@@ -1,0 +1,189 @@
+This is your daily A I podcast for the technically curious, covering new model releases, agent frameworks, open-source breakthroughs, pricing changes, benchmark results, and the tools you can actually use.
+
+We go deep enough to be useful yet clear enough to stay accessible whether you are a developer building with these systems, a product manager evaluating options, or simply someone who wants to understand the technology reshaping every industry.
+
+The reason this show exists is simple.
+
+A I moves at an absurd pace.
+
+New models appear weekly.
+
+Agent frameworks surface overnight.
+
+Open-source projects reach production readiness in days.
+
+Nobody can read everything, so this show reads it all, filters the signal from the noise, and tells you what actually matters.
+
+Think of it as your daily intelligence briefing from someone already in the weeds.
+
+Every episode delivers the day's most important developments with specific model names, versions, benchmarks, and pricing details, because vague claims that A I is getting better do not help anyone.
+
+We always close with concrete things you can try right now.
+
+Pull up a chair.
+
+This is Models and Agents, episode one hundred one, for July fourth, twenty twenty-six.
+
+Your daily A I briefing.
+
+The A I world never sleeps.
+
+Here is what you need to know today.
+
+Specialized agent stacks are cutting construction document review cycles from 60 days to 10 by replacing general-purpose models with perception-semantics-agent layers trained on domain data.
+
+Trunk Tools released a three-layer architecture that extracts, relates, and acts on millions of pages of construction documents with 95 percent reported accuracy.
+
+The system reduced submittal review cycles from 50 to 60 days down to 10 days on average high-rise projects containing 3.6 million pages.
+
+A perception layer parses drawings and PDFs.
+
+A semantic and graph layer builds relationships across specs and schedules.
+
+Purpose-built agents then handle RFIs, bids, and compliance checks.
+
+The stack trains on customer-provided labeled data with explicit opt-out options and continuous L L M as-judge evaluation.
+
+Builders report 8 to 75 minutes saved per common query type.
+
+Agents have already flagged sixty thousand dollars in unsubstantiated subcontractor pricing and one hundred thousand dollars in scheduling conflicts before field work began.
+
+The system now supports autonomous hand-offs, such as a drawing-review agent triggering an RFI agent.
+
+H64LM is a 249 million parameter Mixture-of-Experts Transformer with eight experts and Top-2 routing plus three auxiliary losses.
+
+It implements GQA, SwiGLU, RoPE, RMSNorm, and sliding-window attention entirely in PyTorch without high-level trainers.
+
+The included WikiText-103 checkpoint reaches approximately 40.5 validation perplexity before overfitting.
+
+The author documented batch-size-1 generation limits and DataParallel fallback instead of true DDP.
+
+Meta's A I chief announced the Muse Spark update targets improved coding and agentic capabilities.
+
+The release continues Meta's pattern of shipping incremental gains to existing model families rather than new frontier releases.
+
+No parameter count, benchmark numbers, or pricing details were provided.
+
+Teams using Meta models for agent orchestration should test the update on code-generation subtasks to measure any reduction in required tool calls.
+
+Orca adds a safety layer specifically for autonomous A I agents.
+
+The release focuses on runtime guardrails rather than post-hoc filtering.
+
+No install commands, license, or concrete benchmark numbers appear in the announcement.
+
+Teams deploying long-running agents should evaluate Orca against existing guardrail libraries to see whether it reduces policy-violation rate without adding measurable latency.
+
+OKX announced plans for A I agents to hire and pay each other autonomously in 2026.
+
+The feature would require new wallet and settlement primitives inside the exchange.
+
+No technical specification or timeline beyond the year was released.
+
+Developers building multi-agent marketplaces should monitor OKX developer docs for the first A P I surface.
+
+Exabeam extended its security platform to detect risks introduced by autonomous A I agents.
+
+The update adds agent-specific behavioral analytics to existing log and identity pipelines.
+
+No performance numbers or integration details were disclosed.
+
+Security teams running agents in production should request the new detection rules during their next platform update.
+
+Singapore's MAS released the SAFR framework aimed at securing A I agents in financial services.
+
+The framework outlines governance, risk, and control expectations for agent deployments.
+
+No technical implementation guide or open-source reference implementation was included.
+
+Financial institutions experimenting with agentic trading or compliance agents should map current controls against the SAFR checklist this quarter.
+
+BaryGraph stores every relationship as a first-class embedded BaryEdge document rather than a simple edge, then recursively builds MetaBary triads.
+
+The graph was built on the full English Wiktionary containing 6.6 million docs using MongoDB Community plus mongot and nomic-embed-text.
+
+Structural neighborhood overlap correlates with human similarity judgments at rho 0.32 to 0.53 while raw cosine similarity shows near-zero correlation.
+
+An M C P server exposing find_word, semantic_search, and traverse_up is available on request.
+
+Contrastive Decoding Diffing recovers verbatim finetuning content from logits alone using only grey-box access.
+
+A single default configuration achieved 4 plus out of 5 verbatim recovery on 19 out of 20 organism-model pairs across four families ranging from 1 billion to 32 billion parameters.
+
+The method surfaced the recurring Doctor Elena Rodriguez persona across unrelated synthetic-data domains because Claude Sonnet 3.6 favors that name when generating scientist examples.
+
+Paper and code links are provided in the post.
+
+A pure-Python compiler turns messy markdown into a linked, linted wiki using only the standard library, eliminating repeated embedding and agent calls.
+
+The author fixed two real bugs during implementation and benchmarked the pipeline on two operating systems.
+
+The approach replaces agent-orchestrated wikis for mechanical organization tasks.
+
+Developers maintaining local note systems should test the compiler on their existing markdown corpus this week.
+
+Simon Willison shared a memory file that tells Fable to delegate coding tasks to lower-power subagents using its own judgment.
+
+The prompt reduced token burn noticeably in the days before price changes.
+
+The pattern keeps judgment-heavy work in the main model while routing implementation to cheaper models.
+
+Anyone with remaining Fable access should add the delegate-coding-to-subagents memory before the current allowance window closes.
+
+Clone the H64LM repo and inspect the Top-2 MoE routing losses on your own small dataset to see how auxiliary losses affect expert balance.
+
+Request the BaryGraph M C P endpoint and run a probe query on two domains you know well to test whether the MetaBary bridges hold up.
+
+Add the delegate-coding-to-subagents memory to any active Fable project before token prices change.
+
+Run the pure-Python wiki compiler on your current markdown notes to measure how many manual link and lint fixes it eliminates.
+
+Compare Trunk Tools reported 95 percent agent accuracy against your own vertical document workflow to decide whether domain-specific perception layers are worth the data-labeling cost.
+
+Meta is expected to ship further Muse Spark updates focused on agentic coding loops.
+
+OKX plans to open agent-to-agent payment primitives sometime in 2026.
+
+MAS will likely release implementation guidance for the SAFR framework in financial services.
+
+More vertical agent stacks modeled on Trunk Tools are anticipated in legal and healthcare document workflows.
+
+OK, let's pop the hood on Contrastive Decoding Diffing.
+
+Everyone talks about model diffing as if activation differences are the only reliable signal.
+
+In practice, CDD shows that simply subtracting logits between base and finetuned models already surfaces verbatim training strings with no weight access required.
+
+The method works because narrow finetuning shifts probability mass on a small set of tokens.
+
+Contrasting the two output distributions amplifies exactly those shifts without needing to inspect hidden states.
+
+One configuration recovers 4 plus out of 5 on the SDF benchmark across 1 billion to 32 billion models while Activation Difference Lens never exceeds 3 out of 5 even with full weights.
+
+The approach incidentally exposed a persistent Doctor Elena Rodriguez persona baked into multiple synthetic datasets, revealing how upstream data-generation habits leak into every downstream finetune.
+
+Use CDD when you only have A P I logit access and need to audit what a narrow finetune actually memorized.
+
+Fall back to activation methods only if you already possess full weights and need finer steering control.
+
+Tomorrow, keep an eye on further details around OKX agent payment primitives and any early implementation guidance from MAS on the SAFR framework.
+
+That's Models and Agents for today.
+
+If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update.
+
+The A I world moves fast.
+
+We'll help you keep up.
+
+See you tomorrow.
+
+And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+And before you go: this show is part of the Nerra Network — a family of daily podcasts on tech, science, and markets, each one a short, sharp briefing you can finish on the commute.
+
+If today earned its place in your feed, here's your next listen — Modern Investing Techniques, modern strategies for Canadian and U.S. investors.
+
+Find every show, free, at nerranetwork dot com.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.

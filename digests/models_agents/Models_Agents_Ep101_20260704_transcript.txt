@@ -1,0 +1,227 @@
+This is your daily AI podcast for the technically curious,
+covering new model releases agent frameworks,
+open source breakthroughs, pricing changes, benchmark results,
+and the tools you can actually use.
+We go deep enough to be useful yet clear enough
+to stay accessible, whether you are a developer
+building with these systems, a product manager
+evaluating options, or simply someone
+who wants to understand the technology
+reshaping every industry.
+The reason this show exists is simple.
+AI moves at an absurd pace.
+New models appear weekly, agent frameworks surface overnight,
+open source projects reach production readiness in days.
+Nobody can read everything, so this show reads it all,
+filters the signal from the noise,
+and tells you what actually matters.
+Think of it as your daily intelligence briefing
+from someone already in the weeds.
+Every episode delivers the day's most important developments
+with specific model names, versions, benchmarks,
+and pricing details, because vague claims
+that AI is getting better do not help anyone.
+We always close with concrete things you can try right now.
+Pull up a chair, this is Models and Agents Episode 101
+for July 4th, 2026.
+Your daily AI briefing, the AI world never sleeps.
+Here is what you need to know today.
+Specialized agent stacks are cutting construction
+document review cycles from 60 days to 10
+by replacing general purpose models with perception
+semantics agent layers trained on domain data.
+Trunk tools released a three layer architecture
+that extracts, relates, and acts on millions of pages
+of construction documents with 95% reported accuracy.
+The system reduced submittal review cycles
+from 50 to 60 days down to 10 days on average high-rise projects
+containing 3.6 million pages.
+A perception layer parses drawings and PDFs.
+A semantic and graph layer builds relationships
+across specs and schedules.
+Purpose build agents then handle RFIs, bids,
+and compliance checks.
+The stack trains on customer-provided labeled data
+with explicit opt out options and continuous LLM
+as judge evaluation.
+Builders report 8 to 75 minutes saved per common query type.
+Agents have already flagged $60,000 in unsubstantiated
+subcontractor pricing and $100,000 in scheduling conflicts
+before fieldwork began.
+The system now supports autonomous handoffs
+such as a drawing review agent triggering an RFI agent.
+H64LM is a 249 million parameter mixture of experts
+transformer with eight experts and top two routing
+plus three auxiliary losses.
+It implements GQA, SWG-LU, Rope E, RMS norm,
+and sliding window attention entirely in PyTorch
+without high-level trainers.
+The included wiki text 103 checkpoint
+reaches approximately 40.5 validation perplexity
+before overfitting.
+The author documented batch size one generation limits
+and data parallel fallback instead of true DDP.
+Meta's AI chief announced the Muse Spark update
+targets improved coding and agentic capabilities.
+The release continues Meta's pattern
+of shipping incremental gains to existing model families
+rather than new frontier releases.
+No parameter count, benchmark numbers,
+or pricing details were provided.
+Teams using Meta models for agent orchestration
+should test the update on code generation sub-tasks
+to measure any reduction in required tool calls.
+Orca adds a safety layer specifically
+for autonomous AI agents.
+The release focuses on runtime guard rails
+rather than post-hawk filtering.
+No install commands, license, or concrete benchmark numbers
+appear in the announcement.
+Teams deploying long-running agents
+should evaluate Orca against existing guard rail libraries
+to see whether it reduces policy violation rate
+without adding measurable latency.
+OKX announced plans for AI agents
+to hire and pay each other autonomously in 2026.
+The feature would require new wallet
+and settlement primitives inside the exchange.
+No technical specification or timeline
+beyond the year was released.
+Developers building multi-agent marketplaces
+should monitor OKX developer docs
+for the first API surface.
+ExoBeam extended its security platform
+to detect risks introduced by autonomous AI agents.
+The update adds agent-specific behavioral analytics
+to existing log and identity pipelines.
+No performance numbers or integration details were disclosed.
+Security teams running agents in production
+should request the new detection rules
+during their next platform update.
+Singapore's MAS released the S-A-F-R framework
+aimed at securing AI agents in financial services.
+The framework outlines governance, risk,
+and control expectations for agent deployments.
+No technical implementation guide or open source reference
+implementation was included.
+Financial institutions experimenting
+with agentic trading or compliance agents
+should map current controls against the S-A-F-R checklist
+this quarter.
+Bury graph stores every relationship
+as a first-class embedded Bury Edge document
+rather than a simple edge.
+Then recursively builds meta-barry triads.
+The graph was built on the full English wictionary
+containing 6.6 million docs using MongoDB Community
+plus Mongo and Nomic Embed open by Chi ETX.
+Structural neighborhood overlap correlates
+with human similarity judgments at row 0.32 to 0.53
+while raw cosine similarity shows near zero correlation.
+An MCP server exposing find underscore word
+semantic underscore search and traverse underscore up
+is available on request.
+Contrastive decoding differing
+recovers verbatim fine-tuning content
+from logits alone using only gray box access.
+A single default configuration achieved
+four plus out of five verbatim recovery
+on 19 out of 20 organism model pairs
+across four families ranging from 1 billion to 32 billion
+parameters.
+The method surfaced the recurring doctor Elena Rodriguez
+persona across unrelated synthetic data domains
+because Claude Sonnet 3.6 favors that name
+when generating scientists examples.
+Paper and code links are provided in the post.
+A pure Python compiler turns messy markdown
+into a linked, linted wiki using only the standard library,
+eliminating repeated embedding and agent calls.
+The author fixed two real bugs during implementation
+and benchmarked the pipeline on two operating systems.
+The approach replaces agent orchestrated wikis
+for mechanical organization tasks.
+Developers maintaining local note systems should test
+the compiler on their existing markdown
+corpus this week.
+Simon Willison shared a memory file that
+tells Fable to delegate coding tasks
+to lower power sub agents using its own judgment.
+The prompt reduced token burn noticeably
+in the days before price changes.
+The pattern keeps judgment heavy work in the main model
+while routing implementation to cheaper models.
+Anyone with remaining Fable access should add the delegate
+coding to sub agents memory before the current
+allowance window closes.
+Clone the H64 LM repo and inspect the top two MUE
+routing losses on your own small data set
+to see how auxiliary losses affect expert balance.
+Request the Berry graph MCP endpoint and run a probe query
+on two domains you know well to test whether
+the meta berry bridges hold up.
+Add the delegate coding to sub agents memory
+to any active Fable project before token prices change.
+Run the pure Python wiki compiler on your current
+markdown notes to measure how many manual link
+and lint fixes it eliminates.
+Compare trunk tools reported 95% agent accuracy
+against your own vertical document workflow
+to decide whether domain specific perception layers
+are worth the data labeling cost.
+Meta is expected to ship further MUE spark updates
+focused on agentic coding loops.
+OKX plans to open agent to agent payment primitives
+sometime in 2025.
+MAS will likely release implementation guidance
+for the SAFR framework in financial services.
+More vertical agent stacks modeled on trunk tools
+are anticipated in legal and healthcare document workflows.
+OK, let's pop the hood on contrastive decoding differing.
+Everyone talks about model differing
+as if activation differences are the only reliable signal.
+In practice, CDD shows that simply subtracting
+logits between base and fine tuned models
+already surfaces verbatim training strings
+with no weight access required.
+The method works because narrow fine tuning
+shifts probability mass on a small set of tokens.
+Contrasting the two output distributions
+amplifies exactly those shifts without needing
+to inspect hidden states.
+One configuration recovers 4 plus out of 5
+on the SDF benchmark across 1 billion to 32 billion models
+while activation difference lens never exceeds 3 out of 5
+even with full weights.
+The approach incidentally exposed
+a persistent Dr. Elena Rodriguez persona
+baked into multiple synthetic data sets,
+revealing how upstream data generation habits
+leak into every downstream fine tune.
+Use CDD when you only have API logic access
+and need to audit what a narrow fine tune actually memorized.
+Fall back to activation methods only if you already possess
+full weights and need finer steering control.
+Tomorrow, keep an eye on further details
+around OKX agent payment primitives
+and any early implementation guidance from MAS
+on the SAFR framework.
+That's models and agents for today.
+If you found this useful, share it with someone
+who's trying to keep up with all these changes
+and subscribe so you don't miss tomorrow's update.
+The AI world moves fast.
+We'll help you keep up.
+See you tomorrow.
+And if you'd rather watch than listen,
+find us on YouTube at Naran Network, links in the show notes.
+And before you go, this show is part
+of the Naran Network, a family of daily podcasts
+on tech, science, and markets.
+Each one a short, sharp briefing you can finish on the commute.
+If today earned its place in your feed,
+here's your next lesson, modern investing techniques,
+modern strategies for Canadian and US investors.
+Find every show free at Naranetwork.com.
+This episode used AI voice synthesis of my voice.
+Editorial selection and analysis are my own.

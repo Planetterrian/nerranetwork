@@ -1,0 +1,56 @@
+# Models & Agents
+> **Specialized agent stacks are cutting construction document review cycles from 60 days to 10 by replacing general-purpose models with perception-semantics-agent layers trained on domain data.**
+
+**What You Need to Know:** Trunk Tools released a three-layer architecture that extracts, relates, and acts on millions of pages of construction documents with 95% reported accuracy. H64LM, a 249M-parameter MoE model, was released as a fully from-scratch PyTorch implementation with GQA, SwiGLU, and sliding-window attention. BaryGraph introduces BaryEdges that embed relationships themselves, enabling cross-domain structural retrieval that standard vector search misses.
+---
+### Top Story
+Trunk Tools unveiled a production agent system for construction project management that reduced submittal review cycles from 50-60 days to 10 days. The stack uses a perception layer to parse drawings and PDFs, a semantic/graph layer to build relationships across specs and schedules, and purpose-built agents for RFIs, bids, and compliance checks. It processes an average high-rise project’s 3.6 million pages by training on customer-provided labeled data with explicit opt-out options and continuous LLM-as-judge evaluation. Builders gain 8-75 minutes saved per common query type and have seen agents flag $60k in unsubstantiated subcontractor pricing and $100k in scheduling conflicts before field work began. The system now lets agents hand off work autonomously, such as a drawing-review agent triggering an RFI agent. Watch for similar vertical stacks in legal and healthcare where standardized document formats reward domain-specific fine-tuning over general models. Source: [venturebeat.com](https://venturebeat.com/orchestration/trunk-tools-stack-cut-document-review-from-60-days-to-10-by-ditching-general-purpose-models)
+---
+### Model Updates
+**H64LM: r/MachineLearning**
+H64LM is a 249M-parameter Mixture-of-Experts Transformer with 8 experts and Top-2 routing plus three auxiliary losses. It implements GQA, SwiGLU, RoPE, RMSNorm, and sliding-window attention entirely in PyTorch without high-level trainers. The included WikiText-103 checkpoint reaches ~40.5 validation perplexity before overfitting. The author documented batch-size-1 generation limits and DataParallel fallback instead of true DDP. Builders exploring custom MoE pipelines should clone the repo this week to inspect the routing losses and mixed-precision loop before scaling. Source: [reddit.com](https://www.reddit.com/r/MachineLearning/comments/1umqfd2/h64lm_a_249mparameter_mixtureofexperts/)
+
+**Muse Spark update: InfoWorld**
+Meta’s AI chief announced the Muse Spark update targets improved coding and agentic capabilities. The release continues Meta’s pattern of shipping incremental gains to existing model families rather than new frontier releases. No parameter count, benchmark numbers, or pricing details were provided. Teams using Meta models for agent orchestration should test the update on code-generation subtasks to measure any reduction in required tool calls. Source: [Google News](https://news.google.com/rss/articles/CBMiuwFBVV95cUxNLUdTaEFIdmxrd09iTnRvZ0NocG0yVG5oUEhMcDBqR09FQXl5YWFtQkZQcmctcHBXbVRUSUxjTEViYm5sMFhJM0hHcHdRV3Rhb29PUXZTU0N0UlV1a0phSmV4dVVLNUdrNTBXU1FneGk4a3J0WVBwRS1fREoyT2M1eF9KOXJiYXczYWRzdzNNVjZodThIT1l0RENXYmdDVTJabjZvYTZfcUY2RWJDOGVySXNaOERmdEdYaXVr?oc=5)
+---
+### Agent & Tool Developments
+**Orca safety layer: Let's Data Science**
+Orca adds a safety layer specifically for autonomous AI agents. The release focuses on runtime guardrails rather than post-hoc filtering. No install commands, license, or concrete benchmark numbers appear in the announcement. Teams deploying long-running agents should evaluate Orca against existing guardrail libraries to see whether it reduces policy-violation rate without adding measurable latency. Source: [Google News](https://news.google.com/rss/articles/CBMimAFBVV95cUxQRVUxdlpvcm9oSFBhNHE2OVhNVVBlVTU5UWlrQmxRQndPTkV1NGFhbHI0cTdGb29jczUzU29tTHlWV0ZZcXR4d1ZyWUxlVmFrZWw1TDY0ZEhKS2VqWURJeGJDeUhiaDFUNWdpeTlweUhDdGRLaHVYZEV5WHZtak14N1VuM2xWRzZUNDluV05peUd0ejVFank4VQ?oc=5)
+
+**OKX agent payments: Memeburn**
+OKX announced plans for AI agents to hire and pay each other autonomously in 2026. The feature would require new wallet and settlement primitives inside the exchange. No technical specification or timeline beyond the year was released. Developers building multi-agent marketplaces should monitor OKX’s developer docs for the first API surface. Source: [Google News](https://news.google.com/rss/articles/CBMiggFBVV95cUxOZzlsUHZpMVZ0SE9PTDdtODVac3lEMnIxMUZlSF9ULU9lVm9pc0FVcGtDbTBVTnNUOGYxQkxZLUFkM29iZG55Y3NCN1ZrN2RDbGRNNzJqcFpiMTNOWm9XbkZGYTlpQkhEZVlNNEVIRWN6V0d0Q2tjTDY0T25rTTZsM0h3?oc=5)
+
+**Exabeam platform expansion: IT News Africa**
+Exabeam extended its security platform to detect risks introduced by autonomous AI agents. The update adds agent-specific behavioral analytics to existing log and identity pipelines. No performance numbers or integration details were disclosed. Security teams running agents in production should request the new detection rules during their next platform update. Source: [Google News](https://news.google.com/rss/articles/CBMiswFBVV95cUxPX0hva3doQXY3WUM5YVBxUmZPODlZRElxaUZWNE1pbXNGOUc3MjhGOVVpTkNUVEVzbE1SOGhmUG04c1F2UDJIMkZyU00wV080cEo4anRYaVF6SjQwUkU5S3NUTnZYZmN1QXVxQXd3bEpEamtjMnBoY2o3TTQzT3NiS2syVjJ0SjRHMkdGMUhyeGZWQUZNVFkxS0hYNTA0ZzkxQ3FRcERLOVEwSXROYThCVG1iQQ?oc=5)
+
+**MAS SAFR Framework: FF News**
+Singapore’s MAS released the SAFR framework aimed at securing AI agents in financial services. The framework outlines governance, risk, and control expectations for agent deployments. No technical implementation guide or open-source reference implementation was included. Financial institutions experimenting with agentic trading or compliance agents should map current controls against the SAFR checklist this quarter. Source: [Google News](https://news.google.com/rss/articles/CBMilwFBVV95cUxQLURFM29HVjRaNlRMVVY2VjJNck5VTlZQMzBjNEJseVM3MDNBRnBpcU13TDRrZ2xkZjNjX19QbHpEdThGTENFY0R0cEo3ZWVSMmh1S3BIVVQ4RzFtV0N2aXpyUmFFV0JGam5YaFR1d3pSZHd0QUE0NlQ1Q0RhVE1XWnRrbHR3R05EUlU4UC1rLWxBa0NwQnR3?oc=5)
+---
+### Practical & Community
+**BaryGraph: r/MachineLearning**
+BaryGraph stores every relationship as a first-class embedded BaryEdge document rather than a simple edge, then recursively builds MetaBary triads. The graph was built on the full English Wiktionary (6.6M docs) using MongoDB Community + mongot and nomic-embed-text. Structural neighborhood overlap correlates with human similarity judgments at ρ 0.32–0.53 while raw cosine similarity shows near-zero correlation. An MCP server exposing find_word, semantic_search, and traverse_up is available on request. Researchers working on cross-domain retrieval should request the endpoint and test probe queries on domain pairs they know well. Source: [reddit.com](https://www.reddit.com/r/MachineLearning/comments/1un3lsf/barygraph_knowledge_graph_where_every/)
+
+**Contrastive Decoding Diffing: r/MachineLearning**
+CDD recovers verbatim finetuning content from logits alone using only grey-box access. A single default configuration achieved 4+/5 verbatim recovery on 19/20 organism-model pairs across four families (1B–32B). The method surfaced the recurring “Dr. Elena Rodriguez” persona across unrelated synthetic-data domains because Claude Sonnet 3.6 favors that name when generating scientist examples. Paper and code links are provided in the post. Teams concerned about data leakage from narrow finetunes should run CDD on their own models before public release. Source: [reddit.com](https://www.reddit.com/r/MachineLearning/comments/1umn2dk/contrastive_decoding_diffing_cdd_recovering/)
+
+**LLM Wikis replaced by compiler: Towards Data Science**
+A pure-Python compiler turns messy markdown into a linked, linted wiki using only the standard library, eliminating repeated embedding and agent calls. The author fixed two real bugs during implementation and benchmarked the pipeline on two operating systems. The approach replaces agent-orchestrated wikis for mechanical organization tasks. Developers maintaining local note systems should test the compiler on their existing markdown corpus this week. Source: [towardsdatascience.com](https://towardsdatascience.com/llm-wikis-are-over-engineered-i-replaced-mine-with-a-pure-python-compiler/)
+
+**Fable delegation pattern: Simon Willison's Weblog**
+Simon Willison shared a memory file that tells Fable to delegate coding tasks to lower-power subagents using its own judgment. The prompt reduced token burn noticeably in the days before price changes. The pattern keeps judgment-heavy work in the main model while routing implementation to cheaper models. Anyone with remaining Fable access should add the delegate-coding-to-subagents memory before the current allowance window closes. Source: [simonwillison.net](https://simonwillison.net/2026/Jul/3/judgement/#atom-everything)
+---
+### Under the Hood: Contrastive Decoding Diffing
+Everyone talks about model diffing as if activation differences are the only reliable signal. In practice, CDD shows that simply subtracting logits between base and finetuned models already surfaces verbatim training strings with no weight access required. The method works because narrow finetuning shifts probability mass on a small set of tokens; contrasting the two output distributions amplifies exactly those shifts without needing to inspect hidden states. One configuration recovers 4+/5 on the SDF benchmark across 1B–32B models while Activation Difference Lens never exceeds 3/5 even with full weights. The approach incidentally exposed a persistent “Dr. Elena Rodriguez” persona baked into multiple synthetic datasets, revealing how upstream data-generation habits leak into every downstream finetune. Use CDD when you only have API logit access and need to audit what a narrow finetune actually memorized; fall back to activation methods only if you already possess full weights and need finer steering control.
+---
+### Things to Try This Week
+- Clone the H64LM repo and inspect the Top-2 MoE routing losses on your own small dataset to see how auxiliary losses affect expert balance.
+- Request the BaryGraph MCP endpoint and run a probe query on two domains you know well to test whether the MetaBary bridges hold up.
+- Add the delegate-coding-to-subagents memory to any active Fable project before token prices change.
+- Run the pure-Python wiki compiler on your current markdown notes to measure how many manual link and lint fixes it eliminates.
+- Compare Trunk Tools’ reported 95% agent accuracy against your own vertical document workflow to decide whether domain-specific perception layers are worth the data-labeling cost.
+---
+### On the Horizon
+- Meta is expected to ship further Muse Spark updates focused on agentic coding loops.
+- OKX plans to open agent-to-agent payment primitives sometime in 2026.
+- MAS will likely release implementation guidance for the SAFR framework in financial services.
+- More vertical agent stacks modeled on Trunk Tools are anticipated in legal and healthcare document workflows.
