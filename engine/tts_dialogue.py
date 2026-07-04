@@ -33,10 +33,11 @@ from __future__ import annotations
 
 import logging
 import re
+import statistics
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from engine.tts import (
     GROK_MAX_CHARS_PER_REQUEST,
@@ -143,6 +144,90 @@ def dialogue_stats(script: str, voices: Dict[str, str]) -> Dict[str, int]:
     }
 
 
+# --- Inter-turn loudness matching (July 2026, Ep001 v5 operator listen) ---
+# Dialogue mode makes one Grok TTS call per speaker group (30-40 per episode)
+# and per-call output loudness varies — the shipped episode drifted between a
+# good level and audibly quiet turns. The downstream normalize_voice() chain
+# can't fix this: its loudnorm runs with linear=true (ONE gain for the whole
+# file) and the 4:1 compressor only acts above threshold, so quiet turns stay
+# quiet. Single-voice shows never hit this because the whole script is one
+# TTS call. Fix: measure each turn WAV's mean level and gain-match everything
+# to the MEDIAN before the crossfade — median (not a fixed absolute) so a
+# uniformly loud/quiet session is untouched and only outlier turns move.
+# mean_volume via volumedetect is stable on short clips where loudnorm's
+# integrated measurement is not (many turns are one sentence, ~2-4 s).
+
+_MAX_TURN_GAIN_DB = 12.0   # never boost/cut a turn more than this
+_MIN_TURN_GAIN_DB = 1.0    # leave sub-1 dB drift alone (inaudible)
+
+
+def _measure_mean_volume_db(wav_path: Path) -> Optional[float]:
+    """Return ffmpeg volumedetect ``mean_volume`` in dB, or None on failure."""
+    try:
+        proc = subprocess.run(
+            ["ffmpeg", "-i", str(wav_path), "-af", "volumedetect",
+             "-f", "null", "-"],
+            capture_output=True, text=True, timeout=120,
+        )
+        m = re.search(r"mean_volume:\s*(-?\d+(?:\.\d+)?)\s*dB", proc.stderr)
+        return float(m.group(1)) if m else None
+    except (subprocess.SubprocessError, OSError, ValueError):
+        return None
+
+
+def _match_turn_levels(wav_files: List[Path]) -> Tuple[List[Path], int]:
+    """Gain-match *wav_files* to their median mean level, in place per file.
+
+    Returns ``(paths, n_adjusted)`` — paths in the same order, with adjusted
+    turns replaced by ``*_lvl.wav`` siblings. Any measurement/ffmpeg failure
+    leaves that file untouched (never blocks synthesis).
+    """
+    if len(wav_files) < 2:
+        return wav_files, 0
+    levels = {p: _measure_mean_volume_db(p) for p in wav_files}
+    valid = [v for v in levels.values() if v is not None]
+    if len(valid) < 2:
+        logger.warning(
+            "Dialogue level match: could not measure enough turns "
+            "(%d/%d) — skipping", len(valid), len(wav_files),
+        )
+        return wav_files, 0
+    target = statistics.median(valid)
+    out: List[Path] = []
+    n_adjusted = 0
+    max_move = 0.0
+    for p in wav_files:
+        v = levels[p]
+        gain = 0.0 if v is None else max(
+            -_MAX_TURN_GAIN_DB, min(_MAX_TURN_GAIN_DB, target - v),
+        )
+        if abs(gain) < _MIN_TURN_GAIN_DB:
+            out.append(p)
+            continue
+        leveled = p.with_name(p.stem + "_lvl.wav")
+        try:
+            subprocess.run(
+                ["ffmpeg", "-y", "-i", str(p),
+                 "-af", f"volume={gain:.2f}dB", str(leveled)],
+                check=True, capture_output=True, timeout=300,
+            )
+        except (subprocess.SubprocessError, OSError):
+            logger.warning(
+                "Dialogue level match: gain failed on %s — using raw", p.name,
+            )
+            out.append(p)
+            continue
+        out.append(leveled)
+        n_adjusted += 1
+        max_move = max(max_move, abs(gain))
+    logger.info(
+        "Dialogue level match: median %.1f dB, adjusted %d/%d turn file(s)"
+        "%s", target, n_adjusted, len(wav_files),
+        f" (largest move {max_move:.1f} dB)" if n_adjusted else "",
+    )
+    return out, n_adjusted
+
+
 def _pad_wav_tail(wav_path: Path, pause_ms: int) -> Path:
     """Append *pause_ms* of silence to *wav_path* (ffmpeg ``apad``)."""
     padded = wav_path.with_name(wav_path.stem + "_pad.wav")
@@ -199,8 +284,9 @@ def synthesize_dialogue(
     effective_max = min(max_chars, GROK_MAX_CHARS_PER_REQUEST)
     tmp_dir = Path(tempfile.mkdtemp(prefix="tts_dialogue_", dir=str(output_path.parent)))
 
-    wav_files: List[Path] = []
     try:
+        # Pass 1: synthesise every group (per-group WAV lists, no padding yet).
+        group_wav_lists: List[List[Path]] = []
         for g_idx, (speaker, text) in enumerate(groups):
             chunks = chunk_text(text, max_chars=effective_max)
             group_wavs: List[Path] = []
@@ -212,16 +298,27 @@ def synthesize_dialogue(
                     timeout=timeout, speed=speed,
                 )
                 group_wavs.append(wav)
-            # Let the handoff breathe: pad the group's final chunk with
-            # silence (skip after the last group — the music outro follows).
-            if pause_ms > 0 and g_idx < len(groups) - 1:
-                group_wavs[-1] = _pad_wav_tail(group_wavs[-1], pause_ms)
-            wav_files.extend(group_wavs)
+            group_wav_lists.append(group_wavs)
             logger.info(
                 "Dialogue TTS: group %d/%d (%s, %d chars, %d chunk%s)",
                 g_idx + 1, len(groups), speaker, len(text),
                 len(chunks), "" if len(chunks) == 1 else "s",
             )
+
+        # Pass 2: gain-match every turn file to the median level BEFORE the
+        # silence padding (padding would skew the mean-level measurement).
+        flat = [w for gw in group_wav_lists for w in gw]
+        leveled, _n_adjusted = _match_turn_levels(flat)
+        it = iter(leveled)
+        group_wav_lists = [[next(it) for _ in gw] for gw in group_wav_lists]
+
+        # Pass 3: let each handoff breathe — pad the group's final chunk
+        # with silence (skip after the last group; the music outro follows).
+        wav_files: List[Path] = []
+        for g_idx, group_wavs in enumerate(group_wav_lists):
+            if pause_ms > 0 and g_idx < len(group_wav_lists) - 1:
+                group_wavs[-1] = _pad_wav_tail(group_wavs[-1], pause_ms)
+            wav_files.extend(group_wavs)
 
         _crossfade_wavs_to_mp3(wav_files, output_path, tmp_dir)
         logger.info(

@@ -905,8 +905,32 @@ TST received a full recursive improvement architecture (analogous to MIT):
   `generate_html.py` extracts each digest's `### Think Positive` principle)
   and a **Dispatch Wall** (`_collect_dp_dispatches` reads the
   OPERATOR-CURATED `digests/dp_pod/dispatches.json` — real listener
-  dispatches only, per the club charter; empty file = honest empty state).
+  dispatches only, per the club charter; empty file = honest empty state;
+  operator CLI: `scripts/add_dp_dispatch.py`).
   Drift guards: `tests/test_dp_pod_show.py::TestCommunityLayer`.
+  **July 4 2026 level-drift fix + anthem canon (operator listened to v5:
+  "inconsistent and drifting between good sound level then quiet"):** root
+  cause is structural to dialogue mode — 30-40 independent Grok TTS calls
+  per episode, each at its own loudness, and `normalize_voice`'s
+  `loudnorm … linear=true` applies ONE gain to the whole file so inter-turn
+  variance survives to air (single-voice shows synthesize in one call and
+  never hit this). Fix: `_match_turn_levels` in `engine/tts_dialogue.py`
+  gain-matches every turn WAV to the MEDIAN mean level (volumedetect —
+  stable on 2-4s clips where loudnorm's integrated measure is not; ±12 dB
+  cap, <1 dB left alone, runs BEFORE pause padding so silence can't skew
+  the measure; verified 28 dB synthetic spread → 0). Second leak in the
+  same report: `append_full_song` concatenated the debut song at its native
+  master level — the song branch now runs `loudnorm I=-16`
+  (`_append_song_cmd`, episode branch untouched). Both change shipped audio
+  — A/B-listen per landmine #17. **Anthem:** the operator-supplied "Do
+  Positive" lyrics are canon at `assets/music/dp_pod_lyrics.md`; the
+  podcast prompt's THE SHOW ANTHEM block allows at most ONE verbatim lyric
+  phrase per episode (default ZERO — anti seeded-template), the Ep1 debut
+  override lets the song intro quote one chorus line exactly, and the club
+  page gained an Anthem section (chorus + collapsible full lyrics). Drift
+  guards: `tests/test_tts_dialogue.py::{TestTurnLevelMatching,
+  TestDebutSongLoudness}`, `tests/test_dp_pod_show.py::TestShowAnthem`
+  (including a prompt-quote-matches-canon check).
 - **AOAI** (The Age of AI) — the network's **AI-hosted LIVE interview show**
   (July 2026): Mira, an AI documentarian persona (Grok voice `ara`,
   deliberately NOT the Patrick clone), phones REAL guests via a Voximplant

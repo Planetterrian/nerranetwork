@@ -145,7 +145,10 @@ This is a designed founding episode, not a news day. Total target stays
 6. **[Sign-Off + the song]** IMMEDIATELY BEFORE the supplied closing, one
    host introduces the show's theme song in their own words: we made an
    anthem for this club, it's called "Do Positive", and we're playing the
-   whole thing to close the very first episode — stay for it. Then the
+   whole thing to close the very first episode — stay for it. The
+   introducing host may quote ONE line of the chorus verbatim to set it up
+   (exact words only: "One real thing, one good thing / Let it spread
+   around" or "Turn the worry down") — see THE SHOW ANTHEM rules. Then the
    supplied closing (ending "Do something about it."). The song audio is
    appended by production after your last line — write NOTHING after the
    closing.

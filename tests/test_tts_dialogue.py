@@ -324,3 +324,109 @@ def test_dialogue_defaults_are_noop():
     assert cfg.dialogue_mode is False
     assert cfg.dialogue_voices == {}
     assert cfg.dialogue_pause_ms == 300
+
+
+class TestTurnLevelMatching:
+    """July 2026 (Ep001 v5 operator listen: level drifting good -> quiet).
+
+    Dialogue mode's 30-40 independent Grok calls come back at varying
+    loudness and the whole-file linear loudnorm can't fix inter-turn
+    variance — turns are now gain-matched to the MEDIAN mean level before
+    the crossfade."""
+
+    def _match(self, tmp_path, levels_db, monkeypatch):
+        import engine.tts_dialogue as td
+
+        paths = []
+        measured = {}
+        for i, lvl in enumerate(levels_db):
+            p = tmp_path / f"turn_{i:03d}.wav"
+            p.write_bytes(b"RIFFfake")
+            paths.append(p)
+            measured[p] = lvl
+        monkeypatch.setattr(td, "_measure_mean_volume_db",
+                            lambda p: measured.get(p))
+        gains = {}
+
+        def fake_run(cmd, **kw):
+            # ffmpeg -y -i <in> -af volume=XdB <out>
+            src = Path(cmd[3])
+            gains[src] = float(cmd[5].split("=")[1][:-2])
+            Path(cmd[6]).write_bytes(b"RIFFleveled")
+            return mock.Mock(returncode=0)
+
+        monkeypatch.setattr(td.subprocess, "run", fake_run)
+        out, n = td._match_turn_levels(paths)
+        return paths, out, n, gains
+
+    def test_matches_to_median_and_skips_small_drift(self, tmp_path, monkeypatch):
+        # median of [-18, -19, -26] is -19: the -18 turn drifts <1.1dB...
+        paths, out, n, gains = self._match(
+            tmp_path, [-18.0, -19.0, -26.0], monkeypatch)
+        # -18 → gain -1.0 (>= 1.0 threshold applies), -26 → +7
+        assert gains[paths[2]] == pytest.approx(7.0)
+        assert n >= 1
+        # order preserved
+        assert [p.stem.split("_")[1] for p in out] == ["000", "001", "002"]
+
+    def test_gain_capped_at_12db(self, tmp_path, monkeypatch):
+        paths, out, n, gains = self._match(
+            tmp_path, [-18.0, -18.0, -48.0], monkeypatch)
+        assert gains[paths[2]] == pytest.approx(12.0)
+
+    def test_sub_1db_drift_untouched(self, tmp_path, monkeypatch):
+        paths, out, n, gains = self._match(
+            tmp_path, [-18.0, -18.4, -18.2], monkeypatch)
+        assert n == 0 and gains == {}
+        assert out == paths
+
+    def test_measurement_failure_leaves_file_raw(self, tmp_path, monkeypatch):
+        paths, out, n, gains = self._match(
+            tmp_path, [-18.0, None, -30.0], monkeypatch)
+        assert paths[1] in out  # unmeasured file passes through untouched
+        assert paths[1] not in gains
+
+    def test_synthesize_matches_before_padding(self, tmp_path):
+        # Padding appends silence which would skew the level measurement —
+        # pin the order: level match runs on unpadded wavs, padding after.
+        import engine.tts_dialogue as td
+
+        order = []
+
+        def fake_chunk(text, voice_id, out_path, **kw):
+            Path(out_path).write_bytes(b"RIFFfake")
+
+        def fake_match(files):
+            order.append("match")
+            return files, 0
+
+        def fake_pad(p, ms):
+            order.append("pad")
+            return p
+
+        with mock.patch.object(td, "grok_speak_chunk", side_effect=fake_chunk), \
+             mock.patch.object(td, "_match_turn_levels", side_effect=fake_match), \
+             mock.patch.object(td, "_pad_wav_tail", side_effect=fake_pad), \
+             mock.patch.object(td, "_crossfade_wavs_to_mp3"):
+            td.synthesize_dialogue(
+                "DAN: Hi there.\n\nPATRICK: Hello Dan.", VOICES,
+                tmp_path / "o.mp3", api_key="k", pause_ms=180,
+            )
+        assert order and order[0] == "match", (
+            "level matching must run before pause padding"
+        )
+
+
+class TestDebutSongLoudness:
+    def test_append_song_cmd_normalizes_song_branch(self):
+        # The raw concat shipped the song at its native master level — a
+        # level jump at the handoff (Ep001 v5 operator report).
+        from engine.audio import _append_song_cmd
+
+        cmd = _append_song_cmd("ep.mp3", "song.mp3", "out.mp3")
+        graph = cmd[cmd.index("-filter_complex") + 1]
+        song_branch = graph.split("[1:a]")[1].split("[song]")[0]
+        assert "loudnorm=I=-16" in song_branch
+        # Episode branch stays untouched (already mastered to -16).
+        ep_branch = graph.split("[1:a]")[0]
+        assert "loudnorm" not in ep_branch

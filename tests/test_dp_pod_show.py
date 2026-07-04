@@ -627,3 +627,50 @@ class TestCommunityLayer:
         assert dispatches[0]["name"] == "Sarah, Calgary"
         assert dispatches[0]["numbers"] == "$14, 2h"
         assert dispatches[0]["episode_num"] == 3
+
+
+class TestShowAnthem:
+    """The "Do Positive" lyrics are canon (operator-supplied, July 2026):
+    on-air quotes must match assets/music/dp_pod_lyrics.md exactly, and the
+    anthem must not become a per-episode tic (seeded-template class)."""
+
+    def test_lyrics_file_is_canon(self):
+        lyrics = (PROJECT_ROOT / "assets" / "music" / "dp_pod_lyrics.md").read_text(
+            encoding="utf-8")
+        for line in ("Turn the worry down", "One real thing, one good thing",
+                     "Let it spread around", "We can build from this",
+                     "Now pass it on around"):
+            assert line in lyrics
+
+    def test_prompt_anthem_block_is_anti_tic(self):
+        prompt = (PROJECT_ROOT / "shows" / "prompts" / "dp_pod_podcast.txt").read_text(
+            encoding="utf-8")
+        assert "THE SHOW ANTHEM" in prompt
+        # The anti-convergence guard: default is NO anthem reference.
+        assert "ZERO TIMES" in prompt
+        assert "EXACTLY" in prompt  # quotes must match the lyrics verbatim
+
+    def test_prompt_lyric_quotes_match_canon(self):
+        # Any lyric line the prompt seeds must exist verbatim in the lyrics
+        # file — a drifted quote would put wrong words in the hosts' mouths.
+        lyrics = (PROJECT_ROOT / "assets" / "music" / "dp_pod_lyrics.md").read_text(
+            encoding="utf-8").replace("'", "'")
+        prompt = (PROJECT_ROOT / "shows" / "prompts" / "dp_pod_podcast.txt").read_text(
+            encoding="utf-8")
+        anthem_block = prompt.split("THE SHOW ANTHEM", 1)[1].split("\n\n", 1)[0]
+        import re
+        lyrics = re.sub(r"\s+", " ", lyrics)
+        for quoted in re.findall(r'"([^"]+)"', anthem_block):
+            for fragment in re.split(r"\s*/\s*|\.\.\.", quoted):
+                fragment = re.sub(r"\s+", " ", fragment).strip().rstrip(".")
+                if len(fragment.split()) >= 3 and "Do Positive" not in fragment:
+                    assert fragment in lyrics, f"prompt quote drifted from canon: {fragment!r}"
+
+    def test_club_page_has_anthem_section(self):
+        import generate_html as gh
+
+        html_path = gh.generate_show_page("dp_pod", dry_run=False)
+        html = Path(html_path).read_text(encoding="utf-8")
+        assert 'id="anthem"' in html
+        assert "Turn the worry down" in html
+        assert "Now pass it on around" in html

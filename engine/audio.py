@@ -990,6 +990,39 @@ def mix_with_music(
     return output_path
 
 
+def _append_song_cmd(
+    episode_in: str,
+    song_in: str,
+    out_path: str,
+    *,
+    gap_seconds: float = 1.2,
+) -> list:
+    """ffmpeg command appending *song_in* after *episode_in* with a gap.
+
+    The song branch runs ``loudnorm I=-16`` so the track lands at the same
+    integrated loudness the final mix targets (Apple/Spotify spec). The raw
+    concat originally shipped the song at its native master level — a level
+    JUMP or drop at the handoff, part of the Ep001 v5 "inconsistent sound"
+    operator report (July 2026).
+    """
+    return [
+        "ffmpeg", "-y",
+        "-i", episode_in,
+        "-i", song_in,
+        "-filter_complex",
+        (
+            f"[0:a]apad=pad_dur={gap_seconds:.2f},"
+            "aformat=sample_rates=44100:channel_layouts=stereo[ep];"
+            "[1:a]loudnorm=I=-16:TP=-1.5:LRA=11,"
+            "aformat=sample_rates=44100:channel_layouts=stereo[song];"
+            "[ep][song]concat=n=2:v=0:a=1[out]"
+        ),
+        "-map", "[out]",
+        "-c:a", "libmp3lame", "-q:a", "0",
+        out_path,
+    ]
+
+
 def append_full_song(
     episode_mp3: Path,
     song_path: Path,
@@ -1008,21 +1041,10 @@ def append_full_song(
     episode_mp3 = Path(episode_mp3)
     song_path = Path(song_path)
     tmp_out = episode_mp3.with_name(episode_mp3.stem + "_withsong.mp3")
-    cmd = [
-        "ffmpeg", "-y",
-        "-i", str(episode_mp3),
-        "-i", str(song_path),
-        "-filter_complex",
-        (
-            f"[0:a]apad=pad_dur={gap_seconds:.2f},"
-            "aformat=sample_rates=44100:channel_layouts=stereo[ep];"
-            "[1:a]aformat=sample_rates=44100:channel_layouts=stereo[song];"
-            "[ep][song]concat=n=2:v=0:a=1[out]"
-        ),
-        "-map", "[out]",
-        "-c:a", "libmp3lame", "-q:a", "0",
-        str(tmp_out),
-    ]
+    cmd = _append_song_cmd(
+        str(episode_mp3), str(song_path), str(tmp_out),
+        gap_seconds=gap_seconds,
+    )
     subprocess.run(cmd, check=True, capture_output=True, timeout=timeout_seconds)
     tmp_out.replace(episode_mp3)
     logger.info("Appended full song %s to %s", song_path.name, episode_mp3.name)
