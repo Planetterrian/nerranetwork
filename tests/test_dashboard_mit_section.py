@@ -213,3 +213,54 @@ class TestBuildDashboardIntegration:
         result = build_dashboard(tmp_path, offline=True)
         assert "mit_performance" in result
         assert result["mit_performance"]["available"] is True
+
+
+class TestExecutionHealth:
+    """July 2026 live-trading prep: the dashboard surfaces signal
+    freshness + shadow-ledger vitals so the operator sees at a glance
+    whether the execution bridge artifacts are flowing."""
+
+    def test_execution_health_none_when_artifacts_missing(self, tmp_path: Path):
+        root = _write_mit(tmp_path, tracker={
+            "metadata": {}, "summary": {}, "trades": [],
+        })
+        result = aggregate_mit_performance(root)
+        assert result["execution_health"] == {"signal": None, "shadow": None}
+
+    def test_signal_freshness_and_staleness(self, tmp_path: Path):
+        root = _write_mit(tmp_path, tracker={
+            "metadata": {}, "summary": {}, "trades": [],
+        })
+        mit_dir = root / "digests" / "modern_investing"
+        (mit_dir / "trade_signal_latest.json").write_text(json.dumps({
+            "schema_version": 1, "generated_at": "2020-01-01",
+            "action": "new_trade",
+            "trade": {"snaptrade_symbol": "CNR.TO"},
+        }), encoding="utf-8")
+        result = aggregate_mit_performance(root)
+        sig = result["execution_health"]["signal"]
+        assert sig["action"] == "new_trade"
+        assert sig["symbol"] == "CNR.TO"
+        assert sig["stale"] is True  # ancient signal must be flagged
+
+    def test_shadow_ledger_vitals(self, tmp_path: Path):
+        root = _write_mit(tmp_path, tracker={
+            "metadata": {}, "summary": {}, "trades": [],
+        })
+        mit_dir = root / "digests" / "modern_investing"
+        (mit_dir / "shadow_ledger.json").write_text(json.dumps({
+            "schema_version": 1, "mode": "shadow", "orders": [
+                {"decision": "would_place", "logged_at": "2026-07-06T13:50:00+00:00"},
+                {"decision": "skipped", "logged_at": "2026-07-07T13:50:00+00:00"},
+                {"decision": "would_sell", "shadow_return_pct": 2.5,
+                 "logged_at": "2026-07-10T13:50:00+00:00"},
+            ],
+        }), encoding="utf-8")
+        result = aggregate_mit_performance(root)
+        sh = result["execution_health"]["shadow"]
+        assert sh["orders"] == 3
+        assert sh["decisions"] == {"would_place": 1, "skipped": 1,
+                                   "would_sell": 1}
+        assert sh["round_trips"] == 1
+        assert sh["avg_round_trip_pct"] == 2.5
+        assert sh["last_logged_at"] == "2026-07-10T13:50:00+00:00"

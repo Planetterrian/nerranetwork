@@ -413,7 +413,30 @@ nerranetwork/
   (weekdays 13:50 UTC, yfinance only, no secrets); the read-only/no
   order-placement contract still pinned. `scripts/mit_shadow_report.py`
   = sim-vs-shadow slippage table. Scoreboard/lessons-block additions
-  change prompt context → A/B-listen per landmine #17.
+  change prompt context → A/B-listen per landmine #17. Same-PR second
+  batch: shadow EXITS (paired idempotent `would_sell` on the sim's exit
+  calendar → round-trip shadow P&L + sim-vs-shadow gap in the report),
+  regime block (rolling last-10 alpha + drawdown → cold streak makes
+  no-trade the default / hot streak holds the bar), FAVOR/AVOID now
+  requires n≥5 samples (was 2-3 — coin flips steered picks), performance
+  page gained the matched-window headline tile + "not capital-matched"
+  relabel + major-index sweep.
+  **July 4 2026 fidelity batch** (drift guards:
+  `tests/test_mit_benchmark_integrity.py::{TestStopLossExtraction,TestStopBreach,TestAlphaTStat}`,
+  `tests/test_dashboard_mit_section.py::TestExecutionHealth`): stop-loss
+  ENFORCEMENT — the digest narrates a stop on every pick but the sim
+  never enforced it; the stop is now parsed at pick time (never guessed),
+  carried on the trade + trade signal (future bracket orders), and
+  enforced at evaluation against intraday lows (bars carry a 4th
+  low element; gap-aware fills; entry-bar breaches never claimed; the
+  benchmark window follows the shortened hold; the review narrates
+  "stopped out" as stop discipline working). Per-trade alpha **t-stat**
+  (`alpha_t_stat` / `alpha_statistically_significant`) in the summary +
+  an on-air honesty rule in the scoreboard block (hedge "not yet
+  statistically significant" until t≥2). Dashboard `execution_health`
+  block (trade-signal freshness/staleness + shadow-ledger vitals).
+  Stop enforcement changes sim outcomes going forward; the honesty line
+  + stop narration are new prompt context → A/B-listen per landmine #17.
 
 **Tesla Shorts Time Recursive Memory System (May 2026+)**  
 TST received a full recursive improvement architecture (analogous to MIT):

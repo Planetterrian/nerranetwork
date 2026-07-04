@@ -1540,6 +1540,59 @@ def aggregate_mit_performance(root: Path) -> Dict[str, Any]:
         "monthly": raw_alpha.get("monthly") or {},
     }
 
+    # Execution-layer health (July 2026 live-trading prep): signal
+    # freshness + shadow-ledger vitals so the operator sees at a glance
+    # whether the bridge artifacts are flowing. All best-effort.
+    execution_health: Dict[str, Any] = {
+        "signal": None,
+        "shadow": None,
+    }
+    signal_path = mit_dir / "trade_signal_latest.json"
+    if signal_path.exists():
+        try:
+            sig = json.loads(signal_path.read_text(encoding="utf-8"))
+            gen = str(sig.get("generated_at") or "")[:10]
+            age_days = None
+            try:
+                age_days = (_dt.date.today()
+                            - _dt.date.fromisoformat(gen)).days
+            except ValueError:
+                pass
+            execution_health["signal"] = {
+                "generated_at": sig.get("generated_at"),
+                "age_days": age_days,
+                "action": sig.get("action"),
+                "symbol": (sig.get("trade") or {}).get("snaptrade_symbol"),
+                "stale": bool(age_days is not None and age_days > 1),
+            }
+        except (json.JSONDecodeError, OSError):
+            pass
+    shadow_path = mit_dir / "shadow_ledger.json"
+    if shadow_path.exists():
+        try:
+            ledger = json.loads(shadow_path.read_text(encoding="utf-8"))
+            orders = ledger.get("orders") or []
+            decisions: Dict[str, int] = {}
+            for o in orders:
+                d = str(o.get("decision") or "?")
+                decisions[d] = decisions.get(d, 0) + 1
+            round_trips = [
+                o.get("shadow_return_pct") for o in orders
+                if o.get("decision") == "would_sell"
+                and isinstance(o.get("shadow_return_pct"), (int, float))
+            ]
+            execution_health["shadow"] = {
+                "orders": len(orders),
+                "decisions": decisions,
+                "round_trips": len(round_trips),
+                "avg_round_trip_pct": (
+                    round(sum(round_trips) / len(round_trips), 3)
+                    if round_trips else None),
+                "last_logged_at": orders[-1].get("logged_at") if orders else None,
+            }
+        except (json.JSONDecodeError, OSError):
+            pass
+
     return {
         "available": True,
         "summary": tracker.get("summary") or {},
@@ -1551,6 +1604,7 @@ def aggregate_mit_performance(root: Path) -> Dict[str, Any]:
         "lessons_learned": lessons_active,
         "taught_lessons_hot": taught_hot,
         "sector_concentration_warning": concentration_warning,
+        "execution_health": execution_health,
         "last_updated": (tracker.get("metadata") or {}).get("last_updated"),
     }
 
