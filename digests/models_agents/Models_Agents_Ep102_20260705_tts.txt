@@ -1,0 +1,111 @@
+Good to have you on Models and Agents, episode one hundred two, for July fifth, twenty twenty-six. Your daily A I briefing. Your daily briefing on the A I models and agents that are changing everything. And no, not THOSE kinds of models and agents. Let's get into it.
+
+Coding agents just saved a production library release by catching five release-blocking bugs that the author missed, at an estimated one hundred forty-nine dollars cost.
+
+Simon Willison ran Claude Fable through a final pre-release review of sqlite-utils 4.0rc1.
+
+The agent produced a report that flagged five release blockers.
+
+One example was a delete_where method that never committed and left the connection in an open transaction state.
+
+Over thirty-seven prompts and thirty-four commits the agent rewrote transaction handling so every write method now commits automatically unless an explicit atomic or begin context is active.
+
+It also added db begin, commit, and rollback helpers plus updated documentation for Python 3.12 autocommit connections.
+
+Two further edge cases in db query surfaced during a follow-up G P T 5.5 review and were fixed.
+
+The full effort cost an estimated one hundred forty-nine dollars and twenty-five cents on the Claude Max plan.
+
+This week's model updates start with a new adapter for the Qwen family.
+
+A ten megabyte Laura on Qwenthree point five to fourB reads internal activations to decide whether to answer directly, call web search, or retrieve from local documents.
+
+It refuses to fabricate when verification fails and improved error detection by d prime zero point four six.
+
+Private queries sent to public search dropped from twenty-two percent to ten percent.
+
+The adapter runs locally via MLX on Apple Silicon or GGUF in llama.cpp or Ollama and ships under Apache two point zero with full weights and training code.
+
+Next, Junyang Lin, the former technical lead on Qwen, published an essay on hybrid thinking limits.
+
+He described where Qwen3 hybrid thinking modes and dynamic budgets fell short in practice.
+
+Lin now favors agentic reinforcement learning infrastructure over further reasoning-mode tuning.
+
+The piece highlights reward-hacking risks that appear once agent trajectories lengthen and the added difficulty of building stable agent training loops versus single-turn reasoning.
+
+A separate guide on MarkTechPost surveys open-source models that convert enterprise PDFs, scans, and slide decks into schema-driven JSON on local hardware. The guide separates the schema-driven extraction problem from the layout-and-table problem. It positions these tools as the default path for feeding document data into agents without sending content to external A P I's.
+
+Teams still manually parsing PDFs should evaluate the listed models for their specific schema needs this week. The survey covers current open-source models available for local hardware inference. Source: MarkTechPost.
+
+Three agent and tool developments landed this week.
+
+LlamaIndex released a public legal-kb reference app that gives agents filesystem-style access to a document store.
+
+The tools include retrieve for hybrid search, find, read, and grep with automatic per-file versioning and visual citations.
+
+The stack uses TanStack Start, A I S D K 6 ToolLoopAgent, Prisma, and WorkOS.
+
+Anthropic released Claude Science Beta on June thirtieth, twenty twenty-six.
+
+It runs on existing Claude models with a coordinating agent that delegates to domain specialists and a reviewer agent that corrects citations and numbers.
+
+Every figure ships with exact code, environment, and full message history.
+
+Compute is managed across local machines, HPC over SSH, and Modal with connections to more than sixty databases and Nvidia BioNeMo.
+
+Nvidia introduced the HORIZON agent framework. HORIZON hosts each RTL problem as a versioned Git repository and evolves worktrees autonomously. It reached one hundred percent completion across the benchmark suite without manual intervention between iterations. The hands-free design removes manual intervention between iterations.
+
+Hardware teams evaluating agent-driven RTL flows should examine the repository structure for integration patterns. Source: MarkTechPost.
+
+In the practical and community section, tensey offers a visual editor that validates tensor shapes, counts parameters, and estimates FLOPs and VRAM while designing networks.
+
+It supports sixty-three operations with proper shape inference and exports runnable PyTorch code under the MIT license.
+
+A new semantic-compression proposal treats context compression as progressive noise so models first read a coarse outline then progressively finer slices. Early tests with Qwentwo point five to sevenB show the pipeline is viable but not yet reliable end-to-end. The author seeks collaborators for position-aware fine-tuning. The approach preserves non-local structure that retrieval or simple compaction would drop.
+
+It was presented on r/MachineLearning. Source: reddit dot com.
+
+USAF enables fine-tuning of only sparse expert weights and the router of mixture-of-experts models. Users can fine-tune Qwenthree to thirtyB-A3B on a twelve gigabyte AMD RX 6750 XT that can already run inference. The method is released under Apache two point zero with full code and weights. MoE practitioners on consumer G P U's should test whether the sparse update path matches their accuracy targets.
+
+It was shared on r/MachineLearning. Source: reddit dot com.
+
+OK, let's pop the hood on tool schema adherence in frontier models.
+
+Newer models are not automatically better at tool use because schema adherence is a separate capability that can regress even as reasoning improves.
+
+The core issue appears when models trained heavily on one vendor's edit-tool schema begin emitting extra invented keys inside nested arrays.
+
+The harness rejects the call even though the intended edit is correct.
+
+This adds a retry loop that costs both latency and tokens.
+
+The failure rate rises with the strongest models in the family rather than falling.
+
+Reinforcement learning on the vendor's own harness improves performance inside that harness but reduces robustness on third-party schemas.
+
+Teams therefore face a concrete choice between adopting the vendor's native tool format and accepting lock-in or maintaining multiple parallel tool definitions and routing calls by model family.
+
+The regression often surfaces only after production agents have already been upgraded to the newest checkpoint.
+
+If you haven't tried the Competence Gate Laura on Qwenthree point five to fourB yet, this week is a good time to test it on any workflow that must refuse unverifiable answers.
+
+Clone the LlamaIndex legal-kb repo and wire its retrieve, find, read, and grep tools into a small compliance agent to see hybrid retrieval in action.
+
+Test tensey on your next network design to catch shape mismatches before launching training jobs.
+
+Request access to Claude Science Beta if your work involves genomics or cheminformatics pipelines that need full provenance for every figure.
+
+July seventh marks the end of subsidized Claude Fable access for Max subscribers.
+
+More teams are expected to publish internal confidence adapters after the Qwenthree point five to fourB release.
+
+Nvidia's HORIZON results will likely trigger similar autonomous worktree agents for other hardware-description languages.
+
+Tomorrow, keep an eye on the first public reports from teams testing the Competence Gate approach on production document workflows.
+
+That wraps up today's A I briefing. Share this with a developer or builder who wants to stay current. Subscribe wherever you listen. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+And before you go: this show is part of the Nerra Network — a family of daily podcasts on tech, science, and markets, each one a short, sharp briefing you can finish on the commute. If today earned its place in your feed, here's your next listen — Unintended Consequences, true stories of good intentions that backfired. Find every show, free, at nerranetwork dot com.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
