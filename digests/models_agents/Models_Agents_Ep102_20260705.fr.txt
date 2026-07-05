@@ -1,0 +1,111 @@
+Ravi de vous accueillir sur Models and Agents, épisode cent deux, pour le cinq juillet deux mille vingt-six. Votre briefing quotidien sur l’IA. Votre point quotidien sur les modèles et agents d’IA qui changent tout. Et non, pas ces modèles et agents-là. C’est parti.
+
+Les agents de codage viennent de sauver une mise en production d’une bibliothèque en détectant cinq bogues bloquants que l’auteur avait manqués, pour un coût estimé à cent quarante-neuf dollars.
+
+Simon Willison a fait passer Claude Fable en revue finale avant la sortie de sqlite-utils 4.0rc1.
+
+L’agent a produit un rapport qui a signalé cinq problèmes bloquants.
+
+Un exemple était une méthode delete_where qui ne validait jamais la transaction et laissait la connexion dans un état de transaction ouverte.
+
+Au terme de trente-sept invites et trente-quatre validations, l’agent a réécrit la gestion des transactions afin que chaque méthode d’écriture valide automatiquement, sauf si un contexte atomic ou begin explicite est actif.
+
+Il a également ajouté les assistants db begin, commit et rollback, ainsi que la documentation mise à jour pour les connexions autocommit de Python 3.12.
+
+Deux autres cas limites dans db query sont apparus lors d’une revue complémentaire avec G P T 5.5 et ont été corrigés.
+
+L’ensemble de l’effort a coûté environ cent quarante-neuf dollars et vingt-cinq cents sur l’offre Claude Max.
+
+Les mises à jour des modèles de cette semaine commencent par un nouvel adaptateur pour la famille Qwen.
+
+Un adaptateur LoRA de dix mégaoctets sur Qwen trois point cinq à quatre milliards lit les activations internes pour décider s’il faut répondre directement, appeler une recherche web ou récupérer des documents locaux.
+
+Il refuse de fabriquer des réponses lorsque la vérification échoue et a amélioré la détection des erreurs de d prime zéro point quatre six.
+
+Les requêtes privées envoyées à la recherche publique sont passées de vingt-deux pour cent à dix pour cent.
+
+L’adaptateur fonctionne en local via MLX sur Apple Silicon ou en GGUF dans llama.cpp ou Ollama et est distribué sous licence Apache deux point zéro avec les poids complets et le code d’entraînement.
+
+Ensuite, Junyang Lin, ancien responsable technique de Qwen, a publié un essai sur les limites de la pensée hybride.
+
+Il a décrit les points où les modes de pensée hybride et les budgets dynamiques de Qwen3 n’ont pas tenu en pratique.
+
+Lin privilégie désormais l’infrastructure d’apprentissage par renforcement agentique plutôt que de nouveaux réglages du mode raisonnement.
+
+Le texte met en lumière les risques de piratage de récompense qui apparaissent lorsque les trajectoires des agents s’allongent, ainsi que la difficulté accrue de construire des boucles d’entraînement agentiques stables par rapport au raisonnement à un seul tour.
+
+Un guide distinct sur MarkTechPost passe en revue les modèles open source qui convertissent les PDF d’entreprise, les scans et les présentations en JSON structuré selon un schéma, sur du matériel local. Le guide sépare le problème de l’extraction pilotée par schéma de celui de la mise en page et des tableaux. Il positionne ces outils comme la voie par défaut pour alimenter les agents en données de documents sans envoyer le contenu vers des API externes.
+
+Les équipes qui analysent encore manuellement les PDF devraient évaluer les modèles listés pour leurs besoins de schéma spécifiques cette semaine. L’étude couvre les modèles open source actuels disponibles pour l’inférence sur matériel local. Source : MarkTechPost.
+
+Trois développements d’agents et d’outils ont été publiés cette semaine.
+
+LlamaIndex a sorti une application de référence publique legal-kb qui donne aux agents un accès de type système de fichiers à un magasin de documents.
+
+Les outils incluent retrieve pour la recherche hybride, find, read et grep avec versioning automatique par fichier et citations visuelles.
+
+La pile utilise TanStack Start, A I S D K 6 ToolLoopAgent, Prisma et WorkOS.
+
+Anthropic a lancé Claude Science Beta le trente juin deux mille vingt-six.
+
+Il fonctionne sur les modèles Claude existants avec un agent coordinateur qui délègue à des spécialistes de domaine et un agent réviseur qui corrige les citations et les chiffres.
+
+Chaque figure est fournie avec le code exact, l’environnement et l’historique complet des messages.
+
+Le calcul est géré sur des machines locales, du HPC via SSH et Modal, avec des connexions à plus de soixante bases de données et Nvidia BioNeMo.
+
+Nvidia a présenté le framework d’agents HORIZON. HORIZON héberge chaque problème RTL sous forme de dépôt Git versionné et fait évoluer les worktrees de façon autonome. Il a atteint cent pour cent d’achèvement sur l’ensemble des tests de référence sans intervention manuelle entre les itérations. Cette conception mains libres supprime toute intervention manuelle entre les itérations.
+
+Les équipes matérielles qui évaluent des flux RTL pilotés par agents devraient examiner la structure du dépôt pour repérer les modèles d’intégration. Source : MarkTechPost.
+
+Dans la section pratique et communauté, tensey propose un éditeur visuel qui valide les formes de tenseurs, compte les paramètres et estime les FLOPs et la VRAM lors de la conception de réseaux.
+
+Il prend en charge soixante-trois opérations avec inférence de forme correcte et exporte du code PyTorch exécutable sous licence MIT.
+
+Une nouvelle proposition de compression sémantique traite la compression de contexte comme un bruit progressif, de sorte que les modèles lisent d’abord un plan grossier puis des tranches de plus en plus fines. Les premiers tests avec Qwen deux point cinq à sept milliards montrent que le pipeline est viable mais pas encore fiable de bout en bout. L’auteur cherche des collaborateurs pour un fine-tuning tenant compte de la position. L’approche préserve la structure non locale que la récupération ou une simple compaction ferait perdre.
+
+La proposition a été présentée sur r/MachineLearning. Source : reddit point com.
+
+USAF permet le fine-tuning uniquement des poids experts épars et du routeur des modèles mixture-of-experts. Les utilisateurs peuvent affiner Qwen trois à trente milliards A trois milliards sur une AMD RX 6750 XT de douze gigaoctets qui peut déjà exécuter l’inférence. La méthode est publiée sous licence Apache deux point zéro avec le code complet et les poids. Les praticiens MoE sur GPU grand public devraient tester si le chemin de mise à jour éparse correspond à leurs objectifs de précision.
+
+Le partage a eu lieu sur r/MachineLearning. Source : reddit point com.
+
+Bien, entrons dans les détails de l’adhésion aux schémas d’outils chez les modèles de pointe.
+
+Les modèles plus récents ne sont pas automatiquement meilleurs en utilisation d’outils, car l’adhésion aux schémas est une capacité distincte qui peut régresser même lorsque le raisonnement s’améliore.
+
+Le problème principal apparaît lorsque des modèles entraînés intensivement sur le schéma d’outil d’édition d’un seul fournisseur commencent à émettre des clés inventées supplémentaires dans des tableaux imbriqués.
+
+Le harnais rejette l’appel même si l’édition visée est correcte.
+
+Cela ajoute une boucle de nouvelle tentative qui coûte à la fois de la latence et des tokens.
+
+Le taux d’échec augmente avec les modèles les plus puissants de la famille plutôt que de diminuer.
+
+L’apprentissage par renforcement sur le propre harnais du fournisseur améliore les performances dans ce harnais, mais réduit la robustesse sur les schémas tiers.
+
+Les équipes sont donc confrontées à un choix concret : adopter le format d’outil natif du fournisseur et accepter le verrouillage, ou maintenir plusieurs définitions d’outils en parallèle et router les appels par famille de modèles.
+
+La régression n’apparaît souvent qu’après que les agents de production ont déjà été mis à niveau vers le dernier point de contrôle.
+
+Si vous n’avez pas encore essayé l’adaptateur LoRA Competence Gate sur Qwen trois point cinq à quatre milliards, cette semaine est un bon moment pour le tester sur tout flux de travail qui doit refuser les réponses non vérifiables.
+
+Clonez le dépôt legal-kb de LlamaIndex et connectez ses outils retrieve, find, read et grep à un petit agent de conformité pour voir la récupération hybride en action.
+
+Testez tensey sur votre prochaine conception de réseau pour détecter les incohérences de forme avant de lancer les tâches d’entraînement.
+
+Demandez l’accès à Claude Science Beta si votre travail porte sur des pipelines de génomique ou de chémoinformatique qui exigent une traçabilité complète pour chaque figure.
+
+Le sept juillet marque la fin de l’accès subventionné à Claude Fable pour les abonnés Max.
+
+D’autres équipes devraient publier des adaptateurs de confiance internes après la sortie de Qwen trois point cinq à quatre milliards.
+
+Les résultats de HORIZON chez Nvidia devraient probablement déclencher des agents autonomes de worktree similaires pour d’autres langages de description matérielle.
+
+Demain, surveillez les premiers rapports publics des équipes qui testent l’approche Competence Gate sur des flux de travail documentaires en production.
+
+Voilà qui conclut le briefing IA d’aujourd’hui. Partagez cet épisode avec un développeur ou un créateur qui veut rester à jour. Abonnez-vous là où vous écoutez. À demain. Et si vous préférez regarder plutôt qu’écouter, retrouvez-nous sur YouTube à Nerra Network, le lien est dans les notes de l’émission.
+
+Et avant de partir : cette émission fait partie du Nerra Network, une famille de podcasts quotidiens sur la tech, la science et les marchés, chacun étant un briefing court et percutant que vous pouvez finir pendant vos trajets. Si l’épisode d’aujourd’hui a trouvé sa place dans votre flux, voici votre prochaine écoute : Unintended Consequences, des histoires vraies de bonnes intentions qui ont mal tourné. Retrouvez toutes les émissions, gratuitement, sur nerranetwork point com.
+
+Cet épisode a utilisé une synthèse vocale IA de ma voix ; la sélection éditoriale et l’analyse sont les miennes.
