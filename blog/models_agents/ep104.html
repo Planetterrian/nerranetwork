@@ -108,11 +108,22 @@
     },
     "image": "https://nerranetwork.com/assets/covers/models-agents.jpg",
     "transcript": "https://nerranetwork.com/blog/models_agents/ep104.html#transcript",
-    "associatedMedia": {
-      "@type": "MediaObject",
-      "contentUrl": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep104_20260707.mp3",
-      "inLanguage": "en"
-    }
+    "associatedMedia": [
+      {
+        "@type": "MediaObject",
+        "contentUrl": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep104_20260707.mp3",
+        "inLanguage": "en"
+      },
+      {
+        "@type": "MediaObject",
+        "contentUrl": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep104_20260707.fr.mp3",
+        "inLanguage": "fr"
+      }
+    ],
+    "availableLanguage": [
+      "en",
+      "fr"
+    ]
   }
 ]
     </script>
@@ -1265,6 +1276,27 @@
     </header>
 
     
+    <section class="nn-i18n" aria-label="Listen in another language">
+        <div class="nn-i18n-inner">
+            <div class="nn-i18n-row">
+                <span class="nn-i18n-label">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    Listen in
+                </span>
+                <button type="button" class="nn-i18n-pill" data-lang="en" aria-pressed="true">English</button>
+                
+                <button type="button" class="nn-i18n-pill" data-lang="fr" aria-pressed="false">Français</button>
+                
+            </div>
+            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://audio.nerranetwork.com/models_agents/Models_Agents_Ep104_20260707.mp3"></audio>
+        </div>
+        <script type="application/json" id="nn-i18n-tracks">
+{
+  "en": {"url": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep104_20260707.mp3", "title": "Real-time voice agents just got cheaper and more capable—OpenAI split its Realtime API into speciali…", "desc": "Real-time voice agents just got cheaper and more capable—OpenAI split its Realtime API into specialized models with lower latency."},
+  "fr": {"url": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep104_20260707.fr.mp3", "title": "Ép 104 : Les agents vocaux en temps réel deviennent moins chers et plus performants — OpenAI scinde sa Realtime API en modèles spécialisés à latence réduite", "desc": "Les agents vocaux en temps réel deviennent moins chers et plus performants — OpenAI scinde sa Realtime API en modèles spécialisés à latence réduite"}
+}
+        </script>
+    </section>
     
 
     <!-- Article with TOC sidebar -->
@@ -1338,6 +1370,72 @@
 <li>Watch for vLLM updates addressing the NVFP4 agent-loop instability reported this week.</li>
 <li>Anthropic’s full paper and expert commentary on J-space will likely spur similar interpretability experiments on other families.</li>
 </ul>
+            </div>
+            
+            <div class="blog-body-lang" data-lang="fr" hidden>
+                <p class="blog-translated-note">Français — AI-translated from the English episode.</p>
+                <p>Salut à tous, bienvenue dans Models and Agents, épisode cent quatre, le sept juillet deux mille vingt-six. Voyons ce qui a été livré. Le monde de l’intelligence artificielle ne dort jamais. Voici ce qu’il faut savoir aujourd’hui.</p>
+<p>Les agents vocaux en temps réel viennent de devenir moins chers et plus performants. OpenAI a scindé son API temps réel en modèles spécialisés offrant une latence réduite.</p>
+<p>OpenAI a publié aujourd’hui deux nouveaux modèles destinés aux agents vocaux, tandis que Tencent a lancé un grand modèle mélange d’experts ouvert et que Nvidia a ajouté la prise en charge audio à l’une de ses variantes Nemotron.</p>
+<p>Anthropic a également partagé de nouveaux outils d’interprétabilité qui fonctionnent sur des modèles à poids ouverts.</p>
+<p>Côté agents, un nouveau harnais de codage local est apparu et des expériences communautaires ont mis en lumière à la fois des gains rapides en entraînement et des pièges liés à la quantification.</p>
+<p>Le sujet principal du jour porte sur les mises à jour d’OpenAI concernant sa pile vocale en temps réel.</p>
+<p>OpenAI a ajouté GPT Realtime-2.1 et GPT Realtime-2.1-mini à son API pour des agents vocaux à faible latence.</p>
+<p>La variante mini fonctionne comme un modèle de raisonnement et conserve le même tarif que l’ancien GPT Realtime-mini.</p>
+<p>Les deux modèles utilisent un cache amélioré qui réduit la latence p95 d’au moins vingt-cinq pour cent.</p>
+<p>Ces mises à jour visent les cas d’usage vocaux agentiques et incluent la prise en charge des connexions WebRTC.</p>
+<p>Les développeurs peuvent désormais exécuter des boucles vocales plus réactives sans passer à des paliers tarifaires supérieurs.</p>
+<p>Cette sortie prolonge le travail en cours sur l’appel fiable d’outils par les agents, dont nous avons parlé la semaine dernière.</p>
+<p>Surveillez l’impact de ces modèles scindés sur la stabilité de l’appel d’outils dans les agents vocaux en production.</p>
+<p>Tencent a publié Hy3, un modèle mélange d’experts ouvert de deux cent quatre-vingt-quinze milliards de paramètres.</p>
+<p>Le modèle active vingt et un milliards de paramètres par token et dispose d’une fenêtre de contexte de deux cent cinquante-six mille tokens.</p>
+<p>Il est destiné aux tâches de raisonnement et agentiques, avec un score de soixante-dix-huit virgule zéro sur SWE-Bench Verified et des taux d’hallucination plus faibles.</p>
+<p>Hy3 est publié sous Apache deux point zéro et reste gratuit à essayer sur OpenRouter jusqu’au vingt et un juillet.</p>
+<p>Cela fait progresser la conversation sur les performances des modèles à poids ouverts par rapport aux mises à jour évoquées hier, en montrant qu’un autre laboratoire chinois comble l’écart sur les charges de travail agentiques à long contexte.</p>
+<p>Nvidia a publié Nemotron-Labs-Audex-30B-A3B, un modèle unifié audio-texte construit sur la colonne vertébrale Nemotron-Cascade-2 de trente milliards de paramètres en mélange d’experts.</p>
+<p>Le modèle utilise trois milliards de paramètres actifs, ajoute des tokens audio discrets et un encodeur audio, tout en préservant les performances de raisonnement textuel et agentique.</p>
+<p>Il prend en charge les modes réflexion et instruction ainsi qu’une fenêtre de contexte d’un million de tokens.</p>
+<p>Les équipes travaillant sur la parole à la parole ou sur des agents enrichis en audio peuvent récupérer le point de contrôle sur Hugging Face pour une comparaison directe avec la version texte seul.</p>
+<p>Anthropic s’est associé à Neuronpedia pour publier une démonstration interactive de ses méthodes d’interprétabilité sur des modèles à poids ouverts.</p>
+<p>La démo est disponible sur neuronpedia point org slash jlens et accompagne un article sur la façon dont Claude développe des mécanismes d’accès conscient.</p>
+<p>Les chercheurs peuvent désormais inspecter des circuits similaires dans les modèles qu’ils hébergent eux-mêmes.</p>
+<p>Koder est un nouveau harnais de codage et d’utilisation d’ordinateur basé sur Go, publié après mille trois cents commits.</p>
+<p>Il cible les installations Linux locales avec llama point cpp et des modèles comme Qwen trois point six vingt-sept B Q huit.</p>
+<p>L’outil prend en charge les compétences, M C P, les modèles visuels, la planification par jalons, l’orchestration multi-chat et un explorateur de fichiers intégré.</p>
+<p>Un seul binaire fonctionne hors ligne ou avec n’importe quel point de terminaison compatible OpenAI.</p>
+<p>Les utilisateurs signalent de bons résultats en rétro-ingénierie et dans les boucles OpenSCAD.</p>
+<p>Cela ajoute une option concrète supplémentaire à la couche d’outils agentiques dont nous avons parlé dans l’épisode d’hier.</p>
+<p>Un modèle d’architecture Silia de cent dix-sept millions de paramètres a été entraîné depuis zéro sur un H cent en cinq heures.</p>
+<p>L’entraînement a utilisé le jeu de données synth-cent M et l’optimiseur Muon.</p>
+<p>Le modèle et le code sont disponibles sur Hugging Face et GitHub, ainsi qu’un script d’inférence qui s’exécute via uv.</p>
+<p>Le modèle reste sévèrement sous-entraîné avec seulement quatre-vingt-deux millions de tokens, donc d’autres expériences de mise à l’échelle sont attendues de la part de la communauté.</p>
+<p>Les utilisateurs rapportent que Qwen trois point six vingt-sept B en quantification NVFP quatre et FP huit sur du matériel Blackwell avec vLLM zéro point vingt-quatre point zéro présente des arrêts en cours de tâche et des boucles d’échec répétitives en mode réflexion.</p>
+<p>La version BF seize fonctionne de manière fiable et les problèmes semblent moins fréquents en FP huit qu’en NVFP quatre.</p>
+<p>Les équipes qui exécutent des charges de travail agentiques devraient comparer les points de contrôle quantifiés avec la version BF seize avant déploiement.</p>
+<p>Essayez GPT Realtime-2.1-mini via l’API OpenAI pour vos prototypes d’agents vocaux.</p>
+<p>La latence réduite et le nouveau tarif rendent les sessions plus longues envisageables.</p>
+<p>Récupérez Hy3 de Tencent sur OpenRouter avant le vingt et un juillet et testez-le sur des tâches de type SWE-Bench pour comparer les vingt et un milliards de paramètres actifs avec Qwen trois point six vingt-sept B.</p>
+<p>Testez Koder sur une machine Linux locale avec le modèle de codage de votre choix.</p>
+<p>Son planificateur de jalons et son intégration d’explorateur de fichiers méritent d’être évalués pour les boucles agentiques hors ligne.</p>
+<p>Exécutez la démo Neuronpedia J-space sur un modèle à poids ouvert que vous hébergez déjà afin d’inspecter les schémas d’attention sans avoir besoin de l’infrastructure d’Anthropic.</p>
+<p>D’autres points de contrôle quantifiés pour Qwen trois point six vingt-sept B sont attendus avec la croissance de l’adoption de Blackwell.</p>
+<p>D’autres sorties de modèles mélange d’experts ouverts en provenance de laboratoires chinois sont probables après le passage d’Hy3 sous Apache deux point zéro.</p>
+<p>Surveillez les mises à jour de vLLM qui traiteront l’instabilité des boucles agentiques en NVFP quatre signalée cette semaine.</p>
+<p>Bon, plongeons sous le capot du routage des mélanges d’experts.</p>
+<p>Tout le monde parle du mélange d’experts comme d’un simple tour de passe-passe consistant à activer moins de paramètres pour gagner de la vitesse gratuite.</p>
+<p>En pratique, le routeur doit décider quels experts réveiller pour chaque token, et cette décision se trouve au cœur de l’histoire d’efficacité.</p>
+<p>Un réseau routeur léger attribue un score à chaque expert et conserve généralement les k meilleurs.</p>
+<p>Le coût de ce scoring croît linéairement avec le nombre total d’experts, donc les laboratoires ajoutent des pertes auxiliaires d’équilibrage de charge pendant l’entraînement pour empêcher le routeur de toujours choisir les mêmes quelques experts.</p>
+<p>Quand le routeur est bien réglé, l’inférence ne charge en mémoire que les experts actifs, ce qui explique pourquoi un mélange d’experts de deux cent quatre-vingt-quinze milliards peut tourner à peu près à la vitesse d’un modèle dense de trente milliards.</p>
+<p>Le coût caché apparaît au moment de l’entraînement : chaque token calcule encore les logits du routeur sur tous les experts.</p>
+<p>Un mauvais routage peut laisser certains experts sous-entraînés, créant des chutes de qualité sur des données hors domaine.</p>
+<p>La règle empirique pratique consiste à surveiller les histogrammes d’utilisation des experts.</p>
+<p>Si un expert se situe en dessous d’un à deux pour cent d’activation, vous gaspillez des paramètres et vous devez soit augmenter le coefficient d’équilibrage de charge, soit réduire le nombre total d’experts.</p>
+<p>Les équipes qui choisissent entre dense et mélange d’experts doivent donc mesurer à la fois les tokens par seconde en inférence et la variance d’activation des experts pendant leur charge de travail cible, plutôt que de se fier aux nombres de paramètres mis en avant.</p>
+<p>Avant de partir, gardez un œil sur les mises à jour de vLLM qui traiteront l’instabilité en NVFP quatre et sur la prochaine série de sorties de modèles mélange d’experts ouverts attendue après Hy3.</p>
+<p>Voilà qui conclut le briefing d’intelligence artificielle d’aujourd’hui. Partagez-le avec un développeur ou un constructeur qui souhaite rester à jour. Abonnez-vous là où vous écoutez. À demain. Et si vous préférez regarder plutôt qu’écouter, retrouvez-nous sur YouTube à Nerra Network, le lien est dans les notes de l’émission.</p>
+<p>Et avant de partir : cette émission fait partie du Nerra Network, une famille de podcasts quotidiens sur la tech, la science et les marchés, chacun étant un briefing court et percutant que vous pouvez terminer pendant votre trajet. Si l’épisode d’aujourd’hui a trouvé sa place dans votre flux, voici votre prochaine écoute : Tesla Shorts Time, votre plongée quotidienne dans tout ce qui concerne Tesla. Retrouvez toutes les émissions gratuitement sur nerranetwork point com.</p>
+<p>Cet épisode a utilisé une synthèse vocale par intelligence artificielle de ma voix ; la sélection éditoriale et l’analyse sont les miennes.</p>
             </div>
             
 
