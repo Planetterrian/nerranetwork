@@ -1,0 +1,86 @@
+Hey everyone, welcome to Models and Agents Episode 104 on July 7th, 2026.
+Let's see what shipped.
+The AI world never sleeps.
+Here's what you need to know today.
+Real-time voice agents just got cheaper and more capable.
+Open AI split its real-time API into specialized models with lower latency.
+Open AI released two new models for voice agents today,
+while 10cent dropped a large, open mixture of experts model and NVIDIA added audio support
+to one of its NemoTron variants.
+And Thropic also shared new interpretability tools that run on open-weight models.
+On the agent side, a new local coding harness appeared and community experiments highlighted
+both quick training wins and quantization pitfalls.
+The top story today centers on open AI's updates to its real-time voice stack.
+Open AI added GPT real-time, 2.1 and GPT real-time, 2.1 times mini to its API for low latency voice agents.
+The mini variant functions as a reasoning model and carries the same pricing as the prior GPT real-time mini.
+Both models use improved caching that cuts P95 latency by at least 25%.
+The updates target agent voice use cases and include web RTC connection support.
+Developers can now run more responsive voice loops without moving to higher cost tiers.
+This release continues the ongoing work on reliable agent tool calling that we saw discussed last week.
+Watch for how the split models affect tool calling stability in production voice agents.
+Tencent released high-three and opened 295 billion-parameter mixture of experts model.
+The model activates 21 billion-parameters per token and carries a 256,000-token context window.
+It is aimed at reasoning and agent tasks and report 78.0 on skim bench,
+verified along with lower hallucination rates.
+High-three is released under Apache 2.0 and remains free to try on open router through July 21st.
+This moves the open-weight performance conversation forward from the updates covered yesterday
+by showing another Chinese lab closing the gap on long-context agent workloads.
+Nvidia released Nemotron Labs-Odex-30B-A3B, a unified audio text model built on the 30 billion
+parameter MoE, Nemotron Cascade 2 backbone.
+The model uses three billion active parameters, adds discrete audio tokens and an audio encoder
+and keeps text reasoning and agent performance intact.
+It supports thinking and instruct modes plus a 1 million token context window.
+Teams working on speech-to-speech or audio augmented agents can pull the checkpoint from hugging face
+for direct comparison against the text-only version.
+Anthropic partnered with Neuronpedia to release an interactive demo of its interpretability methods
+on open-weight models. The demo is available at Neuronpedia.org,
+slash JLens, and accompanies a paper on how Claude develops mechanisms for conscious access.
+Researchers can now inspect similar circuits in models they host themselves.
+Coder is a new goal-based coding and computer-use harness released after 1,300 commits.
+It targets local Linux setups with llama.cpp and models such as QN3.627bq8.
+The tool supports skills, MCP, visual models, milestone planning, multi-chat orchestration,
+and an embedded file browser. A single binary runs offline or with any open AI compatible endpoint.
+Users report strong results on reverse engineering and open-escat loops.
+This adds another concrete option to the agent tooling layer we discussed in yesterday's episode.
+A 117 million-parameter Cilia architecture model was trained from scratch on an H-100 in five hours.
+Training used the synth 100m dataset and the muon optimizer.
+The model and code are available on hugging face and github, along with an inference script that runs
+via UV. The model remains severely under-trained on only 82 million tokens, so further scaling
+experiments are expected from the community. Users report that QN3.627b in NVFP4 and FP8 quantization
+on Blackwell hardware with VLLM 0.24.0 shows mid-task halting and repetitive failure loops in thinking
+mode. The BF-16 version runs reliably, and the issues appear less frequent in FP8 than in NVFP4.
+Teams running agentic workloads should benchmark quantized checkpoints against BF-16 before deploying.
+Tried GPT real-time Ride History 2.1 Mini through the open AI API for voice agent prototypes.
+The lower latency and new pricing make longer sessions practical.
+Pull 10 cents high three from open router before July 21st, and run it on school bench style tasks
+to compare the 21 billion active parameters against QN3.627. Test coder on a local Linux machine
+with your preferred coding model. Its milestone planner and file browser integration are worth
+evaluating for offline agent loops. Run the Neuronpedia JSpace demo on an open-weight model you
+already host to inspect attention patterns without needing anthropic infrastructure.
+More quantized checkpoints for QN3.627b are expected as Blackwell adoption grows.
+Additional open MoE releases from Chinese labs are likely following high three's Apache 2.0 move.
+Watch for VLLM updates addressing the NVFP4 agent loop instability reported this week.
+Okay, let's pop the hood on mixture of experts routing. Everyone talks about MoE as a simple
+activate fewer parameters get free speed trick. In practice, the router must decide which experts
+to wake for every token, and that decision sits at the center of the efficiency story.
+A lightweight router network scores every expert and typically keeps the top K.
+The cost of that scoring grows linearly with total expert count, so labs add auxiliary load balancing
+losses during training to stop the router from always picking the same few experts. When the router is
+well tuned, inference only loads the active experts into memory, which is why a 295 billion MoE can run
+at roughly the speed of a 30 billion dense model. The hidden cost appears at training time.
+Every token still computes router logits across all experts. Poor routing can leave some experts
+under trained creating quality cliffs on out-of-domain data. The practical rule of thumb is to watch
+expert utilization histograms. If any expert sits below one to two percent activation, you are wasting
+parameters and should either increase the load balancing coefficient or reduce total experts.
+Teams choosing between dense and MoE should therefore measure both tokens per second at inference
+and the variance in expert activation during their target workload, rather than trusting headline
+parameter counts. Before we go, keep an eye on VLLM updates addressing the NVFP4 instability and
+the next round of open MoE releases expected after high three. That wraps up today's AI briefing.
+Share this with a developer or builder who wants to stay current.
+Subscribe wherever you listen, see you tomorrow, and if you'd rather watch than listen,
+find us on YouTube at NERA Network. Links in the show notes. And before you go, this show is part of
+the NERA network, a family of daily podcasts on tech, science, and markets. Each one a short,
+sharp briefing you can finish on the commute. If today earned its place in your feed, here's your
+next listen. Tesla shorts time, your daily deep dive into everything Tesla. Find every show,
+free at NERAnetwork.com. This episode used AI voice synthesis of my voice. Editorial selection and
+analysis are my own.
