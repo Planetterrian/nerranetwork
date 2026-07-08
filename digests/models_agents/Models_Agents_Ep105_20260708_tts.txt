@@ -1,0 +1,139 @@
+What's up — welcome to Models and Agents, episode one hundred five. It's July eighth, twenty twenty-six. Lots of news to walk through — let's start with what actually matters.
+
+Open A I's next frontier model arrives Thursday while a 2.7-trillion-parameter Chinese model readies for open release.
+
+Sam Altman confirmed that G P T 5.6 Sol launches this week.
+
+MiniMax plans a 2.7-trillion-parameter M3 Pro model for Q three open-sourcing focused on complex reasoning.
+
+Simon Willison's Claude Fable 5 review of sqlite-utils 4.0 surfaced four additional blockers plus an upgrade guide agents can consume directly.
+
+Builders should watch release timing and test the new upgrade tooling this week.
+
+Sam Altman announced G P T 5.6 Sol will launch Thursday.
+
+The release follows limited preview testing and targets global rollout after initial access.
+
+It continues Open A I's pattern of iterative frontier updates that trade incremental capability gains against inference cost.
+
+Developers building production agents or long-context applications should prepare integration tests once the model hits the A P I.
+
+The announcement leaves open questions about context length, pricing tiers, and whether it narrows the gap with open-weight competitors on reasoning benchmarks.
+
+Watch for the exact release notes and any new tool-calling improvements that could affect agent reliability.
+
+MiniMax is preparing a 2.7-trillion-parameter model internally codenamed M3 Pro.
+
+It will be released and open-sourced as early as Q three with claimed gains on complex reasoning and multi-step tasks.
+
+The new model dwarfs the company's current 428-billion-parameter M3 flagship.
+
+Builders tracking open-weight scaling should monitor Hugging Face for the weights once they drop.
+
+This fits the ongoing arc for open-weight models as they continue narrowing the performance gap with closed frontier systems.
+
+TokenAI released two open-source hieroglyph translation models built on Qwen 3.5.
+
+Horus Hiero 9B and the 4B Mini variant support text, image, and video input across approximately 150 languages with a five hundred twelve thousand context window.
+
+They report 79 percent on M M L U Pro, 63 percent on LiveCodeBench, and 84 percent on HumanEval while adding the first large-scale multimodal hieroglyph capability.
+
+The models are available on Hugging Face with NeuralNode framework support.
+
+Community benchmarks show Mimo v2.5 outperforming DeepSeek v4 Flash on several coding harnesses including Codex, Oh My Pi, and Hermes.
+
+Terminal Bench v2.0 scores reached 55 percent with Mimo versus under 50 percent for the compared models.
+
+Users report stronger performance on real-world complex problem solving despite similar aggregate benchmark numbers.
+
+Simon Willison reports Claude Fable 5 demonstrated strong taste during sqlite-utils 4.0 code review, catching A P I design issues the author had missed.
+
+The model was given a final release prompt and identified four additional blockers.
+
+This continues the pattern of frontier models serving as high-signal code reviewers for open-source maintainers.
+
+A new study tested four open models in an iterated Split or Steal game against a fixed G P T 4.1-mini virtual human.
+
+The models were Ministral 3 3B, phi4 14B, Gemma3 12B, and Gemma4 e4B.
+
+Prosocial and Principled personas produced the most consistent cooperation while Analytical personas were likelier to exploit.
+
+The work provides a baseline for future embodied V R studies of trust and strategic behavior.
+
+Researchers trained search-routing policies on Gemma E2B and Qwenthree point five to fourB using counterfactual supervision that compares no-search versus forced-search outcomes.
+
+Macro-F1 on oracle-eligible examples rose from 0.7082 to 0.8235 for Gemma and from 0.7053 to 0.8365 for Qwen.
+
+The policies reduce model-specific failures such as unnecessary search calls or missed retrieval.
+
+A workload-aware study compared KIVI, TurboQuant, SnapKV, and CaM on Llama-three point one to eightB-Instruct and Mistral-7B-Instruct-v0.3 across LongBench tasks.
+
+Compression ratio alone poorly predicted end-to-end performance.
+
+KIVI4 offered the most stable quality while SnapKV delivered the strongest long-context throughput.
+
+The results argue for workload-aware selection rather than one-size-fits-all compression.
+
+Removing the peer speaker from conformity prompts still caused harmful revision in 66.5 percent of initially correct answers across six open-weight L L M's, versus 10.3 percent for a plain re-ask.
+
+The finding establishes a speaker-free floor that existing benchmarks must measure before attributing changes to social influence.
+
+A detailed upgrade guide for the slightly backwards-incompatible sqlite-utils 4.0 release is now available.
+
+The guide is designed to be fed directly to coding agents so they can apply the changes automatically.
+
+Maintainers can also read it manually at sqlite-utils dot datasette dot io.
+
+Claude Fable 5 identified four additional sqlite-utils 4.0 release blockers during a final review pass.
+
+The prompt and findings are documented on simonwillison dot net.
+
+A new 200-document Bangla government form comprehension benchmark tests MLLMs on layout analysis and key information extraction across 26 fine-grained entity types.
+
+Zero-shot and chain-of-thought evaluations of ChatGPT, Gemini, Claude, Qwen, and Kimi series reveal current limitations in localizing granular entities.
+
+The dataset is released on Hugging Face.
+
+A three-stage retrieval-rerank-reason pipeline built from 4B open-weight models matches frontier KOL search accuracy at roughly 35 times lower token cost.
+
+The system reaches 94.1 percent Pat 5 on an 11-query Thai marketing benchmark while serving a 50-KOL query in approximately 20 seconds on one A100.
+
+OK, let's pop the hood on span-level uncertainty quantification.
+
+Everyone talks about uncertainty estimation as if token-level or sequence-level scores are sufficient.
+
+In practice, both granularities create real problems for error localization and self-refinement.
+
+Token scores lack semantic coherence while sequence scores cannot point to the specific span that went wrong.
+
+SPANUQ solves this by distilling multi-sample verification signals into a single forward pass that detects coherent spans and models their uncertainty with a mixture of Beta distributions.
+
+The DETR-style decoder achieves 0.910 F1 on span detection, 39 percent above the best heuristic baseline, while running 10 to 20 times faster than sampling methods.
+
+The approach generalizes across five different L L M backbones.
+
+When you need precise error localization for agent self-correction rather than just a scalar confidence number, span-level methods are worth the added decoder complexity.
+
+Otherwise the simpler sequence score still suffices for many filtering use cases.
+
+Feed Simon Willison's sqlite-utils 4.0 upgrade guide into your coding agent and let it apply the changes on a test branch.
+
+Benchmark Mimo v2.5 against DeepSeek v4 Flash on your own complex coding tasks using the Terminal Bench harness.
+
+Test the new Horus Hiero 9B or 4B models on any multimodal hieroglyph or ancient script translation work.
+
+Run the InfluMatch cascade locally if you need low-cost KOL or expert matching for Thai-language campaigns.
+
+G P T 5.6 Sol is expected Thursday with global rollout after preview.
+
+MiniMax M3 Pro 2.7T model is slated for Q three open-source release.
+
+Continued community evaluation of Mimo v2.5 on additional real-world harnesses is underway.
+
+Tomorrow, keep an eye on the exact G P T 5.6 Sol release notes and any announced tool-calling improvements.
+
+That wraps up today's A I briefing. Share this with a developer or builder who wants to stay current. Subscribe wherever you listen. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+And before you go: this show is part of the Nerra Network — a family of daily podcasts on tech, science, and markets, each one a short, sharp briefing you can finish on the commute. If today earned its place in your feed, here's your next listen — Omni View, a balanced daily world-news briefing that takes every side seriously. Find every show, free, at nerranetwork dot com.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
