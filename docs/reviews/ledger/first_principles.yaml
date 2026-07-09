@@ -149,6 +149,42 @@ reviews:
         evidence: null
     agent_cost_usd: null
 
+  - date: '2026-07-09'
+    pr: null
+    doc: docs/reviews/first_principles_review_2026_07_09.md
+    generated_by: grok-4.3
+    summary: Persistent short scripts on 4/10 recent episodes plus recurring boilerplate tics ('rough magic wand estimate' 7/10, 'on the order of' 8/10) that prior length/lesson fixes did not address.
+    scored_prior_predictions:
+    - metric: consecutive same-category episodes (concrete vs opportunity)
+      verdict: hit
+      evidence: Ep025-034 alternate with no adjacent duplicates
+    - metric: spoken markdown-style sub-headings in _tts.txt
+      verdict: hit
+      evidence: None appear in any of the 10 Whisper transcripts
+    shipped: []
+    deferred:
+    - Garbage auto-segment chapter titles (shared network LLM-title class)
+    predictions:
+    - metric: episodes below 1500-word floor in last 10 _tts.txt
+      baseline: 4/10
+      expected: <=1/10 after next digest-stage retry tuning
+      verdict: pending
+      evidence: null
+    - metric: occurrences of 'a rough magic wand estimate' across 10 transcripts
+      baseline: 7/10
+      expected: <=2/10 after prompt variation rule
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/prompts/first_principles_episode.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Replace the recurring phrase with a fresh variant to break the tic
+    - file: shows/prompts/first_principles_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Vary the second most common tic while preserving hedging
+    agent_cost_usd: 0.0547
 do_not_retry:
   - idea: >-
       Push the podcast length target above ~1500 words via prompt escalation
