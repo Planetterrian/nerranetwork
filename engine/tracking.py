@@ -135,6 +135,7 @@ def record_llm_usage(
     completion_tokens: int,
     estimated_cost_usd: float = 0.0,
     model: str = "",
+    cached_tokens: int = 0,
 ) -> None:
     """Record LLM token usage for a generation step.
 
@@ -143,6 +144,11 @@ def record_llm_usage(
 
     If *estimated_cost_usd* is 0 and *model* is provided, cost is
     estimated from the Grok pricing table.
+
+    *cached_tokens* (optional) is the prompt-cache hit count from xAI
+    ``usage.prompt_tokens_details.cached_tokens``. Tracked for telemetry;
+    cost estimation still uses full prompt_tokens until cached pricing
+    is wired into ``GROK_PRICING``.
     """
     grok = tracker["services"]["grok_api"]
     if model:
@@ -152,11 +158,19 @@ def record_llm_usage(
             "prompt_tokens": 0,
             "completion_tokens": 0,
             "total_tokens": 0,
+            "cached_tokens": 0,
             "estimated_cost_usd": 0.0,
         }
     grok[step]["prompt_tokens"] += prompt_tokens
     grok[step]["completion_tokens"] += completion_tokens
     grok[step]["total_tokens"] += prompt_tokens + completion_tokens
+    if cached_tokens:
+        grok[step]["cached_tokens"] = (
+            int(grok[step].get("cached_tokens", 0) or 0) + int(cached_tokens)
+        )
+        grok["cached_tokens"] = (
+            int(grok.get("cached_tokens", 0) or 0) + int(cached_tokens)
+        )
 
     if estimated_cost_usd > 0:
         grok[step]["estimated_cost_usd"] += estimated_cost_usd

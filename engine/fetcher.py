@@ -627,6 +627,7 @@ def fetch_x_posts(
                 enable_x_search=True,
                 x_handles=[handle],
                 max_turns=5,
+                cache_key="nerra-fetch-x",
             )
         except Exception as exc:
             logger.error("X fetch @%s failed: %s — %s", handle, type(exc).__name__, exc)
@@ -933,6 +934,7 @@ def fetch_web_search_articles(
                 prompt=extraction_prompt,
                 enable_web_search=True,
                 max_turns=5,
+                cache_key="nerra-fetch-web",
             )
 
             if not text or "NO_RECENT_ARTICLES" in text:
