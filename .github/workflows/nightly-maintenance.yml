@@ -157,6 +157,14 @@ jobs:
           # newsletter subscriber social proof from the audience-stats step.
           # --network also regenerates spacex-dashboard.html (data-light).
           python generate_html.py --network
+          # Player + How to Listen are NOT covered by --network; without
+          # these, new shows (DP Pod, Age of AI, …) stay invisible on the
+          # two primary discovery pages until someone runs --all.
+          python generate_html.py --player
+          python generate_html.py --how-to-listen
+          # Start Here / FAQ / About are cheap static pages that drift when
+          # shows launch — regenerate so onboarding stays current.
+          python generate_html.py --start-here --faq --about
           # Optionally regenerate full site if needed:
           # python generate_html.py --all
 
@@ -194,6 +202,12 @@ jobs:
             site/data/gallery-manifest.json
             site/data/search-index.json
             index.html
+            player.html
+            how-to-listen.html
+            start-here.html
+            faq.html
+            about.html
+            data.html
             modern-investing-performance.html
             modern-investing.html
             tesla-narrative.html

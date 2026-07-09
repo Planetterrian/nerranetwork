@@ -70,7 +70,7 @@ POPULAR_LIMIT = 12
 # Only display fields may reach the public file — never tokens/uuids.
 _PUBLIC_EPISODE_FIELDS = (
     "title", "show_slug", "show_name", "brand_color", "show_page",
-    "audio_url", "downloads_7d", "rank",
+    "audio_url", "downloads_7d", "rank", "blog_url",
 )
 
 _NON_SHOW_YAMLS = {
@@ -86,6 +86,18 @@ def _list_show_yaml_paths(shows_dir: Path) -> List[Path]:
         and not p.stem.endswith("_template")
         and not p.stem.startswith("_")
     )
+
+
+def _blog_url_for_title(slug: str, title: str) -> str:
+    """Relative blog URL when the episode HTML exists (underscored dirs)."""
+    import re
+
+    m = re.search(r"(?i)\bep(?:isode)?\s*(\d+)\b", title or "")
+    if not m:
+        return ""
+    ep = int(m.group(1))
+    rel = f"blog/{slug}/ep{ep:03d}.html"
+    return rel if (_ROOT / rel).exists() else ""
 
 
 class _RateLimited(requests.exceptions.RequestException):
@@ -232,6 +244,7 @@ def build_popular_episodes(stats: Dict[str, Any], root: Path) -> List[Dict[str, 
                 "show_page": meta.get("show_page") or "",
                 "audio_url": audio or "",
                 "downloads_7d": ep.get("downloads_7d") or 0,
+                "blog_url": _blog_url_for_title(slug, ep.get("title") or ""),
             })
 
     candidates.sort(key=lambda e: e["downloads_7d"], reverse=True)

@@ -28,7 +28,9 @@
     '/api/tesla.json', '/api/models_agents.json', '/api/fascinating_frontiers.json',
     '/api/omni_view.json', '/api/planetterrian.json', '/api/modern_investing.json',
     '/api/env_intel.json', '/api/finansy_prosto.json', '/api/privet_russian.json',
-    '/api/unintended_consequences.json'
+    '/api/unintended_consequences.json', '/api/spacex.json',
+    '/api/first_principles.json', '/api/dp_pod.json', '/api/age_of_ai.json',
+    '/api/models_agents_beginners.json'
   ];
 
   function norm(s) { return (s || '').toLowerCase().trim(); }
