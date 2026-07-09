@@ -1,13 +1,15 @@
 """Spoken network cross-promo for the end of each podcast.
 
 Every English show's spoken closing gets a short plug for the Nerra Network
-plus ONE rotating sibling show. The featured sibling is chosen deterministically
-from the date, so:
+plus ONE rotating sibling show, plus ONE rotating network *surface*
+(website gallery, blogs, story trackers, data hub, etc.). The featured
+sibling and surface are chosen deterministically from the date, so:
 
-  - it varies every day for every show,
+  - they vary every day for every show,
   - different shows feature different siblings on the same day, and
   - over a full rotation each show's closing eventually features every other
-    English show (no sibling is left unadvertised).
+    English show and every discovery surface (no sibling or surface is left
+    unadvertised).
 
 Russian shows (Финансы Просто, Привет Русский!) are intentionally excluded:
 they neither receive a promo nor get advertised by the English shows (operator
@@ -72,6 +74,15 @@ ENGLISH_SHOWS: dict[str, dict[str, str]] = {
         "spoken_name": "SpaceX Daily",
         "tagline": "the daily companion for following SpaceX as a public company, from Starship to the stock ticker",
     },
+    # Appended July 2026 — keep at end so prior sibling rotations stay stable.
+    "first_principles": {
+        "spoken_name": "First Principles Daily",
+        "tagline": "reasoning from raw materials, not analogy, on the breakthroughs that actually cut cost",
+    },
+    "dp_pod": {
+        "spoken_name": "The Do Positive Pod",
+        "tagline": "good news in science and tech, plus one concrete action you can take",
+    },
 }
 
 # Fixed rotation order (insertion order of the dict above).
@@ -79,6 +90,112 @@ ENGLISH_ORDER: list[str] = list(ENGLISH_SHOWS.keys())
 
 # Shows that must never receive or appear in the cross-promo.
 RUSSIAN_SHOWS = ("finansy_prosto", "privet_russian")
+
+# Network discovery surfaces — website destinations beyond sibling shows.
+# Spoken copy must avoid chapter-marker trigger phrases (bare "deep dive",
+# "next time", "under the hood") that collide with show YAML chapter patterns.
+# ``x_line`` is the short X/YouTube/newsletter form; ``url`` is the path under
+# nerranetwork.com (no leading slash). Append new surfaces at the end.
+NETWORK_SURFACES: list[dict[str, str]] = [
+    {
+        "id": "gallery",
+        "spoken": (
+            "And on the website: every episode's visuals live in our free "
+            "image gallery at nerranetwork.com/gallery — royalty-free under "
+            "Creative Commons, download with attribution."
+        ),
+        "x_line": (
+            "More from the Nerra Network: free CC BY-SA episode images "
+            "in the gallery"
+        ),
+        "url": "gallery.html",
+    },
+    {
+        "id": "blogs",
+        "spoken": (
+            "Prefer reading? Today's full write-up, sources, and transcript "
+            "are on the episode blog at nerranetwork.com — same briefing, "
+            "readable format."
+        ),
+        "x_line": (
+            "More from the Nerra Network: full write-ups, sources, and "
+            "transcripts on every episode blog"
+        ),
+        "url": "blog.html",
+    },
+    {
+        "id": "summaries",
+        "spoken": (
+            "Want the written briefing with source links? Each show keeps "
+            "a summaries page on nerranetwork.com — scannable, dated, and "
+            "free."
+        ),
+        "x_line": (
+            "More from the Nerra Network: dated written briefings on every "
+            "show's summaries page"
+        ),
+        "url": "start-here.html",
+    },
+    {
+        "id": "story_trackers",
+        "spoken": (
+            "Following the long arcs? Story Trackers on nerranetwork.com "
+            "follow major programs across episodes — Tesla, SpaceX, AI, "
+            "space science, and more."
+        ),
+        "x_line": (
+            "More from the Nerra Network: Story Trackers follow major "
+            "programs across episodes"
+        ),
+        "url": "data.html",
+    },
+    {
+        "id": "data_hub",
+        "spoken": (
+            "Live dashboards — TSLA, SpaceX launches, the investing "
+            "scoreboard — are all at nerranetwork.com/data."
+        ),
+        "x_line": (
+            "More from the Nerra Network: live dashboards at the Data Hub"
+        ),
+        "url": "data.html",
+    },
+    {
+        "id": "start_here",
+        "spoken": (
+            "New to the network? nerranetwork.com/start-here picks the "
+            "right daily briefing for you in about two minutes."
+        ),
+        "x_line": (
+            "More from the Nerra Network: Start Here picks your next show"
+        ),
+        "url": "start-here.html",
+    },
+    {
+        "id": "age_of_ai",
+        "spoken": (
+            "The Age of AI puts real builders on the phone with an AI host "
+            "— apply at nerranetwork.com/age-of-ai-apply."
+        ),
+        "x_line": (
+            "More from the Nerra Network: apply to be a guest on The Age of AI"
+        ),
+        "url": "age-of-ai-apply.html",
+    },
+    {
+        "id": "dp_club",
+        "spoken": (
+            "The Do Positive Pod is the club for people who do something "
+            "about it — episodes and the Dispatch Wall at "
+            "nerranetwork.com/thedppod."
+        ),
+        "x_line": (
+            "More from the Nerra Network: The Do Positive Pod club and "
+            "Dispatch Wall"
+        ),
+        "url": "thedppod.html",
+    },
+]
 
 
 def pick_featured_show(show_slug: str, date: _dt.date) -> Optional[str]:
@@ -102,6 +219,38 @@ def pick_featured_show(show_slug: str, date: _dt.date) -> Optional[str]:
     return candidates[idx]
 
 
+def pick_featured_surface(
+    show_slug: str, date: _dt.date
+) -> Optional[dict[str, str]]:
+    """Return the network discovery surface to plug on *date* for *show_slug*.
+
+    Same date-deterministic rotation as :func:`pick_featured_show`, with a
+    different offset so the surface and sibling rotate independently.
+    """
+    if show_slug not in ENGLISH_SHOWS or not NETWORK_SURFACES:
+        return None
+    offset = ENGLISH_ORDER.index(show_slug) * 3  # diverge from sibling idx
+    idx = (date.toordinal() + offset) % len(NETWORK_SURFACES)
+    return NETWORK_SURFACES[idx]
+
+
+def build_surface_x_reply(show_slug: str, date: _dt.date) -> str:
+    """Build an X-length discovery reply that plugs a website surface.
+
+    Used on alternate days instead of the sibling-show reply so listeners
+    also discover gallery / blogs / trackers / apply without blowing the
+    280-char budget by stacking both plugs.
+    """
+    surface = pick_featured_surface(show_slug, date)
+    if not surface:
+        return ""
+    url = (
+        f"https://nerranetwork.com/{surface['url']}"
+        "?utm_source=x&utm_medium=social&utm_campaign=network_discovery"
+    )
+    return f"{surface['x_line']}\n{url}"
+
+
 def build_network_promo(
     show_slug: str,
     date: _dt.date,
@@ -111,14 +260,15 @@ def build_network_promo(
     *date*, or ``""`` for Russian / unknown shows (which get no promo).
 
     The returned text carries no host prefix — it is appended to an already
-    host-prefixed ``closing_block``.
+    host-prefixed ``closing_block``. Includes a sibling-show plug plus a
+    rotating website-surface sentence (gallery, blogs, trackers, etc.).
     """
     featured = pick_featured_show(show_slug, date)
     if not featured:
         return ""
     name = ENGLISH_SHOWS[featured]["spoken_name"]
     tagline = ENGLISH_SHOWS[featured]["tagline"]
-    return (
+    promo = (
         "And before you go: this show is part of the Nerra Network — a family "
         "of daily podcasts on tech, science, and markets, each one a short, "
         "sharp briefing you can finish on the commute. "
@@ -126,3 +276,7 @@ def build_network_promo(
         f"{name}, {tagline}. "
         "Find every show, free, at nerranetwork.com."
     )
+    surface = pick_featured_surface(show_slug, date)
+    if surface and surface.get("spoken"):
+        promo = f"{promo} {surface['spoken']}"
+    return promo
