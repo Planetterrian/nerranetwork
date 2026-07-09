@@ -1320,6 +1320,43 @@ def _wrap_text(text: str, font, max_width: int) -> list:
     return lines
 
 
+def _draw_bottom_scrim(img, *, start_frac: float = 0.42) -> None:
+    """Paint a bottom-up dark gradient so lower-third text stays readable.
+
+    Image-first redesign (July 2026): the previous full-frame Brightness
+    0.55 darken made every thumbnail look like "dark photo + white text".
+    A scrim keeps the upper ~60 % of the frame at full photographic
+    brightness (the enticing part of a Grok Imagine scene) while giving
+    the hook / footer a legible bed. Mutates ``img`` in place.
+    """
+    from PIL import Image
+
+    width, height = img.size
+    overlay = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+    start_y = max(0, int(height * start_frac))
+    band = max(1, height - start_y)
+    # Build one column of alpha, then stretch — cheap and smooth.
+    col = Image.new("RGBA", (1, height), (0, 0, 0, 0))
+    col_px = col.load()
+    for y in range(start_y, height):
+        # 0 at start_y → ~200 at the bottom (not fully opaque — imagery
+        # still peeks through so the frame doesn't read as a black bar).
+        t = (y - start_y) / band
+        alpha = int(30 + 170 * (t ** 1.15))
+        col_px[0, y] = (0, 0, 0, alpha)
+    overlay = col.resize((width, height), Image.BILINEAR)
+    base = img.convert("RGBA")
+    composed = Image.alpha_composite(base, overlay)
+    img.paste(composed.convert("RGB"))
+
+
+def _draw_text_with_shadow(draw, xy, text, *, font, fill, shadow=(0, 0, 0)):
+    """White (or coloured) text with a soft 2-px drop shadow for contrast."""
+    x, y = xy
+    draw.text((x + 2, y + 2), text, font=font, fill=shadow)
+    draw.text((x, y), text, font=font, fill=fill)
+
+
 def generate_episode_thumbnail(
     base_image_path: Path,
     episode_num: int,
@@ -1330,18 +1367,22 @@ def generate_episode_thumbnail(
     show_name: str = "",
     size: tuple = (1280, 720),
 ) -> tuple[Path, int | None]:
-    """Returns (thumbnail_path, hook_font_size_used or None)."""
-    """Render an episode thumbnail by overlaying text on the show cover.
+    """Render an image-first episode thumbnail for YouTube.
 
-    Output is a JPEG at YouTube's recommended 1280x720 thumbnail spec by
-    default. The cover is scaled-and-cropped to fill the frame, darkened
-    for legibility, then overlaid with the show name (top-left), the
-    headline ``hook`` (large, centred), and an "Ep N — date" footer.
+    Returns ``(thumbnail_path, hook_font_size_used or None)``.
+
+    Output is a JPEG at YouTube's recommended 1280×720 (or 1080×1920 for
+    Shorts). The cover/scene is scaled-and-cropped to fill the frame at
+    **full brightness**, a bottom gradient scrim is painted for text
+    legibility, then a compact lower-third hook + show label + Ep footer
+    are overlaid. Deliberately NOT a full-frame darken + centred white
+    block — that look made gallery/keyframe graphics feel like slides
+    rather than enticing photography (July 2026 visual pass).
 
     Parameters
     ----------
     base_image_path:
-        Source cover image (e.g. ``assets/covers/<show>.jpg``).
+        Source cover or Grok Imagine scene.
     episode_num:
         Episode number for the footer line.
     date_str:
@@ -1350,14 +1391,14 @@ def generate_episode_thumbnail(
         Output file path. Suffix ``.jpg``/``.jpeg`` writes JPEG (what
         YouTube prefers); anything else writes PNG.
     hook:
-        Optional one-line headline. Wrapped to fit and rendered as the
-        dominant text. When empty, only the show name + footer appear.
+        Optional one-line headline. Wrapped to fit and rendered in the
+        lower third. When empty, only the show name + footer appear.
     show_name:
         Optional small label rendered top-left.
     size:
         Output ``(width, height)`` in pixels.
     """
-    from PIL import Image, ImageDraw, ImageEnhance
+    from PIL import Image, ImageDraw
 
     width, height = size
     img = Image.open(base_image_path).convert("RGB")
@@ -1376,48 +1417,37 @@ def generate_episode_thumbnail(
     top = (new_h - height) // 2
     img = img.crop((left, top, left + width, top + height))
 
-    # Darken so white text reads cleanly.
-    img = ImageEnhance.Brightness(img).enhance(0.55)
+    # Image-first: keep the photograph bright; only darken the lower third.
+    _draw_bottom_scrim(img, start_frac=0.48 if height > width else 0.42)
 
     draw = ImageDraw.Draw(img)
     margin = max(32, width // 32)
 
     if show_name:
-        label_font = _load_font(max(28, width // 32))
-        draw.text((margin, margin), show_name, font=label_font,
-                  fill=(255, 255, 255))
+        # Compact brand chip — small enough that the scene stays the hero.
+        label_font = _load_font(max(22, width // 40))
+        _draw_text_with_shadow(
+            draw, (margin, margin), show_name,
+            font=label_font, fill=(255, 255, 255),
+        )
 
+    font_size = None
     if hook:
         clean_hook = hook.strip()
-        # Safety cap — anything longer than 220 chars is almost
-        # certainly an LLM run-on; truncate to keep the auto-fit loop
-        # from producing illegible 5-line micro-text on a thumbnail.
-        # The hook is also the first paragraph of the script; the
-        # extra context is preserved on the actual show notes / RSS.
-        if len(clean_hook) > 220:
-            clean_hook = clean_hook[:217].rstrip() + "…"
-        # Auto-shrink-to-fit. Operator caught (May 2026) hooks like
-        # "Tesla is hiring engineers to build a wireless Battery
-        # Management System for Cybercab that removes heavy wiring"
-        # rendering as 5+ lines on Shorts (1080×1920) and clipping
-        # against the top of the safe area at the legacy fixed
-        # 77 px size. Instead of clipping or hard-truncating mid-word,
-        # we shrink the font until the wrapped block fits inside the
-        # text-safe area (60 % of frame height — leaves room for the
-        # show label at top and the footer at bottom). The descent
-        # cap on font size also keeps the smallest legible reading
-        # at ~32 px which is readable on a phone preview thumbnail.
+        # Safety cap — anything longer than 160 chars is almost
+        # certainly an LLM run-on; lower-third layout wants punchy
+        # copy (the full hook still lives in the description).
+        if len(clean_hook) > 160:
+            cut = clean_hook[:157].rsplit(" ", 1)[0].rstrip(",.;:—-")
+            clean_hook = (cut or clean_hook[:157]).rstrip() + "…"
+        # Auto-shrink-to-fit into the LOWER THIRD (not the full centre).
+        # Portrait Shorts get 3 lines; landscape long-form gets 2 — denser
+        # copy belongs in the title/description, not the keyframe.
         max_text_width = width - 2 * margin
-        # Leave 20 % top + 20 % bottom for show label / footer breathing
-        # room. The hook block can fill the central 60 %.
-        max_block_h = int(height * 0.60)
-        max_lines = 4 if height >= width else 3
-        # Try sizes from the YouTube-preferred large size all the way
-        # down to a hard floor. The fall-through floor (32 px) is set
-        # so even on a runaway-long hook the text is still readable
-        # on a 320-px-wide YouTube mobile preview tile.
-        max_font = max(56, width // 14)
-        min_font = max(32, width // 24)
+        max_block_h = int(height * (0.28 if height > width else 0.32))
+        max_lines = 3 if height >= width else 2
+        max_font = max(48, width // 16)
+        min_font = max(28, width // 28)
         font_size = max_font
         lines: list = []
         line_h = 0
@@ -1425,48 +1455,46 @@ def generate_episode_thumbnail(
             hook_font = _load_font(font_size)
             lines = _wrap_text(clean_hook, hook_font, max_text_width)
             ascent_descent = hook_font.getbbox("Ay")
-            line_h = (ascent_descent[3] - ascent_descent[1]) + 12
+            line_h = (ascent_descent[3] - ascent_descent[1]) + 10
             block_h = line_h * len(lines)
             if block_h <= max_block_h and len(lines) <= max_lines:
                 break
-            # Shrink by 8 px per pass — fine-grained enough to find a
-            # good fit without spending many PIL renders on a single
-            # thumbnail (hot path during YouTube publish).
-            font_size -= 8
+            font_size -= 6
         else:
-            # We hit the floor and still don't fit. Render at the
-            # floor; visual review will catch any pathological case
-            # and the operator can hand-edit the hook in the YAML
-            # rather than ship a bad thumbnail.
             hook_font = _load_font(min_font)
             lines = _wrap_text(clean_hook, hook_font, max_text_width)
             ascent_descent = hook_font.getbbox("Ay")
-            line_h = (ascent_descent[3] - ascent_descent[1]) + 12
+            line_h = (ascent_descent[3] - ascent_descent[1]) + 10
         block_h = line_h * len(lines)
-        y = (height - block_h) // 2
+        # Sit the hook block just above the footer, inside the scrim.
+        footer_reserve = max(48, height // 14)
+        y = height - margin - footer_reserve - block_h
+        y = max(int(height * 0.52), y)
         for line in lines:
             bbox = hook_font.getbbox(line)
             line_w = bbox[2] - bbox[0]
             x = (width - line_w) // 2
-            draw.text((x, y), line, font=hook_font, fill=(255, 255, 255))
+            _draw_text_with_shadow(
+                draw, (x, y), line,
+                font=hook_font, fill=(255, 255, 255),
+            )
             y += line_h
 
-    footer_font = _load_font(max(28, width // 32))
+    footer_font = _load_font(max(22, width // 40))
     footer = f"Ep {episode_num} — {date_str}" if date_str else f"Ep {episode_num}"
     footer_bbox = footer_font.getbbox(footer)
     footer_h = footer_bbox[3] - footer_bbox[1]
-    draw.text((margin, height - margin - footer_h), footer,
-              font=footer_font, fill=(255, 255, 255))
+    _draw_text_with_shadow(
+        draw, (margin, height - margin - footer_h), footer,
+        font=footer_font, fill=(220, 224, 232),
+    )
 
     suffix = output_path.suffix.lower()
     if suffix in (".jpg", ".jpeg"):
-        img.save(output_path, "JPEG", quality=88, optimize=True)
+        img.save(output_path, "JPEG", quality=90, optimize=True)
     else:
         img.save(output_path, "PNG")
-    # Return the final hook font size used by autofit so callers can record
-    # the decision for observability of the May 2026 thumbnail improvements.
-    final_hook_font = font_size if 'font_size' in locals() else None
-    return output_path, final_hook_font
+    return output_path, font_size
 
 
 def generate_thumbnail_variants(
@@ -1544,26 +1572,17 @@ def generate_shorts_end_card(
     main_text: str = "WATCH FULL EPISODE",
     sub_text: str = "Tap Subscribe ↗",
     size: tuple = (1080, 1920),
+    scene_image_path: "Path | None" = None,
 ) -> Path:
     """Render the 1080×1920 PNG end-card overlay for a Shorts MP4.
 
-    The drawn card composites the long-form 1280×720 thumbnail into
-    the upper third of a dark vertical frame, then layers a big
-    headline ("WATCH FULL EPISODE") + cyan sub-line ("Tap Subscribe
-    ↗") + a small ``nerranetwork.com`` footer below it. The output
-    is a PNG (transparent background pixels would be wasted — the
-    image fills the whole frame), used as an ffmpeg overlay input
-    on the Shorts MP4 during the last 3 seconds in
-    ``engine.video._short_form_filter_graph``.
+    Prefers a **clean scene image** (``scene_image_path`` — a raw Grok
+    Imagine still without burned-in hook text) when provided; falls
+    back to the long-form thumbnail composite. July 2026: embedding the
+    text-burned thumbnail made the end card look like a slide of a
+    slide. The CTA copy still lives below the image.
 
-    This is the visual upgrade over the drawtext-only end card
-    shipped in PR #417: viewers see what the actual long-form
-    episode looks like, which is significantly more compelling
-    than a text-only "WATCH FULL EPISODE" prompt.
-
-    Falls back to a text-only render when ``long_form_thumbnail_path``
-    is missing or fails to load (defensive: thumbnail generation can
-    fail upstream and we want the end card to still ship).
+    Falls back to a text-only render when neither image loads.
     """
     from PIL import Image, ImageDraw
 
@@ -1573,13 +1592,12 @@ def generate_shorts_end_card(
     # slideshow behind a PNG overlay).
     bg = Image.new("RGB", (width, height), (11, 15, 26))  # --nn-bg
 
-    # Crop the long-form thumbnail into the upper third. Long-form
-    # thumbs are 1280×720 (16:9). Scale to 1080 wide → 1080×608.
-    # Centre vertically inside a 1080×~720 slot at y≈300..1020.
+    # Prefer the clean scene (no burned-in hook) over the text composite.
+    preview_path = scene_image_path or long_form_thumbnail_path
     thumb_section_top = int(height * 0.16)   # y ≈ 307
     thumb_section_h = int(height * 0.38)     # h ≈ 730
     try:
-        thumb = Image.open(long_form_thumbnail_path).convert("RGB")
+        thumb = Image.open(preview_path).convert("RGB")
         # Scale-to-fit (preserve aspect, fit inside thumb_section).
         src_ratio = thumb.width / thumb.height
         target_w = width
@@ -1598,11 +1616,11 @@ def generate_shorts_end_card(
              thumb_x + target_w + 4, thumb_y + target_h + 4),
             outline=(255, 255, 255), width=4,
         )
-    except (FileNotFoundError, OSError) as exc:
+    except (FileNotFoundError, OSError, TypeError) as exc:
         logger.warning(
-            "Shorts end card: long-form thumbnail unavailable (%s) — "
+            "Shorts end card: preview image unavailable (%s) — "
             "rendering text-only card. (%s)",
-            long_form_thumbnail_path, exc,
+            preview_path, exc,
         )
         # No thumbnail to paste — the rest of the card still renders.
 

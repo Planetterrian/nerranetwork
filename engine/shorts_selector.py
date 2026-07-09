@@ -93,6 +93,22 @@ _NUMERIC_PATTERNS = (
 # ---------------------------------------------------------------------------
 
 
+def _trim_opening_text(text: str, *, max_chars: int = 80) -> str:
+    """Trim Shorts window labels on a word boundary (not mid-word).
+
+    July 2026: ``text[:80]`` was cutting titles mid-word ("Cybercab
+    wirele…") which then became the Shorts upload title. Prefer a clean
+    last-space cut + ellipsis when over budget.
+    """
+    cleaned = (text or "").strip()
+    if len(cleaned) <= max_chars:
+        return cleaned
+    cut = cleaned[: max_chars - 1].rsplit(" ", 1)[0].rstrip(",.;:—-")
+    if not cut or len(cut) < max_chars // 3:
+        cut = cleaned[: max_chars - 1].rstrip()
+    return cut + "…"
+
+
 @dataclass(frozen=True)
 class ScoredWindow:
     """One candidate Shorts window with its engagement score."""
@@ -287,7 +303,7 @@ def score_candidates(
             start_seconds=start_final,
             end_seconds=start_final + window_duration,
             score=score,
-            opening_text=text[:80],
+            opening_text=_trim_opening_text(text, max_chars=80),
         ))
     out.sort(key=lambda w: w.score, reverse=True)
     return out

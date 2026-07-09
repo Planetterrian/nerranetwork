@@ -713,6 +713,26 @@
             .then(function (manifest) {
                 var images = manifest.images || [];
                 var shows = manifest.shows || [];
+                // Defense-in-depth: text-burned YouTube thumbnail composites
+                // (intended_use: thumbnail_variant) are not useful in the
+                // public gallery. The manifest builder already excludes them;
+                // this filter covers older manifests until the next rebuild.
+                var EXCLUDED_USES = {
+                    thumbnail_variant: 1,
+                    thumbnail: 1,
+                    youtube_thumbnail: 1,
+                };
+                images = images.filter(function (i) {
+                    var use = (i.intended_use || '').toLowerCase();
+                    if (EXCLUDED_USES[use]) return false;
+                    var tags = i.tags || [];
+                    for (var t = 0; t < tags.length; t++) {
+                        if (EXCLUDED_USES[String(tags[t]).toLowerCase()]) {
+                            return false;
+                        }
+                    }
+                    return true;
+                });
                 if (fixedShowSlug) {
                     images = images.filter(function (i) {
                         return i.show_slug === fixedShowSlug;

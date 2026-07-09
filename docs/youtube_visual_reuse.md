@@ -55,8 +55,11 @@ Layers (bottom-up):
   over the episode's first fresh 16:9 scene (cover fallback), and up to
   `thumbnail_variants` (2) additional composites are rendered from OTHER
   scenes (same hook text/autofit) and uploaded to the gallery R2 bucket
-  (`intended_use: thumbnail_variant`, ignored by the scene selector) for the
-  operator's Studio "Test & Compare" A/B. URLs land in the episode metrics.
+  (`intended_use: thumbnail_variant`) for the operator's Studio "Test &
+  Compare" A/B. URLs land in the episode metrics. **July 2026:** those
+  text-burned variants are **excluded from the public gallery manifest**
+  (and filtered client-side) so visitors only see clean Grok Imagine
+  scenes — variants remain in R2 for Studio.
 - **Evergreen b-roll** — up to 3 curated silent clips interleave into the
   long-form slideshow. A clean no-op until the operator publishes a
   `digests/<dir>/broll.json` pool (below).

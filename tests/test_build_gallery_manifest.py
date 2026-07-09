@@ -44,6 +44,8 @@ def _sidecar(
     episode_id="ep001", episode_title="Ep 1", episode_date="2026-05-24",
     generated_at="2026-05-24T15:00:00+00:00", fmt="jpeg",
     prompt="a tesla cybertruck",
+    intended_use="segment_card",
+    tags=None,
 ):
     return {
         "image_id": image_id,
@@ -56,12 +58,12 @@ def _sidecar(
         "format": fmt,
         "prompt": prompt,
         "model": "grok-imagine-image",
-        "intended_use": "segment_card",
+        "intended_use": intended_use,
         "width": 1792,
         "height": 1024,
         "file_size": 215000,
         "caption": "",
-        "tags": [slug, "segment_card"],
+        "tags": list(tags) if tags is not None else [slug, intended_use],
         "license": "CC BY-SA 4.0",
         "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
         "attribution": "Nerra Network",
@@ -155,6 +157,22 @@ def test_build_manifest_skips_invalid_sidecars(config, caplog):
     manifest = bgm.build_manifest([bad, good], config=config)
     assert manifest["image_count"] == 1
     assert manifest["images"][0]["image_id"] == "ok"
+
+
+def test_build_manifest_excludes_thumbnail_variants(config):
+    """July 2026: text-burned YouTube thumbnail composites must not
+    appear in the public gallery (dark image + white hook text)."""
+    scene = _sidecar(image_id="scene", intended_use="segment_card")
+    variant = _sidecar(image_id="variant", intended_use="thumbnail_variant")
+    tagged = _sidecar(
+        image_id="tagged",
+        intended_use="segment_card",
+        tags=["tesla", "thumbnail_variant"],
+    )
+    manifest = bgm.build_manifest([scene, variant, tagged], config=config)
+    ids = {img["image_id"] for img in manifest["images"]}
+    assert ids == {"scene"}
+    assert manifest["image_count"] == 1
 
 
 def test_build_manifest_attaches_urls_to_every_image(config):

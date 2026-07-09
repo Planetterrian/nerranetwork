@@ -376,9 +376,25 @@ def build_long_form_metadata(
     except Exception:  # noqa: BLE001 — never block a YouTube upload
         discovery_line = ""
 
+    # Hashtags early: YouTube surfaces the first 3 as clickable topic links
+    # above the title. July 2026 — moved above the fold (was buried after
+    # body/chapters) so discovery tags aren't lost under "Show more".
+    _hashtag_line = ""
+    try:
+        from engine.shorts_hashtags import extract_hashtags, format_hashtag_line
+        _extracted = extract_hashtags(
+            hook, show_keywords=list(getattr(config, "keywords", []) or []),
+            max_hashtags=5,
+        )
+        _hashtag_line = format_hashtag_line(_extracted, ("#podcast",))
+    except Exception:  # noqa: BLE001 — hashtags must never block an upload
+        _hashtag_line = ""
+
     pieces: List[str] = []
     if hook:
         pieces.append(hook.strip())
+    if _hashtag_line:
+        pieces.append(_hashtag_line)
     pieces.append(show_page_line)
     pieces.append(subscribe_line)
     if discovery_line:
@@ -393,20 +409,6 @@ def build_long_form_metadata(
         cleaned = [line.strip() for line in photo_attribution if line.strip()]
         if cleaned:
             pieces.append("Photos via Pexels:\n" + "\n".join(cleaned))
-    # SEO: entity hashtags so YouTube renders the first 3 as clickable topic
-    # links above the title (a discovery lever Shorts already had but long-form
-    # was missing). Same heuristic extractor as Shorts; static tail "#podcast".
-    try:
-        from engine.shorts_hashtags import extract_hashtags, format_hashtag_line
-        _extracted = extract_hashtags(
-            hook, show_keywords=list(getattr(config, "keywords", []) or []),
-            max_hashtags=5,
-        )
-        _hashtag_line = format_hashtag_line(_extracted, ("#podcast",))
-        if _hashtag_line:
-            pieces.append(_hashtag_line)
-    except Exception:  # noqa: BLE001 — hashtags must never block an upload
-        pass
     disclosure = (config.youtube.synthetic_disclosure or "").strip()
     if disclosure:
         pieces.append(disclosure)
@@ -489,9 +491,21 @@ def build_short_metadata(
     # hint even when the headline is long.
     title = _build_seo_title(headline, rss_title, suffix="#Shorts")
 
+    # Hashtags immediately after the headline so the first 3 become
+    # clickable topic links above the Shorts title (discovery lever).
+    from engine.shorts_hashtags import extract_hashtags, format_hashtag_line
+    extracted = extract_hashtags(
+        hook,
+        show_keywords=list(getattr(config, "keywords", []) or []),
+        max_hashtags=5,
+    )
+    hashtag_line = format_hashtag_line(extracted, ("#Shorts", "#podcast"))
+
     pieces: List[str] = [headline]
+    if hashtag_line:
+        pieces.append(hashtag_line)
     if long_form_url:
-        pieces.append(f"Full episode: {long_form_url}")
+        pieces.append(f"▶ Full episode: {long_form_url}")
     base_url = getattr(config.publishing, "base_url",
                        "https://nerranetwork.com").rstrip("/")
     rss_link = getattr(config.publishing, "rss_link", "") or base_url
@@ -499,29 +513,11 @@ def build_short_metadata(
         f"{rss_link}{'&' if '?' in rss_link else '?'}"
         f"utm_source=youtube&utm_medium=shorts&utm_campaign=ep{episode_num}"
     )
-    # Show page link near the top — YouTube Shorts descriptions are
-    # short by design, so listeners who tap the title or "more" want
-    # the show page one click away.
     pieces.append(f"🌐 Show page: {rss_link}")
     pieces.append(f"Subscribe to the podcast: {utm_link}")
     disclosure = (config.youtube.synthetic_disclosure or "").strip()
     if disclosure:
         pieces.append(disclosure)
-
-    # Auto-extract hashtags from the hook so the Shorts description
-    # carries the day's entities (Tesla / Cybercab / OpenAI etc.) as
-    # search-indexable + above-the-title topic tags. YouTube renders
-    # the FIRST 3 hashtags as clickable links above the video title
-    # — biggest discovery lever on Shorts after the title itself.
-    # Falls back cleanly to the static ``#Shorts #podcast`` line when
-    # the hook has nothing extractable.
-    from engine.shorts_hashtags import extract_hashtags, format_hashtag_line
-    extracted = extract_hashtags(
-        hook,
-        show_keywords=list(getattr(config, "keywords", []) or []),
-        max_hashtags=5,
-    )
-    pieces.append(format_hashtag_line(extracted, ("#Shorts", "#podcast")))
 
     # Same ``invalidDescription`` defense as build_long_form_metadata —
     # YouTube rejects ``<`` / ``>`` even though Shorts hasn't tripped

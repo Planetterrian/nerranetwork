@@ -289,6 +289,10 @@ def test_long_form_description_has_entity_hashtags():
     assert "#podcast" in hashtag_lines[0]
     # At least one entity hashtag derived from the hook.
     assert any("#Tesla" in l or "#Cybercab" in l for l in hashtag_lines)
+    # July 2026: hashtags sit above the fold (before show-page / body),
+    # not buried after chapters.
+    desc = meta["description"]
+    assert desc.index("#") < desc.index("Show page:")
 
 
 def test_short_title_keeps_shorts_suffix_when_hook_is_long():

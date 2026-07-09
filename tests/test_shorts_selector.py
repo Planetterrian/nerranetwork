@@ -33,6 +33,27 @@ def test_empty_text_scores_zero():
     assert score_text(None) == 0.0  # type: ignore[arg-type]
 
 
+def test_trim_opening_text_cuts_on_word_boundary():
+    """July 2026: Shorts titles must not truncate mid-word."""
+    from engine.shorts_selector import _trim_opening_text
+    long = (
+        "Tesla is hiring engineers to build a wireless Battery "
+        "Management System for Cybercab that removes heavy wiring"
+    )
+    out = _trim_opening_text(long, max_chars=80)
+    assert len(out) <= 80
+    assert out.endswith("…")
+    assert " " not in out[-2:]  # ellipsis, not a mid-word cut
+    # Last visible char before ellipsis is not mid-word garbage.
+    assert not out.rstrip("…").endswith("wirele")
+    assert "wireless" in out or out.rstrip("…").endswith("a")
+
+
+def test_trim_opening_text_leaves_short_alone():
+    from engine.shorts_selector import _trim_opening_text
+    assert _trim_opening_text("Short hook", max_chars=80) == "Short hook"
+
+
 def test_neutral_text_scores_zero():
     assert score_text("The company released its quarterly report.") == 0.0
 

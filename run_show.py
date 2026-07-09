@@ -5018,23 +5018,47 @@ def _publish_youtube(
                 getattr(_yt, "shorts_end_card_duration_seconds", 3.0) or 3.0
             )
             _end_card_image_path = None
-            if _end_card_enabled and thumbnail_path and Path(thumbnail_path).exists():
-                try:
-                    _end_card_image_candidate = work_dir / f"{base_name}_end_card.png"
-                    generate_shorts_end_card(
-                        thumbnail_path,
-                        _end_card_image_candidate,
-                        show_name=config.name,
-                        main_text=_end_card_main,
-                        sub_text=_end_card_sub,
-                    )
-                    if _end_card_image_candidate.exists():
-                        _end_card_image_path = _end_card_image_candidate
-                except Exception as exc:  # pragma: no cover — best-effort
-                    logger.warning(
-                        "Shorts end-card PNG render failed: %s — "
-                        "falling back to drawtext-only end card", exc,
-                    )
+            if _end_card_enabled:
+                # Prefer a clean Grok scene (no burned-in hook text) for the
+                # end-card preview; fall back to the long-form thumbnail.
+                _cover = Path(cover_path) if cover_path else None
+                _end_card_scene = None
+                for _cand in list(fresh_long_scenes or []) + list(
+                    short_scene_paths or []
+                ) + list(long_scene_paths or []):
+                    if not _cand:
+                        continue
+                    _p = Path(_cand)
+                    if _cover is not None and _p.resolve() == _cover.resolve():
+                        continue
+                    if _p.exists():
+                        _end_card_scene = _p
+                        break
+                _end_card_base = (
+                    Path(thumbnail_path)
+                    if thumbnail_path and Path(thumbnail_path).exists()
+                    else None
+                )
+                if _end_card_base or _end_card_scene:
+                    try:
+                        _end_card_image_candidate = (
+                            work_dir / f"{base_name}_end_card.png"
+                        )
+                        generate_shorts_end_card(
+                            _end_card_base or _end_card_scene,
+                            _end_card_image_candidate,
+                            show_name=config.name,
+                            main_text=_end_card_main,
+                            sub_text=_end_card_sub,
+                            scene_image_path=_end_card_scene,
+                        )
+                        if _end_card_image_candidate.exists():
+                            _end_card_image_path = _end_card_image_candidate
+                    except Exception as exc:  # pragma: no cover — best-effort
+                        logger.warning(
+                            "Shorts end-card PNG render failed: %s — "
+                            "falling back to drawtext-only end card", exc,
+                        )
 
             _caption_offset = float(
                 getattr(config.audio, "voice_intro_delay", 0.0) or 0.0
