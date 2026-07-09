@@ -1,0 +1,174 @@
+Good to have you on Models and Agents, episode 106.
+It's July 9th, 2026.
+Another day, another round of AI developments.
+Let's break it down.
+Open AI just made real-time voice agents
+available to every chat GPT Plus and Pro user,
+with free rollout starting now.
+GPT Live rolled out today to all paid chat GPT tiers
+on iOS, Android, and Web.
+Free users will gain access over the next few days.
+The model requires an app update to reach the voice button,
+and it will reach the API soon after.
+Sam Altman called the experience magical and real,
+noting it may change his own preference
+from typing to voice.
+This release moves the frontier model's program forward
+by bringing production voice capability out of limited testing.
+Open AI also audited SWE Bench Pro
+and found 30% of its tasks broken.
+The company is retracting its earlier recommendation
+that researchers treat the benchmark
+as a reliable measure of frontier coding ability.
+As Models improve, the audit shows that evals
+need to grow harder and more trustworthy
+to track genuine progress.
+Builders working on agentic coding tools
+should expect new benchmarks to appear in coming months.
+The retraction affects how teams measure tool calling
+and long horizon code agents going forward.
+It continues the frontier models tracking
+from last episode by shifting attention from capability gains
+to measurement reliability.
+Now for the model updates,
+and Vidya released Nemotron Labs 3 Puzzle, 75B A9B,
+a compressed hybrid mixture of experts model.
+It reduces parameters from 120.7 billion total
+and 12.8 billion active down to 75.3 billion total
+and 9.3 billion active.
+On a single eight times B200 node,
+the model delivers 2.03 times the original throughput
+at 100 tokens per second per user.
+On 1H100, it raises 1 million token concurrency
+from one request to eight.
+The model was built through iterative hardware
+where a wear structural compression
+followed by short knowledge distillation recovery.
+This update advances the AI compute and inference arc
+by showing concrete throughput gains from compression
+that keeps user experience speed intact.
+Sam Altman confirmed GPT 5.6 sole launches Thursday.
+The model will be available for immediate testing after release.
+It continues the frontier models cadence
+and will supply a near-term data point
+on release speed versus cost trajectory.
+IBM added multi-agent capabilities
+to its enterprise AI software development platform.
+The platform also received specialized modernization workflows
+alongside the new capabilities.
+Coordinated agent teams now address complex enterprise tasks
+that exceed single model call limits.
+The changes aligned directly with the agents
+and tool use program.
+Reliability questions for long horizon agents remain central
+to that program.
+Enterprise focused additions test whether coordinated workflows
+improve modernization project results.
+IBM newsroom supplied the details through Google News.
+A new six-stage maturity model for non-human identities
+appeared to guide organizations.
+The model helps manage agentic AI systems
+through explicit stages.
+Identity, authentication, and governance challenges
+receive direct coverage in the framework.
+Autonomous agents acting on behalf of users
+or organizations trigger those challenges.
+The staged path supports identity management
+as autonomy levels increase.
+Standardization efforts in agent and tool protocols
+gain a reference from the model.
+CSOOnline.com published the framework.
+Japan began testing AI agent-based autonomous payments in Yen.
+The XJPY token serves as the payment mechanism in the trial.
+Agents explore handling real financial transactions
+without human intervention at each step.
+The trial examines reliability of long horizon agents
+inside regulated finance.
+Regulated financial domains provide a strict test environment
+for agent behavior.
+Coinpost via the reported the ongoing experiment.
+Simon Willison now lets Claude and GPT 5.5
+write nearly all commit messages.
+The generated messages frequently omit higher level framing
+according to his tests.
+He prefers linking commits back to human written issues instead.
+AI generated rationales sometimes guess incorrectly
+on context.
+Smaller commits stay easier to review
+under the revised workflow.
+Simon Willison shared the updated practice on X.
+Anthropic published research on off-switch mechanisms
+for dual use AI capabilities.
+The research was conducted in collaboration with AE Studio.
+Technical approaches to limiting unintended agent behaviors
+formed the core of the work.
+Dual use capabilities receive specific attention
+in the published findings.
+Anthropic AI posted the details on X.
+Okay, let's pop the hood on activation steering
+for dialect bias.
+The technique is often described as a simple
+add this vector, subtract that vector step.
+In practice, it requires locating the exact layers
+where the unwanted behavior lives
+and extracting a direction that isolates the target
+without hurting fluency.
+Researchers first run causal tracing to identify layers
+that most strongly influence biased continuations.
+They then compute a steering vector
+from paired African-American English
+and standard American English examples.
+At inference, they add a scaled version of that vector
+only to the identified layers.
+The method cut dialect bias five to 20 times more than prompting
+while keeping standard American English fluency.
+Steering strength must still be tuned per model family
+or the output starts to sound unnatural.
+The same direction can affect unrelated syntactic features
+if the localization step is skipped.
+Teams should begin with a small validation set of dialect pairs
+and sweep the steering coefficient before scaling.
+The approach works across model sizes
+from 14 billion to 70 billion parameters without retraining.
+It does require the ERAAE corpus
+of 17,479 validated triplets
+to produce reliable directions.
+So when should you reach for activation steering
+versus prompting?
+Start with a validation sweep on your target model family.
+Update the chat GPT mobile app today
+and test GPT live on a multi-turn planning task.
+Run Neumatron Labs 3 puzzle 75 BA9B on an 8 times B200 node
+if you serve high concurrency 1 million token workloads.
+Audit any internal coding agents
+against the SWE bench pro tasks.
+You still trust and flag the 30% broken subset.
+Experiment with activation steering on your own models
+using the real AAE corpus if you need to reduce dialect bias
+without retraining.
+GPT 5.6 saw is expected Thursday from open AI.
+GPT live API access is coming soon
+after the chat GPT rollout.
+Continued free tier expansion of GPT live
+will roll out over the next few days.
+Tomorrow keep an eye on the GPT 5.6 sole release
+and any early benchmark numbers that surface.
+That wraps up today's AI briefing.
+Share this with a developer or builder
+who wants to stay current.
+Subscribe wherever you listen.
+See you tomorrow and if you'd rather watch than listen,
+find us on YouTube at Narra Network.
+Links in the show notes.
+And before you go, this show is part of the Narra Network,
+a family of daily podcasts on tech, science and markets.
+Each one a short sharp briefing you can finish on the commute.
+If today earned its place in your feed,
+here's your next listen.
+Modern investing techniques, modern strategies
+for Canadian and US investors.
+Find every show free at NarraNetwork.com.
+New to the network, NarraNetwork.com slash start hyphen here
+picks the right daily briefing for you in about two minutes.
+This episode used AI voice synthesis of my voice.
+Editorial selection and analysis are my own.
