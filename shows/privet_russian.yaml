@@ -97,7 +97,9 @@ tts:
   provider: grok
   voice_id: 0b875ae2
   language_code: ru
-  max_chars: 10000
+  # Align with network default so long scripts keep the single-call <fast>
+  # wrap (multi-chunk drops the wrap — landmine #17).
+  max_chars: 14000
 multilingual:
   enabled: false
 audio:

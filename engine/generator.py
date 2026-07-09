@@ -134,10 +134,17 @@ def _call_grok(
     temperature: float = 0.7,
     max_tokens: int = 3500,
     timeout: float = 300.0,
+    cache_key: Optional[str] = None,
 ) -> tuple[str, Dict[str, Any]]:
     """Call xAI Grok via the OpenAI-compatible endpoint.
 
     Returns ``(text, meta)`` where *meta* contains usage info.
+
+    *cache_key* (optional) is sent as the ``x-grok-conv-id`` HTTP header so
+    xAI sticky-routes requests that share a stable system-prompt prefix to
+    the same server, maximizing automatic prompt-cache hits (see
+    https://docs.x.ai/developers/advanced-api-usage/prompt-caching). When
+    omitted the call is unchanged from the pre-caching path.
     """
     from openai import OpenAI
 
@@ -152,15 +159,24 @@ def _call_grok(
         messages.append({"role": "system", "content": system_prompt})
     messages.append({"role": "user", "content": prompt})
 
-    resp = client.chat.completions.create(
-        model=model,
-        messages=messages,
-        temperature=temperature,
-        max_tokens=max_tokens,
-    )
+    create_kwargs: Dict[str, Any] = {
+        "model": model,
+        "messages": messages,
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+    }
+    # Sticky routing for prompt-cache reuse. Per-show keys keep digest /
+    # podcast / retry calls for the same show on one server so the stable
+    # system-prompt prefix can hit cache; different shows stay isolated.
+    if cache_key:
+        create_kwargs["extra_headers"] = {"x-grok-conv-id": str(cache_key)}
+
+    resp = client.chat.completions.create(**create_kwargs)
 
     text = resp.choices[0].message.content.strip()
     meta: Dict[str, Any] = {"provider": "openai_compat", "model": model}
+    if cache_key:
+        meta["cache_key"] = cache_key
     finish_reason = getattr(resp.choices[0], "finish_reason", None)
     meta["finish_reason"] = finish_reason
     # Only warn on length-truncation when the caller is actually trying
@@ -176,12 +192,44 @@ def _call_grok(
             max_tokens,
         )
     if hasattr(resp, "usage") and resp.usage:
-        meta["usage"] = {
+        usage_meta: Dict[str, Any] = {
             "prompt_tokens": resp.usage.prompt_tokens,
             "completion_tokens": resp.usage.completion_tokens,
             "total_tokens": resp.usage.total_tokens,
         }
+        # Prompt-cache telemetry (xAI returns this when a prefix hit).
+        # Nested under prompt_tokens_details on Chat Completions; also
+        # accept a top-level cached_tokens if the SDK flattens it.
+        cached = 0
+        details = getattr(resp.usage, "prompt_tokens_details", None)
+        if details is not None:
+            cached = int(getattr(details, "cached_tokens", 0) or 0)
+        if not cached:
+            cached = int(getattr(resp.usage, "cached_tokens", 0) or 0)
+        if cached:
+            usage_meta["cached_tokens"] = cached
+            logger.info(
+                "Grok prompt cache hit: %d / %d prompt tokens cached (key=%s)",
+                cached, usage_meta["prompt_tokens"], cache_key or "-",
+            )
+        meta["usage"] = usage_meta
     return text, meta
+
+
+def _show_cache_key(config: Any, stage: str = "") -> Optional[str]:
+    """Stable sticky-routing key for a show's Grok Chat Completions calls.
+
+    Format ``nerra-<slug>`` (stage is intentionally omitted so digest,
+    podcast, outline, and retry calls share one server affinity and can
+    reuse the system-prompt prefix cache). Returns ``None`` when the
+    config has no slug so callers without a show identity stay on the
+    legacy no-header path.
+    """
+    slug = getattr(config, "slug", None) or ""
+    slug = str(slug).strip()
+    if not slug:
+        return None
+    return f"nerra-{slug}"
 
 
 # ---------------------------------------------------------------------------
@@ -1355,6 +1403,7 @@ def generate_digest(
         system_prompt=system_prompt,
         temperature=config.llm.digest_temperature,
         max_tokens=config.llm.max_tokens,
+        cache_key=_show_cache_key(config),
     )
 
     # Retry once with 50% more tokens if the response was truncated
@@ -1370,6 +1419,7 @@ def generate_digest(
             system_prompt=system_prompt,
             temperature=config.llm.digest_temperature,
             max_tokens=bumped_tokens,
+            cache_key=_show_cache_key(config),
         )
         if meta.get("finish_reason") == "length":
             logger.warning(
@@ -1386,6 +1436,7 @@ def generate_digest(
                 meta["usage"].get("prompt_tokens", 0),
                 meta["usage"].get("completion_tokens", 0),
                 model=config.llm.model,
+                cached_tokens=meta["usage"].get("cached_tokens", 0),
             )
         except Exception as e:
             logger.warning("Failed to record LLM usage: %s", e)
@@ -1411,13 +1462,14 @@ def generate_digest(
             "Ты ОБЯЗАНА создать полный выпуск в указанном формате. "
             "НЕ ОТКАЗЫВАЙСЯ. НЕ говори, что не можешь.\n\n"
             "If the provided articles lack sufficient relevant content, "
-            "switch to EDUCATIONAL mode: pick 2-3 financial concepts "
-            "relevant to the show's audience and explain them in depth, "
-            "following the exact same output format. An educational episode "
-            "is always better than no episode.\n"
+            "switch to EDUCATIONAL mode: pick 2-3 core concepts from this "
+            "show's topic domain that are relevant to the audience and "
+            "explain them in depth, following the exact same output format. "
+            "An educational episode is always better than no episode.\n"
             "Если статьи недостаточно релевантны — переключись на "
-            "ОБРАЗОВАТЕЛЬНЫЙ режим: выбери 2-3 финансовых понятия, важных "
-            "для аудитории, и объясни их подробно в том же формате. "
+            "ОБРАЗОВАТЕЛЬНЫЙ режим: выбери 2-3 ключевые темы из предметной "
+            "области этого шоу, важных для аудитории, и объясни их подробно "
+            "в том же формате. "
             "Образовательный выпуск ВСЕГДА лучше, чем отказ.\n\n"
             "Generate the digest NOW. Создай обзор ПРЯМО СЕЙЧАС."
         )
@@ -1428,6 +1480,7 @@ def generate_digest(
             system_prompt=system_prompt,
             temperature=config.llm.digest_temperature,
             max_tokens=config.llm.max_tokens,
+            cache_key=_show_cache_key(config),
         )
         if tracker and "usage" in meta2:
             try:
@@ -1438,7 +1491,8 @@ def generate_digest(
                     meta2["usage"].get("prompt_tokens", 0),
                     meta2["usage"].get("completion_tokens", 0),
                     model=config.llm.model,
-                )
+                    cached_tokens=meta2["usage"].get("cached_tokens", 0),
+            )
             except Exception as e:
                 logger.warning("Failed to record retry LLM usage: %s", e)
 
@@ -1462,6 +1516,7 @@ def generate_digest(
                 system_prompt=system_prompt,
                 temperature=config.llm.podcast_temperature,  # slightly more creative
                 max_tokens=config.llm.max_tokens,
+                cache_key=_show_cache_key(config),
             )
             if tracker and "usage" in meta3:
                 try:
@@ -1472,7 +1527,8 @@ def generate_digest(
                         meta3["usage"].get("prompt_tokens", 0),
                         meta3["usage"].get("completion_tokens", 0),
                         model=config.llm.model,
-                    )
+                        cached_tokens=meta3["usage"].get("cached_tokens", 0),
+            )
                 except Exception as e:
                     logger.warning("Failed to record edu retry LLM usage: %s", e)
 
@@ -1498,6 +1554,7 @@ def generate_digest(
                     system_prompt=system_prompt,
                     temperature=config.llm.podcast_temperature,
                     max_tokens=config.llm.max_tokens,
+                    cache_key=_show_cache_key(config),
                 )
                 if tracker:
                     try:
@@ -1514,6 +1571,7 @@ def generate_digest(
                             meta4["usage"].get("prompt_tokens", 0),
                             meta4["usage"].get("completion_tokens", 0),
                             model=fallback_model,
+                            cached_tokens=meta4["usage"].get("cached_tokens", 0),
                         )
                     except Exception as e:
                         logger.warning("Failed to record fallback model LLM usage: %s", e)
@@ -1542,6 +1600,7 @@ def generate_digest(
                 system_prompt=system_prompt,
                 temperature=lower_temp,
                 max_tokens=config.llm.max_tokens,
+                cache_key=_show_cache_key(config),
             )
             _rep_retry = _validate_llm_output(
                 text_retry, stage="digest", show_name=config.name,
@@ -1604,6 +1663,7 @@ def generate_digest(
                     system_prompt=system_prompt,
                     temperature=config.llm.digest_temperature,
                     max_tokens=config.llm.max_tokens,
+                    cache_key=_show_cache_key(config),
                 )
                 # Validate the expanded draft is real content, not a refusal.
                 _validate_llm_output(expanded, stage="digest", show_name=config.name)
@@ -1636,7 +1696,8 @@ def generate_digest(
                                 meta_exp["usage"].get("prompt_tokens", 0),
                                 meta_exp["usage"].get("completion_tokens", 0),
                                 model=config.llm.model,
-                            )
+                                cached_tokens=meta_exp["usage"].get("cached_tokens", 0),
+            )
                         except Exception as e:
                             logger.warning("Failed to record expansion LLM usage: %s", e)
                 else:
@@ -1807,6 +1868,7 @@ def _generate_podcast_outline(
         system_prompt=system_prompt,
         temperature=config.llm.digest_temperature,  # Lower temp for planning
         max_tokens=1500,
+        cache_key=_show_cache_key(config),
     )
 
     if tracker and "usage" in meta:
@@ -1818,6 +1880,7 @@ def _generate_podcast_outline(
                 meta["usage"].get("prompt_tokens", 0),
                 meta["usage"].get("completion_tokens", 0),
                 model=config.llm.model,
+                cached_tokens=meta["usage"].get("cached_tokens", 0),
             )
         except Exception as e:
             logger.warning("Failed to record outline LLM usage: %s", e)
@@ -1899,6 +1962,7 @@ def generate_podcast_script(
         system_prompt=system_prompt,
         temperature=config.llm.podcast_temperature,
         max_tokens=podcast_tokens,
+        cache_key=_show_cache_key(config),
     )
 
     # Retry once with 50% more tokens if the response was truncated
@@ -1914,6 +1978,7 @@ def generate_podcast_script(
             system_prompt=system_prompt,
             temperature=config.llm.podcast_temperature,
             max_tokens=bumped_tokens,
+            cache_key=_show_cache_key(config),
         )
         if meta.get("finish_reason") == "length":
             logger.warning(
@@ -1930,6 +1995,7 @@ def generate_podcast_script(
                 meta["usage"].get("prompt_tokens", 0),
                 meta["usage"].get("completion_tokens", 0),
                 model=config.llm.model,
+                cached_tokens=meta["usage"].get("cached_tokens", 0),
             )
         except Exception as e:
             logger.warning("Failed to record LLM usage: %s", e)
@@ -1968,6 +2034,7 @@ def generate_podcast_script(
             system_prompt=system_prompt,
             temperature=lower_temp,
             max_tokens=podcast_tokens_for_retry,
+            cache_key=_show_cache_key(config),
         )
         if tracker and "usage" in meta_r1:
             try:
@@ -1977,7 +2044,8 @@ def generate_podcast_script(
                     meta_r1["usage"].get("prompt_tokens", 0),
                     meta_r1["usage"].get("completion_tokens", 0),
                     model=config.llm.model,
-                )
+                    cached_tokens=meta_r1["usage"].get("cached_tokens", 0),
+            )
             except Exception:
                 pass
         logger.info("Podcast refusal retry 1 generated (%d chars)", len(text))
@@ -2002,6 +2070,7 @@ def generate_podcast_script(
                 system_prompt=system_prompt,
                 temperature=lower_temp,
                 max_tokens=podcast_tokens_for_retry,
+                cache_key=_show_cache_key(config),
             )
             if tracker:
                 try:
@@ -2017,6 +2086,7 @@ def generate_podcast_script(
                         meta_r2["usage"].get("prompt_tokens", 0),
                         meta_r2["usage"].get("completion_tokens", 0),
                         model=fallback_model,
+                        cached_tokens=meta_r2["usage"].get("cached_tokens", 0),
                     )
                 except Exception:
                     pass
@@ -2075,6 +2145,7 @@ def generate_podcast_script(
             system_prompt=system_prompt,
             temperature=config.llm.podcast_temperature,
             max_tokens=podcast_tokens,
+            cache_key=_show_cache_key(config),
         )
 
         if tracker and "usage" in meta2:
@@ -2086,7 +2157,8 @@ def generate_podcast_script(
                     meta2["usage"].get("prompt_tokens", 0),
                     meta2["usage"].get("completion_tokens", 0),
                     model=config.llm.model,
-                )
+                    cached_tokens=meta2["usage"].get("cached_tokens", 0),
+            )
             except Exception as e:
                 logger.warning("Failed to record retry LLM usage: %s", e)
 
@@ -2139,6 +2211,7 @@ def generate_podcast_script(
                 system_prompt=system_prompt,
                 temperature=lower_temp,
                 max_tokens=podcast_tokens,
+                cache_key=_show_cache_key(config),
             )
             _rep_retry = _validate_llm_output(
                 text_retry, stage="podcast_script", show_name=config.name,
@@ -2211,6 +2284,7 @@ def generate_podcast_script(
                     system_prompt=system_prompt,
                     temperature=config.llm.podcast_temperature,
                     max_tokens=podcast_tokens,
+                    cache_key=_show_cache_key(config),
                 )
                 if tracker and "usage" in meta_rr:
                     try:
@@ -2220,7 +2294,8 @@ def generate_podcast_script(
                             meta_rr["usage"].get("prompt_tokens", 0),
                             meta_rr["usage"].get("completion_tokens", 0),
                             model=config.llm.model,
-                        )
+                            cached_tokens=meta_rr["usage"].get("cached_tokens", 0),
+            )
                     except Exception:
                         pass
                 reps_rr = detect_phrase_repetition(text_rr)
