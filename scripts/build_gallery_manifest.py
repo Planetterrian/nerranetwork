@@ -133,6 +133,16 @@ REQUIRED_SIDECAR_FIELDS = (
     "episode_date", "format",
 )
 
+# Text-burned YouTube thumbnail composites are stored in R2 for Studio
+# "Test & Compare" A/B, but they are NOT useful in the public gallery
+# (dark image + white hook text). Filter them out of the public
+# manifest so visitors only see clean Grok Imagine scenes.
+PUBLIC_GALLERY_EXCLUDED_USES = frozenset({
+    "thumbnail_variant",
+    "thumbnail",
+    "youtube_thumbnail",
+})
+
 
 def _public_url(config: GalleryConfig, key: str) -> str:
     if config.public_base_url:
@@ -206,6 +216,16 @@ def build_manifest(
             continue
         # _validate_sidecar already logs; just check the return.
         if not _validate_sidecar(sidecar, sidecar.get("image_id", "?")):
+            continue
+
+        # Skip text-burned thumbnail composites from the public gallery.
+        use = str(sidecar.get("intended_use") or "").strip().lower()
+        if use in PUBLIC_GALLERY_EXCLUDED_USES:
+            continue
+        tags = sidecar.get("tags") or []
+        if isinstance(tags, list) and any(
+            str(t).strip().lower() in PUBLIC_GALLERY_EXCLUDED_USES for t in tags
+        ):
             continue
 
         original_key, thumb_key, sidecar_key = _build_object_keys(sidecar)

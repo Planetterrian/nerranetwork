@@ -200,20 +200,22 @@ def build_image_prompts(
         if is_vertical
         else "wide cinematic 16:9 framing, photojournalism style"
     )
-    # Network-wide visual-quality cue (June 14 2026): a compact, tasteful set of
-    # modifiers so every generated image reads as a polished editorial photo
-    # rather than a flat stock render. Kept short so it sharpens look without
-    # overriding the subject/narrative the rest of the prompt carries.
+    # Network-wide visual-quality cue (June 14 2026; retuned July 2026):
+    # polished editorial photo, not a flat stock render or title card.
     quality_hint = (
         "dramatic natural lighting, rich depth of field, sharp focus, "
-        "high detail, vivid color grading, professional editorial photography"
+        "high detail, vivid color grading, professional editorial photography, "
+        "cinematic atmosphere, beautiful and enticing"
     )
-    # Operator caught: Grok Imagine renders any free-text "context" hint
-    # as a banner / on-image text overlay. Telling it explicitly to
-    # produce a clean image stops the headline appearing as a chyron
-    # across every slide. This is a soft signal — Grok still occasionally
-    # emits text, but compliance is dramatically better with the cue.
-    no_text_hint = "clean photographic composition, no text or words rendered in the image"
+    # Hard no-text contract. Operator review (July 2026): dumping the full
+    # episode headline after ``depicting:`` made Grok paint white chyron
+    # text onto nearly every gallery image. We now pass only short visual
+    # subject phrases (see ``_visual_subject_phrase``) and reinforce the
+    # ban with an explicit negative.
+    no_text_hint = (
+        "clean photographic composition with ZERO text, letters, words, "
+        "captions, logos, watermarks, or typography of any kind in the frame"
+    )
 
     safe_hook = (hook or "").strip().rstrip(".")
     descriptor = (show_descriptor or "photorealistic news photo").strip()
@@ -245,9 +247,9 @@ def build_image_prompts(
         if not q:
             continue
         parts = [q, descriptor, framing_hint, quality_hint, no_text_hint]
-        ctx = _context_for(len(prompts))
-        if ctx:
-            parts.append(f"depicting: {ctx}")
+        subject = _visual_subject_phrase(_context_for(len(prompts)))
+        if subject:
+            parts.append(f"visual subject: {subject}")
         if narrative_boost:
             parts.append(narrative_boost)
         prompts.append(", ".join(parts))
@@ -261,14 +263,35 @@ def build_image_prompts(
         if not q:
             break
         parts = [q, descriptor, framing_hint, quality_hint, no_text_hint, f"variant {len(prompts) + 1}"]
-        ctx = _context_for(len(prompts))
-        if ctx:
-            parts.append(f"depicting: {ctx}")
+        subject = _visual_subject_phrase(_context_for(len(prompts)))
+        if subject:
+            parts.append(f"visual subject: {subject}")
         if narrative_boost:
             parts.append(narrative_boost)
         prompts.append(", ".join(parts))
 
     return prompts
+
+
+def _visual_subject_phrase(raw: str, *, max_words: int = 8) -> str:
+    """Compress a headline into a short visual-subject phrase.
+
+    Full-sentence hooks after ``depicting:`` were being painted as on-image
+    text by Grok Imagine. Keep only the first ``max_words`` content-ish
+    tokens so the model gets a subject cue without a quotable caption.
+    """
+    text = (raw or "").strip()
+    if not text:
+        return ""
+    # Drop trailing clause noise that reads as caption copy.
+    for sep in (" — ", " - ", ": ", "; ", ". "):
+        if sep in text:
+            text = text.split(sep, 1)[0].strip()
+            break
+    words = [w for w in text.split() if w]
+    if len(words) <= max_words:
+        return " ".join(words)
+    return " ".join(words[:max_words])
 
 
 # ---------------------------------------------------------------------------

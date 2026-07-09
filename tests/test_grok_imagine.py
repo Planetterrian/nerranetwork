@@ -38,9 +38,14 @@ class TestBuildImagePrompts:
             aspect="16:9",
         )
         assert len(prompts) == 3
-        # Hook is woven in to every prompt so episodes get unique imagery.
+        # Hook is woven in as a SHORT visual-subject phrase (not a
+        # full ``depicting:`` sentence — that made Grok paint chyron
+        # text onto gallery images).
         for p in prompts:
-            assert "Tesla unveils Cybertruck price drop" in p
+            assert "visual subject:" in p
+            assert "depicting:" not in p
+            # First words of the hook survive the subject compressor.
+            assert "Tesla unveils" in p or "Cybertruck" in p
 
     def test_recycles_queries_when_count_exceeds_query_list(self):
         """If the operator's image_queries list has 3 entries but we
@@ -97,15 +102,34 @@ class TestBuildImagePrompts:
 
     def test_no_text_hint_blocks_banner_overlay(self):
         """Operator caught (Tesla YouTube long-form + Shorts, May 7
-        2026) Grok Imagine rendering the prompt's headline as a chyron
-        across every slide. Every prompt now ships an explicit
-        ``no text or words`` instruction to suppress the overlay."""
+        2026; reinforced July 2026) Grok Imagine rendering the prompt's
+        headline as a chyron across every slide. Every prompt now ships
+        an explicit ZERO-text instruction to suppress the overlay."""
         from engine.grok_imagine import build_image_prompts
         prompts = build_image_prompts(
             hook="hook", image_queries=["q1", "q2"], count=2,
         )
         for p in prompts:
-            assert "no text" in p or "no words" in p
+            assert "ZERO text" in p or "no text" in p.lower()
+            assert "depicting:" not in p
+            assert "visual subject:" in p
+
+    def test_long_hook_is_compressed_to_visual_subject(self):
+        """Full headlines must not appear verbatim — only a short
+        subject phrase — so Grok has nothing quotable to paint."""
+        from engine.grok_imagine import build_image_prompts
+        long_hook = (
+            "Tesla is hiring engineers to build a wireless Battery "
+            "Management System for Cybercab that removes heavy wiring"
+        )
+        prompts = build_image_prompts(
+            hook=long_hook, image_queries=["cybercab"], count=1,
+        )
+        assert len(prompts) == 1
+        assert long_hook not in prompts[0]
+        assert "visual subject:" in prompts[0]
+        # Subject keeps the lead nouns, drops the long tail.
+        assert "Tesla is hiring" in prompts[0]
 
 
 # ---------------------------------------------------------------------------
@@ -135,9 +159,13 @@ class TestPerSceneContexts:
             count=3,
             per_scene_contexts=contexts,
         )
-        # Each headline appears in exactly one prompt, in document order.
+        # Each headline's LEAD appears as a visual-subject phrase
+        # (compressed — not the full sentence after ``depicting:``).
         for ctx, prompt in zip(contexts, prompts):
-            assert ctx in prompt
+            lead = " ".join(ctx.split()[:4])
+            assert lead in prompt
+            assert "depicting:" not in prompt
+            assert "visual subject:" in prompt
         # The lone episode hook is NOT repeated as a banner across slides.
         assert sum(1 for p in prompts if "lead hook line" in p) == 0
 
@@ -167,7 +195,7 @@ class TestPerSceneContexts:
             count=1,
             per_scene_contexts=[],
         )
-        assert prompts and "lead hook" in prompts[0]
+        assert prompts and "visual subject: lead hook" in prompts[0]
 
     def test_none_contexts_falls_back_to_hook(self):
         from engine.grok_imagine import build_image_prompts
@@ -177,7 +205,7 @@ class TestPerSceneContexts:
             count=1,
             per_scene_contexts=None,
         )
-        assert prompts and "lead hook" in prompts[0]
+        assert prompts and "visual subject: lead hook" in prompts[0]
 
 
 # ---------------------------------------------------------------------------
