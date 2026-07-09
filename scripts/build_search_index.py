@@ -128,7 +128,12 @@ def main() -> int:
             "title": d.get("title") or "",
             "hook": d.get("hook") or "",
             "summary": d.get("summary") or "",
-            "url": f"/blog/{str(d.get('show_slug', '')).replace('_', '-')}/ep{d.get('episode_num')}.html",
+            # Blog dirs use underscores (blog/omni_view/, blog/dp_pod/) —
+            # never hyphens. Zero-pad episode nums to match epNNN.html.
+            "url": (
+                f"/blog/{d.get('show_slug', '')}"
+                f"/ep{int(d.get('episode_num') or 0):03d}.html"
+            ),
             "entities": d.get("entities") or [],
             "topics": d.get("topics") or [],
             "show_name": d.get("show_name") or d.get("show_slug", ""),

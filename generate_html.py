@@ -16,7 +16,9 @@ Usage:
 import argparse
 import json
 import os
+import re
 import sys
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from urllib.parse import quote
 
@@ -39,6 +41,10 @@ GITHUB_RAW = "https://nerranetwork.com"
 # proof and the badge was invisible through the entire early-growth phase.
 MIN_SOCIAL_PROOF_SUBSCRIBERS = 50
 
+# Hide the "Most Played" homepage rail when OP3 data is older than this
+# (token unset / fetch stalled leaves a stale JSON that misleads visitors).
+POPULAR_EPISODES_MAX_AGE_DAYS = 8
+
 # Channel handles for the YouTube CTA on show pages. The handle is
 # determined per-show by youtube.channel in the YAML (en → @NerraNetwork,
 # ru → @NerraRU).
@@ -46,6 +52,30 @@ _YT_CHANNEL_HANDLES = {
     "en": "@NerraNetwork",
     "ru": "@NerraRU",
 }
+
+
+def _blog_url_for_episode(slug: str, title: str = "", episode_num=None) -> str:
+    """Return a relative blog post URL when the episode page exists.
+
+    Blog dirs use underscores (``blog/omni_view/``). Age of AI has no
+    episodes yet — returns '' so templates can fall back to the show page
+    or omit the link.
+    """
+    ep = episode_num
+    if ep is None and title:
+        m = re.search(r"(?i)\bep(?:isode)?\s*(\d+)\b", title)
+        if m:
+            ep = int(m.group(1))
+    try:
+        ep_i = int(ep) if ep is not None else 0
+    except (TypeError, ValueError):
+        ep_i = 0
+    if ep_i <= 0:
+        return ""
+    rel = f"blog/{slug}/ep{ep_i:03d}.html"
+    if (ROOT / rel).exists():
+        return rel
+    return ""
 
 
 def _read_show_youtube(slug: str) -> dict:
@@ -2586,12 +2616,14 @@ def generate_network_page(*, dry_run=False):
                 audio_url = enclosure.get("url", "") if enclosure is not None else ""
                 latest_episodes.append({
                     "show_name": cfg["name"],
+                    "show_slug": slug,
                     "show_page": cfg["show_page"],
                     "brand_color": cfg["brand_color"],
                     "title": title,
                     "pub_date_str": pub_date_str,
                     "pub_date": best_date,
                     "audio_url": audio_url,
+                    "blog_url": _blog_url_for_episode(slug, title=title),
                 })
             except Exception:
                 continue
@@ -2619,13 +2651,42 @@ def generate_network_page(*, dry_run=False):
 
     # "Most played this week" rail — fed by the nightly OP3 stats fetch
     # (scripts/fetch_op3_stats.py). Renders nothing when the file is
-    # missing/empty (OP3_API_TOKEN not configured yet).
+    # missing/empty (OP3_API_TOKEN not configured yet) OR when the
+    # companion op3_stats.json is older than POPULAR_EPISODES_MAX_AGE_DAYS
+    # (stale rail misleads visitors when the token is unset).
     popular_episodes = []
     try:
         _popular_path = ROOT / "site" / "data" / "popular_episodes.json"
-        if _popular_path.exists():
+        _op3_path = ROOT / "api" / "op3_stats.json"
+        _fresh = True
+        if _op3_path.exists():
+            try:
+                _fetched = (json.loads(_op3_path.read_text(encoding="utf-8"))
+                            or {}).get("fetched_at")
+                if _fetched:
+                    _fetched_dt = datetime.fromisoformat(
+                        _fetched.replace("Z", "+00:00"))
+                    if _fetched_dt.tzinfo is None:
+                        _fetched_dt = _fetched_dt.replace(tzinfo=timezone.utc)
+                    _age = datetime.now(timezone.utc) - _fetched_dt
+                    if _age > timedelta(days=POPULAR_EPISODES_MAX_AGE_DAYS):
+                        _fresh = False
+                        print(
+                            f"Warning: popular episodes rail hidden — "
+                            f"OP3 stats are {_age.days}d old "
+                            f"(>{POPULAR_EPISODES_MAX_AGE_DAYS}d)"
+                        )
+            except Exception as _age_exc:
+                print(f"Warning: could not parse OP3 fetched_at: {_age_exc}")
+        if _fresh and _popular_path.exists():
             popular_episodes = json.loads(
                 _popular_path.read_text(encoding="utf-8")) or []
+            for _ep in popular_episodes:
+                if not _ep.get("blog_url"):
+                    _ep["blog_url"] = _blog_url_for_episode(
+                        _ep.get("show_slug") or "",
+                        title=_ep.get("title") or "",
+                    )
             popular_episodes = [
                 ep for ep in popular_episodes if ep.get("audio_url")
             ][:6]
@@ -3616,6 +3677,26 @@ def main():
         help="Generate the cross-show podcast player page",
     )
     parser.add_argument(
+        "--how-to-listen",
+        action="store_true",
+        help="Generate the How to Listen page",
+    )
+    parser.add_argument(
+        "--start-here",
+        action="store_true",
+        help="Generate the Start Here onboarding page",
+    )
+    parser.add_argument(
+        "--faq",
+        action="store_true",
+        help="Generate the FAQ page",
+    )
+    parser.add_argument(
+        "--about",
+        action="store_true",
+        help="Generate the About page",
+    )
+    parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Preview output without writing files",
@@ -3624,7 +3705,12 @@ def main():
     args = parser.parse_args()
 
     # Default to --all if no specific flag
-    if not args.summaries and not args.shows and not args.network and not args.all and not args.show and not args.blogs and not args.sitemap and not args.player:
+    _any_flag = (
+        args.summaries or args.shows or args.network or args.all or args.show
+        or args.blogs or args.sitemap or args.player or args.how_to_listen
+        or args.start_here or args.faq or args.about
+    )
+    if not _any_flag:
         args.all = True
 
     if args.show:
@@ -3709,6 +3795,14 @@ def main():
         generate_sitemap(dry_run=args.dry_run)
     if args.player:
         generate_player_page(dry_run=args.dry_run)
+    if args.how_to_listen:
+        generate_how_to_listen_page(dry_run=args.dry_run)
+    if args.start_here:
+        generate_start_here_page(dry_run=args.dry_run)
+    if args.faq:
+        generate_faq_page(dry_run=args.dry_run)
+    if args.about:
+        generate_about_page(dry_run=args.dry_run)
 
 
 if __name__ == "__main__":

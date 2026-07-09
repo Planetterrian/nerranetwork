@@ -131,7 +131,7 @@
                 </div>
             </div>
             <div class="start-shows-row">
-                {% for s in all_shows if s.slug in ['tesla', 'models_agents', 'models_agents_beginners'] %}
+                {% for s in all_shows if s.slug in ['tesla', 'models_agents', 'models_agents_beginners', 'first_principles', 'age_of_ai'] %}
                 <a href="{{ path_prefix }}{{ s.show_page }}" class="start-show-card" style="--card-color: {{ s.brand_color }}">
                     <picture>
                         <source type="image/webp" srcset="{{ path_prefix }}{{ s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image }}-400.webp">
@@ -147,6 +147,18 @@
                     </div>
                 </a>
                 {% endfor %}
+                {#- Age of AI is interview-driven: surface the guest apply
+                    path next to the show card so prospective guests aren't
+                    sent to an empty blog. -#}
+                <a href="{{ path_prefix }}age-of-ai-apply.html" class="start-show-card" style="--card-color: #00D4FF">
+                    <div class="start-card-info" style="padding-left:0;">
+                        <h3>Apply to be a guest</h3>
+                        <p>The Age of AI interviews real builders — apply to join Mira on the show.</p>
+                        <div class="start-card-meta">
+                            <span>Guest pipeline</span>
+                        </div>
+                    </div>
+                </a>
             </div>
         </div>
 
@@ -215,7 +227,7 @@
                 </div>
             </div>
             <div class="start-shows-row">
-                {% for s in all_shows if s.slug in ['fascinating_frontiers', 'planetterrian'] %}
+                {% for s in all_shows if s.slug in ['fascinating_frontiers', 'planetterrian', 'spacex'] %}
                 <a href="{{ path_prefix }}{{ s.show_page }}" class="start-show-card" style="--card-color: {{ s.brand_color }}">
                     <picture>
                         <source type="image/webp" srcset="{{ path_prefix }}{{ s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image }}-400.webp">
@@ -271,7 +283,7 @@
                 </div>
             </div>
             <div class="start-shows-row">
-                {% for s in all_shows if s.slug in ['unintended_consequences'] %}
+                {% for s in all_shows if s.slug in ['unintended_consequences', 'dp_pod'] %}
                 <a href="{{ path_prefix }}{{ s.show_page }}" class="start-show-card" style="--card-color: {{ s.brand_color }}">
                     <picture>
                         <source type="image/webp" srcset="{{ path_prefix }}{{ s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image }}-400.webp">

@@ -101,7 +101,7 @@
             <div class="hero-badge">Independent Podcast Network</div>
             <h1><span class="gradient-text">Nerra</span> Network</h1>
             <p class="network-hero-tagline">Feed your curiosity. Not your anxiety.</p>
-            <p class="hero-subtitle">Daily ad-free shows covering Tesla, world news, space, science, AI, investing, and more. Produced in Vancouver.</p>
+            <p class="hero-subtitle">Daily ad-free shows covering Tesla, SpaceX, world news, space, science, AI, investing, first-principles thinking, good news, and more. Produced in Vancouver.</p>
             <div class="hero-show-orbit">
                 {% for s in all_shows %}
                 {% set _pbase = s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image %}
@@ -127,7 +127,7 @@
                     <span>cadence</span>
                 </div>
                 <div class="proof-stat">
-                    <strong>900+</strong>
+                    <strong>{{ total_episodes }}+</strong>
                     <span>episodes shipped</span>
                 </div>
                 <div class="proof-stat">
@@ -145,26 +145,35 @@
     <div class="topic-ticker">
         <div class="ticker-track">
             <span>🔋 Tesla & EV Markets</span>
+            <span>🚀 SpaceX Daily</span>
             <span>📈 Modern Investing</span>
             <span>🤖 AI Models & Agents</span>
             <span>🚀 Space & Astronomy</span>
             <span>🧬 Longevity & Biotech</span>
             <span>🌍 Environmental Policy</span>
             <span>📰 Balanced Global News</span>
+            <span>🧠 First Principles</span>
+            <span>✨ The DP Pod</span>
+            <span>🎙️ The Age of AI</span>
             <span>🇷🇺 Learn Russian</span>
             <span>💰 Finance (RU)</span>
             <span>💡 AI for Beginners</span>
             <span>📜 Unintended Consequences</span>
             <span>🔋 Tesla & EV Markets</span>
+            <span>🚀 SpaceX Daily</span>
             <span>📈 Modern Investing</span>
             <span>🤖 AI Models & Agents</span>
             <span>🚀 Space & Astronomy</span>
             <span>🧬 Longevity & Biotech</span>
             <span>🌍 Environmental Policy</span>
             <span>📰 Balanced Global News</span>
+            <span>🧠 First Principles</span>
+            <span>✨ The DP Pod</span>
+            <span>🎙️ The Age of AI</span>
             <span>🇷🇺 Learn Russian</span>
             <span>💰 Finance (RU)</span>
             <span>💡 AI for Beginners</span>
+            <span>📜 Unintended Consequences</span>
         </div>
     </div>
 
@@ -178,7 +187,7 @@
                 </div>
                 <div class="stat-divider"></div>
                 <div class="stat-item">
-                    <div class="stat-number">900+</div>
+                    <div class="stat-number">{{ total_episodes }}+</div>
                     <div class="stat-label">Episodes</div>
                 </div>
                 <div class="stat-divider"></div>
@@ -219,10 +228,17 @@
             {% for ep in latest_episodes %}
             <div class="latest-scroll-card glass-card">
                 <div class="episode-card-show" style="background:{{ ep.brand_color }};">{{ ep.show_name }}</div>
+                {% if ep.blog_url %}
+                <a href="{{ path_prefix }}{{ ep.blog_url }}" class="episode-card-title" style="display:block;color:inherit;text-decoration:none;">{{ ep.title }}</a>
+                {% else %}
                 <div class="episode-card-title">{{ ep.title }}</div>
+                {% endif %}
                 <div class="episode-card-date">{{ ep.date_display }}</div>
                 {% if ep.audio_url %}
                 <audio controls preload="none" src="{{ ep.audio_url }}" aria-label="{{ ep.show_name }} episode audio" style="width:100%;height:36px;border-radius:8px;margin-top:var(--sp-2);"></audio>
+                {% endif %}
+                {% if ep.blog_url %}
+                <a href="{{ path_prefix }}{{ ep.blog_url }}" style="display:inline-block;margin-top:var(--sp-2);font-family:var(--font-ui);font-size:0.8rem;color:{{ ep.brand_color }};text-decoration:none;">Read article →</a>
                 {% endif %}
             </div>
             {% endfor %}
@@ -248,9 +264,16 @@
             {% for ep in popular_episodes %}
             <div class="latest-scroll-card glass-card">
                 <div class="episode-card-show" style="background:{{ ep.brand_color }};">#{{ ep.rank }} · {{ ep.show_name }}</div>
+                {% if ep.blog_url %}
+                <a href="{{ path_prefix }}{{ ep.blog_url }}" class="episode-card-title" style="display:block;color:inherit;text-decoration:none;">{{ ep.title }}</a>
+                {% else %}
                 <div class="episode-card-title">{{ ep.title }}</div>
+                {% endif %}
                 {% if ep.audio_url %}
                 <audio controls preload="none" src="{{ ep.audio_url }}" aria-label="{{ ep.show_name }} episode audio" style="width:100%;height:36px;border-radius:8px;margin-top:var(--sp-2);"></audio>
+                {% endif %}
+                {% if ep.blog_url %}
+                <a href="{{ path_prefix }}{{ ep.blog_url }}" style="display:inline-block;margin-top:var(--sp-2);font-family:var(--font-ui);font-size:0.8rem;color:{{ ep.brand_color }};text-decoration:none;">Read article →</a>
                 {% endif %}
             </div>
             {% endfor %}
@@ -407,7 +430,7 @@
             </div>
             <div class="about-section-text">
                 <p><strong>Ad-free shows on the ideas shaping tomorrow.</strong></p>
-                <p>Nerra Network is an independent podcast network covering Tesla, balanced world news, space and astronomy, science and longevity, environmental intelligence, AI, financial literacy, language learning, and modern investing. All produced in Vancouver, Canada by Patrick.</p>
+                <p>Nerra Network is an independent podcast network covering Tesla, SpaceX, balanced world news, space and astronomy, science and longevity, environmental intelligence, AI, first-principles thinking, good news with agency (The DP Pod), live AI-hosted interviews (The Age of AI), financial literacy, language learning, and modern investing. All produced in Vancouver, Canada by Patrick.</p>
                 <p>Our mission: stimulating conversation, supporting positive developments that benefit all, and providing unbiased coverage with varying perspectives.</p>
             </div>
         </div>
