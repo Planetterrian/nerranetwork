@@ -28,12 +28,16 @@ def grok_generate_text(
     enable_x_search: bool = False,
     x_handles: Optional[List[str]] = None,
     max_turns: Optional[int] = None,
+    cache_key: Optional[str] = None,
 ) -> Tuple[str, Dict[str, Any]]:
     """Generate text from Grok.
 
     When search tools are requested, uses the Responses API
     (``client.responses.create``) with ``x_search`` / ``web_search``
     built-in tools.  Otherwise uses Chat Completions.
+
+    *cache_key* (optional) sticky-routes for prompt-cache reuse: Chat
+    Completions via ``x-grok-conv-id``, Responses via ``prompt_cache_key``.
 
     Returns ``(text, meta)``.
     """
@@ -68,11 +72,17 @@ def grok_generate_text(
         )
 
         try:
-            resp = client.responses.create(
-                model=model,
-                input=[{"role": "user", "content": prompt}],
-                tools=tools,
-            )
+            create_kwargs: Dict[str, Any] = {
+                "model": model,
+                "input": [{"role": "user", "content": prompt}],
+                "tools": tools,
+            }
+            if cache_key:
+                # Responses API sticky routing (same role as x-grok-conv-id).
+                create_kwargs["extra_body"] = {
+                    "prompt_cache_key": str(cache_key),
+                }
+            resp = client.responses.create(**create_kwargs)
             text = getattr(resp, "output_text", "") or ""
             text = text.strip()
             logging.info(
@@ -94,11 +104,14 @@ def grok_generate_text(
         base_url="https://api.x.ai/v1",
         timeout=timeout_seconds,
     )
-    resp = client.chat.completions.create(
-        model=model,
-        messages=[{"role": "user", "content": prompt}],
-        temperature=temperature,
-        max_tokens=max_tokens,
-    )
+    create_kwargs = {
+        "model": model,
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+    }
+    if cache_key:
+        create_kwargs["extra_headers"] = {"x-grok-conv-id": str(cache_key)}
+    resp = client.chat.completions.create(**create_kwargs)
     text = resp.choices[0].message.content.strip()
     return text, {"provider": "openai_compat", "model": model, "usage": getattr(resp, "usage", None)}

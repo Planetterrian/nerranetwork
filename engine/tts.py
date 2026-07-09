@@ -824,6 +824,7 @@ def _speak_with_grok(
     append_exclamation: bool = False,
     speech_wrap_open: str = "",
     speech_wrap_close: str = "",
+    speed: float = 1.0,
 ) -> None:
     """Grok-TTS counterpart of ``speak()``.
 
@@ -885,6 +886,7 @@ def _speak_with_grok(
             grok_speak_chunk(
                 out_text, voice_id, wav_chunk,
                 api_key=api_key, language_code=language_code, timeout=timeout,
+                speed=speed,
             )
             subprocess.run(
                 [
@@ -930,6 +932,7 @@ def _speak_with_grok(
             grok_speak_chunk(
                 chunk_text_str, voice_id, chunk_file,
                 api_key=api_key, language_code=language_code, timeout=timeout,
+                speed=speed,
             )
             chunk_files.append(chunk_file)
             wav_files.append(chunk_file)
@@ -1009,7 +1012,9 @@ def synthesize(
     output_path = Path(output_path)
     if provider == "grok":
         # Grok's "auto" detects language; explicit codes (e.g. "ru") are
-        # the safer choice for non-English shows.
+        # the safer choice for non-English shows. ``speed`` is a documented
+        # Grok TTS multiplier (0.7–1.5); default 1.0 keeps the payload
+        # byte-identical for every show that does not opt in.
         _speak_with_grok(
             text, voice_id, str(output_path),
             api_key=api_key,
@@ -1019,6 +1024,7 @@ def synthesize(
             append_exclamation=append_exclamation,
             speech_wrap_open=speech_wrap_open,
             speech_wrap_close=speech_wrap_close,
+            speed=speed,
         )
         return output_path
     # Default: ElevenLabs
@@ -1107,6 +1113,7 @@ def synthesize_sections(
                 timeout=timeout,
                 speech_wrap_open=speech_wrap_open,
                 speech_wrap_close=speech_wrap_close,
+                speed=speed,
             )
         else:
             speak(
