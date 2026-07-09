@@ -359,11 +359,30 @@ def build_long_form_metadata(
     # attribution.
     show_page_line = f"🌐 Show page: {rss_link}"
 
+    # Rotating network-discovery line (gallery / blogs / trackers / …) —
+    # metadata-only, no audio. Same date-deterministic surface rotation
+    # as the spoken outro and X reply (engine.network_promo).
+    discovery_line = ""
+    try:
+        import datetime as _dt
+        from engine.network_promo import pick_featured_surface
+        _slug = getattr(config, "slug", "") or ""
+        _surface = pick_featured_surface(_slug, _dt.date.today())
+        if _surface:
+            discovery_line = (
+                f"✨ {_surface['x_line'].replace('More from the Nerra Network: ', '')} "
+                f"— https://nerranetwork.com/{_surface['url']}"
+            )
+    except Exception:  # noqa: BLE001 — never block a YouTube upload
+        discovery_line = ""
+
     pieces: List[str] = []
     if hook:
         pieces.append(hook.strip())
     pieces.append(show_page_line)
     pieces.append(subscribe_line)
+    if discovery_line:
+        pieces.append(discovery_line)
     if body:
         pieces.append(body)
     if chapters_block:

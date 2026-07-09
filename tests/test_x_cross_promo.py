@@ -53,25 +53,36 @@ class TestReplyText:
 
     @pytest.mark.parametrize("slug", _X_ENABLED)
     def test_plug_links_a_sibling_with_utm(self, slug):
+        # Even ordinal → sibling show (legacy cross_promo campaign).
         cfg = load_config(f"shows/{slug}.yaml")
-        text = run_show._build_cross_promo_reply(
-            cfg, datetime.date(2026, 6, 10))
+        day = datetime.date(2026, 6, 11)  # even toordinal
+        assert day.toordinal() % 2 == 0
+        text = run_show._build_cross_promo_reply(cfg, day)
         assert "More from the Nerra Network:" in text
         assert "utm_campaign=cross_promo" in text
         assert cfg.name not in text.split("More from the Nerra Network:")[1], (
             "the plug must feature a SIBLING show, not the show itself"
         )
 
+    @pytest.mark.parametrize("slug", _X_ENABLED)
+    def test_odd_day_plugs_network_surface(self, slug):
+        cfg = load_config(f"shows/{slug}.yaml")
+        day = datetime.date(2026, 6, 10)  # odd toordinal
+        assert day.toordinal() % 2 == 1
+        text = run_show._build_cross_promo_reply(cfg, day)
+        assert "utm_campaign=network_discovery" in text
+        assert "More from the Nerra Network:" in text
+
     def test_follow_line_present_when_handle_set(self):
         cfg = load_config("shows/tesla.yaml")
         text = run_show._build_cross_promo_reply(
-            cfg, datetime.date(2026, 6, 10))
+            cfg, datetime.date(2026, 6, 11))
         assert text.startswith("Follow @teslashortstime")
 
     def test_follow_line_omitted_when_no_handle(self):
         cfg = load_config("shows/omni_view.yaml")
         text = run_show._build_cross_promo_reply(
-            cfg, datetime.date(2026, 6, 10))
+            cfg, datetime.date(2026, 6, 11))
         assert "Follow @" not in text
         assert text.startswith("More from the Nerra Network:")
 
@@ -79,7 +90,7 @@ class TestReplyText:
     def test_russian_shows_produce_empty_reply(self, slug):
         cfg = load_config(f"shows/{slug}.yaml")
         assert run_show._build_cross_promo_reply(
-            cfg, datetime.date(2026, 6, 10)) == ""
+            cfg, datetime.date(2026, 6, 11)) == ""
 
     def test_rotation_varies_across_days(self):
         cfg = load_config("shows/tesla.yaml")

@@ -1582,6 +1582,18 @@ def _build_footer_html(show: Dict[str, str]) -> str:
         link for link in (
             _link(show["youtube_playlist_url"], "📺 Watch on YouTube"),
             _link(show["blog_page"], "📝 Read the blog"),
+            _link(
+                "https://nerranetwork.com/gallery.html",
+                "🖼 Free image gallery (CC BY-SA)",
+            ),
+            _link(
+                "https://nerranetwork.com/data.html",
+                "📊 Data Hub & Story Trackers",
+            ),
+            _link(
+                "https://nerranetwork.com/start-here.html",
+                "🧭 Start Here",
+            ),
         ) if link
     ]
     secondary = (

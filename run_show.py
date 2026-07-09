@@ -5539,19 +5539,32 @@ def _build_cross_promo_reply(config, today) -> str:
     """Build the cross-promo reply posted under the daily teaser tweet.
 
     Shape: optional "Follow @handle" line (omitted when the show's YAML
-    doesn't set ``publishing.x_handle``) + one sibling-show plug picked
-    by :func:`engine.network_promo.pick_featured_show` (deterministic
-    daily rotation, English shows only — same rotation the spoken outro
-    promo uses) + a UTM-tagged link to the sibling's show page.
+    doesn't set ``publishing.x_handle``) + either a sibling-show plug
+    (even days) or a network-discovery surface plug (odd days: gallery,
+    blogs, story trackers, data hub, Start Here, Age of AI apply, DP
+    club) — both from :mod:`engine.network_promo` — + a UTM-tagged URL.
 
-    Returns "" when there's nothing worth posting (no handle AND no
-    eligible sibling). X counts any URL as 23 chars, so the 280 budget
-    is enforced on that basis by trimming the tagline first.
+    Alternating keeps the 280-char budget honest while expanding
+    discovery beyond sibling shows. Returns "" when there's nothing
+    worth posting. X counts any URL as 23 chars.
     """
-    from engine.network_promo import ENGLISH_SHOWS, pick_featured_show
+    from engine.network_promo import (
+        ENGLISH_SHOWS,
+        build_surface_x_reply,
+        pick_featured_show,
+    )
 
     handle = (getattr(config.publishing, "x_handle", "") or "").strip()
     follow_line = f"Follow {handle} for daily episodes." if handle else ""
+
+    # Odd days → website surface (gallery / blogs / trackers / …).
+    # Even days → sibling show (legacy behaviour).
+    use_surface = (today.toordinal() % 2) == 1
+    if use_surface:
+        surface_text = build_surface_x_reply(config.slug, today)
+        if surface_text:
+            parts = [p for p in (follow_line, surface_text) if p]
+            return "\n\n".join(parts) if follow_line else surface_text
 
     promo_line = ""
     url = ""

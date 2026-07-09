@@ -66,6 +66,11 @@ def test_promo_text_mentions_network_and_featured_show():
     featured = pick_featured_show("tesla", _DAY)
     from engine.network_promo import ENGLISH_SHOWS
     assert ENGLISH_SHOWS[featured]["spoken_name"] in promo
+    # July 2026: also plugs a rotating website surface.
+    assert any(
+        s in promo.lower()
+        for s in ("gallery", "blog", "summaries", "tracker", "data", "start-here", "age of ai", "do positive")
+    )
 
 
 def test_promo_text_has_no_ampersand():
@@ -74,3 +79,9 @@ def test_promo_text_has_no_ampersand():
         for i in range(len(ENGLISH_ORDER) + 1):
             promo = build_network_promo(slug, _DAY + dt.timedelta(days=i))
             assert "&" not in promo
+
+
+def test_new_shows_appended_not_reordered():
+    """first_principles + dp_pod must be at the end so prior rotations stay stable."""
+    assert ENGLISH_ORDER.index("spacex") < ENGLISH_ORDER.index("first_principles")
+    assert ENGLISH_ORDER[-1] == "dp_pod"
