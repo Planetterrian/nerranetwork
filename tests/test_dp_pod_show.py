@@ -96,9 +96,9 @@ class TestChapterMarkers:
 
 
 class TestClubPage:
-    """July 2026 club redesign (docs/dp_pod_market_assessment_2026_07.md):
-    the page is a membership pitch, not a media property — pledge-led join,
-    constrained Dispatch grammar, seeded member wall, free-forever charter."""
+    """July 2026 club redesign + July 9 de-gimmick pass
+    (docs/reviews/dp_pod_review_2026_07_09.md): membership pitch without
+    oath-heavy pledge language; constrained Dispatch grammar; seeded wall."""
 
     def test_registry_uses_club_template(self):
         from generate_html import NETWORK_SHOWS
@@ -111,22 +111,28 @@ class TestClubPage:
 
         html_path = gh.generate_show_page("dp_pod", dry_run=False)
         html = Path(html_path).read_text(encoding="utf-8")
-        # Mechanic 1: pledge-led join via Buttondown with the show tag
+        # Join via Buttondown with the show tag (de-gimmicked: invitation,
+        # not an oath-style "Sign the pledge")
         assert "buttondown.com/api/emails/embed-subscribe" in html
         assert 'value="DP Pod"' in html
-        assert "Do Positive Pledge" in html
-        # Mechanic 1b: seeded member wall (pledger-majority sequencing)
+        assert "Join the club" in html
+        assert "Join free — get the daily briefing" in html
+        assert "Sign the pledge" not in html
+        assert "once a week, I'll do one positive thing" not in html
+        # Seeded member wall (pledger-majority sequencing)
         assert "№ 001" in html and "Dan Perra" in html
         assert "№ 002" in html and "Patrick Novak" in html
-        # Mechanic 2: constrained Dispatch grammar with a real submission path
+        # Constrained Dispatch grammar with a real submission path
         assert "mailto:" in html and "Do%20Positive%20Dispatch" in html
         assert "The honest numbers" in html
-        # Mechanic 3/4: starter levers pre-launch; charter promises free
-        # JOINING, never "free forever" (operator decision, July 2026 —
-        # patron tiers fund Nerra; episodes stay un-paywalled)
+        # Charter: free JOINING, never "free forever"
         assert "Free to join" in html
         assert "Free forever" not in html
         assert "Do something about it" in html
+        # Lever framed as invitation, not homework assignment
+        assert "This week's levers" in html
+        assert "This week's assignments" not in html
+        assert "You get one invitation" in html
 
     def test_patron_tiers_present_with_placeholder_until_url_set(self):
         import generate_html as gh
@@ -229,6 +235,37 @@ class TestDebutRework:
         ctx = hook.pre_fetch(CFG, episode_num=2, today_str="July 3, 2026")
         assert "nerra_network_context" in ctx
         assert "First Principles Daily" in ctx["nerra_network_context"]
+
+    def test_hook_injects_previous_lever_for_dispatch_continuity(self):
+        """Ep2/Ep4 invented a heat-pump callback that never aired — the hook
+        must surface the real prior Lever so Dispatch can't invent one."""
+        import importlib
+
+        hook = importlib.import_module("shows.hooks.dp_pod")
+        # Live digests exist through Ep4 — previous lever should be Ep4's
+        # solar assessment (newest) or at least some real aired action.
+        prev = hook._previous_lever_for_dispatch()
+        assert prev.startswith("PREVIOUS LEVER")
+        # The quoted lever body (after the colon) must be a real aired action —
+        # not a phantom heat-pump callback. The instruction preamble may still
+        # mention heat pumps as a forbidden example.
+        quoted = prev.split("):", 1)[-1].lower()
+        assert "heat-pump" not in quoted
+        assert "heat pump" not in quoted
+        assert any(
+            token in quoted
+            for token in ("solar", "diesel", "filter", "pledge", "doomscroll")
+        )
+        ctx = hook.pre_fetch(CFG, episode_num=5, today_str="July 9, 2026")
+        assert "PREVIOUS LEVER" in ctx["nerra_network_context"]
+
+    def test_digest_prompt_forbids_phantom_prior_levers(self):
+        digest = (PROJECT_ROOT / "shows" / "prompts" / "dp_pod_digest.txt").read_text(
+            encoding="utf-8")
+        assert "PREVIOUS LEVER" in digest
+        assert "never invent a different past lever" in digest.lower() or (
+            "NEVER invent a prior Lever" in digest
+        )
 
     def test_first_episode_overrides_are_dp_pod_specific(self):
         from engine.first_episode import (

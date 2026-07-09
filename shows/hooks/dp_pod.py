@@ -161,6 +161,47 @@ def _recent_think_positive_thinkers(max_digests: int = 8) -> str:
         return ""
 
 
+def _previous_lever_for_dispatch(max_lookback: int = 5) -> str:
+    """The most recent aired Lever — for honest Dispatch continuity.
+
+    Ep2/Ep4 invented a 'heat-pump filter swap' callback that never aired.
+    Inject the real prior Lever so the digest can only point at something
+    that actually happened. Returns "" before Episode 2.
+    """
+    try:
+        md_files = sorted(
+            (_ROOT / "digests" / "dp_pod").glob("DP_Pod_Ep*.md"),
+            reverse=True,
+        )
+        for md in md_files[:max_lookback]:
+            text = md.read_text(encoding="utf-8")
+            m = re.search(
+                r"###\s*The Lever\s*\n(.*?)(?:\n[━#]|\Z)", text, re.DOTALL,
+            )
+            if not m:
+                continue
+            lever = re.sub(r"\s+", " ", m.group(1)).strip()
+            # Drop trailing Source: lines if present.
+            lever = re.split(r"\bSource:\s*", lever, maxsplit=1)[0].strip()
+            if len(lever) < 40:
+                continue
+            ep_m = re.search(r"Ep(\d+)", md.name)
+            ep_label = f"Ep{int(ep_m.group(1)):03d}" if ep_m else md.stem
+            # Keep the first ~40 words so the digest can quote it briefly.
+            words = lever.split()
+            short = " ".join(words[:40]) + ("…" if len(words) > 40 else "")
+            return (
+                "PREVIOUS LEVER (the most recent aired action — when the "
+                "Dispatch has no listener mail, point at THIS exact lever "
+                "only; never invent a different past action like heat pumps "
+                f"or filters that did not air): [{ep_label}] {short}"
+            )
+        return ""
+    except Exception as exc:
+        logger.warning("dp_pod hook: previous lever unavailable (non-fatal): %s", exc)
+        return ""
+
+
 def _latest_first_principles_brief() -> str:
     """Hook + short excerpt of the newest First Principles Daily digest.
 
@@ -227,6 +268,10 @@ def pre_fetch(config, *, episode_num=None, today_str=None) -> dict:
     if thinkers:
         sections.append("")
         sections.append(thinkers)
+    prev_lever = _previous_lever_for_dispatch()
+    if prev_lever:
+        sections.append("")
+        sections.append(prev_lever)
     notes = _founders_notes()
     if notes:
         sections.append("")
