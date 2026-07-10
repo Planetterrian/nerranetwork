@@ -59,25 +59,40 @@ If the hint is empty (no data yet) the title prompt renders exactly as before.
 
 ## Operator one-time setup
 
-1. **Re-authorise the OAuth token** with the analytics scope. The June 2026
+Two GCP/OAuth steps — both required. Nightly logs on 2026-07-09 showed the
+**API was disabled** on the project (not only a missing OAuth scope), so do
+them in this order:
+
+1. **Enable YouTube Analytics API v2** in the same Google Cloud project that
+   owns `YOUTUBE_CLIENT_ID` (project number was `141610975484` in the July
+   2026 403). Console → **APIs & Services → Library → "YouTube Analytics
+   API"** → Enable. Wait 1–5 minutes for propagation. Uploads use Data API
+   v3 (already enabled); analytics is a separate product.
+
+2. **Re-authorise the OAuth token** with the analytics scope. The June 2026
    change added `https://www.googleapis.com/auth/yt-analytics.readonly` to
-   `engine.youtube.YOUTUBE_SCOPES`. Google rejects a stored refresh token that
-   lacks a requested scope, so re-run:
+   `engine.youtube.YOUTUBE_SCOPES`. Google will not expand scopes on an
+   existing refresh token, so:
 
+   ```bash
+   # Revoke the old grant first so Google re-shows consent:
+   # https://myaccount.google.com/permissions  → remove the Nerra / GCP app
+
+   python scripts/youtube_oauth_bootstrap.py ~/Downloads/client_secrets.json
+   # Sign in as @NerraNetwork → paste token into YOUTUBE_REFRESH_TOKEN_EN
+
+   python scripts/youtube_oauth_bootstrap.py ~/Downloads/client_secrets.json
+   # Sign in as @NerraRU → paste token into YOUTUBE_REFRESH_TOKEN_RU
    ```
-   python scripts/youtube_oauth_bootstrap.py        # @NerraNetwork (EN)
-   ```
 
-   and re-consent, then update the `YOUTUBE_REFRESH_TOKEN_EN` secret (and
-   `YOUTUBE_REFRESH_TOKEN_RU` for @NerraRU if RU shows are publishing). **Until
-   this is done, uploads keep working on the old token; only the analytics
-   read no-ops** (it logs "Analytics query rejected … re-auth needed").
+   **Until both steps are done, uploads keep working; only the analytics
+   read no-ops.**
 
-2. That's it. The nightly job already passes the YouTube secrets to the fetch
+3. That's it. The nightly job already passes the YouTube secrets to the fetch
    step; `api/youtube_stats.json` and the per-show `youtube_performance.json`
-   files start populating once the scope is live and videos have a few weeks of
-   watch data. The title hint switches on the moment a show has ≥4 videos with
-   retention numbers.
+   files start populating once the API + scope are live and videos have a few
+   weeks of watch data. The title hint switches on the moment a show has ≥4
+   videos with retention numbers.
 
 ## Verifying
 
