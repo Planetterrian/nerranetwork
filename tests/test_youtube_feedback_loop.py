@@ -255,3 +255,42 @@ class TestScriptsAreCleanNoOps:
         fya = _load_script("fetch_youtube_analytics.py")
         # No per-show indexes under an empty digests dir → None (no-op).
         assert fya.fetch(tmp_path, days=90) is None
+
+
+class TestAnalytics403Classification:
+    """July 2026: nightly 403 was 'API disabled', not missing scope —
+    the warning must tell the operator which fix to apply."""
+
+    def test_disabled_api_message(self, caplog):
+        import logging
+        from unittest.mock import MagicMock
+
+        fya = _load_script("fetch_youtube_analytics.py")
+        svc = MagicMock()
+        svc.reports.return_value.query.return_value.execute.side_effect = (
+            RuntimeError(
+                "HttpError 403 … YouTube Analytics API has not been used "
+                "in project 141610975484 before or it is disabled"
+            )
+        )
+        with caplog.at_level(logging.WARNING):
+            assert fya._query_batch(svc, ["vid1"], "2026-01-01", "2026-07-09") == {}
+        joined = " ".join(r.message for r in caplog.records)
+        assert "Enable" in joined or "enable" in joined
+        assert "YouTube Analytics API" in joined
+        assert "re-run scripts/youtube_oauth_bootstrap" not in joined
+
+    def test_missing_scope_message(self, caplog):
+        import logging
+        from unittest.mock import MagicMock
+
+        fya = _load_script("fetch_youtube_analytics.py")
+        svc = MagicMock()
+        svc.reports.return_value.query.return_value.execute.side_effect = (
+            RuntimeError("HttpError 403 insufficient authentication scopes")
+        )
+        with caplog.at_level(logging.WARNING):
+            assert fya._query_batch(svc, ["vid1"], "2026-01-01", "2026-07-09") == {}
+        joined = " ".join(r.message for r in caplog.records)
+        assert "yt-analytics.readonly" in joined
+        assert "youtube_oauth_bootstrap" in joined

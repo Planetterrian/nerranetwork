@@ -30,7 +30,9 @@ Per-show YAML: `youtube.channel: en` or `ru`.
 
 ## One-time GCP + OAuth setup
 
-1. Create a Google Cloud project and enable **YouTube Data API v3**.
+1. Create a Google Cloud project and enable **YouTube Data API v3** *and*
+   **YouTube Analytics API** (the retention feedback loop needs Analytics;
+   Data API alone is enough for uploads).
 2. OAuth consent screen: External, add yourself as test user until verified.
 3. Create **Desktop** OAuth credentials; download JSON (never commit).
 4. Mint refresh tokens locally:
@@ -40,8 +42,8 @@ Per-show YAML: `youtube.channel: en` or `ru`.
    ```
 
    Run once per channel (English account, then Russian). The bootstrap script
-   requests `youtube.upload`, `youtube`, and **`youtube.force-ssl`** (required
-   for `captions.insert` / CC track upload).
+   requests `youtube.upload`, `youtube`, **`youtube.force-ssl`** (captions),
+   and **`yt-analytics.readonly`** (title feedback loop).
 
 5. Paste tokens into GitHub secrets:
 
@@ -52,9 +54,12 @@ Per-show YAML: `youtube.channel: en` or `ru`.
    | `YOUTUBE_REFRESH_TOKEN_EN` | English channel run |
    | `YOUTUBE_REFRESH_TOKEN_RU` | Russian channel run |
 
-If captions fail with HTTP 403 after upgrading scopes, **revoke** the app at
-https://myaccount.google.com/permissions and re-run the bootstrap script so
-Google issues a new refresh token with `force-ssl`.
+If captions or analytics fail with HTTP 403 after upgrading scopes, **revoke**
+the app at https://myaccount.google.com/permissions and re-run the bootstrap
+script so Google issues a new refresh token with the full scope set. Also
+confirm **YouTube Analytics API** is Enabled on the GCP project (a disabled
+API returns a 403 that looks like a scope problem — see
+[`docs/youtube_feedback_loop.md`](youtube_feedback_loop.md)).
 
 ## Quota
 

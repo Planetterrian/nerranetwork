@@ -130,10 +130,30 @@ def _query_batch(service, video_ids: List[str], start: str, end: str) -> Dict[st
         ).execute()
     except Exception as exc:
         msg = str(exc)
-        if "insufficient" in msg.lower() or "scope" in msg.lower() or "403" in msg:
+        low = msg.lower()
+        # Distinguish the two common 403s so the operator doesn't re-auth
+        # when the real fix is enabling the Analytics API in GCP (July 2026
+        # nightly log: "YouTube Analytics API has not been used in project
+        # … or it is disabled" was mis-labelled as a scope problem).
+        if "has not been used" in low or "is disabled" in low or "accessnotconfigured" in low:
             logger.warning(
-                "Analytics query rejected (likely missing yt-analytics.readonly "
-                "scope — re-auth needed): %s", msg[:200],
+                "Analytics query rejected — enable YouTube Analytics API v2 "
+                "in the Google Cloud project (APIs & Services → Library → "
+                "YouTube Analytics API), then wait a few minutes: %s",
+                msg[:220],
+            )
+        elif "insufficient" in low or "scope" in low or "access_denied" in low:
+            logger.warning(
+                "Analytics query rejected — refresh token lacks "
+                "yt-analytics.readonly; revoke the app at "
+                "myaccount.google.com/permissions and re-run "
+                "scripts/youtube_oauth_bootstrap.py: %s",
+                msg[:220],
+            )
+        elif "403" in msg:
+            logger.warning(
+                "Analytics query rejected (HTTP 403 — check API enablement "
+                "and OAuth scopes): %s", msg[:220],
             )
         else:
             logger.warning("Analytics query failed: %s", msg[:200])
