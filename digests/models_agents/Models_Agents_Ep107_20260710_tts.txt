@@ -1,0 +1,143 @@
+Glad you're here — welcome to Models and Agents, episode one hundred seven, for July tenth, twenty twenty-six. Your daily briefing on the A I models and agents that are changing everything. And no, not THOSE kinds of models and agents. Let's get into it.
+
+G P T 5.6 ships with new multi-agent and programmatic tool-calling A P I's plus major cost-per-task gains that directly affect what production agents can sustain today.
+
+Open A I released G P T 5.6 with expanded A P I support for programmatic tool calling and multi-agent orchestration.
+
+The release includes three new base models along with eighteen pelican variants tied to six reasoning levels.
+
+Explicit cost improvements target the Sol variant to address enterprise dollars-per-task concerns, with terra and luna also part of the efficiency push.
+
+Sam Altman described it as the best model Open A I has produced and pointed to a detailed accompanying blog post.
+
+The new capabilities build on the existing Codex core that powers the Work product now shipping to paid plans.
+
+Developers working on agent systems can now call the updated endpoints to orchestrate multiple agents without custom scaffolding.
+
+This release moves forward the capability gains versus cost trajectory question tracked since the prior episode while also targeting reliability of long-horizon agents through direct A P I support.
+
+Open A I also rolled out ChatGPT Work to Pro, Enterprise, and Edu users on web and mobile.
+
+Builders should test the new tool-calling endpoints this week for long-horizon agent workloads where token cost has been the blocker.
+
+Google Research, Google DeepMind, and collaborators released SensorFM, a wearable health foundation model pretrained on more than one trillion minutes of unlabeled sensor data from five million participants.
+
+The model uses a ViT-1D masked-autoencoder backbone and shows frozen embeddings plus a PCA-50 linear probe beating feature-engineered baselines on thirty-four of thirty-five tasks.
+
+An agentic classroom searched thirty thousand five hundred sixteen prediction heads during development.
+
+The work demonstrates co-scaling results across four model sizes and four data volumes.
+
+Builders focused on time-series health signals should test the released embeddings this week.
+
+A new preference dataset called PLURAL was introduced containing roughly five hundred thousand synthetic preference triplets drawn from the Integrated Values Survey across twenty countries.
+
+The two-stage generation pipeline converts nationally representative survey responses into realistic scenarios while preserving cross-country value differences.
+
+Training on PLURAL reduced mean absolute error by up to twenty-seven point seven percent relative to strong baselines when steering models toward target cultural profiles.
+
+Blind human evaluation with one hundred seventy-six evaluators in India, Brazil, and Japan confirmed that PLURAL-aligned responses were judged more representative of national values.
+
+The dataset is available on Hugging Face for teams working on pluralistic alignment.
+
+Researchers released EspanStereo, a Spanish-language stereotype dataset spanning multiple countries in Europe and Latin America, built via a human-L L M collaborative annotation framework.
+
+L L M's generated candidate stereotypes that in-culture annotators then validated, surfacing both documented and culturally specific biases absent from English-centric resources.
+
+Evaluation of Spanish-supporting L L M's on the dataset showed significant variation in stereotypical behavior across countries.
+
+The framework is positioned as adaptable to other languages and regions for scalable multilingual bias benchmarks.
+
+Holographic Neural PCFG, or Hol-PCFG, was proposed as a new parameterization that recasts PCFG rule scoring as algebraic relation modeling over torus-constrained embeddings using holographic embeddings.
+
+It achieves state-of-the-art unsupervised parsing performance in six languages while cutting rule-scoring parameters by ninety-nine point nine four percent relative to the Neural PCFG baseline and training more stably.
+
+The model can parse Japanese directly from characters without morphological segmentation while retaining nearly the same morpheme-level performance.
+
+Robbyant released LingBot-World-Infinity, a fourteen billion parameter causal video generation model that functions as an interactive world simulator.
+
+It uses a Mixture of Bidirectional and Autoregressive attention mask plus distribution matching distillation.
+
+A Director-Pilot agentic harness wraps the generator so a V L M proposes events and the Diffusion Transformer renders them, supporting a single sixty-minute uninterrupted session across twenty scenarios.
+
+The release includes one checkpoint and a four hundred eighty P reference script under a non-commercial CC BY-NC-SA four point zero license.
+
+DeepSearch-Evolve introduces a self-distillation framework for web agents built on DeepSearch-World, a deterministic environment with four hundred twenty thousand multi-hop QA tasks and reproducible search and page-reading tools.
+
+The method iteratively performs trajectory generation, filtering, data mixing, and fine-tuning without distillation from stronger models.
+
+DeepSearch-World-9B reaches thirty-one point two percent on BrowseComp, sixty-one point five percent on GAIA, and ninety-three point four percent on HotpotQA.
+
+The environment, training pool, validation set, model, and code will be released to support self-improving long-horizon agents.
+
+MASTE is a multi-agent pipeline that decomposes zero-shot Aspect Sentiment Triplet Extraction into four sequential stages handled by specialized agents with explicit conditioning on prior outputs.
+
+It requires no training data or in-domain demonstrations and generalizes across backbones and datasets.
+
+On four ASTE benchmarks it substantially outperforms zero-shot and chain-of-thought L L M baselines under the same backbone while narrowing the gap to fully supervised methods.
+
+Hallucination Self-Play bootstraps a reinforced hallucination detector by pitting it against an evolved generator initialized from the same base model.
+
+The detector is first fine-tuned on human-labeled data, then used as a reward model via RLAIF to train the generator, which in turn synthesizes harder examples for the detector through rule-based reinforcement learning.
+
+Experiments on RAGTruth and two model families show the small L L M can progressively match or exceed advanced L L M's without external supervision.
+
+COALA provides a framework for contextual biasing in speech-augmented language models by mapping SLM latent representations into a discriminative space that quantifies matching intensity between audio segments and candidate entities.
+
+It addresses training collapse on multi-target utterances and delivers superior performance across varying biasing list scales on LibriSpeech.
+
+The approach targets complex multi-entity scenarios where context-window limits make entity selection critical.
+
+Tail-Aware Credit Calibration, or TACO, was introduced to fix Positive-Credit Contamination in critic-free RL for L L M's, where low-probability tail tokens receive the same positive credit as plausible ones.
+
+The method computes a tail-risk score from local generation context and uses it to modulate positive credit without removing gradients entirely.
+
+Experiments across three L L M's and eight benchmarks show consistent gains over GRPO-style baselines plus improved training stability for long-horizon RL.
+
+COBART applies prefix control tokens with BART fine-tuning for ad headline generation, allowing length control across formats while optimizing click-through rate.
+
+It reports a twenty-five point eight two percent increase in Rouge-L and five point eight two percent estimated CTR lift over prior strong baselines.
+
+The method is described as flexible for other architectures and optimization criteria.
+
+OK, let's pop the hood on tail-aware credit assignment in reinforcement learning for L L M's.
+
+Everyone talks about reinforcement learning on L L M's as if uniform advantage broadcasting is a neutral default.
+
+In practice the design creates Positive-Credit Contamination because every token in a trajectory receives the identical scalar regardless of how surprising or contextually unsupported it was.
+
+The core insight starts with the observation that tail tokens, those falling into the low-probability region of the current policy, are disproportionately likely to be errors rather than useful exploration.
+
+TACO therefore computes a local tail-risk score that conditions on the preceding tokens in the same generation, then scales the positive credit applied to those tokens without zeroing their gradients.
+
+This preserves the possibility that genuinely rare but correct patterns accumulate reinforcement while incidental noise is progressively damped.
+
+The practical tradeoff is modest extra compute for the risk scoring step versus the stability gains that let training continue without the variance spikes that usually force early stopping on long-horizon tasks.
+
+When your RL runs show high variance across repeated trajectories on the same prompt, or when you notice the model reinforcing fluent but factually broken reasoning, the tail-calibration step is the lever worth adding first.
+
+Uniform credit remains acceptable only for short, high-certainty tasks where tail errors are rare by construction.
+
+Test the new G P T 5.6 tool-calling and multi-agent endpoints on a workflow that previously hit token-cost ceilings and compare dollars-per-task against prior models.
+
+Pull the SensorFM embeddings and run the PCA-50 linear probe on your own wearable or time-series health dataset to see whether it beats your current feature set.
+
+Try DeepSearch-World-9B on a multi-hop web task from your domain, where the released environment and code make it straightforward to measure self-evolution gains.
+
+Experiment with MASTE's four-stage pipeline on an Aspect Sentiment Triplet Extraction problem in a new language or domain where you lack labeled triplets.
+
+ChatGPT Work continues rolling out to Plus and Business plans over the coming days, with the desktop app unification already live globally.
+
+Further details on the terra and luna efficiency variants mentioned alongside G P T 5.6 Sol are expected in follow-up Open A I communications.
+
+The full release of DeepSearch-World's four hundred twenty thousand task pool, validation set, and code will enable broader experimentation with verifiable self-evolving agents.
+
+Tomorrow, keep an eye on additional cultural steering results from the PLURAL dataset as more teams fine-tune on the twenty-country preference triplets.
+
+That wraps up today's A I briefing. Share this with a developer or builder who wants to stay current. Subscribe wherever you listen. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+And before you go: this show is part of the Nerra Network — a family of daily podcasts on tech, science, and markets, each one a short, sharp briefing you can finish on the commute. If today earned its place in your feed, here's your next listen — Unintended Consequences, true stories of good intentions that backfired. Find every show, free, at nerranetwork dot com.
+
+The Age of A I puts real builders on the phone with an A I host — apply at nerranetwork dot com/age-of-A I apply.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.

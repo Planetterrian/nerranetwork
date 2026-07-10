@@ -1,0 +1,90 @@
+Glad you're here, welcome to Models and Agents episode 107 for July 10th, 2026.
+Your daily briefing on the AI models and agents that are changing everything.
+And no, not those kinds of models and agents, let's get into it.
+GPT 5.6 ships with new multi-agent and programmatic tool calling APIs, plus major cost-pertask gains
+that directly affect what production agents can sustain today.
+Open AI released GPT 5.6 with expanded API support for programmatic tool calling and multi-agent orchestration.
+The release includes three new base models, along with 18 pelican variants tied to six reasoning levels.
+Explicit cost improvements target the sole variant to address enterprise dollars per task concerns,
+with Terra and Luna also part of the efficiency push.
+Sam Altman described it as the best model open AI has produced and pointed to a detailed accompanying blog post.
+The new capabilities build on the existing codex core that powers the work product now shipping to paid plans.
+Developers working on agent systems can now call the updated endpoints to orchestrate multiple agents without custom scaffolding.
+This release moves forward the capability gains versus cost trajectory question tracked since the prior episode,
+while also targeting reliability of long horizon agents through direct API support.
+Open AI also rolled out chat GPT work to pro enterprise and edu users on web and mobile.
+Builders should test the new tool calling endpoints this week for long horizon agent workloads,
+where token cost has been the blocker.
+Google Research, Google Deep Mind, and collaborators released sensor FM,
+a wearable health foundation model, pre-trained on more than one trillion minutes of unlabeled sensor data from five million participants.
+The model uses a VIT-1D mast autoencoder backbone and shows frozen embeddings plus a PCA-50 linear probe,
+beating feature engineered baselines on 34 of 35 tasks.
+An agentic classroom searched 30,516 prediction heads during development.
+The work demonstrates co-scaling results across four model sizes and four data volumes.
+Builders focused on time series health signals should test the released embeddings this week.
+A new preference data set called plural was introduced containing roughly 500,000 synthetic preference triplets,
+drawn from the integrated value survey across 20 countries.
+The two stage generation pipeline converts nationally representative survey responses into realistic scenarios
+while preserving cross country value differences.
+Training on plural reduced mean absolute error by up to 27.7% relative to strong baselines
+when steering models toward target cultural profiles.
+Blind human evaluation with 176 evaluators in India, Brazil, and Japan confirmed that plural aligned responses were judged more representative of national values.
+The data set is available on hugging phase for teams working on pluralistic alignment.
+Researchers released a spawn stereo, a Spanish language stereotype data set spanning multiple countries in Europe and Latin America,
+built via a human LLM collaborative annotation framework.
+LLM's generated candidate stereotypes that in-culture annotators then validated,
+surfacing both documented and culturally specific biases absent from English-centric resources.
+Evaluation of Spanish supporting LLMs on the data set showed significant variation in stereotypical behavior across countries.
+The framework is positioned as adaptable to other languages and regions for scalable multi-lingual bias benchmarks.
+Holographic neural PCFG or HAL PCFG was proposed as a new parameterization that recasts PCFG rule scoring as algebraic relation modeling over torus constrained embeddings using holographic embeddings.
+It achieved state-of-the-art unsupervised parsing performance in six languages while cutting rule scoring parameters by 99.94%,
+relative to the neural PCFG baseline and training more stably.
+The model can parse Japanese directly from characters without morphological segmentation while retaining nearly the same morpheme level performance.
+Rabiant released Lingbot World Infinity, a 14-billion-parameter causal video generation model that functions as an interactive world simulator.
+It uses a mixture of bidirectional and autoregressive attention mask plus distribution matching distillation.
+A director pilot, a gentick harness wraps the generator so a VLM proposes events and the diffusion transformer renders them,
+supporting a single 60-minute uninterrupted session across 20 scenarios.
+The release includes one checkpoint and a 480p reference script under a non-commercial CC by northside slash SA 4.0 license.
+DeepSearch Evolve introduces a self-distillation framework for web agents built on DeepSearch Times World.
+A deterministic environment with 420,000 multi-hop QA tasks and reproducible search and page reading tools.
+The method iteratively performs trajectory generation, filtering, data mixing, and fine-tuning without distillation from stronger models.
+DeepSearch, DashWorld, Dash9b reaches 31.2% on BrowseCompt, 61.5% on GAIA, and 93.4% on hotpot QA.
+The environment, training pool, validation set, model, and code will be released to support self-improving long horizon agents.
+MAST is a multi-agent pipeline that decomposes zero-shot aspect sentiment triplet extraction into four sequential stages handled by specialized agents with explicit conditioning on prior outputs.
+It requires no training data or in-domain demonstrations and generalizes across backbones and data sets.
+On four AST benchmarks, it substantially outperforms zero-shot and chain-of-explanning layer-layer male-grin, yelking baselines, under the same backbone while narrowing the gap to fully supervised methods.
+Hallucination's self-play bootstraps are reinforced hallucination detector by pitting it against an evolved generator initialized from the same base model.
+The detector is first fine-tuned on human-label data, then used as a reward model via RLAIF to train the generator, which in turn synthesizes harder examples for the detector through rule-based reinforcement learning.
+Experiments on RAG truth and two model families show the small LLM can progressively match or exceed advanced LLMs without external supervision.
+Koala provides a framework for contextual biasing in speech-augmented language models by mapping SLM latent representations into a discriminative space that quantifies matching intensity between audio segments and candidate entities.
+It addresses training collapse on multi-target utterances and delivers superior performance across varying biasing-list scales on library speech.
+The approach targets complex multi-entity scenarios where context window limits make entity selection critical.
+Tail-aware credit calibration or taco was introduced to fix positive credit contamination in critic-free RL for LLMs, where low probability tail tokens receive the same positive credit as plausible ones.
+The method computes a tail-risk score from local generation context and uses it to modulate positive credit without removing gradients entirely.
+Experiments across three LLMs and eight benchmarks show consistent gains over GRPO style baselines plus improved training stability for long horizon RL.
+Cobart applies prefix control tokens with Bart fine-tuning for ad headline generation, allowing length control across formats while optimizing click-through rate.
+It reports a 25.82% increase in Ruzla and 5.82% estimated CTR lift over prior strong baselines.
+The method is described as flexible for other architectures and optimization criteria.
+Okay, let's pop the hood on tail-aware credit assignment in reinforcement learning for LLMs.
+Everyone talks about reinforcement learning on LLMs as if uniform advantage broadcasting is a neutral default.
+In practice, the design creates positive credit contamination because every token in a trajectory receives the identical scalar regardless of how surprising or contextually unsupported it was.
+The core insight starts with the observation that tail tokens, those falling into the low probability region of the current policy, are disproportionately likely to be errors rather than useful exploration.
+Taco therefore computes a local tail-risk score that conditions on the preceding tokens in the same generation then scales the positive credit applied to those tokens without zeroing their gradients.
+This preserves the possibility that genuinely rare but correct patterns accumulate reinforcement while incidental noise is progressively damped.
+The practical trade-off is modest extra compute for the risk scoring step versus the stability gains that let training continue without the variance spikes that usually force early stopping on long horizon tasks.
+When your RL runs show high variance across repeated trajectories on the same prompt or when you notice the model reinforcing fluent but factually broken reasoning, the tail calibration step is the liver worth adding first.
+Uniform credit remains acceptable only for short high certainty tasks where tail errors are rare by construction.
+Test the new GPT 5.6 tool calling and multi agent endpoints on a workflow that previously hit token cost ceilings and compare dollars per task against prior models.
+Pull the sensor FM embeddings and run the PCA 50 linear probe on your own wearable or time series health data set to see whether it beats your current feature set.
+Try deep search dash world dash nine B on a multi hop web task from your domain where the released environment and code make it straightforward to measure self evolution gains.
+Experiment with mastes for stage pipeline on an aspect sentiment triplet extraction problem in a new language or domain where you lack labeled triplets.
+Chat GPT work continues rolling out to plus and business plans over the coming days with the desktop app unification already live globally.
+Further details on the Tara and Luna efficiency variance mentioned alongside GPT 5.6 soul are expected in follow up open AI communications.
+The full release of deep search dash world's 420,000 task pool validation set and code will enable broader experimentation with verifiable self evolving agents.
+Tomorrow keep an eye on additional cultural steering results from the plural data set as more teams fine tune on the 20 country preference triplets.
+That wraps up today's AI briefing share this with the developer or builder who wants to stay current.
+Subscribe wherever you listen see you tomorrow and if you'd rather watch then listen find us on YouTube at nara network links in the show notes.
+And before you go this show is part of the nara network a family of daily podcasts on tech science and markets each one a short sharp briefing you can finish on the commute.
+If today earned its place in your feed here's your next lesson unintended consequences true stories of good intentions that backfired find every show free at nara network dot com.
+The age of AI puts real builders on the phone with an AI host apply at nara network dot com slash age dash of dash AI apply.
+This episode used AI voice synthesis of my voice editorial selection and analysis are my own.
