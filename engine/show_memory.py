@@ -151,8 +151,28 @@ def _save_json(path: Path, data: Dict[str, Any]) -> None:
 # Public load/save API
 # ---------------------------------------------------------------------------
 
+def _merge_missing_programs(
+    tracker: Dict[str, Any], defaults: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Seed any default programs missing from an on-disk tracker.
+
+    Operator-curated ``status`` / claims on existing keys are never
+    overwritten — only brand-new program keys from ``default_programs``
+    are added. Lets coverage expansions (e.g. Cursor on SpaceX, Energy
+    on Tesla via the sibling module) land without a one-shot JSON edit.
+    """
+    programs = tracker.setdefault("programs", {})
+    for key, prog in defaults.items():
+        if key not in programs:
+            programs[key] = copy.deepcopy(prog)
+    return tracker
+
+
 def load_narrative_tracker(output_dir: Path, cfg: MemoryConfig) -> Dict[str, Any]:
-    return _load_json(Path(output_dir) / cfg.narrative_filename, default_narrative_tracker(cfg))
+    tracker = _load_json(
+        Path(output_dir) / cfg.narrative_filename, default_narrative_tracker(cfg),
+    )
+    return _merge_missing_programs(tracker, cfg.default_programs)
 
 
 def save_narrative_tracker(tracker: Dict[str, Any], output_dir: Path, cfg: MemoryConfig) -> None:
@@ -507,7 +527,18 @@ def _program_mentioned(key: str, prog: Dict[str, Any], text_lower: str) -> bool:
     these matches now drive on-air "last covered" callbacks, so false
     positives produce wrong spoken lines. Plurals still match via an
     optional trailing "s"/"es".
+
+    When a program carries ``mention_pattern`` (compiled as a case-
+    insensitive regex against the already-lowercased digest), that
+    pattern is the sole detector — used for collision-prone names like
+    Cursor where a bare token would false-positive.
     """
+    custom = prog.get("mention_pattern")
+    if custom:
+        try:
+            return bool(re.search(custom, text_lower, flags=re.IGNORECASE))
+        except re.error:
+            logger.warning("Invalid mention_pattern for program %s — falling back", key)
     for kw in _program_mention_keywords(key, prog):
         if re.search(rf"\b{re.escape(kw)}(?:e?s)?\b", text_lower):
             return True
@@ -644,8 +675,15 @@ def get_config(slug: str):
     return SHOW_MEMORY_CONFIGS.get(slug)
 
 
-def _prog(display_name: str, status: str, questions: List[str], confidence: str = "medium") -> Dict[str, Any]:
-    return {
+def _prog(
+    display_name: str,
+    status: str,
+    questions: List[str],
+    confidence: str = "medium",
+    *,
+    mention_pattern: str | None = None,
+) -> Dict[str, Any]:
+    prog: Dict[str, Any] = {
         "display_name": display_name,
         "status": status,
         "last_major_update_episode": None,
@@ -654,6 +692,12 @@ def _prog(display_name: str, status: str, questions: List[str], confidence: str 
         "show_confidence": confidence,
         "notable_claims": [],
     }
+    # Optional precision override for collision-prone names (e.g. "Cursor"
+    # matching mouse-cursor prose). Stored on the program so the live
+    # tracker JSON carries it after merge-on-load.
+    if mention_pattern:
+        prog["mention_pattern"] = mention_pattern
+    return prog
 
 
 SHOW_MEMORY_CONFIGS: Dict[str, MemoryConfig] = {
@@ -789,11 +833,56 @@ SHOW_MEMORY_CONFIGS: Dict[str, MemoryConfig] = {
                 "Listed on Nasdaq June 12, 2026 (SPCX) at $135/share — the largest IPO in history (~$75B raised, ~$1.8T valuation at pricing); closed day one around $161 (+19%). Dual-class structure leaves Musk a controlling majority of voting power; prospectus showed ~$18.7B 2025 revenue with Starlink ~2/3 of it and profitable, launch/Starship still loss-making.",
                 ["First earnings report as a public company", "Index inclusion timeline", "Lockup expiry and insider-sale dates"],
             ),
+            "xai_grok_compute": _prog(
+                "xAI / Grok / Colossus",
+                "xAI's Grok models and Colossus-class datacenters sit on the Musk compute stack increasingly fused with SpaceX/Starlink (orbital data centers, AI satellites, IPO AI-infrastructure spend).",
+                [
+                    "How Starlink/SpaceX backhaul and orbital compute tie into xAI training/inference",
+                    "Colossus power, interconnect, and next-cluster scale",
+                    "Grok capability and distribution moves that matter to the SpaceX stack",
+                ],
+                confidence="low-medium",
+                mention_pattern=(
+                    r"\bxai\b|\bgrok\b|\bcolossus\b|\borbital data center\b|"
+                    r"\bai satellites?\b|\bmusk compute\b"
+                ),
+            ),
+            "cursor_ai": _prog(
+                "Cursor / Anysphere",
+                "Cursor (Anysphere) is the AI code editor where Grok and other frontier models reach developers — a distribution and product window into the xAI/Grok side of the SpaceX↔compute story.",
+                [
+                    "Grok (and other model) availability and quality inside Cursor",
+                    "Cursor product/agent releases that change how xAI models are used",
+                    "Any SpaceX/xAI/Anysphere partnership or distribution news",
+                ],
+                confidence="low-medium",
+                # Bare "cursor" false-positives on mouse-cursor prose — require
+                # AI/editor/Anysphere/Grok context or cursor.com.
+                mention_pattern=(
+                    r"\banysphere\b|\bcursor\.com\b|"
+                    r"\bcursor\b.{0,48}\b(?:ai|anysphere|editor|grok|agent|tab|composer)\b|"
+                    r"\b(?:ai|anysphere|editor|grok)\b.{0,48}\bcursor\b"
+                ),
+            ),
+            "starshield_gov": _prog(
+                "Starshield & National Security",
+                "Government/national-security Starlink variant and related contracts.",
+                ["Contract awards and constellation role", "Civil vs government constellation separation"],
+                confidence="low-medium",
+            ),
+            "launch_infrastructure": _prog(
+                "Launch Infrastructure",
+                "Pads, towers, Gigabay, Mechazilla, and production tooling that set cadence.",
+                ["Pad/tower readiness vs flight rate", "Gigabay and production bottlenecks"],
+                confidence="medium",
+            ),
         },
         theme_keywords=[
             "starship", "starbase", "starlink", "falcon", "dragon", "raptor",
             "booster", "launch", "landing", "catch", "orbit", "refueling",
             "mars", "faa", "pad", "merlin", "fairing", "direct-to-cell",
+            "xai", "grok", "colossus", "starshield", "cursor", "anysphere",
+            "gigabay", "mechazilla",
         ],
     ),
     "planetterrian": MemoryConfig(

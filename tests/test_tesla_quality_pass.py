@@ -555,3 +555,69 @@ class TestInstitutionalFilingSpamFilter:
         assert dropped == len(spam)
         kept_titles = {a["title"] for a in kept}
         assert kept_titles == set(legit)
+
+
+class TestFullBusinessCoverageJuly2026:
+    """July 10 2026: operator asked that vehicles, Robotaxi, Energy,
+    Optimus, Solar, Cortex compute, and all Tesla business lines are
+    in-scope for sourcing + prompts + narrative memory."""
+
+    def test_yaml_sources_and_searches_cover_business_lines(self):
+        import yaml
+        cfg = yaml.safe_load((_ROOT / "shows/tesla.yaml").read_text(encoding="utf-8"))
+        labels = " ".join(s.get("label", "") for s in cfg["sources"]).lower()
+        for needed in ("optimus", "energy", "solar", "cortex", "fsd"):
+            assert needed in labels, needed
+        searches = " ".join(cfg["web_search_queries"]).lower()
+        for needed in ("optimus", "megapack", "solar", "cortex", "robotaxi", "semi"):
+            assert needed in searches, needed
+        kw = {k.lower() for k in cfg["keywords"]}
+        for needed in ("optimus", "cybercab", "megapack", "powerwall",
+                       "tesla solar", "cortex", "dojo", "semi", "supercharger"):
+            assert needed in kw, needed
+
+    def test_digest_cover_whole_business_instruction(self):
+        digest = (_ROOT / "shows/prompts/tesla_digest.txt").read_text(encoding="utf-8")
+        system = (_ROOT / "shows/prompts/tesla_system.txt").read_text(encoding="utf-8")
+        assert "COVER THE WHOLE BUSINESS" in digest
+        for phrase in ("Tesla Energy", "Megapack", "Solar", "Cortex", "Optimus", "Robotaxi"):
+            assert phrase in digest, phrase
+        assert "WHOLE Tesla business" in system or "whole Tesla business" in system.lower()
+
+    def test_narrative_defaults_include_energy_solar_cortex(self):
+        programs = tesla_memory.DEFAULT_NARRATIVE_TRACKER["programs"]
+        for needed in ("tesla_energy", "tesla_solar", "cortex_dojo",
+                       "supercharger_network", "semi", "optimus",
+                       "cybercab_robotaxi", "fsd_unsupervised"):
+            assert needed in programs, needed
+
+    def test_merge_on_load_seeds_new_programs(self, tmp_path):
+        # Simulate an older on-disk tracker missing the new programs.
+        old = {
+            "version": 1,
+            "last_updated": "",
+            "programs": {
+                "optimus": dict(
+                    tesla_memory.DEFAULT_NARRATIVE_TRACKER["programs"]["optimus"]),
+            },
+        }
+        path = tmp_path / tesla_memory.NARRATIVE_TRACKER_FILENAME
+        path.write_text(json.dumps(old), encoding="utf-8")
+        loaded = tesla_memory.load_narrative_tracker(tmp_path)
+        assert "optimus" in loaded["programs"]
+        assert "tesla_energy" in loaded["programs"]
+        assert "cortex_dojo" in loaded["programs"]
+        assert "tesla_solar" in loaded["programs"]
+
+    def test_new_program_mention_patterns(self, tmp_path):
+        digest = (
+            "Tesla Megapack wins a utility deal. Solar Roof installs rose. "
+            "Cortex training cluster utilization hit a new high. "
+            "A Tesla Semi entered linehaul service. Supercharger open access expanded."
+        )
+        mentioned = tesla_memory.auto_update_narrative_from_digest(
+            tmp_path, digest, 600, "2026-07-10",
+        )
+        for needed in ("tesla_energy", "tesla_solar", "cortex_dojo",
+                       "semi", "supercharger_network"):
+            assert needed in mentioned, (needed, mentioned)

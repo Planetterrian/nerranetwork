@@ -94,6 +94,67 @@ DEFAULT_NARRATIVE_TRACKER: Dict[str, Any] = {
             "key_open_questions": ["Cost curve and energy density gains"],
             "show_confidence": "medium",
             "notable_claims": []
+        },
+        "tesla_energy": {
+            "display_name": "Tesla Energy (Megapack / Powerwall)",
+            "status": "Utility-scale Megapack deployments and residential Powerwall / VPP growth continue as a major non-auto revenue and margin engine.",
+            "last_major_update_episode": None,
+            "last_major_update_date": "",
+            "key_open_questions": [
+                "Megapack production capacity vs backlog",
+                "Powerwall / virtual power plant scale and software margins",
+            ],
+            "show_confidence": "medium",
+            "notable_claims": []
+        },
+        "tesla_solar": {
+            "display_name": "Tesla Solar",
+            "status": "Solar Roof and panel + storage offerings; often paired with Powerwall in residential installs.",
+            "last_major_update_episode": None,
+            "last_major_update_date": "",
+            "key_open_questions": [
+                "Install cadence and backlog health",
+                "Solar + storage attach rate and unit economics",
+            ],
+            "show_confidence": "low-medium",
+            "notable_claims": []
+        },
+        "cortex_dojo": {
+            "display_name": "Cortex / Dojo AI Compute",
+            "status": "Tesla's training and inference compute stack (Cortex clusters, Dojo lineage, HW5/AI5 vehicle inference) underpinning FSD and Optimus.",
+            "last_major_update_episode": None,
+            "last_major_update_date": "",
+            "key_open_questions": [
+                "Cortex cluster scale and utilization",
+                "Dojo / custom-silicon roadmap vs GPU clusters",
+                "Training vs inference cost trajectory for FSD and Optimus",
+            ],
+            "show_confidence": "low-medium",
+            "notable_claims": []
+        },
+        "supercharger_network": {
+            "display_name": "Supercharger Network",
+            "status": "Global Supercharger expansion continues; open-access and NACS adoption reshape the charging competitive map.",
+            "last_major_update_episode": None,
+            "last_major_update_date": "",
+            "key_open_questions": [
+                "Open-access utilization and economics",
+                "Site density vs reliability in key markets",
+            ],
+            "show_confidence": "medium",
+            "notable_claims": []
+        },
+        "semi": {
+            "display_name": "Tesla Semi",
+            "status": "Commercial electric semi deployments expanding from early fleet customers; long-haul economics still being proven.",
+            "last_major_update_episode": None,
+            "last_major_update_date": "",
+            "key_open_questions": [
+                "Production ramp and customer fleet size",
+                "Real-world range and TCO vs diesel on linehaul routes",
+            ],
+            "show_confidence": "low-medium",
+            "notable_claims": []
         }
     }
 }
@@ -153,7 +214,14 @@ def _save_json(path: Path, data: Dict[str, Any]) -> None:
 
 def load_narrative_tracker(output_dir: Path) -> Dict[str, Any]:
     path = output_dir / NARRATIVE_TRACKER_FILENAME
-    return _load_json(path, DEFAULT_NARRATIVE_TRACKER)
+    tracker = _load_json(path, DEFAULT_NARRATIVE_TRACKER)
+    # Seed any newly added default programs without overwriting operator-
+    # curated status on existing keys (Energy / Solar / Cortex expansions).
+    programs = tracker.setdefault("programs", {})
+    for key, prog in DEFAULT_NARRATIVE_TRACKER["programs"].items():
+        if key not in programs:
+            programs[key] = copy.deepcopy(prog)
+    return tracker
 
 
 def save_narrative_tracker(tracker: Dict[str, Any], output_dir: Path) -> None:
@@ -418,6 +486,7 @@ _THEME_KEYWORDS = [
     "optimus", "cybercab", "robotaxi", "fsd", "unsupervised",
     "hw5", "ai5", "4680", "structural pack", "giga texas",
     "next gen", "redwood", "megapack", "energy storage", "dojo",
+    "powerwall", "cortex", "solar roof", "supercharger", "semi",
 ]
 
 
@@ -549,6 +618,20 @@ _PROGRAM_MENTION_PATTERNS: Dict[str, "re.Pattern[str]"] = {
         r"\bnext[-\s]gen(?:eration)?\b|\bredwood\b|\baffordable (?:model|vehicle|ev)\b"
     ),
     "4680_structural_pack": re.compile(r"\b4680\b|\bstructural (?:battery )?pack\b"),
+    "tesla_energy": re.compile(
+        r"\bmegapacks?\b|\bpowerwalls?\b|\btesla energy\b|"
+        r"\bvirtual power plants?\b|\bvpp\b|\benergy storage\b"
+    ),
+    "tesla_solar": re.compile(
+        r"\bsolar roofs?\b|\btesla solar\b|\bsolar (?:panels?|tiles?)\b"
+    ),
+    "cortex_dojo": re.compile(
+        r"\bcortex\b|\bdojo\b|\bai training (?:cluster|compute|fabric)\b"
+    ),
+    "supercharger_network": re.compile(
+        r"\bsuperchargers?\b|\bsupercharging\b|\bnacs\b|\bcharging network\b"
+    ),
+    "semi": re.compile(r"\btesla semis?\b|\bsemi truck\b"),
 }
 
 

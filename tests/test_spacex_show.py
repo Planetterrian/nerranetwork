@@ -471,19 +471,34 @@ class TestLaunchDashboard:
 
 class TestComprehensiveCoverageAndAISection:
     """June 13 2026: broaden coverage to the whole SpaceX business + a
-    dedicated AI section (SpaceX↔xAI/Grok/X), per operator direction."""
+    dedicated AI section (SpaceX↔xAI/Grok/X), per operator direction.
+
+    July 10 2026: Cursor/Anysphere + full-business narrative programs
+    (Starshield, launch infrastructure, xAI/Grok, Cursor) added so the
+    AI & Compute beat and memory tracker cover the whole Musk stack.
+    """
 
     def test_keywords_cover_business_breadth_and_ai(self):
         cfg = yaml.safe_load((_ROOT / "shows/spacex.yaml").read_text(encoding="utf-8"))
         kw = {k.lower() for k in cfg["keywords"]}
         for needed in ("xai", "grok", "raptor", "starship", "starlink",
-                       "gigabay", "ai satellite", "orbital data center"):
+                       "gigabay", "ai satellite", "orbital data center",
+                       "cursor", "anysphere", "starshield", "cursor ai"):
             assert needed in kw, needed
 
     def test_ai_x_accounts_present(self):
         cfg = yaml.safe_load((_ROOT / "shows/spacex.yaml").read_text(encoding="utf-8"))
         handles = {a["handle"].lower() for a in cfg["x_accounts"]}
         assert "xai" in handles and "grok" in handles
+        assert "cursor_ai" in handles
+
+    def test_cursor_and_xai_feeds_and_searches(self):
+        cfg = yaml.safe_load((_ROOT / "shows/spacex.yaml").read_text(encoding="utf-8"))
+        labels = " ".join(s.get("label", "") for s in cfg["sources"]).lower()
+        assert "cursor" in labels and "xai" in labels
+        searches = " ".join(cfg["web_search_queries"]).lower()
+        assert "cursor" in searches and "anysphere" in searches
+        assert "dragon" in searches or "starshield" in searches
 
     def test_digest_and_podcast_have_ai_section(self):
         digest = (_ROOT / "shows/prompts/spacex_digest.txt").read_text(encoding="utf-8")
@@ -492,6 +507,41 @@ class TestComprehensiveCoverageAndAISection:
         assert "AI & Compute" in podcast and "On the AI front" in podcast
         # business-breadth instruction present
         assert "COVER THE WHOLE BUSINESS" in digest
+        assert "Cursor" in digest and "Cursor" in podcast
+        assert "Anysphere" in digest
+
+    def test_narrative_programs_cover_ai_and_full_business(self):
+        from engine.show_memory import SHOW_MEMORY_CONFIGS
+        mem = SHOW_MEMORY_CONFIGS["spacex"]
+        for needed in ("starship", "starlink", "falcon_reuse", "dragon_crew",
+                       "raptor_engines", "xai_grok_compute", "cursor_ai",
+                       "starshield_gov", "launch_infrastructure", "public_markets"):
+            assert needed in mem.default_programs, needed
+
+    def test_cursor_mention_pattern_avoids_mouse_false_positive(self, tmp_path):
+        from engine.show_memory import (
+            SHOW_MEMORY_CONFIGS, auto_update_narrative_from_digest, load_narrative_tracker,
+        )
+        cfg = SHOW_MEMORY_CONFIGS["spacex"]
+        # Seed tracker with defaults (incl. cursor_ai)
+        tracker = load_narrative_tracker(tmp_path, cfg)
+        assert "cursor_ai" in tracker["programs"]
+        # Mouse-cursor prose must NOT advance Cursor freshness
+        auto_update_narrative_from_digest(
+            tmp_path, cfg,
+            "The operator moved the mouse cursor across the launch dashboard.",
+            99, "2026-07-10",
+        )
+        tracker = load_narrative_tracker(tmp_path, cfg)
+        assert tracker["programs"]["cursor_ai"].get("last_mentioned_episode") is None
+        # Real Cursor/Grok news must advance it
+        auto_update_narrative_from_digest(
+            tmp_path, cfg,
+            "Grok is now selectable inside the Cursor AI editor from Anysphere.",
+            100, "2026-07-10",
+        )
+        tracker = load_narrative_tracker(tmp_path, cfg)
+        assert tracker["programs"]["cursor_ai"]["last_mentioned_episode"] == 100
 
     def test_ai_chapter_marker_and_tracker(self):
         cfg = yaml.safe_load((_ROOT / "shows/spacex.yaml").read_text(encoding="utf-8"))
