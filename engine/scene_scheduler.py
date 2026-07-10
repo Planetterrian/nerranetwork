@@ -72,6 +72,15 @@ _SENTENCE_END_CHARS = (".", "!", "?")
 # sub-second "chapters" would produce unwatchable flicker.
 _MIN_CHAPTER_GAP_S = 1.0
 
+# Hard cap on ffmpeg slideshow inputs. The xfade+zoompan filter graph
+# scales poorly past ~30–40 scenes; Tesla Ep537 (1044 s @ 15 s hold →
+# 74 slots, only 4 unique images after gallery CDN 403s) timed out the
+# 2400 s pipeline mid-slideshow. 24 matches the historical ~10-min /
+# 25 s-hold cadence and keeps a 17-min episode renderable (~43 s holds,
+# still watchable under Ken Burns). Shared with engine.video's uniform
+# cycling path.
+_MAX_SLIDESHOW_SLOTS = 24
+
 
 def _tokenize(text: Optional[str]) -> frozenset:
     """Lower-cased alphanumeric token set for overlap scoring."""
@@ -166,6 +175,37 @@ def _pick_scene(
     return best_path
 
 
+def _cap_slots(
+    plan: List[Tuple[Path, float]],
+    max_slots: int = _MAX_SLIDESHOW_SLOTS,
+) -> List[Tuple[Path, float]]:
+    """Merge adjacent slots until ``len(plan) <= max_slots``.
+
+    Prefers merging consecutive same-path slots (no visual change), then
+    the shortest adjacent pair — so chapter-boundary switches on longer
+    chapters survive when a long episode would otherwise explode the
+    ffmpeg input count. Durations always sum to the original total.
+    """
+    if max_slots < 1 or len(plan) <= max_slots:
+        return plan
+    out = list(plan)
+    while len(out) > max_slots:
+        best_i = 0
+        best_key: Optional[Tuple[int, float]] = None
+        for i in range(len(out) - 1):
+            same = 0 if out[i][0] == out[i + 1][0] else 1
+            combined = out[i][1] + out[i + 1][1]
+            key = (same, combined)
+            if best_key is None or key < best_key:
+                best_key = key
+                best_i = i
+        left_path, left_d = out[best_i]
+        _right_path, right_d = out[best_i + 1]
+        out[best_i] = (left_path, left_d + right_d)
+        del out[best_i + 1]
+    return out
+
+
 def _uniform_plan(
     pool: Sequence[Path], audio_duration_s: float, max_hold_s: float,
 ) -> List[Tuple[Path, float]]:
@@ -178,6 +218,9 @@ def _uniform_plan(
     slots: List[Path] = list(pool)
     if hold > max_hold_s and len(pool) > 1:
         target = math.ceil(audio_duration_s / max_hold_s)
+        # Render-safe cap — see _MAX_SLIDESHOW_SLOTS. Without this a
+        # 17-min episode at 15 s hold asks for ~70 ffmpeg inputs.
+        target = min(target, _MAX_SLIDESHOW_SLOTS)
         slots = [pool[i % len(pool)] for i in range(target)]
         hold = max(_UNIFORM_MIN_HOLD_S, audio_duration_s / len(slots))
     plan = [(path, hold) for path in slots]
@@ -272,6 +315,15 @@ def plan_chapter_schedule(
     diff = audio_duration_s - math.fsum(d for _, d in plan)
     if plan and plan[-1][1] + diff >= 1.0:
         plan[-1] = (plan[-1][0], plan[-1][1] + diff)
+
+    uncapped = len(plan)
+    plan = _cap_slots(plan)
+    if len(plan) < uncapped:
+        logger.info(
+            "scene_scheduler: capped slideshow slots %d → %d "
+            "(max=%d; audio=%.0fs) to keep ffmpeg renderable",
+            uncapped, len(plan), _MAX_SLIDESHOW_SLOTS, audio_duration_s,
+        )
     logger.debug(
         "scene_scheduler: %d chapter windows → %d slots over %.1fs",
         len(windows), len(plan), audio_duration_s,

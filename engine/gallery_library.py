@@ -45,6 +45,13 @@ DEFAULT_MANIFEST = PROJECT_ROOT / "site" / "data" / "gallery-manifest.json"
 
 DOWNLOAD_TIMEOUT_SECONDS = 20
 
+# Abort library blending after this many consecutive download failures.
+# Without a breaker, a CDN outage (gallery.nerranetwork.com 403 from GHA —
+# Tesla Ep537) walks every historical candidate (~150+ HTTP round-trips)
+# and still returns zero paths. Fail fast; the caller already degrades to
+# fresh-only scenes.
+_MAX_CONSECUTIVE_DOWNLOAD_FAILURES = 5
+
 # Aspect → the manifest's ``intended_use`` value (see gallery_uploader):
 # ``segment_card`` is the 16:9 long-form scene, ``social`` the 9:16 Short.
 _ASPECT_TO_USE = {"16:9": "segment_card", "9:16": "social"}
@@ -151,12 +158,77 @@ def _cache_filename(entry: dict) -> str:
     return f"{stem}{ext}"
 
 
+def _r2_object_key(entry: dict) -> Optional[str]:
+    """R2 object key for an authenticated get — prefer the manifest's
+    ``original_key``, else derive from the public URL path."""
+    key = (entry.get("original_key") or "").strip().lstrip("/")
+    if key:
+        return key
+    url = (entry.get("original_url") or "").strip()
+    if not url:
+        return None
+    # https://gallery.nerranetwork.com/tesla/2026-07-08/ep535/abc.jpeg
+    # → tesla/2026-07-08/ep535/abc.jpeg
+    try:
+        from urllib.parse import urlparse
+        path = urlparse(url).path.lstrip("/")
+        return path or None
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _download_via_r2(entry: dict, dest: Path) -> bool:
+    """Authenticated R2 download when the public CDN rejects the GET.
+
+    Reuses the same gallery-bucket credentials the uploader already has
+    in CI (``R2_GALLERY_BUCKET`` + shared R2 account keys). Returns True
+    on a successful write; False on any miss/misconfig/error (caller
+    treats it as another soft failure).
+    """
+    key = _r2_object_key(entry)
+    if not key:
+        return False
+    try:
+        from engine.gallery_uploader import gallery_config_from_env
+        cfg = gallery_config_from_env()
+        if not cfg.is_configured:
+            return False
+        import boto3
+        from botocore.config import Config as BotoConfig
+        s3 = boto3.client(
+            "s3",
+            endpoint_url=cfg.endpoint_url,
+            aws_access_key_id=cfg.access_key,
+            aws_secret_access_key=cfg.secret_key,
+            config=BotoConfig(
+                signature_version="s3v4",
+                retries={"max_attempts": 2, "mode": "standard"},
+            ),
+        )
+        s3.download_file(cfg.bucket, key, str(dest))
+        return dest.exists() and dest.stat().st_size > 0
+    except Exception as exc:  # noqa: BLE001 — soft fallback
+        logger.warning(
+            "gallery_library: R2 fallback failed for key=%s: %s", key, exc,
+        )
+        dest.unlink(missing_ok=True)
+        return False
+
+
 def _download_entry(entry: dict, cache_dir: Path) -> Optional[Path]:
-    """Fetch one image into the cache (or reuse); None on failure."""
+    """Fetch one image into the cache (or reuse); None on failure.
+
+    Tries the public CDN URL first (fast path when the custom domain is
+    healthy). On any HTTP/network failure, falls back to an authenticated
+    R2 get via ``original_key`` — the Ep537 failure mode was a blanket
+    403 from ``gallery.nerranetwork.com`` while the same bucket accepted
+    uploads with the CI credentials.
+    """
     dest = cache_dir / _cache_filename(entry)
     if dest.exists() and dest.stat().st_size > 0:
         _PATH_REGISTRY[dest] = entry
         return dest
+    public_err: Optional[Exception] = None
     try:
         resp = requests.get(entry["original_url"],
                             timeout=DOWNLOAD_TIMEOUT_SECONDS)
@@ -164,9 +236,20 @@ def _download_entry(entry: dict, cache_dir: Path) -> Optional[Path]:
         if not resp.content:
             raise ValueError("empty response body")
         dest.write_bytes(resp.content)
-    except Exception as exc:  # noqa: BLE001 — skip the image, keep going
-        logger.warning("gallery_library: failed to fetch %s: %s",
-                       entry.get("original_url"), exc)
+    except Exception as exc:  # noqa: BLE001 — try R2 before giving up
+        public_err = exc
+        dest.unlink(missing_ok=True)
+        if _download_via_r2(entry, dest):
+            logger.info(
+                "gallery_library: public CDN failed (%s); R2 fallback OK "
+                "for %s", public_err, entry.get("image_id") or dest.name,
+            )
+            _PATH_REGISTRY[dest] = entry
+            return dest
+        logger.warning(
+            "gallery_library: failed to fetch %s: %s",
+            entry.get("original_url"), public_err,
+        )
         return None
     _PATH_REGISTRY[dest] = entry
     return dest
@@ -196,7 +279,8 @@ def select_library_scenes(
     Downloads are cached by ``image_id`` under ``cache_dir`` (default:
     ``gallery_cache/`` in the system temp dir). Failed downloads are
     skipped and the next-best candidate backfills, so the return is
-    best-first local Paths, up to ``limit``. Never raises.
+    best-first local Paths, up to ``limit``. A streak of consecutive
+    failures aborts early (CDN/R2 outage circuit breaker). Never raises.
     """
     try:
         use = _ASPECT_TO_USE.get(aspect)
@@ -215,12 +299,24 @@ def select_library_scenes(
         cdir = Path(cache_dir) if cache_dir else _default_cache_dir()
         cdir.mkdir(parents=True, exist_ok=True)
         paths: List[Path] = []
+        consecutive_failures = 0
         for entry in _rank(entries, context_text):
             if len(paths) >= limit:
+                break
+            if consecutive_failures >= _MAX_CONSECUTIVE_DOWNLOAD_FAILURES:
+                logger.warning(
+                    "gallery_library: aborting after %d consecutive "
+                    "download failures for %s (CDN/R2 likely unavailable) "
+                    "— returning %d of %d requested",
+                    consecutive_failures, show_slug, len(paths), limit,
+                )
                 break
             p = _download_entry(entry, cdir)
             if p is not None:
                 paths.append(p)
+                consecutive_failures = 0
+            else:
+                consecutive_failures += 1
         return paths
     except Exception as exc:  # noqa: BLE001 — library reuse is optional
         logger.warning("gallery_library: scene selection failed for %s: %s",

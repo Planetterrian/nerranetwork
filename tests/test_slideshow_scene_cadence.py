@@ -86,16 +86,53 @@ class TestSceneCadenceMatchesAudio:
     def test_six_minute_episode_cycles_to_15s_cap(self, stub_paths):
         """June 2026 motion pass: scenes CYCLE so no image holds longer than
         ~15 s (was 25 s; 360 s/8 = 45 s/scene used to ship — visually static;
-        the scene list now repeats in rotation at zero added image cost)."""
+        the scene list now repeats in rotation at zero added image cost).
+        360/15 = 24 slots — exactly the render-safe slot cap, so the 15 s
+        preference still wins."""
         dur = _capture_scene_duration(stub_paths, audio_duration_s=360.0)
         assert dur is not None and 8.0 <= dur <= 15.0, (
             f"Expected ≤15 s/scene after cycling for 360 s/8, got {dur}"
         )
 
-    def test_ten_minute_episode_cycles_to_15s_cap(self, stub_paths):
-        """600 s/8 = 75 s/scene pre-fix; cycling caps the hold at ≤15 s."""
+    def test_ten_minute_episode_respects_slot_cap(self, stub_paths):
+        """600 s @ 15 s would be 40 slots; the render-safe cap (24) binds
+        and holds stretch to 600/24 = 25 s. Still far below the pre-motion
+        75 s/scene static look."""
+        from engine.scene_scheduler import _MAX_SLIDESHOW_SLOTS
         dur = _capture_scene_duration(stub_paths, audio_duration_s=600.0)
-        assert dur is not None and 8.0 <= dur <= 15.0
+        assert dur is not None
+        assert 8.0 <= dur <= (600.0 / _MAX_SLIDESHOW_SLOTS) + 0.01
+        # Cap must have fired — uncapped would be ≤15 s.
+        assert dur > 15.0
+
+    def test_seventeen_minute_episode_stays_under_slot_cap(self, stub_paths):
+        """Ep537-class (1044 s): prove the uniform cycling path never asks
+        ffmpeg for more than _MAX_SLIDESHOW_SLOTS inputs."""
+        from engine import video
+        from engine.scene_scheduler import _MAX_SLIDESHOW_SLOTS
+
+        captured = {}
+
+        def _fake_render_slideshow(scene_paths, output, *,
+                                   scene_duration=None, **kwargs):
+            captured["n_scenes"] = len(scene_paths)
+            captured["scene_duration"] = scene_duration
+            Path(output).write_bytes(b"\x00")
+            return Path(output)
+
+        with patch.object(video, "_render_slideshow", _fake_render_slideshow), \
+             patch.object(video, "_long_form_cmd", lambda *a, **k: ["true"]), \
+             patch("subprocess.run",
+                   lambda *a, **k: type("R", (), {"returncode": 0, "stderr": b""})()), \
+             patch("engine.audio.get_audio_duration", return_value=1044.0):
+            video.build_long_form_video(
+                stub_paths["audio"], stub_paths["cover"], stub_paths["out"],
+                scene_paths=stub_paths["scenes"][:4],
+            )
+        assert captured["n_scenes"] == _MAX_SLIDESHOW_SLOTS
+        assert captured["scene_duration"] == pytest.approx(
+            1044.0 / _MAX_SLIDESHOW_SLOTS, rel=0.01,
+        )
 
     def test_thirty_second_teaser_clamps_to_floor(self, stub_paths):
         """Very short audio gets clamped to the 8 s floor so scenes

@@ -196,11 +196,53 @@ class TestSelection:
     def test_failed_download_skipped_and_backfilled(self, tmp_path, monkeypatch):
         fail = "https://gallery.test/tesla/ccc333.jpeg"
         _stub_requests(monkeypatch, fail_urls={fail})
+        # Kill R2 fallback so a public failure stays a soft skip.
+        monkeypatch.setattr(gl, "_download_via_r2", lambda *a, **k: False)
         got = gl.select_library_scenes(
             "tesla", aspect="16:9", limit=2,
             manifest=_manifest(), cache_dir=tmp_path)
         # Best candidate failed → next two backfill, still limit results.
         assert _stems(got) == ["bbb222", "aaa111"]
+
+    def test_circuit_breaker_stops_after_consecutive_failures(
+            self, tmp_path, monkeypatch):
+        """Ep537 class: gallery CDN 403s every URL. Without a breaker we
+        walked 150+ candidates; with it we abort after N consecutive
+        misses and return whatever we have (usually empty)."""
+        big = {"images": [
+            _entry(f"img{i:03d}", episode=f"ep{i}",
+                   date=f"2026-06-{(i % 28) + 1:02d}",
+                   prompt=f"scene {i}")
+            for i in range(40)
+        ]}
+        calls = _stub_requests(monkeypatch, fail_urls={
+            e["original_url"] for e in big["images"]
+        })
+        monkeypatch.setattr(gl, "_download_via_r2", lambda *a, **k: False)
+        got = gl.select_library_scenes(
+            "tesla", aspect="16:9", limit=8,
+            manifest=big, cache_dir=tmp_path)
+        assert got == []
+        assert len(calls) == gl._MAX_CONSECUTIVE_DOWNLOAD_FAILURES
+
+    def test_r2_fallback_used_when_public_cdn_fails(
+            self, tmp_path, monkeypatch):
+        m = _manifest()
+        for e in m["images"]:
+            e["original_key"] = f"tesla/{e['image_id']}.jpeg"
+        fail_all = {e["original_url"] for e in m["images"] if e.get("original_url")}
+        _stub_requests(monkeypatch, fail_urls=fail_all)
+
+        def _fake_r2(entry, dest):
+            dest.write_bytes(b"r2:" + entry["image_id"].encode())
+            return True
+
+        monkeypatch.setattr(gl, "_download_via_r2", _fake_r2)
+        got = gl.select_library_scenes(
+            "tesla", aspect="16:9", limit=2,
+            manifest=m, cache_dir=tmp_path)
+        assert len(got) == 2
+        assert got[0].read_bytes().startswith(b"r2:")
 
     def test_never_raises_on_garbage_manifest(self, tmp_path):
         assert gl.select_library_scenes(

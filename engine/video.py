@@ -433,6 +433,10 @@ _SHORT_SCENE_DURATION_SECONDS = 7.0
 # Ken-Burns zoom + slideshow crossfades keep each hold watchable (the hybrid
 # Grok video clips were retired June 29 2026 — images-only pipeline).
 # Visual-only — no audio impact.
+#
+# Paired with engine.scene_scheduler._MAX_SLIDESHOW_SLOTS: a long episode at
+# 15 s/hold would otherwise ask for 60–70+ ffmpeg inputs (Ep537 timeout).
+# The cycling path below clamps to that shared cap so holds stretch instead.
 _MAX_SCENE_HOLD_S = 15.0
 
 
@@ -1571,7 +1575,11 @@ def build_long_form_video(
                 # visually static. Reusing the SAME images in rotation restores
                 # visual rhythm at zero additional image cost.
                 if scene_duration_s > _MAX_SCENE_HOLD_S and len(slideshow_scenes) > 1:
+                    from engine.scene_scheduler import _MAX_SLIDESHOW_SLOTS
                     target = math.ceil(audio_duration_s / _MAX_SCENE_HOLD_S)
+                    # Cap ffmpeg inputs — see scene_scheduler._MAX_SLIDESHOW_SLOTS
+                    # (Ep537: 74 uncapped slots timed out the pipeline).
+                    target = min(target, _MAX_SLIDESHOW_SLOTS)
                     slideshow_scenes = [
                         slideshow_scenes[i % len(slideshow_scenes)]
                         for i in range(target)
