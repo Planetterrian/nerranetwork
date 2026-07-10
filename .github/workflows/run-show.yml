@@ -454,7 +454,10 @@ jobs:
           # (e.g. newsletter send failure). Without it here those alerts
           # were silently dead (July 2026 reliability pass).
           NOTIFICATION_WEBHOOK_URL: ${{ secrets.NOTIFICATION_WEBHOOK_URL }}
-          PIPELINE_TIMEOUT_SECONDS: '2400'
+          # 50 min — Tesla Ep537 timed out at 40 min mid-slideshow after a
+          # 15-min TTS + 74-scene xfade graph. Slot cap (24) is the primary
+          # fix; this headroom covers long TTS + long-form + 2 Shorts.
+          PIPELINE_TIMEOUT_SECONDS: '3000'
 
       - name: Validate output
         if: steps.pipeline.outputs.skipped != 'true'

@@ -37,7 +37,9 @@ Layers (bottom-up):
   `chapters_ep<NNN>.json` boundaries (subdivided into 6–15 s holds), with
   per-chapter scene choice scored by title↔prompt overlap (fresh scenes win
   ties; reuse penalised for variety). `<2` usable chapters → uniform plan
-  identical to legacy.
+  identical to legacy. **Slot cap:** plans are clamped to
+  `_MAX_SLIDESHOW_SLOTS` (24) so a long episode cannot ask ffmpeg for 60–70+
+  xfade inputs (Tesla Ep537 timeout class); holds stretch instead.
 - **Sentence-snapped Shorts cuts** — scene changes snap to sentence-ending
   words from the faster-whisper word-level transcript (already generated for
   captions — no new transcription cost) instead of the flat 7 s grid.

@@ -11,7 +11,11 @@ chapters available changes nothing.
 import math
 from pathlib import Path
 
-from engine.scene_scheduler import plan_chapter_schedule, sentence_cut_times
+from engine.scene_scheduler import (
+    _MAX_SLIDESHOW_SLOTS,
+    plan_chapter_schedule,
+    sentence_cut_times,
+)
 
 
 def _scenes(prefix: str, n: int):
@@ -30,13 +34,26 @@ class TestUniformFallback:
     def test_no_chapters_mirrors_legacy_rotation(self):
         """4 scenes over 360 s: legacy math says 90 s/scene > 15 s max
         hold → cycle to ceil(360/15) = 24 slots of 15 s, rotating
-        through the pool in order."""
+        through the pool in order. 24 is also the render-safe cap, so
+        this case sits exactly on the boundary."""
         pool = _scenes("fresh", 4)
         plan = plan_chapter_schedule(pool, [], None, 360.0)
         assert len(plan) == 24
+        assert len(plan) <= _MAX_SLIDESHOW_SLOTS
         assert all(abs(d - 15.0) < 1e-9 for _, d in plan)
         assert [p for p, _ in plan] == [pool[i % 4] for i in range(24)]
         assert abs(math.fsum(d for _, d in plan) - 360.0) < 1e-6
+
+    def test_long_episode_uniform_plan_respects_slot_cap(self):
+        """Ep537-class: 1044 s @ 15 s hold would be ~70 slots and timed
+        out the pipeline. Cap stretches holds instead of exploding the
+        ffmpeg input count."""
+        pool = _scenes("fresh", 4)
+        plan = plan_chapter_schedule(pool, [], None, 1044.0)
+        assert len(plan) == _MAX_SLIDESHOW_SLOTS
+        assert abs(math.fsum(d for _, d in plan) - 1044.0) < 1e-6
+        # Holds stretch above the 15 s preference but stay finite.
+        assert all(d >= 15.0 for _, d in plan)
 
     def test_no_cycling_when_even_split_fits(self):
         """10 scenes over 100 s → 10 s/scene ≤ 15 s: one slot per scene,
@@ -133,6 +150,24 @@ class TestChapterAlignment:
         chapters = _chapters((5.0, "Intro"), (25.0, "Closing"))
         plan = plan_chapter_schedule(pool, [], chapters, 40.0)
         assert abs(math.fsum(d for _, d in plan) - 40.0) < 1e-6
+
+    def test_long_episode_chapter_plan_respects_slot_cap(self):
+        """Ep537 shape: ~11 chapters over ~17 min at 15 s hold → 70+
+        slots uncapped. Cap merges adjacent slots; duration sum and
+        chapter-boundary coverage survive."""
+        pool = _scenes("fresh", 4)
+        # 11 chapter anchors across 1044 s (mirrors auto-segmented Ep537).
+        starts = [0, 60, 150, 250, 350, 450, 550, 650, 750, 900, 1000]
+        chapters = _chapters(*[(float(s), f"Ch{i}") for i, s in enumerate(starts)])
+        plan = plan_chapter_schedule(pool, [], chapters, 1044.0,
+                                     max_hold_s=15.0, min_hold_s=6.0)
+        assert len(plan) <= _MAX_SLIDESHOW_SLOTS
+        assert len(plan) >= 2
+        assert abs(math.fsum(d for _, d in plan) - 1044.0) < 1e-6
+        # Uncapped would be ceil(1044/15) ≈ 70; prove the cap fired.
+        uncapped_floor = math.ceil(1044.0 / 15.0)
+        assert uncapped_floor > _MAX_SLIDESHOW_SLOTS
+        assert len(plan) < uncapped_floor
 
 
 # ---------------------------------------------------------------------------

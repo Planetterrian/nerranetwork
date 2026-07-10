@@ -64,6 +64,20 @@ class TestSlideshowSceneCycling:
         assert "_MAX_SCENE_HOLD_S = 15.0" in src
         assert "slideshow_scenes" in src
 
+    def test_slideshow_slot_cap_shared_with_scheduler(self):
+        """Ep537 timeout class: long episodes must clamp ffmpeg inputs via
+        the shared _MAX_SLIDESHOW_SLOTS (not unbounded 15 s cycling)."""
+        from engine.scene_scheduler import _MAX_SLIDESHOW_SLOTS
+        video_src = (_ROOT / "engine" / "video.py").read_text(encoding="utf-8")
+        sched_src = (_ROOT / "engine" / "scene_scheduler.py").read_text(
+            encoding="utf-8")
+        assert "_MAX_SLIDESHOW_SLOTS" in video_src
+        assert "_MAX_SLIDESHOW_SLOTS = 24" in sched_src
+        assert _MAX_SLIDESHOW_SLOTS == 24
+        assert "PIPELINE_TIMEOUT_SECONDS: '3000'" in (
+            _ROOT / ".github" / "workflows" / "run-show.yml"
+        ).read_text(encoding="utf-8")
+
 
 class TestObservability:
     def test_ru_token_warning(self):
