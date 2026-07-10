@@ -250,6 +250,8 @@ def _fetch_single_feed(
     problematic_feeds: set,
     problematic_feeds_lock: Lock,
     max_articles: int = 0,
+    *,
+    label: str = "",
 ) -> Optional[tuple]:
     """Fetch and parse a single RSS feed.
 
@@ -281,8 +283,12 @@ def _fetch_single_feed(
                     len(feed.entries), feed_url,
                 )
 
-        feed_title = feed.feed.get("title", "Unknown")
-        source_name = _get_source_name(feed_url, feed_title)
+        # Prefer the YAML ``label`` (stable, operator-curated). Fall back to
+        # the feed's own <title>, treating blank titles as missing — Ep537
+        # logged ``Feed : parsed 10 entries`` when WhatsUpTesla's RSS title
+        # was an empty string (``.get("title", "Unknown")`` does not help).
+        feed_title = (feed.feed.get("title") or "").strip() or "Unknown"
+        source_name = (label or "").strip() or _get_source_name(feed_url, feed_title)
 
         articles: List[Dict] = []
         for entry in feed.entries:
@@ -463,6 +469,9 @@ def fetch_rss_articles(
     ) - datetime.timedelta(hours=cutoff_hours)
 
     urls = [fd["url"] for fd in feed_urls]
+    url_labels = {
+        fd["url"]: (fd.get("label") or "").strip() for fd in feed_urls
+    }
     logger.info("Fetching news from %d RSS feeds...", len(urls))
 
     all_articles: List[Dict] = []
@@ -480,6 +489,7 @@ def fetch_rss_articles(
                 problematic_feeds,
                 problematic_feeds_lock,
                 max_articles_per_feed,
+                label=url_labels.get(url, ""),
             ): url
             for url in urls
         }

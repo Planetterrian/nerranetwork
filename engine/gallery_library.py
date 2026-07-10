@@ -52,6 +52,12 @@ DOWNLOAD_TIMEOUT_SECONDS = 20
 # fresh-only scenes.
 _MAX_CONSECUTIVE_DOWNLOAD_FAILURES = 5
 
+# After the public CDN 403s once in-process, skip it for the rest of the
+# run and go straight to authenticated R2. Ep537 paid ~8× public-403
+# round-trips before each successful R2 fallback; once we know the CDN
+# is rejecting GHA egress, further public GETs are pure waste.
+_prefer_r2_download = False
+
 # Aspect → the manifest's ``intended_use`` value (see gallery_uploader):
 # ``segment_card`` is the 16:9 long-form scene, ``social`` the 9:16 Short.
 _ASPECT_TO_USE = {"16:9": "segment_card", "9:16": "social"}
@@ -222,12 +228,19 @@ def _download_entry(entry: dict, cache_dir: Path) -> Optional[Path]:
     healthy). On any HTTP/network failure, falls back to an authenticated
     R2 get via ``original_key`` — the Ep537 failure mode was a blanket
     403 from ``gallery.nerranetwork.com`` while the same bucket accepted
-    uploads with the CI credentials.
+    uploads with the CI credentials. Once the CDN 403s in-process, later
+    downloads skip straight to R2 (``_prefer_r2_download``).
     """
+    global _prefer_r2_download
     dest = cache_dir / _cache_filename(entry)
     if dest.exists() and dest.stat().st_size > 0:
         _PATH_REGISTRY[dest] = entry
         return dest
+
+    if _prefer_r2_download and _download_via_r2(entry, dest):
+        _PATH_REGISTRY[dest] = entry
+        return dest
+
     public_err: Optional[Exception] = None
     try:
         resp = requests.get(entry["original_url"],
@@ -239,6 +252,11 @@ def _download_entry(entry: dict, cache_dir: Path) -> Optional[Path]:
     except Exception as exc:  # noqa: BLE001 — try R2 before giving up
         public_err = exc
         dest.unlink(missing_ok=True)
+        # Flip to R2-first for the rest of this process once the public
+        # CDN rejects us (403/401/etc.) — don't keep paying the round-trip.
+        status = getattr(getattr(exc, "response", None), "status_code", None)
+        if status in (401, 403) or "403" in str(exc) or "401" in str(exc):
+            _prefer_r2_download = True
         if _download_via_r2(entry, dest):
             logger.info(
                 "gallery_library: public CDN failed (%s); R2 fallback OK "

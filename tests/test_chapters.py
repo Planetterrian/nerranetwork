@@ -271,6 +271,12 @@ class TestPositionalConstraints:
         # Bare "tomorrow" must never re-enter the teaser pattern — any
         # story sentence mentioning tomorrow would open a chapter.
         assert "tomorrow" not in by_title["Tomorrow Teaser"].pattern.lower()
+        # Closing must precede Tomorrow Teaser in the marker list so a
+        # merged final line awards Closing (EI June-11 ordering rule).
+        titles_in_order = [m.title for m in markers]
+        assert titles_in_order.index("Closing") < titles_in_order.index(
+            "Tomorrow Teaser"
+        )
 
     def test_closing_brand_mention_not_titled_introduction(self):
         """The closing's 'find us on X at tesla shorts time' line must be
@@ -733,7 +739,7 @@ class TestAutoSegmentFallback:
     def test_auto_segment_skips_when_enough_chapters_already(self):
         from engine.chapters import parse_chapters
         # Three markers all match — three chapters, above min. No auto
-        # segments should be added.
+        # segments should be added (head does not span ≥50%).
         markers = [
             {"pattern": "Welcome", "title": "Introduction"},
             {"pattern": "fifty", "title": "Body"},
@@ -748,6 +754,44 @@ class TestAutoSegmentFallback:
         # Three matched chapters, no auto-segmentation.
         assert len(chapters) == 3
         assert all(not c.title.startswith("Segment ") for c in chapters)
+
+    def test_auto_segment_fires_when_head_spans_most_of_script(self):
+        """Ep537 class: 4 markers clear min_chapters, but Introduction
+        still covers ≥50% of the words — auto-segment must still fire
+        (the docstring promised this; the count-only gate missed it)."""
+        from engine.chapters import parse_chapters
+
+        # Long head + short Counterpoint/Teaser/Closing tails.
+        head = "Welcome to Tesla Shorts Time. " + (
+            "\n\n".join(["Story beat about batteries and autonomy. "] * 30)
+        )
+        script = (
+            head
+            + "\n\nOne thing worth watching is the regulatory fight.\n\n"
+            + "Before we go, keep an eye on tomorrow's delivery numbers.\n\n"
+            + "That's Tesla Shorts Time — until next time."
+        )
+        markers = [
+            {"pattern": "Tesla Shorts Time|Welcome", "title": "Introduction",
+             "where": "start"},
+            {"pattern": "one thing worth watching", "title": "The Counterpoint"},
+            {"pattern": "Before we go|keep an eye on", "title": "Tomorrow Teaser",
+             "where": "end"},
+            {"pattern": "That's Tesla Shorts Time|until next time",
+             "title": "Closing", "where": "end"},
+        ]
+        chapters = parse_chapters(
+            script, markers, show_name="tesla",
+            min_chapters=4, auto_segment_target_seconds=30.0,
+        )
+        assert len(chapters) > 4, (
+            f"Head-spans-most should auto-segment despite 4 markers; "
+            f"got {len(chapters)} titles={[c.title for c in chapters]}"
+        )
+        assert chapters[0].title == "Introduction"
+        # Tail markers survive.
+        titles = [c.title for c in chapters]
+        assert "Closing" in titles
 
     def test_auto_segment_word_boundaries_remain_consistent(self):
         """Word boundaries on the rebuilt chapter list must still cover

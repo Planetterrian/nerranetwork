@@ -244,6 +244,43 @@ class TestSelection:
         assert len(got) == 2
         assert got[0].read_bytes().startswith(b"r2:")
 
+    def test_prefer_r2_after_first_cdn_403(self, tmp_path, monkeypatch):
+        """After one public 403, later downloads skip the CDN entirely."""
+        monkeypatch.setattr(gl, "_prefer_r2_download", False)
+        m = {"images": [
+            _entry("aaa111", episode="ep1", date="2026-07-01",
+                   prompt="cybercab"),
+            _entry("bbb222", episode="ep2", date="2026-07-02",
+                   prompt="battery"),
+        ]}
+        for e in m["images"]:
+            e["original_key"] = f"tesla/{e['image_id']}.jpeg"
+
+        class _Forbidden(Exception):
+            def __init__(self):
+                self.response = SimpleNamespace(status_code=403)
+
+        calls = {"public": 0, "r2": 0}
+
+        def get(url, timeout=None):
+            calls["public"] += 1
+            raise _Forbidden()
+
+        def _fake_r2(entry, dest):
+            calls["r2"] += 1
+            dest.write_bytes(b"r2:" + entry["image_id"].encode())
+            return True
+
+        monkeypatch.setattr(gl, "requests", SimpleNamespace(get=get))
+        monkeypatch.setattr(gl, "_download_via_r2", _fake_r2)
+        got = gl.select_library_scenes(
+            "tesla", aspect="16:9", limit=2,
+            manifest=m, cache_dir=tmp_path)
+        assert len(got) == 2
+        # First image: 1 public attempt (403) + R2. Second: R2 only.
+        assert calls["public"] == 1
+        assert calls["r2"] == 2
+
     def test_never_raises_on_garbage_manifest(self, tmp_path):
         assert gl.select_library_scenes(
             "tesla", aspect="16:9", manifest={"images": "not-a-list"},
