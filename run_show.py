@@ -1125,6 +1125,8 @@ def run(args: argparse.Namespace) -> None:
             re.IGNORECASE,
         )
 
+        from engine.utils import prompt_pub_date
+
         news_lines = []
         for i, art in enumerate(articles, 1):
             title = art.get("title", "Untitled")
@@ -1132,7 +1134,7 @@ def run(args: argparse.Namespace) -> None:
             desc = art.get("description", "")
             url = art.get("url", "")
             source = art.get("source_name", "Unknown")
-            pub = art.get("published_date", "")
+            pub = prompt_pub_date(art.get("published_date", ""))
             news_lines.append(
                 f"{i}. **{title}** — {source}"
                 + (f" ({pub})" if pub else "")

@@ -291,6 +291,39 @@ class TestFetchSingleFeed:
         assert articles[0]["url"] == "https://nasa.gov/article/1"
 
     @patch("engine.fetcher.requests")
+    def test_yaml_label_wins_over_empty_feed_title(
+            self, mock_requests, mock_feedparser):
+        """Ep537: WhatsUpTesla RSS had title="" → logged as ``Feed :``.
+        YAML label must win; blank feed titles must not surface."""
+        now = _utc_now()
+        entry = _make_entry(
+            title="Some Tesla Story",
+            link="https://whatsuptesla.com/a",
+            description="Body.",
+            published_parsed=_dt_to_timetuple(now),
+        )
+        mock_response = MagicMock()
+        mock_response.content = b"<rss/>"
+        mock_requests.get.return_value = mock_response
+        mock_requests.RequestException = Exception
+        mock_feedparser.parse.return_value = _make_feed(
+            [entry], title="", bozo=False,
+        )
+        probs, lock = self._make_lock_and_set()
+        result = _fetch_single_feed(
+            "https://whatsuptesla.com/feed",
+            self._cutoff(),
+            None,
+            probs,
+            lock,
+            label="WhatsUpTesla",
+        )
+        assert result is not None
+        _url, articles, source_name = result
+        assert source_name == "WhatsUpTesla"
+        assert len(articles) == 1
+
+    @patch("engine.fetcher.requests")
     def test_network_error_returns_none(self, mock_requests, mock_feedparser):
         """A requests.RequestException causes None return."""
         mock_requests.RequestException = Exception

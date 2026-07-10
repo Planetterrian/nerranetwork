@@ -13,6 +13,7 @@ import logging
 import os
 import re
 from difflib import SequenceMatcher
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +57,24 @@ def env_bool(name: str, default: bool) -> bool:
     if v in {"0", "false", "f", "no", "n", "off"}:
         return False
     return default
+
+
+def prompt_pub_date(pub: Optional[str]) -> str:
+    """Date-only stamp for LLM news blocks.
+
+    Full ISO timestamps (especially X-post fetch-time ``now_iso``) seed a
+    per-item dateline echo — Tesla Ep537's first digest stamped every story
+    with the run's clock time ("— July 10, 2026, 2:56 PM UTC,") 13× and
+    burned a repetition retry. Passing ``YYYY-MM-DD`` keeps recency signal
+    without the clock-time seed.
+    """
+    if not pub:
+        return ""
+    pub = str(pub).strip()
+    if "T" in pub:
+        return pub.split("T", 1)[0]
+    m = re.match(r"(\d{4}-\d{2}-\d{2})", pub)
+    return m.group(1) if m else pub
 
 
 # ---------------------------------------------------------------------------

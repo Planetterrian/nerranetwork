@@ -19,6 +19,23 @@ from engine.utils import number_to_words as omni_number_to_words
 from engine.utils import calculate_similarity as tesla_calculate_similarity
 from engine.utils import remove_similar_items as tesla_remove_similar_items
 from engine.utils import remove_similar_items as omni_remove_similar_items
+from engine.utils import prompt_pub_date
+
+
+# ===================================================================
+# TEST: prompt_pub_date (Ep537 clock-time echo fix)
+# ===================================================================
+
+class TestPromptPubDate:
+    def test_strips_iso_clock_time(self):
+        assert prompt_pub_date("2026-07-10T14:56:12.234567+00:00") == "2026-07-10"
+
+    def test_keeps_date_only(self):
+        assert prompt_pub_date("2026-07-10") == "2026-07-10"
+
+    def test_empty_and_none(self):
+        assert prompt_pub_date("") == ""
+        assert prompt_pub_date(None) == ""
 
 
 # ===================================================================

@@ -259,16 +259,23 @@ def parse_chapters(
     # because the per-show ``section_markers`` regex don't tolerate the
     # variations the LLM and Whisper produce. The result was a 7-minute
     # block called "Introduction" with no nav. When the matched chapter
-    # count is below ``min_chapters`` AND the first chapter spans most
-    # of the script, we splice extra chapters at paragraph boundaries
-    # roughly every ``auto_segment_target_seconds`` of speech so
-    # listeners always get useful navigation. May 8 2026: titles now
-    # derive from each segment's first sentence (truncated to ~50
-    # chars) instead of the previous generic ``Segment N`` placeholder
-    # — Apple Podcasts and Pocket Casts surface chapter titles in the
-    # player UI, and "Segment 2" tells the listener nothing about
-    # whether to skip ahead.
-    if len(chapters) < min_chapters and total_words > 0:
+    # count is below ``min_chapters`` OR the first chapter spans most
+    # of the script (≥50% of words — Ep537 had 4 markers so cleared
+    # min_chapters but Introduction still covered 9 of 13 minutes), we
+    # splice extra chapters at paragraph boundaries roughly every
+    # ``auto_segment_target_seconds`` of speech so listeners always get
+    # useful navigation. May 8 2026: titles now derive from each
+    # segment's first sentence (truncated to ~50 chars) instead of the
+    # previous generic ``Segment N`` placeholder — Apple Podcasts and
+    # Pocket Casts surface chapter titles in the player UI, and
+    # "Segment 2" tells the listener nothing about whether to skip ahead.
+    head_spans_most = bool(
+        chapters
+        and total_words > 0
+        and (chapters[0].word_end - chapters[0].word_start)
+        >= int(total_words * 0.50)
+    )
+    if (len(chapters) < min_chapters or head_spans_most) and total_words > 0:
         words_per_segment = max(
             int(estimated_words_per_minute * (auto_segment_target_seconds / 60.0)),
             120,
