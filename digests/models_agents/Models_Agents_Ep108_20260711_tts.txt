@@ -1,0 +1,113 @@
+Good to have you on Models and Agents, episode one hundred eight, for July eleventh, twenty twenty-six. Your daily A I briefing. Let's see what happened in the A I world today. And trust me, it's been busy.
+
+G P T 5.6 just became the default model inside Microsoft 365 Copilot, giving enterprise users immediate access to its lower-cost reasoning without changing workflows.
+
+Open A I confirmed G P T 5.6 is now the preferred model across Microsoft 365 Copilot.
+
+The same update also cut health-intelligence costs dramatically, with G P T 5.6 Luna delivering stronger results at twenty-five times lower cost than G P T 5.5 at its highest reasoning setting.
+
+This development sits inside the ongoing frontier-models arc tracked since episode one hundred seven, where closed labs continue trading capability and price advantages.
+
+Builders should watch how the new cost curve changes when they move existing Copilot automations onto the updated backend.
+
+The change routes enterprise document, spreadsheet, and email tasks through the newer model without requiring users to select it manually.
+
+G P T 5.6 Luna variant outperforms the prior G P T 5.5 top reasoning tier while running at twenty-five times lower cost, directly addressing the inference economics that have limited large-scale Copilot rollouts.
+
+Teams already licensed for Microsoft 365 gain the upgrade immediately, shifting the build-versus-buy decision for internal agents that previously relied on separate G P T calls.
+
+The move continues the pattern of Open A I tightening integration with Microsoft infrastructure while lowering per-token barriers for high-volume workloads.
+
+This fits the frontier-models narrative from yesterday’s coverage by extending the same cost-reduction trajectory observed across the G P T 5.6 family.
+
+Watch for similar default-model swaps in other Microsoft surfaces and whether the cost reduction extends to non-health verticals.
+
+G P T 5.6 Luna reaches higher performance than G P T 5.5 at maximum reasoning effort while costing twenty-five times less.
+
+The update targets health-intelligence workloads but applies across the G P T 5.6 family.
+
+Builders running medical or compliance pipelines can now test the same quality tier at far lower token budgets.
+
+The change also widens access for global users previously priced out of frontier reasoning.
+
+Open A I highlighted the improvement in a single post that paired the performance claim with the explicit twenty-five times multiplier.
+
+Open A I converted its Bio Bug Bounty into a standing private program and doubled maximum rewards to fifty thousand dollars. Researchers with red-teaming or biosecurity experience are invited to hunt for universal jailbreaks against frontier models on a predefined biosafety challenge. The program remains invite-only and focuses on constructive disclosure rather than public exploits.
+
+The shift from a time-limited bounty to an ongoing program signals Open A I’s intent to maintain continuous external pressure on biosafety boundaries. Teams working in regulated domains should monitor the resulting safeguards for any new refusal patterns.
+
+A new proof-of-concept called Colibrì demonstrates a one point five terabyte model executing on consumer hardware with only twenty-five gigabytes of RAM. The approach targets local A I setups and avoids cloud round-trips for sensitive workloads. Early results suggest the technique could let developers run large models entirely on-device without quantization.
+
+The memory reduction is achieved through a novel architectural shortcut that keeps the full parameter set resident while streaming only active layers. The twenty-five gigabyte footprint was measured on a standard consumer G P U without any custom quantization beyond the novel streaming technique.
+
+Fable 5 enforces a hard fifteen-word quote cap from sources, blocking longer verbatim excerpts even when they support factual claims. The restriction applies during research sessions where users expect direct citations. Simon Willison noted the limit is especially painful compared with more permissive models.
+
+The cap appears to stem from the same safety tuning that governs web-search quoting rules, creating an unintended side effect on uploaded documents. Developers relying on citation-heavy summarization should test alternative models or post-process outputs to restore context.
+
+Robinhood plans to enable A I agents to execute crypto trades on behalf of U S customers. The feature extends the platform’s existing agent tooling into live financial markets. No launch date or risk controls were detailed in the announcement. The move places Robinhood among the first major brokerages to expose live trading endpoints to third-party agent frameworks.
+
+Users should monitor the rollout for custody and approval-flow requirements before routing capital through automated agents.
+
+Work mode in the ChatGPT mobile app successfully ran yt-dlp to pull YouTube subtitles, while Chat mode failed on the same command. The difference indicates Work mode permits outbound network calls that Chat mode blocks. Simon Willison highlighted the split as more significant than the quoting-rule confusion he also encountered.
+
+The observation emerged while Simon Willison was comparing the two modes on identical code-execution tasks inside the same conversation thread. Developers testing mobile agent prototypes should verify which mode their target users have access to before assuming tool-use parity.
+
+A new analysis walks through recent cases where top models fabricated details and caused downstream damage. The piece examines both the mechanisms behind hallucinations and mitigation approaches available today. The author illustrates the point with concrete examples drawn from legal, medical, and financial domains where fabricated citations produced measurable harm.
+
+Practitioners handling high-stakes outputs can use the documented failure modes to build better verification layers. The article stresses that even the strongest models still require external grounding.
+
+The Colibrì proof-of-concept shows a frontier-scale model running locally with minimal RAM. The result is relevant for teams that need to keep data inside corporate boundaries or avoid A P I latency. No public code or weights were released with the announcement. Watch for follow-up open-source ports that would let developers replicate the memory footprint on their own hardware.
+
+OK, let's pop the hood on prompt compression via activation aggregation.
+
+Everyone talks about prompt compression as if it simply deletes tokens.
+
+In practice it means deciding which information must survive inside the model’s hidden state rather than in the token stream.
+
+The core insight is that a single weighted sum of activations at an intermediate layer can carry enough task-relevant signal to replace the original prompt tokens when re-injected early in the network.
+
+Because mid-layer representations already encode higher-level semantics, the compressed vector transfers usefully to earlier layers without retraining the entire stack.
+
+The approach incurs less than two percent accuracy drop on the tasks tested while eliminating the need to re-process the full prompt on every query.
+
+The quality of the compression depends on choosing the right intermediate layer and learning stable weights.
+
+Too early and the signal is too local, too late and task-specific details have already been abstracted away.
+
+The method also reveals that a single activation vector can encode a quantifiable amount of recoverable semantic information, a fact confirmed by the authors’ reconstruction experiments.
+
+Because the compression is learned per instruction, the same vector works across many future queries that reuse that instruction.
+
+This creates a practical cache-like behavior at the activation level rather than at the token level.
+
+Teams should reach for activation aggregation when the same instruction is reused across many calls and latency or context-window pressure is the binding constraint.
+
+The main gotcha is that the compression is instruction-specific, so changing the prompt requires re-learning the vector.
+
+In production the technique pairs naturally with prompt-caching systems that already store KV states, offering an orthogonal saving on the prompt-embedding stage itself.
+
+Test G P T 5.6 inside Microsoft 365 Copilot on any existing document or spreadsheet automation to measure the new cost-to-quality tradeoff.
+
+Run the same yt-dlp command in both Chat and Work modes of the ChatGPT mobile app to map where network tool access is actually available.
+
+Prototype a local Colibrì-style setup on a machine with thirty-two gigabytes of RAM to see whether the twenty-five gigabyte footprint holds for your target model size.
+
+Add a post-processing step that restores longer quotes when Fable 5 truncates them, then compare output quality against an uncapped model.
+
+Further G P T 5.6 model swaps are expected inside additional Microsoft surfaces.
+
+Open A I Bio Bug Bounty program will begin accepting researcher submissions on an ongoing basis.
+
+Robinhood’s A I trading agents are slated for U S customers, with risk and approval details still pending.
+
+More local-inference techniques following the Colibrì memory-reduction approach are likely to surface in open-source form.
+
+Tomorrow, keep an eye on whether the twenty-five times cost reduction for G P T 5.6 Luna extends beyond health workloads into other enterprise verticals.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The A I world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+And before you go: this show is part of the Nerra Network — a family of daily podcasts on tech, science, and markets, each one a short, sharp briefing you can finish on the commute. If today earned its place in your feed, here's your next listen — Space X Daily, the daily companion for following Space X as a public company, from Starship to the stock ticker.
+
+Find every show, free, at nerranetwork dot com. The Do Positive Pod is the club for people who do something about it — episodes and the Dispatch Wall at nerranetwork dot com/thedppod.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
