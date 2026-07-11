@@ -422,6 +422,44 @@ def test_grok_tts_timeout_default_is_300_seconds():
     assert sig.parameters["timeout"].default == GROK_TTS_TIMEOUT_SECONDS
 
 
+def test_grok_tts_retry_policy_hardened_for_connection_drops():
+    """July 2026 FF Ep128: mid-stream RemoteDisconnected exhausted 3
+    short retries. Pin the longer policy so a partial revert fails CI."""
+    from engine import tts as tts_mod
+    from engine.tts import grok_speak_chunk
+    assert tts_mod.GROK_TTS_RETRY_ATTEMPTS >= 5
+    assert tts_mod.GROK_TTS_RETRY_WAIT_MAX >= 60
+    # Decorator is applied to the unbound function; tenacity stores stop/wait
+    # on the retry object.
+    retry_obj = grok_speak_chunk.retry
+    assert retry_obj.stop.max_attempt_number == tts_mod.GROK_TTS_RETRY_ATTEMPTS
+
+
+def test_before_sleep_grok_tts_removes_partial_output(tmp_path: Path):
+    from engine.tts import _before_sleep_grok_tts
+    from types import SimpleNamespace
+
+    partial = tmp_path / "chunk.wav"
+    partial.write_bytes(b"truncated-wav")
+
+    class _Outcome:
+        def exception(self):
+            return ConnectionError("Remote end closed connection")
+
+    class _Next:
+        sleep = 5.0
+
+    state = SimpleNamespace(
+        attempt_number=2,
+        outcome=_Outcome(),
+        next_action=_Next(),
+        kwargs={"out_path": partial},
+        args=(),
+    )
+    _before_sleep_grok_tts(state)
+    assert not partial.exists()
+
+
 def test_synthesize_sections_falls_back_on_timeout(tmp_path: Path, monkeypatch):
     """If a section TTS call raises (e.g. tenacity exhausted retries on
     a Grok read timeout), the function falls back to single-pass
