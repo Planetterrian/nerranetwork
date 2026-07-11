@@ -430,10 +430,21 @@ class TestLoadConfigRealFiles:
         cfg = load_config(SHOWS_DIR / "tesla.yaml")
         assert cfg.name == "Tesla Shorts Time"
         assert cfg.slug == "tesla"
-        assert len(cfg.sources) >= 16  # electrek.co + driveteslacanada.ca removed (blocked sources)
+        # electrek.co + driveteslacanada.ca removed (blocked); July 2026
+        # full-business pass added Optimus/Energy/Solar/Cortex Google News.
+        assert len(cfg.sources) >= 20
         assert cfg.sources[0].label == "Teslarati"
         assert "tsla" in cfg.keywords
-        assert len(cfg.web_search_queries) == 4
+        # July 2026 full-business coverage pass expanded searches from 4 → 10
+        # (Optimus, Robotaxi, Energy, Solar, Cortex/Dojo, Semi/Supercharger).
+        # Pin a floor + required coverage terms, not an exact count — same
+        # pattern as sources so intentional expansions don't brick every
+        # show's CI smoke step (the failure mode that killed all 2026-07-11
+        # scheduled runs).
+        assert len(cfg.web_search_queries) >= 10
+        joined = " ".join(cfg.web_search_queries).lower()
+        for term in ("optimus", "megapack", "solar", "cortex", "robotaxi"):
+            assert term in joined, term
         # Tesla inherits the network default (grok-4.3) — always-on
         # reasoning at lower cost than the previous grok-4.20-reasoning
         # override.
