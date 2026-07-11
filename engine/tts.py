@@ -46,6 +46,15 @@ GROK_MAX_CHARS_PER_REQUEST = 14000
 # voice + ~14k-char chunk under load; normal calls finish in 30-60s and
 # don't notice the higher cap.
 GROK_TTS_TIMEOUT_SECONDS = 300
+# July 2026: Grok occasionally closes the streamed TTS connection mid-
+# body (RemoteDisconnected / ConnectionError) after several minutes of
+# synthesis. Three quick retries were not enough — FF Ep128 burned ~13
+# minutes across 3 attempts and still failed. Five attempts with a longer
+# backoff give the endpoint time to recover without blowing the pipeline
+# timeout (each successful call is typically 1–4 min).
+GROK_TTS_RETRY_ATTEMPTS = 5
+GROK_TTS_RETRY_WAIT_MIN = 5
+GROK_TTS_RETRY_WAIT_MAX = 90
 
 
 def _ffmpeg_escape(path: Path) -> str:
@@ -642,12 +651,59 @@ class _GrokTTSServerError(requests.HTTPError):
     """Retryable Grok TTS server error (5xx / 429)."""
 
 
+def _unlink_partial_tts_output(out_path: Path) -> None:
+    """Remove a partial TTS file left by a failed streamed write.
+
+    ``grok_speak_chunk`` streams bytes into *out_path*; a mid-body
+    ``ConnectionError`` leaves a truncated WAV that must not be reused
+    on the next attempt.
+    """
+    try:
+        if out_path.exists():
+            out_path.unlink()
+            logger.info("Removed partial TTS output before retry: %s", out_path.name)
+    except OSError as exc:
+        logger.warning("Could not remove partial TTS output %s: %s", out_path, exc)
+
+
+def _before_sleep_grok_tts(retry_state) -> None:
+    """Log the retry and scrub any partial output file from the failed call."""
+    exc = retry_state.outcome.exception() if retry_state.outcome else None
+    sleep_for = (
+        retry_state.next_action.sleep if retry_state.next_action else 0.0
+    )
+    logger.warning(
+        "Grok TTS attempt %s/%s failed (%s: %s) — retrying in %.1fs ...",
+        retry_state.attempt_number,
+        GROK_TTS_RETRY_ATTEMPTS,
+        type(exc).__name__ if exc else "?",
+        exc,
+        sleep_for,
+    )
+    out = None
+    if retry_state.kwargs:
+        out = retry_state.kwargs.get("out_path")
+    if out is None and retry_state.args and len(retry_state.args) >= 3:
+        out = retry_state.args[2]
+    if out is not None:
+        _unlink_partial_tts_output(Path(out))
+
+
 @retry(
-    stop=stop_after_attempt(3),
-    wait=wait_exponential(multiplier=1, min=2, max=10),
-    retry=retry_if_exception_type(
-        (requests.ConnectionError, requests.Timeout, _GrokTTSServerError),
+    stop=stop_after_attempt(GROK_TTS_RETRY_ATTEMPTS),
+    wait=wait_exponential(
+        multiplier=2, min=GROK_TTS_RETRY_WAIT_MIN, max=GROK_TTS_RETRY_WAIT_MAX,
     ),
+    retry=retry_if_exception_type(
+        (
+            requests.ConnectionError,
+            requests.Timeout,
+            requests.exceptions.ChunkedEncodingError,
+            _GrokTTSServerError,
+        ),
+    ),
+    before_sleep=_before_sleep_grok_tts,
+    reraise=True,
 )
 def grok_speak_chunk(
     text: str,

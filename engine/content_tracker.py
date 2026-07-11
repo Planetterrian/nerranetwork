@@ -623,15 +623,34 @@ class ContentTracker:
 
     # ----- Querying recent content -----
 
-    def get_recent_headlines(self, days: Optional[int] = None) -> List[str]:
-        """Return headlines from recent episodes for cross-day dedup."""
+    def get_recent_headlines(
+        self,
+        days: Optional[int] = None,
+        *,
+        exclude_today: bool = False,
+    ) -> List[str]:
+        """Return headlines from recent episodes for cross-day dedup.
+
+        ``exclude_today=True`` drops the current calendar day's episode
+        record. Required for post-generate validation: ``run_show`` used
+        to ``record_episode`` *before* ``validate_digest``, so
+        ``get_recent_headlines(days=7)`` included the digest under test
+        and every headline flagged as a 100% "BLOCKING cross-episode
+        repeat" against itself (FF Ep128 2026-07-11 — 15 false positives
+        that also fed the exact-dup stripper and gutted the podcast body).
+        """
+        today = datetime.date.today().isoformat()
         cutoff = (
             datetime.date.today() - datetime.timedelta(days=days or self.max_days)
         ).isoformat()
         headlines = []
         for ep in self.data["episodes"]:
-            if ep.get("date", "") >= cutoff:
-                headlines.extend(ep.get("headlines", []))
+            ep_date = ep.get("date", "")
+            if ep_date < cutoff:
+                continue
+            if exclude_today and ep_date == today:
+                continue
+            headlines.extend(ep.get("headlines", []))
         return headlines
 
     def get_recent_urls(self, days: Optional[int] = None) -> set:

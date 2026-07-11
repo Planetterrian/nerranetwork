@@ -240,6 +240,34 @@ class TestContentTrackerBasics:
         assert "Headline A" in headlines
         assert "Headline B" in headlines
 
+    def test_get_recent_headlines_exclude_today(self, tmp_path):
+        """Validation must not see today's own headlines as cross-episode
+        repeats (FF Ep128 self-match class)."""
+        tracker = ContentTracker("test_show", tmp_path)
+        tracker.load()
+        today = datetime.date.today().isoformat()
+        yesterday = (datetime.date.today() - datetime.timedelta(days=1)).isoformat()
+        tracker.data["episodes"] = [
+            {
+                "date": yesterday,
+                "headlines": ["Yesterday Story"],
+                "quote_author": None,
+                "sections": {},
+            },
+            {
+                "date": today,
+                "headlines": ["Today Self Match"],
+                "quote_author": None,
+                "sections": {},
+            },
+        ]
+        all_h = tracker.get_recent_headlines(days=7)
+        assert "Today Self Match" in all_h
+        assert "Yesterday Story" in all_h
+        prior = tracker.get_recent_headlines(days=7, exclude_today=True)
+        assert "Today Self Match" not in prior
+        assert "Yesterday Story" in prior
+
 
 class TestRecordEpisode:
     def test_record_ff_digest(self, tmp_path):

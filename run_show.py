@@ -1332,7 +1332,10 @@ def run(args: argparse.Namespace) -> None:
         # gate below) would false-positive on them — skip both for deep dives.
         if _val_factory and not is_deep_dive:
             _val_config = _val_factory()
-            _recent = content_tracker.get_recent_headlines(days=7)
+            # CRITICAL: exclude today's record. record_episode runs above, so
+            # without this every headline matches itself at 100% and is flagged
+            # as a BLOCKING cross-episode repeat (FF Ep128 2026-07-11).
+            _recent = content_tracker.get_recent_headlines(days=7, exclude_today=True)
             _val_passed, _val_issues, _exact_dups = _validate_digest(
                 x_thread, _val_config,
                 section_patterns=section_patterns,
