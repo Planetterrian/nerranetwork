@@ -70,8 +70,12 @@ idempotency check.
 
 ## Operator bootstrap (one-time, in order)
 
-1. **Supabase**: create the Nerra Voices project (separate from Bill
-   Saved), apply `supabase/migrations/20260704_nerra_voices_schema.sql`.
+1. **Supabase**: ✅ DONE (July 11 2026) — project `nerra-voices`
+   (ref `mosbymmshvagdgcajkwr`, ca-central-1,
+   `https://mosbymmshvagdgcajkwr.supabase.co`), schema applied with RLS +
+   the two Mira-clip URL columns. Remaining: copy the **service_role key**
+   from Project Settings → API into the Worker + GitHub secrets, and set
+   the clip-URL column DEFAULTs once the clips are recorded (step 2).
 2. **Voximplant** (phase 1 smoke test): enable the Grok Voice Agent
    connector, create app `nerra-voices` + rule `age-of-ai-interview`, buy
    Mira's dedicated Vancouver-area number (§11.1, ~$1/mo), then

@@ -4,51 +4,94 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Apply to be a guest — The Age of AI · Nerra Network</title>
-<meta name="description" content="Apply to be interviewed on The Age of AI — the podcast where Mira, an AI host, interviews real people about living through the AI transition.">
+<meta name="description" content="Apply to be interviewed on The Age of AI — the podcast where Mira, an AI host, calls real people and interviews them live about the AI transition.">
+<meta property="og:title" content="Be a guest on The Age of AI">
+<meta property="og:description" content="Mira, an AI, asks the questions. Real people answer. Apply to be interviewed live.">
+<meta property="og:image" content="https://nerranetwork.com/assets/covers/age-of-ai.jpg">
 <style>
-  :root { --brand:#7C3AED; --ink:#1a202c; --muted:#4a5568; --line:#e2e8f0; }
+  /* The Age of AI brand — docs/age_of_ai_brand.md */
+  :root {
+    --violet: #7C3AED; --violet-bright: #A770FF; --amber: #FBBF24;
+    --deep: #120D2E; --midnight: #291B5C; --lavender: #C4B5FD;
+    --white: #F8F7FF; --card: rgba(248, 247, 255, 0.05);
+    --line: rgba(196, 181, 253, 0.25);
+  }
   * { box-sizing: border-box; }
-  body { font: 16px/1.6 system-ui, -apple-system, sans-serif; color: var(--ink);
-         max-width: 720px; margin: 0 auto; padding: 2rem 1rem 4rem; }
-  h1 { color: var(--brand); margin-bottom: .2rem; }
-  .sub { color: var(--muted); margin-top: 0; }
-  .card { background: #faf5ff; border: 1px solid #e9d8fd; border-radius: 10px;
-          padding: 1rem 1.2rem; margin: 1.4rem 0; }
-  label { display: block; font-weight: 600; margin: 1rem 0 .25rem; }
-  input, textarea { width: 100%; padding: .6rem .7rem; border: 1px solid var(--line);
-                    border-radius: 8px; font: inherit; }
+  body { font: 16px/1.65 'DM Sans', system-ui, -apple-system, sans-serif;
+         color: var(--white); margin: 0; min-height: 100vh;
+         background: linear-gradient(180deg, var(--midnight) 0%, var(--deep) 55%) fixed; }
+  .wrap { max-width: 740px; margin: 0 auto; padding: 2.5rem 1.2rem 4rem; }
+  .lockup { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.6rem; }
+  .lockup svg { flex-shrink: 0; }
+  .lockup .words { line-height: 1.25; }
+  .lockup .title { font-size: 1.5rem; font-weight: 700; letter-spacing: .08em; }
+  .lockup .sub { color: var(--lavender); font-size: .8rem; letter-spacing: .28em; }
+  .lockup .sub::before { content: ""; display: block; width: 56px; height: 3px;
+                         border-radius: 2px; background: var(--amber); margin: .35rem 0 .3rem; }
+  h1 { font-size: 1.9rem; margin: 0 0 .3rem; }
+  .tagline { color: var(--lavender); margin-top: 0; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+          padding: 1.1rem 1.3rem; margin: 1.5rem 0; backdrop-filter: blur(4px); }
+  .card strong { color: var(--white); }
+  .card ul { margin: .6rem 0 0; padding-left: 1.2rem; }
+  .card li { margin: .35rem 0; color: var(--lavender); }
+  .card li b { color: var(--white); font-weight: 600; }
+  label { display: block; font-weight: 600; margin: 1.1rem 0 .3rem; }
+  input, textarea { width: 100%; padding: .65rem .75rem; border: 1px solid var(--line);
+                    border-radius: 10px; font: inherit; color: var(--white);
+                    background: rgba(18, 13, 46, 0.6); }
+  input:focus, textarea:focus { outline: 2px solid var(--violet); border-color: transparent; }
   textarea { min-height: 110px; }
-  .hint { font-size: .85rem; color: var(--muted); margin-top: .2rem; }
-  button { margin-top: 1.4rem; background: var(--brand); color: #fff; border: 0;
-           border-radius: 10px; padding: .85rem 1.6rem; font-size: 1.05rem; cursor: pointer; }
-  button:disabled { opacity: .6; cursor: wait; }
-  #result { margin-top: 1rem; font-weight: 600; }
-  a { color: var(--brand); }
+  ::placeholder { color: rgba(196, 181, 253, 0.45); }
+  .hint { font-size: .85rem; color: var(--lavender); margin-top: .25rem; opacity: .85; }
+  button { margin-top: 1.6rem; background: var(--violet); color: var(--white); border: 0;
+           border-radius: 12px; padding: .9rem 1.7rem; font: inherit; font-size: 1.05rem;
+           font-weight: 600; cursor: pointer; transition: background .15s; }
+  button:hover { background: var(--violet-bright); }
+  button:disabled { opacity: .55; cursor: wait; }
+  #result { margin-top: 1rem; font-weight: 600; color: var(--amber); }
+  a { color: var(--violet-bright); }
+  .foot { margin-top: 3rem; font-size: .8rem; color: var(--lavender); opacity: .7;
+          letter-spacing: .12em; }
 </style>
 </head>
 <body>
-  <h1>Be a guest on The Age of AI</h1>
-  <p class="sub">The interview show where the roles are reversed: Mira, an AI, asks the questions — and real people answer.</p>
+<div class="wrap">
+  <div class="lockup" aria-hidden="false">
+    <!-- The Dialogue mark (assets/age-of-ai-mark.svg, inlined) -->
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="74" height="74" role="img" aria-label="The Age of AI mark">
+      <rect width="120" height="120" rx="26" fill="#120D2E"/>
+      <circle cx="60" cy="60" r="46" fill="none" stroke="#C4B5FD" stroke-opacity="0.8" stroke-width="2.8"/>
+      <g id="dialogue-wave"></g>
+    </svg>
+    <div class="words">
+      <div class="title">THE AGE OF AI</div>
+      <div class="sub">WITH&nbsp;MIRA&nbsp;·&nbsp;NERRA&nbsp;NETWORK</div>
+    </div>
+  </div>
+
+  <h1>Be a guest on the show</h1>
+  <p class="tagline">The interview show where the roles are reversed: Mira, an AI, asks the questions — and real people answer.</p>
 
   <div class="card">
     <strong>How it works, honestly and completely:</strong>
     <ul>
-      <li>Our AI host, <strong>Mira</strong>, calls you at a time you book — a real ~45-minute phone conversation, recorded for the podcast.</li>
+      <li>Our AI host, <b>Mira</b>, calls you at a time you book — a real ~45-minute phone conversation, recorded for the podcast.</li>
       <li>The day before, you get a short prep brief with the themes she plans to explore.</li>
-      <li><strong>Nothing publishes until you approve the transcript.</strong> You can have anything removed.</li>
+      <li><b>Nothing publishes until you approve the transcript.</b> You can have anything removed.</li>
       <li>Every episode discloses that the host is an AI. The guests never are.</li>
     </ul>
   </div>
 
   <form id="applyForm">
     <label for="name">Your name *</label>
-    <input id="name" name="name" required maxlength="200">
+    <input id="name" name="name" required maxlength="200" autocomplete="name">
 
     <label for="email">Email *</label>
-    <input id="email" name="email" type="email" required maxlength="200">
+    <input id="email" name="email" type="email" required maxlength="200" autocomplete="email">
 
     <label for="phone">Phone number (the one Mira should call)</label>
-    <input id="phone" name="phone" maxlength="40" placeholder="+1 604 …">
+    <input id="phone" name="phone" maxlength="40" placeholder="+1 604 …" autocomplete="tel">
     <p class="hint">You can add this later — it's only needed once your interview is booked.</p>
 
     <label for="title">Role / title</label>
@@ -73,7 +116,46 @@
     <p id="result" role="status"></p>
   </form>
 
+  <p class="foot">REAL PEOPLE · AI HOST · THE AGE WE'RE ALL LIVING THROUGH</p>
+</div>
+
 <script>
+// Draw The Dialogue wave (same geometry as scripts/generate_age_of_ai_brand.py).
+(function () {
+  const g = document.getElementById('dialogue-wave');
+  const NS = 'http://www.w3.org/2000/svg';
+  const BAR_HEIGHTS = [0.22,0.40,0.30,0.62,0.48,0.85,0.58,1.00,0.70,0.44,0.58,0.32];
+  const cx = 60, cy = 60, radius = 46;
+  const innerR = radius - (radius/26*1.6)*4, span = innerR*0.82;
+  const barGap = span/BAR_HEIGHTS.length, barW = barGap*0.52, maxH = innerR*1.12;
+  BAR_HEIGHTS.forEach((h, i) => {
+    const t = i/(BAR_HEIGHTS.length-1);
+    const c = [124+ (167-124)*t, 58 + (112-58)*t, 237 + (255-237)*t].map(Math.round);
+    const r = document.createElementNS(NS, 'rect');
+    const half = h*maxH/2, x = cx - span + i*barGap + barGap/2;
+    r.setAttribute('x', x-barW/2); r.setAttribute('y', cy-half);
+    r.setAttribute('width', barW); r.setAttribute('height', half*2);
+    r.setAttribute('rx', barW/2); r.setAttribute('fill', `rgb(${c.join(',')})`);
+    g.appendChild(r);
+  });
+  const pts = [];
+  for (let s = 0; s <= 60; s++) {
+    const t = s/60, env = Math.pow(Math.sin(t*Math.PI), 0.85);
+    const y = cy - Math.sin(t*Math.PI*2.35 + 0.35)*env*maxH*0.40;
+    pts.push(`${(cx + barGap*0.4 + t*span).toFixed(1)},${y.toFixed(1)}`);
+  }
+  const line = document.createElementNS(NS, 'polyline');
+  line.setAttribute('points', pts.join(' '));
+  line.setAttribute('fill', 'none'); line.setAttribute('stroke', '#FBBF24');
+  line.setAttribute('stroke-width', radius/22); line.setAttribute('stroke-linecap', 'round');
+  g.appendChild(line);
+  const [ex, ey] = pts[pts.length-1].split(',');
+  const dot = document.createElementNS(NS, 'circle');
+  dot.setAttribute('cx', ex); dot.setAttribute('cy', ey);
+  dot.setAttribute('r', radius/20); dot.setAttribute('fill', '#FBBF24');
+  g.appendChild(dot);
+})();
+
 document.getElementById('applyForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const btn = document.getElementById('submitBtn');

@@ -91,6 +91,11 @@ create table if not exists interview_runs (
   disconnect_reason text,
   status text default 'pending',
   -- pending, fired, in_progress, completed, failed
+  recording_disclosure_url text,          -- pre-recorded Mira consent clip (R2);
+  grok_drop_apology_url text,             -- Mira apology clip for Grok drops.
+                                          -- Set column DEFAULTs to the R2 URLs
+                                          -- once the clips exist so every run
+                                          -- inherits them (operator bootstrap).
   created_at timestamptz default now()
 );
 

@@ -311,3 +311,41 @@ class TestHumanGates:
     def test_publish_requires_approved_status(self):
         src = (PIPELINES / "publish_episode.py").read_text(encoding="utf-8")
         assert "'approved'" in src and "publish requires status" in src
+
+
+# ---------------------------------------------------------------------------
+# Brand assets (docs/age_of_ai_brand.md — generated, never hand-edited)
+# ---------------------------------------------------------------------------
+
+class TestBrandAssets:
+    def test_cover_art_full_set(self):
+        """Podcast-directory cover + the <picture> variants the nav/site
+        reference. A missing variant ships broken <picture> sources."""
+        covers = ROOT / "assets" / "covers"
+        from PIL import Image
+        with Image.open(covers / "age-of-ai.jpg") as im:
+            assert im.size == (3000, 3000), "podcast cover must be 3000x3000"
+        for name in ("age-of-ai.webp", "age-of-ai-800.webp",
+                     "age-of-ai-400.webp"):
+            assert (covers / name).exists(), name
+
+    def test_logo_svgs_carry_the_brand(self):
+        """The Dialogue mark: Signal Violet bars + Human Amber wave, on a
+        self-contained Deep Field surface (legible on any background)."""
+        for name in ("age-of-ai-mark.svg", "age-of-ai-logo.svg"):
+            svg = (ROOT / "assets" / name).read_text(encoding="utf-8")
+            assert "#FBBF24" in svg, f"{name}: Human Amber wave missing"
+            assert "#120D2E" in svg, f"{name}: Deep Field surface missing"
+            assert "polyline" in svg, f"{name}: the human wave is missing"
+
+    def test_generator_palette_matches_registered_brand_color(self):
+        """scripts/generate_age_of_ai_brand.py is the single source of
+        truth; its violet must equal network_meta.yaml's brand_color so the
+        cover and the site accent can never drift apart."""
+        import yaml as _yaml
+        gen = (ROOT / "scripts" / "generate_age_of_ai_brand.py").read_text(
+            encoding="utf-8")
+        assert "(124, 58, 237)" in gen  # 0x7C, 0x3A, 0xED
+        meta = _yaml.safe_load(
+            (ROOT / "shows" / "network_meta.yaml").read_text(encoding="utf-8"))
+        assert meta["age_of_ai"]["brand_color"].upper() == "#7C3AED"
