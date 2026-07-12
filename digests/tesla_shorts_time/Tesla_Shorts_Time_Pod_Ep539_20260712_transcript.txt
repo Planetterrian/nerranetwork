@@ -1,0 +1,107 @@
+It's a new day on Tesla Short's Time, episode 539.
+It's July 12, 2026, and I'm Patrick in Vancouver.
+Here's your Tesla news rundown.
+Tesla's new patent lets GPUs pull only the exact frames needed for training,
+cutting wasted decode time at petabyte scale.
+Tesla added a dedicated cleaning robot to the official scope of work
+for its RoboTaxi hub in Austin.
+The inclusion signals that interior and exterior maintenance will be handled on-site
+rather than through external services.
+This step fits into the broader preparation for unsupervised operations
+by keeping the vehicle fleet in continuous rotation.
+Listeners tracking the RoboTaxi program will want to watch how the cleaning system
+integrates with the hub's layout and daily throughput targets.
+The move keeps maintenance inside the operation so vehicles spend less time out of service.
+That operational choice connects directly to the data efficiency work that will power those
+same vehicles. The filing describes a method that reads frame headers and timestamps without
+full decoding, then isolates only the reference chain needed for requested moments.
+Multiple hardware decoders on the GPU can handle separate camera streams or training
+batches in parallel. Intermediate frames are discarded once their features are extracted,
+leaving only the target images in local memory.
+The approach directly targets the data efficiency bottleneck in scaling both FSD and
+Optimus training. Training data for vision models has long been treated as a continuous
+stream that must be fully unpacked before any learning occurs.
+Tesla's recent patent instead treats the compressed bit stream as an indexed map,
+letting the GPU locate and decode only the frames a given training step actually requests.
+The result is a measurable drop in decode cycles per useful image, which matters once fleet video
+reaches petabyte volumes. Lower per step cost directly improves the economics of running larger models
+or more frequent updates without proportional increases in silicon or power.
+The same logic applies to Optimus training, where multiple camera angles and repeated task
+demonstrations generate similar volumes of redundant footage. By discarding intermediate reference
+frames once their features are extracted, the system keeps only the target images resident
+in GPU memory. That discipline compounds across thousands of parallel sessions.
+Over time, the efficiency gains shifts the constraint from how much video can we afford to decode,
+to how quickly can we label and curate the frames that matter.
+The next generation inference silicon reached tape out at Samsung's Taylor facility.
+The two nanometers node is intended to deliver higher performance per watt than the current HW4 package.
+Vehicle integration and dojo cluster compatibility remain the next milestones.
+Production volumes will determine how quickly the new silicon reaches customer fleets.
+Silicon progress pairs with ongoing robot development updates.
+The update highlights specific hardware and software milestones cited by Ashok Ellis-Wami.
+Progress on joint torque, sensor fusion, and end-to-end control loops is presented as the
+basis for near-term internal deployment. The details remain focused on factory tasks rather than
+external sales. Next updates are expected to include cycle time benchmarks from the Giga-Texas pilot
+cells. Internal robot progress contrasts with broader market realities for humanoids. Tesla
+posted its highest quarterly deliveries to date, yet the stock fell on the news. The gap between
+volume growth and share reaction points to investor focus on margins and future program timelines,
+rather than units alone. Analysts will likely press for more detail on average selling prices and
+energy storage contribution during the upcoming call. The delivery figure itself does not resolve
+questions about the next phase of vehicle and robot programs. Volume news gives way to real-world
+supervised FSD use cases. The driver had reduced her outings because of fatigue before trying FSD
+supervised. With the system active, she now handles appointments, errands, and longer family visits
+without assistance. The example shows how the current supervised version already changes daily mobility
+for some users. Continued regulatory progress on unsupervised operation would extend that benefit
+to more drivers. Positive supervised use cases sit alongside ongoing monitoring questions.
+Video evidence shows the driver reclined at highway speed while two children rode in the back.
+The clip raises direct questions about the limits of current driver monitoring alerts under supervised
+FSD. Tesla has not issued a statement on the footage. Regulators and safety advocates will likely
+cite the incident when reviewing monitoring requirements for future unsupervised approvals.
+An owner posted the exact split of supervised versus manual miles they find most comfortable on
+daily routes. The preference reflects a balance between system capability and personal oversight.
+Other drivers are comparing their own ratios in replies. The discussion shows how users calibrate trust
+as versions iterate. Tesla's official account posted a short clip labeled simply FSD supervised is magic.
+The video captures a smooth sequence of maneuvers without driver input. Viewers are debating which
+specific behaviors stand out most. The post continues the pattern of highlighting incremental
+improvements in the current supervised stack. The extended wheelbase model YL will not reach US
+customers before summer ends. Production timing remains tied to factory retooling at the relevant site.
+Early allocations are expected to favor other markets first. Buyers tracking the variant will watch
+for updated order windows later this year. The ranking draws on direct experience across the full
+current and past lineup from supercarblondie.com. It places vehicles by a combination of dynamics,
+practicality, and technology integration rather than price alone. The exercise highlights how
+later models have closed gaps that existed in early versions. Owners comparing trims can use the order
+as one data point alongside their own priorities. The July 12, 2026 piece covers every Tesla model ever
+created. It offers a personal perspective on the evolution of the lineup. Readers can see where
+each model stands in the reviewer's assessment. The comparison tests the MG model against the model Y
+on range interior space and charging speed from the driven IO. It examines whether the newcomer matches
+Tesla's software and update cadence. The review also notes differences in build approach and supplier
+base. Market watchers will track how many buyers cross shop the two vehicles in coming quarters.
+The video asks if the MGS 6 is a genuine model Y rival. Testing occurred on July 12, 2026. It
+provides data points for potential customers evaluating options. Registration data shows Tesla
+ownership clusters in areas not traditionally associated with premium vehicles according to
+com.au. The pattern suggests adoption is spreading beyond coastal cities into regional centers.
+Local infrastructure and electricity pricing appear to influence the distribution.
+Continued mapping of these pockets will help forecast service and charging demand.
+The surprising locations of Tesla buyers in this Aussie state were detailed on July 12, 2026.
+Data comes from registration records in the state. The findings challenge assumptions about where
+premium EVs sell best. A software feature surfaced in recent testing that allows remote adjustment of
+cabin vents from not a Tesla app. The capability is tied to the purpose built cyber cab interior layout.
+It removes the need for physical controls inside the passenger compartment.
+Riders will see whether the same interface appears in other upcoming models. Tesla cyber cab will
+let you change air vent direction from the app as reported July 11, 2026. The feature was spotted
+during testing phases. It highlights app integration for the new vehicle design.
+Tesla releases impact report for 2025 on July 12, 2026. The annual report tallies cumulative CO2
+avoidance and battery recycling volumes through last year. It frames progress against the company's
+abundance goals without new forward targets. Energy storage and vehicle efficiency metrics
+receive separate sections. The document serves as a baseline for comparing 2026 results when they
+appear. The report notes 37 million tons of CO2 avoided and 1,400 tons of batteries recycled.
+Metrics cover both environmental impact and operational achievements. Tomorrow we'll be watching
+for any fresh details on how the Austin Hub cleaning robot ties into daily vehicle throughput numbers.
+And that's a wrap on today's Tesla news. TSLA closed at $407.76 up $1.21 0.3%.
+If you enjoyed this episode, please leave a rating or review. It genuinely helps other Tesla fans
+find us. I'm Patrick in Vancouver. See you tomorrow. And before you go, this show is part of the
+NARA network, a family of daily podcasts on tech, science and markets. Each one a short, sharp
+briefing you can finish on the commute. If today earned its place in your feed, here's your next
+lesson. Models and agents, your daily briefing on AI models and agents. Find every show free
+at naranetwork.com. Prefer reading? Today's full write-up, sources and transcript are on the episode
+blog at naranetwork.com, same briefing, readable format. This episode used AI voice synthesis of my
+voice. Editorial selection and analysis are my own.
