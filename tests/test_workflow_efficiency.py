@@ -132,8 +132,22 @@ class TestNoEpisodeMediaAtHead:
         ).stdout.strip()
         assert out == "", f"youtube_tmp PNGs tracked at HEAD: {out[:200]}"
 
+    def test_no_thumbnail_variant_jpgs_tracked(self):
+        """Thumbnail-variant JPGs (*_thumb_v2/v3.jpg) grew ~200 MB/month at
+        HEAD: PR #751 uploads them to R2 but the local temp files were swept
+        in by `git add -A digests/` because .gitignore's *_thumb.jpg pattern
+        does not match the _thumb_vN suffix (landmine #1 regression, July
+        2026 — third instance of the youtube_tmp intermediate class)."""
+        import subprocess
+        out = subprocess.run(
+            ["git", "ls-files", "digests/*/youtube_tmp/*thumb_v*.jpg"],
+            capture_output=True, text=True, cwd=_ROOT,
+        ).stdout.strip()
+        assert out == "", f"thumbnail variants tracked at HEAD: {out[:200]}"
+
     def test_gitignore_guards_present(self):
         gi = (_ROOT / ".gitignore").read_text(encoding="utf-8")
         assert "digests/**/*.mp3" in gi
         assert "!assets/music/*.mp3" in gi
         assert "digests/*/youtube_tmp/*.png" in gi
+        assert "digests/*/youtube_tmp/*_thumb_v*.jpg" in gi
