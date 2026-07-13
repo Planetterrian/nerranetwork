@@ -155,4 +155,42 @@ reviews:
         evidence: null
     agent_cost_usd: null
 
+  - date: '2026-07-12'
+    pr: null
+    doc: docs/reviews/spacex_review_2026_07_12.md
+    generated_by: grok-4.3
+    summary: Length ceiling persists (6/10 episodes <1300w) with boilerplate tics; no new P0s; prior predictions scored hit.
+    scored_prior_predictions:
+    - metric: stranded time fragments in spacex _tts.txt
+      verdict: hit
+      evidence: 0 in Ep21-30
+    - metric: Closing chapter on 2026-06-21 weekly recap
+      verdict: hit
+      evidence: confirmed in 2026-07-02 network pass
+    shipped: []
+    deferred:
+    - Engineering Deep Dive length floor (pending four-show A/B)
+    - SPCX price spoken twice (observe post-reorder)
+    - tomorrow-teaser rotation if frame deadens
+    predictions:
+    - metric: episodes >=1300w in next 10
+      baseline: 4/10
+      expected: 7+/10 if deep-dive lever ships
+      verdict: pending
+      evidence: null
+    - metric: tomorrow-teaser frame count
+      baseline: 8/10
+      expected: <6/10 after rotation
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/prompts/spacex_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: teaser frame hardening into tic
+    - file: shows/prompts/spacex_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: explicit floor vs own spec; A/B only after four-show length decision
+    agent_cost_usd: 0.0611
 do_not_retry: []
