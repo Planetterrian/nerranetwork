@@ -1,0 +1,72 @@
+# Tesla Shorts Time
+**REAL-TIME TSLA price:** $407.76 ▲ $1.21 (0.3%)
+> **Tesla's Fremont factory teardown signals the shift from legacy vehicles to Optimus production scale.**
+---
+### Top 12 News Items
+1. **Jefferies Boosts Tesla Price Target to $400, Cites Q2 Deliveries**, [@Teslarati](https://x.com/Teslarati) (X)
+   Jefferies analysts raised their Tesla price target to $400 from $375 while keeping a Hold rating. The move follows Tesla's Q2 delivery beat of more than 15 percent. The firm credited the strong automotive quarter for the adjustment. Listeners should watch the next earnings call for confirmation on whether delivery momentum continues into Q3. Source: [x.com](https://x.com/Teslarati/status/2076621218845769933)
+
+2. **Tesla Cybercab Spotted in Hampton, NH**, [@Teslarati](https://x.com/Teslarati) (X)
+   A Cybercab prototype was observed on public roads in Hampton, New Hampshire. The sighting adds to evidence of testing activity outside Texas. It remains unclear whether the vehicle was operating in supervised or unsupervised mode during the drive. Next data point to watch is whether additional states report similar sightings in coming weeks. Source: [x.com](https://x.com/Teslarati/status/2076482954641965460)
+
+3. **Tesla Leads South Korean Import Vehicle Sales with 30% Share**, TSLAming (X)
+   Tesla captured 30 percent of all imported vehicle sales in South Korea during June. The result came as the country's total imported vehicle sales rose 37 percent to 38,059 units. Tesla has now exceeded 200,000 cumulative units sold in the market over ten years. The milestone highlights sustained demand even as local competitors prepare responses. Source: [x.com](https://x.com/tslaming/status/2076621816626561341)
+
+4. **FSD Supervised saves deer in direct sunlight**, [@Tesla](https://x.com/Tesla) (X)
+   FSD Supervised detected and avoided a deer despite direct sunlight glare. The system processed the obstacle in real time without driver intervention. This incident demonstrates continued improvement in edge-case handling under challenging visibility. Observers will track whether similar performance holds in upcoming software releases. Source: [x.com](https://x.com/Tesla/status/2076426214416498949)
+
+5. **"Perverse:" Tesla and Hyundai say state-based EV tax would mean electric car owners subsidising hybrids**, The Driven IO
+   Tesla and Hyundai jointly criticized a proposed state EV tax that would effectively have electric owners subsidizing hybrid purchases. The companies called the structure perverse because it reverses the intended incentive direction. Both firms argued the policy would slow EV adoption without clear environmental benefit. Regulators in the affected state have not yet responded to the joint statement. Source: [Google News](https://news.google.com/rss/articles/CBMizgFBVV95cUxQMXJSNms3a0paOGd5bExQT1ZmMkw4R25oRm5haEVlUHNHbFBjZS1Ec0ZFblBvS3ZiQ0g2NVB5NEJIRjJyU3FvWktrWkJRVjh4V1FyclBES1lmUkFiY0hjNjBtNkh0UF9xa2V6bE56NEtzeV9hX0hsQnk4WVp0LXY1aUJVd2l6NFM2SEFvQ2xrNkNtSmxmODE0Z1NqNjFfemhqbzN5dXB4QzQzSXRaSjJDUnUxa0JzOGYxM1k4UnRoMkNOZjJXMHk0QW9NN254QQ?oc=5)
+
+6. **Tesla AI Chief Ashok Elluswamy Says Optimus Has 'Big Shoes to Fill' After Model S, X Production Line Closure**, Benzinga
+   Ashok Elluswamy noted that Optimus must meet high standards set by the Model S and X production lines now being repurposed. The comment came after Tesla closed those lines at Fremont to free space for robot manufacturing. Elluswamy framed the transition as both an opportunity and a pressure point for the humanoid program. The next visible milestone will be the first production cells operating in the converted area. Source: [Google News](https://news.google.com/rss/articles/CBMi7wFBVV95cUxQYXMyUGgwWWNGYTJoX1JZa0RGM2RxazVlZm5keHltdmZjRWZzZl93NGRISFZBd3JQUWFydHNHenBONHZ2cjE4ZEw3MEdhbVBOWFk5b09PQWdwTUU5UDBsTFpvUjQybmdBWERaSDlmdEMyd0poYU84UlhjVVIzclBlMTFuWXQySTFyU3A3WUVULXowbUdBQ1JWX2dpZmFRd3hVb0ZuNkdobDFuaHFBRUtaYkxRc2ZBalBma3R1SWc5NzRNRWtsd19NVms2QzlpbUV0WFplMjdCaVhoNnY5YXN3azNXZS01NFA1WGxoc1dWWQ?oc=5)
+
+7. **Samsung Foundry Completes Preparations for Mass Production of Tesla AI5 Chip ... "Taylor Plant to Begin Operations This Year"**, 매일경제
+   Samsung Foundry has finished setup work for volume production of Tesla's AI5 chip. The Taylor, Texas plant is scheduled to start operations later this year. The chip is intended for autonomous driving inference in future vehicles. Production timing will determine how quickly HW5/AI5 hardware can reach the fleet. Source: [Google News](https://news.google.com/rss/articles/CBMiU0FVX3lxTE9kOE1ncFQ4VThZdkRkUFdaZTA0ckhOX0RtaGlTUGNaSUxSTTRKZHdfOWpSblFtdkR5Nm02YTBkYTdaN01QbkhNdGtWTGtydXo1dXlZ?oc=5)
+
+8. **Ben Shapiro Urges Elon Musk to Build an 8-Seat Tesla SUV or Minivan for Bigger Families: 'Doing Our Best**, Benzinga
+   Ben Shapiro publicly asked Tesla to develop an eight-seat SUV or minivan to serve larger families. Elon Musk replied that the company is "doing our best" on the request. The exchange highlights ongoing customer demand for more seating options beyond current Model Y and X configurations. No timeline or confirmation of development has been provided. Source: [Google News](https://news.google.com/rss/articles/CBMiigJBVV95cUxQZl9zR2dWeDZjUlBuRFhWQjYwWWMyU0VzQU10dS1OY1FpNnZmeGZLdVZjMWQ5RmtBMUxZNUFhdWRqczBhNmU3cnpXZWQ0STJYR2dLZGJpTXpuSGlCS3EzVHBDUlVZT1k3eUQ2YnFYa0pPYmNsS3RpRVBBcW1ZeEV0R2YzTlZxUEdGbmhsdGh5a0ZQSE9FS1BfN0NOejlQWXBPdnJlWl9DMktzYjhGeTFqRGstckExUWk4SXpibXNFQ3JMWFBDS1pGM3lkenAtNnh6dDNDb1FFWl96UEFuUzR4SlZYSGFJSGhrSlljR0o5UFZCWUQwTWVFejVnWDYzSmh3bERkNl9hUUtkZw?oc=5)
+
+9. **See How Tesla Tore Down The Model S Factory To Build Robots Instead**, InsideEVs
+   Tesla has begun dismantling sections of the Fremont Model S and X production area to install Optimus manufacturing cells. The space previously built the first modern EVs and is now being converted for humanoid robots. The change marks a physical shift in factory priorities from passenger vehicles to robotics. Further updates are expected as the first robot production lines become visible. Source: [insideevs.com](https://insideevs.com/news/801412/tesla-model-s-model-x-factory-teardown/)
+
+10. **Tesla readies its autonomous Cybercab and Robotaxi cleaning service**, Teslarati
+    A Texas permit confirms Tesla is preparing an autonomous cleaning robot to service its Cybercab and Robotaxi fleet. The system is designed to operate without human drivers at dedicated hubs. This infrastructure step addresses one operational requirement for scaling a driverless network. Deployment timing will depend on vehicle production and regulatory approval. Source: [teslarati.com](https://www.teslarati.com/tesla-cleaning-robot-cybercab-robotaxi-service/)
+
+11. **Ross Gerber's 'Controversial' EV Opinion? He Prefers Tesla's Cybertruck Over His Rivian, but Criticizes FSD**, Benzinga
+    Investor Ross Gerber stated he prefers his Cybertruck to his Rivian for daily use yet remains critical of FSD performance. The comments separate hardware preference from software capability in one owner's experience. Gerber's view reflects a split assessment common among some early Cybertruck buyers. Future FSD updates will determine whether the software gap narrows for this group. Source: [Google News](https://news.google.com/rss/articles/CBMi6gFBVV95cUxPSlRramRkZzNsX2lrUXpCRThFMUY5OE9CMTB0d3BKWlRYcUFCaEU5VzlYdEJZUGxMNTRDdnlKQ1VyaWhHT1dKbHdFZ29Zd0ZzajdNUTRpdWhvcDJ6eV9vWllzR1VVcnh4NUVwOW00RDRCM19JQ3RjSGlTc1RwenI1dDRyRzN3UVh0NXFjLUhiYnRpWTA2dXl0T05nR1RKTXlnQkl3YmlXMWNWdUpESU1vOF9IZ2RxeG1OZWJraW1XdFpjNFBtbjMyOUVMaDhvYnJyZVViYVQ5cTUwVUVwMURGaUNEOFkxNDh0ckE?oc=5)
+
+12. **Samsung to Produce Tesla's AI5 Chip for Autonomous Driving**, GuruFocus
+    Samsung confirmed it will manufacture Tesla's AI5 chip for autonomous driving applications. The agreement covers production at the Taylor facility once operations begin. This marks another step in Tesla's move toward custom silicon for both vehicles and robots. Volume output will influence how quickly next-generation inference hardware reaches customers. Source: [Google News](https://news.google.com/rss/articles/CBMinAFBVV95cUxPbXZrLWxFVnZCYnV0c1UzQ2RpQ1BPZGhPczFHUzVUVU9qQk15UFc5RjViS2otVk1hT25tN1R0ZDNSSkxjMEVQV3gzLVRQNTVMNmZEUDR4OEljRVhIdHp0dEZ5LW8wUlFidVFrOVFzeEhGMU5fMjgtOUZBbF9NMlhMc0VLelI3QXc2NGhtY3QxNWJQVjRxbWtzZGZ6bE8?oc=5)
+---
+## Tesla X Takeover: What's Hot Right Now
+Tesla X Takeover - What's breaking in the Tesla world today! Here are the most interesting, fresh Tesla developments that have everyone talking.
+
+1. **Nevada thieves stole 11 Tesla battery trailers in weeks, hauling away millions** - Recent thefts
+   Thieves in Nevada removed 11 Tesla battery trailers over several weeks, removing equipment valued in the millions. The incidents targeted high-value energy storage assets rather than vehicles. Local authorities have not released details on suspects or recovery efforts. The scale of the thefts raises questions about physical security at storage sites. Source: [Google News](https://news.google.com/rss/articles/CBMilAFBVV95cUxQS0czOXNQdzZBZEdmY25VT0ltLUUxNUNJbkJBR0lzUGl0QjkyV0ZfZXNPc2lyQVdKOTAzbmZ5UVYtTVBoRS0zZUJIUFNHbHAtLVJqUlpzZFh4czlqS1A1Rnc0dUhsQURSM29leUliTHVUNXRjOEppVFozcDQxTlBpOWJYaDNTYjF3SGJ4bzRDQWx2aFBj?oc=5)
+
+2. **What it is actually like to live with the all-electric Tesla Model Y family SUV**, drive.com.au
+   An Australian owner detailed daily use of a Model Y as a family hauler, noting range, charging habits, and interior space. The review highlighted how the vehicle handles school runs and weekend trips without major compromises. Real-world efficiency figures matched Tesla's claims under mixed conditions. The account adds to the growing set of long-term owner data from right-hand-drive markets. Source: [Google News](https://news.google.com/rss/articles/CBMimgFBVV95cUxNMjEzeHk5eFRFVnZ5ZTJDT09lbFJRNTQ1eXJXa25QOXFVQ21LSThId0g4ZXFsWlpyMTh0NmRxRElSNC1TaUhETVlKSlA4eGw4b1U2MGhZQzhFem1aVmsyTmx2T1BpdkxrZmV2SllEc0tFQk9VN2UwMHYxbDd3ekw2VkxmNzQ0bTMxZHBaOXhEVDVodkg5Sy14cFRB?oc=5)
+
+3. **After 2,500 miles, Tesla's base Cybertruck AWD still looks like a steal, even at $70k**, Yahoo Autos
+   An owner reported 2,500 miles in the base Cybertruck AWD and concluded the truck remains competitively priced at $70,000. The review focused on build quality, utility features, and daily drivability rather than performance claims. No major issues were noted in the initial period. Continued owner reports will show whether early impressions hold at higher mileage. Source: [Google News](https://news.google.com/rss/articles/CBMipAFBVV95cUxPQTNfYmlXNlpiVmQ4MGtkdUpjNTY3SnN4UVRrWENuTDB6anFuWXZvTUpLTEVuNkJwekpQU25yVE9tR1dkaXNPWmtBSWVJOTVDU3dVZlRxb1NnRjBQRGlsMVNaeS1SeEdVbkNHeE5QeW54OXU2RUN6YWhqXzVCQi1YMU9COW0xSkpWV2VDcnppOUNQaGdhOXFpWVFLbGhic3Z3Z3c0SA?oc=5)
+
+4. **Tesla recalled one Powerwall, drained both batteries for months, then said it would replace both**, The Cool Down
+   A customer reported that Tesla recalled one Powerwall unit, drained both batteries over several months, and ultimately offered to replace the pair. The sequence left the homeowner without full backup capacity during the outage period. Tesla has not commented publicly on whether this reflects a broader service policy. Affected owners will monitor whether similar cases surface in other regions. Source: [Google News](https://news.google.com/rss/articles/CBMiggFBVV95cUxPT1ROZnZVOUpsbk1Ia2t2TTQyYkk3S2dPbG5QeEpxdUp3b2xGNkg0TGNDd2NaUEZzcU9tamhUREExSTlOZnFQOEZKSDBNcTF4cEVNdjdJbVY4MGYwR2Fjak1nLUw0UEg0YlR3cHlZbEZKVGVFNU9uYUVjUU9jclZtd1Bn?oc=5)
+
+5. **Tesla’s Screen-Heavy Model Y Just Beat Cars With 50 Buttons**, Autoblog
+   A comparison test showed the Model Y's screen-centric interface outperforming vehicles with up to 50 physical buttons in usability metrics. Testers noted faster menu navigation once drivers adapted to the layout. The result challenges assumptions that physical controls are inherently superior for all tasks. Future interior designs from other makers may incorporate similar screen density. Source: [Google News](https://news.google.com/rss/articles/CBMikgFBVV95cUxQM3EyV0s3dUk2SmN6UUFUWGc5UGtTZWtWLXlDMWJpcHZDQzlxZzU4TklFOXpoS3I1WmlVb2x5LUV5Y0laRWp2Y3RRT2NXRS1NanRoYm11WnpEVV9QdmVlb3FpdEdVWmU1d2R1VElBR1NwcU1kUFNTQVNzTXh1M0hhYmNYTW8tbHdPQ3ZWMU12ODZrUQ?oc=5)
+---
+## Short Spot
+**Tesla’s Profit Per Vehicle Has Been Dropping Significantly:** July 12, 2026, CleanTechnica
+Tesla's profit per vehicle has declined sharply and now sits near Toyota's levels after earlier wide leads. The drop reflects pricing pressure and mix shifts rather than production issues. Gross margins on vehicles remain under scrutiny as the company invests in robotaxi and Optimus programs. Investors will look for margin stabilization signals in the next quarterly report. Source/Post: [cleantechnica.com](https://cleantechnica.com/2026/07/12/teslas-profit-per-vehicle-has-been-dropping-significantly/)
+---
+### Tesla First Principles
+
+Factory space is finite, and every square meter devoted to one product line is unavailable for another. Tesla's decision to dismantle Model S and X assembly at Fremont therefore represents an explicit reallocation of capital equipment and floor area toward Optimus rather than an incremental expansion. The move compresses the timeline for robot production only if the freed capacity can be repurposed faster than building new facilities elsewhere.
+
+The economic logic rests on utilization rates. Legacy vehicle lines that were already running below optimal volume now carry higher fixed costs per unit; converting that space avoids the larger outlay of greenfield construction while the robot program is still proving demand. If Optimus volumes ramp more slowly than projected, however, the company will have surrendered proven passenger-vehicle capacity without an immediate replacement revenue stream.
+
+This choice also affects supply-chain sequencing. Parts and tooling previously flowing to Model S and X production can be redirected or retired, which shortens the cash-conversion cycle for the new line but risks stranding any remaining inventory or supplier contracts tied to those models. The net margin impact will depend on how quickly Optimus unit economics reach the point where robot gross profit exceeds the forgone vehicle contribution.
+---
+Catch feedback at [@teslashortstime](https://x.com/teslashortstime).
