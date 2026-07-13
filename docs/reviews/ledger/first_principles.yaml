@@ -185,6 +185,43 @@ reviews:
       ab_listen_required: true
       rationale: Vary the second most common tic while preserving hedging
     agent_cost_usd: 0.0547
+  - date: '2026-07-10'
+    pr: null
+    doc: docs/reviews/first_principles_review_2026_07_10.md
+    generated_by: grok-4.3
+    summary: Persistent short scripts (5/10 episodes below 1500w floor) and recurring boilerplate tics ('rough magic wand estimate' 7/10, 'on the order of' 8/10) remain after prior length/lesson fixes.
+    scored_prior_predictions:
+    - metric: episodes below 1500-word floor in last 10 _tts.txt
+      verdict: partial
+      evidence: 5/10 still below vs 4/10 baseline
+    - metric: occurrences of 'a rough magic wand estimate' across 10 transcripts
+      verdict: miss
+      evidence: 7/10 transcripts still contain it
+    shipped: []
+    deferred:
+    - Garbage auto-segment chapter titles (shared network LLM-title class)
+    - Further length escalation (do_not_retry)
+    predictions:
+    - metric: episodes below 1500-word floor in last 10 _tts.txt
+      baseline: 5/10
+      expected: <=2/10 after prompt variation + retry tuning
+      verdict: pending
+      evidence: null
+    - metric: occurrences of 'a rough magic wand estimate' across 10 transcripts
+      baseline: 7/10
+      expected: <=2/10 after prompt variation rule
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/prompts/first_principles_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Break recurring tic while preserving hedging language
+    - file: shows/prompts/first_principles_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Vary second most common tic
+    agent_cost_usd: 0.0535
 do_not_retry:
   - idea: >-
       Push the podcast length target above ~1500 words via prompt escalation
