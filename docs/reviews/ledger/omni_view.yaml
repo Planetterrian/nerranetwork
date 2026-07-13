@@ -91,4 +91,54 @@ reviews:
         evidence: null
     agent_cost_usd: null
 
+  - date: '2026-07-11'
+    pr: null
+    doc: docs/reviews/omni_view_review_2026_07_11.md
+    generated_by: grok-4.3
+    summary: This pass finds persistent under-length episodes (ep102 at 1218w), verbatim boilerplate tics in 10/10 transcripts, and continued saturation of the 'Both sides agree X; they differ on whether Y' digest template (12/12 stories in Ep099).
+    scored_prior_predictions:
+    - metric: episodes (last 10) with a Closing chapter in chapters_ep*.json
+      verdict: hit
+      evidence: chapters_ep100–ep109.json all contain Closing
+    - metric: chapters with sentence-fragment / ellipsis titles (last 10 eps)
+      verdict: hit
+      evidence: 0 fragment/ellipsis titles in any chapters_ep*.json
+    - metric: max "the strongest case" count in any single episode (last 10)
+      verdict: partial
+      evidence: script clean but digest Ep085 shipped it 24×
+    - metric: episodes opening stories with anonymous "one side frames / the other side frames" (last 10)
+      verdict: hit
+      evidence: 0 anonymous frames in window
+    - metric: median _tts.txt words (last 10 eps)
+      verdict: miss
+      evidence: ep102=1218w; median still <1600
+    - metric: '"Both sides agree" constructions per episode digest'
+      verdict: pending
+      evidence: 12/12 stories in Ep099
+    shipped: []
+    deferred:
+    - Milder "Both sides agree" frame still recurs — watch whether it becomes the next tic
+    - Chronic under-length (digest ceiling, four-show length A/B)
+    - Low OP3 downloads (network-funnel question)
+    predictions:
+    - metric: episodes (last 10) with _tts.txt word count >=1400
+      baseline: 7 of 10
+      expected: 10 of 10 within 2 weeks
+      verdict: pending
+      evidence: null
+    - metric: '"Both sides agree X; they differ on whether Y" constructions per episode digest'
+      baseline: 12/12 stories (Ep099)
+      expected: <=2/episode once de-seed ships
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/prompts/omni_view_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Remove the literal seed that produces saturation (12/12 stories Ep099).
+    - file: shows/prompts/omni_view_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Mirror the digest ban to prevent template echo in audio.
+    agent_cost_usd: 0.0539
 do_not_retry: []
