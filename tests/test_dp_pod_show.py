@@ -13,6 +13,7 @@ Pins the launch decisions so a partial revert or config drift fails CI:
 from __future__ import annotations
 
 import datetime
+import re
 import sys
 from pathlib import Path
 
@@ -249,12 +250,22 @@ class TestDebutRework:
         # The quoted lever body (after the colon) must be a real aired action —
         # not a phantom heat-pump callback. The instruction preamble may still
         # mention heat pumps as a forbidden example.
-        quoted = prev.split("):", 1)[-1].lower()
-        assert "heat-pump" not in quoted
-        assert "heat pump" not in quoted
-        assert any(
-            token in quoted
-            for token in ("solar", "diesel", "filter", "pledge", "doomscroll")
+        quoted = prev.split("):", 1)[-1]
+        assert "heat-pump" not in quoted.lower()
+        assert "heat pump" not in quoted.lower()
+        # Data-independent reality check (the old hard-coded token list broke
+        # the suite whenever a new episode's lever used different words): the
+        # quoted text must come verbatim from the cited episode's committed
+        # digest, proving it is an aired action rather than an invention.
+        ep_match = re.search(r"\[Ep(\d+)\]\s*(.+)", quoted, re.DOTALL)
+        assert ep_match, f"no [EpNNN] citation in: {quoted[:120]}"
+        digest_glob = f"DP_Pod_Ep{int(ep_match.group(1)):03d}_*.md"
+        sources = list((PROJECT_ROOT / "digests" / "dp_pod").glob(digest_glob))
+        assert sources, f"cited digest {digest_glob} not found"
+        digest_text = re.sub(r"\s+", " ", sources[0].read_text(encoding="utf-8"))
+        lever_snippet = re.sub(r"\s+", " ", ep_match.group(2)).rstrip("…").strip()
+        assert lever_snippet[:120] in digest_text, (
+            f"quoted lever not found in {sources[0].name}: {lever_snippet[:120]}"
         )
         ctx = hook.pre_fetch(CFG, episode_num=5, today_str="July 9, 2026")
         assert "PREVIOUS LEVER" in ctx["nerra_network_context"]
