@@ -1,0 +1,141 @@
+Glad you're here — welcome to Models and Agents, episode one hundred ten, for July thirteenth, twenty twenty-six. Monday in the A I world — which means a weekend's worth of announcements to catch up on. Let's go.
+
+A new 30B-parameter sovereign MoE model delivers frontier-class English and German performance while activating just 3B parameters per token.
+
+Soofi S 30B-A3B launches as a hybrid Mamba-Transformer trained on 27 trillion tokens with heavy German weighting.
+
+It matches or beats larger dense models on code and bilingual benchmarks while keeping inference cache size nearly constant as context grows.
+
+The model was trained end-to-end on the German Industrial A I Cloud and ships with weights, intermediate checkpoints, full data accounting, and training code under permissive terms.
+
+This latest open-weight release continues the pattern we saw yesterday of families like Llama and Mistral narrowing the performance gap with closed frontier systems, particularly on non-English workloads.
+
+Builders working on bilingual or long-context European tasks should test it immediately against current Llama and Mistral equivalents.
+
+Next to watch is how the released checkpoints affect fine-tuning recipes for domain-specific German agents.
+
+Stanford's TRACE system turns recurring agent failures into targeted synthetic RL environments.
+
+The approach diagnoses capability gaps from an agent's own trajectories, synthesizes one verifiable RL environment per gap, trains a Laura adapter, and routes tokens across experts.
+
+It improves τ²-Bench by 15.3 points and reaches 73.2 percent Passat 1 on SWE-bench Verified.
+
+Agent builders should capture trajectory logs and feed them into TRACE-style capability targeting rather than generic fine-tuning.
+
+Prime Intellect released Verifiers v1, which splits environments into taskset, harness, and runtime layers with an interception server that records training-ready traces.
+
+Any taskset runs under any compatible harness and ships with full prime-rl training support.
+
+The rewrite under the verifiers.v1 namespace makes agentic RL pipelines modular and reproducible.
+
+RL practitioners can now swap evaluation harnesses without retraining policies.
+
+AgentKGV combines dynamic routing and iterative query rewriting for document-level knowledge-graph fact verification, then applies turn-level distillation SFT followed by trajectory-level GRPO.
+
+On the long-tail T-REx split it lifts macro-F1 by 9.4 points over single-turn rag while cutting average search calls from 3.24 to 1.63.
+
+The two-stage recipe transfers reasoning from a large teacher into a smaller deployable model.
+
+Knowledge-graph maintenance teams should evaluate the GRPO policy stage for retrieval-cost reduction.
+
+HALO adds a coarse refinement stage plus selective second-stage latent refinement on a scored subset of tokens with monotonic halting.
+
+On the M M L U Pro and G P Q A Diamond benchmarks it posts the best average among paper-facing methods while using fewer average refine steps than either fixed-1 or fixed-2 baselines.
+
+The approach shows that better allocation of refinement, not simply more of it, drives the gains.
+
+Teams running long reasoning traces should experiment with token-scoring controllers to cut unnecessary compute.
+
+Freya-TTS is a 183.2 million parameter non-autoregressive conditional flow-matching Diffusion Transformer that maps directly from a 92-symbol Turkish character vocabulary into the frozen AudioVAE2 latent space.
+
+It achieves 8.0 percent WER and 3.0 percent CER on the Freya-TR-Eval benchmark while running at 0.11 real-time factor on consumer G P U's.
+
+The two-stage post-training recipe locks speaker identity and covers short utterances for production robustness.
+
+Turkish voice-agent developers now have a compact, tokenizer-free option that outperforms larger open systems.
+
+S-TTT lets the model first identify relevant evidence spans inside a long context, then applies language-modeling adaptation only to those spans.
+
+On LongBench-v2 and LongBench-Pro it delivers up to 15 percent relative accuracy gains for Qwenthree to fourB-Thinking-2507 and Llama-three point one to eightB-Instruct.
+
+Random-span test-time training hurts performance while oracle-span test-time training helps dramatically, confirming the value of self-guided selection.
+
+Long-context rag teams should test the span-selection step before full-context adaptation.
+
+Workspace entropy from Anthropic's Jacobian Lens complements output confidence for factual retrieval on PopQA and TriviaQA but fails to flag internalized misconceptions on TruthfulQA.
+
+Calibration is highly task-dependent, and a TriviaQA threshold collapses on GSMeight thousand.
+
+The study supplies full notebooks and raw metrics for cross-model validation.
+
+Retrieval-augmented teams can add it as a low-cost routing signal for high-confidence factual answers.
+
+WILDTRACE supplies 481 tasks over 214 naturally occurring long documents where evidence trails follow the source's own causal and narrative logic rather than planted needles.
+
+It defines seven source-internal evidence geometries and applies multi-stage validation for groundedness and contamination resistance.
+
+Long-context reasoning benchmarks have historically relied on artificial distributions.
+
+Evaluation suites should add WILDTRACE to measure genuine multi-hop integration.
+
+DKCD mines domain knowledge to surface latent causal factors, then uses that knowledge to guide reasoning and produce accurate annotations for graph construction.
+
+On two high-expertise domain datasets it materially improves both factor identification and final graph quality over plain L L M baselines.
+
+The three-stage pipeline directly attacks the lack of domain grounding that previously limited unstructured causal discovery.
+
+Domain analysts can now bootstrap causal graphs from reports without exhaustive manual factor listing.
+
+Ant Group released SingGuard-NSFA as an open-source safety model aimed at agents and multimodal systems.
+
+The release targets security paradigms for autonomous operation rather than generic content filtering.
+
+Agent deployments that interact with external tools or multimodal inputs now have a concrete starting point for safety layers.
+
+Teams should review the model weights and integration patterns for their own guardrail stacks.
+
+OK, let's pop the hood on selective token refinement.
+
+Everyone talks about adding more thinking steps as if extra refinement is always free.
+
+In practice, refinement is a staged allocation problem where each additional pass costs full-sequence compute.
+
+HALO-style systems first run a cheap coarse stage across every token, then score tokens and apply a second, heavier refinement only to a halted subset.
+
+The scoring function learns to predict which tokens still carry high residual error after the first pass.
+
+Monotonic halting prevents later tokens from triggering unnecessary work.
+
+This yields nearly the same token-level accuracy as always running two full passes while cutting average applied steps below even a single fixed pass.
+
+The quality gain vanishes once models exceed roughly 70 billion parameters because the base representations are already low-error.
+
+So when your traces are long and most tokens are already stable after one pass, selective refinement wins.
+
+When every token still needs work, fixed multi-pass or full test-time training remains simpler.
+
+Test Soofi S 30B-A3B on bilingual German-English code tasks to see whether the 3 billion active-parameter footprint changes your latency budget versus dense 14 billion alternatives.
+
+Run Stanford TRACE on your agent's recent failure trajectories to generate targeted Laura adapters instead of generic continued pre-training.
+
+Swap in Prime Intellect Verifiers v1 tasksets for your current agent eval harness to measure how modular runtimes affect trace collection cost.
+
+Add WILDTRACE tasks to your long-context eval suite so you stop optimizing for planted needles and start measuring real evidence integration.
+
+Prototype DKCD's knowledge-guided reasoning stage on your domain reports to surface latent causal factors before building production graphs.
+
+Expect more open-weight hybrid Mamba-Transformer releases as teams replicate Soofi's constant-cache scaling.
+
+Watch for production deployments of TRACE-style capability-targeted training once the synthetic-environment generation code is shared.
+
+Ant Group's SingGuard-NSFA safety models will likely see rapid community fine-tunes for specific agent tool-use policies.
+
+Tomorrow, keep an eye on how the released Soofi checkpoints influence fine-tuning recipes for domain-specific German agents.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The A I world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+And before you go: this show is part of the Nerra Network — a family of daily podcasts on tech, science, and markets, each one a short, sharp briefing you can finish on the commute. If today earned its place in your feed, here's your next listen — The Do Positive Pod, good news in science and tech, plus one concrete action you can take. Find every show, free, at nerranetwork dot com. Prefer reading?
+
+Today's full write-up, sources, and transcript are on the episode blog at nerranetwork dot com — same briefing, readable format.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
