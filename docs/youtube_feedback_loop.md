@@ -107,6 +107,53 @@ cat digests/tesla/youtube_performance.json
 
 Drift guards: `tests/test_youtube_feedback_loop.py`.
 
+## Adaptive publishing policy (July 2026)
+
+The second consumer of `api/youtube_stats.json`: instead of only steering
+*titles*, the network now adapts its publish **volume/format** to what each
+channel's audience actually watches (operator-approved: ~24 EN uploads/day
+were earning ~182 views/day — most long-forms cost render time + Grok Imagine
+spend for single-digit views).
+
+- **`scripts/update_youtube_policy.py`** (nightly, right after the title-hint
+  step; no secrets — reads the committed stats) writes
+  **`api/youtube_policy.json`**: per show × channel, a publish tier computed
+  from a single-snapshot **velocity** metric, `vpd = views /
+  max(1, days_since_publish)`, averaged per kind over videos published in the
+  trailing 14 days (≥4 videos of a kind required for a confident reading;
+  fewer = that dimension holds the active tier).
+- **Tier rules** (same rules on both channels, each decided from its own
+  data): long-form on when `long_vpd ≥ 1.0`; Shorts `≥ 4.0` → 2/episode else
+  1 — **never 0** (Shorts are the probe/recovery signal). Labels: A =
+  long + 2 Shorts, B = long + 1, C = shorts-only, D = probe (shorts-only and
+  `short_vpd < 0.5`; same settings as C).
+- **Monday long-form probe**: a shorts-only show produces no long-form
+  analytics, so it could never re-earn its long-form (a one-way door).
+  `resolve_publish_plan` grants one probe long-form per week (Mondays,
+  UTC) to shows whose YAML wants long-form but whose tier gates it off —
+  that probe generates the data the nightly computation needs to promote.
+- **Hysteresis**: the ACTIVE tier flips only after the same computed tier
+  appears on 2 consecutive runs (`{active, computed, pending, streak}`
+  persisted in the policy file). Cold-start actives are the `SEED_TIERS`
+  hardcoded from the live 2026-07-14 analytics (RU long-form off everywhere:
+  59 views across 11 RU spacex longs vs 2,513 on RU Shorts).
+- **Consumers** (both via `engine.youtube_policy.resolve_publish_plan`):
+  `run_show._publish_youtube` (EN + native-RU shows — skips the long-form
+  render/upload on a shorts-only tier while Shorts, and the long-form
+  thumbnail the Shorts end-card reuses, still ship; raises Shorts to 2 only
+  when `shorts_start_mode: smart`; metrics `yt_policy_tier` /
+  `yt_policy_long_skipped` / `yt_policy_shorts`), and
+  `engine.ru_dub.publish_ru_dub` (@NerraRU dubs — shorts-only tier skips the
+  long render+upload; the RU Short still builds from the shared audio +
+  scenes + thumbnail, and its upload marks the episode done in the sweep's
+  index).
+- **Contract**: best-effort everywhere — a missing/unreadable policy file, an
+  absent slug, or `youtube.adaptive_publishing: false` (new `YouTubeConfig`
+  field, default true) resolves to exact legacy YAML behavior. The policy
+  never edits YAML files and never touches audio (outside landmine #17).
+
+Drift guards: `tests/test_youtube_policy.py`.
+
 ## Deliberately staged for later
 
 - **Topic steering from retention** (feeding the signal into the *digest*

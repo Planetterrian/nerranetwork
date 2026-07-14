@@ -64,12 +64,15 @@ def _index_path(config) -> Path:
 
 
 def _already_done(config, episode_num: int) -> bool:
-    # Keyed on the LONG upload only: engine.ru_dub.publish_ru_dub has no
-    # short-only path (it always renders + uploads the long first), so
-    # retrying an episode whose Short failed would re-upload a duplicate
-    # public long-form video. A failed Short is therefore NOT retried; it is
-    # recorded durably in the index by _record_short_failure so the gap is
-    # visible (re-publish with --force after fixing the cause).
+    # Keyed on ANY uploaded video (long or short) for the episode. Legacy
+    # runs always uploaded the long first, so a long row with a video_id is
+    # the usual done marker; under a shorts-only adaptive-publishing tier
+    # (api/youtube_policy.json — engine.ru_dub skips the long render) the
+    # Short's row is the deliverable, and without counting it every sweep
+    # would re-upload a duplicate public Short. A long-uploaded-but-Short-
+    # failed episode still reads done (retrying would duplicate the long);
+    # the failed Short is recorded durably by _record_short_failure so the
+    # gap is visible (re-publish with --force after fixing the cause).
     #
     # The row must carry a video_id: status-only rows (a short-failure row
     # or a no_scenes_yet deferral row) mean nothing was uploaded, so the
@@ -83,7 +86,8 @@ def _already_done(config, episode_num: int) -> bool:
         data = json.loads(idx.read_text(encoding="utf-8"))
     except Exception:  # noqa: BLE001
         return False
-    return any(v.get("episode") == episode_num and v.get("kind") == "long"
+    return any(v.get("episode") == episode_num
+               and v.get("kind") in ("long", "short")
                and v.get("video_id")
                for v in data.get("videos", []))
 
@@ -261,8 +265,12 @@ def main() -> int:
             elif res.get("status") == "done":
                 _clear_scenes_deferral(config, ep)
             if res.get("short_error") and not args.dry_run:
-                logger.warning("%s Ep%s: Short failed (long uploaded): %s",
-                               slug, ep, res["short_error"])
+                logger.warning("%s Ep%s: Short failed (%s): %s",
+                               slug, ep,
+                               "policy shorts-only — will retry"
+                               if res.get("policy_long_skipped")
+                               else "long uploaded",
+                               res["short_error"])
                 _record_short_failure(config, ep, str(res["short_error"]))
             elif res.get("short_url"):
                 _clear_short_failure(config, ep)

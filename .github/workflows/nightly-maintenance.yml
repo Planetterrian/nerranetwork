@@ -92,6 +92,15 @@ jobs:
           python scripts/fetch_youtube_analytics.py --out api/youtube_stats.json --days 90 || true
           python scripts/update_youtube_performance.py || true
 
+      - name: Update adaptive YouTube publishing policy
+        # Velocity-gated per-channel publish tiers (long-form on/off +
+        # Shorts count) in api/youtube_policy.json, consumed by run_show +
+        # the RU-dub sweep via engine.youtube_policy. Reads the committed
+        # api/youtube_stats.json + the previous policy (hysteresis) — no
+        # secrets needed. Never edits show YAMLs; opt out per show via
+        # youtube.adaptive_publishing: false. Best-effort, non-fatal.
+        run: python scripts/update_youtube_policy.py || echo "::warning::YouTube policy update failed (non-fatal)"
+
       - name: Refresh SpaceX launch dashboard data
         # Next/previous launch, 12-month cadence, and stats for
         # spacex-dashboard.html (The Space Devs Launch Library 2). Keeps
@@ -186,6 +195,7 @@ jobs:
             api/dashboard.json
             api/daily-show-health.json
             api/youtube_stats.json
+            api/youtube_policy.json
             api/gallery_retention.json
             digests/**/youtube_performance.json
             api/op3_stats.json

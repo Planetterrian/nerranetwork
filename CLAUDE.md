@@ -1270,6 +1270,32 @@ any failure logs a warning and ships the exact legacy render.
   `broll_clips_used`, `thumbnail_base`, `thumbnail_variant_urls`. Drift
   guards: `tests/test_visual_reuse.py`.
 
+### Adaptive YouTube publishing policy (July 2026)
+
+Publish volume/format now adapts to what each channel actually watches
+(full doc: [`docs/youtube_feedback_loop.md`](docs/youtube_feedback_loop.md)
+"Adaptive publishing policy"). Nightly `scripts/update_youtube_policy.py`
+(no secrets; runs right after the title-hint step) turns
+`api/youtube_stats.json` into **`api/youtube_policy.json`**: per
+show × channel tiers from 14-day views-per-day velocity (A = long + 2
+Shorts, B = long + 1, C = shorts-only, D = probe; long on at
+`long_vpd ≥ 1.0`, 2 Shorts at `short_vpd ≥ 4.0`, Shorts NEVER 0 — they're
+the recovery signal; <4 in-window videos of a kind holds that dimension).
+**Hysteresis:** the active tier flips only after the same computed tier on
+2 consecutive runs; cold-start actives are `SEED_TIERS` hardcoded from the
+2026-07-14 analytics (RU long-form seeded off everywhere). Consumers via
+`engine.youtube_policy.resolve_publish_plan`: `run_show._publish_youtube`
+(EN + native-RU shows; a shorts-only tier skips the long-form render/upload
+while Shorts + the shared thumbnail still ship; Shorts raise to 2 only with
+`shorts_start_mode: smart`; metrics `yt_policy_tier` /
+`yt_policy_long_skipped` / `yt_policy_shorts`) and
+`engine.ru_dub.publish_ru_dub` (@NerraRU dubs; the sweep's done-check now
+also counts an uploaded Short). Best-effort by contract: missing policy
+file / absent slug / `youtube.adaptive_publishing: false` (new field,
+default true) = exact legacy YAML behavior. The policy never edits YAML
+files at runtime and never touches audio (outside landmine #17). Drift
+guards: `tests/test_youtube_policy.py`.
+
 ### Testing
 
 ```bash

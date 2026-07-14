@@ -4039,6 +4039,57 @@ def _publish_youtube(
         logger.info("YouTube publishing skipped — no final mp3.")
         return result
 
+    # ---- Adaptive publishing policy (July 2026) ----
+    # api/youtube_policy.json (rebuilt nightly by
+    # scripts/update_youtube_policy.py from real per-video velocity, per
+    # channel) can gate long-form off / set the Shorts count for this show.
+    # Best-effort by contract: any failure here — missing file, absent slug,
+    # opt-out via youtube.adaptive_publishing: false — resolves to the exact
+    # legacy YAML behavior. YAML files are never modified at runtime.
+    _policy_publish_long = bool(config.youtube.publish_long_form)
+    _policy_shorts_count = max(
+        1, int(getattr(config.youtube, "shorts_per_episode", 1) or 1)
+    )
+    try:
+        from engine.youtube_policy import load_policy, resolve_publish_plan
+        _yt_plan = resolve_publish_plan(
+            load_policy(PROJECT_ROOT / "api" / "youtube_policy.json"),
+            slug=config.slug,
+            channel=(getattr(config.youtube, "channel", "en") or "en"),
+            yaml_publish_long=_policy_publish_long,
+            yaml_shorts=_policy_shorts_count,
+            smart_mode=(
+                getattr(config.youtube, "shorts_start_mode", "voice") == "smart"
+            ),
+            adaptive_enabled=bool(
+                getattr(config.youtube, "adaptive_publishing", True)
+            ),
+        )
+        if _yt_plan.get("applied"):
+            _policy_long_skipped = (
+                _policy_publish_long and not _yt_plan["publish_long"]
+            )
+            _policy_publish_long = bool(_yt_plan["publish_long"])
+            _policy_shorts_count = int(_yt_plan["shorts"])
+            result["yt_policy_tier"] = str(_yt_plan.get("tier") or "")
+            result["yt_policy_long_skipped"] = _policy_long_skipped
+            result["yt_policy_shorts"] = _policy_shorts_count
+            if _policy_long_skipped:
+                logger.warning(
+                    "yt policy: %s tier %s — long-form skipped "
+                    "(Shorts still publish). %s",
+                    config.slug, _yt_plan.get("tier"),
+                    _yt_plan.get("reason") or "",
+                )
+            else:
+                logger.info(
+                    "yt policy: %s tier %s — long_form=%s shorts=%d",
+                    config.slug, _yt_plan.get("tier"),
+                    _policy_publish_long, _policy_shorts_count,
+                )
+    except Exception as exc:  # noqa: BLE001 — policy must never block publish
+        logger.warning("yt policy resolution failed (%s) — YAML behavior", exc)
+
     # Resolve cover image. Prefer the slug-derived name; then fall back to the
     # basename the show references in its RSS <itunes:image> (some shows name
     # the file after the title, e.g. first-principles-daily.jpg) so a YouTube-
@@ -4109,7 +4160,9 @@ def _publish_youtube(
     # cred-less environment never pays the Grok call for titles it can't use.
     yt_title = ""
     yt_title_variants: list = []
-    if getattr(config.youtube, "optimized_titles", True):
+    # Long-form-only artifact — skip the Grok call when the adaptive policy
+    # gates long-form off (Shorts titles come from the per-window headline).
+    if _policy_publish_long and getattr(config.youtube, "optimized_titles", True):
         try:
             from engine.youtube_titles import generate_youtube_titles
 
@@ -4758,7 +4811,7 @@ def _publish_youtube(
         "fresh_count": len(fresh_long_scenes), "library_count": 0,
         "mode": "uniform" if len(long_scene_paths) >= 2 else "cover",
     }
-    if config.youtube.publish_long_form and video_provider != "grok":
+    if _policy_publish_long and video_provider != "grok":
         try:
             from engine.visual_reuse import long_form_visual_plan
             _visual_plan = long_form_visual_plan(
@@ -4787,7 +4840,7 @@ def _publish_youtube(
     # Best-effort, gated on youtube.video_clips_enabled (pilot: Tesla + SpaceX).
     # Falls back silently to the all-stills slideshow. Touches only visuals.
     long_clip_paths: list = []
-    if config.youtube.publish_long_form and getattr(
+    if _policy_publish_long and getattr(
         config.youtube, "video_clips_enabled", False
     ):
         try:
@@ -4813,8 +4866,12 @@ def _publish_youtube(
             logger.warning("Hybrid video-clip generation skipped: %s", exc)
 
     # ---- Long-form ----
+    # NOTE: the long-form thumbnail above is still generated when the policy
+    # skips long-form — the Shorts end-card and per-Short thumbnail fallback
+    # reuse it (the Short itself is built independently from the audio +
+    # 9:16 scenes, so nothing else from this branch is needed).
     long_url = ""
-    if config.youtube.publish_long_form:
+    if _policy_publish_long:
         try:
             build_long_form_video(
                 final_mp3, cover_path, long_video_path,
@@ -4939,9 +4996,10 @@ def _publish_youtube(
             # Shorts requires ``shorts_per_episode > 1`` AND
             # ``shorts_start_mode: smart`` so the top-N selector has
             # something to rank.
-            shorts_count_yaml = max(
-                1, int(getattr(config.youtube, "shorts_per_episode", 1) or 1)
-            )
+            # Effective count = the adaptive-policy plan resolved above
+            # (identical to the YAML value when no policy applies). The
+            # smart-mode requirement for >1 was already enforced there.
+            shorts_count_yaml = _policy_shorts_count
             mode_resolved = (
                 "explicit" if getattr(
                     config.youtube, "shorts_start_offset", None,
