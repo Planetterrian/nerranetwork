@@ -285,6 +285,13 @@ youtube:
   # Per-episode rendering toggles.
   publish_long_form: true
   publish_shorts: true
+  # Adaptive publishing policy (July 2026): when true, the publish stage
+  # reads the committed api/youtube_policy.json (rebuilt nightly from real
+  # per-video velocity, per channel — scripts/update_youtube_policy.py) and
+  # lets it gate long-form on/off + the Shorts count. Never edits YAML,
+  # never touches audio (outside landmine #17). Set false per show to pin
+  # the YAML publish shape regardless of analytics.
+  adaptive_publishing: true
   # Shorts clip starts at voice_intro_delay (skips music-only intro).
   # Override with shorts_start_offset (seconds) or shorts_start_mode:
   # first_chapter (jumps to 2nd chapter marker for a stronger hook).

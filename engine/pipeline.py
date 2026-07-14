@@ -227,6 +227,14 @@ def record_youtube_outcomes(
             metrics.record("thumbnail_base", str(youtube_urls["thumbnail_base"]))
         if youtube_urls.get("thumbnail_variant_urls"):
             metrics.record("thumbnail_variant_urls", list(youtube_urls["thumbnail_variant_urls"]))
+
+        # Adaptive publishing policy decision (July 2026 — engine/
+        # youtube_policy). Present only when a policy entry actually applied
+        # to this show; absent keys mean legacy YAML behavior ran.
+        if "yt_policy_tier" in youtube_urls:
+            metrics.record("yt_policy_tier", str(youtube_urls["yt_policy_tier"]))
+            metrics.record("yt_policy_long_skipped", bool(youtube_urls.get("yt_policy_long_skipped")))
+            metrics.record("yt_policy_shorts", int(youtube_urls.get("yt_policy_shorts", 1) or 1))
     except Exception:
         # Never let metrics recording break a publish
         logger = __import__("logging").getLogger(__name__)

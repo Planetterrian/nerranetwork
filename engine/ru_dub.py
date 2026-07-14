@@ -289,6 +289,38 @@ def _word_trim(text: str, limit: int) -> str:
     return cut.rstrip(" ,.:;—-…")
 
 
+def _policy_plan(config) -> Dict[str, object]:
+    """Adaptive-publishing decision for this show on the RU channel.
+
+    Reads the committed ``api/youtube_policy.json`` (rebuilt nightly from
+    real per-video velocity by ``scripts/update_youtube_policy.py``) via
+    ``engine.youtube_policy``. RU long-form dubs earn almost nothing while
+    RU Shorts carry all the views (July 2026 analytics), so the policy can
+    gate the expensive long-form render+upload off while the Short still
+    ships. Best-effort: any failure resolves to the legacy always-long
+    behavior. Tests monkeypatch this hook for determinism.
+    """
+    legacy: Dict[str, object] = {"publish_long": True, "shorts": 1,
+                                 "tier": "", "applied": False, "reason": ""}
+    try:
+        from engine.youtube_policy import load_policy, resolve_publish_plan
+        return resolve_publish_plan(
+            load_policy(PROJECT_ROOT / "api" / "youtube_policy.json"),
+            slug=config.slug,
+            channel="ru",
+            yaml_publish_long=True,   # legacy ru_dub always built the long
+            yaml_shorts=1,            # ru_dub builds at most one Short
+            smart_mode=False,
+            adaptive_enabled=bool(getattr(
+                getattr(config, "youtube", None), "adaptive_publishing", True,
+            )),
+        )
+    except Exception as exc:  # noqa: BLE001 — policy must never block a dub
+        logger.warning("ru_dub: policy resolution failed (%s) — legacy "
+                       "behavior", exc)
+        return legacy
+
+
 def _ru_short_title(long_title: str, *, body_limit: int = 70) -> str:
     """A distinct, punchy Short title derived from the RU long title.
 
@@ -349,11 +381,28 @@ def publish_ru_dub(
             ru_title = _cap_title(ru_opt)
     ru_desc = ru_track.get("description") or ru_title
 
+    # Adaptive publishing policy: channels.ru[slug] can gate the long-form
+    # dub off (shorts-only tier). The Short is still produced — audio +
+    # scenes + thumbnail are shared work; only the long-form ffmpeg render
+    # and its upload are skipped.
+    plan = _policy_plan(config)
+    publish_long = bool(plan.get("publish_long", True))
+    if not publish_long:
+        result["policy_long_skipped"] = True
+        result["policy_tier"] = str(plan.get("tier") or "")
+        if not (build_short and getattr(yt, "publish_shorts", True)):
+            logger.info("ru_dub: yt policy gates long-form off and the Short "
+                        "is disabled — nothing to publish for %s Ep%s",
+                        config.slug, episode_num)
+            result["status"] = "policy_skip"
+            return result
+
     # Dry-run is creds-independent so the operator can preview the resolved
     # RU title before doing the @NerraRU OAuth.
     if dry_run:
         result.update(status="dryrun", title=ru_title,
-                      short_title=_ru_short_title(ru_title))
+                      short_title=_ru_short_title(ru_title),
+                      policy_long=publish_long)
         return result
 
     from engine.youtube import get_channel_credentials_from_env
@@ -404,10 +453,14 @@ def publish_ru_dub(
             return result
 
         # Reuse the episode's already-generated 16:9 scene images (zero
-        # cost; URLs resolved above from the refreshed manifest).
-        long_scenes = _download_images(long_urls, tmp) if long_urls else []
+        # cost; URLs resolved above from the refreshed manifest). Skipped
+        # under a shorts-only policy — the long render they feed won't run.
+        long_scenes = (_download_images(long_urls, tmp)
+                       if (long_urls and publish_long) else [])
 
-        # --- Long-form ---
+        # --- Long-form thumbnail ---
+        # Generated even under a shorts-only policy: the Short's end-card
+        # CTA reuses it as its base image.
         try:
             from engine.publisher import generate_episode_thumbnail
             thumb = tmp / "ru_thumb.jpg"
@@ -419,54 +472,66 @@ def publish_ru_dub(
             logger.warning("ru_dub: thumbnail failed (%s) — uploading without", exc)
             thumb_path = None
 
-        long_mp4 = tmp / f"ru_long_ep{episode_num:03d}.mp4"
-        try:
-            build_long_form_video(
-                audio, cover, long_mp4,
-                scene_paths=long_scenes if len(long_scenes) >= 2 else None,
-                show_name=config.name)
-        except Exception as exc:  # noqa: BLE001
-            logger.error("ru_dub: long-form render failed for Ep%s: %s",
-                         episode_num, exc)
-            result["status"] = "render_failed"
-            return result
-
+        # --- Long-form render + upload (policy-gated) ---
         long_url = ""
-        try:
-            up = upload_video(
-                long_mp4, credentials=creds,
-                title=ru_title,
-                description=_ru_long_description(config, ru_desc),
-                tags=list(getattr(config, "keywords", []) or []),
-                category_id=int(getattr(yt, "category_id", 28)),
-                default_language="ru",
-                privacy_status=getattr(yt, "privacy_status", "public"),
-                thumbnail_path=thumb_path,
-            )
-            long_url = up.watch_url
-            result["long_url"] = long_url
-            record_video(
-                video_id=up.video_id, show_slug=config.slug, episode=episode_num,
-                kind="long", title=ru_title, hook=ru_title, published=date_str,
-                watch_url=long_url, channel="ru",
-                index_path=PROJECT_ROOT / config.episode.output_dir
-                / "youtube_videos.ru.json")
-            pl = (getattr(yt, "ru_podcast_playlist_id", None) or "").strip()
-            if pl:
-                try:
-                    add_video_to_playlist(credentials=creds,
-                                          video_id=up.video_id, playlist_id=pl)
-                except Exception as exc:  # noqa: BLE001
-                    logger.warning("ru_dub: playlist add failed: %s", exc)
-            else:
-                logger.info("ru_dub: no ru_podcast_playlist_id — skipped playlist")
-        except Exception as exc:  # noqa: BLE001
-            logger.error("ru_dub: long-form upload failed for Ep%s: %s",
-                         episode_num, exc)
-            result["status"] = "upload_failed"
-            return result
+        if not publish_long:
+            logger.warning(
+                "ru_dub: yt policy — %s RU tier %s: long-form render+upload "
+                "skipped (Short still publishes)",
+                config.slug, plan.get("tier") or "?")
+            # Not "done" yet: the Short below is now the deliverable, so
+            # only its successful upload flips the status (a failed Short
+            # keeps the episode not-done and the next sweep retries it —
+            # safe, since no duplicate long can result).
+            result["status"] = "policy_long_skipped"
+        else:
+            long_mp4 = tmp / f"ru_long_ep{episode_num:03d}.mp4"
+            try:
+                build_long_form_video(
+                    audio, cover, long_mp4,
+                    scene_paths=long_scenes if len(long_scenes) >= 2 else None,
+                    show_name=config.name)
+            except Exception as exc:  # noqa: BLE001
+                logger.error("ru_dub: long-form render failed for Ep%s: %s",
+                             episode_num, exc)
+                result["status"] = "render_failed"
+                return result
 
-        result["status"] = "done"
+            try:
+                up = upload_video(
+                    long_mp4, credentials=creds,
+                    title=ru_title,
+                    description=_ru_long_description(config, ru_desc),
+                    tags=list(getattr(config, "keywords", []) or []),
+                    category_id=int(getattr(yt, "category_id", 28)),
+                    default_language="ru",
+                    privacy_status=getattr(yt, "privacy_status", "public"),
+                    thumbnail_path=thumb_path,
+                )
+                long_url = up.watch_url
+                result["long_url"] = long_url
+                record_video(
+                    video_id=up.video_id, show_slug=config.slug, episode=episode_num,
+                    kind="long", title=ru_title, hook=ru_title, published=date_str,
+                    watch_url=long_url, channel="ru",
+                    index_path=PROJECT_ROOT / config.episode.output_dir
+                    / "youtube_videos.ru.json")
+                pl = (getattr(yt, "ru_podcast_playlist_id", None) or "").strip()
+                if pl:
+                    try:
+                        add_video_to_playlist(credentials=creds,
+                                              video_id=up.video_id, playlist_id=pl)
+                    except Exception as exc:  # noqa: BLE001
+                        logger.warning("ru_dub: playlist add failed: %s", exc)
+                else:
+                    logger.info("ru_dub: no ru_podcast_playlist_id — skipped playlist")
+            except Exception as exc:  # noqa: BLE001
+                logger.error("ru_dub: long-form upload failed for Ep%s: %s",
+                             episode_num, exc)
+                result["status"] = "upload_failed"
+                return result
+
+            result["status"] = "done"
 
         # --- Short (best-effort; failure never blocks the long-form result) ---
         if build_short and getattr(yt, "publish_shorts", True):
@@ -562,6 +627,10 @@ def publish_ru_dub(
                                               video_id=sup.video_id, playlist_id=pl)
                     except Exception:  # noqa: BLE001
                         pass
+                # Under a shorts-only policy the Short IS the deliverable —
+                # its successful upload marks the episode done (no-op when
+                # the long-form already set it).
+                result["status"] = "done"
             except Exception as exc:  # noqa: BLE001
                 logger.warning("ru_dub: Short failed for Ep%s (non-fatal): %s",
                                episode_num, exc)

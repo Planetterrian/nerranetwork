@@ -460,6 +460,14 @@ class YouTubeConfig:
     privacy_status: str = "public"         # "public" | "unlisted" | "private"
     publish_long_form: bool = True
     publish_shorts: bool = True
+    # ---- Adaptive publishing policy (July 2026) ----
+    # When true (default), the publish stage consults the committed
+    # api/youtube_policy.json (nightly, velocity-gated per channel — see
+    # scripts/update_youtube_policy.py) and lets it override long-form
+    # on/off + Shorts count for this show. The policy never edits YAML and
+    # never touches audio (outside landmine #17). Set false per show to pin
+    # the YAML publish shape regardless of analytics.
+    adaptive_publishing: bool = True
     # Generate a click-optimized long-form title via Grok (separate from the
     # spoken hook) + A/B variants. One cheap LLM call/episode; pure metadata,
     # no audio impact. Set false for a fully deterministic hook-based title.
