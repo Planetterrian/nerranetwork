@@ -1,0 +1,133 @@
+What's up — welcome to Models and Agents, episode one hundred twelve, on July fifteenth, twenty twenty-six. Let's see what shipped. Your daily briefing on the A I models and agents that are changing everything. And no, not THOSE kinds of models and agents. Let's get into it.
+
+Browser inference just got a serious upgrade—Google’s LiteRT.js now runs .tflite models directly via WebGPU with up to three times gains over prior web runtimes.
+
+Google released LiteRT.js on July ninth, twenty twenty-six.
+
+It is a JavaScript binding of the LiteRT on-device inference library that executes .tflite models in the browser.
+
+The runtime supports WebAssembly with XNNPACK on CPU, M L Drift over WebGPU, and experimental WebNN for NPUs.
+
+It delivers up to three times gains over other web runtimes and five to sixty times for G P U or NPU paths versus its own CPU baseline.
+
+Tensors must still be manually managed and deleted.
+
+Builders working on client-side M L can now ship models without server round-trips for many inference workloads.
+
+This continues the thread on falling token costs and edge deployment.
+
+Watch for follow-on WebGPU and WebNN optimizations as more teams test the binding.
+
+Sam Altman stated that G P T five point six sol is half the price and roughly twice as token efficient as the prior version for many tasks.
+
+He noted the inference team’s work supporting growth and warned of possible near-term scaling hiccups.
+
+Researchers trained decoder-only transformers up to four billion parameters on one trillion chronologically filtered FineWeb tokens.
+
+They produced monthly checkpoints from twenty thirteen through twenty twenty-four.
+
+The models approach Gemma three four B and LLaMA seven B performance on common-sense and language benchmarks despite strict temporal filtering.
+
+Laura instruction tuning further improved usability and the full pipeline, dataset construction, and evaluation code are released.
+
+The new CANDI-QA dataset evaluates L L M's on context-sensitive, user-aligned answers in medical and financial settings.
+
+It uses expert-curated pairs split into Information Assistance and Applied Inference questions.
+
+MTSS-Net, a lightweight neuro-symbolic baseline combining neural retrieval with rule-based reasoning, was introduced alongside evaluations of over ten models.
+
+Results highlight persistent limitations in current L L M's without enhanced contextual or symbolic integration.
+
+G-SHARE operationalizes the CNNP nine-step human-factor event diagnosis guideline into a multi-stage pipeline.
+
+The pipeline includes evidence extraction, stepwise reasoning, and post-hoc consistency repair.
+
+On real nuclear industry reports, the strongest version outperformed one-shot prompting and traditional M L baselines on accuracy and macro F one.
+
+Ablations confirm structured reasoning and consistency enforcement are critical under weak prompting.
+
+Checkmarx launched autonomous agents designed to detect and repair code flaws without manual intervention.
+
+The agents target security and quality issues in developer workflows.
+
+This moves the reliability of long-horizon agents forward as teams evaluate false-positive rates on internal codebases.
+
+Entrust introduced an A I trust accelerator aimed at autonomous agents.
+
+It focuses on verification and governance layers for enterprise deployments where agent actions require auditability.
+
+Organizations running multi-agent systems should review the accelerator’s integration points with existing identity frameworks.
+
+Fin-Analyst combines an eight-specialist L L M pipeline over news, filings, fundamentals, and sentiment with a lightweight rule-based vote for Bitcoin.
+
+On the final FinMMEval twenty twenty-six Task three leaderboard it ranked first on T S L A with a thirteen point five one percent return and eighty-eight percent win rate.
+
+Ablations showed eight K disclosures as the strongest signal while memoryless agents repeated errors across days.
+
+A study evaluated seven agentic L L M pipelines on seventy-two real clinical cases using one thousand one hundred forty-seven case-specific rubrics.
+
+Claude Opus four point eight with the D and C plus SA pipeline reached the highest global score of zero point five nine four.
+
+Tool use and added autonomy produced mixed results with persistent failures in missing recommendations and overconfidence.
+
+Researchers fine-tuned LLaMA three eight B as a reranker using supervised fine-tuning on a custom relevance dataset via Unsloth and Laura.
+
+They followed with four-bit quantization.
+
+The resulting model replaced the cross-encoder in a dual-retriever rag pipeline and improved answer relevancy by fourteen percent, context precision by sixteen percent, answer similarity by nineteen percent, and answer correctness by twenty-one percent on a domain-specific benchmark while lowering inference cost.
+
+MAGE combines episodic memory, multi-objective Pareto selection, and adaptive evaluation to study component interactions in iterative prompt optimization.
+
+On GSM eight K Hard it reached forty-six point four percent versus GEPA’s thirty-four point zero percent.
+
+The Prompt Optimization Coupling Effect emerged when candidate diversity increased.
+
+In low-data regimes with thirty training examples, well-designed fixed prompts outperformed reflective optimizers.
+
+Metazoa announced Org Intelligence Server for Snapshot.
+
+It delivers A I ready Salesforce org context to admins, developers, and Agentforce.
+
+The server surfaces structured org metadata for downstream agent consumption without custom extraction pipelines.
+
+OK, let's pop the hood on belief-reality separation in L L M's.
+
+Everyone talks about theory-of-mind capabilities as if the model simply understands that a character can hold a false belief.
+
+In practice the separation lives in two narrow, dissociable mechanisms inside the residual stream.
+
+A generic value slot at one layer binds the attributed value whether asserted directly or derived via visibility-gated lookback.
+
+A router at the query position selects which frame, character belief or reality, reads that slot.
+
+The slot itself carries no belief tag and intervening on it moves both readouts equally.
+
+Only the derived route depends on described visibility and a single subspace trained on one route can steer the other.
+
+The behavior emerges reliably between three B and seven B parameters across multiple families.
+
+When building agents that must track multiple mental states, the practical takeaway is to probe and steer these routing subspaces rather than relying on scale alone.
+
+Test LiteRT.js on a small .tflite vision or language model inside a browser extension to measure end-to-end latency versus a server call.
+
+Swap your current rag cross-encoder for the four-bit LLaMA three reranker on a domain-specific QA set and compare answer correctness before and after.
+
+Evaluate the G-SHARE pipeline on any narrative diagnostic task you already run with one-shot prompting to quantify the consistency lift.
+
+Load the CANDI-QA dataset into your evaluation harness to see where your current models lose context alignment on multi-hop applied inference questions.
+
+Further WebGPU and WebNN optimizations for LiteRT.js are expected as more teams report browser-side benchmarks.
+
+Additional agentic clinical pipelines are likely to appear following the breast-cancer agent study.
+
+More point-in-time model releases are coming as the released training code lowers the barrier for temporal-validity research.
+
+Tomorrow, keep an eye on expanded autonomous code-repair agent evaluations once Checkmarx tooling reaches broader developer access.
+
+That wraps up today's A I briefing. Share this with a developer or builder who wants to stay current. Subscribe wherever you listen. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+And before you go: this show is part of the Nerra Network — a family of daily podcasts on tech, science, and markets, each one a short, sharp briefing you can finish on the commute. If today earned its place in your feed, here's your next listen — Omni View, a balanced daily world-news briefing that takes every side seriously. Find every show, free, at nerranetwork dot com. Following the long arcs?
+
+Story Trackers on nerranetwork dot com follow major programs across episodes — Tesla, Space X, A I, space science, and more.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
