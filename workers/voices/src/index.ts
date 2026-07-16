@@ -472,8 +472,46 @@ async function gate2Housekeeping(env: Env) {
 // Router
 // ---------------------------------------------------------------------------
 
+// CORS: the apply form on nerranetwork.com posts cross-origin to
+// api.nerranetwork.com — browsers preflight JSON POSTs, and without these
+// headers every form submission fails in the browser (curl worked, which
+// is how this shipped; caught on the first real form submit, July 2026).
+const ALLOWED_ORIGINS = new Set([
+  "https://nerranetwork.com",
+  "https://www.nerranetwork.com",
+]);
+
+function corsHeaders(origin: string): Record<string, string> {
+  return {
+    "Access-Control-Allow-Origin": origin,
+    "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Max-Age": "86400",
+    "Vary": "Origin",
+  };
+}
+
+function withCors(req: Request, res: Response): Response {
+  const origin = req.headers.get("Origin");
+  if (!origin || !ALLOWED_ORIGINS.has(origin)) return res;
+  const out = new Response(res.body, res);
+  for (const [k, v] of Object.entries(corsHeaders(origin))) out.headers.set(k, v);
+  return out;
+}
+
 export default {
   async fetch(req: Request, env: Env): Promise<Response> {
+    if (req.method === "OPTIONS") {
+      const origin = req.headers.get("Origin");
+      return new Response(null, {
+        status: 204,
+        headers: origin && ALLOWED_ORIGINS.has(origin) ? corsHeaders(origin) : {},
+      });
+    }
+    return withCors(req, await this.route(req, env));
+  },
+
+  async route(req: Request, env: Env): Promise<Response> {
     const url = new URL(req.url);
     const path = url.pathname.replace(/\/+$/, "");
     try {
