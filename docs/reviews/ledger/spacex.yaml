@@ -193,4 +193,43 @@ reviews:
       ab_listen_required: true
       rationale: explicit floor vs own spec; A/B only after four-show length decision
     agent_cost_usd: 0.0611
+  - date: '2026-07-15'
+    pr: null
+    doc: docs/reviews/spacex_review_2026_07_15.md
+    generated_by: grok-4.3
+    summary: Length ceiling and rigid boilerplate tics persist (6/10 episodes <1300w, 'from an engineering standpoint' and 'quick market note' in 10/10); no new P0s; prior length/teaser predictions scored miss.
+    scored_prior_predictions:
+    - metric: episodes >=1300w in next 10
+      verdict: miss
+      evidence: only 4/10 (Ep27-30,32-33); Ep24-26,31 remain 949-1259w
+    - metric: tomorrow-teaser frame count
+      verdict: miss
+      evidence: still 8/10 episodes use the exact 'Watch for the [first/next] <test>' frame
+    shipped: []
+    deferred:
+    - Engineering Deep Dive length floor (pending four-show A/B)
+    - SPCX price spoken twice (observe post-reorder)
+    - tomorrow-teaser rotation if frame deadens
+    - junk-title filter prediction from network pass still pending
+    predictions:
+    - metric: episodes >=1300w in next 10
+      baseline: 4/10
+      expected: 7+/10 if deep-dive lever ships
+      verdict: pending
+      evidence: null
+    - metric: tomorrow-teaser frame count
+      baseline: 8/10
+      expected: <5/10 after rotation
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/prompts/spacex_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: teaser frame hardening into tic (8/10); low-risk rotation to restore variety
+    - file: shows/prompts/spacex_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: explicit floor vs own spec; A/B only after four-show length decision
+    agent_cost_usd: 0.0622
 do_not_retry: []
