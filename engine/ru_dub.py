@@ -151,19 +151,22 @@ def gallery_images_for_episode(
 
 
 def _download_images(urls: List[str], dest_dir: Path) -> List[Path]:
-    """Best-effort download of *urls* → dest_dir. Skips any that fail."""
-    import requests
+    """Best-effort download of *urls* → dest_dir. Skips any that fail.
+
+    Routed through ``engine.gallery_library._download_entry`` so the
+    public-CDN → authenticated-R2 fallback (the gallery.nerranetwork.com
+    403-from-CI failure mode, Tesla Ep537) protects the RU dub scenes too.
+    """
+    from engine import gallery_library
     paths: List[Path] = []
-    for i, url in enumerate(urls):
+    for url in urls:
         try:
-            resp = requests.get(url, timeout=60)
-            resp.raise_for_status()
-            ext = ".jpg" if ".jpg" in url.lower() or ".jpeg" in url.lower() else ".png"
-            p = dest_dir / f"scene_{i:02d}{ext}"
-            p.write_bytes(resp.content)
-            paths.append(p)
+            p = gallery_library._download_entry({"original_url": url}, dest_dir)
         except Exception as exc:  # noqa: BLE001
             logger.warning("ru_dub: failed to fetch scene %s: %s", url, exc)
+            p = None
+        if p is not None:
+            paths.append(p)
     return paths
 
 
@@ -604,18 +607,22 @@ def publish_ru_dub(
                     end_card_main_text=_RU_END_CARD_MAIN,
                     end_card_sub_text=_RU_END_CARD_SUB,
                     end_card_image_path=end_card_png)
+                short_title = _ru_short_title(ru_title)
                 sup = upload_video(
                     short_mp4, credentials=creds,
-                    title=_ru_short_title(ru_title),
+                    title=short_title,
                     description=_ru_long_description(config, ru_desc),
                     tags=list(getattr(config, "keywords", []) or []),
                     category_id=int(getattr(yt, "category_id", 28)),
                     default_language="ru",
                     privacy_status=getattr(yt, "privacy_status", "public"))
                 result["short_url"] = sup.watch_url
+                # Record the title the Short actually shipped with (distinct,
+                # "#Shorts"-suffixed) — the index previously recorded the
+                # long-form title, hiding what @NerraRU really displayed.
                 record_video(
                     video_id=sup.video_id, show_slug=config.slug,
-                    episode=episode_num, kind="short", title=ru_title,
+                    episode=episode_num, kind="short", title=short_title,
                     hook=ru_title, published=date_str, watch_url=sup.watch_url,
                     channel="ru",
                     index_path=PROJECT_ROOT / config.episode.output_dir

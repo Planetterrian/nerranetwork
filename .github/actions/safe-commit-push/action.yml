@@ -69,6 +69,22 @@ runs:
           git add --pathspec-from-file=/tmp/paths-clean.txt || true
         fi
 
+        # Never commit unresolved conflict markers. The `git pull --rebase
+        # --autostash || true` above can leave `<<<<<<<` markers in a
+        # regenerated file when the autostash pop conflicts (Jul 16 2026:
+        # site/data/gallery-manifest.json was committed to main with
+        # markers, breaking JSON consumers network-wide). Any staged file
+        # containing a conflict start marker is restored from origin/main
+        # (or unstaged if it's new there) with a loud warning — the next
+        # scheduled run regenerates it cleanly.
+        for f in $(git diff --cached --name-only); do
+          if git show ":$f" 2>/dev/null | grep -q '^<<<<<<< '; then
+            echo "::warning::safe-commit-push: unresolved conflict markers in $f — restoring from origin/main and skipping this file"
+            git restore --source=origin/main --staged --worktree -- "$f" 2>/dev/null \
+              || git rm --cached --quiet -- "$f" || true
+          fi
+        done
+
     - name: Check for changes
       id: check
       shell: bash
