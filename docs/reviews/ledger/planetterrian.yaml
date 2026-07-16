@@ -83,4 +83,43 @@ reviews:
         evidence: null
     agent_cost_usd: null
 
+  - date: '2026-07-16'
+    pr: null
+    doc: docs/reviews/planetterrian_review_2026_07_16.md
+    generated_by: grok-4.3
+    summary: Persistent under-length scripts (9/10 episodes below 1600-word floor) and recurring boilerplate phrases (10/10 episodes) with no new listener-facing P0 bugs after prior chapter fixes.
+    scored_prior_predictions:
+    - metric: episodes with an Introduction chapter at word 0, last 10
+      verdict: hit
+      evidence: chapters_ep112–121.json all open with Introduction at t=20s
+    - metric: episodes shipping with no Closing chapter, last 10
+      verdict: hit
+      evidence: all 10 chapters files end Closing after Tomorrow Teaser
+    - metric: episodes with a real Science Deep Dive chapter (when a deep dive aired)
+      verdict: hit
+      evidence: 10/10 transcripts contain the seeded opener and matching chapter
+    - metric: median _tts.txt words, last 10 eps
+      verdict: miss
+      evidence: 9/10 episodes 1258–1599 words (snapshot 2026-07-15)
+    - metric: pure-astronomy items per PT episode digest
+      verdict: pending
+      evidence: filter present in YAML but title counts not re-verified in this snapshot
+    shipped: []
+    deferred:
+    - chronic under-length (digest ceiling) — deferred behind four-show length A/B
+    - garbage mid-body auto-segment chapter titles — shared LLM-title class
+    - 'boilerplate reduction — prompt edit would require A/B-listen per landmine #17'
+    predictions:
+    - metric: episodes under 1600-word floor, last 10
+      baseline: 9/10
+      expected: still 8+/10 at next review (digest ceiling unchanged)
+      verdict: pending
+      evidence: null
+    - metric: unique boilerplate phrases recurring in 10/10 transcripts
+      baseline: 6+
+      expected: no reduction without prompt change
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr: []
+    agent_cost_usd: 0.0567
 do_not_retry: []
