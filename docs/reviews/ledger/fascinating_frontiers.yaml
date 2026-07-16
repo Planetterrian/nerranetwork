@@ -264,6 +264,48 @@ reviews:
         evidence: null
     agent_cost_usd: null
 
+  - date: '2026-07-14'
+    pr: null
+    doc: docs/reviews/fascinating_frontiers_review_2026_07_14.md
+    generated_by: grok-4.3
+    summary: Snapshot shows persistent under-length (7/10 episodes below 1700-word floor) plus recurring boilerplate tics in transcripts; prior stock-filter, chapter-order, and garble fixes remain clean.
+    scored_prior_predictions:
+    - metric: 0 market-action items in Ep115 recap
+      verdict: hit
+      evidence: Ep115 recap clean per network pass 2026-07-02
+    - metric: 0 launch/mission titles false-dropped
+      verdict: hit
+      evidence: Ep122-131 kept Falcon 9, Roman, Artemis coverage
+    - metric: every episode has Closing as last marker
+      verdict: hit
+      evidence: chapters_ep122-131.json all end Tomorrow Teaser → Closing
+    shipped: []
+    deferred:
+    - Cosmic Deep Dive length lever (carried; four-show A/B still open)
+    - Mid-section digest-driven chapter titles (network lever)
+    - Theme residual "science nasa" (low harm)
+    - Curated narrative-tracker status pass (operator task)
+    predictions:
+    - metric: episodes below 1700-word floor
+      baseline: 7/10 (Ep122-131)
+      expected: still 6+ of 10 at next review (digest ceiling unchanged)
+      verdict: pending
+      evidence: null
+    - metric: occurrences of network-plug boilerplate in _tts.txt
+      baseline: 10/10 episodes
+      expected: still 10/10 (no prompt change shipped)
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/prompts/fascinating_frontiers_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Reduces the 6/10-episode 'keep an eye on the' tic observed in transcripts.
+    - file: shows/prompts/fascinating_frontiers_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Direct response to 7/10 episodes landing below 1700 words while staying inside the digest ceiling.
+    agent_cost_usd: 0.0651
 do_not_retry:
   - idea: Phonetic respellings or programmatic speech-tag injection.
     evidence: >-
