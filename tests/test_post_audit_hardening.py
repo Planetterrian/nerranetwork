@@ -76,7 +76,9 @@ class TestMixWithMusicVoiceGuard:
         with patch("engine.audio.normalize_voice", return_value=out) as mock_norm:
             result = mix_with_music(voice, music, out)
             assert result == out
-            mock_norm.assert_called_once_with(voice, out)
+            # denoise flows through since the July 16 2026 hiss/tick fix
+            # (adeclick + afftdn stage, audio.voice_denoise config flag).
+            mock_norm.assert_called_once_with(voice, out, denoise=True)
 
 
 # ---------------------------------------------------------------------------

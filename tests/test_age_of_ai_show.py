@@ -111,7 +111,12 @@ class TestSpecArtifacts:
 
     def test_scenario_core_contracts(self):
         js = SCENARIO.read_text(encoding="utf-8")
-        assert "Modules.GrokVoiceAgent" in js
+        # July 2026 (commit 3769bfae): scenario moved to the REAL Voximplant
+        # Grok connector API — require(Modules.Grok) +
+        # Grok.createVoiceAgentAPIClient (the old Modules.GrokVoiceAgent
+        # module never existed on the platform).
+        assert "require(Modules.Grok)" in js
+        assert "createVoiceAgentAPIClient" in js
         assert "stereo: true" in js, "dual-track recording is the diarization"
         assert "50 * 60 * 1000" in js, "50-minute hard cap (spec §11.8)"
         assert "api.nerranetwork.com/voices/interview-complete" in js

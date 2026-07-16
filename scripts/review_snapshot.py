@@ -144,9 +144,13 @@ def chapter_issues(chapters: list[dict]) -> list[str]:
     # a Closing slipped past the old checks — EI Ep049/050/051 ended on
     # promo-collision body chapters and still counted as "clean". The
     # network shape is body → (Tomorrow Teaser →) Closing, so anything
-    # else ending the episode is a flag. "Outro" is accepted as a Closing
-    # synonym.
-    if len(titles) > 1 and not re.search(r"(?i)\b(closing|outro)\b", titles[-1]):
+    # else ending the episode is a flag. Accepted Closing synonyms:
+    # "Outro", the Russian shows' "Завершение" / "Прощание" (FP/PR title
+    # their closings in Russian — the English-only check false-flagged
+    # every FP episode), and DP Pod's "Sign-Off".
+    if len(titles) > 1 and not re.search(
+        r"(?i)\b(closing|outro|sign.?off|завершение|прощание)\b", titles[-1]
+    ):
         issues.append(f"final chapter is not a Closing (ends on {titles[-1]!r})")
     return issues
 

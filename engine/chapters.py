@@ -209,8 +209,17 @@ def parse_chapters(
     # window is generous (10%, min 60 words) so a long cold-open hook
     # can't push the intro line out of range; the closing window (last
     # 15%) comfortably covers teaser + sign-off on a 1500+-word script.
+    #
+    # July 16 2026: the end window is additionally floored at the last
+    # 250 words. The code-appended tail AFTER the spoken sign-off
+    # (network cross-promo + site CTA + AI disclosure) is a FIXED
+    # ~120-180 words, so on short scripts it eats more than 15% and
+    # pushes the real closing line out of the percentage window — MAB
+    # shipped 5 of 14 July episodes with NO Closing chapter because
+    # "that's a wrap" landed at ~84% of words. On 1500+-word scripts
+    # min() keeps the original 85% behavior.
     start_window_end = max(int(total_words * 0.10), 60)
-    end_window_start = min(int(total_words * 0.85), max(total_words - 60, 0))
+    end_window_start = min(int(total_words * 0.85), max(total_words - 250, 0))
 
     for line in lines:
         line_words = line.split()
