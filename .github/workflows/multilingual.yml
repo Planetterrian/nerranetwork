@@ -162,6 +162,18 @@ jobs:
         uses: actions/checkout@v7
         with:
           fetch-depth: 1
+          # July 16 2026 — check out the LIVE main tip, not the pinned
+          # trigger-time github.sha. The concurrency group serializes
+          # multilingual runs, but a queued run's github.sha is frozen at
+          # trigger time — observed 6 s stale on Jul 16 (run B triggered at
+          # 11:42:16 on 384b0db4; run A's tesla push landed 11:42:22), so
+          # the idempotent driver saw no tracks, re-translated Ep543, and
+          # uploaded a DUPLICATE public RU Short to @NerraRU. The stale
+          # checkout also made the commit step's rebase hit deterministic
+          # add/add conflicts (recovery PRs #819/#820/#824/#825/#829/#830
+          # were all duplicates of work already on main). `ref: main`
+          # resolves at job start — after any sibling run has pushed.
+          ref: main
 
       - uses: ./.github/actions/setup-python
         with:
@@ -212,6 +224,17 @@ jobs:
           YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
           YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
           YOUTUBE_REFRESH_TOKEN_RU: ${{ secrets.YOUTUBE_REFRESH_TOKEN_RU }}
+          # The RU title path translates the EN *optimized* YouTube title via
+          # Grok (engine/ru_dub._translate_title_to_ru). Without the key every
+          # dub silently falls back to the truncated hook title — observed on
+          # all Jul 14-16 2026 @NerraRU uploads.
+          GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+          XAI_API_KEY: ${{ secrets.GROK_API_KEY }}
+          # Gallery-scene downloads fall back to authenticated R2 when the
+          # public CDN 403s CI egress (the Tesla Ep537 failure mode).
+          R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
         run: |
           LATEST="${{ github.event.inputs.latest }}"
           [ -z "$LATEST" ] && LATEST=3
