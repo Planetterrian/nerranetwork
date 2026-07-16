@@ -32,6 +32,8 @@ API_BASE = "https://api.voximplant.com/platform_api"
 APPLICATION_NAME = os.environ.get("VOXIMPLANT_APP_NAME", "nerra-voices")
 RULE_NAME = os.environ.get("VOXIMPLANT_RULE_NAME", "age-of-ai-interview")
 SCENARIO_NAME = "age_of_ai_interview"
+_SCENARIO_PATH = (Path(__file__).resolve().parent.parent
+                  / "scenarios" / "age_of_ai_interview.js")
 
 
 class VoximplantError(RuntimeError):
@@ -77,17 +79,39 @@ def start_interview_scenario(run_id: str,
 
 def upload_scenario(path: Path,
                     scenario_name: str = SCENARIO_NAME,
-                    supabase_url: Optional[str] = None) -> Dict[str, Any]:
+                    supabase_url: Optional[str] = None,
+                    supabase_service_key: Optional[str] = None,
+                    xai_api_key: Optional[str] = None) -> Dict[str, Any]:
     """Create or update the scenario source from *path* (deploy step).
 
-    ``__SUPABASE_URL__`` in the source is substituted here so the committed
-    scenario never carries a project-specific hostname.
+    ``__SUPABASE_URL__``, ``__SUPABASE_SERVICE_KEY__`` and
+    ``__XAI_API_KEY__`` in the source are substituted here so the committed
+    scenario never carries a project-specific hostname or secrets. The
+    secrets live only in the deployed copy inside the Voximplant account.
+
+    (July 2026: replaces the application-custom-data secret design —
+    VoxEngine has no ``Application.customData()`` and the Management API's
+    ``SetApplicationInfo`` accepts no ``application_custom_data`` param;
+    both were written from spec, not live docs.)
     """
     source = path.read_text(encoding="utf-8")
     supabase_url = supabase_url or os.environ.get("SUPABASE_URL", "").strip()
     if not supabase_url:
         raise VoximplantError("SUPABASE_URL required to deploy the scenario")
     source = source.replace("__SUPABASE_URL__", supabase_url.rstrip("/"))
+
+    service_key = (supabase_service_key
+                   or os.environ.get("SUPABASE_SERVICE_KEY", "").strip()
+                   or os.environ.get("VOICES_SUPABASE_SERVICE_KEY", "").strip())
+    xai_key = (xai_api_key
+               or os.environ.get("XAI_API_KEY", "").strip()
+               or os.environ.get("GROK_API_KEY", "").strip())
+    if not service_key or not xai_key:
+        raise VoximplantError(
+            "SUPABASE_SERVICE_KEY and XAI_API_KEY/GROK_API_KEY are required "
+            "to deploy the scenario (deploy-time secret substitution)")
+    source = source.replace("__SUPABASE_SERVICE_KEY__", service_key)
+    source = source.replace("__XAI_API_KEY__", xai_key)
 
     try:
         return _call("SetScenarioInfo",
@@ -102,14 +126,13 @@ def upload_scenario(path: Path,
 
 def set_application_secrets(supabase_service_key: str,
                             xai_api_key: str) -> Dict[str, Any]:
-    """Store scenario secrets as application custom data (one-time setup)."""
-    return _call(
-        "SetApplicationInfo",
-        application_name=APPLICATION_NAME,
-        application_custom_data=json.dumps({
-            "SUPABASE_SERVICE_KEY": supabase_service_key,
-            "XAI_API_KEY": xai_api_key,
-        }),
+    """Deploy/refresh scenario secrets (kept for the documented call
+    pattern). Secrets are substituted into the scenario source at deploy
+    time, so this simply re-runs :func:`upload_scenario` with them."""
+    return upload_scenario(
+        _SCENARIO_PATH,
+        supabase_service_key=supabase_service_key,
+        xai_api_key=xai_api_key,
     )
 
 

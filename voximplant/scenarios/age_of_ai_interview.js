@@ -12,29 +12,33 @@
  * voice preset) is pulled from Supabase at start so the fire step stays a
  * thin trigger and the run row is the single source of truth.
  *
- * Secrets: SUPABASE_SERVICE_KEY and XAI_API_KEY are injected as Voximplant
- * application-level custom data / secure storage (Management API
- * SetApplicationInfo) — never hardcode them here.
+ * Secrets: SUPABASE_SERVICE_KEY and XAI_API_KEY are substituted into the
+ * deployed copy at deploy time (upload_scenario placeholder substitution,
+ * like __SUPABASE_URL__) — never hardcode them here.
  *
  * Deploy: voximplant/api_clients/voximplant_client.py upload_scenario().
  */
 
-require(Modules.Recorder);
+// call.record() needs no module require (Recorder module only needed
+// for VoxEngine.createRecorder).
 // Grok Voice Agent connector — native Voximplant module (enable the
-// connector once in the Voximplant panel; spec phase 1).
-require(Modules.GrokVoiceAgent);
+// connector once in the Voximplant panel; spec phase 1). API shape
+// verified July 2026 against voximplant/grok-voice-agent-example +
+// docs.voximplant.ai: Modules.Grok / Grok.createVoiceAgentAPIClient.
+require(Modules.Grok);
 
 const SUPABASE_URL = "__SUPABASE_URL__";           // substituted at deploy time
 const WEBHOOK_URL = "https://api.nerranetwork.com/voices/interview-complete";
 const HARD_CAP_MS = 50 * 60 * 1000;                // spec §11.8: 50-min hard cap
-const GROK_RECONNECT_GRACE_MS = 10 * 1000;         // spec §7: reconnect window
+const GROK_DROP_GUARD_MS = 1500;                   // spec §7: teardown-race guard
 
 let runId = null;
 let call = null;
 let grokAgent = null;
-let recorder = null;
 let webhookFired = false;
 let hardCapTimer = null;
+let recordUrl = null;      // delivered via CallEvents.RecordStarted (no getter API)
+let connectedAt = null;    // Call has no getDuration(); compute from timestamps
 
 VoxEngine.addEventListener(AppEvents.Started, async function () {
   let config;
@@ -57,38 +61,72 @@ VoxEngine.addEventListener(AppEvents.Started, async function () {
 
   call.addEventListener(CallEvents.Connected, async function () {
     try {
-      // 3. Recording-consent disclosure — pre-generated Mira clip from R2
+      // 3. Dual-track stereo recording — call.record({stereo:true})
+      //    puts guest→cloud audio on one channel and cloud→guest (Mira +
+      //    played clips) on the other. NOTE: VoxEngine.createRecorder's
+      //    stereo param records MIXED streams in both channels and can
+      //    never separate participants (verified July 2026) — only
+      //    Call.record gives the per-channel split the editorial
+      //    pipeline's per-channel Whisper STT depends on. Started before
+      //    the disclosure so the consent exchange is on tape.
+      connectedAt = Date.now();
+      call.addEventListener(CallEvents.RecordStarted, function (e) {
+        if (e && e.url) recordUrl = e.url;
+      });
+      call.record({
+        name: "aoa_" + runId,
+        stereo: true,
+        hd_audio: true,
+      });
+
+      // 4. Recording-consent disclosure — pre-generated Mira clip from R2
       //    (spec §11.2; wording confirmed by Patrick before launch).
       if (config.recording_disclosure_url) {
         call.startPlayback(config.recording_disclosure_url);
         await waitForEvent(call, CallEvents.PlaybackFinished);
       }
 
-      // 4. Dual-track stereo recording (guest one channel, Mira the other).
-      recorder = VoxEngine.createRecorder({
-        name: "aoa_" + runId,
-        stereo: true,
-        hd_audio: true,
-      });
-      call.sendMediaTo(recorder);
-
-      // 5. Grok Voice Agent with Mira's compiled persona.
-      grokAgent = VoxEngine.createGrokVoiceAgent({
-        apiKey: getSecret("XAI_API_KEY"),
-        model: "grok-voice-latest",
-        voice: config.voice_preset || "ara",
-        instructions: config.mira_system_prompt,
-        tools: config.tools || [],
-        turn_detection: { type: "server_vad" },
-        temperature: 0.7,
+      // 5. Grok Voice Agent with Mira's compiled persona. No explicit
+      //    model: xAI's Voice Agent API default is current post
+      //    May 31 2026 (per voximplant/grok-voice-agent-example).
+      grokAgent = await Grok.createVoiceAgentAPIClient({
+        xAIApiKey: getSecret("XAI_API_KEY"),
+        onWebSocketClose: onGrokDropped,
       });
 
-      grokAgent.addEventListener(GrokVoiceAgentEvents.Disconnected, onGrokDropped);
-      grokAgent.addEventListener(GrokVoiceAgentEvents.Error, onGrokDropped);
+      grokAgent.addEventListener(Grok.VoiceAgentAPIEvents.ConversationCreated, function () {
+        // Voice presets are capitalized on the Voice Agent API ("Ara");
+        // the DB stores lowercase ("ara") for TTS parity.
+        const preset = (config.voice_preset || "ara");
+        grokAgent.sessionUpdate({
+          session: {
+            voice: preset.charAt(0).toUpperCase() + preset.slice(1),
+            turn_detection: { type: "server_vad" },
+            instructions: config.mira_system_prompt,
+            tools: config.tools || [],
+          },
+        });
+      });
 
-      // 6. Bridge guest <-> Mira; record Mira's track too.
-      VoxEngine.sendMediaBetween(call, grokAgent);
-      grokAgent.sendMediaTo(recorder);
+      grokAgent.addEventListener(Grok.VoiceAgentAPIEvents.SessionUpdated, function () {
+        try {
+          // 6. Bridge guest <-> Mira; record Mira's track too. Mira
+          //    opens the conversation (responseCreate).
+          VoxEngine.sendMediaBetween(call, grokAgent);
+          grokAgent.responseCreate({});
+        } catch (e) {
+          Logger.write("[aoa " + runId + "] media-bridge failure: " + e.message);
+          call.hangup();
+        }
+      });
+
+      // Telephony-natural barge-in: flush Mira's buffered audio the
+      // moment the guest starts speaking.
+      grokAgent.addEventListener(Grok.VoiceAgentAPIEvents.InputAudioBufferSpeechStarted, function () {
+        if (grokAgent) grokAgent.clearMediaBuffer();
+      });
+
+      grokAgent.addEventListener(Grok.VoiceAgentAPIEvents.WebSocketError, onGrokDropped);
 
       // 7. Safety hard cap (Mira's prompt soft-wraps at 45; spec §11.8).
       hardCapTimer = setTimeout(function () {
@@ -112,16 +150,15 @@ VoxEngine.addEventListener(AppEvents.Started, async function () {
       //    reliably from a scenario, so the durable copy happens in
       //    GitHub Actions where retries are cheap (spec §7 handles the
       //    upload-failure case there).
-      if (recorder) recorder.stop();
-      const recordUrl = recorder ? recorder.getUrl() : null;
+      // call.record stops automatically when the call disconnects.
       await fireWebhook({
         run_id: runId,
         status: "completed",
         voximplant_record_url: recordUrl,
-        duration_sec: Math.round(call.getDuration ? call.getDuration() : 0),
-        disconnect_reason: call.getDisconnectReason
-          ? call.getDisconnectReason()
-          : "normal",
+        duration_sec: connectedAt
+          ? Math.round((Date.now() - connectedAt) / 1000)
+          : 0,
+        disconnect_reason: "normal",
         grok_session_log: grokAgent && grokAgent.getSessionLog
           ? grokAgent.getSessionLog()
           : null,
@@ -147,17 +184,21 @@ VoxEngine.addEventListener(AppEvents.Started, async function () {
 });
 
 /**
- * Grok connection dropped mid-call (spec §7 row 3): give the connector a
- * short reconnect window; if the agent is still down, play Mira's
- * pre-recorded apology and hang up. The Disconnected handler then fires
- * the normal webhook with whatever was recorded.
+ * Grok connection dropped mid-call (spec §7 row 3). The native
+ * VoiceAgentAPIClient has no auto-reconnect, so a long grace window is
+ * just dead air for the guest: after a short guard delay (lets a normal
+ * teardown race resolve — the socket also closes when WE hang up), play
+ * Mira's pre-recorded apology and end. The Disconnected handler then
+ * fires the normal webhook with whatever was recorded.
  */
+let grokDropHandled = false;
 function onGrokDropped() {
-  Logger.write("[aoa " + runId + "] Grok connection dropped — grace window");
+  if (grokDropHandled) return;
+  grokDropHandled = true;
+  Logger.write("[aoa " + runId + "] Grok connection dropped/errored");
   setTimeout(async function () {
-    const alive = grokAgent && grokAgent.state && grokAgent.state() === "CONNECTED";
-    if (alive || !call || call.state() === "DISCONNECTED") return;
-    Logger.write("[aoa " + runId + "] Grok did not recover — apologizing and ending");
+    if (!call || call.state() === "DISCONNECTED") return;
+    Logger.write("[aoa " + runId + "] guest still on line — apologizing and ending");
     try {
       const cfg = await fetchInterviewConfig(runId);
       if (cfg && cfg.grok_drop_apology_url) {
@@ -168,7 +209,7 @@ function onGrokDropped() {
       Logger.write("[aoa " + runId + "] apology playback failed: " + e.message);
     }
     call.hangup();
-  }, GROK_RECONNECT_GRACE_MS);
+  }, GROK_DROP_GUARD_MS);
 }
 
 // ---------------------------------------------------------------------------
@@ -176,11 +217,21 @@ function onGrokDropped() {
 // ---------------------------------------------------------------------------
 
 function getSecret(name) {
-  // Application-level secure custom data, set once via the Management API
-  // (see voximplant_client.py set_application_secrets).
-  const secrets = JSON.parse(Application.customData() || "{}");
-  if (!secrets[name]) throw new Error("missing scenario secret: " + name);
-  return secrets[name];
+  // Secrets are substituted into the scenario source at DEPLOY time by
+  // voximplant_client.py upload_scenario (same mechanism as
+  // __SUPABASE_URL__). The committed file never carries real values.
+  // NOTE: VoxEngine has no Application.customData() — the original
+  // application-custom-data design was written from spec and does not
+  // exist in the live API (verified July 2026).
+  const secrets = {
+    SUPABASE_SERVICE_KEY: "__SUPABASE_SERVICE_KEY__",
+    XAI_API_KEY: "__XAI_API_KEY__",
+  };
+  const value = secrets[name];
+  if (!value || value.indexOf("__") === 0) {
+    throw new Error("missing scenario secret (deploy-time substitution did not run): " + name);
+  }
+  return value;
 }
 
 async function fetchInterviewConfig(id) {
