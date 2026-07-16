@@ -83,10 +83,20 @@ _PATH_REGISTRY: Dict[Path, dict] = {}
 def load_manifest(path: Optional[Path] = None) -> dict:
     """Load the gallery manifest; ``{}`` on any failure (missing/corrupt)."""
     p = Path(path) if path else DEFAULT_MANIFEST
+    if not p.exists():
+        # Legitimately absent in unconfigured environments — quiet no-op.
+        logger.info("gallery_library: no manifest at %s", p)
+        return {}
     try:
         data = json.loads(p.read_text(encoding="utf-8"))
-    except Exception as exc:  # noqa: BLE001 — missing/corrupt = empty library
-        logger.info("gallery_library: manifest unreadable at %s (%s)", p, exc)
+    except Exception as exc:  # noqa: BLE001 — corrupt = empty library
+        # A manifest that EXISTS but does not parse silently no-ops the
+        # entire library blend (scene_library_count: 0 on every episode) —
+        # e.g. the Jul 16 2026 incident where a `git pull --autostash`
+        # conflict committed `<<<<<<<` markers into the JSON. Be loud.
+        logger.warning(
+            "gallery_library: manifest at %s exists but is UNREADABLE (%s) "
+            "— library blend will ship zero scenes", p, exc)
         return {}
     return data if isinstance(data, dict) else {}
 
@@ -221,7 +231,10 @@ def _download_via_r2(entry: dict, dest: Path) -> bool:
         return False
 
 
-def _download_entry(entry: dict, cache_dir: Path) -> Optional[Path]:
+def _download_entry(
+    entry: dict, cache_dir: Path,
+    failures: Optional[List[str]] = None,
+) -> Optional[Path]:
     """Fetch one image into the cache (or reuse); None on failure.
 
     Tries the public CDN URL first (fast path when the custom domain is
@@ -230,6 +243,9 @@ def _download_entry(entry: dict, cache_dir: Path) -> Optional[Path]:
     403 from ``gallery.nerranetwork.com`` while the same bucket accepted
     uploads with the CI credentials. Once the CDN 403s in-process, later
     downloads skip straight to R2 (``_prefer_r2_download``).
+
+    When ``failures`` is given, a short human-readable reason is appended
+    on each failed fetch so the caller can report WHY the blend degraded.
     """
     global _prefer_r2_download
     dest = cache_dir / _cache_filename(entry)
@@ -264,6 +280,10 @@ def _download_entry(entry: dict, cache_dir: Path) -> Optional[Path]:
             )
             _PATH_REGISTRY[dest] = entry
             return dest
+        if failures is not None:
+            r2_state = ("R2 fallback also failed" if _r2_configured()
+                        else "R2 fallback unavailable (credentials unset)")
+            failures.append(f"public CDN: {public_err}; {r2_state}")
         logger.warning(
             "gallery_library: failed to fetch %s: %s",
             entry.get("original_url"), public_err,
@@ -271,6 +291,15 @@ def _download_entry(entry: dict, cache_dir: Path) -> Optional[Path]:
         return None
     _PATH_REGISTRY[dest] = entry
     return dest
+
+
+def _r2_configured() -> bool:
+    """Whether the authenticated-R2 fallback has credentials to work with."""
+    try:
+        from engine.gallery_uploader import gallery_config_from_env
+        return bool(gallery_config_from_env().is_configured)
+    except Exception:  # noqa: BLE001
+        return False
 
 
 def select_library_scenes(
@@ -317,6 +346,7 @@ def select_library_scenes(
         cdir = Path(cache_dir) if cache_dir else _default_cache_dir()
         cdir.mkdir(parents=True, exist_ok=True)
         paths: List[Path] = []
+        failures: List[str] = []
         consecutive_failures = 0
         for entry in _rank(entries, context_text):
             if len(paths) >= limit:
@@ -329,12 +359,22 @@ def select_library_scenes(
                     consecutive_failures, show_slug, len(paths), limit,
                 )
                 break
-            p = _download_entry(entry, cdir)
+            p = _download_entry(entry, cdir, failures=failures)
             if p is not None:
                 paths.append(p)
                 consecutive_failures = 0
             else:
                 consecutive_failures += 1
+        if not paths and failures:
+            # The blend selected candidates but shipped ZERO of them — the
+            # exact silent-no-op shape that hid the CDN-403 defect for a
+            # week (scene_library_count: 0, Jul 2026). One loud line with
+            # the first concrete failure reason so run logs always show it.
+            logger.warning(
+                "gallery_library: BLEND DEGRADED for %s (%s): selected %d "
+                "candidate scene(s), downloaded 0 — first failure: %s",
+                show_slug, aspect, len(entries), failures[0],
+            )
         return paths
     except Exception as exc:  # noqa: BLE001 — library reuse is optional
         logger.warning("gallery_library: scene selection failed for %s: %s",

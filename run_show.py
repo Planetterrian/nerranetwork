@@ -951,6 +951,25 @@ def run(args: argparse.Namespace) -> None:
                     keywords=config.keywords,
                 )
                 if web_articles:
+                    # July 16 2026: web-search results bypassed the per-show
+                    # exclude_title_patterns filter (it only ran on the RSS
+                    # path) — PT Ep116's pure-astronomy exoplanet story
+                    # arrived via web search despite \bexoplanets?\b being
+                    # excluded. Apply the same filter here.
+                    _excl_web = list(
+                        getattr(config, "exclude_title_patterns", []) or []
+                    )
+                    if _excl_web:
+                        from engine.utils import drop_excluded_titles
+                        web_articles, _n_web_excl = drop_excluded_titles(
+                            web_articles, _excl_web,
+                        )
+                        if _n_web_excl:
+                            logger.info(
+                                "Excluded %d web-search article(s) matching "
+                                "exclude_title_patterns", _n_web_excl,
+                            )
+                if web_articles:
                     from engine.utils import calculate_similarity
                     # Dedup web articles against existing RSS+X articles
                     deduped_web = []
@@ -2287,6 +2306,54 @@ def run(args: argparse.Namespace) -> None:
             # because a digest "Source:" line reached TTS.
             podcast_script = _strip_source_scaffold_lines(podcast_script)
 
+            # Final near-duplicate strip (July 16 2026): SpaceX Ep034 spoke
+            # its entire ~8-sentence Engineering Deep Dive TWICE verbatim —
+            # once inside the lead story and again at the deep-dive slot.
+            # The July-2 dedup only covered expansion-RETRY output; digest-
+            # level story-vs-deep-dive duplication reached TTS untouched.
+            # Same conservative strip (>=8-word sentences, 0.85 similarity,
+            # first occurrence kept) on the FINAL script. Correctness strip:
+            # removes only near-verbatim repetition that shipped as audio.
+            from engine.generator import _dedup_expansion_sentences
+            podcast_script, _final_dups = _dedup_expansion_sentences(
+                podcast_script, min_words=8,
+            )
+            if _final_dups:
+                logger.warning(
+                    "Final-script dedup removed %d near-duplicate "
+                    "sentence(s) before TTS (SpaceX Ep034 class — "
+                    "story vs deep-dive digest duplication)", _final_dups,
+                )
+                metrics.record("final_script_dup_sentences_removed",
+                               _final_dups)
+
+            # Weekly-summary effectiveness check (July 16 2026): on both
+            # July Sundays every opted-in show recorded
+            # ``weekly_summary_segment: True`` yet ZERO week-in-review
+            # language aired — the LLM ignored the appended instruction
+            # block while telemetry claimed success. Detect whether the
+            # generated script actually contains recap language and record
+            # the honest metric (warning only — enforcing the beat via
+            # regen is a prompt-level change behind the A/B gate).
+            if include_weekly_summary and _summary_segment:
+                _week_lang_re = re.compile(
+                    r"\b(?:this (?:past )?week|week in review|"
+                    r"over the (?:past|last) (?:seven days|week)|"
+                    r"earlier this week|looking back at the week|"
+                    r"what you (?:may have|might have|might've) missed)\b",
+                    re.IGNORECASE,
+                )
+                _segment_aired = bool(_week_lang_re.search(podcast_script))
+                metrics.record("weekly_summary_segment_effective",
+                               _segment_aired)
+                if not _segment_aired:
+                    logger.warning(
+                        "Weekly-summary segment was appended to the digest "
+                        "but NO week-in-review language appears in the "
+                        "generated script — the LLM ignored the instruction "
+                        "block (silent no-op class, Jul 5/12 Sundays)."
+                    )
+
             # Apply pronunciation fixes
             podcast_script = _apply_pronunciation(podcast_script, args.show)
 
@@ -2761,12 +2828,15 @@ def run(args: argparse.Namespace) -> None:
                             outro_fade_out_duration=getattr(
                                 config.audio, "outro_fade_out_duration", 6.0,
                             ),
+                            denoise=config.audio.voice_denoise,
                         )
                     else:
                         logger.warning("Music file not found: %s — using voice only", music_path)
-                        normalize_voice(raw_mp3, final_mp3)
+                        normalize_voice(raw_mp3, final_mp3,
+                                        denoise=config.audio.voice_denoise)
                 else:
-                    normalize_voice(raw_mp3, final_mp3)
+                    normalize_voice(raw_mp3, final_mp3,
+                                    denoise=config.audio.voice_denoise)
 
                 _mix_duration = time.monotonic() - t0
                 logger.info("Audio mixing took %.1fs", _mix_duration)
@@ -3887,26 +3957,51 @@ _SOURCE_SCAFFOLD_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Mid-line / sentence-final attribution: "… within a human lifetime.
+# Source goodnewsnetwork.org." (colon-less) and "… measured. Source:
+# phys.org." — the dp_pod dialogue path speaks these inside a host's
+# turn, so the line-start regex above never sees them (aired in DP Pod
+# Ep007/Ep012, July 2026). Only fires when the label is IMMEDIATELY
+# followed by a bare domain, so prose about "the source" is untouched.
+_SOURCE_INLINE_RE = re.compile(
+    r"\s*(?:\*\*|__)?(?:Sources?|Источники?)(?:\*\*|__)?\s*:?\s+"
+    r"[\w][\w.-]*\.(?:com|org|net|io|ai|ca|gov|edu|co)\b\.?",
+)
+
 
 def _strip_source_scaffold_lines(text: str) -> str:
-    """Drop raw 'Source:'-label scaffold lines from the spoken script.
+    """Drop raw 'Source:'-label scaffold from the spoken script.
 
     Defensive scrub in the script-save path (July 2026 network editorial
     pass) — runs BEFORE pronunciation so the label never reaches TTS,
-    the transcript, or the blog. Deterministic line-level drop; never
-    touches prose (a sentence merely *containing* the word "source" does
-    not start with the label + colon).
+    the transcript, or the blog. Two deterministic shapes:
+
+      1. Whole lines starting with the label + colon (FP Ep059 class).
+      2. Sentence-final "Source <domain>" attributions inside a line
+         (DP Pod Ep007/Ep012 class — dialogue turns carry the label
+         mid-line, with or without the colon). Requires a bare domain
+         right after the label, so prose merely containing the word
+         "source" is never touched.
     """
     lines = text.split("\n")
     kept = [ln for ln in lines if not _SOURCE_SCAFFOLD_RE.match(ln)]
     dropped = len(lines) - len(kept)
-    if dropped:
+
+    inline_hits = 0
+    cleaned = []
+    for ln in kept:
+        new_ln, n = _SOURCE_INLINE_RE.subn("", ln)
+        inline_hits += n
+        cleaned.append(new_ln if n else ln)
+
+    if dropped or inline_hits:
         logger.warning(
-            "Stripped %d 'Source:' scaffold line(s) from the spoken script "
-            "(digest scaffold leaked into the podcast — FP Ep059 class)",
-            dropped,
+            "Stripped %d 'Source:' scaffold line(s) + %d inline source "
+            "attribution(s) from the spoken script (digest scaffold leaked "
+            "into the podcast — FP Ep059 / DP Ep012 class)",
+            dropped, inline_hits,
         )
-        return re.sub(r"\n{3,}", "\n\n", "\n".join(kept))
+        return re.sub(r"\n{3,}", "\n\n", "\n".join(cleaned))
     return text
 
 

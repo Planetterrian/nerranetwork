@@ -728,14 +728,24 @@ def replace_price_ranges(text: str) -> str:
     """Convert price ranges to natural spoken form.
 
     Examples:
-        '$350-$400'  → 'three hundred fifty to four hundred dollars'
-        '$25–$30'    → 'twenty-five to thirty dollars'
+        '$350-$400'       → 'three hundred fifty to four hundred dollars'
+        '$25–$30'         → 'twenty-five to thirty dollars'
+        '$8,000–$15,000'  → 'eight thousand to fifteen thousand dollars'
+
+    July 16 2026: comma-grouped amounts accepted. The DP Pod Ep004 Lever
+    spoke "$8,000–$15,000" as "eight dollars,zero to fifteen,000" (Whisper:
+    "the $8 centrel year to 15,000 range") because these patterns matched
+    only bare digits — the July-2 comma fix covered single currency
+    amounts but not the range form, so replace_currency consumed "$8" and
+    stranded ",000".
     """
+    _num = r"\d{1,3}(?:,\d{3})+|\d+"
+
     # Decimal ranges: $350.50-$400.75
     def _range_decimal(m: re.Match) -> str:
         symbol = m.group(1)
-        low_w, low_d = m.group(2), m.group(3)
-        high_w, high_d = m.group(4), m.group(5)
+        low_w, low_d = m.group(2).replace(",", ""), m.group(3)
+        high_w, high_d = m.group(4).replace(",", ""), m.group(5)
         currency = {"$": "dollars", "€": "euros", "£": "pounds"}.get(symbol, "dollars")
         try:
             low_words = number_to_words(int(low_w))
@@ -749,22 +759,23 @@ def replace_price_ranges(text: str) -> str:
             return m.group(0)
 
     text = re.sub(
-        r"([$€£])(\d+)\.(\d{1,2})\s*[-–—]\s*\1(\d+)\.(\d{1,2})",
+        rf"([$€£])({_num})\.(\d{{1,2}})\s*[-–—]\s*\1({_num})\.(\d{{1,2}})",
         _range_decimal,
         text,
     )
 
-    # Whole-number ranges: $350-$400
+    # Whole-number ranges: $350-$400 / $8,000–$15,000
     def _range_whole(m: re.Match) -> str:
         symbol = m.group(1)
-        low, high = m.group(2), m.group(3)
+        low = m.group(2).replace(",", "")
+        high = m.group(3).replace(",", "")
         currency = {"$": "dollars", "€": "euros", "£": "pounds"}.get(symbol, "dollars")
         try:
             return f"{number_to_words(int(low))} to {number_to_words(int(high))} {currency}"
         except ValueError:
             return m.group(0)
 
-    text = re.sub(r"([$€£])(\d+)\s*[-–—]\s*\1(\d+)", _range_whole, text)
+    text = re.sub(rf"([$€£])({_num})\s*[-–—]\s*\1({_num})", _range_whole, text)
     return text
 
 

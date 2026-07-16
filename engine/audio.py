@@ -109,16 +109,38 @@ def _voice_norm_codec_args(output_path: str) -> list:
     return ["-c:a", "libmp3lame", "-b:a", "192k", "-preset", "fast"]
 
 
-def _voice_norm_full_cmd(voice_in: str, voice_out: str) -> list:
-    """Build the 5-stage voice normalization ffmpeg command.
+def _voice_norm_full_cmd(voice_in: str, voice_out: str,
+                         *, denoise: bool = True) -> list:
+    """Build the voice normalization ffmpeg command.
 
     Order matters — each stage operates on the output of the previous:
 
       1. highpass=80 Hz       — strip sub-bass rumble / TTS artifacts
       2. lowpass=15 kHz       — strip ultrasonic hiss above intelligibility
+      2b. adeclick + afftdn   — impulsive-click repair + gentle broadband
+                                denoise (July 16 2026, see below; skipped
+                                when ``denoise`` is False)
       3. loudnorm I=-18      — voice-only LUFS target (mix gets re-norm'd to -16)
       4. acompressor 4:1     — gentle dynamics control (NPR-ish consistency)
       5. alimiter level_out=0.95 — peak protection, prevents clipping into mix
+
+    July 16 2026 — hiss + tick cleanup (operator report: "audible hisses
+    and ticks in recent podcast episodes"). Measured, not theory-driven:
+    high-frequency energy DURING SPEECH rose ~2-3 dB between the Jul 1-2
+    and Jul 16 episodes on two independent shows (Tesla 6-10 kHz -47.1 →
+    -44.4 dBFS; FF -46.1 → -44.2) with the 1-4 kHz voice core flat — the
+    repo's own chain was unchanged in that window, so the drift is
+    upstream (Grok TTS output). ``adeclick`` (default params) repairs
+    impulsive clicks (2 hard clicks measured in DP Pod Ep012; dialogue
+    turns flow through this same chain), and ``afftdn=nr=9:nf=-42:tn=1``
+    (noise-tracking FFT denoise, gentle 9 dB reduction) removes the
+    broadband hiss. Efficacy verified on Tesla Ep543 before shipping:
+    1-4 kHz untouched (-28.9 → -28.9), 6-10 kHz restored to the Jul-1
+    reference (-44.4 → -46.8 vs ref -47.1), 10-14 kHz -56.4 → -61.0.
+    Placed BEFORE loudnorm/compressor so makeup gain cannot re-amplify
+    the noise the denoiser measures. Disable per show via
+    ``audio.voice_denoise: false`` (landmine #17: A/B-listen the first
+    episode after any change here).
 
     History: the chain briefly carried a 6.5 kHz -3 dB dip in May 2026
     to de-ess the original ``b4cusb2omvkz`` clone, which had a noisy
@@ -145,9 +167,7 @@ def _voice_norm_full_cmd(voice_in: str, voice_out: str) -> list:
       sounded like clipping on enthusiastic delivery. +1 dB keeps
       perceived loudness without slamming the limiter.
     """
-    return [
-        "ffmpeg", "-y", "-threads", "0", "-i", voice_in,
-        "-af",
+    filters = (
         # ``afade=t=in:st=0:d=0.05`` (May 22 2026) ramps the very
         # first 50 ms of voice from silence to full level so the
         # WAV stream-copy concat with the prepended ``voice_silence``
@@ -159,9 +179,14 @@ def _voice_norm_full_cmd(voice_in: str, voice_out: str) -> list:
         # silence boundary at the very end of the voice file.
         "afade=t=in:st=0:d=0.05:curve=tri,"
         "highpass=f=80,lowpass=f=15000,"
-        "loudnorm=I=-18:TP=-1.5:LRA=11:linear=true,"
+        + ("adeclick,afftdn=nr=9:nf=-42:tn=1," if denoise else "")
+        + "loudnorm=I=-18:TP=-1.5:LRA=11:linear=true,"
         "acompressor=threshold=-20dB:ratio=4:attack=10:release=100:makeup=1,"
-        "alimiter=level_in=1:level_out=0.95:limit=0.95",
+        "alimiter=level_in=1:level_out=0.95:limit=0.95"
+    )
+    return [
+        "ffmpeg", "-y", "-threads", "0", "-i", voice_in,
+        "-af", filters,
         "-ar", "44100", "-ac", "1",
     ] + _voice_norm_codec_args(voice_out) + [voice_out]
 
@@ -179,12 +204,16 @@ def _voice_norm_fallback_cmd(voice_in: str, voice_out: str) -> list:
     ] + _voice_norm_codec_args(voice_out) + [voice_out]
 
 
-def normalize_voice(input_path: Path, output_path: Path) -> Path:
+def normalize_voice(input_path: Path, output_path: Path,
+                    *, denoise: bool = True) -> Path:
     """Normalize voice audio with a multi-stage filter chain.
 
-    Tries the full chain (highpass -> lowpass -> loudnorm -> compressor ->
-    limiter).  If it fails (e.g. ffmpeg version mismatch), falls back to
-    loudnorm only.
+    Tries the full chain (highpass -> lowpass -> declick/denoise ->
+    loudnorm -> compressor -> limiter).  If it fails (e.g. ffmpeg version
+    mismatch), falls back to loudnorm only.
+
+    ``denoise=False`` skips the July 2026 adeclick + afftdn stage
+    (per-show opt-out via ``audio.voice_denoise: false``).
 
     When *output_path* ends in ``.wav``, output is lossless PCM to avoid
     an unnecessary lossy encoding pass (useful when the result will be
@@ -197,7 +226,8 @@ def normalize_voice(input_path: Path, output_path: Path) -> Path:
 
     try:
         logger.info("Attempting voice normalization with full filter chain...")
-        cmd = _voice_norm_full_cmd(str(input_path), str(output_path))
+        cmd = _voice_norm_full_cmd(str(input_path), str(output_path),
+                                   denoise=denoise)
         subprocess.run(cmd, check=True, capture_output=True, timeout=timeout_seconds)
         logger.info("Voice normalization (full chain) succeeded.")
     except subprocess.CalledProcessError:
@@ -712,6 +742,7 @@ def mix_with_music(
     background_music_path: Optional[Path] = None,
     outro_crossfade: float = 0.0,
     outro_fade_out_duration: float = 6.0,
+    denoise: bool = True,
 ) -> Path:
     """Full music mixing pipeline supporting three modes.
 
@@ -753,7 +784,7 @@ def mix_with_music(
     """
     if not music_path.exists():
         logger.warning("Music file %s not found — returning voice-only.", music_path)
-        return normalize_voice(voice_path, output_path)
+        return normalize_voice(voice_path, output_path, denoise=denoise)
 
     # Voice file must exist AND be non-empty before we hand it to ffmpeg.
     # A 0-byte / missing voice file produces a cryptic ffmpeg error
@@ -785,7 +816,7 @@ def mix_with_music(
 
         # Normalize voice to lossless WAV — MP3 encoding happens once in final mix
         voice_mix = tmp_dir / "voice_normalized_mix.wav"
-        normalize_voice(voice_path, voice_mix)
+        normalize_voice(voice_path, voice_mix, denoise=denoise)
 
         # --- Apply voice intro delay if configured ---
         effective_voice_duration = voice_duration

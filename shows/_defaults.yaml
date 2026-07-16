@@ -138,6 +138,16 @@ audio:
   overlap_volume: 0.4
   fade_volume: 0.3
   outro_volume: 0.5
+  # July 16 2026 — hiss/tick cleanup stage (adeclick + afftdn) in the
+  # voice-normalization chain. Evidence-driven, not theory-driven:
+  # HF energy DURING SPEECH rose ~2-3 dB between Jul 1-2 and Jul 16
+  # episodes (Grok TTS output drift — the repo chain was unchanged),
+  # and hard clicks were measured in DP Pod Ep012. Efficacy verified
+  # on Tesla Ep543 before shipping (voice band untouched, 6-10 kHz
+  # restored to the Jul-1 reference). Set ``voice_denoise: false``
+  # per show to restore the pre-July-16 chain. Landmine #17:
+  # A/B-listen the first episode after any change here.
+  voice_denoise: true
 
 storage:
   provider: r2

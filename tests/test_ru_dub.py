@@ -568,3 +568,80 @@ class TestRealShowConfigs:
                     f"{slug}: ru_dub_enabled but no RU audio track "
                     f"(multilingual.enabled={ml.enabled}, languages={ml.languages})"
                 )
+
+
+class TestRuDubWorkflowEnv:
+    """The Jul 14-16 2026 incident class: the optimized RU-title path
+    (`_translate_title_to_ru`) shipped but the workflow step never passed
+    the Grok key, so every @NerraRU upload silently fell back to the
+    truncated hook title. Pin the step's env so the fix can't regress."""
+
+    def _ru_dub_step(self):
+        import yaml
+        wf = yaml.safe_load(
+            (_ROOT / ".github" / "workflows" / "multilingual.yml").read_text(
+                encoding="utf-8"))
+        for job in wf.get("jobs", {}).values():
+            for step in job.get("steps", []) or []:
+                if "publish_ru_dubs.py" in str(step.get("run", "")):
+                    return step
+        raise AssertionError("publish_ru_dubs step not found in multilingual.yml")
+
+    def test_step_env_has_grok_key_for_title_translation(self):
+        env = self._ru_dub_step().get("env", {}) or {}
+        assert "GROK_API_KEY" in env, (
+            "RU-dub step must pass GROK_API_KEY — without it the optimized "
+            "RU title translation silently degrades to the hook title")
+        assert "XAI_API_KEY" in env
+
+    def test_step_env_has_r2_credentials_for_scene_fallback(self):
+        env = self._ru_dub_step().get("env", {}) or {}
+        for key in ("R2_ENDPOINT_URL", "R2_ACCESS_KEY_ID",
+                    "R2_SECRET_ACCESS_KEY"):
+            assert key in env, (
+                f"RU-dub step must pass {key} — the gallery-scene download "
+                "falls back to authenticated R2 when the public CDN 403s CI")
+
+
+class TestSceneDownloadRobustness:
+    def test_download_images_routes_through_gallery_library(self, tmp_path,
+                                                            monkeypatch):
+        """RU dub scene downloads must use gallery_library's downloader so
+        the public-CDN → authenticated-R2 fallback (Ep537 403 class)
+        protects them too."""
+        from engine import gallery_library
+        seen = []
+
+        def _fake(entry, dest_dir, failures=None):
+            seen.append(entry["original_url"])
+            p = Path(dest_dir) / f"x{len(seen)}.jpg"
+            p.write_bytes(b"img")
+            return p
+
+        monkeypatch.setattr(gallery_library, "_download_entry", _fake)
+        urls = ["https://gallery.nerranetwork.com/tesla/a.jpeg",
+                "https://gallery.nerranetwork.com/tesla/b.jpeg"]
+        got = ru_dub._download_images(urls, tmp_path)
+        assert seen == urls
+        assert len(got) == 2
+
+    def test_download_images_skips_failures(self, tmp_path, monkeypatch):
+        from engine import gallery_library
+        monkeypatch.setattr(gallery_library, "_download_entry",
+                            lambda *a, **k: None)
+        assert ru_dub._download_images(["https://x/a.jpg"], tmp_path) == []
+
+
+class TestShortIndexTitleFidelity:
+    def test_short_record_uses_uploaded_short_title(self):
+        """The ru index must record the title the Short actually shipped
+        with (`_ru_short_title(...)`, '#Shorts'-suffixed) — recording the
+        long title hid what @NerraRU displayed (Jul 2026 verification)."""
+        import inspect
+        import re
+        src = inspect.getsource(ru_dub.publish_ru_dub)
+        m = re.search(
+            r"short_title = _ru_short_title\(ru_title\)(.*?)"
+            r"record_video\((.*?)\)", src, re.DOTALL)
+        assert m, "short upload must bind short_title before recording"
+        assert "title=short_title" in m.group(2)

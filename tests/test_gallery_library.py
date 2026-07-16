@@ -113,6 +113,38 @@ class TestLoadManifest:
     def test_default_path_is_committed_manifest(self):
         assert gl.DEFAULT_MANIFEST.name == "gallery-manifest.json"
 
+    def test_committed_manifest_is_valid_json_without_conflict_markers(self):
+        """The committed manifest must always parse.
+
+        Jul 16 2026: a `git pull --rebase --autostash` conflict in the
+        nightly job committed `<<<<<<<` markers into the manifest on main —
+        every consumer (library blend, RU dubs, gallery page) silently
+        no-opped. This guard makes that failure loud in CI.
+        """
+        if not gl.DEFAULT_MANIFEST.exists():
+            return  # unconfigured checkout — nothing to validate
+        text = gl.DEFAULT_MANIFEST.read_text(encoding="utf-8")
+        assert "<<<<<<< " not in text, (
+            "gallery-manifest.json contains unresolved git conflict markers")
+        data = json.loads(text)  # raises on corrupt JSON
+        assert isinstance(data, dict) and "images" in data
+
+    def test_corrupt_existing_manifest_warns_loudly(self, tmp_path, caplog):
+        """An EXISTING-but-unparseable manifest is a WARNING, not info —
+        it silently zeroes scene_library_count on every episode."""
+        import logging
+        p = tmp_path / "broken.json"
+        p.write_text('{\n<<<<<<< Updated upstream\n "a": 1\n}', encoding="utf-8")
+        with caplog.at_level(logging.WARNING, logger="engine.gallery_library"):
+            assert gl.load_manifest(p) == {}
+        assert any("UNREADABLE" in r.message for r in caplog.records)
+
+    def test_missing_manifest_stays_quiet(self, tmp_path, caplog):
+        import logging
+        with caplog.at_level(logging.WARNING, logger="engine.gallery_library"):
+            assert gl.load_manifest(tmp_path / "absent.json") == {}
+        assert not [r for r in caplog.records if r.levelno >= logging.WARNING]
+
 
 # ---------------------------------------------------------------------------
 # select_library_scenes
@@ -285,6 +317,49 @@ class TestSelection:
         assert gl.select_library_scenes(
             "tesla", aspect="16:9", manifest={"images": "not-a-list"},
             cache_dir=tmp_path) == []
+
+    def test_zero_download_blend_warns_loudly_with_first_reason(
+            self, tmp_path, monkeypatch, caplog):
+        """Selected N candidates, downloaded 0 → ONE loud warning naming the
+        first concrete failure — the silent-no-op shape that hid the
+        CDN-403 defect for a week (scene_library_count: 0, Jul 2026)."""
+        import logging
+        m = _manifest()  # 4 tesla 16:9 candidates — below the breaker of 5
+        fail_all = {e["original_url"] for e in m["images"]
+                    if e.get("original_url")}
+        _stub_requests(monkeypatch, fail_urls=fail_all)
+        monkeypatch.setattr(gl, "_prefer_r2_download", False)
+        monkeypatch.setattr(gl, "_download_via_r2", lambda *a, **k: False)
+        monkeypatch.setattr(gl, "_r2_configured", lambda: False)
+        with caplog.at_level(logging.WARNING, logger="engine.gallery_library"):
+            got = gl.select_library_scenes(
+                "tesla", aspect="16:9", limit=8,
+                manifest=m, cache_dir=tmp_path)
+        assert got == []
+        degraded = [r for r in caplog.records if "BLEND DEGRADED" in r.message]
+        assert len(degraded) == 1
+        msg = degraded[0].message
+        assert "downloaded 0" in msg
+        assert "stub network failure" in msg          # the first reason
+        assert "credentials unset" in msg             # R2 state named
+
+    def test_partial_download_does_not_warn_degraded(
+            self, tmp_path, monkeypatch, caplog):
+        import logging
+        m = _manifest()
+        first_fail = next(e["original_url"] for e in m["images"]
+                          if e.get("original_url"))
+        _stub_requests(monkeypatch, fail_urls={first_fail})
+        monkeypatch.setattr(gl, "_prefer_r2_download", False)
+        monkeypatch.setattr(gl, "_download_via_r2", lambda *a, **k: False)
+        monkeypatch.setattr(gl, "_r2_configured", lambda: False)
+        with caplog.at_level(logging.WARNING, logger="engine.gallery_library"):
+            got = gl.select_library_scenes(
+                "tesla", aspect="16:9", limit=8,
+                manifest=m, cache_dir=tmp_path)
+        assert got  # at least one scene shipped
+        assert not [r for r in caplog.records
+                    if "BLEND DEGRADED" in r.message]
 
 
 # ---------------------------------------------------------------------------

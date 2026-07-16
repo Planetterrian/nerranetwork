@@ -268,14 +268,40 @@ def build_network_promo(
         return ""
     name = ENGLISH_SHOWS[featured]["spoken_name"]
     tagline = ENGLISH_SHOWS[featured]["tagline"]
-    promo = (
-        "And before you go: this show is part of the Nerra Network — a family "
-        "of daily podcasts on tech, science, and markets, each one a short, "
-        "sharp briefing you can finish on the commute. "
-        f"If today earned its place in your feed, here's your next listen — "
-        f"{name}, {tagline}. "
-        "Find every show, free, at nerranetwork.com."
+    # July 16 2026 — outro-fatigue fix: the single ~40-word promo frame was
+    # verbatim in 146 of 176 in-window episodes, so a multi-show listener
+    # heard the identical minute several times a day (only the sibling name
+    # rotated). Four frames now rotate date-deterministically, offset per
+    # show so two shows on the SAME day usually speak different frames.
+    # Frame 3 is deliberately short — some days the plug is one sentence.
+    # Changes shipped audio -> A/B-listen per landmine #17.
+    frames = (
+        (
+            "And before you go: this show is part of the Nerra Network — a "
+            "family of daily podcasts on tech, science, and markets, each "
+            "one a short, sharp briefing you can finish on the commute. "
+            f"If today earned its place in your feed, here's your next "
+            f"listen — {name}, {tagline}. "
+            "Find every show, free, at nerranetwork.com."
+        ),
+        (
+            f"One more thing — if you liked today's episode, our sister "
+            f"show {name} is worth a spot in your feed: {tagline}. "
+            "It's one of the Nerra Network's daily briefings, all free at "
+            "nerranetwork.com."
+        ),
+        (
+            f"Quick tip from the network: try {name} next — {tagline}. "
+            "Every Nerra Network show is free at nerranetwork.com."
+        ),
+        (
+            f"This show comes to you from the Nerra Network. If you want "
+            f"another sharp daily briefing, {name} has you covered — "
+            f"{tagline}. All our shows are free at nerranetwork.com."
+        ),
     )
+    frame_idx = (date.toordinal() + ENGLISH_ORDER.index(show_slug)) % len(frames)
+    promo = frames[frame_idx]
     surface = pick_featured_surface(show_slug, date)
     if surface and surface.get("spoken"):
         promo = f"{promo} {surface['spoken']}"
