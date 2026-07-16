@@ -22,8 +22,9 @@ import pytest
 # Expected command templates (parameterised by file paths)
 # ---------------------------------------------------------------------------
 
-def voice_normalization_full(voice_in: str, voice_out: str) -> list:
-    """The 5-stage filter chain for voice normalization. The 6.5 kHz
+def voice_normalization_full(voice_in: str, voice_out: str,
+                             denoise: bool = True) -> list:
+    """The voice-normalization filter chain. The 6.5 kHz
     de-essing dip was retired May 2026 once the second custom voice
     clone (kdif6sqjcyiq, recorded on a better mic) replaced the
     sibilant b4cusb2omvkz.
@@ -32,13 +33,20 @@ def voice_normalization_full(voice_in: str, voice_out: str) -> list:
     silence-to-voice transition at the start of the voice file
     ramps smoothly instead of jumping to the first non-zero TTS
     sample (audible as a click when the voice file is later
-    stream-copy-concatenated onto a block of leading silence)."""
+    stream-copy-concatenated onto a block of leading silence).
+
+    July 16 2026: ``adeclick,afftdn=nr=9:nf=-42:tn=1`` between the
+    band-limit filters and loudnorm — measured hiss/tick cleanup
+    (upstream Grok TTS HF drift + hard clicks; see
+    engine/audio._voice_norm_full_cmd docstring). Gated on the
+    ``audio.voice_denoise`` config flag (default true)."""
     return [
         "ffmpeg", "-y", "-threads", "0", "-i", voice_in,
         "-af",
         "afade=t=in:st=0:d=0.05:curve=tri,"
         "highpass=f=80,lowpass=f=15000,"
-        "loudnorm=I=-18:TP=-1.5:LRA=11:linear=true,"
+        + ("adeclick,afftdn=nr=9:nf=-42:tn=1," if denoise else "")
+        + "loudnorm=I=-18:TP=-1.5:LRA=11:linear=true,"
         "acompressor=threshold=-20dB:ratio=4:attack=10:release=100:makeup=1,"
         "alimiter=level_in=1:level_out=0.95:limit=0.95",
         "-ar", "44100", "-ac", "1",
@@ -200,7 +208,12 @@ class TestVoiceNormalization:
         assert "afade=t=in:st=0:d=0.05" in af_value
         assert af_value.index("afade=t=in") < af_value.index("highpass")
         assert af_value.index("highpass") < af_value.index("lowpass")
-        assert af_value.index("lowpass") < af_value.index("loudnorm")
+        # July 16 2026: declick + denoise sit AFTER the band-limits and
+        # BEFORE loudnorm/compressor, so makeup gain cannot re-amplify
+        # the noise the denoiser measures.
+        assert af_value.index("lowpass") < af_value.index("adeclick")
+        assert af_value.index("adeclick") < af_value.index("afftdn")
+        assert af_value.index("afftdn") < af_value.index("loudnorm")
         assert af_value.index("loudnorm") < af_value.index("acompressor")
         assert af_value.index("acompressor") < af_value.index("alimiter")
 
@@ -485,6 +498,25 @@ class TestEngineCommandBuilderParity:
         ref = voice_normalization_full("/tmp/v.mp3", "/tmp/o.mp3")
         eng = _voice_norm_full_cmd("/tmp/v.mp3", "/tmp/o.mp3")
         assert ref == eng
+
+    def test_voice_norm_full_denoise_off_matches(self):
+        """audio.voice_denoise: false must restore the exact pre-July-16
+        chain (no adeclick / afftdn anywhere in the -af string)."""
+        from engine.audio import _voice_norm_full_cmd
+        ref = voice_normalization_full("/tmp/v.mp3", "/tmp/o.mp3",
+                                       denoise=False)
+        eng = _voice_norm_full_cmd("/tmp/v.mp3", "/tmp/o.mp3", denoise=False)
+        assert ref == eng
+        af = eng[eng.index("-af") + 1]
+        assert "adeclick" not in af
+        assert "afftdn" not in af
+
+    def test_voice_denoise_config_default_true(self):
+        """The network default ships with the denoise stage ON; the
+        AudioConfig field exists so YAML opt-out survives _build_nested
+        (the silent config-drop class from the June 2026 YouTube pass)."""
+        from engine.config import AudioConfig
+        assert AudioConfig().voice_denoise is True
 
     def test_voice_norm_fallback_matches(self):
         from engine.audio import _voice_norm_fallback_cmd

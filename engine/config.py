@@ -229,6 +229,11 @@ class AudioConfig:
     outro_volume: float = 0.6
     voice_intro_delay: float = 10.0
     outro_crossfade: float = 0.0
+    # July 16 2026 — adeclick + afftdn stage in normalize_voice()
+    # (measured hiss/tick cleanup; see engine/audio.py
+    # _voice_norm_full_cmd docstring). Per-show opt-out:
+    # ``audio.voice_denoise: false`` restores the pre-July-16 chain.
+    voice_denoise: bool = True
 
 
 @dataclass

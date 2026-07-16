@@ -2761,12 +2761,15 @@ def run(args: argparse.Namespace) -> None:
                             outro_fade_out_duration=getattr(
                                 config.audio, "outro_fade_out_duration", 6.0,
                             ),
+                            denoise=config.audio.voice_denoise,
                         )
                     else:
                         logger.warning("Music file not found: %s — using voice only", music_path)
-                        normalize_voice(raw_mp3, final_mp3)
+                        normalize_voice(raw_mp3, final_mp3,
+                                        denoise=config.audio.voice_denoise)
                 else:
-                    normalize_voice(raw_mp3, final_mp3)
+                    normalize_voice(raw_mp3, final_mp3,
+                                    denoise=config.audio.voice_denoise)
 
                 _mix_duration = time.monotonic() - t0
                 logger.info("Audio mixing took %.1fs", _mix_duration)
