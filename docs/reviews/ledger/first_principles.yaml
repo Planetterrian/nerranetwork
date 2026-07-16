@@ -222,6 +222,39 @@ reviews:
       ab_listen_required: true
       rationale: Vary second most common tic
     agent_cost_usd: 0.0535
+  - date: '2026-07-16'
+    pr: null
+    doc: docs/reviews/first_principles_review_2026_07_16.md
+    generated_by: grok-4.3
+    summary: Snapshot shows 3/10 episodes below 1500-word floor with persistent 'on the order of' boilerplate tic; prior length/tic predictions scored partial/miss; no P0s, chapters clean.
+    scored_prior_predictions:
+    - metric: episodes below 1500-word floor in last 10 _tts.txt
+      verdict: partial
+      evidence: 3/10 below (ep35 1469w, ep39 1343w, ep40 1480w) vs 5/10 baseline
+    - metric: occurrences of 'a rough magic wand estimate' across 10 transcripts
+      verdict: miss
+      evidence: phrase absent from window; 'on the order of' persists in 8+/10 transcripts
+    shipped: []
+    deferred:
+    - Garbage auto-segment chapter titles (shared network LLM-title class)
+    - Further length escalation (do_not_retry)
+    predictions:
+    - metric: episodes below 1500-word floor in last 10 _tts.txt
+      baseline: 3/10
+      expected: <=2/10 after next digest-stage retry tuning
+      verdict: pending
+      evidence: null
+    - metric: occurrences of 'on the order of' across 10 transcripts
+      baseline: 8+/10
+      expected: <=3/10 after prompt variation rule
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/prompts/first_principles_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Break recurring 'on the order of' tic while preserving required hedging language
+    agent_cost_usd: 0.0537
 do_not_retry:
   - idea: >-
       Push the podcast length target above ~1500 words via prompt escalation
