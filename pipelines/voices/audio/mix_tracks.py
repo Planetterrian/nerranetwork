@@ -35,20 +35,40 @@ def split_channels(stereo_path: Path, out_dir: Path) -> Tuple[Path, Path]:
     return guest, mira
 
 
+# Guest-channel telephony repair (July 2026, first dry run: PSTN guest
+# audio sounded rough next to Mira's full-bandwidth TTS track). The guest
+# arrives as ~8 kHz narrowband phone audio; this chain can't create
+# bandwidth but makes it clean and present: denoise, warmth shelf, de-box,
+# presence boost for intelligibility, hiss cut above the PSTN band, then
+# level. Mira's synthetic track needs none of it.
+_GUEST_ENHANCE = (
+    "highpass=f=90,"
+    "afftdn=nf=-25,"
+    "equalizer=f=250:t=q:w=1:g=2,"
+    "equalizer=f=450:t=q:w=1:g=-2,"
+    "equalizer=f=2800:t=q:w=1.2:g=4,"
+    "lowpass=f=4300,"
+    "acompressor=threshold=-21dB:ratio=3:attack=20:release=250"
+)
+
+
 def mix_interview(stereo_path: Path, out_path: Path) -> Path:
     """Leveled mono mix of the conversation for STT + episode assembly.
 
-    Light chain only — the final episode loudness is normalized once at
-    assembly (same -16 LUFS target as the rest of the network).
+    Channels are processed separately BEFORE mixing (guest left, Mira
+    right): the guest gets the telephony-repair chain above; Mira's TTS
+    track is passed through nearly untouched. Final episode loudness is
+    still normalized once at assembly (-16 LUFS network target).
     """
     out_path.parent.mkdir(parents=True, exist_ok=True)
     _run(["ffmpeg", "-y", "-i", stereo_path,
-          "-af",
-          "pan=mono|c0=0.5*c0+0.5*c1,"
-          "highpass=f=80,lowpass=f=12000,"
-          "acompressor=threshold=-21dB:ratio=3:attack=20:release=250,"
-          "dynaudnorm=f=250:g=15",
-          "-ar", "48000", out_path])
+          "-filter_complex",
+          "[0:a]channelsplit=channel_layout=stereo[g][m];"
+          f"[g]{_GUEST_ENHANCE}[ge];"
+          "[m]highpass=f=70[me];"
+          "[ge][me]amix=inputs=2:duration=longest:normalize=0,"
+          "dynaudnorm=f=250:g=15[out]",
+          "-map", "[out]", "-ar", "48000", out_path])
     return out_path
 
 
