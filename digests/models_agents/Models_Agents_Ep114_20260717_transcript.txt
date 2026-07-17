@@ -1,0 +1,95 @@
+Good to have you on models and agents, episode 114 on July 17th, 2026.
+Let's see what's shipped. Let's see what happened in the AI world today.
+And trust me, it's been busy. Nvidia just dropped an open embedding collection whose 8
+billion checkpoint tops the RTEB benchmark while the 1 billion variant keeps nearly all accuracy
+at two times blackwell throughput. Nvidia released Nemotron 3 embed on July 15 and 16.
+The three open checkpoints are Nemotron 3 embed 8Bbf16. Nemotron 3 embed 1bbf16 and Nemotron 3
+embed 1bbf4. All three accept 32,768 token inputs under OpenMDW-1-1.
+Remember, we tracked open weight models and inference economics yesterday.
+This release adds a concrete new baseline for retrieval workloads on Nvidia hardware
+and moves the open inference cost curve forward. The 8 billion BF16 checkpoint
+leads the RTEB leaderboard at 78.46 average NDCG at 10. The 1 billion models were created
+through model opt NAS pruning and COS plus MSE distillation from the 8 billion teacher.
+The NVFP4 version stays within 1% of BF16 retrieval accuracy while delivering up to two times blackwell
+throughput. Teams running RAG or retrieval pipelines now have an open option that trades minimal
+quality for large speed ups on Nvidia Silicon. Open AI's new voice model crossed a usability
+threshold for SAM Altman. He now talks to chat GPT more than he types. Altman described the shift
+as moving past a prior friction point in daily interaction. The change reflects broader improvements
+in handling extended spoken exchanges without repeated corrections. Internal testing at Open AI
+highlighted reduced latency and higher coherence in multi-turn voice sessions. The update aligns
+with ongoing work to make voice the default interface for many users. Altman noted the transition
+occurred after recent refinements to the underlying generation pipeline. TTCD runs diffusion
+language modeling in continuous space. Each token receives its own progression rate from noise to
+final state. A 160 million parameter model trained on open web text and then self distilled matches
+or beats discrete baselines at high speed ups. The method avoids parallel sampling errors common in
+discrete diffusion at aggressive acceleration. Researchers contest the self distilled checkpoint on
+Sudoku or short form conditional tasks. Polestar uses token representation drift under bidirectional attention.
+It decides when to refresh KV cache entries and when to commit tokens.
+On math and coding benchmarks the approach delivers up to 10.73% accuracy gains and 3.7 times higher
+throughput versus prior diffusion LLM baselines. It reaches 3.67 tokens per forward pass.
+The training-free method works across multiple diffusion LLM families, introspection fine tuning
+fine tunes models on their own perturbed forward passes. Tasks include sentence localization and
+strength comparison. Lama 1 billion accuracy on localization rises from 9.6% to 60.6% after the fine
+tuning. The method generalizes to the held out strength task with negligible degradation on
+standard capability benchmarks. T5 CS boost keeps the original T5 next token objective. It adds a
+margin-based triplet loss on decoder embeddings. The model reaches state-of-the-art multi-class
+attribution and human versus LLM detection on open LLM text and HC3. It shows strong robustness
+to 90% intensity word and character level perturbations on the mage and deep fake suite.
+Q raised $5 million to scale its autonomous AI customer service agents.
+The Cape Town startup is expanding across the UK and South Africa. The agents operate without
+human handoff and targeted verticals. Early traction centers on high-volume support workflows
+where full autonomy reduces cost per ticket. Open AI shared details on its racing collaboration.
+Joyce Ruffel and race tech systems discuss turning track data into faster decisions with chat GPT
+and codex. The work builds on an earlier research collaboration with Chip Gnassy Racing.
+Small margins in racing map directly to agentic tool use patterns where rapid iteration on structured
+data matters. Key bank analysts flagged weak customer adoption of Salesforce agent force.
+The critique centers on deployment friction and unclear return on investment for enterprise buyers.
+Teams evaluating autonomous agent platforms should compare current capabilities against narrower
+tools before committing. Crowd strikes field CTO warned that compromised AI agents could amplify
+living off the land attacks. The concern centers on agents that already hold broad system access.
+Security teams running agentic workflows should add explicit tool use auditing and least privilege
+scoping now. The EU AI Act Open Rag data set contains 933 legally structured chunks of regulation
+EU 2024 over 1689. Chunks follow the regulations native structure of articles, recitals, definitions
+and annexes. Structural chunking improved recall at 20-0.541 versus 0.449 for a baseline.
+Legal NLP and compliance teams can download the SQLite file with BGE-M3 embeddings for immediate rag
+experimentation. LBA builds an approximate distribution of high quality adversarial examples
+by combining prior and posterior knowledge. It then samples from the resulting distribution
+to generate candidates. The method was evaluated on six language models and four data sets.
+It outperforms prior state-of-the-art approaches across every reported metric.
+Outputs maintain greater semantic preservation compared with earlier hard label techniques.
+The sampling step lowers the query cost relative to exhaustive search methods.
+Researchers building robustness evaluations should test LBA on their current hard label setups.
+AGGOPS uses a prompt writer, LLM, solver LLM, and evolutionary loop.
+It generates guidelines from reference answers without manual engineering.
+The method recovers 15.5 to 81.7% of the performance loss to underspecified prompts.
+Recovery was measured across math, medical QA, and coding tasks.
+Existing task examples are converted directly into reusable guidelines.
+Teams struggling with prompt consistency on a fixed task should run AGGOPS on their reference set
+this week. Okay, let's pop the hood on multi-agent cascades. Intermediate transformations between
+agents systematically compress the semantic distinctions needed for accurate downstream decisions.
+In the Collector Evaluator Decider Pipeline, critical evaluation reduces label separability
+by 41.7% in embedding space on fact checking, sentiment, and triage tasks.
+Simple identity pass-through preserves nearly all separation.
+Prompt-level regression explains 78% of the variance.
+When building multi-agent flows, measure inter-label separation in sentence-transformer space
+after each stage rather than trusting final accuracy alone.
+Test the Nemotron 3 and Bed 1B, new fee for checkpoint on your current retrieval workload,
+to measure latency and cost gains versus your existing embedder.
+Download the EU AI Act Open Rags SQL Light File and run a structural-chunking rag experiment
+on the 933 legal paragraphs. Run AGGOPS on one of your existing task datasets with reference answers
+to generate reusable prompt guidelines. Evaluate T5-CS boost on your own adversarial AI GT test set
+to check robustness under 90% perturbation intensity. Add drift-based KV cache refresh from the
+star paper to any diffusion LLM inference loop you are already running.
+Sam Altman expects Open AI's next 12 months to be its strongest yet.
+More details on Open AI's chip-ganassi racing collaboration may surface as teams publish
+telemetry to decision tooling. Additional Nemotron 3 family checkpoints are likely given the rapid
+8 billion and 1 billion release cadence. Tomorrow keep an eye on further AR-XY releases on per-token
+diffusion timing and introspection fine-tuning. That's models and agents for today. If you found
+this useful, share it with someone who's trying to keep up with all these changes and subscribe so
+you don't miss tomorrow's update. The AI world moves fast. We'll help you keep up. See you tomorrow
+and if you'd rather watch than listen, find us on YouTube at Narra Network, links in the show notes.
+This show comes to you from the Narra Network. If you want another sharp daily briefing,
+Planetarian Daily has you covered. Daily breakthroughs in science, health, and longevity.
+All our shows are free at NarraNetwork.com. New to the network, NarraNetwork.com slash start-here.
+Picks the right daily briefing for you in about two minutes. This episode used AI voice synthesis of
+my voice. Editorial selection and analysis are my own.
