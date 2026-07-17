@@ -74,6 +74,7 @@ def email_brief_to_guest(interview: dict, app: dict, brief: dict) -> None:
         "voices_prep_brief.j2",
         guest_name=app["name"],
         scheduled_at=when,
+        interview_id=interview["id"],
         thesis=brief["episode_thesis_draft"],
         questions=brief["likely_questions"],
     )

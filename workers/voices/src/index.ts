@@ -30,6 +30,10 @@ export interface Env {
   VOICES_FROM_EMAIL: string;
   CALCOM_BOOKING_URL: string;
   SLACK_WEBHOOK?: string;
+  // WebRTC studio (July 2026): Voximplant app user the browser SDK logs in
+  // as, via the one-time-key handshake in /voices/studio-auth.
+  VOX_GUEST_USER?: string;      // default "guest"
+  VOX_GUEST_PASSWORD?: string;
 }
 
 const REPO = "Planetterrian/nerranetwork";
@@ -203,20 +207,34 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
 
   const existing = await sb(env, "GET",
     `interviews?application_id=eq.${apps[0].id}&status=in.(scheduled,briefed)&limit=1`);
+  let interviewId: string;
   if (existing?.length) {
-    await sb(env, "PATCH", `interviews?id=eq.${existing[0].id}`,
+    interviewId = existing[0].id;
+    await sb(env, "PATCH", `interviews?id=eq.${interviewId}`,
       { scheduled_at: startTime, status: "scheduled", reminder_sent_at: null });
   } else {
-    await sb(env, "POST", "interviews",
-      { application_id: apps[0].id, scheduled_at: startTime, status: "scheduled" });
+    const created = await sb(env, "POST", "interviews",
+      { application_id: apps[0].id, scheduled_at: startTime, status: "scheduled" },
+      "return=representation");
+    interviewId = created?.[0]?.id ?? "";
   }
+  const studioUrl = `https://nerranetwork.com/age-of-ai-studio.html?interview=${interviewId}`;
   await email(env, emailAddr, "Your Age of AI interview is booked",
     `<p>Hi ${esc(apps[0].name)},</p>
-     <p>You're booked. Mira — our AI host — will call you at the number you
-     provided at the scheduled time. About a day before, you'll receive a
-     short prep brief with the themes she plans to explore.</p>
-     <p>Two things to know: the call is recorded for the podcast, and nothing
-     publishes until you've reviewed and approved the transcript.</p>
+     <p>You're booked. At the scheduled time, join Mira — our AI host — from
+     your personal browser studio:</p>
+     <p><a href="${studioUrl}"><strong>Join your interview here</strong></a>
+     (bookmark it — it unlocks a few minutes before your slot).</p>
+     <p>To sound your best: use a computer in a quiet room, with headphones
+     or AirPods (a dedicated mic is even better). Camera is optional but
+     appreciated — we record video for a future YouTube version. If the
+     browser route doesn't work for you, reply to this email and Mira can
+     call your phone instead.</p>
+     <p>About a day before, you'll receive a short prep brief with the
+     themes she plans to explore.</p>
+     <p>Two things to know: the conversation is recorded for the podcast,
+     and nothing publishes until you've reviewed and approved the
+     transcript.</p>
      <p>— The Age of AI, Nerra Network</p>`);
   await slack(env, `Age of AI: ${apps[0].name} booked ${startTime}`);
   return json({ ok: true });
@@ -513,6 +531,117 @@ async function gate2Housekeeping(env: Env) {
 }
 
 // ---------------------------------------------------------------------------
+// WebRTC studio endpoints (July 2026)
+// ---------------------------------------------------------------------------
+
+// Compact MD5 (RFC 1321) — WebCrypto has no MD5, and Voximplant's
+// one-time-key login hash is MD5(key + "|" + MD5(user + ":voximplant.com:" +
+// password)). Verified against Python hashlib before deploy.
+function md5(input: string): string {
+  const add32 = (a: number, b: number) => (a + b) & 0xffffffff;
+  const cmn = (q: number, a: number, b: number, x: number, s: number, t: number) => {
+    a = add32(add32(a, q), add32(x, t));
+    return add32((a << s) | (a >>> (32 - s)), b);
+  };
+  const ff = (a: number, b: number, c: number, d: number, x: number, s: number, t: number) => cmn((b & c) | (~b & d), a, b, x, s, t);
+  const gg = (a: number, b: number, c: number, d: number, x: number, s: number, t: number) => cmn((b & d) | (c & ~d), a, b, x, s, t);
+  const hh = (a: number, b: number, c: number, d: number, x: number, s: number, t: number) => cmn(b ^ c ^ d, a, b, x, s, t);
+  const ii = (a: number, b: number, c: number, d: number, x: number, s: number, t: number) => cmn(c ^ (b | ~d), a, b, x, s, t);
+  function md5cycle(x: number[], k: number[]) {
+    let a = x[0], b = x[1], c = x[2], d = x[3];
+    a = ff(a, b, c, d, k[0], 7, -680876936); d = ff(d, a, b, c, k[1], 12, -389564586);
+    c = ff(c, d, a, b, k[2], 17, 606105819); b = ff(b, c, d, a, k[3], 22, -1044525330);
+    a = ff(a, b, c, d, k[4], 7, -176418897); d = ff(d, a, b, c, k[5], 12, 1200080426);
+    c = ff(c, d, a, b, k[6], 17, -1473231341); b = ff(b, c, d, a, k[7], 22, -45705983);
+    a = ff(a, b, c, d, k[8], 7, 1770035416); d = ff(d, a, b, c, k[9], 12, -1958414417);
+    c = ff(c, d, a, b, k[10], 17, -42063); b = ff(b, c, d, a, k[11], 22, -1990404162);
+    a = ff(a, b, c, d, k[12], 7, 1804603682); d = ff(d, a, b, c, k[13], 12, -40341101);
+    c = ff(c, d, a, b, k[14], 17, -1502002290); b = ff(b, c, d, a, k[15], 22, 1236535329);
+    a = gg(a, b, c, d, k[1], 5, -165796510); d = gg(d, a, b, c, k[6], 9, -1069501632);
+    c = gg(c, d, a, b, k[11], 14, 643717713); b = gg(b, c, d, a, k[0], 20, -373897302);
+    a = gg(a, b, c, d, k[5], 5, -701558691); d = gg(d, a, b, c, k[10], 9, 38016083);
+    c = gg(c, d, a, b, k[15], 14, -660478335); b = gg(b, c, d, a, k[4], 20, -405537848);
+    a = gg(a, b, c, d, k[9], 5, 568446438); d = gg(d, a, b, c, k[14], 9, -1019803690);
+    c = gg(c, d, a, b, k[3], 14, -187363961); b = gg(b, c, d, a, k[8], 20, 1163531501);
+    a = gg(a, b, c, d, k[13], 5, -1444681467); d = gg(d, a, b, c, k[2], 9, -51403784);
+    c = gg(c, d, a, b, k[7], 14, 1735328473); b = gg(b, c, d, a, k[12], 20, -1926607734);
+    a = hh(a, b, c, d, k[5], 4, -378558); d = hh(d, a, b, c, k[8], 11, -2022574463);
+    c = hh(c, d, a, b, k[11], 16, 1839030562); b = hh(b, c, d, a, k[14], 23, -35309556);
+    a = hh(a, b, c, d, k[1], 4, -1530992060); d = hh(d, a, b, c, k[4], 11, 1272893353);
+    c = hh(c, d, a, b, k[7], 16, -155497632); b = hh(b, c, d, a, k[10], 23, -1094730640);
+    a = hh(a, b, c, d, k[13], 4, 681279174); d = hh(d, a, b, c, k[0], 11, -358537222);
+    c = hh(c, d, a, b, k[3], 16, -722521979); b = hh(b, c, d, a, k[6], 23, 76029189);
+    a = hh(a, b, c, d, k[9], 4, -640364487); d = hh(d, a, b, c, k[12], 11, -421815835);
+    c = hh(c, d, a, b, k[15], 16, 530742520); b = hh(b, c, d, a, k[2], 23, -995338651);
+    a = ii(a, b, c, d, k[0], 6, -198630844); d = ii(d, a, b, c, k[7], 10, 1126891415);
+    c = ii(c, d, a, b, k[14], 15, -1416354905); b = ii(b, c, d, a, k[5], 21, -57434055);
+    a = ii(a, b, c, d, k[12], 6, 1700485571); d = ii(d, a, b, c, k[3], 10, -1894986606);
+    c = ii(c, d, a, b, k[10], 15, -1051523); b = ii(b, c, d, a, k[1], 21, -2054922799);
+    a = ii(a, b, c, d, k[8], 6, 1873313359); d = ii(d, a, b, c, k[15], 10, -30611744);
+    c = ii(c, d, a, b, k[6], 15, -1560198380); b = ii(b, c, d, a, k[13], 21, 1309151649);
+    a = ii(a, b, c, d, k[4], 6, -145523070); d = ii(d, a, b, c, k[11], 10, -1120210379);
+    c = ii(c, d, a, b, k[2], 15, 718787259); b = ii(b, c, d, a, k[9], 21, -343485551);
+    x[0] = add32(a, x[0]); x[1] = add32(b, x[1]); x[2] = add32(c, x[2]); x[3] = add32(d, x[3]);
+  }
+  const bytes = new TextEncoder().encode(input);
+  const n = bytes.length;
+  const state = [1732584193, -271733879, -1732584194, 271733878];
+  let i = 0;
+  for (; i + 64 <= n; i += 64) {
+    const k = new Array(16).fill(0);
+    for (let j = 0; j < 64; j++) k[j >> 2] |= bytes[i + j] << ((j % 4) << 3);
+    md5cycle(state, k);
+  }
+  const tail = new Array(16).fill(0);
+  for (let j = 0; i + j < n; j++) tail[j >> 2] |= bytes[i + j] << ((j % 4) << 3);
+  tail[(n - i) >> 2] |= 0x80 << (((n - i) % 4) << 3);
+  if (n - i > 55) { md5cycle(state, tail); tail.fill(0); }
+  tail[14] = n * 8;
+  md5cycle(state, tail);
+  let out = "";
+  for (const word of state)
+    for (let j = 0; j < 4; j++)
+      out += ((word >> (j * 8 + 4)) & 0xf).toString(16) + ((word >> (j * 8)) & 0xf).toString(16);
+  return out;
+}
+
+// GET /voices/studio-state?interview=<id> — the studio page polls this
+// until the fire step has created the run row (webrtc mode leaves it
+// `awaiting_guest`), then joins with the returned run_id.
+async function handleStudioState(req: Request, env: Env): Promise<Response> {
+  const url = new URL(req.url);
+  const interviewId = url.searchParams.get("interview") ?? "";
+  if (!/^[0-9a-f-]{36}$/.test(interviewId)) return json({ error: "interview required" }, 400);
+  const ivs = await sb(env, "GET",
+    `interviews?id=eq.${interviewId}&select=id,status,scheduled_at,call_mode`);
+  const iv = ivs?.[0];
+  if (!iv) return json({ error: "not found" }, 404);
+  const runs = await sb(env, "GET",
+    `interview_runs?interview_id=eq.${interviewId}&status=in.(awaiting_guest,pending)` +
+    `&order=created_at.desc&limit=1&select=id,status`);
+  const run = runs?.[0];
+  return json({
+    ready: Boolean(run),
+    run_id: run?.id ?? null,
+    interview_status: iv.status,
+    scheduled_at: iv.scheduled_at,
+    call_mode: iv.call_mode ?? "webrtc",
+  });
+}
+
+// POST /voices/studio-auth {key} — Voximplant one-time-key handshake:
+// hash = MD5(key + "|" + MD5(user + ":voximplant.com:" + password)).
+async function handleStudioAuth(req: Request, env: Env): Promise<Response> {
+  if (!env.VOX_GUEST_PASSWORD) return json({ error: "studio auth not configured" }, 503);
+  const body = await req.json<any>().catch(() => null);
+  const key = String(body?.key ?? "");
+  if (!key) return json({ error: "key required" }, 400);
+  const user = env.VOX_GUEST_USER || "guest";
+  const token = md5(`${key}|${md5(`${user}:voximplant.com:${env.VOX_GUEST_PASSWORD}`)}`);
+  return json({ token, user });
+}
+
+// ---------------------------------------------------------------------------
 // Router
 // ---------------------------------------------------------------------------
 
@@ -576,6 +705,8 @@ export default {
       if (req.method === "GET" && path === "/voices/episode-lookup") return handleEpisodeLookup(req, env);
       if (req.method === "GET" && path === "/voices/guest-brief") return handleGuestBrief(req, env);
       if (req.method === "POST" && path === "/voices/fact-check") return handleFactCheck(req, env);
+      if (req.method === "GET" && path === "/voices/studio-state") return handleStudioState(req, env);
+      if (req.method === "POST" && path === "/voices/studio-auth") return handleStudioAuth(req, env);
       return json({ error: "not found" }, 404);
     } catch (err: any) {
       console.error("voices worker error:", err?.message ?? err);

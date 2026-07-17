@@ -28,6 +28,7 @@ from common import (  # noqa: E402
 )
 
 FIRE_WINDOW_AHEAD_MIN = 5
+STUDIO_URL = "https://nerranetwork.com/age-of-ai-studio.html"
 FIRE_GRACE_BEHIND_MIN = 30   # cron drift tolerance — never leave a guest
                              # waiting; GitHub delivers */5 crons roughly
                              # hourly under load, so 10 min missed real slots
@@ -139,14 +140,22 @@ def send_reminders() -> None:
             from voximplant.api_clients.voximplant_client import send_sms
             caller_id = interview.get("caller_id") or os.environ.get(
                 "VOXIMPLANT_CALLER_ID", "")
-            send_sms(
-                phone,
-                "Mira here, from The Age of AI (Nerra Network). Your "
-                "interview starts in about two hours — I'll be calling you "
-                f"from this number ({caller_id}). Find a quiet spot and "
-                "we'll make something great. — Mira",
-                source_number=caller_id or None,
-            )
+            if (interview.get("call_mode") or "webrtc") == "webrtc":
+                text = (
+                    "Mira here, from The Age of AI (Nerra Network). Your "
+                    "interview starts in about two hours. Join from a "
+                    "computer in a quiet room (headphones or AirPods "
+                    "help a lot): "
+                    f"{STUDIO_URL}?interview={interview['id']} — Mira"
+                )
+            else:
+                text = (
+                    "Mira here, from The Age of AI (Nerra Network). Your "
+                    "interview starts in about two hours — I'll be calling "
+                    f"you from this number ({caller_id}). Find a quiet spot "
+                    "and we'll make something great. — Mira"
+                )
+            send_sms(phone, text, source_number=caller_id or None)
             sb_update("interviews", f"id=eq.{interview['id']}",
                       {"reminder_sent_at": _iso(_now())})
             logger.info("Reminder SMS sent for interview %s", interview["id"])
@@ -207,6 +216,7 @@ def fire_due_interviews() -> int:
             if not caller_id:
                 raise RuntimeError("no caller_id (set VOXIMPLANT_CALLER_ID)")
 
+            call_mode = (interview.get("call_mode") or "webrtc").strip()
             run = sb_insert("interview_runs", {
                 "interview_id": interview["id"],
                 "mira_system_prompt": compile_mira_prompt(interview, app, brief),
@@ -215,7 +225,20 @@ def fire_due_interviews() -> int:
                 "guest_phone": phone,
                 "caller_id": caller_id,
                 "scheduled_for": interview["scheduled_at"],
+                **({"status": "awaiting_guest"} if call_mode == "webrtc" else {}),
             })
+
+            if call_mode == "webrtc":
+                # WebRTC (default): no outbound dial. The run row is the
+                # studio's green light — the guest's browser polls
+                # /voices/studio-state, sees ready, and joins; the scenario
+                # starts on the inbound call (CallAlerting) and flips the
+                # run to in_progress itself.
+                logger.info(
+                    "Interview %s (run %s) awaiting guest in the studio: "
+                    "%s?interview=%s", interview["id"], run["id"],
+                    STUDIO_URL, interview["id"])
+                continue
 
             from voximplant.api_clients.voximplant_client import (
                 start_interview_scenario,

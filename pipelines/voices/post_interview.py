@@ -96,7 +96,13 @@ def fetch_recording(run: dict, workdir: Path) -> Path:
            or "")
     if not url:
         raise RuntimeError("run has no recording URL — scenario upload failed?")
-    raw = workdir / "raw_interview.mp3"
+    # Keep the source container extension: WebRTC recordings are MP4
+    # (video + stereo audio), PSTN are MP3. ffmpeg sniffs by content, but
+    # a truthful extension keeps R2 keys and tooling honest.
+    ext = Path(url.split("?", 1)[0]).suffix.lstrip(".").lower() or "mp3"
+    if ext not in ("mp3", "mp4", "webm", "wav", "m4a"):
+        ext = "mp3"
+    raw = workdir / f"raw_interview.{ext}"
     with requests.get(url, stream=True, timeout=600) as resp:
         resp.raise_for_status()
         with raw.open("wb") as fh:
@@ -105,6 +111,20 @@ def fetch_recording(run: dict, workdir: Path) -> Path:
     if raw.stat().st_size < 50_000:
         raise RuntimeError(f"recording suspiciously small ({raw.stat().st_size} bytes)")
     return raw
+
+
+def has_video_stream(path: Path) -> bool:
+    """True when the recording contains a video stream (WebRTC guest camera)."""
+    try:
+        import subprocess
+        out = subprocess.run(
+            ["ffprobe", "-v", "quiet", "-select_streams", "v",
+             "-show_entries", "stream=codec_type", "-of", "csv=p=0", str(path)],
+            check=True, capture_output=True, text=True, timeout=120,
+        )
+        return "video" in out.stdout
+    except Exception:  # noqa: BLE001 — video detection is best-effort
+        return False
 
 
 def diarized_transcript(raw: Path, workdir: Path) -> tuple[str, float]:
@@ -194,7 +214,14 @@ def main() -> int:
         duration = duration_seconds(raw)
 
         stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%d")
-        raw_url = r2_upload(raw, f"age_of_ai/raw/{run['id']}_{stamp}.mp3")
+        # WebRTC-mode recordings arrive as MP4 (guest camera video + the
+        # stereo audio tracks); PSTN recordings stay MP3. Preserve the real
+        # container extension and, when a video stream is present, store
+        # the same artifact as recording_video_url (raw material for the
+        # future YouTube version).
+        ext = raw.suffix.lstrip(".") or "mp3"
+        raw_url = r2_upload(raw, f"age_of_ai/raw/{run['id']}_{stamp}.{ext}")
+        video_url = raw_url if has_video_stream(raw) else None
         mixed = mix_interview(raw, workdir / "mixed.wav")
         mixed_url = r2_upload(mixed, f"age_of_ai/raw/{run['id']}_{stamp}_mixed.wav")
 
@@ -204,6 +231,7 @@ def main() -> int:
             "status": "completed",
             "recording_guest_url": raw_url,
             "recording_mixed_url": mixed_url,
+            "recording_video_url": video_url,
             "duration_sec": int(duration),
         })
         sb_update("interviews", f"id=eq.{interview['id']}",
