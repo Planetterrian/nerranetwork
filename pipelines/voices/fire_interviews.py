@@ -150,9 +150,14 @@ def send_reminders() -> None:
 def fire_due_interviews() -> int:
     lo = _now() - dt.timedelta(minutes=FIRE_GRACE_BEHIND_MIN)
     hi = _now() + dt.timedelta(minutes=FIRE_WINDOW_AHEAD_MIN)
+    # status=in.(briefed,scheduled): short-notice bookings (inside the daily
+    # prep cron's 12-36h lookahead) arrive still `scheduled` with no brief —
+    # they get an inline brief below instead of silently never firing
+    # (July 2026: booking opened to 24/7 with 15-min notice).
     due = sb_select(
         "interviews",
-        f"status=eq.briefed&scheduled_at=gte.{_iso(lo)}&scheduled_at=lte.{_iso(hi)}",
+        f"status=in.(briefed,scheduled)"
+        f"&scheduled_at=gte.{_iso(lo)}&scheduled_at=lte.{_iso(hi)}",
     )
     failures = 0
     for interview in due:
@@ -168,8 +173,24 @@ def fire_due_interviews() -> int:
             brief_rows = sb_select("interview_briefs",
                                    f"interview_id=eq.{interview['id']}")
             if not brief_rows:
-                raise RuntimeError("no brief — prep workflow never ran?")
-            brief = brief_rows[0]
+                # Short-notice booking: the daily prep cron never saw this
+                # interview. Generate the brief inline (same code path as
+                # the T-1d workflow) so Mira still calls; the guest gets
+                # the prep email immediately instead of a day ahead.
+                from generate_briefs import email_brief_to_guest, generate_brief
+                logger.warning(
+                    "Interview %s due with no brief (short-notice booking) — "
+                    "generating inline", interview["id"])
+                brief = generate_brief(interview, app)
+                try:
+                    email_brief_to_guest(interview, app, brief)
+                except Exception:  # noqa: BLE001 — email is best-effort here
+                    logger.exception("Inline brief email failed (non-fatal)")
+                sb_update("interviews", f"id=eq.{interview['id']}",
+                          {"status": "briefed",
+                           "episode_thesis": brief["episode_thesis_draft"]})
+            else:
+                brief = brief_rows[0]
             phone = (app.get("phone") or "").strip()
             if not phone:
                 raise RuntimeError("guest has no phone number on file")
