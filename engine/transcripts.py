@@ -79,6 +79,11 @@ def generate_transcript(
         logger.warning("Audio file not found for transcript: %s", audio_path)
         return None
 
+    # Ensure the destination exists — callers pass fresh subdirs (e.g. the
+    # Nerra Voices post-interview workdir), and losing a 4-minute Whisper
+    # run to a missing mkdir is silly (first Age of AI dry run, July 2026).
+    output_dir.mkdir(parents=True, exist_ok=True)
+
     logger.info("Generating transcript from %s (model=%s) ...", audio_path.name, model_size)
 
     # Pass through ``HF_TOKEN`` if present so the faster-whisper model
