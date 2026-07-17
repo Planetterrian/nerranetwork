@@ -33,7 +33,25 @@ def _run(cmd: list) -> None:
 
 def apply_redactions(interview_wav: Path, redactions: List[dict],
                      out_path: Path) -> Path:
-    """Cut [start, end] second ranges out of the interview audio."""
+    """Cut [start, end] second ranges out of the interview audio.
+
+    Guest review submits free-text requests ([{note, resolved}]); the
+    operator resolves them into {start, end} windows before approval.
+    Entries without numeric start/end are SKIPPED LOUDLY rather than
+    crashing assembly (July 2026 dry run: a raw note KeyError'd here).
+    """
+    cuttable = [r for r in redactions
+                if isinstance(r.get("start"), (int, float))
+                and isinstance(r.get("end"), (int, float))]
+    skipped = len(redactions) - len(cuttable)
+    if skipped:
+        logger.error(
+            "%d redaction request(s) have no start/end time window and were "
+            "NOT cut — resolve them into {start, end} seconds before "
+            "publishing: %s", skipped,
+            [r.get("note", "")[:80] for r in redactions
+             if r not in cuttable])
+    redactions = cuttable
     if not redactions:
         return interview_wav
     # Build a keep-filter: select everything outside the redacted ranges.
