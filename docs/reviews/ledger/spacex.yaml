@@ -232,4 +232,47 @@ reviews:
       ab_listen_required: true
       rationale: explicit floor vs own spec; A/B only after four-show length decision
     agent_cost_usd: 0.0622
+  - date: '2026-07-17'
+    pr: null
+    doc: docs/reviews/spacex_review_2026_07_17.md
+    generated_by: grok-4.3
+    summary: Length ceiling and rigid boilerplate tics persist (ep26/ep35 <1300w; 'from an engineering standpoint' and 'on the ai front' in 10/10 episodes); prior length/teaser predictions scored miss; no new P0s.
+    scored_prior_predictions:
+    - metric: episodes >=1300w in next 10
+      verdict: miss
+      evidence: only 8/10 (Ep27-30,32-34); Ep26,35 still 1196w/1264w
+    - metric: tomorrow-teaser frame count
+      verdict: miss
+      evidence: still 8/10 episodes use the exact 'Watch for the [first/next] <test>' frame
+    shipped: []
+    deferred:
+    - Engineering Deep Dive length floor (pending four-show A/B)
+    - SPCX price spoken twice (observe post-reorder)
+    - tomorrow-teaser rotation if frame deadens
+    - junk-title filter prediction from network pass still pending
+    predictions:
+    - metric: episodes >=1300w in next 10
+      baseline: 8/10
+      expected: 9+/10 if deep-dive lever ships
+      verdict: pending
+      evidence: null
+    - metric: tomorrow-teaser frame count
+      baseline: 8/10
+      expected: <5/10 after rotation
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/prompts/spacex_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: rigid marker now a tic (10/10); low-risk rotation restores variety
+    - file: shows/prompts/spacex_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: teaser frame hardening into dead rotation (8/10); low-risk rotation to restore variety
+    - file: shows/prompts/spacex_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: explicit floor vs own spec; A/B only after four-show length decision
+    agent_cost_usd: 0.0627
 do_not_retry: []
