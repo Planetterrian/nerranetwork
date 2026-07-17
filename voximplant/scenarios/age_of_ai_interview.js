@@ -39,6 +39,9 @@ let webhookFired = false;
 let hardCapTimer = null;
 let recordUrl = null;      // delivered via CallEvents.RecordStarted (no getter API)
 let connectedAt = null;    // Call has no getDuration(); compute from timestamps
+let timeCheckTimer = null; // periodic real-clock injections (Mira has no clock)
+const PLANNED_MIN = 45;            // soft interview length the prompt paces to
+const TIME_CHECK_EVERY_MS = 5 * 60 * 1000;
 
 VoxEngine.addEventListener(AppEvents.Started, async function () {
   let config;
@@ -114,6 +117,37 @@ VoxEngine.addEventListener(AppEvents.Started, async function () {
           //    opens the conversation (responseCreate).
           VoxEngine.sendMediaBetween(call, grokAgent);
           grokAgent.responseCreate({});
+
+          // 6b. Real-clock time checks: an LLM voice agent has no sense
+          //     of elapsed time (first dry run: Mira thought a 25-min
+          //     call had run far longer). Every 5 minutes, inject a
+          //     non-spoken system note with true elapsed/remaining time;
+          //     the prompt tells Mira to pace ONLY from these notes.
+          if (timeCheckTimer) clearInterval(timeCheckTimer);
+          timeCheckTimer = setInterval(function () {
+            try {
+              if (!grokAgent || !call || call.state() === "DISCONNECTED") return;
+              const elapsedMin = Math.round((Date.now() - connectedAt) / 60000);
+              const remainMin = Math.max(0, PLANNED_MIN - elapsedMin);
+              let note = "[TIME CHECK — system note, do not read aloud] " +
+                elapsedMin + " minutes elapsed; about " + remainMin +
+                " minutes remain of the planned " + PLANNED_MIN + "-minute interview.";
+              if (remainMin <= 5 && remainMin > 0) {
+                note += " Begin wrapping up now: one final question, then your closing thanks.";
+              } else if (remainMin === 0) {
+                note += " Time is up — deliver your closing thanks and end the interview.";
+              }
+              grokAgent.conversationItemCreate({
+                item: {
+                  type: "message",
+                  role: "system",
+                  content: [{ type: "input_text", text: note }],
+                },
+              });
+            } catch (e) {
+              Logger.write("[aoa " + runId + "] time-check inject failed: " + e.message);
+            }
+          }, TIME_CHECK_EVERY_MS);
         } catch (e) {
           Logger.write("[aoa " + runId + "] media-bridge failure: " + e.message);
           call.hangup();
@@ -143,6 +177,7 @@ VoxEngine.addEventListener(AppEvents.Started, async function () {
 
   call.addEventListener(CallEvents.Disconnected, async function () {
     if (hardCapTimer) clearTimeout(hardCapTimer);
+    if (timeCheckTimer) clearInterval(timeCheckTimer);
     try {
       // 8. Stop recording, collect the Voximplant record URL, notify the
       //    pipeline. The post-interview workflow moves the recording into

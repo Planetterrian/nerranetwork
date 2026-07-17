@@ -200,21 +200,31 @@ def r2_upload(local_path: Path, remote_key: str) -> str:
     raw-interview segregation if the operator wants one.
     """
     from engine.storage import upload_to_r2
+    # Env names follow the NETWORK standard (R2_ACCESS_KEY_ID /
+    # R2_SECRET_ACCESS_KEY — see docs/env_var_inventory.md and the existing
+    # GitHub secrets); the launch code invented R2_ACCESS_KEY/R2_SECRET_KEY
+    # names that exist nowhere, which failed the first real post-interview
+    # run (July 17 2026). Old names kept as fallbacks. Bucket/public-base
+    # default to the network audio bucket like shows/_defaults.yaml.
     bucket = (os.environ.get("VOICES_R2_BUCKET", "")
-              or os.environ.get("R2_BUCKET", ""))
+              or os.environ.get("R2_BUCKET", "")
+              or "podcast-audio")
     endpoint = os.environ.get("R2_ENDPOINT_URL", "")
-    access = os.environ.get("R2_ACCESS_KEY", "")
-    secret = os.environ.get("R2_SECRET_KEY", "")
+    access = (os.environ.get("R2_ACCESS_KEY_ID", "")
+              or os.environ.get("R2_ACCESS_KEY", ""))
+    secret = (os.environ.get("R2_SECRET_ACCESS_KEY", "")
+              or os.environ.get("R2_SECRET_KEY", ""))
     if not all([bucket, endpoint, access, secret]):
         raise RuntimeError(
-            "R2 env vars missing (R2_BUCKET/R2_ENDPOINT_URL/R2_ACCESS_KEY/"
-            "R2_SECRET_KEY) — cannot store interview audio"
+            "R2 env vars missing (R2_ENDPOINT_URL/R2_ACCESS_KEY_ID/"
+            "R2_SECRET_ACCESS_KEY) — cannot store interview audio"
         )
     return upload_to_r2(
         Path(local_path), remote_key,
         bucket=bucket, endpoint_url=endpoint,
         access_key=access, secret_key=secret,
-        public_base_url=os.environ.get("R2_PUBLIC_BASE_URL", ""),
+        public_base_url=(os.environ.get("R2_PUBLIC_BASE_URL", "")
+                         or "https://audio.nerranetwork.com"),
     )
 
 
