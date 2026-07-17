@@ -28,7 +28,12 @@ from common import (  # noqa: E402
 )
 
 FIRE_WINDOW_AHEAD_MIN = 5
-FIRE_GRACE_BEHIND_MIN = 10   # cron drift tolerance — never leave a guest waiting
+FIRE_GRACE_BEHIND_MIN = 30   # cron drift tolerance — never leave a guest
+                             # waiting; GitHub delivers */5 crons roughly
+                             # hourly under load, so 10 min missed real slots
+                             # (July 17 2026). Also gives failed-call retries
+                             # room: a no-answer run resets the interview to
+                             # briefed and later ticks in this window re-fire.
 REMINDER_AHEAD = (dt.timedelta(minutes=105), dt.timedelta(minutes=135))
 
 MIRA_TOOLS = [

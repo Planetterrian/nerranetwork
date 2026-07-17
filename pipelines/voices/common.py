@@ -174,9 +174,15 @@ def llm(prompt: str, *, temperature: float = 0.5, max_tokens: int = 3500,
     return (text or "").strip()
 
 
-def load_prompt(name: str, **subs: Any) -> str:
-    """Load pipelines/voices/prompts/<name> and substitute {{token}} vars."""
-    text = (Path(__file__).parent / "prompts" / name).read_text(encoding="utf-8")
+def load_prompt(template: str, **subs: Any) -> str:
+    """Load pipelines/voices/prompts/<template> and substitute {{token}} vars.
+
+    First param is deliberately NOT called ``name``: callers pass a
+    ``name=<guest name>`` substitution kwarg, which collided with the old
+    positional param and made every generate_brief call a TypeError
+    (latent since launch — surfaced July 17 2026 on the first real brief).
+    """
+    text = (Path(__file__).parent / "prompts" / template).read_text(encoding="utf-8")
     for key, value in subs.items():
         text = text.replace("{{" + key + "}}", str(value))
     return text

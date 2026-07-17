@@ -141,6 +141,50 @@ async function handleInterviewComplete(req: Request, env: Env): Promise<Response
     },
   };
   await sb(env, "PATCH", `interview_runs?id=eq.${payload.run_id}`, patch);
+
+  // Retry ladder for failed dials (spec §7 row 1, implemented July 2026):
+  // a no-answer/failed call resets the interview to `briefed`, so the fire
+  // cron's grace window re-dials on its next tick. Second strike marks the
+  // interview `missed` and emails the guest a reschedule link — no silent
+  // dead ends, no infinite redial of someone who isn't answering.
+  const reason = String(payload.reason ?? payload.disconnect_reason ?? "");
+  const isFailedDial = payload.status === "failed" &&
+    (reason.includes("call_failed") || reason.includes("startup"));
+  if (isFailedDial) {
+    try {
+      const runs = await sb(env, "GET",
+        `interview_runs?id=eq.${payload.run_id}&select=interview_id`);
+      const ivId = runs?.[0]?.interview_id;
+      if (ivId) {
+        const ivs = await sb(env, "GET",
+          `interviews?id=eq.${ivId}&select=no_show_count,application_id`);
+        const strikes = (ivs?.[0]?.no_show_count ?? 0) + 1;
+        if (strikes < 2) {
+          await sb(env, "PATCH", `interviews?id=eq.${ivId}`,
+            { status: "briefed", no_show_count: strikes });
+          await slack(env, `Age of AI: call attempt ${strikes} failed (${reason.slice(0, 120)}) — will retry within the fire grace window.`);
+        } else {
+          await sb(env, "PATCH", `interviews?id=eq.${ivId}`,
+            { status: "missed", no_show_count: strikes });
+          const apps = await sb(env, "GET",
+            `guest_applications?id=eq.${ivs[0].application_id}&select=name,email`);
+          if (apps?.[0]?.email) {
+            await email(env, apps[0].email,
+              "We missed you — rebook your Age of AI interview",
+              `<p>Hi ${apps[0].name},</p><p>Mira tried to reach you twice for your` +
+              ` Age of AI interview but couldn't get through. No problem — pick a` +
+              ` new time that works for you:</p><p><a href="${env.CALCOM_BOOKING_URL}">` +
+              `Rebook your interview</a></p><p>— The Age of AI, Nerra Network</p>`);
+          }
+          await slack(env, `Age of AI: interview ${ivId} marked missed after 2 failed attempts — reschedule email sent.`);
+        }
+      }
+    } catch (err: any) {
+      console.error("retry-ladder error:", err?.message ?? err);
+    }
+    return json({ ok: true });
+  }
+
   await dispatch(env, "interview-complete", { run_id: payload.run_id });
   return json({ ok: true });
 }
