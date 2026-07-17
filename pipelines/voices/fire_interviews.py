@@ -93,7 +93,10 @@ def _now() -> dt.datetime:
 
 
 def _iso(t: dt.datetime) -> str:
-    return t.isoformat()
+    # Z suffix, not +00:00: these strings go raw into PostgREST query
+    # strings, where an unencoded "+" is decoded as a space → 400 (this
+    # crashed every fire cron tick until July 17 2026).
+    return t.isoformat().replace("+00:00", "Z")
 
 
 def compile_mira_prompt(interview: dict, app: dict, brief: dict) -> str:

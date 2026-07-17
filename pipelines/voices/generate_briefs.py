@@ -20,8 +20,10 @@ from common import (  # noqa: E402  (sys.path bootstrapped in common)
 
 def _window() -> tuple[str, str]:
     now = dt.datetime.now(dt.timezone.utc)
-    return ((now + dt.timedelta(hours=12)).isoformat(),
-            (now + dt.timedelta(hours=36)).isoformat())
+    # Z suffix, not +00:00 — raw "+" in a PostgREST query string decodes
+    # as a space and 400s (same bug as fire_interviews._iso).
+    return ((now + dt.timedelta(hours=12)).isoformat().replace("+00:00", "Z"),
+            (now + dt.timedelta(hours=36)).isoformat().replace("+00:00", "Z"))
 
 
 def _application(interview: dict) -> dict:
