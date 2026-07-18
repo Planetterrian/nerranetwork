@@ -62,6 +62,13 @@ class LLMConfig:
     # under the FULL min_podcast_words target instead of only near the
     # 60%-of-target skip floor. Costs one extra LLM call on short days.
     podcast_expand_below_target: bool = False
+    # July 18 2026 (Omni View realignment): flavor of the podcast-stage
+    # expansion retry. "" = legacy behavior (news shows get "cover more
+    # stories"; narrative_mode shows get the deepen-the-brief variant).
+    # "deepen" = expand by deepening the stories already covered, never
+    # adding stories — for news shows whose prompt requires a FIXED story
+    # slate, where "cover more stories" would fight the format.
+    podcast_expansion_style: str = ""
     # June 2026 (First Principles quality pass): digest-stage analogue of
     # ``podcast_expand_below_target``. When ``digest_expand_below_target`` is
     # true AND the generated digest/brief is under ``min_digest_words``,

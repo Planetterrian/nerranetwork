@@ -119,7 +119,11 @@ class TestSpecArtifacts:
         assert "createVoiceAgentAPIClient" in js
         assert "stereo: true" in js, "dual-track recording is the diarization"
         assert "50 * 60 * 1000" in js, "50-minute hard cap (spec §11.8)"
-        assert "api.nerranetwork.com/voices/interview-complete" in js
+        # July 2026 (WebRTC guest-studio rewrite): the webhook URL is now
+        # assembled from API_BASE + "/interview-complete" instead of one
+        # literal — pin both halves so the contract still holds.
+        assert "https://api.nerranetwork.com/voices" in js
+        assert "/interview-complete" in js
         assert "CallEvents.Failed" in js, "no-answer path must fire the webhook"
         assert "webhookFired" in js, "webhook must be exactly-once"
 

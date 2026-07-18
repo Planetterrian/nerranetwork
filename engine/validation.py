@@ -512,25 +512,35 @@ def pt_validation_config() -> ValidationConfig:
 
 
 def ov_validation_config() -> ValidationConfig:
-    """Validation config for Omni View."""
+    """Validation config for Omni View.
+
+    July 18 2026 editorial realignment: the digest moved from the 12-slot
+    "Top stories (5) / world / business / tech / popular media / gossip"
+    taxonomy to a 7-slot slate ("Today's lead story (1)" + "Major world
+    stories (3)" + "Economy, science & technology (2)" + "Progress watch
+    (1)"). The rule now spans the lead + world sections and requires 4
+    story items. Getting this wrong fires a full digest regenerate on
+    every episode (the Ep068 class — the old `### Top \\d+` pattern once
+    burned ~232s/episode that way), so the legacy headers stay as
+    fallback alternates for old-format digests.
+    """
     return ValidationConfig(
         section_pairs=[],
         sections=[
             SectionRule(
-                name="Top Stories",
+                name="Lead + world stories",
                 pattern=(
-                    # Omni View's digest leads with "## Top stories (5)"
-                    # (level-2 header, lowercase, count suffix). The old
-                    # `### Top \d+` pattern never matched it, so "Top Stories
-                    # missing" fired a full digest regenerate on EVERY episode
-                    # (Ep068 burned ~232s on it). Match the real header (and
-                    # keep the legacy forms as fallbacks).
-                    r"(?:#{2,3}\s*Top stories|#{2,3}\s*Today's Top|### Top \d+)"
+                    r"(?:#{2,3}\s*Today's lead story|#{2,3}\s*Top stories|"
+                    r"#{2,3}\s*Today's Top|### Top \d+)"
                     r"(.*?)"
-                    r"(?=━━|#{2,3}\s*Top world|#{2,3}\s*Top business|"
+                    r"(?=━━|#{2,3}\s*Economy|#{2,3}\s*Progress watch|"
+                    r"#{2,3}\s*Understanding the Issue|#{2,3}\s*Top business|"
                     r"### (?:Deep Dive|Closing)|$)"
                 ),
-                min_items=5,
+                # Lead (1) + world (3) on the new format; the intervening
+                # "## Major world stories (3)" header sits inside the span,
+                # so the numbered `### N)` items count across both.
+                min_items=4,
             ),
         ],
     )

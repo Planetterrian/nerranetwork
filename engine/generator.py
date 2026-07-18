@@ -926,11 +926,12 @@ def _build_expansion_retry_prompt(
     script: str,
     *,
     narrative: bool = False,
+    style: str = "",
 ) -> str:
     """Build the one-shot expansion-retry prompt for a too-short podcast
     script.
 
-    Two flavors. The default (news) retry expands by COVERING MORE
+    Three flavors. The default (news) retry expands by COVERING MORE
     STORIES from the day's digest — the right move for a daily news show
     that compressed several stories. ``narrative=True`` shows (First
     Principles, Unintended Consequences) have NO news and exactly ONE
@@ -941,7 +942,33 @@ def _build_expansion_retry_prompt(
     DEEPENS the single topic's reasoning from the full brief — walk the
     arithmetic out, name specifics, address objections — which is also
     exactly what the narrative prompts already ask for on the first pass.
+
+    ``style="deepen"`` (July 18 2026, Omni View realignment): for news
+    shows with a FIXED story slate — the prompt already requires covering
+    every briefing story, so "cover more stories" would push the model to
+    re-add cut minor items or invent an extra story. The deepen flavor
+    expands each existing story with more attributed facts from the
+    digest instead, never adding stories beyond the slate. Configured
+    per show via ``llm.podcast_expansion_style: deepen``.
     """
+    if style == "deepen" and not narrative:
+        return (
+            f"The script you just wrote is only {word_count} words — it "
+            f"under-covers the day's briefing. Rewrite it to at least "
+            f"{min_words} words by DEEPENING the stories already covered, "
+            f"using the complete digest below:\n"
+            f"- Pull more facts, numbers, and NAMED-outlet perspectives from "
+            f"the digest into each story you compressed — especially the lead "
+            f"and world stories\n"
+            f"- Do NOT add stories beyond the briefing's slate, and do NOT "
+            f"pad with unattributed analysis, 'this highlights' sentences, "
+            f"or rephrased framings\n"
+            f"- Do NOT invent facts that are not in the digest, and do not "
+            f"repeat any sentence verbatim\n"
+            f"- Keep the same intro, closing, and overall structure\n\n"
+            f"FULL DIGEST (the source of truth for facts):\n\n{digest}\n\n"
+            f"Here is your short script to expand:\n\n{script}"
+        )
     if narrative:
         return (
             f"The script you just wrote is only {word_count} words — too short for "
@@ -2152,6 +2179,7 @@ def generate_podcast_script(
         retry_prompt = _build_expansion_retry_prompt(
             word_count, min_words, _digest_for_retry, text,
             narrative=bool(getattr(config, "narrative_mode", False)),
+            style=str(getattr(config.llm, "podcast_expansion_style", "") or ""),
         )
         text2, meta2 = _call_grok(
             retry_prompt,

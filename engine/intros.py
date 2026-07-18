@@ -180,10 +180,10 @@ _SHOW_PERSONALITIES: dict[str, dict[str, Any]] = {
             "episode {ep} for {date}. Multiple perspectives, one briefing.",
         ],
         "framings": [
-            "We'll cover what happened, how different viewpoints frame it — so you can decide for yourself.",
+            "The day's biggest stories from around the world — what happened, how different viewpoints frame it, so you can decide for yourself.",
             "Let's look at the day's news from every angle.",
-            "Here's the news, the perspectives, and the questions worth asking.",
-            "Today's stories, multiple viewpoints, your call.",
+            "Here's the news, the perspectives, and where to look next.",
+            "Today's stories from around the world, multiple viewpoints, your call.",
         ],
         "day_colors": {
             0: {
@@ -193,18 +193,36 @@ _SHOW_PERSONALITIES: dict[str, dict[str, Any]] = {
                 ],
             },
         },
+        # July 18 2026 editorial realignment: closings now pair the
+        # perspective-coaching DNA with one encouraging line — the show's
+        # answer to doom-scrolling. Every variant still opens with
+        # "That's Omni View" / "That wraps up today's Omni View" (the
+        # Closing chapter marker + drift guard require it). A/B-listen
+        # per landmine #17.
         "closings": [
             (
-                "That's Omni View. For full source links and more context, check out today's "
-                "written briefing on the Omni View summaries page. As always — compare outlets, "
-                "look for primary documents, and separate what's known from what's assumed. "
-                "If balanced perspectives are valuable to you, share this with a friend and "
-                "subscribe wherever you listen. See you tomorrow."
+                "That's Omni View. The news can feel heavy — but understanding "
+                "what's actually happening, and what's being done about it, beats "
+                "doom-scrolling every time. Stay curious: pick one story from today "
+                "and read it from a second outlet you don't usually open. If "
+                "balanced perspectives are valuable to you, share this with a "
+                "friend and subscribe wherever you listen. See you tomorrow."
             ),
             (
-                "That wraps up today's Omni View. Remember — the best-informed people read "
-                "more than one perspective. If this show helps you do that, share it with "
-                "someone who values fair coverage. See you tomorrow."
+                "That wraps up today's Omni View. Remember — the best-informed "
+                "people read more than one perspective, and the calmest ones know "
+                "that most days, somewhere, something is quietly getting better. "
+                "For full source links, check out today's written briefing on the "
+                "Omni View summaries page. Share this with someone who values "
+                "fair coverage. See you tomorrow."
+            ),
+            (
+                "That's Omni View. As always — compare outlets, look for primary "
+                "documents, and separate what's known from what's assumed. The "
+                "world is complicated, but it's not beyond understanding, and "
+                "you just spent a few minutes understanding it better. If that's "
+                "worth something to you, subscribe wherever you listen. See you "
+                "tomorrow."
             ),
         ],
     },

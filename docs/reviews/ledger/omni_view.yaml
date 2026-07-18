@@ -141,4 +141,61 @@ reviews:
       ab_listen_required: true
       rationale: Mirror the digest ban to prevent template echo in audio.
     agent_cost_usd: 0.0539
+  - date: '2026-07-18'
+    pr: null
+    doc: docs/reviews/omni_view_review_2026_07_18.md
+    generated_by: claude-fable-5 (operator-directed editorial realignment)
+    summary: Full repositioning to "top world stories, balanced, teen-to-senior, encouraging, anti-clickbait" — 7-slot slate replaces the 12-slot taxonomy (gossip/popular-media slots deleted, daily Progress watch added), conditional steel-man with no-sides-on-tragedy, plain-language layer, Daily Mail removed + 12 wire/regional feeds added, deepen expansion-retry flavor, new closings + go-deeper pointer, public copy updated.
+    scored_prior_predictions:
+    - metric: episodes with _tts.txt >= 1400 words
+      verdict: partial
+      evidence: 8/10 in Ep105-114 (Ep113 1379w, Ep114 1177w)
+    - metric: '"Both sides agree" constructions per episode'
+      verdict: pending-superseded
+      evidence: de-seed shipped Jul 16; window still showed ~38x "Both ..." family per 10 eps; realignment adds structural fixes (conditional steel-man, no-sides-on-tragedy)
+    shipped:
+    - 7-slot digest/podcast architecture (lead/world x3/econ-sci-tech x2/progress) with per-story depth targets
+    - conditional STEEL-MAN (2-3 contested stories) + no-sides-on-tragedy rule
+    - plain-language teen-to-senior layer + audience contradiction fix
+    - Progress watch segment + chapter marker + rotating seeded transitions
+    - source rebalance (Daily Mail/dup-BBC/r-news out; Reuters+AP proxies, WSJ, BBC Africa/Asia/LatAm, AllAfrica, SCMP, Nikkei, Hindu, Japan Times, MercoPress in) + exclude_title_patterns
+    - podcast_expansion_style deepen (new LLMConfig field + generator flavor); digest_expand_below_target + min_digest_words 1500
+    - ov_validation_config + OV_SECTION_PATTERNS updated to new headers (Ep068 regenerate-class prevention)
+    - new closing pool (encouraging + perspective coaching) + go-deeper pointer
+    - public positioning copy (rss_description, about/audience/meta, source_highlights, weekly prompt)
+    deferred:
+    - Reuters/AP Google News proxy label attribution (articles carry publisher source_name, not the feed label - cosmetic)
+    - BBC Latin America feed low volume (0 articles in verification window - monitor)
+    predictions:
+    - metric: tabloid/gossip/celebrity items per episode (Ep115+)
+      baseline: 2+ structural
+      expected: '0'
+      verdict: pending
+      evidence: null
+    - metric: '"Both sides agree" family occurrences per 10 episodes'
+      baseline: ~38
+      expected: 0-2
+      verdict: pending
+      evidence: null
+    - metric: '"the question worth considering" per 10 episodes'
+      baseline: '23'
+      expected: '0'
+      verdict: pending
+      evidence: null
+    - metric: median _tts.txt words (Ep115+)
+      baseline: <1600
+      expected: '>=1700'
+      verdict: pending
+      evidence: null
+    - metric: distinct regions per episode (lead+world)
+      baseline: often 1-2
+      expected: '>=3'
+      verdict: pending
+      evidence: null
+    - metric: episodes with a Progress Watch chapter
+      baseline: '0'
+      expected: '>=8/10'
+      verdict: pending
+      evidence: null
+    agent_cost_usd: 0.0
 do_not_retry: []

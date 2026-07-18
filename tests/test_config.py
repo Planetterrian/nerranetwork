@@ -505,13 +505,17 @@ class TestLoadConfigRealFiles:
         cfg = load_config(SHOWS_DIR / "omni_view.yaml")
         assert cfg.name == "Omni View"
         assert cfg.slug == "omni_view"
-        assert len(cfg.sources) == 28
+        # July 18 2026 realignment: 37 feeds — Daily Mail / duplicate-BBC /
+        # r/news removed; wires (Reuters/AP via Google News, WSJ World) +
+        # regional balance feeds (BBC Africa/Asia/LatAm, AllAfrica, SCMP,
+        # Nikkei Asia, The Hindu, Japan Times, MercoPress) added.
+        assert len(cfg.sources) == 37
         assert cfg.sources[0].label == "NPR"
         assert "election" in cfg.keywords
         assert cfg.llm.model == "grok-4.3"
         assert cfg.llm.digest_temperature == 0.5
-        # Raised 4000 -> 10000 so the steel-man digest (now 12 stories)
-        # completes without truncation. See shows/omni_view.yaml.
+        # Raised 4000 -> 10000 so the multi-perspective digest completes
+        # without truncation. See shows/omni_view.yaml.
         assert cfg.llm.max_tokens == 10000
         assert cfg.tts.stability == 0.5
         assert cfg.tts.style == 0.0

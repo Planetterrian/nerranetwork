@@ -289,14 +289,10 @@ class TestNoDuplicateFeedUrls:
     different scheme/host can't slip back in.
     """
 
-    # Pre-existing, out-of-scope duplicate on a show not owned by this pass
-    # (omni_view subscribes BBC News over both http and https). Recorded so
-    # this guard is meaningful network-wide without failing on a file this
-    # pass may not touch; the omni_view owner should collapse it. Any NEW
-    # duplicate — including a second one on omni_view — still fails.
-    _ALLOWED = {
-        "omni_view": {"feeds.bbci.co.uk/news/rss.xml"},
-    }
+    # July 18 2026: the omni_view http/https BBC duplicate was collapsed in
+    # the editorial realignment, so no allowance remains — ANY duplicate
+    # feed on ANY show now fails this guard.
+    _ALLOWED: dict = {}
 
     @staticmethod
     def _norm(url: str) -> str:
