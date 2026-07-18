@@ -1867,6 +1867,27 @@ the fallback everywhere; every piece is best-effort and non-blocking.
   `YOUTUBE_REFRESH_TOKEN_RU` (no-ops with a log line until set). Docs:
   [`docs/ru_youtube_dubs.md`](docs/ru_youtube_dubs.md). Drift guards:
   `tests/test_ru_dub.py`.
+- **Generalized language dubs → @NerraFR (July 18 2026; future languages).**
+  `engine/lang_dub.py` is the language-parameterized sibling of `ru_dub`
+  (which stays bespoke + untouched for @NerraRU — the show-memory
+  precedent). A `DubLanguage` registry entry + `youtube.dub_languages:
+  [fr]` + a `YOUTUBE_REFRESH_TOKEN_<CH>` secret + a `SEED_TIERS` channel
+  = a new dubbed channel; language-neutral machinery is IMPORTED from
+  ru_dub (no fork). FR registered for tesla/spacex/FF/modern_investing
+  (MIT's multilingual `languages` gained `fr` — the track is the dub's
+  input), **seeded shorts-only** with the RU 2.0 long_vpd floor (RU
+  lesson: dubbed longs earned ~9% retention), full RU parity (optimized-
+  title translation with echo rejection, smart multi-Shorts + fill,
+  French ASS captions, French end-card + funnel comment, `no_scenes_yet`
+  deferral, per-show `youtube_videos.fr.json` auto-picked-up by
+  analytics/policy/subscriber tracking). Sweep:
+  `scripts/publish_lang_dubs.py --lang fr` in `multilingual.yml`.
+  Credentials resolve generically (channel `xx` →
+  `YOUTUBE_REFRESH_TOKEN_XX`; en/ru behavior pinned unchanged). DORMANT
+  until the operator creates @NerraFR + adds the secret (clean
+  `no_fr_credentials` no-op until then; activation checklist in the doc).
+  Docs: [`docs/lang_youtube_dubs.md`](docs/lang_youtube_dubs.md). Drift
+  guards: `tests/test_lang_dub.py`.
 - **Recursive YouTube → titles feedback loop.** Mirrors the OP3 audio loop:
   `scripts/fetch_youtube_analytics.py` reads each show's
   `digests/<slug>/youtube_videos.json`, queries the YouTube Analytics API for

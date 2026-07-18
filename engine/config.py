@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 import yaml
 
@@ -517,6 +517,18 @@ class YouTubeConfig:
     # (channel=ru token). English upload is unaffected. Off by default →
     # byte-for-byte no-op. See engine.ru_dub / docs/ru_youtube_dubs.md.
     ru_dub_enabled: bool = False
+    # ---- Generalized language dubs (July 2026 — first language: FR) ----
+    # Registry languages (engine.lang_dub.DUB_LANGUAGES) this show publishes
+    # dubbed videos for, e.g. ``dub_languages: [fr]`` → @NerraFR. Each
+    # language needs its channel token (YOUTUBE_REFRESH_TOKEN_<CH>) — the
+    # pipeline no-ops cleanly until the operator adds it. RU stays on the
+    # bespoke ``ru_dub_enabled`` flag (engine.ru_dub). Empty by default →
+    # byte-for-byte no-op.
+    dub_languages: List[str] = field(default_factory=list)
+    # Per-language playlist ids on the language channels, e.g.
+    # ``dub_playlist_ids: {fr: PL...}`` (operator creates + flags each in
+    # Studio — landmine #15).
+    dub_playlist_ids: Dict[str, str] = field(default_factory=dict)
     # @NerraRU playlist for this show's RU dubs (operator creates + flags it
     # in Studio per landmine #15; uploads still publish without it, warned).
     ru_podcast_playlist_id: Optional[str] = None

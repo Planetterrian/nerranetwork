@@ -241,6 +241,34 @@ jobs:
           python scripts/publish_ru_dubs.py "${{ matrix.show }}" --latest "$LATEST" </dev/null || \
             echo "::warning::RU dub publish failed for ${{ matrix.show }} (non-fatal)"
 
+      - name: Publish ${{ matrix.show }} French dubs to @NerraFR
+        if: always()
+        # July 18 2026 — generalized language-dub engine (engine.lang_dub;
+        # RU stays on the bespoke engine.ru_dub). Builds a French-dubbed
+        # video from the just-generated `fr` audio track — only for shows
+        # with `fr` in youtube.dub_languages. Clean no-op for every other
+        # show and while YOUTUBE_REFRESH_TOKEN_FR is unset (the pipeline
+        # ships dormant until the operator creates @NerraFR + adds the
+        # secret). Off the episode critical path → no timeout risk.
+        env:
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN_FR: ${{ secrets.YOUTUBE_REFRESH_TOKEN_FR }}
+          # FR titles translate the EN *optimized* YouTube title via Grok
+          # (engine/lang_dub._translate_title) — same contract as RU.
+          GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+          XAI_API_KEY: ${{ secrets.GROK_API_KEY }}
+          # Gallery-scene downloads fall back to authenticated R2 when the
+          # public CDN 403s CI egress (the Tesla Ep537 failure mode).
+          R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: |
+          LATEST="${{ github.event.inputs.latest }}"
+          [ -z "$LATEST" ] && LATEST=3
+          python scripts/publish_lang_dubs.py "${{ matrix.show }}" --lang fr --latest "$LATEST" </dev/null || \
+            echo "::warning::FR dub publish failed for ${{ matrix.show }} (non-fatal)"
+
       - name: Build ${{ matrix.show }} language feeds
         if: always()
         env:

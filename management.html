@@ -486,7 +486,10 @@
       const delta = c.subscribers_delta_7d;
       const deltaTxt = (delta == null) ? "" :
         (" (" + (delta >= 0 ? "+" : "") + delta + " · 7d)");
-      row.textContent = "@" + (ch === "ru" ? "NerraRU" : "NerraNetwork") + ": " +
+      const chName = ch === "ru" ? "NerraRU" :
+        ch === "fr" ? "NerraFR" :
+        ch === "en" ? "NerraNetwork" : ("Nerra-" + ch.toUpperCase());
+      row.textContent = "@" + chName + ": " +
         (c.subscribers || 0).toLocaleString() + " subscribers" + deltaTxt +
         " · " + (c.total_views || 0).toLocaleString() + " total views";
       audRoot.appendChild(row);

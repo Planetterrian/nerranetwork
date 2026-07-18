@@ -77,11 +77,13 @@ class TestMultilingualConfig:
                      "models_agents_beginners", "unintended_consequences"):
             assert load_config(f"shows/{slug}.yaml").multilingual.enabled is False, slug
 
-    def test_modern_investing_ru_only(self):
+    def test_modern_investing_languages(self):
         from engine.config import load_config
         ml = load_config("shows/modern_investing.yaml").multilingual
         assert ml.enabled is True
-        assert ml.languages == ["ru"]  # ru-only; MIT never carried fr/zh
+        # July 18 2026: fr added as the @NerraFR dub's input track
+        # (engine.lang_dub). Still no zh (never carried it).
+        assert ml.languages == ["ru", "fr"]
 
     def test_russian_shows_opt_out(self):
         from engine.config import load_config
