@@ -498,6 +498,12 @@ class YouTubeConfig:
     # episode ran at the 5.0 default — Ep505's "best score 3.0 below
     # threshold 5.0" fallback was this bug, not a quiet news day.
     shorts_min_score_threshold: float = 5.0
+    # July 18 2026: when the multi-Shorts selector finds fewer than the
+    # requested N windows above the threshold, fill the remaining slots
+    # with the best non-overlapping sub-threshold windows (score >= 0)
+    # instead of shipping fewer Shorts. The requested count is a policy
+    # decision; before this, FF shipped 1-of-2 on every July episode.
+    shorts_fill_to_requested: bool = True
     # ``always`` | ``alternate_episodes`` — skip Shorts on odd episode
     # numbers to halve upload quota during phased rollout.
     shorts_upload_schedule: str = "always"
@@ -651,6 +657,16 @@ class YouTubeConfig:
     # Appended to the description as an operator copy-paste block (YouTube
     # has no API for pinned comments without extra scopes).
     pinned_comment_template: str = ""
+    # July 18 2026 (operator-approved): post a real channel comment on each
+    # upload via commentThreads.insert — the pinned-comment template on
+    # long-form, a "Full episode: <link>" funnel comment on Shorts. The
+    # API can't pin it (operator pins manually); a 403 is a graceful no-op.
+    auto_comment: bool = True
+    # July 18 2026 (operator-approved): thumbnails render a 2-4 word
+    # ALL-CAPS punch text (LLM-generated with the title bundle) as the
+    # dominant element instead of the full hook sentence. False = legacy
+    # hook rendering.
+    thumbnail_punch_text: bool = True
     # When true and vertical scene images exist, build a 1080×1920 Shorts
     # thumbnail instead of reusing the 1280×720 long-form thumb.
     shorts_thumbnail_from_scene: bool = True

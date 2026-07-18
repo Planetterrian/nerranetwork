@@ -95,8 +95,11 @@ class TestShortParity:
         src = (Path(ru_dub.__file__)).read_text(encoding="utf-8")
         # Transcribe the RU audio in Russian.
         assert "generate_transcript(" in src and 'language="ru"' in src
-        # Smart engaging-beat start + per-word ASS captions.
-        assert "pick_engaging_window(" in src
+        # Smart engaging-beat starts + per-word ASS captions. July 18
+        # 2026: single-window selection upgraded to top-N (up to 2 RU
+        # Shorts when the policy asks) with fill-to-requested.
+        assert "pick_top_n_engaging_windows(" in src
+        assert "fill_to_n=True" in src
         assert "transcript_to_ass_window(" in src
         assert "subtitles_path=ass_path" in src
         # End-card CTA on the short.

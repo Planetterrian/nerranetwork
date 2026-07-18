@@ -1366,6 +1366,7 @@ def generate_episode_thumbnail(
     hook: str = "",
     show_name: str = "",
     size: tuple = (1280, 720),
+    punch_text: str = "",
 ) -> tuple[Path, int | None]:
     """Render an image-first episode thumbnail for YouTube.
 
@@ -1431,9 +1432,16 @@ def generate_episode_thumbnail(
             font=label_font, fill=(255, 255, 255),
         )
 
+    # July 18 2026 — thumbnail punch text (operator-approved style change):
+    # a 2-4 word ALL-CAPS headline rendered MUCH larger than the old
+    # full-hook-sentence lower third. Big-text thumbnails are the #1 CTR
+    # lever available to this network (docs/youtube_seo.md; no on-camera
+    # face exists). Empty punch_text = exact legacy hook rendering.
+    _main_text = (punch_text or "").strip() or hook
+    _is_punch = bool((punch_text or "").strip())
     font_size = None
-    if hook:
-        clean_hook = hook.strip()
+    if _main_text:
+        clean_hook = _main_text.strip()
         # Safety cap — anything longer than 160 chars is almost
         # certainly an LLM run-on; lower-third layout wants punchy
         # copy (the full hook still lives in the description).
@@ -1446,8 +1454,16 @@ def generate_episode_thumbnail(
         max_text_width = width - 2 * margin
         max_block_h = int(height * (0.28 if height > width else 0.32))
         max_lines = 3 if height >= width else 2
-        max_font = max(48, width // 16)
-        min_font = max(28, width // 28)
+        if _is_punch:
+            # Punch text is 2-4 words — start from a display size roughly
+            # 2x the hook base and allow a taller block.
+            max_block_h = int(height * (0.34 if height > width else 0.38))
+            max_lines = 2
+            max_font = max(96, width // 8)
+            min_font = max(48, width // 16)
+        else:
+            max_font = max(48, width // 16)
+            min_font = max(28, width // 28)
         font_size = max_font
         lines: list = []
         line_h = 0
@@ -1507,6 +1523,7 @@ def generate_thumbnail_variants(
     hook: str = "",
     show_name: str = "",
     count: int = 2,
+    punch_text: str = "",
 ) -> "list[Path]":
     """Render extra long-form thumbnail composites from alternate scenes.
 
@@ -1536,6 +1553,7 @@ def generate_thumbnail_variants(
                 dest,
                 hook=hook,
                 show_name=show_name,
+                punch_text=punch_text,
             )
             out.append(path)
         except Exception as exc:  # noqa: BLE001 — variants are optional
@@ -1551,6 +1569,7 @@ def generate_shorts_thumbnail(
     *,
     hook: str = "",
     show_name: str = "",
+    punch_text: str = "",
 ) -> Path:
     """Render a 1080×1920 vertical thumbnail for YouTube Shorts."""
     return generate_episode_thumbnail(
@@ -1561,6 +1580,7 @@ def generate_shorts_thumbnail(
         hook=hook,
         show_name=show_name,
         size=(1080, 1920),
+        punch_text=punch_text,
     )
 
 

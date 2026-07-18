@@ -312,8 +312,13 @@ def _policy_plan(config) -> Dict[str, object]:
             slug=config.slug,
             channel="ru",
             yaml_publish_long=True,   # legacy ru_dub always built the long
-            yaml_shorts=1,            # ru_dub builds at most one Short
-            smart_mode=False,
+            yaml_shorts=1,            # policy may raise (capped at 2 below)
+            # July 18 2026: the RU Short path genuinely runs the smart
+            # selector on its own RU transcript, so the policy is allowed
+            # to raise the Shorts count (RU Shorts are the network's
+            # best-performing format — spacex-RU short_vpd 30 — and the
+            # old smart_mode=False silently capped every RU show at 1).
+            smart_mode=True,
             adaptive_enabled=bool(getattr(
                 getattr(config, "youtube", None), "adaptive_publishing", True,
             )),
@@ -536,111 +541,182 @@ def publish_ru_dub(
 
             result["status"] = "done"
 
-        # --- Short (best-effort; failure never blocks the long-form result) ---
+        # --- Shorts (best-effort; failure never blocks the long-form result) ---
+        # July 18 2026: up to TWO Shorts per episode when the policy asks
+        # (RU Shorts are the network's best-performing format). Window
+        # selection = top-N with fill on the RU transcript; each Short is
+        # its own try/except so a second-Short failure never costs the
+        # first.
         if build_short and getattr(yt, "publish_shorts", True):
+            ru_shorts = max(1, min(2, int(plan.get("shorts", 1) or 1)))
+            short_scenes = []
             try:
                 short_scenes = _download_images(short_urls, tmp) if short_urls else []
-                short_mp4 = tmp / f"ru_short_ep{episode_num:03d}.mp4"
-                short_dur = float(getattr(yt, "short_duration_seconds", 55.0))
-
-                # Parity with the EN shorts: transcribe the RU dub audio
-                # (Russian Whisper, word timestamps) → smart engaging-beat
-                # start + Russian burned-in per-word captions. DejaVu Sans
-                # (the caption font) covers Cyrillic. Every piece is
-                # best-effort — the short still ships without them.
-                start_offset = float(getattr(yt, "shorts_start_offset", 0.0) or 0.0)
-                ass_path = None
-                try:
-                    from engine.transcripts import generate_transcript
-                    from engine.captions import transcript_to_ass_window
-                    from engine.shorts_selector import pick_engaging_window
-                    from engine.audio import get_audio_duration
-                    tr = generate_transcript(
-                        audio, tmp, f"ru_ep{episode_num:03d}", language="ru")
-                    if tr and tr.json_path.exists():
-                        total_dur = get_audio_duration(audio) or 0.0
-                        win = pick_engaging_window(
-                            tr.json_path, audio_offset=start_offset,
-                            audio_duration=total_dur, window_duration=short_dur,
-                            min_start_final=start_offset)
-                        if win is not None:
-                            start_offset = win.start_seconds
-                        ass_candidate = tmp / f"ru_short_ep{episode_num:03d}.ass"
-                        transcript_to_ass_window(
-                            tr.json_path, ass_candidate,
-                            window_start_seconds=start_offset,
-                            window_duration_seconds=short_dur,
-                            audio_offset_seconds=0.0)
-                        if (ass_candidate.exists()
-                                and ass_candidate.stat().st_size > 0
-                                and "Dialogue:" in ass_candidate.read_text(
-                                    encoding="utf-8", errors="replace")):
-                            ass_path = ass_candidate
-                            result["ru_short_captions"] = "ass"
-                except Exception as exc:  # noqa: BLE001
-                    logger.warning("ru_dub: RU transcript/captions failed (%s) — "
-                                   "short without captions", exc)
-
-                # End-card CTA (Russian) — reuse the RU long-form thumbnail.
-                end_card_png = None
-                try:
-                    from engine.publisher import generate_shorts_end_card
-                    if thumb_path is not None:
-                        ec = tmp / f"ru_short_ep{episode_num:03d}_endcard.png"
-                        generate_shorts_end_card(
-                            thumb_path, ec, show_name=config.name,
-                            main_text=_RU_END_CARD_MAIN, sub_text=_RU_END_CARD_SUB)
-                        if ec.exists():
-                            end_card_png = ec
-                except Exception as exc:  # noqa: BLE001
-                    logger.warning("ru_dub: end-card render failed (%s)", exc)
-
-                build_short_video(
-                    audio, cover, short_mp4,
-                    start_offset=start_offset,
-                    duration=short_dur,
-                    hook=ru_title,
-                    scene_paths=short_scenes if len(short_scenes) >= 2 else None,
-                    show_name=config.name,
-                    subtitles_path=ass_path,
-                    end_card=True,
-                    end_card_main_text=_RU_END_CARD_MAIN,
-                    end_card_sub_text=_RU_END_CARD_SUB,
-                    end_card_image_path=end_card_png)
-                short_title = _ru_short_title(ru_title)
-                sup = upload_video(
-                    short_mp4, credentials=creds,
-                    title=short_title,
-                    description=_ru_long_description(config, ru_desc),
-                    tags=list(getattr(config, "keywords", []) or []),
-                    category_id=int(getattr(yt, "category_id", 28)),
-                    default_language="ru",
-                    privacy_status=getattr(yt, "privacy_status", "public"))
-                result["short_url"] = sup.watch_url
-                # Record the title the Short actually shipped with (distinct,
-                # "#Shorts"-suffixed) — the index previously recorded the
-                # long-form title, hiding what @NerraRU really displayed.
-                record_video(
-                    video_id=sup.video_id, show_slug=config.slug,
-                    episode=episode_num, kind="short", title=short_title,
-                    hook=ru_title, published=date_str, watch_url=sup.watch_url,
-                    channel="ru",
-                    index_path=PROJECT_ROOT / config.episode.output_dir
-                    / "youtube_videos.ru.json")
-                pl = (getattr(yt, "ru_podcast_playlist_id", None) or "").strip()
-                if pl:
-                    try:
-                        add_video_to_playlist(credentials=creds,
-                                              video_id=sup.video_id, playlist_id=pl)
-                    except Exception:  # noqa: BLE001
-                        pass
-                # Under a shorts-only policy the Short IS the deliverable —
-                # its successful upload marks the episode done (no-op when
-                # the long-form already set it).
-                result["status"] = "done"
             except Exception as exc:  # noqa: BLE001
-                logger.warning("ru_dub: Short failed for Ep%s (non-fatal): %s",
-                               episode_num, exc)
-                result["short_error"] = str(exc)
+                logger.warning("ru_dub: scene download failed (%s)", exc)
+            short_dur = float(getattr(yt, "short_duration_seconds", 55.0))
+            base_offset = float(getattr(yt, "shorts_start_offset", 0.0) or 0.0)
+
+            # Transcribe once; select up to ru_shorts windows. Parity with
+            # the EN shorts: Russian Whisper word timestamps → smart
+            # engaging-beat starts + per-word Cyrillic ASS captions.
+            # Every piece is best-effort — a Short still ships without them.
+            tr_json = None
+            windows: list = []
+            try:
+                from engine.transcripts import generate_transcript
+                from engine.shorts_selector import pick_top_n_engaging_windows
+                from engine.audio import get_audio_duration
+                tr = generate_transcript(
+                    audio, tmp, f"ru_ep{episode_num:03d}", language="ru")
+                if tr and tr.json_path.exists():
+                    tr_json = tr.json_path
+                    total_dur = get_audio_duration(audio) or 0.0
+                    windows = pick_top_n_engaging_windows(
+                        tr_json, n=ru_shorts,
+                        audio_offset=base_offset,
+                        audio_duration=total_dur,
+                        window_duration=short_dur,
+                        min_start_final=base_offset,
+                        fill_to_n=True)
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("ru_dub: RU transcript/selection failed (%s) — "
+                               "voice-start short without captions", exc)
+
+            # Plan: (offset, opening_text) per Short; legacy single
+            # voice-start fallback when the selector yields nothing.
+            if windows:
+                short_plan = [(w.start_seconds, (w.opening_text or "").strip())
+                              for w in windows[:ru_shorts]]
+            else:
+                short_plan = [(base_offset, "")]
+
+            # End-card CTA (Russian) — shared across Shorts; reuse the RU
+            # long-form thumbnail.
+            end_card_png = None
+            try:
+                from engine.publisher import generate_shorts_end_card
+                if thumb_path is not None:
+                    ec = tmp / f"ru_short_ep{episode_num:03d}_endcard.png"
+                    generate_shorts_end_card(
+                        thumb_path, ec, show_name=config.name,
+                        main_text=_RU_END_CARD_MAIN, sub_text=_RU_END_CARD_SUB)
+                    if ec.exists():
+                        end_card_png = ec
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("ru_dub: end-card render failed (%s)", exc)
+
+            short_urls_out: list = []
+            for short_idx, (start_offset, opening_text) in enumerate(short_plan):
+                try:
+                    suffix = "" if short_idx == 0 else f"_{short_idx + 1}"
+                    short_mp4 = tmp / f"ru_short_ep{episode_num:03d}{suffix}.mp4"
+
+                    ass_path = None
+                    if tr_json is not None:
+                        try:
+                            from engine.captions import transcript_to_ass_window
+                            ass_candidate = (
+                                tmp / f"ru_short_ep{episode_num:03d}{suffix}.ass")
+                            transcript_to_ass_window(
+                                tr_json, ass_candidate,
+                                window_start_seconds=start_offset,
+                                window_duration_seconds=short_dur,
+                                audio_offset_seconds=0.0)
+                            if (ass_candidate.exists()
+                                    and ass_candidate.stat().st_size > 0
+                                    and "Dialogue:" in ass_candidate.read_text(
+                                        encoding="utf-8", errors="replace")):
+                                ass_path = ass_candidate
+                                result["ru_short_captions"] = "ass"
+                        except Exception as exc:  # noqa: BLE001
+                            logger.warning(
+                                "ru_dub: ASS captions failed for short %d "
+                                "(%s)", short_idx + 1, exc)
+
+                    build_short_video(
+                        audio, cover, short_mp4,
+                        start_offset=start_offset,
+                        duration=short_dur,
+                        hook=ru_title,
+                        scene_paths=short_scenes if len(short_scenes) >= 2 else None,
+                        show_name=config.name,
+                        subtitles_path=ass_path,
+                        end_card=True,
+                        end_card_main_text=_RU_END_CARD_MAIN,
+                        end_card_sub_text=_RU_END_CARD_SUB,
+                        end_card_image_path=end_card_png)
+
+                    # Titles: Short #1 keeps the optimized-derived headline;
+                    # Short #2 leads with ITS window's opening text (already
+                    # Russian — it's the RU transcript) so the two Shorts
+                    # are genuinely distinct in the feed.
+                    if short_idx == 0 or not opening_text:
+                        short_title = _ru_short_title(ru_title)
+                        if short_idx > 0:
+                            short_title = _ru_short_title(
+                                ru_title, body_limit=58) + " — ещё момент"
+                    else:
+                        body = _word_trim(
+                            opening_text.rstrip("…").rstrip(),
+                            min(70, _YT_TITLE_MAX - len(_SHORTS_SUFFIX)))
+                        short_title = f"{body}{_SHORTS_SUFFIX}".strip()
+
+                    sup = upload_video(
+                        short_mp4, credentials=creds,
+                        title=short_title,
+                        description=_ru_long_description(config, ru_desc),
+                        tags=list(getattr(config, "keywords", []) or []),
+                        category_id=int(getattr(yt, "category_id", 28)),
+                        default_language="ru",
+                        privacy_status=getattr(yt, "privacy_status", "public"))
+                    short_urls_out.append(sup.watch_url)
+                    # July 18 2026 (operator-approved): RU funnel comment.
+                    # Only when a RU long-form exists this run — a Russian
+                    # Short should never link an English video.
+                    if long_url and bool(getattr(yt, "auto_comment", True)):
+                        try:
+                            from engine.youtube import post_video_comment
+                            post_video_comment(
+                                credentials=creds,
+                                video_id=sup.video_id,
+                                text=("▶ Полный выпуск: " + long_url
+                                      + "\n🔔 Подпишитесь — новые выпуски "
+                                        "каждый день"))
+                        except Exception:  # noqa: BLE001
+                            pass
+                    # Record the title the Short actually shipped with
+                    # (distinct, "#Shorts"-suffixed) — the index previously
+                    # recorded the long-form title, hiding what @NerraRU
+                    # really displayed.
+                    record_video(
+                        video_id=sup.video_id, show_slug=config.slug,
+                        episode=episode_num, kind="short", title=short_title,
+                        hook=ru_title, published=date_str,
+                        watch_url=sup.watch_url,
+                        channel="ru",
+                        index_path=PROJECT_ROOT / config.episode.output_dir
+                        / "youtube_videos.ru.json")
+                    pl = (getattr(yt, "ru_podcast_playlist_id", None) or "").strip()
+                    if pl:
+                        try:
+                            add_video_to_playlist(credentials=creds,
+                                                  video_id=sup.video_id,
+                                                  playlist_id=pl)
+                        except Exception:  # noqa: BLE001
+                            pass
+                    # Under a shorts-only policy the Short IS the
+                    # deliverable — its successful upload marks the episode
+                    # done (no-op when the long-form already set it).
+                    result["status"] = "done"
+                except Exception as exc:  # noqa: BLE001
+                    logger.warning("ru_dub: Short %d failed for Ep%s "
+                                   "(non-fatal): %s",
+                                   short_idx + 1, episode_num, exc)
+                    result["short_error"] = str(exc)
+
+            if short_urls_out:
+                result["short_url"] = short_urls_out[0]
+                result["short_urls"] = short_urls_out
 
     return result

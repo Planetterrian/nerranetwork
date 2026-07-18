@@ -474,6 +474,31 @@
     });
   }
 
+  // -------- YouTube channel growth (July 2026: subscribers) --------
+  const yt = audience.youtube || {};
+  if (yt.configured && !yt.error && yt.channels) {
+    const head = h("div", { style: "margin-top:12px;font-weight:600;color:#e2e8f0;" });
+    head.textContent = "YouTube channels";
+    audRoot.appendChild(head);
+    Object.keys(yt.channels).sort().forEach((ch) => {
+      const c = yt.channels[ch] || {};
+      const row = h("div", { style: "font-size:13px;color:#cbd5e1;padding:2px 0;" });
+      const delta = c.subscribers_delta_7d;
+      const deltaTxt = (delta == null) ? "" :
+        (" (" + (delta >= 0 ? "+" : "") + delta + " · 7d)");
+      row.textContent = "@" + (ch === "ru" ? "NerraRU" : "NerraNetwork") + ": " +
+        (c.subscribers || 0).toLocaleString() + " subscribers" + deltaTxt +
+        " · " + (c.total_views || 0).toLocaleString() + " total views";
+      audRoot.appendChild(row);
+    });
+    (yt.top_subscriber_videos || []).forEach((v, i) => {
+      const row = h("div", { style: "font-size:12px;color:#94a3b8;padding:2px 0;" });
+      row.textContent = "+" + v.subscribers_gained + " subs · [" + v.show + "/" +
+        v.kind + "] " + (v.title || "").slice(0, 80);
+      audRoot.appendChild(row);
+    });
+  }
+
   const costSparks = $("#cost-sparklines");
   const costPerShow = (data.cost_rollup && data.cost_rollup.per_show) || {};
   shows.forEach((s) => {

@@ -119,6 +119,12 @@ class ScoredWindow:
     # segment, surfaced in logs / metrics so the operator can scan the
     # selection without re-running the pipeline.
     opening_text: str = ""
+    # July 18 2026: False when this window was accepted by the
+    # fill-to-requested phase (score below ``min_score_threshold`` but
+    # still the best available) rather than by the qualified phase.
+    # Surfaced in metrics as ``shorts_fill_modes`` so the dashboard can
+    # track qualified-vs-filled rates per show.
+    qualified: bool = True
 
 
 # ---------------------------------------------------------------------------
@@ -372,6 +378,8 @@ def pick_top_n_engaging_windows(
     min_start_final: Optional[float] = None,
     min_score_threshold: float = 5.0,
     min_gap_seconds: float = 10.0,
+    fill_to_n: bool = False,
+    min_fill_score: float = 0.0,
 ) -> List[ScoredWindow]:
     """Return up to ``n`` non-overlapping windows ranked by score.
 
@@ -386,12 +394,27 @@ def pick_top_n_engaging_windows(
     This produces the N most engaging windows that are also
     temporally distinct.
 
+    July 18 2026 — ``fill_to_n``: when True and fewer than ``n``
+    candidates beat ``min_score_threshold``, the remaining slots are
+    FILLED with the best non-overlapping sub-threshold candidates whose
+    score is still >= ``min_fill_score`` (default 0.0 — a negative
+    score means a ``_BORING_OPENERS`` hit and is never shipped). Those
+    windows carry ``qualified=False``. Rationale: for the multi-Shorts
+    path the requested count is a POLICY decision already made — the
+    selector's job is ranking, not vetoing. Before this, tier-A shows
+    chronically under-shipped their best-performing format: FF
+    requested 2 Shorts and shipped 1 on EVERY July episode (its calm
+    science prose rarely beats the kicker-phrase-driven threshold),
+    SpaceX shipped 1-of-2 on 3 of 4. The legacy single-window path
+    (``pick_engaging_window``) keeps its threshold-or-fallback
+    semantics unchanged.
+
     Behaviour at the edges:
 
-    * Fewer than ``n`` candidates above ``min_score_threshold`` →
-      returns whatever it found (possibly empty). Caller decides
-      whether to fall back to legacy voice-start for the missing
-      slots.
+    * Fewer than ``n`` candidates above ``min_score_threshold`` (and
+      ``fill_to_n=False``) → returns whatever it found (possibly
+      empty). Caller decides whether to fall back to legacy
+      voice-start for the missing slots.
     * No candidates at all → returns ``[]``.
     * ``n <= 0`` → returns ``[]`` (defensive — caller bug).
     * Transcript unreadable → returns ``[]`` (logged in score_candidates).
@@ -430,6 +453,25 @@ def pick_top_n_engaging_windows(
             picked.append(cand)
             if len(picked) >= n:
                 break
+
+    if fill_to_n and len(picked) < n:
+        import dataclasses as _dc
+        filled = 0
+        for cand in candidates:
+            if len(picked) >= n:
+                break
+            if cand.score >= min_score_threshold:
+                continue  # already considered in the qualified phase
+            if cand.score < min_fill_score:
+                break  # sorted desc — the rest are worse
+            if not _overlaps_any(cand, picked, min_gap_seconds):
+                picked.append(_dc.replace(cand, qualified=False))
+                filled += 1
+        if filled:
+            logger.info(
+                "Smart Shorts selector (top-%d): filled %d slot(s) with "
+                "best sub-threshold window(s) (fill_to_n)", n, filled,
+            )
 
     # Re-sort by start time so the caller can iterate chronologically.
     picked.sort(key=lambda w: w.start_seconds)

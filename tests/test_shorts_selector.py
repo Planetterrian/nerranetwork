@@ -520,3 +520,91 @@ def test_pick_top_n_respects_min_start_final(tmp_path):
         min_start_final=10.0, window_duration=55.0,
     )
     assert out == []
+
+
+class TestFillToRequested:
+    """July 18 2026: fill-to-requested — the multi-Shorts selector ships
+    the best available sub-threshold windows instead of fewer Shorts."""
+
+    @staticmethod
+    def _write_transcript(tmp_path, segments):
+        import json
+        p = tmp_path / "tr.json"
+        p.write_text(json.dumps({"segments": segments}), encoding="utf-8")
+        return p
+
+    def _segments(self):
+        # One strong beat early, mediocre prose later — mimics the FF
+        # failure shape (only one window beats a high threshold).
+        segs = [{
+            "start": 0.0, "end": 8.0,
+            "text": ("Here's the kicker: profits jumped fifty percent to "
+                     "ten million dollars in one day."),
+        }]
+        t = 8.0
+        filler = [
+            "The mission continued with routine operations throughout.",
+            "Engineers reviewed the data and confirmed the results.",
+            "The team documented findings for the next review cycle.",
+            "Observations continued as the spacecraft passed overhead.",
+            "Analysts noted steady progress on the program milestones.",
+        ] * 7
+        for txt in filler:
+            segs.append({"start": t, "end": t + 8.0, "text": txt})
+            t += 8.0
+        return segs
+
+    def test_fill_returns_requested_count(self, tmp_path):
+        from engine.shorts_selector import pick_top_n_engaging_windows
+        tr = self._write_transcript(tmp_path, self._segments())
+        wins = pick_top_n_engaging_windows(
+            tr, n=2, audio_offset=0.0, audio_duration=300.0,
+            window_duration=40.0, min_score_threshold=5.0, fill_to_n=True,
+        )
+        assert len(wins) == 2
+        modes = sorted(w.qualified for w in wins)
+        assert modes == [False, True], (
+            "expected one qualified + one filled window")
+
+    def test_no_fill_preserves_legacy_behavior(self, tmp_path):
+        from engine.shorts_selector import pick_top_n_engaging_windows
+        tr = self._write_transcript(tmp_path, self._segments())
+        wins = pick_top_n_engaging_windows(
+            tr, n=2, audio_offset=0.0, audio_duration=300.0,
+            window_duration=40.0, min_score_threshold=5.0, fill_to_n=False,
+        )
+        assert len(wins) == 1  # only the strong beat qualifies
+        assert all(w.qualified for w in wins)
+
+    def test_negative_scores_never_fill(self, tmp_path):
+        from engine.shorts_selector import pick_top_n_engaging_windows
+        segs = [
+            {"start": 0.0, "end": 8.0,
+             "text": "Here's the kicker: profits doubled to ten million."},
+            # A boring-opener window (negative score) far from the first.
+            {"start": 120.0, "end": 128.0,
+             "text": "Welcome to the show, today on the show we talk."},
+        ]
+        tr = self._write_transcript(tmp_path, segs)
+        wins = pick_top_n_engaging_windows(
+            tr, n=2, audio_offset=0.0, audio_duration=200.0,
+            window_duration=40.0, min_score_threshold=5.0, fill_to_n=True,
+        )
+        assert all(w.score >= 0 for w in wins)
+
+    def test_scored_window_defaults_qualified(self):
+        from engine.shorts_selector import ScoredWindow
+        w = ScoredWindow(0.0, 40.0, 5.0)
+        assert w.qualified is True
+
+    def test_config_flag_exists(self):
+        from engine.config import YouTubeConfig
+        assert YouTubeConfig().shorts_fill_to_requested is True
+
+    def test_ff_threshold_parity(self):
+        import yaml as _yaml
+        from pathlib import Path
+        cfg = _yaml.safe_load(
+            (Path(__file__).resolve().parent.parent
+             / "shows/fascinating_frontiers.yaml").read_text(encoding="utf-8"))
+        assert cfg["youtube"]["shorts_min_score_threshold"] == 3.5

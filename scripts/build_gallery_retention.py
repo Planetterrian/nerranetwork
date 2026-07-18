@@ -100,6 +100,63 @@ def _index_videos(stats: dict) -> tuple:
     return by_id, by_key
 
 
+_MAX_PHRASE_WORDS = 4
+_BOILERPLATE_DOC_FREQ = 0.5  # phrase in >50% of a show's images = boilerplate
+
+
+def _prompt_phrases(prompt: str) -> List[str]:
+    """Comma-split a Grok-Imagine prompt into normalized style phrases."""
+    out: List[str] = []
+    for chunk in (prompt or "").split(","):
+        phrase = " ".join(chunk.lower().split())
+        if not phrase or len(phrase.split()) > _MAX_PHRASE_WORDS:
+            continue
+        out.append(phrase)
+    return out
+
+
+def build_style_tag_index(manifest: Optional[dict]) -> Dict[str, frozenset]:
+    """Per-show boilerplate phrase sets, mined from prompt document frequency.
+
+    July 18 2026: the manifest ``tags`` arrays carry only boilerplate
+    (slug + 'social' + 'grok-imagine'), so the old join produced EMPTY tag
+    summaries — the retention loop collected data but labeled nothing.
+    The real style signal is the ``prompt`` field. Phrases appearing in
+    more than half of a show's images (the shared descriptor suffix like
+    "cinematic", "ultra-detailed", "wide cinematic 16:9 framing") are
+    boilerplate and excluded, with no hand-curated stoplist to maintain.
+    """
+    counts: Dict[str, Dict[str, int]] = defaultdict(lambda: defaultdict(int))
+    totals: Dict[str, int] = defaultdict(int)
+    for entry in (manifest or {}).get("images") or []:
+        slug = entry.get("show_slug") or ""
+        if not slug:
+            continue
+        totals[slug] += 1
+        for phrase in set(_prompt_phrases(entry.get("prompt") or "")):
+            counts[slug][phrase] += 1
+    boilerplate: Dict[str, frozenset] = {}
+    for slug, phrases in counts.items():
+        total = max(1, totals[slug])
+        boilerplate[slug] = frozenset(
+            p for p, c in phrases.items()
+            if c / total > _BOILERPLATE_DOC_FREQ
+        )
+    return boilerplate
+
+
+def _style_tags(entry: dict, boilerplate: frozenset) -> List[str]:
+    """Distinctive style tags for one image: prompt phrases minus
+    boilerplate, plus any non-generic manifest tags."""
+    slug = entry.get("show_slug") or ""
+    tags = [p for p in _prompt_phrases(entry.get("prompt") or "")
+            if p not in boilerplate and p != slug]
+    for t in entry.get("tags") or []:
+        if t and t != slug and t not in _GENERIC_TAGS and t not in tags:
+            tags.append(t)
+    return tags
+
+
 def build(manifest: Optional[dict], stats: Optional[dict],
           *, min_videos: int = 3) -> dict:
     """Compose the retention join. Empty ``shows`` when either side is absent."""
@@ -115,6 +172,7 @@ def build(manifest: Optional[dict], stats: Optional[dict],
     if not by_id:
         return payload
 
+    boilerplate_by_show = build_style_tag_index(manifest)
     shows: Dict[str, dict] = {}
     # tag → list of (video_id, retention) per show, deduped by video so a
     # 4-image episode doesn't count its one video 4 times per tag.
@@ -135,8 +193,7 @@ def build(manifest: Optional[dict], stats: Optional[dict],
         if video is None:
             continue
         retention = float(video.get("average_view_percentage") or 0.0)
-        tags = [t for t in (entry.get("tags") or [])
-                if t and t != slug and t not in _GENERIC_TAGS]
+        tags = _style_tags(entry, boilerplate_by_show.get(slug, frozenset()))
         shows.setdefault(slug, {"images": {}, "summary": {}})
         shows[slug]["images"][image_id] = {
             "video_id": video.get("video_id"),

@@ -4255,13 +4255,66 @@ def _publish_youtube(
     # cred-less environment never pays the Grok call for titles it can't use.
     yt_title = ""
     yt_title_variants: list = []
-    # Long-form-only artifact — skip the Grok call when the adaptive policy
-    # gates long-form off (Shorts titles come from the per-window headline).
-    if _policy_publish_long and getattr(config.youtube, "optimized_titles", True):
-        try:
-            from engine.youtube_titles import generate_youtube_titles
+    yt_punch_text = ""
+    yt_short_titles: list = []
+    _early_shorts_plan: "list[tuple[float, str, str]]" = []
 
-            yt_title_variants = generate_youtube_titles(
+    # July 18 2026: the transcript find + multi-Shorts window selection are
+    # hoisted ABOVE the title call so ONE Grok "title bundle" call can also
+    # produce a thumbnail punch text and a per-window Short title. The
+    # selected plan is reused by the Shorts section below (single source of
+    # truth — no double-selection drift). find_transcript_for_episode is
+    # side-effect-free.
+    transcript_path = find_transcript_for_episode(
+        digests_dir, config.episode.prefix, episode_num, f"{today:%Y%m%d}",
+    )
+    if (_policy_shorts_count > 1
+            and (getattr(config.youtube, "shorts_start_mode", None) or "voice") == "smart"
+            and getattr(config.youtube, "shorts_start_offset", None) is None
+            and transcript_path is not None):
+        try:
+            from engine.shorts_selector import pick_top_n_engaging_windows
+            from engine.audio import get_audio_duration as _early_dur
+            _voice_off = float(
+                getattr(config.audio, "voice_intro_delay", 0.0) or 0.0)
+            _early_ep_dur = _early_dur(str(final_mp3)) or 0.0
+            _early_windows = pick_top_n_engaging_windows(
+                transcript_path,
+                n=_policy_shorts_count,
+                audio_offset=_voice_off,
+                audio_duration=_early_ep_dur,
+                window_duration=float(
+                    config.youtube.short_duration_seconds or 55.0),
+                min_start_final=_voice_off,
+                min_score_threshold=float(getattr(
+                    config.youtube, "shorts_min_score_threshold", 5.0) or 5.0),
+                fill_to_n=bool(getattr(
+                    config.youtube, "shorts_fill_to_requested", True)),
+            )
+            _early_shorts_plan = [
+                (
+                    w.start_seconds,
+                    (w.opening_text or hook).strip() or hook,
+                    "qualified" if getattr(w, "qualified", True) else "filled",
+                )
+                for w in _early_windows
+            ]
+        except Exception as exc:  # noqa: BLE001 — best-effort
+            logger.warning("Early Shorts window selection failed (%s)", exc)
+            _early_shorts_plan = []
+
+    # One Grok call → long-form title candidates + thumbnail punch text +
+    # per-window Short titles. Runs whenever Shorts OR long-form publish
+    # (Shorts are the growth format, and the shared thumbnail ships even on
+    # shorts-only tiers). Best-effort: empty fields fall back to the legacy
+    # hook-based title / hook thumbnail / opening-text Short headlines.
+    if getattr(config.youtube, "optimized_titles", True):
+        try:
+            from engine.youtube_titles import generate_title_bundle
+
+            _window_texts = ([t for _, t, _ in _early_shorts_plan]
+                             or [hook or ""])
+            _bundle = generate_title_bundle(
                 hook=hook or "",
                 digest_text=digest_text or "",
                 show_name=config.name,
@@ -4269,17 +4322,28 @@ def _publish_youtube(
                 keywords=list(getattr(config, "keywords", []) or []),
                 n=3,
                 perf_dir=digests_dir,
+                short_window_texts=_window_texts,
             )
+            yt_title_variants = list(_bundle.get("titles") or [])
+            yt_punch_text = (
+                str(_bundle.get("punch_text") or "")
+                if getattr(config.youtube, "thumbnail_punch_text", True)
+                else ""
+            )
+            yt_short_titles = list(_bundle.get("short_titles") or [])
             if yt_title_variants:
                 yt_title = yt_title_variants[0]
                 result["youtube_title"] = yt_title
                 result["youtube_title_variants"] = yt_title_variants
-                logger.info(
-                    "YouTube optimized title: %r (%d A/B variants)",
-                    yt_title, len(yt_title_variants),
-                )
+            if yt_punch_text:
+                result["thumbnail_punch_text"] = yt_punch_text
+            logger.info(
+                "YouTube title bundle: title=%r punch=%r short_titles=%d",
+                yt_title or "(fallback)", yt_punch_text or "(none)",
+                len([t for t in yt_short_titles if t]),
+            )
         except Exception as exc:  # noqa: BLE001 — never block a publish
-            logger.warning("Optimized title generation skipped: %s", exc)
+            logger.warning("Title bundle generation skipped: %s", exc)
 
     work_dir = digests_dir / "youtube_tmp"
     work_dir.mkdir(parents=True, exist_ok=True)
@@ -4297,6 +4361,7 @@ def _publish_youtube(
             output_path=thumbnail_path,
             hook=hook,
             show_name=show_label,
+            punch_text=yt_punch_text,
         )
         if _thumb_hook_font is not None:
             result["thumbnail_autofit_font_size"] = int(_thumb_hook_font)
@@ -4305,10 +4370,8 @@ def _publish_youtube(
         thumbnail_path = None  # type: ignore[assignment]
 
     # ---- Build captions SRT (optional — falls back to no captions) ----
+    # (transcript_path was found above the title-bundle call.)
     srt_path = None
-    transcript_path = find_transcript_for_episode(
-        digests_dir, config.episode.prefix, episode_num, f"{today:%Y%m%d}",
-    )
     if transcript_path is not None:
         try:
             srt_candidate = work_dir / f"{base_name}.srt"
@@ -4809,6 +4872,7 @@ def _publish_youtube(
                 output_path=_scene_thumb_out,
                 hook=hook,
                 show_name=show_label,
+                punch_text=yt_punch_text,
             )
             thumbnail_path = _scene_thumb_out
             result["thumbnail_base"] = "scene"
@@ -4837,6 +4901,7 @@ def _publish_youtube(
                 hook=hook,
                 show_name=show_label,
                 count=_n_thumb_variants,
+                punch_text=yt_punch_text,
             )
             _variant_urls: "list[str]" = []
             if _variant_paths:
@@ -4884,6 +4949,7 @@ def _publish_youtube(
             output_path=short_thumbnail_path,
             hook=hook,
             show_name=show_label,
+            punch_text=yt_punch_text,
         )
     except Exception as exc:  # pragma: no cover
         logger.warning("Shorts thumbnail generation failed: %s", exc)
@@ -5036,6 +5102,29 @@ def _publish_youtube(
                     video_id=upload.video_id,
                     playlist_id=playlist_id,
                 )
+            # July 18 2026 (operator-approved): post the pinned-comment
+            # template as a REAL channel comment (it was previously only a
+            # copy-paste block in the description). The API can't pin it —
+            # the operator pins manually — but the channel's own comment
+            # surfaces near the top. Best-effort; 403 = graceful no-op.
+            if bool(getattr(config.youtube, "auto_comment", True)):
+                try:
+                    from engine.video_metadata import build_pinned_comment_text
+                    from engine.youtube import post_video_comment
+                    _pin_text = build_pinned_comment_text(
+                        config, hook=hook, episode_num=episode_num,
+                        today_str=today_str,
+                        rss_link=config.publishing.rss_link or "",
+                        audio_url=audio_url or "",
+                    )
+                    if _pin_text and post_video_comment(
+                            credentials=credentials,
+                            video_id=upload.video_id,
+                            text=_pin_text):
+                        result["yt_comments_posted"] = (
+                            int(result.get("yt_comments_posted", 0)) + 1)
+                except Exception as _exc:  # noqa: BLE001
+                    logger.debug("long-form auto-comment skipped: %s", _exc)
             # Upload the SRT as a real caption track. This is on top of
             # the burned-in captions — gives YouTube the CC button +
             # auto-translation + accessibility search. Best-effort:
@@ -5104,41 +5193,14 @@ def _publish_youtube(
                     or "voice"
                 )
             )
-            shorts_plan: "list[tuple[float, str]]" = []
-            if shorts_count_yaml > 1 and mode_resolved == "smart":
-                try:
-                    from engine.shorts_selector import (
-                        pick_top_n_engaging_windows,
-                    )
-                    voice_offset = float(
-                        getattr(config.audio, "voice_intro_delay", 0.0) or 0.0
-                    )
-                    if transcript_path is not None:
-                        shorts_threshold = float(
-                            getattr(getattr(config, "youtube", None), "shorts_min_score_threshold", 5.0) or 5.0
-                        )
-                        windows = pick_top_n_engaging_windows(
-                            transcript_path,
-                            n=shorts_count_yaml,
-                            audio_offset=voice_offset,
-                            audio_duration=_ep_duration,
-                            window_duration=duration,
-                            min_start_final=voice_offset,
-                            min_score_threshold=shorts_threshold,
-                        )
-                        shorts_plan = [
-                            (
-                                w.start_seconds,
-                                (w.opening_text or hook).strip() or hook,
-                            )
-                            for w in windows
-                        ]
-                except Exception as exc:  # pragma: no cover — best-effort
-                    logger.warning(
-                        "Multi-Shorts top-N selection failed (%s) — "
-                        "falling back to single short", exc,
-                    )
-                    shorts_plan = []
+            # July 18 2026: the multi-Shorts windows were selected ONCE,
+            # above the title-bundle call (so Short titles could be
+            # generated from the window texts). Reuse that plan here —
+            # single source of truth, no double-selection drift. The
+            # fill-to-requested behavior (ship the best sub-threshold
+            # windows rather than fewer Shorts) lives in the selector.
+            shorts_plan: "list[tuple[float, str, str]]" = list(
+                _early_shorts_plan)
 
             if not shorts_plan:
                 # Single-Short fallback: legacy resolved offset + the
@@ -5150,16 +5212,17 @@ def _publish_youtube(
                     audio_duration=_ep_duration,
                     transcript_path=transcript_path,
                 )
-                shorts_plan = [(fallback_offset, hook)]
+                shorts_plan = [(fallback_offset, hook, "legacy_fallback")]
 
             # Surface the resolved plan on the result dict. Single-
             # Short fields stay for backwards compatibility with the
             # dashboard / metrics consumers; the list-shaped fields
             # are new and only useful when len(plan) > 1.
             result["shorts_start_offset"] = round(shorts_plan[0][0], 2)
-            result["shorts_start_offsets"] = [round(o, 2) for o, _ in shorts_plan]
+            result["shorts_start_offsets"] = [round(o, 2) for o, _, _ in shorts_plan]
             result["shorts_start_mode_resolved"] = mode_resolved
             result["shorts_count_requested"] = shorts_count_yaml
+            result["shorts_fill_modes"] = [m for _, _, m in shorts_plan]
 
             # ---- Pre-loop assets shared across every Short ----
             _yt = config.youtube
@@ -5241,7 +5304,7 @@ def _publish_youtube(
             short_video_ids_out: "list[str]" = []
             short_errors_out: "list[dict]" = []
             multi = len(shorts_plan) > 1
-            for short_idx, (this_offset, this_hook) in enumerate(shorts_plan):
+            for short_idx, (this_offset, this_hook, _fill_mode) in enumerate(shorts_plan):
                 # Filename suffix is empty for the single-Short case so
                 # the legacy ``{base}_short.mp4`` path stays exactly the
                 # same when ``shorts_per_episode == 1``.
@@ -5392,12 +5455,19 @@ def _publish_youtube(
                         end_card_duration=_end_card_dur,
                         end_card_image_path=_end_card_image_path,
                     )
+                    # July 18 2026: per-window optimized Short title from
+                    # the title bundle ("" -> legacy opening-text headline).
+                    _opt_short_title = (
+                        yt_short_titles[short_idx]
+                        if short_idx < len(yt_short_titles) else ""
+                    ) or None
                     meta = build_short_metadata(
                         config,
                         episode_num=episode_num,
                         today_str=today_str,
                         hook=this_hook,
                         long_form_url=long_url,
+                        optimized_title=_opt_short_title,
                     )
                     upload_thumb = (
                         this_short_thumb_path
@@ -5453,6 +5523,28 @@ def _publish_youtube(
                                 "Playlist add failed for short #%d: %s",
                                 short_idx + 1, exc,
                             )
+                    # July 18 2026 (operator-approved): channel comment
+                    # with the full-episode link - the strongest Shorts->
+                    # long funnel placement after the description. Cannot
+                    # be pinned via API (operator pins manually); 403 is a
+                    # graceful no-op inside post_video_comment.
+                    if bool(getattr(config.youtube, "auto_comment", True)):
+                        try:
+                            from engine.youtube import post_video_comment
+                            _cmt_target = long_url or (
+                                config.publishing.rss_link or "")
+                            _cmt = ("\u25b6 Full episode: " + _cmt_target
+                                    + "\n\U0001f514 Subscribe for daily "
+                                      "episodes") if _cmt_target else ""
+                            if _cmt and post_video_comment(
+                                    credentials=credentials,
+                                    video_id=this_upload.video_id,
+                                    text=_cmt):
+                                result["yt_comments_posted"] = (
+                                    int(result.get("yt_comments_posted", 0))
+                                    + 1)
+                        except Exception as _exc:  # noqa: BLE001
+                            logger.debug("short auto-comment skipped: %s", _exc)
                     # Multi-platform distribution (Instagram Reels / TikTok).
                     # No-op unless config.youtube.multi_platform_enabled; renders
                     # a safe-zone variant + social.json sidecar, optionally hosts

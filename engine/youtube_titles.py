@@ -134,6 +134,122 @@ def generate_youtube_titles(
     return candidates
 
 
+_BUNDLE_PROMPT_PATH = (
+    _REPO_ROOT / "shows" / "prompts" / "_shared" / "youtube_title_bundle.txt"
+)
+# Punch text renders HUGE on the thumbnail — keep it short and honest.
+PUNCH_TEXT_MAX_CHARS = 26
+SHORT_TITLE_MAX_CHARS = 70
+
+
+def _clean_punch(text: str) -> str:
+    """Normalize the thumbnail punch text; '' when unusable."""
+    t = _clean_title(text).upper()
+    # Punch is display text, not a sentence — strip trailing punctuation.
+    t = t.strip().rstrip(".!,;:")
+    words = t.split()
+    if not (1 < len(words) <= 4):
+        return ""
+    if len(t) > PUNCH_TEXT_MAX_CHARS:
+        return ""
+    # Never ship the generic hype words the prompt bans.
+    banned = {"BREAKING", "SHOCKING", "NEWS", "UNBELIEVABLE"}
+    if set(words) & banned and len(words) <= 2:
+        return ""
+    return t
+
+
+def generate_title_bundle(
+    *,
+    hook: str,
+    digest_text: str,
+    show_name: str,
+    episode_num: int,
+    keywords: Optional[List[str]] = None,
+    n: int = 3,
+    model: str = "grok-4.3",
+    perf_dir: Optional[Path] = None,
+    short_window_texts: Optional[List[str]] = None,
+) -> dict:
+    """One Grok call → long-form titles + thumbnail punch + Short titles.
+
+    July 18 2026: extends the optimized-titles call (same cost — still one
+    call per episode) to also return a 2-4 word ALL-CAPS thumbnail "punch
+    text" (the big-text CTR lever) and a punchy ≤60-char title per Short
+    window (Shorts previously shipped raw transcript opening text as their
+    headline).
+
+    Returns ``{"titles": [...], "punch_text": str, "short_titles": [...]}``
+    — every field may be empty; callers fall back exactly as before
+    (hook-based long title, legacy hook thumbnail, opening-text Short
+    titles). Never raises, never blocks an upload.
+    """
+    empty = {"titles": [], "punch_text": "", "short_titles": []}
+    windows = [w.strip() for w in (short_window_texts or []) if w and w.strip()]
+    try:
+        from engine.generator import _call_grok, load_prompt
+
+        window_lines = "\n".join(
+            f"{i + 1}. \"{w[:200]}\"" for i, w in enumerate(windows)
+        ) or "(none)"
+        prompt = load_prompt(
+            str(_BUNDLE_PROMPT_PATH),
+            {
+                "show_name": show_name or "",
+                "episode_num": episode_num,
+                "hook": (hook or "").strip(),
+                "keywords": ", ".join(keywords or []),
+                "digest_excerpt": (digest_text or "")[:2000],
+                "performance_hint": _performance_hint(perf_dir),
+                "short_windows": window_lines,
+                "n": n,
+            },
+        )
+        text, _meta = _call_grok(
+            prompt,
+            model=model,
+            temperature=0.8,
+            max_tokens=500,
+        )
+    except Exception as exc:  # noqa: BLE001 — never block an upload
+        logger.warning("YouTube title bundle generation failed: %s", exc)
+        return empty
+
+    titles: List[str] = []
+    punch = ""
+    short_titles: dict = {}
+    seen: set = set()
+    for raw in (text or "").splitlines():
+        line = raw.strip()
+        m = re.match(r"^(TITLE|PUNCH|SHORT(\d+))\s*:\s*(.+)$", line,
+                     flags=re.IGNORECASE)
+        if not m:
+            continue
+        label = m.group(1).upper()
+        value = m.group(3).strip()
+        if label == "TITLE":
+            cleaned = _clean_title(value)
+            key = cleaned.lower()
+            if (cleaned and len(cleaned) <= YOUTUBE_TITLE_HARD_MAX
+                    and key not in seen and len(titles) < n):
+                seen.add(key)
+                titles.append(cleaned)
+        elif label == "PUNCH" and not punch:
+            punch = _clean_punch(value)
+        else:  # SHORTn
+            idx = int(m.group(2)) - 1
+            cleaned = _clean_title(value)
+            if cleaned and 0 <= idx < max(len(windows), 1):
+                short_titles[idx] = cleaned[:SHORT_TITLE_MAX_CHARS].strip()
+
+    return {
+        "titles": titles,
+        "punch_text": punch,
+        "short_titles": [short_titles.get(i, "") for i in
+                         range(len(windows))],
+    }
+
+
 def best_youtube_title(
     *,
     hook: str,

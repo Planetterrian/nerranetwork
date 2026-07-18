@@ -66,9 +66,20 @@ _METRICS = [
     "estimatedMinutesWatched",
     "averageViewDuration",
     "averageViewPercentage",
+    # July 18 2026 — the growth metric the operator actually wants to
+    # move. Valid with dimensions=video in Analytics v2 (impressions/CTR
+    # remain Studio-only and are still intentionally omitted).
+    "subscribersGained",
+    "subscribersLost",
 ]
 # Analytics API allows up to 500 ids in a single video== filter.
 _BATCH = 200
+
+# Daily channel-level snapshot history (subscribers, total views) —
+# appended once per run, deduped on (date, channel), capped so the file
+# never grows unbounded.
+_CHANNEL_HISTORY_PATH = "api/youtube_channel_history.json"
+_CHANNEL_HISTORY_MAX_ROWS = 800
 
 
 def _load_index(digests_dir: Path) -> List[dict]:
@@ -168,6 +179,88 @@ def _query_batch(service, video_ids: List[str], start: str, end: str) -> Dict[st
     return out
 
 
+def _channel_snapshot(credentials) -> Optional[dict]:
+    """Channel-level statistics via the Data API (subs, total views).
+
+    July 18 2026: subscribers were previously tracked NOWHERE — growth
+    was judged purely on per-video views/retention. Best-effort: None on
+    any failure.
+    """
+    try:
+        from googleapiclient.discovery import build
+        service = build("youtube", "v3", credentials=credentials,
+                        cache_discovery=False)
+        resp = service.channels().list(part="statistics", mine=True).execute()
+        items = resp.get("items") or []
+        if not items:
+            return None
+        stats = items[0].get("statistics") or {}
+        return {
+            "subscribers": int(stats.get("subscriberCount", 0) or 0),
+            "total_views": int(stats.get("viewCount", 0) or 0),
+            "video_count": int(stats.get("videoCount", 0) or 0),
+        }
+    except Exception as exc:  # noqa: BLE001 — optional read, never fatal
+        logger.warning("Channel snapshot failed: %s", str(exc)[:200])
+        return None
+
+
+def _channel_day_series(service, days: int = 30) -> List[dict]:
+    """Channel-level daily views/subscribersGained series (Analytics v2).
+
+    Empty list on any failure — the per-video fetch is the primary read.
+    """
+    try:
+        today = _dt.date.today()
+        start = (today - _dt.timedelta(days=days)).isoformat()
+        resp = service.reports().query(
+            ids="channel==MINE",
+            startDate=start,
+            endDate=today.isoformat(),
+            metrics="views,subscribersGained,subscribersLost",
+            dimensions="day",
+            sort="day",
+        ).execute()
+        headers = [h["name"] for h in resp.get("columnHeaders", [])]
+        return [dict(zip(headers, row)) for row in resp.get("rows", []) or []]
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Channel day-series query failed: %s", str(exc)[:200])
+        return []
+
+
+def append_channel_history(channels: Dict[str, dict],
+                           path: Path) -> None:
+    """Append today's per-channel snapshot rows (idempotent per day).
+
+    Rows: {date, channel, subscribers, total_views}. Re-runs on the same
+    day replace that day's rows instead of duplicating them.
+    """
+    today = _dt.date.today().isoformat()
+    rows: List[dict] = []
+    try:
+        existing = json.loads(path.read_text(encoding="utf-8"))
+        rows = list(existing.get("rows", []))
+    except Exception:  # noqa: BLE001 — first run / unreadable = start fresh
+        rows = []
+    rows = [r for r in rows
+            if not (r.get("date") == today and r.get("channel") in channels)]
+    for channel, snap in sorted(channels.items()):
+        if not snap:
+            continue
+        rows.append({
+            "date": today,
+            "channel": channel,
+            "subscribers": snap.get("subscribers", 0),
+            "total_views": snap.get("total_views", 0),
+        })
+    rows = rows[-_CHANNEL_HISTORY_MAX_ROWS:]
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps({"rows": rows}, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+
+
 def fetch(digests_dir: Path, days: int) -> Optional[dict]:
     """Build the stats payload, or None if there is nothing to do."""
     videos = _load_index(digests_dir)
@@ -190,6 +283,7 @@ def fetch(digests_dir: Path, days: int) -> Optional[dict]:
         by_channel[(v.get("channel") or "en").lower()].append(v)
 
     metrics_by_video: Dict[str, dict] = {}
+    channels_block: Dict[str, dict] = {}
     any_data = False
     for channel, rows in by_channel.items():
         creds = get_channel_credentials_from_env(channel)
@@ -206,6 +300,12 @@ def fetch(digests_dir: Path, days: int) -> Optional[dict]:
             if got:
                 any_data = True
             metrics_by_video.update(got)
+        # Channel-level snapshot + 30-day day-series (subs growth).
+        snap = _channel_snapshot(creds) or {}
+        series = _channel_day_series(service)
+        if snap or series:
+            snap["day_series"] = series
+            channels_block[channel] = snap
 
     if not any_data:
         logger.info("No analytics returned (no scope / no data yet) — no-op")
@@ -233,12 +333,20 @@ def fetch(digests_dir: Path, days: int) -> Optional[dict]:
             "estimated_minutes_watched": float(m.get("estimatedMinutesWatched", 0) or 0),
             "average_view_duration_s": float(m.get("averageViewDuration", 0) or 0),
             "average_view_percentage": float(m.get("averageViewPercentage", 0) or 0),
+            "subscribers_gained": int(float(m.get("subscribersGained", 0) or 0)),
+            "subscribers_lost": int(float(m.get("subscribersLost", 0) or 0)),
         })
 
     return {
-        "schema_version": 1,
+        # v2 (July 18 2026): adds the top-level "channels" block
+        # (per-channel subscriber snapshot + 30d day-series) and
+        # per-video subscribers_gained/lost. The "shows" shape is
+        # unchanged, so every existing consumer (performance updater,
+        # policy builder, gallery retention) keeps working.
+        "schema_version": 2,
         "generated": _dt.datetime.now(_dt.timezone.utc).isoformat(),
         "window_days": days,
+        "channels": channels_block,
         "shows": shows,
     }
 
@@ -262,6 +370,15 @@ def main() -> int:
     if args.dry_run:
         print(json.dumps(payload, indent=2, ensure_ascii=False)[:4000])
         return 0
+
+    if payload.get("channels"):
+        append_channel_history(
+            payload["channels"], _ROOT / _CHANNEL_HISTORY_PATH,
+        )
+        logger.info(
+            "Channel history appended: %s",
+            {c: s.get("subscribers") for c, s in payload["channels"].items()},
+        )
 
     out_path = _ROOT / args.out
     out_path.parent.mkdir(parents=True, exist_ok=True)

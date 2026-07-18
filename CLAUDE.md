@@ -1353,6 +1353,32 @@ default true) = exact legacy YAML behavior. The policy never edits YAML
 files at runtime and never touches audio (outside landmine #17). Drift
 guards: `tests/test_youtube_policy.py`.
 
+**July 18 2026 growth pass** (review:
+[`docs/reviews/youtube_growth_review_2026_07_18.md`](docs/reviews/youtube_growth_review_2026_07_18.md);
+drift guards: `tests/test_youtube_growth_pass.py`,
+`tests/test_shorts_selector.py::TestFillToRequested`): post-policy
+verification found tier gating exact, RU titles fixed, and RU/EN Shorts
+massively outperforming long-form — but tier-A shows chronically
+under-shipped Shorts (FF 1-of-2 on EVERY July episode). Shipped:
+**fill-to-requested** in the multi-Shorts selector (sub-threshold windows
+ship rather than fewer Shorts; `qualified` flag + `shorts_fill_modes`
+metric; FF threshold 3.5 parity); **RU multi-Shorts** (policy may raise to
+2 — RU Shorts are the network's best surface, spacex-RU short_vpd 30);
+**subscriber tracking** (analytics schema v2: per-video subscribersGained,
+channel snapshots + `api/youtube_channel_history.json`, dashboard card,
+subs-blended title hints — subscribers were previously tracked nowhere);
+**title bundle** (one Grok call → long titles + 2-4-word ALL-CAPS
+thumbnail punch text + per-window Short titles; empty fields = exact
+legacy fallbacks; opt-outs `thumbnail_punch_text` / `optimized_titles`);
+**auto-comments** (`engine.youtube.post_video_comment` — long-form posts
+the pinned-comment template, Shorts post the full-episode funnel link, RU
+only when a RU long exists; API can't pin, operator pins in Studio;
+opt-out `auto_comment`); **channel-specific long-form floor**
+(`LONG_VPD_FLOOR` en 1.0 / ru 2.0 — RU longs earned ~9% retention);
+**gallery-retention style tags** now mined from image prompts (per-show
+doc-frequency boilerplate filter). Operator declined publishAt scheduling
+(uploads stay immediate). All render/metadata-side — outside landmine #17.
+
 ### Testing
 
 ```bash
