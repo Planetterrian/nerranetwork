@@ -809,3 +809,34 @@ class TestFollowUpEpisodes:
         # brief was the ceiling — the digest floor is the length lever.
         assert CFG.llm.min_digest_words == 1100
         assert CFG.llm.digest_expand_below_target is True
+
+
+class TestNetworkPickRotationMemory:
+    """July 18 2026 network review: the daily Network pick converged on
+    Fascinating Frontiers (5/10, consecutive days, same host + frame).
+    The hook now mines recent Network pick lines into a vary-away list."""
+
+    def test_pick_memory_mines_digests_newest_first(self, tmp_path, monkeypatch):
+        import shows.hooks.dp_pod as hook
+
+        monkeypatch.setattr(hook, "_ROOT", tmp_path)
+        d = tmp_path / "digests" / "dp_pod"
+        d.mkdir(parents=True)
+        (d / "DP_Pod_Ep010_20260714.md").write_text(
+            "**Network pick:** Planetterrian Daily — quantum heat engines.\n",
+            encoding="utf-8")
+        (d / "DP_Pod_Ep011_20260715.md").write_text(
+            "**Network pick:** Fascinating Frontiers — booster recovery.\n",
+            encoding="utf-8")
+        out = hook._recent_network_picks()
+        assert "RECENT NETWORK PICKS" in out
+        assert out.index("Fascinating Frontiers") < out.index("Planetterrian Daily")
+
+    def test_pick_memory_in_context(self, tmp_path, monkeypatch):
+        import shows.hooks.dp_pod as hook
+
+        monkeypatch.setattr(hook, "_ROOT", tmp_path)
+        (tmp_path / "digests" / "dp_pod").mkdir(parents=True)
+        ctx = hook.pre_fetch(None)["nerra_network_context"]
+        # No history → no section, and the hook never crashes.
+        assert "THE NERRA NETWORK" in ctx

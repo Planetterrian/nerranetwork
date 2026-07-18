@@ -382,3 +382,44 @@ class TestLedger:
             "meta-review",
         ):
             assert needle in text, f"playbook lost its recursive-loop step: {needle}"
+
+
+class TestSnapshotFetchFilterLeakage:
+    """July 18 2026 meta-review: fetch-filter predictions sat pending for
+    weeks because nothing counted them — the snapshot now scans recent
+    digests for lines whose (bold-title) text matches the show's own
+    exclude_title_patterns."""
+
+    def test_leakage_section_present_for_filter_shows(self):
+        import subprocess
+        import sys
+        out = subprocess.run(
+            [sys.executable, str(ROOT / "scripts" / "review_snapshot.py"), "planetterrian"],
+            capture_output=True, text=True, timeout=120,
+        ).stdout
+        assert "## Fetch-filter leakage" in out
+
+    def test_date_suffix_does_not_false_match(self):
+        # SpaceX digest titles end "(YYYY-MM-DD)" which false-matched the
+        # id-shaped junk-title pattern until the probe stripped it.
+        import subprocess
+        import sys
+        out = subprocess.run(
+            [sys.executable, str(ROOT / "scripts" / "review_snapshot.py"), "spacex"],
+            capture_output=True, text=True, timeout=120,
+        ).stdout
+        section = out.split("## Fetch-filter leakage", 1)[1].split("##", 1)[0]
+        assert "(2026-" not in section, (
+            "date suffixes must not register as junk-title filter hits"
+        )
+
+
+class TestDashboardVoiceBaseline:
+    def test_ru_baseline_is_the_grok_olya_voice(self):
+        # The stale ElevenLabs RU baseline flagged FP/PR/age_of_ai as voice
+        # drift on every dashboard build (false positives train the
+        # operator to ignore warnings).
+        text = (ROOT / "scripts" / "generate_dashboard.py").read_text(
+            encoding="utf-8")
+        assert '_VOICE_ID_RU = "0b875ae2"' in text
+        assert '"ara"' in text.split("_SANCTIONED_EXTRA_VOICES", 1)[1][:80]

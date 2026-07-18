@@ -249,6 +249,34 @@ def parse_chapters(
         logger.info("No chapter markers matched in podcast script for %s", show_name)
         return []
 
+    # A `where: end` chapter (the Closing/Sign-Off) is FINAL: nothing may
+    # start after it. The rotating network cross-promo outro (July 16 2026)
+    # names sibling shows AFTER the closing, and un-anchored body markers
+    # were stealing those mentions as spurious final chapters — Tesla Ep544
+    # shipped a "First Principles" chapter at 642s (after Closing at 616s)
+    # from the promo line "try First Principles Daily next", and MIT Ep104
+    # an "Investor Education" chapter from the promo's "daily deep dive"
+    # (July 18 2026 network review). Same theft class FF fixed June 24 by
+    # dropping bare markers — this closes it engine-wide.
+    # The terminal signal is the closing TITLE (network convention — same
+    # set the snapshot checker accepts), NOT the `where: end` anchor: EI
+    # deliberately anchors only its Tomorrow Teaser while its Closing
+    # marker is position-free, and a teaser may legitimately precede the
+    # closing. Cut at the LAST closing-titled match.
+    _terminal = ("closing", "sign-off", "завершение", "прощание")
+    closing_positions = [
+        w for w, _c, t in matches if t.strip().lower() in _terminal
+    ]
+    if closing_positions:
+        closing_at = max(closing_positions)
+        stolen = [t for w, _c, t in matches if w > closing_at]
+        if stolen:
+            logger.warning(
+                "Dropping %d chapter(s) starting after the closing "
+                "(promo-tail marker theft): %s", len(stolen), stolen,
+            )
+            matches = [m for m in matches if m[0] <= closing_at]
+
     # Build Chapter objects from matches
     chapters: list[Chapter] = []
     for i, (w_start, c_start, title) in enumerate(matches):
