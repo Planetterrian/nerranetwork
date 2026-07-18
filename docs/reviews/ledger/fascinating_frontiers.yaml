@@ -306,6 +306,45 @@ reviews:
       ab_listen_required: true
       rationale: Direct response to 7/10 episodes landing below 1700 words while staying inside the digest ceiling.
     agent_cost_usd: 0.0651
+  - date: '2026-07-18'
+    pr: null
+    doc: docs/reviews/fascinating_frontiers_review_2026_07_18.md
+    generated_by: grok-4.3
+    summary: This pass finds persistent under-length (9/10 episodes below 1700-word floor) and recurring network-plug boilerplate tics (10/10 episodes) with fetch-filter leakage on ephemeris titles still visible in transcripts; all prior chapter-order, stock-filter, and garble fixes remain clean.
+    scored_prior_predictions:
+    - metric: episodes below 1700-word floor
+      verdict: partial
+      evidence: 9/10 episodes below floor (snapshot); still digest-ceiling limited
+    - metric: occurrences of network-plug boilerplate in _tts.txt
+      verdict: hit
+      evidence: 10/10 episodes contain the exact network-closing sentences
+    shipped: []
+    deferred:
+    - Cosmic Deep Dive length lever (carried; four-show A/B still open)
+    - Mid-section digest-driven chapter titles (network lever)
+    - Theme residual 'science nasa' (low harm)
+    - Curated narrative-tracker status pass (operator task)
+    predictions:
+    - metric: ephemeris/sky-tonight title leakage in shipped digests
+      baseline: 3 of last 10 episodes (Ep126/128/134)
+      expected: 0 leakage after next filter tightening
+      verdict: pending
+      evidence: null
+    - metric: occurrences of 'keep an eye on the' teaser opener across 10 episodes
+      baseline: 6-9/10
+      expected: still 6+/10 (no prompt change shipped)
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/prompts/fascinating_frontiers_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Reduces the 6-9/10-episode teaser tic observed in transcripts while preserving forward-looking function
+    - file: shows/fascinating_frontiers.yaml
+      kind: config
+      ab_listen_required: false
+      rationale: Addresses remaining fetch-filter leakage visible in Ep126/128/134 transcripts (deterministic, no audio change)
+    agent_cost_usd: 0.0646
 do_not_retry:
   - idea: Phonetic respellings or programmatic speech-tag injection.
     evidence: >-
