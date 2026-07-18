@@ -114,6 +114,43 @@ Classify findings exactly as prior passes did:
 Every finding must be verified against the working tree with `file:line`
 citations. A claim you did not verify does not go in the review.
 
+### Category rules learned from ledger verdict rates (July 2026 meta-review)
+
+The aggregate ledger record (docs/reviews/ledger/) shows finding categories
+have very different real-world hit rates. Apply these rules:
+
+- **Length findings: digest-substrate levers ONLY.** ~10 podcast-side
+  length predictions (word floors, expand-retries, prompt pressure) have
+  MISSED against 1 hit; every miss re-diagnosed to the digest ceiling.
+  Never propose a podcast-side length lever again (this generalizes the
+  FF/FPD `do_not_retry` entries network-wide). Legitimate levers: digest
+  expansion (`digest_expand_below_target`/`min_digest_words`),
+  licensed-knowledge section floors, full-text article fetch.
+- **De-seed by shape, never with a quotable example.** ≥4 documented cases
+  of a show electing the prompt's own example phrase (or the first rotation
+  menu item) as its next tic. A de-seed must use shape descriptions +
+  a verbatim ban + rotation MEMORY (a do-not-reuse list from recent
+  episodes), and MUST add a successor-tic prediction to the ledger so the
+  next review catches the third-generation convergence.
+- **Garble/pronunciation restore fixes and fetch filters are the
+  highest-yield categories** (~100% hit, deterministic, mostly no-A/B) —
+  weight them up. The snapshot's fetch-filter leakage section counts
+  excluded-class content in shipped digests so these predictions get
+  scored mechanically.
+- **No conditional predictions.** A prediction of the form "7+/10 IF the
+  deferred lever ships" auto-scores `miss` when the lever stays deferred
+  and pollutes the category rates. Predict only what the shipped change
+  controls; score lever-gated hopes as `n/a-lever-not-shipped`.
+- **Escalate instead of re-filing.** If the same metric has missed twice
+  with the identical proposal attached, do not file the proposal a third
+  time — write an explicit operator-decision item in the review doc
+  naming the two misses and the decision needed.
+- **Closed-unmerged review PRs are NOT automatically rejections.** Before
+  writing `do_not_retry` from a closed PR, check its closure comment:
+  infrastructure closes (content landed via another PR, unmergeable
+  branch, API failures) leave the ideas live. Record a rejection only on
+  an explicit operator signal.
+
 ## Phase 3 — Implement
 
 - **Implement** P0 and P1 fixes that are code-only and clearly safe.
@@ -173,6 +210,12 @@ citations. A claim you did not verify does not go in the review.
    with the metric, today's baseline, and the expected value. The next
    review scores it; a fix whose prediction can't be stated probably isn't
    a fix. Record `agent_cost_usd` if you know it, else leave null.
+   **This obligation applies to EVERY pass that writes a review doc with
+   predictions — including operator-directed network/audio/YouTube passes
+   outside the rotation.** (July 2026 meta-review: five July passes wrote
+   predictions into docs only; the rotation could not score them.) A doc
+   containing predictions without a matching ledger entry is an unfinished
+   deliverable.
 5. Update the show's quality-pass notes in `CLAUDE.md` (concise — follow the
    existing June 2026 entries' style) if behavior changed.
 6. Branch named `agent/review-<slug>-<YYYYMMDD>` (this exact prefix is how

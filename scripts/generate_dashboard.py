@@ -82,9 +82,18 @@ _NON_SHOW_YAMLS = {
     "network_meta", "scaffold_pending", "translation_overrides",
 }
 
-# Canonical Russian voice id (pulled from CLAUDE.md; shows/_defaults.yaml ships
-# the English default). Shows may override with either the EN or RU voice id.
-_VOICE_ID_RU = "gedzfqL7OGdPbwm0ynTP"
+# Canonical Russian voice id (the custom "Olya" Grok voice — the May 2026
+# full-network Grok migration retired the old ElevenLabs RU voice
+# gedzfqL7OGdPbwm0ynTP, but this baseline kept pointing at it, flagging
+# FP/PR/age_of_ai as "voice drift" on every dashboard build — a stale-baseline
+# false positive that trains the operator to ignore warnings; July 18 2026
+# network review). shows/_defaults.yaml ships the English default.
+_VOICE_ID_RU = "0b875ae2"
+
+# Per-show sanctioned voice exceptions beyond the EN/RU pair: Age of AI's
+# Mira persona deliberately uses the Grok built-in `ara` (NOT the Patrick
+# clone — CLAUDE.md AOAI section).
+_SANCTIONED_EXTRA_VOICES = {"ara"}
 
 # Stale CLAUDE.md triple we use to detect documentation drift (item 9).
 _CLAUDE_MD_OLD_VOICE_TRIPLE = "0.65/0.9/0.85"
@@ -797,8 +806,12 @@ def audit_voice_config(shows: List[Dict[str, Any]], root: Path) -> Dict[str, Any
                 row["drift"].append({
                     "field": key, "expected": expected, "actual": actual,
                 })
-        # Voice id must be one of the two blessed voices.
-        if row["voice_id"] not in (baseline["voice_id_en"], baseline["voice_id_ru"]):
+        # Voice id must be one of the blessed voices (EN/RU pair plus the
+        # per-show sanctioned exceptions, e.g. age_of_ai's Mira `ara`).
+        if row["voice_id"] not in (
+            baseline["voice_id_en"], baseline["voice_id_ru"],
+            *_SANCTIONED_EXTRA_VOICES,
+        ):
             row["drift"].append({
                 "field": "voice_id",
                 "expected": f"{baseline['voice_id_en']} or {baseline['voice_id_ru']}",

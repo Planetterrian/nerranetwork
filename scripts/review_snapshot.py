@@ -246,6 +246,56 @@ def build_snapshot(slug: str, episodes: int = 10) -> str:
         lines.append("- (no cross-episode repeated phrases above threshold)")
     lines.append("")
 
+    # --- Fetch-filter leakage (July 18 2026 network meta-review) ---
+    # Fetch-filter predictions (PT astronomy, SpaceX junk titles, FF
+    # ephemeris) sat "pending" for weeks because nothing counted them
+    # mechanically. Scan the show's recent DIGESTS for lines matching its
+    # own exclude_title_patterns: a hit means excluded-class content still
+    # reached shipped output (a filter bypass — the Ep116 web-search route
+    # class), zero means the filter held.
+    patterns = show_cfg.get("exclude_title_patterns") or []
+    if patterns:
+        compiled = []
+        for p in patterns:
+            try:
+                compiled.append(re.compile(p, re.IGNORECASE))
+            except re.error:
+                continue
+        digest_files = _latest(
+            [p for p in out_dir.glob("*.md")
+             if "_transcript" not in p.name and "_tts" not in p.name],
+            episodes,
+        )
+        hits = []
+        for num, path in digest_files:
+            text = path.read_text(encoding="utf-8", errors="replace")
+            for line in text.splitlines():
+                # The patterns target fetched article TITLES. Digest item
+                # lines wrap the title in **bold** and append source/date
+                # suffixes ("— Source (2026-07-12)") that false-match some
+                # patterns — test the bold title when present, else the line.
+                m = re.search(r"\*\*(.+?)\*\*", line)
+                probe = m.group(1) if m else line
+                # Digest titles often carry a "(YYYY-MM-DD)" date suffix that
+                # false-matches id-shaped patterns — strip it before probing.
+                probe = re.sub(r"\s*\(\d{4}-\d{2}-\d{2}\)\s*$", "", probe)
+                for rx in compiled:
+                    if rx.search(probe):
+                        hits.append((num, rx.pattern, line.strip()[:90]))
+                        break
+        lines.append(
+            f"## Fetch-filter leakage ({len(patterns)} exclude_title_patterns "
+            f"vs last {len(digest_files)} digests)"
+        )
+        if hits:
+            for num, pat, excerpt in hits[:10]:
+                lines.append(f"- ep{num}: /{pat}/ matched “{excerpt}”")
+            if len(hits) > 10:
+                lines.append(f"- (+{len(hits) - 10} more)")
+        else:
+            lines.append("- 0 hits — excluded-class content absent from shipped digests")
+        lines.append("")
+
     # --- Chapter shape ---
     chapter_files = _latest(out_dir.glob("chapters_ep*.json"), episodes)
     lines.append(f"## Chapter shape (last {len(chapter_files)} episodes)")

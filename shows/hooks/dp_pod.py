@@ -248,6 +248,43 @@ def _latest_first_principles_brief() -> str:
         return ""
 
 
+def _recent_network_picks(max_digests: int = 6) -> str:
+    """Shows recommended in recent Network pick lines (rotation memory).
+
+    July 18 2026 network review: without memory, the daily pick converged —
+    Fascinating Frontiers was the pick in 5 of 10 episodes including
+    consecutive days, mostly voiced by Dan with the same "If you liked X…"
+    frame. The prompt already demands variety; this supplies the data.
+    Mined from this show's own committed digests, newest first. Returns ""
+    before enough history exists.
+    """
+    try:
+        display_names = [name for _d, name, _p in _NETWORK_SHOWS]
+        md_files = sorted((_ROOT / "digests" / "dp_pod").glob("*.md"), reverse=True)
+        picks: list[str] = []
+        for md in md_files[:max_digests]:
+            text = md.read_text(encoding="utf-8")
+            m = re.search(r"\*\*Network pick:\*\*\s*(.+)", text)
+            if not m:
+                continue
+            line = m.group(1)
+            for name in display_names:
+                if name in line:
+                    picks.append(name)
+                    break
+        if not picks:
+            return ""
+        return (
+            "RECENT NETWORK PICKS (newest first — do NOT pick any show from "
+            "the last two days again today, and vary the recommending host "
+            "and the phrasing; the pointer must never become a fixed "
+            "one-show beat): " + ", ".join(picks)
+        )
+    except Exception as exc:
+        logger.warning("dp_pod hook: pick history unavailable (non-fatal): %s", exc)
+        return ""
+
+
 def pre_fetch(config, *, episode_num=None, today_str=None) -> dict:
     catalog = "\n".join(f"- {name} — {pitch}" for _dir, name, pitch in _NETWORK_SHOWS)
     sections = [
@@ -268,6 +305,10 @@ def pre_fetch(config, *, episode_num=None, today_str=None) -> dict:
     if thinkers:
         sections.append("")
         sections.append(thinkers)
+    picks = _recent_network_picks()
+    if picks:
+        sections.append("")
+        sections.append(picks)
     prev_lever = _previous_lever_for_dispatch()
     if prev_lever:
         sections.append("")

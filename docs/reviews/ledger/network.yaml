@@ -53,21 +53,106 @@ reviews:
           (double-spoken closings, verbatim-doubled sentences)
         baseline: "MAB 5/15 double closings; M&A Ep087 doubled sentences"
         expected: "0 across the next 2 weeks of episodes"
-        verdict: pending
-        evidence: null
+        verdict: partial
+        evidence: "2026-07-18: the two fixed classes did not recur, but
+          sibling classes shipped — SpaceX Ep034 whole-deep-dive spoken
+          twice (final-script path, fixed 07-16, Ep035/036 clean) and MAB
+          5/14 MISSING closings from two new causes (fixed 07-16; all four
+          defective episodes re-parse clean with the current config)." 
       - metric: snapshot visibility of Cyrillic tics + missing-final-Closing
           chapter shapes
         baseline: "snapshot cleared FP while a template ran 7/8, and cleared
           EI while 3/5 shipped orphaned Closings"
         expected: "the next FP/EI snapshots surface these classes
           mechanically (no hand-reading required)"
-        verdict: pending
-        evidence: null
+        verdict: partial
+        evidence: "2026-07-18: both checks landed and caught real defects
+          (FP Cyrillic tics surfaced; EI Ep49-51 orphan Closings caught by
+          the 07-13 review), but the Closing check was English-only until
+          07-16 and false-flagged every FP episode in the interim." 
       - metric: same-day sibling story duplication (PT vs FF lead stories)
         baseline: "6 consecutive days of verbatim astronomy duplication"
         expected: "0 after the PT fetch filter"
-        verdict: pending
-        evidence: null
+        verdict: partial
+        evidence: "2026-07-18: verbatim same-day duplication ended, but the
+          astronomy class kept leaking via the unfiltered web-search route
+          until the 07-16 fix (PT Ep116/119/120); PT clean since. FF's own
+          ephemeris class remains open (3/10 recent episodes — reopened as
+          a 07-18 finding)." 
     agent_cost_usd: null
 
-do_not_retry: []
+  - date: 2026-07-18
+    pr: null
+    doc: docs/reviews/network_review_2026_07_18.md
+    reviewer: claude-code (goals & differentiation audit + meta-review)
+    summary: >
+      Operator-requested whole-network audit: are goals met, is the product
+      differentiated. Verdict: factory world-class (100% success, ~$35/mo,
+      90 eps/wk, 5 languages), funnel nearly absent (3,070 downloads/30d,
+      3 newsletter subs); differentiation is topical authority (Tesla+M&A+
+      SpaceX=53% of downloads), the two most differentiated bets (DP Pod,
+      Age of AI) are dark. Shipped: closing-is-final chapter invariant
+      (Tesla Ep544 / MIT Ep104 promo-tail theft), DP Pod network-pick
+      rotation memory, dashboard voice-baseline fix (stale ElevenLabs RU
+      baseline = false-positive drift warnings), snapshot fetch-filter
+      leakage counter, playbook category rules + ledger-discipline rule
+      from the full 15-ledger meta-review. Verified: 07-16 denoise chain
+      ENGAGED in shipped audio (re-denoise removes ~0 dB). P0 operator
+      item: FP/PR publish off-schedule via the daily-audit retry path
+      (three configs disagree on cadence).
+    shipped:
+      - "engine/chapters.py: where:end chapter is final — post-closing
+        promo-tail marker theft dropped engine-wide (verified re-parse of
+        Tesla Ep544 + MIT Ep104)"
+      - "shows/hooks/dp_pod.py: _recent_network_picks rotation memory
+        (FF was the pick 5/10 with a fixed host+frame)"
+      - "scripts/generate_dashboard.py: RU voice baseline 0b875ae2 + ara
+        sanctioned (kills every-build false drift warnings)"
+      - "scripts/review_snapshot.py: fetch-filter leakage section
+        (immediately scored 3 long-pending filter predictions)"
+      - ".claude/commands/review-show.md: category rules (digest-only
+        length levers, de-seed-by-shape+memory, no conditional
+        predictions, two-miss escalation, rejection-signal bar for
+        do_not_retry) + ledger-entry-required rule"
+    deferred:
+      - "P1-3 tic de-seeds (FP x2 100% saturation, MIT seeded transition,
+        PT takeaway, PR secret opener) — A/B-gated proposals in the doc"
+      - "P1-2 FF ephemeris digest-scope bullet — A/B-gated (title filters
+        cannot hold the line; digest normalizes titles)"
+      - "chronic under-length: OV 07-18 slot-depth realignment is the
+        class-wide read; podcast-side levers now banned via do_not_retry"
+      - "operator: RU cadence decision (P0-1), dp_pod feed submission +
+        first real dispatch, FPD distribution gate, FPD/PR product
+        decision, Age of AI launch, EI all-BC drift watch"
+    predictions:
+      - metric: chapters starting after the Closing chapter, network-wide
+        baseline: "2 in the last 10 days (Tesla Ep544, MIT Ep104)"
+        expected: "0 in the next 2 weeks (engine invariant)"
+        verdict: pending
+        evidence: null
+      - metric: dp_pod Network pick concentration (single show share of
+          last 10 picks)
+        baseline: "5/10 Fascinating Frontiers incl. consecutive days"
+        expected: "no show >3/10, no consecutive-day repeats"
+        verdict: pending
+        evidence: null
+      - metric: dashboard voice-drift warnings on FP/PR/age_of_ai
+        baseline: "3 false-positive warns on every build"
+        expected: "0 (only real drift warns)"
+        verdict: pending
+        evidence: null
+      - metric: FF ephemeris/almanac items in shipped digests (snapshot
+          leakage counter)
+        baseline: "3 in last 10 episodes"
+        expected: "0 within 2 weeks of the (A/B-gated) digest-scope bullet
+          shipping; n/a-lever-not-shipped if it stays unapplied"
+        verdict: pending
+        evidence: null
+
+do_not_retry:
+  - idea: podcast-side length levers (word floors, expand-retries, prompt
+      pressure on the podcast stage) for ANY show
+    evidence: "ledger aggregate 2026-07-18: ~10 misses vs 1 hit across
+      Tesla/EI/OV/FF/PT/FP(D)/MAB/SpaceX; every miss re-diagnosed to the
+      digest ceiling. Digest-substrate levers only (digest_expand,
+      licensed-knowledge floors, full-text fetch)."

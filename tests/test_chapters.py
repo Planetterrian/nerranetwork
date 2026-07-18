@@ -811,3 +811,52 @@ class TestAutoSegmentFallback:
                 f"Gap or overlap between chapter {i} ({chapters[i].title}) "
                 f"and {i+1} ({chapters[i+1].title})"
             )
+
+
+class TestClosingIsFinal:
+    """July 18 2026 network review: the rotating network cross-promo outro
+    names sibling shows AFTER the closing, and un-anchored body markers
+    stole those mentions as spurious final chapters (Tesla Ep544 "First
+    Principles" at 642s after Closing at 616s; MIT Ep104 "Investor
+    Education"). A `where: end` chapter is final — nothing starts after it."""
+
+    MARKERS = [
+        {"pattern": "welcome to the show", "title": "Introduction", "where": "start"},
+        {"pattern": "first principles", "title": "First Principles"},
+        {"pattern": "that's all for today", "title": "Closing", "where": "end"},
+    ]
+
+    def _script(self, body_mentions_fp: bool) -> str:
+        body = ["Welcome to the show everyone."]
+        body += ["Filler sentence with plenty of ordinary words here."] * 60
+        if body_mentions_fp:
+            body.insert(30, "Let's apply first principles to this story.")
+        body += ["That's all for today, thanks for listening."]
+        # The promo tail AFTER the closing names the sibling show.
+        body += ["Quick tip from the network: try First Principles Daily next."]
+        return "\n\n".join(body)
+
+    def test_promo_tail_cannot_steal_a_chapter(self):
+        from engine.chapters import parse_chapters
+
+        chapters = parse_chapters(
+            self._script(body_mentions_fp=False), self.MARKERS,
+            show_name="t", min_chapters=1,
+        )
+        titles = [c.title for c in chapters]
+        assert titles[-1] == "Closing", titles
+        assert "First Principles" not in titles, (
+            "the only 'first principles' mention is in the post-closing "
+            "promo tail — it must not become a chapter"
+        )
+
+    def test_body_match_before_closing_still_chapters(self):
+        from engine.chapters import parse_chapters
+
+        chapters = parse_chapters(
+            self._script(body_mentions_fp=True), self.MARKERS,
+            show_name="t", min_chapters=1,
+        )
+        titles = [c.title for c in chapters]
+        assert "First Principles" in titles
+        assert titles[-1] == "Closing", titles
