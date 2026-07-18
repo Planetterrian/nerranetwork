@@ -1,0 +1,100 @@
+Hey everyone, welcome to Models and Agents episode 115 for July 18th, 2026.
+Your daily AI briefing. Let's see what happened in the AI world today.
+And trust me, it's been busy. Moonshot just dropped the largest open-weight model yet
+at 2.8 trillion parameters, matching top-closed systems on long horizon agentic benchmarks.
+This release continues the open-weight model's arc we tracked last week.
+It narrows the open-versus-closed performance gap on agentic tasks while raising new questions
+about commercial licensing terms. Moonshot AI released Kemi-K3 with a 1 million token context
+window, native vision, and always on reasoning mode. The model leads on Browse Comp at 91.2
+and ranks second on AA-brief case behind only Claude Fable 5. Full weights land July 27th.
+Builders should test its single agent long horizon workflows immediately.
+Moonshot AI released Kemi-K3, a 2.8 trillion parameter frontier model with a 1 million token
+context window, native visual understanding, and an always on thinking mode.
+The model uses two internal architectural innovations, Kemi Delta attention hybrid linear
+attention and attention residuals. It is priced at $3 per million input tokens and $15 per
+million output tokens, with cashed inputs at $0.30. On GDP, Valhife and AAV2, it scored 1,687.
+Third overall, on AA-brief case, it reached 1,527. Second place.
+It set a new state of the art on Browse Comp at 91.2 in a single agent setup without context
+compression. The company also demonstrated 48-hour autonomous chip design and compressed
+multi-week astrophysics research into two hours. Full weights arrived July 27th,
+watch for community fine tunes and agent harness integrations. Open AI announced GPT 5.6
+sole reached a new state of the art in cyber security on the last one's cyber range.
+The model now powers Codex security for finding, validating, and fixing real-world vulnerabilities.
+It is already integrated into the Codex security plug-in workflow. Mira Merade's thinking
+machines lab released inkling and Apache 2.0 multimodal mixture of experts model with 975
+billion total parameters and 41 billion active. It was trained on 45 trillion tokens of text,
+images, audio, and video. A smaller 276 billion total parameter variant with 12 billion active
+is in testing. It is positioned as a strong base for fine tuning via the tinker platform.
+Zifra released Zuna 1.1, a 380 million parameter masked diffusion autoencoder for Scalp EEG under
+Apache 2.0. It accepts variable length inputs from 0.5 to 30 seconds while holding or improving
+normalized mean square error across arbitrary channel layouts. Sikana AI introduced error diffusion,
+a back propagation free training method for dual stream excitatory and inhibitory networks
+that obey Dale's principle. The approach reached 96.7% on MNIST and 61.7% on C-FAR 10.
+It scales to reinforcement learning via mojolo error rooting. Capital 1, open-sourced
+and agentic security tool that performs attacker-first forward analysis from APIs and file uploads.
+It then runs a falsification engine to discard false positives before surfacing findings with
+proposed fixes. It currently runs on Claude Opus 4.8 inside Claude code and is released under
+Apache 2.0. The three-stage workflow was validated across thousands of internal repositories.
+This development advances the agents and tool use program we covered yesterday.
+It directly tests reliability of long horizon security agents in production settings.
+Brex released CrabTrap, an open source HTTP and HTTPS proxy that intercepts all agent network
+traffic. It uses an LLM as a judge only on the long tail, less than 3% of requests,
+plus deterministic rules to enforce policy. It is framework and API agnostic.
+Users simply set HTTP underscore proxy. The policy builder bootstraps from observed traffic
+and includes an eval system that replace thousands of requests in minutes.
+Google Cloud shipped the always-on memory agent, a reference implementation on Google ADK and
+Gemini 3.1 flash light. It replaces vector databases and embeddings with continuous LLM driven
+consolidation into SQLite. An orchestrator routes between ingest, consolidate, and query sub-agents
+that maintain structured memory 24-7 without retrieval augmented generation.
+Into it rebuilt its production agent system twice in four months. It moved from specialist agents
+to a central orchestrator and then to a skills and tools architecture after natural language
+handoffs caused compounding errors. The second rebuild took 60 days. Evaluations became the primary
+measurement mechanism and a human handoff feature is now in 1% production testing.
+LinkedIn, Walmart, and Zendesk reported that legacy infrastructure, not models, is the primary bottle
+neck when moving agents to production. LinkedIn pre-provisioned container pools and pushes large
+language models to the leaves of deterministic workflows. Walmart added governance to deduplicate
+citizen developer agents. Zendesk emphasized investing in data pipelines over simply handing 20
+billion conversations to large context windows. Simon Willison highlighted ongoing regressions in
+cloud code on the web that block cloning public GitHub repos into temporary directories from
+existing sessions. He is requesting an automated test suite to prevent future breakage of this core
+functionality. Pewter compiled Firefox to web assembly so the full browser runs inside another
+browser. All traffic is proxied over web socket using the Wisp protocol. The project used roughly
+$25,000 of cloud opus and fabled tokens under a max subscription and supports end-to-end encryption.
+XAI open sourced the entire GROC build codebase, 844,000 lines of rust, under Apache 2.0.
+The repo includes the main system prompt, sub agent prompt, a self-contained mermaid terminal renderer,
+and tool implementations ported from codex and open code. Cars 24 uses open AI-powered voice
+and chat agents to handle over 1 million monthly conversation minutes. The agents recover 12%
+of lost leads and extend agentec workflows across internal teams. TestKimi K3 on long horizon information
+seeking tasks using its 1 million token context window directly instead of multi agent workarounds.
+Deploy Vulner Hunter on a non-production codebase to see the attacker first forward analysis plus
+falsification engine in action. Point crab trap at an existing agent harness and let it bootstrap
+policy from a few days of real traffic. Run the always on memory agent reference implementation
+on a small persistent task to compare continuous consolidation against traditional retrieval augmented
+generation. Kimi K3 full weights are scheduled for July 27th. Intuit plans to scale its human
+in the loop handoff feature beyond the current 1% of customers in the coming weeks.
+Brex is accepting community contributions to crab trap for single sign on role-based access control
+and escalation workflows. Okay, let's pop the hood on agent identity. Everyone treats agent
+identity as a simple give each agent its own key check box. In practice it is a three layer enforcement
+problem that most production systems still solve with borrowed human or service account credentials.
+The first layer is issuance creating a scoped revocable identity at agent spawn time instead of
+reusing a shared API key. The second layer is runtime mediation. Every outbound call must carry that
+identity so policy engines can evaluate it before the request reaches the target API.
+The third layer is attribution logging which identity performed which actions so post incident forensics
+can isolate the blast radius. When these layers are missing a single compromised agent can act with
+the full permissions of every other agent sharing its credential. That pattern appears in 69% of surveyed
+enterprises. The practical trade-off is latency versus safety. Adding a network proxy or sidecar
+for identity enforcement adds measurable overhead but collapses the blast radius from entire fleet
+to single agent. Most teams discover the gap only after the first incident. The fix that actually
+moves the needle is treating non-human identity as infrastructure rather than an application level
+afterthought. So when should you actually reach for this versus the alternative? Tomorrow keep an
+eye on community fine tunes and agent harness integrations for kimi k3 ahead of the July 27th weight release.
+That's models and agents for today. If you found this useful share it with someone who's trying to
+keep up with all these changes and subscribe so you don't miss tomorrow's update. The AI world moves
+fast. We'll help you keep up. See you tomorrow and if you'd rather watch than listen find us on YouTube
+at nara network links in the show notes and before you go this show is part of the nara network.
+A family of daily podcasts on tech science and markets each want a short sharp briefing you can
+finish on the commute. If today earned its place in your feed here's your next listen environmental
+intelligence the environment and climate policy brief for Canada find every show free at nara
+network.com the age of AI puts real builders on the phone with an AI host apply at nara network.com
+slash age dash of dash AI apply this episode used AI voice synthesis of my voice editorial selection
+and analysis are my own.

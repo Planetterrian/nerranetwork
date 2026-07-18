@@ -1,0 +1,171 @@
+Hey everyone, welcome to Models and Agents, episode one hundred fifteen, for July eighteenth, twenty twenty-six. Your daily A I briefing. Let's see what happened in the A I world today. And trust me, it's been busy.
+
+Moonshot just dropped the largest open-weight model yet at 2.8 trillion parameters, matching top closed systems on long-horizon agentic benchmarks.
+
+This release continues the open-weight models arc we tracked last week.
+
+It narrows the open-versus-closed performance gap on agentic tasks while raising new questions about commercial licensing terms.
+
+Moonshot A I released Kimi K3 with a one-million-token context window, native vision, and always-on reasoning mode.
+
+The model leads on BrowseComp at ninety-one point two and ranks second on AA-Briefcase behind only Claude Fable five.
+
+Full weights land July twenty-seventh.
+
+Builders should test its single-agent long-horizon workflows immediately.
+
+Moonshot A I released Kimi K3, a two-point-eight-trillion-parameter frontier model with a one-million-token context window, native visual understanding, and an always-on thinking mode.
+
+The model uses two internal architectural innovations, Kimi Delta Attention hybrid linear attention and Attention Residuals.
+
+It is priced at three dollars per million input tokens and fifteen dollars per million output tokens, with cached inputs at zero point thirty dollars.
+
+On GDPval-AA v2 it scored one thousand six hundred eighty-seven, third overall.
+
+On AA-Briefcase it reached one thousand five hundred twenty-seven, second place.
+
+It set a new state of the art on BrowseComp at ninety-one point two in a single-agent setup without context compression.
+
+The company also demonstrated forty-eight-hour autonomous chip design and compressed multi-week astrophysics research into two hours.
+
+Full weights arrive July twenty-seventh.
+
+Watch for community fine-tunes and agent harness integrations.
+
+Open A I announced G P T five point six Sol reached a new state of the art in cybersecurity on the Last Ones cyber range.
+
+The model now powers Codex Security for finding, validating, and fixing real-world vulnerabilities.
+
+It is already integrated into the Codex Security plugin workflow.
+
+Mira Murati's Thinking Machines Lab released Inkling, an Apache-two-point-zero multimodal mixture-of-experts model with nine hundred seventy-five billion total parameters and forty-one billion active.
+
+It was trained on forty-five trillion tokens of text, images, audio, and video.
+
+A smaller two hundred seventy-six billion total parameter variant with twelve billion active is in testing.
+
+It is positioned as a strong base for fine-tuning via the Tinker platform.
+
+Zyphra released ZUNA one point one, a three hundred eighty million parameter masked diffusion autoencoder for scalp EEG under Apache two point zero.
+
+It accepts variable-length inputs from zero point five to thirty seconds while holding or improving normalized mean square error across arbitrary channel layouts.
+
+Sakana A I introduced Error Diffusion, a backpropagation-free training method for dual-stream excitatory and inhibitory networks that obey Dale's principle.
+
+The approach reached ninety-six point seven percent on MNIST and sixty-one point seven percent on CIFAR-ten.
+
+It scales to reinforcement learning via modulo error routing.
+
+Capital One open-sourced VulnHunter, an agentic security tool that performs attacker-first forward analysis from A P I's and file uploads.
+
+It then runs a falsification engine to discard false positives before surfacing findings with proposed fixes.
+
+It currently runs on Claude Opus four point eight inside Claude Code and is released under Apache two point zero.
+
+The three-stage workflow was validated across thousands of internal repositories.
+
+This development advances the agents and tool use program we covered yesterday.
+
+It directly tests reliability of long-horizon security agents in production settings.
+
+Brex released CrabTrap, an open-source HTTP and HTTPS proxy that intercepts all agent network traffic.
+
+It uses an L L M as-a-judge only on the long tail, less than three percent of requests, plus deterministic rules to enforce policy.
+
+It is framework- and A P I agnostic.
+
+Users simply set HTTP_PROXY.
+
+The policy builder bootstraps from observed traffic and includes an eval system that replays thousands of requests in minutes.
+
+Google Cloud shipped the Always-On Memory Agent, a reference implementation on Google ADK and Gemini three point one Flash-Lite.
+
+It replaces vector databases and embeddings with continuous L L M driven consolidation into SQLite.
+
+An orchestrator routes between Ingest, Consolidate, and Query sub-agents that maintain structured memory twenty-four seven without retrieval-augmented generation.
+
+Intuit rebuilt its production agent system twice in four months.
+
+It moved from specialist agents to a central orchestrator and then to a skills-and-tools architecture after natural-language handoffs caused compounding errors.
+
+The second rebuild took sixty days.
+
+Evaluations became the primary measurement mechanism and a human handoff feature is now in one percent production testing.
+
+LinkedIn, Walmart, and Zendesk reported that legacy infrastructure, not models, is the primary bottleneck when moving agents to production.
+
+LinkedIn pre-provisions container pools and pushes large language models to the leaves of deterministic workflows.
+
+Walmart added governance to deduplicate citizen-developer agents.
+
+Zendesk emphasized investing in data pipelines over simply handing twenty billion conversations to large context windows.
+
+Simon Willison highlighted ongoing regressions in Claude Code on the web that block cloning public GitHub repos into temporary directories from existing sessions.
+
+He is requesting an automated test suite to prevent future breakage of this core functionality.
+
+Puter compiled Firefox to WebAssembly so the full browser runs inside another browser.
+
+All traffic is proxied over WebSocket using the Wisp protocol.
+
+The project used roughly twenty-five thousand dollars of Claude Opus and Fable tokens under a Max subscription and supports end-to-end encryption.
+
+ex A I open-sourced the entire Grok Build codebase, eight hundred forty-four thousand lines of Rust, under Apache two point zero.
+
+The repo includes the main system prompt, subagent prompt, a self-contained Mermaid terminal renderer, and tool implementations ported from Codex and OpenCode.
+
+Cars24 uses Open A I powered voice and chat agents to handle over one million monthly conversation minutes.
+
+The agents recover twelve percent of lost leads and extend agentic workflows across internal teams.
+
+Test Kimi K3 on long-horizon information-seeking tasks using its one-million-token context window directly instead of multi-agent workarounds.
+
+Deploy VulnHunter on a non-production codebase to see the attacker-first forward analysis plus falsification engine in action.
+
+Point CrabTrap at an existing agent harness and let it bootstrap policy from a few days of real traffic.
+
+Run the Always-On Memory Agent reference implementation on a small persistent task to compare continuous consolidation against traditional retrieval-augmented generation.
+
+Kimi K3 full weights are scheduled for July twenty-seventh.
+
+Intuit plans to scale its human-in-the-loop handoff feature beyond the current one percent of customers in the coming weeks.
+
+Brex is accepting community contributions to CrabTrap for single sign-on, role-based access control, and escalation workflows.
+
+OK, let's pop the hood on agent identity.
+
+Everyone treats agent identity as a simple give each agent its own key checkbox.
+
+In practice it is a three-layer enforcement problem that most production systems still solve with borrowed human or service-account credentials.
+
+The first layer is issuance, creating a scoped, revocable identity at agent spawn time instead of reusing a shared A P I key.
+
+The second layer is runtime mediation.
+
+Every outbound call must carry that identity so policy engines can evaluate it before the request reaches the target A P I.
+
+The third layer is attribution, logging which identity performed which action so post-incident forensics can isolate the blast radius.
+
+When these layers are missing, a single compromised agent can act with the full permissions of every other agent sharing its credential.
+
+That pattern appears in sixty-nine percent of surveyed enterprises.
+
+The practical tradeoff is latency versus safety.
+
+Adding a network proxy or sidecar for identity enforcement adds measurable overhead but collapses the blast radius from entire fleet to single agent.
+
+Most teams discover the gap only after the first incident.
+
+The fix that actually moves the needle is treating non-human identity as infrastructure rather than an application-level afterthought.
+
+So when should you actually reach for this versus the alternative.
+
+Tomorrow, keep an eye on community fine-tunes and agent harness integrations for Kimi K3 ahead of the July twenty-seventh weight release.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The A I world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+And before you go: this show is part of the Nerra Network — a family of daily podcasts on tech, science, and markets, each one a short, sharp briefing you can finish on the commute. If today earned its place in your feed, here's your next listen — Environmental Intelligence, the environment and climate-policy brief for Canada. Find every show, free, at nerranetwork dot com.
+
+The Age of A I puts real builders on the phone with an A I host — apply at nerranetwork dot com/age-of-A I apply.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
