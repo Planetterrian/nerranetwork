@@ -33,7 +33,6 @@ until the operator creates @NerraFR and adds the secret.
 
 from __future__ import annotations
 
-import datetime
 import logging
 import re
 import tempfile
