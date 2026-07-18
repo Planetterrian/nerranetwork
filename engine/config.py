@@ -657,6 +657,16 @@ class YouTubeConfig:
     # Appended to the description as an operator copy-paste block (YouTube
     # has no API for pinned comments without extra scopes).
     pinned_comment_template: str = ""
+    # July 18 2026 (operator-approved): post a real channel comment on each
+    # upload via commentThreads.insert — the pinned-comment template on
+    # long-form, a "Full episode: <link>" funnel comment on Shorts. The
+    # API can't pin it (operator pins manually); a 403 is a graceful no-op.
+    auto_comment: bool = True
+    # July 18 2026 (operator-approved): thumbnails render a 2-4 word
+    # ALL-CAPS punch text (LLM-generated with the title bundle) as the
+    # dominant element instead of the full hook sentence. False = legacy
+    # hook rendering.
+    thumbnail_punch_text: bool = True
     # When true and vertical scene images exist, build a 1080×1920 Shorts
     # thumbnail instead of reusing the 1280×720 long-form thumb.
     shorts_thumbnail_from_scene: bool = True

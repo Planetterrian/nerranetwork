@@ -414,6 +414,66 @@ def add_video_to_playlist(
     return True
 
 
+def post_video_comment(
+    *,
+    credentials,
+    video_id: str,
+    text: str,
+) -> Optional[str]:
+    """Post a top-level comment on a video as the channel identity.
+
+    July 18 2026 (operator-approved): the Shorts→long-form funnel's
+    strongest placement after the description link. The API cannot PIN a
+    comment — the operator pins manually in Studio when desired — but the
+    channel's own comment surfaces near the top regardless.
+
+    Returns the comment id, or ``None`` on any failure. Never raises:
+    a 403 (comments disabled on the video, or a token missing the
+    ``youtube.force-ssl`` scope) is a single warning and a no-op.
+    Costs ~50 quota units.
+    """
+    text = (text or "").strip()
+    if not text or not video_id:
+        return None
+    from googleapiclient.discovery import build
+    from googleapiclient.errors import HttpError
+
+    try:
+        youtube = build(
+            "youtube", "v3", credentials=credentials, cache_discovery=False,
+        )
+        body = {
+            "snippet": {
+                "videoId": video_id,
+                "topLevelComment": {
+                    "snippet": {"textOriginal": text[:9500]},
+                },
+            },
+        }
+        resp = youtube.commentThreads().insert(
+            part="snippet", body=body,
+        ).execute()
+        comment_id = (resp or {}).get("id")
+        logger.info("posted channel comment %s on video %s",
+                    comment_id, video_id)
+        return comment_id
+    except HttpError as exc:
+        status = getattr(getattr(exc, "resp", None), "status", "?")
+        if str(status) == "403":
+            logger.warning(
+                "Comment on %s forbidden (HTTP 403) — comments disabled on "
+                "the video, or the token lacks youtube.force-ssl; skipping.",
+                video_id,
+            )
+        else:
+            logger.warning("Comment on %s failed (HTTP %s): %s",
+                           video_id, status, exc)
+        return None
+    except Exception as exc:  # noqa: BLE001 — never block a publish
+        logger.warning("Comment on %s failed: %s", video_id, exc)
+        return None
+
+
 def upload_caption_track(
     *,
     credentials,

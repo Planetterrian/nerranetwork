@@ -271,6 +271,34 @@ def _build_tags(
 # Public API
 # ---------------------------------------------------------------------------
 
+def build_pinned_comment_text(
+    config, *, hook: str = "", episode_num: int = 0, today_str: str = "",
+    rss_link: str = "", audio_url: str = "",
+) -> str:
+    """Render the show's pinned-comment template, or "" when unset.
+
+    July 18 2026: extracted from the long-form description builder so the
+    same text can ALSO be posted as a real channel comment via
+    ``engine.youtube.post_video_comment`` (the API cannot pin it — the
+    operator pins manually — but the channel's own comment surfaces near
+    the top). One template, two surfaces.
+    """
+    pinned = (getattr(config.youtube, "pinned_comment_template", None) or "").strip()
+    if not pinned:
+        return ""
+    try:
+        pinned = pinned.format(
+            hook=(hook or "").strip(),
+            episode_num=episode_num,
+            today_str=today_str,
+            show_page_url=rss_link,
+            full_episode_url=audio_url or "",
+        )
+    except KeyError:
+        pass
+    return pinned.strip()
+
+
 def build_long_form_metadata(
     config,
     *,
@@ -412,18 +440,11 @@ def build_long_form_metadata(
     disclosure = (config.youtube.synthetic_disclosure or "").strip()
     if disclosure:
         pieces.append(disclosure)
-    pinned = (getattr(config.youtube, "pinned_comment_template", None) or "").strip()
+    pinned = build_pinned_comment_text(
+        config, hook=hook, episode_num=episode_num, today_str=today_str,
+        rss_link=rss_link, audio_url=audio_url,
+    )
     if pinned:
-        try:
-            pinned = pinned.format(
-                hook=(hook or "").strip(),
-                episode_num=episode_num,
-                today_str=today_str,
-                show_page_url=rss_link,
-                full_episode_url=audio_url or "",
-            )
-        except KeyError:
-            pass
         pieces.append("—\nSuggested pinned comment:\n" + pinned)
 
     # Final safety strip — YouTube rejects any description containing

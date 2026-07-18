@@ -671,6 +671,20 @@ def publish_ru_dub(
                         default_language="ru",
                         privacy_status=getattr(yt, "privacy_status", "public"))
                     short_urls_out.append(sup.watch_url)
+                    # July 18 2026 (operator-approved): RU funnel comment.
+                    # Only when a RU long-form exists this run — a Russian
+                    # Short should never link an English video.
+                    if long_url and bool(getattr(yt, "auto_comment", True)):
+                        try:
+                            from engine.youtube import post_video_comment
+                            post_video_comment(
+                                credentials=creds,
+                                video_id=sup.video_id,
+                                text=("▶ Полный выпуск: " + long_url
+                                      + "\n🔔 Подпишитесь — новые выпуски "
+                                        "каждый день"))
+                        except Exception:  # noqa: BLE001
+                            pass
                     # Record the title the Short actually shipped with
                     # (distinct, "#Shorts"-suffixed) — the index previously
                     # recorded the long-form title, hiding what @NerraRU
