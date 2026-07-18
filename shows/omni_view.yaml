@@ -1,8 +1,15 @@
 name: Omni View
 slug: omni_view
 weekly_summary_segment: true   # July 2026: daily cadence; Sunday episode includes a short "week in review" segment (content lake).
-description: Daily balanced news summaries presenting multiple perspectives on the
-  stories that matter.
+description: The day's most important stories from around the world — explained calmly,
+  from every side, in plain language for everyone from teens to seniors.
+# July 18 2026 editorial realignment — sources rebalanced for worldwide scope:
+# Daily Mail REMOVED (was the single most-cited outlet, framing hard news;
+# tabloid vector), duplicate http BBC feed removed, r/news removed (US
+# crime-blotter vector). Added: wires via Google News site: proxies (Reuters/
+# AP publish no public RSS), WSJ World, and regional feeds for Africa / Asia /
+# Latin America to fix the heavy UK/US skew (3-6 UK items per episode in the
+# Jul 3-16 window).
 sources:
 - url: https://feeds.npr.org/1001/rss.xml
   label: NPR
@@ -12,8 +19,6 @@ sources:
   label: Fox News
 - url: https://www.newsmax.com/rss/Newsfront/16/
   label: Newsmax
-- url: https://www.dailymail.co.uk/articles.rss
-  label: Daily Mail
 - url: https://www.aljazeera.com/xml/rss/all.xml
   label: Al Jazeera
 - url: https://www.theguardian.com/world/rss
@@ -40,16 +45,36 @@ sources:
   label: Google News World
 - url: https://news.google.com/rss/search?q=economy+inflation+markets+news&hl=en-US&gl=US&ceid=US:en
   label: Google News Economy
+- url: https://news.google.com/rss/search?q=site:reuters.com+world&hl=en-US&gl=US&ceid=US:en
+  label: Reuters (via Google News)
+- url: https://news.google.com/rss/search?q=site:apnews.com+world&hl=en-US&gl=US&ceid=US:en
+  label: AP (via Google News)
 - url: https://www.reddit.com/r/worldnews/.rss
   label: r/worldnews
-- url: https://www.reddit.com/r/news/.rss
-  label: r/news
 - url: https://www.reddit.com/r/geopolitics/.rss
   label: r/geopolitics
 - url: http://feeds.bbci.co.uk/news/world/rss.xml
   label: BBC World News
-- url: http://feeds.bbci.co.uk/news/rss.xml
-  label: BBC Top Stories
+- url: https://feeds.bbci.co.uk/news/world/africa/rss.xml
+  label: BBC Africa
+- url: https://feeds.bbci.co.uk/news/world/asia/rss.xml
+  label: BBC Asia
+- url: https://feeds.bbci.co.uk/news/world/latin_america/rss.xml
+  label: BBC Latin America
+- url: https://allafrica.com/tools/headlines/rdf/latest/headlines.rdf
+  label: AllAfrica
+- url: https://www.scmp.com/rss/91/feed/
+  label: South China Morning Post
+- url: https://asia.nikkei.com/rss/feed/nar
+  label: Nikkei Asia
+- url: https://www.thehindu.com/news/international/feeder/default.rss
+  label: The Hindu International
+- url: https://www.japantimes.co.jp/feed/
+  label: Japan Times
+- url: https://en.mercopress.com/rss/
+  label: MercoPress
+- url: https://feeds.content.dowjones.io/public/rss/RSSWorldNews
+  label: WSJ World
 - url: https://feeds.npr.org/1004/rss.xml
   label: NPR World
 - url: https://rss.dw.com/xml/rss-en-top
@@ -60,10 +85,25 @@ sources:
   label: The Economist
 - url: https://rss.csmonitor.com/feeds/top
   label: Christian Science Monitor
+# Defense-in-depth against celebrity/tabloid shapes at fetch time (FF
+# stock-filter class — deterministic, no A/B). Conservative on purpose:
+# hard-news false drops are worse than a leaked soft item (the prompt-level
+# anti-tabloid bar is the primary filter).
+exclude_title_patterns:
+- red carpet
+- \bLove Island\b
+- \bStrictly Come Dancing\b
+- reality TV star
+- \broyal\b.*\b(fashion|dress|style|outfit)\b
+- wardrobe malfunction
+- \bpaparazzi\b
+- (?i)\bnet worth\b
+- (?i)steps out (?:in|with)
 web_search_queries:
-- breaking news today
-- US politics policy news today
 - world news geopolitics today
+- US politics policy news today
+- Africa major news developments today
+- Latin America Asia major news today
 - economy markets news today
 x_accounts:
 - handle: Reuters
@@ -119,7 +159,6 @@ keywords:
 - internet
 - privacy
 - cyber
-- crime
 - justice
 - police
 - protest
@@ -149,6 +188,14 @@ llm:
   podcast_max_tokens: 8000
   min_podcast_words: 1400
   podcast_expand_below_target: true
+  # July 18 2026: the new 7-slot format is a fixed slate — the default
+  # "cover more stories" retry would fight it, so OV expands by DEEPENING
+  # existing stories instead (engine/generator.py deepen flavor).
+  podcast_expansion_style: deepen
+  # Digest-stage floor + retry (the chronic under-length root cause was the
+  # digest ceiling: 12 thin stories; now 7 deep ones must clear 1500 words).
+  digest_expand_below_target: true
+  min_digest_words: 1500
 tts: {}
 audio:
   music_file: assets/music/OmniView.mp3
@@ -167,10 +214,12 @@ audio:
 publishing:
   rss_file: omni_view_podcast.rss
   rss_title: Omni View - Balanced News Perspectives
-  rss_description: Daily world news where every story is presented from the strongest
-    case each side can make — the version its most thoughtful advocates actually argue,
-    never a caricature. Sources attributed, both sides steel-manned, so you decide.
-    You shouldn't be able to tell which side we favor.
+  rss_description: The day's most important stories from around the world — explained
+    calmly, from every side. Named sources across the spectrum, genuine disagreements
+    presented at their strongest, jargon translated into plain language, and every
+    day one story about what's actually being done — so listeners from teens to
+    seniors stay informed and curious, without clickbait, doom, or spin. You still
+    shouldn't be able to tell which side we favor.
   rss_link: https://nerranetwork.com/omni-view.html
   rss_author: Omni View
   rss_email: patrick@planetterrian.com
@@ -198,6 +247,12 @@ chapters:
     where: start
   - pattern: Shifting now to|Meanwhile|first story|first up
     title: Main Stories
+  # July 18 2026: the new daily progress/solutions segment. Anchored on the
+  # three rotating transitions the podcast prompt seeds (PT dead-marker
+  # class — verify on the first shipped episodes and broaden if needed).
+  - pattern: progress worth knowing|what.?s actually being done|pushing in the
+      right direction
+    title: Progress Watch
   - pattern: to really understand|to understand .{1,80}? more fully|most coverage
       leaves out|here's the thing that changes
     title: Understanding the Issue

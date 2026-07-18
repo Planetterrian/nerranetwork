@@ -124,10 +124,17 @@ PT_SECTION_PATTERNS: Dict[str, str] = {
 }
 
 OV_SECTION_PATTERNS: Dict[str, str] = {
+    # July 18 2026 realignment: the digest's story sections are now
+    # "Today's lead story (1) / Major world stories (3) / Economy, science
+    # & technology (2) / Progress watch (1)". The old `### Top \d+`
+    # pattern was ALREADY stale against the previous "## Top stories (5)"
+    # headers; both new and legacy forms are matched so old digests keep
+    # deduping.
     "headlines": (
-        r"(?:### Top \d+|### Today's Top)"
+        r"(?:#{2,3}\s*Today's lead story|#{2,3}\s*Major world stories|"
+        r"#{2,3}\s*Top stories|### Top \d+|### Today's Top)"
         r"(.*?)"
-        r"(?=━━|### (?:Deep Dive|Understanding the Issue|Closing)|$)"
+        r"(?=━━|#{2,3}\s*(?:Deep Dive|Understanding the Issue|Closing)|$)"
     ),
     "deep_dive": (
         r"(?:### Understanding the Issue|## Understanding the Issue)"

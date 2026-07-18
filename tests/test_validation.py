@@ -415,4 +415,45 @@ def test_ov_top_stories_matches_real_header():
         "## Top world stories (2)\n### 6) World headline\n**What happened (neutral):** z.\n"
     )
     passed, issues, _ = validate_digest(digest, ov_validation_config())
-    assert not any("Top Stories" in i for i in issues), issues
+    assert not any("Lead + world" in i for i in issues), issues
+
+
+def test_ov_new_format_lead_and_world_stories_validate():
+    """July 18 2026 realignment: the digest moved to the 7-slot slate
+    ('Today's lead story (1)' + 'Major world stories (3)' + 'Economy,
+    science & technology (2)' + 'Progress watch (1)'). The validation rule
+    must accept the new headers — a miss fires a full digest regenerate on
+    every episode (the Ep068 class the docstring above describes)."""
+    digest = (
+        "# Omni View\n\n**HOOK:** Something consequential happened.\n\n"
+        "## Today's lead story (1)\n"
+        "### 1) A neutral headline about the day's most consequential story\n"
+        "**What happened (neutral):** Plain-language summary of the event.\n"
+        "**Context & perspectives:** The BBC frames it one way; Al Jazeera another.\n"
+        "**What happens next:** A vote is scheduled for Friday.\n\n"
+        "## Major world stories (3)\n"
+        "### 2) A world headline from a second region\n"
+        "**What happened (neutral):** Another summary here.\n"
+        "**Context & perspectives:** Named outlets weigh in.\n\n"
+        "### 3) Third headline\n**What happened (neutral):** x.\n"
+        "**Context & perspectives:** y.\n\n"
+        "### 4) Fourth headline\n**What happened (neutral):** x.\n"
+        "**Context & perspectives:** y.\n\n"
+        "## Economy, science & technology (2)\n"
+        "### 5) Econ headline\n**What happened (neutral):** z.\n\n"
+        "## Progress watch (1)\n"
+        "### 6) Progress headline\n**What happened (neutral):** w.\n"
+    )
+    passed, issues, _ = validate_digest(digest, ov_validation_config())
+    assert not any("Lead + world" in i for i in issues), issues
+
+
+def test_ov_new_format_missing_lead_section_flags():
+    """A digest with NO lead/world sections must still flag (the rule is a
+    real gate, not a tautology)."""
+    digest = (
+        "# Omni View\n\n**HOOK:** Something.\n\n"
+        "## Understanding the Issue: Some Topic\nProse only, no stories.\n"
+    )
+    passed, issues, _ = validate_digest(digest, ov_validation_config())
+    assert any("Lead + world" in i for i in issues), issues

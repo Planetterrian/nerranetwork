@@ -146,6 +146,35 @@ nerranetwork/
   raised `min_podcast_words` 900→1400 (the expand opt-in the June network
   pass missed). Prompt/length edits change shipped audio — A/B-listen per
   landmine #17; the chapter fix does not.
+  **July 18 2026 editorial realignment** (operator-directed; review:
+  [`docs/reviews/omni_view_review_2026_07_18.md`](docs/reviews/omni_view_review_2026_07_18.md);
+  drift guards: `tests/test_omni_view_quality_pass.py::TestEditorialRealignmentJuly18`):
+  repositioned to "top world stories, balanced, teen-to-senior,
+  informative AND encouraging, anti-clickbait". The 12-slot taxonomy
+  (whose mandatory daily gossip + popular-media slots forced tabloid
+  filler and twice LED episodes with tabloid items) became a 7-slot
+  slate: lead (1) + world (3) + economy/science/tech (2) + **Progress
+  watch** (1, rigor bar: named actors + a number + the complication) +
+  the retained Understanding the Issue deep dive. Steel-man is now
+  CONDITIONAL (2-3 genuinely contested stories, named advocates; the
+  "Both sides agree" family had shipped ~38×/10 eps incl. on a
+  waterslide accident) — disasters/deaths/science/culture get context +
+  what-happens-next, never manufactured sides. Plain-language layer
+  (define every institution in one clause; teen-to-senior audience in
+  every prompt). Sources: Daily Mail REMOVED (was the most-cited outlet;
+  Reuters/AP were 0×), dup-BBC + r/news removed; Reuters/AP Google-News
+  proxies, WSJ World + 9 regional feeds (Africa/Asia/LatAm) added with a
+  geographic-breadth rule (≥3 regions, ≤2/country, UK ≤1); conservative
+  tabloid `exclude_title_patterns`. Engine: `podcast_expansion_style:
+  deepen` (new LLMConfig field — the "cover more stories" retry would
+  fight the fixed slate), `min_digest_words: 1500` + digest retry (the
+  under-length root fix), `ov_validation_config` + `OV_SECTION_PATTERNS`
+  updated to the new headers (Ep068 regenerate-class). New closings pair
+  perspective coaching with one encouraging line; a per-episode
+  "go deeper: compare two outlets" pointer. Public copy updated (tagline
+  kept). All prompt/closing/source changes alter shipped audio —
+  A/B-listen the first post-merge episode per landmine #17; watch the
+  Progress Watch chapter marker for the dead-marker class.
 - **EI** runs exclusively via `run_show.py` + `shows/env_intel.yaml`; no legacy script.
   **June 10 2026 quality pass** (review:
   [`docs/reviews/env_intel_review_2026_06_10.md`](docs/reviews/env_intel_review_2026_06_10.md);
