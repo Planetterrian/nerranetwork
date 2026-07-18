@@ -67,7 +67,7 @@ MIN_VIDEOS_CONFIDENT = 4    # per kind — below this, hold the active setting
 # daily long-form render. The MECHANISM (velocity + hysteresis + Monday
 # probe) stays identical on both channels, so a show can always re-earn
 # long-form through the weekly probe data.
-LONG_VPD_FLOOR: Dict[str, float] = {"en": 1.0, "ru": 2.0}
+LONG_VPD_FLOOR: Dict[str, float] = {"en": 1.0, "ru": 2.0, "fr": 2.0}
 SHORT_VPD_TWO = 4.0         # avg views/day to earn a 2nd Short
 SHORT_VPD_PROBE = 0.5       # below this, shorts-only reads as "probe" (D)
 STREAK_TO_FLIP = 2          # consecutive identical computed tiers to flip
@@ -109,6 +109,16 @@ SEED_TIERS: Dict[str, Dict[str, str]] = {
         "modern_investing": "C",
         "finansy_prosto": "C",
         "privet_russian": "C",
+    },
+    # July 18 2026 — @NerraFR launch (engine.lang_dub). Seeded shorts-only
+    # per the RU lesson (dubbed long-form earned ~9% retention while Shorts
+    # carried the views); the Monday probe + velocity data let long-form
+    # earn its way in. Same 2.0 long_vpd floor as RU (LONG_VPD_FLOOR).
+    "fr": {
+        "tesla": "C",
+        "spacex": "C",
+        "fascinating_frontiers": "C",
+        "modern_investing": "C",
     },
 }
 

@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional
@@ -117,19 +118,23 @@ def get_channel_credentials_from_env(channel: str = "en"):
     """
     client_id = os.getenv("YOUTUBE_CLIENT_ID", "").strip()
     client_secret = os.getenv("YOUTUBE_CLIENT_SECRET", "").strip()
-    suffix = "RU" if channel.lower() == "ru" else "EN"
+    # July 2026 (language-dub generalization): the suffix is the channel
+    # key uppercased — "en" → EN, "ru" → RU (both unchanged), "fr" → FR,
+    # any future language channel → its own YOUTUBE_REFRESH_TOKEN_<CH>.
+    ch = (channel or "en").strip().lower() or "en"
+    suffix = re.sub(r"[^A-Z0-9]", "", ch.upper()) or "EN"
     refresh_token = os.getenv(f"YOUTUBE_REFRESH_TOKEN_{suffix}", "").strip()
 
     if not all([client_id, client_secret, refresh_token]):
-        if suffix == "RU" and client_id and client_secret:
-            # The EN pipeline works but the RU channel token specifically
-            # is missing — the show YAML *asked* for @NerraRU uploads and
+        if suffix != "EN" and client_id and client_secret:
+            # The EN pipeline works but this channel's token specifically
+            # is missing — the show YAML *asked* for uploads on it and
             # they are silently no-oping (June 2026 review: FP/PR shipped
             # for days with youtube_enabled flipping on no upload).
             logger.warning(
-                "YouTube channel=ru is configured for this show but "
-                "YOUTUBE_REFRESH_TOKEN_RU is not set — uploads will no-op "
-                "until the secret is added.",
+                "YouTube channel=%s is configured for this show but "
+                "YOUTUBE_REFRESH_TOKEN_%s is not set — uploads will no-op "
+                "until the secret is added.", ch, suffix,
             )
         else:
             logger.info(

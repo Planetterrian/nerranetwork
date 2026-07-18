@@ -80,9 +80,13 @@ class TestSlideshowSceneCycling:
 
 
 class TestObservability:
-    def test_ru_token_warning(self):
+    def test_missing_channel_token_warning(self):
+        # July 18 2026 (lang_dub generalization): the RU-specific warning
+        # became channel-generic — any non-EN channel with a missing token
+        # warns loudly instead of silently no-oping.
         src = (_ROOT / "engine" / "youtube.py").read_text(encoding="utf-8")
-        assert "YOUTUBE_REFRESH_TOKEN_RU is not set" in src
+        assert "YOUTUBE_REFRESH_TOKEN_%s is not set" in src
+        assert 'suffix != "EN"' in src
 
     def test_shorts_captions_path_metric(self):
         src = (_ROOT / "run_show.py").read_text(encoding="utf-8")
