@@ -116,24 +116,24 @@ reviews:
         baseline: "9/10 episodes"
         expected: "<= 2/10 within 10 episodes (dedup removed the echo; the
           rule is 1 of 11 distinct actives, no longer 5-of-5 in the block)"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "2026-07-18: 0/10 in the last-10 snapshot (was 9/10); ledger stable at 11 distinct actives, no echo regrowth"
       - metric: flash trades with nasdaq_return_pct == 0.0
         baseline: "8/8 flash trades"
         expected: "0 new flash trades with a zero benchmark window"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "2026-07-18: no flash trades occurred; both new closes (COST/DAL) carry real matched windows — thin n, re-score when a flash closes"
       - metric: weekly trades with entry_bar_date < pick date
         baseline: "all mid-week weekly picks backdated to Monday"
         expected: "0 new trades with entry before pick date"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "2026-07-18: Ep101 COST and Ep102 DAL entry bars equal their pick dates"
       - metric: TSX picks priced on the .TO listing
         baseline: "0 (bare US symbols; Ep50 CNR wrong company)"
         expected: "every new TSX pick carries resolved_symbol ending .TO/.V
           or a loud PICK VALIDATION FAILED log"
         verdict: pending
-        evidence: null
+        evidence: "no TSX picks in the window yet; both US picks carry resolved_symbol"
     agent_cost_usd: null
 
   - date: 2026-07-04
@@ -184,20 +184,20 @@ reviews:
         baseline: "0 (ledger created this pass)"
         expected: ">= 8 entries with decision in {would_place, skipped};
           zero duplicate client_order_ids; workflow green without secrets"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "2026-07-18: 12 entries covering every weekday, entries + paired exits, zero duplicate ids, workflow green with no secrets"
       - metric: closed trades carrying benchmark_returns for all 3 indices
         baseline: "0 of 40"
         expected: "every NEWLY closed trade has nasdaq+sp500+tsx returns
           (history backfills when the operator runs the recompute script)"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "2026-07-18: both new closes carry nasdaq+sp500+tsx; history still awaits the operator recompute"
       - metric: closed trades stamped with rules_in_effect
         baseline: "0 of 40"
         expected: "every new pick stamped; first rule scoreboard lines
           appear after ~5 closes; retirement candidates only at >=8"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "2026-07-18: both stamped with the exact 5 rule IDs; scoreboard activates at ~5 stamped closes"
     agent_cost_usd: null
 
   - date: 2026-07-04
@@ -236,14 +236,14 @@ reviews:
         expected: ">= 70% of new picks carry stop_loss (the Risk
           Assessment states one nearly every episode); no trade ever
           carries a stop above its entry"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "2026-07-18: 2/2 new picks carry {pct: 6.0}; none above entry"
       - metric: spoken outperformance claims without a significance hedge
         baseline: "n/a (t-stat never computed)"
         expected: "while alpha_statistically_significant is false, episodes
           claiming outperformance also say it is early/not yet significant"
-        verdict: pending
-        evidence: null
+        verdict: miss
+        evidence: "2026-07-18: alpha quoted in most episodes, hedge spoken in ZERO — separate-instruction design failed; fixed by embedding the caveat inline in the alpha sentence"
     agent_cost_usd: null
 
   - date: 2026-07-04
@@ -283,6 +283,69 @@ reviews:
         baseline: "workflow new"
         expected: "every scheduled run green with 'live layer dormant'
           no-op; zero SnapTrade calls until the operator arms it"
+        verdict: hit
+        evidence: "2026-07-18: no live_execution_state.json exists — the dormant layer has never touched anything"
+    agent_cost_usd: null
+
+  - date: 2026-07-18
+    pr: null
+    doc: docs/reviews/modern_investing_review_2026_07_18.md
+    reviewer: claude-code (operator-requested two-week scoring review)
+    summary: >
+      First full scoring pass over the July 3-4 overhaul: 8 predictions
+      HIT, 1 MISS, 1 pending. The machinery works (signals every episode,
+      shadow ledger complete with paired exits, stops parsed 2/2, rules
+      stamped, tic eliminated, live layer untouched) — but two design
+      flaws surfaced in production: the regime cold-streak brake
+      DEADLOCKED the Practice Investment segment (2 picks in 14 episodes;
+      mean poisoned by the -11.8 MDA outlier + $100 drawdown threshold
+      permanently tripped at $164 standing + cold suppresses the very
+      closes that refresh the window), and a Thursday weekly pick closed
+      as a degenerate one-bar "weekly hold" (Ep101 COST, entry==exit bar,
+      -2.35% while the shadow layer holding Thu->Fri made +0.26% on the
+      same pick). The significance hedge never reached air (alpha quoted
+      most episodes, hedge spoken zero) — separate-instruction design
+      failure. Index sweep was comparing 37-trade vs 2-trade samples.
+    shipped:
+      - regime v2 — median (outlier-robust), drawdown threshold $100->$250
+        (full position), pick-drought escape valve (>7 days cold ->
+        SELECTIVE RESET expecting the next Monday pick), cold-streak
+        on-air transparency instruction
+      - weekly min-hold — Friday close requires >=2 days since pick
+        (Thu/Fri picks roll to next Friday); shadow _exit_due_date matches
+      - index sweep gated on n>=5 per index, 2+ qualifying
+      - significance caveat embedded INLINE in the alpha sentence
+      - no-trade reason taxonomy (explicit None/No Trade/Mid-Week forms;
+        no_practice_section for recaps; no_pick_extracted = real drift)
+    deferred:
+      - "watch: 'volume above the 20-day average' spoken 8/10 (LL-017
+        echo); rule scoreboard adjudicates at ~5 stamped closes"
+      - "product: performance-page execution-reality section at ~20 shadow
+        round trips; Sunday weekly-scoreboard ritual"
+      - "operator: recompute --apply still not run (current +6.59% matched
+        alpha retains old-window inflation; sweep suppressed until
+        backfill); SnapTrade Phase-0 status unverifiable from repo;
+        closing-price lesson retirement still open"
+      - "carried: under-length (digest ceiling); shadow executor cron
+        delays (runs 15:04-16:48 UTC vs 13:50 slot, landmine #24 class)"
+    predictions:
+      - metric: new picks per week (trade signals with action=new_trade)
+        baseline: "1/week over Jul 6-18 (both Monday weeklies suppressed)"
+        expected: ">=1 Monday weekly pick per week under regime v2; no
+          pick drought longer than 7 days while SELECTIVE RESET is
+          reachable"
+        verdict: pending
+        evidence: null
+      - metric: weekly holds with entry_bar_date == exit_bar_date
+        baseline: "1 (Ep101 COST, the Thursday degenerate)"
+        expected: "0 new one-bar weekly holds"
+        verdict: pending
+        evidence: null
+      - metric: episodes quoting the matched-window alpha with the
+          significance qualifier in the same breath
+        baseline: "0 of ~8 alpha mentions (hedge separate -> dropped)"
+        expected: "inline caveat echoed in >=70% of alpha mentions while
+          t<2"
         verdict: pending
         evidence: null
     agent_cost_usd: null

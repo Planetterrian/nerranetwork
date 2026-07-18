@@ -726,10 +726,14 @@ class TestRegimeBlock:
                 "pnl_pct": alpha, "pnl_dollars": pnl_dollars}
 
     def test_cold_streak_raises_the_bar(self):
-        tracker = {"trades": [self._closed(-2.0, -20.0) for _ in range(10)]}
+        # July 18: fresh cold streaks (dated today, no drought) raise the
+        # bar and now also instruct on-air transparency.
+        recent = datetime.date.today().isoformat()
+        tracker = {"trades": [dict(self._closed(-2.0, -20.0), date=recent)
+                              for _ in range(10)]}
         block = mi._build_regime_block(tracker)
         assert "COLD STREAK" in block
-        assert "no-trade day is the DEFAULT" in block
+        assert "3+ independent aligned factors" in block
 
     def test_hot_streak_holds_discipline_never_presses(self):
         tracker = {"trades": [self._closed(2.5, 25.0) for _ in range(10)]}
@@ -743,12 +747,16 @@ class TestRegimeBlock:
         assert "NEUTRAL" in block
 
     def test_drawdown_alone_triggers_cold(self):
-        # Strong early run, then a deep drawdown — even with recent alpha
-        # near zero, being far below the high-water mark tightens the bar.
-        trades = ([self._closed(5.0, 150.0) for _ in range(5)]
-                  + [self._closed(0.1, -30.0) for _ in range(5)])
+        # July 18 recalibration: only a FULL-POSITION drawdown (> $250)
+        # triggers cold on its own — $164 of standing drawdown had locked
+        # the show cold permanently. Deep drawdown still tightens the bar.
+        recent = datetime.date.today().isoformat()
+        trades = ([dict(self._closed(5.0, 150.0), date=recent)
+                   for _ in range(5)]
+                  + [dict(self._closed(0.1, -60.0), date=recent)
+                     for _ in range(5)])
         block = mi._build_regime_block({"trades": trades})
-        assert "COLD STREAK" in block
+        assert "COLD STREAK" in block  # drawdown $300 > $250
 
     def test_too_few_trades_yields_empty(self):
         tracker = {"trades": [self._closed(1.0, 10.0) for _ in range(3)]}
@@ -907,7 +915,9 @@ class TestAlphaTStat:
             "alpha_t_stat": 0.9, "alpha_statistically_significant": False,
         }
         block = mi._build_benchmark_block(tracker)
-        assert "NOT yet statistically distinguishable from luck" in block
+        # July 18: the caveat moved INLINE with the alpha number (models
+        # echo data lines and drop separate instructions).
+        assert "NOT YET STATISTICALLY SIGNIFICANT" in block
 
     def test_signal_carries_stop_loss(self, tmp_path, monkeypatch):
         monkeypatch.delenv("NERRA_HOOKS_READONLY", raising=False)
@@ -924,3 +934,167 @@ class TestAlphaTStat:
         signal = json.loads(
             (tmp_path / mi.TRADE_SIGNAL_LATEST_FILENAME).read_text())
         assert signal["trade"]["stop_loss"] == {"price": 190.0}
+
+
+# ---------------------------------------------------------------------------
+# July 18 2026 scoring pass — regime deadlock, degenerate weeklies,
+# sweep gating, inline hedge, no-trade taxonomy
+# ---------------------------------------------------------------------------
+
+class TestRegimeDeadlockFix:
+    def _closed(self, alpha, pnl_dollars, date="2026-07-01"):
+        return {"status": "closed", "alpha_pct": alpha, "pnl_pct": alpha,
+                "pnl_dollars": pnl_dollars, "date": date}
+
+    def test_median_is_outlier_robust(self):
+        # The Ep81 MDA shape: nine mild positives + one -11.8 outlier.
+        # Mean would be negative; median must keep the regime out of COLD.
+        recent = datetime.date.today().isoformat()
+        trades = ([self._closed(0.5, 5.0, recent) for _ in range(9)]
+                  + [self._closed(-11.8, -118.0, recent)])
+        block = mi._build_regime_block({"trades": trades})
+        assert "COLD STREAK" not in block
+
+    def test_standing_drawdown_of_one_trade_is_not_cold(self):
+        # $164 below high-water (the real July state) must not trip a
+        # permanent cold streak; only a full-position drawdown does.
+        recent = datetime.date.today().isoformat()
+        trades = ([self._closed(2.0, 100.0, recent) for _ in range(5)]
+                  + [self._closed(0.2, -33.0, recent) for _ in range(5)])
+        block = mi._build_regime_block({"trades": trades})
+        assert "COLD STREAK" not in block
+
+    def test_pick_drought_releases_the_brake(self):
+        # Genuinely cold record + no pick in 10 days → SELECTIVE RESET
+        # (the deadlock breaker), never a suppressive COLD text.
+        old = (datetime.date.today() - datetime.timedelta(days=10)).isoformat()
+        trades = [self._closed(-2.0, -20.0, old) for _ in range(10)]
+        block = mi._build_regime_block({"trades": trades})
+        assert "SELECTIVE RESET" in block
+        assert "no pick in 10 days" in block
+        assert "COLD STREAK" not in block
+
+    def test_fresh_cold_streak_still_raises_bar_with_transparency(self):
+        recent = datetime.date.today().isoformat()
+        trades = [self._closed(-2.0, -20.0, recent) for _ in range(10)]
+        block = mi._build_regime_block({"trades": trades})
+        assert "COLD STREAK" in block
+        assert "TELL LISTENERS PLAINLY" in block  # dead air → narrative
+
+
+class TestWeeklyMinHold:
+    def test_thursday_pick_not_closed_on_next_day_friday(self):
+        # The Ep101 COST degenerate: picked Thursday, closed on Friday's
+        # pre-market run with one bar (entry==exit bar). Now rolls.
+        thursday = datetime.date(2026, 7, 9)
+        friday = datetime.date(2026, 7, 10)
+        tracker = {"metadata": {"position_size": 1000}, "summary": {},
+                   "trades": [{"symbol": "COST", "market": "NYSE",
+                               "trade_type": "weekly", "status": "open",
+                               "date": thursday.isoformat()}]}
+        with patch.object(mi.datetime, "date", wraps=datetime.date) as mock_date, \
+             patch.object(mi, "_snapshot_trade") as snap, \
+             patch.object(mi, "_close_trade") as close, \
+             patch.object(mi, "_save_tracker"):
+            mock_date.today.return_value = friday
+            mi._evaluate_open_trade(tracker, Path("/nope"))
+        close.assert_not_called()
+        snap.assert_called_once()
+
+    def test_monday_pick_still_closes_friday(self):
+        monday = datetime.date(2026, 7, 6)
+        friday = datetime.date(2026, 7, 10)
+        tracker = {"metadata": {"position_size": 1000}, "summary": {},
+                   "trades": [{"symbol": "GIS", "market": "NYSE",
+                               "trade_type": "weekly", "status": "open",
+                               "date": monday.isoformat()}]}
+        with patch.object(mi.datetime, "date", wraps=datetime.date) as mock_date, \
+             patch.object(mi, "_close_trade") as close, \
+             patch.object(mi, "_save_tracker"):
+            mock_date.today.return_value = friday
+            mi._evaluate_open_trade(tracker, Path("/nope"))
+        close.assert_called_once()
+
+    def test_shadow_exit_calendar_matches(self):
+        from execution import shadow as sh
+        # Thursday weekly → NEXT Friday, not tomorrow.
+        assert sh._exit_due_date(
+            datetime.date(2026, 7, 9), "weekly") == datetime.date(2026, 7, 17)
+        # Wednesday weekly → this Friday (2-day hold is acceptable).
+        assert sh._exit_due_date(
+            datetime.date(2026, 7, 8), "weekly") == datetime.date(2026, 7, 10)
+
+
+class TestSweepGating:
+    def _summary(self, sp_trades):
+        return {
+            "matched_window_alpha_pct": 6.59, "matched_window_trades": 37,
+            "compounded_return_pct": 18.94,
+            "compounded_nasdaq_matched_pct": 12.35,
+            "alpha_t_stat": 0.31, "alpha_statistically_significant": False,
+            "indices_beaten": 1, "indices_scored": 3,
+            "benchmark_scores": {
+                "nasdaq": {"alpha_pct": 6.59, "trades": 37},
+                "sp500": {"alpha_pct": -4.24, "trades": sp_trades},
+                "tsx": {"alpha_pct": -4.59, "trades": sp_trades},
+            },
+        }
+
+    def _tracker(self, sp_trades):
+        tracker = mi._fresh_tracker()
+        tracker["benchmark"] = {"current_close": 25873.0, "ytd_pct": 11.0,
+                                "inception_to_date_pct": 15.0,
+                                "last_updated": "2026-07-18"}
+        tracker["summary"] = self._summary(sp_trades)
+        return tracker
+
+    def test_two_trade_samples_suppress_the_sweep(self):
+        # The real July 18 state: 37-trade NASDAQ vs 2-trade S&P/TSX —
+        # "beating 1 of 3" was statistically meaningless prompt context.
+        block = mi._build_benchmark_block(self._tracker(sp_trades=2))
+        assert "MAJOR-INDEX SWEEP" not in block
+
+    def test_qualified_samples_reenable_the_sweep(self):
+        block = mi._build_benchmark_block(self._tracker(sp_trades=12))
+        assert "MAJOR-INDEX SWEEP" in block
+        assert "beating 1 of 3" in block
+
+    def test_hedge_is_inline_with_the_alpha_number(self):
+        # Two weeks of transcripts: alpha quoted in most episodes, hedge
+        # spoken in zero — the caveat must be part of the quoted line.
+        block = mi._build_benchmark_block(self._tracker(sp_trades=2))
+        alpha_sentence = [ln for ln in block.split(". ")
+                         if "+6.59%" in ln][0]
+        assert "NOT YET STATISTICALLY SIGNIFICANT" in alpha_sentence
+        assert "never quote this alpha without" in alpha_sentence
+
+
+class TestNoTradeReasonTaxonomy:
+    def test_none_form_is_explicit(self):
+        assert mi._no_trade_reason(
+            "### Practice Investment of the Day\n"
+            "**Trade Type:** No new trade\n**Today's Pick:** None\n"
+        ) == "explicit_no_trade"
+
+    def test_no_trade_type_form_is_explicit(self):
+        assert mi._no_trade_reason(
+            "### Practice Investment of the Day\n"
+            "**Trade Type:** No Trade\n**Today's Pick:** None — watching BNKR\n"
+        ) == "explicit_no_trade"
+
+    def test_midweek_update_is_explicit_not_drift(self):
+        assert mi._no_trade_reason(
+            "### Practice Investment of the Day\n"
+            "**Trade Type:** Mid-Week Update\n"
+        ) == "explicit_no_trade"
+
+    def test_recap_without_section_is_not_drift(self):
+        assert mi._no_trade_reason(
+            "# Weekly recap\nNo practice segment this Sunday.\n"
+        ) == "no_practice_section"
+
+    def test_genuine_drift_still_flagged(self):
+        assert mi._no_trade_reason(
+            "### Practice Investment of the Day\n"
+            "**Today's Pick** is Nvidia at current levels.\n"
+        ) == "no_pick_extracted"

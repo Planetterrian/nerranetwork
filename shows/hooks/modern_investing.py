@@ -362,18 +362,42 @@ def _build_strategy_performance(tracker: dict) -> str:
 
 
 _REGIME_WINDOW = 10
+# July 18 2026 recalibration: the original mean-based trigger (avg < -0.5
+# or drawdown > $100) DEADLOCKED the show — one -11.8% outlier (Ep81 MDA)
+# poisoned the rolling mean, $164 of standing drawdown tripped the $100
+# threshold permanently, and the cold streak suppressed the very trades
+# that would refresh the window. Both Monday weekly picks were skipped
+# and the signature segment went dark 12 of 14 episodes. Now: MEDIAN
+# (outlier-robust), a full-position drawdown threshold, and an escape
+# valve — a pick drought longer than a week downgrades COLD to a
+# SELECTIVE reset so the show trades (and teaches) again.
+_REGIME_COLD_MEDIAN = -1.0
+_REGIME_COLD_DRAWDOWN = 250.0
+_REGIME_PICK_DROUGHT_DAYS = 7
+
+
+def _days_since_last_pick(tracker: dict) -> int | None:
+    dates = []
+    for t in tracker.get("trades", []):
+        d = t.get("date")
+        if isinstance(d, str):
+            try:
+                dates.append(datetime.date.fromisoformat(d))
+            except ValueError:
+                continue
+    if not dates:
+        return None
+    return (datetime.date.today() - max(dates)).days
 
 
 def _build_regime_block(tracker: dict) -> str:
     """Adaptive selectivity from the rolling record (July 2026).
 
-    The loop previously treated every day identically regardless of how
-    the last stretch of picks performed. This block turns the rolling
-    last-``_REGIME_WINDOW`` matched-window alpha + the drawdown from the
-    P&L high-water mark into explicit selection pressure: a cold streak
-    RAISES the bar (prefer explicit no-trade days, demand more aligned
-    factors); a hot streak holds discipline flat (never "press harder").
-    Deterministic — thresholds are code, not vibes.
+    Turns the rolling last-``_REGIME_WINDOW`` MEDIAN matched-window alpha
+    + the drawdown from the P&L high-water mark into explicit selection
+    pressure. A cold streak raises the bar; a hot streak holds discipline
+    flat (never "press harder"); a pick drought releases the brake so the
+    practice segment keeps teaching. Deterministic — thresholds are code.
     """
     closed = [t for t in tracker.get("trades", []) if t.get("status") == "closed"]
     scored = [
@@ -383,9 +407,11 @@ def _build_regime_block(tracker: dict) -> str:
     ]
     if len(scored) < 5:
         return ""
-    recent = scored[-_REGIME_WINDOW:]
-    avg_alpha = sum(t["alpha_pct"] for t in recent) / len(recent)
-    wins = sum(1 for t in recent if _finite(t.get("pnl_pct")) > 0)
+    recent = [t["alpha_pct"] for t in scored[-_REGIME_WINDOW:]]
+    median_alpha = sorted(recent)[len(recent) // 2] if len(recent) % 2 else (
+        sum(sorted(recent)[len(recent) // 2 - 1:len(recent) // 2 + 1]) / 2)
+    wins = sum(1 for t in scored[-_REGIME_WINDOW:]
+               if _finite(t.get("pnl_pct")) > 0)
 
     # Drawdown from the cumulative-P&L high-water mark (all closed trades).
     running = peak = 0.0
@@ -396,18 +422,33 @@ def _build_regime_block(tracker: dict) -> str:
 
     header = (
         f"REGIME CHECK (rolling last {len(recent)} closed trades): "
-        f"avg matched-window alpha {avg_alpha:+.2f}%, {wins}/{len(recent)} "
+        f"median matched-window alpha {median_alpha:+.2f}%, {wins}/{len(recent)} "
         f"wins, ${drawdown:.2f} below the P&L high-water mark."
     )
-    if avg_alpha < -0.5 or drawdown > 100:
+    is_cold = (median_alpha < _REGIME_COLD_MEDIAN
+               or drawdown > _REGIME_COLD_DRAWDOWN)
+    drought = _days_since_last_pick(tracker)
+    if is_cold and drought is not None and drought > _REGIME_PICK_DROUGHT_DAYS:
+        guidance = (
+            f" SELECTIVE RESET — the record is cold but the show has made "
+            f"no pick in {drought} days, and an extended drought teaches "
+            f"nothing. Take the best available setup (a Monday weekly hold "
+            f"is expected), state honestly that conviction is moderate and "
+            f"the playbook is rebuilding, and keep the risk framing tight. "
+            f"A no-trade day now requires a REASON specific to today's "
+            f"tape, not the streak."
+        )
+    elif is_cold:
         guidance = (
             " COLD STREAK — RAISE THE BAR for today's Practice Investment: "
-            "an explicit no-trade day is the DEFAULT unless a setup has 3+ "
-            "independent aligned factors (which also justifies High "
-            "confidence). Do not chase a comeback; smaller, clearer edges "
-            "only."
+            "an explicit no-trade day is acceptable and unremarkable, and "
+            "a pick needs 3+ independent aligned factors. Do not chase a "
+            "comeback. TELL LISTENERS PLAINLY that the playbook is in "
+            "capital-preservation mode after the recent drawdown and what "
+            "would re-open normal trading — that transparency is part of "
+            "the product, not an admission of failure."
         )
-    elif avg_alpha > 1.0:
+    elif median_alpha > 1.0:
         guidance = (
             " HOT STREAK — the process is working. Keep the SAME selection "
             "bar and position discipline; do not loosen criteria or reach "
@@ -900,6 +941,39 @@ def _probe_pick(trade: dict) -> bool:
 TRADE_SIGNAL_LATEST_FILENAME = "trade_signal_latest.json"
 TRADE_SIGNAL_SCHEMA_VERSION = 1
 
+# Explicit no-trade markers (July 18 2026 review): the original regex only
+# matched "Today's Pick: No…"; two weeks of real digests used
+# "**Today's Pick:** None", "**Trade Type:** No new trade" and
+# "**Trade Type:** No Trade" — all deliberate no-trade days that the
+# signal then mislabeled "no_pick_extracted" (extraction drift), making
+# the drift alarm meaningless. Recognize every observed deliberate form.
+_EXPLICIT_NO_TRADE_RE = re.compile(
+    r"(?:Today's Pick[:*\s]+(?:No\b|None\b|—?\s*None)"
+    r"|Trade Type[:*\s]+No(?:\s+new)?\s+[Tt]rade"
+    r"|Trade Type[:*\s]+Mid-?Week Update)",
+    re.IGNORECASE,
+)
+
+
+def _no_trade_reason(digest_text: str) -> str:
+    """Classify why today's signal carries no trade.
+
+    - ``explicit_no_trade`` — the digest deliberately declared no pick
+      (or a mid-week update, which by design creates no new trade);
+    - ``no_practice_section`` — no Practice Investment section at all
+      (weekend/recap episodes);
+    - ``no_pick_extracted`` — a pick section exists but nothing matched:
+      the only remaining case that genuinely means formatting drift.
+    """
+    if not digest_text:
+        return "no_practice_section"
+    if _EXPLICIT_NO_TRADE_RE.search(digest_text):
+        return "explicit_no_trade"
+    if re.search(r"Today's Pick|Practice Investment", digest_text,
+                 re.IGNORECASE):
+        return "no_pick_extracted"
+    return "no_practice_section"
+
 # uuid5 namespace for deterministic client_order_ids — SnapTrade's
 # place-order endpoint accepts a caller-supplied ``client_order_id`` for
 # idempotent placement, which protects a retried cron from double-buying.
@@ -946,14 +1020,8 @@ def _write_trade_signal(
     }
 
     if trade is None:
-        explicit_no_trade = bool(
-            digest_text
-            and re.search(r"Today's Pick[:*\s]+No\b", digest_text, re.IGNORECASE)
-        )
         signal["action"] = "no_trade"
-        signal["reason"] = (
-            "explicit_no_trade" if explicit_no_trade else "no_pick_extracted"
-        )
+        signal["reason"] = _no_trade_reason(digest_text)
         signal["trade"] = None
     else:
         symbol = trade.get("symbol", "")
@@ -1132,8 +1200,20 @@ def _evaluate_open_trade(tracker: dict, tracker_path: Path) -> None:
 
         trade_type = trade.get("trade_type", "weekly")
 
-        # Flash trades close the next day; weekly holds close on Friday only
-        should_close = (trade_type == "flash") or is_friday
+        # Flash trades close the next day; weekly holds close on Friday —
+        # but ONLY when the hold spans at least 2 calendar days (July 18
+        # 2026 review: Ep101 COST was picked Thursday and closed on the
+        # very next Friday pre-market run with a single bar of data —
+        # entry AND exit on Thursday's bar, a same-day trade wearing a
+        # "Weekly Hold" costume. A Thu/Fri-picked weekly now rolls to the
+        # NEXT Friday, matching the shadow executor's exit calendar).
+        pick_date = _trade_pick_date(trade)
+        weekly_held_long_enough = (
+            pick_date is None
+            or (datetime.date.today() - pick_date).days >= 2
+        )
+        should_close = (trade_type == "flash") or (
+            is_friday and weekly_held_long_enough)
 
         if should_close:
             _close_trade(trade, tracker)
@@ -1917,48 +1997,59 @@ def _build_benchmark_block(tracker: dict) -> str:
     matched_n = summary.get("matched_window_trades", 0)
     matched_line = ""
     if matched_n and matched_alpha is not None:
+        # July 18 2026: the significance caveat now lives INSIDE the alpha
+        # sentence. The previous design put it in a separate STATISTICAL
+        # CONFIDENCE instruction, and 2 weeks of transcripts show the
+        # model quoted the alpha in most episodes while speaking the
+        # hedge in zero — models echo data lines and drop instructions,
+        # so the hedge must be part of the data line it qualifies.
+        t_stat = summary.get("alpha_t_stat")
+        if summary.get("alpha_statistically_significant"):
+            caveat = (
+                f" — statistically significant (t={t_stat:+.2f}); the record "
+                f"shows genuine outperformance and you may say so plainly"
+            )
+        elif t_stat is not None:
+            caveat = (
+                f" — EARLY AND NOT YET STATISTICALLY SIGNIFICANT "
+                f"(t={t_stat:+.2f}); never quote this alpha without that "
+                f"qualifier in the same sentence"
+            )
+        else:
+            caveat = ""
         matched_line = (
             f"1) MATCHED-WINDOW SCORE (the honest head-to-head — each $1,000 "
             f"trade vs the NASDAQ over the SAME holding window, compounded): "
             f"portfolio {_sign(summary.get('compounded_return_pct'))} vs NASDAQ "
             f"{_sign(summary.get('compounded_nasdaq_matched_pct'))} → alpha "
-            f"{_sign(matched_alpha)} across {matched_n} benchmarked trades. "
+            f"{_sign(matched_alpha)} across {matched_n} benchmarked trades"
+            f"{caveat}. "
         )
+        # Index sweep — only from samples big enough to mean something.
+        # July 18 2026: before the gate, the sweep compared a 37-trade
+        # NASDAQ score against 2-trade S&P/TSX scores ("beating 1 of 3")
+        # — technically true, statistically meaningless. Indices qualify
+        # at n >= _MIN_SAMPLE_TRADES; the sweep appears once 2+ qualify
+        # (i.e. after the operator's recompute backfills history or
+        # enough new trades close).
         scores = summary.get("benchmark_scores") or {}
-        if len(scores) > 1:
-            parts = []
-            for key in ("nasdaq", "sp500", "tsx"):
-                s = scores.get(key)
-                if s:
-                    parts.append(
-                        f"{BENCHMARK_LABELS[key]} {_sign(s['alpha_pct'])}"
-                    )
-            beaten = summary.get("indices_beaten", 0)
-            scored = summary.get("indices_scored", 0)
+        qualified = {
+            key: s for key, s in scores.items()
+            if s.get("trades", 0) >= _MIN_SAMPLE_TRADES
+        }
+        if len(qualified) > 1:
+            parts = [
+                f"{BENCHMARK_LABELS[key]} {_sign(qualified[key]['alpha_pct'])}"
+                for key in ("nasdaq", "sp500", "tsx") if key in qualified
+            ]
+            beaten = sum(1 for s in qualified.values() if s["alpha_pct"] > 0)
             matched_line += (
                 f"MAJOR-INDEX SWEEP (same matched windows): currently beating "
-                f"{beaten} of {scored} major indices — "
+                f"{beaten} of {len(qualified)} major indices — "
                 + "; ".join(parts)
                 + ". NASDAQ stays the headline benchmark; mention the sweep "
                   "at most once per episode. "
             )
-        t_stat = summary.get("alpha_t_stat")
-        if t_stat is not None:
-            if summary.get("alpha_statistically_significant"):
-                matched_line += (
-                    f"STATISTICAL CONFIDENCE: per-trade alpha t-stat "
-                    f"{t_stat:+.2f} across {matched_n} trades — the edge is "
-                    f"statistically meaningful (~95%+); you may say the "
-                    f"record shows genuine outperformance. "
-                )
-            else:
-                matched_line += (
-                    f"STATISTICAL CONFIDENCE: per-trade alpha t-stat "
-                    f"{t_stat:+.2f} across {matched_n} trades — NOT yet "
-                    f"statistically distinguishable from luck; if the "
-                    f"episode claims outperformance, say 'early and not yet "
-                    f"statistically significant' in the same breath. "
-                )
     return (
         f"NASDAQ Composite ^IXIC: {close:,.0f} "
         f"(YTD {_sign(bench_ytd)}, since inception {_sign(bench_itd)}).\n"
@@ -2555,7 +2646,7 @@ def _extract_trade_from_digest(digest_text: str, episode_num: int | None = None)
         # 2026 review: silent extraction failures were indistinguishable
         # from no-trade days in the tracker).
         if re.search(r"Today's Pick", digest_text):
-            if re.search(r"Today's Pick[:*\s]+No\b", digest_text, re.IGNORECASE):
+            if _EXPLICIT_NO_TRADE_RE.search(digest_text):
                 logger.info("Digest declared no trade today — tracker unchanged.")
             else:
                 logger.warning(
