@@ -60,7 +60,14 @@ logger = logging.getLogger("update_youtube_policy")
 # ---- Tunables -------------------------------------------------------------
 WINDOW_DAYS = 14            # velocity window (days before the stats snapshot)
 MIN_VIDEOS_CONFIDENT = 4    # per kind — below this, hold the active setting
-LONG_VPD_FLOOR = 1.0        # avg views/day to keep long-form on
+# July 18 2026 (operator decision): the long-form floor is CHANNEL-specific.
+# RU long-form earned 435 views across 68 videos (~9% retention) while RU
+# Shorts carried 7,028 — an RU long_vpd of ~1.2 is noise, not
+# product-market fit, so the RU channel must clear a higher bar to spend a
+# daily long-form render. The MECHANISM (velocity + hysteresis + Monday
+# probe) stays identical on both channels, so a show can always re-earn
+# long-form through the weekly probe data.
+LONG_VPD_FLOOR: Dict[str, float] = {"en": 1.0, "ru": 2.0}
 SHORT_VPD_TWO = 4.0         # avg views/day to earn a 2nd Short
 SHORT_VPD_PROBE = 0.5       # below this, shorts-only reads as "probe" (D)
 STREAK_TO_FLIP = 2          # consecutive identical computed tiers to flip
@@ -149,6 +156,7 @@ def compute_tier(
     long_vpds: List[float],
     short_vpds: List[float],
     active_tier: str,
+    channel: str = "en",
 ) -> Tuple[str, Optional[float], Optional[float], str]:
     """Computed tier for one show x channel, holding insufficient dimensions.
 
@@ -159,11 +167,13 @@ def compute_tier(
     long-form data).
     """
     active_long, active_shorts = TIER_SETTINGS.get(active_tier, (False, 1))
+    long_floor = LONG_VPD_FLOOR.get((channel or "en").lower(),
+                                    LONG_VPD_FLOOR["en"])
 
     long_vpd = _avg(long_vpds) if len(long_vpds) >= MIN_VIDEOS_CONFIDENT else None
     short_vpd = _avg(short_vpds) if len(short_vpds) >= MIN_VIDEOS_CONFIDENT else None
 
-    publish_long = (long_vpd >= LONG_VPD_FLOOR) if long_vpd is not None else active_long
+    publish_long = (long_vpd >= long_floor) if long_vpd is not None else active_long
     shorts = ((2 if short_vpd >= SHORT_VPD_TWO else 1)
               if short_vpd is not None else active_shorts)
 
@@ -173,7 +183,7 @@ def compute_tier(
                        f"{MIN_VIDEOS_CONFIDENT} in {WINDOW_DAYS}d)")
     else:
         reasons.append(f"long_vpd {long_vpd:.2f} "
-                       f"{'>=' if publish_long else '<'} {LONG_VPD_FLOOR}")
+                       f"{'>=' if publish_long else '<'} {long_floor}")
     if short_vpd is None:
         reasons.append(f"shorts held ({len(short_vpds)} videos < "
                        f"{MIN_VIDEOS_CONFIDENT} in {WINDOW_DAYS}d)")
@@ -252,7 +262,7 @@ def build_policy(
                     and prev_entry.get("tier") in TIER_SETTINGS else seed
                 )
                 computed, long_vpd, short_vpd, reason = compute_tier(
-                    long_vpds, short_vpds, active_for_hold)
+                    long_vpds, short_vpds, active_for_hold, channel)
             else:
                 computed, long_vpd, short_vpd = seed, None, None
                 reason = "no stats data — holding seed tier."

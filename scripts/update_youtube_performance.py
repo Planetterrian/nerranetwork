@@ -68,7 +68,17 @@ def _build_hint(videos: List[dict]) -> str:
              and (v.get("channel") or "en").lower() == "en"]
     if len(rated) < _MIN_VIDEOS:
         return ""
-    rated.sort(key=lambda v: v.get("average_view_percentage", 0), reverse=True)
+    # July 18 2026: rank by retention BLENDED with subscribers gained —
+    # one subscriber ≈ 5 retention points (subs-gained is a small integer
+    # on this channel; the multiplier makes a converting video outrank a
+    # merely-watched one without letting a single sub dominate).
+    rated.sort(
+        key=lambda v: (
+            float(v.get("average_view_percentage", 0) or 0)
+            + 5.0 * float(v.get("subscribers_gained", 0) or 0)
+        ),
+        reverse=True,
+    )
     top = rated[: max(3, len(rated) // 4)]  # top quartile (min 3)
     median_pct = sorted(v["average_view_percentage"] for v in rated)[len(rated) // 2]
 
@@ -90,6 +100,13 @@ def _build_hint(videos: List[dict]) -> str:
     if examples:
         parts.append("Highest-retention titles so far: "
                      + " | ".join(f'"{t}"' for t in examples) + ".")
+    # Subscriber-converting titles are the strongest possible exemplars.
+    converters = [v["title"] for v in rated
+                  if float(v.get("subscribers_gained", 0) or 0) > 0
+                  and v.get("title")][:2]
+    if converters:
+        parts.append("Titles that converted subscribers: "
+                     + " | ".join(f'"{t}"' for t in converters) + ".")
     parts.append(
         f"Median retention is {median_pct:.0f}% — beat it: keep the promise "
         "concrete and front-load the strongest entity."

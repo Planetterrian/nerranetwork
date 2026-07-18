@@ -1751,6 +1751,72 @@ def build_audience_section(root: Path) -> Dict[str, Any]:
         except Exception as exc:  # noqa: BLE001
             section["newsletter"] = {"configured": True, "error": str(exc)}
 
+    # July 18 2026 — YouTube channel growth (subscribers were previously
+    # tracked NOWHERE). Reads the channels block written by
+    # fetch_youtube_analytics (schema v2) + the daily snapshot history for
+    # the 7-day delta, plus the top subscriber-driving videos.
+    section["youtube"] = {"configured": False}
+    yt_path = root / "api" / "youtube_stats.json"
+    if yt_path.exists():
+        try:
+            data = json.loads(yt_path.read_text(encoding="utf-8"))
+            channels = data.get("channels") or {}
+            hist_rows: List[dict] = []
+            hist_path = root / "api" / "youtube_channel_history.json"
+            if hist_path.exists():
+                try:
+                    hist_rows = json.loads(
+                        hist_path.read_text(encoding="utf-8")).get("rows", [])
+                except Exception:  # noqa: BLE001
+                    hist_rows = []
+
+            def _delta_7d(channel: str, current: int) -> Optional[int]:
+                cutoff = (_dt.date.today()
+                          - _dt.timedelta(days=7)).isoformat()
+                older = [r for r in hist_rows
+                         if r.get("channel") == channel
+                         and str(r.get("date", "")) <= cutoff]
+                if not older:
+                    return None
+                base = older[-1].get("subscribers")
+                return current - int(base) if base is not None else None
+
+            per_channel = {}
+            for ch, snap in channels.items():
+                subs = int(snap.get("subscribers", 0) or 0)
+                per_channel[ch] = {
+                    "subscribers": subs,
+                    "subscribers_delta_7d": _delta_7d(ch, subs),
+                    "total_views": snap.get("total_views"),
+                    "video_count": snap.get("video_count"),
+                }
+            top_converters = sorted(
+                (
+                    {
+                        "show": dir_name,
+                        "title": v.get("title", ""),
+                        "kind": v.get("kind", ""),
+                        "channel": v.get("channel", "en"),
+                        "subscribers_gained": v.get("subscribers_gained", 0),
+                        "views": v.get("views", 0),
+                    }
+                    for dir_name, s in (data.get("shows") or {}).items()
+                    for v in s.get("videos", [])
+                    if int(v.get("subscribers_gained", 0) or 0) > 0
+                ),
+                key=lambda r: r["subscribers_gained"],
+                reverse=True,
+            )[:5]
+            if per_channel or top_converters:
+                section["youtube"] = {
+                    "configured": True,
+                    "generated": data.get("generated"),
+                    "channels": per_channel,
+                    "top_subscriber_videos": top_converters,
+                }
+        except Exception as exc:  # noqa: BLE001
+            section["youtube"] = {"configured": True, "error": str(exc)}
+
     return section
 
 
