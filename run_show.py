@@ -5104,7 +5104,7 @@ def _publish_youtube(
                     or "voice"
                 )
             )
-            shorts_plan: "list[tuple[float, str]]" = []
+            shorts_plan: "list[tuple[float, str, str]]" = []
             if shorts_count_yaml > 1 and mode_resolved == "smart":
                 try:
                     from engine.shorts_selector import (
@@ -5117,6 +5117,16 @@ def _publish_youtube(
                         shorts_threshold = float(
                             getattr(getattr(config, "youtube", None), "shorts_min_score_threshold", 5.0) or 5.0
                         )
+                        # July 18 2026: fill-to-requested. The requested
+                        # count is a policy decision already made — when
+                        # fewer than N windows beat the threshold, ship
+                        # the best available (score >= 0) instead of
+                        # silently under-delivering the network's best-
+                        # performing format (FF shipped 1-of-2 on every
+                        # July episode before this).
+                        _fill = bool(getattr(
+                            config.youtube, "shorts_fill_to_requested", True,
+                        ))
                         windows = pick_top_n_engaging_windows(
                             transcript_path,
                             n=shorts_count_yaml,
@@ -5125,11 +5135,14 @@ def _publish_youtube(
                             window_duration=duration,
                             min_start_final=voice_offset,
                             min_score_threshold=shorts_threshold,
+                            fill_to_n=_fill,
                         )
                         shorts_plan = [
                             (
                                 w.start_seconds,
                                 (w.opening_text or hook).strip() or hook,
+                                "qualified" if getattr(w, "qualified", True)
+                                else "filled",
                             )
                             for w in windows
                         ]
@@ -5150,16 +5163,17 @@ def _publish_youtube(
                     audio_duration=_ep_duration,
                     transcript_path=transcript_path,
                 )
-                shorts_plan = [(fallback_offset, hook)]
+                shorts_plan = [(fallback_offset, hook, "legacy_fallback")]
 
             # Surface the resolved plan on the result dict. Single-
             # Short fields stay for backwards compatibility with the
             # dashboard / metrics consumers; the list-shaped fields
             # are new and only useful when len(plan) > 1.
             result["shorts_start_offset"] = round(shorts_plan[0][0], 2)
-            result["shorts_start_offsets"] = [round(o, 2) for o, _ in shorts_plan]
+            result["shorts_start_offsets"] = [round(o, 2) for o, _, _ in shorts_plan]
             result["shorts_start_mode_resolved"] = mode_resolved
             result["shorts_count_requested"] = shorts_count_yaml
+            result["shorts_fill_modes"] = [m for _, _, m in shorts_plan]
 
             # ---- Pre-loop assets shared across every Short ----
             _yt = config.youtube
@@ -5241,7 +5255,7 @@ def _publish_youtube(
             short_video_ids_out: "list[str]" = []
             short_errors_out: "list[dict]" = []
             multi = len(shorts_plan) > 1
-            for short_idx, (this_offset, this_hook) in enumerate(shorts_plan):
+            for short_idx, (this_offset, this_hook, _fill_mode) in enumerate(shorts_plan):
                 # Filename suffix is empty for the single-Short case so
                 # the legacy ``{base}_short.mp4`` path stays exactly the
                 # same when ``shorts_per_episode == 1``.

@@ -498,6 +498,12 @@ class YouTubeConfig:
     # episode ran at the 5.0 default — Ep505's "best score 3.0 below
     # threshold 5.0" fallback was this bug, not a quiet news day.
     shorts_min_score_threshold: float = 5.0
+    # July 18 2026: when the multi-Shorts selector finds fewer than the
+    # requested N windows above the threshold, fill the remaining slots
+    # with the best non-overlapping sub-threshold windows (score >= 0)
+    # instead of shipping fewer Shorts. The requested count is a policy
+    # decision; before this, FF shipped 1-of-2 on every July episode.
+    shorts_fill_to_requested: bool = True
     # ``always`` | ``alternate_episodes`` — skip Shorts on odd episode
     # numbers to halve upload quota during phased rollout.
     shorts_upload_schedule: str = "always"
