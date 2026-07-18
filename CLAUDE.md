@@ -492,6 +492,34 @@ nerranetwork/
   exists ONLY in `snaptrade_client.py`, invoked ONLY by `live.py`, whose
   FIRST gate is the kill switch (a poisoned-client test proves disabled
   runs touch nothing). No prompt/audio changes (outside landmine #17).
+  **July 18 2026 two-week scoring review** (review:
+  [`docs/reviews/modern_investing_review_2026_07_18.md`](docs/reviews/modern_investing_review_2026_07_18.md);
+  drift guards: `tests/test_mit_benchmark_integrity.py::{TestRegimeDeadlockFix,TestWeeklyMinHold,TestSweepGating,TestNoTradeReasonTaxonomy}`):
+  scored the July 3-4 predictions — 8 HIT (tic 9/10→0/10, entry
+  integrity, stops 2/2, rule stamps, 3-index closes, shadow ledger
+  complete with paired exits, dormant live layer untouched), 1 MISS,
+  1 pending. Two production design flaws fixed: (1) the regime
+  cold-streak brake DEADLOCKED the Practice Investment (2 picks in 14
+  episodes; mean poisoned by the -11.8 MDA outlier, $100 drawdown
+  threshold permanently tripped at $164 standing, and cold suppressed
+  the closes that refresh the window) — regime v2 uses the MEDIAN, a
+  full-position $250 drawdown threshold, a >7-day pick-drought escape
+  valve (SELECTIVE RESET expects the next Monday pick), and tells the
+  show to narrate capital-preservation mode on air; (2) Ep101 COST was
+  picked Thursday and closed as a one-bar "weekly hold" (entry==exit
+  bar, -2.35% while the shadow layer holding Thu→Fri made +0.26%) —
+  weekly closes now require ≥2 days since pick, shadow calendar matched.
+  The MISSed prediction: the t-stat honesty hedge was spoken in ZERO
+  episodes while the alpha was quoted in most — the caveat now lives
+  INLINE in the alpha sentence (models echo data lines, drop separate
+  instructions — a reusable lesson). Index sweep gated on n≥5 per index
+  (was comparing 37-trade NASDAQ vs 2-trade S&P/TSX). No-trade signal
+  reasons: explicit forms broadened ("Today's Pick: None" was mislabeled
+  as extraction drift), `no_practice_section` for recaps. Regime/caveat
+  text changes prompt context → A/B-listen per landmine #17. Operator
+  items still open: recompute --apply (matched alpha retains old-window
+  inflation until backfill), SnapTrade Phase-0 verification, LL-054
+  family retirement.
 
 **Tesla Shorts Time Recursive Memory System (May 2026+)**  
 TST received a full recursive improvement architecture (analogous to MIT):

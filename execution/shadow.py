@@ -164,6 +164,10 @@ def _exit_due_date(pick_date: datetime.date, trade_type: str) -> datetime.date:
     if trade_type == "flash":
         days = 3 if wd == 4 else (2 if wd == 5 else 1)  # Fri→Mon, Sat→Mon
         return pick_date + datetime.timedelta(days=days)
+    if wd == 3:
+        # Thursday-picked weekly: this-week Friday would be a 1-day
+        # "weekly hold" (the sim's Ep101 COST degenerate) — next Friday.
+        return pick_date + datetime.timedelta(days=8)
     if wd == 4:
         return pick_date + datetime.timedelta(days=7)
     if wd == 5:
