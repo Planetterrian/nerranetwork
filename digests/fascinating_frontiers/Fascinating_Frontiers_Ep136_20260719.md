@@ -1,0 +1,57 @@
+# Fascinating Frontiers
+🚀 **Fascinating Frontiers** - Space & Astronomy News
+> **NASA's Psyche spacecraft just used Mars as a gravitational slingshot, returning a rich dataset that will sharpen its approach to a metal world never visited before.**
+---
+### Top 15 Space & Astronomy Stories
+1. **ICEYE radar satellite transferred to Portuguese Air Force** — X post by orbital tracker
+   The Finnish-built ICEYE-X73 synthetic aperture radar satellite has been formally registered under UN document SER.E/1346 as CA-01 and is now owned by the Portuguese Air Force. ICEYE has previously sold identical radar satellites to operators in the United States, Poland, Greece, the United Arab Emirates, and Brazil. The move marks the first Portuguese military ownership of an orbital radar asset. Portugal joins a growing list of nations acquiring commercial radar constellations for sovereign surveillance needs. Watch for further national registrations as ICEYE continues expanding its customer base.
+
+2. **Oval planetary nebula NGC 6563 reaches peak altitude** — Astronomy Magazine
+   NGC 6563 in Sagittarius is an oval bubble of gas lit by its central white dwarf and now stands highest in the evening sky as the Moon sets. The nebula formed when the progenitor star shed its outer layers, leaving the hot core to ionize the expanding shell. Observers with moderate telescopes can locate it near the Sagittarius Teapot asterism. The object offers a clear view of late-stage stellar evolution in a relatively uncrowded field. Follow-up imaging this week will capture any changes in the nebula’s apparent brightness as it transits.
+
+3. **Faintest exoplanet yet imaged from the ground reported** — UA.NEWS
+   Astronomers have captured the dimmest directly imaged exoplanet to date using ground-based instruments. The detection pushes current adaptive-optics and coronagraph technology to new limits for separating planet light from host-star glare. No mass or orbital period figures were released in the initial announcement. The result demonstrates that smaller, cooler worlds are becoming accessible to direct imaging campaigns. Future observations will attempt to extract atmospheric spectra from the same target.
+
+4. **Submillimeter Array activates fast-response system for gamma-ray burst** — Universe Today
+   The Submillimeter Array on Mauna Kea has demonstrated its new semi-automated alert system by rapidly slewing to a gamma-ray burst detected by space-based telescopes. The interferometer recorded submillimeter emission within minutes of the trigger, capturing the early afterglow phase. Data from the event will help constrain the physics of relativistic jets launched by the burst progenitor. The successful test shows how ground-based radio arrays can now respond on timescales previously limited to optical facilities. Additional triggers are expected as the alert pipeline matures.
+
+5. **Psyche spacecraft completes Mars flyby and returns data** — Phys.org
+   NASA’s Psyche mission spacecraft executed its planned gravity-assist maneuver at Mars and transmitted a full dataset from the encounter. Mission teams are now analyzing images and spectra collected during the closest approach to refine navigation for the 2029 arrival at asteroid Psyche. The flyby also served as an in-flight test of several instruments ahead of the main science phase. No hardware anomalies were reported during the pass. The next major milestone is a second deep-space maneuver later this year.
+
+6. **Mauritius signs Artemis Accords as 70th nation** — SpaceNews
+   The island nation of Mauritius acceded to the Artemis Accords on July 17, bringing the total number of signatories to 70 in under six years. The agreement outlines principles for lunar exploration, resource use, and interoperability of systems. Mauritius becomes the latest African state to join the framework. The rapid growth in participation reflects widening international interest in coordinated lunar activities. Subsequent signings are anticipated from additional nations in the coming months.
+
+7. **U.S. Space Force raises launch contract ceiling to $17 billion** — SpaceNews
+   The National Security Space Launch Phase 3 Lane 1 contract maximum value has been increased from $5.6 billion to $17 billion to accommodate rising launch demand. The adjustment provides headroom for additional national-security payloads scheduled through the end of the decade. Lane 1 covers medium-lift missions that do not require the heaviest lift capacity. The change signals sustained growth in classified and civil government launch requirements. Industry teams are already positioning for the expanded opportunity pool.
+
+8. **Pentagon funds expansion of U.S. satellite cover-glass production** — SpaceNews
+   Defense Production Act funding of $7.1 million has been awarded to Martin Materials Solutions to scale manufacturing of radiation-resistant cover glass. The material protects solar arrays and thermal-control systems on spacecraft from charged-particle damage. The small business will add production capacity at its existing facility. Increased domestic supply is intended to reduce reliance on foreign sources for critical satellite components. First deliveries from the expanded line are expected within two years.
+
+9. **Japan completes first flight test of RV-X reusable rocket prototype** — Space.com
+   Japan’s RV-X experimental vehicle lifted off, reached a controlled altitude, and executed a successful vertical landing in its inaugural test flight. The prototype is designed to demonstrate technologies for future reusable first stages. Telemetry from the flight is now being reviewed to assess engine performance and guidance accuracy. The test marks Japan’s entry into controlled vertical-landing experiments. Additional flights are planned to expand the performance envelope.
+
+10. **Artemis III lander test planned as 2027 dress rehearsal** — Universe Today
+    NASA will fly an uncrewed Artemis III demonstration mission in 2027 to practice rendezvous and docking between a commercial human landing system and the Orion spacecraft. Data gathered during the rehearsal will validate procedures ahead of the crewed landing targeted for 2028. The mission also serves as an end-to-end check of ground and flight control teams. This development directly advances the crewed landing schedule tracked in ongoing Artemis coverage. The next visible milestone is hardware delivery for the demonstration vehicle.
+
+11. **Oldest known Martian meteorite reveals early water loss** — Reddit r/space
+    The Teghaza meteorite, dated to 4.1 billion years ago, shows evidence of a granitelike crust and indicates Mars had already begun losing surface water by that epoch. Isotopic measurements suggest the planet’s early hydrosphere was diminishing faster than previously modeled. The rock provides a rare sample of Noachian-era crust not yet visited by rovers. Researchers are now comparing its mineralogy with orbital data from current Mars missions. Further laboratory studies are expected to refine timelines for the planet’s climate transition.
+
+12. **Interactive timeline of every crewed spaceflight launched online** — Reddit r/space
+    A new public website displays a complete chronological record of human spaceflights from Yuri Gagarin through the most recent Soyuz mission. The single-page interface allows users to scroll through every crewed launch without switching between separate databases. The project was built to address the lack of a unified visual history that includes mission durations and crew details. Early user feedback has focused on the clarity of the layout and completeness of the dataset. The site remains freely accessible for ongoing updates.
+
+13. **Giant planets proposed as dark-matter detectors** — Reddit r/astronomy
+    Researchers suggest that massive planets could register interactions with dark-matter particles through measurable orbital or atmospheric effects. The idea leverages the large cross-section of gas and ice giants to capture rare events that smaller worlds would miss. No observational campaign has yet been funded to test the hypothesis. If validated, the method would offer a novel complement to underground detectors and space-based instruments. Modeling papers outlining expected signatures are in preparation.
+
+14. **Serbia joins Artemis Accords program** — Report.az
+    Serbia has signed the Artemis Accords, committing to the same principles of lunar exploration and data sharing already adopted by 69 other nations. The accession expands European participation in the framework beyond existing signatories. Serbian space officials cited opportunities for future scientific and industrial collaboration. The move follows similar recent additions from other smaller nations. Further accessions are expected before year-end.
+
+15. **John Glenn birth anniversary noted** — Astronomy Magazine
+    July 18 marks the birth of John Glenn, who flew 59 combat missions in World War II and 63 in Korea before becoming one of NASA’s original Mercury astronauts. In 1962 he completed three orbits aboard Friendship 7, becoming the first American to circle the Earth. Glenn later served as a U.S. senator and returned to space on the 1998 STS-95 shuttle mission. His career bridged military aviation, early human spaceflight, and later political service. Archival footage and mission transcripts are being highlighted by NASA this week.
+---
+### Cosmic Spotlight
+NASA’s Psyche spacecraft has now banked critical navigation and instrument data from its Mars flyby that will directly influence the final trajectory to the metal asteroid. The encounter also exercised the spacecraft’s autonomous systems under real deep-space conditions, reducing risk for the 2029 arrival. Mission scientists are already examining spectral measurements that may hint at surface composition even before orbital insertion. What remains unknown is whether the asteroid’s bulk density will match current models or force a revision of formation theories for metallic worlds.
+---
+### Cosmic Deep Dive: How Radar Satellites See Through Clouds
+If Earth were a basketball, the altitude of most radar satellites would be roughly the thickness of a sheet of paper above its surface—yet from that narrow corridor they map every continent regardless of weather. A synthetic-aperture radar satellite sends out its own microwave pulses and records the faint echoes that bounce back, so the signal never waits for sunlight or clear skies the way optical cameras must. One satellite traveling at roughly 7.5 kilometres per second can synthesize an antenna hundreds of metres wide simply by moving along its orbit, turning motion itself into resolution. The same pass can distinguish between open water, forest canopy, and urban structures because each surface scatters microwaves differently, producing unique brightness and texture signatures. Despite these capabilities, scientists still cannot predict exactly how vegetation moisture or soil salinity will alter the returned signal strength from one season to the next, leaving calibration models under constant refinement.
+---
+New hardware and new partners keep reshaping what becomes possible above our heads.
