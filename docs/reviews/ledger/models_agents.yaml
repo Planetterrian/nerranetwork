@@ -119,4 +119,57 @@ reviews:
         evidence: null
     agent_cost_usd: null
 
+  - date: '2026-07-19'
+    pr: null
+    doc: docs/reviews/models_agents_review_2026_07_19.md
+    generated_by: grok-4.3
+    summary: This pass finds persistent under-length (9/10 recent episodes below 1500w floor) and recurring boilerplate tics ("keep an eye on", "Okay let's pop the hood on", network outro blocks) across transcripts, with all prior length predictions scoring hit and chapter/garble fixes remaining stable.
+    scored_prior_predictions:
+    - metric: '"An-thropic" occurrences in last-10 _tts.txt (sum)'
+      verdict: hit
+      evidence: 0 in ep107–ep116 transcripts
+    - metric: episodes with an "Under the Hood" chapter, last 5
+      verdict: hit
+      evidence: 4/5 (ep108/110/112/114)
+    - metric: episodes whose chapters include a raw mid-sentence title (ends "…" or >40 chars), last 5
+      verdict: hit
+      evidence: 0/5 in latest batch
+    - metric: median _tts.txt words, last 10 eps
+      verdict: hit
+      evidence: ~1300 steady; no regression
+    - metric: '"koo-dah" occurrences in published blog transcripts of post-merge CUDA episodes'
+      verdict: hit
+      evidence: 0 post-merge (ep107+)
+    - metric: custom voice still reads CUDA cleanly (Whisper of next post-merge CUDA episode)
+      verdict: hit
+      evidence: Whisper shows "CUDA" (no letter-split)
+    - metric: verbatim-doubled sentence pairs in shipped _tts.txt scripts
+      verdict: partial
+      evidence: ep115/116 clean; prior Ep087 fixed
+    shipped: []
+    deferred:
+    - Digest-driven / position-aware mid-section chapter titles (carried)
+    - Expand Under the Hood section for length after four-show A/B settles (carried)
+    - Chronic under-length = digest ceiling (carried)
+    predictions:
+    - metric: episodes below min_podcast_words (1500) in last 10
+      baseline: 9/10
+      expected: <=3/10 after digest min_words raise
+      verdict: pending
+      evidence: null
+    - metric: '"keep an eye on" occurrences as Tomorrow Teaser opener, last 10'
+      baseline: 10/10
+      expected: <=2/10 after shape-based de-seed
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/models_agents.yaml
+      kind: config
+      ab_listen_required: false
+      rationale: Direct lever per length meta-rule; targets digest ceiling without podcast-side changes
+    - file: shows/prompts/models_agents_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Shape-based de-seed of 10/10 tic; avoids quotable example per meta-rule
+    agent_cost_usd: 0.0591
 do_not_retry: []
