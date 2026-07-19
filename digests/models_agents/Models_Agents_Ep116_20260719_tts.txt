@@ -1,0 +1,161 @@
+Good to have you on Models and Agents, episode one hundred sixteen, for July nineteenth, twenty twenty-six. There's signal and noise in A I every day. Let's get to the signal.
+
+Perplexity’s new WANDR benchmark forces research agents to hunt wide and deep with verifiable citations, exposing where current systems still fall short.
+
+Perplexity released WANDR as an open benchmark with five hundred evidence-heavy tasks.
+
+The evaluation requires agents to surface many qualifying entities and back each one with cited, re-verifiable evidence.
+
+Perplexity Search as Code currently leads with zero point three six three soft F1 and zero point one three three hard F1.
+
+The benchmark penalizes shallow or uncited results and rewards thorough evidence collection.
+
+Builders working on long-horizon research agents now have a public yardstick that measures the wide-and-deep behavior most existing evals ignore.
+
+Watch for teams to publish WANDR scores alongside GAIA and WebArena numbers in the coming weeks.
+
+Claude Code is already shipping the unreleased Rust rewrite of Bun for faster runtime.
+
+Nvidia DeepStream nine point one adds thirteen agentic skills and multi-view three-D tracking.
+
+A new ASCII diagram benchmark shows Gemma four thirty one B IT at seventy three point eight percent.
+
+Three open trillion-scale mixture-of-experts models now have direct benchmark, license, and serving-cost comparisons.
+
+Ten open-source no-code platforms for L L M apps, rag, and agents were just catalogued with verified licenses.
+
+Perplexity A I released WANDR as an open benchmark and evaluation harness containing five hundred tasks.
+
+Each task tests whether research agents can locate numerous qualifying entities rather than stopping at the first few hits.
+
+The harness supplies a concrete new signal on citation quality that teams can track alongside prior benchmarks.
+
+This development fits the ongoing arc for Agents and Tool Use covered last on episode one fifteen.
+
+Reliability of long-horizon agents remains a key open question, and WANDR supplies measurable data on citation performance.
+
+A new benchmark called ASCIITermDraw-Bench evaluates vision-language models on ASCII generation and editing.
+
+It contains eighty tasks across basic layouts, network topologies, software architecture diagrams, and image-conditioned editing.
+
+Gemma four thirty one B IT leads at seventy three point eight percent with a plus or minus four point one interval.
+
+Qwen three point seven Plus follows at seventy point two percent, and Kimi K two point six sits at sixty one point eight percent.
+
+The full task set, twelve example tasks, and evaluation code are available on Hugging Face.
+
+Three open trillion-scale mixture-of-experts models received a side-by-side comparison on benchmarks, licenses, and serving cost.
+
+The post supplies concrete numbers for measured intelligence, MIT versus modified MIT licensing, and per-token inference pricing.
+
+Builders evaluating open frontier-class models can now review the cost columns before committing to any of the three families.
+
+This comparison continues the tracked story for Open-Weight Models covered last on episode one fifteen.
+
+The performance gap with closed systems and the practical impact of licensing choices remain central open questions.
+
+Anyone running Claude Code is already executing against the unreleased Rust rewrite of Bun.
+
+Two simple terminal commands reveal the Rust build in use without any additional installation steps.
+
+The change improves startup and runtime performance for the coding agent without any user action required.
+
+This update sits within the Agents and Tool Use arc covered last on twenty twenty-six oh seven eighteen.
+
+The Rust rewrite represents a concrete infrastructure improvement that may reduce latency for code-generation workflows.
+
+Nvidia released DeepStream nine point one with thirteen agentic skills.
+
+The skills let coding agents such as Claude Code and Codex generate multi-camera video analytics pipelines from natural-language prompts.
+
+Multi-View three-D Tracking fuses per-camera detections into one globally consistent three-D world with stable object IDs across views.
+
+AutoMagicCalib removes manual camera calibration entirely.
+
+The release adds JetPack seven point two support and consolidates everything into a single open-source GitHub monorepo.
+
+A roundup lists ten open-source no-code and low-code platforms for building L L M apps, rag systems, and A I agents.
+
+Each entry includes verified license, repository link, and recommended use case.
+
+Teams that prefer visual builders over writing orchestration code can now pick from a documented set of maintained options.
+
+The post emphasizes retrieval, agents, and workflows that now ship as visual or plain-English tools.
+
+Builders gain immediate access to options that handle retrieval, agents, and workflows without custom orchestration code.
+
+The catalog covers platforms suited for production-grade rag or agent systems that non-engineers can operate directly.
+
+A step-by-step Colab notebook walks through fine-tuning Qwen three with Laura using Nvidia NeMo AutoModel.
+
+The workflow covers installing NeMo AutoModel from source, loading the official Qwen three zero point six B Laura recipe, and adjusting precision and scheduler settings for a single G P U.
+
+Training launches via the automodel CLI, followed by comparison of base versus fine-tuned outputs.
+
+The workflow ends with the NeMoAutoModelForCausalLM Python A P I for further customization.
+
+Builders with limited hardware can now follow a verified single-G P U path to adapt small Qwen three models.
+
+TabFM Studio lets users drop a CSV or Excel file, mark a target column, and run Google’s TabFM model directly on the grid without writing code.
+
+In-context examples are taken from rows that already contain the target value while empty rows receive predictions in place.
+
+The repo is at and runs entirely locally, removing any dependency on external A P I's for tabular inference.
+
+Users mark the target column once and the system applies the model to the remaining grid rows.
+
+Predictions appear inline for any row lacking a target value, using only the local TabFM weights.
+
+The point-and-click interface supports both CSV and Excel formats without requiring code edits or external calls.
+
+An interactive t-SNE visualization of thirty two thousand seventy alphabetic tokens from G P T two small’s embedding table is now available.
+
+Users can tap any token to see nearest neighbors connected by a minimum spanning tree.
+
+The tool runs entirely in the browser with pinch-to-zoom, search, and mobile support.
+
+The visualization covers thirty two thousand seventy tokens drawn from the model’s static embedding table.
+
+Each tap highlights the minimum spanning tree linking the selected token to its closest neighbors in the projected space.
+
+The browser-based viewer supports search and mobile gestures so users can inspect embedding geometry without installing software.
+
+OK, let's pop the hood on token embedding geometry.
+
+Everyone treats token embeddings as a fixed lookup table whose nearest neighbors are obvious and stable.
+
+In practice the geometry is shaped by the training objective and the projection method used to inspect it.
+
+When coordinates are left continuous, neighbors of Trump include other presidents and family names because magnitude information is preserved.
+
+After simple discretization the same token suddenly sits among generic political terms because the thresholding step discards the very signals that distinguished specific entities.
+
+The difference arises because discretization throws away magnitude information that the original training preserved.
+
+This adds no runtime cost but changes which analogies surface in embedding-based retrieval or clustering pipelines.
+
+The practical takeaway is to test both continuous and thresholded views before deciding which neighbors matter for your downstream task.
+
+Run the ASCIITermDraw-Bench tasks on your favorite V L M to see how well it handles precise ASCII layout versus free-form description.
+
+Drop a spreadsheet into TabFM Studio and test whether the local tabular model beats your current heuristic rules for the target column.
+
+Compare the three trillion-scale MoE models in the MarkTechPost post on your own workload using the published serving-cost numbers.
+
+Try the single-G P U Qwen three Laura Colab notebook on a small internal dataset to measure whether the fine-tune beats the base model on your domain.
+
+More teams are expected to publish WANDR scores as the benchmark gains adoption among research-agent developers.
+
+Nvidia’s open DeepStream monorepo will likely see community contributions of new agentic skills built on the thirteen-skill foundation.
+
+Additional single-G P U fine-tuning recipes for other small Qwen three variants are likely to appear on Hugging Face in the next week.
+
+Tomorrow, keep an eye on early WANDR score reports from additional research-agent teams.
+
+That wraps up today's A I briefing. Share this with a developer or builder who wants to stay current. Subscribe wherever you listen. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+One more thing — if you liked today's episode, our sister show Models and Agents for Beginners is worth a spot in your feed: artificial intelligence explained simply, for beginners and curious teens. It's one of the Nerra Network's daily briefings, all free at nerranetwork dot com.
+
+The Do Positive Pod is the club for people who do something about it — episodes and the Dispatch Wall at nerranetwork dot com/thedppod.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
