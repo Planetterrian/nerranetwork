@@ -1,0 +1,94 @@
+Welcome back to Models and Agents, episode 117 for July 20, 2026, your daily AI briefing.
+Monday in the AI world, which means a weekend's worth of announcements to catch up on.
+Let's go.
+Kimi K3 lands as the largest open-weight model yet at 2.8 trillion parameters,
+forcing builders to test whether memory-centric scaling beats raw compute for real workloads.
+Moonshot AI released Kimi K3 on July 16. The model carries 2.8 trillion parameters and stands as the
+first entry in the 3 trillion class. It prioritizes memory scaling over raw compute density.
+Remember, we covered the open-weight performance gap yesterday. This release supplies a concrete
+high-parameter baseline for direct comparison on long-context and memory-intensive workloads.
+Builders can now download the weights and run experiments at this scale without proprietary APIs.
+Early independent benchmarks on agentic tasks and serving costs are expected within the next two
+weeks. Public health departments in 10 US jurisdictions will trial generative AI tools from open AI
+and anthropic under the Coalition for Health AI and Accenture's Pulse Program.
+The initiative focuses on real-world use cases in state, local, tribal, and territorial settings.
+Health tech teams should monitor early results for regulatory and deployment patterns that may
+influence other verticals. The program pairs the models with the Coalition for Health AI
+framework to produce measurable outcomes across the participating sites. This development advances
+the safety and policy track by moving evaluation work from lab settings into live public health
+environments. Alibaba announced a new model it positions immediately behind anthropics
+Fable 5. The claim arrives alongside ongoing frontier model comparisons and gives practitioners
+another closed model reference point for capability tracking. Teams working on high-stakes reasoning tasks
+should test it against current clawed and GPT variants this week to map relative strengths on domain
+specific benchmarks. The positioning highlights continued competition at the top of closed model leaderboards
+without releasing weights or detailed architecture notes. Builders tracking the closed frontier
+should add this to their evaluation matrix alongside existing GPT and clawed releases.
+The Chinese Academy of Sciences released an upgraded Science 1 Omni model focused on scientific
+workloads. The update targets researchers needing stronger performance on technical and multimodal
+scientific tasks. Labs running domain specific fine tunes should evaluate it against existing
+open scientific models for chemistry, physics, and biology pipelines. The upgrade builds on prior
+versions with expanded multimodal support for scientific data types. Domain teams in research
+settings gain a new baseline for specialized scientific inference without relying solely on general
+purpose models. Simon Willison notes that chat GPT mobile's work feature operates like code
+interpreter with most safeties disabled and runs entirely in the cloud. On desktop the same feature
+is a re-skinned codex that executes locally. Developers building agentic workflows should test mobile
+work for tasks where reduced guardrails matter while keeping desktop codex for on device constraints.
+The mobile version therefore opens different failure modes and output behaviors than the desktop
+implementation. Teams should compare outputs from both surfaces on the same prompts to understand
+where the cloud execution changes results. A new breakdown outlines six distinct agent architectures
+and their trade-offs. The guide helps teams choose between reactive, planning, hierarchical,
+and other patterns based on task horizon and tool requirements. Builders evaluating frameworks
+should map their current stack against these six to identify gaps in long horizon reliability.
+The architectures cover varying degrees of autonomy, memory use, and planning depth.
+Practitioners gain a concrete decision framework rather than choosing frameworks by marketing claims
+alone. The piece argues that production agents need fine-grained access controls instead of
+credential sharing. This directly addresses the ongoing agent security gap where shared secrets create
+blast radius problems. Teams deploying autonomous agents should audit credential usage and shift
+to scoped access tokens this week. The recommendation aligns with the tracked agents and tool use arc by
+emphasizing reliability improvements through better access design. Production deployments that still
+rely on shared credentials now have a clear migration path to reduce incident scope, source,
+Google News. Josh Blythe released Bordair, a two-stage detector combining a 430 pattern
+rejects gate with a quantized Deberta V3 large ONNX model. The system includes 13,230 real bypass
+attempts collected from a public red team game, plus multimodal handling for images, documents,
+and audio. Developers running LLM inputs should integrate the REGX layer first for sub-millisecond
+filtering before falling back to the transformer on ambiguous cases. The data set combines over 500,000
+synthetic samples with the real attack split, and the full code, weights, and data are available on
+GitHub and Hugging Face. Teams gain a practical, low-cost first line of defense that only invokes
+the heavier model when needed. Code, weights, and data set, China's leadership launched YECO while
+publicly backing open source model development. The announcement signals continued policy support for
+accessible weights and tooling inside the country. Teams tracking global open source momentum should
+watch resulting domestic model releases and licensing terms. The policy move reinforces the open
+weight track by aligning national direction with community accessible models. Observers can expect
+follow-on releases from Chinese labs that build on this stated preference for open weights.
+Okay, let's pop the hood on the board air detector. Everyone treats prompt injection defense as a
+single model problem, yet the engineering split between a fast REGX gate and a heavier transformer
+is what keeps the system usable at scale. The REGX layer handles the obvious majority of traffic
+in under a millisecond and drops straight to a decision. Only the ambiguous remainder reaches the
+244 megabyte quantized deberta-v3-large, keeping the transformer off the hot path for routine queries.
+This design trades a small amount of recall for massive cost reduction. The inclusion of real
+attack data from the red team game tightens the decision boundary on motivated human attempts that
+templated synthetic data misses. Teams that skip the gate and run the transformer on every request
+quickly hit latency and budget walls. Use this pattern in any production pipeline that ingests untrusted
+text images or documents and already pays per token inference costs. The gacha that bites most
+teams is forgetting to update the REGX patterns as new obfuscation tricks appear in the wild.
+Download and run Kemi-K3 weights to benchmark memory-heavy agent tasks against your current open
+models and measure serving cost at 2.8 trillion scale. Integrate the board air REGX gate into any
+LLM input pipeline handling untrusted text or documents for immediate low latency filtering before
+the transformer stage. Test chat GPT mobile. Work on a task you normally run through local codecs
+to see where the reduced safeguards change output behavior. Map your current agent stack against
+the six architectures outlined in the guide and identify which pattern your longest running workflows
+actually need. Audit agent credential usage in production and replace shared secrets with scoped
+access grants following the tech radar recommendations. Early independent benchmarks on Kemi-K3 for
+agentic and long context tasks are expected within two weeks. Additional pulse program results
+from the 10 participating US jurisdictions are due later this quarter. Further details on why
+eco implementation and resulting open source releases from Chinese labs. Continue to analysis of
+the hugging face autonomous agent breach and resulting agent security tooling. Tomorrow keep an
+eye on the first independent agentic task numbers for Kemi-K3 as they start to surface.
+That wraps up today's AI briefing. Share this with a developer or builder who wants to stay
+current. Subscribe wherever you listen. See you tomorrow and if you'd rather watch then listen,
+find us on YouTube at Narrow Network. Links in the show notes. Quick tip from the network try modern
+investing techniques next. Modern strategies for Canadian and US investors. Every Narrow network
+show is free at NarrowNetwork.com and on the website every episode's visuals live in our free
+image gallery at NarrowNetwork.com slash gallery. Royalty free under creative commons,
+download with attribution. This episode used AI voice synthesis of my voice. Editorial selection
+and analysis are my own.

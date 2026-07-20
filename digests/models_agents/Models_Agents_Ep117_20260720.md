@@ -1,0 +1,52 @@
+# Models & Agents
+> **Kimi K3 lands as the largest open-weight model yet at 2.8 trillion parameters, forcing builders to test whether memory-centric scaling beats raw compute for real workloads.**
+
+**What You Need to Know:** Moonshot AI released Kimi K3 on July 16 as a 2.8T-parameter open-weight model that prioritizes memory over compute. US public health agencies began testing OpenAI and Anthropic models through the new PULSE program across 10 jurisdictions. Simon Willison highlighted how ChatGPT mobile's "Work" mode runs cloud-based without the usual safeguards that desktop Codex applies. Watch how these developments shift the open-weight performance gap and agent reliability questions this week.
+---
+### Top Story
+Moonshot AI released Kimi K3, a 2.8-trillion-parameter open-weight model positioned as the largest to date and the first in the 3T class. The model emphasizes memory scaling rather than raw compute, with the launch generating immediate discussion on whether this approach narrows the gap with closed frontier systems. Builders can now download and experiment with a model at this scale for tasks previously limited to proprietary APIs. The release moves the open vs. closed performance question forward by providing a concrete high-parameter baseline for direct comparison on long-context and memory-intensive workloads. Watch for early independent benchmarks on agentic tasks and serving costs over the next two weeks. This sits in the ongoing arc of open-weight families narrowing capability gaps with closed models, directly testing whether parameter count alone closes the remaining distance on practical tasks. Source: [artificialintelligence-news.com](https://www.artificialintelligence-news.com/news/kimi-k3-open-weight-model-memory-compute-china/)
+---
+### Model Updates
+**Alibaba new model claims second place behind Anthropic’s Fable 5: WSJ**
+Alibaba announced a new model it positions immediately behind Anthropic’s Fable 5. The claim arrives alongside ongoing frontier-model comparisons and gives practitioners another closed-model reference point for capability tracking. Teams working on high-stakes reasoning tasks should test it against current Claude and GPT variants this week to map relative strengths on domain-specific benchmarks. The positioning highlights continued competition at the top of closed-model leaderboards without releasing weights or detailed architecture notes. Builders tracking the closed frontier should add this to their evaluation matrix alongside existing GPT and Claude releases.
+
+**China launches upgraded ScienceOne Omni scientific foundation model: Chinese Academy of Sciences**
+The Chinese Academy of Sciences released an upgraded ScienceOne Omni model focused on scientific workloads. The update targets researchers needing stronger performance on technical and multimodal scientific tasks. Labs running domain-specific fine-tunes should evaluate it against existing open scientific models for chemistry, physics, and biology pipelines. The upgrade builds on prior versions with expanded multimodal support for scientific data types. Domain teams in research settings gain a new baseline for specialized scientific inference without relying solely on general-purpose models.
+
+**US public health agencies begin testing OpenAI and Anthropic models via PULSE: AI News**
+Public health departments in ten US jurisdictions will trial generative AI tools from OpenAI and Anthropic under the Coalition for Health AI and Accenture’s PULSE program. The initiative focuses on real-world use cases in state, local, tribal, and territorial settings. Health-tech teams should monitor early results for regulatory and deployment patterns that may influence other verticals. The program pairs the models with the Coalition for Health AI framework to produce measurable outcomes across the participating sites. This development advances the safety and policy track by moving evaluation work from lab settings into live public-health environments. Source: [artificialintelligence-news.com](https://www.artificialintelligence-news.com/news/openai-anthropic-public-health-ai/)
+---
+### Agent & Tool Developments
+**ChatGPT mobile "Work" runs cloud-based without typical safeguards: Simon Willison**
+Simon Willison notes that ChatGPT mobile’s Work feature operates like Code Interpreter with most safeties disabled and runs entirely in the cloud. On desktop the same feature is a reskinned Codex that executes locally. Developers building agentic workflows should test mobile Work for tasks where reduced guardrails matter while keeping desktop Codex for on-device constraints. The mobile version therefore opens different failure modes and output behaviors than the desktop implementation. Teams should compare outputs from both surfaces on the same prompts to understand where the cloud execution changes results.
+
+**Six AI agent architectures mapped for practitioners: cio.com**
+A new breakdown outlines six distinct agent architectures and their trade-offs. The guide helps teams choose between reactive, planning, hierarchical, and other patterns based on task horizon and tool requirements. Builders evaluating frameworks should map their current stack against these six to identify gaps in long-horizon reliability. The architectures cover varying degrees of autonomy, memory use, and planning depth. Practitioners gain a concrete decision framework rather than choosing frameworks by marketing claims alone.
+
+**AI agents require access grants rather than shared secrets: TechRadar**
+The piece argues that production agents need fine-grained access controls instead of credential sharing. This directly addresses the ongoing agent security gap where shared secrets create blast-radius problems. Teams deploying autonomous agents should audit credential usage and shift to scoped access tokens this week. The recommendation aligns with the tracked agents and tool-use arc by emphasizing reliability improvements through better access design. Production deployments that still rely on shared credentials now have a clear migration path to reduce incident scope. Source: [Google News](https://news.google.com/rss/articles/CBMijAFBVV95cUxPRnVqWkZIT2x2R3djX0xiNVVNY1c3QVc5amhWMU15Nmd3T3o5SktPQ0xQSkgwWk9Iei12YzF6ZEhWLTRNWmw0NHdGT3oxNnJPUVRXekNobkdTT2hZMUpIOEV2d18wZ1R2RDhFVWRHcTg3cHpMLXU0VUV0MTFMcGtqdlFsMmo5S3hrSy1Odg)
+---
+### Practical & Community
+**Two-stage prompt-injection detector open-sourced with real attack data: r/MachineLearning**
+Josh Blythe released Bordair, a two-stage detector combining a 430-pattern regex gate with a quantized DeBERTa-v3-large ONNX model. The system includes 13,230 real bypass attempts collected from a public red-team game plus multimodal handling for images, documents, and audio. Developers running LLM inputs should integrate the regex layer first for sub-millisecond filtering before falling back to the transformer on ambiguous cases. The dataset combines over 500k synthetic samples with the real attack split, and the full code, weights, and data are available on GitHub and Hugging Face. Teams gain a practical, low-cost first line of defense that only invokes the heavier model when needed.
+Code: https://github.com/Josh-blythe/bordair-detector  
+Weights & dataset: https://huggingface.co/Bordair/bordair-detector
+
+**Xi Jinping announces WAICO and endorses open-source AI: MediaNama**
+China’s leadership launched WAICO while publicly backing open-source model development. The announcement signals continued policy support for accessible weights and tooling inside the country. Teams tracking global open-source momentum should watch resulting domestic model releases and licensing terms. The policy move reinforces the open-weight track by aligning national direction with community-accessible models. Observers can expect follow-on releases from Chinese labs that build on this stated preference for open weights. Source: [reddit.com](https://www.reddit.com/r/MachineLearning/comments/1v1hm7y/opensourcing_a_twostage_promptinjection_detector/)
+---
+### Under the Hood: Two-Stage Prompt-Injection Detection
+Everyone treats prompt-injection defense as a single model problem. In practice the engineering split between a fast regex gate and a heavier transformer is what makes the system usable at scale. The regex layer (roughly 430 patterns plus decode-then-scan for obfuscations) handles the obvious majority of traffic in under a millisecond and drops straight to a decision. Only the ambiguous remainder reaches the quantized DeBERTa-v3-large, keeping the 244 MB model off the hot path for routine queries. This design trades a small amount of recall for massive cost reduction; teams that skip the gate and run the transformer on every request quickly hit latency and budget walls. The inclusion of real attack data from the red-team game further tightens the decision boundary on motivated human attempts that templated synthetic data misses. When to use this pattern: any production pipeline that ingests untrusted text, images, or documents and already pays per-token inference costs. The gotcha that bites most teams is forgetting to update the regex patterns as new obfuscation tricks appear in the wild.
+---
+### Things to Try This Week
+- Download and run Kimi K3 weights to benchmark memory-heavy agent tasks against your current open models and measure serving cost at 2.8T scale.
+- Integrate the Bordair regex gate into any LLM input pipeline handling untrusted text or documents for immediate low-latency filtering before the transformer stage.
+- Test ChatGPT mobile Work on a task you normally run through local Codex to see where the reduced safeguards change output behavior.
+- Map your current agent stack against the six architectures outlined in the cio.com guide and identify which pattern your longest-running workflows actually need.
+- Audit agent credential usage in production and replace shared secrets with scoped access grants following the TechRadar recommendations.
+---
+### On the Horizon
+- Early independent benchmarks on Kimi K3 for agentic and long-context tasks expected within two weeks.
+- Additional PULSE program results from the ten participating US jurisdictions later this quarter.
+- Further details on WAICO implementation and resulting open-source releases from Chinese labs.
+- Continued analysis of the Hugging Face autonomous-agent breach and resulting agent-security tooling.
