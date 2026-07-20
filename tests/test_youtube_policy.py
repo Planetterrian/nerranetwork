@@ -13,6 +13,7 @@ Covers the three layers:
 
 from __future__ import annotations
 
+import datetime
 import importlib.util
 import json
 import sys
@@ -231,7 +232,9 @@ class TestCommittedPolicyFile:
         policy = json.loads(
             (_ROOT / "api" / "youtube_policy.json").read_text(encoding="utf-8"))
         assert policy["schema_version"] == 1
-        assert set(policy["channels"]) == {"en", "ru"}
+        # en/ru original channels + fr since the @NerraFR launch
+        # (July 18 2026, generalized language-dub engine).
+        assert set(policy["channels"]) == {"en", "ru", "fr"}
         for shows in policy["channels"].values():
             assert shows  # never an empty channel
             for slug, entry in shows.items():
@@ -277,7 +280,11 @@ class TestResolvePublishPlan:
             _policy({"tier": "C", "publish_long_form": False,
                      "shorts_per_episode": 1, "reason": "cold"}),
             slug="tesla", channel="en", yaml_publish_long=True,
-            yaml_shorts=1, smart_mode=False, adaptive_enabled=True)
+            yaml_shorts=1, smart_mode=False, adaptive_enabled=True,
+            # Pin to a non-Monday: the weekly probe (tested separately in
+            # TestMondayProbe) legitimately re-enables long-form on
+            # Mondays, and an unpinned date made this test fail weekly.
+            probe_today=datetime.date(2026, 7, 21))
         assert plan["applied"] is True
         assert plan["publish_long"] is False
         assert plan["tier"] == "C"
@@ -314,7 +321,8 @@ class TestResolvePublishPlan:
         plan = resolve_publish_plan(
             _policy({"tier": "C", "publish_long_form": False}, channel="ru"),
             slug="tesla", channel="ru", yaml_publish_long=True,
-            yaml_shorts=1, smart_mode=False, adaptive_enabled=True)
+            yaml_shorts=1, smart_mode=False, adaptive_enabled=True,
+            probe_today=datetime.date(2026, 7, 21))  # non-Monday (see above)
         assert plan["applied"] is True and plan["publish_long"] is False
 
     def test_load_policy_missing_and_corrupt(self, tmp_path):
