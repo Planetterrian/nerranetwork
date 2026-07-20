@@ -142,6 +142,8 @@ async function handleInterviewComplete(req: Request, env: Env): Promise<Response
     grok_session_log: {
       ...(payload.grok_session_log ? { log: payload.grok_session_log } : {}),
       voximplant_record_url: payload.voximplant_record_url ?? null,
+      voximplant_video_url: payload.voximplant_video_url ?? null,
+      call_mode: payload.call_mode ?? null,
     },
   };
   await sb(env, "PATCH", `interview_runs?id=eq.${payload.run_id}`, patch);

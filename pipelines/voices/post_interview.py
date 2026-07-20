@@ -221,7 +221,26 @@ def main() -> int:
         # future YouTube version).
         ext = raw.suffix.lstrip(".") or "mp3"
         raw_url = r2_upload(raw, f"age_of_ai/raw/{run['id']}_{stamp}.{ext}")
-        video_url = raw_url if has_video_stream(raw) else None
+        # Video (WebRTC mode) is a SEPARATE recording since dry-run 2
+        # showed call.record({video:true}) collapses audio to a mono mix.
+        # The scenario ships its URL in the webhook; fall back to probing
+        # the raw file for legacy single-recording runs.
+        video_url = None
+        vox_video = (run.get("grok_session_log") or {}).get("voximplant_video_url")
+        if vox_video:
+            try:
+                vext = Path(vox_video.split("?", 1)[0]).suffix.lstrip(".").lower() or "webm"
+                vfile = workdir / f"raw_video.{vext}"
+                with requests.get(vox_video, stream=True, timeout=900) as vresp:
+                    vresp.raise_for_status()
+                    with vfile.open("wb") as fh:
+                        for chunk in vresp.iter_content(1 << 16):
+                            fh.write(chunk)
+                video_url = r2_upload(vfile, f"age_of_ai/raw/{run['id']}_{stamp}_video.{vext}")
+            except Exception:  # noqa: BLE001 — video is best-effort
+                logger.exception("Video download/upload failed (non-fatal)")
+        if video_url is None and has_video_stream(raw):
+            video_url = raw_url
         mixed = mix_interview(raw, workdir / "mixed.wav")
         mixed_url = r2_upload(mixed, f"age_of_ai/raw/{run['id']}_{stamp}_mixed.wav")
 
