@@ -112,9 +112,20 @@ def mix_interview(stereo_path: Path, out_path: Path) -> Path:
               "dynaudnorm=f=250:g=15[out]",
               "-map", "[out]", "-ar", "48000", out_path])
     elif channels >= 2:
+        # Full-band WebRTC recording with true per-speaker channels:
+        # sidechain-duck the GUEST under Mira — when Mira speaks, the
+        # guest channel (and its room noise) pulls down hard. This is the
+        # real per-speaker "mute" the first-episode notes asked for,
+        # impossible on mono single-file recordings.
         _run(["ffmpeg", "-y", "-i", stereo_path,
-              "-af", f"pan=mono|c0=0.5*c0+0.5*c1,{gentle}",
-              "-ar", "48000", out_path])
+              "-filter_complex",
+              "[0:a]channelsplit=channel_layout=stereo[g][m];"
+              "[m]asplit=2[m1][m2];"
+              "[g][m1]sidechaincompress=threshold=0.02:ratio=10:"
+              "attack=5:release=400[gd];"
+              "[gd][m2]amix=inputs=2:duration=longest:normalize=0,"
+              f"{gentle}[out]",
+              "-map", "[out]", "-ar", "48000", out_path])
     else:
         _run(["ffmpeg", "-y", "-i", stereo_path,
               "-af", gentle, "-ar", "48000", out_path])

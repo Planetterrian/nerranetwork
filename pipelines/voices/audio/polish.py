@@ -42,20 +42,41 @@ MAX_FILLER_SEC = 1.0
 MERGE_SLOP_SEC = 0.12
 
 
+_RNNOISE_MODEL = (Path(__file__).resolve().parents[3]
+                  / "assets" / "audio" / "rnnoise_sh.rnnn")
+
+
 def polish_audio(in_path: Path, out_path: Path) -> Path:
-    """EQ + gate + level chain (see module docstring). Full-band safe."""
+    """Mastering-order chain (v3, first-episode sound-engineering pass).
+
+    July 20 2026: the v1 chain's noise gate produced audible open/close
+    ticks and its aggressive dynaudnorm pumped the noise floor up during
+    quiet speech — the operator heard both on the produced episode. v3 is
+    a proper order: RNN speech denoiser (removes compression hiss RIDING
+    the voice, artifact-free — far better than afftdn), declicker for
+    impulsive transport ticks, de-esser for harsh call-path sibilance,
+    corrective EQ, then gentle 2.5:1 compression for leveling. No gate,
+    no dynaudnorm — ever again.
+    """
     out_path.parent.mkdir(parents=True, exist_ok=True)
+    denoise = (f"arnndn=m={_RNNOISE_MODEL}," if _RNNOISE_MODEL.exists()
+               else "afftdn=nf=-24:tn=1,")
+    if not _RNNOISE_MODEL.exists():
+        logger.warning("rnnoise model missing (%s) — falling back to afftdn",
+                       _RNNOISE_MODEL)
     chain = (
-        "highpass=f=90,"
-        "equalizer=f=130:t=q:w=1.1:g=-4,"      # tame boomy guest bass
-        "equalizer=f=2800:t=q:w=1.2:g=3,"      # vocal presence / clarity
-        "agate=threshold=-38dB:ratio=2:attack=10:release=300,"  # bg noise
-        "dynaudnorm=f=200:g=15:m=12,"          # speaker level matching
+        "highpass=f=85,"
+        + denoise +
+        "adeclick,"
+        "deesser,"
+        "equalizer=f=130:t=q:w=1.1:g=-3.5,"    # tame boomy guest bass
+        "equalizer=f=2800:t=q:w=1.2:g=2.5,"    # vocal presence / clarity
+        "acompressor=threshold=-24dB:ratio=2.5:attack=15:release=250:makeup=5,"
         "alimiter=limit=0.95"
     )
     cmd = ["ffmpeg", "-y", "-i", str(in_path), "-af", chain,
            "-ar", "48000", "-ac", "1", str(out_path)]
-    logger.info("Polishing interview audio → %s", out_path.name)
+    logger.info("Polishing interview audio (v3 chain) → %s", out_path.name)
     proc = subprocess.run(cmd, capture_output=True, timeout=3600, text=True)
     if proc.returncode != 0:
         logger.error("polish_audio ffmpeg failed:\n%s", (proc.stderr or "")[-1500:])
