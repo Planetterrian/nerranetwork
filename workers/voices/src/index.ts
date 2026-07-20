@@ -34,6 +34,7 @@ export interface Env {
   // as, via the one-time-key handshake in /voices/studio-auth.
   VOX_GUEST_USER?: string;      // default "guest"
   VOX_GUEST_PASSWORD?: string;
+  OPERATOR_EMAIL?: string;      // default patricknovak1@gmail.com
 }
 
 const REPO = "Planetterrian/nerranetwork";
@@ -72,11 +73,25 @@ async function dispatch(env: Env, eventType: string, payload: Record<string, unk
   if (resp.status !== 204) throw new Error(`repository_dispatch ${eventType}: ${resp.status}`);
 }
 
-async function email(env: Env, to: string, subject: string, html: string) {
+function operatorEmail(env: Env): string {
+  return env.OPERATOR_EMAIL || "patricknovak1@gmail.com";
+}
+
+async function email(env: Env, to: string, subject: string, html: string,
+                     ccOperator = false) {
+  const body: Record<string, unknown> = {
+    from: env.VOICES_FROM_EMAIL, to: [to], subject, html,
+  };
+  // Operator oversight (July 2026): Patrick is CC'ed on guest-facing
+  // scheduling/prep mail so Mira can run the show day-to-day while he
+  // keeps full visibility.
+  if (ccOperator && to.toLowerCase() !== operatorEmail(env).toLowerCase()) {
+    body.cc = [operatorEmail(env)];
+  }
   const resp = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from: env.VOICES_FROM_EMAIL, to: [to], subject, html }),
+    body: JSON.stringify(body),
   });
   if (!resp.ok) throw new Error(`resend: ${resp.status} ${await resp.text()}`);
 }
@@ -129,6 +144,25 @@ async function handleApply(req: Request, env: Env): Promise<Response> {
     referrer: form.referrer ?? null,
   }, "return=representation");
   await slack(env, `Age of AI: new guest application — *${form.name}* (${form.organization ?? "independent"}). Triage: https://api.nerranetwork.com/voices/admin/triage`);
+  // Mira notifies the operator directly (July 2026 process): Patrick
+  // approves guests from his inbox rather than watching a dashboard.
+  try {
+    await email(env, operatorEmail(env),
+      `New Age of AI guest application: ${form.name}`,
+      `<p>Hi Patrick,</p>
+       <p>A new guest just applied to the show:</p>
+       <p><strong>${esc(form.name)}</strong>${form.title ? `, ${esc(form.title)}` : ""}
+       ${form.organization ? ` — ${esc(form.organization)}` : ""}<br>
+       ${esc(String(form.bio ?? "").slice(0, 400))}</p>
+       <p><em>Wants to talk about:</em> ${esc((Array.isArray(form.topics) ? form.topics : []).join(", "))}</p>
+       <p><a href="https://api.nerranetwork.com/voices/admin/triage?token=${env.ADMIN_TOKEN}">
+       Review and approve or decline here</a>. If approved, I'll send them
+       my booking link and take it from there — you'll be copied on
+       everything I send them.</p>
+       <p>— Mira</p>`);
+  } catch (err: any) {
+    console.error("operator application email failed:", err?.message ?? err);
+  }
   return json({ ok: true, id: row[0]?.id });
 }
 
@@ -237,7 +271,7 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
      <p>Two things to know: the conversation is recorded for the podcast,
      and nothing publishes until you've reviewed and approved the
      transcript.</p>
-     <p>— The Age of AI, Nerra Network</p>`);
+     <p>— The Age of AI, Nerra Network</p>`, true);
   await slack(env, `Age of AI: ${apps[0].name} booked ${startTime}`);
   return json({ ok: true });
 }
@@ -261,7 +295,7 @@ async function handleTriageDecision(req: Request, env: Env): Promise<Response> {
        <p><a href="${esc(env.CALCOM_BOOKING_URL)}">${esc(env.CALCOM_BOOKING_URL)}</a></p>
        <p>The call runs about forty-five minutes. It's recorded, and nothing
        publishes until you've approved the transcript.</p>
-       <p>— The Age of AI, Nerra Network</p>`);
+       <p>— The Age of AI, Nerra Network</p>`, true);
   }
   return json({ ok: true });
 }

@@ -155,6 +155,25 @@ def main() -> int:
     sb_update("interview_runs", f"id=eq.{run['id']}",
               {"recording_mixed_url": episode_url})
 
+    # 6b. Final-listen gate (July 2026 process): the operator hears the
+    #     produced episode BEFORE it goes live — publish is a deliberate
+    #     dispatch, never automatic. Mira sends the review email.
+    try:
+        from common import OPERATOR_EMAIL, send_email
+        send_email(
+            OPERATOR_EMAIL,
+            f"Episode ready for your final listen: {app['name']}",
+            f"<p>Hi Patrick,</p>"
+            f"<p>The produced episode with <strong>{app['name']}</strong> is "
+            f"ready: <a href=\"{episode_url}\">listen here</a>"
+            + (f" (<a href=\"{video_url}\">video</a>)" if video_url else "")
+            + ".</p><p>Nothing publishes until you say so. When it passes "
+            "your ear, dispatch <em>Publish Age of AI episode</em> from the "
+            f"Actions tab with interview id <code>{interview['id']}</code> — "
+            "or tell Claude to publish it.</p><p>— Mira</p>")
+    except Exception:  # noqa: BLE001 — the gate email is best-effort
+        logger.exception("Final-listen email failed (non-fatal)")
+
     callouts = pkg.get("cross_show_callouts") or {}
     expires = (dt.datetime.now(dt.timezone.utc)
                + dt.timedelta(days=CALLOUT_TTL_DAYS)).isoformat()

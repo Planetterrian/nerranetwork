@@ -102,15 +102,25 @@ def sb_update(table: str, query: str, patch: Dict[str, Any]) -> List[Dict[str, A
 FROM_EMAIL = os.environ.get("VOICES_FROM_EMAIL", "mira@nerranetwork.com")
 
 
-def send_email(to: str, subject: str, html_body: str) -> None:
+OPERATOR_EMAIL = os.environ.get("OPERATOR_EMAIL", "patricknovak1@gmail.com")
+
+
+def send_email(to: str, subject: str, html_body: str,
+               cc_operator: bool = False) -> None:
+    """Send mail as Mira. ``cc_operator=True`` copies Patrick — the July
+    2026 oversight process: Mira runs guest comms, the operator sees
+    everything without being in the critical path."""
     resend_key = os.environ.get("RESEND_API_KEY", "")
     postmark_token = os.environ.get("POSTMARK_TOKEN", "")
+    payload: dict = {"from": FROM_EMAIL, "to": [to],
+                     "subject": subject, "html": html_body}
+    if cc_operator and to.lower() != OPERATOR_EMAIL.lower():
+        payload["cc"] = [OPERATOR_EMAIL]
     if resend_key:
         resp = requests.post(
             "https://api.resend.com/emails",
             headers={"Authorization": f"Bearer {resend_key}"},
-            json={"from": FROM_EMAIL, "to": [to],
-                  "subject": subject, "html": html_body},
+            json=payload,
             timeout=30,
         )
     elif postmark_token:
