@@ -110,16 +110,25 @@ def main() -> int:
             redactions=pkg.get("guest_redactions") or [],
         )
 
-        # 4. Waveform video for YouTube.
-        video = render_waveform(
-            episode_mp3, workdir / f"{final_name}.mp4",
-            cover_image=COVER if COVER.exists() else None,
-            title=f"{app['name']} — The Age of AI",
-        )
+        # 4. Waveform video for YouTube — BEST-EFFORT: the audio episode
+        #    is the product; video polish must never block publishing
+        #    (first production run died here on a CI ffmpeg quirk while a
+        #    finished episode MP3 sat next to it, July 20 2026).
+        video = None
+        try:
+            video = render_waveform(
+                episode_mp3, workdir / f"{final_name}.mp4",
+                cover_image=COVER if COVER.exists() else None,
+                title=f"{app['name']} — The Age of AI",
+            )
+        except Exception:  # noqa: BLE001
+            logger.exception("Waveform video failed (non-fatal) — "
+                             "publishing audio-only")
 
         # 5. Durable copies.
         episode_url = r2_upload(episode_mp3, f"age_of_ai/{episode_mp3.name}")
-        video_url = r2_upload(video, f"age_of_ai/video/{video.name}")
+        video_url = (r2_upload(video, f"age_of_ai/video/{video.name}")
+                     if video else None)
 
     # 6. State + callout queue.
     sb_update("interviews", f"id=eq.{interview['id']}", {"status": "approved"})

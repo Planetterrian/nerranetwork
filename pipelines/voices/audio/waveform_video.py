@@ -55,5 +55,11 @@ def render(audio_path: Path, out_mp4: Path, *,
            "-c:v", "libx264", "-preset", "medium", "-crf", "23",
            "-c:a", "aac", "-b:a", "192k", "-shortest", str(out_mp4)]
     logger.info("Rendering waveform video → %s", out_mp4)
-    subprocess.run(cmd, check=True, capture_output=True, timeout=7200)
+    proc = subprocess.run(cmd, capture_output=True, timeout=7200, text=True)
+    if proc.returncode != 0:
+        # Surface the real ffmpeg error — capture_output previously
+        # swallowed it, leaving only an opaque exit code (July 20 2026).
+        logger.error("ffmpeg waveform render failed (exit %d):\n%s",
+                     proc.returncode, (proc.stderr or "")[-2000:])
+        raise RuntimeError(f"waveform render failed (exit {proc.returncode})")
     return out_mp4
