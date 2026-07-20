@@ -430,3 +430,46 @@ class TestDebutSongLoudness:
         # Episode branch stays untouched (already mastered to -16).
         ep_branch = graph.split("[1:a]")[0]
         assert "loudnorm" not in ep_branch
+
+
+class TestSelfIntroductionRelabel:
+    """July 20 2026 (Ep016): the LLM rotated the supplied closing's labels
+    to dodge a same-host boundary, so Dan's voice said "I'm Patrick Novak"
+    and Patrick's said "I'm Dan Perra" on air. A self-introduction is
+    unambiguous — the turn is relabeled to the host it names."""
+
+    def test_swapped_closing_self_heals(self):
+        script = (
+            "DAN: Big story today.\n\n"
+            "PATRICK: That wraps the show.\n\n"
+            "DAN: Write in and tell us. I'm Patrick Novak.\n\n"
+            "PATRICK: I'm Dan Perra. Do something about it.\n"
+        )
+        groups = parse_dialogue_turns(script, VOICES)
+        assert any("I'm Patrick Novak" in t for s, t in groups if s == "PATRICK")
+        assert any("I'm Dan Perra" in t for s, t in groups if s == "DAN")
+
+    def test_correct_labels_untouched(self):
+        script = (
+            "DAN: Welcome! I'm Dan Perra, he's Patrick Novak.\n\n"
+            "PATRICK: Great to be here. I'm Patrick Novak.\n"
+        )
+        groups = parse_dialogue_turns(script, VOICES)
+        assert groups[0][0] == "DAN" and groups[1][0] == "PATRICK"
+
+    def test_joint_intro_in_one_turn_left_alone(self):
+        # A turn naming BOTH hosts as "I'm ..." is ambiguous — no relabel.
+        script = (
+            "DAN: I'm Dan and I'm Patrick — kidding, he's Patrick.\n\n"
+            "PATRICK: Very funny.\n"
+        )
+        groups = parse_dialogue_turns(script, VOICES)
+        assert groups[0][0] == "DAN"
+
+    def test_curly_apostrophe_matches(self):
+        script = (
+            "DAN: Thanks all.\n\n"
+            "PATRICK: I’m Dan Perra. Do something about it.\n"
+        )
+        groups = parse_dialogue_turns(script, VOICES)
+        assert groups[-1][0] == "DAN"
