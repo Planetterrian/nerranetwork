@@ -165,6 +165,32 @@ class TestValidateLLMOutput:
                 "Я не могу создать этот выпуск.", show_name="finansy_prosto"
             )
 
+    def test_known_entities_exempt_show_product_names(self):
+        # July 21 2026 (Tesla Ep548): 'model y'/'the model'/'the model y'
+        # flags fired a wasteful lower-temp digest regen — the show's own
+        # product names can never be a hallucination signal. Keywords from
+        # the show YAML exempt them; unrelated repetition still counts.
+        # Non-repeating filler so only the product-name phrases repeat.
+        filler = " ".join(f"unique{i} token{i} filler{i}" for i in range(30))
+        text = filler + " " + (
+            "The Model Y refresh lands and the Model Y takes the crown. " * 4
+        )
+        kw = ("tesla", "model y", "cybercab")
+        with_kw = _validate_llm_output(
+            text, stage="digest", show_name="tesla", known_entities=kw,
+        )
+        without_kw = _validate_llm_output(text, stage="digest", show_name="tesla")
+        assert with_kw < without_kw
+
+    def test_known_entities_do_not_mask_unrelated_repetition(self):
+        filler = " ".join(f"unique{i} token{i} filler{i}" for i in range(30))
+        text = filler + " " + ("The kicker is nobody expected the kicker is real. " * 5)
+        count = _validate_llm_output(
+            text, stage="digest", show_name="tesla",
+            known_entities=("tesla", "model y"),
+        )
+        assert count >= 1
+
     def test_refusal_phrase_inside_long_real_content_is_not_flagged(self):
         # A genuine refusal is short; a stray phrase deep in a 4000-char
         # script must NOT trip the gate (it scans only the head of long text).

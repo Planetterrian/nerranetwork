@@ -466,6 +466,7 @@ def _validate_llm_output(
     stage: str = "digest",
     show_name: str = "unknown",
     min_podcast_words: int = 0,
+    known_entities: tuple = (),
 ) -> int:
     """Validate LLM output quality.
 
@@ -477,8 +478,26 @@ def _validate_llm_output(
     Returns the count of distinct suspicious repetition phrases found
     (bigrams appearing 4+ times).  Callers can use this to decide
     whether to retry with a lower temperature.
+
+    ``known_entities`` (the show's YAML ``keywords``) exempts the show's
+    own product/entity names from the repetition detector: on Tesla,
+    "model y" repeating 7× is the beat, not a hallucination. The July 21
+    2026 Ep548 run burned a full lower-temp digest regen on
+    'model y'/'the model'/'the model y' flags — and the regen introduced
+    a heavier real tic ('watch for' 12×) while "improving" the count.
     """
     import re
+
+    # Non-stopword tokens of the show's own entity keywords. A repeated
+    # phrase containing one of these tokens is the show doing its job.
+    _entity_tokens = set()
+    for _ent in known_entities or ():
+        for _tok in str(_ent).lower().split():
+            if len(_tok) > 2 and _tok not in _STOPWORDS:
+                _entity_tokens.add(_tok)
+
+    def _is_entity_phrase(phrase: str) -> bool:
+        return any(t in _entity_tokens for t in phrase.split())
 
     if not text or not text.strip():
         logger.error(
@@ -652,6 +671,9 @@ def _validate_llm_output(
             # Skip date-shape fragments — purely structural, not hallucination.
             if _is_date_fragment(phrase):
                 continue
+            # Skip the show's own entity names ("model y" on Tesla).
+            if _is_entity_phrase(phrase):
+                continue
             if count >= _rep_threshold:
                 _suspicious_count += 1
                 logger.warning(
@@ -723,6 +745,9 @@ def _validate_llm_output(
             # Skip date-shape trigrams (e.g. "may 02, 2026," appearing
             # once per story timestamp). Spec v2 follow-up after Ep459.
             if _is_date_fragment(phrase):
+                continue
+            # Skip the show's own entity names ("the model y" on Tesla).
+            if _is_entity_phrase(phrase):
                 continue
             if count >= _rep_threshold:
                 _suspicious_count += 1
@@ -1529,7 +1554,10 @@ def generate_digest(
     # Validate the digest is usable — if the LLM refused, retry up to 2 times
     # with increasingly aggressive overrides before giving up.
     try:
-        _rep_count = _validate_llm_output(text, stage="digest", show_name=config.name)
+        _rep_count = _validate_llm_output(
+            text, stage="digest", show_name=config.name,
+            known_entities=tuple(getattr(config, "keywords", ()) or ()),
+        )
     except LLMRefusalError:
         # --- Retry 1: same prompt + bilingual anti-refusal suffix ---
         logger.warning(
@@ -1582,7 +1610,10 @@ def generate_digest(
                     len(text), meta2.get("usage", {}).get("total_tokens", "?"))
 
         try:
-            _rep_count = _validate_llm_output(text, stage="digest", show_name=config.name)
+            _rep_count = _validate_llm_output(
+            text, stage="digest", show_name=config.name,
+            known_entities=tuple(getattr(config, "keywords", ()) or ()),
+        )
         except LLMRefusalError:
             # --- Retry 2: pure educational episode (no articles needed) ---
             logger.warning(
@@ -1619,7 +1650,10 @@ def generate_digest(
             # Validate — if even the educational fallback refuses, try a
             # different model before giving up.
             try:
-                _rep_count = _validate_llm_output(text, stage="digest", show_name=config.name)
+                _rep_count = _validate_llm_output(
+            text, stage="digest", show_name=config.name,
+            known_entities=tuple(getattr(config, "keywords", ()) or ()),
+        )
             except LLMRefusalError:
                 fallback_model = _resolve_fallback_model(config)
                 if config.llm.model == fallback_model:
@@ -1662,7 +1696,10 @@ def generate_digest(
                     len(text), meta4.get("usage", {}).get("total_tokens", "?"),
                 )
                 # Validate — if fallback model also refuses, let it propagate
-                _rep_count = _validate_llm_output(text, stage="digest", show_name=config.name)
+                _rep_count = _validate_llm_output(
+            text, stage="digest", show_name=config.name,
+            known_entities=tuple(getattr(config, "keywords", ()) or ()),
+        )
 
     # If the digest has severe repetition (3+ distinct phrases appearing 4+
     # times), retry once with lower temperature to reduce hallucination.
@@ -1686,6 +1723,7 @@ def generate_digest(
             )
             _rep_retry = _validate_llm_output(
                 text_retry, stage="digest", show_name=config.name,
+                known_entities=tuple(getattr(config, "keywords", ()) or ()),
             )
             if _rep_retry < _rep_count:
                 # Guard: don't swap to a drastically shorter retry — it's
@@ -1748,7 +1786,10 @@ def generate_digest(
                     cache_key=_show_cache_key(config),
                 )
                 # Validate the expanded draft is real content, not a refusal.
-                _validate_llm_output(expanded, stage="digest", show_name=config.name)
+                _validate_llm_output(
+                    expanded, stage="digest", show_name=config.name,
+                    known_entities=tuple(getattr(config, "keywords", ()) or ()),
+                )
                 # July 3 2026 (DP Pod Ep001 v4): the DIGEST retry pads by
                 # paraphrase-restatement exactly like the podcast retry did
                 # (the debut brief re-told every story beat a second time,
@@ -2094,7 +2135,8 @@ def generate_podcast_script(
     try:
         _rep_count = _validate_llm_output(text, stage="podcast_script",
                                           show_name=config.name,
-                                          min_podcast_words=min_words)
+                                          min_podcast_words=min_words,
+                                          known_entities=tuple(getattr(config, "keywords", ()) or ()))
     except LLMRefusalError:
         # --- Retry 1: lower temperature + simplified prompt (just digest) ---
         logger.warning(
@@ -2135,7 +2177,8 @@ def generate_podcast_script(
         try:
             _rep_count = _validate_llm_output(text, stage="podcast_script",
                                               show_name=config.name,
-                                              min_podcast_words=min_words)
+                                              min_podcast_words=min_words,
+                                              known_entities=tuple(getattr(config, "keywords", ()) or ()))
         except LLMRefusalError:
             # --- Retry 2: fallback model ---
             fallback_model = _resolve_fallback_model(config)
@@ -2176,7 +2219,8 @@ def generate_podcast_script(
             # If fallback model also refuses, let it propagate
             _rep_count = _validate_llm_output(text, stage="podcast_script",
                                               show_name=config.name,
-                                              min_podcast_words=min_words)
+                                              min_podcast_words=min_words,
+                                              known_entities=tuple(getattr(config, "keywords", ()) or ()))
 
     # Retry once if the podcast script is below the publication soft floor.
     # run_show.py skips any episode under 60% of the target word count
@@ -2271,7 +2315,8 @@ def generate_podcast_script(
             text = text2
             _rep_count = _validate_llm_output(text, stage="podcast_script",
                                               show_name=config.name,
-                                              min_podcast_words=min_words)
+                                              min_podcast_words=min_words,
+                                              known_entities=tuple(getattr(config, "keywords", ()) or ()))
         else:
             logger.warning(
                 "Retry did not meaningfully improve script length for '%s' "
@@ -2299,6 +2344,7 @@ def generate_podcast_script(
             _rep_retry = _validate_llm_output(
                 text_retry, stage="podcast_script", show_name=config.name,
                 min_podcast_words=min_words,
+                known_entities=tuple(getattr(config, "keywords", ()) or ()),
             )
             if _rep_retry < _rep_count:
                 # See ``_retry_word_count_ok`` for the OV Ep059
