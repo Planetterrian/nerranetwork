@@ -156,7 +156,13 @@ SHOW_REGISTRY = {
         "min_audio_s": 240,
         "max_audio_s": 1500,
         "required_sections": [],
-        "schedule": "odd_weekday",
+        # July 21 2026: aligned to the production CRON_MAP in
+        # .github/workflows/run-show.yml ("7 8 * * 1" = Monday-only).
+        # The stale "odd_weekday" belief made the audit flag a phantom
+        # "missed episode" on every non-Monday odd weekday AND dispatch an
+        # off-schedule episode via the retry path (the July 18 network
+        # review's open P0 — same class as FP/PR below).
+        "schedule": "monday",
     },
     "models_agents": {
         "name": "Models & Agents",
@@ -192,7 +198,8 @@ SHOW_REGISTRY = {
         "min_audio_s": 180,
         "max_audio_s": 1200,
         "required_sections": [],
-        "schedule": "even",
+        # Aligned to CRON_MAP Monday-only (July 21 2026, see env_intel note).
+        "schedule": "monday",
     },
     "modern_investing": {
         "name": "Modern Investing Techniques",
@@ -216,7 +223,8 @@ SHOW_REGISTRY = {
         "min_audio_s": 180,
         "max_audio_s": 1200,
         "required_sections": [],
-        "schedule": "even",
+        # Aligned to CRON_MAP Monday-only (July 21 2026, see env_intel note).
+        "schedule": "monday",
     },
     "spacex": {
         "name": "SpaceX Daily",
@@ -242,6 +250,7 @@ SHOW_REGISTRY = {
         "min_audio_s": 240,
         "max_audio_s": 1500,
         "required_sections": [],
+        "narrative": True,   # topic-queue show — fetches no articles by design
         "schedule": "daily",
     },
     "unintended_consequences": {
@@ -254,6 +263,7 @@ SHOW_REGISTRY = {
         "min_audio_s": 300,
         "max_audio_s": 1200,
         "required_sections": [],
+        "narrative": True,   # topic-queue show — fetches no articles by design
         "schedule": "weekday",
     },
 }
@@ -279,6 +289,8 @@ def _should_run_on(schedule: str, target_date: datetime.date) -> bool:
         return is_weekday
     if schedule == "odd_weekday":
         return day % 2 == 1 and is_weekday
+    if schedule == "monday":
+        return weekday == 0
     return True  # unknown schedule → assume should run
 
 
@@ -885,8 +897,12 @@ def check_intro_outro(ep: EpisodeReview) -> None:
             file_path=str(ep.tts_path),
         ))
 
-    # Check last 500 chars for closing indicators
-    last_text = text_lower[-500:]
+    # Check the script tail for closing indicators. The window must cover
+    # the code-appended post-sign-off tail (rotating network cross-promo +
+    # summaries CTA + AI disclosure — up to ~700 chars since July 16 2026),
+    # which pushed the real spoken closing out of the old 500-char window
+    # and fired this info on 6 of 9 shows in the July 21 audit.
+    last_text = text_lower[-1500:]
     closing_indicators = [
         "tomorrow", "next episode", "next time", "see you",
         "until then", "that's it for", "that's all for",
@@ -945,7 +961,12 @@ def check_pipeline_metrics(ep: EpisodeReview) -> None:
             f"Verify it sounds natural and doesn't reveal the slow news status.",
         ))
 
-    # Check article count — too few may indicate feed issues
+    # Check article count — too few may indicate feed issues. Narrative
+    # (topic-queue) shows fetch zero articles BY DESIGN — the July 21
+    # audit warned "Zero articles fetched: RSS feeds may be down" on
+    # First Principles and Unintended Consequences every day.
+    if SHOW_REGISTRY.get(ep.show_slug, {}).get("narrative"):
+        return
     article_count = counters.get("article_count")
     if article_count is None:
         article_count = counters.get("articles_fetched")
