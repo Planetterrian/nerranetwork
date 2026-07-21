@@ -199,8 +199,13 @@ have very different real-world hit rates. Apply these rules:
 1. A review document at `docs/reviews/<slug>_review_<YYYY_MM_DD>.md`
    (P0/P1/P2 structure, what shipped vs. what's recommended, citations).
 2. The fixes + drift-guard tests.
-3. Update the target's entry in `docs/reviews/review_state.yaml` to today's
-   date (this advances the rotation when the PR merges).
+3. Do NOT edit `docs/reviews/review_state.yaml` — the rotation advances
+   automatically from your ledger entry's date when the PR merges
+   (`scripts/pick_review_target.py` reads the newer of the state file's
+   seed date and the latest `docs/reviews/ledger/<slug>.yaml` entry).
+   Concurrent review PRs used to conflict on the shared state file every
+   time; the state file is now only edited when a show joins or leaves
+   the rotation.
 4. **Append this review to `docs/reviews/ledger/<slug>.yaml`** (schema in
    `docs/reviews/ledger/README.md`): shipped fixes, deferred items (carried
    forward and re-evaluated each pass — this is the structured backlog),
