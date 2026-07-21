@@ -33,3 +33,17 @@ class TestConflictMarkerGuard:
         text = _ACTION.read_text(encoding="utf-8")
         assert "git restore --source=origin/main" in text
         assert "::warning::" in text
+
+    def test_guard_is_sigpipe_safe(self):
+        # Jul 21 2026: the original `git show ":$f" | grep -q` form silently
+        # MISSED markers in large files — grep -q exits on the first match,
+        # git show dies of SIGPIPE, and under the step's `-o pipefail` the
+        # pipeline reports failure, so a found marker read as no-match (the
+        # corrupted gallery-manifest reached main again and broke the `test`
+        # check on every open PR). The guard must search the index directly
+        # with `git grep --cached` — no pipe, no SIGPIPE.
+        text = _ACTION.read_text(encoding="utf-8")
+        assert "git grep --cached" in text
+        assert "| grep -q '^<<<<<<< '" not in text, (
+            "the piped git show|grep guard form is SIGPIPE-unsafe under "
+            "pipefail — keep the git grep --cached form")

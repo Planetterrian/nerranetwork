@@ -77,8 +77,17 @@ runs:
         # containing a conflict start marker is restored from origin/main
         # (or unstaged if it's new there) with a loud warning — the next
         # scheduled run regenerates it cleanly.
+        #
+        # Jul 21 2026: the original `git show ":$f" | grep -q` form had a
+        # pipefail+SIGPIPE hole — on a LARGE file whose marker sits near
+        # the top (exactly the gallery-manifest failure shape), `grep -q`
+        # exits on the first match, `git show` dies of SIGPIPE writing the
+        # rest, and under this step's `-o pipefail` the pipeline reports
+        # failure, so the `if` read a FOUND marker as no-match and the
+        # corrupted manifest reached main again. `git grep --cached`
+        # searches the index directly with no pipe.
         for f in $(git diff --cached --name-only); do
-          if git show ":$f" 2>/dev/null | grep -q '^<<<<<<< '; then
+          if git grep --cached -q -e '^<<<<<<< ' -- "$f"; then
             echo "::warning::safe-commit-push: unresolved conflict markers in $f — restoring from origin/main and skipping this file"
             git restore --source=origin/main --staged --worktree -- "$f" 2>/dev/null \
               || git rm --cached --quiet -- "$f" || true
