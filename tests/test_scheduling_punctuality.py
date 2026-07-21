@@ -82,3 +82,32 @@ def test_run_job_has_post_concurrency_duplicate_recheck():
     2026). The run job must re-check after the lock + fresh checkout."""
     assert "Post-concurrency duplicate re-check" in _WF
     assert "Duplicate re-check" in _WF
+
+
+def test_review_schedules_match_cron_day_filters():
+    """July 21 2026: review_episodes.py believed env_intel ran on odd
+    weekdays while the production CRON_MAP is Monday-only — so the daily
+    audit flagged a phantom "missed episode" every non-Monday odd weekday
+    AND dispatched an off-schedule episode via the retry path (the July 18
+    network review's open P0; FP/PR had the same drift as "even"). Any
+    show whose cron carries a Monday day-filter must be "monday" in the
+    reviewer registry so the audit's cadence beliefs track production.
+    """
+    import review_episodes
+
+    cron_map = _cron_map()
+    for show, (_h, _m, day_filter) in cron_map.items():
+        info = review_episodes.SHOW_REGISTRY.get(show)
+        if info is None:
+            continue  # not all shows are audited (e.g. age_of_ai)
+        if day_filter == "monday":
+            assert info.get("schedule") == "monday", (
+                f"{show}: CRON_MAP is Monday-only but review_episodes "
+                f"says {info.get('schedule')!r} — the audit will flag "
+                "phantom missed episodes and dispatch off-schedule runs"
+            )
+        else:
+            assert info.get("schedule") != "monday", (
+                f"{show}: review_episodes says Monday-only but the cron "
+                "has no Monday day-filter"
+            )
