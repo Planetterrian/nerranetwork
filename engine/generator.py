@@ -13,16 +13,24 @@ import re
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
+from tenacity import (
+    before_sleep_log,
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
 
 # Only retry on transient API errors — permanent errors (KeyError, FileNotFoundError,
 # RuntimeError) will fail immediately instead of wasting 3x API credits.
 try:
     from openai import APITimeoutError, APIConnectionError, RateLimitError
     _TRANSIENT_ERRORS = (APITimeoutError, APIConnectionError, RateLimitError)
+    _RATE_LIMIT_ERRORS = (RateLimitError,)
 except ImportError:
     # Fallback if openai isn't installed (e.g. in tests)
     _TRANSIENT_ERRORS = (TimeoutError, ConnectionError)
+    _RATE_LIMIT_ERRORS = ()
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +41,19 @@ class LLMRefusalError(RuntimeError):
     Unlike quality warnings (short text, repetition), a refusal means the LLM
     explicitly declined to produce content.  Continuing the pipeline would waste
     TTS credits synthesising the refusal message into audio.
+    """
+
+
+class LLMEmptyOutputError(LLMRefusalError):
+    """Raised when the LLM returns an empty completion.
+
+    Subclasses ``LLMRefusalError`` so the existing refusal-recovery chains
+    (anti-refusal retry → educational prompt → fallback model) engage.
+    Before July 21 2026 an empty completion was only logged and flowed
+    downstream — the SpaceX run shipped a 0-char digest into the expansion
+    retry and the too-short abort path instead of simply retrying the call
+    (the empty response was a transient xAI capacity glitch; a 429 followed
+    minutes later).
     """
 
 
@@ -126,6 +147,21 @@ def _get_api_key() -> str:
     return (os.getenv("GROK_API_KEY") or os.getenv("XAI_API_KEY") or "").strip()
 
 
+# Capacity-class 429s from xAI ("model is currently at capacity ... try
+# again in a few minutes") need MINUTES of backoff, not the OpenAI SDK's
+# sub-second internal retries. Observed July 21 2026 (SpaceX ep039): three
+# retries inside 5 seconds, all 429, and the digest retry was abandoned
+# while capacity recovered shortly after. Waits: 30s → 60s → 120s between
+# four attempts (~3.5 min total) — well inside the pipeline's time budget
+# and long enough to ride out a typical capacity dip. Other transient
+# errors keep their existing fast retry at the generate_* wrappers.
+@retry(
+    stop=stop_after_attempt(4),
+    wait=wait_exponential(multiplier=30, min=30, max=120),
+    retry=retry_if_exception_type(_RATE_LIMIT_ERRORS),
+    before_sleep=before_sleep_log(logger, logging.WARNING),
+    reraise=True,
+)
 def _call_grok(
     prompt: str,
     *,
@@ -173,7 +209,10 @@ def _call_grok(
 
     resp = client.chat.completions.create(**create_kwargs)
 
-    text = resp.choices[0].message.content.strip()
+    # content can come back None on degraded responses (all-reasoning
+    # completions during capacity incidents) — normalize to "" so callers
+    # see a clean empty string instead of an AttributeError.
+    text = (resp.choices[0].message.content or "").strip()
     meta: Dict[str, Any] = {"provider": "openai_compat", "model": model}
     if cache_key:
         meta["cache_key"] = cache_key
@@ -427,6 +466,7 @@ def _validate_llm_output(
     stage: str = "digest",
     show_name: str = "unknown",
     min_podcast_words: int = 0,
+    known_entities: tuple = (),
 ) -> int:
     """Validate LLM output quality.
 
@@ -438,15 +478,35 @@ def _validate_llm_output(
     Returns the count of distinct suspicious repetition phrases found
     (bigrams appearing 4+ times).  Callers can use this to decide
     whether to retry with a lower temperature.
+
+    ``known_entities`` (the show's YAML ``keywords``) exempts the show's
+    own product/entity names from the repetition detector: on Tesla,
+    "model y" repeating 7× is the beat, not a hallucination. The July 21
+    2026 Ep548 run burned a full lower-temp digest regen on
+    'model y'/'the model'/'the model y' flags — and the regen introduced
+    a heavier real tic ('watch for' 12×) while "improving" the count.
     """
     import re
 
+    # Non-stopword tokens of the show's own entity keywords. A repeated
+    # phrase containing one of these tokens is the show doing its job.
+    _entity_tokens = set()
+    for _ent in known_entities or ():
+        for _tok in str(_ent).lower().split():
+            if len(_tok) > 2 and _tok not in _STOPWORDS:
+                _entity_tokens.add(_tok)
+
+    def _is_entity_phrase(phrase: str) -> bool:
+        return any(t in _entity_tokens for t in phrase.split())
+
     if not text or not text.strip():
         logger.error(
-            "LLM returned EMPTY %s for '%s' — episode will likely be unusable",
+            "LLM returned EMPTY %s for '%s' — treating as retryable failure",
             stage, show_name,
         )
-        return 0
+        raise LLMEmptyOutputError(
+            f"LLM returned empty {stage} for '{show_name}'"
+        )
 
     # Check for LLM refusals — must come before length checks because
     # refusal messages can be 500-2000 chars (passing min-length thresholds).
@@ -611,6 +671,9 @@ def _validate_llm_output(
             # Skip date-shape fragments — purely structural, not hallucination.
             if _is_date_fragment(phrase):
                 continue
+            # Skip the show's own entity names ("model y" on Tesla).
+            if _is_entity_phrase(phrase):
+                continue
             if count >= _rep_threshold:
                 _suspicious_count += 1
                 logger.warning(
@@ -682,6 +745,9 @@ def _validate_llm_output(
             # Skip date-shape trigrams (e.g. "may 02, 2026," appearing
             # once per story timestamp). Spec v2 follow-up after Ep459.
             if _is_date_fragment(phrase):
+                continue
+            # Skip the show's own entity names ("the model y" on Tesla).
+            if _is_entity_phrase(phrase):
                 continue
             if count >= _rep_threshold:
                 _suspicious_count += 1
@@ -1488,7 +1554,10 @@ def generate_digest(
     # Validate the digest is usable — if the LLM refused, retry up to 2 times
     # with increasingly aggressive overrides before giving up.
     try:
-        _rep_count = _validate_llm_output(text, stage="digest", show_name=config.name)
+        _rep_count = _validate_llm_output(
+            text, stage="digest", show_name=config.name,
+            known_entities=tuple(getattr(config, "keywords", ()) or ()),
+        )
     except LLMRefusalError:
         # --- Retry 1: same prompt + bilingual anti-refusal suffix ---
         logger.warning(
@@ -1541,7 +1610,10 @@ def generate_digest(
                     len(text), meta2.get("usage", {}).get("total_tokens", "?"))
 
         try:
-            _rep_count = _validate_llm_output(text, stage="digest", show_name=config.name)
+            _rep_count = _validate_llm_output(
+            text, stage="digest", show_name=config.name,
+            known_entities=tuple(getattr(config, "keywords", ()) or ()),
+        )
         except LLMRefusalError:
             # --- Retry 2: pure educational episode (no articles needed) ---
             logger.warning(
@@ -1578,7 +1650,10 @@ def generate_digest(
             # Validate — if even the educational fallback refuses, try a
             # different model before giving up.
             try:
-                _rep_count = _validate_llm_output(text, stage="digest", show_name=config.name)
+                _rep_count = _validate_llm_output(
+            text, stage="digest", show_name=config.name,
+            known_entities=tuple(getattr(config, "keywords", ()) or ()),
+        )
             except LLMRefusalError:
                 fallback_model = _resolve_fallback_model(config)
                 if config.llm.model == fallback_model:
@@ -1621,7 +1696,10 @@ def generate_digest(
                     len(text), meta4.get("usage", {}).get("total_tokens", "?"),
                 )
                 # Validate — if fallback model also refuses, let it propagate
-                _rep_count = _validate_llm_output(text, stage="digest", show_name=config.name)
+                _rep_count = _validate_llm_output(
+            text, stage="digest", show_name=config.name,
+            known_entities=tuple(getattr(config, "keywords", ()) or ()),
+        )
 
     # If the digest has severe repetition (3+ distinct phrases appearing 4+
     # times), retry once with lower temperature to reduce hallucination.
@@ -1645,6 +1723,7 @@ def generate_digest(
             )
             _rep_retry = _validate_llm_output(
                 text_retry, stage="digest", show_name=config.name,
+                known_entities=tuple(getattr(config, "keywords", ()) or ()),
             )
             if _rep_retry < _rep_count:
                 # Guard: don't swap to a drastically shorter retry — it's
@@ -1707,7 +1786,10 @@ def generate_digest(
                     cache_key=_show_cache_key(config),
                 )
                 # Validate the expanded draft is real content, not a refusal.
-                _validate_llm_output(expanded, stage="digest", show_name=config.name)
+                _validate_llm_output(
+                    expanded, stage="digest", show_name=config.name,
+                    known_entities=tuple(getattr(config, "keywords", ()) or ()),
+                )
                 # July 3 2026 (DP Pod Ep001 v4): the DIGEST retry pads by
                 # paraphrase-restatement exactly like the podcast retry did
                 # (the debut brief re-told every story beat a second time,
@@ -1908,9 +1990,21 @@ def _generate_podcast_outline(
         model=config.llm.model,
         system_prompt=system_prompt,
         temperature=config.llm.digest_temperature,  # Lower temp for planning
-        max_tokens=1500,
+        max_tokens=2500,
         cache_key=_show_cache_key(config),
     )
+
+    # A truncated outline is worse than none: stage 2 is told to "follow
+    # this structure and order", so a mid-story cut silently drops every
+    # remaining story from the episode. Fall back to un-chained generation
+    # (the full digest is still in the podcast prompt).
+    if meta.get("finish_reason") == "length":
+        logger.warning(
+            "Podcast outline for '%s' was truncated at max_tokens — "
+            "dropping the outline (script will follow the digest directly)",
+            config.name,
+        )
+        text = ""
 
     if tracker and "usage" in meta:
         try:
@@ -1983,13 +2077,19 @@ def generate_podcast_script(
             system_prompt=system_prompt,
             tracker=tracker,
         )
-        # Prepend the outline to the podcast prompt so the model follows it
-        prompt = (
-            f"STORY OUTLINE (follow this structure and order):\n{outline}\n\n"
-            f"---\n\n{prompt}"
-        )
-        logger.info("Using prompt chaining for '%s' — outline prepended to podcast prompt",
-                     config.name)
+        if outline:
+            # Prepend the outline to the podcast prompt so the model follows it
+            prompt = (
+                f"STORY OUTLINE (follow this structure and order):\n{outline}\n\n"
+                f"---\n\n{prompt}"
+            )
+            logger.info("Using prompt chaining for '%s' — outline prepended to podcast prompt",
+                         config.name)
+        else:
+            logger.warning(
+                "Outline unavailable for '%s' — generating podcast script "
+                "without chaining", config.name,
+            )
 
     logger.info("Generating podcast script for '%s' (model=%s, temp=%.1f) ...",
                 config.name, config.llm.model, config.llm.podcast_temperature)
@@ -2053,7 +2153,8 @@ def generate_podcast_script(
     try:
         _rep_count = _validate_llm_output(text, stage="podcast_script",
                                           show_name=config.name,
-                                          min_podcast_words=min_words)
+                                          min_podcast_words=min_words,
+                                          known_entities=tuple(getattr(config, "keywords", ()) or ()))
     except LLMRefusalError:
         # --- Retry 1: lower temperature + simplified prompt (just digest) ---
         logger.warning(
@@ -2094,7 +2195,8 @@ def generate_podcast_script(
         try:
             _rep_count = _validate_llm_output(text, stage="podcast_script",
                                               show_name=config.name,
-                                              min_podcast_words=min_words)
+                                              min_podcast_words=min_words,
+                                              known_entities=tuple(getattr(config, "keywords", ()) or ()))
         except LLMRefusalError:
             # --- Retry 2: fallback model ---
             fallback_model = _resolve_fallback_model(config)
@@ -2135,7 +2237,8 @@ def generate_podcast_script(
             # If fallback model also refuses, let it propagate
             _rep_count = _validate_llm_output(text, stage="podcast_script",
                                               show_name=config.name,
-                                              min_podcast_words=min_words)
+                                              min_podcast_words=min_words,
+                                              known_entities=tuple(getattr(config, "keywords", ()) or ()))
 
     # Retry once if the podcast script is below the publication soft floor.
     # run_show.py skips any episode under 60% of the target word count
@@ -2230,7 +2333,8 @@ def generate_podcast_script(
             text = text2
             _rep_count = _validate_llm_output(text, stage="podcast_script",
                                               show_name=config.name,
-                                              min_podcast_words=min_words)
+                                              min_podcast_words=min_words,
+                                              known_entities=tuple(getattr(config, "keywords", ()) or ()))
         else:
             logger.warning(
                 "Retry did not meaningfully improve script length for '%s' "
@@ -2258,6 +2362,7 @@ def generate_podcast_script(
             _rep_retry = _validate_llm_output(
                 text_retry, stage="podcast_script", show_name=config.name,
                 min_podcast_words=min_words,
+                known_entities=tuple(getattr(config, "keywords", ()) or ()),
             )
             if _rep_retry < _rep_count:
                 # See ``_retry_word_count_ok`` for the OV Ep059

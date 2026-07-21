@@ -1251,3 +1251,39 @@ class TestDeduplication:
         ]
         result = fetch_rss_articles(feeds, similarity_threshold=0.85)
         assert len(result) == 1
+
+
+# ---------------------------------------------------------------------------
+# Reddit-specific User-Agent (July 21 2026)
+# ---------------------------------------------------------------------------
+
+class TestRedditUserAgent:
+    """Reddit throttles spoofed browser UAs from CI egress IPs (429s on
+    r/spacex + two Tesla subreddits, July 21 2026). Reddit hosts get the
+    descriptive UA its guidelines require; every other host keeps the
+    browser UA (some publishers block bot-looking agents)."""
+
+    def test_reddit_hosts_get_descriptive_ua(self):
+        from engine.fetcher import _headers_for_url
+
+        for url in (
+            "https://www.reddit.com/r/spacex/.rss",
+            "https://reddit.com/r/teslamotors/.rss",
+            "https://old.reddit.com/r/electricvehicles/.rss",
+        ):
+            ua = _headers_for_url(url)["User-Agent"]
+            assert "nerranetwork" in ua, url
+            assert "Mozilla" not in ua, url
+
+    def test_other_hosts_keep_browser_ua(self):
+        from engine.fetcher import _headers_for_url
+        from engine.utils import DEFAULT_HEADERS
+
+        for url in (
+            "https://www.teslarati.com/feed/",
+            "https://news.google.com/rss/search?q=tesla",
+            # Not fooled by a reddit-lookalike domain
+            "https://notreddit.com/feed",
+            "https://reddit.com.evil.example/feed",
+        ):
+            assert _headers_for_url(url) == DEFAULT_HEADERS, url

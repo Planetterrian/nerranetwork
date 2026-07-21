@@ -139,6 +139,101 @@ def _best_headline_for_segment(
     return title
 
 
+def _clip_title(raw: str, max_chars: int = 60) -> str:
+    title = re.sub(r"[*_`]+", "", raw or "").strip()
+    if len(title) > max_chars:
+        title = title[: max_chars - 1].rsplit(" ", 1)[0].rstrip(",;:") + "…"
+    return title
+
+
+def _headline_anchored_insertions(
+    lines: List[str],
+    head_word_start: int,
+    head_word_end: int,
+    story_headlines: List[str],
+    min_segment_words: int = 60,
+    max_chars: int = 60,
+) -> list:
+    """Anchor auto-segment boundaries where each digest story BEGINS.
+
+    The legacy auto-segment slices the head chapter every ~90s of speech
+    at arbitrary paragraph breaks, then fits a headline to whatever text
+    lands in each window — so a chapter can carry one story's title while
+    starting mid-way through another (Tesla Ep548, July 21 2026). Shows
+    whose prompts ban spoken section labels hit this on most episodes
+    because their keyword markers never match.
+
+    This variant inverts the mapping: for each digest headline, find the
+    paragraph inside the head span whose content words best overlap it,
+    and start a chapter (bearing that headline) at that paragraph. Titles
+    and boundaries then agree by construction. Returns
+    ``[(word_idx, char_offset, title), ...]`` sorted by position, or
+    ``[]`` when fewer than two headlines anchor confidently — callers
+    fall back to the legacy fixed-interval segmentation.
+    """
+    if not story_headlines or len(story_headlines) < 2:
+        return []
+
+    # Walk lines once, building paragraphs with word/char start offsets
+    # (mirrors parse_chapters' offset accounting: splitlines(keepends)).
+    paras: list[tuple[int, int, set]] = []  # (start_word, start_char, tokens)
+    word_idx = 0
+    char_idx = 0
+    cur_start: Optional[tuple[int, int]] = None
+    cur_text: list[str] = []
+    for line in lines:
+        stripped = line.strip()
+        if stripped:
+            if cur_start is None:
+                cur_start = (word_idx, char_idx)
+            cur_text.append(stripped)
+        elif cur_start is not None:
+            paras.append(
+                (cur_start[0], cur_start[1], _tokenize_for_match(" ".join(cur_text)))
+            )
+            cur_start, cur_text = None, []
+        word_idx += len(line.split())
+        char_idx += len(line)
+    if cur_start is not None:
+        paras.append(
+            (cur_start[0], cur_start[1], _tokenize_for_match(" ".join(cur_text)))
+        )
+
+    in_head = [p for p in paras if head_word_start < p[0] < head_word_end]
+    if not in_head:
+        return []
+
+    # Best-matching paragraph per headline; a paragraph keeps only its
+    # strongest headline so two stories can't anchor the same spot.
+    anchors: dict[int, tuple[int, str]] = {}  # para index -> (score, headline)
+    for h in story_headlines:
+        h_tokens = _tokenize_for_match(h)
+        if not h_tokens:
+            continue
+        best_i = None
+        best_score = 0
+        for i, (_w, _c, p_tokens) in enumerate(in_head):
+            overlap = len(p_tokens & h_tokens)
+            if overlap > best_score and (
+                overlap >= 2 or overlap >= max(1, len(h_tokens) // 2)
+            ):
+                best_i, best_score = i, overlap
+        if best_i is not None:
+            prev = anchors.get(best_i)
+            if prev is None or best_score > prev[0]:
+                anchors[best_i] = (best_score, h)
+
+    result: list = []
+    last_w = head_word_start
+    for i in sorted(anchors):
+        w, c, _tokens = in_head[i]
+        if w - last_w < min_segment_words:
+            continue  # too close to the previous boundary — merge forward
+        result.append((w, c, _clip_title(anchors[i][1], max_chars)))
+        last_w = w
+    return result if len(result) >= 2 else []
+
+
 def parse_chapters(
     script: str,
     section_markers: list,
@@ -337,16 +432,27 @@ def parse_chapters(
             head_w_end = head.word_end
             head_c_end = head.char_end
 
-            # Accept paragraph breaks inside the head chapter that are at
-            # least ``words_per_segment`` words apart.
-            insertions: list[tuple[int, int]] = []
-            last_w = head.word_start
-            for w, c in para_break_word_idx:
-                if w <= head.word_start or w >= head_w_end:
-                    continue
-                if w - last_w >= words_per_segment:
-                    insertions.append((w, c))
-                    last_w = w
+            # Preferred (July 21 2026): anchor boundaries where each digest
+            # story begins, so titles and positions agree by construction.
+            # Falls back to fixed ~90s intervals when the script doesn't
+            # echo enough headline content to anchor confidently.
+            anchored = _headline_anchored_insertions(
+                lines, head.word_start, head_w_end, story_headlines or [],
+            )
+            _seg_mode = "headline_anchored" if anchored else "fixed_interval"
+
+            # (word_idx, char_offset, pre-assigned title or "")
+            insertions: list[tuple[int, int, str]] = list(anchored)
+            if not insertions:
+                # Legacy: accept paragraph breaks inside the head chapter
+                # that are at least ``words_per_segment`` words apart.
+                last_w = head.word_start
+                for w, c in para_break_word_idx:
+                    if w <= head.word_start or w >= head_w_end:
+                        continue
+                    if w - last_w >= words_per_segment:
+                        insertions.append((w, c, ""))
+                        last_w = w
 
             if insertions:
                 _used_headlines: set[str] = set()
@@ -357,15 +463,17 @@ def parse_chapters(
                     char_start=head.char_start,
                     char_end=insertions[0][1],
                 )]
-                for n, (w, c) in enumerate(insertions, start=2):
+                for n, (w, c, pre_title) in enumerate(insertions, start=2):
                     next_w = insertions[n - 1][0] if n - 1 < len(insertions) else head_w_end
                     next_c = insertions[n - 1][1] if n - 1 < len(insertions) else head_c_end
-                    # Title preference: (1) matching clean digest headline
-                    # (avoids mid-sentence spoken fragments), (2) the
-                    # segment's first sentence, (3) "Segment N" placeholder.
+                    # Title preference: (1) the anchored headline, (2) a
+                    # matching clean digest headline (avoids mid-sentence
+                    # spoken fragments), (3) the segment's first sentence,
+                    # (4) "Segment N" placeholder.
                     seg_text = script[c:next_c]
                     title = (
-                        _best_headline_for_segment(
+                        pre_title
+                        or _best_headline_for_segment(
                             seg_text, story_headlines or [], _used_headlines)
                         or _first_sentence_as_title(seg_text)
                         or f"Segment {n}"
@@ -380,9 +488,10 @@ def parse_chapters(
                 chapters = rebuilt + tail
                 logger.info(
                     "Auto-segmented head chapter for %s into %d segments "
-                    "(target %.0fs each, ~%d words)",
+                    "(mode=%s, target %.0fs each, ~%d words)",
                     show_name or "show",
                     len(insertions) + 1,
+                    _seg_mode,
                     auto_segment_target_seconds,
                     words_per_segment,
                 )

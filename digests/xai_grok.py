@@ -12,6 +12,46 @@ import os
 import logging
 from typing import Any, Dict, List, Optional, Tuple
 
+from tenacity import (
+    before_sleep_log,
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
+
+logger = logging.getLogger(__name__)
+
+# Capacity-class failures from xAI (429 "model at capacity", 503 during
+# incidents) recover on the minutes scale — the OpenAI SDK's built-in
+# sub-second retries alone are not enough (July 21 2026: the Tesla X-post
+# fetch drew back-to-back 503s on /responses during the same incident
+# that empty-digested SpaceX). Mirror engine.generator._call_grok's long
+# backoff: 30s -> 60s -> 120s across four attempts.
+try:
+    from openai import RateLimitError, InternalServerError
+    _CAPACITY_ERRORS: tuple = (RateLimitError, InternalServerError)
+except ImportError:  # pragma: no cover — openai always present in prod
+    _CAPACITY_ERRORS = ()
+
+_capacity_retry = retry(
+    stop=stop_after_attempt(4),
+    wait=wait_exponential(multiplier=30, min=30, max=120),
+    retry=retry_if_exception_type(_CAPACITY_ERRORS),
+    before_sleep=before_sleep_log(logger, logging.WARNING),
+    reraise=True,
+)
+
+
+@_capacity_retry
+def _responses_create(client, **create_kwargs):
+    return client.responses.create(**create_kwargs)
+
+
+@_capacity_retry
+def _chat_create(client, **create_kwargs):
+    return client.chat.completions.create(**create_kwargs)
+
 
 def _get_xai_api_key() -> str:
     return (os.getenv("GROK_API_KEY") or os.getenv("XAI_API_KEY") or "").strip()
@@ -82,7 +122,7 @@ def grok_generate_text(
                 create_kwargs["extra_body"] = {
                     "prompt_cache_key": str(cache_key),
                 }
-            resp = client.responses.create(**create_kwargs)
+            resp = _responses_create(client, **create_kwargs)
             text = getattr(resp, "output_text", "") or ""
             text = text.strip()
             logging.info(
@@ -112,6 +152,6 @@ def grok_generate_text(
     }
     if cache_key:
         create_kwargs["extra_headers"] = {"x-grok-conv-id": str(cache_key)}
-    resp = client.chat.completions.create(**create_kwargs)
-    text = resp.choices[0].message.content.strip()
+    resp = _chat_create(client, **create_kwargs)
+    text = (resp.choices[0].message.content or "").strip()
     return text, {"provider": "openai_compat", "model": model, "usage": getattr(resp, "usage", None)}
