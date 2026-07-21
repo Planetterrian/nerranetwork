@@ -13,16 +13,24 @@ import re
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
+from tenacity import (
+    before_sleep_log,
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
 
 # Only retry on transient API errors — permanent errors (KeyError, FileNotFoundError,
 # RuntimeError) will fail immediately instead of wasting 3x API credits.
 try:
     from openai import APITimeoutError, APIConnectionError, RateLimitError
     _TRANSIENT_ERRORS = (APITimeoutError, APIConnectionError, RateLimitError)
+    _RATE_LIMIT_ERRORS = (RateLimitError,)
 except ImportError:
     # Fallback if openai isn't installed (e.g. in tests)
     _TRANSIENT_ERRORS = (TimeoutError, ConnectionError)
+    _RATE_LIMIT_ERRORS = ()
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +41,19 @@ class LLMRefusalError(RuntimeError):
     Unlike quality warnings (short text, repetition), a refusal means the LLM
     explicitly declined to produce content.  Continuing the pipeline would waste
     TTS credits synthesising the refusal message into audio.
+    """
+
+
+class LLMEmptyOutputError(LLMRefusalError):
+    """Raised when the LLM returns an empty completion.
+
+    Subclasses ``LLMRefusalError`` so the existing refusal-recovery chains
+    (anti-refusal retry → educational prompt → fallback model) engage.
+    Before July 21 2026 an empty completion was only logged and flowed
+    downstream — the SpaceX run shipped a 0-char digest into the expansion
+    retry and the too-short abort path instead of simply retrying the call
+    (the empty response was a transient xAI capacity glitch; a 429 followed
+    minutes later).
     """
 
 
@@ -126,6 +147,21 @@ def _get_api_key() -> str:
     return (os.getenv("GROK_API_KEY") or os.getenv("XAI_API_KEY") or "").strip()
 
 
+# Capacity-class 429s from xAI ("model is currently at capacity ... try
+# again in a few minutes") need MINUTES of backoff, not the OpenAI SDK's
+# sub-second internal retries. Observed July 21 2026 (SpaceX ep039): three
+# retries inside 5 seconds, all 429, and the digest retry was abandoned
+# while capacity recovered shortly after. Waits: 30s → 60s → 120s between
+# four attempts (~3.5 min total) — well inside the pipeline's time budget
+# and long enough to ride out a typical capacity dip. Other transient
+# errors keep their existing fast retry at the generate_* wrappers.
+@retry(
+    stop=stop_after_attempt(4),
+    wait=wait_exponential(multiplier=30, min=30, max=120),
+    retry=retry_if_exception_type(_RATE_LIMIT_ERRORS),
+    before_sleep=before_sleep_log(logger, logging.WARNING),
+    reraise=True,
+)
 def _call_grok(
     prompt: str,
     *,
@@ -173,7 +209,10 @@ def _call_grok(
 
     resp = client.chat.completions.create(**create_kwargs)
 
-    text = resp.choices[0].message.content.strip()
+    # content can come back None on degraded responses (all-reasoning
+    # completions during capacity incidents) — normalize to "" so callers
+    # see a clean empty string instead of an AttributeError.
+    text = (resp.choices[0].message.content or "").strip()
     meta: Dict[str, Any] = {"provider": "openai_compat", "model": model}
     if cache_key:
         meta["cache_key"] = cache_key
@@ -443,10 +482,12 @@ def _validate_llm_output(
 
     if not text or not text.strip():
         logger.error(
-            "LLM returned EMPTY %s for '%s' — episode will likely be unusable",
+            "LLM returned EMPTY %s for '%s' — treating as retryable failure",
             stage, show_name,
         )
-        return 0
+        raise LLMEmptyOutputError(
+            f"LLM returned empty {stage} for '{show_name}'"
+        )
 
     # Check for LLM refusals — must come before length checks because
     # refusal messages can be 500-2000 chars (passing min-length thresholds).

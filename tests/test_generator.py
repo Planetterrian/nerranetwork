@@ -134,8 +134,18 @@ class TestValidateLLMOutput:
         result = _validate_llm_output(text, stage="digest", show_name="test")
         assert isinstance(result, int)
 
-    def test_empty_text_returns_zero(self):
-        assert _validate_llm_output("", stage="digest", show_name="test") == 0
+    def test_empty_text_raises_retryable_refusal(self):
+        # July 21 2026 (SpaceX ep039 abort): an empty completion used to be
+        # logged and returned as 0, letting a 0-char digest flow into the
+        # expansion retry and downstream gates. It now raises
+        # LLMEmptyOutputError (an LLMRefusalError subclass) so the existing
+        # refusal-recovery chain retries the call instead.
+        from engine.generator import LLMEmptyOutputError
+
+        with pytest.raises(LLMEmptyOutputError):
+            _validate_llm_output("", stage="digest", show_name="test")
+        with pytest.raises(LLMRefusalError):
+            _validate_llm_output("   \n", stage="digest", show_name="test")
 
     def test_english_refusal_raises(self):
         with pytest.raises(LLMRefusalError):

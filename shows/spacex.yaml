@@ -282,6 +282,12 @@ newsletter:
 
 slow_news:
   enabled: true
+  # July 21 2026: the 07-21 run aborted because enabled=true shipped with no
+  # library_file — the empty default resolved to the repo root and the
+  # fallback crashed (IsADirectoryError) instead of rescuing the episode.
+  library_file: shows/segments/spacex.json
+  max_segments: 2
+  cooldown_days: 30
 
 content_tracking:
   section_patterns: {}
