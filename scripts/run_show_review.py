@@ -402,19 +402,13 @@ def update_ledger(slug: str, result: dict, doc: Path, cost: float,
     return path
 
 
-def advance_rotation(slug: str, today: datetime.date) -> Path:
-    """Set the slug's date in review_state.yaml via line replacement so the
-    file's explanatory comments survive."""
-    path = ROOT / "docs" / "reviews" / "review_state.yaml"
-    text = path.read_text(encoding="utf-8")
-    new_text, n = re.subn(
-        rf"(?m)^(\s*{re.escape(slug)}:\s*).*$",
-        rf"\g<1>{today.isoformat()}",
-        text,
-    )
-    if n:
-        path.write_text(new_text, encoding="utf-8")
-    return path
+# NOTE (July 21 2026): the rotation is no longer advanced here. The ledger
+# entry this script appends carries the review date, and
+# scripts/pick_review_target.py reads the effective last-reviewed date as
+# max(review_state seed, latest ledger entry) — so merging the PR advances
+# the rotation without touching the shared review_state.yaml. Two
+# concurrently-open review PRs used to conflict on that file every time
+# (PRs #845/#856).
 
 
 # ---------------------------------------------------------------------------
@@ -617,13 +611,12 @@ def main() -> int:
 
     doc = write_review_doc(slug, result, today)
     ledger = update_ledger(slug, result, doc, cost, today)
-    state = advance_rotation(slug, today)
     pytest_summary = run_show_pytest(slug)
     pr_body = build_pr_body(slug, result, cost, meta, pytest_summary)
 
     print(f"[review] wrote {doc.relative_to(ROOT)}, "
-          f"{ledger.relative_to(ROOT)}, {state.relative_to(ROOT)}")
-    open_draft_pr(slug, [doc, ledger, state], pr_body, today)
+          f"{ledger.relative_to(ROOT)}")
+    open_draft_pr(slug, [doc, ledger], pr_body, today)
     return 0
 
 

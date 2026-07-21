@@ -423,3 +423,64 @@ class TestDashboardVoiceBaseline:
             encoding="utf-8")
         assert '_VOICE_ID_RU = "0b875ae2"' in text
         assert '"ara"' in text.split("_SANCTIONED_EXTRA_VOICES", 1)[1][:80]
+
+
+class TestLedgerDrivenRotation:
+    """July 21 2026: review PRs no longer edit review_state.yaml (any two
+    concurrently-open review PRs conflicted on it every time — PRs
+    #845/#856). The effective last-reviewed date is max(state seed date,
+    latest ledger entry date), so merging a review PR advances the
+    rotation via the ledger entry it already carries."""
+
+    def test_newer_ledger_date_wins_over_state_seed(self, tmp_path):
+        picker = _load_picker()
+        state = tmp_path / "state.yaml"
+        state.write_text(
+            "targets:\n  alpha: 2026-06-01\n  beta: 2026-06-10\n"
+        )
+        ledger = tmp_path / "ledger"
+        ledger.mkdir()
+        # alpha was reviewed on 06-20 per its ledger — beta becomes oldest.
+        (ledger / "alpha.yaml").write_text(
+            "reviews:\n  - date: '2026-06-20'\n    summary: pass\n"
+        )
+        assert picker.pick_target(state, set(), ledger_dir=ledger) == "beta"
+
+    def test_missing_ledger_falls_back_to_state_date(self, tmp_path):
+        picker = _load_picker()
+        state = tmp_path / "state.yaml"
+        state.write_text("targets:\n  alpha: 2026-06-01\n  beta: 2026-06-10\n")
+        assert picker.pick_target(state, set()) == "alpha"
+
+    def test_ledger_dates_read_by_regex_not_yaml(self, tmp_path):
+        # Three committed ledgers contain unquoted ": " inside list items
+        # and cannot be safe_load-ed — the date extraction must survive that.
+        picker = _load_picker()
+        state = tmp_path / "state.yaml"
+        state.write_text("targets:\n  alpha: 2026-06-01\n  beta: 2026-06-05\n")
+        ledger = tmp_path / "ledger"
+        ledger.mkdir()
+        (ledger / "alpha.yaml").write_text(
+            "reviews:\n"
+            "  - date: '2026-06-30'\n"
+            "    summary: broken: unquoted: colons: everywhere\n"
+        )
+        assert picker.pick_target(state, set(), ledger_dir=ledger) == "beta"
+
+    def test_real_ledgers_yield_parseable_dates(self):
+        picker = _load_picker()
+        ledger_dir = ROOT / "docs" / "reviews" / "ledger"
+        found = 0
+        for path in ledger_dir.glob("*.yaml"):
+            d = picker._latest_ledger_date(ledger_dir, path.stem)
+            if d:
+                assert len(d) == 10 and d[4] == "-", (path.name, d)
+                found += 1
+        assert found >= 5  # the rotation's ledgers are being read
+
+    def test_review_runner_no_longer_writes_review_state(self):
+        text = (ROOT / "scripts" / "run_show_review.py").read_text(encoding="utf-8")
+        assert "advance_rotation" not in text.replace(
+            "rotation is no longer advanced here", ""
+        ).replace("advances the\n# rotation", "")
+        assert 'review_state.yaml"' not in text
