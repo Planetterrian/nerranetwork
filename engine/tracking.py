@@ -218,7 +218,13 @@ def save_usage(tracker: dict, output_dir: Path) -> Path | None:
         # Grok is ~36× cheaper per character so the provider switch matters
         # for accurate per-episode cost reporting).
         tts = tracker["services"]["tts_api"]
-        provider = tts.get("provider", "elevenlabs")
+        # A run that never reached TTS has no recorded provider — label it
+        # "none" instead of the legacy "elevenlabs" default, which read as
+        # a provider regression on Grok-TTS shows (SpaceX July 21 2026
+        # abort log: "TTS (elevenlabs): 0 chars").
+        provider = tts.get("provider") or (
+            "none" if not tts.get("characters") else "elevenlabs"
+        )
         rate_per_1k = TTS_PROVIDER_PRICING.get(provider, ELEVENLABS_COST_PER_1K_CHARS)
         tts["estimated_cost_usd"] = (tts["characters"] / 1000) * rate_per_1k
 

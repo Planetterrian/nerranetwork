@@ -1990,9 +1990,21 @@ def _generate_podcast_outline(
         model=config.llm.model,
         system_prompt=system_prompt,
         temperature=config.llm.digest_temperature,  # Lower temp for planning
-        max_tokens=1500,
+        max_tokens=2500,
         cache_key=_show_cache_key(config),
     )
+
+    # A truncated outline is worse than none: stage 2 is told to "follow
+    # this structure and order", so a mid-story cut silently drops every
+    # remaining story from the episode. Fall back to un-chained generation
+    # (the full digest is still in the podcast prompt).
+    if meta.get("finish_reason") == "length":
+        logger.warning(
+            "Podcast outline for '%s' was truncated at max_tokens — "
+            "dropping the outline (script will follow the digest directly)",
+            config.name,
+        )
+        text = ""
 
     if tracker and "usage" in meta:
         try:
@@ -2065,13 +2077,19 @@ def generate_podcast_script(
             system_prompt=system_prompt,
             tracker=tracker,
         )
-        # Prepend the outline to the podcast prompt so the model follows it
-        prompt = (
-            f"STORY OUTLINE (follow this structure and order):\n{outline}\n\n"
-            f"---\n\n{prompt}"
-        )
-        logger.info("Using prompt chaining for '%s' — outline prepended to podcast prompt",
-                     config.name)
+        if outline:
+            # Prepend the outline to the podcast prompt so the model follows it
+            prompt = (
+                f"STORY OUTLINE (follow this structure and order):\n{outline}\n\n"
+                f"---\n\n{prompt}"
+            )
+            logger.info("Using prompt chaining for '%s' — outline prepended to podcast prompt",
+                         config.name)
+        else:
+            logger.warning(
+                "Outline unavailable for '%s' — generating podcast script "
+                "without chaining", config.name,
+            )
 
     logger.info("Generating podcast script for '%s' (model=%s, temp=%.1f) ...",
                 config.name, config.llm.model, config.llm.podcast_temperature)
