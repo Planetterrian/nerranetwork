@@ -365,3 +365,35 @@ class TestCorrectCommonLLMTextMistakes:
         out = _correct_common_llm_text_mistakes(good)
         assert out == good  # no change on clean input
 
+
+
+class TestRetryTargetFloorGuard:
+    """SpaceX Ep040 (2026-07-21): the repetition retry swapped a
+    target-compliant 1365-word script for 1219 words (min_podcast_words
+    1300) — one fewer flagged phrase cost 146 words and the episode
+    shipped below target. When the ORIGINAL clears the show's word
+    target, the retry must clear it too."""
+
+    def test_spacex_ep040_scenario_rejects_retry(self):
+        from engine.generator import _retry_word_count_ok
+        assert _retry_word_count_ok(
+            orig_words=1365, retry_words=1219, show_floor=600,
+            publication_floor=int(1300 * 0.6), target_floor=1300,
+        ) is False
+
+    def test_retry_also_above_target_is_accepted(self):
+        from engine.generator import _retry_word_count_ok
+        assert _retry_word_count_ok(
+            orig_words=1365, retry_words=1310, show_floor=600,
+            publication_floor=int(1300 * 0.6), target_floor=1300,
+        ) is True
+
+    def test_below_target_original_keeps_legacy_behavior(self):
+        # Original already under target: the target rule must NOT bind
+        # (a below-target original can still trade a few words for less
+        # repetition, subject to the existing 80% + floor rules).
+        from engine.generator import _retry_word_count_ok
+        assert _retry_word_count_ok(
+            orig_words=1100, retry_words=1000, show_floor=600,
+            publication_floor=int(1300 * 0.6), target_floor=1300,
+        ) is True
