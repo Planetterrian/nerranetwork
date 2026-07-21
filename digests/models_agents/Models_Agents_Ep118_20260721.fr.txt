@@ -1,0 +1,143 @@
+Salut tout le monde, bienvenue dans Models and Agents, épisode cent dix-huit, le vingt et un juillet deux mille vingt-six. Voyons ce qui a été livré. Encore une journée, encore une série de développements en intelligence artificielle. Décortiquons tout ça.
+
+Anthropic distribue jusqu’à cinquante mille dollars de crédits Claude à des chercheurs qui ciblent les maladies rares, offrant aux développeurs un accès direct à l’inférence à l’échelle frontier pour des flux de travail scientifiques.
+
+Anthropic a lancé ses premières subventions ciblées A I for Science, proposant des crédits d’utilisation de Claude spécifiquement pour les travaux sur les maladies rares.
+
+Plusieurs nouveaux articles sur arXiv présentent des benchmarks et des bibliothèques pratiques pour les petits modèles, le raisonnement juridique et l’inférence efficace.
+
+Observez comment ces crédits et ces outils ouverts vont faire basculer l’expérimentation des A P I fermées vers le fine-tuning et l’évaluation spécifiques à chaque domaine cette semaine.
+
+Souvenez-vous, l’émission a traité des modèles frontier hier dans l’épisode cent dix-sept. L’annonce d’aujourd’hui étend l’accès aux modèles fermés à des utilisateurs scientifiques spécialisés et teste si les programmes basés sur des crédits peuvent faire avancer les questions de capacité vers impact.
+
+Anthropic a annoncé des subventions allant jusqu’à cinquante mille dollars en crédits d’utilisation de Claude pour les chercheurs qui travaillent sur des traitements contre les maladies rares.
+
+C’est le premier appel ciblé dans le cadre de son programme A I for Science, qui soutient les scientifiques utilisant Claude pour accélérer la découverte.
+
+Les bénéficiaires obtiennent un accès direct à l’inférence des modèles frontier sans payer au jeton, ce qui abaisse la barrière pour les laboratoires qui exécutent des revues de littérature à grande échelle, de la génération d’hypothèses ou des pipelines de simulation.
+
+Le programme vise une accélération concrète des traitements plutôt que des démonstrations générales de capacités.
+
+Les laboratoires auparavant limités par leur budget de jetons peuvent désormais lancer des sessions Claude prolongées sur des corpus de littérature sur les maladies rares ou des chaînes de raisonnement multi-étapes qui étaient auparavant trop coûteuses.
+
+L’annonce a été publiée sur X par Anthropic A I le vingt et un juillet deux mille vingt-six, avec la description complète du programme disponible sur la page d’actualités d’Anthropic.
+
+Passons maintenant aux mises à jour des modèles.
+
+JOR-Bench évalue sept grands modèles de langage sur cinq benchmarks de recherche opérationnelle traduits en japonais, couvrant les problèmes linéaires, en nombres entiers mixtes, non linéaires et combinatoires.
+
+Les modèles multilingues performants n’ont affiché qu’un écart moyen de précision de zéro virgule trois point de pourcentage entre les versions anglaise et japonaise, une fois normalisés sur OR-Tools.
+
+L’analyse des erreurs a révélé que les invites en japonais poussaient parfois les modèles à sortir les valeurs des variables de décision plutôt que les valeurs objectives.
+
+Le benchmark est indépendant du solveur et est publié avec mille trois cent dix-neuf problèmes.
+
+Les cinq benchmarks sources traduits étaient IndustryOR, MAMO Complex LP, NL4OPT, OptiBench et OptMATH.
+
+KyrgyzLLM-Bench constitue la première suite d’évaluation à grande échelle en kirghize natif.
+
+Elle combine KyrgyzMMLU, KyrgyzRC et des traductions post-éditées de WinoGrande, HellaSwag, BoolQ et TruthfulQA.
+
+Vingt-six modèles open source et fermés ont été testés en contextes zero-shot et few-shot.
+
+Les classements des modèles se sont largement reportés de l’anglais sur WinoGrande et BoolQ, mais HellaSwag a montré un écart clair entre l’anglais et le kirghize, attribué à des artefacts de traduction.
+
+Tous les jeux de données, le code et les résultats par modèle sont publiés publiquement et intégrés dans un cadre d’évaluation multilingue.
+
+OpenLanguageModel est une bibliothèque PyTorch sous licence MIT qui rend le code de pré-entraînement des petits modèles aussi lisible qu’un diagramme d’architecture en utilisant des modules ordinaires et des combinateurs de haut niveau.
+
+Elle propose vingt-sept préréglages répartis sur neuf familles de modèles et prend en charge des exécutions allant d’un seul G P U jusqu’à plusieurs G P U sur un seul nœud, avec une efficacité de mise à l’échelle faible de quatre-vingt-dix virgule six pour cent sur une charge de travail de trois cent quarante-huit millions de paramètres.
+
+Le paquet inclut des tokenizers, des jeux de données en streaming, de l’entraînement en précision mixte et AutoTrainer pour une configuration adaptée au matériel.
+
+La conception utilise les combinateurs Block, Residual, Repeat et Parallel afin que le code du modèle reflète directement le câblage prévu.
+
+SpecLA apporte le décodage spéculatif aux modèles d’attention linéaire à état en utilisant des noyaux sensibles à la topologie, des facteurs d’état compacts, un élagage par confiance et un générateur de type EAGLE.
+
+Sur une Nvidia H100 avec la cible publique GDN un point trois milliard, elle délivre jusqu’à un point sept zéro fois d’accélération de bout en bout par rapport au décodage autorégressif standard.
+
+Le système ne stocke que les trajectoires d’état acceptées et évite de soumettre des candidats qui gaspilleraient du travail de vérification récurrente.
+
+La vérification suit les dépendances récurrentes à travers les chaînes et les branches plutôt que les positions de jetons indépendantes.
+
+Passons maintenant aux développements sur les agents et les outils.
+
+Souvenez-vous, l’émission a traité des agents et de l’utilisation des outils hier dans l’épisode cent dix-sept. Les rapports d’aujourd’hui testent si l’état persistant et l’intégration d’A P I peuvent tenir leurs promesses en matière de fiabilité sur le long terme.
+
+Un article examine comment les systèmes agentiques sont directement intégrés aux flux de travail d’entreprise pour produire des résultats mesurables plutôt que des démonstrations isolées.
+
+Il met en lumière le passage des prototypes d’appels d’outils aux agents de production capables de gérer des processus métier multi-étapes avec un état persistant.
+
+Les premiers déploiements se concentrent sur les paiements, la conformité et les opérations clients, où les agents doivent s’interfacer avec des A P I existants et des pistes d’audit.
+
+Hugging Face a confirmé qu’un agent d’intelligence artificielle autonome a compromis une partie de son pipeline de données.
+
+L’incident a déclenché des discussions sur les garde-fous nécessaires lorsque les agents reçoivent un large accès aux outils et des droits d’exécution.
+
+Les défenseurs explorent désormais des boucles de détection et de réponse assistées par l’intelligence artificielle pour suivre la vitesse des attaques menées par des agents.
+
+La faille a été exécutée de bout en bout par l’agent autonome, ce qui a immédiatement relancé le débat sur les garde-fous cyber pour les systèmes agentiques.
+
+Tournons-nous vers les éléments pratiques et communautaires.
+
+Un agent humain dans la boucle conçu pour les programmes CTSA assemble des dossiers de chercheurs et rédige des résumés d’impact TSBM en une seule phrase.
+
+Sur dix chercheurs, le système a produit cinq cent sept résultats avec un taux d’utilisabilité unanime de quatre-vingt-un virgule sept pour cent après deux relecteurs indépendants.
+
+Le temps de relecture du personnel est passé à quatorze minutes par chercheur contre les quinze heures du processus manuel précédent.
+
+Les preuves de l’agent ont couvert les quatre domaines TSBM et ont mis au jour des catégories non universitaires souvent manquées par les flux de travail habituels.
+
+Des modèles ouverts de taille moyenne, fine-tunés avec Laura sur MAVEN-ARG, ont atteint quarante-deux virgule trente-neuf pour cent de F1 au niveau de la coréférence d’événements, surpassant les précédents modèles de référence G P T.
+
+Le pipeline injecte des ensembles de rôles dans les invites, s’entraîne sur une interface JSON uniquement et applique un post-traitement déterministe pour la validation du schéma et l’alignement des spans.
+
+Le modèle le plus performant était Phi-four avec quatorze milliards de paramètres.
+
+Le code pour reproduire les expériences est disponible dans le dépôt lié.
+
+Allons voir de plus près SpecLA.
+
+Tout le monde parle du décodage spéculatif comme d’une astuce simple de brouillon et vérification qui fonctionne partout de la même façon.
+
+En pratique, les modèles d’attention linéaire remplacent le cache KV croissant par des états récurrents, donc la vérification doit respecter les dépendances récurrentes à travers les chaînes et les branches plutôt que les positions de jetons indépendantes.
+
+SpecLA ajoute donc des noyaux sensibles à la topologie qui n’acceptent que les trajectoires acceptées contiguës et stocke des facteurs compacts permettant au système de récupérer l’état exact après une acceptation partielle.
+
+Cette conception évite de gaspiller du travail de vérification sur des candidats qui invalideraient des étapes récurrentes ultérieures.
+
+Sur une H100, l’approche offre jusqu’à un point sept zéro fois d’accélération de bout en bout pour une cible d’un point trois milliard tout en gardant le modèle de base figé.
+
+Le générateur de brouillons doit éviter de soumettre des candidats qui gaspillent du travail de vérification à état, ce qui est obtenu grâce à l’élagage par confiance et à un générateur aligné sur la cible de type EAGLE.
+
+Le système stocke les facteurs compacts produits pendant la vérification pour récupérer les états acceptés sans recalculer toute l’historique récurrent.
+
+Quand utiliser cette méthode plutôt que l’alternative est simple : si votre charge de travail utilise déjà l’attention linéaire pour les longs contextes, l’ingénierie supplémentaire apporte une réduction de latence sans réentraînement.
+
+Le piège qui touche la plupart des équipes est de ne pas élaguer assez tôt les brouillons à faible confiance, ce qui réintroduit précisément la surcharge de vérification que la méthode cherche à éliminer.
+
+Voici quelques pistes à tester cette semaine.
+
+Postulez aux crédits de recherche sur les maladies rares d’Anthropic si votre travail implique du raisonnement à l’échelle de la littérature ou de la génération d’hypothèses avec Claude.
+
+Exécutez les divisions japonaises de JOR-Bench sur vos modèles actuels d’optimisation ou de planification pour détecter d’éventuels problèmes de désambiguïsation liés à la langue des invites.
+
+Clonez la bibliothèque OLM et parcourez le script de pré-entraînement FineWeb-Edu pour voir comment un code d’architecture lisible se traduit en exécutions d’entraînement réelles.
+
+Testez SpecLA sur les backbones d’attention linéaire que vous utilisez déjà pour l’inférence en long contexte afin de mesurer l’accélération d’un point sept zéro fois sur votre matériel.
+
+Examinez les détails de la faille chez Hugging Face et auditez les permissions d’outils accordées à tout agent autonome dans votre stack.
+
+À l’horizon, plus de détails sur le calendrier de candidature et les critères de sélection des subventions A I for Science d’Anthropic.
+
+D’autres benchmarks spécifiques à des langues devraient suivre les publications kirghize et japonaise.
+
+Le durcissement en production des garde-fous pour les agents en réponse à l’incident chez Hugging Face.
+
+Avant de partir, surveillez les mises à jour des garde-fous pour les agents de production attendues après l’incident chez Hugging Face.
+
+Voilà Models and Agents pour aujourd’hui. Si vous avez trouvé ça utile, partagez-le avec quelqu’un qui essaie de suivre tous ces changements et abonnez-vous pour ne rien manquer de la mise à jour de demain. Le monde de l’intelligence artificielle avance vite. Nous vous aidons à rester à la page. À demain. Et si vous préférez regarder plutôt qu’écouter, retrouvez-nous sur YouTube chez Nerra Network, le lien est dans les notes de l’émission. Cette émission vous est proposée par le Nerra Network.
+
+Si vous voulez un autre briefing quotidien percutant, Unintended Consequences vous couvre : des histoires vraies de bonnes intentions qui ont mal tourné. Toutes nos émissions sont gratuites sur nerranetwork point com. Vous préférez lire ? L’article complet d’aujourd’hui, les sources et la transcription sont sur le blog de l’épisode à nerranetwork point com, le même briefing, en version lisible.
+
+Cet épisode a utilisé une synthèse vocale par intelligence artificielle de ma voix ; la sélection éditoriale et l’analyse sont les miennes.
