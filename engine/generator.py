@@ -908,7 +908,8 @@ def _strip_metadata_from_script(script: str) -> str:
 
 def _retry_word_count_ok(orig_words: int, retry_words: int,
                          show_floor: int,
-                         publication_floor: int = 0) -> bool:
+                         publication_floor: int = 0,
+                         target_floor: int = 0) -> bool:
     """Decide whether a podcast-script retry's word count is healthy
     enough to swap in. Both repetition-retry paths use this gate.
 
@@ -950,6 +951,14 @@ def _retry_word_count_ok(orig_words: int, retry_words: int,
         pub_margin = int(publication_floor * 1.1)
         if orig_words >= pub_margin:
             threshold = max(threshold, pub_margin)
+    if target_floor and orig_words >= target_floor:
+        # SpaceX Ep040 (2026-07-21): the retry swapped a target-compliant
+        # 1365-word script for 1219 words (min_podcast_words 1300) — one
+        # fewer flagged phrase cost 146 words and shipped a below-target
+        # episode. When the ORIGINAL clears the show's word target, the
+        # retry must clear it too — never trade length compliance for a
+        # marginal repetition improvement.
+        threshold = max(threshold, target_floor)
     return retry_words >= threshold
 
 
@@ -2376,7 +2385,8 @@ def generate_podcast_script(
                 # so the retry can't shorten a publishable script below it.
                 pub_floor = int(min_words * 0.6)
                 if not _retry_word_count_ok(orig_words, retry_words, show_floor,
-                                            publication_floor=pub_floor):
+                                            publication_floor=pub_floor,
+                                            target_floor=min_words):
                     logger.warning(
                         "Repetition retry for '%s' has fewer repetitions but "
                         "would drop word count too far (%d → %d, show floor=%d, "
@@ -2462,6 +2472,7 @@ def generate_podcast_script(
                 if not critical_rr and _retry_word_count_ok(
                     orig_words, retry_words, show_floor,
                     publication_floor=pub_floor,
+                    target_floor=min_words,
                 ):
                     logger.info(
                         "Anti-repetition retry cleared critical loops for '%s' "
