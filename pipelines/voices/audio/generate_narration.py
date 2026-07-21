@@ -35,11 +35,15 @@ def synthesize_segments(segments: List[Dict[str, str]], out_dir: Path) -> Dict[s
             logger.warning("Narration segment %s is empty — skipped", seg_id)
             continue
         target = out_dir / f"narration_{seg_id}.mp3"
+        # engine.tts.synthesize signature is (text, voice_id, output_path,
+        # *, api_key, ...) — the launch code passed the path second and
+        # voice_id as a kwarg (TypeError on the first production run,
+        # July 20 2026; same wrong-signature class as the setup docs).
         synthesize(
             text,
+            MIRA_VOICE,
             str(target),
             provider="grok",
-            voice_id=MIRA_VOICE,
             api_key=api_key,
             language_code="en",
         )

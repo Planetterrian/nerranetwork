@@ -113,6 +113,14 @@ def parse_dialogue_turns(
         first_speaker, first_body = turns[0]
         turns[0] = (first_speaker, "\n\n".join(preamble + [first_body]))
 
+    # Name-voice congruence guard (July 20 2026, Ep016): the LLM rotated
+    # the supplied closing's speaker labels to dodge a same-host boundary
+    # (the turn before the closing and the closing's first line were both
+    # DAN's), so Dan's VOICE said "I'm Patrick Novak" and Patrick's said
+    # "I'm Dan Perra" on air. A self-introduction is unambiguous: a turn
+    # saying "I'm <OtherHost>" belongs to that host — relabel it.
+    turns = _fix_self_introduction_labels(turns, known)
+
     # Merge consecutive same-speaker turns into one synthesis group.
     groups: List[Tuple[str, str]] = []
     for speaker, text in turns:
@@ -121,6 +129,41 @@ def parse_dialogue_turns(
         else:
             groups.append((speaker, text))
     return groups
+
+
+def _fix_self_introduction_labels(
+    turns: List[Tuple[str, str]],
+    known: set,
+) -> List[Tuple[str, str]]:
+    """Relabel turns whose self-introduction names the OTHER configured host.
+
+    Speaker labels double as first names on the network's dialogue shows
+    (DAN → "Dan", PATRICK → "Patrick"), so "I'm Dan…" spoken under a
+    PATRICK: label is a wrong-voice defect, never intent. Only unambiguous
+    single-host self-intros are touched; a turn matching several hosts'
+    names (a joint intro) is left alone with a warning.
+    """
+    intro_res = {
+        label: re.compile(rf"\bI(?:'|’)?m {label.capitalize()}\b")
+        for label in known
+    }
+    fixed: List[Tuple[str, str]] = []
+    for speaker, text in turns:
+        claimed = [lbl for lbl, rx in intro_res.items() if rx.search(text)]
+        if len(claimed) == 1 and claimed[0] != speaker:
+            logger.warning(
+                "Dialogue label fix: %r self-introduces as %s — relabeling "
+                "the turn so the right voice says its own name "
+                "(text: %.60r)", speaker, claimed[0], text,
+            )
+            speaker = claimed[0]
+        elif len(claimed) > 1:
+            logger.warning(
+                "Dialogue label check: turn names multiple hosts (%s) — "
+                "leaving label %r unchanged", claimed, speaker,
+            )
+        fixed.append((speaker, text))
+    return fixed
 
 
 def dialogue_stats(script: str, voices: Dict[str, str]) -> Dict[str, int]:

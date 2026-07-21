@@ -52,23 +52,83 @@ _GUEST_ENHANCE = (
 )
 
 
+def _probe_audio(path: Path) -> tuple[int, bool]:
+    """Return (channels, is_narrowband). Narrowband = telephony source:
+    almost no energy above 5 kHz relative to the speech band."""
+    out = subprocess.run(
+        ["ffprobe", "-v", "quiet", "-select_streams", "a:0",
+         "-show_entries", "stream=channels", "-of", "csv=p=0", str(path)],
+        check=True, capture_output=True, text=True, timeout=120,
+    )
+    channels = int((out.stdout.strip().splitlines() or ["1"])[0] or 1)
+
+    def band_mean(lo: int, hi: int) -> float:
+        r = subprocess.run(
+            ["ffmpeg", "-v", "info", "-t", "60", "-i", str(path),
+             "-af", f"highpass=f={lo},lowpass=f={hi},volumedetect",
+             "-f", "null", "-"],
+            capture_output=True, text=True, timeout=300,
+        )
+        for line in r.stderr.splitlines():
+            if "mean_volume" in line:
+                try:
+                    return float(line.split("mean_volume:")[1].split("dB")[0])
+                except ValueError:
+                    pass
+        return -90.0
+
+    speech, high = band_mean(300, 3000), band_mean(5000, 12000)
+    narrowband = (speech - high) > 30.0  # PSTN: HF ~absent below the speech band
+    logger.info("mix_interview probe: channels=%d speech=%.1fdB high=%.1fdB narrowband=%s",
+                channels, speech, high, narrowband)
+    return channels, narrowband
+
+
 def mix_interview(stereo_path: Path, out_path: Path) -> Path:
     """Leveled mono mix of the conversation for STT + episode assembly.
 
-    Channels are processed separately BEFORE mixing (guest left, Mira
-    right): the guest gets the telephony-repair chain above; Mira's TTS
-    track is passed through nearly untouched. Final episode loudness is
-    still normalized once at assembly (-16 LUFS network target).
+    MODE-AWARE (dry-run 2, July 20 2026): the telephony-repair chain is
+    ONLY for genuinely narrowband (PSTN) guest channels. Applying it to a
+    full-band WebRTC recording — or blindly channel-splitting a MONO
+    source that ffmpeg silently upmixes — sums a filtered and unfiltered
+    copy of the same signal (comb filtering, mud). Paths:
+
+      - stereo + narrowband guest  → per-channel: guest repair chain + mix
+      - stereo + full-band guest   → gentle shared chain, no band surgery
+      - mono (legacy single-file)  → gentle chain only, never split
     """
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    _run(["ffmpeg", "-y", "-i", stereo_path,
-          "-filter_complex",
-          "[0:a]channelsplit=channel_layout=stereo[g][m];"
-          f"[g]{_GUEST_ENHANCE}[ge];"
-          "[m]highpass=f=70[me];"
-          "[ge][me]amix=inputs=2:duration=longest:normalize=0,"
-          "dynaudnorm=f=250:g=15[out]",
-          "-map", "[out]", "-ar", "48000", out_path])
+    channels, narrowband = _probe_audio(stereo_path)
+    gentle = ("highpass=f=60,"
+              "acompressor=threshold=-21dB:ratio=3:attack=20:release=250,"
+              "dynaudnorm=f=250:g=15")
+    if channels >= 2 and narrowband:
+        _run(["ffmpeg", "-y", "-i", stereo_path,
+              "-filter_complex",
+              "[0:a]channelsplit=channel_layout=stereo[g][m];"
+              f"[g]{_GUEST_ENHANCE}[ge];"
+              "[m]highpass=f=70[me];"
+              "[ge][me]amix=inputs=2:duration=longest:normalize=0,"
+              "dynaudnorm=f=250:g=15[out]",
+              "-map", "[out]", "-ar", "48000", out_path])
+    elif channels >= 2:
+        # Full-band WebRTC recording with true per-speaker channels:
+        # sidechain-duck the GUEST under Mira — when Mira speaks, the
+        # guest channel (and its room noise) pulls down hard. This is the
+        # real per-speaker "mute" the first-episode notes asked for,
+        # impossible on mono single-file recordings.
+        _run(["ffmpeg", "-y", "-i", stereo_path,
+              "-filter_complex",
+              "[0:a]channelsplit=channel_layout=stereo[g][m];"
+              "[m]asplit=2[m1][m2];"
+              "[g][m1]sidechaincompress=threshold=0.02:ratio=10:"
+              "attack=5:release=400[gd];"
+              "[gd][m2]amix=inputs=2:duration=longest:normalize=0,"
+              f"{gentle}[out]",
+              "-map", "[out]", "-ar", "48000", out_path])
+    else:
+        _run(["ffmpeg", "-y", "-i", stereo_path,
+              "-af", gentle, "-ar", "48000", out_path])
     return out_path
 
 

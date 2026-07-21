@@ -65,23 +65,42 @@ def apply_redactions(interview_wav: Path, redactions: List[dict],
     return out_path
 
 
+SEGMENT_GAP_SEC = 0.8   # breathing room between narration/interview blocks
+
+
 def _concat_with_crossfades(blocks: List[Path], out_path: Path) -> Path:
+    """Join episode blocks with normalized levels and real pauses.
+
+    July 20 2026 (first produced episode notes): raw acrossfade joins had
+    no gap between Mira's narration sections and audibly bad seams, and
+    narration blocks sat at a different loudness than the interview. Every
+    block is now: resampled 48k mono → loudness-normalized to the network
+    target → edge-faded (kills join clicks/ticks) → padded with a
+    SEGMENT_GAP_SEC pause, then plain-concatenated. Voice-into-voice
+    crossfading is gone on purpose — speech should breathe, not blend.
+    """
     if len(blocks) == 1:
         _run(["ffmpeg", "-y", "-i", blocks[0], out_path])
         return out_path
+    prepped: List[Path] = []
+    for i, b in enumerate(blocks):
+        p = out_path.parent / f"blk_{i:02d}.wav"
+        pad = f",apad=pad_dur={SEGMENT_GAP_SEC}" if i < len(blocks) - 1 else ""
+        _run(["ffmpeg", "-y", "-i", b, "-af",
+              "aresample=48000,"
+              "loudnorm=I=-16:TP=-1.5:LRA=11,"
+              "afade=t=in:d=0.04,areverse,afade=t=in:d=0.06,areverse"
+              + pad,
+              "-ar", "48000", "-ac", "1", p])
+        prepped.append(p)
     inputs: list = []
-    for b in blocks:
-        inputs += ["-i", b]
-    graph, prev = [], "0:a"
-    for i in range(1, len(blocks)):
-        label = f"x{i}"
-        graph.append(
-            f"[{prev}][{i}:a]acrossfade=d={CROSSFADE_SEC}:c1=tri:c2=tri[{label}]"
-        )
-        prev = label
+    for p in prepped:
+        inputs += ["-i", p]
     _run(["ffmpeg", "-y", *inputs,
-          "-filter_complex", ";".join(graph),
-          "-map", f"[{prev}]", out_path])
+          "-filter_complex",
+          "".join(f"[{i}:a]" for i in range(len(prepped)))
+          + f"concat=n={len(prepped)}:v=0:a=1[out]",
+          "-map", "[out]", out_path])
     return out_path
 
 

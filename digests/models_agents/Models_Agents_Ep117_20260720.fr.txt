@@ -1,0 +1,67 @@
+Bienvenue de nouveau dans Models and Agents, épisode cent dix-sept, pour le vingt juillet deux mille vingt-six. Votre briefing quotidien sur l’intelligence artificielle. Lundi dans le monde de l’IA, ce qui signifie qu’il faut rattraper toutes les annonces du week-end. C’est parti.
+
+Kimi K3 arrive comme le plus grand modèle à poids ouverts à ce jour, avec deux virgule huit billions de paramètres, obligeant les développeurs à tester si le dimensionnement centré sur la mémoire surpasse le calcul brut pour les charges de travail réelles.
+
+Moonshot AI a publié Kimi K3 le seize juillet. Le modèle compte deux virgule huit billions de paramètres et constitue la première entrée dans la catégorie des trois billions. Il privilégie le dimensionnement mémoire plutôt que la densité de calcul brute.
+
+Rappelez-vous, nous avons évoqué hier l’écart de performance des modèles à poids ouverts : cette sortie fournit une base concrète à haut nombre de paramètres pour une comparaison directe sur les tâches à contexte long et intensives en mémoire. Les développeurs peuvent désormais télécharger les poids et exécuter des expériences à cette échelle sans recourir aux API propriétaires. Les premiers benchmarks indépendants sur les tâches agentiques et les coûts de service sont attendus dans les deux prochaines semaines.
+
+Les services de santé publique de dix juridictions américaines vont tester des outils d’IA générative fournis par OpenAI et Anthropic dans le cadre du programme PULSE de la Coalition for Health AI et d’Accenture. L’initiative se concentre sur des cas d’usage concrets dans les contextes étatiques, locaux, tribaux et territoriaux. Les équipes de santé numérique doivent suivre les premiers résultats pour repérer les schémas réglementaires et de déploiement susceptibles d’influencer d’autres secteurs.
+
+Le programme associe les modèles au cadre de la Coalition for Health AI afin de produire des résultats mesurables sur les sites participants. Cette avancée fait progresser le volet sécurité et politique en déplaçant les travaux d’évaluation des laboratoires vers des environnements de santé publique en conditions réelles.
+
+Alibaba a annoncé un nouveau modèle qu’il positionne immédiatement derrière Fable 5 d’Anthropic. Cette affirmation intervient alors que se poursuivent les comparaisons des modèles de pointe et offre aux praticiens un nouveau point de référence en modèle fermé pour suivre les capacités. Les équipes travaillant sur des tâches de raisonnement à fort enjeu devraient le tester cette semaine face aux variantes actuelles de Claude et GPT afin de cartographier les forces relatives sur des benchmarks spécifiques aux domaines.
+
+Ce positionnement souligne la concurrence continue au sommet des classements des modèles fermés sans publication des poids ni de notes détaillées sur l’architecture. Les développeurs qui suivent la frontière fermée doivent l’ajouter à leur matrice d’évaluation aux côtés des sorties GPT et Claude existantes.
+
+L’Académie chinoise des sciences a publié une version améliorée du modèle ScienceOne Omni, axée sur les charges de travail scientifiques. La mise à jour cible les chercheurs qui ont besoin de meilleures performances sur les tâches scientifiques techniques et multimodales. Les laboratoires effectuant des ajustements fins spécifiques à un domaine devraient l’évaluer face aux modèles scientifiques ouverts existants pour les pipelines de chimie, physique et biologie.
+
+La mise à niveau s’appuie sur les versions précédentes avec un support multimodal élargi pour les types de données scientifiques. Les équipes de recherche gagnent une nouvelle base de référence pour l’inférence scientifique spécialisée sans dépendre uniquement de modèles généralistes.
+
+Simon Willison note que la fonctionnalité Work de ChatGPT mobile fonctionne comme Code Interpreter avec la plupart des sécurités désactivées et s’exécute entièrement dans le cloud. Sur ordinateur, la même fonctionnalité est une version relookée de Codex qui s’exécute localement. Les développeurs concevant des flux de travail agentiques devraient tester Work mobile pour les tâches où la réduction des garde-fous importe, tout en conservant Codex sur ordinateur pour les contraintes locales.
+
+La version mobile ouvre donc des modes de défaillance et des comportements de sortie différents de ceux de l’implémentation sur ordinateur. Les équipes doivent comparer les sorties des deux interfaces sur les mêmes invites pour comprendre où l’exécution cloud modifie les résultats.
+
+Une nouvelle analyse détaille six architectures d’agents distinctes et leurs compromis. Le guide aide les équipes à choisir entre les modèles réactifs, de planification, hiérarchiques et autres en fonction de l’horizon des tâches et des besoins en outils. Les développeurs évaluant les frameworks devraient cartographier leur pile actuelle face à ces six architectures afin d’identifier les lacunes en matière de fiabilité sur le long terme.
+
+Les architectures couvrent différents degrés d’autonomie, d’utilisation de la mémoire et de profondeur de planification. Les praticiens obtiennent un cadre de décision concret plutôt que de choisir les frameworks uniquement sur la base d’affirmations marketing.
+
+L’article soutient que les agents en production ont besoin de contrôles d’accès fins plutôt que du partage d’identifiants. Cela répond directement au problème persistant de sécurité des agents, où les secrets partagés créent des risques de rayon d’impact. Les équipes déployant des agents autonomes devraient auditer l’utilisation des identifiants et passer à des jetons d’accès limités cette semaine.
+
+Cette recommandation s’aligne sur l’axe suivi des agents et de l’utilisation d’outils en mettant l’accent sur les améliorations de fiabilité grâce à une meilleure conception des accès. Les déploiements en production qui reposent encore sur des identifiants partagés disposent désormais d’une voie de migration claire pour réduire la portée des incidents. Source : Google News.
+
+Josh Blythe a publié Bordair, un détecteur en deux étapes combinant une porte regex de quatre cent trente motifs avec un modèle DeBERTa-v3-large quantifié au format ONNX. Le système inclut treize mille deux cent trente tentatives de contournement réelles collectées lors d’un jeu public de red teaming, ainsi qu’une gestion multimodale pour les images, documents et audio.
+
+Les développeurs traitant des entrées de grands modèles de langage devraient intégrer d’abord la couche regex pour un filtrage en moins d’une milliseconde avant de basculer vers le transformateur dans les cas ambigus. Le jeu de données combine plus de cinq cent mille échantillons synthétiques avec la partie attaques réelles, et le code complet, les poids et les données sont disponibles sur GitHub et Hugging Face.
+
+Les équipes disposent ainsi d’une première ligne de défense pratique et peu coûteuse qui n’invoque le modèle plus lourd que lorsque c’est nécessaire. Code : Poids et jeu de données :
+
+La direction chinoise a lancé WAICO tout en soutenant publiquement le développement de modèles open source. L’annonce signale un soutien politique continu aux poids et outils accessibles à l’intérieur du pays. Les équipes qui suivent l’élan mondial de l’open source doivent surveiller les futures sorties de modèles nationaux et les conditions de licence qui en découleront.
+
+Cette mesure politique renforce l’axe des poids ouverts en alignant la direction nationale sur les modèles accessibles à la communauté. Les observateurs peuvent s’attendre à des sorties ultérieures de laboratoires chinois qui s’appuieront sur cette préférence affirmée pour les poids ouverts.
+
+Bon, entrons dans les détails du détecteur Bordair.
+
+Tout le monde traite la défense contre l’injection de prompts comme un problème de modèle unique, pourtant la séparation technique entre une porte regex rapide et un transformateur plus lourd est ce qui rend le système utilisable à grande échelle. La couche regex gère la majorité évidente du trafic en moins d’une milliseconde et aboutit directement à une décision.
+
+Seul le reste ambigu atteint le modèle DeBERTa-v3-large quantifié de deux cent quarante-quatre mégaoctets, ce qui maintient le transformateur hors du chemin critique pour les requêtes courantes. Cette conception sacrifie un peu de rappel pour une réduction massive des coûts. L’inclusion de données d’attaques réelles issues du jeu de red teaming affine la frontière de décision sur les tentatives humaines motivées que les données synthétiques modélisées manquent.
+
+Les équipes qui sautent la porte et font tourner le transformateur sur chaque requête atteignent rapidement des limites de latence et de budget. Utilisez ce schéma dans tout pipeline de production qui ingère du texte, des images ou des documents non fiables et qui paie déjà des coûts d’inférence par token. Le piège qui touche la plupart des équipes est d’oublier de mettre à jour les motifs regex lorsque de nouvelles astuces d’obfuscation apparaissent dans la nature.
+
+Téléchargez et exécutez les poids de Kimi K3 pour benchmarker les tâches agentiques gourmandes en mémoire face à vos modèles ouverts actuels et mesurer le coût de service à l’échelle de deux virgule huit billions de paramètres. Intégrez la porte regex de Bordair dans tout pipeline d’entrée de grands modèles de langage traitant du texte ou des documents non fiables pour un filtrage immédiat à faible latence avant l’étape du transformateur.
+
+Testez la fonctionnalité Work de ChatGPT mobile sur une tâche que vous exécutez habituellement via Codex local afin de voir où la réduction des garde-fous modifie le comportement de sortie. Cartographiez votre pile d’agents actuelle face aux six architectures décrites dans le guide et identifiez quel schéma vos flux de travail les plus longs nécessitent réellement.
+
+Auditez l’utilisation des identifiants d’agents en production et remplacez les secrets partagés par des autorisations d’accès limitées selon les recommandations de TechRadar.
+
+Les premiers benchmarks indépendants sur Kimi K3 pour les tâches agentiques et à contexte long sont attendus dans les deux semaines. Des résultats supplémentaires du programme PULSE provenant des dix juridictions américaines participantes sont prévus plus tard ce trimestre. D’autres détails sur la mise en œuvre de WAICO et les sorties open source qui en résulteront dans les laboratoires chinois.
+
+Analyse continue de la brèche des agents autonomes sur Hugging Face et des outils de sécurité des agents qui en découlent.
+
+Demain, surveillez les premiers chiffres indépendants sur les tâches agentiques de Kimi K3 dès qu’ils commenceront à apparaître.
+
+Voilà qui conclut le briefing IA d’aujourd’hui. Partagez cet épisode avec un développeur ou un constructeur qui souhaite rester à jour. Abonnez-vous là où vous écoutez. À demain. Et si vous préférez regarder plutôt qu’écouter, retrouvez-nous sur YouTube à Nerra Network, le lien est dans les notes de l’émission. Un conseil rapide du réseau : essayez Modern Investing Techniques, des stratégies modernes pour les investisseurs canadiens et américains.
+
+Chaque émission de Nerra Network est gratuite sur nerranetwork point com. Et sur le site web, les visuels de chaque épisode sont disponibles dans notre galerie d’images gratuite à nerranetwork point com slash gallery, libres de droits sous Creative Commons, téléchargeables avec attribution.
+
+Cet épisode a utilisé une synthèse vocale par IA de ma voix, la sélection éditoriale et l’analyse sont les miennes.

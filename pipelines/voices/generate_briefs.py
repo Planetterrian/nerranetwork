@@ -78,7 +78,8 @@ def email_brief_to_guest(interview: dict, app: dict, brief: dict) -> None:
         thesis=brief["episode_thesis_draft"],
         questions=brief["likely_questions"],
     )
-    send_email(app["email"], "Your Age of AI interview — what Mira will ask", html)
+    send_email(app["email"], "Your Age of AI interview — what Mira will ask",
+               html, cc_operator=True)
     sb_update("interview_briefs", f"id=eq.{brief['id']}",
               {"sent_to_guest_at": dt.datetime.now(dt.timezone.utc).isoformat()})
 

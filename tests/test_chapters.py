@@ -860,3 +860,69 @@ class TestClosingIsFinal:
         titles = [c.title for c in chapters]
         assert "First Principles" in titles
         assert titles[-1] == "Closing", titles
+
+
+class TestHeadlineAnchoredAutoSegment:
+    """July 21 2026 (Tesla Ep548): the fixed-interval auto-segment titled
+    chapters with headlines fitted to arbitrary ~90s windows, so a chapter
+    could carry one story's title while starting mid-way through another.
+    Auto-segment boundaries now anchor at the paragraph where each digest
+    story begins whenever >=2 headlines match confidently."""
+
+    def _script(self):
+        # Intro + three clearly distinct stories + closing, blank-line
+        # separated, each story padded to clear the 60-word minimum gap.
+        pad = "More context follows in plain prose covering operational rollout numbers deployment cadence logistics supplier detail. " * 6
+        intro_pad = "Great to have you along for the ride once again this fine morning. " * 10
+        return (
+            "Welcome to Test Show, your daily update. " + intro_pad + "\n\n"
+            "The Cybercab Starlink terminal moves inside the roof cavity. "
+            + pad + "\n\n"
+            "Xpeng Australia announces several new models for that market. "
+            + pad + "\n\n"
+            "Giga Berlin hiring expands while rivals cut positions. "
+            + pad + "\n\n"
+            "That's a wrap for today. Thanks for being here.\n"
+        )
+
+    def _markers(self):
+        return [
+            SectionMarker(pattern="Welcome to Test Show", title="Introduction", where="start"),
+            SectionMarker(pattern="That's a wrap", title="Closing", where="end"),
+        ]
+
+    def test_anchors_boundaries_at_story_starts(self):
+        headlines = [
+            "Cybercab Starlink terminal integrated into the roof",
+            "Xpeng Australia announces new models",
+            "Giga Berlin hiring expands against industry cuts",
+        ]
+        script = self._script()
+        chapters = parse_chapters(
+            script, self._markers(), show_name="test",
+            story_headlines=headlines,
+        )
+        titles = [c.title for c in chapters]
+        # Each story chapter is titled by its headline...
+        assert any("Cybercab" in t for t in titles), titles
+        assert any("Xpeng" in t for t in titles), titles
+        assert any("Giga Berlin" in t for t in titles), titles
+        # ...and STARTS on its own story's text, not mid-way through
+        # another story (the Ep548 misalignment class).
+        for ch in chapters:
+            if "Xpeng" in ch.title:
+                assert script[ch.char_start:ch.char_start + 60].startswith("Xpeng Australia")
+            if "Giga Berlin" in ch.title:
+                assert script[ch.char_start:ch.char_start + 60].startswith("Giga Berlin hiring")
+
+    def test_falls_back_to_fixed_interval_without_headlines(self):
+        script = self._script()
+        chapters = parse_chapters(
+            script, self._markers(), show_name="test", story_headlines=[],
+        )
+        # Legacy fixed-interval path still runs (no anchors available) —
+        # a short script may not clear the ~247-word interval, but the
+        # parse itself must stay intact.
+        assert len(chapters) >= 2
+        assert chapters[0].title == "Introduction"
+        assert chapters[-1].title == "Closing"

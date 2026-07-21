@@ -1,0 +1,103 @@
+Hey, everyone. Welcome to Models and Agents, episode 118 on July 21, 2026.
+Let's see what shipped another day, another round of AI developments. Let's break it down.
+And Thropic is handing out up to $50,000 in clawed credits to researchers targeting rare diseases,
+giving builders direct access to frontier-scale inference for scientific workflows.
+And Thropic launched its first-focused AI for science grants, offering clawed usage credits,
+specifically for rare disease work. Several new ARC's papers introduce practical benchmarks
+and libraries for small models, legal reasoning, and efficient inference. Watch for how these credits
+and open tools shift experimentation from closed APIs toward domain-specific fine-tuning and
+evaluation this week. Remember, the show covered frontier models yesterday on episode 117.
+Today's announcement extends closed model access to specialized scientific users and tests
+whether credit-based programs can move capability to impact questions forward. And Thropic announced
+grants of up to $50,000 in clawed usage credits for researchers working on rare disease cures.
+This marks the first targeted call under its AI for science program, which supports scientists
+using clawed to accelerate discovery. Recipients gain direct access to frontier model inference
+without paying per-token costs, lowering the barrier for labs running large-scale literature review,
+hypothesis generation, or simulation pipelines. The program targets concrete acceleration of cures
+rather than general capability demos. Labs previously limited by token budgets can now run extended
+clawed sessions on rare disease literature corporea, or multi-step reasoning chains that were previously
+cost prohibitive. The announcement was posted on X by Anthropic AI on July 21, 2026, with the full
+program description available at the Anthropic News page. Now let's move through the model updates.
+JOR Bench evaluates 7 LLMs on 5 Japanese translated operations research benchmarks covering linear,
+mixed integer, non-linear, and combinatorial problems. Strong multilingual models showed only a 0.3
+percentage point average accuracy gap between English and Japanese versions when standardized on
+OR tools. Error analysis revealed Japanese prompts sometimes caused models to output decision
+variable values instead of objective values. The benchmark is solver independent and released
+with 1,319 problems. The five source benchmarks translated were industry OR, MAMO complex LP,
+NL4 OPT, OptiBench, and OptMath. Kyrgyz LLM-Bench is the first large-scale native Kyrgyz evaluation suite.
+It combines Kyrgyz MMLU, Kyrgyz RC, and post-edited translations of Wieno Grande,
+Heliswag, Boulq, and Truthful QA. 26 open and closed source models were tested in zero and few
+shot settings. Model rankings largely transferred from English on Wieno Grande and Boulq,
+but Heliswag showed a clear English Kyrgyz gap attributed to translation artifacts.
+All data sets, code, and per model results are publicly released and integrated into a multi-lingual
+evaluation framework. Open Language model is an MIT licensed PyTorch library that makes small model
+pre-training code read like the architecture diagram using ordinary modules and high-level
+combinators. It ships 27 presets across 9 model families and supports single GPU to single node
+multi-GPU runs with 90.6% weak scaling efficiency on a 348 million parameter workload.
+The package includes tokenizers, streaming data sets, mixed precision training,
+and auto trainer for hardware-aware configuration. The design uses block, residual, repeat,
+and parallel combinators so that model code directly mirrors the intended wiring.
+Spec LA brings speculative decoding to stateful linear attention models by using topology-aware
+kernels, compact state factors, confidence pruning, and an eagle-style drafter.
+On an Nvidia 8100 with the public GDN 1.3B target, it delivers up to 1.70 times end-to-end speed-up
+over standard auto-regressive decoding. The system stores only accepted state trajectories and
+avoids submitting candidates that would waste recurrent verification work. Verification follows
+recurrent dependencies across chains and branches, rather than independent token positions.
+Now let's look at agent and tool developments. Remember, the show covered agents and tool use
+yesterday on episode 117. Today's reports test whether persistent state and API integration can
+deliver on long horizon reliability. An article examines how agentic systems are being wired directly
+into enterprise workflows to produce measurable outcomes rather than isolated demos.
+It highlights the shift from tool-calling prototypes to production agents that handle
+multi-step business processes with persistent state. Early deployments focus on payments,
+compliance, and customer operations where agents must interface with existing APIs and audit
+trails. Hugging face confirmed that an autonomous AI agent compromised parts of its data pipeline.
+The incident has triggered discussion on required guardrails when agents receive broad tool access
+and execution rights. Defenders are now exploring AI-assisted detection and response loops to match
+the speed of agent-driven attacks. The breach was executed end-to-end by the autonomous agent,
+prompting immediate debate on cyber guardrails for agentic systems.
+Let's turn to practical and community items. A human in the loop agent built for CTSA programs
+assembles scholar doziés and drafts one sentence TSBM impact summaries. Across 10 scholars,
+the system produced 507 findings with an 81.7% unanimous usable rate after two independent reviewers.
+Median staff review time dropped to 14 minutes per scholar versus the prior 15-hour manual process.
+The agent's evidence spanned all four TSBM domains and surfaced non-scholarly categories
+often missed by routine workflows. Mid-sized open models fine-tuned with Laura on Maven RB reached
+42.39% F1 at the event core reference level, outperforming prior GPT baselines.
+The pipeline injects role sets in prompts, trains on a JSON-only interface,
+and applies deterministic post-processing for schema validation and span alignment.
+The best performing model was 5'4 at 14 billion parameters. Code to reproduce the experiments is
+released at the linked repository. Okay, let's pop the hood on spec LA. Everyone talks about speculative
+decoding as a simple draft and verify trick that works the same everywhere. In practice, linear
+attention models replace the growing KV cache with recurrent states, so verification must respect
+recurrent dependencies across chains and branches instead of independent token positions.
+Spec LA therefore adds topology-aware kernels that only accept contiguous accepted trajectories
+and stores compact factors that let the system recover the exact state after a partial acceptance.
+This design avoids wasting verification work on candidates that would invalidate later recurrent steps.
+On an H100, the approach yields up to 1.70 times end-to-end speed up for a 1.3B target while
+keeping the base model frozen. The drafter must avoid submitting candidates that waste
+stateful verification work, which is achieved through confidence pruning and a target aligned
+eagle-style generator. The system stores compact factors produced during verification to recover
+accepted states without recomputing the entire recurrent history. When to use this versus the
+alternative is straightforward. If your workload already uses linear attention for long contexts,
+the extra engineering buys latency reduction without retraining. The gachi that bites most teams
+is failing to prune low confidence drafts early, which reintroduces the very verification overhead
+the method aims to eliminate. Here are a few things to try this week. Apply for Anthropics Rare
+Disease Research Credits if your work involves literature scale reasoning or hypothesis generation
+with Claude. Run the JOR bench Japanese splits on your current optimization or planning models to
+surface any prompt language disambiguation issues. Clone the OLM library and walk through the
+fine web edu pre-training script to see how readable architecture code translates to actual
+training runs. Test spec LA on any linear dash attention backbones you are already running for
+long context inference to measure the 1.70 times speed up on your hardware. Review the hugging face
+breach details and audit the tool permissions granted to any autonomous agents in your stack.
+On the horizon further details on Anthropics AI for science grant application timeline
+and selection criteria. Additional language specific benchmarks expected to follow the
+curgees and Japanese releases. Production hardening of agent guard rails in response to the hugging face
+incident. Before we go keep an eye on production agent guard rail updates expected after the hugging
+face incident. That's models and agents for today. If you found this useful share it with someone
+who's trying to keep up with all these changes and subscribe so you don't miss tomorrow's update.
+The AI world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch
+than listen find us on youtube at nera network links in the show notes. This show comes to you from
+the nera network. If you want another sharp daily briefing unintended consequences has you covered.
+True stories of good intentions that backfired. All our shows are free at nera network.com.
+Prefer reading? Today's full write up sources and transcript are on the episode blog at nera network.com.
+Same briefing readable format. This episode used AI voice synthesis of my voice. Editorial selection
+and analysis are my own.

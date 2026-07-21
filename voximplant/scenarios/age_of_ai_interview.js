@@ -30,6 +30,9 @@
 // verified July 2026 against voximplant/grok-voice-agent-example +
 // docs.voximplant.ai: Modules.Grok / Grok.createVoiceAgentAPIClient.
 require(Modules.Grok);
+// Recorder module: used ONLY for the separate video recorder in WebRTC
+// mode (the primary audio recording stays call.record — see below).
+require(Modules.Recorder);
 
 const SUPABASE_URL = "__SUPABASE_URL__";           // substituted at deploy time
 const API_BASE = "https://api.nerranetwork.com/voices";
@@ -48,6 +51,8 @@ let recordUrl = null;      // delivered via CallEvents.RecordStarted (no getter 
 let connectedAt = null;    // Call has no getDuration(); compute from timestamps
 let timeCheckTimer = null; // periodic real-clock injections (Mira has no clock)
 let callMode = "pstn";     // "pstn" | "webrtc" — set by whichever entry fires
+let videoRecorder = null;  // separate WebRTC-mode video recorder
+let videoRecordUrl = null;
 
 // ---------------------------------------------------------------------------
 // Entry 1: outbound PSTN (fallback mode) — StartScenarios with customData.
@@ -130,12 +135,36 @@ async function beginInterview(config, withVideo) {
     call.addEventListener(CallEvents.RecordStarted, function (e) {
       if (e && e.url) recordUrl = e.url;
     });
+    // AUDIO stays a dedicated audio-only recording in BOTH modes: dry-run
+    // 2 (July 20 2026) proved that video:true on call.record collapses
+    // the audio to a single mono mix (WebM/Opus, channels=1), destroying
+    // the per-participant stereo split the diarization depends on.
     call.record({
       name: "aoa_" + runId,
       stereo: true,
       hd_audio: true,
-      video: !!withVideo,
     });
+    // VIDEO (WebRTC mode) records on a SEPARATE recorder — guest camera
+    // plus the mixed conversation audio, for the future YouTube version.
+    // Best-effort: a video-recorder failure never blocks the interview.
+    if (withVideo) {
+      try {
+        videoRecorder = VoxEngine.createRecorder({
+          name: "aoa_" + runId + "_video",
+          video: true,
+        });
+        videoRecorder.addEventListener(RecorderEvents.Started, function (e) {
+          if (e && e.url) videoRecordUrl = e.url;
+        });
+        videoRecorder.addEventListener(RecorderEvents.Stopped, function (e) {
+          if (e && e.url) videoRecordUrl = e.url;
+        });
+        call.sendMediaTo(videoRecorder);
+      } catch (e) {
+        Logger.write("[aoa " + runId + "] video recorder unavailable (non-fatal): " + e.message);
+        videoRecorder = null;
+      }
+    }
 
     // 2. Recording-consent disclosure — pre-generated Mira clip from R2
     //    (spec §11.2; wording confirmed by Patrick before launch).
@@ -170,6 +199,11 @@ async function beginInterview(config, withVideo) {
       try {
         // 4. Bridge guest <-> Mira; Mira opens the conversation.
         VoxEngine.sendMediaBetween(call, grokAgent);
+        if (videoRecorder) {
+          try { grokAgent.sendMediaTo(videoRecorder); } catch (e) {
+            Logger.write("[aoa " + runId + "] mira->video-recorder failed (non-fatal): " + e.message);
+          }
+        }
         grokAgent.responseCreate({});
         startTimeChecks();
       } catch (e) {
@@ -295,11 +329,13 @@ function attachEndHandlers() {
       // The recording stops automatically on disconnect; the durable copy
       // happens in GitHub Actions (Net.httpRequest can't stream multi-MB
       // audio reliably from a scenario).
+      if (videoRecorder) { try { videoRecorder.stop(); } catch (ignored) {} }
       await fireWebhook({
         run_id: runId,
         status: "completed",
         call_mode: callMode,
         voximplant_record_url: recordUrl,
+        voximplant_video_url: videoRecordUrl,
         duration_sec: connectedAt
           ? Math.round((Date.now() - connectedAt) / 1000)
           : 0,

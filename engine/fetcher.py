@@ -223,6 +223,30 @@ def _parse_entry_date(entry) -> Optional[datetime.datetime]:
 # Retry-wrapped HTTP helper
 # ---------------------------------------------------------------------------
 
+# Reddit throttles spoofed browser User-Agents from cloud/CI egress IPs
+# hard (their API guidelines require a unique, descriptive UA). The
+# generic Chrome UA in DEFAULT_HEADERS drew 429s on r/spacex,
+# r/electricvehicles, and r/teslainvestorsclub across the July 21 2026
+# runs. Send the descriptive UA Reddit asks for on reddit.com hosts only —
+# every other feed keeps the browser UA (some publishers block bot-looking
+# agents, the opposite failure mode).
+_REDDIT_HEADERS = {
+    **DEFAULT_HEADERS,
+    "User-Agent": "nerranetwork-rss/1.0 (podcast news fetcher; https://nerranetwork.com)",
+}
+
+
+def _headers_for_url(url: str) -> dict:
+    try:
+        from urllib.parse import urlparse
+        host = (urlparse(url).hostname or "").lower()
+    except Exception:
+        host = ""
+    if host == "reddit.com" or host.endswith(".reddit.com"):
+        return _REDDIT_HEADERS
+    return DEFAULT_HEADERS
+
+
 @retry(
     stop=stop_after_attempt(3),
     wait=wait_exponential(multiplier=1, min=2, max=10),
@@ -234,7 +258,7 @@ def _parse_entry_date(entry) -> Optional[datetime.datetime]:
 )
 def _fetch_url_with_retry(url: str) -> requests.Response:
     """GET a URL with automatic retry on transient network errors."""
-    response = requests.get(url, headers=DEFAULT_HEADERS, timeout=HTTP_TIMEOUT_SECONDS)
+    response = requests.get(url, headers=_headers_for_url(url), timeout=HTTP_TIMEOUT_SECONDS)
     response.raise_for_status()
     return response
 

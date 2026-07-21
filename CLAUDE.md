@@ -1582,7 +1582,23 @@ were stolen by un-anchored body markers AFTER the closing — Tesla Ep544
 "First Principles" at 642s, MIT Ep104 "Investor Education"; terminal signal
 is the closing TITLE set, not the `where: end` anchor, because EI anchors
 only its Teaser); **dp_pod Network-pick rotation memory**
-(`_recent_network_picks` — FF was the pick 5/10 with a fixed host+frame);
+(`_recent_network_picks` — FF was the pick 5/10 with a fixed host+frame); **July 20 2026 Ep016 name-swap fix + banter pass (operator listened:
+  hosts signed off as each other; wants human flow + comedic banter):**
+  the LLM rotated the supplied closing's speaker labels to dodge a
+  same-host boundary (turn before the closing and the closing's first
+  line were both DAN's), so Dan's voice said "I'm Patrick Novak" on air.
+  Two-layer fix: `_fix_self_introduction_labels` in
+  `engine/tts_dialogue.py` relabels any turn whose self-intro names the
+  OTHER host (deterministic; joint intros untouched; verified self-healing
+  on the real Ep016 script), and the podcast prompt forbids closing-label
+  rotation outright. Flow: Ep014-016 shipped ZERO exclamations, ZERO
+  voice tags, 12-26% one-liners against the DELIVERY asks — enforcement
+  moved INTO the Positive Papers segment spec (per-story 3+ turn volley +
+  earned exclamation) and a COMEDY block (2-3 character-driven beats,
+  one callback, device rotates daily, no catchphrases). Prompt edits
+  change shipped audio — A/B-listen per landmine #17. Drift guards:
+  `tests/test_tts_dialogue.py::TestSelfIntroductionRelabel`,
+  `tests/test_dp_pod_show.py::TestEp016NameSwapAndBanter`;
 **dashboard voice-baseline fix** (stale ElevenLabs RU baseline flagged
 FP/PR/Age-of-AI as drift on every build; now Olya `0b875ae2` + sanctioned
 `ara`); **snapshot fetch-filter leakage counter** (scored three long-pending

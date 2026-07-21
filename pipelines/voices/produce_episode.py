@@ -30,6 +30,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from audio.assemble_episode import assemble  # noqa: E402
 from audio.generate_narration import synthesize_segments  # noqa: E402
 from audio.waveform_video import render as render_waveform  # noqa: E402
+from audio.polish import build_word_cuts, polish_audio  # noqa: E402
 
 MUSIC_BED = ROOT / "assets" / "music" / "age_of_ai.mp3"  # optional; no-op if absent
 COVER = ROOT / "assets" / "covers" / "age-of-ai.jpg"
@@ -101,25 +102,51 @@ def main() -> int:
         segments = write_narration(interview, app, pkg)
         narration = synthesize_segments(segments, workdir / "narration")
 
-        # 3. Assembly (redaction cuts first, then bed + loudnorm).
+        # 3. Polish (July 2026, first-episode operator notes): EQ/de-bass +
+        #    noise gate + speaker level matching, then a Whisper word-pass
+        #    that cuts filler words, collapses long silences, and removes
+        #    any spoken time-check phrases. Best-effort: a polish failure
+        #    ships the unpolished (but assembled) episode rather than none.
+        polished = interview_wav
+        auto_cuts: list = []
+        try:
+            polished = polish_audio(interview_wav,
+                                    workdir / "interview_polished.wav")
+            auto_cuts = build_word_cuts(polished, workdir)
+        except Exception:  # noqa: BLE001
+            logger.exception("Polish stage failed (non-fatal) — using "
+                             "unpolished interview audio")
+            polished = interview_wav
+            auto_cuts = []
+
+        # 4. Assembly (guest redactions + polish cuts, then bed + loudnorm).
         stamp = dt.datetime.now(dt.timezone.utc)
         final_name = f"Age_of_AI_{app['name'].replace(' ', '_')}_{stamp:%Y%m%d}"
         episode_mp3 = assemble(
-            narration, interview_wav, workdir / f"{final_name}.mp3",
+            narration, polished, workdir / f"{final_name}.mp3",
             music_bed=MUSIC_BED if MUSIC_BED.exists() else None,
-            redactions=pkg.get("guest_redactions") or [],
+            redactions=(pkg.get("guest_redactions") or []) + auto_cuts,
         )
 
-        # 4. Waveform video for YouTube.
-        video = render_waveform(
-            episode_mp3, workdir / f"{final_name}.mp4",
-            cover_image=COVER if COVER.exists() else None,
-            title=f"{app['name']} — The Age of AI",
-        )
+        # 4. Waveform video for YouTube — BEST-EFFORT: the audio episode
+        #    is the product; video polish must never block publishing
+        #    (first production run died here on a CI ffmpeg quirk while a
+        #    finished episode MP3 sat next to it, July 20 2026).
+        video = None
+        try:
+            video = render_waveform(
+                episode_mp3, workdir / f"{final_name}.mp4",
+                cover_image=COVER if COVER.exists() else None,
+                title=f"{app['name']} — The Age of AI",
+            )
+        except Exception:  # noqa: BLE001
+            logger.exception("Waveform video failed (non-fatal) — "
+                             "publishing audio-only")
 
         # 5. Durable copies.
         episode_url = r2_upload(episode_mp3, f"age_of_ai/{episode_mp3.name}")
-        video_url = r2_upload(video, f"age_of_ai/video/{video.name}")
+        video_url = (r2_upload(video, f"age_of_ai/video/{video.name}")
+                     if video else None)
 
     # 6. State + callout queue.
     sb_update("interviews", f"id=eq.{interview['id']}", {"status": "approved"})
@@ -127,6 +154,25 @@ def main() -> int:
               {"status": "approved_by_guest"})
     sb_update("interview_runs", f"id=eq.{run['id']}",
               {"recording_mixed_url": episode_url})
+
+    # 6b. Final-listen gate (July 2026 process): the operator hears the
+    #     produced episode BEFORE it goes live — publish is a deliberate
+    #     dispatch, never automatic. Mira sends the review email.
+    try:
+        from common import OPERATOR_EMAIL, send_email
+        send_email(
+            OPERATOR_EMAIL,
+            f"Episode ready for your final listen: {app['name']}",
+            f"<p>Hi Patrick,</p>"
+            f"<p>The produced episode with <strong>{app['name']}</strong> is "
+            f"ready: <a href=\"{episode_url}\">listen here</a>"
+            + (f" (<a href=\"{video_url}\">video</a>)" if video_url else "")
+            + ".</p><p>Nothing publishes until you say so. When it passes "
+            "your ear, dispatch <em>Publish Age of AI episode</em> from the "
+            f"Actions tab with interview id <code>{interview['id']}</code> — "
+            "or tell Claude to publish it.</p><p>— Mira</p>")
+    except Exception:  # noqa: BLE001 — the gate email is best-effort
+        logger.exception("Final-listen email failed (non-fatal)")
 
     callouts = pkg.get("cross_show_callouts") or {}
     expires = (dt.datetime.now(dt.timezone.utc)

@@ -652,12 +652,15 @@ class TestPostRunValidation:
 class TestLLMOutputValidation:
     """Test the LLM output validation in engine/generator.py."""
 
-    def test_empty_output_logs_error(self, caplog):
-        """Empty LLM output triggers error log."""
-        from engine.generator import _validate_llm_output
+    def test_empty_output_logs_error_and_raises(self, caplog):
+        """Empty LLM output logs an error AND raises a retryable refusal
+        (July 21 2026 — SpaceX empty-digest abort)."""
+        import pytest
+        from engine.generator import _validate_llm_output, LLMEmptyOutputError
 
         with caplog.at_level("ERROR"):
-            _validate_llm_output("", stage="digest", show_name="test")
+            with pytest.raises(LLMEmptyOutputError):
+                _validate_llm_output("", stage="digest", show_name="test")
         assert "EMPTY" in caplog.text
 
     def test_short_output_logs_warning(self, caplog):

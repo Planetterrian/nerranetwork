@@ -180,6 +180,82 @@ class TestLoadSegmentLibrary:
         with pytest.raises(ValueError, match="non-empty"):
             load_segment_library(str(bad_path))
 
+    def test_empty_path_raises_clear_error(self):
+        # July 21 2026 (SpaceX ep039): slow_news.enabled with the empty
+        # library_file default resolved Path("") to the project root and
+        # crashed the fallback with IsADirectoryError. Must fail with an
+        # actionable message instead.
+        from engine.slow_news import load_segment_library
+
+        with pytest.raises(FileNotFoundError, match="library_file is empty"):
+            load_segment_library("")
+        with pytest.raises(FileNotFoundError, match="library_file is empty"):
+            load_segment_library("   ")
+
+    def test_directory_path_raises_clear_error(self, tmp_path):
+        from engine.slow_news import load_segment_library
+
+        with pytest.raises(FileNotFoundError, match="directory"):
+            load_segment_library(str(tmp_path))
+
+
+# ---------------------------------------------------------------------------
+# Drift guard: every show that enables slow_news must ship a valid library
+# (SpaceX launched June 13 2026 with enabled: true and no library_file —
+# the misconfiguration sat dormant until the first day the fallback fired,
+# then killed the episode instead of rescuing it)
+# ---------------------------------------------------------------------------
+
+_SHOWS_DIR = Path(__file__).resolve().parent.parent / "shows"
+
+
+class TestSlowNewsConfigDriftGuard:
+    def _show_yamls(self):
+        return sorted(
+            p for p in _SHOWS_DIR.glob("*.yaml")
+            if not p.name.startswith("_")
+        )
+
+    def test_every_enabled_show_has_loadable_library(self):
+        from engine.config import load_config
+        from engine.slow_news import load_segment_library
+
+        checked = 0
+        for yaml_path in self._show_yamls():
+            cfg = load_config(str(yaml_path))
+            if not cfg.slow_news.enabled:
+                continue
+            checked += 1
+            lib = cfg.slow_news.library_file
+            assert str(lib).strip(), (
+                f"{yaml_path.name}: slow_news.enabled without library_file "
+                "(the SpaceX July 21 2026 abort class)"
+            )
+            lib_path = Path(lib)
+            if not lib_path.is_absolute():
+                lib_path = _SHOWS_DIR.parent / lib
+            segments = load_segment_library(str(lib_path))
+            assert segments, (
+                f"{yaml_path.name}: slow_news library "
+                f"{cfg.slow_news.library_file} loaded but is empty"
+            )
+        # Sanity: the guard is actually exercising shows (11 enabled today).
+        assert checked >= 5
+
+    def test_spacex_has_slow_news_library(self):
+        from engine.config import load_config
+        from engine.slow_news import load_segment_library
+
+        cfg = load_config(str(_SHOWS_DIR / "spacex.yaml"))
+        assert cfg.slow_news.enabled
+        assert cfg.slow_news.library_file == "shows/segments/spacex.json"
+        segments = load_segment_library(
+            str(_SHOWS_DIR.parent / cfg.slow_news.library_file)
+        )
+        assert len(segments) >= 10
+        ids = [s["id"] for s in segments]
+        assert len(ids) == len(set(ids)), "duplicate segment ids"
+
 
 # ---------------------------------------------------------------------------
 # select_segments

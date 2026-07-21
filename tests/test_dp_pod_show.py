@@ -840,3 +840,33 @@ class TestNetworkPickRotationMemory:
         ctx = hook.pre_fetch(None)["nerra_network_context"]
         # No history → no section, and the hook never crashes.
         assert "THE NERRA NETWORK" in ctx
+
+
+class TestEp016NameSwapAndBanter:
+    """July 20 2026 (operator listened to Ep016: hosts signed off as each
+    other; wants more human flow + comedic banter)."""
+
+    def test_prompt_forbids_closing_label_rotation(self):
+        prompt = (PROJECT_ROOT / "shows" / "prompts" / "dp_pod_podcast.txt").read_text(
+            encoding="utf-8")
+        assert "NEVER rotate or reassign the closing's speaker labels" in prompt
+        assert 'only Patrick may say "I\'m Patrick Novak"' in prompt
+
+    def test_prompt_has_comedy_block(self):
+        prompt = (PROJECT_ROOT / "shows" / "prompts" / "dp_pod_podcast.txt").read_text(
+            encoding="utf-8")
+        assert "COMEDY" in prompt
+        assert "CHARACTER and SPECIFICITY" in prompt
+        # Anti-tic: the comedic device must rotate.
+        assert "Vary the comedic device day to day" in prompt
+        assert "No catchphrases" in prompt
+
+    def test_volley_enforcement_is_structural(self):
+        # Ep014-016 shipped 12-26% one-sentence turns and ZERO exclamations
+        # against the DELIVERY block's asks — the requirement now lives
+        # inside the Positive Papers segment spec where the model reads it.
+        prompt = (PROJECT_ROOT / "shows" / "prompts" / "dp_pod_podcast.txt").read_text(
+            encoding="utf-8")
+        papers = prompt.split("[The Positive Papers]", 1)[1].split("[", 1)[0]
+        assert "3+ consecutive one-sentence turns" in papers
+        assert "exclamation" in papers

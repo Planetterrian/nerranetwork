@@ -72,12 +72,26 @@ def load_segment_library(library_file: str) -> List[Dict]:
     ValueError
         If the file is malformed or segments are missing required keys.
     """
+    # A blank library_file (the dataclass default when a show enables
+    # slow_news but forgets the path — SpaceX, July 21 2026) would resolve
+    # to the project root below and blow up as IsADirectoryError deep inside
+    # the fallback. Fail with a clear, actionable message instead.
+    if not str(library_file).strip():
+        raise FileNotFoundError(
+            "slow_news is enabled but library_file is empty — set "
+            "slow_news.library_file (e.g. shows/segments/<slug>.json) "
+            "in the show YAML"
+        )
     path = Path(library_file)
     if not path.is_absolute():
         # Try relative to cwd (project root)
         path = Path.cwd() / path
     if not path.exists():
         raise FileNotFoundError(f"Segment library not found: {library_file}")
+    if path.is_dir():
+        raise FileNotFoundError(
+            f"Segment library path is a directory, not a JSON file: {library_file}"
+        )
 
     with open(path, "r", encoding="utf-8") as f:
         data = json.load(f)
