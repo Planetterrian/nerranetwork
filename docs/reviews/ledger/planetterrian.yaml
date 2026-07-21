@@ -122,4 +122,49 @@ reviews:
       evidence: null
     proposed_changes_in_pr: []
     agent_cost_usd: 0.0567
+  - date: '2026-07-20'
+    pr: null
+    doc: docs/reviews/planetterrian_review_2026_07_20.md
+    generated_by: grok-4.3
+    summary: Persistent under-length (9/10 episodes below 1600-word floor) and recurring boilerplate phrases (10/10 episodes) with fetch-filter leakage on astronomy terms; chapter shape remains clean after prior fixes.
+    scored_prior_predictions:
+    - metric: episodes with an Introduction chapter at word 0, last 10
+      verdict: hit
+      evidence: chapters_ep117–126 all open with Introduction at t=20s
+    - metric: episodes shipping with no Closing chapter, last 10
+      verdict: hit
+      evidence: all 10 chapters files end Closing after Tomorrow Teaser
+    - metric: episodes with a real Science Deep Dive chapter (when a deep dive aired)
+      verdict: hit
+      evidence: 10/10 transcripts contain the seeded opener and matching chapter
+    - metric: median _tts.txt words, last 10 eps
+      verdict: miss
+      evidence: 9/10 episodes 1258–1599 words (snapshot 2026-07-15)
+    - metric: pure-astronomy items per PT episode digest
+      verdict: partial
+      evidence: filter present in YAML but 6 leakage matches still occurred
+    shipped: []
+    deferred:
+    - chronic under-length (digest ceiling) — deferred behind four-show length A/B
+    - garbage mid-body auto-segment chapter titles — shared LLM-title class
+    - 'boilerplate reduction — prompt edit would require A/B-listen per landmine #17'
+    - astronomy fetch-filter tuning — leakage still observed; verify volume impact first
+    predictions:
+    - metric: episodes under 1600-word floor, last 10
+      baseline: 9/10
+      expected: still 8+/10 at next review (digest ceiling unchanged)
+      verdict: pending
+      evidence: null
+    - metric: unique boilerplate phrases recurring in 10/10 transcripts
+      baseline: 6+
+      expected: no reduction without prompt change
+      verdict: pending
+      evidence: null
+    - metric: fetch-filter leakage matches in last 10 digests
+      baseline: '6'
+      expected: monitor after any YAML tightening
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr: []
+    agent_cost_usd: 0.0564
 do_not_retry: []
