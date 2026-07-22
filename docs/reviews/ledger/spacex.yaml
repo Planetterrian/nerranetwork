@@ -275,4 +275,37 @@ reviews:
       ab_listen_required: true
       rationale: explicit floor vs own spec; A/B only after four-show length decision
     agent_cost_usd: 0.0627
-do_not_retry: []
+  - date: '2026-07-22'
+    pr: null
+    doc: docs/reviews/spacex_review_2026_07_22.md
+    generated_by: grok-4.3
+    summary: Length ceiling persists (6/10 episodes <1300w) with rigid required markers; prior length/teaser predictions scored miss; no new P0s.
+    scored_prior_predictions:
+    - metric: episodes >=1300w in next 10
+      verdict: miss
+      evidence: only 4/10 (Ep37-39,41); Ep32,35,36,38-40 still 1057-1264w (snapshot)
+    - metric: tomorrow-teaser frame count
+      verdict: miss
+      evidence: still 8/10 episodes use the exact 'Watch for the [first/next] <test>' frame (Ep32-41 transcripts)
+    shipped: []
+    deferred:
+    - Engineering Deep Dive length floor (pending four-show A/B)
+    - SPCX price spoken twice (observe post-reorder)
+    - tomorrow-teaser rotation if frame deadens
+    - junk-title filter prediction from network pass still pending
+    predictions:
+    - metric: episodes >=1300w in next 10
+      baseline: 4/10
+      expected: still <=5/10 unless digest-expansion lever ships (digest ceiling thesis)
+      verdict: pending
+      evidence: null
+    - metric: rigid marker count for required chapter openers
+      baseline: 10/10 for 'from an engineering standpoint' and 'on the ai front'
+      expected: 10/10 (by design per prompt chapter rules)
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr: []
+    agent_cost_usd: 0.0625
+do_not_retry:
+  - idea: podcast-side length levers (repeated misses; digest-substrate only)
+    evidence: flagged 2026-07-22 (Grok review)
