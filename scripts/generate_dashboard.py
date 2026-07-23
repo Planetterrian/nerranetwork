@@ -1789,10 +1789,19 @@ def build_audience_section(root: Path) -> Dict[str, Any]:
                 older = [r for r in hist_rows
                          if r.get("channel") == channel
                          and str(r.get("date", "")) <= cutoff]
-                if not older:
-                    return None
-                base = older[-1].get("subscribers")
-                return current - int(base) if base is not None else None
+                if older:
+                    base = older[-1].get("subscribers")
+                    return (current - int(base)
+                            if base is not None else None)
+                # History too young (< 7 days of snapshots) — fall back to
+                # the Analytics day_series net gain over the last 7 rows.
+                series = (channels.get(channel) or {}).get("day_series") or []
+                if series:
+                    tail = series[-7:]
+                    return sum(int(d.get("subscribersGained", 0) or 0)
+                               - int(d.get("subscribersLost", 0) or 0)
+                               for d in tail)
+                return None
 
             per_channel = {}
             for ch, snap in channels.items():

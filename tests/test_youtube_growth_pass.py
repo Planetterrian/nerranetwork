@@ -264,3 +264,47 @@ class TestChannelLongFloor:
         m = self._mod()
         tier_ru, *_ = m.compute_tier([2.5] * 6, [5.0] * 6, "C", "ru")
         assert tier_ru == "A"
+
+
+# ---------------------------------------------------------------------------
+# Smart Shorts start network-wide (July 22 2026)
+# ---------------------------------------------------------------------------
+
+class TestSmartShortsNetworkWide:
+    """Every YouTube-enabled show uses the smart Shorts selector.
+
+    July 22 2026 finding: 7 enabled shows still resolved ``voice`` mode, so
+    every Short opened on the 10 s intro/branding beat — the weakest
+    possible Shorts opening — and the adaptive policy could never raise
+    them to 2 Shorts (the raise requires smart mode). MAB + FPD had smart
+    mode but the 5.0 default threshold fell back 6/6 episodes; 3.5 is the
+    proven fleet setting (Tesla/SpaceX/FF).
+    """
+
+    def _yaml(self, path):
+        import yaml
+        return yaml.safe_load((_ROOT / "shows" / path).read_text(
+            encoding="utf-8"))
+
+    def test_every_enabled_show_uses_smart_mode(self):
+        for path in sorted((_ROOT / "shows").glob("*.yaml")):
+            if path.name.startswith("_"):
+                continue
+            data = self._yaml(path.name)
+            yt = (data or {}).get("youtube") or {}
+            if not yt.get("enabled"):
+                continue
+            assert yt.get("shorts_start_mode") == "smart", path.name
+
+    def test_enabled_shows_pin_fleet_threshold(self):
+        # The 5.0 dataclass default causes chronic fallback on
+        # non-numeric transcript styles — enabled shows pin 3.5.
+        for path in sorted((_ROOT / "shows").glob("*.yaml")):
+            if path.name.startswith("_"):
+                continue
+            data = self._yaml(path.name)
+            yt = (data or {}).get("youtube") or {}
+            if not yt.get("enabled"):
+                continue
+            assert float(yt.get("shorts_min_score_threshold", 5.0)) <= 3.5, \
+                path.name

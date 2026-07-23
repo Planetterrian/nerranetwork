@@ -152,6 +152,25 @@ class TestTitleVariantsRecorded:
         assert "youtube_title" not in recorded
         assert "youtube_title_variants" not in recorded
 
+    def test_growth_pass_keys_persisted(self):
+        # July 22 2026: fill/punch/comment layers had shipped invisibly —
+        # the recorder dropped these three result keys.
+        recorded = self._record({
+            "long_url": "https://youtu.be/x",
+            "shorts_fill_modes": ["qualified", "filled"],
+            "thumbnail_punch_text": "FSD PROBE",
+            "yt_comments_posted": 3,
+        })
+        assert recorded["shorts_fill_modes"] == ["qualified", "filled"]
+        assert recorded["thumbnail_punch_text"] == "FSD PROBE"
+        assert recorded["yt_comments_posted"] == 3
+
+    def test_absent_growth_pass_keys_record_nothing(self):
+        recorded = self._record({"long_url": "https://youtu.be/x"})
+        for key in ("shorts_fill_modes", "thumbnail_punch_text",
+                    "yt_comments_posted"):
+            assert key not in recorded
+
 
 class TestUpdaterHint:
     def test_build_hint_needs_minimum_videos(self):

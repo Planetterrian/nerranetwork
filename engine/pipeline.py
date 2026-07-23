@@ -196,6 +196,18 @@ def record_youtube_outcomes(
         if youtube_urls.get("shorts_selector_scores"):
             metrics.record("shorts_selector_scores", youtube_urls["shorts_selector_scores"])
 
+        # July 18 2026 growth pass observability (recorder previously
+        # dropped these three result keys — the fill/punch/comment layers
+        # were shipping invisibly): per-Short fill modes
+        # (qualified|filled|legacy_fallback), the thumbnail punch text
+        # actually used, and how many auto-comments posted.
+        if youtube_urls.get("shorts_fill_modes"):
+            metrics.record("shorts_fill_modes", list(youtube_urls["shorts_fill_modes"]))
+        if youtube_urls.get("thumbnail_punch_text"):
+            metrics.record("thumbnail_punch_text", str(youtube_urls["thumbnail_punch_text"]))
+        if youtube_urls.get("yt_comments_posted"):
+            metrics.record("yt_comments_posted", int(youtube_urls["yt_comments_posted"]))
+
         # Thumbnail + hook overlay autofit decisions (for drift monitoring)
         if "thumbnail_autofit_font_size" in youtube_urls:
             metrics.record("thumbnail_autofit_font_size", int(youtube_urls["thumbnail_autofit_font_size"]))

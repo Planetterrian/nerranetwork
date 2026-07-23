@@ -279,6 +279,16 @@ def build_policy(
             active, pending, streak = advance_hysteresis(
                 prev_entry, computed, seed)
             publish_long, shorts = TIER_SETTINGS[active]
+            # July 22 2026: the Shorts COUNT follows the data, not the tier
+            # letter. The 4-letter taxonomy pinned shorts-only (C) shows to
+            # 1 Short via TIER_SETTINGS, silently discarding the computed
+            # "-> 2 Short(s)" — RU spacex/tesla/FF sat at short_vpd 18-45
+            # (the network's hottest surface) while shipping half the
+            # allowed Shorts. The 14-day vpd average is already smoothed,
+            # and a 1<->2 flip is cheap, so no extra hysteresis; a
+            # data-thin dimension still holds the active tier's count.
+            if short_vpd is not None:
+                shorts = 2 if short_vpd >= SHORT_VPD_TWO else 1
             channels[channel][slug] = {
                 "tier": active,
                 "publish_long_form": publish_long,
