@@ -98,4 +98,41 @@ reviews:
         evidence: null
     agent_cost_usd: null
 
+  - date: '2026-07-23'
+    pr: null
+    doc: docs/reviews/finansy_prosto_review_2026_07_23.md
+    generated_by: grok-4.3
+    summary: This pass finds persistent under-length episodes (9/10 below 1000w), 10+ cross-episode boilerplate tics shipping in transcripts, and a pending ledger prediction that can now be scored hit; proposes digest-only length levers and shape-based de-seeds.
+    scored_prior_predictions:
+    - metric: spoken source-scaffold lines («Сорс …» / «Source …»)
+      verdict: hit
+      evidence: No scaffold lines appear in Ep66-75 transcripts
+    - metric: median FP _tts.txt words
+      verdict: miss
+      evidence: 9/10 episodes still below 1000w per snapshot
+    shipped: []
+    deferred:
+    - podcast-prompt length-target reconciliation after digest expansion lands
+    - operator cadence confirmation (even-days vs mixed dispatch)
+    predictions:
+    - metric: episodes with repeated tics (Подруга спросила / не так уж и сложно)
+      baseline: 8-10/10
+      expected: <=2/10 after shape de-seed
+      verdict: pending
+      evidence: null
+    - metric: median _tts.txt words (last 10)
+      baseline: ~800w
+      expected: '>=950w on normal-news episodes (digest expansion only)'
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/prompts/fp_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: digest-substrate lever only (per July meta-review); de-seed by shape + memory list to avoid example convergence
+    - file: shows/prompts/fp_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: prevents padding ban violation while allowing digest-driven growth
+    agent_cost_usd: 0.0445
 do_not_retry: []
