@@ -67,6 +67,13 @@ def discover_show_ids() -> Dict[str, str]:
             if isinstance(data.get("podcast"), dict) else None)
         if isinstance(sid, str) and sid.strip():
             ids[path.stem] = sid.strip()
+        dubs = data.get("spotify_show_ids") or (
+            (data.get("podcast") or {}).get("spotify_show_ids")
+            if isinstance(data.get("podcast"), dict) else None)
+        if isinstance(dubs, dict):
+            for lang, dsid in dubs.items():
+                if isinstance(dsid, str) and dsid.strip():
+                    ids[f"{path.stem}_{lang}"] = dsid.strip()
     return ids
 
 
