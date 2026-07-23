@@ -133,23 +133,34 @@ RSS URL. Being in Apple Podcasts is sufficient for Overcast discoverability.
 
 | Show | Apple | Spotify | YouTube Music | Amazon | Podcast Index | Pocket Casts | iHeart |
 |------|-------|---------|---------------|--------|---------------|--------------|--------|
-| Tesla Shorts Time | -- | -- | -- | -- | -- | -- | -- |
-| SpaceX Daily | -- | -- | -- | -- | -- | -- | -- |
-| Fascinating Frontiers | -- | -- | -- | -- | -- | -- | -- |
-| Modern Investing | -- | -- | -- | -- | -- | -- | -- |
-| Omni View | -- | -- | -- | -- | -- | -- | -- |
-| Planetterrian Daily | -- | -- | -- | -- | -- | -- | -- |
-| Environmental Intelligence | -- | -- | -- | -- | -- | -- | -- |
-| Models & Agents | -- | -- | -- | -- | -- | -- | -- |
-| Models & Agents for Beginners | -- | -- | -- | -- | -- | -- | -- |
-| First Principles | -- | -- | -- | -- | -- | -- | -- |
-| Unintended Consequences | -- | -- | -- | -- | -- | -- | -- |
-| The DP Pod | -- | -- | -- | -- | -- | -- | -- |
-| Age of AI | -- | -- | -- | -- | -- | -- | -- |
-| Финансы Просто | -- | -- | -- | -- | -- | -- | -- |
-| Привет, Русский! | -- | -- | -- | -- | -- | -- | -- |
-| FR dub feeds (4) | -- | -- | n/a (playlists) | -- | -- | -- | -- |
-| RU dub feeds (4) | -- | -- | n/a (playlists) | -- | -- | -- | -- |
+| Tesla Shorts Time | LIVE | LIVE | -- | -- | -- | -- | -- |
+| SpaceX Daily | LIVE | LIVE | -- | -- | -- | -- | -- |
+| Fascinating Frontiers | LIVE | LIVE | -- | -- | -- | -- | -- |
+| Modern Investing | LIVE | LIVE | -- | -- | -- | -- | -- |
+| Omni View | LIVE | LIVE | -- | -- | -- | -- | -- |
+| Planetterrian Daily | LIVE | LIVE | -- | -- | -- | -- | -- |
+| Environmental Intelligence | LIVE | LIVE | -- | -- | -- | -- | -- |
+| Models & Agents | LIVE | LIVE | -- | -- | -- | -- | -- |
+| Models & Agents for Beginners | LIVE | LIVE | -- | -- | -- | -- | -- |
+| First Principles | LIVE | LIVE | -- | -- | -- | -- | -- |
+| Unintended Consequences | LIVE | LIVE | -- | -- | -- | -- | -- |
+| The DP Pod | LIVE (2026-07-23) | PENDING | -- | -- | -- | -- | -- |
+| Age of AI | LIVE (2026-07-23) | PENDING | -- | -- | -- | -- | -- |
+| Финансы Просто | LIVE | LIVE | -- | -- | -- | -- | -- |
+| Привет, Русский! | LIVE | PENDING | -- | -- | -- | -- | -- |
+| FR dub feeds (4) | LIVE (2026-07-23) | PENDING | n/a (playlists) | -- | -- | -- | -- |
+| RU dub feeds (4) | LIVE (2026-07-23) | PENDING | n/a (playlists) | -- | -- | -- | -- |
+
+Apple 2026-07-23 publish pass: the last 7 drafts (The DP Pod, Age of AI,
+Le Temps des Shorts Tesla, SpaceX Quotidien, Frontières Fascinantes,
+Techniques d'investissement modernes, SpaceX Daily RU) were published in
+Podcasts Connect — content rights declared "no third-party content",
+Update Frequency set (Daily; Age of AI = No Set Schedule). All shows now
+show status "Available". Apple show IDs visible on each show page
+(e.g. Age of AI 6794048682, FR Tesla 6794047703, FR SpaceX 6794048213,
+FR Frontiers 6794048504, FR Investing 6794048326, RU SpaceX 6794048451).
+Spotify PENDING rows: feeds submitted + code-verified 2026-07-22, awaiting
+indexing — record `spotify_show_id:` in the show YAMLs once live.
 
 Note: on YouTube the dub shows are distributed as native uploads +
 podcast playlists on @NerraRU/@NerraFR (not RSS ingestion), so the
