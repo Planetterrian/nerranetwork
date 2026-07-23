@@ -37,7 +37,70 @@ SHOWS = [
     ("unintended_consequences", "Unintended Consequences", "unintended_consequences_podcast.rss"),
     ("first_principles", "First Principles Daily", "first_principles_podcast.rss"),
     ("spacex", "SpaceX Daily", "spacex_podcast.rss"),
+    ("dp_pod", "The DP Pod", "dp_pod_podcast.rss"),
+    ("age_of_ai", "The Age of AI", "age_of_ai_podcast.rss"),
+    # Language dub feeds (localized names, same artwork family)
+    ("tesla_fr", "Le Temps des Shorts Tesla", "podcast.fr.rss"),
+    ("spacex_fr", "SpaceX Quotidien", "spacex_podcast.fr.rss"),
+    ("fascinating_frontiers_fr", "Frontieres Fascinantes", "fascinating_frontiers_podcast.fr.rss"),
+    ("modern_investing_fr", "Techniques d'investissement modernes", "modern_investing_podcast.fr.rss"),
+    ("tesla_ru", "Tesla Shorts Time (RU)", "podcast.ru.rss"),
+    ("spacex_ru", "SpaceX Daily (RU)", "spacex_podcast.ru.rss"),
+    ("fascinating_frontiers_ru", "Fascinating Frontiers (RU)", "fascinating_frontiers_podcast.ru.rss"),
+    ("modern_investing_ru", "Modern Investing (RU)", "modern_investing_podcast.ru.rss"),
 ]
+
+
+def add_to_podcast_index(rss_url: str, show_name: str, dry_run: bool = False):
+    """ADD a feed to Podcast Index via the authenticated API.
+
+    hub/pubnotify only notifies about feeds already in the index; this
+    endpoint is what actually inserts a new feed. Requires the
+    PODCAST_INDEX_API_KEY / PODCAST_INDEX_API_SECRET env vars (already
+    repo secrets). Returns True/False, or None when unconfigured.
+    Idempotent: adding an existing feed just returns its existing id.
+    """
+    import hashlib
+    import os
+    import time
+
+    import requests
+
+    key = os.getenv("PODCAST_INDEX_API_KEY", "").strip()
+    secret = os.getenv("PODCAST_INDEX_API_SECRET", "").strip()
+    if not (key and secret):
+        logger.info("  [SKIP] add/byfeedurl: PODCAST_INDEX_API_KEY/SECRET unset")
+        return None
+    if dry_run:
+        logger.info("  [DRY RUN] Would ADD to Podcast Index: %s", rss_url)
+        return True
+    ts = str(int(time.time()))
+    headers = {
+        "X-Auth-Key": key,
+        "X-Auth-Date": ts,
+        "Authorization": hashlib.sha1((key + secret + ts).encode()).hexdigest(),
+        "User-Agent": "NerraNetwork-DirectorySubmit/1.0",
+    }
+    try:
+        resp = requests.get(
+            "https://api.podcastindex.org/api/1.0/add/byfeedurl",
+            params={"url": rss_url}, headers=headers, timeout=20,
+        )
+        body = {}
+        try:
+            body = resp.json()
+        except ValueError:
+            pass
+        if resp.status_code == 200 and body.get("status") in ("true", True, "1"):
+            logger.info("  [OK] Podcast Index ADD %s -> feedId=%s (%s)",
+                        show_name, body.get("feedId"), body.get("description"))
+            return True
+        logger.warning("  [WARN] Podcast Index ADD %s: HTTP %s %s",
+                       show_name, resp.status_code, body or resp.text[:200])
+        return False
+    except Exception as e:
+        logger.warning("  [FAIL] Podcast Index ADD: %s - %s", show_name, e)
+        return False
 
 
 def submit_to_podcast_index(rss_url: str, show_name: str, dry_run: bool = False) -> bool:
@@ -105,6 +168,7 @@ def main():
     for slug, name, rss_file in SHOWS:
         rss_url = f"{BASE_URL}/{rss_file}"
         logger.info("\n%s (%s)", name, rss_url)
+        add_to_podcast_index(rss_url, name, dry_run=args.dry_run)
         submit_to_podcast_index(rss_url, name, dry_run=args.dry_run)
         submit_to_pubsubhubbub(rss_url, name, dry_run=args.dry_run)
 

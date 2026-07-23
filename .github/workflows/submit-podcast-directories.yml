@@ -1,0 +1,42 @@
+name: Submit Podcast Directories
+
+# One-off / occasional: pushes every network RSS feed to Podcast Index
+# (authenticated add/byfeedurl -- inserts feeds that are not yet in the
+# index; idempotent for ones that are) and pings PubSubHubbub. Apple /
+# Spotify / Amazon / iHeart remain manual and are tracked in
+# docs/podcast_directories.md.
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run - print what would be submitted'
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - uses: ./.github/actions/setup-python
+        with:
+          python-version: '3.12'
+          requirements-file: 'requirements.txt'
+          skip-checkout: 'true'
+
+      - name: Submit feeds
+        env:
+          PODCAST_INDEX_API_KEY: ${{ secrets.PODCAST_INDEX_API_KEY }}
+          PODCAST_INDEX_API_SECRET: ${{ secrets.PODCAST_INDEX_API_SECRET }}
+        run: |
+          ARGS=""
+          if [ "${{ inputs.dry_run }}" = "true" ]; then ARGS="--dry-run"; fi
+          python scripts/submit_to_directories.py $ARGS
