@@ -123,10 +123,18 @@ spend for single-digit views).
   trailing 14 days (≥4 videos of a kind required for a confident reading;
   fewer = that dimension holds the active tier).
 - **Tier rules** (same rules on both channels, each decided from its own
-  data): long-form on when `long_vpd ≥ 1.0`; Shorts `≥ 4.0` → 2/episode else
-  1 — **never 0** (Shorts are the probe/recovery signal). Labels: A =
-  long + 2 Shorts, B = long + 1, C = shorts-only, D = probe (shorts-only and
-  `short_vpd < 0.5`; same settings as C).
+  data): long-form on when `long_vpd ≥` the channel floor (en 1.0 / ru+fr
+  2.0); Shorts `≥ 4.0` → 2/episode else 1 — **never 0** (Shorts are the
+  probe/recovery signal). Labels: A = long + 2 Shorts, B = long + 1, C =
+  shorts-only, D = probe (shorts-only and `short_vpd < 0.5`; same settings
+  as C). **July 22 2026:** the emitted `shorts_per_episode` follows the
+  computed `short_vpd` directly whenever that dimension is data-confident
+  — NOT the tier letter. Previously `TIER_SETTINGS[active]` pinned
+  shorts-only (C) shows to 1 Short, discarding the computed
+  "-> 2 Short(s)" (RU spacex/tesla/FF sat at short_vpd 18-45 while
+  shipping half the allowed Shorts). No extra hysteresis on the count: the
+  14-day average is already smoothed and a 1↔2 flip is cheap; a data-thin
+  dimension still holds the active tier's count.
 - **Monday long-form probe**: a shorts-only show produces no long-form
   analytics, so it could never re-earn its long-form (a one-way door).
   `resolve_publish_plan` grants one probe long-form per week (Mondays,

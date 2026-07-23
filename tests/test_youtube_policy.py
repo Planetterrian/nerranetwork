@@ -225,6 +225,49 @@ class TestSeedsAndBestEffort:
         assert out["channels"]["ru"]["tesla"]["tier"] == "C"
 
 
+class TestShortsCountFollowsData:
+    """July 22 2026: shorts_per_episode follows the computed short_vpd, not
+    the tier letter — the C tier had pinned shorts-only shows to 1 Short
+    even at short_vpd 18-45 (RU spacex/tesla/FF), discarding the computed
+    "-> 2 Short(s)"."""
+
+    def test_shorts_only_show_earns_second_short(self):
+        mod = _load_script()
+        # RU tesla is seeded C (shorts-only). Hot Shorts: 1 day old, 50 vpd.
+        stats = _stats(
+            [_vid(kind="short", channel="ru", published="2026-07-12",
+                  views=50)] * 4)
+        policy = mod.build_policy(stats, None)
+        entry = policy["channels"]["ru"]["tesla"]
+        assert entry["tier"] == "C"
+        assert entry["publish_long_form"] is False
+        assert entry["shorts_per_episode"] == 2
+
+    def test_cold_shorts_drop_to_one_while_tier_letter_holds(self):
+        mod = _load_script()
+        # EN tesla seeded A; strong long-form, cold Shorts → computed B.
+        # Hysteresis holds the ACTIVE letter at A for one run, but the
+        # emitted Shorts count follows the data immediately.
+        stats = _stats(
+            [_vid(kind="long", published="2026-07-08", views=100)] * 4
+            + [_vid(kind="short", published="2026-07-08", views=5)] * 4)
+        policy = mod.build_policy(stats, None)
+        entry = policy["channels"]["en"]["tesla"]
+        assert entry["tier"] == "A"          # letter held by hysteresis
+        assert entry["publish_long_form"] is True
+        assert entry["shorts_per_episode"] == 1   # data says 1
+
+    def test_data_thin_dimension_still_holds_active_count(self):
+        mod = _load_script()
+        # < MIN_VIDEOS_CONFIDENT shorts → count holds the active tier's.
+        stats = _stats(
+            [_vid(kind="short", channel="ru", published="2026-07-12",
+                  views=50)] * 2)
+        policy = mod.build_policy(stats, None)
+        entry = policy["channels"]["ru"]["tesla"]
+        assert entry["shorts_per_episode"] == 1
+
+
 class TestCommittedPolicyFile:
     """The generated api/youtube_policy.json stays structurally sound."""
 

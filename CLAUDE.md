@@ -1379,6 +1379,32 @@ opt-out `auto_comment`); **channel-specific long-form floor**
 doc-frequency boilerplate filter). Operator declined publishAt scheduling
 (uploads stay immediate). All render/metadata-side — outside landmine #17.
 
+**July 22 2026 scoring pass** (review:
+[`docs/reviews/youtube_review_2026_07_22.md`](docs/reviews/youtube_review_2026_07_22.md);
+drift guards: `tests/test_youtube_policy.py::TestShortsCountFollowsData`,
+`tests/test_youtube_growth_pass.py::TestSmartShortsNetworkWide`): scored the
+07-18 rollout list — fill-to-requested HIT (Tesla/FF/SpaceX all 2/2 since
+the fix), Monday probe HIT (MIT Ep112, Mon 07-20), FF-RU long demotion HIT;
+two MISSes fixed: (1) **`shorts_per_episode` now follows the computed
+`short_vpd`, not the tier letter** — `TIER_SETTINGS[active]` had pinned
+shorts-only (C) shows to 1 Short, discarding the computed "-> 2 Short(s)"
+(RU spacex/tesla/FF sat at short_vpd 18-45, the network's hottest surface,
+shipping half the allowed Shorts; policy regenerated, they get the 2nd
+Short now); (2) **`api/youtube_channel_history.json` was never committed**
+(nightly add-paths whitelist gap — 4 runs silently dropped the snapshot;
+path added, file seeded en 207 / ru 61 subs, dashboard `_delta_7d` falls
+back to the day_series net gain while history is <7 days old). Also:
+**smart Shorts start network-wide** — 7 enabled shows (OV, M&A, EI, PT, UC,
+FP, PR) still resolved `voice` (every Short opened on the 10 s intro) and
+MAB/FPD's smart mode fell back 6/6 at the 5.0 default threshold; all
+enabled shows now pin `smart` + fleet threshold 3.5 (guarded). And
+`record_youtube_outcomes` finally persists `shorts_fill_modes` /
+`thumbnail_punch_text` / `yt_comments_posted` (the 07-18 layers had shipped
+invisibly — verify punch + comments in metrics from 07-23). Subscriber
+attribution insight: EN long-form converts subs best (24 vs 15 EN-short /
+10 RU-short of 56 tracked) — long-form cuts stay velocity-gated, never
+blanket. All policy/metadata-side — outside landmine #17.
+
 ### Testing
 
 ```bash
