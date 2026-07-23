@@ -3,234 +3,273 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Nerra Network — Management Dashboard</title>
-<meta name="description" content="Operator status page for the Nerra Network: landmine guards, per-show health, cost rollup, voice settings drift.">
+<title>Nerra Network — Mission Control</title>
+<meta name="description" content="Operator mission control for the Nerra Network: audience, spend, pipeline health, landmine guards, voice drift.">
 <meta name="robots" content="noindex,follow">
 <link rel="canonical" href="https://nerranetwork.com/management.html">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='6' fill='%236B47FF'/><circle cx='20' cy='30' r='4' fill='%2300D4FF'/><circle cx='80' cy='30' r='4' fill='%2300D4FF'/><circle cx='25' cy='75' r='4' fill='%2300D4FF'/><circle cx='75' cy='75' r='4' fill='%2300D4FF'/></svg>">
 <link rel="stylesheet" href="styles/main.css">
 <style>
-  :root {
-    --status-ok: #16a34a;
-    --status-warn: #b45309;
-    --status-fail: #dc2626;
+  /* ---- design tokens (dark; validated against surface #161a24) ---- */
+  .mc-root {
+    color-scheme: dark;
+    --surface-1: #161a24;      /* card surface */
+    --surface-2: #10131b;      /* inset / track */
+    --ink-1: #f1f5f9;          /* primary text */
+    --ink-2: #cbd5e1;          /* secondary text */
+    --ink-3: #94a3b8;          /* muted / labels */
+    --ink-4: #64748b;          /* faint */
+    --hairline: #232938;       /* borders, grid */
+    --series-1: #9085e9;       /* violet — primary magnitude */
+    --series-2: #d95926;       /* orange — second series */
+    --series-3: #199e70;       /* green-aqua */
+    --series-4: #c98500;       /* yellow */
+    --status-ok: #22c55e;
+    --status-warn: #fbbf24;
+    --status-fail: #f87171;
+    --accent: #6B47FF;
   }
-  .mgmt-wrap { max-width: 1200px; margin: 0 auto; padding: 32px 24px 64px; }
-  .mgmt-header {
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 16px; flex-wrap: wrap; margin-bottom: 24px;
-  }
-  .mgmt-header h1 { margin: 0; font-size: 28px; }
-  .mgmt-header .subtitle { color: var(--nn-muted, #94a3b8); font-size: 14px; }
-  .status-summary {
-    display: inline-flex; gap: 12px; align-items: center;
-    background: var(--nn-surface, #161a24); padding: 12px 20px; border-radius: 12px;
-    border: 1px solid var(--nn-border, #232938);
-  }
-  .status-pill {
-    display: inline-flex; gap: 6px; align-items: center;
-    padding: 4px 10px; border-radius: 999px; font-size: 13px; font-weight: 600;
-  }
-  .status-pill.ok { background: rgba(22,163,74,0.15); color: #22c55e; }
-  .status-pill.warn { background: rgba(245,158,11,0.15); color: #fbbf24; }
-  .status-pill.fail { background: rgba(220,38,38,0.15); color: #f87171; }
+  .mc-root { max-width: 1280px; margin: 0 auto; padding: 28px 24px 72px;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
 
-  .mgmt-section { margin-top: 40px; }
-  .mgmt-section h2 {
-    margin: 0 0 16px; font-size: 18px; text-transform: uppercase; letter-spacing: 0.06em;
-    color: var(--nn-muted, #94a3b8);
-  }
-  .banner {
-    padding: 14px 18px; border-radius: 10px; margin-bottom: 16px;
-    background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.45);
-    color: #fbbf24;
-  }
-  .banner strong { color: #fde68a; }
+  /* ---- header ---- */
+  .mc-header { display: flex; align-items: flex-end; justify-content: space-between;
+    gap: 16px; flex-wrap: wrap; margin-bottom: 6px; }
+  .mc-header h1 { margin: 0; font-size: 26px; letter-spacing: -0.01em; color: var(--ink-1); }
+  .mc-header .subtitle { color: var(--ink-3); font-size: 13px; margin-top: 4px; }
+  .health-pills { display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .pill { display: inline-flex; gap: 6px; align-items: center; padding: 4px 11px;
+    border-radius: 999px; font-size: 12.5px; font-weight: 600; border: 1px solid transparent; }
+  .pill.ok   { background: rgba(34,197,94,0.12);  color: var(--status-ok); }
+  .pill.warn { background: rgba(245,158,11,0.12); color: var(--status-warn); }
+  .pill.fail { background: rgba(220,38,38,0.14);  color: var(--status-fail); }
+  .pill.idle { background: rgba(148,163,184,0.10); color: var(--ink-3); font-weight: 500; }
 
-  .grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 16px;
-  }
-  .card {
-    background: var(--nn-surface, #161a24); border: 1px solid var(--nn-border, #232938);
-    border-radius: 14px; padding: 18px;
-  }
-  .card.status-ok { border-left: 4px solid var(--status-ok); }
-  .card.status-warn { border-left: 4px solid var(--status-warn); }
-  .card.status-fail { border-left: 4px solid var(--status-fail); }
-  .card h3 { margin: 0 0 6px; font-size: 15px; }
-  .card .card-id {
-    font-size: 11px; color: var(--nn-muted, #94a3b8); font-family: ui-monospace, monospace;
-  }
-  .card .card-details { margin: 10px 0 0; font-size: 14px; line-height: 1.5; color: var(--nn-body, #cbd5e1); }
-  .card details {
-    margin-top: 10px; font-size: 12px; color: var(--nn-muted, #94a3b8);
-  }
-  .card details pre {
-    background: rgba(0,0,0,0.25); padding: 10px; border-radius: 8px; overflow-x: auto;
-    font-size: 11px; margin: 8px 0 0;
-  }
+  .mc-nav { display: flex; gap: 14px; flex-wrap: wrap; margin: 14px 0 22px;
+    font-size: 12.5px; border-bottom: 1px solid var(--hairline); padding-bottom: 10px; }
+  .mc-nav a { color: var(--ink-3); text-decoration: none; }
+  .mc-nav a:hover { color: var(--ink-1); }
 
-  .show-card {
-    background: var(--nn-surface, #161a24); border: 1px solid var(--nn-border, #232938);
-    border-radius: 14px; padding: 16px;
-  }
-  .show-card .show-head { display: flex; gap: 12px; align-items: center; margin-bottom: 10px; }
-  .show-card img.cover { width: 56px; height: 56px; border-radius: 10px; object-fit: cover; flex-shrink: 0; }
-  .show-card h3 { margin: 0; font-size: 16px; }
-  .show-card .slug { font-size: 11px; color: var(--nn-muted, #94a3b8); font-family: ui-monospace, monospace; }
-  .show-card .stats {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 12px 0 4px;
-    font-size: 12px;
-  }
-  .show-card .stats div { background: rgba(124,92,255,0.08); padding: 8px 10px; border-radius: 8px; }
-  .show-card .stats strong { display: block; font-size: 14px; color: #fff; }
-  .show-card .links { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; font-size: 12px; }
+  /* ---- alert band ---- */
+  .alert-band { display: flex; flex-direction: column; gap: 8px; margin-bottom: 22px; }
+  .alert { padding: 10px 14px; border-radius: 10px; font-size: 13.5px; line-height: 1.45; }
+  .alert.warn { background: rgba(245,158,11,0.10); border: 1px solid rgba(245,158,11,0.35); color: #fde68a; }
+  .alert.fail { background: rgba(220,38,38,0.10); border: 1px solid rgba(220,38,38,0.4); color: #fecaca; }
+  .alert code { font-size: 12px; }
+
+  /* ---- hero stat tiles ---- */
+  .tile-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px; margin-bottom: 28px; }
+  .tile { background: var(--surface-1); border: 1px solid var(--hairline);
+    border-radius: 14px; padding: 14px 16px 12px; min-width: 0; }
+  .tile .t-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;
+    color: var(--ink-3); }
+  .tile .t-value { font-size: 27px; font-weight: 600; color: var(--ink-1); margin-top: 5px;
+    line-height: 1.1; }
+  .tile .t-sub { font-size: 12px; color: var(--ink-3); margin-top: 5px; }
+  .tile .t-delta { font-size: 12px; font-weight: 600; margin-left: 6px; }
+  .tile .t-delta.up { color: var(--status-ok); }
+  .tile .t-delta.down { color: var(--status-fail); }
+  .tile svg.spark { display: block; width: 100%; height: 26px; margin-top: 8px; }
+
+  /* ---- sections & cards ---- */
+  .mc-section { margin-top: 36px; }
+  .mc-section > h2 { margin: 0 0 14px; font-size: 13px; text-transform: uppercase;
+    letter-spacing: 0.07em; color: var(--ink-3); font-weight: 600; }
+  .mc-section > h2 .pill-note { font-size: 12px; font-weight: 400; text-transform: none;
+    letter-spacing: 0; margin-left: 8px; color: var(--ink-4); }
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 14px; align-items: start; }
+  .mc-card { background: var(--surface-1); border: 1px solid var(--hairline);
+    border-radius: 14px; padding: 16px 18px; min-width: 0; }
+  .mc-card h3 { margin: 0 0 4px; font-size: 14.5px; color: var(--ink-1); display: flex;
+    align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+  .mc-card h3 .meta { font-size: 11.5px; font-weight: 400; color: var(--ink-4); }
+  .mc-card .headline { font-size: 21px; font-weight: 600; color: var(--ink-1); margin: 6px 0 2px; }
+  .mc-card .headline small { font-size: 12.5px; font-weight: 400; color: var(--ink-3); margin-left: 6px; }
+
+  /* labeled bar rows (a bar-chart-as-list: every row direct-labeled) */
+  .bar-row { display: flex; align-items: center; gap: 10px; padding: 4px 0; min-width: 0; }
+  .bar-row .label { flex: 0 0 168px; font-size: 12.5px; color: var(--ink-2);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bar-row .track { flex: 1; height: 12px; background: var(--surface-2);
+    border-radius: 4px; overflow: hidden; min-width: 40px; }
+  .bar-row .fill { height: 100%; background: var(--series-1);
+    border-radius: 0 4px 4px 0; }
+  .bar-row .value { flex: 0 0 auto; font-size: 12px; color: var(--ink-3);
+    font-variant-numeric: tabular-nums; }
+
+  .fine-list { margin: 8px 0 0; padding: 0; list-style: none; font-size: 12.5px;
+    color: var(--ink-3); line-height: 1.55; }
+  .fine-list li { padding: 2px 0; }
+  .fine-list .k { color: var(--ink-2); }
+
+  .chip { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px;
+    border-radius: 999px; font-size: 11.5px; font-weight: 600; background: var(--surface-2);
+    color: var(--ink-3); border: 1px solid var(--hairline); }
+  .chip .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .chip.on { color: var(--ink-1); }
+
+  /* legend for any 2+ series visual */
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 11.5px;
+    color: var(--ink-3); margin-top: 8px; }
+  .legend .key { display: inline-flex; align-items: center; gap: 6px; }
+  .legend .swatch { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
+  /* stacked split bar (grok vs tts) */
+  .split-bar { display: flex; height: 14px; border-radius: 4px; overflow: hidden;
+    background: var(--surface-2); margin-top: 8px; }
+  .split-bar .seg { height: 100%; }
+  .split-bar .seg + .seg { margin-left: 2px; } /* surface gap */
+
+  /* tables */
+  table.mc-table { width: 100%; border-collapse: collapse; font-size: 13px; color: var(--ink-2); }
+  table.mc-table th, table.mc-table td { padding: 9px 12px; text-align: left;
+    border-bottom: 1px solid var(--hairline); }
+  table.mc-table th { color: var(--ink-3); font-size: 11px; text-transform: uppercase;
+    letter-spacing: 0.05em; font-weight: 600; }
+  table.mc-table td { font-variant-numeric: tabular-nums; }
+  table.mc-table td.drift { color: var(--status-warn); font-weight: 600; }
+
+  /* landmine + show cards */
+  .lm-card { border-left: 4px solid var(--hairline); }
+  .lm-card.status-ok { border-left-color: var(--status-ok); }
+  .lm-card.status-warn { border-left-color: var(--status-warn); }
+  .lm-card.status-fail { border-left-color: var(--status-fail); }
+  .lm-card .card-id { font-size: 10.5px; color: var(--ink-4); font-family: ui-monospace, monospace; }
+  .lm-card .card-details { margin: 8px 0 0; font-size: 13px; line-height: 1.5; color: var(--ink-2); }
+  .lm-card details { margin-top: 8px; font-size: 12px; color: var(--ink-3); }
+  .lm-card details pre { background: var(--surface-2); padding: 10px; border-radius: 8px;
+    overflow-x: auto; font-size: 11px; margin: 8px 0 0; }
+
+  .show-card .show-head { display: flex; gap: 12px; align-items: center; margin-bottom: 8px; }
+  .show-card img.cover { width: 52px; height: 52px; border-radius: 10px; object-fit: cover;
+    flex-shrink: 0; }
+  .show-card h3 { margin: 0; font-size: 15px; }
+  .show-card .slug { font-size: 10.5px; color: var(--ink-4); font-family: ui-monospace, monospace; }
+  .show-card .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+    margin: 10px 0 6px; font-size: 11.5px; color: var(--ink-3); }
+  .show-card .stats div { background: var(--surface-2); padding: 7px 10px; border-radius: 8px; }
+  .show-card .stats strong { display: block; font-size: 14px; color: var(--ink-1); }
+  .show-card .links { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; font-size: 12px; }
   .show-card .links a { color: #818cf8; text-decoration: none; }
   .show-card .links a:hover { text-decoration: underline; }
+  .show-card .meta-line { font-size: 12px; color: var(--ink-3); }
 
-  table.voice-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  table.voice-table th, table.voice-table td {
-    padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--nn-border, #232938);
-  }
-  table.voice-table th { color: var(--nn-muted, #94a3b8); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
-  table.voice-table td.drift { color: #fbbf24; font-weight: 600; }
+  .sparkline-row { display: flex; align-items: center; gap: 12px; padding: 7px 0;
+    border-bottom: 1px solid var(--hairline); }
+  .sparkline-row:last-child { border-bottom: none; }
+  .sparkline-row .label { width: 190px; font-size: 12.5px; color: var(--ink-2);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sparkline-row svg { flex: 1; height: 30px; min-width: 60px; }
+  .sparkline-row .value { width: 140px; text-align: right; font-size: 12px; color: var(--ink-3);
+    font-variant-numeric: tabular-nums; }
 
-  .sparkline-row {
-    display: flex; align-items: center; gap: 12px; padding: 10px 0;
+  #error { display: none; padding: 16px; background: rgba(220,38,38,0.12);
+    border: 1px solid rgba(220,38,38,0.4); color: #fca5a5; border-radius: 10px; }
+  #loading { padding: 48px; text-align: center; color: var(--ink-3); }
+  .footnote { margin-top: 48px; font-size: 12px; color: var(--ink-4); text-align: center; }
+  .footnote code { font-size: 11px; }
+  @media (max-width: 640px) {
+    .bar-row .label { flex-basis: 110px; }
+    .sparkline-row .label { width: 110px; }
+    .sparkline-row .value { width: 100px; }
   }
-
-  .automation-card {
-    background: linear-gradient(135deg, rgba(107,71,255,0.08), rgba(0,212,255,0.04));
-    border: 1px solid #6b47ff;
-    border-radius: 14px;
-    padding: 20px;
-    margin-top: 24px;
-  }
-  .automation-card h3 { color: #a5b4fc; margin-top: 0; }
-  .automation-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 16px;
-    margin-top: 16px;
-  }
-  .automation-item {
-    background: rgba(0,0,0,0.2);
-    padding: 12px 14px;
-    border-radius: 8px;
-    font-size: 13px;
-  }
-  .automation-item strong { display: block; color: #c0c7ff; margin-bottom: 4px; }
-    border-bottom: 1px solid var(--nn-border, #232938);
-  }
-  .sparkline-row .label { width: 200px; font-size: 13px; }
-  .sparkline-row svg { flex: 1; height: 32px; }
-  .sparkline-row .value { width: 120px; text-align: right; font-size: 13px; color: var(--nn-muted, #94a3b8); }
-
-  #error { display: none; padding: 16px; background: rgba(220,38,38,0.15); border: 1px solid rgba(220,38,38,0.4); color: #fca5a5; border-radius: 10px; }
-  #loading { padding: 40px; text-align: center; color: var(--nn-muted, #94a3b8); }
 </style>
 </head>
 <body>
-<div class="mgmt-wrap">
+<div class="mc-root">
 
-<div class="mgmt-header">
+<div class="mc-header">
   <div>
-    <h1>Nerra Network — Management</h1>
+    <h1>Nerra Network — Mission Control</h1>
     <div class="subtitle" id="generated-at">Loading dashboard data…</div>
   </div>
-  <div class="status-summary" id="status-summary" hidden>
-    <span class="status-pill ok"><span id="count-ok">0</span>&nbsp;OK</span>
-    <span class="status-pill warn"><span id="count-warn">0</span>&nbsp;warn</span>
-    <span class="status-pill fail"><span id="count-fail">0</span>&nbsp;fail</span>
-    <span id="spend-7d" style="font-size:13px;color:#94a3b8"></span>
-    <span id="last-refreshed" style="font-size:12px;color:#64748b;margin-left:8px;"></span>
+  <div class="health-pills" id="status-summary" hidden>
+    <span class="pill ok"><span id="count-ok">0</span>&nbsp;OK</span>
+    <span class="pill warn"><span id="count-warn">0</span>&nbsp;warn</span>
+    <span class="pill fail"><span id="count-fail">0</span>&nbsp;fail</span>
+    <span class="pill idle" id="last-refreshed"></span>
   </div>
 </div>
 
-<!-- New: Highlight improved automation (added after the major May 2026 CI overhaul) -->
-<div style="max-width:1200px;margin:0 auto 20px;background:linear-gradient(135deg,rgba(107,71,255,0.08),rgba(0,212,255,0.03));border:1px solid #6b47ff;border-radius:12px;padding:16px 20px;">
-  <strong style="color:#a5b4fc;">🛠️ Automation &amp; CI Improvements (May 2026)</strong>
-  <div style="margin-top:8px;font-size:13.5px;color:#cbd5e1;display:flex;gap:16px;flex-wrap:wrap;">
-    <div>• Reusable composite actions (setup-python, safe-commit-push, etc.)</div>
-    <div>• Nightly maintenance now reliably updates dashboard + gallery + search index</div>
-    <div>• Dependabot + actionlint + full ruff in CI</div>
-  </div>
-  <div style="margin-top:6px;font-size:12px;color:#64748b;">
-    Result: Much higher consistency for search, galleries, and this dashboard.
-  </div>
-</div>
+<nav class="mc-nav" aria-label="Sections">
+  <a href="#audience">Audience</a>
+  <a href="#operations">Operations</a>
+  <a href="#shows">Shows</a>
+  <a href="#guards">Guards</a>
+  <a href="#voice">Voice</a>
+  <a href="#mit">MIT performance</a>
+  <a href="#feeds">Feeds</a>
+  <a href="docs/analytics.md">Analytics contract ↗</a>
+  <a href="api/dashboard.json">Raw JSON ↗</a>
+</nav>
 
 <div id="error">
   Could not load <code>api/dashboard.json</code>. Run
   <code>python scripts/generate_dashboard.py</code> to produce it.
 </div>
-
 <div id="loading">Loading…</div>
 
 <main id="content" hidden>
 
-  <section class="mgmt-section">
+  <div class="alert-band" id="alert-band"></div>
+
+  <div class="tile-row" id="tile-row"></div>
+
+  <section class="mc-section" id="audience">
+    <h2>Audience <span class="pill-note" id="audience-status-pill"></span></h2>
+    <div class="card-grid" id="audience-grid"></div>
+  </section>
+
+  <section class="mc-section" id="operations">
+    <h2>Operations</h2>
+    <div class="card-grid" id="operations-grid"></div>
+  </section>
+
+  <section class="mc-section" id="shows">
+    <h2>Shows</h2>
+    <div class="card-grid" id="shows-grid"></div>
+  </section>
+
+  <section class="mc-section" id="guards">
     <h2>Landmine guards</h2>
     <div id="claude-md-banner" hidden></div>
-    <div class="grid" id="landmines-grid"></div>
+    <div class="card-grid" id="landmines-grid"></div>
   </section>
 
-  <section class="mgmt-section">
-    <h2>Shows (10 cards — Models &amp; Agents and Models &amp; Agents for Beginners stay separate)</h2>
-    <div class="grid" id="shows-grid"></div>
-  </section>
-
-  <section class="mgmt-section">
+  <section class="mc-section" id="voice">
     <h2>Voice settings consistency</h2>
-    <table class="voice-table" id="voice-table">
-      <thead>
-        <tr>
-          <th>Show</th><th>Voice ID</th><th>Stability</th>
-          <th>Similarity</th><th>Style</th><th>Drift</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+    <div class="mc-card" style="padding:0;overflow-x:auto;">
+      <table class="mc-table" id="voice-table">
+        <thead>
+          <tr>
+            <th>Show</th><th>Voice ID</th><th>Stability</th>
+            <th>Similarity</th><th>Style</th><th>Drift</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
   </section>
 
-  <section class="mgmt-section">
-    <h2>Audience <span id="audience-status-pill" style="font-size:12px;font-weight:normal;color:#94a3b8;margin-left:8px;"></span></h2>
-    <div id="audience-section"></div>
-  </section>
-
-  <section class="mgmt-section">
-    <h2>30-day cost per show</h2>
-    <div id="cost-sparklines"></div>
-  </section>
-
-  <section class="mgmt-section">
-    <h2>Multilingual coverage <span id="multilingual-status-pill" style="font-size:12px;font-weight:normal;color:#94a3b8;margin-left:8px;"></span></h2>
-    <div id="multilingual-coverage"></div>
-  </section>
-
-  <section class="mgmt-section">
-    <h2>Pipeline p50 duration per show</h2>
-    <div id="pipeline-sparklines"></div>
-  </section>
-
-  <section class="mgmt-section">
-    <h2>Modern Investing — Performance <span id="mit-status-pill" style="font-size:12px;font-weight:normal;color:#94a3b8;margin-left:8px;"></span></h2>
+  <section class="mc-section" id="mit">
+    <h2>Modern Investing — Performance <span class="pill-note" id="mit-status-pill"></span></h2>
     <div id="mit-performance"></div>
   </section>
 
-  <section class="mgmt-section">
+  <section class="mc-section" id="feeds">
     <h2>Feed audit (latest)</h2>
-    <div id="feed-audit"></div>
+    <div class="mc-card" id="feed-audit"></div>
   </section>
 
 </main>
 
-<p style="margin-top:48px;font-size:12px;color:#64748b;text-align:center">
-  Generated by <code>scripts/generate_dashboard.py</code>. Regenerates daily via
-  <code>.github/workflows/nightly-maintenance.yml</code> (and after every successful show publish via workflow_run).
-  Models &amp; Agents and Models &amp; Agents for Beginners are always tracked as
-  two separate shows.
+<p class="footnote">
+  Generated by <code>scripts/generate_dashboard.py</code> · refreshed nightly by
+  <code>nightly-maintenance.yml</code>. Data contract for humans &amp; AI tools:
+  <a href="docs/analytics.md" style="color:#818cf8;">docs/analytics.md</a>.
+  Models &amp; Agents and Models &amp; Agents for Beginners are always tracked as two separate shows.
 </p>
 </div>
 
@@ -253,6 +292,13 @@
   };
 
   const money = (n) => "$" + Number(n || 0).toFixed(2);
+  const fmt = (n) => Number(n || 0).toLocaleString();
+  const compact = (n) => {
+    n = Number(n || 0);
+    if (n >= 1e6) return (n / 1e6).toFixed(1) + "M";
+    if (n >= 10000) return (n / 1e3).toFixed(1) + "K";
+    return n.toLocaleString();
+  };
   const ageText = (iso) => {
     if (!iso) return "never";
     const d = new Date(iso);
@@ -260,6 +306,97 @@
     if (hours < 1) return Math.round(hours * 60) + "m ago";
     if (hours < 48) return Math.round(hours) + "h ago";
     return Math.round(hours / 24) + "d ago";
+  };
+  const staleNote = (iso) => {
+    if (!iso) return "";
+    const hours = (Date.now() - new Date(iso).getTime()) / 3600000;
+    return hours > 48 ? " · STALE" : "";
+  };
+
+  // 2px line sparkline with 10% area wash and ring-ended dot.
+  const CSSVAR = (name) => getComputedStyle(document.querySelector('.mc-root')).getPropertyValue(name).trim();
+  const sparkline = (values, opts = {}) => {
+    const w = opts.w || 240, ht = opts.h || 30, color = opts.color || CSSVAR('--series-1');
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 " + w + " " + ht);
+    svg.setAttribute("preserveAspectRatio", "none");
+    if (opts.cls) svg.setAttribute("class", opts.cls);
+    if (!values || values.length < 2) return svg;
+    const max = Math.max.apply(null, values), min = Math.min.apply(null, values);
+    const range = (max - min) || 1;
+    const pad = 3;
+    const step = (w - pad * 2) / (values.length - 1);
+    const y = (v) => ht - pad - ((v - min) / range) * (ht - pad * 2);
+    const pts = values.map((v, i) => [(pad + i * step), y(v)]);
+    const line = pts.map((p, i) => (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" ");
+    const area = line + " L" + pts[pts.length - 1][0].toFixed(1) + " " + (ht - 1) +
+      " L" + pts[0][0].toFixed(1) + " " + (ht - 1) + " Z";
+    const a = document.createElementNS(svg.namespaceURI, "path");
+    a.setAttribute("d", area); a.setAttribute("fill", color); a.setAttribute("opacity", "0.1");
+    svg.appendChild(a);
+    const l = document.createElementNS(svg.namespaceURI, "path");
+    l.setAttribute("d", line); l.setAttribute("fill", "none");
+    l.setAttribute("stroke", color); l.setAttribute("stroke-width", "2");
+    l.setAttribute("stroke-linecap", "round"); l.setAttribute("stroke-linejoin", "round");
+    svg.appendChild(l);
+    const end = pts[pts.length - 1];
+    const ring = document.createElementNS(svg.namespaceURI, "circle");
+    ring.setAttribute("cx", end[0]); ring.setAttribute("cy", end[1]); ring.setAttribute("r", "5");
+    ring.setAttribute("fill", CSSVAR('--surface-1') || "#161a24");
+    svg.appendChild(ring);
+    const dot = document.createElementNS(svg.namespaceURI, "circle");
+    dot.setAttribute("cx", end[0]); dot.setAttribute("cy", end[1]); dot.setAttribute("r", "3.4");
+    dot.setAttribute("fill", color);
+    svg.appendChild(dot);
+    if (opts.title) {
+      const t = document.createElementNS(svg.namespaceURI, "title");
+      t.textContent = opts.title;
+      svg.appendChild(t);
+    }
+    return svg;
+  };
+
+  const barRow = (label, value, max, valueText, opts = {}) => {
+    const row = h("div", { class: "bar-row" });
+    row.appendChild(h("div", { class: "label", text: label, title: label }));
+    const track = h("div", { class: "track" });
+    const pctW = max > 0 ? Math.max(1.5, 100 * value / max) : 0;
+    const fill = h("div", { class: "fill", style: "width:" + pctW.toFixed(1) + "%;" +
+      (opts.color ? "background:" + opts.color + ";" : "") });
+    track.appendChild(fill);
+    row.appendChild(track);
+    row.appendChild(h("div", { class: "value", text: valueText }));
+    if (opts.title) row.title = opts.title;
+    return row;
+  };
+
+  const statTile = (label, value, opts = {}) => {
+    const tile = h("div", { class: "tile" });
+    tile.appendChild(h("div", { class: "t-label", text: label }));
+    const v = h("div", { class: "t-value", text: value });
+    if (opts.delta != null && opts.delta !== 0) {
+      const up = opts.delta > 0;
+      const good = opts.downIsGood ? !up : up;
+      v.appendChild(h("span", {
+        class: "t-delta " + (good ? "up" : "down"),
+        text: (up ? "+" : "") + compact(opts.delta) + (opts.deltaSuffix || ""),
+      }));
+    }
+    tile.appendChild(v);
+    if (opts.sub) tile.appendChild(h("div", { class: "t-sub", text: opts.sub }));
+    if (opts.spark && opts.spark.length > 1) {
+      tile.appendChild(sparkline(opts.spark, { cls: "spark", w: 200, h: 26, title: opts.sparkTitle }));
+    }
+    return tile;
+  };
+
+  const sectionCard = (title, meta) => {
+    const card = h("div", { class: "mc-card" });
+    const head = h("h3");
+    head.appendChild(document.createTextNode(title));
+    if (meta) head.appendChild(h("span", { class: "meta", text: meta }));
+    card.appendChild(head);
+    return card;
   };
 
   let data;
@@ -277,31 +414,328 @@
   $("#content").hidden = false;
   $("#status-summary").hidden = false;
   const genDate = new Date(data.generated_at);
-  $("#generated-at").textContent =
-    "Generated " + genDate.toLocaleString() + ".";
+  $("#generated-at").textContent = "Generated " + genDate.toLocaleString() +
+    " · one page, every number the network collects.";
+  const hoursAgo = Math.round((Date.now() - genDate.getTime()) / 3600000);
+  $("#last-refreshed").textContent = hoursAgo < 2 ? "fresh" : hoursAgo + "h old";
+  $("#last-refreshed").title = genDate.toLocaleString();
 
-  // Last refreshed indicator (friendly relative time)
-  const lastRef = document.getElementById("last-refreshed");
-  if (lastRef) {
-    const hoursAgo = Math.round((Date.now() - genDate.getTime()) / (1000 * 60 * 60));
-    lastRef.textContent = hoursAgo < 2 ? "Just now" : `${hoursAgo}h ago`;
-    lastRef.title = genDate.toLocaleString();
-  }
-
-  const counts = data.network.landmines_counts || {};
+  const counts = (data.network && data.network.landmines_counts) || {};
   $("#count-ok").textContent = counts.ok || 0;
   $("#count-warn").textContent = counts.warn || 0;
   $("#count-fail").textContent = counts.fail || 0;
-  $("#spend-7d").textContent =
-    "· 7d spend " + money(data.network.total_cost_last_7_days_usd) +
-    " · 30d spend " + money(data.network.total_cost_last_30_days_usd);
 
-  // -------- CLAUDE.md drift banner --------
+  const audience = data.audience || {};
+  const op3 = audience.op3 || {};
+  const yt = audience.youtube || {};
+  const site = audience.site || {};
+  const sp = audience.spotify || {};
+  const bd = audience.newsletter || {};
+  const cost = data.cost_rollup || {};
+
+  // ---------- alert band ----------
+  const band = $("#alert-band");
+  (data.landmines || []).filter((lm) => lm.status === "fail").forEach((lm) => {
+    band.appendChild(h("div", { class: "alert fail",
+      html: "<strong>FAIL — " + lm.title + ":</strong> " + lm.details }));
+  });
+  (data.landmines || []).filter((lm) => lm.status === "warn").forEach((lm) => {
+    band.appendChild(h("div", { class: "alert warn",
+      html: "<strong>Warn — " + lm.title + ":</strong> " + lm.details }));
+  });
+  (data.alerts || []).forEach((a) => {
+    band.appendChild(h("div", { class: "alert warn", text: String(a.message || a) }));
+  });
+  if (sp.configured === false || (sp.per_show && !Object.keys(sp.per_show).length)) {
+    // quiet: surfaced in the Spotify card, not the alert band
+  }
+
+  // ---------- hero stat tiles ----------
+  const tiles = $("#tile-row");
+  const chSum = (field) => Object.values(yt.channels || {})
+    .reduce((s, c) => s + (c[field] || 0), 0);
+  const siteSpark = (site.day_series || []).map((r) => Number(r.activeUsers || 0));
+
+  tiles.appendChild(statTile("RSS downloads · 30d", compact(op3.network_downloads_30d),
+    { sub: fmt(op3.network_downloads_7d) + " in the last 7d · via OP3" }));
+  tiles.appendChild(statTile("YouTube subscribers", compact(chSum("subscribers")),
+    { delta: chSum("subscribers_delta_7d"), deltaSuffix: " · 7d",
+      sub: compact(chSum("total_views")) + " total views · " +
+           Object.keys(yt.channels || {}).length + " channels" }));
+  tiles.appendChild(statTile("Site active users · 28d",
+    site.configured && site.totals ? compact(site.totals.active_users) : "—",
+    { sub: site.configured && site.totals
+        ? fmt(site.totals.sessions) + " sessions · " + fmt(site.totals.page_views) + " page views"
+        : "GA4 not configured",
+      spark: siteSpark,
+      sparkTitle: "Daily active users, last " + siteSpark.length + " days" }));
+  tiles.appendChild(statTile("Spend · 7d", money(data.network.total_cost_last_7_days_usd),
+    { sub: money(data.network.total_cost_last_30_days_usd) + " · 30d · projected " +
+           money((cost.projections || {}).projected_weekly_usd) + "/wk" }));
+  tiles.appendChild(statTile("Episodes · 7d", fmt((cost.network_last_7_days || {}).episodes),
+    { sub: money((cost.projections || {}).avg_cost_per_episode_usd) + " avg / episode" }));
+  tiles.appendChild(statTile("Newsletter", bd.configured ? fmt(bd.subscriber_count) : "—",
+    { sub: bd.configured ? "subscribers · Buttondown" : "not configured" }));
+
+  // ---------- audience cards ----------
+  const audPillBits = [];
+  if (op3.fetched_at) audPillBits.push("OP3 " + ageText(op3.fetched_at) + staleNote(op3.fetched_at));
+  if (site.fetched_at) audPillBits.push("GA4 " + ageText(site.fetched_at) + staleNote(site.fetched_at));
+  if (yt.generated) audPillBits.push("YT " + ageText(yt.generated) + staleNote(yt.generated));
+  $("#audience-status-pill").textContent = audPillBits.join(" · ");
+
+  const audGrid = $("#audience-grid");
+
+  // RSS downloads (OP3)
+  {
+    const card = sectionCard("RSS downloads — OP3", "all podcast apps except Spotify");
+    if (!op3.configured) {
+      card.appendChild(h("p", { class: "fine-list", text: "Not configured — set OP3_API_TOKEN." }));
+    } else {
+      card.appendChild(h("div", { class: "headline",
+        html: fmt(op3.network_downloads_30d) + "<small>30d</small>" +
+              "&nbsp;&nbsp;" + fmt(op3.network_downloads_7d) + "<small>7d</small>" }));
+      const perShow = op3.per_show || {};
+      const slugs = Object.keys(perShow)
+        .sort((a, b) => (perShow[b].downloads_30d || 0) - (perShow[a].downloads_30d || 0));
+      const maxDl = Math.max.apply(null, slugs.map((s) => perShow[s].downloads_30d || 0).concat([1]));
+      slugs.forEach((slug) => {
+        const v = perShow[slug] || {};
+        card.appendChild(barRow(slug, v.downloads_30d || 0, maxDl,
+          fmt(v.downloads_30d || 0) + " · 30d (" + fmt(v.downloads_7d || 0) + " · 7d)",
+          { title: slug + ": " + fmt(v.downloads_30d || 0) + " downloads in 30d, weekly avg " + fmt(v.weekly_avg || 0) }));
+      });
+      if ((op3.top_episodes_7d || []).length) {
+        const ul = h("ul", { class: "fine-list" });
+        op3.top_episodes_7d.slice(0, 5).forEach((ep, i) => {
+          ul.appendChild(h("li", { html:
+            "#" + (i + 1) + " <span class='k'>[" + ep.show_slug + "]</span> " +
+            String(ep.title || "").slice(0, 80).replace(/</g, "&lt;") +
+            " — <span class='k'>" + fmt(ep.downloads_7d) + " · 7d</span>" }));
+        });
+        card.appendChild(h("div", { style: "margin-top:10px;font-size:11px;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.05em;", text: "Top episodes · 7d" }));
+        card.appendChild(ul);
+      }
+    }
+    audGrid.appendChild(card);
+  }
+
+  // YouTube
+  {
+    const card = sectionCard("YouTube", "official Analytics API");
+    if (!yt.configured) {
+      card.appendChild(h("p", { class: "fine-list", text: "Not configured — set the YOUTUBE_* OAuth secrets." }));
+    } else {
+      const chans = yt.channels || {};
+      const chName = (ch) => ch === "ru" ? "@NerraRU" : ch === "fr" ? "@NerraFR" :
+        ch === "en" ? "@NerraNetwork" : "@Nerra-" + ch.toUpperCase();
+      const maxSubs = Math.max.apply(null, Object.values(chans).map((c) => c.subscribers || 0).concat([1]));
+      Object.keys(chans).sort().forEach((ch) => {
+        const c = chans[ch] || {};
+        const delta = c.subscribers_delta_7d;
+        card.appendChild(barRow(chName(ch), c.subscribers || 0, maxSubs,
+          fmt(c.subscribers || 0) + " subs" +
+          (delta != null ? " (" + (delta >= 0 ? "+" : "") + delta + " · 7d)" : ""),
+          { title: chName(ch) + ": " + fmt(c.total_views || 0) + " total views · " + fmt(c.video_count || 0) + " videos" }));
+      });
+      const ul = h("ul", { class: "fine-list" });
+      (yt.top_subscriber_videos || []).slice(0, 5).forEach((v) => {
+        ul.appendChild(h("li", { html:
+          "+" + v.subscribers_gained + " subs <span class='k'>[" + v.show + "/" + v.kind + "]</span> " +
+          String(v.title || "").slice(0, 70).replace(/</g, "&lt;") }));
+      });
+      if ((yt.top_subscriber_videos || []).length) {
+        card.appendChild(h("div", { style: "margin-top:10px;font-size:11px;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.05em;", text: "Top subscriber-driving videos" }));
+        card.appendChild(ul);
+      }
+    }
+    audGrid.appendChild(card);
+  }
+
+  // Website (GA4)
+  {
+    const card = sectionCard("Website — GA4", "consent-gated; undercounts decliners");
+    if (!site.configured) {
+      card.appendChild(h("p", { class: "fine-list", text: "Not configured — set GA4_SERVICE_ACCOUNT_JSON." }));
+    } else if (site.error) {
+      card.appendChild(h("p", { class: "fine-list", text: "GA4 error: " + site.error }));
+    } else {
+      const t = site.totals || {};
+      card.appendChild(h("div", { class: "headline",
+        html: fmt(t.active_users) + "<small>users · " + (site.days || 28) + "d</small>" +
+              "&nbsp;&nbsp;" + fmt(t.sessions) + "<small>sessions</small>" +
+              "&nbsp;&nbsp;" + fmt(t.page_views) + "<small>views</small>" }));
+      if (siteSpark.length > 1) {
+        const sparkWrap = h("div", { style: "margin:6px 0 2px;" });
+        const sv = sparkline(siteSpark, { w: 560, h: 44, title: "Daily active users" });
+        sv.style.width = "100%"; sv.style.height = "44px"; sv.style.display = "block";
+        sparkWrap.appendChild(sv);
+        sparkWrap.appendChild(h("div", { style: "font-size:11px;color:var(--ink-4);margin-top:2px;", text: "Daily active users · last " + siteSpark.length + " days" }));
+        card.appendChild(sparkWrap);
+      }
+      const pages = (site.top_pages || []).slice(0, 5);
+      if (pages.length) {
+        const maxV = Math.max.apply(null, pages.map((p) => p.screenPageViews || 0).concat([1]));
+        card.appendChild(h("div", { style: "margin-top:10px;font-size:11px;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.05em;", text: "Top pages · views" }));
+        pages.forEach((p) => {
+          card.appendChild(barRow(p.pagePath, p.screenPageViews || 0, maxV,
+            fmt(p.screenPageViews || 0) + " (" + fmt(p.activeUsers || 0) + " users)"));
+        });
+      }
+      const chansTxt = (site.channels || []).map((c) =>
+        c.sessionDefaultChannelGroup + " " + fmt(c.sessions)).join(" · ");
+      if (chansTxt) card.appendChild(h("p", { class: "fine-list", html: "<span class='k'>Traffic:</span> " + chansTxt }));
+    }
+    audGrid.appendChild(card);
+  }
+
+  // Spotify
+  {
+    const card = sectionCard("Spotify", "unofficial connector · fills the OP3 blind spot");
+    const per = sp.per_show || {};
+    if (!sp.configured) {
+      card.appendChild(h("p", { class: "fine-list",
+        html: "Armed, waiting on data — cookies are set; add <code>spotify_show_id:</code> to each <code>shows/*.yaml</code> once feeds finish indexing." }));
+    } else if (sp.error) {
+      card.appendChild(h("p", { class: "fine-list", text: "Spotify error: " + sp.error + " — sp_dc/sp_key cookies may have expired." }));
+    } else if (!Object.keys(per).length) {
+      card.appendChild(h("p", { class: "fine-list",
+        html: "Cookies configured; no <code>spotify_show_id</code> recorded yet in <code>shows/*.yaml</code>." }));
+    } else {
+      const slugs = Object.keys(per).sort((a, b) => (per[b].streams || 0) - (per[a].streams || 0));
+      const maxV = Math.max.apply(null, slugs.map((s) => per[s].streams || 0).concat([1]));
+      slugs.forEach((slug) => {
+        const v = per[slug] || {};
+        card.appendChild(barRow(slug, v.streams || 0, maxV,
+          fmt(v.streams || 0) + " streams · " + fmt(v.followers || 0) + " followers" +
+          (v.errors ? " · partial" : "")));
+      });
+      if (sp.fetched_at) card.appendChild(h("p", { class: "fine-list", text: "fetched " + ageText(sp.fetched_at) }));
+    }
+    audGrid.appendChild(card);
+  }
+
+  // ---------- operations cards ----------
+  const opsGrid = $("#operations-grid");
+
+  // Cost
+  {
+    const card = sectionCard("Cost", "Grok + TTS, per published episode");
+    const n7 = cost.network_last_7_days || {};
+    card.appendChild(h("div", { class: "headline",
+      html: money(n7.total) + "<small>7d</small>&nbsp;&nbsp;" +
+            money((cost.network_last_30_days || {}).total) + "<small>30d</small>" }));
+    const total7 = (n7.grok || 0) + (n7.tts || 0);
+    if (total7 > 0) {
+      const split = h("div", { class: "split-bar", title:
+        "Grok " + money(n7.grok) + " · TTS " + money(n7.tts) });
+      split.appendChild(h("div", { class: "seg", style:
+        "width:" + (100 * (n7.grok || 0) / total7).toFixed(1) + "%;background:var(--series-1);" }));
+      split.appendChild(h("div", { class: "seg", style:
+        "flex:1;background:var(--series-2);" }));
+      card.appendChild(split);
+      const legend = h("div", { class: "legend" });
+      legend.appendChild(h("span", { class: "key", html:
+        "<span class='swatch' style='background:var(--series-1)'></span>Grok " + money(n7.grok) }));
+      legend.appendChild(h("span", { class: "key", html:
+        "<span class='swatch' style='background:var(--series-2)'></span>TTS " + money(n7.tts) }));
+      card.appendChild(legend);
+    }
+    const proj = cost.projections || {};
+    card.appendChild(h("p", { class: "fine-list", html:
+      "<span class='k'>" + fmt(n7.episodes) + "</span> episodes · 7d — avg <span class='k'>" +
+      money(proj.avg_cost_per_episode_usd) + "</span>/episode, projected <span class='k'>" +
+      money(proj.projected_weekly_usd) + "</span>/week" }));
+    const quota = cost.youtube_quota || {};
+    if (quota.note) {
+      card.appendChild(h("p", { class: "fine-list", html:
+        "<span class='k'>YouTube quota:</span> ~" + fmt(quota.daily_insert_cost_units) +
+        " units/day scheduled. " + String(quota.note).replace(/</g, "&lt;") }));
+    }
+    // 30d per-show cost sparklines
+    const per = cost.per_show || {};
+    const withSeries = Object.keys(per)
+      .filter((s) => (per[s].daily_series || []).length > 1)
+      .sort((a, b) => ((per[b].last_30_days || {}).total || 0) - ((per[a].last_30_days || {}).total || 0));
+    if (withSeries.length) {
+      card.appendChild(h("div", { style: "margin-top:12px;font-size:11px;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.05em;", text: "30-day cost per show" }));
+      withSeries.forEach((slug) => {
+        const row = h("div", { class: "sparkline-row" });
+        row.appendChild(h("div", { class: "label", text: slug, title: slug }));
+        const series = per[slug].daily_series.map((p) => p[1]);
+        row.appendChild(sparkline(series, { w: 240, h: 30, title: slug + " daily cost, 30d" }));
+        row.appendChild(h("div", { class: "value",
+          text: money((per[slug].last_30_days || {}).total) + " · 30d" }));
+        card.appendChild(row);
+      });
+    }
+    opsGrid.appendChild(card);
+  }
+
+  // Pipeline health
+  {
+    const card = sectionCard("Pipeline health", "publish runs, p50 duration");
+    const pipe = data.pipeline_health || {};
+    const slugs = Object.keys(pipe).sort((a, b) => (pipe[b].p50_duration_s || 0) - (pipe[a].p50_duration_s || 0));
+    if (!slugs.length) {
+      card.appendChild(h("p", { class: "fine-list", text: "No pipeline telemetry yet." }));
+    } else {
+      const maxP = Math.max.apply(null, slugs.map((s) => pipe[s].p50_duration_s || 0).concat([1]));
+      slugs.forEach((slug) => {
+        const p = pipe[slug] || {};
+        const sr = p.success_rate == null ? null : Math.round(p.success_rate * 100);
+        card.appendChild(barRow(slug, p.p50_duration_s || 0, maxP,
+          (p.p50_duration_s || 0).toFixed(0) + "s p50 · " +
+          (sr == null ? "—" : sr + "%") + " ok",
+          { color: sr != null && sr < 90 ? "var(--status-warn)" : null,
+            title: slug + ": p95 " + (p.p95_duration_s || 0).toFixed(0) + "s · sample " + (p.sample_size || 0) }));
+      });
+      card.appendChild(h("p", { class: "fine-list",
+        text: "Bar = median publish-run duration; amber when success rate dips below 90%." }));
+    }
+    opsGrid.appendChild(card);
+  }
+
+  // Multilingual coverage
+  {
+    const card = sectionCard("Multilingual coverage",
+      "last " + ((data.multilingual || {}).recent_n || 10) + " episodes per show");
+    const ml = data.multilingual;
+    if (!ml || !ml.per_show || !Object.keys(ml.per_show).length) {
+      card.appendChild(h("p", { class: "fine-list", text: "No multilingual data yet — translations populate as episodes publish." }));
+    } else {
+      card.appendChild(h("p", { class: "fine-list", html:
+        "<span class='k'>" + money(ml.network_cost_7d_usd) + "</span> dub spend · 7d" }));
+      const langColor = { fr: "var(--series-1)", ru: "var(--series-2)", es: "var(--series-3)", zh: "var(--series-4)" };
+      Object.keys(ml.per_show).sort().forEach((slug) => {
+        const c = ml.per_show[slug];
+        const row = h("div", { style: "display:flex;align-items:center;gap:8px;padding:5px 0;flex-wrap:wrap;" });
+        row.appendChild(h("div", { style: "flex:0 0 168px;font-size:12.5px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;", text: slug, title: slug }));
+        (ml.languages || []).forEach((lang) => {
+          const n = (c.per_language || {})[lang] || 0;
+          const on = n > 0;
+          const chip = h("span", { class: "chip" + (on ? " on" : ""), title:
+            lang + ": " + n + " of last " + (ml.recent_n || 10) + " episodes dubbed" });
+          chip.appendChild(h("span", { class: "dot", style: "background:" +
+            (on ? (langColor[lang] || "var(--series-1)") : "var(--hairline)") + ";" }));
+          chip.appendChild(document.createTextNode(lang + " " + n));
+          row.appendChild(chip);
+        });
+        row.appendChild(h("span", { style: "font-size:11.5px;color:var(--ink-4);", text:
+          money(c.cost_7d_usd) + " · 7d" }));
+        card.appendChild(row);
+      });
+    }
+    opsGrid.appendChild(card);
+  }
+
+  // ---------- CLAUDE.md drift banner ----------
   if (data.voice_config && data.voice_config.claude_md_drift_detected) {
     const b = $("#claude-md-banner");
     const baseline = data.voice_config.baseline || {};
     b.hidden = false;
-    b.className = "banner";
+    b.className = "alert warn";
+    b.style.marginBottom = "14px";
     b.innerHTML =
       "<strong>Documentation drift:</strong> CLAUDE.md still references the " +
       "old ElevenLabs tuning triple <code>0.65/0.9/0.85</code>, but " +
@@ -310,10 +744,10 @@
       "</code>. Update CLAUDE.md item 9 to match.";
   }
 
-  // -------- Landmines grid --------
+  // ---------- landmines ----------
   const lmGrid = $("#landmines-grid");
   (data.landmines || []).forEach((lm) => {
-    const card = h("div", { class: "card status-" + lm.status });
+    const card = h("div", { class: "mc-card lm-card status-" + lm.status });
     card.appendChild(h("div", { class: "card-id", text: lm.id }));
     card.appendChild(h("h3", { text: lm.title }));
     card.appendChild(h("p", { class: "card-details", text: lm.details }));
@@ -326,11 +760,11 @@
     lmGrid.appendChild(card);
   });
 
-  // -------- Shows grid --------
+  // ---------- shows ----------
   const showGrid = $("#shows-grid");
   const shows = (data.network && data.network.shows) || [];
+  const op3PerShow = op3.per_show || {};
   const coverFor = (slug) => {
-    // Map slug → cover image filename (matches assets/covers/*.jpg)
     const map = {
       "tesla": "tesla-shorts-time.jpg",
       "models_agents": "models-agents.jpg",
@@ -348,7 +782,7 @@
   };
 
   shows.forEach((s) => {
-    const card = h("div", { class: "show-card" });
+    const card = h("div", { class: "mc-card show-card" });
     const head = h("div", { class: "show-head" });
     head.appendChild(h("img", { class: "cover", src: coverFor(s.slug), alt: s.name + " cover art", loading: "lazy" }));
     const headText = h("div");
@@ -357,25 +791,24 @@
     head.appendChild(headText);
     card.appendChild(head);
 
+    const dl = op3PerShow[s.slug] || {};
     const stats = h("div", { class: "stats" });
     stats.appendChild(h("div", { html:
       "<strong>" + (s.episodes_last_7_days || 0) + "</strong>ep · 7d" }));
     stats.appendChild(h("div", { html:
       "<strong>" + money(s.cost_last_7_days_usd) + "</strong>cost · 7d" }));
     stats.appendChild(h("div", { html:
-      "<strong>" + (s.p50_pipeline_s || 0).toFixed(0) + "s</strong>p50 run" }));
+      "<strong>" + fmt(dl.downloads_7d || 0) + "</strong>dl · 7d" }));
     card.appendChild(stats);
 
     const pubStatus = s.pub_status || "unknown";
-    const pubColor = pubStatus === "ok" ? "#22c55e" :
-                     pubStatus === "warn" ? "#fbbf24" :
-                     pubStatus === "stale" ? "#f87171" : "#94a3b8";
-    card.appendChild(h("div", {
-      html: "Latest episode: " +
-        "<span style='color:" + pubColor + "'>" +
-        ageText(s.latest_pub_date) + "</span> · " +
-        "X posting: <strong>" + (s.x_enabled ? "ON" : "off") + "</strong> · " +
-        "Newsletter: <strong>" + (s.newsletter_enabled ? "ON" : "off") + "</strong>"
+    const pubColor = pubStatus === "ok" ? "var(--status-ok)" :
+                     pubStatus === "warn" ? "var(--status-warn)" :
+                     pubStatus === "stale" ? "var(--status-fail)" : "var(--ink-3)";
+    card.appendChild(h("div", { class: "meta-line",
+      html: "Latest: <span style='color:" + pubColor + "'>" +
+        ageText(s.latest_pub_date) + "</span> · X: <strong>" + (s.x_enabled ? "ON" : "off") +
+        "</strong> · Newsletter: <strong>" + (s.newsletter_enabled ? "ON" : "off") + "</strong>"
     }));
 
     const links = h("div", { class: "links" });
@@ -386,7 +819,7 @@
     showGrid.appendChild(card);
   });
 
-  // -------- Voice settings table --------
+  // ---------- voice table ----------
   const tbody = $("#voice-table tbody");
   (data.voice_config.shows || []).forEach((row) => {
     const tr = h("tr");
@@ -404,269 +837,44 @@
     tbody.appendChild(tr);
   });
 
-  // -------- Inline SVG sparklines --------
-  const drawSparkline = (values, w = 240, h = 28) => {
-    if (!values || !values.length) {
-      return '<svg width="' + w + '" height="' + h + '"></svg>';
-    }
-    const max = Math.max.apply(null, values) || 1;
-    const min = Math.min.apply(null, values);
-    const range = max - min || 1;
-    const step = w / Math.max(values.length - 1, 1);
-    const pts = values
-      .map((v, i) => (i * step).toFixed(1) + "," + (h - ((v - min) / range) * h).toFixed(1))
-      .join(" ");
-    return (
-      '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + " " + h + '">' +
-      '<polyline fill="none" stroke="#6B47FF" stroke-width="2" points="' + pts + '" />' +
-      "</svg>"
-    );
-  };
-
-  // -------- Audience (OP3 downloads + newsletter subscribers) --------
-  const audRoot = $("#audience-section");
-  const audience = data.audience || {};
-  const op3 = audience.op3 || {};
-  const bd = audience.newsletter || {};
-  const audPill = $("#audience-status-pill");
-  if (!op3.configured && !bd.configured) {
-    audPill.textContent = "(not configured — set OP3_API_TOKEN / BUTTONDOWN_API_KEY secrets)";
-  } else {
-    const bits = [];
-    if (op3.configured && !op3.error) {
-      bits.push((op3.network_downloads_30d || 0).toLocaleString() + " downloads · 30d");
-      bits.push((op3.network_downloads_7d || 0).toLocaleString() + " · 7d");
-    } else if (op3.error) {
-      bits.push("OP3 error");
-    }
-    if (bd.configured && bd.subscriber_count != null) {
-      bits.push(bd.subscriber_count.toLocaleString() + " newsletter subscribers");
-    }
-    if (op3.fetched_at) bits.push("fetched " + ageText(op3.fetched_at));
-    audPill.textContent = "· " + bits.join(" · ");
-
-    const perShow = op3.per_show || {};
-    Object.keys(perShow)
-      .sort((a, b) => (perShow[b].downloads_30d || 0) - (perShow[a].downloads_30d || 0))
-      .forEach((slug) => {
-        const v = perShow[slug] || {};
-        const row = h("div", { class: "sparkline-row" });
-        row.appendChild(h("div", { class: "label", text: slug }));
-        const bar = h("div", { style: "flex:1;height:8px;background:#1e293b;border-radius:4px;overflow:hidden;" });
-        const maxDl = Math.max.apply(null,
-          Object.values(perShow).map((p) => p.downloads_30d || 0)) || 1;
-        bar.appendChild(h("div", {
-          style: "height:100%;background:#6B47FF;width:" +
-            (100 * (v.downloads_30d || 0) / maxDl).toFixed(0) + "%;",
-        }));
-        row.appendChild(bar);
-        row.appendChild(h("div", { class: "value",
-          text: (v.downloads_30d || 0).toLocaleString() + " · 30d  (" +
-                (v.downloads_7d || 0).toLocaleString() + " · 7d)" }));
-        audRoot.appendChild(row);
-      });
-
-    (op3.top_episodes_7d || []).forEach((ep, i) => {
-      const row = h("div", { style: "font-size:12px;color:#94a3b8;padding:2px 0;" });
-      row.textContent = "#" + (i + 1) + " [" + ep.show_slug + "] " +
-        ep.title.slice(0, 90) + " — " + ep.downloads_7d + " · 7d";
-      audRoot.appendChild(row);
-    });
-  }
-
-  // -------- YouTube channel growth (July 2026: subscribers) --------
-  const yt = audience.youtube || {};
-  if (yt.configured && !yt.error && yt.channels) {
-    const head = h("div", { style: "margin-top:12px;font-weight:600;color:#e2e8f0;" });
-    head.textContent = "YouTube channels";
-    audRoot.appendChild(head);
-    Object.keys(yt.channels).sort().forEach((ch) => {
-      const c = yt.channels[ch] || {};
-      const row = h("div", { style: "font-size:13px;color:#cbd5e1;padding:2px 0;" });
-      const delta = c.subscribers_delta_7d;
-      const deltaTxt = (delta == null) ? "" :
-        (" (" + (delta >= 0 ? "+" : "") + delta + " · 7d)");
-      const chName = ch === "ru" ? "NerraRU" :
-        ch === "fr" ? "NerraFR" :
-        ch === "en" ? "NerraNetwork" : ("Nerra-" + ch.toUpperCase());
-      row.textContent = "@" + chName + ": " +
-        (c.subscribers || 0).toLocaleString() + " subscribers" + deltaTxt +
-        " · " + (c.total_views || 0).toLocaleString() + " total views";
-      audRoot.appendChild(row);
-    });
-    (yt.top_subscriber_videos || []).forEach((v, i) => {
-      const row = h("div", { style: "font-size:12px;color:#94a3b8;padding:2px 0;" });
-      row.textContent = "+" + v.subscribers_gained + " subs · [" + v.show + "/" +
-        v.kind + "] " + (v.title || "").slice(0, 80);
-      audRoot.appendChild(row);
-    });
-  }
-
-  // -------- Website traffic (GA4) --------
-  const site = audience.site || {};
-  if (site.configured && !site.error && site.totals) {
-    const shead = h("div", { style: "margin-top:12px;font-weight:600;color:#e2e8f0;" });
-    shead.textContent = "Website (GA4 \u00b7 " + (site.days || 28) + "d)";
-    audRoot.appendChild(shead);
-    const st = site.totals || {};
-    const srow = h("div", { style: "font-size:13px;color:#cbd5e1;padding:2px 0;" });
-    srow.textContent = (st.active_users || 0).toLocaleString() + " active users \u00b7 " +
-      (st.sessions || 0).toLocaleString() + " sessions \u00b7 " +
-      (st.page_views || 0).toLocaleString() + " page views" +
-      (site.fetched_at ? " \u00b7 fetched " + ageText(site.fetched_at) : "");
-    audRoot.appendChild(srow);
-    (site.top_pages || []).forEach((pg, i) => {
-      const r = h("div", { style: "font-size:12px;color:#94a3b8;padding:2px 0;" });
-      r.textContent = "#" + (i + 1) + " " + pg.pagePath + " \u2014 " +
-        (pg.screenPageViews || 0) + " views \u00b7 " + (pg.activeUsers || 0) + " users";
-      audRoot.appendChild(r);
-    });
-    const chans = (site.channels || []).map((c) =>
-      c.sessionDefaultChannelGroup + " " + (c.sessions || 0)).join(" \u00b7 ");
-    if (chans) {
-      const r = h("div", { style: "font-size:12px;color:#94a3b8;padding:2px 0;" });
-      r.textContent = "Channels: " + chans;
-      audRoot.appendChild(r);
-    }
-  } else if (site.error) {
-    audRoot.appendChild(h("div", { style: "font-size:12px;color:#f87171;padding:2px 0;",
-      text: "GA4 error: " + site.error }));
-  }
-
-  // -------- Spotify (unofficial cookie-auth connector) --------
-  const sp = audience.spotify || {};
-  if (sp.configured && !sp.error && sp.per_show && Object.keys(sp.per_show).length) {
-    const phead = h("div", { style: "margin-top:12px;font-weight:600;color:#e2e8f0;" });
-    phead.textContent = "Spotify (" + (sp.window_days || 30) + "d)";
-    audRoot.appendChild(phead);
-    Object.keys(sp.per_show).sort((a, b) =>
-      ((sp.per_show[b].streams || 0) - (sp.per_show[a].streams || 0))).forEach((slug) => {
-      const v = sp.per_show[slug] || {};
-      const r = h("div", { style: "font-size:13px;color:#cbd5e1;padding:2px 0;" });
-      r.textContent = slug + ": " +
-        (v.followers != null ? v.followers.toLocaleString() + " followers \u00b7 " : "") +
-        (v.streams != null ? v.streams.toLocaleString() + " streams \u00b7 " : "") +
-        (v.listeners != null ? v.listeners.toLocaleString() + " listeners" : "") +
-        (v.errors ? " (partial: " + v.errors.join(",") + ")" : "");
-      audRoot.appendChild(r);
-    });
-    if (sp.fetched_at) audRoot.appendChild(h("div", {
-      style: "font-size:12px;color:#94a3b8;", text: "fetched " + ageText(sp.fetched_at) }));
-  } else if (sp.error) {
-    audRoot.appendChild(h("div", { style: "font-size:12px;color:#f87171;padding:2px 0;",
-      text: "Spotify error: " + sp.error + " \u2014 cookies may have expired" }));
-  }
-
-  const costSparks = $("#cost-sparklines");
-  const costPerShow = (data.cost_rollup && data.cost_rollup.per_show) || {};
-  shows.forEach((s) => {
-    const series = ((costPerShow[s.slug] || {}).daily_series || []).map((p) => p[1]);
-    const row = h("div", { class: "sparkline-row" });
-    row.appendChild(h("div", { class: "label", text: s.name || s.slug }));
-    const svg = document.createElement("div");
-    svg.innerHTML = drawSparkline(series);
-    svg.style.flex = "1";
-    row.appendChild(svg.firstChild || h("div"));
-    row.appendChild(h("div", { class: "value",
-      text: money((costPerShow[s.slug] || {}).last_30_days && (costPerShow[s.slug] || {}).last_30_days.total) + " · 30d" }));
-    costSparks.appendChild(row);
-  });
-
-  // Multilingual coverage — per-show language badges (count in the last N
-  // episodes), % of recent episodes with all languages, and 7-day spend.
-  const mlWrap = $("#multilingual-coverage");
-  const ml = data.multilingual;
-  if (mlWrap) {
-    if (!ml || !ml.per_show || !Object.keys(ml.per_show).length) {
-      mlWrap.appendChild(h("div", { class: "muted",
-        text: "No multilingual data yet — translations populate as episodes publish." }));
-    } else {
-      const pill = $("#multilingual-status-pill");
-      if (pill) pill.textContent = money(ml.network_cost_7d_usd) + " · 7d · last " + (ml.recent_n || 10) + " eps";
-      shows.forEach((s) => {
-        const c = (ml.per_show || {})[s.slug];
-        if (!c) return;  // disabled / Russian shows are excluded
-        const row = h("div", { class: "sparkline-row" });
-        row.appendChild(h("div", { class: "label", text: s.name || s.slug }));
-        const badges = h("div", { style: "flex:1;display:flex;gap:6px;flex-wrap:wrap;" });
-        (ml.languages || []).forEach((lang) => {
-          const n = (c.per_language || {})[lang] || 0;
-          const on = n > 0;
-          badges.appendChild(h("span", {
-            style: "font:600 11px/1.6 ui-monospace,monospace;padding:1px 7px;border-radius:100px;"
-              + (on ? "background:#0e7490;color:#e0f2fe;" : "background:#1e293b;color:#64748b;"),
-            text: lang.toUpperCase() + (on ? " " + n : ""),
-          }));
-        });
-        row.appendChild(badges);
-        row.appendChild(h("div", { class: "value",
-          text: (c.coverage_pct || 0) + "% all · " + money(c.cost_7d_usd) + " 7d" }));
-        mlWrap.appendChild(row);
-      });
-    }
-  }
-
-  const pipeSparks = $("#pipeline-sparklines");
-  const health = data.pipeline_health || {};
-  shows.forEach((s) => {
-    const recent = ((health[s.slug] || {}).recent || []).map((r) => r.total_duration_s);
-    const row = h("div", { class: "sparkline-row" });
-    row.appendChild(h("div", { class: "label", text: s.name || s.slug }));
-    const svg = document.createElement("div");
-    svg.innerHTML = drawSparkline(recent);
-    svg.style.flex = "1";
-    row.appendChild(svg.firstChild || h("div"));
-    row.appendChild(h("div", { class: "value",
-      text: (health[s.slug] || {}).p50_duration_s + "s p50 · " +
-            (((health[s.slug] || {}).success_rate || 0) * 100).toFixed(0) + "% ok" }));
-    pipeSparks.appendChild(row);
-  });
-
-  // -------- Modern Investing performance --------
+  // ---------- MIT performance ----------
+  const mit = data.mit_performance;
   const mitRoot = $("#mit-performance");
-  const mit = data.mit_performance || {};
   const mitPill = $("#mit-status-pill");
-  if (!mit.available) {
-    mitPill.textContent = "(no tracker data yet)";
+  const pct = (v) => (v == null ? "—" : (v >= 0 ? "+" : "") + Number(v).toFixed(2) + "%");
+  if (!mit || !mit.available) {
+    mitPill.textContent = "(no data yet)";
+    mitRoot.appendChild(h("p", { class: "fine-list", text:
+      "No trades recorded yet — populates after the first Modern Investing episode with a mock trade." }));
   } else {
     const summary = mit.summary || {};
     const benchmark = mit.benchmark || {};
     const alpha = mit.alpha || {};
-    const pct = (v) => (v == null ? "—" : (Number(v) >= 0 ? "+" : "") + Number(v).toFixed(2) + "%");
-    const alphaYtd = alpha.ytd_pct;
-    const alphaIcon = alphaYtd == null ? "" : (alphaYtd >= 0 ? " ✓" : " ✗");
-    mitPill.textContent =
-      "· " + (summary.total_trades || 0) + " trades · " +
-      (summary.win_rate_pct || 0).toFixed(0) + "% win rate · " +
-      "alpha YTD " + pct(alphaYtd) + alphaIcon +
-      (mit.last_updated ? " · updated " + ageText(mit.last_updated) : "");
+    mitPill.textContent = "updated " + (mit.last_updated || "");
 
-    // (1) Summary strip
-    const strip = h("div", { style: "display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:16px;" });
-    const card = (label, value, sub) => {
-      const c = h("div", { class: "card" });
-      c.appendChild(h("div", { style: "font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.04em;", text: label }));
-      c.appendChild(h("div", { style: "font-size:20px;font-weight:600;margin-top:4px;", text: value }));
-      if (sub) c.appendChild(h("div", { style: "font-size:12px;color:#94a3b8;margin-top:4px;", text: sub }));
+    const strip = h("div", { style: "display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:14px;" });
+    const mcard = (label, value, sub) => {
+      const c = h("div", { class: "tile" });
+      c.appendChild(h("div", { class: "t-label", text: label }));
+      c.appendChild(h("div", { class: "t-value", style: "font-size:20px;", text: value }));
+      if (sub) c.appendChild(h("div", { class: "t-sub", text: sub }));
       return c;
     };
-    strip.appendChild(card("NASDAQ ^IXIC", benchmark.current_close == null ? "—" : Number(benchmark.current_close).toLocaleString(), "YTD " + pct(benchmark.ytd_pct)));
-    strip.appendChild(card("Portfolio YTD", pct((alpha.ytd_pct ?? 0) + (benchmark.ytd_pct ?? 0)), "ITD " + pct((alpha.inception_to_date_pct ?? 0) + (benchmark.inception_to_date_pct ?? 0))));
-    strip.appendChild(card("Alpha YTD", pct(alpha.ytd_pct), "ITD " + pct(alpha.inception_to_date_pct)));
-    strip.appendChild(card("Win rate", (summary.win_rate_pct || 0).toFixed(0) + "%", summary.wins + "W / " + summary.losses + "L / " + summary.breakeven + "BE"));
-    strip.appendChild(card("Cumulative P&L", money(summary.cumulative_pnl), "avg " + pct(summary.average_return_pct) + " / trade"));
+    strip.appendChild(mcard("NASDAQ ^IXIC", benchmark.current_close == null ? "—" : Number(benchmark.current_close).toLocaleString(), "YTD " + pct(benchmark.ytd_pct)));
+    strip.appendChild(mcard("Portfolio YTD", pct((alpha.ytd_pct ?? 0) + (benchmark.ytd_pct ?? 0)), "ITD " + pct((alpha.inception_to_date_pct ?? 0) + (benchmark.inception_to_date_pct ?? 0))));
+    strip.appendChild(mcard("Alpha YTD", pct(alpha.ytd_pct), "ITD " + pct(alpha.inception_to_date_pct)));
+    strip.appendChild(mcard("Win rate", (summary.win_rate_pct || 0).toFixed(0) + "%", summary.wins + "W / " + summary.losses + "L / " + summary.breakeven + "BE"));
+    strip.appendChild(mcard("Cumulative P&L", money(summary.cumulative_pnl), "avg " + pct(summary.average_return_pct) + " / trade"));
     mitRoot.appendChild(strip);
 
     if (mit.sector_concentration_warning) {
-      const warn = h("div", { class: "pill fail", style: "margin-bottom:16px;display:inline-block;padding:8px 12px;" });
-      warn.textContent = "⚠ Sector concentration: " + mit.sector_concentration_warning;
-      mitRoot.appendChild(warn);
+      mitRoot.appendChild(h("div", { class: "alert warn", style: "margin-bottom:14px;",
+        text: "Sector concentration: " + mit.sector_concentration_warning }));
     }
 
-    // (2) Trades table
-    const tradesBox = h("div", { class: "card", style: "margin-bottom:16px;padding:0;overflow-x:auto;" });
-    tradesBox.appendChild(h("div", { style: "padding:12px 16px;border-bottom:1px solid var(--nn-border,#232938);font-weight:600;", text: "Mock trades (newest first, last " + mit.trades.length + ")" }));
-    const tt = h("table", { class: "voice-table", style: "margin:0;" });
+    const tradesBox = h("div", { class: "mc-card", style: "margin-bottom:14px;padding:0;overflow-x:auto;" });
+    tradesBox.appendChild(h("div", { style: "padding:12px 16px;border-bottom:1px solid var(--hairline);font-weight:600;font-size:13.5px;", text: "Mock trades (newest first, last " + mit.trades.length + ")" }));
+    const tt = h("table", { class: "mc-table", style: "margin:0;" });
     tt.innerHTML =
       "<thead><tr><th>Date</th><th>Ep</th><th>Ticker</th><th>Sector</th>" +
       "<th>Type</th><th>Entry</th><th>Exit</th><th>P&amp;L %</th>" +
@@ -691,7 +899,6 @@
       cells.forEach((v, i) => {
         const td = document.createElement("td");
         td.textContent = v;
-        // Colour alpha column for quick visual scan
         if (i === 9 && t.alpha_pct != null) {
           td.style.color = Number(t.alpha_pct) >= 0 ? "#4ade80" : "#fca5a5";
           td.style.fontWeight = "600";
@@ -704,11 +911,10 @@
     tradesBox.appendChild(tt);
     mitRoot.appendChild(tradesBox);
 
-    // (3) Monthly snapshots
     if ((mit.monthly_snapshots || []).length) {
-      const msBox = h("div", { class: "card", style: "margin-bottom:16px;padding:0;overflow-x:auto;" });
-      msBox.appendChild(h("div", { style: "padding:12px 16px;border-bottom:1px solid var(--nn-border,#232938);font-weight:600;", text: "Monthly snapshots" }));
-      const mt = h("table", { class: "voice-table", style: "margin:0;" });
+      const msBox = h("div", { class: "mc-card", style: "margin-bottom:14px;padding:0;overflow-x:auto;" });
+      msBox.appendChild(h("div", { style: "padding:12px 16px;border-bottom:1px solid var(--hairline);font-weight:600;font-size:13.5px;", text: "Monthly snapshots" }));
+      const mt = h("table", { class: "mc-table", style: "margin:0;" });
       mt.innerHTML =
         "<thead><tr><th>Month</th><th>Trades</th><th>Win %</th>" +
         "<th>Portfolio %</th><th>NASDAQ %</th><th>Alpha %</th><th>P&amp;L $</th></tr></thead>";
@@ -729,30 +935,28 @@
       mitRoot.appendChild(msBox);
     }
 
-    // (4) Active recursive-improvement rules
-    const llBox = h("div", { class: "card", style: "margin-bottom:16px;padding:0;" });
-    llBox.appendChild(h("div", { style: "padding:12px 16px;border-bottom:1px solid var(--nn-border,#232938);font-weight:600;", text: "Active recursive-improvement rules (" + (mit.lessons_learned || []).length + ")" }));
-    const llList = h("ul", { style: "margin:0;padding:12px 24px;font-size:13px;line-height:1.6;" });
+    const llBox = h("div", { class: "mc-card", style: "margin-bottom:14px;padding:0;" });
+    llBox.appendChild(h("div", { style: "padding:12px 16px;border-bottom:1px solid var(--hairline);font-weight:600;font-size:13.5px;", text: "Active recursive-improvement rules (" + (mit.lessons_learned || []).length + ")" }));
+    const llList = h("ul", { style: "margin:0;padding:12px 24px;font-size:13px;line-height:1.6;color:var(--ink-2);" });
     (mit.lessons_learned || []).forEach((e) => {
       const li = h("li");
       li.innerHTML =
         "<strong>" + (e.id || "LL-???") + "</strong> " +
-        "<span style='color:#94a3b8;'>[" + (e.category || "content") + ", Ep" + (e.episode_num || "?") + ", " + (e.date || "") + "]</span> " +
+        "<span style='color:var(--ink-3);'>[" + (e.category || "content") + ", Ep" + (e.episode_num || "?") + ", " + (e.date || "") + "]</span> " +
         "<em>" + (e.observation || "").replace(/</g, "&lt;") + "</em> &nbsp;→&nbsp; " +
         "<strong>Rule:</strong> " + (e.adjustment || "").replace(/</g, "&lt;");
       llList.appendChild(li);
     });
     if (!(mit.lessons_learned || []).length) {
-      llList.appendChild(h("li", { text: "No active rules yet — the daily show will append one each episode when a trade teaches a generalisable lesson.", style: "color:#94a3b8;" }));
+      llList.appendChild(h("li", { text: "No active rules yet — the daily show will append one each episode when a trade teaches a generalisable lesson.", style: "color:var(--ink-3);" }));
     }
     llBox.appendChild(llList);
     mitRoot.appendChild(llBox);
 
-    // (5) Hot taught-lessons (operator-only — what's on cooldown right now)
     if ((mit.taught_lessons_hot || []).length) {
-      const hotBox = h("div", { class: "card", style: "padding:0;" });
-      hotBox.appendChild(h("div", { style: "padding:12px 16px;border-bottom:1px solid var(--nn-border,#232938);font-weight:600;", text: "Lessons under cooldown — operator view" }));
-      const hotList = h("ul", { style: "margin:0;padding:12px 24px;font-size:13px;line-height:1.6;" });
+      const hotBox = h("div", { class: "mc-card", style: "padding:0;" });
+      hotBox.appendChild(h("div", { style: "padding:12px 16px;border-bottom:1px solid var(--hairline);font-weight:600;font-size:13.5px;", text: "Lessons under cooldown — operator view" }));
+      const hotList = h("ul", { style: "margin:0;padding:12px 24px;font-size:13px;line-height:1.6;color:var(--ink-2);" });
       mit.taught_lessons_hot.forEach((t) => {
         hotList.appendChild(h("li", {
           text: t.tag + " · count " + t.count + " · last Ep" + t.last_episode + " (" + t.days_since + "d ago) · cools in " + t.cools_in_days + "d",
@@ -763,16 +967,19 @@
     }
   }
 
-  // -------- Feed audit summary --------
+  // ---------- feed audit ----------
   const rss = data.rss_audit || { feeds: [] };
-  const audit = $("#feed-audit");
-  const summary = h("p", {
-    text: rss.feeds.length + " feed(s) audited · " +
-          (rss.raw_github_hits || []).length + " raw.githubusercontent.com hit(s) · " +
-          (rss.non_r2_hosts || []).length + " non-R2 host(s)",
-  });
-  audit.appendChild(summary);
-  const list = h("ul", { style: "margin:8px 0 0;padding-left:18px;font-size:13px" });
+  const auditEl = $("#feed-audit");
+  const malformed = (rss.feeds || []).filter((f) => f.malformed).length;
+  auditEl.appendChild(h("p", { style: "margin:0;font-size:13.5px;color:var(--ink-2);",
+    text: rss.feeds.length + " feeds audited · " +
+          (rss.raw_github_hits || []).length + " raw.githubusercontent.com hits · " +
+          (rss.non_r2_hosts || []).length + " non-R2 hosts · " +
+          malformed + " malformed",
+  }));
+  const det = h("details", { style: "margin-top:8px;font-size:12.5px;color:var(--ink-3);" });
+  det.appendChild(h("summary", { text: "per-feed detail" }));
+  const list = h("ul", { style: "margin:8px 0 0;padding-left:18px;line-height:1.55;" });
   (rss.feeds || []).forEach((f) => {
     const li = h("li");
     li.textContent = f.file + " · " + f.entry_count + " items · " +
@@ -780,7 +987,8 @@
       (f.malformed ? " · MALFORMED" : "");
     list.appendChild(li);
   });
-  audit.appendChild(list);
+  det.appendChild(list);
+  auditEl.appendChild(det);
 })();
 </script>
 </body>
