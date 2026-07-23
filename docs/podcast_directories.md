@@ -144,12 +144,12 @@ RSS URL. Being in Apple Podcasts is sufficient for Overcast discoverability.
 | Models & Agents for Beginners | LIVE | LIVE | -- | -- | -- | -- | -- |
 | First Principles | LIVE | LIVE | -- | -- | -- | -- | -- |
 | Unintended Consequences | LIVE | LIVE | -- | -- | -- | -- | -- |
-| The DP Pod | LIVE (2026-07-23) | PENDING | -- | -- | -- | -- | -- |
-| Age of AI | LIVE (2026-07-23) | PENDING | -- | -- | -- | -- | -- |
+| The DP Pod | LIVE (2026-07-23) | LIVE | -- | -- | -- | -- | -- |
+| Age of AI | LIVE (2026-07-23) | LIVE | -- | -- | -- | -- | -- |
 | Финансы Просто | LIVE | LIVE | -- | -- | -- | -- | -- |
-| Привет, Русский! | LIVE | PENDING | -- | -- | -- | -- | -- |
-| FR dub feeds (4) | LIVE (2026-07-23) | PENDING | n/a (playlists) | -- | -- | -- | -- |
-| RU dub feeds (4) | LIVE (2026-07-23) | PENDING | n/a (playlists) | -- | -- | -- | -- |
+| Привет, Русский! | LIVE | LIVE | -- | -- | -- | -- | -- |
+| FR dub feeds (4) | LIVE (2026-07-23) | LIVE | n/a (playlists) | -- | -- | -- | -- |
+| RU dub feeds (4) | LIVE (2026-07-23) | LIVE (except SpaceX RU) | n/a (playlists) | -- | -- | -- | -- |
 
 Apple 2026-07-23 publish pass: the last 7 drafts (The DP Pod, Age of AI,
 Le Temps des Shorts Tesla, SpaceX Quotidien, Frontières Fascinantes,
@@ -159,8 +159,17 @@ Update Frequency set (Daily; Age of AI = No Set Schedule). All shows now
 show status "Available". Apple show IDs visible on each show page
 (e.g. Age of AI 6794048682, FR Tesla 6794047703, FR SpaceX 6794048213,
 FR Frontiers 6794048504, FR Investing 6794048326, RU SpaceX 6794048451).
-Spotify PENDING rows: feeds submitted + code-verified 2026-07-22, awaiting
-indexing — record `spotify_show_id:` in the show YAMLs once live.
+Spotify 2026-07-23: all feeds indexed; every `spotify_show_id` (plus
+`spotify_show_ids:` fr/ru dub maps) is recorded in the show YAMLs, so
+the nightly Spotify analytics fetch is active. Exception: the RU SpaceX
+feed (spacex_podcast.ru.rss) never indexed on Spotify — resubmit at
+creators.spotify.com if wanted.
+Amazon Music 2026-07-23: the 16 missing feeds were submitted and all
+ownership-confirmation emails were clicked the same day — shows go
+LIVE as Amazon ingests them. Podcast Index: API keys stale (HTTP 401);
+refresh PODCAST_INDEX_API_KEY/SECRET at api.podcastindex.org, then
+re-run the "Submit Podcast Directories" workflow. iHeart: not yet
+submitted (manual form).
 
 Note: on YouTube the dub shows are distributed as native uploads +
 podcast playlists on @NerraRU/@NerraFR (not RSS ingestion), so the
