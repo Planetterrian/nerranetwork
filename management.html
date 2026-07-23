@@ -502,6 +502,61 @@
     });
   }
 
+  // -------- Website traffic (GA4) --------
+  const site = audience.site || {};
+  if (site.configured && !site.error && site.totals) {
+    const shead = h("div", { style: "margin-top:12px;font-weight:600;color:#e2e8f0;" });
+    shead.textContent = "Website (GA4 \u00b7 " + (site.days || 28) + "d)";
+    audRoot.appendChild(shead);
+    const st = site.totals || {};
+    const srow = h("div", { style: "font-size:13px;color:#cbd5e1;padding:2px 0;" });
+    srow.textContent = (st.active_users || 0).toLocaleString() + " active users \u00b7 " +
+      (st.sessions || 0).toLocaleString() + " sessions \u00b7 " +
+      (st.page_views || 0).toLocaleString() + " page views" +
+      (site.fetched_at ? " \u00b7 fetched " + ageText(site.fetched_at) : "");
+    audRoot.appendChild(srow);
+    (site.top_pages || []).forEach((pg, i) => {
+      const r = h("div", { style: "font-size:12px;color:#94a3b8;padding:2px 0;" });
+      r.textContent = "#" + (i + 1) + " " + pg.pagePath + " \u2014 " +
+        (pg.screenPageViews || 0) + " views \u00b7 " + (pg.activeUsers || 0) + " users";
+      audRoot.appendChild(r);
+    });
+    const chans = (site.channels || []).map((c) =>
+      c.sessionDefaultChannelGroup + " " + (c.sessions || 0)).join(" \u00b7 ");
+    if (chans) {
+      const r = h("div", { style: "font-size:12px;color:#94a3b8;padding:2px 0;" });
+      r.textContent = "Channels: " + chans;
+      audRoot.appendChild(r);
+    }
+  } else if (site.error) {
+    audRoot.appendChild(h("div", { style: "font-size:12px;color:#f87171;padding:2px 0;",
+      text: "GA4 error: " + site.error }));
+  }
+
+  // -------- Spotify (unofficial cookie-auth connector) --------
+  const sp = audience.spotify || {};
+  if (sp.configured && !sp.error && sp.per_show && Object.keys(sp.per_show).length) {
+    const phead = h("div", { style: "margin-top:12px;font-weight:600;color:#e2e8f0;" });
+    phead.textContent = "Spotify (" + (sp.window_days || 30) + "d)";
+    audRoot.appendChild(phead);
+    Object.keys(sp.per_show).sort((a, b) =>
+      ((sp.per_show[b].streams || 0) - (sp.per_show[a].streams || 0))).forEach((slug) => {
+      const v = sp.per_show[slug] || {};
+      const r = h("div", { style: "font-size:13px;color:#cbd5e1;padding:2px 0;" });
+      r.textContent = slug + ": " +
+        (v.followers != null ? v.followers.toLocaleString() + " followers \u00b7 " : "") +
+        (v.streams != null ? v.streams.toLocaleString() + " streams \u00b7 " : "") +
+        (v.listeners != null ? v.listeners.toLocaleString() + " listeners" : "") +
+        (v.errors ? " (partial: " + v.errors.join(",") + ")" : "");
+      audRoot.appendChild(r);
+    });
+    if (sp.fetched_at) audRoot.appendChild(h("div", {
+      style: "font-size:12px;color:#94a3b8;", text: "fetched " + ageText(sp.fetched_at) }));
+  } else if (sp.error) {
+    audRoot.appendChild(h("div", { style: "font-size:12px;color:#f87171;padding:2px 0;",
+      text: "Spotify error: " + sp.error + " \u2014 cookies may have expired" }));
+  }
+
   const costSparks = $("#cost-sparklines");
   const costPerShow = (data.cost_rollup && data.cost_rollup.per_show) || {};
   shows.forEach((s) => {
