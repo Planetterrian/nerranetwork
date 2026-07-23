@@ -1,0 +1,66 @@
+name: Backfill Dub Playlists
+
+# One-off / occasional: add already-published dub videos to their show
+# playlists on the language channels (@NerraRU, @NerraFR, ...). The dub
+# pipelines only playlist videos at publish time, so anything published
+# before a playlist was wired (the whole RU catalog pre-July 2026) is
+# missing. Idempotent — safe to run repeatedly; each run inserts up to
+# ``max_inserts`` videos (50 YouTube quota units each) and reports how
+# many remain. Re-run on following days until "0 remaining".
+#
+# Manual trigger only: this competes for the same daily YouTube API
+# quota as the publish pipeline, so the operator decides when to spend it.
+
+on:
+  workflow_dispatch:
+    inputs:
+      lang:
+        description: 'Language to backfill (ru, fr) or "all"'
+        required: false
+        default: 'all'
+      max_inserts:
+        description: 'Insert cap for this run (50 quota units each)'
+        required: false
+        default: '120'
+      dry_run:
+        description: 'Dry run — report missing counts, insert nothing'
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backfill-dub-playlists
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - uses: ./.github/actions/setup-python
+        with:
+          python-version: '3.12'
+          requirements-file: 'requirements.txt'
+          skip-checkout: 'true'
+
+      - name: Backfill playlists
+        env:
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN_RU: ${{ secrets.YOUTUBE_REFRESH_TOKEN_RU }}
+          YOUTUBE_REFRESH_TOKEN_FR: ${{ secrets.YOUTUBE_REFRESH_TOKEN_FR }}
+        run: |
+          ARGS="--max-inserts ${{ inputs.max_inserts }}"
+          if [ "${{ inputs.lang }}" != "all" ] && [ -n "${{ inputs.lang }}" ]; then
+            ARGS="$ARGS --lang ${{ inputs.lang }}"
+          fi
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            ARGS="$ARGS --dry-run"
+          fi
+          python scripts/backfill_dub_playlists.py $ARGS

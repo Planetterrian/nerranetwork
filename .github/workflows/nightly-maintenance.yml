@@ -56,15 +56,24 @@ jobs:
           requirements-file: 'requirements.txt'
           skip-checkout: 'true'
 
-      - name: Fetch audience stats (OP3 downloads + Buttondown subscribers)
+      - name: Fetch audience stats (OP3 + Buttondown + GA4 + Spotify)
         # Clean no-ops when the secrets are unset. Must run BEFORE the
         # dashboard build so the Audience section can consume the JSONs.
+        # GA4 uses the official Data API (service-account key secret);
+        # Spotify uses the community spotifyconnector cookies — when
+        # those expire the fetch logs a re-auth hint and keeps the
+        # previous JSON (stale data, never a red nightly).
         env:
           OP3_API_TOKEN: ${{ secrets.OP3_API_TOKEN }}
           BUTTONDOWN_API_KEY: ${{ secrets.BUTTONDOWN_API_KEY }}
+          GA4_SERVICE_ACCOUNT_JSON: ${{ secrets.GA4_SERVICE_ACCOUNT_JSON }}
+          SPOTIFY_SP_DC: ${{ secrets.SPOTIFY_SP_DC }}
+          SPOTIFY_SP_KEY: ${{ secrets.SPOTIFY_SP_KEY }}
         run: |
           python scripts/fetch_op3_stats.py --out api/op3_stats.json --popular-out site/data/popular_episodes.json
           python scripts/fetch_buttondown_stats.py --out api/buttondown_stats.json
+          python scripts/fetch_ga4_stats.py --out api/ga4_stats.json
+          python scripts/fetch_spotify_stats.py --out api/spotify_stats.json
 
       - name: Refresh show performance trackers from OP3 data
         # Closes the memory systems' performance-feedback loop (June

@@ -13,16 +13,43 @@ Before submitting, ensure:
 
 ## RSS Feed URLs
 
+English shows:
+
 | Show | RSS Feed URL |
 |------|-------------|
-| Tesla Shorts Time | `https://nerranetwork.com/tesla_shorts_time_podcast.rss` |
-| Omni View | `https://nerranetwork.com/omni_view_podcast.rss` |
+| Tesla Shorts Time | `https://nerranetwork.com/podcast.rss` |
+| SpaceX Daily | `https://nerranetwork.com/spacex_podcast.rss` |
 | Fascinating Frontiers | `https://nerranetwork.com/fascinating_frontiers_podcast.rss` |
+| Modern Investing | `https://nerranetwork.com/modern_investing_podcast.rss` |
+| Omni View | `https://nerranetwork.com/omni_view_podcast.rss` |
 | Planetterrian Daily | `https://nerranetwork.com/planetterrian_podcast.rss` |
 | Environmental Intelligence | `https://nerranetwork.com/env_intel_podcast.rss` |
 | Models & Agents | `https://nerranetwork.com/models_agents_podcast.rss` |
 | Models & Agents for Beginners | `https://nerranetwork.com/models_agents_beginners_podcast.rss` |
-| Finansy Prosto | `https://nerranetwork.com/finansy_prosto_podcast.rss` |
+| First Principles | `https://nerranetwork.com/first_principles_podcast.rss` |
+| Unintended Consequences | `https://nerranetwork.com/unintended_consequences_podcast.rss` |
+| The DP Pod | `https://nerranetwork.com/dp_pod_podcast.rss` |
+| Age of AI | `https://nerranetwork.com/age_of_ai_podcast.rss` |
+
+Russian-native shows (@NerraRU):
+
+| Show | RSS Feed URL |
+|------|-------------|
+| Финансы Просто | `https://nerranetwork.com/finansy_prosto_podcast.rss` |
+| Привет, Русский! | `https://nerranetwork.com/privet_russian_podcast.rss` |
+
+Language dub feeds (second-pass submissions — same artwork family,
+localized names; see `assets/youtube/fr_podcasts/`, `ru_podcasts/`):
+
+| Show | FR feed | RU feed |
+|------|---------|---------|
+| Tesla | `podcast.fr.rss` | `podcast.ru.rss` |
+| SpaceX | `spacex_podcast.fr.rss` | `spacex_podcast.ru.rss` |
+| Fascinating Frontiers | `fascinating_frontiers_podcast.fr.rss` | `fascinating_frontiers_podcast.ru.rss` |
+| Modern Investing | `modern_investing_podcast.fr.rss` | `modern_investing_podcast.ru.rss` |
+
+(All relative to `https://nerranetwork.com/`. `es`/`zh` variants exist
+for most shows but are not yet in the submission plan.)
 
 ## Directory Submission Steps
 
@@ -107,13 +134,30 @@ RSS URL. Being in Apple Podcasts is sufficient for Overcast discoverability.
 | Show | Apple | Spotify | YouTube Music | Amazon | Podcast Index | Pocket Casts | iHeart |
 |------|-------|---------|---------------|--------|---------------|--------------|--------|
 | Tesla Shorts Time | -- | -- | -- | -- | -- | -- | -- |
-| Omni View | -- | -- | -- | -- | -- | -- | -- |
+| SpaceX Daily | -- | -- | -- | -- | -- | -- | -- |
 | Fascinating Frontiers | -- | -- | -- | -- | -- | -- | -- |
+| Modern Investing | -- | -- | -- | -- | -- | -- | -- |
+| Omni View | -- | -- | -- | -- | -- | -- | -- |
 | Planetterrian Daily | -- | -- | -- | -- | -- | -- | -- |
 | Environmental Intelligence | -- | -- | -- | -- | -- | -- | -- |
 | Models & Agents | -- | -- | -- | -- | -- | -- | -- |
 | Models & Agents for Beginners | -- | -- | -- | -- | -- | -- | -- |
-| Finansy Prosto | -- | -- | -- | -- | -- | -- | -- |
+| First Principles | -- | -- | -- | -- | -- | -- | -- |
+| Unintended Consequences | -- | -- | -- | -- | -- | -- | -- |
+| The DP Pod | -- | -- | -- | -- | -- | -- | -- |
+| Age of AI | -- | -- | -- | -- | -- | -- | -- |
+| Финансы Просто | -- | -- | -- | -- | -- | -- | -- |
+| Привет, Русский! | -- | -- | -- | -- | -- | -- | -- |
+| FR dub feeds (4) | -- | -- | n/a (playlists) | -- | -- | -- | -- |
+| RU dub feeds (4) | -- | -- | n/a (playlists) | -- | -- | -- | -- |
+
+Note: on YouTube the dub shows are distributed as native uploads +
+podcast playlists on @NerraRU/@NerraFR (not RSS ingestion), so the
+YouTube Music column doesn't apply to them.
+
+Spotify show IDs: once a feed is live on Spotify, record its 22-char
+show ID as `spotify_show_id:` in `shows/<slug>.yaml` — that enables the
+nightly Spotify analytics fetch (`docs/analytics.md`).
 
 Legend: -- = not submitted, PENDING = submitted awaiting review, LIVE = live and verified
 

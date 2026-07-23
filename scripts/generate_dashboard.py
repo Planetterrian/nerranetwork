@@ -1839,6 +1839,48 @@ def build_audience_section(root: Path) -> Dict[str, Any]:
         except Exception as exc:  # noqa: BLE001
             section["youtube"] = {"configured": True, "error": str(exc)}
 
+    # July 23 2026 — GA4 site traffic + Spotify listening (fetch_ga4_stats /
+    # fetch_spotify_stats). Same optional-file convention as OP3 above; see
+    # docs/analytics.md for the full contract.
+    section["site"] = {"configured": False}
+    ga4_path = root / "api" / "ga4_stats.json"
+    if ga4_path.exists():
+        try:
+            data = json.loads(ga4_path.read_text(encoding="utf-8"))
+            section["site"] = {
+                "configured": True,
+                "fetched_at": data.get("fetched_at"),
+                "days": data.get("days"),
+                "totals": data.get("totals") or {},
+                "top_pages": (data.get("top_pages") or [])[:5],
+                "channels": data.get("channels") or [],
+            }
+        except Exception as exc:  # noqa: BLE001
+            section["site"] = {"configured": True, "error": str(exc)}
+
+    section["spotify"] = {"configured": False}
+    sp_path = root / "api" / "spotify_stats.json"
+    if sp_path.exists():
+        try:
+            data = json.loads(sp_path.read_text(encoding="utf-8"))
+            per_show = {
+                slug: {
+                    "followers": s.get("followers"),
+                    "streams": s.get("streams"),
+                    "listeners": s.get("listeners"),
+                    "errors": sorted((s.get("errors") or {}).keys()) or None,
+                }
+                for slug, s in (data.get("shows") or {}).items()
+            }
+            section["spotify"] = {
+                "configured": True,
+                "fetched_at": data.get("fetched_at"),
+                "window_days": data.get("window_days"),
+                "per_show": per_show,
+            }
+        except Exception as exc:  # noqa: BLE001
+            section["spotify"] = {"configured": True, "error": str(exc)}
+
     return section
 
 
