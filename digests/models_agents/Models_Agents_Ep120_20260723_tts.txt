@@ -1,0 +1,67 @@
+Glad you're here — welcome to Models and Agents, episode one hundred twenty. It's July twenty-third, twenty twenty-six. There's signal and noise in A I every day. Let's get to the signal.
+
+Anthropic’s new Claude Security plugin turns your terminal into a multi-agent vulnerability scanner that proposes patches you still review and apply.
+
+Anthropic released the Claude Security plugin for Claude Code in beta. The tool runs a multi-agent vulnerability scan of a repository from inside an existing Claude Code session. It converts selected findings into patch files for manual review. The plugin operates directly in the terminal without requiring separate infrastructure.
+
+Builders working on internal codebases now have an integrated way to surface issues before deployment. The announcement highlights its ability to scan and propose fixes without leaving the Claude Code environment.
+
+This development continues the tracked Agents and Tool Use arc from episode one hundred nineteen by extending multi-turn agent reliability into security workflows. Watch for how the plugin handles larger repositories and whether Anthropic expands the set of supported vulnerability classes in follow-up updates.
+
+A new Rust BPE tokenizer called Gigatoken hits twenty four point five three gigabytes per second on one hundred forty four core hardware. A detailed cost study across G P T, Claude, Gemini, and Kimi shows real task costs varying ten point six times despite only two times published price differences.
+
+Poolside’s small research team trained Laguna S, a one hundred eighteen billion mixture of experts model that beats Thinky’s roughly one trillion parameter open weights model through efficient infrastructure.
+
+Researchers released a session layer conversational risk accumulation framework that tracks semantic drift across multi turn dialogues. PyPI now rejects new file uploads to releases older than fourteen days. A new paper studies hypernetworks for train time knowledge injection using a dataset of tens of millions of multi hop question answering examples across thirty nine domains.
+
+The Claude Security plugin integrates directly into existing Claude Code sessions. Users can trigger multi agent scans and receive patch files without switching tools. The beta focuses on terminal based operation for immediate workflow fit. This builds on prior agent tool use coverage by adding concrete security scanning inside the same session.
+
+Gigatoken achieves its speed through a hand written SWAR pretokenizer and pretoken caching. The implementation runs nine hundred eighty nine times faster than Hugging Face tokenizers on the same G P T two workload. The gains come specifically from the pretokenizer and caching strategy rather than changes to the BPE merge loop.
+
+Teams handling large scale preprocessing should test it for throughput gains.
+
+Poolside’s model factory shows how smaller teams can close gaps through process improvements. The co C E O Eiso Kant discussed construction of the factory capable of producing competitive models at this size. This continues the tracked open weight models story from episode one hundred nineteen by demonstrating training efficiency gains.
+
+Watch for release details on the next model iteration as the factory scales further.
+
+The real task cost benchmark ran ten realistic product tasks across providers using each cost optimized tier. Total costs spread ten point six times even though published rates differed by only two times. One model used one hundred ninety seven reasoning tokens to produce a single word classification answer.
+
+The study references CostBench from ACL twenty twenty six and TerminalWorld findings on failed agent attempts burning more tokens.
+
+This data fits into the tracked reasoning models arc from episode one hundred nineteen by highlighting invisible token costs that affect real world budgeting. The full methodology and ten task prompts are public on GitHub at useweckr dot com/benchmark.
+
+The hypernetwork paper introduces MegaWikiQA constructed from Wikidata five M. Results show predictive power law scaling along depth, width, and target size axes plus reliable out of distribution generalization. The design decouples the hypernetwork’s injection capacity from the target model’s general capability.
+
+Teams exploring efficient knowledge updates should examine the scaling curves for depth and width choices.
+
+Researchers propose a conversational risk accumulation framework that tracks semantic drift, sensitivity weighted entity graphs, and compliance gradients. The approach releases CRA Bench with one thousand two hundred eight turn sessions plus a five family extension reaching two thousand sessions.
+
+Evaluation uses trajectory AUROC, turns to detection, calibrated false positive metrics, and leave one family out diagnostic stress tests. This directly extends the tracked Agents and Tool Use arc from episode one hundred nineteen by addressing gradual intent drift that single turn guardrails miss.
+
+PyPI implemented the upload restriction after analysis showed no technical barrier had previously existed. Seth Larson noted that attackers simply had not yet abused the prior openness. Maintainers of older releases should review their publishing workflows. The restriction applies only to new files on existing older releases.
+
+The emb diversity tool provides a standardized set of embedding based diversity measures that work with any embedding model. The package supports stylistic, semantic, language, and speaker diversity calculations through a single interface. Researchers can install it directly from the linked GitHub repository. The tool addresses fragmentation of prior diversity measurement approaches.
+
+Install Gigatoken and benchmark your current preprocessing pipeline against Hugging Face tokenizers on large text corpora. Add the Claude Security plugin to an existing Claude Code session and scan a non production repository to see the patch workflow. Run the public ten task cost benchmark prompts against your top two providers to measure real versus advertised spend.
+
+Explore the MegaWikiQA dataset if you are testing hypernetwork or Laura based knowledge injection methods.
+
+Continued rollout of Open A I Presence enterprise agent features to additional eligible customers is expected. Further releases from Poolside’s model factory following Laguna S are on the way. Expanded CRA Bench evaluations as more teams adopt the multi turn risk framework will appear soon.
+
+Additional scaling studies on hypernetwork knowledge injection as the MegaWikiQA results circulate are coming next.
+
+OK, let's pop the hood on the invisible reasoning tokens that drive the ten point six times cost spread. Published per token prices suggest predictable spend. In practice many models generate substantial hidden reasoning traces billed at output rates but never shown to the user.
+
+The Reddit benchmark revealed one model consuming one hundred ninety seven internal tokens to emit a single classification word. These traces arise because current reasoning training encourages step by step computation even when the final answer is trivial. The effect compounds on agentic or multi turn tasks where failed attempts burn extra tokens at high rates.
+
+This matches the reported negative zero point six two correlation between failed attempts and token burn. When choosing providers, run your actual workload rather than relying on list prices. The practical decision rule is to measure end to end token usage on representative tasks before committing to a cost optimized tier.
+
+Tomorrow, keep an eye on further Poolside model factory updates and expanded CRA Bench results.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The A I world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+One more thing — if you liked today's episode, our sister show First Principles Daily is worth a spot in your feed: reasoning from raw materials, not analogy, on the breakthroughs that actually cut cost. It's one of the Nerra Network's daily briefings, all free at nerranetwork dot com. Following the long arcs?
+
+Story Trackers on nerranetwork dot com follow major programs across episodes — Tesla, Space X, A I, space science, and more.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.

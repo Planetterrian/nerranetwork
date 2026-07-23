@@ -1,0 +1,84 @@
+Glad you're here. Welcome to Models and Agents, episode 120. It's July 23, 2026.
+Their signal and noise in AI every day. Let's get to the signal.
+Anthropics new Cloud Security plugin turns your terminal into a multi-agent vulnerability scanner
+that proposes patches you still review and apply. Anthropic released the Cloud Security plugin for
+Cloud Code in beta. The tool runs a multi-agent vulnerability scan of a repository from inside an
+existing Cloud Code session. It converts selected findings into patch files for manual review.
+The plugin operates directly in the terminal without requiring separate infrastructure.
+Builders working on internal code bases now have an integrated way to surface issues before deployment.
+The announcement highlights its ability to scan and propose fixes without leaving the
+Cloud Code environment. This development continues the tracked agents and tool use arc from episode 119
+by extending multi-turn agent reliability into security workflows. Watch for how the plugin
+handles larger repositories and whether Anthropic expands the set of supported vulnerability classes
+in follow-up updates. A new Rust-BPE tokenizer called Gigatoken hits 24.53 gigabytes per second on
+144 core hardware. A detailed cost study across GPT, Claude, Gemini, and Kimmy shows real task costs
+varying 10.6 times despite only two times published price differences. Poolside's small research team
+trained Laguna S, a 118 billion mixture of experts model that beats think he's roughly one trillion
+parameter open weights model through efficient infrastructure. Researchers released a session layer
+conversational risk accumulation framework that tracks semantic drift across multi-turn dialogues.
+PiPI now rejects new file uploads to releases older than 14 days. A new paper studies hyper networks for
+train time knowledge injection using a data set of tens of millions of multi-hop question answering
+examples across 39 domains. The Claude security plugin integrates directly into existing Claude
+code sessions. Users can trigger multi-agent scans and receive patch files without switching tools.
+The beta focuses on terminal-based operation for immediate workflow fit. This builds on prior agent
+tool use coverage by adding concrete security scanning inside the same session. Gigatoken
+achieves its speed through a handwritten swar pre tokenizer and pre token caching. The implementation runs
+989 times faster than hugging face tokenizers on the same GPT2 workload. The gains come specifically
+from the pre tokenizer and caching strategy rather than changes to the BPE merge loop.
+Teams handling large scale pre-processing should test it for throughput gains.
+PoolSides model factory shows how smaller teams can close gaps through process improvements.
+The co-CEO Esokant discussed construction of the factory capable of producing competitive models
+at this size. This continues the tracked open weight models story from Episode 119 by demonstrating
+training efficiency gains. Watch for released details on the next model iteration as the factory
+scales further. The real task cost benchmark ran 10 realistic product tasks across providers using
+each cost optimized tier. Total costs spread 10.6 times even though published rates differed by
+only two times. One model used 197 reasoning tokens to produce a single word classification
+answer. The study references cost bench from ACL 2026 and terminal world findings on failed agent
+attempts burning more tokens. This data fits into the tracked reasoning models arc from Episode 119 by
+highlighting invisible token costs that affect real world budgeting. The full methodology and 10
+task prompts are public on GitHub at usewecker.com slash benchmark. The hyper network paper introduces
+mega wiki qa constructed from wiki data 5m results show predictive power loss scaling along depth
+width and target size axes plus reliable out of distribution generalization. The design decouples
+the hyper networks injection capacity from the target models general capability. Teams exploring
+efficient knowledge updates should examine the scaling curves for depth and width choices.
+Researchers propose a conversational risk accumulation framework that tracks semantic drift,
+sensitivity weighted entity graphs and compliance gradients. The approach releases CRA bench with
+1,208 turn sessions plus a five family extension reaching 2,000 sessions. Evaluation uses trajectory
+AUROC turns to detection calibrated false positive metrics and leave one family out diagnostic stress tests.
+This directly extends the tracked agents and tool use arc from Episode 119 by addressing gradual
+intent drift that single turn guard rails miss. Pipi implemented the upload restriction after
+analysis showed no technical barrier had previously existed. Seth Larson noted that attacker simply had
+not yet abused the prior openness. Maintainers of older releases should review their publishing workflows.
+The restriction applies only to new files on existing older releases. The M diversity tool provides
+a standardized set of embedding based diversity measures that work with any embedding model.
+The package supports stylistic semantic language and speaker diversity calculations through a single
+interface. Researchers can install it directly from the linked GitHub repository. The tool addresses
+fragmentation of prior diversity measurement approaches. Install gigatoken and benchmark your current
+pre-processing pipeline against hugging face tokenizers on large text corporate. Add the
+Claude security plugin to an existing Claude code session and scan a non-production repository to see
+the patch workflow. Run the public 10 task, cost benchmark prompts against your top two providers to
+measure real versus advertised spend. Explore the mega wiki QA dataset if you are testing hyper network
+or Laura based knowledge injection methods. Continued rollout of open AI presence enterprise agent
+features to additional eligible customers is expected. Further releases from pool sides model factory
+following Laguna S are on the way. Expanded CRA bench evaluations as more teams adopt the multi-turn
+risk framework will appear soon. Additional scaling studies on hyper network knowledge injection as the
+mega wiki QA results circulate are coming next. Okay, let's pop the hood on the invisible reasoning
+tokens that drive the 10.6 times cost spread. Published per token prices suggest predictable spend.
+In practice, many models generate substantial hidden reasoning traces, build at output rates but never
+shown to the user. The Reddit benchmark revealed one model consuming 197 internal tokens to emit a
+single classification word. These traces arise because current reasoning training encourages step-by-step
+computation even when the final answer is trivial. The effect compounds on agentic or multi-turn tasks
+where failed attempts burn extra tokens at high rates. This matches the reported negative 0.62
+correlation between failed attempts and token burn. When choosing providers, run your actual workload
+rather than relying on list prices. The practical decision rule is to measure end-to-end token usage on
+representative tasks before committing to a cost-optimized tier. Tomorrow keep an eye on further pool
+side model factory updates and expanded CRA bench results. That's models and agents for today.
+If you found this useful, share it with someone who's trying to keep up with all these changes
+and subscribe so you don't miss tomorrow's update. The AI world moves fast. We'll help you keep
+up, see you tomorrow, and if you'd rather watch than listen, find us on YouTube at NARA Network,
+links in the show notes. One more thing. If you like today's episode, our sister show First Principles
+Daily is worth a spot in your feed. Reasoning from raw materials, not analogy, on the breakthroughs
+that actually cut cost. It's one of the NARA Network's daily briefings, all free at NARANetwork.com.
+Following the long arcs, story trackers on NARANetwork.com follow major programs across episodes,
+Tesla, SpaceX, AI, Space Science, and more. This episode used AI voice synthesis of my voice. Editorial
+selection and analysis are my own.
