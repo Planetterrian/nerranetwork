@@ -1604,6 +1604,21 @@ same review ran across the other ten shows. Drift guards:
   risk): Unintended Consequences +14 → 38 unproduced (~7.6 wk runway, was
   ~4.8); First Principles +12 → 27 unproduced (~3.9 wk, was ~1.3 and
   about to dry up), preserving the concrete/opportunity alternation.
+  **July 24 2026 — restocks are now AUTOMATED** (drift guards:
+  `tests/test_queue_restock.py`): `.github/workflows/restock-topic-queues.yml`
+  (daily 13:37 UTC + dispatch, `force` input) runs
+  `scripts/restock_topic_queues.py` — trigger-gated (FPD <4wk, UC <5wk;
+  refills to ~8wk) Grok generation against per-show restock prompts
+  (`shows/prompts/*_restock.txt` — full queue history injected for dedupe,
+  category balance for FPD's alternation, an explicit never-invent honesty
+  rule since briefs become episodes). Validation rejects thin briefs, bad
+  categories, id dupes, and fuzzy near-duplicate titles vs the ENTIRE
+  history (produced included); existing entries are never modified; the
+  workflow re-runs `TestNarrativeQueueRunway` BEFORE committing, so the
+  runway floors (3.0/4.0wk) are now the alarm that the AUTOMATION broke,
+  not a manual chore. Age of AI's deliberately-empty queue is not
+  registered and must never be. Generated topics sit unproduced for weeks
+  — prune any weak ones directly in `shows/topic_queues/*.yaml`.
 - **Финансы Просто YouTube category** fixed 25 (News) → 27 (Education).
 - **Operator items (not code):** localize the Russian shows' spoken AI
   disclosure (still English on the Olya voice — A/B per #17); decide

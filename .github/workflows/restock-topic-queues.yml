@@ -1,0 +1,85 @@
+# Auto-restock narrative topic queues (July 24 2026).
+#
+# The narrative shows (First Principles Daily, Unintended Consequences) run
+# from shows/topic_queues/*.yaml instead of a news fetch. Restocks were
+# manual, and twice a queue drifted to within days of empty — an empty
+# queue means narrative_queue_empty skips and the show silently stops
+# publishing. scripts/restock_topic_queues.py is trigger-gated (only acts
+# when a show's runway drops below ~4-5 weeks, refills to ~8), so this
+# daily run is a cheap no-op most days and a small Grok call (~pennies)
+# when it fires. Age of AI's queue is deliberately empty and is NOT
+# registered in the script — never add it.
+#
+# The drift guards in tests/test_network_quality_pass.py
+# (TestNarrativeQueueRunway, 3.0/4.0-week floors) remain the alarm of last
+# resort: they only fire if this automation has been broken for a week+.
+name: Restock Topic Queues
+
+on:
+  schedule:
+    # Daily, off-peak (:37 per landmine #24), after the morning shows finish.
+    - cron: "37 13 * * *"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Restock to target runway even when above the trigger"
+        required: false
+        default: "false"
+
+concurrency:
+  group: restock-topic-queues
+  cancel-in-progress: false
+
+jobs:
+  restock:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./.github/actions/setup-python
+        with:
+          python-version: "3.12"
+          requirements-file: "requirements.txt"
+          skip-checkout: "true"
+
+      - name: Restock queues (trigger-gated)
+        env:
+          GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+          XAI_API_KEY: ${{ secrets.GROK_API_KEY }}
+        run: |
+          FORCE_FLAG=""
+          if [ "${{ github.event.inputs.force }}" = "true" ]; then
+            FORCE_FLAG="--force"
+          fi
+          python scripts/restock_topic_queues.py $FORCE_FLAG
+
+      - name: Verify queue integrity after restock
+        # The runway/uniqueness/alternation drift guards double as the
+        # post-restock validator: a malformed or under-filled restock
+        # fails HERE, before anything is committed.
+        run: python -m pytest tests/test_network_quality_pass.py::TestNarrativeQueueRunway -q
+
+      - uses: ./.github/actions/safe-commit-push
+        with:
+          add-paths: |
+            shows/topic_queues/first_principles.yaml
+            shows/topic_queues/unintended_consequences.yaml
+          commit-message: "Auto-restock: narrative topic queues (trigger-gated)"
+
+      - name: Notify operator
+        if: success()
+        env:
+          NOTIFICATION_WEBHOOK_URL: ${{ secrets.NOTIFICATION_WEBHOOK_URL }}
+        run: |
+          # Ping only when something was actually committed this run
+          # (clean no-op when the webhook secret is unset).
+          if [ -n "$NOTIFICATION_WEBHOOK_URL" ] && \
+             git log -1 --pretty=%s | grep -q "Auto-restock: narrative topic queues"; then
+            STAT=$(git show --stat --oneline -1 | head -c 1200)
+            printf '{"text":"Topic queues restocked:\n%s"}' "$STAT" \
+              | tr '\n' ' ' \
+              | curl -sf -X POST -H "Content-Type: application/json" -d @- \
+                  "$NOTIFICATION_WEBHOOK_URL" || true
+          fi

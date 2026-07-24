@@ -166,9 +166,13 @@ class TestPromptTicBans:
 
 
 class TestNarrativeQueueRunway:
-    # NOTE: topic-queue restocks are MANUAL (no auto-generation), and a breach
-    # here fails the full -x suite and thus blocks unrelated PRs — restock the
-    # shows/topic_queues/ YAML before the runway runs out.
+    # NOTE (July 24 2026): restocks are now AUTOMATED — the daily
+    # restock-topic-queues.yml workflow runs scripts/restock_topic_queues.py,
+    # which refills any registered queue whose runway drops below its
+    # trigger (4-5 weeks) back up to ~8 weeks via Grok. These floors are
+    # the alarm of LAST RESORT: a breach here means the automation itself
+    # has been broken for a week+ (check the workflow's recent runs), and
+    # it fails the full -x suite until fixed.
     # unintended_consequences runs 7 days/week (cron "1 9 * * *", a daily
     # narrative show per DAILY_NARRATIVE_SHOWS in test_schedule.py); per_week
     # was corrected 5→7 July 2026 to match the real cadence.
