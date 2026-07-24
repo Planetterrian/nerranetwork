@@ -172,4 +172,45 @@ reviews:
       ab_listen_required: true
       rationale: Shape-based de-seed of 10/10 tic; avoids quotable example per meta-rule
     agent_cost_usd: 0.0591
+  - date: '2026-07-24'
+    pr: null
+    doc: docs/reviews/models_agents_review_2026_07_24.md
+    generated_by: grok-4.3
+    summary: Persistent under-length (9/10 episodes below 1500w) and boilerplate tics ("keep an eye on", "Okay let's pop the hood on", network outros) continue; prior length/garble predictions hit with no regressions; chapters remain clean.
+    scored_prior_predictions:
+    - metric: episodes below min_podcast_words (1500) in last 10
+      verdict: miss
+      evidence: 9/10 still below (snapshot ep112-121)
+    - metric: '"keep an eye on" occurrences as Tomorrow Teaser opener, last 10'
+      verdict: miss
+      evidence: 10/10 (transcripts ep112-121)
+    - metric: verbatim-doubled sentence pairs in shipped _tts.txt scripts
+      verdict: hit
+      evidence: ep115/116+ clean
+    shipped: []
+    deferred:
+    - Digest-driven / position-aware mid-section chapter titles (carried)
+    - Expand Under the Hood section for length after four-show A/B settles (carried)
+    - Chronic under-length = digest ceiling (carried)
+    predictions:
+    - metric: episodes below min_podcast_words (1500) in last 10
+      baseline: 9/10
+      expected: <=3/10 after min_digest_words raise to 1500
+      verdict: pending
+      evidence: null
+    - metric: '"keep an eye on" occurrences as Tomorrow Teaser opener, last 10'
+      baseline: 10/10
+      expected: <=2/10 after shape-based de-seed + ban + rotation memory
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/models_agents.yaml
+      kind: config
+      ab_listen_required: false
+      rationale: Direct digest-substrate lever per length meta-rule; targets ceiling without podcast-side changes
+    - file: shows/prompts/models_agents_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Shape-based de-seed per meta-rule; avoids quotable example; adds successor-tic prediction to ledger
+    agent_cost_usd: 0.0575
 do_not_retry: []
