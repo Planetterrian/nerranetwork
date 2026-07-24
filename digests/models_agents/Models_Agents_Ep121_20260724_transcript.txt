@@ -1,0 +1,92 @@
+Pull up a chair. This is Models and Agents, episode 121 for July 24th, 2026.
+Your daily AI briefing. Their signal and noise in AI every day.
+Let's get to the signal. Voice now drives multi-agent work on desktop and iOS,
+while a new 10 billion European reasoning model ships open weights.
+Open AI expanded voice control to the desktop app, so users on plus,
+pro, business, edu, and enterprise plans can direct multiple agents through chat GPT work
+or codex without typing. The same rollout brings remote codex access through the iOS app,
+with Android support listed as coming soon. A separate European release put a 10 billion
+parameter open weight reasoning model into the open under an MIT license after pre-training on
+9 trillion tokens. Builders watching both agent interfaces and smaller reasoning models
+now have concrete releases to test this week. Open AI rolled out chat GPT voice to the desktop
+app on macOS and Windows for plus, pro, business, edu, and enterprise users.
+The feature runs on GPT Live so the model can speak, listen, and coordinate work inside the app
+at the same time. Control extends to codex via the iOS app with paired remote access,
+while Android support is scheduled soon. The announcement covers global availability starting today
+across the listed plans and explicitly pairs the voice layer with existing work and codex agent
+environments. Teams already using voice and mobile workflows can now run the same patterns on desktop
+hardware. This continues the agent and tool use arc we tracked last episode, where reliability of
+long horizon agents remains the open question. Domino small is a 10 billion parameter open weight
+reasoning model released under MIT after pre-training on 9 trillion multilingual tokens,
+followed by continued pre-training that doubled context to 32k native tokens.
+Post-training included math focused SFT and kneeling, GRPO with verifiable rewards,
+DPO, and a multi-environment GRPO stage covering mathematics, code, multiple choice QA,
+instruction following, and tool calling. The model extends to 128k at inference via YAR and
+supports a chat template toggle for dual mode reasoning. It produces roughly one third the tokens of
+Quinn 3.59B on core reasoning benchmarks while scoring 79.9 on IFEVAL and 50.0 on GPQA diamond.
+The release also ships Domine Swarm and Apache 2.0 inference framework developed for HPC clusters
+during the same program. This moves the open weight reasoning models arc forward from yesterday's
+episode by delivering a new European checkpoint that narrows the performance gap on math and tool
+tasks. Black Forest Labs released Flux 3, a multimodal flow model family that reportedly outperforms
+CDANCE 2.0, Gemini Omni, and Grock Imagine on image and video tasks, plus a Flux mimic variant for
+video action robotics. The release marks a significant capability jump for the lab in both generation
+quality and cross-modal consistency. Practitioners focused on high fidelity image or robotic simulation
+work now have a new open contender to benchmark against closed frontier systems. Open AI stated that
+GPT 5.5 instant brought frontier health intelligence to all free users while GPT 5.6 sole improves
+performance on more complex medical questions. The updates build on work with hundreds of physicians
+measuring accuracy, safety, context awareness, and appropriate escalation. More than 300 million
+weekly health queries already reached chat GPT, and the new models target better handling of those
+cases. Chat GPT in work mode can now build and deploy public websites that run on cloud flair
+workers with SQL life persistence. The platform handles the deployment details, though open AI does not
+surface the underlying stack clearly. This gives builders a zero config path from prompt to
+live site with durable storage. Open AI presence delivers enterprise AI agents through a managed
+program rather than self-serve, with deployments led by open AI's own forward deployed engineers.
+The offering is currently in limited general availability and not yet available for direct online
+purchase. It pairs agents with attached engineering support for production use cases.
+A new tutorial walks through an end-to-end OCR workflow using BIDU's unlimited OCR model on high
+resolution document images and multi-page PDFs. It covers GPU setup, tiled high detail inference versus
+faster base modes, and handling dense layouts, tables, and cross-page content. The pipeline is
+reproducible and aimed at production document processing. Health in chat GPT is rolling out to US
+users. Users can securely connect Apple Health and supported medical records. This connection supports
+contextual analysis and change tracking. The feature emphasizes informed conversations while
+maintaining privacy controls. Users with existing health data on Apple platforms can test the integration.
+The model surfaces trends and flags issues from the connected records. The rollout pairs the new
+data sources with GPT 5.5 instant and GPT 5.6 sole models. Simon Willison notes that the simple
+React style agent loop explored since 2022 may be what much of the current loops excitement actually
+refers to. The observation pushes back against hype that treats loops as a novel breakthrough.
+Builders should verify whether their current agent implementations already capture the core pattern.
+The post-questions whether recent enthusiasm around agent loops simply rediscoveres the original
+React formulation. The discussion highlights that many recent implementations followed the same 2022
+pattern without new mechanisms. Practitioners are encouraged to check existing setups before
+introducing added complexity. Enable chat GPT voice on desktop if you have a plus or higher plan
+and test directing two agents in the same session to see coordination latency.
+Download Daumann-Small weights and run the math and kneeling checkpoint on a local 32K
+context task to compare token usage against Quen 3.59B. Follow the mark tech post by
+do unlimited OCR tutorial on a multi-page PDF from your own documents and measure tiled versus
+base mode accuracy. Connect Apple Health data in chat GPT for US users and ask for trend summaries
+on a 90-day window to evaluate context handling. Android support for chat GPT voice in Codex is
+expected in the coming weeks. Further flux 3 fine tunes and robotics adapters are likely from
+the community. Expanded US rollout of health in chat GPT to additional medical record providers is
+on the schedule. Okay, let's pop the hood on mixture of experts routing. Everyone treats MoE
+routing as a learned load balancing trick, yet the paper shows it spontaneously implements Huffman
+coding. High frequency tokens get short, low diversity expert paths while rare or complex tokens
+trigger high diversity expert committees. The frequency diversity law emerges directly from
+training dynamics in models such as fee 3.5 MoE and Gemma 427 BA4B where effective sparsity already
+approximates minimum description length optimality. When load balancing forces too many experts active,
+low K over E effective functional redundancy appears and the Huffman signal collapses,
+as seen in QN 3.535 BA3B. Subset difference pruning removes those duplicates without hurting downstream
+reasoning, restoring the efficient shortcode paths for common tokens. The practical takeaway is to
+measure effective sparsity on your target workload before adding extra load balancing loss.
+If the ratio is already low, pruning the redundant experts will usually cut both memory and
+latency with no accuracy cost. The authors demonstrate that the pruning step preserves GSM 8K accuracy
+on QN 3.8B after 20,000 alpha-edit batch edits, retaining 79.9% versus 10.9% with a Wikipedia baseline.
+So when should you actually reach for this versus the alternative? Tomorrow keep an eye on Android
+support for chat GPT voice in Codex and the first community adapters for Flux 3. That's models and
+agents for today. If you found this useful, share it with someone who's trying to keep up with all
+these changes and subscribe so you don't miss tomorrow's update. The AI world moves fast,
+we'll help you keep up. See you tomorrow and if you'd rather watch than listen,
+find us on YouTube at NARA Network. Links in the show notes. Quick tip from the network. Try the
+do positive pod next. Good news and science and tech. Plus one concrete action you can take.
+Every NARA network show is free at nara-network.com. Live dashboards, TSLA, SpaceX launches,
+the investing scoreboard are all at nara-network.com slash data. This episode used AI voice synthesis
+of my voice. Editorial selection and analysis are my own.

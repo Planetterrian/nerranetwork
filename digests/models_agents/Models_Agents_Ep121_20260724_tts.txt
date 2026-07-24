@@ -1,0 +1,133 @@
+Pull up a chair, this is Models and Agents, episode one hundred twenty-one, for July twenty-fourth, twenty twenty-six. Your daily A I briefing. There's signal and noise in A I every day. Let's get to the signal.
+
+Voice now drives multi-agent work on desktop and iOS while a new 10B European reasoning model ships open weights.
+
+Open A I expanded voice control to the desktop app so users on Plus, Pro, Business, Edu, and Enterprise plans can direct multiple agents through ChatGPT Work or Codex without typing.
+
+The same rollout brings remote Codex access through the iOS app, with Android support listed as coming soon.
+
+A separate European release put a ten billion parameter open-weight reasoning model into the open under an MIT license after pre-training on nine trillion tokens.
+
+Builders watching both agent interfaces and smaller reasoning models now have concrete releases to test this week.
+
+Open A I rolled out ChatGPT Voice to the desktop app on macOS and Windows for Plus, Pro, Business, Edu, and Enterprise users.
+
+The feature runs on G P T Live so the model can speak, listen, and coordinate work inside the app at the same time.
+
+Control extends to Codex via the iOS app with paired remote access, while Android support is scheduled soon.
+
+The announcement covers global availability starting today across the listed plans and explicitly pairs the voice layer with existing Work and Codex agent environments.
+
+Teams already using voice in mobile workflows can now run the same patterns on desktop hardware.
+
+This continues the agent and tool use arc we tracked last episode, where reliability of long-horizon agents remains the open question.
+
+Domyn-Small is a ten billion parameter open-weight reasoning model released under MIT after pre-training on nine trillion multilingual tokens followed by continued pre-training that doubled context to thirty two K native tokens.
+
+Post-training included math-focused SFT annealing, GRPO with verifiable rewards, DPO, and a multi-environment GRPO stage covering mathematics, code, multiple-choice QA, instruction following, and tool calling.
+
+The model extends to one hundred twenty eight K at inference via YaRN and supports a chat-template toggle for dual-mode reasoning.
+
+It produces roughly one third the tokens of Qwen three point five nine B on core reasoning benchmarks while scoring seventy nine point nine on IFEval and fifty point zero on G P Q A Diamond.
+
+The release also ships Domyn Swarm, an Apache two point zero inference framework developed for HPC clusters during the same program.
+
+This moves the open-weight reasoning models arc forward from yesterday's episode by delivering a new European checkpoint that narrows the performance gap on math and tool tasks.
+
+Black Forest Labs released FLUX three, a multimodal flow model family that reportedly outperforms Seedance two point zero, Gemini Omni, and Grok Imagine on image and video tasks, plus a FLUX-mimic variant for video-action robotics.
+
+The release marks a significant capability jump for the lab in both generation quality and cross-modal consistency.
+
+Practitioners focused on high-fidelity image or robotics simulation work now have a new open contender to benchmark against closed frontier systems.
+
+Open A I stated that G P T five point five Instant brought frontier health intelligence to all free users while G P T five point six Sol improves performance on more complex medical questions.
+
+The updates build on work with hundreds of physicians measuring accuracy, safety, context awareness, and appropriate escalation.
+
+More than three hundred million weekly health queries already reach ChatGPT, and the new models target better handling of those cases.
+
+ChatGPT in Work mode can now build and deploy public websites that run on Cloudflare Workers with SQLite persistence.
+
+The platform handles the deployment details, though Open A I does not surface the underlying stack clearly.
+
+This gives builders a zero-config path from prompt to live site with durable storage.
+
+Open A I Presence delivers enterprise A I agents through a managed program rather than self-serve, with deployments led by Open A I’s own Forward Deployed Engineers.
+
+The offering is currently in limited general availability and not yet available for direct online purchase.
+
+It pairs agents with attached engineering support for production use cases.
+
+A new tutorial walks through an end-to-end OCR workflow using Baidu’s Unlimited-OCR model on high-resolution document images and multi-page PDFs.
+
+It covers G P U setup, tiled high-detail inference versus faster base modes, and handling dense layouts, tables, and cross-page content.
+
+The pipeline is reproducible and aimed at production document processing.
+
+Health in ChatGPT is rolling out to U.S. users.
+
+Users can securely connect Apple Health and supported medical records.
+
+This connection supports contextual analysis and change tracking.
+
+The feature emphasizes informed conversations while maintaining privacy controls.
+
+Users with existing health data on Apple platforms can test the integration.
+
+The model surfaces trends and flags issues from the connected records.
+
+The rollout pairs the new data sources with G P T 5.5 Instant and G P T 5.6 Sol models.
+
+Simon Willison notes that the simple ReAct-style agent loop explored since twenty twenty two may be what much of the current loops excitement actually refers to.
+
+The observation pushes back against hype that treats loops as a novel breakthrough.
+
+Builders should verify whether their current agent implementations already capture the core pattern.
+
+The post questions whether recent enthusiasm around agent loops simply rediscovers the original ReAct formulation.
+
+The discussion highlights that many recent implementations follow the same 2022 pattern without new mechanisms.
+
+Practitioners are encouraged to check existing setups before introducing added complexity.
+
+Enable ChatGPT Voice on desktop if you have a Plus or higher plan and test directing two agents in the same session to see coordination latency.
+
+Download Domyn-Small weights and run the math annealing checkpoint on a local thirty two K context task to compare token usage against Qwen three point five nine B.
+
+Follow the MarkTechPost Baidu Unlimited-OCR tutorial on a multi-page PDF from your own documents and measure tiled versus base mode accuracy.
+
+Connect Apple Health data in ChatGPT for U.S. users and ask for trend summaries on a ninety day window to evaluate context handling.
+
+Android support for ChatGPT Voice in Codex is expected in the coming weeks.
+
+Further FLUX three fine-tunes and robotics adapters are likely from the community.
+
+Expanded U.S. rollout of Health in ChatGPT to additional medical record providers is on the schedule.
+
+OK, let's pop the hood on mixture of experts routing.
+
+Everyone treats MoE routing as a learned load-balancing trick, yet the paper shows it spontaneously implements Huffman coding.
+
+High-frequency tokens get short, low-diversity expert paths while rare or complex tokens trigger high-diversity expert committees.
+
+The Frequency-Diversity Law emerges directly from training dynamics in models such as Phi three point five MoE and Gemma four twenty seven B A four B, where effective sparsity already approximates minimum-description-length optimality.
+
+When load-balancing forces too many experts active, low k over E effective, functional redundancy appears and the Huffman signal collapses, as seen in Qwen three point five thirty five B A three B.
+
+Subset Difference Pruning removes those duplicates without hurting downstream reasoning, restoring the efficient short-code paths for common tokens.
+
+The practical takeaway is to measure effective sparsity on your target workload before adding extra load-balancing loss.
+
+If the ratio is already low, pruning the redundant experts will usually cut both memory and latency with no accuracy cost.
+
+The authors demonstrate that the pruning step preserves GSM eight K accuracy on Qwen three eight B after twenty thousand AlphaEdit batch edits, retaining seventy nine point nine percent versus ten point nine percent with a Wikipedia baseline.
+
+So when should you actually reach for this versus the alternative.
+
+Tomorrow, keep an eye on Android support for ChatGPT Voice in Codex and the first community adapters for FLUX three.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The A I world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+Quick tip from the network: try The Do Positive Pod next — good news in science and tech, plus one concrete action you can take. Every Nerra Network show is free at nerranetwork dot com. Live dashboards — T S L A, Space X launches, the investing scoreboard — are all at nerranetwork dot com/data.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
