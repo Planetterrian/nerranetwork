@@ -409,3 +409,76 @@ def test_management_html_renders_multilingual_card():
     html = (ROOT / "management.html").read_text(encoding="utf-8")
     assert 'id="multilingual-coverage"' in html
     assert "data.multilingual" in html
+
+
+# ---------------------------------------------------------------------------
+# Mission-control expansion (July 2026): catalog, gallery, content lake,
+# all-time OP3 downloads. The operator asked for cumulative numbers —
+# these guards pin the section shapes so the dashboard stays the single
+# current + cumulative surface.
+# ---------------------------------------------------------------------------
+
+def test_catalog_section_shape():
+    data = gd.build_dashboard(ROOT, offline=True)
+    cat = data.get("catalog")
+    assert cat, "dashboard must emit the catalog section"
+    assert cat["shows_count"] == data["network"]["shows_count"]
+    assert cat["network_episodes_to_date"] > 0
+    assert cat["network_news_sources"] > 0
+    tesla = cat["per_show"]["tesla"]
+    assert tesla["episodes_to_date"] >= 550  # monotonic episode numbering
+    assert tesla["news_sources"] > 0
+    for cap in ("x", "newsletter", "youtube", "multilingual", "memory"):
+        assert cap in tesla["capabilities"], cap
+    # Narrative shows report topic-queue runway instead of feeds.
+    fp = cat["per_show"]["first_principles"]
+    assert fp["narrative_mode"] is True
+    assert fp["topic_queue"] and "remaining" in fp["topic_queue"]
+    # MAB and M&A stay two separate catalog rows.
+    assert "models_agents" in cat["per_show"]
+    assert "models_agents_beginners" in cat["per_show"]
+
+
+def test_gallery_section_shape():
+    data = gd.build_dashboard(ROOT, offline=True)
+    gal = data.get("gallery")
+    assert gal, "dashboard must emit the gallery section"
+    if gal.get("configured") and not gal.get("error"):
+        assert gal["image_count"] > 0
+        assert gal["per_show"], "per-show image counts expected"
+        assert "retention" in gal
+
+
+def test_content_lake_section_shape():
+    data = gd.build_dashboard(ROOT, offline=True)
+    lake = data.get("content_lake")
+    assert lake, "dashboard must emit the content_lake section"
+    for key in ("stats", "db_exists", "db_size_bytes", "healthy"):
+        assert key in lake, key
+
+
+def test_op3_history_accumulates(tmp_path):
+    """_merge_op3_history freezes old weeks and overwrites the rolling 4."""
+    (tmp_path / "api").mkdir()
+    per_show = {"tesla": {"weekly_downloads": [10, 20, 30, 40]}}
+    out1 = gd._merge_op3_history(tmp_path, "2026-07-23T00:00:00Z", per_show)
+    assert out1["network_total"] == 100
+    assert out1["per_show_totals"]["tesla"] == 100
+    assert out1["since"] == "2026-06-29"  # Monday of w-3
+    # A week later: the window slides; the dropped-off week stays frozen.
+    per_show2 = {"tesla": {"weekly_downloads": [21, 31, 41, 5]}}
+    out2 = gd._merge_op3_history(tmp_path, "2026-07-30T00:00:00Z", per_show2)
+    # frozen w 2026-06-29 (10) + overwritten 20->21, 30->31, 40->41 + new 5
+    assert out2["network_total"] == 10 + 21 + 31 + 41 + 5
+    assert out2["since"] == "2026-06-29"
+    assert len(out2["network_series"]) == 5
+
+
+def test_management_html_renders_new_sections():
+    html = (ROOT / "management.html").read_text(encoding="utf-8")
+    assert 'id="catalog-table"' in html
+    assert 'id="library-grid"' in html
+    assert "data.catalog" in html
+    assert "data.gallery" in html
+    assert "data.content_lake" in html
+    assert "network_downloads_all_time" in html

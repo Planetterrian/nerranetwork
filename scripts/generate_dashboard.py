@@ -1187,9 +1187,14 @@ def aggregate_costs(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]:
             "note": "Projection uses last-7d average × 65 (network volume). Tune per operator knowledge.",
         },
         "youtube_quota": {
-            "enabled_shows_count": 2,  # TST + MAB only (per landmine #20 quota cap)
-            "daily_insert_cost_units": 1600,  # long + short typical (see engine/youtube_quota.py)
-            "note": "Hard cap ~10k units/day per channel. Preflight + youtube_quota.py have the estimators. 6 shows enabled across 2 channels (EN: Tesla+MAB full, FF+MIT Shorts-only; RU: FP+PR) — see landmine #20.",
+            "enabled_shows_count": sum(
+                1 for s in shows
+                if s.get("cfg") and getattr(s["cfg"].youtube, "enabled", False)
+            ),
+            "daily_insert_cost_units": 1600,  # per long-form insert (see engine/youtube_quota.py)
+            "note": "Quota raised to 200k units/day per channel (June 26 2026 — landmine #20); "
+                    "the binding constraint is now upload CADENCE (~30/day/channel safe ceiling), "
+                    "not quota. Preflight + youtube_quota.py have the estimators.",
         },
     }
 
@@ -1692,11 +1697,87 @@ def build_dashboard(root: Path, *, offline: bool = False, previous_flat: Optiona
         "rss_audit": rss,
         "mit_performance": aggregate_mit_performance(root),
         "audience": build_audience_section(root),
-        "content_lake": {
-            "stats": _get_content_lake_stats_safe(),
-            "compaction_note": "Run scripts/compact_lake.py or engine.content_lake.compact_lake() to prune old full text.",
-        },
+        "catalog": build_catalog_section(root, shows, rss),
+        "gallery": build_gallery_section(root),
+        "content_lake": build_content_lake_section(root),
     }
+
+
+def _merge_op3_history(
+    root: Path,
+    fetched_at: Optional[str],
+    per_show: Dict[str, Dict[str, Any]],
+) -> Dict[str, Any]:
+    """Accumulate OP3's rolling 4-week series into api/op3_history.json.
+
+    OP3 has no all-time endpoint — it exposes ``weeklyDownloads``
+    (w-3 … w0, w0 = the week containing the fetch date). Each dashboard
+    build overwrites those four ISO weeks in the history file (they are
+    authoritative and w0 is still growing) and leaves older weeks frozen,
+    yielding an ever-more-complete weekly ledger. All-time totals are the
+    sum over stored weeks, i.e. "since history tracking began".
+
+    NOTE the file must stay in nightly-maintenance.yml's safe-commit-push
+    add-paths whitelist — the youtube_channel_history landmine (July 22
+    2026 pass) was exactly a history file written but never committed.
+
+    Returns {"network_total", "per_show_totals", "since", "network_series"}.
+    Best-effort: any failure returns zeros without breaking the dashboard.
+    """
+    empty = {"network_total": 0, "per_show_totals": {}, "since": None,
+             "network_series": []}
+    try:
+        # Anchor w0 to the Monday of the week containing the fetch date.
+        try:
+            fetch_date = _dt.date.fromisoformat(str(fetched_at)[:10])
+        except (ValueError, TypeError):
+            fetch_date = _dt.date.today()
+        monday_w0 = fetch_date - _dt.timedelta(days=fetch_date.weekday())
+
+        hist_path = root / "api" / "op3_history.json"
+        weeks: Dict[str, Dict[str, int]] = {}
+        if hist_path.exists():
+            try:
+                stored = json.loads(hist_path.read_text(encoding="utf-8"))
+                if isinstance(stored.get("weeks"), dict):
+                    weeks = {
+                        wk: {s: int(n) for s, n in row.items()
+                             if isinstance(n, (int, float))}
+                        for wk, row in stored["weeks"].items()
+                        if isinstance(row, dict)
+                    }
+            except Exception:  # noqa: BLE001 — corrupt history: rebuild
+                weeks = {}
+
+        for slug, v in per_show.items():
+            series = v.get("weekly_downloads") or []
+            for i, n in enumerate(reversed(series)):
+                week_start = (monday_w0 - _dt.timedelta(weeks=i)).isoformat()
+                weeks.setdefault(week_start, {})[slug] = int(n or 0)
+
+        hist_path.parent.mkdir(parents=True, exist_ok=True)
+        hist_path.write_text(
+            json.dumps(
+                {"updated_at": _dt.datetime.now(_dt.timezone.utc).isoformat(),
+                 "weeks": weeks},
+                indent=2, ensure_ascii=False, sort_keys=True) + "\n",
+            encoding="utf-8")
+
+        per_show_totals: Dict[str, int] = {}
+        network_series: List[List[Any]] = []
+        for wk in sorted(weeks):
+            row = weeks[wk]
+            network_series.append([wk, sum(row.values())])
+            for slug, n in row.items():
+                per_show_totals[slug] = per_show_totals.get(slug, 0) + n
+        return {
+            "network_total": sum(v for _, v in network_series),
+            "per_show_totals": per_show_totals,
+            "since": min(weeks) if weeks else None,
+            "network_series": network_series,
+        }
+    except Exception:  # noqa: BLE001 — never break the dashboard
+        return empty
 
 
 def build_audience_section(root: Path) -> Dict[str, Any]:
@@ -1723,9 +1804,34 @@ def build_audience_section(root: Path) -> Dict[str, Any]:
                     "downloads_7d": s.get("downloads_7d") or 0,
                     "downloads_30d": s.get("downloads_30d") or 0,
                     "weekly_avg": s.get("weekly_avg") or 0,
+                    # 4-element weekly series (w-3 … w0) for trend sparklines.
+                    "weekly_downloads": list(s.get("weekly_downloads") or []),
                 }
                 for slug, s in shows.items()
             }
+            # Network weekly trend: right-aligned element-wise sum of the
+            # per-show weekly series (shows with shorter histories only
+            # contribute to the weeks they have).
+            max_weeks = max(
+                (len(v["weekly_downloads"]) for v in per_show.values()),
+                default=0,
+            )
+            network_weekly = [0] * max_weeks
+            for v in per_show.values():
+                wk = v["weekly_downloads"]
+                for i, n in enumerate(reversed(wk)):
+                    network_weekly[max_weeks - 1 - i] += int(n or 0)
+
+            # All-time downloads: OP3 only exposes rolling windows (the
+            # per-episode downloadsAll list is a subset — summing it
+            # UNDERCOUNTS badly), so we accumulate the weekly series into
+            # api/op3_history.json on every build and sum the accumulated
+            # weeks. "All-time" therefore means "since history tracking
+            # began" and grows more complete every week.
+            history = _merge_op3_history(
+                root, data.get("fetched_at"), per_show)
+            for slug, v in per_show.items():
+                v["downloads_all_time"] = history["per_show_totals"].get(slug, 0)
             top_episodes = sorted(
                 (
                     {
@@ -1746,6 +1852,10 @@ def build_audience_section(root: Path) -> Dict[str, Any]:
                     v["downloads_30d"] for v in per_show.values()),
                 "network_downloads_7d": sum(
                     v["downloads_7d"] for v in per_show.values()),
+                "network_downloads_all_time": history["network_total"],
+                "all_time_since": history["since"],
+                "network_weekly_downloads": network_weekly,
+                "network_weekly_history": history["network_series"],
                 "per_show": per_show,
                 "top_episodes_7d": top_episodes,
             }
@@ -1890,6 +2000,229 @@ def _get_content_lake_stats_safe() -> dict:
         return get_lake_stats()
     except Exception:
         return {"error": "content lake unavailable"}
+
+
+def build_content_lake_section(root: Path) -> Dict[str, Any]:
+    """Content-lake vitals for the dashboard (July 2026).
+
+    The lake (data/content_lake.db) powers cross-episode dedup, the Sunday
+    weekly-summary segment, and site search — an empty lake silently
+    degrades all three (the exact failure mode scripts/backfill_content_lake.py
+    annotates on). Surface its state so the operator sees it on the
+    mission-control page, not just in CI logs.
+    """
+    stats = _get_content_lake_stats_safe()
+    db_path = root / "data" / "content_lake.db"
+    db_exists = db_path.exists()
+    db_size = db_path.stat().st_size if db_exists else 0
+    total = int(stats.get("total_episodes") or 0) if isinstance(stats, dict) else 0
+    return {
+        "stats": stats,
+        "db_path": "data/content_lake.db",
+        "db_exists": db_exists,
+        "db_size_bytes": db_size,
+        # <2 episodes means the weekly-summary segment can't build and
+        # cross-episode dedup is running blind — the backfill guard's
+        # thin-lake threshold.
+        "healthy": total >= 2,
+        "compaction_note": "Run scripts/compact_lake.py or engine.content_lake.compact_lake() to prune old full text.",
+    }
+
+
+def build_gallery_section(root: Path) -> Dict[str, Any]:
+    """Image-library roll-up from the committed gallery manifest (July 2026).
+
+    site/data/gallery-manifest.json is rebuilt nightly from the R2 sidecars
+    (build_gallery_manifest.py). This summarises what the network offers on
+    /gallery.html: total images, per-show counts, intended-use split, plus
+    whether the retention feedback loop (api/gallery_retention.json) has
+    data yet. All best-effort — an absent manifest reports configured: false.
+    """
+    section: Dict[str, Any] = {"configured": False}
+    manifest_path = root / "site" / "data" / "gallery-manifest.json"
+    if manifest_path.exists():
+        try:
+            data = json.loads(manifest_path.read_text(encoding="utf-8"))
+            images = data.get("images") or []
+            use_counts: Dict[str, int] = {}
+            licenses: Dict[str, int] = {}
+            latest_generated = ""
+            for img in images:
+                use = str(img.get("intended_use") or "unknown")
+                use_counts[use] = use_counts.get(use, 0) + 1
+                lic = str(img.get("license") or "unknown")
+                licenses[lic] = licenses.get(lic, 0) + 1
+                gen = str(img.get("generated_at") or "")
+                if gen > latest_generated:
+                    latest_generated = gen
+            name_by_slug = {
+                s.get("slug"): s.get("name")
+                for s in (data.get("shows") or [])
+                if isinstance(s, dict)
+            }
+            section = {
+                "configured": True,
+                "generated_at": data.get("generated_at"),
+                "image_count": int(data.get("image_count") or len(images)),
+                "latest_image_at": latest_generated or None,
+                "per_show": {
+                    slug: {"count": count, "name": name_by_slug.get(slug, slug)}
+                    for slug, count in (data.get("show_counts") or {}).items()
+                },
+                "intended_use": use_counts,
+                "licenses": licenses,
+            }
+        except Exception as exc:  # noqa: BLE001 — never break the dashboard
+            section = {"configured": True, "error": str(exc)}
+
+    # Retention feedback loop: how much of the library has audience data.
+    retention: Dict[str, Any] = {"available": False}
+    ret_path = root / "api" / "gallery_retention.json"
+    if ret_path.exists():
+        try:
+            ret = json.loads(ret_path.read_text(encoding="utf-8"))
+            ret_shows = ret.get("shows") or {}
+            imgs_with_data = sum(
+                len(s.get("images") or {}) for s in ret_shows.values()
+                if isinstance(s, dict)
+            )
+            retention = {
+                "available": bool(imgs_with_data),
+                "generated": ret.get("generated"),
+                "shows_analyzed": len(ret_shows),
+                "images_with_retention": imgs_with_data,
+            }
+        except Exception:  # noqa: BLE001
+            pass
+    section["retention"] = retention
+    return section
+
+
+def _episode_num_of(record: Dict[str, Any]) -> Optional[int]:
+    for key in ("episode_num", "episode"):
+        v = record.get(key)
+        if isinstance(v, int):
+            return v
+    return None
+
+
+def build_catalog_section(
+    root: Path, shows: List[Dict[str, Any]], rss: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Show catalog: episodes to date, feed depth, and news sources (July 2026).
+
+    Answers the cumulative questions the run-rate cards don't: how many
+    shows exist, how many episodes each has ever produced, how deep the
+    public feed is, and what each show's input pipeline looks like (RSS
+    sources + web-search queries for news shows, topic-queue runway for
+    narrative shows).
+    """
+    entry_count_by_feed = {
+        f.get("file"): f.get("entry_count")
+        for f in (rss.get("feeds") or [])
+    }
+
+    per_show: Dict[str, Any] = {}
+    total_eps = 0
+    total_sources = 0
+    total_queries = 0
+    for s in shows:
+        cfg = s.get("cfg")
+        slug = s["slug"]
+        if not cfg:
+            per_show[slug] = {"name": s.get("name") or slug,
+                              "load_error": s.get("load_error")}
+            continue
+
+        # Episodes to date: the highest episode number ever recorded in
+        # the show's summaries file (the file itself is capped at recent
+        # records, but episode numbering is monotonic so max == to-date).
+        episodes_to_date = 0
+        latest_date = None
+        summ = cfg.publishing.summaries_json or ""
+        summ_path = root / summ if summ else None
+        if summ_path and summ_path.exists():
+            try:
+                data = json.loads(summ_path.read_text(encoding="utf-8"))
+                if isinstance(data, dict) and isinstance(data.get("summaries"), list):
+                    records = data["summaries"]
+                elif isinstance(data, dict) and isinstance(data.get("episodes"), list):
+                    records = data["episodes"]
+                elif isinstance(data, list):
+                    records = data
+                else:
+                    records = []
+                nums = [n for n in (_episode_num_of(r) for r in records
+                                    if isinstance(r, dict)) if n is not None]
+                episodes_to_date = max(nums) if nums else len(records)
+                dates = sorted(str(r.get("date")) for r in records
+                               if isinstance(r, dict) and r.get("date"))
+                latest_date = dates[-1] if dates else None
+            except Exception:  # noqa: BLE001
+                pass
+
+        raw = s.get("raw_yaml") or {}
+        sources = raw.get("sources") or []
+        queries = raw.get("web_search_queries") or []
+        n_sources = len(sources) if isinstance(sources, list) else 0
+        n_queries = len(queries) if isinstance(queries, list) else 0
+
+        narrative = bool(getattr(cfg, "narrative_mode", False))
+        queue_info = None
+        if narrative:
+            qfile = getattr(cfg, "topic_queue_file", "") or ""
+            qpath = root / qfile if qfile else None
+            if qpath and qpath.exists():
+                try:
+                    q = yaml.safe_load(qpath.read_text(encoding="utf-8")) or {}
+                    items = q.get("queue") or q.get("topics") or []
+                    if not isinstance(items, list):
+                        items = []
+                    produced = sum(
+                        1 for t in items
+                        if isinstance(t, dict)
+                        and (t.get("produced") or t.get("status") == "produced")
+                    )
+                    queue_info = {
+                        "total": len(items),
+                        "produced": produced,
+                        "remaining": len(items) - produced,
+                    }
+                except Exception:  # noqa: BLE001
+                    pass
+
+        ml = getattr(cfg, "multilingual", None)
+        yt = getattr(cfg, "youtube", None)
+        per_show[slug] = {
+            "name": cfg.name or slug,
+            "episodes_to_date": episodes_to_date,
+            "episodes_in_feed": entry_count_by_feed.get(
+                cfg.publishing.rss_file or ""),
+            "latest_date": latest_date,
+            "news_sources": n_sources,
+            "web_search_queries": n_queries,
+            "narrative_mode": narrative,
+            "topic_queue": queue_info,
+            "capabilities": {
+                "x": bool(cfg.publishing.x_enabled),
+                "newsletter": bool(cfg.newsletter.enabled),
+                "youtube": bool(yt and getattr(yt, "enabled", False)),
+                "multilingual": bool(ml and getattr(ml, "enabled", False)),
+                "memory": bool(getattr(cfg, "memory_enabled", False)
+                               or slug == "tesla"),  # Tesla: bespoke engine/tesla_memory
+            },
+        }
+        total_eps += episodes_to_date
+        total_sources += n_sources
+        total_queries += n_queries
+
+    return {
+        "shows_count": len(shows),
+        "network_episodes_to_date": total_eps,
+        "network_news_sources": total_sources,
+        "network_web_search_queries": total_queries,
+        "per_show": per_show,
+    }
 
 
 def _read_previous_flat_total(out_path: Path) -> Optional[int]:
