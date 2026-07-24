@@ -520,6 +520,33 @@ nerranetwork/
   items still open: recompute --apply (matched alpha retains old-window
   inflation until backfill), SnapTrade Phase-0 verification, LL-054
   family retirement.
+  **July 24 2026 operator-directed pass** (review:
+  [`docs/reviews/modern_investing_review_2026_07_24.md`](docs/reviews/modern_investing_review_2026_07_24.md);
+  drift guards: `tests/test_mit_benchmark_integrity.py::{TestSuffixedSymbolExtraction,TestCryptoSymbolCandidates,TestInstrumentScaleMismatch,TestVoidDisclosure,TestAlphaCaveatDataShaped,TestArticleCollapseAlarm}`):
+  the trade EXTRACTOR could not parse the exchange-native symbols the
+  July-3 pass taught the digest to emit — Ep111's spoken CNR.TO weekly
+  pick was silently LOST (`no_pick_extracted`) and Ep113's "BTC-USD —
+  Bitcoin" was truncated to "BTC", validated against an unrelated $28.80
+  equity (narrated stop $64,500), routed to Webull in the trade signal,
+  and would_place'd by the SHADOW executor — the wrong instrument reached
+  the execution layer. Fixed: suffixed/hyphenated symbol extraction +
+  CRYPTO market (+ latent TSX-V alternation bug), crypto candidates force
+  the `-USD` pair with no bare fallback, a wrong-instrument tripwire
+  (stop outside [ref/3, ref×3] voids at record time + self-healing
+  migration; committed tracker migrated — Ep113 BTC voided), and an
+  announced-then-voided pick is now disclosed on air exactly once. Ep115
+  fetched 9 articles (vs 222-337 median) and shipped 6/6 x.com sources —
+  new network-wide source-collapse `::warning::` + `article_count_degraded`
+  metric in run_show; digest prompt gains x.com-as-one-publication /
+  publisher-first sourcing, the Tools-header scaffold typo fix ("…Tool:
+  Source" shipped verbatim), and Today's-Pick template instructions moved
+  out of the value slot (Ep111 echoed the parenthetical on air). Length
+  attacked at the sanctioned substrate (`digest_expand_below_target` +
+  `min_digest_words: 1500`; 10/10 scripts were under the 1800 floor). The
+  significance caveat missed a SECOND time (1/6 alpha mentions) — now
+  fused into the alpha value as a data-shaped parenthetical; a third miss
+  goes to the operator as accept-or-abandon. Prompt/caveat/digest-lever
+  edits change output — A/B-listen per landmine #17.
 
 **Tesla Shorts Time Recursive Memory System (May 2026+)**  
 TST received a full recursive improvement architecture (analogous to MIT):

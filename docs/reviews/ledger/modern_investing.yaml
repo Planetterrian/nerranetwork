@@ -334,18 +334,121 @@ reviews:
         expected: ">=1 Monday weekly pick per week under regime v2; no
           pick drought longer than 7 days while SELECTIVE RESET is
           reachable"
-        verdict: pending
-        evidence: null
+        verdict: partial
+        evidence: "2026-07-24: the escape valve produced a weekly pick 3 days
+          after v2 merged (Jul 21, ending an 11-day mostly-pre-fix drought) —
+          but on TUESDAY (Mon Jul 20 was an explicit no-trade), and the pick
+          was lost to the suffixed-symbol extraction bug (BTC-USD -> 'BTC',
+          wrong instrument, voided)."
+
       - metric: weekly holds with entry_bar_date == exit_bar_date
         baseline: "1 (Ep101 COST, the Thursday degenerate)"
         expected: "0 new one-bar weekly holds"
         verdict: pending
-        evidence: null
+        evidence: "2026-07-24: no weekly hold closed in the window (the only
+          new pick voided on the wrong-instrument tripwire) — carry forward."
+
       - metric: episodes quoting the matched-window alpha with the
           significance qualifier in the same breath
         baseline: "0 of ~8 alpha mentions (hedge separate -> dropped)"
         expected: "inline caveat echoed in >=70% of alpha mentions while
           t<2"
+        verdict: miss
+        evidence: "2026-07-24: post-merge alpha mentions Ep111 0/1, Ep112 1/2,
+          Ep113 0/1, Ep114 0/2 = 1/6 (17%) — the em-dash instruction form is
+          stripped during paraphrase. Second miss on this metric; third
+          mechanism shipped (caveat fused into the alpha VALUE as a
+          data-shaped parenthetical); a third miss goes to the operator as
+          accept-or-abandon."
+
+    agent_cost_usd: null
+
+  - date: 2026-07-24
+    pr: null
+    doc: docs/reviews/modern_investing_review_2026_07_24.md
+    reviewer: claude-code (/review-show, operator-directed out of rotation)
+    summary: >
+      Operator-reported issues in latest episodes / source referencing /
+      pick reviews / performance reporting — all four verified. P0: the
+      extractor could not parse the exchange-native symbols the July-3
+      pass taught the digest to emit — Ep111's spoken CNR.TO weekly pick
+      was silently LOST (signal: no_pick_extracted) and Ep113's
+      "BTC-USD — Bitcoin" was truncated to "BTC", validated against an
+      unrelated equity at $28.80 (narrated stop $64,500 — above entry),
+      routed to Webull in the trade signal, and would_place'd by the
+      shadow executor at $29.62: the wrong instrument reached the
+      execution layer. P0: Ep115 fetched 9 articles (vs 222-337 median)
+      and shipped 6/6 x.com sources incl. a duplicate unusual_whales URL
+      + the Tools header scaffold typo rendered verbatim ("...Tool:
+      Source"). P1: alpha quoted without the significance caveat (miss
+      #2), chronic under-length (10/10 below floor, median ~1382w),
+      "no newly closed trade" in 9/10 episodes (drought + lost picks).
+    shipped:
+      - suffixed/hyphenated symbol extraction (CNR.TO / BTC-USD / .V) +
+        CRYPTO market recognition + TSX-V alternation-order fix
+      - crypto candidates force the -USD Yahoo pair with NO bare
+        fallback; pre-suffixed symbols pass through verbatim
+      - "wrong-instrument tripwire — stop outside [ref/3, ref*3] voids
+        the pick at record time (instrument_scale_mismatch), writes an
+        explicit no-trade signal, + self-healing migration (committed
+        tracker migrated: Ep113 BTC voided)"
+      - void transparency — an announced-then-voided pick is disclosed
+        on air exactly once via the trade-review block
+      - "source-collapse alarm in run_show (article_count_degraded +
+        a GitHub warning annotation when count < 25% of the show's recent
+        median; log-only, all shows)"
+      - digest-substrate length lever — digest_expand_below_target true,
+        min_digest_words 1500 (A/B)
+      - digest prompt (A/B) — x.com = one publication / publisher-first
+        sourcing / thin-day depth rule; Tools header scaffold typo fixed;
+        Today's Pick template instructions moved out of the value slot
+        (Ep111 echoed the parenthetical on air) + explicit ticker format
+      - alpha caveat mechanism 3 (A/B) — qualifier fused into the alpha
+        value as a data-shaped parenthetical
+      - 18 new drift guards in tests/test_mit_benchmark_integrity.py
+    deferred:
+      - "operator: Ep31 'BTC' flash (April, closed +0.42% @ $33.67) is
+        the same wrong-instrument class historically; no stop recorded so
+        the tripwire cannot catch it — adjudicate via recompute report"
+      - "operator: Ep111 lost CNR.TO pick was spoken on air but never
+        recorded; optional one-line on-air acknowledgment"
+      - "carried: recompute --apply (matched alpha retains old-window
+        inflation), SnapTrade Phase-0 verification, closing-price lesson
+        retirement, shadow-executor cron delay (landmine #24 class)"
+    predictions:
+      - metric: suffixed/crypto picks recorded correctly (tracker symbol
+          matches the digest's Today's Pick symbol verbatim)
+        baseline: "Ep111 CNR.TO lost; Ep113 BTC-USD truncated to BTC"
+        expected: "0 lost or mangled suffixed picks; every crypto pick
+          resolves to the -USD pair"
+        verdict: pending
+        evidence: null
+      - metric: non-voided trades with stop/reference ratio outside
+          [1/3, 3]
+        baseline: "1 (Ep113 BTC, open, stop 2240x reference)"
+        expected: "0 — the tripwire voids at record time and the
+          migration self-heals any that slip through"
+        verdict: pending
+        evidence: null
+      - metric: alpha mentions carrying the significance qualifier
+          (while t<2)
+        baseline: "1/6 (17%) with the em-dash instruction form"
+        expected: ">=70% with the data-shaped parenthetical; a third
+          miss escalates to an operator accept-or-abandon decision
+          instead of a fourth mechanism"
+        verdict: pending
+        evidence: null
+      - metric: median script words, last-10 snapshot
+        baseline: "~1382w (all 10 below the 1800 floor)"
+        expected: ">=1550w within 10 episodes of the digest retry
+          shipping (digest-substrate lever, min_digest_words 1500)"
+        verdict: pending
+        evidence: null
+      - metric: episodes with >2 x.com Source citations on a
+          normal-fetch day (article_count > 100)
+        baseline: "Ep115: 6/6 x.com (collapsed-fetch day)"
+        expected: "0; collapsed-fetch days additionally emit
+          article_count_degraded"
         verdict: pending
         evidence: null
     agent_cost_usd: null

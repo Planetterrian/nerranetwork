@@ -916,8 +916,9 @@ class TestAlphaTStat:
         }
         block = mi._build_benchmark_block(tracker)
         # July 18: the caveat moved INLINE with the alpha number (models
-        # echo data lines and drop separate instructions).
-        assert "NOT YET STATISTICALLY SIGNIFICANT" in block
+        # echo data lines and drop separate instructions). July 24: after
+        # a second miss, it fused into the value as a data parenthetical.
+        assert "(early, not yet statistically significant" in block
 
     def test_signal_carries_stop_loss(self, tmp_path, monkeypatch):
         monkeypatch.delenv("NERRA_HOOKS_READONLY", raising=False)
@@ -1062,11 +1063,12 @@ class TestSweepGating:
     def test_hedge_is_inline_with_the_alpha_number(self):
         # Two weeks of transcripts: alpha quoted in most episodes, hedge
         # spoken in zero — the caveat must be part of the quoted line.
+        # July 24 2026 (second miss): even the em-dash instruction form
+        # was dropped in 5/6 mentions; the qualifier is now a data-shaped
+        # parenthetical fused to the alpha value itself.
         block = mi._build_benchmark_block(self._tracker(sp_trades=2))
-        alpha_sentence = [ln for ln in block.split(". ")
-                         if "+6.59%" in ln][0]
-        assert "NOT YET STATISTICALLY SIGNIFICANT" in alpha_sentence
-        assert "never quote this alpha without" in alpha_sentence
+        assert "+6.59% (early, not yet statistically significant" in block
+        assert "never quote" not in block.lower()
 
 
 class TestNoTradeReasonTaxonomy:
@@ -1098,3 +1100,215 @@ class TestNoTradeReasonTaxonomy:
             "### Practice Investment of the Day\n"
             "**Today's Pick** is Nvidia at current levels.\n"
         ) == "no_pick_extracted"
+
+
+# ---------------------------------------------------------------------------
+# July 24 2026 review — suffixed-symbol extraction + wrong-instrument
+# tripwire (Ep111 CNR.TO lost pick / Ep113 BTC-USD → equity "BTC" class)
+# ---------------------------------------------------------------------------
+
+class TestSuffixedSymbolExtraction:
+    """The July 3 pass taught the DIGEST to emit exchange-native symbols
+    (CNR.TO, BTC-USD) but the extractor still only accepted bare
+    [A-Z]{1,5}: Ep111's spoken CNR.TO weekly pick was silently lost
+    (signal reason no_pick_extracted) and Ep113's BTC-USD was truncated
+    to "BTC" and validated against the wrong equity."""
+
+    def _digest(self, pick_line, market="NYSE"):
+        return (
+            "### Practice Investment of the Day\n"
+            f"**Trade Type:** Weekly Hold\n"
+            f"**Today's Pick:** {pick_line}\n"
+            f"**Market:** {market}\n"
+            "**Strategy:** test strategy\n"
+            "- **Confidence Level:** Medium\n"
+        )
+
+    def test_crypto_pair_symbol_survives(self):
+        trade = mi._extract_trade_from_digest(
+            self._digest("BTC-USD — Bitcoin", market="Crypto"), 999)
+        assert trade is not None
+        assert trade["symbol"] == "BTC-USD"
+        assert trade["market"] == "CRYPTO"
+
+    def test_tsx_suffixed_symbol_survives(self):
+        trade = mi._extract_trade_from_digest(
+            self._digest("CNR.TO — Canadian National Railway", market="TSX"), 999)
+        assert trade is not None
+        assert trade["symbol"] == "CNR.TO"
+
+    def test_ep111_real_pick_line_extracts(self):
+        # The exact shipped Ep111 line, prompt-echo parenthetical included.
+        trade = mi._extract_trade_from_digest(self._digest(
+            "CNR.TO — Canadian National Railway (only for new picks on "
+            "Monday or Flash Trades)", market="TSX"), 111)
+        assert trade is not None
+        assert trade["symbol"] == "CNR.TO"
+
+    def test_bare_us_symbol_unchanged(self):
+        trade = mi._extract_trade_from_digest(
+            self._digest("LMT — Lockheed Martin"), 999)
+        assert trade is not None
+        assert trade["symbol"] == "LMT"
+
+    def test_no_trade_day_still_returns_none(self):
+        trade = mi._extract_trade_from_digest(
+            self._digest("None — monitoring Lockheed Martin ($LMT)"), 999)
+        assert trade is None
+
+    def test_tsx_v_market_no_longer_shadowed_by_tsx(self):
+        # Latent bug: (TSX|NYSE|NASDAQ|TSX-V) matched "TSX" inside
+        # "TSX-V", so TSX-V could never be extracted. Alternation order
+        # now puts TSX-V first.
+        trade = mi._extract_trade_from_digest(
+            self._digest("ABC.V — Test Venture Co", market="TSX-V"), 999)
+        assert trade is not None
+        assert trade["market"] == "TSX-V"
+
+
+class TestCryptoSymbolCandidates:
+    def test_crypto_pair_passes_through(self):
+        assert mi._yf_symbol_candidates("BTC-USD", "CRYPTO") == ["BTC-USD"]
+
+    def test_suffixed_tsx_passes_through(self):
+        assert mi._yf_symbol_candidates("CNR.TO", "TSX") == ["CNR.TO"]
+
+    def test_bare_crypto_symbol_gets_pair_and_never_falls_back(self):
+        # Bare "BTC" resolves to an unrelated equity on Yahoo — the
+        # crypto market must force the -USD pair with NO bare fallback.
+        assert mi._yf_symbol_candidates("BTC", "CRYPTO") == ["BTC-USD"]
+
+
+class TestInstrumentScaleMismatch:
+    def _btc_trade(self, **over):
+        trade = {
+            "episode_num": 113, "date": "2026-07-21", "symbol": "BTC",
+            "status": "open", "trade_type": "weekly",
+            "stop_loss": {"price": 64500.0},
+            "pick_reference_price": 28.8,
+            "entry_price": None, "exit_price": None,
+            "pnl_pct": None, "pnl_dollars": None,
+        }
+        trade.update(over)
+        return trade
+
+    def test_ep113_shape_trips(self):
+        assert mi._instrument_scale_mismatch(self._btc_trade()) is True
+
+    def test_normal_stop_does_not_trip(self):
+        t = self._btc_trade(stop_loss={"price": 27.0}, pick_reference_price=28.8)
+        assert mi._instrument_scale_mismatch(t) is False
+
+    def test_pct_stop_does_not_trip(self):
+        assert mi._instrument_scale_mismatch(
+            self._btc_trade(stop_loss={"pct": 6.0})) is False
+
+    def test_no_reference_does_not_trip(self):
+        assert mi._instrument_scale_mismatch(
+            self._btc_trade(pick_reference_price=None)) is False
+
+    def test_migration_voids_mismatched_open_trade(self):
+        tracker = {"trades": [self._btc_trade()]}
+        mi._void_instrument_scale_mismatch_trades(tracker)
+        t = tracker["trades"][0]
+        assert t["status"] == "voided"
+        assert t["void_reason"] == "instrument_scale_mismatch"
+        assert t["pnl_pct"] is None
+
+    def test_migration_voids_wrongly_closed_trade(self):
+        # If the wrong listing already CLOSED before the fix merged, the
+        # migration still voids it — never narrated as a market outcome.
+        t = self._btc_trade(status="closed", entry_price=28.9,
+                            exit_price=29.4, pnl_pct=1.7, pnl_dollars=17.0)
+        tracker = {"trades": [t]}
+        mi._void_instrument_scale_mismatch_trades(tracker)
+        assert tracker["trades"][0]["status"] == "voided"
+
+    def test_migration_leaves_healthy_trades_alone(self):
+        healthy = self._btc_trade(
+            symbol="COST", stop_loss={"price": 880.0},
+            pick_reference_price=934.94, status="closed",
+            entry_price=934.94, exit_price=912.97, pnl_pct=-2.35)
+        tracker = {"trades": [healthy]}
+        mi._void_instrument_scale_mismatch_trades(tracker)
+        assert tracker["trades"][0]["status"] == "closed"
+
+
+class TestVoidDisclosure:
+    def _tracker_with_recent_void(self):
+        return {
+            "trades": [{
+                "episode_num": 113,
+                "date": datetime.date.today().isoformat(),
+                "symbol": "BTC-USD", "status": "voided",
+                "void_reason": "instrument_scale_mismatch",
+            }],
+            "summary": {},
+        }
+
+    def test_recent_void_disclosed_once(self):
+        tracker = self._tracker_with_recent_void()
+        block = mi._build_trade_review(tracker, episode_num=116)
+        assert "VOIDED" in block
+        assert tracker["trades"][0]["void_disclosed_in_episode"] == 116
+        # Second episode: already disclosed — never repeated.
+        block2 = mi._build_trade_review(tracker, episode_num=117)
+        assert "VOIDED" not in block2
+
+    def test_old_void_not_resurfaced(self):
+        tracker = self._tracker_with_recent_void()
+        tracker["trades"][0]["date"] = "2026-06-01"
+        block = mi._build_trade_review(tracker, episode_num=116)
+        assert "VOIDED" not in block
+
+
+class TestAlphaCaveatDataShaped:
+    """Third mechanism for the twice-missed significance caveat: the
+    qualifier is now a data-shaped parenthetical inside the alpha value
+    itself, not an instruction sentence the model can drop."""
+
+    def _tracker(self, significant=False):
+        tracker = mi._fresh_tracker()
+        tracker["benchmark"] = {"current_close": 25873.0, "ytd_pct": 11.0,
+                                "inception_to_date_pct": 15.0,
+                                "last_updated": "2026-07-23"}
+        tracker["summary"] = {
+            "matched_window_alpha_pct": 6.59,
+            "matched_window_trades": 37,
+            "compounded_return_pct": 18.94,
+            "compounded_nasdaq_matched_pct": 12.35,
+            "alpha_t_stat": 0.31,
+            "alpha_statistically_significant": significant,
+            "benchmark_scores": {},
+        }
+        return tracker
+
+    def test_insignificant_alpha_carries_inline_parenthetical(self):
+        block = mi._build_benchmark_block(self._tracker())
+        assert "+6.59% (early, not yet statistically significant" in block
+        # The old imperative phrasing is gone (it was dropped 5/6 times).
+        assert "never quote" not in block.lower()
+
+    def test_significant_alpha_says_so_inside_the_value(self):
+        block = mi._build_benchmark_block(self._tracker(significant=True))
+        assert "+6.59% (statistically significant" in block
+
+
+class TestArticleCollapseAlarm:
+    """run_show warns when a show's article fetch collapses vs its own
+    recent median (MIT Ep115: 9 articles vs 222-337 — the digest then
+    sourced every section from x.com posts). Log-only, never blocking."""
+
+    def test_alarm_source_present(self):
+        src = (_ROOT / "run_show.py").read_text(encoding="utf-8")
+        assert "article_count_degraded" in src
+        assert "article fetch collapsed" in src
+        # Non-blocking contract: the alarm must not call _skip_episode.
+        block = src.split("Source-collapse alarm")[1].split("if not articles")[0]
+        assert "_skip_episode" not in block
+
+    def test_mit_yaml_has_digest_length_lever(self):
+        import yaml as _yaml
+        y = _yaml.safe_load((_ROOT / "shows/modern_investing.yaml").read_text())
+        assert y["llm"]["digest_expand_below_target"] is True
+        assert y["llm"]["min_digest_words"] == 1500

@@ -125,6 +125,13 @@ llm:
   podcast_max_tokens: 8000
   min_podcast_words: 1800
   podcast_expand_below_target: true
+  # Digest-substrate length lever (July 24 2026 review): all 10 recent
+  # scripts ran 1158-1746w against the 1800 floor, and the podcast-side
+  # expand retry can't add facts the digest doesn't carry (network-wide
+  # ledger lesson — podcast-side length levers are banned). The digest
+  # retry deepens the brief when it lands under 1500w (FPD/OV precedent).
+  digest_expand_below_target: true
+  min_digest_words: 1500
   podcast_chain: true
 tts: {}
 audio:
