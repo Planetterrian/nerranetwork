@@ -982,8 +982,8 @@ SHOW_MEMORY_CONFIGS: Dict[str, MemoryConfig] = {
                 "The show's own simulated $1,000-per-trade record — the "
                 "longitudinal teaching artifact (results live in the "
                 "investment tracker; this tracks the STORY arc).",
-                ["Whether the matched-window alpha becomes statistically "
-                 "significant", "Which taught rules prove to have real edge"],
+                ["Whether the matched-window alpha becomes significant",
+                 "Which taught rules prove to have real edge"],
                 confidence="high",
             ),
         },
