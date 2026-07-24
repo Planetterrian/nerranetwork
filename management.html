@@ -147,7 +147,7 @@
     flex-shrink: 0; }
   .show-card h3 { margin: 0; font-size: 15px; }
   .show-card .slug { font-size: 10.5px; color: var(--ink-4); font-family: ui-monospace, monospace; }
-  .show-card .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+  .show-card .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
     margin: 10px 0 6px; font-size: 11.5px; color: var(--ink-3); }
   .show-card .stats div { background: var(--surface-2); padding: 7px 10px; border-radius: 8px; }
   .show-card .stats strong { display: block; font-size: 14px; color: var(--ink-1); }
@@ -194,8 +194,10 @@
 </div>
 
 <nav class="mc-nav" aria-label="Sections">
-  <a href="#audience">Audience</a>
+  <a href="#audience-section">Audience</a>
+  <a href="#catalog">Catalog</a>
   <a href="#operations">Operations</a>
+  <a href="#library">Lake &amp; images</a>
   <a href="#shows">Shows</a>
   <a href="#guards">Guards</a>
   <a href="#voice">Voice</a>
@@ -217,14 +219,37 @@
 
   <div class="tile-row" id="tile-row"></div>
 
-  <section class="mc-section" id="audience">
+  <section class="mc-section" id="audience-section">
     <h2>Audience <span class="pill-note" id="audience-status-pill"></span></h2>
     <div class="card-grid" id="audience-grid"></div>
   </section>
 
+  <section class="mc-section" id="catalog">
+    <h2>Catalog — shows, episodes &amp; sources <span class="pill-note" id="catalog-pill"></span></h2>
+    <div class="mc-card" style="padding:0;overflow-x:auto;">
+      <table class="mc-table" id="catalog-table">
+        <thead>
+          <tr>
+            <th>Show</th><th>Episodes to date</th><th>In feed</th>
+            <th>Latest</th><th>Input pipeline</th><th>Channels</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
   <section class="mc-section" id="operations">
     <h2>Operations</h2>
-    <div class="card-grid" id="operations-grid"></div>
+    <div class="card-grid" id="operations-grid">
+      <!-- Multilingual coverage card hydrates into this static anchor -->
+      <div class="mc-card" id="multilingual-coverage" hidden></div>
+    </div>
+  </section>
+
+  <section class="mc-section" id="library">
+    <h2>Content lake &amp; image library</h2>
+    <div class="card-grid" id="library-grid"></div>
   </section>
 
   <section class="mc-section" id="shows">
@@ -432,6 +457,9 @@
   const sp = audience.spotify || {};
   const bd = audience.newsletter || {};
   const cost = data.cost_rollup || {};
+  const catalog = data.catalog || {};
+  const gallery = data.gallery || {};
+  const lake = data.content_lake || {};
 
   // ---------- alert band ----------
   const band = $("#alert-band");
@@ -456,8 +484,16 @@
     .reduce((s, c) => s + (c[field] || 0), 0);
   const siteSpark = (site.day_series || []).map((r) => Number(r.activeUsers || 0));
 
+  const weeklyHist = (op3.network_weekly_history || []).map((r) => Number(r[1] || 0));
+  tiles.appendChild(statTile("RSS downloads · all-time", compact(op3.network_downloads_all_time),
+    { sub: (op3.all_time_since ? "tracked since " + op3.all_time_since + " · " : "") + "via OP3",
+      spark: weeklyHist,
+      sparkTitle: "Weekly downloads since " + (op3.all_time_since || "tracking began") }));
   tiles.appendChild(statTile("RSS downloads · 30d", compact(op3.network_downloads_30d),
     { sub: fmt(op3.network_downloads_7d) + " in the last 7d · via OP3" }));
+  tiles.appendChild(statTile("Shows", fmt(catalog.shows_count || (data.network || {}).shows_count),
+    { sub: fmt(catalog.network_episodes_to_date) + " episodes to date · " +
+           fmt(catalog.network_news_sources) + " news sources" }));
   tiles.appendChild(statTile("YouTube subscribers", compact(chSum("subscribers")),
     { delta: chSum("subscribers_delta_7d"), deltaSuffix: " · 7d",
       sub: compact(chSum("total_views")) + " total views · " +
@@ -476,6 +512,10 @@
     { sub: money((cost.projections || {}).avg_cost_per_episode_usd) + " avg / episode" }));
   tiles.appendChild(statTile("Newsletter", bd.configured ? fmt(bd.subscriber_count) : "—",
     { sub: bd.configured ? "subscribers · Buttondown" : "not configured" }));
+  tiles.appendChild(statTile("Image library", gallery.configured ? compact(gallery.image_count) : "—",
+    { sub: gallery.configured
+        ? "CC-licensed images on /gallery.html"
+        : "gallery manifest not built yet" }));
 
   // ---------- audience cards ----------
   const audPillBits = [];
@@ -493,8 +533,19 @@
       card.appendChild(h("p", { class: "fine-list", text: "Not configured — set OP3_API_TOKEN." }));
     } else {
       card.appendChild(h("div", { class: "headline",
-        html: fmt(op3.network_downloads_30d) + "<small>30d</small>" +
+        html: fmt(op3.network_downloads_all_time) + "<small>all-time</small>" +
+              "&nbsp;&nbsp;" + fmt(op3.network_downloads_30d) + "<small>30d</small>" +
               "&nbsp;&nbsp;" + fmt(op3.network_downloads_7d) + "<small>7d</small>" }));
+      if (weeklyHist.length > 1) {
+        const sparkWrap = h("div", { style: "margin:6px 0 2px;" });
+        const sv = sparkline(weeklyHist, { w: 560, h: 40, title: "Weekly downloads, all tracked weeks" });
+        sv.style.width = "100%"; sv.style.height = "40px"; sv.style.display = "block";
+        sparkWrap.appendChild(sv);
+        sparkWrap.appendChild(h("div", { style: "font-size:11px;color:var(--ink-4);margin-top:2px;",
+          text: "Weekly downloads · accumulating since " + (op3.all_time_since || "—") +
+                " (api/op3_history.json)" }));
+        card.appendChild(sparkWrap);
+      }
       const perShow = op3.per_show || {};
       const slugs = Object.keys(perShow)
         .sort((a, b) => (perShow[b].downloads_30d || 0) - (perShow[a].downloads_30d || 0));
@@ -502,8 +553,9 @@
       slugs.forEach((slug) => {
         const v = perShow[slug] || {};
         card.appendChild(barRow(slug, v.downloads_30d || 0, maxDl,
-          fmt(v.downloads_30d || 0) + " · 30d (" + fmt(v.downloads_7d || 0) + " · 7d)",
-          { title: slug + ": " + fmt(v.downloads_30d || 0) + " downloads in 30d, weekly avg " + fmt(v.weekly_avg || 0) }));
+          fmt(v.downloads_30d || 0) + " · 30d (" + fmt(v.downloads_all_time || 0) + " all-time)",
+          { title: slug + ": " + fmt(v.downloads_30d || 0) + " in 30d · " + fmt(v.downloads_7d || 0) +
+                   " in 7d · " + fmt(v.downloads_all_time || 0) + " all-time · weekly avg " + fmt(v.weekly_avg || 0) }));
       });
       if ((op3.top_episodes_7d || []).length) {
         const ul = h("ul", { class: "fine-list" });
@@ -615,6 +667,154 @@
     audGrid.appendChild(card);
   }
 
+  // ---------- catalog table ----------
+  {
+    $("#catalog-pill").textContent =
+      fmt(catalog.network_episodes_to_date) + " episodes to date · " +
+      fmt(catalog.network_news_sources) + " news sources · " +
+      fmt(catalog.network_web_search_queries) + " search queries";
+    const tbody = $("#catalog-table tbody");
+    const per = catalog.per_show || {};
+    const slugs = Object.keys(per).sort((a, b) =>
+      (per[b].episodes_to_date || 0) - (per[a].episodes_to_date || 0));
+    const capChip = (label, on, title) => {
+      const c = h("span", { class: "chip" + (on ? " on" : ""), title: title });
+      c.appendChild(h("span", { class: "dot",
+        style: "background:" + (on ? "var(--status-ok)" : "var(--hairline)") + ";" }));
+      c.appendChild(document.createTextNode(label));
+      return c;
+    };
+    slugs.forEach((slug) => {
+      const c = per[slug] || {};
+      const tr = h("tr");
+      const nameTd = h("td");
+      nameTd.appendChild(h("div", { text: c.name || slug }));
+      nameTd.appendChild(h("div", { style: "font-size:10.5px;color:var(--ink-4);font-family:ui-monospace,monospace;", text: slug }));
+      tr.appendChild(nameTd);
+      tr.appendChild(h("td", { text: fmt(c.episodes_to_date) }));
+      tr.appendChild(h("td", { text: c.episodes_in_feed != null ? fmt(c.episodes_in_feed) : "—" }));
+      tr.appendChild(h("td", { text: c.latest_date || "—" }));
+      const srcTd = h("td");
+      if (c.narrative_mode) {
+        const q = c.topic_queue;
+        if (q && q.total > 0) {
+          const low = (q.remaining || 0) < 14; // < ~2 weeks of daily runway
+          srcTd.appendChild(h("span", {
+            style: low ? "color:var(--status-warn);font-weight:600;" : "",
+            text: "topic queue · " + fmt(q.remaining) + " left of " + fmt(q.total),
+            title: fmt(q.produced) + " produced" + (low ? " — runway under 2 weeks, restock soon" : ""),
+          }));
+        } else if (slug === "age_of_ai") {
+          // Deliberately-empty queue: production runs via the Nerra Voices
+          // interview pipeline, not run_show (registry no-op by design).
+          srcTd.appendChild(h("span", { style: "color:var(--ink-4);",
+            text: "Nerra Voices pipeline (live interviews)" }));
+        } else {
+          srcTd.appendChild(h("span", { text: "topic queue (narrative)" }));
+        }
+      } else {
+        srcTd.appendChild(h("span", {
+          text: fmt(c.news_sources) + " feeds" +
+                (c.web_search_queries ? " + " + fmt(c.web_search_queries) + " searches" : ""),
+          title: "RSS/Atom sources in shows/" + slug + ".yaml plus xAI web-search queries",
+        }));
+      }
+      tr.appendChild(srcTd);
+      const capTd = h("td", { style: "white-space:nowrap;" });
+      const caps = c.capabilities || {};
+      capTd.appendChild(capChip("X", caps.x, "X/Twitter posting"));
+      capTd.appendChild(document.createTextNode(" "));
+      capTd.appendChild(capChip("NL", caps.newsletter, "Newsletter"));
+      capTd.appendChild(document.createTextNode(" "));
+      capTd.appendChild(capChip("YT", caps.youtube, "YouTube publishing"));
+      capTd.appendChild(document.createTextNode(" "));
+      capTd.appendChild(capChip("ML", caps.multilingual, "Multilingual translation tracks"));
+      capTd.appendChild(document.createTextNode(" "));
+      capTd.appendChild(capChip("Mem", caps.memory, "Narrative memory (longitudinal chronicle)"));
+      tr.appendChild(capTd);
+      tbody.appendChild(tr);
+    });
+  }
+
+  // ---------- content lake + image library ----------
+  {
+    const libGrid = $("#library-grid");
+
+    // Content lake card
+    const lakeCard = sectionCard("Content lake", "data/content_lake.db · dedup, recaps, search");
+    const stats = lake.stats || {};
+    if (stats.error) {
+      lakeCard.appendChild(h("p", { class: "fine-list", text: "Lake unavailable: " + stats.error }));
+    } else {
+      const total = stats.total_episodes || 0;
+      lakeCard.appendChild(h("div", { class: "headline",
+        html: fmt(total) + "<small>episodes</small>" +
+              "&nbsp;&nbsp;" + compact(stats.total_words) + "<small>words</small>" +
+              "&nbsp;&nbsp;" + fmt((stats.shows || []).length) + "<small>shows</small>" }));
+      if (!lake.healthy) {
+        lakeCard.appendChild(h("div", { class: "alert warn", style: "margin:8px 0;",
+          html: "<strong>Lake is empty/thin</strong> — cross-episode dedup, the Sunday " +
+                "week-in-review segment, and site search are degraded. Run " +
+                "<code>python scripts/backfill_content_lake.py</code>." }));
+      }
+      const dr = stats.date_range || {};
+      lakeCard.appendChild(h("p", { class: "fine-list", html:
+        "<span class='k'>Coverage:</span> " + (dr.earliest || "—") + " → " + (dr.latest || "—") +
+        " · <span class='k'>DB size:</span> " + ((lake.db_size_bytes || 0) / 1048576).toFixed(1) + " MB" }));
+      const perLake = stats.per_show || {};
+      const lakeSlugs = Object.keys(perLake)
+        .sort((a, b) => (perLake[b].count || 0) - (perLake[a].count || 0));
+      if (lakeSlugs.length) {
+        const maxN = Math.max.apply(null, lakeSlugs.map((s) => perLake[s].count || 0).concat([1]));
+        lakeSlugs.forEach((slug) => {
+          const v = perLake[slug] || {};
+          lakeCard.appendChild(barRow(slug, v.count || 0, maxN,
+            fmt(v.count || 0) + " eps",
+            { title: slug + ": " + (v.earliest || "—") + " → " + (v.latest || "—") }));
+        });
+      }
+      lakeCard.appendChild(h("p", { class: "fine-list", text: lake.compaction_note || "" }));
+    }
+    libGrid.appendChild(lakeCard);
+
+    // Image library card
+    const galCard = sectionCard("Image library", "Grok-Imagine scenes · nerra-gallery R2 bucket");
+    if (!gallery.configured) {
+      galCard.appendChild(h("p", { class: "fine-list",
+        html: "No manifest yet — <code>build-gallery-manifest.yml</code> populates <code>site/data/gallery-manifest.json</code> nightly." }));
+    } else if (gallery.error) {
+      galCard.appendChild(h("p", { class: "fine-list", text: "Manifest error: " + gallery.error }));
+    } else {
+      galCard.appendChild(h("div", { class: "headline",
+        html: fmt(gallery.image_count) + "<small>images offered on /gallery.html</small>" }));
+      const uses = gallery.intended_use || {};
+      const useTxt = Object.keys(uses).sort()
+        .map((u) => u + " " + fmt(uses[u])).join(" · ");
+      const licTxt = Object.keys(gallery.licenses || {}).join(", ");
+      galCard.appendChild(h("p", { class: "fine-list", html:
+        "<span class='k'>By use:</span> " + (useTxt || "—") +
+        (licTxt ? " · <span class='k'>License:</span> " + licTxt : "") +
+        (gallery.latest_image_at ? " · <span class='k'>Newest:</span> " + ageText(gallery.latest_image_at) : "") }));
+      const perGal = gallery.per_show || {};
+      const galSlugs = Object.keys(perGal)
+        .sort((a, b) => (perGal[b].count || 0) - (perGal[a].count || 0));
+      const maxG = Math.max.apply(null, galSlugs.map((s) => perGal[s].count || 0).concat([1]));
+      galSlugs.forEach((slug) => {
+        const v = perGal[slug] || {};
+        galCard.appendChild(barRow(v.name || slug, v.count || 0, maxG, fmt(v.count || 0),
+          { color: "var(--series-3)", title: slug + ": " + fmt(v.count || 0) + " images" }));
+      });
+      const ret = gallery.retention || {};
+      galCard.appendChild(h("p", { class: "fine-list", html: ret.available
+        ? "<span class='k'>Retention loop:</span> " + fmt(ret.images_with_retention) +
+          " images joined with YouTube retention across " + fmt(ret.shows_analyzed) + " shows"
+        : "<span class='k'>Retention loop:</span> no audience data joined yet" }));
+      galCard.appendChild(h("p", { class: "fine-list",
+        html: "<a href='gallery.html' style='color:#818cf8;'>Open public gallery ↗</a>" }));
+    }
+    libGrid.appendChild(galCard);
+  }
+
   // ---------- operations cards ----------
   const opsGrid = $("#operations-grid");
 
@@ -649,8 +849,9 @@
     const quota = cost.youtube_quota || {};
     if (quota.note) {
       card.appendChild(h("p", { class: "fine-list", html:
-        "<span class='k'>YouTube quota:</span> ~" + fmt(quota.daily_insert_cost_units) +
-        " units/day scheduled. " + String(quota.note).replace(/</g, "&lt;") }));
+        "<span class='k'>YouTube:</span> " + fmt(quota.enabled_shows_count) +
+        " shows publishing · ~" + fmt(quota.daily_insert_cost_units) +
+        " units per long-form insert. " + String(quota.note).replace(/</g, "&lt;") }));
     }
     // 30d per-show cost sparklines
     const per = cost.per_show || {};
@@ -696,10 +897,15 @@
     opsGrid.appendChild(card);
   }
 
-  // Multilingual coverage
+  // Multilingual coverage — hydrates the static #multilingual-coverage anchor
   {
-    const card = sectionCard("Multilingual coverage",
-      "last " + ((data.multilingual || {}).recent_n || 10) + " episodes per show");
+    const card = $("#multilingual-coverage");
+    card.hidden = false;
+    const head = h("h3");
+    head.appendChild(document.createTextNode("Multilingual coverage"));
+    head.appendChild(h("span", { class: "meta",
+      text: "last " + ((data.multilingual || {}).recent_n || 10) + " episodes per show" }));
+    card.appendChild(head);
     const ml = data.multilingual;
     if (!ml || !ml.per_show || !Object.keys(ml.per_show).length) {
       card.appendChild(h("p", { class: "fine-list", text: "No multilingual data yet — translations populate as episodes publish." }));
@@ -726,6 +932,8 @@
         card.appendChild(row);
       });
     }
+    // The static anchor renders before the JS-built cards; appendChild on an
+    // existing child MOVES it, restoring the Cost → Pipeline → Multilingual order.
     opsGrid.appendChild(card);
   }
 
@@ -777,6 +985,10 @@
       "finansy_prosto": "finansy-prosto.jpg",
       "privet_russian": "privet-russian.jpg",
       "unintended_consequences": "unintended-consequences.jpg",
+      "first_principles": "first-principles-daily.jpg",
+      "dp_pod": "dp-pod.jpg",
+      "age_of_ai": "age-of-ai.jpg",
+      "spacex": "spacex.jpg",
     };
     return "assets/covers/" + (map[slug] || (slug + ".jpg"));
   };
@@ -792,7 +1004,10 @@
     card.appendChild(head);
 
     const dl = op3PerShow[s.slug] || {};
+    const cat = (catalog.per_show || {})[s.slug] || {};
     const stats = h("div", { class: "stats" });
+    stats.appendChild(h("div", { html:
+      "<strong>" + fmt(cat.episodes_to_date || 0) + "</strong>episodes" }));
     stats.appendChild(h("div", { html:
       "<strong>" + (s.episodes_last_7_days || 0) + "</strong>ep · 7d" }));
     stats.appendChild(h("div", { html:
