@@ -602,6 +602,25 @@ def post_generate(config, *, digest_text: str = "", episode_num: int | None = No
             _probe_pick(trade)
         except Exception as exc:
             logger.warning("Pick validation probe failed for %s: %s", trade.get("symbol"), exc)
+        # Wrong-instrument tripwire (July 24 2026, Ep113 BTC): if the
+        # narrated stop and the resolved listing's price are on different
+        # scales, the resolution is wrong — void at record time so the
+        # sim never prices it and the execution layers never see it.
+        if _instrument_scale_mismatch(trade):
+            logger.error(
+                "PICK VOIDED AT RECORD: %s stop $%s vs reference $%s — the "
+                "resolved listing is not the instrument the show discussed. "
+                "Check the digest's Today's Pick symbol format.",
+                trade.get("symbol"),
+                (trade.get("stop_loss") or {}).get("price"),
+                trade.get("pick_reference_price"),
+            )
+            trade["status"] = "voided"
+            trade["void_reason"] = "instrument_scale_mismatch"
+            trade["lesson"] = (
+                "Trade voided — the price tracker resolved the wrong "
+                "instrument for this symbol."
+            )
         tracker["trades"].append(trade)
         tracker["metadata"]["last_updated"] = datetime.date.today().isoformat()
         tracker["sectors"] = _compute_sector_exposure(tracker)
@@ -619,7 +638,16 @@ def post_generate(config, *, digest_text: str = "", episode_num: int | None = No
     # digest prose — so LLM formatting drift can't reach an order ticket.
     # Best-effort: a signal-write failure must never block the pipeline.
     try:
-        _write_trade_signal(output_dir, trade, digest_text, episode_num, tracker)
+        # A trade voided at record time must never reach the execution
+        # layers — the signal carries an explicit no_trade with the void
+        # reason instead (fail-closed for shadow AND live).
+        if trade is not None and trade.get("status") == "voided":
+            _write_trade_signal(
+                output_dir, None, digest_text, episode_num, tracker,
+                override_reason=trade.get("void_reason") or "pick_voided",
+            )
+        else:
+            _write_trade_signal(output_dir, trade, digest_text, episode_num, tracker)
     except Exception as exc:
         logger.warning("Trade-signal write failed (non-fatal): %s", exc)
 
@@ -741,6 +769,7 @@ def _ensure_schema(tracker: dict) -> None:
     tracker.setdefault("monthly_snapshots", [])
     tracker.setdefault("trades", [])
     _void_nonfinite_closed_trades(tracker)
+    _void_instrument_scale_mismatch_trades(tracker)
 
 
 def _void_nonfinite_closed_trades(tracker: dict) -> None:
@@ -813,11 +842,20 @@ def _yf_symbol_candidates(symbol: str, market: str = "") -> list[str]:
     sym = (symbol or "").upper().strip()
     if not sym:
         return []
+    # Already exchange-suffixed or crypto-quoted (CNR.TO, BTC-USD): the
+    # digest named the exact listing — use it verbatim, never re-suffix.
+    if "." in sym or sym.endswith("-USD"):
+        return [sym]
     m = (market or "").upper().replace("_", "-").strip()
     if m in ("TSX-V", "TSXV"):
         return [f"{sym}.V", f"{sym}.TO", sym]
     if m == "TSX":
         return [f"{sym}.TO", sym]
+    if m == "CRYPTO":
+        # Yahoo quotes spot crypto as <SYM>-USD. The bare symbol is NOT a
+        # safe fallback here — "BTC" resolves to an unrelated equity
+        # (the Ep113 wrong-instrument shape), so crypto never falls back.
+        return [f"{sym}-USD"]
     return [sym]
 
 
@@ -955,6 +993,61 @@ _EXPLICIT_NO_TRADE_RE = re.compile(
 )
 
 
+_SCALE_MISMATCH_FACTOR = 3.0
+
+
+def _instrument_scale_mismatch(trade: dict) -> bool:
+    """True when the narrated stop and the resolved instrument's price are
+    on wildly different scales — the wrong-instrument tripwire.
+
+    July 24 2026 (Ep113): the digest picked Bitcoin ("BTC-USD", stop
+    $64,500) but the tracker resolved bare "BTC" to an equity at $28.80
+    and marked the pick VALIDATED; the shadow executor then would_place'd
+    $1,000 of the wrong instrument. A stop 2,200× the reference price is
+    not a stop — it's proof the resolved listing is not the instrument
+    the show talked about. Anything outside [ref/3, ref*3] trips.
+    """
+    stop = trade.get("stop_loss")
+    ref = trade.get("pick_reference_price") or trade.get("entry_price")
+    if not (isinstance(stop, dict) and isinstance(ref, (int, float)) and ref > 0):
+        return False
+    price = stop.get("price")
+    if not (isinstance(price, (int, float)) and price > 0):
+        return False
+    ratio = price / ref
+    return ratio > _SCALE_MISMATCH_FACTOR or ratio < 1.0 / _SCALE_MISMATCH_FACTOR
+
+
+def _void_instrument_scale_mismatch_trades(tracker: dict) -> None:
+    """One-time/self-healing migration: void trades whose stop price and
+    reference/entry price sit on different scales (wrong instrument).
+
+    Covers the shipped Ep113 BTC state (open, resolved to the wrong
+    equity) AND any close that happened against the wrong listing before
+    this fix merged. Mirrors ``_void_nonfinite_closed_trades``: voided
+    trades leave every aggregate and are never narrated as outcomes.
+    """
+    for trade in tracker.get("trades", []):
+        if trade.get("status") == "voided":
+            continue
+        if _instrument_scale_mismatch(trade):
+            logger.error(
+                "VOIDING trade Ep%s %s: stop $%s vs reference $%s — "
+                "instrument scale mismatch (wrong listing resolved).",
+                trade.get("episode_num"), trade.get("symbol"),
+                (trade.get("stop_loss") or {}).get("price"),
+                trade.get("pick_reference_price") or trade.get("entry_price"),
+            )
+            trade["status"] = "voided"
+            trade["void_reason"] = "instrument_scale_mismatch"
+            trade["pnl_pct"] = None
+            trade["pnl_dollars"] = None
+            trade["lesson"] = (
+                "Trade voided — the price tracker resolved the wrong "
+                "instrument for this symbol."
+            )
+
+
 def _no_trade_reason(digest_text: str) -> str:
     """Classify why today's signal carries no trade.
 
@@ -986,6 +1079,8 @@ def _write_trade_signal(
     digest_text: str,
     episode_num: int | None,
     tracker: dict,
+    *,
+    override_reason: str | None = None,
 ) -> None:
     """Write the per-episode machine-readable trade signal.
 
@@ -1021,7 +1116,7 @@ def _write_trade_signal(
 
     if trade is None:
         signal["action"] = "no_trade"
-        signal["reason"] = _no_trade_reason(digest_text)
+        signal["reason"] = override_reason or _no_trade_reason(digest_text)
         signal["trade"] = None
     else:
         symbol = trade.get("symbol", "")
@@ -1874,11 +1969,38 @@ def _build_trade_review(tracker: dict, episode_num: int | None = None) -> str:
     if episode_num and episode_num <= 1:
         return ""  # No review for Episode 1
 
+    # Void transparency (July 24 2026): when a pick the show ANNOUNCED on
+    # air gets voided (wrong-instrument resolution, data failure), say so
+    # once instead of silently dropping it — listeners heard the pick and
+    # deserve to know no simulated result is being claimed. Disclosed
+    # exactly once (stamped), only for recent voids so old migrations
+    # don't resurface.
+    void_note = ""
+    today = datetime.date.today()  # noqa: DTZ011 — matches the tracker's naive dates
+    for t in tracker["trades"]:
+        if t.get("status") != "voided" or t.get("void_disclosed_in_episode"):
+            continue
+        try:
+            age = (today - datetime.date.fromisoformat(t.get("date", ""))).days
+        except ValueError:
+            continue
+        if age <= 7:
+            if episode_num is not None:
+                t["void_disclosed_in_episode"] = episode_num
+            void_note = (
+                f"**Correction first:** the {t.get('symbol', '?')} practice "
+                f"pick from episode {t.get('episode_num', '?')} was VOIDED — "
+                f"a tracking error (not a market outcome), so no simulated "
+                f"result is claimed for it and it is excluded from the "
+                f"running totals. State this plainly and briefly.\n"
+            )
+            break
+
     closed = [t for t in tracker["trades"] if t.get("status") == "closed"]
     open_trades = [t for t in tracker["trades"] if t.get("status") == "open"]
     if not closed:
         # Check for open weekly hold — provide mid-week update
-        return _weekly_hold_update(open_trades)
+        return void_note + _weekly_hold_update(open_trades)
 
     last = closed[-1]
 
@@ -1887,8 +2009,8 @@ def _build_trade_review(tracker: dict, episode_num: int | None = None) -> str:
     if already is not None and already != episode_num:
         hold_update = _weekly_hold_update(open_trades)
         if hold_update:
-            return hold_update
-        return (
+            return void_note + hold_update
+        return void_note + (
             "**No newly closed trade since the last review.** The most "
             "recent Practice Investment has already been reviewed; current "
             "holdings remain open and pending their scheduled evaluation, "
@@ -1929,7 +2051,7 @@ def _build_trade_review(tracker: dict, episode_num: int | None = None) -> str:
         pass
 
     if entry is None or exit_ is None:
-        return (
+        return void_note + (
             f"**Last {type_label}:** {symbol}\n"
             f"**Result:** Market data was unavailable for evaluation.\n"
             f"**Running Total:** ${summary.get('cumulative_pnl', 0):.2f}\n"
@@ -1947,7 +2069,7 @@ def _build_trade_review(tracker: dict, episode_num: int | None = None) -> str:
             f"position exited at the stop — say so plainly; stop discipline "
             f"working as designed is a teachable win.\n"
         )
-    return (
+    return void_note + (
         f"**Last {type_label}:** {symbol} — {strategy}\n"
         f"{stop_note}"
         f"**Entry:** ${entry:.2f} ({entry_label}) → **Exit:** ${exit_:.2f} ({exit_label})\n"
@@ -2003,27 +2125,34 @@ def _build_benchmark_block(tracker: dict) -> str:
         # model quoted the alpha in most episodes while speaking the
         # hedge in zero — models echo data lines and drop instructions,
         # so the hedge must be part of the data line it qualifies.
+        # July 24 2026 (second miss on this metric): the em-dash
+        # instruction caveat ("never quote this alpha without…") was
+        # dropped by the model in 5 of 6 alpha mentions since July 18 —
+        # instruction-shaped text gets stripped during paraphrase even
+        # when it rides the data line. Third mechanism: make the caveat
+        # part of the alpha VALUE itself, a data-shaped parenthetical the
+        # model has to copy to quote the number at all.
         t_stat = summary.get("alpha_t_stat")
         if summary.get("alpha_statistically_significant"):
-            caveat = (
-                f" — statistically significant (t={t_stat:+.2f}); the record "
-                f"shows genuine outperformance and you may say so plainly"
+            alpha_phrase = (
+                f"{_sign(matched_alpha)} (statistically significant, "
+                f"t={t_stat:+.2f})"
             )
         elif t_stat is not None:
-            caveat = (
-                f" — EARLY AND NOT YET STATISTICALLY SIGNIFICANT "
-                f"(t={t_stat:+.2f}); never quote this alpha without that "
-                f"qualifier in the same sentence"
+            alpha_phrase = (
+                f"{_sign(matched_alpha)} (early, not yet statistically "
+                f"significant, t={t_stat:+.2f})"
             )
         else:
-            caveat = ""
+            alpha_phrase = _sign(matched_alpha)
         matched_line = (
             f"1) MATCHED-WINDOW SCORE (the honest head-to-head — each $1,000 "
             f"trade vs the NASDAQ over the SAME holding window, compounded): "
             f"portfolio {_sign(summary.get('compounded_return_pct'))} vs NASDAQ "
             f"{_sign(summary.get('compounded_nasdaq_matched_pct'))} → alpha "
-            f"{_sign(matched_alpha)} across {matched_n} benchmarked trades"
-            f"{caveat}. "
+            f"{alpha_phrase} across {matched_n} benchmarked trades. The "
+            f"parenthetical after the alpha number is PART OF the statistic "
+            f"— speak them together. "
         )
         # Index sweep — only from samples big enough to mean something.
         # July 18 2026: before the gate, the sweep compared a 37-trade
@@ -2628,15 +2757,23 @@ def _extract_trade_from_digest(digest_text: str, episode_num: int | None = None)
     if not digest_text:
         return None
 
-    # Extract ticker symbol
+    # Extract ticker symbol. July 24 2026: the pattern must accept
+    # exchange-suffixed and hyphenated symbols — the July 3 integrity pass
+    # taught the DIGEST to emit "CNR.TO" / "BTC-USD", but the extractor
+    # still only took bare [A-Z]{1,5}: Ep111 spoke a CNR.TO weekly pick
+    # that was silently LOST (signal: no_pick_extracted), and Ep113's
+    # "BTC-USD — Bitcoin" was truncated to "BTC", which _probe_pick then
+    # validated against the WRONG INSTRUMENT (an equity at $28.80 vs the
+    # spoken Bitcoin pick with a $64,500 stop).
+    _SYM = r"([A-Z]{1,5}(?:[.-][A-Z]{1,4})?)"
     ticker_match = re.search(
-        r"\*\*Today's Pick:\*\*\s*\[?([A-Z]{1,5})\]?\s*[-—]",
+        r"\*\*Today's Pick:\*\*\s*\[?" + _SYM + r"\]?\s*[-—]",
         digest_text,
     )
     if not ticker_match:
         # Fallback: try alternative patterns
         ticker_match = re.search(
-            r"Today's Pick[:\s]+([A-Z]{1,5})\s",
+            r"Today's Pick[:\s]+" + _SYM + r"\s",
             digest_text,
         )
     if not ticker_match:
@@ -2660,9 +2797,11 @@ def _extract_trade_from_digest(digest_text: str, episode_num: int | None = None)
 
     symbol = ticker_match.group(1).strip()
 
-    # Extract market
+    # Extract market. CRYPTO added July 24 2026 — Ep113's "**Market:**
+    # Crypto" line fell through to UNKNOWN, so the candidate resolver had
+    # no signal that the bare symbol needed the -USD crypto quote.
     market_match = re.search(
-        r"\*\*Market:\*\*\s*(TSX|NYSE|NASDAQ|TSX-V)",
+        r"\*\*Market:\*\*\s*(TSX-V|TSX|NYSE|NASDAQ|CRYPTO)",
         digest_text, re.IGNORECASE,
     )
     market = market_match.group(1).upper() if market_match else "UNKNOWN"

@@ -997,6 +997,43 @@ def run(args: argparse.Namespace) -> None:
         )
         metrics.record("article_count", len(articles))
 
+        # Source-collapse alarm (July 24 2026, MIT Ep115): a show that
+        # normally fetches 200-350 articles shipped a day on 9 — the
+        # digest then sourced every section from the X-post block (6/6
+        # x.com citations, duplicate URLs) and ran thin. Above the
+        # min_articles_skip floor nothing surfaced. Compare today's count
+        # against the show's own recent median and warn loudly (GitHub
+        # annotation) so a degraded-fetch day is visible the same morning.
+        # Log-only — never blocks the episode.
+        try:
+            _recent_counts = []
+            for _mf in sorted(Path(config.episode.output_dir).glob("metrics_ep*.json"))[-10:]:
+                try:
+                    _mc = json.loads(_mf.read_text(encoding="utf-8")).get(
+                        "counters", {}).get("article_count")
+                    if isinstance(_mc, (int, float)) and _mc > 0:
+                        _recent_counts.append(int(_mc))
+                except (json.JSONDecodeError, OSError, ValueError):
+                    continue
+            if len(_recent_counts) >= 5:
+                _median = sorted(_recent_counts)[len(_recent_counts) // 2]
+                if _median >= 40 and len(articles) < _median * 0.25:
+                    metrics.record("article_count_degraded", True)
+                    print(
+                        f"::warning::{config.slug}: article fetch collapsed — "
+                        f"{len(articles)} articles vs recent median {_median}. "
+                        f"Digest will lean on X/web-search sources; check feed "
+                        f"health.",
+                        flush=True,
+                    )
+                    logger.warning(
+                        "Article fetch collapsed: %d vs recent median %d",
+                        len(articles), _median,
+                    )
+        except (OSError, TypeError, ValueError, AttributeError) as exc:
+            # Alarm must never break a run — degrade to a debug line.
+            logger.debug("article-collapse check failed: %s", exc)
+
         if not articles and not _topic_driven:
             logger.warning("No articles found even after expanded search. Skipping episode.")
             _skip_episode("no_articles", "No articles found even after expanded search.")
