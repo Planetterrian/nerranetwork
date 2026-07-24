@@ -1976,7 +1976,7 @@ def _build_trade_review(tracker: dict, episode_num: int | None = None) -> str:
     # exactly once (stamped), only for recent voids so old migrations
     # don't resurface.
     void_note = ""
-    today = datetime.date.today()
+    today = datetime.date.today()  # noqa: DTZ011 — matches the tracker's naive dates
     for t in tracker["trades"]:
         if t.get("status") != "voided" or t.get("void_disclosed_in_episode"):
             continue

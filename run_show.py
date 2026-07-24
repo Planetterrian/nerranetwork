@@ -1013,7 +1013,7 @@ def run(args: argparse.Namespace) -> None:
                         "counters", {}).get("article_count")
                     if isinstance(_mc, (int, float)) and _mc > 0:
                         _recent_counts.append(int(_mc))
-                except Exception:
+                except (json.JSONDecodeError, OSError, ValueError):
                     continue
             if len(_recent_counts) >= 5:
                 _median = sorted(_recent_counts)[len(_recent_counts) // 2]
@@ -1030,7 +1030,8 @@ def run(args: argparse.Namespace) -> None:
                         "Article fetch collapsed: %d vs recent median %d",
                         len(articles), _median,
                     )
-        except Exception as exc:  # noqa: BLE001 — alarm must never break a run
+        except (OSError, TypeError, ValueError, AttributeError) as exc:
+            # Alarm must never break a run — degrade to a debug line.
             logger.debug("article-collapse check failed: %s", exc)
 
         if not articles and not _topic_driven:
