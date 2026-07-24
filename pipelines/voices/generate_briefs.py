@@ -13,8 +13,9 @@ import datetime as dt
 import json
 
 from common import (  # noqa: E402  (sys.path bootstrapped in common)
-    llm, load_prompt, logger, notify_operator, parse_json_lenient,
-    render_email, sb_insert, sb_select, sb_update, send_email,
+    episode_memory_block, llm, load_prompt, logger, notify_operator,
+    parse_json_lenient, render_email, sb_insert, sb_select, sb_update,
+    send_email,
 )
 
 
@@ -45,17 +46,18 @@ def generate_brief(interview: dict, app: dict) -> dict:
                     bio=app.get("bio", ""), topics=topics, links=links),
         temperature=0.3, web_search=True, max_tokens=2500,
     )
+    memory = episode_memory_block()
     questions_raw = llm(
         load_prompt("question_generation.txt",
                     name=app["name"], bio_research=bio_research,
-                    topics=topics),
+                    topics=topics, show_memory=memory),
         temperature=0.6, max_tokens=2000,
     )
     questions = parse_json_lenient(questions_raw)
     thesis = llm(
         load_prompt("episode_thesis.txt",
                     name=app["name"], bio_research=bio_research,
-                    topics=topics),
+                    topics=topics, show_memory=memory),
         temperature=0.5, max_tokens=600,
     )
 

@@ -39,7 +39,7 @@ from typing import Any, Dict, List
 # Fascinating Frontiers, AND Planetterrian while real topics (dark
 # matter, gene editing) sat in the 20s. ``_extract_bigrams`` is shared so
 # the echo filter below sees exactly what the miner produces.
-from engine.tesla_memory import _THEME_STOPWORDS, _extract_bigrams
+from engine.tesla_memory import _JUNK_BIGRAMS, _THEME_STOPWORDS, _extract_bigrams
 
 logger = logging.getLogger(__name__)
 
@@ -470,6 +470,12 @@ def update_theme_history_from_digest(output_dir: Path, cfg: MemoryConfig,
         if words_in_key and any(w in _THEME_STOPWORDS for w in words_in_key):
             del themes[noise_key]
         elif noise_key in echo_bigrams or noise_key in self_ref_bigrams:
+            del themes[noise_key]
+        elif noise_key in _JUNK_BIGRAMS or (
+            len(words_in_key) == 2 and words_in_key[0] == words_in_key[1]
+        ):
+            # Generic-prose / doubled-word artifacts (July 24 2026:
+            # "need know" x78 on M&A, "google google" x109 on Tesla).
             del themes[noise_key]
 
     # Strip source attributions before mining. Digests format sources as
@@ -929,6 +935,146 @@ SHOW_MEMORY_CONFIGS: Dict[str, MemoryConfig] = {
             "alzheimer", "neurodegenerat", "microbiome", "gut", "stem cell", "reprogramming",
             "regenerat", "sleep", "circadian", "metabolic", "genetic", "genom", "gene editing",
             "crispr", "epigenetic", "mitochond", "inflammation", "nutrition", "clinical trial",
+        ],
+    ),
+    # July 24 2026 expansion — the three shows without narrative memory.
+    # MIT keeps its bespoke investment_tracker (trades/lessons) untouched;
+    # this layer tracks the MARKET NARRATIVES the show teaches against, the
+    # dimension the trade ledger can't hold. Seeded conservatively per the
+    # Phase-3 rule: factual program status, no speculative claims.
+    "modern_investing": MemoryConfig(
+        slug="modern_investing",
+        label="MODERN INVESTING",
+        file_prefix="modern_investing",
+        default_programs={
+            "rate_cycle": _prog(
+                "Central-Bank Rate Cycle",
+                "Fed and Bank of Canada policy path — the macro backdrop every "
+                "episode's Market Pulse reads against.",
+                ["Timing and size of the next Fed/BoC moves",
+                 "How rate-sensitive sectors reprice on each decision"],
+            ),
+            "ai_infrastructure_trade": _prog(
+                "AI-Infrastructure Trade",
+                "The AI capex build-out (chips, data centers, power) as a "
+                "market-leadership theme.",
+                ["Whether AI capex momentum persists or unwinds",
+                 "Which second-order names benefit next"],
+                confidence="low-medium",
+            ),
+            "canadian_wealth_mechanics": _prog(
+                "Canadian Wealth Mechanics",
+                "TFSA/RRSP/FHSA mechanics and TSX dynamics — the show's "
+                "Canadian-listener education spine.",
+                ["Annual contribution-room changes",
+                 "TSX sector leadership shifts"],
+                confidence="high",
+            ),
+            "crypto_adoption": _prog(
+                "Crypto & Digital Assets",
+                "Bitcoin/crypto market structure and mainstream adoption.",
+                ["ETF flows and institutional adoption",
+                 "Regulatory clarity in the US and Canada"],
+                confidence="low",
+            ),
+            "practice_portfolio": _prog(
+                "Practice Portfolio Journey",
+                "The show's own simulated $1,000-per-trade record — the "
+                "longitudinal teaching artifact (results live in the "
+                "investment tracker; this tracks the STORY arc).",
+                ["Whether the matched-window alpha becomes statistically "
+                 "significant", "Which taught rules prove to have real edge"],
+                confidence="high",
+            ),
+        },
+        theme_keywords=[
+            "tfsa", "rrsp", "fhsa", "etf", "dividend", "rate cut", "rate hike",
+            "earnings", "tsx", "nasdaq", "s&p", "crypto", "bitcoin", "bank of canada",
+            "fed", "inflation", "recession", "momentum", "volatility", "stop-loss",
+            "diversif", "index fund", "options", "bond", "yield",
+        ],
+    ),
+    "dp_pod": MemoryConfig(
+        slug="dp_pod",
+        label="THE DP POD",
+        file_prefix="dp_pod",
+        default_programs={
+            "clean_energy_buildout": _prog(
+                "Clean-Energy Build-Out",
+                "The global renewables/storage build-out — the show's most "
+                "recurrent progress arc.",
+                ["Grid-scale storage cost curve",
+                 "Which regions hit renewable-majority milestones next"],
+            ),
+            "global_health_progress": _prog(
+                "Global Health Progress",
+                "Disease elimination, vaccine rollouts, and clinical "
+                "breakthroughs with named actors and numbers.",
+                ["Malaria/polio elimination timelines",
+                 "Which trial results translate into deployed care"],
+            ),
+            "conservation_recoveries": _prog(
+                "Conservation Recoveries",
+                "Species rebounds and ecosystem restoration wins.",
+                ["Which recovery programs sustain their gains",
+                 "Marine protection expansion"],
+                confidence="low-medium",
+            ),
+            "science_frontier": _prog(
+                "Science Frontier",
+                "Fundamental science advances the hosts unpack for agency — "
+                "materials, space, computing.",
+                ["Which lab results reach real deployment",
+                 "Fusion / advanced-materials milestones"],
+                confidence="low",
+            ),
+            "listener_levers": _prog(
+                "The Lever Track Record",
+                "The individual actions ('The Lever') the show has recommended, "
+                "with honest numbers.",
+                ["Which levers listeners actually report acting on",
+                 "Cumulative impact framing that stays honest"],
+                confidence="high",
+            ),
+        },
+        theme_keywords=[
+            "solar", "wind", "battery", "storage", "renewable", "vaccine", "malaria",
+            "conservation", "species", "restoration", "breakthrough", "clinical trial",
+            "emissions", "recovery", "milestone", "lever", "fusion", "grid",
+            "rewilding", "clean energy", "carbon", "biodiversity",
+        ],
+    ),
+    # Age of AI does NOT run through run_show (Nerra Voices pipeline), so the
+    # digest-driven hooks never fire — its memory feeds the interview
+    # pipeline instead (pipelines/voices/common.py:episode_memory_block reads
+    # the committed summaries file for guest/topic continuity). The registry
+    # entry gives it the narrative page, the Story Tracker button, and
+    # nightly OP3 performance signals once downloads accrue.
+    "age_of_ai": MemoryConfig(
+        slug="age_of_ai",
+        label="THE AGE OF AI",
+        file_prefix="age_of_ai",
+        default_programs={
+            "interview_chronicle": _prog(
+                "Interview Chronicle",
+                "The growing record of real practitioners interviewed about "
+                "living and working through the AI age (Ep1: Patrick Novak, "
+                "2026-07-20).",
+                ["Which vantage points are still missing from the chronicle",
+                 "Recurring tensions guests independently raise"],
+                confidence="high",
+            ),
+            "ai_hosted_format": _prog(
+                "AI-Hosted Format",
+                "Mira's AI-documentarian format — disclosed AI host, verbatim "
+                "guest words, two human gates before publish.",
+                ["Guest comfort and booking rate over time",
+                 "Which narration beats listeners respond to"],
+            ),
+        },
+        theme_keywords=[
+            "interview", "guest", "career", "workflow", "automation", "adoption",
+            "displacement", "augment", "creativity", "trust", "disclosure",
         ],
     ),
 }

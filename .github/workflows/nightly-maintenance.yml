@@ -122,6 +122,14 @@ jobs:
         # (Yahoo Finance). Keeps last-good cache on failure.
         run: python scripts/fetch_tesla_dashboard.py --out api/tesla_dashboard.json || true
 
+      - name: Backfill Content Lake (before dashboard + search index)
+        # The content lake DB is gitignored. July 24 2026 lake review: this
+        # step used to run AFTER the dashboard build, so api/dashboard.json
+        # reported "lake: 0 episodes" every single night (the mission-control
+        # card showed a permanent false "lake empty" warning). Backfill
+        # first; the dashboard and search index both read the populated lake.
+        run: python scripts/backfill_content_lake.py
+
       - name: Generate Management Dashboard
         run: python scripts/generate_dashboard.py --out api/dashboard.json
 
@@ -132,12 +140,6 @@ jobs:
         env:
           NOTIFICATION_WEBHOOK_URL: ${{ secrets.NOTIFICATION_WEBHOOK_URL }}
         run: python scripts/grok_show_check.py --out api/daily-show-health.json || echo "::warning::Show health check failed (non-fatal)"
-
-      - name: Backfill Content Lake (required for search index)
-        # The content lake DB is gitignored. Nightly needs it populated from
-        # committed digests so build_search_index.py can produce a real index.
-        # Without this, search returns 0 results (the bug the user reported).
-        run: python scripts/backfill_content_lake.py
 
       - name: Build Gallery Manifest + Search Index
         env:

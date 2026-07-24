@@ -1485,6 +1485,27 @@ episode:
   - `scripts/backfill_content_lake.py` — evaluates the rebuilt lake and emits a
     GitHub `::error::`/`::warning::` annotation when it's empty/thin (was a
     silent failure mode that broke dedup/recaps/search).
+    **July 24 2026 orchestration pass** (drift guards:
+    `tests/test_memory_lake_expansion.py::TestLakeOrchestration`): the lake
+    ENGINE was healthy (1,200+ episodes, 1.5M words, FTS working) but three
+    orchestration bugs hid it. (1) The run-show **finalize job** rebuilt the
+    public search index on a fresh checkout WITHOUT backfilling the
+    gitignored lake — every episode (~13×/day) committed a zero-episode
+    `site/data/search-index.json`, so site search served 0 results most of
+    every day (nightly repaired it once; the next morning wiped it again).
+    Finalize now backfills before `build_search_index.py`, and the index
+    builder additionally REFUSES to overwrite a populated index with an
+    empty one (loud `::warning::`, non-blocking). (2) **Nightly built the
+    dashboard BEFORE the backfill**, so `api/dashboard.json` reported
+    "lake: 0 episodes" every night (the mission-control card showed a
+    permanent false empty-lake warning) — steps reordered. (3) Shows that
+    don't produce run_show digests (**Age of AI**) never entered the lake;
+    the backfill gained a summaries-JSON fallback importer so every
+    published episode is searchable. The lake remains a rebuild-from-repo
+    cache by design: committed `digests/**` are the durable store, the DB
+    is derived — safe to delete, cheap to rebuild (~30 s), reliable for
+    future content products via `query_show_range` / `search_content` /
+    `query_by_entity`.
   - `scripts/youtube_quota_preflight.py` — sums quota for YouTube-enabled shows
     and annotates when projected over the 10k/day budget (landmine #20). Wired
     as a preflight step in `run-show.yml`.
@@ -1797,6 +1818,29 @@ become longitudinal chronicles, not disposable daily recaps.
   with one YAML flag (`memory_enabled: false`) — per landmine #17, A/B-listen
   before trusting the output change. Drift guards: `tests/test_phase3_memory.py`
   (+ `tests/test_show_memory.py` still pins the untouched Tesla module).
+- **July 24 2026 expansion + hygiene pass** (drift guards:
+  `tests/test_memory_lake_expansion.py`): **MIT, DP Pod, and Age of AI**
+  joined the registry (all 8 non-Tesla content pillars now have memory;
+  Tesla stays bespoke). MIT's narrative layer tracks MARKET NARRATIVES
+  (rate cycle, AI-infra trade, Canadian wealth mechanics, crypto, the
+  practice-portfolio story arc) — the bespoke `investment_tracker`
+  trade/lesson ledger is untouched and stays authoritative for results.
+  DP Pod tracks progress arcs (clean-energy build-out, health, conservation,
+  The Lever track record). **Age of AI never runs through run_show**, so its
+  memory feeds the Nerra Voices pipeline instead:
+  `pipelines/voices/common.py:episode_memory_block` (reads the committed
+  summaries file) injects a `{{show_memory}}` chronicle block into the
+  question-generation / episode-thesis / Mira-narration prompts (continuity,
+  callbacks, no retreading); the registry entry still gives it the narrative
+  page + Story Tracker button + nightly OP3 signals. The podcast stage in
+  run_show now `setdefault`s `{narrative_memory_section}` like the digest
+  stage (a hook-load failure on a memory show could previously KeyError the
+  podcast prompt). Mining hygiene: doubled-word bigrams ("google google"
+  ×109 on Tesla — from unstripped `[Google News](url)` labels; the June-13
+  label-strip was never ported to the bespoke Tesla module, now is) and
+  generic-prose junk bigrams ("need know" ×78 on M&A) are filtered +
+  committed histories scrubbed. Memory-section injection changes prompt
+  context for MIT/DP Pod → A/B-listen per landmine #17.
 
 ### Per-show repositioning + per-episode blog title (Phase 4 partial, May 2026)
 

@@ -490,8 +490,20 @@ _THEME_KEYWORDS = [
 ]
 
 
+# Bigrams that survive stopword filtering but are generic prose, not themes
+# (July 24 2026 memory review: "need know" = "what you need to know" ranked
+# #1 on Models & Agents at count 78).
+_JUNK_BIGRAMS = frozenset({"need know", "need knows", "want know", "make sure"})
+
+
 def _extract_bigrams(text_lower: str) -> list:
-    """Stopword-filtered lowercase bigrams (the theme-mining unit)."""
+    """Stopword-filtered lowercase bigrams (the theme-mining unit).
+
+    July 24 2026: doubled-word bigrams are skipped — a repeated token is a
+    stopword-removal artifact, never a theme ("Google News … Google News"
+    with "news" stopworded became "google google", ranked #1 on Tesla at
+    count 109). Known generic-prose bigrams are skipped via _JUNK_BIGRAMS.
+    """
     words = [
         w for w in re.findall(r"\b[a-z]{4,}\b", text_lower)
         if w not in _THEME_STOPWORDS
@@ -500,6 +512,8 @@ def _extract_bigrams(text_lower: str) -> list:
         f"{words[i]} {words[i + 1]}"
         for i in range(len(words) - 1)
         if len(words[i]) + len(words[i + 1]) + 1 > 8
+        and words[i] != words[i + 1]
+        and f"{words[i]} {words[i + 1]}" not in _JUNK_BIGRAMS
     ]
 
 
@@ -569,12 +583,20 @@ def update_theme_history_from_digest(output_dir: Path, digest_text: str, episode
         words_in_key = noise_key.split()
         if words_in_key and any(w in _THEME_STOPWORDS for w in words_in_key):
             del themes[noise_key]
-        elif noise_key in echo_bigrams:
+        elif noise_key in echo_bigrams or noise_key in _JUNK_BIGRAMS:
+            del themes[noise_key]
+        elif len(words_in_key) == 2 and words_in_key[0] == words_in_key[1]:
+            # Doubled-word artifact (July 24 2026: "google google" x109
+            # from unstripped "[Google News](url)" source labels).
             del themes[noise_key]
 
-    # Strip URLs before mining — digests carry "Source: https://..."
-    # lines whose tokens otherwise become junk bigrams ("google https").
-    text_lower = re.sub(r"https?://\S+", " ", digest_text.lower())
+    # Strip source attributions before mining. June 13 2026 fix that
+    # landed in engine/show_memory but was never ported back to this
+    # bespoke module: remove the whole "[label](url)" markdown construct
+    # FIRST (the label — "Google News" — otherwise survives the bare-URL
+    # strip and pairs into junk bigrams), then any bare URL.
+    _no_links = re.sub(r"\[[^\]]*\]\([^)]*\)", " ", digest_text or "")
+    text_lower = re.sub(r"https?://\S+", " ", _no_links.lower())
     for kw in _THEME_KEYWORDS:
         if kw in text_lower:
             themes[kw] = themes.get(kw, 0) + 1

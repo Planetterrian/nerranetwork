@@ -317,4 +317,18 @@ def pre_fetch(config, *, episode_num=None, today_str=None) -> dict:
     if notes:
         sections.append("")
         sections.append(notes)
-    return {"nerra_network_context": "\n".join(sections)}
+    out = {"nerra_network_context": "\n".join(sections)}
+    # Narrative memory (July 24 2026): longitudinal progress arcs
+    # (clean-energy build-out, health progress, conservation recoveries…)
+    # so the hosts can call back to how a story has MOVED since the show
+    # last covered it. Gated on config.memory_enabled.
+    from engine import show_memory
+    out.update(show_memory.memory_pre_fetch(config, "dp_pod"))
+    return out
+
+
+def post_generate(config, *, digest_text="", episode_num=None) -> None:
+    """Mine theme history + per-program freshness from today's digest."""
+    from engine import show_memory
+    show_memory.memory_post_generate(
+        config, "dp_pod", digest_text or "", episode_num or 0)

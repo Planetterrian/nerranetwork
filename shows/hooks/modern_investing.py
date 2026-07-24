@@ -18,6 +18,8 @@ import re
 import uuid
 from pathlib import Path
 
+from engine import show_memory
+
 
 def _finite(value, default=0.0):
     """Return *value* if it's a finite number, else *default*.
@@ -264,6 +266,13 @@ def pre_fetch(config, *, episode_num: int | None = None, today_str: str | None =
     except Exception as exc:
         logger.warning("Failed to build recursive learning context: %s", exc)
         context["mit_recursive_learning_context"] = "Learning context temporarily unavailable — focus on process discipline."
+
+    # Narrative memory (July 24 2026): the market-narrative layer the
+    # investment tracker can't hold (rate cycle, AI-infra trade, Canadian
+    # wealth mechanics …). Gated on config.memory_enabled; returns the
+    # {narrative_memory_section} key (empty string when disabled) so the
+    # prompt placeholder never KeyErrors.
+    context.update(show_memory.memory_pre_fetch(config, "modern_investing"))
 
     return context
 
@@ -677,6 +686,13 @@ def post_generate(config, *, digest_text: str = "", episode_num: int | None = No
         )
         _save_lessons_learned(lessons, lessons_path)
         logger.info("Appended lesson_learned %s: %s", entry["id"], entry["observation"][:80])
+
+    # Narrative-memory mining (July 24 2026): theme history + per-program
+    # freshness from the just-generated digest. Gated on memory_enabled;
+    # honors NERRA_HOOKS_READONLY via the readonly guard at the top of
+    # this function (we only reach here on live runs).
+    show_memory.memory_post_generate(
+        config, "modern_investing", digest_text or "", episode_num or 0)
 
 
 # ---------------------------------------------------------------------------

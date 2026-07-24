@@ -2075,6 +2075,10 @@ def run(args: argparse.Namespace) -> None:
             # defaulting as the digest stage (str.format_map raises
             # KeyError on missing placeholders).
             pod_vars.setdefault("vocab_review_section", "")
+            # Phase-3 narrative memory — several podcast prompts reference
+            # {narrative_memory_section}; same hook-failure-safe default as
+            # the digest stage (July 24 2026 memory expansion).
+            pod_vars.setdefault("narrative_memory_section", "")
 
             # Provide default intro_line/closing_block if hook didn't supply them.
             # Uses engine.intros for day-varying, show-specific intros so
