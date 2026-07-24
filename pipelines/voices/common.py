@@ -255,3 +255,50 @@ def parse_json_lenient(text: str) -> Any:
         if text.rstrip().endswith("```"):
             text = text.rstrip()[:-3]
     return json.loads(text)
+
+
+# ---------------------------------------------------------------------------
+# Show memory (July 24 2026) — Age of AI runs OUTSIDE run_show, so the
+# network's digest-driven narrative memory never fires for it. This is its
+# memory surface: the committed episode record, injected into brief /
+# thesis / narration prompts so the show behaves like a chronicle
+# (continuity, callbacks, no retreading) instead of isolated one-offs.
+# ---------------------------------------------------------------------------
+
+def episode_memory_block(limit: int = 10) -> str:
+    """Published-episode memory for prompt injection ({{show_memory}}).
+
+    Reads the committed ``digests/age_of_ai/summaries_age_of_ai.json`` —
+    the durable record of what the show has already aired (guest, date,
+    episode framing). Returns a labeled block, or ``""`` when no episodes
+    exist yet / on any failure — memory must never block an interview.
+    """
+    try:
+        path = ROOT / "digests" / "age_of_ai" / "summaries_age_of_ai.json"
+        if not path.exists():
+            return ""
+        data = json.loads(path.read_text(encoding="utf-8"))
+        episodes = data.get("episodes") or data.get("summaries") or []
+        rows = []
+        for ep in episodes:
+            if not isinstance(ep, dict):
+                continue
+            num = ep.get("episode") or ep.get("episode_num")
+            title = (ep.get("title") or ep.get("hook") or "").strip()
+            date = str(ep.get("date") or "")[:10]
+            if num and title:
+                rows.append((int(num), date, title))
+        if not rows:
+            return ""
+        rows.sort(reverse=True)
+        lines = [f"- Ep{n} ({d}): {t}" for n, d, t in rows[:limit]]
+        return (
+            "THE SHOW'S CHRONICLE SO FAR (episodes already published — do "
+            "not retread ground these covered, and never restate an "
+            "existing episode's angle as a thesis; a brief, respectful "
+            "callback to an earlier episode is welcome when this guest's "
+            "world genuinely connects to one):\n" + "\n".join(lines)
+        )
+    except Exception as exc:  # noqa: BLE001 — memory must never block
+        logger.warning("episode_memory_block failed (non-fatal): %s", exc)
+        return ""

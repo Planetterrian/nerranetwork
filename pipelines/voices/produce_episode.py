@@ -22,8 +22,8 @@ from pathlib import Path
 import requests
 
 from common import (  # noqa: E402
-    ROOT, llm, load_prompt, logger, notify_operator, parse_json_lenient,
-    r2_upload, sb_insert, sb_select, sb_update,
+    ROOT, episode_memory_block, llm, load_prompt, logger, notify_operator,
+    parse_json_lenient, r2_upload, sb_insert, sb_select, sb_update,
 )
 
 sys.path.insert(0, str(Path(__file__).parent))
@@ -68,6 +68,7 @@ def write_narration(interview: dict, app: dict, pkg: dict) -> list[dict]:
             episode_thesis=interview.get("episode_thesis", ""),
             episode_notes=pkg.get("episode_notes", ""),
             transcript=pkg.get("transcript_cleaned", ""),
+            show_memory=episode_memory_block(),
         ),
         temperature=0.6, max_tokens=4000,
     )

@@ -149,6 +149,7 @@ def main(argv=None):
         md_files = sorted(output_dir.glob("*.md"))
         logger.info("\n%s: Found %d digest files in %s", show_slug, len(md_files), output_dir)
 
+        show_imported = 0
         for md_file in md_files:
             if "_tts" in md_file.stem:
                 continue
@@ -188,6 +189,55 @@ def main(argv=None):
 
             store_episode(record)
             total_imported += 1
+            show_imported += 1
+
+        # Summaries fallback (July 24 2026): shows whose production does
+        # NOT go through run_show (Age of AI — the Nerra Voices interview
+        # pipeline) have no *_EpN_YYYYMMDD.md digests, so they never
+        # entered the lake and their episodes were invisible to search /
+        # recaps / future content products. Import their committed
+        # summaries records (title/hook/description) instead — thinner
+        # than a digest, but searchable and dated.
+        if show_imported == 0:
+            summ_path = Path(getattr(cfg.publishing, "summaries_json", "") or "")
+            if summ_path and summ_path.exists():
+                try:
+                    import json as _json
+                    data = _json.loads(summ_path.read_text(encoding="utf-8"))
+                    records = (
+                        data.get("episodes") or data.get("summaries") or []
+                        if isinstance(data, dict) else data
+                    )
+                    for rec in records:
+                        if not isinstance(rec, dict):
+                            continue
+                        num = rec.get("episode") or rec.get("episode_num")
+                        date = str(rec.get("date") or "")[:10]
+                        if not (num and date):
+                            continue
+                        title = (rec.get("title") or "").strip()
+                        hook = (rec.get("hook") or rec.get("description") or "")[:500]
+                        body = (rec.get("description") or rec.get("content") or "")
+                        et = extract_entities_and_topics(f"{title}\n{body}", show_slug)
+                        store_episode(EpisodeRecord(
+                            show_slug=show_slug, episode_num=int(num),
+                            date=date, title=title or f"Episode {num}",
+                            hook=hook, digest_md=body, podcast_script="",
+                            summary=body[:500], headlines=[], source_urls=[],
+                            entities=et["entities"], topics=et["topics"],
+                            word_count=len(body.split()), show_name=show_name,
+                            language=lang,
+                        ))
+                        total_imported += 1
+                        show_imported += 1
+                    if show_imported:
+                        logger.info(
+                            "%s: imported %d episode(s) from summaries fallback "
+                            "(no .md digests — non-run_show show)",
+                            show_slug, show_imported,
+                        )
+                except Exception as exc:  # noqa: BLE001 — fallback is best-effort
+                    logger.warning("%s summaries fallback failed: %s", show_slug, exc)
 
     stats = get_lake_stats()
     logger.info("\n%s", "=" * 60)

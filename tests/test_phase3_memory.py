@@ -19,7 +19,15 @@ import pytest
 from engine import show_memory as sm
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-MEMORY_SHOWS = ("models_agents", "fascinating_frontiers", "planetterrian")
+# July 24 2026 expansion added modern_investing, dp_pod, and age_of_ai
+# (spacex is covered by tests/test_spacex_show.py; tesla stays bespoke).
+MEMORY_SHOWS = ("models_agents", "fascinating_frontiers", "planetterrian",
+                "modern_investing", "dp_pod", "age_of_ai")
+# Age of AI never generates via run_show (Nerra Voices pipeline) — it has
+# no run_show prompts/hook; its memory feeds the interview pipeline
+# (pipelines/voices/common.py:episode_memory_block, guarded by
+# tests/test_memory_lake_expansion.py).
+RUN_SHOW_MEMORY_SHOWS = tuple(s for s in MEMORY_SHOWS if s != "age_of_ai")
 
 
 # ---------------------------------------------------------------------------
@@ -143,13 +151,13 @@ class TestRegistryAndConfig:
 # ---------------------------------------------------------------------------
 
 class TestPromptWiring:
-    @pytest.mark.parametrize("slug", MEMORY_SHOWS)
+    @pytest.mark.parametrize("slug", RUN_SHOW_MEMORY_SHOWS)
     def test_prompts_have_placeholder(self, slug):
         for kind in ("digest", "podcast"):
             txt = (PROJECT_ROOT / "shows" / "prompts" / f"{slug}_{kind}.txt").read_text(encoding="utf-8")
             assert "{narrative_memory_section}" in txt, f"{slug}_{kind} missing placeholder"
 
-    @pytest.mark.parametrize("slug", MEMORY_SHOWS)
+    @pytest.mark.parametrize("slug", RUN_SHOW_MEMORY_SHOWS)
     def test_hook_file_exposes_prefetch(self, slug):
         import importlib.util
         path = PROJECT_ROOT / "shows" / "hooks" / f"{slug}.py"

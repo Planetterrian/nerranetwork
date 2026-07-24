@@ -140,6 +140,31 @@ def main() -> int:
             "language": d.get("language") or "en",
         })
 
+    # Empty-lake guard (July 24 2026 lake review): the finalize job used to
+    # run this on a fresh checkout WITHOUT backfilling the (gitignored)
+    # lake, committing a zero-episode index ~13x/day and breaking site
+    # search for most of every day. The workflow now backfills first, but
+    # never let ANY caller downgrade a populated committed index to an
+    # empty one — that is always an orchestration bug upstream, not a real
+    # "the network has no episodes" state.
+    if not clean_docs and args.out.exists():
+        try:
+            existing = json.loads(args.out.read_text(encoding="utf-8"))
+            if int(existing.get("episode_count") or 0) > 0:
+                print(
+                    "::warning::Content lake is EMPTY but the existing search "
+                    f"index has {existing['episode_count']} episodes — refusing "
+                    "to overwrite a good index with an empty one. Run "
+                    "scripts/backfill_content_lake.py before this script.",
+                    flush=True,
+                )
+                # Non-blocking (finalize also regenerates the homepage in
+                # the same step — never hold those hostage): keep the good
+                # index, exit 0.
+                return 0
+        except (json.JSONDecodeError, OSError):
+            pass  # unreadable existing index — writing fresh is fine
+
     index = build_index(clean_docs)
     content = json.dumps(index, indent=2, ensure_ascii=False) + "\n"
 

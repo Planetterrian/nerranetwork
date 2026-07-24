@@ -778,8 +778,16 @@ jobs:
           python generate_network_rss.py
           python scripts/generate_api.py
 
+          # CRITICAL ORDER (July 24 2026 lake review): this job runs on a
+          # FRESH checkout and the lake DB is gitignored — without a
+          # backfill here, build_search_index read an EMPTY lake and
+          # committed a zero-episode search-index.json after EVERY episode
+          # (~13x/day; nightly repaired it once, the next morning's first
+          # finalize wiped it again — site search served 0 results most of
+          # every day). Backfill BEFORE the index build, always.
+          python scripts/backfill_content_lake.py
+
           # Rebuild the global search index so new episodes are immediately searchable.
-          # This (combined with the backfill in nightly) makes search reliable and up-to-date.
           python scripts/build_search_index.py --out site/data/search-index.json
 
           # Gallery manifest (June 2026): previously a standalone workflow
