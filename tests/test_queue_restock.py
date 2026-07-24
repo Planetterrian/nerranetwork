@@ -148,3 +148,61 @@ class TestWorkflowWiring:
     def test_runway_alarm_comment_updated(self):
         src = (ROOT / "tests/test_network_quality_pass.py").read_text()
         assert "restock-topic-queues.yml" in src
+
+
+class TestResequenceUnproduced:
+    """The first live restock run (2026-07-24) generated valid topics but
+    appended them in model order — long same-category runs that failed the
+    queue-interleave drift guards, and the workflow's verify-before-commit
+    step correctly blocked the commit. The script now re-interleaves the
+    whole unproduced tail in place after appending."""
+
+    def _entry(self, i, cat, produced=False):
+        return {"id": f"t{i}", "title": f"T{i}", "brief": "b" * 90,
+                "category": cat, "produced": produced}
+
+    def test_fpd_shape_alternates_within_imbalance_bound(self):
+        # Replicates the failed run: 2 categories, imbalanced (33 C / 23 O
+        # style), appended as one big C-block then an O-block.
+        queue = [self._entry(0, "concrete_example", produced=True)]
+        queue += [self._entry(i + 1, "concrete_example") for i in range(12)]
+        queue += [self._entry(i + 20, "opportunity_area") for i in range(8)]
+        rq.resequence_unproduced(queue)
+        seq = [e["category"] for e in queue if not e["produced"]]
+        pairs = sum(1 for a, b in zip(seq, seq[1:]) if a == b)
+        imbalance = abs(seq.count("concrete_example") - seq.count("opportunity_area"))
+        assert pairs <= imbalance
+        # Seam: first unproduced differs from the last produced category.
+        assert seq[0] != "concrete_example"
+
+    def test_uc_shape_no_adjacent_repeat_before_overflow(self):
+        import itertools
+        from collections import Counter
+        queue = [self._entry(0, "classic", produced=True)]
+        cats = ["economics"] * 10 + ["policy"] * 5 + ["classic"] * 4 + \
+               ["medicine"] * 3 + ["infrastructure"] * 2 + ["tech"] * 1
+        queue += [self._entry(i + 1, c) for i, c in enumerate(cats)]
+        rq.resequence_unproduced(queue)
+        seq = [e["category"] for e in queue if not e["produced"]]
+        counts = Counter(seq)
+        dominant = counts.most_common(1)[0][0]
+        head = seq[: len(seq) - counts[dominant]]
+        runs = [sum(1 for _ in g) for _, g in itertools.groupby(head)]
+        assert max(runs, default=0) <= 1, f"clustered head: {seq}"
+
+    def test_produced_entries_and_positions_untouched(self):
+        queue = [self._entry(0, "classic", produced=True),
+                 self._entry(1, "policy"),
+                 self._entry(2, "classic", produced=True),
+                 self._entry(3, "policy"),
+                 self._entry(4, "tech")]
+        before_produced = [(i, e["id"]) for i, e in enumerate(queue) if e["produced"]]
+        before_ids = sorted(e["id"] for e in queue)
+        rq.resequence_unproduced(queue)
+        after_produced = [(i, e["id"]) for i, e in enumerate(queue) if e["produced"]]
+        assert after_produced == before_produced
+        assert sorted(e["id"] for e in queue) == before_ids  # nothing lost/duped
+
+    def test_restock_flow_calls_resequence(self):
+        src = (ROOT / "scripts/restock_topic_queues.py").read_text()
+        assert "resequence_unproduced(queue)" in src
