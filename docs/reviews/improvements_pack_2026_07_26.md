@@ -28,6 +28,17 @@ stage / MIT NaN / Mission Control).
 PT/FF/Tesla/SpaceX/FP/MIT prompt edits, continuity budget, reader-transcript
 path is metadata-only (blog text).
 
+## Verified from this environment (2026-07-26)
+
+| Check | Result |
+|-------|--------|
+| Supabase `nerra-voices` (`mosbymmshvagdgcajkwr`) | ACTIVE_HEALTHY; tables present with RLS; **live rows** (2 applications, 2 interviews, 3 runs, 2 editorial packages, 4 cross-show callouts) |
+| GitHub Actions secrets list | **403** — agent token cannot read secret names |
+| Local `.env` / `GROK_API_KEY` | Absent in this cloud sandbox — cannot run `--test` Grok regenerations here |
+| `gh` / Wrangler deploy / Apple Connect / Meta / TikTok | Not available (no wrangler; no app-store credentials) |
+| Review snapshots (OV / EI / MAB) | Ran; chronic under-length still visible; OV “Both sides agree” tic **not** in top repeated phrases (disclosure/CTA dominate) |
+| Dashboard offline regen | Show pages + `rss_image` correct (`dp_pod` → `thedppod.html`) |
+
 ## Remaining — operator / external (cannot be finished by code alone)
 
 ### P0 — do these next

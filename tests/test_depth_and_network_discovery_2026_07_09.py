@@ -89,13 +89,39 @@ class TestNetworkDiscoverySurfaces:
             assert "next time" not in low
 
     def test_surface_rotation_covers_all(self):
-        from engine.network_promo import NETWORK_SURFACES, pick_featured_surface
+        from engine.network_promo import (
+            NETWORK_SURFACES,
+            _weighted_surface_pool,
+            pick_featured_surface,
+        )
 
+        # Walk the weighted pool (gallery weight 3) so every unique id appears.
+        pool_len = len(_weighted_surface_pool())
         seen = {
             pick_featured_surface("tesla", _DAY + dt.timedelta(days=i))["id"]
-            for i in range(len(NETWORK_SURFACES) * 2)
+            for i in range(pool_len * 2)
         }
         assert seen == {s["id"] for s in NETWORK_SURFACES}
+
+    def test_gallery_is_weighted_above_peers(self):
+        from engine.network_promo import (
+            NETWORK_SURFACES,
+            _weighted_surface_pool,
+            pick_featured_surface,
+        )
+
+        pool = _weighted_surface_pool()
+        gallery_slots = sum(1 for s in pool if s["id"] == "gallery")
+        assert gallery_slots >= 3
+        assert gallery_slots > len(NETWORK_SURFACES) // 2
+        # Over a long window gallery should appear more often than blogs.
+        counts = {"gallery": 0, "blogs": 0}
+        for i in range(len(pool) * 4):
+            sid = pick_featured_surface(
+                "tesla", _DAY + dt.timedelta(days=i))["id"]
+            if sid in counts:
+                counts[sid] += 1
+        assert counts["gallery"] > counts["blogs"]
 
     def test_surface_x_reply_has_utm(self):
         from engine.network_promo import build_surface_x_reply
