@@ -1922,6 +1922,33 @@ operator checklist). Shipped, all no-ops when secrets unset:
   OP3 response shapes are pinned in `tests/test_op3_stats.py` — verified
   live June 2026 (`monthlyDownloads`/`weeklyDownloads`; episode
   `downloads1/3/7/30/All` keys are OMITTED when the data span is young).
+  **July 25 2026 nightly-fetch hardening** (drift guards:
+  `tests/test_connector_budget.py`; contract:
+  [`docs/analytics.md`](docs/analytics.md)): a live run surfaced two
+  issues the JSON outputs had been hiding. (1) The Spotify step ran for
+  **over an hour** — `spotifyconnector` retries a failing endpoint 6×
+  with unbounded exponential backoff (~124 s each), and a registered
+  feed with no plays yet answers `500` on `/metadata` + `/aggregate`
+  *every* night (18 of 24 feeds were in that state, ~32 dead endpoints).
+  New `engine/connector_budget.py` clamps the connectors' retry
+  constants (3 attempts / 1 s base ≈ 6 s per dead endpoint, measured)
+  and adds a wall-clock budget (`SPOTIFY_/APPLE_FETCH_BUDGET_SECONDS`,
+  default 900 s) as the backstop; unreached shows keep their previous
+  entry tagged `not_refreshed_this_run`, so a budget stop never shrinks
+  the file. Applied to the Apple fetcher too (its constant is
+  `MAX_RETRY_ATTEMPTS`, not `MAX_REQUEST_ATTEMPTS` — a copy-paste would
+  clamp nothing). (2) **Age of AI's enclosures carried no OP3 prefix**:
+  the prefix is applied by each publish path, never by
+  `update_rss_feed`, and the Nerra Voices publisher
+  (`pipelines/voices/publish_episode.py`) bypasses run_show — so its
+  downloads were invisible. Fixed for new episodes; the published Ep001
+  URL is deliberately left unprefixed (rewriting a live enclosure
+  re-downloads it for every subscriber). Any future show that bypasses
+  run_show must apply the prefix in its own publish step. The `dp_pod` /
+  `age_of_ai` OP3 **404s are an indexing lag**, not a bug — OP3's docs
+  define 404 as "OP3 doesn't know about the show"; downloads attach
+  retroactively once it indexes the feed. A 404 persisting for weeks
+  means check the prefix first.
 - **Adjacency-map bug fixed.** `newsletter.network_adjacencies` (and the
   other newsletter composition keys) had been mis-indented under
   `cost_circuit_breakers:` in `shows/_defaults.yaml` — newsletter +

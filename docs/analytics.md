@@ -69,6 +69,40 @@ Public, display-safe extracts live in `site/data/` (e.g.
   show YAML.
 * **OP3 history** starts the day the prefix went live — no backfill of
   earlier listens.
+* **A show only appears in OP3 once OP3 knows the feed.** The lookup is
+  `GET /shows/<base64 feed URL>`, and per OP3's docs a 404 means "OP3
+  doesn't know about the show" — not that there were no downloads. New
+  feeds therefore 404 for a while after launch (`op3: <slug> fetch
+  failed: 404` in the nightly log) while their prefixed downloads are
+  still being recorded; they attach retroactively once OP3 indexes the
+  feed. Observed 2026-07-25 for `dp_pod` and `age_of_ai`, both of which
+  had only gone LIVE on Apple two days earlier. **A 404 that persists
+  for weeks is different** — check the feed's enclosures actually carry
+  the `https://op3.dev/e/` prefix before assuming it's an indexing lag.
+* **The prefix is applied by each publish path, not by
+  `update_rss_feed`.** `run_show.py`, `engine/pipeline.py`,
+  `engine/language_feeds.py` and `pipelines/voices/publish_episode.py`
+  each call `apply_op3_prefix` themselves. Age of AI publishes outside
+  run_show and was missing that call, so its Ep001 enclosure is
+  unprefixed and its downloads were never counted (fixed 2026-07-25 for
+  new episodes; the published Ep001 URL is deliberately left alone —
+  rewriting a live enclosure re-downloads the episode for every
+  subscriber). Any future show that bypasses `run_show` must apply the
+  prefix in its own publish step.
+* **Both cookie connectors are runtime-bounded.** `spotifyconnector`
+  and `appleconnector` retry a failing endpoint 6 times with unbounded
+  exponential backoff (~124s per endpoint). A registered feed with no
+  plays yet returns `500` on `/metadata` and `/aggregate` *every* night,
+  so this is a stable cost, not a transient one: with 18 of 24 Spotify
+  feeds in that state the nightly fetch step ran for over an hour
+  (measured 2026-07-25) before the rest of maintenance could start.
+  `engine/connector_budget.py` clamps the retry constants (3 attempts,
+  1s base ≈ 6s per dead endpoint) and enforces a wall-clock budget
+  (`SPOTIFY_FETCH_BUDGET_SECONDS` / `APPLE_FETCH_BUDGET_SECONDS`,
+  default 900s); shows not reached before the budget expires keep their
+  previous entry, tagged `not_refreshed_this_run`, so the file never
+  silently shrinks. Watch for the `::warning::…budget…expired`
+  annotation — it means the platform got slower, not that a feed died.
 * **YouTube quota** is shared between publishing and analytics;
   `scripts/backfill_dub_playlists.py` (manual workflow) also spends it —
   50 units per playlist insert.
