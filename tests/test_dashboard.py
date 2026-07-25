@@ -570,3 +570,76 @@ def test_management_html_renders_distribution_and_policy():
     assert "data.youtube_policy" in html
     assert "Podcast directories" in html
     assert "site.countries" in html
+
+
+# ---------------------------------------------------------------------------
+# Apple Podcasts engagement (July 25 2026). Apple ships NO official creator
+# analytics API — OP3 already counts Apple downloads, so this integration
+# exists for followers/plays/completion, the only finish-rate signal the
+# network gets. Cookie connector, same trade-off as Spotify.
+# ---------------------------------------------------------------------------
+
+class TestAppleAnalytics:
+    def test_absent_file_is_clean_not_configured(self, tmp_path):
+        section = gd.build_audience_section(tmp_path)
+        assert section["apple"] == {"configured": False}
+
+    def test_totals_and_per_show_rollup(self, tmp_path):
+        (tmp_path / "api").mkdir()
+        (tmp_path / "api" / "apple_stats.json").write_text(json.dumps({
+            "fetched_at": "2026-07-25T12:00:00+00:00",
+            "window_days": 30,
+            "shows": {
+                "tesla": {"show_id": "1", "plays": 120, "listeners": 40,
+                          "followers": 9, "time_listened": 5000},
+                "spacex": {"show_id": "2", "plays": 30, "listeners": 12,
+                           "followers": 3, "time_listened": 900},
+                "dp_pod": {"show_id": "3", "errors": {"overview": "500"}},
+            },
+        }), encoding="utf-8")
+        ap = gd.build_audience_section(tmp_path)["apple"]
+        assert ap["configured"] is True
+        assert ap["totals"] == {"plays": 150, "listeners": 52,
+                                "followers": 12, "time_listened": 5900}
+        assert ap["feeds_registered"] == 3
+        assert ap["feeds_reporting"] == 2  # dp_pod errored → no plays
+        assert ap["per_show"]["dp_pod"]["errors"] == ["overview"]
+
+    def test_fetcher_noops_without_cookies(self, monkeypatch):
+        import importlib, sys as _sys
+        _sys.path.insert(0, str(ROOT / "scripts"))
+        monkeypatch.delenv("APPLE_MYACINFO", raising=False)
+        monkeypatch.delenv("APPLE_ITCTX", raising=False)
+        mod = importlib.import_module("fetch_apple_stats")
+        assert mod.main(["--dry-run"]) == 0  # clean no-op, never a red nightly
+
+    def test_show_id_discovery_reads_yaml(self, monkeypatch, tmp_path):
+        import importlib, sys as _sys
+        _sys.path.insert(0, str(ROOT / "scripts"))
+        mod = importlib.import_module("fetch_apple_stats")
+        shows = tmp_path / "shows"
+        shows.mkdir()
+        (shows / "tesla.yaml").write_text(
+            "apple_show_id: 6794047703\napple_show_ids:\n  fr: 6794047704\n",
+            encoding="utf-8")
+        (shows / "_defaults.yaml").write_text("apple_show_id: nope\n", encoding="utf-8")
+        monkeypatch.setattr(mod, "REPO_ROOT", tmp_path)
+        ids = mod.discover_show_ids()
+        assert ids == {"tesla": "6794047703", "tesla_fr": "6794047704"}
+
+    def test_management_html_renders_apple_card(self):
+        html = (ROOT / "management.html").read_text(encoding="utf-8")
+        assert "Apple Podcasts" in html
+        assert "audience.apple" in html
+        # The not-configured state must explain WHY (no official API).
+        assert "no official analytics API" in html
+
+    def test_nightly_wires_apple_fetch_and_commit(self):
+        wf = (ROOT / ".github/workflows/nightly-maintenance.yml").read_text()
+        assert "fetch_apple_stats.py" in wf
+        assert "APPLE_MYACINFO" in wf and "APPLE_ITCTX" in wf
+        # Must be committed or the nightly result is thrown away
+        # (the youtube_channel_history landmine class).
+        assert "api/apple_stats.json" in wf.split("add-paths")[1]
+        # And must run BEFORE the dashboard build that consumes it.
+        assert wf.find("fetch_apple_stats.py") < wf.find("generate_dashboard.py")

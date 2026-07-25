@@ -23,6 +23,7 @@ degraded, not deleted — check the secret before assuming data loss.
 | `api/youtube_channel_history.json` | derived | Daily subscriber snapshots (7-day deltas). | same | same |
 | `api/ga4_stats.json` | GA4 Data API (official) | nerranetwork.com site traffic, 28d: totals, day series, top pages, channels, countries. Property `533581233`. | `scripts/fetch_ga4_stats.py` | `GA4_SERVICE_ACCOUNT_JSON` (+ optional `GA4_PROPERTY_ID`) |
 | `api/spotify_stats.json` | Spotify for Podcasters (**unofficial**, cookie-auth) | Per-show followers / streams / listeners + demographics, 30d. Fills the OP3 blind spot. | `scripts/fetch_spotify_stats.py` | `SPOTIFY_SP_DC`, `SPOTIFY_SP_KEY` |
+| `api/apple_stats.json` | Apple Podcasts Connect (**unofficial**, cookie-auth) | Apple **engagement**: plays, listeners, followers, time-listened per show, 30d. Apple *downloads* are already in OP3 — this adds the follow/finish signal nothing else measures. Needs `apple_show_id:` in each `shows/<slug>.yaml` (numeric ID from the Podcasts Connect URL). | `scripts/fetch_apple_stats.py` | `APPLE_MYACINFO`, `APPLE_ITCTX` |
 | `api/buttondown_stats.json` | Buttondown API (official) | Newsletter subscriber count. | `scripts/fetch_buttondown_stats.py` | `BUTTONDOWN_API_KEY` |
 | `api/op3_history.json` | derived (accumulated) | Weekly download ledger keyed by ISO-week Monday. OP3 has no all-time endpoint, so each dashboard build overwrites the current 4 rolling weeks and freezes older ones; "all-time" = sum of stored weeks ("since tracking began", 2026-06-29). Must stay in nightly's safe-commit-push add-paths (youtube_channel_history landmine class). | `scripts/generate_dashboard.py` | — |
 | `api/youtube_policy.json` | derived (nightly) | Adaptive publishing tier per show × channel (A/B/C/D) + the views-per-day velocity behind it; decides long-form on/off and Shorts count. Surfaced in the dashboard's Distribution section. | `scripts/update_youtube_policy.py` | — |
@@ -55,13 +56,17 @@ Public, display-safe extracts live in `site/data/` (e.g.
   goes stale. Fix: log in at podcasters.spotify.com, copy the `sp_dc`
   and `sp_key` cookies (browser dev tools → Application → Cookies),
   update the two repo secrets. ~5 minutes.
-* **Apple Podcasts** has no official analytics API. Apple *download*
-  traffic is already covered by OP3; Apple-only engagement metrics
-  (followers, time listened) live in
-  [Podcasts Connect](https://podcastsconnect.apple.com/) and are not
-  fetched. If that changes (or the cookie-based
-  [apple-connector](https://github.com/openpodcast/apple-connector) is
-  adopted), add `api/apple_stats.json` here.
+* **Apple Podcasts** still has no official analytics API (re-verified
+  July 2026). Apple *download* traffic is covered by OP3; the Apple-only
+  engagement metrics (followers, plays, time listened) are now fetched
+  via the community
+  [apple-connector](https://github.com/openpodcast/apple-connector) into
+  `api/apple_stats.json`, authenticated with `myacinfo`/`itctx` session
+  cookies — the same unofficial trade-off already accepted for Spotify.
+  **Both cookie integrations expire** and degrade to stale data (never a
+  red nightly); the fetcher logs a loud re-auth hint when every show
+  fails. Turning it on takes two secrets plus an `apple_show_id:` per
+  show YAML.
 * **OP3 history** starts the day the prefix went live — no backfill of
   earlier listens.
 * **YouTube quota** is shared between publishing and analytics;
