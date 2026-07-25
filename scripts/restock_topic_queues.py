@@ -211,6 +211,56 @@ def validate_and_dedupe(
     return accepted
 
 
+def interleave_by_category(entries: list[dict], seed_prev: str | None = None) -> list[dict]:
+    """Order *entries* so no two adjacent share a category (greedy).
+
+    Repeatedly picks from the category with the most remaining entries,
+    excluding the previous pick's category; when only the previous
+    category remains, its overflow trails at the end (the unavoidable
+    tail the drift guards allow). ``seed_prev`` — the category of the
+    most recently produced episode — prevents a same-category seam at
+    the produced/unproduced boundary. Stable within each category.
+    """
+    from collections import OrderedDict
+    buckets: OrderedDict[str, list[dict]] = OrderedDict()
+    for e in entries:
+        buckets.setdefault(e.get("category") or "?", []).append(e)
+    out: list[dict] = []
+    prev = seed_prev
+    while any(buckets.values()):
+        candidates = sorted(
+            (cat for cat, items in buckets.items() if items and cat != prev),
+            key=lambda cat: (-len(buckets[cat]), cat),
+        )
+        cat = candidates[0] if candidates else prev  # only prev left: overflow tail
+        out.append(buckets[cat].pop(0))
+        prev = cat
+    return out
+
+
+def resequence_unproduced(queue: list[dict]) -> None:
+    """Re-interleave the unproduced tail IN PLACE (produced entries fixed).
+
+    The queue drift guards (July 2 2026 hygiene pass) require the
+    unproduced sequence to be category-interleaved — FPD's alternation
+    continues from the produced tail, UC has no adjacent same-category
+    pair before the dominant category's unavoidable overflow. A restock
+    appends in model order, so the whole unproduced set is re-sequenced
+    afterward: unproduced entries are re-placed into the SAME list
+    positions in interleaved order, leaving produced entries (and the
+    file layout) untouched. Reordering unproduced entries is safe — only
+    their relative consumption order changes, which is the point.
+    """
+    idxs = [i for i, e in enumerate(queue)
+            if isinstance(e, dict) and not e.get("produced")]
+    produced_cats = [e.get("category") for e in queue
+                     if isinstance(e, dict) and e.get("produced")]
+    seed = produced_cats[-1] if produced_cats else None
+    ordered = interleave_by_category([queue[i] for i in idxs], seed_prev=seed)
+    for i, entry in zip(idxs, ordered):
+        queue[i] = entry
+
+
 def build_prompt(cfg: RestockConfig, queue: list[dict], needed: int) -> str:
     """Render the show's restock prompt with queue history + counts."""
     template = (ROOT / cfg.prompt_file).read_text(encoding="utf-8")
@@ -292,6 +342,9 @@ def restock_show(cfg: RestockConfig, *, dry_run: bool, force: bool) -> dict:
         return result
 
     queue.extend(accepted)
+    # Keep the unproduced tail category-interleaved (drift-guard contract;
+    # first live run failed the verify step without this — the guard held).
+    resequence_unproduced(queue)
     data["queue"] = queue
     # Same write convention as engine.topic_queue.mark_topic_produced.
     with queue_path.open("w", encoding="utf-8") as fh:
