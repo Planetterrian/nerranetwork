@@ -195,6 +195,7 @@
 
 <nav class="mc-nav" aria-label="Sections">
   <a href="#audience-section">Audience</a>
+  <a href="#distribution">Distribution</a>
   <a href="#catalog">Catalog</a>
   <a href="#operations">Operations</a>
   <a href="#library">Lake &amp; images</a>
@@ -222,6 +223,11 @@
   <section class="mc-section" id="audience-section">
     <h2>Audience <span class="pill-note" id="audience-status-pill"></span></h2>
     <div class="card-grid" id="audience-grid"></div>
+  </section>
+
+  <section class="mc-section" id="distribution">
+    <h2>Distribution — directories &amp; publishing policy <span class="pill-note" id="distribution-pill"></span></h2>
+    <div class="card-grid" id="distribution-grid"></div>
   </section>
 
   <section class="mc-section" id="catalog">
@@ -460,6 +466,8 @@
   const catalog = data.catalog || {};
   const gallery = data.gallery || {};
   const lake = data.content_lake || {};
+  const dist = data.distribution || {};
+  const ytPolicy = data.youtube_policy || {};
 
   // ---------- alert band ----------
   const band = $("#alert-band");
@@ -637,6 +645,9 @@
       const chansTxt = (site.channels || []).map((c) =>
         c.sessionDefaultChannelGroup + " " + fmt(c.sessions)).join(" · ");
       if (chansTxt) card.appendChild(h("p", { class: "fine-list", html: "<span class='k'>Traffic:</span> " + chansTxt }));
+      const ctryTxt = (site.countries || []).slice(0, 6).map((c) =>
+        c.country + " " + fmt(c.activeUsers)).join(" · ");
+      if (ctryTxt) card.appendChild(h("p", { class: "fine-list", html: "<span class='k'>Countries:</span> " + ctryTxt }));
     }
     audGrid.appendChild(card);
   }
@@ -654,17 +665,142 @@
       card.appendChild(h("p", { class: "fine-list",
         html: "Cookies configured; no <code>spotify_show_id</code> recorded yet in <code>shows/*.yaml</code>." }));
     } else {
-      const slugs = Object.keys(per).sort((a, b) => (per[b].streams || 0) - (per[a].streams || 0));
+      const t = sp.totals || {};
+      card.appendChild(h("div", { class: "headline",
+        html: fmt(t.streams) + "<small>streams · " + (sp.window_days || 30) + "d</small>" +
+              "&nbsp;&nbsp;" + fmt(t.listeners) + "<small>listeners</small>" +
+              "&nbsp;&nbsp;" + fmt(t.followers) + "<small>followers</small>" }));
+      // starts vs streams = Spotify's own completion signal.
+      if (t.starts) {
+        const held = t.starts > 0 ? Math.round(100 * (t.streams || 0) / t.starts) : 0;
+        card.appendChild(h("p", { class: "fine-list", html:
+          "<span class='k'>" + fmt(t.starts) + "</span> starts → <span class='k'>" +
+          fmt(t.streams) + "</span> streams (" + held + "% passed Spotify's " +
+          "stream threshold; the rest bailed early)" }));
+      }
+      const slugs = Object.keys(per)
+        .filter((s) => (per[s].streams || 0) > 0)
+        .sort((a, b) => (per[b].streams || 0) - (per[a].streams || 0));
       const maxV = Math.max.apply(null, slugs.map((s) => per[s].streams || 0).concat([1]));
       slugs.forEach((slug) => {
         const v = per[slug] || {};
         card.appendChild(barRow(slug, v.streams || 0, maxV,
-          fmt(v.streams || 0) + " streams · " + fmt(v.followers || 0) + " followers" +
-          (v.errors ? " · partial" : "")));
+          fmt(v.streams || 0) + " streams · " + fmt(v.listeners || 0) + " listeners",
+          { color: "var(--series-3)",
+            title: slug + ": " + fmt(v.followers || 0) + " followers · " +
+                   fmt(v.starts || 0) + " starts · " + fmt(v.total_episodes || 0) + " episodes on Spotify" }));
       });
-      if (sp.fetched_at) card.appendChild(h("p", { class: "fine-list", text: "fetched " + ageText(sp.fetched_at) }));
+      // Demographics — the only audience demographics any platform gives us.
+      const cc = (sp.top_countries || []).map((r) => r[0] + " " + fmt(r[1])).join(" · ");
+      if (cc) card.appendChild(h("p", { class: "fine-list", html: "<span class='k'>Top countries:</span> " + cc }));
+      const ab = (sp.age_bands || []).map((r) => r[0] + " " + fmt(r[1])).join(" · ");
+      if (ab) card.appendChild(h("p", { class: "fine-list", html: "<span class='k'>Age bands:</span> " + ab }));
+      const quiet = (sp.feeds_registered || 0) - (sp.feeds_reporting || 0);
+      if (quiet > 0) {
+        card.appendChild(h("p", { class: "fine-list", html:
+          "<span class='k'>" + sp.feeds_reporting + " of " + sp.feeds_registered +
+          "</span> registered feeds report data; " + quiet + " return no plays yet " +
+          "(newer/low-traffic feeds answer the metadata + aggregate endpoints with 500s — " +
+          "expected until they accrue listens)." }));
+      }
+      if (sp.fetched_at) card.appendChild(h("p", { class: "fine-list", text: "fetched " + ageText(sp.fetched_at) + staleNote(sp.fetched_at) }));
     }
     audGrid.appendChild(card);
+  }
+
+  // ---------- distribution: directories + publishing policy ----------
+  {
+    const grid = $("#distribution-grid");
+    const pillBits = [];
+    if (dist.configured && dist.platforms) {
+      const live = Object.values(dist.platforms)
+        .filter((p) => p.coverage_pct >= 100).length;
+      pillBits.push(live + " of " + Object.keys(dist.platforms).length + " platforms fully live");
+    }
+    if (ytPolicy.generated) pillBits.push("policy " + ageText(ytPolicy.generated));
+    $("#distribution-pill").textContent = pillBits.join(" · ");
+
+    // Directory coverage
+    {
+      const card = sectionCard("Podcast directories",
+        "no analytics API — coverage from the submission tracker");
+      if (!dist.configured || dist.error) {
+        card.appendChild(h("p", { class: "fine-list",
+          html: dist.error ? ("Tracker parse error: " + dist.error)
+            : "No <code>docs/podcast_directories.md</code> status table found." }));
+      } else {
+        const plats = dist.platforms || {};
+        const names = Object.keys(plats);
+        const maxA = Math.max.apply(null, names.map((p) => plats[p].applicable || 0).concat([1]));
+        names.forEach((p) => {
+          const v = plats[p];
+          const full = v.coverage_pct >= 100;
+          card.appendChild(barRow(p, v.live || 0, maxA,
+            fmt(v.live) + "/" + fmt(v.applicable) + " live" +
+            (v.pending ? " · " + v.pending + " pending" : ""),
+            { color: full ? "var(--status-ok)"
+                : (v.live > 0 ? "var(--series-4)" : "var(--status-warn)"),
+              title: p + ": " + v.coverage_pct + "% of applicable feeds live" +
+                     (v.missing_shows && v.missing_shows.length
+                       ? " · missing: " + v.missing_shows.slice(0, 6).join(", ")
+                         + (v.missing_shows.length > 6 ? "…" : "")
+                       : "") }));
+        });
+        card.appendChild(h("p", { class: "fine-list", html:
+          "<span class='k'>" + fmt(dist.rows) + "</span> feed rows tracked · source: <code>" +
+          dist.source_doc + "</code> (hand-maintained during submission passes)" }));
+        (dist.notes || []).forEach((n) => {
+          card.appendChild(h("div", { class: "alert warn",
+            style: "margin-top:8px;font-size:12.5px;", text: n }));
+        });
+      }
+      grid.appendChild(card);
+    }
+
+    // YouTube adaptive publishing policy
+    {
+      const card = sectionCard("YouTube publishing policy",
+        "adaptive tiers from 14-day velocity");
+      if (!ytPolicy.configured) {
+        card.appendChild(h("p", { class: "fine-list",
+          html: "No <code>api/youtube_policy.json</code> yet — the nightly policy step writes it." }));
+      } else {
+        const chName = (ch) => ch === "ru" ? "@NerraRU" : ch === "fr" ? "@NerraFR" :
+          ch === "en" ? "@NerraNetwork" : "@Nerra-" + ch.toUpperCase();
+        Object.keys(ytPolicy.channels || {}).sort().forEach((ch) => {
+          const c = ytPolicy.channels[ch];
+          const tiers = Object.keys(c.tier_counts || {}).sort()
+            .map((t) => t + "×" + c.tier_counts[t]).join(" ");
+          card.appendChild(h("div", { style: "margin-top:10px;font-size:12.5px;color:var(--ink-2);",
+            html: "<strong>" + chName(ch) + "</strong> — " + c.shows.length +
+                  " shows · tiers " + tiers + " · <span class='k'>" + c.long_form_on +
+                  " long-form on</span> · " + c.shorts_planned + " Shorts/day planned" }));
+          const rows = (c.shows || []).slice(0, 12);
+          rows.forEach((r) => {
+            const row = h("div", { class: "bar-row" });
+            row.appendChild(h("div", { class: "label", text: r.slug, title: r.slug }));
+            const chip = h("span", { class: "chip on", style: "flex:0 0 auto;",
+              title: "Tier " + r.tier });
+            chip.appendChild(h("span", { class: "dot", style: "background:" +
+              (r.tier === "A" ? "var(--status-ok)" : r.tier === "B" ? "var(--series-4)"
+                : r.tier === "C" ? "var(--series-2)" : "var(--ink-4)") + ";" }));
+            chip.appendChild(document.createTextNode(r.tier));
+            row.appendChild(chip);
+            row.appendChild(h("div", { class: "value", style: "flex:1;text-align:right;",
+              text: (r.publish_long_form ? "long + " : "shorts-only, ") +
+                    (r.shorts_per_episode || 0) + "×Short" +
+                    " · vpd " + (r.long_vpd == null ? "—" : Number(r.long_vpd).toFixed(1)) +
+                    "/" + (r.short_vpd == null ? "—" : Number(r.short_vpd).toFixed(1)) }));
+            card.appendChild(row);
+          });
+        });
+        card.appendChild(h("p", { class: "fine-list", html:
+          "Tier A = long + 2 Shorts · B = long + 1 · C = shorts-only · D = probe. " +
+          "vpd = long/short views-per-day over " + (ytPolicy.window_days || 14) +
+          "d; Shorts are never zeroed (they're the recovery signal)." }));
+      }
+      grid.appendChild(card);
+    }
   }
 
   // ---------- catalog table ----------
