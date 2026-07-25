@@ -1680,7 +1680,10 @@ def _fetch_nasdaq_close(for_date: datetime.date | None = None) -> float | None:
             if for_date is None:
                 hist = ticker.history(period="5d", interval="1d")
                 if not hist.empty:
-                    return float(hist["Close"].iloc[-1])
+                    close = float(hist["Close"].iloc[-1])
+                    # yfinance can return NaN on thin/halted bars; NaN is
+                    # not None and poisons benchmark + alpha (MIT Ep117).
+                    return close if math.isfinite(close) else None
             else:
                 start = for_date - datetime.timedelta(days=5)
                 end = for_date + datetime.timedelta(days=1)
@@ -1689,8 +1692,10 @@ def _fetch_nasdaq_close(for_date: datetime.date | None = None) -> float | None:
                     # Pick the most recent close on or before ``for_date``.
                     mask = hist.index.date <= for_date
                     if mask.any():
-                        return float(hist[mask]["Close"].iloc[-1])
-                    return float(hist["Close"].iloc[-1])
+                        close = float(hist[mask]["Close"].iloc[-1])
+                    else:
+                        close = float(hist["Close"].iloc[-1])
+                    return close if math.isfinite(close) else None
         except Exception as exc:
             logger.warning("NASDAQ fetch attempt %d (%s): %s", attempt + 1, for_date, exc)
         if attempt < 2:
@@ -1764,21 +1769,53 @@ def _compute_benchmark_state(tracker: dict) -> None:
     current_close = _fetch_nasdaq_close()
 
     benchmark = tracker.setdefault("benchmark", {})
-    benchmark["current_close"] = round(current_close, 2) if current_close is not None else benchmark.get("current_close")
+    prev_close = benchmark.get("current_close")
+    if isinstance(prev_close, (int, float)) and not math.isfinite(prev_close):
+        prev_close = None
+    if current_close is not None and math.isfinite(current_close):
+        benchmark["current_close"] = round(current_close, 2)
+    else:
+        # Keep the last finite close; never persist NaN (MIT Ep117).
+        benchmark["current_close"] = prev_close
     benchmark["last_updated"] = today_iso
 
     inception_close = meta.get("nasdaq_inception_close")
     ytd_start = meta.get("nasdaq_ytd_start_close")
+    if isinstance(inception_close, (int, float)) and not math.isfinite(inception_close):
+        inception_close = None
+    if isinstance(ytd_start, (int, float)) and not math.isfinite(ytd_start):
+        ytd_start = None
     ref_close = benchmark["current_close"]
+    if isinstance(ref_close, (int, float)) and not math.isfinite(ref_close):
+        ref_close = None
+        benchmark["current_close"] = None
 
     if ref_close is not None and inception_close:
-        benchmark["inception_to_date_pct"] = round(((ref_close - inception_close) / inception_close) * 100, 2)
+        benchmark["inception_to_date_pct"] = round(
+            ((ref_close - inception_close) / inception_close) * 100, 2)
+    else:
+        prev_itd = benchmark.get("inception_to_date_pct")
+        if not (isinstance(prev_itd, (int, float)) and math.isfinite(prev_itd)):
+            benchmark["inception_to_date_pct"] = None
     if ref_close is not None and ytd_start:
         benchmark["ytd_pct"] = round(((ref_close - ytd_start) / ytd_start) * 100, 2)
+    else:
+        prev_ytd = benchmark.get("ytd_pct")
+        if not (isinstance(prev_ytd, (int, float)) and math.isfinite(prev_ytd)):
+            benchmark["ytd_pct"] = None
 
     alpha = tracker.setdefault("alpha", {"monthly": {}})
-    alpha["inception_to_date_pct"] = round(_portfolio_return_pct(tracker) - benchmark.get("inception_to_date_pct", 0.0), 2)
-    alpha["ytd_pct"] = round(_portfolio_return_ytd_pct(tracker) - benchmark.get("ytd_pct", 0.0), 2)
+    bench_itd = benchmark.get("inception_to_date_pct")
+    bench_ytd = benchmark.get("ytd_pct")
+    if isinstance(bench_itd, (int, float)) and math.isfinite(bench_itd):
+        alpha["inception_to_date_pct"] = round(
+            _portfolio_return_pct(tracker) - bench_itd, 2)
+    else:
+        alpha["inception_to_date_pct"] = None
+    if isinstance(bench_ytd, (int, float)) and math.isfinite(bench_ytd):
+        alpha["ytd_pct"] = round(_portfolio_return_ytd_pct(tracker) - bench_ytd, 2)
+    else:
+        alpha["ytd_pct"] = None
 
 
 def _matched_nasdaq_window(bars, entry_date, exit_date):
@@ -2111,19 +2148,28 @@ def _build_benchmark_block(tracker: dict) -> str:
     portfolio_itd = _portfolio_return_pct(tracker)
     portfolio_ytd = _portfolio_return_ytd_pct(tracker)
     close = benchmark.get("current_close")
+    if isinstance(close, (int, float)) and not math.isfinite(close):
+        close = None
     bench_ytd = benchmark.get("ytd_pct")
     bench_itd = benchmark.get("inception_to_date_pct")
     alpha_ytd = alpha.get("ytd_pct")
     alpha_itd = alpha.get("inception_to_date_pct")
-
-    if close is None:
-        return (
-            "NASDAQ Composite: data temporarily unavailable — acknowledge the gap "
-            "on air rather than inventing numbers."
-        )
+    for _name, _val in (
+        ("bench_ytd", bench_ytd), ("bench_itd", bench_itd),
+        ("alpha_ytd", alpha_ytd), ("alpha_itd", alpha_itd),
+    ):
+        if isinstance(_val, (int, float)) and not math.isfinite(_val):
+            if _name == "bench_ytd":
+                bench_ytd = None
+            elif _name == "bench_itd":
+                bench_itd = None
+            elif _name == "alpha_ytd":
+                alpha_ytd = None
+            else:
+                alpha_itd = None
 
     def _sign(v):
-        if v is None:
+        if v is None or (isinstance(v, float) and not math.isfinite(v)):
             return "n/a"
         return f"{v:+.2f}%"
 
@@ -2132,6 +2178,8 @@ def _build_benchmark_block(tracker: dict) -> str:
     # review). Label them so the script can never conflate the two.
     summary = tracker.get("summary", {}) or {}
     matched_alpha = summary.get("matched_window_alpha_pct")
+    if isinstance(matched_alpha, float) and not math.isfinite(matched_alpha):
+        matched_alpha = None
     matched_n = summary.get("matched_window_trades", 0)
     matched_line = ""
     if matched_n and matched_alpha is not None:
@@ -2195,6 +2243,26 @@ def _build_benchmark_block(tracker: dict) -> str:
                 + ". NASDAQ stays the headline benchmark; mention the sweep "
                   "at most once per episode. "
             )
+    if close is None:
+        # Live index quote failed (NaN/missing) — still speak the matched-
+        # window scoreboard when we have it (MIT Ep117 went silent on alpha
+        # even though matched_window_alpha_pct was healthy).
+        if matched_line:
+            return (
+                "NASDAQ Composite: live index level temporarily unavailable — "
+                "acknowledge the gap on air; do NOT invent a level or a YTD "
+                "benchmark move. Still report the MATCHED-WINDOW SCOREBOARD "
+                "below (it does not need today's quote):\n"
+                f"{matched_line}\n"
+                "Skip the buy-and-hold gap numbers today — they need the "
+                "live NASDAQ level."
+            )
+        return (
+            "NASDAQ Composite: data temporarily unavailable — acknowledge the "
+            "gap on air rather than inventing numbers. Skip portfolio alpha "
+            "versus the NASDAQ today."
+        )
+
     return (
         f"NASDAQ Composite ^IXIC: {close:,.0f} "
         f"(YTD {_sign(bench_ytd)}, since inception {_sign(bench_itd)}).\n"

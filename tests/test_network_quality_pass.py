@@ -11,6 +11,7 @@ Covers the ten non-flagship shows (Tesla/MIT had their own passes):
 
 from __future__ import annotations
 
+import re
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -109,7 +110,12 @@ class TestShowMemoryFixesPorted:
         tracker = sm.load_narrative_tracker(
             _ROOT / "digests" / "planetterrian", cfg)
         block = sm.build_narrative_status_block(tracker, cfg.label)
-        assert "MAKE THE CONTINUITY AUDIBLE" in block
+        assert "CONTINUITY BUDGET" in block
+        assert "NEVER write" in block
+        # Status lines must not seed "Ep{N}" (ban-list examples may mention it).
+        for line in block.splitlines():
+            if "last covered on air:" in line or "status last reviewed:" in line:
+                assert not re.search(r"\bEp\d+\b", line), line
 
 
 class TestHookLedTeasersNetworkWide:

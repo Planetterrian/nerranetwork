@@ -98,7 +98,10 @@ class TestBlockBuilders:
         block = tm.build_narrative_status_block(tracker)
         assert "Optimus" in block
         assert "Gen 3 hands in testing." in block
-        assert "Ep42" in block
+        # July 2026: never seed "EpN" abbreviations (voiced as letter-soup).
+        assert "Ep42" not in block
+        assert "episode 42" in block
+        assert "CONTINUITY BUDGET" in block
 
     def test_empty_performance_signals_yields_empty(self):
         assert tm.build_performance_signals_block({"recent_signals": {}}) == ""

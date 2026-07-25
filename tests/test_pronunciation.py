@@ -426,6 +426,19 @@ class TestReplaceEpisodeNumbers:
         result = replace_episode_numbers("episode 336")
         assert "three hundred thirty-six" in result
 
+    # July 2026 — FF Ep142 / SpaceX Ep44: narrative memory seeded "Ep141"
+    # and TTS voiced the abbreviation as letter-soup.
+    def test_ep_abbrev_no_space(self):
+        result = replace_episode_numbers("covered on Ep141 — today's news")
+        assert "episode" in result.lower()
+        assert "one hundred forty-one" in result
+        assert "Ep141" not in result
+
+    def test_ep_abbrev_with_space(self):
+        result = replace_episode_numbers("last appeared on Ep 43")
+        assert "episode forty-three" in result
+        assert "Ep 43" not in result
+
 
 class TestReplaceOrdinalNumbers:
     def test_seventh(self):

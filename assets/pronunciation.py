@@ -1131,7 +1131,24 @@ def replace_timezones(text: str) -> str:
 
 
 def replace_episode_numbers(text: str) -> str:
-    """Convert 'episode 39' to 'episode thirty-nine'."""
+    """Convert episode references to spoken words.
+
+    Handles both ``episode 39`` and the abbreviated forms the narrative-
+    memory block used to seed (``Ep141``, ``Ep 141``, ``EP141``) — those
+    abbreviations were voiced letter-by-letter as "E P one forty-one"
+    (Fascinating Frontiers Ep142, SpaceX Ep44, July 2026). Abbreviations
+    expand to the full word ``episode`` first so TTS never sees bare
+    ``EpN``.
+    """
+    def _ep_abbrev(m: re.Match) -> str:
+        try:
+            return f"episode {number_to_words(int(m.group(1)))}"
+        except ValueError:
+            return m.group(0)
+
+    # Ep141 / Ep 141 / ep.141 — before the bare "episode N" pass.
+    text = re.sub(r"\b[Ee]p\.?\s*(\d+)\b", _ep_abbrev, text)
+
     def _ep(m: re.Match) -> str:
         prefix = m.group(1)
         num = m.group(2)

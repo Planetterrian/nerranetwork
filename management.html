@@ -1255,9 +1255,19 @@
       if (sub) c.appendChild(h("div", { class: "t-sub", text: sub }));
       return c;
     };
-    strip.appendChild(mcard("NASDAQ ^IXIC", benchmark.current_close == null ? "—" : Number(benchmark.current_close).toLocaleString(), "YTD " + pct(benchmark.ytd_pct)));
-    strip.appendChild(mcard("Portfolio YTD", pct((alpha.ytd_pct ?? 0) + (benchmark.ytd_pct ?? 0)), "ITD " + pct((alpha.inception_to_date_pct ?? 0) + (benchmark.inception_to_date_pct ?? 0))));
+    const finiteNum = (v) => (typeof v === "number" && Number.isFinite(v) ? v : null);
+    const sumOrDash = (a, b) => {
+      const x = finiteNum(a), y = finiteNum(b);
+      return (x != null && y != null) ? pct(x + y) : "—";
+    };
+    const closeNum = finiteNum(benchmark.current_close);
+    strip.appendChild(mcard("NASDAQ ^IXIC", closeNum == null ? "—" : closeNum.toLocaleString(), "YTD " + pct(benchmark.ytd_pct)));
+    strip.appendChild(mcard("Portfolio YTD", sumOrDash(alpha.ytd_pct, benchmark.ytd_pct), "ITD " + sumOrDash(alpha.inception_to_date_pct, benchmark.inception_to_date_pct)));
     strip.appendChild(mcard("Alpha YTD", pct(alpha.ytd_pct), "ITD " + pct(alpha.inception_to_date_pct)));
+    const matchedAlpha = finiteNum(summary.matched_window_alpha_pct);
+    if (matchedAlpha != null) {
+      strip.appendChild(mcard("Matched-window α", pct(matchedAlpha), (summary.matched_window_trades || 0) + " trades · honest scoreboard"));
+    }
     strip.appendChild(mcard("Win rate", (summary.win_rate_pct || 0).toFixed(0) + "%", summary.wins + "W / " + summary.losses + "L / " + summary.breakeven + "BE"));
     strip.appendChild(mcard("Cumulative P&L", money(summary.cumulative_pnl), "avg " + pct(summary.average_return_pct) + " / trade"));
     mitRoot.appendChild(strip);
