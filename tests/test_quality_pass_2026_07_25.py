@@ -77,17 +77,14 @@ class TestSpaceXStageNaming:
 
 class TestMITNaNBenchmark:
     def test_fetch_rejects_nan(self):
-        import types
-        import pandas as pd
         from shows.hooks import modern_investing as mi
 
-        class _FakeTicker:
-            def history(self, **kwargs):
-                return pd.DataFrame({"Close": [float("nan")]})
-
-        fake_yf = types.ModuleType("yfinance")
-        fake_yf.Ticker = lambda *_a, **_k: _FakeTicker()
-        with patch.dict(sys.modules, {"yfinance": fake_yf}), \
+        # Multi-source chain (July 26 pack): every source must reject
+        # non-finite / missing closes before the helper returns None.
+        with patch.object(mi, "_fetch_nasdaq_via_history", return_value=None), \
+             patch.object(mi, "_fetch_nasdaq_via_fast_info",
+                          return_value=float("nan")), \
+             patch.object(mi, "_fetch_nasdaq_via_yahoo_v8", return_value=None), \
              patch("time.sleep"):
             assert mi._fetch_nasdaq_close() is None
 

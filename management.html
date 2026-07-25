@@ -1152,7 +1152,11 @@
   const showGrid = $("#shows-grid");
   const shows = (data.network && data.network.shows) || [];
   const op3PerShow = op3.per_show || {};
-  const coverFor = (slug) => {
+  // Prefer rss_image from api/dashboard.json (single source of truth with
+  // network_meta / show YAML). Hardcoded cover map kept only as fallback
+  // for older dashboard.json blobs missing the field.
+  const coverFor = (s) => {
+    if (s.rss_image) return s.rss_image;
     const map = {
       "tesla": "tesla-shorts-time.jpg",
       "models_agents": "models-agents.jpg",
@@ -1170,13 +1174,13 @@
       "age_of_ai": "age-of-ai.jpg",
       "spacex": "spacex.jpg",
     };
-    return "assets/covers/" + (map[slug] || (slug + ".jpg"));
+    return "assets/covers/" + (map[s.slug] || (s.slug + ".jpg"));
   };
 
   shows.forEach((s) => {
     const card = h("div", { class: "mc-card show-card" });
     const head = h("div", { class: "show-head" });
-    head.appendChild(h("img", { class: "cover", src: coverFor(s.slug), alt: s.name + " cover art", loading: "lazy" }));
+    head.appendChild(h("img", { class: "cover", src: coverFor(s), alt: s.name + " cover art", loading: "lazy" }));
     const headText = h("div");
     headText.appendChild(h("h3", { text: s.name || s.slug }));
     headText.appendChild(h("div", { class: "slug", text: s.slug }));

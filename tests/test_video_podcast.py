@@ -1,4 +1,4 @@
-"""Drift guards for the video-podcast pilot (July 2026, tesla + spacex).
+"""Drift guards for the video-podcast pilot (July 2026: tesla + spacex + FF).
 
 What this ships and why it can break quietly:
 
@@ -49,7 +49,7 @@ from engine.video_feed import (  # noqa: E402
     video_r2_key,
 )
 
-PILOT_SHOWS = ("tesla", "spacex")
+PILOT_SHOWS = ("tesla", "spacex", "fascinating_frontiers")
 
 
 def _cfg(slug: str):
@@ -61,7 +61,7 @@ def _cfg(slug: str):
 # ---------------------------------------------------------------------------
 
 class TestConfigWiring:
-    def test_pilot_shows_are_exactly_tesla_and_spacex(self):
+    def test_pilot_shows_are_exactly_the_enabled_set(self):
         """Pins the blast radius. A third show turning this on means a
         third Apple submission + a third R2 video keyspace — deliberate,
         never incidental."""

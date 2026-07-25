@@ -2395,6 +2395,14 @@ def run(args: argparse.Namespace) -> None:
                         "block (silent no-op class, Jul 5/12 Sundays)."
                     )
 
+            # Snapshot the READER transcript BEFORE pronunciation transforms
+            # (number→words, acronym letter-spelling, etc.). Blog/RSS must
+            # publish canonical spelling — pronunciation maps are for TTS only
+            # (June 2026 M&A "koo-dah" leak class). Written below alongside
+            # *_tts.txt after the final clean passes.
+            from engine.utils import strip_speech_tags as _strip_tags_for_reader
+            reader_script = _strip_tags_for_reader(podcast_script)
+
             # Apply pronunciation fixes
             podcast_script = _apply_pronunciation(podcast_script, args.show)
 
@@ -2529,6 +2537,29 @@ def run(args: argparse.Namespace) -> None:
             tts_script_path = digests_dir / f"{config.episode.prefix}_Ep{episode_num:03d}_{today:%Y%m%d}_tts.txt"
             tts_script_path.write_text(_scrub(podcast_script), encoding="utf-8")
             logger.info("TTS script saved: %s", tts_script_path)
+
+            # Reader/blog transcript — pre-pronunciation canonical text
+            # (July 2026 improvements pack). Keeps blog/SEO free of TTS
+            # respellings while *_tts.txt remains the synthesis source.
+            try:
+                # Append the same AI disclosure the spoken script carries,
+                # stripped of speech tags, so the on-page transcript matches
+                # the episode ending listeners hear.
+                _reader_body = reader_script.rstrip()
+                _reader_disclosure = _strip_tags_for_reader(
+                    _AI_DISCLOSURE_RU if args.show in _RUSSIAN_SHOWS
+                    else (_AI_DISCLOSURE_DIALOGUE if config.tts.dialogue_mode
+                          else _AI_DISCLOSURE)
+                )
+                if _reader_disclosure and _reader_disclosure not in _reader_body:
+                    _reader_body = _reader_body + "\n\n" + _reader_disclosure
+                reader_script_path = digests_dir / (
+                    f"{config.episode.prefix}_Ep{episode_num:03d}_{today:%Y%m%d}_reader.txt"
+                )
+                reader_script_path.write_text(_scrub(_reader_body), encoding="utf-8")
+                logger.info("Reader transcript saved: %s", reader_script_path)
+            except Exception as _reader_exc:  # noqa: BLE001 — never block publish
+                logger.warning("Reader transcript save failed (non-fatal): %s", _reader_exc)
 
             # 9. TTS — provider-aware (ElevenLabs default; Grok for Russian shows)
             tts_provider = (config.tts.provider or "elevenlabs").lower()
@@ -4383,6 +4414,7 @@ def _publish_youtube(
                 n=3,
                 perf_dir=digests_dir,
                 short_window_texts=_window_texts,
+                channel=getattr(config.youtube, "channel", "en") or "en",
             )
             yt_title_variants = list(_bundle.get("titles") or [])
             yt_punch_text = (

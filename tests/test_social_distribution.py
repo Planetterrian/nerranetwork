@@ -66,6 +66,14 @@ class TestSocialMetadata:
         m = self._build(is_ru=True)
         assert "Полный выпуск" in m["instagram_reels"]["caption"]
 
+    def test_gallery_cta_on_all_platforms(self):
+        m = self._build()
+        assert "nerranetwork.com/gallery.html" in m["instagram_reels"]["caption"]
+        assert "nerranetwork.com/gallery.html" in m["tiktok"]["caption"]
+        assert "nerranetwork.com/gallery.html" in m["youtube"]["description"]
+        m_ru = self._build(is_ru=True)
+        assert "Галерея" in m_ru["instagram_reels"]["caption"]
+
 
 # ---------------------------------------------------------------------------
 # Safe-zone Short filter graph

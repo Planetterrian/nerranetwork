@@ -1193,8 +1193,9 @@ def _build_digest_expansion_retry_prompt(
         f"your own domain knowledge. Do not pad news items with significance "
         f"sentences ('this matters because…').\n"
         f"- If a narrative-memory / tracked-program block was provided, weave "
-        f"1–2 continuity sentences into items that touch those programs "
-        f"(where today's development fits the arc) — continuity is not padding.\n\n"
+        f"at most ONE continuity sentence in the whole digest for items that "
+        f"touch those programs (prefer the date / 'yesterday'; never write "
+        f"'EpN') — continuity is not padding.\n\n"
         f"Here is your short digest to expand:\n\n{draft}"
     )
 
