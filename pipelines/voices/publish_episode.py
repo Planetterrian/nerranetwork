@@ -81,12 +81,24 @@ def main() -> int:
         )
         duration = float(probe.stdout.strip() or 0.0)
 
-        from engine.publisher import update_rss_feed
+        # OP3 analytics prefix. Every other show gets this from its
+        # run_show/pipeline publish path; Age of AI bypasses run_show, so
+        # without it the feed's enclosures are unprefixed and its
+        # downloads never reach api/op3_stats.json (Ep001 shipped that
+        # way — its URL is deliberately left alone, since rewriting a
+        # published enclosure re-downloads the episode for every
+        # subscriber). New episodes are counted from here on.
+        # (Uses apply_op3_prefix's default, which a drift guard pins to
+        # shows/_defaults.yaml's analytics.prefix_url — this pipeline
+        # deliberately doesn't load the show-config stack.)
+        from engine.publisher import apply_op3_prefix, update_rss_feed
+        feed_audio_url = apply_op3_prefix(audio_url)
+
         update_rss_feed(
             ROOT / "age_of_ai_podcast.rss",
             episode_num, title, description, today,
             local_mp3.name, duration, local_mp3,
-            audio_url=audio_url,
+            audio_url=feed_audio_url,
             audio_subdir="digests/age_of_ai",
             channel_title=SHOW_NAME,
             channel_link="https://nerranetwork.com/age-of-ai.html",

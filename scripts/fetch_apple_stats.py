@@ -40,17 +40,35 @@ import datetime as dt
 import json
 import logging
 import os
+import sys
 from pathlib import Path
 from typing import Any
 
 import yaml
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from engine.connector_budget import (  # noqa: E402  (after sys.path fix)
+    FetchBudget,
+    _env_float,
+    _env_int,
+    clamp_connector_retries,
+)
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 logger = logging.getLogger("fetch_apple_stats")
 
 WINDOW_DAYS = 30
+
+# Same bounded-retry contract as the Spotify fetcher — six endpoints per
+# show here, so an unbounded backoff loop would be even more expensive.
+# (appleconnector spells its constant MAX_RETRY_ATTEMPTS, not
+# MAX_REQUEST_ATTEMPTS; the clamp helper only writes what it finds.)
+MAX_RETRY_ATTEMPTS = _env_int("APPLE_MAX_RETRY_ATTEMPTS", 3)
+RETRY_DELAY_BASE = _env_float("APPLE_RETRY_DELAY_BASE", 1.0)
+BUDGET_SECONDS = _env_float("APPLE_FETCH_BUDGET_SECONDS", 900.0)
 
 
 def discover_show_ids() -> dict[str, str]:
@@ -169,14 +187,47 @@ def main(argv=None) -> int:
 
     try:
         import appleconnector  # noqa: F401
+        from appleconnector import connector as _connector_mod
     except ImportError:
         logger.error("appleconnector not installed — add it to "
                      "requirements.txt / pip install appleconnector")
         return 0
 
+    applied = clamp_connector_retries(
+        _connector_mod,
+        attempts_attr="MAX_RETRY_ATTEMPTS",
+        delay_attr="DELAY_BASE",
+        attempts=MAX_RETRY_ATTEMPTS,
+        delay_base=RETRY_DELAY_BASE,
+    )
+    if applied:
+        logger.info("connector retry budget: %s", applied)
+    else:
+        logger.warning(
+            "appleconnector no longer exposes MAX_RETRY_ATTEMPTS / "
+            "DELAY_BASE — retries are UNBOUNDED this run; the wall-clock "
+            "budget is the only guard left")
+
+    out = Path(args.out)
+    previous_shows: dict[str, Any] = {}
+    if out.exists():
+        try:
+            previous_shows = (json.loads(
+                out.read_text(encoding="utf-8")) or {}).get("shows") or {}
+        except Exception:  # noqa: BLE001
+            previous_shows = {}
+
+    budget = FetchBudget(seconds=BUDGET_SECONDS)
     shows: dict[str, Any] = {}
     failures = 0
+    skipped: list[str] = []
     for slug, sid in show_ids.items():
+        if budget.exhausted():
+            skipped.append(slug)
+            prior = previous_shows.get(slug)
+            if isinstance(prior, dict):
+                shows[slug] = {**prior, "not_refreshed_this_run": True}
+            continue
         try:
             shows[slug] = fetch_show(myacinfo, itctx, sid)
             if len(shows[slug].get("errors") or {}) >= 4:
@@ -186,7 +237,15 @@ def main(argv=None) -> int:
             failures += 1
         logger.info("fetched %s (%s)", slug, sid)
 
-    if failures == len(show_ids):
+    if skipped:
+        logger.warning(
+            "::warning::apple fetch budget of %.0fs expired after %d of %d "
+            "shows — %s kept their previous entry.", BUDGET_SECONDS,
+            len(show_ids) - len(skipped), len(show_ids), ", ".join(skipped))
+    logger.info("apple fetch took %.0fs for %d shows",
+                budget.elapsed(), len(show_ids) - len(skipped))
+
+    if show_ids and failures == len(show_ids):
         logger.error(
             "every Apple fetch failed — the myacinfo/itctx cookies have "
             "likely EXPIRED. Re-extract them from a logged-in "
@@ -203,7 +262,6 @@ def main(argv=None) -> int:
     if args.dry_run:
         print(json.dumps(data, indent=2, default=str)[:4000])
         return 0
-    out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(data, indent=2, default=str) + "\n", encoding="utf-8")
     logger.info("wrote %s (%d shows)", out, len(shows))
