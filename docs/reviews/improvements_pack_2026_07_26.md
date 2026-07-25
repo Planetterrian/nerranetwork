@@ -39,20 +39,41 @@ path is metadata-only (blog text).
 | Review snapshots (OV / EI / MAB) | Ran; chronic under-length still visible; OV “Both sides agree” tic **not** in top repeated phrases (disclosure/CTA dominate) |
 | Dashboard offline regen | Show pages + `rss_image` correct (`dp_pod` → `thedppod.html`) |
 
-## Remaining — operator / external (cannot be finished by code alone)
+## Agent / tool assist matrix (what this environment can finish)
+
+| Remaining item | Agent can do now | Needs you (operator) |
+|----------------|------------------|----------------------|
+| A/B-listen prompt pack | After you paste listen notes: revert/tweak prompts, open follow-up PR | Listen to next FF/PT/UC/MAB/Tesla/SpaceX/FP/MIT episodes |
+| IG / TikTok auto-post | Flip YAML once secrets exist; verify sidecar paths in CI | Meta + TikTok app approval; set `IG_*` / `TIKTOK_*` secrets |
+| Apple video shows | Keep feeds valid; expand YAML pilots after acceptance | Create separate video shows in Podcasts Connect |
+| Age of AI bootstrap | Supabase MCP: inspect schema/rows; prepare SQL/migrations; review Worker code | service_role key → Worker + GitHub; Voximplant number + smoke; `wrangler deploy`; Cal.com webhook; dry-run calls |
+| X handles / cross-promo | One-line YAML once you name the handle | Confirm `@handles` + X app access |
+| DP Pod newsletter/YouTube | Flip flags + update tests on request | Explicit “quality locked” go-ahead |
+| Digest depth / tic re-score | Re-run `review_snapshot.py`; draft de-seeds under A/B | Merge decision after listen |
+| YouTube Test & Compare | Title variants already stashed in pipeline | Enable feature in Studio |
+| Gallery promo weight | Done in this pack (`network_promo` weight 3) | Optional pin / social posts |
+| Scheduler Worker | Code + SLOTS tests already green | Deploy `workers/scheduler` if not live |
+| Dashboard regen | Offline regen of show pages OK here | Nightly CI or merge-to-main for `api/dashboard.json` |
+| Reader-transcript backfill | Can write a script for new episodes only | Historical pre-TTS archive (usually absent) |
+
+**Blocked in this sandbox (no credentials / no tool):** GitHub secrets list/write (403), local `GROK_API_KEY` for `--test` regenerations, Wrangler CLI deploy, Apple Connect, Meta/TikTok developer consoles, Voximplant portal.
+
+**Live Age of AI DB (Supabase MCP, 2026-07-26):** `guest_applications` 2 · `interviews` 2 · `interview_briefs` 2 · `interview_runs` 3 · `editorial_packages` 2 · `cross_show_callouts` 4 — schema step 1 remains DONE; steps 2–7 still external.
 
 ### P0 — do these next
 
 1. **A/B-listen the prompt pack**  
    Next episodes of FF, PT, UC, MAB, Tesla, SpaceX, FP (RU), MIT.  
-   Revert specific prompt files via git if a show regresses (landmine #17).
+   Revert specific prompt files via git if a show regresses (landmine #17).  
+   *Agent assist:* reply with which shows sounded worse → targeted revert PR.
 
 2. **Arm IG Reels + TikTok auto-post**  
    - Complete Meta app review + TikTok Content Posting audit.  
    - Set secrets: `IG_ACCESS_TOKEN`, `IG_USER_ID`, `TIKTOK_ACCESS_TOKEN`.  
    - Flip per show: `instagram_enabled: true` / `tiktok_enabled: true` under
      `youtube:` (Tesla/SpaceX already generate local `_social.mp4` + sidecars).  
-   - Doc: `docs/social_distribution.md`.
+   - Doc: `docs/social_distribution.md`.  
+   *Agent assist:* after secrets are set, ask to flip the YAML flags.
 
 3. **Submit Apple Podcasts video shows**  
    Tesla + SpaceX feeds already exist; FF now builds
@@ -61,11 +82,17 @@ path is metadata-only (blog text).
    (`docs/video_podcasts.md`). Enabling YAML alone does not list on Apple.
 
 4. **Age of AI bootstrap (external)** — follow `docs/age_of_ai_plan.md`:  
-   Supabase project + migration → Voximplant scenario + number → Cloudflare
-   Worker secrets + deploy → Cal.com event + webhook → GitHub `VOICES_*` /
-   `VOXIMPLANT_*` secrets → consent/apology clips on R2 → dry-run call →
-   soft launch → phase-8 flip `newsletter` / `youtube` / `x` in
-   `shows/age_of_ai.yaml`. Keep topic queue empty.
+   ✅ Supabase project + schema (live data above). Remaining order:  
+   (2) Voximplant app/rule/number + consent/apology clips on R2 + cell smoke,  
+   (3) Worker secrets (`SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, `GITHUB_DISPATCH_TOKEN`,
+   `ADMIN_TOKEN`, `RESEND_API_KEY`, `VOICES_FROM_EMAIL`, `CALCOM_BOOKING_URL`,
+   optional `SLACK_WEBHOOK`) + `wrangler deploy`,  
+   (4) Cal.com event → `/voices/cal-com-booked`,  
+   (5) GitHub `VOICES_SUPABASE_URL`, `VOICES_SUPABASE_SERVICE_KEY`,
+   `VOXIMPLANT_ACCOUNT_ID`, `VOXIMPLANT_API_KEY`, `VOXIMPLANT_CALLER_ID`,
+   email + `CALCOM_BOOKING_URL` (+ optional Slack),  
+   (6) three dry-run interviews, (7) soft launch, (8) flip distribution YAML.  
+   Keep topic queue empty. *Agent assist:* status SQL, migration review, Worker code fixes — not portal steps.
 
 ### P1 — high impact, mostly operator decisions
 
