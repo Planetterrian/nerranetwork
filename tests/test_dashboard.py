@@ -482,3 +482,91 @@ def test_management_html_renders_new_sections():
     assert "data.gallery" in html
     assert "data.content_lake" in html
     assert "network_downloads_all_time" in html
+
+
+# ---------------------------------------------------------------------------
+# July 25 2026 distribution/platform pass: Apple/Amazon/directory coverage,
+# Spotify enrichment, YouTube publishing policy, GA4 series+countries, and
+# the NaN-blanks-the-whole-dashboard fix.
+# ---------------------------------------------------------------------------
+
+def test_dashboard_json_is_browser_parseable():
+    """NaN/Infinity are valid python-json but INVALID JSON — JSON.parse
+    rejects them, so one poisoned float blanks the entire dashboard (the
+    page renders its error banner instead). Reproduced July 25 2026 with a
+    NaN MIT benchmark close."""
+    import math
+    data = gd.build_dashboard(ROOT, offline=True)
+    blob = json.dumps(gd._json_safe(data), default=str)
+    assert "NaN" not in blob and "Infinity" not in blob
+    # And the sanitiser must preserve structure while nulling non-finites.
+    dirty = {"a": float("nan"), "b": [1.0, float("inf")], "c": {"d": 2.5}}
+    clean = gd._json_safe(dirty)
+    assert clean == {"a": None, "b": [1.0, None], "c": {"d": 2.5}}
+    assert math.isfinite(clean["c"]["d"])
+
+
+def test_distribution_section_parses_directory_tracker():
+    data = gd.build_dashboard(ROOT, offline=True)
+    dist = data.get("distribution")
+    assert dist and dist.get("configured"), "distribution section expected"
+    plats = dist["platforms"]
+    # The platforms the operator submits to must all be represented.
+    for name in ("Apple", "Spotify", "Amazon"):
+        assert name in plats, f"{name} column missing from the tracker parse"
+        p = plats[name]
+        for key in ("live", "pending", "missing", "applicable", "coverage_pct"):
+            assert key in p, key
+    assert dist["rows"] > 0
+    # Apple is fully live as of the 2026-07-23 publish pass.
+    assert plats["Apple"]["live"] > 0
+
+
+def test_spotify_section_surfaces_totals_and_demographics():
+    data = gd.build_dashboard(ROOT, offline=True)
+    sp = data["audience"]["spotify"]
+    if not sp.get("configured") or sp.get("error"):
+        pytest.skip("Spotify stats not present in this checkout")
+    for key in ("totals", "feeds_registered", "feeds_reporting",
+                "feeds_erroring", "top_countries", "age_bands"):
+        assert key in sp, key
+    for metric in ("followers", "streams", "listeners", "starts"):
+        assert metric in sp["totals"], metric
+    # starts >= streams is Spotify's own funnel invariant.
+    if sp["totals"]["starts"]:
+        assert sp["totals"]["starts"] >= sp["totals"]["streams"]
+
+
+def test_youtube_policy_section_shape():
+    data = gd.build_dashboard(ROOT, offline=True)
+    yp = data.get("youtube_policy")
+    assert yp is not None
+    if not yp.get("configured"):
+        pytest.skip("no youtube_policy.json in this checkout")
+    for ch, v in yp["channels"].items():
+        assert v["shows"], f"{ch} has no policy rows"
+        row = v["shows"][0]
+        for key in ("slug", "tier", "publish_long_form", "shorts_per_episode"):
+            assert key in row, key
+        assert "tier_counts" in v and "long_form_on" in v
+
+
+def test_ga4_section_emits_series_and_countries():
+    """The hero tile + GA4 card sparklines read site.day_series, which the
+    generator never emitted — they rendered permanently blank even with GA4
+    configured (found July 25 2026)."""
+    data = gd.build_dashboard(ROOT, offline=True)
+    site = data["audience"]["site"]
+    if not site.get("configured") or site.get("error"):
+        pytest.skip("GA4 stats not present in this checkout")
+    assert "day_series" in site, "management.html reads site.day_series"
+    assert "countries" in site
+
+
+def test_management_html_renders_distribution_and_policy():
+    html = (ROOT / "management.html").read_text(encoding="utf-8")
+    assert 'id="distribution-grid"' in html
+    assert "data.distribution" in html
+    assert "data.youtube_policy" in html
+    assert "Podcast directories" in html
+    assert "site.countries" in html

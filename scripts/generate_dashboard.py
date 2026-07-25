@@ -1700,6 +1700,8 @@ def build_dashboard(root: Path, *, offline: bool = False, previous_flat: Optiona
         "catalog": build_catalog_section(root, shows, rss),
         "gallery": build_gallery_section(root),
         "content_lake": build_content_lake_section(root),
+        "distribution": build_distribution_section(root),
+        "youtube_policy": build_youtube_policy_section(root),
     }
 
 
@@ -1962,8 +1964,13 @@ def build_audience_section(root: Path) -> Dict[str, Any]:
                 "fetched_at": data.get("fetched_at"),
                 "days": data.get("days"),
                 "totals": data.get("totals") or {},
+                "day_series": data.get("day_series") or [],
                 "top_pages": (data.get("top_pages") or [])[:5],
                 "channels": data.get("channels") or [],
+                # July 25 2026: countries were fetched but never rendered —
+                # the network publishes in 5 languages, so where the audience
+                # actually is is a programming signal, not a vanity metric.
+                "countries": (data.get("countries") or [])[:8],
             }
         except Exception as exc:  # noqa: BLE001
             section["site"] = {"configured": True, "error": str(exc)}
@@ -1973,24 +1980,237 @@ def build_audience_section(root: Path) -> Dict[str, Any]:
     if sp_path.exists():
         try:
             data = json.loads(sp_path.read_text(encoding="utf-8"))
+            shows_raw = data.get("shows") or {}
             per_show = {
                 slug: {
                     "followers": s.get("followers"),
                     "streams": s.get("streams"),
                     "listeners": s.get("listeners"),
+                    # July 25 2026: starts + episode count were fetched but
+                    # discarded. ``starts`` vs ``streams`` is Spotify's own
+                    # completion signal (a start that doesn't reach the
+                    # stream threshold = an early bail), so surfacing both
+                    # turns the card into a retention read.
+                    "starts": s.get("starts"),
+                    "total_episodes": s.get("totalEpisodes"),
                     "errors": sorted((s.get("errors") or {}).keys()) or None,
                 }
-                for slug, s in (data.get("shows") or {}).items()
+                for slug, s in shows_raw.items()
             }
+
+            def _sum(field: str) -> int:
+                return sum(int(v[field] or 0) for v in per_show.values()
+                           if isinstance(v.get(field), (int, float)))
+
+            # Demographics: Spotify returns age/gender/country facets per
+            # show in aggregate_30d — the only demographic data the network
+            # gets from any platform. Roll it up network-wide.
+            countries: Dict[str, int] = {}
+            age_bands: Dict[str, int] = {}
+            for s in shows_raw.values():
+                agg = s.get("aggregate_30d")
+                if not isinstance(agg, dict):
+                    continue
+                for row in (agg.get("countryFacetedCounts") or {}).items():
+                    code, payload = row
+                    if isinstance(payload, dict):
+                        counts = payload.get("counts")
+                        total = (sum(int(x or 0) for x in counts.values())
+                                 if isinstance(counts, dict) else 0)
+                        if total:
+                            countries[code] = countries.get(code, 0) + total
+                for band, payload in (agg.get("ageFacetedCounts") or {}).items():
+                    if isinstance(payload, dict):
+                        counts = payload.get("counts")
+                        total = (sum(int(x or 0) for x in counts.values())
+                                 if isinstance(counts, dict) else 0)
+                        if total:
+                            age_bands[band] = age_bands.get(band, 0) + total
+
+            reporting = [s for s, v in per_show.items() if v["streams"] is not None]
+            erroring = [s for s, v in per_show.items() if v["errors"]]
             section["spotify"] = {
                 "configured": True,
                 "fetched_at": data.get("fetched_at"),
                 "window_days": data.get("window_days"),
                 "per_show": per_show,
+                "totals": {
+                    "followers": _sum("followers"),
+                    "streams": _sum("streams"),
+                    "listeners": _sum("listeners"),
+                    "starts": _sum("starts"),
+                },
+                "feeds_registered": len(per_show),
+                "feeds_reporting": len(reporting),
+                "feeds_erroring": len(erroring),
+                "top_countries": sorted(
+                    countries.items(), key=lambda kv: -kv[1])[:5],
+                "age_bands": sorted(age_bands.items(), key=lambda kv: -kv[1])[:5],
             }
         except Exception as exc:  # noqa: BLE001
             section["spotify"] = {"configured": True, "error": str(exc)}
 
+    return section
+
+
+def build_youtube_policy_section(root: Path) -> Dict[str, Any]:
+    """Adaptive publishing tiers per show × channel (July 2026 policy).
+
+    ``api/youtube_policy.json`` decides, nightly and from real velocity
+    data, whether each show publishes long-form and how many Shorts — the
+    single biggest lever on publish volume — but it was never rendered.
+    An operator seeing "long-form off" on a show should be able to see WHY
+    (its views-per-day) without opening the raw JSON.
+    """
+    section: Dict[str, Any] = {"configured": False}
+    path = root / "api" / "youtube_policy.json"
+    if not path.exists():
+        return section
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        channels_out: Dict[str, Any] = {}
+        for channel, payload in (data.get("channels") or {}).items():
+            if not isinstance(payload, dict):
+                continue
+            # The writer maps slug -> policy directly; tolerate a future
+            # {"shows": {...}} wrapper without breaking.
+            shows = payload.get("shows") if isinstance(
+                payload.get("shows"), dict) else payload
+            if not isinstance(shows, dict):
+                continue
+            rows = []
+            tier_counts: Dict[str, int] = {}
+            for slug, v in shows.items():
+                if not isinstance(v, dict):
+                    continue
+                tier = str(v.get("tier") or "?")
+                tier_counts[tier] = tier_counts.get(tier, 0) + 1
+                rows.append({
+                    "slug": slug,
+                    "tier": tier,
+                    "publish_long_form": bool(v.get("publish_long_form")),
+                    "shorts_per_episode": v.get("shorts_per_episode"),
+                    "long_vpd": v.get("long_vpd"),
+                    "short_vpd": v.get("short_vpd"),
+                    "pending": v.get("pending"),
+                })
+            rows.sort(key=lambda r: (r["tier"], r["slug"]))
+            channels_out[channel] = {
+                "shows": rows,
+                "tier_counts": tier_counts,
+                "long_form_on": sum(1 for r in rows if r["publish_long_form"]),
+                "shorts_planned": sum(int(r["shorts_per_episode"] or 0) for r in rows),
+            }
+        if channels_out:
+            section = {
+                "configured": True,
+                "generated": data.get("generated"),
+                "window_days": data.get("window_days"),
+                "channels": channels_out,
+            }
+    except Exception as exc:  # noqa: BLE001
+        section = {"configured": True, "error": str(exc)}
+    return section
+
+
+def build_distribution_section(root: Path) -> Dict[str, Any]:
+    """Directory coverage per platform, parsed from the operator's tracker.
+
+    July 25 2026: Apple Podcasts, Amazon Music, Podcast Index, Pocket Casts
+    and iHeart have NO analytics API (Apple's downloads already flow through
+    OP3), so the only record of where each show is actually *distributed*
+    lived in docs/podcast_directories.md — invisible on mission control.
+    A directory that silently failed to ingest a feed is lost reach that
+    nothing else would surface.
+
+    This parses that markdown status table (the operator's single source of
+    truth — kept as markdown deliberately, since it's hand-maintained during
+    submission passes) into per-platform coverage counts. Best-effort: a
+    missing/renamed table degrades to ``configured: false``.
+
+    Legend in the doc: ``LIVE`` (optionally with a date), ``PENDING``,
+    ``--`` (not submitted), ``n/a`` (doesn't apply).
+    """
+    section: Dict[str, Any] = {"configured": False}
+    doc = root / "docs" / "podcast_directories.md"
+    if not doc.exists():
+        return section
+    try:
+        text = doc.read_text(encoding="utf-8")
+        if "## Submission Status Tracker" not in text:
+            return section
+        block = text.split("## Submission Status Tracker", 1)[1]
+        rows = [ln.strip() for ln in block.splitlines()
+                if ln.strip().startswith("|")]
+        if len(rows) < 3:
+            return section
+        header = [c.strip() for c in rows[0].strip("|").split("|")]
+        platforms = header[1:]
+        per_platform: Dict[str, Dict[str, Any]] = {
+            p: {"live": 0, "pending": 0, "missing": 0, "na": 0,
+                "missing_shows": []}
+            for p in platforms
+        }
+        show_rows = []
+        for line in rows[2:]:  # skip header + separator
+            cells = [c.strip() for c in line.strip("|").split("|")]
+            if len(cells) != len(header):
+                continue
+            show = cells[0]
+            statuses: Dict[str, str] = {}
+            for platform, raw in zip(platforms, cells[1:]):
+                val = raw.strip()
+                low = val.lower()
+                bucket = per_platform[platform]
+                if low.startswith("live"):
+                    bucket["live"] += 1
+                    state = "live"
+                elif low.startswith("pending"):
+                    bucket["pending"] += 1
+                    state = "pending"
+                elif low.startswith("n/a"):
+                    bucket["na"] += 1
+                    state = "na"
+                else:
+                    bucket["missing"] += 1
+                    bucket["missing_shows"].append(show)
+                    state = "missing"
+                statuses[platform] = state
+            show_rows.append({"show": show, "statuses": statuses})
+
+        for bucket in per_platform.values():
+            applicable = bucket["live"] + bucket["pending"] + bucket["missing"]
+            bucket["applicable"] = applicable
+            bucket["coverage_pct"] = (
+                round(100 * bucket["live"] / applicable, 1) if applicable else 0.0)
+            bucket["missing_shows"] = bucket["missing_shows"][:20]
+
+        # Operator follow-ups the doc records in prose (kept short + exact).
+        notes = []
+        if "Podcast Index: API keys stale" in block or "HTTP 401" in block:
+            notes.append("Podcast Index: API keys stale (HTTP 401) — refresh "
+                         "PODCAST_INDEX_API_KEY/SECRET, then re-run the "
+                         "Submit Podcast Directories workflow.")
+        if "never indexed on Spotify" in block:
+            notes.append("Spotify: the RU SpaceX feed never indexed — "
+                         "resubmit at creators.spotify.com if wanted.")
+        if "iHeart: not yet submitted" in block:
+            notes.append("iHeart: not yet submitted (manual form).")
+        if "Amazon Music" in block and "ownership-confirmation" in block:
+            notes.append("Amazon Music: feeds submitted + ownership confirmed "
+                         "2026-07-23; shows go LIVE as Amazon ingests them — "
+                         "spot-check and mark LIVE in the tracker.")
+
+        section = {
+            "configured": True,
+            "source_doc": "docs/podcast_directories.md",
+            "rows": len(show_rows),
+            "platforms": per_platform,
+            "shows": show_rows,
+            "notes": notes,
+        }
+    except Exception as exc:  # noqa: BLE001 — never break the dashboard
+        section = {"configured": True, "error": str(exc)}
     return section
 
 
@@ -2225,6 +2445,25 @@ def build_catalog_section(
     }
 
 
+def _json_safe(value: Any) -> Any:
+    """Recursively replace non-finite floats (NaN/±Infinity) with None.
+
+    JSON.parse in every browser rejects the bare ``NaN``/``Infinity``
+    literals Python's json module emits by default, so one poisoned float
+    blanks the entire dashboard. ``None`` renders as "—" in every consumer
+    (they all use ``x == null`` fallbacks), which is the honest display for
+    a value that failed to compute.
+    """
+    import math as _math
+    if isinstance(value, float):
+        return value if _math.isfinite(value) else None
+    if isinstance(value, dict):
+        return {k: _json_safe(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_json_safe(v) for v in value]
+    return value
+
+
 def _read_previous_flat_total(out_path: Path) -> Optional[int]:
     if not out_path.exists():
         return None
@@ -2251,7 +2490,14 @@ def main(argv: Optional[List[str]] = None) -> int:
     previous = _read_previous_flat_total(out_path)
     data = build_dashboard(_ROOT, offline=args.offline, previous_flat=previous)
 
-    blob = json.dumps(data, indent=2, ensure_ascii=False, default=str)
+    # NaN/Infinity are valid Python-JSON but INVALID JSON per spec, and
+    # browsers' JSON.parse rejects them — a single NaN anywhere in this
+    # payload makes management.html fail its fetch and render the error
+    # banner instead of the whole dashboard (verified July 25 2026 with a
+    # NaN MIT benchmark close: every section went blank). NaN has reached
+    # this payload before via yfinance NaN closes (the July 2026 MIT
+    # phantom-trade class), so sanitise on the way out.
+    blob = json.dumps(_json_safe(data), indent=2, ensure_ascii=False, default=str)
     if args.dry_run:
         print(blob)
         return 0
