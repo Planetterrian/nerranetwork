@@ -338,6 +338,50 @@ class MultilingualConfig:
 
 
 @dataclass
+class VideoPodcastConfig:
+    """Opt-in **video podcast** feed for a show (July 2026 pilot).
+
+    Apple Podcasts accepts video episodes through an ordinary RSS
+    ``<enclosure>`` (MOV / MP4 / M4V). Its 2026 HLS video experience is
+    gated to a short list of hosting partners and does not support
+    ``podcast:alternateEnclosure``, so for a self-hoster the MP4 enclosure
+    is the *only* route in — and Apple's own guidance is to publish the
+    video version as a **separate show**, not to mix formats in one feed.
+
+    So this emits ``<show>_podcast.video.rss`` beside the canonical audio
+    feed. The audio feed is never touched: a video-podcast episode is a
+    second product built from an asset the network already renders (the
+    long-form 1920x1080 MP4 the YouTube stage produces), which is why the
+    marginal cost is one R2 upload and zero extra render time.
+
+    **Coupling to know about:** the MP4 only exists when the adaptive
+    YouTube policy publishes long-form that day
+    (``engine.youtube_policy``). A shorts-only tier means no video episode
+    — the run logs a warning and records ``video_podcast_skipped`` rather
+    than rendering a second time.
+
+    Fields are declared here (not read via getattr on the raw dict) so
+    ``_build_nested`` doesn't silently drop them — see landmine #20.
+    """
+    enabled: bool = False
+    # R2 key prefix for the hosted MP4s, under the same bucket as the
+    # episode audio: ``<prefix>/<slug>/<filename>.mp4``. Kept distinct from
+    # the audio keyspace so a lifecycle rule can target video alone.
+    r2_prefix: str = "video"
+    # Channel-title suffix. Apple lists the audio and video shows side by
+    # side, so they need to be tellable apart at a glance.
+    title_suffix: str = " (Video)"
+    # Rolling feed window. An episode MP4 is ~40x its MP3, so the video
+    # feed carries recent episodes rather than the whole back catalogue.
+    # Capped in practice by the summaries file's own 30-record window.
+    max_episodes: int = 30
+    # Optional overrides; empty means "derive from publishing.*".
+    rss_file: str = ""          # default: <audio rss>.video.rss
+    channel_description: str = ""
+    channel_image: str = ""
+
+
+@dataclass
 class AnalyticsConfig:
     enabled: bool = False
     prefix_url: str = "https://op3.dev/e/"
@@ -774,6 +818,7 @@ class ShowConfig:
     content_freshness: ContentFreshnessConfig = field(default_factory=ContentFreshnessConfig)
     youtube: YouTubeConfig = field(default_factory=YouTubeConfig)
     multilingual: MultilingualConfig = field(default_factory=MultilingualConfig)
+    video_podcast: VideoPodcastConfig = field(default_factory=VideoPodcastConfig)
     # Weekly-summary segment (July 2026). When ``true`` and the runner
     # ticks on a Sunday, the show runs a NORMAL daily episode AND weaves
     # in one short "week in review" segment synthesised from the past 7
@@ -986,6 +1031,7 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
         content_freshness=_build_nested(ContentFreshnessConfig, data.get("content_freshness")),
         youtube=_build_nested(YouTubeConfig, data.get("youtube")),
         multilingual=_build_nested(MultilingualConfig, data.get("multilingual")),
+        video_podcast=_build_nested(VideoPodcastConfig, data.get("video_podcast")),
         # Accept the legacy ``weekly_recap_on_sunday`` key as a fallback so any
         # unmigrated YAML keeps working (the field was renamed July 2026 when
         # the full Sunday-recap mode became a small in-episode segment).

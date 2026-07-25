@@ -3298,6 +3298,25 @@ def run(args: argparse.Namespace) -> None:
         rss_url=f"{config.publishing.base_url}/{config.publishing.rss_file}",
     )
 
+    # 12b. Video podcast (July 2026 pilot). The episode's long-form MP4 was
+    # uploaded to R2 during the YouTube stage; attach it to the summaries
+    # record and rebuild the separate <show>_podcast.video.rss. Apple wants
+    # the video edition as its own show, so the audio feed is untouched.
+    # Entirely best-effort: a video failure never affects the audio publish.
+    if config.video_podcast.enabled:
+        try:
+            _video_track = (youtube_urls or {}).get("video_podcast")
+            if _video_track:
+                from engine.summaries_io import upsert_video
+                upsert_video(summaries_json, episode_num, _video_track)
+            from engine.video_feed import build_video_feed_for_show
+            _vf = build_video_feed_for_show(config, PROJECT_ROOT)
+            if _vf:
+                logger.info("Video podcast feed: %s (%d episodes)",
+                            _vf[0].name, _vf[1])
+        except Exception as exc:  # noqa: BLE001 — never block the publish
+            logger.warning("Video podcast step failed (non-fatal): %s", exc)
+
     # 11c. Multilingual audio (FR/RU/ES/ZH) is generated OUT OF BAND by a
     # separate workflow (.github/workflows/multilingual.yml) running the
     # idempotent driver scripts/generate_translations.py. It used to run
@@ -5073,6 +5092,18 @@ def _publish_youtube(
     # reuse it (the Short itself is built independently from the audio +
     # 9:16 scenes, so nothing else from this branch is needed).
     long_url = ""
+    if config.video_podcast.enabled and not _policy_publish_long:
+        # The video-podcast episode is a by-product of the long-form
+        # render, so a shorts-only tier means no video episode that day.
+        # Say so loudly rather than letting the feed quietly stop growing
+        # (we do NOT render a second time just to feed it).
+        logger.warning(
+            "::warning::%s: video podcast is enabled but the adaptive "
+            "YouTube policy skipped long-form today, so no episode video "
+            "was rendered — the video feed will not gain an episode. Set "
+            "youtube.adaptive_publishing: false (or raise the tier) if the "
+            "video feed must stay daily.", config.slug)
+        result["video_podcast_skipped"] = "long_form_not_rendered"
     if _policy_publish_long:
         try:
             build_long_form_video(
@@ -5087,6 +5118,20 @@ def _publish_youtube(
                 scene_schedule=_visual_plan.get("scene_schedule"),
                 broll_clips=_visual_plan.get("broll_clips"),
             )
+            # ---- Video podcast (July 2026 pilot) ----
+            # Host the rendered MP4 on R2 so it can also ship as an Apple
+            # video-podcast episode. Done here, immediately after the
+            # render, so a YouTube upload failure below doesn't cost the
+            # video episode — they are independent products built from the
+            # same asset. Soft-fail by contract (see upload_episode_video).
+            if config.video_podcast.enabled:
+                from engine.video_feed import upload_episode_video
+                _video_track = upload_episode_video(long_video_path, config)
+                if _video_track:
+                    _video_track["duration_sec"] = _ep_duration
+                    result["video_podcast"] = _video_track
+                    result["video_podcast_url"] = _video_track["url"]
+
             meta = build_long_form_metadata(
                 config,
                 episode_num=episode_num,
