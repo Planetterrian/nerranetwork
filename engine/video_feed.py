@@ -226,8 +226,9 @@ def build_video_feed(
         if dur:
             try:
                 fe.podcast.itunes_duration(format_duration(float(dur)))
-            except Exception:  # noqa: BLE001 — duration is advisory
-                pass
+            except Exception as exc:  # noqa: BLE001 — duration is advisory
+                logger.debug("[%s] ep%s duration %r unusable: %s",
+                             slug, num, dur, exc)
 
     fg.lastBuildDate(_dt.datetime.now(_dt.timezone.utc))
 
