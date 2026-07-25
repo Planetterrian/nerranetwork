@@ -214,9 +214,12 @@ def build_narrative_status_block(tracker: Dict[str, Any], label: str) -> str:
     lines = [
         f"### {label} PROGRAM NARRATIVE MEMORY",
         "Use this to give regular listeners a sense of ongoing stories and real progress (or the lack of it).",
-        "When a story touches one of these programs, MAKE THE CONTINUITY AUDIBLE — open that story with a",
-        "short callback a regular listener recognizes, e.g. 'Remember, the show covered [program] on",
-        "[last covered date] — today's news moves that forward because...'. Then answer naturally:",
+        "CONTINUITY BUDGET — at most ONE audible continuity callback in the whole episode",
+        "(across all programs). Prefer the date ('yesterday' / the covered date). NEVER write",
+        "'Ep141', 'Ep 141', 'ep141', or any 'EpN' abbreviation — those get voiced as letter-soup.",
+        "If a number is truly needed, write 'episode <number in words>' once. Example shape:",
+        "'Remember, we covered [program] yesterday — today's news moves that forward because...'.",
+        "Then answer naturally:",
         "  - Where does today's development fit in the bigger arc for this program?",
         "  - Does it meaningfully move any of the key open questions?",
         "  - What should attentive listeners be watching for next?",
@@ -230,7 +233,11 @@ def build_narrative_status_block(tracker: Dict[str, Any], label: str) -> str:
         status = prog.get("status", "Status not yet tracked.")
         last_ep = prog.get("last_major_update_episode")
         last_date = prog.get("last_major_update_date", "")
-        when = f" (status last reviewed: Ep{last_ep}, {last_date})" if last_ep else ""
+        # Speak-friendly refs only — never "EpN" (July 2026: FF Ep142
+        # echoed "on Ep141" three times from this block's old wording).
+        when = ""
+        if last_ep:
+            when = f" (status last reviewed: {last_date or 'date unknown'}; episode {last_ep})"
         # Auto-tracked freshness (June 2026, ported from the Tesla fix):
         # when the show last actually discussed this program on air —
         # kept current by auto_update_narrative_from_digest, unlike the
@@ -238,7 +245,10 @@ def build_narrative_status_block(tracker: Dict[str, Any], label: str) -> str:
         ment_ep = prog.get("last_mentioned_episode")
         ment_date = prog.get("last_mentioned_date", "")
         if ment_ep and ment_ep != last_ep:
-            when += f" (last covered on air: Ep{ment_ep}, {ment_date})"
+            when += (
+                f" (last covered on air: {ment_date or 'date unknown'}; "
+                f"episode {ment_ep})"
+            )
 
         lines.append(f"\n**{name}**{when}")
         lines.append(f"Current status: {status}")

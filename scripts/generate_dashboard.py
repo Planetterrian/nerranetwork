@@ -98,6 +98,40 @@ _SANCTIONED_EXTRA_VOICES = {"ara"}
 # Stale CLAUDE.md triple we use to detect documentation drift (item 9).
 _CLAUDE_MD_OLD_VOICE_TRIPLE = "0.65/0.9/0.85"
 
+# Canonical public show-page filenames (must match generate_html.NETWORK_SHOWS
+# + shows/network_meta.yaml). The dashboard used to emit ``{slug}.html``
+# which 404s for almost every show (dp_pod → thedppod.html, modern_investing
+# → modern-investing.html, RU shows under ru/, etc.).
+_SHOW_PAGE_BY_SLUG: Dict[str, str] = {
+    "tesla": "tesla.html",
+    "omni_view": "omni-view.html",
+    "fascinating_frontiers": "fascinating-frontiers.html",
+    "planetterrian": "planetterrian.html",
+    "env_intel": "env-intel.html",
+    "models_agents": "models-agents.html",
+    "models_agents_beginners": "models-agents-beginners.html",
+    "finansy_prosto": "ru/finansy-prosto.html",
+    "privet_russian": "ru/privet-russian.html",
+    "modern_investing": "modern-investing.html",
+    "unintended_consequences": "unintended-consequences.html",
+    "first_principles": "first-principles.html",
+    "spacex": "spacex.html",
+    "dp_pod": "thedppod.html",
+    "age_of_ai": "age-of-ai.html",
+}
+
+# Cadence-aware publish-staleness thresholds (warn_hours, stale_hours).
+# Daily shows keep the historic 48h/72h. Monday-only shows need ~10 days
+# before "stale" is a real miss. Age of AI is interview-driven — never
+# flag as stale from pub age alone.
+_PUB_AGE_THRESHOLDS_H: Dict[str, Optional[tuple]] = {
+    "env_intel": (192, 240),        # Monday
+    "finansy_prosto": (192, 240),   # Monday
+    "privet_russian": (192, 240),   # Monday
+    "age_of_ai": None,              # on-demand interviews
+}
+_PUB_AGE_DEFAULT_H = (48, 72)
+
 
 # ---------------------------------------------------------------------------
 # Data containers
@@ -1335,6 +1369,18 @@ def build_network_rollup(
     # Per-show latest episode from RSS audit
     latest_by_feed = {f["file"]: f.get("latest_pub_date") for f in rss.get("feeds", [])}
 
+    # Overlay network_meta.yaml show_page overrides (dp_pod, age_of_ai, …).
+    show_pages = dict(_SHOW_PAGE_BY_SLUG)
+    meta_path = _ROOT / "shows" / "network_meta.yaml"
+    if meta_path.exists():
+        try:
+            meta = yaml.safe_load(meta_path.read_text(encoding="utf-8")) or {}
+            for mslug, entry in meta.items():
+                if isinstance(entry, dict) and entry.get("show_page"):
+                    show_pages[mslug] = entry["show_page"]
+        except Exception:
+            pass
+
     per_show_summary = []
     for s in shows:
         slug = s["slug"]
@@ -1345,18 +1391,23 @@ def build_network_rollup(
         rss_file = cfg.publishing.rss_file or ""
         latest_pub = latest_by_feed.get(rss_file)
         pub_status = "ok"
-        if latest_pub:
+        thresholds = _PUB_AGE_THRESHOLDS_H.get(slug, _PUB_AGE_DEFAULT_H)
+        if latest_pub and thresholds is not None:
             try:
                 when = _dt.datetime.fromisoformat(latest_pub)
                 age_hours = (
                     _dt.datetime.now(_dt.timezone.utc) - when
                 ).total_seconds() / 3600
-                if age_hours > 72:
+                warn_h, stale_h = thresholds
+                if age_hours > stale_h:
                     pub_status = "stale"
-                elif age_hours > 48:
+                elif age_hours > warn_h:
                     pub_status = "warn"
             except Exception:
                 pub_status = "unknown"
+        elif thresholds is None:
+            # On-demand shows (Age of AI): never paint red from silence.
+            pub_status = "ok"
         cost_7 = costs["per_show"].get(slug, {}).get("last_7_days", {})
         m = metrics.get(slug, {})
         per_show_summary.append({
@@ -1365,7 +1416,8 @@ def build_network_rollup(
             "rss_file": rss_file,
             "rss_title": cfg.publishing.rss_title,
             "rss_image": cfg.publishing.rss_image,
-            "show_page": f"{slug}.html",
+            "show_page": show_pages.get(
+                slug, slug.replace("_", "-") + ".html"),
             "blog_page": f"blog/{slug}/index.html",
             "newsletter_enabled": cfg.newsletter.enabled,
             "x_enabled": cfg.publishing.x_enabled,
@@ -1551,18 +1603,29 @@ def aggregate_mit_performance(root: Path) -> Dict[str, Any]:
 
     # Normalise benchmark/alpha sub-keys so the template can use
     # ``performance_data.benchmark.ytd_pct`` without tripping on
-    # Jinja's Undefined sentinel on older tracker files.
+    # Jinja's Undefined sentinel on older tracker files. Non-finite
+    # floats (yfinance NaN) become None — never 0 (MIT Ep117 / dashboard
+    # Portfolio YTD tile was lying as "+0.00%" when both sides were NaN).
+    import math as _math
+
+    def _finite_or_none(v: Any) -> Any:
+        if isinstance(v, (int, float)) and _math.isfinite(v):
+            return v
+        return None
+
     raw_bench = tracker.get("benchmark") or {}
     benchmark = {
-        "current_close": raw_bench.get("current_close"),
-        "inception_to_date_pct": raw_bench.get("inception_to_date_pct"),
-        "ytd_pct": raw_bench.get("ytd_pct"),
+        "current_close": _finite_or_none(raw_bench.get("current_close")),
+        "inception_to_date_pct": _finite_or_none(
+            raw_bench.get("inception_to_date_pct")),
+        "ytd_pct": _finite_or_none(raw_bench.get("ytd_pct")),
         "last_updated": raw_bench.get("last_updated"),
     }
     raw_alpha = tracker.get("alpha") or {}
     alpha = {
-        "inception_to_date_pct": raw_alpha.get("inception_to_date_pct"),
-        "ytd_pct": raw_alpha.get("ytd_pct"),
+        "inception_to_date_pct": _finite_or_none(
+            raw_alpha.get("inception_to_date_pct")),
+        "ytd_pct": _finite_or_none(raw_alpha.get("ytd_pct")),
         "monthly": raw_alpha.get("monthly") or {},
     }
 

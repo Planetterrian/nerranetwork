@@ -109,8 +109,13 @@ class TestNarrativeAutoFreshness:
             tmp_path, "FSD unsupervised rollout expands.", 505, "2026-06-09")
         tracker = tesla_memory.load_narrative_tracker(tmp_path)
         block = tesla_memory.build_narrative_status_block(tracker)
-        assert "last covered on air: Ep505, 2026-06-09" in block
-        assert "MAKE THE CONTINUITY AUDIBLE" in block
+        assert "last covered on air: 2026-06-09; episode 505" in block
+        assert "CONTINUITY BUDGET" in block
+        # Ban-list examples may mention Ep505; status lines must not seed it.
+        import re
+        for line in block.splitlines():
+            if "last covered on air:" in line or "status last reviewed:" in line:
+                assert not re.search(r"\bEp\d+\b", line), line
 
     def test_run_show_wires_auto_update(self):
         src = (_ROOT / "run_show.py").read_text(encoding="utf-8")
