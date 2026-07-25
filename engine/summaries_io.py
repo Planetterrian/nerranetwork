@@ -52,6 +52,24 @@ def upsert_translation(path: Path, episode_num: int, lang: str, entry: dict) -> 
     return False
 
 
+def upsert_video(path: Path, episode_num: int, entry: dict) -> bool:
+    """Concurrency-safe write of one episode's video track.
+
+    Same re-read-then-write discipline as :func:`upsert_translation` (it
+    exists so a long-running stage can't clobber a record the live cron
+    appended in the meantime). Sets ``record["video"] = entry``, which is
+    what :mod:`engine.video_feed` reads to build the video-podcast feed.
+    Returns True if the episode was found and written.
+    """
+    wrapper, records = load_summaries(path)
+    for rec in records:
+        if rec.get("episode_num") == episode_num:
+            rec["video"] = entry
+            save_summaries(path, wrapper, records)
+            return True
+    return False
+
+
 def save_summaries(path: Path, wrapper: Optional[dict], records: List[dict]) -> None:
     """Atomically write ``records`` back, preserving the original shape."""
     path = Path(path)

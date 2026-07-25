@@ -181,6 +181,29 @@ multilingual:
   # for the translations. Unset → the show's tts.voice_id is used.
   cloned_voice_env: GROK_CLONED_VOICE_ID
 
+video_podcast:
+  # OFF network-wide; opted into per show (July 2026 pilot: tesla + spacex).
+  # When on, the long-form MP4 the YouTube stage already renders is also
+  # uploaded to R2 and listed in a SEPARATE <show>_podcast.video.rss for
+  # Apple Podcasts' video player. The canonical audio feed is never
+  # touched — Apple's own guidance is a separate show for the video
+  # edition, and a self-hoster's only route in is the MP4 enclosure (its
+  # 2026 HLS experience is gated to partner hosts and ignores
+  # podcast:alternateEnclosure).
+  #
+  # Cost: R2 storage for the MP4s plus ZERO egress — R2 charges no egress,
+  # which is the only reason self-hosting podcast video is viable at all.
+  # The per-episode size is NOT yet measured (the long-form render is a
+  # mostly-static slideshow, so its real bitrate can't be inferred from
+  # the encoder settings); the pipeline records `video_podcast_bytes` per
+  # episode so the projection comes from data. At $0.015/GB-month even a
+  # 250 MB episode is well under a cent a month. No extra render time —
+  # the MP4 was previously deleted right after the YouTube upload.
+  enabled: false
+  r2_prefix: video
+  title_suffix: " (Video)"
+  max_episodes: 30
+
 publishing:
   rss_author: Nerra Network
   rss_email: patrick@planetterrian.com

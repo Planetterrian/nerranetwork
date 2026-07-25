@@ -208,6 +208,20 @@ def record_youtube_outcomes(
         if youtube_urls.get("yt_comments_posted"):
             metrics.record("yt_comments_posted", int(youtube_urls["yt_comments_posted"]))
 
+        # Video podcast (July 2026 pilot). The hosted MP4's real byte size
+        # is the only honest input to the R2 storage-cost projection — the
+        # long-form render is a mostly-static slideshow, so its bitrate
+        # can't be assumed from the encoder settings alone. Recorded per
+        # episode so the projection is measured, never guessed.
+        if youtube_urls.get("video_podcast"):
+            _vp = youtube_urls["video_podcast"]
+            metrics.record("video_podcast_uploaded", True)
+            metrics.record("video_podcast_bytes", int(_vp.get("bytes", 0) or 0))
+        elif youtube_urls.get("video_podcast_skipped"):
+            metrics.record("video_podcast_uploaded", False)
+            metrics.record("video_podcast_skipped",
+                           str(youtube_urls["video_podcast_skipped"]))
+
         # Thumbnail + hook overlay autofit decisions (for drift monitoring)
         if "thumbnail_autofit_font_size" in youtube_urls:
             metrics.record("thumbnail_autofit_font_size", int(youtube_urls["thumbnail_autofit_font_size"]))

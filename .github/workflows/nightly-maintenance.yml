@@ -202,10 +202,26 @@ jobs:
           XAI_API_KEY: ${{ secrets.GROK_API_KEY }}
         run: python scripts/build_language_feeds.py --all || echo "::warning::Language-feed rebuild failed (non-fatal)"
 
+      - name: Rebuild video-podcast feeds
+        # run_show rebuilds a show's <show>_podcast.video.rss inline right
+        # after it publishes; this nightly pass repairs a feed whose inline
+        # build was skipped (e.g. the episode run timed out after the R2
+        # upload landed). Deterministic from summaries → usually a no-op.
+        run: python scripts/build_video_feeds.py --all || echo "::warning::Video-feed rebuild failed (non-fatal)"
+
+      # NOTE on the committed-paths list below: `*.video.rss` is NOT
+      # redundant with `*_podcast.*.rss`. Tesla's audio feed is the ROOT
+      # podcast.rss, so its video feed is podcast.video.rss, which the
+      # *_podcast.*.rss glob does not match (youtube_channel_history
+      # landmine: a whitelist gap silently drops a generated file for days
+      # before anyone notices). Do not put comments INSIDE the block scalar
+      # below — it is fed to `git add --pathspec-from-file`, which has no
+      # comment syntax.
       - uses: ./.github/actions/safe-commit-push
         with:
           add-paths: |
             *_podcast.*.rss
+            *.video.rss
             digests/**/channel_i18n.json
             api/dashboard.json
             api/daily-show-health.json

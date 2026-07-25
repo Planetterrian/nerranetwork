@@ -2043,6 +2043,44 @@ the fallback everywhere; every piece is best-effort and non-blocking.
   `no_fr_credentials` no-op until then; activation checklist in the doc).
   Docs: [`docs/lang_youtube_dubs.md`](docs/lang_youtube_dubs.md). Drift
   guards: `tests/test_lang_dub.py`.
+- **Video podcasts → Apple (July 25 2026 pilot: tesla + spacex).** Doc:
+  [`docs/video_podcasts.md`](docs/video_podcasts.md); drift guards:
+  `tests/test_video_podcast.py`. Apple's Feb-2026 HLS video experience is
+  gated to a short list of hosting partners and it ignores
+  `podcast:alternateEnclosure`, so a self-hoster's ONLY route into the
+  Apple video player is a plain MP4 `<enclosure>` — and Apple's own
+  guidance is to publish video as a **separate show**. So the two pilot
+  shows emit `podcast.video.rss` / `spacex_podcast.video.rss` beside their
+  audio feeds; **the audio feeds are never touched and no published
+  enclosure URL changes**. The asset is the long-form 1920x1080 MP4 the
+  YouTube stage already renders and previously deleted right after upload
+  (`run_show._publish_youtube`'s cleanup) — so the marginal cost is one R2
+  upload and ZERO extra render/Grok spend. Flow: `_publish_youtube` calls
+  `engine.video_feed.upload_episode_video` right after the render (BEFORE
+  the YouTube upload, so a YouTube failure doesn't also cost the video
+  episode, and before the `unlink`) → `engine.summaries_io.upsert_video`
+  attaches `record["video"]` → `engine.video_feed.build_video_feed_for_show`
+  rebuilds the feed from summaries (the `language_feeds` pattern: fresh
+  rebuild, deterministic `<prefix>-video-epNNN-YYYYMMDD` GUIDs, churn
+  suppression, never an empty feed). Three things that look redundant and
+  are not: `content_type="video/mp4"` is passed EXPLICITLY on both the
+  upload and the enclosure (`upload_to_r2` defaults non-`.mp3` to
+  `application/octet-stream` and `publisher.py` hardcodes `audio/mpeg` in
+  three places — either would make Apple refuse the episode); the R2 key is
+  `video/<slug>/…`, outside the audio keyspace every published enclosure
+  depends on, so a lifecycle rule can expire video alone; and nightly's
+  add-paths needs `*.video.rss` because Tesla's audio feed is the ROOT
+  `podcast.rss`, which `*_podcast.*.rss` does not match
+  (youtube_channel_history silent-drop class). Enclosures are deliberately
+  NOT OP3-prefixed (OP3 is an audio-download redirector, not a video CDN;
+  engagement comes from Apple Connect). **Known coupling:** the video
+  episode is a by-product of the long-form render, so an adaptive-policy
+  shorts-only day yields no video episode — the run logs a `::warning::`
+  and records `video_podcast_skipped` rather than rendering twice. Per-
+  episode `video_podcast_bytes` is recorded so the R2 storage projection
+  is measured rather than guessed (unmeasured at merge). Operator work is
+  the Apple Podcasts Connect submission of each `.video.rss` as a NEW
+  show — see the doc's checklist. Rollback is one YAML flag per show.
 - **Recursive YouTube → titles feedback loop.** Mirrors the OP3 audio loop:
   `scripts/fetch_youtube_analytics.py` reads each show's
   `digests/<slug>/youtube_videos.json`, queries the YouTube Analytics API for
