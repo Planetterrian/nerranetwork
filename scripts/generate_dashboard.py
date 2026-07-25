@@ -1975,6 +1975,49 @@ def build_audience_section(root: Path) -> Dict[str, Any]:
         except Exception as exc:  # noqa: BLE001
             section["site"] = {"configured": True, "error": str(exc)}
 
+    # Apple Podcasts Connect (July 25 2026). OP3 already counts Apple
+    # DOWNLOADS; what Apple uniquely reports is ENGAGEMENT — followers and
+    # whether people finished the episode. No official API exists, so this
+    # mirrors the Spotify cookie-connector trade-off.
+    section["apple"] = {"configured": False}
+    ap_path = root / "api" / "apple_stats.json"
+    if ap_path.exists():
+        try:
+            data = json.loads(ap_path.read_text(encoding="utf-8"))
+            shows_raw = data.get("shows") or {}
+            per_show = {
+                slug: {
+                    "plays": s.get("plays"),
+                    "listeners": s.get("listeners"),
+                    "followers": s.get("followers"),
+                    "time_listened": s.get("time_listened"),
+                    "errors": sorted((s.get("errors") or {}).keys()) or None,
+                }
+                for slug, s in shows_raw.items()
+            }
+
+            def _apple_sum(field: str) -> int:
+                return sum(int(v[field] or 0) for v in per_show.values()
+                           if isinstance(v.get(field), (int, float)))
+
+            reporting = [s for s, v in per_show.items() if v["plays"] is not None]
+            section["apple"] = {
+                "configured": True,
+                "fetched_at": data.get("fetched_at"),
+                "window_days": data.get("window_days"),
+                "per_show": per_show,
+                "totals": {
+                    "plays": _apple_sum("plays"),
+                    "listeners": _apple_sum("listeners"),
+                    "followers": _apple_sum("followers"),
+                    "time_listened": _apple_sum("time_listened"),
+                },
+                "feeds_registered": len(per_show),
+                "feeds_reporting": len(reporting),
+            }
+        except Exception as exc:  # noqa: BLE001
+            section["apple"] = {"configured": True, "error": str(exc)}
+
     section["spotify"] = {"configured": False}
     sp_path = root / "api" / "spotify_stats.json"
     if sp_path.exists():

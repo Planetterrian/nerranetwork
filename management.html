@@ -652,6 +652,50 @@
     audGrid.appendChild(card);
   }
 
+  // Apple Podcasts — engagement (OP3 already has Apple downloads)
+  {
+    const ap = audience.apple || {};
+    const card = sectionCard("Apple Podcasts",
+      "engagement only — downloads are already in OP3");
+    if (!ap.configured) {
+      card.appendChild(h("p", { class: "fine-list",
+        html: "Not configured. Apple ships <strong>no official analytics API</strong> — " +
+              "set <code>APPLE_MYACINFO</code> / <code>APPLE_ITCTX</code> (cookies from a " +
+              "logged-in podcastsconnect.apple.com session) and record each show's " +
+              "<code>apple_show_id:</code> in <code>shows/*.yaml</code>. " +
+              "Apple <em>downloads</em> already flow through OP3; this adds followers, " +
+              "plays and completion — the only finish-rate signal the network gets." }));
+    } else if (ap.error) {
+      card.appendChild(h("p", { class: "fine-list", text: "Apple error: " + ap.error }));
+    } else {
+      const t = ap.totals || {};
+      card.appendChild(h("div", { class: "headline",
+        html: fmt(t.plays) + "<small>plays · " + (ap.window_days || 30) + "d</small>" +
+              "&nbsp;&nbsp;" + fmt(t.listeners) + "<small>listeners</small>" +
+              "&nbsp;&nbsp;" + fmt(t.followers) + "<small>followers</small>" }));
+      const per = ap.per_show || {};
+      const slugs = Object.keys(per)
+        .filter((s) => (per[s].plays || 0) > 0)
+        .sort((a, b) => (per[b].plays || 0) - (per[a].plays || 0));
+      const maxV = Math.max.apply(null, slugs.map((s) => per[s].plays || 0).concat([1]));
+      slugs.forEach((slug) => {
+        const v = per[slug] || {};
+        card.appendChild(barRow(slug, v.plays || 0, maxV,
+          fmt(v.plays || 0) + " plays · " + fmt(v.followers || 0) + " followers",
+          { color: "var(--series-4)",
+            title: slug + ": " + fmt(v.listeners || 0) + " listeners · " +
+                   fmt(v.time_listened || 0) + " time-listened units" }));
+      });
+      if (ap.feeds_registered) {
+        card.appendChild(h("p", { class: "fine-list", text:
+          ap.feeds_reporting + " of " + ap.feeds_registered + " registered shows reporting" }));
+      }
+      if (ap.fetched_at) card.appendChild(h("p", { class: "fine-list",
+        text: "fetched " + ageText(ap.fetched_at) + staleNote(ap.fetched_at) }));
+    }
+    audGrid.appendChild(card);
+  }
+
   // Spotify
   {
     const card = sectionCard("Spotify", "unofficial connector · fills the OP3 blind spot");

@@ -56,24 +56,28 @@ jobs:
           requirements-file: 'requirements.txt'
           skip-checkout: 'true'
 
-      - name: Fetch audience stats (OP3 + Buttondown + GA4 + Spotify)
+      - name: Fetch audience stats (OP3 + Buttondown + GA4 + Spotify + Apple)
         # Clean no-ops when the secrets are unset. Must run BEFORE the
         # dashboard build so the Audience section can consume the JSONs.
         # GA4 uses the official Data API (service-account key secret);
-        # Spotify uses the community spotifyconnector cookies — when
-        # those expire the fetch logs a re-auth hint and keeps the
-        # previous JSON (stale data, never a red nightly).
+        # Spotify and Apple both use community cookie connectors (neither
+        # platform ships a creator analytics API) — when those cookies
+        # expire the fetch logs a re-auth hint and keeps the previous JSON
+        # (stale data, never a red nightly).
         env:
           OP3_API_TOKEN: ${{ secrets.OP3_API_TOKEN }}
           BUTTONDOWN_API_KEY: ${{ secrets.BUTTONDOWN_API_KEY }}
           GA4_SERVICE_ACCOUNT_JSON: ${{ secrets.GA4_SERVICE_ACCOUNT_JSON }}
           SPOTIFY_SP_DC: ${{ secrets.SPOTIFY_SP_DC }}
           SPOTIFY_SP_KEY: ${{ secrets.SPOTIFY_SP_KEY }}
+          APPLE_MYACINFO: ${{ secrets.APPLE_MYACINFO }}
+          APPLE_ITCTX: ${{ secrets.APPLE_ITCTX }}
         run: |
           python scripts/fetch_op3_stats.py --out api/op3_stats.json --popular-out site/data/popular_episodes.json
           python scripts/fetch_buttondown_stats.py --out api/buttondown_stats.json
           python scripts/fetch_ga4_stats.py --out api/ga4_stats.json
           python scripts/fetch_spotify_stats.py --out api/spotify_stats.json
+          python scripts/fetch_apple_stats.py --out api/apple_stats.json
 
       - name: Refresh show performance trackers from OP3 data
         # Closes the memory systems' performance-feedback loop (June
@@ -215,6 +219,7 @@ jobs:
             api/buttondown_stats.json
             api/ga4_stats.json
             api/spotify_stats.json
+            api/apple_stats.json
             digests/tesla_shorts_time/tesla_performance_tracker.json
             digests/models_agents/models_agents_performance_tracker.json
             digests/fascinating_frontiers/fascinating_frontiers_performance_tracker.json
