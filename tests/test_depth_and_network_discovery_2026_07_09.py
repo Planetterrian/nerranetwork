@@ -112,8 +112,9 @@ class TestNetworkDiscoverySurfaces:
 
         pool = _weighted_surface_pool()
         gallery_slots = sum(1 for s in pool if s["id"] == "gallery")
+        peer_slots = sum(1 for s in pool if s["id"] == "blogs")
         assert gallery_slots >= 3
-        assert gallery_slots > len(NETWORK_SURFACES) // 2
+        assert gallery_slots > peer_slots
         # Over a long window gallery should appear more often than blogs.
         counts = {"gallery": 0, "blogs": 0}
         for i in range(len(pool) * 4):
