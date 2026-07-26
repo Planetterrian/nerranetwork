@@ -1203,13 +1203,15 @@ def aggregate_costs(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]:
         for k in ("grok", "tts", "total"):
             bucket[k] = round(bucket[k], 4)
 
-    # Quick-win enhancements (May 2026 codebase review):
-    # - Simple projection so operators see "at current burn rate, what does a week cost?"
-    # - Surface for future live YT quota remaining (engine.youtube_quota already exists).
-    episodes_7 = max(network_7.get("episodes", 0), 1)
-    avg_per_episode = round(network_7["total"] / episodes_7, 4)
-    # Conservative: network ships ~70-80 episodes/week across 12 shows
-    projected_weekly = round(avg_per_episode * 65, 2)
+    # Projection = actual last-7d burn (honest "current weekly rate").
+    # Previously multiplied avg × 65, which understated spend when the
+    # network ships ~100–150 credit_usage files/week (July 2026).
+    episodes_7 = int(network_7.get("episodes", 0) or 0)
+    avg_per_episode = (
+        round(network_7["total"] / episodes_7, 4) if episodes_7 else 0.0
+    )
+    projected_weekly = round(network_7["total"], 2)
+    projected_monthly = round(network_30["total"], 2)
 
     return {
         "per_show": per_show,
@@ -1218,7 +1220,13 @@ def aggregate_costs(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]:
         "projections": {
             "avg_cost_per_episode_usd": avg_per_episode,
             "projected_weekly_usd": projected_weekly,
-            "note": "Projection uses last-7d average × 65 (network volume). Tune per operator knowledge.",
+            "projected_monthly_usd": projected_monthly,
+            "episodes_7d": episodes_7,
+            "note": (
+                "Weekly projection = actual last-7d Grok+TTS spend "
+                f"({episodes_7} credit_usage files). Monthly = last-30d total. "
+                "Not a calendar forecast — a trailing burn rate."
+            ),
         },
         "youtube_quota": {
             "enabled_shows_count": sum(
@@ -1747,6 +1755,9 @@ def build_dashboard(root: Path, *, offline: bool = False, previous_flat: Optiona
 
     alerts = extract_critical_alerts(landmines, costs)
 
+    audience = build_audience_section(root)
+    efficiency = build_efficiency_section(costs, audience)
+
     return {
         "generated_at": _dt.datetime.now(_dt.timezone.utc).isoformat(),
         "network": network,
@@ -1759,7 +1770,8 @@ def build_dashboard(root: Path, *, offline: bool = False, previous_flat: Optiona
         "pipeline_health": metrics,
         "rss_audit": rss,
         "mit_performance": aggregate_mit_performance(root),
-        "audience": build_audience_section(root),
+        "audience": audience,
+        "efficiency": efficiency,
         "catalog": build_catalog_section(root, shows, rss),
         "gallery": build_gallery_section(root),
         "content_lake": build_content_lake_section(root),
@@ -1910,15 +1922,20 @@ def build_audience_section(root: Path) -> Dict[str, Any]:
                 key=lambda e: e["downloads_7d"],
                 reverse=True,
             )[:5]
+            d30 = sum(v["downloads_30d"] for v in per_show.values())
+            d7 = sum(v["downloads_7d"] for v in per_show.values())
+            all_time = int(history["network_total"] or 0)
             section["op3"] = {
                 "configured": True,
                 "fetched_at": data.get("fetched_at"),
-                "network_downloads_30d": sum(
-                    v["downloads_30d"] for v in per_show.values()),
-                "network_downloads_7d": sum(
-                    v["downloads_7d"] for v in per_show.values()),
-                "network_downloads_all_time": history["network_total"],
+                "network_downloads_30d": d30,
+                "network_downloads_7d": d7,
+                "network_downloads_all_time": all_time,
                 "all_time_since": history["since"],
+                # History tracking began mid-2026 — all-time can read BELOW
+                # the rolling 30d window until enough weeks accumulate.
+                "all_time_incomplete": bool(
+                    all_time and d30 and all_time < d30),
                 "network_weekly_downloads": network_weekly,
                 "network_weekly_history": history["network_series"],
                 "per_show": per_show,
@@ -2004,12 +2021,59 @@ def build_audience_section(root: Path) -> Dict[str, Any]:
                 key=lambda r: r["subscribers_gained"],
                 reverse=True,
             )[:5]
-            if per_channel or top_converters:
+            # Per-show rollup (90d Analytics window). Videos already carry
+            # show_slug; fall back to digest-dir → YAML slug (tesla_shorts_time
+            # → tesla) so Mission Control can show YT next to OP3/Spotify.
+            dir_to_slug = {v: k for k, v in _SHOW_DIR_OVERRIDES.items()}
+            yt_per_show: Dict[str, Dict[str, Any]] = {}
+            for dir_name, s in (data.get("shows") or {}).items():
+                for v in s.get("videos") or []:
+                    if not isinstance(v, dict):
+                        continue
+                    slug = str(v.get("show_slug") or "").strip() or str(dir_name)
+                    if slug in dir_to_slug:
+                        slug = dir_to_slug[slug]
+                    if slug == "tesla_shorts_time":
+                        slug = "tesla"
+                    bucket = yt_per_show.setdefault(slug, {
+                        "views": 0,
+                        "subscribers_gained": 0,
+                        "subscribers_lost": 0,
+                        "video_count": 0,
+                        "long_views": 0,
+                        "short_views": 0,
+                        "_ret": [],
+                    })
+                    views = int(v.get("views") or 0)
+                    bucket["views"] += views
+                    bucket["subscribers_gained"] += int(
+                        v.get("subscribers_gained") or 0)
+                    bucket["subscribers_lost"] += int(
+                        v.get("subscribers_lost") or 0)
+                    bucket["video_count"] += 1
+                    kind = str(v.get("kind") or "").lower()
+                    if kind == "long":
+                        bucket["long_views"] += views
+                    elif "short" in kind:
+                        bucket["short_views"] += views
+                    avp = v.get("average_view_percentage")
+                    if isinstance(avp, (int, float)):
+                        bucket["_ret"].append(float(avp))
+            for slug, bucket in yt_per_show.items():
+                rets = bucket.pop("_ret", [])
+                bucket["avg_view_percentage"] = (
+                    round(sum(rets) / len(rets), 1) if rets else None
+                )
+            if per_channel or top_converters or yt_per_show:
                 section["youtube"] = {
                     "configured": True,
                     "generated": data.get("generated"),
+                    "window_days": data.get("window_days") or 90,
                     "channels": per_channel,
                     "top_subscriber_videos": top_converters,
+                    "per_show": yt_per_show,
+                    "network_views": sum(
+                        v["views"] for v in yt_per_show.values()),
                 }
         except Exception as exc:  # noqa: BLE001
             section["youtube"] = {"configured": True, "error": str(exc)}
@@ -2157,6 +2221,104 @@ def build_audience_section(root: Path) -> Dict[str, Any]:
             section["spotify"] = {"configured": True, "error": str(exc)}
 
     return section
+
+
+def build_efficiency_section(
+    costs: Dict[str, Any],
+    audience: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Unit economics across OP3 / YouTube / Spotify — never summed as reach.
+
+    Mission Control historically over-weighted YouTube subscriber tiles and
+    understated podcast downloads + cost-per-listen. This section puts
+    trailing spend next to each platform's own metric so operators can see
+    which shows earn their Grok+TTS bill without inventing a fake "total
+    reach" number (forbidden by docs/analytics.md).
+    """
+    op3 = audience.get("op3") or {}
+    yt = audience.get("youtube") or {}
+    sp = audience.get("spotify") or {}
+    ap = audience.get("apple") or {}
+    n7 = costs.get("network_last_7_days") or {}
+    cost7 = float(n7.get("total") or 0.0)
+    eps7 = int(n7.get("episodes") or 0)
+    dl7 = int(op3.get("network_downloads_7d") or 0)
+    dl30 = int(op3.get("network_downloads_30d") or 0)
+    yt_views = int(yt.get("network_views") or 0)
+    if not yt_views and isinstance(yt.get("per_show"), dict):
+        yt_views = sum(int(v.get("views") or 0) for v in yt["per_show"].values())
+    sp_totals = sp.get("totals") or {}
+    sp_streams = int(sp_totals.get("streams") or 0)
+    sp_listeners = int(sp_totals.get("listeners") or 0)
+    ap_totals = ap.get("totals") or {}
+    ap_reporting = int(ap.get("feeds_reporting") or 0)
+
+    slugs = set()
+    for block in (
+        (op3.get("per_show") or {}),
+        (costs.get("per_show") or {}),
+        (yt.get("per_show") or {}),
+        (sp.get("per_show") or {}),
+    ):
+        slugs.update(block.keys())
+
+    per_show: Dict[str, Dict[str, Any]] = {}
+    for slug in sorted(slugs):
+        # Skip Spotify language variants in the show-card join (fascinating_frontiers_ru)
+        if "_" in slug and slug.rsplit("_", 1)[-1] in ("ru", "fr", "es", "zh"):
+            base = slug.rsplit("_", 1)[0]
+            if base in slugs or base in (op3.get("per_show") or {}):
+                continue
+        c7 = ((costs.get("per_show") or {}).get(slug) or {}).get("last_7_days") or {}
+        o = (op3.get("per_show") or {}).get(slug) or {}
+        y = (yt.get("per_show") or {}).get(slug) or {}
+        s = (sp.get("per_show") or {}).get(slug) or {}
+        cost_s = float(c7.get("total") or 0.0)
+        dl = int(o.get("downloads_7d") or 0)
+        views = int(y.get("views") or 0)
+        streams = s.get("streams")
+        streams_n = int(streams) if isinstance(streams, (int, float)) else 0
+        per_show[slug] = {
+            "cost_7d_usd": round(cost_s, 4),
+            "op3_downloads_7d": dl,
+            "op3_downloads_30d": int(o.get("downloads_30d") or 0),
+            "usd_per_op3_download": (
+                round(cost_s / dl, 4) if dl > 0 else None
+            ),
+            "youtube_views": views,
+            "youtube_avg_view_pct": y.get("avg_view_percentage"),
+            "youtube_subs_gained": int(y.get("subscribers_gained") or 0),
+            "usd_per_yt_view": (
+                round(cost_s / views, 4) if views > 0 else None
+            ),
+            "spotify_streams_30d": streams_n or None,
+        }
+
+    return {
+        "cost_7d_usd": round(cost7, 4),
+        "episodes_7d": eps7,
+        "op3_downloads_7d": dl7,
+        "op3_downloads_30d": dl30,
+        "usd_per_op3_download_7d": (
+            round(cost7 / dl7, 4) if dl7 > 0 else None
+        ),
+        "youtube_views_window": yt_views,
+        "youtube_window_days": yt.get("window_days") or 90,
+        "usd_per_yt_view": (
+            round(cost7 / yt_views, 4) if yt_views > 0 else None
+        ),
+        "spotify_streams_30d": sp_streams,
+        "spotify_listeners_30d": sp_listeners,
+        "apple_feeds_reporting": ap_reporting,
+        "apple_plays_30d": int(ap_totals.get("plays") or 0) if ap_reporting else None,
+        "note": (
+            "Platform metrics are side-by-side and never summed into one "
+            "reach number. $/OP3-download uses 7d cost ÷ 7d RSS downloads; "
+            "$/YT-view uses 7d cost ÷ Analytics window views (usually 90d) "
+            "— directional only across mismatched windows."
+        ),
+        "per_show": per_show,
+    }
 
 
 def build_youtube_policy_section(root: Path) -> Dict[str, Any]:

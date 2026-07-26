@@ -98,6 +98,11 @@ class LLMConfig:
     reviewer_model: str = "grok-4-1-fast-non-reasoning"
     reviewer_max_tokens: int = 1500
     reviewer_temperature: float = 0.3
+    # Optional xAI reasoning depth for models that support it (grok-4.5:
+    # low|medium|high). Empty string = omit the parameter (byte-identical
+    # to pre-wiring requests on grok-4.3). Do NOT set on digest/podcast
+    # paths without an A/B listen when the model change alters prose.
+    reasoning_effort: str = ""
 
 
 @dataclass

@@ -643,3 +643,163 @@ class TestAppleAnalytics:
         assert "api/apple_stats.json" in wf.split("add-paths")[1]
         # And must run BEFORE the dashboard build that consumes it.
         assert wf.find("fetch_apple_stats.py") < wf.find("generate_dashboard.py")
+
+
+# ---------------------------------------------------------------------------
+# July 26 2026 — multi-platform efficiency + cost projection honesty
+# ---------------------------------------------------------------------------
+
+
+class TestEfficiencyAndProjection:
+    def test_projected_weekly_equals_trailing_7d_spend(self, tmp_path):
+        """Projection must NOT multiply by a hard-coded 65 episode volume."""
+        shows_dir = tmp_path / "shows"
+        shows_dir.mkdir()
+        (shows_dir / "_defaults.yaml").write_text(
+            "llm: {model: grok-4.3}\ntts: {provider: grok, voice_id: x}\n"
+            "publishing: {}\nnewsletter: {enabled: false}\nyoutube: {enabled: false}\n",
+            encoding="utf-8",
+        )
+        (shows_dir / "demo.yaml").write_text(
+            "slug: demo\nname: Demo\n"
+            "episode:\n  output_dir: digests/demo\n  prefix: Demo\n"
+            "publishing:\n  rss_file: demo.rss\n  summaries_json: digests/demo/summaries.json\n",
+            encoding="utf-8",
+        )
+        ddir = tmp_path / "digests" / "demo"
+        ddir.mkdir(parents=True)
+        # Two usage files in the last 7 days → total $2.00
+        import datetime as _dt
+        today = _dt.date.today().isoformat()
+        for i, total in enumerate((1.25, 0.75), start=1):
+            (ddir / f"credit_usage_{today}_ep{i:03d}.json").write_text(
+                json.dumps({
+                    "date": today,
+                    "episode_number": i,
+                    "total_estimated_cost_usd": total,
+                    "services": {
+                        "grok_api": {"total_cost_usd": total * 0.8},
+                        "tts_api": {"estimated_cost_usd": total * 0.2},
+                    },
+                }),
+                encoding="utf-8",
+            )
+        shows = gd.load_shows_from_yaml(shows_dir, tmp_path)
+        costs = gd.aggregate_costs(tmp_path, shows)
+        assert costs["network_last_7_days"]["total"] == pytest.approx(2.0)
+        assert costs["projections"]["projected_weekly_usd"] == pytest.approx(2.0)
+        assert costs["projections"]["episodes_7d"] == 2
+        # Guard against the old ×65 understatement returning.
+        assert costs["projections"]["projected_weekly_usd"] != pytest.approx(
+            costs["projections"]["avg_cost_per_episode_usd"] * 65
+        )
+
+    def test_youtube_per_show_joins_digest_dir_to_slug(self, tmp_path):
+        (tmp_path / "api").mkdir()
+        (tmp_path / "api" / "youtube_stats.json").write_text(json.dumps({
+            "schema_version": 2,
+            "generated": "2026-07-26T00:00:00+00:00",
+            "window_days": 90,
+            "channels": {"en": {"subscribers": 10, "total_views": 100,
+                                "video_count": 2}},
+            "shows": {
+                "tesla_shorts_time": {
+                    "videos": [
+                        {"show_slug": "tesla", "kind": "long", "views": 40,
+                         "subscribers_gained": 2, "subscribers_lost": 0,
+                         "average_view_percentage": 50.0, "title": "A"},
+                        {"show_slug": "tesla", "kind": "short", "views": 60,
+                         "subscribers_gained": 1, "subscribers_lost": 0,
+                         "average_view_percentage": 30.0, "title": "B"},
+                    ],
+                },
+            },
+        }), encoding="utf-8")
+        yt = gd.build_audience_section(tmp_path)["youtube"]
+        assert yt["configured"] is True
+        assert "tesla" in yt["per_show"]
+        assert "tesla_shorts_time" not in yt["per_show"]
+        row = yt["per_show"]["tesla"]
+        assert row["views"] == 100
+        assert row["long_views"] == 40
+        assert row["short_views"] == 60
+        assert row["avg_view_percentage"] == 40.0
+        assert yt["network_views"] == 100
+
+    def test_efficiency_uses_op3_and_youtube_side_by_side(self):
+        costs = {
+            "network_last_7_days": {"total": 10.0, "episodes": 5,
+                                    "grok": 8.0, "tts": 2.0},
+            "per_show": {
+                "tesla": {"last_7_days": {"total": 4.0, "episodes": 2}},
+                "spacex": {"last_7_days": {"total": 6.0, "episodes": 3}},
+            },
+        }
+        audience = {
+            "op3": {
+                "network_downloads_7d": 1000,
+                "network_downloads_30d": 4000,
+                "per_show": {
+                    "tesla": {"downloads_7d": 400, "downloads_30d": 1600},
+                    "spacex": {"downloads_7d": 600, "downloads_30d": 2400},
+                },
+            },
+            "youtube": {
+                "window_days": 90,
+                "network_views": 5000,
+                "per_show": {
+                    "tesla": {"views": 2000, "avg_view_percentage": 40,
+                              "subscribers_gained": 5},
+                    "spacex": {"views": 3000, "avg_view_percentage": 35,
+                               "subscribers_gained": 8},
+                },
+            },
+            "spotify": {
+                "totals": {"streams": 240, "listeners": 100},
+                "per_show": {"tesla": {"streams": 17}},
+            },
+            "apple": {"feeds_reporting": 0, "totals": {"plays": 0}},
+        }
+        eff = gd.build_efficiency_section(costs, audience)
+        assert eff["usd_per_op3_download_7d"] == pytest.approx(0.01)
+        assert eff["youtube_views_window"] == 5000
+        assert eff["spotify_streams_30d"] == 240
+        assert eff["per_show"]["tesla"]["usd_per_op3_download"] == pytest.approx(0.01)
+        assert "never summed" in eff["note"].lower() or "side-by-side" in eff["note"]
+
+    def test_op3_all_time_incomplete_flag(self, tmp_path):
+        (tmp_path / "api").mkdir()
+        (tmp_path / "api" / "op3_stats.json").write_text(json.dumps({
+            "fetched_at": "2026-07-26T00:00:00+00:00",
+            "shows": {
+                "tesla": {
+                    "downloads_7d": 100, "downloads_30d": 500, "weekly_avg": 100,
+                    # One short week only — after merge, all-time stays < 30d.
+                    "weekly_downloads": [80],
+                    "episodes": [],
+                },
+            },
+        }), encoding="utf-8")
+        op3 = gd.build_audience_section(tmp_path)["op3"]
+        assert op3["network_downloads_30d"] == 500
+        assert op3["network_downloads_all_time"] < op3["network_downloads_30d"]
+        assert op3["all_time_incomplete"] is True
+
+    def test_management_html_renders_efficiency_and_multiplatform(self):
+        html = (ROOT / "management.html").read_text(encoding="utf-8")
+        assert "data.efficiency" in html
+        assert "Unit economics" in html
+        assert "not reporting" in html
+        assert "Spotify streams" in html
+        assert "Views by show" in html
+        assert "stat-label" in html
+
+    def test_dashboard_payload_includes_efficiency(self):
+        data = gd.build_dashboard(ROOT, offline=True)
+        assert "efficiency" in data
+        assert "per_show" in data["efficiency"]
+        yt = data["audience"]["youtube"]
+        if yt.get("configured") and not yt.get("error"):
+            assert "per_show" in yt
+            # Tesla digest dir must resolve to the YAML slug.
+            assert "tesla" in yt["per_show"] or "spacex" in yt["per_show"]

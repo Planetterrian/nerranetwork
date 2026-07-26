@@ -117,6 +117,30 @@ class TestPromptCacheRouting:
         _call_grok("hello", model="grok-4.3")
         assert "extra_headers" not in recorder
 
+    def test_call_grok_sends_reasoning_effort_when_set(self, fake_openai_cache):
+        from engine.generator import _call_grok
+
+        recorder, _ = fake_openai_cache
+        _call_grok("hello", model="grok-4.5", reasoning_effort="low")
+        assert (recorder.get("extra_body") or {}).get("reasoning_effort") == "low"
+
+    def test_call_grok_omits_reasoning_effort_when_unset(self, fake_openai_cache):
+        from engine.generator import _call_grok
+
+        recorder, _ = fake_openai_cache
+        _call_grok("hello", model="grok-4.3")
+        assert "reasoning_effort" not in (recorder.get("extra_body") or {})
+
+    def test_llm_reasoning_effort_helper(self):
+        from engine.generator import _llm_reasoning_effort
+
+        assert _llm_reasoning_effort(SimpleNamespace(
+            llm=SimpleNamespace(reasoning_effort="medium"))) == "medium"
+        assert _llm_reasoning_effort(SimpleNamespace(
+            llm=SimpleNamespace(reasoning_effort=""))) is None
+        assert _llm_reasoning_effort(SimpleNamespace(
+            llm=SimpleNamespace(reasoning_effort="nope"))) is None
+
     def test_record_llm_usage_tracks_cached_tokens(self):
         from engine.tracking import create_tracker, record_llm_usage
 

@@ -36,6 +36,12 @@ llm:
   reviewer_model: grok-4-1-fast-non-reasoning
   reviewer_max_tokens: 1500
   reviewer_temperature: 0.3
+  # Optional (July 2026): set to low|medium|high only when using a model
+  # that honors reasoning_effort (e.g. grok-4.5). Empty = omit param —
+  # daily shows stay on grok-4.3 without the extra dial. Keep unset for
+  # digest/podcast until a measured trial; safe first targets are
+  # reviewer / synth / tool-heavy fetch.
+  # reasoning_effort: ""
 
 tts:
   # Network default since May 2026: xAI Grok TTS at $4.20/M chars
