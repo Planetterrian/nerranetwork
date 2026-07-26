@@ -96,9 +96,13 @@ RUSSIAN_SHOWS = ("finansy_prosto", "privet_russian")
 # "next time", "under the hood") that collide with show YAML chapter patterns.
 # ``x_line`` is the short X/YouTube/newsletter form; ``url`` is the path under
 # nerranetwork.com (no leading slash). Append new surfaces at the end.
+# Optional ``weight`` (default 1) biases the date-deterministic rotation
+# without dropping other surfaces. Gallery is weighted higher (July 2026
+# improvements pack) so the free CC gallery gets more discovery airtime.
 NETWORK_SURFACES: list[dict[str, str]] = [
     {
         "id": "gallery",
+        "weight": "3",
         "spoken": (
             "And on the website: every episode's visuals live in our free "
             "image gallery at nerranetwork.com/gallery — royalty-free under "
@@ -198,6 +202,18 @@ NETWORK_SURFACES: list[dict[str, str]] = [
 ]
 
 
+def _weighted_surface_pool() -> list[dict[str, str]]:
+    """Expand NETWORK_SURFACES by optional per-entry weight (default 1)."""
+    pool: list[dict[str, str]] = []
+    for surface in NETWORK_SURFACES:
+        try:
+            weight = max(1, int(surface.get("weight") or 1))
+        except (TypeError, ValueError):
+            weight = 1
+        pool.extend([surface] * weight)
+    return pool or list(NETWORK_SURFACES)
+
+
 def pick_featured_show(show_slug: str, date: _dt.date) -> Optional[str]:
     """Return the sibling English show to feature in *show_slug*'s closing on
     *date*, or ``None`` if there is no eligible sibling / the show is not an
@@ -226,12 +242,14 @@ def pick_featured_surface(
 
     Same date-deterministic rotation as :func:`pick_featured_show`, with a
     different offset so the surface and sibling rotate independently.
+    Surfaces with ``weight`` > 1 appear proportionally more often.
     """
-    if show_slug not in ENGLISH_SHOWS or not NETWORK_SURFACES:
+    pool = _weighted_surface_pool()
+    if show_slug not in ENGLISH_SHOWS or not pool:
         return None
     offset = ENGLISH_ORDER.index(show_slug) * 3  # diverge from sibling idx
-    idx = (date.toordinal() + offset) % len(NETWORK_SURFACES)
-    return NETWORK_SURFACES[idx]
+    idx = (date.toordinal() + offset) % len(pool)
+    return pool[idx]
 
 
 def build_surface_x_reply(show_slug: str, date: _dt.date) -> str:
