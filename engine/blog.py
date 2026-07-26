@@ -764,21 +764,26 @@ def generate_blog_post_html(
         seen_urls.add(url)
         source_domains.append({"url": url, "domain": _domain_from_url(url)})
 
-    # Load transcript (TTS script) if available — scan digest dir for
-    # a *_Ep{NNN}_*_tts.txt file matching this episode number. The TTS
-    # script carries Grok speech tags ([pause], <emphasis>...</emphasis>,
-    # etc.) which the audio engine consumes; readers must never see
-    # them — strip before handing to the template.
+    # Load on-page transcript. Prefer *_reader.txt (pre-pronunciation
+    # canonical spelling — July 2026 improvements pack) so blog/SEO never
+    # shows TTS respellings ("koo-dah", number-words). Fall back to
+    # *_tts.txt for historical episodes. Speech tags are stripped either way.
     transcript_text = ""
     try:
         _md_path = metadata.get("_md_path")
         if _md_path:
             _digest_dir = Path(_md_path).parent
-            _tts_pattern = f"*_Ep{ep_num:03d}_*_tts.txt"
-            _tts_files = sorted(_digest_dir.glob(_tts_pattern))
-            if _tts_files:
-                from engine.utils import strip_speech_tags
-                _raw = _tts_files[-1].read_text(encoding="utf-8").strip()
+            from engine.utils import strip_speech_tags
+            _reader_files = sorted(
+                _digest_dir.glob(f"*_Ep{ep_num:03d}_*_reader.txt")
+            )
+            _tts_files = sorted(
+                _digest_dir.glob(f"*_Ep{ep_num:03d}_*_tts.txt")
+            )
+            _src = (_reader_files[-1] if _reader_files
+                    else (_tts_files[-1] if _tts_files else None))
+            if _src is not None:
+                _raw = _src.read_text(encoding="utf-8").strip()
                 transcript_text = strip_speech_tags(_raw)
     except Exception:
         pass  # Non-fatal — transcript is optional

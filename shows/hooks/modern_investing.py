@@ -1666,40 +1666,145 @@ def _fetch_market_indices() -> str:
 # NASDAQ benchmark — fetch, alpha math, per-trade annotation
 # ---------------------------------------------------------------------------
 
+def _finite_close(value) -> float | None:
+    """Return *value* as float if finite, else None."""
+    try:
+        close = float(value)
+    except (TypeError, ValueError):
+        return None
+    return close if math.isfinite(close) else None
+
+
+def _fetch_nasdaq_via_history(for_date: datetime.date | None = None) -> float | None:
+    """Primary: yfinance history bars."""
+    import yfinance as yf
+    ticker = yf.Ticker(NASDAQ_SYMBOL)
+    if for_date is None:
+        hist = ticker.history(period="5d", interval="1d")
+        if hist.empty:
+            return None
+        return _finite_close(hist["Close"].iloc[-1])
+    start = for_date - datetime.timedelta(days=5)
+    end = for_date + datetime.timedelta(days=1)
+    hist = ticker.history(start=start.isoformat(), end=end.isoformat(), interval="1d")
+    if hist.empty:
+        return None
+    mask = hist.index.date <= for_date
+    if mask.any():
+        return _finite_close(hist[mask]["Close"].iloc[-1])
+    return _finite_close(hist["Close"].iloc[-1])
+
+
+def _fetch_nasdaq_via_fast_info() -> float | None:
+    """Secondary: yfinance fast_info (live / last price)."""
+    import yfinance as yf
+    info = yf.Ticker(NASDAQ_SYMBOL).fast_info
+    price = (
+        getattr(info, "last_price", None)
+        or getattr(info, "regularMarketPrice", None)
+        or getattr(info, "previous_close", None)
+    )
+    return _finite_close(price)
+
+
+def _fetch_nasdaq_via_yahoo_v8(for_date: datetime.date | None = None) -> float | None:
+    """Tertiary: direct Yahoo v8 chart HTTP (Tesla landmine-#22 pattern)."""
+    import requests
+    params = {"interval": "1d", "range": "5d"}
+    if for_date is not None:
+        # Chart API wants unix seconds; pull a short window around the date.
+        start = datetime.datetime.combine(
+            for_date - datetime.timedelta(days=7), datetime.time.min,
+            tzinfo=datetime.timezone.utc,
+        )
+        end = datetime.datetime.combine(
+            for_date + datetime.timedelta(days=2), datetime.time.min,
+            tzinfo=datetime.timezone.utc,
+        )
+        params = {
+            "interval": "1d",
+            "period1": int(start.timestamp()),
+            "period2": int(end.timestamp()),
+        }
+    resp = requests.get(
+        f"https://query1.finance.yahoo.com/v8/finance/chart/{NASDAQ_SYMBOL}",
+        params=params,
+        headers={
+            "User-Agent": "Mozilla/5.0 (compatible; NerraNetwork/1.0)",
+            "Accept": "application/json",
+        },
+        timeout=12,
+    )
+    if resp.status_code != 200:
+        logger.warning("Yahoo v8 ^IXIC HTTP %s", resp.status_code)
+        return None
+    result = resp.json()["chart"]["result"][0]
+    closes = result["indicators"]["quote"][0]["close"]
+    valid = [c for c in closes if c is not None]
+    if not valid:
+        meta_price = result.get("meta", {}).get("regularMarketPrice")
+        return _finite_close(meta_price)
+    if for_date is None:
+        return _finite_close(valid[-1])
+    # Prefer the last bar on/before for_date when timestamps exist.
+    try:
+        ts_list = result.get("timestamp") or []
+        picked = None
+        for ts, close in zip(ts_list, closes):
+            if close is None:
+                continue
+            bar_day = datetime.datetime.fromtimestamp(
+                ts, tz=datetime.timezone.utc).date()
+            if bar_day <= for_date:
+                picked = close
+        if picked is not None:
+            return _finite_close(picked)
+    except Exception:
+        pass
+    return _finite_close(valid[-1])
+
+
 def _fetch_nasdaq_close(for_date: datetime.date | None = None) -> float | None:
     """Return the ^IXIC close for the given date (or most recent if None).
 
-    Uses the same 3-retry pattern as ``_fetch_trade_prices``. Returns
-    ``None`` on total failure — callers must tolerate missing data.
+    Multi-source chain (July 2026 improvements pack — MIT Ep117 NaN day):
+    1. yfinance history  2. yfinance fast_info  3. Yahoo v8 chart HTTP.
+    Each source is tried with retries; non-finite closes are rejected.
     """
     import time as _time
-    for attempt in range(3):
-        try:
-            import yfinance as yf
-            ticker = yf.Ticker(NASDAQ_SYMBOL)
-            if for_date is None:
-                hist = ticker.history(period="5d", interval="1d")
-                if not hist.empty:
-                    close = float(hist["Close"].iloc[-1])
-                    # yfinance can return NaN on thin/halted bars; NaN is
-                    # not None and poisons benchmark + alpha (MIT Ep117).
-                    return close if math.isfinite(close) else None
-            else:
-                start = for_date - datetime.timedelta(days=5)
-                end = for_date + datetime.timedelta(days=1)
-                hist = ticker.history(start=start.isoformat(), end=end.isoformat(), interval="1d")
-                if not hist.empty:
-                    # Pick the most recent close on or before ``for_date``.
-                    mask = hist.index.date <= for_date
-                    if mask.any():
-                        close = float(hist[mask]["Close"].iloc[-1])
-                    else:
-                        close = float(hist["Close"].iloc[-1])
-                    return close if math.isfinite(close) else None
-        except Exception as exc:
-            logger.warning("NASDAQ fetch attempt %d (%s): %s", attempt + 1, for_date, exc)
-        if attempt < 2:
-            _time.sleep(2 ** (attempt + 1))
+    sources = (
+        ("yfinance_history", lambda: _fetch_nasdaq_via_history(for_date)),
+        ("yfinance_fast_info", _fetch_nasdaq_via_fast_info),
+        ("yahoo_v8_chart", lambda: _fetch_nasdaq_via_yahoo_v8(for_date)),
+    )
+    # fast_info is live-only — skip when a historical date was requested.
+    if for_date is not None:
+        sources = (
+            ("yfinance_history", lambda: _fetch_nasdaq_via_history(for_date)),
+            ("yahoo_v8_chart", lambda: _fetch_nasdaq_via_yahoo_v8(for_date)),
+        )
+    for name, fetcher in sources:
+        for attempt in range(2):
+            try:
+                close = fetcher()
+                if close is not None:
+                    # Sanity band for the composite (~5k–40k in 2020s).
+                    if 3000.0 <= close <= 50000.0:
+                        if name != "yfinance_history":
+                            logger.info("NASDAQ close via %s: %.2f", name, close)
+                        return close
+                    logger.warning(
+                        "NASDAQ %s returned out-of-band %.2f — trying next",
+                        name, close,
+                    )
+                    break
+            except Exception as exc:
+                logger.warning(
+                    "NASDAQ %s attempt %d (%s): %s",
+                    name, attempt + 1, for_date, exc,
+                )
+            if attempt == 0:
+                _time.sleep(1.5)
     return None
 
 

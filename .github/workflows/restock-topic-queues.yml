@@ -35,6 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pull-requests: write  # recovery PR if push to main exhausts
     steps:
       - uses: actions/checkout@v7
 
@@ -67,6 +68,8 @@ jobs:
             shows/topic_queues/first_principles.yaml
             shows/topic_queues/unintended_consequences.yaml
           commit-message: "Auto-restock: narrative topic queues (trigger-gated)"
+          recovery-on-failure: "true"
+          recovery-show: "topic-queues"
 
       - name: Notify operator
         if: success()

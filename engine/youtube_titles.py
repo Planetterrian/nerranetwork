@@ -51,16 +51,16 @@ def _clean_title(line: str) -> str:
     return t.strip()
 
 
-def _performance_hint(perf_dir: Optional[Path]) -> str:
+def _performance_hint(perf_dir: Optional[Path], *, channel: str = "en") -> str:
     """A one-paragraph 'what's been working' steer from past YouTube
-    retention, or "" when there's no data yet (the loop is dormant until
-    the operator re-auths the analytics scope and a few weeks accrue).
+    retention, or "" when there's no data yet.
 
     Read from ``<perf_dir>/youtube_performance.json`` — *perf_dir* is the
     show's own output dir (slug != dir for some shows, e.g. tesla →
     digests/tesla_shorts_time), written by
-    ``scripts/update_youtube_performance.py``. Pure best-effort — title
-    generation must never depend on it. Title-only signal, no audio impact.
+    ``scripts/update_youtube_performance.py``. Prefers channel-scoped
+    hints (``title_hint_en`` / ``title_hint_ru``) when present, else the
+    primary ``title_hint``. Pure best-effort — title-only, no audio impact.
     """
     if not perf_dir:
         return ""
@@ -70,7 +70,12 @@ def _performance_hint(perf_dir: Optional[Path]) -> str:
         if not path.exists():
             return ""
         data = json.loads(path.read_text(encoding="utf-8"))
-        hint = (data.get("title_hint") or "").strip()
+        channel = (channel or "en").lower()
+        keyed = (
+            data.get("title_hint_ru") if channel == "ru"
+            else data.get("title_hint_en")
+        )
+        hint = (keyed or data.get("title_hint") or "").strip()
         return ("\nWHAT'S WORKING (from this show's recent YouTube retention — "
                 "lean toward these angles/keywords if they fit honestly):\n"
                 f"{hint}\n") if hint else ""
@@ -88,6 +93,7 @@ def generate_youtube_titles(
     n: int = 3,
     model: str = "grok-4.3",
     perf_dir: Optional[Path] = None,
+    channel: str = "en",
 ) -> List[str]:
     """Return up to *n* click-optimized title candidates, best first.
 
@@ -104,7 +110,8 @@ def generate_youtube_titles(
                 "hook": (hook or "").strip(),
                 "keywords": ", ".join(keywords or []),
                 "digest_excerpt": (digest_text or "")[:2000],
-                "performance_hint": _performance_hint(perf_dir),
+                "performance_hint": _performance_hint(
+                    perf_dir, channel=channel),
                 "n": n,
             },
         )
@@ -170,6 +177,7 @@ def generate_title_bundle(
     model: str = "grok-4.3",
     perf_dir: Optional[Path] = None,
     short_window_texts: Optional[List[str]] = None,
+    channel: str = "en",
 ) -> dict:
     """One Grok call → long-form titles + thumbnail punch + Short titles.
 
@@ -200,7 +208,8 @@ def generate_title_bundle(
                 "hook": (hook or "").strip(),
                 "keywords": ", ".join(keywords or []),
                 "digest_excerpt": (digest_text or "")[:2000],
-                "performance_hint": _performance_hint(perf_dir),
+                "performance_hint": _performance_hint(
+                    perf_dir, channel=channel),
                 "short_windows": window_lines,
                 "n": n,
             },

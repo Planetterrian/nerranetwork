@@ -37,6 +37,20 @@ inputs:
     description: "Body for the PR (only used if pull-request=true)"
     required: false
     default: ""
+  recovery-on-failure:
+    description: |
+      If true, when the push-to-main retry loop exhausts, open a draft
+      recovery PR via scripts/create_recovery_pr.sh and exit 0 (data
+      preserved) instead of failing the job. Use for large / hard-to-
+      regenerate commits (nightly manifests, restock). Leave false for
+      regenerable artifacts (dashboard, gallery) so a failed push is
+      visible and the next cron rebuilds cleanly.
+    required: false
+    default: "false"
+  recovery-show:
+    description: "Show/slug label for the recovery PR branch (recovery/<show>-…)"
+    required: false
+    default: "nightly"
 
 runs:
   using: "composite"
@@ -117,6 +131,8 @@ runs:
     - name: Push to main (with retry)
       if: steps.check.outputs.has_changes == 'true' && inputs.create-branch != 'true'
       shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
       run: |
         for attempt in 1 2 3 4 5; do
           if git push origin main; then
@@ -128,6 +144,12 @@ runs:
           sleep $((attempt * 2))
         done
         echo "All push attempts failed"
+        if [ "${{ inputs.recovery-on-failure }}" = "true" ]; then
+          echo "::warning::safe-commit-push: opening recovery PR (data preserved)"
+          SHOW="${{ inputs.recovery-show }}" \
+            bash scripts/create_recovery_pr.sh || true
+          exit 0
+        fi
         exit 1
 
     - name: Create branch + push (for PR workflows)

@@ -48,6 +48,13 @@ _STOP = frozenset({
     "with", "at", "by", "from", "as", "is", "are", "was", "this", "that",
     "how", "why", "what", "new", "now", "you", "your", "ep", "episode",
     "daily", "show", "could", "will", "can", "vs", "its",
+    # Brand / format / calendar noise that was drowning real topics
+    # (Tesla hint mined "shorts"/"time"/"july"/"2026" — July 2026 pack).
+    "shorts", "short", "time", "podcast", "nerra", "network", "full",
+    "watch", "video", "today", "tonight", "week", "month", "year",
+    "january", "february", "march", "april", "may", "june", "july",
+    "august", "september", "october", "november", "december",
+    "2024", "2025", "2026", "2027",
 })
 
 
@@ -56,16 +63,19 @@ def _keywords(text: str) -> List[str]:
     return [t for t in toks if t.lower() not in _STOP]
 
 
-def _build_hint(videos: List[dict]) -> str:
+def _build_hint(videos: List[dict], *, channel: str = "en") -> str:
     """Compose a short natural-language steer from the best performers.
 
-    EN-channel rows only (rows without a ``channel`` predate the field and
-    are all EN): the title hint feeds the ENGLISH title generator, and mixing
-    in @NerraRU dub retention skews the median and can quote Russian titles
-    as exemplars in English prompts."""
-    rated = [v for v in videos
-             if v.get("average_view_percentage")
-             and (v.get("channel") or "en").lower() == "en"]
+    ``channel`` selects EN (@NerraNetwork) or RU (@NerraRU) rows. Mixing
+    channels skews the median and can quote the wrong language as exemplars.
+    Rows without a ``channel`` field predate the split and count as EN.
+    """
+    channel = (channel or "en").lower()
+    rated = [
+        v for v in videos
+        if v.get("average_view_percentage")
+        and (v.get("channel") or "en").lower() == channel
+    ]
     if len(rated) < _MIN_VIDEOS:
         return ""
     # July 18 2026: rank by retention BLENDED with subscribers gained —
@@ -137,7 +147,12 @@ def main() -> int:
     # perf file lands next to that show's index file.
     for dir_name, payload in shows.items():
         videos = payload.get("videos") or []
-        hint = _build_hint(videos)
+        hint_en = _build_hint(videos, channel="en")
+        hint_ru = _build_hint(videos, channel="ru")
+        # Primary title_hint: EN for English shows; RU natives (finansy /
+        # privet) often have only @NerraRU rows — fall back so they aren't
+        # permanently hint-starved.
+        hint = hint_en or hint_ru
         if not hint:
             logger.info("%s: too few rated videos (%d) — skipped",
                         dir_name, len(videos))
@@ -147,16 +162,19 @@ def main() -> int:
             logger.info("%s: no output dir — skipped", dir_name)
             continue
         out = {
-            "schema_version": 1,
+            "schema_version": 2,
             "generated": _dt.datetime.now(_dt.timezone.utc).isoformat(),
             "video_count": len(videos),
             "title_hint": hint,
+            "title_hint_en": hint_en,
+            "title_hint_ru": hint_ru,
         }
         (out_dir / "youtube_performance.json").write_text(
             json.dumps(out, indent=2, ensure_ascii=False), encoding="utf-8"
         )
         written += 1
-        logger.info("%s: wrote youtube_performance.json", dir_name)
+        logger.info("%s: wrote youtube_performance.json (en=%s ru=%s)",
+                    dir_name, bool(hint_en), bool(hint_ru))
 
     logger.info("Updated YouTube performance for %d show(s)", written)
     return 0

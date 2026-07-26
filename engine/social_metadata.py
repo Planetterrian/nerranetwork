@@ -71,28 +71,33 @@ def build_social_metadata(
     entity_tags = extract_hashtags(hook, show_keywords=show_keywords, max_hashtags=6)
 
     listen = long_form_url or short_youtube_url or show_url
+    gallery = "https://nerranetwork.com/gallery.html"
     # Localised CTA copy for the Russian shows.
     if is_ru:
         full = "🎧 Полный выпуск и другие серии"
         more = "Слушайте"
+        gallery_line = f"🖼 Галерея: {gallery}"
     else:
         full = "🎧 Full episode + more"
         more = "Listen"
+        gallery_line = f"🖼 Free gallery: {gallery}"
 
     # --- Instagram Reels: hook, CTA, then hashtags on their own line ---
     ig_tags = _merge_tags(entity_tags, _IG_SUFFIX, cap=10)
     ig_caption = _clip(
-        f"{hook}\n\n{full}: {show_url}\n\n{_fmt_tags(ig_tags)}"
+        f"{hook}\n\n{full}: {show_url}\n{gallery_line}\n\n{_fmt_tags(ig_tags)}"
     )
 
     # --- TikTok: punchier; a few hashtags inline after the hook ---
     tt_tags = _merge_tags(entity_tags, _TIKTOK_SUFFIX, cap=6)
-    tt_caption = _clip(f"{hook} {_fmt_tags(tt_tags)}".strip())
+    tt_caption = _clip(
+        f"{hook} {gallery_line} {_fmt_tags(tt_tags)}".strip()
+    )
 
     # --- YouTube Shorts: title + description + tags (mirrors video_metadata) ---
     yt_tags = _merge_tags(entity_tags, _YT_SUFFIX, cap=12)
     yt_title = _clip(f"{hook} | {show_name} #Shorts", limit=100)
-    yt_desc_lines = [hook, "", f"{more}: {listen}", f"🌐 {show_url}"]
+    yt_desc_lines = [hook, "", f"{more}: {listen}", gallery_line, f"🌐 {show_url}"]
     if long_form_url:
         yt_desc_lines.insert(2, f"▶ Full episode: {long_form_url}")
     yt_description = _clip("\n".join(yt_desc_lines), limit=4500)
