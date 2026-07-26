@@ -1217,6 +1217,10 @@ def aggregate_costs(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]:
         "per_show": per_show,
         "network_last_7_days": network_7,
         "network_last_30_days": network_30,
+        # Quick-win enhancements (May 2026 codebase review): the cost
+        # rollup also emits forward projections + the YouTube quota
+        # surface. Pinned by tests/test_quick_wins.py — keep this marker
+        # with the block it names.
         "projections": {
             "avg_cost_per_episode_usd": avg_per_episode,
             "projected_weekly_usd": projected_weekly,
@@ -1825,6 +1829,7 @@ def _merge_op3_history(
                     }
             except Exception:  # noqa: BLE001 — corrupt history: rebuild
                 weeks = {}
+        stored_weeks = {wk: dict(row) for wk, row in weeks.items()}
 
         for slug, v in per_show.items():
             series = v.get("weekly_downloads") or []
@@ -1832,13 +1837,19 @@ def _merge_op3_history(
                 week_start = (monday_w0 - _dt.timedelta(weeks=i)).isoformat()
                 weeks.setdefault(week_start, {})[slug] = int(n or 0)
 
-        hist_path.parent.mkdir(parents=True, exist_ok=True)
-        hist_path.write_text(
-            json.dumps(
-                {"updated_at": _dt.datetime.now(_dt.timezone.utc).isoformat(),
-                 "weeks": weeks},
-                indent=2, ensure_ascii=False, sort_keys=True) + "\n",
-            encoding="utf-8")
+        # Churn suppression: only rewrite when a week actually changed.
+        # An unconditional write bumped ``updated_at`` on every build —
+        # including read-only/offline builds and every test run — which
+        # dirtied the working tree and put a no-content diff into the
+        # nightly commit (same reason language/video feeds suppress churn).
+        if weeks != stored_weeks:
+            hist_path.parent.mkdir(parents=True, exist_ok=True)
+            hist_path.write_text(
+                json.dumps(
+                    {"updated_at": _dt.datetime.now(_dt.timezone.utc).isoformat(),
+                     "weeks": weeks},
+                    indent=2, ensure_ascii=False, sort_keys=True) + "\n",
+                encoding="utf-8")
 
         per_show_totals: Dict[str, int] = {}
         network_series: List[List[Any]] = []

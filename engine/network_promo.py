@@ -203,14 +203,38 @@ NETWORK_SURFACES: list[dict[str, str]] = [
 
 
 def _weighted_surface_pool() -> list[dict[str, str]]:
-    """Expand NETWORK_SURFACES by optional per-entry weight (default 1)."""
-    pool: list[dict[str, str]] = []
+    """Expand NETWORK_SURFACES by optional per-entry weight (default 1).
+
+    The extra copies are INTERLEAVED, not clustered. The rotation walks
+    the pool one step per day, so appending ``[gallery] * 3`` back-to-back
+    would air the identical gallery paragraph three days running on every
+    show — the repeated-boilerplate tic the playbook bans — instead of
+    spreading it across the cycle. Round-robin passes place copy *n* of a
+    weighted surface a full base-cycle apart.
+    """
+    if not NETWORK_SURFACES:
+        return []
+    weights: list[int] = []
     for surface in NETWORK_SURFACES:
         try:
-            weight = max(1, int(surface.get("weight") or 1))
+            weights.append(max(1, int(surface.get("weight") or 1)))
         except (TypeError, ValueError):
-            weight = 1
-        pool.extend([surface] * weight)
+            weights.append(1)
+
+    total = sum(weights)
+    slots: list[Optional[dict[str, str]]] = [None] * total
+    # Heaviest first so it gets the evenly-spaced slots; the rest fill the
+    # gaps in declaration order, preserving their relative rotation.
+    for i in sorted(range(len(NETWORK_SURFACES)), key=lambda n: (-weights[n], n)):
+        weight = weights[i]
+        for copy_index in range(weight):
+            target = (copy_index * total) // weight
+            for step in range(total):
+                pos = (target + step) % total
+                if slots[pos] is None:
+                    slots[pos] = NETWORK_SURFACES[i]
+                    break
+    pool = [s for s in slots if s is not None]
     return pool or list(NETWORK_SURFACES)
 
 

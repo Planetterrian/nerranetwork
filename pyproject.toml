@@ -1,3 +1,18 @@
+[tool.ruff]
+# The CI lint gate (`.github/workflows/test.yml`) installs ruff UNPINNED.
+# With no config in the repo, the gate silently tracked whatever rule set
+# the newest ruff happened to default to — a ruff release widened that
+# default and the step went from "2 findings" to 2,360 repo-wide (483 not
+# auto-fixable), so `ruff check ... --exit-non-zero-on-fix` has been red on
+# main and the `pytest` step after it never ran at all.
+#
+# Pin the contract explicitly to ruff's documented default rule set — the
+# one this codebase actually passes — so a dependency bump can never again
+# take the test job down. Widening this is a deliberate, separate cleanup:
+# add codes here and fix the fallout in the same PR.
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]

@@ -32,7 +32,6 @@ import datetime as dt
 import json
 import logging
 import os
-import sys
 from pathlib import Path
 from typing import Any, Dict, List
 

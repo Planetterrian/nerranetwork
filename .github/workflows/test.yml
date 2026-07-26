@@ -24,6 +24,14 @@ jobs:
         run: ruff check engine/ run_show.py scripts/ --fix --exit-non-zero-on-fix
 
       - name: Validate GitHub Actions workflows (actionlint)
+        env:
+          # The ONLY working place to suppress shellcheck codes for
+          # actionlint — the `shellcheck:` block that used to sit in
+          # .github/actionlint.yaml is not part of actionlint's config
+          # schema and silently did nothing. These four are noisy-to-false
+          # in the Actions environment (`${{ }}` expands before the shell
+          # runs); fix the script rather than extend this list.
+          SHELLCHECK_OPTS: "-e SC2086 -e SC2034 -e SC2044 -e SC2035"
         run: |
           # Install actionlint if not present
           curl -s https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash | bash -s -- latest

@@ -83,7 +83,9 @@ existing track; `--dry-run` to translate + project cost without TTS/upload;
 
 - Re-running skips any `(episode, language)` already recorded unless `--force`.
 - Each run logs a rough character + `$` projection up front (`--dry-run` to see
-  it without spending). Grok TTS is ~$4.20 / 1M chars; a 4-language batch is
+  it without spending). The projection reads Grok TTS's rate from
+  `engine/tracking.py` (`GROK_TTS_COST_PER_1K_CHARS` — $15/M chars as of
+  July 2026; $4.20/M was the promo-era rate). A 4-language batch is
   ~4× the English character volume per episode plus translation tokens.
 
 ## Operator notes (length & quality)
