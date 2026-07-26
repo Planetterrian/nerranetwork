@@ -124,6 +124,29 @@ class TestNetworkDiscoverySurfaces:
                 counts[sid] += 1
         assert counts["gallery"] > counts["blogs"]
 
+    def test_weighted_surface_never_airs_on_consecutive_days(self):
+        """Weight must SPREAD a surface, not cluster it.
+
+        The rotation advances one slot per day, so expanding a weight-3
+        entry into three adjacent pool slots aired the identical gallery
+        paragraph three days running on every show — the repeated-boilerplate
+        tic the playbook bans. Copies are interleaved instead.
+        """
+        from engine.network_promo import (
+            ENGLISH_SHOWS,
+            _weighted_surface_pool,
+            pick_featured_surface,
+        )
+
+        pool_len = len(_weighted_surface_pool())
+        for slug in ENGLISH_SHOWS:
+            ids = [
+                pick_featured_surface(slug, _DAY + dt.timedelta(days=i))["id"]
+                for i in range(pool_len * 2)
+            ]
+            repeats = [a for a, b in zip(ids, ids[1:]) if a == b]
+            assert not repeats, f"{slug} repeats {repeats} on consecutive days"
+
     def test_surface_x_reply_has_utm(self):
         from engine.network_promo import build_surface_x_reply
 

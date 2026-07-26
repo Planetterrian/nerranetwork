@@ -81,6 +81,32 @@ class TestReaderTranscript:
         assert "_reader.txt" in src
         assert "Prefer *_reader.txt" in src or "prefer" in src.lower()
 
+    def test_reader_replays_the_non_pronunciation_passes(self):
+        """The reader snapshot is taken pre-pronunciation ON PURPOSE, but the
+        passes AFTER it that are not pronunciation transforms must still run.
+
+        ``fix_phonetic_garbles`` repairs garbles the LLM itself wrote
+        ("An-thropic", "Tesla-rah-tee", "nassa") — those are present in the
+        pre-pronunciation text too, so skipping the repair ships them to the
+        blog, which is the exact leak the repair layer exists to stop. Same
+        for the RU date fix and the speaker-prefix strip.
+        """
+        src = (_ROOT / "run_show.py").read_text(encoding="utf-8")
+        head, _, reader_block = src.partition("Reader/blog transcript")
+        assert reader_block, "reader-transcript block missing"
+        reader_block = reader_block.split("# 9. TTS")[0]
+        assert "fix_phonetic_garbles" in reader_block
+        assert "russify_english_dates" in reader_block
+        assert "_reader_body" in reader_block and "Narrator:" in reader_block
+
+    def test_garbles_the_llm_writes_survive_into_the_snapshot(self):
+        """Pins the premise: these garbles are pre-pronunciation, so the
+        reader transcript needs its own repair pass."""
+        from engine.utils import fix_phonetic_garbles
+        raw = "An-thropic and Tesla-rah-tee covered nassa today."
+        assert fix_phonetic_garbles(raw) != raw
+        assert "Anthropic" in fix_phonetic_garbles(raw)
+
 
 class TestMultiPlatformPilot:
     def test_tesla_and_spacex_enable_multi_platform_assets(self):

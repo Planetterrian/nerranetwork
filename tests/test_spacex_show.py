@@ -294,11 +294,26 @@ class TestIpoPositioning:
         block = _build_market_block(161.0, "+19.3%")
         assert "$161.00" in block and "verbatim" in block
 
-    def test_quote_validation_band_and_deviation_guard(self):
+    def test_quote_validation_band_and_deviation_guard(self, monkeypatch):
+        """Band + deviation guard, pinned against a STUBBED cache.
+
+        The in-band assertion used to read the live committed
+        ``api/spcx.json``: once SPCX drifted far enough from the 161.00
+        literal (115.07 by 2026-07-25) the deviation guard rejected it and
+        this guard failed on price movement rather than on a code change.
+        Stub the cache so both halves stay deterministic.
+        """
         from shows.hooks import spacex as hook
+
+        monkeypatch.setattr(hook, "_load_cached_price", lambda: None)
         assert not hook._validate(5.0)       # below band
         assert not hook._validate(5000.0)    # above band
-        assert hook._validate(161.0)         # day-one close passes
+        assert hook._validate(161.0)         # in band, no cache to compare
+
+        # With a cache present the deviation guard is what rejects.
+        monkeypatch.setattr(hook, "_load_cached_price", lambda: 160.0)
+        assert hook._validate(161.0)         # ~0.6% move accepted
+        assert not hook._validate(400.0)     # >35% move rejected
 
     def test_market_watch_chapter_marker(self):
         by_title = {m["title"]: m for m in _spacex_markers()}

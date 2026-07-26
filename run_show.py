@@ -2542,10 +2542,41 @@ def run(args: argparse.Namespace) -> None:
             # (July 2026 improvements pack). Keeps blog/SEO free of TTS
             # respellings while *_tts.txt remains the synthesis source.
             try:
+                # Replay the post-snapshot passes that are NOT pronunciation
+                # transforms. The snapshot is taken before
+                # ``_apply_pronunciation`` on purpose (that is the whole
+                # point — no "koo-dah" on the blog), but everything after it
+                # in the spoken path is either a correctness repair or a
+                # formatting strip that the reader needs just as much:
+                #
+                #  * fix_phonetic_garbles repairs garbles the LLM WROTE
+                #    ("An-thropic", "Tesla-rah-tee", "nassa") — those are in
+                #    the pre-pronunciation text too, and shipping them to the
+                #    blog is the exact leak that created the repair layer.
+                #  * russify_english_dates fixes LLM-emitted English dates in
+                #    otherwise-Russian scripts (FP/PR).
+                #  * the speaker-prefix strip removes "Host:"/"Patrick:"
+                #    labels that survived earlier cleaning.
+                from engine.utils import fix_phonetic_garbles as _reader_garbles
+                _reader_body = _reader_garbles(reader_script)
+                if args.show in ("finansy_prosto", "privet_russian"):
+                    from engine.russian_text import russify_english_dates as _ru_dates
+                    _reader_body = _ru_dates(_reader_body)
+                if not config.tts.dialogue_mode:
+                    for _pfx in ("Host:", f"{host}:", "Patrick:", "Ведущая:",
+                                 "Ведущий:", "Narrator:", "Speaker:"):
+                        _esc = _re.escape(_pfx)
+                        _reader_body = _re.sub(
+                            r"^" + _esc + r"\s*", "", _reader_body,
+                            flags=_re.MULTILINE)
+                        _reader_body = _re.sub(
+                            r"(?<=[.!?])\s+" + _esc + r"\s*", " ", _reader_body)
+                _reader_body = _re.sub(r"\n{3,}", "\n\n", _reader_body).strip()
+
                 # Append the same AI disclosure the spoken script carries,
                 # stripped of speech tags, so the on-page transcript matches
                 # the episode ending listeners hear.
-                _reader_body = reader_script.rstrip()
+                _reader_body = _reader_body.rstrip()
                 _reader_disclosure = _strip_tags_for_reader(
                     _AI_DISCLOSURE_RU if args.show in _RUSSIAN_SHOWS
                     else (_AI_DISCLOSURE_DIALOGUE if config.tts.dialogue_mode

@@ -36,15 +36,18 @@ from dotenv import load_dotenv  # noqa: E402
 
 load_dotenv(PROJECT_ROOT / ".env")
 
-from engine import multilingual, translate, tts  # noqa: E402
+from engine import multilingual, tracking, translate, tts  # noqa: E402
 from engine.config import load_config  # noqa: E402
 from engine.summaries_io import load_summaries  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, format="%(levelname)s %(message)s")
 logger = logging.getLogger("generate_translations")
 
-# Grok TTS list price (~$4.20 / 1M chars) for the up-front projection.
-_TTS_USD_PER_MILLION = 4.20
+# Grok TTS list price for the up-front projection. Read from the network's
+# single source of truth so this operator-facing estimate can't drift from
+# what the dashboard actually bills (it was pinned at the promo-era $4.20/M
+# after tracking.py moved to the $15/M list rate — a 3.6× understatement).
+_TTS_USD_PER_MILLION = tracking.GROK_TTS_COST_PER_1K_CHARS * 1000.0
 
 
 def _select_records(records: List[dict], latest: int, episode: Optional[int]) -> List[dict]:
