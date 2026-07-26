@@ -271,10 +271,14 @@ def test_grok_tts_pricing_is_per_provider_map():
 
 
 def test_grok_tts_is_substantially_cheaper_than_elevenlabs():
-    """Whole point of the migration — Grok must be at least 10× cheaper."""
+    """Whole point of the migration — Grok must be at least 10× cheaper.
+
+    July 2026 list price is $15/M chars ($0.015/1K) vs ElevenLabs $150/M —
+    exactly 10×; keep the floor inclusive so a list-price sync doesn't fail CI.
+    """
     el = TTS_PROVIDER_PRICING["elevenlabs"]
     grok = TTS_PROVIDER_PRICING["grok"]
-    assert grok < el / 10, (
+    assert grok <= el / 10, (
         f"Grok TTS at ${grok}/1K vs ElevenLabs at ${el}/1K — "
         "expected at least 10× savings; got "
         f"{el / grok:.1f}× ratio."
@@ -293,7 +297,7 @@ def test_save_usage_uses_grok_rate_when_provider_grok(tmp_path: Path):
     assert tts_block["estimated_cost_usd"] == pytest.approx(expected)
     # Sanity: this is much less than what ElevenLabs would have charged.
     elevenlabs_equiv = (10_000 / 1000) * TTS_PROVIDER_PRICING["elevenlabs"]
-    assert tts_block["estimated_cost_usd"] < elevenlabs_equiv / 10
+    assert tts_block["estimated_cost_usd"] <= elevenlabs_equiv / 10
 
 
 def test_save_usage_uses_elevenlabs_rate_when_provider_elevenlabs(tmp_path: Path):

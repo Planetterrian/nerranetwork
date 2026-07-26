@@ -17,26 +17,44 @@ logger = logging.getLogger(__name__)
 
 # TTS pricing per 1000 characters, by provider.
 # - ElevenLabs Flash v2.5: $0.15/1K chars  (0.5 credits/char × $0.30/1K credits)
-# - Grok TTS (xAI /v1/tts): $0.0042/1K chars ($4.20 per 1M chars, ~36× cheaper
-#   than ElevenLabs Flash; introduced April 2026, used for the Russian shows
-#   since May 2026).
+# - Grok TTS (xAI /v1/tts): public list price as of July 2026 is
+#   $15.00 per 1M chars ($0.015/1K) — see docs.x.ai Voice pricing.
+#   Earlier network tracking used $4.20/M (April–June 2026 promo-era
+#   figure); dashboard costs for NEW episodes use the list rate so
+#   Mission Control isn't systematically understating TTS spend.
+#   Still ~10× cheaper than ElevenLabs Flash ($150/M).
 ELEVENLABS_COST_PER_1K_CHARS = 0.15
-GROK_TTS_COST_PER_1K_CHARS = 0.0042
+GROK_TTS_COST_PER_1K_CHARS = 0.015
 
 TTS_PROVIDER_PRICING = {
     "elevenlabs": ELEVENLABS_COST_PER_1K_CHARS,
     "grok": GROK_TTS_COST_PER_1K_CHARS,
 }
 
-# xAI Grok pricing per 1M tokens (input/output).
+# xAI Grok pricing per 1M tokens (input/output/cached_input).
 # Only models actually reachable by the current code are listed — historical
 # ids (grok-2, grok-3, grok-3-mini, grok-4.20-0309-*) were pruned April 2026
 # once the audit confirmed no live call site resolves to them.
+# Cached-input rates (July 2026 docs) apply when usage reports
+# prompt_tokens_details.cached_tokens — see _estimate_grok_cost.
 GROK_PRICING = {
     # Grok 4.3 — current network default (released 2026-04-30). Always-on
-    # reasoning, 1M context, ~37% cheaper input and ~58% cheaper output
-    # than grok-4.20 at the same or better intelligence tier.
-    "grok-4.3": {"input_per_1m": 1.25, "output_per_1m": 2.50},
+    # reasoning, 1M context. Prefer over 4.5 for daily digests (cheaper +
+    # larger context); 4.5 is opt-in for hard agentic paths.
+    "grok-4.3": {
+        "input_per_1m": 1.25,
+        "output_per_1m": 2.50,
+        "cached_input_per_1m": 0.20,
+    },
+    # Grok 4.5 (July 16 2026) — frontier coding/agentic. Higher unit cost,
+    # 500k context, reasoning_effort low|medium|high (default high).
+    # Wired for selective use; do NOT flip network digest default without
+    # a measured A/B (landmine #17 for any prompt-quality change).
+    "grok-4.5": {
+        "input_per_1m": 2.00,
+        "output_per_1m": 6.00,
+        "cached_input_per_1m": 0.30,
+    },
     # Grok 4 (legacy refusal fallback — retained because older
     # credit_usage JSONs still report it, and _estimate_grok_cost may be
     # re-run against them).
@@ -117,13 +135,28 @@ def record_refusal_fallback(tracker: dict, stage: str, model: str) -> None:
 
 
 def _estimate_grok_cost(
-    model: str, prompt_tokens: int, completion_tokens: int
+    model: str,
+    prompt_tokens: int,
+    completion_tokens: int,
+    cached_tokens: int = 0,
 ) -> float:
-    """Estimate cost for a Grok API call based on model pricing."""
+    """Estimate cost for a Grok API call based on model pricing.
+
+    When *cached_tokens* > 0 and the model row has ``cached_input_per_1m``,
+    those tokens are billed at the cached rate and the remainder of
+    *prompt_tokens* at the full input rate (xAI prompt-cache accounting).
+    """
     pricing = GROK_PRICING.get(model)
     if not pricing:
         return 0.0
-    input_cost = (prompt_tokens / 1_000_000) * pricing["input_per_1m"]
+    cached = max(0, min(int(cached_tokens or 0), int(prompt_tokens or 0)))
+    uncached = max(0, int(prompt_tokens or 0) - cached)
+    cached_rate = pricing.get("cached_input_per_1m")
+    if cached and cached_rate is not None:
+        input_cost = (uncached / 1_000_000) * pricing["input_per_1m"]
+        input_cost += (cached / 1_000_000) * float(cached_rate)
+    else:
+        input_cost = (prompt_tokens / 1_000_000) * pricing["input_per_1m"]
     output_cost = (completion_tokens / 1_000_000) * pricing["output_per_1m"]
     return input_cost + output_cost
 
@@ -143,12 +176,8 @@ def record_llm_usage(
     ``"podcast_script_generation"``.
 
     If *estimated_cost_usd* is 0 and *model* is provided, cost is
-    estimated from the Grok pricing table.
-
-    *cached_tokens* (optional) is the prompt-cache hit count from xAI
-    ``usage.prompt_tokens_details.cached_tokens``. Tracked for telemetry;
-    cost estimation still uses full prompt_tokens until cached pricing
-    is wired into ``GROK_PRICING``.
+    estimated from the Grok pricing table (including cached-input rates
+    when *cached_tokens* is reported).
     """
     grok = tracker["services"]["grok_api"]
     if model:
@@ -176,7 +205,7 @@ def record_llm_usage(
         grok[step]["estimated_cost_usd"] += estimated_cost_usd
     elif model:
         grok[step]["estimated_cost_usd"] += _estimate_grok_cost(
-            model, prompt_tokens, completion_tokens
+            model, prompt_tokens, completion_tokens, cached_tokens=cached_tokens
         )
 
 

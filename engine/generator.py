@@ -171,6 +171,7 @@ def _call_grok(
     max_tokens: int = 3500,
     timeout: float = 300.0,
     cache_key: Optional[str] = None,
+    reasoning_effort: Optional[str] = None,
 ) -> tuple[str, Dict[str, Any]]:
     """Call xAI Grok via the OpenAI-compatible endpoint.
 
@@ -181,6 +182,11 @@ def _call_grok(
     the same server, maximizing automatic prompt-cache hits (see
     https://docs.x.ai/developers/advanced-api-usage/prompt-caching). When
     omitted the call is unchanged from the pre-caching path.
+
+    *reasoning_effort* (optional: ``low`` / ``medium`` / ``high``) is sent
+    only when set — required for meaningful grok-4.5 cost control (default
+    high is expensive). Empty/None keeps requests byte-identical for
+    models that ignore the field (grok-4.3 daily path).
     """
     from openai import OpenAI
 
@@ -206,6 +212,12 @@ def _call_grok(
     # system-prompt prefix can hit cache; different shows stay isolated.
     if cache_key:
         create_kwargs["extra_headers"] = {"x-grok-conv-id": str(cache_key)}
+    effort = (reasoning_effort or "").strip().lower()
+    if effort in ("low", "medium", "high"):
+        create_kwargs["extra_body"] = {
+            **(create_kwargs.get("extra_body") or {}),
+            "reasoning_effort": effort,
+        }
 
     resp = client.chat.completions.create(**create_kwargs)
 
@@ -332,6 +344,15 @@ _STOPWORDS = frozenset(
     "think know see like make take come go say says said new first last "
     "today according".split()
 )
+
+
+def _llm_reasoning_effort(config: Any) -> Optional[str]:
+    """Return a validated reasoning_effort from config, or None to omit."""
+    effort = (
+        getattr(getattr(config, "llm", None), "reasoning_effort", "") or ""
+    ).strip().lower()
+    return effort if effort in ("low", "medium", "high") else None
+
 
 
 def _detect_story_duplication(text: str, show_name: str) -> int:
@@ -1521,6 +1542,7 @@ def generate_digest(
         temperature=config.llm.digest_temperature,
         max_tokens=config.llm.max_tokens,
         cache_key=_show_cache_key(config),
+        reasoning_effort=_llm_reasoning_effort(config),
     )
 
     # Retry once with 50% more tokens if the response was truncated
@@ -1537,6 +1559,7 @@ def generate_digest(
             temperature=config.llm.digest_temperature,
             max_tokens=bumped_tokens,
             cache_key=_show_cache_key(config),
+        reasoning_effort=_llm_reasoning_effort(config),
         )
         if meta.get("finish_reason") == "length":
             logger.warning(
@@ -1601,6 +1624,7 @@ def generate_digest(
             temperature=config.llm.digest_temperature,
             max_tokens=config.llm.max_tokens,
             cache_key=_show_cache_key(config),
+        reasoning_effort=_llm_reasoning_effort(config),
         )
         if tracker and "usage" in meta2:
             try:
@@ -1640,6 +1664,7 @@ def generate_digest(
                 temperature=config.llm.podcast_temperature,  # slightly more creative
                 max_tokens=config.llm.max_tokens,
                 cache_key=_show_cache_key(config),
+        reasoning_effort=_llm_reasoning_effort(config),
             )
             if tracker and "usage" in meta3:
                 try:
@@ -1681,6 +1706,7 @@ def generate_digest(
                     temperature=config.llm.podcast_temperature,
                     max_tokens=config.llm.max_tokens,
                     cache_key=_show_cache_key(config),
+        reasoning_effort=_llm_reasoning_effort(config),
                 )
                 if tracker:
                     try:
@@ -1730,6 +1756,7 @@ def generate_digest(
                 temperature=lower_temp,
                 max_tokens=config.llm.max_tokens,
                 cache_key=_show_cache_key(config),
+        reasoning_effort=_llm_reasoning_effort(config),
             )
             _rep_retry = _validate_llm_output(
                 text_retry, stage="digest", show_name=config.name,
@@ -1794,6 +1821,7 @@ def generate_digest(
                     temperature=config.llm.digest_temperature,
                     max_tokens=config.llm.max_tokens,
                     cache_key=_show_cache_key(config),
+        reasoning_effort=_llm_reasoning_effort(config),
                 )
                 # Validate the expanded draft is real content, not a refusal.
                 _validate_llm_output(
@@ -2002,6 +2030,7 @@ def _generate_podcast_outline(
         temperature=config.llm.digest_temperature,  # Lower temp for planning
         max_tokens=2500,
         cache_key=_show_cache_key(config),
+        reasoning_effort=_llm_reasoning_effort(config),
     )
 
     # A truncated outline is worse than none: stage 2 is told to "follow
@@ -2114,6 +2143,7 @@ def generate_podcast_script(
         temperature=config.llm.podcast_temperature,
         max_tokens=podcast_tokens,
         cache_key=_show_cache_key(config),
+        reasoning_effort=_llm_reasoning_effort(config),
     )
 
     # Retry once with 50% more tokens if the response was truncated
@@ -2130,6 +2160,7 @@ def generate_podcast_script(
             temperature=config.llm.podcast_temperature,
             max_tokens=bumped_tokens,
             cache_key=_show_cache_key(config),
+        reasoning_effort=_llm_reasoning_effort(config),
         )
         if meta.get("finish_reason") == "length":
             logger.warning(
@@ -2187,6 +2218,7 @@ def generate_podcast_script(
             temperature=lower_temp,
             max_tokens=podcast_tokens_for_retry,
             cache_key=_show_cache_key(config),
+        reasoning_effort=_llm_reasoning_effort(config),
         )
         if tracker and "usage" in meta_r1:
             try:
@@ -2224,6 +2256,7 @@ def generate_podcast_script(
                 temperature=lower_temp,
                 max_tokens=podcast_tokens_for_retry,
                 cache_key=_show_cache_key(config),
+        reasoning_effort=_llm_reasoning_effort(config),
             )
             if tracker:
                 try:
@@ -2301,6 +2334,7 @@ def generate_podcast_script(
             temperature=config.llm.podcast_temperature,
             max_tokens=podcast_tokens,
             cache_key=_show_cache_key(config),
+        reasoning_effort=_llm_reasoning_effort(config),
         )
 
         if tracker and "usage" in meta2:
@@ -2368,6 +2402,7 @@ def generate_podcast_script(
                 temperature=lower_temp,
                 max_tokens=podcast_tokens,
                 cache_key=_show_cache_key(config),
+        reasoning_effort=_llm_reasoning_effort(config),
             )
             _rep_retry = _validate_llm_output(
                 text_retry, stage="podcast_script", show_name=config.name,
@@ -2443,6 +2478,7 @@ def generate_podcast_script(
                     temperature=config.llm.podcast_temperature,
                     max_tokens=podcast_tokens,
                     cache_key=_show_cache_key(config),
+        reasoning_effort=_llm_reasoning_effort(config),
                 )
                 if tracker and "usage" in meta_rr:
                     try:

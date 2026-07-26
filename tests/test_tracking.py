@@ -157,6 +157,28 @@ class TestRecordLlmUsage:
         step = tracker["services"]["grok_api"]["x_thread_generation"]
         assert step["estimated_cost_usd"] == 0.0
 
+    def test_cached_tokens_use_cached_input_rate(self):
+        from engine.tracking import _estimate_grok_cost, GROK_PRICING
+        pricing = GROK_PRICING["grok-4.3"]
+        # 1M prompt, 400k cached, 100k completion
+        cost = _estimate_grok_cost(
+            "grok-4.3", 1_000_000, 100_000, cached_tokens=400_000,
+        )
+        expected = (
+            (600_000 / 1e6) * pricing["input_per_1m"]
+            + (400_000 / 1e6) * pricing["cached_input_per_1m"]
+            + (100_000 / 1e6) * pricing["output_per_1m"]
+        )
+        assert cost == pytest.approx(expected)
+        # Cheaper than billing the full prompt at the uncached rate.
+        full = _estimate_grok_cost("grok-4.3", 1_000_000, 100_000, cached_tokens=0)
+        assert cost < full
+
+    def test_grok_45_pricing_row_exists(self):
+        assert "grok-4.5" in GROK_PRICING
+        assert GROK_PRICING["grok-4.5"]["input_per_1m"] == 2.0
+        assert GROK_PRICING["grok-4.5"]["cached_input_per_1m"] == 0.30
+
 
 # ===================================================================
 # TEST: record_tts_usage

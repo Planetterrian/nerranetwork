@@ -8,6 +8,9 @@
 <meta name="robots" content="noindex,follow">
 <link rel="canonical" href="https://nerranetwork.com/management.html">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='6' fill='%236B47FF'/><circle cx='20' cy='30' r='4' fill='%2300D4FF'/><circle cx='80' cy='30' r='4' fill='%2300D4FF'/><circle cx='25' cy='75' r='4' fill='%2300D4FF'/><circle cx='75' cy='75' r='4' fill='%2300D4FF'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles/main.css">
 <style>
   /* ---- design tokens (dark; validated against surface #161a24) ---- */
@@ -30,13 +33,18 @@
     --accent: #6B47FF;
   }
   .mc-root { max-width: 1280px; margin: 0 auto; padding: 28px 24px 72px;
-    font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+    font-family: "IBM Plex Sans", "Source Sans 3", system-ui, -apple-system, "Segoe UI", sans-serif;
+    background:
+      radial-gradient(1200px 420px at 8% -10%, rgba(107, 71, 255, 0.14), transparent 55%),
+      radial-gradient(900px 360px at 92% 0%, rgba(0, 212, 255, 0.08), transparent 50%),
+      transparent; }
 
   /* ---- header ---- */
   .mc-header { display: flex; align-items: flex-end; justify-content: space-between;
     gap: 16px; flex-wrap: wrap; margin-bottom: 6px; }
-  .mc-header h1 { margin: 0; font-size: 26px; letter-spacing: -0.01em; color: var(--ink-1); }
-  .mc-header .subtitle { color: var(--ink-3); font-size: 13px; margin-top: 4px; }
+  .mc-header h1 { margin: 0; font-size: 26px; letter-spacing: -0.02em; color: var(--ink-1);
+    font-weight: 650; }
+  .mc-header .subtitle { color: var(--ink-3); font-size: 13px; margin-top: 4px; max-width: 52ch; }
   .health-pills { display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   .pill { display: inline-flex; gap: 6px; align-items: center; padding: 4px 11px;
     border-radius: 999px; font-size: 12.5px; font-weight: 600; border: 1px solid transparent; }
@@ -60,12 +68,15 @@
   /* ---- hero stat tiles ---- */
   .tile-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 12px; margin-bottom: 28px; }
-  .tile { background: var(--surface-1); border: 1px solid var(--hairline);
-    border-radius: 14px; padding: 14px 16px 12px; min-width: 0; }
+  .tile { background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent 40%),
+    var(--surface-1); border: 1px solid var(--hairline);
+    border-radius: 14px; padding: 14px 16px 12px; min-width: 0;
+    transition: border-color 160ms ease, transform 160ms ease; }
+  .tile:hover { border-color: #2f3748; transform: translateY(-1px); }
   .tile .t-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;
     color: var(--ink-3); }
   .tile .t-value { font-size: 27px; font-weight: 600; color: var(--ink-1); margin-top: 5px;
-    line-height: 1.1; }
+    line-height: 1.1; font-variant-numeric: tabular-nums; }
   .tile .t-sub { font-size: 12px; color: var(--ink-3); margin-top: 5px; }
   .tile .t-delta { font-size: 12px; font-weight: 600; margin-left: 6px; }
   .tile .t-delta.up { color: var(--status-ok); }
@@ -147,10 +158,24 @@
     flex-shrink: 0; }
   .show-card h3 { margin: 0; font-size: 15px; }
   .show-card .slug { font-size: 10.5px; color: var(--ink-4); font-family: ui-monospace, monospace; }
-  .show-card .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+  .show-card .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
     margin: 10px 0 6px; font-size: 11.5px; color: var(--ink-3); }
-  .show-card .stats div { background: var(--surface-2); padding: 7px 10px; border-radius: 8px; }
-  .show-card .stats strong { display: block; font-size: 14px; color: var(--ink-1); }
+  @media (min-width: 720px) {
+    .show-card .stats { grid-template-columns: repeat(6, 1fr); }
+  }
+  .show-card .stats div { background: var(--surface-2); padding: 7px 8px; border-radius: 8px; }
+  .show-card .stats strong { display: block; font-size: 13px; color: var(--ink-1);
+    font-variant-numeric: tabular-nums; }
+  .show-card .stats span.stat-label { font-size: 10px; color: var(--ink-4);
+    text-transform: uppercase; letter-spacing: 0.04em; }
+  .eff-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;
+    margin: 8px 0 12px; }
+  .eff-cell { background: var(--surface-2); border-radius: 10px; padding: 10px 12px; }
+  .eff-cell .eff-n { font-size: 18px; font-weight: 600; color: var(--ink-1);
+    font-variant-numeric: tabular-nums; }
+  .eff-cell .eff-l { font-size: 11px; color: var(--ink-4); margin-top: 2px;
+    text-transform: uppercase; letter-spacing: 0.04em; }
+  .platform-note { font-size: 12px; color: var(--ink-4); margin: 0 0 8px; line-height: 1.4; }
   .show-card .links { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; font-size: 12px; }
   .show-card .links a { color: #818cf8; text-decoration: none; }
   .show-card .links a:hover { text-decoration: underline; }
@@ -184,6 +209,7 @@
   <div>
     <h1>Nerra Network — Mission Control</h1>
     <div class="subtitle" id="generated-at">Loading dashboard data…</div>
+    <div class="subtitle" style="margin-top:2px;">RSS downloads · Spotify · Apple · YouTube · site · spend — side by side, never one fake “reach” number.</div>
   </div>
   <div class="health-pills" id="status-summary" hidden>
     <span class="pill ok"><span id="count-ok">0</span>&nbsp;OK</span>
@@ -463,6 +489,7 @@
   const sp = audience.spotify || {};
   const bd = audience.newsletter || {};
   const cost = data.cost_rollup || {};
+  const eff = data.efficiency || {};
   const catalog = data.catalog || {};
   const gallery = data.gallery || {};
   const lake = data.content_lake || {};
@@ -493,19 +520,25 @@
   const siteSpark = (site.day_series || []).map((r) => Number(r.activeUsers || 0));
 
   const weeklyHist = (op3.network_weekly_history || []).map((r) => Number(r[1] || 0));
+  const allTimeSub = op3.all_time_incomplete
+    ? "incomplete history (below 30d) · since " + (op3.all_time_since || "?")
+    : ((op3.all_time_since ? "tracked since " + op3.all_time_since + " · " : "") + "via OP3");
   tiles.appendChild(statTile("RSS downloads · all-time", compact(op3.network_downloads_all_time),
-    { sub: (op3.all_time_since ? "tracked since " + op3.all_time_since + " · " : "") + "via OP3",
+    { sub: allTimeSub,
       spark: weeklyHist,
       sparkTitle: "Weekly downloads since " + (op3.all_time_since || "tracking began") }));
   tiles.appendChild(statTile("RSS downloads · 30d", compact(op3.network_downloads_30d),
     { sub: fmt(op3.network_downloads_7d) + " in the last 7d · via OP3" }));
-  tiles.appendChild(statTile("Shows", fmt(catalog.shows_count || (data.network || {}).shows_count),
-    { sub: fmt(catalog.network_episodes_to_date) + " episodes to date · " +
-           fmt(catalog.network_news_sources) + " news sources" }));
+  tiles.appendChild(statTile("Spotify streams · 30d",
+    sp.configured ? compact((sp.totals || {}).streams) : "—",
+    { sub: sp.configured
+        ? fmt((sp.totals || {}).listeners) + " listeners · " +
+          fmt(sp.feeds_reporting || 0) + "/" + fmt(sp.feeds_registered || 0) + " feeds"
+        : "not configured" }));
   tiles.appendChild(statTile("YouTube subscribers", compact(chSum("subscribers")),
     { delta: chSum("subscribers_delta_7d"), deltaSuffix: " · 7d",
-      sub: compact(chSum("total_views")) + " total views · " +
-           Object.keys(yt.channels || {}).length + " channels" }));
+      sub: compact(yt.network_views != null ? yt.network_views : chSum("total_views")) +
+           " video views · " + Object.keys(yt.channels || {}).length + " channels" }));
   tiles.appendChild(statTile("Site active users · 28d",
     site.configured && site.totals ? compact(site.totals.active_users) : "—",
     { sub: site.configured && site.totals
@@ -514,10 +547,13 @@
       spark: siteSpark,
       sparkTitle: "Daily active users, last " + siteSpark.length + " days" }));
   tiles.appendChild(statTile("Spend · 7d", money(data.network.total_cost_last_7_days_usd),
-    { sub: money(data.network.total_cost_last_30_days_usd) + " · 30d · projected " +
-           money((cost.projections || {}).projected_weekly_usd) + "/wk" }));
+    { sub: money(data.network.total_cost_last_30_days_usd) + " · 30d · " +
+           (eff.usd_per_op3_download_7d != null
+             ? ("$" + Number(eff.usd_per_op3_download_7d).toFixed(3) + "/RSS dl")
+             : (money((cost.projections || {}).projected_weekly_usd) + "/wk burn")) }));
   tiles.appendChild(statTile("Episodes · 7d", fmt((cost.network_last_7_days || {}).episodes),
-    { sub: money((cost.projections || {}).avg_cost_per_episode_usd) + " avg / episode" }));
+    { sub: money((cost.projections || {}).avg_cost_per_episode_usd) + " avg / episode · " +
+           fmt(catalog.shows_count || (data.network || {}).shows_count) + " shows" }));
   tiles.appendChild(statTile("Newsletter", bd.configured ? fmt(bd.subscriber_count) : "—",
     { sub: bd.configured ? "subscribers · Buttondown" : "not configured" }));
   tiles.appendChild(statTile("Image library", gallery.configured ? compact(gallery.image_count) : "—",
@@ -544,6 +580,11 @@
         html: fmt(op3.network_downloads_all_time) + "<small>all-time</small>" +
               "&nbsp;&nbsp;" + fmt(op3.network_downloads_30d) + "<small>30d</small>" +
               "&nbsp;&nbsp;" + fmt(op3.network_downloads_7d) + "<small>7d</small>" }));
+      if (op3.all_time_incomplete) {
+        card.appendChild(h("p", { class: "platform-note", text:
+          "All-time is still accumulating (tracked since " + (op3.all_time_since || "?") +
+          ") and can read below the rolling 30d window until history catches up." }));
+      }
       if (weeklyHist.length > 1) {
         const sparkWrap = h("div", { style: "margin:6px 0 2px;" });
         const sv = sparkline(weeklyHist, { w: 560, h: 40, title: "Weekly downloads, all tracked weeks" });
@@ -598,6 +639,23 @@
           (delta != null ? " (" + (delta >= 0 ? "+" : "") + delta + " · 7d)" : ""),
           { title: chName(ch) + ": " + fmt(c.total_views || 0) + " total views · " + fmt(c.video_count || 0) + " videos" }));
       });
+      const ytPer = yt.per_show || {};
+      const ytSlugs = Object.keys(ytPer)
+        .sort((a, b) => (ytPer[b].views || 0) - (ytPer[a].views || 0));
+      if (ytSlugs.length) {
+        card.appendChild(h("div", { style: "margin-top:12px;font-size:11px;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.05em;",
+          text: "Views by show · " + (yt.window_days || 90) + "d Analytics window" }));
+        const maxV = Math.max.apply(null, ytSlugs.map((s) => ytPer[s].views || 0).concat([1]));
+        ytSlugs.slice(0, 10).forEach((slug) => {
+          const v = ytPer[slug] || {};
+          card.appendChild(barRow(slug, v.views || 0, maxV,
+            fmt(v.views || 0) + " views · " +
+            (v.avg_view_percentage != null ? v.avg_view_percentage + "% ret" : "—"),
+            { color: "var(--series-2)",
+              title: slug + ": long " + fmt(v.long_views || 0) + " · shorts " +
+                     fmt(v.short_views || 0) + " · +" + fmt(v.subscribers_gained || 0) + " subs" }));
+        });
+      }
       const ul = h("ul", { class: "fine-list" });
       (yt.top_subscriber_videos || []).slice(0, 5).forEach((v) => {
         ul.appendChild(h("li", { html:
@@ -667,6 +725,15 @@
               "plays and completion — the only finish-rate signal the network gets." }));
     } else if (ap.error) {
       card.appendChild(h("p", { class: "fine-list", text: "Apple error: " + ap.error }));
+    } else if (!(ap.feeds_reporting > 0)) {
+      card.appendChild(h("div", { class: "headline",
+        html: "—<small>not reporting</small>" }));
+      card.appendChild(h("p", { class: "platform-note", text:
+        "0 of " + fmt(ap.feeds_registered || 0) + " registered shows returned engagement. " +
+        "This is a connector/cookie problem — not zero listener interest. " +
+        "Apple downloads still flow through OP3 above." }));
+      if (ap.fetched_at) card.appendChild(h("p", { class: "fine-list",
+        text: "fetched " + ageText(ap.fetched_at) + staleNote(ap.fetched_at) }));
     } else {
       const t = ap.totals || {};
       card.appendChild(h("div", { class: "headline",
@@ -692,6 +759,65 @@
       }
       if (ap.fetched_at) card.appendChild(h("p", { class: "fine-list",
         text: "fetched " + ageText(ap.fetched_at) + staleNote(ap.fetched_at) }));
+    }
+    audGrid.appendChild(card);
+  }
+
+  // Unit economics — cost vs each platform (never summed)
+  {
+    const card = sectionCard("Unit economics", "Grok+TTS vs listening · not one reach number");
+    if (!eff || eff.cost_7d_usd == null) {
+      card.appendChild(h("p", { class: "fine-list", text: "Efficiency rollup not in this dashboard.json yet — regenerate." }));
+    } else {
+      const grid = h("div", { class: "eff-grid" });
+      const cells = [
+        [money(eff.cost_7d_usd), "spend · 7d"],
+        [eff.usd_per_op3_download_7d != null
+          ? ("$" + Number(eff.usd_per_op3_download_7d).toFixed(3)) : "—",
+          "$ / RSS download · 7d"],
+        [fmt(eff.op3_downloads_7d), "RSS downloads · 7d"],
+        [fmt(eff.spotify_streams_30d), "Spotify streams · 30d"],
+        [fmt(eff.youtube_views_window), "YouTube views · " + (eff.youtube_window_days || 90) + "d"],
+        [eff.usd_per_yt_view != null
+          ? ("$" + Number(eff.usd_per_yt_view).toFixed(3)) : "—",
+          "$ / YT view (directional)"],
+      ];
+      cells.forEach(([n, l]) => {
+        const cell = h("div", { class: "eff-cell" });
+        cell.appendChild(h("div", { class: "eff-n", text: String(n) }));
+        cell.appendChild(h("div", { class: "eff-l", text: l }));
+        grid.appendChild(cell);
+      });
+      card.appendChild(grid);
+      card.appendChild(h("p", { class: "platform-note", text: eff.note ||
+        "Platform metrics stay separate — never sum OP3 + Spotify + YouTube." }));
+      const per = eff.per_show || {};
+      const ranked = Object.keys(per)
+        .filter((s) => (per[s].op3_downloads_7d || 0) > 0 || (per[s].cost_7d_usd || 0) > 0)
+        .sort((a, b) => {
+          const ua = per[a].usd_per_op3_download;
+          const ub = per[b].usd_per_op3_download;
+          if (ua == null && ub == null) return 0;
+          if (ua == null) return 1;
+          if (ub == null) return -1;
+          return ua - ub;
+        });
+      if (ranked.length) {
+        card.appendChild(h("div", { style: "margin-top:8px;font-size:11px;color:var(--ink-4);text-transform:uppercase;letter-spacing:0.05em;",
+          text: "Best $/RSS-download · 7d (lower is better)" }));
+        const maxCost = Math.max.apply(null,
+          ranked.map((s) => per[s].usd_per_op3_download || 0).concat([0.001]));
+        ranked.slice(0, 8).forEach((slug) => {
+          const v = per[slug];
+          const rate = v.usd_per_op3_download;
+          card.appendChild(barRow(slug, rate == null ? 0 : rate, maxCost,
+            (rate == null ? "—" : ("$" + Number(rate).toFixed(3))) +
+            " · " + fmt(v.op3_downloads_7d) + " dl · " + money(v.cost_7d_usd),
+            { color: "var(--series-3)",
+              title: slug + ": YT " + fmt(v.youtube_views || 0) + " views · Spotify " +
+                     fmt(v.spotify_streams_30d || 0) + " streams" }));
+        });
+      }
     }
     audGrid.appendChild(card);
   }
@@ -1023,9 +1149,21 @@
     }
     const proj = cost.projections || {};
     card.appendChild(h("p", { class: "fine-list", html:
-      "<span class='k'>" + fmt(n7.episodes) + "</span> episodes · 7d — avg <span class='k'>" +
-      money(proj.avg_cost_per_episode_usd) + "</span>/episode, projected <span class='k'>" +
-      money(proj.projected_weekly_usd) + "</span>/week" }));
+      "<span class='k'>" + fmt(n7.episodes) + "</span> credit files · 7d — avg <span class='k'>" +
+      money(proj.avg_cost_per_episode_usd) + "</span>/file · trailing burn <span class='k'>" +
+      money(proj.projected_weekly_usd) + "</span>/week" +
+      (proj.projected_monthly_usd != null
+        ? (" · <span class='k'>" + money(proj.projected_monthly_usd) + "</span>/30d")
+        : "") }));
+    if (eff.usd_per_op3_download_7d != null) {
+      card.appendChild(h("p", { class: "fine-list", html:
+        "Unit cost: <span class='k'>$" + Number(eff.usd_per_op3_download_7d).toFixed(3) +
+        "</span> per RSS download · 7d" +
+        (eff.usd_per_yt_view != null
+          ? (" · <span class='k'>$" + Number(eff.usd_per_yt_view).toFixed(3) +
+             "</span> per YT view (mismatched windows — directional)")
+          : "") }));
+    }
     const quota = cost.youtube_quota || {};
     if (quota.note) {
       card.appendChild(h("p", { class: "fine-list", html:
@@ -1152,6 +1290,9 @@
   const showGrid = $("#shows-grid");
   const shows = (data.network && data.network.shows) || [];
   const op3PerShow = op3.per_show || {};
+  const effPerShow = eff.per_show || {};
+  const ytPerShow = yt.per_show || {};
+  const spPerShow = sp.per_show || {};
   // Prefer rss_image from api/dashboard.json (single source of truth with
   // network_meta / show YAML). Hardcoded cover map kept only as fallback
   // for older dashboard.json blobs missing the field.
@@ -1188,17 +1329,33 @@
     card.appendChild(head);
 
     const dl = op3PerShow[s.slug] || {};
+    const eRow = effPerShow[s.slug] || {};
+    const yRow = ytPerShow[s.slug] || {};
+    const sRow = spPerShow[s.slug] || {};
     const cat = (catalog.per_show || {})[s.slug] || {};
     const stats = h("div", { class: "stats" });
-    stats.appendChild(h("div", { html:
-      "<strong>" + fmt(cat.episodes_to_date || 0) + "</strong>episodes" }));
-    stats.appendChild(h("div", { html:
-      "<strong>" + (s.episodes_last_7_days || 0) + "</strong>ep · 7d" }));
-    stats.appendChild(h("div", { html:
-      "<strong>" + money(s.cost_last_7_days_usd) + "</strong>cost · 7d" }));
-    stats.appendChild(h("div", { html:
-      "<strong>" + fmt(dl.downloads_7d || 0) + "</strong>dl · 7d" }));
+    const addStat = (value, label) => {
+      stats.appendChild(h("div", { html:
+        "<strong>" + value + "</strong><span class='stat-label'>" + label + "</span>" }));
+    };
+    addStat(fmt(cat.episodes_to_date || 0), "episodes");
+    addStat(String(s.episodes_last_7_days || 0), "ep · 7d");
+    addStat(money(s.cost_last_7_days_usd), "cost · 7d");
+    addStat(fmt(dl.downloads_7d || 0), "RSS · 7d");
+    addStat(fmt(yRow.views || eRow.youtube_views || 0), "YT views");
+    addStat(
+      (sRow.streams != null ? fmt(sRow.streams) :
+        (eRow.spotify_streams_30d != null ? fmt(eRow.spotify_streams_30d) : "—")),
+      "Spotify");
     card.appendChild(stats);
+    if (eRow.usd_per_op3_download != null) {
+      card.appendChild(h("div", { class: "meta-line", html:
+        "$/RSS dl · 7d: <strong>$" + Number(eRow.usd_per_op3_download).toFixed(3) +
+        "</strong>" +
+        (yRow.avg_view_percentage != null
+          ? (" · YT retention <strong>" + yRow.avg_view_percentage + "%</strong>")
+          : "") }));
+    }
 
     const pubStatus = s.pub_status || "unknown";
     const pubColor = pubStatus === "ok" ? "var(--status-ok)" :
