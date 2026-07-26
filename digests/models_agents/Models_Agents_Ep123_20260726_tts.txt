@@ -1,0 +1,119 @@
+Good to have you on Models and Agents, episode one hundred twenty-three, for July twenty-sixth, twenty twenty-six. Plenty of model releases and agent benchmarks moving today.
+
+Photon-1 pretrains on raw video alone to simulate desktops and play checkers, removing the action-label requirement that has limited most video agents.
+
+Induction Labs released a one hundred six billion A five B sparse mixture-of-experts imagination model called Photon-1.
+
+It was pretrained on raw video with no action labels at all.
+
+The model learns desktop simulation, checkers play, and billiard physics directly from passive video.
+
+This removes the explicit action-frame pairings that most prior video agents required.
+
+The test system targets the data bottleneck that constrained earlier video-based agents.
+
+Builders working on long-horizon agents or world models can now explore pretraining pipelines that skip expensive action annotation.
+
+Watch for follow-up releases testing whether the same label-free approach scales to more complex environments.
+
+In model updates, the Gemma four family has now been downloaded more than three hundred million times.
+
+The full Gemma open model series exceeds nine hundred million downloads.
+
+DeepMind positions these releases as core contributions to an open ecosystem alongside JAX and Transformers.
+
+Demis Hassabis noted that a strong open ecosystem supports responsible deployment of both open and proprietary models.
+
+Builders evaluating open models for production can factor these download figures into decisions about community support and fine-tuning momentum.
+
+Sakana A I released Fugu-Cyber, a security-tuned endpoint on its Fugu orchestration model.
+
+It reports eighty six point nine percent on CyberGym and seventy two point one percent on CTI-REALM.
+
+The scores edge past G P T five point five Cyber and Claude Mythos Preview on the same benchmarks.
+
+Access requires manual approval plus a defensive-use policy and Token Plan.
+
+Security teams evaluating orchestration models for endpoint tasks should request access and run their own CyberGym evaluations before deployment.
+
+A bachelor's project implemented full YOLO twenty six n inference in ARM sixty four assembly plus C on Raspberry Pi four.
+
+The work includes NEON SIMD, Winograd convolution, optimized GEMM kernels, and custom micro-kernels for Conv, C three K two, SPPF, C two PSA, and Detect layers.
+
+The custom binary format and operator fusion produced correct detections, though measured speedups fell short of initial targets.
+
+Edge developers targeting ARM devices without full frameworks can study the released repository for memory-layout and cache-tiling patterns.
+
+SignalPilot Labs evaluated frontier and sub-frontier models on the twenty twenty six International Mathematical Olympiad problems using multiple harnesses including AutoFyn.
+
+Frontier models reached perfect or near-perfect scores regardless of harness.
+
+Sonnet, Opus, and GLM four improved with the multi-agent harness but still trailed.
+
+Every sub-frontier model missed the key reduction on the hardest problem P three even in twenty hour runs that proved all other problems.
+
+Grading combined a separate frontier model with manual verification by former IMO medalists.
+
+Teams building math or reasoning agents should test whether their current harness supplies the missing high-level idea generation rather than only retrieval and verification.
+
+Ruff zero point sixteen point zero raised the number of default-enabled rules from fifty nine to four hundred thirteen.
+
+It flagged one thousand six hundred eighteen issues across sqlite-utils alone.
+
+The update also expanded the total rule count from seven hundred eight to nine hundred sixty eight since the last default change.
+
+Simon Willison used uvx ruff at latest check dot with fix and unsafe fixes to auto-resolve the bulk of issues in Datasette, sqlite-utils, and L L M.
+
+Roughly eighty issues per project remained for manual review, including DTZ zero zero five datetime calls without timezone arguments.
+
+Python developers should run the latest Ruff with unsafe fixes on their largest repositories this week and review the remaining issues for manual attention.
+
+Reactor released Open Dreamer, a JAX Flax NNX reproduction of the Dreamer four world-model pipeline that includes the full training recipe.
+
+The repositories provide a causal video tokenizer, action-conditioned latent dynamics model, rollout generation, and FVD scoring.
+
+Two separate repos were published, with next-state open-dreamer holding the training pipeline.
+
+Researchers reproducing world models can now start from the published training code instead of reimplementing the pipeline from papers.
+
+OK, let's pop the hood on vector search indexes.
+
+In-memory HNSW delivers single-digit millisecond queries but requires the entire graph to fit in RAM.
+
+Teams quickly hit expensive instance sizes once collections exceed a few hundred million vectors.
+
+Disk-based approaches such as SPANN and DiskANN keep only a small hot set in memory and fetch compressed neighbor lists from SSD.
+
+This adds roughly ten to thirty milliseconds per query while cutting RAM needs by five to ten times on the same dataset.
+
+The quality gap appears mainly at high recall targets above ninety five percent, where disk methods need extra re-ranking passes.
+
+When your working set stays under roughly fifty million vectors and sub-ten millisecond latency matters more than cost, stay in RAM.
+
+Once collections grow larger or you need to serve many tenants on the same hardware, move to a disk-aware index and budget for the extra re-ranking step.
+
+The gotcha that bites most teams is underestimating how quickly re-ranking cost grows once recall targets push past zero point nine five on billion-scale collections.
+
+Run uvx ruff at latest check dot with fix and unsafe fixes on your largest Python project to surface the new default rules before they break CI.
+
+Request access to Fugu-Cyber and run it on your own CyberGym subset to see whether the eighty six point nine percent score holds on your security tasks.
+
+Clone the Open Dreamer repositories and train a small world model on your own video data to test label-free pretraining.
+
+Study the ARM sixty four YOLO twenty six n repository if you need to deploy detection without heavy frameworks on Raspberry Pi-class hardware.
+
+More label-free video foundation models are expected as teams replicate the Photon-1 pretraining approach.
+
+Sakana A I may expand the Fugu family beyond the security-tuned endpoint now under manual approval.
+
+Additional IMO-style benchmarks from independent groups will likely appear as the twenty twenty six problems circulate.
+
+Tomorrow, keep an eye on further Ruff rule expansions given Astral's recent pace of enabling previously opt-in checks.
+
+That wraps up today's A I briefing. Share this with a developer or builder who wants to stay current. Subscribe wherever you listen. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+And before you go: this show is part of the Nerra Network — a family of daily podcasts on tech, science, and markets, each one a short, sharp briefing you can finish on the commute. If today earned its place in your feed, here's your next listen — Omni View, a balanced daily world-news briefing that takes every side seriously. Find every show, free, at nerranetwork dot com.
+
+The Age of A I puts real builders on the phone with an A I host — apply at nerranetwork dot com/age-of-A I apply.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.

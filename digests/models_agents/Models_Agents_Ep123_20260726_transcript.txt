@@ -1,0 +1,77 @@
+Good to have you on models and agents, episode 123 for July 26th, 2026.
+Plenty of model releases and agent benchmarks moving today.
+Photon 1 pre-trains on raw video alone to simulate desktops and play checkers,
+removing the action label requirement that has limited most video agents.
+Induction labs released a 106 billion A5B sparse mixture of experts imagination model called
+Photon 1. It was pre-trained on raw video with no action labels at all.
+The model learns desktops simulation, checkers play, and billiard physics directly from passive
+video. This removes the explicit action frame pairings that most prior video agents required.
+The test system targets the data bottleneck that constrained earlier video based agents.
+Builders working on long horizon agents or world models can now explore pre-training pipelines
+that skip expensive action annotation. Watch for follow-up releases testing whether the same
+label-free approach scales to more complex environments. In model updates, the Gemma 4 family has
+now been downloaded more than 300 million times. The full Gemma open model series exceeds 900
+million downloads. Deep-mind positions these releases as core contributions to an open ecosystem
+alongside JX and Transformers. Demi's Hassabis noted that a strong open ecosystem supports responsible
+deployment of both open and proprietary models. Builders evaluating open models for production can
+factor these download figures into decisions about community support and fine-tuning momentum.
+Sakana AI released Fugu Cyber, a security-tuned endpoint on its Fugu orchestration model.
+It reports 86.9% on CyberGym and 72.1% on CTI RAM. The scores edge pass GPT 5.5 Cyber and
+Cloud Mythos preview on the same benchmarks. Access requires manual approval plus a defensive
+use policy and token plan. Security teams evaluating orchestration models for endpoint tasks should
+request access and run their own CyberGym evaluations before deployment. A bachelor's project implemented
+full YOLO 26N inference in ARM 64 assembly plus C on Raspberry Pi 4. The work includes neon
+siling winnograd convolution, optimized gem kernels, and custom micro kernels for CONV, C3K2, SPPF,
+C2 PSA, and detect layers. The custom binary format and operator fusion produced correct detections,
+though measured speedups fell short of initial targets. Edge developers targeting ARM devices
+without full frameworks can study the released repository for memory layout and cache tiling patterns.
+Signal pilot labs evaluated Frontier and sub Frontier models on the 2026 International
+Mathematical Olympiad problems, using multiple harnesses including Autofine. Frontier models reached
+perfect or near perfect scores regardless of harness. Sonnet, Opus, and GLM4 improved with the
+multi-agent harness, but still trailed. Every sub Frontier model missed the key reduction on the hardest
+problem P3, even in 20 hour runs that proved all other problems. Grading combined a separate Frontier
+model with manual verification by former IMO medallists. Teams building math or reasoning agents should
+test whether their current harness supplies the missing high-level idea generation, rather than
+only retrieval and verification. Rough 0.16.0 raised the number of default-enabled rules from 59 to
+413. It flagged 1,618 issues across E-squalite-yudels alone. The update also expanded the total
+rule count from 708 to 968 since the last default change. Simon Willison used UVX rough at
+latest check dot with fix and unsafe fixes to auto-resolve the bulk of issues in data set,
+ski light, hyphen utels, and LLM. Roughly 80 issues per project remained for manual review,
+including DTC-005 daytime calls without time zone arguments. Python developers should run the
+latest rough with unsafe fixes on their largest repositories this week, and review the remaining
+issues for manual attention. Reactor released Open Dreamer, a JX-Flax NNX reproduction of the Dreamer
+4 world model pipeline that includes the full training recipe. The repositories provide a causal
+video tokenizer, action-conditioned latent dynamics model, rollout generation, and FVD scoring.
+Two separate repos were published, with next state Open Dreamer holding the training pipeline.
+Researchers reproducing world models can now start from the published training code instead of
+re-implementing the pipeline from papers. Okay, let's pop the hood on vector search indexes.
+In memory, HNSW delivers single-digit millisecond queries, but requires the entire graph to
+fit in RAM. Teams quickly hit expensive instance sizes once collections exceed a few hundred million
+vectors. Disk-based approaches, such as span and disk A&N, keep only a small hot set in memory,
+and fetch compressed neighbor lists from SSD. This adds roughly 10 to 30 milliseconds per query,
+while cutting RAM needs by five to ten times on the same data set. The quality gap appears mainly
+at high recall targets above 95%, where disk methods need extra re-ranking passes.
+When your working set stays under roughly 50 million vectors and sub-ten millisecond latency
+matters more than cost, stay in RAM. Once collections grow larger or you need to serve many tenants on
+the same hardware. Move to a disk-aware index and budget for the extra re-ranking step.
+The gacha that bites most teams is underestimating how quickly re-ranking cost grows once recall targets
+push past 0.95 on billion scale collections. Run UVXRough at latestcheck.withfix and unsafe fixes on
+your largest Python project to surface the new default rules before they break CI.
+Request access to Fougu Cyber and run it on your own CyberGym subset to see whether the 86.9%
+score holds on your security tasks. Clone the Open Dreamer repositories and train a small world model
+on your own video data to test label-free pre-training. Study the ARM 64, YOLO 26, and repository if you
+need to deploy detection without heavy frameworks on Raspberry Pi class hardware. More label-free
+video foundation models are expected as teams replicate the Photon-1 pre-training approach.
+Sakana AI may expand the Fougu family beyond the security-tuned endpoint now under manual approval.
+Additional IMO-style benchmarks from independent groups will likely appear as the 2026 problems
+circulate. Tomorrow, keep an eye on further rough rule expansions given Astral's recent pace of
+enabling previously opt-in checks. That wraps up today's AI briefing. Share this with a developer or
+builder who wants to stay current. Subscribe wherever you listen, see you tomorrow, and if you'd
+rather watch then listen, find us on YouTube at NARA Network, links in the show notes.
+And before you go, this show is part of the NARA Network, a family of daily podcasts on tech,
+science, and markets. Each one a short, sharp briefing you can finish on the commute.
+If today earned its place in your feed, here's your next listen. OmniView, a balanced daily world
+news briefing that takes every side seriously. Find every show free at NARANetwork.com.
+The age of AI puts real builders on the phone with an AI host. Apply at NARANetwork.com,
+slash age hyphen of hyphen AI Apply. This episode used AI voice synthesis of my voice.
+Editorial selection and analysis are my own.
