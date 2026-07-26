@@ -1,16 +1,20 @@
 # actionlint configuration for Nerra Network
-# See: https://github.com/rhysd/actionlint/blob/main/docs/usage.md#configuration-file
+# See: https://github.com/rhysd/actionlint/blob/main/docs/config.md
+#
+# NOTE — shellcheck suppressions do NOT live here. This file previously
+# carried a `shellcheck: {ignore: [SC2086, SC2034, SC2044, SC2035]}` block
+# that suppressed nothing: actionlint's config schema has no such key, and
+# it silently ignores unknown top-level keys (verified against v1.7.12 —
+# an invented `totally-bogus-key` is accepted just as quietly). So all four
+# suppressions had been dead the whole time, and the lint step only stayed
+# green because no workflow happened to trip them.
+#
+# The mechanism that DOES work is `SHELLCHECK_OPTS` on the actionlint step
+# in .github/workflows/test.yml — shellcheck itself reads it. Codes to
+# suppress network-wide are listed there, with the same rationale that used
+# to sit here: SC2086/SC2034/SC2044/SC2035 are noisy-to-false in the Actions
+# environment, where `${{ }}` expansion happens before the shell sees the
+# script. Prefer fixing the script (env vars + arrays) over suppressing.
 
-# We intentionally suppress some common stylistic ShellCheck warnings
-# that are very noisy in GitHub Actions contexts (especially around
-# expression expansion and common scripting patterns).
-shellcheck:
-  # These are mostly stylistic / false-positive in the Actions environment:
-  # - SC2086: Unquoted variables (very common because ${{ }} expansion happens before shell)
-  # - SC2034: Unused variables (often used for documentation or future use)
-  # - SC2044 / SC2035: find + glob patterns (widely used and usually safe here)
-  ignore:
-    - SC2086
-    - SC2034
-    - SC2044
-    - SC2035
+self-hosted-runner:
+  labels: []

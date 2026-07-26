@@ -55,12 +55,22 @@ jobs:
           YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
           YOUTUBE_REFRESH_TOKEN_RU: ${{ secrets.YOUTUBE_REFRESH_TOKEN_RU }}
           YOUTUBE_REFRESH_TOKEN_FR: ${{ secrets.YOUTUBE_REFRESH_TOKEN_FR }}
+          # Dispatch inputs go through env, never inline `${{ }}` in the
+          # script body: inline interpolation happens BEFORE the shell runs,
+          # so a crafted input is substituted as shell source. Collecting the
+          # flags in an array (rather than a word-split string) is also what
+          # clears the SC2086 actionlint/shellcheck finding honestly —
+          # quoting the old "$ARGS" would have passed every flag as one
+          # argument and broken the script.
+          BACKFILL_LANG: ${{ inputs.lang }}
+          BACKFILL_MAX_INSERTS: ${{ inputs.max_inserts }}
+          BACKFILL_DRY_RUN: ${{ inputs.dry_run }}
         run: |
-          ARGS="--max-inserts ${{ inputs.max_inserts }}"
-          if [ "${{ inputs.lang }}" != "all" ] && [ -n "${{ inputs.lang }}" ]; then
-            ARGS="$ARGS --lang ${{ inputs.lang }}"
+          args=(--max-inserts "$BACKFILL_MAX_INSERTS")
+          if [ "$BACKFILL_LANG" != "all" ] && [ -n "$BACKFILL_LANG" ]; then
+            args+=(--lang "$BACKFILL_LANG")
           fi
-          if [ "${{ inputs.dry_run }}" = "true" ]; then
-            ARGS="$ARGS --dry-run"
+          if [ "$BACKFILL_DRY_RUN" = "true" ]; then
+            args+=(--dry-run)
           fi
-          python scripts/backfill_dub_playlists.py $ARGS
+          python scripts/backfill_dub_playlists.py "${args[@]}"
