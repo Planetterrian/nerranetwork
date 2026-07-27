@@ -359,11 +359,14 @@ class VideoPodcastConfig:
     long-form 1920x1080 MP4 the YouTube stage produces), which is why the
     marginal cost is one R2 upload and zero extra render time.
 
-    **Coupling to know about:** the MP4 only exists when the adaptive
-    YouTube policy publishes long-form that day
-    (``engine.youtube_policy``). A shorts-only tier means no video episode
-    — the run logs a warning and records ``video_podcast_skipped`` rather
-    than rendering a second time.
+    **Rendering is decoupled from YouTube publishing.** The MP4 is a
+    by-product of the long-form render, which used to be gated on the
+    adaptive YouTube policy — so a shorts-only tier silently stopped the
+    video feed growing while the audio feed kept publishing daily, and
+    Apple de-ranks a dormant feed. ``run_show`` now renders whenever
+    *either* product wants the MP4 and uploads to YouTube only when the
+    policy says so. The cost on a shorts-only day is render time, not API
+    spend: the visual plan is already built by then.
 
     Fields are declared here (not read via getattr on the raw dict) so
     ``_build_nested`` doesn't silently drop them — see landmine #20.
@@ -374,11 +377,16 @@ class VideoPodcastConfig:
     # the audio keyspace so a lifecycle rule can target video alone.
     r2_prefix: str = "video"
     # Channel-title suffix. Apple lists the audio and video shows side by
-    # side, so they need to be tellable apart at a glance.
-    title_suffix: str = " (Video)"
+    # side, so they need to be tellable apart at a glance — and Apple
+    # rejects a new show whose title duplicates an existing one, so this is
+    # load-bearing rather than cosmetic.
+    title_suffix: str = " — Video Edition"
     # Rolling feed window. An episode MP4 is ~40x its MP3, so the video
     # feed carries recent episodes rather than the whole back catalogue.
-    # Capped in practice by the summaries file's own 30-record window.
+    # This is a real knob as of the durable index (engine.video_index):
+    # before it, summaries' own 30-record truncation capped the feed no
+    # matter what was set here, and episodes silently left the feed — which
+    # Apple treats as a de-listing.
     max_episodes: int = 30
     # Optional overrides; empty means "derive from publishing.*".
     rss_file: str = ""          # default: <audio rss>.video.rss

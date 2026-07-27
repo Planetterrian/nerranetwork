@@ -3371,6 +3371,17 @@ def run(args: argparse.Namespace) -> None:
             if _video_track:
                 from engine.summaries_io import upsert_video
                 upsert_video(summaries_json, episode_num, _video_track)
+                # Also record it in the durable per-show index. summaries is
+                # truncated to 30 records, so without this the episode leaves
+                # the feed a month from now and Apple de-lists it — and the
+                # MP4 stays in R2 forever with nothing pointing at it.
+                from engine.video_index import record_from_track
+                record_from_track(
+                    config, episode_num, _video_track,
+                    date=f"{today:%Y-%m-%d}",
+                    title=(f"Ep {episode_num}: {hook}" if hook
+                           else f"Episode {episode_num}"),
+                )
             from engine.video_feed import build_video_feed_for_show
             _vf = build_video_feed_for_show(config, PROJECT_ROOT)
             if _vf:
@@ -5155,19 +5166,20 @@ def _publish_youtube(
     # reuse it (the Short itself is built independently from the audio +
     # 9:16 scenes, so nothing else from this branch is needed).
     long_url = ""
-    if config.video_podcast.enabled and not _policy_publish_long:
-        # The video-podcast episode is a by-product of the long-form
-        # render, so a shorts-only tier means no video episode that day.
-        # Say so loudly rather than letting the feed quietly stop growing
-        # (we do NOT render a second time just to feed it).
-        logger.warning(
-            "::warning::%s: video podcast is enabled but the adaptive "
-            "YouTube policy skipped long-form today, so no episode video "
-            "was rendered — the video feed will not gain an episode. Set "
-            "youtube.adaptive_publishing: false (or raise the tier) if the "
-            "video feed must stay daily.", config.slug)
-        result["video_podcast_skipped"] = "long_form_not_rendered"
-    if _policy_publish_long:
+    # The video-podcast episode is a by-product of the long-form render.
+    # That render used to be gated on the adaptive YouTube policy alone, so
+    # a shorts-only tier meant no video episode — the feed quietly stopped
+    # growing while the audio feed kept publishing daily, which is the state
+    # Apple de-ranks. Render whenever EITHER product wants the MP4; upload
+    # to YouTube only when the policy says so. A policy-skipped day now
+    # costs render time and no API spend (the visual plan is already built).
+    _render_long = _policy_publish_long or config.video_podcast.enabled
+    if _render_long and not _policy_publish_long:
+        logger.info(
+            "%s: YouTube policy skipped long-form today; rendering anyway "
+            "for the video podcast feed (no YouTube upload).", config.slug)
+        result["video_podcast_render_only"] = True
+    if _render_long:
         try:
             build_long_form_video(
                 final_mp3, cover_path, long_video_path,
@@ -5195,102 +5207,106 @@ def _publish_youtube(
                     result["video_podcast"] = _video_track
                     result["video_podcast_url"] = _video_track["url"]
 
-            meta = build_long_form_metadata(
-                config,
-                episode_num=episode_num,
-                today_str=today_str,
-                hook=hook,
-                digest_text=digest_text,
-                audio_url=audio_url,
-                chapters_path=chapters_path if chapters_path.exists() else None,
-                photo_attribution=pexels_attribution,
-                optimized_title=yt_title,
-            )
-            upload = upload_video(
-                long_video_path,
-                credentials=credentials,
-                title=meta["title"],
-                description=meta["description"],
-                tags=meta["tags"],
-                category_id=meta["category_id"],
-                default_language=meta["default_language"],
-                privacy_status=config.youtube.privacy_status,
-                thumbnail_path=thumbnail_path,
-            )
-            long_url = upload.watch_url
-            result["long_url"] = long_url
-            # Record in the network video→episode index so the YouTube
-            # analytics-feedback loop can attribute retention/CTR back to
-            # this show + episode (best-effort; never blocks publish).
-            try:
-                from engine.youtube_index import record_video as _yt_record
-                _yt_record(
-                    video_id=upload.video_id,
-                    show_slug=getattr(config, "slug", ""),
-                    episode=episode_num,
-                    kind="long",
-                    title=meta.get("title", ""),
+            # Everything below is YouTube-only. On a policy-skipped day we
+            # still rendered (for the video feed) but must not upload,
+            # touch the video index, the playlist, comments or captions.
+            if _policy_publish_long:
+                meta = build_long_form_metadata(
+                    config,
+                    episode_num=episode_num,
+                    today_str=today_str,
                     hook=hook,
-                    published=f"{today:%Y-%m-%d}",
-                    watch_url=long_url,
-                    channel=(getattr(config.youtube, "channel", "en") or "en"),
-                    index_path=digests_dir / "youtube_videos.json",
+                    digest_text=digest_text,
+                    audio_url=audio_url,
+                    chapters_path=chapters_path if chapters_path.exists() else None,
+                    photo_attribution=pexels_attribution,
+                    optimized_title=yt_title,
                 )
-            except Exception as _exc:
-                logger.debug("video index (long) skipped: %s", _exc)
-            playlist_id = (
-                getattr(config.youtube, "podcast_playlist_id", None) or ""
-            ).strip()
-            if not playlist_id:
-                logger.info(
-                    "Podcast playlist ID empty — skipping playlist add."
-                )
-            else:
-                add_video_to_playlist(
+                upload = upload_video(
+                    long_video_path,
                     credentials=credentials,
-                    video_id=upload.video_id,
-                    playlist_id=playlist_id,
+                    title=meta["title"],
+                    description=meta["description"],
+                    tags=meta["tags"],
+                    category_id=meta["category_id"],
+                    default_language=meta["default_language"],
+                    privacy_status=config.youtube.privacy_status,
+                    thumbnail_path=thumbnail_path,
                 )
-            # July 18 2026 (operator-approved): post the pinned-comment
-            # template as a REAL channel comment (it was previously only a
-            # copy-paste block in the description). The API can't pin it —
-            # the operator pins manually — but the channel's own comment
-            # surfaces near the top. Best-effort; 403 = graceful no-op.
-            if bool(getattr(config.youtube, "auto_comment", True)):
+                long_url = upload.watch_url
+                result["long_url"] = long_url
+                # Record in the network video→episode index so the YouTube
+                # analytics-feedback loop can attribute retention/CTR back to
+                # this show + episode (best-effort; never blocks publish).
                 try:
-                    from engine.video_metadata import build_pinned_comment_text
-                    from engine.youtube import post_video_comment
-                    _pin_text = build_pinned_comment_text(
-                        config, hook=hook, episode_num=episode_num,
-                        today_str=today_str,
-                        rss_link=config.publishing.rss_link or "",
-                        audio_url=audio_url or "",
+                    from engine.youtube_index import record_video as _yt_record
+                    _yt_record(
+                        video_id=upload.video_id,
+                        show_slug=getattr(config, "slug", ""),
+                        episode=episode_num,
+                        kind="long",
+                        title=meta.get("title", ""),
+                        hook=hook,
+                        published=f"{today:%Y-%m-%d}",
+                        watch_url=long_url,
+                        channel=(getattr(config.youtube, "channel", "en") or "en"),
+                        index_path=digests_dir / "youtube_videos.json",
                     )
-                    if _pin_text and post_video_comment(
-                            credentials=credentials,
-                            video_id=upload.video_id,
-                            text=_pin_text):
-                        result["yt_comments_posted"] = (
-                            int(result.get("yt_comments_posted", 0)) + 1)
-                except Exception as _exc:  # noqa: BLE001
-                    logger.debug("long-form auto-comment skipped: %s", _exc)
-            # Upload the SRT as a real caption track. This is on top of
-            # the burned-in captions — gives YouTube the CC button +
-            # auto-translation + accessibility search. Best-effort:
-            # failures are logged and the run continues.
-            if srt_path and srt_path.exists():
-                from engine.youtube import upload_caption_track
-                lang_code = (config.youtube.default_language or "en").lower()
-                track_name = "English" if lang_code == "en" else (
-                    "Русский" if lang_code == "ru" else lang_code.upper()
-                )
-                upload_caption_track(
-                    credentials=credentials,
-                    video_id=upload.video_id,
-                    srt_path=srt_path,
-                    language=lang_code,
-                    name=track_name,
-                )
+                except Exception as _exc:
+                    logger.debug("video index (long) skipped: %s", _exc)
+                playlist_id = (
+                    getattr(config.youtube, "podcast_playlist_id", None) or ""
+                ).strip()
+                if not playlist_id:
+                    logger.info(
+                        "Podcast playlist ID empty — skipping playlist add."
+                    )
+                else:
+                    add_video_to_playlist(
+                        credentials=credentials,
+                        video_id=upload.video_id,
+                        playlist_id=playlist_id,
+                    )
+                # July 18 2026 (operator-approved): post the pinned-comment
+                # template as a REAL channel comment (it was previously only a
+                # copy-paste block in the description). The API can't pin it —
+                # the operator pins manually — but the channel's own comment
+                # surfaces near the top. Best-effort; 403 = graceful no-op.
+                if bool(getattr(config.youtube, "auto_comment", True)):
+                    try:
+                        from engine.video_metadata import build_pinned_comment_text
+                        from engine.youtube import post_video_comment
+                        _pin_text = build_pinned_comment_text(
+                            config, hook=hook, episode_num=episode_num,
+                            today_str=today_str,
+                            rss_link=config.publishing.rss_link or "",
+                            audio_url=audio_url or "",
+                        )
+                        if _pin_text and post_video_comment(
+                                credentials=credentials,
+                                video_id=upload.video_id,
+                                text=_pin_text):
+                            result["yt_comments_posted"] = (
+                                int(result.get("yt_comments_posted", 0)) + 1)
+                    except Exception as _exc:  # noqa: BLE001
+                        logger.debug("long-form auto-comment skipped: %s", _exc)
+                # Upload the SRT as a real caption track. This is on top of
+                # the burned-in captions — gives YouTube the CC button +
+                # auto-translation + accessibility search. Best-effort:
+                # failures are logged and the run continues.
+                if srt_path and srt_path.exists():
+                    from engine.youtube import upload_caption_track
+                    lang_code = (config.youtube.default_language or "en").lower()
+                    track_name = "English" if lang_code == "en" else (
+                        "Русский" if lang_code == "ru" else lang_code.upper()
+                    )
+                    upload_caption_track(
+                        credentials=credentials,
+                        video_id=upload.video_id,
+                        srt_path=srt_path,
+                        language=lang_code,
+                        name=track_name,
+                    )
         except Exception as exc:
             logger.exception("YouTube long-form publish failed: %s", exc)
             # Surface the failure reason in the result dict so the

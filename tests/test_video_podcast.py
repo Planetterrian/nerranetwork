@@ -28,7 +28,6 @@ from __future__ import annotations
 import json
 import shutil
 import sys
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -38,7 +37,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from engine.config import VideoPodcastConfig, load_config  # noqa: E402
-from engine.summaries_io import load_summaries, upsert_video  # noqa: E402
+from engine.summaries_io import load_summaries, save_summaries, upsert_video  # noqa: E402
 from engine.video_feed import (  # noqa: E402
     VIDEO_ENCLOSURE_TYPE,
     _enclosure_length,
@@ -49,7 +48,11 @@ from engine.video_feed import (  # noqa: E402
     video_r2_key,
 )
 
-PILOT_SHOWS = ("tesla", "spacex", "fascinating_frontiers")
+# The shows publishing a video edition. Started as a Tesla+SpaceX pilot;
+# Fascinating Frontiers joined, then Models & Agents and its beginners
+# spin-off (July 2026) — all five render long-form daily.
+PILOT_SHOWS = ("tesla", "spacex", "fascinating_frontiers",
+               "models_agents", "models_agents_beginners")
 
 
 def _cfg(slug: str):
@@ -156,7 +159,17 @@ def video_repo(tmp_path):
     dest = tmp_path / "digests" / "spacex"
     dest.mkdir(parents=True)
     src = ROOT / "digests" / "spacex" / "summaries_spacex.json"
-    shutil.copy(src, dest / "summaries_spacex.json")
+    out = dest / "summaries_spacex.json"
+    shutil.copy(src, out)
+    # Strip any real video tracks. The live summaries now carries them (the
+    # pilot has published), so a fixture that merely copies the file no
+    # longer represents the "no video yet" state these tests construct —
+    # test_no_tracks_writes_no_feed went red the day the first real episode
+    # shipped. Build the starting state instead of inheriting it.
+    _w, recs = load_summaries(out)
+    for rec in recs:
+        rec.pop("video", None)
+    save_summaries(out, _w, recs)
     return tmp_path
 
 
@@ -231,7 +244,11 @@ class TestFeedBuild:
         """Apple lists the audio and video editions side by side."""
         _attach_tracks(video_repo)
         out, _ = build_video_feed_for_show(_cfg("spacex"), video_repo)
-        assert "<title>SpaceX Daily (Video)</title>" in out.read_text(encoding="utf-8")
+        suffix = _cfg("spacex").video_podcast.title_suffix
+        assert f"<title>SpaceX Daily{suffix}</title>" in out.read_text(encoding="utf-8")
+        # Whatever the suffix is, it must actually distinguish the show:
+        # Apple rejects a new show whose title duplicates an existing one.
+        assert suffix.strip()
 
     def test_enclosure_urls_are_not_op3_prefixed(self, video_repo):
         """OP3 is an audio-download analytics redirector, not a video CDN.
@@ -381,11 +398,23 @@ class TestPipelineWiring:
         yt_at = self.RUN_SHOW.index("upload = upload_video(")
         assert upload_at < yt_at
 
-    def test_a_policy_long_form_skip_is_announced(self):
-        """The video episode is a by-product of the long-form render, so a
-        shorts-only tier silently stops the feed. That must be loud."""
-        assert "video_podcast_skipped" in self.RUN_SHOW
-        assert "::warning::%s: video podcast is enabled" in self.RUN_SHOW
+    def test_render_is_decoupled_from_the_youtube_publish_gate(self):
+        """The video episode is a by-product of the long-form render. Gating
+        that render on the YouTube policy meant a shorts-only tier silently
+        stopped the feed growing while the audio feed kept publishing daily —
+        the state Apple de-ranks. Render on the union; upload on the policy.
+        """
+        assert ("_render_long = _policy_publish_long or config.video_podcast.enabled"
+                in self.RUN_SHOW)
+        assert "if _render_long:" in self.RUN_SHOW
+        # The YouTube half must stay policy-gated and must never widen.
+        assert "if _policy_publish_long:" in self.RUN_SHOW
+        assert "if _render_long and config.youtube" not in self.RUN_SHOW
+
+    def test_render_only_day_is_observable(self):
+        """A day where we render for the feed but skip YouTube should be
+        visible in metrics, not silent."""
+        assert "video_podcast_render_only" in self.RUN_SHOW
 
     def test_feed_rebuild_is_wired_after_the_summaries_save(self):
         """The feed is built FROM the summaries record, so the upsert and
@@ -396,7 +425,8 @@ class TestPipelineWiring:
 
     def test_video_step_cannot_break_the_audio_publish(self):
         block = self.RUN_SHOW[self.RUN_SHOW.index("if config.video_podcast.enabled:\n        try:"):]
-        assert "except Exception as exc:  # noqa: BLE001 — never block the publish" in block[:1200]
+        try_body = block[:block.index("\n    # 11c.")]
+        assert "except Exception as exc:  # noqa: BLE001 — never block the publish" in try_body
 
 
 class TestWorkflowWiring:

@@ -82,23 +82,28 @@ Design details worth not undoing:
   lifecycle rule can expire video without touching the audio objects that
   every published enclosure depends on.
 
-## The one coupling to know about
+## Rendering is decoupled from YouTube publishing
 
-The video episode is a **by-product of the YouTube long-form render**. If
-the adaptive publishing policy (`engine/youtube_policy.py`) demotes a show
-to a shorts-only tier on a given day, no MP4 is rendered and the video
-feed gains no episode. The run does not render a second time just to feed
-it — instead it logs
+The video episode is a by-product of the YouTube long-form render, and
+that render used to be gated on the adaptive publishing policy
+(`engine/youtube_policy.py`). A shorts-only tier therefore meant no video
+episode that day — the feed quietly stopped growing while the audio feed
+kept publishing daily, which is the state Apple de-ranks.
 
+`run_show` now renders whenever **either** product wants the MP4:
+
+```python
+_render_long = _policy_publish_long or config.video_podcast.enabled
 ```
-::warning::spacex: video podcast is enabled but the adaptive YouTube
-policy skipped long-form today …
-```
 
-and records `video_podcast_skipped: long_form_not_rendered` in the
-episode metrics. Both pilot shows are on full-format tiers today, so this
-should be rare; if a video feed must stay strictly daily, set
-`youtube.adaptive_publishing: false` for that show.
+and uploads to YouTube only when `_policy_publish_long` is true. A
+policy-skipped day costs render time (~10 min of runner) and **no API
+spend** — the visual plan, including the Grok imagery, is already built by
+that point. The run records `video_podcast_render_only: true` so those days
+are visible in metrics rather than silent.
+
+If you ever want the old behaviour for a show, turn off `video_podcast`
+for it rather than reintroducing the coupling.
 
 ## Cost
 
@@ -114,10 +119,55 @@ the first week of those before making any storage projection. Even at the
 top of that range, 30 episodes × 2 shows is well under a cent a month at
 $0.015/GB-month.
 
-There is deliberately **no retention sweep** in this pilot. The feed lists
-`max_episodes` (30) but older objects stay in R2. If storage grows past
-what you want to keep, add an R2 lifecycle rule on the `video/` prefix —
-that keyspace exists precisely so such a rule can't touch audio.
+There is deliberately **no retention sweep**. The feed lists
+`max_episodes` (30 by default) and older objects stay in R2. If storage
+grows past what you want to keep, add an R2 lifecycle rule on the `video/`
+prefix — that keyspace exists precisely so such a rule can't touch audio.
+
+`max_episodes` is a real knob as of the durable index (below). Before it,
+raising the value did nothing: `summaries_<slug>.json` is truncated to 30
+records by `publisher.save_summary_to_github_pages`, so the feed could
+never see further back — and worse, each episode **left the feed** on its
+31st day, which Apple treats as a de-listing, while its MP4 stayed in R2
+with nothing pointing at it.
+
+## The durable index
+
+`digests/<slug>/video_assets.json` (`engine/video_index.py`) is the
+authoritative record of which episode has a video, where, and how many
+bytes. Nothing truncates it. The feed builder reads summaries first — it
+carries the operator-facing title and show notes — and falls back to this
+index for anything summaries has forgotten, so an episode stays in the feed
+for as long as `max_episodes` allows rather than for 30 days.
+
+It follows `engine/youtube_index.py`, including being **per-show**: a dozen
+show jobs run concurrently in the daily matrix, and a network-wide file
+would have every one of them racing to commit the same path.
+
+## Backfilling a new video show
+
+A freshly enabled show's feed contains only episodes published since the
+switch — everything earlier had its MP4 deleted after the YouTube upload,
+and Apple routinely rejects a sparse feed. `scripts/backfill_video_feed.py`
+re-renders past episodes from assets that *did* survive: R2 audio,
+committed cover art, gallery scene stills, committed transcripts and
+chapters. `build_long_form_video` is pure ffmpeg, so this costs runner time
+and no API spend.
+
+```
+python scripts/backfill_video_feed.py spacex --latest 10
+```
+
+or dispatch **Backfill Video Podcast Feeds** in Actions for the per-show
+matrix. It needs `R2_GALLERY_BUCKET` as well as the usual R2 credentials —
+the public gallery CDN returns 403 for original JPEGs from CI, so without
+the authenticated fallback every episode renders cover-only. The script
+refuses to start rather than produce a pile of those.
+
+Scene stills only exist in the gallery from roughly tesla ep486 / spacex
+ep003 / fascinating_frontiers ep101 / models_agents ep093 /
+models_agents_beginners ep052 onward. Older episodes still render, but
+cover-only — reported as `scene_count: 0` rather than failing.
 
 ## Operator checklist
 

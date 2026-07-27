@@ -1,0 +1,103 @@
+name: Backfill Video Podcast Feeds
+
+# Seeds a video podcast feed with back-catalogue episodes by re-rendering
+# their long-form MP4s and uploading them to R2.
+#
+# A show's video feed only carries episodes published since video_podcast
+# was switched on — everything earlier had its MP4 deleted after the
+# YouTube upload. Apple reviews a feed before listing the show and
+# routinely rejects a sparse one, so run this before submitting.
+#
+# Pure ffmpeg over surviving assets (R2 audio + gallery stills + committed
+# transcripts): no Grok, no TTS, no API spend. Roughly 10-12 min of runner
+# time per episode, so a 10-episode show is ~2 hours; shows run in
+# parallel. The repo is public, so Actions minutes are free.
+#
+# Dispatch ONE show with latest=1 first and curl -I the resulting MP4
+# (expect 200 and Content-Type: video/mp4) before running the full set.
+
+on:
+  workflow_dispatch:
+    inputs:
+      shows:
+        description: "Comma-separated show slugs"
+        required: false
+        default: "tesla,spacex,fascinating_frontiers,models_agents,models_agents_beginners"
+      latest:
+        description: "Most recent N episodes per show"
+        required: false
+        default: "10"
+      force:
+        description: "Re-render even if already recorded"
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    outputs:
+      shows: ${{ steps.split.outputs.shows }}
+    steps:
+      - id: split
+        run: |
+          python3 -c "
+          import json, os
+          slugs = [s.strip() for s in '''${{ inputs.shows }}'''.split(',') if s.strip()]
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as fh:
+              fh.write('shows=' + json.dumps(slugs) + '\n')
+          "
+
+  backfill:
+    needs: resolve
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      max-parallel: 5
+      matrix:
+        show: ${{ fromJson(needs.resolve.outputs.shows) }}
+    concurrency:
+      # Per-show: two runs of the same show would race on its video index
+      # and its feed file. Different shows never touch the same paths.
+      group: backfill-video-${{ matrix.show }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - uses: ./.github/actions/setup-python
+        with:
+          python-version: '3.12'
+          requirements-file: 'requirements.txt'
+          system-packages: 'ffmpeg'
+          skip-checkout: 'true'
+
+      - name: Backfill ${{ matrix.show }}
+        env:
+          # Audio bucket — the MP4 upload target.
+          R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          # Gallery bucket — REQUIRED. The public gallery CDN returns 403 for
+          # original JPEGs from CI, so gallery_library falls back to an
+          # authenticated S3 GET. Without this every episode silently renders
+          # cover-only, which is why the script refuses to start without it.
+          R2_GALLERY_BUCKET: ${{ secrets.R2_GALLERY_BUCKET }}
+          R2_GALLERY_PUBLIC_BASE_URL: ${{ secrets.R2_GALLERY_PUBLIC_BASE_URL }}
+        run: |
+          python scripts/backfill_video_feed.py "${{ matrix.show }}" \
+            --latest "${{ inputs.latest }}" \
+            ${{ inputs.force && '--force' || '' }} </dev/null
+
+      - uses: ./.github/actions/safe-commit-push
+        with:
+          add-paths: |
+            *.video.rss
+            digests/**/video_assets.json
+          commit-message: "Backfill video feed: ${{ matrix.show }}"

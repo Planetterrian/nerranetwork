@@ -48,6 +48,7 @@ import tempfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+from engine import video_index
 from engine.summaries_io import load_summaries
 
 logger = logging.getLogger(__name__)
@@ -88,13 +89,47 @@ def video_r2_key(prefix: str, slug: str, filename: str) -> str:
     return f"{prefix.strip('/')}/{slug}/{filename}"
 
 
-def _records_with_video(records: List[dict], limit: int) -> List[dict]:
-    """Episode records carrying a usable video track, newest first."""
+def _records_with_video(records: List[dict], limit: int,
+                        index_path: Optional[Path] = None) -> List[dict]:
+    """Episode records carrying a usable video track, newest first.
+
+    Summaries is the preferred source — it holds the operator-facing title
+    and show notes — but it is truncated to 30 records, so anything older
+    is recovered from the durable index written by
+    :mod:`engine.video_index`. Without that merge ``max_episodes`` above 30
+    would be a no-op and every episode would silently drop out of the feed
+    after a month, which Apple treats as a de-listing.
+    """
     out: List[dict] = []
+    seen = set()
     for rec in records:
         track = rec.get("video") or {}
         if isinstance(track, dict) and track.get("url"):
             out.append(rec)
+            try:
+                seen.add(int(rec.get("episode_num")))
+            except (TypeError, ValueError):
+                pass
+
+    if index_path is not None:
+        from engine.video_index import indexed_episodes
+
+        for ep, row in indexed_episodes(index_path).items():
+            if ep in seen:
+                continue
+            # Synthesised record: the index carries everything the feed
+            # needs, and summaries has forgotten this episode entirely.
+            out.append({
+                "episode_num": ep,
+                "date": row.get("date") or "",
+                "episode_title": row.get("title") or f"Episode {ep}",
+                "video": {
+                    "url": row["url"],
+                    "bytes": int(row.get("bytes") or 0),
+                    "duration_sec": float(row.get("duration_sec") or 0.0),
+                },
+            })
+
     out.sort(key=lambda r: r.get("episode_num") or 0, reverse=True)
     return out[:limit] if limit and limit > 0 else out
 
@@ -151,6 +186,7 @@ def build_video_feed(
     channel_language: str = "en-us",
     base_url: str = "https://nerranetwork.com",
     max_episodes: int = 30,
+    index_path: Optional[Path] = None,
 ) -> Optional[Tuple[Path, int]]:
     """Write ``out_path`` as a video-podcast RSS feed for *slug*.
 
@@ -168,7 +204,7 @@ def build_video_feed(
     from engine.publisher import _inject_podcast_locked_tag, _markdown_to_rss_html
 
     _wrapper, records = load_summaries(summaries_path)
-    targets = _records_with_video(records, max_episodes)
+    targets = _records_with_video(records, max_episodes, index_path)
     if not targets:
         logger.info("[%s] no episodes with a video track — skipping video feed",
                     slug)
@@ -292,6 +328,7 @@ def build_video_feed_for_show(config, project_root: Path) -> Optional[Tuple[Path
         channel_subcategory=pub.rss_subcategory or "",
         base_url=pub.base_url or "https://nerranetwork.com",
         max_episodes=vp.max_episodes,
+        index_path=video_index.index_path(config, project_root),
     )
 
 
