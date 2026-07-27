@@ -1,0 +1,118 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<rss xmlns:atom="http://www.w3.org/2005/Atom" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" xmlns:podcast="https://podcastindex.org/namespace/1.0" version="2.0">
+  <channel>
+    <title>Models &amp; Agents — Video Edition</title>
+    <link>https://nerranetwork.com/models-agents.html</link>
+    <description>Your daily briefing on AI models and agents: new releases from the frontier labs, open-weight drops, agent frameworks, benchmarks, pricing, and practical tools you can use the same day — with long-running program tracking so you always know where the big stories stand. For developers, builders, and AI practitioners.</description>
+    <atom:link href="https://nerranetwork.com/models_agents_podcast.video.rss" rel="self" />
+    <copyright>Copyright 2026</copyright>
+    <docs>http://www.rssboard.org/rss-specification</docs>
+    <generator>python-feedgen</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 27 Jul 2026 11:15:02 +0000</lastBuildDate>
+    <itunes:author>Patrick</itunes:author>
+    <itunes:category text="Technology" />
+    <itunes:image href="https://nerranetwork.com/assets/covers/models-agents.jpg" />
+    <itunes:explicit>no</itunes:explicit>
+    <itunes:owner>
+      <itunes:name>Patrick</itunes:name>
+      <itunes:email>patrick@planetterrian.com</itunes:email>
+    </itunes:owner>
+    <itunes:summary>Your daily briefing on AI models and agents: new releases from the frontier labs, open-weight drops, agent frameworks, benchmarks, pricing, and practical tools you can use the same day — with long-running program tracking so you always know where the big stories stand. For developers, builders, and AI practitioners.</itunes:summary>
+    <item>
+      <title>Ep 124: Autonomous support agents just proved they can handle real volume — G2A’s Dave closed 14,400 tickets without human help.</title>
+      <description>Models &amp; Agents
+&lt;b&gt;Autonomous support agents just proved they can handle real volume — G2A’s Dave closed 14,400 tickets without human help.&lt;/b&gt;
+
+&lt;b&gt;What You Need to Know:&lt;/b&gt; G2A deployed an autonomous AI agent named Dave that resolved 14,400 seller support tickets over 63 days. Meta confirmed it will release a new open-source model. Qwen3.6-27B showed stronger speculative decoding gains on heavier quantization levels. Builders should watch how these agent and inference improvements translate to production workloads this week.
+
+Top Story
+G2A.COM deployed its Autonomous AI Agent Dave to handle seller support tickets. The agent resolved 14,400 tickets across 63 days with no reported human intervention in the loop. This demonstrates concrete throughput for a narrow but high-volume customer-support workflow. The result gives teams a data point on what fully autonomous ticket resolution looks like in practice today. Companies running similar high-ticket-volume operations should test comparable agent setups against their own support logs this week. Watch for follow-up metrics on resolution quality and escalation rates. Source: &lt;a href="https://news.google.com/rss/articles/CBMi0AFBVV95cUxOX3FqRFRSUWZ2N2dIdnNYZ3hlMmNsMHZIQkg3eHlmWHNZTm8yUFppaS1BWUhUek1iTGExb3ByVFJiVGpMaTdxZF9DVWYxYjBKbmR1TldsMWhTTFpJNDdRUEs0Yzd6X1o2aUViMHBnSXJPOV95cTRXTVVPRTdOb29UaXpLd0Q4aXJCZEZkU0lvdmRvMk05cUNsYWFiNDlrZW9iOUpQeDJ5bWJUZWUzMlpnazVFbWU3SjRvdnNYWmpfSGdocVlsUmRlbTJQVVhDNHJH?oc=5"&gt;Google News&lt;/a&gt;
+
+Model Updates
+&lt;b&gt;Qwen3.6-27B speculative decoding gains on heavier quants: r/LocalLLaMA&lt;/b&gt;
+Qwen3.6-27B showed the largest speculative decoding speedups on Q8 weights, with gains decreasing through Q6 and Q4. Ten of ten tested speculative configurations ranked Q8 highest by multiplier. Acceptance rates stayed consistent across matched quant depths while base step speed dropped with higher weight byte counts. DFlash delivered the highest absolute tokens per second overall; MTP ranked second across most setups. The nvfp4/SGLang pair proved fastest overall among quant and engine combinations. Weaver appeared as an outlier because it is fork-only with per-target heads, limiting it to specific model and quant pairings. Llama.cpp’s MTP path on UD-Q4 ran pathologically slow, producing lower absolute tokens per second than the Q6 MTP-3 variant at identical acceptance rates. Builders running local inference on 27B-class models should benchmark DFlash or MTP on their target quant this week to capture the reported gains. The tests used short outputs, greedy decoding, and batch size one, so the multipliers represent an upper bound rather than a general concurrency result. Source: &lt;a href="https://www.reddit.com/r/LocalLLaMA/comments/1v7wh6g/qwen3627b_speculative_decoding_gets_better_on/"&gt;reddit.com&lt;/a&gt;
+
+&lt;b&gt;Meta confirms upcoming open-source model release: r/LocalLLaMA&lt;/b&gt;
+The announcement came via a screenshot of a post by Alexandr Wang. No architecture details, parameter count, or release timeline were provided in the post. Community discussion centers on how the new model will compare to existing open-weight families. Developers tracking open releases should monitor Meta’s official channels for the first weights drop. Source: &lt;a href="https://www.reddit.com/r/LocalLLaMA/comments/1v7smm5/meta_has_confirmed_that_it_will_release_an_open/"&gt;reddit.com&lt;/a&gt;
+
+Agent &amp; Tool Developments
+&lt;b&gt;Siemens adds characterisation AI agent for design iteration: Electronics Weekly&lt;/b&gt;
+Siemens introduced a characterisation AI agent that automates design iteration loops. The agent targets electronics design workflows where repeated characterisation steps are common. No specific performance numbers or integration details were released. Hardware and EDA teams should watch for the first public demos or API access. Source: &lt;a href="https://news.google.com/rss/articles/CBMitgFBVV95cUxOVU4zdGRhVWV6dWIzcE9qWFhXZTlneFpmZHkzTEoxZ1VlR1dSek9MZGJfVU4xTV9fbjAtTFRkMkU3Yk1MaGpocDM2ZG84VUxqMlMwNjZIZjFrM0JsdEU3ZGxldzZNaHJiQzlPaTBGd1Q3N2FVZ1pZSHNYTkZWSzBEd0F3b3JkUnhBd0tCYkRYM0lOaUFuM3FfYVgwMHhZc1ludVZ2YlotNi1vRjMzQTNhU3ZjNmxZUQ?oc=5"&gt;Google News&lt;/a&gt;
+
+&lt;b&gt;iLands launches shared economic network for AI agents and humans: The Manila Times&lt;/b&gt;
+iLands launched as a shared economic network where autonomous AI agents and humans can work, trade, and co-evolve. The platform positions itself as infrastructure for agent-to-agent and human-to-agent economic interactions. No technical architecture, APIs, or early access details were disclosed. Teams exploring multi-agent marketplaces should track the project’s first public documentation. Source: &lt;a href="https://news.google.com/rss/articles/CBMiigJBVV95cUxNSVNOTnIzbjQ1dFA3cXNodWpCcGVRV21Za0lWTnozT0NkTDhhU2t4dnhud2FvNTlfOThIV2dFRXRHRlF0LVRoMWVqN3phVzJkYlBqeFR2QmJodjh3cXNFTTBnLXVnN2RRRm45aGY4aWJ3c3BLOUlBNVl4LVNfcGRzay1YbTZ2SkpUMHprVzFYMnhpRjhjRlRhQTR0bmZvcWd1Vl9ybXNfckU2bFJKZVdwSzZVMTFqR2xkazFBalJ4amtIOC1MZUJtRVZBX0hCY2NrdjVyc24tNGhoRi0yQVFiS1JadWtWMmp3T2s0SFBDcmNCSHJTVVlDWlJsTnVydWFPNHJrMzExQ3Z6Z9IBjwJBVV95cUxPby00dG1xUERhQ2NVWjdhQy1xUGhraHJpUHNCQnBzWm0yanpDTjZEU3VmQjJCbW5OUmlvM3BKX3Z6N2h3VDJkLUpGd1RXY05XVTFPM2dMQUdYNzVHc1FmRTVNMDdVWlpRSEVMblFteXBhcG80STg2UU51UmpNYmFSTnRCWnotSVpueExUbEd5STgwV0RVT2FpcVJSLTQxbUVfZmdGRDdUcGZJakR0TDB5YVNrcnJ1UG9kalNVVjFaXzJ4bEdPNS1sVTF4cXZjbHF4aXpvNXg2bkh5OC1kSE42MlJpOEY3U3pVdnlxcVBMUDN6VHh6eXBRWGUzVERKOTBkMVpwZ1JvTVJRak5leEhn?oc=5"&gt;Google News&lt;/a&gt;
+
+Practical &amp; Community
+&lt;b&gt;Image segmentation request for Gemini 2.5: Simon Willison (X)&lt;/b&gt;
+Simon Willison posted that image segmentation capabilities similar to those demonstrated in Gemini 2.5 would be useful. The tweet links to his earlier write-up on Gemini image segmentation. No new implementation was shared. Developers working on multimodal tooling should review the linked post for context on current segmentation behavior. Source: &lt;a href="https://x.com/simonw/status/2081546026792673767"&gt;x.com&lt;/a&gt;
+
+&lt;b&gt;ChatGPT handles complex group trip planning from phone: Sam Altman (X)&lt;/b&gt;
+Sam Altman shared a detailed prompt that used full chat history to generate three trip options, build a coordination site, reach group consensus, and draft reservation emails. The system completed the end-to-end task from a mobile prompt. The example illustrates current multi-step agentic planning reach. Builders should test similar long-horizon prompts against their own coordination workflows. Source: &lt;a href="https://x.com/sama/status/2081396796174282900"&gt;x.com&lt;/a&gt;
+
+Under the Hood: MoE-Style Low-Rank Adaptation
+Everyone talks about parameter-efficient fine-tuning for MoE models as if uniform adapters are the obvious default. In practice, MoE²-LoRA couples the pretrained router directly to task-specific LoRA routing through a dual-channel Routing-Conditioned Projection module. The router activations already computed by the base model are reused to decide which LoRA experts activate, avoiding a second full routing pass. A single global LoRA expert pool is shared across all layers, allowing emergent layer-wise affinities while keeping total added parameters low. This design reduces the risk of overwriting base expert specialization compared with static adapter placement. The approach delivered state-of-the-art downstream accuracy on multiple MoE backbones while preserving more general capabilities than prior MoE PEFT methods. Teams fine-tuning MoE models should test MoE²-LoRA first when router reuse is feasible; the main gotcha is ensuring the base router remains frozen during adaptation so routing priors are not disturbed.
+
+Things to Try This Week
+• Test DFlash or MTP speculative decoding on Qwen3.6-27B at Q8 weights to measure the reported speedups on your hardware.
+• Review Simon Willison’s Gemini image segmentation write-up if you need multimodal region extraction in current workflows.
+• Run Sam Altman’s group-trip prompt style against your own multi-step planning tasks to see where current agents succeed or break.
+• Monitor Meta’s channels for the promised open-source model weights and compare early releases against Qwen and Llama families on your target tasks.
+
+On the Horizon
+• Siemens characterisation agent expected to reach public demos or early access.
+• iLands platform documentation and APIs anticipated for agent-to-agent trading experiments.
+• Further Meta open-source model details likely within the next release cycle.</description>
+      <guid isPermaLink="false">models-agents-video-ep124-20260727</guid>
+      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep124_20260727.mp4" length="178060584" type="video/mp4" />
+      <pubDate>Mon, 27 Jul 2026 08:00:00 +0000</pubDate>
+      <itunes:duration>08:43</itunes:duration>
+      <itunes:explicit>no</itunes:explicit>
+      <itunes:summary># Models &amp; Agents
+&gt; **Autonomous support agents just proved they can handle real volume — G2A’s Dave closed 14,400 tickets without human help.**
+
+**What You Need to Know:** G2A deployed an autonomous AI agent named Dave that resolved 14,400 seller support tickets over 63 days. Meta confirmed it will release a new open-source model. Qwen3.6-27B showed stronger speculative decoding gains on heavier quantization levels. Builders should watch how these agent and inference improvements translate to production workloads this week.
+---
+### Top Story
+G2A.COM deployed its Autonomous AI Agent Dave to handle seller support tickets. The agent resolved 14,400 tickets across 63 days with no reported human intervention in the loop. This demonstrates concrete throughput for a narrow but high-volume customer-support workflow. The result gives teams a data point on what fully autonomous ticket resolution looks like in practice today. Companies running similar high-ticket-volume operations should test comparable agent setups against their own support logs this week. Watch for follow-up metrics on resolution quality and escalation rates. Source: [Google News](https://news.google.com/rss/articles/CBMi0AFBVV95cUxOX3FqRFRSUWZ2N2dIdnNYZ3hlMmNsMHZIQkg3eHlmWHNZTm8yUFppaS1BWUhUek1iTGExb3ByVFJiVGpMaTdxZF9DVWYxYjBKbmR1TldsMWhTTFpJNDdRUEs0Yzd6X1o2aUViMHBnSXJPOV95cTRXTVVPRTdOb29UaXpLd0Q4aXJCZEZkU0lvdmRvMk05cUNsYWFiNDlrZW9iOUpQeDJ5bWJUZWUzMlpnazVFbWU3SjRvdnNYWmpfSGdocVlsUmRlbTJQVVhDNHJH?oc=5)
+---
+### Model Updates
+**Qwen3.6-27B speculative decoding gains on heavier quants: r/LocalLLaMA**
+Qwen3.6-27B showed the largest speculative decoding speedups on Q8 weights, with gains decreasing through Q6 and Q4. Ten of ten tested speculative configurations ranked Q8 highest by multiplier. Acceptance rates stayed consistent across matched quant depths while base step speed dropped with higher weight byte counts. DFlash delivered the highest absolute tokens per second overall; MTP ranked second across most setups. The nvfp4/SGLang pair proved fastest overall among quant and engine combinations. Weaver appeared as an outlier because it is fork-only with per-target heads, limiting it to specific model and quant pairings. Llama.cpp’s MTP path on UD-Q4 ran pathologically slow, producing lower absolute tokens per second than the Q6 MTP-3 variant at identical acceptance rates. Builders running local inference on 27B-class models should benchmark DFlash or MTP on their target quant this week to capture the reported gains. The tests used short outputs, greedy decoding, and batch size one, so the multipliers represent an upper bound rather than a general concurrency result. Source: [reddit.com](https://www.reddit.com/r/LocalLLaMA/comments/1v7wh6g/qwen3627b_speculative_decoding_gets_better_on/)
+
+**Meta confirms upcoming open-source model release: r/LocalLLaMA**
+The announcement came via a screenshot of a post by Alexandr Wang. No architecture details, parameter count, or release timeline were provided in the post. Community discussion centers on how the new model will compare to existing open-weight families. Developers tracking open releases should monitor Meta’s official channels for the first weights drop. Source: [reddit.com](https://www.reddit.com/r/LocalLLaMA/comments/1v7smm5/meta_has_confirmed_that_it_will_release_an_open/)
+---
+### Agent &amp; Tool Developments
+**Siemens adds characterisation AI agent for design iteration: Electronics Weekly**
+Siemens introduced a characterisation AI agent that automates design iteration loops. The agent targets electronics design workflows where repeated characterisation steps are common. No specific performance numbers or integration details were released. Hardware and EDA teams should watch for the first public demos or API access. Source: [Google News](https://news.google.com/rss/articles/CBMitgFBVV95cUxOVU4zdGRhVWV6dWIzcE9qWFhXZTlneFpmZHkzTEoxZ1VlR1dSek9MZGJfVU4xTV9fbjAtTFRkMkU3Yk1MaGpocDM2ZG84VUxqMlMwNjZIZjFrM0JsdEU3ZGxldzZNaHJiQzlPaTBGd1Q3N2FVZ1pZSHNYTkZWSzBEd0F3b3JkUnhBd0tCYkRYM0lOaUFuM3FfYVgwMHhZc1ludVZ2YlotNi1vRjMzQTNhU3ZjNmxZUQ?oc=5)
+
+**iLands launches shared economic network for AI agents and humans: The Manila Times**
+iLands launched as a shared economic network where autonomous AI agents and humans can work, trade, and co-evolve. The platform positions itself as infrastructure for agent-to-agent and human-to-agent economic interactions. No technical architecture, APIs, or early access details were disclosed. Teams exploring multi-agent marketplaces should track the project’s first public documentation. Source: [Google News](https://news.google.com/rss/articles/CBMiigJBVV95cUxNSVNOTnIzbjQ1dFA3cXNodWpCcGVRV21Za0lWTnozT0NkTDhhU2t4dnhud2FvNTlfOThIV2dFRXRHRlF0LVRoMWVqN3phVzJkYlBqeFR2QmJodjh3cXNFTTBnLXVnN2RRRm45aGY4aWJ3c3BLOUlBNVl4LVNfcGRzay1YbTZ2SkpUMHprVzFYMnhpRjhjRlRhQTR0bmZvcWd1Vl9ybXNfckU2bFJKZVdwSzZVMTFqR2xkazFBalJ4amtIOC1MZUJtRVZBX0hCY2NrdjVyc24tNGhoRi0yQVFiS1JadWtWMmp3T2s0SFBDcmNCSHJTVVlDWlJsTnVydWFPNHJrMzExQ3Z6Z9IBjwJBVV95cUxPby00dG1xUERhQ2NVWjdhQy1xUGhraHJpUHNCQnBzWm0yanpDTjZEU3VmQjJCbW5OUmlvM3BKX3Z6N2h3VDJkLUpGd1RXY05XVTFPM2dMQUdYNzVHc1FmRTVNMDdVWlpRSEVMblFteXBhcG80STg2UU51UmpNYmFSTnRCWnotSVpueExUbEd5STgwV0RVT2FpcVJSLTQxbUVfZmdGRDdUcGZJakR0TDB5YVNrcnJ1UG9kalNVVjFaXzJ4bEdPNS1sVTF4cXZjbHF4aXpvNXg2bkh5OC1kSE42MlJpOEY3U3pVdnlxcVBMUDN6VHh6eXBRWGUzVERKOTBkMVpwZ1JvTVJRak5leEhn?oc=5)
+---
+### Practical &amp; Community
+**Image segmentation request for Gemini 2.5: Simon Willison (X)**
+Simon Willison posted that image segmentation capabilities similar to those demonstrated in Gemini 2.5 would be useful. The tweet links to his earlier write-up on Gemini image segmentation. No new implementation was shared. Developers working on multimodal tooling should review the linked post for context on current segmentation behavior. Source: [x.com](https://x.com/simonw/status/2081546026792673767)
+
+**ChatGPT handles complex group trip planning from phone: Sam Altman (X)**
+Sam Altman shared a detailed prompt that used full chat history to generate three trip options, build a coordination site, reach group consensus, and draft reservation emails. The system completed the end-to-end task from a mobile prompt. The example illustrates current multi-step agentic planning reach. Builders should test similar long-horizon prompts against their own coordination workflows. Source: [x.com](https://x.com/sama/status/2081396796174282900)
+---
+### Under the Hood: MoE-Style Low-Rank Adaptation
+Everyone talks about parameter-efficient fine-tuning for MoE models as if uniform adapters are the obvious default. In practice, MoE²-LoRA couples the pretrained router directly to task-specific LoRA routing through a dual-channel Routing-Conditioned Projection module. The router activations already computed by the base model are reused to decide which LoRA experts activate, avoiding a second full routing pass. A single global LoRA expert pool is shared across all layers, allowing emergent layer-wise affinities while keeping total added parameters low. This design reduces the risk of overwriting base expert specialization compared with static adapter placement. The approach delivered state-of-the-art downstream accuracy on multiple MoE backbones while preserving more general capabilities than prior MoE PEFT methods. Teams fine-tuning MoE models should test MoE²-LoRA first when router reuse is feasible; the main gotcha is ensuring the base router remains frozen during adaptation so routing priors are not disturbed.
+---
+### Things to Try This Week
+- Test DFlash or MTP speculative decoding on Qwen3.6-27B at Q8 weights to measure the reported speedups on your hardware.
+- Review Simon Willison’s Gemini image segmentation write-up if you need multimodal region extraction in current workflows.
+- Run Sam Altman’s group-trip prompt style against your own multi-step planning tasks to see where current agents succeed or break.
+- Monitor Meta’s channels for the promised open-source model weights and compare early releases against Qwen and Llama families on your target tasks.
+---
+### On the Horizon
+- Siemens characterisation agent expected to reach public demos or early access.
+- iLands platform documentation and APIs anticipated for agent-to-agent trading experiments.
+- Further Meta open-source model details likely within the next release cycle.</itunes:summary>
+      <itunes:episode>124</itunes:episode>
+      <itunes:title>Ep 124: Autonomous support agents just proved they can handle real volume — G2A’s Dave closed 14,400 tickets without human help.</itunes:title>
+      <itunes:episodeType>full</itunes:episodeType>
+    </item>
+  <podcast:locked owner="patrick@planetterrian.com">yes</podcast:locked></channel>
+</rss>

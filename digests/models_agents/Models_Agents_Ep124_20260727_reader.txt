@@ -1,0 +1,121 @@
+Welcome back to Models and Agents, episode 124, for July 27, 2026. Your daily AI briefing. New week in AI. And if last week was anything to go by, buckle up. Let's get into it.
+
+Autonomous support agents just proved they can handle real volume — G2A’s Dave closed fourteen thousand four hundred tickets without human help.
+
+G2A deployed an autonomous AI agent named Dave that resolved fourteen thousand four hundred seller support tickets over sixty three days.
+
+Meta confirmed it will release a new open source model.
+
+Qwen three point six twenty seven B showed stronger speculative decoding gains on heavier quantization levels.
+
+Builders should watch how these agent and inference improvements translate to production workloads this week.
+
+G2A dot com deployed its Autonomous AI Agent Dave to handle seller support tickets.
+
+The agent resolved fourteen thousand four hundred tickets across sixty three days with no reported human intervention in the loop.
+
+This demonstrates concrete throughput for a narrow but high volume customer support workflow.
+
+The result gives teams a data point on what fully autonomous ticket resolution looks like in practice today.
+
+Companies running similar high ticket volume operations should test comparable agent setups against their own support logs this week.
+
+Watch for follow up metrics on resolution quality and escalation rates.
+
+Qwen three point six twenty seven B showed the largest speculative decoding speedups on Q eight weights, with gains decreasing through Q six and Q four.
+
+Ten of ten tested speculative configurations ranked Q eight highest by multiplier.
+
+Acceptance rates stayed consistent across matched quant depths while base step speed dropped with higher weight byte counts.
+
+DFlash delivered the highest absolute tokens per second overall.
+
+MTP ranked second across most setups.
+
+The nvfp four SGLang pair proved fastest overall among quant and engine combinations.
+
+Weaver appeared as an outlier because it is fork only with per target heads, limiting it to specific model and quant pairings.
+
+Llama dot cpp’s MTP path on UD Q four ran pathologically slow, producing lower absolute tokens per second than the Q six MTP three variant at identical acceptance rates.
+
+Builders running local inference on twenty seven B class models should benchmark DFlash or MTP on their target quant this week to capture the reported gains.
+
+The tests used short outputs, greedy decoding, and batch size one, so the multipliers represent an upper bound rather than a general concurrency result.
+
+The announcement came via a screenshot of a post by Alexandr Wang.
+
+No architecture details, parameter count, or release timeline were provided in the post.
+
+Community discussion centers on how the new model will compare to existing open weight families.
+
+Developers tracking open releases should monitor Meta’s official channels for the first weights drop.
+
+Siemens introduced a characterisation AI agent that automates design iteration loops.
+
+The agent targets electronics design workflows where repeated characterisation steps are common.
+
+No specific performance numbers or integration details were released.
+
+Hardware and EDA teams should watch for the first public demos or API access.
+
+iLands launched as a shared economic network where autonomous AI agents and humans can work, trade, and co evolve.
+
+The platform positions itself as infrastructure for agent to agent and human to agent economic interactions.
+
+No technical architecture, APIs, or early access details were disclosed.
+
+Teams exploring multi agent marketplaces should track the project’s first public documentation.
+
+Simon Willison posted that image segmentation capabilities similar to those demonstrated in Gemini two point five would be useful.
+
+The tweet links to his earlier write up on Gemini image segmentation.
+
+No new implementation was shared.
+
+Developers working on multimodal tooling should review the linked post for context on current segmentation behavior.
+
+Sam Altman shared a detailed prompt that used full chat history to generate three trip options, build a coordination site, reach group consensus, and draft reservation emails.
+
+The system completed the end to end task from a mobile prompt.
+
+The example illustrates current multi step agentic planning reach.
+
+Builders should test similar long horizon prompts against their own coordination workflows.
+
+OK, let's pop the hood on parameter efficient fine tuning for mixture of experts models.
+
+Everyone talks about uniform adapters as the obvious default, yet MoE squared LoRA couples the pretrained router directly to task specific LoRA routing through a dual channel Routing Conditioned Projection module.
+
+The router activations already computed by the base model are reused to decide which LoRA experts activate, avoiding a second full routing pass.
+
+A single global LoRA expert pool is shared across all layers, allowing emergent layer wise affinities while keeping total added parameters low.
+
+This design reduces the risk of overwriting base expert specialization compared with static adapter placement.
+
+The approach delivered state of the art downstream accuracy on multiple MoE backbones while preserving more general capabilities than prior MoE PEFT methods.
+
+Teams fine tuning MoE models should test MoE squared LoRA first when router reuse is feasible.
+
+The main gotcha is ensuring the base router remains frozen during adaptation so routing priors are not disturbed.
+
+Test DFlash or MTP speculative decoding on Qwen three point six twenty seven B at Q eight weights to measure the reported speedups on your hardware.
+
+Review Simon Willison’s Gemini image segmentation write up if you need multimodal region extraction in current workflows.
+
+Run Sam Altman’s group trip prompt style against your own multi step planning tasks to see where current agents succeed or break.
+
+Monitor Meta’s channels for the promised open source model weights and compare early releases against Qwen and Llama families on your target tasks.
+
+Siemens characterisation agent expected to reach public demos or early access.
+
+iLands platform documentation and APIs anticipated for agent to agent trading experiments.
+
+Further Meta open source model details likely within the next release cycle.
+
+Tomorrow, keep an eye on the first public documentation from iLands on its agent marketplace setup.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The AI world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+One more thing — if you liked today's episode, our sister show Fascinating Frontiers is worth a spot in your feed: the most fascinating news from space and science. It's one of the Nerra Network's daily briefings, all free at nerranetwork.com. The Do Positive Pod is the club for people who do something about it — episodes and the Dispatch Wall at nerranetwork.com/thedppod.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.

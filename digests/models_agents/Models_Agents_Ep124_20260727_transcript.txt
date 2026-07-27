@@ -1,0 +1,74 @@
+Welcome back to Models and Agents, Episode 124 for July 27, 2026.
+Your daily AI briefing, new week in AI, and if last week was anything to go by,
+buckle up. Let's get into it. Autonomous support agents just prove they can handle real volume.
+G2A's Dave closed 14,400 tickets without human help.
+G2A deployed an autonomous AI agent named Dave that resolved 14,400 seller support tickets
+over 63 days. Meta confirmed it will release a new open source model.
+Quen3.627b showed stronger speculative decoding gains on heavier quantization levels.
+Builders should watch how these agent and inference improvements translate to production
+workloads this week. G2A.com deployed its autonomous AI agent Dave to handle seller support
+tickets. The agent resolved 14,400 tickets across 63 days, with no reported human intervention
+in the loop. This demonstrates concrete throughput for a narrow but high-volume customer support
+workflow. The result gives teams a data point on what fully autonomous ticket resolution looks
+like in practice today. Companies running similar high-ticket volume operations should test
+comparable agent setups against their own support logs this week. Watch for follow-up metrics
+on resolution quality and escalation rates. Quen3.627b showed the largest speculative decoding speed-ups
+on Q8 weights, with gains decreasing through Q6 and Q4. 10 of 10 tested speculative configurations
+ranked Q8 highest by multiplier. Acceptance rates stayed consistent across matched quant depths
+while base steps speed dropped with higher weight bite counts. D-flash delivered the highest absolute
+tokens per second overall. MTP ranked second across most setups. The NVFP4 SG-Lang pair proved
+fastest overall among quant and engine combinations. Weaver appeared as an outlier because it is fork
+only with per target heads, limiting it to specific model and quant pairings. Lama.cpp's MTP path
+on UDQ4 ran pathologically slow, producing lower absolute tokens per second than the Q6 MTP3
+variant at identical acceptance rates. Builders running local inference on 27b class models should
+benchmark D-flash or MTP on their target quant this week to capture the reported gains.
+The tests used short outputs, greedy decoding and batch size one, so the multipliers represent
+an upper bound rather than a general concurrency result. The announcement came via a screenshot
+of a post by Alexander Wang. No architecture details, parameter count or release timeline were
+provided in the post. Community discussion centers on how the new model will compare to existing
+open weight families. Developers tracking open releases should monitor meta's official channels
+for the first weight drop. Siemens introduced a characterization AI agent that automates design
+iteration loops. The agent targets electronics design workflows where repeated characterization steps
+are common. No specific performance numbers or integration details were released. Hardware and
+EDA teams should watch for the first public demos or API access. Islands launched as a shared
+economic network where autonomous AI agents and humans can work, trade and co-evolve. The platform
+positions itself as infrastructure for agent to agent and human to agent economic interactions.
+No technical architecture, APIs or early access details were disclosed. Teams exploring multi-agent
+marketplaces should track the project's first public documentation. Simon Willison posted that
+image segmentation capabilities similar to those demonstrated in Gemini 2.5 would be useful.
+The tweet links to his earlier write-up on Gemini image segmentation. No new implementation was
+shared. Developers working on multi-modal tooling should review the linked post for context on
+current segmentation behavior. Sam Altman shared a detailed prompt that used full chat history
+to generate three trip options. Build a coordination site, reach group consensus and draft reservation
+emails. The system completed the end-to-end task from a mobile prompt. The example illustrates current
+multi-step agent planning reach. Builders should test similar long horizon prompts against their
+own coordination workflows. Okay, let's pop the hood on parameter efficient fine-tuning for
+mixture of experts models. Everyone talks about uniform adapters as the obvious default. Yet Moe
+squared Laura couples the pre-trained router directly to task specific Laura routing through a
+mobile channel routing condition projection module. The router activations already computed by
+the base model are reused to decide which Laura experts activate, avoiding a second full routing
+pass. A single global Laura expert pool is shared across all layers, allowing emergent,
+layer-wise affinities while keeping total added parameters low. This design reduces the risk of
+overriding base expert specialization compared with static adapter placement. The approach delivered
+state-of-the-art downstream accuracy on multiple Moe backbones while preserving more general
+capabilities than prior Moe PEFT methods. Teams fine-tuning Moe models should test Moe squared Laura
+first when router reuse is feasible. The main gotcha is ensuring the base router remains frozen
+during adaptation, so routing priors are not disturbed. Test D-flash or MTP speculative decoding on
+Quinn 3.627b at Q8 weights to measure the reported speed-ups on your hardware.
+Review Simon Willisons Gemini image segmentation write-up if you need multimodal region extraction
+in current workflows. Run Sam Altman's group trip prompt style against your own multi-step
+planning tasks to see where current agents succeed or break. Monitor Meta's channels for the
+promised open-source model weights and compare early releases against Quinn and Lama families on
+your target tasks. Simon's characterization agent expected to reach public demos or early access.
+Island's platform documentation and APIs anticipated for agent-to-agent trading experiments.
+Further Meta open-source model details likely within the next release cycle. Tomorrow keep an
+eye on the first public documentation from islands on its agent marketplace setup. That's models
+and agents for today. If you found this useful share it with someone who's trying to keep up with
+all these changes and subscribe so you don't miss tomorrow's update. The AI world moves fast.
+We'll help you keep up. See you tomorrow and if you'd rather watch than listen,
+find us on YouTube at Narra Network. Links in the show notes. One more thing. If you like today's
+episode, our sister show Fascinating Frontiers is worth a spot in your feed. The most fascinating
+news from space and science. It's one of the Narra Network's daily briefings all free at Narra
+Network dot com. The do positive pod is the club for people who do something about it.
+Episodes and the dispatch wall at Narra Network dot com slash the dp pod.
+This episode used AI voice synthesis of my voice. Editorial selection and analysis are my own.
