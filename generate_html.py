@@ -14,6 +14,7 @@ Usage:
 """
 
 import argparse
+import functools
 import json
 import os
 import re
@@ -135,6 +136,94 @@ def _read_show_image_provider(slug: str) -> str:
         return "pexels"
     yt = data.get("youtube") or {}
     return (yt.get("image_provider") or "pexels").strip().lower() or "pexels"
+
+
+# Apple accepts a bare numeric show URL and 302s to the canonical
+# slugged one, so the ID alone is enough to build a working link. That
+# matters here: ``apple_show_id`` is authoritative (it comes straight
+# out of Podcasts Connect), whereas the hand-typed
+# ``apple_podcasts_url`` strings in NETWORK_SHOWS drift and, for six
+# shows, were simply never filled in.
+_APPLE_SHOW_URL = "https://podcasts.apple.com/us/podcast/id{show_id}"
+
+
+@functools.lru_cache(maxsize=None)
+def _read_show_apple(slug: str) -> dict:
+    """Pull the show's Apple Podcasts IDs from the show YAML.
+
+    Returns ``apple_show_id`` (str), ``apple_podcasts_url_derived``
+    (str) and ``apple_video_url`` (str) — the last one set only for the
+    five shows that have a separate Apple *video edition*, which is a
+    distinct Apple show with its own ID under ``apple_show_ids.video``.
+
+    The derived URL is deliberately kept in its own context key rather
+    than overwriting ``apple_podcasts_url``: the registry strings are
+    the nicer slugged form and are what existing pages already render,
+    so preferring them keeps unchanged pages byte-identical. The
+    derived value is a *fallback*, filled in only where the registry
+    has nothing.
+
+    Cached because ``_build_all_shows_list()`` asks for every show on
+    every page render — without this it is ~900 YAML reads per full
+    site build.
+    """
+    import yaml as _yaml
+
+    empty = {
+        "apple_show_id": "",
+        "apple_podcasts_url_derived": "",
+        "apple_video_url": "",
+    }
+    yaml_path = SHOWS_DIR / f"{slug}.yaml"
+    if not yaml_path.exists():
+        return empty
+    try:
+        data = _yaml.safe_load(yaml_path.read_text(encoding="utf-8")) or {}
+    except _yaml.YAMLError:
+        return empty
+
+    podcast = data.get("podcast") or {}
+    show_id = str(data.get("apple_show_id")
+                  or podcast.get("apple_show_id") or "").strip()
+    extra = data.get("apple_show_ids") or podcast.get("apple_show_ids") or {}
+    video_id = str((extra or {}).get("video") or "").strip()
+
+    return {
+        "apple_show_id": show_id,
+        "apple_podcasts_url_derived": (
+            _APPLE_SHOW_URL.format(show_id=show_id) if show_id else ""),
+        "apple_video_url": (
+            _APPLE_SHOW_URL.format(show_id=video_id) if video_id else ""),
+    }
+
+
+def _apple_links_for(slug: str, registry_url) -> dict:
+    """Resolve the Apple links a template should render for *slug*.
+
+    ``registry_url`` is whatever ``NETWORK_SHOWS`` holds — a slugged
+    URL, ``None``, or missing. Registry wins when set; the ID-derived
+    URL fills the gap otherwise.
+    """
+    apple = _read_show_apple(slug)
+    return {
+        "apple_podcasts_url": (registry_url or ""
+                               or apple["apple_podcasts_url_derived"]),
+        "apple_video_url": apple["apple_video_url"],
+        "apple_show_id": apple["apple_show_id"],
+    }
+
+
+# Apple's "Listen on Apple Podcasts" lockup is Apple-owned artwork and
+# has to be downloaded from toolbox.marketingtools.apple.com and used
+# unmodified per the Apple Podcasts Identity Guidelines — it cannot be
+# redrawn here. So the template renders the badge only once the file is
+# actually present, and falls back to the plain text chip until then.
+_APPLE_BADGE_REL = "assets/badges/listen-on-apple-podcasts.svg"
+
+
+def _apple_badge_asset() -> str:
+    """Return the badge's repo-relative path, or "" if not downloaded yet."""
+    return _APPLE_BADGE_REL if (ROOT / _APPLE_BADGE_REL).exists() else ""
 
 
 def _collect_language_feeds(rss_file: str, prefix: str) -> list:
@@ -1749,7 +1838,8 @@ def _build_all_shows_list():
             "description_long": cfg.get("description_long", cfg["description"]),
             "source_highlights": cfg.get("source_highlights", []),
             "audience": cfg.get("audience", ""),
-            "apple_podcasts_url": cfg.get("apple_podcasts_url"),
+            "apple_podcasts_url": _apple_links_for(
+                cfg["slug"], cfg.get("apple_podcasts_url"))["apple_podcasts_url"],
             "spotify_url": cfg.get("spotify_url"),
             "picker_tags": _SHOW_PICKER_TAGS.get(cfg["slug"], {}),
             "blog_page": f"blog/{cfg['slug']}/index.html",
@@ -2494,6 +2584,11 @@ def generate_show_page(slug, *, dry_run=False):
         "page_size": 24,
         "hide_controls": True,
         **yt_meta,
+        # Apple links last: the derived-from-ID fallback must override
+        # the ``apple_podcasts_url: None`` that **cfg splatted in above
+        # for the six shows the registry never had a URL for.
+        **_apple_links_for(cfg["slug"], cfg.get("apple_podcasts_url")),
+        "apple_badge_asset": _apple_badge_asset(),
     }
 
     html = template.render(**context)

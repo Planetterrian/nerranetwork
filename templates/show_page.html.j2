@@ -135,8 +135,15 @@
                 <div class="show-hero-subscribe">
                     <span class="subscribe-label">{% if _is_ru %}Подписаться{% else %}Subscribe{% endif %}</span>
                     {% if apple_podcasts_url %}
+                    {%- if apple_badge_asset %}
+                    <a href="{{ apple_podcasts_url | with_utm(campaign=show_slug) }}" class="nn-apple-badge" target="_blank" rel="noopener" data-show="{{ show_slug }}" aria-label="{% if _is_ru %}Слушать в Apple Podcasts{% else %}Listen on Apple Podcasts{% endif %}"><img src="{{ path_prefix }}{{ apple_badge_asset }}" alt="{% if _is_ru %}Слушать в Apple Podcasts{% else %}Listen on Apple Podcasts{% endif %}" height="40" loading="lazy"></a>
+                    {%- else %}
                     <a href="{{ apple_podcasts_url | with_utm(campaign=show_slug) }}" class="nn-chip" target="_blank" rel="noopener" data-show="{{ show_slug }}">Apple Podcasts</a>
+                    {%- endif %}
                     {% endif %}
+                    {%- if apple_video_url %}
+                    <a href="{{ apple_video_url | with_utm(campaign=show_slug, medium='apple-video') }}" class="nn-chip" target="_blank" rel="noopener" data-show="{{ show_slug }}">{% if _is_ru %}Apple — видео{% else %}Apple (video){% endif %}</a>
+                    {%- endif %}
                     {% if spotify_url %}
                     <a href="{{ spotify_url | with_utm(campaign=show_slug) }}" class="nn-chip" target="_blank" rel="noopener" data-show="{{ show_slug }}">Spotify</a>
                     {% endif %}

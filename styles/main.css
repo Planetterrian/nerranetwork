@@ -707,6 +707,19 @@ button { font-family: var(--font-ui); cursor: pointer; }
   background: var(--nn-surface); transform: translateY(-1px);
 }
 
+/* Apple's official "Listen on Apple Podcasts" lockup. Apple's identity
+   guidelines forbid recolouring, cropping or adding effects to the
+   badge, so this rule only positions it — no filters, no background,
+   no border-radius. Height is fixed at 40px to sit level with the
+   chips beside it. Rendered only when the SVG is present in
+   assets/badges/ (see _apple_badge_asset in generate_html.py). */
+.nn-apple-badge {
+  display: inline-flex; align-items: center;
+  transition: transform var(--duration) var(--ease);
+}
+.nn-apple-badge img { height: 40px; width: auto; display: block; }
+.nn-apple-badge:hover { transform: translateY(-1px); }
+
 /* ---------- Latest Episode Player (Show Page) ---------- */
 .latest-episode {
   padding: var(--sp-8);

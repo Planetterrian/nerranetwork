@@ -56,8 +56,30 @@ Public, display-safe extracts live in `site/data/` (e.g.
   goes stale. Fix: log in at podcasters.spotify.com, copy the `sp_dc`
   and `sp_key` cookies (browser dev tools → Application → Cookies),
   update the two repo secrets. ~5 minutes.
-* **Apple Podcasts** still has no official analytics API (re-verified
-  July 2026). Apple *download* traffic is covered by OP3; the Apple-only
+* **Apple Podcasts — correction, 25 July 2026.** This file previously
+  said Apple has "no official analytics API". That is wrong, and the
+  claim also sat in `requirements.txt`. Apple ships **Reporter**, a
+  command-line tool that returns `apShowListening`,
+  `apEpisodeListening`, `apChannelListening` and `apProviderListening`
+  reports (Daily / Weekly / Monthly) against an access token valid for
+  **180 days** — no cookies, no browser session. That is exactly the
+  durable, scriptable source the cookie scraper below is a workaround
+  for. Two gates stand between us and it: our Apple Podcasters Program
+  agreement reads **"Pending User Info"** (missing a bank account and
+  the Canadian GST/HST form — see Podcasts Connect → Business), and
+  Apple documents these reports as requiring at least one active
+  subscription, of which we have zero. Provider number is `93825591`.
+  Settle it empirically before designing around it:
+
+  ```
+  java -jar Reporter.jar p=Reporter.properties Sales.getVendors
+  java -jar Reporter.jar p=Reporter.properties \
+      Sales.getReport 93825591, apShowListening, Summary, Daily, YYYYMMDD
+  ```
+
+  If those return data, Reporter becomes the primary Apple source and
+  the cookie path below drops to fallback.
+* Apple *download* traffic is covered by OP3; the Apple-only
   engagement metrics (followers, plays, time listened) are now fetched
   via the community
   [apple-connector](https://github.com/openpodcast/apple-connector) into

@@ -22,6 +22,15 @@ google-auth-httplib2>=0.4.0
 # Unofficial Spotify for Podcasters analytics (scripts/fetch_spotify_stats.py)
 spotifyconnector>=0.7.0
 # Unofficial Apple Podcasts Connect analytics (scripts/fetch_apple_stats.py).
-# Apple ships no creator analytics API; this reads the same endpoints the
-# Podcasts Connect dashboard uses, via myacinfo/itctx session cookies.
+# Reads the same endpoints the Podcasts Connect dashboard uses, via
+# myacinfo/itctx session cookies, which expire in roughly a day.
+#
+# Correction (July 2026): an earlier note here claimed "Apple ships no
+# creator analytics API". That is wrong. Apple's Reporter command-line
+# tool exposes apShowListening / apEpisodeListening / apProviderListening
+# reports against a 180-day access token — no cookies. It is gated on an
+# active Apple Podcasters Program agreement (ours is "Pending User Info")
+# and, per Apple's docs, on having at least one subscription. If that
+# gate clears, Reporter becomes the primary source and this cookie
+# scraper drops to fallback. See docs/analytics.md.
 appleconnector>=0.3.0
