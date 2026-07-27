@@ -199,3 +199,53 @@ class TestFeedSurvivesSummariesTruncation:
         config.video_podcast.max_episodes = 35
         _out, count = build_video_feed_for_show(config, repo)
         assert count == 35, "max_episodes should no longer be capped at 30"
+
+
+class TestBackfillIdempotency:
+    """The smoke run re-rendered an episode the live pipeline had already
+    published, because the gate consulted only the durable index — which was
+    empty on first run. Sixteen wasted minutes, and it overwrote a good R2
+    object with a different render (the scene library moves, so a re-render
+    is never byte-identical), briefly leaving the feed's advertised length
+    disagreeing with what the CDN served."""
+
+    def test_an_already_published_episode_is_adopted_not_re_rendered(
+            self, repo, monkeypatch):
+        import engine.video_backfill as vb
+
+        config = _spacex()
+        monkeypatch.setattr(vb, "PROJECT_ROOT", repo)
+        summaries = repo / config.publishing.summaries_json
+        _w, recs = load_summaries(summaries)
+        ep = recs[0]["episode_num"]
+        upsert_video(summaries, ep, _track(ep))
+
+        def _boom(*a, **k):  # noqa: ANN001 — must never be reached
+            raise AssertionError("re-rendered an episode that already had video")
+
+        monkeypatch.setattr("engine.video.build_long_form_video", _boom)
+        monkeypatch.setattr(video_index, "PROJECT_ROOT", repo)
+
+        result = vb.backfill_episode_video(config, ep)
+        assert result["status"] == "adopted"
+        # And the point of adopting: it now survives summaries truncation.
+        assert ep in video_index.indexed_episodes(
+            video_index.index_path(config, repo))
+
+    def test_force_still_re_renders(self, repo, monkeypatch):
+        import engine.video_backfill as vb
+
+        config = _spacex()
+        monkeypatch.setattr(vb, "PROJECT_ROOT", repo)
+        summaries = repo / config.publishing.summaries_json
+        _w, recs = load_summaries(summaries)
+        ep = recs[0]["episode_num"]
+        upsert_video(summaries, ep, _track(ep))
+        monkeypatch.setattr(video_index, "PROJECT_ROOT", repo)
+
+        calls = []
+        monkeypatch.setattr(vb, "_download_audio",
+                            lambda *a, **k: calls.append(1) or None)
+        result = vb.backfill_episode_video(config, ep, force=True)
+        assert calls, "--force must bypass the idempotency gate"
+        assert result["status"] == "no_audio"  # got past the gate, then stubbed

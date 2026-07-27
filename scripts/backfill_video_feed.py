@@ -149,7 +149,7 @@ def main() -> int:
                 config, ep, force=args.force, verify=args.verify,
                 dry_run=args.dry_run)
             status = result.get("status")
-            if status in ("ok", "already_done", "would_render"):
+            if status in ("ok", "already_done", "adopted", "would_render"):
                 total_ok += 1
                 extra = (f" ({result['scene_count']} scenes)"
                          if "scene_count" in result else "")

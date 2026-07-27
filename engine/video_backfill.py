@@ -144,25 +144,6 @@ def backfill_episode_video(
     if not (vp and vp.enabled):
         return {"status": "not_enabled", "episode": episode_num}
 
-    idx = index_path(config)
-    existing = indexed_episodes(idx).get(episode_num)
-    if existing and not force:
-        if not verify:
-            return {"status": "already_done", "episode": episode_num,
-                    "url": existing["url"]}
-        try:
-            import requests
-
-            if requests.head(existing["url"], timeout=30,
-                             allow_redirects=True).status_code == 200:
-                return {"status": "already_done", "episode": episode_num,
-                        "url": existing["url"]}
-            logger.warning("[%s] ep%s recorded video is unreachable — re-rendering",
-                           slug, episode_num)
-        except Exception:  # noqa: BLE001 — an unverifiable URL gets re-rendered
-            logger.warning("[%s] ep%s video HEAD failed — re-rendering",
-                           slug, episode_num)
-
     summaries_path = PROJECT_ROOT / config.publishing.summaries_json
     try:
         _wrapper, records = load_summaries(summaries_path)
@@ -174,6 +155,54 @@ def backfill_episode_video(
         return {"status": "no_record", "episode": episode_num}
 
     date_str = str(rec.get("date") or "")[:10]
+
+    # Idempotency. An episode "already has a video" if EITHER source says so.
+    # Checking only the index would re-render every episode the live pipeline
+    # has already published — on a show that has been running a while that is
+    # a pile of wasted renders, and each one overwrites a perfectly good R2
+    # object with a different render (the scene library moves, so a re-render
+    # is never byte-identical), briefly leaving the feed's advertised length
+    # disagreeing with what the CDN serves.
+    idx = index_path(config)
+    indexed = indexed_episodes(idx)
+    existing = indexed.get(episode_num)
+    summary_track = rec.get("video") if isinstance(rec.get("video"), dict) else None
+    if not existing and summary_track and summary_track.get("url"):
+        existing = {
+            "url": summary_track["url"],
+            "bytes": int(summary_track.get("bytes") or 0),
+            "adopted_from_summaries": True,
+        }
+
+    if existing and not force:
+        reachable = True
+        if verify:
+            try:
+                import requests
+
+                reachable = requests.head(
+                    existing["url"], timeout=30,
+                    allow_redirects=True).status_code == 200
+            except Exception:  # noqa: BLE001 — unverifiable means re-render
+                reachable = False
+            if not reachable:
+                logger.warning("[%s] ep%s recorded video is unreachable — re-rendering",
+                               slug, episode_num)
+        if reachable:
+            # Adopt a live-pipeline upload into the durable index rather than
+            # re-rendering it. This is the whole point of the index: the
+            # episode survives summaries' 30-record truncation, and it costs
+            # nothing.
+            if existing.get("adopted_from_summaries"):
+                record_from_track(
+                    config, episode_num, summary_track, date=date_str,
+                    title=rec.get("episode_title") or f"Episode {episode_num}")
+                logger.info("[%s] ep%s already published by the pipeline — "
+                            "adopted into the index, no re-render", slug, episode_num)
+                return {"status": "adopted", "episode": episode_num,
+                        "url": existing["url"]}
+            return {"status": "already_done", "episode": episode_num,
+                    "url": existing["url"]}
     cover = _cover_path(config)
     if not cover:
         return {"status": "no_cover", "episode": episode_num}
