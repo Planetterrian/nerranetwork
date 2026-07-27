@@ -1,0 +1,121 @@
+Bienvenue dans Models and Agents, épisode cent vingt-quatre, pour le vingt-sept juillet deux mille vingt-six. Votre briefing quotidien sur l’IA. Une nouvelle semaine en IA. Et si la précédente est un indicateur, accrochez-vous. On y va.
+
+Des agents autonomes de support viennent de prouver qu’ils peuvent gérer un vrai volume. Dave de G2A a traité quatorze mille quatre cents tickets sans intervention humaine.
+
+G2A a déployé un agent IA autonome nommé Dave qui a résolu quatorze mille quatre cents tickets de support vendeur sur soixante-trois jours.
+
+Meta a confirmé qu’il allait sortir un nouveau modèle open source.
+
+Qwen trois point six vingt-sept B a montré des gains plus importants en décodage spéculatif sur des niveaux de quantification plus élevés.
+
+Les développeurs doivent surveiller comment ces progrès sur les agents et l’inférence se traduisent en charges de production cette semaine.
+
+G2A point com a déployé son agent IA autonome Dave pour gérer les tickets de support vendeur.
+
+L’agent a résolu quatorze mille quatre cents tickets sur soixante-trois jours sans aucune intervention humaine signalée dans la boucle.
+
+Cela démontre un débit concret pour un flux de support client étroit mais à fort volume.
+
+Le résultat fournit aux équipes un point de données concret sur ce que ressemble une résolution de tickets entièrement autonome en pratique aujourd’hui.
+
+Les entreprises qui gèrent des volumes élevés de tickets similaires devraient tester des configurations d’agents comparables sur leurs propres logs de support cette semaine.
+
+Surveillez les métriques de suivi sur la qualité de résolution et les taux d’escalade.
+
+Qwen trois point six vingt-sept B a affiché les plus gros gains de vitesse en décodage spéculatif sur des poids Q huit, avec des gains qui diminuaient sur Q six et Q quatre.
+
+Dix configurations spéculatives testées sur dix ont classé Q huit en tête par multiplicateur.
+
+Les taux d’acceptation sont restés constants sur des profondeurs de quantification équivalentes tandis que la vitesse de base diminuait avec des poids plus lourds en octets.
+
+DFlash a délivré le plus haut nombre absolu de tokens par seconde au global.
+
+MTP s’est classé deuxième sur la plupart des configurations.
+
+Le couple nvfp quatre SGLang s’est révélé le plus rapide globalement parmi les combinaisons de quantification et de moteur.
+
+Weaver est apparu comme une exception car il est uniquement en fork avec des têtes par cible, ce qui le limite à des paires spécifiques de modèle et de quantification.
+
+Le chemin MTP de Llama point cpp sur UD Q quatre s’est exécuté de façon pathologiquement lente, produisant un nombre absolu de tokens par seconde inférieur à la variante MTP trois en Q six à des taux d’acceptation identiques.
+
+Les développeurs qui font de l’inférence locale sur des modèles de classe vingt-sept B devraient benchmarker DFlash ou MTP sur leur quantification cible cette semaine pour capter les gains annoncés.
+
+Les tests utilisaient des sorties courtes, un décodage glouton et une taille de batch de un, donc les multiplicateurs représentent une borne supérieure plutôt qu’un résultat général en concurrence.
+
+L’annonce est arrivée via une capture d’écran d’un post d’Alexandr Wang.
+
+Aucun détail d’architecture, aucun nombre de paramètres ni calendrier de sortie n’ont été fournis dans le post.
+
+La discussion communautaire porte sur la façon dont le nouveau modèle se comparera aux familles de poids ouverts existantes.
+
+Les développeurs qui suivent les sorties ouvertes doivent surveiller les canaux officiels de Meta pour la première diffusion des poids.
+
+Siemens a présenté un agent IA de caractérisation qui automatise les boucles d’itération de conception.
+
+L’agent cible les flux de conception électronique où les étapes de caractérisation répétées sont courantes.
+
+Aucun chiffre de performance ni détail d’intégration n’a été communiqué.
+
+Les équipes hardware et EDA doivent surveiller les premières démos publiques ou l’accès API.
+
+iLands a été lancé comme un réseau économique partagé où des agents IA autonomes et des humains peuvent travailler, échanger et coévoluer.
+
+La plateforme se positionne comme une infrastructure pour les interactions économiques agent à agent et humain à agent.
+
+Aucune architecture technique, aucune API ni détail d’accès anticipé n’ont été divulgués.
+
+Les équipes qui explorent les places de marché multi-agents doivent suivre la première documentation publique du projet.
+
+Simon Willison a publié que des capacités de segmentation d’image similaires à celles démontrées dans Gemini deux point cinq seraient utiles.
+
+Le tweet renvoie à son article précédent sur la segmentation d’image dans Gemini.
+
+Aucune nouvelle implémentation n’a été partagée.
+
+Les développeurs qui travaillent sur des outils multimodaux devraient consulter le post lié pour le contexte sur le comportement actuel de segmentation.
+
+Sam Altman a partagé un prompt détaillé qui utilisait l’historique complet des conversations pour générer trois options de voyage, construire un site de coordination, atteindre un consensus de groupe et rédiger des e-mails de réservation.
+
+Le système a accompli la tâche de bout en bout à partir d’un prompt mobile.
+
+L’exemple illustre la portée actuelle de la planification agentique multi-étapes.
+
+Les développeurs devraient tester des prompts à long horizon similaires sur leurs propres flux de coordination.
+
+Bon, on ouvre le capot sur le fine-tuning efficace en paramètres pour les modèles mixture of experts.
+
+Tout le monde parle des adaptateurs uniformes comme le choix évident par défaut, pourtant MoE squared Laura couple directement le routeur pré-entraîné au routage Laura spécifique à la tâche via un module de projection conditionnée par routage à double canal.
+
+Les activations du routeur déjà calculées par le modèle de base sont réutilisées pour décider quels experts Laura s’activent, évitant un second passage complet de routage.
+
+Un seul pool global d’experts Laura est partagé entre toutes les couches, permettant des affinités émergentes par couche tout en gardant le total de paramètres ajoutés faible.
+
+Cette conception réduit le risque d’écraser la spécialisation des experts de base par rapport à un placement statique d’adaptateurs.
+
+L’approche a atteint une précision state of the art en aval sur plusieurs backbones MoE tout en préservant davantage de capacités générales que les méthodes MoE PEFT précédentes.
+
+Les équipes qui fine-tunent des modèles MoE devraient tester MoE squared Laura en premier lorsque la réutilisation du routeur est possible.
+
+Le principal piège est de s’assurer que le routeur de base reste figé pendant l’adaptation afin que les priorités de routage ne soient pas perturbées.
+
+Testez le décodage spéculatif DFlash ou MTP sur Qwen trois point six vingt-sept B avec des poids Q huit pour mesurer les accélérations annoncées sur votre matériel.
+
+Consultez l’article de Simon Willison sur la segmentation d’image dans Gemini si vous avez besoin d’extraction de régions multimodales dans vos flux actuels.
+
+Appliquez le style de prompt de voyage en groupe de Sam Altman à vos propres tâches de planification multi-étapes pour voir où les agents actuels réussissent ou échouent.
+
+Surveillez les canaux de Meta pour les poids du modèle open source promis et comparez les premières versions aux familles Qwen et Llama sur vos tâches cibles.
+
+L’agent de caractérisation de Siemens devrait atteindre des démos publiques ou un accès anticipé.
+
+La documentation et les API de la plateforme iLands sont attendues pour des expériences de trading agent à agent.
+
+D’autres détails sur le modèle open source de Meta sont probables dans le prochain cycle de sortie.
+
+Demain, gardez un œil sur la première documentation publique d’iLands concernant sa configuration de marketplace d’agents.
+
+C’était Models and Agents pour aujourd’hui. Si vous avez trouvé cela utile, partagez-le avec quelqu’un qui essaie de suivre tous ces changements et abonnez-vous pour ne pas manquer la mise à jour de demain. Le monde de l’IA avance vite. Nous vous aidons à rester à jour. À demain. Et si vous préférez regarder plutôt qu’écouter, retrouvez-nous sur YouTube à Nerra Network, le lien est dans les notes de l’émission.
+
+Une dernière chose : si vous avez aimé l’épisode d’aujourd’hui, notre émission sœur Fascinating Frontiers mérite une place dans votre flux : les nouvelles les plus fascinantes de l’espace et de la science. C’est l’un des briefings quotidiens du réseau Nerra, tous gratuits sur nerranetwork point com. The Do Positive Pod est le club des gens qui passent à l’action : épisodes et mur de dispatch sur nerranetwork point com slash thedppod.
+
+Cet épisode a utilisé une synthèse vocale IA de ma voix ; la sélection éditoriale et l’analyse sont les miennes.
