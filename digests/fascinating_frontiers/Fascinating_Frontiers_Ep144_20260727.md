@@ -1,0 +1,48 @@
+# Fascinating Frontiers
+🚀 **Fascinating Frontiers** - Space & Astronomy News
+> **A seed that circled the Moon now grows into a living tree in the middle of Manhattan.**
+---
+### Top 15 Space & Astronomy Stories
+1. **Blue Origin Tests New Glenn Stages at Stennis** — SpaceNews
+   Blue Origin will conduct hot-fire tests of New Glenn upper stages at NASA’s Stennis Space Center. The company is rebuilding its Cape Canaveral launch complex after earlier infrastructure work. Stennis offers existing test stands suited for large liquid-hydrogen engines. Engineers will use the data to qualify the stage for flight. The first New Glenn orbital attempt remains targeted for later this year. Source: [spacenews.com](https://spacenews.com/blue-origin-to-test-new-glenn-upper-stages-at-stennis/)
+
+2. **Rocket Lab Wins $266 Million Alaska Launch Deal** — SpaceNews
+   Rocket Lab will build a new launch site at Kodiak, Alaska, under a Space Force contract. The facility is designed for up to 18 suborbital missions supporting military testing. Construction will begin soon and create a second U.S. launch location for the company. The deal expands Rocket Lab’s ability to serve national-security customers from both coasts. No orbital launches are currently planned from the site. Source: [spacenews.com](https://spacenews.com/rocket-lab-to-open-alaska-launch-site-under-266-million-space-force-deal/)
+
+3. **Moon Tree Planted in New York City Park** — Space.com
+   A tree grown from a seed that flew around the Moon on Artemis I now stands in Madison Square Park. The Madison Square Park Conservancy unveiled the sapling during a public event. The seed traveled aboard Orion before returning to Earth for germination. Organizers chose a dawn redwood for its historical connection to earlier Moon tree projects. The tree will remain on public display in the park. Source: [space.com](https://www.space.com/astronomy/moon/a-seed-that-flew-around-the-moon-grew-into-this-tree-in-nyc)
+
+4. **ESA Hosts Space Startup Days in September** — ESA Activities
+   The European Space Agency will hold its Industry Space Days event on 16–17 September at ESTEC in the Netherlands. Startup teams will pitch ideas for using space technologies and data. Established companies and investors will attend to explore partnerships. The two-day program includes matchmaking sessions and capability showcases. Registration remains open for both startups and larger industry players. Source: [esa.int](https://www.esa.int/About_Us/Business_with_ESA/Meet_space_startups_at_ESA_s_Industry_Space_Days)
+
+5. **Saturn Reaches Stationary Point Tonight** — Astronomy
+   Saturn appears motionless against the stars in Pisces as it reaches a stationary point at 7 P.M. EDT. The planet sits highest in the predawn sky, offering the best viewing window a few hours before sunrise. Its rings remain tilted toward Earth at a favorable angle. Observers with small telescopes can still spot the planet’s largest moon, Titan. The stationary moment marks the transition from westward to eastward motion in Earth’s sky. Source: [astronomy.com](https://www.astronomy.com/observing/the-sky-today-monday-july-27-2026/)
+
+6. **Pink Penguin Droppings Reveal Diet Shifts** — NASA Science
+   Scientists are using the color of Adélie penguin guano to track what the birds eat. Pinker droppings indicate more krill consumption while greener hues point to fish. Satellite images of colony stains help researchers monitor diet changes without disturbing the penguins. Sea-ice conditions strongly influence which prey species remain available. The method gives a broad view of how warming affects the Antarctic food web. Source: [science.nasa.gov](https://science.nasa.gov/earth/earth-observatory/pink-penguin-guano-provides-diet-clues/)
+
+7. **Black Hole Mergers Show Signs of Repeat Events** — Universe Today
+   Gravitational-wave detections now suggest some black holes merge more than once. When two black holes collide, the resulting larger object can later pair with another companion. The pattern appears in the mass and spin distributions recorded by LIGO and Virgo. Repeating mergers help explain the population of unexpectedly heavy black holes. Future runs will test how common these second-generation events truly are. Source: [universetoday.com](https://www.universetoday.com/articles/black-hole-collisions-tell-a-tale-of-repeating-mergers)
+
+8. **Clouds Reshape Sub-Neptune Interiors** — Universe Today
+   Researchers at Arizona State University modeled how thick cloud layers alter heat flow inside sub-Neptunes. The clouds trap heat near the surface, changing the temperature gradient that reaches the rocky core. This feedback can expand or compress the planet’s interior over time. The study used atmospheric circulation models tied to interior structure codes. Follow-up observations with JWST will test the predicted cloud signatures. Source: [universetoday.com](https://www.universetoday.com/articles/new-research-shows-how-clouds-shape-the-interiors-of-sub-neptunes)
+
+9. **Extreme Millisecond Pulsar Detected in Gamma Rays** — Phys.org Space
+   Chinese astronomers found gamma-ray pulsations from PSR J0435+3233 using Fermi telescope data. The pulsar spins once every 3.2 milliseconds and lies roughly 3,900 light-years away. Its gamma-ray beam provides a new probe of the extreme magnetic and rotational environment near the neutron star. The detection adds to the small sample of millisecond pulsars visible at high energies. More timing observations will refine its spin-down rate and age estimate. Source: [phys.org](https://phys.org/news/2026-07-gamma-ray-pulsations-reveal-extreme.html)
+
+10. **UCF Team Builds Tool for Habitable-World Search** — Universe Today
+    University of Central Florida researchers are developing the Photonics-Enabled Exoplanet Spectroscopic System. The instrument aims to improve atmospheric measurements for NASA’s planned Habitable Worlds Observatory. It combines photonic technologies to boost signal-to-noise ratios on faint exoplanet light. Early lab tests target the wavelength ranges needed to spot potential biosignatures. The project supports the broader goal of characterizing Earth-like worlds around nearby stars. Source: [universetoday.com](https://www.universetoday.com/articles/ucf-researchers-are-developing-tools-to-help-find-habitable-planets)
+
+11. **Comet LINEAR Broke Apart 26 Years Ago** — Astronomy
+    Comet C/1999 S4 (LINEAR) was discovered in 1999 and disintegrated while approaching the Sun. Hubble images from July 2000 captured fragments separating as the nucleus crumbled. The comet’s unusual brightness fade and sudden disintegration drew wide attention at the time. Its breakup offered a rare view of how cometary nuclei respond to solar heating. Archival data from the event still inform models of comet fragility. Source: [astronomy.com](https://www.astronomy.com/today-in-the-history-of-astronomy/july-26-2000-comet-linear-disintegrates/)
+
+12. **Paper Explores Harvesting Stellar Spin as Technosignature** — Universe Today
+    A new preprint examines whether advanced civilizations might extract rotational energy from stars instead of building Dyson spheres. The author models how such extraction would alter a star’s spin rate and observable properties. Mid-infrared waste heat searches would miss this signature entirely. The idea shifts attention toward stars that appear to spin slower than expected for their age. Follow-up studies will test whether current surveys could already detect the effect. Source: [universetoday.com](https://www.universetoday.com/articles/are-aliens-harvesting-the-spin-of-stars)
+---
+### Cosmic Spotlight
+Clouds on sub-Neptunes do more than block starlight. ASU models show they trap heat near the surface, shifting the temperature profile that reaches the planet’s rocky core and changing its overall size and density. JWST transmission spectra can now test these predictions by measuring cloud-top temperatures and compositions on a growing sample of worlds. If the feedback loop holds, many sub-Neptunes may hide larger rocky interiors than current mass-radius diagrams suggest. The next step is comparing the new interior models against the first multi-wavelength phase curves of cloudy sub-Neptunes. What fraction of the sub-Neptune population actually follows this cloud-regulated pathway?
+---
+### Cosmic Deep Dive: How Repeating Black Hole Mergers Trace Cosmic History
+If every black hole merger released energy equal to several Suns converted entirely into gravitational waves, the total output from one event would still be invisible to ordinary telescopes yet shake spacetime across billions of light-years. When two black holes spiral together, the final object can carry enough mass and spin to capture a new partner later, creating a second-generation merger whose heavier mass and distinctive spin signature stand out in the data. LIGO and Virgo have already recorded candidates whose masses exceed what single-collapse stars are expected to produce, pointing to this repeated pairing process. The rate of such events depends on how often black holes remain bound inside dense star clusters rather than being ejected after the first collision. Current catalogs contain only a handful of these candidates, but the number is rising with each observing run. We still do not know what fraction of all mergers follow this repeat pathway or how that fraction changes with cosmic time.  
+---
+New instruments and fresh data keep rewriting what we thought we knew about both nearby worlds and distant extremes.
