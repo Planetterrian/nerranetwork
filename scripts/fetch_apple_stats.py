@@ -95,8 +95,66 @@ def discover_show_ids() -> dict[str, str]:
     return ids
 
 
+def _overview_scalars(overview: Any) -> dict[str, int]:
+    """Pull the headline scalars out of an ``overview()`` response.
+
+    This is the reliable source and it is what the Connect dashboard itself
+    renders. ``overview.showPlayCount.latestValue`` carries::
+
+        {"playscount": 2041.0, "uniquelistenerscount": 164.0,
+         "uniqueengagedlistenerscount": 94.0, "totaltimelistened": 445323.0}
+
+    and ``followerAllTimeTrends`` is ``[[yyyymmdd, followers, ...], ...]``.
+
+    Why this exists: the previous implementation derived every scalar from
+    the ``trends()`` payloads via :func:`_totals_from_trends`, which walks
+    for dicts carrying ``value``/``count``/``total``. Those payloads put
+    their data in ``content`` as a **list of lists of scalars**, so no key
+    ever matched, every metric came back ``None``, and the dashboard summed
+    those into a confident-looking ``0`` — while 4,486 real plays across 14
+    shows sat in this field, fetched and then discarded. The failure was
+    invisible because a parse miss produces no ``errors`` entry, so the
+    "cookies expired" hint could never fire for it either.
+
+    Returns only the keys it could actually read, so a missing metric stays
+    absent (rendered "—") rather than becoming a false zero.
+    """
+    if not isinstance(overview, dict):
+        return {}
+    out: dict[str, int] = {}
+
+    latest = (overview.get("showPlayCount") or {}).get("latestValue") or {}
+    if isinstance(latest, dict):
+        for key, field in (
+            ("plays", "playscount"),
+            ("listeners", "uniquelistenerscount"),
+            ("engaged_listeners", "uniqueengagedlistenerscount"),
+            ("time_listened", "totaltimelistened"),
+        ):
+            val = latest.get(field)
+            if isinstance(val, (int, float)) and not isinstance(val, bool):
+                out[key] = int(val)
+
+    # [[yyyymmdd, followers, ...]] — newest row last. An empty list means
+    # Apple has no follower data for this show, which is not zero followers.
+    trends = overview.get("followerAllTimeTrends")
+    if isinstance(trends, list) and trends:
+        row = trends[-1]
+        if isinstance(row, list) and len(row) >= 2:
+            val = row[1]
+            if isinstance(val, (int, float)) and not isinstance(val, bool):
+                out["followers"] = int(val)
+
+    return out
+
+
 def _totals_from_trends(payload: Any) -> int | None:
     """Best-effort scalar total out of a trends() response.
+
+    Retained as a FALLBACK only — :func:`_overview_scalars` is the primary
+    source. Kept because the trends payload shape has shifted before and
+    may grow dict-shaped nodes again; when it does, this picks them up
+    without another outage.
 
     The unofficial endpoint's shape shifts; rather than pin one schema we
     walk the common containers and sum any numeric ``value``/``count``.
@@ -158,10 +216,25 @@ def fetch_show(myacinfo: str, itctx: str, show_id: str) -> dict[str, Any]:
             result.setdefault("errors", {})[name] = str(exc)[:300]
 
     # Compact scalars the dashboard renders without knowing the raw shape.
-    for metric_name in ("plays", "listeners", "followers", "time_listened"):
+    # The overview is authoritative — it is what Connect's own dashboard
+    # shows. Trends are consulted only for anything the overview omits, so
+    # a future shape change on either side degrades rather than zeroes.
+    scalars = _overview_scalars(result.get("overview"))
+    for metric_name in ("plays", "listeners", "followers",
+                        "time_listened", "engaged_listeners"):
+        if metric_name in scalars:
+            result[metric_name] = scalars[metric_name]
+            continue
         val = _totals_from_trends(result.get(f"trend_{metric_name}"))
         if val is not None:
             result[metric_name] = val
+
+    # A show that returned neither an overview nor any usable trend is not
+    # a show with zero plays — record it so the dashboard can tell the two
+    # apart instead of rendering a confident 0.
+    if not any(k in result for k in ("plays", "listeners", "followers",
+                                     "time_listened")):
+        result["no_data"] = True
     return result
 
 

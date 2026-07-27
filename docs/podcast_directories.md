@@ -166,10 +166,32 @@ feed (spacex_podcast.ru.rss) never indexed on Spotify — resubmit at
 creators.spotify.com if wanted.
 Amazon Music 2026-07-23: the 16 missing feeds were submitted and all
 ownership-confirmation emails were clicked the same day — shows go
-LIVE as Amazon ingests them. Podcast Index: API keys stale (HTTP 401);
-refresh PODCAST_INDEX_API_KEY/SECRET at api.podcastindex.org, then
-re-run the "Submit Podcast Directories" workflow. iHeart: not yet
-submitted (manual form).
+LIVE as Amazon ingests them. iHeart: not yet submitted (manual form).
+
+Podcast Index 2026-07-27 — CORRECTION. The earlier note here said the
+API keys were "stale (HTTP 401); refresh ... then re-run". That was a
+misdiagnosis and cost a round of key regeneration. Fresh keys return the
+same 401, because Podcast Index's own API spec says of the endpoint:
+
+    /add/byfeedurl — NOTE: this endpoint requires an API Key with the
+    write permission.
+
+Self-service developer keys are read-only, so `add_to_podcast_index()`
+can never succeed with them. Do not regenerate keys for this again.
+
+None of it mattered: Podcast Index is an open, public index and feeds
+are NOT owned by an API key or account. All 23 audio feeds are already
+indexed and crawled continuously — Tesla Shorts Time is feed 7776625 and
+was carrying same-day episodes when checked. Losing the account the keys
+were issued under had no effect on any of them.
+
+To add a feed that genuinely is missing, use the public form at
+podcastindex.org/add — no key required, hCaptcha-gated so it is a manual
+step. The five video-edition feeds were added that way on 2026-07-27.
+
+Housekeeping: a stale duplicate "Tesla Shorts Time Daily" is also in the
+index alongside the live entry; worth removing so apps don't surface
+both.
 
 Note: on YouTube the dub shows are distributed as native uploads +
 podcast playlists on @NerraRU/@NerraFR (not RSS ingestion), so the
