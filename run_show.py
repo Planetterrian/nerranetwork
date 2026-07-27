@@ -3316,6 +3316,8 @@ def run(args: argparse.Namespace) -> None:
             channel_image=config.publishing.rss_image,
             channel_category=config.publishing.rss_category,
             channel_subcategory=getattr(config.publishing, "rss_subcategory", ""),
+            channel_category2=getattr(config.publishing, "rss_category2", ""),
+            channel_subcategory2=getattr(config.publishing, "rss_subcategory2", ""),
             channel_keywords=getattr(config.publishing, "rss_keywords", ""),
             guid_prefix=config.publishing.guid_prefix,
             format_duration_func=format_duration,

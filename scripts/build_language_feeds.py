@@ -125,6 +125,8 @@ def build_for_show(
             channel_image=config.publishing.rss_image,
             channel_category=config.publishing.rss_category,
             channel_subcategory=getattr(config.publishing, "rss_subcategory", ""),
+            channel_category2=getattr(config.publishing, "rss_category2", ""),
+            channel_subcategory2=getattr(config.publishing, "rss_subcategory2", ""),
             base_url=base_url,
             analytics_prefix_url=analytics_prefix_url,
         )

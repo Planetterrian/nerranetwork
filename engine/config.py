@@ -260,10 +260,23 @@ class PublishingConfig:
     rss_image: str = ""
     rss_category: str = "Technology"
     # Apple Podcasts allows a category + sub-category pair; the
-    # sub-category drives the curated charts inside Apple. Operator
-    # caught (May 6 2026 audit) every show emitting a single-level
-    # category and missing the sub. Per-show YAML supplies the value.
+    # sub-category drives the curated charts inside Apple. Per-show YAML
+    # supplies the value.
+    #
+    # CORRECTION (July 2026): the May 6 2026 audit noted here that every
+    # show emitted a single-level category and was "missing the sub".
+    # That was wrong for the Technology shows — Apple's Technology
+    # category has NO subcategories, so there was never one to add. They
+    # showed a single genre in Podcasts Connect because that is correct.
+    # What they actually lacked is a SECOND category (below).
     rss_subcategory: str = ""
+    # Apple allows a SECOND category (primary + secondary), each with its
+    # own subcategory. The second appears on its own category page, so it
+    # is a free discoverability slot. Note Technology has no subcategories
+    # at all — see engine/feed_categories.py; a Technology show widens
+    # reach via this field, not via rss_subcategory.
+    rss_category2: str = ""
+    rss_subcategory2: str = ""
     # ``itunes:keywords`` was officially deprecated by Apple but is
     # still indexed by every other major aggregator (Spotify, Pocket
     # Casts, Fountain, Podcast Index). Cheap SEO win — comma-separated

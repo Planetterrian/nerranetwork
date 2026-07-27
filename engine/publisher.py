@@ -20,6 +20,8 @@ from email.utils import parsedate_to_datetime
 from pathlib import Path
 from typing import Optional, Sequence
 
+from engine.feed_categories import apply_categories
+
 logger = logging.getLogger(__name__)
 
 
@@ -280,6 +282,8 @@ def update_rss_feed(
     channel_image: str = "",
     channel_category: str = "Technology",
     channel_subcategory: str = "",
+    channel_category2: str = "",
+    channel_subcategory2: str = "",
     channel_keywords: str = "",
     guid_prefix: str = "podcast",
     format_duration_func=None,
@@ -480,10 +484,8 @@ def update_rss_feed(
     fg.podcast.itunes_owner(name=channel_author, email=channel_email)
     if channel_image:
         fg.podcast.itunes_image(channel_image)
-    if channel_subcategory:
-        fg.podcast.itunes_category({"cat": channel_category, "sub": channel_subcategory})
-    else:
-        fg.podcast.itunes_category(channel_category)
+    apply_categories(fg, channel_category, channel_subcategory,
+                     channel_category2, channel_subcategory2)
     # ``itunes:keywords`` — Apple deprecated but Spotify / Pocket Casts /
     # Fountain / Podcast Index still index it. Cheap SEO. Operator
     # caught (May 6 2026 audit) every show shipping with no keywords.

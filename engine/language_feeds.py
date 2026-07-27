@@ -38,6 +38,7 @@ import logging
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Tuple
 
+from engine.feed_categories import apply_categories
 from engine.summaries_io import load_summaries
 
 logger = logging.getLogger(__name__)
@@ -209,6 +210,8 @@ def build_language_feed(
     channel_image: str = "",
     channel_category: str = "Technology",
     channel_subcategory: str = "",
+    channel_category2: str = "",
+    channel_subcategory2: str = "",
     base_url: str = "https://nerranetwork.com",
     analytics_prefix_url: str = "",
 ) -> Optional[Tuple[Path, int]]:
@@ -254,10 +257,8 @@ def build_language_feed(
     fg.podcast.itunes_owner(name=channel_author, email=channel_email)
     if channel_image:
         fg.podcast.itunes_image(channel_image)
-    if channel_subcategory:
-        fg.podcast.itunes_category({"cat": channel_category, "sub": channel_subcategory})
-    else:
-        fg.podcast.itunes_category(channel_category)
+    apply_categories(fg, channel_category, channel_subcategory,
+                     channel_category2, channel_subcategory2)
     fg.podcast.itunes_explicit("no")
 
     for rec in targets:

@@ -49,6 +49,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from engine import video_index
+from engine.feed_categories import apply_categories
 from engine.summaries_io import load_summaries
 
 logger = logging.getLogger(__name__)
@@ -183,6 +184,8 @@ def build_video_feed(
     channel_image: str = "",
     channel_category: str = "Technology",
     channel_subcategory: str = "",
+    channel_category2: str = "",
+    channel_subcategory2: str = "",
     channel_language: str = "en-us",
     base_url: str = "https://nerranetwork.com",
     max_episodes: int = 30,
@@ -226,11 +229,8 @@ def build_video_feed(
     fg.podcast.itunes_owner(name=channel_author, email=channel_email)
     if channel_image:
         fg.podcast.itunes_image(channel_image)
-    if channel_subcategory:
-        fg.podcast.itunes_category({"cat": channel_category,
-                                    "sub": channel_subcategory})
-    else:
-        fg.podcast.itunes_category(channel_category)
+    apply_categories(fg, channel_category, channel_subcategory,
+                     channel_category2, channel_subcategory2)
     fg.podcast.itunes_explicit("no")
 
     for rec in targets:
@@ -326,6 +326,8 @@ def build_video_feed_for_show(config, project_root: Path) -> Optional[Tuple[Path
         channel_image=vp.channel_image or pub.rss_image or "",
         channel_category=pub.rss_category or "Technology",
         channel_subcategory=pub.rss_subcategory or "",
+        channel_category2=getattr(pub, "rss_category2", "") or "",
+        channel_subcategory2=getattr(pub, "rss_subcategory2", "") or "",
         base_url=pub.base_url or "https://nerranetwork.com",
         max_episodes=vp.max_episodes,
         index_path=video_index.index_path(config, project_root),
