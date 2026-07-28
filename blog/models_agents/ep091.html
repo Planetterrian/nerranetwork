@@ -480,6 +480,19 @@
             background: var(--nn-surface);
             flex-shrink: 0;
         }
+        /* Aggregator-sourced items name the real publisher, for which we
+           have no domain to fetch a favicon from — a lettered badge is
+           honest where Google's favicon would imply Google reported it. */
+        .blog-source-card .source-initial {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-ui);
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--nn-text);
+            background: var(--nn-border, var(--nn-surface));
+        }
 
         /* Related posts */
         .blog-related {
@@ -1389,8 +1402,8 @@
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMixwFBVV95cUxQUm5tMzgtaFNlcWVPY3oxSGZMdzNFQWRXTDRFbGpXU3dXYUxRR2pmRXZpQXVKZndPSkljRXhOd0NXaHVLVjlKS3ZYV3BrcVFESDQ5djNKb1dCZHpPdDZOd3RiQ0NUQ3hwdGYwaGVqMnFCYVNfNmlONVVULXd3a3hPNm1ZUEQ0dERzTXZWRm13MTRqeTZ2MWtuTlQ2VHI0QkhwRy1CTmR3aUp0VVBBSGZpSGJlUHBVMTZfM0xxcENNSnZIMnE2NV9n?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">S</span>
+                        <span class="source-domain">Source 디지털투데이</span>
                     </a>
                     
                     <a href="https://x.com/OpenAI/status/2069483224158646739" target="_blank" rel="noopener" class="blog-source-card">

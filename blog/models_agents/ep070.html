@@ -480,6 +480,19 @@
             background: var(--nn-surface);
             flex-shrink: 0;
         }
+        /* Aggregator-sourced items name the real publisher, for which we
+           have no domain to fetch a favicon from — a lettered badge is
+           honest where Google's favicon would imply Google reported it. */
+        .blog-source-card .source-initial {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-ui);
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--nn-text);
+            background: var(--nn-border, var(--nn-surface));
+        }
 
         /* Related posts */
         .blog-related {
@@ -1358,8 +1371,8 @@
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMipwFBVV95cUxPSVgtemJtZzZNM0JnSzRBWl9MQnJWdGRydXpJclpzenU3U1NRZFVYc3FsZERKb3c3Rk5vZlBneVJEQ1B1MUp1Q00yaGdkMldyN0pBTnVsOGNHOU9sejJDdWtDQkdEVktXTzRmb3hLM1lhVm90a3lWV01ENDhxSlJIUzdhWGNSNUxGNEFvREVOb1pLUXFtQmZ5YWg4X1l5QlV2TWlTUGRrYw" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">G</span>
+                        <span class="source-domain">Google DeepMind</span>
                     </a>
                     
                     <a href="https://x.com/OpenAI/status/2062281977122996256" target="_blank" rel="noopener" class="blog-source-card">
@@ -1373,8 +1386,8 @@
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMipgFBVV95cUxNb3RVTzUwWGVVS3V6VUVBWXV4T0lkVWtPakpxaHk3ZVpyNW1QSm0tcUNleHl0RGZrLU1DZzV3THRLSTJYRzBaeWo0ZkpfYmQ4V1UyYkRJNzRzOVMzQTZIeEtpcnlzS3g0TFZ6TnMtUmpITkRDR0xBREdZdlNCTG9ndGM0VkVaa2lhNnBKWHg0eV85SF9vMFBEVi1IbEZyTVlYTktxTl9R" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">Y</span>
+                        <span class="source-domain">Yahoo Finance</span>
                     </a>
                     
                     <a href="https://openai.com/index/endava-frontiers" target="_blank" rel="noopener" class="blog-source-card">
@@ -1383,18 +1396,18 @@
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMizgFBVV95cUxOUEJpUVVpclhna1lVUWtJQ0YxWW1nN3pWRGo2RUZGRlI2c0tmN0VRQTF6TVhqWGJqYjlYdWJxUDA0WHFLaG9iNEZyVDYybDE4MU9VSXNLNmQxeG1FU1h3VEUteFFKQnpnWXJnOVNVZ1YtMzVPc3U2WVNreGRiS0pabVlXRFlZM2loSk9CSWZ4UVBPS1JiVVhjXzlhOEdXWEdpX0pPTlZ6dHRmVDFHRnVBU3E0Z3FRUlc1RU1BWGdSRDU0b0RObzY1X09LbFk0QQ" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">A</span>
+                        <span class="source-domain">AD HOC NEWS</span>
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMi1wFBVV95cUxOYkk1bTF2QmMyNDRBbFFDa2h2Q1Nab3dQYmk2Q3lwUWtQWXh3enRScFA4YzZUR2tiNHR1dGU1NFFFS3pWNzV2LWsyeWlHdzlyLUk5ZVVjMVpuU2M4X1dRbm1oZWNfanZUcXdGaFFlZWh2UjFmMjNaeExjVFRrRmJHTDluRy1wXzlHeEJIMTJXeEprZGdpWEt5VUJTdWI0UExZNUhlUDVCUUc3Z29oc2xWWXhRaDR6ZXR5TjBjb2IxLUNKWm9xOEVHdDY1ZlllYTJPd3h6TnNBa9IB3gFBVV95cUxQazAxaW5lTkl3enlyWTgtN2lrVnlYR3U5MS1NRnJmX3FKMEZacWp0eXdWWUhiS2dkVFZnZEdhVjRBLTFUb090VUctSjNiN3FBVmE4N3k2QjlCM0poOC1mSG9uRXBPWnd4TjNuNXpjaVc2RlVlaXpNTXluT0V4WjdjdGFBbUE4Z0VSYWs1V0NtMUxkOXBaY3hvRXFxNlRuQ2ZfUVZSLW9PaDFzelpKSzJBQ09pYXFWNldjWHBTaUpTWWVORjhfdkE1M0RKeWNuMjY1SDA0ZjBpZWJWNFN3bnc" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">T</span>
+                        <span class="source-domain">The Hindu</span>
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMiuAFBVV95cUxPTkZlVlc2ZWJZbUo0UnJrbFhGMGRyUTk2b2xtOHNWT1pnMFpMZllXS1NOQ0gtNlc2c1VrVnR6Z0R3MDRCd0hkdDhvZFAtSGNKMHRuNmh4SnM1UFdvWGNERFV6dFdwQWo5MWtrT1pfamUwV3RWZ2VrT0tRNXlOUWdqaHc0dlRXUXRvb2VWeUFwY2hJSU5YWGxhTGZJcWxVN3JpenRUNmtLQ25lNXFINnY3RmViajNzRkdR" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">C</span>
+                        <span class="source-domain">CX Today</span>
                     </a>
                     
                     <a href="https://www.reddit.com/r/MachineLearning/comments/1twhhnq/repo_for_implementations_of_various_transformer/" target="_blank" rel="noopener" class="blog-source-card">
