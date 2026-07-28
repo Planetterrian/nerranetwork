@@ -175,6 +175,27 @@ def validate_yaml(yaml_path: Path, result: ValidationResult) -> dict | None:
         else:
             result.ok(f"Output directory exists: {output_dir}")
 
+    # publishing.rss_link — the <link> every podcast app and YouTube shows
+    # as "the show's website". fascinating_frontiers pointed at
+    # /fascinating_frontiers.html (underscores) while the generated page
+    # is /fascinating-frontiers.html (hyphens), so that link 404'd in
+    # every directory for months and showed up in Search Console. The
+    # slug uses underscores and the page name uses hyphens, so this is an
+    # easy one to get wrong again — check the file actually exists.
+    publishing = config.get("publishing", {})
+    rss_link = (publishing.get("rss_link") or "").strip()
+    if rss_link:
+        rel = rss_link.split("nerranetwork.com/", 1)[-1].split("?", 1)[0]
+        target = PROJECT_ROOT / rel
+        if rel and not target.is_file():
+            hint = ""
+            alt = PROJECT_ROOT / rel.replace("_", "-")
+            if alt.is_file():
+                hint = f" — did you mean /{rel.replace('_', '-')}?"
+            result.error(f"publishing.rss_link 404s: {rss_link}{hint}")
+        else:
+            result.ok(f"rss_link resolves: /{rel}")
+
     return config
 
 
