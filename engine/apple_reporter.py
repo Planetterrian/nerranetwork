@@ -121,14 +121,43 @@ class ShowListening:
         return out
 
 
+# Apple's phrasings for "there is no report for that date". They are
+# indistinguishable from real failures by status code alone, and one of
+# them is actively misleading — see ``_is_no_data``.
+_NO_DATA_MARKERS = (
+    "no reports available",
+    "no sales",
+    "there were no",
+    "not available",
+    # Apple returns THIS for a valid vendor on a date it has no report
+    # for. Verified 28 July 2026: vendor 93825591 with date 20260727
+    # downloads fine, and the identical command with 20260725 answers
+    # "Invalid vendor number specified. Try again." The vendor is not
+    # invalid; it simply did not exist yet on that date, because Apple
+    # provisions the reporting vendor when the Podcasters Program
+    # agreement goes Active. Treating this as a hard error would make
+    # the nightly look broken every time it reached past that boundary.
+    "invalid vendor number",
+)
+
+
+def _is_no_data(text: str) -> bool:
+    return any(marker in (text or "").lower() for marker in _NO_DATA_MARKERS)
+
+
 @dataclass
 class ReporterResult:
-    """Outcome of one report fetch. Never raises; inspect ``error``."""
+    """Outcome of one report fetch. Never raises; inspect ``error``.
+
+    ``ok`` with empty ``rows`` means Apple has no report for that date —
+    a real answer. ``error`` means the fetch itself failed.
+    """
 
     report_type: str
     date: str
     rows: List[ShowListening] = field(default_factory=list)
     error: str = ""
+    no_data: bool = False
 
     @property
     def ok(self) -> bool:
@@ -287,8 +316,9 @@ def fetch_report_http(
             pass
         # Apple returns 404 with an "no reports available" body for a
         # date with no data — a real answer, not a failure.
-        if "no reports available" in detail.lower() or "no sales" in detail.lower():
-            logger.info("Apple reports no data for %s %s", report_type, date)
+        if _is_no_data(detail):
+            logger.info("Apple has no %s report for %s", report_type, date)
+            result.no_data = True
             return result
         result.error = f"HTTP {exc.code}: {detail.strip() or exc.reason}"
         return result
@@ -301,7 +331,9 @@ def fetch_report_http(
     if raw[:2] != b"\x1f\x8b" and "gzip" not in encoding:
         # An XML/plain error document rather than a report.
         text = raw.decode("utf-8", "replace").strip()
-        if "no reports available" in text.lower():
+        if _is_no_data(text):
+            logger.info("Apple has no %s report for %s", report_type, date)
+            result.no_data = True
             return result
         result.error = text[:400] or "empty response"
         return result
@@ -367,9 +399,14 @@ def fetch_report(
         return result
 
     output = f"{proc.stdout}\n{proc.stderr}".strip()
-    if proc.returncode != 0 and "Successfully downloaded" not in output:
-        result.error = output.splitlines()[0] if output else "Reporter failed"
-        return result
+    if "Successfully downloaded" not in output:
+        if _is_no_data(output):
+            logger.info("Apple has no %s report for %s", report_type, date)
+            result.no_data = True
+            return result
+        if proc.returncode != 0:
+            result.error = output.splitlines()[0] if output else "Reporter failed"
+            return result
 
     downloaded = None
     for line in output.splitlines():
@@ -377,10 +414,9 @@ def fetch_report(
             downloaded = cwd / line.split()[-1]
             break
     if downloaded is None or not downloaded.exists():
-        # Apple reports "There were no sales for the date specified" for a
-        # day with no activity. That is a real answer, not a failure.
-        if "no sales" in output.lower() or "not available" in output.lower():
-            logger.info("Apple reports no data for %s %s", report_type, date)
+        if _is_no_data(output):
+            logger.info("Apple has no %s report for %s", report_type, date)
+            result.no_data = True
             return result
         result.error = output.splitlines()[0] if output else "no file produced"
         return result

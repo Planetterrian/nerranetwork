@@ -86,8 +86,16 @@ def main() -> int:
         if not result.ok:
             print(f"{stamp}  ERROR  {result.error}")
             continue
+        if result.no_data:
+            # Apple says "Invalid vendor number specified" here, which is
+            # a lie — the vendor is fine, it just did not exist on that
+            # date. Reports begin when the Podcasters Program agreement
+            # goes Active, so anything earlier has no history to fetch.
+            print(f"{stamp}  no report exists for this date "
+                  f"(before the vendor was provisioned)")
+            continue
         if not result.rows:
-            print(f"{stamp}  no shows reported activity")
+            print(f"{stamp}  report exists but no show had activity")
             continue
 
         any_rows = True

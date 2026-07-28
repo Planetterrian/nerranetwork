@@ -184,3 +184,46 @@ class TestReportTypeSpellings:
     ])
     def test_exact_spelling(self, name, expected):
         assert name == expected
+
+
+class TestNoDataIsNotAnError:
+    """Apple's "no report for that date" phrasings, one of which lies.
+
+    Verified 28 July 2026 against the live account: vendor 93825591 with
+    date 20260727 downloads fine, and the byte-identical command with
+    20260725 answers "Invalid vendor number specified. Try again." The
+    vendor is not invalid — Apple provisions the reporting vendor when
+    the Podcasters Program agreement goes Active, so nothing exists
+    before that boundary. Treating it as a hard error would make the
+    nightly look broken every time it reached past the start of history,
+    and would bury a genuinely wrong vendor number in noise.
+    """
+
+    @pytest.mark.parametrize("message", [
+        "Invalid vendor number specified. Try again.",
+        "There were no sales for the date specified.",
+        "No reports available.",
+        "Daily reports are not available for that date",
+    ])
+    def test_recognised_as_absence(self, message):
+        from engine.apple_reporter import _is_no_data
+
+        assert _is_no_data(message)
+
+    @pytest.mark.parametrize("message", [
+        "Your Access Token is invalid.",
+        "You have access to more than one account.",
+        "Invalid report type",
+        "",
+    ])
+    def test_real_failures_are_not_swallowed(self, message):
+        from engine.apple_reporter import _is_no_data
+
+        assert not _is_no_data(message)
+
+    def test_absence_is_flagged_and_not_an_error(self):
+        result = ReporterResult(report_type=SHOW_REPORT, date="20260725",
+                                no_data=True)
+        assert result.ok, "absence must not read as failure"
+        assert result.rows == []
+        assert result.no_data, "but callers must be able to tell it apart"
