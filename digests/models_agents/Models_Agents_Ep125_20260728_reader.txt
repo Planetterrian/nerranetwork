@@ -1,0 +1,81 @@
+Pull up a chair, this is Models and Agents, episode 125, on July 28, 2026. Let's see what shipped. The AI world never sleeps. Here's what you need to know today.
+
+MCP’s largest update removes session stickiness so agents can scale behind ordinary load balancers.
+
+The Model Context Protocol now runs fully stateless with mandatory issuer validation. It adds official extensions for interactive interfaces and long-running tasks. Snowflake introduced a new gateway for enterprise control over agents. Microsoft released a five billion active parameter cyber defense model plus a .NET library that pulls skills from MCP servers.
+
+The Model Context Protocol just received its biggest architectural change since launch.
+
+The protocol moved to a fully stateless design and strengthened authentication to block mix-up attacks. MCP Apps and MCP Tasks graduated to official extensions. Servers can now sit behind standard load balancers without sticky sessions. Clients receive durable task handles that survive a single connection. Payload sizes increased only modestly and remain compressible.
+
+Out-of-band logging was removed after usage data showed almost none. A twelve-month deprecation policy and an Enterprise Managed Authorization extension developed with Okta give larger organizations the stability they requested. SDK downloads now reach roughly two hundred fifty million per week. The Agentic AI Foundation has two hundred forty members.
+
+The update finalizes support for more than one hundred MCP servers in the new transport layer and adds multi-round-trip request negotiation.
+
+Builders running production agents should test the new transport layer and the Tasks extension for any workflow that once needed persistent connections.
+
+Microsoft released MAI-Cyber-1-Flash. The model contains one hundred thirty seven billion total parameters with five billion active sparse mixture of experts parameters. It is a fine-tune of MAI-Code-1-Flash and carries a two hundred fifty six thousand token context window. The model runs inside the MDASH agentic scanning harness where it handles up to ninety percent of tasks.
+
+That lifts the overall system to ninety five point nine five percent on CyberGym. It is not offered as a standalone endpoint and targets cyber-defense workloads inside Microsoft’s multi-model pipeline.
+
+A new tutorial shows how to run the one-bit Bonsai twenty seven billion model. The setup uses the PrismML fork of llama dot cpp and its specialized CUDA kernels for the Q one underscore zero underscore g one two eight GGUF format. The endpoint exposes an OpenAI-compatible interface for local inference. The quantization format requires those PrismML kernels to decode correctly on consumer GPUs.
+
+Developers working with extreme quantization on consumer GPUs now have a documented path that preserves usable output quality. The tutorial demonstrates inference on a single consumer GPU while maintaining the OpenAI-compatible endpoint.
+
+Anthropic published its formal position on open-weights models. The document covers safety, proliferation, and commercial use without releasing any new model. It addresses licensing, safety commitments, and differences in security practices across the industry. The post clarifies the company’s views on safety, proliferation, and commercial use after weeks of speculation.
+
+Teams deciding between closed frontier APIs and open-weight deployments should read the full document for the lab’s explicit risk assessment. The document addresses licensing, safety commitments, and the divergence between open-weight support and security practices across the industry.
+
+Snowflake launched Cortex AI Gateway. The control plane enforces identity, policy, and audit for agents that touch enterprise data. It supports more than one hundred MCP servers and provides dual attribution that records both agent identity and the human delegator. Spend limits help prevent runaway costs.
+
+The gateway builds on the May twenty twenty six Natoma acquisition and integrates with one Password, SailPoint, Saviynt, Aembit, and Linx Security in private preview. Task-scoped access tokens replace inherited user permissions. Runtime monitoring compares every action against the original human intent.
+
+Tines released version three B. The update adds centralized controls for automation builders who need policy enforcement across multiple agent platforms. Security and operations teams already using Tines for no-code workflows can now apply the same governance layer to autonomous agents.
+
+The release targets organizations that must audit and constrain agent actions across heterogeneous tool ecosystems. Tines released version 3B focused on governing AI workflows, apps, and agents at enterprise scale.
+
+Semantic Kernel now lets agents discover and load skills directly from any MCP server at runtime. A central team can publish skills once and agents pull only what they need per deployment. The change removes the need to copy skill folders into every container image or binary distribution.
+
+Semantic Kernel now lets agents discover and load skills directly from any MCP server at runtime instead of embedding them in the application binary. .NET developers building agentic applications should test the new discovery flow on existing MCP servers.
+
+A new Policy Improvement Reinforcement Learning framework adds a retrospective verification step after each base-algorithm update. The authors released code at the repository mentioned in the r slash Machine Learning post and report gains across math, code, and tool-use tasks plus better training stability.
+
+The method works as a plug-and-play layer that does not replace the base algorithm’s local credit assignment. If the updated policy improves on a sliding historical window it reinforces the change; otherwise it corrects the direction. The authors released code at github.com/JacckMa/pipo_verl and report gains across math, code, and tool-use tasks plus better training stability.
+
+RL practitioners should try PIPO as a plug-in layer on top of their current post-training loop.
+
+GPT-Live in ChatGPT Voice is now rolled out to Education, Business, and Enterprise plans worldwide. The feature gives teams real-time voice interaction with the model without consumer-plan restrictions. Organizations already on those plans can enable it immediately for internal tooling and customer-facing prototypes.
+
+The rollout removes previous geographic and plan-based gating that had limited the voice mode to individual consumer accounts.
+
+OK, let's pop the hood on closed-loop policy improvement. Everyone talks about reinforcement learning post-training as a single forward pass that just gets better each step. In practice the update can degrade performance because of sampling noise, imperfect credit assignment, and stochastic generation.
+
+PIRL adds a second verification phase after the base optimizer such as PPO or GRPO takes its exploratory step. The next iteration measures whether the new policy actually outperforms a sliding historical anchor. If the measured gain is positive the direction is reinforced. If negative the update is suppressed or reversed.
+
+This adds one extra forward pass per cycle and a small amount of historical state. The overhead stays modest because verification re-uses the same reward model already in the loop. The quality gain is largest on tasks where local advantage estimates are noisy such as math reasoning and multi-step tool use.
+
+The gain shrinks once models exceed roughly thirty billion parameters and the base optimizer already produces stable improvements. The two-phase structure also improves cross-seed stability without requiring larger batch sizes or more gradient steps.
+
+Teams should reach for PIPO-style verification when they observe high variance across random seeds or when wall-clock efficiency matters more than squeezing the last point of benchmark score.
+
+Point a Semantic Kernel agent at an existing MCP server and let it load skills on demand instead of baking them into the binary.
+
+Add the PIPO verification layer to your current RL post-training run on math or code tasks and compare seed-to-seed stability.
+
+Enable GPT-Live on an Enterprise workspace and test real-time voice workflows that previously required separate transcription plus LLM steps.
+
+Evaluate Cortex AI Gateway’s task-scoped tokens if you are already routing agents through Snowflake data.
+
+Cortex AI Gateway enters public preview in the coming weeks.
+
+Additional MCP servers and identity-provider integrations are expected from the new coalition partners.
+
+More labs are expected to publish their own positions on open-weights models following Anthropic’s release.
+
+Tomorrow, keep an eye on further MCP transport and authorization extensions from the Agentic AI Foundation working group.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The AI world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+Quick tip from the network: try Planetterrian Daily next — daily breakthroughs in science, health, and longevity. Every Nerra Network show is free at nerranetwork.com. And on the website: every episode's visuals live in our free image gallery at nerranetwork.com/gallery — royalty-free under Creative Commons, download with attribution.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
