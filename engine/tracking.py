@@ -31,6 +31,11 @@ GROK_TTS_COST_PER_1K_CHARS = 0.015
 # use them); only the display label is corrected here.
 _STEP_LABELS = {
     "x_thread_generation": "Digest",
+    # Output that was generated, billed, and thrown away because it hit
+    # max_tokens. A persistently non-zero line here means the show's
+    # llm.max_tokens is set below what its prompt actually needs.
+    "x_thread_generation_truncated": "Digest (truncated, discarded)",
+    "podcast_script_generation_truncated": "Podcast script (truncated, discarded)",
     "x_thread_generation_expansion": "Digest expansion retry",
     "x_thread_generation_retry": "Digest retry",
     "x_thread_generation_retry_edu": "Digest retry (edu)",

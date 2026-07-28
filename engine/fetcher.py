@@ -247,18 +247,41 @@ def _headers_for_url(url: str) -> dict:
     return DEFAULT_HEADERS
 
 
+class ThrottledError(Exception):
+    """A feed answered 429/503 — retryable, unlike other HTTP errors."""
+
+
+# Statuses that mean "ask again shortly", as opposed to "this feed is
+# broken". Retrying a 404 or 403 is pointless; retrying a 429 usually
+# works, and until July 28 2026 we did not try at all.
+_RETRYABLE_STATUSES = (429, 503)
+
+
 @retry(
     stop=stop_after_attempt(3),
     wait=wait_exponential(multiplier=1, min=2, max=10),
     retry=retry_if_exception_type((
         requests.exceptions.ConnectionError,
         requests.exceptions.Timeout,
+        ThrottledError,
     )),
     reraise=True,
 )
 def _fetch_url_with_retry(url: str) -> requests.Response:
-    """GET a URL with automatic retry on transient network errors."""
+    """GET a URL with automatic retry on transient network errors.
+
+    429 is treated as transient. Reddit throttles per-request from cloud
+    egress rather than blocking outright — a live probe on 2026-07-28 got
+    200 on r/LocalLLaMA and r/SpaceXLounge and 429 on r/space in the same
+    second — but the retry predicate only covered connection errors and
+    timeouts, so a throttled feed was dropped on the first refusal with no
+    second attempt. Backing off and asking again recovers most of them.
+    """
     response = requests.get(url, headers=_headers_for_url(url), timeout=HTTP_TIMEOUT_SECONDS)
+    if response.status_code in _RETRYABLE_STATUSES:
+        raise ThrottledError(
+            f"HTTP {response.status_code} (throttled) for {url}"
+        )
     response.raise_for_status()
     return response
 

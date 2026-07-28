@@ -7,9 +7,12 @@ so subscribers only receive emails for shows they opted into.
 
 from __future__ import annotations
 
+import datetime
+import json
 import logging
 import os
 import re
+from pathlib import Path
 from typing import Dict, List, Optional
 
 import requests
@@ -120,6 +123,87 @@ def _md_inline(text: str) -> str:
 # ---------------------------------------------------------------------------
 # API key validation
 # ---------------------------------------------------------------------------
+
+
+# Where a known sending block is remembered. Buttondown exposes no
+# documented endpoint for "can this account send yet", so rather than
+# guess at an undocumented schema we record what the send endpoint
+# actually told us and let the preflight read it back.
+#
+# SCOPE, precisely: this file is gitignored runtime state, matching the
+# double-send guardrail above, so on GitHub Actions (a fresh clone per
+# run) it suppresses within a run but not across runs. The part that
+# always works is the message — one actionable warning naming the
+# operator fix, instead of a generic `logger.error` at the end of every
+# pipeline. The durable fix is configuring the sending domain (or
+# turning the newsletter off); this only stops the noise from training
+# people to ignore real errors in the meantime.
+_SENDING_BLOCKED_MARKER = Path(__file__).resolve().parent.parent / "digests" / "_newsletter_sending_blocked.json"
+
+# The account cannot send until a custom sending domain is verified in
+# Buttondown. This is a standing configuration state, not a transient
+# fault, so it must not be logged as a fresh error on every run.
+_SENDING_DOMAIN_HINTS = ("sending domain", "email_invalid")
+
+# How long a remembered block is trusted. Short enough that the pipeline
+# picks the newsletter back up on its own once the operator configures
+# the domain, without needing anyone to clear a file.
+_SENDING_BLOCK_TTL_DAYS = 7
+
+
+def _is_sending_domain_error(detail: str) -> bool:
+    """True when Buttondown refused because the account cannot send yet."""
+    lowered = (detail or "").lower()
+    return all(hint in lowered for hint in _SENDING_DOMAIN_HINTS) or (
+        "custom sending domain" in lowered
+    )
+
+
+def _remember_sending_block(detail: str) -> None:
+    """Persist the sending block so the next run can skip early."""
+    try:
+        _SENDING_BLOCKED_MARKER.parent.mkdir(parents=True, exist_ok=True)
+        _SENDING_BLOCKED_MARKER.write_text(
+            json.dumps({
+                "blocked_at": datetime.datetime.now(
+                    datetime.timezone.utc
+                ).isoformat(),
+                "detail": (detail or "")[:500],
+            }, indent=2),
+            encoding="utf-8",
+        )
+    except Exception as exc:  # never let bookkeeping break the pipeline
+        logger.debug("Could not record newsletter sending block: %s", exc)
+
+
+def clear_sending_block() -> None:
+    """Forget a remembered block. Called after any successful send."""
+    try:
+        _SENDING_BLOCKED_MARKER.unlink(missing_ok=True)
+    except Exception as exc:
+        logger.debug("Could not clear newsletter sending block: %s", exc)
+
+
+def sending_block_reason() -> Optional[str]:
+    """Return a short reason when sending is known to be blocked, else None.
+
+    Expires after ``_SENDING_BLOCK_TTL_DAYS`` so a fixed configuration is
+    picked up automatically rather than staying suppressed forever.
+    """
+    try:
+        if not _SENDING_BLOCKED_MARKER.exists():
+            return None
+        data = json.loads(_SENDING_BLOCKED_MARKER.read_text(encoding="utf-8"))
+        blocked_at = datetime.datetime.fromisoformat(data["blocked_at"])
+        age = datetime.datetime.now(datetime.timezone.utc) - blocked_at
+        if age > datetime.timedelta(days=_SENDING_BLOCK_TTL_DAYS):
+            return None
+        return (
+            "Buttondown account has no verified custom sending domain "
+            "(configure it in Buttondown → Settings → Sending)"
+        )
+    except Exception:
+        return None
 
 
 def validate_api_key(api_key: str) -> bool:
@@ -371,6 +455,10 @@ def send_newsletter(
                 email_id, tags,
             )
             return None
+        # A send that actually landed proves the account can send, so any
+        # remembered block is stale — drop it immediately rather than
+        # waiting out the TTL.
+        clear_sending_block()
         return email_id
     else:
         error_detail = resp.text[:500]
@@ -379,6 +467,20 @@ def send_newsletter(
                 "Newsletter send failed with tag filter error (likely invalid Buttondown tag identifier in YAML 'newsletter.tag'). "
                 "Current tag value(s): %s. Check your Buttondown Tags page for the exact slug/ID to use. Error: %s",
                 tags, error_detail,
+            )
+        elif _is_sending_domain_error(error_detail):
+            # A standing configuration state, not a fault in this run.
+            # Logging it as a fresh error every single pipeline (which is
+            # what happened until July 28 2026) is how people learn to
+            # ignore errors. One clear, actionable warning instead, and
+            # remember it so the next run skips before doing the work.
+            _remember_sending_block(error_detail)
+            logger.warning(
+                "Newsletter not sent: the Buttondown account has no verified "
+                "custom sending domain. Configure it in Buttondown → Settings "
+                "→ Sending, or disable the newsletter for this show. "
+                "Suppressing this stage for %d days.",
+                _SENDING_BLOCK_TTL_DAYS,
             )
         else:
             logger.error(
@@ -439,6 +541,15 @@ def send_show_newsletter(
     api_key = os.getenv(newsletter.api_key_env, "").strip()
     if not api_key:
         logger.info("Newsletter API key not set (%s). Skipping.", newsletter.api_key_env)
+        return None
+
+    # Skip before doing the work. Composing, scrubbing, contrast-checking
+    # and rendering a newsletter only to have Buttondown reject it for a
+    # standing account-configuration reason is wasted pipeline time and a
+    # guaranteed error at the end of every run (July 28 2026).
+    blocked = sending_block_reason()
+    if blocked:
+        logger.info("Newsletter skipped — %s", blocked)
         return None
 
     slug = getattr(config, "slug", "") or ""

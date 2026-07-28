@@ -1481,6 +1481,37 @@ def _build_educational_fallback_prompt(
         )
 
 
+def _record_discarded_call(tracker, step: str, meta: dict, config) -> None:
+    """Account for a generation call whose output is about to be thrown away.
+
+    The truncation retries below replace ``text``/``meta`` wholesale, so
+    the first call's tokens used to vanish — billed by xAI, absent from
+    the episode's credit file. That made the waste unmeasurable: the
+    July 2026 improvement plan had to infer it from run logs, and named
+    the wrong show (SpaceX, which has never truncated in 45 recorded
+    runs; the real offenders are Omni View at 17% and Fascinating
+    Frontiers at 6%).
+
+    Recorded under its own step key so it shows up as a distinct line in
+    the credit summary rather than inflating the successful call.
+    """
+    if not tracker or "usage" not in (meta or {}):
+        return
+    try:
+        from engine.tracking import record_llm_usage
+        usage = meta["usage"]
+        record_llm_usage(
+            tracker,
+            step,
+            usage.get("prompt_tokens", 0),
+            usage.get("completion_tokens", 0),
+            model=config.llm.model,
+            cached_tokens=usage.get("cached_tokens", 0),
+        )
+    except Exception as exc:  # accounting must never break generation
+        logger.warning("Failed to record discarded-call usage: %s", exc)
+
+
 @retry(
     stop=stop_after_attempt(3),
     wait=wait_exponential(multiplier=1, min=1, max=15),
@@ -1551,6 +1582,13 @@ def generate_digest(
             "Digest truncated at %d tokens — retrying with %d tokens",
             config.llm.max_tokens, bumped_tokens,
         )
+        # Record the DISCARDED call before `meta` is overwritten. Until
+        # July 2026 only the retry's usage was tracked, so the thrown-away
+        # call was invisible in cost data — which is precisely why the
+        # improvement plan could not tell which shows were paying for it
+        # (it named SpaceX, which turns out never to truncate). Cost that
+        # is not recorded cannot be optimised.
+        _record_discarded_call(tracker, "x_thread_generation_truncated", meta, config)
         text, meta = _call_grok(
             prompt,
             model=config.llm.model,
@@ -2151,6 +2189,11 @@ def generate_podcast_script(
         logger.warning(
             "Podcast script truncated at %d tokens — retrying with %d tokens",
             podcast_tokens, bumped_tokens,
+        )
+        # See the digest path: the discarded call is recorded so wasted
+        # spend is measurable instead of inferred.
+        _record_discarded_call(
+            tracker, "podcast_script_generation_truncated", meta, config
         )
         text, meta = _call_grok(
             prompt,
