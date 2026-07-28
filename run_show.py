@@ -3097,6 +3097,22 @@ def run(args: argparse.Namespace) -> None:
         digests_dir=digests_dir,
         args=args,
     )
+    # Feed image spend back into the credit tracker. grok_imagine.py has
+    # always computed this cost and logged it, but nothing carried it
+    # into the episode summary — so the reported per-episode total left
+    # out the images entirely (July 28 2026).
+    try:
+        from engine.tracking import record_image_usage
+        _img_cost = float(youtube_urls.get("grok_image_cost_usd", 0.0) or 0.0)
+        _img_count = int(youtube_urls.get("grok_images_generated", 0) or 0)
+        if _img_cost or _img_count:
+            record_image_usage(
+                tracker, _img_count, _img_cost,
+                model=str(getattr(config.youtube, "grok_image_model", "") or ""),
+            )
+    except Exception as exc:  # never let accounting break a publish
+        logger.warning("Image cost accounting failed (non-fatal): %s", exc)
+
     youtube_long_url = youtube_urls.get("long_url", "")
     youtube_short_url = youtube_urls.get("short_url", "")
     youtube_pexels_filtered = int(youtube_urls.get("pexels_photos_filtered", 0) or 0)

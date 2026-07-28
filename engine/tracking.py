@@ -26,6 +26,23 @@ logger = logging.getLogger(__name__)
 ELEVENLABS_COST_PER_1K_CHARS = 0.15
 GROK_TTS_COST_PER_1K_CHARS = 0.015
 
+# Human-readable labels for the recorded LLM steps. The KEYS are frozen
+# for back-compat (the dashboard and every historical credit_usage JSON
+# use them); only the display label is corrected here.
+_STEP_LABELS = {
+    "x_thread_generation": "Digest",
+    "x_thread_generation_expansion": "Digest expansion retry",
+    "x_thread_generation_retry": "Digest retry",
+    "x_thread_generation_retry_edu": "Digest retry (edu)",
+    "x_thread_generation_retry_fallback_model": "Digest retry (fallback model)",
+    "podcast_outline_generation": "Podcast outline",
+    "podcast_script_generation": "Podcast script",
+    "podcast_script_retry": "Podcast script retry",
+    "podcast_script_refusal_retry": "Podcast script refusal retry",
+    "podcast_script_refusal_fallback_model": "Podcast script (fallback model)",
+    "podcast_script_anti_repetition_retry": "Podcast anti-repetition retry",
+}
+
 TTS_PROVIDER_PRICING = {
     "elevenlabs": ELEVENLABS_COST_PER_1K_CHARS,
     "grok": GROK_TTS_COST_PER_1K_CHARS,
@@ -110,6 +127,23 @@ def create_tracker(show_name: str, episode_num: int) -> dict:
                 "post_calls": 0,
                 "total_calls": 0,
             },
+            # Grok Imagine scene generation. Added July 28 2026 — image
+            # spend was the single largest hole in the per-episode
+            # figure: grok_imagine.py logged its own cost but nothing
+            # ever fed it back to the tracker, so a run that spent
+            # ~$0.16 on images reported $0.00 for them.
+            "image_api": {
+                "provider": "grok-imagine",
+                "model": "",
+                "images_generated": 0,
+                "estimated_cost_usd": 0.0,
+            },
+        },
+        # Informational only — render minutes are compute, not a billed
+        # API line, but they are the other half of "what did this
+        # episode cost" and were invisible before.
+        "render": {
+            "video_seconds": 0.0,
         },
         "refusal_fallbacks": {
             "count": 0,
@@ -223,6 +257,45 @@ def record_x_post(tracker: dict) -> None:
     tracker["services"]["x_api"]["post_calls"] += 1
 
 
+def record_image_usage(
+    tracker: dict,
+    images_generated: int,
+    cost_usd: float,
+    model: str = "",
+    provider: str = "grok-imagine",
+) -> None:
+    """Record Grok Imagine scene generation.
+
+    ``engine/grok_imagine.py`` already computes the per-batch cost from
+    ``MODEL_COST_USD``; this is the missing wire that carries it into
+    the episode's credit summary. Callers are additive — a show that
+    generates images in several passes (16:9 then 9:16) calls this once
+    per pass.
+    """
+    images = tracker["services"].setdefault(
+        "image_api",
+        {
+            "provider": provider,
+            "model": "",
+            "images_generated": 0,
+            "estimated_cost_usd": 0.0,
+        },
+    )
+    if model:
+        images["model"] = model
+    images["provider"] = provider
+    images["images_generated"] += int(images_generated or 0)
+    images["estimated_cost_usd"] += float(cost_usd or 0.0)
+
+
+def record_render_seconds(tracker: dict, seconds: float) -> None:
+    """Record video render wall-clock. Informational — never priced."""
+    render = tracker.setdefault("render", {"video_seconds": 0.0})
+    render["video_seconds"] = round(
+        float(render.get("video_seconds", 0.0) or 0.0) + float(seconds or 0.0), 1
+    )
+
+
 def save_usage(tracker: dict, output_dir: Path) -> Path | None:
     """Finalize cost calculations and write the tracker to a JSON file.
 
@@ -230,14 +303,23 @@ def save_usage(tracker: dict, output_dir: Path) -> Path | None:
     """
     try:
         grok = tracker["services"]["grok_api"]
-        # Sum up LLM totals
-        grok["total_tokens"] = (
-            grok["x_thread_generation"]["total_tokens"]
-            + grok["podcast_script_generation"]["total_tokens"]
-        )
-        grok["total_cost_usd"] = (
-            grok["x_thread_generation"]["estimated_cost_usd"]
-            + grok["podcast_script_generation"]["estimated_cost_usd"]
+        # Sum EVERY recorded step, not just the two original ones.
+        #
+        # Until July 28 2026 this summed only ``x_thread_generation`` and
+        # ``podcast_script_generation`` — so the outline call, every
+        # truncation/expansion retry, the anti-repetition retry and the
+        # refusal-fallback call were all recorded in the file and then
+        # silently dropped from the total. On SpaceX Ep047 that hid 47%
+        # of the episode's LLM spend ($0.0269 reported vs $0.0503
+        # actually recorded). Retries are exactly the spend an operator
+        # needs to see, because they are the part that is fixable.
+        steps = [
+            (name, value) for name, value in grok.items()
+            if isinstance(value, dict) and "estimated_cost_usd" in value
+        ]
+        grok["total_tokens"] = sum(v.get("total_tokens", 0) or 0 for _, v in steps)
+        grok["total_cost_usd"] = sum(
+            v.get("estimated_cost_usd", 0.0) or 0.0 for _, v in steps
         )
 
         x_api = tracker["services"]["x_api"]
@@ -264,8 +346,11 @@ def save_usage(tracker: dict, output_dir: Path) -> Path | None:
         if "elevenlabs_api" not in tracker["services"]:
             tracker["services"]["elevenlabs_api"] = tts
 
+        images = tracker["services"].get("image_api") or {}
+        image_cost = float(images.get("estimated_cost_usd", 0.0) or 0.0)
+
         tracker["total_estimated_cost_usd"] = (
-            grok["total_cost_usd"] + tts["estimated_cost_usd"]
+            grok["total_cost_usd"] + tts["estimated_cost_usd"] + image_cost
         )
 
         # Write file
@@ -278,24 +363,39 @@ def save_usage(tracker: dict, output_dir: Path) -> Path | None:
         logger.info("=" * 60)
         logger.info("CREDIT USAGE SUMMARY")
         logger.info("=" * 60)
-        logger.info(
-            "Grok API [%s] (X Thread): %d tokens ($%.4f)",
-            grok.get("model", "unknown"),
-            grok["x_thread_generation"]["total_tokens"],
-            grok["x_thread_generation"]["estimated_cost_usd"],
-        )
-        logger.info(
-            "Grok API [%s] (Podcast): %d tokens ($%.4f)",
-            grok.get("model", "unknown"),
-            grok["podcast_script_generation"]["total_tokens"],
-            grok["podcast_script_generation"]["estimated_cost_usd"],
-        )
+        # One line per step. The ``x_thread_generation`` KEY is retained
+        # for dashboard/back-compat, but it has always held the DIGEST
+        # call — it is written on every run, including the majority of
+        # shows that post nothing to X — so the label said "X Thread"
+        # on runs with zero X calls. Label from the work, not the key.
+        for name, value in sorted(steps, key=lambda kv: -kv[1].get("estimated_cost_usd", 0.0)):
+            logger.info(
+                "Grok API [%s] (%s): %d tokens ($%.4f)",
+                grok.get("model", "unknown"),
+                _STEP_LABELS.get(name, name.replace("_", " ")),
+                value.get("total_tokens", 0) or 0,
+                value.get("estimated_cost_usd", 0.0) or 0.0,
+            )
         logger.info(
             "TTS (%s): %d chars ($%.4f)",
             provider,
             tts["characters"],
             tts["estimated_cost_usd"],
         )
+        if images.get("images_generated") or image_cost:
+            logger.info(
+                "Images (%s): %d images ($%.4f)",
+                images.get("model") or images.get("provider", "grok-imagine"),
+                images.get("images_generated", 0) or 0,
+                image_cost,
+            )
+        render_seconds = float(
+            (tracker.get("render") or {}).get("video_seconds", 0.0) or 0.0
+        )
+        if render_seconds:
+            logger.info(
+                "Video render: %.1f min (compute, not billed)", render_seconds / 60
+            )
         logger.info(
             "X API: %d calls (search: %d, post: %d)",
             x_api["total_calls"],
