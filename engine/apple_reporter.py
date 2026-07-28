@@ -72,7 +72,15 @@ SALES_URL = "https://reportingitc-reporter.apple.com/reportservice/sales/v1"
 
 # Reporter's own protocol version string. Sent verbatim; Apple rejects
 # a request that omits it.
+FINANCE_URL = "https://reportingitc-reporter.apple.com/reportservice/finance/v1"
+
 _PROTOCOL_VERSION = "2.2"
+
+# The jar spells this "Robot.xml" — lowercase after the dot. Recovered
+# from AutoIngestConstant, which also carries the "m=Robot.xml" /
+# "m=normal" command-line forms. "Robot.XML" is what the user guide
+# prints and is not what the client sends.
+_MODE = "Robot.xml"
 
 # Report types. The spellings are Apple's and are case-sensitive.
 SHOW_REPORT = "apShowListening"
@@ -286,43 +294,50 @@ def aggregate_by_show(rows: List[ShowListening]) -> Dict[str, ShowListening]:
 
 def build_query_input(vendor: str, report_type: str, date: str,
                       *, subtype: str = "Summary", date_type: str = "Daily",
-                      wrapped: bool = True, report_version: str = "") -> str:
-    """The ``queryInput`` string Reporter sends for ``Sales.getReport``.
+                      properties_name: str = "Reporter.properties") -> str:
+    """The ``queryInput`` string, exactly as Reporter.jar builds it.
 
-    The jar wraps the command in ``[p=Reporter.properties, ...]``. Some
-    Reporter versions accept the bare command instead, and Apple's error
-    102 ("too few or too many parameters") does not say which it wanted,
-    so both shapes are constructible and the probe sweeps them.
+    Recovered by decompiling ``Reporter.buildQueryString`` rather than
+    guessed — ten guesses all returned Apple's error 102, and the wire
+    format is undocumented.
 
-    No spaces after the commas — the same rule as the command line,
-    where spaces make the argument split and Reporter then reports a
-    misleading "Invalid vendor number specified".
+    The jar does ``Arrays.toString(args)`` on its **raw argv**, which for
+
+        java -jar Reporter.jar p=Reporter.properties Sales.getReport 9,t,Summary,Daily,20260727
+
+    is three elements, and ``Arrays.toString`` joins with ``", "``. So
+    the string carries a **comma after** ``Sales.getReport``:
+
+        [p=Reporter.properties, Sales.getReport, 9,t,Summary,Daily,20260727]
+
+    That comma is the whole bug. Every earlier attempt sent
+    ``Sales.getReport 9,...`` with a space, which Apple split into the
+    wrong number of parameters — hence "Too few or too many parameters
+    specified for the method".
+
+    The jar then applies two ``replaceAll`` passes, ``",\\s,,\\s" -> ","``
+    and ``",,\\s" -> ","``, purely to normalise an operator who typed
+    spaces after the commas. Building the list ourselves, there are none
+    to strip, so they are reproduced for fidelity and are no-ops.
     """
-    params = [vendor, report_type, subtype, date_type, date]
-    if report_version:
-        # The Reporter guide notes a trailing version "if multiple
-        # exist" for a report type. Apple's error 102 does not say which
-        # parameter count it wanted, so this is constructible and swept.
-        params.append(report_version)
-    command = "Sales.getReport " + ",".join(params)
-    return f"[p=Reporter.properties, {command}]" if wrapped else command
+    argv = [f"p={properties_name}", "Sales.getReport",
+            f"{vendor},{report_type},{subtype},{date_type},{date}"]
+    rendered = "[" + ", ".join(argv) + "]"
+    return rendered.replace(", ,, ", ",").replace(",, ", ",")
 
 
 def fetch_report_http(
     *,
     access_token: str,
-    account: str,
+    account: str = "",
     vendor: str,
     date: str,
     report_type: str = SHOW_REPORT_WORLDWIDE,
     sales_url: str = SALES_URL,
+    finance_url: str = FINANCE_URL,
     timeout: int = 90,
     version: str = _PROTOCOL_VERSION,
-    mode: str = "Robot.XML",
-    wrapped_query: bool = True,
-    send_account: bool = True,
-    account_as_int: bool = False,
-    report_version: str = "",
+    mode: str = _MODE,
 ) -> ReporterResult:
     """Fetch a report by speaking Reporter's protocol directly.
 
@@ -332,38 +347,51 @@ def fetch_report_http(
     redistributed into a public repo. Posting to the same endpoint needs
     nothing but the 180-day access token, which fits in a repo secret.
 
-    The request shape mirrors what the jar sends: a form-encoded
-    ``jsonRequest`` whose ``queryInput`` is the same bracketed command
-    string the CLI takes. Apple answers with the gzipped TSV directly on
-    success, or an XML error document.
+    The envelope is reproduced from ``Reporter.buildQueryString``'s
+    bytecode. Three details there are not guessable and each one alone
+    produces a rejection:
+
+    1. **Every value is URL-encoded before entering the JSON**, so the
+       body is double-encoded once the form encoding is applied on top.
+    2. **Every properties-file key is sent**, lowercased — not just the
+       token. The jar iterates ``Properties.keys()`` wholesale, so
+       ``salesurl`` and ``financeurl`` travel in the payload too.
+    3. ``queryInput`` carries a comma after ``Sales.getReport`` (see
+       :func:`build_query_input`).
 
     Never raises. ``error`` distinguishes a dead token or a rejected
     request from a day that genuinely had no listening (``ok`` with
-    empty ``rows``).
+    empty ``rows`` and ``no_data`` set).
     """
     result = ReporterResult(report_type=report_type, date=date)
     if not access_token:
         result.error = "no access token"
         return result
 
-    payload = {
-        "accesstoken": access_token,
-        "version": version,
-        "mode": mode,
-        "queryInput": build_query_input(vendor, report_type, date,
-                                        wrapped=wrapped_query,
-                                        report_version=report_version),
-    }
-    if account and send_account:
-        # Reporter's own client sends this as a JSON number. A string
-        # may or may not be accepted depending on version, so both are
-        # reachable and the probe sweeps them.
-        try:
-            payload["account"] = int(account) if account_as_int else str(account)
-        except (TypeError, ValueError):
-            payload["account"] = str(account)
+    def enc(value: str) -> str:
+        return urllib.parse.quote_plus(str(value))
 
-    body = urllib.parse.urlencode({"jsonRequest": json.dumps(payload)}).encode()
+    # Mirrors the jar: the whole properties file, keys lowercased and
+    # values URL-encoded, then version and queryInput.
+    payload = {
+        "accesstoken": enc(access_token),
+        "mode": enc(mode),
+        "salesurl": enc(sales_url),
+        "financeurl": enc(finance_url),
+    }
+    if account:
+        payload["account"] = enc(account)
+    payload["version"] = version
+    payload["queryInput"] = enc(
+        build_query_input(vendor, report_type, date))
+
+    # ``"jsonRequest=" + json.toString()``, appended RAW. The jar does
+    # not form-encode the JSON, because every value inside it is already
+    # URL-encoded above. Running urlencode() over the whole thing
+    # escapes those percent signs a second time, Apple decodes once, and
+    # the parameters arrive mangled — which is the entire content of
+    # error 102. Confirmed by capturing the jar against a local server.
+    body = ("jsonRequest=" + json.dumps(payload)).encode()
     request = urllib.request.Request(
         sales_url, data=body,
         headers={"Content-Type": "application/x-www-form-urlencoded",
@@ -380,8 +408,6 @@ def fetch_report_http(
             detail = exc.read().decode("utf-8", "replace")[:400]
         except Exception:  # noqa: BLE001
             pass
-        # Apple returns 404 with an "no reports available" body for a
-        # date with no data — a real answer, not a failure.
         if _is_no_data(detail):
             logger.info("Apple has no %s report for %s", report_type, date)
             result.no_data = True
@@ -401,7 +427,6 @@ def fetch_report_http(
     if not raw:
         return result
     if raw[:2] != b"\x1f\x8b" and "gzip" not in encoding:
-        # An XML/plain error document rather than a report.
         text = raw.decode("utf-8", "replace").strip()
         if _is_no_data(text):
             logger.info("Apple has no %s report for %s", report_type, date)

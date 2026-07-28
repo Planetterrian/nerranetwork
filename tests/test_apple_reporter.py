@@ -227,3 +227,142 @@ class TestNoDataIsNotAnError:
         assert result.ok, "absence must not read as failure"
         assert result.rows == []
         assert result.no_data, "but callers must be able to tell it apart"
+
+
+class TestWireFormatMatchesTheJar:
+    """The envelope, recovered by capturing Reporter.jar against a local
+    server rather than inferred.
+
+    Ten guessed variants all returned Apple's error 102, "Too few or too
+    many parameters specified for the method". Three details were wrong,
+    and each alone is enough to produce that error:
+
+    1. ``queryInput`` is ``Arrays.toString(argv)``, so it carries a
+       **comma after** ``Sales.getReport`` — not the space the command
+       line uses.
+    2. Values inside the JSON are URL-encoded.
+    3. The body is ``"jsonRequest=" + json``, appended **raw**. The jar
+       does not form-encode the JSON, because its values are already
+       encoded. Running urlencode() over the whole thing escapes those
+       percent signs a second time and Apple decodes once — which was
+       the actual bug.
+
+    Against the live endpoint with a deliberately invalid token, the
+    correct envelope now returns 124 "Your Access Token is invalid"
+    (parsed, credential rejected) where it previously returned 102.
+    """
+
+    JAR_QUERY_INPUT = (
+        "[p=Reporter.properties, Sales.getReport, "
+        "93825591,apShowListeningWorldwide,Summary,Daily,20260727]")
+
+    def test_query_input_matches_the_jar_byte_for_byte(self):
+        from engine.apple_reporter import build_query_input
+
+        assert build_query_input(
+            "93825591", "apShowListeningWorldwide", "20260727"
+        ) == self.JAR_QUERY_INPUT
+
+    def test_comma_follows_the_method_name(self):
+        """The single character that caused error 102."""
+        from engine.apple_reporter import build_query_input
+
+        query = build_query_input("9", "t", "20260727")
+        assert "Sales.getReport, 9," in query
+        assert "Sales.getReport 9" not in query
+
+    def test_mode_is_robot_xml_lowercase(self):
+        """AutoIngestConstant spells it Robot.xml. The user guide prints
+        Robot.XML, which is not what the client sends."""
+        from engine.apple_reporter import _MODE
+
+        assert _MODE == "Robot.xml"
+
+    def _payload(self, **kwargs):
+        import engine.apple_reporter as ar
+
+        sent = {}
+
+        class _Fake:
+            headers = {}
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *a):
+                return False
+
+            def read(self):
+                return b""
+
+        def _capture(req, **kw):
+            sent["body"] = req.data.decode()
+            return _Fake()
+
+        real = ar.urllib.request.urlopen
+        ar.urllib.request.urlopen = _capture
+        try:
+            ar.fetch_report_http(
+                access_token="FAKETOKEN123", account="128317151",
+                vendor="93825591", date="20260727", **kwargs)
+        finally:
+            ar.urllib.request.urlopen = real
+        return sent["body"]
+
+    def test_body_is_not_form_encoded(self):
+        """urlencode() would turn the values' % into %25 and Apple, which
+        decodes exactly once, would see mangled parameters."""
+        body = self._payload()
+        assert body.startswith("jsonRequest={")
+        assert "%25" not in body, "the JSON was double-encoded"
+
+    def test_values_inside_the_json_are_url_encoded(self):
+        import json as _json
+
+        payload = _json.loads(self._payload().split("jsonRequest=", 1)[1])
+        assert payload["queryInput"].startswith("%5Bp%3DReporter.properties")
+        assert payload["salesurl"].startswith("https%3A%2F%2F")
+
+    def test_every_properties_key_is_sent_lowercased(self):
+        """The jar iterates the whole properties file, so salesurl and
+        financeurl travel in the payload too — not just the token."""
+        import json as _json
+
+        payload = _json.loads(self._payload().split("jsonRequest=", 1)[1])
+        assert sorted(payload) == ["accesstoken", "account", "financeurl",
+                                   "mode", "queryInput", "salesurl", "version"]
+
+    def test_account_is_a_string_not_a_number(self):
+        import json as _json
+
+        payload = _json.loads(self._payload().split("jsonRequest=", 1)[1])
+        assert payload["account"] == "128317151"
+        assert isinstance(payload["account"], str)
+
+    def test_account_omitted_when_not_configured(self):
+        import engine.apple_reporter as ar
+        import json as _json
+
+        sent = {}
+
+        class _Fake:
+            headers = {}
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *a):
+                return False
+
+            def read(self):
+                return b""
+
+        real = ar.urllib.request.urlopen
+        ar.urllib.request.urlopen = lambda req, **kw: (
+            sent.__setitem__("body", req.data.decode()) or _Fake())
+        try:
+            ar.fetch_report_http(access_token="x", vendor="9", date="20260727")
+        finally:
+            ar.urllib.request.urlopen = real
+        payload = _json.loads(sent["body"].split("jsonRequest=", 1)[1])
+        assert "account" not in payload
