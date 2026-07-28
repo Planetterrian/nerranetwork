@@ -550,6 +550,47 @@ def _md_inline(text: str) -> str:
     return text
 
 
+def _format_timestamp(seconds: float) -> str:
+    """Seconds -> ``M:SS`` (or ``H:MM:SS`` past an hour)."""
+    total = int(round(seconds or 0))
+    hours, remainder = divmod(total, 3600)
+    minutes, secs = divmod(remainder, 60)
+    if hours:
+        return f"{hours}:{minutes:02d}:{secs:02d}"
+    return f"{minutes}:{secs:02d}"
+
+
+def _load_chapters(md_path, episode_num: int) -> list[dict]:
+    """Read the episode's committed chapter markers for on-page navigation.
+
+    Returns ``[{"seconds", "time", "title"}]`` in start order, or ``[]``
+    when the episode has no chapter file (older episodes, or a run where
+    parsing produced too few markers). Never raises — chapters are a
+    navigation nicety and must not be able to break a blog build.
+    """
+    if not md_path or not episode_num:
+        return []
+    try:
+        chapters_path = Path(md_path).parent / f"chapters_ep{episode_num:03d}.json"
+        if not chapters_path.exists():
+            return []
+        data = json.loads(chapters_path.read_text(encoding="utf-8"))
+        out = []
+        for entry in data.get("chapters") or []:
+            title = (entry.get("title") or "").strip()
+            start = entry.get("startTime")
+            if not title or not isinstance(start, (int, float)):
+                continue
+            out.append({
+                "seconds": float(start),
+                "time": _format_timestamp(start),
+                "title": title,
+            })
+        return sorted(out, key=lambda c: c["seconds"])
+    except Exception:  # noqa: BLE001 — never break a build over chapters
+        return []
+
+
 def _domain_from_url(url: str) -> str:
     """Extract display domain from a URL."""
     try:
@@ -944,6 +985,13 @@ def generate_blog_post_html(
     except Exception:
         pass  # Non-fatal — transcript is optional
 
+    # Chapters (July 28 2026). These have been generated, committed and
+    # shipped in the podcast feeds for months, but the website surfaced
+    # them nowhere — a reader arriving from search saw a wall of
+    # transcript with no way to tell what the episode covers. The data is
+    # already on disk at build time, so this costs nothing to generate.
+    chapters = _load_chapters(metadata.get("_md_path"), ep_num)
+
     # Build JSON-LD now that the transcript is known, so the (single, canonical)
     # PodcastEpisode block can carry the transcript + audio links.
     _transcript_url = f"{blog_url}#transcript" if transcript_text else ""
@@ -986,6 +1034,7 @@ def generate_blog_post_html(
         "toc": toc,
         "source_domains": source_domains,
         "source_urls": metadata.get("source_urls", []),
+        "chapters": chapters,
         "jsonld": jsonld,
         "prev_post": prev_post,
         "next_post": next_post,

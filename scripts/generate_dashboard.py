@@ -152,6 +152,30 @@ class LandmineResult:
 # ---------------------------------------------------------------------------
 
 
+def _absent_preserving_totals(
+    per_show: Dict[str, Dict[str, Any]], fields,
+) -> Dict[str, Optional[float]]:
+    """Sum *fields* across shows, keeping "not measured" distinct from zero.
+
+    This repo's signature bug is rendering absence as ``0``: Apple
+    suppresses metrics it will not disclose, and a show with no listening
+    has no row at all. The old Apple totals coerced every missing value
+    with ``int(v or 0)``, so "Apple told us nothing" and "Apple told us
+    zero" collapsed into the same number on the dashboard.
+
+    A field that NO show reported returns ``None`` — the UI renders that
+    as an em dash. A field some shows reported sums only those.
+    """
+    out: Dict[str, Optional[float]] = {}
+    for metric in fields:
+        values = [
+            v.get(metric) for v in per_show.values()
+            if isinstance(v.get(metric), (int, float))
+        ]
+        out[metric] = round(sum(values), 4) if values else None
+    return out
+
+
 def _list_show_yaml_paths(shows_dir: Path) -> List[Path]:
     return sorted(
         p for p in shows_dir.glob("*.yaml")
@@ -2117,7 +2141,59 @@ def build_audience_section(root: Path) -> Dict[str, Any]:
     # DOWNLOADS; what Apple uniquely reports is ENGAGEMENT — followers and
     # whether people finished the episode. No official API exists, so this
     # mirrors the Spotify cookie-connector trade-off.
+    # Two Apple sources, deliberately ranked (July 28 2026):
+    #
+    #   1. api/apple_reporter.json — the OFFICIAL Apple Podcasts Reporter
+    #      feed. Token-authenticated, accumulates real daily history.
+    #   2. api/apple_stats.json — the cookie-scrape connector. Fragile,
+    #      needs a daily re-auth chore, and is the reason two of this
+    #      repo's three "absence rendered as 0" bugs existed.
+    #
+    # Reporter wins when it has data; the scrape stays as a labelled
+    # fallback until ~3 weeks of Reporter history accrue and the sources
+    # can be compared. Both carry `provenance` and `fetched_at` so the
+    # card can say which one it is showing rather than implying a single
+    # authoritative Apple number.
     section["apple"] = {"configured": False}
+    _apple_sources: dict = {}
+
+    rep_path = root / "api" / "apple_reporter.json"
+    if rep_path.exists():
+        try:
+            rdata = json.loads(rep_path.read_text(encoding="utf-8"))
+            rshows = rdata.get("shows") or {}
+            # Key by repo slug so the two sources are directly comparable;
+            # fall back to the Apple show id when a slug isn't mapped yet.
+            reporter_per_show = {}
+            for show_id, row in rshows.items():
+                slug = row.get("slug") or show_id
+                reporter_per_show[slug] = {
+                    "plays": row.get("plays"),
+                    "listeners": row.get("listeners"),
+                    "engaged_listeners": row.get("engaged_listeners"),
+                    "listening_hours": row.get("listening_hours"),
+                    "days_reported": row.get("days_reported"),
+                    "show_name": row.get("show_name") or "",
+                }
+            _apple_sources["reporter"] = {
+                "provenance": "Apple Podcasts Reporter (official)",
+                "fetched_at": rdata.get("fetched_at"),
+                "first_date": rdata.get("first_date"),
+                "last_date": rdata.get("last_date"),
+                "days_retained": rdata.get("days_retained"),
+                "per_show": reporter_per_show,
+                "totals": _absent_preserving_totals(
+                    reporter_per_show,
+                    ("plays", "listeners", "engaged_listeners", "listening_hours"),
+                ),
+                "shows_reporting": len(rdata.get("shows_reported") or []),
+            }
+        except Exception as exc:  # noqa: BLE001
+            _apple_sources["reporter"] = {
+                "provenance": "Apple Podcasts Reporter (official)",
+                "error": str(exc),
+            }
+
     ap_path = root / "api" / "apple_stats.json"
     if ap_path.exists():
         try:
@@ -2134,27 +2210,43 @@ def build_audience_section(root: Path) -> Dict[str, Any]:
                 for slug, s in shows_raw.items()
             }
 
-            def _apple_sum(field: str) -> int:
-                return sum(int(v[field] or 0) for v in per_show.values()
-                           if isinstance(v.get(field), (int, float)))
-
             reporting = [s for s, v in per_show.items() if v["plays"] is not None]
-            section["apple"] = {
-                "configured": True,
+            _apple_sources["connect_scrape"] = {
+                "provenance": "Apple Podcasts Connect (cookie scrape — fallback)",
                 "fetched_at": data.get("fetched_at"),
                 "window_days": data.get("window_days"),
                 "per_show": per_show,
-                "totals": {
-                    "plays": _apple_sum("plays"),
-                    "listeners": _apple_sum("listeners"),
-                    "followers": _apple_sum("followers"),
-                    "time_listened": _apple_sum("time_listened"),
-                },
+                "totals": _absent_preserving_totals(
+                    per_show, ("plays", "listeners", "followers", "time_listened"),
+                ),
                 "feeds_registered": len(per_show),
                 "feeds_reporting": len(reporting),
             }
         except Exception as exc:  # noqa: BLE001
-            section["apple"] = {"configured": True, "error": str(exc)}
+            _apple_sources["connect_scrape"] = {
+                "provenance": "Apple Podcasts Connect (cookie scrape — fallback)",
+                "error": str(exc),
+            }
+
+    if _apple_sources:
+        # Primary = Reporter when it actually reported something. A file
+        # that exists but holds no show is not a source of truth, so the
+        # scrape keeps the card alive until Reporter history accrues.
+        rep = _apple_sources.get("reporter") or {}
+        rep_has_data = bool(rep.get("per_show")) and not rep.get("error")
+        primary = "reporter" if rep_has_data else (
+            "connect_scrape" if _apple_sources.get("connect_scrape") else "reporter"
+        )
+        chosen = _apple_sources.get(primary, {})
+        section["apple"] = {
+            "configured": True,
+            "primary_source": primary,
+            "sources": _apple_sources,
+            # Flattened view of the primary source so existing consumers
+            # keep working without knowing about the two-source split.
+            **{k: v for k, v in chosen.items() if k != "provenance"},
+            "provenance": chosen.get("provenance", ""),
+        }
 
     section["spotify"] = {"configured": False}
     sp_path = root / "api" / "spotify_stats.json"
