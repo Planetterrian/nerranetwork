@@ -350,6 +350,12 @@
 
   const money = (n) => "$" + Number(n || 0).toFixed(2);
   const fmt = (n) => Number(n || 0).toLocaleString();
+  // Absence-preserving formatter. `fmt` coerces null/undefined to 0, which
+  // is this repo's signature bug: Apple suppresses metrics it will not
+  // disclose, and "not measured" is not "zero". Use this for any value
+  // that can legitimately be missing.
+  const fmtOrDash = (n) =>
+    (n === null || n === undefined || n === "") ? "—" : Number(n).toLocaleString();
   const compact = (n) => {
     n = Number(n || 0);
     if (n >= 1e6) return (n / 1e6).toFixed(1) + "M";
@@ -736,10 +742,28 @@
         text: "fetched " + ageText(ap.fetched_at) + staleNote(ap.fetched_at) }));
     } else {
       const t = ap.totals || {};
+      const isReporter = ap.primary_source === "reporter";
+      // Which Apple source is on screen. Two sources with different
+      // trust levels reporting different numbers is confusing unless
+      // the card says which one it is showing (July 28 2026).
+      if (ap.provenance) {
+        card.appendChild(h("p", { class: "platform-note",
+          html: "Source: <strong>" + ap.provenance + "</strong>" +
+                (isReporter ? "" :
+                  " — the official Reporter feed has no data yet; " +
+                  "this is the cookie scrape.") }));
+      }
+      // Reporter reports engaged listeners and listening hours; the
+      // scrape reports followers and an opaque time-listened unit.
+      const third = isReporter
+        ? fmtOrDash(t.engaged_listeners) + "<small>engaged</small>"
+        : fmtOrDash(t.followers) + "<small>followers</small>";
+      const windowLabel = isReporter
+        ? (ap.days_retained || 0) + "d" : (ap.window_days || 30) + "d";
       card.appendChild(h("div", { class: "headline",
-        html: fmt(t.plays) + "<small>plays · " + (ap.window_days || 30) + "d</small>" +
-              "&nbsp;&nbsp;" + fmt(t.listeners) + "<small>listeners</small>" +
-              "&nbsp;&nbsp;" + fmt(t.followers) + "<small>followers</small>" }));
+        html: fmtOrDash(t.plays) + "<small>plays · " + windowLabel + "</small>" +
+              "&nbsp;&nbsp;" + fmtOrDash(t.listeners) + "<small>listeners</small>" +
+              "&nbsp;&nbsp;" + third }));
       const per = ap.per_show || {};
       const slugs = Object.keys(per)
         .filter((s) => (per[s].plays || 0) > 0)
@@ -747,18 +771,38 @@
       const maxV = Math.max.apply(null, slugs.map((s) => per[s].plays || 0).concat([1]));
       slugs.forEach((slug) => {
         const v = per[slug] || {};
+        const secondary = isReporter
+          ? fmtOrDash(v.engaged_listeners) + " engaged"
+          : fmtOrDash(v.followers) + " followers";
         card.appendChild(barRow(slug, v.plays || 0, maxV,
-          fmt(v.plays || 0) + " plays · " + fmt(v.followers || 0) + " followers",
+          fmtOrDash(v.plays) + " plays · " + secondary,
           { color: "var(--series-4)",
-            title: slug + ": " + fmt(v.listeners || 0) + " listeners · " +
-                   fmt(v.time_listened || 0) + " time-listened units" }));
+            title: slug + ": " + fmtOrDash(v.listeners) + " listeners · " +
+                   (isReporter
+                     ? fmtOrDash(v.listening_hours) + " listening hours"
+                     : fmtOrDash(v.time_listened) + " time-listened units") }));
       });
-      if (ap.feeds_registered) {
+      if (isReporter && ap.days_retained) {
+        card.appendChild(h("p", { class: "fine-list", text:
+          ap.days_retained + " day(s) of official history · " +
+          (ap.first_date || "?") + " → " + (ap.last_date || "?") }));
+      } else if (ap.feeds_registered) {
         card.appendChild(h("p", { class: "fine-list", text:
           ap.feeds_reporting + " of " + ap.feeds_registered + " registered shows reporting" }));
       }
-      if (ap.fetched_at) card.appendChild(h("p", { class: "fine-list",
-        text: "fetched " + ageText(ap.fetched_at) + staleNote(ap.fetched_at) }));
+      // Both sources' freshness, so a silently-dead one is visible.
+      const srcs = ap.sources || {};
+      Object.keys(srcs).forEach((key) => {
+        const s = srcs[key] || {};
+        if (!s.fetched_at) return;
+        card.appendChild(h("p", { class: "fine-list", text:
+          (key === "reporter" ? "Reporter" : "Connect scrape") + " fetched " +
+          ageText(s.fetched_at) + staleNote(s.fetched_at) }));
+      });
+      if (!Object.keys(srcs).length && ap.fetched_at) {
+        card.appendChild(h("p", { class: "fine-list",
+          text: "fetched " + ageText(ap.fetched_at) + staleNote(ap.fetched_at) }));
+      }
     }
     audGrid.appendChild(card);
   }
