@@ -480,6 +480,19 @@
             background: var(--nn-surface);
             flex-shrink: 0;
         }
+        /* Aggregator-sourced items name the real publisher, for which we
+           have no domain to fetch a favicon from — a lettered badge is
+           honest where Google's favicon would imply Google reported it. */
+        .blog-source-card .source-initial {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-ui);
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--nn-text);
+            background: var(--nn-border, var(--nn-surface));
+        }
 
         /* Related posts */
         .blog-related {
@@ -1346,8 +1359,8 @@
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMigwJBVV95cUxNWWZxZFZTX2ptQldaS0FqcTVFb1U4dzhzR2JwZnhidThuTHd5VHZqYklRY2RscXdtTW9hckROSmtyaVhJVERuUlYwQkRLTnpYc0FZV2RjNFVFVmdISTNNMFVRZHE5TjN6SzUzbVQxbVRKQU9HQ1RmeWdtWFZNX3N3REJ2M1pQcElmQkFrOFJpR3UwcWQ3dm50QlVpZnJ6bUxvWTc0MEM3NUVHN0xZcEdORThPOXh6M1dEU1RFUXRHeWw0VDBSMTgyTjNBU0JrYTVJNHlzU0doczJMZjNqcTBTTi1EU1IydjMxYzVTbmlVNEs2ZEktalhtaUFWbXRfRW40NFY4?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">G</span>
+                        <span class="source-domain">Government of Canada</span>
                     </a>
                     
                     <a href="https://insideclimatenews.org/news/16042026/minnesotas-boundary-waters-just-lost-protection-from-mining/" target="_blank" rel="noopener" class="blog-source-card">

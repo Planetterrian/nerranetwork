@@ -480,6 +480,19 @@
             background: var(--nn-surface);
             flex-shrink: 0;
         }
+        /* Aggregator-sourced items name the real publisher, for which we
+           have no domain to fetch a favicon from — a lettered badge is
+           honest where Google's favicon would imply Google reported it. */
+        .blog-source-card .source-initial {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-ui);
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--nn-text);
+            background: var(--nn-border, var(--nn-surface));
+        }
 
         /* Related posts */
         .blog-related {
@@ -1353,7 +1366,7 @@
                 <div class="blog-sources-grid">
                     
                     <a href="https://news.google.com/rss/articles/CBMiwAFBVV95cUxNTUdaYXFlbk9mRy1rZzhxLU03SVlkRFhELVpxa0RSY1dGbGdidG9qRDJhOW5OYlJzU3hYMzF1d2tFZmN5elp4WTVoMVhUYkl2SEtWVXlidlBqYTRrSkg0bHBpaWRCMTRudno3Q3RSRzMybUV0aURqaFhqa0d6RTZpV1ZMN2plZmlraGtHNmVOZGhlbHBuVFpXTXJ4QVc0UEtaMktmMUxoUTkxdjNmU1FXb0o0bDZpVmtRUFc5Z2NTbF8?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-icon source-initial" aria-hidden="true">N</span>
                         <span class="source-domain">news.google.com</span>
                     </a>
                     

@@ -485,6 +485,19 @@
             background: var(--nn-surface);
             flex-shrink: 0;
         }
+        /* Aggregator-sourced items name the real publisher, for which we
+           have no domain to fetch a favicon from — a lettered badge is
+           honest where Google's favicon would imply Google reported it. */
+        .blog-source-card .source-initial {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-ui);
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--nn-text);
+            background: var(--nn-border, var(--nn-surface));
+        }
 
         /* Related posts */
         .blog-related {
@@ -1352,13 +1365,13 @@
                 <div class="blog-sources-grid">
                     
                     <a href="https://news.google.com/rss/articles/CBMizAFBVV95cUxPeEQ0MWxJRWpmelRxLTB4eVlQOHVqWTF6VTBBaGZkcTdIcjZwTm9uNm91dVA3aVZJdVJuQXpLbDNpM19keWs0b2dmME5nN0p0Y3pITUtjUlpTVk1jUDBTdFMxcldWdlhDd2lWX1lRRUlBOW00ZWtBSFRtWmFzV3VzZ3A3Vlh2YjA0eThDc1dEbnoxcDlXU2dpOXJTUFFiNFYzNzBNc3FsYlJrSXVwajN0SlI2R1RqT2xzRG85YWtnTE9OR0RvblFwOXhleU8?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-icon source-initial" aria-hidden="true">N</span>
                         <span class="source-domain">news.google.com</span>
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMieEFVX3lxTE1PQlMwZ0JYWHZmNldwQl9fVm9lcUtOVEZhZlZPYmxkNjZJcjBSS3ZPMURLSm52cDljZ0prNWVMNHZfdk5DOXc1djZrU3BGSXpLdWxtdXpJVXVpcTY1RHVGdGxTYXd5SWdVdUdpS0pPNHZNYzVXSTRwXw?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">G</span>
+                        <span class="source-domain">Global News</span>
                     </a>
                     
                     <a href="https://news.gov.bc.ca/releases/2026ECS0027-000630" target="_blank" rel="noopener" class="blog-source-card">
