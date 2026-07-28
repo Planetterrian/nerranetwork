@@ -3281,14 +3281,34 @@ def generate_sitemap(*, dry_run=False):
         if (ROOT / extra).exists():
             urls.append((f"{base}/{extra}", "0.5", _file_lastmod(ROOT / extra)))
 
-    # Individual blog posts
+    # Individual blog posts.
+    #
+    # lastmod comes from the EPISODE DATE embedded in the page, not the
+    # file mtime. A blog post is a dated article: its content changes
+    # when the episode changes, which is never. But the file is rewritten
+    # every time anything in the generator or template moves, and a
+    # network-wide regeneration then stamps all ~1,250 posts with today's
+    # date — telling Google the entire archive changed at once, which is
+    # exactly the useless signal the May 2026 audit removed by switching
+    # off build-date lastmod in the first place. Reading the date back out
+    # of the page makes the signal survive regeneration.
+    _dp_re = re.compile(r'"datePublished"\s*:\s*"(\d{4}-\d{2}-\d{2})')
+
+    def _post_lastmod(ep_file):
+        try:
+            head = ep_file.read_text(encoding="utf-8", errors="ignore")[:20000]
+        except Exception:
+            return _file_lastmod(ep_file)
+        m = _dp_re.search(head)
+        return m.group(1) if m else _file_lastmod(ep_file)
+
     blog_dir = ROOT / "blog"
     if blog_dir.exists():
         for show_dir in sorted(blog_dir.iterdir()):
             if show_dir.is_dir():
                 for ep_file in sorted(show_dir.glob("ep*.html")):
                     rel = f"blog/{show_dir.name}/{ep_file.name}"
-                    urls.append((f"{base}/{rel}", "0.6", _file_lastmod(ep_file)))
+                    urls.append((f"{base}/{rel}", "0.6", _post_lastmod(ep_file)))
 
     # Build XML
     lines = ['<?xml version="1.0" encoding="UTF-8"?>',
