@@ -456,6 +456,17 @@ def _preflight_checks(config, *, dry_run: bool = False) -> None:
         )
         logger.info("Pre-flight LLM ping OK (model=%s)", config.llm.model)
     except Exception as exc:
+        # A billing stop is the one ping failure worth aborting on.
+        # Continuing past it guarantees paying for the fetch, digest and
+        # script stages to arrive at the same 403 at the audio step —
+        # which is exactly what happened across the whole matrix on
+        # 28 July 2026. Everything else stays a warning, because a
+        # network blip must not cancel a day of episodes.
+        from engine.provider_quota import is_quota_exhausted, quota_message
+
+        if is_quota_exhausted(exc):
+            logger.error("%s", quota_message("xAI", exc))
+            raise SystemExit("Pre-flight aborted: provider out of credit")
         logger.warning(
             "Pre-flight LLM ping failed for model=%s: %s (continuing anyway)",
             config.llm.model, exc,
