@@ -257,7 +257,12 @@ def test_build_long_form_metadata_truncates_title_to_100_chars():
         audio_url="https://audio.nerranetwork.com/tesla/ep001.mp3",
     )
     assert len(meta["title"]) <= vm.YOUTUBE_TITLE_MAX
-    assert meta["title"].endswith("...")
+    # The marker is engine.titles.ELLIPSIS ("…"), not "...". One character
+    # instead of three inside a 100-char budget, and asserting the shared
+    # constant rather than a literal means a future change to the house
+    # style updates here automatically instead of going red.
+    from engine.titles import ELLIPSIS
+    assert meta["title"].endswith(ELLIPSIS)
 
 
 def test_long_form_title_front_loads_hook_for_seo():
