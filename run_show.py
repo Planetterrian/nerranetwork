@@ -1871,6 +1871,30 @@ def run(args: argparse.Namespace) -> None:
         x_thread = scrub_scaffold(x_thread)
         x_thread = transform_daily_body(x_thread, slug=getattr(config, "slug", ""))
         x_thread = fix_phonetic_garbles(x_thread)
+
+        # Name the outlet that actually reported each aggregated story.
+        # The digest cites them as "[Google News](news.google.com/...)",
+        # which tells the reader nothing and makes the blog's Sources
+        # card render Google's favicon as though Google were the
+        # publisher. The real outlet is already on the article record
+        # (fetcher._publisher_from_entry reads the feed's <source>
+        # element) — this is the wire that carries it into the digest.
+        # Deterministic and keyed on the exact URL: no prompt change, so
+        # no generated prose moves, and no network call (July 28 2026).
+        try:
+            from engine.url_utils import relabel_aggregator_links
+            x_thread, _relabelled = relabel_aggregator_links(
+                x_thread, locals().get("articles") or []
+            )
+            if _relabelled:
+                logger.info(
+                    "Named the real publisher on %d aggregated source link(s)",
+                    _relabelled,
+                )
+                metrics.record("sources_relabelled", _relabelled)
+        except Exception as exc:  # never block a digest on link cosmetics
+            logger.warning("Source relabelling failed (non-fatal): %s", exc)
+
         if args.show == "tesla":
             from shows.hooks.tesla import scrub_unavailable_tsla_from_digest
             x_thread = scrub_unavailable_tsla_from_digest(x_thread)
@@ -2818,6 +2842,10 @@ def run(args: argparse.Namespace) -> None:
                     _transcript_result = generate_transcript(
                         raw_mp3, digests_dir, _ep_prefix,
                         model_size=config.tts.whisper_model, language=_lang,
+                        # Show proper nouns bias the decoder away from the
+                        # brand garbles that shipped in 790 transcripts
+                        # before July 28 2026 (see engine/transcripts.py).
+                        vocabulary=[config.name, *config.keywords],
                     )
                 except Exception as exc:
                     logger.warning("Transcript generation failed (non-fatal): %s", exc)
@@ -3093,6 +3121,22 @@ def run(args: argparse.Namespace) -> None:
         digests_dir=digests_dir,
         args=args,
     )
+    # Feed image spend back into the credit tracker. grok_imagine.py has
+    # always computed this cost and logged it, but nothing carried it
+    # into the episode summary — so the reported per-episode total left
+    # out the images entirely (July 28 2026).
+    try:
+        from engine.tracking import record_image_usage
+        _img_cost = float(youtube_urls.get("grok_image_cost_usd", 0.0) or 0.0)
+        _img_count = int(youtube_urls.get("grok_images_generated", 0) or 0)
+        if _img_cost or _img_count:
+            record_image_usage(
+                tracker, _img_count, _img_cost,
+                model=str(getattr(config.youtube, "grok_image_model", "") or ""),
+            )
+    except Exception as exc:  # never let accounting break a publish
+        logger.warning("Image cost accounting failed (non-fatal): %s", exc)
+
     youtube_long_url = youtube_urls.get("long_url", "")
     youtube_short_url = youtube_urls.get("short_url", "")
     youtube_pexels_filtered = int(youtube_urls.get("pexels_photos_filtered", 0) or 0)

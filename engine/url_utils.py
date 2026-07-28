@@ -172,3 +172,58 @@ def shorten_for_email(url: str, *, max_len: int = 200) -> str:
         return cleaned if cleaned else url
     except Exception:  # noqa: BLE001 — never fail on URL ops
         return url
+
+
+def relabel_aggregator_links(text: str, articles) -> tuple[str, int]:
+    """Replace "Google News" link labels with the outlet that reported the story.
+
+    Digests cite aggregated stories as ``Source: [Google News](https://
+    news.google.com/rss/articles/CBMi...)``. The label names the
+    redirector, so the reader never learns who did the reporting, and the
+    blog's Sources card renders Google's favicon as if Google were the
+    publisher.
+
+    The real outlet is already known: ``fetcher._publisher_from_entry``
+    reads it from the feed's per-item ``<source>`` element and stores it
+    on the article as ``source_name``. This is the wire that carries it
+    into the digest — a deterministic post-pass keyed on the exact URL,
+    with no prompt change (so nothing about the generated prose moves)
+    and no network call.
+
+    The href is deliberately left pointing at Google: it is the only URL
+    we have that reaches the article. ``resolve_google_news_url`` cannot
+    help — Google serves a JS interstitial that redirect-following does
+    not penetrate, so it fails on 100% of current-format URLs.
+
+    Returns ``(text, relabelled_count)``.
+    """
+    if not text or not articles:
+        return text, 0
+
+    by_url = {}
+    for article in articles:
+        url = (article.get("url") or "").strip()
+        name = (article.get("source_name") or "").strip()
+        if url and name and is_google_news_url(url):
+            by_url[url] = name
+
+    if not by_url:
+        return text, 0
+
+    count = 0
+
+    def _replace(match: "re.Match") -> str:
+        nonlocal count
+        label, url = match.group(1), match.group(2)
+        publisher = by_url.get(url.strip())
+        # Only rewrite the aggregator placeholder. A label the digest
+        # already made specific is left exactly as written.
+        if publisher and label.strip().lower() in ("google news", "news.google.com"):
+            count += 1
+            return f"[{publisher}]({url})"
+        return match.group(0)
+
+    import re as _re
+
+    text = _re.sub(r"\[([^\]]+)\]\((https?://news\.google\.[^)]+)\)", _replace, text)
+    return text, count
