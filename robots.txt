@@ -10,6 +10,11 @@ Allow: /
 Disallow: /management.html
 Disallow: /api/
 Disallow: /digests/
+# Machine-readable build artifacts, not pages. Google was crawling
+# search-index.json and gallery-manifest.json and filing them under
+# "Crawled - currently not indexed" (July 2026) — they can never be a
+# search result, so the crawl budget is better spent on blog posts.
+Disallow: /site/data/
 
 # AI training crawlers — Nerra Network is an AI-narrated network
 # that already discloses its use of AI publicly. We allow these

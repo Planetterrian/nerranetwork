@@ -257,6 +257,30 @@ _DATE_FORMATS = [
 ]
 
 
+def _clip_words(text: str, limit: int) -> str:
+    """Clip *text* to at most *limit* chars WITHOUT cutting a word in half.
+
+    The old behaviour was a bare ``text[:100]`` slice, which produced
+    titles like "...battle sugarcane beetles - but the toads br..." and
+    "...talk about trees, riv...". 61% of every blog post on the network
+    carried one, in the <title>, the <h1> AND the schema headline. A
+    search result whose headline stops mid-word reads as broken, and it
+    wastes the few characters Google actually shows.
+
+    Cuts at the last word boundary at or before *limit*, strips dangling
+    punctuation, and only appends the ellipsis when something was
+    actually removed.
+    """
+    text = (text or "").strip()
+    if len(text) <= limit:
+        return text
+    cut = text[:limit]
+    space = cut.rfind(" ")
+    if space > limit * 0.6:  # keep a sane minimum rather than one long word
+        cut = cut[:space]
+    return cut.rstrip(" .,;:—-\u2013") + "\u2026"
+
+
 def extract_blog_metadata(
     md_text: str,
     show_slug: str,
@@ -353,7 +377,7 @@ def extract_blog_metadata(
 
     # Fallback: use hook as title (truncated) — much better than generic show name
     if not title and hook:
-        title = hook[:80] + ("..." if len(hook) > 80 else "")
+        title = hook  # full hook: <h1> and cards clamp in CSS, no need to cut
 
     # June 2026 look-and-feel pass: when the extracted title is just the
     # show name (digests lead with "# <Show Name>"), prefer the unique
@@ -367,7 +391,7 @@ def extract_blog_metadata(
         except Exception:
             _show_name = ""
         if _show_name and (title == _show_name or title.startswith(_show_name)):
-            title = hook[:100].rstrip(" .,;:—-") + ("…" if len(hook) > 100 else "")
+            title = hook
 
     # Fallback: derive hook from first substantive content paragraph
     if not hook:
@@ -871,6 +895,25 @@ def _build_jsonld(metadata: dict, show_name: str, blog_url: str,
 # High-level generators
 # ---------------------------------------------------------------------------
 
+def _blog_meta_description(metadata: dict, show_config: dict) -> str:
+    """A description that is not just a copy of the <title>.
+
+    Previously this was the raw hook while the <title> was that same hook
+    truncated — so 99% of posts shipped a description that was a prefix of
+    their own title. Google gains nothing from the repeat and often
+    rewrites the snippet instead. The hook is a complete sentence, so it
+    stays the spine; the show name is appended for context when there is
+    room inside the ~160 chars a result actually shows.
+    """
+    hook = (metadata.get("hook") or "").strip()
+    if not hook:
+        return (show_config.get("description") or "").strip()
+    suffix = f" {show_config['name']}, episode {metadata.get('episode_num', 0)}."
+    if len(hook) + len(suffix) <= 160:
+        return hook.rstrip(" .") + "." + suffix
+    return hook
+
+
 def generate_blog_post_html(
     md_text: str,
     metadata: dict,
@@ -925,8 +968,7 @@ def generate_blog_post_html(
         or _extracted.startswith(_show)
     )
     if _is_show_name and _hook:
-        clipped = _hook[:100].rstrip(" .,;:—-")
-        metadata["title"] = clipped + ("…" if len(_hook) > 100 else "")
+        metadata["title"] = _hook
     elif not _extracted:
         metadata["title"] = _show
 
@@ -1010,8 +1052,16 @@ def generate_blog_post_html(
 
     context = {
         "path_prefix": _path_prefix(path_key),
-        "page_title": f"{metadata['title']} — Ep{ep_num} | {show_config['name']} Blog",
-        "meta_description": metadata.get("hook", show_config.get("description", "")),
+        # <title> and description must not be the same string. The full
+        # headline lives in the <h1>, the schema headline and the
+        # description; the <title> carries a word-safe lead plus the
+        # episode and brand, so the part Google actually renders (~60
+        # chars) is a readable phrase rather than a severed word.
+        "page_title": (
+            f"{_clip_words(metadata['title'], 62)} — Ep{ep_num}"
+            f" | {show_config['name']}"
+        ),
+        "meta_description": _blog_meta_description(metadata, show_config),
         "meta_keywords": show_config.get("meta_keywords", ""),
         "theme_color": show_config.get("theme_color", ""),
         "og_image": f"https://nerranetwork.com/{show_config.get('podcast_image', '')}",
@@ -1236,7 +1286,7 @@ def blog_rss_item_title(meta: dict, show_name: str) -> str:
     title = (meta.get("title") or "").strip()
     hook = (meta.get("hook") or "").strip()
     if hook and (not title or title == show_name.strip()):
-        return hook[:120] + ("..." if len(hook) > 120 else "")
+        return _clip_words(hook, 120)
     return title or hook or show_name
 
 
