@@ -502,6 +502,19 @@
             background: var(--nn-surface);
             flex-shrink: 0;
         }
+        /* Aggregator-sourced items name the real publisher, for which we
+           have no domain to fetch a favicon from — a lettered badge is
+           honest where Google's favicon would imply Google reported it. */
+        .blog-source-card .source-initial {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-ui);
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--nn-text);
+            background: var(--nn-border, var(--nn-surface));
+        }
 
         /* Related posts */
         .blog-related {
@@ -1542,7 +1555,7 @@
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMixAFBVV95cUxOMzVrYklLZU5aQnNEczRvbC1WcG15dklJRnliOTB0LUhyWUdBZGNXbVVCrjBBVzlHWVE1ZHhFX1h5b012N2JkWTVsdWRzRE5NYXhfMzNuM1FRODROrjU5dkljXzcyejdSY1dhOS1xUUluV3h6RXpwWmd0VVB0OVJJM0V3LUI2V2pVTHdNVEFjanlWbVdDemdVZ3I3dHN6RzkxSjVjZXdCTUdBVWdVZm8yT1oxTmhaUC1VOVRYOEhmU3U5Y19i0gHKAUFVX3lxTE8xbkt1S21zcGpwX0R0aTZVRDJFSEJuYVRsTUc3U0hKV25vMDNVQlpvUmF5NUpLLTZBS2d2dWI2M2RkeXdVUXZxZHJ6b29JaWpaLW1FZjRiN3JzYnNPR2xyUnppcDRkLU5CSG52SFdlcUhhTFA1OWp3ZmRpNTBRVmQtQmVLZ1JtVWxfY1RnbkZORnlWNzBMRkFZRm5XdnZGc3czY2pKQkFGTkduZFd4Vzc1V3JGUTBDMkdVY0U0S0hhSDhqblFtaG9WQ2c" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-icon source-initial" aria-hidden="true">N</span>
                         <span class="source-domain">news.google.com</span>
                     </a>
                     
