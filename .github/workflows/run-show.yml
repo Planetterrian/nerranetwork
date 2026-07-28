@@ -642,38 +642,20 @@ jobs:
           git commit -m "Auto-generated: ${{ matrix.show }} $(date +%Y-%m-%d)"
 
           # Push with retry (handles concurrent pushes from matrix jobs).
-          # On persistent "fatal error in commit_refs" or other server transients
-          # after the local commit succeeded, fall back to a recovery branch + PR
-          # so the episode artifacts (transcripts, metrics, chapters, digests, blog)
-          # are preserved instead of being discarded with the runner VM.
+          # Delegated to a script so the conflict-resolution logic is
+          # testable — tests/test_push_show_artifacts.py drives it against
+          # real temporary git repos.
+          #
+          # Replaces an inline loop whose merge fallback could never work:
+          # checkout is fetch-depth: 1, so a shallow clone has no common
+          # ancestor with the fetched tip and git answers "refusing to
+          # merge unrelated histories". Every conflict, of any kind, spent
+          # four doomed attempts and 30s of sleeps before stranding the
+          # episode in a recovery PR (SpaceX Ep47, 28 July 2026).
           PUSH_SUCCEEDED=false
-          for attempt in 1 2 3 4; do
-            # Try rebase first (cleanest history)
-            if git pull --rebase origin main; then
-              if git push origin main; then
-                echo "Push succeeded on attempt $attempt (rebase)"
-                PUSH_SUCCEEDED=true
-                break
-              fi
-            else
-              # Rebase failed (likely conflict) — abort and try merge
-              git rebase --abort 2>/dev/null || true
-              echo "Rebase failed on attempt $attempt, trying merge..."
-              if git pull --no-rebase origin main -X theirs; then
-                if git push origin main; then
-                  echo "Push succeeded on attempt $attempt (merge)"
-                  PUSH_SUCCEEDED=true
-                  break
-                fi
-              else
-                echo "Merge also failed on attempt $attempt"
-              fi
-            fi
-            if [ $attempt -lt 4 ]; then
-              echo "Push failed on attempt $attempt, retrying in $((attempt * 5))s..."
-              sleep $((attempt * 5))
-            fi
-          done
+          if SHOW="${{ matrix.show }}" scripts/push_show_artifacts.sh; then
+            PUSH_SUCCEEDED=true
+          fi
 
           if [ "$PUSH_SUCCEEDED" != "true" ]; then
             echo "All direct push attempts to main exhausted (likely GitHub 'fatal error in commit_refs' transient)."
