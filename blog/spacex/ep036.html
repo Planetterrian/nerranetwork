@@ -508,6 +508,19 @@
             background: var(--nn-surface);
             flex-shrink: 0;
         }
+        /* Aggregator-sourced items name the real publisher, for which we
+           have no domain to fetch a favicon from — a lettered badge is
+           honest where Google's favicon would imply Google reported it. */
+        .blog-source-card .source-initial {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-ui);
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--nn-text);
+            background: var(--nn-border, var(--nn-surface));
+        }
 
         /* Related posts */
         .blog-related {
@@ -1514,23 +1527,23 @@
                 <div class="blog-sources-grid">
                     
                     <a href="https://news.google.com/rss/articles/CBMiZ0FVX3lxTFBqc3RRTURzN0czVnVmVVdVVVFObXp6cG1QT3Y0R1FfazNOMl9ZNlBnaWJXXzhyamUxSUNBZmFrS3FvcDFTVnJiNFhETEN4eEZpdjhwa0pvMFBCMHJUQVpmQW1faEpNbm8?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">K</span>
+                        <span class="source-domain">KeepTrack</span>
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMiwgJBVV95cUxPY3VOd19zbXJmYkh6ZnBJeTVqTHJ0cHVCbHFHMTNCd1RqNmxBckVBQU1mcDI3bTkwRFZyMnBobzZxY1dJMWliSEE4bjN0VjJoZDVxWGtYVDBsdEdxNVpjNElBaTZMdktzNk1vX3hiSFBmMHI1andJVjlHUEpYYjNkdmdkRmFra2ZIb0NTQ0V4MHJ5SkZuZlcySlBRV3U2WWthcE1aUi1XMzkwOWIwR1U2LUNpWEtuMW1uV0ZhbzdCOGQtLXJiTjV2STJIMll0bTcxaG9kZGpjUXFxdDNBM2dIMXc3aHNiSFU3VkdOQ2lwVGQ4b1dLU1N1WV92VG9LYVNTQkZ3QWtNZGhpM3VkaTdOd19XdkxzTFpZN3IxQUhjM0RqQmEyQzhTd0JhZlczYTdhQXZnSmxGVVhtMGtXSFVaV3d3?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">S</span>
+                        <span class="source-domain">Space Daily</span>
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMiiwFBVV95cUxQeFo2VzgxYld2ZW4zeFVRWEN6ZHlRWW1neWxWd1B6dEZ3djNrYzBBaW5XaDcyYUtBUkJmMHVjblp3T3llM1daWXpRZVVjWkQ0WE52NUJOWkZzeEpJdHgxYkE4TGpxdkw4MlpBRkdhb1NJTEJadFRqOGdyalP3a081WHdMVzhhcjB6dDE4?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">T</span>
+                        <span class="source-domain">Teslarati</span>
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMiggFBVV95cUxQMlIxMXJ6LWJkNDlRWGxYblBHemlKUmpMYTMzTUdhUjUtN0tOalJMbHNkYzhyZ0tzT0hCUFd5TTBCQ0Y1SGxSbXNRNnprWjJSenJWX3RlcVJWZlV0UnBjYl9hbUpfd25wQnByTXpMVVd0a2xCaG12NkhlQzhKOVNqM0ZR?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">W</span>
+                        <span class="source-domain">WESH</span>
                     </a>
                     
                     <a href="https://arstechnica.com/space/2026/07/will-russias-answer-to-the-falcon-9-rocket-ever-take-flight/" target="_blank" rel="noopener" class="blog-source-card">
@@ -1539,18 +1552,18 @@
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMixwFBVV95cUxQaUYyUnduMFJGOGFXLWl6WnJsOU9nWVNwa1dRRG9XNUxDN2Rpczc1bm9uT0xhVDE1UW1KdG05VXhZSDU2WEtlQy02aHBMSlhFdXhhalMzR0FPWk9nbVVCR2pDSE45VzdnWkVxLUJ4dE0zTldRd2NuaW5JcWcyckdOcGhrZGdZanRhQ2loQ3MxZ19UMGFFQ05tVXJSc1V5R2g2Zko3Qko4Y2xMS1dZYXplUENxTk5IMzZVNXB3NU0wZDNzdzFyZkQw?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">T</span>
+                        <span class="source-domain">Tech Times</span>
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMiuAFBVV95cUxNaW9va0YwaWF0cmlYNmhlcFFnZGd0and0MFZnUmMzRUFJbk53ODNSV3BteUZ4dkxnQW1UWkdBWlBfcFUzbzdyR3VOb01scUxFSDQ0RjhjcEVpbnRJUzRKYnZrQ1ZlZFUtS3FKZm1XTHlpNjJVMWF1Vk5sVWFhMFBKeWlpV3RoQUpBSm5pOGJfWm9Mc2RpdVFYbXViN092akMzZlRBSHlZOHdmOWl0aHBKeFhJb1lqTW90?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">T</span>
+                        <span class="source-domain">The Register</span>
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMijgFBVV95cUxONHBmZ1gxQUFZaXpMRG5NV3BINzJiTU5TZHNOdDlZODUxM0lMYmRVYWw3LWNkSmlYMU1HQXdtb1hwaVpzMVNYMS05RE1rVWZyaE9IalU2R2w0Zk9ReHI1OU5OZTFmbGJERkxkSXNmN0Z2YVZoV2pxeGp0MkdBMFZqYVVHeDJDdHpDelJlN3NB?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">S</span>
+                        <span class="source-domain">Space</span>
                     </a>
                     
                 </div>

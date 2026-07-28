@@ -508,6 +508,19 @@
             background: var(--nn-surface);
             flex-shrink: 0;
         }
+        /* Aggregator-sourced items name the real publisher, for which we
+           have no domain to fetch a favicon from — a lettered badge is
+           honest where Google's favicon would imply Google reported it. */
+        .blog-source-card .source-initial {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-ui);
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--nn-text);
+            background: var(--nn-border, var(--nn-surface));
+        }
 
         /* Related posts */
         .blog-related {
@@ -1593,18 +1606,18 @@
                 <div class="blog-sources-grid">
                     
                     <a href="https://news.google.com/rss/articles/CBMizwFBVV95cUxNNVh4N2w0SGZVTk12N1V3QVZZZDluUElSc1J1ZVoxZmVpcGM5RURwWDM0MGlfck9SMV9YMzRQdFJVMXJFUDVSYjR1R2NhNzExRXhXMmpZZ3c4LS1OT0l6M2ZmUm5lTHNTS2t1YUNwQmIyNkhFVk1YV2l2dGxpajEtTFpvRjYtbUFkX0xHcDVmdWZMZUJYRFZwakdpMkxrUGJBVkhaRllxSGJNN1Q4cFdBa1J2VDJEN1VuQ2RNbTZuZWtQQ1RHVUNKS0F3b3o5YVU?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">S</span>
+                        <span class="source-domain">Space</span>
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMioAFBVV95cUxPdlB5SjlSZHhxT2JMN0tlQ25zVDNWRXM1QlZCTUxjRjB3WW9wUWgtY3BtZVdtaWttUlVOU3d3Ty1ZMjgtTVBIZXI1WVRDSkp5d1lDaWJNYVQwcENCRHd3d2NkNVRneld1TFExendGZHA3eE9WUTd5MkY2ZF9Nal9xUTAzMEsydER0ZGJrTGt2MTRKVVJQT1dob0ZkSlo3YzBB?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">S</span>
+                        <span class="source-domain">Space</span>
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMipAFBVV95cUxOV2NMV2tDZVp6aWxuaVlVV0p0a0xHLVVmVEtHQllLZm4yT0xyajlfZ3RhdWhZajR0TTUyR0V1bElIekM4TnVxNXZEMTFsSFdVS0FTTUc1TnlJa1ZZc2dURk9hWGZWSjVLYXU4dlg2Szdzd2h0dnFHUE16WG5FdWV0bVlYZWlMaU9nUFp5b0ZpT3FjS0NWQjU5UFJLa1FKODhUSHVhdg?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">P</span>
+                        <span class="source-domain">PCMag</span>
                     </a>
                     
                     <a href="https://spacenews.com/perovskite-solar-panel-startup-verde-technologies-shifts-focus-to-space/" target="_blank" rel="noopener" class="blog-source-card">
@@ -1613,13 +1626,13 @@
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMihgFBVV95cUxOUW1SajhhX2NQdHhJaF9BdzJ5Mkl4UlpqZUUyTG5PSlVsUTgzWnNLR09FZEJkZTk3LWdEUXp5XzktWjBEZTdqYUlIVElKQ1Z6Z2dXOWRibTByUXY2UEcxdG9VaEtMQ1pDNHpxRmMwVURwemJyZ3h6YzFiZ3pJWjZ4TnRkaXZfUQ?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">A</span>
+                        <span class="source-domain">AOL.com</span>
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMi8AFBVV95cUxOc1NKMVRsTlpvcmlYVUF6bDB0QzUxWUtQNXhWdC1BOVdabjR5cGJOb1pKajE2X1hSUHZnSnBZU2xFLXgxNUE4VW56dkV4VFY1bEhYVDVhdGw0ZjZuVGxia2djLUUta2E0eFNZaU9GWmF4ck5la0FydzNiY3NzVHlwSHAzcXFIeUdKTmZ1V3BucmRpWGZUWmRDZWdSZXZFSnh0eFBVcDhScDlsS0lWWFlIY0xlUF90WkRBZ09wRC0waHFOVmNsZldOa1VIOHlnU2tBcnB2TGQ3S1MzeFBFY0FONDl5Q2N2a1dwQlJvbmtGQjI?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">D</span>
+                        <span class="source-domain">Daytona Beach News-Journal</span>
                     </a>
                     
                     <a href="https://www.reddit.com/r/spacex/comments/1ulla37/starship_60second_static_fire_ahead_of_the/" target="_blank" rel="noopener" class="blog-source-card">
@@ -1628,8 +1641,8 @@
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMilAFBVV95cUxPMVFUQ24tOEl3OGNPelRCSDhlYjdfTG5IYnp3aGZUeWMydEhPQTc2YTVFY09na0NvNHpWZ3JWUUMzaTM3OS1fSGxFY2JLZW9lMXNLWEh6aDE2S0ptM3JJeExaZ2RMdHNvbVlLMGtoRnh2OUNUd1ZFNzdFWk80Q3l4Smlka0tRZHhkRklfRnBWNzN3SDVV?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">T</span>
+                        <span class="source-domain">The Business Journals</span>
                     </a>
                     
                 </div>

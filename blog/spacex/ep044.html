@@ -508,6 +508,19 @@
             background: var(--nn-surface);
             flex-shrink: 0;
         }
+        /* Aggregator-sourced items name the real publisher, for which we
+           have no domain to fetch a favicon from — a lettered badge is
+           honest where Google's favicon would imply Google reported it. */
+        .blog-source-card .source-initial {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-ui);
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--nn-text);
+            background: var(--nn-border, var(--nn-surface));
+        }
 
         /* Related posts */
         .blog-related {
@@ -1551,12 +1564,12 @@
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMivAFBVV95cUxPbzR5NUN3LUtZdFNpZ0d6OUctOFhkTDVFejUtTS1CTThLekdCWVdaemx1UWctWHk1Yy03Ty1TSk5xTmVPbnItLThlQm5Mc0RZbnNDWHY2a0ZuSXM2NFRZcnd5eUxncWxEelk3UXk5elVJOFppSnZxU0xESFRRbmIwbVFSTjNPY25ub0dVV1o1QkpYRnZSNlpmNl8zeFFOZ1dweXRwWmJwVWp0N2h3blVGbTE2eEVCR3FSWTkzUQ?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-icon source-initial" aria-hidden="true">N</span>
                         <span class="source-domain">news.google.com</span>
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMiswFBVV95cUxNSmtna1VxYzBTTXZBd0VuS1BhT3EtSWZ6N29MRHNudy11S3FhVWxrbUtKdzFCaDlKR2pOaDNkRm9yTV9YZE1vMXZVeVlDUU1DVFlPbzJibTQwczdmbi0xeXEzMVpMSnV2QkRUMWl1aUZuUDNldXFhZXNfTEZJT3BjeFJHbmhKLUJfRU1yU0Jvdmw3Y3ItVmFJSXZNd2RENndXMU5XTlotN3VtM0IzcGpoVktGUQ?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-icon source-initial" aria-hidden="true">N</span>
                         <span class="source-domain">news.google.com</span>
                     </a>
                     
@@ -1566,17 +1579,17 @@
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMiqgFBVV95cUxOV0YyUkZSSngzeTc1OHVhWGt6T1BsdFBwcFo0RUNkN2hqX3dyelprUnlnQ0FWTU1tUG9HZFRGbXU3cjJ1dHhENE9mQXE2QVRzaE5hXzRtYl9MM1Vzck5rWjdxUHpYRFlIVFRMR2ljUlF4U2Z4UkZITE01bk1pWmRLdWRodkVtRmVGLWlFVFkyUkN0SzVZZnU0QWs4cVVUXzJlOHNEY3RGb3JzZw?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-icon source-initial" aria-hidden="true">N</span>
                         <span class="source-domain">news.google.com</span>
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMitwFBVV95cUxNVW5SOE5xcGxqZEZRZ0xpTE9Wc2JiTUloM1VHUHdxcllUQXI4RHNnZnRqdnZWYTJZS1pwYl9obxh3aDVJNVZMX3lBS2ZxbnNlMklGbjdUX0lnal95RFBaNHE1MUt0anNSVHhqd1dFNTN5bWM0YS02QzNWbzRrUHkzN0VKRUR1aFJYd3NPX2RGWDRzVUo0dEtlQm14alV4N3ByQl9qVWxuZmoybU5sSlAyNC1TUE9YQQ?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-icon source-initial" aria-hidden="true">N</span>
                         <span class="source-domain">news.google.com</span>
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMijAFBVV95cUxNem4zRHlYZ202c1BsYlYteEgwLUhUN3ZGVl9UczJhNjZ4RHh4TWJtOFVuS3ZWLWdmMjFDZTZzam96WjdCT0FqVU5tU3pVR0pWY0hNbDFBYVlTQmZxMDY0Sl9MUmJhZGlEN1VMRFdqNEg4NDJfVzJjUS1ZU19icjJYeDByc1RaQWhleEZGYtIBjAFBVV95cUxQY0pudU9ZNGNMaE9RWXhwT3FJRUt5T0NVbzVXT3FBWUhJUGRMMVN6TDhJbVBQSzBfMXVjY2VSWHpJQ0FZM09temg1TXlPZDhfQVVjdTVaTTIpVWx6UXhlWVl0bHFIVDhwaFdFWjRUbmlZR2h1SGNZNWlOYlo4aUlnOWlKajFGdHVGcExZQQ?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-icon source-initial" aria-hidden="true">N</span>
                         <span class="source-domain">news.google.com</span>
                     </a>
                     
