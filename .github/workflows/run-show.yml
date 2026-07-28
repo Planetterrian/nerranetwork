@@ -458,6 +458,18 @@ jobs:
           # 15-min TTS + 74-scene xfade graph. Slot cap (24) is the primary
           # fix; this headroom covers long TTS + long-form + 2 Shorts.
           PIPELINE_TIMEOUT_SECONDS: '3000'
+          # Opt-in single-pass video render (engine.video._single_pass_enabled).
+          # Fuses the slideshow and composite into one ffmpeg graph, ~30%
+          # faster on long-form. Verified equivalent on synthetic renders
+          # but not yet A/B'd against a real episode, so it stays OFF by
+          # default and is driven by a repository variable rather than a
+          # commit — set NERRA_SINGLE_PASS_RENDER=1 under Settings →
+          # Secrets and variables → Actions → Variables, watch ONE episode
+          # on a video show, then either flip the default in
+          # _single_pass_enabled() or delete the variable. Unset is falsy,
+          # and a failure in the fused command re-renders the old way, so
+          # neither state can break a run.
+          NERRA_SINGLE_PASS_RENDER: ${{ vars.NERRA_SINGLE_PASS_RENDER }}
 
       - name: Validate output
         if: steps.pipeline.outputs.skipped != 'true'
