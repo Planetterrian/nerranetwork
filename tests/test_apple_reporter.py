@@ -18,8 +18,11 @@ that real data are load-bearing and easy to break:
 from __future__ import annotations
 
 import gzip
+from pathlib import Path
 
 import pytest
+
+ROOT = Path(__file__).resolve().parent.parent
 
 from engine.apple_reporter import (  # noqa: E402
     SHOW_REPORT,
@@ -366,3 +369,81 @@ class TestWireFormatMatchesTheJar:
             ar.urllib.request.urlopen = real
         payload = _json.loads(sent["body"].split("jsonRequest=", 1)[1])
         assert "account" not in payload
+
+
+class TestDurableAccumulator:
+    """``scripts/fetch_apple_reporter.py`` keeps its own history.
+
+    Apple has nothing before the day the reporting vendor was
+    provisioned, and every earlier date answers "Invalid vendor number
+    specified". There is no backfill to come back for, so a day's
+    numbers must be captured when they are available and never lost.
+    """
+
+    @staticmethod
+    def _module():
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location(
+            "fetch_apple_reporter",
+            ROOT / "scripts" / "fetch_apple_reporter.py")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+
+    DAYS = {
+        "2026-07-27": {
+            "1855142939": {"show_id": "1855142939", "show_name": "Tesla Shorts Time",
+                           "plays": 38, "listeners": 6, "listening_hours": 1.38},
+            "1896920957": {"show_id": "1896920957", "show_name": "SpaceX Daily",
+                           "plays": 22, "listeners": 10, "engaged_listeners": 7,
+                           "listening_hours": 1.28},
+        },
+        "2026-07-28": {
+            "1855142939": {"show_id": "1855142939", "show_name": "Tesla Shorts Time",
+                           "plays": 40, "listeners": 8, "engaged_listeners": 3,
+                           "listening_hours": 1.5},
+        },
+    }
+
+    def test_totals_sum_across_days(self):
+        rollup = self._module().build_rollup(self.DAYS, {})
+        assert rollup["shows"]["1855142939"]["plays"] == 78
+
+    def test_a_blank_day_does_not_contribute_a_zero(self):
+        """Tesla's engaged listeners were suppressed on the 27th and 3 on
+        the 28th. The total is 3, not 3 + 0 — which happens to be the
+        same number, and would not be if the blank day were counted in
+        an average."""
+        rollup = self._module().build_rollup(self.DAYS, {})
+        assert rollup["shows"]["1855142939"]["engaged_listeners"] == 3
+
+    def test_metric_blank_on_every_day_stays_absent(self):
+        rollup = self._module().build_rollup(
+            {"2026-07-27": {"9": {"show_id": "9", "show_name": "X"}}}, {})
+        assert "plays" not in rollup["shows"]["9"]
+
+    def test_days_reported_counts_only_days_the_show_appeared(self):
+        """A show absent from a day's report was not measured that day,
+        so it must not dilute a per-day average."""
+        rollup = self._module().build_rollup(self.DAYS, {})
+        assert rollup["shows"]["1855142939"]["days_reported"] == 2
+        assert rollup["shows"]["1896920957"]["days_reported"] == 1
+
+    def test_slug_is_joined_from_the_show_yaml_ids(self):
+        rollup = self._module().build_rollup(
+            self.DAYS, {"1855142939": "tesla", "1896920957": "spacex"})
+        assert rollup["shows"]["1855142939"]["slug"] == "tesla"
+
+    def test_date_range_is_reported(self):
+        rollup = self._module().build_rollup(self.DAYS, {})
+        assert rollup["first_date"] == "2026-07-27"
+        assert rollup["last_date"] == "2026-07-28"
+        assert rollup["days_retained"] == 2
+
+    def test_real_show_ids_resolve_to_slugs(self):
+        """The join key is the same apple_show_id the cookie fetcher
+        uses, so the two sources agree on which show is which."""
+        by_id = self._module().show_slugs_by_id()
+        assert by_id.get("1855142939") == "tesla"
+        assert by_id.get("1896920957") == "spacex"

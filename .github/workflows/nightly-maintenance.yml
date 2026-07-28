@@ -60,11 +60,22 @@ jobs:
       - name: Fetch audience stats (OP3 + Buttondown + GA4 + Spotify + Apple)
         # Clean no-ops when the secrets are unset. Must run BEFORE the
         # dashboard build so the Audience section can consume the JSONs.
-        # GA4 uses the official Data API (service-account key secret);
-        # Spotify and Apple both use community cookie connectors (neither
-        # platform ships a creator analytics API) — when those cookies
-        # expire the fetch logs a re-auth hint and keeps the previous JSON
-        # (stale data, never a red nightly).
+        # GA4 uses the official Data API (service-account key secret).
+        # Spotify still uses a community cookie connector, and those
+        # cookies expire — the fetch then logs a re-auth hint and keeps
+        # the previous JSON (stale data, never a red nightly).
+        #
+        # Apple now has TWO sources, deliberately:
+        #   * fetch_apple_reporter.py — Apple's OFFICIAL Reporter
+        #     endpoint, authenticated with a 180-day access token. This
+        #     is the one to trust. It accumulates its own history in
+        #     api/apple_reporter_daily.json because Apple serves nothing
+        #     from before the reporting vendor was provisioned, so a
+        #     missed day is gone for good.
+        #   * fetch_apple_stats.py — the older cookie scrape, kept as a
+        #     fallback while the Reporter history is still short. Its
+        #     cookies expire in about a day.
+        # Both are clean no-ops when their secrets are unset.
         env:
           OP3_API_TOKEN: ${{ secrets.OP3_API_TOKEN }}
           BUTTONDOWN_API_KEY: ${{ secrets.BUTTONDOWN_API_KEY }}
@@ -73,11 +84,15 @@ jobs:
           SPOTIFY_SP_KEY: ${{ secrets.SPOTIFY_SP_KEY }}
           APPLE_MYACINFO: ${{ secrets.APPLE_MYACINFO }}
           APPLE_ITCTX: ${{ secrets.APPLE_ITCTX }}
+          APPLE_REPORTER_TOKEN: ${{ secrets.APPLE_REPORTER_TOKEN }}
+          APPLE_REPORTER_VENDOR: ${{ secrets.APPLE_REPORTER_VENDOR }}
+          APPLE_REPORTER_ACCOUNT: ${{ secrets.APPLE_REPORTER_ACCOUNT }}
         run: |
           python scripts/fetch_op3_stats.py --out api/op3_stats.json --popular-out site/data/popular_episodes.json
           python scripts/fetch_buttondown_stats.py --out api/buttondown_stats.json
           python scripts/fetch_ga4_stats.py --out api/ga4_stats.json
           python scripts/fetch_spotify_stats.py --out api/spotify_stats.json
+          python scripts/fetch_apple_reporter.py
           python scripts/fetch_apple_stats.py --out api/apple_stats.json
 
       - name: Refresh show performance trackers from OP3 data
@@ -238,6 +253,8 @@ jobs:
             api/ga4_stats.json
             api/spotify_stats.json
             api/apple_stats.json
+            api/apple_reporter.json
+            api/apple_reporter_daily.json
             digests/tesla_shorts_time/tesla_performance_tracker.json
             digests/models_agents/models_agents_performance_tracker.json
             digests/fascinating_frontiers/fascinating_frontiers_performance_tracker.json
