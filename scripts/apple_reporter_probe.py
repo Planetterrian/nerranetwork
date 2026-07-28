@@ -47,6 +47,74 @@ from engine.apple_reporter import (  # noqa: E402
 )
 
 
+def _sweep(token: str, args, report: str, stamp: str) -> int:
+    """Try each plausible request envelope against a date known to have data.
+
+    Apple answered with error 102, "Too few or too many parameters
+    specified for the method" — which says the shape is wrong without
+    saying which part. The jar is closed source and the wire format is
+    undocumented, so this walks the small space of real differences
+    rather than guessing one variant per round trip.
+
+    Reading the output: a **fake** token returns 124 for a well-formed
+    request and 102 for a malformed one, so the two codes separate
+    "envelope wrong" from "credential wrong". With a real token, 102
+    means the parameter list is wrong while anything else means the
+    envelope was accepted.
+    """
+    # Named variants rather than a full cross product — twelve blind
+    # combinations tell you less than eight deliberate ones.
+    variants = [
+        ("baseline (jar-style)", {}),
+        ("account as JSON number", {"account_as_int": True}),
+        ("no account", {"send_account": False}),
+        ("mode=Normal", {"mode": "Normal"}),
+        ("report version 1_0", {"report_version": "1_0"}),
+        ("report version 1_1", {"report_version": "1_1"}),
+        ("version 1.0", {"version": "1.0"}),
+        ("bare queryInput", {"wrapped_query": False}),
+        ("account int + mode Normal",
+         {"account_as_int": True, "mode": "Normal"}),
+        ("account int + version 1_0",
+         {"account_as_int": True, "report_version": "1_0"}),
+    ]
+
+    print(f"Sweeping request envelopes for {report} on {stamp}")
+    print("(the jar returns data for this date, so anything but success "
+          "is our bug)\n")
+
+    for label, overrides in variants:
+        result = fetch_report_http(
+            access_token=token, account=args.account, vendor=args.vendor,
+            date=stamp, report_type=report, **overrides)
+        if result.rows:
+            print(f"  {label:<28} -> {len(result.rows)} ROWS\n")
+            print(f"WORKING ENVELOPE: {label}  {overrides or '(defaults)'}")
+            for row in result.rows:
+                print("   ", row.as_dict())
+            return 0
+        if result.no_data:
+            print(f"  {label:<28} -> accepted, but no data")
+            continue
+        text = (result.error or "?").strip()
+        code = message = ""
+        if "<Code>" in text:
+            code = "code " + text.split("<Code>")[1].split("<")[0]
+        if "<Message>" in text:
+            message = text.split("<Message>")[1].split("<")[0]
+        if not (code or message):
+            # Not every rejection is Apple's XML — mode=Normal answers in
+            # plain text. Showing the raw first non-empty line beats
+            # printing an empty arrow, which reads like a crash.
+            message = next((ln.strip() for ln in text.splitlines()
+                            if ln.strip()), "(empty response)")
+        print(f"  {label:<28} -> {code} {message[:80]}".rstrip())
+
+    print("\nNone worked. Paste the whole output — the codes differ "
+          "between variants and that narrows it further.")
+    return 1
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--vendor", default=os.getenv("APPLE_REPORTER_VENDOR", ""),
@@ -59,6 +127,9 @@ def main() -> int:
                     help="Per-storefront report instead of worldwide")
     ap.add_argument("--days", type=int, default=1,
                     help="Also walk back this many days, to see coverage")
+    ap.add_argument("--sweep", action="store_true",
+                    help="Try every plausible request envelope and report "
+                         "which one Apple accepts")
     args = ap.parse_args()
 
     token = os.getenv("APPLE_REPORTER_TOKEN", "").strip()
@@ -74,6 +145,9 @@ def main() -> int:
     report = SHOW_REPORT if args.storefronts else SHOW_REPORT_WORLDWIDE
     base = (dt.datetime.strptime(args.date, "%Y%m%d").date() if args.date
             else dt.date.today() - dt.timedelta(days=1))  # noqa: DTZ011
+
+    if args.sweep:
+        return _sweep(token, args, report, base.strftime("%Y%m%d"))
 
     any_rows = False
     for offset in range(args.days):

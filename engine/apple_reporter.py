@@ -284,6 +284,30 @@ def aggregate_by_show(rows: List[ShowListening]) -> Dict[str, ShowListening]:
     return merged
 
 
+def build_query_input(vendor: str, report_type: str, date: str,
+                      *, subtype: str = "Summary", date_type: str = "Daily",
+                      wrapped: bool = True, report_version: str = "") -> str:
+    """The ``queryInput`` string Reporter sends for ``Sales.getReport``.
+
+    The jar wraps the command in ``[p=Reporter.properties, ...]``. Some
+    Reporter versions accept the bare command instead, and Apple's error
+    102 ("too few or too many parameters") does not say which it wanted,
+    so both shapes are constructible and the probe sweeps them.
+
+    No spaces after the commas — the same rule as the command line,
+    where spaces make the argument split and Reporter then reports a
+    misleading "Invalid vendor number specified".
+    """
+    params = [vendor, report_type, subtype, date_type, date]
+    if report_version:
+        # The Reporter guide notes a trailing version "if multiple
+        # exist" for a report type. Apple's error 102 does not say which
+        # parameter count it wanted, so this is constructible and swept.
+        params.append(report_version)
+    command = "Sales.getReport " + ",".join(params)
+    return f"[p=Reporter.properties, {command}]" if wrapped else command
+
+
 def fetch_report_http(
     *,
     access_token: str,
@@ -293,6 +317,12 @@ def fetch_report_http(
     report_type: str = SHOW_REPORT_WORLDWIDE,
     sales_url: str = SALES_URL,
     timeout: int = 90,
+    version: str = _PROTOCOL_VERSION,
+    mode: str = "Robot.XML",
+    wrapped_query: bool = True,
+    send_account: bool = True,
+    account_as_int: bool = False,
+    report_version: str = "",
 ) -> ReporterResult:
     """Fetch a report by speaking Reporter's protocol directly.
 
@@ -316,16 +346,22 @@ def fetch_report_http(
         result.error = "no access token"
         return result
 
-    query = (f"[p=Reporter.properties, Sales.getReport "
-             f"{vendor},{report_type},Summary,Daily,{date}]")
     payload = {
         "accesstoken": access_token,
-        "version": _PROTOCOL_VERSION,
-        "mode": "Robot.XML",
-        "queryInput": query,
+        "version": version,
+        "mode": mode,
+        "queryInput": build_query_input(vendor, report_type, date,
+                                        wrapped=wrapped_query,
+                                        report_version=report_version),
     }
-    if account:
-        payload["account"] = str(account)
+    if account and send_account:
+        # Reporter's own client sends this as a JSON number. A string
+        # may or may not be accepted depending on version, so both are
+        # reachable and the probe sweeps them.
+        try:
+            payload["account"] = int(account) if account_as_int else str(account)
+        except (TypeError, ValueError):
+            payload["account"] = str(account)
 
     body = urllib.parse.urlencode({"jsonRequest": json.dumps(payload)}).encode()
     request = urllib.request.Request(
