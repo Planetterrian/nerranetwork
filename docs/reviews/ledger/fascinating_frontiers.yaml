@@ -385,6 +385,49 @@ reviews:
       ab_listen_required: true
       rationale: Reduces the 6-9/10-episode teaser tic observed in transcripts while preserving forward-looking function; de-seed uses shape + verbatim ban + rotation memory
     agent_cost_usd: 0.0633
+  - date: '2026-07-28'
+    pr: null
+    doc: docs/reviews/fascinating_frontiers_review_2026_07_28.md
+    generated_by: grok-4.3
+    summary: Snapshot shows 10/10 episodes below 1700-word floor plus recurring network boilerplate (10/10) and ephemeris filter leakage (ep137/138/143 transcripts); all prior chapter/stock/garble fixes remain clean.
+    scored_prior_predictions:
+    - metric: episodes below 1700-word floor
+      verdict: partial
+      evidence: 10/10 episodes below floor (snapshot); still digest-ceiling limited
+    - metric: occurrences of network-plug boilerplate in _tts.txt
+      verdict: hit
+      evidence: 10/10 episodes contain the exact network-closing sentences
+    - metric: ephemeris/sky-tonight title leakage in shipped digests
+      verdict: partial
+      evidence: Ep137/138/143 transcripts still contain almanac titles matching the planet pattern
+    shipped: []
+    deferred:
+    - Cosmic Deep Dive length lever (carried; four-show A/B still open)
+    - Mid-section digest-driven chapter titles (network lever)
+    - Theme residual "science nasa" (low harm)
+    - Curated narrative-tracker status pass (operator task)
+    - Ephemeris title-filter tuning (still leaking on some patterns)
+    predictions:
+    - metric: ephemeris/sky-tonight title leakage count in last 10 digests
+      baseline: 3 of last 10 episodes (Ep137/138/143)
+      expected: 0 leakage after next filter tightening
+      verdict: pending
+      evidence: null
+    - metric: occurrences of 'keep an eye on the' teaser opener across 10 episodes
+      baseline: 6-9/10
+      expected: still 6+/10 (no prompt change shipped)
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/fascinating_frontiers.yaml
+      kind: config
+      ab_listen_required: false
+      rationale: Addresses remaining fetch-filter leakage visible in Ep137/138/143 transcripts (deterministic, no audio change)
+    - file: shows/prompts/fascinating_frontiers_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Reduces the 6-9/10-episode teaser tic observed in transcripts while preserving forward-looking function; de-seed uses shape + verbatim ban + rotation memory
+    agent_cost_usd: 0.0642
 do_not_retry:
   - idea: Phonetic respellings or programmatic speech-tag injection.
     evidence: >-
