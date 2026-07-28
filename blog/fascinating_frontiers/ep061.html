@@ -480,6 +480,19 @@
             background: var(--nn-surface);
             flex-shrink: 0;
         }
+        /* Aggregator-sourced items name the real publisher, for which we
+           have no domain to fetch a favicon from — a lettered badge is
+           honest where Google's favicon would imply Google reported it. */
+        .blog-source-card .source-initial {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-ui);
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--nn-text);
+            background: var(--nn-border, var(--nn-surface));
+        }
 
         /* Related posts */
         .blog-related {
@@ -1361,8 +1374,8 @@
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMi5wFBVV95cUxNX243Tm8tTUpwcjYzbWlURW1EaFR4UnlZc0tCZXY4QmwtZUxnbUpnQ2RrenfIVUlnNE9hb25QYTZTSGtMN3lmSU9WQ1B1eXlCNGdUYzFLZVZrS0lMSXRfYi1WYXkwNVlpU3otWnZaZlBObnh6dE5MaVoyNTRhV3I1ZmFicndKY1gwWGlxR0xRTDJZY1NtUV9haTh5bEZHVVRDbnBNLXBLWGlzWnF1UmlvQThvVFEwQnJKc0xLWW96LXZma2Q5RG8yelFqV1pZR2tnNVoyYnEyYS1DVEM0RnVpRXh4Ql94eTg?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">M</span>
+                        <span class="source-domain">MSN</span>
                     </a>
                     
                     <a href="https://www.reddit.com/r/space/comments/1t19kn3/russia_cloaks_launch_schedule_after_spaceport/" target="_blank" rel="noopener" class="blog-source-card">
@@ -1371,8 +1384,8 @@
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMiygFBVV95cUxOcFJudWZKMHR5clJPaUxUSXdqY2ZJN0gybmxleFh4bTY1NnM1NWdmc3lINUxuamFLTUV6VkFsTllKQjRKbXp3LU1WY1plcE53bzBaNXN2Y3hlMlpDZUVDS2J5MEZIczdiWlBJZGptdWFXMzJ6MUJLX1ROWHh2V2R2UnpLQnVPNlBIQlFYN1ZnOXRaOFBoeW9KUWM5Q0JxXy10eXJteFRLOEI2VjBlZ3o5OU5RYnNZSUoyeGdEekZlb1B5OUZGbXNQWDZn?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">T</span>
+                        <span class="source-domain">Tech Review Africa</span>
                     </a>
                     
                     <a href="https://www.reddit.com/r/space/comments/1t18snf/nasas_lithiumfed_nuclear_thruster_flares_to_life/" target="_blank" rel="noopener" class="blog-source-card">
@@ -1386,8 +1399,8 @@
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMimgFBVV95cUxOamM4NUJVeDJNU3gxUF85VF92NUdFaEI5MEhZaWlYdE5GTWFOMmZwanQ0SmNqcUR1dGIzUzN2ZDdBbGxXV1hNNkctTDAycGpLS0IyV0lVR2s4NHMzQ2gzdE9LZHpiR1NhQjdnaGdIZnBvbDlkeEtwX2lfbWxjNW5KZHFXMF91SFFSbm95bWtnNk4ySzlMYjJQb3VR?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">M</span>
+                        <span class="source-domain">Mitchell Republic</span>
                     </a>
                     
                     <a href="https://www.reddit.com/r/spacex/comments/1t1cwvg/faa_starship_flight_12_net_12_may/" target="_blank" rel="noopener" class="blog-source-card">
@@ -1396,8 +1409,8 @@
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMi0gFBVV95cUxPcGV0NlpUaDl6bVZFV1FrQmRQX1dmQlpYVi1hUkNJdFpjVHBJRHZxOTluZE1IRWNoR2tnYV91TGV3NG5QcHlRZm54SkZHNDdudldIME1hemdVMTU2VUk5R1BESXhvQ2VoVkVSbnJUS29CbndBUjh5YllZeEptWTVCX1FEbGxHUTR4VjB1d0dZV1RBZ3dHb3VFMWo2MkpWaXM3SnlrRjNqZlNpQTYwSHlYYWdWU2lqc21IZC1MMDQwOFhyUE9PYVlpSVJTVGVaOHp3LXfSAdIBQVVfeXFMT3BldDZaVGg5em1WRVdRa0JkUF9XZkJaWFYtYVJDSXRaY1RwSUR2cTk5bmRNSEVjaEdrZ2FfdUxldzRuUHB5UWZueEpGRzQ3bnZXSDBNYXpnVTE1NlVJOUdQREl4b0NlaFZFUm5yVEtvQm53QVI4eWJZWXhKbVk1Ql9RRGxsR1E0eFYwdXdHWVdUQWd3R291RTFqNjJKVmlzN0p5a0YzamZTaUE2MEh5WGFnVlNpanNtSGQtTDA0MDhYclBPT2FZaUlSU1RlWjh6dy13?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">S</span>
+                        <span class="source-domain">Social News XYZ</span>
                     </a>
                     
                 </div>

@@ -480,6 +480,19 @@
             background: var(--nn-surface);
             flex-shrink: 0;
         }
+        /* Aggregator-sourced items name the real publisher, for which we
+           have no domain to fetch a favicon from — a lettered badge is
+           honest where Google's favicon would imply Google reported it. */
+        .blog-source-card .source-initial {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-ui);
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--nn-text);
+            background: var(--nn-border, var(--nn-surface));
+        }
 
         /* Related posts */
         .blog-related {
@@ -1384,8 +1397,8 @@
                 <div class="blog-sources-grid">
                     
                     <a href="https://news.google.com/rss/articles/CBMitgFBVV95cUxQZkIyWlRUeDAwa2dmZ0lHYl82bjloZllvRFZ0WWJBMEdNUjdZNGlkRDg4RVFIS1JWczJ1OWJiX1N6Y0dSWTkzX1E5VXg3YVlvaTVYRUJuU2N0TTNKeU9pYlBKRGhhemRtTklONHRhNk80eWM4TTYzREdTMTFBVFlDQnBGZEN1R2FxMnY0N044MEZBbllYWFRHcWNRR21wWURuMXRDQ1N1LUZaZXJlU0ItVk95c1gydw?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">N</span>
+                        <span class="source-domain">New Scientist</span>
                     </a>
                     
                     <a href="https://www.reddit.com/r/Astronomy/comments/1tqxkyh/weighing_newborn_planets_using_their_dusty/" target="_blank" rel="noopener" class="blog-source-card">

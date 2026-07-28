@@ -508,6 +508,19 @@
             background: var(--nn-surface);
             flex-shrink: 0;
         }
+        /* Aggregator-sourced items name the real publisher, for which we
+           have no domain to fetch a favicon from — a lettered badge is
+           honest where Google's favicon would imply Google reported it. */
+        .blog-source-card .source-initial {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-ui);
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--nn-text);
+            background: var(--nn-border, var(--nn-surface));
+        }
 
         /* Related posts */
         .blog-related {
@@ -1724,8 +1737,8 @@
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMilAFBVV95cUxOUU1MMDE0bTJyUTllcWUzcGsybG5qZ1F6cWtoRUctRTJiai1saFFYUV91YW53dVc2WDZBRzlFSTBUVld0VThaN0drelFsR2swYW9mNm1vdkFJMWwtM3dna3BMOTdITUpvWTRnYUVDRm9BTkttblpPWXRMZmpfRy1PVUNDZW14dmU2ajQtbWdUaEQzOUts" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">U</span>
+                        <span class="source-domain">UC Irvine News</span>
                     </a>
                     
                     <a href="https://www.universetoday.com/articles/astronomers-discover-another-galaxy-with-no-dark-matter" target="_blank" rel="noopener" class="blog-source-card">

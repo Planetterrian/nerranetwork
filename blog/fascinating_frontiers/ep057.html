@@ -480,6 +480,19 @@
             background: var(--nn-surface);
             flex-shrink: 0;
         }
+        /* Aggregator-sourced items name the real publisher, for which we
+           have no domain to fetch a favicon from — a lettered badge is
+           honest where Google's favicon would imply Google reported it. */
+        .blog-source-card .source-initial {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-ui);
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--nn-text);
+            background: var(--nn-border, var(--nn-surface));
+        }
 
         /* Related posts */
         .blog-related {
@@ -1347,18 +1360,18 @@
                 <div class="blog-sources-grid">
                     
                     <a href="https://news.google.com/rss/articles/CBMi3wFBVV95cUxNZU1mQmhQNWVqVy14X1MtR3ExYXpXSkU3N2M5dDNWVTYydXV2aFU0Z3JYREdNSVp6ZnN4a1VMeWxpVElDZ3RBOEhpVkxLUkticGZXekFpZThqUklUVjdEZnljWmM0eHlLVzFfdEdxLVNRQmVZREVxWTZkYTlTc21CbDAyRmVFTDBPN1pLMENBTWRpV0piYmttTDB4TGw5aXpoMG1tTzU5TVIxQnk5NGNHMnlDeTdnNDdKNkVqTHRpa1ZWbDlBdVBZT1FObTY3VU9FM1JSbnhHWEg1SEtYcy1Z?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">G</span>
+                        <span class="source-domain">Google News</span>
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMi1wFBVV95cUxNX25ZSl8tREx6SnVRalhCc2l2LXZkWGxOSks2OHhPWmlmVGRZbEN1MGp2MkNHNzJnYTROcmJYY2I5VnluMFItWXBJUHBabk9XR1F3cUlNcElWWG1QQnh1ZEZLSUsyQXY3eGV6U09oQmdtSWZ6YWcyU3h6MnN6ZFE1OHB5cjd4VEpZTzA0ZHRIVzFBdVhDbVZIMlZXd1hhcHU1elVONGd6OEF6d0FtMkdrRjZtWXJlaU1lOUV2T0V2dkotZllUcmhVOFRaM0FnaGZVMjJJQThod9IB3AFBVV95cUxNZ3ZzcDNYTGZqNXBKSUdQU051SU9YVXJrSUN6U19LaFdwWU1GbmFpNURIMXdSejNuXzMtcWNHdEdMS0Z4ZVd5TnQ4SE1UWEFDdWZaLUdPTzRZT0std05KcmJTV2dvcnN4M0RGdHdfX291dmNvT291VGd2SGdGUDJYVlQ4RlNoMnE2MGlNbXlYendmUTk0aVlNTnRpRFlzaS1ERW44TU1CaXRpUzd2U3hJOTFRQ3FGc3BXLUNNaHNGTUo4a3F0LUdjMGlHZnEzdGtoanJFODlCQTBGU1hL?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">R</span>
+                        <span class="source-domain">Republic World</span>
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMiwgFBVV95cUxPQm51LUc0ZUFIcVpxZ3B2V2Z4U19BOTI0SkpJMm9sSG9MX3l5Y2UydG0yQW1oSERtYnVhRW12NkptWl9ydGZnTExkNkZaWEZiQ0tPU0o3dGVXbzdBYlNBZzFwcGlKdUJSb21haWxIbU1BZ3lnanNjcV9zd1N3dlpoVnpSTVRXSHk1V0p2TjNpdzh5Q1FyTmhXT1Q5ekp5QUVrdHlNMFlzV1cyUmpDWU1yVEpEUHEtWWdSajdqWHFmc1VoUQ?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">N</span>
+                        <span class="source-domain">news.cgtn.com</span>
                     </a>
                     
                     <a href="https://www.teslarati.com/spacex-golden-dome-missle-defense/" target="_blank" rel="noopener" class="blog-source-card">
@@ -1372,8 +1385,8 @@
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMilAFBVV95cUxNcS0xSThKaGg3R0dtdm01Z1ZUSFgyWHV1UUVqRnVnUWZqWlNsbXk3c1EwZklRclJOQ3BNMXpxTE1VaExzdGw5cFZScE9HZUE3QmRsbF9BYUtQeFdIbUNwYklSUDVSOThKWU5yNWYyOW1IT1hORlhINFp4TTNjaFQ1TkN5V1VmNE1FZ29oRFNybHE1cWNh0gGoAUFVX3lxTFBGQkluNHg5MkUxazQ2cVVTcnh0UEZMT3o3bVNUeFRISlVhWlN0eUpOb2Y3NUdwMHdmYkthVC11YW1mNXNua25iUGx6Z19sSkVCNHg1UXROTUdxbFc1bDBRVGUxZlY2cDR5TlVTM0dVcEE2aVNieG1EbC1UOGEzSHNpY085TVR2TndOemVxUUg1YVh2RDFfb1Q0Y0RfblluSkF2c28yZGJnSw?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">B</span>
+                        <span class="source-domain">Boston 25 News</span>
                     </a>
                     
                     <a href="https://science.nasa.gov/earth/human-dimensions/agriculture/an-agricultural-mosaic-in-taiwan/" target="_blank" rel="noopener" class="blog-source-card">
@@ -1387,13 +1400,13 @@
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMi3gFBVV95cUxPVVdsSS1EYWd6MEIxZVBSMWdBMWk2Mk9WLS1uUlluUGp6SEtKR1F5SjZjM2FFOXZ3d29TWlVBeWRXT0N6VlhGQmtHaFFZMC1sYXo3N2hVejBXb3AtZ0tSREowQTBFV0JIcTVNUlZqM0xvWlFWOWwwYzQ0WXF1Nm1HWGVEQXIwR0xWV25wOGw1ck50RkdlczhXT19VSEY1b0dFVnpwaElsdVllbXlKd0Y1a0NuNFY5NmxMd1piTmpqb2IyWE0wYzk1RFp3eXRiSTFLSDhkUVVTUTdpQzVEakE?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">W</span>
+                        <span class="source-domain">WVTM</span>
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMiqgFBVV95cUxOZTlITGFiMUgwSG5uQU9fa29ka1B6MGIyZE1lczRuMlhTV09lVjdmWEw5YmwyLXNvWnpObk9FVF9EWFNTMzhZNWg2TV9uelJ2eXRVUlEyMWEyRkp6ZHRoX1NZc0hKYTczUVV2cV9WSGNZOU1IUThGLXRjcUhOX1JwNkhJUWtzZ1I0RmhKaEx3VktJREZ6aUxPN2xMZWdaUDZmUkJSOGNFc3pMZw?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">M</span>
+                        <span class="source-domain">Maui Now</span>
                     </a>
                     
                     <a href="https://www.reddit.com/r/space/comments/1su1fir/nasa_welcomes_jordan_as_63rd_artemis_accords/" target="_blank" rel="noopener" class="blog-source-card">
@@ -1402,18 +1415,18 @@
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMiiwFBVV95cUxOeFB6X3FYRVJNR3AtbWx1WUl3THlxZUhFOTFBTGNuWldoYmctTDZ0bUpuWFUwSVNzY0dyMGtrNDhsMWE5Wmx0c2NGRF9uSmJVQlBaVU5Wc0tZZy1yQTNYMTVHeUxaQVNFX0JuNTRZY3l3d1NPa0dlUzd4UXk5ZlFMLVVaZGhBVms5Tzdn?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">M</span>
+                        <span class="source-domain">Mirage News</span>
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMijgFBVV95cUxQdDdCUW95VzNPWmZRb0EyMHRSYWF3SXpVUDFWZDgzZDdOMDliMC1kUldqYkthaUY0TWVPOWU0THJTSlRMdEZ4X0s0VW1OUGY0UEozcWFuMVRkaGltcTNrengzYkFQSzM1WDhJTlNFbG0zN2FPSlZuei1qRlNHdjRra3JDcVM1NTh2WTdMVm5R0gGiAUFVX3lxTE9LVW5ncEFjdlZsZ04xeXNjVmFpLXJUSnpRVjlKR3ZZOUZqcTZWNzg1THl6Q1JSZGhLdTFac1QwNl9pc3RmTTQwQXMwT3hSMVRvMDZiUmdHZ3M5cGxkSTNTUE1ZLWxHVUVIY0p1THVyY1o1aWljVmdRSHQ5SUJBSHlmOFJmRTdROUNUdno3UFdRaThrc0N0bUpmRERRZ2pBUTQ5Zw?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">K</span>
+                        <span class="source-domain">KFYR-TV</span>
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMiigFBVV95cUxOTEg2SWE3QTRRVVBYMUlsN1J3WlZUcG43ZnFKZFlUOWFmanRvd1RITnVlRWVtRFptSWZ6NFBYMi1abU5OQjBKcmNMd1pldk9YZWVUQlpCRzlyYWdDTk5yUEhVZGpsYmNfV1ZFQUF3RURzZjJCMjRIZE9UbldKcDJmR01RMlJRbWl2SHc?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">N</span>
+                        <span class="source-domain">NBC News</span>
                     </a>
                     
                 </div>
