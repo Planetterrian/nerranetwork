@@ -480,6 +480,19 @@
             background: var(--nn-surface);
             flex-shrink: 0;
         }
+        /* Aggregator-sourced items name the real publisher, for which we
+           have no domain to fetch a favicon from — a lettered badge is
+           honest where Google's favicon would imply Google reported it. */
+        .blog-source-card .source-initial {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-ui);
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--nn-text);
+            background: var(--nn-border, var(--nn-surface));
+        }
 
         /* Related posts */
         .blog-related {
@@ -1418,8 +1431,8 @@
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMiqgFBVV95cUxPZURvenZMaDEzb0xCNW0yT2lTVzFqY0R6ck5PSFVlelF3S3FlSm9SM2p3UXNvcldpMzZCNzRVS3lKR0xWTHE5U2RHaFZXWHNISkJES1Vobmt4T2ltTlBEYVhrRFJrdlVfNWZ5OXlkdWcwaUQxTnhqSnVsV3dJWFhYTWcyeWU2VkhlcFNxU05nZTY0Vjd1aTl5bmZLWnBPUXYzZE5UWFlrT3VDUQ?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">E</span>
+                        <span class="source-domain">eletric-vehicles.com</span>
                     </a>
                     
                     <a href="https://www.notateslaapp.com/news/4207/tesla-patents-self-cleaning-camera-lens-with-built-in-wiper" target="_blank" rel="noopener" class="blog-source-card">
@@ -1433,18 +1446,18 @@
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMiogFBVV95cUxOcjlhYl9kMnAwTjdZZWFXdXFBeVRyRmtqVnFucTc4TFNwTzI1Tm9kQUo4QUVMaEJ4aXMwMzdZM3VLNFdscFJSYURyYzQzRjByZzdtVUU5S29nV1RWVGpibTB1ZUYxdzRvWnh0cVRmYlRRX3JBYWxZQmZQeF9nbDFFX3NKWng0elVCblNyMVVOdkgyUnY3R1BCNjlsUGd6T0ZKY0E?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">Y</span>
+                        <span class="source-domain">Yahoo Autos</span>
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMilwFBVV95cUxNWFNPOEJlaW9JTzc4djMwcTR6UjhBUWQzb29TYlhwMUYwSWRfMWpqc3N4Y0JZeTdTSTUxb3o2QzRDZDFsWjhHRms0R01ZaGdjNE91Y2xlWjhlNUxUcGtFd01lYi1SUlhYV1BidW5pZ05DMHFFUnRyeWp1SW0yNUtwOERjSWhBbkMzU3JVMldPYWlJY09FdTc4?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">Y</span>
+                        <span class="source-domain">Yahoo Autos</span>
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMihgFBVV95cUxOTHdubzJrSWw5SHl4ODZFNkdTVVEwZzZ5bkowaDdnRUZiNWRWSDNHckRWZFlRZDlxOUlFb0JqamkxaEFncHRTcTR5cmhmSFJmNzd6MzBOOC1TSjNaN3N4SHhnaTR1TWEwbk9nXzlXZ0lWOV9zQktWOEVFdkRpTF90WC16TTFWUQ?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">Y</span>
+                        <span class="source-domain">Yahoo Finance Australia</span>
                     </a>
                     
                     <a href="https://www.notateslaapp.com/news/4210/tesla-issues-service-bulletins-for-refreshed-model-y-suspension-creaks" target="_blank" rel="noopener" class="blog-source-card">
@@ -1453,12 +1466,12 @@
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMiqgFBVV95cUxOMzhzbXdZb0lCOUtWSVRQRXFCTEUwbVBqczY2bjdnQk9XNHhSYlc1Vk9VeEVqcU0zM1BraWVHLWdaUWN6dFpBemlGb0pvazNBdnVnRXJZNWZSNngtd2xoT1lCZ1RRMU9ZakRsZnBDaVNTSXZsdnZrNzVKeDVOdUExbmRac3E4UmtDaUc0Y1FNX1kzNzJVNTNza2JWMHZRT2w3YmVLUGVDdjdaQQ?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-icon source-initial" aria-hidden="true">N</span>
                         <span class="source-domain">news.google.com</span>
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMigwFBVV95cUxOUmdPNzYzbkJtYmhtUVdPTUlQQml5SldhcHhpTkFWMlFyU0VKMG9SMlA0TFBVVnJURnV1TnVScm9QRXFGeDI5SkVFRlFiOWJ3TUZzQ0F2aXlPeDBYbTF3enFCeG9WR0xmMkZGcW5DRXNCeHhKcEJMdDg5Zjh5VzZJQVdxVQ?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-icon source-initial" aria-hidden="true">N</span>
                         <span class="source-domain">news.google.com</span>
                     </a>
                     

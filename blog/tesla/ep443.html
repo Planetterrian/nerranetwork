@@ -480,6 +480,19 @@
             background: var(--nn-surface);
             flex-shrink: 0;
         }
+        /* Aggregator-sourced items name the real publisher, for which we
+           have no domain to fetch a favicon from — a lettered badge is
+           honest where Google's favicon would imply Google reported it. */
+        .blog-source-card .source-initial {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-ui);
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--nn-text);
+            background: var(--nn-border, var(--nn-surface));
+        }
 
         /* Related posts */
         .blog-related {
@@ -1369,33 +1382,33 @@
                 <div class="blog-sources-grid">
                     
                     <a href="https://news.google.com/rss/articles/CBMihwFBVV95cUxPbDhkYWljZ3hCSk1CaU1GaTRLVGptY3dsRW1UekNBTWw5bjdZSXdVZTFIX0o1S1dWX25nVEQ0dmxYenZJd2oyZzRrNzE0ek1melV6R3BVVVJFV3psdGxLbnotWUxHbGd5bGlCV1VmTEtOWHkzNFNuU2dlejhOZnJpdWZUc0x4eTA?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">0</span>
+                        <span class="source-domain">00 AM PST, The Cool Down</span>
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMikgFBVV95cUxPZl9fMWV3clBkT1hlczFPbVFYcy1RVG1hZ2tIWTI4ZmJfM014eXYyekZZMURxb2RaUlZza3ZtUnhkdmRpUktMd2dBR0htc25sNE9YY1pJUkw1U21OcEZ3U2R0aUxfdHhZZ1BUM3NBemNObUhuYWVscTFRZmJLZDBDbjBNMERWZ0dCaU5FNEdrWEtqdw?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">1</span>
+                        <span class="source-domain">18 AM PST, Electrek</span>
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMiowFBVV95cUxOTzBNdDdubE9VYjZ0ZUpEOG05UDFkSXlhRHRkcGRGX01rbk44WHNTbkpSdUVQakNGc0ZyWWFob1l0ZDV1Ti1jOG5ERDUtTUlIVWxtWW0telJSOTJnQkpFZjdVd2ttaE9zTU94UVRSVnJtd2EwdWdSUC1iVFRsV05FT2JKU1Zfalc4c1F4Smo0LXkzcERFR0lmQ0pWV21Bek5rV0NR?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">3</span>
+                        <span class="source-domain">30 AM PST, eletric-vehicles.com</span>
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMiggFBVV95cUxPTkY1ZnM4SmVVYjRFZ3FMM1Q1cFBuYndhZnZFaWxScDlkLVduMkRSRzRaRm41eXFzcTBUa0p6bVJLMF9hQWZPcndZeFZfQWp2V084TUVGdEdtQUZic0NVZjRDS05JQ3JPd2VST1VxSVkwLWNrWk5URXJWcVl3Q3ZuWVZB0gGKAUFVX3lxTE1ZQ0xKYUNwcHhXb3BNSWlIZzlmRjd0WllQdE9UaGFKRW1xSmREVnJVM0Q2TXBKTzJmNHFuQVRCT1c4M2NFcS1aQW5FOHY3QnhpNktZd3N6WVdHd1FFVklfWmdnck9EejAwQXlJeDNrUm0yYWF5Rk9Sb2hOMU1yX0NuUUdRMjZzNHVhdw?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">2</span>
+                        <span class="source-domain">25 AM PST, CleanTechnica</span>
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMi1gFBVV95cUxQZXpGbFZmb0VyakNtOEVWWEZ4LTFVQlgwM011ZzVnY09pV0VyTGgwOWxuODNyekVSMFdGSkd5QnZmSkxKcWZ3eUtnRzJVdlhxVzJEc25vWUpGZXlJVzJwc1R5NlI2WHBVWGgtb0pyMThVcWhVWlhNLXF3ai1RSmJUYUJ3QnFhVmpTcDVrLXVUcXFDNEt4NWg0anJOa0VWSEFjXzVqX3hBajFiWUJfVDh6cU5fdVlaNmZUZlE5S1ROdWxPbjBvRVZBTlpuWnNTbS02VkJ2WjBn?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">0</span>
+                        <span class="source-domain">00 AM PST, The Detroit News</span>
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMizgFBVV95cUxNbGdZQU1RaktFQjlXSkRGbGMzcDNTT0c2NU5rQUlTZ213RFkwSUVMUV9pSjFMMUNNZ2hYQi1fUDNXNlVhVVV0X3hjTWNpVnhHZEp5dlVueF9wbXRhYmI2aWIyLVRfblR3TmdyV3VaMmQ3cnB1MmdRVlVDd2tkQTlHOG1xNjdHamZicHRIQ1d6Z1doRHZ2WWFfZmdJNkM4MTMtek9qNTdTVFVsTm5JekpkVzY2TWxsbGVSUzlnNGVybDJ4UTlRMUluaW5fODZsZw?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">3</span>
+                        <span class="source-domain">37 PM PST, WFAA</span>
                     </a>
                     
                     <a href="https://insideevs.com/news/793536/jeep-wagoneer-s-2026-not-coming/" target="_blank" rel="noopener" class="blog-source-card">
@@ -1409,13 +1422,13 @@
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMimAFBVV95cUxOS0ZSZUJOQmpiVnpMekEwSlR6dXRQRUU0cXdWUEhTbXZ4cHdhVkZkMTdrTHk1b002Mi0wRkFUTnhoQVZNNElnc1Y1Yzk0V2syTVRVaHZaNnNRVkkwWWdSakRQUDdNQ0diY20wZG9uZDRrWE0yUjJCUnlKMkVVWFF4QTFCVlFmZnJXUGRlOVNialNib0k3MHZuMQ?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">0</span>
+                        <span class="source-domain">00 AM PST, Forbes</span>
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMixgFBVV95cUxQakg0RUVmNXBhMFR1VGJ2bVpaYkNpWlB5MWZ5ekJpOXYyLXpTZUdZTmRFWEFuTHJ0LVJFVHAzUlFFcHNWbU01VWN4OEZGaW84UVhMS3NUaWlSSm5BNFBTUDRUTnJqSmlFTjl1V0J1ZlQ4Vl9CUWNGTno2X1dScjRKQm56U1IweElQVm5EM09DTXlvNlFvUXJSSXpDdTNMejJzMTRKQktwUXdvSnJ5N3FiSEpzUnQ5Zk5zNE1hbndWWXNsc1o3dkE?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">3</span>
+                        <span class="source-domain">34 AM PST, AD HOC NEWS</span>
                     </a>
                     
                     <a href="https://www.teslarati.com/ark-invest-spacex-ipo-valuation-guide/" target="_blank" rel="noopener" class="blog-source-card">
@@ -1424,22 +1437,22 @@
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMi9AFBVV95cUxNLW44MnRLQ0Z0M3QzT2p6YTIyT2ZjX0lqMEhVMVVjQ0QzcEEzX2FMM2xHdTZIckxZMzN4MWJuQzIxWG4zUTNfR2ZDaWFKLXhuZ2R6T0JwMTNwUUJhUFRWaEVVWFBHYS04eDdvY0pBTGplTk0yY2JabU1ycksxVDZXTnFfSV9abjlIeUxqSHd1MnJRTlBGODMwR3VaNENiOWlLWGhSRFJlWVhaMHFFY0I2V2VzTmczRDEybV9FVGhJMzBTbHlyWXo1NXpjZDRwSUdmUV8yaGZVSUlFclpRYmNvWGNfX3EyWjg5dVZVQ1doVWlOS0Ez?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-icon source-initial" aria-hidden="true">N</span>
                         <span class="source-domain">news.google.com</span>
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMirgJBVV95cUxOZktDd1luMldLeFFaTExWRVduSk04cUxOVkpFWFI4bXRiU3ZLUXRaLTZJczVlY29kUjRUWndWUFhvVmVFc3ZBUk5TSzBCT05aUzN0VTI1MXROWUMwZ0x5ekd4cThaOVQ4Z1VfakdqSjJkNUNvSmhiTGhrNFVQOFo4QUk1T1kyb2N1Mk9mZnRvZVV2b251bElLazVMQldMc3lzdWRIMVFILV9KNGE0V05HZ0kyN1puOXZrNmpyYlBmUk1VWTdJVGZ0WnVLVzFncmRtdGRnVHo2dXQzNXRhOTR6SEdCSFlfMTRqNkdWSVFVQTR6eUpCZ0RQNXFzTFFMNGlnTGRwT1dFNEUxYUEteWhtTk5HcEtXdXdRSzhwQ3piQlI0ekUtMmViSjdlWkM5dw?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-icon source-initial" aria-hidden="true">N</span>
                         <span class="source-domain">news.google.com</span>
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMimgFBVV95cUxQcGNWU0pRaTk2ZkxnUlFVblNBdWk5Vk5mejV5MVNsQjJoOGpXcS1nUGt2d2QwQXh1ZVNBc1d1elJIY3p0bUgzNGdGdUJ1NlM3VWpkRUI4ZmxqRmZXZEk1TXM5LV85RHllZWtDam5vR2Rac2JqdTJiVFdKaHAxaGprY0RQQnY4QzRuRE44NHV2R0JtWHVUZmJFdzFB?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">0</span>
+                        <span class="source-domain">06 AM PST, Electrek</span>
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMirgFBVV95cUxOZDI0OHB2TUZYb2ZvTUtPSWhPbzlDZjA1T2VfNm1KS2ZmTG9vX2NoeGJzRDNyaW40UW9xZlVFWV9zTVZBX21vUWxTV2t0WnhtNmxKM1VuR281NXoteDhpTkN5MVNPUnZmVTJQMzkyVlNSbE94bVIteXIwVlZ6dEtDR2RLNWVtTkVSdHU1ZERNYkF4RmdRRkhoV0ZyMlllS0tLcEF6T29rSnh1OHBaalE?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-icon source-initial" aria-hidden="true">N</span>
                         <span class="source-domain">news.google.com</span>
                     </a>
                     

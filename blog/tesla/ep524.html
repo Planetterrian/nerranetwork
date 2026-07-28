@@ -480,6 +480,19 @@
             background: var(--nn-surface);
             flex-shrink: 0;
         }
+        /* Aggregator-sourced items name the real publisher, for which we
+           have no domain to fetch a favicon from — a lettered badge is
+           honest where Google's favicon would imply Google reported it. */
+        .blog-source-card .source-initial {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-ui);
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--nn-text);
+            background: var(--nn-border, var(--nn-surface));
+        }
 
         /* Related posts */
         .blog-related {
@@ -1351,8 +1364,8 @@
                 <div class="blog-sources-grid">
                     
                     <a href="https://news.google.com/rss/articles/CBMiygFBVV95cUxQdFp0VUdMWjBPQ2NXdEVRemwxZkx0czFWWXlISDVkNzlqOEJITVhVQUN0am4takgxUkxYc3htWG44cHYtZjZvOEJfcmhtN3l5b25abHpFb2RvSHVzaEp1bDM5YzgySHVfQ1R2bUtQZ2JNU3VKWGRPZ2FGNTNQVWZLMXFwaXhCVmtDYVBzbXNvNmxFUEpYOUMzemU2RXQ2LTNfZVNlQ1FpZEZvelFNN0dGT3ppZzhmd0kzTS1ULXZQYy1uX1VVYTUyX1Nn?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">R</span>
+                        <span class="source-domain">Reuters</span>
                     </a>
                     
                     <a href="https://x.com/tslaming/status/2070785071297290494" target="_blank" rel="noopener" class="blog-source-card">
@@ -1361,13 +1374,13 @@
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMidEFVX3lxTE01MjJ6U2Y5aWlSLXNkbFlvQkVIVHhnc1QzeUU2V3JQZm5tN1JxSlpYQ0dxZ3YwRU1zc0R3REVEZk8yT3FvRW4yVkE5UG1pNXctMjhEUW1RSHRuSzNHdXp2MklvMUNya1UxemdibkFQVnZCVDFH?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">D</span>
+                        <span class="source-domain">driveteslacanada.ca</span>
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMickFVX3lxTE5UUzNpcHlIVF9DTTFxV0ZMMU9DTUl0ZXpxMUR5Yy1SRXNDV3BhQnRMbGtwdFZUeVVCdkJCYWNWdDE4NGxKbGs2ZU1GaFJCU2ZmYVc1ckhJZFJIN1p3UVlib2szcmt2TU03MlE5aDVET1pQQQ?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">D</span>
+                        <span class="source-domain">driveteslacanada.ca</span>
                     </a>
                     
                     <a href="https://www.notateslaapp.com/news/4361/tesla-plans-new-factory-building-and-rail-hub-at-giga-berlin" target="_blank" rel="noopener" class="blog-source-card">
@@ -1376,8 +1389,8 @@
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMiogFBVV95cUxPcXNzLWdKVW40LVlHMmdGalNaR2RDYVYtQXVHM0pOWXMwY1ExR0xPdVFXLTY2cGVfSWxWQ0VrcXJOcFZRT1FKTjJfdUpYbGROV2RvWXFQWWdES25paXpQbWNSSlNndHFqcUF2clhTVTVsOTJXV3FkOVp5T1NKYlZUSmFLNTVtWFVUZ0UtY0p2UVZNdXp0SHR1c2pJYzZXSGxReWc?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">T</span>
+                        <span class="source-domain">Tekedia</span>
                     </a>
                     
                     <a href="https://www.notateslaapp.com/news/4360/volkswagen-to-cut-100000-jobs-as-tesla-and-china-close-in" target="_blank" rel="noopener" class="blog-source-card">
@@ -1386,13 +1399,13 @@
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMikwFBVV95cUxNbkI5WS1fZ0s1S0FUWFp2OEYxaW9yTDRMNVdPUk5LeVJzX1JjcF84RjFiRG1OaXZVQVc0ZUZUTmljYTNTYUFIMXBHVzcwcXA3WlNPYXNUaDJSWXRoRHIwblVYQmVXSjQ0NjlwWWF5ek5zcGg3eHZtNTFqYlRtZjNEQl9QMGdHVlVlMUkwRGdyWm42MEU?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">I</span>
+                        <span class="source-domain">Investor's Business Daily</span>
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMihgFBVV95cUxQc0lOa0lLVG9hdl9VeXJsRldWaTU5N1BpLUJuYmttdl9JcXQyRjVQalRaOF9yXzVHdFUxbmhScDhDV0pQTkhrcFBTUjQwSWNONEx6aDY2c2NfRmN1S0FLZ18zUXJqd2tkZlFTSUs1MWtpRmVGRjdqbmxmc1VmRjJZelRJNHE2Zw?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">E</span>
+                        <span class="source-domain">EVChargingStations.com</span>
                     </a>
                     
                     <a href="https://www.notateslaapp.com/news/4337/tesla-trademarks-megapod-will-turn-idle-superchargers-into-distributed-compute" target="_blank" rel="noopener" class="blog-source-card">
@@ -1401,8 +1414,8 @@
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMiqgFBVV95cUxPN21sbllkdjFENEJwSWRyanAyNFZMakdJX2s1N1NIZ21nQ0VBdnp6Q0sxbV94RXBvU1BsYnNsVGg5Y0o0ZUhPMVBiQlBxMnF0VXlidnRwakQ0V25YTEZ0YTlMTmRDdDhrNldadmhGV2ZKSjB5Q3ZaaGg3UUw0TzVMTE15RkQ5UzY3aEpZOWR1Z0w0NGJKWndHQUtBUk5rQnpRTHBFQURTTTlBQQ?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">E</span>
+                        <span class="source-domain">eletric-vehicles.com</span>
                     </a>
                     
                     <a href="https://x.com/tslaming/status/2070811607815643599" target="_blank" rel="noopener" class="blog-source-card">
@@ -1426,18 +1439,18 @@
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMi2wFBVV95cUxQUzFBc0xWaFMyUVBFMm1iS0dmOENPZ3dVWldLdkw0TmxFRXZLUW1hN2taZm1yeW5YdXV3b0RKazNDQWxfTVZtVmRaQnBCUUJDRF8yVlNDMjdRSEstaVZSS0pPOXk0V0ZvSmRRRS1sblJmZVVuaU91N0tUSjZLd25qMHZ0ZGpCQThCM2ozYjA1cGJvSU0xYk81U3JoVjY5QnpTRzgzVFA4eXU2NlpIVWVKbDhqWU1iYjJ2c3U0X0VIYkNWNVFvWHpXeVp5MnNmMlB5QXdHM25CTzJxRlU?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-icon source-initial" aria-hidden="true">N</span>
                         <span class="source-domain">news.google.com</span>
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMiowFBVV95cUxOejBXOXVlSUZQRURMU3lubktfb3hCR3RGbzdNWlhCcGJrVVhISm14Q04zYnp4ODRwZEZBb2tEbmZrOGpDSDdiREd4ZDZ2cUxrcFozV1VUaHprOU9URXlLMmdPaVpyandicjBTdDB6Y2EzMGRjbU03UFo1VGowX0RKUXlmdktublQyc3lmckRlZFdGalJaWVJ4U2JGRGt5b0hQYUtF?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-icon source-initial" aria-hidden="true">N</span>
                         <span class="source-domain">news.google.com</span>
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMieEFVX3lxTE9OeE82SjhxQWxfZWt3Vm0yOEtLWDlPNjI2MFNzaG9RdUYzcmVIYkhWY2JFSHc5UzN2VGxyUUxSTDEwLW80T1MwWXlhRzdUSlZnWXhnWW84YVJxT09wN2thTmVTN1dZemxPTFYyWVFuRng3dF93Ri1jWg?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">E</span>
+                        <span class="source-domain">Electrek</span>
                     </a>
                     
                 </div>

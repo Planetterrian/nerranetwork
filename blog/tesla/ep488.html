@@ -480,6 +480,19 @@
             background: var(--nn-surface);
             flex-shrink: 0;
         }
+        /* Aggregator-sourced items name the real publisher, for which we
+           have no domain to fetch a favicon from — a lettered badge is
+           honest where Google's favicon would imply Google reported it. */
+        .blog-source-card .source-initial {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-ui);
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--nn-text);
+            background: var(--nn-border, var(--nn-surface));
+        }
 
         /* Related posts */
         .blog-related {
@@ -1347,18 +1360,18 @@
                 <div class="blog-sources-grid">
                     
                     <a href="https://news.google.com/rss/articles/CBMiowFBVV95cUxNSThoM3BIQjZlZDV5ZjNlMWNnVHZPdlJxNk9LbThmTndKVUtpaU5CU0NQQUF6bG1EZTQzcDdfQkg0UXlmUmNDaW41UGw4bGh0aTFnekQ1Ul9OUkR4YnM2blJkZ1I5T0JCWFU4NXBtQWZHeUVnSm9RLXdHLWVaY0ZrWUExYUhlV25IOUFfajlZLV8yemplRWNzdUE0T2V1eklrRlVj?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">Y</span>
+                        <span class="source-domain">Yahoo Finance</span>
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMilwFBVV95cUxNWFNPOEJlaW9JTzc4djMwcTR6UjhBUWQzb29TYlhwMUYwSWRfMWpqc3N4Y0JZeTdTSTUxb3o2QzRDZDFsWjhHRms0R01ZaGdjNE91Y2xlWjhlNUxUcGtFd01lYi1SUlhYV1BidW5pZ05DMHFFUnRyeWp1SW0yNUtwOERjSWhBbkMzU3JVMldPYWlJY09FdTc4?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">Y</span>
+                        <span class="source-domain">Yahoo Autos</span>
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMi9gFBVV95cUxQV1RDNnlVWWNNaFV2MC1GUnRkOGRPNXkxTkVZaUk0WnM4MEdkcnhVTzBCVHhPbkFQM09fVkM2Vl94QlplSnRYRjVCWVBXZXFhUlJwLXRDZENUQ2V4TmFaeDB0WDN5QWdxdC13QnFuNFk2YW1MSVNNTHJCdjNtODRRa0l4QlZzdEY4VzN0SlN3SjNjcnZCZVctS0xxTlZUZ0g0WmxVUGlQaFJlcnp5ZVJkQW81SFc4NnIwSjFOMFZoWTZ1TVJKMUxrc0pRYm1IWF85M1NWYlAzVjNLUXFzMDNNdVNqdWhDZWYwa3JiLUtkbDNEakJDWVE?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">B</span>
+                        <span class="source-domain">Barchart.com</span>
                     </a>
                     
                     <a href="https://www.teslarati.com/spacex-nasa-contracts/" target="_blank" rel="noopener" class="blog-source-card">
@@ -1382,8 +1395,8 @@
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMiiwFBVV95cUxNdnhYTWpQNXhxT2JhaF9BX3VRUTdsTXlxUnBMcVVsSDl5SHhOcUZ1Z2d6S0tZeWtZeURaQ1FzVmdzUHE1Z18ySTZHM1UtLUVVSFpRLWl1XzZDTGVhdDNNVDdSSnJzcS12V2NCdHRvU0ZlVkZpenVteWowLTJrUXpCTVhHc3F1ajFUeXZV?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">F</span>
+                        <span class="source-domain">Forbes</span>
                     </a>
                     
                     <a href="https://insideevs.com/news/796927/volvo-tesla-supercharger-europe-app/" target="_blank" rel="noopener" class="blog-source-card">
@@ -1392,8 +1405,8 @@
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMiwwFBVV95cUxQQVZsTWEtR3lEWVgtczZVZ3FyTWNhdDY5YWgzblNGOWlpeEZpLVVBb3Bqd0FjaVJQUVdTT2h2ZUh6bUhMMzBQcnBCSmcwb1Qxa3R1VHVGaXNvM2NZNmVJYVNESDlWazE3YXMxSF9xZVBta3JQb1VycVdpMncxNmFEWW1zNmVheVd4WjRfemVRTldRbDNTbjBuSEJnRHRHYi1fTkh3RHM4emRVckRnSjFlOUdZWEVmT1lPMUJFOWRlMV94dXM?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">T</span>
+                        <span class="source-domain">Torque News</span>
                     </a>
                     
                     <a href="https://x.com/Teslarati/status/2059730734621860299" target="_blank" rel="noopener" class="blog-source-card">

@@ -480,6 +480,19 @@
             background: var(--nn-surface);
             flex-shrink: 0;
         }
+        /* Aggregator-sourced items name the real publisher, for which we
+           have no domain to fetch a favicon from — a lettered badge is
+           honest where Google's favicon would imply Google reported it. */
+        .blog-source-card .source-initial {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-ui);
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--nn-text);
+            background: var(--nn-border, var(--nn-surface));
+        }
 
         /* Related posts */
         .blog-related {
@@ -1363,13 +1376,13 @@
                 <div class="blog-sources-grid">
                     
                     <a href="https://news.google.com/rss/articles/CBMinAFBVV95cUxNeEc2NU50WlFIVE12a3Y1WksweENyN3RXVkdOQjV3Xy1OeV96cGVLalE3REFlYkFTNXdMZXNqSmdLcFdLekNycXhnRmYxX3FFMERKX1BiT0x1c3haUzZma1JRd3AwWEd4S3NCTEFMSG9wRUhBRjY3QnJDSEZwYzJHTzdtOTM4c1Q0Q3pVeW02Tld2R19tWXJraS0weDk?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">0</span>
+                        <span class="source-domain">03 AM PST, Hungarian Conservative</span>
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMikgFBVV95cUxOQUVadklUblEyeDJDeGZFdlo3QWVIcUJBaV8yWWl0ZlgtaTRXOVFlSi1TdXliU0g0Z1dIOXlxZFVZdkdmSjYxUWRnRVZ5WmJzcVgwRHBkSGdiX25FY0NmdG41V2w4VDh5U2J0NWRySHVSZXRDRlFGeUVXbVhjTE5BZVJxemgxaU9RZERPeXpPOHBPZw?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">5</span>
+                        <span class="source-domain">54 PM PST, digitimes</span>
                     </a>
                     
                     <a href="https://www.teslarati.com/tesla-full-self-driving-shows-stunning-maneuver-europe-silence-skeptics/" target="_blank" rel="noopener" class="blog-source-card">
@@ -1378,8 +1391,8 @@
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMikwFBVV95cUxPdWVRMWRYbEtYaVRvRkNxZlp0OE5rOTRGdm9tekpyMnlwNGhjUjFRUkJENUx2VU5XQ3RHTVNYRXNsS01WMEpON1cxOHRBZTAydnl1bzVxQ3BDNnYtQmYxcWtfWWZDdzNvUkxnZ1g4SXU0TEFLN1VYQXhxSXZfVUlvc3k3bDB2YlRsbGFLZmNpT0o4Z2s?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">1</span>
+                        <span class="source-domain">16 PM PST, EV Central</span>
                     </a>
                     
                     <a href="https://www.notateslaapp.com/news/3968/tesla-to-let-drivers-hide-third-party-superchargers-in-trip-planner" target="_blank" rel="noopener" class="blog-source-card">
@@ -1388,8 +1401,8 @@
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMihAFBVV95cUxNY3RmeUNQZUFfOEdraE9hNmdaZzg5S0NHTTJwYjZadDRMSURUWFg2N3FjYWh5am9BMWx3WTVicGxYUWxlR1FfSEdqb3M5dzRCNTdDUm4tNVdycDdCY2plakJ2WWY3VFh1S2lNMjhadjZyejJ1UE5ZLVZZdVE4WnpxX2hJMjA?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">3</span>
+                        <span class="source-domain">31 PM PST, AOL.com</span>
                     </a>
                     
                     <a href="https://www.reddit.com/r/teslainvestorsclub/comments/1slgc2r/teslas_gigafactory_water_use_surges_in_austin_as/" target="_blank" rel="noopener" class="blog-source-card">
@@ -1403,23 +1416,23 @@
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMilwFBVV95cUxQRWJiV283NmJEZlZOMHpwV1RaNk9tYzFRRDVHNlJuTzJSSjlIWDRHZ2JxSndGT3ZieFRYNGtiVTB3QlRyZ05xRGU4T0tUSGVuYklXYjRzaTJnRUx1SlplUjI3Rk5iVnIwSFZMbS1SQW1QdTFJdVYyS3pkV3hnalBiOFRRQjJpdmtFWTNId0NHbXRrbjJvdWNr?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">5</span>
+                        <span class="source-domain">50 AM PST, eletric-vehicles.com</span>
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMijAJBVV95cUxPcnNFZGhRbFE0RnpZV3dEek9zVUVCSm5iMlRTMGpQaWEwTkpab0NXdlJpMXFXMDFhbGlpQVhUa2kySzZUbnNobXdaQURIcGxsWFpyNjJBbjF3ZllQUTFoVGdsWnlBSU1BTGY2eDR0WkFMMmVDcmt2SWtrY1pjdTItVW5PQUo5UGk0cl80d3czRXdmQjJwZFVGbS1FalZyWHY4MmVwWkI0OXIwMmVCRnpoZGxBR3lNcDR5R1dQd3V6M21iMXdvR1kwZW9CSV91RTRnUzhoYy1XelhBY2ZMYUNlNHRfSkxMZmlnMGdnaXZSS3ExQzhoTVVQN1JWam8xb1N0Y1RRcUwya2VvNmlp?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">2</span>
+                        <span class="source-domain">22 AM PST, TechRadar</span>
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMiuAFBVV95cUxPNFRsc0duMkx5Z1E0dU1zbnVXNkE4UUN1QlZqSkNCelpPZW9TRTRHRGtMOGNEYU83SVFhMWZWMVhrRnF4NkEyWHMxSThnRlk4RXF1bVhVY041MHp2X0VQM1AxbWJMS09uUVBKLXNZM0FqNmRVcC0za3BJUDJrTGlBZ2sySE5HNXprd1BNdUFsLW52UC16WGdlY3B0WXFaRzhUaHAzQlFjX2NvVkZwQUFtQk5jbFd5OGFI?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-icon source-initial" aria-hidden="true">N</span>
                         <span class="source-domain">news.google.com</span>
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMi5gFBVV95cUxOSm80N21Jd3BtOHRsUmNGSlZVVXdCZ1pNeGJsLVlzT1ZmRmZ2UEtQbDhWVjlnYmdfRDk1YWU0dFF5N1hVMEhsV2l5ZkMwa1B5c3hpRTEyYk1xNVd3dzF2dEZKeHpZT2FRVFdVQnFTb2JDUWJrMXNhRE0yeUIwaGVNOUhNYUhnSF9yXzlBd2dDNm9NZElYMzVSdFhKWG1Id0Zwd0ZCUU5EZjlCVllWLVFiVDV0MWh4bDlpdDJrRnk4UXYtZFpJT2VySkc3VVRzd2ZFR25fQ2RBY0h4cFo2V1UtWGc5M1Uxdw?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
-                        <span class="source-domain">news.google.com</span>
+                        <span class="source-icon source-initial" aria-hidden="true">1</span>
+                        <span class="source-domain">18 PM PST, FinancialContent</span>
                     </a>
                     
                     <a href="https://www.teslarati.com/spacex-starship-v3-static-fire/" target="_blank" rel="noopener" class="blog-source-card">
@@ -1428,12 +1441,12 @@
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMipgFBVV95cUxOOHdib0Jva1RPbFhUMXBWZWdXRDhralZjVWxkT3RvVE9Za2FFbFZQd1pEQmhaU0RaQnliVGNza2JGLXlrRHhHNHBYQUdFNFJxWHNvWDMtd1dSMGFhRDRJeFh2UEkwSW5ja3hzVFZOU3A3VW1FbFJOdnp6aGJVdFhJdHVyZU5Fb2xfbnY4TG1KQ04xY1pDNUZHdUtBdThZRlZiWFlXYkV3?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-icon source-initial" aria-hidden="true">N</span>
                         <span class="source-domain">news.google.com</span>
                     </a>
                     
                     <a href="https://news.google.com/rss/articles/CBMib0FVX3lxTE5JWlBaQnBzU1RHVVN5bEt5bVMzUUo1RFJuejI5VTR5cl9qb1V3YjNiNGZUVmtkTzBCVFNyOS1sdXNEZUlITURKSkktY0Fyem5WdjlLR0FmNm9zQnpaNGp4WHlWR2l5OWQxU0o1NWZoTQ?oc=5" target="_blank" rel="noopener" class="blog-source-card">
-                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-icon source-initial" aria-hidden="true">N</span>
                         <span class="source-domain">news.google.com</span>
                     </a>
                     
