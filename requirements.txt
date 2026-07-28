@@ -28,9 +28,12 @@ spotifyconnector>=0.7.0
 # Correction (July 2026): an earlier note here claimed "Apple ships no
 # creator analytics API". That is wrong. Apple's Reporter command-line
 # tool exposes apShowListening / apEpisodeListening / apProviderListening
-# reports against a 180-day access token — no cookies. It is gated on an
-# active Apple Podcasters Program agreement (ours is "Pending User Info")
-# and, per Apple's docs, on having at least one subscription. If that
-# gate clears, Reporter becomes the primary source and this cookie
-# scraper drops to fallback. See docs/analytics.md.
+# reports against a 180-day access token — no cookies.
+#
+# Tested end to end 27 July 2026: the token authenticates and the service
+# is up, but the podcast provider account has no reporting vendor,
+# because the Apple Podcasters Program agreement reads "Pending User
+# Info". So this cookie scraper stays primary for now. Full findings and
+# the retry procedure are in docs/analytics.md — read that before
+# spending another afternoon on Reporter.
 appleconnector>=0.3.0

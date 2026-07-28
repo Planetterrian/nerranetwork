@@ -64,18 +64,65 @@ Public, display-safe extracts live in `site/data/` (e.g.
   reports (Daily / Weekly / Monthly) against an access token valid for
   **180 days** — no cookies, no browser session. That is exactly the
   durable, scriptable source the cookie scraper below is a workaround
-  for. Two gates stand between us and it: our Apple Podcasters Program
-  agreement reads **"Pending User Info"** (missing a bank account and
-  the Canadian GST/HST form — see Podcasts Connect → Business), and
-  Apple documents these reports as requiring at least one active
-  subscription, of which we have zero. Provider number is `93825591`.
-  Settle it empirically before designing around it:
+  for.
+
+  **Tested end to end on 27 July 2026. Result: blocked, not broken.**
+  Setup all works — do not redo it:
+
+  * Reporter is a `.jar`; macOS ships no Java. `brew install --cask temurin`.
+  * `Sales.generateToken` cannot do 2FA. It needs an **app-specific
+    password** created at appleid.apple.com **while signed in as the
+    Apple Account that owns Podcasts Connect** — that is
+    `patrick@avvizo.com`, *not* the personal gmail. An app-specific
+    password made under the wrong Apple ID fails with the same generic
+    "please create an app-specific password" message, which is what
+    cost us a round trip.
+  * `generateToken` prints the token; it does **not** write it to
+    `Reporter.properties`. Paste it in yourself. Lost it? `Sales.viewToken`
+    reprints it — do not re-run `generateToken`, which invalidates the
+    old token (one active token per Apple Account).
+  * The parameter list takes **no spaces**:
+    `Sales.getReport 92749973,apShowListening,Summary,Daily,20260726`.
+    Spaces after the commas make the shell split it and Reporter reports
+    a bogus "Invalid vendor number".
+  * The Apple ID sees four accounts. `Sales.getAccounts` →
+    `Planetterrian, 128317151` (the podcast provider) and
+    `PlanetTerrian Ventures Inc, 126848014` (the corporate entity), plus
+    two personal App Store accounts.
+
+  And the result:
+
+  * `Sales.getStatus` → "Sales and Trends Reporter is currently available".
+    So the service is up and the token authenticates.
+  * `Sales.getVendors` under **128317151 returns nothing** — the podcast
+    provider has no reporting vendor.
+  * Under 126848014 it returns `92749973` and `93654549`, but `getReport`
+    rejects both as invalid: they are App Store vendors with no podcast
+    data behind them.
+  * `93825591`, visible on the Business tab, is **not** a vendor number.
+    An earlier revision of this file said it was. It is not.
+
+  The gate is the **Apple Podcasters Program agreement, which reads
+  "Pending User Info"** (Podcasts Connect → Business): missing a bank
+  account and the Canadian GST/HST form; the two U.S. W-8 forms are
+  already Active. Apple issues no reporting vendor until the agreement
+  completes, and separately documents these reports as requiring at
+  least one active subscription — we have zero.
+
+  **To retry** (after the agreement flips to Active), from the Reporter
+  directory with a valid `AccessToken` and `Account=128317151`:
 
   ```
   java -jar Reporter.jar p=Reporter.properties Sales.getVendors
   java -jar Reporter.jar p=Reporter.properties \
-      Sales.getReport 93825591, apShowListening, Summary, Daily, YYYYMMDD
+      Sales.getReport <vendor>,apShowListening,Summary,Daily,YYYYMMDD
   ```
+
+  A vendor number appearing is the signal. If one appears but
+  `getReport` still refuses, the remaining gate is the subscription
+  requirement, and the open question becomes whether one nominal
+  subscription offering is worth it to unlock provider-wide reporting.
+  Decide that with the error in hand, not before.
 
   If those return data, Reporter becomes the primary Apple source and
   the cookie path below drops to fallback.
