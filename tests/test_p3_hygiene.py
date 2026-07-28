@@ -1,0 +1,257 @@
+"""Drift guards for P3 operational hygiene (July 28 2026).
+
+Three scheduled-maintenance gaps, plus two plan items that turned out to
+be already done:
+
+  * ``scripts/prune_video_r2.py`` existed but was scheduled nowhere, so
+    the video keyspace grew ~318 GB/year unchecked.
+  * ``recovery/*`` branches were never cleaned up — and an UNMERGED one
+    is a stranded episode (generated, paid for, never published) that
+    nothing was watching for.
+  * The Apple Reporter token expires after 180 days and its failure mode
+    is silent by design, so a dead token produced a green nightly job.
+
+Already resolved, verified rather than assumed: the repo-root strays
+(``_to_delete/``, ``recovered_ep519/``, ``recovered_spacex_ep12/``) are
+gone, and the ruff gate is green.
+"""
+
+from __future__ import annotations
+
+import datetime as dt
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+import pytest
+import yaml
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+
+from check_apple_reporter_freshness import check as reporter_check  # noqa: E402
+import prune_recovery_branches as prb  # noqa: E402
+
+
+class TestRepoRootIsClean:
+    @pytest.mark.parametrize(
+        "stray", ["_to_delete", "recovered_ep519", "recovered_spacex_ep12"])
+    def test_stray_directories_are_gone(self, stray):
+        assert not (REPO_ROOT / stray).exists()
+
+    @pytest.mark.parametrize(
+        "stray", ["_to_delete", "recovered_ep519", "recovered_spacex_ep12"])
+    def test_strays_are_not_tracked(self, stray):
+        tracked = subprocess.run(
+            ["git", "ls-files", stray], cwd=REPO_ROOT,
+            capture_output=True, text=True,
+        ).stdout.strip()
+        assert tracked == ""
+
+
+class TestStoragePruneScheduled:
+    @pytest.fixture()
+    def workflow(self):
+        path = REPO_ROOT / ".github" / "workflows" / "storage-prune.yml"
+        assert path.exists(), "the monthly prune workflow must exist"
+        return yaml.safe_load(path.read_text(encoding="utf-8"))
+
+    def test_runs_on_a_monthly_cron(self, workflow):
+        # PyYAML parses a bare `on:` key as the boolean True.
+        triggers = workflow.get("on") or workflow.get(True)
+        crons = [s["cron"] for s in triggers["schedule"]]
+        assert crons, "no schedule configured"
+        # day-of-month set, month wildcard => monthly.
+        day_of_month = crons[0].split()[2]
+        assert day_of_month != "*", f"not monthly: {crons[0]}"
+
+    def test_manual_runs_default_to_a_dry_run(self, workflow):
+        """Irreversible deletion must not be the default for a human."""
+        triggers = workflow.get("on") or workflow.get(True)
+        assert triggers["workflow_dispatch"]["inputs"]["apply"]["default"] is False
+
+    def test_scheduled_run_actually_applies(self):
+        """A prune that never deletes would leave the growth unfixed."""
+        raw = (REPO_ROOT / ".github" / "workflows" / "storage-prune.yml").read_text(
+            encoding="utf-8")
+        assert "github.event_name == 'schedule' && 'true'" in raw
+        assert "--apply" in raw
+
+    def test_missing_credentials_skip_rather_than_fail(self):
+        raw = (REPO_ROOT / ".github" / "workflows" / "storage-prune.yml").read_text(
+            encoding="utf-8")
+        assert "R2 credentials not configured" in raw
+
+    def test_report_reaches_the_job_summary(self):
+        """A destructive job with no audit trail is how bad prunes hide."""
+        raw = (REPO_ROOT / ".github" / "workflows" / "storage-prune.yml").read_text(
+            encoding="utf-8")
+        assert "GITHUB_STEP_SUMMARY" in raw
+
+    def test_does_not_race_the_daily_slate(self, workflow):
+        """Shows finish as late as ~16:00; nightly runs 16:45."""
+        triggers = workflow.get("on") or workflow.get(True)
+        hour = int(triggers["schedule"][0]["cron"].split()[1])
+        assert hour < 4 or 4 <= hour <= 6, f"hour {hour} risks overlapping a publish"
+
+
+class TestRecoveryBranchJanitor:
+    def test_unmerged_branches_are_never_deleted(self):
+        """Deleting a stranded episode is the failure this prevents."""
+        source = (REPO_ROOT / "scripts" / "prune_recovery_branches.py").read_text(
+            encoding="utf-8")
+        delete_block = source.split("if not args.apply:")[1]
+        # The only iteration that deletes is over `merged`.
+        assert "for branch in merged:" in delete_block
+        assert "for branch in stranded:" not in delete_block
+
+    def test_unresolvable_ref_is_treated_as_unmerged(self, monkeypatch):
+        def _boom(*args, **kwargs):
+            raise subprocess.CalledProcessError(1, "git")
+        monkeypatch.setattr(prb, "_git", _boom)
+        assert prb.is_merged("recovery/tesla-1-2", "origin/main") is False
+
+    def test_age_read_from_the_branch_name(self):
+        now = dt.datetime(2026, 7, 28, 12, 0, tzinfo=dt.timezone.utc)
+        created = now - dt.timedelta(hours=30)
+        branch = f"recovery/tesla-30353150739-{int(created.timestamp())}"
+        age = prb.branch_age_hours(branch, now)
+        assert age == pytest.approx(30.0, abs=0.1)
+
+    def test_show_name_recovered_from_the_branch(self):
+        assert prb.show_of("recovery/spacex-30354757421-1785247730") == "spacex"
+        # Multi-part slugs survive the split.
+        assert prb.show_of("recovery/models_agents-1-2") == "models_agents"
+
+    def test_stranded_branch_emits_a_warning(self, monkeypatch, capsys):
+        now = dt.datetime.now(dt.timezone.utc)
+        created = int((now - dt.timedelta(hours=48)).timestamp())
+        branch = f"recovery/tesla-999-{created}"
+        monkeypatch.setattr(prb, "remote_recovery_branches", lambda: [branch])
+        monkeypatch.setattr(prb, "is_merged", lambda b, base: False)
+
+        prb.main([])
+        out = capsys.readouterr().out
+        assert "::warning::" in out
+        assert "Stranded recovery branch" in out
+        assert "tesla" in out
+
+    def test_young_unmerged_branch_is_not_alarmed(self, monkeypatch, capsys):
+        """An in-flight recovery PR is normal, not an incident."""
+        now = dt.datetime.now(dt.timezone.utc)
+        created = int((now - dt.timedelta(hours=2)).timestamp())
+        monkeypatch.setattr(
+            prb, "remote_recovery_branches",
+            lambda: [f"recovery/tesla-999-{created}"])
+        monkeypatch.setattr(prb, "is_merged", lambda b, base: False)
+
+        prb.main([])
+        out = capsys.readouterr().out
+        assert "::warning::" not in out
+        assert "in flight" in out
+
+    def test_no_branches_is_a_clean_noop(self, monkeypatch, capsys):
+        monkeypatch.setattr(prb, "remote_recovery_branches", lambda: [])
+        assert prb.main([]) == 0
+        assert "nothing to do" in capsys.readouterr().out
+
+    def test_wired_into_nightly(self):
+        raw = (REPO_ROOT / ".github" / "workflows"
+               / "nightly-maintenance.yml").read_text(encoding="utf-8")
+        assert "prune_recovery_branches.py" in raw
+        assert "--apply" in raw
+
+
+class TestAppleReporterFreshness:
+    def _rollup(self, tmp_path, *, fetched_at, shows=1):
+        path = tmp_path / "apple_reporter.json"
+        path.write_text(json.dumps({
+            "fetched_at": fetched_at, "last_date": "2026-07-27",
+            "shows": {str(i): {} for i in range(shows)},
+        }), encoding="utf-8")
+        return path
+
+    def test_fresh_rollup_is_ok(self, tmp_path):
+        now = dt.datetime.now(dt.timezone.utc)
+        path = self._rollup(
+            tmp_path, fetched_at=(now - dt.timedelta(days=1)).isoformat())
+        ok, message = reporter_check(path, 3, now)
+        assert ok
+        assert "fresh" in message
+
+    def test_stale_rollup_names_the_token(self, tmp_path):
+        now = dt.datetime.now(dt.timezone.utc)
+        path = self._rollup(
+            tmp_path, fetched_at=(now - dt.timedelta(days=9)).isoformat())
+        ok, message = reporter_check(path, 3, now)
+        assert not ok
+        assert "180 days" in message
+        assert "token" in message.lower()
+
+    def test_absent_file_is_not_an_alarm(self, tmp_path):
+        """Reporter is opt-in — "not set up" is not "broken"."""
+        ok, message = reporter_check(
+            tmp_path / "nope.json", 3, dt.datetime.now(dt.timezone.utc))
+        assert ok
+        assert "not configured" in message
+
+    def test_corrupt_file_is_an_alarm(self, tmp_path):
+        path = tmp_path / "apple_reporter.json"
+        path.write_text("{broken", encoding="utf-8")
+        ok, _ = reporter_check(path, 3, dt.datetime.now(dt.timezone.utc))
+        assert not ok
+
+    def test_missing_timestamp_is_an_alarm(self, tmp_path):
+        path = tmp_path / "apple_reporter.json"
+        path.write_text(json.dumps({"shows": {}}), encoding="utf-8")
+        ok, _ = reporter_check(path, 3, dt.datetime.now(dt.timezone.utc))
+        assert not ok
+
+    def test_naive_timestamps_do_not_crash(self, tmp_path):
+        now = dt.datetime.now(dt.timezone.utc)
+        path = self._rollup(
+            tmp_path,
+            fetched_at=(now - dt.timedelta(days=1)).replace(tzinfo=None).isoformat())
+        ok, _ = reporter_check(path, 3, now)
+        assert ok
+
+    def test_never_fails_the_nightly_by_default(self, tmp_path):
+        """It rides along with nightly — an alarm must not become a gate."""
+        now = dt.datetime.now(dt.timezone.utc)
+        path = self._rollup(
+            tmp_path, fetched_at=(now - dt.timedelta(days=30)).isoformat())
+        result = subprocess.run(
+            [sys.executable,
+             str(REPO_ROOT / "scripts" / "check_apple_reporter_freshness.py"),
+             "--path", str(path)],
+            capture_output=True, text=True,
+        )
+        assert result.returncode == 0
+        assert "::warning::" in result.stdout
+
+    def test_strict_mode_exits_non_zero(self, tmp_path):
+        now = dt.datetime.now(dt.timezone.utc)
+        path = self._rollup(
+            tmp_path, fetched_at=(now - dt.timedelta(days=30)).isoformat())
+        result = subprocess.run(
+            [sys.executable,
+             str(REPO_ROOT / "scripts" / "check_apple_reporter_freshness.py"),
+             "--path", str(path), "--strict"],
+            capture_output=True, text=True,
+        )
+        assert result.returncode == 1
+
+    def test_expiry_is_documented(self):
+        doc = (REPO_ROOT / "docs" / "analytics.md").read_text(encoding="utf-8")
+        assert "180 days" in doc
+        assert "January 2027" in doc
+        # And names the real secret, not an invented one.
+        assert "APPLE_REPORTER_TOKEN" in doc
+
+    def test_wired_into_nightly(self):
+        raw = (REPO_ROOT / ".github" / "workflows"
+               / "nightly-maintenance.yml").read_text(encoding="utf-8")
+        assert "check_apple_reporter_freshness.py" in raw

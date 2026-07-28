@@ -1,0 +1,120 @@
+name: Storage Prune (video R2)
+
+# The video keyspace grows ~318 GB/year and nothing expires it. Each
+# rendered episode is ~174 MB, five shows publish daily, and every video
+# feed lists only `max_episodes` (30) items — so episode 31 and older are
+# already unreachable by any listener while still being billed for.
+#
+# `scripts/prune_video_r2.py` deletes by REACHABILITY, not by age: an
+# object survives if any live `*.video.rss` or any durable
+# `digests/<slug>/video_assets.json` still references it, and a per-show
+# `--keep-newest` floor means a bug in feed generation cannot cascade
+# into deleting a back catalogue. That is why this is a script on a cron
+# rather than a bucket lifecycle rule — a lifecycle rule expires by age,
+# which would delete still-listed episodes out from under a show that
+# paused for two months.
+#
+# Ownership split, consistent with the rest of the repo:
+#   - Daily Audit          -> quality + missed-episode detection
+#   - Nightly Maintenance  -> heavy, idempotent artifact/index builds
+#   - THIS workflow        -> monthly, irreversible storage reclamation
+#
+# It is deliberately NOT folded into nightly: it is the only scheduled
+# job in the repo that permanently destroys data, and it should be
+# separately visible, separately runnable, and separately revertible
+# (disable this one file) without touching the nightly pipeline.
+
+on:
+  schedule:
+    # Monthly, on the 3rd at 04:20 UTC. Well clear of the daily show
+    # slate (which finishes as late as ~16:00 once GitHub's scheduling
+    # delay is counted) and of nightly maintenance at 16:45, so a prune
+    # can never race a publish that is still writing objects.
+    - cron: '20 4 3 * *'
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: 'Actually delete (unchecked = dry run report only)'
+        type: boolean
+        default: false
+      keep_newest:
+        description: 'Per-show floor of objects to retain regardless of references'
+        type: string
+        default: '60'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: storage-prune
+  cancel-in-progress: false
+
+jobs:
+  prune:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The reachability check reads the committed video feeds and
+          # per-show asset indexes; a shallow clone of the tip is all it
+          # needs, and matches the repo's shallow-clone convention
+          # (landmine #1 — full clones cost ~2.5 GB).
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install boto3 pyyaml
+
+      - name: Prune unreachable video objects
+        env:
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          # Scheduled runs prune for real — that is the point of the job.
+          # Manual runs default to a dry run so an operator can look
+          # before deleting.
+          APPLY: ${{ github.event_name == 'schedule' && 'true' || inputs.apply }}
+          KEEP_NEWEST: ${{ inputs.keep_newest || '60' }}
+        run: |
+          set -o pipefail
+          if [ -z "${R2_ENDPOINT_URL}" ] || [ -z "${R2_ACCESS_KEY_ID}" ]; then
+            echo "::warning::R2 credentials not configured — skipping prune."
+            exit 0
+          fi
+
+          FLAGS="--keep-newest ${KEEP_NEWEST}"
+          if [ "${APPLY}" = "true" ]; then
+            FLAGS="${FLAGS} --apply"
+            echo "Running in APPLY mode — objects will be deleted."
+          else
+            echo "Running as a DRY RUN — nothing will be deleted."
+          fi
+
+          # Tee the report so it lands in the job summary. A destructive
+          # scheduled job that leaves no audit trail is how you discover
+          # a bad prune months later.
+          python scripts/prune_video_r2.py ${FLAGS} 2>&1 | tee prune-report.txt
+
+      - name: Publish report to the job summary
+        if: always()
+        run: |
+          {
+            echo "## Video storage prune"
+            echo ""
+            if [ "${{ github.event_name }}" = "schedule" ]; then
+              echo "Mode: **apply** (scheduled monthly run)"
+            else
+              echo "Mode: **${{ inputs.apply && 'apply' || 'dry run' }}** (manual dispatch)"
+            fi
+            echo ""
+            echo '```'
+            cat prune-report.txt 2>/dev/null || echo "(no report produced)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
