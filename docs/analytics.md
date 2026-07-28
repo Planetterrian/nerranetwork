@@ -81,6 +81,18 @@ Public, display-safe extracts live in `site/data/` (e.g.
     `Reporter.properties`. Paste it in yourself. Lost it? `Sales.viewToken`
     reprints it — do not re-run `generateToken`, which invalidates the
     old token (one active token per Apple Account).
+  * **The token expires 180 days after issue.** This one was issued in
+    late July 2026, so it dies around **late January 2027** — worth a
+    calendar entry, because the failure is silent *by design*:
+    `fetch_apple_reporter.py` leaves the store untouched when every
+    request fails (stale-but-real beats empty), so a dead token yields a
+    green nightly job and a dashboard still showing plausible numbers.
+    `scripts/check_apple_reporter_freshness.py` runs nightly and raises a
+    `::warning::` once `api/apple_reporter.json` stops advancing for 3
+    days; that annotation is the only thing that will tell you. To
+    rotate: `Sales.generateToken`, paste the value into the
+    `APPLE_REPORTER_TOKEN` secret, and confirm the next nightly run
+    reports "Apple Reporter fresh".
   * The parameter list takes **no spaces**:
     `Sales.getReport 92749973,apShowListening,Summary,Daily,20260726`.
     Spaces after the commas make the shell split it and Reporter reports

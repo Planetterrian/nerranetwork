@@ -225,6 +225,26 @@ jobs:
         # upload landed). Deterministic from summaries → usually a no-op.
         run: python scripts/build_video_feeds.py --all || echo "::warning::Video-feed rebuild failed (non-fatal)"
 
+      - name: Clean up merged recovery branches
+        # Landmine #23 parks an episode on a recovery/* branch whenever a
+        # show's artifact push exhausts its retry loop. Merged ones were
+        # never cleaned up, and an UNMERGED one is a stranded episode —
+        # generated, paid for, never published — that nobody was watching
+        # for. Deletes only branches provably already on main; an unmerged
+        # branch is reported, never removed.
+        run: |
+          git fetch origin 'refs/heads/recovery/*:refs/remotes/origin/recovery/*' --quiet || true
+          python scripts/prune_recovery_branches.py --apply \
+            || echo "::warning::Recovery-branch cleanup failed (non-fatal)"
+
+      - name: Warn when the Apple Reporter feed goes stale
+        # The Reporter access token expires 180 days after issue, and a
+        # dead token is the most likely cause of a rollup that stops
+        # advancing. The fetcher deliberately leaves the store untouched
+        # when every request fails (better stale-but-real than empty), so
+        # silence is indistinguishable from success without this check.
+        run: python scripts/check_apple_reporter_freshness.py || true
+
       # NOTE on the committed-paths list below: `*.video.rss` is NOT
       # redundant with `*_podcast.*.rss`. Tesla's audio feed is the ROOT
       # podcast.rss, so its video feed is podcast.video.rss, which the
