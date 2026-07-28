@@ -581,6 +581,46 @@
         }
 
         /* Transcript */
+        .blog-chapters {
+            margin: var(--sp-6) 0;
+            padding-top: var(--sp-5);
+            border-top: 1px solid var(--nn-border);
+        }
+        .blog-chapters h2 {
+            font-family: var(--font-ui);
+            font-size: 1.05rem;
+            margin-bottom: var(--sp-3);
+        }
+        .blog-chapter-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        .blog-chapter-list li {
+            display: flex;
+            gap: var(--sp-3);
+            align-items: baseline;
+            padding: var(--sp-2) 0;
+            border-bottom: 1px solid var(--nn-border);
+        }
+        .blog-chapter-list li:last-child { border-bottom: none; }
+        .blog-chapter-list .chapter-time {
+            font-family: var(--font-ui);
+            font-variant-numeric: tabular-nums;
+            font-size: 0.85rem;
+            color: var(--show-color);
+            min-width: 3.5rem;
+            flex-shrink: 0;
+        }
+        /* Only looks clickable once the seek script has attached to a
+           real audio element — an English-only episode has no inline
+           player, and a cursor that promises nothing is worse than none. */
+        .blog-chapter-list li.is-seekable { cursor: pointer; }
+        .blog-chapter-list li.is-seekable:hover .chapter-title { color: var(--show-color); }
+        .blog-chapters .chapter-foot {
+            margin-top: var(--sp-3);
+            font-size: 0.85rem;
+        }
         .blog-transcript {
             margin-top: var(--sp-8);
             padding-top: var(--sp-6);
@@ -1886,6 +1926,80 @@
                     
                 </div>
             </section>
+            
+
+            <!-- Chapters (July 2026): generated and shipped in the feeds
+                 for months but surfaced nowhere on the site. Data is on
+                 disk at build time, so this adds no generation cost. -->
+            
+            <section class="blog-chapters" id="chapters">
+                <h2>In this episode</h2>
+                <ol class="blog-chapter-list">
+                    <li>
+                        <span class="chapter-time" data-seconds="20.0">0:20</span>
+                        <span class="chapter-title">Introduction</span>
+                    </li>
+                    <li>
+                        <span class="chapter-time" data-seconds="135.9">2:16</span>
+                        <span class="chapter-title">Tesla Driver 'Overrode' Autopilot In Fatal Crash, NTSB Says</span>
+                    </li>
+                    <li>
+                        <span class="chapter-time" data-seconds="251.7">4:12</span>
+                        <span class="chapter-title">Hyundai, Kia Top Tesla in EV Battery Health in Europe</span>
+                    </li>
+                    <li>
+                        <span class="chapter-time" data-seconds="365.3">6:05</span>
+                        <span class="chapter-title">Franz von Holzhausen receiving the first protected Model S…</span>
+                    </li>
+                    <li>
+                        <span class="chapter-time" data-seconds="480.7">8:01</span>
+                        <span class="chapter-title">Key facts: Tesla Q2 July 22; Optimus, robotaxi H1 miss…</span>
+                    </li>
+                    <li>
+                        <span class="chapter-time" data-seconds="592.5">9:52</span>
+                        <span class="chapter-title">Agility Robotics Opens Training Center in Tesla's Fremont…</span>
+                    </li>
+                    <li>
+                        <span class="chapter-time" data-seconds="709.7">11:50</span>
+                        <span class="chapter-title">Tesla leads early uptake of Germany's new EV subsidies</span>
+                    </li>
+                    <li>
+                        <span class="chapter-time" data-seconds="769.9">12:50</span>
+                        <span class="chapter-title">The Counterpoint</span>
+                    </li>
+                    <li>
+                        <span class="chapter-time" data-seconds="815.6">13:36</span>
+                        <span class="chapter-title">Tomorrow Teaser</span>
+                    </li>
+                    <li>
+                        <span class="chapter-time" data-seconds="823.3">13:43</span>
+                        <span class="chapter-title">Closing</span>
+                    </li>
+                </ol>
+                
+                <p class="chapter-foot"><a href="#transcript">Read the full transcript &darr;</a></p>
+                
+            </section>
+            <script>
+            /* Progressive enhancement: make chapters seek the player, but
+               ONLY when there is a player on the page. Episodes without
+               alternate-language tracks render no inline <audio>, so the
+               list stays a plain, useful contents listing there. */
+            (function () {
+                var audio = document.getElementById("nn-i18n-audio");
+                if (!audio) return;
+                document.querySelectorAll(".blog-chapter-list li").forEach(function (li) {
+                    var stamp = li.querySelector(".chapter-time");
+                    if (!stamp) return;
+                    var at = parseFloat(stamp.getAttribute("data-seconds"));
+                    if (isNaN(at)) return;
+                    li.classList.add("is-seekable");
+                    li.addEventListener("click", function () {
+                        try { audio.currentTime = at; audio.play(); } catch (e) {}
+                    });
+                });
+            })();
+            </script>
             
 
             <!-- Transcript -->
