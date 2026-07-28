@@ -6,6 +6,10 @@
 # Runtime state — never commit. See engine/newsletter.py:_record_send.
 digests/*/_newsletter_lastsend.txt
 digests/*/.published_*.json
+# Remembered "this account cannot send yet" state. Same convention as the
+# guardrail above: runtime state, never committed. See
+# engine/newsletter.py:sending_block_reason.
+digests/_newsletter_sending_blocked.json
 
 # OAuth client secrets (Google Cloud Console download)
 client_secret*.json

@@ -272,6 +272,25 @@ def _download_entry(
         # CDN rejects us (403/401/etc.) — don't keep paying the round-trip.
         status = getattr(getattr(exc, "response", None), "status_code", None)
         if status in (401, 403) or "403" in str(exc) or "401" in str(exc):
+            # Announce the FIRST flip loudly. Before July 28 2026 this
+            # degradation was only visible as an INFO line per image
+            # ("R2 fallback OK"), so a CDN that had been rejecting every
+            # public GET for weeks looked like a healthy pipeline —
+            # renders just silently paid the slower authenticated path up
+            # to 16 times each. A public bucket that stops being public
+            # is a config regression and should be seen the same day.
+            if not _prefer_r2_download:
+                print(
+                    "::warning::gallery CDN rejected a public read "
+                    f"(HTTP {status or 'error'}) — falling back to "
+                    "authenticated R2 for the rest of this run. Check the "
+                    "bucket's public-access / custom-domain configuration.",
+                    flush=True,
+                )
+                logger.warning(
+                    "gallery_library: public CDN unavailable (%s) — every "
+                    "library image this run pays the R2 fallback", public_err,
+                )
             _prefer_r2_download = True
         if _download_via_r2(entry, dest):
             logger.info(

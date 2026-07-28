@@ -24,6 +24,7 @@ malformed URL.
 from __future__ import annotations
 
 import logging
+import re
 import unicodedata
 from typing import Optional
 from urllib.parse import urlparse
@@ -212,7 +213,7 @@ def relabel_aggregator_links(text: str, articles) -> tuple[str, int]:
 
     count = 0
 
-    def _replace(match: "re.Match") -> str:
+    def _replace(match: re.Match) -> str:
         nonlocal count
         label, url = match.group(1), match.group(2)
         publisher = by_url.get(url.strip())
@@ -223,7 +224,5 @@ def relabel_aggregator_links(text: str, articles) -> tuple[str, int]:
             return f"[{publisher}]({url})"
         return match.group(0)
 
-    import re as _re
-
-    text = _re.sub(r"\[([^\]]+)\]\((https?://news\.google\.[^)]+)\)", _replace, text)
+    text = re.sub(r"\[([^\]]+)\]\((https?://news\.google\.[^)]+)\)", _replace, text)
     return text, count

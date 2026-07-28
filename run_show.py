@@ -483,8 +483,19 @@ def _preflight_checks(config, *, dry_run: bool = False) -> None:
             )
         else:
             try:
-                from engine.newsletter import validate_api_key
-                if not validate_api_key(nl_key):
+                from engine.newsletter import sending_block_reason, validate_api_key
+                # A valid key is not the same as a sendable account. The
+                # preflight used to print "validated successfully" and the
+                # send then failed at the very end of every pipeline, which
+                # is a permanent false-green. If a previous run already
+                # learned the account cannot send, say so once, here, and
+                # skip the stage cleanly (July 28 2026).
+                blocked = sending_block_reason()
+                if blocked:
+                    logger.warning(
+                        "Newsletter skipped for '%s': %s", config.name, blocked
+                    )
+                elif not validate_api_key(nl_key):
                     logger.error(
                         "Newsletter API key validation FAILED for '%s' — "
                         "emails will not be sent this run",

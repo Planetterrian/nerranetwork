@@ -186,7 +186,12 @@ llm:
   podcast_prompt_file: shows/prompts/fascinating_frontiers_podcast.txt
   digest_temperature: 0.5
   podcast_temperature: 0.75
-  max_tokens: 5000
+  # Raised 5000 -> 7500 (July 28 2026). 7 of 107 recorded runs (6%) hit
+  # the truncation retry; largest kept digest was 7,287 tokens, which the
+  # old ceiling could never have produced in one call. Matches the retry
+  # ceiling (5000 x 1.5), so a run that used to need two calls now needs
+  # one. Free on the 94% of runs that finish well under it.
+  max_tokens: 7500
   podcast_max_tokens: 10000
   min_podcast_words: 1700
   podcast_expand_below_target: true

@@ -515,8 +515,12 @@ class TestLoadConfigRealFiles:
         assert cfg.llm.model == "grok-4.3"
         assert cfg.llm.digest_temperature == 0.5
         # Raised 4000 -> 10000 so the multi-perspective digest completes
-        # without truncation. See shows/omni_view.yaml.
-        assert cfg.llm.max_tokens == 10000
+        # without truncation, then 10000 -> 13000 (July 28 2026) because it
+        # still didn't: 21 of 117 recorded runs hit the truncation retry,
+        # each paying for a full 10k digest that was discarded and
+        # regenerated. Largest digest actually kept was 12,000 tokens.
+        # See shows/omni_view.yaml and tests/test_truncation_waste.py.
+        assert cfg.llm.max_tokens == 13000
         assert cfg.tts.stability == 0.5
         assert cfg.tts.style == 0.0
         # OV got its own dedicated theme in May 2026 (replaced LubechangeOilers.mp3).

@@ -184,7 +184,13 @@ llm:
   podcast_prompt_file: shows/prompts/omni_view_podcast.txt
   digest_temperature: 0.5
   podcast_temperature: 0.7
-  max_tokens: 10000
+  # Raised 10000 -> 13000 (July 28 2026). 21 of 117 recorded runs (17%)
+  # hit the truncation retry, each one paying for a full 10k-token digest
+  # that was then discarded and regenerated at 15k. Largest digest
+  # actually kept: 12,000 tokens. Output tokens bill on what is produced,
+  # not on the ceiling, so headroom is free on the 83% of runs that never
+  # reach it — this removes a wasted call without adding any cost.
+  max_tokens: 13000
   podcast_max_tokens: 8000
   min_podcast_words: 1400
   podcast_expand_below_target: true
