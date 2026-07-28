@@ -2818,6 +2818,10 @@ def run(args: argparse.Namespace) -> None:
                     _transcript_result = generate_transcript(
                         raw_mp3, digests_dir, _ep_prefix,
                         model_size=config.tts.whisper_model, language=_lang,
+                        # Show proper nouns bias the decoder away from the
+                        # brand garbles that shipped in 790 transcripts
+                        # before July 28 2026 (see engine/transcripts.py).
+                        vocabulary=[config.name, *config.keywords],
                     )
                 except Exception as exc:
                     logger.warning("Transcript generation failed (non-fatal): %s", exc)
