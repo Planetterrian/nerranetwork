@@ -1,5 +1,26 @@
 # CLAUDE.md — Tesla Shorts Time Podcast Network
 
+## Titles: one module owns every limit
+
+**Never truncate a title outside `engine/titles.py`.** Import a limit and
+`clip_words()` / `episode_title()` from it. A new surface adds its limit
+to that module; it does not write its own slice.
+
+This is not style preference. The same bug shipped three times
+independently — `engine.blog` sliced `hook[:100]`,
+`video_metadata._truncate` sliced `text[:max_len - 3]`, and `run_show`
+built `f"Ep {n}: {hook}"` with no cap at all — and the consequence was
+that **YouTube silently rewrote episode titles on every show in the
+network** for months, cutting mid-word and emailing to say no action was
+required. Current limits: YouTube 100, podcast RSS 100 (same on purpose,
+YouTube ingests the feed), web `<title>` lead 62, newsletter subject 78.
+`tests/test_titles.py` enforces the property against ~4,500 generated
+hooks in English and Russian.
+
+Full context, including the Search Console work, the verified state of
+each subsystem and the traps found along the way:
+[`docs/session_2026-07-28.md`](docs/session_2026-07-28.md).
+
 ## Project Overview
 
 Automated daily podcast generation system running 15 shows via a unified
@@ -1391,6 +1412,23 @@ Phase 3 (current):
   by any workflow or cron job.
 
 ## Known Landmines
+
+**Sitemap `lastmod` must not follow file mtime.** Blog post files are
+rewritten by every regeneration; the episode date is not. If `lastmod`
+tracks mtime, a network-wide regen tells Google all ~1,250 posts changed
+at once, which is the exact signal the May 2026 audit removed.
+`generate_sitemap()` reads `datePublished` out of each page's JSON-LD.
+Do not "simplify" it back to `_file_lastmod`.
+
+**`digests/_newsletter_sending_blocked.json` silently skips the
+newsletter for 7 days.** If newsletters stop going out, check for that
+file before debugging Buttondown.
+
+**Show slugs use underscores, page filenames use hyphens.**
+`fascinating_frontiers` → `fascinating-frontiers.html`. Getting this
+wrong in `publishing.rss_link` 404s the "website" button in every
+podcast directory, and nothing in the pipeline fetches its own
+`rss_link` to notice. `validate_show.py` now checks it.
 
 **Operator's first stop:** the live state of every landmine below is rendered
 by [`management.html`](management.html), fed by
