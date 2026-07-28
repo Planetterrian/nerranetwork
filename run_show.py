@@ -1871,6 +1871,30 @@ def run(args: argparse.Namespace) -> None:
         x_thread = scrub_scaffold(x_thread)
         x_thread = transform_daily_body(x_thread, slug=getattr(config, "slug", ""))
         x_thread = fix_phonetic_garbles(x_thread)
+
+        # Name the outlet that actually reported each aggregated story.
+        # The digest cites them as "[Google News](news.google.com/...)",
+        # which tells the reader nothing and makes the blog's Sources
+        # card render Google's favicon as though Google were the
+        # publisher. The real outlet is already on the article record
+        # (fetcher._publisher_from_entry reads the feed's <source>
+        # element) — this is the wire that carries it into the digest.
+        # Deterministic and keyed on the exact URL: no prompt change, so
+        # no generated prose moves, and no network call (July 28 2026).
+        try:
+            from engine.url_utils import relabel_aggregator_links
+            x_thread, _relabelled = relabel_aggregator_links(
+                x_thread, locals().get("articles") or []
+            )
+            if _relabelled:
+                logger.info(
+                    "Named the real publisher on %d aggregated source link(s)",
+                    _relabelled,
+                )
+                metrics.record("sources_relabelled", _relabelled)
+        except Exception as exc:  # never block a digest on link cosmetics
+            logger.warning("Source relabelling failed (non-fatal): %s", exc)
+
         if args.show == "tesla":
             from shows.hooks.tesla import scrub_unavailable_tsla_from_digest
             x_thread = scrub_unavailable_tsla_from_digest(x_thread)

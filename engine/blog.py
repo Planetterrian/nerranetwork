@@ -77,6 +77,144 @@ _ANY_HEADING_RE = re.compile(r"^\s*#{1,6}\s+\S")
 _URL_IN_LINE_RE = re.compile(r"\[[^\]]*\]\((https?://[^)\s]+)\)|(https?://[^\s)\]]+)")
 
 
+# Aggregator hosts whose URLs tell the reader nothing about who reported
+# the story. A source card showing "news.google.com" with Google's favicon
+# is worse than useless — it hides the outlet AND implies Google is the
+# publisher (July 28 2026).
+_AGGREGATOR_HOSTS = ("news.google.com", "news.google.co.uk", "news.google.ca")
+
+# The publisher Google News appends to every headline, which the digest
+# prompts carry through verbatim. This is the same data
+# ``engine/fetcher._publisher_from_entry`` reads from the feed's <source>
+# element, preserved in the digest text — which makes it recoverable for
+# the 348 already-committed digests without a single network call.
+#
+# Three item shapes are in use across the network; all three appear in
+# episodes shipped this week, so all three are handled:
+#   A  **Headline** — Publisher            (SpaceX, Fascinating Frontiers)
+#   B  **Headline: Publisher**             (Env Intel, DP Pod, M&A)
+#   C  **Headline:** July 28, 2026, Publisher   (Tesla)
+_ITEM_BOLD_RE = re.compile(r"\*\*\s*(.+?)\s*\*\*\s*(.*)$")
+
+
+def _clean_publisher(candidate: str) -> str:
+    """Normalise a candidate outlet name, or return "" if implausible."""
+    candidate = candidate.strip().strip("*_ ").rstrip(".")
+    if not 2 <= len(candidate) <= 45:
+        return ""
+    # Outlet names are noun phrases; sentence punctuation means we sliced
+    # prose, not an attribution.
+    if any(ch in candidate for ch in "!?;"):
+        return ""
+    return candidate
+
+
+def _split_trailing_publisher(text: str) -> str:
+    """Split "Headline — Publisher" on the separator the digest actually used.
+
+    The em/en dash is tried before " - " because outlet names themselves
+    contain hyphens ("BASENOR - Tesla Accessories"); splitting on the
+    hyphen first would truncate them mid-name.
+    """
+    for sep in ("—", "–", " - "):
+        if sep in text:
+            head, _, candidate = text.rpartition(sep)
+            # Mirrors the guard in engine/fetcher._publisher_from_entry:
+            # a real headline remains in front of a real attribution.
+            if len(head.strip()) >= 15:
+                cleaned = _clean_publisher(candidate)
+                if cleaned:
+                    return cleaned
+    return ""
+
+
+def _publisher_from_headline(line: str) -> str:
+    """Recover the outlet named on a digest item's headline line.
+
+    Returns "" when the line carries no headline or no attribution —
+    deliberately, because an empty label degrades to the honest raw
+    domain while a guessed one would misattribute the reporting.
+    """
+    match = _ITEM_BOLD_RE.search(line)
+    if not match:
+        return ""
+    bold, tail = match.group(1), match.group(2).strip()
+
+    # A — publisher trails the bold, after a dash.
+    if tail:
+        dash = re.match(r"^[—–-]\s*([^*]{2,60})$", tail)
+        if dash:
+            cleaned = _clean_publisher(dash.group(1))
+            if cleaned:
+                return cleaned
+
+    # A' — same shape, but the dash sits INSIDE the bold.
+    inside = _split_trailing_publisher(bold)
+    if inside:
+        return inside
+
+    # C — publisher is the last comma-separated field of a trailing date
+    #     line ("July 28, 2026, Electrek"). Requires a comma so a plain
+    #     sentence tail can never be mistaken for an outlet.
+    if bold.endswith(":") and "," in tail:
+        cleaned = _clean_publisher(tail.rsplit(",", 1)[1])
+        if cleaned:
+            return cleaned
+
+    # B — publisher sits inside the bold, after the final colon.
+    if ":" in bold and not bold.endswith(":"):
+        cleaned = _clean_publisher(bold.rsplit(":", 1)[1])
+        if cleaned:
+            return cleaned
+
+    return ""
+
+
+def _is_aggregator_url(url: str) -> bool:
+    """True when *url* points at a news aggregator rather than a publisher."""
+    try:
+        host = urlparse(url).netloc.lower()
+    except Exception:
+        return False
+    return host.removeprefix("www.") in _AGGREGATOR_HOSTS
+
+
+def _publisher_labels_by_url(md_text: str) -> dict[str, str]:
+    """Map each source URL to the publisher named on its digest item.
+
+    Digest items are shaped::
+
+        1. **Headline** — San Antonio Express-News
+           Body text ... Source: [Google News](https://news.google.com/...)
+
+    so the publisher for a URL is the nearest preceding "— Publisher"
+    suffix. Walking the text once and remembering the last publisher seen
+    is enough, and it degrades to "no label" rather than a wrong one when
+    a show's format doesn't carry the suffix.
+    """
+    labels: dict[str, str] = {}
+    current = ""
+    for line in md_text.split("\n"):
+        stripped = line.strip()
+        # Structural breaks end the item. Without this the last publisher
+        # seen leaks onto later sections that carry no attribution of
+        # their own — e.g. SpaceX Ep047's "The Counterpoint" source was
+        # labelled "Tech Times", the outlet from the item above it. A
+        # WRONG publisher is worse than an honest "news.google.com".
+        if not stripped or stripped.startswith("#") or set(stripped) <= {"-", "*", "_"}:
+            current = ""
+
+        candidate = _publisher_from_headline(line)
+        if candidate:
+            current = candidate
+        if current:
+            for m in _URL_IN_LINE_RE.finditer(line):
+                url = (m.group(1) or m.group(2) or "").rstrip(").,;")
+                if url:
+                    labels.setdefault(url, current)
+    return labels
+
+
 def _extract_source_urls(md_text: str) -> list[str]:
     """Collect every source URL from a digest, deduped, in document order.
 
@@ -756,13 +894,31 @@ def generate_blog_post_html(
     # publisher (e.g. several reddit.com threads) keep all of them instead of
     # collapsing to a single card. Same URL cited by multiple stories still
     # shows once.
+    #
+    # For aggregator URLs the domain is "news.google.com", which names
+    # the redirector instead of the outlet that did the reporting. The
+    # digest already carries the real publisher on the item's headline
+    # line, so recover it from there — no network call, and it works
+    # retroactively for every already-committed digest.
+    publisher_labels = _publisher_labels_by_url(md_text)
     source_domains = []
     seen_urls = set()
     for url in metadata.get("source_urls", []):
         if url in seen_urls:
             continue
         seen_urls.add(url)
-        source_domains.append({"url": url, "domain": _domain_from_url(url)})
+        domain = _domain_from_url(url)
+        card = {"url": url, "domain": domain, "publisher": "", "aggregator": False}
+        if _is_aggregator_url(url):
+            card["aggregator"] = True
+            publisher = publisher_labels.get(url, "")
+            if publisher:
+                # Show who reported it. The href stays the Google link —
+                # it is the only URL we have that reaches the article,
+                # and it does resolve in a browser.
+                card["publisher"] = publisher
+                card["domain"] = publisher
+        source_domains.append(card)
 
     # Load on-page transcript. Prefer *_reader.txt (pre-pronunciation
     # canonical spelling — July 2026 improvements pack) so blog/SEO never
