@@ -164,6 +164,35 @@ class ReporterResult:
         return not self.error
 
 
+def _ssl_context():
+    """A verifying SSL context that works on a bare macOS Python.
+
+    Python installed from python.org does not populate a CA bundle, so
+    ``urllib`` has nothing to verify against and every HTTPS call dies
+    with "self signed certificate in certificate chain" — which reads
+    like a proxy problem and is really a missing trust store. Apple's
+    endpoint is fine; the client is not.
+
+    ``certifi`` ships the bundle and is already present transitively via
+    ``requests``. Using it explicitly is what ``requests`` itself does,
+    and it makes this work identically on a developer Mac and a CI
+    runner.
+
+    Verification is never disabled. This request carries a 180-day
+    credential, so an unverified connection is not an acceptable
+    shortcut — if no bundle can be found, the system default is used and
+    the caller sees the real error.
+    """
+    import ssl
+
+    try:
+        import certifi
+
+        return ssl.create_default_context(cafile=certifi.where())
+    except Exception:  # noqa: BLE001 — fall back to the system default
+        return ssl.create_default_context()
+
+
 def _norm(header: str) -> str:
     return " ".join(str(header or "").split()).strip().lower()
 
@@ -305,7 +334,8 @@ def fetch_report_http(
                  "Accept": "*/*"})
 
     try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:
+        with urllib.request.urlopen(request, timeout=timeout,
+                                    context=_ssl_context()) as response:
             raw = response.read()
             encoding = (response.headers.get("Content-Encoding") or "").lower()
     except urllib.error.HTTPError as exc:
@@ -323,7 +353,13 @@ def fetch_report_http(
         result.error = f"HTTP {exc.code}: {detail.strip() or exc.reason}"
         return result
     except Exception as exc:  # noqa: BLE001 — analytics never break a run
-        result.error = f"{type(exc).__name__}: {exc}"
+        detail = f"{type(exc).__name__}: {exc}"
+        if "CERTIFICATE_VERIFY_FAILED" in detail:
+            detail += ("  [this is a local trust-store problem, not Apple: a "
+                       "python.org macOS build ships no CA bundle. pip install "
+                       "certifi, or run '/Applications/Python 3.x/Install "
+                       "Certificates.command'.]")
+        result.error = detail
         return result
 
     if not raw:
