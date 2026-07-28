@@ -258,27 +258,14 @@ _DATE_FORMATS = [
 
 
 def _clip_words(text: str, limit: int) -> str:
-    """Clip *text* to at most *limit* chars WITHOUT cutting a word in half.
+    """Word-safe clip. Thin alias over engine.titles.clip_words.
 
-    The old behaviour was a bare ``text[:100]`` slice, which produced
-    titles like "...battle sugarcane beetles - but the toads br..." and
-    "...talk about trees, riv...". 61% of every blog post on the network
-    carried one, in the <title>, the <h1> AND the schema headline. A
-    search result whose headline stops mid-word reads as broken, and it
-    wastes the few characters Google actually shows.
-
-    Cuts at the last word boundary at or before *limit*, strips dangling
-    punctuation, and only appends the ellipsis when something was
-    actually removed.
+    Kept as a module-local name because this file calls it in several
+    places, but the rule itself lives in engine.titles so the website,
+    the podcast feed and YouTube cannot drift apart again.
     """
-    text = (text or "").strip()
-    if len(text) <= limit:
-        return text
-    cut = text[:limit]
-    space = cut.rfind(" ")
-    if space > limit * 0.6:  # keep a sane minimum rather than one long word
-        cut = cut[:space]
-    return cut.rstrip(" .,;:—-\u2013") + "\u2026"
+    from engine.titles import clip_words
+    return clip_words(text, limit)
 
 
 def extract_blog_metadata(

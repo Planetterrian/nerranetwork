@@ -3270,15 +3270,22 @@ def run(args: argparse.Namespace) -> None:
         from engine.publisher import update_rss_feed
         from engine.audio import format_duration
 
-        if hook:
-            # Russian shows get a Russian episode-number prefix — the
-            # listing is read by Russian speakers ("Episode 49" looked
-            # foreign in an otherwise-Russian feed).
-            _ep_prefix = "Выпуск" if args.show in _RUSSIAN_SHOWS else "Ep"
-            episode_title = f"{_ep_prefix} {episode_num}: {hook}"
-        else:
-            _ep_word = "Выпуск" if args.show in _RUSSIAN_SHOWS else "Episode"
-            episode_title = f"{config.name} - {_ep_word} {episode_num} - {today_str}"
+        # Russian shows get a Russian episode-number prefix — the
+        # listing is read by Russian speakers ("Episode 49" looked
+        # foreign in an otherwise-Russian feed).
+        _ep_prefix = "Выпуск" if args.show in _RUSSIAN_SHOWS else "Ep"
+        _ep_word = "Выпуск" if args.show in _RUSSIAN_SHOWS else "Episode"
+        # Capped at 100 chars via engine.titles. YouTube ingests this feed
+        # directly and silently rewrites anything longer, cutting mid-word
+        # ("...how coral reef fis...") and emailing afterwards to say no
+        # action is required. 75% of items were over the cap before this.
+        from engine.titles import episode_title as _build_episode_title
+        episode_title = _build_episode_title(
+            hook,
+            episode_num,
+            prefix=_ep_prefix,
+            fallback=f"{config.name} - {_ep_word} {episode_num} - {today_str}",
+        )
         # Use a short summary for the RSS description (first ~500 chars at sentence boundary)
         # to avoid overwhelming podcast app UIs with the full digest.
         _desc_limit = 500
@@ -3418,12 +3425,15 @@ def run(args: argparse.Namespace) -> None:
             f"{config.publishing.base_url}/{config.publishing.audio_subdir}/{final_mp3.name}"
         )
 
+    from engine import titles as _titles
     save_summary_to_github_pages(
         summary_text=x_thread,
         summaries_json_path=summaries_json,
         podcast_name=config.publishing.summaries_podcast_name or config.slug,
         episode_num=episode_num,
-        episode_title=f"Ep {episode_num}: {hook}" if hook else f"{config.name} - Episode {episode_num} - {today_str}",
+        episode_title=_titles.episode_title(
+            hook, episode_num,
+            fallback=f"{config.name} - Episode {episode_num} - {today_str}"),
         audio_url=audio_url,
         rss_url=f"{config.publishing.base_url}/{config.publishing.rss_file}",
     )

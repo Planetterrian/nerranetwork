@@ -100,10 +100,15 @@ def _strip_markdown(text: str) -> str:
 
 
 def _truncate(text: str, max_len: int) -> str:
-    """Trim *text* to ``max_len`` characters with an ellipsis if shortened."""
-    if len(text) <= max_len:
-        return text
-    return text[: max_len - 3].rstrip() + "..."
+    """Trim *text* to ``max_len`` characters, never cutting a word in half.
+
+    Was ``text[: max_len - 3] + "..."``, which produced YouTube titles
+    ending mid-word. Delegates to engine.titles so the video path, the
+    podcast feed and the website all clip by the same rule — see that
+    module for why this is centralised.
+    """
+    from engine.titles import clip_words
+    return clip_words(text, max_len)
 
 
 def _build_seo_title(hook: str, show_name: str, *, suffix: str = "") -> str:
@@ -128,10 +133,14 @@ def _build_seo_title(hook: str, show_name: str, *, suffix: str = "") -> str:
         tail = f"{tail} {suffix}" if tail else f" {suffix}"
     if len(hook) + len(tail) <= YOUTUBE_TITLE_MAX:
         return (hook + tail).strip()
-    # Hook + show won't both fit — keep the #Shorts suffix (classifier) if it
-    # fits, otherwise the hook alone (truncated). Keywords > show name.
-    if suffix and len(hook) + 1 + len(suffix) <= YOUTUBE_TITLE_MAX:
-        return f"{hook} {suffix}"
+    # Hook + show won't both fit. Drop the show name before the suffix:
+    # "#Shorts" is a classifier hint YouTube reads, so losing it can cost
+    # the video its Shorts placement, whereas the show name is already on
+    # the channel. Previously the suffix was kept only when the untrimmed
+    # hook happened to leave room — a long hook silently dropped #Shorts.
+    # Now the suffix is reserved first and the hook clips around it.
+    if suffix:
+        return f"{_truncate(hook, YOUTUBE_TITLE_MAX - len(suffix) - 1)} {suffix}"
     return _truncate(hook, YOUTUBE_TITLE_MAX)
 
 
