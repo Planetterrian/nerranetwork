@@ -1,0 +1,99 @@
+name: Check YouTube Caption Scope
+
+# On-demand audit of the OAuth scope that gates caption uploads.
+#
+# ``captions.insert`` needs ``youtube.force-ssl``. A channel whose
+# refresh token predates that scope keeps uploading video fine and
+# silently ships every episode with no CC track — which also disables
+# YouTube's automatic caption translation. engine.youtube logs a warning
+# and returns False so a caption problem can never cost the upload, so
+# nothing ever goes red. This makes the state visible on demand.
+#
+# Dispatch it from the Actions tab and read the job summary: one line
+# per channel, ``OK`` / ``not configured — skipped`` / ``FAIL``.
+#
+# A FAIL is fixed by re-running the OAuth consent flow for that channel
+# with https://www.googleapis.com/auth/youtube.force-ssl included, then
+# replacing that channel's YOUTUBE_REFRESH_TOKEN_* secret.
+
+on:
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: 'Check one channel only (en, fr, ru, es, zh). Blank checks all.'
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: check-youtube-caption-scope
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - uses: ./.github/actions/setup-python
+        with:
+          python-version: '3.12'
+          requirements-file: 'requirements.txt'
+          skip-checkout: 'true'
+
+      - name: Report caption scope per channel
+        id: scope
+        env:
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN_EN: ${{ secrets.YOUTUBE_REFRESH_TOKEN_EN }}
+          YOUTUBE_REFRESH_TOKEN_FR: ${{ secrets.YOUTUBE_REFRESH_TOKEN_FR }}
+          YOUTUBE_REFRESH_TOKEN_RU: ${{ secrets.YOUTUBE_REFRESH_TOKEN_RU }}
+          YOUTUBE_REFRESH_TOKEN_ES: ${{ secrets.YOUTUBE_REFRESH_TOKEN_ES }}
+          YOUTUBE_REFRESH_TOKEN_ZH: ${{ secrets.YOUTUBE_REFRESH_TOKEN_ZH }}
+          CHANNEL_INPUT: ${{ inputs.channel }}
+        run: |
+          set -o pipefail
+          args=""
+          if [ -n "${CHANNEL_INPUT}" ]; then
+            args="--channel ${CHANNEL_INPUT}"
+          fi
+
+          # Capture the exit status without tripping `set -e`, so the
+          # summary is always written even when a channel fails.
+          set +e
+          python scripts/check_youtube_caption_scope.py $args \
+            | tee /tmp/caption-scope.txt
+          status=${PIPESTATUS[0]}
+          set -e
+
+          {
+            echo "## YouTube caption scope"
+            echo
+            echo '```'
+            cat /tmp/caption-scope.txt
+            echo '```'
+            echo
+            if [ "$status" -eq 0 ]; then
+              echo "Every configured channel can upload caption tracks."
+            else
+              echo "One or more channels are **missing \`youtube.force-ssl\`**."
+              echo "Every caption upload on those channels is being rejected"
+              echo "with HTTP 403, so their videos ship with no CC track and"
+              echo "no auto-translation."
+              echo
+              echo "Fix: re-run the OAuth consent flow for that channel with"
+              echo "\`https://www.googleapis.com/auth/youtube.force-ssl\` in the"
+              echo "scope list, then replace that channel's"
+              echo "\`YOUTUBE_REFRESH_TOKEN_*\` repository secret."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          exit "$status"
