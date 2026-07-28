@@ -35,6 +35,7 @@ from __future__ import annotations
 import json
 import logging
 import math
+import os
 import subprocess
 from pathlib import Path
 from typing import List, Optional, Sequence, Tuple
@@ -1372,6 +1373,224 @@ def write_chapter_metadata(chapters_path: Path, out_path: Path,
     return out_path
 
 
+def _single_pass_enabled() -> bool:
+    """Whether to fuse the slideshow and composite into one ffmpeg run.
+
+    Opt-in (default OFF) for now. The fused graph is verified equivalent
+    on synthetic renders — identical ffprobe geometry/codec/duration,
+    54 dB average PSNR, pixel-identical overlay regions — but it has not
+    yet been A/B'd against a REAL episode with real scene imagery,
+    captions and chapter metadata. Flipping the default before that
+    happens would risk every video show's nightly render on a change
+    nobody has watched end to end.
+
+    Operator: set ``NERRA_SINGLE_PASS_RENDER=1``, compare one episode,
+    then make it the default here. The two-stage path stays as the
+    automatic fallback either way — a failure in the fused command is
+    caught and re-rendered the old way.
+    """
+    return os.getenv("NERRA_SINGLE_PASS_RENDER", "").strip().lower() in (
+        "1", "true", "yes", "on",
+    )
+
+
+def _uniform_slideshow_plan(
+    scene_paths: Sequence[Path], audio_duration_s: float,
+) -> Tuple[List[Path], float]:
+    """Scene list + per-scene hold for the non-scheduled slideshow.
+
+    Extracted so the two-stage and single-pass paths compute the plan
+    from ONE implementation. The cycling rule (no image held longer than
+    ``_MAX_SCENE_HOLD_S``, capped at ``_MAX_SLIDESHOW_SLOTS`` ffmpeg
+    inputs) is load-bearing on real episodes — Ep505 held one image for
+    168 s before it existed, and Ep537 timed out the pipeline at 74
+    uncapped slots — so the two paths must not be able to drift apart.
+    """
+    scenes = list(scene_paths)
+    if audio_duration_s <= 0:
+        return scenes, _SCENE_DURATION_SECONDS  # legacy 12 s
+
+    hold = max(8.0, audio_duration_s / len(scenes))
+    if hold > _MAX_SCENE_HOLD_S and len(scenes) > 1:
+        from engine.scene_scheduler import _MAX_SLIDESHOW_SLOTS
+        target = math.ceil(audio_duration_s / _MAX_SCENE_HOLD_S)
+        target = min(target, _MAX_SLIDESHOW_SLOTS)
+        scenes = [scenes[i % len(scenes)] for i in range(target)]
+        hold = max(8.0, audio_duration_s / len(scenes))
+    return scenes, hold
+
+
+def _single_pass_scene_plan(
+    schedule, scene_paths, audio_duration_s: float,
+) -> Tuple[List[Path], Optional[List[float]], float]:
+    """Resolve ``(scenes, per_scene_durations, uniform_duration)``.
+
+    A chapter-aware schedule supplies its own per-scene holds; otherwise
+    the uniform plan applies and ``per_scene_durations`` is None (which
+    reproduces the legacy graph exactly).
+    """
+    if schedule:
+        return ([p for p, _ in schedule],
+                [d for _, d in schedule],
+                _SCENE_DURATION_SECONDS)
+    if not scene_paths:
+        return [], None, _SCENE_DURATION_SECONDS
+    scenes, hold = _uniform_slideshow_plan(scene_paths, audio_duration_s)
+    return scenes, None, hold
+
+
+def _single_pass_long_form_filter_graph(
+    scene_count: int, *,
+    scene_duration: float = _SCENE_DURATION_SECONDS,
+    scene_durations: Optional[Sequence[float]] = None,
+    width: int = 1920, height: int = 1080,
+    fps: int = 30,
+    crossfade: float = _SLIDESHOW_XFADE_S,
+    subtitles_path: Optional[str] = None,
+    with_url_pill: bool = False,
+) -> str:
+    """One filter graph for slideshow + overlays + captions (P1-2).
+
+    The two-stage path renders the Ken Burns slideshow to an intermediate
+    MP4, then feeds that file back in as ``[0:v]`` of the composite. That
+    costs a full extra encode AND a full extra decode of a 1080p file
+    that exists only to be consumed seconds later — roughly 42% of a
+    video show's wall clock — and it puts every delivered pixel through
+    two lossy passes.
+
+    Fusing them means the scene STILLS become the inputs, so the input
+    indices all shift. Two-stage numbering is fixed at bg(0) / audio(1) /
+    brand(2) / url-pill(3); here the scenes occupy ``0 .. n-1`` and
+    everything else moves up by ``n - 1``. Getting that wrong is silent —
+    ffmpeg happily overlays the wrong stream — so the offsets are derived
+    from ``scene_count`` in one place rather than written out.
+
+    The slideshow half is :func:`_slideshow_filter_graph` verbatim, with
+    its ``[v]`` output relabelled ``[bg]``. Reusing it (rather than
+    reimplementing) is deliberate: the xfade offset arithmetic and the
+    per-scene duration handling are subtle, already tested, and must not
+    fork between the two paths.
+    """
+    slideshow = _slideshow_filter_graph(
+        scene_count,
+        scene_duration=scene_duration,
+        scene_durations=scene_durations,
+        width=width, height=height, fps=fps,
+        crossfade=crossfade,
+    )
+    # The slideshow graph's terminal label is always ``[v]``; the
+    # composite needs it as ``[bg]``. Only the final occurrence is the
+    # output (intermediate labels are [s0], [x1], ...), so replace from
+    # the right.
+    if not slideshow.endswith("[v]"):
+        raise ValueError("slideshow graph did not end with [v]")
+    graph = slideshow[: -len("[v]")] + "[bg]"
+
+    # Scenes consume inputs 0..n-1, so audio/brand/pill shift up.
+    brand_idx = scene_count + 1
+    pill_idx = scene_count + 2
+
+    graph += (
+        f";[{brand_idx}:v]format=rgba[brand];"
+        f"[bg][brand]overlay=x=24:y=24[branded]"
+    )
+    if with_url_pill:
+        graph += (
+            f";[{pill_idx}:v]format=rgba[urlpill];"
+            "[branded][urlpill]overlay=x=W-w-24:y=24[stamped]"
+        )
+        post_brand_label = "[stamped]"
+    else:
+        post_brand_label = "[branded]"
+
+    if subtitles_path:
+        escaped = _subtitles_path_escape(subtitles_path)
+        graph += (
+            f";{post_brand_label}subtitles='{escaped}'"
+            f":force_style='{_SUBTITLES_FORCE_STYLE}'[v]"
+        )
+    else:
+        graph += f";{post_brand_label}null[v]"
+    return graph
+
+
+def _single_pass_long_form_cmd(
+    scene_paths: Sequence[Path], audio_in: str, brand_in: str,
+    output: str, *,
+    scene_duration: float = _SCENE_DURATION_SECONDS,
+    scene_durations: Optional[Sequence[float]] = None,
+    width: int = 1920, height: int = 1080,
+    fps: int = 30,
+    crossfade: float = _SLIDESHOW_XFADE_S,
+    subtitles_path: Optional[str] = None,
+    url_pill_in: Optional[str] = None,
+    chapter_metadata_in: Optional[str] = None,
+) -> List[str]:
+    """Full ffmpeg command for the fused single-pass long-form render.
+
+    Input order is load-bearing and mirrors the filter graph exactly:
+    scenes ``0..n-1``, audio ``n``, brand ``n+1``, optional URL pill
+    ``n+2``, optional ffmetadata last (it carries no streams, so it
+    never appears in the graph — only in ``-map_metadata``).
+
+    Each scene input keeps the two-stage path's ``-t`` padding so the
+    xfade overlap cannot shorten a scene's visible time.
+    """
+    use_xfade = crossfade and crossfade > 0 and len(scene_paths) >= 2
+    input_pad = (crossfade if use_xfade else 0.0) + 0.5
+    durs: List[float] = (
+        [float(d) for d in scene_durations]
+        if scene_durations is not None
+        else [scene_duration] * len(scene_paths)
+    )
+
+    inputs: List[str] = []
+    for i, path in enumerate(scene_paths):
+        inputs.extend([
+            "-loop", "1",
+            "-framerate", str(fps),
+            "-t", f"{durs[i] + input_pad:.2f}",
+            "-i", str(path),
+        ])
+
+    n = len(scene_paths)
+    inputs.extend(["-i", audio_in])
+    inputs.extend(["-loop", "1", "-framerate", str(fps), "-i", brand_in])
+    if url_pill_in:
+        inputs.extend(["-loop", "1", "-framerate", str(fps), "-i", url_pill_in])
+
+    meta_inputs: List[str] = []
+    meta_map: List[str] = []
+    if chapter_metadata_in:
+        meta_index = n + 3 if url_pill_in else n + 2
+        meta_inputs = ["-f", "ffmetadata", "-i", chapter_metadata_in]
+        meta_map = ["-map_metadata", str(meta_index)]
+
+    return [
+        "ffmpeg", "-y", "-threads", "0",
+        *inputs,
+        *meta_inputs,
+        "-filter_complex",
+        _single_pass_long_form_filter_graph(
+            n,
+            scene_duration=scene_duration,
+            scene_durations=scene_durations,
+            width=width, height=height, fps=fps,
+            crossfade=crossfade,
+            subtitles_path=subtitles_path,
+            with_url_pill=bool(url_pill_in),
+        ),
+        "-map", "[v]", "-map", f"{n}:a",
+        *meta_map,
+        *_VIDEO_ENCODE,
+        "-r", str(fps),
+        *_AUDIO_ENCODE,
+        "-shortest",
+        "-movflags", "+faststart",
+        output,
+    ]
+
+
 def _long_form_cmd(audio_in: str, bg_in: str, brand_in: str,
                    output: str, *,
                    fps: int = 30,
@@ -1730,6 +1949,47 @@ def build_long_form_video(
             _run_ffmpeg(cmd, label="long-form video")
             return output_path
 
+        # Single-pass fusion (P1-2). Renders the slideshow and the
+        # composite as ONE filter graph, removing a full intermediate
+        # encode + decode of a 1080p file that exists only to be
+        # consumed seconds later, and with it the last generational
+        # loss. Opt-in via NERRA_SINGLE_PASS_RENDER=1 — see
+        # _single_pass_long_form_cmd. Only the pure-stills paths qualify;
+        # the hybrid clips path above has already produced a real video
+        # background and is untouched.
+        if _single_pass_enabled():
+            sp_scenes, sp_durations, sp_uniform = _single_pass_scene_plan(
+                schedule, scene_paths, audio_duration_s,
+            )
+            if sp_scenes:
+                try:
+                    cmd = _single_pass_long_form_cmd(
+                        sp_scenes, str(audio_path), str(brand_path),
+                        str(output_path),
+                        scene_duration=sp_uniform,
+                        scene_durations=sp_durations,
+                        fps=fps,
+                        subtitles_path=(
+                            str(subtitles_path) if subtitles_path else None),
+                        url_pill_in=(
+                            str(url_pill_path) if url_pill_path else None),
+                        chapter_metadata_in=chapter_meta,
+                    )
+                    logger.info(
+                        "Building long-form video → %s (SINGLE-PASS, "
+                        "scenes=%d, captions=%s)",
+                        output_path.name, len(sp_scenes), bool(subtitles_path),
+                    )
+                    _run_ffmpeg(cmd, label="long-form video (single-pass)")
+                    return output_path
+                except (subprocess.CalledProcessError, RuntimeError) as exc:
+                    # Never lose a render to the new path: fall through to
+                    # the proven two-stage pipeline below.
+                    logger.warning(
+                        "Single-pass render failed (%s) — falling back to "
+                        "the two-stage pipeline", exc,
+                    )
+
         if schedule:
             # Chapter-aware plan: the scheduler already decided both the
             # scene ORDER and each scene's hold, so we render the
@@ -1751,31 +2011,19 @@ def build_long_form_video(
                     "to single cover", exc,
                 )
         else:
-            slideshow_scenes = list(scene_paths)
-            if audio_duration_s > 0:
-                scene_duration_s = max(8.0, audio_duration_s / len(slideshow_scenes))
-                # Cycle the scene list so no single image holds longer than
-                # _MAX_SCENE_HOLD_S (module constant; June 2026 motion pass lowered
-                # it 25 → 15 s). The May 12 retune halved Grok spend to 4
-                # images/aspect, which left each scene on screen ~2-3 minutes on a
-                # full-length episode (Ep505: 4 scenes over 673 s = 168 s/image) —
-                # visually static. Reusing the SAME images in rotation restores
-                # visual rhythm at zero additional image cost.
-                if scene_duration_s > _MAX_SCENE_HOLD_S and len(slideshow_scenes) > 1:
-                    from engine.scene_scheduler import _MAX_SLIDESHOW_SLOTS
-                    target = math.ceil(audio_duration_s / _MAX_SCENE_HOLD_S)
-                    # Cap ffmpeg inputs — see scene_scheduler._MAX_SLIDESHOW_SLOTS
-                    # (Ep537: 74 uncapped slots timed out the pipeline).
-                    target = min(target, _MAX_SLIDESHOW_SLOTS)
-                    slideshow_scenes = [
-                        slideshow_scenes[i % len(slideshow_scenes)]
-                        for i in range(target)
-                    ]
-                    scene_duration_s = max(
-                        8.0, audio_duration_s / len(slideshow_scenes),
-                    )
-            else:
-                scene_duration_s = _SCENE_DURATION_SECONDS  # legacy 12 s
+            # Cycle the scene list so no single image holds longer than
+            # _MAX_SCENE_HOLD_S (module constant; June 2026 motion pass lowered
+            # it 25 → 15 s). The May 12 retune halved Grok spend to 4
+            # images/aspect, which left each scene on screen ~2-3 minutes on a
+            # full-length episode (Ep505: 4 scenes over 673 s = 168 s/image) —
+            # visually static. Reusing the SAME images in rotation restores
+            # visual rhythm at zero additional image cost.
+            #
+            # Shared with the single-pass path via _uniform_slideshow_plan so
+            # the two renderers cannot compute different plans (July 2026).
+            slideshow_scenes, scene_duration_s = _uniform_slideshow_plan(
+                scene_paths, audio_duration_s,
+            )
             try:
                 _render_slideshow(
                     slideshow_scenes, slideshow_path,
