@@ -42,6 +42,13 @@ from typing import List
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
+try:  # Repo convention — run_show.py and every other script does this.
+    from dotenv import load_dotenv
+
+    load_dotenv(ROOT / ".env")
+except ImportError:  # pragma: no cover — dotenv is a hard dep elsewhere
+    pass
+
 FORCE_SSL = "https://www.googleapis.com/auth/youtube.force-ssl"
 _TOKEN_URL = "https://oauth2.googleapis.com/token"
 

@@ -52,8 +52,36 @@ from typing import Dict, List, Set
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
+try:  # Repo convention — run_show.py and every other script does this.
+    from dotenv import load_dotenv
+
+    load_dotenv(ROOT / ".env")
+except ImportError:  # pragma: no cover — dotenv is a hard dep elsewhere
+    pass
+
 DEFAULT_KEEP_NEWEST = 60
 _ENCLOSURE_RE = re.compile(rb'<enclosure[^>]+url="([^"]+\.mp4)"')
+
+
+def _default_bucket() -> str:
+    """Read the bucket from shows/_defaults.yaml rather than hardcoding it.
+
+    A wrong bucket name here is not a harmless typo: it would list an
+    empty (or someone else's) keyspace and report every referenced object
+    as absent. Sourcing it from the same config the uploader uses means
+    the two cannot drift.
+    """
+    env = os.getenv("R2_BUCKET", "").strip()
+    if env:
+        return env
+    try:
+        import yaml
+
+        data = yaml.safe_load(
+            (ROOT / "shows" / "_defaults.yaml").read_text(encoding="utf-8"))
+        return str((data.get("storage") or {}).get("bucket") or "").strip()
+    except Exception:  # noqa: BLE001
+        return ""
 
 
 def _referenced_keys() -> Set[str]:
@@ -94,8 +122,14 @@ def _client():
     access_key = os.getenv("R2_ACCESS_KEY_ID", "")
     secret_key = os.getenv("R2_SECRET_ACCESS_KEY", "")
     if not (endpoint and access_key and secret_key):
-        raise SystemExit("R2_ENDPOINT_URL / R2_ACCESS_KEY_ID / "
-                         "R2_SECRET_ACCESS_KEY must be set")
+        missing = [n for n, v in (("R2_ENDPOINT_URL", endpoint),
+                                  ("R2_ACCESS_KEY_ID", access_key),
+                                  ("R2_SECRET_ACCESS_KEY", secret_key)) if not v]
+        raise SystemExit(
+            f"Missing {', '.join(missing)}.\n"
+            f"These live in the repo's .env (gitignored) alongside the other\n"
+            f"credentials, or in the GitHub Actions secrets. Either add them\n"
+            f"to {ROOT / '.env'} or export them for this shell.")
     return boto3.client("s3", endpoint_url=endpoint,
                         aws_access_key_id=access_key,
                         aws_secret_access_key=secret_key)
@@ -105,7 +139,8 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--apply", action="store_true",
                     help="Actually delete. Without this, report only.")
-    ap.add_argument("--bucket", default=os.getenv("R2_BUCKET", "nerra-audio"))
+    ap.add_argument("--bucket", default=_default_bucket(),
+                    help="Defaults to storage.bucket in shows/_defaults.yaml")
     ap.add_argument("--show", default="", help="Limit to one show slug")
     ap.add_argument("--keep-newest", type=int, default=DEFAULT_KEEP_NEWEST,
                     help=f"Per-show floor, default {DEFAULT_KEEP_NEWEST}")
