@@ -127,6 +127,7 @@ def record_video(
     filename: str = "",
     date: str = "",
     title: str = "",
+    image_url: str = "",
     project_root: Optional[Path] = None,
 ) -> bool:
     """Record one episode's hosted video. Idempotent on *episode*.
@@ -148,6 +149,11 @@ def record_video(
             "filename": filename,
             "date": date,
             "title": title,
+            # Square per-episode artwork for the feed's item-level
+            # <itunes:image>. Empty on every row written before
+            # engine.episode_art existed; the feed then inherits the
+            # channel cover, which is the pre-existing behaviour.
+            "image_url": image_url or "",
             "recorded": _dt.datetime.now(_dt.timezone.utc).isoformat(),
         })
         rows.sort(key=lambda r: r.get("episode") or 0, reverse=True)
@@ -180,5 +186,6 @@ def record_from_track(config, episode: int, track: dict, *,
         filename=track.get("filename") or "",
         date=date,
         title=title,
+        image_url=track.get("image_url") or "",
         project_root=project_root,
     )

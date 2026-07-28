@@ -32,8 +32,12 @@ from engine import visual_reuse as vr  # noqa: E402
 
 _NEW_KNOBS = {
     "gallery_blend_enabled": True,
-    "gallery_blend_max_long": 8,
-    "gallery_blend_max_short": 4,
+    # July 2026: 8 -> 16 and 4 -> 6. Only 4 fresh images are
+    # generated per episode against up to 24 scheduler slots, so
+    # the old pool repeated every image several times per episode.
+    # Library scenes are already generated and already paid for.
+    "gallery_blend_max_long": 16,
+    "gallery_blend_max_short": 6,
     "chapter_aligned_scenes": True,
     "long_form_thumbnail_from_scene": True,
     "thumbnail_variants": 2,

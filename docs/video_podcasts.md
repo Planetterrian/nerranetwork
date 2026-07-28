@@ -110,19 +110,42 @@ for it rather than reintroducing the coupling.
 R2 storage for the MP4s, and **zero egress** — R2 charges none, which is
 the only reason self-hosting podcast video is economically viable here.
 
-The per-episode size is **not yet measured**. The long-form render is a
-mostly-static slideshow with crossfades, so its real bitrate can't be
-inferred from the CRF setting alone — it could plausibly land anywhere
-between ~60 MB and ~250 MB for a 13-minute episode. Rather than guess, the
-pipeline records **`video_podcast_bytes`** in each episode's metrics; read
-the first week of those before making any storage projection. Even at the
-top of that range, 30 episodes × 2 shows is well under a cent a month at
-$0.015/GB-month.
+**Measured, 27 July 2026** — the earlier "not yet measured, somewhere
+between 60 and 250 MB" estimate is now settled. Across the 50 episodes
+in the five live video feeds:
 
-There is deliberately **no retention sweep**. The feed lists
-`max_episodes` (30 by default) and older objects stay in R2. If storage
-grows past what you want to keep, add an R2 lifecycle rule on the `video/`
-prefix — that keyspace exists precisely so such a rule can't touch audio.
+| | |
+|---|---|
+| Mean episode | **174 MB** |
+| Total bitrate | **~2.05 Mbps** (≈1.86 Mbps video + 192 kbps audio) |
+| Per minute | ~15.4 MB |
+
+Remarkably consistent, and higher than a slideshow ought to be. The
+cause is the Ken Burns zoom: continuous sub-pixel motion on every frame
+defeats inter-frame prediction, so CRF 22 spends real bitrate
+re-describing what is visually a still photograph. Easing the zoom
+ceiling (1.12 → 1.09, July 2026) helps; it does not eliminate it.
+
+At five shows publishing daily that is **≈318 GB/year, growing forever**.
+R2 is $0.015/GB-month, so the first year alone settles at roughly
+$4.80/month and the second doubles it. This is the one place the video
+pilot turns into a recurring bill.
+
+**`scripts/prune_video_r2.py`** is the answer. It deletes by
+*reachability*, not age: an object goes only if no `*.video.rss` and no
+`digests/*/video_assets.json` references it. Dry-run by default, with a
+`--keep-newest` floor (60) so a feed-generation bug can't cascade into
+deleting a back catalogue.
+
+```
+python scripts/prune_video_r2.py            # report
+python scripts/prune_video_r2.py --apply    # delete
+```
+
+A bucket lifecycle rule is the wrong tool here even though the `video/`
+keyspace was built for one: lifecycle expires by age, but the feed window
+is a *count*, so a show that pauses for two months would have
+still-listed episodes deleted out from under it.
 
 `max_episodes` is a real knob as of the durable index (below). Before it,
 raising the value did nothing: `summaries_<slug>.json` is truncated to 30

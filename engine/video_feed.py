@@ -66,6 +66,12 @@ _EST_VIDEO_BYTES_PER_SEC = 250_000
 # renders MP4 exclusively.
 VIDEO_ENCLOSURE_TYPE = "video/mp4"
 
+# Podcasting 2.0. ``engine.publisher`` declares this same constant inside
+# each of its injector functions rather than at module scope, so it
+# cannot be imported; duplicated here rather than refactoring a
+# publish-critical module for one string.
+PODCAST_NS = "https://podcastindex.org/namespace/1.0"
+
 
 def video_feed_filename(audio_rss_file: str) -> str:
     """``spacex_podcast.rss`` -> ``spacex_podcast.video.rss``.
@@ -128,6 +134,8 @@ def _records_with_video(records: List[dict], limit: int,
                     "url": row["url"],
                     "bytes": int(row.get("bytes") or 0),
                     "duration_sec": float(row.get("duration_sec") or 0.0),
+                    "filename": row.get("filename") or "",
+                    "image_url": row.get("image_url") or "",
                 },
             })
 
@@ -161,6 +169,111 @@ def _normalize_for_compare(feed_bytes: bytes) -> bytes:
     return re.sub(rb"<lastBuildDate>[^<]*</lastBuildDate>", b"", feed_bytes)
 
 
+def _episode_stem(track: dict) -> str:
+    """``SpaceX_Daily_Ep046_20260727`` from a track record.
+
+    Prefers the stored filename, falling back to the enclosure URL's
+    basename — index-synthesised records carry the URL but predate the
+    ``filename`` field, and both encode the same stem.
+    """
+    name = str(track.get("filename") or "").strip()
+    if not name:
+        name = str(track.get("url") or "").rstrip("/").rsplit("/", 1)[-1]
+    name = name.split("?", 1)[0]
+    return name[:-4] if name.lower().endswith(".mp4") else name
+
+
+def _sidecar_assets(
+    *,
+    num: int,
+    track: dict,
+    base_url: str,
+    audio_subdir: str,
+    assets_root: Optional[Path],
+) -> List[Tuple[str, Dict[str, str]]]:
+    """Podcasting 2.0 sidecar tags for one episode.
+
+    Returns ``[(tag_name, attributes), ...]`` for ``<podcast:transcript>``
+    and ``<podcast:chapters>``. Both artifacts are already generated,
+    committed and served by GitHub Pages for every episode — the *audio*
+    feed has pointed at them since day one and the video feed simply
+    never did.
+
+    Emitted **only when the file exists on disk**. A feed advertising a
+    transcript URL that 404s is worse than one advertising none: Apple
+    and Podcast Index both fetch these, and a broken sidecar is a
+    validation error against the show rather than a missing nicety.
+    ``assets_root`` is None in unit tests that don't materialise the
+    digests tree, which correctly yields no tags.
+    """
+    if assets_root is None:
+        return []
+
+    subdir = (audio_subdir or "digests").strip("/")
+    root = assets_root / subdir
+    prefix = f"{base_url.rstrip('/')}/{subdir}"
+    out: List[Tuple[str, Dict[str, str]]] = []
+
+    stem = _episode_stem(track)
+    if stem:
+        # The JSON transcript is the richer artifact (word timings), and
+        # is what publisher.py advertises on the audio feed. The .txt
+        # twin is the fallback for clients that reject JSON transcripts.
+        for filename, mime in ((f"{stem}_transcript.json", "application/json"),
+                               (f"{stem}_transcript.txt", "text/plain")):
+            if (root / filename).is_file():
+                out.append(("transcript",
+                            {"url": f"{prefix}/{filename}", "type": mime}))
+                break
+
+    chapters_name = f"chapters_ep{num:03d}.json"
+    if (root / chapters_name).is_file():
+        out.append(("chapters", {"url": f"{prefix}/{chapters_name}",
+                                 "type": "application/json+chapters"}))
+    return out
+
+
+def _inject_item_tags(rss_path: Path,
+                      per_guid: Dict[str, List[Tuple[str, Dict[str, str]]]]) -> None:
+    """Add ``podcast:``-namespaced tags to items after feedgen has written.
+
+    feedgen's podcast extension covers the ``itunes:`` vocabulary only,
+    so Podcasting 2.0 tags have to be spliced in afterwards — the same
+    approach ``engine.publisher`` takes for the audio feed
+    (``_inject_transcript_tag`` / the chapters injector). Matching is by
+    GUID rather than position so it cannot mis-attach if entry ordering
+    ever changes.
+
+    Best-effort: a malformed feed here would be far worse than a missing
+    transcript link, so any failure logs and leaves the file untouched.
+    """
+    if not per_guid:
+        return
+    import xml.etree.ElementTree as ET
+
+    try:
+        ET.register_namespace("podcast", PODCAST_NS)
+        tree = ET.parse(rss_path)
+        channel = tree.getroot().find("channel")
+        if channel is None:
+            return
+        touched = 0
+        for item in channel.findall("item"):
+            guid_el = item.find("guid")
+            guid = (guid_el.text or "").strip() if guid_el is not None else ""
+            for tag, attrs in per_guid.get(guid, []):
+                if item.find(f"{{{PODCAST_NS}}}{tag}") is not None:
+                    continue
+                el = ET.SubElement(item, f"{{{PODCAST_NS}}}{tag}")
+                for key, val in attrs.items():
+                    el.set(key, val)
+                touched += 1
+        if touched:
+            tree.write(rss_path, encoding="UTF-8", xml_declaration=True)
+    except Exception as exc:  # noqa: BLE001 — never corrupt a published feed
+        logger.warning("Podcasting 2.0 tag injection skipped (%s)", exc)
+
+
 def _episode_description(rec: dict) -> str:
     """Prefer the stored show-notes body, fall back to the title."""
     for key in ("content", "summary"):
@@ -187,9 +300,12 @@ def build_video_feed(
     channel_category2: str = "",
     channel_subcategory2: str = "",
     channel_language: str = "en-us",
+    channel_keywords: str = "",
     base_url: str = "https://nerranetwork.com",
     max_episodes: int = 30,
     index_path: Optional[Path] = None,
+    audio_subdir: str = "digests",
+    assets_root: Optional[Path] = None,
 ) -> Optional[Tuple[Path, int]]:
     """Write ``out_path`` as a video-podcast RSS feed for *slug*.
 
@@ -204,7 +320,11 @@ def build_video_feed(
     from feedgen.feed import FeedGenerator
 
     from engine.audio import format_duration
-    from engine.publisher import _inject_podcast_locked_tag, _markdown_to_rss_html
+    from engine.publisher import (
+        _inject_podcast_locked_tag,
+        _markdown_to_rss_html,
+        inject_channel_keywords,
+    )
 
     _wrapper, records = load_summaries(summaries_path)
     targets = _records_with_video(records, max_episodes, index_path)
@@ -232,6 +352,18 @@ def build_video_feed(
     apply_categories(fg, channel_category, channel_subcategory,
                      channel_category2, channel_subcategory2)
     fg.podcast.itunes_explicit("no")
+    # Apple defaults an absent <itunes:type> to "episodic", but stating it
+    # is what makes Apple present newest-first and label the show
+    # correctly rather than inferring. Every show here is a daily.
+    try:
+        fg.podcast.itunes_type("episodic")
+    except Exception as exc:  # noqa: BLE001 — advisory tag, never fatal
+        logger.debug("[%s] itunes:type unsupported by feedgen: %s", slug, exc)
+    # ``itunes:keywords`` is spliced in after the write — feedgen has no
+    # setter for it (see engine.publisher.inject_channel_keywords).
+
+    # GUID -> Podcasting 2.0 tags, spliced in after feedgen writes.
+    sidecars: Dict[str, List[Tuple[str, Dict[str, str]]]] = {}
 
     for rec in targets:
         track = rec["video"]
@@ -258,6 +390,23 @@ def build_video_feed(
         fe.podcast.itunes_episode(num)
         fe.podcast.itunes_episode_type("full")
         fe.podcast.itunes_explicit("no")
+        # Per-episode artwork. Without this every episode in Apple's list
+        # renders the identical channel cover. The URL is recorded at
+        # publish time by engine.episode_art; absent (every episode
+        # published before that existed) the channel cover is inherited,
+        # which is exactly the previous behaviour.
+        art = str(track.get("image_url") or "").strip()
+        if art:
+            try:
+                fe.podcast.itunes_image(art)
+            except Exception as exc:  # noqa: BLE001 — cosmetic, never fatal
+                logger.debug("[%s] ep%s artwork %r rejected: %s",
+                             slug, num, art, exc)
+        sidecar = _sidecar_assets(
+            num=num, track=track, base_url=base_url,
+            audio_subdir=audio_subdir, assets_root=assets_root)
+        if sidecar:
+            sidecars[guid] = sidecar
         dur = track.get("duration_sec")
         if dur:
             try:
@@ -275,6 +424,8 @@ def build_video_feed(
         fg.rss_file(tmp_path, pretty=True)
         _inject_podcast_locked_tag(Path(tmp_path),
                                    channel_email or "patrick@planetterrian.com")
+        inject_channel_keywords(Path(tmp_path), channel_keywords)
+        _inject_item_tags(Path(tmp_path), sidecars)
         if out_path.exists():
             new_bytes = Path(tmp_path).read_bytes()
             old_bytes = out_path.read_bytes()
@@ -328,9 +479,12 @@ def build_video_feed_for_show(config, project_root: Path) -> Optional[Tuple[Path
         channel_subcategory=pub.rss_subcategory or "",
         channel_category2=getattr(pub, "rss_category2", "") or "",
         channel_subcategory2=getattr(pub, "rss_subcategory2", "") or "",
+        channel_keywords=getattr(pub, "rss_keywords", "") or "",
         base_url=pub.base_url or "https://nerranetwork.com",
         max_episodes=vp.max_episodes,
         index_path=video_index.index_path(config, project_root),
+        audio_subdir=getattr(pub, "audio_subdir", "digests") or "digests",
+        assets_root=project_root,
     )
 
 

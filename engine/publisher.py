@@ -486,17 +486,10 @@ def update_rss_feed(
         fg.podcast.itunes_image(channel_image)
     apply_categories(fg, channel_category, channel_subcategory,
                      channel_category2, channel_subcategory2)
-    # ``itunes:keywords`` — Apple deprecated but Spotify / Pocket Casts /
-    # Fountain / Podcast Index still index it. Cheap SEO. Operator
-    # caught (May 6 2026 audit) every show shipping with no keywords.
-    if channel_keywords:
-        try:
-            fg.podcast.itunes_keywords(channel_keywords)
-        except Exception:  # pragma: no cover — older feedgen lacks setter
-            # Newer feedgen versions also expose the keyword via the
-            # generic ``meta`` extension; if both fail, the field is
-            # optional anyway.
-            pass
+    # ``itunes:keywords`` is injected after feedgen writes — see
+    # ``inject_channel_keywords``. feedgen has no setter for it, and the
+    # call that used to live here failed silently into a bare ``except:
+    # pass`` for two months.
     fg.podcast.itunes_explicit("no")
 
     # --- Migrate legacy GitHub raw URLs to R2 CDN --------------------------
@@ -584,6 +577,8 @@ def update_rss_feed(
             Path(tmp_path),
             channel_email or "patrick@planetterrian.com",
         )
+
+        inject_channel_keywords(Path(tmp_path), channel_keywords)
 
         # Add channel-level <podcast:funding> + <podcast:person>
         # (Podcasting 2.0 discovery/support surface; June 2026 growth
@@ -692,6 +687,47 @@ def _validate_injected_tags(
                 )
     except Exception as exc:
         logger.error("RSS validation pass failed for %s: %s", rss_path, exc)
+
+
+ITUNES_NS = "http://www.itunes.com/dtds/podcast-1.0.dtd"
+
+
+def inject_channel_keywords(rss_path: Path, keywords: str) -> bool:
+    """Add channel-level ``<itunes:keywords>``. Returns True if written.
+
+    This exists because the obvious call does not work. ``feedgen``'s
+    podcast extension **has no** ``itunes_keywords`` setter — Apple
+    deprecated the tag, so feedgen never implemented it. The call site
+    below wrapped ``fg.podcast.itunes_keywords(...)`` in a bare
+    ``except: pass``, so from the May 2026 audit that added it right up
+    to July 2026 every feed in the network shipped with no keywords
+    while the code and its comment claimed otherwise. Verified: zero
+    occurrences of ``itunes:keywords`` across every published feed.
+
+    Apple ignores the tag, but Spotify, Pocket Casts, Fountain and
+    Podcast Index all still index it, so it is free discovery on shows
+    that have bothered to write a keyword list.
+
+    Idempotent, and best-effort: a failure here must never cost the
+    feed, so it logs and returns False rather than raising.
+    """
+    kws = ", ".join(k.strip() for k in (keywords or "").split(",") if k.strip())
+    if not kws:
+        return False
+    try:
+        ET.register_namespace("itunes", ITUNES_NS)
+        tree = ET.parse(str(rss_path))
+        channel = tree.getroot().find("channel")
+        if channel is None:
+            return False
+        if channel.find(f"{{{ITUNES_NS}}}keywords") is not None:
+            return False
+        ET.SubElement(channel, f"{{{ITUNES_NS}}}keywords").text = kws
+        tree.write(str(rss_path), xml_declaration=True, encoding="UTF-8")
+        return True
+    except Exception as exc:  # noqa: BLE001 — the feed matters, the tag doesn't
+        logger.warning("Failed to inject <itunes:keywords>: %s", exc)
+        return False
 
 
 def _inject_podcast_locked_tag(rss_path: Path, owner_email: str) -> None:

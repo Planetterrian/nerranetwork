@@ -5194,6 +5194,12 @@ def _publish_youtube(
                 show_name=config.name,
                 scene_schedule=_visual_plan.get("scene_schedule"),
                 broll_clips=_visual_plan.get("broll_clips"),
+                # Writes a chapter track into the MP4 container. The
+                # same chapters already reach the YouTube description
+                # and both RSS feeds; the container is what Apple's
+                # video player and any offline copy can use.
+                chapters_path=(chapters_path if chapters_path
+                               and chapters_path.exists() else None),
             )
             # ---- Video podcast (July 2026 pilot) ----
             # Host the rendered MP4 on R2 so it can also ship as an Apple
@@ -5206,6 +5212,32 @@ def _publish_youtube(
                 _video_track = upload_episode_video(long_video_path, config)
                 if _video_track:
                     _video_track["duration_sec"] = _ep_duration
+                    # Square artwork for the feed's item-level
+                    # <itunes:image>. Without it every episode in Apple's
+                    # list renders the identical channel cover. Prefers
+                    # the same fresh scene the YouTube thumbnail is built
+                    # from, so the two previews agree; falls back through
+                    # the rendered thumbnail to the show cover. Returns
+                    # "" on any failure, which reproduces today's
+                    # behaviour exactly.
+                    try:
+                        from engine.episode_art import publish_square_art
+
+                        _art_url = publish_square_art(
+                            [
+                                fresh_long_scenes[0] if fresh_long_scenes else None,
+                                thumbnail_path,
+                                cover_path,
+                            ],
+                            config=config,
+                            work_dir=work_dir,
+                            base_name=base_name,
+                        )
+                        if _art_url:
+                            _video_track["image_url"] = _art_url
+                    except Exception as exc:  # noqa: BLE001 — cosmetic
+                        logger.warning("Episode artwork step failed "
+                                       "(non-fatal): %s", exc)
                     result["video_podcast"] = _video_track
                     result["video_podcast_url"] = _video_track["url"]
 

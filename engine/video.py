@@ -32,6 +32,7 @@ the rendition with "video can't play".
 
 from __future__ import annotations
 
+import json
 import logging
 import math
 import subprocess
@@ -69,6 +70,13 @@ _VIDEO_ENCODE: List[str] = [
     "-keyint_min", "60",
     "-sc_threshold", "0",
     "-force_key_frames", "expr:gte(t,n_forced*2)",
+    # Ceiling, not a target. Measured episodes land around 2.0 Mbps
+    # total, so this never binds in normal operation — it exists so a
+    # pathological scene (heavy grain, a near-noise still) cannot
+    # produce a 600 MB enclosure that Apple times out fetching. CRF
+    # remains the quality control.
+    "-maxrate", "4M",
+    "-bufsize", "8M",
 ]
 
 # Fast profile for the STAGE-1 slideshow, which is an *intermediate* file —
@@ -77,11 +85,20 @@ _VIDEO_ENCODE: List[str] = [
 # the slideshow render from ~10 min toward ~2-3 min on Tesla/SpaceX, which is
 # the main reason those clip-era runs crept toward the 40-min pipeline timeout.
 # No keyframe args needed (it's not the delivered file). June 2026 render pass.
+#
+# July 2026: CRF 20 -> 16. Every delivered pixel goes through two lossy
+# encodes — CRF 20 here, then CRF 22 in the composite — and the errors
+# compound. CRF 16 is close enough to transparent that stage 2 becomes
+# effectively the only quality-determining pass, which is what the
+# ``-crf 22`` above is tuned for. The intermediate is deleted minutes
+# later, so the only cost is scratch disk and a little encode time; the
+# preset stays ``veryfast`` precisely because that is where the render
+# minutes are, not in the CRF.
 _VIDEO_ENCODE_FAST: List[str] = [
     "-c:v", "libx264",
     "-pix_fmt", "yuv420p",
     "-preset", "veryfast",
-    "-crf", "20",          # slightly higher quality to offset the re-encode loss
+    "-crf", "16",
 ]
 
 _AUDIO_ENCODE: List[str] = [
@@ -450,6 +467,35 @@ _XFADE_TRANSITIONS = [
     "fade", "dissolve", "smoothleft", "fadeblack", "smoothright", "fade",
 ]
 
+# Ken Burns geometry (July 2026 sharpness pass).
+#
+# The source stills are the constraint. Grok Imagine returns 1792x1024
+# for 16:9, which is *below* the 1920x1080 delivery frame, so every
+# pixel shipped is already an upsample before the zoom adds more. The
+# old numbers — pre-scale 1.15 (2208px) with a zoom to 1.12 — pushed
+# the worst case to about 1.38x.
+#
+# Two changes, both conservative:
+#
+# * ``_ZOOM_MAX`` 1.12 -> 1.09. Less magnification at the top of each
+#   scene's window, and less per-frame motion, which also matters for
+#   file size: continuous sub-pixel zoom defeats inter-frame prediction,
+#   so the encoder spends real bitrate re-describing a still photo.
+# * Lanczos on the pre-scale. ffmpeg's default is bicubic, which is
+#   noticeably softer on upsamples. Lanczos costs CPU only.
+#
+# The 1.15 pre-scale itself is deliberately kept. Working above the
+# output resolution is what hides ``zoompan``'s integer-pixel stepping;
+# dropping to 1.0 would sharpen the still frame and introduce visible
+# judder in the motion, which is the worse trade on a slideshow.
+_PRESCALE = 1.15
+_ZOOM_MAX = 1.09
+
+# ffmpeg's default scaler is bicubic. Lanczos preserves noticeably more
+# detail when upsampling, which is the only regime this pipeline is ever
+# in (see above).
+_SCALE_FLAGS = "flags=lanczos"
+
 
 def _slideshow_filter_graph(scene_count: int, *,
                             scene_duration: float = _SCENE_DURATION_SECONDS,
@@ -485,9 +531,9 @@ def _slideshow_filter_graph(scene_count: int, *,
             f"scene_durations length {len(scene_durations)} != "
             f"scene_count {scene_count}"
         )
-    pre_w = int(width * 1.15)
-    pre_h = int(height * 1.15)
-    zoom_expr = "min(zoom+0.0006,1.12)"
+    pre_w = int(width * _PRESCALE)
+    pre_h = int(height * _PRESCALE)
+    zoom_expr = f"min(zoom+0.0006,{_ZOOM_MAX})"
     use_xfade = crossfade and crossfade > 0 and scene_count >= 2
     xfade_pad = crossfade if use_xfade else 0.0
     durs: List[float] = (
@@ -502,7 +548,8 @@ def _slideshow_filter_graph(scene_count: int, *,
         frames_per_scene = int(clip_len * fps)
         chains.append(
             f"[{i}:v]"
-            f"scale={pre_w}:{pre_h}:force_original_aspect_ratio=increase,"
+            f"scale={pre_w}:{pre_h}:force_original_aspect_ratio=increase"
+            f":{_SCALE_FLAGS},"
             f"crop={pre_w}:{pre_h},setsar=1,"
             f"zoompan=z='{zoom_expr}':d={frames_per_scene}"
             f":s={width}x{height}:fps={fps},"
@@ -858,9 +905,28 @@ def _short_segment_durations(cut_times: Sequence[float],
 # Outline-only (``BorderStyle=1`` + ``Outline=3`` + ``Shadow=1``) is
 # unchanged from the first pass — keeps the slideshow imagery
 # visible behind the words.
+# July 2026 legibility pass: FontSize 22 -> 26.
+#
+# A caveat worth recording, because it is the trap here. These numbers
+# are NOT pixels. ffmpeg's ``subtitles`` filter renders SRT through
+# libass with the ASS default script resolution (``PlayResY=288``), so
+# every size is scaled by ``1080/288 = 3.75``. FontSize=22 is therefore
+# about 82 px on screen — roughly 7.6% of frame height, already
+# comfortably readable, not the ~2% a naive reading suggests. An
+# earlier draft of this change assumed pixels and went to 32, which
+# rendered at ~120 px and swallowed the lower third of the frame.
+#
+# 26 (~98 px) is a real improvement on a phone without the captions
+# becoming the subject of the video. The comparison was rendered at 22,
+# 26, 28 and 32 before picking.
+#
+# Deliberately NOT switched to the Shorts' ``BorderStyle=3`` card: on a
+# 16:9 slideshow the card would band across imagery that is the whole
+# point of the video, whereas a 9:16 Short is mostly empty anyway.
+# Outline-only keeps the picture visible behind the words.
 _SUBTITLES_FORCE_STYLE = (
     "FontName=DejaVu Sans,"
-    "FontSize=22,"
+    "FontSize=26,"
     "PrimaryColour=&H00FFFFFF,"
     "OutlineColour=&H00000000,"
     "BackColour=&H00000000,"
@@ -954,19 +1020,25 @@ def _long_form_filter_graph(*, width: int = 1920, height: int = 1080,
     spectrum used to.
     """
     if bg_is_video:
-        # Slideshow MP4 already has motion + zoom; just normalize to
-        # the target frame and fps.
+        # Slideshow MP4 already has motion + zoom at exactly this
+        # resolution, so the scale/crop pair here is a no-op on every
+        # real render — it only earns its keep if a caller ever hands in
+        # a differently-sized background. ``scale`` short-circuits when
+        # input and output dimensions already match, so leaving it costs
+        # nothing and keeps that contract.
         bg_chain = (
-            f"[0:v]scale={width}:{height}:force_original_aspect_ratio=increase,"
+            f"[0:v]scale={width}:{height}:force_original_aspect_ratio=increase"
+            f":{_SCALE_FLAGS},"
             f"crop={width}:{height},setsar=1,format=yuv420p[bg]"
         )
     else:
-        pre_w = int(width * 1.15)
-        pre_h = int(height * 1.15)
+        pre_w = int(width * _PRESCALE)
+        pre_h = int(height * _PRESCALE)
         zoom_expr = "min(zoom+0.000004,1.08)"
         bg_chain = (
             f"[0:v]"
-            f"scale={pre_w}:{pre_h}:force_original_aspect_ratio=increase,"
+            f"scale={pre_w}:{pre_h}:force_original_aspect_ratio=increase"
+            f":{_SCALE_FLAGS},"
             f"crop={pre_w}:{pre_h},setsar=1,"
             f"zoompan=z='{zoom_expr}':d=1:s={width}x{height}:fps={fps}"
             f"[bg]"
@@ -1227,12 +1299,86 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
 # Long-form command builder (stage 2)
 # ---------------------------------------------------------------------------
 
+def _ffmetadata_escape(text: str) -> str:
+    """Escape the four characters ffmetadata treats as syntax."""
+    out = str(text or "")
+    for ch in ("\\", "=", ";", "#", "\n"):
+        out = out.replace(ch, "\\" + ch if ch != "\n" else "\\\n")
+    return out
+
+
+def write_chapter_metadata(chapters_path: Path, out_path: Path,
+                           total_duration_s: float) -> Optional[Path]:
+    """Render an ffmetadata chapter file, or None if there's nothing to write.
+
+    The network already produces chapters and attaches them in three
+    places — the YouTube description, the audio RSS as
+    ``<podcast:chapters>``, and now the video RSS — but never inside the
+    MP4 itself. A container chapter track is what gives Apple's video
+    player (and any future platform that ignores RSS sidecars) a
+    scrubbable chapter list, and it travels with the file if someone
+    downloads it.
+
+    Requires at least two chapters: a single chapter spanning the whole
+    episode is what players show anyway, so writing it adds a track for
+    no benefit. Returns None on any parse problem — a bad metadata file
+    would make ffmpeg fail the whole render, which is far worse than a
+    video without chapters.
+    """
+    try:
+        raw = json.loads(Path(chapters_path).read_text(encoding="utf-8"))
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("Chapter metadata skipped (%s unreadable: %s)",
+                     chapters_path, exc)
+        return None
+
+    items = raw.get("chapters") if isinstance(raw, dict) else raw
+    if not isinstance(items, list) or len(items) < 2:
+        return None
+
+    marks: List[Tuple[float, str]] = []
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        start = item.get("startTime", item.get("start_time", item.get("start")))
+        try:
+            start_f = float(start)
+        except (TypeError, ValueError):
+            continue
+        title = str(item.get("title") or item.get("name") or "").strip()
+        marks.append((start_f, title or f"Chapter {len(marks) + 1}"))
+
+    marks.sort(key=lambda m: m[0])
+    if len(marks) < 2 or total_duration_s <= marks[-1][0]:
+        return None
+
+    lines = [";FFMETADATA1"]
+    for i, (start_f, title) in enumerate(marks):
+        end_f = marks[i + 1][0] if i + 1 < len(marks) else total_duration_s
+        if end_f <= start_f:
+            continue
+        lines += [
+            "[CHAPTER]",
+            "TIMEBASE=1/1000",
+            f"START={int(start_f * 1000)}",
+            f"END={int(end_f * 1000)}",
+            f"title={_ffmetadata_escape(title)}",
+        ]
+    if len(lines) == 1:
+        return None
+
+    out_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    logger.info("Chapter metadata: %d chapters -> %s", len(marks), out_path.name)
+    return out_path
+
+
 def _long_form_cmd(audio_in: str, bg_in: str, brand_in: str,
                    output: str, *,
                    fps: int = 30,
                    bg_is_video: bool = False,
                    subtitles_path: Optional[str] = None,
-                   url_pill_in: Optional[str] = None) -> List[str]:
+                   url_pill_in: Optional[str] = None,
+                   chapter_metadata_in: Optional[str] = None) -> List[str]:
     """Full ffmpeg command for stage 2.
 
     When *bg_is_video* is True, *bg_in* is a pre-rendered slideshow
@@ -1242,6 +1388,13 @@ def _long_form_cmd(audio_in: str, bg_in: str, brand_in: str,
     When *url_pill_in* is provided, a 4th input (the
     ``nerranetwork.com`` URL pill) is added as input ``[3:v]`` and
     overlaid in the filter graph at the top-right corner.
+
+    *chapter_metadata_in* is an ffmetadata file (see
+    :func:`write_chapter_metadata`). It is added as the LAST input and
+    referenced by index so it cannot disturb the ``[0:v]`` / ``[1:a]`` /
+    ``[2:v]`` / ``[3:v]`` numbering the filter graph is written against —
+    an ffmetadata input carries no streams, so it never appears in the
+    graph, only in ``-map_metadata``.
     """
     if bg_is_video:
         bg_input = ["-stream_loop", "-1", "-i", bg_in]
@@ -1254,12 +1407,21 @@ def _long_form_cmd(audio_in: str, bg_in: str, brand_in: str,
             "-loop", "1", "-framerate", str(fps), "-i", url_pill_in,
         ]
 
+    meta_inputs: List[str] = []
+    meta_map: List[str] = []
+    if chapter_metadata_in:
+        # Input index: bg(0) + audio(1) + brand(2) + optional url pill(3).
+        meta_index = 4 if url_pill_in else 3
+        meta_inputs = ["-f", "ffmetadata", "-i", chapter_metadata_in]
+        meta_map = ["-map_metadata", str(meta_index)]
+
     return [
         "ffmpeg", "-y", "-threads", "0",
         *bg_input,
         "-i", audio_in,
         "-loop", "1", "-framerate", str(fps), "-i", brand_in,
         *extra_inputs,
+        *meta_inputs,
         "-filter_complex",
         _long_form_filter_graph(
             fps=fps,
@@ -1268,6 +1430,7 @@ def _long_form_cmd(audio_in: str, bg_in: str, brand_in: str,
             with_url_pill=bool(url_pill_in),
         ),
         "-map", "[v]", "-map", "1:a",
+        *meta_map,
         *_VIDEO_ENCODE,
         "-r", str(fps),
         *_AUDIO_ENCODE,
@@ -1387,6 +1550,7 @@ def build_long_form_video(
     show_name: Optional[str] = None,
     scene_schedule: Optional[Sequence[Tuple[Path, float]]] = None,
     broll_clips: Optional[Sequence[Path]] = None,
+    chapters_path: Optional[Path] = None,
 ) -> Path:
     """Render a 1920x1080 long-form podcast video.
 
@@ -1431,6 +1595,12 @@ def build_long_form_video(
         positions between the stills via the hybrid renderer;
         any failure degrades to the pure slideshow. Purely a
         consumer of existing files — this never generates clips.
+    chapters_path:
+        Optional ``chapters_ep<NNN>.json``. When it holds two or more
+        chapters, they are written into the MP4 container as a chapter
+        track, so Apple's video player can scrub by section and the
+        chapters survive a download. Any problem reading it degrades to
+        a video with no chapter track.
 
     Returns
     -------
@@ -1439,6 +1609,22 @@ def build_long_form_video(
     """
     if not audio_path.exists():
         raise FileNotFoundError(f"audio not found: {audio_path}")
+
+    # Built before the render branches so both the hybrid and the
+    # pure-slideshow paths get the same chapter track.
+    chapter_meta: Optional[str] = None
+    if chapters_path and Path(chapters_path).exists():
+        try:
+            from engine.audio import get_audio_duration
+
+            written = write_chapter_metadata(
+                Path(chapters_path),
+                output_path.with_suffix(".chapters.ffmeta"),
+                get_audio_duration(str(audio_path)) or 0.0,
+            )
+            chapter_meta = str(written) if written else None
+        except Exception as exc:  # noqa: BLE001 — chapters are never critical
+            logger.warning("Chapter metadata skipped: %s", exc)
     if not cover_path.exists():
         raise FileNotFoundError(f"cover not found: {cover_path}")
 
@@ -1535,6 +1721,7 @@ def build_long_form_video(
                 bg_is_video=bg_is_video,
                 subtitles_path=str(subtitles_path) if subtitles_path else None,
                 url_pill_in=str(url_pill_path) if url_pill_path else None,
+                chapter_metadata_in=chapter_meta,
             )
             logger.info(
                 "Building long-form video → %s (hybrid clips=%d, captions=%s)",
@@ -1609,6 +1796,7 @@ def build_long_form_video(
         bg_is_video=bg_is_video,
         subtitles_path=str(subtitles_path) if subtitles_path else None,
         url_pill_in=str(url_pill_path) if url_pill_path else None,
+        chapter_metadata_in=chapter_meta,
     )
     logger.info("Building long-form video → %s (slideshow=%s, captions=%s)",
                 output_path.name, bg_is_video, bool(subtitles_path))

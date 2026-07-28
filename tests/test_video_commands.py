@@ -589,9 +589,18 @@ def test_slideshow_filter_graph_single_scene_uses_concat():
 
 def test_slideshow_filter_graph_zoom_per_scene():
     """Slideshow zoom is faster than the single-image Ken Burns
-    (each scene is only ~12s)."""
+    (each scene is only ~12s).
+
+    July 2026: the 1.12 ceiling moved to ``_ZOOM_MAX`` (now 1.09) — the
+    sources are 1792x1024, below the delivery frame, so the zoom was
+    stacking magnification on an upsample. Asserted against the constant
+    rather than a literal so the two cannot drift apart; the band is
+    pinned in tests/test_video_render_quality.py.
+    """
+    from engine.video import _ZOOM_MAX
+
     graph = _slideshow_filter_graph(scene_count=2)
-    assert "min(zoom+0.0006,1.12)" in graph
+    assert f"min(zoom+0.0006,{_ZOOM_MAX})" in graph
 
 
 def test_slideshow_cmd_has_one_input_per_scene(tmp_path):
@@ -686,9 +695,12 @@ def test_subtitles_force_style_has_required_fields():
     # Keeps the slideshow imagery visible behind the words.
     assert "BorderStyle=1" in _SUBTITLES_FORCE_STYLE
     assert "BorderStyle=3" not in _SUBTITLES_FORCE_STYLE
-    # FontSize=22 (was 18) — bigger reads better on phone screens
-    # without looking like a heavy "subtitle bar."
-    assert "FontSize=22" in _SUBTITLES_FORCE_STYLE
+    # FontSize: 18 -> 22 (May 2026) -> 26 (July 2026). These are libass
+    # script units, not pixels — the subtitles filter renders SRT at the
+    # ASS default PlayResY=288, so a 1080p frame scales them by 3.75x.
+    # The exact value and its rationale live in
+    # tests/test_video_render_quality.py::TestCaptionLegibility.
+    assert "FontSize=26" in _SUBTITLES_FORCE_STYLE
 
 
 # ---------------------------------------------------------------------------

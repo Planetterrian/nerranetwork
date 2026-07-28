@@ -703,8 +703,15 @@ class YouTubeConfig:
     # Grok Imagine sets, ranked by hook/chapter-title relevance. Zero new
     # image-generation cost; caps below bound the download volume.
     gallery_blend_enabled: bool = True
-    gallery_blend_max_long: int = 8    # 16:9 library scenes per long-form
-    gallery_blend_max_short: int = 4   # 9:16 library scenes per Short
+    # July 2026: raised 8 -> 16. Only 4 fresh 16:9 images are generated per
+    # episode, and the chapter-aligned scheduler can place up to 24 slots,
+    # so a 12-image pool meant every image appeared two to six times in a
+    # single episode. Library scenes are already generated and already paid
+    # for — the only cost of a bigger pool is R2 download volume during the
+    # render, which is free egress. Generating more *fresh* images is the
+    # alternative and it is not free: ~$0.02 each across eleven daily shows.
+    gallery_blend_max_long: int = 16   # 16:9 library scenes per long-form
+    gallery_blend_max_short: int = 6   # 9:16 library scenes per Short
     # Align long-form scene switches with the episode's chapters.json
     # boundaries (engine.scene_scheduler.plan_chapter_schedule) instead of
     # the uniform timer. <2 usable chapters falls back to uniform.
