@@ -875,3 +875,33 @@ class TestItem4CostBreakers:
         # Even if not set in YAML, the attrs exist post-load
         assert hasattr(cfg, "max_weekly_tts_chars")
         assert isinstance(cfg.max_weekly_tts_chars, int)
+
+
+class TestRssLinkResolves:
+    """Every show's publishing.rss_link must point at a page that exists.
+
+    fascinating_frontiers pointed at /fascinating_frontiers.html
+    (underscores) while the generated page is
+    /fascinating-frontiers.html (hyphens), so the <link> every podcast
+    app and YouTube shows as "the show's website" 404'd for months. The
+    slug convention (underscores) differing from the page convention
+    (hyphens) makes this easy to reintroduce on the next scaffolded
+    show, and neither validate_show script runs in CI — this guard does.
+    """
+
+    def test_every_rss_link_resolves_to_a_real_file(self):
+        import yaml as _yaml
+
+        root = Path(__file__).resolve().parent.parent
+        missing = []
+        for path in sorted((root / "shows").glob("*.yaml")):
+            if path.stem.startswith("_"):
+                continue
+            data = _yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+            link = ((data.get("publishing") or {}).get("rss_link") or "").strip()
+            if not link:
+                continue
+            rel = link.split("nerranetwork.com/", 1)[-1].split("?", 1)[0]
+            if rel and not (root / rel).is_file():
+                missing.append(f"{path.stem}: {link}")
+        assert not missing, f"rss_link targets that 404: {missing}"
