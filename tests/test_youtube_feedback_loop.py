@@ -313,3 +313,47 @@ class TestAnalytics403Classification:
         joined = " ".join(r.message for r in caplog.records)
         assert "yt-analytics.readonly" in joined
         assert "youtube_oauth_bootstrap" in joined
+
+
+class TestEveryDubChannelEntersTheLoop:
+    """@NerraFR went live 2026-07-23 and published 39 videos that the
+    analytics fetch never saw: only ``.ru.json`` had been added beside
+    the base index, so the glob missed ``.fr.json`` entirely.
+
+    The blind spot was not cosmetic. The adaptive policy computed
+    ``video_count_14d = 0`` for all four FR shows and held them at their
+    seed tier — a channel that could never earn a promotion however well
+    it performed — and the title hints, subscriber attribution and
+    gallery-retention join were blind for the same reason. Matching the
+    language indexes by pattern means the next channel is covered on the
+    day it launches."""
+
+    def test_language_indexes_are_globbed_not_listed(self):
+        src = (_ROOT / "scripts" / "fetch_youtube_analytics.py").read_text(
+            encoding="utf-8")
+        assert 'digests_dir.glob("*/youtube_videos.*.json")' in src
+        # A hardcoded per-language line is what caused the miss.
+        assert 'glob("*/youtube_videos.ru.json")' not in src
+
+    def test_the_two_patterns_do_not_overlap(self):
+        """The base index must be collected exactly once — a double read
+        would duplicate every EN row and inflate its view totals."""
+        import fnmatch
+
+        assert not fnmatch.fnmatch("youtube_videos.json", "youtube_videos.*.json")
+        assert fnmatch.fnmatch("youtube_videos.fr.json", "youtube_videos.*.json")
+        assert fnmatch.fnmatch("youtube_videos.ru.json", "youtube_videos.*.json")
+
+    def test_live_fr_rows_are_picked_up(self):
+        """Guards the real repo state, not just the pattern."""
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location(
+            "_fya", _ROOT / "scripts" / "fetch_youtube_analytics.py")
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        rows = mod._load_index(_ROOT / "digests")
+        channels = {r.get("channel") or "en" for r in rows}
+        if (_ROOT / "digests").glob("*/youtube_videos.fr.json"):
+            assert "fr" in channels or not any(
+                (_ROOT / "digests").glob("*/youtube_videos.fr.json"))
