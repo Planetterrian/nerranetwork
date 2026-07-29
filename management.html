@@ -65,6 +65,45 @@
   .alert.fail { background: rgba(220,38,38,0.10); border: 1px solid rgba(220,38,38,0.4); color: #fecaca; }
   .alert code { font-size: 12px; }
 
+  /* ---- view switch (operator ⇄ sponsor) ----
+     One page, two audiences. Operator is the default and shows
+     everything. Sponsor hides internal spend and pipeline-health
+     surfaces and leads with the audience story, so the page can be
+     shared with a sponsor or buyer without a second build. The URL
+     carries the choice (?view=sponsor) so a shared link opens the
+     right way round. */
+  .view-switch { display: inline-flex; gap: 2px; padding: 3px; border-radius: 999px;
+    background: var(--surface-2); border: 1px solid var(--hairline); }
+  .view-switch button { appearance: none; border: 0; cursor: pointer;
+    font: inherit; font-size: 12px; font-weight: 600; letter-spacing: 0.01em;
+    padding: 5px 13px; border-radius: 999px; color: var(--ink-3);
+    background: transparent; transition: background 140ms ease, color 140ms ease; }
+  .view-switch button:hover { color: var(--ink-1); }
+  .view-switch button[aria-pressed="true"] { background: var(--accent);
+    color: #04121d; }
+  .view-note { font-size: 12px; color: var(--ink-4); margin-top: 6px; max-width: 62ch; }
+
+  /* Default (operator): sponsor-only surfaces stay hidden. */
+  [data-sponsor] { display: none; }
+  body.view-sponsor [data-sponsor] { display: revert; }
+  body.view-sponsor [data-ops] { display: none !important; }
+
+  /* ---- sponsor headline panel ---- */
+  .sponsor-hero { background: linear-gradient(135deg, rgba(0,212,255,0.07), transparent 55%),
+    var(--surface-1); border: 1px solid var(--hairline); border-radius: 16px;
+    padding: 20px 22px; margin-bottom: 22px; }
+  .sponsor-hero h2 { margin: 0 0 4px; font-size: 19px; letter-spacing: -0.01em; }
+  .sponsor-hero .lede { color: var(--ink-3); font-size: 13px; margin-bottom: 16px;
+    max-width: 78ch; }
+  .reach-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 14px; }
+  .reach-item { border-left: 2px solid var(--accent); padding-left: 11px; }
+  .reach-item .r-v { font-size: 25px; font-weight: 650; letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums; line-height: 1.1; }
+  .reach-item .r-l { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--ink-4); margin-top: 3px; }
+  .reach-item .r-s { font-size: 11.5px; color: var(--ink-3); margin-top: 3px; }
+
   /* ---- hero stat tiles ---- */
   .tile-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 12px; margin-bottom: 28px; }
@@ -211,27 +250,38 @@
     <div class="subtitle" id="generated-at">Loading dashboard data…</div>
     <div class="subtitle" style="margin-top:2px;">RSS downloads · Spotify · Apple · YouTube · site · spend — side by side, never one fake “reach” number.</div>
   </div>
-  <div class="health-pills" id="status-summary" hidden>
-    <span class="pill ok"><span id="count-ok">0</span>&nbsp;OK</span>
-    <span class="pill warn"><span id="count-warn">0</span>&nbsp;warn</span>
-    <span class="pill fail"><span id="count-fail">0</span>&nbsp;fail</span>
-    <span class="pill idle" id="last-refreshed"></span>
+  <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
+    <div class="view-switch" role="group" aria-label="Dashboard view">
+      <button type="button" id="view-operator" aria-pressed="true">Operator</button>
+      <button type="button" id="view-sponsor" aria-pressed="false">Sponsor</button>
+    </div>
+    <div class="health-pills" id="status-summary" data-ops hidden>
+      <span class="pill ok"><span id="count-ok">0</span>&nbsp;OK</span>
+      <span class="pill warn"><span id="count-warn">0</span>&nbsp;warn</span>
+      <span class="pill fail"><span id="count-fail">0</span>&nbsp;fail</span>
+      <span class="pill idle" id="last-refreshed"></span>
+    </div>
   </div>
+</div>
+<div class="view-note" id="view-note" hidden>
+  Sponsor view — audience, reach and catalogue only. Internal spend and
+  pipeline-health panels are hidden. Share this page with
+  <code>?view=sponsor</code> to open it here directly.
 </div>
 
 <nav class="mc-nav" aria-label="Sections">
   <a href="#audience-section">Audience</a>
   <a href="#distribution">Distribution</a>
   <a href="#catalog">Catalog</a>
-  <a href="#operations">Operations</a>
-  <a href="#library">Lake &amp; images</a>
+  <a href="#operations" data-ops>Operations</a>
+  <a href="#library" data-ops>Lake &amp; images</a>
   <a href="#shows">Shows</a>
-  <a href="#guards">Guards</a>
-  <a href="#voice">Voice</a>
+  <a href="#guards" data-ops>Guards</a>
+  <a href="#voice" data-ops>Voice</a>
   <a href="#mit">MIT performance</a>
-  <a href="#feeds">Feeds</a>
-  <a href="docs/analytics.md">Analytics contract ↗</a>
-  <a href="api/dashboard.json">Raw JSON ↗</a>
+  <a href="#feeds" data-ops>Feeds</a>
+  <a href="docs/analytics.md" data-ops>Analytics contract ↗</a>
+  <a href="api/dashboard.json" data-ops>Raw JSON ↗</a>
 </nav>
 
 <div id="error">
@@ -242,7 +292,14 @@
 
 <main id="content" hidden>
 
-  <div class="alert-band" id="alert-band"></div>
+  <div class="alert-band" id="alert-band" data-ops></div>
+
+  <section class="sponsor-hero" data-sponsor id="sponsor-hero">
+    <h2>Nerra Network at a glance</h2>
+    <div class="lede" id="sponsor-lede"></div>
+    <div class="reach-grid" id="reach-grid"></div>
+    <p class="view-note" id="sponsor-method" style="margin-top:15px;"></p>
+  </section>
 
   <div class="tile-row" id="tile-row"></div>
 
@@ -271,7 +328,7 @@
     </div>
   </section>
 
-  <section class="mc-section" id="operations">
+  <section class="mc-section" data-ops id="operations">
     <h2>Operations</h2>
     <div class="card-grid" id="operations-grid">
       <!-- Multilingual coverage card hydrates into this static anchor -->
@@ -279,7 +336,7 @@
     </div>
   </section>
 
-  <section class="mc-section" id="library">
+  <section class="mc-section" data-ops id="library">
     <h2>Content lake &amp; image library</h2>
     <div class="card-grid" id="library-grid"></div>
   </section>
@@ -289,13 +346,13 @@
     <div class="card-grid" id="shows-grid"></div>
   </section>
 
-  <section class="mc-section" id="guards">
+  <section class="mc-section" data-ops id="guards">
     <h2>Landmine guards</h2>
     <div id="claude-md-banner" hidden></div>
     <div class="card-grid" id="landmines-grid"></div>
   </section>
 
-  <section class="mc-section" id="voice">
+  <section class="mc-section" data-ops id="voice">
     <h2>Voice settings consistency</h2>
     <div class="mc-card" style="padding:0;overflow-x:auto;">
       <table class="mc-table" id="voice-table">
@@ -315,7 +372,7 @@
     <div id="mit-performance"></div>
   </section>
 
-  <section class="mc-section" id="feeds">
+  <section class="mc-section" data-ops id="feeds">
     <h2>Feed audit (latest)</h2>
     <div class="mc-card" id="feed-audit"></div>
   </section>
@@ -435,6 +492,10 @@
 
   const statTile = (label, value, opts = {}) => {
     const tile = h("div", { class: "tile" });
+    // Internal-only tiles (spend, per-episode cost) are hidden in the
+    // shareable sponsor view — see the view switch at the bottom.
+    if (opts.ops) tile.setAttribute("data-ops", "");
+    if (opts.sponsorOnly) tile.setAttribute("data-sponsor", "");
     tile.appendChild(h("div", { class: "t-label", text: label }));
     const v = h("div", { class: "t-value", text: value });
     if (opts.delta != null && opts.delta !== 0) {
@@ -519,6 +580,29 @@
     // quiet: surfaced in the Spotify card, not the alert band
   }
 
+  // Feeds confirmed live on the two directories that carry the large
+  // majority of podcast listening. Read from the live coverage table,
+  // never hardcoded, so the figure cannot outlive the reality it
+  // describes — and taken as the max rather than the sum, because the
+  // same feed listed on both platforms is one feed, not two.
+  function liveFeedCount(d) {
+    const plat = ((d.distribution || {}).platforms) || {};
+    return ["Apple", "Spotify"].reduce(function (best, name) {
+      return Math.max(best, (plat[name] || {}).live || 0);
+    }, 0);
+  }
+
+  // Distinct languages the network actually publishes audio in: English
+  // plus every language any show generates a translated track for.
+  function sponsorLanguageCount(d) {
+    const langs = new Set(["en"]);
+    const per = ((d.multilingual || {}).per_show) || {};
+    Object.keys(per).forEach(function (slug) {
+      (per[slug].languages || []).forEach(function (l) { langs.add(String(l)); });
+    });
+    return langs.size;
+  }
+
   // ---------- hero stat tiles ----------
   const tiles = $("#tile-row");
   const chSum = (field) => Object.values(yt.channels || {})
@@ -553,13 +637,25 @@
       spark: siteSpark,
       sparkTitle: "Daily active users, last " + siteSpark.length + " days" }));
   tiles.appendChild(statTile("Spend · 7d", money(data.network.total_cost_last_7_days_usd),
-    { sub: money(data.network.total_cost_last_30_days_usd) + " · 30d · " +
+    { ops: true,
+      sub: money(data.network.total_cost_last_30_days_usd) + " · 30d · " +
            (eff.usd_per_op3_download_7d != null
              ? ("$" + Number(eff.usd_per_op3_download_7d).toFixed(3) + "/RSS dl")
              : (money((cost.projections || {}).projected_weekly_usd) + "/wk burn")) }));
   tiles.appendChild(statTile("Episodes · 7d", fmt((cost.network_last_7_days || {}).episodes),
-    { sub: money((cost.projections || {}).avg_cost_per_episode_usd) + " avg / episode · " +
+    { ops: true,
+      sub: money((cost.projections || {}).avg_cost_per_episode_usd) + " avg / episode · " +
            fmt(catalog.shows_count || (data.network || {}).shows_count) + " shows" }));
+  // Sponsor-facing counterparts to the two tiles above: the same
+  // production reality stated as scale rather than as cost.
+  tiles.appendChild(statTile("Episodes published", compact(catalog.network_episodes_to_date),
+    { sponsorOnly: true,
+      sub: fmt((cost.network_last_7_days || {}).episodes) + " in the last 7d · " +
+           fmt(catalog.shows_count || (data.network || {}).shows_count) + " active shows" }));
+  tiles.appendChild(statTile("Languages", fmt(sponsorLanguageCount(data)),
+    { sponsorOnly: true,
+      sub: "original + translated audio tracks · " +
+           fmt(Object.keys(yt.channels || {}).length) + " YouTube channels" }));
   tiles.appendChild(statTile("Newsletter", bd.configured ? fmt(bd.subscriber_count) : "—",
     { sub: bd.configured ? "subscribers · Buttondown" : "not configured" }));
   tiles.appendChild(statTile("Image library", gallery.configured ? compact(gallery.image_count) : "—",
@@ -716,6 +812,27 @@
     audGrid.appendChild(card);
   }
 
+  // Is the Apple card's PRIMARY source actually reporting?
+  //
+  // The two Apple sources count shows under different keys — the cookie
+  // scrape publishes `feeds_reporting`, the official Reporter feed
+  // publishes `shows_reporting` — and the flattened view carries only
+  // whichever the primary source used. Testing `feeds_reporting` alone
+  // therefore read as "not reporting" on every Reporter-primary run, so
+  // the card claimed "0 of 0 registered shows" while sitting on real
+  // Apple data (60 plays across 2 shows on 2026-07-27). Ask the numbers
+  // instead of a source-specific key.
+  function appleIsReporting(ap) {
+    if (ap.shows_reporting > 0 || ap.feeds_reporting > 0) return true;
+    const t = ap.totals || {};
+    if ((t.plays || 0) > 0 || (t.listeners || 0) > 0) return true;
+    const per = ap.per_show || {};
+    return Object.keys(per).some(function (s) {
+      const v = per[s] || {};
+      return (v.plays || 0) > 0 || (v.listeners || 0) > 0;
+    });
+  }
+
   // Apple Podcasts — engagement (OP3 already has Apple downloads)
   {
     const ap = audience.apple || {};
@@ -731,7 +848,7 @@
               "plays and completion — the only finish-rate signal the network gets." }));
     } else if (ap.error) {
       card.appendChild(h("p", { class: "fine-list", text: "Apple error: " + ap.error }));
-    } else if (!(ap.feeds_reporting > 0)) {
+    } else if (!appleIsReporting(ap)) {
       card.appendChild(h("div", { class: "headline",
         html: "—<small>not reporting</small>" }));
       card.appendChild(h("p", { class: "platform-note", text:
@@ -1599,6 +1716,125 @@
   });
   det.appendChild(list);
   auditEl.appendChild(det);
+
+  // ---------- sponsor reach panel ----------
+  // Deliberately NOT one blended "reach" number. Each platform counts a
+  // different event (an RSS download is not a Spotify stream is not a
+  // YouTube view), and the network's own analytics contract says never
+  // to sum them into a single figure. A sponsor gets the real shape
+  // instead: what each surface delivers, and which way the trend runs.
+  (function renderSponsorPanel() {
+    const grid = $("#reach-grid");
+    if (!grid) return;
+    const weeks = (op3.network_weekly_history || []).map((r) => Number(r[1] || 0));
+    const lastW = weeks.length ? weeks[weeks.length - 1] : 0;
+    const prevW = weeks.length > 1 ? weeks[weeks.length - 2] : 0;
+    const growth = prevW > 0 ? Math.round(((lastW - prevW) / prevW) * 100) : null;
+    const ytViews = yt.network_views != null ? yt.network_views : chSum("total_views");
+    const ytSubs = chSum("subscribers");
+
+    const items = [
+      { v: compact(op3.network_downloads_30d), l: "Podcast downloads · 30d",
+        s: fmt(op3.network_downloads_all_time) + " all-time (OP3-verified)" },
+      { v: (growth == null ? "—" : (growth > 0 ? "+" : "") + growth + "%"),
+        l: "Week-over-week growth",
+        s: fmt(prevW) + " → " + fmt(lastW) + " downloads/wk" },
+      // Lifetime channel views, labelled as such. `network_views` is the
+      // 90-day Analytics window and reads as a lifetime figure if the
+      // label does not say otherwise — on a page a sponsor may rely on,
+      // the smaller honest number with the right label beats the bigger
+      // ambiguous one.
+      { v: compact(chSum("total_views")), l: "YouTube views · lifetime",
+        s: fmt(ytSubs) + " subscribers · " + compact(ytViews) + " views in the last " +
+           fmt(yt.window_days || 90) + "d" },
+      { v: sp.configured ? compact((sp.totals || {}).streams) : "—",
+        l: "Spotify streams · 30d",
+        s: sp.configured ? fmt((sp.totals || {}).listeners) + " listeners · " +
+           fmt((sp.totals || {}).followers) + " followers" : "not connected" },
+      { v: compact(catalog.network_episodes_to_date), l: "Episodes published",
+        s: fmt(catalog.shows_count || (data.network || {}).shows_count) +
+           " shows · " + fmt(sponsorLanguageCount(data)) + " languages" },
+      // Feeds actually listed, not directories counted. A bare "2" read
+      // as a weakness while its own subtitle claimed "every major
+      // directory" — the honest and stronger statement is how many show
+      // and language editions are live on the two platforms that carry
+      // the large majority of podcast listening.
+      { v: fmt(liveFeedCount(data)), l: "Feeds live on Apple + Spotify",
+        s: "every show and language edition listed · YouTube runs as its " +
+           "own channel network" },
+    ];
+    items.forEach((it) => {
+      const cell = h("div", { class: "reach-item" });
+      cell.appendChild(h("div", { class: "r-v", text: it.v }));
+      cell.appendChild(h("div", { class: "r-l", text: it.l }));
+      cell.appendChild(h("div", { class: "r-s", text: it.s }));
+      grid.appendChild(cell);
+    });
+
+    const lede = $("#sponsor-lede");
+    if (lede) {
+      lede.textContent =
+        fmt(catalog.shows_count || (data.network || {}).shows_count) +
+        " original shows publishing " +
+        fmt((cost.network_last_7_days || {}).episodes) +
+        " episodes a week in " + fmt(sponsorLanguageCount(data)) +
+        " languages, on Apple Podcasts, Spotify and YouTube.";
+    }
+    const method = $("#sponsor-method");
+    if (method) {
+      method.textContent =
+        "Every figure is measured, not modelled: downloads are IAB-style " +
+        "counts from OP3, YouTube from the official Analytics API, Spotify " +
+        "and Apple from their creator dashboards. Platform numbers are shown " +
+        "side by side and never summed — a download, a stream and a view are " +
+        "different events. Updated " + ageText(data.generated_at) + ".";
+    }
+  })();
+
+  // ---------- view switch ----------
+  (function viewSwitch() {
+    const opBtn = $("#view-operator");
+    const spBtn = $("#view-sponsor");
+    const note = $("#view-note");
+    if (!opBtn || !spBtn) return;
+
+    const h1 = document.querySelector(".mc-header h1");
+    const sub = document.querySelector(".mc-header .subtitle:last-of-type");
+    const OPERATOR_H1 = h1 ? h1.textContent : "";
+    const OPERATOR_SUB = sub ? sub.textContent : "";
+
+    function apply(view, push) {
+      const sponsor = view === "sponsor";
+      document.body.classList.toggle("view-sponsor", sponsor);
+      opBtn.setAttribute("aria-pressed", String(!sponsor));
+      spBtn.setAttribute("aria-pressed", String(sponsor));
+      if (note) note.hidden = !sponsor;
+      // The masthead is operator language ("Mission Control", "spend").
+      // Swap it rather than leaving a sponsor reading a console header.
+      if (h1) h1.textContent = sponsor
+        ? "Nerra Network — Audience & Reach" : OPERATOR_H1;
+      if (sub) sub.textContent = sponsor
+        ? "Downloads, streams, views and subscribers — measured per platform, never blended into one number."
+        : OPERATOR_SUB;
+      try { localStorage.setItem("nerraDashView", view); } catch (e) { /* private mode */ }
+      if (push) {
+        const u = new URL(window.location.href);
+        if (sponsor) u.searchParams.set("view", "sponsor");
+        else u.searchParams.delete("view");
+        history.replaceState(null, "", u);
+      }
+    }
+
+    // URL wins over the stored preference, so a shared link always opens
+    // the way the sender intended.
+    let initial = new URLSearchParams(window.location.search).get("view");
+    if (initial !== "sponsor" && initial !== "operator") {
+      try { initial = localStorage.getItem("nerraDashView"); } catch (e) { initial = null; }
+    }
+    apply(initial === "sponsor" ? "sponsor" : "operator", false);
+    opBtn.addEventListener("click", () => apply("operator", true));
+    spBtn.addEventListener("click", () => apply("sponsor", true));
+  })();
 })();
 </script>
 </body>
