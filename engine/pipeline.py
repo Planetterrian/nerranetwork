@@ -249,6 +249,14 @@ def record_youtube_outcomes(
             metrics.record("scene_library_count", int(youtube_urls.get("scene_library_count", 0) or 0))
         if "broll_clips_used" in youtube_urls:
             metrics.record("broll_clips_used", int(youtube_urls.get("broll_clips_used", 0) or 0))
+        # Shorts-only scene saving (July 2026): 16:9 scenes are only worth
+        # generating when a long-form video is actually produced.
+        if "scene_long_form_produced" in youtube_urls:
+            metrics.record("scene_long_form_produced",
+                           bool(youtube_urls["scene_long_form_produced"]))
+        if "scene_fresh_long_requested" in youtube_urls:
+            metrics.record("scene_fresh_long_requested",
+                           int(youtube_urls.get("scene_fresh_long_requested", 0) or 0))
         if youtube_urls.get("thumbnail_base"):
             metrics.record("thumbnail_base", str(youtube_urls["thumbnail_base"]))
         if youtube_urls.get("thumbnail_variant_urls"):

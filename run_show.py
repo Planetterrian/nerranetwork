@@ -4788,7 +4788,9 @@ def _publish_youtube(
     except Exception:  # pragma: no cover — best-effort
         narrative_keywords = None
 
-    def _run_grok_path(*, aspect: str, label_suffix: str) -> "list[Path]":
+    def _run_grok_path(
+        *, aspect: str, label_suffix: str, count: int = 4,
+    ) -> "list[Path]":
         from engine.grok_imagine import (
             build_image_prompts,
             fetch_scene_images_grok,
@@ -4808,7 +4810,10 @@ def _publish_youtube(
                 # the Grok Imagine spend on YouTube-enabled shows
                 # (Tesla + MAB). Compliance is unaffected — the
                 # ``containsSyntheticMedia`` flag is binary.
-                count=4,
+                #
+                # The 16:9 count drops to 1 on days no long-form video is
+                # produced — see ``_fresh_long_scene_count`` below.
+                count=count,
                 show_descriptor=getattr(
                     yt, "grok_image_descriptor", "photorealistic news photo",
                 ),
@@ -5001,9 +5006,31 @@ def _publish_youtube(
 
     # Skip image provider logic if video_provider is enabled (videos replace
     # slides) or the recap pool already supplied both scene sets.
+    # How many FRESH 16:9 scenes this episode actually needs. The 9:16 set
+    # always gets the full four — those are the Shorts, which every tier
+    # publishes. But 16:9 scenes feed exactly three consumers: the
+    # long-form slideshow, the long-form thumbnail (+ its Studio variants),
+    # and the gallery library. On a shorts-only policy day for a show with
+    # no video-podcast feed, the slideshow is never rendered and the
+    # thumbnail is only a fallback — so three of the four images are
+    # generated, paid for, and never seen. Keep one (thumbnail base +
+    # gallery contribution); drop the rest. Shorts thumbnails are
+    # unaffected: they come from ``short_scene_paths`` (9:16).
+    _long_form_produced = bool(_policy_publish_long or config.video_podcast.enabled)
+    _fresh_long_scene_count = 4 if _long_form_produced else 1
+
     if video_provider != "grok" and not recap_pool_used:
         if image_provider == "grok":
-            long_scene_paths = _run_grok_path(aspect="16:9", label_suffix="")
+            if not _long_form_produced:
+                logger.info(
+                    "%s: no long-form video today (policy tier skip, no video "
+                    "podcast) — generating %d fresh 16:9 scene(s) instead of 4.",
+                    config.slug, _fresh_long_scene_count,
+                )
+            long_scene_paths = _run_grok_path(
+                aspect="16:9", label_suffix="",
+                count=_fresh_long_scene_count,
+            )
             short_scene_paths = _run_grok_path(aspect="9:16", label_suffix="_short")
         elif image_provider == "hybrid":
             _run_pexels_path(into_long=True, into_short=False)
@@ -5927,6 +5954,10 @@ def _publish_youtube(
     else:
         result["visual_mode"] = str(_visual_plan.get("mode") or "cover")
     result["scene_fresh_count"] = len(fresh_long_scenes) + len(fresh_short_scenes)
+    # Measure the shorts-only scene saving rather than assuming it: this is
+    # 3 fewer paid Grok Imagine images on every such episode.
+    result["scene_long_form_produced"] = _long_form_produced
+    result["scene_fresh_long_requested"] = _fresh_long_scene_count
     result["scene_library_count"] = (
         scene_library_count + (len(long_scene_paths) + len(short_scene_paths)
                                if recap_pool_used else 0)
