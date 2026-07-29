@@ -1,0 +1,123 @@
+Welcome back to Models and Agents, episode 126. It's July 29, 2026. Let's see what happened in the AI world today. And trust me, it's been busy.
+
+Claude just found a previously unknown attack on a quantum-resistant signature scheme that survived two years of expert review.
+
+Anthropic’s Mythos Preview model discovered a practical break in the HAWK digital signature scheme.
+
+The same lab also released new research showing how frontier models can surface cryptographic weaknesses at scale.
+
+Remember, we covered frontier model capabilities yesterday — this new work applies those models to cryptographic discovery.
+
+The model found an attack on the HAWK digital signature scheme that reduced key strength by half after sixty hours of work.
+
+The same system sped up an existing attack on a reduced AES cipher by two hundred to eight hundred times within a week.
+
+These results come from a model that had already received two years of expert scrutiny on HAWK.
+
+The symmetric cipher tested was a reduced version of the Advanced Encryption Standard.
+
+Teams working on cryptographic implementations or automated red-teaming should test whether similar preview access changes their evaluation pipelines.
+
+Now let's move to the model updates.
+
+Liquid AI released two open-weight bidirectional encoders built on the LFM2 hybrid backbone.
+
+Both support an eight thousand one hundred ninety-two token context window.
+
+The three hundred fifty million parameter model ranked fourth among fourteen models on a seventeen-task GLUE, SuperGLUE, and multilingual suite.
+
+The two hundred thirty million parameter variant completes a single eight thousand token forward pass on CPU in roughly twenty-eight seconds.
+
+The encoders are released as open weights.
+
+SK Telecom announced its own AI foundation model named AIDATX K2.
+
+The release includes plans to distribute the model more broadly.
+
+No parameter count, benchmark numbers, or licensing details were shared in the initial announcement.
+
+Developers in the Korean market or those tracking regional foundation-model efforts should monitor the forthcoming technical report for architecture and training details.
+
+OpenAI quietly released an open-source Codex Security CLI that scans repositories, tracks findings across runs, verifies fixes, and integrates into CI/CD pipelines.
+
+The tool is available via npm with the command npx at OpenAI slash codex-security at latest dash dash help.
+
+The CLI supports repository scanning, cross-run tracking of findings, fix verification, and CI/CD security checks.
+
+The GitHub repository contains both source code and documentation.
+
+Security-focused teams should add it to existing scanning workflows to compare signal quality against current static-analysis tools.
+
+Wiz launched Atlas, an autonomous AI agent for vulnerability research that currently ranks first on the CyberGym benchmark.
+
+The agent focuses on finding security issues in cloud environments.
+
+Security researchers and red-team operators should watch for public access or API details to test it against internal environments.
+
+Google launched Gemini Spark, a twenty-four seven personal AI agent, initially in Hong Kong.
+
+The agent is positioned for continuous personal assistance.
+
+Users in supported regions should test availability through existing Gemini channels to evaluate real-world reliability.
+
+A new preprint adapts classical isnād–rijāl chain-of-transmission verification into a claim-level trust layer for multi-agent LLM systems.
+
+Each claim carries a graded transmission chain, with independent corroboration scored separately from content evaluation.
+
+The author released both the paper and code plus evaluations.
+
+The approach draws on a roughly twelve-century-old methodology for verifying transmitted statements.
+
+Every claim receives a full chain of transmitters graded on integrity and precision.
+
+Teams building multi-agent pipelines that need provenance beyond agent identity should review the failure-mode discussion for applicability.
+
+TabRank distills chain-of-thought reasoning into compact table rerankers using six thousand seven hundred twenty-eight reasoning traces collected on the Natural Questions Tables dataset.
+
+The approach improves Acc at ten by thirty point five percent on HybridQA, fifteen point two percent on SQA, fifty-two point nine percent on TabFact, and thirteen point one percent on TATQA subsets of the Multi-Table QA Benchmark.
+
+Code, data, and models are available at the repository.
+
+The method shows strong generalization to multi-table scenarios.
+
+Practitioners working on structured retrieval should test the distilled reranker against their current table-ranking stack.
+
+OK, let's pop the hood on the spike-induced sparsity work in neuromorphic diffusion models.
+
+Everyone talks about diffusion language models as a straightforward way to improve inference throughput over autoregressive decoding.
+
+In practice the efficiency gain comes from a specific engineering choice: allowing multiple tokens to be generated per parameter access through block diffusion, then layering spike-based neuromorphic computation on top.
+
+The block mechanism alone raises token throughput, but the real leverage appears when spike-induced sparsity skips inactive channels entirely, cutting both parameter traffic and compute.
+
+On translation tasks this combination delivers measurable energy and throughput wins even on platforms where standard masked diffusion models would lose to autoregressive baselines.
+
+The tradeoff is that the sparsity pattern must be discovered at runtime; overly aggressive skipping can drop accuracy unless the kernel uses online-softmax statistics to decide which blocks to retain.
+
+The token-level roofline model developed in the work captures how block-parallel generation and spike sparsity interact on decoding efficiency.
+
+When your workload is memory-bound and you already have neuromorphic hardware or a simulator, the approach is worth testing; if you are strictly compute-bound on dense GPUs, the added complexity rarely justifies the gain.
+
+The gotcha most teams hit is assuming the sparsity will be static; real workloads require the kernel to adapt the skip mask per step.
+
+If you haven't tried the Codex Security CLI yet, this week is a great time because you can install it with npx at OpenAI slash codex-security at latest dash dash help and run it on a small internal repo.
+
+Benchmark Liquid AI’s LFM2.5-Encoder-230M on an eight thousand token CPU classification task you currently run with a larger encoder to measure latency and accuracy tradeoffs.
+
+Review the ISNAD paper and code if you maintain multi-agent pipelines that need claim-level provenance beyond simple agent logging.
+
+Test TabRank’s distilled reranker on any table-heavy QA workload you have in HybridQA or TabFact format.
+
+Further details on SK Telecom’s AIDATX K2 distribution and technical specifications are expected in the coming weeks.
+
+Additional results from Anthropic’s Mythos Preview cryptographic work may appear as other labs attempt replication.
+
+Public access or API details for Wiz Atlas and Google Gemini Spark remain pending.
+
+Tomorrow, keep an eye on further details on SK Telecom’s AIDATX K2 distribution plans.
+
+That wraps up today's AI briefing. Share this with a developer or builder who wants to stay current. Subscribe wherever you listen. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes. This show comes to you from the Nerra Network.
+
+If you want another sharp daily briefing, Environmental Intelligence has you covered — the environment and climate-policy brief for Canada. All our shows are free at nerranetwork.com. Prefer reading? Today's full write-up, sources, and transcript are on the episode blog at nerranetwork.com — same briefing, readable format.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
