@@ -87,18 +87,29 @@ DEFAULT_DAYS = 4
 _METRICS = ("plays", "listeners", "engaged_listeners", "listening_hours")
 
 
-def load_daily() -> dict:
+def load_daily() -> dict | None:
+    """Load the durable store, or ``None`` when it must not be touched.
+
+    ``None`` means the file exists but is unreadable OR has the wrong
+    shape — either way the caller must refuse to write, because a fresh
+    4-day store on top of the irreplaceable history is exactly the loss
+    this guards against. (Wrong-shape valid JSON — ``{"days": null}``, a
+    list — is the same hazard as a parse error and gets the same
+    refusal.)
+    """
     if not DAILY_PATH.exists():
         return {"days": {}}
     try:
         data = json.loads(DAILY_PATH.read_text(encoding="utf-8"))
-        if isinstance(data, dict) and isinstance(data.get("days"), dict):
-            return data
     except Exception as exc:  # noqa: BLE001 — a corrupt store must not erase history
         logger.warning("Could not read %s (%s) — refusing to overwrite it",
                        DAILY_PATH.name, exc)
-        raise SystemExit(1)
-    return {"days": {}}
+        return None
+    if isinstance(data, dict) and isinstance(data.get("days"), dict):
+        return data
+    logger.warning("%s has an unexpected shape — refusing to overwrite it",
+                   DAILY_PATH.name)
+    return None
 
 
 def show_slugs_by_id() -> Dict[str, str]:
@@ -182,6 +193,15 @@ def main(argv=None) -> int:
         return 0
 
     store = load_daily()
+    if store is None:
+        # Loud but non-fatal: a SystemExit here would abort the whole
+        # nightly "Fetch audience stats" step (dashboard, site regen,
+        # commit) over one damaged analytics file. The annotation is the
+        # alarm; the skipped write is the protection.
+        print(f"::error::{DAILY_PATH.name} is unreadable or malformed — "
+              "Apple Reporter fetch skipped to avoid erasing irreplaceable "
+              "history. Restore the file from git.", flush=True)
+        return 0
     days = store.setdefault("days", {})
     before = len(days)
 
@@ -220,6 +240,18 @@ def main(argv=None) -> int:
     logger.info("%d day(s) fetched, %d without a report, %d error(s); "
                 "store holds %d day(s) (was %d)",
                 fetched, absent, errors, len(days), before)
+
+    if absent and not fetched and not errors and before:
+        # Every request cleanly answered "no report" against a store that
+        # HAS history. Apple phrases a wrong vendor number exactly like a
+        # pre-provisioning date, so a typo'd APPLE_REPORTER_VENDOR looks
+        # like this — permanently, with green runs — and every day it
+        # persists is unrecoverable. Say so where someone will see it.
+        print("::warning::Apple Reporter returned no report for any day in "
+              f"the window despite {before} day(s) of prior history. If "
+              "this persists, verify APPLE_REPORTER_VENDOR — a wrong "
+              "vendor number is indistinguishable from 'no data' and the "
+              "missed days cannot be backfilled.", flush=True)
 
     if args.dry_run:
         print(json.dumps(rollup, indent=2)[:2000])

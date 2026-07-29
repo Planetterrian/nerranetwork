@@ -80,6 +80,29 @@ def check(path: Path, max_age_days: float, now: dt.datetime) -> tuple[bool, str]
             "docs/analytics.md."
         )
 
+    # A fresh fetch that keeps returning "no report" advances fetched_at
+    # but NOT last_date. That is what a wrong APPLE_REPORTER_VENDOR looks
+    # like (Apple phrases it exactly like a pre-provisioning date), and
+    # every day it persists is unrecoverable history.
+    try:
+        last_report = dt.datetime.strptime(last_date, "%Y-%m-%d").replace(
+            tzinfo=dt.timezone.utc)
+    except ValueError:
+        last_report = None
+    if last_report is not None:
+        report_lag_days = (now - last_report).total_seconds() / 86400
+        # +1: Apple publishes next-day, so "yesterday missing" is normal.
+        if report_lag_days > max_age_days + 1:
+            return False, (
+                f"Apple Reporter fetches are running (last fetch "
+                f"{fetched.date()}) but the newest report date is still "
+                f"{last_date} — {report_lag_days:.1f} days ago. Every "
+                "request is answering 'no report'; verify "
+                "APPLE_REPORTER_VENDOR (a wrong vendor number is "
+                "indistinguishable from 'no data') — missed days cannot "
+                "be backfilled. See docs/analytics.md."
+            )
+
     return True, (
         f"Apple Reporter fresh: fetched {age_days:.1f} days ago, "
         f"through {last_date}, {shows} show(s)."

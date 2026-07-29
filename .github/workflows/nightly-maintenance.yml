@@ -233,7 +233,10 @@ jobs:
         # for. Deletes only branches provably already on main; an unmerged
         # branch is reported, never removed.
         run: |
-          git fetch origin 'refs/heads/recovery/*:refs/remotes/origin/recovery/*' --quiet || true
+          # --depth=1: only the tips are needed for the ancestry check;
+          # the script deepens MAIN itself (bounded, --shallow-since) so
+          # merged-ness stays decidable in this fetch-depth:1 checkout.
+          git fetch --depth=1 origin 'refs/heads/recovery/*:refs/remotes/origin/recovery/*' --quiet || true
           python scripts/prune_recovery_branches.py --apply \
             || echo "::warning::Recovery-branch cleanup failed (non-fatal)"
 

@@ -55,6 +55,7 @@ import gzip
 import io
 import json
 import logging
+import shlex
 import subprocess
 import urllib.error
 import urllib.parse
@@ -480,12 +481,11 @@ def fetch_report(
     # reports a misleading "Invalid vendor number specified".
     params = f"{vendor},{report_type},Summary,Daily,{date}"
     cmd = ["java", "-jar", str(jar_path),
-           f"p={Path(properties_path).name}", f"Sales.getReport {params}"]
+           f"p={Path(properties_path).name}", "Sales.getReport", params]
 
     try:
         proc = subprocess.run(
-            ["java", "-jar", str(jar_path), f"p={Path(properties_path).name}",
-             "Sales.getReport", params],
+            cmd,
             cwd=str(cwd), capture_output=True, text=True, timeout=timeout,
         )
     except FileNotFoundError:
@@ -522,5 +522,8 @@ def fetch_report(
         result.rows = parse_show_listening(downloaded.read_bytes())
     except Exception as exc:  # noqa: BLE001 — analytics never break a run
         result.error = f"could not parse {downloaded.name}: {exc}"
-    logger.debug("Reporter command was: %s", " ".join(cmd))
+    # shlex.join keeps the params a single argv element in the log — a
+    # bare space-join prints exactly the split-args form the comment
+    # above warns against reproducing.
+    logger.debug("Reporter command was: %s", shlex.join(cmd))
     return result
