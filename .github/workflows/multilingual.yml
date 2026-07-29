@@ -235,6 +235,11 @@ jobs:
           R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          # Escape hatch for the single-pass render (default ON in
+          # engine.video since the July 29 2026 A/B). Set the repo
+          # variable to 0 to force the legacy two-stage path here too,
+          # so one switch covers the dub renders as well as run-show.
+          NERRA_SINGLE_PASS_RENDER: ${{ vars.NERRA_SINGLE_PASS_RENDER }}
         run: |
           LATEST="${{ github.event.inputs.latest }}"
           [ -z "$LATEST" ] && LATEST=3
@@ -263,6 +268,11 @@ jobs:
           R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          # Escape hatch for the single-pass render (default ON in
+          # engine.video since the July 29 2026 A/B). Set the repo
+          # variable to 0 to force the legacy two-stage path here too,
+          # so one switch covers the dub renders as well as run-show.
+          NERRA_SINGLE_PASS_RENDER: ${{ vars.NERRA_SINGLE_PASS_RENDER }}
         run: |
           LATEST="${{ github.event.inputs.latest }}"
           [ -z "$LATEST" ] && LATEST=3

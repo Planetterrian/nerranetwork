@@ -43,22 +43,42 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 SCENES = [Path(f"/tmp/scene{i}.png") for i in range(4)]
 
 
-class TestDefaultIsUnchanged:
-    """The flag is off by default; legacy behaviour must be untouched."""
+class TestDefaultIsOnWithAnEscapeHatch:
+    """Default flipped ON (July 29 2026) after an A/B on both production
+    render shapes — uniform stills and chapter-schedule-plus-captions —
+    which came out equivalent (same duration/frames/geometry, mean pixel
+    diff < 0.3/255, identical scene timeline) and 23-34% faster.
 
-    def test_disabled_without_the_env_var(self, monkeypatch):
+    The env var is now an escape hatch rather than an opt-in, so the
+    values that must keep working are the DISABLING ones. The two-stage
+    fallback on ffmpeg failure is pinned separately below — that is what
+    makes the flip safe in the first place."""
+
+    def test_enabled_without_the_env_var(self, monkeypatch):
         monkeypatch.delenv("NERRA_SINGLE_PASS_RENDER", raising=False)
-        assert video._single_pass_enabled() is False
+        assert video._single_pass_enabled() is True
 
-    @pytest.mark.parametrize("value", ["1", "true", "TRUE", "yes", "on"])
-    def test_enabled_values(self, monkeypatch, value):
+    @pytest.mark.parametrize("value", ["", "1", "true", "TRUE", "yes", "on"])
+    def test_absent_or_affirmative_values_stay_enabled(self, monkeypatch, value):
         monkeypatch.setenv("NERRA_SINGLE_PASS_RENDER", value)
         assert video._single_pass_enabled() is True
 
-    @pytest.mark.parametrize("value", ["", "0", "false", "off", "no"])
-    def test_disabled_values(self, monkeypatch, value):
+    @pytest.mark.parametrize("value", ["0", "false", "FALSE", "off", "no"])
+    def test_escape_hatch_forces_the_legacy_path(self, monkeypatch, value):
         monkeypatch.setenv("NERRA_SINGLE_PASS_RENDER", value)
         assert video._single_pass_enabled() is False
+
+    def test_dub_workflow_carries_the_escape_hatch(self):
+        """The dubs render long-form too. Before this, one switch could
+        not turn the fused path off everywhere."""
+        wf = (REPO_ROOT / ".github" / "workflows"
+              / "multilingual.yml").read_text(encoding="utf-8")
+        wired = [ln for ln in wf.splitlines()
+                 if ln.strip().startswith("NERRA_SINGLE_PASS_RENDER:")]
+        assert len(wired) == 2, (
+            "both the RU and FR dub publish steps must carry the hatch; "
+            f"found {len(wired)}"
+        )
 
 
 class TestInputIndexArithmetic:
