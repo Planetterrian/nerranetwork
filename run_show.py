@@ -662,8 +662,36 @@ def run(args: argparse.Namespace) -> None:
         )
 
     # 3. Tracker
-    from engine.tracking import create_tracker, save_usage
+    from engine.tracking import create_tracker, save_usage as _save_usage_raw
     tracker = create_tracker(config.name, episode_num)
+
+    def save_usage(tracker_arg, output_dir):
+        """Fold in xAI search-tool spend, then write the usage file.
+
+        The fetch layer bills server-side search (x_search / web_search)
+        per source consulted but has no tracker reference, so it
+        accumulates in ``digests.xai_grok`` and is drained here. Wrapping
+        save_usage rather than patching its seven call sites means the
+        abort paths (refusal, billing stop) report the searches they
+        already paid for instead of dropping them.
+        """
+        try:
+            from digests.xai_grok import drain_search_usage
+            from engine.tracking import record_search_usage
+
+            usage = drain_search_usage()
+            if usage.get("calls"):
+                record_search_usage(
+                    tracker_arg,
+                    calls=usage["calls"],
+                    sources=usage["sources"],
+                    prompt_tokens=usage["input_tokens"],
+                    completion_tokens=usage["output_tokens"],
+                    model=str(getattr(config.llm, "model", "") or ""),
+                )
+        except Exception as exc:  # never let accounting break a run
+            logger.warning("Search cost accounting failed (non-fatal): %s", exc)
+        return _save_usage_raw(tracker_arg, output_dir)
 
     # 3b. Initialize content lake database (idempotent — CREATE IF NOT EXISTS)
     try:
@@ -3145,6 +3173,13 @@ def run(args: argparse.Namespace) -> None:
                 tracker, _img_count, _img_cost,
                 model=str(getattr(config.youtube, "grok_image_model", "") or ""),
             )
+        # The July 28 cost pass shipped record_render_seconds with no
+        # caller, so `render.video_seconds` was always 0.0 and the "video
+        # render: N min" line could never print. The video stage is the
+        # episode's largest wall-clock item (~20 min on Tesla) — the one
+        # number that says whether the single-pass render is worth having.
+        from engine.tracking import record_render_seconds
+        record_render_seconds(tracker, time.monotonic() - _t_yt)
     except Exception as exc:  # never let accounting break a publish
         logger.warning("Image cost accounting failed (non-fatal): %s", exc)
 
