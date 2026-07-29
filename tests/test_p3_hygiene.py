@@ -219,6 +219,45 @@ class TestRecoveryBranchJanitor:
         prb.ensure_ancestry_provable([branch], now)
         assert prb.is_merged(branch, "origin/main") is True
 
+    def test_a_failed_deepen_does_not_alarm_on_its_own(
+            self, monkeypatch, capsys):
+        """CI checks out shallow, so the deepen runs — and when it cannot
+        succeed there, a standalone ``::warning::`` turned every quiet run
+        into a red one. The caveat belongs on the stranded alarm, not on
+        its own line: an internal git optimisation failing is not an
+        operator action."""
+        now = dt.datetime.now(dt.timezone.utc)
+        created = int((now - dt.timedelta(hours=2)).timestamp())
+        monkeypatch.setattr(
+            prb, "remote_recovery_branches",
+            lambda: [f"recovery/tesla-999-{created}"])
+        monkeypatch.setattr(prb, "is_merged", lambda b, base: False)
+        monkeypatch.setattr(prb, "ensure_ancestry_provable",
+                            lambda branches, now: False)
+
+        prb.main([])
+        out = capsys.readouterr().out
+        assert "::warning::" not in out
+        assert "in flight" in out
+
+    def test_an_undecidable_ancestry_caveats_the_stranded_alarm(
+            self, monkeypatch, capsys):
+        """When a branch IS alarmed and ancestry could not be proven, say
+        so — otherwise the operator chases an episode that shipped."""
+        now = dt.datetime.now(dt.timezone.utc)
+        created = int((now - dt.timedelta(hours=48)).timestamp())
+        monkeypatch.setattr(
+            prb, "remote_recovery_branches",
+            lambda: [f"recovery/tesla-999-{created}"])
+        monkeypatch.setattr(prb, "is_merged", lambda b, base: False)
+        monkeypatch.setattr(prb, "ensure_ancestry_provable",
+                            lambda branches, now: False)
+
+        prb.main([])
+        out = capsys.readouterr().out
+        assert "::warning::Stranded recovery branch" in out
+        assert "could not be deepened" in out
+
     def test_full_clone_is_left_untouched(self, monkeypatch):
         """On a non-shallow repo the deepen must be a no-op — a stray
         --shallow-since fetch here could shallowify a full clone."""

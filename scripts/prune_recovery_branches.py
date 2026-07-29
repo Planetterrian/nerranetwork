@@ -108,7 +108,7 @@ def branch_age_hours(branch: str, now: dt.datetime) -> float | None:
         return None
 
 
-def ensure_ancestry_provable(branches: list[str], now: dt.datetime) -> None:
+def ensure_ancestry_provable(branches: list[str], now: dt.datetime) -> bool:
     """Deepen a shallow clone far enough that merged-ness is decidable.
 
     Nightly checks out with ``fetch-depth: 1``. With only main's tip
@@ -120,16 +120,21 @@ def ensure_ancestry_provable(branches: list[str], now: dt.datetime) -> None:
     provable while staying bounded (days-to-weeks of text-only commits,
     not the full history — landmine #1).
 
-    Best-effort: on failure the janitor still runs, deletion stays
-    fail-safe (uncertain branches are never deleted), and the warning
-    below tells the operator why the classification may be wrong.
+    Returns True when ancestry is decidable (already a full clone, or the
+    deepen succeeded). Best-effort: on failure the janitor still runs and
+    deletion stays fail-safe — uncertain branches are never deleted — but
+    the caller appends a caveat to any stranded-branch alarm, because
+    that alarm is exactly what an undecidable ancestry can fake. The
+    caveat rides on the alarm rather than being its own ``::warning::``:
+    a standalone note about an internal git optimisation is noise on
+    every quiet run, and it fired in CI's own shallow checkout.
     """
     try:
         shallow = _git("rev-parse", "--is-shallow-repository") == "true"
     except subprocess.CalledProcessError:
-        return
+        return True
     if not shallow:
-        return
+        return True
 
     oldest: int | None = None
     for branch in branches:
@@ -149,12 +154,11 @@ def ensure_ancestry_provable(branches: list[str], now: dt.datetime) -> None:
     try:
         _git("fetch", "--quiet", f"--shallow-since={since.isoformat()}",
              "origin", "main")
+        return True
     except subprocess.CalledProcessError:
-        print(
-            "::warning::Could not deepen the shallow clone; merged "
-            "recovery branches may be misreported as stranded this run.",
-            flush=True,
-        )
+        print("Could not deepen the shallow clone — merged branches may "
+              "read as unmerged this run.", flush=True)
+        return False
 
 
 def show_of(branch: str) -> str:
@@ -180,7 +184,7 @@ def main(argv=None) -> int:
 
     print(f"{len(branches)} recovery branch(es) on origin\n")
     now = dt.datetime.now(dt.timezone.utc)
-    ensure_ancestry_provable(branches, now)
+    ancestry_provable = ensure_ancestry_provable(branches, now)
 
     merged, stranded, young = [], [], []
     for branch in branches:
@@ -203,12 +207,16 @@ def main(argv=None) -> int:
 
     # A stranded recovery branch means a generated, paid-for episode was
     # never published. That is worth an annotation someone will see.
+    caveat = "" if ancestry_provable else (
+        " NOTE: this clone could not be deepened, so a branch that WAS "
+        "merged can appear here — verify before acting."
+    )
     for branch, age in stranded:
         print(
             f"::warning::Stranded recovery branch {branch} "
             f"({show_of(branch)}) is {age:.0f}h old and not merged into "
             f"{args.base}. Its episode artifacts were generated but never "
-            f"published — merge or close the recovery PR.",
+            f"published — merge or close the recovery PR.{caveat}",
             flush=True,
         )
 
