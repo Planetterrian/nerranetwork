@@ -1,0 +1,130 @@
+name: Retitle YouTube Videos
+
+# On-demand repair of transcript-fragment titles on published videos.
+#
+# Before the July 18 2026 title-bundle work, a Short's title was the raw
+# opening text of its clip — "it's July 1st, 2026. Let's dive into
+# today's Tesla news. Tesla plans to add 1000 #Shorts". Measured across
+# every tracked upload that is 11% of Shorts before the fix against 1%
+# after: the pipeline was repaired and the back catalogue was left live
+# and indexed.
+#
+# This runs scripts/retitle_youtube_videos.py, which rebuilds each title
+# from the episode's committed digest headlines (the Short's own stored
+# hook IS the fragment for exactly these videos, so it cannot be the
+# source) and writes it back with videos.update.
+#
+# It exists as a workflow because the credentials live here. Running the
+# script on a laptop needs YOUTUBE_CLIENT_ID / _SECRET / _REFRESH_TOKEN_*
+# in a local .env; without them the script reports its plan and writes
+# nothing, which is safe but not what you wanted.
+#
+# DRY RUN IS THE DEFAULT. Dispatch once to read the proposals in the job
+# summary, then dispatch again with apply=true.
+#
+# Note on channels: fragment detection is English-language. Selecting
+# ru/fr reads that channel's own index and uses that channel's token
+# (a video can only be updated by the channel that owns it), but the
+# French mid-clause truncation is a different defect — the FR Short
+# title is cut from the FR long title rather than written as a title —
+# and is not what this repairs.
+
+on:
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: 'Write the titles. Leave false for a dry run.'
+        required: false
+        type: boolean
+        default: false
+      limit:
+        description: 'Max videos to change in one run (0 = no cap).'
+        required: false
+        type: string
+        default: '25'
+      show:
+        description: 'Restrict to one show slug (blank = all shows).'
+        required: false
+        type: string
+        default: ''
+      channel:
+        description: 'Channel whose videos to retitle (en, ru, fr).'
+        required: false
+        type: string
+        default: 'en'
+
+permissions:
+  contents: read
+
+concurrency:
+  # Never let two retitle runs touch the same videos at once.
+  group: retitle-youtube-videos
+  cancel-in-progress: false
+
+jobs:
+  retitle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - uses: ./.github/actions/setup-python
+        with:
+          python-version: '3.12'
+          requirements-file: 'requirements.txt'
+          skip-checkout: 'true'
+
+      - name: Retitle
+        env:
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN_EN: ${{ secrets.YOUTUBE_REFRESH_TOKEN_EN }}
+          YOUTUBE_REFRESH_TOKEN_RU: ${{ secrets.YOUTUBE_REFRESH_TOKEN_RU }}
+          YOUTUBE_REFRESH_TOKEN_FR: ${{ secrets.YOUTUBE_REFRESH_TOKEN_FR }}
+          APPLY_INPUT: ${{ inputs.apply }}
+          LIMIT_INPUT: ${{ inputs.limit }}
+          SHOW_INPUT: ${{ inputs.show }}
+          CHANNEL_INPUT: ${{ inputs.channel }}
+        run: |
+          set -o pipefail
+          args="--channel ${CHANNEL_INPUT:-en}"
+          if [ "${APPLY_INPUT}" = "true" ]; then
+            args="$args --apply"
+          fi
+          if [ -n "${LIMIT_INPUT}" ]; then
+            args="$args --limit ${LIMIT_INPUT}"
+          fi
+          if [ -n "${SHOW_INPUT}" ]; then
+            args="$args --show ${SHOW_INPUT}"
+          fi
+
+          # Keep the summary even if the script exits non-zero, so a
+          # partial run is still auditable.
+          set +e
+          # shellcheck disable=SC2086
+          python scripts/retitle_youtube_videos.py $args 2>&1 \
+            | tee /tmp/retitle.txt
+          status=${PIPESTATUS[0]}
+          set -e
+
+          {
+            echo "## Retitle YouTube videos"
+            echo
+            if [ "${APPLY_INPUT}" = "true" ]; then
+              echo "**Mode: APPLY** — titles were written."
+            else
+              echo "**Mode: dry run** — nothing was written. "
+              echo "Re-dispatch with \`apply: true\` to write these."
+            fi
+            echo
+            echo '```'
+            # The config loader logs one INFO line per show YAML; drop
+            # them so the proposals are the whole summary.
+            grep -v '^INFO Loaded config' /tmp/retitle.txt | tail -c 60000
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          exit $status
