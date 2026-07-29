@@ -147,6 +147,43 @@ class TestTheIncident:
         assert "ep47" in landed, f"our episode was discarded: {landed!r}"
 
 
+    def test_resolved_feed_is_regenerated_not_taken_verbatim(
+            self, remote_and_clone):
+        """The resolve step promises "correct by construction": after
+        taking our side it re-runs build_video_feeds.py so the committed
+        bytes match a clean rebuild of the merged state. The stub below
+        mirrors the real script's CLI (positional slug — there is no
+        --show flag), so a wrong invocation dies in argparse, the
+        ``|| true`` swallows it, and this assertion catches the silent
+        degradation to take-ours."""
+        _, seed, work = remote_and_clone
+        stub_dir = work / "scripts"
+        stub_dir.mkdir()
+        (stub_dir / "build_video_feeds.py").write_text(
+            "import argparse, pathlib\n"
+            "ap = argparse.ArgumentParser()\n"
+            "ap.add_argument('show', nargs='?')\n"
+            "ap.add_argument('--all', action='store_true')\n"
+            "ap.add_argument('--dry-run', action='store_true')\n"
+            "args = ap.parse_args()\n"
+            "pathlib.Path(f'{args.show}_podcast.video.rss').write_text(\n"
+            "    f'<rss>regenerated {args.show}</rss>\\n')\n")
+        (work / "spacex_podcast.video.rss").write_text(
+            "<rss>ours: ep47 added</rss>\n")
+        _git("add", "-A", cwd=work)
+        _git("commit", "-m", "spacex ep47", cwd=work)
+
+        _advance_origin(seed, "spacex_podcast.video.rss",
+                        "<rss>nightly rebuild</rss>\n", "nightly feeds")
+
+        assert _run_script(work).returncode == 0
+        _git("fetch", "origin", cwd=work)
+        landed = _git("show", "origin/main:spacex_podcast.video.rss",
+                      cwd=work).stdout
+        assert "regenerated spacex" in landed, (
+            f"feed was committed take-ours instead of regenerated: {landed!r}")
+
+
 class TestRefusesToGuess:
     def test_unknown_conflict_is_not_auto_resolved(self, remote_and_clone):
         """A wrong auto-resolution is worse than a recovery PR, because

@@ -58,7 +58,7 @@ is_regenerable() {
 regenerate_feeds() {
   [ -n "$SHOW" ] || return 0
   if [ -f scripts/build_video_feeds.py ]; then
-    python scripts/build_video_feeds.py --show "$SHOW" >/dev/null 2>&1 || true
+    python scripts/build_video_feeds.py "$SHOW" >/dev/null 2>&1 || true
     git add -- '*.video.rss' 2>/dev/null || true
   fi
 }
