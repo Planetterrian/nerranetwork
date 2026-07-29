@@ -91,7 +91,18 @@ llm:
   # expand-retry fires on anything short of a full episode.
   min_podcast_words: 1550
   min_podcast_word_floor: 1000
-  podcast_expand_below_target: true
+  # DISABLED July 29 2026 (cost + quality). Measured over 901 committed
+  # episodes: 81% still shipped BELOW target WITH this retry running (Tesla
+  # 96.7%, M&A 95.2%) — it fires on nearly every episode and almost never
+  # reaches the goal, because the ceiling is the DIGEST, not the script.
+  # It also pads by paraphrase-duplication (the July 28 pass had to add
+  # _dedup_expansion_sentences to strip its near-duplicate sentences), so
+  # what it does ship is the weaker copy. The July 18 playbook already
+  # banned podcast-side length levers network-wide (do_not_retry: ~10
+  # misses vs 1 hit); this makes the config match the policy. Length is
+  # now attacked only at the sanctioned substrate below
+  # (digest_expand_below_target). ~$39/yr of retry calls recovered.
+  podcast_expand_below_target: false
   # The podcast tracks the digest ~1:1 network-wide (FF/UC/PT root cause),
   # so keep the digest from capping the episode. Raised 700→1100 after Ep1
   # shipped ~1,200-word scripts against the 1,550 target — the brief was

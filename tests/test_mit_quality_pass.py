@@ -352,11 +352,19 @@ class TestTradeExtractionDiagnostics:
 
 
 class TestConfigAndTeaser:
-    def test_mit_opts_into_expand_below_target(self):
+    def test_mit_length_lever_is_digest_side(self):
+        # Superseded 2026-07-29 (cost-efficiency pass): the podcast-side
+        # expansion retry is OFF wherever a digest-side lever exists. Over
+        # 901 committed episodes 81% still shipped below target WITH it
+        # running, and it padded by paraphrase-duplication; the July 18
+        # playbook had already banned podcast-side length levers. The
+        # length lever must now be the digest one — assert that, not the
+        # retired flag. Guard: tests/test_cost_efficiency_pass.py.
         from engine.config import load_config
 
         cfg = load_config("shows/modern_investing.yaml")
-        assert cfg.llm.podcast_expand_below_target is True
+        assert cfg.llm.podcast_expand_below_target is False
+        assert cfg.llm.digest_expand_below_target is True
 
     def test_teaser_has_hook_blog_and_performance_links(self):
         import run_show

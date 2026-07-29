@@ -55,7 +55,10 @@ class TestConfigLoads:
         # plateau + digest ceiling); the Engineering Deep Dive length lever
         # is the quality-preserving fix in the podcast prompt.
         assert cfg.llm.min_podcast_words == 1300
-        assert cfg.llm.podcast_expand_below_target is True
+        # Superseded 2026-07-29: length is attacked at the digest stage
+        # only — see tests/test_cost_efficiency_pass.py.
+        assert cfg.llm.podcast_expand_below_target is False
+        assert cfg.llm.digest_expand_below_target is True
 
     def test_memory_enabled_and_registered(self):
         cfg = load_config(_ROOT / "shows/spacex.yaml")

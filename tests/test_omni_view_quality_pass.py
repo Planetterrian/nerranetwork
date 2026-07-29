@@ -172,9 +172,17 @@ class TestLengthTarget:
         assert "at least 2000 words" not in text
         assert "1,700" in text  # the unified target
 
-    def test_yaml_opts_into_expansion_and_raises_floor(self):
+    def test_yaml_keeps_a_length_lever_and_raised_floor(self):
+        # Superseded 2026-07-29 (cost-efficiency pass): the podcast-side
+        # expansion retry is OFF wherever a digest-side lever exists. Over
+        # 901 committed episodes 81% still shipped below target WITH it
+        # running, and it padded by paraphrase-duplication; the July 18
+        # playbook had already banned podcast-side length levers. The
+        # length lever must now be the digest one — assert that, not the
+        # retired flag. Guard: tests/test_cost_efficiency_pass.py.
         llm = _cfg()["llm"]
-        assert llm.get("podcast_expand_below_target") is True
+        assert llm.get("podcast_expand_below_target") is False
+        assert llm.get("digest_expand_below_target") is True
         assert llm.get("min_podcast_words", 0) >= 1200
 
 
