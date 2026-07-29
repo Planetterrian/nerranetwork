@@ -160,6 +160,34 @@ class TestWordLevelRepair:
             assert after["end"] == before["end"]
             assert after["probability"] == before["probability"]
 
+    def test_ru_prefixed_english_words_are_not_anchors(self):
+        """"ruins"/"rules"/"Russia" start with "ru" but are not the
+        NerraRU channel suffix — a legitimate "Nara" before them must
+        survive (Nara's temple ruins are the live collocation)."""
+        for follower in ("ruins", "rules,", "Russia"):
+            words = [
+                {"word": "Nara", "start": 0.1, "end": 0.3, "probability": 0.9},
+                {"word": follower, "start": 0.3, "end": 0.6, "probability": 0.9},
+            ]
+            out = correct_brand_words(words)
+            assert out[0]["word"] == "Nara", follower
+
+    def test_standalone_ru_token_still_anchors(self):
+        words = [
+            {"word": "NARA", "start": 0.1, "end": 0.3, "probability": 0.5},
+            {"word": "-RU.", "start": 0.3, "end": 0.6, "probability": 0.9},
+        ]
+        assert correct_brand_words(words)[0]["word"] == "Nerra"
+
+    def test_ru_prefixed_segment_is_not_an_anchor(self):
+        from engine.transcripts import correct_brand_segments
+        segments = [
+            {"text": "We visited Nara"},
+            {"text": "Russia announced new sanctions"},
+        ]
+        out = correct_brand_segments(segments)
+        assert out[0]["text"] == "We visited Nara"
+
     def test_input_list_is_not_mutated(self):
         words = [
             {"word": "NARA", "start": 0.2, "end": 0.4, "probability": 0.5},
@@ -186,6 +214,17 @@ class TestInitialPrompt:
         prompt = build_initial_prompt(["Nerra Network", "  ", "", "Starship"])
         assert prompt.count("Nerra Network") == 1
         assert "Starship" in prompt
+
+    def test_brand_survives_an_oversized_keyword_list(self):
+        """Whisper keeps the TAIL of an over-window prompt, so the brand
+        must sit at the end and the total must stay under the ~224-token
+        window — otherwise keyword-heavy shows (planetterrian) lose the
+        very terms the prompt exists to teach."""
+        huge = [f"Some Long Keyword Phrase {i}" for i in range(100)]
+        prompt = build_initial_prompt(huge)
+        assert prompt.rstrip(".").endswith("nerranetwork.com")
+        assert "Nerra Network" in prompt
+        assert len(prompt) <= 620  # cap plus the closing punctuation
 
     def test_transcribe_is_called_with_initial_prompt(self):
         """The prompt must actually reach faster-whisper, not just exist."""

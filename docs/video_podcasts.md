@@ -1,12 +1,16 @@
-# Video podcasts — the Tesla + SpaceX pilot (July 2026)
+# Video podcasts on Apple (July 2026 — five shows)
 
-Two shows now publish a **second, video-only podcast feed** alongside their
-canonical audio feed:
+Five shows now publish a **second, video-only podcast feed** alongside
+their canonical audio feed (the July 25 tesla+spacex pilot expanded on
+July 27):
 
 | Show | Audio feed (unchanged) | Video feed (new) |
 |---|---|---|
 | Tesla Shorts Time | `podcast.rss` | `podcast.video.rss` |
 | SpaceX Daily | `spacex_podcast.rss` | `spacex_podcast.video.rss` |
+| Fascinating Frontiers | `fascinating_frontiers_podcast.rss` | `fascinating_frontiers_podcast.video.rss` |
+| Models & Agents | `models_agents_podcast.rss` | `models_agents_podcast.video.rss` |
+| Models & Agents for Beginners | `models_agents_beginners_podcast.rss` | `models_agents_beginners_podcast.video.rss` |
 
 The video episode is the **long-form 1920×1080 MP4 the YouTube stage
 already renders** — previously deleted seconds after the YouTube upload.

@@ -108,6 +108,55 @@ def branch_age_hours(branch: str, now: dt.datetime) -> float | None:
         return None
 
 
+def ensure_ancestry_provable(branches: list[str], now: dt.datetime) -> None:
+    """Deepen a shallow clone far enough that merged-ness is decidable.
+
+    Nightly checks out with ``fetch-depth: 1``. With only main's tip
+    available locally, ``merge-base --is-ancestor`` is false for every
+    branch merged before that tip — so every MERGED recovery branch
+    would be misclassified as unmerged, never deleted, and falsely
+    announced as a stranded episode once past the grace period. Deepening
+    main to just before the oldest branch's creation time makes ancestry
+    provable while staying bounded (days-to-weeks of text-only commits,
+    not the full history — landmine #1).
+
+    Best-effort: on failure the janitor still runs, deletion stays
+    fail-safe (uncertain branches are never deleted), and the warning
+    below tells the operator why the classification may be wrong.
+    """
+    try:
+        shallow = _git("rev-parse", "--is-shallow-repository") == "true"
+    except subprocess.CalledProcessError:
+        return
+    if not shallow:
+        return
+
+    oldest: int | None = None
+    for branch in branches:
+        match = _BRANCH_RE.match(branch)
+        if not match:
+            continue
+        try:
+            ts = int(match.group("ts"))
+        except ValueError:
+            continue
+        oldest = ts if oldest is None else min(oldest, ts)
+    if oldest is None:
+        oldest = int((now - dt.timedelta(days=30)).timestamp())
+
+    since = dt.datetime.fromtimestamp(
+        oldest, dt.timezone.utc) - dt.timedelta(days=2)
+    try:
+        _git("fetch", "--quiet", f"--shallow-since={since.isoformat()}",
+             "origin", "main")
+    except subprocess.CalledProcessError:
+        print(
+            "::warning::Could not deepen the shallow clone; merged "
+            "recovery branches may be misreported as stranded this run.",
+            flush=True,
+        )
+
+
 def show_of(branch: str) -> str:
     match = _BRANCH_RE.match(branch)
     return match.group("show") if match else branch[len(BRANCH_PREFIX):]
@@ -131,6 +180,7 @@ def main(argv=None) -> int:
 
     print(f"{len(branches)} recovery branch(es) on origin\n")
     now = dt.datetime.now(dt.timezone.utc)
+    ensure_ancestry_provable(branches, now)
 
     merged, stranded, young = [], [], []
     for branch in branches:

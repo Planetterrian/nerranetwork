@@ -144,10 +144,10 @@ def correct_brand_text(text: str) -> str:
 # anchor — never to free text.
 _STEM_ONLY_RE = re.compile(rf"\b(?:at?)?{_STEM}\b", re.I)
 
-# What counts as a brand anchor in the next word token. Whisper splits
-# the separator unpredictably — "nara" + "-network", "NARA" + "-RU.",
+# What counts as a brand anchor in the next word token: "network..." /
+# "rennetwork..." prefixes, or a standalone "ru". Whisper splits the
+# separator unpredictably — "nara" + "-network", "NARA" + "-RU.",
 # ".nara" + ".ru." — so leading punctuation is stripped before the test.
-_ANCHOR_PREFIXES = ("network", "ru", "rennetwork")
 
 
 # The stem sitting at the very end of a segment, where the anchoring
@@ -158,7 +158,13 @@ _TRAILING_STEM_RE = re.compile(rf"\b(?:at?)?{_STEM}\b\s*$", re.I)
 def _next_token_anchors(token: str) -> bool:
     """True when *token* is the trailing half of a split brand name."""
     stripped = (token or "").strip().lstrip(".-–—/ ").lower()
-    return stripped.startswith(_ANCHOR_PREFIXES)
+    if stripped.startswith(("network", "rennetwork")):
+        return True
+    # "ru" must stand alone (bar trailing punctuation): "ruins", "rules"
+    # and "Russia" begin with the same two letters, and treating them as
+    # anchors would rewrite a legitimate preceding "Nara" ("we visited
+    # Nara ruins" must never become "Nerra ruins").
+    return stripped.startswith("ru") and not stripped[2:3].isalpha()
 
 
 def _repair_with_external_anchor(token: str) -> str:
@@ -243,18 +249,40 @@ def correct_brand_segments(segments: Sequence[dict]) -> list[dict]:
     return out
 
 
+# Whisper conditions on roughly the last 224 TOKENS of the prompt; stay
+# comfortably under that so nothing is silently dropped.
+_MAX_PROMPT_CHARS = 600
+
+
 def build_initial_prompt(vocabulary: Optional[Iterable[str]] = None) -> str:
     """Compose the faster-whisper ``initial_prompt`` for a show.
 
     *vocabulary* carries per-show proper nouns (the show name and its
-    YAML ``keywords:``); the network brand is always included.
+    YAML ``keywords:``); the network brand is always included — and goes
+    LAST, because Whisper keeps the *tail* of an oversized prompt: put
+    first, the brand terms are exactly what truncation removes on
+    keyword-heavy shows (planetterrian's list alone overflows the
+    window). Excess show keywords are dropped instead, never the brand.
     """
-    terms: list[str] = list(_BASE_VOCABULARY)
+    brand = list(_BASE_VOCABULARY)
+    seen = {t.lower() for t in brand}
+    extras: list[str] = []
     for term in vocabulary or ():
         term = (term or "").strip()
-        if term and term.lower() not in {t.lower() for t in terms}:
-            terms.append(term)
-    return ", ".join(terms) + "."
+        if term and term.lower() not in seen:
+            seen.add(term.lower())
+            extras.append(term)
+
+    budget = _MAX_PROMPT_CHARS - (len(", ".join(brand)) + 1)
+    kept: list[str] = []
+    used = 0
+    for term in extras:
+        cost = len(term) + 2  # ", " separator
+        if used + cost > budget:
+            break
+        kept.append(term)
+        used += cost
+    return ", ".join(kept + brand) + "."
 
 
 @dataclass(frozen=True)

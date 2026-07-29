@@ -164,15 +164,112 @@ class TestRecoveryBranchJanitor:
         assert "prune_recovery_branches.py" in raw
         assert "--apply" in raw
 
+    def test_merged_branch_is_decidable_in_a_shallow_clone(
+            self, tmp_path, monkeypatch):
+        """Nightly runs the janitor in a fetch-depth:1 checkout. With
+        only main's tip local, ``merge-base --is-ancestor`` is false for
+        every branch merged before that tip — every merged branch would
+        be misclassified unmerged and eventually announced as a stranded
+        episode. ``ensure_ancestry_provable`` deepens main (bounded by
+        the branch-name timestamp) so the check becomes decidable."""
+        def git(*args, cwd):
+            return subprocess.run(
+                ["git", *args], cwd=str(cwd), check=True,
+                capture_output=True, text=True).stdout.strip()
+
+        seed = tmp_path / "seed"
+        seed.mkdir()
+        git("init", "--initial-branch=main", cwd=seed)
+        git("config", "user.email", "t@example.com", cwd=seed)
+        git("config", "user.name", "T", cwd=seed)
+        (seed / "a.txt").write_text("base\n")
+        git("add", "-A", cwd=seed)
+        git("commit", "-m", "base", cwd=seed)
+
+        now = dt.datetime.now(dt.timezone.utc)
+        branch = f"recovery/tesla-999-{int(now.timestamp())}"
+        git("checkout", "-b", branch, cwd=seed)
+        (seed / "ep.txt").write_text("episode\n")
+        git("add", "-A", cwd=seed)
+        git("commit", "-m", "recovered episode", cwd=seed)
+        git("checkout", "main", cwd=seed)
+        git("merge", "--no-ff", "-m", "merge recovery", branch, cwd=seed)
+        (seed / "later.txt").write_text("later\n")
+        git("add", "-A", cwd=seed)
+        git("commit", "-m", "later main commit", cwd=seed)
+
+        origin = tmp_path / "origin.git"
+        subprocess.run(
+            ["git", "init", "--bare", "--initial-branch=main", str(origin)],
+            check=True, capture_output=True)
+        git("remote", "add", "origin", str(origin), cwd=seed)
+        git("push", "origin", "main", branch, cwd=seed)
+
+        # file:// forces the wire protocol so --depth is honoured.
+        clone = tmp_path / "shallow"
+        subprocess.run(
+            ["git", "clone", "--depth", "1", f"file://{origin}",
+             str(clone)], check=True, capture_output=True)
+        git("fetch", "--depth=1", "origin",
+            f"refs/heads/{branch}:refs/remotes/origin/{branch}", cwd=clone)
+
+        monkeypatch.chdir(clone)
+        # The bug: undecidable before deepening.
+        assert prb.is_merged(branch, "origin/main") is False
+        prb.ensure_ancestry_provable([branch], now)
+        assert prb.is_merged(branch, "origin/main") is True
+
+    def test_full_clone_is_left_untouched(self, monkeypatch):
+        """On a non-shallow repo the deepen must be a no-op — a stray
+        --shallow-since fetch here could shallowify a full clone."""
+        calls = []
+
+        def fake_git(*args):
+            calls.append(args)
+            if args == ("rev-parse", "--is-shallow-repository"):
+                return "false"
+            raise AssertionError(f"unexpected git call: {args}")
+
+        monkeypatch.setattr(prb, "_git", fake_git)
+        prb.ensure_ancestry_provable(
+            ["recovery/tesla-999-1785247730"],
+            dt.datetime.now(dt.timezone.utc))
+        assert calls == [("rev-parse", "--is-shallow-repository")]
+
 
 class TestAppleReporterFreshness:
-    def _rollup(self, tmp_path, *, fetched_at, shows=1):
+    def _rollup(self, tmp_path, *, fetched_at, shows=1, last_date=None):
+        if last_date is None:
+            last_date = (dt.datetime.now(dt.timezone.utc)
+                         - dt.timedelta(days=1)).date().isoformat()
         path = tmp_path / "apple_reporter.json"
         path.write_text(json.dumps({
-            "fetched_at": fetched_at, "last_date": "2026-07-27",
+            "fetched_at": fetched_at, "last_date": last_date,
             "shows": {str(i): {} for i in range(shows)},
         }), encoding="utf-8")
         return path
+
+    def test_fresh_fetch_but_stalled_report_date_is_an_alarm(self, tmp_path):
+        """A wrong APPLE_REPORTER_VENDOR answers 'no report' for every
+        date — fetched_at keeps advancing while last_date freezes, and
+        every silent day is unrecoverable history."""
+        now = dt.datetime.now(dt.timezone.utc)
+        path = self._rollup(
+            tmp_path,
+            fetched_at=(now - dt.timedelta(hours=6)).isoformat(),
+            last_date=(now - dt.timedelta(days=9)).date().isoformat())
+        ok, message = reporter_check(path, 3, now)
+        assert not ok
+        assert "APPLE_REPORTER_VENDOR" in message
+
+    def test_next_day_publishing_lag_is_not_an_alarm(self, tmp_path):
+        now = dt.datetime.now(dt.timezone.utc)
+        path = self._rollup(
+            tmp_path,
+            fetched_at=(now - dt.timedelta(hours=6)).isoformat(),
+            last_date=(now - dt.timedelta(days=2)).date().isoformat())
+        ok, _ = reporter_check(path, 3, now)
+        assert ok
 
     def test_fresh_rollup_is_ok(self, tmp_path):
         now = dt.datetime.now(dt.timezone.utc)

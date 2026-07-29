@@ -225,8 +225,12 @@ def _ru_long_description(config, ru_desc: str) -> str:
 
 
 def _cap_title(title: str, limit: int = 95) -> str:
-    title = (title or "").strip()
-    return title if len(title) <= limit else title[: limit - 1].rstrip() + "…"
+    # Word-boundary clip (engine.titles) — a mid-word slice on the dub
+    # channels is the exact failure the one-title-policy pass removed
+    # from every other surface.
+    from engine.titles import clip_words
+
+    return clip_words((title or "").strip(), limit)
 
 
 def _has_cyrillic(text: str) -> bool:

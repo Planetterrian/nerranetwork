@@ -1,4 +1,4 @@
-"""Drift guards for the video-podcast pilot (July 2026: tesla + spacex + FF).
+"""Drift guards for the video-podcast rollout (July 2026: tesla, spacex, FF, M&A, MAB).
 
 What this ships and why it can break quietly:
 

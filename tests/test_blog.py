@@ -322,3 +322,32 @@ class TestCrossShowRelatedCuratedFirst:
                 assert related in NETWORK_SHOWS, (
                     f"NETWORK_SHOWS[{slug}].related_show={related!r} unknown"
                 )
+
+
+class TestBlogMetaDescription:
+    """The description is a reader-facing SEO surface — it must never
+    ship doubled punctuation ("scary?.") or echo the title verbatim."""
+
+    SHOW = {"name": "Models & Agents", "description": "Fallback text."}
+
+    def _desc(self, hook, ep=21):
+        from engine.blog import _blog_meta_description
+
+        return _blog_meta_description(
+            {"hook": hook, "episode_num": ep}, self.SHOW)
+
+    def test_period_hook_gets_single_period(self):
+        assert self._desc("AI just got cheaper.") == (
+            "AI just got cheaper. Models & Agents, episode 21.")
+
+    def test_question_hook_keeps_its_mark(self):
+        desc = self._desc("Is the new model actually scary?")
+        assert "?." not in desc
+        assert desc.startswith("Is the new model actually scary?")
+        assert desc.endswith("episode 21.")
+
+    def test_exclamation_hook_keeps_its_mark(self):
+        assert "!." not in self._desc("The results are in!")
+
+    def test_no_hook_falls_back_to_show_description(self):
+        assert self._desc("") == "Fallback text."

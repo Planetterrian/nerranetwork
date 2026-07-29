@@ -232,6 +232,47 @@ class TestBackfillIdempotency:
         assert ep in video_index.indexed_episodes(
             video_index.index_path(config, repo))
 
+    def test_index_only_episode_short_circuits_as_done(self, repo, monkeypatch):
+        """An episode aged out of summaries' 30-record window but present
+        in the durable index must report already_done — surviving that
+        truncation is the index's stated purpose. It previously returned
+        no_record (an error line in the batch log) because the summaries
+        lookup ran before the index was consulted."""
+        import engine.video_backfill as vb
+
+        config = _spacex()
+        monkeypatch.setattr(vb, "PROJECT_ROOT", repo)
+        monkeypatch.setattr(video_index, "PROJECT_ROOT", repo)
+        video_index.record_video(
+            config=config, episode=1,
+            url="https://audio.nerranetwork.com/video/spacex/Ep001.mp4",
+            bytes=120_000_000, date="2026-06-13", title="Ep 1",
+            project_root=repo)
+
+        result = vb.backfill_episode_video(config, 1)
+        assert result["status"] == "already_done"
+        assert result["url"].endswith("Ep001.mp4")
+
+    def test_zero_byte_summaries_track_is_not_adopted(self, repo, monkeypatch):
+        """The index drops zero-byte rows as half-finished-upload
+        fingerprints; adopting one from summaries would loop forever
+        (adopted -> dropped on the next read -> adopted again) while the
+        feed ships an estimated enclosure length. A zero-byte track must
+        fall through to a real render instead."""
+        import engine.video_backfill as vb
+
+        config = _spacex()
+        monkeypatch.setattr(vb, "PROJECT_ROOT", repo)
+        monkeypatch.setattr(video_index, "PROJECT_ROOT", repo)
+        summaries = repo / config.publishing.summaries_json
+        _w, recs = load_summaries(summaries)
+        ep = recs[0]["episode_num"]
+        track = dict(_track(ep), bytes=0)
+        upsert_video(summaries, ep, track)
+
+        result = vb.backfill_episode_video(config, ep, dry_run=True)
+        assert result["status"] == "would_render"
+
     def test_force_still_re_renders(self, repo, monkeypatch):
         import engine.video_backfill as vb
 
