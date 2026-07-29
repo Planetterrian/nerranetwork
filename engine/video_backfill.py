@@ -144,17 +144,27 @@ def backfill_episode_video(
     if not (vp and vp.enabled):
         return {"status": "not_enabled", "episode": episode_num}
 
+    # The durable index is consulted FIRST: an episode aged out of
+    # summaries' 30-record window must still short-circuit as done —
+    # surviving that truncation is the index's whole purpose. Summaries
+    # are only required when there is actually something to (re)render.
+    idx = index_path(config)
+    indexed_entry = indexed_episodes(idx).get(episode_num)
+
     summaries_path = PROJECT_ROOT / config.publishing.summaries_json
+    rec = None
     try:
         _wrapper, records = load_summaries(summaries_path)
+        rec = next((r for r in records if r.get("episode_num") == episode_num), None)
     except Exception as exc:  # noqa: BLE001
-        return {"status": "no_record", "episode": episode_num, "error": str(exc)}
-
-    rec = next((r for r in records if r.get("episode_num") == episode_num), None)
-    if not rec or not rec.get("audio_url"):
+        if not indexed_entry:
+            return {"status": "no_record", "episode": episode_num, "error": str(exc)}
+    if rec is not None and not rec.get("audio_url"):
+        rec = None
+    if rec is None and not indexed_entry:
         return {"status": "no_record", "episode": episode_num}
 
-    date_str = str(rec.get("date") or "")[:10]
+    date_str = str((rec or {}).get("date") or "")[:10]
 
     # Idempotency. An episode "already has a video" if EITHER source says so.
     # Checking only the index would re-render every episode the live pipeline
@@ -163,11 +173,16 @@ def backfill_episode_video(
     # object with a different render (the scene library moves, so a re-render
     # is never byte-identical), briefly leaving the feed's advertised length
     # disagreeing with what the CDN serves.
-    idx = index_path(config)
-    indexed = indexed_episodes(idx)
-    existing = indexed.get(episode_num)
-    summary_track = rec.get("video") if isinstance(rec.get("video"), dict) else None
-    if not existing and summary_track and summary_track.get("url"):
+    existing = indexed_entry
+    summary_track = (
+        rec.get("video") if rec and isinstance(rec.get("video"), dict) else None
+    )
+    # Adoption requires real bytes: the index deliberately drops zero-byte
+    # rows as half-finished-upload fingerprints, so adopting one would
+    # loop forever (adopted -> dropped on the next index read -> adopted
+    # again) while the feed ships an estimated enclosure length.
+    if (not existing and summary_track and summary_track.get("url")
+            and int(summary_track.get("bytes") or 0) > 0):
         existing = {
             "url": summary_track["url"],
             "bytes": int(summary_track.get("bytes") or 0),
@@ -203,6 +218,13 @@ def backfill_episode_video(
                         "url": existing["url"]}
             return {"status": "already_done", "episode": episode_num,
                     "url": existing["url"]}
+
+    if rec is None:
+        # Index-only episode that needs a re-render (force, or verify
+        # found the object unreachable) — summaries no longer carry its
+        # audio URL, so there is nothing to render from.
+        return {"status": "no_record", "episode": episode_num}
+
     cover = _cover_path(config)
     if not cover:
         return {"status": "no_cover", "episode": episode_num}
