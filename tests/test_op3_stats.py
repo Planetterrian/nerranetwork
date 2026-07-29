@@ -19,7 +19,6 @@ import sys
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
 
 _ROOT = Path(__file__).resolve().parent.parent
 if str(_ROOT) not in sys.path:
@@ -197,3 +196,96 @@ def test_nightly_maintenance_runs_op3_fetch():
     assert wf.index("fetch_op3_stats.py") < wf.index("generate_dashboard.py"), (
         "OP3 stats must be fetched before the dashboard build consumes them"
     )
+
+
+class TestLanguageFeedMeasurement:
+    """Multilingual is ~a third of network spend and its audience was
+    measured nowhere: the per-language enclosures carry the OP3 prefix,
+    but the fetcher only ever resolved each show's English feed — so a
+    language with zero listeners was indistinguishable from a popular
+    one, and no language could be switched off on evidence."""
+
+    def test_targets_cover_every_generated_language(self):
+        from scripts.fetch_op3_stats import _language_feed_targets
+
+        targets = _language_feed_targets(_ROOT)
+        keys = {t["key"] for t in targets}
+        # The shows that actually pay for translation today.
+        assert "tesla:zh" in keys
+        assert "spacex:ru" in keys
+        assert "env_intel:fr" in keys
+        # And nothing for a show that never opted in.
+        assert not any(k.startswith("privet_russian:") for k in keys)
+
+    def test_targets_are_scoped_to_configured_languages(self):
+        """The repo has 44 language feed FILES (many are stubs from a
+        one-off backfill). Fetching all of them would triple the request
+        count for feeds nothing generates — scope to the YAML."""
+        import yaml as _yaml
+
+        from scripts.fetch_op3_stats import _language_feed_targets
+
+        for target in _language_feed_targets(_ROOT):
+            data = _yaml.safe_load(
+                (_ROOT / "shows" / f"{target['slug']}.yaml").read_text(
+                    encoding="utf-8")) or {}
+            ml = data.get("multilingual") or {}
+            assert ml.get("enabled"), target["key"]
+            assert target["lang"] in [
+                str(x).lower() for x in (ml.get("languages") or [])
+            ], target["key"]
+
+    def test_language_feeds_are_a_separate_section(self, tmp_path, monkeypatch):
+        """Every consumer iterates ``shows`` keyed by slug — a 'tesla:fr'
+        key in there would be read as an unknown show."""
+        from scripts import fetch_op3_stats as mod
+
+        monkeypatch.setenv("OP3_API_TOKEN", "t")
+        monkeypatch.setattr(mod.time, "sleep", lambda *_: None)
+        monkeypatch.setattr(
+            mod, "_language_feed_targets",
+            lambda root: [{"key": "tesla:fr", "slug": "tesla", "lang": "fr",
+                           "rss_file": "podcast.fr.rss"}])
+
+        def _fake(slug, feed_url, token, cached):
+            return {"show_uuid": "u", "feed_url": feed_url, "asof": "",
+                    "downloads_7d": 5, "downloads_30d": 20, "weekly_avg": 5,
+                    "weekly_downloads": [5], "episodes": []}
+
+        monkeypatch.setattr(mod, "_fetch_show_stats", _fake)
+        out = tmp_path / "op3.json"
+        assert mod.main(["--out", str(out),
+                         "--popular-out", str(tmp_path / "pop.json")]) == 0
+
+        data = json.loads(out.read_text())
+        assert "tesla:fr" not in data["shows"]
+        assert data["language_feeds"]["tesla:fr"]["downloads_7d"] == 5
+        assert data["language_feeds"]["tesla:fr"]["show_slug"] == "tesla"
+        assert data["language_feeds"]["tesla:fr"]["language"] == "fr"
+
+    def test_a_failed_language_fetch_keeps_the_previous_reading(
+            self, tmp_path, monkeypatch):
+        """Dropping the entry would read as 'no audience' — the exact
+        conclusion this data exists to make honestly."""
+        from scripts import fetch_op3_stats as mod
+
+        out = tmp_path / "op3.json"
+        out.write_text(json.dumps({
+            "shows": {},
+            "language_feeds": {"tesla:fr": {"downloads_30d": 42}},
+        }), encoding="utf-8")
+
+        monkeypatch.setenv("OP3_API_TOKEN", "t")
+        monkeypatch.setattr(mod.time, "sleep", lambda *_: None)
+        monkeypatch.setattr(
+            mod, "_language_feed_targets",
+            lambda root: [{"key": "tesla:fr", "slug": "tesla", "lang": "fr",
+                           "rss_file": "podcast.fr.rss"}])
+        monkeypatch.setattr(mod, "_fetch_show_stats",
+                            lambda *a, **k: None)  # every fetch fails
+
+        assert mod.main(["--out", str(out),
+                         "--popular-out", str(tmp_path / "pop.json")]) == 0
+        entry = json.loads(out.read_text())["language_feeds"]["tesla:fr"]
+        assert entry["downloads_30d"] == 42
+        assert entry["not_refreshed_this_run"] is True
