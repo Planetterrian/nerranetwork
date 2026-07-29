@@ -1354,11 +1354,70 @@ def aggregate_multilingual(
             "cost_7d_usd": cost_7,
         }
 
+    # Audience per language, so the spend above can be judged rather than
+    # assumed. Until July 2026 this was measured nowhere — the per-language
+    # feeds carry the OP3 prefix but the fetcher never resolved them, so a
+    # language with zero listeners looked exactly like one with many.
+    op3: Dict[str, Any] = {}
+    _op3_path = root / "api" / "op3_stats.json"
+    if _op3_path.exists():
+        try:
+            op3 = json.loads(_op3_path.read_text(encoding="utf-8")) or {}
+        except Exception:  # noqa: BLE001 — analytics never break the build
+            op3 = {}
+    lang_feeds = op3.get("language_feeds") or {}
+    per_language_audience: Dict[str, Any] = {}
+    for key, entry in lang_feeds.items():
+        if not isinstance(entry, dict):
+            continue
+        slug = entry.get("show_slug") or key.split(":", 1)[0]
+        lang = entry.get("language") or (key.split(":", 1)[-1])
+        row = {
+            "downloads_7d": int(entry.get("downloads_7d") or 0),
+            "downloads_30d": int(entry.get("downloads_30d") or 0),
+            "stale": bool(entry.get("not_refreshed_this_run")),
+        }
+        per_language_audience[key] = {"show_slug": slug, "language": lang, **row}
+        show_row = per_show.get(slug)
+        if show_row is not None:
+            show_row.setdefault("audience_by_language", {})[lang] = row
+
+    # Roll up by language so "does ZH earn its keep" is one glance, not a
+    # spreadsheet exercise. Cost is apportioned evenly across a show's
+    # languages: the per-episode tracker records one multilingual total,
+    # not a per-language split, and the tracks are near-identical work.
+    by_language: Dict[str, Any] = {}
+    for slug, row in per_show.items():
+        langs = row.get("languages") or []
+        share = (row.get("cost_7d_usd") or 0.0) / len(langs) if langs else 0.0
+        for lang in langs:
+            agg = by_language.setdefault(
+                lang, {"downloads_7d": 0, "downloads_30d": 0,
+                       "approx_cost_7d_usd": 0.0, "shows": 0, "measured": False},
+            )
+            agg["shows"] += 1
+            agg["approx_cost_7d_usd"] = round(agg["approx_cost_7d_usd"] + share, 4)
+            aud = (row.get("audience_by_language") or {}).get(lang)
+            if aud:
+                agg["measured"] = True
+                agg["downloads_7d"] += aud["downloads_7d"]
+                agg["downloads_30d"] += aud["downloads_30d"]
+
     return {
         "languages": list(_ML_LANGS),
         "recent_n": recent_n,
         "per_show": per_show,
         "network_cost_7d_usd": round(network_cost_7, 4),
+        "audience_measured": bool(lang_feeds),
+        "per_language_audience": per_language_audience,
+        "by_language": by_language,
+        "audience_note": (
+            "Per-language OP3 downloads for the feeds the multilingual stage "
+            "produces. approx_cost_7d_usd splits each show's multilingual "
+            "spend evenly across its languages (the tracker records one "
+            "total per episode). A language reading 0 downloads across "
+            "several weeks is a candidate to switch off in the show YAML."
+        ),
     }
 
 

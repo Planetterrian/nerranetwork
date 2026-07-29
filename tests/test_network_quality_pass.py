@@ -30,6 +30,21 @@ def _yaml(slug):
 
 
 class TestExpandBelowTargetOptIns:
+    """Superseded 2026-07-29 — the length lever moved to the digest stage.
+
+    The June 2026 pass opted eight chronically-short shows into the
+    PODCAST-side expansion retry. Measured over 901 committed episodes,
+    81% still shipped below target with it running (Tesla 96.7%, M&A
+    95.2%): the ceiling is the digest, so the retry paid on nearly every
+    episode and almost never reached the goal — and it padded by
+    paraphrase-duplication. The July 18 playbook had already banned
+    podcast-side length levers network-wide (``do_not_retry``).
+
+    So the contract flipped: a show with a digest-side lever must NOT
+    also run the podcast-side one. The two shows that still lack a
+    digest lever keep theirs until they get one.
+    """
+
     # Shows the review found chronically below target (>=50% of recent eps).
     EXPECTED = [
         "models_agents", "fascinating_frontiers", "planetterrian",
@@ -38,11 +53,17 @@ class TestExpandBelowTargetOptIns:
     ]
 
     @pytest.mark.parametrize("slug", EXPECTED)
-    def test_show_opts_in(self, slug):
+    def test_show_still_has_exactly_one_length_lever(self, slug):
         llm = _yaml(slug).get("llm") or {}
-        assert llm.get("podcast_expand_below_target") is True, (
-            f"{slug} ships chronically below target — it must opt into "
-            f"podcast_expand_below_target"
+        podcast = bool(llm.get("podcast_expand_below_target"))
+        digest = bool(llm.get("digest_expand_below_target"))
+        assert podcast or digest, (
+            f"{slug} ships chronically below target — it must keep a length "
+            f"lever (digest-side preferred)"
+        )
+        assert not (podcast and digest), (
+            f"{slug} runs BOTH expansion retries — paying twice for the "
+            f"same miss. The digest lever is the sanctioned substrate."
         )
 
     def test_models_agents_has_explicit_target(self):

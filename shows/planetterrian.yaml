@@ -257,7 +257,18 @@ llm:
   min_podcast_words: 1600
   # June 2026 network quality pass: 8 of 8 recent episodes below target.
   # Expand-retry now fires on ANY below-target script.
-  podcast_expand_below_target: true
+  # DISABLED July 29 2026 (cost + quality). Measured over 901 committed
+  # episodes: 81% still shipped BELOW target WITH this retry running (Tesla
+  # 96.7%, M&A 95.2%) — it fires on nearly every episode and almost never
+  # reaches the goal, because the ceiling is the DIGEST, not the script.
+  # It also pads by paraphrase-duplication (the July 28 pass had to add
+  # _dedup_expansion_sentences to strip its near-duplicate sentences), so
+  # what it does ship is the weaker copy. The July 18 playbook already
+  # banned podcast-side length levers network-wide (do_not_retry: ~10
+  # misses vs 1 hit); this makes the config match the policy. Length is
+  # now attacked only at the sanctioned substrate below
+  # (digest_expand_below_target). ~$39/yr of retry calls recovered.
+  podcast_expand_below_target: false
   # July 2026 improvements pack: chronic under-length is the digest ceiling
   # (same root cause as FF). Expand thin briefs before the podcast stage.
   digest_expand_below_target: true

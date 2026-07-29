@@ -39,6 +39,11 @@ from engine.video import (
 # Encoder profile — keyframe args are the playback fix
 # ---------------------------------------------------------------------------
 
+@pytest.fixture
+def force_two_stage_render(monkeypatch):
+    """Pin the legacy two-stage render for tests that assert its shape."""
+    monkeypatch.setenv("NERRA_SINGLE_PASS_RENDER", "0")
+
 def test_video_encode_profile_includes_keyframe_args():
     """``-g``, ``-keyint_min``, ``-sc_threshold`` and
     ``-force_key_frames`` must all be present.
@@ -757,6 +762,13 @@ def test_build_long_form_video_falls_back_to_cover_with_one_scene(tmp_path,
     assert "zoompan" in graph
 
 
+# These four pin the TWO-STAGE pipeline, which since July 29 2026 is the
+# automatic fallback rather than the default path (engine.video
+# ._single_pass_enabled flipped ON after an A/B showed equivalent output
+# 23-34%% faster). They stay valuable exactly because that fallback still
+# ships on any fused-command failure — so force the legacy path rather
+# than deleting the coverage.
+@pytest.mark.usefixtures("force_two_stage_render")
 def test_build_long_form_video_renders_slideshow_for_multi_scene(tmp_path,
                                                                  monkeypatch):
     """Multi-scene list triggers a stage-1 slideshow render before
@@ -1560,6 +1572,13 @@ def test_render_slideshow_schedule_hard_cut_fallback(tmp_path, monkeypatch):
     assert "trim=duration=8.00" in retry_graph
 
 
+# These four pin the TWO-STAGE pipeline, which since July 29 2026 is the
+# automatic fallback rather than the default path (engine.video
+# ._single_pass_enabled flipped ON after an A/B showed equivalent output
+# 23-34%% faster). They stay valuable exactly because that fallback still
+# ships on any fused-command failure — so force the legacy path rather
+# than deleting the coverage.
+@pytest.mark.usefixtures("force_two_stage_render")
 def test_build_long_form_video_uses_scene_schedule(tmp_path, monkeypatch):
     """scene_schedule= drives the stage-1 slideshow: scheduled scene
     order, per-scene -t inputs, cumulative xfade offsets."""
@@ -1601,6 +1620,13 @@ def test_build_long_form_video_uses_scene_schedule(tmp_path, monkeypatch):
     assert "-stream_loop" in captured_cmds[1]
 
 
+# These four pin the TWO-STAGE pipeline, which since July 29 2026 is the
+# automatic fallback rather than the default path (engine.video
+# ._single_pass_enabled flipped ON after an A/B showed equivalent output
+# 23-34%% faster). They stay valuable exactly because that fallback still
+# ships on any fused-command failure — so force the legacy path rather
+# than deleting the coverage.
+@pytest.mark.usefixtures("force_two_stage_render")
 def test_build_long_form_video_short_schedule_keeps_legacy_path(tmp_path,
                                                                 monkeypatch):
     """A degenerate 1-entry schedule must NOT flip the pipeline — the
@@ -1890,6 +1916,13 @@ def test_build_long_form_video_broll_caps_at_three(tmp_path, monkeypatch):
     assert used == clips[:3]
 
 
+# These four pin the TWO-STAGE pipeline, which since July 29 2026 is the
+# automatic fallback rather than the default path (engine.video
+# ._single_pass_enabled flipped ON after an A/B showed equivalent output
+# 23-34%% faster). They stay valuable exactly because that fallback still
+# ships on any fused-command failure — so force the legacy path rather
+# than deleting the coverage.
+@pytest.mark.usefixtures("force_two_stage_render")
 def test_build_long_form_video_broll_failure_degrades_to_slideshow(tmp_path,
                                                                    monkeypatch):
     """Any ffmpeg failure on the hybrid render must degrade to the pure

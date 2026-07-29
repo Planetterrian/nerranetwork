@@ -9,6 +9,7 @@ Provides:
 """
 
 import datetime
+import os
 import json
 import logging
 from pathlib import Path
@@ -52,6 +53,14 @@ TTS_PROVIDER_PRICING = {
     "elevenlabs": ELEVENLABS_COST_PER_1K_CHARS,
     "grok": GROK_TTS_COST_PER_1K_CHARS,
 }
+
+# xAI server-side search tools are billed per SOURCE consulted (xAI's
+# published Agent Tools rate is $25 per 1,000 sources). Env-overridable
+# because it is the one rate here that is not pinned by a model id — if
+# xAI moves it, the operator sets XAI_SEARCH_COST_PER_SOURCE rather than
+# waiting on a code change. A run that reports no source count costs
+# nothing extra beyond its tokens, which is the honest floor.
+SEARCH_COST_PER_SOURCE = 0.025
 
 # xAI Grok pricing per 1M tokens (input/output/cached_input).
 # Only models actually reachable by the current code are listed — historical
@@ -141,6 +150,19 @@ def create_tracker(show_name: str, episode_num: int) -> dict:
                 "provider": "grok-imagine",
                 "model": "",
                 "images_generated": 0,
+                "estimated_cost_usd": 0.0,
+            },
+            # xAI server-side search tools (x_search / web_search via the
+            # Responses API). Billed PER SOURCE consulted on top of
+            # tokens. Added July 29 2026 — flagged as uncounted by the
+            # July 24 pass and still missing after the July 28 cost fix,
+            # so every search-fetching show under-reported its spend.
+            "search_api": {
+                "provider": "xai",
+                "calls": 0,
+                "sources": 0,
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
                 "estimated_cost_usd": 0.0,
             },
         },
@@ -293,6 +315,52 @@ def record_image_usage(
     images["estimated_cost_usd"] += float(cost_usd or 0.0)
 
 
+def record_search_usage(
+    tracker: dict,
+    calls: int,
+    sources: int,
+    prompt_tokens: int = 0,
+    completion_tokens: int = 0,
+    model: str = "",
+) -> None:
+    """Record xAI server-side search-tool usage (x_search / web_search).
+
+    ``digests/xai_grok.py`` accumulates this per process because the
+    fetch layer has no tracker reference; run_show drains it once per
+    episode. Additive — a show that fetches several X accounts drains one
+    combined total.
+
+    Token cost is priced through the normal Grok table when *model* is
+    known; the per-source fee is the part that was invisible.
+    """
+    search = tracker["services"].setdefault(
+        "search_api",
+        {
+            "provider": "xai", "calls": 0, "sources": 0,
+            "prompt_tokens": 0, "completion_tokens": 0,
+            "estimated_cost_usd": 0.0,
+        },
+    )
+    search["calls"] += int(calls or 0)
+    search["sources"] += int(sources or 0)
+    search["prompt_tokens"] += int(prompt_tokens or 0)
+    search["completion_tokens"] += int(completion_tokens or 0)
+
+    try:
+        rate = float(
+            os.getenv("XAI_SEARCH_COST_PER_SOURCE", "").strip()
+            or SEARCH_COST_PER_SOURCE
+        )
+    except ValueError:
+        rate = SEARCH_COST_PER_SOURCE
+    cost = int(sources or 0) * rate
+    if model and (prompt_tokens or completion_tokens):
+        cost += _estimate_grok_cost(model, prompt_tokens, completion_tokens)
+    search["estimated_cost_usd"] = round(
+        float(search.get("estimated_cost_usd", 0.0) or 0.0) + cost, 6
+    )
+
+
 def record_render_seconds(tracker: dict, seconds: float) -> None:
     """Record video render wall-clock. Informational — never priced."""
     render = tracker.setdefault("render", {"video_seconds": 0.0})
@@ -353,9 +421,12 @@ def save_usage(tracker: dict, output_dir: Path) -> Path | None:
 
         images = tracker["services"].get("image_api") or {}
         image_cost = float(images.get("estimated_cost_usd", 0.0) or 0.0)
+        search = tracker["services"].get("search_api") or {}
+        search_cost = float(search.get("estimated_cost_usd", 0.0) or 0.0)
 
         tracker["total_estimated_cost_usd"] = (
-            grok["total_cost_usd"] + tts["estimated_cost_usd"] + image_cost
+            grok["total_cost_usd"] + tts["estimated_cost_usd"]
+            + image_cost + search_cost
         )
 
         # Write file
@@ -393,6 +464,13 @@ def save_usage(tracker: dict, output_dir: Path) -> Path | None:
                 images.get("model") or images.get("provider", "grok-imagine"),
                 images.get("images_generated", 0) or 0,
                 image_cost,
+            )
+        if search.get("calls") or search_cost:
+            logger.info(
+                "Search tools (xAI): %d call(s), %d source(s) ($%.4f)",
+                search.get("calls", 0) or 0,
+                search.get("sources", 0) or 0,
+                search_cost,
             )
         render_seconds = float(
             (tracker.get("render") or {}).get("video_seconds", 0.0) or 0.0

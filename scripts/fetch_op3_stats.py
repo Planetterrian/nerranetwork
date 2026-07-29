@@ -202,6 +202,53 @@ def _fetch_show_stats(slug: str, feed_url: str, token: str,
         return None
 
 
+def _language_feed_targets(root: Path) -> List[Dict[str, str]]:
+    """Every per-language feed the network actually pays to produce.
+
+    The multilingual stage is roughly a third of network spend (~$38/mo)
+    and its audience was measured NOWHERE: the per-language enclosures
+    carry the OP3 prefix like any other, but this fetcher only ever
+    resolved the English feed, so ``api/op3_stats.json`` had zero
+    language-track entries. Whether a language earns its cost was
+    therefore unanswerable — which is the only reason the ZH/FR tracks
+    on channel-less shows kept renewing.
+
+    Scoped to the languages each show actually generates
+    (``multilingual.languages`` with ``enabled``), so the request count
+    tracks real spend rather than the 44 feed files on disk (most of
+    which are stubs from a one-off backfill).
+    """
+    import yaml
+
+    targets: List[Dict[str, str]] = []
+    for yaml_path in _list_show_yaml_paths(root / "shows"):
+        try:
+            data = yaml.safe_load(yaml_path.read_text(encoding="utf-8")) or {}
+        except Exception:  # noqa: BLE001 — one bad YAML must not kill the run
+            continue
+        ml = data.get("multilingual") or {}
+        if not ml.get("enabled"):
+            continue
+        rss_file = ((data.get("publishing") or {}).get("rss_file") or "").strip()
+        if not rss_file:
+            continue
+        for lang in (ml.get("languages") or []):
+            lang = str(lang).strip().lower()
+            if not lang:
+                continue
+            from engine.language_feeds import feed_filename
+            fname = feed_filename(rss_file, lang)
+            if not (root / fname).is_file():
+                continue
+            targets.append({
+                "key": f"{yaml_path.stem}:{lang}",
+                "slug": yaml_path.stem,
+                "lang": lang,
+                "rss_file": fname,
+            })
+    return targets
+
+
 def _episode_audio_urls(rss_path: Path) -> Dict[str, str]:
     """Map episode title AND guid → enclosure URL from a committed feed."""
     mapping: Dict[str, str] = {}
@@ -305,9 +352,36 @@ def main(argv: Optional[List[str]] = None) -> int:
         if result is not None:
             shows[slug] = result
 
+    # Per-language feeds live in their OWN top-level section, never mixed
+    # into ``shows``: every consumer (dashboard rollups, popular-episode
+    # rail, performance trackers) iterates ``shows`` keyed by slug, and a
+    # "tesla:fr" key in there would be read as an unknown show.
+    prev_langs = previous.get("language_feeds") or {}
+    language_feeds: Dict[str, Any] = {}
+    for target in _language_feed_targets(root):
+        time.sleep(2)  # politeness — OP3 rate-limits bursts (429)
+        result = _fetch_show_stats(
+            target["key"], _feed_url_for(target["rss_file"]), token,
+            (prev_langs.get(target["key"]) or {}).get("show_uuid"),
+        )
+        if result is None:
+            # Keep the previous reading rather than dropping the language
+            # from the file — an absent entry reads as "no audience" and
+            # that is exactly the conclusion this data must not fake.
+            if target["key"] in prev_langs:
+                language_feeds[target["key"]] = {
+                    **prev_langs[target["key"]],
+                    "not_refreshed_this_run": True,
+                }
+            continue
+        result["show_slug"] = target["slug"]
+        result["language"] = target["lang"]
+        language_feeds[target["key"]] = result
+
     stats = {
         "fetched_at": _dt.datetime.now(_dt.timezone.utc).isoformat(),
         "shows": shows,
+        "language_feeds": language_feeds,
     }
     popular = build_popular_episodes(stats, root)
 
@@ -318,7 +392,8 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(stats, indent=2) + "\n", encoding="utf-8")
-    log.info("op3: wrote %s (%d shows)", out_path, len(shows))
+    log.info("op3: wrote %s (%d shows, %d language feeds)",
+             out_path, len(shows), len(language_feeds))
 
     popular_path.parent.mkdir(parents=True, exist_ok=True)
     popular_path.write_text(json.dumps(popular, indent=2) + "\n", encoding="utf-8")

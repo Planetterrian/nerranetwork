@@ -57,6 +57,75 @@ def _get_xai_api_key() -> str:
     return (os.getenv("GROK_API_KEY") or os.getenv("XAI_API_KEY") or "").strip()
 
 
+# ---------------------------------------------------------------------------
+# Search-tool usage accounting
+# ---------------------------------------------------------------------------
+# xAI bills server-side search tools per SOURCE consulted, on top of the
+# usual token cost. Several shows run these every day (the per-account X
+# fetch alone is one call per configured handle), and none of it reached
+# the episode's credit summary — the Responses path returned only the
+# text, so ``credit_usage_*.json`` undercounted every search-fetching show.
+#
+# The fetch layer has no tracker reference (``engine/fetcher`` is called
+# long before the episode tracker is threaded through), so usage lands in
+# a process-wide accumulator that run_show drains once per episode — the
+# same shape ``engine/grok_imagine`` uses for image spend.
+_SEARCH_USAGE: Dict[str, Any] = {
+    "calls": 0, "sources": 0, "input_tokens": 0, "output_tokens": 0,
+}
+
+
+def _int_attr(obj: Any, *names: str) -> int:
+    """First present int-ish attribute/key among *names*, else 0.
+
+    xAI's Responses usage object is not pinned by a public schema and has
+    carried both ``num_sources_used`` and ``sources_used`` in the wild, so
+    read defensively rather than guessing one name.
+    """
+    for name in names:
+        value = None
+        if isinstance(obj, dict):
+            value = obj.get(name)
+        else:
+            value = getattr(obj, name, None)
+        if isinstance(value, (int, float)):
+            return int(value)
+    return 0
+
+
+def _record_search_usage(resp: Any, tool_count: int) -> None:
+    """Accumulate one Responses-API call's billable usage."""
+    usage = getattr(resp, "usage", None)
+    _SEARCH_USAGE["calls"] += 1
+    _SEARCH_USAGE["input_tokens"] += _int_attr(
+        usage, "input_tokens", "prompt_tokens")
+    _SEARCH_USAGE["output_tokens"] += _int_attr(
+        usage, "output_tokens", "completion_tokens")
+    sources = _int_attr(usage, "num_sources_used", "sources_used")
+    if not sources:
+        # Some responses report the count under server_side_tool_use
+        # instead of at the usage root.
+        nested = getattr(usage, "server_side_tool_use", None)
+        sources = _int_attr(nested, "num_sources_used", "sources_used")
+    _SEARCH_USAGE["sources"] += sources
+    if sources:
+        logger.info("Responses API: %d source(s) billed across %d tool(s)",
+                    sources, tool_count)
+
+
+def drain_search_usage() -> Dict[str, int]:
+    """Return the accumulated search usage and reset the accumulator.
+
+    Draining (rather than peeking) keeps a long-lived process — the daily
+    audit retry path runs several shows back to back — from charging one
+    show for another's searches.
+    """
+    snapshot = {k: int(v) for k, v in _SEARCH_USAGE.items()}
+    for key in _SEARCH_USAGE:
+        _SEARCH_USAGE[key] = 0
+    return snapshot
+
+
 def grok_generate_text(
     *,
     prompt: str,
@@ -123,6 +192,10 @@ def grok_generate_text(
                     "prompt_cache_key": str(cache_key),
                 }
             resp = _responses_create(client, **create_kwargs)
+            try:
+                _record_search_usage(resp, len(tools))
+            except Exception:  # pragma: no cover — accounting is never fatal
+                logger.debug("search usage accounting failed", exc_info=True)
             text = getattr(resp, "output_text", "") or ""
             text = text.strip()
             logging.info(

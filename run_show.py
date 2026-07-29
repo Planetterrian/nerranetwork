@@ -662,8 +662,36 @@ def run(args: argparse.Namespace) -> None:
         )
 
     # 3. Tracker
-    from engine.tracking import create_tracker, save_usage
+    from engine.tracking import create_tracker, save_usage as _save_usage_raw
     tracker = create_tracker(config.name, episode_num)
+
+    def save_usage(tracker_arg, output_dir):
+        """Fold in xAI search-tool spend, then write the usage file.
+
+        The fetch layer bills server-side search (x_search / web_search)
+        per source consulted but has no tracker reference, so it
+        accumulates in ``digests.xai_grok`` and is drained here. Wrapping
+        save_usage rather than patching its seven call sites means the
+        abort paths (refusal, billing stop) report the searches they
+        already paid for instead of dropping them.
+        """
+        try:
+            from digests.xai_grok import drain_search_usage
+            from engine.tracking import record_search_usage
+
+            usage = drain_search_usage()
+            if usage.get("calls"):
+                record_search_usage(
+                    tracker_arg,
+                    calls=usage["calls"],
+                    sources=usage["sources"],
+                    prompt_tokens=usage["input_tokens"],
+                    completion_tokens=usage["output_tokens"],
+                    model=str(getattr(config.llm, "model", "") or ""),
+                )
+        except Exception as exc:  # never let accounting break a run
+            logger.warning("Search cost accounting failed (non-fatal): %s", exc)
+        return _save_usage_raw(tracker_arg, output_dir)
 
     # 3b. Initialize content lake database (idempotent — CREATE IF NOT EXISTS)
     try:
@@ -3145,6 +3173,13 @@ def run(args: argparse.Namespace) -> None:
                 tracker, _img_count, _img_cost,
                 model=str(getattr(config.youtube, "grok_image_model", "") or ""),
             )
+        # The July 28 cost pass shipped record_render_seconds with no
+        # caller, so `render.video_seconds` was always 0.0 and the "video
+        # render: N min" line could never print. The video stage is the
+        # episode's largest wall-clock item (~20 min on Tesla) — the one
+        # number that says whether the single-pass render is worth having.
+        from engine.tracking import record_render_seconds
+        record_render_seconds(tracker, time.monotonic() - _t_yt)
     except Exception as exc:  # never let accounting break a publish
         logger.warning("Image cost accounting failed (non-fatal): %s", exc)
 
@@ -4788,7 +4823,9 @@ def _publish_youtube(
     except Exception:  # pragma: no cover — best-effort
         narrative_keywords = None
 
-    def _run_grok_path(*, aspect: str, label_suffix: str) -> "list[Path]":
+    def _run_grok_path(
+        *, aspect: str, label_suffix: str, count: int = 4,
+    ) -> "list[Path]":
         from engine.grok_imagine import (
             build_image_prompts,
             fetch_scene_images_grok,
@@ -4808,7 +4845,10 @@ def _publish_youtube(
                 # the Grok Imagine spend on YouTube-enabled shows
                 # (Tesla + MAB). Compliance is unaffected — the
                 # ``containsSyntheticMedia`` flag is binary.
-                count=4,
+                #
+                # The 16:9 count drops to 1 on days no long-form video is
+                # produced — see ``_fresh_long_scene_count`` below.
+                count=count,
                 show_descriptor=getattr(
                     yt, "grok_image_descriptor", "photorealistic news photo",
                 ),
@@ -5001,9 +5041,31 @@ def _publish_youtube(
 
     # Skip image provider logic if video_provider is enabled (videos replace
     # slides) or the recap pool already supplied both scene sets.
+    # How many FRESH 16:9 scenes this episode actually needs. The 9:16 set
+    # always gets the full four — those are the Shorts, which every tier
+    # publishes. But 16:9 scenes feed exactly three consumers: the
+    # long-form slideshow, the long-form thumbnail (+ its Studio variants),
+    # and the gallery library. On a shorts-only policy day for a show with
+    # no video-podcast feed, the slideshow is never rendered and the
+    # thumbnail is only a fallback — so three of the four images are
+    # generated, paid for, and never seen. Keep one (thumbnail base +
+    # gallery contribution); drop the rest. Shorts thumbnails are
+    # unaffected: they come from ``short_scene_paths`` (9:16).
+    _long_form_produced = bool(_policy_publish_long or config.video_podcast.enabled)
+    _fresh_long_scene_count = 4 if _long_form_produced else 1
+
     if video_provider != "grok" and not recap_pool_used:
         if image_provider == "grok":
-            long_scene_paths = _run_grok_path(aspect="16:9", label_suffix="")
+            if not _long_form_produced:
+                logger.info(
+                    "%s: no long-form video today (policy tier skip, no video "
+                    "podcast) — generating %d fresh 16:9 scene(s) instead of 4.",
+                    config.slug, _fresh_long_scene_count,
+                )
+            long_scene_paths = _run_grok_path(
+                aspect="16:9", label_suffix="",
+                count=_fresh_long_scene_count,
+            )
             short_scene_paths = _run_grok_path(aspect="9:16", label_suffix="_short")
         elif image_provider == "hybrid":
             _run_pexels_path(into_long=True, into_short=False)
@@ -5927,6 +5989,10 @@ def _publish_youtube(
     else:
         result["visual_mode"] = str(_visual_plan.get("mode") or "cover")
     result["scene_fresh_count"] = len(fresh_long_scenes) + len(fresh_short_scenes)
+    # Measure the shorts-only scene saving rather than assuming it: this is
+    # 3 fewer paid Grok Imagine images on every such episode.
+    result["scene_long_form_produced"] = _long_form_produced
+    result["scene_fresh_long_requested"] = _fresh_long_scene_count
     result["scene_library_count"] = (
         scene_library_count + (len(long_scene_paths) + len(short_scene_paths)
                                if recap_pool_used else 0)
