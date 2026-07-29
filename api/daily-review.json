@@ -1,66 +1,83 @@
 {
-  "date": "2026-07-28",
-  "generated_at": "2026-07-28T17:45:31.306425+00:00",
+  "date": "2026-07-29",
+  "generated_at": "2026-07-29T17:36:10.628171+00:00",
   "summary": {
-    "episodes_reviewed": 9,
+    "episodes_reviewed": 8,
     "critical_issues": 7,
-    "warning_issues": 11,
-    "missed_episodes": 1,
+    "warning_issues": 12,
+    "missed_episodes": 2,
     "skipped_episodes": 0
   },
   "remediation": {
     "auto_retry_shows": [
-      "modern_investing"
+      "fascinating_frontiers",
+      "models_agents"
     ],
     "recommendation": "Run `gh workflow run run-show.yml -f show=<slug>` for the shows above if they are not intentionally skipped."
   },
   "missed_and_skipped": [
     {
-      "show": "modern_investing",
+      "show": "fascinating_frontiers",
       "severity": "critical",
-      "title": "Missed episode: Modern Investing Techniques",
-      "detail": "Modern Investing Techniques was scheduled to produce an episode on 2026-07-28 (schedule: daily) but no output files were found in digests/modern_investing/ and no skip marker was present. The pipeline may have failed or the workflow did not trigger."
+      "title": "Missed episode: Fascinating Frontiers",
+      "detail": "Fascinating Frontiers was scheduled to produce an episode on 2026-07-29 (schedule: daily) but no output files were found in digests/fascinating_frontiers/ and no skip marker was present. The pipeline may have failed or the workflow did not trigger."
+    },
+    {
+      "show": "models_agents",
+      "severity": "critical",
+      "title": "Missed episode: Models & Agents",
+      "detail": "Models & Agents was scheduled to produce an episode on 2026-07-29 (schedule: daily) but no output files were found in digests/models_agents/ and no skip marker was present. The pipeline may have failed or the workflow did not trigger."
     }
   ],
   "episodes": [
     {
       "show": "tesla",
-      "episode_num": 555,
-      "critical": 1,
-      "warnings": 1,
+      "episode_num": 556,
+      "critical": 0,
+      "warnings": 4,
       "issues": [
         {
           "severity": "warning",
-          "title": "Podcast script below target (1730 words)",
-          "detail": "Script has 1730 words (target: 2000+). Episode may feel shorter than usual."
+          "title": "Podcast script below target (1442 words)",
+          "detail": "Script has 1442 words (target: 2000+). Episode may feel shorter than usual."
         },
         {
-          "severity": "critical",
-          "title": "AI review: Repetitive",
-          "detail": "Court-filing allegations about engineer hours and test-car hazards appear twice, nearly verbatim."
+          "severity": "warning",
+          "title": "Possible story duplication (2 block pairs)",
+          "detail": "Found 2 pairs of non-adjacent paragraph blocks with high proper-noun overlap. The same story may be covered twice."
         },
         {
-          "severity": "info",
-          "title": "AI quality score: 7/10",
-          "detail": "Solid, well-structured episode marred only by one duplicated paragraph; otherwise publishable with minor editing."
+          "severity": "warning",
+          "title": "AI review: Factual Errors",
+          "detail": "The claim that the Cybercab \"now ships with a factory-integrated Starlink V5 terminal\" is not supported by any verifiable Tesla announcement or product detail as of 2026-07-29."
+        },
+        {
+          "severity": "warning",
+          "title": "AI quality score: 5/10",
+          "detail": "Grok rated this episode 5/10. The episode is well-structured and professionally delivered, but the central Cybercab-Starlink integration claim appears fabricated, undermining factual credibility."
         }
       ]
     },
     {
       "show": "omni_view",
-      "episode_num": 126,
+      "episode_num": 127,
       "critical": 1,
-      "warnings": 3,
+      "warnings": 4,
       "issues": [
         {
           "severity": "warning",
-          "title": "Excessive repetition: 'what happens next:' (5x)",
-          "detail": "The phrase 'what happens next:' appears 5 times, suggesting possible LLM hallucination or loop."
+          "title": "Excessive repetition: 'what happens next:' (6x)",
+          "detail": "The phrase 'what happens next:' appears 6 times, suggesting possible LLM hallucination or loop."
         },
         {
           "severity": "info",
           "title": "Slow news mode active (trigger: stale_repeats)",
           "detail": "This episode was produced in slow news mode (trigger: stale_repeats). Verify it sounds natural and doesn't reveal the slow news status."
+        },
+        {
+          "severity": "warning",
+          "title": "Possible story duplication (3 block pairs)",
+          "detail": "Found 3 pairs of non-adjacent paragraph blocks with high proper-noun overlap. The same story may be covered twice."
         },
         {
           "severity": "warning",
@@ -75,131 +92,103 @@
         {
           "severity": "critical",
           "title": "AI review: Repetitive",
-          "detail": "[multiple paragraphs restate the same points about state budget incentives and the One Big Beautiful Bill Act]"
-        },
-        {
-          "severity": "info",
-          "title": "AI quality score: 6/10",
-          "detail": "Solid episode with minor repetition in the food-stamp analysis; otherwise clear, well-structured coverage."
-        }
-      ]
-    },
-    {
-      "show": "fascinating_frontiers",
-      "episode_num": 145,
-      "critical": 1,
-      "warnings": 1,
-      "issues": [
-        {
-          "severity": "warning",
-          "title": "Podcast script below target (1455 words)",
-          "detail": "Script has 1455 words (target: 1700+). Episode may feel shorter than usual."
-        },
-        {
-          "severity": "critical",
-          "title": "AI review: Repetitive",
-          "detail": "[Io/volcanic exo-moon content repeated almost verbatim in two consecutive paragraphs]"
+          "detail": "[NTPC $178 billion investment story repeated almost verbatim in two separate segments]"
         },
         {
           "severity": "info",
           "title": "AI quality score: 7/10",
-          "detail": "Solid episode marred only by a brief, near-verbatim repetition of the exo-volcanism segment; otherwise clean and publishable."
+          "detail": "Solid episode marred only by a duplicated NTPC story; otherwise clear, balanced, and publishable."
         }
       ]
     },
     {
       "show": "planetterrian",
-      "episode_num": 134,
-      "critical": 0,
-      "warnings": 0,
-      "issues": [
-        {
-          "severity": "info",
-          "title": "AI quality score: 8/10",
-          "detail": "Strong, well-structured episode with clear transitions and no noticeable issues."
-        }
-      ]
-    },
-    {
-      "show": "models_agents",
-      "episode_num": 125,
+      "episode_num": 135,
       "critical": 1,
-      "warnings": 2,
+      "warnings": 1,
       "issues": [
         {
           "severity": "warning",
-          "title": "Podcast script below target (1484 words)",
-          "detail": "Script has 1484 words (target: 1500+). Episode may feel shorter than usual."
-        },
-        {
-          "severity": "warning",
-          "title": "Possible story duplication (3 block pairs)",
-          "detail": "Found 3 pairs of non-adjacent paragraph blocks with high proper-noun overlap. The same story may be covered twice."
+          "title": "Podcast script below target (1492 words)",
+          "detail": "Script has 1492 words (target: 1600+). Episode may feel shorter than usual."
         },
         {
           "severity": "critical",
           "title": "AI review: Repetitive",
-          "detail": "The Anthropic open-weights paragraph and the Snowflake Cortex Gateway paragraph each repeat nearly verbatim within a few sentences."
+          "detail": "the Einstein-tile optical discussion is repeated almost verbatim in two separate segments"
         },
         {
           "severity": "info",
           "title": "AI quality score: 7/10",
-          "detail": "Solid, well-structured episode marred only by two instances of near-verbatim repetition that slightly dilute polish."
+          "detail": "Solid, well-organized episode with one noticeable repetition of the Einstein-tile segment; otherwise clean and publishable."
         }
       ]
     },
     {
       "show": "models_agents_beginners",
-      "episode_num": 116,
-      "critical": 0,
+      "episode_num": 117,
+      "critical": 1,
       "warnings": 1,
       "issues": [
         {
           "severity": "warning",
-          "title": "Podcast script below target (1096 words)",
-          "detail": "Script has 1096 words (target: 1200+). Episode may feel shorter than usual."
+          "title": "Podcast script below target (1083 words)",
+          "detail": "Script has 1083 words (target: 1200+). Episode may feel shorter than usual."
+        },
+        {
+          "severity": "critical",
+          "title": "AI review: Repetitive",
+          "detail": "Anthropic petition described twice in Quick Bits"
         },
         {
           "severity": "info",
-          "title": "AI quality score: 8/10",
-          "detail": "Solid beginner-friendly episode with clear explanations and practical examples; minor room for deeper technical detail but no quality issues."
+          "title": "AI quality score: 7/10",
+          "detail": "Solid episode with minor repetition; otherwise clear, well-paced, and publishable."
+        }
+      ]
+    },
+    {
+      "show": "modern_investing",
+      "episode_num": 121,
+      "critical": 1,
+      "warnings": 0,
+      "issues": [
+        {
+          "severity": "critical",
+          "title": "AI review: Repetitive",
+          "detail": "[retirement savings gap statistics repeated nearly verbatim in two separate segments]"
+        },
+        {
+          "severity": "info",
+          "title": "AI quality score: 7/10",
+          "detail": "Solid educational episode with minor repetition of retirement statistics; otherwise well-structured and on-topic."
         }
       ]
     },
     {
       "show": "spacex",
-      "episode_num": 47,
-      "critical": 1,
-      "warnings": 3,
+      "episode_num": 48,
+      "critical": 0,
+      "warnings": 0,
       "issues": [
         {
-          "severity": "warning",
-          "title": "AI review: Factual Errors",
-          "detail": "\"Orbes\" appears to be a non-existent company; \"SPCX\" is not a real SpaceX ticker; Amazon's Kuiper filing claims 5,105 satellites with no public record of that exact number; \"Opsera\" and \"Liatrio\" are not verifiable Cursor partners; \"Bob Hensgens\" discussion of a Vermilion Parish facility lacks corroboration."
-        },
-        {
-          "severity": "critical",
-          "title": "AI review: Repetitive",
-          "detail": "The heat-shield survival and tile-degradation discussion is repeated almost verbatim in three separate sections."
-        },
-        {
-          "severity": "warning",
-          "title": "AI review: Off Topic",
-          "detail": "Extended discussion of AI coding platforms (Opsera, Cursor, Liatrio) and municipal tax-revenue allocation in Memphis are only tangentially related to SpaceX."
-        },
-        {
-          "severity": "warning",
-          "title": "AI quality score: 4/10",
-          "detail": "Grok rated this episode 4/10. The episode contains multiple unverifiable or fabricated claims, heavy repetition of the heat-shield narrative, and drifts into loosely related AI and local-politics topics, making it feel thin and unreliable despite coherent delivery."
+          "severity": "info",
+          "title": "AI quality score: 8/10",
+          "detail": "Strong, well-structured episode with solid coverage and no noticeable issues."
         }
       ]
     },
     {
       "show": "first_principles",
-      "episode_num": 53,
+      "episode_num": 54,
       "critical": 1,
-      "warnings": 0,
+      "warnings": 1,
       "issues": [
+        {
+          "severity": "warning",
+          "title": "Possible story duplication (3 block pairs)",
+          "detail": "Found 3 pairs of non-adjacent paragraph blocks with high proper-noun overlap. The same story may be covered twice."
+        },
         {
           "severity": "info",
           "title": "Significant story overlap with unintended_consequences",
@@ -208,25 +197,30 @@
         {
           "severity": "critical",
           "title": "AI review: Repetitive",
-          "detail": "[Multiple paragraphs restate the same point about consumable costs and silver halide]"
+          "detail": "The core argument about the gap between marginal cost and price is restated multiple times with similar phrasing."
         },
         {
           "severity": "info",
-          "title": "AI quality score: 6/10",
-          "detail": "Solid conceptual breakdown undermined by noticeable repetition of the same argument."
+          "title": "AI quality score: 7/10",
+          "detail": "Solid, well-structured episode with a clear thesis, but noticeable repetition of the same cost-gap argument reduces overall polish."
         }
       ]
     },
     {
       "show": "unintended_consequences",
-      "episode_num": 72,
+      "episode_num": 73,
       "critical": 0,
-      "warnings": 0,
+      "warnings": 1,
       "issues": [
+        {
+          "severity": "warning",
+          "title": "Podcast script below target (1225 words)",
+          "detail": "Script has 1225 words (target: 1300+). Episode may feel shorter than usual."
+        },
         {
           "severity": "info",
           "title": "AI quality score: 8/10",
-          "detail": "Strong, well-structured episode that clearly explains the Peltzman effect with historical evidence and balanced caveats; minor room for deeper data citations."
+          "detail": "Strong, well-structured episode with solid evidence and clear takeaways; minor room for deeper post-pandemic data."
         }
       ]
     }
