@@ -427,11 +427,40 @@ def build_long_form_metadata(
     except Exception:  # noqa: BLE001 — hashtags must never block an upload
         _hashtag_line = ""
 
+    # What the episode is actually ABOUT, directly under the hook.
+    # Previously the first thing after the hook was three promotional
+    # link lines, so the topics a viewer (or YouTube's indexer) most
+    # needs sat below "Show more" behind boilerplate that is identical
+    # on every upload. These headlines are the day's stories, already
+    # extracted for the slideshow — no new call, no new cost.
+    _topics_block = ""
+    try:
+        from engine.grok_imagine import extract_story_headlines
+        _stories = [
+            _truncate(_strip_markdown(s), 110)
+            for s in extract_story_headlines(digest_text or "", max_count=5)
+        ]
+        # Drop a headline that merely restates the hook — the hook is
+        # the line immediately above it.
+        _hook_key = " ".join((hook or "").lower().split())[:60]
+        _stories = [
+            s for s in _stories
+            if s and " ".join(s.lower().split())[:60] != _hook_key
+        ]
+        if _stories:
+            _topics_block = "In this episode:\n" + "\n".join(
+                "• " + s for s in _stories[:4]
+            )
+    except Exception:  # noqa: BLE001 — never block an upload
+        _topics_block = ""
+
     pieces: List[str] = []
     if hook:
         pieces.append(hook.strip())
     if _hashtag_line:
         pieces.append(_hashtag_line)
+    if _topics_block:
+        pieces.append(_topics_block)
     pieces.append(show_page_line)
     pieces.append(subscribe_line)
     if discovery_line:

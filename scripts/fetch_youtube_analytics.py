@@ -84,12 +84,23 @@ _CHANNEL_HISTORY_MAX_ROWS = 800
 
 def _load_index(digests_dir: Path) -> List[dict]:
     """Collect rows from every per-show video index — the EN channel
-    (``youtube_videos.json``) AND the @NerraRU dubs
-    (``youtube_videos.ru.json``). Each row carries its own ``channel`` field,
-    so the fetch groups them onto the right channel token; without the RU
-    files the analytics loop was EN-only and never read the RU channel."""
+    (``youtube_videos.json``) AND every dubbed channel
+    (``youtube_videos.<lang>.json``). Each row carries its own ``channel``
+    field, so the fetch groups them onto the right channel token; without
+    the dub files the analytics loop was EN-only.
+
+    The language files are matched by PATTERN rather than listed. When
+    @NerraFR went live (2026-07-23) it published 39 videos that this
+    fetch never saw, because only ``.ru.json`` had been added alongside
+    the base index. Everything downstream inherited the blind spot: the
+    adaptive policy computed ``video_count_14d = 0`` for all four FR
+    shows and froze them at their seed tier — a channel that could never
+    earn a promotion no matter how well it performed — and the title
+    hints, subscriber attribution and gallery-retention join were all
+    equally blind. A glob costs nothing and cannot be forgotten again.
+    """
     files = sorted(digests_dir.glob("*/youtube_videos.json"))
-    files += sorted(digests_dir.glob("*/youtube_videos.ru.json"))
+    files += sorted(digests_dir.glob("*/youtube_videos.*.json"))
     if not files:
         logger.info("No per-show video indexes under %s — nothing to fetch "
                     "(clean no-op)", digests_dir)

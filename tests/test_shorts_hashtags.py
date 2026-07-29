@@ -266,3 +266,46 @@ class TestExtractEntityPhrases:
         out = _eep("Tesla SpaceX OpenAI Nvidia Google Apple Meta Amazon Intel",
                    max_phrases=3)
         assert len(out) == 3
+
+
+class TestEntityPhraseFragments:
+    """July 29 2026 — a contractor audit scored the channel's keywords
+    10/100. Most of that was wrong (30 relevant tags ship on every
+    upload), but it did surface a real flaw: this function had no
+    substring de-dupe, so "…at its German Gigafactory" spent three of a
+    show's thirty tag slots on `german gigafactory`, `german` and
+    `gigafactory`. Its sibling extract_hashtags has de-duped by
+    substring since it was written — the two now agree."""
+
+    def test_phrase_suppresses_its_own_fragments(self):
+        out = _eep(
+            "Tesla plans to add 1,000 workers at its German Gigafactory.",
+            show_keywords=[])
+        assert "german gigafactory" in out
+        assert "german" not in out
+        assert "gigafactory" not in out
+
+    def test_show_keywords_keep_their_slot(self):
+        """A configured keyword is a deliberate choice — a longer phrase
+        containing it must not cost the show its own tag."""
+        out = _eep("Tesla Cybercab enters volume production in Austin.",
+                   show_keywords=["tesla", "cybercab"])
+        assert "tesla cybercab" in out
+        assert "tesla" in out and "cybercab" in out
+
+    def test_long_title_case_run_is_capped(self):
+        """Without a cap, one long run becomes a single unsearchable tag
+        and — with fragment suppression on — swallows every term in it."""
+        from engine.shorts_hashtags import _MAX_ENTITY_WORDS
+
+        out = _eep("Tesla SpaceX OpenAI Nvidia Google Apple Meta", max_phrases=6)
+        assert out, "a long run must still yield tags"
+        assert len(out[0].split()) <= _MAX_ENTITY_WORDS
+        assert len(out) > 1, "constituents must survive the capped phrase"
+
+    def test_real_hooks_lose_no_useful_tag(self):
+        out = _eep(
+            "SpaceX Starship Block 3 completes static fire at Starbase.",
+            show_keywords=["spacex", "starship"])
+        for expected in ("spacex", "starship", "starbase"):
+            assert expected in out, expected

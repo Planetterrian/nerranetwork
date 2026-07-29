@@ -61,6 +61,11 @@ _STOPWORDS = frozenset((
 _MIN_ACRONYM_LEN = 2
 _MAX_ACRONYM_LEN = 6
 
+# Longest run of Title-Case words still treated as ONE named entity.
+# "Modern Investing Techniques" is an entity; a nine-word run is a
+# sentence fragment nobody searches for.
+_MAX_ENTITY_WORDS = 3
+
 # Hashtag character class — YouTube accepts letters / digits /
 # underscores after the ``#``. Anything else terminates the tag.
 _HASHTAG_BODY_RE = re.compile(r"[A-Za-z0-9_]+")
@@ -297,11 +302,29 @@ def extract_entity_phrases(
     out: List[str] = []
     seen: set = set()
 
-    def _add(phrase: str) -> None:
+    def _add(phrase: str, *, protected: bool = False) -> None:
+        """Add a tag phrase, suppressing fragments of one already taken.
+
+        ``extract_hashtags`` has always de-duped by substring so that
+        "#Tesla" cannot eat a slot "#TeslaCybercab" already covers; this
+        sibling never did, so a hook like "…at its German Gigafactory"
+        shipped `german gigafactory`, `german` AND `gigafactory` — two of
+        the show's 30 tag slots spent on halves of a phrase already
+        present, and "german" alone describes nothing about the episode.
+        Same rule here, with one exception: the show's own configured
+        keywords (step 4) are deliberate and keep their slot even when a
+        longer phrase happens to contain them, so a Tesla episode never
+        loses the "tesla" tag just because "tesla cybercab" ranked first.
+        """
         p = " ".join(phrase.split()).strip().lower()
-        if p and p not in seen:
-            seen.add(p)
-            out.append(p)
+        if not p or p in seen:
+            return
+        if not protected:
+            for picked in seen:
+                if p in picked:
+                    return
+        seen.add(p)
+        out.append(p)
 
     def _edge_strip(tok: str) -> str:
         return tok.strip(".,!?:;\"'()[]{}")
@@ -317,7 +340,13 @@ def extract_entity_phrases(
                 run.append(tokens[j])
                 j += 1
             if len(run) >= 2:
-                _add(" ".join(_edge_strip(t) for t in run))
+                # Cap the entity at three words. A named entity is
+                # "Tesla Cybercab" or "Modern Investing Techniques";
+                # anything longer is a sentence fragment that nobody
+                # searches for, and — now that fragments of a taken
+                # phrase are suppressed — a long run would also swallow
+                # every useful single term inside it.
+                _add(" ".join(_edge_strip(t) for t in run[:_MAX_ENTITY_WORDS]))
             i = j
         else:
             i += 1
@@ -331,7 +360,7 @@ def extract_entity_phrases(
             _add(_edge_strip(t))
     # 4) show keywords fill remaining slots
     for kw in (show_keywords or []):
-        _add(str(kw))
+        _add(str(kw), protected=True)
 
     return out[:max_phrases]
 

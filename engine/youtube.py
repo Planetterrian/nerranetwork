@@ -419,6 +419,69 @@ def add_video_to_playlist(
     return True
 
 
+def update_video_title(
+    *,
+    credentials,
+    video_id: str,
+    new_title: str,
+) -> Optional[str]:
+    """Retitle an already-published video, preserving everything else.
+
+    ``videos.update`` REPLACES each part it is given, so sending a
+    snippet containing only a title would blank the description, tags
+    and category of a live video. This reads the current snippet first
+    and writes it back with one field changed — the read is 1 quota
+    unit, the write 50, and skipping the read to save that unit would
+    risk destroying metadata on every video it touched.
+
+    Requires the ``youtube.force-ssl`` scope, which the network's stored
+    tokens already carry (it is needed for caption upload), so no
+    re-authorisation is involved.
+
+    Returns the title actually written, or ``None`` when nothing was
+    changed or the call failed. Never raises: this runs over a back
+    catalogue in bulk, and one inaccessible video must not stop the rest.
+    """
+    new_title = (new_title or "").strip()
+    if not video_id or not new_title:
+        return None
+    from googleapiclient.discovery import build
+    from googleapiclient.errors import HttpError
+
+    try:
+        youtube = build(
+            "youtube", "v3", credentials=credentials, cache_discovery=False,
+        )
+        current = youtube.videos().list(
+            part="snippet", id=video_id,
+        ).execute()
+        items = (current or {}).get("items") or []
+        if not items:
+            logger.warning("retitle: video %s not found or not visible", video_id)
+            return None
+        snippet = items[0].get("snippet") or {}
+        if (snippet.get("title") or "").strip() == new_title:
+            return None  # already correct — do not spend a write
+        snippet["title"] = new_title
+        # categoryId is REQUIRED on update; a snippet read always carries
+        # it, but be explicit so a malformed read fails loudly here
+        # rather than as an opaque 400 from the API.
+        if not snippet.get("categoryId"):
+            logger.warning("retitle: %s has no categoryId — skipping", video_id)
+            return None
+        youtube.videos().update(
+            part="snippet", body={"id": video_id, "snippet": snippet},
+        ).execute()
+        logger.info("retitled %s -> %s", video_id, new_title)
+        return new_title
+    except HttpError as exc:
+        logger.warning("retitle: %s failed (%s)", video_id, exc)
+        return None
+    except Exception as exc:  # noqa: BLE001 — bulk job, never fatal
+        logger.warning("retitle: %s failed (%s)", video_id, exc)
+        return None
+
+
 def post_video_comment(
     *,
     credentials,
