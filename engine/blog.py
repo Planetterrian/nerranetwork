@@ -128,6 +128,28 @@ def _split_trailing_publisher(text: str) -> str:
     return ""
 
 
+# The colon shapes below are the weakest attribution signal: a colon
+# inside a bold headline is usually a subtitle ("Starship Block 3: A New
+# Era"), not an outlet. Only accept a colon-shape candidate carrying an
+# outlet fingerprint — a digit (radio formats like "97.9 the Bruce"), a
+# dot (bare domains), or a common outlet word. A false negative degrades
+# to the honest raw domain; a false positive misattributes the reporting.
+_OUTLET_FINGERPRINT_RE = re.compile(
+    r"\d|\."
+    r"|\b(?:news|times|post|daily|herald|tribune|journal|gazette|press"
+    r"|wire|today|weekly|globe|mail|telegraph|chronicle|observer"
+    r"|standard|express|bulletin|nation|media|network|radio|tv|fm"
+    r"|insider|verge|reuters|bloomberg|reporter|record|courier|dispatch"
+    r"|examiner|sentinel|review|magazine|monitor|beat|blog|week)\b",
+    re.IGNORECASE,
+)
+
+# Shape C's tail is a date line ("July 28, 2026, Electrek"); requiring
+# the date is what separates it from ordinary body prose that happens to
+# contain a comma.
+_DATE_LED_TAIL_RE = re.compile(r"^[A-Z][a-z]+\.? \d{1,2}, \d{4},\s*(.+)$")
+
+
 def _publisher_from_headline(line: str) -> str:
     """Recover the outlet named on a digest item's headline line.
 
@@ -153,18 +175,23 @@ def _publisher_from_headline(line: str) -> str:
     if inside:
         return inside
 
-    # C — publisher is the last comma-separated field of a trailing date
-    #     line ("July 28, 2026, Electrek"). Requires a comma so a plain
-    #     sentence tail can never be mistaken for an outlet.
-    if bold.endswith(":") and "," in tail:
-        cleaned = _clean_publisher(tail.rsplit(",", 1)[1])
-        if cleaned:
-            return cleaned
+    # C — publisher trails a date line ("July 28, 2026, Electrek").
+    #     Anchored on the date itself: a bold-ending-in-colon followed by
+    #     body prose containing a comma must never be mistaken for an
+    #     attribution (the last clause of a sentence is not an outlet).
+    if bold.endswith(":"):
+        date_led = _DATE_LED_TAIL_RE.match(tail)
+        if date_led:
+            cleaned = _clean_publisher(date_led.group(1))
+            if cleaned:
+                return cleaned
 
-    # B — publisher sits inside the bold, after the final colon.
+    # B — publisher sits inside the bold, after the final colon. Guarded
+    #     by the outlet fingerprint because this shape is textually
+    #     identical to a subtitle ("Starship Block 3: A New Era").
     if ":" in bold and not bold.endswith(":"):
         cleaned = _clean_publisher(bold.rsplit(":", 1)[1])
-        if cleaned:
+        if cleaned and _OUTLET_FINGERPRINT_RE.search(cleaned):
             return cleaned
 
     return ""
@@ -897,6 +924,10 @@ def _blog_meta_description(metadata: dict, show_config: dict) -> str:
         return (show_config.get("description") or "").strip()
     suffix = f" {show_config['name']}, episode {metadata.get('episode_num', 0)}."
     if len(hook) + len(suffix) <= 160:
+        # Keep a hook's own terminal ?/!/… — appending "." after them
+        # shipped "scary?." in 24 live descriptions.
+        if hook[-1] in "?!…":
+            return hook + suffix
         return hook.rstrip(" .") + "." + suffix
     return hook
 

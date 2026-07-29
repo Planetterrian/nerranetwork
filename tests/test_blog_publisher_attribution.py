@@ -97,6 +97,15 @@ class TestHeadlineFormats:
             "",
             # A dash inside a short bold phrase is not an attribution.
             "**Q3 - Q4**",
+            # A colon-subtitle headline is NOT shape B — the tail of the
+            # colon is a subtitle, not an outlet. Inventing "A New Era"
+            # as a publisher misattributes the reporting.
+            "1. **Starship Block 3: A New Era**",
+            "3. **Optimus V3: What Happens Next**",
+            # A bold-ending-in-colon followed by body prose with a comma
+            # is NOT shape C — only a date-led tail carries attribution.
+            "2. **Why the ruling matters:** The court found the permit "
+            "invalid, a decision experts called sweeping",
         ],
     )
     def test_no_attribution_returns_empty(self, line):
