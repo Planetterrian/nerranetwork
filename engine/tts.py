@@ -143,6 +143,8 @@ def prepare_text_for_tts(text: str) -> str:
         text,
     )
 
+    text = _speech_safe_urls(text)
+
     corrections = _load_pronunciation_map()
     for written, spoken in corrections.items():
         if not written or not spoken:
@@ -151,6 +153,68 @@ def prepare_text_for_tts(text: str) -> str:
         text = re.sub(pattern, str(spoken), text, flags=re.IGNORECASE)
 
     return text.strip()
+
+
+# A domain-like token followed by a path: "nerranetwork.com/start-here",
+# "example.org/a/b". Captures the host and the path separately so only the
+# PATH is rewritten.
+# A dot inside the path must be followed by more path characters, so a
+# SENTENCE-ending period is never swallowed — the voice needs that period
+# to close the sentence, and an earlier version of this pattern ate it.
+_URL_IN_SPEECH = re.compile(
+    r"\b((?:[a-z0-9-]+\.)+(?:com|org|net|io|ai|co|dev|gov|edu))"
+    r"/([A-Za-z0-9\-_/]+(?:\.[A-Za-z0-9\-_/]+)*)",
+    re.IGNORECASE,
+)
+
+
+# Set by ``_speak_with_grok`` when the chunk-boundary guard drops the
+# speech wrap, drained once per episode by run_show. Module-level for the
+# same reason ``digests.xai_grok`` accumulates search usage this way: the
+# synthesis layer has no tracker reference to write through.
+_WRAP_DROPPED: dict = {}
+
+
+def drain_wrap_drop() -> dict:
+    """Return and clear the speech-wrap drop record for this process."""
+    global _WRAP_DROPPED
+    out, _WRAP_DROPPED = _WRAP_DROPPED, {}
+    return out
+
+
+def _speech_safe_urls(text: str) -> str:
+    """Make URL paths readable aloud without touching ordinary prose.
+
+    Grok TTS speaks the hyphen in a URL path as the WORD "hyphen": the
+    network cross-promo's "nerranetwork.com/start-here" shipped as
+    "slash start hyphen here", and "/age-of-ai-apply" as "of hyphen AI
+    apply". Measured across 1,191 episodes that had both a TTS input and
+    a Whisper transcript of the audio that shipped: 95 spoken "hyphen"s
+    across 67 episodes, 36 of them from these promo URLs.
+
+    The scope is deliberately narrow. Those same 1,191 episodes fed the
+    voice 28,955 hyphenated compounds and only 0.33% leaked, so hyphens
+    are overwhelmingly handled correctly and a blanket strip would
+    rewrite ~29,000 tokens to fix ~95. Only the PATH of a domain-like
+    token is touched: hyphens and slashes become spaces, and the file
+    extension is dropped. The host keeps its dots, so "nerranetwork.com"
+    still reads as the brand.
+
+    Prose is untouched because a bare hyphenated word has no preceding
+    domain to match, and a hyphenated word inside a sentence that merely
+    follows a URL is outside the matched span.
+    """
+    if not text or "/" not in text:
+        return text
+
+    def _spoken(match: re.Match) -> str:
+        host, path = match.group(1), match.group(2)
+        path = re.sub(r"\.(?:html?|php|aspx?)$", "", path, flags=re.IGNORECASE)
+        # Slashes and hyphens both become pauses in speech, not words.
+        path = re.sub(r"[/\-_.]+", " ", path).strip()
+        return f"{host} {path}".rstrip()
+
+    return _URL_IN_SPEECH.sub(_spoken, text)
 
 
 def validate_elevenlabs_auth(api_key: str) -> None:
@@ -922,6 +986,15 @@ def _speak_with_grok(
         )
         speech_wrap_open = ""
         speech_wrap_close = ""
+        # Record it as well as logging it. The warning above has fired on
+        # 5.1% of the 1,270 committed episodes — 16% on Modern Investing
+        # and 11% on Tesla — so roughly one Tesla episode in nine ships
+        # with different vocal energy from the other eight, and nothing
+        # surfaced that. A log line in a CI job is not a signal anyone
+        # sees; run_show drains this into the episode metrics.
+        global _WRAP_DROPPED
+        _WRAP_DROPPED = {"dropped": True, "chunks": len(chunks),
+                         "chars": len(text)}
 
     def _wrap(s: str) -> str:
         if not (speech_wrap_open or speech_wrap_close):
