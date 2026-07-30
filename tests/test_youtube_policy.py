@@ -498,7 +498,19 @@ class TestRuDubPolicyGating:
         monkeypatch.setattr(ru_dub, "_en_optimized_long_title",
                             lambda *a, **k: "")
 
-        calls = {"long_renders": 0, "short_renders": 0, "uploads": []}
+        calls = {"long_renders": 0, "short_renders": 0, "uploads": [],
+                 "comments": []}
+
+        def _fake_comment(*, credentials, video_id, text):
+            calls["comments"].append(text)
+            return "cmt1"
+
+        # Stubbed because July 2026 made the RU funnel comment fire on
+        # shorts-only days too (it used to be gated on a long-form URL
+        # that @NerraRU rarely has, so it posted nothing most days).
+        # Without this stub the real client would be constructed here and
+        # reach for the YouTube discovery document over the network.
+        monkeypatch.setattr(yt_mod, "post_video_comment", _fake_comment)
 
         def _fake_long(*a, **k):
             calls["long_renders"] += 1
@@ -544,6 +556,15 @@ class TestRuDubPolicyGating:
                          .read_text(encoding="utf-8"))
         kinds = {v["kind"] for v in idx["videos"] if v.get("video_id")}
         assert kinds == {"short"}
+        # July 2026: the funnel comment now fires WITHOUT a RU long-form.
+        # @NerraRU is shorts-only for most shows, so gating the comment on
+        # a long-form URL meant the network's highest-reach surface posted
+        # nothing at all on nearly every run. It must point at a Russian
+        # destination — never at an English video.
+        assert len(calls["comments"]) == 1
+        assert "/ru/" in calls["comments"][0] or "nerranetwork.com" in calls["comments"][0]
+        assert "youtube.com" not in calls["comments"][0]
+        assert "youtu.be" not in calls["comments"][0]
 
     def test_legacy_plan_still_uploads_long_and_short(
             self, tmp_path, monkeypatch):
