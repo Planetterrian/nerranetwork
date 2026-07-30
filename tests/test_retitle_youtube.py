@@ -127,3 +127,69 @@ class TestUpdaterPreservesMetadata:
         body = body[:body.index("\ndef ")]
         assert "except HttpError" in body
         assert "except Exception" in body
+
+
+class TestChannelScoping:
+    """A video can only be updated with the credentials of the channel
+    that owns it. Once the workflow exposed a channel input, reading the
+    EN index while holding the RU token would have sent every EN video
+    id to the wrong channel — a run of guaranteed failures that looks
+    like a broken script rather than a wrong argument."""
+
+    def test_each_channel_reads_its_own_index(self):
+        from scripts.retitle_youtube_videos import _iter_records
+
+        en = _iter_records(None, "en")
+        assert en, "EN index should not be empty in this repo"
+        assert all("youtube_videos.json" in r["_index_path"] for r in en)
+        assert all(".ru.json" not in r["_index_path"] for r in en)
+
+        fr = _iter_records(None, "fr")
+        for rec in fr:
+            assert rec["_index_path"].endswith("youtube_videos.fr.json")
+            assert rec.get("channel") == "fr"
+
+    def test_default_channel_is_en(self):
+        from scripts.retitle_youtube_videos import _iter_records
+
+        assert _iter_records(None) == _iter_records(None, "en")
+
+
+class TestWorkflowWiring:
+    WF = REPO_ROOT / ".github" / "workflows" / "retitle-youtube-videos.yml"
+
+    def test_workflow_exists_and_is_dispatch_only(self):
+        import yaml
+
+        data = yaml.safe_load(self.WF.read_text(encoding="utf-8"))
+        triggers = data.get("on") or data.get(True)
+        assert list(triggers) == ["workflow_dispatch"], (
+            "retitling live videos must never fire on a schedule or push"
+        )
+
+    def test_apply_defaults_to_false(self):
+        import yaml
+
+        data = yaml.safe_load(self.WF.read_text(encoding="utf-8"))
+        triggers = data.get("on") or data.get(True)
+        assert triggers["workflow_dispatch"]["inputs"]["apply"]["default"] is False
+
+    def test_inputs_reach_the_script_through_env(self):
+        """Interpolating an input straight into a run: block is a shell
+        injection; they go through env like the caption-scope workflow."""
+        raw = self.WF.read_text(encoding="utf-8")
+        assert "APPLY_INPUT: ${{ inputs.apply }}" in raw
+        assert "SHOW_INPUT: ${{ inputs.show }}" in raw
+        assert "${{ inputs.show }} --" not in raw
+
+    def test_credentials_come_from_secrets(self):
+        raw = self.WF.read_text(encoding="utf-8")
+        for name in ("YOUTUBE_CLIENT_ID", "YOUTUBE_CLIENT_SECRET",
+                     "YOUTUBE_REFRESH_TOKEN_EN"):
+            assert f"{name}: ${{{{ secrets.{name} }}}}" in raw, name
+
+    def test_runs_do_not_overlap(self):
+        import yaml
+
+        data = yaml.safe_load(self.WF.read_text(encoding="utf-8"))
+        assert data["concurrency"]["cancel-in-progress"] is False

@@ -107,9 +107,20 @@ def looks_like_fragment(title: str) -> bool:
     return False
 
 
-def _iter_records(show: Optional[str]) -> List[Dict]:
+def _iter_records(show: Optional[str], channel: str = "en") -> List[Dict]:
+    """Video records for ONE channel.
+
+    Each channel keeps its own index — ``youtube_videos.json`` for the
+    EN channel, ``youtube_videos.<lang>.json`` for each dub — and a
+    video can only be updated with the credentials of the channel that
+    owns it. Reading the wrong index would send EN video ids to the RU
+    token and fail every call, so the channel selects the file.
+    """
+    channel = (channel or "en").strip().lower()
+    pattern = ("*/youtube_videos.json" if channel == "en"
+               else f"*/youtube_videos.{channel}.json")
     out: List[Dict] = []
-    for path in sorted((REPO_ROOT / "digests").glob("*/youtube_videos.json")):
+    for path in sorted((REPO_ROOT / "digests").glob(pattern)):
         raw = json.loads(path.read_text(encoding="utf-8"))
         videos = raw.get("videos") if isinstance(raw, dict) else raw
         items = list(videos.values()) if isinstance(videos, dict) else (videos or [])
@@ -174,7 +185,8 @@ def _episode_headlines(cfg, episode: int, cache: Dict) -> List[str]:
     return out
 
 
-def plan(show: Optional[str], include_all: bool) -> List[Dict]:
+def plan(show: Optional[str], include_all: bool,
+         channel: str = "en") -> List[Dict]:
     """Return the list of proposed retitles, newest first."""
     from engine.video_metadata import _build_seo_title
 
@@ -182,7 +194,7 @@ def plan(show: Optional[str], include_all: bool) -> List[Dict]:
     headline_cache: Dict = {}
     used_per_episode: Dict = {}
     proposals: List[Dict] = []
-    for rec in _iter_records(show):
+    for rec in _iter_records(show, channel):
         title = str(rec.get("title") or "")
         published = str(rec.get("published") or "")
         if not include_all and published >= TITLE_FIX_DATE:
@@ -236,7 +248,7 @@ def main(argv=None) -> int:
                     help="which channel's credentials to use (en/ru/fr)")
     args = ap.parse_args(argv)
 
-    proposals = plan(args.show, args.all)
+    proposals = plan(args.show, args.all, args.channel)
     fixable = [p for p in proposals if p.get("new_title")]
     skipped = [p for p in proposals if not p.get("new_title")]
 
