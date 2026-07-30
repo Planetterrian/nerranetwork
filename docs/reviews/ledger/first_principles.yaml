@@ -255,6 +255,39 @@ reviews:
       ab_listen_required: true
       rationale: Break recurring 'on the order of' tic while preserving required hedging language
     agent_cost_usd: 0.0537
+  - date: '2026-07-29'
+    pr: null
+    doc: docs/reviews/first_principles_review_2026_07_29.md
+    generated_by: grok-4.3
+    summary: Persistent shorts (6/10 episodes below 1500w floor) and recurring boilerplate tics ('on the order of' in 6/10 transcripts plus expected disclosures/sign-offs) with chapters clean; prior length/tic predictions scored partial/miss; no P0s; digest-stage levers only per category rules.
+    scored_prior_predictions:
+    - metric: episodes below 1500-word floor in last 10 _tts.txt
+      verdict: partial
+      evidence: 6/10 below vs 3/10 baseline (ep45 1403w, ep47 1337w, ep48 1341w, ep49 1425w, ep51 1293w, ep52 1320w)
+    - metric: occurrences of 'on the order of' across 10 transcripts
+      verdict: miss
+      evidence: phrase present in 6/10 transcripts (ep45,46,48,49,52,54); prior 'rough magic wand estimate' absent
+    shipped: []
+    deferred:
+    - Garbage auto-segment chapter titles (shared network LLM-title class)
+    - Further length escalation (do_not_retry)
+    predictions:
+    - metric: episodes below 1500-word floor in last 10 _tts.txt
+      baseline: 6/10
+      expected: <=4/10 after next digest-stage retry tuning (min_digest_words:1400)
+      verdict: pending
+      evidence: null
+    - metric: occurrences of 'on the order of' across 10 transcripts
+      baseline: 6/10
+      expected: <=2/10 after shape-based de-seed + rotation memory in digest prompt
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/prompts/first_principles_episode.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 'De-seed recurring ''on the order of'' tic by shape description + verbatim ban + rotation MEMORY per July 2026 meta-review category rule; A/B-listen required (landmine #17).'
+    agent_cost_usd: 0.0547
 do_not_retry:
   - idea: >-
       Push the podcast length target above ~1500 words via prompt escalation
