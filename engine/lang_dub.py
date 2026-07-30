@@ -16,8 +16,9 @@ pattern for the other shows):
     future cleanup could fold RU onto this engine once it has weeks of
     parity in production.
   - Language-NEUTRAL machinery (manifest refresh, scene lookup/download,
-    cover resolution, EN-optimized-title lookup, word trimming) is IMPORTED
-    from ``engine.ru_dub`` — one implementation, no drift.
+    cover resolution, EN-optimized-title lookup, clause-aware title
+    trimming) is IMPORTED from ``engine.ru_dub`` — one implementation, no
+    drift.
   - Everything language-SPECIFIC lives in a ``DubLanguage`` spec. Adding a
     future language = one registry entry + ``youtube.dub_languages: [xx]``
     in the show YAML + a ``YOUTUBE_REFRESH_TOKEN_XX`` secret + the channel
@@ -27,8 +28,9 @@ Contract (identical to ru_dub): runs in the decoupled multilingual workflow,
 never the episode critical path; fully best-effort (returns a status dict,
 never raises); no-ops cleanly when the show hasn't opted in
 (``youtube.dub_languages``), the track doesn't exist, or the channel token
-(``YOUTUBE_REFRESH_TOKEN_<CH>``) is unset — so the FR pipeline ships DORMANT
-until the operator creates @NerraFR and adds the secret.
+(``YOUTUBE_REFRESH_TOKEN_<CH>``) is unset — which is how the FR pipeline
+shipped dormant. **@NerraFR has been live since 2026-07-21**; a future
+language stays a clean no-op until its own channel and secret exist.
 """
 
 from __future__ import annotations
@@ -51,7 +53,6 @@ from engine.ru_dub import (  # language-neutral helpers — single source
     _hashtags,
     _is_fresh_episode,
     _clause_trim,
-    _word_trim,
     gallery_images_for_episode,
 )
 

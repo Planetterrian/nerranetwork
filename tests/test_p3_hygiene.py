@@ -391,3 +391,47 @@ class TestAppleReporterFreshness:
         raw = (REPO_ROOT / ".github" / "workflows"
                / "nightly-maintenance.yml").read_text(encoding="utf-8")
         assert "check_apple_reporter_freshness.py" in raw
+
+
+class TestRuffGateRunsLocally:
+    """``pytest`` must fail on what the CI lint step fails on.
+
+    July 30 2026: the full local suite passed (5,023 tests) while CI went
+    red, because the lint step in ``.github/workflows/test.yml`` was the
+    only thing running ruff and nothing in the suite did. The retention
+    pass stopped using ``build_intro_line``'s greeting/framing selections
+    but left them assigned, which is an F841 — invisible locally, a red
+    check on the PR.
+
+    Skips when ruff isn't installed rather than failing: CI installs it
+    and runs the explicit step regardless, so the value here is catching
+    it in a dev environment before the push, not gating one without ruff.
+    """
+
+    # Mirrors the CI invocation's targets. CI adds --fix
+    # --exit-non-zero-on-fix (fail even when auto-fixable); a plain check
+    # fails on the same findings without mutating the working tree.
+    _TARGETS = ["engine/", "run_show.py", "scripts/"]
+
+    def test_ruff_is_clean(self):
+        pytest.importorskip("ruff", reason="ruff not installed in this env")
+        result = subprocess.run(
+            [sys.executable, "-m", "ruff", "check", *self._TARGETS],
+            cwd=REPO_ROOT, capture_output=True, text=True,
+        )
+        assert result.returncode == 0, (
+            "ruff would fail CI:\n" + (result.stdout or result.stderr)
+        )
+
+    def test_targets_match_the_ci_step(self):
+        """A target added to CI but not here would go unchecked locally."""
+        raw = (REPO_ROOT / ".github" / "workflows"
+               / "test.yml").read_text(encoding="utf-8")
+        line = next(ln for ln in raw.splitlines() if "ruff check" in ln)
+        for target in self._TARGETS:
+            assert target in line, f"CI no longer lints {target}"
+        # And nothing in CI's list is missing from ours.
+        ci_targets = [tok for tok in line.split()
+                      if not tok.startswith("-") and tok not in
+                      ("run:", "ruff", "check")]
+        assert sorted(ci_targets) == sorted(self._TARGETS), ci_targets
