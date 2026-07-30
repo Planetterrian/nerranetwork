@@ -1,17 +1,29 @@
 # Nerra Voices — publish an approved, produced episode (spec §5.5).
-# Manual dispatch (operator picks the release moment) or repository_dispatch
-# from a scheduler. Updates RSS + summaries + site pages and commits, same
-# publish surface as every other Nerra show.
+# Manual dispatch (operator picks the release moment), repository_dispatch
+# from a scheduler, or the daily SWEEP. Updates RSS + summaries + site
+# pages and commits, same publish surface as every other Nerra show.
+#
+# The sweep exists because this was dispatch-only, and the 2026-07-17
+# interview sat unpublished for 13 days after clearing BOTH human gates
+# while the 2026-07-20 one — recorded three days later — went out
+# normally, purely because someone dispatched that one by hand. Gate 2
+# auto-approves after 7 days, so an episode can reach `approved` with
+# nobody watching. The sweep publishes only rows where both gates are
+# already recorded as cleared, so it adds no authority the manual path
+# did not have; it just removes the requirement that a human remember.
 name: Publish Age of AI episode
 on:
   workflow_dispatch:
     inputs:
       interview_id:
-        description: 'Supabase interviews.id to publish'
-        required: true
+        description: 'Supabase interviews.id to publish (blank = sweep all eligible)'
+        required: false
         type: string
   repository_dispatch:
     types: [interview-publish]
+  schedule:
+    # Daily, after the produce/review steps have had the day to run.
+    - cron: '25 19 * * *' 
 
 permissions:
   contents: write

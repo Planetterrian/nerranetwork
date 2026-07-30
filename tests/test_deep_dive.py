@@ -214,6 +214,12 @@ class TestShippedMITDeepDive:
             "topic_brief": "B", "topic_category": "special",
             "current_research": "- per Reuters (date): ...",
             "episode_num": 7, "hook": "H", "digest": "D",
+            # run_show sets these on pod_vars before generation and the
+            # deep-dive path swaps only the prompt FILE, so the same vars
+            # reach this template. Added July 30 2026 with the global
+            # cold-open / delivery specs.
+            "cold_open_spec": "<cold open spec>",
+            "delivery_spec": "<delivery spec>",
         }
         load_prompt("shows/prompts/modern_investing_deep_dive.txt", v)
         load_prompt("shows/prompts/modern_investing_deep_dive_podcast.txt", v)

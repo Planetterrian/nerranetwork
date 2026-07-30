@@ -1077,9 +1077,113 @@ def build_cold_open_spec(show_slug: str = "", *, is_ru: bool = False) -> str:
         "suspense — the fact IS the hook.\n"
         "- Do not open with any of these, in any language or variation: "
         f"{banned}. They signal a podcast clearing its throat.\n"
-        "- Write it so it would still make sense as the first line of a "
-        "wire report. If it sounds like an announcer, rewrite it.\n"
+        "- It must survive the accuracy test of a wire report — but it is "
+        "NOT written like one. Say it the way one person tells another "
+        "something they just found out: plain words, real voice, no "
+        "announcer cadence and no press-release register.\n"
+        "- CHOOSE THE RIGHT FACT. Of everything in today's material, the "
+        "opener is whichever item a well-informed listener would least "
+        "expect to be true — the reversal, the number that broke a trend, "
+        "the thing that was supposed to be impossible and now is not. "
+        "Rank the day's items by that test and open on the winner, even "
+        "when it is not the biggest story.\n"
+        "- MAKE THE STAKES LAND IN THE SAME BREATH. A number alone is "
+        "trivia. State the fact and, in the same sentence or the very "
+        "next one, what it changes and for whom. If you cannot say why "
+        "it matters in one clause, it is the wrong opening fact.\n"
+        "- Prefer the concrete to the abstract every time: a named thing, "
+        "a real quantity, a specific actor doing a specific thing. Trade "
+        "categories for instances.\n"
+        "- Short sentences. Active voice. Lead with the subject doing the "
+        "thing, not with scene-setting or a subordinate clause.\n"
+        "- Never open on a question. It reads as a stall and the listener "
+        "answers it by leaving.\n"
         "- ONLY AFTER the cold open, give the short identity line."
+    )
+
+
+# The ONLY tags Grok TTS consumes silently. Anything outside this set is
+# spoken aloud as a literal word — that is the landmine-#17 leak shape
+# (M&A Ep045 voiced "Fast." at chunk boundaries; UC Ep001 voiced "Build
+# intensity."). Adding to this list requires listening evidence, not
+# documentation.
+_SANCTIONED_TAGS = ("[breath]", "[pause]", "[long-pause]",
+                    "<emphasis>...</emphasis>")
+
+
+def build_delivery_spec(show_slug: str = "", *, is_ru: bool = False) -> str:
+    """Performance direction injected into every podcast prompt.
+
+    Why this exists and why it is shaped this way
+    ---------------------------------------------
+    A DELIVERY block used to live in all 12 podcast prompts and was
+    dropped in May 2026 because it was not working: of 56 sampled
+    ``_tts.txt`` files only 10 had any tag at all, never reliably. It was
+    paying prompt-token cost for no measurable change.
+
+    The diagnosis was "the model ignores it". The likelier reading is
+    that the old block asked for a MOOD ("deliver with energy") and gave
+    no test for whether the instruction had been followed. This version
+    is countable — a specific budget, specific placements, and a rule for
+    what to do when unsure — because an instruction the model can check
+    itself against is one it can actually comply with.
+
+    Landmine #17 governs everything here. PROGRAMMATIC tag injection has
+    a 100% regression rate on this voice (``engine/prosody.py``, deleted;
+    the phonetic respellings, reverted). This is not that: the tags are
+    placed by the writer at points the MEANING calls for, which is the
+    one variant with a working precedent in this network — dp_pod has
+    carried a voice-direction block since launch.
+
+    Deliberately contains no example sentence, for the same reason
+    ``build_cold_open_spec`` does not: every seeded template tic in this
+    network's history came from a prompt handing over the line it wanted.
+    """
+    if is_ru:
+        return (
+            "ПОДАЧА — как это должно звучать вслух:\n"
+            "- Пиши так, как говорят, а не как пишут. Короткие фразы. "
+            "Знаки препинания — это ритм: точка останавливает, тире "
+            "подхватывает.\n"
+            "- Разрешены ТОЛЬКО эти пометки: [breath], [pause], "
+            "[long-pause], <emphasis>...</emphasis>. Любая другая "
+            "пометка будет прочитана вслух как обычное слово.\n"
+            "- Всего 3-6 пометок на весь выпуск. Ставь их там, где смысл "
+            "сам требует паузы: перед важной цифрой, на повороте мысли, "
+            "после вопроса, который стоит обдумать.\n"
+            "- <emphasis> — только на одном слове, от которого зависит "
+            "смысл фразы. Не на целом предложении.\n"
+            "- Сомневаешься — не ставь. Ровная честная речь лучше, чем "
+            "наигранная."
+        )
+    tags = ", ".join(_SANCTIONED_TAGS)
+    return (
+        "DELIVERY — how this must sound read aloud:\n"
+        "- Write for the ear. This is one person telling another person "
+        "something worth knowing, not copy being read out. If a sentence "
+        "would sound odd said out loud to a friend, rewrite it.\n"
+        "- Use plain, physical verbs. Say what a thing DOES. Corporate "
+        "register (leverage, utilise, robust, in terms of) and press-"
+        "release nouns flatten narration faster than anything else.\n"
+        "- Vary sentence length deliberately, and let the variation do the "
+        "work punctuation cannot. Several long sentences in a row drone; "
+        "several short ones in a row sound clipped. The CONTRAST between "
+        "them is what reads as a human thinking.\n"
+        "- Give a big number somewhere to land. State it, then translate "
+        "it into something a listener can picture — a rate, a comparison, "
+        "a before-and-after. A number nobody can picture is noise.\n"
+        "- Address the listener directly when it is earned, sparingly. "
+        "Second person wakes an audience up; used every paragraph it "
+        "becomes a tic.\n"
+        "- Never narrate the structure of the episode out loud. No "
+        "signposting what you are about to cover — just cover it.\n"
+        f"- Speech tags are OPTIONAL and capped: at most 3 in the whole "
+        f"episode, and ONLY these — {tags}. Every other tag is spoken "
+        "aloud as a literal word; episodes have shipped with the host "
+        "saying a tag name out loud. Use one only where the meaning "
+        "already wants a beat, never for decoration, and <emphasis> only "
+        "on a single word. Rhythm from sentence construction is worth "
+        "more than any tag, so if in doubt use none."
     )
 
 

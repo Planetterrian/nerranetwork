@@ -20,6 +20,7 @@ import json
 import os
 import subprocess
 import tempfile
+from typing import List
 from pathlib import Path
 
 import requests
@@ -39,10 +40,39 @@ def _next_episode_number() -> int:
     return (max(nums) + 1) if nums else 1
 
 
-def main() -> int:
-    interview_id = os.environ.get("INTERVIEW_ID", "").strip()
-    if not interview_id:
-        raise RuntimeError("INTERVIEW_ID env var is required")
+def find_publishable() -> List[str]:
+    """Interview ids that have cleared BOTH gates and are not yet published.
+
+    Why a sweep exists (July 30 2026). Every other stage of this pipeline
+    is automatic — firing is a 5-minute cron, post-processing runs off the
+    hangup webhook — but publish was ``workflow_dispatch`` only, so the
+    terminal step ran when a human remembered to enter an interview id.
+    Gate 2 auto-approves a guest transcript after 7 days, so an episode
+    can advance to ``approved`` with nobody watching and then sit.
+
+    That is not hypothetical: the 2026-07-17 interview (24 minutes,
+    recorded, produced, editorially reviewed, guest-approved) was still
+    unpublished 13 days later, while the 2026-07-20 interview recorded
+    three days AFTER it published normally because someone happened to
+    dispatch that one.
+
+    Publishing here does not bypass a human gate — it runs only for rows
+    where both gates are already recorded as cleared, which is the same
+    precondition the manual path enforces.
+    """
+    out: List[str] = []
+    for interview in sb_select("interviews", "status=eq.approved"):
+        iid = interview.get("id")
+        if not iid:
+            continue
+        pkgs = sb_select("editorial_packages",
+                         f"interview_id=eq.{iid}&status=eq.approved_by_guest")
+        if pkgs:
+            out.append(str(iid))
+    return out
+
+
+def publish_one(interview_id: str) -> int:
     interview = sb_select("interviews", f"id=eq.{interview_id}")[0]
     if interview.get("status") != "approved":
         raise RuntimeError(
@@ -153,6 +183,34 @@ def main() -> int:
     )
     logger.info("Published episode %d (%s)", episode_num, app["name"])
     return 0
+
+
+def main() -> int:
+    """``INTERVIEW_ID`` publishes one episode; without it, sweep.
+
+    The sweep is what the scheduled workflow runs. It is idempotent —
+    ``publish_one`` flips both rows to ``published``, so a second pass
+    finds nothing — and one failing episode never blocks the others.
+    """
+    interview_id = os.environ.get("INTERVIEW_ID", "").strip()
+    if interview_id:
+        return publish_one(interview_id)
+
+    pending = find_publishable()
+    if not pending:
+        logger.info("No episodes awaiting publish (clean no-op).")
+        return 0
+    logger.warning(
+        "::warning::%d Age of AI episode(s) had cleared both gates and were "
+        "not published: %s", len(pending), ", ".join(pending))
+    failures = 0
+    for iid in pending:
+        try:
+            publish_one(iid)
+        except Exception as exc:  # noqa: BLE001 — one bad row must not block the rest
+            failures += 1
+            logger.error("publish failed for %s: %s", iid, exc)
+    return 1 if failures else 0
 
 
 if __name__ == "__main__":
