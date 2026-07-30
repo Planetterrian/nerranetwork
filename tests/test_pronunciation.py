@@ -1299,3 +1299,116 @@ class TestTeslaIntroFormatting:
         closing = _pick_closing(context)
         assert "Patrick" in closing
         assert "tomorrow" in closing.lower()
+
+
+# ---------------------------------------------------------------------------
+# Timezone abbreviations only expand when they ARE timezones (July 30 2026)
+#
+# Operator caught SpaceX Daily Ep049 saying "Boeing's central standard
+# time 100 Starliner" — twice. Boeing's CST-100 Starliner is Crew Space
+# Transportation; ``replace_timezones`` had been expanding every whole-word
+# match unconditionally.
+#
+# The corruption was upstream of the voice: the digest and the reader copy
+# both said "CST-100" correctly and the TTS INPUT already read "Central
+# Standard Time-100", so this is a text-processing bug, not a TTS one.
+#
+# Measured before changing anything: of the timezone expansions across every
+# committed TTS script, 33 are legitimate and all follow a time expression;
+# the only 2 that do not are the Ep049 pair. Across 102 digests containing a
+# timezone abbreviation, exactly 1 changes behaviour.
+# ---------------------------------------------------------------------------
+
+class TestTimezoneExpansionNeedsATime:
+    @staticmethod
+    def _f(text):
+        from assets.pronunciation import replace_timezones
+        return replace_timezones(text)
+
+    def test_the_operator_reported_sentences(self):
+        """The exact lines that aired wrong."""
+        for line in (
+            "Kelly Ortberg said the company is feeling pretty good about a "
+            "possible CST-100 Starliner flight this year.",
+            "Observers noted that Boeing's CST-100 Starliner could still "
+            "reach orbit this year.",
+        ):
+            out = self._f(line)
+            assert "Central Standard Time" not in out, out
+            assert "C S T one hundred" in out, out
+
+    def test_cst_100_spelling_variants(self):
+        for written in ("CST-100", "CST100", "CST 100", "cst-100"):
+            out = self._f(f"Boeing's {written} Starliner is on the pad.")
+            assert "Central Standard Time" not in out, written
+            assert "C S T one hundred" in out, written
+
+    def test_real_timezone_uses_still_expand(self):
+        """Every legitimate expansion in the corpus follows a time."""
+        cases = [
+            ("lifted off at approximately eight thirty-four a.m. PDT.",
+             "Pacific Daylight Time"),
+            ("Mercury reaches its stationary point at 1 P.M. EDT.",
+             "Eastern Daylight Time"),
+            ("The flight window opens at five thirty a.m. EDT on June 24.",
+             "Eastern Daylight Time"),
+            ("scheduled between nine oh eight A M and nine fifty-seven A M "
+             "BST on April 30.", "British Summer Time"),
+            ("The deadline is 5 p.m. CST.", "Central Standard Time"),
+        ]
+        for line, expected in cases:
+            assert expected in self._f(line), line
+
+    def test_unrelated_uses_are_left_alone(self):
+        """Same letters, different meaning — no preceding time, no expansion."""
+        for line in (
+            "The team replaced the BST with a hash map for lookups.",
+            "The IST framework shipped a new release.",
+        ):
+            assert self._f(line) == line, line
+
+    def test_guard_does_not_read_a_later_rewrite(self):
+        """The lookbehind must scan the string this pass started with.
+
+        The expansion loop reassigns ``text`` per timezone, so a closure
+        reading the outer name could see an already-rewritten string and
+        judge the wrong context.
+        """
+        line = ("Launch at 9 a.m. EDT, and separately the CST-100 Starliner "
+                "remains grounded.")
+        out = self._f(line)
+        assert "Eastern Daylight Time" in out
+        assert "Central Standard Time" not in out
+
+    def test_corpus_regression_is_limited_to_the_known_case(self):
+        """Re-run over the committed digests: only Ep049 may change."""
+        import re
+        from pathlib import Path
+        from assets.pronunciation import TIMEZONE_EXPANSIONS
+        root = Path(__file__).resolve().parent.parent
+        abbr = re.compile(r"\b(" + "|".join(TIMEZONE_EXPANSIONS) + r")\b")
+        changed = []
+        for p in (root / "digests").rglob("*.md"):
+            text = p.read_text(encoding="utf-8", errors="replace")
+            if not abbr.search(text):
+                continue
+            legacy = text
+            for tz, exp in TIMEZONE_EXPANSIONS.items():
+                legacy = re.sub(rf"\b{re.escape(tz)}\b", exp, legacy)
+            if self._f(text) != legacy:
+                changed.append(p.name)
+        assert len(changed) <= 1, (
+            f"the guard changed {len(changed)} committed digests, expected "
+            f"only the CST-100 one: {changed[:8]}"
+        )
+
+    def test_24_hour_times_still_expand(self):
+        """UTC times carry no a.m./p.m. marker.
+
+        By the time this runs the digits are already words, so "0850 UTC"
+        arrives as "oh eight fifty UTC". A marker-only anchor stopped
+        expanding UTC on SpaceX Daily — the show that uses it most — which
+        tests/test_spacex_show.py caught.
+        """
+        assert "U T C" in self._f("Liftoff occurred at oh eight fifty UTC.")
+        assert "U T C" in self._f("The burn completed at fourteen hundred UTC.")

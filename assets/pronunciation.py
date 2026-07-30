@@ -1123,10 +1123,63 @@ def replace_times(text: str) -> str:
     return text
 
 
+# A timezone abbreviation is only a timezone when it FOLLOWS a time. Every
+# legitimate use in the network's 1,270 committed TTS scripts does: "eight
+# thirty-four a.m. Pacific Daylight Time", "1 P.M. Eastern Daylight Time".
+# Times are already spelled out by the time this runs, but the a.m./p.m.
+# marker survives, so it is the reliable anchor.
+#
+# The anchor has to cover 24-hour times too. Those carry no a.m./p.m.
+# marker, and by this point the digits are already words: "Liftoff occurred
+# at 0850 UTC" reaches here as "at oh eight fifty UTC". SpaceX Daily uses
+# exactly that shape, so a marker-only anchor would have stopped expanding
+# UTC on the show that uses it most.
+_NUM_WORD = (r"oh|zero|one|two|three|four|five|six|seven|eight|nine|ten|"
+             r"eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|"
+             r"eighteen|nineteen|twenty|thirty|forty|fifty|hundred")
+_TIME_BEFORE_TZ = re.compile(
+    r"(?:\d|noon|midnight|o'clock|[ap]\.?\s?m\.?|\b(?:" + _NUM_WORD + r"))"
+    r"[\s,-]*$", re.IGNORECASE)
+
+# Product designations that COLLIDE with a timezone abbreviation, expanded
+# letter-wise before the timezone pass can touch them. Boeing's CST-100
+# Starliner is Crew Space Transportation, and SpaceX Daily Ep049 aired
+# "Boeing's central standard time 100 Starliner" twice (operator-caught,
+# 2026-07-30). Spoken as letters, which is how the vehicle is said aloud.
+_TZ_COLLIDING_PRODUCTS: Dict[str, str] = {
+    r"\bCST-?\s?100\b": "C S T one hundred",
+}
+
+
 def replace_timezones(text: str) -> str:
-    """Expand timezone abbreviations to full names."""
+    """Expand timezone abbreviations to full names — when they ARE timezones.
+
+    This used to expand every whole-word match unconditionally, which is
+    correct for "5 p.m. CST" and wrong for anything that merely shares the
+    letters. Boeing's CST-100 Starliner shipped as "central standard
+    time-100 Starliner" on SpaceX Daily Ep049.
+
+    Measured against every committed TTS script: 33 legitimate expansions
+    all follow a time expression and are preserved by the guard, and the
+    only two it blocks are the Ep049 CST-100 pair. The guard also covers
+    collisions that have not happened yet — "BST" is a binary search tree
+    in an AI-news episode, "IST" and "MST" have their own product uses.
+    """
+    for pattern, spoken in _TZ_COLLIDING_PRODUCTS.items():
+        text = re.sub(pattern, spoken, text, flags=re.IGNORECASE)
+
     for tz, expansion in TIMEZONE_EXPANSIONS.items():
-        text = re.sub(rf"\b{re.escape(tz)}\b", expansion, text)
+        # Bind the string this pass scans, so the lookbehind never reads a
+        # later iteration's rewritten text through the closure.
+        source = text
+
+        def _maybe(match: re.Match, _exp: str = expansion, _src: str = source) -> str:
+            before = _src[max(0, match.start() - 40):match.start()]
+            if _TIME_BEFORE_TZ.search(before):
+                return _exp
+            return match.group(0)   # not a timezone here — leave it alone
+
+        text = re.sub(rf"\b{re.escape(tz)}\b", _maybe, source)
     return text
 
 

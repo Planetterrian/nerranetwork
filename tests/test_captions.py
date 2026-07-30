@@ -324,3 +324,101 @@ def test_find_transcript_for_episode(tmp_path: Path):
 
     missing = find_transcript_for_episode(digests, "TST", 99, "20260427")
     assert missing is None
+
+
+# ---------------------------------------------------------------------------
+# Long cues must not overflow the frame (July 30 2026)
+#
+# Operator: "All videos now on Apple and YouTube have the script over the
+# video, but it is cutting off at the top."
+#
+# Root cause was a wrong assumption in the May 2026 fix: it appended a long
+# segment's remainder to the last line "and let libass clip on the right".
+# libass does NOT clip — with the default WrapStyle it word-wraps, and cues
+# are bottom-anchored, so the extra lines grow UPWARD off the top of the
+# frame. A real SpaceX Ep049 cue carried a 298-character last line, which
+# wraps to ~13 rendered lines at ~98 px each: ~1,270 px of text in a
+# 1,080 px frame.
+# ---------------------------------------------------------------------------
+
+class TestLongSegmentsBecomeMultipleCues:
+    _MAX_CHARS = 55
+    _MAX_LINES = 3
+
+    @staticmethod
+    def _blocks(text, **kw):
+        from engine.captions import _split_caption_text
+        return _split_caption_text(text, **kw)
+
+    def test_a_long_segment_splits_instead_of_overflowing(self):
+        text = " ".join(f"word{i}" for i in range(120))
+        blocks = self._blocks(text)
+        assert len(blocks) > 1
+        for b in blocks:
+            lines = b.split("\n")
+            assert len(lines) <= self._MAX_LINES, b
+            for line in lines:
+                assert len(line) <= self._MAX_CHARS, line
+
+    def test_no_word_is_lost_or_duplicated(self):
+        """The May 2026 bug this replaces was silent word LOSS."""
+        text = " ".join(f"w{i}" for i in range(250))
+        joined = " ".join(l for b in self._blocks(text) for l in b.split("\n"))
+        assert joined.split() == text.split()
+
+    def test_short_segment_is_a_single_cue(self):
+        assert self._blocks("A short line of narration.") == \
+            ["A short line of narration."]
+
+    def test_real_transcript_cues_fit_the_frame(self):
+        """Replay the episode the operator reported."""
+        import json
+        from pathlib import Path
+        from engine.captions import transcript_to_srt
+        root = Path(__file__).resolve().parent.parent
+        src = sorted((root / "digests" / "spacex").glob("*_transcript.json"))
+        if not src:
+            import pytest
+            pytest.skip("no committed SpaceX transcript")
+        out = Path(__import__("tempfile").mkdtemp()) / "t.srt"
+        transcript_to_srt(src[-1], out, audio_offset_seconds=0.0)
+        cues = out.read_text(encoding="utf-8").strip().split("\n\n")
+        for cue in cues:
+            body = [l for l in cue.split("\n")[2:] if l.strip()]
+            assert len(body) <= self._MAX_LINES, cue[:160]
+            for line in body:
+                assert len(line) <= self._MAX_CHARS, line
+
+        # And the SRT still carries every transcribed word.
+        segments = json.loads(src[-1].read_text(encoding="utf-8"))["segments"]
+        expected = " ".join((s.get("text") or "").strip()
+                            for s in segments).split()
+        got = " ".join(l for c in cues for l in c.split("\n")[2:]).split()
+        assert got == expected
+
+    def test_no_control_character_reaches_the_srt(self):
+        """An earlier draft passed the overflow through a NUL marker."""
+        from engine.captions import _split_caption_text
+        text = " ".join(f"word{i}" for i in range(200))
+        for block in _split_caption_text(text):
+            assert "\x00" not in block
+
+    def test_split_cues_share_the_segment_time_range(self):
+        """Split blocks must not all sit on the segment's start time."""
+        import json
+        import tempfile
+        from pathlib import Path
+        from engine.captions import transcript_to_srt
+        long_text = " ".join(f"word{i}" for i in range(150))
+        tmp = Path(tempfile.mkdtemp())
+        src = tmp / "t.json"
+        src.write_text(json.dumps(
+            {"segments": [{"start": 10.0, "end": 40.0, "text": long_text}]}),
+            encoding="utf-8")
+        out = tmp / "t.srt"
+        transcript_to_srt(src, out, audio_offset_seconds=0.0)
+        cues = out.read_text(encoding="utf-8").strip().split("\n\n")
+        assert len(cues) > 1
+        starts = [c.split("\n")[1].split(" --> ")[0] for c in cues]
+        assert len(set(starts)) == len(starts), starts
+        assert cues[-1].split("\n")[1].endswith("00:00:40,000")
