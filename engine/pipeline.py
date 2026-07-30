@@ -367,6 +367,8 @@ def run_generation_phase(
     from engine.intros import (
         build_intro_line,
         build_closing_block,
+        build_cold_open_spec,
+        build_delivery_spec,
         _maybe_append_youtube_cta,
         _RUSSIAN_SPOKEN_SHOWS,
     )
@@ -524,6 +526,28 @@ def run_generation_phase(
 
     pod_vars.setdefault("tone_hint", "natural and conversational")
     pod_vars.setdefault("nerra_network_context", "")
+
+    # Cold-open + delivery specs (July 30 2026 retention pass). These were
+    # wired into run_show.py's pod_vars — which, as the Ep1 comment above
+    # records, is NOT the live path: run_show builds that dict and never
+    # passes it into run_generation_phase. So all 14 podcast prompts gained
+    # {cold_open_spec} and 17 gained {delivery_spec} while nothing supplied
+    # either, and the next run of EVERY show died in load_prompt with
+    # `KeyError: 'cold_open_spec'` (SpaceX Ep50, 2026-07-30 20:54 UTC — the
+    # first show to tick over after the change merged).
+    #
+    # setdefault, not assignment: a show whose pre-fetch hook supplies its
+    # own spec via extra_context keeps it.
+    _spec_slug = getattr(config, "slug", "") or (
+        getattr(args, "show", "") if args is not None else ""
+    )
+    _spec_is_ru = _spec_slug in _RUSSIAN_SPOKEN_SHOWS
+    pod_vars.setdefault(
+        "cold_open_spec", build_cold_open_spec(_spec_slug, is_ru=_spec_is_ru),
+    )
+    pod_vars.setdefault(
+        "delivery_spec", build_delivery_spec(_spec_slug, is_ru=_spec_is_ru),
+    )
 
     # Append the rotating Nerra Network cross-promo to the spoken closing.
     # Done HERE (after closing_block is resolved from any source) so it covers
