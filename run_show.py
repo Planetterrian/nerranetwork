@@ -4542,7 +4542,7 @@ def _publish_youtube(
                 audio_offset=_voice_off,
                 audio_duration=_early_ep_dur,
                 window_duration=float(
-                    config.youtube.short_duration_seconds or 55.0),
+                    config.youtube.short_duration_seconds or 35.0),
                 min_start_final=_voice_off,
                 min_score_threshold=float(getattr(
                     config.youtube, "shorts_min_score_threshold", 5.0) or 5.0),
@@ -5521,7 +5521,7 @@ def _publish_youtube(
         config, episode_num=episode_num,
     ):
         try:
-            duration = float(config.youtube.short_duration_seconds or 55.0)
+            duration = float(config.youtube.short_duration_seconds or 35.0)
 
             # Resolve the "shorts plan" — a list of (start_offset, hook)
             # pairs to publish, one per Short. Legacy single-Short

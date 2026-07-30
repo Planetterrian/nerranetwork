@@ -364,7 +364,27 @@ youtube:
   # first_chapter (jumps to 2nd chapter marker for a stronger hook).
   shorts_start_mode: voice
   shorts_upload_schedule: always   # alternate_episodes = Shorts on even ep nums only
-  short_duration_seconds: 55
+  # 35s (was 55). Measured over 348 Shorts with >=5 views in the 90-day
+  # analytics window: the median Short holds a viewer for 21 seconds
+  # (EN 23, RU 18; p75 29s, p90 40s). Absolute watch time barely moves
+  # with clip length, so length mostly decides what PERCENTAGE those
+  # seconds represent — and completion is the dominant Shorts ranking
+  # signal. 21s of a 55s clip is 38%; of a 35s clip it is 60%, while
+  # still containing the full average watch of 83% of Shorts.
+  #
+  # The five shows that had already pinned 40 (Tesla, SpaceX, FF, MIT,
+  # MAB) show median retention 51.2% against 41.1% for the shows left on
+  # the 55 default. Read that as directional, not as a controlled test —
+  # the two cohorts are different shows with very different traffic
+  # (30.4k views vs 1.9k), so show identity is confounded with length.
+  # The arithmetic above is the actual argument; that split is a
+  # consistency check on it.
+  #
+  # 35 rather than 30 or 25 because a Short still has to make one
+  # complete point: ~35s is ~85 spoken words, enough for a hook, the
+  # fact, and why it matters. Below 30 the clip starts truncating
+  # mid-thought, which costs the completion it buys.
+  short_duration_seconds: 35
   description_prompt_file: shows/prompts/youtube_description_intro.txt
   pinned_comment_template: |
     🎧 Full episode + show notes: {show_page_url}

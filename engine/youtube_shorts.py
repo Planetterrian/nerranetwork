@@ -81,7 +81,7 @@ def resolve_shorts_start_offset(
             offset = float(getattr(config.audio, "voice_intro_delay", 0.0) or 0.0)
         if audio_duration > 0:
             short_dur = float(
-                getattr(yt, "short_duration_seconds", 55.0) or 55.0
+                getattr(yt, "short_duration_seconds", 35.0) or 35.0
             )
             max_start = max(0.0, audio_duration - short_dur - 1.0)
             offset = min(offset, max_start)
@@ -103,7 +103,7 @@ def resolve_shorts_start_offset(
         from engine.shorts_selector import pick_engaging_window
         if transcript_path is not None and transcript_path.exists():
             short_dur = float(
-                getattr(yt, "short_duration_seconds", 55.0) or 55.0
+                getattr(yt, "short_duration_seconds", 35.0) or 35.0
             )
             # June 10 2026: pass the per-show noise floor. Tesla's 3.5
             # override (May retune) never reached this path — the YAML

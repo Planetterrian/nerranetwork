@@ -32,6 +32,23 @@ logger = logging.getLogger(__name__)
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_POLICY_PATH = PROJECT_ROOT / "api" / "youtube_policy.json"
 
+# Absolute ceiling on Shorts per episode, wherever the count comes from
+# (policy band, YAML, or a caller's own arithmetic). It lives here because
+# the plan contract lives here: run_show, engine.ru_dub and engine.lang_dub
+# all consume the same plan and must agree on the bound.
+#
+# Before July 30 2026 each dub module carried its own ``min(2, ...)``
+# literal. When the nightly policy gained a 3-Short band for the shows
+# whose demand is an order of magnitude past the 2-Short bar, those
+# literals would have discarded it silently — and the band's members are
+# RU dubs, so the change would have been a total no-op on exactly the
+# channel it was written for. One named constant instead.
+#
+# The bound is a guard against a runaway count (a mis-generated policy
+# file, a YAML typo), not a target. What a show actually publishes is the
+# policy's business; this only says no configuration may exceed it.
+MAX_SHORTS_PER_EPISODE = 3
+
 
 def load_policy(path: Optional[Path] = None) -> Optional[dict]:
     """Read + minimally validate the committed policy file.
@@ -113,6 +130,15 @@ def resolve_publish_plan(
         # Multi-Shorts requires the smart selector (run_show falls back to
         # a single Short without it anyway) — don't raise past the YAML.
         shorts = yaml_shorts_floor
+    if shorts > MAX_SHORTS_PER_EPISODE:
+        # Enforced here rather than per-consumer: run_show takes
+        # plan["shorts"] verbatim and had no bound of its own, so a
+        # mis-generated policy file could have asked it for any number.
+        logger.warning(
+            "yt policy: %s/%s asked for %d Shorts — clamping to %d",
+            channel, slug, shorts, MAX_SHORTS_PER_EPISODE,
+        )
+        shorts = MAX_SHORTS_PER_EPISODE
 
     publish_long = bool(entry.get("publish_long_form", yaml_publish_long))
     reason = str(entry.get("reason") or "")

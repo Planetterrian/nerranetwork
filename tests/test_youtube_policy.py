@@ -233,10 +233,11 @@ class TestShortsCountFollowsData:
 
     def test_shorts_only_show_earns_second_short(self):
         mod = _load_script()
-        # RU tesla is seeded C (shorts-only). Hot Shorts: 1 day old, 50 vpd.
+        # RU tesla is seeded C (shorts-only). Warm Shorts: 1 day old, 10
+        # vpd — past the 2-Short bar, short of the 3-Short band.
         stats = _stats(
             [_vid(kind="short", channel="ru", published="2026-07-12",
-                  views=50)] * 4)
+                  views=10)] * 4)
         policy = mod.build_policy(stats, None)
         entry = policy["channels"]["ru"]["tesla"]
         assert entry["tier"] == "C"
@@ -687,3 +688,125 @@ class TestMondayLongFormProbe:
             yaml_publish_long=False, yaml_shorts=1, smart_mode=True,
             adaptive_enabled=True, probe_today=datetime.date(2026, 7, 20))
         assert plan["publish_long"] is False
+
+
+class TestShortsSupplyLadder:
+    """July 30 2026: a third Shorts band above 20 views/day.
+
+    Until then the ladder topped out at 2, so RU spacex (62.3 vpd) and RU
+    fascinating_frontiers (60.5) were allotted the same supply as RU
+    modern_investing (4.9) — a 13x spread in demonstrated demand met by
+    identical supply.
+    """
+
+    def test_ladder_bands(self):
+        mod = _load_script()
+        cases = [(0.0, 1), (3.9, 1), (4.0, 2), (19.9, 2), (20.0, 3),
+                 (62.3, 3), (1000.0, 3)]
+        for vpd, expected in cases:
+            assert mod.shorts_for_vpd(vpd) == expected, f"vpd {vpd}"
+
+    def test_ladder_never_returns_zero(self):
+        """Shorts are the recovery signal — they never go to 0."""
+        mod = _load_script()
+        for vpd in (0.0, 0.01, 0.4):
+            assert mod.shorts_for_vpd(vpd) >= 1
+
+    def test_hot_shorts_only_show_earns_a_third(self):
+        mod = _load_script()
+        stats = _stats(
+            [_vid(kind="short", channel="ru", published="2026-07-12",
+                  views=60)] * 4)
+        policy = mod.build_policy(stats, None)
+        entry = policy["channels"]["ru"]["tesla"]
+        assert entry["shorts_per_episode"] == 3
+        assert entry["publish_long_form"] is False   # RU longs stay gated
+
+    def test_written_count_matches_the_logged_computation(self):
+        """The writer must not carry its own copy of the threshold rule.
+
+        ``compute_tier`` reports the count in its human-readable reason
+        and ``build_policy`` records it in the entry. Those were separate
+        expressions until July 30 2026, so the first run after the
+        3-Short band landed logged "-> 3 Short(s)" and wrote 2.
+        """
+        mod = _load_script()
+        stats = _stats(
+            [_vid(kind="short", channel="ru", published="2026-07-12",
+                  views=60)] * 4)
+        policy = mod.build_policy(stats, None)
+        entry = policy["channels"]["ru"]["tesla"]
+        assert f"-> {entry['shorts_per_episode']} Short(s)" in entry["reason"]
+
+    def test_committed_policy_agrees_with_the_ladder(self):
+        """api/youtube_policy.json is regenerated, not hand-edited."""
+        mod = _load_script()
+        policy = json.loads(
+            (_ROOT / "api" / "youtube_policy.json").read_text(encoding="utf-8"))
+        for channel, entries in (policy.get("channels") or {}).items():
+            for slug, entry in entries.items():
+                vpd = entry.get("short_vpd")
+                if vpd is None:
+                    continue    # held — the count follows the active tier
+                assert entry["shorts_per_episode"] == mod.shorts_for_vpd(vpd), (
+                    f"{channel}/{slug}: {vpd} vpd recorded as "
+                    f"{entry['shorts_per_episode']} Short(s)"
+                )
+
+
+class TestMaxShortsCeiling:
+    """The ceiling is one shared constant, not a literal per consumer.
+
+    ``engine.ru_dub`` and ``engine.lang_dub`` each carried their own
+    ``min(2, ...)``. Because the 3-Short band's members are RU dubs, those
+    literals would have made the band a total no-op on exactly the channel
+    it was written for.
+    """
+
+    def test_no_module_hardcodes_a_local_shorts_cap(self):
+        import re
+        for name in ("engine/ru_dub.py", "engine/lang_dub.py"):
+            src = (_ROOT / name).read_text(encoding="utf-8")
+            assert not re.search(r"min\(\s*\d+\s*,\s*int\(plan", src), (
+                f"{name} caps the Shorts count with a literal — use "
+                "engine.youtube_policy.MAX_SHORTS_PER_EPISODE"
+            )
+            assert "MAX_SHORTS_PER_EPISODE" in src, f"{name}"
+
+    def test_ceiling_covers_the_top_ladder_band(self):
+        mod = _load_script()
+        from engine.youtube_policy import MAX_SHORTS_PER_EPISODE
+        top = max(count for _, count in mod.SHORT_VPD_BANDS)
+        assert MAX_SHORTS_PER_EPISODE >= top, (
+            f"the ladder can ask for {top} Shorts but the ceiling is "
+            f"{MAX_SHORTS_PER_EPISODE} — the top band would be unreachable"
+        )
+
+    def test_resolve_clamps_an_overreaching_policy_file(self):
+        from engine.youtube_policy import MAX_SHORTS_PER_EPISODE
+        policy = {"channels": {"ru": {"tesla": {
+            "tier": "C", "publish_long_form": False,
+            "shorts_per_episode": 99, "reason": "corrupt"}}}}
+        plan = resolve_publish_plan(
+            policy, slug="tesla", channel="ru", yaml_publish_long=False,
+            yaml_shorts=1, smart_mode=True, adaptive_enabled=True)
+        assert plan["shorts"] == MAX_SHORTS_PER_EPISODE
+
+    def test_clamp_does_not_disturb_a_normal_plan(self):
+        policy = {"channels": {"ru": {"tesla": {
+            "tier": "C", "publish_long_form": False,
+            "shorts_per_episode": 3, "reason": "hot"}}}}
+        plan = resolve_publish_plan(
+            policy, slug="tesla", channel="ru", yaml_publish_long=False,
+            yaml_shorts=1, smart_mode=True, adaptive_enabled=True)
+        assert plan["shorts"] == 3
+
+    def test_third_short_still_requires_smart_mode(self):
+        """Without the smart selector there is only one window to cut."""
+        policy = {"channels": {"ru": {"tesla": {
+            "tier": "C", "publish_long_form": False,
+            "shorts_per_episode": 3, "reason": "hot"}}}}
+        plan = resolve_publish_plan(
+            policy, slug="tesla", channel="ru", yaml_publish_long=False,
+            yaml_shorts=1, smart_mode=False, adaptive_enabled=True)
+        assert plan["shorts"] == 1

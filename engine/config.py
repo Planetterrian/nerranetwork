@@ -554,7 +554,7 @@ class YouTubeConfig:
     # spoken hook) + A/B variants. One cheap LLM call/episode; pure metadata,
     # no audio impact. Set false for a fully deterministic hook-based title.
     optimized_titles: bool = True
-    short_duration_seconds: float = 55.0
+    short_duration_seconds: float = 35.0
     # Seconds into the final mixed MP3 where the Shorts clip begins.
     # When unset, ``shorts_start_mode`` picks the offset (default ``voice``
     # = ``audio.voice_intro_delay`` only — not intro_duration + delay).

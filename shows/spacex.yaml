@@ -359,7 +359,10 @@ youtube:
   tiktok_enabled: false
   social_r2_prefix: "social/spacex"
   shorts_per_episode: 2         # 2 Shorts/episode (restored after the 200k quota grant)
-  short_duration_seconds: 40    # 30-45 s Shorts sweet spot for completion rate
+  # 35s (was 40) — July 30 2026. See shows/_defaults.yaml: the median
+  # Short holds 21s, so 35 turns that into 60% completion instead of
+  # 52%. This show was already ahead of the 55s network default.
+  short_duration_seconds: 35
   # SpaceX stories are narrative/measured like Tesla's; lower the smart-selector
   # floor from the 5.0 default so good-but-not-perfect beats still win over the
   # boilerplate voice-intro start. See engine/shorts_selector.py.

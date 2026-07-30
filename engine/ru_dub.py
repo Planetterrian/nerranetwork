@@ -30,6 +30,8 @@ import tempfile
 from pathlib import Path
 from typing import Dict, List, Optional
 
+from engine.youtube_policy import MAX_SHORTS_PER_EPISODE
+
 logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -296,6 +298,76 @@ def _word_trim(text: str, limit: int) -> str:
     return cut.rstrip(" ,.:;—-…")
 
 
+# Function words that cannot end a headline. A word-boundary trim keeps
+# words whole but is blind to whether the phrase it leaves behind is one —
+# so it happily produces "...force les astronomes à #Shorts".
+#
+# Measured across every tracked Short: FR 26% of titles ended mid-clause,
+# RU 5%, EN 1%. FR is worst because its Short title is cut from the
+# translated LONG title at 70 chars, and French runs ~15-20% longer than
+# the English it is translated from, so the cut lands inside a phrase far
+# more often. EN is nearly clean because its Short titles are written whole
+# by the title bundle rather than cut from anything.
+#
+# Per language, and a missing language is a no-op — a wrong stop-word list
+# would mangle titles, so an unknown language keeps the plain word trim.
+_DANGLING_TAIL = {
+    "fr": (
+        "de du des le la les un une à au aux en dans sur pour avec par "
+        "que qui et ou est sont alors plus son sa ses leur leurs ce cette "
+        "ces se ne pas comme mais donc car si quand dont où vers chez "
+        "sous entre depuis après avant ainsi très bien encore"
+    ),
+    "ru": (
+        "и в во на с со к ко о об от до по за из у для при над под про "
+        "без через между что как же бы ли не но а или то это его её их "
+        "свой своя свои чтобы уже ещё"
+    ),
+    "es": (
+        "de del la el los las un una a al en con por para que quien y o "
+        "es son pero su sus este esta estos como cuando donde sobre "
+        "entre desde hasta más"
+    ),
+    "en": (
+        "the a an and or of to in on at for with from by as is are was "
+        "were that which its his her their this these but so than into "
+        "over after before"
+    ),
+}
+_DANGLING_RE = {
+    code: re.compile(
+        r"[\s,;:—-]+(?:" + "|".join(re.escape(w) for w in words.split()) + r")$",
+        re.IGNORECASE | re.UNICODE,
+    )
+    for code, words in _DANGLING_TAIL.items()
+}
+
+# Never strip a headline below this fraction of its budget. A title that
+# ends on a preposition is bad; a three-word title is worse.
+_MIN_TRIM_RATIO = 0.55
+
+
+def _clause_trim(text: str, limit: int, lang: str = "") -> str:
+    """``_word_trim`` that also refuses to end on a dangling function word.
+
+    Trailing function words are peeled off one at a time — a cut can leave
+    two ("... de la"), and removing only the last still ends on a
+    preposition. Peeling stops at ``_MIN_TRIM_RATIO`` of the limit so a
+    phrase made mostly of short words cannot be eaten down to nothing.
+    """
+    trimmed = _word_trim(text, limit)
+    pattern = _DANGLING_RE.get((lang or "").strip().lower())
+    if pattern is None:
+        return trimmed
+    floor = max(1, int(limit * _MIN_TRIM_RATIO))
+    while len(trimmed) > floor:
+        shorter = pattern.sub("", trimmed).rstrip(" ,.:;—-…")
+        if shorter == trimmed:
+            break
+        trimmed = shorter
+    return trimmed
+
+
 def _policy_plan(config) -> Dict[str, object]:
     """Adaptive-publishing decision for this show on the RU channel.
 
@@ -343,7 +415,7 @@ def _ru_short_title(long_title: str, *, body_limit: int = 70) -> str:
     body = _EP_PREFIX_RE.sub("", (long_title or "").strip()).strip()
     body = body.rstrip("…").rstrip()
     ceiling = min(body_limit, _YT_TITLE_MAX - len(_SHORTS_SUFFIX))
-    body = _word_trim(body, ceiling)
+    body = _clause_trim(body, ceiling, "ru")
     return f"{body}{_SHORTS_SUFFIX}".strip()
 
 
@@ -546,19 +618,29 @@ def publish_ru_dub(
             result["status"] = "done"
 
         # --- Shorts (best-effort; failure never blocks the long-form result) ---
-        # July 18 2026: up to TWO Shorts per episode when the policy asks
+        # July 18 2026: multiple Shorts per episode when the policy asks
         # (RU Shorts are the network's best-performing format). Window
         # selection = top-N with fill on the RU transcript; each Short is
         # its own try/except so a second-Short failure never costs the
         # first.
+        #
+        # July 30 2026: the local cap was `min(2, ...)`, which silently
+        # discarded whatever the policy computed above it. That mattered
+        # the moment the policy gained a 3-Short band, because the shows
+        # in that band are RU spacex / RU fascinating_frontiers / RU tesla
+        # — this path exactly. The bound now comes from
+        # MAX_SHORTS_PER_EPISODE so raising a policy band raises the
+        # supply, and the ceiling is one named constant rather than a
+        # literal buried in two dub modules.
         if build_short and getattr(yt, "publish_shorts", True):
-            ru_shorts = max(1, min(2, int(plan.get("shorts", 1) or 1)))
+            ru_shorts = max(1, min(MAX_SHORTS_PER_EPISODE,
+                                   int(plan.get("shorts", 1) or 1)))
             short_scenes = []
             try:
                 short_scenes = _download_images(short_urls, tmp) if short_urls else []
             except Exception as exc:  # noqa: BLE001
                 logger.warning("ru_dub: scene download failed (%s)", exc)
-            short_dur = float(getattr(yt, "short_duration_seconds", 55.0))
+            short_dur = float(getattr(yt, "short_duration_seconds", 35.0))
             base_offset = float(getattr(yt, "shorts_start_offset", 0.0) or 0.0)
 
             # Transcribe once; select up to ru_shorts windows. Parity with
@@ -661,9 +743,13 @@ def publish_ru_dub(
                             short_title = _ru_short_title(
                                 ru_title, body_limit=58) + " — ещё момент"
                     else:
-                        body = _word_trim(
+                        # Clause-aware — this titles the 2nd/3rd Short from
+                        # its window's opening speech, already a
+                        # mid-sentence slice.
+                        body = _clause_trim(
                             opening_text.rstrip("…").rstrip(),
-                            min(70, _YT_TITLE_MAX - len(_SHORTS_SUFFIX)))
+                            min(70, _YT_TITLE_MAX - len(_SHORTS_SUFFIX)),
+                            "ru")
                         short_title = f"{body}{_SHORTS_SUFFIX}".strip()
 
                     sup = upload_video(

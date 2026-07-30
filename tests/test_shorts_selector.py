@@ -608,3 +608,68 @@ class TestFillToRequested:
             (Path(__file__).resolve().parent.parent
              / "shows/fascinating_frontiers.yaml").read_text(encoding="utf-8"))
         assert cfg["youtube"]["shorts_min_score_threshold"] == 3.5
+
+
+class TestShortsClipLength:
+    """Shorts run 35s network-wide (July 30 2026).
+
+    Measured over 348 Shorts with >=5 views in the 90-day analytics
+    window: the median Short holds a viewer 21 seconds (EN 23, RU 18;
+    p75 29s, p90 40s). Absolute watch time barely moves with clip
+    length, so length mostly decides what percentage those seconds
+    represent — and completion is the dominant Shorts ranking signal.
+    21s of 55s is 38%; of 35s it is 60%.
+
+    Eight shows had been sitting on the 55s network default. The floor
+    below is what keeps a new show from inheriting that again.
+    """
+
+    _MAX = 35.0
+
+    @staticmethod
+    def _shows():
+        import pathlib
+        import yaml as _yaml
+        root = pathlib.Path(__file__).resolve().parent.parent
+        for path in sorted((root / "shows").glob("*.yaml")):
+            if path.stem.startswith("_"):
+                continue
+            raw = _yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+            yield path.stem, (raw.get("youtube") or {})
+
+    def test_no_show_pins_a_longer_clip(self):
+        for stem, yt in self._shows():
+            if "short_duration_seconds" not in yt:
+                continue
+            assert yt["short_duration_seconds"] <= self._MAX, (
+                f"{stem}.yaml pins {yt['short_duration_seconds']}s Shorts — "
+                f"above the measured {self._MAX}s completion optimum"
+            )
+
+    def test_network_default_is_35(self):
+        import pathlib
+        import yaml as _yaml
+        root = pathlib.Path(__file__).resolve().parent.parent
+        raw = _yaml.safe_load(
+            (root / "shows/_defaults.yaml").read_text(encoding="utf-8"))
+        assert raw["youtube"]["short_duration_seconds"] == 35
+
+    def test_dataclass_default_matches_yaml(self):
+        """Callers that build a YouTubeConfig directly must not get 55.
+
+        engine.ru_dub / engine.lang_dub / engine.youtube_shorts each
+        resolve the length through a getattr fallback, so a stale
+        dataclass default would ship long Shorts on the dub channels
+        only — the hardest place to notice it.
+        """
+        from engine.config import YouTubeConfig
+        assert YouTubeConfig().short_duration_seconds == 35.0
+
+    def test_selector_window_default_matches(self):
+        import inspect
+        from engine.shorts_selector import (
+            pick_engaging_window, pick_top_n_engaging_windows,
+        )
+        for fn in (pick_engaging_window, pick_top_n_engaging_windows):
+            default = inspect.signature(fn).parameters["window_duration"].default
+            assert default == 35.0, f"{fn.__name__} defaults to {default}s"

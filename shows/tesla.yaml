@@ -447,7 +447,10 @@ youtube:
   # Shorter clips perform better on the Shorts surface — 40 s lands
   # in the 30-45 s "high completion rate" sweet spot vs the previous
   # 55 s near-max. Same generation cost, better algorithmic signal.
-  short_duration_seconds: 40
+  # 35s (was 40) — July 30 2026. See shows/_defaults.yaml: the median
+  # Short holds 21s, so 35 turns that into 60% completion instead of
+  # 52%. This show was already ahead of the 55s network default.
+  short_duration_seconds: 35
   # TST content is often more measured/narrative than punchy. The
   # default 5.0 threshold in the smart selector frequently falls back
   # to the legacy voice start. Lowering to 3.5 gives the heuristic a

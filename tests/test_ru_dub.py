@@ -648,3 +648,83 @@ class TestShortIndexTitleFidelity:
             r"record_video\((.*?)\)", src, re.DOTALL)
         assert m, "short upload must bind short_title before recording"
         assert "title=short_title" in m.group(2)
+
+
+# ---------------------------------------------------------------------------
+# Clause-aware Short-title trimming (July 30 2026)
+#
+# A Short's title is cut from the translated LONG title at 70 chars. The cut
+# kept words whole but was blind to whether the phrase it left behind was
+# one, so it shipped titles like "...force les astronomes à #Shorts".
+#
+# Measured across every tracked Short at the time of the fix: FR 26% of
+# titles ended mid-clause, RU 5%, EN 1%. FR is worst because a French
+# translation of an English title runs ~15-20% longer, so the fixed 70-char
+# cut lands inside a phrase far more often.
+# ---------------------------------------------------------------------------
+
+class TestClauseTrim:
+    def test_drops_a_trailing_french_preposition(self):
+        from engine.ru_dub import _clause_trim
+        out = _clause_trim(
+            "Un candidat de lune de la taille de Jupiter force les astronomes "
+            "à confirmer", 70, "fr")
+        assert out == "Un candidat de lune de la taille de Jupiter force les astronomes"
+
+    def test_peels_more_than_one_dangling_word(self):
+        """A cut can leave two — removing only the last still dangles."""
+        from engine.ru_dub import _clause_trim
+        assert _clause_trim("Les actions canadiennes face aux signaux de la",
+                            46, "fr") == "Les actions canadiennes face aux signaux"
+
+    def test_russian_tail(self):
+        from engine.ru_dub import _clause_trim
+        assert _clause_trim("NASA отправляет марсоход на Луну и", 34, "ru") == \
+            "NASA отправляет марсоход на Луну"
+
+    def test_unknown_language_is_a_plain_word_trim(self):
+        """A wrong stop-word list would mangle titles, so an unregistered
+        language keeps the previous behaviour exactly."""
+        from engine.ru_dub import _clause_trim, _word_trim
+        text = "Ein Kandidat für den Mond der Groesse des Jupiter"
+        assert _clause_trim(text, 30, "de") == _word_trim(text, 30)
+        assert _clause_trim(text, 30, "") == _word_trim(text, 30)
+
+    def test_never_eats_a_title_down_to_nothing(self):
+        """A phrase of nothing but function words keeps its length."""
+        from engine.ru_dub import _clause_trim
+        out = _clause_trim("de la et le des un une à", 70, "fr")
+        assert len(out) >= 10
+
+    def test_respects_the_length_floor(self):
+        from engine.ru_dub import _clause_trim, _MIN_TRIM_RATIO
+        out = _clause_trim("Les actions de la Banque du Canada", 20, "fr")
+        assert len(out) >= int(20 * _MIN_TRIM_RATIO)
+
+    def test_short_titles_never_grow(self):
+        from engine.ru_dub import _clause_trim, _word_trim
+        text = "Les données thermiques du vol 13 de Starship font progresser la"
+        for limit in (30, 50, 70, 90):
+            assert len(_clause_trim(text, limit, "fr")) <= len(
+                _word_trim(text, limit))
+
+    def test_ru_short_title_uses_it(self):
+        from engine.ru_dub import _ru_short_title
+        title = _ru_short_title(
+            "Эп. 118: NASA рассматривает отправку запасного марсохода на Луну "
+            "и выделяет средства")
+        assert not title.replace(" #Shorts", "").rstrip().endswith(" и")
+
+    def test_no_dub_module_still_word_trims_a_short_title(self):
+        """Both dub modules title the 2nd/3rd Short from its window's
+        opening speech — a mid-sentence slice, so the most exposed path."""
+        import re
+        from pathlib import Path
+        root = Path(__file__).resolve().parent.parent
+        for name in ("engine/ru_dub.py", "engine/lang_dub.py"):
+            src = (root / name).read_text(encoding="utf-8")
+            for match in re.finditer(r"_word_trim\(\s*\n?\s*opening_text", src):
+                raise AssertionError(
+                    f"{name} word-trims a Short title from opening_text at "
+                    f"offset {match.start()} — use _clause_trim"
+                )

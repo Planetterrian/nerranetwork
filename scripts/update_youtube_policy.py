@@ -68,9 +68,45 @@ MIN_VIDEOS_CONFIDENT = 4    # per kind — below this, hold the active setting
 # probe) stays identical on both channels, so a show can always re-earn
 # long-form through the weekly probe data.
 LONG_VPD_FLOOR: Dict[str, float] = {"en": 1.0, "ru": 2.0, "fr": 2.0}
-SHORT_VPD_TWO = 4.0         # avg views/day to earn a 2nd Short
 SHORT_VPD_PROBE = 0.5       # below this, shorts-only reads as "probe" (D)
 STREAK_TO_FLIP = 2          # consecutive identical computed tiers to flip
+
+# Shorts supply ladder: (min avg views/day, Shorts per episode), highest
+# matching band wins. Below the lowest band, one Short — Shorts are NEVER
+# zero, they are the recovery signal a cold show earns its way back with.
+#
+# July 30 2026: added the 3-Short band. Until then the ladder topped out
+# at 2, so demonstrated demand spanning 13x got identical supply — RU
+# spacex at 62.3 vpd and RU fascinating_frontiers at 60.5 were allotted
+# the same two Shorts as RU modern_investing at 4.9 and EN
+# fascinating_frontiers at 4.6. The threshold sits at 20 because the
+# measured distribution has a clean gap there (a 4.6-8.0 cluster, then
+# 23.6, then 60-62), so the new band selects exactly the shows whose
+# demand is an order of magnitude past the 2-Short bar rather than
+# splitting a crowded region.
+#
+# Deliberately stopping at 3, not 4: each additional Short comes from the
+# next-best window the smart selector found, so the marginal clip is by
+# construction weaker than the one before it. 3 is what the data
+# supports; a 4th would be extrapolation. Headroom is not the limit —
+# the RU channel runs ~7-8 uploads/day against the 30/day cadence
+# ceiling (SAFE_DAILY_UPLOADS_PER_CHANNEL) and ~13k of 200k quota units,
+# so this adds ~3 uploads/day to a channel with room for 20 more.
+SHORT_VPD_BANDS: Tuple[Tuple[float, int], ...] = (
+    (20.0, 3),
+    (4.0, 2),
+)
+# Retained name for the 2-Short threshold — referenced by the drift
+# guards and by docs/youtube_feedback_loop.md.
+SHORT_VPD_TWO = 4.0
+
+
+def shorts_for_vpd(short_vpd: float) -> int:
+    """Shorts per episode earned by a measured views-per-day figure."""
+    for floor, count in SHORT_VPD_BANDS:
+        if short_vpd >= floor:
+            return count
+    return 1
 
 # Tier label -> (publish_long_form, shorts_per_episode). C and D share
 # settings — D is a reporting label ("shorts-only AND the shorts are cold").
@@ -184,7 +220,7 @@ def compute_tier(
     short_vpd = _avg(short_vpds) if len(short_vpds) >= MIN_VIDEOS_CONFIDENT else None
 
     publish_long = (long_vpd >= long_floor) if long_vpd is not None else active_long
-    shorts = ((2 if short_vpd >= SHORT_VPD_TWO else 1)
+    shorts = (shorts_for_vpd(short_vpd)
               if short_vpd is not None else active_shorts)
 
     reasons: List[str] = []
@@ -287,8 +323,15 @@ def build_policy(
             # allowed Shorts. The 14-day vpd average is already smoothed,
             # and a 1<->2 flip is cheap, so no extra hysteresis; a
             # data-thin dimension still holds the active tier's count.
+            #
+            # July 30 2026: this branch carried its OWN copy of the
+            # threshold rule, so ``compute_tier`` logging "-> 3 Short(s)"
+            # and the file recording 2 was possible — and was exactly what
+            # happened on the first run after the 3-Short band landed.
+            # Both now call ``shorts_for_vpd``, so the ladder is defined
+            # once.
             if short_vpd is not None:
-                shorts = 2 if short_vpd >= SHORT_VPD_TWO else 1
+                shorts = shorts_for_vpd(short_vpd)
             channels[channel][slug] = {
                 "tier": active,
                 "publish_long_form": publish_long,

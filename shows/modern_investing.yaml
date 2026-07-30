@@ -251,7 +251,10 @@ youtube:
   publish_long_form: true       # Flipped on with the 200k quota grant (June 2026)
   shorts_start_mode: smart
   shorts_min_score_threshold: 3.5   # Fleet setting (July 22 2026); MIT's digit-dense transcripts fired at 5.0 too, this is consistency not a behavior change.
-  short_duration_seconds: 40
+  # 35s (was 40) — July 30 2026. See shows/_defaults.yaml: the median
+  # Short holds 21s, so 35 turns that into 60% completion instead of
+  # 52%. This show was already ahead of the 55s network default.
+  short_duration_seconds: 35
   channel: en
   # Russian-dubbed video to @NerraRU from the auto-generated `ru` audio
   # track (engine.ru_dub, decoupled multilingual flow). Operator must
