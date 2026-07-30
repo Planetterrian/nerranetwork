@@ -554,6 +554,12 @@ class YouTubeConfig:
     # spoken hook) + A/B variants. One cheap LLM call/episode; pure metadata,
     # no audio impact. Set false for a fully deterministic hook-based title.
     optimized_titles: bool = True
+    # Burn captions into the long-form PIXELS. Default False: the runner
+    # uploads a real caption track for every long-form video, and doing
+    # both showed two sets of captions the moment a viewer pressed CC.
+    # Shorts are unaffected (they have no caption UI). Set True only for a
+    # surface that will not render a sidecar track.
+    long_form_burn_in_captions: bool = False
     short_duration_seconds: float = 35.0
     # Seconds into the final mixed MP3 where the Shorts clip begins.
     # When unset, ``shorts_start_mode`` picks the offset (default ``voice``
