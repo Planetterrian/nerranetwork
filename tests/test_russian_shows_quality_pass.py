@@ -188,9 +188,24 @@ class TestVocabThemeAndWordOfDay:
                   "shows/prompts/privet_russian_digest.txt"):
             assert "{vocab_review_section}" in (_ROOT / f).read_text(encoding="utf-8")
 
-    def test_run_show_defaults_placeholder(self):
-        src = (_ROOT / "run_show.py").read_text(encoding="utf-8")
-        assert src.count('setdefault("vocab_review_section", "")') >= 2
+    def test_both_stages_default_the_placeholder(self):
+        """A failed hook must degrade to an empty section, not a KeyError.
+
+        This counted TWO defaults in run_show.py — one for the digest
+        stage, one in the `pod_vars` dict that was never passed to
+        run_generation_phase. So the podcast half was never actually
+        enforced, and the test could not tell. Now asserted on each
+        stage's real owner; the dead block was removed 2026-07-30 after
+        the same trap took the network down with
+        `KeyError: 'cold_open_spec'`.
+        """
+        digest_src = (_ROOT / "run_show.py").read_text(encoding="utf-8")
+        assert 'setdefault("vocab_review_section", "")' in digest_src, \
+            "digest stage lost its hook-failure default"
+        podcast_src = (_ROOT / "engine" / "pipeline.py").read_text(
+            encoding="utf-8")
+        assert 'setdefault("vocab_review_section", "")' in podcast_src, \
+            "podcast stage (the LIVE path) lost its hook-failure default"
 
     def test_hook_always_returns_key(self):
         from shows.hooks import privet_russian as hook
