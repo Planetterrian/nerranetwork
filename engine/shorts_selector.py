@@ -218,7 +218,7 @@ def score_candidates(
     *,
     audio_offset: float,
     audio_duration: float,
-    window_duration: float = 55.0,
+    window_duration: float = 35.0,
     min_start_final: float = 0.0,
     max_late_pct: float = 0.85,
 ) -> List[ScoredWindow]:
@@ -320,7 +320,7 @@ def pick_engaging_window(
     *,
     audio_offset: float,
     audio_duration: float,
-    window_duration: float = 55.0,
+    window_duration: float = 35.0,
     min_start_final: Optional[float] = None,
     min_score_threshold: float = 5.0,
 ) -> Optional[ScoredWindow]:
@@ -374,7 +374,7 @@ def pick_top_n_engaging_windows(
     n: int,
     audio_offset: float,
     audio_duration: float,
-    window_duration: float = 55.0,
+    window_duration: float = 35.0,
     min_start_final: Optional[float] = None,
     min_score_threshold: float = 5.0,
     min_gap_seconds: float = 10.0,

@@ -237,8 +237,13 @@ audio:
   # May 12 2026 retune (see shows/_defaults.yaml). Voice enters at 10 s,
   # music continues 45 s under voice with a 30 s log-fade, post-voice
   # outro is 20 s with a slow 15 s fade-out.
-  voice_intro_delay: 10.0
-  intro_duration: 10.0
+  # July 30 2026 cold-open change: the hook is now the first thing
+  # spoken (engine.intros.build_cold_open_spec + the podcast prompt), so
+  # the voice starts at 0 and the music's alone-period is a short breath
+  # rather than a ten-second wait. Long-form YouTube retention was 10.7%
+  # (EN) / 6.3% (RU) with the old 10 s + ~18 s greeting open.
+  voice_intro_delay: 0.0
+  intro_duration: 3.0
   overlap_duration: 15.0
   fade_duration: 30.0
   outro_duration: 30.0
@@ -442,7 +447,10 @@ youtube:
   # Shorter clips perform better on the Shorts surface — 40 s lands
   # in the 30-45 s "high completion rate" sweet spot vs the previous
   # 55 s near-max. Same generation cost, better algorithmic signal.
-  short_duration_seconds: 40
+  # 35s (was 40) — July 30 2026. See shows/_defaults.yaml: the median
+  # Short holds 21s, so 35 turns that into 60% completion instead of
+  # 52%. This show was already ahead of the 55s network default.
+  short_duration_seconds: 35
   # TST content is often more measured/narrative than punchy. The
   # default 5.0 threshold in the smart selector frequently falls back
   # to the legacy voice start. Lowering to 3.5 gives the heuristic a

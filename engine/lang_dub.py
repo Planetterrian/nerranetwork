@@ -40,6 +40,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional
 
+from engine.youtube_policy import MAX_SHORTS_PER_EPISODE
 from engine.ru_dub import (  # language-neutral helpers — single source
     PROJECT_ROOT,
     _cap_title,
@@ -49,6 +50,7 @@ from engine.ru_dub import (  # language-neutral helpers — single source
     _fresh_manifest_path,
     _hashtags,
     _is_fresh_episode,
+    _clause_trim,
     _word_trim,
     gallery_images_for_episode,
 )
@@ -179,7 +181,10 @@ def _short_title(long_title: str, lang: DubLanguage, *,
     body = lang.ep_prefix_re.sub("", (long_title or "").strip()).strip()
     body = body.rstrip("…").rstrip()
     ceiling = min(body_limit, _YT_TITLE_MAX - len(_SHORTS_SUFFIX))
-    body = _word_trim(body, ceiling)
+    # Clause-aware, not just word-aware: 26% of published FR Short titles
+    # ended on a dangling preposition or article because a French
+    # translation of an English long title routinely overruns 70 chars.
+    body = _clause_trim(body, ceiling, lang.code)
     return f"{body}{_SHORTS_SUFFIX}".strip()
 
 
@@ -434,7 +439,10 @@ def publish_lang_dub(
         # --- Shorts (best-effort; RU parity incl. the July 18 multi-Short
         # + fill-to-requested behavior) ---
         if build_short and getattr(yt, "publish_shorts", True):
-            n_shorts = max(1, min(2, int(plan.get("shorts", 1) or 1)))
+            # Bound from the shared plan contract, not a local literal —
+            # see MAX_SHORTS_PER_EPISODE in engine.youtube_policy.
+            n_shorts = max(1, min(MAX_SHORTS_PER_EPISODE,
+                                  int(plan.get("shorts", 1) or 1)))
             short_scenes: List[Path] = []
             try:
                 short_scenes = (_download_images(short_urls, tmp)
@@ -442,7 +450,7 @@ def publish_lang_dub(
             except Exception as exc:  # noqa: BLE001
                 logger.warning("lang_dub[%s]: scene download failed (%s)",
                                lang.code, exc)
-            short_dur = float(getattr(yt, "short_duration_seconds", 55.0))
+            short_dur = float(getattr(yt, "short_duration_seconds", 35.0))
             base_offset = float(getattr(yt, "shorts_start_offset", 0.0) or 0.0)
 
             tr_json = None
@@ -545,9 +553,15 @@ def publish_lang_dub(
                             st = (_short_title(title, lang, body_limit=52)
                                   + lang.second_short_tail)
                     else:
-                        body = _word_trim(
+                        # Clause-aware: this branch titles the 2nd/3rd Short
+                        # from its window's opening speech, which is a
+                        # mid-sentence slice to begin with — a plain word
+                        # trim lands on a dangling article even more often
+                        # than the long-title path does.
+                        body = _clause_trim(
                             opening_text.rstrip("…").rstrip(),
-                            min(70, _YT_TITLE_MAX - len(_SHORTS_SUFFIX)))
+                            min(70, _YT_TITLE_MAX - len(_SHORTS_SUFFIX)),
+                            lang.code)
                         st = f"{body}{_SHORTS_SUFFIX}".strip()
 
                     sup = upload_video(

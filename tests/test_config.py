@@ -479,8 +479,9 @@ class TestLoadConfigRealFiles:
         # file kept in repo for emergency rollback.
         assert cfg.audio.music_file == "assets/music/fascinatingfrontiers_bg.mp3"
         assert cfg.audio.background_music_file is None
-        # May 12 2026 retune — 10s music alone before voice.
-        assert cfg.audio.voice_intro_delay == 10.0
+        # July 30 2026 cold open — voice starts at second 0 on the hook
+        # (was 10 s of music alone first).
+        assert cfg.audio.voice_intro_delay == 0.0
         assert cfg.publishing.rss_category == "Science"
         assert cfg.publishing.x_env_prefix == "PLANETTERRIAN_X_"
         assert cfg.episode.prefix == "Fascinating_Frontiers"

@@ -222,8 +222,13 @@ audio:
   music_file: assets/music/EnvIntel.mp3
   transition_sting: assets/music/transition_sting.mp3
   # May 12 2026 retune (see shows/_defaults.yaml).
-  voice_intro_delay: 10.0
-  intro_duration: 10.0
+  # July 30 2026 cold-open change: the hook is now the first thing
+  # spoken (engine.intros.build_cold_open_spec + the podcast prompt), so
+  # the voice starts at 0 and the music's alone-period is a short breath
+  # rather than a ten-second wait. Long-form YouTube retention was 10.7%
+  # (EN) / 6.3% (RU) with the old 10 s + ~18 s greeting open.
+  voice_intro_delay: 0.0
+  intro_duration: 3.0
   overlap_duration: 15.0
   fade_duration: 30.0
   outro_duration: 30.0

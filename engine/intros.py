@@ -438,6 +438,10 @@ _SHOW_PERSONALITIES: dict[str, dict[str, Any]] = {
     "finansy_prosto": {
         "host": "Ведущая",
         "show_name": "Финансы Просто",
+        # Russian-language show — the identity line is spoken in Russian.
+        # Olya names herself here because the host label is stripped
+        # before synthesis, so nothing else in the line would.
+        "identity_template": "Это Оля, вы слушаете {show_name}, выпуск {ep}.",
         "greetings": [
             "Привет! С вами Оля и",
             "Привет, дорогие! Это",
@@ -490,6 +494,10 @@ _SHOW_PERSONALITIES: dict[str, dict[str, Any]] = {
     "privet_russian": {
         "host": "Host",
         "show_name": "Привет, Русский!",
+        # Bilingual lesson show for English speakers: the identity line is
+        # English framing around the Russian title, and Olya names herself
+        # (the host label is stripped before synthesis).
+        "identity_template": "I'm Olya, and this is {show_name} — episode {ep}.",
         "greetings": [
             "Privyet! That means hello in Russian! Welcome to",
             "Privyet, friends! Welcome to",
@@ -744,6 +752,11 @@ _SHOW_PERSONALITIES: dict[str, dict[str, Any]] = {
     "dp_pod": {
         "host": "DAN",
         "show_name": "The DP Pod",
+        # Two-voice show: a listener has to learn which voice is which, so
+        # the who's-who survives the July 30 2026 identity trim. Dan says
+        # his OWN name (the Ep016 name-swap rule) and the date does not
+        # come back.
+        "identity_tail": "I'm Dan Perra, he's Patrick Novak.",
         "greetings": [
             "Hey, welcome to",
             "Welcome back to",
@@ -819,6 +832,13 @@ _SHOW_PERSONALITIES: dict[str, dict[str, Any]] = {
     "age_of_ai": {
         "host": "MIRA",
         "show_name": "The Age of AI",
+        # The whole premise is an AI host being honest about it from the
+        # first minute, and every episode must disclose the AI host. The
+        # legacy openers carried that disclosure, so the identity trim
+        # keeps a short version of it rather than dropping it. (This show
+        # also never runs through run_show — production comes from
+        # pipelines/voices/ — so it has no retention exposure to trim for.)
+        "identity_tail": "I'm Mira. I'm an AI — my guest is not.",
         "greetings": [
             "Welcome to",
             "This is",
@@ -962,18 +982,115 @@ def build_intro_line(
     framing_pool = day_overrides.get("framings", personality["framings"])
     framing = _pick(framing_pool, show_slug, date, salt="framing")
 
-    # Assemble
-    parts = [f"{host}: {greeting} {show_name}, {opener} {framing}"]
+    # Assemble — IDENTITY ONLY, and it no longer runs first.
+    #
+    # July 30 2026 (cold-open change). This used to emit the whole
+    # opening: "{greeting} {show_name}, {opener} {framing}" — which
+    # rendered as "Welcome back to Tesla Shorts Time, episode 557. It's
+    # July 30, 2026 and I'm Patrick in Vancouver. Let's dive into
+    # today's Tesla news." That is ~18 seconds of speech containing no
+    # information, on top of a 10-second music intro, so the first
+    # actual fact arrived around 28 seconds in.
+    #
+    # Measured consequence on YouTube long-form: median retention 10.7%
+    # on EN and 6.3% on RU, with average view durations of 18-85 seconds
+    # on 5-13 minute videos. Most viewers left before the episode said
+    # anything. The date was the worst offender — it is in the metadata,
+    # it stamps every video as stale to anyone arriving from search
+    # weeks later, and nobody ever needed to hear it.
+    #
+    # The identity line is now short and lands AFTER the cold-open hook
+    # (see ``build_cold_open_spec``). The greeting/framing pools are
+    # retained but no longer used here — the closings still read them,
+    # and a future variation experiment can draw on them again.
+    # The default identity line is English. A show that is not hosted in
+    # English declares its own ``identity_template`` — without one, the
+    # July 30 2026 trim would have handed Финансы Просто (an entirely
+    # Russian-language show) and Привет, Русский! an English sentence.
+    template = str(personality.get("identity_template")
+                   or "This is {show_name}, episode {ep}.")
+    intro = f"{host}: " + template.format(show_name=show_name, ep=episode_num)
 
-    # Add milestone note if applicable
+    # A few shows carry something load-bearing in the identity line that a
+    # bare "This is <show>, episode N" would lose: DP Pod has to teach the
+    # listener which of two voices is which, and The Age of AI must
+    # disclose that its host is an AI. Those shows declare a short
+    # ``identity_tail`` rather than reverting to the full legacy opener —
+    # the date and the "let's dive in" framing stay gone either way.
+    tail = str(personality.get("identity_tail") or "").strip()
+    if tail:
+        intro = f"{intro} {tail}"
+
+    # Milestones are genuinely worth saying out loud — a 500th episode
+    # is a credibility signal, unlike a date.
     milestone = _milestone_note(episode_num)
     if milestone:
-        parts.append(f" {milestone}")
+        intro = f"{intro} {milestone}"
 
-    intro = "".join(parts)
-
-    logger.debug("Dynamic intro for %s ep%d: %s", show_slug, episode_num, intro[:80])
+    logger.debug("Identity line for %s ep%d: %s", show_slug, episode_num, intro[:80])
     return intro
+
+
+# Clichés observed in the network's own shipped transcripts, banned by
+# name. Listing the BANNED shapes is safe; supplying a model-ready
+# example of the wanted shape is not — every seeded template tic in this
+# network's history came from a prompt handing over the sentence it
+# wanted (see CLAUDE.md, "de-seed by shape, never with a quotable
+# example"). So this spec describes the shape and forbids the failures.
+_COLD_OPEN_BANNED = (
+    "welcome to", "welcome back", "thanks for joining", "thanks for tuning in",
+    "it's a new day", "glad to have you", "good to have you",
+    "let's dive in", "let's dive into", "let's get into it",
+    "let's get started", "here's what you need to know",
+    "buckle up", "strap in", "hold onto your", "you won't believe",
+    "in today's episode", "on today's show", "today is",
+)
+
+
+def build_cold_open_spec(show_slug: str = "", *, is_ru: bool = False) -> str:
+    """The cold-open rules injected into every podcast prompt.
+
+    A single shared spec rather than fifteen hand-written variants, so
+    the rule is identical everywhere and changes in one place.
+
+    Deliberately contains NO example sentence. The instruction states
+    what the first words must DO and what they must never be; inventing
+    the line is the model's job, and handing it a specimen is how this
+    network has repeatedly seeded a tic across every episode of a show.
+    """
+    if is_ru:
+        return (
+            "ХОЛОДНОЕ ОТКРЫТИЕ — первые слова эпизода:\n"
+            "- Начни СРАЗУ с самой конкретной и содержательной деталью "
+            "сегодняшнего материала: цифра, изменение, противоречие или "
+            "результат, который сам по себе вызывает интерес. Одна-две "
+            "фразы, максимум.\n"
+            "- Никаких приветствий, никакой даты, никаких «сегодня в "
+            "выпуске», никакого приглашения слушать. Слушатель уже здесь.\n"
+            "- Это должен быть настоящий факт из материала, а не обещание "
+            "или интрига. Никогда не преувеличивай и не придумывай.\n"
+            "- Только ПОСЛЕ этого — короткая строка с названием передачи."
+        )
+    banned = "; ".join(f'"{p}"' for p in _COLD_OPEN_BANNED)
+    return (
+        "COLD OPEN — the first words of the episode:\n"
+        "- Open IMMEDIATELY on the single most concrete, consequential "
+        "detail in today's material: a number, a reversal, a result, a "
+        "contradiction — something that earns attention on its own merit. "
+        "One or two sentences, no more.\n"
+        "- No greeting, no date, no episode number, no host name, no "
+        "invitation to keep listening. The listener is already here; "
+        "spending their first seconds on housekeeping is what loses them.\n"
+        "- It must be a REAL specific from the material, stated plainly. "
+        "Not a teaser, not a riddle, not a promise of what is coming. "
+        "Never overstate, never invent, never withhold the fact to create "
+        "suspense — the fact IS the hook.\n"
+        "- Do not open with any of these, in any language or variation: "
+        f"{banned}. They signal a podcast clearing its throat.\n"
+        "- Write it so it would still make sense as the first line of a "
+        "wire report. If it sounds like an announcer, rewrite it.\n"
+        "- ONLY AFTER the cold open, give the short identity line."
+    )
 
 
 def build_closing_block(
