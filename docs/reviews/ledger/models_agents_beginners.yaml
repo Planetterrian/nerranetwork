@@ -86,6 +86,57 @@ reviews:
         evidence: null
     agent_cost_usd: null
 
+  - date: '2026-07-30'
+    pr: null
+    doc: docs/reviews/models_agents_beginners_review_2026_07_30.md
+    generated_by: grok-4.3
+    summary: Persistent under-length (9/10 episodes <1200 words), recurring boilerplate tics in 6-10/10 transcripts, and one chapter-shape failure (ep112 ends without Closing).
+    scored_prior_predictions:
+    - metric: '"not so scary, right?" occurrences in last-10 transcripts'
+      verdict: hit
+      evidence: 0/10 post-merge per 2026-07-02 ledger
+    - metric: Big Story openers using "Something [adj] just happened", last 10
+      verdict: hit
+      evidence: 0/10 post-merge per 2026-07-02 ledger
+    - metric: median _tts.txt words, last 10 eps
+      verdict: miss
+      evidence: still 9/10 below 1200 (snapshot)
+    - metric: episodes with a "The Big Story" chapter, last 10
+      verdict: pending
+      evidence: still 0/10 (deferred)
+    - metric: episodes with a double-spoken closing (guard false-fire)
+      verdict: pending
+      evidence: no data in current window
+    shipped: []
+    deferred:
+    - chronic under-length (digest ceiling only)
+    - '"The Big Story" chapter marker (dead; gated on digest-driven titles)'
+    - MAB pronunciation hook respellings (0 impact; align with M&A)
+    predictions:
+    - metric: episodes with repeated boilerplate outro phrases (last 10 transcripts)
+      baseline: 10/10
+      expected: <=4/10 after de-seed
+      verdict: pending
+      evidence: null
+    - metric: median _tts.txt words (last 10)
+      baseline: ~1050
+      expected: no regression (digest ceiling only)
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/prompts/mab_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 10/10 transcripts repeat the exact outro tic; de-seed by shape + verbatim ban per July 2026 meta-review rule.
+    - file: shows/prompts/mab_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 8/10 transcripts repeat the tic; de-seed by shape, never quotable example.
+    - file: shows/prompts/mab_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 6/10 transcripts echo the prompt's own example.
+    agent_cost_usd: 0.0426
 do_not_retry:
   - idea: phonetic respellings / programmatic speech-tag injection on the custom voice
     evidence: landmine #17 — 100% regression rate; reverted May 11 2026. (Note this pass did NOT add any; it recommends REMOVING the stale MAB hook respellings.)
