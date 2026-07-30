@@ -2013,3 +2013,55 @@ def test_interleave_broll_into_schedule_scales_holds():
     assert clips == [(Path("/c/x.mp4"), 6.0)]
     total = sum(d for _, d in stills) + sum(d for _, d in clips)
     assert abs(total - 60.0) < 1e-6
+
+
+# ---------------------------------------------------------------------------
+# Long-form captions: sidecar track only, no burn-in (July 30 2026)
+#
+# The pipeline had always done BOTH — build_long_form_video received the SRT
+# to burn into the pixels, AND upload_caption_track uploaded the same SRT as
+# a real track. A viewer who pressed CC saw two sets of captions at once.
+#
+# The track wins on this surface: it toggles, auto-translates, the player
+# positions it, YouTube indexes it, and it does not permanently cover the
+# Grok scene imagery the episode paid for. Apple's video podcast player
+# also expects sidecar captions. Shorts KEEP their burn-in — watched muted,
+# in-feed, with no caption UI to fall back on.
+# ---------------------------------------------------------------------------
+
+class TestLongFormCaptionLayer:
+    @staticmethod
+    def _run_show():
+        from pathlib import Path
+        return (Path(__file__).resolve().parent.parent
+                / "run_show.py").read_text(encoding="utf-8")
+
+    def test_burn_in_defaults_off(self):
+        from engine.config import YouTubeConfig
+        assert YouTubeConfig().long_form_burn_in_captions is False
+
+    def test_long_form_render_is_gated_on_the_flag(self):
+        src = self._run_show()
+        assert "long_form_burn_in_captions" in src
+        # The old unconditional form must not come back.
+        assert "\n                subtitles_path=srt_path,\n" not in src
+
+    def test_shorts_burn_in_is_untouched(self):
+        """Shorts are the surface where burned-in captions are correct."""
+        src = self._run_show()
+        assert "subtitles_path=this_srt_path" in src
+
+    def test_caption_track_failure_is_visible(self):
+        """It is now the ONLY caption layer, so silence is not acceptable."""
+        src = self._run_show()
+        assert "caption_track_uploaded" in src
+        assert "shipped with NO captions" in src
+
+    def test_no_show_yaml_turns_burn_in_back_on(self):
+        import pathlib
+        import yaml as _yaml
+        root = pathlib.Path(__file__).resolve().parent.parent
+        for path in sorted((root / "shows").glob("*.yaml")):
+            raw = _yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+            yt = raw.get("youtube") or {}
+            assert yt.get("long_form_burn_in_captions") is not True, path.name

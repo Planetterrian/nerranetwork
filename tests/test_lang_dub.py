@@ -321,3 +321,53 @@ class TestRuEngineUntouched:
         for helper in ("gallery_images_for_episode", "_fresh_manifest_path",
                        "_en_optimized_long_title", "_cover_path"):
             assert helper in src
+
+
+class TestAnalyticsCredentialsCoverEveryDubChannel:
+    """Every channel the network UPLOADS to must also be readable back.
+
+    July 30 2026: @NerraFR published 42 videos from 2026-07-21 while every
+    FR show reported ``short_vpd: null`` and stayed frozen at its seed
+    tier. Two separate causes, fixed a day apart:
+
+      1. ``fetch_youtube_analytics`` globbed only ``youtube_videos.ru.json``
+         beside the base index, so it never SAW the FR rows.
+      2. ``nightly-maintenance.yml`` passed only the EN and RU refresh
+         tokens, so even once it saw them it could not AUTHENTICATE to the
+         channel — ``get_channel_credentials_from_env("fr")`` returned
+         None and the loop skipped it. The 2026-07-30 nightly ran cleanly
+         and still emitted zero fr rows.
+
+    The upload path always had the FR token; only the read-back lacked it.
+    A channel that can be written to and not read from is invisible to the
+    adaptive policy, which is a channel that can never earn a promotion.
+    """
+
+    _NIGHTLY = ".github/workflows/nightly-maintenance.yml"
+
+    def _nightly_env(self):
+        import yaml as _yaml
+        from pathlib import Path
+        root = Path(__file__).resolve().parent.parent
+        raw = _yaml.safe_load((root / self._NIGHTLY).read_text(encoding="utf-8"))
+        env = {}
+        for job in (raw.get("jobs") or {}).values():
+            for step in (job.get("steps") or []):
+                env.update(step.get("env") or {})
+        return env
+
+    def test_every_registered_dub_language_is_readable(self):
+        from engine.lang_dub import DUB_LANGUAGES
+        env = self._nightly_env()
+        for code, lang in DUB_LANGUAGES.items():
+            var = f"YOUTUBE_REFRESH_TOKEN_{lang.channel.upper()}"
+            assert var in env, (
+                f"{lang.channel_handle} uploads but the nightly analytics "
+                f"fetch has no {var} — the channel is invisible to the "
+                "adaptive policy and can never earn a promotion"
+            )
+
+    def test_base_channels_still_present(self):
+        env = self._nightly_env()
+        for var in ("YOUTUBE_REFRESH_TOKEN_EN", "YOUTUBE_REFRESH_TOKEN_RU"):
+            assert var in env, var

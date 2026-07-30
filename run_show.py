@@ -5368,7 +5368,27 @@ def _publish_youtube(
                     or (long_scene_paths if len(long_scene_paths) >= 2 else None)
                 ),
                 clip_paths=long_clip_paths or None,
-                subtitles_path=srt_path,
+                # Long-form captions come from the REAL caption track
+                # uploaded after the upload below, not from burned-in
+                # pixels. Doing both put two sets of captions on screen the
+                # moment a viewer pressed CC — the pipeline has always
+                # uploaded a track AND baked one in. The track is strictly
+                # better on this surface: it toggles, it auto-translates,
+                # the player positions it, YouTube indexes it for search,
+                # and it does not permanently cover the Grok scene imagery
+                # the episode paid for. Apple's video podcast player also
+                # expects sidecar captions rather than baked ones.
+                #
+                # Shorts KEEP their burn-in — watched muted, in-feed, with
+                # no caption UI to fall back on.
+                #
+                # Per-show escape hatch for a surface that will not render
+                # a track: youtube.long_form_burn_in_captions: true.
+                subtitles_path=(
+                    srt_path
+                    if getattr(config.youtube, "long_form_burn_in_captions", False)
+                    else None
+                ),
                 show_name=config.name,
                 scene_schedule=_visual_plan.get("scene_schedule"),
                 broll_clips=_visual_plan.get("broll_clips"),
@@ -5502,23 +5522,41 @@ def _publish_youtube(
                                 int(result.get("yt_comments_posted", 0)) + 1)
                     except Exception as _exc:  # noqa: BLE001
                         logger.debug("long-form auto-comment skipped: %s", _exc)
-                # Upload the SRT as a real caption track. This is on top of
-                # the burned-in captions — gives YouTube the CC button +
-                # auto-translation + accessibility search. Best-effort:
-                # failures are logged and the run continues.
+                # Upload the SRT as a real caption track. Since July 30
+                # 2026 this is the ONLY caption layer on long-form (the
+                # burn-in is off by default — see build_long_form_video
+                # above), so a failure here means the video ships with no
+                # captions at all rather than merely losing the CC button.
+                # Still best-effort by contract: logged, run continues, and
+                # the metric below records it.
                 if srt_path and srt_path.exists():
                     from engine.youtube import upload_caption_track
                     lang_code = (config.youtube.default_language or "en").lower()
                     track_name = "English" if lang_code == "en" else (
                         "Русский" if lang_code == "ru" else lang_code.upper()
                     )
-                    upload_caption_track(
-                        credentials=credentials,
-                        video_id=upload.video_id,
-                        srt_path=srt_path,
-                        language=lang_code,
-                        name=track_name,
-                    )
+                    try:
+                        upload_caption_track(
+                            credentials=credentials,
+                            video_id=upload.video_id,
+                            srt_path=srt_path,
+                            language=lang_code,
+                            name=track_name,
+                        )
+                        result["caption_track_uploaded"] = True
+                    except Exception as _cap_exc:  # noqa: BLE001
+                        # Its own try/except: a caption failure must not
+                        # abort the surrounding publish block, and now that
+                        # this is the only caption layer on long-form it
+                        # needs a signal louder than a swallowed log line.
+                        result["caption_track_uploaded"] = False
+                        result["caption_track_error"] = str(_cap_exc)[:300]
+                        logger.warning(
+                            "::warning::%s long-form shipped with NO captions "
+                            "— caption-track upload failed (%s). Burn-in is "
+                            "off by default, so the track is the only layer.",
+                            config.slug, _cap_exc,
+                        )
         except Exception as exc:
             logger.exception("YouTube long-form publish failed: %s", exc)
             # Surface the failure reason in the result dict so the

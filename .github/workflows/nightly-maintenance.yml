@@ -117,6 +117,16 @@ jobs:
           YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
           YOUTUBE_REFRESH_TOKEN_EN: ${{ secrets.YOUTUBE_REFRESH_TOKEN_EN }}
           YOUTUBE_REFRESH_TOKEN_RU: ${{ secrets.YOUTUBE_REFRESH_TOKEN_RU }}
+          # @NerraFR. Without this the fetch can SEE the FR video rows
+          # (the glob fix, 2026-07-29) but cannot authenticate to the
+          # channel, so get_channel_credentials_from_env("fr") returns
+          # None and the whole channel is skipped — the 2026-07-30 nightly
+          # ran cleanly and still produced zero fr rows. The upload path
+          # has always had this token (multilingual.yml); only the
+          # read-back was missing it, which is why 42 FR videos published
+          # since 2026-07-21 while every FR show reported short_vpd: null
+          # and sat frozen at its seed tier.
+          YOUTUBE_REFRESH_TOKEN_FR: ${{ secrets.YOUTUBE_REFRESH_TOKEN_FR }}
         run: |
           python scripts/fetch_youtube_analytics.py --out api/youtube_stats.json --days 90 || true
           python scripts/update_youtube_performance.py || true
