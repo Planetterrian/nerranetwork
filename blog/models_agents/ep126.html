@@ -108,11 +108,22 @@
     },
     "image": "https://nerranetwork.com/assets/covers/models-agents.jpg",
     "transcript": "https://nerranetwork.com/blog/models_agents/ep126.html#transcript",
-    "associatedMedia": {
-      "@type": "MediaObject",
-      "contentUrl": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep126_20260730.mp3",
-      "inLanguage": "en"
-    }
+    "associatedMedia": [
+      {
+        "@type": "MediaObject",
+        "contentUrl": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep126_20260730.mp3",
+        "inLanguage": "en"
+      },
+      {
+        "@type": "MediaObject",
+        "contentUrl": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep126_20260730.fr.mp3",
+        "inLanguage": "fr"
+      }
+    ],
+    "availableLanguage": [
+      "en",
+      "fr"
+    ]
   }
 ]
     </script>
@@ -1318,6 +1329,27 @@
     </header>
 
     
+    <section class="nn-i18n" aria-label="Listen in another language">
+        <div class="nn-i18n-inner">
+            <div class="nn-i18n-row">
+                <span class="nn-i18n-label">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    Listen in
+                </span>
+                <button type="button" class="nn-i18n-pill" data-lang="en" aria-pressed="true">English</button>
+                
+                <button type="button" class="nn-i18n-pill" data-lang="fr" aria-pressed="false">Français</button>
+                
+            </div>
+            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://audio.nerranetwork.com/models_agents/Models_Agents_Ep126_20260730.mp3"></audio>
+        </div>
+        <script type="application/json" id="nn-i18n-tracks">
+{
+  "en": {"url": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep126_20260730.mp3", "title": "OpenAI\u0027s GPT-5.6 Sol just tripled its ARC-AGI-3 score using two API settings that also cut output tokens by 6x.", "desc": "OpenAI\u0027s GPT-5.6 Sol just tripled its ARC-AGI-3 score using two API settings that also cut output tokens by 6x."},
+  "fr": {"url": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep126_20260730.fr.mp3", "title": "Ép 126 : GPT-5.6 Sol d’OpenAI vient de tripler son score ARC-AGI-3 grâce à deux paramètres d’API qui ont aussi réduit…", "desc": "GPT-5.6 Sol d’OpenAI vient de tripler son score ARC-AGI-3 grâce à deux paramètres d’API qui ont également réduit les tokens de sortie d’un facteur 6."}
+}
+        </script>
+    </section>
     
 
     <!-- Article with TOC sidebar -->
@@ -1399,6 +1431,88 @@
 <li>Further reports on whether the 20% serving-cost reduction from GPT-5.6 generalizes to other frontier families.</li>
 <li>Additional agent-framework integrations for AgentGUI now that the repository is public.</li>
 </ul>
+            </div>
+            
+            <div class="blog-body-lang" data-lang="fr" hidden>
+                <p class="blog-translated-note">Français — AI-translated from the English episode.</p>
+                <p>Ravi de vous accueillir sur Models and Agents, épisode cent vingt-six, pour le trente juillet deux mille vingt-six. Une autre journée, une autre série de développements en intelligence artificielle. Décortiquons cela.</p>
+<p>GPT 5.6 Sol d’Open AI vient de tripler son score ARC-AGI 3 grâce à deux réglages d’API qui ont aussi divisé par six le nombre de tokens en sortie.</p>
+<p>Open AI a expliqué comment la conservation du raisonnement et la compaction du contexte dans l’API Responses ont fait grimper le score public ARC-AGI 3 de GPT 5.6 Sol de cent quatre-vingt-huit pour cent tout en réduisant fortement le nombre de tokens.</p>
+<p>Simon Willison a par ailleurs remarqué que ces optimisations de GPT 5.6 avaient déjà permis à Open AI de baisser ses coûts de service de vingt pour cent.</p>
+<p>Les développeurs devraient tester ces mêmes réglages cette semaine sur des tâches d’agents à long horizon.</p>
+<p>Open AI a indiqué que le score ARC-AGI 3 de GPT 5.6 Sol avait augmenté de cent quatre-vingt-huit pour cent sur l’ensemble public après le passage à l’API Responses, avec conservation du raisonnement et activation de la compaction du contexte.</p>
+<p>Le harnais standard supprimait le raisonnement après chaque action et abandonnait les actions précédentes dès que le contexte se saturait, obligeant le modèle à tout reprendre à zéro.</p>
+<p>Avec les nouveaux réglages, le modèle s’appuie sur les apprentissages antérieurs dans des tâches de jeu bidimensionnel en plusieurs étapes qui testent l’adaptation à des règles inconnues sans instructions.</p>
+<p>Ce changement a également réduit les tokens en sortie d’un facteur six.</p>
+<p>Open AI recommande aux développeurs qui visent des performances de pointe sur des évaluations de type agent d’utiliser le même harnais et les mêmes réglages qu’en interne.</p>
+<p>L’entreprise a aussi insisté sur le fait que les scores de benchmark reflètent le modèle associé à la conception du harnais et aux choix de prompt, et non le modèle isolé.</p>
+<p>Ce développement s’inscrit dans la trajectoire d’amélioration des capacités par rapport aux coûts observée depuis l’épisode précédent.</p>
+<p>GPT 5.6 a permis une réduction de vingt pour cent des coûts de service complets pour Open AI.</p>
+<p>Willison estime que cela représente probablement plusieurs milliards de dollars par mois à l’échelle actuelle.</p>
+<p>Ces optimisations s’ajoutent aux modifications du harnais ARC-AGI 3 annoncées le même jour.</p>
+<p>Willison a également observé que le modèle avait trouvé des gains concrets dans la façon dont il est servi via l’API.</p>
+<p>Les développeurs qui évaluent GPT 5.6 devraient mesurer à la fois les capacités et l’efficacité en tokens sur leurs propres charges de travail avant de s’engager.</p>
+<p>Le chiffre de vingt pour cent s’applique à l’ensemble du pipeline de service et non à des composants isolés.</p>
+<p>Anthropic verse à SpaceX un milliard deux cent cinquante millions de dollars par mois rien que pour la capacité d’inférence de Colossus.</p>
+<p>Willison précise que ce montant ne représente probablement même pas la majorité des dépenses totales d’inférence d’Anthropic.</p>
+<p>Cette révélation montre à quelle vitesse les laboratoires de pointe augmentent leurs engagements en calcul.</p>
+<p>La dépense mensuelle ne couvre qu’un seul fournisseur majeur et laisse place à des capacités supplémentaires auprès d’autres sources.</p>
+<p>Willison a souligné cette dépense comme la preuve que les coûts d’inférence restent un poste dominant, même pour les laboratoires centrés sur le développement de modèles.</p>
+<p>Sam Altman s’est montré enthousiaste à l’idée d’un accès gratuit prochain aux modèles d’Open AI pour les chercheurs.</p>
+<p>Il a présenté cette initiative comme le moyen le plus rapide d’accélérer la découverte scientifique plutôt que de garder les modèles en interne.</p>
+<p>Le programme cible les scientifiques capables d’utiliser des systèmes de pointe sur des problèmes ouverts.</p>
+<p>Altman a noté que les modèles approchent du point où ils peuvent accélérer de façon significative la découverte dans de nombreux domaines.</p>
+<p>Il a présenté cet accès comme un moyen de distribuer largement les bénéfices plutôt que de les concentrer au sein d’une seule organisation.</p>
+<p>AgentGUI est une interface graphique hébergée localement qui permet d’observer et de piloter plusieurs sessions d’agents d’intelligence artificielle concurrentes et de longue durée.</p>
+<p>Elle fournit des visualisations riches des trajectoires, des commandes de pilotage manuelles et automatisées, ainsi qu’une intégration avec les frameworks d’agents open source et de pointe.</p>
+<p>Une étude utilisateur contrôlée a montré une réduction de trente-huit pour cent du temps nécessaire pour identifier les éléments clés dans les traces d’agents, avec une signification statistique à p égale zéro virgule zéro deux trois.</p>
+<p>La fonction automatisée de prévention de la dérive a augmenté les taux d’achèvement des tâches jusqu’à trente-quatre points de pourcentage sur des modèles allant de zéro virgule huit milliard à neuf milliards de paramètres lors d’une expérience préliminaire de cinquante exécutions par modèle.</p>
+<p>Voice Memory est une architecture écouteur-penseur uniquement en inférence qui permet à un correcteur figé de consulter un unique fichier mémoire point md par domaine et de décider s’il faut corriger une hypothèse de reconnaissance vocale automatique ou s’abstenir.</p>
+<p>Un optimiseur asynchrone révise le fichier uniquement lorsque les modifications améliorent strictement un score sur un ensemble de validation.</p>
+<p>Sur dix domaines HyPoradise, cela a fait baisser le taux d’erreur de mots pondéré de huit virgule trente-six pour cent à sept virgule cinquante-deux pour cent tout en réduisant le taux de sur-correction de soixante-quatre pour cent à trente-cinq pour cent.</p>
+<p>La mémoire se transfère entre familles de correcteurs sans aucun paramètre supplémentaire et accepte des exemples en contexte optionnels qui améliorent encore les résultats jusqu’à sept virgule quarante-sept pour cent.</p>
+<p>CMT-rag stocke la mémoire conversationnelle sous forme de traces de raisonnement persistantes de sous-questions dans un graphe acyclique dirigé au niveau de la session.</p>
+<p>À chaque tour, un générateur de traces dans l’espace d’états décompose la requête actuelle en sous-questions orientées récupération qui font référence aux traces précédentes.</p>
+<p>Sur MuMu-QA et les benchmarks RAG au niveau du corpus, cette approche a surpassé cinq catégories de baselines en précision des réponses.</p>
+<p>La méthode répond directement à la perte de dépendances inter-tours qui survient lorsque les systèmes s’appuient sur l’historique brut ou des résumés plats.</p>
+<p>Les expériences confirment des gains constants sur les questions multi-sauts qui s’étendent sur plusieurs tours de conversation.</p>
+<p>WikiLoop entraîne conjointement une seule politique Qwen trois virgule cinq neuf milliards à la fois comme navigateur et comme constructeur d’un wiki natif pour agents.</p>
+<p>Le constructeur propose des modifications notées par le changement de performance en aval d’un navigateur figé.</p>
+<p>Le navigateur suit un objectif de suffisance avant efficacité.</p>
+<p>Sur AuthTrace, le système a atteint soixante-deux virgule six en exactitude agrégée des réponses, soit six virgule trois points de plus que la baseline LLM Wiki, avec les plus forts gains sur les requêtes multi-documents.</p>
+<p>Les modifications apprises restent utiles pour un navigateur non vu et améliorent les performances sur HotpotQA et MuSiQue sans entraînement spécifique au jeu de données.</p>
+<p>ForgetBench évalue la rétention à long terme de la mémoire paramétrique sous édition séquentielle de connaissances à l’aide de flux de questions-réponses basés sur des concepts et des scénarios.</p>
+<p>Les méthodes d’édition existantes ne parviennent pas à équilibrer rétention et qualité de généralisation sur plusieurs étapes.</p>
+<p>Le benchmark fournit un cadre unifié de mesure de décroissance temporelle qui suit la force de rétention et la stabilité inter-instances.</p>
+<p>Les expériences sur divers modèles et méthodes d’édition montrent que les approches actuelles ne peuvent pas maintenir à la fois une rétention à long terme et une généralisation simultanée.</p>
+<p>V-Steer modifie les vecteurs de valeur mis en cache au moment de l’inférence pour restaurer l’influence privilégiée du prompt système face à des entrées utilisateur ou outils conflictuelles.</p>
+<p>Cette méthode sans entraînement fait passer la précision de la contrainte principale de moins de dix-huit pour cent à quatre-vingt-douze pour cent sur des benchmarks de conflit de rôles pour des modèles allant de sept milliards à soixante-dix milliards de paramètres.</p>
+<p>Elle n’ajoute qu’un surcoût de pré-remplissage unique et reste compatible avec les moteurs d’attention fusionnés.</p>
+<p>L’intervention est la plus forte dans une bande de couches intermédiaires et se transfère en zéro shot vers des corpus indépendants lorsque la même direction de trait est appliquée.</p>
+<p>Testez GPT 5.6 Sol sur des tâches de style ARC-AGI 3 avec l’API Responses plus conservation du raisonnement et compaction du contexte pour voir si le gain de cent quatre-vingt-huit pour cent apparaît sur vos propres charges de travail d’agent.</p>
+<p>Clonez AgentGUI et testez-le sur les traces d’agents à long horizon que vous possédez déjà.</p>
+<p>L’économie de trente-huit pour cent de temps sur l’inspection des traces est immédiate.</p>
+<p>Essayez V-Steer sur un modèle de sept à treize milliards de paramètres que vous contrôlez si vous avez besoin d’une meilleure adhésion au prompt système sans fine-tuning.</p>
+<p>Évaluez CMT-rag sur toute tâche de récupération multi-tours où les étapes de raisonnement antérieures disparaissent constamment.</p>
+<p>D’autres détails sont attendus sur le programme d’accès gratuit aux chercheurs d’Open AI.</p>
+<p>D’autres rapports sur la question de savoir si la réduction de vingt pour cent des coûts de service de GPT 5.6 se généralise à d’autres familles de pointe.</p>
+<p>D’autres intégrations de frameworks d’agents pour AgentGUI maintenant que le dépôt est public.</p>
+<p>Bien, entrons dans le détail de V-Steer.</p>
+<p>Tout le monde parle des hiérarchies d’instructions comme si un seul prompt ou une seule phase d’entraînement pouvait les faire respecter.</p>
+<p>En pratique, les couches d’attention du modèle laissent souvent les segments de priorité inférieure dominer au moment de la génération.</p>
+<p>V-Steer part de l’observation que les vecteurs de valeur dans les états d’attention mis en cache encodent déjà la force relative des différents segments du prompt.</p>
+<p>Il utilise une attribution directe des logits sur la première prédiction du token suivant pour localiser les têtes où le contenu de priorité inférieure l’emporte.</p>
+<p>Il applique ensuite un simple boost multiplicatif aux vecteurs de valeur du segment privilégié et une suppression correspondante au segment conflictuel.</p>
+<p>Comme la modification s’effectue en place sur des caches déjà calculés, elle fonctionne avec n’importe quel noyau d’attention fusionné et ne coûte que le passage de pré-remplissage initial.</p>
+<p>La méthode a été validée sur des benchmarks contrôlés de conflit de rôles et des évaluations plus larges de hiérarchie d’instructions, égalant ou dépassant les approches basées sur l’entraînement sur trois des quatre échelles de modèles.</p>
+<p>Les équipes confrontées à des risques de jailbreak ou d’injection d’outils peuvent donc ajouter une protection légère sans réentraînement, à condition d’accepter le coût unique de pré-remplissage et la nécessité d’identifier les bonnes têtes par famille de modèles.</p>
+<p>L’approche évite toute mise à jour des poids, préservant la compatibilité avec les moteurs fusionnés existants tout en apportant des gains mesurables en précision des contraintes.</p>
+<p>Alors, quand faut-il vraiment choisir cette méthode plutôt que l’alternative ?</p>
+<p>Avant de partir, surveillez les prochains détails sur le programme d’accès gratuit aux chercheurs.</p>
+<p>C’était Models and Agents pour aujourd’hui. Si cet épisode vous a été utile, partagez-le avec quelqu’un qui essaie de suivre tous ces changements et abonnez-vous pour ne pas manquer la mise à jour de demain. Le monde de l’intelligence artificielle avance vite. Nous vous aidons à rester à jour. À demain. Et si vous préférez regarder plutôt qu’écouter, retrouvez-nous sur YouTube à Nerra Network — le lien est dans les notes de l’émission.</p>
+<p>Et avant de partir : cette émission fait partie du Nerra Network, une famille de podcasts quotidiens sur la tech, la science et les marchés, chacun étant un briefing court et percutant que vous pouvez terminer pendant votre trajet. Si aujourd’hui a mérité sa place dans votre flux, voici votre prochaine écoute : Models and Agents for Beginners, l’intelligence artificielle expliquée simplement, pour les débutants et les adolescents curieux. Retrouvez toutes les émissions, gratuitement, sur nerranetwork point com.</p>
+<p>Vous voulez le briefing écrit avec les liens sources ? Chaque émission conserve une page de résumés sur nerranetwork point com — consultable, datée et gratuite.</p>
+<p>Cet épisode a utilisé la synthèse vocale par intelligence artificielle de ma voix — la sélection éditoriale et l’analyse sont les miennes.</p>
             </div>
             
 
