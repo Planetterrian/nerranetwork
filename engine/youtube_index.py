@@ -33,7 +33,8 @@ Schema (``schema_version`` 1)::
           "hook": "<episode hook / spoken lead>",
           "published": "2026-06-29",
           "watch_url": "https://www.youtube.com/watch?v=abc123",
-          "channel": "en" | "ru"
+          "channel": "en" | "ru",
+          "variant": "stills" | "grok_video"   # optional; A/B arm only
         },
         ...
       ]
@@ -95,6 +96,7 @@ def record_video(
     published: str = "",
     watch_url: str = "",
     channel: str = "en",
+    variant: str = "",
     index_path: Optional[Path] = None,
 ) -> bool:
     """Append (or update) one published-video record. Best-effort.
@@ -120,6 +122,11 @@ def record_video(
             "watch_url": watch_url,
             "channel": channel,
         }
+        # Experiment arm (July 2026 Shorts motion A/B). Only written when
+        # set, so every historical row and every non-enrolled show keeps
+        # its exact existing shape.
+        if variant:
+            row["variant"] = variant
         # Idempotent upsert keyed on video_id.
         for i, existing in enumerate(videos):
             if existing.get("video_id") == video_id:

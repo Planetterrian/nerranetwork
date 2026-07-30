@@ -49,6 +49,10 @@ def _make_config(**overrides):
     )
     return SimpleNamespace(
         name=overrides.get("name", "Tesla Shorts Time"),
+        # Real ShowConfigs always carry a slug; engine.funnel builds the
+        # campaign id from it, so the stub needs one to produce the
+        # attributable campaign production would.
+        slug=overrides.get("slug", "tesla"),
         publishing=publishing,
         youtube=youtube_cfg,
         keywords=overrides.get(
@@ -320,9 +324,12 @@ def test_build_long_form_metadata_includes_disclosure_and_utm():
         audio_url="https://audio.nerranetwork.com/tesla/ep042.mp3",
     )
     assert "AI Disclosure" in meta["description"]
+    # July 2026: the UTM shape moved to engine/funnel.py. The campaign now
+    # carries the show slug — `utm_campaign=ep42` collapsed every show's
+    # episode 42 into one unattributable GA4 row.
     assert "utm_source=youtube" in meta["description"]
-    assert "utm_medium=video" in meta["description"]
-    assert "utm_campaign=ep42" in meta["description"]
+    assert "utm_medium=long" in meta["description"]
+    assert "utm_campaign=nn-tesla-en-long-ep042" in meta["description"]
     assert meta["category_id"] == 28
     assert meta["default_language"] == "en"
 
@@ -434,7 +441,9 @@ def test_build_short_metadata_uses_shorts_hashtag():
     )
     assert "#Shorts" in meta["title"]
     assert "https://www.youtube.com/watch?v=abc" in meta["description"]
-    assert "utm_medium=shorts" in meta["description"]
+    # See the long-form note above: one module owns the funnel taxonomy.
+    assert "utm_medium=short" in meta["description"]
+    assert "utm_campaign=nn-tesla-en-short-ep042" in meta["description"]
     assert "AI Disclosure" in meta["description"]
     # Tags should include the shorts marker.
     assert "shorts" in meta["tags"]

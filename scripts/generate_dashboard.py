@@ -1864,6 +1864,7 @@ def build_dashboard(root: Path, *, offline: bool = False, previous_flat: Optiona
         "content_lake": build_content_lake_section(root),
         "distribution": build_distribution_section(root),
         "youtube_policy": build_youtube_policy_section(root),
+        "funnel": build_funnel_section(root),
     }
 
 
@@ -2481,6 +2482,112 @@ def build_efficiency_section(
         ),
         "per_show": per_show,
     }
+
+
+def build_funnel_section(root: Path) -> Dict[str, Any]:
+    """The four funnel stages + each pilot, condensed for the dashboard.
+
+    Reads ``api/funnel.json`` (built nightly by ``scripts/build_funnel.py``)
+    and hands the card exactly what it renders. Stages that were never
+    measured stay ``configured: false`` all the way to the UI so the
+    operator sees "not measured" rather than a confident zero — the whole
+    point of the instrumentation is to stop guessing, and a fabricated
+    zero is a guess with a number on it.
+    """
+    section: Dict[str, Any] = {"configured": False}
+    path = root / "api" / "funnel.json"
+    if not path.exists():
+        return section
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except Exception as exc:  # noqa: BLE001
+        section["error"] = str(exc)
+        return section
+
+    stages = data.get("stages") or {}
+    reach = stages.get("reach") or {}
+    click = stages.get("click") or {}
+    visit = stages.get("visit") or {}
+    capture = stages.get("capture") or {}
+
+    def _stage(key, label, configured, value, unit,
+               secondary=None, secondary_unit=""):
+        # An unmeasured stage reports null, never 0. The card renders
+        # "not measured"; a 0 would read as "nobody clicked", and those
+        # two facts call for opposite actions.
+        return {
+            "key": key,
+            "label": label,
+            "configured": bool(configured),
+            "value": value if configured else None,
+            "secondary": secondary if configured else None,
+            "unit": unit,
+            "secondary_unit": secondary_unit,
+        }
+
+    section.update({
+        "configured": True,
+        "generated_at": data.get("generated_at"),
+        "window_days": data.get("window_days"),
+        "stages": [
+            _stage("reach", "Reach", reach.get("configured"),
+                   (reach.get("totals") or {}).get("youtube_views"),
+                   "YouTube views",
+                   (reach.get("totals") or {}).get("podcast_downloads"),
+                   "podcast downloads"),
+            _stage("click", "Click", click.get("configured"),
+                   (click.get("totals") or {}).get("sessions"),
+                   "attributed sessions",
+                   (click.get("unattributed") or {}).get("sessions"),
+                   "unattributed"),
+            _stage("visit", "Visit", visit.get("configured"),
+                   (visit.get("totals") or {}).get("sessions"),
+                   "landings on a funnel page"),
+            # The subscriber TOTAL is measured as soon as Buttondown
+            # answers; only its per-source breakdown needs the tag fetch.
+            _stage("capture", "Capture", capture.get("total_configured"),
+                   capture.get("total_subscribers"), "subscribers",
+                   capture.get("signup_events_total"),
+                   "signup events (window)"),
+        ],
+        "capture_attribution_configured": bool(capture.get("configured")),
+        "rates": data.get("network_rates") or {},
+        "pilots": data.get("pilots") or {},
+        "by_source": capture.get("by_source") or {},
+        "unmeasured": [
+            name for name, block in stages.items()
+            if not (block or {}).get("configured")
+        ],
+    })
+
+    # The Shorts motion A/B rides on the same card: it is the one
+    # experiment currently spending money to answer a funnel question.
+    ab_path = root / "api" / "shorts_ab.json"
+    if ab_path.exists():
+        try:
+            ab = json.loads(ab_path.read_text(encoding="utf-8"))
+            section["shorts_ab"] = {
+                "status": ab.get("status"),
+                "min_per_arm": ab.get("min_per_arm"),
+                "arms": {
+                    name: {
+                        "n": (arm or {}).get("n"),
+                        "views_mean": ((arm or {}).get("views") or {}).get("mean"),
+                        "retention_mean": (
+                            (arm or {}).get("average_view_percentage") or {}
+                        ).get("mean"),
+                        "subs_total": (
+                            (arm or {}).get("subscribers_gained") or {}
+                        ).get("total"),
+                    }
+                    for name, arm in (ab.get("arms") or {}).items()
+                },
+                "comparisons": ab.get("comparisons") or {},
+                "spend_usd": ab.get("spend_usd") or {},
+            }
+        except Exception:  # noqa: BLE001 — the card degrades, never breaks
+            pass
+    return section
 
 
 def build_youtube_policy_section(root: Path) -> Dict[str, Any]:

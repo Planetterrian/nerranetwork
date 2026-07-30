@@ -24,7 +24,9 @@ export interface ButtondownClient {
   subscribe(
     apiKey: string,
     email: string,
-    tag: string,
+    // A single tag (the gallery gate) or the resolved list + source tags
+    // a funnel landing page sends. See resolveSubscribeTags in handlers.ts.
+    tag: string | string[],
   ): Promise<{
     ok: boolean;
     alreadySubscribed: boolean;

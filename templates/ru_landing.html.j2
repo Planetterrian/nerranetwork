@@ -1,0 +1,420 @@
+{# ---------------------------------------------------------------------
+   Russian-language funnel landing page (July 2026 pilot).
+
+   ONE destination, ONE thing to do. Every @NerraRU Short and long-form
+   description for a show with `funnel.destinations.ru` set points here
+   instead of at the English homepage, and the only ask above the fold is
+   an email address in exchange for one clearly-described weekly letter.
+
+   Everything below the capture block is proof, not another ask: the next
+   launch window, the latest Russian episodes, and where to subscribe in
+   a podcast app. Deliberately no navigation-style link farm — a second
+   call to action is how a landing page stops converting.
+   --------------------------------------------------------------------- #}
+{% extends "base.html.j2" %}
+{% from "_macros.html.j2" import ai_badge %}
+
+{% block head_extra %}
+<style>
+  .ru-hero {
+    position: relative;
+    padding: 4.5rem 0 3rem;
+    overflow: hidden;
+  }
+  .ru-hero::before {
+    content: '';
+    position: absolute;
+    inset: -40% -20% auto -20%;
+    height: 140%;
+    background: radial-gradient(ellipse at 50% 0%,
+                rgba(107, 71, 255, 0.28), transparent 62%);
+    pointer-events: none;
+  }
+  .ru-hero-inner {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    gap: 3rem;
+    align-items: center;
+  }
+  .ru-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    font-size: .8rem;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--nn-cyan);
+    margin-bottom: 1rem;
+  }
+  .ru-hero h1 {
+    font-size: clamp(2.1rem, 5.2vw, 3.4rem);
+    line-height: 1.08;
+    margin: 0 0 1rem;
+    letter-spacing: -0.02em;
+  }
+  .ru-hero-desc {
+    font-size: 1.1rem;
+    line-height: 1.65;
+    color: var(--nn-text-muted);
+    max-width: 46ch;
+    margin: 0 0 1.75rem;
+  }
+  .ru-hero-art img {
+    width: 100%;
+    max-width: 340px;
+    border-radius: 20px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, .5);
+    display: block;
+    margin-inline: auto;
+  }
+
+  /* ---- The one ask ---- */
+  .ru-capture {
+    background: var(--nn-card);
+    border: 1px solid var(--nn-border);
+    border-radius: 18px;
+    padding: 1.6rem 1.6rem 1.35rem;
+    max-width: 34rem;
+  }
+  .ru-capture h2 {
+    font-size: 1.18rem;
+    margin: 0 0 .4rem;
+    letter-spacing: -0.01em;
+  }
+  .ru-capture p {
+    font-size: .94rem;
+    line-height: 1.55;
+    color: var(--nn-text-muted);
+    margin: 0 0 1rem;
+  }
+  .ru-form { display: flex; gap: .6rem; flex-wrap: wrap; }
+  .ru-form input[type="email"] {
+    flex: 1 1 15rem;
+    min-width: 0;
+    padding: .8rem 1rem;
+    border-radius: 10px;
+    border: 1px solid var(--nn-border-hover);
+    background: rgba(0, 0, 0, .28);
+    color: var(--nn-text);
+    font: inherit;
+    font-size: .98rem;
+  }
+  .ru-form input[type="email"]:focus {
+    outline: 2px solid var(--nn-cyan);
+    outline-offset: 1px;
+  }
+  .ru-form button {
+    flex: 0 0 auto;
+    padding: .8rem 1.5rem;
+    border: 0;
+    border-radius: 10px;
+    background: var(--nn-gradient);
+    color: #fff;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .ru-form button[disabled] { opacity: .6; cursor: default; }
+  .ru-form-note {
+    font-size: .8rem;
+    color: var(--nn-text-muted);
+    margin: .8rem 0 0;
+  }
+  .ru-form-status {
+    margin: .85rem 0 0;
+    font-size: .93rem;
+    font-weight: 600;
+    min-height: 1.2em;
+  }
+  .ru-form-status[data-state="ok"] { color: var(--nn-cyan); }
+  .ru-form-status[data-state="error"] { color: #ff9a9a; }
+
+  /* ---- Proof blocks ---- */
+  .ru-panel {
+    background: var(--nn-card);
+    border: 1px solid var(--nn-border);
+    border-radius: 16px;
+    padding: 1.4rem 1.5rem;
+  }
+  .ru-launch-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: .2rem 0 .3rem;
+  }
+  .ru-launch-meta {
+    font-size: .9rem;
+    color: var(--nn-text-muted);
+    line-height: 1.6;
+    margin: 0;
+  }
+  .ru-countdown {
+    font-variant-numeric: tabular-nums;
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: .6rem 0 0;
+  }
+  .ru-eplist { display: grid; gap: .75rem; margin: 0; padding: 0; list-style: none; }
+  .ru-ep {
+    background: var(--nn-card);
+    border: 1px solid var(--nn-border);
+    border-radius: 14px;
+    padding: 1rem 1.1rem;
+  }
+  .ru-ep-date { font-size: .78rem; color: var(--nn-text-muted); }
+  .ru-ep-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: .25rem 0 .6rem;
+    line-height: 1.4;
+  }
+  .ru-ep audio { width: 100%; height: 34px; }
+  .ru-listen { display: flex; flex-wrap: wrap; gap: .6rem; }
+  .ru-listen a {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    padding: .55rem 1rem;
+    border-radius: 999px;
+    border: 1px solid var(--nn-border-hover);
+    color: var(--nn-text);
+    text-decoration: none;
+    font-size: .9rem;
+    font-weight: 600;
+  }
+  .ru-listen a:hover { border-color: var(--nn-cyan); color: var(--nn-cyan); }
+  .ru-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 21rem), 1fr));
+    gap: 1.25rem;
+  }
+  @media (max-width: 860px) {
+    .ru-hero { padding-top: 2rem; }
+    .ru-hero-inner { grid-template-columns: 1fr; gap: 1.75rem; }
+    /* The ask stays above the cover art on phones. Visitors arrive here
+       from a Short, on a phone, with one thing to do — pushing the form
+       a full screen down behind decorative artwork is how a landing
+       page loses the traffic it just paid for. */
+    .ru-hero h1 { font-size: clamp(1.9rem, 8vw, 2.4rem); }
+    .ru-hero-desc { font-size: 1rem; margin-bottom: 1.25rem; }
+    .ru-hero-art img { max-width: 180px; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<main id="main-content">
+
+  <!-- ============ Hero + the one ask ============ -->
+  <section class="ru-hero">
+    <div class="container ru-hero-inner">
+      <div>
+        <span class="ru-eyebrow">🚀 Ежедневный подкаст · Русский</span>
+        <h1>{{ hero_title }}</h1>
+        <p class="ru-hero-desc">{{ hero_description }}</p>
+
+        <div class="ru-capture">
+          <h2>{{ magnet_title }}</h2>
+          <p>{{ magnet_description }}</p>
+          <form class="ru-form" id="ru-capture-form" novalidate>
+            <label class="sr-only" for="ru-capture-email">Электронная почта</label>
+            <input type="email" id="ru-capture-email" name="email"
+                   placeholder="вы@почта.ru" required
+                   autocomplete="email" inputmode="email">
+            <button type="submit" id="ru-capture-submit">Подписаться</button>
+          </form>
+          <p class="ru-form-status" id="ru-capture-status" role="status" aria-live="polite"></p>
+          <p class="ru-form-note">{{ magnet_note }}</p>
+        </div>
+      </div>
+      <div class="ru-hero-art">
+        <img src="{{ cover_url }}" alt="Обложка подкаста «{{ show_name_ru }}»"
+             width="640" height="640" loading="eager" decoding="async">
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Proof: next launch + how to listen ============ -->
+  <section class="nn-section">
+    <div class="container ru-grid-2">
+      {% if show_launch_panel %}
+      <div class="ru-panel" id="ru-launch-panel" hidden>
+        <div class="ru-eyebrow" style="margin-bottom:.2rem">Следующий запуск</div>
+        <p class="ru-launch-name" id="ru-launch-name">—</p>
+        <p class="ru-countdown" id="ru-launch-countdown">—</p>
+        <p class="ru-launch-meta" id="ru-launch-meta"></p>
+      </div>
+      {% endif %}
+
+      <div class="ru-panel">
+        <div class="ru-eyebrow" style="margin-bottom:.6rem">Слушать в приложении</div>
+        <div class="ru-listen">
+          {% for link in listen_links %}
+          <a href="{{ link.url }}" rel="noopener"
+             {% if link.external %}target="_blank"{% endif %}>{{ link.label }}</a>
+          {% endfor %}
+        </div>
+        <p class="ru-launch-meta" style="margin-top:.9rem">{{ listen_note }}</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Proof: recent Russian episodes ============ -->
+  {% if episodes %}
+  <section class="nn-section">
+    <div class="container">
+      <div class="nn-section-header">
+        <h2>Последние выпуски по-русски</h2>
+      </div>
+      <ul class="ru-eplist">
+        {% for ep in episodes %}
+        <li class="ru-ep">
+          <div class="ru-ep-date">{{ ep.date }} · Выпуск {{ ep.number }}</div>
+          <div class="ru-ep-title">{{ ep.title }}</div>
+          <audio controls preload="none" src="{{ ep.audio_url }}"></audio>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </section>
+  {% endif %}
+
+  <section class="nn-section">
+    <div class="container" style="max-width:52rem">
+      <p class="ru-launch-meta">
+        {{ ai_disclosure }}
+        {{ ai_badge(path_prefix, is_ru=true) }}
+      </p>
+    </div>
+  </section>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  "use strict";
+
+  // The Worker that owns Buttondown (same origin as the gallery gate).
+  var API_BASE = (window.NN_GALLERY_API_BASE ||
+    "https://api.nerranetwork.com").replace(/\/+$/, "");
+  var LIST = {{ capture_list | tojson }};
+
+  // Which surface sent this visitor. Mirrors engine.funnel.source_tag()
+  // and the Worker's own allow-list — anything not on it is dropped
+  // rather than guessed, so an unattributed capture stays honestly
+  // unattributed instead of being credited to the wrong channel.
+  var SOURCE_TAGS = {
+    "youtube": "src-youtube",
+    "youtube_ru": "src-youtube-ru",
+    "youtube_fr": "src-youtube-fr",
+    "podcast": "src-podcast",
+    "newsletter": "src-newsletter",
+    "x": "src-x"
+  };
+
+  function params() {
+    try { return new URLSearchParams(window.location.search); }
+    catch (e) { return new URLSearchParams(""); }
+  }
+  var qs = params();
+  var sourceTag = SOURCE_TAGS[(qs.get("utm_source") || "").toLowerCase()] || "";
+  var campaign = qs.get("utm_campaign") || "";
+
+  var form = document.getElementById("ru-capture-form");
+  var input = document.getElementById("ru-capture-email");
+  var button = document.getElementById("ru-capture-submit");
+  var status = document.getElementById("ru-capture-status");
+
+  function say(text, state) {
+    status.textContent = text;
+    status.setAttribute("data-state", state || "");
+  }
+
+  if (form) {
+    form.addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      var email = (input.value || "").trim();
+      if (!email || email.indexOf("@") < 1 || email.indexOf(".") < 0) {
+        say("Проверьте адрес электронной почты.", "error");
+        input.focus();
+        return;
+      }
+      button.disabled = true;
+      say("Отправляем…", "");
+
+      fetch(API_BASE + "/api/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email: email, list: LIST, source: sourceTag })
+      }).then(function (resp) {
+        return resp.json().catch(function () { return {}; })
+          .then(function (data) { return { ok: resp.ok, data: data }; });
+      }).then(function (r) {
+        if (!r.ok || !r.data || r.data.ok !== true) {
+          throw new Error("subscribe failed");
+        }
+        form.hidden = true;
+        say(r.data.alreadySubscribed
+          ? "Вы уже подписаны — письмо придёт в воскресенье."
+          : "Готово! Первое письмо придёт в ближайшее воскресенье.", "ok");
+        // Conversion event: this is the ONLY place the funnel learns that
+        // a visit became a capture, and the campaign carries the show,
+        // channel and episode that earned it (see engine/funnel.py).
+        if (typeof window.gtag === "function") {
+          window.gtag("event", "newsletter_signup", {
+            list: LIST,
+            source: sourceTag || "direct",
+            campaign: campaign || "direct"
+          });
+        }
+      }).catch(function () {
+        button.disabled = false;
+        say("Не получилось подписаться. Попробуйте ещё раз позже.", "error");
+      });
+    });
+  }
+
+  // ---- Next launch (same api/spacex_launches.json the data hub reads) ----
+  var panel = document.getElementById("ru-launch-panel");
+  if (panel) {
+    fetch({{ launch_feed_url | tojson }}, { cache: "no-store" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        var next = data && data.next;
+        if (!next || !next.net) { return; }
+        var when = new Date(next.net);
+        if (isNaN(when.getTime())) { return; }
+        panel.hidden = false;
+        document.getElementById("ru-launch-name").textContent =
+          next.name || next.mission || "Запуск SpaceX";
+        var meta = [];
+        if (next.location) { meta.push(next.location); }
+        if (next.orbit) { meta.push(next.orbit); }
+        meta.push(when.toLocaleString("ru-RU", {
+          dateStyle: "long", timeStyle: "short"
+        }));
+        document.getElementById("ru-launch-meta").textContent = meta.join(" · ");
+
+        var out = document.getElementById("ru-launch-countdown");
+        function tick() {
+          var ms = when.getTime() - Date.now();
+          if (ms <= 0) { out.textContent = "Идёт запуск"; return; }
+          var s = Math.floor(ms / 1000);
+          var d = Math.floor(s / 86400);
+          var h = Math.floor((s % 86400) / 3600);
+          var m = Math.floor((s % 3600) / 60);
+          out.textContent = (d > 0 ? d + " д " : "") +
+            h + " ч " + m + " мин";
+        }
+        tick();
+        setInterval(tick, 30000);
+      })
+      .catch(function () { /* the panel simply stays hidden */ });
+  }
+})();
+</script>
+{% endblock %}

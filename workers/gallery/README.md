@@ -9,11 +9,38 @@ and is consumed by `assets/js/gallery.js` on the static site.
 
 | Method | Path | Auth | Behaviour |
 |---|---|---|---|
-| POST | `/api/subscribe` | none | Body `{email}`. Subscribes via Buttondown with tag `gallery-subscriber`, sets a 90-day HttpOnly Secure SameSite=Lax JWT cookie, returns `200 {ok:true}`. |
+| POST | `/api/subscribe` | none | Body `{email, list?, source?}`. Subscribes via Buttondown, sets a 90-day HttpOnly Secure SameSite=Lax JWT cookie, returns `200 {ok:true}`. See **Subscribe lists** below. |
 | GET | `/api/login` | none | `?email=...`. If the address is subscribed in Buttondown, sends a magic-link email via Resend (15-min TTL). Always 200 (no enumeration). |
 | GET | `/api/magic` | none | `?token=...`. Verifies the magic-login JWT, issues the 90-day cookie, 302 to `/gallery.html`. |
 | GET | `/api/download` | cookie | `?key=<r2_object_key>`. Verifies the cookie + per-email revocation blacklist (Item 3), fetches the R2 object via the bound bucket, streams it back with `Content-Disposition: attachment`. |
 | GET | `/api/health` | none | Liveness ping. `200 {ok:true}`. |
+
+## Subscribe lists (July 2026 — funnel instrumentation)
+
+`/api/subscribe` takes an optional `list` and `source`. **The client
+names a list; the server owns the tags** (`resolveSubscribeTags` in
+`src/handlers.ts`), so a visitor cannot add themselves — or anyone
+else — to an arbitrary Buttondown segment by editing the request body.
+
+| `list` | Buttondown tags | Used by |
+|---|---|---|
+| *(omitted)* → `gallery` | `gallery-subscriber` | the gallery download gate (unchanged behaviour) |
+| `ru-spacex` | `ru-spacex` | `ru/spacex.html`, the RU SpaceX funnel landing page |
+
+`source` must be one of the `src-*` attribution tags produced by
+`engine.funnel.source_tag()` (`src-youtube`, `src-youtube-ru`,
+`src-youtube-fr`, `src-podcast`, `src-newsletter`, `src-x`,
+`src-nerranetwork`); anything else is dropped rather than guessed. The
+landing page derives it from its own `utm_source`, which is how
+`scripts/build_funnel.py` can report captures per surface.
+
+Adding a list means editing `SUBSCRIBE_LISTS` **and** the show's
+`funnel.capture_tag` — `tests/test_ru_spacex_pilot.py` fails if the two
+drift, because a capture whose list the Worker does not know silently
+falls back to the gallery tag.
+
+Note `ru-spacex` deliberately does **not** include the English
+"SpaceX Daily" tag: those subscribers asked for a Russian weekly.
 
 ## Deviation from spec
 

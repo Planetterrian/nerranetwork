@@ -359,6 +359,13 @@
                 <a href="{{ path_prefix }}data.html">{% if _is_ru %}Данные и дашборды{% else %}Data &amp; Dashboards{% endif %}</a>
                 <a href="{{ path_prefix }}management.html">{{ t.footer_network_status }}</a>
             </div>
+            {#- Funnel landing pages set ``hide_footer_subscribe`` (July
+                2026). Their single ask is one named letter; this block
+                offers a checkbox list of fifteen ENGLISH show names,
+                which on a Russian landing page is both a competing call
+                to action and the wrong one. Default false, so every
+                other page renders byte-for-byte as before. -#}
+            {%- if not hide_footer_subscribe %}
             <!-- Newsletter Subscribe -->
             <div class="nn-footer-subscribe">
                 <form action="https://buttondown.com/api/emails/embed-subscribe/patricknovak1" method="post" target="popupwindow" class="nn-subscribe-form"
@@ -385,6 +392,7 @@
                     </div>
                 </form>
             </div>
+            {%- endif %}
             <div class="nn-footer-bottom">
                 <span>{{ t.copyright_line }}</span>
                 <a href="{{ path_prefix }}index.html">nerranetwork.com</a>

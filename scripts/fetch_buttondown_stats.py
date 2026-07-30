@@ -69,6 +69,48 @@ def fetch_subscriber_count(api_key: str) -> Optional[int]:
         return None
 
 
+def fetch_tag_counts(api_key: str) -> Optional[dict]:
+    """Return ``{tag_name: subscriber_count}``, or None on any failure.
+
+    The network-wide total answers "how big is the list"; it cannot
+    answer "which surface produced this subscriber", which is the only
+    question a funnel needs. Buttondown exposes a per-tag
+    ``subscriber_count`` on ``GET /v1/tags``, so the breakdown costs one
+    extra request rather than a page-walk of the whole roster.
+
+    Two families matter downstream (see ``engine.funnel``):
+      * list tags (``ru-spacex``, ``gallery-subscriber``, show tags) —
+        WHAT the subscriber signed up for;
+      * ``src-*`` tags — WHERE they came from.
+    """
+    try:
+        resp = requests.get(
+            f"{BUTTONDOWN_API_BASE}/tags",
+            headers={"Authorization": f"Token {api_key}"},
+            params={"page_size": "200"},
+            timeout=HTTP_TIMEOUT,
+        )
+        if resp.status_code != 200:
+            log.warning("buttondown: HTTP %s from /tags", resp.status_code)
+            return None
+        data = resp.json() or {}
+        results = data.get("results")
+        if not isinstance(results, list):
+            log.warning("buttondown: no 'results' list on /tags "
+                        "(keys: %s)", sorted(data.keys()))
+            return None
+        counts = {}
+        for row in results:
+            name = (row or {}).get("name")
+            count = (row or {}).get("subscriber_count")
+            if isinstance(name, str) and name and isinstance(count, int):
+                counts[name] = count
+        return counts
+    except Exception as exc:  # noqa: BLE001 — never break the nightly job
+        log.warning("buttondown: tag fetch failed: %s", exc)
+        return None
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out", default="api/buttondown_stats.json")
@@ -90,6 +132,15 @@ def main(argv: Optional[List[str]] = None) -> int:
         "fetched_at": _dt.datetime.now(_dt.timezone.utc).isoformat(),
         "subscriber_count": count,
     }
+    # Per-tag breakdown. Omitted (not zeroed) when the call fails, so a
+    # bad night reads as "unknown" rather than "everyone unsubscribed".
+    tag_counts = fetch_tag_counts(api_key)
+    if tag_counts is not None:
+        stats["tag_counts"] = dict(sorted(tag_counts.items()))
+        stats["source_counts"] = {
+            name: n for name, n in sorted(tag_counts.items())
+            if name.startswith("src-")
+        }
 
     if args.dry_run:
         print(json.dumps(stats, indent=2))

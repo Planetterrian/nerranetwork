@@ -1,0 +1,65 @@
+name: RU SpaceX Weekly Letter
+
+# «Хроника SpaceX» — the Russian weekly letter promised by the RU funnel
+# landing page (ru/spacex.html). Its own workflow rather than a job inside
+# weekly-newsletter.yml because it sends to a different audience (the
+# `ru-spacex` Buttondown tag, not a show tag), composes from the
+# multilingual RU tracks rather than the English digest, and must not be
+# able to delay or break an English send.
+#
+# Sunday 15:00 UTC — after the Sunday episode has published and after its
+# RU translation track has been produced by multilingual.yml, so the
+# letter always includes the full week.
+
+on:
+  schedule:
+    - cron: '0 15 * * 0'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Compose and print without sending'
+        required: false
+        type: boolean
+        default: false
+      force:
+        description: 'Ignore the same-week double-send guard'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ru-spacex-weekly
+  cancel-in-progress: false
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - uses: ./.github/actions/setup-python
+        with:
+          python-version: '3.12'
+          requirements-file: 'requirements.txt'
+          skip-checkout: 'true'
+
+      - name: Send «Хроника SpaceX»
+        env:
+          BUTTONDOWN_API_KEY: ${{ secrets.BUTTONDOWN_API_KEY }}
+        run: |
+          python scripts/send_ru_spacex_weekly.py \
+            ${{ inputs.dry_run && '--dry-run' || '' }} \
+            ${{ inputs.force && '--force' || '' }}
+
+      # The send marker is what stops a retried run from mailing the list
+      # twice, so it has to survive the runner.
+      - uses: ./.github/actions/safe-commit-push
+        if: ${{ !inputs.dry_run }}
+        with:
+          add-paths: |
+            digests/spacex/_ru_weekly_lastsend.txt
+          commit-message: 'RU SpaceX weekly letter sent'

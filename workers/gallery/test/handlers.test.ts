@@ -12,6 +12,7 @@ import {
   handleSubscribe,
   isSafeKey,
   normaliseEmail,
+  resolveSubscribeTags,
 } from "../src/handlers";
 import { signJwt } from "../src/jwt";
 import type { ButtondownClient, Env, HandlerDeps, ResendClient } from "../src/types";
@@ -105,7 +106,67 @@ describe("isSafeKey", () => {
 // /api/subscribe
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Subscribe lists + source attribution (July 2026 funnel instrumentation)
+// ---------------------------------------------------------------------------
+
+describe("resolveSubscribeTags", () => {
+  it("defaults to the gallery list when no list is named", () => {
+    expect(resolveSubscribeTags(undefined, undefined))
+      .toEqual({ tags: ["gallery-subscriber"], list: "gallery" });
+  });
+
+  it("resolves a known list and appends an allow-listed source tag", () => {
+    expect(resolveSubscribeTags("ru-spacex", "src-youtube-ru"))
+      .toEqual({ tags: ["ru-spacex", "src-youtube-ru"], list: "ru-spacex" });
+  });
+
+  it("keeps the RU pilot OFF the English daily tag", () => {
+    // Adding these subscribers to "SpaceX Daily" would send a Russian
+    // audience a daily English email they never asked for.
+    const { tags } = resolveSubscribeTags("ru-spacex", "src-youtube-ru");
+    expect(tags).not.toContain("SpaceX Daily");
+  });
+
+  it("ignores an unknown list instead of trusting the client", () => {
+    expect(resolveSubscribeTags("everyone", undefined).list).toBe("gallery");
+  });
+
+  it("drops a source tag that is not on the allow-list", () => {
+    // The client cannot invent Buttondown segments — including via
+    // prototype keys, which a plain object lookup would otherwise hit.
+    expect(resolveSubscribeTags("gallery", "src-anything").tags)
+      .toEqual(["gallery-subscriber"]);
+    expect(resolveSubscribeTags("constructor", "toString").list)
+      .toBe("gallery");
+  });
+
+  it("never duplicates a tag", () => {
+    const { tags } = resolveSubscribeTags("ru-spacex", "SRC-YOUTUBE-RU");
+    expect(tags).toEqual(["ru-spacex", "src-youtube-ru"]);
+  });
+});
+
+
 describe("POST /api/subscribe", () => {
+  it("carries the named list and source through to Buttondown", async () => {
+    const deps = makeDeps();
+    const env = makeEnv();
+    const req = makeRequest("POST", "https://api.nerranetwork.com/api/subscribe", {
+      body: JSON.stringify({
+        email: "boris@example.com",
+        list: "ru-spacex",
+        source: "src-youtube-ru",
+      }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const resp = await handleSubscribe(req, env, deps);
+    expect(resp.status).toBe(200);
+    expect(deps.buttondown.subscribe).toHaveBeenCalledWith(
+      "fake-bd", "boris@example.com", ["ru-spacex", "src-youtube-ru"],
+    );
+  });
+
   it("subscribes and sets the cookie on success", async () => {
     const deps = makeDeps();
     const env = makeEnv();
@@ -115,8 +176,10 @@ describe("POST /api/subscribe", () => {
     });
     const resp = await handleSubscribe(req, env, deps);
     expect(resp.status).toBe(200);
+    // No `list` in the body → the gallery list, i.e. exactly the tag
+    // this endpoint sent before subscribe lists existed.
     expect(deps.buttondown.subscribe).toHaveBeenCalledWith(
-      "fake-bd", "alice@example.com", "gallery-subscriber",
+      "fake-bd", "alice@example.com", ["gallery-subscriber"],
     );
     const setCookie = resp.headers.get("Set-Cookie");
     expect(setCookie).toMatch(/^nn_gallery=/);

@@ -562,6 +562,7 @@
   const lake = data.content_lake || {};
   const dist = data.distribution || {};
   const ytPolicy = data.youtube_policy || {};
+  const funnel = data.funnel || {};
 
   // ---------- alert band ----------
   const band = $("#alert-band");
@@ -1129,6 +1130,103 @@
           "Tier A = long + 2 Shorts · B = long + 1 · C = shorts-only · D = probe. " +
           "vpd = long/short views-per-day over " + (ytPolicy.window_days || 14) +
           "d; Shorts are never zeroed (they're the recovery signal)." }));
+      }
+      grid.appendChild(card);
+    }
+
+    // ---------- Funnel: reach -> click -> visit -> capture ----------
+    {
+      const card = sectionCard("Funnel",
+        "reach → click → visit → capture · " + (funnel.window_days || 30) + "d");
+      if (!funnel.configured) {
+        card.appendChild(h("p", { class: "fine-list",
+          html: "No <code>api/funnel.json</code> yet — the nightly " +
+                "<code>build_funnel.py</code> step writes it." }));
+      } else {
+        // Stage strip. An unmeasured stage shows "not measured", never 0 —
+        // the whole point of this card is to stop guessing, and a
+        // fabricated zero is a guess with a number on it.
+        (funnel.stages || []).forEach((s) => {
+          const row = h("div", { class: "bar-row" });
+          row.appendChild(h("div", { class: "label", text: s.label }));
+          const value = s.configured ? fmtOrDash(s.value) : "not measured";
+          const detail = (s.configured && s.secondary != null)
+            ? " · " + fmtOrDash(s.secondary) + " " + (s.secondary_unit || "")
+            : "";
+          row.appendChild(h("div", {
+            class: "value", style: "flex:1;text-align:right;" +
+              (s.configured ? "" : "opacity:.6;"),
+            text: value + (s.configured ? " " + s.unit : "") + detail }));
+          card.appendChild(row);
+        });
+
+        const r = funnel.rates || {};
+        const pctOrDash = (v) =>
+          (v === null || v === undefined) ? "—" : Number(v).toFixed(2) + "%";
+        card.appendChild(h("p", { class: "fine-list", html:
+          "Reach→click <strong>" + pctOrDash(r.reach_to_click_pct) +
+          "</strong> · visit→capture <strong>" +
+          pctOrDash(r.visit_to_capture_pct) +
+          "</strong> · attribution coverage <strong>" +
+          pctOrDash(r.attribution_coverage_pct) + "</strong>" }));
+
+        // Per-pilot rows — the end-to-end read on each funnel experiment.
+        const pilots = funnel.pilots || {};
+        Object.keys(pilots).sort().forEach((key) => {
+          const p = pilots[key];
+          const st = p.stages || {};
+          const row = h("div", { class: "bar-row" });
+          row.appendChild(h("div", { class: "label", text: key,
+            title: p.destination || "" }));
+          row.appendChild(h("div", { class: "value",
+            style: "flex:1;text-align:right;",
+            text: fmtOrDash(st.reach_views) + " views → " +
+                  fmtOrDash(st.clicks_sessions) + " sessions → " +
+                  fmtOrDash(st.visits_sessions) + " landings → " +
+                  fmtOrDash(st.captures_subscribers) + " subs" }));
+          card.appendChild(row);
+        });
+
+        // Shorts motion A/B — the one experiment currently spending money
+        // to answer a funnel question.
+        const ab = funnel.shorts_ab;
+        if (ab) {
+          const arms = ab.arms || {};
+          const armText = (name) => {
+            const a = arms[name] || {};
+            return name + " n=" + (a.n || 0) +
+              " · " + (a.retention_mean == null ? "—"
+                : Number(a.retention_mean).toFixed(1) + "% held") +
+              " · " + (a.views_mean == null ? "—"
+                : Math.round(a.views_mean) + " views/Short");
+          };
+          card.appendChild(h("div", {
+            style: "margin-top:12px;font-size:12.5px;color:var(--ink-2);",
+            html: "<strong>Shorts motion A/B</strong> — " +
+                  (ab.status || "unknown") +
+                  " (needs " + (ab.min_per_arm || 14) + "/arm)" }));
+          Object.keys(arms).sort().forEach((name) => {
+            card.appendChild(h("div", { class: "bar-row" }, [
+              h("div", { class: "label", text: name }),
+              h("div", { class: "value", style: "flex:1;text-align:right;",
+                text: armText(name) })
+            ]));
+          });
+          const verdicts = Object.keys(ab.comparisons || {}).map((m) =>
+            m + ": " + (ab.comparisons[m].verdict || "?"));
+          if (verdicts.length) {
+            card.appendChild(h("p", { class: "fine-list",
+              text: verdicts.join(" · ") }));
+          }
+        }
+
+        if ((funnel.unmeasured || []).length) {
+          card.appendChild(h("p", { class: "fine-list", html:
+            "Not yet measured: <code>" + funnel.unmeasured.join("</code>, <code>") +
+            "</code>. Rates stay null until a stage has ≥30 in its " +
+            "denominator — a small sample is reported as unknown, not as a " +
+            "percentage." }));
+        }
       }
       grid.appendChild(card);
     }

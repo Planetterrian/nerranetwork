@@ -847,6 +847,104 @@ def _interleave_broll_into_schedule(
     return visuals
 
 
+def _probe_video_duration(path: Path, fallback: float) -> float:
+    """Seconds of a video file, or *fallback* when ffprobe can't say.
+
+    Generated clips do not always come back at the requested length, and
+    a wrong duration here would desync every later segment in the
+    hybrid, so the real file is measured rather than trusted.
+    """
+    try:
+        out = subprocess.run(
+            ["ffprobe", "-v", "error", "-show_entries", "format=duration",
+             "-of", "default=noprint_wrappers=1:nokey=1", str(path)],
+            capture_output=True, text=True, timeout=30, check=True,
+        ).stdout.strip()
+        value = float(out)
+        if value > 0:
+            return value
+    except Exception:  # noqa: BLE001 — probing is advisory
+        pass
+    return max(0.5, float(fallback))
+
+
+def _build_short_hybrid_sequence(
+    scene_paths: Sequence[Path],
+    clip_paths: Sequence[Path],
+    *,
+    duration: float,
+    nominal_clip_seconds: float = 5.0,
+    min_still_hold_s: float = 2.0,
+) -> List[tuple]:
+    """Lay out one Short's background as clips interleaved with stills.
+
+    Returns the ``(path, is_video, seconds)`` list
+    :func:`_render_hybrid_slideshow` consumes, summing to *duration*
+    exactly so the background needs no looping.
+
+    Shape: **open on a clip** (the first second of a Short decides
+    whether it is watched at all, and motion is the thing being tested),
+    then alternate still / clip. Clips keep their own measured length;
+    the stills share whatever time is left. When the clips alone already
+    cover the Short, the last one is trimmed to fit rather than dropped.
+    """
+    clips = [Path(p) for p in clip_paths if Path(p).exists()]
+    stills = [Path(p) for p in scene_paths if Path(p).exists()]
+    if not clips:
+        raise ValueError("no usable clips for the hybrid Shorts background")
+
+    measured = [
+        min(_probe_video_duration(c, nominal_clip_seconds), float(duration))
+        for c in clips
+    ]
+
+    # Trim the clip list to what actually fits, leaving room for at least
+    # one still between clips when stills exist.
+    reserve = min_still_hold_s * min(len(stills), max(0, len(clips) - 1))
+    budget = max(0.0, float(duration) - reserve)
+    kept: List[tuple] = []
+    used = 0.0
+    for clip, secs in zip(clips, measured):
+        if used >= budget:
+            break
+        secs = min(secs, budget - used)
+        if secs < 1.0:
+            break
+        kept.append((clip, secs))
+        used += secs
+    if not kept:
+        # Every clip was squeezed out — one clip capped at the Short's
+        # length still beats raising and losing the render.
+        kept = [(clips[0], min(measured[0], float(duration)))]
+        used = kept[0][1]
+
+    remaining = max(0.0, float(duration) - used)
+    n_gaps = len(kept) if stills else 0
+    # A still after each clip, including a tail still after the last one,
+    # so the Short never ends mid-motion on a hard cut to the end card.
+    hold = (remaining / n_gaps) if n_gaps else 0.0
+
+    visuals: List[tuple] = []
+    for i, (clip, secs) in enumerate(kept):
+        visuals.append((clip, True, secs))
+        if n_gaps and hold > 0:
+            visuals.append((stills[i % len(stills)], False, hold))
+
+    if not n_gaps and remaining > 0:
+        # No stills available: stretch the final clip's slot instead of
+        # leaving the tail black.
+        path, secs = visuals[-1][0], visuals[-1][2] + remaining
+        visuals[-1] = (path, True, secs)
+
+    # Guarantee the sum is exact — accumulated float error over a dozen
+    # segments would otherwise leave a few frames of black at the end.
+    total = math.fsum(d for _p, _v, d in visuals)
+    if visuals and abs(total - duration) > 1e-6:
+        path, is_video, secs = visuals[-1]
+        visuals[-1] = (path, is_video, max(0.5, secs + (duration - total)))
+    return visuals
+
+
 def _short_segment_durations(cut_times: Sequence[float],
                              duration: float,
                              *, min_segment_s: float = 0.5) -> List[float]:
@@ -2076,7 +2174,9 @@ def build_short_video(audio_path: Path, cover_path: Path,
                       end_card_image_path: Optional[Path] = None,
                       drop_url_pill: bool = False,
                       caption_margin_v: Optional[int] = None,
-                      scene_change_times: Optional[Sequence[float]] = None) -> Path:
+                      scene_change_times: Optional[Sequence[float]] = None,
+                      clip_paths: Optional[Sequence[Path]] = None,
+                      clip_seconds: float = 5.0) -> Path:
     """Render a 1080x1920 vertical YouTube Shorts video.
 
     ``drop_url_pill`` / ``caption_margin_v`` support the multi-platform
@@ -2127,6 +2227,19 @@ def build_short_video(audio_path: Path, cover_path: Path,
         ``-stream_loop`` (looping a full-length background would
         restart the visuals mid-clip). ``None`` keeps the legacy
         flat-pace loop path unchanged.
+    clip_paths:
+        Optional generated video clips (July 2026 — the Shorts motion
+        A/B, see :mod:`engine.shorts_ab`). When two or more are given
+        they become the background: the clips are interleaved with the
+        still scenes into ONE full-length 1080x1920 hybrid via
+        :func:`_render_hybrid_slideshow`, so the Short opens on motion
+        and cuts back to stills between clips instead of looping four
+        seconds of video for the whole 35 s. Falls through to the
+        stills path on any render failure — the Short always ships.
+    clip_seconds:
+        Nominal seconds of each entry in *clip_paths*; the real
+        duration is measured per file and this is only the fallback
+        when a probe fails.
     """
     if duration >= 60:
         raise ValueError(
@@ -2157,7 +2270,37 @@ def build_short_video(audio_path: Path, cover_path: Path,
     bg_path: Path = cover_path
     bg_is_video = False
     bg_full_length = False
-    if scene_paths and len(scene_paths) >= 2:
+
+    # ---- Motion A/B treatment arm: generated video clips + stills ----
+    # Runs BEFORE the stills paths so a successful hybrid wins, and
+    # falls straight through to them on any failure.
+    usable_clips = [Path(p) for p in (clip_paths or [])]
+    usable_clips = [p for p in usable_clips if p.exists()]
+    if len(usable_clips) >= 2:
+        try:
+            visuals = _build_short_hybrid_sequence(
+                list(scene_paths or []) or [cover_path],
+                usable_clips,
+                duration=duration,
+                nominal_clip_seconds=clip_seconds,
+            )
+            hybrid_path = work_dir / f"{output_path.stem}_short_hybrid.mp4"
+            _render_hybrid_slideshow(
+                visuals, hybrid_path, width=1080, height=1920, fps=fps,
+            )
+            bg_path = hybrid_path
+            bg_is_video = True
+            bg_full_length = True
+        except Exception as exc:  # noqa: BLE001 — never lose the Short
+            logger.warning(
+                "Shorts hybrid (clips) render failed (%s) — falling back "
+                "to the stills background", exc,
+            )
+            bg_is_video = False
+            bg_full_length = False
+            bg_path = cover_path
+
+    if not bg_is_video and scene_paths and len(scene_paths) >= 2:
         if scene_change_times:
             # Sentence-snapped cuts (June 2026): build the vertical
             # slideshow to the clip's FULL length with per-segment

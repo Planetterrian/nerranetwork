@@ -3289,6 +3289,13 @@ def run(args: argparse.Namespace) -> None:
                 "shorts_count_uploaded",
                 int(youtube_urls.get("shorts_count_uploaded", 0) or 0),
             )
+        # Shorts motion A/B (July 2026). Recorded on every episode of an
+        # enrolled show, including all-stills days, so the report can tell
+        # "control only today" apart from "the experiment stopped running"
+        # — and so its real spend is read from metrics rather than assumed
+        # from the config's ceiling.
+        if youtube_urls.get("shorts_ab"):
+            metrics.record("shorts_ab", youtube_urls["shorts_ab"])
         if youtube_urls.get("gallery_skipped_reason"):
             metrics.record(
                 "gallery_skipped_reason",
@@ -5601,6 +5608,22 @@ def _publish_youtube(
             result["shorts_count_requested"] = shorts_count_yaml
             result["shorts_fill_modes"] = [m for _, _, m in shorts_plan]
 
+            # ---- Shorts motion A/B (July 2026) ----
+            # Which arm each Short INTENDS to ship. All-stills (today's
+            # behaviour, byte for byte) unless the show opts in and has
+            # >= 2 Shorts, so index 0 is always the control.
+            from engine import shorts_ab as _shorts_ab
+
+            _short_variant_plan = _shorts_ab.plan_variants(
+                config, len(shorts_plan),
+            )
+            _short_variant_results: "list" = []
+            _short_variants = list(_short_variant_plan)
+            _ab_spent_usd = 0.0
+            _yt_channel = (
+                getattr(config.youtube, "channel", "en") or "en"
+            ).lower()
+
             # ---- Pre-loop assets shared across every Short ----
             _yt = config.youtube
             _end_card_enabled = bool(
@@ -5811,8 +5834,37 @@ def _publish_youtube(
                             "visuals", short_idx + 1, exc,
                         )
 
+                    # ---- Shorts motion A/B: build this arm's assets ----
+                    # Best-effort by contract: a shortfall returns the
+                    # stills arm with a reason, and the render below is
+                    # then byte-identical to a control Short.
+                    _variant = _shorts_ab.build_variant(
+                        config,
+                        index=short_idx,
+                        intended=(
+                            _short_variant_plan[short_idx]
+                            if short_idx < len(_short_variant_plan)
+                            else _shorts_ab.VARIANT_STILLS
+                        ),
+                        work_dir=work_dir,
+                        episode_num=episode_num,
+                        hook=(this_hook or hook or ""),
+                        scene_prompts=(
+                            _scene_contexts
+                            if "_scene_contexts" in locals() else []
+                        ),
+                        spent_usd=_ab_spent_usd,
+                    )
+                    _ab_spent_usd += _variant.cost_usd
+                    _short_variant_results.append(_variant)
+                    if short_idx < len(_short_variants):
+                        _short_variants[short_idx] = _variant.variant
+
                     build_short_video(
                         final_mp3, cover_path, this_short_video_path,
+                        clip_paths=_variant.clip_paths or None,
+                        clip_seconds=float(getattr(
+                            config.youtube, "shorts_ab_clip_seconds", 5) or 5),
                         start_offset=this_offset,
                         duration=duration,
                         hook=this_hook or None,
@@ -5845,6 +5897,8 @@ def _publish_youtube(
                         hook=this_hook,
                         long_form_url=long_url,
                         optimized_title=_opt_short_title,
+                        channel=_yt_channel,
+                        variant=_variant.variant,
                     )
                     upload_thumb = (
                         this_short_thumb_path
@@ -5876,6 +5930,9 @@ def _publish_youtube(
                             published=f"{today:%Y-%m-%d}",
                             watch_url=this_upload.watch_url,
                             channel=(getattr(config.youtube, "channel", "en") or "en"),
+                            # The arm this Short ACTUALLY shipped —
+                            # analytics reads the experiment from here.
+                            variant=_variant.variant,
                             index_path=digests_dir / "youtube_videos.json",
                         )
                     except Exception as _exc:
@@ -5908,8 +5965,21 @@ def _publish_youtube(
                     if bool(getattr(config.youtube, "auto_comment", True)):
                         try:
                             from engine.youtube import post_video_comment
-                            _cmt_target = long_url or (
-                                config.publishing.rss_link or "")
+                            from engine import funnel as _funnel
+                            # A Short's comment is the single strongest
+                            # funnel placement after the description, so
+                            # it carries its own utm_content \u2014 the long
+                            # form URL is a YouTube watch link and stays
+                            # untagged (YouTube strips query params from
+                            # its own links).
+                            _cmt_target = long_url or _funnel.episode_link(
+                                _funnel.destination_for(
+                                    config, channel=_yt_channel),
+                                getattr(config, "slug", ""), episode_num,
+                                channel=_yt_channel, kind="short",
+                                variant=_variant.variant,
+                                placement=_funnel.PLACEMENT_COMMENT,
+                            ) or (config.publishing.rss_link or "")
                             _cmt = ("\u25b6 Full episode: " + _cmt_target
                                     + "\n\U0001f514 Subscribe for daily "
                                       "episodes") if _cmt_target else ""
@@ -5986,6 +6056,14 @@ def _publish_youtube(
                     result["short_urls"] = short_urls_out
                     result["short_video_ids"] = short_video_ids_out
             result["shorts_count_uploaded"] = len(short_urls_out)
+            if _short_variant_results:
+                # Recorded on every episode of an enrolled show, including
+                # the all-stills days, so the report can tell "control
+                # only" apart from "the A/B stopped running".
+                result["shorts_ab"] = _shorts_ab.summarize(
+                    _short_variant_results
+                )
+                result["shorts_ab_variants"] = list(_short_variants)
             if short_errors_out:
                 result["short_error"] = short_errors_out[0]
                 if multi:

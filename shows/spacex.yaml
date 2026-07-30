@@ -154,6 +154,25 @@ multilingual:
 video_podcast:
   enabled: true
 
+# ---- Funnel destinations (July 2026 — the RU SpaceX pilot) ----
+# Read only via engine/funnel.py. @NerraRU is the network's highest-reach
+# surface (RU Shorts velocity ~60 views/day against ~1 for a RU long), and
+# until now every one of its Shorts pointed at the bare English homepage:
+# maximum reach into a page a Russian viewer cannot read and that asks
+# nothing of them. The pilot gives those Shorts ONE destination in their
+# own language with ONE thing to do — see ru/spacex.html.
+# English keeps its existing show page; only the campaign tagging changed.
+funnel:
+  enabled: true
+  destinations:
+    default: https://nerranetwork.com/spacex.html
+    ru: https://nerranetwork.com/ru/spacex.html
+  # Buttondown tag every capture from the RU lander carries, so
+  # scripts/build_funnel.py can count this pilot's conversions apart from
+  # the rest of the network — and so the weekly Russian email
+  # (scripts/send_ru_spacex_weekly.py) has exactly one audience to send to.
+  capture_tag: ru-spacex
+
 llm:
   provider: xai
   system_prompt_file: shows/prompts/spacex_system.txt
@@ -378,7 +397,33 @@ youtube:
   # Removed network-wide (see shows/tesla.yaml): ~33% clip success, ~$0.35/ep
   # for one clip, and the extra render risked the 40-min timeout. Visual appeal
   # now comes from free slideshow motion (crossfades + varied Ken Burns).
+  # Still off: that was a LONG-FORM setting and stays retired. The Shorts
+  # motion A/B below is a separate, bounded experiment — see engine/shorts_ab.py.
   video_clips_enabled: false
+
+  # ---- Shorts motion A/B (operator-requested, July 2026) ----
+  # Short #1 = stills (control, exactly what ships today).
+  # Short #2 = Grok Imagine VIDEO clips (treatment).
+  # Same episode, same audio, same channel, same day — the only clean
+  # way to compare two formats on one channel. Read the result in
+  # api/shorts_ab.json (scripts/build_shorts_ab_report.py, nightly).
+  #
+  # Cost: 3 clips x 5 s x $0.07 = ~$1.05 on the treatment Short only,
+  # capped hard by shorts_ab_max_cost_usd. At 1 treatment Short/day that
+  # is ~$32/mo — real money against a ~$110-125/mo network, so the
+  # experiment is meant to be READ AND ENDED, not left running. Revisit
+  # once api/shorts_ab.json has >= 14 episodes per arm.
+  shorts_ab_enabled: true
+  shorts_ab_video_indexes: [1]
+  shorts_ab_clips: 3
+  shorts_ab_clip_seconds: 5
+  shorts_ab_resolution: "720p"
+  shorts_ab_budget_seconds: 420
+  shorts_ab_max_cost_usd: 1.25
+  # Below 2 usable clips the Short ships as stills and is RECORDED as
+  # stills — a treatment arm containing disguised control episodes would
+  # invalidate the comparison it exists to make.
+  shorts_ab_min_clips: 2
 
   # Grok Imagine for all imagery (long-form slideshow + Shorts) — unique,
   # narrative-tied spaceflight visuals and feeds the gallery pipeline. ~$0.32/

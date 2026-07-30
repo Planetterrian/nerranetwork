@@ -437,6 +437,28 @@ class NewsletterConfig:
 
 
 @dataclass
+class FunnelConfig:
+    """Where a show's published surfaces send people, per channel.
+
+    Read exclusively through :mod:`engine.funnel` (``destination_for`` /
+    ``capture_tags``) — the module docstring there explains why every
+    funnel link, campaign id and capture tag has exactly one builder.
+
+    ``destinations`` is keyed by YouTube channel token (``en`` / ``ru`` /
+    ``fr``) with a ``default`` fallback. Empty = the show page
+    (``publishing.rss_link``), i.e. the pre-funnel behaviour.
+
+    ``capture_tag`` is the Buttondown tag a signup from this show's
+    landing page carries, so ``scripts/build_funnel.py`` can count
+    captures per pilot rather than per network.
+    """
+
+    enabled: bool = True
+    destinations: dict = field(default_factory=dict)
+    capture_tag: str = ""
+
+
+@dataclass
 class SectionMarker:
     pattern: str = ""
     title: str = ""
@@ -692,6 +714,41 @@ class YouTubeConfig:
     video_clip_seconds: int = 5
     video_clips_resolution: str = "720p"
 
+    # ---- Shorts motion A/B (July 2026, SpaceX pilot) ----
+    # Operator-requested experiment: on a show that publishes >= 2 Shorts
+    # per episode, keep Short #1 exactly as it ships today (Grok Imagine
+    # STILLS + Ken Burns) and render Short #2 over Grok Imagine VIDEO
+    # clips, so the two motion treatments can be compared on the same
+    # episode, same audio, same day, same channel — the only clean way to
+    # A/B a format on one channel.
+    #
+    # Deliberately NOT a revival of `video_clips_enabled` (retired June
+    # 2026 for the long-form: ~1/3 clip success at ~$0.35/ep and a render
+    # that crowded the 40-min pipeline timeout). The differences that
+    # make this safe are the cost ceiling, the wall-clock budget, and the
+    # scope: one 35 s Short needs ~3 clips, not a 12-minute slideshow.
+    # Any shortfall silently ships the stills variant and records
+    # ``fallback`` so the report never credits a video Short that was
+    # actually stills. See engine/shorts_ab.py.
+    shorts_ab_enabled: bool = False
+    # Which Short indexes (0-based) get the video treatment. Everything
+    # else stays on stills — the control.
+    shorts_ab_video_indexes: List[int] = field(default_factory=lambda: [1])
+    shorts_ab_clips: int = 3
+    shorts_ab_clip_seconds: int = 5
+    shorts_ab_resolution: str = "720p"
+    # Hard wall-clock budget for clip generation on ONE Short. The clip
+    # step runs after the audio is already published, so overrunning
+    # costs a render, never an episode.
+    shorts_ab_budget_seconds: float = 420.0
+    # Hard per-episode spend ceiling for the experiment. Clips are only
+    # requested while the projected spend stays under it.
+    shorts_ab_max_cost_usd: float = 1.25
+    # Minimum clips that must land before the video variant is used. Below
+    # this the Short ships as stills (recorded as a fallback) rather than
+    # as a two-clip loop that would misrepresent the treatment.
+    shorts_ab_min_clips: int = 2
+
     # ---- Visual reuse + chapter-aligned scenes (June 2026) ----
     # These gate engine/visual_reuse.py, the composition layer over
     # engine.gallery_library + engine.scene_scheduler. All default ON and
@@ -852,6 +909,7 @@ class ShowConfig:
     youtube: YouTubeConfig = field(default_factory=YouTubeConfig)
     multilingual: MultilingualConfig = field(default_factory=MultilingualConfig)
     video_podcast: VideoPodcastConfig = field(default_factory=VideoPodcastConfig)
+    funnel: FunnelConfig = field(default_factory=FunnelConfig)
     # Weekly-summary segment (July 2026). When ``true`` and the runner
     # ticks on a Sunday, the show runs a NORMAL daily episode AND weaves
     # in one short "week in review" segment synthesised from the past 7
@@ -1065,6 +1123,7 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
         youtube=_build_nested(YouTubeConfig, data.get("youtube")),
         multilingual=_build_nested(MultilingualConfig, data.get("multilingual")),
         video_podcast=_build_nested(VideoPodcastConfig, data.get("video_podcast")),
+        funnel=_build_nested(FunnelConfig, data.get("funnel")),
         # Accept the legacy ``weekly_recap_on_sunday`` key as a fallback so any
         # unmigrated YAML keeps working (the field was renamed July 2026 when
         # the full Sunday-recap mode became a small in-episode segment).
