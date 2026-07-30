@@ -42,6 +42,43 @@ def _format_srt_timestamp(seconds: float) -> str:
     return f"{hours:02d}:{minutes:02d}:{secs:02d},{ms:03d}"
 
 
+def _wrap_all_lines(text: str, max_chars: int) -> List[str]:
+    """Greedy word-wrap into as many lines as the text needs.
+
+    Pure wrapping with no line cap, so it can never drop a word. The cue
+    box's line limit is applied by ``_split_caption_text``, which groups
+    these lines into cue-sized blocks.
+    """
+    lines: List[str] = []
+    current = ""
+    for word in " ".join((text or "").split()).split():
+        candidate = f"{current} {word}".strip()
+        if len(candidate) <= max_chars or not current:
+            current = candidate
+        else:
+            lines.append(current)
+            current = word
+    if current:
+        lines.append(current)
+    return lines
+
+
+def _split_caption_text(text: str, max_chars: int = 55,
+                        max_lines: int = 3) -> List[str]:
+    """Wrap *text* into as many cue-sized blocks as it needs.
+
+    One Whisper segment can be far longer than a caption box. Returning a
+    LIST rather than one over-stuffed block is what keeps every cue inside
+    the frame while still showing every word: the caller shares the
+    segment's time range across the blocks.
+    """
+    lines = _wrap_all_lines(text, max_chars)
+    if not lines:
+        return [""]
+    return ["\n".join(lines[i:i + max_lines])
+            for i in range(0, len(lines), max_lines)]
+
+
 def _wrap_caption_line(text: str, max_chars: int = 55,
                        max_lines: int = 3) -> str:
     """Greedy word-wrap so each caption stays within *max_lines*.
@@ -84,10 +121,20 @@ def _wrap_caption_line(text: str, max_chars: int = 55,
         lines.append(current)
         current = ""
         if len(lines) >= max_lines:
-            # Already filled all ``max_lines`` complete lines.
-            # Tack the remaining words onto the LAST committed
-            # line and let libass clip on the right. The earlier
-            # lines stay intact (no overwrite — that was the bug).
+            # Kept for direct callers, which need this to stay lossless.
+            # The SRT path no longer reaches here — it uses
+            # ``_split_caption_text``, which turns the overflow into its
+            # OWN cue instead of stuffing one line.
+            #
+            # Why that matters: this branch used to append the remainder
+            # "and let libass clip on the right". libass does not clip;
+            # with the default WrapStyle it WORD-WRAPS, and because cues
+            # are bottom-anchored the extra lines grow upward and off the
+            # top of the frame. A real SpaceX Ep049 cue carried a 298-char
+            # last line, which wraps to ~13 rendered lines at ~98 px each
+            # — about 1,270 px of text in a 1,080 px frame. That is the
+            # "script cut off at the top" reported on both YouTube and the
+            # Apple video feed.
             rest = " ".join(words[i:])
             lines[-1] = (lines[-1] + " " + rest).strip()
             return "\n".join(lines)
@@ -164,14 +211,24 @@ def transcript_to_srt(transcript_path: Path, srt_path: Path,
             continue
         if end_f - start_f < min_segment_duration:
             continue
-        wrapped = _wrap_caption_line(text)
-        cues.append(
-            f"{cue_index}\n"
-            f"{_format_srt_timestamp(start_f)} --> "
-            f"{_format_srt_timestamp(end_f)}\n"
-            f"{wrapped}\n"
-        )
-        cue_index += 1
+        # A Whisper segment can be much longer than one caption box. Split
+        # it into cue-sized blocks and share the segment's time range
+        # between them, so every word still appears and no single cue
+        # overflows the frame.
+        blocks = _split_caption_text(text)
+        span = (end_f - start_f) / len(blocks)
+        for n, block in enumerate(blocks):
+            if not block.strip():
+                continue
+            b_start = start_f + n * span
+            b_end = start_f + (n + 1) * span if n < len(blocks) - 1 else end_f
+            cues.append(
+                f"{cue_index}\n"
+                f"{_format_srt_timestamp(b_start)} --> "
+                f"{_format_srt_timestamp(b_end)}\n"
+                f"{block}\n"
+            )
+            cue_index += 1
 
     if not cues:
         logger.warning(
