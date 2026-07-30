@@ -2163,6 +2163,7 @@ def run(args: argparse.Namespace) -> None:
                 build_intro_line,
                 build_closing_block,
                 build_cold_open_spec,
+                build_delivery_spec,
                 get_show_host,
                 _maybe_append_youtube_cta,
                 _RUSSIAN_SPOKEN_SHOWS,
@@ -2261,6 +2262,10 @@ def run(args: argparse.Namespace) -> None:
                     args.show,
                     is_ru=args.show in _RUSSIAN_SPOKEN_SHOWS,
                 ),
+            )
+            pod_vars.setdefault(
+                "delivery_spec",
+                build_delivery_spec(args.show, is_ru=args.show in _RUSSIAN_SPOKEN_SHOWS),
             )
 
             # === Generation Phase ===

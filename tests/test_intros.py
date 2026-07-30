@@ -612,3 +612,94 @@ class TestVoiceStartsImmediately:
         for slug in _PROMPT_FOR_SLUG:
             audio = self._audio(slug)
             assert audio.intro_volume > 0.0, f"{slug} has no intro music"
+
+
+class TestDeliverySpec:
+    """Performance direction, injected globally (July 30 2026).
+
+    A DELIVERY block used to live in the prompts and was dropped in May
+    2026: of 56 sampled scripts only 10 carried any tag. A first attempt
+    at reviving it here asked for a 3-6 tag budget and produced ZERO tags
+    in a live Grok generation — the same failure, twice measured.
+
+    So the spec leads with prose craft, which a live A/B showed the model
+    DOES follow (physical verbs, sentence-length contrast, translating a
+    big number into something picturable), and demotes tags to an
+    optional cap of 3. Rhythm from sentence construction is the mechanism;
+    tags are the garnish.
+    """
+
+    def test_only_sanctioned_tags_are_offered(self):
+        from engine.intros import _SANCTIONED_TAGS, build_delivery_spec
+        spec = build_delivery_spec("tesla")
+        for tag in _SANCTIONED_TAGS:
+            assert tag in spec, tag
+        # Tags known to be VOICED aloud by Grok must never be suggested.
+        for leak in ("<fast>", "<slow>", "<whisper>", "[laugh]",
+                     "<build-intensity>", "<soft>", "<loud>"):
+            assert leak not in spec, f"{leak} has shipped as spoken audio"
+
+    def test_carries_no_example_sentence(self):
+        """De-seed by shape — the same rule the cold-open spec follows."""
+        import re
+        from engine.intros import build_delivery_spec
+        spec = build_delivery_spec("tesla")
+        assert not re.search(r'"[A-Z][^"]{25,}"', spec), (
+            "a quotable specimen is how a tic gets seeded network-wide")
+
+    def test_tag_budget_is_stated_and_small(self):
+        spec = __import__("engine.intros", fromlist=["x"]).build_delivery_spec("tesla")
+        assert "at most 3" in spec
+        assert "OPTIONAL" in spec
+
+    def test_russian_variant_is_russian(self):
+        from engine.intros import build_delivery_spec
+        spec = build_delivery_spec("finansy_prosto", is_ru=True)
+        assert "ПОДАЧА" in spec and "DELIVERY" not in spec
+
+    def test_every_podcast_prompt_injects_it(self):
+        """Global by construction — no future propagation pass."""
+        from pathlib import Path
+        root = Path(__file__).resolve().parent.parent
+        prompts = sorted((root / "shows" / "prompts").glob("*_podcast.txt"))
+        assert len(prompts) >= 15
+        for p in prompts:
+            assert "{delivery_spec}" in p.read_text(encoding="utf-8"), p.name
+
+    def test_runner_always_supplies_it(self):
+        from pathlib import Path
+        src = (Path(__file__).resolve().parent.parent
+               / "run_show.py").read_text(encoding="utf-8")
+        assert 'pod_vars.setdefault(\n                "delivery_spec"' in src or \
+               '"delivery_spec"' in src
+
+
+class TestColdOpenIsCompelling:
+    """The July 30 2026 revision, after a live A/B on real Grok output."""
+
+    def test_no_longer_asks_for_wire_report_prose(self):
+        """That instruction measurably flattened the writing.
+
+        With it, Grok produced press-release register; without any spec it
+        produced livelier prose but a cliche greeting. The spec now keeps
+        the wire report's ACCURACY bar while explicitly rejecting its
+        voice.
+        """
+        from engine.intros import build_cold_open_spec
+        spec = build_cold_open_spec("tesla")
+        assert "NOT written like one" in spec
+        assert "announcer cadence" in spec
+
+    def test_asks_for_the_least_expected_fact(self):
+        from engine.intros import build_cold_open_spec
+        spec = build_cold_open_spec("tesla")
+        assert "least expect" in spec
+        assert "even when it is not the biggest story" in spec
+
+    def test_requires_stakes_in_the_same_breath(self):
+        from engine.intros import build_cold_open_spec
+        assert "STAKES" in build_cold_open_spec("tesla")
+
+    def test_bans_opening_on_a_question(self):
+        from engine.intros import build_cold_open_spec
+        assert "Never open on a question" in build_cold_open_spec("tesla")
