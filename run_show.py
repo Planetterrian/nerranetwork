@@ -2875,6 +2875,29 @@ def run(args: argparse.Namespace) -> None:
                 _tts_duration = time.monotonic() - t0
                 logger.info("TTS synthesis took %.1fs", _tts_duration)
                 metrics.record("tts_duration_s", round(_tts_duration, 2))
+
+                # Did the chunk-boundary guard drop the <fast> energy wrap
+                # on this episode? It fires whenever the script overflows
+                # the single-call budget, which is 5.1% of episodes
+                # network-wide but 16% on Modern Investing and 11% on
+                # Tesla — so the same show ships two different vocal
+                # energies depending on script length, and until now that
+                # was only a log line. Recorded so the dashboard can show
+                # the rate and the operator can decide whether the
+                # inconsistency or the lift matters more.
+                from engine.tts import drain_wrap_drop
+                _wrap_drop = drain_wrap_drop()
+                metrics.record("tts_speech_wrap_dropped", bool(_wrap_drop))
+                if _wrap_drop:
+                    metrics.record("tts_chunks", int(_wrap_drop.get("chunks", 0)))
+                    logger.warning(
+                        "::warning::%s Ep%s shipped WITHOUT the <fast> energy "
+                        "wrap (script %s chars -> %s chunks). Vocal energy "
+                        "differs from this show's other episodes.",
+                        config.slug, episode_num,
+                        _wrap_drop.get("chars"), _wrap_drop.get("chunks"),
+                    )
+
                 from engine.tracking import record_tts_usage
                 record_tts_usage(tracker, len(podcast_script), provider=config.tts.provider)
 

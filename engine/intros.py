@@ -966,22 +966,13 @@ def build_intro_line(
 
     host = personality["host"]
     show_name = personality["show_name"]
-    weekday = date.weekday()
 
-    # Select greeting — prefer day-specific if available
-    day_overrides = personality.get("day_colors", {}).get(weekday, {})
-    greeting_pool = day_overrides.get("greetings", personality["greetings"])
-    greeting = _pick(greeting_pool, show_slug, date, salt="greeting")
-
-    # Select opener
-    opener_pool = personality["openers"]
-    opener = _pick(opener_pool, show_slug, date, salt="opener")
-    opener = opener.format(ep=episode_num, date=today_str)
-
-    # Select framing — prefer day-specific if available
-    framing_pool = day_overrides.get("framings", personality["framings"])
-    framing = _pick(framing_pool, show_slug, date, salt="framing")
-
+    # The greeting / opener / framing pools are no longer read HERE — see
+    # the note below. They stay in ``_SHOW_PERSONALITIES`` because
+    # ``build_closing_block`` reads them and because a future variation
+    # experiment can draw on them again; selecting from them in this
+    # function and discarding the result is just dead work.
+    #
     # Assemble — IDENTITY ONLY, and it no longer runs first.
     #
     # July 30 2026 (cold-open change). This used to emit the whole
@@ -1000,9 +991,8 @@ def build_intro_line(
     # weeks later, and nobody ever needed to hear it.
     #
     # The identity line is now short and lands AFTER the cold-open hook
-    # (see ``build_cold_open_spec``). The greeting/framing pools are
-    # retained but no longer used here — the closings still read them,
-    # and a future variation experiment can draw on them again.
+    # (see ``build_cold_open_spec``).
+    #
     # The default identity line is English. A show that is not hosted in
     # English declares its own ``identity_template`` — without one, the
     # July 30 2026 trim would have handed Финансы Просто (an entirely

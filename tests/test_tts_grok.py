@@ -764,3 +764,109 @@ def test_synthesize_sections_passes_wrap_through(tmp_path: Path, monkeypatch):
         _, kwargs = call
         assert kwargs["speech_wrap_open"] == "<fast>"
         assert kwargs["speech_wrap_close"] == "</fast>"
+
+
+# ---------------------------------------------------------------------------
+# Speech-safe URL paths (July 30 2026)
+#
+# Found by comparing each episode's TTS input against the Whisper transcript
+# of the audio that actually shipped — 1,191 episodes had both. Grok TTS
+# speaks the hyphen in a URL path as the WORD "hyphen": the network
+# cross-promo's "nerranetwork.com/start-here" aired as "slash start hyphen
+# here" and "/age-of-ai-apply" as "of hyphen AI apply". 95 spoken "hyphen"s
+# across 67 episodes, 36 of them from these promo URLs.
+#
+# The scope is narrow ON PURPOSE. Those same episodes fed the voice 28,955
+# hyphenated compounds and only 0.33% leaked, so a blanket strip would
+# rewrite ~29,000 tokens to fix ~95.
+# ---------------------------------------------------------------------------
+
+class TestSpeechSafeUrls:
+    @staticmethod
+    def _f(text):
+        from engine.tts import _speech_safe_urls
+        return _speech_safe_urls(text)
+
+    def test_the_real_shipped_lines(self):
+        """Exactly the copy that produced the artifact on air."""
+        assert "hyphen" not in self._f(
+            "New to the network? nerranetwork.com/start-here picks the "
+            "right daily briefing for you in about two minutes.")
+        assert self._f("apply at nerranetwork.com/age-of-ai-apply.") == \
+            "apply at nerranetwork.com age of ai apply."
+
+    def test_sentence_period_survives(self):
+        """The voice needs the period to close the sentence.
+
+        A dot inside the path must be followed by more path characters —
+        an earlier version of the pattern swallowed the sentence-final
+        period along with the path.
+        """
+        out = self._f("at nerranetwork.com/thedppod. This episode used AI.")
+        assert out.startswith("at nerranetwork.com thedppod.")
+        assert out.endswith("This episode used AI.")
+
+    def test_file_extension_is_not_spoken(self):
+        assert self._f("See nerranetwork.com/data.html for more.") == \
+            "See nerranetwork.com data for more."
+
+    def test_prose_hyphens_are_untouched(self):
+        """28,955 hyphenated compounds ship correctly — do not touch them."""
+        for line in (
+            "No fresh contaminated-sites thresholds appear in the index.",
+            "NASA plans six post-certification missions.",
+            "The state-of-the-art model is open-weights and multi-modal.",
+            "It was a well-known trade-off in high-volume manufacturing.",
+        ):
+            assert self._f(line) == line, line
+
+    def test_bare_domain_is_untouched(self):
+        """No path means nothing to rewrite — the brand keeps its dots."""
+        assert self._f("All our shows are free at nerranetwork.com.") == \
+            "All our shows are free at nerranetwork.com."
+
+    def test_runs_on_every_tts_input(self):
+        """Wired into prepare_text_for_tts, not just callable in isolation."""
+        from engine.tts import prepare_text_for_tts
+        assert "hyphen" not in prepare_text_for_tts(
+            "Visit nerranetwork.com/start-here today.")
+        assert "start here" in prepare_text_for_tts(
+            "Visit nerranetwork.com/start-here today.")
+
+    def test_no_promo_surface_still_ships_a_hyphenated_path(self):
+        """The copy itself should also be speakable, belt and braces."""
+        from engine.network_promo import NETWORK_SURFACES
+        for surface in NETWORK_SURFACES:
+            spoken = self._f(str(surface.get("spoken") or ""))
+            assert "hyphen" not in spoken.lower(), surface.get("id")
+
+
+class TestSpeechWrapDropIsVisible:
+    """The <fast> wrap drop must be a metric, not only a log line.
+
+    The chunk-boundary guard fires whenever a script overflows the
+    single-call budget: 5.1% of the 1,270 committed episodes network-wide,
+    but 16% on Modern Investing and 11% on Tesla. So roughly one Tesla
+    episode in nine ships with different vocal energy from the other
+    eight, and nothing surfaced it.
+    """
+
+    def test_drain_returns_then_clears(self):
+        """A later episode in the same process must not inherit the flag."""
+        from engine import tts
+        tts._WRAP_DROPPED = {"dropped": True, "chunks": 2, "chars": 15200}
+        first = tts.drain_wrap_drop()
+        assert first["chunks"] == 2
+        assert tts.drain_wrap_drop() == {}
+
+    def test_clean_episode_drains_empty(self):
+        from engine import tts
+        tts._WRAP_DROPPED = {}
+        assert tts.drain_wrap_drop() == {}
+
+    def test_run_show_records_the_metric(self):
+        from pathlib import Path
+        src = (Path(__file__).resolve().parent.parent
+               / "run_show.py").read_text(encoding="utf-8")
+        assert "drain_wrap_drop" in src
+        assert "tts_speech_wrap_dropped" in src
