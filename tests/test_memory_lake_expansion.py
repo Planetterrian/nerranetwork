@@ -78,8 +78,18 @@ class TestNewMemoryShows:
         # A hook-load failure on a memory show must degrade to an empty
         # section, never a KeyError in podcast prompt substitution (the
         # digest stage already had this; the podcast stage did not).
-        src = (ROOT / "run_show.py").read_text()
-        assert src.count('setdefault("narrative_memory_section", "")') >= 2
+        #
+        # This used to count TWO occurrences in run_show.py — one for the
+        # digest stage and one in the `pod_vars` dict that was never
+        # passed to run_generation_phase. So the podcast half of the
+        # invariant was never enforced and this test could not tell.
+        # Now asserted on each stage's real owner.
+        digest_src = (ROOT / "run_show.py").read_text()
+        assert 'setdefault("narrative_memory_section", "")' in digest_src, \
+            "digest stage lost its hook-failure default"
+        podcast_src = (ROOT / "engine" / "pipeline.py").read_text()
+        assert 'setdefault("narrative_memory_section", "")' in podcast_src, \
+            "podcast stage (the LIVE path) lost its hook-failure default"
 
     def test_mit_keeps_bespoke_investment_tracker(self):
         # The narrative layer must not replace the trade ledger.

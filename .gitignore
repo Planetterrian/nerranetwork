@@ -95,6 +95,15 @@ digests/*/youtube_tmp/*.ass
 !outputs/.gitkeep
 
 
+# Node artifacts anywhere, including the repo root. Running `npx` from
+# the root (rather than from workers/gallery) creates a root-level
+# node_modules/ holding tool caches — which was untracked and therefore
+# a candidate to be committed. This repo's largest problem is git
+# history size (landmine #1); 200 MB of dependencies is the last thing
+# it needs.
+node_modules/
+.vite/
+
 # Cloudflare Worker (workers/gallery) build + local-dev artifacts.
 workers/**/node_modules/
 workers/**/.wrangler/

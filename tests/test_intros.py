@@ -667,11 +667,22 @@ class TestDeliverySpec:
             assert "{delivery_spec}" in p.read_text(encoding="utf-8"), p.name
 
     def test_runner_always_supplies_it(self):
+        """Asserted against engine/pipeline.py — the path that RUNS.
+
+        This test used to check run_show.py, which built a `pod_vars`
+        dict that was never passed to run_generation_phase. It passed
+        while nothing supplied the key, and every show died with
+        `KeyError: 'cold_open_spec'` on 2026-07-30. The dead block is
+        gone; the assertion now points at the live builder.
+
+        tests/test_podcast_prompt_placeholders.py covers this
+        behaviourally by rendering every prompt through the real path.
+        """
         from pathlib import Path
         src = (Path(__file__).resolve().parent.parent
-               / "run_show.py").read_text(encoding="utf-8")
-        assert 'pod_vars.setdefault(\n                "delivery_spec"' in src or \
-               '"delivery_spec"' in src
+               / "engine" / "pipeline.py").read_text(encoding="utf-8")
+        assert 'pod_vars.setdefault(' in src
+        assert '"delivery_spec"' in src
 
 
 class TestColdOpenIsCompelling:

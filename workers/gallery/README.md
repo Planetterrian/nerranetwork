@@ -77,10 +77,15 @@ Revoked users immediately get 403 on `/api/download` and 403 on
 `/api/magic` (no new long-lived cookie can be minted).
 
 The check is fail-open if the KV binding is missing (no accidental
-mass lockouts during misconfig). Add the same KV namespace ID you
-already use for rate limiting.
+mass lockouts during misconfig).
 
-No new secrets or bindings required.
+**Currently inert.** No KV namespace has ever been provisioned, so the
+binding is commented out in `wrangler.toml` and both revocation and
+rate limiting are no-ops in production. The procedure above starts
+working once you create the namespace and uncomment the block — see the
+instructions in `wrangler.toml`.
+
+No new secrets required.
 
 ## One-time operator setup
 
@@ -146,13 +151,31 @@ The R2 binding is set declaratively in `wrangler.toml` (not via
 ```bash
 cd workers/gallery
 npm install
-npm test          # 45 unit tests
+npm test          # unit tests (52 at time of writing)
 npm run typecheck
 npm run deploy    # = wrangler deploy
 ```
 
 `wrangler deploy` reads `wrangler.toml`, uploads the bundled Worker,
 and binds the route. First deploy will require `wrangler login`.
+
+**Before you deploy, `git pull`.** Deploying a stale checkout silently
+ships the previous code — the tests are the tell: if `npm test` reports
+an unexpected count, your checkout is behind.
+
+**The `[[kv_namespaces]]` block is commented out on purpose** (see
+`wrangler.toml`). No namespace has ever been provisioned, and wrangler
+validates the whole config before running *any* command — so
+uncommenting it with a blank `id` blocks `wrangler deploy` **and**
+`wrangler kv namespace list`, which is how you would look the id up.
+Leave it commented unless you are actually provisioning KV.
+
+If you edit `wrangler.toml` for a deploy, verify the edit reached disk
+before running anything:
+
+```bash
+git diff --stat wrangler.toml   # no output = your editor didn't save
+```
 
 ### 6. Smoke-test
 
@@ -195,7 +218,7 @@ the page.
 ## Tests
 
 ```bash
-npm test          # vitest run (45 tests in 3 files)
+npm test          # vitest run (3 files)
 npm run typecheck # tsc --noEmit
 ```
 
