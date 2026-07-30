@@ -1702,11 +1702,26 @@ decision); everything else has a live status card.
       handles dates, currencies, and ordinary numbers — the
       `pronunciation_map.yaml` layer remains for proper-noun / acronym
       overrides.
-    - **Voice EQ chain** (`engine/audio.py:_voice_norm_full_cmd`)
-      gained a 6.5 kHz dip (`equalizer=f=6500:t=q:w=1.5:g=-3`) for
-      gentle de-essing on the new custom voice. Previous chain
-      (highpass / lowpass / loudnorm / compressor / limiter) is
-      otherwise unchanged.
+    - **Voice EQ chain** (`engine/audio.py:_voice_norm_full_cmd`) —
+      highpass 80 / lowpass 15k / adeclick+afftdn / loudnorm -18 /
+      acompressor 4:1 / alimiter. **This entry used to claim the chain
+      "gained a 6.5 kHz dip (`equalizer=f=6500:t=q:w=1.5:g=-3`) for
+      gentle de-essing". It never did** — `git log -S "6500"` on
+      `engine/audio.py` returns nothing, the string has never existed in
+      the file. Corrected 2026-07-30. Do not "restore" it: there is
+      nothing to restore.
+      **De-essing was then measured and deliberately declined.** With a
+      live key, 2:34 of real Tesla Ep557 synthesized on the production
+      voice and pushed through the chain shows the midrange flat
+      (-0.1 dB) while the sibilance band (5.5-8.5 kHz) gains **+5.1 dB**
+      and air (8.5-16 kHz) **+5.0 dB** — the 4:1 broadband compressor
+      lifts consonants faster than vowels. Four variants (no de-ess /
+      static -3 dB / static -5 dB / ffmpeg `deesser`) were rendered and
+      **the operator listened: all four sound the same on this voice.**
+      So the +5 dB is a measurement, not a defect, and the network ships
+      the chain unchanged — adding a stage that buys no audible benefit
+      but alters every episode on 15 shows is the landmine-#17 shape.
+      Re-open only with listening evidence, not spectra.
     - **Final mix** (`engine/audio.py:_final_mix_cmd`) replaced the
       simple `amix` with sidechain-ducked music + EBU R128 loudnorm
       to **-16 LUFS** (Apple Podcasts / Spotify spec). Music
