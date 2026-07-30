@@ -127,6 +127,37 @@ def test_live_path_supplies_every_podcast_placeholder(slug):
     )
 
 
+def test_run_show_does_not_rebuild_a_discarded_pod_vars():
+    """The trap itself, removed 2026-07-30 — keep it removed.
+
+    ``run_show.py`` used to build a second, complete set of podcast
+    template variables into a local ``pod_vars`` dict and then never pass
+    it to ``run_generation_phase``. It read as the authoritative place to
+    wire a prompt variable, and twice it wasn't: the DP Pod Ep001
+    truncated closing, and the network-wide ``KeyError: 'cold_open_spec'``.
+
+    Guarding the symptom (the test above) is not enough while the trap is
+    still sitting there looking authoritative.
+    """
+    import ast
+
+    tree = ast.parse((ROOT / "run_show.py").read_text(encoding="utf-8"))
+    # Structural, not a substring match: the comment left behind at the
+    # removal site names `pod_vars` on purpose, and that comment is the
+    # thing telling the next person where prompt variables belong.
+    assigned = {
+        node.id
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store)
+    }
+    assert "pod_vars" not in assigned, (
+        "run_show.py is building podcast template variables again. That "
+        "dict is not what formats the prompt — engine/pipeline.py's "
+        "run_generation_phase is. Put prompt variables there, or pass "
+        "per-show values through extra_context."
+    )
+
+
 def test_the_two_specs_from_the_retention_pass_are_wired():
     """Pin the exact regression: SpaceX Ep50, 2026-07-30 20:54 UTC."""
     import inspect

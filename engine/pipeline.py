@@ -527,6 +527,20 @@ def run_generation_phase(
     pod_vars.setdefault("tone_hint", "natural and conversational")
     pod_vars.setdefault("nerra_network_context", "")
 
+    # Hook-failure safety. A memory show's pre-fetch hook normally injects
+    # {narrative_memory_section} (and Привет, Русский! injects
+    # {vocab_review_section}) through extra_context. If the hook fails to
+    # load, the prompt still references the placeholder and
+    # str.format_map raises — the same KeyError class that took the
+    # network down on 2026-07-30. Degrade to an empty section instead.
+    #
+    # These defaults existed only in run_show.py's discarded pod_vars, so
+    # the invariant was never actually enforced;
+    # tests/test_memory_lake_expansion.py passed by counting occurrences
+    # in that dead block. setdefault means a working hook is unaffected.
+    pod_vars.setdefault("narrative_memory_section", "")
+    pod_vars.setdefault("vocab_review_section", "")
+
     # Cold-open + delivery specs (July 30 2026 retention pass). These were
     # wired into run_show.py's pod_vars — which, as the Ep1 comment above
     # records, is NOT the live path: run_show builds that dict and never

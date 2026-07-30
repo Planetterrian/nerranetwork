@@ -187,9 +187,17 @@ class TestEp001Fixes:
         # The generic single-host Ep1 closing fought the dialogue prompt
         # (Ep001 shipped "please subscribe..." truncated mid-sentence);
         # dialogue shows now debut with the personality's labeled closing.
-        src = (PROJECT_ROOT / "run_show.py").read_text(encoding="utf-8")
+        #
+        # Asserted against engine/pipeline.py, not run_show.py. Ep001
+        # shipped the broken closing precisely BECAUSE the fix went into
+        # run_show.py's `pod_vars` — a dict never passed to
+        # run_generation_phase — so this test was pinning code that could
+        # not run. The dead block was removed 2026-07-30 after the same
+        # trap took the whole network down a second time.
+        src = (PROJECT_ROOT / "engine" / "pipeline.py").read_text(
+            encoding="utf-8")
         ep1_block = src.split("if episode_num == 1:", 1)[1][:2200]
-        assert "config.tts.dialogue_mode" in ep1_block
+        assert "dialogue_mode" in ep1_block
         assert "build_closing_block" in ep1_block
 
     def test_dispatch_prompt_bans_invented_host_anecdotes(self):

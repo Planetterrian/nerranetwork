@@ -26,11 +26,27 @@ routes = [
 binding = "GALLERY_BUCKET"
 bucket_name = "nerra-gallery"
 
-# KV namespace for rate limiting on subscribe/login (medium item from codebase review).
-# Prevents abuse of Buttondown + Resend quotas and Worker CPU.
+# KV namespace for rate limiting on subscribe/login, and for the
+# per-email revocation list. COMMENTED OUT because no namespace has ever
+# been provisioned — so this is not a regression, it is the config
+# finally matching production. Both consumers fail open when the binding
+# is absent (see checkRateLimit / isEmailRevoked in src/handlers.ts), so
+# the Worker runs correctly without it; it simply has no rate limiting.
+#
+# DO NOT uncomment these lines with a blank `id`. Wrangler validates the
+# whole config before running ANY command, so a blank id doesn't just
+# fail `deploy` — it also blocks `wrangler kv namespace list`, which is
+# how you'd look the id up. That loop cost the operator five failed
+# deploys on 2026-07-30.
+#
+# To enable rate limiting, from a directory WITHOUT this wrangler.toml
+# (so the same validation doesn't block you):
+#     cd <repo root>
+#     workers/gallery/node_modules/.bin/wrangler kv namespace create gallery_rate_limits
+# then paste the returned id below and uncomment all four lines.
 # [[kv_namespaces]]
 # binding = "RATE_LIMIT_KV"
-# id = ""          # Fill with real production KV ID after creation: wrangler kv namespace create gallery_rate_limits
+# id = ""
 # preview_id = ""  # Optional preview namespace
 
 # Secrets are set out-of-band via:

@@ -2056,6 +2056,31 @@ def run(args: argparse.Namespace) -> None:
 
         if not args.skip_podcast:
 
+            # !!! KNOWN INERT — DO NOT "CLEAN UP", AND DO NOT SILENTLY WIRE UP.
+            #
+            # `clean_digest` is computed and refined below (podcast-only
+            # cleaning, the Sunday weekly-summary segment, duplicate-headline
+            # stripping) and then READ BY NOTHING. Its only consumer was the
+            # discarded `pod_vars` dict removed on 2026-07-30; the live path
+            # sets the prompt's {digest} to `x_thread`
+            # (engine/pipeline.py: template_vars_for_script["digest"] = x_thread).
+            #
+            # So three things have never reached a podcast script:
+            #   1. `_clean_digest_for_podcast` cleaning
+            #   2. the Sunday weekly-summary segment (landmine #19)
+            #   3. the 100%-duplicate-headline strip
+            #
+            # tests/test_weekly_summary_segment.py passes anyway because it
+            # asserts the APPEND by matching source text, never that the value
+            # reaches the prompt.
+            #
+            # Left computed rather than deleted so the feature isn't quietly
+            # discarded. Connecting it changes the digest every podcast prompt
+            # receives — on every show, and substantially on Sundays — which is
+            # an audio-affecting change and needs an operator A/B listen
+            # (landmine #17). Flagged for that decision, deliberately not made
+            # here.
+            #
             # Strip URLs, emojis, unicode decorations, and other metadata from
             # the digest before feeding it to the podcast script prompt.  The LLM
             # sometimes echoes these through to the script, and TTS reads them
@@ -2114,6 +2139,11 @@ def run(args: argparse.Namespace) -> None:
                             )
                             clean_digest = clean_digest_new
 
+            # NOTE: the value computed here is SUPERSEDED — run_generation_phase
+            # derives its own effective_hook and returns it below, overwriting
+            # this one. What survives is the operator warning in the
+            # topic-driven branch, which is why the block is kept. Do not add
+            # consumers of this local; read the returned value instead.
             if hook:
                 effective_hook = hook
             elif _topic_driven:
@@ -2136,137 +2166,26 @@ def run(args: argparse.Namespace) -> None:
                     f"Here's what's making news in the {config.name} world today."
                 )
 
-            pod_vars = {
-                "episode_num": episode_num,
-                "today_str": today_str,
-                "date_human": today_str,  # alias used by Omni View prompts
-                "digest": clean_digest,
-                "hook": effective_hook,
-            }
-            # Merge extra context for podcast prompt (e.g. tone_hint, intro_line)
-            pod_vars.update(extra_context)
-            # Привет, Русский! vocabulary memory — same hook-failure-safe
-            # defaulting as the digest stage (str.format_map raises
-            # KeyError on missing placeholders).
-            pod_vars.setdefault("vocab_review_section", "")
-            # Phase-3 narrative memory — several podcast prompts reference
-            # {narrative_memory_section}; same hook-failure-safe default as
-            # the digest stage (July 24 2026 memory expansion).
-            pod_vars.setdefault("narrative_memory_section", "")
+            # The show's host name. Used downstream to strip stray
+            # "Patrick:" speaker prefixes from the generated script — the
+            # one thing the removed block below produced that anything
+            # actually read.
+            from engine.intros import get_show_host
 
-            # Provide default intro_line/closing_block if hook didn't supply them.
-            # Uses engine.intros for day-varying, show-specific intros so
-            # listeners don't hear the exact same opening every day.
-            # Episode 1 gets a special intro — the podcast prompt templates handle
-            # the detailed first-episode introduction based on {episode_num}.
-            from engine.intros import (
-                build_intro_line,
-                build_closing_block,
-                build_cold_open_spec,
-                build_delivery_spec,
-                get_show_host,
-                _maybe_append_youtube_cta,
-                _RUSSIAN_SPOKEN_SHOWS,
-            )
-            host = getattr(config.publishing, "host_name", None) or get_show_host(args.show)
-            # Pick the YouTube channel handle so the closing line can mention
-            # the right channel. Empty string means "don't mention YouTube"
-            # (e.g. shows where YouTube publishing isn't enabled yet).
-            _yt_handle = ""
-            if getattr(config, "youtube", None) and config.youtube.enabled:
-                _yt_handle = (
-                    "@NerraRU" if config.youtube.channel == "ru" else "@NerraNetwork"
-                )
-            if episode_num == 1:
-                if config.tts.dialogue_mode:
-                    # Dialogue shows: the generic single-host Ep1 closing
-                    # ("I'm X in Vancouver... see you tomorrow") fights the
-                    # dialogue prompt's speaker-label + exact-sign-off rules
-                    # — DP Pod Ep001 shipped it truncated to "please
-                    # subscribe..." mid-sentence. Use a labeled debut intro
-                    # (the personality's lead host) and the personality's
-                    # own labeled closing, which already carries the
-                    # subscribe ask and ends with the exact sign-off.
-                    _lead = get_show_host(args.show)
-                    pod_vars.setdefault(
-                        "intro_line",
-                        f"{_lead}: Welcome to the very first episode of "
-                        f"{config.name}! Today is {today_str}. {effective_hook}",
-                    )
-                    pod_vars.setdefault(
-                        "closing_block",
-                        build_closing_block(
-                            args.show,
-                            episode_num=episode_num,
-                            today_str=today_str,
-                            date=today,
-                            extra_context=extra_context,
-                            youtube_channel_handle=_yt_handle,
-                        ),
-                    )
-                else:
-                    pod_vars.setdefault(
-                        "intro_line",
-                        f"{host}: Welcome to the very first episode of {config.name}! "
-                        f"Today is {today_str}. {effective_hook}",
-                    )
-                    _ep1_close = (
-                        f"{host}: That wraps up our very first episode of {config.name}! "
-                        f"If you enjoyed this, please subscribe on Apple Podcasts, Spotify, "
-                        f"or wherever you listen — and a rating or review really helps new "
-                        f"listeners find us. "
-                        f"I'm {host} in Vancouver. Thanks for joining me on this journey, "
-                        f"and I'll see you tomorrow for episode two."
-                    )
-                    # Route the YouTube call-out through the shared helper so the
-                    # "@" is stripped (no "at at" stutter) and the EN handle is
-                    # split to the spaced "Nerra Network" — matching every other
-                    # episode's closing.
-                    _ep1_close = _maybe_append_youtube_cta(
-                        _ep1_close,
-                        _yt_handle,
-                        is_ru=args.show in _RUSSIAN_SPOKEN_SHOWS,
-                    )
-                    pod_vars.setdefault("closing_block", _ep1_close)
-            else:
-                pod_vars.setdefault(
-                    "intro_line",
-                    build_intro_line(
-                        args.show,
-                        episode_num=episode_num,
-                        today_str=today_str,
-                        date=today,
-                        extra_context=extra_context,
-                    ),
-                )
-                pod_vars.setdefault(
-                    "closing_block",
-                    build_closing_block(
-                        args.show,
-                        episode_num=episode_num,
-                        today_str=today_str,
-                        date=today,
-                        extra_context=extra_context,
-                        youtube_channel_handle=_yt_handle,
-                    ),
-                )
-            pod_vars.setdefault("tone_hint", "natural and conversational")
-            pod_vars.setdefault("nerra_network_context", "")
-            # Cold-open rules (July 30 2026). One shared spec for every
-            # show so the rule cannot drift per prompt, and so the wording
-            # that governs the first seconds of every episode lives in one
-            # reviewable place.
-            pod_vars.setdefault(
-                "cold_open_spec",
-                build_cold_open_spec(
-                    args.show,
-                    is_ru=args.show in _RUSSIAN_SPOKEN_SHOWS,
-                ),
-            )
-            pod_vars.setdefault(
-                "delivery_spec",
-                build_delivery_spec(args.show, is_ru=args.show in _RUSSIAN_SPOKEN_SHOWS),
-            )
+            host = (getattr(config.publishing, "host_name", None)
+                    or get_show_host(args.show))
+
+            # NOTE: this is where a second, DEAD copy of the podcast
+            # template variables used to be built (removed 2026-07-30).
+            # It computed intro lines, closing blocks, the cold-open and
+            # delivery specs into a `pod_vars` dict that was never passed
+            # to run_generation_phase — the live path rebuilds its own in
+            # engine/pipeline.py. Two production bugs shipped from wiring
+            # a value into the discarded copy: the DP Pod Ep001 truncated
+            # closing, and `KeyError: 'cold_open_spec'` taking down every
+            # show on 2026-07-30. Podcast prompt variables belong in
+            # engine/pipeline.py:run_generation_phase. Anything a show
+            # needs to inject reaches it via `extra_context`.
 
             # === Generation Phase ===
             from engine.pipeline import run_generation_phase
