@@ -705,6 +705,49 @@ attribution insight: EN long-form converts subs best (24 vs 15 EN-short /
 10 RU-short of 56 tracked) — long-form cuts stay velocity-gated, never
 blanket. All policy/metadata-side — outside landmine #17.
 
+**July 30 2026 retention pass** (drift guards:
+`tests/test_intros.py`, `tests/test_shorts_selector.py::TestShortsClipLength`,
+`tests/test_youtube_policy.py::{TestShortsSupplyLadder,TestMaxShortsCeiling}`,
+`tests/test_ru_dub.py::TestClauseTrim`):
+
+- **Every episode now opens on its hook** (AUDIO — A/B-listen per
+  landmine #17). Ten seconds of theme music played alone, then
+  `build_intro_line` emitted a ~35-word greeting with the date, so the
+  first fact arrived around second 28. Long-form median retention was
+  10.7% EN / 6.3% RU with average view durations of 18-85 s on 5-13
+  minute videos; Shorts, which skip the intro, run ~42% on the same
+  audio. `build_intro_line` now emits one short identity line,
+  `build_cold_open_spec` injects the shared cold-open rules into all 15
+  podcast prompts (no example sentence — de-seed by shape), the prompts
+  put `{hook}` before `{intro_line}`, and `voice_intro_delay` is 0 with
+  `intro_duration` 3 network-wide. **Music still plays from t=0 and the
+  sidechain holds it at the same level under the opening line as
+  mid-episode (-31.7 dB either side, verified by render), so this is a
+  cold open in structure, not a bare one in sound.** Three shows keep a
+  short `identity_tail` / `identity_template` because their line carries
+  something load-bearing: DP Pod names both hosts, Age of AI discloses
+  its AI host, and the Russian shows would otherwise be handed English.
+- **Shorts run 35 s** (was 55 default / 40 on five shows). Median Short
+  holds 21 s (n=348, 90-day window), so length mostly decides what
+  percentage that is: 38% at 55 s, 60% at 35 s. The dataclass default and
+  the four `getattr` fallbacks moved too — `ru_dub` / `lang_dub` /
+  `youtube_shorts` each resolve through one, so a stale default would
+  ship long Shorts on the dub channels only.
+- **Shorts supply ladder gained a 3-Short band** at 20 vpd (`SHORT_VPD_BANDS`
+  + `shorts_for_vpd`). RU spacex 62.3 / FF 60.5 had the same supply as
+  RU MIT 4.9. Two silent caps had to go first: `build_policy` carried a
+  second copy of the threshold rule (logged "-> 3" and wrote 2), and
+  `ru_dub`/`lang_dub` each had a local `min(2, ...)` — and the band's
+  members are RU dubs, so those literals would have made it a total
+  no-op. The ceiling is now `engine.youtube_policy.MAX_SHORTS_PER_EPISODE`,
+  enforced in `resolve_publish_plan`.
+- **Dub Short titles trim to a clause** (`_clause_trim`). 26% of published
+  FR Short titles ended on a dangling preposition (RU 5%, EN 1%) because
+  the title is cut from the translated LONG title at 70 chars and French
+  runs ~15-20% longer than its English source. Per-language stop-word
+  tails, a 55%-of-budget floor, and an unregistered language stays a
+  plain word trim.
+
 ### Testing
 
 ```bash
@@ -786,6 +829,20 @@ episode:
     cost / quota / RSS-freshness line from `api/dashboard.json` and POSTs to
     `NOTIFICATION_WEBHOOK_URL` (clean no-op when unset). Wired into the finalize
     job.
+  - `scripts/retitle_youtube_videos.py` — repairs transcript-fragment titles on
+    ALREADY-PUBLISHED videos. Before the July 18 2026 title bundle, a Short's
+    title was the raw opening text of its clip: 11% of Shorts published before
+    that date carry a fragment title against 1% after. The pipeline was fixed
+    forward; the back catalogue never was, and those videos are still live and
+    still the first thing a new viewer sees. Rebuilds the title from the
+    episode's DIGEST HEADLINES (the Short's own stored `hook` IS the fragment
+    for exactly the videos this repairs, so it can never supply the
+    replacement; sibling Shorts take different headlines so one episode does
+    not produce four identically-titled clips). **Dry run by default** —
+    `--apply` is required to write. Run it from Actions ("Retitle YouTube
+    Videos"), not a laptop: the YouTube credentials live there, and a local run
+    prints its plan then writes nothing. ~51 quota units per video. 31 fixable
+    at last count.
 
 ### Growth & trust surface (Phase 2, May 2026)
 
@@ -1323,9 +1380,18 @@ the fallback everywhere; every piece is best-effort and non-blocking.
   analytics/policy/subscriber tracking). Sweep:
   `scripts/publish_lang_dubs.py --lang fr` in `multilingual.yml`.
   Credentials resolve generically (channel `xx` →
-  `YOUTUBE_REFRESH_TOKEN_XX`; en/ru behavior pinned unchanged). DORMANT
-  until the operator creates @NerraFR + adds the secret (clean
-  `no_fr_credentials` no-op until then; activation checklist in the doc).
+  `YOUTUBE_REFRESH_TOKEN_XX`; en/ru behavior pinned unchanged).
+  **@NerraFR went LIVE 2026-07-21** (this section previously said
+  DORMANT) — 42 videos across the four shows in its first ten days, 38
+  Shorts + 4 long. It was invisible to the feedback loop until
+  2026-07-29 because `fetch_youtube_analytics` globbed only
+  `youtube_videos.ru.json` beside the base index, so the policy computed
+  `video_count_14d = 0` for every FR show and froze them at seed tier —
+  a channel that could never earn a promotion. The glob is now a
+  pattern, but it landed four minutes before that night's run, so **no
+  nightly has definitely included it**; every FR show still reports
+  `short_vpd: null`. First clean read is the next nightly, and FR tiers
+  should not be touched until a couple of weeks of real velocity exist.
   Docs: [`docs/lang_youtube_dubs.md`](docs/lang_youtube_dubs.md). Drift
   guards: `tests/test_lang_dub.py`.
 - **Video podcasts → Apple (July 25 2026 pilot: tesla + spacex).** Doc:
