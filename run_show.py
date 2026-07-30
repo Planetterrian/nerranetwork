@@ -2162,6 +2162,7 @@ def run(args: argparse.Namespace) -> None:
             from engine.intros import (
                 build_intro_line,
                 build_closing_block,
+                build_cold_open_spec,
                 get_show_host,
                 _maybe_append_youtube_cta,
                 _RUSSIAN_SPOKEN_SHOWS,
@@ -2250,6 +2251,17 @@ def run(args: argparse.Namespace) -> None:
                 )
             pod_vars.setdefault("tone_hint", "natural and conversational")
             pod_vars.setdefault("nerra_network_context", "")
+            # Cold-open rules (July 30 2026). One shared spec for every
+            # show so the rule cannot drift per prompt, and so the wording
+            # that governs the first seconds of every episode lives in one
+            # reviewable place.
+            pod_vars.setdefault(
+                "cold_open_spec",
+                build_cold_open_spec(
+                    args.show,
+                    is_ru=args.show in _RUSSIAN_SPOKEN_SHOWS,
+                ),
+            )
 
             # === Generation Phase ===
             from engine.pipeline import run_generation_phase

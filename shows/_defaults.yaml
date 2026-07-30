@@ -136,8 +136,29 @@ audio:
   # ``voice_intro_delay`` MUST stay >= ``intro_duration`` so the
   # voice doesn't enter while the music intro is still in its
   # alone-period (10 >= 10 holds).
-  voice_intro_delay: 10.0
-  intro_duration: 10.0
+  # 0.0s (was 10.0) — July 30 2026 cold-open change.
+  #
+  # Ten seconds of theme music played before anyone spoke, and the script
+  # then spent ~18 more seconds on "Welcome back to <show>, episode N,
+  # it's <date>, I'm Patrick in Vancouver, let's dive in". The first
+  # actual fact arrived around 28 seconds in.
+  #
+  # Measured cost on YouTube long-form: median retention 10.7% (EN) and
+  # 6.3% (RU), average view durations of 18-85 seconds on 5-13 minute
+  # videos — most viewers left before the episode said anything. Shorts
+  # already skipped the intro via shorts_start_mode, which is part of why
+  # their retention is ~42%.
+  #
+  # The voice now starts at 0 and opens on the episode's hook (see
+  # engine.intros.build_cold_open_spec + the podcast prompts). Music
+  # still plays from the top and the sidechain ducks it under the voice,
+  # so the open is warm rather than abrupt — it is a cold open in
+  # structure, not a bare one in sound.
+  voice_intro_delay: 0.0
+  # 3.0s (was 10.0). Paired with voice_intro_delay: 0.0 below — the
+  # hook now lands in the first second, so the music's alone-period is a
+  # short breath under the opening line rather than a ten-second wait.
+  intro_duration: 3.0
   overlap_duration: 15.0
   fade_duration: 30.0
   outro_duration: 30.0

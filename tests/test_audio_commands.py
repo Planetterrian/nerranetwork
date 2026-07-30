@@ -760,9 +760,11 @@ class TestShowMusicConfigs:
     def test_tesla_has_music(self, load_config):
         cfg = load_config("shows/tesla.yaml")
         assert cfg.audio.music_file == "assets/music/tesla_shorts_time.mp3"
-        # May 13 2026 retune — see AudioConfig docstring. Outro
-        # crossfade dropped to 0 so music plays alone after voice ends.
-        assert cfg.audio.voice_intro_delay == 10.0
+        # July 30 2026 cold open — voice starts at second 0 and the
+        # episode's first spoken words are the hook. Was 10.0.
+        assert cfg.audio.voice_intro_delay == 0.0
+        # Outro crossfade stays 0 so music plays alone after voice ends
+        # (May 13 2026 retune — see AudioConfig docstring).
         assert cfg.audio.outro_crossfade == 0.0
 
     def test_ff_has_unified_music(self, load_config):
@@ -779,7 +781,8 @@ class TestShowMusicConfigs:
         # Dual-music override removed — the runner now uses the same
         # track for intro / overlap / fadeout / outro.
         assert cfg.audio.background_music_file is None
-        assert cfg.audio.voice_intro_delay == 10.0
+        # July 30 2026 cold open — voice starts at 0 (was 10.0).
+        assert cfg.audio.voice_intro_delay == 0.0
         assert cfg.audio.fade_duration == 30.0
 
     def test_pt_has_music(self, load_config):
@@ -799,12 +802,13 @@ class TestShowMusicConfigs:
         assert cfg.audio.music_file == "assets/music/EnvIntel.mp3"
 
     def test_ei_standard_timing(self, load_config):
-        """EI inherits the network's May 13 2026 retune (10 s intro
-        alone, 30 s post-voice outro with music alone after voice +
-        a 10 s fade-out tail) but pins lower volumes for the briefing
-        format."""
+        """EI inherits the network's July 30 2026 cold open (3 s music
+        breath under the opening hook instead of the old 10 s alone
+        period, 30 s post-voice outro with music alone after voice)
+        but pins lower volumes for the briefing format."""
         cfg = load_config("shows/env_intel.yaml")
-        assert cfg.audio.intro_duration == 10.0
+        assert cfg.audio.intro_duration == 3.0
+        assert cfg.audio.voice_intro_delay == 0.0
         assert cfg.audio.outro_duration == 30.0
         assert cfg.audio.outro_crossfade == 0.0
         assert cfg.audio.intro_volume <= 0.5

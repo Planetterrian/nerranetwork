@@ -144,24 +144,26 @@ class TestBuildIntroLine:
         # Should still contain show name regardless of day
         assert "Tesla Shorts Time" in intro
 
-    def test_intro_varies_across_days(self):
-        """Different days should produce different intros (not identical)."""
-        intros = set()
-        for day in range(1, 28):
-            d = datetime.date(2026, 3, day)
-            # Skip weekends for consistency
-            if d.weekday() in (5, 6):
-                continue
-            intro = build_intro_line(
+    def test_intro_does_not_vary_by_day(self):
+        """The identity line is fixed for a given episode number.
+
+        Before July 30 2026 this line was the whole opening and rotated
+        greeting / opener / framing pools per day, which is why it was
+        long enough to matter. It is now one short sentence, so the same
+        episode must render identically whatever day it is built on —
+        day rotation returning here would mean the long opener came
+        back with it.
+        """
+        rendered = {
+            build_intro_line(
                 "tesla",
-                episode_num=400 + day,
+                episode_num=403,
                 today_str=f"March {day}, 2026",
-                date=d,
+                date=datetime.date(2026, 3, day),
             )
-            intros.add(intro)
-        # With ~20 weekdays and multiple greeting/framing pools,
-        # we should see variation
-        assert len(intros) >= 5
+            for day in range(1, 28)
+        }
+        assert len(rendered) == 1
 
     def test_milestone_in_intro(self):
         intro = build_intro_line(
@@ -320,3 +322,293 @@ def test_closing_block_supports_russian_handle():
     assert "YouTube" in closing
     assert "show notes" not in closing  # English call-out replaced
     assert "Ссылка" in closing          # Russian call-out present
+
+
+# ---------------------------------------------------------------------------
+# Cold-open contract (July 30 2026)
+#
+# The change: every episode's first spoken words are the hook. Before it,
+# 10 s of theme music played, then the host spent ~18 more seconds on
+# "Welcome back to <show>, episode N, it's <date>, I'm Patrick in
+# Vancouver, let's dive into today's news" — the first fact arrived around
+# second 28. Measured cost on YouTube long-form: median retention 10.7%
+# (EN) / 6.3% (RU), average view durations of 18-85 s on 5-13 minute
+# videos. Shorts, which skip the intro entirely, run ~42%.
+#
+# These guards pin the three pieces that a later edit could quietly undo:
+# the identity line stays short and dateless, the prompts keep the hook
+# ahead of the identity line, and the YAMLs keep the voice starting at 0.
+# ---------------------------------------------------------------------------
+
+import re
+from pathlib import Path
+
+import yaml
+
+from engine.intros import _COLD_OPEN_BANNED, _SHOW_PERSONALITIES, build_cold_open_spec
+
+_REPO = Path(__file__).resolve().parent.parent
+_SHOWS = _REPO / "shows"
+_PROMPTS = _SHOWS / "prompts"
+
+_MONTHS = ("January", "February", "March", "April", "May", "June", "July",
+           "August", "September", "October", "November", "December",
+           "января", "февраля", "марта", "апреля", "мая", "июня", "июля",
+           "августа", "сентября", "октября", "ноября", "декабря")
+
+# Every show that renders {intro_line} through run_show, mapped to its
+# podcast prompt. age_of_ai is deliberately absent from the prompt-order
+# check below (its production path is pipelines/voices/, not run_show) but
+# still has to satisfy the identity-line rules.
+_PROMPT_FOR_SLUG = {
+    "tesla": "tesla_podcast.txt",
+    "spacex": "spacex_podcast.txt",
+    "omni_view": "omni_view_podcast.txt",
+    "fascinating_frontiers": "fascinating_frontiers_podcast.txt",
+    "planetterrian": "planetterrian_podcast.txt",
+    "env_intel": "env_intel_podcast.txt",
+    "models_agents": "models_agents_podcast.txt",
+    "models_agents_beginners": "mab_podcast.txt",
+    "modern_investing": "modern_investing_podcast.txt",
+    "unintended_consequences": "unintended_consequences_podcast.txt",
+    "first_principles": "first_principles_podcast.txt",
+    "finansy_prosto": "fp_podcast.txt",
+    "privet_russian": "privet_russian_podcast.txt",
+}
+
+
+class TestIdentityLineIsShortAndDateless:
+    def test_no_show_speaks_the_date(self):
+        """The date is in the metadata and stamps the episode stale.
+
+        It was the single worst offender in the old opener: someone
+        arriving from search three weeks later heard "it's July 30" as
+        the second thing in the episode.
+        """
+        for slug in _SHOW_PERSONALITIES:
+            intro = build_intro_line(
+                slug, episode_num=42, today_str="July 30, 2026",
+                date=datetime.date(2026, 7, 30),
+            )
+            for month in _MONTHS:
+                assert month not in intro, f"{slug} speaks a date: {intro}"
+            assert "2026" not in intro, f"{slug} speaks a year: {intro}"
+
+    def test_identity_line_stays_short(self):
+        """One sentence of identity, plus an optional short tail.
+
+        The old line ran ~35 words. A regression here means the opener
+        crept back in, whatever the wording.
+        """
+        for slug in _SHOW_PERSONALITIES:
+            intro = build_intro_line(
+                slug, episode_num=42, today_str="July 30, 2026",
+                date=datetime.date(2026, 7, 30),
+            )
+            words = len(intro.split())
+            assert words <= 20, f"{slug} identity line is {words} words: {intro}"
+
+    def test_no_cliche_openers_in_identity_line(self):
+        for slug in _SHOW_PERSONALITIES:
+            intro = build_intro_line(
+                slug, episode_num=42, today_str="July 30, 2026",
+                date=datetime.date(2026, 7, 30),
+            ).lower()
+            for banned in _COLD_OPEN_BANNED:
+                assert banned not in intro, f"{slug}: banned {banned!r} in {intro!r}"
+
+    def test_russian_show_identity_line_is_russian(self):
+        """Финансы Просто is hosted entirely in Russian.
+
+        The default identity template is English, so without a per-show
+        ``identity_template`` the trim would have handed an English
+        sentence to a Russian-language show.
+        """
+        intro = build_intro_line(
+            "finansy_prosto", episode_num=30, today_str="30 июля 2026",
+            date=datetime.date(2026, 7, 30),
+        )
+        assert "Финансы Просто" in intro
+        assert "This is" not in intro
+        assert "episode" not in intro
+        assert "выпуск" in intro
+
+    def test_dp_pod_still_names_both_hosts(self):
+        """Two-voice show — the listener has to learn which voice is which.
+
+        Dan says his OWN name (the Ep016 name-swap rule).
+        """
+        intro = build_intro_line(
+            "dp_pod", episode_num=16, today_str="July 30, 2026",
+            date=datetime.date(2026, 7, 30),
+        )
+        assert intro.startswith("DAN:")
+        assert "Dan Perra" in intro and "Patrick Novak" in intro
+
+    def test_age_of_ai_still_discloses_the_ai_host(self):
+        """Every Age of AI episode must disclose that its host is an AI.
+
+        The legacy rotating openers carried that disclosure, so the trim
+        keeps a short version rather than dropping it.
+        """
+        intro = build_intro_line(
+            "age_of_ai", episode_num=2, today_str="July 30, 2026",
+            date=datetime.date(2026, 7, 30),
+        )
+        assert "Mira" in intro
+        assert "AI" in intro
+
+
+class TestColdOpenSpec:
+    def test_spec_carries_no_example_sentence(self):
+        """De-seed by shape, never with a quotable example.
+
+        Every seeded template tic in this network's history came from a
+        prompt supplying the literal sentence it wanted. The only quoted
+        strings in this spec are the BANNED phrases.
+        """
+        spec = build_cold_open_spec("tesla")
+        quoted = re.findall(r'"([^"]+)"', spec)
+        for q in quoted:
+            assert q.lower() in _COLD_OPEN_BANNED, (
+                f"cold-open spec quotes {q!r}, which is not a banned phrase — "
+                "a quotable specimen is how a tic gets seeded network-wide"
+            )
+
+    def test_spec_bans_the_cliches(self):
+        spec = build_cold_open_spec("tesla").lower()
+        for banned in ("welcome to", "let's dive in", "buckle up", "today is"):
+            assert banned in spec
+
+    def test_spec_forbids_date_and_greeting(self):
+        spec = build_cold_open_spec("tesla").lower()
+        assert "no greeting" in spec
+        assert "no date" in spec
+
+    def test_russian_spec_is_russian(self):
+        spec = build_cold_open_spec("finansy_prosto", is_ru=True)
+        assert "ХОЛОДНОЕ ОТКРЫТИЕ" in spec
+        assert "COLD OPEN" not in spec
+
+
+class TestPromptsPutTheHookFirst:
+    """The structural guarantee: {hook} precedes {intro_line}.
+
+    This is the whole change. A prompt edit that reorders these two
+    placeholders puts the housekeeping back in front of the value
+    without changing a single line of Python, so it is pinned here.
+    """
+
+    @staticmethod
+    def _placement_offset(text, placeholder):
+        """Offset of the line that IS the placeholder, not one that mentions it.
+
+        Every prompt also names ``{intro_line}`` in prose — the brand
+        rules say to copy it verbatim — and that mention sits near the
+        top of the file. The placement is the line whose entire content
+        is the placeholder.
+        """
+        offset = 0
+        for line in text.splitlines(keepends=True):
+            if line.strip() == placeholder:
+                return offset
+            offset += len(line)
+        return None
+
+    def test_hook_precedes_intro_line_in_every_prompt(self):
+        for slug, filename in _PROMPT_FOR_SLUG.items():
+            text = (_PROMPTS / filename).read_text(encoding="utf-8")
+            assert "{hook}" in text, f"{filename} lost its {{hook}}"
+            intro_at = self._placement_offset(text, "{intro_line}")
+            assert intro_at is not None, (
+                f"{filename} has no standalone {{intro_line}} line — the "
+                "identity line is no longer placed, only described"
+            )
+            assert text.index("{hook}") < intro_at, (
+                f"{filename}: {{intro_line}} is placed before {{hook}} — the "
+                "episode would open on housekeeping again"
+            )
+
+    def test_hook_appears_exactly_once(self):
+        """Two {hook} sites would speak the hook twice."""
+        for slug, filename in _PROMPT_FOR_SLUG.items():
+            text = (_PROMPTS / filename).read_text(encoding="utf-8")
+            assert text.count("{hook}") == 1, f"{filename} has multiple {{hook}}"
+
+    def test_russian_cold_open_labels_match_each_shows_own_rule(self):
+        """The two Russian prompts disagree about speaker labels.
+
+        Финансы Просто requires every line to start with «Ведущая:» —
+        feminine, because Olya hosts it; the masculine «Ведущий:» is
+        both the wrong label and the wrong gender. Привет, Русский!
+        forbids speaker labels outright ("This is a SOLO host show — do
+        NOT prefix lines"). The first draft of this change got both
+        wrong, so both are pinned.
+        """
+        fp = (_PROMPTS / "fp_podcast.txt").read_text(encoding="utf-8")
+        fp_hook = next(l for l in fp.splitlines() if "{hook}" in l)
+        assert fp_hook.startswith("Ведущая:"), fp_hook
+
+        pr = (_PROMPTS / "privet_russian_podcast.txt").read_text(encoding="utf-8")
+        pr_hook = next(l for l in pr.splitlines() if "{hook}" in l)
+        assert pr_hook.strip() == "{hook}", (
+            f"privet_russian labels its cold open ({pr_hook!r}) but the same "
+            "prompt forbids speaker labels"
+        )
+
+    def test_every_prompt_injects_the_cold_open_spec(self):
+        for slug, filename in _PROMPT_FOR_SLUG.items():
+            text = (_PROMPTS / filename).read_text(encoding="utf-8")
+            assert "{cold_open_spec}" in text, (
+                f"{filename} does not inject {{cold_open_spec}} — it would "
+                "cold-open with no rules about what the first words must do"
+            )
+
+
+class TestVoiceStartsImmediately:
+    """No show may reintroduce a music-alone wait before the first words.
+
+    All 13 run_show shows override the network defaults, so a partial
+    revert is a per-file edit that this catches.
+    """
+
+    @staticmethod
+    def _audio(slug):
+        from engine.config import load_config
+        return load_config(_SHOWS / f"{slug}.yaml").audio
+
+    def test_no_show_delays_the_voice(self):
+        for slug in _PROMPT_FOR_SLUG:
+            audio = self._audio(slug)
+            assert audio.voice_intro_delay == 0.0, (
+                f"{slug} delays the voice by {audio.voice_intro_delay}s — "
+                "the hook no longer lands in the first second"
+            )
+
+    def test_music_alone_period_is_a_breath_not_a_wait(self):
+        for slug in _PROMPT_FOR_SLUG:
+            audio = self._audio(slug)
+            assert audio.intro_duration <= 5.0, (
+                f"{slug} has intro_duration {audio.intro_duration}s"
+            )
+
+    def test_network_default_matches(self):
+        raw = yaml.safe_load((_SHOWS / "_defaults.yaml").read_text(encoding="utf-8"))
+        assert raw["audio"]["voice_intro_delay"] == 0.0
+        assert raw["audio"]["intro_duration"] == 3.0
+
+    def test_music_still_plays_over_the_open(self):
+        """The open is a cold open in structure, not a bare one in sound.
+
+        Rendered A/B at merge time: with the theme playing from t=0 and
+        the voice entering at t=0, the sidechain compressor holds the
+        music at the same level under the opening line as under the rest
+        of the episode (-31.7 dB at t=0..3 and at t=240 alike, measured
+        above 2 kHz against a 1 kHz tone voice), and integrated loudness
+        stays on target (-16.2 LUFS). So intro_volume must stay > 0 —
+        dropping the music would make the change a bare cold open, which
+        is not what was verified.
+        """
+        for slug in _PROMPT_FOR_SLUG:
+            audio = self._audio(slug)
+            assert audio.intro_volume > 0.0, f"{slug} has no intro music"
