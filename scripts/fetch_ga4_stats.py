@@ -121,6 +121,59 @@ def fetch(prop: str, days: int) -> Dict[str, Any]:
         "limit": 10,
     }))
 
+    # ---- Funnel attribution (July 2026) -----------------------------
+    # The three reports that turn GA4 from a traffic counter into the
+    # middle of a funnel. Without `sessionCampaignName` nothing on the
+    # site can be traced back to the video that produced it, which is
+    # exactly why the network could measure reach and captures but never
+    # the step between them.
+    campaigns = _rows(_run_report(session, prop, {
+        "dateRanges": date_range,
+        "dimensions": [{"name": "sessionSource"}, {"name": "sessionMedium"},
+                       {"name": "sessionCampaignName"}],
+        "metrics": [{"name": "sessions"}, {"name": "activeUsers"},
+                    {"name": "engagedSessions"},
+                    {"name": "userEngagementDuration"}],
+        "orderBys": [{"metric": {"metricName": "sessions"}, "desc": True}],
+        "limit": 200,
+    }))
+    # Landing pages, so a funnel destination's own performance is visible
+    # even for visits GA4 could not attribute to a campaign.
+    landing_pages = _rows(_run_report(session, prop, {
+        "dateRanges": date_range,
+        "dimensions": [{"name": "landingPagePlusQueryString"}],
+        "metrics": [{"name": "sessions"}, {"name": "activeUsers"},
+                    {"name": "bounceRate"}],
+        "orderBys": [{"metric": {"metricName": "sessions"}, "desc": True}],
+        "limit": 50,
+    }))
+    # Conversions by campaign. `newsletter_signup` is fired by the funnel
+    # landing pages' capture form (templates/ru_landing.html.j2), so this
+    # is the only GA4 view that reports the funnel's last step. Best
+    # effort: an unconfigured or empty event name is a normal state
+    # before the first capture, not an error.
+    try:
+        conversions = _rows(_run_report(session, prop, {
+            "dateRanges": date_range,
+            "dimensions": [{"name": "eventName"},
+                           {"name": "sessionCampaignName"}],
+            "metrics": [{"name": "eventCount"}],
+            "dimensionFilter": {
+                "filter": {
+                    "fieldName": "eventName",
+                    "inListFilter": {
+                        "values": ["newsletter_signup", "generate_lead"],
+                    },
+                },
+            },
+            "orderBys": [{"metric": {"metricName": "eventCount"},
+                          "desc": True}],
+            "limit": 100,
+        }))
+    except Exception as exc:  # noqa: BLE001 — never fail the whole fetch
+        logger.warning("GA4 conversion report unavailable: %s", exc)
+        conversions = []
+
     totals = {
         "active_users": sum(int(r.get("activeUsers", 0)) for r in day_series),
         "sessions": sum(int(r.get("sessions", 0)) for r in day_series),
@@ -137,6 +190,10 @@ def fetch(prop: str, days: int) -> Dict[str, Any]:
         "top_pages": top_pages,
         "channels": channels,
         "countries": countries,
+        # v2 additions — consumed by scripts/build_funnel.py.
+        "campaigns": campaigns,
+        "landing_pages": landing_pages,
+        "conversions": conversions,
     }
 
 

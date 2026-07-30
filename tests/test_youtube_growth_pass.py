@@ -186,12 +186,32 @@ class TestAutoComment:
         assert "build_pinned_comment_text" in src
         assert "auto_comment" in src
 
-    def test_ru_dub_comment_only_with_ru_long(self):
+    def test_ru_dub_comment_never_links_an_english_video(self):
+        """The original invariant, re-expressed after the July 2026 pilot.
+
+        This used to pin the literal line
+        ``if long_url and bool(getattr(yt, "auto_comment"`` — i.e. post a
+        comment ONLY when a RU long-form shipped. That gate was doing
+        two jobs: keeping English URLs out of Russian Shorts (correct,
+        and still enforced below) and, accidentally, suppressing the
+        comment entirely — @NerraRU sits on a shorts-only tier for most
+        shows, so ``long_url`` was empty on nearly every run and the
+        network's highest-reach surface posted nothing at all.
+
+        The comment now falls back to the show's RUSSIAN landing page.
+        What must never happen is the English video, so that is what is
+        asserted: the English ``long_url`` is used only inside the
+        ``if long_url`` branch.
+        """
         src = (_ROOT / "engine/ru_dub.py").read_text(encoding="utf-8")
         assert "post_video_comment" in src
         assert "Полный выпуск" in src
-        # The gate: never link an English video from a Russian Short.
-        assert "if long_url and bool(getattr(yt, \"auto_comment\"" in src
+        # The RU comment block must still branch on long_url...
+        assert "if long_url:" in src
+        # ...and the fallback must resolve a RU destination, not a URL
+        # from any other channel.
+        assert 'channel="ru"' in src
+        assert "destination_for(" in src
 
 
 # ---------------------------------------------------------------------------

@@ -68,6 +68,59 @@ import type {
 
 const SUBSCRIBER_TAG = "gallery-subscriber";
 const COOKIE_NAME = "nn_gallery";
+
+// ---------------------------------------------------------------------------
+// Subscribe lists (July 2026 — funnel instrumentation)
+// ---------------------------------------------------------------------------
+// A caller names a LIST, not a tag. The server owns the tag set, so a
+// visitor can never add themselves (or anyone else) to an arbitrary
+// Buttondown segment by editing the request body — the reason this is a
+// server-side map and not a passthrough field.
+//
+// `gallery` is the pre-existing behaviour and stays the default, so the
+// gallery gate's requests are byte-identical to before.
+//
+// `ru-spacex` deliberately does NOT include the English "SpaceX Daily"
+// tag: these subscribers asked for a Russian weekly, and quietly adding
+// them to a daily English send is the fastest way to turn the pilot's
+// only asset into unsubscribes.
+const SUBSCRIBE_LISTS: Record<string, string[]> = {
+  gallery: [SUBSCRIBER_TAG],
+  "ru-spacex": ["ru-spacex"],
+};
+const DEFAULT_LIST = "gallery";
+
+// Attribution tags. Same allow-list rule: the client picks from a closed
+// set, the server decides what that means. Values mirror
+// `engine.funnel.source_tag()` — keep the two in sync.
+const SOURCE_TAGS = new Set([
+  "src-youtube",
+  "src-youtube-ru",
+  "src-youtube-fr",
+  "src-podcast",
+  "src-newsletter",
+  "src-x",
+  "src-nerranetwork",
+]);
+
+/** Resolve the client's `list` + `source` into the tags we will send. */
+export function resolveSubscribeTags(
+  list: unknown,
+  source: unknown,
+): { tags: string[]; list: string } {
+  const listKey =
+    typeof list === "string" && Object.prototype.hasOwnProperty.call(
+      SUBSCRIBE_LISTS, list,
+    )
+      ? list
+      : DEFAULT_LIST;
+  const tags = [...SUBSCRIBE_LISTS[listKey]];
+  const src = typeof source === "string" ? source.trim().toLowerCase() : "";
+  if (SOURCE_TAGS.has(src) && !tags.includes(src)) {
+    tags.push(src);
+  }
+  return { tags, list: listKey };
+}
 const SUBSCRIBER_TTL_SECONDS = 90 * 24 * 60 * 60;   // 90 days
 const MAGIC_TTL_SECONDS = 15 * 60;                  // 15 minutes
 const MAGIC_TTL_MINUTES = 15;
@@ -171,10 +224,11 @@ export async function handleSubscribe(
     return jsonResponse(request, 400, { ok: false, error: "invalid email" });
   }
 
+  const { tags, list } = resolveSubscribeTags(body?.list, body?.source);
   const result = await deps.buttondown.subscribe(
     env.BUTTONDOWN_API_KEY,
     email,
-    SUBSCRIBER_TAG,
+    tags,
   );
 
   if (!result.ok) {
@@ -182,6 +236,7 @@ export async function handleSubscribe(
     console.warn("subscribe: buttondown failure", result.error, result.status);
     return jsonResponse(request, 502, { ok: false, error: "subscribe failed" });
   }
+  console.log("subscribe: ok", list, tags.join(","));
 
   const token = await signJwt(
     {

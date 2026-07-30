@@ -37,9 +37,16 @@ export interface SubscribeResult {
 export async function subscribe(
   apiKey: string,
   email: string,
-  tag: string,
+  tag: string | string[],
 ): Promise<SubscribeResult> {
   if (!apiKey) return { ok: false, alreadySubscribed: false, error: "no api key" };
+  // July 2026: accepts multiple tags so one signup can carry both the
+  // list it joined AND the surface that sent it (`src-youtube-ru`), which
+  // is what makes a capture attributable in api/funnel.json. A bare
+  // string keeps every existing caller working unchanged.
+  const tags = (Array.isArray(tag) ? tag : [tag]).filter(
+    (t) => typeof t === "string" && t.trim().length > 0,
+  );
   let resp: Response;
   try {
     resp = await fetch(`${BUTTONDOWN_BASE}/subscribers`, {
@@ -51,7 +58,7 @@ export async function subscribe(
       },
       body: JSON.stringify({
         email_address: email,
-        tags: [tag],
+        tags,
         type: "regular",
       }),
     });

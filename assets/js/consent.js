@@ -83,15 +83,39 @@
         var banner = document.createElement('div');
         banner.id = 'nn-consent-banner';
         banner.setAttribute('role', 'dialog');
-        banner.setAttribute('aria-label', 'Cookie consent');
+        // Localised from the page's own <html lang> (July 2026). The
+        // banner is the most prominent element on the screen when it
+        // shows, so an English one on a Russian page — including the RU
+        // funnel landing pages, whose single job is to convert Russian
+        // speakers — is the first thing a visitor is asked to trust.
+        var isRu = (document.documentElement.lang || 'en')
+            .toLowerCase().indexOf('ru') === 0;
+        var t = isRu ? {
+            label: 'Согласие на использование cookie',
+            text: 'Мы используем cookie, чтобы понимать, как слушатели ' +
+                  'находят Nerra Network, и оценивать эффективность. ',
+            privacy: 'Политика конфиденциальности',
+            reject: 'Отклонить',
+            accept: 'Принять'
+        } : {
+            label: 'Cookie consent',
+            text: 'We use cookies to understand how listeners find ' +
+                  'Nerra Network and to measure our marketing. ',
+            privacy: 'Privacy Policy',
+            reject: 'Reject',
+            accept: 'Accept'
+        };
+        banner.setAttribute('aria-label', t.label);
         banner.innerHTML = '' +
             '<div class="nn-consent-text">' +
-                'We use cookies to understand how listeners find Nerra Network and to measure our marketing. ' +
-                '<a href="/privacy-policy.html">Privacy Policy</a>.' +
+                t.text +
+                '<a href="/privacy-policy.html">' + t.privacy + '</a>.' +
             '</div>' +
             '<div class="nn-consent-actions">' +
-                '<button type="button" class="nn-consent-btn nn-consent-reject">Reject</button>' +
-                '<button type="button" class="nn-consent-btn nn-consent-accept">Accept</button>' +
+                '<button type="button" class="nn-consent-btn nn-consent-reject">' +
+                    t.reject + '</button>' +
+                '<button type="button" class="nn-consent-btn nn-consent-accept">' +
+                    t.accept + '</button>' +
             '</div>';
         document.body.appendChild(banner);
 

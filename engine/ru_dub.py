@@ -217,9 +217,31 @@ def _hashtags(config) -> str:
     return " ".join(parts)
 
 
-def _ru_long_description(config, ru_desc: str) -> str:
+def _ru_long_description(config, ru_desc: str, *,
+                         episode_num: int = 0,
+                         kind: str = "long",
+                         variant: str = "") -> str:
+    """RU description with a funnel-tagged, Russian-language destination.
+
+    Before July 2026 this linked the bare English homepage with no UTM:
+    the network's highest-reach surface pointed at a page its audience
+    could not read, and its traffic was unattributable. ``engine.funnel``
+    resolves ``funnel.destinations.ru`` (the Russian landing page for
+    shows in the pilot) and falls back to the show page for everyone
+    else, so an un-piloted show's only change is that its clicks are now
+    countable.
+    """
+    from engine import funnel as _funnel
+
     base_url = getattr(config.publishing, "base_url", "https://nerranetwork.com")
-    lines = [ru_desc.strip(), "", f"🎧 {base_url}", "", _AI_DISCLOSURE_RU]
+    dest = _funnel.destination_for(config, channel="ru") or base_url
+    link = _funnel.episode_link(
+        dest, getattr(config, "slug", ""), episode_num,
+        channel="ru", kind=kind, variant=variant,
+        placement=_funnel.PLACEMENT_DESCRIPTION,
+    ) or dest
+    lines = [ru_desc.strip(), "", f"🎧 Все выпуски по-русски: {link}",
+             "", _AI_DISCLOSURE_RU]
     tags = _hashtags(config)
     if tags:
         lines += ["", tags]
@@ -585,7 +607,9 @@ def publish_ru_dub(
                 up = upload_video(
                     long_mp4, credentials=creds,
                     title=ru_title,
-                    description=_ru_long_description(config, ru_desc),
+                    description=_ru_long_description(
+                        config, ru_desc,
+                        episode_num=episode_num, kind="long"),
                     tags=list(getattr(config, "keywords", []) or []),
                     category_id=int(getattr(yt, "category_id", 28)),
                     default_language="ru",
@@ -755,24 +779,54 @@ def publish_ru_dub(
                     sup = upload_video(
                         short_mp4, credentials=creds,
                         title=short_title,
-                        description=_ru_long_description(config, ru_desc),
+                        description=_ru_long_description(
+                            config, ru_desc,
+                            episode_num=episode_num, kind="short"),
                         tags=list(getattr(config, "keywords", []) or []),
                         category_id=int(getattr(yt, "category_id", 28)),
                         default_language="ru",
                         privacy_status=getattr(yt, "privacy_status", "public"))
                     short_urls_out.append(sup.watch_url)
                     # July 18 2026 (operator-approved): RU funnel comment.
-                    # Only when a RU long-form exists this run — a Russian
-                    # Short should never link an English video.
-                    if long_url and bool(getattr(yt, "auto_comment", True)):
+                    # A Russian Short must never link an English video, so
+                    # the long-form link is used only when a RU long-form
+                    # actually shipped this run.
+                    #
+                    # July 2026 pilot fix: @NerraRU sits on a shorts-only
+                    # tier for most shows (RU long-form was demoted after
+                    # ~9% retention), so `long_url` is empty on nearly
+                    # every run — which meant the network's highest-reach
+                    # surface posted NO comment at all on most days. When
+                    # there is no RU long-form, the comment now carries the
+                    # show's Russian landing page instead of nothing.
+                    if bool(getattr(yt, "auto_comment", True)):
                         try:
                             from engine.youtube import post_video_comment
-                            post_video_comment(
-                                credentials=creds,
-                                video_id=sup.video_id,
-                                text=("▶ Полный выпуск: " + long_url
-                                      + "\n🔔 Подпишитесь — новые выпуски "
-                                        "каждый день"))
+                            from engine import funnel as _funnel
+
+                            if long_url:
+                                _text = ("▶ Полный выпуск: " + long_url
+                                         + "\n🔔 Подпишитесь — новые выпуски "
+                                           "каждый день")
+                            else:
+                                _dest = _funnel.episode_link(
+                                    _funnel.destination_for(
+                                        config, channel="ru"),
+                                    getattr(config, "slug", ""), episode_num,
+                                    channel="ru", kind="short",
+                                    placement=_funnel.PLACEMENT_COMMENT,
+                                )
+                                _text = (
+                                    "▶ Полный выпуск и все эпизоды "
+                                    "по-русски: " + _dest
+                                    + "\n🔔 Подпишитесь — новые выпуски "
+                                      "каждый день"
+                                ) if _dest else ""
+                            if _text:
+                                post_video_comment(
+                                    credentials=creds,
+                                    video_id=sup.video_id,
+                                    text=_text)
                         except Exception:  # noqa: BLE001
                             pass
                     # Record the title the Short actually shipped with

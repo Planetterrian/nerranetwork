@@ -21,7 +21,7 @@ import re
 import sys
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
-from urllib.parse import quote
+from urllib.parse import quote, urlparse
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -2611,6 +2611,12 @@ def generate_all_show_pages(*, dry_run=False):
         if result:
             paths.append(result)
 
+    # Russian funnel landing pages (July 2026 pilot). Generated with the
+    # show pages because their episode rail has the same daily cadence —
+    # and because a landing page that goes stale is a landing page the
+    # audience stops trusting.
+    paths.extend(generate_all_ru_landing_pages(dry_run=dry_run))
+
     # Dedicated MIT Performance & Lessons page (best-in-class transparency)
     mit_result = generate_mit_performance_page(dry_run=dry_run)
     if mit_result:
@@ -3208,8 +3214,11 @@ def generate_all_blogs(*, dry_run=False):
 # ---------------------------------------------------------------------------
 
 
-def generate_sitemap(*, dry_run=False):
-    """Generate sitemap.xml with all pages on the site."""
+def generate_sitemap(*, dry_run=False, out=None):
+    """Write sitemap.xml. *out* overrides the destination (tests only —
+    regenerating the real file outside the pipeline rewrites every
+    `lastmod` from local file state; see the sitemap landmine in
+    CLAUDE.md)."""
     from xml.sax.saxutils import escape as _esc
     import os
     from datetime import datetime, timezone
@@ -3264,6 +3273,14 @@ def generate_sitemap(*, dry_run=False):
     # Russian hub
     urls.append((f"{base}/ru/index.html", "0.7",
                  _lm_or_today("ru/index.html")))
+
+    # Russian funnel landing pages. High priority on purpose: these are
+    # the destination every @NerraRU description points at, so they are
+    # the pages a Russian-speaking searcher should find first.
+    for _slug in NETWORK_SHOWS:
+        _target = _ru_landing_target(_slug)
+        if _target and (ROOT / _target).exists():
+            urls.append((f"{base}/{_target}", "0.8", _lm_or_today(_target)))
 
     # Legal pages
     for legal in ["privacy-policy.html", "terms-of-service.html", "ai-disclosure.html"]:
@@ -3325,7 +3342,7 @@ def generate_sitemap(*, dry_run=False):
 
     xml = "\n".join(lines)
 
-    out_path = ROOT / "sitemap.xml"
+    out_path = Path(out) if out else ROOT / "sitemap.xml"
     if dry_run:
         print(f"[dry-run] Would write {out_path} ({len(urls)} URLs)")
         return None
@@ -3424,6 +3441,209 @@ def _count_languages() -> int:
         else:
             langs.add("en")
     return len(langs)
+
+
+# ---------------------------------------------------------------------------
+# Russian funnel landing pages (July 2026 pilot)
+# ---------------------------------------------------------------------------
+# Copy per show. Kept here rather than in the show YAML because it is page
+# copy, not pipeline config, and because it must be written by someone who
+# can read it — an auto-translated landing page is exactly the thing that
+# makes an audience distrust a signup form.
+_RU_LANDING_COPY = {
+    "spacex": {
+        "show_name_ru": "SpaceX по-русски",
+        "hero_title": "SpaceX. Каждый день. По-русски.",
+        "hero_description": (
+            "Starship, Falcon, Starlink, Dragon и рынок SPCX — 10–13 минут "
+            "инженерной сути каждый день. Источники названы, один честный "
+            "контраргумент в каждом выпуске, без рекламы и без пересказа "
+            "заголовков."
+        ),
+        "magnet_title": "«Хроника SpaceX» — письмо по воскресеньям",
+        "magnet_description": (
+            "Одно письмо в неделю: главное за семь дней одним списком, "
+            "окно следующего запуска и ссылки на выпуски, которые стоит "
+            "послушать. По-русски."
+        ),
+        "magnet_note": (
+            "Одно письмо в неделю, ничего кроме. Отписка — одной ссылкой "
+            "в каждом письме."
+        ),
+        "listen_note": (
+            "Русская озвучка выходит вслед за английским выпуском — "
+            "тот же сценарий, тот же день."
+        ),
+        "launches": True,
+    },
+}
+
+_RU_AI_DISCLOSURE = (
+    "Раскрытие: выпуски готовит Патрик, а озвучка создаётся "
+    "ИИ-синтезом голоса. Отбор материалов, анализ и тексты — "
+    "человеческая работа по первоисточникам."
+)
+
+
+def _ru_landing_target(slug: str) -> str:
+    """The ``ru/<name>.html`` path this show's RU landing page writes to.
+
+    Driven by the show YAML's ``funnel.destinations.ru`` so the page that
+    gets BUILT and the URL every @NerraRU description POINTS AT can never
+    drift apart — a landing page at a different path than the links is a
+    404 on the network's highest-reach surface, and nothing in the
+    pipeline fetches its own funnel URL to notice (the same failure shape
+    as the slug/filename landmine).
+
+    Returns "" when the show has no on-site Russian destination.
+    """
+    import yaml as _yaml
+
+    yaml_path = SHOWS_DIR / f"{slug}.yaml"
+    if not yaml_path.exists():
+        return ""
+    try:
+        data = _yaml.safe_load(yaml_path.read_text(encoding="utf-8")) or {}
+    except _yaml.YAMLError:
+        return ""
+    dest = (((data.get("funnel") or {}).get("destinations") or {})
+            .get("ru") or "").strip()
+    if not dest:
+        return ""
+    path = urlparse(dest).path.lstrip("/")
+    return path if path.startswith("ru/") and path.endswith(".html") else ""
+
+
+def _ru_landing_episodes(slug: str, limit: int = 4) -> list:
+    """Recent episodes that actually have a Russian audio track."""
+    yaml_path = SHOWS_DIR / f"{slug}.yaml"
+    try:
+        import yaml as _yaml
+        data = _yaml.safe_load(yaml_path.read_text(encoding="utf-8")) or {}
+        summaries_path = ROOT / (data.get("publishing") or {}).get(
+            "summaries_json", "")
+        payload = json.loads(summaries_path.read_text(encoding="utf-8"))
+    except Exception:
+        return []
+    out = []
+    for rec in (payload.get("summaries") or []):
+        track = ((rec.get("translations") or {}).get("ru") or {})
+        audio = (track.get("audio_url") or "").strip()
+        if not audio:
+            continue
+        out.append({
+            "number": rec.get("episode_num"),
+            "date": rec.get("date", ""),
+            "title": (track.get("description") or track.get("title")
+                      or "").strip(),
+            "audio_url": audio,
+        })
+        if len(out) >= limit:
+            break
+    return out
+
+
+def generate_ru_landing_page(slug, *, dry_run=False):
+    """Render one show's Russian funnel landing page (``ru/<slug>.html``).
+
+    A no-op (returns ``None``) unless the show declares an on-site
+    ``funnel.destinations.ru`` AND has hand-written Russian copy, so a
+    show can never accidentally ship an English landing page to a Russian
+    audience.
+    """
+    target = _ru_landing_target(slug)
+    copy = _RU_LANDING_COPY.get(slug)
+    if not target or not copy:
+        return None
+
+    cfg = NETWORK_SHOWS.get(slug, {})
+    prefix = "../"
+    rss_file = cfg.get("rss_file", "")
+    ru_feed = ""
+    if rss_file:
+        candidate = f"{Path(rss_file).stem}.ru.rss"
+        if (ROOT / candidate).exists():
+            ru_feed = f"{prefix}{candidate}"
+
+    import yaml as _yaml
+    try:
+        show_yaml = _yaml.safe_load(
+            (SHOWS_DIR / f"{slug}.yaml").read_text(encoding="utf-8")) or {}
+    except Exception:
+        show_yaml = {}
+    # The RU edition is a SEPARATE Apple show with its own id — linking
+    # the English one would send a Russian listener to English audio.
+    apple_ru_id = str(
+        (show_yaml.get("apple_show_ids") or {}).get("ru", "")).strip()
+
+    listen_links = []
+    if apple_ru_id:
+        listen_links.append({
+            "label": "Apple Podcasts",
+            "url": f"https://podcasts.apple.com/podcast/id{apple_ru_id}",
+            "external": True,
+        })
+    if ru_feed:
+        listen_links.append({
+            "label": "RSS (любое приложение)", "url": ru_feed,
+            "external": False,
+        })
+    listen_links.append({
+        "label": "YouTube · @NerraRU",
+        "url": "https://www.youtube.com/@NerraRU",
+        "external": True,
+    })
+
+    capture_list = ((show_yaml.get("funnel") or {}).get("capture_tag")
+                    or "gallery")
+
+    env = _get_jinja_env()
+    template = env.get_template("ru_landing.html.j2")
+    context = {
+        "path_prefix": prefix,
+        "page_lang": "ru",
+        "page_title": f"{copy['show_name_ru']} | Nerra Network",
+        "page_description": copy["hero_description"],
+        "meta_description": copy["hero_description"],
+        "theme_color": cfg.get("brand_color", "#6B47FF"),
+        "show_color": cfg.get("brand_color", "#6B47FF"),
+        "show_color_dark": cfg.get("brand_color_dark",
+                                   cfg.get("brand_color", "#6B47FF")),
+        "og_image": f"{GITHUB_RAW}/{_url_encode_image(cfg.get('podcast_image', ''))}",
+        "canonical_url": f"{GITHUB_RAW}/{target}",
+        "cover_url": f"{prefix}{cfg.get('podcast_image', '')}",
+        "all_shows": _build_all_shows_list(),
+        "episodes": _ru_landing_episodes(slug),
+        "listen_links": listen_links,
+        "capture_list": capture_list,
+        # One ask per landing page. The footer's show-picker offers
+        # fifteen English show names and would tag a Russian visitor
+        # onto English dailies — a competing CTA and the wrong one.
+        "hide_footer_subscribe": True,
+        "launch_feed_url": f"{prefix}api/spacex_launches.json",
+        "show_launch_panel": bool(copy.get("launches")),
+        "ai_disclosure": _RU_AI_DISCLOSURE,
+        **copy,
+    }
+    html = template.render(**context)
+    out_path = ROOT / target
+    if dry_run:
+        print(f"[dry-run] Would write {out_path} ({len(html):,} bytes)")
+        return out_path
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
+    print(f"Wrote {out_path} ({len(html):,} bytes)")
+    return out_path
+
+
+def generate_all_ru_landing_pages(*, dry_run=False):
+    """Render every show that has an on-site Russian funnel destination."""
+    written = []
+    for slug in NETWORK_SHOWS:
+        path = generate_ru_landing_page(slug, dry_run=dry_run)
+        if path:
+            written.append(path)
+    return written
 
 
 def generate_data_hub_page(*, dry_run=False):
@@ -3856,6 +4076,12 @@ def main():
             generate_spacex_dashboard(dry_run=args.dry_run)
         # Phase 3 narrative page for other memory-enabled shows (no-op otherwise)
         generate_narrative_page(args.show, dry_run=args.dry_run)
+        # Russian funnel landing page (no-op unless the show has one). Must
+        # run in the per-show path too: this is the branch the episode
+        # pipeline calls, and a landing page whose episode rail only
+        # refreshes nightly would show yesterday's show to everyone who
+        # arrives from this morning's Short.
+        generate_ru_landing_page(args.show, dry_run=args.dry_run)
         if args.blogs:
             generate_blog_posts(args.show, dry_run=args.dry_run)
             generate_blog_index(args.show, dry_run=args.dry_run)

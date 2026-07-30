@@ -16,12 +16,27 @@
   // Short labels shown on the toggle pill per language.
   var SHORT = { en: "EN", fr: "FR", es: "ES", ru: "RU", zh: "中文" };
 
+  // Fall back to the PAGE's own language, not to English (July 2026).
+  // A first-time visitor landing on a Russian page saw the chip read
+  // "EN" — on the RU funnel landing pages, whose entire job is to look
+  // like they were made for the reader, that is the first detail that
+  // says otherwise. A stored preference still wins: someone who chose a
+  // language means it.
+  function pageLang() {
+    try {
+      var l = (document.documentElement.lang || "en").toLowerCase().slice(0, 2);
+      return SHORT[l] ? l : "en";
+    } catch (e) {
+      return "en";
+    }
+  }
+
   function read() {
     try {
       var v = localStorage.getItem(PREF_KEY);
-      return v && SHORT[v] ? v : "en";
+      return v && SHORT[v] ? v : pageLang();
     } catch (e) {
-      return "en";
+      return pageLang();
     }
   }
 

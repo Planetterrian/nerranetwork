@@ -319,6 +319,7 @@ def build_long_form_metadata(
     chapters_path: Optional[Path] = None,
     photo_attribution: Optional[List[str]] = None,
     optimized_title: Optional[str] = None,
+    channel: str = "en",
 ) -> Dict:
     """Assemble the YouTube metadata payload for a long-form upload.
 
@@ -358,10 +359,18 @@ def build_long_form_metadata(
     base_url = getattr(config.publishing, "base_url",
                        "https://nerranetwork.com").rstrip("/")
     rss_link = getattr(config.publishing, "rss_link", "") or base_url
-    utm_link = (
-        f"{rss_link}{'&' if '?' in rss_link else '?'}"
-        f"utm_source=youtube&utm_medium=video&utm_campaign=ep{episode_num}"
-    )
+    # Funnel-tagged destination. ``engine.funnel`` owns the campaign
+    # taxonomy for the whole network — the previous hand-rolled
+    # ``utm_campaign=ep{n}`` carried no show slug, so every show's
+    # episode 42 collapsed into one unattributable GA4 row.
+    from engine import funnel as _funnel
+
+    utm_link = _funnel.episode_link(
+        _funnel.destination_for(config, channel=channel) or rss_link,
+        getattr(config, "slug", ""), episode_num,
+        channel=channel, kind="long",
+        placement=_funnel.PLACEMENT_DESCRIPTION,
+    ) or rss_link
 
     template_body = _load_description_body_from_template(
         config,
@@ -526,6 +535,8 @@ def build_short_metadata(
     hook: str,
     long_form_url: str = "",
     optimized_title: Optional[str] = None,
+    channel: str = "en",
+    variant: str = "",
 ) -> Dict:
     """Assemble the YouTube metadata payload for a Shorts upload.
 
@@ -568,10 +579,17 @@ def build_short_metadata(
     base_url = getattr(config.publishing, "base_url",
                        "https://nerranetwork.com").rstrip("/")
     rss_link = getattr(config.publishing, "rss_link", "") or base_url
-    utm_link = (
-        f"{rss_link}{'&' if '?' in rss_link else '?'}"
-        f"utm_source=youtube&utm_medium=shorts&utm_campaign=ep{episode_num}"
-    )
+    # Funnel-tagged destination (see engine/funnel.py). ``variant`` rides
+    # in the campaign id so the Shorts motion A/B can be read straight
+    # out of GA4 without a second join.
+    from engine import funnel as _funnel
+
+    utm_link = _funnel.episode_link(
+        _funnel.destination_for(config, channel=channel) or rss_link,
+        getattr(config, "slug", ""), episode_num,
+        channel=channel, kind="short", variant=variant,
+        placement=_funnel.PLACEMENT_DESCRIPTION,
+    ) or rss_link
     pieces.append(f"🌐 Show page: {rss_link}")
     pieces.append(f"Subscribe to the podcast: {utm_link}")
     disclosure = (config.youtube.synthetic_disclosure or "").strip()

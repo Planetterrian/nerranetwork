@@ -141,10 +141,26 @@ def _playlist_id(config, lang: DubLanguage) -> str:
     return str(mapping.get(lang.code, "") or "").strip()
 
 
-def _long_description(config, desc: str, lang: DubLanguage) -> str:
+def _long_description(config, desc: str, lang: DubLanguage, *,
+                      episode_num: int = 0, kind: str = "long") -> str:
+    """Description with a funnel-tagged destination for this language.
+
+    Same change the RU dub got: resolve ``funnel.destinations[<lang>]``
+    (a localized landing page when the show has one) and fall back to the
+    show page, always UTM-tagged so @NerraFR's clicks are countable. A
+    show with no localized destination is unchanged apart from the tag.
+    """
+    from engine import funnel as _funnel
+
     base_url = getattr(config.publishing, "base_url",
                        "https://nerranetwork.com")
-    lines = [desc.strip(), "", f"🎧 {base_url}", "", lang.disclosure]
+    dest = _funnel.destination_for(config, channel=lang.code) or base_url
+    link = _funnel.episode_link(
+        dest, getattr(config, "slug", ""), episode_num,
+        channel=lang.code, kind=kind,
+        placement=_funnel.PLACEMENT_DESCRIPTION,
+    ) or dest
+    lines = [desc.strip(), "", f"🎧 {link}", "", lang.disclosure]
     tags = _hashtags(config)
     if tags:
         lines += ["", tags]
@@ -408,7 +424,9 @@ def publish_lang_dub(
                 up = upload_video(
                     long_mp4, credentials=creds,
                     title=title,
-                    description=_long_description(config, desc, lang),
+                    description=_long_description(config, desc, lang,
+                                                  episode_num=episode_num,
+                                                  kind="long"),
                     tags=list(getattr(config, "keywords", []) or []),
                     category_id=int(getattr(yt, "category_id", 28)),
                     default_language=lang.default_language,
@@ -568,7 +586,9 @@ def publish_lang_dub(
                     sup = upload_video(
                         short_mp4, credentials=creds,
                         title=st,
-                        description=_long_description(config, desc, lang),
+                        description=_long_description(config, desc, lang,
+                                                      episode_num=episode_num,
+                                                      kind="short"),
                         tags=list(getattr(config, "keywords", []) or []),
                         category_id=int(getattr(yt, "category_id", 28)),
                         default_language=lang.default_language,

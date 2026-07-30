@@ -1,0 +1,231 @@
+# Funnel instrumentation, the RU SpaceX pilot, and the Shorts motion A/B
+
+*July 2026. Three connected pieces: a measurement layer, a pilot that
+uses it, and an experiment it can score.*
+
+---
+
+## 1. Why the funnel could not be measured before
+
+The July 18 2026 network audit concluded that the factory is world-class
+(100% run success, ~90 episodes/week in five languages at ~$110-125/mo)
+and the **funnel is the product gap**: ~3,900 downloads/30d and 3
+newsletter subscribers.
+
+The blocker was never missing analytics. All four systems were live:
+
+| System | What it knew | What it could not say |
+|---|---|---|
+| YouTube Analytics | views, retention, subs per video | where those viewers went |
+| OP3 | downloads per show | who they were |
+| GA4 | sessions on the site | which video sent them |
+| Buttondown | 3 subscribers | which surface earned them |
+
+The blocker was that **no two of them shared a key**. Three concrete
+causes, all fixed:
+
+* `engine/video_metadata.py` hand-rolled `utm_campaign=ep45`. No show
+  slug — every show's episode 45 collapsed into one GA4 campaign row.
+* `engine/ru_dub.py` linked `https://nerranetwork.com` with **no UTM at
+  all**. The network's highest-reach surface (@NerraRU Shorts, ~25,800
+  views/30d against ~13,800 on the English channel) was invisible.
+* Buttondown captured one undifferentiated `gallery-subscriber` tag, so
+  a signup could never be traced back to anything.
+
+## 2. `engine/funnel.py` — one module owns every funnel link
+
+The same rule `engine/titles.py` established for titles: **never build a
+funnel URL, campaign id, or capture tag anywhere else.**
+
+The contract is two functions that must stay exact inverses:
+
+```
+build:  campaign_id("spacex", 45, channel="ru", kind="short")
+        -> "nn-spacex-ru-short-ep045"
+parse:  parse_campaign_id("nn-spacex-ru-short-ep045")
+        -> Campaign(show="spacex", channel="ru", kind="short", episode=45)
+```
+
+Format: `nn-<show>-<channel>-<kind>-ep<NNN>[-<variant>]`. `-` is the
+separator and can never appear inside a component (show slugs use
+underscores; `_norm()` translates hyphens rather than dropping them, so
+`models-agents` and `modelsagents` cannot collide). Placement rides in
+`utm_content`, not the campaign, so one campaign aggregates a video's
+whole surface area while still breaking down by description / comment.
+
+If the two halves ever drift, **nothing breaks** — `api/funnel.json`
+just reports zeros for the changed surfaces, which is exactly the
+failure this layer exists to end. `tests/test_funnel.py` therefore
+round-trips 1,152 generated shapes and asserts that each real publishing
+surface (EN Short, EN long, RU dub, FR dub) emits a parseable campaign.
+
+### Destinations
+
+`funnel.destinations` in a show's YAML, keyed by channel with a
+`default` fallback, resolved through `funnel.destination_for()`. Empty =
+the show page, i.e. the pre-funnel behaviour. This is what lets @NerraRU
+send viewers somewhere Russian while @NerraNetwork keeps its English
+show page.
+
+### The pipeline
+
+```
+scripts/fetch_youtube_analytics.py ─┐
+scripts/fetch_op3_stats.py         ─┤
+scripts/fetch_ga4_stats.py         ─┼─> scripts/build_funnel.py -> api/funnel.json
+scripts/fetch_buttondown_stats.py  ─┘                              -> dashboard card
+```
+
+Nightly, in that order (the funnel joins the four fetches and the
+dashboard reads the funnel — the same ordering bug the July 24 lake pass
+found).
+
+Two fetchers gained fields:
+
+* **GA4** now pulls `sessionSource / sessionMedium / sessionCampaignName`,
+  landing pages, and a `newsletter_signup` conversion report. Without the
+  campaign dimension nothing on the site can be traced back to a video.
+* **Buttondown** now pulls per-tag `subscriber_count` from `/v1/tags`.
+  The total answers "how big is the list"; only the breakdown answers
+  "which surface produced this subscriber".
+
+### Honesty rules
+
+A growth number that flatters is worse than none, so:
+
+* Every stage carries `configured`. A missing input reports **null,
+  never 0** — "we did not measure" and "it was zero" lead to opposite
+  decisions. The dashboard card renders "not measured".
+* Rates are **null until the denominator reaches 30**
+  (`MIN_DENOMINATOR`). A 1-of-2 sample is not a 50% conversion rate.
+* GA4 campaigns that do not parse as ours are **summed and reported**
+  under `unattributed`, plus an `attribution_coverage_pct`, so the
+  report shows how much of the picture it is missing rather than
+  implying it sees everything.
+
+---
+
+## 3. The RU SpaceX pilot
+
+**Why this surface.** @NerraRU carries ~25,800 views/30d — more than the
+English channel — and SpaceX's RU Shorts are its strongest performer.
+Until now every one of those Shorts pointed at the bare English
+homepage: maximum reach into a page its audience cannot read and that
+asks nothing of them. Most reach, least to lose.
+
+**One destination.** `ru/spacex.html`, generated by
+`generate_ru_landing_page()` from `templates/ru_landing.html.j2`, driven
+off `funnel.destinations.ru` so the page that gets BUILT and the URL
+every description POINTS AT cannot drift apart (the slug/filename
+landmine applied to the funnel; guarded by a test that resolves the
+configured URL to a file on disk).
+
+**One reason to give an email.** «Хроника SpaceX» — one Russian letter
+every Sunday: the week's episodes, the next launch window, links to the
+audio. Nothing else on the page asks for anything; the site footer's
+fifteen-English-show picker is suppressed via `hide_footer_subscribe`
+(default false, so no other page changed).
+
+**The letter is actually sent.** `scripts/send_ru_spacex_weekly.py` +
+`.github/workflows/ru-spacex-weekly.yml` (Sundays 15:00 UTC, after the
+episode and its RU translation). Composed entirely from artifacts that
+already exist — `translations.ru` in the summaries file and
+`api/spacex_launches.json`. Guards, in firing order: no API key -> clean
+no-op; no Russian episodes in the window -> **no send** (an empty issue
+spends the only attention this pilot has); already sent this ISO week ->
+refused.
+
+**Attribution.** The capture form posts `{email, list, source}` to the
+existing Cloudflare Worker. `list` and `source` are **allow-listed
+server-side** (`resolveSubscribeTags`) — the client names a list, the
+server owns the tags, so nobody can add themselves or anyone else to an
+arbitrary Buttondown segment. `source` comes from the page's own
+`utm_source`, so a capture carries the channel that earned it. The
+`ru-spacex` list deliberately does **not** include the English
+"SpaceX Daily" tag.
+
+**Also fixed on the way:** @NerraRU sits on a shorts-only tier for most
+shows, so `long_url` was empty on nearly every run and the RU funnel
+comment — added in July 2026 as the strongest placement after the
+description — **posted nothing at all on most days**. It now falls back
+to the show's Russian landing page.
+
+### Operator setup
+
+1. `wrangler deploy` in `workers/gallery/` (the subscribe endpoint gained
+   the list/source parameters).
+2. Confirm the `ru-spacex` tag exists in Buttondown (created on the first
+   capture).
+3. Set `GA4_SERVICE_ACCOUNT_JSON` if it is not already set — without it
+   the click and visit stages stay `configured: false` forever.
+4. Optional: mark `newsletter_signup` as a key event in GA4 so it appears
+   in Google's own reports as well as ours.
+
+---
+
+## 4. The Shorts motion A/B
+
+**The question.** Every Short the network ships is a Ken Burns pan over
+stills. Nobody knows whether generated *motion* converts better.
+
+**The design.** SpaceX publishes two Shorts a day. Short #1 stays
+exactly as it ships today (stills, control); Short #2 renders over Grok
+Imagine video clips (treatment). Same episode, same audio window logic,
+same channel, same day — the confounders that would wreck a
+between-episode or between-channel comparison (news cycle, upload time,
+thumbnail luck, audience mix) apply equally to both arms.
+
+**This is not the retired June 2026 pilot.** That was a *long-form*
+experiment, switched off for cost (~1/3 clip success, ~$0.35/ep, and a
+render that crowded the 40-minute pipeline timeout). `video_clips_enabled`
+stays `false` everywhere. Three differences make this one safe:
+
+1. **Scope** — a 35 s Short needs ~3 clips, not a 12-minute slideshow,
+   and the clip step runs after the audio has already published, so an
+   overrun costs a render, never an episode.
+2. **A hard cost ceiling** — `shorts_ab_max_cost_usd`, checked *before*
+   each request, so the experiment cannot drift into the ~$50/episode
+   line item that got full Grok Video switched off.
+3. **Honest fallback** — below `shorts_ab_min_clips` usable clips the
+   Short ships as stills and is **recorded as stills**. A treatment arm
+   quietly containing control episodes is worse than no experiment.
+
+**Cost:** ~$1.05/episode on the treatment Short, ~$32/month. Real money
+against a ~$110-125/mo network. **This experiment is meant to be read
+and ended, not left running.**
+
+**Reading it.** `scripts/build_shorts_ab_report.py` -> `api/shorts_ab.json`,
+nightly. It refuses to compare until **both** arms reach 14 Shorts
+(~2 weeks), reports a 95% confidence interval on the difference (Welch,
+unequal variances) rather than a p-value — the decision is "is the effect
+worth $32/month", which an interval answers directly — and says
+`no_measurable_difference` when that interval contains zero. Shorts
+published before the experiment carry no `variant` and are excluded
+entirely rather than being treated as control.
+
+**Deciding.** After ~14 episodes per arm, read
+`comparisons.average_view_percentage` (retention is the strongest public
+signal for a Short):
+
+* `treatment_better` -> consider raising `shorts_ab_video_indexes`, or
+  rolling motion out to the RU dubs where reach is highest.
+* `control_better` or `no_measurable_difference` -> set
+  `shorts_ab_enabled: false`. The answer is worth the $32 either way;
+  paying it a second month is not.
+
+---
+
+## Files
+
+| Path | Role |
+|---|---|
+| `engine/funnel.py` | campaign ids, funnel URLs, capture tags — the only builder |
+| `engine/shorts_ab.py` | variant assignment + treatment assets + fallbacks |
+| `scripts/build_funnel.py` | joins the four datasets -> `api/funnel.json` |
+| `scripts/build_shorts_ab_report.py` | scores the A/B -> `api/shorts_ab.json` |
+| `scripts/send_ru_spacex_weekly.py` | «Хроника SpaceX» |
+| `templates/ru_landing.html.j2` | the Russian landing page |
+| `workers/gallery/src/handlers.ts` | `resolveSubscribeTags` (server-side allow-list) |
+| `tests/test_funnel.py` | build/parse round-trip + every surface is tagged |
+| `tests/test_shorts_ab.py` | control preserved, fallbacks honest, no early verdicts |
+| `tests/test_ru_spacex_pilot.py` | page exists where it is linked, letter sends |

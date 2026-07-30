@@ -160,6 +160,21 @@ jobs:
         # first; the dashboard and search index both read the populated lake.
         run: python scripts/backfill_content_lake.py
 
+      # ORDER MATTERS: the funnel joins the four analytics files fetched
+      # above (youtube_stats, op3_stats, ga4_stats, buttondown_stats), and
+      # the dashboard reads api/funnel.json — so this sits after the
+      # fetches and before the dashboard build. Running it earlier would
+      # silently report yesterday's funnel; running it later would give
+      # the dashboard a stale one (the same ordering bug the July 24 lake
+      # pass found on the content lake).
+      - name: Build the funnel (reach -> click -> visit -> capture)
+        run: python scripts/build_funnel.py --out api/funnel.json || echo "::warning::Funnel build failed (non-fatal)"
+
+      - name: Score the Shorts motion A/B
+        # Reads the variant recorded on each published Short. Clean no-op
+        # ("not_started") until the experiment has published Shorts.
+        run: python scripts/build_shorts_ab_report.py --out api/shorts_ab.json || echo "::warning::Shorts A/B report failed (non-fatal)"
+
       - name: Generate Management Dashboard
         run: python scripts/generate_dashboard.py --out api/dashboard.json
 
@@ -279,6 +294,8 @@ jobs:
             api/youtube_channel_history.json
             api/youtube_policy.json
             api/gallery_retention.json
+            api/funnel.json
+            api/shorts_ab.json
             digests/**/youtube_performance.json
             api/op3_stats.json
             api/op3_history.json

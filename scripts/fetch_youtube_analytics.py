@@ -337,6 +337,12 @@ def fetch(digests_dir: Path, days: int) -> Optional[dict]:
             # Carried through so the performance updater can keep RU-dub
             # retention out of the EN title hints (and vice versa).
             "channel": (v.get("channel") or "en").lower(),
+            # Experiment arm for the Shorts motion A/B. Absent on every
+            # video published before the experiment (and on shows not
+            # enrolled), which the report treats as "not in the trial"
+            # rather than as the control — an unenrolled Short was never
+            # eligible to be the treatment.
+            "variant": (v.get("variant") or ""),
             "title": v.get("title", ""),
             "hook": v.get("hook", ""),
             "published": v.get("published", ""),
