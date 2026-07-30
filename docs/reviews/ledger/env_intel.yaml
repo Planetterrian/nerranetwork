@@ -190,4 +190,42 @@ reviews:
     predictions: []
     proposed_changes_in_pr: []
     agent_cost_usd: 0.048
+  - date: '2026-07-27'
+    pr: null
+    doc: docs/reviews/env_intel_review_2026_07_27.md
+    generated_by: grok-4.3
+    summary: Chronic under-length (7/10 eps <900w), recurring 'nuance here worth understanding' deep-dive tic (8+/10 transcripts, prior prediction miss), and boilerplate network-promo tics in every episode.
+    scored_prior_predictions:
+    - metric: episodes whose LAST chapter is Closing, last 10
+      verdict: hit
+      evidence: 9/10 episodes end with Closing per chapters_ep*.json after July-2 reorder
+    - metric: deep-dive opener 'There's a nuance here worth understanding' does not become 5+/10 template
+      verdict: miss
+      evidence: 8/10 transcripts (Ep052-Ep061) use it verbatim
+    shipped: []
+    deferred:
+    - Chronic under-length (digest ceiling only)
+    - Mid-section chapter markers rely on literal keywords
+    - 'Numbers/dates spell-out drift (landmine #17)'
+    predictions:
+    - metric: episodes below min_podcast_words:900, last 10
+      baseline: 7/10
+      expected: <=3/10 after digest expansion levers
+      verdict: pending
+      evidence: null
+    - metric: transcripts using 'There's a nuance here worth understanding' as deep-dive opener, last 10
+      baseline: 8/10
+      expected: <=2/10 after menu removal + rotation memory
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/prompts/env_intel_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: De-seed by shape + verbatim ban + rotation memory per ledger rule; prevents third-generation tic
+    - file: shows/prompts/env_intel_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Mirror digest de-seed; podcast faithfully echoes digest opener
+    agent_cost_usd: 0.0492
 do_not_retry: []
