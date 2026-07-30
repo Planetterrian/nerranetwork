@@ -1412,3 +1412,61 @@ class TestTimezoneExpansionNeedsATime:
         """
         assert "U T C" in self._f("Liftoff occurred at oh eight fifty UTC.")
         assert "U T C" in self._f("The burn completed at fourteen hundred UTC.")
+
+
+class TestSpokenUrlsThroughTheWholeChain:
+    """URL paths must be speakable after the FULL pronunciation chain.
+
+    July 30 2026, found with a live Grok TTS key. PR #913 added
+    ``engine.tts._speech_safe_urls`` and unit-tested it on a raw URL, where
+    it passed. In production it never fired: ``assets.pronunciation``
+    runs FIRST and rewrites "nerranetwork.com" to "nerranetwork dot com",
+    after which the later regex no longer recognises a domain. The fix
+    shipped dead.
+
+    The lesson is the test shape, not the regex — these assert the output
+    of ``run_show._apply_pronunciation`` followed by
+    ``engine.tts.prepare_text_for_tts``, which is what the voice actually
+    receives. Confirmed against synthesized audio: Whisper heard "start
+    here", with no "hyphen" and no "slash".
+    """
+
+    @staticmethod
+    def _voice_receives(text, slug="spacex"):
+        import run_show
+        from engine.tts import prepare_text_for_tts
+        return prepare_text_for_tts(run_show._apply_pronunciation(text, slug))
+
+    def test_promo_urls_have_no_spoken_punctuation(self):
+        for line in (
+            "New to the network? nerranetwork.com/start-here picks your briefing.",
+            "Apply at nerranetwork.com/age-of-ai-apply today.",
+            "The Dispatch Wall at nerranetwork.com/thedppod.",
+            "Live dashboards are at nerranetwork.com/data.",
+        ):
+            out = self._voice_receives(line)
+            assert "/" not in out, out
+            assert "-" not in out.split("dot com")[-1], out
+
+    def test_path_words_survive(self):
+        out = self._voice_receives(
+            "New to the network? nerranetwork.com/start-here picks your briefing.")
+        assert "start here" in out, out
+
+    def test_file_extension_not_spoken(self):
+        out = self._voice_receives("See nerranetwork.com/data.html for more.")
+        assert "html" not in out.lower(), out
+
+    def test_bare_domain_unchanged_in_meaning(self):
+        out = self._voice_receives("All our shows are free at nerranetwork.com.")
+        assert "dot com" in out and "/" not in out, out
+
+    def test_subdomain_still_handled(self):
+        out = self._voice_receives("Read chat.openai.com for details.")
+        assert "dot" in out and "/" not in out, out
+
+    def test_every_promo_surface_is_speakable(self):
+        from engine.network_promo import NETWORK_SURFACES
+        for surface in NETWORK_SURFACES:
+            out = self._voice_receives(str(surface.get("spoken") or ""))
+            assert "/" not in out, (surface.get("id"), out)

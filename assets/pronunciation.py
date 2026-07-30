@@ -83,9 +83,32 @@ def strip_urls(text: str) -> str:
     # Replace bare domain names (no protocol) with spoken form so TTS
     # doesn't mangle them via acronym expansion (e.g. "chat.openai.com"
     # would otherwise become "chat.Open A I.com").
+    #
+    # The PATH is handled here too, in the same pass. It has to be: this
+    # rewrite turns ".com" into " dot com", and any later attempt to
+    # recognise the URL then fails to match, because the thing it is
+    # looking for no longer looks like a domain. That is exactly how the
+    # first version of this fix (engine.tts._speech_safe_urls, PR #913)
+    # ended up dead in production — it passed its unit tests on a raw URL
+    # and never fired on the real pipeline, where this function runs
+    # first. Verified against live Grok TTS on 2026-07-30.
+    #
+    # Grok TTS speaks a hyphen in a path as the WORD "hyphen":
+    # "nerranetwork.com/start-here" aired as "slash start hyphen here".
+    # Hyphens, slashes and underscores are pauses in speech, not words.
+    def _spoken_domain(m: re.Match) -> str:
+        host = m.group("host").replace(".", " dot ")
+        path = m.group("path") or ""
+        if not path:
+            return host
+        path = re.sub(r"\.(?:html?|php|aspx?)$", "", path.lstrip("/"),
+                      flags=re.IGNORECASE)
+        return f"{host} {re.sub(r'[/_.-]+', ' ', path)}".rstrip()
+
     text = re.sub(
-        r"\b(\w+(?:\.\w+)*\.(?:com|org|net|io|ai|co|dev))\b",
-        lambda m: m.group(0).replace(".", " dot "),
+        r"\b(?P<host>\w+(?:\.\w+)*\.(?:com|org|net|io|ai|co|dev))"
+        r"(?P<path>/[A-Za-z0-9\-_/]+(?:\.[A-Za-z0-9\-_/]+)*)?",
+        _spoken_domain,
         text,
     )
     return text
