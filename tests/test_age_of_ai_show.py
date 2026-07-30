@@ -358,3 +358,56 @@ class TestBrandAssets:
         meta = _yaml.safe_load(
             (ROOT / "shows" / "network_meta.yaml").read_text(encoding="utf-8"))
         assert meta["age_of_ai"]["brand_color"].upper() == "#7C3AED"
+
+
+class TestPublishSweep:
+    """The terminal step must not depend on a human remembering.
+
+    July 30 2026, found in the live database: the 2026-07-17 interview
+    (24 minutes, recorded, produced, editorially reviewed, guest-approved)
+    was still unpublished 13 days later, while the 2026-07-20 interview
+    recorded three days AFTER it published normally — purely because
+    someone dispatched that one by hand. Publish was
+    ``workflow_dispatch``-only while every other stage was automatic, and
+    gate 2 auto-approves a guest transcript after 7 days, so an episode
+    can reach ``approved`` with nobody watching.
+    """
+
+    _SRC = "pipelines/voices/publish_episode.py"
+    _WF = ".github/workflows/nerra_voices_publish.yml"
+
+    def _src(self):
+        return (ROOT / self._SRC).read_text(encoding="utf-8")
+
+    def test_sweep_exists(self):
+        src = self._src()
+        assert "def find_publishable(" in src
+        assert "def publish_one(" in src
+
+    def test_sweep_requires_both_gates(self):
+        """It must not publish anything a human has not already cleared."""
+        src = self._src()
+        assert "status=eq.approved" in src
+        assert "status=eq.approved_by_guest" in src
+
+    def test_explicit_id_still_publishes_one(self):
+        assert "INTERVIEW_ID" in self._src()
+
+    def test_one_failure_does_not_block_the_rest(self):
+        src = self._src()
+        assert "one bad row must not block the rest" in src
+
+    def test_workflow_is_scheduled(self):
+        import yaml
+        raw = yaml.safe_load((ROOT / self._WF).read_text(encoding="utf-8"))
+        triggers = raw.get(True) or raw.get("on") or {}
+        assert "schedule" in triggers, "publish is dispatch-only again"
+        assert triggers["schedule"][0]["cron"]
+
+    def test_interview_id_input_is_optional(self):
+        """A blank id is the sweep; requiring it would defeat the schedule."""
+        import yaml
+        raw = yaml.safe_load((ROOT / self._WF).read_text(encoding="utf-8"))
+        triggers = raw.get(True) or raw.get("on") or {}
+        inp = triggers["workflow_dispatch"]["inputs"]["interview_id"]
+        assert inp.get("required") is False
