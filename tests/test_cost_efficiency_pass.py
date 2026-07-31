@@ -64,12 +64,25 @@ class TestLengthLeverPolicy:
         ]
         assert not offenders, offenders
 
-    def test_the_two_shows_without_a_digest_lever_keep_theirs(self):
-        """env_intel and finansy_prosto have no digest-side lever, so
-        switching the podcast retry off would leave them no length
-        mechanism at all. Deliberately untouched — revisit only by
-        giving them the digest lever first."""
-        for slug in ("env_intel", "finansy_prosto"):
+    def test_env_intel_switched_to_the_digest_lever(self):
+        """July 31 2026: env_intel gained digest_expand_below_target
+        (digests measured 563-891 words — the real ceiling), so its
+        banned podcast-side retry is now off per the network policy."""
+        data = yaml.safe_load(
+            (REPO_ROOT / "shows" / "env_intel.yaml").read_text(
+                encoding="utf-8")) or {}
+        llm = data.get("llm") or {}
+        assert llm.get("digest_expand_below_target") is True
+        assert llm.get("min_digest_words", 0) > 0
+        assert not llm.get("podcast_expand_below_target")
+
+    def test_the_show_without_a_digest_lever_keeps_theirs(self):
+        """finansy_prosto still has no digest-side lever (its digest .md
+        is a ~200-word structured brief — a words floor needs its own
+        design), so switching the podcast retry off would leave it no
+        length mechanism at all. Deliberately untouched — revisit only by
+        giving it the digest lever first."""
+        for slug in ("finansy_prosto",):
             data = yaml.safe_load(
                 (REPO_ROOT / "shows" / f"{slug}.yaml").read_text(
                     encoding="utf-8")) or {}
