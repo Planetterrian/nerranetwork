@@ -357,3 +357,95 @@ class TestEveryDubChannelEntersTheLoop:
         if (_ROOT / "digests").glob("*/youtube_videos.fr.json"):
             assert "fr" in channels or not any(
                 (_ROOT / "digests").glob("*/youtube_videos.fr.json"))
+
+
+class TestTitleHintHygiene:
+    """July 31 2026 learning-loop review: the blended pool's "top
+    quartile" was structurally all-Shorts (~42% retention vs ~10%
+    long-form), so Shorts exemplars and a Shorts-inflated median steered
+    LONG-FORM titles; live perf files also quoted fragment titles
+    ("prove adequate, the architecture could…") and datelines ("Today is
+    July 16th, 2026") as exemplars — teaching the generator the shapes
+    the title bundle exists to eliminate."""
+
+    def _mod(self):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "uyp", str(_ROOT / "scripts" / "update_youtube_performance.py"))
+        m = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(m)
+        return m
+
+    @staticmethod
+    def _v(kind, pct, title, subs=0):
+        return {"kind": kind, "average_view_percentage": pct,
+                "title": title, "hook": title, "channel": "en",
+                "subscribers_gained": subs}
+
+    def test_fragment_and_dateline_titles_are_never_exemplars(self):
+        m = self._mod()
+        assert not m._quotable("prove adequate, the architecture could…")
+        assert not m._quotable("Today is July 16th, 2026")
+        assert not m._quotable("and then the rocket landed")
+        assert not m._quotable("However, the outcome was different")
+        assert m._quotable("Tesla Opens 500-Stall Supercharger Hub")
+
+    def test_kinds_are_mined_separately(self):
+        m = self._mod()
+        vids = ([self._v("short", 45, f"Short Winner {i} Reveals Numbers")
+                 for i in range(6)]
+                + [self._v("long", 11, f"Long Steady {i} Covers Topic")
+                   for i in range(6)])
+        hint = m._compose_kind_hints(vids, channel="en")
+        assert "LONG-FORM:" in hint and "SHORTS:" in hint
+        long_part = hint.split("SHORTS:")[0]
+        assert "Short Winner" not in long_part
+        assert "Median retention is 11%" in long_part
+
+    def test_small_channels_fall_back_to_blended(self):
+        m = self._mod()
+        small = ([self._v("long", 12, f"Only Long {i} Title")
+                  for i in range(2)]
+                 + [self._v("short", 40, f"Only Short {i} Title")
+                    for i in range(2)])
+        fb = m._compose_kind_hints(small, channel="en")
+        assert fb and "LONG-FORM:" not in fb
+
+
+class TestGalleryRetentionPrior:
+    """July 31 2026: the gallery-retention flywheel was a dead end (built
+    nightly, consumed only by a dashboard card). Scene ranking now takes
+    a BOUNDED retention prior — overlap stays primary, the prior only
+    shuffles near-ties, and a missing report is a byte-identical no-op."""
+
+    def test_prior_is_fail_open(self):
+        from engine.gallery_library import _retention_tag_scores
+        assert _retention_tag_scores("show_that_never_existed") == {}
+
+    def test_prior_is_bounded(self):
+        from engine.gallery_library import _retention_score
+        entry = {"tags": ["hot tag"]}
+        assert _retention_score(entry, {"hot tag": 500.0}) == 10.0
+        assert _retention_score(entry, {"hot tag": -500.0}) == -10.0
+        assert _retention_score(entry, {}) == 0.0
+
+    def test_overlap_still_outranks_retention(self):
+        from engine.gallery_library import _rank, _RETENTION_PRIOR_CACHE
+        _RETENTION_PRIOR_CACHE["__test_show__"] = {"great tag": 10.0}
+        overlap_entry = {"image_id": "a", "episode_date": "2026-07-01",
+                         "tags": [], "prompt": "starship booster catch",
+                         "caption": ""}
+        retention_entry = {"image_id": "b", "episode_date": "2026-07-01",
+                           "tags": ["great tag"], "prompt": "", "caption": ""}
+        out = _rank([retention_entry, overlap_entry],
+                    "starship booster catch", "__test_show__")
+        assert out[0]["image_id"] == "a", (
+            "retention prior must never outrank a real context match")
+
+    def test_no_slug_is_legacy_order(self):
+        from engine.gallery_library import _rank
+        a = {"image_id": "a", "episode_date": "2026-07-02", "tags": [],
+             "prompt": "", "caption": ""}
+        b = {"image_id": "b", "episode_date": "2026-07-01", "tags": [],
+             "prompt": "", "caption": ""}
+        assert [e["image_id"] for e in _rank([b, a], "")] == ["a", "b"]
