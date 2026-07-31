@@ -128,21 +128,44 @@ def plan_variants(config, shorts_count: int) -> List[str]:
     return plan
 
 
-def _clip_contexts(hook: str, scene_prompts: Optional[Sequence[str]],
+def _clip_contexts(config, hook: str, scene_prompts: Optional[Sequence[str]],
                    count: int) -> List[str]:
-    """Per-clip subject text, richest source first.
+    """Per-clip subject text — CONCRETE scenes, never news headlines.
 
-    The scene prompts the episode's Grok Imagine stills already used are
-    the best available description of what this episode looks like, so
-    the video arm stays visually on-topic with the control instead of
-    drifting into generic stock motion.
+    The first cut of this passed the episode's extracted headlines
+    straight through, and the operator's verdict on the resulting Short
+    was "pretty bad video content and pretty nonsensical". That is the
+    predictable outcome: a headline like "Rocket Lab's purchase of
+    Aridium for $8bn brings L-band spectrum holdings under one roof" has
+    no depictable content, so a text-to-video model renders an
+    incoherent approximation of a financial abstraction.
+
+    A video model needs a *physical scene*. The show YAML already
+    curates exactly that for the still pipeline —
+    ``youtube.image_queries`` ("Falcon 9 rocket night launch", "Raptor
+    engine static fire") — chosen precisely because unguided queries
+    produced garbage (landmine #14, where raw ``keywords`` sent Pexels
+    looking for fashion models). Those subjects are the right input
+    here too, and reusing them keeps the video arm visually consistent
+    with the stills arm it is being compared against.
+
+    The episode hook is used only as a last resort, and the raw
+    headlines are no longer used at all.
     """
-    contexts = [c for c in (scene_prompts or []) if (c or "").strip()]
-    if not contexts and hook:
-        contexts = [hook]
-    if not contexts:
+    queries: List[str] = []
+    yt = getattr(config, "youtube", None)
+    if yt is not None:
+        queries = [str(q).strip() for q in
+                   (getattr(yt, "image_queries", None) or []) if str(q).strip()]
+    if not queries:
+        # No curated subjects: fall back to the scene prompts (already
+        # image-generation phrasing) and only then to the hook.
+        queries = [c for c in (scene_prompts or []) if (c or "").strip()]
+    if not queries and hook:
+        queries = [hook]
+    if not queries:
         return []
-    return [contexts[i % len(contexts)] for i in range(max(1, count))]
+    return [queries[i % len(queries)] for i in range(max(1, count))]
 
 
 def build_variant(
@@ -213,7 +236,7 @@ def build_variant(
         clip_set = generate_short_clips(
             work_dir=work_dir,
             episode_num=episode_num,
-            contexts=_clip_contexts(hook, scene_prompts, count),
+            contexts=_clip_contexts(config, hook, scene_prompts, count),
             hook=hook,
             show_config=config,
             count=count,

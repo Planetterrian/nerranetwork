@@ -190,6 +190,105 @@ def _query_batch(service, video_ids: List[str], start: str, end: str) -> Dict[st
     return out
 
 
+# Demographics window. 28 days to match what YouTube Studio's own
+# Audience tab shows, so a number here can be checked against the app.
+_DEMO_DAYS = 28
+# The video filter accepts a bounded id list; keep well under the API's
+# limit so a big channel doesn't 400 the whole report.
+_DEMO_FILTER_MAX = 200
+
+
+def _viewer_percentages(service, start: str, end: str,
+                        video_ids: Optional[List[str]] = None) -> List[dict]:
+    """Age x gender split as ``viewerPercentage`` rows.
+
+    Percentages cover SIGNED-IN viewers only and sum to 100 across the
+    whole matrix — YouTube reports no absolute counts here. Passing
+    *video_ids* restricts the report to those videos, which is how the
+    Shorts-vs-long-form split is produced (the API has no "Shorts"
+    dimension; our own index knows which is which).
+
+    Returns [] on any failure — demographics are a reporting nicety and
+    must never take down the nightly analytics fetch.
+    """
+    params = dict(
+        ids="channel==MINE", startDate=start, endDate=end,
+        metrics="viewerPercentage", dimensions="ageGroup,gender",
+    )
+    if video_ids:
+        params["filters"] = "video==" + ",".join(video_ids[:_DEMO_FILTER_MAX])
+    try:
+        resp = service.reports().query(**params).execute()
+    except Exception as exc:  # noqa: BLE001
+        logger.info("demographics query skipped (%s): %s",
+                    "filtered" if video_ids else "channel", str(exc)[:160])
+        return []
+    headers = [h["name"] for h in resp.get("columnHeaders", [])]
+    out = []
+    for row in resp.get("rows", []) or []:
+        rec = dict(zip(headers, row))
+        try:
+            pct = float(rec.get("viewerPercentage") or 0.0)
+        except (TypeError, ValueError):
+            continue
+        out.append({
+            # "age25-34" -> "25-34"; leave anything unexpected alone.
+            "age": str(rec.get("ageGroup", "")).replace("age", ""),
+            "gender": str(rec.get("gender", "")),
+            "pct": round(pct, 3),
+        })
+    return out
+
+
+def _geography(service, start: str, end: str, limit: int = 25) -> List[dict]:
+    """Top viewing countries by views. [] on any failure."""
+    try:
+        resp = service.reports().query(
+            ids="channel==MINE", startDate=start, endDate=end,
+            metrics="views,estimatedMinutesWatched", dimensions="country",
+            sort="-views", maxResults=limit,
+        ).execute()
+    except Exception as exc:  # noqa: BLE001
+        logger.info("geography query skipped: %s", str(exc)[:160])
+        return []
+    headers = [h["name"] for h in resp.get("columnHeaders", [])]
+    rows = []
+    for row in resp.get("rows", []) or []:
+        rec = dict(zip(headers, row))
+        rows.append({
+            "country": rec.get("country", ""),
+            "views": int(float(rec.get("views") or 0)),
+            "minutes": round(float(rec.get("estimatedMinutesWatched") or 0), 1),
+        })
+    total = sum(r["views"] for r in rows) or 0
+    for r in rows:
+        # Share of the REPORTED countries, and honestly labelled as such:
+        # the API returns a top-N, so this is not a share of all views.
+        r["pct_of_listed"] = round(100.0 * r["views"] / total, 2) if total else None
+    return rows
+
+
+def _summarise_demographics(rows: List[dict]) -> dict:
+    """Marginals worth putting on a dashboard card."""
+    if not rows:
+        return {}
+    by_gender: Dict[str, float] = defaultdict(float)
+    by_age: Dict[str, float] = defaultdict(float)
+    for r in rows:
+        by_gender[r["gender"]] += r["pct"]
+        by_age[r["age"]] += r["pct"]
+    older = sum(p for a, p in by_age.items()
+                if a in ("55-64", "65-"))
+    under_25 = sum(p for a, p in by_age.items()
+                   if a in ("13-17", "18-24"))
+    return {
+        "by_gender": {k: round(v, 2) for k, v in sorted(by_gender.items())},
+        "by_age": {k: round(v, 2) for k, v in sorted(by_age.items())},
+        "pct_55_plus": round(older, 2),
+        "pct_under_25": round(under_25, 2),
+    }
+
+
 def _channel_snapshot(credentials) -> Optional[dict]:
     """Channel-level statistics via the Data API (subs, total views).
 
@@ -314,8 +413,41 @@ def fetch(digests_dir: Path, days: int) -> Optional[dict]:
         # Channel-level snapshot + 30-day day-series (subs growth).
         snap = _channel_snapshot(creds) or {}
         series = _channel_day_series(service)
-        if snap or series:
+
+        # Audience demographics + geography (July 2026). Studio shows
+        # these per channel but not split by format; the Shorts/long
+        # split is the interesting cut, because Shorts skew young
+        # everywhere and a channel whose Shorts DON'T is a different
+        # strategic situation from one whose long-form drags the average
+        # up. The API has no Shorts dimension, so the split comes from
+        # filtering on our own index's `kind`.
+        demo_start = (today - _dt.timedelta(days=_DEMO_DAYS)).isoformat()
+        demo: Dict[str, object] = {"window_days": _DEMO_DAYS}
+        all_rows = _viewer_percentages(service, demo_start, end)
+        if all_rows:
+            demo["all"] = all_rows
+            demo["summary"] = _summarise_demographics(all_rows)
+            for kind in ("long", "short"):
+                kind_ids = [
+                    r["video_id"] for r in rows
+                    if (r.get("kind") or "") == kind
+                    and (r.get("published") or "") >= demo_start
+                ]
+                if len(kind_ids) < 3:
+                    continue    # too few videos for a meaningful split
+                kind_rows = _viewer_percentages(service, demo_start, end,
+                                                video_ids=kind_ids)
+                if kind_rows:
+                    demo[kind] = kind_rows
+                    demo[f"{kind}_summary"] = _summarise_demographics(kind_rows)
+        geo = _geography(service, demo_start, end)
+
+        if snap or series or all_rows or geo:
             snap["day_series"] = series
+            if all_rows:
+                snap["demographics"] = demo
+            if geo:
+                snap["geography"] = geo
             channels_block[channel] = snap
 
     if not any_data:
