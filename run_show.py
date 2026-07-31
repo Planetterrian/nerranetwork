@@ -2056,30 +2056,20 @@ def run(args: argparse.Namespace) -> None:
 
         if not args.skip_podcast:
 
-            # !!! KNOWN INERT — DO NOT "CLEAN UP", AND DO NOT SILENTLY WIRE UP.
+            # WIRED 2026-07-31 (operator-requested, after two days inert).
             #
             # `clean_digest` is computed and refined below (podcast-only
             # cleaning, the Sunday weekly-summary segment, duplicate-headline
-            # stripping) and then READ BY NOTHING. Its only consumer was the
-            # discarded `pod_vars` dict removed on 2026-07-30; the live path
-            # sets the prompt's {digest} to `x_thread`
-            # (engine/pipeline.py: template_vars_for_script["digest"] = x_thread).
-            #
-            # So three things have never reached a podcast script:
-            #   1. `_clean_digest_for_podcast` cleaning
-            #   2. the Sunday weekly-summary segment (landmine #19)
-            #   3. the 100%-duplicate-headline strip
-            #
-            # tests/test_weekly_summary_segment.py passes anyway because it
-            # asserts the APPEND by matching source text, never that the value
-            # reaches the prompt.
-            #
-            # Left computed rather than deleted so the feature isn't quietly
-            # discarded. Connecting it changes the digest every podcast prompt
-            # receives — on every show, and substantially on Sundays — which is
-            # an audio-affecting change and needs an operator A/B listen
-            # (landmine #17). Flagged for that decision, deliberately not made
-            # here.
+            # stripping) and passed into run_generation_phase as
+            # ``podcast_digest``, which supplies the podcast prompt's
+            # {digest}. History: its only consumer was the dead pod_vars
+            # dict deleted on 2026-07-30, so none of those three layers had
+            # EVER reached a podcast script; the 07-30 refactor left it
+            # computed-but-unread with an explicit do-not-silently-wire
+            # note, and the operator approved wiring it on 07-31 (weekly
+            # review follow-up). Audio-affecting on every show and
+            # substantially on Sundays — first episodes after this merge
+            # are the A/B-listen set (landmine #17).
             #
             # Strip URLs, emojis, unicode decorations, and other metadata from
             # the digest before feeding it to the podcast script prompt.  The LLM
@@ -2199,6 +2189,14 @@ def run(args: argparse.Namespace) -> None:
                 template_vars=template_vars,   # pass the rich dict built earlier (news, tracker summaries, hook data, etc.)
                 args=args,
                 tracker=tracker if 'tracker' in locals() else None,
+                # The podcast-only digest copy (cleanup + Sunday weekly-
+                # summary segment + duplicate-headline strip). Wired
+                # 2026-07-31 at operator request — previously computed
+                # above and read by nothing (see the block's history
+                # comment). Audio-affecting: changes the digest every
+                # podcast prompt receives (landmine #17 — A/B-listen).
+                podcast_digest=(clean_digest
+                                if 'clean_digest' in locals() else ""),
             )
 
             # 8b. Podcast script length check — two-tier gate.

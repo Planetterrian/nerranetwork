@@ -2167,15 +2167,26 @@ def generate_podcast_script(
                 "without chaining", config.name,
             )
 
+    # Per-stage model override (2026-07-31): the SCRIPT stage may run
+    # a different model than the digest/fetch stage. Motivation: newer
+    # Grok releases (grok-4.5, 2026-07-08) write better prose but
+    # measure WORSE on confident-hallucination benchmarks, so they are
+    # a bad trade for the facts-first digest yet a plausible win for
+    # turning an already-verified digest into a script. Empty (the
+    # default) = config.llm.model, byte-identical behaviour. Setting
+    # it changes shipped audio -> per-show A/B (landmine #17).
+    script_model = (getattr(config.llm, "podcast_model", "")
+                    or config.llm.model)
+
     logger.info("Generating podcast script for '%s' (model=%s, temp=%.1f) ...",
-                config.name, config.llm.model, config.llm.podcast_temperature)
+                config.name, script_model, config.llm.podcast_temperature)
 
     # Use podcast-specific max_tokens if configured, otherwise fall back to shared max_tokens
     podcast_tokens = getattr(config.llm, "podcast_max_tokens", 0) or config.llm.max_tokens
 
     text, meta = _call_grok(
         prompt,
-        model=config.llm.model,
+        model=script_model,
         system_prompt=system_prompt,
         temperature=config.llm.podcast_temperature,
         max_tokens=podcast_tokens,
@@ -2197,7 +2208,7 @@ def generate_podcast_script(
         )
         text, meta = _call_grok(
             prompt,
-            model=config.llm.model,
+            model=script_model,
             system_prompt=system_prompt,
             temperature=config.llm.podcast_temperature,
             max_tokens=bumped_tokens,
@@ -2218,7 +2229,7 @@ def generate_podcast_script(
                 "podcast_script_generation",
                 meta["usage"].get("prompt_tokens", 0),
                 meta["usage"].get("completion_tokens", 0),
-                model=config.llm.model,
+                model=script_model,
                 cached_tokens=meta["usage"].get("cached_tokens", 0),
             )
         except Exception as e:
@@ -2255,7 +2266,7 @@ def generate_podcast_script(
         lower_temp = max(0.3, config.llm.podcast_temperature * 0.6)
         text, meta_r1 = _call_grok(
             simple_prompt,
-            model=config.llm.model,
+            model=script_model,
             system_prompt=system_prompt,
             temperature=lower_temp,
             max_tokens=podcast_tokens_for_retry,
@@ -2269,7 +2280,7 @@ def generate_podcast_script(
                     tracker, "podcast_script_refusal_retry",
                     meta_r1["usage"].get("prompt_tokens", 0),
                     meta_r1["usage"].get("completion_tokens", 0),
-                    model=config.llm.model,
+                    model=script_model,
                     cached_tokens=meta_r1["usage"].get("cached_tokens", 0),
             )
             except Exception:
@@ -2284,7 +2295,7 @@ def generate_podcast_script(
         except LLMRefusalError:
             # --- Retry 2: fallback model ---
             fallback_model = _resolve_fallback_model(config)
-            if config.llm.model == fallback_model:
+            if script_model == fallback_model:
                 raise
             logger.warning(
                 "LLM refused podcast script again for '%s' — "
@@ -2371,7 +2382,7 @@ def generate_podcast_script(
         )
         text2, meta2 = _call_grok(
             retry_prompt,
-            model=config.llm.model,
+            model=script_model,
             system_prompt=system_prompt,
             temperature=config.llm.podcast_temperature,
             max_tokens=podcast_tokens,
@@ -2387,7 +2398,7 @@ def generate_podcast_script(
                     "podcast_script_retry",
                     meta2["usage"].get("prompt_tokens", 0),
                     meta2["usage"].get("completion_tokens", 0),
-                    model=config.llm.model,
+                    model=script_model,
                     cached_tokens=meta2["usage"].get("cached_tokens", 0),
             )
             except Exception as e:
@@ -2439,7 +2450,7 @@ def generate_podcast_script(
         try:
             text_retry, _ = _call_grok(
                 prompt,
-                model=config.llm.model,
+                model=script_model,
                 system_prompt=system_prompt,
                 temperature=lower_temp,
                 max_tokens=podcast_tokens,
@@ -2515,7 +2526,7 @@ def generate_podcast_script(
             try:
                 text_rr, meta_rr = _call_grok(
                     anti_rep_prompt,
-                    model=config.llm.model,
+                    model=script_model,
                     system_prompt=system_prompt,
                     temperature=config.llm.podcast_temperature,
                     max_tokens=podcast_tokens,
@@ -2529,7 +2540,7 @@ def generate_podcast_script(
                             tracker, "podcast_script_anti_repetition_retry",
                             meta_rr["usage"].get("prompt_tokens", 0),
                             meta_rr["usage"].get("completion_tokens", 0),
-                            model=config.llm.model,
+                            model=script_model,
                             cached_tokens=meta_rr["usage"].get("cached_tokens", 0),
             )
                     except Exception:

@@ -882,3 +882,54 @@ class TestEp016NameSwapAndBanter:
         papers = prompt.split("[The Positive Papers]", 1)[1].split("[", 1)[0]
         assert "3+ consecutive one-sentence turns" in papers
         assert "exclamation" in papers
+
+
+class TestNetworkPickHardBan:
+    """July 31 2026: the July-18 rotation-memory INSTRUCTION was violated
+    six days running (Planetterrian Daily picked in Ep019-024 straight
+    with the ban text in the prompt each time). Enforcement moved to the
+    DATA: shows picked in the last two days are excluded from the fresh-
+    episode candidate list, so the model has no episode of theirs to
+    point at — filter the input, don't instruct the output."""
+
+    def test_recently_picked_shows_are_excluded_from_candidates(
+            self, tmp_path, monkeypatch):
+        import json as _json
+        import shows.hooks.dp_pod as hook
+
+        monkeypatch.setattr(hook, "_ROOT", tmp_path)
+        d = tmp_path / "digests" / "dp_pod"
+        d.mkdir(parents=True)
+        (d / "DP_Pod_Ep023_20260730.md").write_text(
+            "**Network pick:** Planetterrian Daily covers nanoplastics.\n",
+            encoding="utf-8")
+        (d / "DP_Pod_Ep024_20260731.md").write_text(
+            "**Network pick:** Planetterrian Daily covers brain scans.\n",
+            encoding="utf-8")
+        # Give Planetterrian a fresh episode that WOULD qualify.
+        pt = tmp_path / "digests" / "planetterrian"
+        pt.mkdir(parents=True)
+        import datetime as _dt
+        (pt / "summaries_planet.json").write_text(_json.dumps({
+            "summaries": [{"date": _dt.date.today().isoformat(),
+                           "episode_title": "Ep 137: A fresh discovery"}]}),
+            encoding="utf-8")
+
+        banned = hook._recently_picked_shows()
+        assert "Planetterrian Daily" in banned
+
+        fresh = hook._fresh_network_episodes(exclude=banned)
+        assert "Planetterrian Daily" not in fresh
+
+        ctx = hook.pre_fetch(None)["nerra_network_context"]
+        assert "NETWORK PICK HARD BAN" in ctx
+        assert "Planetterrian Daily" in ctx.split("HARD BAN")[1]
+
+    def test_no_history_means_no_ban_and_no_crash(self, tmp_path, monkeypatch):
+        import shows.hooks.dp_pod as hook
+
+        monkeypatch.setattr(hook, "_ROOT", tmp_path)
+        (tmp_path / "digests" / "dp_pod").mkdir(parents=True)
+        assert hook._recently_picked_shows() == frozenset()
+        ctx = hook.pre_fetch(None)["nerra_network_context"]
+        assert "HARD BAN" not in ctx

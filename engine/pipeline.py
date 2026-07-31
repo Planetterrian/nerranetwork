@@ -344,6 +344,7 @@ def run_generation_phase(
     template_vars: Optional[Dict[str, Any]] = None,
     args: Any = None,
     tracker: Optional[dict] = None,
+    podcast_digest: str = "",
 ) -> tuple[str, str, list, str]:
     """
     Run the digest + podcast script generation phase (correctly wired).
@@ -597,7 +598,15 @@ def run_generation_phase(
     # (the podcast prompt expects many of the same keys + digest, etc.)
     template_vars_for_script = dict(template_vars)
     template_vars_for_script.update(pod_vars)
-    template_vars_for_script["digest"] = x_thread  # many podcast prompts use {digest}
+    # {digest} for the podcast prompt. ``podcast_digest`` is run_show's
+    # podcast-only copy (URL/emoji cleanup, the Sunday weekly-summary
+    # segment — landmine #19 — and the 100%-duplicate-headline strip).
+    # From 2026-07-30 to 2026-07-31 that copy was computed and read by
+    # nothing (its only consumer was the deleted dead pod_vars dict), so
+    # none of those three layers had EVER reached a podcast script —
+    # wired 2026-07-31 at operator request. Empty → the raw x_thread,
+    # which is byte-for-byte the previous behaviour.
+    template_vars_for_script["digest"] = podcast_digest or x_thread
 
     podcast_script = generate_podcast_script(
         template_vars_for_script, config, tracker=tracker

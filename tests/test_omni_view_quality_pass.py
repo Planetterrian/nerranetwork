@@ -116,21 +116,51 @@ class TestRealScriptChapters:
         assert not missing, f"episodes missing a Closing chapter: {missing}"
 
     def test_no_garbage_sentence_fragment_chapter_titles(self):
+        """No sentence-fragment chapter titles on the path listeners get.
+
+        2026-07-31: this used to re-parse each script WITHOUT digest
+        headlines and assert the bare auto-segment fallback never emits a
+        fragment — a property that fallback cannot guarantee by design
+        (it truncates the segment's first sentence with an ellipsis), so
+        the suite went red on Ep129 purely because that day's first
+        sentences ran long. Production never runs that bare path: both
+        run_show.py and engine/pipeline.py pass story_headlines from the
+        digest, and the fallback only fires per-segment when no headline
+        overlaps. So this now checks (a) the production-shaped parse and
+        (b) the chapters files that actually shipped.
+        """
         from engine.config import load_config
         from engine.chapters import parse_chapters
+        from engine.grok_imagine import extract_story_headlines
+        import json
         import logging
         logging.disable(logging.CRITICAL)
         markers = load_config(str(_YAML)).chapters.section_markers
         bad = []
         for f in self._scripts():
             script = Path(f).read_text(encoding="utf-8")
-            for c in parse_chapters(script, markers, show_name="Omni View"):
-                # Garbage titles are raw deep-dive sentences: long and/or
-                # ending in an ellipsis (the auto-segment fallback's
-                # first-sentence truncation).
-                if c.title.endswith("…") or len(c.title) > 45:
+            digest_md = Path(f.replace("_tts.txt", ".md"))
+            headlines = []
+            if digest_md.exists():
+                headlines = extract_story_headlines(
+                    digest_md.read_text(encoding="utf-8"), max_count=12)
+            for c in parse_chapters(script, markers, show_name="Omni View",
+                                    story_headlines=headlines):
+                if c.title.endswith("…") or len(c.title) > 60:
                     bad.append((Path(f).name, c.title))
         assert not bad, f"garbage sentence-fragment chapter titles: {bad}"
+
+        # The listener-facing artifact: committed chapters files.
+        shipped_bad = []
+        for f in sorted(glob.glob(
+                str(_ROOT / "digests/omni_view/chapters_ep*.json")))[-10:]:
+            for c in json.loads(Path(f).read_text(encoding="utf-8")).get(
+                    "chapters", []):
+                title = c.get("title", "")
+                if title.endswith("…") or len(title) > 60:
+                    shipped_bad.append((Path(f).name, title))
+        assert not shipped_bad, (
+            f"fragment titles SHIPPED to listeners: {shipped_bad}")
 
 
 # ---------------------------------------------------------------------------

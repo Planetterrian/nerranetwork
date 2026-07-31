@@ -293,8 +293,13 @@ class TestGrokReviewScript:
     SCRIPT = ROOT / "scripts" / "run_show_review.py"
 
     def test_script_exists_and_uses_grok(self):
+        """The scheduled reviewer stays on a Grok model (cost contract:
+        this job replaced a $6-9/run Claude agent). Upgraded grok-4.3 ->
+        grok-4.5 on 2026-07-31 (analysis-only task, operator-gated
+        output, ~$0.75/run); env-overridable for rollback."""
         text = self.SCRIPT.read_text(encoding="utf-8")
-        assert 'REVIEW_MODEL = "grok-4.3"' in text
+        assert 'REVIEW_MODEL = os.environ.get("REVIEW_MODEL", "grok-4.5")' \
+            in text
 
     def test_script_opens_draft_pr_with_review_branch_prefix(self):
         text = self.SCRIPT.read_text(encoding="utf-8")

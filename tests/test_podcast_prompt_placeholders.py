@@ -169,3 +169,59 @@ def test_the_two_specs_from_the_retention_pass_are_wired():
             "supplied by the live generation path — this is the exact "
             "shape that broke every show on 2026-07-30."
         )
+
+
+def test_podcast_digest_override_reaches_the_prompt():
+    """The clean_digest wire, connected 2026-07-31 at operator request.
+
+    History: run_show computes a podcast-only digest copy (URL/emoji
+    cleanup, the Sunday weekly-summary segment — landmine #19 — and the
+    duplicate-headline strip). Its only consumer was the dead pod_vars
+    dict deleted on 2026-07-30, so none of those layers had EVER reached
+    a podcast script, and tests passed anyway because they asserted the
+    APPEND, never the arrival. This test asserts arrival: the value
+    passed as ``podcast_digest`` must be the {digest} the podcast prompt
+    is formatted with, and an empty override must fall back to x_thread.
+    """
+    cfg = load_config(ROOT / "shows" / "tesla.yaml")
+    seen = {}
+
+    def _fake_podcast(vars_dict, config, tracker=None):
+        seen["digest"] = vars_dict.get("digest")
+        return "word " * 400
+
+    logging.disable(logging.CRITICAL)
+    try:
+        with mock.patch("engine.generator.generate_podcast_script",
+                        _fake_podcast):
+            pipeline.run_generation_phase(
+                cfg, episode_num=50, today_str="2026-07-31",
+                hook="h", x_thread="RAW DIGEST",
+                extra_context={}, template_vars={"digest": "body"},
+                args=SimpleNamespace(show="tesla"),
+                podcast_digest="CLEANED PODCAST DIGEST",
+            )
+            assert seen["digest"] == "CLEANED PODCAST DIGEST"
+
+            pipeline.run_generation_phase(
+                cfg, episode_num=50, today_str="2026-07-31",
+                hook="h", x_thread="RAW DIGEST",
+                extra_context={}, template_vars={"digest": "body"},
+                args=SimpleNamespace(show="tesla"),
+                podcast_digest="",
+            )
+            assert seen["digest"] == "RAW DIGEST"
+    finally:
+        logging.disable(logging.NOTSET)
+
+
+def test_run_show_passes_clean_digest_into_the_generation_phase():
+    """The caller half of the wire: run_show must hand its computed
+    ``clean_digest`` to run_generation_phase, not just compute it."""
+    src = (ROOT / "run_show.py").read_text(encoding="utf-8")
+    assert "podcast_digest=(clean_digest" in src, (
+        "run_show.py no longer passes clean_digest into "
+        "run_generation_phase — the podcast-only cleaning, the Sunday "
+        "weekly-summary segment (landmine #19) and the duplicate-headline "
+        "strip would silently stop reaching podcast scripts again."
+    )
