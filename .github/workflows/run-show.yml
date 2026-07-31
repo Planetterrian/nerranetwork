@@ -408,7 +408,21 @@ jobs:
           python run_show.py ${{ matrix.show }} $EXTRA_FLAGS 2>&1
           EXIT_CODE=$?
           if [ $EXIT_CODE -eq 2 ]; then
-            echo "::warning::Show ${{ matrix.show }} skipped — insufficient articles for a quality episode"
+            # Exit 2 covers several graceful-skip reasons (insufficient
+            # articles, thin podcast script, empty narrative queue, ...).
+            # Surface the REAL reason from the skip marker run_show writes —
+            # the 2026-07-31 Tesla thin-script skip was reported here as
+            # "insufficient articles" and sent the operator debugging the
+            # wrong subsystem.
+            SKIP_DIR="digests/${{ matrix.show }}"
+            [ "${{ matrix.show }}" = "tesla" ] && SKIP_DIR="digests/tesla_shorts_time"
+            SKIP_MARKER="$SKIP_DIR/.skip_$(date -u +%Y%m%d).json"
+            if [ -f "$SKIP_MARKER" ]; then
+              SKIP_REASON=$(python -c "import json,sys; d=json.load(open(sys.argv[1])); print(d.get('reason','unknown') + ': ' + d.get('detail',''))" "$SKIP_MARKER" 2>/dev/null || echo "unknown")
+              echo "::warning::Show ${{ matrix.show }} skipped — $SKIP_REASON"
+            else
+              echo "::warning::Show ${{ matrix.show }} skipped (exit 2, no skip marker found — likely insufficient articles)"
+            fi
             echo "skipped=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
