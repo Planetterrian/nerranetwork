@@ -4190,6 +4190,27 @@ _SOURCE_INLINE_RE = re.compile(
     r"[\w][\w.-]*\.(?:com|org|net|io|ai|ca|gov|edu|co)\b\.?",
 )
 
+# Third + fourth shapes (July 31 2026 network review):
+#
+# "Source: Google News." — the label followed by an OUTLET NAME rather
+# than a domain, which the domain-shaped regex above cannot see. DP Pod
+# Ep022 spoke "Source: Google News." aloud twice. Capital-S label with a
+# colon + <=4 TitleCase words + a terminal period is always scaffold;
+# prose about "the source" is lowercase and colon-less, and a sentence
+# like "Source: NASA confirmed the launch." doesn't terminate after the
+# capitalized run, so neither matches.
+_SOURCE_INLINE_OUTLET_RE = re.compile(
+    r"\s*(?:\*\*|__)?Sources?(?:\*\*|__)?\s*:\s+"
+    r"[A-Z][\w&'’.-]*(?:\s+[A-Z][\w&'’.-]*){0,3}\s*\.(?=\s|$)"
+)
+# «Источник информации — bnnbloomberg.ca» — the Russian label variant
+# with an em-dash instead of a colon; aired 13x across 6 of FP's last 10
+# episodes on the Olya voice.
+_SOURCE_INLINE_RU_DASH_RE = re.compile(
+    r"\s*(?:\*\*|__)?Источники?(?:\s+информации)?(?:\*\*|__)?\s*[—–-]\s+"
+    r"[\w][\w.-]*\.(?:com|org|net|io|ai|ca|gov|edu|co|ru)\b\.?"
+)
+
 
 def _strip_source_scaffold_lines(text: str) -> str:
     """Drop raw 'Source:'-label scaffold from the spoken script.
@@ -4213,6 +4234,9 @@ def _strip_source_scaffold_lines(text: str) -> str:
     cleaned = []
     for ln in kept:
         new_ln, n = _SOURCE_INLINE_RE.subn("", ln)
+        for extra_re in (_SOURCE_INLINE_OUTLET_RE, _SOURCE_INLINE_RU_DASH_RE):
+            new_ln, n2 = extra_re.subn("", new_ln)
+            n += n2
         inline_hits += n
         cleaned.append(new_ln if n else ln)
 

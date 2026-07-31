@@ -60,7 +60,12 @@ _REVIEW_WORDS_PER_EPISODE = 4
 # episodes (~16 days on the even-day cadence) clears a full rotation.
 _RECENT_EPISODES_NO_RETEACH = 8
 # Recent themes surfaced to the prompt as an explicit "do not reuse" list.
-_RECENT_THEMES_WINDOW = 6
+# >= the no-reteach window: with themes remembered for fewer episodes
+# than words, a theme could return while its words were still banned —
+# the July 31 2026 review found a systematic re-teach cycle (ep58/59/60/
+# 63 each re-taught 5-7 words from exactly 7-8 episodes back) driven by
+# this 6 < 8 mismatch together with the [:24] cap below.
+_RECENT_THEMES_WINDOW = _RECENT_EPISODES_NO_RETEACH
 _WORDS_PER_EPISODE_CAP = 12
 
 
@@ -256,7 +261,13 @@ def build_review_section(output_dir: Path, current_episode: int) -> str:
     if recent_words:
         lines.append(
             "RECENTLY TAUGHT (do NOT re-teach these as new words, and pick a "
-            "DIFFERENT theme than they suggest): " + ", ".join(recent_words[:24]) + "."
+            "DIFFERENT theme than they suggest): "
+            # No cap: the old [:24] slice silently truncated the ban list
+            # to the newest ~3.5 episodes while the header promised 8 —
+            # words from episodes 4-8 back became re-teachable, which is
+            # the exact re-teach cycle shipped on Привет, Русский!
+            # ep58-63. 8 episodes x ~7 words ~= 56 tokens of prompt: cheap.
+            + ", ".join(recent_words) + "."
         )
     if wotd_history:
         lines.append(
