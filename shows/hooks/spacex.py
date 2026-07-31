@@ -92,7 +92,20 @@ def pronunciation_overrides() -> dict:
     NOT a phonetic respelling of a word — so it is outside the landmine #17 ban
     on theory-driven respellings.
     """
-    return {"extra_words": {"tf": "tons-force"}}
+    return {
+        "extra_words": {"tf": "tons-force"},
+        # SPCX is already letter-spelled at TTS-call time by
+        # shows/pronunciation_map.yaml, but that leaves the saved _tts.txt
+        # carrying the raw ticker while the voice receives "S P C X" — the
+        # 2026-07-31 Ep051 ticker investigation had to reconstruct what the
+        # voice was actually sent because the on-disk script didn't show it.
+        # Expanding at script-save time too makes the committed TTS text
+        # match the audio input byte-for-byte (the TTS-call map then finds
+        # nothing left to replace — the voice receives the identical string,
+        # so this is bookkeeping, not an audio change). The chapter patterns
+        # in shows/spacex.yaml already tolerate both forms.
+        "extra_acronyms": {"SPCX": "S P C X"},
+    }
 
 
 # ---------------------------------------------------------------------------
