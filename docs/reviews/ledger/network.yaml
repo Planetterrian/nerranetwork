@@ -128,26 +128,102 @@ reviews:
       - metric: chapters starting after the Closing chapter, network-wide
         baseline: "2 in the last 10 days (Tesla Ep544, MIT Ep104)"
         expected: "0 in the next 2 weeks (engine invariant)"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "2026-07-31: 0 post-Closing chapters in any episode
+          dated >= 07-18 (all shows' chapters_ep*.json scanned by date)"
       - metric: dp_pod Network pick concentration (single show share of
           last 10 picks)
         baseline: "5/10 Fascinating Frontiers incl. consecutive days"
         expected: "no show >3/10, no consecutive-day repeats"
-        verdict: pending
-        evidence: null
+        verdict: miss
+        evidence: "2026-07-31: Planetterrian Daily was the pick 6/10 incl.
+          SIX consecutive days (Ep019-024) with the rotation-memory ban
+          text present in every prompt. Re-attacked data-side: recently
+          picked shows are now excluded from the fresh-episode candidate
+          list (shows/hooks/dp_pod.py, guarded)."
       - metric: dashboard voice-drift warnings on FP/PR/age_of_ai
         baseline: "3 false-positive warns on every build"
         expected: "0 (only real drift warns)"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "2026-07-31: claude_md_drift_detected false, 0 show rows
+          flagged in api/dashboard.json (built 07-30)"
       - metric: FF ephemeris/almanac items in shipped digests (snapshot
           leakage counter)
         baseline: "3 in last 10 episodes"
         expected: "0 within 2 weeks of the (A/B-gated) digest-scope bullet
           shipping; n/a-lever-not-shipped if it stays unapplied"
+        verdict: miss
+        evidence: "2026-07-31: still leaking (Ep147 Venus almanac hook came
+          through a re-headlined column). Re-attacked at the deterministic
+          fetch filter: 3 new title patterns in shows/
+          fascinating_frontiers.yaml (zero real-news false drops verified)."
+
+  - date: 2026-07-31
+    pr: "https://github.com/Planetterrian/nerranetwork/pull/927"
+    doc: docs/reviews/network_review_2026_07_31.md
+    reviewer: claude-code (operator-directed prompt + LLM pass; 4 parallel cluster audits)
+    summary: >
+      Full network prompt + LLM review at operator request ("best shows
+      possible"; optimize as Grok versions improve). P0: the July-30
+      identity line was deleted network-wide by the junk-title-header
+      stripper (fixed + guarded); DP Pod spoke "Source: Google News."
+      and FP aired the Russian em-dash source label 13x (both scrub
+      shapes added). Sweep de-seeded 11 confirmed tics by shape across
+      10 shows, fixed cold-open integration contradictions, root-caused
+      PR's re-teach cycle to vocab_tracker window bugs, gave EI the
+      digest-side length lever, wired clean_digest (operator-approved),
+      added llm.podcast_model for per-stage grok-4.5 trials (digests
+      stay on grok-4.3 per its confident-hallucination profile), and
+      upgraded the scheduled reviewer to grok-4.5.
+    shipped:
+      - identity-line exemption in the title-header stripper (P0, network-wide)
+      - Source-scaffold scrub: outlet-name + Russian em-dash shapes
+      - clean_digest wired into the podcast prompt (operator-approved; A/B)
+      - llm.podcast_model per-stage override + guards; REVIEW_MODEL -> grok-4.5
+      - 11 tic de-seeds by shape across 10 shows (A/B-listen list in PR #927)
+      - FF ephemeris fetch-filter title patterns (deterministic)
+      - vocab_tracker: no-reteach list uncapped + themes window = no-reteach window
+      - env_intel digest-side length lever (min_digest_words 950), podcast retry off
+      - dp_pod pick rotation enforced data-side (exclude recently picked shows)
+      - UC/FPD queue pruning (3 fabrication-flag + 5 category-error briefs)
+      - Age of AI: thesis name-dup, NARA garble path, honest auto-approve sign-off
+    deferred:
+      - FP digest-side length lever (verify true pre-format digest length first)
+      - dp_pod Ep023-class closing containment (turn deleted + label swapped)
+      - identity-line reinsertion guard (LLM-omission case)
+      - MIT alpha-significance caveat: THIRD miss -> operator accept-or-abandon
+      - dp_pod dispatches.json still empty (operator)
+      - dead _shared includes (accuracy_rules, ai_transparency_note) — wire or delete
+      - narrative-shaped outline prompt + dialogue-aware reviewer prompt
+      - MIT fetch collapse (10-24 articles on 3 of last 4 days) — fetch-side pass
+    predictions:
+      - metric: spoken identity line present (show name in first 60s of transcript)
+        baseline: "0% of episodes since 2026-07-30 (stripper deleted it network-wide)"
+        expected: "100% of episodes over the next 2 weeks"
         verdict: pending
         evidence: null
+      - metric: spoken source-attribution leaks in FP/DP transcripts
+          (outlet-name + Russian em-dash shapes)
+        baseline: "13 RU-dash airings across 6 of FP's last 10; DP Ep022 outlet form x2"
+        expected: "0 in the next 10 episodes of each"
+        verdict: pending
+        evidence: null
+      - metric: dp_pod Network pick concentration (single show share of last 10)
+        baseline: "6/10 Planetterrian incl. 6 consecutive (data-side exclusion now live)"
+        expected: "no show >3/10, no consecutive-day repeats"
+        verdict: pending
+        evidence: null
+      - metric: PR words re-taught from within the 8-episode no-reteach window
+        baseline: "5-7 words/ep re-taught from 7-8 episodes back (ep58/59/60/63)"
+        expected: "0 re-teaches within the window over the next 6 episodes"
+        verdict: pending
+        evidence: null
+      - metric: env_intel scripts below min_podcast_words 900
+        baseline: "5 of last 10 below (digests 563-891w were the ceiling)"
+        expected: "<=2 of the next 10 below, via the digest lever"
+        verdict: pending
+        evidence: null
+    agent_cost_usd: null
 
 do_not_retry:
   - idea: podcast-side length levers (word floors, expand-retries, prompt
