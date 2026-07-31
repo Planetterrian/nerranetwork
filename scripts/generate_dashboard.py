@@ -2383,6 +2383,57 @@ def build_audience_section(root: Path) -> Dict[str, Any]:
         except Exception as exc:  # noqa: BLE001
             section["spotify"] = {"configured": True, "error": str(exc)}
 
+    # ---- YouTube audience demographics (July 30 2026) ----------------
+    # Studio shows these per channel but never split by format, and the
+    # split is the interesting cut: Shorts skew young almost everywhere,
+    # so a channel whose Shorts DON'T is a different strategic situation
+    # from one whose long-form simply drags the average up. Trended here
+    # rather than read off a phone screenshot.
+    section["youtube_audience"] = {"configured": False}
+    yt_path = root / "api" / "youtube_stats.json"
+    if yt_path.exists():
+        try:
+            yt = json.loads(yt_path.read_text(encoding="utf-8"))
+            channels = {}
+            for ch, block in (yt.get("channels") or {}).items():
+                demo = (block or {}).get("demographics") or {}
+                geo = (block or {}).get("geography") or []
+                if not demo and not geo:
+                    continue
+                entry: Dict[str, Any] = {
+                    "window_days": demo.get("window_days"),
+                    "summary": demo.get("summary") or {},
+                    "top_countries": [
+                        {"country": g.get("country"),
+                         "views": g.get("views"),
+                         "pct_of_listed": g.get("pct_of_listed")}
+                        for g in geo[:10]
+                    ],
+                }
+                # Only present when enough videos of that kind existed to
+                # ask for the split — absent means "not measured", which
+                # the card must not render as a zero.
+                for kind in ("long", "short"):
+                    key = f"{kind}_summary"
+                    if demo.get(key):
+                        entry[key] = demo[key]
+                channels[ch] = entry
+            if channels:
+                section["youtube_audience"] = {
+                    "configured": True,
+                    "generated": yt.get("generated"),
+                    "channels": channels,
+                    # The percentages describe SIGNED-IN viewers only, a
+                    # subset of views. Carried to the UI so nobody reads
+                    # "0.0% under 25" as a headcount.
+                    "note": ("viewerPercentage covers signed-in viewers "
+                             "only; country shares are of the reported "
+                             "top countries, not of all views"),
+                }
+        except Exception as exc:  # noqa: BLE001
+            section["youtube_audience"] = {"configured": False,
+                                           "error": str(exc)}
+
     return section
 
 

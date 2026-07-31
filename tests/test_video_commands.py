@@ -601,11 +601,58 @@ def test_slideshow_filter_graph_zoom_per_scene():
     stacking magnification on an upsample. Asserted against the constant
     rather than a literal so the two cannot drift apart; the band is
     pinned in tests/test_video_render_quality.py.
+
+    July 30 2026: the fixed per-frame increment is gone. It reached the
+    ceiling after 5 s and then the picture was FROZEN for the rest of the
+    scene — 57.1% of a 12 s scene, measured by rendering. The zoom is now
+    normalised to each scene's own frame count, so it travels the same
+    range whatever the hold length and never stops. The ceiling is still
+    asserted against the constant so the two cannot drift apart.
     """
     from engine.video import _ZOOM_MAX
 
     graph = _slideshow_filter_graph(scene_count=2)
-    assert f"min(zoom+0.0006,{_ZOOM_MAX})" in graph
+    # Duration-normalised: progress is a function of the output frame
+    # number, not an accumulator against a cap.
+    assert "on/" in graph
+    assert str(_ZOOM_MAX) in graph
+    assert "min(zoom+0.0006" not in graph, (
+        "the capped-accumulator zoom is back — it freezes the image for "
+        "the remainder of every scene once the cap is reached"
+    )
+
+
+def test_slideshow_zoom_is_anchored_not_left_to_default():
+    """zoompan's x/y default to "0" — the TOP-LEFT corner.
+
+    The pipeline never set them, so every scene on the network zoomed
+    into its top-left corner and slid the subject down and right
+    (measured drift of a centred subject: 0.044 of frame width per
+    scene; 0.000 after this fix). Confirmed against ffmpeg 7.0's own
+    ``-h filter=zoompan``, which documents x and y as default "0".
+    """
+    graph = _slideshow_filter_graph(scene_count=2)
+    assert ":x='" in graph and ":y='" in graph, (
+        "zoompan without explicit x/y anchors to the top-left corner"
+    )
+    assert "iw/zoom/2" in graph and "ih/zoom/2" in graph
+
+
+def test_slideshow_prescale_leaves_subpixel_headroom():
+    """zoompan steps x/y in whole SOURCE pixels.
+
+    At the old 1.15x pre-scale a slow zoom often failed to advance a
+    pixel between frames: 77.2% of consecutive frames were byte-identical
+    (measured), i.e. the motion stuttered at well under the video's own
+    frame rate. 2.0x brought that to 33.3% for +17% render time; 3.0x
+    halves it again but costs +121%, which the 40-minute pipeline budget
+    does not have to spare.
+    """
+    from engine.video import _PRESCALE
+
+    assert _PRESCALE >= 2.0, (
+        "pre-scale below 2.0 reintroduces visible integer-pixel judder"
+    )
 
 
 def test_slideshow_cmd_has_one_input_per_scene(tmp_path):

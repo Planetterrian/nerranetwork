@@ -175,6 +175,33 @@ class TestBuildVariantFallsBackHonestly:
         assert len(result.clip_paths) == 3
         assert result.cost_usd == pytest.approx(1.05)
 
+    def test_clip_subjects_are_scenes_not_headlines(self, spacex):
+        """A video model needs something depictable.
+
+        The first cut fed the episode's extracted headlines to the clip
+        prompt, and the operator's verdict on the resulting Short was
+        "pretty bad video content and pretty nonsensical" — a $8bn
+        spectrum acquisition has no physical form to render. The show's
+        curated ``image_queries`` are concrete scenes and are what the
+        still pipeline already uses.
+        """
+        from engine.shorts_ab import _clip_contexts
+
+        headline = "Rocket Lab's purchase of Aridium for $8 billion"
+        got = _clip_contexts(spacex, "an episode hook", [headline], 3)
+        assert got, "no clip subjects produced"
+        assert headline not in got, "raw news headlines are back in the prompt"
+        assert set(got) <= set(spacex.youtube.image_queries)
+
+    def test_clip_subjects_fall_back_when_a_show_curates_none(self, spacex):
+        from engine.shorts_ab import _clip_contexts
+
+        spacex.youtube.image_queries = []
+        got = _clip_contexts(spacex, "the hook", ["a scene prompt"], 2)
+        assert got == ["a scene prompt", "a scene prompt"]
+        spacex.youtube.image_queries = []
+        assert _clip_contexts(spacex, "the hook", [], 1) == ["the hook"]
+
     def test_clips_are_requested_vertical(self, spacex, tmp_path, monkeypatch):
         seen = {}
 
