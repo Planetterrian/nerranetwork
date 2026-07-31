@@ -498,12 +498,27 @@ def publish_lang_dub(
                                "(%s) — voice-start short without captions",
                                lang.code, exc)
 
+            # Hook-first (July 31 2026 operator directive, all channels):
+            # Short #1 is the dub's opening hook sequence — same rule as
+            # the EN + RU paths (the dub track translates the same
+            # cold-open script, so t~=0 is the hook here too).
+            if bool(getattr(yt, "shorts_first_is_hook", True)):
+                from engine.shorts_selector import hook_first_windows
+                windows = hook_first_windows(
+                    list(windows or []), n=max(1, n_shorts),
+                    hook_start=base_offset, window_duration=short_dur,
+                )
+
             if windows:
-                short_plan = [(w.start_seconds,
-                               (w.opening_text or "").strip())
-                              for w in windows[:n_shorts]]
+                short_plan = [
+                    (w.start_seconds, (w.opening_text or "").strip(),
+                     ("hook_open" if w.score == float("inf")
+                      else "qualified" if getattr(w, "qualified", True)
+                      else "filled"))
+                    for w in windows[:n_shorts]
+                ]
             else:
-                short_plan = [(base_offset, "")]
+                short_plan = [(base_offset, "", "legacy_fallback")]
 
             end_card_png = None
             try:
@@ -521,8 +536,8 @@ def publish_lang_dub(
                                lang.code, exc)
 
             short_urls_out: List[str] = []
-            for short_idx, (start_offset, opening_text) in enumerate(
-                    short_plan):
+            for short_idx, (start_offset, opening_text,
+                            window_label) in enumerate(short_plan):
                 try:
                     suffix = "" if short_idx == 0 else f"_{short_idx + 1}"
                     short_mp4 = (tmp / f"{lang.code}_short_ep"
@@ -600,7 +615,8 @@ def publish_lang_dub(
                         episode=episode_num, kind="short", title=st,
                         hook=title, published=date_str,
                         watch_url=sup.watch_url,
-                        channel=lang.channel, index_path=idx_path)
+                        channel=lang.channel, window=window_label,
+                        index_path=idx_path)
                     if playlist:
                         try:
                             add_video_to_playlist(credentials=creds,

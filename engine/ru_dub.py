@@ -698,13 +698,29 @@ def publish_ru_dub(
                 logger.warning("ru_dub: RU transcript/selection failed (%s) — "
                                "voice-start short without captions", exc)
 
-            # Plan: (offset, opening_text) per Short; legacy single
-            # voice-start fallback when the selector yields nothing.
+            # Hook-first (July 31 2026 operator directive, all channels):
+            # Short #1 is the dub's opening hook sequence — the RU/FR
+            # track translates the same cold-open script, so t~=0 is the
+            # hook there too. Smart windows fill the remaining slots.
+            if bool(getattr(yt, "shorts_first_is_hook", True)):
+                from engine.shorts_selector import hook_first_windows
+                windows = hook_first_windows(
+                    list(windows or []), n=max(1, ru_shorts),
+                    hook_start=base_offset, window_duration=short_dur,
+                )
+
+            # Plan: (offset, opening_text, window_label) per Short; legacy
+            # single voice-start fallback when the selector yields nothing.
             if windows:
-                short_plan = [(w.start_seconds, (w.opening_text or "").strip())
-                              for w in windows[:ru_shorts]]
+                short_plan = [
+                    (w.start_seconds, (w.opening_text or "").strip(),
+                     ("hook_open" if w.score == float("inf")
+                      else "qualified" if getattr(w, "qualified", True)
+                      else "filled"))
+                    for w in windows[:ru_shorts]
+                ]
             else:
-                short_plan = [(base_offset, "")]
+                short_plan = [(base_offset, "", "legacy_fallback")]
 
             # End-card CTA (Russian) — shared across Shorts; reuse the RU
             # long-form thumbnail.
@@ -722,7 +738,8 @@ def publish_ru_dub(
                 logger.warning("ru_dub: end-card render failed (%s)", exc)
 
             short_urls_out: list = []
-            for short_idx, (start_offset, opening_text) in enumerate(short_plan):
+            for short_idx, (start_offset, opening_text,
+                            window_label) in enumerate(short_plan):
                 try:
                     suffix = "" if short_idx == 0 else f"_{short_idx + 1}"
                     short_mp4 = tmp / f"ru_short_ep{episode_num:03d}{suffix}.mp4"
@@ -844,6 +861,7 @@ def publish_ru_dub(
                         hook=ru_title, published=date_str,
                         watch_url=sup.watch_url,
                         channel="ru",
+                        window=window_label,
                         index_path=PROJECT_ROOT / config.episode.output_dir
                         / "youtube_videos.ru.json")
                     pl = (getattr(yt, "ru_podcast_playlist_id", None) or "").strip()

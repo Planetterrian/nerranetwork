@@ -97,6 +97,7 @@ def record_video(
     watch_url: str = "",
     channel: str = "en",
     variant: str = "",
+    window: str = "",
     index_path: Optional[Path] = None,
 ) -> bool:
     """Append (or update) one published-video record. Best-effort.
@@ -127,6 +128,13 @@ def record_video(
         # its exact existing shape.
         if variant:
             row["variant"] = variant
+        # Which window the Short came from (July 31 2026 hook-first
+        # directive): "hook_open" | "qualified" | "filled" |
+        # "legacy_fallback". Only written when set, same back-compat
+        # contract as ``variant`` — analytics reads this to compare the
+        # hook Short's performance against smart windows.
+        if window:
+            row["window"] = window
         # Idempotent upsert keyed on video_id.
         for i, existing in enumerate(videos):
             if existing.get("video_id") == video_id:

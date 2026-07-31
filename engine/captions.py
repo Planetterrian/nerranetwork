@@ -412,6 +412,13 @@ def transcript_to_srt_window(
 # (R=00, G=D4, B=FF) becomes &H00FFD400.
 _HIGHLIGHT_PRIMARY_BGR = "&H00FFD400&"
 
+# Active-word "pop" (July 31 2026 — B2): alongside the colour flip, the
+# highlighted word scales to 112% over its first 80 ms via a libass
+# animated transform (``\t`` + per-glyph ``\fscx``/``\fscy`` are core
+# libass). Reads as a beat-synced pulse — the TikTok-native look — and
+# the existing ``{\r}`` reset reverts everything for the other words.
+_HIGHLIGHT_POP = r"\t(0,80,\fscx112\fscy112)"
+
 # Inline override that resets the cue's primary colour to whatever
 # ``force_style`` set as the default (white in
 # ``_SHORTS_SUBTITLES_FORCE_STYLE``). ``\r`` without an argument reverts
@@ -459,6 +466,32 @@ YCbCr Matrix: TV.709
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
 Style: Default,DejaVu Sans,48,&H00FFFFFF,&H00FFFFFF,&H00000000,&H80000000,-1,0,0,0,100,100,0,0,3,3,0,2,40,40,340,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+"""
+
+
+# Long-form (1920x1080) per-word header (July 31 2026 — B1). Mirrors the
+# long-form burn-in look pinned by ``engine.video._SUBTITLES_FORCE_STYLE``
+# (FontSize=26 in libass's 288-unit SRT space ≈ 98 real pixels on a 1080p
+# frame): white text, BorderStyle=1 outline 3 + shadow 1 (no card — the
+# slideshow imagery stays visible behind the words), Alignment=2 bottom-
+# centre, MarginV=50. Because this file declares PlayResX/Y 1920x1080,
+# every value here is in REAL pixels, so Fontsize is 98, not 26 — and the
+# render path deliberately does NOT apply the 288-unit ``force_style`` to
+# ``.ass`` inputs (see ``engine.video._long_form_subtitles_stage``).
+_ASS_HEADER_LONG_FORM = """[Script Info]
+ScriptType: v4.00+
+PlayResX: 1920
+PlayResY: 1080
+WrapStyle: 0
+ScaledBorderAndShadow: yes
+YCbCr Matrix: TV.709
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,DejaVu Sans,98,&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,3,1,2,60,60,50,1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -550,7 +583,10 @@ def _render_chunk_dialogues(
         for j, t in enumerate(tokens):
             esc = _ass_escape(t)
             if j == idx:
-                parts.append(f"{{\\1c{_HIGHLIGHT_PRIMARY_BGR}}}{esc}{_HIGHLIGHT_RESET}")
+                parts.append(
+                    f"{{\\1c{_HIGHLIGHT_PRIMARY_BGR}{_HIGHLIGHT_POP}}}"
+                    f"{esc}{_HIGHLIGHT_RESET}"
+                )
             else:
                 parts.append(esc)
         cue_text = " ".join(parts)
@@ -681,6 +717,112 @@ def transcript_to_ass_window(
             "Wrote %d per-word Shorts caption events → %s (window=[%.1fs, %.1fs])",
             len(dialogue_lines), ass_path.name,
             window_start_seconds, window_end,
+        )
+    return ass_path
+
+
+def transcript_to_ass_full(
+    transcript_path: Path,
+    ass_path: Path,
+    *,
+    audio_offset_seconds: float = 0.0,
+    wrap_max_chars: int = 42,
+    max_words_per_chunk: int = 10,
+) -> Path:
+    """Emit a FULL-EPISODE per-word ASS caption file for the long-form
+    video (July 31 2026 — B1).
+
+    The full-frame sibling of :func:`transcript_to_ass_window`: no
+    window, no rebasing — every word of the episode gets a Dialogue
+    line on the final-audio timeline (``audio_offset_seconds`` shifts
+    the voice-only Whisper timestamps past any music intro, same
+    contract as the SRT path). Chunk budget is wider (~42 chars /
+    ≤10 words) because the 1920-wide frame fits more text per line
+    than the 1080-wide Shorts frame at the ~98 px long-form size.
+
+    The style block is the long-form look in REAL pixels (PlayRes
+    1920x1080, Fontsize 98, BorderStyle=1 outline — see
+    ``_ASS_HEADER_LONG_FORM``); the render path lets the file
+    self-style rather than forcing the 288-unit SRT style onto it.
+
+    A transcript without word-level data writes only the header —
+    the caller treats a Dialogue-less file the same way the Shorts
+    path does (fall back to the segment-level SRT).
+    """
+    if audio_offset_seconds < 0:
+        raise ValueError(
+            f"audio_offset_seconds must be >= 0, got {audio_offset_seconds}"
+        )
+
+    try:
+        data = json.loads(transcript_path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        logger.error("Transcript not found: %s", transcript_path)
+        raise
+    except json.JSONDecodeError as exc:
+        logger.error("Transcript JSON malformed (%s): %s", transcript_path, exc)
+        raise
+
+    segments = data.get("segments", []) if isinstance(data, dict) else []
+
+    # The "window" is the whole episode: end = transcript duration (or
+    # the last word/segment end when the header field is missing),
+    # shifted by the music-intro offset, with slack for rounding.
+    total = 0.0
+    try:
+        total = float(data.get("duration") or 0.0)
+    except (TypeError, ValueError):
+        total = 0.0
+    if total <= 0:
+        for seg in segments:
+            if isinstance(seg, dict):
+                try:
+                    total = max(total, float(seg.get("end") or 0.0))
+                except (TypeError, ValueError):
+                    continue
+    window_end = total + audio_offset_seconds + 5.0 if total > 0 else 1e7
+
+    dialogue_lines: List[str] = []
+    for seg in segments:
+        if not isinstance(seg, dict):
+            continue
+        words = [w for w in (seg.get("words") or []) if isinstance(w, dict)]
+        if not words:
+            continue
+        for chunk in _chunk_words(
+            words,
+            max_chars=wrap_max_chars,
+            max_words_per_chunk=max_words_per_chunk,
+        ):
+            dialogue_lines.extend(
+                _render_chunk_dialogues(
+                    chunk,
+                    window_start=0.0,
+                    window_end=window_end,
+                    audio_offset=audio_offset_seconds,
+                )
+            )
+
+    body = (_ASS_HEADER_LONG_FORM + "\n".join(dialogue_lines)
+            + ("\n" if dialogue_lines else ""))
+    try:
+        ass_path.parent.mkdir(parents=True, exist_ok=True)
+        ass_path.write_text(body, encoding="utf-8")
+    except OSError as exc:
+        logger.error(
+            "Failed to write long-form ASS to %s (%s): %s",
+            ass_path, type(exc).__name__, exc,
+        )
+        raise
+    if not dialogue_lines:
+        logger.info(
+            "Transcript %s carries no word-level data — long-form ASS "
+            "written empty (caller falls back to SRT)", transcript_path,
+        )
+    else:
+        logger.info(
+            "Wrote %d per-word long-form caption events → %s",
+            len(dialogue_lines), ass_path.name,
         )
     return ass_path
 

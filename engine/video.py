@@ -37,10 +37,18 @@ import logging
 import math
 import os
 import subprocess
+import zlib
 from pathlib import Path
 from typing import List, Optional, Sequence, Tuple
 
 logger = logging.getLogger(__name__)
+
+# Visual-era counter (July 31 2026 render pass). Bumped whenever the
+# shipped look changes materially (grade chain, KB vocabulary, caption
+# treatment, hook titles) so analytics can segment retention by visual
+# era. Recorded as the ``render_look_version`` metric alongside
+# ``visual_mode`` in run_show.
+RENDER_LOOK_VERSION = 2
 
 
 def _run_ffmpeg(cmd: List[str], *, label: str) -> None:
@@ -360,6 +368,14 @@ _BRAND_PILL_TEXT = "Nerra Network"
 _NETWORK_URL_PILL_TEXT = "nerranetwork.com"
 
 
+# Nerra cyan (#00D4FF) — the caption-highlight accent colour, reused
+# as a 2 px left-edge accent inside the pill for brand cohesion.
+_PILL_ACCENT_RGBA = (0, 212, 255, 235)
+# Width of the visible accent strip at DELIVERY size (px). Rendered at
+# 2x supersample, so the internal clip is twice this.
+_PILL_ACCENT_WIDTH = 6
+
+
 def _make_brand_pill(output_path: Path,
                      *, text: str = _BRAND_PILL_TEXT,
                      width: int = 220, height: int = 60) -> Path:
@@ -370,6 +386,13 @@ def _make_brand_pill(output_path: Path,
     margin). Show names up to ~30 chars fit comfortably at the
     default 220 × 60; longer names get the smaller font, still
     legible against the cover background.
+
+    July 31 2026 (B5): rendered at 2x and LANCZOS-downscaled for
+    supersampled text edges, plus a 2 px Nerra-cyan left-edge accent
+    inside the rounded rect. The cache is path-keyed, so the version
+    lives in the FILENAMES the builders use (``_show_pill_v2_*`` /
+    ``_url_pill_v2`` / ``_brand_pill_v3``) — a persistent work dir
+    regenerates rather than reusing a stale 1x pill.
     """
     if output_path.exists():
         return output_path
@@ -377,28 +400,44 @@ def _make_brand_pill(output_path: Path,
 
     from PIL import Image, ImageDraw, ImageFont
 
-    img = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+    # 2x supersample: every geometry/font value below is doubled, then
+    # the finished pill is LANCZOS-downscaled to the requested size.
+    w2, h2 = width * 2, height * 2
+    img = Image.new("RGBA", (w2, h2), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
 
-    radius = height // 2
+    radius = h2 // 2
     draw.rounded_rectangle(
-        [(0, 0), (width - 1, height - 1)],
+        [(0, 0), (w2 - 1, h2 - 1)],
         radius=radius,
         fill=(0, 0, 0, 140),
     )
+
+    # Cyan left-edge accent: a rounded rect with the same geometry,
+    # clipped to the leftmost strip so only the leading edge shows.
+    accent = Image.new("RGBA", (w2, h2), (0, 0, 0, 0))
+    ImageDraw.Draw(accent).rounded_rectangle(
+        [(0, 0), (w2 - 1, h2 - 1)],
+        radius=radius,
+        fill=_PILL_ACCENT_RGBA,
+    )
+    accent_strip = accent.crop((0, 0, _PILL_ACCENT_WIDTH * 2, h2))
+    img.alpha_composite(accent_strip, (0, 0))
 
     font_path = _find_font()
     font = None
     # Wider top range than legacy (was 22 → 12) to accommodate longer
     # show names that previously got clamped to the smallest font even
-    # when more horizontal room was available.
-    for size in range(28, 11, -1):
+    # when more horizontal room was available. Doubled for the 2x
+    # canvas (56 → 24 ≙ 28 → 12 at delivery size), stepping by 2 so
+    # the delivery-size ladder is unchanged.
+    for size in range(56, 23, -2):
         try:
             candidate = ImageFont.truetype(font_path, size)
         except (IOError, OSError):
             continue
         bbox = candidate.getbbox(text)
-        if bbox[2] - bbox[0] <= width - 32:
+        if bbox[2] - bbox[0] <= w2 - 64:
             font = candidate
             break
     if font is None:
@@ -407,10 +446,11 @@ def _make_brand_pill(output_path: Path,
     bbox = font.getbbox(text)
     text_w = bbox[2] - bbox[0]
     text_h = bbox[3] - bbox[1]
-    x = (width - text_w) // 2 - bbox[0]
-    y = (height - text_h) // 2 - bbox[1]
+    x = (w2 - text_w) // 2 - bbox[0]
+    y = (h2 - text_h) // 2 - bbox[1]
     draw.text((x, y), text, font=font, fill=(255, 255, 255, 235))
 
+    img = img.resize((width, height), Image.LANCZOS)
     img.save(output_path, "PNG")
     return output_path
 
@@ -493,6 +533,40 @@ _PRESCALE = 2.0
 _ZOOM_MAX = 1.09
 
 # ---------------------------------------------------------------------------
+# Network color grade (July 31 2026 render pass — C1)
+# ---------------------------------------------------------------------------
+# One gentle chain applied wherever the composite forms its ``[bg]``
+# (long-form both branches, Shorts, and the fused single-pass graph) so
+# every Grok Imagine scene on the network shares a unified, produced
+# look instead of shipping raw flat pixels:
+#
+#   * ``eq``       — gentle contrast/saturation lift + tiny gamma dip;
+#     Grok stills ship flat.
+#   * ``vignette`` — soft default vignette (angle=PI/5): depth + an
+#     eye-to-center pull that unifies mismatched scenes.
+#   * ``gradfun``  — de-bands the gradient skies that slow Ken Burns
+#     zooms make shimmer.
+#
+# Deliberately NO ``noise`` grain: grain fights the encoder (the 4 Mbps
+# ``-maxrate`` ceiling in ``_VIDEO_ENCODE`` exists precisely for
+# near-noise pathologies). The chain is applied ONCE per delivered
+# pixel — at composite/[bg] time, never inside the stage-1 slideshow —
+# so the two-stage path cannot double-grade.
+_GRADE_CHAIN = (
+    "eq=contrast=1.05:saturation=1.08:gamma=0.98,"
+    "vignette=angle=PI/5,"
+    "gradfun=3.5:8"
+)
+
+# Shorts-only output sharpen (C2). The 9:16 Grok sources come back
+# below delivery resolution, so every vertical pixel shipped is an
+# upsample; lanczos preserves detail but a mild luma-only unsharp
+# restores perceived crispness on phone screens. Amount stays at 0.5 —
+# halos appear above ~0.8. Long-form skips this (the 2.0 prescale +
+# lanczos was measured as the knee there).
+_SHORTS_SHARPEN = "unsharp=5:5:0.5:5:5:0.0"
+
+# ---------------------------------------------------------------------------
 # Ken Burns (July 30 2026 motion pass — measured, not guessed)
 # ---------------------------------------------------------------------------
 # Three defects were found by rendering the shipping filter graph at
@@ -539,7 +613,35 @@ _ZOOM_MAX = 1.09
 # Gentle, deterministic move per scene index — varied enough not to feel
 # mechanical, never so much that it draws attention to itself. Index, not
 # randomness, so a re-render of the same episode is identical.
-_KB_MOVES = ("in_centre", "out_centre", "in_pan_x", "out_pan_y")
+#
+# July 31 2026 (A1): widened from 4 to 8 moves. The FIRST FOUR entries
+# are the legacy vocabulary in the legacy order — the Shorts motion A/B
+# control arm renders with ``extended=False`` which indexes only into
+# that prefix, so the ordering here is load-bearing. The new moves
+# reuse the same feasible-window travel math; the diagonals ramp BOTH
+# cx and cy (each axis is independently bounded, so feasibility holds).
+_KB_MOVES = ("in_centre", "out_centre", "in_pan_x", "out_pan_y",
+             "in_pan_y", "out_pan_x", "in_pan_xy", "out_pan_xy")
+# How many of the leading moves make up the legacy (pre-A1) vocabulary.
+_KB_LEGACY_MOVE_COUNT = 4
+
+# Per-slot zoom amplitude alternation (A1) — rhythm without randomness.
+# 1.12 was the pre-July-2026 network value, so sharpness at that
+# ceiling is a known-acceptable quantity; 1.06 is a calmer breath
+# between the stronger pushes. The legacy path stays pinned at
+# ``_ZOOM_MAX`` (1.09).
+_KB_ZOOM_AMPLITUDES = (1.06, 1.09, 1.12)
+
+
+def _kb_seed_from_stem(stem) -> int:
+    """Deterministic per-episode Ken Burns seed from an output filename.
+
+    CRC32 of the stem — stable across processes and re-renders of the
+    same episode (unlike ``hash()``, which is salted per interpreter),
+    varied across episodes/files, and no date/random involvement so a
+    re-render is byte-identical.
+    """
+    return zlib.crc32(str(stem).encode("utf-8")) & 0xFFFFFFFF
 
 
 def _ken_burns(frames: int, move: str, *,
@@ -571,11 +673,26 @@ def _ken_burns(frames: int, move: str, *,
     # zoom makes room: in-pans start centred and drift as they tighten,
     # out-pans return to centre as they widen, and the requested centre
     # stays inside the feasible window for every frame.
-    travel = round((1.0 - 1.0 / zoom_max) / 2.0, 6)
+    # FLOOR to 6 decimals (not round): rounding up by half an ulp can
+    # push the requested centre a hair past the feasible window at
+    # p=1, where zoompan clamps — flooring keeps every frame strictly
+    # inside. (The legacy 1.09 value is identical either way, so the
+    # A/B control arm's graph is unchanged.)
+    travel = math.floor(((1.0 - 1.0 / zoom_max) / 2.0) * 1e6) / 1e6
+    ramp_in = f"(0.5+{travel}*{p})"          # centre → offset as zoom tightens
+    ramp_out = f"(0.5+{travel}-{travel}*{p})"  # offset → centre as zoom widens
     if move == "in_pan_x":
-        cx, cy = f"(0.5+{travel}*{p})", "0.5"
+        cx, cy = ramp_in, "0.5"
     elif move == "out_pan_y":
-        cx, cy = "0.5", f"(0.5+{travel}-{travel}*{p})"
+        cx, cy = "0.5", ramp_out
+    elif move == "in_pan_y":
+        cx, cy = "0.5", ramp_in
+    elif move == "out_pan_x":
+        cx, cy = ramp_out, "0.5"
+    elif move == "in_pan_xy":
+        cx, cy = ramp_in, ramp_in
+    elif move == "out_pan_xy":
+        cx, cy = ramp_out, ramp_out
     else:
         cx, cy = "0.5", "0.5"
 
@@ -587,10 +704,28 @@ def _ken_burns(frames: int, move: str, *,
 def _ken_burns_chain(src: str, out_label: str, *, frames: int, index: int,
                      width: int, height: int, fps: int,
                      prescale: float = _PRESCALE,
-                     trim_seconds: Optional[float] = None) -> str:
-    """The full scale -> crop -> zoompan chain for one still."""
+                     trim_seconds: Optional[float] = None,
+                     kb_seed: int = 0,
+                     kb_extended: bool = True) -> str:
+    """The full scale -> crop -> zoompan chain for one still.
+
+    ``kb_extended=True`` (July 31 2026, A1) uses the widened 8-move
+    vocabulary offset by ``kb_seed`` (per-episode, derived from the
+    output filename stem) and alternates the zoom amplitude per slot
+    (1.06 / 1.09 / 1.12). ``kb_extended=False`` reproduces the legacy
+    behaviour byte-for-byte — first 4 moves in index order at
+    ``_ZOOM_MAX``, seed ignored — which the Shorts motion A/B control
+    arm depends on (upgrading the control mid-flight would bias the
+    experiment).
+    """
     pre_w, pre_h = int(width * prescale), int(height * prescale)
-    z, x, y = _ken_burns(frames, _KB_MOVES[index % len(_KB_MOVES)])
+    if kb_extended:
+        move = _KB_MOVES[(index + kb_seed) % len(_KB_MOVES)]
+        zoom_max = _KB_ZOOM_AMPLITUDES[(index + kb_seed) % len(_KB_ZOOM_AMPLITUDES)]
+    else:
+        move = _KB_MOVES[index % _KB_LEGACY_MOVE_COUNT]
+        zoom_max = _ZOOM_MAX
+    z, x, y = _ken_burns(frames, move, zoom_max=zoom_max)
     chain = (
         f"{src}"
         f"scale={pre_w}:{pre_h}:force_original_aspect_ratio=increase"
@@ -614,7 +749,9 @@ def _slideshow_filter_graph(scene_count: int, *,
                             scene_durations: Optional[Sequence[float]] = None,
                             width: int = 1920, height: int = 1080,
                             fps: int = 30,
-                            crossfade: float = _SLIDESHOW_XFADE_S) -> str:
+                            crossfade: float = _SLIDESHOW_XFADE_S,
+                            kb_seed: int = 0,
+                            kb_extended: bool = True) -> str:
     """Build the filter_complex for a Ken Burns slideshow.
 
     Each scene gets a 1.00 → 1.12 zoom over its window. When *crossfade* > 0
@@ -660,6 +797,7 @@ def _slideshow_filter_graph(scene_count: int, *,
             frames=frames_per_scene, index=i,
             width=width, height=height, fps=fps,
             trim_seconds=clip_len,
+            kb_seed=kb_seed, kb_extended=kb_extended,
         ))
 
     if not use_xfade:
@@ -689,7 +827,9 @@ def _slideshow_cmd(scene_paths: Sequence[Path], output: Path,
                    scene_durations: Optional[Sequence[float]] = None,
                    width: int = 1920, height: int = 1080,
                    fps: int = 30,
-                   crossfade: float = _SLIDESHOW_XFADE_S) -> List[str]:
+                   crossfade: float = _SLIDESHOW_XFADE_S,
+                   kb_seed: int = 0,
+                   kb_extended: bool = True) -> List[str]:
     """ffmpeg command for stage 1 (slideshow render).
 
     *width* and *height* default to 1920x1080 for the long-form path;
@@ -724,7 +864,8 @@ def _slideshow_cmd(scene_paths: Sequence[Path], output: Path,
                                 scene_duration=scene_duration,
                                 scene_durations=scene_durations,
                                 width=width, height=height, fps=fps,
-                                crossfade=crossfade),
+                                crossfade=crossfade,
+                                kb_seed=kb_seed, kb_extended=kb_extended),
         "-map", "[v]",
         "-r", str(fps),
         *_VIDEO_ENCODE_FAST,
@@ -738,7 +879,9 @@ def _render_slideshow(scene_paths: Sequence[Path], output: Path,
                       *, scene_duration: float = _SCENE_DURATION_SECONDS,
                       scene_durations: Optional[Sequence[float]] = None,
                       width: int = 1920, height: int = 1080,
-                      fps: int = 30) -> Path:
+                      fps: int = 30,
+                      kb_seed: int = 0,
+                      kb_extended: bool = True) -> Path:
     """Render the stage-1 slideshow MP4. Idempotent (skips if output exists).
 
     Tries the crossfade graph first; if ffmpeg rejects it for any reason,
@@ -757,7 +900,8 @@ def _render_slideshow(scene_paths: Sequence[Path], output: Path,
         cmd = _slideshow_cmd(scene_paths, output,
                              scene_duration=scene_duration,
                              scene_durations=scene_durations,
-                             width=width, height=height, fps=fps)
+                             width=width, height=height, fps=fps,
+                             kb_seed=kb_seed, kb_extended=kb_extended)
         _run_ffmpeg(cmd, label="slideshow render (crossfade)")
     except (subprocess.CalledProcessError, RuntimeError) as exc:
         logger.warning(
@@ -769,7 +913,8 @@ def _render_slideshow(scene_paths: Sequence[Path], output: Path,
                              scene_duration=scene_duration,
                              scene_durations=scene_durations,
                              width=width, height=height, fps=fps,
-                             crossfade=0.0)
+                             crossfade=0.0,
+                             kb_seed=kb_seed, kb_extended=kb_extended)
         _run_ffmpeg(cmd, label="slideshow render (hard cut fallback)")
     return output
 
@@ -780,7 +925,9 @@ def _render_slideshow(scene_paths: Sequence[Path], output: Path,
 
 def _hybrid_filter_graph(visuals: Sequence[tuple], *,
                          width: int = 1920, height: int = 1080,
-                         fps: int = 30) -> str:
+                         fps: int = 30,
+                         kb_seed: int = 0,
+                         kb_extended: bool = True) -> str:
     """filter_complex mixing Ken-Burns stills with native video clips.
 
     *visuals* is an ordered list of ``(path, is_video, duration)`` tuples.
@@ -810,6 +957,7 @@ def _hybrid_filter_graph(visuals: Sequence[tuple], *,
                 frames=frames, index=i,
                 width=width, height=height, fps=fps,
                 trim_seconds=float(duration),
+                kb_seed=kb_seed, kb_extended=kb_extended,
             ))
     concat_in = "".join(f"[s{i}]" for i in range(len(visuals)))
     chains.append(f"{concat_in}concat=n={len(visuals)}:v=1:a=0[v]")
@@ -818,7 +966,9 @@ def _hybrid_filter_graph(visuals: Sequence[tuple], *,
 
 def _hybrid_slideshow_cmd(visuals: Sequence[tuple], output: Path, *,
                           width: int = 1920, height: int = 1080,
-                          fps: int = 30) -> List[str]:
+                          fps: int = 30,
+                          kb_seed: int = 0,
+                          kb_extended: bool = True) -> List[str]:
     """ffmpeg command for a stills+clips hybrid slideshow."""
     inputs: List[str] = []
     for path, is_video, duration in visuals:
@@ -835,7 +985,8 @@ def _hybrid_slideshow_cmd(visuals: Sequence[tuple], output: Path, *,
         "ffmpeg", "-y", "-threads", "0",
         *inputs,
         "-filter_complex",
-        _hybrid_filter_graph(visuals, width=width, height=height, fps=fps),
+        _hybrid_filter_graph(visuals, width=width, height=height, fps=fps,
+                             kb_seed=kb_seed, kb_extended=kb_extended),
         "-map", "[v]",
         "-r", str(fps),
         *_VIDEO_ENCODE,
@@ -847,12 +998,15 @@ def _hybrid_slideshow_cmd(visuals: Sequence[tuple], output: Path, *,
 
 def _render_hybrid_slideshow(visuals: Sequence[tuple], output: Path, *,
                              width: int = 1920, height: int = 1080,
-                             fps: int = 30) -> Path:
+                             fps: int = 30,
+                             kb_seed: int = 0,
+                             kb_extended: bool = True) -> Path:
     """Render the stage-1 hybrid (stills + clips) MP4. Idempotent."""
     if output.exists():
         return output
     cmd = _hybrid_slideshow_cmd(visuals, output,
-                                width=width, height=height, fps=fps)
+                                width=width, height=height, fps=fps,
+                                kb_seed=kb_seed, kb_extended=kb_extended)
     n_clips = sum(1 for _p, is_v, _d in visuals if is_v)
     logger.info("Rendering hybrid slideshow (%d segments, %d clips, %dx%d) → %s",
                 len(visuals), n_clips, width, height, output.name)
@@ -1195,11 +1349,97 @@ def _shorts_subtitle_style(margin_v: Optional[int] = None) -> str:
     return _SHORTS_SUBTITLES_FORCE_STYLE.replace("MarginV=340", f"MarginV={int(margin_v)}")
 
 
+# Long-form opening hook title (July 31 2026 — B4). The July 30
+# retention pass made the AUDIO open on its hook; the VIDEO first
+# seconds were still a photo + two pills. This stage burns the hook as
+# an on-screen title for the first ~4 s so the viewer READS the hook
+# while the cold open SPEAKS it. Alpha ramps in over 0.3 s and out over
+# the last 0.6 s (ending t=4) instead of popping.
+_LONG_HOOK_ALPHA = "clip(t/0.3,0,1)*clip((4-t)/0.6,0,1)"
+_LONG_HOOK_ENABLE = "between(t,0,4.05)"
+
+
+def _long_form_hook_stage(post_label: str, hook: str, *,
+                          width: int = 1920,
+                          has_subtitles: bool = False) -> Tuple[str, str]:
+    """Per-line drawtext chain for the long-form opening hook title.
+
+    Returns ``(chain_fragment, new_post_label)``. Mirrors the Shorts
+    graph's proven per-line label-chaining pattern (one drawtext per
+    wrapped line — the ``\\n``-in-text path is the Tesla Ep485 "letter
+    n" landmine). Autofit at 16:9: safe margin 140, max 2 lines,
+    candidates 64/56/48/40 px. Lines are centred around ``h*0.42`` —
+    above frame centre, clear of the bottom caption zone.
+
+    An empty/unrenderable hook returns ``("", post_label)`` so the
+    caller's terminal logic is untouched.
+    """
+    font_path_raw = _find_font()
+    font_path = _drawtext_escape(font_path_raw)
+    hook_fontsize, wrapped = autofit_hook_overlay(
+        hook,
+        frame_width=width,
+        safe_margin=140,
+        max_lines=2,
+        font_path=font_path_raw,
+        candidates=(64, 56, 48, 40),
+    )
+    wrapped_lines = [ln for ln in (wrapped.split("\n") if wrapped else []) if ln]
+    if not wrapped_lines:
+        return "", post_label
+    n_lines = len(wrapped_lines)
+    line_spacing = 14
+    line_h = hook_fontsize + line_spacing
+    terminal = "[lfhooked]" if has_subtitles else "[v]"
+    chain = ""
+    for i, line in enumerate(wrapped_lines):
+        escaped_line = _drawtext_escape(line)
+        offset_px = (i - (n_lines - 1) / 2.0) * line_h
+        sign = "+" if offset_px >= 0 else "-"
+        y_expr = f"h*0.42{sign}{abs(offset_px):.0f}"
+        is_last = (i == n_lines - 1)
+        line_label = terminal if is_last else f"[lfhookln{i}]"
+        chain += (
+            f";{post_label}drawtext=fontfile='{font_path}':"
+            f"text='{escaped_line}':"
+            f"fontsize={hook_fontsize}:fontcolor=white:"
+            f"x=(w-text_w)/2:y={y_expr}:"
+            f"borderw=4:bordercolor=black:"
+            f"shadowx=2:shadowy=2:shadowcolor=black@0.7:"
+            f"alpha='{_LONG_HOOK_ALPHA}':"
+            f"enable='{_LONG_HOOK_ENABLE}'"
+            f"{line_label}"
+        )
+        post_label = line_label
+    return chain, post_label
+
+
+def _long_form_subtitles_stage(post_label: str,
+                               subtitles_path: str) -> str:
+    """The terminal subtitles stage for the long-form composite.
+
+    SRT goes through libass at the ASS default PlayRes (288 units), so
+    the legacy ``force_style`` (FontSize=26 ≈ 98 px on screen) applies.
+    A per-word ``.ass`` file (July 31 2026 — B1) declares its OWN
+    PlayRes 1920x1080 and carries the equivalent long-form style in
+    real pixels (Fontsize 98) — forcing the 288-unit style onto it
+    would render ~26 px captions, so the ASS file's self-styling wins.
+    """
+    escaped = _subtitles_path_escape(subtitles_path)
+    if subtitles_path.lower().endswith(".ass"):
+        return f";{post_label}subtitles='{escaped}'[v]"
+    return (
+        f";{post_label}subtitles='{escaped}'"
+        f":force_style='{_SUBTITLES_FORCE_STYLE}'[v]"
+    )
+
+
 def _long_form_filter_graph(*, width: int = 1920, height: int = 1080,
                             fps: int = 30,
                             bg_is_video: bool = False,
                             subtitles_path: Optional[str] = None,
-                            with_url_pill: bool = False) -> str:
+                            with_url_pill: bool = False,
+                            hook: Optional[str] = None) -> str:
     """filter_complex for stage 2.
 
     Inputs:
@@ -1230,7 +1470,7 @@ def _long_form_filter_graph(*, width: int = 1920, height: int = 1080,
         bg_chain = (
             f"[0:v]scale={width}:{height}:force_original_aspect_ratio=increase"
             f":{_SCALE_FLAGS},"
-            f"crop={width}:{height},setsar=1,format=yuv420p[bg]"
+            f"crop={width}:{height},setsar=1,{_GRADE_CHAIN},format=yuv420p[bg]"
         )
     else:
         # Degraded path: one static cover behind the whole episode, with a
@@ -1250,7 +1490,8 @@ def _long_form_filter_graph(*, width: int = 1920, height: int = 1080,
             f"crop={pre_w}:{pre_h},setsar=1,"
             f"zoompan=z='{zoom_expr}'"
             f":x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
-            f":d=1:s={width}x{height}:fps={fps}"
+            f":d=1:s={width}x{height}:fps={fps},"
+            f"{_GRADE_CHAIN}"
             f"[bg]"
         )
 
@@ -1275,12 +1516,18 @@ def _long_form_filter_graph(*, width: int = 1920, height: int = 1080,
     else:
         post_brand_label = "[branded]"
 
-    if subtitles_path:
-        escaped = _subtitles_path_escape(subtitles_path)
-        graph += (
-            f";{post_brand_label}subtitles='{escaped}'"
-            f":force_style='{_SUBTITLES_FORCE_STYLE}'[v]"
+    # Opening hook title (B4) — chains after the pills, before captions.
+    if hook:
+        frag, post_brand_label = _long_form_hook_stage(
+            post_brand_label, hook, width=width,
+            has_subtitles=bool(subtitles_path),
         )
+        graph += frag
+        if not subtitles_path and post_brand_label == "[v]":
+            return graph  # hook stage terminated the graph
+
+    if subtitles_path:
+        graph += _long_form_subtitles_stage(post_brand_label, subtitles_path)
     else:
         graph += f";{post_brand_label}null[v]"
     return graph
@@ -1320,7 +1567,8 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
     bg_chain = (
         f"[0:v]"
         f"scale={width}:{height}:force_original_aspect_ratio=increase,"
-        f"crop={width}:{height},setsar=1,format=yuv420p[bg]"
+        f"crop={width}:{height},setsar=1,"
+        f"{_GRADE_CHAIN},{_SHORTS_SHARPEN},format=yuv420p[bg]"
     )
 
     # Show brand pill goes top-right (anchor point for vertical Shorts).
@@ -1403,6 +1651,11 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
             y_expr = f"h*0.55{sign}{abs(offset_px):.0f}"
             is_last = (i == n_lines - 1)
             line_label = hook_label if is_last else f"[hookln{i}]"
+            # July 31 2026 (B3): fade the hook in over 250 ms and out
+            # over 400 ms instead of the single-frame pop the bare
+            # ``enable='between(t,0,3)'`` produced. The enable window
+            # extends to 3.05 s so the alpha ramp reaches 0 on screen
+            # rather than being cut off by the gate.
             chain += (
                 f";{post_brand_label}drawtext=fontfile='{font_path}':"
                 f"text='{escaped_line}':"
@@ -1410,7 +1663,8 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
                 f"x=(w-text_w)/2:y={y_expr}:"
                 f"borderw=4:bordercolor=black:"
                 f"shadowx=2:shadowy=2:shadowcolor=black@0.7:"
-                f"enable='between(t,0,3)'"
+                f"alpha='clip(t/0.25,0,1)*clip((3-t)/0.4,0,1)':"
+                f"enable='between(t,0,3.05)'"
                 f"{line_label}"
             )
             post_brand_label = line_label
@@ -1466,14 +1720,27 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
             # PNG path. The input is added as a video stream
             # upstream (in _short_form_cmd) and labelled with
             # whatever index the caller assigned, e.g. ``[4:v]``.
+            #
+            # July 31 2026 (C4): alpha fade-in on the card's input
+            # chain — ``fade`` with ``alpha=1`` ramps only the alpha
+            # plane, so the card materialises over the last still in
+            # 0.45 s instead of guillotining it in one frame. The
+            # looped PNG input has running timestamps, so ``st=`` on
+            # the card's own timeline lines up with the overlay's
+            # enable window.
             chain += (
-                f";{end_card_image_input_label}format=rgba[endcard];"
+                f";{end_card_image_input_label}format=rgba,"
+                f"fade=t=in:st={end_card_start:.2f}:d=0.45:alpha=1[endcard];"
                 f"{post_brand_label}[endcard]overlay="
                 f"x=0:y=0:enable='{enable_clause}'[v]"
             )
             return chain
 
-        # Drawtext fallback path.
+        # Drawtext fallback path. July 31 2026 (C4): the two drawtext
+        # stages gain an alpha fade-in so the copy materialises rather
+        # than popping; the drawbox backdrop stays hard (drawbox has no
+        # alpha expression — acceptable on the degraded path).
+        end_card_alpha = f"clip((t-{end_card_start:.2f})/0.45,0,1)"
         font_path = _drawtext_escape(_find_font())
         escaped_main = _drawtext_escape(end_card_main_text)
         escaped_sub = _drawtext_escape(end_card_sub_text)
@@ -1489,6 +1756,7 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
             f"x=(w-text_w)/2:y=(h-text_h)/2-100:"
             f"borderw=4:bordercolor=black:"
             f"shadowx=2:shadowy=2:shadowcolor=black@0.7:"
+            f"alpha='{end_card_alpha}':"
             f"enable='{enable_clause}'"
             # 3. Sub-line — smaller, accent colour (cyan, matches
             # the per-word caption highlight from PR #415).
@@ -1497,6 +1765,7 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
             f"fontsize=56:fontcolor=0x00D4FF:"
             f"x=(w-text_w)/2:y=(h+text_h)/2+40:"
             f"borderw=3:bordercolor=black:"
+            f"alpha='{end_card_alpha}':"
             f"enable='{enable_clause}'"
             f"[v]"
         )
@@ -1665,6 +1934,9 @@ def _single_pass_long_form_filter_graph(
     crossfade: float = _SLIDESHOW_XFADE_S,
     subtitles_path: Optional[str] = None,
     with_url_pill: bool = False,
+    hook: Optional[str] = None,
+    kb_seed: int = 0,
+    kb_extended: bool = True,
 ) -> str:
     """One filter graph for slideshow + overlays + captions (P1-2).
 
@@ -1694,14 +1966,17 @@ def _single_pass_long_form_filter_graph(
         scene_durations=scene_durations,
         width=width, height=height, fps=fps,
         crossfade=crossfade,
+        kb_seed=kb_seed, kb_extended=kb_extended,
     )
     # The slideshow graph's terminal label is always ``[v]``; the
     # composite needs it as ``[bg]``. Only the final occurrence is the
     # output (intermediate labels are [s0], [x1], ...), so replace from
-    # the right.
+    # the right. The network grade (C1) attaches here — the fused
+    # path's [bg] formation — matching the two-stage composite's
+    # bg_is_video branch so the two render paths ship the same look.
     if not slideshow.endswith("[v]"):
         raise ValueError("slideshow graph did not end with [v]")
-    graph = slideshow[: -len("[v]")] + "[bg]"
+    graph = slideshow[: -len("[v]")] + f",{_GRADE_CHAIN}[bg]"
 
     # Scenes consume inputs 0..n-1, so audio/brand/pill shift up.
     brand_idx = scene_count + 1
@@ -1720,12 +1995,18 @@ def _single_pass_long_form_filter_graph(
     else:
         post_brand_label = "[branded]"
 
-    if subtitles_path:
-        escaped = _subtitles_path_escape(subtitles_path)
-        graph += (
-            f";{post_brand_label}subtitles='{escaped}'"
-            f":force_style='{_SUBTITLES_FORCE_STYLE}'[v]"
+    # Opening hook title (B4) — same stage as the two-stage composite.
+    if hook:
+        frag, post_brand_label = _long_form_hook_stage(
+            post_brand_label, hook, width=width,
+            has_subtitles=bool(subtitles_path),
         )
+        graph += frag
+        if not subtitles_path and post_brand_label == "[v]":
+            return graph  # hook stage terminated the graph
+
+    if subtitles_path:
+        graph += _long_form_subtitles_stage(post_brand_label, subtitles_path)
     else:
         graph += f";{post_brand_label}null[v]"
     return graph
@@ -1742,6 +2023,9 @@ def _single_pass_long_form_cmd(
     subtitles_path: Optional[str] = None,
     url_pill_in: Optional[str] = None,
     chapter_metadata_in: Optional[str] = None,
+    hook: Optional[str] = None,
+    kb_seed: int = 0,
+    kb_extended: bool = True,
 ) -> List[str]:
     """Full ffmpeg command for the fused single-pass long-form render.
 
@@ -1796,6 +2080,8 @@ def _single_pass_long_form_cmd(
             crossfade=crossfade,
             subtitles_path=subtitles_path,
             with_url_pill=bool(url_pill_in),
+            hook=hook,
+            kb_seed=kb_seed, kb_extended=kb_extended,
         ),
         "-map", "[v]", "-map", f"{n}:a",
         *meta_map,
@@ -1814,7 +2100,8 @@ def _long_form_cmd(audio_in: str, bg_in: str, brand_in: str,
                    bg_is_video: bool = False,
                    subtitles_path: Optional[str] = None,
                    url_pill_in: Optional[str] = None,
-                   chapter_metadata_in: Optional[str] = None) -> List[str]:
+                   chapter_metadata_in: Optional[str] = None,
+                   hook: Optional[str] = None) -> List[str]:
     """Full ffmpeg command for stage 2.
 
     When *bg_is_video* is True, *bg_in* is a pre-rendered slideshow
@@ -1864,6 +2151,7 @@ def _long_form_cmd(audio_in: str, bg_in: str, brand_in: str,
             bg_is_video=bg_is_video,
             subtitles_path=subtitles_path,
             with_url_pill=bool(url_pill_in),
+            hook=hook,
         ),
         "-map", "[v]", "-map", "1:a",
         *meta_map,
@@ -1987,6 +2275,7 @@ def build_long_form_video(
     scene_schedule: Optional[Sequence[Tuple[Path, float]]] = None,
     broll_clips: Optional[Sequence[Path]] = None,
     chapters_path: Optional[Path] = None,
+    hook: Optional[str] = None,
 ) -> Path:
     """Render a 1920x1080 long-form podcast video.
 
@@ -2037,6 +2326,12 @@ def build_long_form_video(
         track, so Apple's video player can scrub by section and the
         chapters survive a download. Any problem reading it degrades to
         a video with no chapter track.
+    hook:
+        Optional episode hook (July 31 2026 — B4). When provided, the
+        first ~4 s burn an on-screen hook title (autofit at 16:9,
+        max 2 lines, alpha fade in/out) so the video's opening carries
+        the same hook the cold-open audio speaks. ``None`` keeps the
+        legacy title-less opening.
 
     Returns
     -------
@@ -2065,23 +2360,27 @@ def build_long_form_video(
         raise FileNotFoundError(f"cover not found: {cover_path}")
 
     work_dir = output_path.parent
-    # Bumped filename when the pill text changed (was
-    # "Nerra Network · AI-narrated", now per-show name). The new
-    # filename forces regeneration even on persistent work dirs that
-    # still hold an old cached pill.
+    # Pill cache is path-keyed, so the version lives in the FILENAME.
+    # v2/v3 (July 31 2026 — B5): 2x supersampled render + cyan accent;
+    # the bumped names force regeneration on persistent work dirs that
+    # still hold a stale 1x pill.
     if show_name:
         # Per-show pill — sluggified so different shows get distinct
         # cached PNGs (otherwise the pill from the first show to run
         # on a persistent work dir would be reused for everyone).
         slug = "".join(c if c.isalnum() else "_" for c in show_name.lower()).strip("_")
-        brand_path = work_dir / f"_show_pill_{slug}.png"
+        brand_path = work_dir / f"_show_pill_v2_{slug}.png"
         _make_show_pill(show_name, brand_path)
-        url_pill_path = work_dir / "_url_pill_v1.png"
+        url_pill_path = work_dir / "_url_pill_v2.png"
         _make_url_pill(url_pill_path)
     else:
-        brand_path = work_dir / "_brand_pill_v2.png"
+        brand_path = work_dir / "_brand_pill_v3.png"
         _make_brand_pill(brand_path)
         url_pill_path = None
+
+    # Per-episode Ken Burns seed (A1) — derived from the output stem so
+    # a re-render is identical and different episodes de-synchronize.
+    kb_seed = _kb_seed_from_stem(output_path.stem)
 
     # Chapter-aware schedule (June 2026): an explicit per-scene plan wins
     # over the uniform timer. Normalized once so every branch below sees
@@ -2138,7 +2437,8 @@ def build_long_form_video(
                         audio_duration_s=audio_duration_s,
                     )
                 hybrid_path = work_dir / f"{output_path.stem}_hybrid.mp4"
-                _render_hybrid_slideshow(visuals, hybrid_path, fps=fps)
+                _render_hybrid_slideshow(visuals, hybrid_path, fps=fps,
+                                         kb_seed=kb_seed)
                 bg_path = hybrid_path
                 bg_is_video = True
             except subprocess.CalledProcessError as exc:
@@ -2158,6 +2458,7 @@ def build_long_form_video(
                 subtitles_path=str(subtitles_path) if subtitles_path else None,
                 url_pill_in=str(url_pill_path) if url_pill_path else None,
                 chapter_metadata_in=chapter_meta,
+                hook=hook,
             )
             logger.info(
                 "Building long-form video → %s (hybrid clips=%d, captions=%s)",
@@ -2191,6 +2492,8 @@ def build_long_form_video(
                         url_pill_in=(
                             str(url_pill_path) if url_pill_path else None),
                         chapter_metadata_in=chapter_meta,
+                        hook=hook,
+                        kb_seed=kb_seed,
                     )
                     logger.info(
                         "Building long-form video → %s (SINGLE-PASS, "
@@ -2219,6 +2522,7 @@ def build_long_form_video(
                 _render_slideshow(
                     [p for p, _ in schedule], slideshow_path,
                     scene_durations=[d for _, d in schedule], fps=fps,
+                    kb_seed=kb_seed,
                 )
                 bg_path = slideshow_path
                 bg_is_video = True
@@ -2245,6 +2549,7 @@ def build_long_form_video(
                 _render_slideshow(
                     slideshow_scenes, slideshow_path,
                     scene_duration=scene_duration_s, fps=fps,
+                    kb_seed=kb_seed,
                 )
                 bg_path = slideshow_path
                 bg_is_video = True
@@ -2262,6 +2567,7 @@ def build_long_form_video(
         subtitles_path=str(subtitles_path) if subtitles_path else None,
         url_pill_in=str(url_pill_path) if url_pill_path else None,
         chapter_metadata_in=chapter_meta,
+        hook=hook,
     )
     logger.info("Building long-form video → %s (slideshow=%s, captions=%s)",
                 output_path.name, bg_is_video, bool(subtitles_path))
@@ -2287,7 +2593,8 @@ def build_short_video(audio_path: Path, cover_path: Path,
                       caption_margin_v: Optional[int] = None,
                       scene_change_times: Optional[Sequence[float]] = None,
                       clip_paths: Optional[Sequence[Path]] = None,
-                      clip_seconds: float = 5.0) -> Path:
+                      clip_seconds: float = 5.0,
+                      kb_extended: bool = True) -> Path:
     """Render a 1080x1920 vertical YouTube Shorts video.
 
     ``drop_url_pill`` / ``caption_margin_v`` support the multi-platform
@@ -2351,6 +2658,15 @@ def build_short_video(audio_path: Path, cover_path: Path,
         Nominal seconds of each entry in *clip_paths*; the real
         duration is measured per file and this is only the fallback
         when a probe fails.
+    kb_extended:
+        Ken Burns vocabulary gate (July 31 2026 — A1). ``True``
+        (default) uses the widened 8-move / 3-amplitude, per-episode-
+        seeded motion. ``False`` pins the legacy 4-move / 1.09
+        behaviour byte-for-byte — run_show passes
+        ``kb_extended=not shorts_ab.is_enabled(config)`` so a show
+        running the Shorts motion A/B does not have its CONTROL arm
+        upgraded mid-experiment (which would bias the test toward
+        "motion isn't worth paying for").
     """
     if duration >= 60:
         raise ValueError(
@@ -2362,11 +2678,14 @@ def build_short_video(audio_path: Path, cover_path: Path,
         raise FileNotFoundError(f"cover not found: {cover_path}")
 
     work_dir = output_path.parent
+    # Per-episode Ken Burns seed (A1) — per-Short stems (_short_1/_2)
+    # de-synchronize the two Shorts of one episode too.
+    kb_seed = _kb_seed_from_stem(output_path.stem)
     if show_name:
         slug = "".join(c if c.isalnum() else "_" for c in show_name.lower()).strip("_")
-        brand_path = work_dir / f"_show_pill_{slug}.png"
+        brand_path = work_dir / f"_show_pill_v2_{slug}.png"
         _make_show_pill(show_name, brand_path)
-        url_pill_path = work_dir / "_url_pill_v1.png"
+        url_pill_path = work_dir / "_url_pill_v2.png"
         _make_url_pill(url_pill_path)
         if drop_url_pill:
             # Social safe-zone variant: keep the top brand pill, drop the
@@ -2374,7 +2693,7 @@ def build_short_video(audio_path: Path, cover_path: Path,
             # bottom band is covered by IG/TikTok UI anyway).
             url_pill_path = None
     else:
-        brand_path = work_dir / "_brand_pill_v2.png"
+        brand_path = work_dir / "_brand_pill_v3.png"
         _make_brand_pill(brand_path)
         url_pill_path = None
 
@@ -2398,6 +2717,7 @@ def build_short_video(audio_path: Path, cover_path: Path,
             hybrid_path = work_dir / f"{output_path.stem}_short_hybrid.mp4"
             _render_hybrid_slideshow(
                 visuals, hybrid_path, width=1080, height=1920, fps=fps,
+                kb_seed=kb_seed, kb_extended=kb_extended,
             )
             bg_path = hybrid_path
             bg_is_video = True
@@ -2435,6 +2755,7 @@ def build_short_video(audio_path: Path, cover_path: Path,
                         seg_scenes, slideshow_path,
                         scene_durations=seg_durations,
                         width=1080, height=1920, fps=fps,
+                        kb_seed=kb_seed, kb_extended=kb_extended,
                     )
                     bg_path = slideshow_path
                     bg_is_video = True
@@ -2452,6 +2773,7 @@ def build_short_video(audio_path: Path, cover_path: Path,
                     scene_paths, slideshow_path,
                     scene_duration=_SHORT_SCENE_DURATION_SECONDS,
                     width=1080, height=1920, fps=fps,
+                    kb_seed=kb_seed, kb_extended=kb_extended,
                 )
                 bg_path = slideshow_path
                 bg_is_video = True

@@ -475,6 +475,9 @@ def fetch(digests_dir: Path, days: int) -> Optional[dict]:
             # rather than as the control — an unenrolled Short was never
             # eligible to be the treatment.
             "variant": (v.get("variant") or ""),
+            # Hook-first window label (July 31 2026): lets reports compare
+            # the hook-opening Short against smart-window Shorts.
+            "window": (v.get("window") or ""),
             "title": v.get("title", ""),
             "hook": v.get("hook", ""),
             "published": v.get("published", ""),

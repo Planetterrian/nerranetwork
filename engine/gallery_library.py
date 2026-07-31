@@ -145,18 +145,77 @@ def _candidate_entries(
     return out
 
 
-def _rank(entries: List[dict], context_text: str) -> List[dict]:
+_RETENTION_PRIOR_PATH = Path(__file__).resolve().parent.parent / "api" / "gallery_retention.json"
+_RETENTION_PRIOR_CACHE: dict = {}
+
+
+def _retention_tag_scores(show_slug: str) -> dict:
+    """Per-tag mean-retention map for one show, from the nightly
+    ``api/gallery_retention.json`` flywheel report.
+
+    July 31 2026: the flywheel had been a DEAD END — the report was built
+    nightly since June and consumed only by a dashboard card, while scene
+    ranking stayed pure token-overlap + recency. This closes the loop:
+    tags that measurably held viewers get a bounded ranking nudge.
+    Fail-open: missing file/show → {} → ranking identical to legacy.
+    Cached per process (the manifest loader already sets that precedent).
+    """
+    if show_slug in _RETENTION_PRIOR_CACHE:
+        return _RETENTION_PRIOR_CACHE[show_slug]
+    scores: dict = {}
+    try:
+        import json as _json
+        data = _json.loads(_RETENTION_PRIOR_PATH.read_text(encoding="utf-8"))
+        summary = ((data.get("shows") or {}).get(show_slug) or {}).get(
+            "summary") or {}
+        rows = list(summary.get("top_tags") or []) + list(
+            summary.get("bottom_tags") or [])
+        vals = [float(r.get("mean_retention") or 0.0) for r in rows]
+        if rows and vals:
+            mid = sorted(vals)[len(vals) // 2]
+            for r in rows:
+                tag = str(r.get("tag") or "").strip().lower()
+                if tag:
+                    scores[tag] = float(r.get("mean_retention") or 0.0) - mid
+    except Exception:  # noqa: BLE001 — the prior is a nudge, never a gate
+        scores = {}
+    _RETENTION_PRIOR_CACHE[show_slug] = scores
+    return scores
+
+
+def _retention_score(entry: dict, tag_scores: dict) -> float:
+    """Mean centered-retention of the entry's known tags, clipped to
+    ±10 points so the prior can shuffle near-ties but never outrank a
+    real context-overlap difference (overlap stays the primary key)."""
+    if not tag_scores:
+        return 0.0
+    vals = [tag_scores[t] for t in
+            (str(x).strip().lower() for x in entry.get("tags") or [])
+            if t in tag_scores]
+    if not vals:
+        return 0.0
+    return max(-10.0, min(10.0, sum(vals) / len(vals)))
+
+
+def _rank(entries: List[dict], context_text: str,
+          show_slug: str = "") -> List[dict]:
     """Deterministic best-first ordering.
 
-    Primary: token overlap with the context. Ties: newer ``episode_date``
-    first, then ``image_id`` — so identical inputs always yield identical
-    output regardless of manifest document order. Implemented as three
-    stable sorts (least- to most-significant key); Python's sort is stable
-    even with ``reverse=True``.
+    Primary: token overlap with the context. Secondary (July 31 2026):
+    the bounded retention prior — among equal-overlap candidates, images
+    whose tags historically held viewers rank first. Ties after that:
+    newer ``episode_date`` first, then ``image_id`` — so identical inputs
+    always yield identical output regardless of manifest document order.
+    Implemented as stable sorts (least- to most-significant key);
+    Python's sort is stable even with ``reverse=True``.
     """
     ctx = _tokenize(context_text)
+    tag_scores = _retention_tag_scores(show_slug) if show_slug else {}
     ranked = sorted(entries, key=lambda e: e.get("image_id") or "")
     ranked.sort(key=lambda e: e.get("episode_date") or "", reverse=True)
+    if tag_scores:
+        ranked.sort(key=lambda e: _retention_score(e, tag_scores),
+                    reverse=True)
     if ctx:
         ranked.sort(key=lambda e: len(ctx & _entry_tokens(e)), reverse=True)
     return ranked
@@ -367,7 +426,7 @@ def select_library_scenes(
         paths: List[Path] = []
         failures: List[str] = []
         consecutive_failures = 0
-        for entry in _rank(entries, context_text):
+        for entry in _rank(entries, context_text, show_slug):
             if len(paths) >= limit:
                 break
             if consecutive_failures >= _MAX_CONSECUTIVE_DOWNLOAD_FAILURES:

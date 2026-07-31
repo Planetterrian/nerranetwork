@@ -55,7 +55,32 @@ _STOP = frozenset({
     "january", "february", "march", "april", "may", "june", "july",
     "august", "september", "october", "november", "december",
     "2024", "2025", "2026", "2027",
+    # July 31 2026: plain function words that were passing the list and
+    # shipping as "topics that retained best" ("while", "just").
+    "while", "just", "about", "after", "over", "more", "been", "their",
+    "them", "they", "were", "have", "has", "had", "not", "into", "than",
+    "when", "where", "which", "there", "here", "some", "most", "also",
 })
+
+# Exemplar quality gate (July 31 2026): live performance files were
+# quoting FRAGMENT titles ("prove adequate, the architecture could…")
+# and DATE titles ("Today is July 16th, 2026") as high-retention
+# exemplars — teaching the title generator the exact shapes the July 18
+# title bundle exists to eliminate. A title is quotable only when it
+# doesn't look like a transcript fragment or a dateline.
+_BAD_EXEMPLAR = re.compile(
+    r"(?:…|\.\.\.)\s*$"                       # trailing ellipsis = fragment
+    r"|(?i:^\s*(?:today is|it's|its)\s)"      # dateline / spoken opener
+    # Case-sensitivity is load-bearing on the next branch: a global
+    # IGNORECASE made [a-z] match "T" and rejected every title.
+    r"|^\s*[a-z]"                             # starts lowercase = mid-sentence
+    r"|^\s*\S+\s*,"                           # "word," opener = clause tail
+)
+
+
+def _quotable(title: str) -> bool:
+    t = (title or "").strip()
+    return bool(t) and not _BAD_EXEMPLAR.search(t)
 
 
 def _keywords(text: str) -> List[str]:
@@ -63,18 +88,26 @@ def _keywords(text: str) -> List[str]:
     return [t for t in toks if t.lower() not in _STOP]
 
 
-def _build_hint(videos: List[dict], *, channel: str = "en") -> str:
+def _build_hint(videos: List[dict], *, channel: str = "en",
+                kind: str = "") -> str:
     """Compose a short natural-language steer from the best performers.
 
     ``channel`` selects EN (@NerraNetwork) or RU (@NerraRU) rows. Mixing
     channels skews the median and can quote the wrong language as exemplars.
     Rows without a ``channel`` field predate the split and count as EN.
+
+    ``kind`` ("long" | "short" | "" for all) scopes the pool. July 31
+    2026: the blended pool's "top quartile" was structurally all-Shorts
+    (~42% retention vs ~10% long-form), so Shorts exemplars and a
+    Shorts-inflated median were steering LONG-FORM titles too. Kinds are
+    now mined separately and composed into a labeled hint.
     """
     channel = (channel or "en").lower()
     rated = [
         v for v in videos
         if v.get("average_view_percentage")
         and (v.get("channel") or "en").lower() == channel
+        and (not kind or (v.get("kind") or "") == kind)
     ]
     if len(rated) < _MIN_VIDEOS:
         return ""
@@ -105,15 +138,18 @@ def _build_hint(videos: List[dict], *, channel: str = "en") -> str:
             "Topics/keywords that retained best recently: "
             + ", ".join(common[:8]) + "."
         )
-    # Show the operator/LLM 2-3 concrete high-retention titles as exemplars.
-    examples = [v["title"] for v in top[:3] if v.get("title")]
+    # Show the operator/LLM 2-3 concrete high-retention titles as
+    # exemplars — quotable ones only (no fragments/datelines: quoting a
+    # broken title as an exemplar teaches the generator the exact shapes
+    # the title bundle exists to eliminate).
+    examples = [v["title"] for v in top if _quotable(v.get("title"))][:3]
     if examples:
         parts.append("Highest-retention titles so far: "
                      + " | ".join(f'"{t}"' for t in examples) + ".")
     # Subscriber-converting titles are the strongest possible exemplars.
     converters = [v["title"] for v in rated
                   if float(v.get("subscribers_gained", 0) or 0) > 0
-                  and v.get("title")][:2]
+                  and _quotable(v.get("title"))][:2]
     if converters:
         parts.append("Titles that converted subscribers: "
                      + " | ".join(f'"{t}"' for t in converters) + ".")
@@ -122,6 +158,26 @@ def _build_hint(videos: List[dict], *, channel: str = "en") -> str:
         "concrete and front-load the strongest entity."
     )
     return " ".join(parts)
+
+
+def _compose_kind_hints(videos: List[dict], *, channel: str = "en") -> str:
+    """Labeled per-kind hint: long-form and Shorts mined SEPARATELY.
+
+    Falls back to the blended pool only when neither kind alone clears
+    the minimum sample — small channels keep getting a hint, but a show
+    with real data never has Shorts retention steering long-form titles
+    again.
+    """
+    hint_long = _build_hint(videos, channel=channel, kind="long")
+    hint_short = _build_hint(videos, channel=channel, kind="short")
+    parts: List[str] = []
+    if hint_long:
+        parts.append("LONG-FORM: " + hint_long)
+    if hint_short:
+        parts.append("SHORTS: " + hint_short)
+    if parts:
+        return " ".join(parts)
+    return _build_hint(videos, channel=channel)
 
 
 def main() -> int:
@@ -147,8 +203,8 @@ def main() -> int:
     # perf file lands next to that show's index file.
     for dir_name, payload in shows.items():
         videos = payload.get("videos") or []
-        hint_en = _build_hint(videos, channel="en")
-        hint_ru = _build_hint(videos, channel="ru")
+        hint_en = _compose_kind_hints(videos, channel="en")
+        hint_ru = _compose_kind_hints(videos, channel="ru")
         # Primary title_hint: EN for English shows; RU natives (finansy /
         # privet) often have only @NerraRU rows — fall back so they aren't
         # permanently hint-starved.

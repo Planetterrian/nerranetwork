@@ -113,18 +113,21 @@ class TestChapterAlignment:
         assert abs(math.fsum(d for _, d in plan) - 90.0) < 1e-6
 
     def test_long_chapter_subdivides_within_bounds(self):
-        """A 40 s chapter with max_hold=15 splits into 3 equal ~13.3 s
-        slots — every slot within [min_hold, max_hold]."""
+        """A 40 s opening chapter subdivides with the ACCELERATING-OPEN
+        max hold (July 31 2026 — D1: windows starting < 60 s clamp to
+        8 s) → 5 equal 8 s slots. Every slot stays within
+        [min_hold, effective max]."""
         pool = _scenes("fresh", 6)
         chapters = _chapters((0.0, "Intro"), (40.0, "Closing"))
         plan = plan_chapter_schedule(pool, [], chapters, 55.0,
                                      max_hold_s=15.0, min_hold_s=6.0)
-        # First chapter (40 s) contributes 3 slots of 40/3 s.
-        first_three = [d for _, d in plan[:3]]
-        assert all(abs(d - 40.0 / 3) < 1e-9 for d in first_three)
+        # First chapter (40 s, start < 60 s) contributes 5 slots of 8 s.
+        first_five = [d for _, d in plan[:5]]
+        assert all(abs(d - 8.0) < 1e-9 for d in first_five)
         for _, dur in plan:
             assert dur <= 15.0 + 1e-9
             assert dur >= 6.0 - 1e-9
+        assert abs(math.fsum(d for _, d in plan) - 55.0) < 1e-6
 
     def test_sixteen_second_chapter_splits_into_two_eights(self):
         pool = _scenes("fresh", 4)
@@ -171,6 +174,76 @@ class TestChapterAlignment:
 
 
 # ---------------------------------------------------------------------------
+# Accelerating open (July 31 2026 — D1)
+# ---------------------------------------------------------------------------
+
+
+class TestAcceleratingOpen:
+    def test_slots_starting_in_first_minute_hold_at_most_eight_seconds(self):
+        """The first minute is where long-form retention is decided
+        (10.7% EN median). Chapter windows starting < 60 s subdivide at
+        an 8 s max hold — ~2x the scene-change rate — before the plan
+        settles into the normal 6-15 s cruise."""
+        pool = _scenes("fresh", 6)
+        chapters = _chapters((0.0, "Intro"), (30.0, "Body"),
+                             (90.0, "Deep Dive"))
+        # 4 + 8 + 10 = 22 slots — under the 24-slot cap, so the merge
+        # never coarsens the opening (an over-cap plan may: the ffmpeg
+        # input cap outranks the pacing preference by design — see
+        # test_open_acceleration_respects_slot_cap).
+        plan = plan_chapter_schedule(pool, [], chapters, 240.0,
+                                     max_hold_s=15.0, min_hold_s=6.0)
+        acc = 0.0
+        for _, dur in plan:
+            if acc < 60.0 - 1e-9:
+                assert dur <= 8.0 + 1e-9, (
+                    f"slot starting at {acc:.1f}s holds {dur:.1f}s "
+                    f"(> 8 s inside the first minute)"
+                )
+            acc += dur
+        assert abs(math.fsum(d for _, d in plan) - 240.0) < 1e-6
+
+    def test_cruise_holds_return_after_the_first_minute(self):
+        """Chapters starting past 60 s keep the normal max hold — the
+        acceleration is an OPENING treatment, not a global re-pace."""
+        pool = _scenes("fresh", 6)
+        chapters = _chapters((0.0, "Intro"), (60.0, "Body"))
+        plan = plan_chapter_schedule(pool, [], chapters, 120.0,
+                                     max_hold_s=15.0, min_hold_s=6.0)
+        # The [60, 120) window subdivides at max_hold 15 → 4 x 15 s.
+        tail = [d for _, d in plan[-4:]]
+        assert all(abs(d - 15.0) < 1e-9 for d in tail)
+
+    def test_open_acceleration_respects_slot_cap(self):
+        """More opening slots must never push the plan past the ffmpeg
+        input cap — the existing merge absorbs the extra slots."""
+        from engine.scene_scheduler import _MAX_SLIDESHOW_SLOTS
+        pool = _scenes("fresh", 4)
+        starts = [0, 20, 40, 60, 150, 250, 350, 450, 550, 650, 750, 900]
+        chapters = _chapters(*[(float(s), f"Ch{i}")
+                               for i, s in enumerate(starts)])
+        plan = plan_chapter_schedule(pool, [], chapters, 1044.0,
+                                     max_hold_s=15.0, min_hold_s=6.0)
+        assert len(plan) <= _MAX_SLIDESHOW_SLOTS
+        assert abs(math.fsum(d for _, d in plan) - 1044.0) < 1e-6
+
+    def test_chapter_boundaries_still_hit_exactly(self):
+        """The opening acceleration subdivides WITHIN windows, so the
+        cumulative plan still passes exactly through every boundary."""
+        pool = _scenes("fresh", 5)
+        chapters = _chapters((0.0, "Intro"), (30.0, "Deep Dive"),
+                             (60.0, "Closing"))
+        plan = plan_chapter_schedule(pool, [], chapters, 90.0)
+        cumulative = set()
+        acc = 0.0
+        for _, dur in plan:
+            acc += dur
+            cumulative.add(round(acc, 6))
+        assert 30.0 in cumulative
+        assert 60.0 in cumulative
+
+
+# ---------------------------------------------------------------------------
 # Scene selection — token overlap, fresh tie-break, reuse variety
 # ---------------------------------------------------------------------------
 
@@ -188,8 +261,10 @@ class TestSceneSelection:
         )
         plan = plan_chapter_schedule([cyber, star], [], chapters, 40.0,
                                      scene_context=context)
-        # 2 chapters × 20 s → 2 slots each of 10 s.
-        assert [p for p, _ in plan] == [cyber, cyber, star, star]
+        # 2 chapters × 20 s, both inside the accelerating-open window
+        # (D1: max hold 8 s) → 3 slots each of ~6.67 s; the topical
+        # scene still wins every slot of its own chapter.
+        assert [p for p, _ in plan] == [cyber, cyber, cyber, star, star, star]
 
     def test_fresh_scene_wins_tie_over_library(self):
         fresh = _scenes("fresh", 1)
@@ -200,12 +275,14 @@ class TestSceneSelection:
 
     def test_reuse_penalty_yields_rotation_variety(self):
         """With a context-less pool of 3, the plan should rotate
-        through all three scenes with no back-to-back repeat."""
+        through all three scenes with no back-to-back repeat. (D1: both
+        chapters start < 60 s, so they subdivide at the 8 s opening max
+        hold → 6 slots each = 12 picks.)"""
         pool = _scenes("fresh", 3)
         chapters = _chapters((0.0, "Intro"), (45.0, "Closing"))
         plan = plan_chapter_schedule(pool, [], chapters, 90.0)
         picks = [p for p, _ in plan]
-        assert len(picks) == 6
+        assert len(picks) == 12
         assert set(picks) == set(pool)
         for a, b in zip(picks, picks[1:]):
             assert a != b, f"back-to-back repeat of {a}"
