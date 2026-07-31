@@ -209,7 +209,12 @@ episode:
 chapters:
   enabled: true
   section_markers:
-  - pattern: welcome to Models and Agents for Beginners
+  # July 31 2026: the cold open leads with the hook, so the greeting no
+  # longer opens the episode — the identity line ("This is Models and
+  # Agents for Beginners, episode N") is the new start anchor (ep119 lost
+  # its Welcome chapter on the legacy pattern).
+  - pattern: welcome to Models and Agents for Beginners|This is Models and Agents
+      for Beginners
     title: Welcome
     where: start
   - pattern: big story|biggest news
@@ -222,7 +227,10 @@ chapters:
     title: Quick Bits
   # "that is it for today" (no contraction) shipped on Ep095/098 July 2026
   # and matched nothing; the `.?s` form covers straight/curly apostrophes.
-  - pattern: that(?:.?s| is) it for today|that.?s models and agents|that.?s a wrap
+  # "And that is a wrap" (same de-contraction, other closing variant)
+  # shipped on Ep112/Ep119 and also matched nothing — cover both variants.
+  - pattern: that(?:.?s| is) it for today|that.?s models and agents|that(?:.?s|
+      is) a wrap
     title: Closing
     where: end
 newsletter:
