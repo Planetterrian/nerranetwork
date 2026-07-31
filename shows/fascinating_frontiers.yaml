@@ -121,6 +121,17 @@ exclude_title_patterns:
 # "Mars may host large subsurface magma systems" (verb not almanac), and
 # the FF June-16 lesson — never a bare "passes near".
 - ^(the )?(moon|mercury|venus|mars|jupiter|saturn|uranus|neptune)\b.{0,60}\b(passes|shines|reaches \d+ degrees)\b
+# July 31 2026: the daily "sky today / sky tonight" almanac columns from
+# astronomy.com + Astronomy Magazine (URL slug "the-sky-today-friday-...")
+# and Space.com's monthly stargazing round-up ("The night sky is changing
+# this August — here's which planets to watch") kept slipping the filters
+# above because the LLM re-headlines them ("Mercury Brightens in Morning
+# Sky", "August Night Sky Features Shifting Planets") AFTER the fetch-time
+# title check. Anchor on the ORIGINAL column titles instead. Conservative
+# — verified against the Ep140-147 kept-title set: zero real-news drops.
+- \bthe sky (today|tonight)\b
+- \bnight sky is changing\b
+- \bwhich planets?\b.{0,20}\b(to )?(watch|see)\b
 keywords:
 - space
 - astronomy

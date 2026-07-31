@@ -207,9 +207,17 @@ llm:
   # rather than fill space with editorial padding"; this aligns the
   # pipeline gate with that instruction.
   min_podcast_words: 900
-  # June 2026 network quality pass: chronic below-target episodes —
-  # the expand-retry now fires on ANY below-target script.
-  podcast_expand_below_target: true
+  # July 31 2026 network review: env_intel finally gets the sanctioned
+  # DIGEST-side length lever (the July playbook: podcast-side levers
+  # are banned network-wide, ~10 misses vs 1 hit; EI only kept its
+  # podcast retry because it had no digest lever — that reason no
+  # longer holds). Last 6 digests ran 563-891 words, which is the real
+  # ceiling under the scripts. Floor set just above the observed range
+  # so the retry fires on thin days without demanding padding on
+  # normal ones.
+  digest_expand_below_target: true
+  min_digest_words: 950
+  podcast_expand_below_target: false
   min_podcast_word_floor: 450
 
 tts:
