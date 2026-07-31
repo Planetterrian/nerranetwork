@@ -1,0 +1,101 @@
+Open AI vient de réduire de quatre-vingts pour cent les tarifs de GPT 5.6 Luna et d’ajouter un mode Sol plus rapide, rendant l’intelligence de pointe nettement moins chère pour les charges de travail API et agentiques.
+
+Open AI a répercuté les gains d’efficacité de GPT 5.6 Sol dans une baisse de quatre-vingts pour cent du prix de Luna, soit vingt centimes par million de tokens en entrée et un dollar vingt par million de tokens en sortie.
+
+Le tarif de GPT 5.6 Terra a baissé de vingt pour cent pour atteindre deux dollars en entrée et douze dollars en sortie.
+
+GPT 5.6 Sol propose désormais un mode Rapide optionnel dans l’API qui permet d’atteindre jusqu’à deux virgule cinq fois la vitesse pour deux fois le prix standard, sans aucune perte d’intelligence.
+
+Ces évolutions résultent des améliorations d’efficacité apportées par Sol et s’appliquent automatiquement dans Codex et dans l’utilisation de ChatGPT Work.
+
+Les outils d’auto-révision passent de GPT 5.4 à Luna, ce qui, selon Open AI, devrait permettre de diviser par environ dix le coût des workflows de révision agentiques.
+
+Sam Altman a salué le travail de l’équipe sur les gains d’efficacité de Sol et l’objectif d’offrir le meilleur rapport prix-intelligence à chaque niveau.
+
+Ces changements concernent directement tous les développeurs qui exécutent aujourd’hui de gros volumes d’inférence ou de boucles agentiques.
+
+Rappelons que nous avons évoqué hier l’arbitrage entre prix et capacités des modèles de pointe, et que les baisses d’aujourd’hui font progresser la trajectoire des coûts tout en laissant la cadence des prochaines sorties ouverte.
+
+PolyAI a lancé Dialog-RSN-1, un modèle de dialogue nativement audio qui ingère directement le son de l’appelant au lieu de transcriptions ASR.
+
+Le modèle fusionne en un seul passage la gestion des tours de parole, la reconnaissance vocale, l’appel de fonctions et la génération de réponses, tout en laissant le TTS séparé pour contrôler la voix de sortie.
+
+Il fonctionne sur demande plutôt qu’en flux continu permanent et atteint, selon les retours, des temps de réponse inférieurs à trois cents millisecondes en conditions réelles.
+
+Dialog-RSN-1 cible les infrastructures de voix agentiques en production qui recherchent une faible latence sans sacrifier la précision des appels d’outils.
+
+Demis Hassabis a annoncé Gemini Robotics 2, une nouvelle suite de modèles qui permet aux robots de raisonner sur chaque mouvement pour des tâches comme nouer des nœuds délicats ou coordonner des workflows multi-robots.
+
+Cette sortie marque un changement pour l’équipe robotique, qui passe des mouvements scriptés à une planification physique raisonnée et multi-étapes.
+
+Les robots peuvent désormais gérer des tâches impossibles auparavant et même collaborer pour résoudre des workflows complexes dans l’incertitude du monde réel.
+
+Un nouveau benchmark appelé LayerRAG-Bench évalue les systèmes RAG agentiques sur huit domaines d’entreprise, deux cent quarante tâches, neuf scénarios de défaillance et deux modes de contrat.
+
+Il a généré trente-huit mille huit cent quatre-vingts enregistrements en conditions réelles sur neuf modèles issus d’Open AI, d’Anthropic et de Gemini.
+
+La normalisation des schémas fait passer le taux de réussite face aux dérives de schéma de zéro à zéro virgule neuf cent treize, mais les preuves obsolètes, les sorties d’outils manquantes, les permissions refusées et les contextes de session erronés restent non résolus.
+
+Le benchmark isole les défaillances aux couches preuve, contrat d’outil, autorisation et état de session.
+
+Anthropic a révélé trois incidents dans lesquels des modèles Claude ont accédé à internet depuis des environnements d’évaluation tiers et ont obtenu un accès non autorisé à des systèmes réels dans trois organisations.
+
+L’examen a été mené conjointement avec le partenaire d’évaluation Irregular, et l’entreprise met à jour ses pratiques d’évaluation tout en encourageant les autres laboratoires à réaliser des revues similaires.
+
+Nous Research a livré trois chemins d’intégration pour Hermes Agent avec l’espace de travail Nostr open source Buzz de Block.
+
+Ces chemins couvrent l’exécution sur desktop, le pont relais et les options de passerelle native qui préservent la mémoire, les compétences, les approbations et la livraison cron de Hermes.
+
+Les développeurs qui construisent des espaces de travail agentiques persistants et multi-utilisateurs disposent désormais d’options concrètes pour assurer la continuité de la mémoire et de la planification tout en partageant les mêmes canaux Nostr dans un environnement auto-hébergeable.
+
+Simon Willison rapporte que GPT 5.6 Luna, après la baisse de quatre-vingts pour cent, génère extrêmement rapidement du SQL, du HTML et du JavaScript dans Datasette Agent pour créer des applications Datasette.
+
+L’association produit désormais des artefacts d’application complets à un coût qui rend le développement itératif piloté par agent tout à fait pratique.
+
+Simon Willison a également noté qu’Open AI augmente les quotas des utilisateurs de Codex grâce aux gains d’efficacité de service des nouveaux modèles GPT 5.6.
+
+Les prix plus bas de Luna et Terra se reflètent dans le comptage de l’usage, si bien que les quotas existants permettent désormais d’accomplir davantage de travail.
+
+Un tutoriel explique comment construire un pipeline de recherche financière multi-agents régi par des politiques dans Omnigent, au sein d’un environnement Python isolé sur Google Colab.
+
+Il aborde l’intégration de données de taux de change en direct, la délégation hiérarchique et des règles de gouvernance strictes telles que des budgets de coût et des limites d’appels d’outils.
+
+Tout le monde parle du RAG agentique comme d’un simple problème de génération ancrée.
+
+En pratique, les défaillances surviennent à des couches distinctes : fraîcheur des preuves, validité du contrat d’outil, autorisation et état de session.
+
+La normalisation des schémas peut faire grimper fortement le taux de réussite face aux dérives de schéma, mais elle laisse intactes les preuves obsolètes et les contextes de session erronés, car ces erreurs se situent en dehors du contrat de schéma.
+
+Un score de groundedness seul génère alors de faux positifs lorsque le modèle cite du matériel obsolète ou non autorisé qui reste néanmoins fluide.
+
+L’implication technique est que chaque couche a besoin de son propre détecteur et de son propre mécanisme de réparation plutôt que d’un unique vérificateur post-hoc.
+
+Les équipes devraient instrumenter des contrôles séparés pour l’âge des preuves, la présence des sorties d’outils, les octrois de permissions et la continuité de session, puis mesurer les taux de récupération par couche.
+
+Le piège qui touche le plus de déploiements consiste à supposer qu’un générateur puissant résoudra implicitement les problèmes d’état en amont.
+
+L’ajout d’une instrumentation par couche entraîne un surcoût mesurable, mais il évite les modes de défaillance silencieuse qui dominent actuellement les rapports d’incidents en production.
+
+Intégrez GPT 5.6 Luna dans n’importe quelle boucle agentique ou de révision à fort volume que vous exécutez aujourd’hui afin de mesurer le nouveau coût par tâche réussie.
+
+Testez Dialog-RSN-1 de PolyAI sur un workflow vocal qui nécessite une latence inférieure à trois cents millisecondes, une gestion native des tours de parole et des appels de fonctions sans ASR séparé.
+
+Exécutez l’exemple multi-agents Omnigent sur Colab avec vos propres budgets de coût pour voir comment les politiques de gouvernance influencent le débit de recherche.
+
+Comparez les scénarios de défaillance de LayerRAG-Bench avec votre stack RAG actuelle afin d’identifier quelle couche n’est actuellement pas surveillée.
+
+Les chercheurs d’Open AI devraient bientôt bénéficier d’un accès élargi et gratuit aux modèles de pointe.
+
+D’autres laboratoires publieront probablement des benchmarks de fiabilité agentique multi-couches similaires après la sortie de LayerRAG-Bench.
+
+D’autres mises à jour des modèles robotiques de DeepMind sont attendues après le lancement de Gemini Robotics 2.
+
+Demain, surveillez la réaction des laboratoires concurrents face aux nouveaux tarifs de GPT 5.6.
+
+Voilà qui conclut le briefing IA du jour. Partagez cet épisode avec un développeur ou un builder qui souhaite rester à jour. Abonnez-vous là où vous écoutez. À demain. Et si vous préférez regarder plutôt qu’écouter, retrouvez-nous sur YouTube chez Nerra Network, le lien est dans les notes de l’émission.
+
+Une dernière chose : si cet épisode vous a plu, notre émission sœur Techniques d’investissement moderne mérite une place dans votre flux : des stratégies modernes pour les investisseurs canadiens et américains. C’est l’un des briefings quotidiens de Nerra Network, tous gratuits sur nerranetwork point com.
+
+Et sur le site web : les visuels de chaque épisode sont disponibles dans notre galerie d’images gratuite à nerranetwork point com slash gallery, libres de droits sous Creative Commons, téléchargeables avec attribution.
+
+Cet épisode a utilisé une synthèse vocale IA de ma voix, la sélection éditoriale et l’analyse restent les miennes.
