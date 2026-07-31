@@ -508,3 +508,48 @@ def _overlaps_any(
         ):
             return True
     return False
+
+
+def hook_first_windows(
+    windows: List[ScoredWindow],
+    *,
+    n: int,
+    hook_start: float,
+    window_duration: float = 35.0,
+    hook_text: str = "",
+    min_gap_seconds: float = 10.0,
+) -> List[ScoredWindow]:
+    """Make the episode's OPENING the first window; smart windows follow.
+
+    July 31 2026 (operator directive): one Short per channel is the
+    episode's "starting hook sequence". Since the July-30 retention pass
+    every episode opens on its hook (cold open at t~=0, median long-form
+    retention 10.7% vs ~42% on Shorts that skip housekeeping), so the
+    first ``window_duration`` seconds ARE the hook sequence — the single
+    strongest, editorially-chosen beat of the episode. The hook window
+    ships FIRST on every channel; the remaining slots keep the smart
+    selector's top windows, minus any that overlap the opening.
+
+    The hook window carries ``qualified=True`` and ``score=inf`` — it is
+    a policy decision, not a scored candidate — and its opening_text is
+    the episode hook so titles/thumbnails describe it correctly.
+
+    Returns a NEW list, never mutates the input. ``n <= 0`` returns [].
+    """
+    if n <= 0:
+        return []
+    hook_window = ScoredWindow(
+        start_seconds=max(0.0, float(hook_start)),
+        end_seconds=max(0.0, float(hook_start)) + float(window_duration),
+        score=float("inf"),
+        opening_text=(hook_text or "").strip(),
+        qualified=True,
+    )
+    kept: List[ScoredWindow] = [hook_window]
+    for w in windows:
+        if len(kept) >= n:
+            break
+        if _overlaps_any(w, [hook_window], min_gap_seconds):
+            continue
+        kept.append(w)
+    return kept[:n]

@@ -4537,11 +4537,30 @@ def _publish_youtube(
                 fill_to_n=bool(getattr(
                     config.youtube, "shorts_fill_to_requested", True)),
             )
+            # Hook-first (July 31 2026 operator directive): Short #1 is
+            # the episode's opening hook sequence on every channel; the
+            # smart windows fill the remaining slots (overlaps dropped).
+            # window="hook" flows into metrics + the video index so the
+            # analytics loop can score the change against smart windows.
+            if (bool(getattr(config.youtube, "shorts_first_is_hook", True))
+                    and getattr(config.youtube, "shorts_start_offset",
+                                None) is None):
+                from engine.shorts_selector import hook_first_windows
+                _early_windows = hook_first_windows(
+                    _early_windows,
+                    n=_policy_shorts_count,
+                    hook_start=_voice_off,
+                    window_duration=float(
+                        config.youtube.short_duration_seconds or 35.0),
+                    hook_text=hook or "",
+                )
             _early_shorts_plan = [
                 (
                     w.start_seconds,
                     (w.opening_text or hook).strip() or hook,
-                    "qualified" if getattr(w, "qualified", True) else "filled",
+                    ("hook_open" if w.score == float("inf")
+                     else "qualified" if getattr(w, "qualified", True)
+                     else "filled"),
                 )
                 for w in _early_windows
             ]
@@ -5578,16 +5597,28 @@ def _publish_youtube(
                 _early_shorts_plan)
 
             if not shorts_plan:
-                # Single-Short fallback: legacy resolved offset + the
-                # episode-level hook. Same code path as before
-                # ``shorts_per_episode`` existed.
-                fallback_offset = resolve_shorts_start_offset(
-                    config,
-                    chapters_path if chapters_path.exists() else None,
-                    audio_duration=_ep_duration,
-                    transcript_path=transcript_path,
-                )
-                shorts_plan = [(fallback_offset, hook, "legacy_fallback")]
+                if (bool(getattr(config.youtube, "shorts_first_is_hook",
+                                 True))
+                        and getattr(config.youtube, "shorts_start_offset",
+                                    None) is None):
+                    # Hook-first single Short (July 31 2026): the episode
+                    # opens on its hook since the cold-open pass, so the
+                    # opening IS the strongest window — no selector or
+                    # chapter resolution needed.
+                    _hook_off = float(getattr(
+                        config.audio, "voice_intro_delay", 0.0) or 0.0)
+                    shorts_plan = [(_hook_off, hook, "hook_open")]
+                else:
+                    # Single-Short fallback: legacy resolved offset + the
+                    # episode-level hook. Same code path as before
+                    # ``shorts_per_episode`` existed.
+                    fallback_offset = resolve_shorts_start_offset(
+                        config,
+                        chapters_path if chapters_path.exists() else None,
+                        audio_duration=_ep_duration,
+                        transcript_path=transcript_path,
+                    )
+                    shorts_plan = [(fallback_offset, hook, "legacy_fallback")]
 
             # Surface the resolved plan on the result dict. Single-
             # Short fields stay for backwards compatibility with the
@@ -5934,6 +5965,10 @@ def _publish_youtube(
                             # Empty for non-participating shows so the
                             # control arm stays same-show, same-channel.
                             variant=(_variant.variant if _ab_on else ""),
+                            # Which window this Short came from (hook-
+                            # first directive) — hook_open | qualified |
+                            # filled | legacy_fallback.
+                            window=_fill_mode,
                             index_path=digests_dir / "youtube_videos.json",
                         )
                     except Exception as _exc:

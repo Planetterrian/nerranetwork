@@ -673,3 +673,73 @@ class TestShortsClipLength:
         for fn in (pick_engaging_window, pick_top_n_engaging_windows):
             default = inspect.signature(fn).parameters["window_duration"].default
             assert default == 35.0, f"{fn.__name__} defaults to {default}s"
+
+
+class TestHookFirstWindows:
+    """July 31 2026 operator directive: Short #1 on every channel is the
+    episode's opening hook sequence (since the cold-open pass, t~=0 IS
+    the hook); smart windows fill the remaining slots, overlaps dropped.
+    The hook window records window="hook_open" so the analytics loop can
+    score the directive against smart windows."""
+
+    def _w(self, start, end, score=6.0, text="w", qualified=True):
+        from engine.shorts_selector import ScoredWindow
+        return ScoredWindow(start_seconds=start, end_seconds=end,
+                            score=score, opening_text=text,
+                            qualified=qualified)
+
+    def test_hook_window_is_always_first(self):
+        from engine.shorts_selector import hook_first_windows
+        smart = [self._w(120, 155), self._w(300, 335)]
+        out = hook_first_windows(smart, n=3, hook_start=0.0,
+                                 window_duration=35.0, hook_text="The hook")
+        assert out[0].start_seconds == 0.0
+        assert out[0].opening_text == "The hook"
+        assert out[0].score == float("inf")
+        assert [w.start_seconds for w in out[1:]] == [120, 300]
+
+    def test_overlapping_smart_windows_are_dropped(self):
+        from engine.shorts_selector import hook_first_windows
+        smart = [self._w(20, 55), self._w(200, 235)]  # 20s overlaps hook
+        out = hook_first_windows(smart, n=3, hook_start=0.0,
+                                 window_duration=35.0)
+        assert [w.start_seconds for w in out] == [0.0, 200]
+
+    def test_count_is_respected(self):
+        from engine.shorts_selector import hook_first_windows
+        smart = [self._w(120, 155), self._w(300, 335), self._w(500, 535)]
+        out = hook_first_windows(smart, n=2, hook_start=0.0,
+                                 window_duration=35.0)
+        assert len(out) == 2
+        assert out[0].score == float("inf")
+
+    def test_zero_count_returns_empty(self):
+        from engine.shorts_selector import hook_first_windows
+        assert hook_first_windows([], n=0, hook_start=0.0) == []
+
+    def test_network_default_is_on_and_spacex_pins_off(self):
+        """Default true (the directive applies network-wide); spacex is
+        pinned false until the Shorts motion A/B reads out — flipping it
+        mid-experiment would confound arm position with window choice."""
+        from engine.config import load_config
+        from pathlib import Path
+        root = Path(__file__).resolve().parent.parent
+        assert load_config(root / "shows" / "tesla.yaml").youtube \
+            .shorts_first_is_hook is True
+        assert load_config(root / "shows" / "spacex.yaml").youtube \
+            .shorts_first_is_hook is False
+
+    def test_run_show_and_both_dub_paths_are_wired(self):
+        """All three publish paths must apply the directive — a channel
+        that silently keeps smart-only Shorts would look like the
+        directive failing when it was never wired."""
+        from pathlib import Path
+        root = Path(__file__).resolve().parent.parent
+        for f in ("run_show.py", "engine/ru_dub.py", "engine/lang_dub.py"):
+            src = (root / f).read_text(encoding="utf-8")
+            assert "hook_first_windows" in src, f
+            assert "shorts_first_is_hook" in src, f
+        # And the index records the window label for the learning loop.
+        idx = (root / "engine" / "youtube_index.py").read_text(
+            encoding="utf-8")
+        assert 'row["window"] = window' in idx

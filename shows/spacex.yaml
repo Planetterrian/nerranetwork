@@ -414,6 +414,12 @@ youtube:
   # experiment is meant to be READ AND ENDED, not left running. Revisit
   # once api/shorts_ab.json has >= 14 episodes per arm.
   shorts_ab_enabled: true
+  # Hook-first Shorts (July 31 2026 network default) is PINNED OFF here
+  # until the motion A/B reads out: with it on, control (Short #1)
+  # would become the hook window while treatment (Short #2) stays a
+  # smart window — confounding motion with window position. Flip to
+  # true when the experiment ends (>= 14/arm, read api/shorts_ab.json).
+  shorts_first_is_hook: false
   shorts_ab_video_indexes: [1]
   shorts_ab_clips: 3
   shorts_ab_clip_seconds: 5

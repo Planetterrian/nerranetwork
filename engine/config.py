@@ -611,6 +611,16 @@ class YouTubeConfig:
     # instead of shipping fewer Shorts. The requested count is a policy
     # decision; before this, FF shipped 1-of-2 on every July episode.
     shorts_fill_to_requested: bool = True
+    # July 31 2026 (operator directive): the FIRST Short on every channel
+    # is the episode's opening hook sequence (since the July-30 cold-open
+    # pass, t~=0 IS the hook — the strongest editorially-chosen beat).
+    # Remaining Shorts keep the smart selector's windows. The hook Short
+    # is labeled window="hook" in the video index so the analytics loop
+    # can compare it against smart windows. False = pre-directive
+    # behavior (spacex pins false until the Shorts motion A/B reads out —
+    # flipping it mid-experiment would confound arm position with window
+    # choice).
+    shorts_first_is_hook: bool = True
     # ``always`` | ``alternate_episodes`` — skip Shorts on odd episode
     # numbers to halve upload quota during phased rollout.
     shorts_upload_schedule: str = "always"
