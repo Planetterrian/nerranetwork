@@ -714,3 +714,39 @@ class TestColdOpenIsCompelling:
     def test_bans_opening_on_a_question(self):
         from engine.intros import build_cold_open_spec
         assert "Never open on a question" in build_cold_open_spec("tesla")
+
+
+class TestIdentityLineSurvivesScriptCleaning:
+    """July 31 2026 P0: run_show's title-header stripper exactly matched
+    the July-30 identity line ("Patrick: This is <Show>, episode N."), so
+    every post-merge episode network-wide shipped without its host ever
+    saying the show's name (SpaceX Ep050/051, MIT Ep123 verified; the
+    Introduction chapter was lost with it). The stripper now exempts
+    spoken identity shapes while still dropping real junk headers."""
+
+    def _clean(self, script):
+        import run_show
+        return run_show._clean_podcast_script(script)
+
+    def test_english_identity_line_survives(self):
+        out = self._clean(
+            "Patrick: A real fact.\n"
+            "Patrick: This is SpaceX Daily, episode 52.\n"
+        )
+        assert "This is SpaceX Daily, episode 52" in out
+
+    def test_russian_identity_line_survives(self):
+        out = self._clean(
+            "Ведущая: Это Оля, вы слушаете Финансы Просто, выпуск 100.\n"
+        )
+        assert "вы слушаете" in out
+
+    def test_junk_title_headers_still_stripped(self):
+        out = self._clean(
+            "Tesla Shorts Time Daily – Episode 412 – March 19, 2026\n"
+            "Omni View, Episode 129\n"
+            "Patrick: Actual content here.\n"
+        )
+        assert "Episode 412" not in out
+        assert "Omni View, Episode 129" not in out
+        assert "Actual content here" in out

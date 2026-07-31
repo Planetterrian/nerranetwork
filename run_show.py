@@ -4056,7 +4056,19 @@ def _clean_podcast_script(
             continue
         # Also catch simpler variants: "Show Name, Episode N" at end of line
         # (with optional trailing metadata like "Script (Expanded – X words)")
-        if re.match(
+        #
+        # ...but NEVER the spoken identity line. The July 30 2026 cold-open
+        # pass made build_intro_line emit "Patrick: This is <Show>,
+        # episode N." — which this header-stripper matched EXACTLY, so
+        # every post-merge episode network-wide shipped without its host
+        # ever saying the show's name (verified: SpaceX Ep050/051, MIT
+        # Ep123 — MIT never says "Patrick" at all; Introduction chapters
+        # lost with it). Title headers are metadata shapes ("Show –
+        # Episode 412 – March 19"); a sentence built around "this is" /
+        # "вы слушаете" / "and this is" is speech, not a header.
+        if not re.search(
+            r"(?i)\b(this is|вы слушаете|and this is)\b", line
+        ) and re.match(
             r"(?i)^.{3,50},?\s+episode\s+[\w\s]+[,.]?\s*"
             r"(?:script\b.*)?$",
             line,
