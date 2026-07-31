@@ -92,7 +92,11 @@ def _tagged(url: str, placement: str) -> str:
         url,
         source=funnel.SOURCE_NEWSLETTER,
         medium=funnel.MEDIUM_EMAIL,
-        campaign="nn-spacex-ru-email-ep000",
+        # Built, not hand-written: the funnel rule (CLAUDE.md) exists
+        # because literal campaign strings drift silently when the
+        # format changes. ep000 = the weekly letter, not one episode.
+        campaign=funnel.campaign_id(
+            SHOW_SLUG, 0, channel="ru", kind="email"),
         placement=placement,
     )
 
@@ -101,7 +105,10 @@ def recent_ru_episodes(days: int = 7,
                        today: Optional[dt.date] = None) -> List[Dict]:
     """Episodes from the last *days* that have a Russian audio track."""
     today = today or dt.date.today()
-    cutoff = today - dt.timedelta(days=days)
+    # days-1: `cutoff <= when <= today` is inclusive on both ends, so a
+    # plain `days` span covered 8 calendar days and re-included last
+    # Sunday's episode in this Sunday's letter.
+    cutoff = today - dt.timedelta(days=max(0, days - 1))
     path = _ROOT / "digests" / SHOW_SLUG / f"summaries_{SHOW_SLUG}.json"
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
@@ -252,11 +259,21 @@ def build_body(episodes: List[Dict], launch: Optional[Dict],
 
 
 def _already_sent_this_week(week_ending: dt.date) -> bool:
+    """True when the marker records a send in the same ISO week.
+
+    Compared by ISO (year, week), not exact date: the marker stores the
+    date the letter went out, and a delayed cron / Monday re-dispatch
+    lands on a DIFFERENT date in the SAME week — an exact-date compare
+    would double-mail the list, which is the one unrecoverable failure
+    for a 'one letter a week' promise.
+    """
     try:
-        return SEND_MARKER.read_text(encoding="utf-8").strip() == \
-            week_ending.isoformat()
-    except OSError:
+        recorded = dt.date.fromisoformat(
+            SEND_MARKER.read_text(encoding="utf-8").strip()
+        )
+    except (OSError, ValueError):
         return False
+    return recorded.isocalendar()[:2] == week_ending.isocalendar()[:2]
 
 
 def _record_send(week_ending: dt.date) -> None:

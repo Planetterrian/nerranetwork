@@ -104,7 +104,13 @@ def resolve_publish_plan(
         YAML count requires ``shorts_start_mode: smart`` (the multi-Short
         path needs the top-N window selector). Lowering is always allowed.
     """
-    yaml_shorts_floor = max(1, int(yaml_shorts or 1))
+    # Clamp the YAML value too: the no-policy / adaptive-off paths return
+    # this verbatim and run_show has no bound of its own, so a YAML
+    # `shorts_per_episode: 10` would previously ship 10 Shorts whenever
+    # the policy file was missing or the show opted out of adaptation.
+    yaml_shorts_floor = min(
+        MAX_SHORTS_PER_EPISODE, max(1, int(yaml_shorts or 1))
+    )
     plan: Dict[str, object] = {
         "publish_long": bool(yaml_publish_long),
         "shorts": yaml_shorts_floor,

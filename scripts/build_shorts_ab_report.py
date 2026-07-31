@@ -123,20 +123,61 @@ def welch_difference(treatment: Sequence[float],
     }
 
 
+def _enabled_show_slugs() -> set:
+    """Shows that actually run the experiment (shorts_ab_enabled: true).
+
+    Read from the YAMLs rather than assumed: between 2026-07-30 and
+    2026-07-31 run_show stamped ``variant: "stills"`` on EVERY network
+    Short (plan_variants doubles as the render plan and its output was
+    recorded verbatim), so the indexes contain "control" rows from shows
+    that were never in the experiment. Filtering to enabled shows keeps
+    those contaminated rows out of the comparison — a control arm drawn
+    from other shows/channels measures the network, not the motion.
+    """
+    slugs = set()
+    for path in sorted((_ROOT / "shows").glob("*.yaml")):
+        if path.name.startswith("_"):
+            continue
+        try:
+            import yaml
+            data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+            if (data.get("youtube") or {}).get("shorts_ab_enabled"):
+                slugs.add(data.get("slug") or path.stem)
+        except Exception as exc:  # noqa: BLE001
+            log.debug("skip %s: %s", path.name, exc)
+    return slugs
+
+
 def _collect_videos() -> List[dict]:
-    """Every analytics row that carries an experiment arm."""
+    """Every analytics row that carries an experiment arm, from
+    participating shows only."""
     stats = _ROOT / "api" / "youtube_stats.json"
     try:
         payload = json.loads(stats.read_text(encoding="utf-8"))
     except Exception as exc:  # noqa: BLE001
         log.warning("cannot read %s: %s", stats, exc)
         return []
+    enabled = _enabled_show_slugs()
     rows = []
-    for block in (payload.get("shows") or {}).values():
+    dropped = 0
+    for slug, block in (payload.get("shows") or {}).items():
         for video in (block or {}).get("videos") or []:
             variant = (video.get("variant") or "").strip()
-            if variant in (VARIANT_STILLS, VARIANT_GROK_VIDEO):
-                rows.append(video)
+            if variant not in (VARIANT_STILLS, VARIANT_GROK_VIDEO):
+                continue
+            # Fail open when the shows/ registry is unreadable (enabled
+            # is empty) — a missing registry means we cannot distinguish
+            # participants, and dropping EVERY row would silently report
+            # "collecting" forever.
+            if enabled and slug not in enabled:
+                dropped += 1
+                continue
+            rows.append(video)
+    if dropped:
+        log.info(
+            "dropped %d variant-tagged video(s) from non-participating "
+            "shows (2026-07-30/31 contamination window)", dropped,
+        )
     return rows
 
 

@@ -30,6 +30,7 @@ from jinja2 import Environment, FileSystemLoader
 # RSS feeds, network HTML) scrubs at the same boundary. See utils.py
 # for the May 7 2026 operator-caught regression that prompted this.
 from engine.utils import strip_lone_surrogates as _strip_lone_surrogates
+from engine import titles as _titles
 
 ROOT = Path(__file__).resolve().parent
 TEMPLATES_DIR = ROOT / "templates"
@@ -2467,8 +2468,10 @@ def generate_show_page(slug, *, dry_run=False):
             dynamic_meta_description = f"Latest: {latest_episode_title}. {cfg.get('meta_description', '')}".strip()
             # Page title becomes "Show — Latest Hook Snippet | Nerra Network" (safe length)
             hook_snippet = latest_episode_title.split(":", 1)[-1].strip() if ":" in latest_episode_title else latest_episode_title
-            if len(hook_snippet) > 70:
-                hook_snippet = hook_snippet[:67] + "…"
+            # Titles rule (CLAUDE.md top rule): every truncation goes through
+            # engine/titles.py. The old raw slice cut mid-word on published
+            # <title>s ("…configuration na…" on spacex.html, 2026-07-31).
+            hook_snippet = _titles.clip_words(hook_snippet, _titles.WEB_TITLE_LEAD_MAX)
             page_title = f"{cfg['name']} — {hook_snippet} | Nerra Network"
 
     # Modern Investing: pull the mock-trade performance block from
@@ -2519,8 +2522,9 @@ def generate_show_page(slug, *, dry_run=False):
     latest_episode_title = static_episodes[0]["title"] if static_episodes else None
     if latest_episode_title:
         hook_snippet = latest_episode_title.split(":", 1)[-1].strip() if ":" in latest_episode_title else latest_episode_title
-        if len(hook_snippet) > 68:
-            hook_snippet = hook_snippet[:65] + "…"
+        # Titles rule: clip through engine/titles.py, never a raw slice (the
+        # two slice sites here even disagreed with each other, 67 vs 65).
+        hook_snippet = _titles.clip_words(hook_snippet, _titles.WEB_TITLE_LEAD_MAX)
         page_title = f"{cfg['name']} — {hook_snippet} | Nerra Network"
         meta_description = f"Latest: {latest_episode_title}. {cfg.get('meta_description', '')}".strip()
 

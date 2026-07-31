@@ -105,8 +105,15 @@ def strip_urls(text: str) -> str:
                       flags=re.IGNORECASE)
         return f"{host} {re.sub(r'[/_.-]+', ' ', path)}".rstrip()
 
+    # The trailing \b after the TLD is load-bearing: without it ".net"
+    # matches as a prefix inside ".netlify.app" (MAB ships those demo
+    # links regularly — 10 committed occurrences) and the URL is
+    # half-converted ("snake-awakening dot netlify.app"). \b still sits
+    # before both a path "/" and a sentence-final "." (non-word chars),
+    # so the promo-URL path handling is unaffected; it only blocks
+    # letter-continuation. Dropped by the 2026-07-30 rewrite, restored.
     text = re.sub(
-        r"\b(?P<host>\w+(?:\.\w+)*\.(?:com|org|net|io|ai|co|dev))"
+        r"\b(?P<host>\w+(?:\.\w+)*\.(?:com|org|net|io|ai|co|dev))\b"
         r"(?P<path>/[A-Za-z0-9\-_/]+(?:\.[A-Za-z0-9\-_/]+)*)?",
         _spoken_domain,
         text,

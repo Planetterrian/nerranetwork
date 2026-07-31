@@ -883,8 +883,21 @@ _SHOW_PERSONALITIES: dict[str, dict[str, Any]] = {
 # Milestone detection
 # ---------------------------------------------------------------------------
 
-def _milestone_note(episode_num: int) -> str | None:
-    """Return a brief milestone acknowledgment for round episode numbers."""
+def _milestone_note(episode_num: int, *, is_ru: bool = False) -> str | None:
+    """Return a brief milestone acknowledgment for round episode numbers.
+
+    ``is_ru`` picks the Russian phrasing for the Russian-spoken shows —
+    the identity line was carefully localized in the July 30 cold-open
+    pass, but this tail was appended unconditionally in English, so
+    Финансы Просто's Ep100 would have opened with the Olya voice reading
+    an English sentence mid-Russian-intro.
+    """
+    if is_ru:
+        if episode_num == 100:
+            return "Это сотый выпуск — настоящая веха. Спасибо, что вы с нами."
+        if episode_num % 100 == 0 and episode_num > 0:
+            return "Ещё одна круглая отметка — спасибо, что слушаете."
+        return None
     if episode_num == 100:
         return "That's episode one hundred — a big milestone. Thank you for being here."
     if episode_num == 200:
@@ -1013,7 +1026,9 @@ def build_intro_line(
 
     # Milestones are genuinely worth saying out loud — a 500th episode
     # is a credibility signal, unlike a date.
-    milestone = _milestone_note(episode_num)
+    milestone = _milestone_note(
+        episode_num, is_ru=show_slug in _RUSSIAN_SPOKEN_SHOWS
+    )
     if milestone:
         intro = f"{intro} {milestone}"
 

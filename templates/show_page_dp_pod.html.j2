@@ -353,6 +353,13 @@
       <a href="{{ rss_url }}">RSS feed</a>
       <a href="{{ path_prefix }}{{ blog_page }}">Episode notes &amp; transcripts</a>
       <a href="#archive">All episodes</a>
+      {# Story Tracker: DP Pod joined the show-memory registry in July 2026
+         and thedppod-narrative.html has been generated + sitemapped since,
+         but this custom template never linked it (the button lives in the
+         generic show_page.html.j2) — the page was reachable from nowhere. #}
+      {% if narrative_page_url %}
+      <a href="{{ path_prefix }}{{ narrative_page_url }}">Progress tracker</a>
+      {% endif %}
     </div>
     <div style="margin-top:1.2rem;">{{ ai_badge(path_prefix=path_prefix) }}</div>
   </section>

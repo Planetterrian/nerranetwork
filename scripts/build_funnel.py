@@ -219,6 +219,13 @@ def _clicks(ga4: Optional[dict]) -> Dict[str, Any]:
         entry["sessions"] += sessions
         entry["engaged_sessions"] += engaged
 
+    # Sessions our campaign ids actually explain. Kept separate from the
+    # raw total: "totals.sessions" includes organic/(not set) rows, and
+    # presenting it as funnel clicks was the one flattering number in an
+    # otherwise honest report.
+    out["totals"]["attributed_sessions"] = (
+        out["totals"]["sessions"] - out["unattributed"]["sessions"]
+    )
     out["by_show"] = {k: dict(v) for k, v in sorted(per_show.items())}
     out["by_channel"] = {k: dict(v) for k, v in sorted(per_channel.items())}
     out["by_variant"] = {k: dict(v) for k, v in sorted(per_variant.items())}
@@ -356,12 +363,45 @@ def _pilots(show_funnels: Dict[str, Any], reach: Dict[str, Any],
             views = ch_reach.get("views")
             sessions = ((clicks.get("by_channel") or {})
                         .get(channel, {}).get("sessions"))
+            # Show sessions scoped to THIS pilot's channel: by_show[slug]
+            # sums the show's campaigns across ALL channels, so once EN
+            # spacex campaign traffic exists it would inflate the RU
+            # pilot's click-through. by_campaign rows carry the parsed
+            # show+channel, so the scoped sum costs nothing extra.
             show_sessions = ((clicks.get("by_show") or {})
                              .get(slug, {}).get("sessions"))
+            pilot_sessions = None
+            if isinstance(clicks.get("by_campaign"), dict):
+                matched = [
+                    int(row.get("sessions") or 0)
+                    for row in clicks["by_campaign"].values()
+                    if row.get("show") == slug
+                    and row.get("channel") == channel
+                ]
+                pilot_sessions = sum(matched) if matched else 0
             landed = ((visits.get("by_destination") or {})
                       .get(key, {}).get("sessions"))
             tag = cfg.get("capture_tag")
             subscribers = ((captures.get("by_list") or {}) or {}).get(tag)
+            # Windowed signup EVENTS attributable to this pilot's
+            # campaigns — same window as `landed`, so the rate compares
+            # like with like. The all-time Buttondown tag count stays in
+            # the stages block as the cumulative truth, but dividing it
+            # by a windowed session count drifts upward forever (and past
+            # 100%), so it no longer feeds a rate.
+            pilot_signups = None
+            events = captures.get("signup_events_by_campaign")
+            if isinstance(events, dict) and captures.get(
+                    "signup_events_total") is not None:
+                import engine.funnel as _F
+                total_ev = 0
+                for name, count in events.items():
+                    parsed_ev = _F.parse_campaign_id(str(name))
+                    if (parsed_ev is not None
+                            and parsed_ev.show == slug
+                            and parsed_ev.channel == channel):
+                        total_ev += int(count or 0)
+                pilot_signups = total_ev
 
             out[key] = {
                 "show": slug,
@@ -377,10 +417,13 @@ def _pilots(show_funnels: Dict[str, Any], reach: Dict[str, Any],
                 "rates": {
                     # Reach -> click is the number this pilot exists to
                     # move: how many of the people who watched came.
-                    "click_through_pct": _rate(show_sessions, views),
-                    "capture_pct": _rate(subscribers, landed),
+                    # Channel-scoped sessions over channel-scoped reach.
+                    "click_through_pct": _rate(pilot_sessions, views),
+                    # Windowed signups over windowed landings.
+                    "capture_pct": _rate(pilot_signups, landed),
                 },
                 "channel_sessions": sessions,
+                "show_sessions_all_channels": show_sessions,
             }
     return out
 
@@ -404,9 +447,21 @@ def build(window_days: int = 30) -> Dict[str, Any]:
     visits = _visits(ga4, destinations)
     captures = _captures(bd, ga4)
 
+    # Null-vs-0 rule applied precisely: only an UNMEASURED input (or a
+    # denominator below the floor) yields null — a measured zero in the
+    # NUMERATOR is a real rate of 0. The previous `x or None` on the
+    # numerators made 0% coverage (the honest launch state: campaigns
+    # exist, none parse yet) unrepresentable — it rendered as "not
+    # measured", the exact inversion the honesty rules forbid.
+    _clicks_measured = bool(clicks.get("configured"))
+    _attributed = (
+        clicks["totals"]["attributed_sessions"] if _clicks_measured else None
+    )
     network_rates = {
+        # Attributed sessions only: dividing ALL site sessions (organic
+        # included) by YouTube views flattered the funnel.
         "reach_to_click_pct": _rate(
-            clicks["totals"]["sessions"] or None,
+            _attributed,
             reach["totals"]["youtube_views"] or None),
         "visit_to_capture_pct": _rate(
             captures.get("signup_events_total"),
@@ -415,9 +470,8 @@ def build(window_days: int = 30) -> Dict[str, Any]:
         # number here means the funnel report is describing a minority of
         # reality and should be read as such.
         "attribution_coverage_pct": _rate(
-            (clicks["totals"]["sessions"]
-             - clicks["unattributed"]["sessions"]) or None,
-            clicks["totals"]["sessions"] or None),
+            _attributed,
+            clicks["totals"]["sessions"] if _clicks_measured else None),
     }
 
     return {

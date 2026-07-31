@@ -540,6 +540,14 @@ def run_generation_phase(
     # in that dead block. setdefault means a working hook is unaffected.
     pod_vars.setdefault("narrative_memory_section", "")
     pod_vars.setdefault("vocab_review_section", "")
+    # Tesla's bespoke memory module injects three placeholders of its own
+    # (the generalized shows share {narrative_memory_section} above). A
+    # tesla hook-load failure would KeyError the podcast prompt exactly
+    # like the 2026-07-30 cold_open_spec outage — same guard, same
+    # setdefault semantics (a working hook is untouched).
+    pod_vars.setdefault("tesla_narrative_status_block", "")
+    pod_vars.setdefault("tesla_performance_signals_block", "")
+    pod_vars.setdefault("tesla_theme_context_block", "")
 
     # Cold-open + delivery specs (July 30 2026 retention pass). These were
     # wired into run_show.py's pod_vars — which, as the Ep1 comment above

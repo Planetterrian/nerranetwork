@@ -5577,6 +5577,14 @@ def _publish_youtube(
             _short_variant_results: "list" = []
             _short_variants = list(_short_variant_plan)
             _ab_spent_usd = 0.0
+            # Record an experiment arm ONLY for shows actually running the
+            # experiment. plan_variants returns "stills" for every show (it
+            # doubles as the render plan), and passing that through to
+            # metadata/index/analytics stamped variant="stills" on EVERY
+            # network Short from 2026-07-30 on — filling the A/B control
+            # arm with cross-show Shorts whose baselines differ ~10x from
+            # the spacex treatment arm. Non-participants record no arm.
+            _ab_on = _shorts_ab.is_enabled(config)
             _yt_channel = (
                 getattr(config.youtube, "channel", "en") or "en"
             ).lower()
@@ -5855,7 +5863,7 @@ def _publish_youtube(
                         long_form_url=long_url,
                         optimized_title=_opt_short_title,
                         channel=_yt_channel,
-                        variant=_variant.variant,
+                        variant=(_variant.variant if _ab_on else ""),
                     )
                     upload_thumb = (
                         this_short_thumb_path
@@ -5889,7 +5897,9 @@ def _publish_youtube(
                             channel=(getattr(config.youtube, "channel", "en") or "en"),
                             # The arm this Short ACTUALLY shipped —
                             # analytics reads the experiment from here.
-                            variant=_variant.variant,
+                            # Empty for non-participating shows so the
+                            # control arm stays same-show, same-channel.
+                            variant=(_variant.variant if _ab_on else ""),
                             index_path=digests_dir / "youtube_videos.json",
                         )
                     except Exception as _exc:
@@ -5934,7 +5944,7 @@ def _publish_youtube(
                                     config, channel=_yt_channel),
                                 getattr(config, "slug", ""), episode_num,
                                 channel=_yt_channel, kind="short",
-                                variant=_variant.variant,
+                                variant=(_variant.variant if _ab_on else ""),
                                 placement=_funnel.PLACEMENT_COMMENT,
                             ) or (config.publishing.rss_link or "")
                             _cmt = ("\u25b6 Full episode: " + _cmt_target

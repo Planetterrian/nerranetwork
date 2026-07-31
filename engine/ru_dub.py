@@ -381,7 +381,12 @@ def _clause_trim(text: str, limit: int, lang: str = "") -> str:
     pattern = _DANGLING_RE.get((lang or "").strip().lower())
     if pattern is None:
         return trimmed
-    floor = max(1, int(limit * _MIN_TRIM_RATIO))
+    # Floor against the ACTUAL text length, not the budget: a title that
+    # arrives already shorter than 55% of the limit (e.g. 31 chars vs a
+    # 70-char budget) previously started below the floor, so the peel
+    # loop never ran and the dangling "à"/"de" tail — the exact defect
+    # this function exists to remove — survived untouched.
+    floor = max(1, int(min(len(trimmed), limit) * _MIN_TRIM_RATIO))
     while len(trimmed) > floor:
         shorter = pattern.sub("", trimmed).rstrip(" ,.:;—-…")
         if shorter == trimmed:
@@ -410,7 +415,7 @@ def _policy_plan(config) -> Dict[str, object]:
             slug=config.slug,
             channel="ru",
             yaml_publish_long=True,   # legacy ru_dub always built the long
-            yaml_shorts=1,            # policy may raise (capped at 2 below)
+            yaml_shorts=1,            # policy may raise (cap: MAX_SHORTS_PER_EPISODE)
             # July 18 2026: the RU Short path genuinely runs the smart
             # selector on its own RU transcript, so the policy is allowed
             # to raise the Shorts count (RU Shorts are the network's

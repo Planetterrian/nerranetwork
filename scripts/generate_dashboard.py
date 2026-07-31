@@ -2586,8 +2586,22 @@ def build_funnel_section(root: Path) -> Dict[str, Any]:
                    "YouTube views",
                    (reach.get("totals") or {}).get("podcast_downloads"),
                    "podcast downloads"),
+            # attributed_sessions, not the raw total: totals.sessions
+            # includes organic/(not set) rows, so labelling it
+            # "attributed sessions" showed a number up to 10x the truth
+            # while ALSO listing the unattributed count beside it.
+            # Fallback subtraction covers a funnel.json built before the
+            # field existed.
             _stage("click", "Click", click.get("configured"),
-                   (click.get("totals") or {}).get("sessions"),
+                   ((click.get("totals") or {}).get("attributed_sessions")
+                    if (click.get("totals") or {}).get(
+                        "attributed_sessions") is not None
+                    else (
+                        (click.get("totals") or {}).get("sessions", 0)
+                        - ((click.get("unattributed") or {})
+                           .get("sessions") or 0)
+                    ) if (click.get("totals") or {}).get("sessions")
+                    is not None else None),
                    "attributed sessions",
                    (click.get("unattributed") or {}).get("sessions"),
                    "unattributed"),
@@ -2607,7 +2621,14 @@ def build_funnel_section(root: Path) -> Dict[str, Any]:
         "by_source": capture.get("by_source") or {},
         "unmeasured": [
             name for name, block in stages.items()
+            # Capture's TOTAL is measured as soon as Buttondown answers
+            # (the stage row above shows a real number); listing it under
+            # "not yet measured" at the same time — because per-source
+            # attribution still needs the tag fetch — made the card
+            # contradict itself. Only a stage with NO number is unmeasured.
             if not (block or {}).get("configured")
+            and not (name == "capture"
+                     and (block or {}).get("total_configured"))
         ],
     })
 

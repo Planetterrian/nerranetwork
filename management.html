@@ -1127,7 +1127,8 @@
           });
         });
         card.appendChild(h("p", { class: "fine-list", html:
-          "Tier A = long + 2 Shorts · B = long + 1 · C = shorts-only · D = probe. " +
+          "Tiers gate LONG-FORM (A/B = long on · C = shorts-only · D = probe); " +
+          "Shorts count follows short_vpd bands independently, up to 3/episode. " +
           "vpd = long/short views-per-day over " + (ytPolicy.window_days || 14) +
           "d; Shorts are never zeroed (they're the recovery signal)." }));
       }
@@ -1490,6 +1491,24 @@
       card.appendChild(h("p", { class: "fine-list", html:
         "<span class='k'>" + money(ml.network_cost_7d_usd) + "</span> dub spend · 7d" }));
       const langColor = { fr: "var(--series-1)", ru: "var(--series-2)", es: "var(--series-3)", zh: "var(--series-4)" };
+      // Per-language downloads vs cost — the decision instrument the July 29
+      // cost pass shipped ("a language reading zero across several weeks is a
+      // candidate to switch off"). Without these rows the signal only existed
+      // in raw api/dashboard.json. "—" = not yet measured (null), never 0.
+      if (ml.by_language && Object.keys(ml.by_language).length) {
+        Object.keys(ml.by_language).sort().forEach((lang) => {
+          const bl = ml.by_language[lang];
+          const dl30 = bl.measured ? (bl.downloads_30d + " dl·30d") : "dl not measured yet";
+          const row = h("div", { style: "display:flex;align-items:center;gap:8px;padding:3px 0;" });
+          row.appendChild(h("span", { class: "chip on", title: lang + " across " + bl.shows + " show(s)" }));
+          row.lastChild.appendChild(h("span", { class: "dot", style: "background:" + (langColor[lang] || "var(--series-1)") + ";" }));
+          row.lastChild.appendChild(document.createTextNode(lang.toUpperCase()));
+          row.appendChild(h("span", { style: "font-size:12px;color:var(--ink-2);", text: dl30 }));
+          row.appendChild(h("span", { style: "font-size:11.5px;color:var(--ink-4);", text:
+            money(bl.approx_cost_7d_usd) + " · 7d · " + bl.shows + " shows" }));
+          card.appendChild(row);
+        });
+      }
       Object.keys(ml.per_show).sort().forEach((slug) => {
         const c = ml.per_show[slug];
         const row = h("div", { style: "display:flex;align-items:center;gap:8px;padding:5px 0;flex-wrap:wrap;" });
