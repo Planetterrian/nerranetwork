@@ -4458,6 +4458,7 @@ def _publish_youtube(
 
     from engine.captions import (
         find_transcript_for_episode,
+        transcript_to_ass_full,
         transcript_to_ass_window,
         transcript_to_srt,
         transcript_to_srt_window,
@@ -4638,6 +4639,7 @@ def _publish_youtube(
     # ---- Build captions SRT (optional — falls back to no captions) ----
     # (transcript_path was found above the title-bundle call.)
     srt_path = None
+    long_ass_path = None
     if transcript_path is not None:
         try:
             srt_candidate = work_dir / f"{base_name}.srt"
@@ -4659,6 +4661,39 @@ def _publish_youtube(
             srt_path = srt_candidate
         except Exception as exc:  # pragma: no cover — best-effort
             logger.warning("Caption generation failed: %s", exc)
+        # Long-form burn-in prefers per-word ASS (July 31 2026 — B1),
+        # mirroring the Shorts ASS-first/SRT-fallback pattern. Only
+        # built when the burn-in flag is on (the default long-form
+        # caption layer is the uploaded track, which stays SRT — the
+        # YouTube captions API doesn't take ASS).
+        if getattr(config.youtube, "long_form_burn_in_captions", False):
+            try:
+                _lf_offset = float(
+                    getattr(config.audio, "voice_intro_delay", 0.0) or 0.0
+                )
+                ass_candidate = work_dir / f"{base_name}.ass"
+                transcript_to_ass_full(
+                    transcript_path,
+                    ass_candidate,
+                    audio_offset_seconds=_lf_offset,
+                )
+                if (ass_candidate.exists()
+                        and ass_candidate.stat().st_size > 0
+                        and "Dialogue:" in ass_candidate.read_text(
+                            encoding="utf-8", errors="replace")):
+                    long_ass_path = ass_candidate
+                    result["long_form_captions_path"] = "ass"
+                    logger.info("Long-form captions: per-word ASS path")
+                else:
+                    result["long_form_captions_path"] = "srt_fallback"
+                    logger.info(
+                        "Long-form captions: SRT fallback (no word-level "
+                        "cues in transcript)",
+                    )
+            except Exception as exc:  # pragma: no cover — best-effort
+                result["long_form_captions_path"] = "srt_fallback"
+                logger.warning("Long-form ASS caption generation failed: "
+                               "%s — SRT fallback", exc)
 
     # ---- Video generation (June 2026 Grok Video experiment) ----
     # When ``video_provider`` is set to "grok", generate full videos from the
@@ -5363,11 +5398,16 @@ def _publish_youtube(
                 #
                 # Per-show escape hatch for a surface that will not render
                 # a track: youtube.long_form_burn_in_captions: true.
+                # When burn-in is on, the per-word ASS (B1) wins over the
+                # segment-level SRT — same preference order as Shorts.
                 subtitles_path=(
-                    srt_path
+                    (long_ass_path or srt_path)
                     if getattr(config.youtube, "long_form_burn_in_captions", False)
                     else None
                 ),
+                # Opening hook title (B4): the video's first ~4 s show
+                # the hook the cold-open audio speaks.
+                hook=hook or None,
                 show_name=config.name,
                 scene_schedule=_visual_plan.get("scene_schedule"),
                 broll_clips=_visual_plan.get("broll_clips"),
@@ -5636,6 +5676,26 @@ def _publish_youtube(
             # >= 2 Shorts, so index 0 is always the control.
             from engine import shorts_ab as _shorts_ab
 
+            # Window-parity de-confound (July 31 2026 learning-loop
+            # review): treatment is pinned to Short INDEX 1, which was
+            # always the SECOND-best smart window — so the experiment
+            # measured motion + weaker-window combined. For enrolled
+            # shows, alternate the top-two window assignment by episode
+            # parity: over N episodes each arm sees ~equal window
+            # quality, deterministically (re-render identical). Caught
+            # with only 2 treatment Shorts published, so the confounded
+            # rows are noise once 14/arm accrue.
+            if (_shorts_ab.is_enabled(config) and len(shorts_plan) >= 2
+                    and episode_num % 2 == 1):
+                shorts_plan[0], shorts_plan[1] = (
+                    shorts_plan[1], shorts_plan[0])
+                result["shorts_ab_windows_swapped"] = True
+                result["shorts_start_offset"] = round(shorts_plan[0][0], 2)
+                result["shorts_start_offsets"] = [
+                    round(o, 2) for o, _, _ in shorts_plan]
+                result["shorts_fill_modes"] = [
+                    m for _, _, m in shorts_plan]
+
             _short_variant_plan = _shorts_ab.plan_variants(
                 config, len(shorts_plan),
             )
@@ -5895,6 +5955,10 @@ def _publish_youtube(
                         clip_paths=_variant.clip_paths or None,
                         clip_seconds=float(getattr(
                             config.youtube, "shorts_ab_clip_seconds", 5) or 5),
+                        # A1 guard: a show running the Shorts motion A/B
+                        # keeps the LEGACY Ken Burns on both arms so the
+                        # control arm isn't upgraded mid-experiment.
+                        kb_extended=not _ab_on,
                         start_offset=this_offset,
                         duration=duration,
                         hook=this_hook or None,
@@ -6142,6 +6206,11 @@ def _publish_youtube(
         result["visual_mode"] = "library_fallback"
     else:
         result["visual_mode"] = str(_visual_plan.get("mode") or "cover")
+    # Visual-era counter (July 31 2026): lets analytics segment
+    # retention by render look. Bumped in engine.video whenever the
+    # shipped look changes materially.
+    from engine.video import RENDER_LOOK_VERSION as _render_look_version
+    result["render_look_version"] = int(_render_look_version)
     result["scene_fresh_count"] = len(fresh_long_scenes) + len(fresh_short_scenes)
     # Measure the shorts-only scene saving rather than assuming it: this is
     # 3 fewer paid Grok Imagine images on every such episode.

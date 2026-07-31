@@ -481,3 +481,20 @@ class TestReport:
         data = self._build(tmp_path, [])
         assert data["status"] == "not_started"
         assert data["arms"]["grok_video"]["n"] == 0
+
+
+class TestWindowParityDeconfound:
+    """July 31 2026: treatment was pinned to Short index 1 = always the
+    SECOND-best smart window, so the experiment measured motion + weaker
+    window combined. run_show now alternates the top-two window
+    assignment by episode parity for enrolled shows — each arm sees
+    ~equal window quality over time, deterministically."""
+
+    def test_run_show_swaps_windows_on_odd_episodes_for_enrolled_shows(self):
+        src = (ROOT / "run_show.py").read_text(encoding="utf-8")
+        assert "episode_num % 2 == 1" in src
+        assert "shorts_ab_windows_swapped" in src
+        # The swap is gated on enrollment — non-enrolled shows must keep
+        # their plan order untouched.
+        swap_block = src.split("Window-parity de-confound")[1][:800]
+        assert "_shorts_ab.is_enabled(config)" in swap_block

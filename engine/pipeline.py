@@ -243,6 +243,16 @@ def record_youtube_outcomes(
         # episode's imagery was fresh vs recycled from the gallery.
         if youtube_urls.get("visual_mode"):
             metrics.record("visual_mode", str(youtube_urls["visual_mode"]))
+        # Visual-era counter (July 31 2026 render pass) — segments
+        # retention analytics by render look, alongside visual_mode.
+        if youtube_urls.get("render_look_version") is not None:
+            metrics.record("render_look_version",
+                           int(youtube_urls["render_look_version"]))
+        # Long-form burn-in caption mode (per-word ASS vs SRT fallback);
+        # present only when youtube.long_form_burn_in_captions is on.
+        if youtube_urls.get("long_form_captions_path"):
+            metrics.record("long_form_captions_path",
+                           str(youtube_urls["long_form_captions_path"]))
         if "scene_fresh_count" in youtube_urls:
             metrics.record("scene_fresh_count", int(youtube_urls.get("scene_fresh_count", 0) or 0))
         if "scene_library_count" in youtube_urls:

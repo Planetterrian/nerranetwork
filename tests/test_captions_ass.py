@@ -177,9 +177,20 @@ def test_emits_header_and_one_dialogue_per_word(tmp_path):
     assert len(dialogues) == 4  # one per word
 
 
+# The full highlight override tag: colour flip + the July 31 2026 (B2)
+# active-word "pop" — a libass animated transform scaling the word to
+# 112% over its first 80 ms. Shared by the Shorts window builder and the
+# long-form full builder (they render through the same chunk code).
+HIGHLIGHT_TAG = "{\\1c&H00FFD400&\\t(0,80,\\fscx112\\fscy112)}"
+HIGHLIGHT_RE = re.compile(
+    r"\{\\1c&H00FFD400&\\t\(0,80,\\fscx112\\fscy112\)\}([^{]+)\{\\r\}"
+)
+
+
 def test_active_word_is_color_flipped(tmp_path):
-    """Each Dialogue line should highlight exactly one word; the rest
-    of the chunk text appears at the style default."""
+    """Each Dialogue line should highlight exactly one word (colour
+    flip + B2 pop transform); the rest of the chunk text appears at
+    the style default."""
     seg = _seg(
         0.0, 1.2, [
             ("alpha", 0.0, 0.3),
@@ -194,15 +205,17 @@ def test_active_word_is_color_flipped(tmp_path):
         window_start_seconds=0.0, window_duration_seconds=10.0,
     )
     dialogues = _parse_dialogue_lines(out.read_text(encoding="utf-8"))
-    # Highlight color appears exactly once per line.
+    # Highlight override (colour + pop) appears exactly once per line.
     for start, end, text in dialogues:
-        assert text.count("{\\1c&H00FFD400&}") == 1, (
+        assert text.count(HIGHLIGHT_TAG) == 1, (
             f"line should have one highlight: {text!r}"
         )
         assert text.count("{\\r}") == 1
+        # The pop is an animated transform, never a bare colour flip.
+        assert "\\t(0,80,\\fscx112\\fscy112)" in text
     # The highlighted words progress: alpha, beta, gamma.
-    highlight_re = re.compile(r"\{\\1c&H00FFD400&\}([^{]+)\{\\r\}")
-    highlighted = [highlight_re.search(t).group(1).strip() for _, _, t in dialogues]
+    highlighted = [HIGHLIGHT_RE.search(t).group(1).strip()
+                   for _, _, t in dialogues]
     assert highlighted == ["alpha", "beta", "gamma"]
 
 
@@ -352,11 +365,113 @@ def test_ass_escape_strips_braces(tmp_path):
     )
     body = out.read_text(encoding="utf-8")
     # ASS tag delimiter (`{`) must only appear inside our highlight
-    # tags, never as part of a token. Strip our known good tags and
-    # check no `{` remains in any Dialogue text.
+    # tags, never as part of a token. Strip our known good tags (colour
+    # flip + B2 pop transform) and check no `{` remains in any Dialogue
+    # text.
     for _, _, text in _parse_dialogue_lines(body):
-        without_tags = re.sub(r"\{\\1c&H[0-9A-F]+&\}", "", text)
+        without_tags = re.sub(
+            r"\{\\1c&H[0-9A-F]+&(?:\\t\([^)]*\))?\}", "", text)
         without_tags = without_tags.replace(r"{\r}", "")
         assert "{" not in without_tags, (
             f"raw brace leaked into dialogue: {text!r}"
         )
+
+
+# ---------------------------------------------------------------------------
+# transcript_to_ass_full — long-form per-word captions (July 31 2026, B1)
+# ---------------------------------------------------------------------------
+
+
+from engine.captions import transcript_to_ass_full  # noqa: E402
+
+
+def test_full_header_declares_long_form_playres_and_style(tmp_path):
+    """The long-form ASS is self-styled in REAL pixels: PlayRes
+    1920x1080 and the long-form burn-in look (~98 px white text,
+    BorderStyle=1 outline 3 + shadow 1, bottom-centre MarginV=50) —
+    the equivalent of _SUBTITLES_FORCE_STYLE's FontSize=26 in libass's
+    288-unit SRT space. The render path lets this file self-style."""
+    seg = _seg(0.0, 1.0, [("Hello", 0.0, 0.5), ("world", 0.5, 1.0)])
+    tp = _write_transcript(tmp_path, [seg])
+    out = tmp_path / "long.ass"
+    transcript_to_ass_full(tp, out)
+    body = out.read_text(encoding="utf-8")
+    assert "PlayResX: 1920" in body
+    assert "PlayResY: 1080" in body
+    style = [ln for ln in body.splitlines()
+             if ln.startswith("Style: Default")][0]
+    fields = style.split(",")
+    assert fields[2] == "98"              # Fontsize (real px)
+    assert fields[15] == "1"              # BorderStyle=1 (outline, no card)
+    assert fields[16] == "3"              # Outline
+    assert fields[17] == "1"              # Shadow
+    assert fields[18] == "2"              # Alignment=2 bottom-centre
+    assert fields[21] == "50"             # MarginV
+    assert "&H80000000" not in style      # no Shorts caption card
+
+
+def test_full_emits_one_dialogue_per_word_on_absolute_timeline(tmp_path):
+    """No window, no rebase: word times land verbatim (plus offset)."""
+    seg = _seg(10.0, 11.0, [("only", 10.0, 11.0)])
+    tp = _write_transcript(tmp_path, [seg])
+    out = tmp_path / "long.ass"
+    transcript_to_ass_full(tp, out)
+    dialogues = _parse_dialogue_lines(out.read_text(encoding="utf-8"))
+    assert len(dialogues) == 1
+    start, end, text = dialogues[0]
+    assert start == "0:00:10.00"
+    assert end == "0:00:11.00"
+    # Shared highlight machinery: colour flip + B2 pop.
+    assert HIGHLIGHT_TAG in text
+
+
+def test_full_applies_music_intro_offset(tmp_path):
+    seg = _seg(1.0, 2.0, [("hello", 1.0, 2.0)])
+    tp = _write_transcript(tmp_path, [seg])
+    out = tmp_path / "long.ass"
+    transcript_to_ass_full(tp, out, audio_offset_seconds=4.5)
+    dialogues = _parse_dialogue_lines(out.read_text(encoding="utf-8"))
+    start, end, _ = dialogues[0]
+    assert start == "0:00:05.50"
+    assert end == "0:00:06.50"
+
+
+def test_full_uses_wider_long_form_chunk_budget(tmp_path):
+    """~42 chars / <=10 words per chunk (the 1920-wide frame fits more
+    than the Shorts 24/8 card) — and never more than 10 words."""
+    words = [(f"word{i}", i * 0.4, i * 0.4 + 0.35) for i in range(24)]
+    seg = _seg(0.0, 10.0, words)
+    tp = _write_transcript(tmp_path, [seg])
+    out = tmp_path / "long.ass"
+    transcript_to_ass_full(tp, out)
+    dialogues = _parse_dialogue_lines(out.read_text(encoding="utf-8"))
+    assert len(dialogues) == 24  # one per word
+    for _, _, text in dialogues:
+        plain = re.sub(r"\{[^}]*\}", "", text).strip()
+        assert len(plain.split()) <= 10
+        assert len(plain) <= 42 + 8  # chunk budget (+ small slack)
+
+
+def test_full_without_word_data_writes_header_only(tmp_path):
+    """Older transcripts: no words[] → no Dialogue lines; run_show
+    treats that as 'fall back to the segment-level SRT'."""
+    seg = {"start": 0.0, "end": 2.0, "text": "no words here"}
+    tp = _write_transcript(tmp_path, [seg])
+    out = tmp_path / "long.ass"
+    transcript_to_ass_full(tp, out)
+    body = out.read_text(encoding="utf-8")
+    assert "[Script Info]" in body
+    assert "Dialogue:" not in body
+
+
+def test_full_invalid_offset_raises(tmp_path):
+    seg = _seg(0.0, 1.0, [("hi", 0.0, 1.0)])
+    tp = _write_transcript(tmp_path, [seg])
+    with pytest.raises(ValueError):
+        transcript_to_ass_full(tp, tmp_path / "long.ass",
+                               audio_offset_seconds=-1.0)
+
+
+def test_full_missing_transcript_raises(tmp_path):
+    with pytest.raises(FileNotFoundError):
+        transcript_to_ass_full(tmp_path / "nope.json", tmp_path / "out.ass")

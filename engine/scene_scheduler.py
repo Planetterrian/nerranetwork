@@ -72,6 +72,15 @@ _SENTENCE_END_CHARS = (".", "!", "?")
 # sub-second "chapters" would produce unwatchable flicker.
 _MIN_CHAPTER_GAP_S = 1.0
 
+# Accelerating open (July 31 2026 — D1): chapter windows starting inside
+# the first minute subdivide with a tighter max hold, so the opening —
+# where long-form retention is decided (10.7% EN median, 18-85 s average
+# view duration) — gets ~2x the scene-change rate before the plan
+# settles into the normal [min_hold_s, max_hold_s] cruise. Slot count
+# stays bounded by _MAX_SLIDESHOW_SLOTS via the existing cap merge.
+_OPEN_FAST_WINDOW_S = 60.0
+_OPEN_MAX_HOLD_S = 8.0
+
 # Hard cap on ffmpeg slideshow inputs. The xfade+zoompan filter graph
 # scales poorly past ~30–40 scenes; Tesla Ep537 (1044 s @ 15 s hold →
 # 74 slots, only 4 unique images after gallery CDN 403s) timed out the
@@ -304,7 +313,14 @@ def plan_chapter_schedule(
     last_pick: Optional[Path] = None
     for start, end, title in windows:
         title_tokens = _tokenize(title)
-        for slot_duration in _subdivide(end - start, max_hold_s, min_hold_s):
+        # Accelerating open (D1): windows starting inside the first
+        # minute subdivide with the tighter opening max hold, so slots
+        # starting < ~60 s never hold longer than _OPEN_MAX_HOLD_S.
+        effective_max = (
+            min(max_hold_s, _OPEN_MAX_HOLD_S)
+            if start < _OPEN_FAST_WINDOW_S else max_hold_s
+        )
+        for slot_duration in _subdivide(end - start, effective_max, min_hold_s):
             pick = _pick_scene(
                 pool, fresh, context, title_tokens, use_counts, last_pick,
             )

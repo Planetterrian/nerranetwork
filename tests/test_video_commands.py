@@ -83,11 +83,17 @@ def test_long_form_filter_graph_drops_visual_distractions():
     Compliance is now covered by the API ``containsSyntheticMedia``
     flag + description disclosure footer (no on-screen AI-narration
     reminder). Pin the absence of the dropped pieces so a future
-    refactor doesn't quietly re-introduce them."""
+    refactor doesn't quietly re-introduce them.
+
+    July 31 2026 note: the OPENING HOOK TITLE (B4) is a deliberate,
+    opt-in exception — ``hook=`` adds a 0-4 s drawtext title (see
+    TestLongFormHookTitle). The DEFAULT graph (no hook) must stay
+    clean, and the disclosure line specifically must never return."""
     graph = _long_form_filter_graph()
     assert "showcqt" not in graph
     assert "showwaves" not in graph
     assert "drawbox" not in graph
+    assert "drawtext" not in graph  # hook is opt-in; default stays clean
     # Centered first-4s disclosure burn-in is gone.
     assert "AI-narrated content" not in graph
     assert "between(t,0,4)" not in graph
@@ -123,8 +129,13 @@ def test_short_form_filter_graph_with_hook_burns_caption():
         hook="Tesla just unveiled a Virtual Queue for Superchargers."
     )
     assert "drawtext" in graph
-    # Hook caption shows for the first 3s only.
-    assert r"enable='between(t,0,3)'" in graph
+    # July 31 2026 (B3): the hook FADES in (250 ms) and out (400 ms)
+    # instead of popping on/off in one frame. The enable window extends
+    # to 3.05 s so the alpha ramp completes on screen.
+    assert r"alpha='clip(t/0.25,0,1)*clip((3-t)/0.4,0,1)'" in graph
+    assert r"enable='between(t,0,3.05)'" in graph
+    # The bare single-frame gate must not come back.
+    assert r"enable='between(t,0,3)'" not in graph
     # Some text from the hook appears (escaped) in the graph.
     assert "Tesla" in graph
     assert graph.endswith("[v]")
@@ -202,8 +213,8 @@ def test_short_form_filter_graph_subtitles_compose_with_hook():
     graph = _short_form_filter_graph(
         hook="Today's market.", subtitles_path="/tmp/short.srt",
     )
-    # Hook is wired through with its 0-3s gate.
-    assert "between(t,0,3)" in graph
+    # Hook is wired through with its 0-3s gate (B3: 3.05 fade window).
+    assert "between(t,0,3.05)" in graph
     # Subtitles filter is wired through.
     assert "subtitles=" in graph
     # Single final [v] output (no double-terminated graph).
@@ -309,7 +320,9 @@ def test_short_form_cmd_threads_hook_into_filter_graph():
     graph = cmd[cmd.index("-filter_complex") + 1]
     assert "drawtext" in graph
     assert "A short headline" in graph
-    assert r"enable='between(t,0,3)'" in graph
+    # B3 fade window (in 0.25 s / out 0.4 s, gate to 3.05 s).
+    assert r"enable='between(t,0,3.05)'" in graph
+    assert r"alpha='clip(t/0.25,0,1)*clip((3-t)/0.4,0,1)'" in graph
 
 
 def test_short_form_rejects_60s_duration(tmp_path):
@@ -346,7 +359,9 @@ def test_short_form_accepts_under_60s(tmp_path, monkeypatch):
     assert captured["cmd"][0] == "ffmpeg"
     assert "55.00" in captured["cmd"]
     # Brand pill PNG should have been generated alongside the output.
-    brand_pill = out.parent / "_brand_pill_v2.png"
+    # v3 (July 31 2026 — B5): 2x supersampled render + cyan accent; the
+    # bumped filename forces regeneration on persistent work dirs.
+    brand_pill = out.parent / "_brand_pill_v3.png"
     assert brand_pill.exists()
 
 
@@ -408,7 +423,8 @@ def test_build_long_form_video_generates_brand_pill(tmp_path, monkeypatch):
     monkeypatch.setattr("engine.video.subprocess.run",
                         lambda cmd, **kwargs: type("R", (), {"returncode": 0})())
     build_long_form_video(audio, cover, out)
-    assert (out.parent / "_brand_pill_v2.png").exists()
+    # v3 filename (B5) — see test_short_form_accepts_under_60s.
+    assert (out.parent / "_brand_pill_v3.png").exists()
 
 
 # ---------------------------------------------------------------------------
@@ -1131,8 +1147,8 @@ def test_short_form_filter_graph_end_card_composes_with_hook_only():
     graph = _short_form_filter_graph(
         end_card=True, hook="Today on the show.", total_duration=55.0,
     )
-    # Hook still gates on first 3 s.
-    assert "between(t,0,3)" in graph
+    # Hook still gates on first 3 s (B3: fade window ends at 3.05).
+    assert "between(t,0,3.05)" in graph
     # End card gates on last 3 s.
     assert "between(t,52.00,55.00)" in graph
     assert graph.endswith("[v]")
@@ -1309,13 +1325,18 @@ def test_short_form_filter_graph_long_hook_uses_smaller_font():
 
 def test_short_form_filter_graph_end_card_image_uses_overlay():
     """When ``end_card_image_input_label`` is provided, the filter
-    graph must overlay that image (NOT emit drawbox + drawtext)."""
+    graph must overlay that image (NOT emit drawbox + drawtext).
+
+    July 31 2026 (C4): the card's input chain carries an alpha
+    fade-in (``fade=...:alpha=1`` ramps only the alpha plane), so the
+    card materialises over the last still in 0.45 s instead of
+    guillotining it in a single frame."""
     graph = _short_form_filter_graph(
         end_card=True, total_duration=55.0,
         end_card_image_input_label="[3:v]",
     )
-    # Overlay filter sourcing the image label.
-    assert "[3:v]format=rgba[endcard]" in graph
+    # Overlay filter sourcing the image label, with the alpha fade-in.
+    assert "[3:v]format=rgba,fade=t=in:st=52.00:d=0.45:alpha=1[endcard]" in graph
     assert "[endcard]overlay=x=0:y=0:enable='between(t,52.00,55.00)'[v]" in graph
     # Drawtext fallback is NOT emitted.
     assert "drawbox" not in graph
@@ -1344,7 +1365,7 @@ def test_short_form_filter_graph_end_card_image_composes_with_captions():
         end_card_image_input_label="[4:v]",
     )
     assert "[capted]" in graph
-    assert "[4:v]format=rgba[endcard]" in graph
+    assert "[4:v]format=rgba,fade=t=in:st=52.00:d=0.45:alpha=1[endcard]" in graph
     assert "[capted][endcard]overlay" in graph
     assert graph.endswith("[v]")
     assert graph.count("[v]") == 1
@@ -1381,7 +1402,8 @@ def test_short_form_cmd_adds_end_card_image_as_input(tmp_path, monkeypatch):
     # Filter graph references the right index. With show_name=Tesla
     # the URL pill takes [3:v], so the end-card lands at [4:v].
     graph = cmd[cmd.index("-filter_complex") + 1]
-    assert "[4:v]format=rgba[endcard]" in graph
+    assert "[4:v]format=rgba,fade=" in graph
+    assert "[endcard]" in graph
 
 
 def test_short_form_cmd_end_card_image_index_when_no_url_pill(tmp_path, monkeypatch):
@@ -1411,7 +1433,8 @@ def test_short_form_cmd_end_card_image_index_when_no_url_pill(tmp_path, monkeypa
     assert captured
     cmd = captured[-1]
     graph = cmd[cmd.index("-filter_complex") + 1]
-    assert "[3:v]format=rgba[endcard]" in graph
+    assert "[3:v]format=rgba,fade=" in graph
+    assert "[endcard]" in graph
 
 
 def test_short_form_cmd_missing_end_card_image_falls_back_to_drawtext(
@@ -2112,3 +2135,432 @@ class TestLongFormCaptionLayer:
             raw = _yaml.safe_load(path.read_text(encoding="utf-8")) or {}
             yt = raw.get("youtube") or {}
             assert yt.get("long_form_burn_in_captions") is not True, path.name
+
+
+# ---------------------------------------------------------------------------
+# July 31 2026 render pass — network grade (C1) + Shorts sharpen (C2)
+# ---------------------------------------------------------------------------
+#
+# One grade chain (_GRADE_CHAIN) applied wherever the composite forms
+# its [bg]: long-form both branches, Shorts, and the fused single-pass
+# graph. Applied ONCE per delivered pixel — never inside the stage-1
+# slideshow graph, or the two-stage path would grade twice.
+
+class TestNetworkGrade:
+    def _grade(self):
+        from engine.video import _GRADE_CHAIN
+        return _GRADE_CHAIN
+
+    def test_grade_chain_constant_shape(self):
+        grade = self._grade()
+        assert "eq=contrast=1.05:saturation=1.08:gamma=0.98" in grade
+        assert "vignette=angle=PI/5" in grade
+        assert "gradfun=3.5:8" in grade
+        # Deliberately NO noise grain — it fights the 4 Mbps maxrate
+        # ceiling (see _VIDEO_ENCODE).
+        assert "noise" not in grade
+
+    def test_long_form_video_bg_branch_is_graded(self):
+        graph = _long_form_filter_graph(bg_is_video=True)
+        assert self._grade() in graph
+        # Grade lands on the [bg] formation, before the pill overlays.
+        assert graph.index(self._grade()) < graph.index("[bg]")
+
+    def test_long_form_degraded_cover_branch_is_graded(self):
+        graph = _long_form_filter_graph(bg_is_video=False)
+        assert self._grade() in graph
+
+    def test_short_form_bg_is_graded_and_sharpened(self):
+        from engine.video import _SHORTS_SHARPEN
+        graph = _short_form_filter_graph()
+        assert self._grade() in graph
+        # C2: mild luma-only output sharpen for the 9:16 upsample.
+        assert _SHORTS_SHARPEN in graph
+        assert "unsharp=5:5:0.5:5:5:0.0" in graph
+        # Sharpen follows the grade in the bg chain.
+        assert graph.index(self._grade()) < graph.index(_SHORTS_SHARPEN)
+
+    def test_single_pass_graph_is_graded_once(self):
+        from engine.video import _single_pass_long_form_filter_graph
+        graph = _single_pass_long_form_filter_graph(3)
+        assert graph.count(self._grade()) == 1
+        assert graph.index(self._grade()) < graph.index("[bg]")
+
+    def test_stage_one_slideshow_graph_is_not_graded(self):
+        """The two-stage path grades at composite time; grading the
+        intermediate too would double-apply the look."""
+        graph = _slideshow_filter_graph(scene_count=3)
+        assert self._grade() not in graph
+        assert "vignette" not in graph
+
+    def test_long_form_sharpen_is_shorts_only(self):
+        """Long-form skips the unsharp stage — 2.0x lanczos prescale
+        was measured as the knee there; sharpening a 16:9 slideshow
+        would halo the Grok imagery for no phone-screen payoff."""
+        assert "unsharp" not in _long_form_filter_graph(bg_is_video=True)
+        assert "unsharp" not in _long_form_filter_graph(bg_is_video=False)
+
+
+class TestRenderLookVersion:
+    def test_constant_is_two(self):
+        from engine.video import RENDER_LOOK_VERSION
+        assert RENDER_LOOK_VERSION == 2
+
+    def test_run_show_records_it_next_to_visual_mode(self):
+        import pathlib
+        src = (pathlib.Path(__file__).resolve().parent.parent
+               / "run_show.py").read_text(encoding="utf-8")
+        assert 'result["render_look_version"]' in src
+
+    def test_pipeline_metric_recorded(self):
+        from engine.pipeline import record_youtube_outcomes
+
+        class _M:
+            def __init__(self):
+                self.data = {}
+
+            def record(self, key, value):
+                self.data[key] = value
+
+        from types import SimpleNamespace
+        m = _M()
+        record_youtube_outcomes(
+            m, {"render_look_version": 2,
+                "long_form_captions_path": "ass"}, 1.0,
+            config=SimpleNamespace(youtube=None),
+        )
+        assert m.data["render_look_version"] == 2
+        assert m.data["long_form_captions_path"] == "ass"
+
+
+# ---------------------------------------------------------------------------
+# July 31 2026 render pass — long-form opening hook title (B4)
+# ---------------------------------------------------------------------------
+
+class TestLongFormHookTitle:
+    HOOK = "Tesla just unveiled a Virtual Queue for Superchargers."
+
+    def test_hook_burns_title_with_fade(self):
+        graph = _long_form_filter_graph(hook=self.HOOK)
+        assert "drawtext" in graph
+        assert "Tesla" in graph
+        # Centred around h*0.42 (above centre, clear of captions).
+        assert "y=h*0.42" in graph
+        # Alpha fade: in 0.3 s, out 0.6 s ending t=4; gate to 4.05 so
+        # the ramp completes on screen.
+        assert r"alpha='clip(t/0.3,0,1)*clip((4-t)/0.6,0,1)'" in graph
+        assert r"enable='between(t,0,4.05)'" in graph
+        assert graph.endswith("[v]")
+
+    def test_no_hook_keeps_legacy_graph(self):
+        assert _long_form_filter_graph() == _long_form_filter_graph(hook=None)
+        assert "drawtext" not in _long_form_filter_graph(hook=None)
+
+    def test_hook_composes_with_subtitles(self):
+        graph = _long_form_filter_graph(
+            hook=self.HOOK, subtitles_path="/tmp/captions.srt",
+        )
+        assert "subtitles=" in graph
+        # Hook chains INTO the subtitle stage (per-line labels), never
+        # double-terminates the graph.
+        assert "[lfhooked]subtitles=" in graph
+        assert graph.count("[v]") == 1
+        assert graph.endswith("[v]")
+
+    def test_long_hook_stacks_one_drawtext_per_line(self):
+        """Per-line drawtext (the Tesla Ep485 'letter n' landmine —
+        never a \\n inside text=), max 2 lines at 16:9."""
+        long_hook = (
+            "California regulators just disclosed the Tesla Semi's "
+            "battery sizes at 822 kWh and 548 kWh in a filing."
+        )
+        graph = _long_form_filter_graph(hook=long_hook)
+        import re as _re
+        text_values = _re.findall(r"text='([^']*)'", graph)
+        assert text_values
+        for tv in text_values:
+            assert "\n" not in tv
+            assert r"\n" not in tv
+
+    def test_hook_autofit_uses_16x9_candidates(self):
+        """Autofit ladder at 1920 starts at 64 px — a short hook gets
+        the biggest size, and every candidate stays in 64..40."""
+        import re as _re
+        graph = _long_form_filter_graph(hook="Tesla wins.")
+        m = _re.search(r"fontsize=(\d+)", graph)
+        assert m and int(m.group(1)) == 64
+        long_graph = _long_form_filter_graph(hook=self.HOOK * 3)
+        m2 = _re.search(r"fontsize=(\d+)", long_graph)
+        assert m2 and 40 <= int(m2.group(1)) < 64
+
+    def test_long_form_cmd_threads_hook(self):
+        cmd = _long_form_cmd("voice.mp3", "cover.jpg", "brand.png",
+                             "out.mp4", hook=self.HOOK)
+        graph = cmd[cmd.index("-filter_complex") + 1]
+        assert "Tesla" in graph and "y=h*0.42" in graph
+
+    def test_single_pass_graph_threads_hook(self):
+        from engine.video import _single_pass_long_form_filter_graph
+        graph = _single_pass_long_form_filter_graph(3, hook=self.HOOK)
+        assert "y=h*0.42" in graph
+        assert r"enable='between(t,0,4.05)'" in graph
+        assert graph.endswith("[v]")
+
+    def test_build_long_form_video_threads_hook(self, tmp_path, monkeypatch):
+        audio = tmp_path / "voice.mp3"
+        audio.write_bytes(b"\x00")
+        cover = tmp_path / "cover.jpg"
+        cover.write_bytes(b"\xFF\xD8")
+        out = tmp_path / "out.mp4"
+        captured = []
+        monkeypatch.setattr(
+            "engine.video.subprocess.run",
+            lambda cmd, **kw: (captured.append(list(cmd)),
+                               type("R", (), {"returncode": 0})())[1],
+        )
+        build_long_form_video(audio, cover, out, hook=self.HOOK)
+        graph = captured[-1][captured[-1].index("-filter_complex") + 1]
+        assert "y=h*0.42" in graph
+
+    def test_run_show_passes_hook_to_long_form(self):
+        import pathlib
+        src = (pathlib.Path(__file__).resolve().parent.parent
+               / "run_show.py").read_text(encoding="utf-8")
+        assert "hook=hook or None," in src
+
+
+# ---------------------------------------------------------------------------
+# July 31 2026 render pass — long-form per-word ASS captions (B1)
+# ---------------------------------------------------------------------------
+
+class TestLongFormAssSubtitles:
+    def test_ass_path_skips_the_288_unit_force_style(self):
+        """A per-word .ass declares its own PlayRes 1920x1080 and
+        carries the long-form style in REAL pixels (Fontsize 98).
+        Forcing the SRT force_style (FontSize=26 in 288-unit space)
+        onto it would render ~26 px captions."""
+        graph = _long_form_filter_graph(subtitles_path="/tmp/captions.ass")
+        assert "subtitles=" in graph
+        assert "captions.ass" in graph
+        assert "force_style" not in graph
+        assert graph.endswith("[v]")
+
+    def test_srt_path_keeps_legacy_force_style(self):
+        graph = _long_form_filter_graph(subtitles_path="/tmp/captions.srt")
+        assert "force_style=" in graph
+        assert "FontSize=26" in graph
+
+    def test_single_pass_graph_matches(self):
+        from engine.video import _single_pass_long_form_filter_graph
+        ass_graph = _single_pass_long_form_filter_graph(
+            3, subtitles_path="/tmp/captions.ass")
+        assert "force_style" not in ass_graph
+        srt_graph = _single_pass_long_form_filter_graph(
+            3, subtitles_path="/tmp/captions.srt")
+        assert "force_style=" in srt_graph
+
+    def test_run_show_prefers_ass_with_srt_fallback(self):
+        """The burn-in path mirrors the Shorts ASS-first/SRT-fallback
+        pattern and records which layer shipped."""
+        import pathlib
+        src = (pathlib.Path(__file__).resolve().parent.parent
+               / "run_show.py").read_text(encoding="utf-8")
+        assert "transcript_to_ass_full" in src
+        assert "(long_ass_path or srt_path)" in src
+        assert 'result["long_form_captions_path"] = "ass"' in src
+        assert 'result["long_form_captions_path"] = "srt_fallback"' in src
+
+
+# ---------------------------------------------------------------------------
+# July 31 2026 render pass — Ken Burns vocabulary + per-episode seed (A1)
+# ---------------------------------------------------------------------------
+
+def _eval_kb_expr(expr: str, *, on: float, n_zoom: float) -> float:
+    """Numerically evaluate a zoompan x/y expression with iw=ih=1."""
+    e = expr.replace("iw", "1.0").replace("ih", "1.0")
+    e = e.replace("zoom", repr(float(n_zoom)))
+    e = e.replace("on", repr(float(on)))
+    return eval(e)  # noqa: S307 — controlled arithmetic-only expression
+
+
+class TestKenBurnsVocabulary:
+    def test_eight_moves_with_legacy_prefix(self):
+        from engine.video import _KB_LEGACY_MOVE_COUNT, _KB_MOVES
+        assert len(_KB_MOVES) == 8
+        # The FIRST FOUR entries are the legacy vocabulary in the
+        # legacy order — the A/B control arm indexes into this prefix.
+        assert _KB_MOVES[:4] == ("in_centre", "out_centre",
+                                 "in_pan_x", "out_pan_y")
+        assert _KB_MOVES[4:] == ("in_pan_y", "out_pan_x",
+                                 "in_pan_xy", "out_pan_xy")
+        assert _KB_LEGACY_MOVE_COUNT == 4
+
+    def test_zoom_amplitudes(self):
+        from engine.video import _KB_ZOOM_AMPLITUDES
+        assert _KB_ZOOM_AMPLITUDES == (1.06, 1.09, 1.12)
+
+    def test_pan_feasibility_all_moves_all_amplitudes(self):
+        """Numeric feasibility: for every move x amplitude, the
+        requested window origin stays inside [0, 1 - 1/zoom] on both
+        axes for every frame — i.e. zoompan never has to clamp, which
+        is the edge-anchored-zoom defect the July 30 pass fixed."""
+        from engine.video import _KB_MOVES, _KB_ZOOM_AMPLITUDES, _ken_burns
+        frames = 90
+        for move in _KB_MOVES:
+            for amp in _KB_ZOOM_AMPLITUDES:
+                z_expr, x_expr, y_expr = _ken_burns(
+                    frames, move, zoom_max=amp)
+                for on in range(frames):
+                    z = _eval_kb_expr(z_expr, on=on, n_zoom=1.0)
+                    assert 1.0 - 1e-9 <= z <= amp + 1e-9, (
+                        f"{move}@{amp}: zoom {z} out of band at on={on}")
+                    for axis, expr in (("x", x_expr), ("y", y_expr)):
+                        origin = _eval_kb_expr(expr, on=on, n_zoom=z)
+                        upper = 1.0 - 1.0 / z
+                        assert -1e-9 <= origin <= upper + 1e-9, (
+                            f"{move}@{amp} {axis}: origin {origin:.6f} "
+                            f"outside [0, {upper:.6f}] at on={on} (zoom {z:.4f})"
+                        )
+
+    def test_diagonals_ramp_both_axes(self):
+        from engine.video import _ken_burns
+        _z, x, y = _ken_burns(60, "in_pan_xy", zoom_max=1.12)
+        # Both axes carry the same travel ramp (not a static 0.5).
+        assert "0.5+" in x and "0.5+" in y
+
+    def test_seed_offsets_the_rotation_deterministically(self):
+        from engine.video import _kb_seed_from_stem
+        s1 = _kb_seed_from_stem("Tesla_Pod_Ep042_20260731")
+        s2 = _kb_seed_from_stem("Tesla_Pod_Ep042_20260731")
+        s3 = _kb_seed_from_stem("Tesla_Pod_Ep043_20260801")
+        assert s1 == s2          # re-render identical
+        assert s1 != s3          # episodes de-synchronize
+        assert isinstance(s1, int) and s1 >= 0
+
+    def test_seed_changes_the_graph(self):
+        g0 = _slideshow_filter_graph(scene_count=4, kb_seed=0)
+        g1 = _slideshow_filter_graph(scene_count=4, kb_seed=1)
+        assert g0 != g1
+
+    def test_extended_graph_alternates_amplitudes(self):
+        """Three consecutive slots at seed 0 carry the 1.06/1.09/1.12
+        alternation (rounded amps appear in the zoom expressions)."""
+        graph = _slideshow_filter_graph(scene_count=3, kb_seed=0)
+        assert "0.06" in graph and "0.09" in graph and "0.12" in graph
+
+    def test_legacy_mode_pins_four_moves_at_109(self):
+        """kb_extended=False must reproduce the pre-A1 graph: first 4
+        moves in index order at the single 1.09 amplitude, seed
+        ignored — this IS the Shorts A/B control arm's render."""
+        from engine.video import _ZOOM_MAX
+        legacy = _slideshow_filter_graph(scene_count=4, kb_extended=False)
+        assert str(_ZOOM_MAX) in legacy
+        assert "1.06" not in legacy and "1.12" not in legacy
+        # Seed is ignored in legacy mode — byte-identical either way.
+        assert legacy == _slideshow_filter_graph(
+            scene_count=4, kb_extended=False, kb_seed=12345)
+
+    def test_build_short_video_kb_extended_defaults_true(self):
+        import inspect
+        params = inspect.signature(build_short_video).parameters
+        assert "kb_extended" in params
+        assert params["kb_extended"].default is True
+
+    def test_run_show_gates_shorts_kb_on_the_ab(self):
+        """run_show must pass kb_extended=not <A/B enabled> so an
+        enrolled show's control arm is not upgraded mid-experiment."""
+        import pathlib
+        src = (pathlib.Path(__file__).resolve().parent.parent
+               / "run_show.py").read_text(encoding="utf-8")
+        assert "kb_extended=not _ab_on," in src
+
+    def test_build_short_video_legacy_kb_when_not_extended(self, tmp_path,
+                                                           monkeypatch):
+        """End-to-end: kb_extended=False keeps the stage-1 vertical
+        slideshow on the legacy vocabulary (no 1.06/1.12 amplitudes)."""
+        audio = tmp_path / "voice.mp3"
+        audio.write_bytes(b"\x00")
+        cover = tmp_path / "cover.jpg"
+        cover.write_bytes(b"\xFF\xD8")
+        scenes = []
+        for i in range(3):
+            s = tmp_path / f"scene{i}.jpg"
+            s.write_bytes(b"\xFF\xD8")
+            scenes.append(s)
+        out = tmp_path / "short.mp4"
+
+        captured = []
+
+        def fake_run(cmd, **kw):
+            captured.append(list(cmd))
+            if "-an" in cmd:
+                Path(cmd[-1]).write_bytes(b"\x00")
+            return type("R", (), {"returncode": 0})()
+
+        monkeypatch.setattr("engine.video.subprocess.run", fake_run)
+        build_short_video(audio, cover, out, duration=55.0,
+                          scene_paths=scenes, kb_extended=False)
+        stage1 = captured[0]
+        graph = stage1[stage1.index("-filter_complex") + 1]
+        assert "1.09" in graph
+        assert "1.06" not in graph and "1.12" not in graph
+
+
+# ---------------------------------------------------------------------------
+# July 31 2026 render pass — crisper pills (B5)
+# ---------------------------------------------------------------------------
+
+class TestPillV2:
+    def test_pill_is_delivered_at_requested_size(self, tmp_path):
+        """2x supersample is internal — the saved PNG is the requested
+        delivery size (LANCZOS-downscaled)."""
+        from PIL import Image
+        target = tmp_path / "pill.png"
+        _make_brand_pill(target, width=220, height=60)
+        with Image.open(target) as img:
+            assert img.size == (220, 60)
+
+    def test_pill_has_cyan_left_edge_accent(self, tmp_path):
+        """A ~2 px Nerra-cyan accent inside the left edge of the
+        rounded rect — brand cohesion with the caption highlight."""
+        from PIL import Image
+        target = tmp_path / "pill.png"
+        _make_brand_pill(target, width=220, height=60)
+        with Image.open(target) as img:
+            r, g, b, a = img.convert("RGBA").getpixel((1, 30))
+        assert a > 0
+        # Cyan-dominant: blue and green well above red.
+        assert b > 150 and g > 100 and b > r + 60, (r, g, b, a)
+
+    def test_pill_centre_is_still_the_dark_field(self, tmp_path):
+        from PIL import Image
+        target = tmp_path / "pill.png"
+        _make_brand_pill(target, width=220, height=60, text="")
+        with Image.open(target) as img:
+            r, g, b, a = img.convert("RGBA").getpixel((110, 30))
+        assert a > 0 and max(r, g, b) < 60
+
+    def test_pill_v2_idempotent(self, tmp_path):
+        target = tmp_path / "pill.png"
+        _make_brand_pill(target)
+        first = target.stat().st_mtime_ns
+        _make_brand_pill(target)
+        assert target.stat().st_mtime_ns == first
+
+    def test_builders_use_versioned_filenames(self, tmp_path, monkeypatch):
+        """The cache is path-keyed, so the supersampled look only ships
+        if the builders use the bumped names."""
+        audio = tmp_path / "voice.mp3"
+        audio.write_bytes(b"\x00")
+        cover = tmp_path / "cover.jpg"
+        cover.write_bytes(b"\xFF\xD8")
+        monkeypatch.setattr(
+            "engine.video.subprocess.run",
+            lambda cmd, **kw: type("R", (), {"returncode": 0})())
+        build_short_video(audio, cover, tmp_path / "short.mp4",
+                          duration=55.0, show_name="Tesla Shorts Time")
+        assert (tmp_path / "_show_pill_v2_tesla_shorts_time.png").exists()
+        assert (tmp_path / "_url_pill_v2.png").exists()
+        # Stale v1 names must not be written.
+        assert not (tmp_path / "_show_pill_tesla_shorts_time.png").exists()
+        assert not (tmp_path / "_url_pill_v1.png").exists()
