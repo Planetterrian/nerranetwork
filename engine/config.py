@@ -88,6 +88,15 @@ class LLMConfig:
     # won't. Pointing back at the older 4.20-reasoning ensures the chain
     # actually switches snapshots on a refusal of grok-4.3.
     fallback_model: str = "grok-4.20-reasoning"
+    # Podcast SCRIPT stage override (2026-07-31). Empty = use ``model``
+    # (byte-identical). Exists so a newer Grok release can be A/B'd on
+    # the prose stage of ONE show without touching the facts-first
+    # digest/fetch stage: grok-4.5 (2026-07-08) is a large capability
+    # jump but measures worse on confident-hallucination benchmarks, so
+    # the digest keeps grok-4.3 while a script-stage trial is cheap
+    # (~15k tokens/ep). Setting this changes shipped audio — per-show
+    # A/B-listen required (landmine #17).
+    podcast_model: str = ""
     # Synthesizer (weekly newsletter, monthly report, cross-show briefing)
     # defaults. Empty synth_model means "use model".
     synth_model: str = "grok-4.3"

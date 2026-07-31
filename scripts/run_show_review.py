@@ -51,7 +51,14 @@ sys.path.insert(0, str(ROOT / "scripts"))
 # gather/parse/write logic is unit-testable) without those installed.
 from engine.tracking import _estimate_grok_cost  # noqa: E402
 
-REVIEW_MODEL = "grok-4.3"
+# grok-4.5 (2026-07-08): +16 points on the Artificial Analysis index over
+# 4.3 — the largest generation jump xAI has posted — with configurable
+# reasoning effort. Its worse confident-hallucination profile matters for
+# the news digests (which stay on grok-4.3) but not here: the reviewer
+# ANALYZES committed transcripts and its proposals are operator-gated
+# behind a draft PR, so a sharper analyst is pure upside. Cost moves
+# ~$0.30 -> ~$0.75/run at 2 runs/week. Env-overridable for rollback.
+REVIEW_MODEL = os.environ.get("REVIEW_MODEL", "grok-4.5")
 
 # Context caps so a huge show can't blow past Grok's window or run up cost.
 MAX_EPISODES = 10

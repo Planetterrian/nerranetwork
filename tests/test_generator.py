@@ -397,3 +397,57 @@ class TestStructuralLabelAndSteelManRepetitionSkip:
         txt = ("# X\n\n" + ("the engine stalls and the engine stalls once more. " * 8)
                + " ".join(f"separate remark {i} on a distinct subject." for i in range(40)))
         assert self._validate()(txt, stage="digest", show_name="Test") >= 1
+
+
+class TestPodcastModelOverride:
+    """llm.podcast_model (2026-07-31): script-stage-only model override.
+
+    Exists so newer Grok releases can be trialled on the prose stage of
+    one show while the facts-first digest stays on the proven model.
+    Empty default must be byte-identical to the old behaviour.
+    """
+
+    def test_empty_default_uses_llm_model(self):
+        from engine.config import load_config
+        root = Path(__file__).resolve().parent.parent
+        cfg = load_config(root / "shows" / "tesla.yaml")
+        assert cfg.llm.podcast_model == ""
+
+    def test_script_stage_honors_the_override(self, monkeypatch):
+        from unittest import mock
+        from engine.config import load_config
+        from engine import generator
+
+        root = Path(__file__).resolve().parent.parent
+        cfg = load_config(root / "shows" / "tesla.yaml")
+        cfg.llm.podcast_model = "grok-4.5"
+        cfg.llm.podcast_chain = False
+        seen = []
+
+        def _fake_call(prompt, model=None, **kwargs):
+            seen.append(model)
+            return "word " * 500, {"finish_reason": "stop"}
+
+        monkeypatch.setattr(generator, "_call_grok", _fake_call)
+        monkeypatch.setattr(generator, "_validate_llm_output",
+                            lambda *a, **k: 0)
+        generator.generate_podcast_script(
+            {"episode_num": 50, "digest": "body", "today_str": "x",
+             "hook": "h", "intro_line": "i", "closing_block": "c",
+             "tone_hint": "t", "cold_open_spec": "", "delivery_spec": "",
+             "narrative_memory_section": "", "nerra_network_context": "",
+             "tesla_narrative_status_block": "",
+             "tesla_performance_signals_block": "",
+             "tesla_theme_context_block": ""},
+            cfg,
+        )
+        assert seen and all(m == "grok-4.5" for m in seen), seen
+
+    def test_digest_stage_ignores_the_override(self):
+        """The whole point: the digest (facts) stage must NOT follow
+        podcast_model — grok-4.5's confident-hallucination profile is the
+        reason this is a per-stage switch."""
+        import inspect
+        from engine import generator
+        src = inspect.getsource(generator.generate_digest)
+        assert "podcast_model" not in src

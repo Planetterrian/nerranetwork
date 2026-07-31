@@ -87,16 +87,27 @@ def _founders_notes() -> str:
         return ""
 
 
-def _fresh_network_episodes(max_age_days: int = 3, today: datetime.date | None = None) -> str:
+def _fresh_network_episodes(max_age_days: int = 3, today: datetime.date | None = None,
+                            exclude: frozenset = frozenset()) -> str:
     """Real sibling episodes from the last *max_age_days* days.
 
     Reads each show's committed ``summaries_*.json`` for its latest entry —
     the on-air network pointer must name an actual current episode, never a
     generic show plug. Returns "" when nothing is fresh (never blocks).
+
+    ``exclude`` drops shows picked in the last two days from the candidate
+    list entirely. July 31 2026: the July-18 rotation-memory INSTRUCTION
+    shipped and was then violated six days running (Planetterrian Daily
+    was the pick in Ep019-024 straight, with the ban text present in the
+    prompt each time) — same lesson as the fetch filters: filter the
+    INPUT, don't instruct the output. A show the model cannot see fresh
+    material for is a show it has no episode to point at.
     """
     today = today or datetime.date.today()
     lines = []
     for dir_name, display, _pitch in _NETWORK_SHOWS:
+        if display in exclude:
+            continue
         try:
             candidates = sorted((_ROOT / "digests" / dir_name).glob("summaries_*.json"))
             if not candidates:
@@ -248,6 +259,28 @@ def _latest_first_principles_brief() -> str:
         return ""
 
 
+def _recently_picked_shows(days: int = 2) -> frozenset:
+    """Display names picked in the *days* newest digests — the hard-ban
+    set the candidate list excludes (see _fresh_network_episodes)."""
+    try:
+        display_names = [name for _d, name, _p in _NETWORK_SHOWS]
+        md_files = sorted((_ROOT / "digests" / "dp_pod").glob("*.md"), reverse=True)
+        banned = set()
+        for md in md_files[:days]:
+            m = re.search(r"\*\*Network pick:\*\*\s*(.+)",
+                          md.read_text(encoding="utf-8"))
+            if not m:
+                continue
+            for name in display_names:
+                if name in m.group(1):
+                    banned.add(name)
+                    break
+        return frozenset(banned)
+    except Exception as exc:  # noqa: BLE001 — never block a run
+        logger.warning("dp_pod hook: pick ban-set unavailable (non-fatal): %s", exc)
+        return frozenset()
+
+
 def _recent_network_picks(max_digests: int = 6) -> str:
     """Shows recommended in recent Network pick lines (rotation memory).
 
@@ -293,10 +326,19 @@ def pre_fetch(config, *, episode_num=None, today_str=None) -> dict:
         "never read this list aloud):",
         catalog,
     ]
-    fresh = _fresh_network_episodes()
+    banned_picks = _recently_picked_shows()
+    fresh = _fresh_network_episodes(exclude=banned_picks)
     if fresh:
         sections.append("")
         sections.append(fresh)
+    if banned_picks:
+        sections.append("")
+        sections.append(
+            "NETWORK PICK HARD BAN (their fresh episodes are withheld "
+            "above on purpose): today's Network pick must NOT be "
+            + " or ".join(sorted(banned_picks))
+            + " — they were the pick in the last two episodes."
+        )
     fp_brief = _latest_first_principles_brief()
     if fp_brief:
         sections.append("")
