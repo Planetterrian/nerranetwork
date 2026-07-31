@@ -352,16 +352,30 @@ def transcript_to_srt_window(
         # Rebase onto the Shorts clip's t=0 origin.
         rel_start = clipped_start - window_start_seconds
         rel_end = clipped_end - window_start_seconds
-        wrapped = _wrap_caption_line(
+        # Split oversized segments into cue-sized blocks that share the
+        # segment's time range — the same fix transcript_to_srt received
+        # (2026-07-30). _wrap_caption_line's lossy branch stuffed the
+        # whole remainder into the last line; libass word-wraps rather
+        # than clips, so at 24 chars x 2 lines a normal 100-150-char
+        # Whisper segment grew the bottom-anchored FontSize-48 card
+        # upward into the hook-overlay zone.
+        blocks = _split_caption_text(
             text, max_chars=wrap_max_chars, max_lines=wrap_max_lines,
         )
-        cues.append(
-            f"{cue_index}\n"
-            f"{_format_srt_timestamp(rel_start)} --> "
-            f"{_format_srt_timestamp(rel_end)}\n"
-            f"{wrapped}\n"
-        )
-        cue_index += 1
+        span = (rel_end - rel_start) / max(1, len(blocks))
+        for n, block in enumerate(blocks):
+            if not block.strip():
+                continue
+            b_start = rel_start + n * span
+            b_end = (rel_start + (n + 1) * span
+                     if n < len(blocks) - 1 else rel_end)
+            cues.append(
+                f"{cue_index}\n"
+                f"{_format_srt_timestamp(b_start)} --> "
+                f"{_format_srt_timestamp(b_end)}\n"
+                f"{block}\n"
+            )
+            cue_index += 1
 
     if not cues:
         logger.info(

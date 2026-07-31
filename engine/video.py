@@ -560,10 +560,22 @@ def _ken_burns(frames: int, move: str, *,
     else:
         z = f"(1+{amp}*{p})"
 
+    # Pan amplitude is bounded by the zoom's feasible window: at zoom z
+    # the visible-window CENTRE can only sit in [1/(2z), 1-1/(2z)], i.e.
+    # +/-(1-1/z)/2 around 0.5 — which is 0 at zoom 1.0 and only ~0.041 at
+    # 1.09. The previous fixed 0.42→0.58 sweep (+/-0.08) exceeded that for
+    # roughly the first and last 40% of every pan scene; zoompan clamps
+    # x/y, so those phases rendered as edge-anchored zooms (a milder
+    # reprise of the corner-drift defect this function was written to
+    # fix). The pan now ramps from centre exactly as fast as the growing
+    # zoom makes room: in-pans start centred and drift as they tighten,
+    # out-pans return to centre as they widen, and the requested centre
+    # stays inside the feasible window for every frame.
+    travel = round((1.0 - 1.0 / zoom_max) / 2.0, 6)
     if move == "in_pan_x":
-        cx, cy = f"(0.42+0.16*{p})", "0.5"
+        cx, cy = f"(0.5+{travel}*{p})", "0.5"
     elif move == "out_pan_y":
-        cx, cy = "0.5", f"(0.58-0.16*{p})"
+        cx, cy = "0.5", f"(0.5+{travel}-{travel}*{p})"
     else:
         cx, cy = "0.5", "0.5"
 

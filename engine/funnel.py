@@ -209,6 +209,20 @@ def campaign_id(
         show = "unknown"
     chan = _norm(channel) or "en"
     knd = _norm(kind) or "short"
+    if knd not in KINDS:
+        # Build/parse must stay exact inverses: parse_campaign_id rejects
+        # kinds outside the closed vocabulary, so an out-of-vocabulary
+        # kind here would build a campaign that ships fine and then lands
+        # every session it earns in `unattributed` — silently. Same
+        # pattern as the empty-slug guard above: loud, then coerce.
+        logger.warning(
+            "funnel: kind %r is not in the closed vocabulary %s — "
+            "coercing to 'short' so the campaign stays parseable "
+            "(show %s, episode %s). Placements belong in the placement/"
+            "content field, not in kind.",
+            kind, sorted(KINDS), show, episode,
+        )
+        knd = "short"
     try:
         ep = max(0, int(episode))
     except (TypeError, ValueError):

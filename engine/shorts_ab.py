@@ -191,6 +191,12 @@ def build_variant(
 
     def _fall_back(reason: str) -> ShortVariant:
         result.variant = VARIANT_STILLS
+        # Clear any clips already attached: run_show passes
+        # result.clip_paths into build_short_video, and the hybrid render
+        # fires on >= 2 usable clips — so a "not enough clips" fallback
+        # that kept 2 paths would RECORD stills while SHIPPING video,
+        # the disguised-arm case this module's contract forbids.
+        result.clip_paths = []
         result.fallback_reason = reason
         logger.warning(
             "Shorts A/B: Short #%d falls back to stills (%s) — the "
@@ -209,7 +215,10 @@ def build_variant(
         resolution = str(getattr(yt, "shorts_ab_resolution", "720p") or "720p")
         budget_s = float(getattr(yt, "shorts_ab_budget_seconds", 420.0) or 420.0)
         max_cost = float(getattr(yt, "shorts_ab_max_cost_usd", 1.25) or 1.25)
-        min_clips = max(1, int(getattr(yt, "shorts_ab_min_clips", 2) or 2))
+        # Floor 2, not 1: the hybrid renderer requires >= 2 usable clips
+        # (engine/video.py) — a min_clips of 1 would record grok_video
+        # and then ship stills when a single clip landed.
+        min_clips = max(2, int(getattr(yt, "shorts_ab_min_clips", 2) or 2))
     except (TypeError, ValueError) as exc:
         return _fall_back(f"malformed shorts_ab config: {exc}")
 

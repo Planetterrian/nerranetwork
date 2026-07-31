@@ -256,11 +256,15 @@ class TestDebutRework:
         prev = hook._previous_lever_for_dispatch()
         assert prev.startswith("PREVIOUS LEVER")
         # The quoted lever body (after the colon) must be a real aired action —
-        # not a phantom heat-pump callback. The instruction preamble may still
-        # mention heat pumps as a forbidden example.
+        # not a phantom callback. NOTE: no banned-token assertions here. The
+        # original bug was an INVENTED heat-pump lever, and this test once
+        # asserted "heat-pump" never appears — until Ep024 (2026-07-31)
+        # aired a GENUINE heat-pump-assessment lever and the suite went red
+        # on legitimate data (the exact trap the comment below describes).
+        # The verbatim-from-digest check is the real, data-independent guard:
+        # a lever quoted verbatim from the cited committed digest cannot be
+        # a phantom, whatever words it uses.
         quoted = prev.split("):", 1)[-1]
-        assert "heat-pump" not in quoted.lower()
-        assert "heat pump" not in quoted.lower()
         # Data-independent reality check (the old hard-coded token list broke
         # the suite whenever a new episode's lever used different words): the
         # quoted text must come verbatim from the cited episode's committed

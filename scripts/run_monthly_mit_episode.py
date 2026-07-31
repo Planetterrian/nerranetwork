@@ -289,13 +289,20 @@ def _parse_date_safe(value: Any) -> _dt.date | None:
 def generate_monthly_podcast_script(report_md: str, config, *, month: int, year: int) -> str | None:
     """Ask the LLM to turn the monthly report markdown into a podcast script."""
     from engine.generator import _call_grok, load_prompt
+    from engine.intros import build_delivery_spec
 
     prompt_path = PROJECT_ROOT / "shows" / "prompts" / "modern_investing_monthly_podcast.txt"
+    # {delivery_spec} was added to this prompt by the 2026-07-30 retention
+    # pass, which wired the supply into engine/pipeline.py — but this
+    # script is a THIRD formatting path (neither run_show's digest stage
+    # nor run_generation_phase), so the placeholder had no supplier and
+    # load_prompt raised KeyError, killing the monthly episode.
     template = load_prompt(str(prompt_path), template_vars={
         "month_name": calendar.month_name[month],
         "year": str(year),
         "host_name": config.publishing.host_name or "Patrick",
         "report": report_md,
+        "delivery_spec": build_delivery_spec("modern_investing"),
     })
 
     model = getattr(config.llm, "synth_model", "") or config.llm.model

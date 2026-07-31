@@ -372,17 +372,27 @@ class TestVideoIndexCarriesTheVariant:
 # ---------------------------------------------------------------------------
 
 class TestReport:
-    def _write_stats(self, tmp_path, videos):
+    def _write_stats(self, tmp_path, videos, extra_shows=None):
         api = tmp_path / "api"
         api.mkdir(parents=True, exist_ok=True)
-        (api / "youtube_stats.json").write_text(json.dumps(
-            {"shows": {"spacex": {"videos": videos}}}))
+        shows = {"spacex": {"videos": videos}}
+        shows.update(extra_shows or {})
+        (api / "youtube_stats.json").write_text(json.dumps({"shows": shows}))
+        # Enrollment registry: only spacex runs the experiment. Without
+        # this the report cannot tell participants from bystanders — the
+        # 2026-07-30/31 window stamped variant="stills" on every network
+        # Short, and an unfiltered report drew its control arm from the
+        # whole network.
+        shows_dir = tmp_path / "shows"
+        shows_dir.mkdir(parents=True, exist_ok=True)
+        (shows_dir / "spacex.yaml").write_text(
+            "slug: spacex\nyoutube:\n  shorts_ab_enabled: true\n")
         return api
 
-    def _build(self, tmp_path, videos):
+    def _build(self, tmp_path, videos, extra_shows=None):
         import importlib
 
-        api = self._write_stats(tmp_path, videos)
+        api = self._write_stats(tmp_path, videos, extra_shows=extra_shows)
         module = importlib.import_module("scripts.build_shorts_ab_report")
         original = module._ROOT
         module._ROOT = tmp_path
@@ -417,6 +427,25 @@ class TestReport:
         # arm with a different production era.
         assert data["arms"]["stills"]["n"] == 1
         assert data["arms"]["grok_video"]["n"] == 0
+
+    def test_non_participating_shows_never_enter_the_control_arm(
+            self, tmp_path):
+        """Between 2026-07-30 and 07-31 run_show recorded variant="stills"
+        on every network Short (plan_variants doubles as the render plan
+        and its output was recorded verbatim). Those rows must not become
+        control data: a control arm drawn from other shows/channels
+        measures the network, not the motion."""
+        tesla_short = {"show_slug": "tesla", "kind": "short",
+                       "variant": "stills", "views": 5000,
+                       "average_view_percentage": 55.0,
+                       "subscribers_gained": 3}
+        data = self._build(
+            tmp_path,
+            [self._video("stills"), self._video("grok_video")],
+            extra_shows={"tesla": {"videos": [tesla_short, tesla_short]}},
+        )
+        assert data["arms"]["stills"]["n"] == 1
+        assert data["arms"]["grok_video"]["n"] == 1
 
     def test_overlapping_arms_report_no_measurable_difference(self, tmp_path):
         from scripts.build_shorts_ab_report import MIN_PER_ARM

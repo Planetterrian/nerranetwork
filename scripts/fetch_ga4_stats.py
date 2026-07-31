@@ -135,7 +135,11 @@ def fetch(prop: str, days: int) -> Dict[str, Any]:
                     {"name": "engagedSessions"},
                     {"name": "userEngagementDuration"}],
         "orderBys": [{"metric": {"metricName": "sessions"}, "desc": True}],
-        "limit": 200,
+        # Rows are source x medium x campaign triples. Per-episode
+        # campaigns accrue at ~13 shows x 30 eps x channels, so a 200-row
+        # cap would silently truncate the tail within weeks — shifting
+        # totals.sessions and attribution_coverage_pct without any signal.
+        "limit": 2000,
     }))
     # Landing pages, so a funnel destination's own performance is visible
     # even for visits GA4 could not attribute to a campaign.
@@ -172,7 +176,11 @@ def fetch(prop: str, days: int) -> Dict[str, Any]:
         }))
     except Exception as exc:  # noqa: BLE001 — never fail the whole fetch
         logger.warning("GA4 conversion report unavailable: %s", exc)
-        conversions = []
+        # None, not [] — an empty list means "measured, zero conversions"
+        # and build_funnel reports it as a fact; a failed report must
+        # surface as "not measured" (null) or the funnel claims nobody
+        # converted on a day it simply couldn't read the data.
+        conversions = None
 
     totals = {
         "active_users": sum(int(r.get("activeUsers", 0)) for r in day_series),
