@@ -433,6 +433,16 @@ youtube:
   # base (cover fallback); `thumbnail_variants` extra composites from
   # other scenes feed the operator's Studio "Test & Compare" A/B.
   long_form_thumbnail_from_scene: true
+  # Aug 1 2026: ON network-wide. The July 30 "captions from the track,
+  # not the pixels" change made burn-in opt-in — and no show opted in,
+  # so long-form shipped with NO on-screen captions at all and the July
+  # 31 per-word ASS work (transcript_to_ass_full) was dormant. The
+  # operator's video directive ("most enjoyable, visually appealing")
+  # wants the burned per-word treatment; the uploaded caption TRACK
+  # still ships alongside (YouTube CC defaults off, so no doubling for
+  # normal viewers). long_form_captions_path metric records ass vs
+  # srt_fallback per episode.
+  long_form_burn_in_captions: true
   thumbnail_variants: 2
   # Sunday recaps reuse the week's gallery scenes (both aspects) instead
   # of regenerating imagery for stories already illustrated this week.

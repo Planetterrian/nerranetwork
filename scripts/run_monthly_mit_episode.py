@@ -593,9 +593,24 @@ def main() -> int:
         logger.info("Not the last trading day of the month — exiting without work.")
         return 0
 
+    month, year = args.month, args.year
+    if (args.require_last_trading_day
+            and (month, year) == (default_month, default_year)):
+        # The cron fires ON the month's last trading day (22:00 UTC,
+        # after close) to recap THAT month — but the CLI default is the
+        # PREVIOUS calendar month (for early-next-month manual runs).
+        # The July 31 2026 scheduled run therefore wrote
+        # Monthly_2026-06, re-recapping June. When the gate proves
+        # today IS the month-end, recap today's month; an explicit
+        # --month always wins (the equality check only overrides the
+        # untouched default).
+        month, year = today.month, today.year
+        logger.info("Last-trading-day run: recapping the CURRENT month "
+                    "(%04d-%02d).", year, month)
+
     return run(
-        month=args.month,
-        year=args.year,
+        month=month,
+        year=year,
         dry_run=args.dry_run,
         skip_audio=args.skip_audio,
         skip_rss=args.skip_rss,

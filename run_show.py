@@ -5689,6 +5689,15 @@ def _publish_youtube(
                     and episode_num % 2 == 1):
                 shorts_plan[0], shorts_plan[1] = (
                     shorts_plan[1], shorts_plan[0])
+                # The per-window Short TITLES were generated from the
+                # plan BEFORE this swap (the title bundle runs upstream)
+                # — swap them in lockstep or the two Shorts ship with
+                # each other's titles. Shipped live on spacex Ep053
+                # (2026-08-01): both Shorts published title-crossed.
+                if (isinstance(yt_short_titles, list)
+                        and len(yt_short_titles) >= 2):
+                    yt_short_titles[0], yt_short_titles[1] = (
+                        yt_short_titles[1], yt_short_titles[0])
                 result["shorts_ab_windows_swapped"] = True
                 result["shorts_start_offset"] = round(shorts_plan[0][0], 2)
                 result["shorts_start_offsets"] = [

@@ -90,6 +90,14 @@ llm:
   # segment was added, July 2026). Floor sits just under it so the
   # expand-retry fires on anything short of a full episode.
   min_podcast_words: 1550
+  # Aug 1 2026: dp_pod's script slid 1533 -> 1199 -> 1089 -> 929 words
+  # across four episodes and Aug 1 SKIPPED at the hard floor — the only
+  # missed daily show. Its own digest/brief shrank in step (958 -> 718
+  # -> 740 words), and the July playbook says length levers are
+  # DIGEST-side only: the script can't say more than the brief gives
+  # it. Same lever env_intel got on July 31.
+  digest_expand_below_target: true
+  min_digest_words: 900
   min_podcast_word_floor: 1000
   # DISABLED July 29 2026 (cost + quality). Measured over 901 committed
   # episodes: 81% still shipped BELOW target WITH this retry running (Tesla
