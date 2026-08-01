@@ -1,0 +1,111 @@
+DeepSeek-V4-Flash-0731 delivers strong agentic and coding performance at roughly one-fifth the price of comparable frontier models.
+
+This is Models and Agents, episode one hundred twenty-eight.
+
+Simon Willison reports that the three hundred four billion parameter DeepSeek-V4-Flash-0731 model, one hundred sixty seven gigabytes on Hugging Face, ranks ahead of MiniMax M3 on Artificial Analysis charts.
+
+It charges fourteen cents per million input tokens and twenty seven cents per million output tokens.
+
+MiniMax released its H3 omni-modal model that ingests text, images, video, and audio in one context and outputs two K video clips with native stereo audio for durations of four to fifteen seconds.
+
+Stateless M C P two point zero and DataFlow-Harness both lower the barrier for reliable agent tooling by replacing session state and free-form scripts with auditable single-request calls and persistent directed acyclic graphs.
+
+MiniMax released MiniMax H3, a general-purpose multimodal generation model that treats text, images, video, and audio as a single unified context.
+
+The model returns video with native stereo sound at two K resolution for integer durations between four and fifteen seconds without separate audio tracks.
+
+It is positioned as a native omni-modal system rather than a text-to-video model with bolted-on components.
+
+Builders working on short-form video with synchronized sound can now generate clips directly from mixed inputs instead of stitching separate pipelines.
+
+Watch for follow-on releases that extend duration or add longer context windows.
+
+The three hundred four billion parameter DeepSeek-V4-Flash-0731 ships with unchanged architecture but improved post-training that boosts agentic and coding performance.
+
+It ranks ahead of the four hundred twenty eight billion parameter MiniMax M3 on Artificial Analysis Pareto charts while costing fourteen cents per million input tokens and twenty seven cents per million output tokens.
+
+Simon Willison notes strong results on the Intelligence Index versus Cost chart and shows that raising reasoning effort via OpenRouter markedly improves output quality on tasks such as drawing a pelican riding a bicycle.
+
+The release appeared on Hugging Face on July thirty first, twenty twenty six, and the official DeepSeek A P I moved into public beta the same day.
+
+Default runs cost forty four hundredths of a cent and high-reasoning runs cost twenty two hundredths of a cent per the linked Gist, with the first request in a session benefiting from prompt caching.
+
+The model is available through OpenRouter and the official DeepSeek A P I now in public beta.
+
+The two thousand twenty six zero seven two eight Model Context Protocol revision replaces the two-request initialize-plus-call flow with a single stateless POST that includes M C P Protocol-Version and M C P Method headers.
+
+Simon Willison built M C P explorer, datasette-M C P, and the L L M M C P client plugin in one week to explore the simpler spec.
+
+The change removes server-side session storage and makes M C P tools easier to audit than full shell access.
+
+Peking University researchers released an open-source framework that guides L L M agents to build persistent, editable DAG workflows instead of disposable Python scripts.
+
+On a twelve-task benchmark it reached ninety three point three percent end-to-end pass rate while cutting A P I cost seventy two point five percent and latency forty nine point nine percent versus vanilla Claude Code.
+
+The system uses typed mutations against a live operator registry and DataFlow-Skills for domain rules.
+
+The new datasette-agent zero point four alpha zero release adds await context.browser_task so agent tools can run JavaScript directly in the user’s browser.
+
+The capability lets Datasette Agent plugins expose custom browser-side actions without additional server round-trips.
+
+The change is documented in pull request number thirty three and targets use cases where client-side rendering or DOM inspection is required inside an agent workflow.
+
+The new smevals tool runs small YAML-defined eval suites across models, prompts, and harnesses, then grades results with custom checkers.
+
+Commands include uvx smevals run, uvx smevals grade, and uvx smevals serve for a local results browser.
+
+It supports any model reachable by the L L M library and separates execution from grading.
+
+Groundcover raised one hundred million dollars and now has more than two hundred fifty paying customers.
+
+It uses eBPF collection inside customer clouds so telemetry never leaves the user’s AWS, Azure, or GCP account.
+
+Pricing is based on monitored hosts rather than data volume, which suits high-telemetry A I agent workloads.
+
+A new arXiv paper shows standard metrics reward repetitive normal templates and penalize clinically meaningful rare terms in chest X-ray report generation.
+
+The authors introduce a framework that measures term erasure and biased hallucination in V L M radiology reports.
+
+The paper is titled Measuring What V L M's Don’t Say and is available at arXiv two six zero three zero one six two five.
+
+Everyone talks about M C P as a simple plug-in-a-tool layer.
+
+In practice the original stateful design forced every client to open a session, store a M C P Session-Id, and route every subsequent call to the same backend instance.
+
+The two thousand twenty six zero seven two eight revision collapses that into one HTTP request carrying protocol version and method headers, eliminating server-side session tables entirely.
+
+The engineering payoff is horizontal scaling without sticky sessions and simpler client code that no longer needs to manage or retry session IDs.
+
+The tradeoff is that servers lose any opportunity to keep per-client mutable state across calls, so tool authors must design purely functional operations or push state into the client-supplied meta object.
+
+Teams that previously wrapped M C P behind a stateful proxy can now drop the proxy and expose tools directly behind ordinary load balancers.
+
+The practical decision rule is that if your tool needs only the arguments supplied in the current call, switch to stateless.
+
+If it must remember prior interactions, keep that memory in the client or in an external store the tool can reach.
+
+This stateless revision advances the standardization of agent and tool protocols that we discussed yesterday by removing the need for session affinity.
+
+Run uvx M C P explorer list then inspect and call tools to see stateless M C P in action.
+
+Test DeepSeek-V4-Flash-0731 at high reasoning effort via OpenRouter on a coding or agent task and compare cost against your current model.
+
+Install the alpha L L M M C P client plugin and wire it to datasette dot simonwillison dot net slash dash M C P to let an L L M run SQL against a live dataset.
+
+Clone DataFlow-Harness and run one of the twelve benchmark tasks to see how typed DAG mutations differ from free-form script generation.
+
+Build a small smevals suite for a task you care about such as SVG generation or haiku writing and grade runs across two models.
+
+More open-weight releases from Chinese labs are expected to target the price and performance band currently occupied by DeepSeek-V4-Flash.
+
+Additional M C P server implementations and client libraries will appear as the stateless spec stabilizes.
+
+Further agent-telemetry platforms will adopt host-based or BYOC pricing to handle rising A I workload data volumes.
+
+Before we go, the next open-weight checkpoints from Chinese labs are already in testing for that same price and performance band.
+
+That wraps up today's A I briefing. Share this with a developer or builder who wants to stay current. Subscribe wherever you listen. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes. Quick tip from the network: try Unintended Consequences next — true stories of good intentions that backfired.
+
+Every Nerra Network show is free at nerranetwork dot com. Following the long arcs? Story Trackers on nerranetwork dot com follow major programs across episodes — Tesla, Space X, A I, space science, and more.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
