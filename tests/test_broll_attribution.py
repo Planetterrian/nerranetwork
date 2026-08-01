@@ -155,6 +155,47 @@ class TestScanUsability:
         monkeypatch.setattr(fsb, "_list_channel_ids", lambda *a, **k: [])
         assert fsb._list_cc("chan", 10) == 1
 
+    def test_total_probe_failure_is_not_reported_as_zero_cc(
+            self, monkeypatch, caplog):
+        """The @SpaceX/streams run failed all 300 probes on auth and
+        printed "0 of 0 probed videos are CC-licensed" — which reads as
+        a definitive "no CC footage exists". Opposite conclusions must
+        not share a message."""
+        monkeypatch.setattr(fsb, "_list_channel_ids",
+                            lambda *a, **k: ["a", "b", "c"])
+
+        def _fail(url, cookies=None):
+            raise RuntimeError("yt-dlp exit 1: Use --cookies-from-browser "
+                               "or --cookies for the authentication")
+
+        monkeypatch.setattr(fsb, "_probe", _fail)
+        with caplog.at_level("ERROR"):
+            assert fsb._list_cc("chan", 3, workers=2) == 1
+        text = caplog.text
+        assert "NOT a finding about licensing" in text
+        assert "wants credentials" in text
+
+    def test_auth_detection_covers_cookie_demand_and_bot_check(self):
+        assert fsb.needs_auth("Sign in to confirm you're not a bot")
+        assert fsb.needs_auth("Use --cookies-from-browser for the "
+                              "authentication")
+        assert not fsb.needs_auth("This video is not available")
+
+    def test_stderr_head_is_kept_not_tail(self, monkeypatch):
+        """yt-dlp appends long wiki-link boilerplate; tailing cut the
+        real cause mid-word on the first live run."""
+        class _Proc:
+            returncode = 1
+            stdout = ""
+            stderr = ("ERROR: Sign in to confirm you're not a bot. "
+                      + "See https://github.com/yt-dlp/wiki/FAQ " * 40)
+
+        monkeypatch.setattr(fsb, "_require_ytdlp", lambda: "yt-dlp")
+        monkeypatch.setattr(fsb.subprocess, "run", lambda *a, **k: _Proc())
+        with pytest.raises(RuntimeError) as exc:
+            fsb._run_ytdlp(["-J"], timeout=10)
+        assert "not a bot" in str(exc.value)
+
 
 class TestSectionParsing:
     def test_valid_sections(self):
@@ -235,6 +276,85 @@ class TestPoolBuilderAttribution:
     def test_nasa_fetcher_writes_attribution(self):
         src = (_SCRIPTS / "fetch_nasa_broll.py").read_text(encoding="utf-8")
         assert '"attribution"' in src
+
+
+class TestNasaTls:
+    """A stock python.org macOS build fails every HTTPS call with
+    CERTIFICATE_VERIFY_FAILED until "Install Certificates.command" is
+    run; the fetcher now carries certifi's bundle itself."""
+
+    def test_all_network_calls_go_through_the_ssl_helper(self):
+        src = (_SCRIPTS / "fetch_nasa_broll.py").read_text(encoding="utf-8")
+        # urlretrieve accepts no SSL context, so it can never work on
+        # that build — it must not come back. (Match the CALL, not the
+        # word: the source explains why it was removed.)
+        assert "urlretrieve(" not in src
+        assert "certifi" in src
+        # No bare urlopen calls outside the helper's own definition.
+        bare = [ln for ln in src.splitlines()
+                if "urllib.request.urlopen(" in ln
+                and "def _urlopen" not in ln]
+        assert len(bare) == 1, f"unexpected bare urlopen calls: {bare}"
+
+    def test_ssl_context_is_built(self):
+        import fetch_nasa_broll as fnb
+        import ssl as _ssl
+        assert isinstance(fnb._ssl_context(), _ssl.SSLContext)
+
+
+class TestNasaRenditionFallback:
+    """Picking one rendition and skipping the asset when it was over the
+    size cap dropped 4 of the 6 best "Isolated Launch Views" (DART,
+    JPSS-2, IXPE, Artemis I) even though each manifest also offered a
+    medium/mobile that fits. Verified live 2026-08-01: 2/6 before, 6/6
+    after."""
+
+    def _mod(self):
+        import fetch_nasa_broll as fnb
+        return fnb
+
+    def test_candidates_are_ordered_best_first(self, monkeypatch):
+        fnb = self._mod()
+        base = "https://x/asset"
+        monkeypatch.setattr(fnb, "_get_json", lambda url: [
+            f"{base}~preview.mp4", f"{base}~orig.mp4", f"{base}~small.mp4",
+            f"{base}~large.mp4", f"{base}~medium.mp4", f"{base}~mobile.mp4",
+        ])
+        got = [c.rsplit("~", 1)[-1] for c in fnb._mp4_candidates("href")]
+        assert got == ["large.mp4", "medium.mp4", "small.mp4",
+                       "mobile.mp4", "orig.mp4", "preview.mp4"]
+
+    def test_non_mp4_assets_are_excluded(self, monkeypatch):
+        fnb = self._mod()
+        monkeypatch.setattr(fnb, "_get_json", lambda url: [
+            "https://x/a~thumb.jpg", "https://x/a~large.mp4",
+            "https://x/a~metadata.json",
+        ])
+        assert fnb._mp4_candidates("href") == ["https://x/a~large.mp4"]
+
+    def test_unknown_renditions_still_offered_last(self, monkeypatch):
+        fnb = self._mod()
+        monkeypatch.setattr(fnb, "_get_json", lambda url: [
+            "https://x/a~weird.mp4", "https://x/a~medium.mp4",
+        ])
+        got = fnb._mp4_candidates("href")
+        assert got[0].endswith("~medium.mp4")
+        assert got[-1].endswith("~weird.mp4")
+
+    def test_download_loop_steps_down_past_oversized_renditions(self):
+        # The stepping logic itself, as the runner applies it.
+        cap = 220 * 1024 * 1024
+        sizes = {"large": 332_000_000, "medium": 149_000_000,
+                 "small": 40_000_000}
+        chosen = next(
+            (name for name in ("large", "medium", "small")
+             if sizes[name] <= cap), None)
+        assert chosen == "medium"
+
+    def test_runner_uses_candidates_not_single_pick(self):
+        src = (_SCRIPTS / "fetch_nasa_broll.py").read_text(encoding="utf-8")
+        assert "_mp4_candidates(" in src
+        assert "_best_mp4(" not in src
 
 
 # ---------------------------------------------------------------------------
