@@ -79,6 +79,34 @@ _VIDEO_CONTENT_TYPES = {
 }
 
 
+def attribution_for(clip: Path, explicit: str | None) -> str:
+    """Resolve a clip's footage credit line.
+
+    Precedence: the ``--attribution`` flag, then the ``attribution``
+    field of a ``_provenance.json`` beside the clip (written by
+    ``fetch_spacex_broll.py`` / ``fetch_nasa_broll.py``, keyed by file
+    name), else empty. CC BY-sourced clips (SpaceX YouTube) NEED this to
+    reach ``broll.json`` — the description credit the license requires
+    is built from it.
+    """
+    if explicit:
+        return explicit.strip()
+    prov_path = clip.parent / "_provenance.json"
+    if not prov_path.exists():
+        return ""
+    try:
+        rows = json.loads(prov_path.read_text(encoding="utf-8"))
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("%s unreadable (%s) — no attribution", prov_path, exc)
+        return ""
+    if not isinstance(rows, list):
+        return ""
+    for row in rows:
+        if isinstance(row, dict) and row.get("file") == clip.name:
+            return str(row.get("attribution") or "").strip()
+    return ""
+
+
 def _load_pool(path: Path) -> dict:
     if not path.exists():
         return {}
@@ -101,6 +129,10 @@ def main() -> int:
                     help="Curated local clip files (.mp4/.mov/.webm)")
     ap.add_argument("--label", default=None,
                     help="Label for the uploaded clips (default: file stem)")
+    ap.add_argument("--attribution", default=None,
+                    help="Footage credit line for the uploaded clips "
+                         "(default: looked up per clip in a sibling "
+                         "_provenance.json from the fetch scripts)")
     args = ap.parse_args()
 
     try:
@@ -162,6 +194,9 @@ def main() -> int:
             "label": args.label or clip.stem,
             "key": key,
         }
+        credit = attribution_for(clip, args.attribution)
+        if credit:
+            entry["attribution"] = credit
         if url in by_url:
             by_url[url].update(entry)  # refresh label/duration in place
         else:

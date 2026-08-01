@@ -5462,6 +5462,18 @@ def _publish_youtube(
             # still rendered (for the video feed) but must not upload,
             # touch the video index, the playlist, comments or captions.
             if _policy_publish_long:
+                # Footage credits for any b-roll the render used. CC BY
+                # sources (SpaceX YouTube back-catalog) require the
+                # credit; empty list for unattributed pools = today's
+                # description byte-for-byte.
+                try:
+                    from engine.gallery_library import broll_attributions_for
+                    _broll_credits = broll_attributions_for(
+                        _visual_plan.get("broll_clips"),
+                        digests_dir=digests_dir,
+                    )
+                except Exception:  # noqa: BLE001 — never block an upload
+                    _broll_credits = []
                 meta = build_long_form_metadata(
                     config,
                     episode_num=episode_num,
@@ -5471,6 +5483,7 @@ def _publish_youtube(
                     audio_url=audio_url,
                     chapters_path=chapters_path if chapters_path.exists() else None,
                     photo_attribution=pexels_attribution,
+                    footage_attribution=_broll_credits,
                     optimized_title=yt_title,
                 )
                 upload = upload_video(

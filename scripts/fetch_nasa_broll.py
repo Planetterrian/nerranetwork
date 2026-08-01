@@ -11,9 +11,13 @@ Why NASA and not SpaceX's own media (August 2026, operator request to use
 * **SpaceX's Flickr photos are CC BY-NC 2.0** — the NC (non-commercial)
   term is a problem for monetized channels. Operator judgment call, not a
   default.
-* **SpaceX webcast video is SpaceX's copyright** with no reuse license —
-  wholesale b-roll reuse risks Content ID claims/strikes. Not fetched
-  here; if wanted, ask SpaceX media relations for written permission.
+* **SpaceX's own video is usable ONLY per-video**: parts of the YouTube
+  back-catalog are marked "Creative Commons Attribution (reuse allowed)"
+  (CC BY — monetized reuse OK with credit), but it's a per-video flag,
+  never channel-wide, and 2024+ streams live on X with no license grant.
+  ``fetch_spacex_broll.py`` handles that path with a hard CC gate +
+  attribution plumbing; anything not CC-marked stays off limits without
+  written permission from SpaceX media relations.
 
 This script only DOWNLOADS candidates into a local directory. The
 operator then curates (watch, delete duds, keep evergreen shots — pads,
@@ -158,6 +162,11 @@ def main() -> int:
                     "nasa_id": nasa_id, "title": title, "center": center,
                     "source_url": mp4, "file": dest.name,
                     "license": "public domain (NASA, 17 U.S.C. 105)",
+                    # Attribution isn't legally required for public-domain
+                    # NASA footage, but NASA asks for a courtesy credit —
+                    # build_broll_pool.py copies this into broll.json and
+                    # the render appends it to the YouTube description.
+                    "attribution": "NASA (public domain)",
                 })
             except Exception as exc:  # noqa: BLE001
                 logger.warning("failed %s: %s", nasa_id, exc)
