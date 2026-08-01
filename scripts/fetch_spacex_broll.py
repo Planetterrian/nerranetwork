@@ -30,8 +30,11 @@ of any episode that actually uses the clip.
 
 Workflow::
 
-    # 1. Discover which recent channel videos are CC-licensed:
-    python scripts/fetch_spacex_broll.py --list-cc --max 40
+    # 1. Discover which channel videos are CC-licensed (probes run
+    #    concurrently; scan deep — the CC-marked material is mostly
+    #    older, and add --cookies-from-browser chrome if YouTube
+    #    bot-challenges the machine):
+    python scripts/fetch_spacex_broll.py --list-cc --max 300
 
     # 2. Download a bounded section of a CC video (webcasts run hours —
     #    grab the 30-60s you actually want, e.g. liftoff or landing):
@@ -57,6 +60,7 @@ import re
 import shutil
 import subprocess
 import sys
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout,
@@ -141,24 +145,49 @@ def _require_ytdlp() -> str:
     return exe
 
 
-def _probe(url: str) -> dict:
+def _cookie_args(cookies_from_browser: str | None) -> list:
+    """yt-dlp cookie flags.
+
+    YouTube increasingly answers datacenter/plain requests with a
+    "Sign in to confirm you're not a bot" challenge; yt-dlp then exits
+    non-zero on every probe. Passing a logged-in browser's cookies
+    (``--cookies-from-browser chrome``) is the documented fix.
+    """
+    return ["--cookies-from-browser", cookies_from_browser] \
+        if cookies_from_browser else []
+
+
+def _run_ytdlp(args: list, *, timeout: int) -> str:
+    """Run yt-dlp, raising with its ACTUAL stderr on failure.
+
+    ``subprocess.CalledProcessError`` alone prints only the exit status,
+    which is what made a bot-check failure indistinguishable from a
+    deleted video.
+    """
+    exe = _require_ytdlp()
+    proc = subprocess.run(  # noqa: S603
+        [exe, *args], capture_output=True, text=True, timeout=timeout,
+    )
+    if proc.returncode != 0:
+        detail = " ".join((proc.stderr or "").split())[-300:] or "no stderr"
+        raise RuntimeError(f"yt-dlp exit {proc.returncode}: {detail}")
+    return proc.stdout
+
+
+def _probe(url: str, cookies_from_browser: str | None = None) -> dict:
     """Fetch a single video's metadata (no download)."""
-    exe = _require_ytdlp()
-    out = subprocess.run(  # noqa: S603
-        [exe, "-J", "--no-download", "--no-playlist", url],
-        capture_output=True, text=True, timeout=120, check=True,
-    ).stdout
-    return json.loads(out)
+    return json.loads(_run_ytdlp(
+        ["-J", "--no-download", "--no-playlist",
+         *_cookie_args(cookies_from_browser), url],
+        timeout=120))
 
 
-def _list_channel_ids(channel_url: str, max_videos: int) -> list:
-    exe = _require_ytdlp()
-    out = subprocess.run(  # noqa: S603
-        [exe, "-J", "--flat-playlist", "--playlist-end", str(max_videos),
-         channel_url],
-        capture_output=True, text=True, timeout=300, check=True,
-    ).stdout
-    data = json.loads(out)
+def _list_channel_ids(channel_url: str, max_videos: int,
+                      cookies_from_browser: str | None = None) -> list:
+    data = json.loads(_run_ytdlp(
+        ["-J", "--flat-playlist", "--playlist-end", str(max_videos),
+         *_cookie_args(cookies_from_browser), channel_url],
+        timeout=300))
     return [e.get("id") for e in (data.get("entries") or []) if e.get("id")]
 
 
@@ -185,14 +214,15 @@ def _merge_provenance(out_dir: Path, rows: list) -> None:
                     encoding="utf-8")
 
 
-def _download_clip(url: str, section_raw: str, out_dir: Path) -> dict | None:
+def _download_clip(url: str, section_raw: str, out_dir: Path,
+                   cookies_from_browser: str | None = None) -> dict | None:
     try:
         ytdlp_section = parse_section(section_raw)
     except ValueError as exc:
         logger.error("%s: %s — skipped", url, exc)
         return None
     try:
-        info = _probe(url)
+        info = _probe(url, cookies_from_browser)
     except Exception as exc:  # noqa: BLE001
         logger.error("%s: metadata probe failed (%s) — skipped", url, exc)
         return None
@@ -228,6 +258,7 @@ def _download_clip(url: str, section_raw: str, out_dir: Path) -> dict | None:
            "-f", "bv*[height<=1080][ext=mp4]/bv*[height<=1080]/bv*",
            "--remux-video", "mp4",
            "--no-playlist",
+           *_cookie_args(cookies_from_browser),
            "-o", str(dest)]
     if ytdlp_section:
         cmd += ["--download-sections", ytdlp_section,
@@ -258,31 +289,81 @@ def _download_clip(url: str, section_raw: str, out_dir: Path) -> dict | None:
     }
 
 
-def _list_cc(channel_url: str, max_videos: int) -> int:
-    logger.info("scanning %s (newest %d videos; one metadata request "
-                "each, so this takes a minute)...", channel_url, max_videos)
+def _list_cc(channel_url: str, max_videos: int,
+             cookies_from_browser: str | None = None,
+             workers: int = 8) -> int:
+    """Scan a channel and print which videos are CC-licensed.
+
+    Probes run CONCURRENTLY (one yt-dlp metadata call each, a few
+    seconds apiece) with a live progress counter. Serial scanning of a
+    few hundred videos looked indistinguishable from a hang, which
+    matters here because SpaceX's CC-marked material is mostly old —
+    a useful scan has to go deep, not stop at the newest 40.
+    """
+    logger.info("listing %s (up to %d videos)...", channel_url, max_videos)
     try:
-        ids = _list_channel_ids(channel_url, max_videos)
+        ids = _list_channel_ids(channel_url, max_videos, cookies_from_browser)
     except Exception as exc:  # noqa: BLE001
         logger.error("channel listing failed: %s", exc)
+        if "not a bot" in str(exc).lower() or "sign in" in str(exc).lower():
+            logger.error("YouTube is bot-challenging this machine — retry "
+                         "with --cookies-from-browser chrome (or safari/"
+                         "firefox), using a browser signed in to YouTube.")
         return 1
-    found = 0
-    for vid in ids:
+    if not ids:
+        logger.error("channel listing returned no videos")
+        return 1
+
+    logger.info("probing %d videos with %d workers...", len(ids), workers)
+    results: list = [None] * len(ids)
+    failures: list = []
+    done = 0
+    with ThreadPoolExecutor(max_workers=max(1, workers)) as pool:
+        futures = {
+            pool.submit(_probe, f"https://www.youtube.com/watch?v={vid}",
+                        cookies_from_browser): idx
+            for idx, vid in enumerate(ids)
+        }
         try:
-            info = _probe(f"https://www.youtube.com/watch?v={vid}")
-        except Exception as exc:  # noqa: BLE001
-            logger.warning("%s: probe failed (%s)", vid, exc)
-            continue
-        if is_cc_license(info.get("license")):
+            for fut in as_completed(futures):
+                idx = futures[fut]
+                done += 1
+                # Progress on stderr so stdout stays a clean, pipeable
+                # list of CC hits.
+                print(f"\r  scanned {done}/{len(ids)}...",
+                      end="", file=sys.stderr, flush=True)
+                try:
+                    results[idx] = fut.result()
+                except Exception as exc:  # noqa: BLE001
+                    failures.append((ids[idx], str(exc)))
+        except KeyboardInterrupt:
+            print(file=sys.stderr)
+            logger.warning("interrupted — showing partial results")
+            for fut in futures:
+                fut.cancel()
+    print(file=sys.stderr)
+
+    found = 0
+    for vid, info in zip(ids, results):
+        if info and is_cc_license(info.get("license")):
             found += 1
             dur = float(info.get("duration") or 0)
             print(f"CC  {vid}  {info.get('upload_date', '????????')}  "
                   f"{dur / 60:6.1f}min  {info.get('title', '')[:70]}")
-    logger.info("%d of %d scanned videos are CC-licensed. Note: SpaceX's "
-                "2024+ launch streams moved to X (no license grant), so "
-                "expect CC hits to skew toward the back-catalog — scan "
-                "deeper with --max, or pass known video URLs directly "
-                "via --clip.", found, len(ids))
+
+    if failures:
+        logger.warning("%d probe(s) failed; first: %s — %s",
+                       len(failures), failures[0][0], failures[0][1])
+        joined = " ".join(msg for _, msg in failures[:5]).lower()
+        if "not a bot" in joined or "sign in" in joined:
+            logger.error("YouTube is bot-challenging this machine — retry "
+                         "with --cookies-from-browser chrome (or safari/"
+                         "firefox), using a browser signed in to YouTube.")
+    logger.info("%d of %d probed videos are CC-licensed. SpaceX's 2024+ "
+                "launch streams moved to X (no license grant), so CC hits "
+                "skew to the back-catalog — scan deeper with a bigger "
+                "--max, or pass known video URLs straight to --clip.",
+                found, len(ids) - len(failures))
     return 0
 
 
@@ -298,8 +379,15 @@ def main() -> int:
     parser.add_argument("--channel", default=DEFAULT_CHANNEL,
                         help=f"channel URL for --list-cc "
                              f"(default: {DEFAULT_CHANNEL})")
-    parser.add_argument("--max", type=int, default=40,
-                        help="videos to scan with --list-cc")
+    parser.add_argument("--max", type=int, default=200,
+                        help="videos to scan with --list-cc (CC-marked "
+                             "SpaceX material is mostly older, so scan deep)")
+    parser.add_argument("--workers", type=int, default=8,
+                        help="concurrent metadata probes for --list-cc")
+    parser.add_argument("--cookies-from-browser", default=None,
+                        metavar="BROWSER",
+                        help="e.g. chrome/safari/firefox — needed when "
+                             "YouTube bot-challenges this machine")
     parser.add_argument("--out-dir", default="spacex_broll")
     args = parser.parse_args()
 
@@ -308,14 +396,17 @@ def main() -> int:
 
     rc = 0
     if args.list_cc:
-        rc = _list_cc(args.channel, args.max)
+        rc = _list_cc(args.channel, args.max,
+                      cookies_from_browser=args.cookies_from_browser,
+                      workers=args.workers)
 
     if args.clip:
         out_dir = Path(args.out_dir)
         out_dir.mkdir(parents=True, exist_ok=True)
         rows = []
         for url, section in args.clip:
-            row = _download_clip(url, section, out_dir)
+            row = _download_clip(url, section, out_dir,
+                                 args.cookies_from_browser)
             if row:
                 rows.append(row)
         if rows:
@@ -331,4 +422,10 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    try:
+        raise SystemExit(main())
+    except KeyboardInterrupt:
+        # A curation tool gets Ctrl-C'd routinely; a traceback here reads
+        # like a crash.
+        logger.warning("interrupted")
+        raise SystemExit(130)
