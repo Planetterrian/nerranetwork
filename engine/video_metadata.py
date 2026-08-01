@@ -318,6 +318,7 @@ def build_long_form_metadata(
     audio_url: str,
     chapters_path: Optional[Path] = None,
     photo_attribution: Optional[List[str]] = None,
+    footage_attribution: Optional[List[str]] = None,
     optimized_title: Optional[str] = None,
     channel: str = "en",
 ) -> Dict:
@@ -334,6 +335,12 @@ def build_long_form_metadata(
         Optional list of one-line photographer credits (e.g. from the
         Pexels slideshow). When non-empty, a "Photos:" block is
         appended to the description above the AI disclosure footer.
+    footage_attribution:
+        Optional list of one-line b-roll credits (from
+        ``engine.gallery_library.broll_attributions_for``). NOT
+        cosmetic when present: CC BY-licensed footage (SpaceX YouTube
+        back-catalog) legally requires the credit wherever the video
+        ships, so this block must survive any description refactor.
 
     Returns
     -------
@@ -484,6 +491,11 @@ def build_long_form_metadata(
         cleaned = [line.strip() for line in photo_attribution if line.strip()]
         if cleaned:
             pieces.append("Photos via Pexels:\n" + "\n".join(cleaned))
+    if footage_attribution:
+        cleaned = [line.strip() for line in footage_attribution
+                   if line.strip()]
+        if cleaned:
+            pieces.append("Footage:\n" + "\n".join(cleaned))
     disclosure = (config.youtube.synthetic_disclosure or "").strip()
     if disclosure:
         pieces.append(disclosure)

@@ -34,7 +34,7 @@ import logging
 import re
 import tempfile
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional
+from typing import Dict, Iterable, List, Optional, Sequence
 
 import requests
 
@@ -549,6 +549,38 @@ def load_broll_entries(digests_dir: Path) -> List[dict]:
     if not isinstance(clips, list):
         return []
     return [c for c in clips if isinstance(c, dict) and c.get("url")]
+
+
+def broll_attributions_for(
+    clip_paths: Optional[Sequence] = None,
+    *,
+    digests_dir: Path,
+) -> List[str]:
+    """Footage credit lines for the b-roll clips a render actually used.
+
+    Matches the local cached Paths (whose file names are the pool URL
+    basenames — see ``select_broll_clips``) back to ``broll.json``
+    entries and returns their ``attribution`` strings, deduped, in pool
+    order. CC BY-sourced clips (SpaceX YouTube back-catalog) make this
+    load-bearing: the license requires the credit wherever the footage
+    ships. Entries without an attribution (e.g. the recovered Grok Video
+    clips — network-owned) contribute nothing. Never raises.
+    """
+    try:
+        if not clip_paths:
+            return []
+        used = {Path(p).name for p in clip_paths}
+        out: List[str] = []
+        for entry in load_broll_entries(Path(digests_dir)):
+            name = str(entry.get("url", "")).rstrip("/").rsplit("/", 1)[-1]
+            credit = str(entry.get("attribution") or "").strip()
+            if name in used and credit and credit not in out:
+                out.append(credit)
+        return out
+    except Exception as exc:  # noqa: BLE001 — credits must never block
+        logger.warning("gallery_library: b-roll attribution lookup "
+                       "failed: %s", exc)
+        return []
 
 
 def select_broll_clips(
