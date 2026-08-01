@@ -47,7 +47,10 @@ import argparse
 import datetime
 import json
 import logging
+import re
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from typing import List
 
@@ -77,6 +80,58 @@ _VIDEO_CONTENT_TYPES = {
     ".webm": "video/webm",
     ".mkv": "video/x-matroska",
 }
+
+
+# Renders use a pool clip as a short ACCENT (engine.video's
+# _MAX_BROLL_SEGMENT_S). Anything much longer than that is a source
+# file the operator probably meant to trim, so warn — and offer --trim
+# to cut the moment they actually want.
+ACCENT_SECONDS = 8.0
+LONG_CLIP_WARN_SECONDS = 30.0
+
+_TRIM_RE = re.compile(
+    r"^(?P<start>\d{1,2}(?::\d{2}){0,2}(?:\.\d+)?)"
+    r"-(?P<end>\d{1,2}(?::\d{2}){0,2}(?:\.\d+)?)$")
+
+
+def parse_trim(spec: str) -> tuple:
+    """``MM:SS-MM:SS`` (or ``H:MM:SS``/bare seconds) → (start, end).
+
+    Raises ValueError on anything else so a typo cannot silently upload
+    the untrimmed original.
+    """
+    m = _TRIM_RE.match((spec or "").strip())
+    if not m:
+        raise ValueError(
+            f"bad --trim {spec!r} — expected START-END like 1:24-1:32")
+
+    def _secs(value: str) -> float:
+        parts = [float(p) for p in value.split(":")]
+        total = 0.0
+        for part in parts:
+            total = total * 60 + part
+        return total
+
+    start, end = _secs(m.group("start")), _secs(m.group("end"))
+    if end <= start:
+        raise ValueError(f"--trim {spec!r}: end must be after start")
+    return start, end
+
+
+def trim_clip(clip: Path, spec: str, work_dir: Path) -> Path:
+    """Cut ``spec`` out of *clip* with ffmpeg, returning the new file."""
+    start, end = parse_trim(spec)
+    out = work_dir / f"{clip.stem}__{int(start)}-{int(end)}{clip.suffix}"
+    cmd = [
+        "ffmpeg", "-y", "-ss", f"{start:.3f}", "-to", f"{end:.3f}",
+        "-i", str(clip),
+        # Re-encode rather than stream-copy: a keyframe-aligned copy
+        # drifts by seconds, which is the whole clip at accent length.
+        "-c:v", "libx264", "-preset", "veryfast", "-crf", "20",
+        "-an", str(out),
+    ]
+    subprocess.run(cmd, check=True, capture_output=True)  # noqa: S603
+    return out
 
 
 def attribution_for(clip: Path, explicit: str | None) -> str:
@@ -133,7 +188,18 @@ def main() -> int:
                     help="Footage credit line for the uploaded clips "
                          "(default: looked up per clip in a sibling "
                          "_provenance.json from the fetch scripts)")
+    ap.add_argument("--trim", default=None, metavar="START-END",
+                    help="Cut this section out of each clip before upload, "
+                         "e.g. 1:24-1:32. Renders use only the first "
+                         f"~{ACCENT_SECONDS:.0f}s of a pool clip, so trim to "
+                         "the moment you actually want.")
     args = ap.parse_args()
+
+    if args.trim:
+        try:
+            parse_trim(args.trim)
+        except ValueError as exc:
+            ap.error(str(exc))
 
     try:
         config = load_config(f"shows/{args.show}.yaml")
@@ -156,7 +222,9 @@ def main() -> int:
     by_url = {c["url"]: c for c in clips}
 
     uploaded = 0
-    for clip in args.clips:
+    work_dir = Path(tempfile.mkdtemp(prefix="broll_trim_"))
+    for source_clip in args.clips:
+        clip = source_clip
         if not clip.exists():
             logger.error("%s: not found — skipped", clip)
             continue
@@ -165,11 +233,25 @@ def main() -> int:
         if content_type is None:
             logger.error("%s: unsupported extension %s — skipped", clip, ext)
             continue
+        if args.trim:
+            try:
+                clip = trim_clip(clip, args.trim, work_dir)
+                logger.info("%s: trimmed to %s", source_clip.name, args.trim)
+            except Exception as exc:  # noqa: BLE001
+                logger.error("%s: trim failed (%s) — skipped. Is ffmpeg "
+                             "installed?", source_clip, exc)
+                continue
         duration = get_audio_duration(clip)  # ffprobe format probe; video OK
         if not duration:
             logger.error("%s: ffprobe could not read a duration — skipped "
                          "(is it a valid video file?)", clip)
             continue
+        if duration > LONG_CLIP_WARN_SECONDS:
+            logger.warning(
+                "%s is %.0fs, but a render uses only its first ~%.0fs. "
+                "Re-run with --trim START-END to pick the moment you want "
+                "(the pool entry is replaced, not duplicated).",
+                source_clip.name, duration, ACCENT_SECONDS)
         # Content-hash key (same idempotency convention as gallery images):
         # re-running on the same bytes re-uploads to the same object.
         stem = compute_image_id(clip.read_bytes())
@@ -191,10 +273,12 @@ def main() -> int:
         entry = {
             "url": url,
             "duration_s": round(float(duration), 2),
-            "label": args.label or clip.stem,
+            "label": args.label or source_clip.stem,
             "key": key,
         }
-        credit = attribution_for(clip, args.attribution)
+        # Provenance lives beside the ORIGINAL download, not the temp
+        # trimmed copy.
+        credit = attribution_for(source_clip, args.attribution)
         if credit:
             entry["attribution"] = credit
         if url in by_url:
@@ -203,7 +287,7 @@ def main() -> int:
             clips.append(entry)
             by_url[url] = entry
         uploaded += 1
-        logger.info("%s → %s (%.1fs)", clip.name, url, duration)
+        logger.info("%s → %s (%.1fs)", source_clip.name, url, duration)
 
     if not uploaded:
         logger.error("No clips uploaded — broll.json unchanged.")
