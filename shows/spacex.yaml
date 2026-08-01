@@ -413,13 +413,17 @@ youtube:
   # is ~$32/mo — real money against a ~$110-125/mo network, so the
   # experiment is meant to be READ AND ENDED, not left running. Revisit
   # once api/shorts_ab.json has >= 14 episodes per arm.
-  shorts_ab_enabled: true
-  # Hook-first Shorts (July 31 2026 network default) is PINNED OFF here
-  # until the motion A/B reads out: with it on, control (Short #1)
-  # would become the hook window while treatment (Short #2) stays a
-  # smart window — confounding motion with window position. Flip to
-  # true when the experiment ends (>= 14/arm, read api/shorts_ab.json).
-  shorts_first_is_hook: false
+  # ENDED 2026-08-01 (operator verdict supersedes the experiment): the
+  # operator reviewed the spacex videos and wants REAL footage (NASA
+  # public-domain b-roll via scripts/fetch_nasa_broll.py +
+  # build_broll_pool.py) instead of paid generated motion. The A/B had
+  # produced ZERO analytics-rated episodes in either arm (status
+  # not_started) at ~$1.05/ep, and staying enrolled was also pinning
+  # spacex to legacy Ken Burns (kb_extended=False) and smart-first
+  # Shorts. Config below retained for a one-line re-enable.
+  shorts_ab_enabled: false
+  # Hook-first now ON (was pinned off only to protect the experiment).
+  shorts_first_is_hook: true
   shorts_ab_video_indexes: [1]
   shorts_ab_clips: 3
   shorts_ab_clip_seconds: 5

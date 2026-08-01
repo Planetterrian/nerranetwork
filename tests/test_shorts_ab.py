@@ -40,10 +40,15 @@ def spacex():
 # ---------------------------------------------------------------------------
 
 class TestPlanVariants:
-    def test_spacex_is_enrolled_with_short_2_as_the_treatment(self, spacex):
-        assert shorts_ab.is_enabled(spacex)
+    def test_spacex_enrollment_ended_by_operator_verdict(self, spacex):
+        """2026-08-01: the operator reviewed the spacex videos and chose
+        real NASA b-roll over paid generated motion — the experiment
+        ended with ZERO analytics-rated episodes in either arm. The
+        machinery stays (config retained for a one-line re-enable), but
+        no show is enrolled and spacex ships all-stills plans."""
+        assert shorts_ab.is_enabled(spacex) is False
         assert shorts_ab.plan_variants(spacex, 2) == [
-            shorts_ab.VARIANT_STILLS, shorts_ab.VARIANT_GROK_VIDEO,
+            shorts_ab.VARIANT_STILLS, shorts_ab.VARIANT_STILLS,
         ]
 
     def test_index_zero_is_always_the_control(self, spacex):
@@ -64,6 +69,7 @@ class TestPlanVariants:
             [shorts_ab.VARIANT_STILLS] * 2
 
     def test_junk_indexes_do_not_crash_a_publish(self, spacex):
+        spacex.youtube.shorts_ab_enabled = True  # machinery test
         spacex.youtube.shorts_ab_video_indexes = ["x", None, 1]
         assert shorts_ab.plan_variants(spacex, 2)[1] == \
             shorts_ab.VARIANT_GROK_VIDEO
@@ -75,17 +81,18 @@ class TestPlanVariants:
             assert shorts_ab.plan_variants(cfg, 2) == \
                 [shorts_ab.VARIANT_STILLS] * 2
 
-    def test_only_spacex_is_enrolled(self):
-        """One show at a time. Two enrolled shows would double the spend
-        and still not answer the question faster — the comparison is
-        within-show."""
+    def test_no_show_is_enrolled(self):
+        """The experiment ended 2026-08-01 (operator verdict: real
+        footage over generated motion). If it ever restarts: one show at
+        a time — two enrolled shows would double the spend and still not
+        answer the question faster; the comparison is within-show."""
         from engine.config import discover_show_slugs
 
         enrolled = [
             slug for slug in discover_show_slugs()
             if shorts_ab.is_enabled(load_config(ROOT / "shows" / f"{slug}.yaml"))
         ]
-        assert enrolled == ["spacex"]
+        assert enrolled == []
 
 
 # ---------------------------------------------------------------------------
