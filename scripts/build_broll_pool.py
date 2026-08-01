@@ -162,6 +162,29 @@ def attribution_for(clip: Path, explicit: str | None) -> str:
     return ""
 
 
+def source_for(clip: Path) -> str:
+    """Which source video this clip was cut from, per ``_provenance.json``.
+
+    Recorded in the pool so ``gallery_library.interleave_by_source`` can
+    spread an episode's slice across different launches instead of
+    taking three moments from one. Empty when the clip wasn't auto-cut
+    (the label heuristic covers those).
+    """
+    prov_path = clip.parent / "_provenance.json"
+    if not prov_path.exists():
+        return ""
+    try:
+        rows = json.loads(prov_path.read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001
+        return ""
+    if not isinstance(rows, list):
+        return ""
+    for row in rows:
+        if isinstance(row, dict) and row.get("file") == clip.name:
+            return str(row.get("source_file") or "").strip()
+    return ""
+
+
 def _load_pool(path: Path) -> dict:
     if not path.exists():
         return {}
@@ -281,6 +304,9 @@ def main() -> int:
         credit = attribution_for(source_clip, args.attribution)
         if credit:
             entry["attribution"] = credit
+        origin = source_for(source_clip)
+        if origin:
+            entry["source"] = origin
         if url in by_url:
             by_url[url].update(entry)  # refresh label/duration in place
         else:

@@ -584,6 +584,59 @@ def broll_attributions_for(
         return []
 
 
+# Auto-cut clips are named "<source stem>__MMmSSs", so the source a clip
+# came from can be recovered from its label even for pools published
+# before ``source`` was recorded explicitly.
+_CUT_STAMP_RE = re.compile(r"_+\d+m\d+s$")
+
+
+def broll_source_key(entry: dict) -> str:
+    """Which source video a pool clip was cut from.
+
+    Prefers the explicit ``source`` field; falls back to stripping the
+    auto-cut timestamp suffix off the label so pools published before
+    that field existed still group correctly; finally the url, which
+    makes every clip its own group (i.e. no grouping).
+    """
+    explicit = str(entry.get("source") or "").strip()
+    if explicit:
+        return explicit
+    label = str(entry.get("label") or "").strip()
+    if label:
+        return _CUT_STAMP_RE.sub("", label) or label
+    return str(entry.get("url") or "")
+
+
+def interleave_by_source(entries: List[dict]) -> List[dict]:
+    """Round-robin the pool across source videos.
+
+    Auto-cutting yields runs of clips from one source, so a contiguous
+    slice of the pool was three moments from the SAME launch — same
+    rocket, same pad, same light. Measured on the first real pool: 5 of
+    7 consecutive episodes drew all three clips from one source.
+    Round-robining means each episode's slice spans different launches
+    while the operator's relative ordering within a source is kept.
+    """
+    groups: Dict[str, List[dict]] = {}
+    for entry in entries:
+        groups.setdefault(broll_source_key(entry), []).append(entry)
+    if len(groups) < 2:
+        return list(entries)
+    # Proportional spread, not naive round-robin: with unequal group
+    # sizes (one launch yielding 10 clips and the others 5) round-robin
+    # exhausts the small groups first and leaves a long single-source
+    # tail — exactly the clustering this is meant to remove. Placing
+    # each clip at its fractional position within its own group spreads
+    # the big group evenly across the whole pool instead.
+    placed = [
+        ((i + 0.5) / len(group), key, entry)
+        for key, group in groups.items()
+        for i, entry in enumerate(group)
+    ]
+    placed.sort(key=lambda t: (t[0], t[1]))
+    return [entry for _pos, _key, entry in placed]
+
+
 def rotate_for_episode(entries: List[dict], episode_seed: Optional[str],
                        limit: int) -> List[dict]:
     """Rotate a pool so consecutive episodes draw different clips.
@@ -603,6 +656,9 @@ def rotate_for_episode(entries: List[dict], episode_seed: Optional[str],
         return []
     if not episode_seed:
         return entries[:limit]
+    # Spread each episode's slice across sources before rotating (the
+    # no-seed path above keeps the exact committed order).
+    entries = interleave_by_source(entries)
     seed = str(episode_seed)
     # Stride by the episode NUMBER when the seed carries one ("…ep053"),
     # so consecutive episodes get DISJOINT slices and the pool is walked
