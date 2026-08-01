@@ -88,6 +88,74 @@ class TestCcLicenseGate:
         assert "allow_non_cc" not in src
 
 
+class TestScanUsability:
+    """The Aug 1 scan looked like a hang and hid yt-dlp's real error.
+
+    Serial probing of a deep scan (the CC-marked SpaceX material is
+    mostly old, so a useful scan is hundreds of videos) gave no output
+    for minutes, and ``check=True`` surfaced only "exit status 1" — a
+    YouTube bot-challenge was indistinguishable from a deleted video.
+    """
+
+    def test_probe_failure_surfaces_ytdlp_stderr(self, monkeypatch):
+        class _Proc:
+            returncode = 1
+            stdout = ""
+            stderr = "ERROR: Sign in to confirm you're not a bot"
+
+        monkeypatch.setattr(fsb, "_require_ytdlp", lambda: "yt-dlp")
+        monkeypatch.setattr(fsb.subprocess, "run", lambda *a, **k: _Proc())
+        with pytest.raises(RuntimeError) as exc:
+            fsb._run_ytdlp(["-J"], timeout=10)
+        assert "not a bot" in str(exc.value)
+
+    def test_cookie_args_passed_through_or_absent(self):
+        assert fsb._cookie_args("chrome") == ["--cookies-from-browser",
+                                              "chrome"]
+        assert fsb._cookie_args(None) == []
+
+    def test_scan_is_concurrent_and_keeps_channel_order(self, monkeypatch,
+                                                        capsys):
+        ids = [f"vid{i}" for i in range(6)]
+        monkeypatch.setattr(fsb, "_list_channel_ids", lambda *a, **k: ids)
+        cc = "Creative Commons Attribution license (reuse allowed)"
+
+        def _probe(url, cookies=None):
+            vid = url.rsplit("=", 1)[-1]
+            n = int(vid[-1])
+            return {"id": vid, "title": f"T{n}", "duration": 60,
+                    "upload_date": "20240101",
+                    # Odd ones CC, even ones not — output must still be
+                    # in channel order, not completion order.
+                    "license": cc if n % 2 else "Standard YouTube License"}
+
+        monkeypatch.setattr(fsb, "_probe", _probe)
+        assert fsb._list_cc("chan", 6, workers=4) == 0
+        printed = [l for l in capsys.readouterr().out.splitlines()
+                   if l.startswith("CC ")]
+        assert [l.split()[1] for l in printed] == ["vid1", "vid3", "vid5"]
+
+    def test_scan_survives_individual_probe_failures(self, monkeypatch,
+                                                     capsys):
+        monkeypatch.setattr(fsb, "_list_channel_ids",
+                            lambda *a, **k: ["good", "bad"])
+        cc = "Creative Commons Attribution license (reuse allowed)"
+
+        def _probe(url, cookies=None):
+            if url.endswith("bad"):
+                raise RuntimeError("yt-dlp exit 1: video unavailable")
+            return {"title": "ok", "duration": 30, "license": cc,
+                    "upload_date": "20240101"}
+
+        monkeypatch.setattr(fsb, "_probe", _probe)
+        assert fsb._list_cc("chan", 2, workers=2) == 0
+        assert "CC  good" in capsys.readouterr().out
+
+    def test_empty_channel_listing_is_an_error(self, monkeypatch):
+        monkeypatch.setattr(fsb, "_list_channel_ids", lambda *a, **k: [])
+        assert fsb._list_cc("chan", 10) == 1
+
+
 class TestSectionParsing:
     def test_valid_sections(self):
         assert fsb.parse_section("19:45-20:40") == "*19:45-20:40"
