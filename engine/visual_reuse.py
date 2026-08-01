@@ -205,9 +205,15 @@ def long_form_visual_plan(
 
         if _flag(config, "evergreen_broll"):
             from engine.gallery_library import select_broll_clips
+            # episode_seed rotates the pool per episode — without it
+            # every episode shipped the same first clips regardless of
+            # how large the pool grew.
             broll = select_broll_clips(
                 show_slug, digests_dir=Path(digests_dir),
-                limit=_BROLL_LIMIT, cache_dir=cache_dir,
+                limit=int(getattr(_yt(config), "broll_clips_per_episode",
+                                  _BROLL_LIMIT) or _BROLL_LIMIT),
+                cache_dir=cache_dir,
+                episode_seed=f"{show_slug}:{episode_id}",
             )
             out["broll_clips"] = broll or None
 

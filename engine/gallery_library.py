@@ -33,6 +33,7 @@ import json
 import logging
 import re
 import tempfile
+import zlib
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Sequence
 
@@ -583,18 +584,61 @@ def broll_attributions_for(
         return []
 
 
+def rotate_for_episode(entries: List[dict], episode_seed: Optional[str],
+                       limit: int) -> List[dict]:
+    """Rotate a pool so consecutive episodes draw different clips.
+
+    The pool was consumed in fixed committed order, so EVERY episode of
+    a show got the same first ``limit`` clips no matter how large the
+    pool grew — the daily long-forms shared one identical set of
+    accents. Rotating by a stable hash of the episode id walks the whole
+    pool across successive episodes while staying deterministic (a
+    re-run of the same episode renders the same video, which the
+    idempotent-publish path depends on).
+
+    Order within the returned slice is preserved from the pool, so the
+    operator's curation still decides sequencing.
+    """
+    if not entries:
+        return []
+    if not episode_seed:
+        return entries[:limit]
+    seed = str(episode_seed)
+    # Stride by the episode NUMBER when the seed carries one ("…ep053"),
+    # so consecutive episodes get DISJOINT slices and the pool is walked
+    # in order. A plain hash of the whole seed collides often enough to
+    # repeat a set every few days (measured: 7 distinct sets across 10
+    # episodes of a 12-clip pool), which is the very thing this exists
+    # to prevent. The non-numeric part still feeds the offset so two
+    # shows don't march in lockstep.
+    digits = re.findall(r"\d+", seed)
+    show_part = re.sub(r"\d+", "", seed)
+    show_offset = zlib.crc32(show_part.encode("utf-8"))
+    if digits:
+        index = int(digits[-1])
+        offset = (index * max(1, limit) + show_offset) % len(entries)
+    else:
+        offset = show_offset % len(entries)
+    rotated = entries[offset:] + entries[:offset]
+    return rotated[:limit]
+
+
 def select_broll_clips(
     show_slug: str,
     *,
     digests_dir: Path,
     limit: int = 3,
     cache_dir: Optional[Path] = None,
+    episode_seed: Optional[str] = None,
 ) -> List[Path]:
     """Download up to ``limit`` curated evergreen clips for a show.
 
     Reads the committed ``broll.json`` pool (see
-    ``scripts/build_broll_pool.py``) and returns local Paths in the pool's
-    stable committed order — no scoring, the operator curated the order.
+    ``scripts/build_broll_pool.py``). With an ``episode_seed`` the pool
+    is rotated per episode (see :func:`rotate_for_episode`) so a growing
+    pool actually produces varied videos; without one the legacy
+    committed order is preserved exactly.
+
     Best-effort: a failed download is skipped (the next entry backfills);
     a missing pool file is a clean ``[]``. Never raises.
     """
@@ -602,6 +646,9 @@ def select_broll_clips(
         entries = load_broll_entries(Path(digests_dir))
         if not entries or limit <= 0:
             return []
+        # Rotate first, then walk — so a download failure inside the
+        # rotated slice backfills from the rest of the pool.
+        entries = rotate_for_episode(entries, episode_seed, len(entries))
         cdir = (Path(cache_dir) if cache_dir
                 else _default_cache_dir() / "broll" / show_slug)
         cdir.mkdir(parents=True, exist_ok=True)

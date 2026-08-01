@@ -820,6 +820,10 @@ class YouTubeConfig:
     # published by scripts/build_broll_pool.py) into the long-form
     # slideshow. A clean no-op until the operator publishes a pool.
     evergreen_broll: bool = True
+    # How many pool clips one long-form episode uses. The pool is
+    # rotated per episode, so this is the WIDTH of each episode's slice,
+    # not which clips it gets. Capped by engine.video._MAX_BROLL_CLIPS.
+    broll_clips_per_episode: int = 3
 
     # Optional path (relative to repo root) to a text template for the
     # long-form description body. Placeholders: {hook}, {episode_num},
