@@ -973,7 +973,10 @@ def _hybrid_slideshow_cmd(visuals: Sequence[tuple], output: Path, *,
     inputs: List[str] = []
     for path, is_video, duration in visuals:
         if is_video:
-            inputs.extend(["-i", str(path)])
+            # Input-level -t as well as the graph's trim: without it
+            # ffmpeg decodes the WHOLE source, which is free for a 5 s
+            # generated clip and ruinous for a 40-minute NASA master.
+            inputs.extend(["-t", f"{float(duration):.2f}", "-i", str(path)])
         else:
             inputs.extend([
                 "-loop", "1",
@@ -1064,6 +1067,16 @@ def _build_hybrid_sequence(scene_paths: Sequence[Path],
 # Evergreen-B-roll cap: more than ~3 clips per episode stops feeling like
 # accent motion and starts fighting the chapter-aligned still rhythm.
 _MAX_BROLL_CLIPS = 3
+
+# ...and the same logic bounds each clip's LENGTH. The pool was built
+# around the recovered Grok Video clips (~5 s each), so nothing bounded
+# the per-clip segment — the interleaver simply used each file's full
+# duration. The first real-footage pool (Aug 2026: NASA launch views,
+# 229 s - 2442 s per file) would therefore have asked for ~72 minutes of
+# b-roll inside a ~10 minute episode, collapsing every still to its 1 s
+# floor and making ffmpeg decode 40-minute inputs. A pool clip is an
+# ACCENT: it is trimmed to at most this many seconds.
+_MAX_BROLL_SEGMENT_S = 8.0
 
 
 def _interleave_broll_into_schedule(
@@ -2424,9 +2437,18 @@ def build_long_form_video(
                 clip_durs: List[float] = []
                 for c in usable_clips:
                     try:
-                        clip_durs.append(float(_get_duration(str(c)) or 5.0))
+                        raw_dur = float(_get_duration(str(c)) or 5.0)
                     except Exception:
-                        clip_durs.append(5.0)
+                        raw_dur = 5.0
+                    # Clamp: a long source file contributes an accent,
+                    # not a takeover (see _MAX_BROLL_SEGMENT_S).
+                    if raw_dur > _MAX_BROLL_SEGMENT_S:
+                        logger.info(
+                            "B-roll %s is %.0fs — using its first %.0fs as "
+                            "an accent", Path(c).name, raw_dur,
+                            _MAX_BROLL_SEGMENT_S)
+                        raw_dur = _MAX_BROLL_SEGMENT_S
+                    clip_durs.append(raw_dur)
                 if schedule:
                     visuals = _interleave_broll_into_schedule(
                         schedule, usable_clips, clip_durs,
