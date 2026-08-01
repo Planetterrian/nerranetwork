@@ -235,6 +235,98 @@ class TestRotateForEpisode:
         assert len(seen) == 10
 
 
+class TestSourceInterleave:
+    """Auto-cutting yields runs of clips from one source, so a
+    contiguous slice was three moments from the SAME launch. Measured on
+    the first real 25-clip pool: 5 of 7 consecutive episodes drew all
+    three clips from one source."""
+
+    def _pool(self, spec):
+        out = []
+        for src, n in spec:
+            for i in range(n):
+                out.append({"url": f"https://r2/{src}{i}.mp4",
+                            "label": f"KSC-0001-{src}_Isolated___0{i}m00s"})
+        return out
+
+    def test_source_recovered_from_explicit_field(self):
+        assert gl.broll_source_key(
+            {"source": "DART.mp4", "label": "whatever__01m00s"}) == "DART.mp4"
+
+    def test_source_recovered_from_legacy_label(self):
+        """Pools published before ``source`` existed still group — the
+        operator's committed pool is one of them."""
+        assert gl.broll_source_key(
+            {"label": "KSC-20211123-0001-SpaceX_DART_Isolated___00m25s"}
+        ) == "KSC-20211123-0001-SpaceX_DART_Isolated"
+
+    def test_clips_from_one_source_share_a_key(self):
+        keys = {
+            gl.broll_source_key({"label": f"KSC-1-DART_Iso___0{i}m10s"})
+            for i in range(4)
+        }
+        assert len(keys) == 1
+
+    def test_no_episode_is_all_one_source(self):
+        """The bar that matters: never three moments from one launch.
+
+        Perfect 3-distinct isn't achievable for every episode when one
+        source is 40% of the pool (the real shape — IXPE contributed two
+        files), so this pins the property that actually protects the
+        viewer and the next test pins the typical case.
+        """
+        pool = self._pool([("DART", 5), ("IXPE", 10), ("GOES", 5),
+                           ("IMAP", 5)])
+        for n in range(50, 90):
+            got = gl.rotate_for_episode(pool, f"spacex:ep{n:03d}", 3)
+            sources = {gl.broll_source_key(c) for c in got}
+            assert len(sources) >= 2, f"ep{n} drew only from {sources}"
+
+    def test_most_episodes_span_three_sources(self):
+        pool = self._pool([("DART", 5), ("IXPE", 10), ("GOES", 5),
+                           ("IMAP", 5)])
+        three = sum(
+            len({gl.broll_source_key(c) for c in gl.rotate_for_episode(
+                pool, f"spacex:ep{n:03d}", 3)}) == 3
+            for n in range(50, 90)
+        )
+        # Measured 24/40 on this shape. A clear majority is the bar; a
+        # higher one isn't reachable while one source is 40% of the pool
+        # (three distinct then needs exactly one clip from it), and the
+        # load-bearing guarantee is the no-single-source test above.
+        assert three >= 20, f"only {three}/40 episodes span 3 sources"
+
+    def test_single_source_pool_is_unchanged(self):
+        pool = self._pool([("DART", 5)])
+        assert gl.interleave_by_source(pool) == pool
+
+    def test_interleave_preserves_every_clip(self):
+        pool = self._pool([("DART", 5), ("IXPE", 10), ("GOES", 5)])
+        got = gl.interleave_by_source(pool)
+        assert sorted(c["url"] for c in got) == sorted(
+            c["url"] for c in pool)
+
+    def test_order_within_a_source_is_preserved(self):
+        pool = self._pool([("DART", 3), ("IXPE", 3)])
+        got = [c["url"] for c in gl.interleave_by_source(pool)]
+        dart = [u for u in got if "DART" in u]
+        assert dart == ["https://r2/DART0.mp4", "https://r2/DART1.mp4",
+                        "https://r2/DART2.mp4"]
+
+    def test_coverage_still_complete_over_a_month(self):
+        pool = self._pool([("DART", 5), ("IXPE", 10), ("GOES", 5),
+                           ("IMAP", 5)])
+        seen = set()
+        for n in range(1, 31):
+            for c in gl.rotate_for_episode(pool, f"spacex:ep{n:03d}", 3):
+                seen.add(c["url"])
+        assert len(seen) == len(pool)
+
+    def test_no_seed_still_bypasses_interleaving(self):
+        pool = self._pool([("DART", 5), ("IXPE", 5)])
+        assert gl.rotate_for_episode(pool, None, 3) == pool[:3]
+
+
 class TestWiring:
     def test_visual_reuse_passes_an_episode_seed(self):
         src = (PROJECT_ROOT / "engine" / "visual_reuse.py").read_text(
