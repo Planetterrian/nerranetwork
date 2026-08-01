@@ -2127,14 +2127,31 @@ class TestLongFormCaptionLayer:
         assert "caption_track_uploaded" in src
         assert "shipped with NO captions" in src
 
-    def test_no_show_yaml_turns_burn_in_back_on(self):
+    def test_burn_in_decision_is_centralized_in_defaults(self):
+        """Aug 1 2026 reversal: burn-in is ON as the NETWORK default.
+
+        History: July 30 made burn-in opt-in ("captions from the track,
+        not the pixels") — and no show opted in, so long-form shipped
+        with no on-screen captions at all and the July-31 per-word ASS
+        layer was dormant. The operator's video directive turned it back
+        on network-wide. The decision lives in _defaults.yaml ONLY:
+        per-show files stay silent (a show wanting out sets false
+        explicitly, which this guard permits but none does today)."""
         import pathlib
         import yaml as _yaml
         root = pathlib.Path(__file__).resolve().parent.parent
+        defaults = _yaml.safe_load(
+            (root / "shows" / "_defaults.yaml").read_text(encoding="utf-8"))
+        assert (defaults.get("youtube") or {}).get(
+            "long_form_burn_in_captions") is True
         for path in sorted((root / "shows").glob("*.yaml")):
+            if path.name == "_defaults.yaml":
+                continue
             raw = _yaml.safe_load(path.read_text(encoding="utf-8")) or {}
             yt = raw.get("youtube") or {}
-            assert yt.get("long_form_burn_in_captions") is not True, path.name
+            assert yt.get("long_form_burn_in_captions") is not True, (
+                f"{path.name}: redundant per-show flip — the default is "
+                "already true; only explicit opt-OUTs belong in show YAMLs")
 
 
 # ---------------------------------------------------------------------------

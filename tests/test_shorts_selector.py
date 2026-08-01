@@ -717,17 +717,18 @@ class TestHookFirstWindows:
         from engine.shorts_selector import hook_first_windows
         assert hook_first_windows([], n=0, hook_start=0.0) == []
 
-    def test_network_default_is_on_and_spacex_pins_off(self):
-        """Default true (the directive applies network-wide); spacex is
-        pinned false until the Shorts motion A/B reads out — flipping it
-        mid-experiment would confound arm position with window choice."""
+    def test_hook_first_is_on_network_wide_including_spacex(self):
+        """Default true (the directive applies network-wide). spacex was
+        pinned false only to protect the motion A/B from a window-
+        position confound; the experiment ended 2026-08-01 (operator
+        verdict: real footage over generated motion), so the pin lifted
+        with it."""
         from engine.config import load_config
         from pathlib import Path
         root = Path(__file__).resolve().parent.parent
-        assert load_config(root / "shows" / "tesla.yaml").youtube \
-            .shorts_first_is_hook is True
-        assert load_config(root / "shows" / "spacex.yaml").youtube \
-            .shorts_first_is_hook is False
+        for slug in ("tesla", "spacex"):
+            assert load_config(root / "shows" / f"{slug}.yaml").youtube \
+                .shorts_first_is_hook is True, slug
 
     def test_run_show_and_both_dub_paths_are_wired(self):
         """All three publish paths must apply the directive — a channel

@@ -253,6 +253,9 @@ def record_youtube_outcomes(
         if youtube_urls.get("long_form_captions_path"):
             metrics.record("long_form_captions_path",
                            str(youtube_urls["long_form_captions_path"]))
+        if youtube_urls.get("shorts_ab_windows_swapped") is not None:
+            metrics.record("shorts_ab_windows_swapped",
+                           bool(youtube_urls["shorts_ab_windows_swapped"]))
         if "scene_fresh_count" in youtube_urls:
             metrics.record("scene_fresh_count", int(youtube_urls.get("scene_fresh_count", 0) or 0))
         if "scene_library_count" in youtube_urls:

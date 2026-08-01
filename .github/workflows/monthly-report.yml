@@ -120,7 +120,11 @@ jobs:
         with:
           python-version: '3.12'
           requirements-file: 'requirements.txt'
-          # MIT monthly needs yfinance + engine deps for R2 + ffmpeg
+          # The comment above this line long CLAIMED ffmpeg but nothing
+          # installed it — the July 31 2026 scheduled run generated the
+          # whole episode then died at the mix step with
+          # FileNotFoundError: 'ffmpeg'. Same param run-show.yml uses.
+          system-packages: 'ffmpeg'
           skip-checkout: 'true'
 
       - name: Run MIT monthly episode
