@@ -145,6 +145,19 @@ def _require_ytdlp() -> str:
     return exe
 
 
+def needs_auth(message: str) -> bool:
+    """True when a yt-dlp error is really "YouTube wants credentials".
+
+    Covers the bot-challenge AND the plain cookie/auth demand YouTube
+    returns for tabs like /streams. Distinguishing this from "no CC
+    videos here" matters: they are opposite conclusions.
+    """
+    low = (message or "").lower()
+    return any(s in low for s in (
+        "not a bot", "confirm you", "sign in", "cookies", "authenticat",
+        "login required"))
+
+
 def _cookie_args(cookies_from_browser: str | None) -> list:
     """yt-dlp cookie flags.
 
@@ -169,7 +182,10 @@ def _run_ytdlp(args: list, *, timeout: int) -> str:
         [exe, *args], capture_output=True, text=True, timeout=timeout,
     )
     if proc.returncode != 0:
-        detail = " ".join((proc.stderr or "").split())[-300:] or "no stderr"
+        # Keep the HEAD of stderr, not the tail: yt-dlp appends long
+        # boilerplate wiki links, and tailing cut the actual cause
+        # mid-word ("...kies-from-browser") on the first live run.
+        detail = " ".join((proc.stderr or "").split())[:400] or "no stderr"
         raise RuntimeError(f"yt-dlp exit {proc.returncode}: {detail}")
     return proc.stdout
 
@@ -305,10 +321,10 @@ def _list_cc(channel_url: str, max_videos: int,
         ids = _list_channel_ids(channel_url, max_videos, cookies_from_browser)
     except Exception as exc:  # noqa: BLE001
         logger.error("channel listing failed: %s", exc)
-        if "not a bot" in str(exc).lower() or "sign in" in str(exc).lower():
-            logger.error("YouTube is bot-challenging this machine — retry "
-                         "with --cookies-from-browser chrome (or safari/"
-                         "firefox), using a browser signed in to YouTube.")
+        if needs_auth(str(exc)):
+            logger.error("YouTube wants credentials for this listing — "
+                         "retry with --cookies-from-browser chrome (or "
+                         "safari/firefox), signed in to YouTube.")
         return 1
     if not ids:
         logger.error("channel listing returned no videos")
@@ -351,19 +367,34 @@ def _list_cc(channel_url: str, max_videos: int,
             print(f"CC  {vid}  {info.get('upload_date', '????????')}  "
                   f"{dur / 60:6.1f}min  {info.get('title', '')[:70]}")
 
+    probed = len(ids) - len(failures)
+    auth_wanted = any(needs_auth(msg) for _, msg in failures)
     if failures:
-        logger.warning("%d probe(s) failed; first: %s — %s",
-                       len(failures), failures[0][0], failures[0][1])
-        joined = " ".join(msg for _, msg in failures[:5]).lower()
-        if "not a bot" in joined or "sign in" in joined:
-            logger.error("YouTube is bot-challenging this machine — retry "
-                         "with --cookies-from-browser chrome (or safari/"
-                         "firefox), using a browser signed in to YouTube.")
-    logger.info("%d of %d probed videos are CC-licensed. SpaceX's 2024+ "
-                "launch streams moved to X (no license grant), so CC hits "
-                "skew to the back-catalog — scan deeper with a bigger "
-                "--max, or pass known video URLs straight to --clip.",
-                found, len(ids) - len(failures))
+        logger.warning("%d of %d probe(s) failed; first: %s — %s",
+                       len(failures), len(ids), failures[0][0],
+                       failures[0][1])
+        if auth_wanted:
+            logger.error("YouTube wants credentials — retry with "
+                         "--cookies-from-browser chrome (or safari/"
+                         "firefox), signed in to YouTube.")
+
+    # A scan where NOTHING could be probed is not evidence about
+    # licensing. Reporting it as "0 CC-licensed" reads as a definitive
+    # negative and is the opposite of what happened.
+    if probed == 0:
+        logger.error("NO videos could be probed (%d/%d failed) — this is a "
+                     "fetch failure, NOT a finding about licensing. Nothing "
+                     "can be concluded about CC availability from this run.",
+                     len(failures), len(ids))
+        return 1
+
+    logger.info("%d of %d successfully probed videos are CC-licensed.%s",
+                found, probed,
+                "" if found else
+                " SpaceX's 2024+ launch streams moved to X (no license "
+                "grant), so any CC hits would skew to the back-catalog — "
+                "scan deeper with a bigger --max, or pass known video URLs "
+                "straight to --clip.")
     return 0
 
 
