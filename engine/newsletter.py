@@ -272,6 +272,25 @@ def _fold_tag(name: str) -> str:
     return " ".join(str(name or "").split()).casefold()
 
 
+# Buttondown tag identifiers are TypeIDs. Observed live (Aug 2026) as
+# ``sub_tag_…``; the send-filter docs elsewhere in this file describe a
+# ``tag_…`` shape. Accept both — the prefix is Buttondown's to change,
+# and the value is only ever passed straight back to their API.
+_TAG_ID_PREFIXES = ("sub_tag_", "tag_")
+
+
+def looks_like_tag_id(value: str) -> bool:
+    """True when a configured tag is already an identifier.
+
+    Lets a show pin ``newsletter.tag`` to the immutable id instead of
+    the display name. Names are resolved through Buttondown's Tags page,
+    which is hand-edited — renaming a tag there would otherwise break
+    that show's send silently, the same class of failure as the tag
+    simply not existing.
+    """
+    return str(value or "").strip().startswith(_TAG_ID_PREFIXES)
+
+
 def _resolve_tag_ids(tag_names: List[str], api_key: str) -> Dict[str, str]:
     """Resolve Buttondown tag display names to their tag identifiers.
 
@@ -286,6 +305,12 @@ def _resolve_tag_ids(tag_names: List[str], api_key: str) -> Dict[str, str]:
     how to handle misses. Resolved pairs are cached per-process so a run that
     sends several shows only pays for one tag fetch.
     """
+    # A tag configured as an identifier needs no lookup — and must not
+    # trigger one, or a show pinned to an id would still fail whenever
+    # the Tags endpoint is unreachable.
+    passthrough = {t: t.strip() for t in tag_names if looks_like_tag_id(t)}
+    tag_names = [t for t in tag_names if t not in passthrough]
+
     need = [t for t in tag_names if t and t not in _TAG_ID_CACHE]
     if need:
         _ALL_TAG_NAMES.clear()
@@ -316,6 +341,7 @@ def _resolve_tag_ids(tag_names: List[str], api_key: str) -> Dict[str, str]:
                 "Failed to fetch Buttondown tags for id resolution: %s", exc,
             )
     resolved = {t: _TAG_ID_CACHE[t] for t in tag_names if t in _TAG_ID_CACHE}
+    resolved.update(passthrough)
     # Tolerant second pass for the names that missed. Buttondown's Tags
     # page is hand-edited, so a stray trailing space or a case change
     # ("Spacex Daily") silently drops a show's whole send — an exact-match
