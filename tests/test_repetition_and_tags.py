@@ -1,0 +1,219 @@
+"""Guards for two Ep054 failures: a wasted regen and a blocked send.
+
+**Repetition.** The digest bigram bar was 4, and measured across the
+last 30 committed digests on six shows it fired on 17 of 180 (20% on
+SpaceX) with EVERY flagged phrase a false positive — domain nouns
+("upper stage", "static fire", "flight 13") or bare function phrases
+("the first", "the same", "whether the"). Ep054 burned a full
+lower-temperature regeneration and then logged "did not improve —
+keeping original". The detector must still catch a genuine loop.
+
+**Buttondown tag.** ``Could not resolve Buttondown tag id(s) for
+['SpaceX Daily']`` blocked the send (correctly refusing to blast the
+whole list unfiltered), but told the operator only to "verify the name
+matches" — without showing what names exist.
+"""
+
+import sys
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+import pytest  # noqa: E402
+
+from engine.generator import _validate_llm_output  # noqa: E402
+
+
+# Varied filler to clear the 50-word floor the scanners require WITHOUT
+# introducing repetition of its own (an earlier version of this helper
+# repeated one sentence and tripped the detector it was meant to test).
+_FILLER = (
+    "Starbase crews rolled a booster to the pad before dawn. Weather "
+    "officers gave a favourable forecast for Tuesday. Range control "
+    "cleared a corridor over the Gulf. Investors watched premarket "
+    "quotes drift sideways. A supplier confirmed new tooling arrived "
+    "in Florida. Regulators published an updated environmental review. "
+)
+
+
+def _digest(body: str) -> str:
+    return _FILLER + body
+
+
+_SUBJECTS = ["Analysts", "Engineers", "Regulators", "Investors", "Crews",
+             "Suppliers", "Controllers", "Auditors", "Planners", "Managers",
+             "Inspectors", "Technicians"]
+_VERBS = ["described", "flagged", "measured", "questioned", "welcomed",
+          "audited", "compared", "documented", "revisited", "praised",
+          "disputed", "modelled"]
+_NOUNS = ["telemetry", "margins", "cadence", "tooling", "propellant",
+          "avionics", "schedule", "throughput", "hardware", "staffing",
+          "insulation", "guidance"]
+_TAILS = ["ahead of the review", "in the quarterly filing",
+          "during a campaign", "at the Cape", "before a window",
+          "under a new contract", "across two pads", "for the manifest",
+          "in a briefing", "on a call", "after a delay",
+          "with fresh capacity"]
+
+
+def _phrase_in_varied_sentences(phrase: str, times: int) -> str:
+    """Repeat *phrase* with EVERY neighbouring word varying.
+
+    This is how a phrase recurs in a real digest: the phrase returns,
+    the sentences around it do not. Holding any neighbour fixed would
+    manufacture a second repeated n-gram and test the harness rather
+    than the detector — and repeating a whole sentence would build an
+    actual hallucination loop, which the detector is supposed to catch.
+    """
+    return _digest(" ".join(
+        f"{_SUBJECTS[i % len(_SUBJECTS)]} {_VERBS[i % len(_VERBS)]} "
+        f"{phrase} {_NOUNS[i % len(_NOUNS)]} {_TAILS[i % len(_TAILS)]}."
+        for i in range(times)
+    ))
+
+
+class TestFunctionPhrasesNoLongerFire:
+    """A determiner plus one word carries no information."""
+
+    @pytest.mark.parametrize("phrase", [
+        "the first", "the same", "the work", "the open", "whether the",
+        "the upper", "the ship",
+    ])
+    def test_bare_function_bigrams_are_ignored(self, phrase):
+        text = _phrase_in_varied_sentences(phrase, 12)
+        assert _validate_llm_output(text, "digest", "spacex", 0, ()) == 0
+
+
+class TestDomainVocabularyIsNotHallucination:
+    # The bar that matters is the RETRY trigger (_rep_count >= 3), not
+    # whether a phrase is noted at all. One domain noun recurring is
+    # allowed to be logged; what must not happen is burning a
+    # regeneration over it, which is what Ep054 did.
+    RETRY_AT = 3
+
+    def test_technical_noun_phrase_does_not_trigger_a_regen(self):
+        """'upper stage' ×5 in a digest about the upper stage is the
+        subject matter — this is the exact Ep054 flag."""
+        text = _phrase_in_varied_sentences("upper stage", 5)
+        assert _validate_llm_output(
+            text, "digest", "spacex", 0, ()) < self.RETRY_AT
+
+    def test_static_fire_and_flight_number(self):
+        for phrase in ("static fire", "flight 13"):
+            assert _validate_llm_output(
+                _phrase_in_varied_sentences(phrase, 5),
+                "digest", "spacex", 0, ()) < self.RETRY_AT
+
+    def test_memory_block_framing_is_exempt(self):
+        """"open questions" is a heading engine.show_memory hands the
+        prompt per tracked program — SpaceX Ep029/Ep035 regenerated on
+        it alone."""
+        for phrase in ("open question", "open questions",
+                       "whose open questions"):
+            assert _validate_llm_output(
+                _phrase_in_varied_sentences(phrase, 6),
+                "digest", "spacex", 0, ()) < self.RETRY_AT
+
+
+class TestRealLoopsStillCaught:
+    def test_repeated_clause_is_flagged(self):
+        loop = (
+            "The rocket achieved orbital velocity today. " * 3
+            + "Engineers confirmed the anomaly was contained within the "
+              "vehicle. " * 9
+            + "More detail followed from the flight director. "
+        ) * 3
+        assert _validate_llm_output(loop, "digest", "spacex", 0, ()) >= 3
+
+    def test_content_bigram_above_the_new_bar_still_fires(self):
+        """Two content words recurring far past the bar, in otherwise
+        varied prose — the shape a real fixation takes."""
+        text = _phrase_in_varied_sentences("quantum entanglement", 9)
+        assert _validate_llm_output(text, "digest", "spacex", 0, ()) >= 1
+
+    def test_sensitivity_was_not_bought_by_raising_the_threshold(self):
+        """The count threshold is deliberately UNCHANGED — a blunt raise
+        also blunts real tics (it broke
+        test_known_entities_do_not_mask_unrelated_repetition, which
+        catches a clause tic at 5 repeats). The fix is the content-word
+        floor, which discriminates instead."""
+        src = (PROJECT_ROOT / "engine" / "generator.py").read_text(
+            encoding="utf-8")
+        assert '_rep_threshold = 5 if stage == "podcast_script" else 4' in src
+        assert "if sum(1 for t in tokens if t not in _STOPWORDS) < 2:" in src
+
+    def test_clause_level_tic_at_five_repeats_still_fires(self):
+        """Pins the behaviour the threshold raise would have lost."""
+        filler = " ".join(f"unique{i} token{i} filler{i}" for i in range(30))
+        text = filler + " " + (
+            "The kicker is nobody expected the kicker is real. " * 5)
+        assert _validate_llm_output(text, "digest", "tesla", 0,
+                                    ("tesla", "model y")) >= 1
+
+
+class TestNoNetworkRegressionOnCommittedDigests:
+    def test_recent_digests_do_not_trigger_regeneration(self):
+        """The measurement that justified the change, pinned."""
+        import glob
+        from engine.config import load_config
+        fired = 0
+        checked = 0
+        for slug, pat in (
+            ("spacex", "digests/spacex/*.md"),
+            ("tesla", "digests/tesla_shorts_time/*.md"),
+            ("fascinating_frontiers", "digests/fascinating_frontiers/*.md"),
+        ):
+            try:
+                cfg = load_config(f"shows/{slug}.yaml")
+            except Exception:
+                continue
+            kw = tuple(getattr(cfg, "keywords", []) or ())
+            for path in sorted(glob.glob(pat))[-20:]:
+                text = Path(path).read_text(encoding="utf-8")
+                try:
+                    n = _validate_llm_output(text, "digest", slug, 0, kw)
+                except Exception:
+                    continue
+                checked += 1
+                if n >= 3:
+                    fired += 1
+        if checked < 10:
+            pytest.skip("not enough committed digests in this checkout")
+        # Was 13/90 on these three shows before the fix.
+        assert fired == 0, f"{fired}/{checked} digests would still regenerate"
+
+
+class TestButtondownTagDiagnostics:
+    def test_fold_normalises_case_and_whitespace(self):
+        from engine.newsletter import _fold_tag
+        assert _fold_tag("  SpaceX   Daily ") == _fold_tag("spacex daily")
+
+    def test_tolerant_match_recovers_a_case_typo(self, monkeypatch):
+        import engine.newsletter as nl
+        monkeypatch.setattr(nl, "_TAG_ID_CACHE", {"SpaceX Daily": "tag_1"})
+        monkeypatch.setattr(nl, "_ALL_TAG_NAMES", ["SpaceX Daily"])
+        got = nl._resolve_tag_ids(["Spacex daily "], api_key="k")
+        assert got == {"Spacex daily ": "tag_1"}
+
+    def test_exact_match_is_unchanged(self, monkeypatch):
+        import engine.newsletter as nl
+        monkeypatch.setattr(nl, "_TAG_ID_CACHE", {"SpaceX Daily": "tag_1"})
+        monkeypatch.setattr(nl, "_ALL_TAG_NAMES", ["SpaceX Daily"])
+        assert nl._resolve_tag_ids(["SpaceX Daily"], api_key="k") == {
+            "SpaceX Daily": "tag_1"}
+
+    def test_genuinely_absent_tag_still_misses(self, monkeypatch):
+        """Tolerance must not invent a match — refusing to send is right
+        when the tag does not exist."""
+        import engine.newsletter as nl
+        monkeypatch.setattr(nl, "_TAG_ID_CACHE", {"Tesla Shorts Time": "t1"})
+        monkeypatch.setattr(nl, "_ALL_TAG_NAMES", ["Tesla Shorts Time"])
+        assert nl._resolve_tag_ids(["SpaceX Daily"], api_key="k") == {}
+
+    def test_error_names_the_available_tags(self):
+        src = (PROJECT_ROOT / "engine" / "newsletter.py").read_text(
+            encoding="utf-8")
+        assert "The account has %d tag(s)" in src
+        assert "_ALL_TAG_NAMES" in src

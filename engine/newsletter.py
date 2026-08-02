@@ -260,6 +260,17 @@ _VALID_STATUSES = {"about_to_send", "draft", "scheduled"}
 # lazily from GET /v1/tags the first time a name is needed in a process.
 _TAG_ID_CACHE: Dict[str, str] = {}
 
+# Every tag name the account actually has, in fetch order. Kept so a
+# failed lookup can SHOW the operator what exists instead of asking them
+# to go compare by eye — "verify the name matches" is not actionable when
+# the list it must match isn't in the log.
+_ALL_TAG_NAMES: List[str] = []
+
+
+def _fold_tag(name: str) -> str:
+    """Normalise a tag name for tolerant comparison."""
+    return " ".join(str(name or "").split()).casefold()
+
 
 def _resolve_tag_ids(tag_names: List[str], api_key: str) -> Dict[str, str]:
     """Resolve Buttondown tag display names to their tag identifiers.
@@ -277,6 +288,7 @@ def _resolve_tag_ids(tag_names: List[str], api_key: str) -> Dict[str, str]:
     """
     need = [t for t in tag_names if t and t not in _TAG_ID_CACHE]
     if need:
+        _ALL_TAG_NAMES.clear()
         try:
             url: Optional[str] = f"{BUTTONDOWN_API_BASE}/tags"
             params: Optional[Dict[str, str]] = {"page_size": "100"}
@@ -294,6 +306,7 @@ def _resolve_tag_ids(tag_names: List[str], api_key: str) -> Dict[str, str]:
                     tid = tag.get("id")
                     if name and tid:
                         _TAG_ID_CACHE[name] = tid
+                        _ALL_TAG_NAMES.append(name)
                 # The ``next`` URL is fully qualified and already carries
                 # the cursor — drop our params so we don't override it.
                 url = payload.get("next") or None
@@ -302,7 +315,25 @@ def _resolve_tag_ids(tag_names: List[str], api_key: str) -> Dict[str, str]:
             logger.error(
                 "Failed to fetch Buttondown tags for id resolution: %s", exc,
             )
-    return {t: _TAG_ID_CACHE[t] for t in tag_names if t in _TAG_ID_CACHE}
+    resolved = {t: _TAG_ID_CACHE[t] for t in tag_names if t in _TAG_ID_CACHE}
+    # Tolerant second pass for the names that missed. Buttondown's Tags
+    # page is hand-edited, so a stray trailing space or a case change
+    # ("Spacex Daily") silently drops a show's whole send — an exact-match
+    # -only lookup turns a typo into an outage. A tolerant hit is used but
+    # announced, so the YAML still gets corrected.
+    still_missing = [t for t in tag_names if t not in resolved]
+    if still_missing and _TAG_ID_CACHE:
+        folded = {_fold_tag(name): name for name in _TAG_ID_CACHE}
+        for want in still_missing:
+            actual = folded.get(_fold_tag(want))
+            if actual:
+                resolved[want] = _TAG_ID_CACHE[actual]
+                logger.warning(
+                    "Buttondown tag %r matched %r only after normalising "
+                    "case/whitespace — update the show YAML's "
+                    "newsletter.tag to the exact name.", want, actual,
+                )
+    return resolved
 
 
 def send_newsletter(
@@ -398,10 +429,13 @@ def send_newsletter(
         resolved_ids = [tag_id_map[t] for t in tags if t in tag_id_map]
         missing = [t for t in tags if t not in tag_id_map]
         if missing:
+            known = ", ".join(repr(n) for n in sorted(_ALL_TAG_NAMES)[:40])
             logger.error(
                 "Could not resolve Buttondown tag id(s) for %s — those "
-                "subscribers will not be targeted. Verify the tag name(s) "
-                "match the Buttondown Tags page exactly.", missing,
+                "subscribers will not be targeted. The account has %d tag(s): "
+                "[%s]. Either fix newsletter.tag in the show YAML to match "
+                "one of those exactly, or create the tag in Buttondown.",
+                missing, len(_ALL_TAG_NAMES), known or "none returned",
             )
         if not resolved_ids:
             # Never fall through to an unfiltered ``data`` (that would
