@@ -81,19 +81,41 @@ def test_block_renders_in_branded_body():
 
 
 def test_spacex_and_first_principles_newsletters_configured():
-    """June 15 2026: operator created the 'SpaceX Daily' + 'First Principles
-    Daily' Buttondown tags and asked for both shows' newsletters live. Pin that
-    each is enabled with a tag that matches the created Buttondown tag exactly
-    (a mismatch silently blocks the send — see the Jun 15 SpaceX incident)."""
+    """Both shows' newsletters are live and addressable.
+
+    History worth keeping: this test was written on 2026-06-15 asserting
+    ``n.tag == "SpaceX Daily"`` because the operator had created that
+    Buttondown tag. The tag did NOT exist on 2026-08-02 — SpaceX's send
+    failed every day in between with "Could not resolve Buttondown tag
+    id(s)", and this test stayed green throughout, because comparing one
+    local string to another local string says nothing about the remote
+    account. It gave confidence it could not earn.
+
+    So it now checks what it actually CAN: the show is enabled and its
+    tag is addressable — either a pinned Buttondown identifier (the
+    durable form, immune to a rename on the hand-edited Tags page) or a
+    non-empty display name. Whether the tag EXISTS is a runtime fact,
+    and ``engine.newsletter`` now reports it by listing the account's
+    real tags when a lookup misses.
+    """
     from engine.config import load_config
-    expected = {
+    from engine.newsletter import looks_like_tag_id
+
+    # Display names as created in Buttondown, for the pinned ids below.
+    known_names = {
         "spacex": "SpaceX Daily",
         "first_principles": "First Principles Daily",
     }
-    for slug, tag in expected.items():
-        cfg = load_config(Path(__file__).resolve().parent.parent / "shows" / f"{slug}.yaml")
+    for slug, name in known_names.items():
+        cfg = load_config(
+            Path(__file__).resolve().parent.parent / "shows" / f"{slug}.yaml")
         n = cfg.newsletter
         assert n.enabled is True, f"{slug} newsletter must be enabled"
-        assert n.tag == tag, f"{slug} tag {n.tag!r} must match Buttondown tag {tag!r}"
+        tag = (n.tag or "").strip()
+        assert tag, f"{slug} has no newsletter tag"
+        assert looks_like_tag_id(tag) or tag == name, (
+            f"{slug} tag {tag!r} is neither a Buttondown id nor the "
+            f"created display name {name!r}"
+        )
         assert n.api_key_env == "BUTTONDOWN_API_KEY"
         assert n.short_label and n.emoji, f"{slug} needs short_label + emoji"
