@@ -519,6 +519,18 @@ def _validate_llm_output(
     def _is_entity_phrase(phrase: str) -> bool:
         return any(t in _entity_tokens for t in phrase.split())
 
+    # Framing the SHOW ITSELF supplies. The narrative-memory block
+    # (engine.show_memory) hands the prompt an "open questions" heading
+    # per tracked program, so a memory-enabled show naturally says it
+    # once per program — SpaceX Ep029/Ep035 tripped the retry purely on
+    # "open question" / "open questions" / "whose open questions". Same
+    # class as Omni View's steel-man phrases in _COMMON_BIGRAMS, but
+    # matched as a family because it appears in several shapes.
+    _STRUCTURAL_FRAMING = ("open question",)
+
+    def _is_structural_framing(phrase: str) -> bool:
+        return any(frag in phrase for frag in _STRUCTURAL_FRAMING)
+
     if not text or not text.strip():
         logger.error(
             "LLM returned EMPTY %s for '%s' — treating as retryable failure",
@@ -679,6 +691,14 @@ def _validate_llm_output(
             tokens = phrase.split()
             if all(len(t) <= 3 for t in tokens):
                 continue
+            # A bigram needs TWO content words to mean anything. The
+            # length-only test above passed "the first" / "the same" /
+            # "the work" / "whether the" straight through, and phrases
+            # like those were the bulk of the measured false positives —
+            # a determiner plus one word carries no information, so
+            # repeating it says nothing about hallucination.
+            if sum(1 for t in tokens if t not in _STOPWORDS) < 2:
+                continue
             # Skip speaker-attribution bigrams (e.g. "host: the", "patrick:
             # this", "olya: now"): the first token is a dialogue label ending
             # in a colon, so the repeat is the script format, not a
@@ -693,6 +713,9 @@ def _validate_llm_output(
                 continue
             # Skip the show's own entity names ("model y" on Tesla).
             if _is_entity_phrase(phrase):
+                continue
+            # Skip framing the show's own memory block supplies.
+            if _is_structural_framing(phrase):
                 continue
             if count >= _rep_threshold:
                 _suspicious_count += 1
@@ -755,6 +778,11 @@ def _validate_llm_output(
             tokens = phrase.split()
             if all(len(t) <= 3 for t in tokens):
                 continue
+            # Same content-word floor as the bigram pass: a trigram that
+            # is one content word padded with function words ("the open
+            # question of") describes the show's own framing, not a loop.
+            if sum(1 for t in tokens if t not in _STOPWORDS) < 2:
+                continue
             # Speaker-attribution trigrams (e.g. "host: the first") are a
             # dialogue-format artifact, not hallucination — see the bigram
             # loop above.
@@ -768,6 +796,9 @@ def _validate_llm_output(
                 continue
             # Skip the show's own entity names ("the model y" on Tesla).
             if _is_entity_phrase(phrase):
+                continue
+            # Skip framing the show's own memory block supplies.
+            if _is_structural_framing(phrase):
                 continue
             if count >= _rep_threshold:
                 _suspicious_count += 1
