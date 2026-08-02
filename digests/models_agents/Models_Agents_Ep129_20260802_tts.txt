@@ -1,0 +1,161 @@
+Open A I’s internal Astra model solved ten decade-old math problems for under two thousand dollars each in tokens, moving frontier models from benchmark chasing to original research contributions.
+
+This is Models and Agents, episode one hundred twenty-nine.
+
+Open A I used an internal version of Astra to tackle problems untouched for at least ten years.
+
+The team published Lean four formalizations in the Open A I/ten-proofs repository along with a paper and an L L M generated PDF that reconstructs the reasoning steps.
+
+AMD released a fully open sixteen billion parameter mixture of experts model with two point eight billion active parameters trained on Instinct G P U's.
+
+Nvidia shipped Molt, a compact PyTorch-native agentic reinforcement learning framework built around an asynchronous loop with Ray, vLLM, and NeMo.
+
+Builders should watch how these releases affect both research tooling and production agent stacks this week.
+
+Over the past week the Open A I and G P T thread showed continued movement on long-horizon research tasks, while earlier episodes tracked similar internal runs that lowered the cost of formal verification experiments.
+
+The frontier models arc also saw open-weight releases narrowing gaps on specific workloads, and agent evaluation frameworks expanded their coverage of real production tasks.
+
+Open A I directed an internal version of Astra at ten mathematical problems that had seen no progress for at least a decade.
+
+The effort cost less than two thousand dollars per problem at G P T five point six Sol token prices.
+
+It produced Lean four formalizations now available in the Open A I/ten-proofs repository.
+
+A paper and an L L M generated PDF reconstruct the reasoning steps for each proof.
+
+The results add to a pattern of frontier labs using large token budgets for genuine research rather than benchmark tuning.
+
+Mathematicians are reacting with a mix of excitement and unease.
+
+Builders working on formal verification or automated theorem proving now have concrete artifacts to inspect.
+
+This development fits the frontier models arc we followed yesterday by showing measurable cost drops for original research contributions rather than benchmark scores alone.
+
+AMD released Instella-MoE-16B-A3B, a sixteen billion parameter mixture of experts model that activates two point eight billion parameters per token.
+
+It uses Gated MLA and FarSkip-Collective and was trained from scratch on Instinct MI300X and MI325X G P U's.
+
+AMD published weights from every training stage, data mixtures, configs, and inference code under a fully open license.
+
+This gives builders direct access to intermediate checkpoints for studying mixture of experts training dynamics.
+
+Teams evaluating open-weight alternatives to closed frontier models should test Instella-MoE on their specific workloads this week.
+
+A tutorial walks through configuring the Nvidia Transformer Engine to use fused G P U kernels, FP8 delayed scaling, and BF16 for G P T style causal language models in PyTorch.
+
+It includes practical code examples and performance analysis on current G P U's.
+
+Developers can apply the same patterns to reduce training time and memory footprint without changing model architecture.
+
+The post emphasizes measurable throughput gains from the fused kernels and scaling techniques.
+
+Anyone running custom transformer training should try the FP8 path on supported hardware.
+
+Supabase open-sourced supabase/evals, an Apache two point zero benchmark that runs coding agents against real Supabase tasks.
+
+The tasks include building schemas, debugging Edge Functions, and fixing RLS policies inside containerized stacks.
+
+Scoring uses deterministic checks plus L L M as-a-judge.
+
+The framework currently evaluates Claude Code, Codex, and OpenCode.
+
+Teams building or choosing coding agents for database work now have a reproducible way to compare them on production-like tasks.
+
+Nvidia released Molt, an eight point six K line PyTorch-native framework for agentic RL research.
+
+It composes Ray, vLLM, and NeMo AutoModel around a single asynchronous loop.
+
+The agent remains ordinary Python, trajectories stay token-exact, and throughput matches a Megatron-based stack.
+
+This removes the need to thread every algorithm change through trainer, distributed backend, and rollout glue.
+
+Researchers modifying RL algorithms can now iterate faster without touching low-level infrastructure.
+
+The zero point two a zero release of datasette-apps adds app_debug and app_list tools.
+
+These let Datasette Agent open apps invisibly, run JavaScript tests inside a sandboxed iframe, and list apps the user can edit.
+
+The iframe uses opacity zero and pointer-events none so the agent can measure elements and smoke-test functionality without visual interaction.
+
+This builds on the context.browser_task mechanism from datasette-agent zero point four a zero.
+
+Developers using Datasette for agent-driven app creation now have a practical way to verify edits automatically.
+
+An article argues that coding agents suffer when context grows because irrelevant code competes for attention.
+
+Agents begin compressing their own memory mid-task as a result.
+
+It proposes treating prompt construction like a compiler that decides what to keep, reduce, or discard.
+
+The approach aims to prevent the forgetting that appears when windows fill.
+
+Builders hitting context limits on long codebases should experiment with explicit compilation steps before simply requesting larger windows.
+
+Another post describes a hybrid pattern that embeds adaptive agent behavior inside a predefined workflow.
+
+This keeps the reliability of structured flows while allowing the agent to handle exceptions and variations.
+
+The pattern is positioned as a practical middle ground between rigid pipelines and fully autonomous agents.
+
+Teams building production agent systems should test whether wrapping agents in workflows reduces failure modes on their tasks.
+
+A new interpretability study on KataGo examines whether superhuman Go networks learn rotation- and reflection-invariant internal representations.
+
+The work was largely A I driven with human oversight and includes linked code plus an accessible write-up.
+
+Researchers studying symmetry in vision or game models can use the same methodology on other domains.
+
+A new benchmark called CausalVLBench evaluates visual causal reasoning capabilities in large vision-language models.
+
+It was posted to r/MachineLearning with links and discussion for further details.
+
+Teams working on multimodal reasoning now have a targeted test for causal understanding beyond standard VQA or captioning tasks.
+
+OK, let's pop the hood on context compilation for coding agents.
+
+Everyone talks about giving coding agents more context as if bigger windows are the only lever.
+
+In practice the real engineering problem is deciding what belongs in the prompt at all.
+
+A context compiler treats the prompt like a build artifact.
+
+It runs retrieval then applies reduction rules that drop low-relevance files, summarize others, and keep only the symbols the model is likely to edit.
+
+This adds a small preprocessing step but prevents the model from diluting attention across thousands of irrelevant tokens.
+
+The quality gain is largest on repositories above roughly fifty thousand lines.
+
+Below that threshold the overhead rarely pays off.
+
+When the compiler also tracks which files changed in the last edit cycle it can further prune the window by thirty to forty percent with almost no drop in task success.
+
+The gotcha that bites most teams is treating the compiler as a one-time filter instead of re-running it after every agent action.
+
+Stale context is what produces the it forgot what it just did failures.
+
+Use a compiler when your codebase exceeds a few hundred files or when agents start mid-task compression.
+
+Otherwise simple retrieval plus a hard token cap is still simpler and sufficient.
+
+Try AMD’s Instella-MoE-16B-A3B on a coding or reasoning task you currently run on a dense seven billion or thirteen billion model.
+
+Run Supabase’s new evals harness against Claude Code and any other coding agent you are evaluating on real schema and Edge Function tasks.
+
+Experiment with the context-compiler pattern from the Towards Data Science post on a repository larger than fifty thousand lines before simply increasing the model’s context window.
+
+Test Nvidia Molt’s asynchronous loop on a small agentic RL experiment if you have been modifying RL algorithms and want to avoid threading changes through Megatron-style infrastructure.
+
+More labs are expected to publish internal research runs similar to Open A I’s ten-proofs effort as the cost of long-horizon model use continues to drop.
+
+Additional open-weight mixture of experts releases from AMD and others will likely include full training artifacts.
+
+Agent evaluation frameworks like Supabase Evals are likely to expand to more real-world task domains beyond database work.
+
+Before we go, watch for whether other labs release the prompts or reasoning traces from their own long-horizon math experiments in the coming days.
+
+That wraps up today's A I briefing. Share this with a developer or builder who wants to stay current. Subscribe wherever you listen. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes. This show comes to you from the Nerra Network.
+
+If you want another sharp daily briefing, Space X Daily has you covered — the daily companion for following Space X as a public company, from Starship to the stock ticker. All our shows are free at nerranetwork dot com. Live dashboards — T S L A, Space X launches, the investing scoreboard — are all at nerranetwork dot com data.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
