@@ -261,7 +261,10 @@ class TestTagIdPassthrough:
             ["Tesla Shorts Time", "sub_tag_abc"], api_key="k")
         assert got == {"Tesla Shorts Time": "t1", "sub_tag_abc": "sub_tag_abc"}
 
-    def test_the_two_repaired_shows_are_pinned_to_ids(self):
+    def test_the_two_repaired_shows_pin_an_id_in_tag_id(self):
+        """The id lives in ``tag_id``, NOT ``tag`` — see
+        TestTagIdIsSeparateFromDisplayName for why that distinction is
+        load-bearing."""
         import logging
         logging.disable(logging.CRITICAL)
         try:
@@ -269,8 +272,9 @@ class TestTagIdPassthrough:
             from engine.newsletter import looks_like_tag_id
             for slug in ("spacex", "first_principles"):
                 cfg = load_config(f"shows/{slug}.yaml")
-                tag = (getattr(cfg.newsletter, "tag", "") or "").strip()
-                assert looks_like_tag_id(tag), f"{slug} tag is not an id: {tag!r}"
+                tag_id = (getattr(cfg.newsletter, "tag_id", "") or "").strip()
+                assert looks_like_tag_id(tag_id), (
+                    f"{slug} tag_id is not an id: {tag_id!r}")
         finally:
             logging.disable(logging.NOTSET)
 
@@ -286,3 +290,108 @@ class TestTagIdPassthrough:
             assert not looks_like_tag_id(cfg.newsletter.tag)
         finally:
             logging.disable(logging.NOTSET)
+
+
+class TestTagIdIsSeparateFromDisplayName:
+    """``tag`` is ALSO the subscribe-form checkbox value.
+
+    Pinning identifiers into ``newsletter.tag`` (one commit on
+    2026-08-02) meant the next site regeneration would have written
+    ``value="sub_tag_75a4…"`` into every show page, blog post and the
+    network page's signup form. Subscribers carry tag NAMES, so those
+    signups would have been tagged with a literal identifier string
+    matching nothing — and would silently never receive the newsletter.
+    Caught by a dirty working tree before the nightly regen shipped it.
+    """
+
+    def _cfg(self, slug):
+        import logging
+        logging.disable(logging.CRITICAL)
+        try:
+            from engine.config import load_config
+            return load_config(f"shows/{slug}.yaml")
+        finally:
+            logging.disable(logging.NOTSET)
+
+    def test_pinned_shows_keep_a_readable_display_name(self):
+        from engine.newsletter import looks_like_tag_id
+        for slug, name in (("spacex", "SpaceX Daily"),
+                           ("first_principles", "First Principles Daily")):
+            tag = self._cfg(slug).newsletter.tag
+            assert tag == name
+            assert not looks_like_tag_id(tag), (
+                f"{slug}: an id in `tag` reaches the subscribe form")
+
+    def test_pinned_shows_carry_the_id_in_tag_id(self):
+        from engine.newsletter import looks_like_tag_id
+        for slug in ("spacex", "first_principles"):
+            assert looks_like_tag_id(self._cfg(slug).newsletter.tag_id)
+
+    def test_tag_id_is_declared_on_the_dataclass(self):
+        """Landmine: _build_nested drops YAML keys the dataclass does
+        not declare, so an undeclared tag_id would silently be lost."""
+        from engine.config import NewsletterConfig
+        assert hasattr(NewsletterConfig(), "tag_id")
+        assert self._cfg("spacex").newsletter.tag_id
+
+    def test_send_prefers_the_id_over_the_name(self):
+        src = (PROJECT_ROOT / "engine" / "newsletter.py").read_text(
+            encoding="utf-8")
+        assert 'getattr(newsletter, "tag_id", "")' in src
+
+    def test_page_generation_reads_the_display_name(self):
+        """The site helper reads newsletter.tag — with the id split out,
+        the form value is a name again."""
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "_gh", PROJECT_ROOT / "generate_html.py")
+        src = (PROJECT_ROOT / "generate_html.py").read_text(encoding="utf-8")
+        assert '(data.get("newsletter") or {}).get("tag")' in src
+        assert "tag_id" not in src.split("_newsletter_tag_for_slug")[1][:900]
+
+
+class TestCaptureTagAbsenceIsNotAnError:
+    """``ru-spacex`` does not exist because the RU lander has not
+    converted anyone yet — Buttondown creates a capture tag with the
+    first signup (that is how ``gallery-subscriber`` appeared). Failing
+    the weekly workflow red every week for that is noise."""
+
+    @staticmethod
+    def _account(monkeypatch, names, fail=False):
+        """Stub the Tags endpoint with a real account shape."""
+        import engine.newsletter as nl
+        monkeypatch.setattr(nl, "_TAG_ID_CACHE", {})
+        monkeypatch.setattr(nl, "_ALL_TAG_NAMES", [])
+
+        class _Resp:
+            def raise_for_status(self):
+                if fail:
+                    raise RuntimeError("401 Unauthorized")
+
+            def json(self):
+                return {"results": [{"name": n, "id": f"sub_tag_{i}"}
+                                    for i, n in enumerate(names)],
+                        "next": None}
+
+        monkeypatch.setattr(nl.requests, "get", lambda *a, **k: _Resp())
+        return nl
+
+    def test_absent_tag_reports_false_when_the_account_was_read(
+            self, monkeypatch):
+        nl = self._account(monkeypatch, ["SpaceX Daily", "gallery-subscriber"])
+        assert nl.tag_exists("ru-spacex", "k") is False
+
+    def test_unreachable_account_reports_none_not_false(self, monkeypatch):
+        """An API outage must not be read as 'no subscribers yet'."""
+        nl = self._account(monkeypatch, [], fail=True)
+        assert nl.tag_exists("ru-spacex", "k") is None
+
+    def test_present_tag_reports_true(self, monkeypatch):
+        nl = self._account(monkeypatch, ["ru-spacex", "SpaceX Daily"])
+        assert nl.tag_exists("ru-spacex", "k") is True
+
+    def test_weekly_script_exits_zero_on_absence(self):
+        src = (PROJECT_ROOT / "scripts" / "send_ru_spacex_weekly.py").read_text(
+            encoding="utf-8")
+        assert "present = tag_exists(CAPTURE_TAG, api_key)" in src
+        assert "if present is False:" in src

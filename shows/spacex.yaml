@@ -320,12 +320,15 @@ newsletter:
   platform: buttondown
   api_key_env: BUTTONDOWN_API_KEY
   status: about_to_send
-  # Pinned to the immutable Buttondown tag id (display name:
-  # "SpaceX Daily"). The name-based lookup reads Buttondown's Tags page,
-  # which is hand-edited — this show's sends failed outright until the
-  # tag was created on 2026-08-02, and a later rename would fail the
-  # same silent way. The id cannot drift.
-  tag: "sub_tag_75a48w4wsm9fhr6n2eckfysexs"
+  # ``tag`` is the DISPLAY NAME and must stay readable — it is also the
+  # subscribe-form checkbox value on the show page, blog posts and the
+  # network page, and subscribers carry tag names.
+  tag: "SpaceX Daily"
+  # ``tag_id`` pins the send filter to the immutable identifier, so a
+  # rename on Buttondown's hand-edited Tags page cannot silently break
+  # the send (this show's newsletter failed every day until the tag was
+  # created on 2026-08-02).
+  tag_id: "sub_tag_75a48w4wsm9fhr6n2eckfysexs"
   short_label: "SpaceX Daily"
   emoji: "🚀"
   newsletter_start_date: "2026-06-12"

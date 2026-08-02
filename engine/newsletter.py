@@ -362,6 +362,29 @@ def _resolve_tag_ids(tag_names: List[str], api_key: str) -> Dict[str, str]:
     return resolved
 
 
+def tag_exists(tag: str, api_key: str) -> Optional[bool]:
+    """Whether *tag* exists on the Buttondown account.
+
+    ``True`` / ``False`` when the account was read successfully;
+    ``None`` when it could not be read at all — the caller must not
+    treat an unreachable API as "the tag is missing".
+
+    Capture tags (``ru-spacex``, ``gallery-subscriber``) are created by
+    Buttondown when the FIRST subscriber arrives carrying them, so
+    "absent" legitimately means "no signups yet" for those surfaces.
+    """
+    tag = (tag or "").strip()
+    if not tag:
+        return False
+    if looks_like_tag_id(tag):
+        return True  # ids need no lookup; the API validates on send
+    resolved = _resolve_tag_ids([tag], api_key)
+    if resolved:
+        return True
+    # Distinguish "fetched the list, tag absent" from "fetch failed".
+    return False if _ALL_TAG_NAMES else None
+
+
 def send_newsletter(
     subject: str,
     body: str,
@@ -642,7 +665,15 @@ def send_show_newsletter(
         slug, hook, send_date=_today, hook_max_chars=50, is_daily=True,
     )
 
-    tag = getattr(newsletter, "tag", "") or ""
+    # ``tag_id`` (send filter) is separate from ``tag`` (display name)
+    # ON PURPOSE. ``tag`` is ALSO the value of the subscribe-form
+    # checkbox on every show page, blog post and the network page —
+    # subscribers carry tag NAMES, so putting an identifier there tags
+    # new signups with a literal "sub_tag_…" string that matches
+    # nothing, and they silently never receive the newsletter. Pinning
+    # ids directly into ``tag`` did exactly that for one commit.
+    tag = (getattr(newsletter, "tag_id", "") or "").strip() \
+        or (getattr(newsletter, "tag", "") or "")
     tags_list = [tag] if tag else None
 
     # Body transforms — clean up scaffold + render Tesla price /
