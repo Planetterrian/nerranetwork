@@ -327,7 +327,24 @@ def main(argv: Optional[List[str]] = None) -> int:
                     today.isoformat())
         return 0
 
-    from engine.newsletter import send_newsletter
+    from engine.newsletter import send_newsletter, tag_exists
+
+    # A capture tag only comes into being when the first subscriber
+    # arrives with it (the Worker assigns "ru-spacex" on the RU lander;
+    # "gallery-subscriber" appeared the same way). So an absent tag here
+    # means the pilot has no subscribers YET — a legitimate state, not a
+    # broken configuration, and it must not fail the workflow every week
+    # with the same red run. ``tag_exists`` returns None when the account
+    # could not be read at all, which IS an error worth surfacing.
+    present = tag_exists(CAPTURE_TAG, api_key)
+    if present is False:
+        log.info(
+            "No subscribers have been captured with %r yet — nothing to "
+            "send. Buttondown creates the tag with the first signup from "
+            "%s; this becomes a real send once the lander converts "
+            "someone.", CAPTURE_TAG, LANDING_URL,
+        )
+        return 0
 
     email_id = send_newsletter(
         subject,

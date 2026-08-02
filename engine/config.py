@@ -428,7 +428,16 @@ class NewsletterConfig:
     platform: str = "buttondown"
     api_key_env: str = "BUTTONDOWN_API_KEY"
     status: str = "about_to_send"  # "about_to_send", "draft", or "scheduled"
-    tag: str = ""  # Buttondown tag for per-show subscriber filtering
+    # Buttondown tag DISPLAY NAME. Used for per-show subscriber
+    # filtering AND as the subscribe-form checkbox value on every show
+    # page / blog post / the network page — subscribers carry tag names,
+    # so this must stay human-readable.
+    tag: str = ""
+    # Optional Buttondown tag IDENTIFIER (e.g. ``sub_tag_…``). When set,
+    # the SEND FILTER uses it instead of resolving ``tag`` through
+    # Buttondown's hand-edited Tags page, so renaming a tag there cannot
+    # silently break the show's send. Never reaches the subscribe form.
+    tag_id: str = ""
     # June 10 2026: these fields were set in show YAMLs and read via
     # getattr() on this dataclass — but never DECLARED here, so
     # _build_nested silently dropped them and the getattr defaults always
