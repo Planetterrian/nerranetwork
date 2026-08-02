@@ -2433,7 +2433,8 @@ def run(args: argparse.Namespace) -> None:
                     score_result.get("listener_value", 0),
                     score_result.get("engagement_potential", 0)
                 )
-                if score_result.get("overall", 10) < 6.5:
+                if score_result.get("overall", 10) < \
+                        listener_value_scorer.REVIEW_THRESHOLD:
                     logger.warning(
                         "Listener Value Score below threshold (%.1f). Consider review before publishing. "
                         "Suggestions: %s",
