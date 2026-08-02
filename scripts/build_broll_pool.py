@@ -245,6 +245,7 @@ def main() -> int:
     by_url = {c["url"]: c for c in clips}
 
     uploaded = 0
+    non_public_warned = False
     work_dir = Path(tempfile.mkdtemp(prefix="broll_trim_"))
     for source_clip in args.clips:
         clip = source_clip
@@ -314,6 +315,18 @@ def main() -> int:
             by_url[url] = entry
         uploaded += 1
         logger.info("%s → %s (%.1fs)", source_clip.name, url, duration)
+        if not non_public_warned and ".r2.cloudflarestorage.com" in url:
+            # R2_GALLERY_PUBLIC_BASE_URL unset → upload_to_r2 hands back
+            # the S3 API endpoint, which answers an unauthenticated GET
+            # with 400. Renders recover via the authenticated fallback
+            # (the `key` above is what makes that possible), but the
+            # operator should know the pool is not publicly readable.
+            logger.warning(
+                "R2_GALLERY_PUBLIC_BASE_URL is unset, so the pool stores "
+                "S3-endpoint URLs that no plain GET can read. Renders fall "
+                "back to authenticated R2, but set it to publish public "
+                "URLs.")
+            non_public_warned = True
 
     if not uploaded:
         logger.error("No clips uploaded — broll.json unchanged.")

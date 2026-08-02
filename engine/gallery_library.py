@@ -234,13 +234,31 @@ def _cache_filename(entry: dict) -> str:
     return f"{stem}{ext}"
 
 
+def is_public_media_url(url: str) -> bool:
+    """False for an S3-API endpoint URL, which no plain GET can read.
+
+    ``upload_to_r2`` returns the raw
+    ``https://<account>.r2.cloudflarestorage.com/<bucket>/<key>`` endpoint
+    when ``R2_GALLERY_PUBLIC_BASE_URL`` is unset — that address requires
+    SigV4 signing, so an unauthenticated GET is answered 400, not 403.
+    Recognising it lets the caller go straight to the authenticated path
+    instead of spending a doomed request per object.
+    """
+    return ".r2.cloudflarestorage.com" not in (url or "").lower()
+
+
 def _r2_object_key(entry: dict) -> Optional[str]:
-    """R2 object key for an authenticated get — prefer the manifest's
-    ``original_key``, else derive from the public URL path."""
-    key = (entry.get("original_key") or "").strip().lstrip("/")
-    if key:
-        return key
-    url = (entry.get("original_url") or "").strip()
+    """R2 object key for an authenticated get.
+
+    Prefers an explicit key — ``original_key`` on gallery manifest
+    entries, ``key`` on b-roll pool entries — and only then derives one
+    from the URL path.
+    """
+    for field in ("original_key", "key"):
+        key = (entry.get(field) or "").strip().lstrip("/")
+        if key:
+            return key
+    url = (entry.get("original_url") or entry.get("url") or "").strip()
     if not url:
         return None
     # https://gallery.nerranetwork.com/tesla/2026-07-08/ep535/abc.jpeg
@@ -248,6 +266,20 @@ def _r2_object_key(entry: dict) -> Optional[str]:
     try:
         from urllib.parse import urlparse
         path = urlparse(url).path.lstrip("/")
+        if not path:
+            return None
+        # An S3-endpoint URL puts the BUCKET in the path
+        # (/nerra-gallery/broll/…), but the bucket is passed separately
+        # to the client — leaving it in would look up a key that does
+        # not exist.
+        if not is_public_media_url(url):
+            try:
+                from engine.gallery_uploader import gallery_config_from_env
+                bucket = (gallery_config_from_env().bucket or "").strip("/")
+            except Exception:  # noqa: BLE001
+                bucket = ""
+            if bucket and path.startswith(f"{bucket}/"):
+                path = path[len(bucket) + 1:]
         return path or None
     except Exception:  # noqa: BLE001
         return None
@@ -717,6 +749,16 @@ def select_broll_clips(
             if dest.exists() and dest.stat().st_size > 0:
                 paths.append(dest)
                 continue
+            # Same public-then-authenticated ladder the image path uses.
+            # Ep054 shipped with broll=0 because this did a bare GET
+            # against an S3-endpoint URL and took all 25 400s as "no
+            # clips available" — while the images beside it recovered
+            # through R2 on the very same run.
+            if not is_public_media_url(url) or _prefer_r2_download:
+                if _download_via_r2(entry, dest):
+                    paths.append(dest)
+                    continue
+            public_err: Optional[Exception] = None
             try:
                 resp = requests.get(url, timeout=DOWNLOAD_TIMEOUT_SECONDS)
                 resp.raise_for_status()
@@ -724,9 +766,29 @@ def select_broll_clips(
                     raise ValueError("empty response body")
                 dest.write_bytes(resp.content)
                 paths.append(dest)
-            except Exception as exc:  # noqa: BLE001 — skip, keep going
-                logger.warning("gallery_library: failed to fetch b-roll %s: %s",
-                               url, exc)
+                continue
+            except Exception as exc:  # noqa: BLE001 — try R2 before giving up
+                public_err = exc
+                dest.unlink(missing_ok=True)
+            if _download_via_r2(entry, dest):
+                logger.info("gallery_library: b-roll public fetch failed "
+                            "(%s); R2 fallback OK for %s",
+                            public_err, dest.name)
+                paths.append(dest)
+                continue
+            logger.warning(
+                "gallery_library: failed to fetch b-roll %s: %s (%s)",
+                url, public_err,
+                "R2 fallback also failed" if _r2_configured()
+                else "R2 fallback unavailable (credentials unset)")
+        if entries and not paths:
+            # Every clip failed. Silent-empty here reads downstream as
+            # "the operator published no pool", which is a different
+            # thing and hid a whole-pool outage for a full episode.
+            print("::warning::b-roll pool for "
+                  f"{show_slug} has {len(entries)} clip(s) but NONE could be "
+                  "fetched — the episode renders on stills only. Check R2 "
+                  "credentials and the pool's URLs.", flush=True)
         return paths
     except Exception as exc:  # noqa: BLE001 — b-roll is optional garnish
         logger.warning("gallery_library: b-roll selection failed for %s: %s",
