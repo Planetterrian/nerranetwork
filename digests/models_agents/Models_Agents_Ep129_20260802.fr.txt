@@ -1,0 +1,161 @@
+Le modèle interne Astra d’Open AI a résolu dix problèmes mathématiques vieux de dix ans pour moins de deux mille dollars chacun en tokens, faisant passer les modèles de pointe de la course aux benchmarks à des contributions de recherche originale.
+
+C’est Modèles et Agents, épisode cent vingt-neuf.
+
+Open AI a utilisé une version interne d’Astra pour s’attaquer à des problèmes restés intouchés depuis au moins dix ans.
+
+L’équipe a publié des formalisations Lean 4 dans le dépôt Open AI/ten-proofs, accompagnées d’un article et d’un PDF généré par un grand modèle de langage qui reconstitue les étapes du raisonnement.
+
+AMD a sorti un modèle mélange d’experts entièrement ouvert de seize milliards de paramètres, dont deux virgule huit milliards de paramètres actifs, entraîné sur des GPU Instinct.
+
+Nvidia a livré Molt, un cadre compact d’apprentissage par renforcement agentique natif PyTorch, construit autour d’une boucle asynchrone avec Ray, vLLM et NeMo.
+
+Les développeurs devraient surveiller comment ces sorties influencent à la fois les outils de recherche et les piles d’agents en production cette semaine.
+
+Au cours de la semaine écoulée, le fil Open AI et GPT a montré une progression continue sur les tâches de recherche à long horizon, tandis que les épisodes précédents avaient suivi des exécutions internes similaires qui avaient réduit le coût des expériences de vérification formelle.
+
+L’arc des modèles de pointe a également vu des sorties à poids ouverts réduire les écarts sur des charges de travail spécifiques, et les cadres d’évaluation d’agents ont élargi leur couverture des tâches de production réelles.
+
+Open AI a dirigé une version interne d’Astra vers dix problèmes mathématiques qui n’avaient connu aucune avancée depuis au moins une décennie.
+
+L’effort a coûté moins de deux mille dollars par problème aux prix des tokens GPT cinq point six Sol.
+
+Il a produit des formalisations Lean 4 désormais disponibles dans le dépôt Open AI/ten-proofs.
+
+Un article et un PDF généré par un grand modèle de langage reconstituent les étapes du raisonnement pour chaque démonstration.
+
+Ces résultats s’ajoutent à une tendance des laboratoires de pointe à utiliser de gros budgets de tokens pour de la recherche authentique plutôt que pour l’ajustement de benchmarks.
+
+Les mathématiciens réagissent avec un mélange d’excitation et d’inquiétude.
+
+Les développeurs qui travaillent sur la vérification formelle ou la démonstration automatique de théorèmes disposent désormais d’artefacts concrets à examiner.
+
+Ce développement s’inscrit dans l’arc des modèles de pointe que nous avons suivi hier en montrant des baisses de coût mesurables pour des contributions de recherche originale plutôt que pour les seuls scores de benchmarks.
+
+AMD a publié Instella-MoE-16B-A3B, un modèle mélange d’experts de seize milliards de paramètres qui active deux virgule huit milliards de paramètres par token.
+
+Il utilise Gated MLA et FarSkip-Collective et a été entraîné depuis zéro sur des GPU Instinct MI300X et MI325X.
+
+AMD a publié les poids de chaque étape d’entraînement, les mélanges de données, les configurations et le code d’inférence sous une licence entièrement ouverte.
+
+Cela donne aux développeurs un accès direct aux points de contrôle intermédiaires pour étudier la dynamique d’entraînement des mélanges d’experts.
+
+Les équipes qui évaluent des alternatives à poids ouverts face aux modèles de pointe fermés devraient tester Instella-MoE sur leurs charges de travail spécifiques cette semaine.
+
+Un tutoriel explique comment configurer le Transformer Engine de Nvidia pour utiliser des noyaux GPU fusionnés, la mise à l’échelle différée FP8 et le BF16 pour les modèles de langage causal de style GPT dans PyTorch.
+
+Il inclut des exemples de code pratiques et une analyse de performance sur les GPU actuels.
+
+Les développeurs peuvent appliquer les mêmes schémas pour réduire le temps d’entraînement et l’empreinte mémoire sans modifier l’architecture du modèle.
+
+Le billet met l’accent sur les gains de débit mesurables obtenus grâce aux noyaux fusionnés et aux techniques de mise à l’échelle.
+
+Quiconque exécute un entraînement de transformeur personnalisé devrait essayer la voie FP8 sur du matériel compatible.
+
+Supabase a rendu open source supabase/evals, un benchmark Apache deux point zéro qui fait tourner des agents de codage sur de vraies tâches Supabase.
+
+Les tâches incluent la construction de schémas, le débogage de Edge Functions et la correction de politiques RLS dans des piles conteneurisées.
+
+Le scoring repose sur des vérifications déterministes plus un grand modèle de langage en tant que juge.
+
+Le cadre évalue actuellement Claude Code, Codex et OpenCode.
+
+Les équipes qui construisent ou choisissent des agents de codage pour le travail en base de données disposent désormais d’un moyen reproductible de les comparer sur des tâches proches de la production.
+
+Nvidia a sorti Molt, un cadre natif PyTorch de huit point six mille lignes pour la recherche en apprentissage par renforcement agentique.
+
+Il compose Ray, vLLM et NeMo AutoModel autour d’une seule boucle asynchrone.
+
+L’agent reste du Python ordinaire, les trajectoires restent exactes au niveau des tokens et le débit correspond à une pile basée sur Megatron.
+
+Cela supprime la nécessité de faire passer chaque modification d’algorithme par l’entraîneur, le backend distribué et la colle de rollout.
+
+Les chercheurs qui modifient des algorithmes d’apprentissage par renforcement peuvent désormais itérer plus vite sans toucher à l’infrastructure de bas niveau.
+
+La version zéro point deux a zéro de datasette-apps ajoute les outils app_debug et app_list.
+
+Ils permettent à Datasette Agent d’ouvrir des applications de manière invisible, d’exécuter des tests JavaScript dans un iframe sandboxé et de lister les applications que l’utilisateur peut modifier.
+
+L’iframe utilise une opacité zéro et des événements de pointeur désactivés afin que l’agent puisse mesurer les éléments et tester la fonctionnalité sans interaction visuelle.
+
+Cela s’appuie sur le mécanisme context.browser_task de datasette-agent zéro point quatre a zéro.
+
+Les développeurs qui utilisent Datasette pour la création d’applications pilotée par des agents disposent désormais d’un moyen pratique de vérifier automatiquement les modifications.
+
+Un article soutient que les agents de codage souffrent lorsque le contexte grandit parce que du code non pertinent entre en concurrence pour l’attention.
+
+Les agents commencent alors à compresser leur propre mémoire en cours de tâche.
+
+L’article propose de traiter la construction de prompts comme un compilateur qui décide quoi conserver, réduire ou jeter.
+
+L’approche vise à prévenir l’oubli qui apparaît lorsque les fenêtres se remplissent.
+
+Les développeurs qui atteignent les limites de contexte sur de grandes bases de code devraient expérimenter des étapes de compilation explicites avant de demander simplement des fenêtres plus grandes.
+
+Un autre billet décrit un schéma hybride qui intègre un comportement adaptatif d’agent à l’intérieur d’un flux de travail prédéfini.
+
+Cela conserve la fiabilité des flux structurés tout en permettant à l’agent de gérer les exceptions et les variations.
+
+Le schéma est présenté comme un juste milieu pratique entre des pipelines rigides et des agents entièrement autonomes.
+
+Les équipes qui construisent des systèmes d’agents en production devraient tester si l’encapsulation d’agents dans des flux de travail réduit les modes d’échec sur leurs tâches.
+
+Une nouvelle étude d’interprétabilité sur KataGo examine si les réseaux de Go surhumains apprennent des représentations internes invariantes par rotation et réflexion.
+
+Le travail a été largement piloté par l’IA avec une supervision humaine et inclut du code lié ainsi qu’un article accessible.
+
+Les chercheurs qui étudient la symétrie dans les modèles de vision ou de jeu peuvent appliquer la même méthodologie à d’autres domaines.
+
+Un nouveau benchmark appelé CausalVLBench évalue les capacités de raisonnement causal visuel dans les grands modèles de vision-langage.
+
+Il a été publié sur r/MachineLearning avec des liens et des discussions pour plus de détails.
+
+Les équipes qui travaillent sur le raisonnement multimodal disposent désormais d’un test ciblé pour la compréhension causale au-delà des tâches standard de VQA ou de légendage.
+
+Bien, plongeons sous le capot de la compilation de contexte pour les agents de codage.
+
+Tout le monde parle de donner plus de contexte aux agents de codage comme si des fenêtres plus grandes étaient le seul levier.
+
+En pratique, le vrai problème d’ingénierie est de décider ce qui doit figurer dans le prompt.
+
+Un compilateur de contexte traite le prompt comme un artefact de build.
+
+Il exécute d’abord une récupération puis applique des règles de réduction qui suppriment les fichiers à faible pertinence, résument les autres et conservent uniquement les symboles que le modèle est susceptible de modifier.
+
+Cela ajoute une petite étape de prétraitement mais empêche le modèle de diluer son attention sur des milliers de tokens non pertinents.
+
+Le gain de qualité est le plus important sur les dépôts dépassant environ cinquante mille lignes.
+
+En dessous de ce seuil, la surcharge est rarement rentable.
+
+Lorsque le compilateur suit également les fichiers modifiés lors du dernier cycle d’édition, il peut réduire encore la fenêtre de trente à quarante pour cent avec presque aucune baisse du taux de réussite des tâches.
+
+Le piège qui touche la plupart des équipes est de traiter le compilateur comme un filtre unique au lieu de le relancer après chaque action de l’agent.
+
+Un contexte obsolète est ce qui provoque les échecs du type « il a oublié ce qu’il venait de faire ».
+
+Utilisez un compilateur lorsque votre base de code dépasse quelques centaines de fichiers ou lorsque les agents commencent à compresser leur contexte en cours de tâche.
+
+Sinon, une simple récupération plus une limite stricte de tokens reste plus simple et suffisante.
+
+Essayez Instella-MoE-16B-A3B d’AMD sur une tâche de codage ou de raisonnement que vous exécutez actuellement sur un modèle dense de sept ou treize milliards de paramètres.
+
+Exécutez le nouveau harnais d’évaluation de Supabase contre Claude Code et tout autre agent de codage que vous évaluez sur de vraies tâches de schémas et de Edge Functions.
+
+Expérimentez le schéma de compilateur de contexte de l’article Towards Data Science sur un dépôt de plus de cinquante mille lignes avant d’augmenter simplement la fenêtre de contexte du modèle.
+
+Testez la boucle asynchrone de Molt de Nvidia sur une petite expérience d’apprentissage par renforcement agentique si vous modifiez des algorithmes d’apprentissage par renforcement et souhaitez éviter de faire passer les changements par une infrastructure de type Megatron.
+
+D’autres laboratoires devraient publier des exécutions de recherche internes similaires à l’effort ten-proofs d’Open AI à mesure que le coût de l’utilisation de modèles à long horizon continue de baisser.
+
+D’autres sorties de mélanges d’experts à poids ouverts venant d’AMD et d’autres incluront probablement des artefacts d’entraînement complets.
+
+Les cadres d’évaluation d’agents comme Supabase Evals devraient s’étendre à davantage de domaines de tâches du monde réel au-delà du travail en base de données.
+
+Avant de partir, surveillez si d’autres laboratoires publient les prompts ou les traces de raisonnement de leurs propres expériences mathématiques à long horizon dans les jours à venir.
+
+Voilà qui conclut le briefing IA d’aujourd’hui. Partagez-le avec un développeur ou un builder qui souhaite rester à jour. Abonnez-vous là où vous écoutez. À demain. Et si vous préférez regarder plutôt qu’écouter, retrouvez-nous sur YouTube à Nerra Network, le lien est dans les notes de l’émission. Cette émission vous est proposée par le Nerra Network.
+
+Si vous voulez un autre briefing quotidien percutant, Space X Daily vous attend, le compagnon quotidien pour suivre Space X en tant que société cotée, de Starship au cours de l’action. Tous nos programmes sont gratuits sur nerranetwork point com. Les tableaux de bord en direct — T-S-L-A, les lancements de Space X, le tableau de bord des investissements — sont tous sur nerranetwork point com data.
+
+Cet épisode a utilisé une synthèse vocale IA de ma voix, la sélection éditoriale et l’analyse sont les miennes.
