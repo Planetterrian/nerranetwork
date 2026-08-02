@@ -172,4 +172,67 @@ reviews:
       ab_listen_required: true
       rationale: Shape-based de-seed of 10/10 tic; avoids quotable example per meta-rule
     agent_cost_usd: 0.0591
+  - date: '2026-08-02'
+    pr: null
+    doc: docs/reviews/models_agents_review_2026_08_02.md
+    generated_by: grok-4.5
+    summary: Prior length and teaser-tic predictions both missed (8/10 scripts still under 1500w; “keep an eye on” still ~8/10); chapters are not actually clean (sparse/auto-titles, ep127 first marker at 4min, ep128 missing Under the Hood when the host skipped “pop the hood”), and continuity still speaks episode numbers—propose digest floor raise, shape-ban teaser de-seed, and episode-number ban only.
+    scored_prior_predictions:
+    - metric: episodes below min_podcast_words (1500) in last 10
+      verdict: miss
+      evidence: 8/10 ep120–129 still under 1500w (only ep126=1592, ep129=1501); min_digest_words=1300 + digest_expand already live
+    - metric: '"keep an eye on" occurrences as Tomorrow Teaser opener, last 10'
+      verdict: miss
+      evidence: Still ~8/10 teasers (ep120–127); July-19 shape de-seed never applied (shipped:[])
+    - metric: verbatim-doubled sentence pairs in shipped _tts.txt scripts
+      verdict: hit
+      evidence: No paraphrase-doubled sentence pairs in ep120–129 transcripts after expansion-strip
+    - metric: custom voice still reads CUDA cleanly (Whisper of post-merge CUDA episode)
+      verdict: hit
+      evidence: No koo-dah/letter-split in ep120–129; prior July-19 hit stands
+    shipped: []
+    deferred:
+    - Digest-driven / position-aware mid-section chapter titles (carried; ep120/121 ellipsis auto-titles, ep127 first chapter at 240s, ep128 lost Under the Hood when host skipped pop-the-hood — markers remain brittle)
+    - Under the Hood licensed-knowledge sentence/fact floor in digest prompt — operator option B if min_digest_words=1600 still leaves >=7/10 podcast scripts under 1500
+    - Accept ~1200–1400w natural length and lower min_podcast_words (operator option C) so health dashboards stop false-alarming
+    - Signature opener "okay let's pop the hood on" (8/10) — intentional chapter signal; revisit only with A/B evidence
+    - 'Network-wide: blog/RSS transcript sourced from pre-pronunciation text or Whisper (LoRA/RAG/JAXA class leaks) — collision-unsafe for lone-token restore'
+    - July-2 selection rebalance A/B (lab product/feature announcements outrank preprints; arXiv items <= 40%) — still not applied
+    - Recap must synthesize, not splice dailies' sentences (Sunday weekly_summary_segment) — carried
+    - OP3 7d drop 173→88 — watch one more cycle before product changes; no metadata root cause found this pass
+    predictions:
+    - metric: episodes below min_podcast_words (1500) in last 10
+      baseline: 8/10 (ep120–129)
+      expected: <=4/10 in episodes generated after min_digest_words=1600 merge (digest lever only; if still >=7/10, escalate to UTH floor or accept-lower-floor — do not re-raise podcast expand)
+      verdict: pending
+      evidence: null
+    - metric: '"keep an eye on" / "Tomorrow keep an eye on" / "Before we go, keep an eye on" as teaser opener, last 10'
+      baseline: ~8/10
+      expected: <=2/10 post de-seed merge
+      verdict: pending
+      evidence: null
+    - metric: 'successor teaser-opener tic: any single new opener phrase in >=6/10 teasers (convergence watch)'
+      baseline: n/a (watch)
+      expected: 0 phrases at >=6/10; if a replacement converges, ban by shape next pass
+      verdict: pending
+      evidence: null
+    - metric: spoken episode-number continuity callbacks ("episode N" / "EpN") in last 10 Whisper/_tts.txt
+      baseline: '>=1 (ep120 "episode 119"; pattern live)'
+      expected: 0 in post-merge episodes
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/models_agents.yaml
+      kind: config
+      ab_listen_required: false
+      rationale: July-19 length prediction missed with 1300+expand still yielding 8/10 podcast scripts under 1500. Meta-review allows digest-substrate levers only; this is the next step before an Under-the-Hood floor or accepting a lower podcast floor. Do not touch podcast_expand_below_target.
+    - file: shows/prompts/models_agents_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: De-seed the 8/10 teaser tic by shape + verbatim ban with no quotable replacement (meta-rule). Same edit hard-bans spoken episode-number callbacks seen in ep120. A/B-listen required.
+    - file: tests/test_models_agents_quality_pass.py
+      kind: code
+      ab_listen_required: false
+      rationale: Drift-guard the config floor and the two prompt bans so a later edit cannot silently drop them (pattern from test_models_agents_quality_pass.py / network quality passes).
+    agent_cost_usd: 0.1151
 do_not_retry: []
