@@ -217,3 +217,72 @@ class TestButtondownTagDiagnostics:
             encoding="utf-8")
         assert "The account has %d tag(s)" in src
         assert "_ALL_TAG_NAMES" in src
+
+
+class TestTagIdPassthrough:
+    """A show may pin the immutable id instead of the display name.
+
+    Buttondown's Tags page is hand-edited: SpaceX Daily and First
+    Principles Daily both failed every send until their tags were
+    created (2026-08-02), and a later rename would fail the same silent
+    way. Both are pinned to ids now.
+    """
+
+    def test_recognises_both_observed_id_shapes(self):
+        from engine.newsletter import looks_like_tag_id
+        assert looks_like_tag_id("sub_tag_75a48w4wsm9fhr6n2eckfysexs")
+        assert looks_like_tag_id("tag_abc123")
+
+    def test_display_names_are_not_mistaken_for_ids(self):
+        from engine.newsletter import looks_like_tag_id
+        for name in ("SpaceX Daily", "Tesla Shorts Time", "DP Pod", ""):
+            assert not looks_like_tag_id(name)
+
+    def test_pinned_id_resolves_without_any_api_lookup(self, monkeypatch):
+        """An id must not depend on the Tags endpoint being reachable."""
+        import engine.newsletter as nl
+        monkeypatch.setattr(nl, "_TAG_ID_CACHE", {})
+        monkeypatch.setattr(nl, "_ALL_TAG_NAMES", [])
+
+        def _no_calls(*a, **k):
+            raise AssertionError("Tags endpoint must not be called")
+
+        monkeypatch.setattr(nl.requests, "get", _no_calls)
+        got = nl._resolve_tag_ids(["sub_tag_75a48w4wsm9fhr6n2eckfysexs"],
+                                  api_key="k")
+        assert got == {"sub_tag_75a48w4wsm9fhr6n2eckfysexs":
+                       "sub_tag_75a48w4wsm9fhr6n2eckfysexs"}
+
+    def test_ids_and_names_resolve_together(self, monkeypatch):
+        import engine.newsletter as nl
+        monkeypatch.setattr(nl, "_TAG_ID_CACHE", {"Tesla Shorts Time": "t1"})
+        monkeypatch.setattr(nl, "_ALL_TAG_NAMES", ["Tesla Shorts Time"])
+        got = nl._resolve_tag_ids(
+            ["Tesla Shorts Time", "sub_tag_abc"], api_key="k")
+        assert got == {"Tesla Shorts Time": "t1", "sub_tag_abc": "sub_tag_abc"}
+
+    def test_the_two_repaired_shows_are_pinned_to_ids(self):
+        import logging
+        logging.disable(logging.CRITICAL)
+        try:
+            from engine.config import load_config
+            from engine.newsletter import looks_like_tag_id
+            for slug in ("spacex", "first_principles"):
+                cfg = load_config(f"shows/{slug}.yaml")
+                tag = (getattr(cfg.newsletter, "tag", "") or "").strip()
+                assert looks_like_tag_id(tag), f"{slug} tag is not an id: {tag!r}"
+        finally:
+            logging.disable(logging.NOTSET)
+
+    def test_other_shows_still_use_readable_names(self):
+        """Names stay where they work — ids are for the surfaces that
+        actually broke, not a blanket rewrite."""
+        import logging
+        logging.disable(logging.CRITICAL)
+        try:
+            from engine.config import load_config
+            from engine.newsletter import looks_like_tag_id
+            cfg = load_config("shows/tesla.yaml")
+            assert not looks_like_tag_id(cfg.newsletter.tag)
+        finally:
+            logging.disable(logging.NOTSET)
