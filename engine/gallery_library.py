@@ -670,7 +670,7 @@ def interleave_by_source(entries: List[dict]) -> List[dict]:
 
 
 def rotate_for_episode(entries: List[dict], episode_seed: Optional[str],
-                       limit: int) -> List[dict]:
+                       limit: int, *, stride: Optional[int] = None) -> List[dict]:
     """Rotate a pool so consecutive episodes draw different clips.
 
     The pool was consumed in fixed committed order, so EVERY episode of
@@ -702,9 +702,19 @@ def rotate_for_episode(entries: List[dict], episode_seed: Optional[str],
     digits = re.findall(r"\d+", seed)
     show_part = re.sub(r"\d+", "", seed)
     show_offset = zlib.crc32(show_part.encode("utf-8"))
+    # The per-episode step. ``stride`` exists because a caller that wants
+    # the FULL rotated pool back (select_broll_clips, so a failed
+    # download can backfill from the remainder) passes limit=len(entries)
+    # — and with the step derived from that limit, index * len % len == 0
+    # cancelled the episode number entirely. Production shipped the SAME
+    # clips on every episode from Ep055 until this fix while the direct
+    # unit tests (which pass the slice width as limit) stayed green. The
+    # stride must be the SLICE WIDTH the consumer will take, never the
+    # pool size.
+    step = int(stride) if stride else max(1, limit)
     if digits:
         index = int(digits[-1])
-        offset = (index * max(1, limit) + show_offset) % len(entries)
+        offset = (index * max(1, step) + show_offset) % len(entries)
     else:
         offset = show_offset % len(entries)
     rotated = entries[offset:] + entries[:offset]
@@ -735,8 +745,12 @@ def select_broll_clips(
         if not entries or limit <= 0:
             return []
         # Rotate first, then walk — so a download failure inside the
-        # rotated slice backfills from the rest of the pool.
-        entries = rotate_for_episode(entries, episode_seed, len(entries))
+        # rotated slice backfills from the rest of the pool. The stride
+        # is the CALLER's slice width (see rotate_for_episode: deriving
+        # it from this full-pool limit cancelled the rotation and shipped
+        # identical clips every episode).
+        entries = rotate_for_episode(entries, episode_seed, len(entries),
+                                     stride=limit)
         cdir = (Path(cache_dir) if cache_dir
                 else _default_cache_dir() / "broll" / show_slug)
         cdir.mkdir(parents=True, exist_ok=True)
