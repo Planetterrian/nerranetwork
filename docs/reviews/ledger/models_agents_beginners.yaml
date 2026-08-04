@@ -137,6 +137,105 @@ reviews:
       ab_listen_required: true
       rationale: 6/10 transcripts echo the prompt's own example.
     agent_cost_usd: 0.0426
+  - date: '2026-07-31'
+    pr: null
+    doc: docs/reviews/models_agents_beginners_review_2026_07_31.md
+    generated_by: grok-4.5
+    summary: Eight of ten episodes still under the 1200-word floor (digest ceiling—escalate, do not re-litigate podcast levers); live tics are the Deep Dive handoff “okay now for my favorite part… under the hood” (8/10), the third-generation closer “stops/less like magic” (5/10), and the opener-menu echo “Here’s something that…change/reshape” (4/10); ep112/ep119 ship without a Closing chapter and ep119’s cold open drops the identity line entirely.
+    scored_prior_predictions:
+    - metric: '"not so scary, right?" / verbatim three-sentence Deep Dive closer (last 10)'
+      verdict: hit
+      evidence: 0/10 in ep110–119 transcripts; replaced by magic/mysterious closer successor
+    - metric: Big Story openers using "Something [adj] just happened", last 10
+      verdict: hit
+      evidence: 0/10; model converged on "Here's something that…change/reshape" (4/10) instead
+    - metric: median _tts.txt words, last 10 eps (June 25 no-regression)
+      verdict: hit
+      evidence: median ≈1089 on ep110–119; still under floor but no further regression
+    - metric: episodes with a "The Big Story" chapter, last 10
+      verdict: hit
+      evidence: still 0/10 as the documented deferral predicted
+    - metric: episodes with a double-spoken closing (guard false-fire)
+      verdict: hit
+      evidence: 0/10 ep110–119; each ep has a single wrap/that's-it-for-today
+    - metric: episodes with repeated boilerplate outro phrases (last 10) after de-seed
+      verdict: miss
+      evidence: still 10/10 — July 30 de-seed never applied; strings are intentional network outro+AI disclosure anyway
+    - metric: median _tts.txt words (last 10) no-regression (July 30)
+      verdict: hit
+      evidence: median ≈1089 vs baseline ~1050; 8/10 still under 1200 floor
+    shipped: []
+    deferred:
+    - 'Chronic under-length: ESCALATE to operator — raise min_digest_words / licensed-knowledge floors / full-text fetch, OR lower min_podcast_words to accept ~1000–1100-word beginner eps. Do NOT re-propose podcast_expand or word-floor pressure (network do_not_retry; June 25 miss + July 30 still under).'
+    - '"The Big Story" chapter missing every episode — dead big-story|biggest news marker; needs network digest-driven / position-aware chapter titles.'
+    - Auto-segment raw-sentence chapter titles (ep110/113/116/119) — same digest-driven-titles lever.
+    - 'MAB pronunciation hook phonetic respellings (SOTA/LoRA/ONNX/…) — 0 transcript impact; align with sister M&A (letter-spellings only) on an A/B slot; landmine #17.'
+    - '"Try this" items ineligible unless the tool is NAMED in the source (July 2; still intermittent).'
+    - Quick Bits ≤3 sentences / every sentence a new fact (July 2 A/B, not applied).
+    - Light "think of it like" / "another way to picture it" analogy-stem overuse (6/10) — only after the three harder tics clear.
+    predictions:
+    - metric: '"okay now for my favorite part of the show" in last-10 transcripts'
+      baseline: 8/10 (ep111,113–119)
+      expected: ≤2/10 in episodes generated after the handoff de-seed merges; no single replacement handoff phrase >3/10
+      verdict: pending
+      evidence: null
+    - metric: Deep Dive closers using "stops feeling like magic|mysterious" or "less like magic" (last 10)
+      baseline: 5/10 (ep113–115,117–118)
+      expected: ≤1/10 post-merge; successor shape (if any) recorded for next pass
+      verdict: pending
+      evidence: null
+    - metric: Big Story openers starting "Here's something that" / "that's going to change" / "could change how you" (last 10)
+      baseline: 4/10 (ep111,114,116,118)
+      expected: 0/10 post menu rewrite; no single new opener stem >3/10
+      verdict: pending
+      evidence: null
+    - metric: episodes whose chapters include Closing (last 10)
+      baseline: 8/10 (ep112, ep119 missing)
+      expected: 10/10 once Closing match on 'that is a wrap' is verified against _tts.txt path
+      verdict: pending
+      evidence: null
+    - metric: cold-open episodes speaking an identity line matching Welcome anchor (last 10)
+      baseline: ep119 = 0 identity line at open (pure hook)
+      expected: every post-merge episode contains 'This is Models and Agents for Beginners' or 'Welcome to Models and Agents for Beginners' once near the open
+      verdict: pending
+      evidence: null
+    - metric: median _tts.txt words, last 10
+      baseline: ~1089 (8/10 below 1200)
+      expected: no regression from prompt de-seeds; length only moves if operator raises digest substrate
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/prompts/mab_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 8/10 transcripts share the same Deep Dive handoff; de-seed by shape + verbatim ban + MEMORY per July 2026 meta-review (never seed a replacement example).
+    - file: shows/prompts/mab_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: June-25 de-seed HIT but spawned the magic/mysterious closer in 5/10 recent eps (July-2 caveat confirmed); ban the successor shape and predict the next tic.
+    - file: shows/prompts/mab_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 4/10 eps now open on the prompt-menu echo 'Here's something that…change/reshape'; third consecutive opener tic from quotable examples — rewrite with zero quotable strings.
+    - file: shows/prompts/mab_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 'July 31 cold-open (`voice_intro_delay: 0.0`) correctly kills the 10s wait, but ep119 dropped identity entirely and lost the Welcome chapter; prompt must require the anchor the YAML already matches on.'
+    - file: shows/prompts/mab_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: June 25 root cause was double-seeding from digest+podcast; keep both prompts aligned when de-seeding.
+    - file: tests/test_mab_quality_pass.py
+      kind: code
+      ab_listen_required: false
+      rationale: Every behavioral prompt fix needs a drift-guard per playbook; pins the three new de-seeds + identity-line requirement.
+    - file: shows/models_agents_beginners.yaml
+      kind: config
+      ab_listen_required: false
+      rationale: ep119 is post-pattern-widen and still has no Closing chapter; guessing more regex synonyms is how this file accreted. Verify the path first (code/config diagnosis, not audio change).
+    agent_cost_usd: 0.1045
 do_not_retry:
   - idea: phonetic respellings / programmatic speech-tag injection on the custom voice
     evidence: landmine #17 — 100% regression rate; reverted May 11 2026. (Note this pass did NOT add any; it recommends REMOVING the stale MAB hook respellings.)
+  - idea: De-seed the intentional network outro / AI-voice-disclosure lines ("this episode used AI voice synthesis of my voice…", "see you tomorrow and if you'd rather watch… find us on YouTube…", "links in the show notes") — July 30 review flagged these as boilerplate tics; they are required show furniture by design (10/10). Only segment handoffs and Deep Dive openers/closers are in scope for de-seed.
+    evidence: flagged 2026-07-31 (Grok review)
