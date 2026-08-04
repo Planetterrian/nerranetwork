@@ -72,23 +72,28 @@ jobs:
         if: ${{ inputs.source == 'pexels' }}
         env:
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+          SHOW: ${{ inputs.show }}
+          MAX_CLIPS: ${{ inputs.max_clips }}
         run: |
           set -euo pipefail
           python scripts/fetch_stock_broll.py \
-            --show "${{ inputs.show }}" \
+            --show "$SHOW" \
             --out-dir /tmp/broll_ready \
-            --max "${{ inputs.max_clips }}"
+            --max "$MAX_CLIPS"
 
       - name: Fetch + auto-cut footage (nasa)
         if: ${{ inputs.source == 'nasa' }}
+        env:
+          QUERY: ${{ inputs.query }}
+          MAX_CLIPS: ${{ inputs.max_clips }}
         run: |
           set -euo pipefail
-          if [ -z "${{ inputs.query }}" ]; then
+          if [ -z "$QUERY" ]; then
             echo "::error::the nasa source needs a query (e.g. 'Isolated Launch Views')"
             exit 1
           fi
           python scripts/fetch_nasa_broll.py \
-            --query "${{ inputs.query }}" \
+            --query "$QUERY" \
             --max 8 \
             --out-dir /tmp/broll_src
           python scripts/cut_broll_segments.py /tmp/broll_src/*.mp4 \
@@ -101,7 +106,7 @@ jobs:
           mkdir -p /tmp/broll_ready
           count=0
           for f in /tmp/broll_cuts/*.mp4; do
-            [ "$count" -ge "${{ inputs.max_clips }}" ] && break
+            [ "$count" -ge "$MAX_CLIPS" ] && break
             cp "$f" /tmp/broll_ready/
             count=$((count + 1))
           done
@@ -114,6 +119,7 @@ jobs:
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           R2_GALLERY_BUCKET: ${{ secrets.R2_GALLERY_BUCKET }}
           R2_GALLERY_PUBLIC_BASE_URL: ${{ secrets.R2_GALLERY_PUBLIC_BASE_URL }}
+          SHOW: ${{ inputs.show }}
         run: |
           set -euo pipefail
           shopt -s nullglob
@@ -122,8 +128,8 @@ jobs:
             echo "::error::no clips survived fetching/cutting — nothing to publish"
             exit 1
           fi
-          echo "Publishing ${#clips[@]} clip(s) to the ${{ inputs.show }} pool"
-          python scripts/build_broll_pool.py --show "${{ inputs.show }}" "${clips[@]}"
+          echo "Publishing ${#clips[@]} clip(s) to the $SHOW pool"
+          python scripts/build_broll_pool.py --show "$SHOW" "${clips[@]}"
 
       - uses: ./.github/actions/safe-commit-push
         with:
