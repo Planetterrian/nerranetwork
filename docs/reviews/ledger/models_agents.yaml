@@ -235,4 +235,86 @@ reviews:
       ab_listen_required: false
       rationale: Drift-guard the config floor and the two prompt bans so a later edit cannot silently drop them (pattern from test_models_agents_quality_pass.py / network quality passes).
     agent_cost_usd: 0.1151
+  - date: '2026-08-04'
+    pr: null
+    doc: docs/reviews/models_agents_review_2026_08_04.md
+    generated_by: grok-4.5
+    summary: Prior length and teaser-tic predictions missed again because Aug-2 levers never shipped (7/10 scripts still under 1500w; “keep an eye on” still 6/10); chapters remain brittle (ep127 first marker at 4min, ep128 lost Under the Hood); new UTH body tic “Everyone talks about…” is 8/10 — escalate length to an operator decision and re-propose only the never-applied teaser/UTH de-seeds plus a no-A/B chapter-marker catch.
+    scored_prior_predictions:
+    - metric: episodes below min_podcast_words (1500) in last 10
+      verdict: miss
+      evidence: 7/10 ep122–131 still under 1500 (worst ep127=1099, ep124=1135); min_digest_words still 1300 — Aug-2 1600 lever never applied
+    - metric: '"keep an eye on" / "Tomorrow keep an eye on" / "Before we go, keep an eye on" as teaser opener, last 10'
+      verdict: miss
+      evidence: 6/10 still (ep122–127 verbatim); ep128–131 drifted to Before-we-go without the phrase; Aug-2 shape de-seed never applied
+    - metric: 'successor teaser-opener tic: any single new opener phrase in >=6/10 teasers (convergence watch)'
+      verdict: hit
+      evidence: '"Before we go" at 5/10 (ep126,128–131) — under the 6/10 threshold; watch next pass'
+    - metric: spoken episode-number continuity callbacks ("episode N" / "EpN") in last 10 Whisper/_tts.txt
+      verdict: hit
+      evidence: 0 episode-number callbacks in ep122–131; framing is yesterday/prior-episode/tracked-arc instead
+    shipped: []
+    deferred:
+    - 'OPERATOR DECISION (escalated after two missed length predictions — July-19 digest-min raise miss + Aug-2 min_digest_words=1600 miss; do not re-file 1600 a third time without an explicit choice): (A) raise min_digest_words to 1600, (B) Under-the-Hood licensed-knowledge sentence/fact floor in digest prompt, or (C) accept ~1200–1400w natural length and lower min_podcast_words. Never re-enable podcast_expand_below_target.'
+    - Digest-driven / position-aware mid-section chapter titles (carried; ep125/130 ellipsis auto-titles, ep127 first chapter at 240s, ep128 lost UTH before marker patch — markers remain brittle)
+    - Under the Hood licensed-knowledge sentence/fact floor in digest prompt — operator option B
+    - Accept ~1200–1400w natural length and lower min_podcast_words — operator option C
+    - Signature opener "okay let's pop the hood on" (8/10) — intentional chapter signal; revisit only with A/B evidence
+    - 'Network-wide: blog/RSS transcript sourced from pre-pronunciation text or Whisper (LoRA/RAG/JAXA class leaks) — collision-unsafe for lone-token restore'
+    - July-2 selection rebalance A/B (lab product/feature announcements outrank preprints; arXiv items <= 40%) — still not applied
+    - Recap must synthesize, not splice dailies' sentences (Sunday weekly_summary_segment) — carried
+    - OP3 7d 105 vs prior ~170 plateau — recovering from Aug-2 88 trough; watch one more cycle before product changes
+    predictions:
+    - metric: '"keep an eye on" as Tomorrow Teaser / before-we-go opener, last 10 post-merge'
+      baseline: 6/10 (ep122–127)
+      expected: <=2/10 in episodes generated after teaser shape-ban merges
+      verdict: pending
+      evidence: null
+    - metric: '"Everyone talks about" as Under-the-Hood / deep-dive opener, last 10 post-merge'
+      baseline: 8/10 (ep124–131)
+      expected: <=2/10 after UTH shape-ban merges
+      verdict: pending
+      evidence: null
+    - metric: 'successor UTH-opener tic: any single new contrast-cliché opener in >=6/10 deep-dives (convergence watch)'
+      baseline: n/a (watch)
+      expected: 0 phrases at >=6/10; if a replacement converges (e.g. "Most teams still…", "The common story is…"), ban by shape next pass
+      verdict: pending
+      evidence: null
+    - metric: 'successor teaser-opener tic: "Before we go" (with or without keep-an-eye) in >=6/10 teasers'
+      baseline: 5/10 (ep126,128–131)
+      expected: <=5/10 sustained; if it hits >=6/10, shape-ban next pass
+      verdict: pending
+      evidence: null
+    - metric: episodes with an Under the Hood chapter when a deep-dive is present, last 10
+      baseline: 8/10 (ep128 missing UTH chapter despite deep-dive; ep127 sparse/no UTH marker)
+      expected: '>=9/10 after section_markers += everyone talks about (ep128-class caught)'
+      verdict: pending
+      evidence: null
+    - metric: spoken episode-number continuity callbacks in last 10
+      baseline: 0 (ep122–131)
+      expected: 0 sustained after explicit podcast-side ban
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/prompts/models_agents_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: '"keep an eye on" still opens 6/10 teasers (ep122–127); July-19 and Aug-2 shape de-seeds never applied. Meta-rule: de-seed by shape + verbatim ban, no quotable replacement menu; successor "Before we go" already at 5/10 is on the watch list.'
+    - file: shows/prompts/models_agents_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 'New third-generation tic: "Everyone talks about…" is the UTH body opener in 8/10 recent episodes and is also why ep127/128 lost the pop-the-hood chapter signal. Shape-ban with no replacement menu; keep signature pop-the-hood alone.'
+    - file: shows/prompts/models_agents_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: ep122–131 already hit 0 episode-number callbacks, but the Aug-2 podcast-side ban never landed. Belt-and-suspenders so the ep120 regression cannot return; matches digest continuity budget.
+    - file: shows/models_agents.yaml
+      kind: config
+      ab_listen_required: false
+      rationale: ep128 deep-dive opened "Everyone talks about MCP…" with no pop-the-hood → zero UTH chapter. ep127 same shape. Adding the live formula phrase to section_markers restores the chapter without changing audio. Does not replace deferred digest-driven titles.
+    - file: tests/test_models_agents_quality_pass.py
+      kind: code
+      ab_listen_required: false
+      rationale: Drift-guard the two prompt bans, the UTH marker alternate, and the no-podcast-expand / digest-floor floor so a later edit cannot silently drop them (pattern from existing quality-pass tests).
+    agent_cost_usd: 0.1256
 do_not_retry: []
