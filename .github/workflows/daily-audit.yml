@@ -138,6 +138,7 @@ jobs:
       - name: RSS Feed Freshness Health Check
         shell: python3 {0}
         run: |
+          import os
           import sys
           import xml.etree.ElementTree as ET
           from email.utils import parsedate_to_datetime
@@ -160,11 +161,20 @@ jobs:
               # not page the daily audit (both are daily shows).
               "spacex_podcast.rss": ("SpaceX Daily", 96),
               "dp_pod_podcast.rss": ("The DP Pod", 96),
+              # Monday-only — a full week between episodes, so the limit
+              # matches the dashboard's Monday cadence band, not the daily 96.
+              "offshore_north_podcast.rss": ("Offshore North", 240),
           }
 
           now = datetime.now(timezone.utc)
           stale = []
           for rss_file, (name, max_hours) in FEEDS.items():
+              # A show registered before its first episode has no feed file
+              # yet. That is pre-launch, not staleness — skipping keeps the
+              # audit from paging the operator every day until Ep1 ships.
+              if not os.path.exists(rss_file):
+                  print(f"{name}: no feed yet (pre-launch) — skipped")
+                  continue
               try:
                   tree = ET.parse(rss_file)
                   items = tree.getroot().findall(".//item")
