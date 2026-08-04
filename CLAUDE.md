@@ -53,7 +53,7 @@ and the Shorts motion A/B: [`docs/funnel.md`](docs/funnel.md).
 
 ## Project Overview
 
-Automated daily podcast generation system running 15 shows via a unified
+Automated daily podcast generation system running 16 shows via a unified
 `run_show.py` runner + per-show YAML configs, plus 4 legacy standalone scripts
 (deprecated — see note below). Shows use **Grok TTS** (`engine.tts.grok_speak_chunk`)
 and (where enabled) post to X/Twitter via `engine/publisher.post_to_x()`.
@@ -75,6 +75,7 @@ and (where enabled) post to X/Twitter via `engine/publisher.post_to_x()`.
 | SpaceX Daily | — | `shows/spacex.yaml` | Daily | — (X disabled) | Grok TTS (custom) |
 | The DP Pod | — | `shows/dp_pod.yaml` | Daily | — (X disabled) | Grok TTS (two-voice: Patrick + Dan) |
 | The Age of AI | — | `shows/age_of_ai.yaml` | When an interview is ready (Nerra Voices pipeline, NOT run_show) | — (X disabled) | Real guest phone audio + Mira narration (Grok voice `ara`) |
+| Offshore North | — | `shows/offshore_north.yaml` | Monday | — (X disabled) | Grok TTS (Dan `0vscf8u8yrxc`, single-narrator) |
 
 > Weekly-summary segment (July 2026): shows on a daily cadence with
 > `weekly_summary_segment: true` in their YAML run a NORMAL daily episode on

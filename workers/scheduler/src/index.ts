@@ -30,6 +30,7 @@ const SLOTS: Array<[number, number, string, string | null]> = [
   [9, 16, "spacex",                   null],
   [9, 37, "finansy_prosto",          "monday"],
   [9, 46, "dp_pod",                   null],
+  [10, 1, "offshore_north",          "monday"],
 ];
 
 function dayFilterPasses(filter: string | null, now: Date): boolean {
