@@ -27,11 +27,11 @@ def _show_count() -> int:
     return len(generate_html.NETWORK_SHOWS)
 
 
-def test_network_has_fifteen_shows():
+def test_network_has_sixteen_shows():
     """When this fails you've added/removed a show — update the
     hardcoded-count surfaces listed in the other tests, then bump this.
-    (15 as of July 2026: The Age of AI joined the network.)"""
-    assert _show_count() == 15
+    (16 as of August 2026: Offshore North joined the network.)"""
+    assert _show_count() == 16
 
 
 def test_no_stale_count_phrases_in_templates():

@@ -83,6 +83,10 @@ ENGLISH_SHOWS: dict[str, dict[str, str]] = {
         "spoken_name": "The Do Positive Pod",
         "tagline": "good news in science and tech, plus one concrete action you can take",
     },
+    "offshore_north": {
+        "spoken_name": "Offshore North",
+        "tagline": "offshore ocean racing explained every Monday, with a Canadian angle",
+    },
 }
 
 # Fixed rotation order (insertion order of the dict above).

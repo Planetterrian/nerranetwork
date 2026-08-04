@@ -128,6 +128,7 @@ _PUB_AGE_THRESHOLDS_H: Dict[str, Optional[tuple]] = {
     "env_intel": (192, 240),        # Monday
     "finansy_prosto": (192, 240),   # Monday
     "privet_russian": (192, 240),   # Monday
+    "offshore_north": (192, 240),   # Monday
     "age_of_ai": None,              # on-demand interviews
 }
 _PUB_AGE_DEFAULT_H = (48, 72)

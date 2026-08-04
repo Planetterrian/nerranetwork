@@ -82,6 +82,13 @@ def test_promo_text_has_no_ampersand():
 
 
 def test_new_shows_appended_not_reordered():
-    """first_principles + dp_pod must be at the end so prior rotations stay stable."""
+    """New shows append at the end so prior rotations stay stable.
+
+    Asserted as relative order rather than a pinned tail: the tail moves
+    every time a show joins (offshore_north, Aug 2026), but the order the
+    earlier shows were appended in must never change.
+    """
     assert ENGLISH_ORDER.index("spacex") < ENGLISH_ORDER.index("first_principles")
-    assert ENGLISH_ORDER[-1] == "dp_pod"
+    assert ENGLISH_ORDER.index("first_principles") < ENGLISH_ORDER.index("dp_pod")
+    assert ENGLISH_ORDER.index("dp_pod") < ENGLISH_ORDER.index("offshore_north")
+    assert ENGLISH_ORDER[-1] == "offshore_north"

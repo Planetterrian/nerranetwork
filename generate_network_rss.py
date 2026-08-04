@@ -19,6 +19,7 @@ FEEDS = [
     "modern_investing_podcast.rss",
     "unintended_consequences_podcast.rss",
     "dp_pod_podcast.rss",
+    "offshore_north_podcast.rss",
 ]
 
 MAX_EPISODES = 50

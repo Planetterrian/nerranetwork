@@ -67,7 +67,10 @@ class TestNetworkDiscoverySurfaces:
 
         assert "first_principles" in ENGLISH_SHOWS
         assert "dp_pod" in ENGLISH_SHOWS
-        assert ENGLISH_ORDER[-2:] == ["first_principles", "dp_pod"]
+        # Both joined in July 2026 and must keep the order they were
+        # appended in. Not pinned to the tail — later shows append after
+        # them (offshore_north, Aug 2026) without disturbing this pair.
+        assert ENGLISH_ORDER.index("first_principles") < ENGLISH_ORDER.index("dp_pod")
 
     def test_promo_includes_surface_sentence(self):
         from engine.network_promo import (
