@@ -126,6 +126,56 @@ reviews:
         evidence: null
     agent_cost_usd: null
 
+  - date: '2026-08-01'
+    pr: null
+    doc: docs/reviews/tesla_review_2026_08_01.md
+    generated_by: grok-4.5
+    summary: July-2 brand/comma fixes held, but 6/10 episodes still speak the malformed closer “TSLA closed at down…”, every recent script remains under the 2000-word floor despite digest-side expand, and the tomorrow-teaser/CTA pools have collapsed into single tics.
+    scored_prior_predictions:
+    - metric: episodes whose spoken intro says "Tesla Shorts Time Daily"
+      verdict: hit
+      evidence: Ep550-559 snapshot phrase list has identity as "i'm patrick in vancouver"; no "Daily" / "Tesla Shorts Time Daily" recurrence in last 10.
+    - metric: comma-number hook garbles ("dollars,990"-class) in new _tts.txt
+      verdict: hit
+      evidence: No dollars,NNN / zeroth / comma-number class in last-10 snapshot phrases; formatter fix holding.
+    shipped: []
+    deferred:
+    - 'Operator length decision (ESCALATE — third miss): (a) full-text fetch for primary Tesla feeds, (b) accept grok-4.3 plateau and lower min_podcast_words + RSS ''15 focused minutes'' to match ~11-12 min reality, or (c) hard First Principles word floor on the digest. Do not re-enable podcast_expand_below_target.'
+    - Digest-driven chapter titles + engine/chapters.py long-Introduction auto-split when editorial markers alone hit min_chapters (network-scoped; June-10/20/July-2 carry).
+    - Narrative-tracker curated status lag — scripts/update_tesla_narrative.py operator curation.
+    - 'July-2 A/B not applied: recap hardening (one story once; no Title-Case headline readbacks / patent-hex minutiae); dateline-filler ban; counterpoint enforcement; SpaceX/xAI corporate never as Tesla hook/lead.'
+    - June-23 double-publish forensics (operator).
+    - RSS listing minute-count copy — only after operator length decision so store text is not edited twice.
+    predictions:
+    - metric: episodes whose spoken closer matches /closed at (up|down)/i in last-10 Whisper transcripts or _tts.txt
+      baseline: 6/10 (snapshot phrase "tsla closed at down")
+      expected: 0/10 after _pick_closing harden merges
+      verdict: pending
+      evidence: null
+    - metric: episodes containing verbatim teaser opener "keep an eye on" in last-10 transcripts
+      baseline: 8/10
+      expected: ≤2/10; successor tic (if any) named in next ledger score
+      verdict: pending
+      evidence: null
+    - metric: single CTA bigram (e.g. "rating or review") frequency in last-10 closers
+      baseline: 6/10 "a rating or review"
+      expected: ≤3/10 for any one CTA bigram after closer-tail rotation
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/hooks/tesla.py
+      kind: code
+      ab_listen_required: true
+      rationale: 'Snapshot: ''tsla closed at down'' in 6/10 shipped transcripts — listener-facing garble in the final seconds of the show. Same function also explains the 6/10 ''a rating or review'' CTA collapse.'
+    - file: shows/prompts/tesla_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 8/10 episodes open the teaser with the same 'keep an eye on' tic — dead rotation. De-seed by shape + verbatim ban per playbook (no quotable exemplar that becomes the next tic).
+    - file: tests/test_tesla_quality_pass.py
+      kind: code
+      ab_listen_required: false
+      rationale: Drift-guard pattern from prior Tesla quality passes; locks P0 closer fix and CTA rotation without touching audio settings.
+    agent_cost_usd: 0.0902
 do_not_retry:
   - idea: phonetic respellings or programmatic speech-tag injection
     evidence: 100% regression rate on custom voice kdif6sqjcyiq (May 2026,
