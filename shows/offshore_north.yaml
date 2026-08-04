@@ -1,0 +1,340 @@
+# Offshore North — the Nerra Network's weekly offshore ocean racing show.
+#
+# Weekly, Mondays 06:00 Pacific. Single host: Dan, on his
+# custom Grok voice (the same voice used for the DAN turns on dp_pod).
+# ~12 minutes. The show follows Canada Ocean Racing's campaign toward the
+# Vendée Globe 2028 as a spine story and explains the wider IMOCA world
+# around it for a keen-but-not-expert English-speaking audience.
+#
+# Design notes live in docs/offshore_north_show_bible.md.
+name: Offshore North
+slug: offshore_north
+description: "The weekly English-language guide to offshore ocean racing — the first Canadian campaign to the Vendée Globe, the wider IMOCA fleet, and one thing explained properly every week."
+
+# Already a weekly show, so no Sunday week-in-review branch. Do NOT add
+# this slug to DAILY_SHOWS in tests/test_schedule.py.
+weekly_summary_segment: false
+
+# The beat is genuinely sparse — offshore racing has real dead weeks (the
+# whole of August 2026 sits between the Vendée Arctique and The Ocean Race
+# Atlantic). A weekly cadence over seven days of news usually clears this
+# comfortably; the floor is deliberately low so a quiet week ships with an
+# expanded Plain Sailing segment rather than skipping.
+min_articles: 4
+min_articles_skip: 2
+
+sources:
+  # ---- Tier 1: the campaign itself (primary, low volume, highest value) ----
+  - url: "https://www.canadaoceanracing.com/feed/"
+    label: Canada Ocean Racing
+  - url: "https://www.canadaoceanracing.com/category/news/feed/"
+    label: Canada Ocean Racing — News
+
+  # ---- Tier 2: class + organizers ----
+  # NOTE: imoca.org and theoceanrace.com publish NO RSS feed (verified
+  # August 2026 — custom JS front-ends, no autodiscovery, /feed 404s).
+  # They are covered by the Google News queries below and by
+  # web_search_queries, which is the only route to them. Do not "fix"
+  # their absence by inventing a feed URL.
+  - url: "https://www.vendeeglobe.org/en/wall/rss.xml"
+    label: Vendée Globe (official)
+  # Vendée Globe French root feed as a fallback — the /en/ locale variant
+  # above is Drupal-generated and its language has not been confirmed.
+  # Drop one of the two after the first week of real fetches.
+  - url: "https://www.vendeeglobe.org/wall/rss.xml"
+    label: Vendée Globe (root feed)
+
+  # ---- Tier 3: trade + insider ----
+  # Tip & Shaft now publishes as Sailorz ("Sailorz by Tip & Shaft").
+  # The site root is French; /en/ is the English edition.
+  - url: "https://sailorz.com/en/feed/"
+    label: "Sailorz (Tip & Shaft, English)"
+
+  # ---- Tier 4: daily aggregation ----
+  - url: "https://www.sailingscuttlebutt.com/feed/"
+    label: Scuttlebutt Sailing News
+  - url: "https://www.sail-world.com/rss/"
+    label: "Sail-World (worldwide racing)"
+  - url: "https://www.sail-world.com/Europe/rss/"
+    label: "Sail-World Europe (racing)"
+
+  # ---- Tier 5: magazines / technical depth ----
+  - url: "https://www.seahorsemagazine.com/?format=feed&type=rss"
+    label: Seahorse Magazine
+  - url: "https://www.yachtingworld.com/news/feed"
+    label: Yachting World — News
+
+  # ---- Tier 6: Canadian angle ----
+  # Canadian Yachting was renamed Canadian Boating; canadianyachting.ca
+  # 302-redirects here. VERIFIED August 2026: the site-wide /feed/ returns
+  # valid RSS ("Canadian Boating"). The category feeds
+  # (/category/racing/feed/, /category/sailing-news/feed/) did NOT — they
+  # served HTML on the same check, so they are deliberately not used here.
+  # The keyword filter does the narrowing instead.
+  - url: "https://canadianboating.ca/feed/"
+    label: Canadian Boating
+
+  # ---- Tier 7: Google News backfill (the only route to IMOCA + The Ocean
+  # Race, which have no feeds of their own). Quote multi-word entities or
+  # the results are noise.
+  - url: "https://news.google.com/rss/search?q=%22Canada+Ocean+Racing%22+OR+%22Scott+Shawyer%22&hl=en-US&gl=US&ceid=US:en"
+    label: "Google News — Canada Ocean Racing"
+  - url: "https://news.google.com/rss/search?q=%22IMOCA%22+%28offshore+OR+%22Vend%C3%A9e%22+OR+foiling%29&hl=en-US&gl=US&ceid=US:en"
+    label: "Google News — IMOCA class"
+  - url: "https://news.google.com/rss/search?q=%22Vend%C3%A9e+Globe%22&hl=en-US&gl=US&ceid=US:en"
+    label: "Google News — Vendée Globe"
+  - url: "https://news.google.com/rss/search?q=%22The+Ocean+Race%22&hl=en-US&gl=US&ceid=US:en"
+    label: "Google News — The Ocean Race"
+  - url: "https://news.google.com/rss/search?q=%22Route+du+Rhum%22+OR+%22D%C3%A9fi+Azimut%22&hl=en-US&gl=US&ceid=US:en"
+    label: "Google News — Route du Rhum / Défi Azimut"
+  - url: "https://news.google.com/rss/search?q=%22offshore+racing%22+sailing+skipper+OR+transatlantic&hl=en-US&gl=US&ceid=US:en"
+    label: "Google News — offshore racing"
+
+# Web search is load-bearing on this show, not a supplement: the two most
+# important non-campaign sources (imoca.org, theoceanrace.com) are only
+# reachable this way.
+web_search_queries:
+  - "Canada Ocean Racing Scott Shawyer this week"
+  - "IMOCA class news this week"
+  - "The Ocean Race Atlantic news"
+  - "Vendée Globe 2028 qualification news"
+  - "Route du Rhum IMOCA news"
+  - "IMOCA new boat launch foils"
+  - "offshore racing sponsorship budget IMOCA campaign"
+  - "Tip and Shaft IMOCA English"
+
+keywords:
+  # Campaign + Canadian angle
+  - Canada Ocean Racing
+  - Scott Shawyer
+  - Emira
+  - Be Water Positive
+  - Canadian skipper
+  - Collingwood
+  - Georgian Bay
+  - Nick Moloney
+  - Alex Thomson
+  - Pip Hare
+  # Class + governance
+  - IMOCA
+  - IMOCA Globe Series
+  - Antoine Mermod
+  - class rule
+  - box rule
+  - qualification
+  - qualifying race
+  - wild card
+  - Globe Series points
+  # Races
+  - Vendée Globe
+  - Vendée Arctique
+  - The Ocean Race
+  - Ocean Race Atlantic
+  - Route du Rhum
+  - Défi Azimut
+  - Transat Jacques Vabre
+  - Retour à la Base
+  - Fastnet
+  - Les Sables d'Olonne
+  - Lorient
+  - Saint-Malo
+  - Guadeloupe
+  # Boats + technical
+  - foil
+  - foiling
+  - foiler
+  - canting keel
+  - wing mast
+  - hydrogenerator
+  - dismasted
+  - dismasting
+  - jury rig
+  - refit
+  - Verdier
+  - VPLP
+  - Antoine Koch
+  - Finot-Conq
+  - CDK Technologies
+  - Multiplast
+  - Lorima
+  - monohull
+  - Class40
+  - Ultim
+  - Ocean Fifty
+  # Racing + navigation
+  - weather routing
+  - Antarctic Exclusion Zone
+  - ice gate
+  - Southern Ocean
+  - Point Nemo
+  - doldrums
+  - solo sailing
+  - double-handed
+  - transatlantic
+  - circumnavigation
+  - On Board Reporter
+  - 24-hour record
+  # Skippers most likely to drive the week's news
+  - Boris Herrmann
+  - Malizia
+  - Sam Goodchild
+  - Ambrogio Beccaria
+  - Charlie Dalin
+  - Yoann Richomme
+  - Sébastien Simon
+  - Thomas Ruyant
+  - Kojiro Shiraishi
+  - Conrad Colman
+  - Violette Dorange
+  - Justine Mettraux
+  - Francesca Clapcich
+  - Jean Le Cam
+
+multilingual:
+  enabled: false
+  auto: false
+  languages: []
+
+llm:
+  provider: xai
+  system_prompt_file: shows/prompts/offshore_north_system.txt
+  digest_prompt_file: shows/prompts/offshore_north_digest.txt
+  podcast_prompt_file: shows/prompts/offshore_north_podcast.txt
+  # Low temperature on the digest: this show's single unforgivable error is
+  # a confidently-stated wrong fact about a boat, a skipper, or a date.
+  digest_temperature: 0.4
+  podcast_temperature: 0.7
+  max_tokens: 4500
+  podcast_max_tokens: 8000
+  # ONE length target: 10-15 minutes ≈ 1,500-2,200 words at ~150 wpm.
+  # 1,600 sits inside that band so the expand-retry fires on genuinely
+  # short episodes, not on every good 1,550-word one.
+  min_podcast_words: 1600
+  min_podcast_word_floor: 1150
+  # Network-wide July 2026 policy: length is attacked on the DIGEST side
+  # only — the script can never say more than the brief gives it, and
+  # podcast-side expansion pads by paraphrase-duplication. A weekly show
+  # over seven days of news needs a fat brief.
+  digest_expand_below_target: true
+  min_digest_words: 1300
+  podcast_expand_below_target: false
+
+tts:
+  # Dan's custom Grok voice — the same voice_id used for the DAN turns in
+  # dp_pod's dialogue mode. Single-narrator here, so NO dialogue_mode.
+  voice_id: 0vscf8u8yrxc
+  language_code: en
+  # Subtle energy lift, matched to dp_pod's tuned value. A/B-listen before
+  # keeping (landmine #17) — drop to 1.0 if it introduces artifacts on
+  # French proper nouns, which this show is full of.
+  speed: 1.02
+
+audio:
+  # No dedicated theme at launch — ships as a clean voice-only briefing.
+  # When a track exists, point this at assets/music/offshore_north.mp3 and
+  # the network's standard mix parameters apply from _defaults.yaml.
+  music_file: null
+
+publishing:
+  rss_file: offshore_north_podcast.rss
+  rss_title: "Offshore North"
+  rss_description: "Offshore ocean racing, explained weekly for English-speaking fans — with a Canadian angle. Every Monday: what Canada Ocean Racing did on the road to the Vendée Globe and what it actually means, the week in the IMOCA fleet and the wider offshore world, and one concept explained properly for people who love this sport without living inside it. Sources in every episode. No hype, no play-by-play."
+  rss_link: https://nerranetwork.com/offshore-north.html
+  rss_author: "Nerra Network"
+  rss_email: patrick@planetterrian.com
+  rss_image: https://nerranetwork.com/assets/covers/offshore-north.jpg
+  rss_category: Sports
+  rss_subcategory: "Wilderness"
+  # Apple allows a primary + secondary category; the second gets its own
+  # category page. Sports is the home category; Places & Travel widens
+  # reach to the adventure/expedition audience.
+  rss_category2: "Society & Culture"
+  rss_subcategory2: "Places & Travel"
+  rss_keywords: "offshore sailing, ocean racing, IMOCA, Vendee Globe, Canada Ocean Racing, Scott Shawyer, The Ocean Race, Route du Rhum, solo sailing, foiling, yacht racing, Canadian sailing"
+  guid_prefix: offshorenorth
+  base_url: https://nerranetwork.com
+  audio_subdir: digests/offshore_north
+  summaries_json: digests/offshore_north/summaries_offshore_north.json
+  summaries_podcast_name: offshore_north
+  player_html: offshore-north.html
+  summaries_html: offshore-north-summaries.html
+  # RSS + site page only at launch (operator decision).
+  x_enabled: false
+  x_env_prefix: ""
+  host_name: Dan
+
+episode:
+  prefix: Offshore_North
+  filename_pattern: "{prefix}_Ep{num:03d}_{date:%Y%m%d}.mp3"
+  output_dir: digests/offshore_north
+  mp3_glob: "Offshore_North_Ep*.mp3"
+
+chapters:
+  enabled: true
+  # Network chapter lessons baked in at launch:
+  #  - positional `where` anchors on Introduction and Sign-Off (the
+  #    Tesla/EI/PT orphan-chapter class);
+  #  - Sign-Off listed BEFORE the body markers (EI June-11 ordering rule);
+  #  - every announce-anchored marker uses the exact phrasings the podcast
+  #    prompt REQUIRES the host to speak, so a passing mention earlier in
+  #    the episode cannot steal the marker (dp_pod Ep001 "The Lever" bug).
+  section_markers:
+    # The Introduction pattern must cover EVERY greeting variant in
+    # engine/intros.py::_SHOW_PERSONALITIES['offshore_north']['greetings'].
+    # Caught at install: "Thanks for tuning in to" was missing, which would
+    # have shipped ~1 episode in 5 with no Introduction chapter (the EI
+    # June-17 orphan-chapter class). Add here whenever a greeting is added.
+    - pattern: "(?:[Ww]elcome (?:back )?to|[Tt]his is|[Gg]lad you.?re here on|[Gg]ood to have you aboard|[Tt]hanks for tuning in to) Offshore North"
+      title: "Introduction"
+      where: start
+    - pattern: "[Ff]air winds"
+      title: "Sign-Off"
+      where: end
+    - pattern: "on the Canadian boat|over to the Canadian boat|to the Canadian boat"
+      title: "The Canadian Boat"
+    - pattern: "out in the fleet|now,? the fleet|rest of the fleet this week"
+      title: "The Fleet"
+    - pattern: "time for Plain Sailing|brings us to Plain Sailing|now for Plain Sailing"
+      title: "Plain Sailing"
+    - pattern: "and the countdown|before we go,? the countdown|the countdown stands"
+      title: "The Countdown"
+
+slow_news:
+  # Offshore racing has genuine dead weeks. On a thin week the show expands
+  # Plain Sailing from this library instead of padding the news — see the
+  # explainer bank in the show bible.
+  enabled: true
+  library_file: shows/segments/offshore_north.json
+  max_segments: 1
+  cooldown_days: 120
+
+newsletter:
+  enabled: false
+  tag: "Offshore North"
+  short_label: "Offshore North"
+  emoji: "⛵"
+
+content_tracking:
+  section_patterns: {}
+
+youtube:
+  # Off at launch (RSS + site page only). image_provider is pre-set to grok
+  # so a future one-line enable doesn't trip the drift guard
+  # (tests/test_config.py::test_youtube_enabled_shows_use_grok_image_provider).
+  enabled: false
+  channel: en
+  category_id: 17               # Sports
+  image_provider: grok
+  # Required >=3 even while YouTube is disabled
+  # (tests/test_visual_assets.py::test_every_show_yaml_has_image_queries).
+  image_queries:
+    - foiling ocean racing yacht at speed in heavy seas
+    - solo sailor at the helm of a racing yacht at dawn
+    - racing yacht bow wave and spray in the southern ocean
+    - carbon fibre racing yacht in a boatyard refit shed
+    - nautical chart with dividers and a weather routing plot
+
+# Spotify / Apple catalog IDs — fill in after the show is submitted and
+# accepted. Leaving them unset simply disables that show's analytics pull.
+# spotify_show_id:
+# apple_show_id:

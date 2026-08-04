@@ -59,6 +59,13 @@ on:
     # The DP Pod: Daily at 9:46 UTC. Two-host dialogue show (Dan + Patrick).
     # Fresh episode all 7 days — no Sunday recap (operator decision).
     - cron: '46 9 * * *'
+    # Offshore North: Weekly on Monday at 10:01 UTC.
+    # Offshore ocean racing, single host (Dan). The "past 7 days"
+    # window ends Sunday, so the cron day and the news window are
+    # coupled - do not move this without changing the prompt's
+    # window language. Races start and finish at weekends, so Monday
+    # is also the freshest editorial day for this beat.
+    - cron: '1 10 * * 1'
 
   workflow_dispatch:
     inputs:
@@ -82,6 +89,7 @@ on:
           - spacex
           - dp_pod
           - age_of_ai
+          - offshore_north
           - all
       test_mode:
         description: 'Dry run: fetch + digest only (no TTS, no R2 upload, no RSS, no X, no commit)'
@@ -157,6 +165,7 @@ jobs:
                   "16 9 * * *":       ("spacex",                   None),
                   "37 9 * * 1":       ("finansy_prosto",          "monday"),
                   "46 9 * * *":       ("dp_pod",                   None),
+                  "1 10 * * 1":       ("offshore_north",          "monday"),
               }
 
               shows = []

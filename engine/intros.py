@@ -34,6 +34,55 @@ logger = logging.getLogger(__name__)
 #   closings    — pool of closing block variations
 
 _SHOW_PERSONALITIES: dict[str, dict[str, Any]] = {
+    "offshore_north": {
+        "host": "Dan",
+        "show_name": "Offshore North",
+        "greetings": [
+            "Welcome to",
+            "Welcome back to",
+            "Good to have you aboard",
+            "Thanks for tuning in to",
+            "Glad you're here on",
+        ],
+        "openers": [
+            "episode {ep}. I'm Dan. It's {date}.",
+            "episode {ep}, your week in offshore racing. I'm Dan \u2014 it's {date}.",
+            "episode {ep}. It's {date}, and I'm Dan.",
+        ],
+        "framings": [
+            "Here's the week on the water.",
+            "Let's get into the week in offshore racing.",
+            "A lot moved in the fleet this week.",
+            "Seven days of offshore racing, and what it all means.",
+            "From Georgian Bay to the Bay of Biscay \u2014 here's the week.",
+        ],
+        # EVERY variant MUST contain "fair winds" and MUST end with the fixed
+        # final line, or the Sign-Off chapter marker in
+        # shows/offshore_north.yaml will not latch and the episode ships with
+        # no closing chapter (the EI/OV/MAB orphan-closing class).
+        "closings": [
+            (
+                "That's Offshore North for this week. "
+                "Every source is linked in the episode notes if you want to read further. "
+                "If the show helps you follow this sport, a rating on Apple Podcasts or "
+                "Spotify genuinely helps other people find it. "
+                "I'm Dan. Fair winds \u2014 and eyes on the horizon."
+            ),
+            (
+                "And that's the week in offshore racing. "
+                "Sources are in the episode notes, as always. "
+                "Send this to the one other person you know who follows this sport \u2014 "
+                "there aren't many of us. "
+                "I'm Dan. Fair winds \u2014 and eyes on the horizon."
+            ),
+            (
+                "That's your week in offshore racing. "
+                "Full sources in the episode notes. "
+                "I'll see you next Monday. "
+                "I'm Dan. Fair winds \u2014 and eyes on the horizon."
+            ),
+        ],
+    },
     "tesla": {
         "host": "Patrick",
         # June 2026: "Daily" dropped from the spoken name so the audio
