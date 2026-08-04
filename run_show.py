@@ -5973,9 +5973,49 @@ def _publish_youtube(
                     if short_idx < len(_short_variants):
                         _short_variants[short_idx] = _variant.variant
 
+                    # ---- Real-footage Shorts (Aug 2026) ----
+                    # The evergreen b-roll pool fed only the long-form
+                    # render; every Short still shipped stills even
+                    # after the operator published real launch footage.
+                    # Reuse the motion-A/B's proven hybrid path: when no
+                    # experiment is enrolled, fill clip_paths from the
+                    # pool. Per-short seed (episode*4 + index — the
+                    # multiplier exceeds MAX_SHORTS so slices stay
+                    # disjoint across Shorts AND stride across episodes).
+                    # Clean no-op without a pool. While an A/B is
+                    # enrolled BOTH arms keep their designed visuals —
+                    # pool clips in the control arm would upgrade it
+                    # mid-experiment.
+                    _short_broll: list = []
+                    if (not _ab_on
+                            and not _variant.clip_paths
+                            and getattr(config.youtube,
+                                        "shorts_broll", True)):
+                        try:
+                            from engine.gallery_library import (
+                                select_broll_clips,
+                            )
+                            _short_broll = select_broll_clips(
+                                args.show,
+                                digests_dir=digests_dir,
+                                limit=2,
+                                episode_seed=(
+                                    f"{args.show}-short:"
+                                    f"e{episode_num * 4 + short_idx:05d}"
+                                ),
+                            )
+                        except Exception as exc:  # noqa: BLE001
+                            logger.warning(
+                                "Shorts b-roll selection failed: %s — "
+                                "stills only", exc)
+                            _short_broll = []
+                    result.setdefault("shorts_broll_counts", []).append(
+                        len(_short_broll))
+
                     build_short_video(
                         final_mp3, cover_path, this_short_video_path,
-                        clip_paths=_variant.clip_paths or None,
+                        clip_paths=(_variant.clip_paths
+                                    or _short_broll or None),
                         clip_seconds=float(getattr(
                             config.youtube, "shorts_ab_clip_seconds", 5) or 5),
                         # A1 guard: a show running the Shorts motion A/B

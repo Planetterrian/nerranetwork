@@ -262,6 +262,12 @@ def record_youtube_outcomes(
             metrics.record("scene_library_count", int(youtube_urls.get("scene_library_count", 0) or 0))
         if "broll_clips_used" in youtube_urls:
             metrics.record("broll_clips_used", int(youtube_urls.get("broll_clips_used", 0) or 0))
+        # Real-footage Shorts (Aug 2026): pool clips per Short, in upload
+        # order — [2, 2] means both Shorts carried footage, [0, 0] means
+        # the pool was missing/unfetchable and stills shipped.
+        if "shorts_broll_counts" in youtube_urls:
+            metrics.record("shorts_broll_counts",
+                           list(youtube_urls.get("shorts_broll_counts") or []))
         # Shorts-only scene saving (July 2026): 16:9 scenes are only worth
         # generating when a long-form video is actually produced.
         if "scene_long_form_produced" in youtube_urls:

@@ -833,6 +833,11 @@ class YouTubeConfig:
     # rotated per episode, so this is the WIDTH of each episode's slice,
     # not which clips it gets. Capped by engine.video._MAX_BROLL_CLIPS.
     broll_clips_per_episode: int = 3
+    # Fill Shorts backgrounds from the same pool (real footage between
+    # the stills, via the motion-A/B's hybrid path). Clean no-op until a
+    # pool is published; suppressed automatically while a Shorts motion
+    # A/B is enrolled so neither arm changes mid-experiment.
+    shorts_broll: bool = True
 
     # Optional path (relative to repo root) to a text template for the
     # long-form description body. Placeholders: {hook}, {episode_num},

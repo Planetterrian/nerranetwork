@@ -1,0 +1,131 @@
+name: Build B-roll Pool
+
+# One-click real-footage pool for any show — the operator-laptop steps
+# (fetch → auto-cut → upload to R2 → commit broll.json) as a single
+# workflow_dispatch. This is what makes "real footage on every show"
+# operationally cheap: the SpaceX pool took a multi-step local session;
+# every further show should be one dispatch from the Actions tab.
+#
+# Sources:
+#   * pexels — royalty-free stock video via the show's own curated
+#     image_queries (scripts/fetch_stock_broll.py). Clips arrive short,
+#     so no cutting stage. Attribution recorded per clip (a Pexels API
+#     licence condition) and carried into the YouTube description.
+#   * nasa — public-domain NASA footage for a given query
+#     (scripts/fetch_nasa_broll.py), auto-cut into ~7 s accents at the
+#     moments with real motion (scripts/cut_broll_segments.py).
+#
+# The clips are machine-curated (motion scoring / curated queries +
+# safety filter), not human-watched: SPOT-CHECK the next episode's video
+# after a pool lands. A dud clip is removed by editing the show's
+# digests/<dir>/broll.json (delete its entry) — no re-upload needed.
+#
+# Consumers: long-form interleaves up to broll_clips_per_episode clips;
+# Shorts draw 2 per Short (youtube.shorts_broll). Both rotate per
+# episode so a deeper pool means more day-to-day variety.
+
+on:
+  workflow_dispatch:
+    inputs:
+      show:
+        description: "Show slug (e.g. tesla, fascinating_frontiers)"
+        required: true
+      source:
+        description: "Footage source"
+        type: choice
+        options:
+          - pexels
+          - nasa
+        default: pexels
+      query:
+        description: "NASA search query (nasa source only), e.g. Isolated Launch Views"
+        required: false
+        default: ""
+      max_clips:
+        description: "Max clips to add to the pool this run"
+        required: false
+        default: "12"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-broll-pool-${{ inputs.show }}
+  cancel-in-progress: false
+
+jobs:
+  build-pool:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - uses: ./.github/actions/setup-python
+        with:
+          python-version: '3.12'
+          requirements-file: 'requirements.txt'
+          skip-checkout: 'true'
+          system-packages: 'ffmpeg'
+
+      - name: Fetch footage (pexels)
+        if: ${{ inputs.source == 'pexels' }}
+        env:
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+        run: |
+          set -euo pipefail
+          python scripts/fetch_stock_broll.py \
+            --show "${{ inputs.show }}" \
+            --out-dir /tmp/broll_ready \
+            --max "${{ inputs.max_clips }}"
+
+      - name: Fetch + auto-cut footage (nasa)
+        if: ${{ inputs.source == 'nasa' }}
+        run: |
+          set -euo pipefail
+          if [ -z "${{ inputs.query }}" ]; then
+            echo "::error::the nasa source needs a query (e.g. 'Isolated Launch Views')"
+            exit 1
+          fi
+          python scripts/fetch_nasa_broll.py \
+            --query "${{ inputs.query }}" \
+            --max 8 \
+            --out-dir /tmp/broll_src
+          python scripts/cut_broll_segments.py /tmp/broll_src/*.mp4 \
+            --out-dir /tmp/broll_cuts \
+            --per-source 5
+          # Bound the run to max_clips. The cut script orders best-first
+          # WITHIN each source; this head is alphabetical across sources,
+          # which is fine — every surviving cut already cleared the
+          # motion floor.
+          mkdir -p /tmp/broll_ready
+          count=0
+          for f in /tmp/broll_cuts/*.mp4; do
+            [ "$count" -ge "${{ inputs.max_clips }}" ] && break
+            cp "$f" /tmp/broll_ready/
+            count=$((count + 1))
+          done
+          cp /tmp/broll_cuts/_provenance.json /tmp/broll_ready/ 2>/dev/null || true
+
+      - name: Upload to R2 + write pool index
+        env:
+          R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_GALLERY_BUCKET: ${{ secrets.R2_GALLERY_BUCKET }}
+          R2_GALLERY_PUBLIC_BASE_URL: ${{ secrets.R2_GALLERY_PUBLIC_BASE_URL }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          clips=(/tmp/broll_ready/*.mp4)
+          if [ "${#clips[@]}" -eq 0 ]; then
+            echo "::error::no clips survived fetching/cutting — nothing to publish"
+            exit 1
+          fi
+          echo "Publishing ${#clips[@]} clip(s) to the ${{ inputs.show }} pool"
+          python scripts/build_broll_pool.py --show "${{ inputs.show }}" "${clips[@]}"
+
+      - uses: ./.github/actions/safe-commit-push
+        with:
+          add-paths: "digests/*/broll.json"
+          commit-message: "B-roll pool: ${{ inputs.show }} += ${{ inputs.source }} footage"
