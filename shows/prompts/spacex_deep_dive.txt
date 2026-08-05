@@ -1,0 +1,71 @@
+[PRODUCTION NOTES — DO NOT COPY INTO OUTPUT]
+This stage produces the EPISODE BRIEF for a SPECIAL standalone episode of SpaceX Daily. It is NOT a daily news episode: there is no fetched news, no Community Buzz from today's feeds, no Tomorrow Teaser about the news cycle. The whole episode is one subject, explored in depth. The brief is structured with section markers; the downstream podcast prompt turns those sections into flowing narration. Do not include this production-notes block in your output.
+[END PRODUCTION NOTES]
+
+# SpaceX Daily — Special Episode Brief
+
+**Date:** {today_str}
+**Topic:** {topic_title}
+
+**HOOK:** [One sentence under 130 characters. It MUST begin with "SpaceX Q2 2026 Earnings Special:" and then lead with the single most striking verified fact or stake. Plain prose, no blockquote, no emoji. This becomes the RSS / Apple / Spotify / YouTube episode title.]
+
+━━━━━━━━━━━━━━━━━━━━
+
+ABOUT THE HOOK LINE (CRITICAL — read before writing anything):
+The ``**HOOK:**`` line above is the episode title in podcast apps. It is a SEPARATE field from the opening segment. Both must appear:
+  • ``**HOOK:**`` — one sentence, under 130 characters, plain prose, on its own line BEFORE the ━━━ divider.
+  • ``### Segment 1 — The Open`` — the spoken opening framing.
+Do NOT merge them, do NOT omit the ``**HOOK:**`` label.
+
+You are writing the brief for a special episode of "SpaceX Daily," hosted by Patrick in Vancouver — engineer-storyteller, honest about setbacks, never a stock promoter. The audience is SPCX investors, spaceflight enthusiasts, and engineers. Use the topic brief below as your factual backbone and the current research for today's reactions. This is education and reporting, not financial advice.
+
+TOPIC TITLE: {topic_title}
+TOPIC BRIEF (verified facts from the company's Q2 2026 earnings press release and Form 10-Q, plus attributed call/press reactions — this defines exactly what to cover): {topic_brief}
+TOPIC CATEGORY: {topic_category}
+
+CURRENT RESEARCH (live web + X results retrieved TODAY — the freshest reactions and commentary):
+{current_research}
+
+HOW TO USE THE CURRENT RESEARCH (critical):
+- The topic brief's filing numbers are VERIFIED — state them as fact. The current research is for the REACTION: analyst takes, X commentary, the after-hours stock move, anything that happened after the call. Attribute every reaction to its outlet or @handle and label opinion as opinion.
+- If the research contradicts a brief number, prefer the brief for filing figures (they come from the 10-Q itself) and note the discrepancy for anything else.
+- Carry [UNCONFIRMED] labels through. If the research is empty, rely on the attributed reactions already in the brief and do NOT invent fresher commentary.
+
+Produce a written, essay-style brief covering ALL segments below, in this order. Prose paragraphs under each marker, not bullet spam. The downstream podcast prompt turns this into a ~16–20 minute episode, so give every segment real substance — a thin brief produces a thin special.
+
+### Segment 1 — The Open
+2–3 sentences. Frame the moment: the first time the public has ever seen SpaceX's quarterly numbers, and what this episode will do with them. Separate from the HOOK line.
+
+### Segment 2 — The Headline Numbers
+6–10 sentences. Revenue, growth rate, the beat vs expectations (attributed), net loss and the improvement, EPS vs expected, Adjusted EBITDA, loss from operations and the near-breakeven story. Explain the one-time items in the six-month loss honestly (debt extinguishment, deemed dividend) so the scary H1 number is contextualized, not hidden.
+
+### Segment 3 — Segment by Segment
+12–18 sentences, one block per reported segment in this order: Space (revenue, R&D acceleration, launches and mass to orbit, why the operating loss grew), Connectivity (the profit engine — revenue, operating income, Starlink subscribers doubling to 12 million, ARPU trade-off, Consumer vs Enterprise & Government growth), AI (the rocket ship — revenue up 247%, the Cloud Services Agreements, first positive segment Adjusted EBITDA, the advertising decline, the operating loss and why).
+
+### Segment 4 — The Big Announcements
+10–16 sentences. Starship V3 Flights 12 and 13 and the Flight 14 tower-catch plan with the Musk cadence quote (attributed as call coverage); the $14.1 billion Cloud Services Agreements and 1.4 GW compute with Colossus II; the reported Google and Anthropic agreements (attributed); the $60 billion Cursor acquisition and Q3 close; Grok 4.5 and the V9 foundation model; the $6 billion+ Starshield awards; the airline and spectrum wins.
+
+### Segment 5 — The Balance Sheet & The Capex Question
+8–14 sentences. The IPO and bond proceeds, the ~$100 billion war chest, the $47.5 billion backlog — then the honest other side: $18.4 billion quarterly capex ($15.8 billion AI, ~39% above estimates, attributed), guidance that the next two quarters look similar, operating cash flow vs capex, the after-hours stock drop and where SPCX trades vs the IPO price, the lockup expiration overhang, customer concentration, the ARPU decline, and how to hear the CFO's "$100 billion annualized recurring revenue pace" claim (management projection, with caveats).
+
+### Segment 6 — The Street & The Community React
+6–10 sentences. The strongest attributed reactions from the current research and the brief: what bulls are saying, what bears are saying, the sharpest X takes — named, dated where possible, and labeled as opinion. Pick insight over noise; the capex debate and AI-revenue-quality question are the center of gravity.
+
+### Segment 7 — The Engineering Angle
+10–16 sentences. The show's signature, from first principles: what $15.8 billion of quarterly AI capex physically buys (servers line item growth, construction in progress, 0.4 → 1.4 GW), the power and depreciation math, why Connectivity's operating leverage works (internal launches at marginal cost), and the vertical-integration thesis connecting Raptor economics to gigawatt datacenters — the idiot-index playbook applied to compute. Concrete numbers, honest about fact vs projection.
+
+### Segment 8 — Market Watch & What to Watch Next
+4–6 sentences. Where SPCX trades (in words-friendly figures), then the concrete forward catalysts: the Flight 14 catch attempt window, the Cursor close in Q3, the next two capex quarters, the lockup calendar, subscriber and compute trajectories.
+
+### Segment 9 — The Takeaways
+3–5 sentences. Two or three durable conclusions a listener should carry — phrased plainly, stated once. End on the honest open question the quarter leaves.
+
+CRITICAL CONSTRAINTS:
+- Filing numbers from the brief are fact; call quotes are "on the call / per [outlet]"; analyst and X takes are opinion with attribution. NEVER blur these tiers.
+- Do NOT fabricate numbers, quotes, dates, or price levels not present in the brief or the research. If a figure is missing, speak to the mechanism instead.
+- This is a public-company episode: no financial advice, no price targets, no buy/sell framing. "Not financial advice" is part of the show's DNA.
+- The company is ALWAYS spelled "SpaceX"; the ticker is SPCX.
+- Keep all ``### Segment`` markers so the podcast writer sees the structure; write each segment as prose.
+- Length target: 2,000–2,800 words for the brief. This is a flagship special — go deep on every segment rather than summarizing.
+
+Output the brief now.

@@ -173,6 +173,23 @@ funnel:
   # (scripts/send_ru_spacex_weekly.py) has exactly one audience to send to.
   capture_tag: ru-spacex
 
+# ---- Deep-dive specials (Aug 2026) ----
+# Manual-force ONLY: enabled stays false so the daily cron never scans the
+# queue and a stale entry can never hijack a news episode (run_show's gate
+# still honors an explicit --deep-dive force with enabled: false). To run a
+# special:  python run_show.py spacex --deep-dive <id>
+# First entry: q2-2026-earnings (SpaceX Quarterly Earnings Special Q2 2026).
+# The queue entry carries live web+X research queries so the reaction
+# segment reflects commentary pulled at generation time.
+deep_dive:
+  enabled: false
+  queue_file: shows/deep_dives/spacex.yaml
+  digest_prompt_file: shows/prompts/spacex_deep_dive.txt
+  podcast_prompt_file: shows/prompts/spacex_deep_dive_podcast.txt
+  # A special is a flagship-length episode, not a daily (the MIT Ep059
+  # lesson: without this the length gate accepts a daily-sized script).
+  min_podcast_words: 2400
+
 llm:
   provider: xai
   system_prompt_file: shows/prompts/spacex_system.txt
