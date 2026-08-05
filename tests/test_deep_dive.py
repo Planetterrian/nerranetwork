@@ -195,6 +195,20 @@ class TestShippedMITDeepDive:
             "alongside shows/topic_queues/, or deep dives re-fire."
         )
 
+    def test_run_show_workflow_exposes_deep_dive_dispatch_input(self):
+        """workflow_dispatch MUST carry a ``deep_dive`` input wired to
+        ``--deep-dive``. This is the ONLY production path to a manual-force
+        special: queue entries under ``deep_dive.enabled: false`` never fire
+        on their own, and secrets live in Actions — without this input the
+        Q2-2026 SpaceX earnings special dispatched as a plain daily (Ep058,
+        2026-08-05) because the operator had no way to pass the flag."""
+        wf = Path(".github/workflows/run-show.yml").read_text()
+        assert "deep_dive:" in wf, "run-show.yml lost the deep_dive dispatch input"
+        assert "--deep-dive ${{ github.event.inputs.deep_dive }}" in wf, (
+            "run-show.yml must append --deep-dive <id> to EXTRA_FLAGS when "
+            "the deep_dive dispatch input is set."
+        )
+
     def test_deep_dive_prompts_exist_and_reference_topic(self):
         digest = Path("shows/prompts/modern_investing_deep_dive.txt").read_text()
         podcast = Path(
