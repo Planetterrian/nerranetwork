@@ -1,0 +1,188 @@
+# Deep-dive queue for SpaceX Daily.
+#
+# SPECIAL standalone single-subject episodes, distinct from the daily news
+# show. Same mechanism as Modern Investing's deep dives (the network's
+# original deep-dive show): run_show.py checks this queue via the show's
+# ``deep_dive:`` config block. Because SpaceX Daily's ``deep_dive.enabled``
+# is FALSE, entries here NEVER fire on a scheduled daily run — a special
+# only happens when the operator forces it:
+#
+#   python run_show.py spacex --deep-dive <id>
+#
+# (Forced runs work with enabled: false by design — see run_show.py's
+# deep-dive gate. This protects the daily cadence: a stale queue entry can
+# never hijack tomorrow's news episode.)
+#
+# When one fires, the episode bypasses the news fetch, swaps in the
+# spacex_deep_dive prompts, runs the live web+X research below, and
+# publishes into the normal SpaceX Daily feed/YouTube/newsletter surfaces
+# as the next episode number. The runner flips ``produced`` when done.
+#
+# Entry schema: see shows/deep_dives/modern_investing.yaml.
+
+queue:
+  - id: q2-2026-earnings
+    title: "SpaceX Quarterly Earnings Special: Q2 2026 — The First Report Card"
+    category: earnings_special
+    produced: false
+    episode_number: null
+    produced_date: null
+    # Live grounding pulled at generation time (web + X) and injected into
+    # the brief prompt's {current_research} block. This is where the
+    # freshest analyst / X commentary comes from — the static brief below
+    # carries the verified filing numbers, the research carries the react.
+    web_search_queries:
+      - "SpaceX SPCX Q2 2026 earnings results reaction"
+      - "SpaceX first earnings call August 4 2026 highlights quotes"
+      - "SPCX stock price after hours earnings capex"
+      - "SpaceX earnings call Musk Starship Flight 14 catch quotes"
+      - "SpaceX CFO Bret Johnsen annualized recurring revenue cloud"
+      - "SpaceX Q2 2026 analyst commentary AI capex concern"
+      - "SpaceX Anthropic Colossus compute agreement commentary"
+      - "SpaceX Cursor acquisition 60 billion analyst reaction"
+      - "SPCX share lockup expiration IPO investors"
+    x_handles:
+      - SpaceX
+      - elonmusk
+      - thesheetztweetz
+      - SciGuySpace
+      - xai
+      - cursor_ai
+    brief: >
+      A special standalone episode: SpaceX's FIRST quarterly earnings report
+      as a public company (Q2 2026, reported after market close August 4,
+      2026 — the 10-Q filed the same day). This is a landmark moment — the
+      first time in history the public has seen SpaceX's audited quarterly
+      numbers — and the episode should treat it with the significance it
+      deserves while keeping the show's engineering-first, honest,
+      never-a-stock-promoter voice. Everything below is verified from the
+      company's Q2 2026 earnings press release and Form 10-Q (period ended
+      June 30, 2026; filed August 4, 2026) unless marked otherwise.
+
+      THE HEADLINE NUMBERS (all vs Q2 2025 unless noted): Revenue $7.814
+      billion, up 92% from $4.071 billion — and a beat against the roughly
+      $6.9 billion analysts expected (per CNBC/Yahoo Finance reporting).
+      Net loss $541 million, an improvement of $467 million from the $1.008
+      billion loss a year ago; loss per share $0.09 against roughly $0.26
+      expected. Adjusted EBITDA $3.538 billion, up 191% from $1.214
+      billion. Loss from operations narrowed to $143 million from $970
+      million — the company is within sight of operating breakeven.
+      Six-month net loss was $4.817 billion, which includes a $1.545
+      billion loss on debt extinguishment and a $671 million deemed
+      dividend from the pre-IPO capital structure — one-time items worth
+      explaining honestly.
+
+      SEGMENTS (the company reports three): SPACE — revenue $962 million,
+      up 29% YoY and 55% sequentially; operating loss $542 million as
+      Starship R&D accelerated ($1.076 billion of R&D, up 55% YoY); 38
+      launches in the quarter (10 customer, 28 internal), 485 metric tons
+      to orbit; H1 totals 78 launches and 1,041 tons. CONNECTIVITY — the
+      profit engine: revenue $4.291 billion, up 66% YoY; income from
+      operations $1.656 billion, up 79%; Adjusted EBITDA $2.597 billion.
+      Starlink subscribers reached 12.0 million, DOUBLING year-over-year
+      and up 1.7 million in the quarter, with ARPU steady at $66/month
+      (down from $85 a year ago — a deliberate reach-for-scale trade
+      worth noting). Consumer revenue $2.485 billion (+44% YoY);
+      Enterprise & Government $1.806 billion (+108% YoY). AI — revenue
+      $2.561 billion, up 247% YoY and 213% sequentially; AI solutions &
+      infrastructure revenue jumped to $2.194 billion from $311 million a
+      year ago on new Cloud Services Agreements; advertising (the X ads
+      business) declined to $367 million from $426 million. The AI segment
+      posted its FIRST positive Adjusted EBITDA: $1.146 billion (vs
+      negative $276 million a year ago), while still running a $1.257
+      billion operating loss on huge depreciation and R&D.
+
+      THE BIG ANNOUNCEMENTS FROM THE RELEASE AND CALL: (1) Starship V3 —
+      two successful flight tests in 90 days: Flight 12 in May (first
+      suborbital mission from the new Starbase pad, precision upper-stage
+      landing, modified V2 Starlink satellite deployment) and Flight 13 in
+      July (all objectives achieved: 20 production V3 satellites deployed,
+      in-space Raptor relight, softest-ever Starship splashdown with an
+      intact heat shield). On the call, Musk said the next flight —
+      tentatively end of August — will attempt to CATCH THE SHIP with the
+      tower, pending regulatory approval, and projected the cadence
+      reaching "at least one flight a day, possibly more" within a year
+      (per Space.com's call coverage — attribute call quotes). (2) Cloud
+      Services Agreements totaling $14.1 billion in contracted sales,
+      which drove $1.6 billion of incremental AI infrastructure revenue in
+      the quarter; compute capacity expanded to 1.4 GW nameplate (from 1.0
+      GW in Q1 and 0.4 GW a year ago) with Colossus II building out.
+      Reporting around the call noted a Google agreement for AI capacity
+      (reported at roughly $920 million/month) and that Anthropic
+      contracted all of Colossus 1's capacity in Memphis — attribute these
+      to the call coverage / {current_research}. (3) Agreement to acquire
+      Cursor (Anysphere) for $60 billion, expected to close in Q3 2026,
+      to accelerate AI enterprise offerings. (4) Grok 4.5 released in
+      July — the company's largest model, trained alongside Cursor,
+      incorporating the 1.5-trillion-parameter V9 foundation model. (5)
+      Over $6 billion in multi-year U.S. government Starshield contracts,
+      primarily two Space Force awards for LEO communications and sensing.
+      (6) Starlink aviation/enterprise wins: American Airlines agreement;
+      activations on Southwest, Virgin Atlantic, Iberia, Aer Lingus;
+      mobile partnerships with SoftBank, NTT Docomo, Spark NZ; FCC
+      approval of the EchoStar license transfer (65 MHz of US spectrum
+      plus global MSS licenses).
+
+      THE BALANCE SHEET AND THE CAPEX QUESTION (the honest counterpoint —
+      give this real weight): The IPO closed June 15 (638.9 million Class
+      A shares, ~$85.7 billion net proceeds — trading began June 12 under
+      SPCX); a $25 billion inaugural investment-grade bond deal closed
+      June 26 (five tranches 2031–2056, weighted average coupon 5.855%).
+      The company ended the quarter with roughly $100 billion of cash and
+      marketable securities and $47.5 billion of backlog. But capex was
+      $18.369 billion in the QUARTER — $15.828 billion of it AI
+      infrastructure, roughly 39% above analyst estimates (per
+      Investing.com/indmoney call coverage), and management signaled the
+      next two quarters could look similar. Operating cash flow for the
+      HALF was $3.466 billion against $28.476 billion of H1 capex — the
+      company is spending far ahead of what operations generate, funded by
+      the IPO and bonds. The market reaction told that story: SPCX rose
+      ~9.4% into the print, then fell ~7% after hours (hovering near $117
+      — below the $135 IPO price and the $150 opening trade, and well off
+      the ~$225 high). The earnings date also triggers the first big
+      share-lockup expiration (per CNBC) — flag as a supply overhang to
+      watch. Other honest flags: customer concentration (two customers
+      were ~19.5% and ~18.3% of Q2 revenue — the Cloud Services
+      Agreements concentrate revenue in a few AI counterparties), Starlink
+      ARPU down $85→$66 YoY, X advertising still shrinking, and CFO Bret
+      Johnsen's "$100 billion annualized recurring revenue pace by year
+      end" claim (per Yahoo Finance call coverage) deserves scrutiny —
+      report it as a management projection with the definition caveats,
+      not as fact.
+
+      THE ENGINEERING ANGLE (the show's signature — do this from first
+      principles): what does $15.8 billion of quarterly AI capex actually
+      buy? Servers and networking equipment on the balance sheet grew from
+      $22.7 billion to $34.8 billion in six months; construction in
+      progress nearly tripled to $12.6 billion; nameplate compute went 0.4
+      → 1.4 GW in a year. Walk the power math (a gigawatt-class datacenter
+      versus what a Starship launch consumes), the depreciation reality
+      (AI segment D&A of $1.885 billion per quarter — chips depreciate
+      like rockets don't), and the vertical-integration thesis: the same
+      company building Raptor engines is building gigawatt datacenters,
+      and Starship's promised 99%+ cost-to-orbit reduction is the same
+      idiot-index playbook applied to compute. Explain why Connectivity's
+      operating leverage works (satellites are launched on internal
+      Falcon flights at marginal cost — 28 of 38 Q2 launches were
+      internal). Keep it concrete and honest about what is engineering
+      fact versus management projection.
+
+      USE OF LIVE RESEARCH: the {current_research} block carries TODAY'S
+      best analyst and X commentary on the report — weave the strongest
+      2-4 takes into the reaction segment WITH attribution (name the
+      outlet or @handle), clearly labeled as opinion. Prioritize
+      commentary that adds insight (the capex debate, the AI-revenue
+      quality question, the Starship cadence skepticism or excitement)
+      over cheerleading. If research is empty, rely on the attributed
+      reactions already in this brief.
+
+      FRAMING RULES: this is the one episode where the business IS the
+      headline — but keep the engineering heart: the numbers exist because
+      of the hardware. Not financial advice; no price targets; no buy/sell
+      framing. State beats/misses with attribution to reporting, state
+      filing numbers as fact, label call quotes as call quotes, and label
+      opinion as opinion. The episode should leave a listener — investor
+      or engineer — feeling they understand what the first public quarter
+      actually revealed: a launch monopoly funding a broadband profit
+      engine funding an AI land grab, and the honest open question of
+      whether the capex bet pays.

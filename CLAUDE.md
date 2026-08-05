@@ -241,7 +241,11 @@ today's work, not just explain yesterday's):
   voice. X posting on via the @planetterrian account.
 - **SpaceX** (SpaceX Daily) runs via `run_show.py` + `shows/spacex.yaml`;
   engineering-first daily on SpaceX as a public company (Nasdaq: SPCX),
-  `memory_enabled`, X disabled.
+  `memory_enabled`, X disabled. Has a **manual-force-only deep-dive queue**
+  (`shows/deep_dives/spacex.yaml`, `deep_dive.enabled: false` so the daily
+  cron never scans it): `python run_show.py spacex --deep-dive <id>` runs a
+  standalone special through the spacex_deep_dive prompts (first entry:
+  `q2-2026-earnings`, the Q2 2026 earnings special, Aug 2026).
 - **DP** (The DP Pod: The Do Positive Podcast) runs via `run_show.py` +
   `shows/dp_pod.yaml`; the network's **two-host dialogue** show (July 2026
   launch) — Dan Perra + Patrick Novak, daily ~10 min of good news in science/
