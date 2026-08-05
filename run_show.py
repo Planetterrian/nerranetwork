@@ -985,14 +985,38 @@ def run(args: argparse.Namespace) -> None:
         # 5a2. Web search fallback — if articles below quality threshold, try Grok web_search
         web_articles: list = []
         min_quality = getattr(config, "min_articles", 6) or 6
+        # Count how many articles are actually ON TOPIC, not just how many
+        # arrived. The fetch ladder's last resort drops keyword filtering
+        # entirely, so a show starved of relevant material ends the fetch
+        # with a LARGE pile of loosely-related ones — and the old
+        # ``len(articles) < min_quality`` gate then read that pile as
+        # health and skipped web search. Offshore North Ep001 finished with
+        # 70 articles against min_articles=4, so its eight configured
+        # web_search_queries could never run: 70 < 4 is never true. The
+        # digest that resulted was 697 words against a 1300 target.
+        _kw_lower = [k.lower() for k in (getattr(config, "keywords", []) or [])]
+
+        def _is_on_topic(art: dict) -> bool:
+            if not _kw_lower:
+                return True
+            blob = f"{art.get('title', '')} {art.get('description', '')}".lower()
+            return any(k in blob for k in _kw_lower)
+
+        _relevant = sum(1 for a in articles if _is_on_topic(a))
+        if _kw_lower and _relevant < len(articles):
+            logger.info(
+                "Relevance check: %d of %d articles match this show's keywords",
+                _relevant, len(articles),
+            )
         if (
             not _topic_driven
-            and len(articles) < min_quality
+            and min(len(articles), _relevant) < min_quality
             and getattr(config, "web_search_queries", None)
         ):
             logger.info(
-                "Articles (%d) below quality threshold (%d) — trying web search ...",
-                len(articles), min_quality,
+                "Articles (%d total, %d on-topic) below quality threshold (%d) "
+                "— trying web search ...",
+                len(articles), _relevant, min_quality,
             )
             try:
                 from engine.fetcher import fetch_web_search_articles
