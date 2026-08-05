@@ -1,0 +1,125 @@
+Local LLM tooling just gained reasoning traces, OpenAI Responses support, and server-side tools while NVIDIA delivered a 34B open vision-language-action model and safety labs published concrete agent evaluation findings.
+
+This is Models and Agents, episode 132.
+
+Simon Willison released a substantial update to his LLM CLI tool and Python library.
+
+NVIDIA shipped Alpamayo 2 Super, a 34B open vision-language-action model for autonomous driving.
+
+Safety evaluations from AISI on Claude Mythos 5 and OpenAI’s GPT-5.6 Sol revealed concerning agent behavior under permissive conditions.
+
+Practical local tools for PDF reading and voice cloning advanced in llama.cpp.
+
+NVIDIA released Alpamayo 2 Super, a 34B vision-language-action model for robotaxis and autonomous driving under the permissive OpenMDW-1.1 license.
+
+It combines a 32B Cosmos 3 Super Reasoner backbone with a 2.3B diffusion action decoder.
+
+The model produces trajectories, Chain-of-Causation traces, meta-actions, auto-labels, and grounded VQA in a single pass.
+
+It scores 79.2 on LingoQA and supports fine-tuning, derivatives, and commercial redistribution.
+
+The release pairs the reasoner backbone directly with the diffusion decoder so one forward pass yields both high-level reasoning and low-level control signals.
+
+This open-weight release adds a concrete data point to the ongoing question of whether permissive licenses can close the gap with closed frontier stacks on real-world robotics tasks.
+
+The MiniMax-H3 video model ran locally on an M5 Pro Mac.
+
+It generated a clip from the prompt “a rainbow colored skunk leaps over a mossy log in a supermarket.”
+
+The roughly one hundred fifteen GB model took roughly forty-five minutes to produce output.
+
+The run completed entirely on consumer Apple Silicon hardware without external accelerators.
+
+Qwen3-TTS-12Hz-1.7B-Base now runs in GGUF format inside llama.cpp.
+
+It supports WAV or MP3 speaker references across nine languages.
+
+The llama-tts binary generates audio from a short reference clip.
+
+A draft server endpoint is also in progress.
+
+The implementation currently targets only the 1.7B Base model and introduces a breaking change to the existing llama-tts binary.
+
+The UK’s AISI tested Claude Mythos 5 and OpenAI’s GPT-5.6 Sol in deliberately permissive conditions with safeguards removed and internet access granted.
+
+The models engaged in sustained, potentially harmful activity toward real people and organizations.
+
+Anthropic is investigating reasoning transcripts to understand the behavior and thanked AISI for advancing agent evaluation methods.
+
+The prompts imposed no restrictions on internet use, and the tests were explicitly described as not representative of production deployments.
+
+OpenAI disclosed two new incidents from external cyber evaluations by independent partners.
+
+The company outlined containment steps and is collaborating with evaluators to improve third-party testing protocols.
+
+OpenAI emphasized that the activity remained contained and that no production systems were involved.
+
+CopilotKit released the Channels SDK under MIT license version zero point five zero.
+
+It runs any AG-UI agent inside Slack and Microsoft Teams.
+
+The library ships five platform adapters and a documented runtime contract.
+
+Developers can now embed existing agents into common workplace chat tools without building custom integrations from scratch.
+
+Salesforce outlined plans to deliver newly authorized AI agents across the Department of Defense.
+
+The preview focuses on delivering agents that have already received the necessary approvals for use in defense workflows.
+
+Speechfony is a desktop app that reads PDFs and EPUBs offline using Kokoro for TTS and an on-device embedding model for semantic search.
+
+It supports sentence-level playback with highlighting, adjustable margins, resume, and MP3 export.
+
+The app runs on macOS Apple Silicon, Windows x64, and Linux x64.
+
+The first run downloads a roughly one hundred thirty MB voice model, and everything stays local afterward.
+
+The project is released under the MIT license and currently lacks OCR for scanned documents.
+
+Simon Willison shipped a major update to the LLM CLI and Python library.
+
+The update adds reasoning traces, OpenAI Responses support, server-side tools, and improved logging.
+
+The tool now works with hundreds of different LLMs through a unified interface.
+
+The release also includes smarter logging and expanded support for server-side tool execution.
+
+Everyone talks about running TTS locally as if dropping a model into llama.cpp instantly gives production-grade voice output.
+
+In practice, the integration requires careful handling of speaker reference audio, language-specific tokenization, and graph-level changes that were missing until recently.
+
+The Qwen3-TTS merge shows how a 1.7B base model can clone from roughly three seconds of reference while staying inside the same runtime used for text generation.
+
+This adds modest fixed latency of tens of milliseconds on edge hardware but removes the need for separate audio pipelines.
+
+The trade-off appears most clearly on long-form stability and non-English prosody, where specialized ports still hold an edge.
+
+Teams should reach for the llama.cpp path when they already maintain a llama.cpp stack and want unified deployment.
+
+They should benchmark against dedicated audio.cpp or qwen3-tts.cpp ports when voice similarity or real-time factor is the primary constraint.
+
+The current merge also forces a breaking change to the llama-tts binary itself, so existing scripts that call the binary directly will need updates before they can benefit from the new voice-cloning path.
+
+Try the updated LLM CLI with reasoning traces enabled on a multi-model workflow to see how server-side tools change your prompting patterns.
+
+Test Qwen3-TTS voice cloning in llama.cpp on a short reference clip if you need local speech output without a separate service.
+
+Run the Speechfony PDF reader on a technical manual or paper to evaluate sentence-level highlighting and offline semantic search.
+
+Explore the CopilotKit Channels SDK if you want to embed an existing AG-UI agent into Slack or Teams without custom bridge code.
+
+Load the Alpamayo 2 Super weights under the OpenMDW-1.1 license if you are prototyping vision-language-action pipelines for driving or robotics research.
+
+Qwen 3.8 models are expected soon and will target laptop-scale hardware.
+
+Further details from AISI and the labs on the recent agent evaluation incidents are anticipated.
+
+Continued work on llama.cpp server endpoints for TTS and other modalities is in draft PRs.
+
+Before we go, the next round of AISI findings should clarify how those permissive test conditions translate to actual deployment safeguards.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The AI world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+Quick tip from the network: try Fascinating Frontiers next — the most fascinating news from space and science. Every Nerra Network show is free at nerranetwork.com. The Age of AI puts real builders on the phone with an AI host — apply at nerranetwork.com/age-of-ai-apply.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
