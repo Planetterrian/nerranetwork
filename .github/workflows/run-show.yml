@@ -96,6 +96,11 @@ on:
         required: false
         type: boolean
         default: false
+      deep_dive:
+        description: 'Deep-dive topic id — runs a standalone SPECIAL episode via --deep-dive (bypasses the news fetch; single-show dispatch only, ignored for show=all). Example: show=spacex, deep_dive=q2-2026-earnings'
+        required: false
+        type: string
+        default: ''
 
 permissions:
   contents: write
@@ -413,6 +418,16 @@ jobs:
           if [ "${{ github.event.inputs.test_mode }}" = "true" ]; then
             EXTRA_FLAGS="--test"
             echo "::notice::test_mode=true — running with --test (fetch + digest only, no TTS/R2/RSS/X/commit)"
+          fi
+          # Deep-dive special (Aug 2026): the ONLY production path to a
+          # manual-force special (queue entries with deep_dive.enabled: false
+          # never fire on their own — the Q2-2026 earnings special shipped as
+          # a plain daily because dispatch had no way to pass this flag).
+          # Single-show dispatches only: with show=all every other show would
+          # graceful-skip on deep_dive_unconfigured.
+          if [ -n "${{ github.event.inputs.deep_dive }}" ] && [ "${{ github.event.inputs.show }}" != "all" ]; then
+            EXTRA_FLAGS="$EXTRA_FLAGS --deep-dive ${{ github.event.inputs.deep_dive }}"
+            echo "::notice::deep_dive=${{ github.event.inputs.deep_dive }} — forcing a standalone deep-dive special"
           fi
           python run_show.py ${{ matrix.show }} $EXTRA_FLAGS 2>&1
           EXIT_CODE=$?
