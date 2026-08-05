@@ -930,6 +930,17 @@ class ShowConfig:
     web_search_queries: List[str] = field(default_factory=list)
     min_articles: int = 3  # Minimum articles before expanding search
     min_articles_skip: int = 3  # Hard cutoff — skip episode if fewer articles
+    # Progressive fetch-window ladder, in hours, widest last. Empty = use
+    # the network default (24 → 48 → 72), which is tuned for DAILY shows.
+    #
+    # A show whose publication interval exceeds the widest stage can never
+    # see its own period: Offshore North publishes Monday covering seven
+    # days, and on the 2026-08-04 run the 72h ceiling starved it to 6
+    # on-topic articles from 2 of 17 feeds. The pipeline only reached 46
+    # articles by switching keyword filtering OFF, i.e. by going
+    # off-topic, and the resulting digest came out at 596 words against a
+    # 1300 target. Set this to cover the show's own cadence.
+    fetch_expansion_hours: List[int] = field(default_factory=list)
     min_audio_duration: int = 0  # Minimum audio seconds — skip if shorter (0 = disabled)
     max_weekly_cost_usd: float = 0.0  # 0 = no limit; >0 skips episode if 7-day spend exceeds
     # Item 4 stronger breakers (May 2026 review)
@@ -1141,6 +1152,9 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
         web_search_queries=data.get("web_search_queries", []),
         min_articles=data.get("min_articles", 3),
         min_articles_skip=data.get("min_articles_skip", 3),
+        fetch_expansion_hours=[
+            int(h) for h in (data.get("fetch_expansion_hours") or [])
+        ],
         min_audio_duration=int(
             data.get("min_audio_duration")
             or (data.get("audio") or {}).get("min_audio_duration")
