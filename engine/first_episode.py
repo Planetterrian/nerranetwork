@@ -151,19 +151,26 @@ Order and shape:
      Shawyer and Canada Ocean Racing are trying to change that at the
      Vendee Globe starting 12 November 2028. The show follows that attempt
      week by week and uses it as a door into the whole sport.
-   - **WHAT LISTENERS GET EACH WEEK.** Name the four segments and what
-     each is FOR in one clause apiece: The Canadian Boat (what the
-     campaign did and what it changes — consequence, not recap), The Fleet
-     (the week in offshore racing with the why-it-matters layer), Plain
-     Sailing (one concept explained properly), The Countdown (days to the
-     start and where qualification actually stands).
-   - **THE PROMISE.** Sources named in the episode and linked in the
-     notes. No hype. No play-by-play that is stale by Monday. Nothing
-     stated that the sources do not support — and when something is
-     uncertain, it gets said as uncertain.
-   - **WHO IT IS FOR, AND WHO IS TALKING.** Made for people who are
-     enthusiastic, not expert, and never treated as though those are the
-     same thing. Dan is a commercial airline pilot and a Nerra Network
+   - **WHAT LISTENERS GET EACH WEEK.** Describe the four recurring
+     segments in your own words. CRITICAL: do NOT speak any segment's
+     announcement phrase here — those phrases are chapter triggers and the
+     FIRST time one is spoken claims the marker, so using one in the
+     introduction moves the chapter to the wrong place (Ep001 put "The
+     Canadian Boat" at 61 seconds, inside this introduction, instead of at
+     the segment). Refer to them descriptively instead: the Canadian
+     campaign segment, the fleet round-up, the weekly explainer, the
+     countdown. One clause each on what each is FOR.
+   - **THE PROMISE.** Convey — in your own phrasing, as one or two spoken
+     sentences, NOT as a recited list — that sources are named and linked,
+     that the show does not hype or run stale play-by-play, and that
+     anything uncertain is said to be uncertain. Do NOT paraphrase these
+     bullet points back as script; Ep001 read this instruction almost
+     verbatim on air in the passive voice and it sounded like terms and
+     conditions.
+   - **WHO IT IS FOR, AND WHO IS TALKING.** Say who the show is for as
+     Dan would say it out loud to one person — warm, first person,
+     contractions, no policy language, and NOT a restatement of this
+     bullet. Dan is a commercial airline pilot and a Nerra Network
      co-founder, not an offshore racing expert, and says so plainly. He
      may name the two things he does bring — a working life spent reading
      weather, trading a shorter track against a faster one, and making
@@ -176,11 +183,21 @@ Order and shape:
      what it is: an independent, ad-free network of daily shows built by
      two friends — Novak plus Perra equals Nerra — covering technology,
      science, markets, world news and language learning, in several
-     languages, free to listen to with no ads and no paywall. Point at
-     "nerra network dot com" once, said naturally, for every show and the
-     episode notes. Two or three sentences. This is an invitation, not a
+     languages, free with no ads and no paywall. Point at "nerra network
+     dot com" once, said naturally. This is an invitation, not a
      commercial: no superlatives, no growth numbers, no claims about how
-     many shows or listeners there are.
+     many shows or listeners there are. Break it into TWO OR THREE SHORT
+     SPOKEN SENTENCES — Ep001 delivered this as a single 47-word run-on
+     that no person would say out loud in one breath.
+   - **HOW ALL OF THIS SHOULD SOUND.** This introduction is Dan talking,
+     not a charter being read. First person throughout ("I built this
+     because...", "what I want to do every Monday is..."). Contractions.
+     Vary sentence length hard — a four-word sentence next to a long one
+     is what makes speech sound human. ACTIVE voice only: Ep001 produced
+     "No hype gets added", "nothing gets stated", "The audience is assumed
+     to be" — three passive constructions in a row, and that, far more
+     than the synthesis itself, is why the episode sounded robotic. If a
+     sentence has no human subject doing something, rewrite it.
 4. **[The Canadian Boat]** As normal, announced by name. If the campaign
    made no public news this week, say so in one sentence and use a
    standing item — do not pad and do not speculate about the campaign's

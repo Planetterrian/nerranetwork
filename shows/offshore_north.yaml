@@ -107,6 +107,36 @@ sources:
 # Web search is load-bearing on this show, not a supplement: the two most
 # important non-campaign sources (imoca.org, theoceanrace.com) are only
 # reachable this way.
+# ---- X / Twitter as a CONTENT source (not posting) ----
+# Offshore racing breaks on X and Instagram before it reaches any RSS feed:
+# campaigns post launches, damage and routing calls in real time, and the
+# French-language press picks them up days later. This is the third content
+# lever after the keyword fix and web search.
+#
+# DORMANT BY DESIGN: `x_fetch_enabled` stays false until the operator has
+# VERIFIED each handle below. These were written from the show bible's
+# source list, NOT confirmed against live X — an unverified handle fetches
+# nothing (it fails safe, it does not fabricate), but a wrong one is a
+# silent hole in coverage. Check each, correct it, then flip the flag.
+# Cost: X API calls per episode; weekly cadence keeps that small.
+x_fetch_enabled: false
+x_accounts:
+- handle: imoca_class
+  label: IMOCA Class (VERIFY handle)
+  max_posts: 4
+- handle: TheOceanRace
+  label: The Ocean Race (VERIFY handle)
+  max_posts: 3
+- handle: VendeeGlobe
+  label: Vendee Globe (VERIFY handle)
+  max_posts: 3
+- handle: tipandshaft
+  label: Tip & Shaft (VERIFY handle)
+  max_posts: 3
+- handle: TeamMalizia
+  label: Team Malizia (VERIFY handle)
+  max_posts: 2
+
 web_search_queries:
   - "Canada Ocean Racing Scott Shawyer this week"
   - "IMOCA class news this week"
@@ -305,7 +335,16 @@ chapters:
     # Caught at install: "Thanks for tuning in to" was missing, which would
     # have shipped ~1 episode in 5 with no Introduction chapter (the EI
     # June-17 orphan-chapter class). Add here whenever a greeting is added.
-    - pattern: "(?:[Ww]elcome (?:back )?to|[Tt]his is|[Gg]lad you.?re here on|[Gg]ood to have you aboard|[Tt]hanks for tuning in to) Offshore North"
+    # Ep001 (2026-08-05) shipped with NO Introduction chapter. The supplied
+    # intro line is "This is Offshore North, episode 1." and this pattern
+    # matched it exactly — but the LLM ignored the copy-verbatim rule and
+    # wrote "Welcome to the very first episode of Offshore North! Today is
+    # August fifth, twenty twenty-six." The greeting and the show name were
+    # both present; the five words wedged between them broke the match.
+    # The gap tolerance below absorbs that class of rewrite. It stays
+    # bounded (no ".*") so a late brand mention still cannot claim the
+    # marker, and `where: start` keeps it in the opening window.
+    - pattern: "(?:[Ww]elcome (?:back )?to|[Tt]his is|[Gg]lad you.?re here on|[Gg]ood to have you aboard|[Tt]hanks for tuning in to)(?:\\s+\\S+){0,6}?\\s+Offshore North"
       title: "Introduction"
       where: start
     - pattern: "[Ff]air winds"

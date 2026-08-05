@@ -398,10 +398,25 @@ def _fetch_single_feed(
                     if title.endswith(suffix):
                         title = title[: -len(suffix)].strip()
 
-            # Keyword filtering (if keywords provided)
+            # Keyword filtering (if keywords provided).
+            #
+            # The keywords MUST be lowercased to match the lowercased text.
+            # Until 2026-08-05 they were not, so any keyword carrying a
+            # capital letter could never match — 149 of the network's 652
+            # keywords (23%), and 55 of Offshore North's 79 (70%), were
+            # silently dead. Every proper noun a show is ABOUT is
+            # capitalised, so the filter was rejecting exactly the articles
+            # it existed to keep: a headline reading "Scott Shawyer and
+            # Canada Ocean Racing announce IMOCA programme" was dropped by
+            # a show whose first three keywords are those three names.
+            # Shows written with all-lowercase keywords (tesla, spacex,
+            # fascinating_frontiers, omni_view) were unaffected, which is
+            # why this stayed invisible. The web-search path at
+            # fetch_web_search_articles has always lowercased correctly —
+            # that asymmetry is what confirms this side was the bug.
             if keywords:
                 text_lower = (title + " " + description).lower()
-                if not any(kw in text_lower for kw in keywords):
+                if not any(kw.lower() in text_lower for kw in keywords):
                     continue
 
             articles.append(

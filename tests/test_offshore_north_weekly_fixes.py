@@ -138,7 +138,9 @@ class TestDebutIntroduction:
 
     def test_debut_covers_show_purpose_and_the_network(self):
         p = first_episode_podcast_appendix(1, "Offshore North", "offshore_north")
-        low = p.lower()
+        # collapse wrapping — the template is hard-wrapped prose, so a
+        # phrase can legitimately straddle a line break
+        low = " ".join(p.lower().split())
         assert "why it exists" in low
         assert "nerra network" in low
         assert "ad-free" in low
@@ -182,3 +184,167 @@ class TestDebutIntroduction:
         assert "THE DEBUT SCRIPT" in first_episode_podcast_appendix(
             1, "The DP Pod", "dp_pod"
         )
+
+
+# ---------------------------------------------------------------------------
+# Ep001 post-mortem fixes (2026-08-05). The first published episode ran
+# 7m32s against a 10-15 min target, gave 38% of its runtime to the
+# explainer segment, shipped no Introduction chapter, cited one source,
+# and closed a WEEKLY SOLO show with "we'll see you tomorrow".
+# ---------------------------------------------------------------------------
+
+
+class TestKeywordFilterIsCaseInsensitive:
+    """The highest-impact bug found in the Ep001 review.
+
+    engine/fetcher.py compared un-lowercased keywords against lowercased
+    text, so any keyword with a capital letter could never match — 149 of
+    the network's 652 keywords, and 70% of Offshore North's. Every proper
+    noun a show is ABOUT is capitalised.
+    """
+
+    def test_capitalised_keyword_matches_lowercase_text(self):
+        from engine.fetcher import fetch_rss_articles  # noqa: F401  (import guard)
+
+        src = (_ROOT / "engine" / "fetcher.py").read_text(encoding="utf-8")
+        assert "any(kw.lower() in text_lower for kw in keywords)" in src, (
+            "the RSS keyword filter must lowercase its keywords"
+        )
+        assert "any(kw in text_lower for kw in keywords)" not in src, (
+            "the un-lowercased comparison is back — capitalised keywords are dead again"
+        )
+
+    def test_a_headline_of_this_shows_proper_nouns_passes(self):
+        kws = [k.lower() for k in _cfg().keywords]
+        blob = (
+            "Vendee Globe 2028: Scott Shawyer and Canada Ocean Racing "
+            "confirm IMOCA programme"
+        ).lower()
+        assert any(k in blob for k in kws)
+
+    def test_off_topic_headline_is_still_rejected(self):
+        """The fix must not turn the filter into a pass-through."""
+        kws = [k.lower() for k in _cfg().keywords]
+        blob = "Local council approves new bicycle lane downtown".lower()
+        assert not any(k in blob for k in kws)
+
+
+class TestWebSearchFiresOnRelevance:
+    """Ep001 finished with 70 articles against min_articles=4, so the
+    `len(articles) < min_articles` gate was never true and the show's
+    eight configured web_search_queries never ran — even though only a
+    handful of those 70 were on topic."""
+
+    def test_gate_counts_on_topic_articles(self):
+        src = (_ROOT / "run_show.py").read_text(encoding="utf-8")
+        assert "_is_on_topic" in src
+        assert "min(len(articles), _relevant) < min_quality" in src, (
+            "web search must fire on on-topic count, not raw count"
+        )
+
+    def test_show_still_has_queries_to_run(self):
+        assert len(_cfg().web_search_queries) >= 5
+
+
+class TestIntroductionChapterLatches:
+    def _pattern(self):
+        raw = yaml.safe_load(_SHOW_YAML.read_text(encoding="utf-8"))
+        return next(
+            m["pattern"]
+            for m in raw["chapters"]["section_markers"]
+            if m["title"] == "Introduction"
+        )
+
+    def test_matches_the_exact_line_that_shipped_broken(self):
+        """Ep001's opening. Greeting and show name both present; five
+        words wedged between them broke the old pattern."""
+        assert re.search(
+            self._pattern(),
+            "Welcome to the very first episode of Offshore North! Today is "
+            "August fifth, twenty twenty-six.",
+        )
+
+    def test_still_matches_the_supplied_intro_line(self):
+        assert re.search(self._pattern(), "This is Offshore North, episode 1.")
+
+    def test_does_not_match_a_late_brand_mention(self):
+        """`where: start` bounds this too, but the pattern must not be so
+        loose that a sign-off mention could claim the marker."""
+        assert not re.search(
+            self._pattern(), "That is all from Offshore North for this week."
+        )
+
+
+class TestDebutDoesNotStealChapterMarkers:
+    """The Ep001 debut template told the host to name the four segments,
+    so "on the Canadian boat" was spoken inside the introduction and the
+    chapter landed at 61s — inside the intro, not at the segment."""
+
+    def test_debut_does_not_contain_segment_trigger_phrases(self):
+        p = first_episode_podcast_appendix(1, "Offshore North", "offshore_north")
+        raw = yaml.safe_load(_SHOW_YAML.read_text(encoding="utf-8"))
+        triggers = []
+        for marker in raw["chapters"]["section_markers"]:
+            if marker["title"] in ("Introduction", "Sign-Off"):
+                continue
+            triggers += [t.strip() for t in marker["pattern"].split("|")]
+        # the template may NAME a segment, but must never hand the model a
+        # ready-made announcement phrase to speak early
+        spoken = p.lower()
+        for trig in triggers:
+            plain = trig.replace("[Ff]", "f").replace(",?", ",")
+            if plain.startswith("on the canadian boat") and plain in spoken:
+                raise AssertionError(
+                    f"debut template contains chapter trigger {plain!r}"
+                )
+
+    def test_debut_warns_about_the_trigger_phrases(self):
+        p = first_episode_podcast_appendix(1, "Offshore North", "offshore_north")
+        assert "chapter trigger" in p.lower()
+
+
+class TestScriptNaturalness:
+    """The operator's note was that Ep001 sounded robotic. The script was
+    passive-voice and near-uniform sentence length; the prompt now says so
+    explicitly, quoting the actual failures."""
+
+    def _prompt(self):
+        return (_ROOT / "shows" / "prompts" / "offshore_north_podcast.txt").read_text(
+            encoding="utf-8"
+        )
+
+    def test_prompt_demands_active_voice_and_varied_rhythm(self):
+        src = self._prompt().lower()
+        assert "active voice" in src
+        assert "vary sentence length" in src
+        assert "contractions" in src
+
+    def test_prompt_bans_meta_commentary_about_the_brief(self):
+        """Ep001 said "not established in the supplied sources" on air."""
+        assert "the supplied sources" in self._prompt()
+
+    def test_prompt_bans_daily_cadence_language(self):
+        """A weekly solo show said "we'll see you tomorrow for episode two"."""
+        src = self._prompt()
+        assert "tomorrow" in src and "NEXT MONDAY" in src
+
+    def test_plain_sailing_has_a_hard_ceiling(self):
+        src = self._prompt()
+        assert "HARD CEILING" in src
+        assert "600 spoken words" in src
+
+
+class TestXSourcingIsScaffoldedButDormant:
+    def test_accounts_present_but_fetch_disabled(self):
+        raw = yaml.safe_load(_SHOW_YAML.read_text(encoding="utf-8"))
+        assert raw.get("x_fetch_enabled") is False, (
+            "handles are unverified — must not fetch until the operator checks them"
+        )
+        assert len(raw.get("x_accounts") or []) >= 3
+
+    def test_every_handle_is_flagged_for_verification(self):
+        raw = yaml.safe_load(_SHOW_YAML.read_text(encoding="utf-8"))
+        for acct in raw["x_accounts"]:
+            assert "VERIFY" in acct["label"], (
+                f"{acct['handle']}: handle was never confirmed against live X"
+            )
