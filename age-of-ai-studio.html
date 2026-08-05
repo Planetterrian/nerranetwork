@@ -100,6 +100,9 @@
       <button class="ghost" id="muteBtn">Mute</button>
       <button class="danger" id="hangupBtn">End interview</button>
     </div>
+    <label>Your microphone (this should move when you speak — if it
+    doesn't, Mira can't hear you)</label>
+    <div id="micLevelCall"><div style="height:8px;width:0%;background:var(--ok);border-radius:4px;transition:width .08s linear"></div></div>
     <video id="selfview" class="hidden"></video>
     <p class="tips" style="color:var(--muted)">
       Interrupt her whenever you like — she can handle it. Ask her questions
@@ -282,10 +285,26 @@
 
     await sdk.loginWithOneTimeKey(user, auth.token);
 
+    // Use the classic SDK's REAL device-selection APIs. The original code
+    // called sdk.setAudioInputDevice, which does not exist — the guard
+    // made it a silent no-op, so the CALL captured the system-default
+    // microphone while the preview meter tested the selected one. Dan's
+    // Aug 5 dry run: he heard Mira perfectly; she never heard him.
     var micId = document.getElementById("micSel").value;
     var camId = document.getElementById("camSel").value;
-    if (micId) sdk.setAudioInputDevice && sdk.setAudioInputDevice(micId);
-    if (camOn && camId) sdk.setVideoInputDevice && sdk.setVideoInputDevice(camId);
+    try {
+      if (micId) {
+        VoxImplant.Hardware.AudioDeviceManager.get()
+          .setCallAudioSettings({ inputId: micId });
+      }
+    } catch (e) { console.warn("audio device select failed", e); }
+    try {
+      if (camOn && camId) {
+        VoxImplant.Hardware.CameraManager.get()
+          .setCallVideoSettings({ cameraId: camId,
+                                  frameWidth: 1280, frameHeight: 720 });
+      }
+    } catch (e) { console.warn("camera select failed", e); }
 
     activeCall = sdk.call({
       number: "mira",
@@ -307,6 +326,28 @@
       document.getElementById("callTimer").textContent =
         String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0");
     }, 1000);
+    // In-call mic meter on the SAME device the call selected: a silent
+    // mic becomes visible in seconds instead of minutes of "can you hear
+    // me?". Chrome allows a second consumer on the same device.
+    try {
+      var micId = document.getElementById("micSel").value;
+      navigator.mediaDevices.getUserMedia(
+        { audio: micId ? { deviceId: { exact: micId } } : true })
+        .then(function (s) {
+          var ctx = new (window.AudioContext || window.webkitAudioContext)();
+          var an = ctx.createAnalyser(); an.fftSize = 512;
+          ctx.createMediaStreamSource(s).connect(an);
+          var data = new Uint8Array(an.frequencyBinCount);
+          var bar = document.querySelector("#micLevelCall > div");
+          (function loop() {
+            an.getByteTimeDomainData(data);
+            var peak = 0;
+            for (var i = 0; i < data.length; i++) peak = Math.max(peak, Math.abs(data[i] - 128));
+            if (bar) bar.style.width = Math.min(100, (peak / 128) * 220) + "%";
+            requestAnimationFrame(loop);
+          })();
+        }).catch(function () { /* meter is best-effort */ });
+    } catch (e) { /* best-effort */ }
   }
   function onCallEnded() {
     if (timerHandle) clearInterval(timerHandle);

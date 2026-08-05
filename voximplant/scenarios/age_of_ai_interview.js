@@ -52,6 +52,8 @@ let connectedAt = null;    // Call has no getDuration(); compute from timestamps
 let timeCheckTimer = null; // periodic real-clock injections (Mira has no clock)
 let callMode = "pstn";     // "pstn" | "webrtc" — set by whichever entry fires
 let videoRecorder = null;  // separate WebRTC-mode video recorder
+let guestHeard = false;    // set on first InputAudioBufferSpeechStarted
+let micCheckTimer = null;  // silent-mic detection
 let videoRecordUrl = null;
 
 // ---------------------------------------------------------------------------
@@ -213,10 +215,18 @@ async function beginInterview(config, withVideo) {
     });
 
     // Telephony-natural barge-in: flush Mira's buffered audio the moment
-    // the guest starts speaking.
+    // the guest starts speaking. Also feeds the silent-mic detector.
     grokAgent.addEventListener(Grok.VoiceAgentAPIEvents.InputAudioBufferSpeechStarted, function () {
+      guestHeard = true;
       if (grokAgent) grokAgent.clearMediaBuffer();
     });
+
+    // Silent-mic detection (Aug 5 2026, Dan Perra dry run: guest heard
+    // Mira fine, his mic never reached us, and the call limped on in
+    // one-way silence). If Grok hears NOTHING from the guest shortly
+    // after the greeting, Mira says so and points at the on-screen mic
+    // meter — twice, then keeps waiting rather than hanging up.
+    micCheckTimer = setTimeout(function () { silentMicNudge(1); }, 35 * 1000);
 
     // 5. Mira's in-call tools — WITHOUT this handler a tool call stalls
     //    her mid-conversation forever (the request is never answered).
@@ -234,6 +244,31 @@ async function beginInterview(config, withVideo) {
   } catch (e) {
     Logger.write("[aoa " + runId + "] connected-handler failure: " + e.message);
     call.hangup();
+  }
+}
+
+function silentMicNudge(attempt) {
+  try {
+    if (guestHeard || !grokAgent || !call || call.state() === "DISCONNECTED") return;
+    Logger.write("[aoa " + runId + "] no guest audio after greeting (attempt " + attempt + ")");
+    grokAgent.conversationItemCreate({
+      item: { type: "message", role: "system",
+        content: [{ type: "input_text", text:
+          "[MIC CHECK — system note] You have not received ANY audio from " +
+          "the guest since the call began — their microphone is not " +
+          "reaching you. Tell them warmly that you can't hear them yet, " +
+          "and ask them to check the microphone meter on their screen: if " +
+          "it isn't moving when they speak, they should pick a different " +
+          "microphone from the selector and rejoin, or reply to their " +
+          "booking email to switch to a phone call. Keep it short, then " +
+          "wait." }] },
+    });
+    grokAgent.responseCreate({});
+    if (attempt < 2) {
+      micCheckTimer = setTimeout(function () { silentMicNudge(attempt + 1); }, 45 * 1000);
+    }
+  } catch (e) {
+    Logger.write("[aoa " + runId + "] silent-mic nudge failed: " + e.message);
   }
 }
 
@@ -325,6 +360,7 @@ function attachEndHandlers() {
   call.addEventListener(CallEvents.Disconnected, async function () {
     if (hardCapTimer) clearTimeout(hardCapTimer);
     if (timeCheckTimer) clearInterval(timeCheckTimer);
+    if (micCheckTimer) clearTimeout(micCheckTimer);
     try {
       // The recording stops automatically on disconnect; the durable copy
       // happens in GitHub Actions (Net.httpRequest can't stream multi-MB
