@@ -180,6 +180,36 @@ async function handleInterviewComplete(req: Request, env: Env): Promise<Response
       call_mode: payload.call_mode ?? null,
     },
   };
+  // Aborted studio call (Aug 5 2026, Dan Perra dry run): a WebRTC session
+  // shorter than 5 minutes is a failed join (media-path failure, refresh,
+  // wrong room), not an interview. Reset the run so the guest can rejoin
+  // immediately — do NOT mark it completed or dispatch post-production on
+  // 141 seconds of silence.
+  const dur = Number(payload.duration_sec ?? 0);
+  if (payload.call_mode === "webrtc" && payload.status !== "failed" && dur < 300) {
+    await sb(env, "PATCH", `interview_runs?id=eq.${payload.run_id}`, {
+      status: "awaiting_guest",
+      duration_sec: null,
+      disconnect_reason: null,
+      grok_session_log: { aborted_attempt: { duration_sec: dur,
+        record_url: payload.voximplant_record_url ?? null,
+        at: new Date().toISOString() } },
+    });
+    await slack(env, `Age of AI: studio call ended after ${dur}s — treated as an aborted join; the studio is unlocked for the guest to retry.`);
+    try {
+      await email(env, operatorEmail(env),
+        "Age of AI: guest's studio call dropped early — retry is open",
+        `<p>Hi Patrick,</p><p>A studio session ended after only ${dur} seconds
+         — that's a failed join (bad network path, refresh, or a media issue),
+         so I reopened the studio for the guest to rejoin. If it keeps
+         happening, switch their interview to phone mode and I'll call them
+         instead.</p><p>— Mira</p>`);
+    } catch (err: any) {
+      console.error("aborted-join email failed:", err?.message ?? err);
+    }
+    return json({ ok: true, aborted_join: true });
+  }
+
   await sb(env, "PATCH", `interview_runs?id=eq.${payload.run_id}`, patch);
 
   // Retry ladder for failed dials (spec §7 row 1, implemented July 2026):
