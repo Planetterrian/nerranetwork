@@ -750,7 +750,19 @@ export default {
     }
   },
 
-  async scheduled(_event: ScheduledEvent, env: Env): Promise<void> {
+  async scheduled(event: ScheduledEvent, env: Env): Promise<void> {
+    // */5 tick: punctual fire dispatch (Cloudflare crons fire to the
+    // minute; GitHub's own schedule trigger lags up to hours — a real
+    // guest sat in a locked studio on Aug 5 2026). Everything downstream
+    // is idempotent, so overlapping with the GitHub fallback cron is safe.
+    if (event.cron === "*/5 * * * *") {
+      try {
+        await dispatch(env, "fire-tick", { source: "voices-worker-cron" });
+      } catch (err: any) {
+        console.error("fire-tick dispatch failed:", err?.message ?? err);
+      }
+      return;
+    }
     await gate2Housekeeping(env);
   },
 };

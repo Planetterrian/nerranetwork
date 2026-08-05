@@ -8,6 +8,13 @@ on:
   schedule:
     - cron: '*/5 * * * *'
   workflow_dispatch:
+  # Punctuality (Aug 5 2026, landmine #24 shape): GitHub delivered this
+  # */5 cron at ~2-hour intervals and a real guest sat in a locked studio.
+  # The nerra-voices Cloudflare Worker now fires this event every 5
+  # minutes ON TIME; the GitHub cron stays as fallback (double ticks are
+  # safe — the in-script window + run-row idempotency dedupe them).
+  repository_dispatch:
+    types: [fire-tick]
 
 permissions:
   contents: read

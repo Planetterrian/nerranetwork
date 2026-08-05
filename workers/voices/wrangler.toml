@@ -23,7 +23,11 @@ routes = [
 # Daily cron: gate-2 housekeeping — day-4 guest reminder, day-7
 # auto-approve (spec §7).
 [triggers]
-crons = ["0 17 * * *"]
+# */5: punctual fire-tick dispatch to the GitHub fire workflow (Aug 2026 —
+# GitHub's own */5 cron arrives ~hourly under load; Cloudflare fires to
+# the minute, same pattern as workers/scheduler for the shows).
+# 17:00: gate-2 housekeeping (guest-review reminders / auto-approve).
+crons = ["*/5 * * * *", "0 17 * * *"]
 
 # Secrets (set once via `wrangler secret put <NAME>`):
 #   SUPABASE_URL              Nerra Voices Supabase project URL
