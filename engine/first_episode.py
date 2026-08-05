@@ -35,6 +35,46 @@ This is the **series premiere** for "{show_name}".
 # audio.debut_song_file; the script must introduce it).
 
 _SHOW_DIGEST_EP1 = {
+    "offshore_north": """
+### FIRST EPISODE (Episode {episode_num}) — DEBUT BRIEF for "{show_name}"
+A normal weekly brief with a real introduction in front of it. Keep the
+standard hook line and the standard section headings — the pipeline and the
+blog both read them — and add ONE new section directly after the hook:
+
+**## What This Show Is** (250-350 words, first episode only)
+- The gap: one of the great endurance sports on earth is reported almost
+  entirely in French, leaving English-speaking fans with the results but
+  not the meaning. This show closes that gap weekly. State it once,
+  plainly — no grievance, no hype.
+- The spine: every four years a small number of people sail alone, without
+  stopping and without assistance, around the world, and no Canadian has
+  ever finished. Scott Shawyer and Canada Ocean Racing are trying to change
+  that at the Vendee Globe starting 12 November 2028. The show follows that
+  attempt week by week and uses it as a door into the whole sport.
+- The weekly shape: The Canadian Boat (consequence, not recap), The Fleet
+  (the week in offshore racing with the why-it-matters layer), Plain
+  Sailing (one concept explained properly), The Countdown (days to the
+  start and where qualification stands).
+- The promise: sources named and linked every week; no hype; no
+  play-by-play that is stale by Monday; nothing stated that the sources do
+  not support, and uncertainty flagged as uncertainty.
+- Who it is for: people who are enthusiastic, not expert — and never
+  treated as though those are the same thing.
+- The network, in two or three sentences: Offshore North is part of the
+  Nerra Network, an independent, ad-free network of daily shows built by
+  two friends (Novak plus Perra equals Nerra) covering technology, science,
+  markets, world news and language learning in several languages, free with
+  no ads and no paywall, at nerranetwork.com. An invitation, not a
+  commercial — no superlatives, no growth numbers, no counts of shows or
+  listeners.
+
+Then run the normal sections for the week. Debut discipline: choose the
+STRONGEST stories rather than padding the list; define every piece of
+jargon on first use; do not reference previous episodes or weeks; and hold
+every racing claim to the show's normal sourcing and [VERIFY: ...] rules —
+only the introduction speaks from the show's own identity rather than from
+the week's sources.
+""",
     "dp_pod": """
 ### FIRST EPISODE — THE FOUNDING BRIEF (Episode 1 of {show_name})
 This debut brief is NOT a news digest. It MUST still begin with the standard
@@ -83,6 +123,82 @@ Papers news-item format entirely and structure the brief as:
 }
 
 _SHOW_PODCAST_EP1 = {
+    "offshore_north": """
+### FIRST EPISODE — THE DEBUT SCRIPT (series premiere of {show_name})
+A real episode with a real introduction in front of it, NOT a news-only
+week. Target 1,900-2,100 words — longer than a normal episode because the
+introduction is additive, and every regular segment still runs and is still
+announced BY NAME so its chapter marker latches.
+
+Order and shape:
+
+1. **[Cold open — the week's single most interesting development, 2-3
+   sentences]** Plain fact, no preamble, exactly as on any other week.
+2. **[The supplied intro line — copy it VERBATIM, immediately after the
+   cold open]** It must appear within the first ~100 words of the script.
+   Do not push it later with extra cold-open material; the Introduction
+   chapter marker is positional and will not latch if it drifts.
+3. **[THE INTRODUCTION — 450-600 WORDS, first episode only]** Dan explains,
+   in his own plain voice, what this show is. Cover, in whatever order
+   reads naturally — as talk, not as a list read aloud:
+   - **WHY IT EXISTS.** One of the great endurance sports on earth is
+     reported almost entirely in French, which leaves English-speaking
+     fans with the results but not the meaning. This show closes that gap
+     every Monday. Say it once, without grievance and without hype.
+   - **THE SPINE OF THE SERIES.** Every four years a small number of
+     people sail alone, without stopping and without assistance, all the
+     way around the world, and no Canadian has ever finished. Scott
+     Shawyer and Canada Ocean Racing are trying to change that at the
+     Vendee Globe starting 12 November 2028. The show follows that attempt
+     week by week and uses it as a door into the whole sport.
+   - **WHAT LISTENERS GET EACH WEEK.** Name the four segments and what
+     each is FOR in one clause apiece: The Canadian Boat (what the
+     campaign did and what it changes — consequence, not recap), The Fleet
+     (the week in offshore racing with the why-it-matters layer), Plain
+     Sailing (one concept explained properly), The Countdown (days to the
+     start and where qualification actually stands).
+   - **THE PROMISE.** Sources named in the episode and linked in the
+     notes. No hype. No play-by-play that is stale by Monday. Nothing
+     stated that the sources do not support — and when something is
+     uncertain, it gets said as uncertain.
+   - **WHO IT IS FOR, AND WHO IS TALKING.** Made for people who are
+     enthusiastic, not expert, and never treated as though those are the
+     same thing. Dan is a commercial airline pilot and a Nerra Network
+     co-founder, not an offshore racing expert, and says so plainly. He
+     may name the two things he does bring — a working life spent reading
+     weather, trading a shorter track against a faster one, and making
+     irreversible calls on incomplete information; and having felt, at a
+     far smaller scale, what it is like when a hull comes unstuck and
+     starts to fly. ONE such touch, briefly. No career history, no resume,
+     no life story. Do NOT invent any specific past event, place, date or
+     anecdote for Dan — he is a real person.
+   - **WHAT THE NERRA NETWORK IS.** Offshore North is part of it, so say
+     what it is: an independent, ad-free network of daily shows built by
+     two friends — Novak plus Perra equals Nerra — covering technology,
+     science, markets, world news and language learning, in several
+     languages, free to listen to with no ads and no paywall. Point at
+     "nerra network dot com" once, said naturally, for every show and the
+     episode notes. Two or three sentences. This is an invitation, not a
+     commercial: no superlatives, no growth numbers, no claims about how
+     many shows or listeners there are.
+4. **[The Canadian Boat]** As normal, announced by name. If the campaign
+   made no public news this week, say so in one sentence and use a
+   standing item — do not pad and do not speculate about the campaign's
+   internal decisions, finances or plans.
+5. **[The Fleet]** As normal, announced by name.
+6. **[Plain Sailing]** As normal, announced by name. On a debut, prefer a
+   genuinely foundational concept — the thing a new listener most needs in
+   order to follow every future episode.
+7. **[The Countdown]** As normal, announced by name.
+8. **[Sign-off]** The supplied closing block, copied VERBATIM. Final spoken
+   words are the fixed sign-off line.
+
+Debut discipline: do NOT say "welcome back", do not reference earlier
+episodes, and do not promise anything you cannot guarantee weekly. Every
+racing fact in this episode obeys the show's normal sourcing rules —
+the introduction is the only part that speaks from the show's own
+identity rather than from the week's sources.
+""",
     "dp_pod": """
 ### FIRST EPISODE — THE DEBUT SCRIPT (series premiere of {show_name})
 This is a designed founding episode, not a news day. Total target stays

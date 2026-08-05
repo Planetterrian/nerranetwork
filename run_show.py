@@ -3738,6 +3738,28 @@ def _fetch_with_expansion(
         (72, 0.55, False),   # Drop keyword filter entirely (broader catch)
     ]
 
+    # Per-show override for shows whose cadence is wider than the daily
+    # ladder above. The final stage always repeats the widest window with
+    # keyword filtering off, mirroring the default shape — dropping
+    # keywords is the last resort, never an earlier one, because
+    # off-topic volume produces a longer article list and a WORSE digest
+    # (Offshore North, 2026-08-04: 46 off-topic articles -> 596 words).
+    # Empty list = the default ladder, byte-for-byte.
+    _custom_hours = list(getattr(config, "fetch_expansion_hours", []) or [])
+    if _custom_hours:
+        _custom_hours = sorted({int(h) for h in _custom_hours if int(h) > 0})
+        expansion_stages = [
+            (h, 0.65 if idx < 2 else 0.55, True)
+            for idx, h in enumerate(_custom_hours)
+        ]
+        expansion_stages.append((_custom_hours[-1], 0.55, False))
+        logger.info(
+            "Fetch ladder overridden for %s: %s (widest %dh)",
+            getattr(config, "slug", "?"),
+            " -> ".join(f"{h}h" for h in _custom_hours),
+            _custom_hours[-1],
+        )
+
     best_articles: list[dict] = []
 
     for stage_idx, (cutoff_hours, sim_threshold, use_keywords) in enumerate(expansion_stages):

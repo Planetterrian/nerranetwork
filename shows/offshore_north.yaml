@@ -23,6 +23,15 @@ weekly_summary_segment: false
 min_articles: 4
 min_articles_skip: 2
 
+# Weekly show — the network default ladder (24 -> 48 -> 72h) is tuned for
+# DAILY shows and tops out three days short of this show's own period, so
+# four of the seven days it exists to cover were invisible. The 2026-08-04
+# run starved to 6 on-topic articles from 2 of 17 feeds and only reached 46
+# by dropping keyword filtering, i.e. by going off-topic; the digest came
+# out at 596 words against a 1300 target and the episode was skipped.
+# 168h = the seven days a Monday episode actually reports on.
+fetch_expansion_hours: [48, 96, 168]
+
 sources:
   # ---- Tier 1: the campaign itself (primary, low volume, highest value) ----
   - url: "https://www.canadaoceanracing.com/feed/"
@@ -59,8 +68,13 @@ sources:
     label: "Sail-World Europe (racing)"
 
   # ---- Tier 5: magazines / technical depth ----
-  - url: "https://www.seahorsemagazine.com/?format=feed&type=rss"
-    label: Seahorse Magazine
+  # REMOVED 2026-08-04: Seahorse Magazine
+  # (https://www.seahorsemagazine.com/?format=feed&type=rss) returned
+  # "Feed yielded 0 entries (likely blocked/empty/stale URL)" on all four
+  # fetch passes of the first live run — it is the only one of the 17
+  # feeds that is actually broken rather than merely filtered out. No
+  # replacement URL is guessed here; re-add only a URL confirmed to serve
+  # recent English items.
   - url: "https://www.yachtingworld.com/news/feed"
     label: Yachting World — News
 
@@ -210,7 +224,14 @@ llm:
   # 1,600 sits inside that band so the expand-retry fires on genuinely
   # short episodes, not on every good 1,550-word one.
   min_podcast_words: 1600
-  min_podcast_word_floor: 1150
+  # Lowered 1150 -> 950 on 2026-08-04. Ep001 generated a 1124-word script
+  # and was skipped for being 26 words under its own floor, which was set
+  # nearly 2x the network default of 600. 950 still sits just under the
+  # 960 soft floor (60% of target), so a genuinely rushed episode is
+  # still refused — but a real racing week no longer loses the episode to
+  # a rounding error. The length fix is the wider fetch window below;
+  # this is only the safety net under it.
+  min_podcast_word_floor: 950
   # Network-wide July 2026 policy: length is attacked on the DIGEST side
   # only — the script can never say more than the brief gives it, and
   # podcast-side expansion pads by paraphrase-duplication. A weekly show
