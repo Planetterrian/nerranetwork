@@ -187,27 +187,61 @@ async function handleInterviewComplete(req: Request, env: Env): Promise<Response
   // 141 seconds of silence.
   const dur = Number(payload.duration_sec ?? 0);
   if (payload.call_mode === "webrtc" && payload.status !== "failed" && dur < 300) {
+    const runRows = await sb(env, "GET",
+      `interview_runs?id=eq.${payload.run_id}&select=interview_id,grok_session_log`);
+    const runRow = runRows?.[0] ?? {};
+    const attempts = Number(runRow.grok_session_log?.aborted_attempts ?? 0) + 1;
+
+    if (attempts >= 2 && runRow.interview_id) {
+      // AUTO PHONE FALLBACK (Aug 6 2026, after Dan Perra's four-attempt
+      // studio ordeal): two failed browser joins = the browser path is
+      // broken for this guest today. Flip the interview to PSTN, fail
+      // this run so the fire tick (<=5 min, Worker cron) creates a fresh
+      // one and dials the guest's phone. Everyone gets told; nobody has
+      // to do anything.
+      await sb(env, "PATCH", `interviews?id=eq.${runRow.interview_id}`,
+        { status: "briefed", call_mode: "pstn" });
+      await sb(env, "PATCH", `interview_runs?id=eq.${payload.run_id}`,
+        { status: "failed", disconnect_reason: "studio_join_failed_x2_auto_pstn" });
+      const ivs = await sb(env, "GET",
+        `interviews?id=eq.${runRow.interview_id}&select=application_id`);
+      const apps = ivs?.[0] ? await sb(env, "GET",
+        `guest_applications?id=eq.${ivs[0].application_id}&select=name,email`) : [];
+      if (apps?.[0]?.email) {
+        await email(env, apps[0].email,
+          "Change of plan — I'll call your phone instead",
+          `<p>Hi ${esc(apps[0].name)},</p><p>The browser studio isn't
+           cooperating with your setup today — no fault of yours. Let's not
+           fight it: <strong>I'll call your phone within the next five
+           minutes.</strong> Find a quiet spot, and answer when you see the
+           call. Everything else works exactly the same.</p><p>— Mira</p>`,
+          true);
+      }
+      await slack(env, `Age of AI: 2 failed studio joins — auto-switched to PSTN; Mira dials within 5 minutes.`);
+      return json({ ok: true, auto_pstn_fallback: true });
+    }
+
     await sb(env, "PATCH", `interview_runs?id=eq.${payload.run_id}`, {
       status: "awaiting_guest",
       duration_sec: null,
       disconnect_reason: null,
-      grok_session_log: { aborted_attempt: { duration_sec: dur,
-        record_url: payload.voximplant_record_url ?? null,
-        at: new Date().toISOString() } },
+      grok_session_log: { aborted_attempts: attempts,
+        last_aborted: { duration_sec: dur,
+          record_url: payload.voximplant_record_url ?? null,
+          at: new Date().toISOString() } },
     });
-    await slack(env, `Age of AI: studio call ended after ${dur}s — treated as an aborted join; the studio is unlocked for the guest to retry.`);
+    await slack(env, `Age of AI: studio call ended after ${dur}s (attempt ${attempts}) — studio reopened for retry; one more failure auto-switches to phone.`);
     try {
       await email(env, operatorEmail(env),
         "Age of AI: guest's studio call dropped early — retry is open",
         `<p>Hi Patrick,</p><p>A studio session ended after only ${dur} seconds
-         — that's a failed join (bad network path, refresh, or a media issue),
-         so I reopened the studio for the guest to rejoin. If it keeps
-         happening, switch their interview to phone mode and I'll call them
-         instead.</p><p>— Mira</p>`);
+         (attempt ${attempts}) — a failed join. The studio is reopened for
+         the guest; if the next attempt fails too, I'll automatically switch
+         them to a phone call. No action needed.</p><p>— Mira</p>`);
     } catch (err: any) {
       console.error("aborted-join email failed:", err?.message ?? err);
     }
-    return json({ ok: true, aborted_join: true });
+    return json({ ok: true, aborted_join: true, attempt: attempts });
   }
 
   await sb(env, "PATCH", `interview_runs?id=eq.${payload.run_id}`, patch);

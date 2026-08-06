@@ -63,9 +63,14 @@ def _probe_audio(path: Path) -> tuple[int, bool]:
     channels = int((out.stdout.strip().splitlines() or ["1"])[0] or 1)
 
     def band_mean(lo: int, hi: int) -> float:
+        # For stereo recordings, probe the GUEST channel (left) alone —
+        # Mira's full-band channel otherwise masks a narrowband PSTN
+        # guest and the telephony repair never engages (Aug 5 2026,
+        # Dan Perra phone interview).
+        pre = "pan=mono|c0=c0," if channels >= 2 else ""
         r = subprocess.run(
             ["ffmpeg", "-v", "info", "-t", "60", "-i", str(path),
-             "-af", f"highpass=f={lo},lowpass=f={hi},volumedetect",
+             "-af", f"{pre}highpass=f={lo},lowpass=f={hi},volumedetect",
              "-f", "null", "-"],
             capture_output=True, text=True, timeout=300,
         )
