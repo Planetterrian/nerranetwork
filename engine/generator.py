@@ -2472,6 +2472,92 @@ def generate_podcast_script(
                 config.name, word_count, word_count2,
             )
 
+    # Publication-floor re-roll (Aug 2026, Tesla Ep564). When the script is
+    # STILL inside the skip band after the expansion retry, the episode is
+    # about to be thrown away: run_show skips anything under 60% of target.
+    # Tesla lost the whole 2026-08-06 slot this way \u2014 954-word first pass,
+    # expansion retry reached only 1119 against the 1200 floor \u2014 and the
+    # identical 2026-07-31 skip was recovered by a MANUAL workflow rerun
+    # that produced a normal 1500-word script from the same news day. A
+    # fresh full-prompt regeneration recovers a low-tail sampling draw far
+    # more reliably than asking the model to expand its own short draft
+    # (the expansion retry's ledger record is ~10 misses to 1 hit). This is
+    # NOT the banned podcast-side length lever: the gate is the publication
+    # soft floor (+ the same 10% dedup margin the expansion threshold
+    # uses), never the word TARGET, so it cannot fire on a merely
+    # below-target script \u2014 it only decides between "an episode ships" and
+    # "the day is lost". Costs one extra LLM call, only on would-be-skipped
+    # days. The longer candidate wins; a shorter or refused re-roll keeps
+    # the original (and the runner's skip gate still has the final say).
+    _pub_band = max(600, int(int(min_words * 0.6) * 1.1))
+    _current_words = len(text.split())
+    if _current_words < _pub_band:
+        logger.warning(
+            "Podcast script for '%s' is still in the publication skip band "
+            "(%d words < %d) after the expansion retry \u2014 re-rolling the full "
+            "prompt once (fresh generation) to avoid losing the episode ...",
+            config.name, _current_words, _pub_band,
+        )
+        try:
+            text_fresh, meta_fresh = _call_grok(
+                prompt,
+                model=script_model,
+                system_prompt=system_prompt,
+                temperature=config.llm.podcast_temperature,
+                max_tokens=podcast_tokens,
+                cache_key=_show_cache_key(config),
+                reasoning_effort=_llm_reasoning_effort(config),
+            )
+            if tracker and "usage" in meta_fresh:
+                try:
+                    from engine.tracking import record_llm_usage
+                    record_llm_usage(
+                        tracker,
+                        "podcast_script_floor_reroll",
+                        meta_fresh["usage"].get("prompt_tokens", 0),
+                        meta_fresh["usage"].get("completion_tokens", 0),
+                        model=script_model,
+                        cached_tokens=meta_fresh["usage"].get("cached_tokens", 0),
+                    )
+                except Exception as e:
+                    logger.warning("Failed to record re-roll LLM usage: %s", e)
+            # A fresh draw can still degenerate into self-restatement —
+            # strip intra-script near-duplicates before comparing so a
+            # doubled script can't "win" on raw length (same guard the
+            # expansion retry uses; a clean script loses nothing here).
+            text_fresh, _fresh_dups = _dedup_expansion_sentences(text_fresh)
+            if _fresh_dups:
+                logger.warning(
+                    "Publication-floor re-roll for '%s' repeated itself — "
+                    "stripped %d near-duplicate sentence(s)",
+                    config.name, _fresh_dups,
+                )
+            fresh_words = len(text_fresh.split())
+            if fresh_words > _current_words:
+                # Validate BEFORE accepting \u2014 a refusal raises here and the
+                # except below keeps the original draft.
+                _rep_count = _validate_llm_output(
+                    text_fresh, stage="podcast_script", show_name=config.name,
+                    min_podcast_words=min_words,
+                    known_entities=tuple(getattr(config, "keywords", ()) or ()),
+                )
+                logger.info(
+                    "Publication-floor re-roll recovered '%s' (%d \u2192 %d "
+                    "words)", config.name, _current_words, fresh_words,
+                )
+                text = text_fresh
+            else:
+                logger.warning(
+                    "Publication-floor re-roll for '%s' was no longer than "
+                    "the current draft (%d vs %d words) \u2014 keeping original",
+                    config.name, fresh_words, _current_words,
+                )
+        except Exception as exc:
+            logger.warning(
+                "Publication-floor re-roll failed for '%s' (%s) \u2014 keeping "
+                "original draft", config.name, exc,
+            )
+
     # If the script has severe repetition, retry with lower temperature
     if _rep_count >= 3:
         logger.warning(
