@@ -1,0 +1,62 @@
+# SpaceX Daily
+> **NROL-95's launch and Redwire's Starfall agreement show how national-security and microgravity hardware are scaling on the same Falcon and Dragon platforms.**
+---
+### Top News
+1. **SpaceX Launches NROL-95 Mission as NRO Executes Dual-Track Architecture for 2026 Fleet Operations** — satnews.com (2026-08-06)
+   The mission placed a classified payload for the National Reconnaissance Office into orbit from Vandenberg. NRO is running parallel architecture tracks for its 2026 satellite fleet. The launch used a Falcon 9 configuration already qualified for national-security orbits. This flight adds to the growing cadence of Starshield-derived hardware supporting government customers. Source: [satnews.com](https://news.google.com/rss/articles/CBMiyAFBVV95cUxNZ1B4MXg5NGNwM0hkTGNjaF9GUGd1MnNuQkZNTDNVX2haaEl4dHFHUEhGUVV4UWhSc3lJOWVQRUo1TjdnOTZreVBZNFVMMFVQa2JZTlJfeU00czB6MG5iTW5rRmczUmxFRUVOWFBNRHdRN2FaZ3FSNGFhQkRoZzBEc21Xd1VvTm92OHliVVk0eDNLN0M2NkhqaXVUQ210Vnh1cmkxSDgtXzlrU3BLRjZoeENTZ0dKdzZnbmsxN0tVMU1pUEFnZEdJbw?oc=5)
+
+2. **Redwire to fly dedicated Starfall mission for microgravity research** — SpaceNews (2026-08-06)
+   Redwire's subsidiary signed an agreement to fly biotech and pharmaceutical payloads on the Starfall reentry vehicle. The dedicated mission will return microgravity-processed materials to Earth. Starfall operates as a Dragon-derived capsule optimized for rapid sample return. The contract expands commercial use of Dragon-class hardware beyond crew and cargo rotations. Source: [spacenews.com](https://spacenews.com/redwire-to-fly-dedicated-starfall-mission-for-microgravity-research/)
+
+3. **r/SpaceX Starlink 17-38 Official Launch Discussion & Updates Thread!** — r/spacex (2026-08-06)
+   The upcoming Falcon 9 flight from SLC-4E at Vandenberg targets August 8 at 14:00 UTC. Booster B1093 will attempt its 16th landing on the drone ship OCISLY. The mission will deploy another batch of Starlink satellites into low Earth orbit. Weather and trajectory data remain under review ahead of the four-hour launch window. Source: [reddit.com](https://www.reddit.com/r/spacex/comments/1vh59ms/rspacex_starlink_1738_official_launch_discussion/)
+
+4. **SpaceX to Increase Its Computing Capacity More Than Fivefold** — Zamin.uz (2026-08-06)
+   SpaceX plans a more than fivefold expansion of its internal computing resources. The buildout supports expanded simulation, telemetry processing, and on-orbit data handling. No specific hardware vendors or rack counts were disclosed in the announcement. The increase aligns with growing demands from Starlink constellation operations and vehicle testing. Source: [Zamin.uz](https://news.google.com/rss/articles/CBMipgFBVV95cUxNRDFyTDIwSmFFdFFpRkVnX0RmOXNydlYtY3l0SHd3VzVCTkx5RWp5OUdvT3QwN3BncVI4ajZRaFVBcGM2VENSYncxdUgwR0l1Q0hURFdBZTBRUlRYTHRiSDc3bFU3V3dEY2JEdFdZMk5XMXhIR3hybk9RajA3ZU9pcW1XYW9XM1BFSWR3OG5rZWJVRE53dE0tMFJkenBvM1JybDh6T1RB?oc=5)
+
+5. **Envision Commissions World’s Largest AI Data Center Building Using On-Site Renewables** — Tech Times (2026-08-06)
+   Envision completed the world's largest single AI data-center building powered by on-site renewables. The facility integrates solar and wind generation directly at the site. Construction details emphasize rapid deployment of high-density compute halls. The project highlights scaling challenges for power delivery to large AI clusters. Source: [Tech Times](https://news.google.com/rss/articles/CBMi0gFBVV95cUxQWWhLSlplYVppMFlWTl9zQ091VGVmRTRlS3EwUnVTZk00YWZoZWI5ODNaTng2RGZPRjBjWmJCb1BjSEZacGlTMTJhUm1OdlFISExXUEppU1hTR2JHTlpzTWNtQ0ZNWWRqQThRX0RTR1NHRzhELVFLYURqQUp4SkdNRVUwMmRTYUhENk9PaEphVjVROVhyM1Jpdl9TcjZTQi1HN0M1WENGb1BIUTNmOWNnOVdlSGJHU2NjaDVYajNLb0p4RlJoSnhUeWpKVDFDMTR2Z3c?oc=5)
+
+6. **SpaceX Explains Why One of Its Falcon 9 Second Stages Crashed Into the Moon** — autoevolution (2026-08-06)
+   SpaceX confirmed a Falcon 9 upper stage reached the lunar surface after a disposal burn shortfall. The stage followed a trajectory set during an earlier deep-space test. Telemetry showed the disposal maneuver did not achieve the intended lunar-avoidance orbit. Engineers are reviewing the burn parameters for future high-energy disposal profiles. Source: [autoevolution](https://news.google.com/rss/articles/CBMivwFBVV95cUxOal9qaXQ1SExieFFmbm9KckEzS1dpMGIyR2wxNVp3Rm1KTTFVTTVHX29zT3hfTHpGNFlGRnc1Nml0VkUtVVcwTTEwQWJRdk02WnB1VGE5LVU0VEpRUjVVNzVYd0tPVjVEOTZKNi1sLXdlLUlNSk1SamFuWDVEeDEwSGdmVUhtdTZ4WVlQLVp2NUtuM0xVMGhMOGRVRkxEdHlueEVCTVN6aTRFUmlhdXZaU2k5Tk1PdDk1OTFtM0JWUQ?oc=5)
+
+7. **Chinese satellite captures video of SpaceX rocket debris crashing into the moon** — South China Morning Post (2026-08-06)
+   A Chinese satellite recorded video of the Falcon 9 upper-stage impact on the lunar surface. The footage shows the debris cloud and surface disturbance near the targeted region. Impact timing matched ground-based predictions for the disposal trajectory. The observation provides independent confirmation of the stage's final location. Source: [Google News](https://news.google.com/rss/articles/CBMiwAFBVV95cUxQX1Q4YTZkRHBEeExEb2hqYUh5MjNJNDBhaXA4Um12bWFYc2Zmam4tRFhSeWdjR2M4ZTdWM2cwWThLT3M0MWJDN2c0V3U2OUpGUkZFRDNpcXdtTUlNaVdZLUcxYTlOY2haVTVXRUlnMzBFRjZObWdJanBINVc3Z0w2VXM1MkdYZ1ZGVkdydExXOWVydDJXUnROMzhSOXlTSmZZc3ljdEhyRnZZVGgxSG1fUFRGUFBRYms4R0JoQTJEM2XSAcABQVVfeXFMTWVuSExkMldNZkx5b0hKZllrWHNVSVYxZERGYnNSSHhoa21mUUFTT0docE9VWEtoY0NjdTN2Um5fLVY3aWFnQWN4XzZZd3hjYUJWS0VIVWNWcEtMYUNYdlFJenhmX3l5RHdQeWRodGFLbHo4Nms3aHMyQzdHN3VtNzdKem95eURMSkhoZGJaZm41ZXdicDFHYXhHS21BUmUxLVRlWV9TdWxIQkxtdVMwamgtUFBoN2RMd01zNTIwR3dP?oc=5)
+
+8. **Floating SpaceX rocket piece crashes into moon, kicks up lunar dust** — khaleejtimes.com (2026-08-06)
+   The upper stage struck the Moon and lofted a visible dust plume captured by multiple observers. Trajectory analysis placed the impact near the previously predicted coordinates. The event marks another instance of Falcon 9 hardware reaching cislunar space after mission completion. Post-flight review will examine the disposal burn sequence. Source: [Google News](https://news.google.com/rss/articles/CBMihwFBVV95cUxORzkzYkFlODNFdDdFaUN5OGNscEgyZGpiUHBSQ0hhTmRkZV9Ea0Rqd250ZkdVU0F0MzRYSmFGSkdiZHUtSmVZaWpWREpjczZPRzdXUGhURzVXMHJxbHhIRWJsdWNjRnluZnBTaFExeGlfVnppSEtTR0RxZFlOSFpQQ2RXTHp1Y1XSAYcBQVVfeXFMTkc5M2JBZTgzRXQ3RWlDeThjbHBIM2RqYlBwUkNIYU5kZGVfRGtEandudGZHVVNBdDM0WEphRkpHYmR1LUplWWlqVkRKY3M2T0c3V1BoVEc1VzBycWx4SEVibHVjY0Z5bmZwU2hRMXhpX1Z6aUhLU0dEcWRZTkhaUENkV0x6dWNV?oc=5)
+---
+## Community Buzz
+1. **r/SpaceX Starlink 17-38 Official Launch Discussion & Updates Thread!** — r/spacex (2026-08-06)
+   Community members are tracking the 3-day-20-hour pad turnaround at SLC-4E and the 25-day interval since B1093's prior flight. Observers note the booster's 16th flight as a new reuse record candidate if the landing succeeds. Live thread updates focus on weather constraints and trajectory plots from Flight Club.
+
+2. **Absolute shit journalism: Eric Trump blasts Bloomberg for SpaceX coverage** — Cryptopolitan (2026-08-06)
+   Eric Trump publicly criticized Bloomberg's reporting on SpaceX operations and valuation. The comments highlight ongoing tension between company statements and media framing of launch cadence and funding. No specific corrections or clarifications were issued by Bloomberg in response.
+
+3. **SpaceX Now Faces a Terrible Peril** — Futurism (2026-08-06)
+   The article outlines regulatory and technical hurdles that could slow Starship flight-test cadence. Commenters on related forums debate whether the cited risks stem from FAA timelines or internal hardware maturation. The piece draws on earlier statements from company leadership about reuse goals.
+
+4. **South Korea space agency shares Moon images after SpaceX rocket debris crash** — BBC (2026-08-06)
+   Korea's Danuri orbiter released before-and-after lunar images showing the impact site. Observers in space forums compared the crater features to prior Falcon 9 disposal events. The images provide additional public data on upper-stage lunar impacts.
+---
+## The Counterpoint
+SpaceX’s future hinges on Starship and Starlink as company faces profitability questions. The report notes continued heavy investment in Starship development and Starlink ground infrastructure while launch and satellite segments remain the primary revenue drivers. Sustained positive cash flow from Starlink subscriptions and national-security contracts would be required to offset ongoing Starship expenditures. Source: [WFTV](https://news.google.com/rss/articles/CBMi2AFBVV95cUxNRFZjQnZFMk5UWFV2TFNSaVh0SEZkSU1PanVacUFDb2ZxTUFkeFZFRFpZSGVjX0RIRmtaNVE0d2RHS0lTakZZT2l1bHdhbkZYMVgxdWw5dUhia0tvTHVCRi1RTmk5T05QM05pd1ctYlFGMGJwYU1tRTRZVXNmNy1SNl9jcjVmM3J6RjA0TUQxd1JqUHAwZ0N4dUlyRHdVa3lwS1praU12ZTJqRHQ3SEY1M3ltLWlIQjVNUm9PQy02OE9DQS1YeEZKZXFPY0Z5NVpFWVV6Ql8xVkE?oc=5)
+---
+### AI & Compute
+SpaceX to Increase Its Computing Capacity More Than Fivefold. The expansion targets internal simulation and telemetry workloads tied to vehicle testing and constellation management. Source: [Zamin.uz](https://news.google.com/rss/articles/CBMipgFBVV95cUxNRDFyTDIwSmFFdFFpRkVnX0RmOXNydlYtY3l0SHd3VzVCTkx5RWp5OUdvT3QwN3BncVI4ajZRaFVBcGM2VENSYncxdUgwR0l1Q0hURFdBZTBRUlRYTHRiSDc3bFU3V3dEY2JEdFdZMk5XMXhIR3hybk9RajA3ZU9pcW1XYW9XM1BFSWR3OG5rZWJVRE53dE0tMFJkenBvM1JybDh6T1RB?oc=5)
+
+Nvidia (NVDA) Stock Surges 4.3% After SpaceX Commits to Exclusive Vera Rubin Partnership. The commitment covers next-generation GPU racks for SpaceX compute clusters. Source: [Blockonomi](https://news.google.com/rss/articles/CBMirgFBVV95cUxNQTEzRmpZWGEzbXotMXNVdEhvTGM0eHFENjRJTi1BMlJBSTByVVpfcExLWXc5QjItSFJINkwwZldVTTdmQUNWbWJnRmFhUVRfX29sa1FxYUxXRE5sR2ZuOWJ2R01fMTNCampZOF9kcUtTUkNhVndZS0pLc01aUUNLQ1p3c3A0MXY1eGlzeFpiZ2NRbTZWRTljWlR5SEtTT3pMNVJVSkN4T3lWU3dZbVE?oc=5)
+
+Elon Musk's $60 Billion Bet on AI Coding Data: xAI Swallows Cursor, Reborn in Four Months. The acquisition integrates Cursor's developer tooling with xAI models for code-generation workflows. Source: [finance.biggo.com](https://news.google.com/rss/articles/CBMidkFVX3lxTFBvaHFZSjZnVHVvWVdZOGVtNFFLTWNRVEdZMDJJWG4zQzdrT0NDWjM3Z2R1RFJzc2VoVG5leVRPNDhXclVFWWRfUW1HbmdKNXl2eTlmd2FyRHRJeV9XbFNaTXVsdEFjT3hHWWNhck9LSUYzVENyYVE?oc=5)
+---
+### Engineering Deep Dive
+The Starfall reentry vehicle builds directly on Dragon's proven pressure-vessel and heat-shield architecture yet optimizes for smaller, faster-turnaround payloads. Dragon's PICA-X tiles already demonstrated repeated atmospheric entry at orbital velocities; Starfall inherits that material selection while reducing overall mass to allow dedicated missions rather than sharing a Dragon trunk. The design trades some internal volume for a dedicated service module that handles deorbit and attitude control, lowering the marginal cost of each microgravity sample return below what a full Dragon flight would require. By keeping the same outer mold line and recovery systems, SpaceX avoids new qualification campaigns for parachutes and splashdown loads while still achieving the rapid reuse cadence already proven on cargo Dragons.
+
+From a first-principles standpoint, the dominant constraint on any Earth-return capsule is peak heat flux during reentry. Starfall's smaller ballistic coefficient reduces that flux relative to a fully loaded Dragon, which in turn relaxes the thickness and density requirements on the heat-shield tiles. The resulting mass savings can be reinvested in additional payload or propellant margin for the deorbit burn. This mirrors the same mass-fraction logic that drove Falcon 9's first-stage recovery: every kilogram saved on the thermal-protection system directly increases the useful payload that can be returned rather than expended.
+
+The next engineering milestone to watch is whether Starfall can demonstrate a turnaround time measured in weeks rather than months between flights. If the vehicle reuses the same pressure vessel and avionics across multiple missions, the per-flight cost floor approaches the raw material and propellant cost of the service module alone. That cost curve determines how many dedicated microgravity flights the platform can support before commercial demand saturates the manifest.
+---
+### Market Watch
+SPCX is at $114.92, +4.5% vs the previous close.
+---
+SpaceX's engineering cadence continues to set the pace across multiple programs.
