@@ -29,6 +29,7 @@ project quota is 10,000 units/day. ``thumbnails.set`` adds another
 
 from __future__ import annotations
 
+import datetime
 import logging
 import os
 import re
@@ -178,8 +179,28 @@ def _build_video_body(
     privacy_status: str,
     contains_synthetic_media: bool,
     made_for_kids: bool,
+    publish_at: Optional["datetime.datetime"] = None,
 ) -> dict:
-    """Construct the request body for ``youtube.videos().insert()``."""
+    """Construct the request body for ``youtube.videos().insert()``.
+
+    ``publish_at`` engages YouTube's own scheduler: the API requires the
+    video to be PRIVATE at insert time, then flips it public at the
+    RFC3339 timestamp. Used by staggered Shorts publishing
+    (engine/shorts_stagger.py) so one episode's Shorts spread through the
+    day instead of all landing in the same minute.
+    """
+    status = {
+        "privacyStatus": privacy_status,
+        "selfDeclaredMadeForKids": made_for_kids,
+        "containsSyntheticMedia": contains_synthetic_media,
+        # Skip YouTube's gradual rollout to subscribers' homepages
+        # (we have RSS + X for that). False = publish to subs feed.
+        "publishToSubscriptions": True,
+    }
+    if publish_at is not None:
+        from engine.shorts_stagger import format_publish_at
+        status["privacyStatus"] = "private"  # API requirement for publishAt
+        status["publishAt"] = format_publish_at(publish_at)
     return {
         "snippet": {
             "title": title,
@@ -189,14 +210,7 @@ def _build_video_body(
             "defaultLanguage": default_language,
             "defaultAudioLanguage": default_language,
         },
-        "status": {
-            "privacyStatus": privacy_status,
-            "selfDeclaredMadeForKids": made_for_kids,
-            "containsSyntheticMedia": contains_synthetic_media,
-            # Skip YouTube's gradual rollout to subscribers' homepages
-            # (we have RSS + X for that). False = publish to subs feed.
-            "publishToSubscriptions": True,
-        },
+        "status": status,
     }
 
 
@@ -249,6 +263,7 @@ def upload_video(
     thumbnail_path: Optional[Path] = None,
     contains_synthetic_media: bool = True,
     made_for_kids: bool = False,
+    publish_at: Optional[datetime.datetime] = None,
 ) -> "UploadResult":
     """Upload a single video and (optionally) its custom thumbnail.
 
@@ -273,6 +288,10 @@ def upload_video(
     made_for_kids:
         ``status.selfDeclaredMadeForKids``. Default ``False``; flip per
         show in the YAML if a show is targeted at < 13.
+    publish_at:
+        When set, the video uploads PRIVATE with ``status.publishAt`` and
+        YouTube makes it public at that UTC time (staggered Shorts —
+        engine/shorts_stagger.py). Overrides ``privacy_status``.
 
     Returns
     -------
@@ -302,6 +321,7 @@ def upload_video(
         privacy_status=privacy_status,
         contains_synthetic_media=contains_synthetic_media,
         made_for_kids=made_for_kids,
+        publish_at=publish_at,
     )
 
     media = MediaFileUpload(
@@ -315,7 +335,8 @@ def upload_video(
         "Uploading to YouTube: %s (%.1f MiB, privacy=%s, AI-disclosed)",
         video_path.name,
         video_path.stat().st_size / (1024 * 1024),
-        privacy_status,
+        (f"scheduled@{body['status']['publishAt']}"
+         if publish_at is not None else privacy_status),
     )
 
     insert_request = youtube.videos().insert(

@@ -886,6 +886,18 @@ class YouTubeConfig:
     # offset so they ignore this knob and always produce 1 Short.
     shorts_per_episode: int = 1
 
+    # ---- Staggered Shorts publishing (Aug 2026) ----
+    # Short #1 publishes with the episode; later Shorts upload PRIVATE with
+    # ``status.publishAt`` set to the channel's next optimal slots
+    # (engine/shorts_stagger.py), so one episode's Shorts spread through the
+    # day instead of competing with each other at publish time. Applies to
+    # scheduled AND manual runs. Dataclass default False for backwards
+    # compat (the x_cross_promo pattern); the network default lives in
+    # shows/_defaults.yaml. Slots map channel → list of UTC hours; empty
+    # falls back to engine.shorts_stagger.DEFAULT_SLOT_HOURS_UTC.
+    shorts_stagger_enabled: bool = False
+    shorts_stagger_slots_utc: Dict[str, list] = field(default_factory=dict)
+
     # ---- Multi-platform distribution (Instagram Reels / TikTok / etc.) ----
     # When true, each published Short additionally gets (1) a "safe-zone"
     # variant MP4 with overlays lifted out of the bottom/right bands that IG

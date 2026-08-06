@@ -5858,6 +5858,42 @@ def _publish_youtube(
                 except Exception as exc:  # pragma: no cover — best-effort
                     logger.debug("Transcript word load skipped: %s", exc)
 
+            # ---- Staggered Shorts publishing (Aug 2026) ----
+            # Short #1 goes public with the episode; later Shorts upload
+            # private with status.publishAt at the channel's next optimal
+            # slots so they spread through the day (manual runs included).
+            # Any failure here degrades to the legacy publish-all-now.
+            _stagger_times: "list" = []
+            if len(shorts_plan) > 1 and bool(
+                getattr(config.youtube, "shorts_stagger_enabled", False)
+            ):
+                try:
+                    from engine.shorts_stagger import (
+                        resolve_slot_hours,
+                        stagger_publish_times,
+                    )
+                    _stagger_times = stagger_publish_times(
+                        datetime.datetime.now(datetime.timezone.utc),
+                        len(shorts_plan) - 1,
+                        slot_hours=resolve_slot_hours(
+                            config.youtube, _yt_channel),
+                    )
+                    result["shorts_scheduled_times"] = [
+                        t.strftime("%Y-%m-%dT%H:%M:%SZ")
+                        for t in _stagger_times
+                    ]
+                    logger.info(
+                        "Shorts stagger: #1 publishes now; %d later Short(s) "
+                        "scheduled at %s",
+                        len(_stagger_times),
+                        ", ".join(result["shorts_scheduled_times"]),
+                    )
+                except Exception as exc:  # noqa: BLE001
+                    logger.warning(
+                        "Shorts stagger scheduling failed — all Shorts "
+                        "publish immediately: %s", exc)
+                    _stagger_times = []
+
             # ---- Per-Short loop ----
             short_urls_out: "list[str]" = []
             short_video_ids_out: "list[str]" = []
@@ -6108,6 +6144,14 @@ def _publish_youtube(
                         if this_short_thumb_path and Path(this_short_thumb_path).exists()
                         else thumbnail_path
                     )
+                    # Staggered publishing: Short #1 is immediate; later
+                    # Shorts carry publishAt (upload_video flips them to
+                    # private + scheduled).
+                    _publish_at = (
+                        _stagger_times[short_idx - 1]
+                        if short_idx >= 1 and (short_idx - 1) < len(_stagger_times)
+                        else None
+                    )
                     this_upload = upload_video(
                         this_short_video_path,
                         credentials=credentials,
@@ -6118,6 +6162,7 @@ def _publish_youtube(
                         default_language=meta["default_language"],
                         privacy_status=config.youtube.privacy_status,
                         thumbnail_path=upload_thumb,
+                        publish_at=_publish_at,
                     )
                     short_urls_out.append(this_upload.watch_url)
                     short_video_ids_out.append(this_upload.video_id)
@@ -6130,7 +6175,11 @@ def _publish_youtube(
                             kind="short",
                             title=meta.get("title", ""),
                             hook=(this_hook or hook),
-                            published=f"{today:%Y-%m-%d}",
+                            # A scheduled Short's velocity clock starts when
+                            # it goes PUBLIC, not when it uploads — record
+                            # the publishAt date so policy vpd math is honest.
+                            published=(f"{_publish_at:%Y-%m-%d}"
+                                       if _publish_at else f"{today:%Y-%m-%d}"),
                             watch_url=this_upload.watch_url,
                             channel=(getattr(config.youtube, "channel", "en") or "en"),
                             # The arm this Short ACTUALLY shipped —
@@ -6192,7 +6241,22 @@ def _publish_youtube(
                             _cmt = ("\u25b6 Full episode: " + _cmt_target
                                     + "\n\U0001f514 Subscribe for daily "
                                       "episodes") if _cmt_target else ""
-                            if _cmt and post_video_comment(
+                            if _cmt and _publish_at is not None:
+                                # Comments can't be posted on a private
+                                # (scheduled) video \u2014 queue it; the sweep
+                                # (scripts/post_scheduled_short_comments.py)
+                                # posts it once the Short is public.
+                                from engine.shorts_stagger import queue_comment
+                                if queue_comment(
+                                        digests_dir,
+                                        video_id=this_upload.video_id,
+                                        channel=_yt_channel,
+                                        text=_cmt,
+                                        publish_at=_publish_at):
+                                    result["yt_comments_queued"] = (
+                                        int(result.get(
+                                            "yt_comments_queued", 0)) + 1)
+                            elif _cmt and post_video_comment(
                                     credentials=credentials,
                                     video_id=this_upload.video_id,
                                     text=_cmt):

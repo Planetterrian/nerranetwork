@@ -481,6 +481,25 @@ single-Short behaviour byte-for-byte. Drift guards in
 `tests/test_shorts_selector.py` under the
 `pick_top_n_engaging_windows` block.
 
+**Staggered Shorts publishing (Aug 2026, operator-directed).** Short #1
+publishes with the episode; the 2nd/3rd upload PRIVATE with
+`status.publishAt` at the channel's next optimal UTC slots
+(`youtube.shorts_stagger_slots_utc` in `_defaults.yaml` — EN 17/21/23,
+RU 15/18/20, FR 17/19/21; audience-timezone priors, hand-tuned because
+the Analytics API has no hour-of-day dimension), so one episode's Shorts
+spread through the day on every channel, manual runs included. YouTube's
+own scheduler flips them public — no new infra, dead runners can't
+strand a Short. Engine: [`engine/shorts_stagger.py`](engine/shorts_stagger.py);
+wired in `run_show._publish_youtube`, `engine/ru_dub.py`,
+`engine/lang_dub.py`. The video index records the **publishAt** date so
+policy vpd math stays honest. Funnel comments can't be posted on a
+private video, so they queue to `digests/<slug>/scheduled_comments.json`
+and `scripts/post_scheduled_short_comments.py` (multilingual sweep +
+nightly, which hold the channel tokens; sidecar is in nightly's
+add-paths whitelist) posts them once public. `shorts_stagger_enabled:
+false` per show reverts to publish-all-now. Drift guards:
+`tests/test_shorts_stagger.py`.
+
 **Auto-hashtag injection on Shorts descriptions.** Every Shorts
 upload now carries entity-derived hashtags in its description
 (via [`engine.shorts_hashtags.extract_hashtags`](engine/shorts_hashtags.py)).

@@ -279,6 +279,23 @@ jobs:
           python scripts/publish_lang_dubs.py "${{ matrix.show }}" --lang fr --latest "$LATEST" </dev/null || \
             echo "::warning::FR dub publish failed for ${{ matrix.show }} (non-fatal)"
 
+      - name: Post due scheduled-Short comments
+        if: always()
+        # Staggered Shorts (Aug 2026): comments can't be posted on a
+        # private (publishAt-scheduled) Short, so the publish paths queue
+        # them in digests/<slug>/scheduled_comments.json. This sweep posts
+        # every queued comment whose Short has gone public. Best-effort;
+        # entries stay queued when their channel token is absent here.
+        env:
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN_EN: ${{ secrets.YOUTUBE_REFRESH_TOKEN_EN }}
+          YOUTUBE_REFRESH_TOKEN_RU: ${{ secrets.YOUTUBE_REFRESH_TOKEN_RU }}
+          YOUTUBE_REFRESH_TOKEN_FR: ${{ secrets.YOUTUBE_REFRESH_TOKEN_FR }}
+        run: |
+          python scripts/post_scheduled_short_comments.py || \
+            echo "::warning::scheduled-Short comment sweep failed (non-fatal)"
+
       - name: Build ${{ matrix.show }} language feeds
         if: always()
         env:
