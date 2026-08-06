@@ -737,6 +737,34 @@ def publish_ru_dub(
             except Exception as exc:  # noqa: BLE001
                 logger.warning("ru_dub: end-card render failed (%s)", exc)
 
+            # Staggered Shorts (Aug 2026): Short #1 publishes now; later
+            # Shorts upload private with publishAt at the RU audience's
+            # evening slots. Failure = legacy publish-all-now.
+            _stagger_times: list = []
+            if len(short_plan) > 1 and bool(
+                getattr(yt, "shorts_stagger_enabled", False)
+            ):
+                try:
+                    from engine.shorts_stagger import (
+                        resolve_slot_hours,
+                        stagger_publish_times,
+                    )
+                    import datetime as _sdt
+                    _stagger_times = stagger_publish_times(
+                        _sdt.datetime.now(_sdt.timezone.utc),
+                        len(short_plan) - 1,
+                        slot_hours=resolve_slot_hours(yt, "ru"),
+                    )
+                    logger.info(
+                        "ru_dub: Shorts stagger — #1 now, %d scheduled at %s",
+                        len(_stagger_times),
+                        ", ".join(t.strftime("%Y-%m-%dT%H:%MZ")
+                                  for t in _stagger_times))
+                except Exception as exc:  # noqa: BLE001
+                    logger.warning("ru_dub: stagger scheduling failed — all "
+                                   "Shorts publish immediately: %s", exc)
+                    _stagger_times = []
+
             short_urls_out: list = []
             for short_idx, (start_offset, opening_text,
                             window_label) in enumerate(short_plan):
@@ -798,6 +826,12 @@ def publish_ru_dub(
                             "ru")
                         short_title = f"{body}{_SHORTS_SUFFIX}".strip()
 
+                    _publish_at = (
+                        _stagger_times[short_idx - 1]
+                        if short_idx >= 1
+                        and (short_idx - 1) < len(_stagger_times)
+                        else None
+                    )
                     sup = upload_video(
                         short_mp4, credentials=creds,
                         title=short_title,
@@ -807,7 +841,8 @@ def publish_ru_dub(
                         tags=list(getattr(config, "keywords", []) or []),
                         category_id=int(getattr(yt, "category_id", 28)),
                         default_language="ru",
-                        privacy_status=getattr(yt, "privacy_status", "public"))
+                        privacy_status=getattr(yt, "privacy_status", "public"),
+                        publish_at=_publish_at)
                     short_urls_out.append(sup.watch_url)
                     # July 18 2026 (operator-approved): RU funnel comment.
                     # A Russian Short must never link an English video, so
@@ -844,7 +879,15 @@ def publish_ru_dub(
                                     + "\n🔔 Подпишитесь — новые выпуски "
                                       "каждый день"
                                 ) if _dest else ""
-                            if _text:
+                            if _text and _publish_at is not None:
+                                # Can't comment on a private (scheduled)
+                                # video — queue for the post-publish sweep.
+                                from engine.shorts_stagger import queue_comment
+                                queue_comment(
+                                    PROJECT_ROOT / config.episode.output_dir,
+                                    video_id=sup.video_id, channel="ru",
+                                    text=_text, publish_at=_publish_at)
+                            elif _text:
                                 post_video_comment(
                                     credentials=creds,
                                     video_id=sup.video_id,
@@ -858,7 +901,11 @@ def publish_ru_dub(
                     record_video(
                         video_id=sup.video_id, show_slug=config.slug,
                         episode=episode_num, kind="short", title=short_title,
-                        hook=ru_title, published=date_str,
+                        hook=ru_title,
+                        # Scheduled Shorts go public at publishAt — record
+                        # that date so policy vpd math stays honest.
+                        published=(f"{_publish_at:%Y-%m-%d}"
+                                   if _publish_at else date_str),
                         watch_url=sup.watch_url,
                         channel="ru",
                         window=window_label,

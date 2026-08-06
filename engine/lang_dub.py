@@ -535,6 +535,35 @@ def publish_lang_dub(
                 logger.warning("lang_dub[%s]: end-card failed (%s)",
                                lang.code, exc)
 
+            # Staggered Shorts (Aug 2026): Short #1 publishes now; later
+            # Shorts upload private with publishAt at this language
+            # audience's evening slots. Failure = legacy publish-all-now.
+            _stagger_times: list = []
+            if len(short_plan) > 1 and bool(
+                getattr(yt, "shorts_stagger_enabled", False)
+            ):
+                try:
+                    from engine.shorts_stagger import (
+                        resolve_slot_hours,
+                        stagger_publish_times,
+                    )
+                    import datetime as _sdt
+                    _stagger_times = stagger_publish_times(
+                        _sdt.datetime.now(_sdt.timezone.utc),
+                        len(short_plan) - 1,
+                        slot_hours=resolve_slot_hours(yt, lang.channel),
+                    )
+                    logger.info(
+                        "lang_dub[%s]: Shorts stagger — #1 now, %d scheduled "
+                        "at %s", lang.code, len(_stagger_times),
+                        ", ".join(t.strftime("%Y-%m-%dT%H:%MZ")
+                                  for t in _stagger_times))
+                except Exception as exc:  # noqa: BLE001
+                    logger.warning("lang_dub[%s]: stagger scheduling failed "
+                                   "— all Shorts publish immediately: %s",
+                                   lang.code, exc)
+                    _stagger_times = []
+
             short_urls_out: List[str] = []
             for short_idx, (start_offset, opening_text,
                             window_label) in enumerate(short_plan):
@@ -598,6 +627,12 @@ def publish_lang_dub(
                             lang.code)
                         st = f"{body}{_SHORTS_SUFFIX}".strip()
 
+                    _publish_at = (
+                        _stagger_times[short_idx - 1]
+                        if short_idx >= 1
+                        and (short_idx - 1) < len(_stagger_times)
+                        else None
+                    )
                     sup = upload_video(
                         short_mp4, credentials=creds,
                         title=st,
@@ -608,12 +643,17 @@ def publish_lang_dub(
                         category_id=int(getattr(yt, "category_id", 28)),
                         default_language=lang.default_language,
                         privacy_status=getattr(yt, "privacy_status",
-                                               "public"))
+                                               "public"),
+                        publish_at=_publish_at)
                     short_urls_out.append(sup.watch_url)
                     record_video(
                         video_id=sup.video_id, show_slug=config.slug,
                         episode=episode_num, kind="short", title=st,
-                        hook=title, published=date_str,
+                        # Scheduled Shorts go public at publishAt — record
+                        # that date so policy vpd math stays honest.
+                        hook=title,
+                        published=(f"{_publish_at:%Y-%m-%d}"
+                                   if _publish_at else date_str),
                         watch_url=sup.watch_url,
                         channel=lang.channel, window=window_label,
                         index_path=idx_path)
@@ -628,11 +668,26 @@ def publish_lang_dub(
                     # this run (never link a different-language video).
                     if long_url and bool(getattr(yt, "auto_comment", True)):
                         try:
-                            post_video_comment(
-                                credentials=creds,
-                                video_id=sup.video_id,
-                                text=lang.comment_full_episode.format(
-                                    url=long_url))
+                            _cmt_text = lang.comment_full_episode.format(
+                                url=long_url)
+                            if _publish_at is not None:
+                                # Can't comment on a private (scheduled)
+                                # video — queue for the post-publish sweep.
+                                from engine.shorts_stagger import (
+                                    queue_comment,
+                                )
+                                queue_comment(
+                                    PROJECT_ROOT
+                                    / config.episode.output_dir,
+                                    video_id=sup.video_id,
+                                    channel=lang.channel,
+                                    text=_cmt_text,
+                                    publish_at=_publish_at)
+                            else:
+                                post_video_comment(
+                                    credentials=creds,
+                                    video_id=sup.video_id,
+                                    text=_cmt_text)
                         except Exception:  # noqa: BLE001
                             pass
                     result["status"] = "done"

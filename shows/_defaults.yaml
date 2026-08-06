@@ -390,6 +390,21 @@ youtube:
   # fact, and why it matters. Below 30 the clip starts truncating
   # mid-thought, which costs the completion it buys.
   short_duration_seconds: 35
+  # ---- Staggered Shorts publishing (Aug 2026, operator-directed) ----
+  # Short #1 publishes with the episode; the 2nd/3rd upload private with
+  # status.publishAt at the channel's next slot below (UTC hours), so one
+  # episode's Shorts spread through the day on every channel — scheduled
+  # and manual runs alike. Slots are audience-timezone priors (EN: US
+  # lunch/commute/evening; RU: Moscow evening; FR: CEST evening) — the
+  # Analytics API has no hour-of-day views dimension, so tune by hand.
+  # Funnel comments for scheduled Shorts are queued to
+  # digests/<slug>/scheduled_comments.json and posted by the multilingual
+  # sweep / nightly maintenance once the Short is public.
+  shorts_stagger_enabled: true
+  shorts_stagger_slots_utc:
+    en: [17, 21, 23]
+    ru: [15, 18, 20]
+    fr: [17, 19, 21]
   description_prompt_file: shows/prompts/youtube_description_intro.txt
   pinned_comment_template: |
     🎧 Full episode + show notes: {show_page_url}
