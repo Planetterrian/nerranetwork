@@ -186,7 +186,14 @@ today's work, not just explain yesterday's):
   are banned network-wide (July 18 playbook `do_not_retry`: ~10 misses vs
   1 hit) and were switched off in the show YAMLs on 2026-07-29 wherever a
   digest-side lever exists. Chronic under-length on FF / PT / UC / Tesla /
-  EI is a DIGEST ceiling — do not re-attack it at the script.
+  EI is a DIGEST ceiling — do not re-attack it at the script. The
+  **publication-floor re-roll** (Aug 2026, `engine/generator.py`) is NOT
+  that lever: it fires only inside run_show's 60%-of-target skip band —
+  where the alternative is losing the whole day (Tesla Ep564 skipped
+  2026-08-06; the identical 2026-07-31 skip was recovered by a manual
+  rerun) — and regenerates the full prompt fresh instead of expanding the
+  short draft. Guarded by `tests/test_podcast_floor_reroll.py`; do not
+  remove it as a "banned retry", and do not widen it above the band.
 - **De-seed by shape, never with a quotable example.** Every seeded
   template tic in this network's history came from a prompt supplying the
   literal sentence it wanted; three generations of them are in the
