@@ -333,6 +333,63 @@ def translate_script(
     raise last_err
 
 
+def headline_from_excerpt(
+    excerpt: str,
+    lang: str,
+    *,
+    max_chars: int = 70,
+    model: str = _TRANSLATION_MODEL,
+) -> str:
+    """Turn a mid-sentence transcript excerpt into a complete headline.
+
+    Aug 2026: a dub channel's 2nd/3rd Shorts are titled from their window's
+    opening speech, which is a mid-sentence slice by construction — the
+    clause-trim keeps the cut grammatical but the title still *starts*
+    mid-thought («атмосферу. Успех станет…», ~2/3 of RU Short titles once
+    the 3-Short band shipped). This asks Grok for ONE natural, complete
+    headline in the excerpt's own language, grounded strictly in the
+    excerpt (the never-invent rule), and validates the result with the
+    same refusal/script guards as the other translation surfaces.
+
+    Returns ``""`` on ANY failure or doubt so the caller keeps its legacy
+    clause-trim path — a fragment title is bad, an invented or English
+    title on a Russian channel is worse. Title-only metadata: no audio is
+    touched (outside the landmine-#17 A/B gate, same contract as the
+    youtube_titles loop).
+    """
+    excerpt = _collapse_ws(excerpt or "")
+    if len(excerpt) < 15 or lang not in LANGUAGE_NAMES:
+        return ""
+    name = language_name(lang)
+    prompt = (
+        f"This is an excerpt from a {name} podcast transcript; it may begin "
+        f"mid-sentence:\n\n\"{excerpt[:400]}\"\n\n"
+        f"Write ONE natural, complete {name} headline for a YouTube Short "
+        f"made from this exact moment. Requirements: at most {max_chars} "
+        "characters; a grammatical, self-contained phrase or sentence that "
+        "never starts mid-thought; state the concrete fact or stake from "
+        "the excerpt; keep proper nouns, brand names and tickers intact; "
+        "no quotation marks, emoji, hashtags, or trailing ellipsis; do NOT "
+        "add facts that are not in the excerpt. Return ONLY the headline "
+        "text, nothing else."
+    )
+    try:
+        raw = _generate(prompt, model, 200)
+        raw = _collapse_ws(raw).strip().strip('"«»“”').strip()
+        # Same refusal + target-script guards the script path uses.
+        raw = validate_translation(raw, lang)
+        if len(raw) < 8:
+            return ""
+        # A wildly over-budget result means the model ignored the brief —
+        # treat as failure rather than hand a paragraph to the trimmer.
+        if len(raw) > int(max_chars * 1.6):
+            return ""
+        return raw
+    except Exception as exc:  # noqa: BLE001 — headline is best-effort
+        logger.warning("headline_from_excerpt (%s) failed: %s", lang, exc)
+        return ""
+
+
 def translate_metadata(
     title: str,
     description: str,

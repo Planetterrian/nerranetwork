@@ -817,13 +817,28 @@ def publish_ru_dub(
                             short_title = _ru_short_title(
                                 ru_title, body_limit=58) + " — ещё момент"
                     else:
-                        # Clause-aware — this titles the 2nd/3rd Short from
-                        # its window's opening speech, already a
-                        # mid-sentence slice.
-                        body = _clause_trim(
-                            opening_text.rstrip("…").rstrip(),
-                            min(70, _YT_TITLE_MAX - len(_SHORTS_SUFFIX)),
-                            "ru")
+                        # Aug 2026: the 2nd/3rd Short's window opening is a
+                        # mid-sentence slice by construction, so first ask
+                        # Grok for a complete headline from that excerpt
+                        # (engine.translate.headline_from_excerpt — grounded
+                        # in the excerpt only, never-invent). Any failure
+                        # falls back to the legacy clause-trim so a Short
+                        # never ships untitled. Title-only metadata.
+                        _limit = min(70, _YT_TITLE_MAX - len(_SHORTS_SUFFIX))
+                        body = ""
+                        try:
+                            from engine.translate import headline_from_excerpt
+                            body = headline_from_excerpt(
+                                opening_text, "ru", max_chars=_limit)
+                        except Exception:  # noqa: BLE001
+                            body = ""
+                        if body:
+                            body = _clause_trim(body, _limit, "ru")
+                        else:
+                            # Legacy clause-aware trim of the raw excerpt.
+                            body = _clause_trim(
+                                opening_text.rstrip("…").rstrip(),
+                                _limit, "ru")
                         short_title = f"{body}{_SHORTS_SUFFIX}".strip()
 
                     _publish_at = (
