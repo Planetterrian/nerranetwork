@@ -616,15 +616,27 @@ def publish_lang_dub(
                             st = (_short_title(title, lang, body_limit=52)
                                   + lang.second_short_tail)
                     else:
-                        # Clause-aware: this branch titles the 2nd/3rd Short
-                        # from its window's opening speech, which is a
-                        # mid-sentence slice to begin with — a plain word
-                        # trim lands on a dangling article even more often
-                        # than the long-title path does.
-                        body = _clause_trim(
-                            opening_text.rstrip("…").rstrip(),
-                            min(70, _YT_TITLE_MAX - len(_SHORTS_SUFFIX)),
-                            lang.code)
+                        # Aug 2026: window openings are mid-sentence slices
+                        # by construction — ask Grok for a complete headline
+                        # from the excerpt first (never-invent, same-language
+                        # validated); any failure keeps the legacy
+                        # clause-trim. Title-only metadata.
+                        _limit = min(70, _YT_TITLE_MAX - len(_SHORTS_SUFFIX))
+                        body = ""
+                        try:
+                            from engine.translate import (
+                                headline_from_excerpt,
+                            )
+                            body = headline_from_excerpt(
+                                opening_text, lang.code, max_chars=_limit)
+                        except Exception:  # noqa: BLE001
+                            body = ""
+                        if body:
+                            body = _clause_trim(body, _limit, lang.code)
+                        else:
+                            body = _clause_trim(
+                                opening_text.rstrip("…").rstrip(),
+                                _limit, lang.code)
                         st = f"{body}{_SHORTS_SUFFIX}".strip()
 
                     _publish_at = (

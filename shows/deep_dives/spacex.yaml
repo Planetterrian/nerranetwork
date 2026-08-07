@@ -39,3 +39,164 @@ queue:
     FRAMING RULES: this is the one episode where the business IS the headline — but keep the engineering heart: the numbers exist because of the hardware. Not financial advice; no price targets; no buy/sell framing. State beats/misses with attribution to reporting, state filing numbers as fact, label call quotes as call quotes, and label opinion as opinion. The episode should leave a listener — investor or engineer — feeling they understand what the first public quarter actually revealed: a launch monopoly funding a broadband profit engine funding an AI land grab, and the honest open question of whether the capex bet pays.
 
     '
+
+# ---------------------------------------------------------------------------
+# Pre-staged specials (Aug 2026). Both are MANUAL-FORCE ONLY (the show's
+# deep_dive.enabled stays false — no scheduling keys here, so the daily
+# cron can never pick them up). Run from Actions: "Run Podcast Show" ->
+# Run workflow -> show=spacex + the deep_dive id.
+#
+# Both events are IN THE FUTURE at authoring time, so unlike the Q2 entry
+# their briefs carry verified CONTEXT only — every fact about the event
+# itself must come from the {current_research} block pulled at generation
+# time. The briefs enforce that hard: if the research is thin, the host
+# says what is and is not known rather than inventing.
+# ---------------------------------------------------------------------------
+
+- id: flight-14-catch-reaction
+  title: 'Starship Flight 14 Special: The Tower Catch Attempt'
+  category: event_special
+  produced: false
+  episode_number: null
+  produced_date: null
+  # Run this the DAY OF or DAY AFTER the flight, whatever the outcome —
+  # success, partial, failure, or scrub. The research pulls what actually
+  # happened; the brief refuses to presume it.
+  web_search_queries:
+  - Starship Flight 14 launch result upper stage tower catch
+  - SpaceX Starship Flight 14 live coverage outcome
+  - Starship Flight 14 Mechazilla ship catch attempt analysis
+  - Starship Flight 14 booster catch upper stage reentry heat shield
+  - Elon Musk Starship Flight 14 reaction quotes
+  - SPCX stock reaction Starship Flight 14
+  - Starship Flight 14 engineering analysis what changed V3
+  - Starship flight cadence daily flights Musk projection
+  x_handles:
+  - SpaceX
+  - elonmusk
+  - NASASpaceflight
+  - SciGuySpace
+  - StarshipGazer
+  - thesheetztweetz
+  brief: >
+    A special standalone reaction episode on Starship Flight 14 — the
+    flight on which SpaceX said it would attempt, for the first time in
+    history, to CATCH THE SHIP (the upper stage) with the launch tower.
+    CRITICAL HONESTY RULE: this brief was written BEFORE the flight. The
+    outcome — success, partial success, failure, or scrub — is UNKNOWN
+    here and must be taken ENTIRELY from the {current_research} block and
+    reported exactly as it happened, with attribution. Do not presume
+    success; do not soften a failure; a scrub or delay is its own honest
+    episode ("what the hold tells us"). Name the stage in every recovery
+    reference — Super Heavy booster (first stage) versus Ship / upper
+    stage — and never blur the two.
+
+    VERIFIED CONTEXT (from the Q2 2026 earnings release and call, August
+    4, 2026 — safe to state as background): Starship V3 completed two
+    successful flight tests in the 90 days before the call. Flight 12 in
+    May was V3's first suborbital mission from the new Starbase pad, with
+    a precision upper-stage landing and deployment of modified V2
+    Starlink satellites. Flight 13 in July achieved all objectives: 20
+    production V3 satellites deployed, an in-space Raptor engine relight,
+    and the softest-ever Starship splashdown, returning an intact heat
+    shield. On the earnings call, Musk said the next flight — tentatively
+    end of August — would attempt to catch the Ship with the tower,
+    pending regulatory approval, and projected flight cadence reaching
+    "at least one flight a day, possibly more" within a year (attribute
+    call quotes as call coverage). The company frames Starship as the
+    path to cutting cost-to-orbit by 99% or more.
+
+    EPISODE SHAPE: (1) The moment — what was attempted and what happened,
+    from the research, minute by minute where the reporting supports it.
+    (2) Why a Ship catch is HARD, from first principles — the engineering
+    centerpiece: the upper stage returns from orbital velocity through
+    full reentry heating (unlike the booster's suborbital return), must
+    survive with a reusable heat shield, relight engines, decelerate to a
+    hover at a precise point, and be caught by the tower arms; walk the
+    physics of why SpaceX wants tower catches at all (no landing legs =
+    dry-mass savings = payload; rapid re-stack = cadence; the 99%
+    cost-to-orbit thesis needs BOTH stages back same-day). (3) What the
+    outcome — whichever it was — actually proves or disproves on the road
+    to full and rapid reusability, and what it means for the Starlink V3
+    deployment rate and the daily-flight projection. (4) The reaction:
+    the best attributed takes from the research (X commentary, analyst
+    reads, SPCX move if reported), labeled as opinion. (5) What to watch
+    next, concretely. Engineering-first, honest, never a stock promoter;
+    not financial advice.
+
+- id: q3-2026-earnings
+  title: 'SpaceX Quarterly Earnings Special: Q3 2026'
+  category: earnings_special
+  produced: false
+  episode_number: null
+  produced_date: null
+  # Run this AFTER the Q3 call (expected early November 2026 — confirm
+  # the actual date from the research; the Q2 call was August 4).
+  # OPERATOR PRE-FLIGHT (same playbook that made the Q2 special sharp):
+  # if you can, drop the Q3 press release / 10-Q numbers into this brief
+  # before dispatching — verified filing numbers beat scraped ones. The
+  # episode still works from research alone, with heavier attribution.
+  web_search_queries:
+  - SpaceX SPCX Q3 2026 earnings results revenue net loss
+  - SpaceX Q3 2026 earnings call highlights quotes Musk
+  - SPCX stock reaction Q3 earnings after hours
+  - SpaceX Q3 2026 AI capex compute gigawatts Colossus
+  - SpaceX Starlink subscribers ARPU Q3 2026
+  - SpaceX Q3 2026 analyst commentary beat miss estimates
+  - SpaceX Cursor acquisition close integration Q3
+  - SpaceX Starship program update Q3 earnings
+  - SPCX lockup insider selling supply Q3
+  x_handles:
+  - SpaceX
+  - elonmusk
+  - thesheetztweetz
+  - SciGuySpace
+  - xai
+  - cursor_ai
+  brief: >
+    A special standalone episode on SpaceX's SECOND quarterly earnings
+    report as a public company (Q3 2026, expected early November — confirm
+    the reporting date and all figures from {current_research}). CRITICAL
+    HONESTY RULE: this brief was written in August, BEFORE the quarter
+    closed. Every Q3 NUMBER must come from the research block with
+    attribution — never reuse a Q2 figure as if it were Q3, and never
+    invent a figure the research does not carry. Where the research gives
+    filing numbers, state them as fact; call quotes as call quotes;
+    analyst takes as opinion. If a number is missing, speak to the trend
+    and say the figure was not yet verified.
+
+    VERIFIED Q2 BASELINE (from the Q2 2026 release and 10-Q — the
+    comparison bar this episode measures Q3 against): revenue $7.814
+    billion (+92% YoY); net loss $541 million; adjusted EBITDA $3.538
+    billion; loss from operations $143 million (near breakeven — THE
+    number to re-check first in Q3); segments: Space $962 million revenue
+    with a $542 million operating loss (Starship R&D), Connectivity
+    $4.291 billion revenue with $1.656 billion operating income and 12.0
+    million Starlink subscribers at $66 ARPU, AI $2.561 billion revenue
+    (+247%) with its first positive adjusted EBITDA ($1.146 billion);
+    capex $18.369 billion in the quarter ($15.828 billion AI) with
+    management guiding the NEXT TWO QUARTERS similar — so Q3 capex
+    against that guidance is a headline question; ~$100 billion cash,
+    $47.5 billion backlog, $14.1 billion of Cloud Services Agreements
+    signed in Q2 with $6.7 billion more contracted to ramp from October
+    (per the CFO on the Q2 call); the CFO's "$100 billion annualized
+    recurring revenue pace by year end" projection is a CLAIM this
+    episode should score against Q3 actuals; Cursor ($60 billion
+    acquisition) was expected to close in Q3 — confirm whether it did
+    and how it reports; compute was 1.4 GW nameplate at Q2.
+
+    EPISODE SHAPE: (1) The headline Q3 numbers vs expectations and vs
+    the Q2 baseline above — did operating breakeven arrive? (2) Segment
+    by segment against Q2: Space (Starship flight cadence and R&D),
+    Connectivity (subscriber adds, ARPU trade, aviation/enterprise
+    momentum), AI (Cloud Services ramp including the October cohort,
+    compute GW growth, Cursor's first quarter inside if closed, X
+    advertising trend). (3) The capex question, round two: did the
+    "next two quarters look similar" guidance hold, what did operating
+    cash flow cover, and how did the market read it. (4) The
+    announcements and call moments, attributed. (5) The engineering
+    angle from first principles on whatever Q3's biggest build-out
+    number is. (6) The honest counterpoints: concentration, lockup /
+    supply, any cracks in the growth story the research surfaces. Same
+    voice as always: engineering-first, honest, never a stock promoter,
+    not financial advice.
