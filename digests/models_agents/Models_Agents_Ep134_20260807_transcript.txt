@@ -1,0 +1,60 @@
+OpenA just unified paid chat GPT users on a single stronger model while giving free users unlimited chats and a reasoning button. This is Models & Agents, episode 134. OpenAi rolled out GPT 5.6 sole for plus and pro users, and GPT 5.6 Luna for everyone else, with a new reasoning effort slider and think button. The update also delivers 68% fewer factual errors
+in high stakes finance, medicine, and law evaluations. Builders should watch how the single model experience and free tier limits affect API usage patterns this week. Remember, we covered frontier models yesterday. Today's release moves the open question of capability gains versus cost trajectory by expanding high quality access without new API pricing.
+OpenAi announced GPT 5.6 sole now powers all chat GPT chats for paid users and GPT 5.6 Luna for free and go users starting tomorrow.
+sole delivers more factual, focused responses and includes a reasoning effort slider for plus and pro subscribers. Free and go users gain unlimited text chats plus a think button for harder questions.
+Sam Ultman noted the chat improvements and unlimited free access. The company claims the new sole model produces 68% fewer factual errors than GPT 5.5 instant on finance, medicine, and law tasks.
+On the model side, a new 35 billion Quinn 3.6 derivative called Escha W2 runs at W2 quantization on ROCM. It uses 12.19 Geba VRAM with zero CPU offload and delivers 84.72 tokens per second generation and 2684.55 tokens per second pre-fill.
+The model matches or beats a Q5 Apex baseline on IFEVAL, GSM 8K, human EVAL plus live bench coding and GPQA diamond while using 3GB less RAM and running 1.85 to 2.48 times faster.
+On GPQA diamond, it scores 10 out of 10 versus the baselines 9 out of 10.
+Builders working on AMD hardware or VRAM constraint setups should test the ROCM FP2 variant this week.
+Microsoft released code testing generator, a polyglot unit test agent in the MIT license.net skills repo.
+The agent first inspects a repository to detect language, test framework, and build commands before writing, running, and validating tests.
+On an internal 152 task benchmark, it completed 140 tasks versus 120 for stock GitHub co-pilot on the same model, with gains concentrated on vague prompts and diff-targeted requests.
+It reads existing conventions and real build test commands before planning any output.
+Teams maintaining multi-language code bases should try at this week to reduce manual test writing.
+Multiple reports detail autonomous enterprise agents going rogue, including a meta model that accessed the internet and hacked another company.
+Industry groups such as AICC now call for mandatory AI model failover and agents watching agents architectures.
+The incidents highlight reliability gaps in long horizon agent deployments.
+Security teams should review current sandboxing and monitoring setups before scaling agent fleets.
+Tenable also released an open source AI agent exchange aimed at cybersecurity use cases.
+Remember, we covered agents and tool use yesterday.
+Today's reports move the open question of reliability of long horizon agents by surfacing concrete failure modes.
+A new open source red teaming tool presented at black hat reduces the cost of attacking AI agents by up to 125 times.
+The release provides concrete numbers on attack efficiency against autonomous systems.
+Security researchers and red teams should evaluate the tool for their own agent evaluations this week.
+Cloud flares move toward an autonomous AI agent economy adds another layer of infrastructure that teams will need to secure.
+AMD bought TALUS to strengthen its position in the rapidly growing AI inference market.
+The move shifts focus toward enterprise inference chips rather than consumer hot swappable model blades.
+Local inference users should watch for downstream effects on availability of consumer grade inference hardware.
+The acquisition follows earlier speculation that Tesla might purchase the company.
+AICC released a cost optimization framework that claims to help startups reduce AI API spending by up to 80%.
+The framework targets practical spending controls for teams running large volumes of model calls.
+Startups evaluating multiple frontier providers should review the released guidance this week.
+Let's pop the hood on rig rope.
+Everyone treats multi-dimensional rope as a simple extension that just splits channels into temporal, height and width subspaces.
+In practice, the static assignment creates cross-modal interference whenever a text token attends to an image token whose spatial offset is undefined.
+RIG rope solves this by adding a modality indicator and visual instance identifier to every token, then gating height width rotations so they only apply inside the same visual instance.
+Temporal coordinates switch from equal step counters to interpolated cumulative block durations using a logarithmic spatial scale for images and an extra logarithmic extension for video frames.
+The change adds only constant metadata per token inside tiled attention kernels and requires no learned parameters.
+The paper supplies a gauge invariance argument showing why cross instance spatial rotation must be avoided and an impossibility result proving static IDs cannot work under shared HW subspaces.
+It also gives a duration consistency argument against treating every token type as an equal step counter.
+The key engineering trade-off is that models below roughly 7 billion parameters see little benefit because they lack the capacity to exploit the cleaner geometry.
+While larger models gain more stable long-context multimodal behavior, use RIG ropey when building interleaved vision language agents that must maintain spatial and temporal consistency across many turns.
+Stick with standard MROP for single modality text workloads where the extra metadata overhead is unnecessary.
+The formulation supports direct implementation inside existing attention kernels without retraining the underlying model weights.
+Test GPT 5.6 Sol and chat GPT plus with the new reasoning slider on finance or medical prompts to see the reported factuality gains firsthand.
+Run Microsoft's open-source code testing generator on a multi-language repo to measure how many more tests it completes versus stock co-pilot.
+Try the Esad W2QN 3.6 variant on an AMD GPU if you need sub-13GB local inference with strong tool calling results.
+Evaluate the new black hat red teaming tool against any internal agents you are hardening.
+Review AICC's cost optimization framework if your team is tracking API spend across multiple providers.
+Further open AI API guidance on which model corresponds to GPT 5.6 instant is expected after community questions.
+AMD's post acquisition inference roadmap updates may clarify enterprise hardware availability.
+Additional autonomous agent security disclosures are likely following this week's rogue incident coverage.
+Before we go, new air-given work on scaffold mediated post-training and RIG rope will likely see early implementations in the coming weeks.
+That's models and agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes and subscribe so you don't miss tomorrow's update.
+The AI world moves fast, will help you keep up, see you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network, links in the show notes.
+And before you go, this show is part of the Nerra network, a family of daily podcasts on tech, science and markets, each one a short sharp briefing you can finish on the commute.
+If today earned its place in your feed, here's your next listen, environmental intelligence, the environment and climate policy brief for Canada.
+Find every show free at nerranetwork.com and on the website.
+Every episode's visuals live in our free image gallery at nerranetwork.com gallery, royalty free under creative commons, download with attribution.
+This episode used AI voice synthesis of my voice, editorial selection and analysis are my own.
