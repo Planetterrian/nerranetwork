@@ -1679,6 +1679,13 @@ podcast directory, and nothing in the pipeline fetches its own
 **Operator's first stop:** the live state of every landmine below is rendered
 by [`management.html`](management.html), fed by
 [`scripts/generate_dashboard.py`](scripts/generate_dashboard.py) → `api/dashboard.json`.
+The dashboard's **Growth levers** section (Aug 2026) renders the per-channel
+WoW scorecard, staggered-Shorts/sweep health, the specials queue, analytics
+freshness (alerts past 36h — the Aug 6 outage staleness lesson), and the
+experiments register: **every change shipped to move a number gets an entry
+in [`docs/experiments.yaml`](docs/experiments.yaml)** with its readout date
+and (where supported) a live metric key — a typo'd metric name fails CI
+(`tests/test_dashboard_growth.py`).
 Items 7 and 10 are intentionally excluded from the dashboard (per an explicit
 decision); everything else has a live status card.
 

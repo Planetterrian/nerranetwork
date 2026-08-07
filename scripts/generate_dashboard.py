@@ -1799,6 +1799,379 @@ def aggregate_mit_performance(root: Path) -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# Growth levers (Aug 2026) — channel trends, experiments in flight, stagger
+# health, specials queue, data freshness. Everything here follows the funnel
+# report's honesty rules: an unmeasured value is None, never 0, and every
+# approximation says so in a note the card renders.
+# ---------------------------------------------------------------------------
+
+def _load_json(path: Path) -> Optional[Dict[str, Any]]:
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _parse_iso(ts: str) -> Optional[_dt.datetime]:
+    try:
+        return _dt.datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _iter_video_index_rows(root: Path):
+    """Yield every row from every per-show video index (all channels).
+
+    The indexes are the ONLY complete upload record — the Analytics API
+    omits videos with zero activity, which is exactly how 53 of 72 FR
+    launch uploads were invisible until Aug 2026. Dashboard math that
+    needs "how many did we PUBLISH" must come from here, never from
+    analytics rows.
+    """
+    for idx in sorted(root.glob("digests/*/youtube_videos*.json")):
+        data = _load_json(idx)
+        if not data:
+            continue
+        for v in data.get("videos", []):
+            if isinstance(v, dict):
+                yield v
+
+
+def build_channel_scorecard(root: Path) -> Dict[str, Any]:
+    """Per-channel week-over-week trend card (EN / RU / FR).
+
+    The Aug 2026 review's headline (RU gaining ~9x EN's daily views on
+    45% of the uploads; FR at ~zero) lived only in a one-off doc — this
+    makes the channel race a permanent, trending surface. WoW deltas are
+    the continuous-improvement signal; the zero-view share is the
+    early-warning the FR launch lacked.
+    """
+    section: Dict[str, Any] = {"configured": False}
+    stats = _load_json(root / "api" / "youtube_stats.json")
+    if not stats or not stats.get("channels"):
+        return section
+    anchor = _parse_iso(stats.get("generated") or "")
+    anchor_d = (anchor.date() if anchor else _dt.date.today())
+    hist = _load_json(root / "api" / "youtube_channel_history.json") or {}
+    hist_rows = hist.get("rows", [])
+
+    # Complete upload counts (14d window ending at the analytics anchor)
+    # from the indexes; analytics rows for the same window from stats.
+    win_lo = (anchor_d - _dt.timedelta(days=14)).isoformat()
+    win_hi = anchor_d.isoformat()
+    uploads: Dict[str, int] = {}
+    for v in _iter_video_index_rows(root):
+        pub = str(v.get("published") or "")[:10]
+        if win_lo <= pub <= win_hi:
+            ch = str(v.get("channel") or "en")
+            uploads[ch] = uploads.get(ch, 0) + 1
+    rows_seen: Dict[str, int] = {}
+    vpv: Dict[str, Dict[str, Any]] = {}
+    for show in (stats.get("shows") or {}).values():
+        for v in show.get("videos", []):
+            pub = str(v.get("published") or "")[:10]
+            if not (win_lo <= pub <= win_hi):
+                continue
+            ch = str(v.get("channel") or "en")
+            rows_seen[ch] = rows_seen.get(ch, 0) + 1
+            kind = "short" if v.get("kind") == "short" else "long"
+            b = vpv.setdefault(ch, {}).setdefault(kind, {"n": 0, "views": 0})
+            b["n"] += 1
+            b["views"] += int(v.get("views") or 0)
+
+    channels_out: Dict[str, Any] = {}
+    for ch, c in (stats.get("channels") or {}).items():
+        ds = [d for d in (c.get("day_series") or []) if isinstance(d, dict)]
+        last7 = ds[-7:]
+        prior7 = ds[-14:-7]
+        v7 = sum(int(d.get("views") or 0) for d in last7)
+        vp7 = sum(int(d.get("views") or 0) for d in prior7)
+        subs7 = sum(int(d.get("subscribersGained") or 0)
+                    - int(d.get("subscribersLost") or 0) for d in last7)
+        subsp7 = sum(int(d.get("subscribersGained") or 0)
+                     - int(d.get("subscribersLost") or 0) for d in prior7)
+        up = uploads.get(ch, 0)
+        seen = rows_seen.get(ch, 0)
+        zero_share = (max(0.0, 1.0 - seen / up) if up else None)
+        per_kind = {}
+        for kind, b in (vpv.get(ch) or {}).items():
+            per_kind[kind] = {
+                "n": b["n"],
+                "views_per_video": round(b["views"] / b["n"], 1) if b["n"] else None,
+            }
+        channels_out[ch] = {
+            "subscribers": c.get("subscribers"),
+            "views_7d": v7,
+            "views_prior_7d": vp7,
+            "views_wow_pct": (round(100.0 * (v7 - vp7) / vp7, 1) if vp7 else None),
+            "subs_net_7d": subs7,
+            "subs_net_prior_7d": subsp7,
+            "uploads_14d": up,
+            "analytics_rows_14d": seen,
+            "zero_view_share_14d": (round(zero_share, 2)
+                                    if zero_share is not None else None),
+            "views_per_video_14d": per_kind,
+        }
+    # Subscriber trajectory from the committed history (per channel).
+    subs_series: Dict[str, list] = {}
+    for r in hist_rows:
+        ch = str(r.get("channel") or "")
+        if ch:
+            subs_series.setdefault(ch, []).append(
+                [r.get("date"), r.get("subscribers")])
+    section = {
+        "configured": True,
+        "as_of": stats.get("generated"),
+        "window_note": (
+            "WoW = last 7 analytics days vs the 7 before, anchored to the "
+            "analytics fetch. zero_view_share compares INDEX uploads (the "
+            "complete record) with analytics rows — the API omits zero-"
+            "activity videos, so this is the FR-launch early warning."),
+        "channels": channels_out,
+        "subscriber_series": {ch: s[-30:] for ch, s in subs_series.items()},
+    }
+    return section
+
+
+_EXPERIMENT_STATUSES = {"reading", "decide", "done"}
+
+
+def _experiment_live_metrics(root: Path) -> Dict[str, Any]:
+    """Compute the small closed vocabulary of live experiment metrics.
+
+    A metric that cannot be computed is None — the card must say
+    "no data yet", never fake a zero (the funnel report's rule).
+    """
+    out: Dict[str, Any] = {}
+    stats = _load_json(root / "api" / "youtube_stats.json") or {}
+    anchor = _parse_iso(stats.get("generated") or "")
+    anchor_d = (anchor.date() if anchor else _dt.date.today())
+    win_lo = (anchor_d - _dt.timedelta(days=14)).isoformat()
+
+    # EN long-form median retention over the last 14 analytics days.
+    avps = []
+    for show in (stats.get("shows") or {}).values():
+        for v in show.get("videos", []):
+            if (v.get("kind") == "long" and (v.get("channel") or "en") == "en"
+                    and str(v.get("published") or "")[:10] >= win_lo
+                    and v.get("average_view_percentage") is not None):
+                avps.append(float(v["average_view_percentage"]))
+    avps.sort()
+    out["long_form_median_avp_en_14d"] = (
+        round(avps[len(avps) // 2], 1) if avps else None)
+
+    # Channel views WoW from the day series.
+    for ch in ("en", "ru"):
+        ds = ((stats.get("channels") or {}).get(ch) or {}).get("day_series") or []
+        v7 = sum(int(d.get("views") or 0) for d in ds[-7:])
+        vp7 = sum(int(d.get("views") or 0) for d in ds[-14:-7])
+        out[f"channel_views_wow_{ch}"] = (
+            round(100.0 * (v7 - vp7) / vp7, 1) if vp7 else None)
+
+    # Best short_vpd per channel from the adaptive policy.
+    policy = _load_json(root / "api" / "youtube_policy.json") or {}
+    for ch in ("fr", "ru"):
+        vals = [v.get("short_vpd")
+                for v in ((policy.get("channels") or {}).get(ch) or {}).values()
+                if isinstance(v, dict) and v.get("short_vpd") is not None]
+        out[f"{ch}_short_vpd_max"] = (round(max(vals), 2) if vals else None)
+
+    # Fragment share of RU/FR window-Short titles (2nd/3rd Shorts) in the
+    # last 14 days. Heuristic mirror of the defect: a title whose first
+    # letter is lowercase started mid-sentence.
+    frag = total = 0
+    for v in _iter_video_index_rows(root):
+        if v.get("kind") != "short":
+            continue
+        if (v.get("channel") or "en") not in ("ru", "fr"):
+            continue
+        if str(v.get("published") or "")[:10] < win_lo:
+            continue
+        title = str(v.get("title") or "").strip()
+        m = re.search(r"[A-Za-zА-Яа-яЁё]", title)
+        if not m:
+            continue
+        total += 1
+        if m.group(0).islower():
+            frag += 1
+    out["dub_fragment_title_share_14d"] = (
+        round(frag / total, 2) if total else None)
+    return out
+
+
+def build_experiments_section(root: Path) -> Dict[str, Any]:
+    """Levers in flight — docs/experiments.yaml + live metric snapshots.
+
+    The registry is the discipline ('one variable at a time; know your
+    readout date before you ship'); the dashboard renders it so decision
+    dates cannot silently slip past.
+    """
+    section: Dict[str, Any] = {"configured": False}
+    path = root / "docs" / "experiments.yaml"
+    if not path.exists():
+        return section
+    try:
+        import yaml as _yaml
+        data = _yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        entries = data.get("experiments") or []
+        metrics = _experiment_live_metrics(root)
+        today = _dt.date.today()
+        rows = []
+        for e in entries:
+            if not isinstance(e, dict) or not e.get("id"):
+                continue
+            readout = None
+            try:
+                readout = _dt.date.fromisoformat(str(e.get("readout")))
+            except Exception:  # noqa: BLE001
+                pass
+            status = str(e.get("status") or "reading")
+            days = (readout - today).days if readout else None
+            rows.append({
+                "id": e.get("id"),
+                "title": e.get("title"),
+                "area": e.get("area"),
+                "shipped": e.get("shipped"),
+                "readout": e.get("readout"),
+                "status": (status if status in _EXPERIMENT_STATUSES
+                           else "reading"),
+                "days_to_readout": days,
+                "overdue": bool(readout and days is not None and days < 0
+                                and status != "done"),
+                "metric": e.get("metric"),
+                "baseline": e.get("baseline"),
+                "value": metrics.get(str(e.get("metric") or "")),
+                "target": e.get("target"),
+                "criteria": e.get("criteria"),
+                "notes": e.get("notes"),
+            })
+        rows.sort(key=lambda r: (r["status"] == "done", r["readout"] or "9999"))
+        section = {
+            "configured": True,
+            "registry": "docs/experiments.yaml",
+            "experiments": rows,
+            "overdue_count": sum(1 for r in rows if r["overdue"]),
+        }
+    except Exception as exc:  # noqa: BLE001
+        section = {"configured": True, "error": str(exc)}
+    return section
+
+
+def build_stagger_section(root: Path) -> Dict[str, Any]:
+    """Staggered-Shorts health: is the feature engaged, and is the
+    deferred-comment sweep keeping up?
+
+    A pending comment whose publish time passed > 48h ago means the sweep
+    is broken (tokens, workflow, or the whitelist landmine) — that gets a
+    warning the alert band picks up, because a silently-dead sweep is a
+    silent funnel degradation.
+    """
+    now = _dt.datetime.now(_dt.timezone.utc)
+    shows_out = []
+    pending_total = posted_total = 0
+    oldest_overdue_h: Optional[float] = None
+    for path in sorted(root.glob("digests/*/scheduled_comments.json")):
+        data = _load_json(path)
+        if data is None:
+            continue
+        pend = [e for e in data.get("pending", []) if isinstance(e, dict)]
+        posted = int(data.get("posted_total", 0) or 0)
+        overdue_h = None
+        for e in pend:
+            due = _parse_iso(e.get("publish_at") or "")
+            if due and due < now:
+                h = (now - due).total_seconds() / 3600.0
+                overdue_h = max(overdue_h or 0.0, h)
+        shows_out.append({
+            "slug": path.parent.name,
+            "pending": len(pend),
+            "posted_total": posted,
+            "max_overdue_hours": (round(overdue_h, 1)
+                                  if overdue_h is not None else None),
+        })
+        pending_total += len(pend)
+        posted_total += posted
+        if overdue_h is not None:
+            oldest_overdue_h = max(oldest_overdue_h or 0.0, overdue_h)
+    stuck = bool(oldest_overdue_h and oldest_overdue_h > 48)
+    return {
+        "configured": bool(shows_out),
+        "shows": shows_out,
+        "pending_total": pending_total,
+        "posted_total": posted_total,
+        "max_overdue_hours": (round(oldest_overdue_h, 1)
+                              if oldest_overdue_h is not None else None),
+        "sweep_stuck": stuck,
+        "note": ("Comments queue while a scheduled Short is private and are "
+                 "posted by the multilingual/nightly sweeps once it goes "
+                 "public. Entries kept 7 days; overdue > 48h = sweep broken."),
+    }
+
+
+def build_specials_section(root: Path) -> Dict[str, Any]:
+    """Deep-dive specials queues — produced history + ready-to-dispatch."""
+    produced, pending = [], []
+    for path in sorted(root.glob("shows/deep_dives/*.yaml")):
+        data = None
+        try:
+            import yaml as _yaml
+            data = _yaml.safe_load(path.read_text(encoding="utf-8"))
+        except Exception:  # noqa: BLE001
+            continue
+        show = path.stem
+        for e in (data or {}).get("queue", []):
+            if not isinstance(e, dict):
+                continue
+            row = {"show": show, "id": e.get("id"), "title": e.get("title"),
+                   "category": e.get("category")}
+            if e.get("produced"):
+                row["episode_number"] = e.get("episode_number")
+                row["produced_date"] = e.get("produced_date")
+                produced.append(row)
+            else:
+                pending.append(row)
+    produced.sort(key=lambda r: str(r.get("produced_date") or ""), reverse=True)
+    return {
+        "configured": bool(produced or pending),
+        "pending": pending,
+        "produced": produced[:8],
+        "dispatch_hint": ("Actions → Run Podcast Show → show=<show> + "
+                          "deep_dive=<id>"),
+    }
+
+
+def build_freshness_section(root: Path) -> Dict[str, Any]:
+    """Age of every analytics input, with a warning past 36h.
+
+    The Aug 6 GitHub outage killed a nightly and every downstream number
+    silently went a day stale — the operator had no surface saying so.
+    Staleness is now a rendered fact, and > 36h raises an alert.
+    """
+    now = _dt.datetime.now(_dt.timezone.utc)
+    sources = {
+        "youtube_stats": ("api/youtube_stats.json", "generated"),
+        "youtube_policy": ("api/youtube_policy.json", "generated"),
+        "op3_stats": ("api/op3_stats.json", "fetched_at"),
+        "funnel": ("api/funnel.json", "generated_at"),
+    }
+    out: Dict[str, Any] = {}
+    stale = []
+    for name, (rel, key) in sources.items():
+        data = _load_json(root / rel)
+        ts = _parse_iso((data or {}).get(key) or "")
+        if ts is None:
+            out[name] = {"age_hours": None, "as_of": None}
+            continue
+        if ts.tzinfo is None:
+            ts = ts.replace(tzinfo=_dt.timezone.utc)
+        age = round((now - ts).total_seconds() / 3600.0, 1)
+        out[name] = {"age_hours": age, "as_of": ts.isoformat()}
+        if age > 36:
+            stale.append(f"{name} is {age:.0f}h old")
+    return {"sources": out, "stale": stale, "warn_after_hours": 36}
+
+
 def build_dashboard(root: Path, *, offline: bool = False, previous_flat: Optional[int] = None) -> Dict[str, Any]:
     shows = load_shows_from_yaml(root / "shows", root)
     rss = audit_rss_enclosures(root, offline=offline)
@@ -1843,6 +2216,34 @@ def build_dashboard(root: Path, *, offline: bool = False, previous_flat: Optiona
 
     alerts = extract_critical_alerts(landmines, costs)
 
+    # Growth-lever alerts (Aug 2026): a stuck comment sweep and stale
+    # analytics are both silent-degradation classes this week surfaced —
+    # they belong in the band, not buried in a card.
+    stagger = build_stagger_section(root)
+    freshness = build_freshness_section(root)
+    if stagger.get("sweep_stuck"):
+        alerts.append({
+            "severity": "warn",
+            "message": (f"Scheduled-Short comment sweep looks stuck: oldest "
+                        f"queued comment is {stagger.get('max_overdue_hours')}h "
+                        "past its Short's publish time (check the multilingual/"
+                        "nightly sweep + channel tokens)."),
+        })
+    for msg in freshness.get("stale", []):
+        alerts.append({
+            "severity": "warn",
+            "message": f"Analytics staleness: {msg} — downstream cards and "
+                       "the adaptive policy are reading old data.",
+        })
+    experiments = build_experiments_section(root)
+    if experiments.get("overdue_count"):
+        alerts.append({
+            "severity": "warn",
+            "message": (f"{experiments['overdue_count']} experiment(s) past "
+                        "their readout date in docs/experiments.yaml — read "
+                        "the result and update status, or the discipline rots."),
+        })
+
     audience = build_audience_section(root)
     efficiency = build_efficiency_section(costs, audience)
 
@@ -1866,6 +2267,14 @@ def build_dashboard(root: Path, *, offline: bool = False, previous_flat: Optiona
         "distribution": build_distribution_section(root),
         "youtube_policy": build_youtube_policy_section(root),
         "funnel": build_funnel_section(root),
+        # Growth levers (Aug 2026): trends, experiments, stagger, specials.
+        "growth": {
+            "channel_scorecard": build_channel_scorecard(root),
+            "experiments": experiments,
+            "shorts_stagger": stagger,
+            "specials": build_specials_section(root),
+            "freshness": freshness,
+        },
     }
 
 
