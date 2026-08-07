@@ -305,4 +305,65 @@ reviews:
       ab_listen_required: true
       rationale: rigid marker now a tic (9/10); de-seed by shape + verbatim ban + rotation memory per July 2026 meta-review
     agent_cost_usd: 0.0646
+  - date: '2026-08-05'
+    pr: null
+    doc: docs/reviews/spacex_review_2026_08_05.md
+    generated_by: grok-4.5
+    summary: Seven of ten episodes still under the 1300w floor, the required engineering chapter-anchor has hardened into a 10/10 verbatim tic, SPCX price is still spoken twice every daily, and Ep58 shipped malformed Title:-prefixed story chapters; length and price-once are escalated to operator decisions after repeated misses.
+    scored_prior_predictions:
+    - metric: exact 'from an engineering standpoint' occurrences in next 10 transcripts
+      verdict: miss
+      evidence: 'Ep50–59 Whisper: phrase still 10/10; July-30 shape de-seed never applied'
+    - metric: laundered SEO / sports-fixture / video-ID junk titles in digests
+      verdict: hit
+      evidence: 'review_snapshot fetch-filter leakage: 0 hits on last 10 spacex digests'
+    - metric: episodes >=1300w in next 10
+      verdict: miss
+      evidence: only 3/10 (Ep53/58/59); 7 dailies still 1057–1299w — reconfirm prior misses, no new lever
+    shipped: []
+    deferred:
+    - 'OPERATOR DECISION (escalation after repeated misses): accept grok-4.3 daily length plateau vs further digest-substrate only (min_digest_words / full-text fetch) — do not re-propose podcast expand, word floors in podcast prompt, or ''7+/10 if deep-dive ships'' predictions'
+    - 'OPERATOR DECISION (escalation since 2026-06-13): SPCX price-once — Market Watch qualitative + single precise quote only in closing_block; coupled A/B-listen; stop carrying the same unshipped fix'
+    - 'Q2/special path: enforce richer spacex_deep_dive.txt briefs so specials clear deep_dive.min_podcast_words 2400 (Ep59 shipped 1778) — digest/brief substrate only'
+    - Tomorrow-teaser rotation (P2; 'Watch for the first/next <test>' no longer dominant in Ep50–58)
+    - Scheduler forensics for any missed Sunday weekly_summary_segment run (June-28 class) — operator
+    - NASA public-domain b-roll pool vs retired shorts_ab generated motion — render-side follow-up, not audio
+    predictions:
+    - metric: chapters_ep*.json titles matching /^Title:\s*/ in next 10 spacex episodes
+      baseline: 1/10 (Ep58 has six Title:-prefixed headline chapters)
+      expected: 0/10 after chapter-title sanitizer ships
+      verdict: pending
+      evidence: null
+    - metric: exact phrase 'from an engineering standpoint' in next 10 daily (non-special) transcripts
+      baseline: 10/10
+      expected: '<=6/10 if anchor-rotation prompt ships (successor tic to watch: monoculture on ''the engineering angle'')'
+      verdict: pending
+      evidence: null
+    - metric: on-air xAI facility attributed as SpaceX (Memphis/Colossus/'SpaceX AI' datacenter) in next 10 transcripts
+      baseline: '>=1 in window (Ep53 ''SpaceX AI added another data center building in Memphis'')'
+      expected: 0 clear mis-attributions if entity-discipline prompt ships
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: engine/chapters.py
+      kind: code
+      ab_listen_required: false
+      rationale: P0 listener-facing metadata bug unique to Ep58 in the window; deterministic, no audio, high yield per meta-review garble/filter class.
+    - file: shows/prompts/spacex_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 'P1: 10/10 monoculture on one required phrase; de-seed by shape + finite rotation set + MEMORY so chapters keep working; successor-tic prediction logged for ''the engineering angle'' convergence.'
+    - file: shows/prompts/spacex_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 'P1: Ep53 on-air ''SpaceX AI added another data center building in Memphis'' repeats the July-02 entity conflation; prompt-level hard rule, A/B-listen.'
+    - file: shows/prompts/spacex_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Digest is the substrate the podcast is licensed to read; fix conflation at source so podcast cannot re-emit it.
+    - file: tests/test_spacex_show.py
+      kind: code
+      ab_listen_required: false
+      rationale: Drift-guards for P0 chapter sanitizer and intro-chapter regressions; code-only.
+    agent_cost_usd: 0.1363
 do_not_retry: []
