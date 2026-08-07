@@ -223,6 +223,7 @@ def post_due_comments(
             continue
         keep = []
         changed = False
+        posted_here = 0
         for entry in data.get("pending", []):
             try:
                 due = _dt.datetime.strptime(
@@ -267,12 +268,19 @@ def post_due_comments(
                 cid = None
             if cid:
                 stats["posted"] += 1
+                posted_here += 1
                 changed = True
             else:
                 keep.append(entry)
                 stats["kept"] += 1
         if changed or len(keep) != len(data.get("pending", [])):
             try:
+                # Rolling per-show counter for the dashboard's stagger-
+                # health card — pending entries vanish once posted, so
+                # without this the sidecar carries no evidence the sweep
+                # ever worked.
+                data["posted_total"] = (
+                    int(data.get("posted_total", 0) or 0) + posted_here)
                 data["pending"] = keep
                 path.write_text(
                     json.dumps(data, ensure_ascii=False, indent=1) + "\n",

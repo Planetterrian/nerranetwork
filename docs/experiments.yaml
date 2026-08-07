@@ -1,0 +1,124 @@
+# Growth levers in flight — the dashboard's experiments registry.
+#
+# Every change that was shipped TO MOVE A NUMBER gets an entry here the
+# day it ships, with the date the result becomes readable and (where the
+# generator supports it) a named live metric so the dashboard can show
+# the current value against the baseline. This makes "what are we testing
+# and when do we decide" a rendered surface instead of tribal knowledge —
+# the same discipline as the review ledgers, applied to growth work.
+#
+# Consumed by scripts/generate_dashboard.py::build_experiments_section.
+# Schema per entry:
+#   id:        unique slug
+#   title:     short human name
+#   area:      retention | reach | subscribers | funnel | quality
+#   shipped:   YYYY-MM-DD the change reached production
+#   readout:   YYYY-MM-DD the earliest honest read (or decision date)
+#   status:    reading   — accruing data, do not stack another change on
+#                          the same metric until readout
+#              decide    — readout date is a DECISION with criteria below
+#              done      — resolved; keep for the record, dashboard greys it
+#   metric:    (optional) live-metric key the generator computes:
+#                long_form_median_avp_en_14d   — EN long-form median
+#                                                averageViewPercentage, 14d
+#                fr_short_vpd_max              — best FR short_vpd (policy)
+#                ru_short_vpd_max              — best RU short_vpd (policy)
+#                channel_views_wow_ru          — RU channel views, last 7d
+#                                                vs prior 7d (%)
+#                channel_views_wow_en          — same for EN
+#                dub_fragment_title_share_14d  — share of RU/FR window-
+#                                                Short titles starting
+#                                                mid-sentence, 14d
+#              Unknown/absent metric renders as null — never 0.
+#   baseline:  (optional) the number when the change shipped
+#   target:    (optional) what success looks like
+#   criteria:  (optional, decide entries) the decision rule
+#   notes:     (optional) one line of context
+#
+# Prune done entries older than ~a quarter.
+
+experiments:
+  - id: cold-open-retention
+    title: "Cold open — hook is the first thing spoken"
+    area: retention
+    shipped: 2026-07-30
+    readout: 2026-08-15
+    status: reading
+    metric: long_form_median_avp_en_14d
+    baseline: 11.3
+    target: "long-form median AVP off the ~11% floor"
+    notes: >
+      Ten seconds of theme + a 35-word greeting used to push the first
+      fact to ~second 28; Shorts (which skip the intro) hold ~42% on the
+      same audio. Audio change — was A/B-listened per landmine #17.
+
+  - id: staggered-shorts
+    title: "Staggered Shorts — #1 at publish, rest at channel prime time"
+    area: reach
+    shipped: 2026-08-06
+    readout: 2026-08-13
+    status: reading
+    metric: channel_views_wow_ru
+    target: "RU/EN Short views up WoW with unchanged supply"
+    notes: >
+      publishAt scheduling; EN 17/21/23 UTC, RU 15/18/20, FR 17/19/21.
+      First full day 2026-08-07. Confounder note: reads channel views,
+      so a big news day can mask it — check views-per-video too.
+
+  - id: ru-3-short-band
+    title: "RU 3-Short band on spacex + FF"
+    area: reach
+    shipped: 2026-07-30
+    readout: 2026-08-13
+    status: reading
+    metric: ru_short_vpd_max
+    baseline: 60.9
+    target: "short_vpd holds or grows with 50% more supply"
+    notes: >
+      The supply ladder's 20-vpd band. If vpd holds while supply grew,
+      the audience wasn't saturated; if it drops proportionally, it was.
+
+  - id: dub-window-headlines
+    title: "Complete headlines for RU/FR window-Shorts"
+    area: quality
+    shipped: 2026-08-07
+    readout: 2026-08-14
+    status: reading
+    metric: dub_fragment_title_share_14d
+    baseline: 0.66
+    target: "fragment share of window-Short titles near zero"
+    notes: >
+      Was ~2/3 of @NerraRU Short titles once the 3-Short band shipped
+      (mid-sentence transcript slices). Grok headline w/ clause-trim
+      fallback; title-only metadata.
+
+  - id: fr-channel-decision
+    title: "@NerraFR — keep or pause the dub channel"
+    area: reach
+    shipped: 2026-07-21
+    readout: 2026-08-25
+    status: decide
+    metric: fr_short_vpd_max
+    baseline: 0.26
+    criteria: >
+      Keep if any FR show reaches short_vpd >= 1.0 or organic subscriber
+      traction appears by 2026-08-25; else pause FR dubs
+      (youtube.dub_languages: [] on the four shows — one line,
+      reversible). FR PODCAST tracks are decided separately via the
+      per-language OP3 instrument.
+    notes: >
+      53 of 72 launch-window uploads had zero recorded views. Clean
+      analytics only since 2026-07-29 (the glob fix), hence the late
+      decision date rather than a same-day verdict.
+
+  - id: earnings-special-format
+    title: "Event specials — earnings/flight reaction episodes"
+    area: reach
+    shipped: 2026-08-05
+    readout: 2026-08-12
+    status: reading
+    target: "special out-performs the daily episodes around it"
+    notes: >
+      Ep059 (Q2 earnings) is the pilot: compare its 7d views/downloads
+      against Ep057/058/060. flight-14-catch-reaction and
+      q3-2026-earnings are pre-staged in the spacex deep-dive queue.

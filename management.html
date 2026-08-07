@@ -308,6 +308,11 @@
     <div class="card-grid" id="audience-grid"></div>
   </section>
 
+  <section class="mc-section" id="growth-levers" data-ops>
+    <h2>Growth levers — trends, experiments &amp; specials <span class="pill-note" id="levers-pill"></span></h2>
+    <div class="card-grid" id="levers-grid"></div>
+  </section>
+
   <section class="mc-section" id="distribution">
     <h2>Distribution — directories &amp; publishing policy <span class="pill-note" id="distribution-pill"></span></h2>
     <div class="card-grid" id="distribution-grid"></div>
@@ -1038,6 +1043,186 @@
       if (sp.fetched_at) card.appendChild(h("p", { class: "fine-list", text: "fetched " + ageText(sp.fetched_at) + staleNote(sp.fetched_at) }));
     }
     audGrid.appendChild(card);
+  }
+
+  // ---------- growth levers: trends, experiments, stagger, specials ----------
+  {
+    const growth = data.growth || {};
+    const grid = $("#levers-grid");
+    const sc = growth.channel_scorecard || {};
+    const ex = growth.experiments || {};
+    const stg = growth.shorts_stagger || {};
+    const specials = growth.specials || {};
+    const fresh = growth.freshness || {};
+
+    const pill = $("#levers-pill");
+    const reading = (ex.experiments || []).filter((r) => r.status !== "done").length;
+    pill.textContent = reading ? reading + " levers in flight" : "";
+
+    // Channel scorecard — the channel race, trending.
+    {
+      const card = sectionCard("Channel scorecard",
+        "WoW trends · " + (sc.as_of ? "data " + ageText(sc.as_of) : "no data"));
+      if (!sc.configured) {
+        card.appendChild(h("p", { class: "fine-list",
+          text: "No api/youtube_stats.json yet." }));
+      } else {
+        const chName = (ch) => ch === "ru" ? "@NerraRU" : ch === "fr" ? "@NerraFR"
+          : ch === "en" ? "@NerraNetwork" : ch;
+        Object.keys(sc.channels || {}).sort().forEach((ch) => {
+          const c = sc.channels[ch];
+          const wow = c.views_wow_pct;
+          const wowTxt = (wow === null || wow === undefined) ? "—"
+            : (wow > 0 ? "+" : "") + wow + "%";
+          const wowCls = (wow === null || wow === undefined) ? ""
+            : (wow >= 0 ? "up" : "down");
+          const head = h("div", { style: "margin-top:10px;font-size:13px;" });
+          head.appendChild(h("strong", { text: chName(ch) }));
+          head.appendChild(h("span", { style: "margin-left:8px;color:var(--ink-2);",
+            text: compact(c.views_7d) + " views/7d " }));
+          head.appendChild(h("span", { class: "t-delta " + wowCls,
+            text: wowTxt + " WoW" }));
+          head.appendChild(h("span", { style: "margin-left:8px;color:var(--ink-2);",
+            text: "· " + fmtOrDash(c.subscribers) + " subs (net " +
+                  (c.subs_net_7d >= 0 ? "+" : "") + c.subs_net_7d + "/7d)" }));
+          card.appendChild(head);
+          const kinds = c.views_per_video_14d || {};
+          const vv = (k) => (kinds[k] && kinds[k].views_per_video != null)
+            ? kinds[k].views_per_video : "—";
+          const zero = c.zero_view_share_14d;
+          const zeroTxt = (zero === null || zero === undefined) ? "—"
+            : Math.round(zero * 100) + "%";
+          card.appendChild(h("div", { class: "fine-list",
+            style: (zero != null && zero > 0.5)
+              ? "color:var(--status-warn);" : "",
+            text: "views/video 14d: short " + vv("short") + " · long " + vv("long")
+                  + " · uploads " + c.uploads_14d
+                  + " · zero-view share " + zeroTxt }));
+        });
+        card.appendChild(h("p", { class: "fine-list", text: sc.window_note || "" }));
+      }
+      grid.appendChild(card);
+    }
+
+    // Experiments in flight — the continuous-improvement register.
+    {
+      const card = sectionCard("Levers in flight",
+        "docs/experiments.yaml · one variable at a time");
+      if (!ex.configured) {
+        card.appendChild(h("p", { class: "fine-list",
+          text: "No docs/experiments.yaml registry yet." }));
+      } else {
+        (ex.experiments || []).forEach((r) => {
+          const row = h("div", { style: "margin-top:10px;font-size:12.5px;"
+            + (r.status === "done" ? "opacity:.55;" : "") });
+          const chip = r.overdue
+            ? "<span class='t-delta down'>readout overdue</span>"
+            : (r.days_to_readout != null
+                ? "<span style='color:var(--ink-3)'>" +
+                  (r.status === "decide" ? "decision" : "readout") + " in " +
+                  r.days_to_readout + "d</span>"
+                : "");
+          row.appendChild(h("div", { html:
+            "<strong>" + r.title + "</strong> " + chip }));
+          let m = "";
+          if (r.metric) {
+            m = r.metric + ": <span class='k'>" +
+                (r.value === null || r.value === undefined ? "no data yet" : r.value) +
+                "</span>" +
+                (r.baseline != null ? " (baseline " + r.baseline + ")" : "");
+          }
+          const tail = [m, r.target ? "target: " + r.target : "",
+                        r.criteria ? "decision rule: " + r.criteria : ""]
+            .filter(Boolean).join(" · ");
+          if (tail) row.appendChild(h("div", { class: "fine-list", html: tail }));
+          card.appendChild(row);
+        });
+        card.appendChild(h("p", { class: "fine-list", text:
+          "Every change shipped to move a number registers here with its " +
+          "readout date. Values are live; 'no data yet' is honest, not zero." }));
+      }
+      grid.appendChild(card);
+    }
+
+    // Staggered Shorts + deferred comments health.
+    {
+      const card = sectionCard("Staggered Shorts",
+        "publishAt scheduling + deferred funnel comments");
+      if (!stg.configured) {
+        card.appendChild(h("p", { class: "fine-list",
+          text: "No scheduled_comments sidecars yet — first multi-Short " +
+                "episode after the Aug 6 rollout populates this." }));
+      } else {
+        card.appendChild(h("div", { style: "font-size:13px;margin-top:6px;", html:
+          "<span class='k'>" + stg.pending_total + "</span> comment(s) queued · " +
+          "<span class='k'>" + stg.posted_total + "</span> posted by sweeps" +
+          (stg.max_overdue_hours != null
+            ? " · oldest overdue " + stg.max_overdue_hours + "h"
+            : "") }));
+        if (stg.sweep_stuck) {
+          card.appendChild(h("div", { class: "alert warn",
+            style: "margin-top:8px;font-size:12.5px;",
+            text: "Sweep looks stuck (>48h overdue) — check multilingual/" +
+                  "nightly runs and channel tokens." }));
+        }
+        (stg.shows || []).forEach((s) => {
+          const row = h("div", { class: "bar-row" });
+          row.appendChild(h("div", { class: "label", text: s.slug }));
+          row.appendChild(h("div", { class: "value", style: "flex:1;text-align:right;",
+            text: s.pending + " queued · " + s.posted_total + " posted" +
+                  (s.max_overdue_hours != null ? " · " + s.max_overdue_hours + "h overdue" : "") }));
+          card.appendChild(row);
+        });
+        card.appendChild(h("p", { class: "fine-list", text: stg.note || "" }));
+      }
+      grid.appendChild(card);
+    }
+
+    // Specials queue — event episodes ready to dispatch.
+    {
+      const card = sectionCard("Specials queue",
+        "deep-dive episodes · " + ((specials.pending || []).length) + " ready");
+      if (!specials.configured) {
+        card.appendChild(h("p", { class: "fine-list", text: "No deep-dive queues." }));
+      } else {
+        (specials.pending || []).forEach((r) => {
+          const row = h("div", { style: "margin-top:8px;font-size:12.5px;", html:
+            "<strong>" + r.show + "</strong> · <code>" + r.id + "</code><br>" +
+            "<span style='color:var(--ink-2)'>" + (r.title || "") + "</span>" });
+          card.appendChild(row);
+        });
+        if ((specials.produced || []).length) {
+          card.appendChild(h("p", { class: "fine-list", html:
+            "Produced: " + specials.produced.map((r) =>
+              r.id + (r.episode_number ? " (Ep" + r.episode_number + ")" : "")
+            ).join(" · ") }));
+        }
+        card.appendChild(h("p", { class: "fine-list", html:
+          "Dispatch: <code>" + (specials.dispatch_hint || "") + "</code>" }));
+      }
+      grid.appendChild(card);
+    }
+
+    // Data freshness — staleness is a rendered fact now.
+    {
+      const card = sectionCard("Analytics freshness",
+        "warn past " + (fresh.warn_after_hours || 36) + "h");
+      const src = fresh.sources || {};
+      Object.keys(src).sort().forEach((name) => {
+        const s = src[name];
+        const stale = s.age_hours != null && s.age_hours > (fresh.warn_after_hours || 36);
+        const row = h("div", { class: "bar-row" });
+        row.appendChild(h("div", { class: "label", text: name }));
+        row.appendChild(h("div", { class: "value",
+          style: "flex:1;text-align:right;" + (stale ? "color:var(--status-warn);" : ""),
+          text: s.age_hours == null ? "missing" : s.age_hours + "h old" }));
+        card.appendChild(row);
+      });
+      card.appendChild(h("p", { class: "fine-list", text:
+        "The Aug 6 outage made every downstream number silently a day stale " +
+        "— staleness is now visible here and alerts past the threshold." }));
+      grid.appendChild(card);
+    }
   }
 
   // ---------- distribution: directories + publishing policy ----------
