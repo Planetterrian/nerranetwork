@@ -1,0 +1,54 @@
+# Models & Agents
+> **OpenAI is adding extra controls to its upcoming Astra model after classifying it as the first “critical” cybersecurity system under its Preparedness Framework.**
+
+**What You Need to Know:** OpenAI flagged Astra’s cyber capabilities as high-risk and is extending the timeline for general availability to implement stronger safeguards. Sam Altman confirmed the model will eventually ship broadly rather than stay limited to a few users. Builders should watch how the company balances advanced tool-use with the new safety layer.
+---
+### Top Story
+OpenAI announced it is treating the upcoming Astra model as its first “critical” cybersecurity model under the Preparedness Framework. The company is adding extra controls during further development after internal evaluation showed advanced cyber capabilities. Sam Altman stated the model is powerful and that OpenAI plans to make it broadly available rather than keep it restricted to a small group. The extra safety work is expected to delay release but not by a long period. This marks the first time OpenAI has publicly applied this classification to a model in active development. Yesterday’s frontier-model safety discussion already highlighted similar evaluation thresholds. Source: [x.com](https://x.com/OpenAI/status/2085801349866729975)
+---
+### Model Updates
+**Qwen3.6 27B and 35B on single R9700:** r/LocalLLaMA
+A user ran the Avesed INT4-quantized Qwen3.6 27B and 35B-A3B models on a single Radeon AI Pro R9700 using a custom vLLM container. The 27B dense model with MTP speculative decoding set to four tokens delivered 53–62 tok/s decode across 4k–100k context lengths while maintaining mean accepted lengths of 4.4–4.6. The 35B MoE variant reached 49–61 tok/s decode at KV pool sizes up to 440,241 tokens while fitting the 32 GB card at INT4. The 35B at FP8 would not fit at useful context lengths on one card. Prefill speeds for the 35B ranged from 7,800 tok/s at 4k down to 3,690 tok/s at 150k. Builders testing AMD inference setups can try the stilldeadcode/vllm-radiance image with the linked INT4 weights and the exact tensor-parallel-size 1 plus gpu-memory-utilization 0.98 settings reported. Source: [reddit.com](https://www.reddit.com/r/LocalLLaMA/comments/1viq0pq/qwen36_27b_35b_on_vllm_single_r9700_gfx1201/)
+
+**DeepSeek V4 Flash 0731 on dual Spark:** r/LocalLLaMA
+A developer running the DeepSeek V4 Flash 0731 model on dual DGX Spark cards reported strong sustained performance across two-hour coding sessions and document workflows. The model handled integration code generation, email search, DOCX generation, and OS admin tasks without dropping context. The user ordered a second pair of Sparks after seeing clear gains over prior Qwen3.6 27B FP8 runs on the same hardware. Everyday tasks with the Hermes agent and coding tasks with OpenCode both completed reliably. The developer noted that MiniMax M2.7 on the same dual-Spark setup had been solid but the new model sits on a noticeably higher level for sustained multi-hour workloads. Source: [reddit.com](https://www.reddit.com/r/LocalLLaMA/comments/1vio0x6/deepseek_v4_flash_0731_appreciation_post/)
+
+**Longcat-Flash support added to llama.cpp:** r/LocalLLaMA
+A pull request adds Longcat-Flash model support to llama.cpp, with GGUF files already available for testing on the ggml-org Hugging Face page. The submitter verified a small 8B sub-model extracted from the original weights and is requesting feedback on the full-size version. The PR is marked ready for testing and includes updated GGUF links in the latest comments. No performance numbers were shared yet for the larger model. Source: [reddit.com](https://www.reddit.com/r/LocalLLaMA/comments/1vipk8z/model_support_longcatflash_need_testing_by_ngxson/)
+
+**Qwen 35B-A3B MoE vs 27B dense on local coding tasks:** r/LocalLLaMA
+Direct comparison on a Radeon AI PRO R9700 showed the 35B-A3B MoE model generating at ~116 tok/s versus ~30 tok/s for the 27B dense model under Q5_K_M and Q4_K_XL quantization respectively. Quality difference remained small on ordinary bug fixes and multi-file edits, with both models scoring 7/10 on an early parser-repair test. The dense model pulled ahead mainly on implicit invariants, unusual edge cases, and consequences beyond the literal request. The test used llama.cpp with Vulkan backend, full GPU offload, and 8K context. The author plans to publish the full set of prompts, source fixtures, and raw terminal transcripts for further scrutiny. Source: [reddit.com](https://www.reddit.com/r/LocalLLaMA/comments/1vinr66/qwen_35ba3b_moe_vs_27b_dense_in_local_coding/)
+---
+### Agent & Tool Developments
+**Cloudflare Wallets for safe agent payments:** Memeburn
+Cloudflare introduced Wallets that let AI agents pay for APIs directly while keeping transactions contained. The system aims to reduce the risk of agents making uncontrolled or malicious purchases by isolating payment credentials. No specific transaction limits or supported chains were detailed in the announcement. The feature is positioned as infrastructure for an emerging autonomous-agent economy. Source: [Google News](https://news.google.com/rss/articles/CBMijwFBVV95cUxQVVlaSVlhZ3NYSnlBaVhZRXNoMDI0bnlvZVRvVnVGYm1tbm1wQk01LW5ibzhVRHFUSm9zcmllR0tDeUNaa0F4bWozNHJ6UzFHSDk0NEJ2NTVlbWFray14YlZmd0FaNWVpQnp4eEhKYkVhT2o1SzBUVEZ6Z0RzTm9KVUNDdU9zMEdUeVdTT1lQOA?oc=5)
+
+**DREAM memory graph for role-playing agents:** arXiv
+The DREAM framework converts literary text into an Event-aware Memory Graph that links events causally and temporally. It adds dual-granularity profiles capturing both stable traits and event-driven behavioral evolution. A new Temporal Causal Memory benchmark was introduced to measure long-range narrative coherence. The approach improved consistency on CoSER, LIFECHOICE, and the new benchmark over multiple strong baselines. The method draws explicitly from the Activating Event-Belief-Consequence cognitive model. Source: [arxiv.org](https://arxiv.org/abs/2608.05170)
+
+**Constraint-First Reasoning prompting protocol:** arXiv
+CFR extracts problem constraints in stage one then checks solutions against them in stage two. Routed-CFR applies the two-stage process only when a regex router detects restrictive cues; otherwise it falls back to direct chain-of-thought. The method lifted direct CoT performance on AIME, CMIMC, BRUMO, and AIMO_AMC across multiple backbones. The authors also ran convention-controlled routing experiments, matched prompting baselines, and OlympiadBench evaluations. Constraint-quality audits and total-token accounting were included to quantify overhead. Source: [arxiv.org](https://arxiv.org/abs/2608.05254)
+---
+### Practical & Community
+**Tensor-split fixes for multi-V620 setups:** r/LocalLLaMA
+Users with multiple gfx1030 cards can avoid memory corruption by setting `-ub 384` and making batch size a multiple of that value scaled by GPU count. The change enabled stable 27B and 35B-A3B runs at 40–110+ tok/s on two V620 cards with Q8_0 weights and KV. Three-card tests showed slight slowdowns attributed to PCIe interconnect limits on the R740 server. The user plans to move to a six-card mining-rig frame without NVLink-style interconnects. Source: [reddit.com](https://www.reddit.com/r/LocalLLaMA/comments/1vim2gt/psa_for_anyone_with_multiple_v620s_or_other/)
+
+**Qwen 3.8 anticipation on Apple Silicon:** r/LocalLLaMA
+Users running Qwen3.6 27B Q4 on M5 hardware are watching for the next dense 27B release, expecting better code quality while keeping fast local inference. The current quant already feels fast enough for home serving, and the poster hopes a future version will close the remaining gap to frontier coding performance. A simple browser-extension pattern for routing queries through a local model first is also discussed as a hedge against future metered API pricing. Source: [reddit.com](https://www.reddit.com/r/LocalLLaMA/comments/1vinzvu/anyone_else_amped_up_over_qwen_38/)
+
+**SkillZip graph compression for agent skill libraries:** arXiv
+SkillZip compresses recurring contract-valid motifs into reversible macros while preserving dependency closure and verifier reachability. It delivered up to 3.46× compression with 99.2 % dependency preservation and 98.7 % verifier reachability on technical and embodied benchmarks. The framework also includes a ReZip stage that integrates new skills and revises risky macros using execution evidence. Scaling tests covered skill libraries from 200 to 100K entries. Source: [arxiv.org](https://arxiv.org/abs/2608.05604)
+---
+### Under the Hood: Commitment Order in Diffusion LLMs
+Everyone talks about diffusion LLMs as if their any-order token commitment is pure upside. In practice the freedom creates a reachability problem: the model can lock in a final answer while most of the reasoning canvas is still masked. Logging every step on LLaDA-8B showed the answer token committed at 15–24 % of the trajectory on GSM8K, after which the model often collapsed to answer-only outputs on up to 90 % of problems as context grew. Chain-of-thought only helped when commitment order was constrained; without that constraint the benefit disappeared entirely. A 2×2 prompt-decoder design isolated the interaction: adding reasoning text improved accuracy by 34.8 percentage points only under ordered commitment. The same interaction held on Dream-7B and MATH-500. A simple frontier-gated window that forces early tokens to stay open until a quality threshold is met recovered most of the gap while still allowing 4× parallel decoding once the window advanced. The practical rule is to keep the first 8–12 tokens under ordered commitment on reasoning tasks, then relax the constraint for later refinement steps; the optimal window flips from w=1 at full refinement to unconstrained at 8 tokens per step. The root cause is not EOS pressure, which remains nearly identical across decoders, but whether the sampler can act on termination beliefs at distant positions before the reasoning region is filled.
+---
+### Things to Try This Week
+- Run the Avesed Qwen3.6 27B INT4 weights on a single R9700 with the stilldeadcode vLLM image to test current AMD inference limits.
+- Add the new llama.cpp Longcat-Flash support and the provided GGUF files to compare against your existing 7B–13B local setups.
+- Test Cloudflare Wallets in a small agent workflow that calls paid APIs to see how the payment containment works in practice.
+- Apply the Constraint-First Reasoning two-stage prompt on AIME-style problems to measure the lift over plain CoT on your current model.
+---
+### On the Horizon
+- OpenAI is expected to share more details on Astra’s additional controls before broader release.
+- Further Qwen3.8 dense variants are anticipated in the coming weeks based on community discussion.
+- New arXiv work on self-consistency optimization and diffusion LLM decoding order will likely influence next-round prompting techniques.

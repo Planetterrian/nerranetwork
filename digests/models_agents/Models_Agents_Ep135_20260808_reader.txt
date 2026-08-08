@@ -1,0 +1,117 @@
+OpenAI is adding extra controls to its upcoming Astra model after classifying it as the first critical cybersecurity system under its Preparedness Framework.
+
+The company flagged the model's cyber capabilities as high risk during internal evaluation and is extending the timeline for general availability to add stronger safeguards.
+
+Sam Altman confirmed the model remains on track for broad release rather than staying limited to a small group.
+
+The extra safety work will delay the launch but not by a long period.
+
+This marks the first time OpenAI has publicly applied the critical classification to a model still in active development.
+
+Yesterday's frontier model safety discussion already highlighted similar evaluation thresholds, and today's announcement moves that thread forward by putting the framework into practice on a frontier system.
+
+This is Models and Agents, episode 135.
+
+OpenAI announced it is treating the upcoming Astra model as its first critical cybersecurity model under the Preparedness Framework.
+
+The company is adding extra controls during further development after internal evaluation showed advanced cyber capabilities.
+
+Sam Altman stated the model is powerful and that OpenAI plans to make it broadly available rather than keep it restricted to a small group.
+
+The extra safety work is expected to delay release but not by a long period.
+
+Builders should watch how the company balances advanced tool use with the new safety layer.
+
+A user ran the Avesed INT4 quantized Qwen three point six twenty seven billion and thirty five billion A three B models on a single Radeon AI Pro R nine thousand seven hundred using a custom vLLM container.
+
+The twenty seven billion dense model with MTP speculative decoding set to four tokens delivered fifty three to sixty two tokens per second decode across four thousand to one hundred thousand context lengths while maintaining mean accepted lengths of four point four to four point six.
+
+The thirty five billion mixture of experts variant reached forty nine to sixty one tokens per second decode at KV pool sizes up to four hundred forty thousand two hundred forty one tokens while fitting the thirty two gigabyte card at INT4.
+
+The thirty five billion at FP eight would not fit at useful context lengths on one card.
+
+Prefill speeds for the thirty five billion ranged from seven thousand eight hundred tokens per second at four thousand context down to three thousand six hundred ninety tokens per second at one hundred fifty thousand.
+
+A developer running the DeepSeek V four Flash zero seven three one model on dual DGX Spark cards reported strong sustained performance across two hour coding sessions and document workflows.
+
+The model handled integration code generation, email search, DOCX generation, and OS admin tasks without dropping context.
+
+The user ordered a second pair of Sparks after seeing clear gains over prior Qwen three point six twenty seven billion FP eight runs on the same hardware.
+
+A pull request adds Longcat Flash model support to llama dot cpp, with GGUF files already available for testing on the ggml org Hugging Face page.
+
+The submitter verified a small eight billion sub model extracted from the original weights and is requesting feedback on the full size version.
+
+Direct comparison on a Radeon AI PRO R nine thousand seven hundred showed the thirty five billion A three B mixture of experts model generating at roughly one hundred sixteen tokens per second versus roughly thirty tokens per second for the twenty seven billion dense model under Q five K M and Q four K XL quantization respectively.
+
+Quality difference remained small on ordinary bug fixes and multi file edits, with both models scoring seven out of ten on an early parser repair test.
+
+The dense model pulled ahead mainly on implicit invariants, unusual edge cases, and consequences beyond the literal request.
+
+Cloudflare introduced Wallets that let AI agents pay for APIs directly while keeping transactions contained.
+
+The system aims to reduce the risk of agents making uncontrolled or malicious purchases by isolating payment credentials.
+
+The feature is positioned as infrastructure for an emerging autonomous agent economy.
+
+The DREAM framework converts literary text into an Event aware Memory Graph that links events causally and temporally.
+
+It adds dual granularity profiles capturing both stable traits and event driven behavioral evolution.
+
+A new Temporal Causal Memory benchmark was introduced to measure long range narrative coherence.
+
+The approach improved consistency on CoSER, LIFECHOICE, and the new benchmark over multiple strong baselines.
+
+CFR extracts problem constraints in stage one then checks solutions against them in stage two.
+
+Routed CFR applies the two stage process only when a regex router detects restrictive cues.
+
+The method lifted direct chain of thought performance on AIME, CMIMC, BRUMO, and AIMO AMC across multiple backbones.
+
+Users with multiple gfx one thousand thirty cards can avoid memory corruption by setting ub three hundred eighty four and making batch size a multiple of that value scaled by GPU count.
+
+The change enabled stable twenty seven billion and thirty five billion A three B runs at forty to one hundred ten plus tokens per second on two V six hundred twenty cards with Q eight zero weights and KV.
+
+SkillZip compresses recurring contract valid motifs into reversible macros while preserving dependency closure and verifier reachability.
+
+It delivered up to three point four six times compression with ninety nine point two percent dependency preservation and ninety eight point seven percent verifier reachability on technical and embodied benchmarks.
+
+OK, let's pop the hood on diffusion LLMs for a moment.
+
+Everyone talks about diffusion LLMs as if their any order token commitment is pure upside.
+
+In practice the freedom creates a reachability problem where the model can lock in a final answer while most of the reasoning canvas is still masked.
+
+Logging every step on LLaDA eight B showed the answer token committed at fifteen to twenty four percent of the trajectory on GSM eight K, after which the model often collapsed to answer only outputs on up to ninety percent of problems as context grew.
+
+Chain of thought only helped when commitment order was constrained.
+
+A two by two prompt decoder design isolated the interaction where adding reasoning text improved accuracy by thirty four point eight percentage points only under ordered commitment.
+
+The same interaction held on Dream seven B and MATH five hundred.
+
+A simple frontier gated window that forces early tokens to stay open until a quality threshold is met recovered most of the gap while still allowing four times parallel decoding once the window advanced.
+
+The practical rule is to keep the first eight to twelve tokens under ordered commitment on reasoning tasks, then relax the constraint for later refinement steps.
+
+Run the Avesed Qwen three point six twenty seven billion INT4 weights on a single R nine thousand seven hundred with the stilldeadcode vLLM image to test current AMD inference limits.
+
+Add the new llama dot cpp Longcat Flash support and the provided GGUF files to compare against your existing seven billion to thirteen billion local setups.
+
+Test Cloudflare Wallets in a small agent workflow that calls paid APIs to see how the payment containment works in practice.
+
+Apply the Constraint First Reasoning two stage prompt on AIME style problems to measure the lift over plain chain of thought on your current model.
+
+OpenAI is expected to share more details on Astra's additional controls before broader release.
+
+Further Qwen three point eight dense variants are anticipated in the coming weeks based on community discussion.
+
+Before we go, the next round of diffusion LLM decoding order papers should land soon and will likely shift prompting best practices again.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The AI world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+One more thing — if you liked today's episode, our sister show Models and Agents for Beginners is worth a spot in your feed: artificial intelligence explained simply, for beginners and curious teens. It's one of the Nerra Network's daily briefings, all free at nerranetwork.com. Prefer reading?
+
+Today's full write-up, sources, and transcript are on the episode blog at nerranetwork.com — same briefing, readable format.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
