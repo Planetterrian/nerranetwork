@@ -2175,6 +2175,445 @@ def build_freshness_section(root: Path) -> Dict[str, Any]:
     return {"sources": out, "stale": stale, "warn_after_hours": 36}
 
 
+# ---------------------------------------------------------------------------
+# Industry benchmarks + investor view (Aug 2026)
+#
+# Two sections that put the network's numbers NEXT TO the market's:
+#   - "benchmarks": where each show and the network sit against published
+#     podcast-industry percentiles, CPM ranges and production costs.
+#   - "investor": what has been built (asset inventory with market-comp
+#     framing) and honest now / 1-year / 5-year value scenarios.
+#
+# All external figures come from docs/industry_benchmarks.yaml (one file,
+# provenance rendered), all internal figures from the same sections the
+# rest of the dashboard uses. House honesty rules apply throughout:
+# unmeasured = null (never 0), ranges stay ranges, projections are
+# labelled scenarios with their assumptions serialized next to them.
+# ---------------------------------------------------------------------------
+
+
+def _load_industry_benchmarks(root: Path) -> Optional[Dict[str, Any]]:
+    path = root / "docs" / "industry_benchmarks.yaml"
+    if not path.exists():
+        return None
+    try:
+        data = yaml.safe_load(path.read_text(encoding="utf-8"))
+        return data if isinstance(data, dict) else None
+    except Exception:
+        return None
+
+
+_PUBDATE_RE = re.compile(r"<pubDate>([^<]+)</pubDate>")
+
+
+def _feed_episodes_last_7d(root: Path, network: Dict[str, Any]) -> Dict[str, int]:
+    """Count episodes each show actually PUBLISHED in the last 7 days,
+    from its RSS feed's pubDates.
+
+    The cost rollup's ``episodes_last_7_days`` counts credit_usage FILES,
+    which include multilingual dub tracks and re-runs — using it as the
+    per-episode-downloads denominator understated every show's placement
+    (145 "episodes"/week vs ~90 real ones). The feed is the publication
+    record, so it is the denominator.
+    """
+    now = _dt.datetime.now(_dt.timezone.utc)
+    out: Dict[str, int] = {}
+    for s in (network or {}).get("shows", []):
+        slug, rss_file = s.get("slug"), s.get("rss_file")
+        if not slug or not rss_file:
+            continue
+        path = root / rss_file
+        if not path.exists():
+            continue
+        count = 0
+        try:
+            text = path.read_text(encoding="utf-8", errors="replace")
+            for raw in _PUBDATE_RE.findall(text):
+                when = _parse_rfc822(raw.strip())
+                if when is None:
+                    continue
+                if when.tzinfo is None:
+                    when = when.replace(tzinfo=_dt.timezone.utc)
+                if (now - when).total_seconds() <= 7 * 86400:
+                    count += 1
+        except Exception:
+            continue
+        out[slug] = count
+    return out
+
+
+def _percentile_band(dl_7d: float, ladder: Dict[str, Any]) -> str:
+    """Map a first-7-days download count onto the industry ladder."""
+    try:
+        if dl_7d >= float(ladder.get("top_1pct", 4615)):
+            return "top 1%"
+        if dl_7d >= float(ladder.get("top_5pct", 1029)):
+            return "top 5%"
+        if dl_7d >= float(ladder.get("top_10pct", 434)):
+            return "top 10%"
+        if dl_7d >= float(ladder.get("top_25pct", 119)):
+            return "top 25%"
+        if dl_7d >= float(ladder.get("median", 28)):
+            return "top 50%"
+        return "below median"
+    except (TypeError, ValueError):
+        return "unknown"
+
+
+def build_benchmarks_section(
+    root: Path,
+    *,
+    audience: Dict[str, Any],
+    costs: Dict[str, Any],
+    network: Dict[str, Any],
+) -> Dict[str, Any]:
+    bm = _load_industry_benchmarks(root)
+    if not bm:
+        return {"configured": False}
+
+    ladder = bm.get("podcast_episode_downloads_7d_percentiles") or {}
+    op3 = (audience or {}).get("op3") or {}
+    section: Dict[str, Any] = {
+        "configured": True,
+        "as_of": bm.get("as_of"),
+        "sources": bm.get("sources") or [],
+        "ladder": ladder,
+        "method_note": (
+            "Per-episode figure = a show's OP3 downloads over the last 7 "
+            "days ÷ episodes it published in those 7 days. That is a proxy "
+            "for the industry's 'downloads in an episode's first 7 days' "
+            "(back-catalog listening inflates it slightly; binge listening "
+            "deflates it). Unmeasured shows report null, never 0."
+        ),
+    }
+
+    # Per-show placement. Episodes counted from each show's RSS feed
+    # (the publication record), NOT credit files — see
+    # _feed_episodes_last_7d for why.
+    episodes_by_slug = _feed_episodes_last_7d(root, network)
+    per_show: Dict[str, Any] = {}
+    op3_per_show = op3.get("per_show") or {}
+    for slug, row in op3_per_show.items():
+        eps = episodes_by_slug.get(slug) or 0
+        dl7 = row.get("downloads_7d")
+        if not eps or dl7 is None:
+            per_show[slug] = {
+                "dl_per_episode_7d": None,
+                "percentile_band": None,
+                "episodes_7d": eps,
+            }
+            continue
+        per_ep = round(float(dl7) / max(1, eps), 1)
+        per_show[slug] = {
+            "dl_per_episode_7d": per_ep,
+            "percentile_band": _percentile_band(per_ep, ladder),
+            "episodes_7d": eps,
+        }
+    section["per_show"] = per_show
+
+    # Network-level placement + trailing growth.
+    total_eps_7d = sum(episodes_by_slug.values())
+    net_dl7 = op3.get("network_downloads_7d")
+    net_per_ep = (
+        round(float(net_dl7) / total_eps_7d, 1)
+        if (op3.get("configured") and net_dl7 is not None and total_eps_7d)
+        else None
+    )
+    weekly = [
+        float(r[1] or 0) for r in (op3.get("network_weekly_history") or [])
+    ]
+    # Median week-over-week growth over the last up-to-8 complete pairs —
+    # median rather than mean so one outage week can't fake a trend.
+    # Pairs are built from the full series FIRST and then windowed;
+    # slicing each side separately misaligns when history is shorter
+    # than the window (every week paired with itself → 0% growth).
+    wow: List[float] = []
+    for a, b in list(zip(weekly[:-1], weekly[1:]))[-8:]:
+        if a > 0:
+            wow.append(100.0 * (b - a) / a)
+    wow_median = round(sorted(wow)[len(wow) // 2], 1) if wow else None
+
+    # Cost per PUBLISHED episode: tracked 7d Grok+TTS spend ÷ episodes
+    # the feeds actually gained. The projections' avg is per credit FILE
+    # (which include dub tracks), so it reads lower than reality.
+    spend_7d = (costs.get("network_last_7_days") or {}).get("total")
+    cost_per_episode = (
+        round(float(spend_7d) / total_eps_7d, 2)
+        if spend_7d and total_eps_7d else None
+    )
+    prod = bm.get("production_cost_per_episode_usd") or {}
+    full_service = prod.get("full_service") or [None, None]
+    cost_advantage = None
+    if cost_per_episode and full_service[0]:
+        cost_advantage = [
+            int(float(full_service[0]) / cost_per_episode),
+            int(float(full_service[1]) / cost_per_episode),
+        ]
+    section["network"] = {
+        "dl_per_episode_7d": net_per_ep,
+        "percentile_band": (
+            _percentile_band(net_per_ep, ladder) if net_per_ep is not None
+            else None
+        ),
+        "episodes_7d": total_eps_7d,
+        "wow_growth_median_pct": wow_median,
+        "cost_per_episode_usd": cost_per_episode,
+        "cost_note": (
+            "Tracked Grok + TTS spend ÷ episodes published to the feeds "
+            "in the same 7 days. Untracked lines (Grok Imagine imagery, "
+            "some multilingual) roughly double it — still three orders "
+            "of magnitude under market rates."
+        ),
+        "industry_cost_per_episode_usd": prod,
+        "cost_advantage_x": cost_advantage,
+        "industry_structure": bm.get("industry_structure") or {},
+    }
+
+    # Monetization capacity — illustrative only (the network runs no ads).
+    cpm = bm.get("podcast_cpm_usd") or {}
+    prog = cpm.get("programmatic") or [None, None]
+    host = cpm.get("host_read_midtier") or [None, None]
+    dl30 = op3.get("network_downloads_30d")
+    podcast_cap = None
+    if op3.get("configured") and dl30 and prog[0] and host[1]:
+        annual_impressions = float(dl30) * 12.0 / 1000.0
+        podcast_cap = [
+            int(annual_impressions * float(prog[0]) * 1),   # 1 programmatic slot
+            int(annual_impressions * float(host[1]) * 2),   # 2 host-read slots
+        ]
+    ytb = (audience or {}).get("youtube") or {}
+    rpm = (bm.get("youtube") or {}).get("blended_rpm_usd") or [None, None]
+    yt_cap = None
+    views_window = ytb.get("network_views")
+    window_days = ytb.get("window_days") or 90
+    if ytb.get("configured") and views_window and rpm[0]:
+        annual_views_k = float(views_window) * (365.0 / window_days) / 1000.0
+        yt_cap = [int(annual_views_k * float(rpm[0])),
+                  int(annual_views_k * float(rpm[1]))]
+    section["monetization_capacity"] = {
+        "monthly_downloads": dl30 if op3.get("configured") else None,
+        "podcast_ads_annual_usd": podcast_cap,
+        "youtube_annual_usd": yt_cap,
+        "cpm_assumptions": {"programmatic": prog, "host_read": host,
+                            "youtube_rpm": rpm},
+        "note": (
+            "Illustrative capacity if inventory were sold at 2026 industry "
+            "rates — the network currently runs ZERO ads by design. Podcast "
+            "range = 1 programmatic slot at the low CPM to 2 host-read "
+            "slots at the high CPM."
+        ),
+    }
+    return section
+
+
+def _grow(value: float, monthly_pct: float, months: int) -> float:
+    return value * ((1.0 + monthly_pct / 100.0) ** months)
+
+
+def build_investor_section(
+    root: Path,
+    *,
+    audience: Dict[str, Any],
+    costs: Dict[str, Any],
+    catalog: Dict[str, Any],
+    lake: Dict[str, Any],
+    gallery: Dict[str, Any],
+    network: Dict[str, Any],
+    benchmarks: Dict[str, Any],
+) -> Dict[str, Any]:
+    bm = _load_industry_benchmarks(root)
+    if not bm or not benchmarks.get("configured"):
+        return {"configured": False}
+
+    op3 = (audience or {}).get("op3") or {}
+    ytb = (audience or {}).get("youtube") or {}
+    nl = (audience or {}).get("newsletter") or {}
+    episodes_to_date = (catalog or {}).get("network_episodes_to_date") or 0
+    shows_count = (catalog or {}).get("shows_count") or 0
+    # Real published episodes/week + per-episode cost from the feeds
+    # (via benchmarks), not credit-file counts — see _feed_episodes_last_7d.
+    eps_per_week = (benchmarks.get("network") or {}).get("episodes_7d") or 0
+    avg_cost = (benchmarks.get("network") or {}).get("cost_per_episode_usd")
+
+    prod = bm.get("production_cost_per_episode_usd") or {}
+    boutique = prod.get("boutique_agency") or [200, 400]
+    library_replacement = (
+        [int(episodes_to_date * boutique[0]),
+         int(episodes_to_date * boutique[1])]
+        if episodes_to_date else None
+    )
+    # Finished-audio estimate from transcript words at a 150 wpm speaking
+    # rate — an estimate, and labelled as one.
+    total_words = ((lake or {}).get("stats") or {}).get("total_words") or 0
+    audio_hours_est = int(total_words / 150 / 60) if total_words else None
+
+    val = bm.get("valuation") or {}
+    nl_per_sub = val.get("newsletter_value_per_free_subscriber_usd") or [1, 8]
+    ma_multiple = val.get("podcast_ma_revenue_multiple") or [1, 4]
+
+    yt_subs = sum(
+        (c or {}).get("subscribers") or 0
+        for c in (ytb.get("channels") or {}).values()
+    )
+    yt_views_lifetime = sum(
+        (c or {}).get("total_views") or 0
+        for c in (ytb.get("channels") or {}).values()
+    )
+
+    assets = [
+        {
+            "label": "Content library",
+            "value": (f"{episodes_to_date:,} episodes"
+                      + (f" · ~{audio_hours_est:,} h finished audio (est.)"
+                         if audio_hours_est else "")),
+            "framing": (
+                "Replacement cost at boutique-agency production rates "
+                f"(${boutique[0]}–${boutique[1]}/episode) — what a "
+                "traditional studio would charge to produce this catalog."
+            ),
+            "usd_range": library_replacement,
+        },
+        {
+            "label": "Production engine",
+            "value": (f"{shows_count} shows · ~{eps_per_week}/wk · "
+                      + (f"${avg_cost:.2f}/episode marginal cost"
+                         if avg_cost else "cost not measured")),
+            "framing": (
+                "Fully autonomous pipeline: fetch → write → voice → mix → "
+                "video → publish → analytics → self-review, in 5 languages, "
+                "with no per-episode human labor. The engine, not any one "
+                "show, is the core asset — a 17th show costs one YAML file."
+            ),
+            "usd_range": None,
+        },
+        {
+            "label": "Audience & channels",
+            "value": (
+                f"{(op3.get('network_downloads_30d') or 0):,} podcast "
+                f"downloads/30d · {yt_subs:,} YouTube subs · "
+                f"{yt_views_lifetime:,} lifetime views · "
+                f"{(nl.get('subscriber_count') or 0):,} newsletter subs"
+            ),
+            "framing": (
+                "Early but compounding: distribution live on Apple, "
+                "Spotify and 3 YouTube channels; every video ends on a "
+                "funnel-tagged site showcase feeding the newsletter."
+            ),
+            "usd_range": None,
+        },
+        {
+            "label": "Image & data assets",
+            "value": (
+                f"{((gallery or {}).get('image_count') or 0):,} CC-licensed "
+                "images · full-text content lake · per-episode analytics "
+                "joined across 6 platforms"
+            ),
+            "framing": (
+                "The feedback loops (retention-ranked imagery, adaptive "
+                "publishing policy, experiment registry) compound output "
+                "quality without adding headcount."
+            ),
+            "usd_range": None,
+        },
+    ]
+
+    # ---- Value scenarios: now / 1 year / 5 years ----
+    dl30 = op3.get("network_downloads_30d") if op3.get("configured") else None
+    scenarios: Dict[str, Any] = {"configured": dl30 is not None}
+    if dl30 is not None:
+        cpm = bm.get("podcast_cpm_usd") or {}
+        prog_lo = float((cpm.get("programmatic") or [12])[0])
+        host_hi = float((cpm.get("host_read_midtier") or [25, 50])[1])
+
+        def capacity(monthly_dl: float) -> List[int]:
+            impressions_k = monthly_dl * 12.0 / 1000.0
+            return [int(impressions_k * prog_lo * 1),
+                    int(impressions_k * host_hi * 2)]
+
+        def ev(cap: List[int]) -> List[int]:
+            return [int(cap[0] * ma_multiple[0]), int(cap[1] * ma_multiple[1])]
+
+        # Growth assumptions: deliberately DETACHED from the hot trailing
+        # trend (recently ~double-digit weekly), because extrapolating a
+        # small base's hot streak for years is how dishonest decks are
+        # made. Year 1 runs at the named monthly rate; years 2-5 taper to
+        # the long-run rate. All three are scenarios, not forecasts.
+        specs = [
+            {"name": "hold", "y1_monthly_pct": 0.0, "later_monthly_pct": 0.0,
+             "story": "growth stops today; the factory keeps publishing"},
+            {"name": "base", "y1_monthly_pct": 5.0, "later_monthly_pct": 2.0,
+             "story": "5%/mo year one, tapering to 2%/mo"},
+            {"name": "upside", "y1_monthly_pct": 10.0, "later_monthly_pct": 3.0,
+             "story": "10%/mo year one, tapering to 3%/mo"},
+        ]
+        eps_y1 = episodes_to_date + eps_per_week * 52
+        eps_y5 = episodes_to_date + eps_per_week * 52 * 5
+        rows = []
+        for spec in specs:
+            dl_y1 = _grow(float(dl30), spec["y1_monthly_pct"], 12)
+            dl_y5 = _grow(dl_y1, spec["later_monthly_pct"], 48)
+            cap_now = capacity(float(dl30))
+            cap_y1 = capacity(dl_y1)
+            cap_y5 = capacity(dl_y5)
+            rows.append({
+                "name": spec["name"],
+                "story": spec["story"],
+                "downloads_month": {"now": int(dl30), "y1": int(dl_y1),
+                                    "y5": int(dl_y5)},
+                "revenue_capacity_annual_usd": {
+                    "now": cap_now, "y1": cap_y1, "y5": cap_y5},
+                "implied_ev_usd": {
+                    "now": ev(cap_now), "y1": ev(cap_y1), "y5": ev(cap_y5)},
+            })
+        scenarios.update({
+            "rows": rows,
+            "library": {
+                "episodes": {"now": episodes_to_date, "y1": eps_y1,
+                             "y5": eps_y5},
+                "replacement_usd": {
+                    "now": library_replacement,
+                    "y1": [eps_y1 * boutique[0], eps_y1 * boutique[1]],
+                    "y5": [eps_y5 * boutique[0], eps_y5 * boutique[1]],
+                },
+            },
+            "assumptions": [
+                "Scenarios, not forecasts — none of this is booked revenue.",
+                ("Revenue capacity = monthly downloads × 12 ÷ 1,000 × CPM × "
+                 f"slots (low: 1 programmatic slot at ${prog_lo:.0f} CPM; "
+                 f"high: 2 host-read slots at ${host_hi:.0f} CPM). The "
+                 "network currently sells zero ads."),
+                (f"Implied EV applies the {ma_multiple[0]}–{ma_multiple[1]}x "
+                 "revenue multiple observed across 2020-24 podcast M&A to "
+                 "that capacity IF it were realized."),
+                ("Episode counts assume the current cadence "
+                 f"(~{eps_per_week}/week) simply continues — the factory's "
+                 "marginal cost makes that the default, not a stretch."),
+                (f"Library replacement value prices episodes at boutique "
+                 f"production rates (${boutique[0]}–${boutique[1]}). It is "
+                 "a cost-basis framing, not a resale price."),
+                (f"Trailing reality check: median WoW download growth over "
+                 "recent weeks is "
+                 f"{benchmarks.get('network', {}).get('wow_growth_median_pct')}"
+                 "% — the scenarios deliberately assume much less."),
+            ],
+        })
+    section = {
+        "configured": True,
+        "as_of": bm.get("as_of"),
+        "thesis": {
+            "shows": shows_count,
+            "episodes_per_week": eps_per_week,
+            "episodes_to_date": episodes_to_date,
+            "languages": None,  # filled by caller (needs multilingual)
+            "cost_per_episode_usd": avg_cost,
+            "newsletter_per_sub_usd": nl_per_sub,
+        },
+        "assets": assets,
+        "scenarios": scenarios,
+    }
+    return section
+
+
 def build_dashboard(root: Path, *, offline: bool = False, previous_flat: Optional[int] = None) -> Dict[str, Any]:
     shows = load_shows_from_yaml(root / "shows", root)
     rss = audit_rss_enclosures(root, offline=offline)
@@ -2250,6 +2689,27 @@ def build_dashboard(root: Path, *, offline: bool = False, previous_flat: Optiona
     audience = build_audience_section(root)
     efficiency = build_efficiency_section(costs, audience)
 
+    multilingual = aggregate_multilingual(root, shows)
+    catalog_section = build_catalog_section(root, shows, rss)
+    lake_section = build_content_lake_section(root)
+    gallery_section = build_gallery_section(root)
+
+    # Industry benchmarks + investor view (Aug 2026): built from the
+    # sections above so every comparison uses the same numbers the rest
+    # of the dashboard renders.
+    benchmarks = build_benchmarks_section(
+        root, audience=audience, costs=costs, network=network)
+    investor = build_investor_section(
+        root, audience=audience, costs=costs, catalog=catalog_section,
+        lake=lake_section, gallery=gallery_section, network=network,
+        benchmarks=benchmarks)
+    if investor.get("configured"):
+        langs = {"en"}
+        for entry in (multilingual.get("per_show") or {}).values():
+            for lang in entry.get("languages") or []:
+                langs.add(str(lang))
+        investor["thesis"]["languages"] = len(langs)
+
     return {
         "generated_at": _dt.datetime.now(_dt.timezone.utc).isoformat(),
         "network": network,
@@ -2258,18 +2718,20 @@ def build_dashboard(root: Path, *, offline: bool = False, previous_flat: Optiona
         "alerts": alerts,
         "voice_config": voice,
         "cost_rollup": costs,
-        "multilingual": aggregate_multilingual(root, shows),
+        "multilingual": multilingual,
         "pipeline_health": metrics,
         "rss_audit": rss,
         "mit_performance": aggregate_mit_performance(root),
         "audience": audience,
         "efficiency": efficiency,
-        "catalog": build_catalog_section(root, shows, rss),
-        "gallery": build_gallery_section(root),
-        "content_lake": build_content_lake_section(root),
+        "catalog": catalog_section,
+        "gallery": gallery_section,
+        "content_lake": lake_section,
         "distribution": build_distribution_section(root),
         "youtube_policy": build_youtube_policy_section(root),
         "funnel": build_funnel_section(root),
+        "benchmarks": benchmarks,
+        "investor": investor,
         # Growth levers (Aug 2026): trends, experiments, stagger, specials.
         "growth": {
             "channel_scorecard": build_channel_scorecard(root),

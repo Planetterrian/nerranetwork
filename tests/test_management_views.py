@@ -99,8 +99,15 @@ class TestViewSwitch:
         assert 'id="view-sponsor" aria-pressed="false"' in src
 
     def test_sponsor_hides_ops_and_shows_sponsor_surfaces(self):
+        """Aug 2026: the sponsor view hides ops, econ AND investor
+        surfaces (one grouped rule); the investor view hides ops only."""
         src = _page()
-        assert "body.view-sponsor [data-ops] { display: none !important; }" in src
+        assert re.search(
+            r"body\.view-sponsor \[data-ops\],\s*"
+            r"body\.view-sponsor \[data-econ\],\s*"
+            r"body\.view-sponsor \[data-investor\] \{ display: none !important; \}",
+            src)
+        assert "body.view-investor [data-ops] { display: none !important; }" in src
         assert "[data-sponsor] { display: none; }" in src
         assert "body.view-sponsor [data-sponsor] { display: revert; }" in src
 
@@ -116,12 +123,15 @@ class TestViewSwitch:
         for section in ("operations", "library", "guards", "voice", "feeds"):
             assert f'<section class="mc-section" data-ops id="{section}">' in src, section
 
-    def test_spend_tiles_are_operator_only(self):
+    def test_spend_tiles_are_econ_tagged(self):
+        """Aug 2026: spend tiles moved from data-ops to data-econ —
+        still hidden from sponsors, but visible in the investor view
+        (unit economics are the pitch)."""
         src = _page()
         spend = src[src.index('statTile("Spend · 7d"'):]
-        assert "ops: true" in spend[:400]
+        assert "econ: true" in spend[:400]
         episodes = src[src.index('statTile("Episodes · 7d"'):]
-        assert "ops: true" in episodes[:400]
+        assert "econ: true" in episodes[:400]
 
     def test_url_parameter_overrides_the_stored_preference(self):
         """A shared ?view=sponsor link must open in sponsor view even for

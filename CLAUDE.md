@@ -1711,6 +1711,20 @@ experiments register: **every change shipped to move a number gets an entry
 in [`docs/experiments.yaml`](docs/experiments.yaml)** with its readout date
 and (where supported) a live metric key — a typo'd metric name fails CI
 (`tests/test_dashboard_growth.py`).
+
+The page carries **three views** (Aug 2026): Operator (everything),
+Sponsor (`?view=sponsor` — audience + catalogue, no spend/valuation) and
+**Investor** (`?view=investor` — audience, unit economics, industry
+benchmarks and now/1yr/5yr value scenarios). Every external market figure
+(percentile ladder, CPMs, production costs, M&A multiples) lives ONLY in
+[`docs/industry_benchmarks.yaml`](docs/industry_benchmarks.yaml) with
+sources + an `as_of` date the page renders; the generator's
+`build_benchmarks_section` / `build_investor_section` compute placement
+and scenarios from the same audience/cost sections the rest of the page
+uses. Honesty rules: episode denominators come from RSS pubDates (credit
+files count dub tracks and overstate episodes), unmeasured = null never 0,
+projections are labelled scenarios with their assumptions serialized next
+to them. Drift guards: `tests/test_investor_dashboard.py`.
 Items 7 and 10 are intentionally excluded from the dashboard (per an explicit
 decision); everything else has a live status card.
 

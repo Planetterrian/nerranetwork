@@ -83,10 +83,65 @@
     color: #04121d; }
   .view-note { font-size: 12px; color: var(--ink-4); margin-top: 6px; max-width: 62ch; }
 
-  /* Default (operator): sponsor-only surfaces stay hidden. */
+  /* Default (operator): sponsor-only surfaces stay hidden; everything
+     else shows. Three audiences, one page:
+       - operator  — everything (default)
+       - sponsor   — audience + catalogue only; no spend, no plumbing,
+                     no valuation talk
+       - investor  — audience + economics + benchmarks + value scenarios;
+                     internal plumbing (guards, voice, feeds) hidden
+     Attributes: [data-ops] internal plumbing · [data-econ] economics an
+     investor should see · [data-investor] valuation surfaces (operator +
+     investor) · [data-sponsor] sponsor hero only. */
   [data-sponsor] { display: none; }
   body.view-sponsor [data-sponsor] { display: revert; }
-  body.view-sponsor [data-ops] { display: none !important; }
+  body.view-sponsor [data-ops],
+  body.view-sponsor [data-econ],
+  body.view-sponsor [data-investor] { display: none !important; }
+  body.view-investor [data-ops] { display: none !important; }
+
+  /* ---- benchmark ladder + investor panels ---- */
+  .bench-ladder { position: relative; height: 46px; margin: 48px 0 4px;
+    background: var(--surface-2); border-radius: 8px; }
+  .bench-ladder .rung { position: absolute; top: 0; bottom: 0; width: 2px;
+    background: var(--hairline); }
+  .bench-ladder .rung .rl { position: absolute; top: 100%; margin-top: 4px;
+    transform: translateX(-50%); font-size: 10px; color: var(--ink-4);
+    white-space: nowrap; }
+  /* Stagger alternating rung labels into a second row so the log-scale
+     percentile marks (which bunch toward the right) stay readable. */
+  .bench-ladder .rung:nth-of-type(even) .rl { margin-top: 17px; }
+  .bench-ladder .rung:last-of-type .rl { transform: translateX(-85%); }
+  .bench-ladder .marker { position: absolute; top: -6px; bottom: -6px; width: 3px;
+    border-radius: 2px; background: var(--accent); }
+  .bench-ladder .marker .ml { position: absolute; bottom: 100%; margin-bottom: 4px;
+    transform: translateX(-50%); font-size: 11px; font-weight: 600;
+    color: var(--ink-1); white-space: nowrap; }
+  .scenario-table td:first-child { color: var(--ink-1); font-weight: 600; }
+  .scenario-table .rng { white-space: nowrap; }
+  .assumptions { margin: 10px 0 0; padding-left: 18px; font-size: 12px;
+    color: var(--ink-4); line-height: 1.55; }
+  .assumptions li { padding: 1px 0; }
+  .investor-hero { background: linear-gradient(135deg, rgba(107,71,255,0.10), transparent 55%),
+    var(--surface-1); border: 1px solid var(--hairline); border-radius: 16px;
+    padding: 20px 22px; margin-bottom: 22px; }
+  /* The hero leads only the investor view; the #investor section below
+     stays reachable from the operator view too. */
+  #investor-hero { display: none; }
+  body.view-investor #investor-hero { display: block; }
+  .investor-hero h2 { margin: 0 0 4px; font-size: 19px; letter-spacing: -0.01em; }
+  .asset-row { display: flex; gap: 14px; padding: 10px 0;
+    border-bottom: 1px solid var(--hairline); flex-wrap: wrap; }
+  .asset-row:last-child { border-bottom: none; }
+  .asset-row .a-label { flex: 0 0 170px; font-weight: 600; color: var(--ink-1);
+    font-size: 13px; }
+  .asset-row .a-body { flex: 1; min-width: 240px; }
+  .asset-row .a-value { font-size: 13.5px; color: var(--ink-1);
+    font-variant-numeric: tabular-nums; }
+  .asset-row .a-framing { font-size: 12px; color: var(--ink-3); margin-top: 3px;
+    line-height: 1.45; }
+  .asset-row .a-usd { flex: 0 0 auto; font-size: 13.5px; font-weight: 650;
+    color: var(--series-3); font-variant-numeric: tabular-nums; }
 
   /* ---- sponsor headline panel ---- */
   .sponsor-hero { background: linear-gradient(135deg, rgba(0,212,255,0.07), transparent 55%),
@@ -254,6 +309,7 @@
     <div class="view-switch" role="group" aria-label="Dashboard view">
       <button type="button" id="view-operator" aria-pressed="true">Operator</button>
       <button type="button" id="view-sponsor" aria-pressed="false">Sponsor</button>
+      <button type="button" id="view-investor" aria-pressed="false">Investor</button>
     </div>
     <div class="health-pills" id="status-summary" data-ops hidden>
       <span class="pill ok"><span id="count-ok">0</span>&nbsp;OK</span>
@@ -263,14 +319,12 @@
     </div>
   </div>
 </div>
-<div class="view-note" id="view-note" hidden>
-  Sponsor view — audience, reach and catalogue only. Internal spend and
-  pipeline-health panels are hidden. Share this page with
-  <code>?view=sponsor</code> to open it here directly.
-</div>
+<div class="view-note" id="view-note" hidden></div>
 
 <nav class="mc-nav" aria-label="Sections">
   <a href="#audience-section">Audience</a>
+  <a href="#benchmarks">Benchmarks</a>
+  <a href="#investor" data-investor>Investor</a>
   <a href="#distribution">Distribution</a>
   <a href="#catalog">Catalog</a>
   <a href="#operations" data-ops>Operations</a>
@@ -301,11 +355,27 @@
     <p class="view-note" id="sponsor-method" style="margin-top:15px;"></p>
   </section>
 
+  <section class="investor-hero" data-investor id="investor-hero" hidden>
+    <h2>The investment thesis — an autonomous media network</h2>
+    <div class="lede" id="investor-lede" style="color:var(--ink-3);font-size:13px;max-width:86ch;"></div>
+    <div class="reach-grid" id="investor-thesis-grid" style="margin-top:14px;"></div>
+  </section>
+
   <div class="tile-row" id="tile-row"></div>
 
   <section class="mc-section" id="audience-section">
     <h2>Audience <span class="pill-note" id="audience-status-pill"></span></h2>
     <div class="card-grid" id="audience-grid"></div>
+  </section>
+
+  <section class="mc-section" id="benchmarks">
+    <h2>Industry benchmarks — where Nerra sits <span class="pill-note" id="benchmarks-pill"></span></h2>
+    <div class="card-grid" id="benchmarks-grid"></div>
+  </section>
+
+  <section class="mc-section" id="investor" data-investor>
+    <h2>Investor view — what's being built &amp; what it's worth <span class="pill-note" id="investor-pill"></span></h2>
+    <div class="card-grid" id="investor-grid" style="grid-template-columns:1fr;"></div>
   </section>
 
   <section class="mc-section" id="growth-levers" data-ops>
@@ -499,7 +569,10 @@
     const tile = h("div", { class: "tile" });
     // Internal-only tiles (spend, per-episode cost) are hidden in the
     // shareable sponsor view — see the view switch at the bottom.
+    // `econ` tiles additionally stay visible in the investor view
+    // (economics are the moat; plumbing is not).
     if (opts.ops) tile.setAttribute("data-ops", "");
+    if (opts.econ) tile.setAttribute("data-econ", "");
     if (opts.sponsorOnly) tile.setAttribute("data-sponsor", "");
     tile.appendChild(h("div", { class: "t-label", text: label }));
     const v = h("div", { class: "t-value", text: value });
@@ -643,13 +716,13 @@
       spark: siteSpark,
       sparkTitle: "Daily active users, last " + siteSpark.length + " days" }));
   tiles.appendChild(statTile("Spend · 7d", money(data.network.total_cost_last_7_days_usd),
-    { ops: true,
+    { econ: true,
       sub: money(data.network.total_cost_last_30_days_usd) + " · 30d · " +
            (eff.usd_per_op3_download_7d != null
              ? ("$" + Number(eff.usd_per_op3_download_7d).toFixed(3) + "/RSS dl")
              : (money((cost.projections || {}).projected_weekly_usd) + "/wk burn")) }));
   tiles.appendChild(statTile("Episodes · 7d", fmt((cost.network_last_7_days || {}).episodes),
-    { ops: true,
+    { econ: true,
       sub: money((cost.projections || {}).avg_cost_per_episode_usd) + " avg / episode · " +
            fmt(catalog.shows_count || (data.network || {}).shows_count) + " shows" }));
   // Sponsor-facing counterparts to the two tiles above: the same
@@ -930,9 +1003,12 @@
     audGrid.appendChild(card);
   }
 
-  // Unit economics — cost vs each platform (never summed)
+  // Unit economics — cost vs each platform (never summed). Marked
+  // data-econ: hidden from sponsors (spend is internal), shown to
+  // investors (unit economics ARE the pitch).
   {
     const card = sectionCard("Unit economics", "Grok+TTS vs listening · not one reach number");
+    card.setAttribute("data-econ", "");
     if (!eff || eff.cost_7d_usd == null) {
       card.appendChild(h("p", { class: "fine-list", text: "Efficiency rollup not in this dashboard.json yet — regenerate." }));
     } else {
@@ -1222,6 +1298,273 @@
         "The Aug 6 outage made every downstream number silently a day stale " +
         "— staleness is now visible here and alerts past the threshold." }));
       grid.appendChild(card);
+    }
+  }
+
+  // ---------- industry benchmarks ----------
+  // The network's numbers NEXT TO the market's — percentile ladder,
+  // production-cost gap, monetization capacity. All external figures
+  // come from docs/industry_benchmarks.yaml via the generator, with
+  // provenance rendered ("industry data as of …").
+  {
+    const bm = data.benchmarks || {};
+    const grid = $("#benchmarks-grid");
+    const usd = (n) => (n == null ? "—" : "$" + compact(n));
+    const rangeUsd = (r) => (r && r.length === 2)
+      ? usd(r[0]) + "–" + usd(r[1]) : "—";
+    if (!bm.configured) {
+      const card = sectionCard("Industry benchmarks");
+      card.appendChild(h("p", { class: "fine-list",
+        html: "No <code>docs/industry_benchmarks.yaml</code> — add it and regenerate." }));
+      grid.appendChild(card);
+    } else {
+      $("#benchmarks-pill").textContent = "industry data as of " + (bm.as_of || "?");
+      const net = bm.network || {};
+      const ladder = bm.ladder || {};
+
+      // Card 1 — downloads per episode vs the percentile ladder.
+      {
+        const card = sectionCard("Downloads per episode vs industry",
+          "first-7-days ladder · Buzzsprout percentiles");
+        // Log-scale ladder: rungs at the industry percentiles, markers
+        // for the network and its best show.
+        const LMIN = 2, LMAX = 6000;
+        const x = (v) => {
+          const c = Math.min(LMAX, Math.max(LMIN, v));
+          return 2 + 96 * (Math.log10(c) - Math.log10(LMIN)) /
+            (Math.log10(LMAX) - Math.log10(LMIN));
+        };
+        const lad = h("div", { class: "bench-ladder" });
+        [["median", ladder.median], ["top 25%", ladder.top_25pct],
+         ["top 10%", ladder.top_10pct], ["top 5%", ladder.top_5pct],
+         ["top 1%", ladder.top_1pct]].forEach(([lbl, v]) => {
+          if (v == null) return;
+          const rung = h("div", { class: "rung", style: "left:" + x(v).toFixed(1) + "%;" });
+          rung.appendChild(h("span", { class: "rl", text: lbl + " · " + fmt(v) }));
+          lad.appendChild(rung);
+        });
+        const perShow = bm.per_show || {};
+        const ranked = Object.keys(perShow)
+          .filter((s) => perShow[s].dl_per_episode_7d != null)
+          .sort((a, b) => perShow[b].dl_per_episode_7d - perShow[a].dl_per_episode_7d);
+        if (net.dl_per_episode_7d != null) {
+          const m = h("div", { class: "marker", style: "left:" + x(net.dl_per_episode_7d).toFixed(1) + "%;" });
+          m.appendChild(h("span", { class: "ml", text: "network · " + net.dl_per_episode_7d }));
+          lad.appendChild(m);
+        }
+        if (ranked.length) {
+          const top = perShow[ranked[0]];
+          const m2 = h("div", { class: "marker",
+            style: "left:" + x(top.dl_per_episode_7d).toFixed(1) + "%;background:var(--series-3);" });
+          m2.appendChild(h("span", { class: "ml", style: "margin-bottom:22px;color:var(--series-3);",
+            text: ranked[0] + " · " + top.dl_per_episode_7d }));
+          lad.appendChild(m2);
+        }
+        card.appendChild(lad);
+        card.appendChild(h("div", { style: "height:32px;" }));
+        ranked.slice(0, 8).forEach((slug) => {
+          const v = perShow[slug];
+          card.appendChild(barRow(slug, Math.log10(Math.max(2, v.dl_per_episode_7d)),
+            Math.log10(LMAX),
+            v.dl_per_episode_7d + " dl/ep · " + (v.percentile_band || "—"),
+            { title: slug + ": " + v.episodes_7d + " episodes in the last 7d" }));
+        });
+        if (net.wow_growth_median_pct != null) {
+          card.appendChild(h("p", { class: "fine-list", html:
+            "<span class='k'>Network trend:</span> median <strong>" +
+            (net.wow_growth_median_pct > 0 ? "+" : "") + net.wow_growth_median_pct +
+            "% week-over-week</strong> download growth over recent weeks." }));
+        }
+        card.appendChild(h("p", { class: "platform-note", text: bm.method_note || "" }));
+        grid.appendChild(card);
+      }
+
+      // Card 2 — the economics gap + survival context. data-econ:
+      // internal spend stays off the sponsor view.
+      {
+        const card = sectionCard("The economics gap",
+          "cost per episode vs 2026 market rates");
+        card.setAttribute("data-econ", "");
+        const cost = net.cost_per_episode_usd;
+        const ind = net.industry_cost_per_episode_usd || {};
+        card.appendChild(h("div", { class: "headline",
+          html: (cost == null ? "—" : "$" + Number(cost).toFixed(2)) +
+                "<small>per published episode (tracked spend)</small>" }));
+        const rows = [
+          ["Nerra Network", cost, "var(--status-ok)"],
+          ["DIY + freelance edit", ind.diy_freelance_edit, "var(--series-4)"],
+          ["Boutique agency", ind.boutique_agency, "var(--series-2)"],
+          ["Full-service studio", ind.full_service, "var(--status-fail)"],
+        ];
+        const maxHi = Math.max.apply(null, rows.map((r) =>
+          Array.isArray(r[1]) ? r[1][1] : (r[1] || 0)).concat([1]));
+        rows.forEach(([lbl, v, color]) => {
+          const hi = Array.isArray(v) ? v[1] : v;
+          const txt = Array.isArray(v)
+            ? ("$" + fmt(v[0]) + "–$" + fmt(v[1]))
+            : (v == null ? "—" : "$" + Number(v).toFixed(2));
+          card.appendChild(barRow(lbl, hi || 0, maxHi, txt, { color: color }));
+        });
+        if (net.cost_advantage_x) {
+          card.appendChild(h("p", { class: "fine-list", html:
+            "<span class='k'>" + fmt(net.cost_advantage_x[0]) + "–" +
+            fmt(net.cost_advantage_x[1]) + "× cheaper</span> than " +
+            "full-service production at current tracked spend." }));
+        }
+        card.appendChild(h("p", { class: "platform-note", text: net.cost_note || "" }));
+        const st = net.industry_structure || {};
+        if (st.new_show_6mo_abandonment_pct) {
+          card.appendChild(h("p", { class: "fine-list", html:
+            "<span class='k'>Survival context:</span> of ~" +
+            compact(st.indexed_podcast_feeds) + " indexed podcasts only ~" +
+            compact(st.actively_publishing_shows) + " still publish, and <strong>" +
+            st.new_show_6mo_abandonment_pct + "% of new shows quit within 6 " +
+            "months</strong>. This network has published every scheduled day " +
+            "across " + fmt((data.catalog || {}).shows_count) + " shows — " +
+            "consistency is the moat automation buys." }));
+        }
+        grid.appendChild(card);
+      }
+
+      // Card 3 — monetization capacity (illustrative; zero ads today).
+      {
+        const mc = bm.monetization_capacity || {};
+        const card = sectionCard("Monetization capacity",
+          "illustrative · the network runs ZERO ads today");
+        card.setAttribute("data-econ", "");
+        if (mc.monthly_downloads == null) {
+          card.appendChild(h("p", { class: "fine-list", text: "Downloads not measured yet." }));
+        } else {
+          const grid2 = h("div", { class: "eff-grid" });
+          const cells = [
+            [rangeUsd(mc.podcast_ads_annual_usd), "podcast ads · annual capacity"],
+            [rangeUsd(mc.youtube_annual_usd), "YouTube RPM · annual capacity"],
+            [fmt(mc.monthly_downloads), "downloads / month today"],
+            [(mc.cpm_assumptions ? "$" + mc.cpm_assumptions.programmatic[0] +
+              "–$" + mc.cpm_assumptions.host_read[1] + " CPM" : "—"),
+              "assumed rate range"],
+          ];
+          cells.forEach(([n, l]) => {
+            const cell = h("div", { class: "eff-cell" });
+            cell.appendChild(h("div", { class: "eff-n", text: String(n) }));
+            cell.appendChild(h("div", { class: "eff-l", text: l }));
+            grid2.appendChild(cell);
+          });
+          card.appendChild(grid2);
+          card.appendChild(h("p", { class: "platform-note", text: mc.note || "" }));
+        }
+        grid.appendChild(card);
+      }
+    }
+  }
+
+  // ---------- investor view ----------
+  {
+    const inv = data.investor || {};
+    const grid = $("#investor-grid");
+    const usd = (n) => (n == null ? "—" : "$" + compact(n));
+    const rangeUsd = (r) => (r && r.length === 2)
+      ? usd(r[0]) + "–" + usd(r[1]) : "—";
+    if (inv.configured) {
+      const t = inv.thesis || {};
+      $("#investor-pill").textContent = "market comps as of " + (inv.as_of || "?");
+
+      // Hero (visible in investor view only — the [data-investor] hero
+      // block above the tiles).
+      const hero = $("#investor-hero");
+      if (hero) hero.hidden = false;
+      const lede = $("#investor-lede");
+      if (lede) {
+        lede.textContent =
+          "Nerra Network is a fully autonomous podcast + video network: " +
+          fmt(t.shows) + " original shows publishing ~" + fmt(t.episodes_per_week) +
+          " episodes a week in " + fmt(t.languages || 1) + " languages across " +
+          "Apple, Spotify, YouTube (3 channels), web and email — at a marginal " +
+          "cost of " + (t.cost_per_episode_usd != null
+            ? "$" + Number(t.cost_per_episode_usd).toFixed(2) : "—") +
+          " per episode. The asset is not any one show: it is the engine that " +
+          "writes, voices, edits, publishes, measures and improves the whole " +
+          "catalog with no per-episode human labor, plus the compounding " +
+          "content library and audience it produces.";
+      }
+      const tg = $("#investor-thesis-grid");
+      if (tg) {
+        [
+          { v: fmt(t.shows), l: "Original shows", s: "16 formats incl. two-host dialogue + live AI interviews" },
+          { v: "~" + fmt(t.episodes_per_week) + "/wk", l: "Episodes published", s: fmt(t.episodes_to_date) + " to date, growing daily" },
+          { v: fmt(t.languages || 1), l: "Languages", s: "same-day translated audio + dubbed video channels" },
+          { v: t.cost_per_episode_usd != null ? "$" + Number(t.cost_per_episode_usd).toFixed(2) : "—",
+            l: "Marginal cost / episode", s: "vs $400–$1,000 at a full-service studio" },
+        ].forEach((it) => {
+          const cell = h("div", { class: "reach-item" });
+          cell.appendChild(h("div", { class: "r-v", text: it.v }));
+          cell.appendChild(h("div", { class: "r-l", text: it.l }));
+          cell.appendChild(h("div", { class: "r-s", text: it.s }));
+          tg.appendChild(cell);
+        });
+      }
+
+      // Card A — asset inventory.
+      {
+        const card = sectionCard("What's been built", "asset inventory · market-comp framing");
+        (inv.assets || []).forEach((a) => {
+          const row = h("div", { class: "asset-row" });
+          row.appendChild(h("div", { class: "a-label", text: a.label }));
+          const body = h("div", { class: "a-body" });
+          body.appendChild(h("div", { class: "a-value", text: a.value }));
+          body.appendChild(h("div", { class: "a-framing", text: a.framing }));
+          row.appendChild(body);
+          if (a.usd_range) row.appendChild(h("div", { class: "a-usd", text: rangeUsd(a.usd_range) }));
+          card.appendChild(row);
+        });
+        grid.appendChild(card);
+      }
+
+      // Card B — value scenarios now / 1 yr / 5 yr.
+      {
+        const sc = inv.scenarios || {};
+        const card = sectionCard("Value scenarios — now · 1 year · 5 years",
+          "scenarios, not forecasts");
+        if (!sc.configured) {
+          card.appendChild(h("p", { class: "fine-list", text: "Downloads not measured yet — scenarios need a base." }));
+        } else {
+          const wrap = h("div", { style: "overflow-x:auto;" });
+          const tbl = h("table", { class: "mc-table scenario-table" });
+          tbl.innerHTML = "<thead><tr><th>Scenario</th><th>Downloads / mo</th>" +
+            "<th>Revenue capacity / yr</th><th>Implied EV (1–4× rev)</th></tr></thead>";
+          const tb = h("tbody");
+          (sc.rows || []).forEach((r) => {
+            [["now", "today"], ["y1", "in 1 year"], ["y5", "in 5 years"]].forEach(([k, when], i) => {
+              const tr = h("tr");
+              tr.appendChild(h("td", { text: i === 0 ? (r.name + " — " + r.story) : "" }));
+              tr.appendChild(h("td", { text: fmt(r.downloads_month[k]) + " · " + when }));
+              tr.appendChild(h("td", { class: "rng", text: rangeUsd(r.revenue_capacity_annual_usd[k]) }));
+              tr.appendChild(h("td", { class: "rng", text: rangeUsd(r.implied_ev_usd[k]) }));
+              tb.appendChild(tr);
+            });
+          });
+          tbl.appendChild(tb);
+          wrap.appendChild(tbl);
+          card.appendChild(wrap);
+          const lib = sc.library || {};
+          if (lib.replacement_usd) {
+            card.appendChild(h("p", { class: "fine-list", html:
+              "<span class='k'>Content-library replacement value</span> (cost basis, " +
+              "boutique rates): today <strong>" + rangeUsd(lib.replacement_usd.now) +
+              "</strong> (" + fmt(lib.episodes.now) + " eps) → 1 yr <strong>" +
+              rangeUsd(lib.replacement_usd.y1) + "</strong> (" + fmt(lib.episodes.y1) +
+              ") → 5 yr <strong>" + rangeUsd(lib.replacement_usd.y5) + "</strong> (" +
+              fmt(lib.episodes.y5) + ") at the current cadence." }));
+          }
+          const ul = h("ul", { class: "assumptions" });
+          (sc.assumptions || []).forEach((a) => ul.appendChild(h("li", { text: a })));
+          card.appendChild(ul);
+        }
+        grid.appendChild(card);
+      }
+    } else {
+      $("#investor-grid").appendChild(h("p", { class: "fine-list",
+        text: "Investor section not in this dashboard.json yet — regenerate." }));
     }
   }
 
@@ -2094,48 +2437,72 @@
   })();
 
   // ---------- view switch ----------
+  // Three audiences, one page: operator (everything), sponsor (audience
+  // + catalogue only), investor (audience + economics + benchmarks +
+  // value scenarios). The URL carries the choice so a shared link opens
+  // the way the sender intended.
   (function viewSwitch() {
-    const opBtn = $("#view-operator");
-    const spBtn = $("#view-sponsor");
+    const buttons = {
+      operator: $("#view-operator"),
+      sponsor: $("#view-sponsor"),
+      investor: $("#view-investor"),
+    };
     const note = $("#view-note");
-    if (!opBtn || !spBtn) return;
+    if (!buttons.operator || !buttons.sponsor || !buttons.investor) return;
 
     const h1 = document.querySelector(".mc-header h1");
     const sub = document.querySelector(".mc-header .subtitle:last-of-type");
-    const OPERATOR_H1 = h1 ? h1.textContent : "";
-    const OPERATOR_SUB = sub ? sub.textContent : "";
+    const VIEWS = {
+      operator: {
+        h1: h1 ? h1.textContent : "",
+        sub: sub ? sub.textContent : "",
+        note: "",
+      },
+      sponsor: {
+        h1: "Nerra Network — Audience & Reach",
+        sub: "Downloads, streams, views and subscribers — measured per platform, never blended into one number.",
+        note: "Sponsor view — audience, reach and catalogue only. Internal " +
+              "spend, valuation and pipeline panels are hidden. Share with " +
+              "?view=sponsor.",
+      },
+      investor: {
+        h1: "Nerra Network — Investor Overview",
+        sub: "The autonomous media network: audience, unit economics, industry benchmarks and value scenarios — every number measured or labelled a scenario.",
+        note: "Investor view — audience, economics, benchmarks and value " +
+              "scenarios. Internal pipeline plumbing is hidden. Share with " +
+              "?view=investor.",
+      },
+    };
 
     function apply(view, push) {
-      const sponsor = view === "sponsor";
-      document.body.classList.toggle("view-sponsor", sponsor);
-      opBtn.setAttribute("aria-pressed", String(!sponsor));
-      spBtn.setAttribute("aria-pressed", String(sponsor));
-      if (note) note.hidden = !sponsor;
-      // The masthead is operator language ("Mission Control", "spend").
-      // Swap it rather than leaving a sponsor reading a console header.
-      if (h1) h1.textContent = sponsor
-        ? "Nerra Network — Audience & Reach" : OPERATOR_H1;
-      if (sub) sub.textContent = sponsor
-        ? "Downloads, streams, views and subscribers — measured per platform, never blended into one number."
-        : OPERATOR_SUB;
+      if (!VIEWS[view]) view = "operator";
+      document.body.classList.toggle("view-sponsor", view === "sponsor");
+      document.body.classList.toggle("view-investor", view === "investor");
+      Object.keys(buttons).forEach((k) =>
+        buttons[k].setAttribute("aria-pressed", String(k === view)));
+      if (note) {
+        note.hidden = view === "operator";
+        note.textContent = VIEWS[view].note;
+      }
+      if (h1) h1.textContent = VIEWS[view].h1;
+      if (sub) sub.textContent = VIEWS[view].sub;
       try { localStorage.setItem("nerraDashView", view); } catch (e) { /* private mode */ }
       if (push) {
         const u = new URL(window.location.href);
-        if (sponsor) u.searchParams.set("view", "sponsor");
-        else u.searchParams.delete("view");
+        if (view === "operator") u.searchParams.delete("view");
+        else u.searchParams.set("view", view);
         history.replaceState(null, "", u);
       }
     }
 
-    // URL wins over the stored preference, so a shared link always opens
-    // the way the sender intended.
+    // URL wins over the stored preference.
     let initial = new URLSearchParams(window.location.search).get("view");
-    if (initial !== "sponsor" && initial !== "operator") {
+    if (!VIEWS[initial]) {
       try { initial = localStorage.getItem("nerraDashView"); } catch (e) { initial = null; }
     }
-    apply(initial === "sponsor" ? "sponsor" : "operator", false);
-    opBtn.addEventListener("click", () => apply("operator", true));
-    spBtn.addEventListener("click", () => apply("sponsor", true));
+    apply(VIEWS[initial] ? initial : "operator", false);
+    Object.keys(buttons).forEach((k) =>
+      buttons[k].addEventListener("click", () => apply(k, true)));
   })();
 })();
 </script>
