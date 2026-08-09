@@ -1,0 +1,143 @@
+Anthropic’s auto mode now defaults for most Claude Code users and blocks 89 percent of dangerous actions in tests where humans only caught 13.6 percent.
+
+This is Models and Agents, episode 136.
+
+Anthropic published third-party evaluations showing that Claude models in auto mode stopped every one of 720 indirect prompt injection attempts across 72 scenarios.
+
+The same system outperformed human reviewers at rejecting harmful commands mid-session.
+
+Builders should watch how other labs respond to these safety claims and whether independent red teams can reproduce the results.
+
+Over the past week, coverage has centered on agent safety benchmarks and enterprise-scale rollouts, with teams testing new guardrails against prompt injection and data exfiltration.
+
+Those threads continue today as more labs publish their own evaluation results.
+
+Anthropic is making auto mode the default for new Claude Code sessions on Pro, Max, and Team plans starting August 14.
+
+The change follows internal testing and a third-party evaluation by Trajectory Labs that found zero successful indirect prompt injection attacks against Claude Fable 5, Opus 5, or Sonnet 5 in auto mode across 720 attempts.
+
+In a separate test with 1,053 paid users, auto mode blocked 89 percent of swapped dangerous commands while only 13.6 percent of humans refused them.
+
+Simon Willison notes the remaining 11 percent failure rate and highlights risks from malicious third-party packages that could still exfiltrate data even under auto mode.
+
+The evaluations focus on prompt injection and data exfiltration but do not yet cover every possible supply-chain attack.
+
+Internally at Anthropic, almost every person already uses auto mode, and Cat Wu stated that for the main risk categories the system performs better than average human reviewers.
+
+Thariq Shihipar described the work as addressing the lethal trifecta of risks.
+
+Developers using coding agents should test auto mode on non-critical repositories this week and compare it against their current approval workflows.
+
+Willison remains concerned that confirmation fatigue in human approval flows is real and that auto mode still leaves room for attacks involving malicious packages such as one that instructs agents to run uvx fetch-model-files before tests.
+
+He has previously predicted a challenger-disaster-scale incident for coding agents in 2026 and wants independent confirmation before fully trusting the new safeguards.
+
+Researchers used frontier genome language models Evo 1 and Evo 2 to generate complete viable bacteriophage genomes based on the ΦX174 template.
+
+The models produced sequences with realistic genetic architecture and targeted host tropism.
+
+Experimental validation yielded 16 functional phages that showed substantial evolutionary novelty and had never existed in nature.
+
+This marks the first reported case of whole-genome generative design that resulted in viable organisms.
+
+The work demonstrates that current genome-scale language models can now output full-length functional sequences rather than short gene fragments.
+
+Teams working on synthetic biology or genome-scale modeling should examine the released sequences and the training approach used.
+
+Recent evaluations found that current large language models continue to embed racial and gender biases when answering medical questions.
+
+The study highlights persistent stereotype reinforcement in clinical reasoning tasks despite safety fine-tuning.
+
+Researchers at Flinders University documented specific failure patterns across multiple model families.
+
+The findings show that bias persists even in models trained with recent alignment techniques.
+
+Medical AI teams should add targeted bias audits to their evaluation pipelines before deployment.
+
+Cisco announced a company-wide rollout of AI agents to its full workforce of 90,000 people.
+
+The deployment focuses on internal productivity tools and process automation across departments.
+
+Early economics show per-employee cost reductions that scale with usage volume.
+
+The rollout includes monitoring layers to track agent actions and spending.
+
+Organizations evaluating enterprise agent platforms should review Cisco’s reported integration patterns and monitoring approach.
+
+Time Magazine has begun serving advertisements explicitly designed to be read and acted upon by AI agents rather than humans.
+
+The ads target agent decision-making loops in browsing and research workflows.
+
+This development shows how content publishers are adapting to agent-mediated consumption.
+
+The format uses structured prompts that agents are more likely to parse and follow than traditional banner copy.
+
+Teams building web agents should add filters for sponsored content that may attempt to steer agent behavior.
+
+Attackers have created more than 800 counterfeit AI agent skills that deliver malware when installed.
+
+The campaign exploits agent marketplaces and skill registries by mimicking legitimate tool descriptions.
+
+Once activated, the fake skills exfiltrate data or execute unauthorized actions.
+
+The operation relies on volume and rapid re-registration after takedowns.
+
+Agent developers should implement stricter vetting and sandboxing for third-party skills before allowing execution.
+
+A new tutorial demonstrates how to wrap a stateful LangGraph agent in a production-ready Streamlit interface.
+
+The guide covers session state management, tool call visualization, and streaming responses.
+
+Developers can follow the provided code to expose LangGraph agents through a simple web UI without additional frontend frameworks.
+
+Submissions are now open for the Real-Time Conversational Agents workshop at NeurIPS 2026 in Sydney.
+
+The workshop focuses on streaming speech, full-duplex dialogue, turn-taking, and evaluation of live interactive systems.
+
+Full papers, short papers, and demo submissions are accepted with a deadline of August 29.
+
+Topics include latency-aware generation, natural interaction metrics, and safety considerations for real-time agents.
+
+OK, let’s pop the hood on the auto-mode defenses.
+
+Everyone treats auto mode as a single safety toggle, but the engineering reality is a layered set of runtime checks and policy models that run alongside the main agent loop.
+
+The core mechanism replaces user approval prompts with an always-on secondary model that scores proposed actions against a narrow set of disallowed patterns before any tool executes.
+
+This adds measurable latency, roughly one extra forward pass per decision, but removes confirmation fatigue that causes humans to approve 86 percent of harmful commands in the reported tests.
+
+The defense works best when the policy model has no access to the same untrusted context the primary agent sees, creating an information barrier that stops many injected instructions from reaching the decision stage.
+
+Trade-offs appear at scale: the policy model must stay small enough to keep total cost low, yet large enough to catch novel attack phrasings, and the gap between the two sizes is where the remaining 11 percent of attacks still slip through.
+
+The approach also assumes the set of dangerous actions can be enumerated in advance; open-ended coding agents that can install arbitrary packages quickly exceed that assumption.
+
+When the policy model is kept deliberately smaller than the main agent, novel phrasing attacks become harder to block without raising false-positive rates that frustrate users.
+
+Teams should adopt this pattern only when they can afford the extra inference cost and when their agent’s tool set is narrow enough that disallowed actions can be enumerated in advance; for open-ended coding agents the same approach quickly becomes incomplete without additional sandboxing.
+
+A practical next step is to run the policy model on a separate, smaller instance so that even if the primary context is poisoned the decision layer remains clean.
+
+This development sits within the ongoing work on agent reliability that we covered yesterday, moving the open question of long-horizon safety forward by showing concrete numbers on what a secondary policy model can and cannot catch.
+
+Test Claude Code auto mode on a non-production repository to measure how often it blocks actions you would have approved manually.
+
+Review the 16 viable AI-generated bacteriophage genomes released with the Evo paper if you work on genome-scale modeling or synthetic biology validation pipelines.
+
+Add Streamlit to an existing LangGraph agent following the new tutorial to get a quick internal demo interface without building a separate frontend.
+
+Submit a short paper or demo to the Real-Time Conversational Agents workshop if your team has latency or turn-taking results ready by August 29.
+
+NeurIPS 2026 workshop submission deadline for Real-Time Conversational Agents is August 29 AoE.
+
+Anthropic plans to release additional auto-mode evaluations in the coming weeks.
+
+OpenAI continues to pause portions of Astra work while addressing identified security concerns.
+
+Before we go, multiple labs are expected to publish their own responses to the new indirect prompt injection benchmark results in the next few days.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The AI world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+Quick tip from the network: try Modern Investing Techniques next — modern strategies for Canadian and U.S. investors. Every Nerra Network show is free at nerranetwork.com. Want the written briefing with source links? Each show keeps a summaries page on nerranetwork.com — scannable, dated, and free.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
