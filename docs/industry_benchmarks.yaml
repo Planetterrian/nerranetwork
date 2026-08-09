@@ -1,0 +1,72 @@
+# Industry benchmarks the dashboard compares Nerra Network against.
+#
+# Consumed by scripts/generate_dashboard.py::build_benchmarks_section and
+# ::build_investor_section. This file is the ONE place external market
+# numbers live — the generator never hardcodes an industry figure, so a
+# stale benchmark is a one-file fix and the dashboard can always render
+# provenance ("as of", sources) next to any comparison it draws.
+#
+# Honesty rules (same as api/funnel.json):
+#   - These are published industry figures, not our measurements. Every
+#     rendered comparison must carry the as_of date.
+#   - Ranges stay ranges — never collapse [25, 50] into "37.50".
+#   - When our own side of a comparison is unmeasured, the card renders
+#     "not measured", never 0.
+#
+# Refresh cadence: check the sources roughly quarterly; update as_of when
+# any number changes. tests/test_investor_dashboard.py pins the schema.
+
+as_of: "2026-08"
+
+sources:
+  - label: "Buzzsprout platform stats (episode downloads, first 7 days)"
+    url: "https://www.buzzsprout.com/global_stats"
+  - label: "Podcast CPM guides (Acast, ADOPTER Media, AdvertiseOnPodcasts)"
+    url: "https://advertise.acast.com/news-and-insights/how-much-does-podcast-advertising-cost"
+  - label: "Podcast M&A multiples (Jahani & Associates transaction review)"
+    url: "https://jahaniandassociates.com/podcast-advertising-and-sports-podcast-advertising-ma-transactions-and-valuations/"
+  - label: "Newsletter valuation ranges (Flippa, Sponsy)"
+    url: "https://flippa.com/blog/newsletter-channel-multiples-how-to-evaluate-a-newsletters-worth/"
+  - label: "Active-podcast + podfade counts (Podchaser, Podcast Industry Insights)"
+    url: "https://www.podchaser.com/articles/podcast-insights/podcast-audience-demographics"
+  - label: "Production cost ranges (Podcast Engineers, industry guides)"
+    url: "https://www.podcastengineers.com/blogs/podcast-editing-cost-2026/"
+
+# Downloads an EPISODE earns in its first 7 days — the standard
+# percentile ladder podcasters are ranked on (Buzzsprout live stats;
+# widely cited across 2025-2026 benchmark guides).
+podcast_episode_downloads_7d_percentiles:
+  median: 28
+  top_25pct: 119
+  top_10pct: 434
+  top_5pct: 1029
+  top_1pct: 4615
+
+# What advertisers pay per 1,000 downloads (USD CPM, 2026).
+podcast_cpm_usd:
+  programmatic: [12, 25]
+  host_read_midtier: [25, 50]
+
+# What producing ONE podcast episode costs at market rates (USD, 2026).
+production_cost_per_episode_usd:
+  diy_freelance_edit: [50, 200]
+  boutique_agency: [200, 400]
+  full_service: [400, 1000]
+
+# YouTube monetization + engagement reference points (2026).
+youtube:
+  shorts_avd_pct_typical: [40, 55]
+  blended_rpm_usd: [0.5, 3.0]     # conservative blend of Shorts + long-form
+  shorts_subs_per_1k_views_good: 5
+
+# Asset-valuation reference ranges (2026 market comps).
+valuation:
+  newsletter_value_per_free_subscriber_usd: [1, 8]
+  podcast_ma_revenue_multiple: [1, 4]     # avg deals 2020-2024; Stitcher went ~4.5x
+
+# Industry survival context — why "publishing daily, every day" is itself
+# a differentiator.
+industry_structure:
+  indexed_podcast_feeds: 6000000
+  actively_publishing_shows: 400000
+  new_show_6mo_abandonment_pct: 42
