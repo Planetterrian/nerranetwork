@@ -405,6 +405,20 @@ youtube:
     en: [17, 21, 23]
     ru: [15, 18, 20]
     fr: [17, 19, 21]
+  # ---- Site-showcase video endings (Aug 2026, operator-directed) ----
+  # Long-form videos fade in a 1920x1080 outro card over their last
+  # outro_card_duration_seconds: framed screenshots of the show's
+  # nerranetwork.com page + the network home page, the URL in Nerra
+  # cyan, a localized newsletter line, and a QR to the funnel-tagged
+  # show page (utm_content=outro). Shorts end cards paste the home
+  # page's show-grid band as a framed strip above the URL footer.
+  # Screenshots are committed at assets/site_screens/ and refreshed by
+  # scripts/capture_site_screens.py — the render never hits the network.
+  # Render/metadata only (outside landmine #17); best-effort — missing
+  # screenshots ship the legacy ending.
+  outro_card_enabled: true
+  outro_card_duration_seconds: 6.0
+  shorts_end_card_site_panel: true
   description_prompt_file: shows/prompts/youtube_description_intro.txt
   pinned_comment_template: |
     🎧 Full episode + show notes: {show_page_url}

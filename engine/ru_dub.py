@@ -603,11 +603,38 @@ def publish_ru_dub(
             result["status"] = "policy_long_skipped"
         else:
             long_mp4 = tmp / f"ru_long_ep{episode_num:03d}.mp4"
+            # Site-showcase outro card (Aug 2026) — Russian copy, QR to
+            # the RU funnel destination (the ru/spacex-style lander when
+            # configured). Best-effort: None ships the legacy ending.
+            outro_card = None
+            if bool(getattr(yt, "outro_card_enabled", True)):
+                try:
+                    from engine import funnel as _funnel
+                    from engine.promo_card import generate_outro_card
+
+                    _dest = _funnel.destination_for(config, channel="ru")
+                    _link = (
+                        _funnel.episode_link(
+                            _dest, config.slug, episode_num,
+                            channel="ru", kind="long",
+                            placement=_funnel.PLACEMENT_OUTRO,
+                        ) if _dest else ""
+                    )
+                    outro_card = generate_outro_card(
+                        tmp / f"ru_outro_ep{episode_num:03d}.png",
+                        show_slug=config.slug, show_name=config.name,
+                        channel="ru", link_url=_link)
+                except Exception as exc:  # noqa: BLE001
+                    logger.warning("ru_dub: outro card failed (%s)", exc)
+                    outro_card = None
             try:
                 build_long_form_video(
                     audio, cover, long_mp4,
                     scene_paths=long_scenes if len(long_scenes) >= 2 else None,
-                    show_name=config.name)
+                    show_name=config.name,
+                    outro_card_path=outro_card,
+                    outro_card_duration=float(getattr(
+                        yt, "outro_card_duration_seconds", 6.0) or 6.0))
             except Exception as exc:  # noqa: BLE001
                 logger.error("ru_dub: long-form render failed for Ep%s: %s",
                              episode_num, exc)
@@ -734,10 +761,18 @@ def publish_ru_dub(
             try:
                 from engine.publisher import generate_shorts_end_card
                 if thumb_path is not None:
+                    _site_panel = None
+                    if bool(getattr(yt, "shorts_end_card_site_panel", True)):
+                        try:
+                            from engine.promo_card import short_site_panel
+                            _site_panel = short_site_panel(config.slug, "ru")
+                        except Exception:  # noqa: BLE001 — best-effort
+                            _site_panel = None
                     ec = tmp / f"ru_short_ep{episode_num:03d}_endcard.png"
                     generate_shorts_end_card(
                         thumb_path, ec, show_name=config.name,
-                        main_text=_RU_END_CARD_MAIN, sub_text=_RU_END_CARD_SUB)
+                        main_text=_RU_END_CARD_MAIN, sub_text=_RU_END_CARD_SUB,
+                        site_image_path=_site_panel)
                     if ec.exists():
                         end_card_png = ec
             except Exception as exc:  # noqa: BLE001

@@ -5421,9 +5421,42 @@ def _publish_youtube(
             "for the video podcast feed (no YouTube upload).", config.slug)
         result["video_podcast_render_only"] = True
     if _render_long:
+        # ---- Site-showcase outro card (Aug 2026, operator-directed) ----
+        # Composited from committed nerranetwork.com screenshots; the QR
+        # link is funnel-tagged (PLACEMENT_OUTRO) so scans are separable
+        # in GA4. Best-effort: None ships the legacy ending.
+        _outro_card_path = None
+        if bool(getattr(config.youtube, "outro_card_enabled", True)):
+            try:
+                from engine import funnel as _funnel
+                from engine.promo_card import generate_outro_card
+
+                _outro_dest = _funnel.destination_for(config, channel="en")
+                _outro_link = (
+                    _funnel.episode_link(
+                        _outro_dest, config.slug, episode_num,
+                        channel="en", kind="long",
+                        placement=_funnel.PLACEMENT_OUTRO,
+                    ) if _outro_dest else ""
+                )
+                _outro_card_path = generate_outro_card(
+                    work_dir / f"{base_name}_outro_card.png",
+                    show_slug=config.slug,
+                    show_name=config.name,
+                    channel="en",
+                    link_url=_outro_link,
+                )
+            except Exception as exc:  # noqa: BLE001 — never block a render
+                logger.warning("Outro card generation failed: %s", exc)
+                _outro_card_path = None
+        result["outro_card"] = bool(_outro_card_path)
         try:
             build_long_form_video(
                 final_mp3, cover_path, long_video_path,
+                outro_card_path=_outro_card_path,
+                outro_card_duration=float(getattr(
+                    config.youtube, "outro_card_duration_seconds", 6.0
+                ) or 6.0),
                 scene_paths=(
                     _visual_plan.get("scene_paths")
                     or (long_scene_paths if len(long_scene_paths) >= 2 else None)
@@ -5821,6 +5854,18 @@ def _publish_youtube(
                 )
                 if _end_card_base or _end_card_scene:
                     try:
+                        # Site strip (Aug 2026 site showcase): the network
+                        # home page's show-grid band under the CTA.
+                        _site_panel = None
+                        if bool(getattr(
+                            config.youtube, "shorts_end_card_site_panel", True
+                        )):
+                            try:
+                                from engine.promo_card import short_site_panel
+                                _site_panel = short_site_panel(
+                                    config.slug, "en")
+                            except Exception:  # noqa: BLE001 — best-effort
+                                _site_panel = None
                         _end_card_image_candidate = (
                             work_dir / f"{base_name}_end_card.png"
                         )
@@ -5831,6 +5876,7 @@ def _publish_youtube(
                             main_text=_end_card_main,
                             sub_text=_end_card_sub,
                             scene_image_path=_end_card_scene,
+                            site_image_path=_site_panel,
                         )
                         if _end_card_image_candidate.exists():
                             _end_card_image_path = _end_card_image_candidate

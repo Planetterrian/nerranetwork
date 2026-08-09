@@ -1631,6 +1631,7 @@ def generate_shorts_end_card(
     sub_text: str = "Tap Subscribe ↗",
     size: tuple = (1080, 1920),
     scene_image_path: "Path | None" = None,
+    site_image_path: "Path | None" = None,
 ) -> Path:
     """Render the 1080×1920 PNG end-card overlay for a Shorts MP4.
 
@@ -1639,6 +1640,13 @@ def generate_shorts_end_card(
     back to the long-form thumbnail composite. July 2026: embedding the
     text-burned thumbnail made the end card look like a slide of a
     slide. The CTA copy still lives below the image.
+
+    ``site_image_path`` (Aug 2026 site showcase) is a committed
+    screenshot of nerranetwork.com (see ``engine.promo_card``); when it
+    loads, its show-grid band is pasted as a framed strip between the
+    CTA sub-line and the footer, and the footer URL flips to Nerra cyan
+    so the strip and the address read as one unit. Any failure keeps
+    the legacy card byte-for-byte.
 
     Falls back to a text-only render when neither image loads.
     """
@@ -1720,17 +1728,46 @@ def generate_shorts_end_card(
     draw.text((sub_x, sub_y), sub_text, font=sub_font,
               fill=(0, 212, 255))
 
+    # Site strip (Aug 2026 site showcase): the network home page's
+    # show-grid band, framed, in the gap between the sub-line (~0.77)
+    # and the footer (0.93). Best-effort — a missing/unreadable
+    # screenshot keeps the legacy card exactly.
+    site_strip_rendered = False
+    if site_image_path is not None:
+        try:
+            from engine.promo_card import render_short_site_strip
+
+            strip_w, strip_h = 832, 260
+            strip = render_short_site_strip(
+                Path(site_image_path), strip_w, strip_h)
+            strip_x = (width - strip_w) // 2
+            strip_y = int(height * 0.785)
+            bg.paste(strip, (strip_x, strip_y))
+            draw.rectangle(
+                (strip_x - 4, strip_y - 4,
+                 strip_x + strip_w + 4, strip_y + strip_h + 4),
+                outline=(255, 255, 255), width=4,
+            )
+            site_strip_rendered = True
+        except Exception as exc:  # noqa: BLE001 — never block the card
+            logger.warning(
+                "Shorts end card: site strip unavailable (%s) — "
+                "rendering legacy card. (%s)", site_image_path, exc,
+            )
+
     # Footer with the network URL — small + muted so it doesn't
     # compete with the CTA above. Sits clear of the Shorts URL pill
-    # at y≈1820 by living at y≈1870.
+    # at y≈1820 by living at y≈1870. With the site strip above it, the
+    # URL is the strip's caption: cyan + a step larger.
     footer_y = int(height * 0.93)
-    footer_font = _load_font(32)
+    footer_font = _load_font(40 if site_strip_rendered else 32)
     footer_text = "nerranetwork.com"
     fw_bbox = footer_font.getbbox(footer_text)
     footer_w = fw_bbox[2] - fw_bbox[0]
     draw.text(
         ((width - footer_w) // 2, footer_y),
-        footer_text, font=footer_font, fill=(139, 143, 174),  # --nn-text-muted
+        footer_text, font=footer_font,
+        fill=(0, 212, 255) if site_strip_rendered else (139, 143, 174),
     )
 
     bg.save(output_path, format="PNG", optimize=True)
