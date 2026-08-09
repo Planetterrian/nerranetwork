@@ -898,6 +898,35 @@ class YouTubeConfig:
     shorts_stagger_enabled: bool = False
     shorts_stagger_slots_utc: Dict[str, list] = field(default_factory=dict)
 
+    # ---- Dub long-form override (Aug 2026, operator-directed) ----
+    # Channels whose dub publishes the LONG-FORM video regardless of the
+    # adaptive policy's tier (the Shorts count still follows the policy —
+    # this pins long on, it never touches the shorts ladder). The RU
+    # long-form demotion (~9% retention, July 2026) is the evidence this
+    # overrides; registered as the dub-long-form-probe experiment with a
+    # readout date in docs/experiments.yaml. e.g. ``[ru, fr]``.
+    dub_force_long_channels: List[str] = field(default_factory=list)
+
+    # ---- Shorts progress bar (Aug 2026 render pass) ----
+    # Thin animated Nerra-cyan bar across the top of every Short — the
+    # standard short-video retention device (visible time remaining).
+    # Render-only (no audio, outside landmine #17); opt out per show.
+    shorts_progress_bar: bool = True
+
+    # ---- Site-showcase video endings (Aug 2026, operator-directed) ----
+    # The closing seconds of every long-form video overlay an outro card
+    # composited from COMMITTED screenshots of nerranetwork.com (the
+    # show's page + the network home page — engine/promo_card.py), with
+    # the URL in Nerra cyan, a localized newsletter line, and a QR to
+    # the funnel-tagged show page (utm_content=outro). Shorts end cards
+    # additionally paste the network home page's show-grid band as a
+    # framed strip (``shorts_end_card_site_panel``). Render/metadata
+    # only — outside landmine #17. Best-effort everywhere: missing
+    # screenshots or a failed composite ship the legacy ending.
+    outro_card_enabled: bool = True
+    outro_card_duration_seconds: float = 6.0
+    shorts_end_card_site_panel: bool = True
+
     # ---- Multi-platform distribution (Instagram Reels / TikTok / etc.) ----
     # When true, each published Short additionally gets (1) a "safe-zone"
     # variant MP4 with overlays lifted out of the bottom/right bands that IG

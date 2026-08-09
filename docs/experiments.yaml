@@ -111,6 +111,41 @@ experiments:
       analytics only since 2026-07-29 (the glob fix), hence the late
       decision date rather than a same-day verdict.
 
+  - id: dub-long-form-probe
+    title: "RU+FR long-form dubs on tesla / spacex / FF (operator override)"
+    area: reach
+    shipped: 2026-08-07
+    readout: 2026-08-21
+    status: reading
+    metric: ru_long_vpd_max
+    baseline: 2.0
+    target: >
+      RU/FR long_vpd clearing the RU floor (2.0) with retention above the
+      ~9% the July demotion measured; watch fr_long_vpd_max too.
+    notes: >
+      Operator-directed: dub_force_long_channels pins long-form ON for
+      the big three on both dub channels regardless of tier; the Shorts
+      supply ladder is untouched. Overrides the July RU long demotion
+      (~9% retention, ~11 views/video) to give dubbed long-form a
+      second, deliberate read. If the readout repeats the July numbers,
+      remove the YAML flags and let the policy decide again.
+
+  - id: shorts-progress-bar
+    title: "Shorts progress bar (all channels)"
+    area: retention
+    shipped: 2026-08-07
+    readout: 2026-08-21
+    status: reading
+    target: >
+      Short median AVP up vs the ~44% pre-bar level (compare EN+RU short
+      retention before/after 08-07 in youtube_stats).
+    notes: >
+      Thin animated cyan bar at the top of every Short — visible time
+      remaining, the standard short-video retention device. Render-only;
+      per-show opt-out youtube.shorts_progress_bar: false. NOTE: overlaps
+      the staggered-shorts readout window — judge by retention (AVP),
+      which stagger does not touch, not by views.
+
   - id: earnings-special-format
     title: "Event specials — earnings/flight reaction episodes"
     area: reach
@@ -122,3 +157,23 @@ experiments:
       Ep059 (Q2 earnings) is the pilot: compare its 7d views/downloads
       against Ep057/058/060. flight-14-catch-reaction and
       q3-2026-earnings are pre-staged in the spacex deep-dive queue.
+
+  - id: site-outro-cards
+    title: "Site-showcase endings — outro card + Shorts site strip"
+    area: funnel
+    shipped: 2026-08-09
+    readout: 2026-08-23
+    status: reading
+    target: >
+      utm_content=outro sessions appearing in api/funnel.json (QR scans)
+      and click-through from video surfaces up vs the pre-08-09 level;
+      newsletter captures from src-youtube-* tags are the end goal.
+    notes: >
+      Long-form videos end on a card built from real nerranetwork.com
+      screenshots (show page + network home) with a QR to the
+      funnel-tagged show page; Shorts end cards gain the home page's
+      show-grid strip. Render-only (outside landmine #17); per-show
+      opt-outs youtube.outro_card_enabled /
+      youtube.shorts_end_card_site_panel. Screenshots are committed
+      (assets/site_screens) and refreshed by
+      scripts/capture_site_screens.py.

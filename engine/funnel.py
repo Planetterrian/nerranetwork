@@ -102,10 +102,14 @@ PLACEMENT_COMMENT = "comment"
 PLACEMENT_ENDCARD = "endcard"
 PLACEMENT_SHOWNOTES = "shownotes"
 PLACEMENT_BODY = "body"
+# The QR on the long-form outro card (Aug 2026 site showcase) — its own
+# placement, distinct from ``endcard`` (the Shorts end card's tap link),
+# so QR scans are separable from taps in GA4.
+PLACEMENT_OUTRO = "outro"
 
 PLACEMENTS = frozenset({
     PLACEMENT_DESCRIPTION, PLACEMENT_COMMENT, PLACEMENT_ENDCARD,
-    PLACEMENT_SHOWNOTES, PLACEMENT_BODY,
+    PLACEMENT_SHOWNOTES, PLACEMENT_BODY, PLACEMENT_OUTRO,
 })
 
 # The ``kind`` component of a campaign id — the asset that carried the link.

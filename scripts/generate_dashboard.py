@@ -1969,13 +1969,16 @@ def _experiment_live_metrics(root: Path) -> Dict[str, Any]:
         out[f"channel_views_wow_{ch}"] = (
             round(100.0 * (v7 - vp7) / vp7, 1) if vp7 else None)
 
-    # Best short_vpd per channel from the adaptive policy.
+    # Best short/long vpd per channel from the adaptive policy. The long
+    # variants read out the Aug 2026 dub long-form probe (tesla/spacex/FF
+    # publish RU+FR longs via dub_force_long_channels).
     policy = _load_json(root / "api" / "youtube_policy.json") or {}
     for ch in ("fr", "ru"):
-        vals = [v.get("short_vpd")
-                for v in ((policy.get("channels") or {}).get(ch) or {}).values()
-                if isinstance(v, dict) and v.get("short_vpd") is not None]
-        out[f"{ch}_short_vpd_max"] = (round(max(vals), 2) if vals else None)
+        for kind in ("short", "long"):
+            vals = [v.get(f"{kind}_vpd")
+                    for v in ((policy.get("channels") or {}).get(ch) or {}).values()
+                    if isinstance(v, dict) and v.get(f"{kind}_vpd") is not None]
+            out[f"{ch}_{kind}_vpd_max"] = (round(max(vals), 2) if vals else None)
 
     # Fragment share of RU/FR window-Short titles (2nd/3rd Shorts) in the
     # last 14 days. Heuristic mirror of the defect: a title whose first

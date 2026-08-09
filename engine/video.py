@@ -1558,6 +1558,7 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
                              end_card_main_text: str = "WATCH FULL EPISODE",
                              end_card_sub_text: str = "Tap Subscribe ↗",
                              end_card_image_input_label: Optional[str] = None,
+                             progress_bar: bool = False,
                              caption_margin_v: Optional[int] = None) -> str:
     """filter_complex for the 1080x1920 Shorts build.
 
@@ -1603,11 +1604,36 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
     else:
         post_brand_label = "[branded]"
 
-    # Anchor for any post-brand overlay (hook caption + burn-in
-    # subtitles + the final ``[v]`` rename). We chain by reassigning
-    # ``post_brand_label`` after each step so the order is:
-    #   brand pill → URL pill → hook (0-3s) → burn-in subtitles → [v]
+    # Anchor for any post-brand overlay (progress bar + hook caption +
+    # burn-in subtitles + the final ``[v]`` rename). We chain by
+    # reassigning ``post_brand_label`` after each step so the order is:
+    #   brand pill → URL pill → progress bar → hook (0-3s) →
+    #   burn-in subtitles → [v]
     chain = base
+
+    if progress_bar and total_duration > 0:
+        # Aug 2026 render pass: thin animated bar across the top —
+        # the standard Shorts retention device (visible time
+        # remaining). Nerra cyan (matches the per-word caption
+        # highlight); 10 px at y=0 sits far above the hook block
+        # (y≈1056) and the caption card. Implementation note:
+        # drawbox does NOT re-evaluate its width per frame on the
+        # ffmpeg builds we ship on (verified: a t-expression paints
+        # a static full-width bar), so the animation uses the
+        # classic slide-in — a full-width cyan strip overlaid with
+        # a per-frame x expression (overlay defaults to
+        # eval=frame): off-screen left at t=0, flush at t=end.
+        # shortest=1 ends the infinite color source with the main.
+        # Drawn before hook/captions/end card so every later
+        # overlay stacks above it.
+        chain += (
+            f";color=c=0x00D4FF@0.85:s={width}x10:r={fps}[pbsrc]"
+            f";{post_brand_label}[pbsrc]overlay="
+            f"x='-w+w*min(t/{total_duration:.2f},1)':y=0:"
+            f"shortest=1[pbar]"
+        )
+        post_brand_label = "[pbar]"
+
     if hook:
         # Auto-shrink-to-fit (May 2026 retune): start at the legacy
         # fontsize=44 and shrink in 4-px steps only if the wrapped
@@ -2025,6 +2051,24 @@ def _single_pass_long_form_filter_graph(
     return graph
 
 
+def _outro_overlay_tail(input_label: str, *, start: float,
+                        end: float) -> str:
+    """Filter-graph fragment overlaying the outro card over ``[v]``.
+
+    Appended AFTER a long-form graph has produced its terminal ``[v]``
+    (all three long-form graph paths end there), consuming it and
+    emitting ``[vout]`` — the caller flips its ``-map`` accordingly.
+    Same fade-in + enable-window shape as the Shorts end-card PNG
+    overlay, which has shipped since PR #417.
+    """
+    return (
+        f";{input_label}format=rgba,"
+        f"fade=t=in:st={start:.2f}:d=0.6:alpha=1[outrocard]"
+        f";[v][outrocard]overlay=x=0:y=0:"
+        f"enable='between(t,{start:.2f},{end:.2f})'[vout]"
+    )
+
+
 def _single_pass_long_form_cmd(
     scene_paths: Sequence[Path], audio_in: str, brand_in: str,
     output: str, *,
@@ -2039,6 +2083,9 @@ def _single_pass_long_form_cmd(
     hook: Optional[str] = None,
     kb_seed: int = 0,
     kb_extended: bool = True,
+    outro_card_in: Optional[str] = None,
+    total_duration: float = 0.0,
+    outro_duration: float = 6.0,
 ) -> List[str]:
     """Full ffmpeg command for the fused single-pass long-form render.
 
@@ -2070,33 +2117,57 @@ def _single_pass_long_form_cmd(
     n = len(scene_paths)
     inputs.extend(["-i", audio_in])
     inputs.extend(["-loop", "1", "-framerate", str(fps), "-i", brand_in])
+    next_index = n + 2
     if url_pill_in:
         inputs.extend(["-loop", "1", "-framerate", str(fps), "-i", url_pill_in])
+        next_index += 1
+
+    # Outro card (Aug 2026 site showcase) — needs a real total duration
+    # to place its enable window; without one, ship the legacy graph.
+    outro_active = bool(
+        outro_card_in and total_duration and total_duration > outro_duration
+    )
+    outro_label = None
+    if outro_active:
+        inputs.extend([
+            "-loop", "1", "-framerate", str(fps), "-i", outro_card_in,
+        ])
+        outro_label = f"[{next_index}:v]"
+        next_index += 1
 
     meta_inputs: List[str] = []
     meta_map: List[str] = []
     if chapter_metadata_in:
-        meta_index = n + 3 if url_pill_in else n + 2
         meta_inputs = ["-f", "ffmetadata", "-i", chapter_metadata_in]
-        meta_map = ["-map_metadata", str(meta_index)]
+        meta_map = ["-map_metadata", str(next_index)]
+
+    graph = _single_pass_long_form_filter_graph(
+        n,
+        scene_duration=scene_duration,
+        scene_durations=scene_durations,
+        width=width, height=height, fps=fps,
+        crossfade=crossfade,
+        subtitles_path=subtitles_path,
+        with_url_pill=bool(url_pill_in),
+        hook=hook,
+        kb_seed=kb_seed, kb_extended=kb_extended,
+    )
+    map_label = "[v]"
+    if outro_active and outro_label:
+        graph += _outro_overlay_tail(
+            outro_label,
+            start=max(0.0, total_duration - outro_duration),
+            end=total_duration,
+        )
+        map_label = "[vout]"
 
     return [
         "ffmpeg", "-y", "-threads", "0",
         *inputs,
         *meta_inputs,
         "-filter_complex",
-        _single_pass_long_form_filter_graph(
-            n,
-            scene_duration=scene_duration,
-            scene_durations=scene_durations,
-            width=width, height=height, fps=fps,
-            crossfade=crossfade,
-            subtitles_path=subtitles_path,
-            with_url_pill=bool(url_pill_in),
-            hook=hook,
-            kb_seed=kb_seed, kb_extended=kb_extended,
-        ),
-        "-map", "[v]", "-map", f"{n}:a",
+        graph,
+        "-map", map_label, "-map", f"{n}:a",
         *meta_map,
         *_VIDEO_ENCODE,
         "-r", str(fps),
@@ -2114,7 +2185,10 @@ def _long_form_cmd(audio_in: str, bg_in: str, brand_in: str,
                    subtitles_path: Optional[str] = None,
                    url_pill_in: Optional[str] = None,
                    chapter_metadata_in: Optional[str] = None,
-                   hook: Optional[str] = None) -> List[str]:
+                   hook: Optional[str] = None,
+                   outro_card_in: Optional[str] = None,
+                   total_duration: float = 0.0,
+                   outro_duration: float = 6.0) -> List[str]:
     """Full ffmpeg command for stage 2.
 
     When *bg_is_video* is True, *bg_in* is a pre-rendered slideshow
@@ -2138,18 +2212,47 @@ def _long_form_cmd(audio_in: str, bg_in: str, brand_in: str,
         bg_input = ["-loop", "1", "-framerate", str(fps), "-i", bg_in]
 
     extra_inputs: List[str] = []
+    # Input index: bg(0) + audio(1) + brand(2) + optional url pill(3)
+    # + optional outro card next.
+    next_index = 3
     if url_pill_in:
-        extra_inputs = [
+        extra_inputs.extend([
             "-loop", "1", "-framerate", str(fps), "-i", url_pill_in,
-        ]
+        ])
+        next_index += 1
+
+    outro_active = bool(
+        outro_card_in and total_duration and total_duration > outro_duration
+    )
+    outro_label = None
+    if outro_active:
+        extra_inputs.extend([
+            "-loop", "1", "-framerate", str(fps), "-i", outro_card_in,
+        ])
+        outro_label = f"[{next_index}:v]"
+        next_index += 1
 
     meta_inputs: List[str] = []
     meta_map: List[str] = []
     if chapter_metadata_in:
-        # Input index: bg(0) + audio(1) + brand(2) + optional url pill(3).
-        meta_index = 4 if url_pill_in else 3
         meta_inputs = ["-f", "ffmetadata", "-i", chapter_metadata_in]
-        meta_map = ["-map_metadata", str(meta_index)]
+        meta_map = ["-map_metadata", str(next_index)]
+
+    graph = _long_form_filter_graph(
+        fps=fps,
+        bg_is_video=bg_is_video,
+        subtitles_path=subtitles_path,
+        with_url_pill=bool(url_pill_in),
+        hook=hook,
+    )
+    map_label = "[v]"
+    if outro_active and outro_label:
+        graph += _outro_overlay_tail(
+            outro_label,
+            start=max(0.0, total_duration - outro_duration),
+            end=total_duration,
+        )
+        map_label = "[vout]"
 
     return [
         "ffmpeg", "-y", "-threads", "0",
@@ -2159,14 +2262,8 @@ def _long_form_cmd(audio_in: str, bg_in: str, brand_in: str,
         *extra_inputs,
         *meta_inputs,
         "-filter_complex",
-        _long_form_filter_graph(
-            fps=fps,
-            bg_is_video=bg_is_video,
-            subtitles_path=subtitles_path,
-            with_url_pill=bool(url_pill_in),
-            hook=hook,
-        ),
-        "-map", "[v]", "-map", "1:a",
+        graph,
+        "-map", map_label, "-map", "1:a",
         *meta_map,
         *_VIDEO_ENCODE,
         "-r", str(fps),
@@ -2192,7 +2289,8 @@ def _short_form_cmd(audio_in: str, bg_in: str, brand_in: str,
                     end_card_duration: float = 3.0,
                     end_card_image_in: Optional[str] = None,
                     caption_margin_v: Optional[int] = None,
-                    bg_loop: bool = True) -> List[str]:
+                    bg_loop: bool = True,
+                    progress_bar: bool = False) -> List[str]:
     """ffmpeg command for the 1080x1920 Shorts build.
 
     When *bg_is_video* is True, *bg_in* is a pre-rendered vertical
@@ -2260,7 +2358,8 @@ def _short_form_cmd(audio_in: str, bg_in: str, brand_in: str,
                                  end_card_main_text=end_card_main_text,
                                  end_card_sub_text=end_card_sub_text,
                                  end_card_image_input_label=end_card_image_input_label,
-                                 caption_margin_v=caption_margin_v),
+                                 caption_margin_v=caption_margin_v,
+                                 progress_bar=progress_bar),
         "-map", "[v]", "-map", "1:a",
         *_VIDEO_ENCODE,
         "-r", str(fps),
@@ -2289,6 +2388,8 @@ def build_long_form_video(
     broll_clips: Optional[Sequence[Path]] = None,
     chapters_path: Optional[Path] = None,
     hook: Optional[str] = None,
+    outro_card_path: Optional[Path] = None,
+    outro_card_duration: float = 6.0,
 ) -> Path:
     """Render a 1920x1080 long-form podcast video.
 
@@ -2345,6 +2446,13 @@ def build_long_form_video(
         max 2 lines, alpha fade in/out) so the video's opening carries
         the same hook the cold-open audio speaks. ``None`` keeps the
         legacy title-less opening.
+    outro_card_path:
+        Optional 1920×1080 site-showcase PNG (Aug 2026 —
+        ``engine.promo_card.generate_outro_card``). When provided, it
+        fades in over the video's last ``outro_card_duration`` seconds
+        (same overlay pattern as the Shorts end card). ``None`` — or a
+        failure to read the episode's duration — keeps the legacy
+        ending byte-for-byte.
 
     Returns
     -------
@@ -2394,6 +2502,25 @@ def build_long_form_video(
     # Per-episode Ken Burns seed (A1) — derived from the output stem so
     # a re-render is identical and different episodes de-synchronize.
     kb_seed = _kb_seed_from_stem(output_path.stem)
+
+    # Outro card (Aug 2026 site showcase): resolved once, threaded into
+    # every render path below. The overlay's enable window needs the
+    # episode's real duration; an unreadable duration disables the card
+    # rather than guessing a window.
+    outro_in: Optional[str] = None
+    outro_total = 0.0
+    if outro_card_path and Path(outro_card_path).exists():
+        try:
+            from engine.audio import get_audio_duration as _outro_gd
+
+            outro_total = float(_outro_gd(str(audio_path)) or 0.0)
+        except Exception as exc:  # noqa: BLE001 — card is never critical
+            logger.warning("Outro card skipped (duration probe: %s)", exc)
+            outro_total = 0.0
+        # Require breathing room past the card itself so a very short
+        # render can't spend most of its runtime on the outro.
+        if outro_total > outro_card_duration + 10.0:
+            outro_in = str(outro_card_path)
 
     # Chapter-aware schedule (June 2026): an explicit per-scene plan wins
     # over the uniform timer. Normalized once so every branch below sees
@@ -2481,6 +2608,9 @@ def build_long_form_video(
                 url_pill_in=str(url_pill_path) if url_pill_path else None,
                 chapter_metadata_in=chapter_meta,
                 hook=hook,
+                outro_card_in=outro_in,
+                total_duration=outro_total,
+                outro_duration=outro_card_duration,
             )
             logger.info(
                 "Building long-form video → %s (hybrid clips=%d, captions=%s)",
@@ -2516,6 +2646,9 @@ def build_long_form_video(
                         chapter_metadata_in=chapter_meta,
                         hook=hook,
                         kb_seed=kb_seed,
+                        outro_card_in=outro_in,
+                        total_duration=outro_total,
+                        outro_duration=outro_card_duration,
                     )
                     logger.info(
                         "Building long-form video → %s (SINGLE-PASS, "
@@ -2590,6 +2723,9 @@ def build_long_form_video(
         url_pill_in=str(url_pill_path) if url_pill_path else None,
         chapter_metadata_in=chapter_meta,
         hook=hook,
+        outro_card_in=outro_in,
+        total_duration=outro_total,
+        outro_duration=outro_card_duration,
     )
     logger.info("Building long-form video → %s (slideshow=%s, captions=%s)",
                 output_path.name, bg_is_video, bool(subtitles_path))
@@ -2616,7 +2752,8 @@ def build_short_video(audio_path: Path, cover_path: Path,
                       scene_change_times: Optional[Sequence[float]] = None,
                       clip_paths: Optional[Sequence[Path]] = None,
                       clip_seconds: float = 5.0,
-                      kb_extended: bool = True) -> Path:
+                      kb_extended: bool = True,
+                      progress_bar: bool = True) -> Path:
     """Render a 1080x1920 vertical YouTube Shorts video.
 
     ``drop_url_pill`` / ``caption_margin_v`` support the multi-platform
@@ -2824,6 +2961,7 @@ def build_short_video(audio_path: Path, cover_path: Path,
         ),
         caption_margin_v=caption_margin_v,
         bg_loop=not bg_full_length,
+        progress_bar=progress_bar,
     )
     logger.info(
         "Building Shorts video (%.1fs from %.1fs) → %s "

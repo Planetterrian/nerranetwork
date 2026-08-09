@@ -228,6 +228,10 @@ def _policy_plan(config, lang: DubLanguage) -> Dict[str, object]:
             adaptive_enabled=bool(getattr(
                 getattr(config, "youtube", None), "adaptive_publishing", True,
             )),
+            # Aug 2026 operator-directed dub long-form probe (see ru_dub).
+            force_long=(lang.channel in (getattr(
+                getattr(config, "youtube", None),
+                "dub_force_long_channels", []) or [])),
         )
     except Exception as exc:  # noqa: BLE001
         logger.warning("lang_dub[%s]: policy resolution failed (%s) — "
@@ -409,12 +413,40 @@ def publish_lang_dub(
             result["status"] = "policy_long_skipped"
         else:
             long_mp4 = tmp / f"{lang.code}_long_ep{episode_num:03d}.mp4"
+            # Site-showcase outro card (Aug 2026) — localized copy keyed
+            # on the dub channel, QR to that channel's funnel destination.
+            outro_card = None
+            if bool(getattr(yt, "outro_card_enabled", True)):
+                try:
+                    from engine import funnel as _funnel
+                    from engine.promo_card import generate_outro_card
+
+                    _dest = _funnel.destination_for(
+                        config, channel=lang.channel)
+                    _link = (
+                        _funnel.episode_link(
+                            _dest, config.slug, episode_num,
+                            channel=lang.channel, kind="long",
+                            placement=_funnel.PLACEMENT_OUTRO,
+                        ) if _dest else ""
+                    )
+                    outro_card = generate_outro_card(
+                        tmp / f"{lang.code}_outro_ep{episode_num:03d}.png",
+                        show_slug=config.slug, show_name=config.name,
+                        channel=lang.channel, link_url=_link)
+                except Exception as exc:  # noqa: BLE001
+                    logger.warning("lang_dub[%s]: outro card failed (%s)",
+                                   lang.code, exc)
+                    outro_card = None
             try:
                 build_long_form_video(
                     audio, cover, long_mp4,
                     scene_paths=(long_scenes
                                  if len(long_scenes) >= 2 else None),
-                    show_name=config.name)
+                    show_name=config.name,
+                    outro_card_path=outro_card,
+                    outro_card_duration=float(getattr(
+                        yt, "outro_card_duration_seconds", 6.0) or 6.0))
             except Exception as exc:  # noqa: BLE001
                 logger.error("lang_dub[%s]: long render failed Ep%s: %s",
                              lang.code, episode_num, exc)
@@ -524,11 +556,20 @@ def publish_lang_dub(
             try:
                 from engine.publisher import generate_shorts_end_card
                 if thumb_path is not None:
+                    _site_panel = None
+                    if bool(getattr(yt, "shorts_end_card_site_panel", True)):
+                        try:
+                            from engine.promo_card import short_site_panel
+                            _site_panel = short_site_panel(
+                                config.slug, lang.channel)
+                        except Exception:  # noqa: BLE001 — best-effort
+                            _site_panel = None
                     ec = tmp / f"{lang.code}_endcard_ep{episode_num:03d}.png"
                     generate_shorts_end_card(
                         thumb_path, ec, show_name=config.name,
                         main_text=lang.end_card_main,
-                        sub_text=lang.end_card_sub)
+                        sub_text=lang.end_card_sub,
+                        site_image_path=_site_panel)
                     if ec.exists():
                         end_card_png = ec
             except Exception as exc:  # noqa: BLE001
