@@ -428,6 +428,67 @@ reviews:
       ab_listen_required: true
       rationale: Reduces the 6-9/10-episode teaser tic observed in transcripts while preserving forward-looking function; de-seed uses shape + verbatim ban + rotation memory
     agent_cost_usd: 0.0642
+  - date: '2026-08-09'
+    pr: null
+    doc: docs/reviews/fascinating_frontiers_review_2026_08_09.md
+    generated_by: grok-4.5
+    summary: 10/10 episodes still under the 1700-word floor (digest ceiling; podcast-side levers remain banned), ephemeris/almanac fetch-filter leakage continues in 4/10 digests including a fully ephemeris-led Ep147 with broken chapters, and the prompt-seeded “Keep an eye on” teaser tic is now 10/10.
+    scored_prior_predictions:
+    - metric: ephemeris/sky-tonight title leakage count in last 10 digests
+      verdict: miss
+      evidence: 4/10 still leak (ep147 evening-skies cold open, ep148/153 Perseid-sky guides, ep156 Hipparcos 1989 anniversary); expected 0 after tightening that was not effectively applied
+    - metric: occurrences of 'keep an eye on the' teaser opener across 10 episodes
+      verdict: hit
+      evidence: 10/10 Ep147–156 transcripts/snapshot still contain keep-an-eye-on teaser openers; prompt example unchanged
+    - metric: episodes below 1700-word floor (digest-ceiling trajectory)
+      verdict: hit
+      evidence: 10/10 ep147–156 _tts.txt under 1700w (1168–1503); ceiling still digest-side
+    - metric: presence of Closing as last semantic chapter marker on new episodes
+      verdict: partial
+      evidence: Ep148–156 correctly end Teaser→Closing, but Ep147 chapters_ep147.json has ONLY Teaser+Closing at 611s+ (no Intro/body map)
+    shipped: []
+    deferred:
+    - Cosmic Deep Dive digest length lever — ESCALATE to operator yes/no after carrying since June 12; only sanctioned length path left (digest licensed-knowledge floor). Do not re-file podcast word pressure (do_not_retry).
+    - Align min_podcast_words down to ~1500 to silence every-episode script_below_target — cosmetic ops choice, does not add facts.
+    - Mid-section digest-driven chapter titles (network lever; Spotlight/Deep Dive markers rarely fire because prompt forbids announcing them).
+    - Theme residual 'science nasa' (low harm adjacency / bare science.nasa.gov).
+    - 'Curated narrative-tracker status pass (operator task: scripts/update_tesla_narrative.py --slug fascinating_frontiers).'
+    - review_snapshot.py sparse-chapter / missing-Introduction detector (Ep147 false 'clean'); network tooling owner.
+    - Aggressive brand-level telescope product title bans — try digest curation bullet first to avoid false drops.
+    predictions:
+    - metric: ephemeris/sky-almanac/this-day-in-history items in FF Top-15 digests (evening-planet columns, shower peak guides, pure anniversaries)
+      baseline: 4/10 episodes in ep147–156 window (ep147 led entirely on evening skies)
+      expected: 0 almanac-led hooks and 0 Perseid-peak / this-day-in-history bullets in digests after filter+digest backstop merge; real mission/science astronomy retained
+      verdict: pending
+      evidence: null
+    - metric: occurrences of verbatim teaser opener 'Keep an eye on' in next 10 _tts.txt files
+      baseline: 10/10 (ep147–156)
+      expected: 0/10 after teaser de-seed merges; teasers still one concrete forward-looking sentence
+      verdict: pending
+      evidence: null
+    - metric: Episodes missing spoken identity line and/or shipping <3 chapter entries
+      baseline: '1/10 (Ep147: no ''This is Fascinating Frontiers episode'', chapters only Teaser+Closing)'
+      expected: 0 post-merge; every episode speaks identity line once after cold open and has Introduction + Teaser + Closing markers
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/fascinating_frontiers.yaml
+      kind: config
+      ab_listen_required: false
+      rationale: Deterministic fetch-time tightening for the four residual almanac/anniversary leak classes in ep147/148/153/156 without bare 'passes near' or bare planet names (June-16 Falcon-9 false-drop lesson).
+    - file: shows/prompts/fascinating_frontiers_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Digest-side scope backstop (same dual-layer pattern as the June-16 stock fix). Fetch filters miss re-headlined monthly guides and web-search items; Ep147 proves almanac can become the cold open.
+    - file: shows/prompts/fascinating_frontiers_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Ep147 transcript never says 'This is Fascinating Frontiers, episode …'; Introduction chapter marker never fired; chapter file only has Teaser+Closing at 611s+. Hardens post cold-open identity after July-30 cold-open retune.
+    - file: shows/prompts/fascinating_frontiers_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: De-seed by shape + verbatim ban + rotation memory (playbook July 2026 rule). Prompt-example 'Keep an eye on...' became a 10/10 tic; prior passes predicted persistence while no prompt change shipped.
+    agent_cost_usd: 0.1334
 do_not_retry:
   - idea: Phonetic respellings or programmatic speech-tag injection.
     evidence: >-
