@@ -366,4 +366,74 @@ reviews:
       ab_listen_required: false
       rationale: Drift-guards for P0 chapter sanitizer and intro-chapter regressions; code-only.
     agent_cost_usd: 0.1363
+  - date: '2026-08-07'
+    pr: null
+    doc: docs/reviews/spacex_review_2026_08_07.md
+    generated_by: grok-4.5
+    summary: Title:-prefixed headline chapters spread from Ep58 to Ep60 (P0 sanitizer still unshipped), engineering-anchor tic remains 10/10, 7/10 dailies under 1300w with Ep61 at 863w, and length/price-once stay escalated operator decisions after repeated misses.
+    scored_prior_predictions:
+    - metric: chapters_ep*.json titles matching /^Title:\s*/ in next 10 spacex episodes
+      verdict: miss
+      evidence: 'Sanitizer never applied; Ep58 still has six Title: chapters; Ep60 added three Title: + one bare headline chapter'
+    - metric: exact phrase 'from an engineering standpoint' in next 10 daily (non-special) transcripts
+      verdict: miss
+      evidence: 'Ep53–62 Whisper: phrase still 10/10; Aug-05 anchor-rotation prompt never applied'
+    - metric: on-air xAI facility attributed as SpaceX (Memphis/Colossus/'SpaceX AI' datacenter) in next 10 transcripts
+      verdict: partial
+      evidence: Ep53 still ships Memphis 'SpaceX AI' mis-attr; Ep60–62 clean on that class (n=3) but entity prompt never shipped
+    shipped: []
+    deferred:
+    - 'OPERATOR DECISION (escalation after repeated misses): accept grok-4.3 daily length plateau vs further digest-substrate only (min_digest_words / full-text fetch) — do not re-propose podcast expand, word floors in podcast prompt, or ''7+/10 if deep-dive ships'' predictions'
+    - 'OPERATOR DECISION (escalation since 2026-06-13): SPCX price-once — Market Watch qualitative + single precise quote only in closing_block; coupled A/B-listen; stop carrying the same unshipped fix'
+    - 'Q2/special path: enforce richer spacex_deep_dive.txt briefs so specials clear deep_dive.min_podcast_words 2400 (Ep59 shipped 1778) — digest/brief substrate only'
+    - Tomorrow-teaser rotation (P2; Watch for the first/next <test> no longer dominant in Ep53–62)
+    - Scheduler forensics for any missed Sunday weekly_summary_segment run (June-28 class) — operator
+    - NASA public-domain b-roll pool vs retired shorts_ab generated motion — render-side follow-up, not audio
+    predictions:
+    - metric: chapters_ep*.json titles matching /^Title:\s*/ or bare truncated headline chapters outside known section set in next 10 spacex episodes
+      baseline: '2/10 (Ep58 six Title: chapters; Ep60 three Title: + one bare headline)'
+      expected: 0/10 after chapter-title sanitizer ships
+      verdict: pending
+      evidence: null
+    - metric: exact phrase 'from an engineering standpoint' in next 10 daily (non-special) transcripts
+      baseline: 10/10
+      expected: '<=6/10 if anchor-rotation prompt ships (successor tic to watch: monoculture on ''the engineering angle'')'
+      verdict: pending
+      evidence: null
+    - metric: Market Watch chapter present when script contains SPCX/S P C X + trading/closed price line (non-special dailies)
+      baseline: Ep56 has spoken market price but no Market Watch chapter (bare 'trading at' miss)
+      expected: Market Watch chapter fires on bare 'trading at' after pattern widen; Closing still wins sign-off-only price lines
+      verdict: pending
+      evidence: null
+    - metric: on-air xAI facility attributed as SpaceX (Memphis/Colossus/'SpaceX AI' datacenter operator) in next 10 transcripts
+      baseline: 1 clear in window (Ep53)
+      expected: 0 clear mis-attributions if entity-discipline prompt ships
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: engine/chapters.py
+      kind: code
+      ab_listen_required: false
+      rationale: P0 listener-facing metadata bug now on Ep58 and Ep60; deterministic garble/filter class with ~100% hit rate per meta-review; no A/B.
+    - file: shows/spacex.yaml
+      kind: config
+      ab_listen_required: false
+      rationale: 'P0/P1 chapter miss: Ep56 spoke ''SPC X trading at $114.53'' with no Market Watch chapter because pattern required ''is trading''. Metadata-only; Closing where:end must remain listed before Market Watch so sign-off price lines stay Closing.'
+    - file: shows/prompts/spacex_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 'P1: 10/10 monoculture on one required phrase across Ep53–62; de-seed by shape + finite rotation set + MEMORY per July 2026 meta-review; successor-tic prediction logged for ''the engineering angle'' convergence.'
+    - file: shows/prompts/spacex_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 'P1: Ep53 on-air ''SpaceX AI added another data center building in Memphis'' repeats the July-02 entity conflation; prompt-level hard rule, A/B-listen.'
+    - file: shows/prompts/spacex_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Digest is the substrate the podcast is licensed to read; fix conflation at source so podcast cannot re-emit it.
+    - file: tests/test_spacex_show.py
+      kind: code
+      ab_listen_required: false
+      rationale: Drift-guards for P0 chapter sanitizer, Market Watch pattern widen, and intro/closing regressions; code-only.
+    agent_cost_usd: 0.1468
 do_not_retry: []
