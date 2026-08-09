@@ -425,6 +425,12 @@ def _policy_plan(config) -> Dict[str, object]:
             adaptive_enabled=bool(getattr(
                 getattr(config, "youtube", None), "adaptive_publishing", True,
             )),
+            # Aug 2026 operator-directed dub long-form probe: shows listing
+            # "ru" here publish the long regardless of tier; Shorts supply
+            # still follows the policy ladder untouched.
+            force_long=("ru" in (getattr(
+                getattr(config, "youtube", None),
+                "dub_force_long_channels", []) or [])),
         )
     except Exception as exc:  # noqa: BLE001 — policy must never block a dub
         logger.warning("ru_dub: policy resolution failed (%s) — legacy "

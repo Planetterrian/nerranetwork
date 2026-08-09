@@ -85,6 +85,7 @@ def resolve_publish_plan(
     smart_mode: bool,
     adaptive_enabled: bool,
     probe_today: Optional["datetime.date"] = None,
+    force_long: bool = False,
 ) -> Dict[str, object]:
     """Resolve the effective publish plan for one show on one channel.
 
@@ -99,6 +100,11 @@ def resolve_publish_plan(
       - ``publish_long`` comes from the policy tier (both directions —
         a tier promotion can turn long-form back on for a YAML
         shorts-only show; the opt-out flag exists to pin YAML behavior).
+      - ``force_long`` (Aug 2026, operator-directed dub long-form
+        probe) pins ``publish_long`` True AFTER policy resolution while
+        leaving the Shorts count/supply ladder untouched — the existing
+        shorts system keeps running exactly as the policy decides. Wired
+        from ``youtube.dub_force_long_channels`` in the show YAML.
       - ``shorts`` is the policy value with a hard probe floor of 1
         (Shorts are the recovery signal — never 0), and RAISING above the
         YAML count requires ``shorts_start_mode: smart`` (the multi-Short
@@ -155,6 +161,11 @@ def resolve_publish_plan(
         # nightly tier computation needs to promote it back.
         publish_long = True
         reason = (reason + " | " if reason else "") + "Monday long-form probe"
+
+    if force_long and not publish_long:
+        publish_long = True
+        reason = (reason + " | " if reason else "") + \
+            "operator long-form override (dub_force_long_channels)"
 
     plan.update(
         publish_long=publish_long,

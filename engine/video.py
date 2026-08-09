@@ -1558,6 +1558,7 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
                              end_card_main_text: str = "WATCH FULL EPISODE",
                              end_card_sub_text: str = "Tap Subscribe ↗",
                              end_card_image_input_label: Optional[str] = None,
+                             progress_bar: bool = False,
                              caption_margin_v: Optional[int] = None) -> str:
     """filter_complex for the 1080x1920 Shorts build.
 
@@ -1603,11 +1604,36 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
     else:
         post_brand_label = "[branded]"
 
-    # Anchor for any post-brand overlay (hook caption + burn-in
-    # subtitles + the final ``[v]`` rename). We chain by reassigning
-    # ``post_brand_label`` after each step so the order is:
-    #   brand pill → URL pill → hook (0-3s) → burn-in subtitles → [v]
+    # Anchor for any post-brand overlay (progress bar + hook caption +
+    # burn-in subtitles + the final ``[v]`` rename). We chain by
+    # reassigning ``post_brand_label`` after each step so the order is:
+    #   brand pill → URL pill → progress bar → hook (0-3s) →
+    #   burn-in subtitles → [v]
     chain = base
+
+    if progress_bar and total_duration > 0:
+        # Aug 2026 render pass: thin animated bar across the top —
+        # the standard Shorts retention device (visible time
+        # remaining). Nerra cyan (matches the per-word caption
+        # highlight); 10 px at y=0 sits far above the hook block
+        # (y≈1056) and the caption card. Implementation note:
+        # drawbox does NOT re-evaluate its width per frame on the
+        # ffmpeg builds we ship on (verified: a t-expression paints
+        # a static full-width bar), so the animation uses the
+        # classic slide-in — a full-width cyan strip overlaid with
+        # a per-frame x expression (overlay defaults to
+        # eval=frame): off-screen left at t=0, flush at t=end.
+        # shortest=1 ends the infinite color source with the main.
+        # Drawn before hook/captions/end card so every later
+        # overlay stacks above it.
+        chain += (
+            f";color=c=0x00D4FF@0.85:s={width}x10:r={fps}[pbsrc]"
+            f";{post_brand_label}[pbsrc]overlay="
+            f"x='-w+w*min(t/{total_duration:.2f},1)':y=0:"
+            f"shortest=1[pbar]"
+        )
+        post_brand_label = "[pbar]"
+
     if hook:
         # Auto-shrink-to-fit (May 2026 retune): start at the legacy
         # fontsize=44 and shrink in 4-px steps only if the wrapped
@@ -2192,7 +2218,8 @@ def _short_form_cmd(audio_in: str, bg_in: str, brand_in: str,
                     end_card_duration: float = 3.0,
                     end_card_image_in: Optional[str] = None,
                     caption_margin_v: Optional[int] = None,
-                    bg_loop: bool = True) -> List[str]:
+                    bg_loop: bool = True,
+                    progress_bar: bool = False) -> List[str]:
     """ffmpeg command for the 1080x1920 Shorts build.
 
     When *bg_is_video* is True, *bg_in* is a pre-rendered vertical
@@ -2260,7 +2287,8 @@ def _short_form_cmd(audio_in: str, bg_in: str, brand_in: str,
                                  end_card_main_text=end_card_main_text,
                                  end_card_sub_text=end_card_sub_text,
                                  end_card_image_input_label=end_card_image_input_label,
-                                 caption_margin_v=caption_margin_v),
+                                 caption_margin_v=caption_margin_v,
+                                 progress_bar=progress_bar),
         "-map", "[v]", "-map", "1:a",
         *_VIDEO_ENCODE,
         "-r", str(fps),
@@ -2616,7 +2644,8 @@ def build_short_video(audio_path: Path, cover_path: Path,
                       scene_change_times: Optional[Sequence[float]] = None,
                       clip_paths: Optional[Sequence[Path]] = None,
                       clip_seconds: float = 5.0,
-                      kb_extended: bool = True) -> Path:
+                      kb_extended: bool = True,
+                      progress_bar: bool = True) -> Path:
     """Render a 1080x1920 vertical YouTube Shorts video.
 
     ``drop_url_pill`` / ``caption_margin_v`` support the multi-platform
@@ -2824,6 +2853,7 @@ def build_short_video(audio_path: Path, cover_path: Path,
         ),
         caption_margin_v=caption_margin_v,
         bg_loop=not bg_full_length,
+        progress_bar=progress_bar,
     )
     logger.info(
         "Building Shorts video (%.1fs from %.1fs) → %s "

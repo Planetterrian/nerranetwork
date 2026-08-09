@@ -6122,6 +6122,8 @@ def _publish_youtube(
                         end_card_sub_text=_end_card_sub,
                         end_card_duration=_end_card_dur,
                         end_card_image_path=_end_card_image_path,
+                        progress_bar=bool(getattr(
+                            config.youtube, "shorts_progress_bar", True)),
                     )
                     # July 18 2026: per-window optimized Short title from
                     # the title bundle ("" -> legacy opening-text headline).

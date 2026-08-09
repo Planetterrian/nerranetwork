@@ -228,6 +228,10 @@ def _policy_plan(config, lang: DubLanguage) -> Dict[str, object]:
             adaptive_enabled=bool(getattr(
                 getattr(config, "youtube", None), "adaptive_publishing", True,
             )),
+            # Aug 2026 operator-directed dub long-form probe (see ru_dub).
+            force_long=(lang.channel in (getattr(
+                getattr(config, "youtube", None),
+                "dub_force_long_channels", []) or [])),
         )
     except Exception as exc:  # noqa: BLE001
         logger.warning("lang_dub[%s]: policy resolution failed (%s) — "
