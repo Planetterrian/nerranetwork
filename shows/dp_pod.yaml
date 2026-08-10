@@ -96,8 +96,10 @@ llm:
   # -> 740 words), and the July playbook says length levers are
   # DIGEST-side only: the script can't say more than the brief gives
   # it. Same lever env_intel got on July 31.
-  digest_expand_below_target: true
-  min_digest_words: 900
+  # (Aug 10 2026: this block briefly declared min_digest_words: 900,
+  # duplicating the 1100 declaration below — YAML last-wins meant 1100
+  # was always the effective floor; the duplicate keys are now removed
+  # so the file states one value. See the declaration below.)
   min_podcast_word_floor: 1000
   # DISABLED July 29 2026 (cost + quality). Measured over 901 committed
   # episodes: 81% still shipped BELOW target WITH this retry running (Tesla
@@ -115,8 +117,26 @@ llm:
   # so keep the digest from capping the episode. Raised 700→1100 after Ep1
   # shipped ~1,200-word scripts against the 1,550 target — the brief was
   # the ceiling (July 2026 follow-up pass; A/B-listen per landmine #17).
+  # Aug 10 2026: digests still shipped 667–1,240 words against this floor
+  # (the one-shot expansion retry fires and falls short) — the deeper
+  # cause was the digest FORMAT spec itself capping at ~750–900 words
+  # (2–3 items × 4–6 sentences); the prompt's per-item sentence counts
+  # were raised in the same pass so the format can actually reach the
+  # floor.
   min_digest_words: 1100
   digest_expand_below_target: true
+  # Aug 10 2026 script-stage model A/B (the July-31 network review built
+  # this knob for exactly one show to trial): dp_pod's scripts ignore the
+  # delivery spec on grok-4.3 — 27 of 30 episodes shipped ZERO
+  # exclamation points, ~5 voice-direction tags total across the whole
+  # run, and high-verbatim briefing paste (Ep22 65%, Ep29 42% 10-word
+  # shingle overlap with the digest, 44 digest sentences copied exactly).
+  # grok-4.5 writes better prose but hallucinates more confidently — the
+  # right trade HERE because the digest/fetch stage stays on grok-4.3
+  # (facts are locked before this model ever runs). A/B-listen per
+  # landmine #17; revert = delete this line (empty default is
+  # byte-identical grok-4.3 behaviour).
+  podcast_model: grok-4.5
 
 tts:
   # Two-host dialogue mode: DAN:/PATRICK: labeled turns, one Grok voice per

@@ -933,3 +933,97 @@ class TestNetworkPickHardBan:
         assert hook._recently_picked_shows() == frozenset()
         ctx = hook.pre_fetch(None)["nerra_network_context"]
         assert "HARD BAN" not in ctx
+
+
+class TestLeverRotationMemory:
+    """Aug 10 2026: The Lever converged into week-long runs of one action
+    (solar assessment ×5, air-sealing ×4, plug-in solar ×3, wetland
+    monitoring ×4, heat-pump assessment ×7 straight in Ep24–30) because
+    the PREVIOUS LEVER injection was the only lever the model saw and the
+    digest prompt supplied a quotable example. Same fix shape as the
+    Network pick and Think Positive thinkers: rotation memory as DATA."""
+
+    def test_hook_mines_recent_levers_from_committed_digests(self):
+        import shows.hooks.dp_pod as hook
+
+        block = hook._recent_levers()
+        assert block.startswith("RECENT LEVERS")
+        bullets = [ln for ln in block.splitlines() if ln.startswith("- ")]
+        # 30 committed episodes of history — the memory must be real.
+        assert len(bullets) >= 3
+        # Data-independent reality check (same pattern as the previous-
+        # lever guard): every listed action must come verbatim from some
+        # committed digest — the memory can never invent a lever.
+        digest_blob = re.sub(
+            r"\s+", " ",
+            " ".join(
+                p.read_text(encoding="utf-8")
+                for p in (PROJECT_ROOT / "digests" / "dp_pod").glob("DP_Pod_Ep*.md")
+            ),
+        )
+        for bullet in bullets:
+            action = re.sub(r"\s+", " ", bullet[2:]).strip()
+            assert action[:80] in digest_blob, f"invented lever in memory: {action[:80]}"
+
+    def test_recent_levers_reach_the_prompt_context(self):
+        import shows.hooks.dp_pod as hook
+
+        ctx = hook.pre_fetch(None)["nerra_network_context"]
+        assert "RECENT LEVERS" in ctx
+        # The Dispatch continuity line coexists with (and is distinct from)
+        # the rotation memory.
+        assert "PREVIOUS LEVER" in ctx
+
+    def test_no_lever_history_is_a_clean_noop(self, tmp_path, monkeypatch):
+        import shows.hooks.dp_pod as hook
+
+        monkeypatch.setattr(hook, "_ROOT", tmp_path)
+        (tmp_path / "digests" / "dp_pod").mkdir(parents=True)
+        assert hook._recent_levers() == ""
+        ctx = hook.pre_fetch(None)["nerra_network_context"]
+        assert "RECENT LEVERS" not in ctx
+
+    def test_digest_prompt_requires_lever_rotation(self):
+        digest = (PROJECT_ROOT / "shows" / "prompts" / "dp_pod_digest.txt").read_text(
+            encoding="utf-8")
+        assert "RECENT LEVERS" in digest
+        assert "ROTATION IS MANDATORY" in digest
+
+    def test_no_quotable_lever_seed_in_prompts_or_hook(self):
+        """De-seed by shape, never with a quotable example (playbook rule):
+        the prompt's own example ("seal the top three leaks") aired nearly
+        verbatim in Ep10–13, and the anti-phantom bans that NAMED heat
+        pumps preceded the heat-pump lever running 7 episodes straight."""
+        digest = (PROJECT_ROOT / "shows" / "prompts" / "dp_pod_digest.txt").read_text(
+            encoding="utf-8")
+        podcast = (PROJECT_ROOT / "shows" / "prompts" / "dp_pod_podcast.txt").read_text(
+            encoding="utf-8")
+        hook_src = (PROJECT_ROOT / "shows" / "hooks" / "dp_pod.py").read_text(
+            encoding="utf-8")
+        assert "seal the top three leaks" not in digest
+        for text, where in ((digest, "digest prompt"), (podcast, "podcast prompt")):
+            assert "heat-pump or filter callbacks" not in text, where
+            assert "heat pumps, filters" not in text, where
+        # The hook's injected PREVIOUS LEVER string must not name example
+        # actions either (its docstring/comments may).
+        m = re.search(r'"PREVIOUS LEVER.*?"', hook_src, re.DOTALL)
+        injected = re.search(
+            r'return \(\n(\s+"PREVIOUS LEVER.*?)\)', hook_src, re.DOTALL)
+        assert injected and "heat pump" not in injected.group(1)
+
+    def test_yaml_declares_each_llm_length_key_once(self):
+        """The file briefly carried min_digest_words twice (900 then 1100)
+        — YAML last-wins hid the conflict. One declaration each."""
+        raw = (PROJECT_ROOT / "shows" / "dp_pod.yaml").read_text(encoding="utf-8")
+        active = "\n".join(
+            ln for ln in raw.splitlines() if not ln.lstrip().startswith("#"))
+        assert active.count("min_digest_words:") == 1
+        assert active.count("digest_expand_below_target:") == 1
+
+    def test_script_stage_model_ab_never_reaches_the_digest(self):
+        """podcast_model is the script-stage-only A/B knob (July 31 2026
+        network review). The digest/fetch stage must stay on the network
+        default — grok-4.5's confident-hallucination rate is the wrong
+        trade for the facts-first stage."""
+        assert CFG.llm.podcast_model in ("", "grok-4.5")
+        assert CFG.llm.model != "grok-4.5"

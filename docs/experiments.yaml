@@ -177,3 +177,25 @@ experiments:
       youtube.shorts_end_card_site_panel. Screenshots are committed
       (assets/site_screens) and refreshed by
       scripts/capture_site_screens.py.
+
+  - id: dp-pod-script-model-45
+    title: "DP Pod script stage on grok-4.5 (podcast_model A/B)"
+    area: quality
+    shipped: 2026-08-10
+    readout: 2026-08-24
+    status: reading
+    baseline: "27/30 episodes with zero exclamation points; ~30% median digest-to-script 10-word shingle overlap (Ep22 65%)"
+    target: >
+      Scripts stop reading the brief verbatim (<=15% median shingle
+      overlap) and the delivery spec finally lands (>=2 exclamation
+      points in most episodes, voice tags actually used) with NO new
+      facts beyond the digest.
+    criteria: >
+      Operator A/B-listens the first post-merge episodes; keep grok-4.5
+      only if the energy is real and factuality holds — revert is
+      deleting the one podcast_model line in shows/dp_pod.yaml.
+    notes: >
+      First (only) show on the July-31 script-stage model knob. The
+      digest/fetch stage stays on grok-4.3 by design — facts are locked
+      before the script model runs. Audio change — landmine #17 A/B.
+      Scored against the 2026-08-10 dp_pod review ledger predictions.

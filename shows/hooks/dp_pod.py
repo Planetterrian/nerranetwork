@@ -172,12 +172,62 @@ def _recent_think_positive_thinkers(max_digests: int = 8) -> str:
         return ""
 
 
+def _recent_levers(max_digests: int = 15) -> str:
+    """Actions aired as The Lever recently (rotation memory).
+
+    Aug 10 2026: the daily action converged into week-long runs of one
+    lever — solar assessment ×5 (Ep4–8), air-sealing ×4 (Ep10–13),
+    plug-in solar ×3, wetland monitoring ×4, then the heat-pump
+    assessment SEVEN episodes straight (Ep24–30). The PREVIOUS LEVER
+    Dispatch injection was the only lever the model could see each day,
+    so it became an attractor. Same lesson as the Network pick and the
+    Think Positive thinkers: supply rotation DATA, not just a rotation
+    instruction. Mined from this show's own committed digests, newest
+    first. Returns "" before enough history exists.
+    """
+    try:
+        md_files = sorted(
+            (_ROOT / "digests" / "dp_pod").glob("DP_Pod_Ep*.md"),
+            reverse=True,
+        )
+        seen: list[str] = []
+        for md in md_files[:max_digests]:
+            text = md.read_text(encoding="utf-8")
+            m = re.search(
+                r"###\s*The Lever\s*\n(.*?)(?:\n[━#]|\Z)", text, re.DOTALL,
+            )
+            if not m:
+                continue
+            lever = re.sub(r"\s+", " ", m.group(1)).strip()
+            lever = re.split(r"\bSource:\s*", lever, maxsplit=1)[0].strip()
+            # The first sentence is the action statement.
+            first = re.split(r"(?<=[.!?])\s+", lever)[0].strip()
+            if len(first) < 20:
+                continue
+            if first not in seen:
+                seen.append(first)
+        if not seen:
+            return ""
+        return (
+            "RECENT LEVERS (actions this show already aired, newest first "
+            "— today's Lever must be a genuinely DIFFERENT action: never "
+            "repeat or lightly rephrase any action below, and change the "
+            "domain from the newest entries — if recent levers were home "
+            "energy, go to transport, food, citizen science, community, "
+            "health, or repair/reuse today):\n"
+            + "\n".join(f"- {s}" for s in seen)
+        )
+    except Exception as exc:
+        logger.warning("dp_pod hook: lever history unavailable (non-fatal): %s", exc)
+        return ""
+
+
 def _previous_lever_for_dispatch(max_lookback: int = 5) -> str:
     """The most recent aired Lever — for honest Dispatch continuity.
 
-    Ep2/Ep4 invented a 'heat-pump filter swap' callback that never aired.
-    Inject the real prior Lever so the digest can only point at something
-    that actually happened. Returns "" before Episode 2.
+    Ep2/Ep4 invented a prior-lever callback that never aired. Inject the
+    real prior Lever so the digest can only point at something that
+    actually happened. Returns "" before Episode 2.
     """
     try:
         md_files = sorted(
@@ -202,10 +252,11 @@ def _previous_lever_for_dispatch(max_lookback: int = 5) -> str:
             words = lever.split()
             short = " ".join(words[:40]) + ("…" if len(words) > 40 else "")
             return (
-                "PREVIOUS LEVER (the most recent aired action — when the "
-                "Dispatch has no listener mail, point at THIS exact lever "
-                "only; never invent a different past action like heat pumps "
-                f"or filters that did not air): [{ep_label}] {short}"
+                "PREVIOUS LEVER (the most recent aired action — for the "
+                "Dispatch callback ONLY: when the Dispatch has no listener "
+                "mail, point at THIS exact lever and never invent a past "
+                "action that did not air. Today's Lever section must NOT "
+                f"reuse this action — it is yesterday's): [{ep_label}] {short}"
             )
         return ""
     except Exception as exc:
@@ -351,6 +402,10 @@ def pre_fetch(config, *, episode_num=None, today_str=None) -> dict:
     if picks:
         sections.append("")
         sections.append(picks)
+    recent_levers = _recent_levers()
+    if recent_levers:
+        sections.append("")
+        sections.append(recent_levers)
     prev_lever = _previous_lever_for_dispatch()
     if prev_lever:
         sections.append("")
