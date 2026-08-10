@@ -1,3 +1,8 @@
+# OPERATOR RULE (Aug 10 2026): publishing is ALWAYS a deliberate human
+# act — the operator hears the produced episode first (final-listen
+# gate). The daily sweep the review agent added violated that rule and
+# republished an already-published interview as a duplicate Ep2 from a
+# stale artifact. Do NOT re-add schedule triggers here.
 # Nerra Voices — publish an approved, produced episode (spec §5.5).
 # Manual dispatch (operator picks the release moment), repository_dispatch
 # from a scheduler, or the daily SWEEP. Updates RSS + summaries + site
@@ -21,9 +26,6 @@ on:
         type: string
   repository_dispatch:
     types: [interview-publish]
-  schedule:
-    # Daily, after the produce/review steps have had the day to run.
-    - cron: '25 19 * * *' 
 
 permissions:
   contents: write
