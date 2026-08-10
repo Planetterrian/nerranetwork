@@ -49,10 +49,15 @@ class TestCadence:
 
 
 class TestLaunchDistribution:
-    def test_rss_only_at_launch(self):
+    def test_distribution_shape(self):
+        """Launch was RSS+site only. Aug 10 2026 (operator-directed): the
+        newsletter is ON — the club's join form had promised a daily
+        briefing since launch, and email replies are the Dispatch
+        submission channel. X / YouTube / multilingual stay off."""
         assert CFG.publishing.x_enabled is False
         assert CFG.youtube.enabled is False
-        assert CFG.newsletter.enabled is False
+        assert CFG.newsletter.enabled is True
+        assert CFG.newsletter.tag == "DP Pod"
         assert CFG.multilingual.enabled is False
 
     def test_future_youtube_enable_is_one_line(self):

@@ -292,9 +292,20 @@ today's work, not just explain yesterday's):
   (experiment `dp-pod-script-model-45`, readout 2026-08-24; digest stays
   grok-4.3; revert = delete the line). Digest format spec was raised
   (Papers 6–8 sentences, Lever 6–9) because 2–3×4–6 arithmetically capped
-  digests below their own 1100-word floor. Open operator items (escalated,
-  second filing): the join form promises a daily briefing while
-  `newsletter.enabled: false`, and `dispatches.json` is still empty.
+  digests below their own 1100-word floor. **Same-day operator follow-up
+  (Aug 10):** `newsletter.enabled: true` (daily briefing now real; email
+  replies are the Dispatch submission channel, named on air, on the club
+  page, and in the join fine print — "two honest sentences count"), and
+  the catalogue was PRUNED 30 → 11 episodes (operator-directed): all
+  repeated-lever episodes and high-verbatim-paste episodes removed from
+  RSS/summaries/blog/site (kept 1, 2, 3, 8, 9, 11, 15, 19, 21, 24, 30 —
+  each with a distinct lever; Ep30 stays partly because RSS `<itunes:
+  episode>` max pins `get_next_episode_number` at 31, so the purge can
+  never renumber future episodes into published GUIDs). R2 MP3s of
+  deleted episodes were NOT removed (no credentials in the session;
+  harmless — unreferenced). `metrics_ep*/credit_usage_*` files kept as
+  real spend accounting. Still open: `dispatches.json` is empty until a
+  real listener/host dispatch is seeded.
 - **AOAI** (The Age of AI) — the network's **AI-hosted LIVE interview show**
   (July 2026): Mira, an AI documentarian persona (Grok voice `ara`,
   deliberately NOT the Patrick clone), phones REAL guests via a Voximplant
