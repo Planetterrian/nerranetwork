@@ -278,6 +278,23 @@ today's work, not just explain yesterday's):
   `dialogue_mode is False`), `tests/test_dp_pod_show.py` (launch shape).
   Prompt edits change shipped audio — A/B-listen per landmine #17; the first
   episodes are the calibration set for `dialogue_pause_ms` handoff pacing.
+  **Aug 10 2026 quality pass** (review:
+  [`docs/reviews/dp_pod_review_2026_08_10.md`](docs/reviews/dp_pod_review_2026_08_10.md);
+  drift guards: `tests/test_dp_pod_show.py::TestLeverRotationMemory`): The
+  Lever had converged into week-long identical runs (heat-pump assessment
+  ×7 straight, Ep24–30) — the July-9 PREVIOUS LEVER injection was the only
+  lever the model saw and both prompts named quotable examples. Fixed with
+  data-side rotation memory (`_recent_levers()`, 15-episode window) + full
+  de-seed by shape; do NOT reintroduce example actions into the lever/
+  dispatch prompt text. Scripts also pasted the brief verbatim (Ep22 65%
+  shingle overlap) with zero exclamations in 27/30 episodes, so dp_pod is
+  the network's first `llm.podcast_model: grok-4.5` script-stage A/B
+  (experiment `dp-pod-script-model-45`, readout 2026-08-24; digest stays
+  grok-4.3; revert = delete the line). Digest format spec was raised
+  (Papers 6–8 sentences, Lever 6–9) because 2–3×4–6 arithmetically capped
+  digests below their own 1100-word floor. Open operator items (escalated,
+  second filing): the join form promises a daily briefing while
+  `newsletter.enabled: false`, and `dispatches.json` is still empty.
 - **AOAI** (The Age of AI) — the network's **AI-hosted LIVE interview show**
   (July 2026): Mira, an AI documentarian persona (Grok voice `ara`,
   deliberately NOT the Patrick clone), phones REAL guests via a Voximplant

@@ -28,16 +28,72 @@ reviews:
       - metric: "phantom prior-lever callbacks (heat pump / invented filter) in Dispatch, next 7 episodes"
         baseline: "2/4 episodes (Ep2, Ep4)"
         expected: "0/7"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "Ep5-30 Dispatch callbacks all reference the real aired lever (Ep30 quotes Ep29's actual assessment action) — but see 2026-08-10: the injection became a repetition attractor."
       - metric: "club page primary CTA is join/membership, not 'Sign the pledge'"
         baseline: "oath-style pledge CTA live"
         expected: "Sign the pledge / weekly-vow copy gone from thedppod.html"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "CTA reads 'Join free — get the daily briefing' with 'No oath required'; 'Sign the pledge' absent (only CSS class names still say pledge)."
       - metric: "at least one real Dispatch aired (host or listener)"
         baseline: "0 (dispatches.json empty; host 'I'll report back' ×4 unmet)"
         expected: ">=1 within 2 weeks"
+        verdict: miss
+        evidence: "dispatches.json still empty on 2026-08-10, a month later; reopened as an escalated operator item (second filing)."
+    agent_cost_usd: null
+
+  - date: 2026-08-10
+    pr: null
+    doc: docs/reviews/dp_pod_review_2026_08_10.md
+    reviewer: claude-code (operator-directed performance/mission/experience pass)
+    summary: >-
+      The Lever repeated in week-long runs (heat-pump assessment 7 episodes
+      straight, Ep24-30; only 2 distinct actions in the last 10 episodes) —
+      root cause was three quotable seeds (the prompt's own lever example,
+      the anti-phantom bans naming heat pumps, and the PREVIOUS LEVER
+      injection being the only lever the model saw). Shipped data-side
+      rotation memory + de-seed by shape. Half of many episodes is the
+      brief read verbatim (Ep22 65% shingle overlap) with zero exclamation
+      points in 27/30 episodes — escalated past the twice-failed
+      instruction route to the July-31 podcast_model knob (grok-4.5,
+      script stage only, A/B). Digest format spec (2-3 items x 4-6
+      sentences) capped digests at ~750-900w below their own 1100 floor —
+      per-item sentence counts raised. YAML duplicate llm keys removed.
+    shipped:
+      - _recent_levers() rotation memory in the hook (15-episode window, data-side)
+      - PREVIOUS LEVER injection reframed as Dispatch-only + de-seeded
+      - digest+podcast prompts de-seeded (quotable lever example, heat-pump mentions)
+      - Lever rotation mandatory + domain rotation + checklist line (A/B)
+      - Positive Papers 6-8 sentences, Lever 6-9 (digest-side length lever, A/B)
+      - llm.podcast_model grok-4.5 script-stage A/B + experiments.yaml entry
+      - dp_pod.yaml duplicate min_digest_words/digest_expand_below_target removed
+      - tests/test_dp_pod_show.py::TestLeverRotationMemory (7 guards)
+    deferred:
+      - newsletter enable vs join-copy soften (operator decision, ESCALATED second filing — page promises a daily briefing nobody sends)
+      - seed one real host Dispatch (operator, second filing)
+      - YouTube Shorts-only enable after the A/B settles (one YAML flip)
+      - deterministic verbatim-paste retry — only if the grok-4.5 A/B misses
+      - de-seed "the main barrier is" tic — watch one cycle first
+      - weekly Lever-of-the-Week + collective counter (blocked on real receipts)
+    predictions:
+      - metric: "distinct Lever actions in the next 10 episodes (first-sentence dedup, review_snapshot method)"
+        baseline: "2 distinct in Ep21-30 (heat-pump assessment x7)"
+        expected: ">=6 distinct, no action appearing more than twice"
+        verdict: pending
+        evidence: null
+      - metric: "median 10-word shingle overlap between digest and script, next 10 episodes"
+        baseline: "~30% median (Ep22 65%, Ep29 42%) on grok-4.3"
+        expected: "<=15% median"
+        verdict: pending
+        evidence: null
+      - metric: "episodes with >=2 exclamation points in _tts.txt, next 10 episodes"
+        baseline: "0/10 (27 of 30 all-time episodes shipped zero)"
+        expected: ">=6/10"
+        verdict: pending
+        evidence: null
+      - metric: "median digest word count, next 10 episodes"
+        baseline: "918 words (Ep22-30 range 667-1240 vs 1100 floor)"
+        expected: ">=1050"
         verdict: pending
         evidence: null
     agent_cost_usd: null
