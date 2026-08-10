@@ -1,0 +1,50 @@
+# Modern Investing Techniques
+💰 **Modern Investing Techniques** — AI-Powered Daily Market Intelligence
+> **TSX energy investors gain a concrete signal as International Petroleum launches fresh share repurchases while the index sits at record highs.**
+
+**Market Pulse:** The S&P 500 closed at 7,758, up 0.6 percent, while the NASDAQ Composite reached 26,691, up 1.3 percent, and the TSX Composite hit a fresh record at 36,381.23, up 0.7 percent. Energy and miners led the TSX advance as tech weighed on broader sentiment. The QQQ has now gained 276 percent since the March 2020 low, underscoring the long recovery in growth indices. About 16 days ago we picked EPD on dividend-compounding momentum into the second half; today's buyback activity in the same sector shows how sector patience can align with capital-return programs. The Bank of Canada and Fed decisions remain the key macro backdrop, with rate-sensitive names repricing on any shift in expected timing. Earnings season continues to provide sector-specific catalysts amid the current leadership rotation. NASDAQ Composite ^IXIC stands at 26,691 with YTD move of +14.87 percent and since-inception move of +19.29 percent. The matched-window portfolio return reaches +16.56 percent against the NASDAQ's +14.26 percent over identical holding windows, producing alpha of +2.29 percent across 40 benchmarked trades. The buy-and-hold gap shows portfolio YTD at +0.55 percent versus the NASDAQ's stronger advance.
+---
+### Strategy Spotlight
+Custom stock screeners that reverse-engineer historical winners give investors a data-driven way to surface names with matching financial and trend profiles instead of relying on single metrics like P/E. Today's market rewards this approach because traditional valuation screens missed multi-baggers such as NVIDIA after May 2023 when forward growth and momentum metrics aligned. Build the screener by feeding a target stock and date into a 5,000-stock universe, then rank candidates on revenue growth, free-cash-flow trends, and relative strength; the output lists exact reasons for each match so you can verify every data point yourself. This method worked best in 2023-2025 when sector rotation rewarded names with accelerating fundamentals rather than cheap multiples alone. Risk arises when the selected date sits in a low-volume regime, so always add a same-day volume filter above the 20-day average before acting. Platforms such as TradingView or custom Python scripts pulling public Yahoo Finance data let Canadian investors run these screens inside a TFSA without extra cost. The Reddit project avoids black-box AI predictions entirely, relying instead on transparent data engineering that investors can fact-check against public filings and price histories. One concrete implementation step involves selecting a stock like NVIDIA on a specific past date, running the match, and then reviewing the ranked list for comparable revenue-acceleration patterns before any capital commitment. Source: [reddit.com](https://www.reddit.com/r/investing/comments/1vkfas1/stock_screener_alternative/)
+---
+### Investor Education: How Buyback Announcements Translate Into Shareholder Value
+Imagine you added an energy name last week after seeing a normal-course issuer bid filing; your fill arrived at the prevailing ask, yet the real mechanics between announcement and execution determine whether that capital return actually accrues to you. The issuer can repurchase up to a stated daily limit, often 0.5 percent of public float, which creates a persistent bid that narrows the spread and supports price even on down days for the broader index. Most retail investors assume the buyback simply reduces shares outstanding and lifts EPS, but the immediate effect is order-flow absorption that can lift the stock 2-4 percent within the first two weeks if volume exceeds the 20-day average. Professionals always check the exact filing for maximum daily volume and blackout periods before sizing the position. International Petroleum Corporation announced the repurchase of 72,282 common shares between August 6 and 7 under its previously authorized normal course issuer bid program listed on both the TSX and Nasdaq Stockholm. The concrete misconception to avoid is treating every buyback as an automatic green light; the fix is to confirm the program size relative to average daily volume and pair it with a same-day volume spike before entering.
+---
+### Practice Investment of the Day
+**Disclaimer:** This is a SIMULATED trade for educational purposes only. No real money is involved. This is NOT financial advice.
+
+**Trade Type:** Weekly Hold
+**Today's Pick:** IPCO.TO — International Petroleum Corporation
+**Market:** TSX
+**Sector:** energy
+**Strategy:** Buyback-supported entry on announced normal-course issuer bid
+**Hold Period:** Monday-Friday
+**Lesson Tags:** risk_management, macro_rotation
+**AI Analysis:**
+- **Catalyst:** Normal course issuer bid filing covering 72,282 shares repurchased August 6-7 under the existing program.
+- **Technical Setup:** No specific moving-average or RSI levels available in source data; monitor price action relative to recent TSX energy leadership.
+- **Risk Assessment:** Sector rotation out of energy could pressure the name; set a 5 percent stop below the announcement-day close to cap loss.
+- **Target:** +2 percent to +5 percent over the five-day window if buyback flow continues and energy prices hold.
+- **Confidence Level:** Low — single-factor catalyst without volume confirmation or multiple aligned signals.
+
+**Why This Teaches:** The trade demonstrates how to read capital-return programs as a structural bid rather than a headline event, forcing disciplined position sizing and stop placement regardless of sector momentum. Listeners learn to treat buyback size relative to float as a quantifiable edge instead of assuming automatic outperformance. Source: [financialpost.com](https://financialpost.com/globe-newswire/international-petroleum-corporation-announces-results-of-normal-course-issuer-bid-95)
+---
+### Tools & Techniques
+**Reverse-Engineering Stock Screener**
+The platform lets users input any ticker and historical date, then surfaces the top-ranked matches from a 5,000-stock universe based on identical financial and trend metrics at that moment. It removes black-box predictions by showing every data point used, so investors can verify revenue growth, free-cash-flow, and relative-strength calculations themselves before acting. Canadian DIY investors running TFSA or RRSP screens gain an edge over generic P/E filters that missed past winners. Access the tool via the Reddit project link for free with public data sources. The approach explicitly compares candidates against the exact financial and market-trend profile of the chosen stock on the chosen date, producing a transparent ranked list rather than opaque scores. One practical workflow starts with entering a known winner such as NVIDIA from May 2023, reviewing the output criteria, and then scanning the current market for similar profiles while staying inside tax-advantaged accounts. Source: [reddit.com](https://www.reddit.com/r/investing/comments/1vkfas1/stock_screener_alternative/)
+---
+### Quick Hits
+**Barrick Mining Faces Valuation Questions After 191 Percent Run**
+The gold miner has delivered strong returns, yet analysts flag the multiple as potentially full after the extended move. The 191 percent advance raises the question of whether further upside remains limited without fresh fundamental catalysts. 
+**Action:** Trim exposure if Barrick closes below its 50-day moving average this week. Source: [Yahoo! Finance Canada](https://news.google.com/rss/articles/CBMigwFBVV95cUxNeDFxQ1liaHRZN3ZnRjJWaUZVdzM3eHc2a0dRS1dsRm1OeWV6eDRnb0hXNUJVWjM1SDlub2o5cG1NdUhGNTNoZ3JYMkJRRklzMmNjYktlcGl2MHJDenlnelpYQTRKd3RPcGVDM0o4R2JleERza3pxbF8tZnpJSjIwMjZIVQ?oc=5)
+
+**Global Power Solutions Signs LOI for Modular Power Deployment**
+The TSX-V name entered a non-binding agreement with SolarZone to evaluate modular systems, expanding its energy solutions reach. The letter of intent focuses on potential deployment of modular power systems and remains subject to further due diligence before any binding commitment. 
+**Action:** Add PWER.V to the watchlist and wait for binding-contract confirmation before sizing. Source: [financialpost.com](https://financialpost.com/globe-newswire/global-power-solutions-signs-non-binding-loi-with-solarzone-energy-for-potential-deployment-of-modular-power-systems)
+
+**Canaccord Genuity Targets Wealth-Management Acquisitions**
+The firm is actively seeking deals across three markets to grow its advisory footprint. Expansion plans center on wealth-management platforms in targeted regions where scale advantages can improve margins. 
+**Action:** Watch CF.TO for any announced transaction that could re-rate the multiple. Source: [Google News](https://news.google.com/rss/articles/CBMi7wFBVV95cUxQS3lkS1NDZ1JuQm9palMtVTBhMW1wdmxRT3F1MHJEUW1xZndvVENOY1hINUVnbW14anlPb1NHdUZBeFYyRjRUd3RyWUNrNE9uWTNKa2kyQXRkWEhPOGhjcDJYeW1UWDctYTJ5Z1U3bzBxei1tMTRqSGV0TFJldGlkWkx5RUhsQVdiSE5HZEZ0YmRKUUFFZUpQdzRKSTNsa3ZWeHoyUUk0R3RtUXBDZThVY2hpWDJUZFFleFNsM2FpcjNjMGZ1UEF2d2RXdHBwZlRGSHhMeXFMNzdZcFFzQXdZQ3BwdnJEN1laQW1HdTdhQdIB9AFBVV95cUxOSUh5a3J4MUVYNWpxVm5XREV2MXNTSFBFRjltX29kejlycWpMX0llMzlweG1jdEs2UEJmMDUzbHlrdXNMU2VOVGMtTXZaOXFGVTkybGZ1bW9qaTZFU3V1dkFKY1FWOUlzUzdrS3JpZTJCcmY4SDVEdkdTaVFZUWhCMTNxdktfZUcwUmhrWXFKcmVzWFBxUm56b1Z6c01jRGx2eGM1dVk5cl9XZXRnRTBQeFJqYzZScVdZN2FVQVN6SjNTLUtBVmtQbHNaaXN3cmNxYzR3WVFXUGRDRE1nckhlNl9vcFRwdlhSM0RVQ0FZYnp3MnlL?oc=5)
+
+**Listener Challenge**
+Open your brokerage platform, pull up IPCO.TO, and note the exact daily volume limit stated in the latest issuer-bid filing; compare it to average daily volume to size a potential position before Friday.
