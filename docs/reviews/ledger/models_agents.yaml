@@ -317,4 +317,88 @@ reviews:
       ab_listen_required: false
       rationale: Drift-guard the two prompt bans, the UTH marker alternate, and the no-podcast-expand / digest-floor floor so a later edit cannot silently drop them (pattern from existing quality-pass tests).
     agent_cost_usd: 0.1256
+  - date: '2026-08-11'
+    pr: null
+    doc: docs/reviews/models_agents_review_2026_08_11.md
+    generated_by: grok-4.5
+    summary: 'Aug-4 teaser/UTH de-seeds and UTH marker still never shipped: “keep an eye on” cleared but “Before we go” is now 10/10 and “Everyone talks/treats about…” opens 10/10 deep-dives, while 8/10 scripts stay under 1500w and length remains an operator decision after two missed levers.'
+    scored_prior_predictions:
+    - metric: '"keep an eye on" as Tomorrow Teaser / before-we-go opener, last 10 post-merge'
+      verdict: hit
+      evidence: ~0/10 in ep129–138 teasers; phrase cleared even though shape-ban never merged
+    - metric: '"Everyone talks about" as Under-the-Hood / deep-dive opener, last 10 post-merge'
+      verdict: miss
+      evidence: 7/10 exact + 3/10 "Everyone treats" = 10/10 contrast-cliché openers; Aug-4 de-seed never applied
+    - metric: 'successor UTH-opener tic: any single new contrast-cliché opener in >=6/10 deep-dives (convergence watch)'
+      verdict: hit
+      evidence: '"Everyone treats" alone is 3/10; no independent new phrase ≥6/10 while original formula still dominates'
+    - metric: 'successor teaser-opener tic: "Before we go" (with or without keep-an-eye) in >=6/10 teasers'
+      verdict: miss
+      evidence: 10/10 ep129–138 teasers open with "Before we go"
+    - metric: episodes with an Under the Hood chapter when a deep-dive is present, last 10
+      verdict: miss
+      evidence: 8/10 (ep132/133 missing UTH when host led with Everyone-talks and skipped pop-the-hood); marker alternate never shipped
+    - metric: spoken episode-number continuity callbacks in last 10
+      verdict: hit
+      evidence: 0 continuity episode-N/EpN callbacks in ep129–138 Whisper (identity line only)
+    shipped: []
+    deferred:
+    - 'OPERATOR DECISION (length — escalated after July-19 + Aug-2 misses; do not re-file min_digest_words=1600 without an explicit choice): (A) raise min_digest_words to 1600, (B) Under-the-Hood licensed-knowledge sentence/fact floor in digest prompt, or (C) accept ~1200–1400w and lower min_podcast_words. Never re-enable podcast_expand_below_target. Today still 8/10 under 1500w.'
+    - Digest-driven / position-aware mid-section chapter titles (carried; ep130/132/133/135–137 ellipsis auto-titles, ep132/133 lost UTH before marker patch — markers remain brittle)
+    - Under the Hood licensed-knowledge sentence/fact floor in digest prompt — operator option B
+    - Accept ~1200–1400w natural length and lower min_podcast_words — operator option C
+    - Signature opener "okay let's pop the hood on" (~8/10) — intentional chapter signal; revisit only with A/B evidence
+    - 'Network-wide: blog/RSS transcript sourced from pre-pronunciation text or Whisper (LoRA/RAG/JAXA class leaks) — collision-unsafe for lone-token restore'
+    - July-2 selection rebalance A/B (lab product/feature announcements outrank preprints; arXiv items <= 40%) — still not applied
+    - Recap must synthesize, not splice dailies' sentences (Sunday weekly_summary_segment) — carried
+    predictions:
+    - metric: '"Everyone talks about" / "Everyone treats" as UTH body opener, last 10 post-merge'
+      baseline: 10/10 (ep129–138)
+      expected: ≤2/10 in episodes generated after UTH shape-ban merges
+      verdict: pending
+      evidence: null
+    - metric: '"Before we go" as Tomorrow Teaser opener, last 10 post-merge'
+      baseline: 10/10 (ep129–138)
+      expected: ≤4/10 after teaser shape-ban merges (variety restored; not necessarily zero)
+      verdict: pending
+      evidence: null
+    - metric: '"keep an eye on" as teaser opener, last 10 (regression watch)'
+      baseline: ~0/10 (ep129–138)
+      expected: ≤1/10 sustained after explicit ban lands
+      verdict: pending
+      evidence: null
+    - metric: 'successor UTH-opener tic: any single new contrast-cliché (e.g. "Most teams still", "The common story is", "The usual take") in >=6/10 deep-dives'
+      baseline: n/a (watch)
+      expected: 0 phrases at ≥6/10; if a replacement converges, ban by shape next pass
+      verdict: pending
+      evidence: null
+    - metric: 'successor teaser-opener tic: any single new framing phrase in >=6/10 teasers'
+      baseline: n/a (watch)
+      expected: 0 phrases at ≥6/10 after Before-we-go de-seed
+      verdict: pending
+      evidence: null
+    - metric: episodes with an Under the Hood chapter when a deep-dive is present, last 10
+      baseline: 8/10 (ep132/133 missing)
+      expected: ≥9/10 after section_markers += everyone talks about|everyone treats
+      verdict: pending
+      evidence: null
+    - metric: spoken episode-number continuity callbacks in last 10
+      baseline: 0 (ep129–138)
+      expected: 0 sustained after explicit podcast-side ban
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/prompts/models_agents_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 'UTH contrast-cliché is 10/10 (Everyone talks/treats); teaser locked on Before we go 10/10 after keep-an-eye cleared; episode-number ban never landed. Meta-rule: de-seed by shape + verbatim ban, no quotable replacement menu; successor-tic predictions recorded in ledger.'
+    - file: shows/models_agents.yaml
+      kind: config
+      ab_listen_required: false
+      rationale: ep132/133 deep-dives opened Everyone-talks without pop-the-hood → zero UTH chapter. Adding the live formula phrases restores the chapter without changing audio. Teaser marker alternates prevent chapter loss when Before-we-go is de-seeded. Does not replace deferred digest-driven titles.
+    - file: tests/test_models_agents_quality_pass.py
+      kind: code
+      ab_listen_required: false
+      rationale: Drift-guard the two prompt bans, UTH/teaser marker alternates, and no-podcast-expand so a later edit cannot silently drop them.
+    agent_cost_usd: 0.1325
 do_not_retry: []
