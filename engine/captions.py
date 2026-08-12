@@ -557,7 +557,17 @@ def _render_chunk_dialogues(
     if not tokens:
         return []
 
-    lines: List[str] = []
+    # Pre-compute each word's successor start so a cue can HOLD until
+    # the next word begins. One Dialogue per [start, end] used to leave
+    # the inter-word gaps uncovered — Whisper routinely leaves
+    # 150-600 ms between words at sentence boundaries and breaths, so
+    # the whole caption card vanished and re-popped 10-20 times per
+    # 35 s Short. Native TikTok/Reels captions hold the chunk on screen
+    # continuously and only move the highlight; now ours do too (hold
+    # capped at _MAX_HOLD_GAP so the card still clears a long silence).
+    _MAX_HOLD_GAP = 0.6
+    next_starts: List[Optional[float]] = []
+    entries: List[tuple] = []
     for idx, w in enumerate(chunk):
         token = (w.get("word") or "").strip()
         if not token:
@@ -567,11 +577,33 @@ def _render_chunk_dialogues(
             we = float(w["end"]) + audio_offset
         except (KeyError, TypeError, ValueError):
             continue
+        entries.append((idx, ws, we))
+    for pos, (_idx, _ws, _we) in enumerate(entries):
+        next_starts.append(entries[pos + 1][1] if pos + 1 < len(entries)
+                           else None)
+
+    lines: List[str] = []
+    for pos, (idx, ws, we) in enumerate(entries):
         # Clip to the Shorts window, then rebase to t=0.
         ws = max(ws, window_start)
         we = min(we, window_end)
         if we - ws < min_word_duration:
             we = ws + min_word_duration
+        nxt = next_starts[pos]
+        if nxt is not None:
+            # Hold until the next word starts (bounded), and never past
+            # it — the min_word_duration floor above could previously
+            # push a short word's cue over its successor's start, giving
+            # two simultaneous Alignment=2 events that libass stacks as
+            # a visible one-frame two-line jump.
+            we = max(we, min(nxt, we + _MAX_HOLD_GAP))
+            we = min(we, nxt)
+        # The chunk's last word keeps its own end time: the next chunk
+        # takes over with new text, so a gap there reads as a natural
+        # card change rather than an intra-sentence flicker.
+        we = min(we, window_end)
+        if we <= ws:
+            continue
         rel_start = ws - window_start
         rel_end = we - window_start
         if rel_end <= 0 or rel_start >= (window_end - window_start):

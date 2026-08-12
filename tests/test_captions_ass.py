@@ -475,3 +475,54 @@ def test_full_invalid_offset_raises(tmp_path):
 def test_full_missing_transcript_raises(tmp_path):
     with pytest.raises(FileNotFoundError):
         transcript_to_ass_full(tmp_path / "nope.json", tmp_path / "out.ass")
+
+
+# ---------------------------------------------------------------------------
+# Aug 2026 — caption card holds through inter-word gaps (no flicker)
+# ---------------------------------------------------------------------------
+
+def test_word_cue_holds_until_next_word_starts(tmp_path):
+    """A pause between words used to leave the caption card OFF for the
+    gap (Whisper leaves 150-600 ms at breaths), so the card vanished and
+    re-popped 10-20 times per Short. A cue now extends to the next
+    word's start when the gap is short."""
+    seg = _seg(0.0, 3.0, [("hello", 0.0, 0.5), ("world", 0.9, 1.4)])
+    tp = _write_transcript(tmp_path, [seg])
+    out = tmp_path / "short.ass"
+    transcript_to_ass_window(
+        tp, out, window_start_seconds=0.0, window_duration_seconds=10.0,
+    )
+    dialogues = _parse_dialogue_lines(out.read_text(encoding="utf-8"))
+    assert len(dialogues) == 2
+    # First cue holds through the 0.4 s gap to the successor's start.
+    assert dialogues[0][1] == "0:00:00.90"
+    assert dialogues[1][0] == "0:00:00.90"
+
+
+def test_word_cue_hold_is_bounded_over_long_silences(tmp_path):
+    """A long silence must still clear the card — the hold caps at
+    0.6 s rather than bridging an arbitrary gap."""
+    seg = _seg(0.0, 6.0, [("before", 0.0, 0.5), ("after", 4.0, 4.5)])
+    tp = _write_transcript(tmp_path, [seg])
+    out = tmp_path / "short.ass"
+    transcript_to_ass_window(
+        tp, out, window_start_seconds=0.0, window_duration_seconds=10.0,
+    )
+    dialogues = _parse_dialogue_lines(out.read_text(encoding="utf-8"))
+    assert dialogues[0][1] == "0:00:01.10"  # 0.5 + 0.6 cap
+
+
+def test_min_duration_floor_never_overlaps_the_next_word(tmp_path):
+    """The min_word_duration floor on a sub-80 ms word used to push its
+    end past the next word's start — two simultaneous Alignment=2
+    events that libass stacks as a one-frame two-line jump."""
+    seg = _seg(0.0, 2.0, [("a", 0.00, 0.03), ("tiny", 0.05, 0.6)])
+    tp = _write_transcript(tmp_path, [seg])
+    out = tmp_path / "short.ass"
+    transcript_to_ass_window(
+        tp, out, window_start_seconds=0.0, window_duration_seconds=10.0,
+    )
+    dialogues = _parse_dialogue_lines(out.read_text(encoding="utf-8"))
+    assert len(dialogues) == 2
+    # First cue may extend only TO the successor's start, never past.
+    assert dialogues[0][1] <= dialogues[1][0]

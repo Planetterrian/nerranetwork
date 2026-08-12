@@ -1124,19 +1124,22 @@ def test_short_form_filter_graph_end_card_custom_text():
 
 
 def test_short_form_filter_graph_end_card_composes_with_subtitles():
-    """When BOTH subtitles and the end card are present, captions
-    must stop at the [capted] label and the end-card chain becomes
-    the [v] terminator. No double-terminated graph."""
+    """When BOTH subtitles and the end card are present, the card
+    terminates at [carded] and the SUBTITLES stage is the [v]
+    terminator. Order matters: the opaque card used to paint over the
+    captions, so the last ~3 s of speech played with its text hidden —
+    captions now burn in on top (their 50%-black box keeps them
+    legible over the CTA). No double-terminated graph."""
     graph = _short_form_filter_graph(
         end_card=True, subtitles_path="/tmp/short.srt", total_duration=55.0,
     )
-    # Subtitles land at [capted], not [v].
-    assert "[capted]" in graph
-    # End card runs after — the only [v] is from the end-card chain.
+    # End card lands at [carded]; captions consume it.
+    assert "[carded]" in graph
+    assert "[carded]subtitles=" in graph
+    # The only [v] is from the subtitles stage, which runs last.
     assert graph.count("[v]") == 1
     assert graph.endswith("[v]")
-    # End-card overlay paints over captions.
-    assert "drawbox" in graph
+    assert graph.index("drawbox") < graph.index("subtitles=")
     assert "WATCH FULL EPISODE" in graph
 
 
@@ -1364,9 +1367,13 @@ def test_short_form_filter_graph_end_card_image_composes_with_captions():
         subtitles_path="/tmp/short.srt",
         end_card_image_input_label="[4:v]",
     )
-    assert "[capted]" in graph
+    # Card overlay terminates at [carded]; captions burn in ON TOP so
+    # the final seconds of speech keep their text over the opaque PNG.
+    assert "[carded]" in graph
     assert "[4:v]format=rgba,fade=t=in:st=52.00:d=0.45:alpha=1[endcard]" in graph
-    assert "[capted][endcard]overlay" in graph
+    assert "[endcard]overlay" in graph
+    assert "[carded]subtitles=" in graph
+    assert graph.index("[endcard]overlay") < graph.index("[carded]subtitles=")
     assert graph.endswith("[v]")
     assert graph.count("[v]") == 1
 

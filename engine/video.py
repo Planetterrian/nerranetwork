@@ -1708,20 +1708,24 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
             )
             post_brand_label = line_label
 
-    if subtitles_path:
+    # Subtitles used to burn in HERE, with the end card overlaid on top
+    # afterwards — and the PNG card is fully opaque, so the last ~3 s of
+    # every Short played speech with its caption text hidden under the
+    # card (8.6% of a 35 s Short, landing on the clip's final thought).
+    # The caption stage now runs AFTER the end-card overlay: the caption
+    # card paints its own 50%-black box, so it stays legible over the
+    # CTA, and no spoken word loses its text.
+    if subtitles_path and not end_card:
         escaped_sub = _subtitles_path_escape(subtitles_path)
         # Use the dedicated Shorts force-style so font + position
         # are tuned for the 1080x1920 vertical frame and don't
         # overlap the hook (above) or the URL pill (below).
-        sub_label = "[capted]" if end_card else "[v]"
         chain += (
             f";{post_brand_label}subtitles='{escaped_sub}'"
-            f":force_style='{_shorts_subtitle_style(caption_margin_v)}'{sub_label}"
+            f":force_style='{_shorts_subtitle_style(caption_margin_v)}'[v]"
         )
-        post_brand_label = sub_label
-        if not end_card:
-            return chain
-    elif hook and not end_card:
+        return chain
+    if hook and not end_card and not subtitles_path:
         # Hook was the last filter — already terminated at [v].
         return chain
 
@@ -1754,6 +1758,9 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
         enable_clause = (
             f"between(t,{end_card_start:.2f},{end_card_end:.2f})"
         )
+        # When captions follow, the card terminates at [carded] and the
+        # subtitles stage below produces the final [v].
+        card_out = "[carded]" if subtitles_path else "[v]"
 
         if end_card_image_input_label:
             # PNG path. The input is added as a video stream
@@ -1771,8 +1778,14 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
                 f";{end_card_image_input_label}format=rgba,"
                 f"fade=t=in:st={end_card_start:.2f}:d=0.45:alpha=1[endcard];"
                 f"{post_brand_label}[endcard]overlay="
-                f"x=0:y=0:enable='{enable_clause}'[v]"
+                f"x=0:y=0:enable='{enable_clause}'{card_out}"
             )
+            if subtitles_path:
+                escaped_sub = _subtitles_path_escape(subtitles_path)
+                chain += (
+                    f";{card_out}subtitles='{escaped_sub}'"
+                    f":force_style='{_shorts_subtitle_style(caption_margin_v)}'[v]"
+                )
             return chain
 
         # Drawtext fallback path. July 31 2026 (C4): the two drawtext
@@ -1806,8 +1819,14 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
             f"borderw=3:bordercolor=black:"
             f"alpha='{end_card_alpha}':"
             f"enable='{enable_clause}'"
-            f"[v]"
+            f"{card_out}"
         )
+        if subtitles_path:
+            escaped_sub = _subtitles_path_escape(subtitles_path)
+            chain += (
+                f";{card_out}subtitles='{escaped_sub}'"
+                f":force_style='{_shorts_subtitle_style(caption_margin_v)}'[v]"
+            )
         return chain
 
     return chain + f";{post_brand_label}null[v]"
