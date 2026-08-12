@@ -19,6 +19,12 @@ Design contract:
 from __future__ import annotations
 
 import logging
+
+# Canonical title limit + clipper live in engine/titles.py (the module
+# that owns every title cap — see CLAUDE.md). Aliased for existing
+# references.
+from engine.titles import YOUTUBE_TITLE_MAX as YOUTUBE_TITLE_HARD_MAX
+from engine.titles import clip_words as _clip_words
 import re
 from pathlib import Path
 from typing import List, Optional
@@ -29,11 +35,9 @@ _REPO_ROOT = Path(__file__).resolve().parent.parent
 _PROMPT_PATH = _REPO_ROOT / "shows" / "prompts" / "_shared" / "youtube_title.txt"
 
 # YouTube's hard cap is 100 chars; we aim well under so the title isn't
-# truncated mid-word in search/browse. Candidates longer than the hard cap
-# are dropped (the LLM was asked to stay ≤90).
-# Canonical limit lives in engine/titles.py (the module that owns every
-# title cap — see CLAUDE.md). Aliased here for existing references.
-from engine.titles import YOUTUBE_TITLE_MAX as YOUTUBE_TITLE_HARD_MAX, clip_words as _clip_words
+# truncated mid-word in search/browse. Over-length candidates are clipped
+# at a word boundary (the LLM was asked to stay ≤90, so a long line is a
+# near-miss, not a failure).
 
 
 def _clean_title(line: str) -> str:
