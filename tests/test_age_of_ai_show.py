@@ -397,15 +397,23 @@ class TestPublishSweep:
         src = self._src()
         assert "one bad row must not block the rest" in src
 
-    def test_workflow_is_scheduled(self):
+    def test_workflow_is_not_scheduled(self):
+        """OPERATOR RULE (Aug 10 2026): publishing is ALWAYS a deliberate
+        human act after the final-listen gate. The daily sweep republished
+        an already-published interview as a duplicate Ep2 from a stale
+        artifact, so the schedule trigger was removed (commit ffb62541)
+        with an explicit "Do NOT re-add" in the workflow header. This
+        guard pins that rule — it used to assert the opposite."""
         import yaml
         raw = yaml.safe_load((ROOT / self._WF).read_text(encoding="utf-8"))
         triggers = raw.get(True) or raw.get("on") or {}
-        assert "schedule" in triggers, "publish is dispatch-only again"
-        assert triggers["schedule"][0]["cron"]
+        assert "schedule" not in triggers, (
+            "the publish sweep is back — operator rule forbids scheduled "
+            "publishing (see the workflow header + commit ffb62541)")
+        assert "workflow_dispatch" in triggers
 
     def test_interview_id_input_is_optional(self):
-        """A blank id is the sweep; requiring it would defeat the schedule."""
+        """A blank id sweeps all eligible rows on a manual dispatch."""
         import yaml
         raw = yaml.safe_load((ROOT / self._WF).read_text(encoding="utf-8"))
         triggers = raw.get(True) or raw.get("on") or {}
