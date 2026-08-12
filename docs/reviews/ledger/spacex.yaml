@@ -436,4 +436,77 @@ reviews:
       ab_listen_required: false
       rationale: Drift-guards for P0 chapter sanitizer, Market Watch pattern widen, and intro/closing regressions; code-only.
     agent_cost_usd: 0.1468
+  - date: '2026-08-12'
+    pr: null
+    doc: docs/reviews/spacex_review_2026_08_12.md
+    generated_by: grok-4.5
+    summary: P0 Title:-prefixed chapters remain in Ep58/Ep60 (sanitizer still unshipped), engineering-anchor tic is still 10/10, 5/10 dailies under 1300w with Ep61 at 863w, and length/price-once stay escalated operator decisions after repeated unshipped proposals.
+    scored_prior_predictions:
+    - metric: chapters_ep*.json titles matching /^Title:\s*/ or bare truncated headline chapters outside known section set in next 10 spacex episodes
+      verdict: miss
+      evidence: 'Sanitizer never applied; Ep58 six Title: chapters and Ep60 three Title: + one bare headline still committed; Ep61–67 clean'
+    - metric: exact phrase 'from an engineering standpoint' in next 10 daily (non-special) transcripts
+      verdict: miss
+      evidence: 'Ep58–67 Whisper: phrase still 10/10; Aug-05/07 anchor-rotation prompt never applied'
+    - metric: Market Watch chapter present when script contains SPCX/S P C X + trading/closed price line (non-special dailies)
+      verdict: miss
+      evidence: Pattern widen never shipped; YAML still lacks bare trading at / tape openers; Ep67 also fired Market Watch mid-body on an early closed-at line
+    - metric: on-air xAI facility attributed as SpaceX (Memphis/Colossus/'SpaceX AI' datacenter operator) in next 10 transcripts
+      verdict: partial
+      evidence: 0 clear mis-attrs in Ep58–67 window; entity prompt never shipped so Ep53-class regression risk remains
+    shipped: []
+    deferred:
+    - 'OPERATOR DECISION (escalation after repeated misses): accept grok-4.3 daily length plateau vs further digest-substrate only (min_digest_words / full-text fetch) — do not re-propose podcast expand, word floors in podcast prompt, or ''7+/10 if deep-dive ships'' predictions'
+    - 'OPERATOR DECISION (escalation since 2026-06-13): SPCX price-once — Market Watch qualitative + single precise quote only in closing_block; coupled A/B-listen; stop carrying the same unshipped fix as a silent proposal'
+    - 'Q2/special path: enforce richer spacex_deep_dive.txt briefs so specials clear deep_dive.min_podcast_words 2400 (Ep59 shipped 1778) — digest/brief substrate only'
+    - Tomorrow-teaser rotation (P2; Watch for the first/next <test> no longer dominant in Ep58–67)
+    - Scheduler forensics for any missed Sunday weekly_summary_segment run (June-28 class) — operator
+    - NASA public-domain b-roll pool vs retired shorts_ab generated motion — render-side follow-up, not audio
+    predictions:
+    - metric: chapters_ep*.json titles matching /^Title:\s*/ or bare truncated headline chapters outside known section set in next 10 spacex episodes
+      baseline: '2/10 historical (Ep58 six Title: chapters; Ep60 three Title: + one bare headline); Ep61–67 clean'
+      expected: 0/10 new episodes after chapter-title sanitizer ships; Ep58/Ep60 cleaned or accepted as frozen archive
+      verdict: pending
+      evidence: null
+    - metric: exact phrase 'from an engineering standpoint' in next 10 daily (non-special) transcripts
+      baseline: 10/10
+      expected: '<=6/10 if anchor-rotation prompt ships (successor tic to watch: monoculture on ''the engineering angle'')'
+      verdict: pending
+      evidence: null
+    - metric: Market Watch chapter present when non-special daily script has a mid-body SPCX price/tape line (not sign-off-only)
+      baseline: Pattern misses bare trading at / some tape phrasings; Ep67 early mid-body closed-at fired Market Watch before Counterpoint
+      expected: Market Watch fires on widened mid-body price/tape forms; Closing still wins sign-off-only price lines (Ep62–64 class)
+      verdict: pending
+      evidence: null
+    - metric: on-air xAI facility attributed as SpaceX (Memphis/Colossus/'SpaceX AI' datacenter operator) in next 10 transcripts
+      baseline: 0 clear in Ep58–67; Ep53 archive still wrong
+      expected: 0 clear mis-attributions if entity-discipline prompt ships
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: engine/chapters.py
+      kind: code
+      ab_listen_required: false
+      rationale: P0 listener-facing metadata bug still on Ep58 and Ep60; deterministic garble/filter class with ~100% hit rate per meta-review; no A/B; third review still unshipped.
+    - file: shows/spacex.yaml
+      kind: config
+      ab_listen_required: false
+      rationale: 'P0/P1 chapter miss class: bare ''trading at'' and tape openers never match; metadata-only. Closing where:end must remain listed BEFORE Market Watch so sign-off-only price lines stay Closing (Ep3/Ep62–64 class).'
+    - file: shows/prompts/spacex_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 'P1: 10/10 monoculture on one required phrase across Ep58–67; de-seed by shape + finite rotation set + MEMORY per July 2026 meta-review; no new quotable full-sentence example; successor-tic prediction logged for ''the engineering angle'' convergence.'
+    - file: shows/prompts/spacex_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 'P1 regression guard: Ep53 on-air ''SpaceX AI added another data center building in Memphis'' class; window Ep58–67 clean but prompt never shipped; A/B-listen.'
+    - file: shows/prompts/spacex_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Digest is the substrate the podcast is licensed to read; fix conflation at source so podcast cannot re-emit it.
+    - file: tests/test_spacex_show.py
+      kind: code
+      ab_listen_required: false
+      rationale: Drift-guards for P0 chapter sanitizer, Market Watch pattern widen, and intro/closing regressions; code-only.
+    agent_cost_usd: 0.1568
 do_not_retry: []
