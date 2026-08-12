@@ -193,9 +193,11 @@ def _build_video_body(
         "privacyStatus": privacy_status,
         "selfDeclaredMadeForKids": made_for_kids,
         "containsSyntheticMedia": contains_synthetic_media,
-        # Skip YouTube's gradual rollout to subscribers' homepages
-        # (we have RSS + X for that). False = publish to subs feed.
-        "publishToSubscriptions": True,
+        # NOTE: an earlier revision set "publishToSubscriptions" here —
+        # that is not a real ``status`` field (the API silently ignores
+        # unknown keys). Subscriber notification is controlled by the
+        # ``notifySubscribers`` query parameter on videos.insert, which
+        # defaults to true — the behavior we want, so nothing to pass.
     }
     if publish_at is not None:
         from engine.shorts_stagger import format_publish_at

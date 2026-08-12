@@ -31,7 +31,9 @@ _PROMPT_PATH = _REPO_ROOT / "shows" / "prompts" / "_shared" / "youtube_title.txt
 # YouTube's hard cap is 100 chars; we aim well under so the title isn't
 # truncated mid-word in search/browse. Candidates longer than the hard cap
 # are dropped (the LLM was asked to stay ≤90).
-YOUTUBE_TITLE_HARD_MAX = 100
+# Canonical limit lives in engine/titles.py (the module that owns every
+# title cap — see CLAUDE.md). Aliased here for existing references.
+from engine.titles import YOUTUBE_TITLE_MAX as YOUTUBE_TITLE_HARD_MAX, clip_words as _clip_words
 
 
 def _clean_title(line: str) -> str:
@@ -129,7 +131,12 @@ def generate_youtube_titles(
     seen: set[str] = set()
     for line in (text or "").splitlines():
         cleaned = _clean_title(line)
-        if not cleaned or len(cleaned) > YOUTUBE_TITLE_HARD_MAX:
+        if cleaned and len(cleaned) > YOUTUBE_TITLE_HARD_MAX:
+            # A near-miss (asked for <=90, got 104) is a usable title —
+            # clip at a word boundary rather than discarding it and
+            # risking an empty bundle -> hook-derived fallback.
+            cleaned = _clip_words(cleaned, YOUTUBE_TITLE_HARD_MAX, ellipsis="")
+        if not cleaned:
             continue
         key = cleaned.lower()
         if key in seen:
@@ -238,9 +245,11 @@ def generate_title_bundle(
         value = m.group(3).strip()
         if label == "TITLE":
             cleaned = _clean_title(value)
+            if cleaned and len(cleaned) > YOUTUBE_TITLE_HARD_MAX:
+                cleaned = _clip_words(cleaned, YOUTUBE_TITLE_HARD_MAX,
+                                      ellipsis="")
             key = cleaned.lower()
-            if (cleaned and len(cleaned) <= YOUTUBE_TITLE_HARD_MAX
-                    and key not in seen and len(titles) < n):
+            if cleaned and key not in seen and len(titles) < n:
                 seen.add(key)
                 titles.append(cleaned)
         elif label == "PUNCH" and not punch:
@@ -249,7 +258,8 @@ def generate_title_bundle(
             idx = int(m.group(2)) - 1
             cleaned = _clean_title(value)
             if cleaned and 0 <= idx < max(len(windows), 1):
-                short_titles[idx] = cleaned[:SHORT_TITLE_MAX_CHARS].strip()
+                short_titles[idx] = _clip_words(
+                    cleaned, SHORT_TITLE_MAX_CHARS, ellipsis="").strip()
 
     return {
         "titles": titles,

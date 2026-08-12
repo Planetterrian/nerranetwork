@@ -35,14 +35,24 @@ def test_generate_titles_parses_and_dedupes(monkeypatch):
     assert titles == ["Tesla FSD v14 Ships", "The Robotaxi Math Nobody Ran"]
 
 
-def test_generate_titles_drops_overlong(monkeypatch):
-    long_line = "X" * (YOUTUBE_TITLE_HARD_MAX + 5)
+def test_generate_titles_clips_overlong_at_word_boundary(monkeypatch):
+    # A near-miss candidate (model asked for <=90, returned ~105) used to
+    # be DROPPED — three long lines meant an empty bundle and a silent
+    # fall back to the hook title. Now it's clipped via
+    # engine.titles.clip_words, never mid-word.
+    long_line = ("Tesla ships wireless charging pad for Cybercab fleet "
+                 "and analysts say the robotaxi economics just changed")
+    assert len(long_line) > YOUTUBE_TITLE_HARD_MAX
     monkeypatch.setattr("engine.generator._call_grok",
                         _fake_grok(f"{long_line}\nShort Good Title\n"))
     titles = generate_youtube_titles(
         hook="h", digest_text="d", show_name="S", episode_num=1, n=3,
     )
-    assert titles == ["Short Good Title"]
+    assert len(titles) == 2
+    assert len(titles[0]) <= YOUTUBE_TITLE_HARD_MAX
+    assert not titles[0].endswith(" ")  # clean word-boundary cut
+    assert long_line.startswith(titles[0])
+    assert titles[1] == "Short Good Title"
 
 
 def test_generate_titles_returns_empty_on_failure(monkeypatch):

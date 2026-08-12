@@ -6177,6 +6177,22 @@ def _publish_youtube(
                         yt_short_titles[short_idx]
                         if short_idx < len(yt_short_titles) else ""
                     ) or None
+                    # Aug 2026: when the bundle has no title for a
+                    # non-hook window, the legacy fallback shipped the
+                    # window's mid-sentence 80-char excerpt as the
+                    # headline ("…they said the pad would be…"). Both
+                    # dub channels already repair this via
+                    # headline_from_excerpt; the EN channel — highest
+                    # volume — never did. Best-effort; "" keeps legacy.
+                    if (not _opt_short_title
+                            and _fill_mode not in ("hook_open", "")
+                            and this_hook):
+                        try:
+                            from engine.translate import headline_from_excerpt
+                            _opt_short_title = headline_from_excerpt(
+                                this_hook, "en", max_chars=70) or None
+                        except Exception:  # noqa: BLE001
+                            _opt_short_title = None
                     meta = build_short_metadata(
                         config,
                         episode_num=episode_num,
@@ -6186,6 +6202,10 @@ def _publish_youtube(
                         optimized_title=_opt_short_title,
                         channel=_yt_channel,
                         variant=(_variant.variant if _ab_on else ""),
+                        # Hashtags/entity tags come from the EPISODE hook —
+                        # a window excerpt often has no proper nouns and
+                        # collapsed the clickable tag row to #Shorts.
+                        topic_hook=hook,
                     )
                     upload_thumb = (
                         this_short_thumb_path
@@ -6243,15 +6263,15 @@ def _publish_youtube(
                         )
                     except Exception as _exc:
                         logger.debug("video index (short) skipped: %s", _exc)
+                    # Shorts never join the PODCAST playlist (YouTube
+                    # Music ingests it as the show's podcast — a 35 s
+                    # vertical clip in there is a broken "episode").
+                    # They join the dedicated Shorts playlist when the
+                    # show has one, otherwise no playlist at all.
                     playlist_id = (
-                        getattr(config.youtube, "podcast_playlist_id", None) or ""
+                        getattr(config.youtube, "shorts_playlist_id", None) or ""
                     ).strip()
-                    if not playlist_id:
-                        if short_idx == 0:
-                            logger.info(
-                                "Podcast playlist ID empty — skipping playlist add."
-                            )
-                    else:
+                    if playlist_id:
                         try:
                             add_video_to_playlist(
                                 credentials=credentials,

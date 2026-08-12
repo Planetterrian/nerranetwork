@@ -98,7 +98,11 @@ def _record_status_row(config, lang: str, episode_num: int, *,
                  if not (v.get("episode") == episode_num
                          and v.get("kind") == kind
                          and v.get("status") == status)]
+    # ``channel`` rides on every row in a per-language index — consumers
+    # (analytics glob, retitle channel scoping, its drift guard) treat a
+    # channel-less record as a foreign body.
     row = {"episode": episode_num, "kind": kind, "status": status,
+           "channel": lang,
            "recorded": _dt.datetime.now(_dt.timezone.utc).isoformat()}
     row.update({k: v for k, v in extra.items() if v is not None})
     videos.append(row)

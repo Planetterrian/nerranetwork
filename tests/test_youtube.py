@@ -175,12 +175,39 @@ def test_format_chapter_timestamp_over_an_hour():
     assert vm._format_chapter_timestamp(3725) == "1:02:05"
 
 
-def test_chapter_block_requires_zero_start():
+def test_chapter_block_synthesizes_intro_when_first_starts_late():
+    # Every committed chapters file starts AFTER the music intro (0 of
+    # 1,333 began at 0:00 measured 2026-08-12), so the old "return ''
+    # unless the first stamp is 0:00" guard meant NO episode ever
+    # shipped seek-bar chapters. A late first chapter now gets a
+    # synthetic 0:00 Intro line prepended.
     chapters = [
-        {"title": "Intro", "startTime": 30},  # YouTube ignores blocks not starting at 0
+        {"title": "Top Stories", "startTime": 30},
         {"title": "Main", "startTime": 120},
     ]
-    assert vm._format_chapter_block(chapters) == ""
+    block = vm._format_chapter_block(chapters)
+    assert block.splitlines() == ["0:00 Intro", "0:30 Top Stories", "2:00 Main"]
+
+
+def test_chapter_block_clamps_a_near_zero_first_chapter():
+    # A sub-10s opening chapter makes YouTube reject the whole block, so
+    # a first chapter inside the first 10 s is clamped to 0:00 instead
+    # of gaining a 3-second synthetic Intro.
+    chapters = [
+        {"title": "Cold Open", "startTime": 3.0},
+        {"title": "Main", "startTime": 120},
+    ]
+    block = vm._format_chapter_block(chapters)
+    assert block.splitlines() == ["0:00 Cold Open", "2:00 Main"]
+
+
+def test_chapter_block_localizes_the_synthetic_intro():
+    chapters = [
+        {"title": "Новости", "startTime": 20},
+        {"title": "Итоги", "startTime": 300},
+    ]
+    block = vm._format_chapter_block(chapters, language="ru")
+    assert block.splitlines()[0] == "0:00 Вступление"
 
 
 def test_chapter_block_renders_when_starts_at_zero():

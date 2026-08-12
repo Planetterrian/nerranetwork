@@ -177,18 +177,32 @@ def _read_chapters(chapters_path: Optional[Path]) -> List[Dict]:
     return chapters
 
 
-def _format_chapter_block(chapters: List[Dict]) -> str:
+# YouTube requires a chapter block to start at 0:00 and each chapter to
+# run >= 10 s or it silently ignores the whole block. Every committed
+# chapters_ep*.json starts AFTER the music intro (0 of 1,333 files began
+# at 0:00 when measured 2026-08-12), so the old "return '' unless the
+# first stamp is 0:00" guard discarded every chapter block the network
+# ever generated — the description slot existed, the formatter existed,
+# and no episode ever shipped seek-bar chapters. Synthesize the missing
+# intro line instead of giving up.
+_MIN_FIRST_CHAPTER_S = 10.0
+_INTRO_LABELS = {"en": "Intro", "ru": "Вступление", "fr": "Intro"}
+
+
+def _format_chapter_block(chapters: List[Dict], *, language: str = "en") -> str:
     """Render chapters as the YouTube-compatible ``0:00 Title`` block.
 
-    Returns an empty string when the chapter list is missing, has fewer
-    than 2 entries, or doesn't start at 0 — YouTube silently ignores
-    chapter blocks that don't meet those rules, so there's no point
-    rendering one.
+    A chapter list that starts after 0:00 (the network's normal shape —
+    chapter 1 begins after the music intro) gets a synthetic ``0:00
+    Intro`` line prepended; when chapter 1 starts inside the first 10 s
+    it is clamped to 0:00 instead, because a sub-10 s opening chapter
+    makes YouTube ignore the whole block. Returns an empty string only
+    when fewer than 2 real chapters render.
     """
     if not chapters or len(chapters) < 2:
         return ""
 
-    rendered: List[str] = []
+    parsed: List[tuple] = []
     for ch in chapters:
         if not isinstance(ch, dict):
             continue
@@ -200,9 +214,22 @@ def _format_chapter_block(chapters: List[Dict]) -> str:
             start_f = float(start)
         except (TypeError, ValueError):
             continue
-        rendered.append(f"{_format_chapter_timestamp(start_f)} {title}")
+        parsed.append((start_f, title))
 
-    # YouTube requires the first stamp to be 0:00.
+    if len(parsed) < 2:
+        return ""
+    parsed.sort(key=lambda pair: pair[0])
+
+    first_start = parsed[0][0]
+    if 0 < first_start < _MIN_FIRST_CHAPTER_S:
+        # Chapter 1 begins almost immediately — clamp it to 0:00 rather
+        # than shipping a sub-10 s Intro chapter YouTube would reject.
+        parsed[0] = (0.0, parsed[0][1])
+    elif first_start >= _MIN_FIRST_CHAPTER_S:
+        label = _INTRO_LABELS.get((language or "en").lower()[:2], "Intro")
+        parsed.insert(0, (0.0, label))
+
+    rendered = [f"{_format_chapter_timestamp(s)} {t}" for s, t in parsed]
     if not rendered or not rendered[0].startswith("0:00"):
         return ""
     return "\n".join(rendered)
@@ -392,7 +419,10 @@ def build_long_form_metadata(
         paragraphs = [p.strip() for p in body_source.split("\n\n") if p.strip()]
         body = "\n\n".join(paragraphs[:4]).strip()
 
-    chapters_block = _format_chapter_block(_read_chapters(chapters_path))
+    chapters_block = _format_chapter_block(
+        _read_chapters(chapters_path),
+        language=getattr(config.youtube, "default_language", "en") or "en",
+    )
 
     # Order matters: YouTube only shows the first ~150 chars above the
     # "Show more" fold on mobile, so the subscribe link goes right
@@ -483,35 +513,57 @@ def build_long_form_metadata(
         pieces.append(discovery_line)
     if body:
         pieces.append(body)
+
+    # Tail blocks are assembled separately and RESERVED: the footage
+    # credit is a license obligation (CC BY requires attribution
+    # wherever the video ships) and the AI disclosure is a policy
+    # commitment — both used to sit last in one flat list, so a long
+    # digest body pushed them past YOUTUBE_DESC_MAX and the tail-side
+    # truncation silently deleted them. Now the head (hook → body) is
+    # clipped to whatever room the tail leaves, never the reverse.
+    tail_pieces: List[str] = []
     if chapters_block:
-        pieces.append("Chapters:\n" + chapters_block)
+        tail_pieces.append("Chapters:\n" + chapters_block)
     if audio_url:
-        pieces.append(f"Direct audio: {audio_url}")
+        tail_pieces.append(f"Direct audio: {audio_url}")
     if photo_attribution:
         cleaned = [line.strip() for line in photo_attribution if line.strip()]
         if cleaned:
-            pieces.append("Photos via Pexels:\n" + "\n".join(cleaned))
+            tail_pieces.append("Photos via Pexels:\n" + "\n".join(cleaned))
     if footage_attribution:
         cleaned = [line.strip() for line in footage_attribution
                    if line.strip()]
         if cleaned:
-            pieces.append("Footage:\n" + "\n".join(cleaned))
+            tail_pieces.append("Footage:\n" + "\n".join(cleaned))
     disclosure = (config.youtube.synthetic_disclosure or "").strip()
     if disclosure:
-        pieces.append(disclosure)
+        tail_pieces.append(disclosure)
     pinned = build_pinned_comment_text(
         config, hook=hook, episode_num=episode_num, today_str=today_str,
         rss_link=rss_link, audio_url=audio_url,
     )
     if pinned:
-        pieces.append("—\nSuggested pinned comment:\n" + pinned)
+        tail_pieces.append("—\nSuggested pinned comment:\n" + pinned)
 
     # Final safety strip — YouTube rejects any description containing
     # ``<`` or ``>`` with HTTP 400 ``invalidDescription``. ``_strip_markdown``
     # already cleans the body, but the hook + chapter titles flow into
     # the description verbatim, so we belt-and-braces strip again here.
-    description = "\n\n".join(pieces).strip().replace("<", "").replace(">", "")
-    description = _truncate(description, YOUTUBE_DESC_MAX)
+    def _clean(text: str) -> str:
+        return text.strip().replace("<", "").replace(">", "")
+
+    head = _clean("\n\n".join(pieces))
+    tail = _clean("\n\n".join(tail_pieces))
+    if tail:
+        head_budget = YOUTUBE_DESC_MAX - len(tail) - 2  # "\n\n" join
+        if head_budget >= 200:
+            description = _truncate(head, head_budget) + "\n\n" + tail
+        else:
+            # Pathological tail — fall back to the old whole-string clip
+            # rather than shipping a description that is all boilerplate.
+            description = _truncate(head + "\n\n" + tail, YOUTUBE_DESC_MAX)
+    else:
+        description = _truncate(head, YOUTUBE_DESC_MAX)
 
     # Per-episode entity tags: prepend the day's specific entities (from the
     # hook) ahead of the show's static tags, so each upload's tag set reflects
@@ -549,6 +601,7 @@ def build_short_metadata(
     optimized_title: Optional[str] = None,
     channel: str = "en",
     variant: str = "",
+    topic_hook: str = "",
 ) -> Dict:
     """Assemble the YouTube metadata payload for a Shorts upload.
 
@@ -558,6 +611,14 @@ def build_short_metadata(
     the "Show more" fold on mobile. *optimized_title* (from
     ``engine.youtube_titles``), when present, is used as the headline in
     place of the spoken hook.
+
+    *topic_hook*, when set, is what hashtags and entity tags are
+    extracted from — for Shorts #2/#3 the *hook* argument is a
+    mid-episode window excerpt that often carries no proper nouns, so
+    without a separate topic source the clickable hashtag row above the
+    Shorts title collapsed to ``#Shorts #podcast`` and the per-episode
+    entity tags to the show's static keywords. Pass the episode-level
+    hook here; falls back to *hook* when empty.
     """
     rss_title = (
         getattr(config.publishing, "rss_title", "")
@@ -575,22 +636,40 @@ def build_short_metadata(
 
     # Hashtags immediately after the headline so the first 3 become
     # clickable topic links above the Shorts title (discovery lever).
+    tag_source = (topic_hook or "").strip() or hook
     from engine.shorts_hashtags import extract_hashtags, format_hashtag_line
     extracted = extract_hashtags(
-        hook,
+        tag_source,
         show_keywords=list(getattr(config, "keywords", []) or []),
         max_hashtags=5,
     )
     hashtag_line = format_hashtag_line(extracted, ("#Shorts", "#podcast"))
+
+    base_url = getattr(config.publishing, "base_url",
+                       "https://nerranetwork.com").rstrip("/")
+    rss_link = getattr(config.publishing, "rss_link", "") or base_url
 
     pieces: List[str] = [headline]
     if hashtag_line:
         pieces.append(hashtag_line)
     if long_form_url:
         pieces.append(f"▶ Full episode: {long_form_url}")
-    base_url = getattr(config.publishing, "base_url",
-                       "https://nerranetwork.com").rstrip("/")
-    rss_link = getattr(config.publishing, "rss_link", "") or base_url
+    else:
+        # Shorts-only policy days used to drop the "Full episode" line
+        # entirely — the description's strongest funnel placement gone
+        # on exactly the tiers that have nothing BUT Shorts. Point it at
+        # the funnel-tagged show destination instead (the comment path
+        # already did this; see the ru_dub fallback note).
+        from engine import funnel as _short_funnel
+
+        _fallback = _short_funnel.episode_link(
+            _short_funnel.destination_for(config, channel=channel) or rss_link,
+            getattr(config, "slug", ""), episode_num,
+            channel=channel, kind="short", variant=variant,
+            placement=_short_funnel.PLACEMENT_DESCRIPTION,
+        )
+        if _fallback:
+            pieces.append(f"▶ Full episode: {_fallback}")
     # Funnel-tagged destination (see engine/funnel.py). ``variant`` rides
     # in the campaign id so the Shorts motion A/B can be read straight
     # out of GA4 without a second join.
@@ -618,7 +697,8 @@ def build_short_metadata(
     try:
         from engine.shorts_hashtags import extract_entity_phrases
         _entity_tags = extract_entity_phrases(
-            hook, show_keywords=list(getattr(config, "keywords", []) or []),
+            tag_source,
+            show_keywords=list(getattr(config, "keywords", []) or []),
             max_phrases=8,
         )
     except Exception:  # noqa: BLE001
