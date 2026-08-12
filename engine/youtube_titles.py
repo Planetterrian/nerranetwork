@@ -73,11 +73,22 @@ def _performance_hint(perf_dir: Optional[Path], *, channel: str = "en") -> str:
             return ""
         data = json.loads(path.read_text(encoding="utf-8"))
         channel = (channel or "en").lower()
-        keyed = (
-            data.get("title_hint_ru") if channel == "ru"
-            else data.get("title_hint_en")
-        )
+        # Channel-generic (Aug 2026): the old en/ru two-way branch sent
+        # every OTHER channel (fr today) the ENGLISH hint.
+        keyed = data.get(f"title_hint_{channel}")
         hint = (keyed or data.get("title_hint") or "").strip()
+        # A hint mined from analytics that stopped updating is stale
+        # steering — ignore anything older than ~3 weeks.
+        try:
+            import datetime as _dt
+            gen = data.get("generated") or ""
+            if gen:
+                age = (_dt.datetime.now(_dt.timezone.utc)
+                       - _dt.datetime.fromisoformat(gen))
+                if age.days > 21:
+                    return ""
+        except Exception:  # noqa: BLE001 — age gate is best-effort
+            pass
         return ("\nWHAT'S WORKING (from this show's recent YouTube retention — "
                 "lean toward these angles/keywords if they fit honestly):\n"
                 f"{hint}\n") if hint else ""

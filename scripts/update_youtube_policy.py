@@ -70,6 +70,9 @@ MIN_VIDEOS_CONFIDENT = 4    # per kind — below this, hold the active setting
 LONG_VPD_FLOOR: Dict[str, float] = {"en": 1.0, "ru": 2.0, "fr": 2.0}
 SHORT_VPD_PROBE = 0.5       # below this, shorts-only reads as "probe" (D)
 STREAK_TO_FLIP = 2          # consecutive identical computed tiers to flip
+# Stats older than this freeze the policy (loud ::warning::) instead of
+# recomputing tiers from a frozen 14-day cohort every night.
+STATS_MAX_AGE_DAYS = 3
 
 # Shorts supply ladder: (min avg views/day, Shorts per episode), highest
 # matching band wins. Below the lowest band, one Short — Shorts are NEVER
@@ -380,6 +383,30 @@ def main() -> int:
         logger.warning("Keeping existing %s unchanged (no stats data)",
                        out_path)
         return 0
+
+    # Staleness gate (Aug 2026): a stats file whose fetch silently died
+    # keeps its old `generated` stamp, and because collect_velocities
+    # dates the 14-day window off that stamp, the SAME frozen cohort
+    # recomputed the same tier every night — with STREAK_TO_FLIP=2 that
+    # is enough to flip a tier on day two of an outage and hold it
+    # there. Treat stale stats like missing stats: freeze the policy
+    # loudly instead of steering on dead data.
+    if stats is not None and out_path.exists():
+        try:
+            # Freeze only when there is a VALID previous policy to keep —
+            # a corrupt previous file still restarts from seeds below.
+            json.loads(out_path.read_text(encoding="utf-8"))
+            gen = str(stats.get("generated") or "")
+            age = (_dt.datetime.now(_dt.timezone.utc)
+                   - _dt.datetime.fromisoformat(gen))
+            if age > _dt.timedelta(days=STATS_MAX_AGE_DAYS):
+                print(f"::warning::youtube_stats.json is {age.days}d old — "
+                      "keeping the existing publishing policy unchanged "
+                      "until the analytics fetch recovers.", flush=True)
+                logger.warning("Stats stale (%s old) — policy frozen", age)
+                return 0
+        except Exception:  # noqa: BLE001 — an unparseable stamp isn't fatal
+            pass
 
     previous: Optional[dict] = None
     if out_path.exists():

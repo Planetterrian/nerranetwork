@@ -209,6 +209,24 @@ class TestSeedsAndBestEffort:
         assert mod.main() == 0
         assert json.loads(out_path.read_text()) == {"sentinel": True}
 
+    def test_stale_stats_freeze_a_valid_policy(self, tmp_path, monkeypatch):
+        # Aug 2026: a stats file whose fetch silently died keeps its old
+        # `generated` stamp; recomputing tiers from the frozen cohort
+        # every night could flip a tier on day two of an outage
+        # (STREAK_TO_FLIP=2). Stale stats + a valid existing policy =
+        # freeze loudly, change nothing.
+        mod = _load_script()
+        monkeypatch.setattr(mod, "ROOT", tmp_path)
+        (tmp_path / "api").mkdir(parents=True)
+        (tmp_path / "api" / "youtube_stats.json").write_text(
+            json.dumps(_stats([], generated="2026-07-01T00:00:00+00:00")),
+            encoding="utf-8")
+        out_path = tmp_path / "api" / "youtube_policy.json"
+        out_path.write_text('{"sentinel": true}', encoding="utf-8")
+        monkeypatch.setattr(sys, "argv", ["update_youtube_policy.py"])
+        assert mod.main() == 0
+        assert json.loads(out_path.read_text()) == {"sentinel": True}
+
     def test_unreadable_previous_policy_restarts_from_seeds(
             self, tmp_path, monkeypatch):
         mod = _load_script()
@@ -680,17 +698,37 @@ class TestMondayLongFormProbe:
             "tier": "C", "publish_long_form": False,
             "shorts_per_episode": 1, "reason": "tier C"}}}}
 
-    def test_monday_grants_probe_long(self):
+    def test_probe_day_grants_probe_long(self):
+        # Probe days are sharded per (channel, slug) since Aug 2026 —
+        # every gated show probing on the same UTC Monday was a weekly
+        # render/upload spike where each probe competed with every other
+        # probe for the same day's browse surface. en/omni_view hashes
+        # to weekday 2 (Wednesday); 2026-07-22 is a Wednesday.
         import datetime
-        from engine.youtube_policy import resolve_publish_plan
+        from engine.youtube_policy import resolve_publish_plan, _is_probe_day
+        probe_date = datetime.date(2026, 7, 22)
+        assert _is_probe_day(probe_date, slug="omni_view", channel="en")
         plan = resolve_publish_plan(
             self._policy(), slug="omni_view", channel="en",
             yaml_publish_long=True, yaml_shorts=1, smart_mode=True,
-            adaptive_enabled=True, probe_today=datetime.date(2026, 7, 20))
+            adaptive_enabled=True, probe_today=probe_date)
         assert plan["publish_long"] is True
         assert "probe" in plan["reason"].lower()
 
-    def test_non_monday_keeps_long_gated(self):
+    def test_probes_are_sharded_across_the_week(self):
+        # Not every show probes on the same weekday.
+        import datetime
+        from engine.youtube_policy import _is_probe_day
+        slugs = ["omni_view", "tesla", "spacex", "fascinating_frontiers",
+                 "modern_investing", "env_intel", "planetterrian"]
+        base = datetime.date(2026, 7, 20)  # a Monday
+        days = {s: next(d for d in range(7)
+                        if _is_probe_day(base + datetime.timedelta(days=d),
+                                         slug=s, channel="en"))
+                for s in slugs}
+        assert len(set(days.values())) > 1, days
+
+    def test_non_probe_day_keeps_long_gated(self):
         import datetime
         from engine.youtube_policy import resolve_publish_plan
         plan = resolve_publish_plan(

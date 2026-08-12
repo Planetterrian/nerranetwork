@@ -203,12 +203,21 @@ def main() -> int:
     # perf file lands next to that show's index file.
     for dir_name, payload in shows.items():
         videos = payload.get("videos") or []
-        hint_en = _compose_kind_hints(videos, channel="en")
-        hint_ru = _compose_kind_hints(videos, channel="ru")
+        # Channel-generic hints (Aug 2026): the old two-way en/ru pair
+        # meant FR rows — collected since the July index-glob fix — were
+        # mined into nothing, and every future dub channel would silently
+        # read the ENGLISH hint. One hint per channel present in the data.
+        channels = sorted({(v.get("channel") or "en").lower()
+                           for v in videos if isinstance(v, dict)})
+        hints = {ch: _compose_kind_hints(videos, channel=ch)
+                 for ch in channels}
+        hint_en = hints.get("en", "")
+        hint_ru = hints.get("ru", "")
         # Primary title_hint: EN for English shows; RU natives (finansy /
         # privet) often have only @NerraRU rows — fall back so they aren't
         # permanently hint-starved.
-        hint = hint_en or hint_ru
+        hint = hint_en or hint_ru or next(
+            (h for h in hints.values() if h), "")
         if not hint:
             logger.info("%s: too few rated videos (%d) — skipped",
                         dir_name, len(videos))
@@ -222,9 +231,9 @@ def main() -> int:
             "generated": _dt.datetime.now(_dt.timezone.utc).isoformat(),
             "video_count": len(videos),
             "title_hint": hint,
-            "title_hint_en": hint_en,
-            "title_hint_ru": hint_ru,
         }
+        for ch, h in hints.items():
+            out[f"title_hint_{ch}"] = h
         (out_dir / "youtube_performance.json").write_text(
             json.dumps(out, indent=2, ensure_ascii=False), encoding="utf-8"
         )
