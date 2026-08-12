@@ -263,10 +263,33 @@ def score_candidates(
     if not segments:
         return []
 
+    if not audio_duration or audio_duration <= 0:
+        # ffprobe failures reach here as 0.0 (callers coerce None), and
+        # with audio_duration == 0 BOTH end-of-audio guards below were
+        # skipped — the selector could hand back a window starting 10 s
+        # before the file ends, shipping a truncated Short or one whose
+        # tail is all outro. Recover the duration from the transcript
+        # itself before giving up: a degraded-but-bounded pick beats an
+        # unbounded one.
+        try:
+            audio_duration = (
+                float(data.get("duration") or 0.0)
+                or float(segments[-1].get("end") or 0.0) + audio_offset
+            )
+        except (TypeError, ValueError):
+            audio_duration = 0.0
+        if audio_duration <= 0:
+            logger.warning(
+                "Smart Shorts selector: no usable audio duration "
+                "(probe failed, transcript carries none) — falling back "
+                "to the legacy start so a window can't overrun the "
+                "audio.")
+            return []
+
     # Pre-filter: segments must have a numeric start, must be in the
     # acceptable window of the audio, and must carry text.
     valid: List[dict] = []
-    for s in segments:
+    for full_idx_src, s in enumerate(segments):
         if not isinstance(s, dict):
             continue
         text = (s.get("text") or "").strip()
@@ -284,19 +307,18 @@ def score_candidates(
             or final_start > audio_duration * max_late_pct
         ):
             continue
-        valid.append(s)
+        valid.append((full_idx_src, s))
 
     if not valid:
         return []
 
     out: List[ScoredWindow] = []
-    for i, seg in enumerate(valid):
-        # The window's index in the FULL segments list — _window_score
-        # walks forward from there to score overlap.
-        try:
-            full_idx = segments.index(seg)
-        except ValueError:
-            full_idx = i
+    for full_idx, seg in valid:
+        # The window's index in the FULL segments list is carried from
+        # the filter above — dict-equality .index() recovery resolved
+        # duplicate segments (identical filler lines) to the FIRST
+        # occurrence, scoring a late candidate against the early
+        # window's forward context, and was O(n^2) besides.
         score = _window_score(
             segments, full_idx,
             window_duration=window_duration,

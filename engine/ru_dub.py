@@ -309,15 +309,16 @@ def _translate_title_to_ru(en_title: str) -> str:
 def _word_trim(text: str, limit: int) -> str:
     """Trim *text* to <= *limit* chars on a WORD boundary (never mid-word).
 
-    No trailing ellipsis — the Short appends " #Shorts", and "…" + "#Shorts"
-    reads awkwardly. Trailing punctuation left by the cut is stripped."""
+    Delegates to ``engine.titles.clip_words`` — the module that owns every
+    title limit — so hyphen/dash/slash boundaries count too (a local
+    space-only reimplementation shipped mid-word cuts on compound-heavy
+    RU/FR titles). No trailing ellipsis: the Short appends " #Shorts",
+    and "…" + "#Shorts" reads awkwardly. Trailing punctuation left by the
+    cut is stripped."""
+    from engine.titles import clip_words
+
     text = (text or "").strip()
-    if len(text) <= limit:
-        return text.rstrip(" ,.:;—-…")
-    cut = text[:limit]
-    if " " in cut:
-        cut = cut[:cut.rfind(" ")]  # break before the partial last word
-    return cut.rstrip(" ,.:;—-…")
+    return clip_words(text, limit, ellipsis="").rstrip(" ,.:;—-…")
 
 
 # Function words that cannot end a headline. A word-boundary trim keeps

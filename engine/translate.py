@@ -358,9 +358,13 @@ def headline_from_excerpt(
     youtube_titles loop).
     """
     excerpt = _collapse_ws(excerpt or "")
-    if len(excerpt) < 15 or lang not in LANGUAGE_NAMES:
+    # "en" is allowed here but deliberately NOT added to LANGUAGE_NAMES:
+    # engine/multilingual.py falls back to supported_languages() when a
+    # show declares none, and registering English there would spawn an
+    # English "translation" track on every such show.
+    if len(excerpt) < 15 or (lang != "en" and lang not in LANGUAGE_NAMES):
         return ""
-    name = language_name(lang)
+    name = "English" if lang == "en" else language_name(lang)
     prompt = (
         f"This is an excerpt from a {name} podcast transcript; it may begin "
         f"mid-sentence:\n\n\"{excerpt[:400]}\"\n\n"

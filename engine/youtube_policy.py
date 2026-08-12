@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import datetime
 import json
+import hashlib
 import logging
 from pathlib import Path
 from typing import Dict, Optional
@@ -154,13 +155,15 @@ def resolve_publish_plan(
 
     publish_long = bool(entry.get("publish_long_form", yaml_publish_long))
     reason = str(entry.get("reason") or "")
-    if not publish_long and yaml_publish_long and _is_probe_day(probe_today):
+    if (not publish_long and yaml_publish_long
+            and _is_probe_day(probe_today, slug=slug, channel=channel)):
         # Weekly long-form probe: a Shorts-only show produces no long-form
         # analytics, so without this it could never re-earn its long-form
         # (a one-way door). One probe long per week generates the data the
-        # nightly tier computation needs to promote it back.
+        # nightly tier computation needs to promote it back. Sharded per
+        # show so the probes don't all land on the same UTC Monday.
         publish_long = True
-        reason = (reason + " | " if reason else "") + "Monday long-form probe"
+        reason = (reason + " | " if reason else "") + "weekly long-form probe"
 
     if force_long and not publish_long:
         publish_long = True
@@ -177,8 +180,19 @@ def resolve_publish_plan(
     return plan
 
 
-def _is_probe_day(today: Optional["datetime.date"]) -> bool:
-    """True on the weekly long-form probe day (Monday, UTC)."""
+def _is_probe_day(today: Optional["datetime.date"],
+                  slug: str = "", channel: str = "en") -> bool:
+    """True on this show's weekly long-form probe day.
+
+    Sharded deterministically by (channel, slug) so every gated show
+    doesn't probe on the same UTC Monday — the synchronized probe was a
+    weekly render/Grok/upload spike on one day, and every probe competed
+    with every other probe for the same day's browse surface. A show
+    without a slug keeps the legacy Monday.
+    """
 
     day = today or datetime.datetime.now(datetime.timezone.utc).date()
-    return day.weekday() == 0
+    if not slug:
+        return day.weekday() == 0
+    digest = hashlib.sha1(f"{channel}/{slug}".encode("utf-8")).hexdigest()
+    return day.weekday() == int(digest, 16) % 7

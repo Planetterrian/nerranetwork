@@ -504,8 +504,13 @@ _MAX_SCENE_HOLD_S = 15.0
 # path falls back to hard-cut concat if the xfade chain ever fails, so this
 # can never make a render fail outright.
 _SLIDESHOW_XFADE_S = 0.6
+# dissolve/fadeblack were removed from the rotation (Aug 2026): ffmpeg's
+# dissolve is a random per-pixel threshold — on photographic stills it
+# reads as a burst of noise, and it is the worst possible input for the
+# x264 maxrate ceiling; fadeblack dips to black mid-episode, which reads
+# as an unintended cut on a continuous slideshow.
 _XFADE_TRANSITIONS = [
-    "fade", "dissolve", "smoothleft", "fadeblack", "smoothright", "fade",
+    "fade", "smoothleft", "fade", "circleopen", "smoothright", "fade",
 ]
 
 # Ken Burns geometry (July 2026 sharpness pass).
@@ -654,7 +659,7 @@ def _ken_burns(frames: int, move: str, *,
     """
     n = max(2, int(frames))
     # Normalised progress 0..1 across this scene, in OUTPUT frames.
-    p = f"(on/{n - 1})"
+    p = f"(min(on/{n - 1},1))"
     amp = round(zoom_max - 1.0, 6)
 
     if move.startswith("out"):
@@ -791,7 +796,7 @@ def _slideshow_filter_graph(scene_count: int, *,
     chains: List[str] = []
     for i in range(scene_count):
         clip_len = durs[i] + xfade_pad
-        frames_per_scene = int(clip_len * fps)
+        frames_per_scene = max(2, round(clip_len * fps))
         chains.append(_ken_burns_chain(
             f"[{i}:v]", f"[s{i}]",
             frames=frames_per_scene, index=i,
@@ -870,7 +875,9 @@ def _slideshow_cmd(scene_paths: Sequence[Path], output: Path,
         "-r", str(fps),
         *_VIDEO_ENCODE_FAST,
         "-an",
-        "-movflags", "+faststart",
+        # No +faststart: this is a local intermediate (decoded by stage 2,
+        # then deleted) — relocating the moov atom is a full second pass
+        # over the file for a player that will never stream it.
         str(output),
     ]
 
@@ -894,10 +901,17 @@ def _render_slideshow(scene_paths: Sequence[Path], output: Path,
     """
     if output.exists():
         return output
+    # Render to a temp name + atomic replace: a run killed mid-encode
+    # (pipeline timeout) used to leave a truncated MP4 that the
+    # ``output.exists()`` guard above happily reused on the next run —
+    # with ``-shortest``, the delivered episode silently truncated to
+    # the broken intermediate's length.
+    tmp_output = output.with_name(output.stem + ".part" + output.suffix)
+    tmp_output.unlink(missing_ok=True)
     logger.info("Rendering slideshow (%d scenes, %dx%d, crossfade=%.1fs) → %s",
                 len(scene_paths), width, height, _SLIDESHOW_XFADE_S, output.name)
     try:
-        cmd = _slideshow_cmd(scene_paths, output,
+        cmd = _slideshow_cmd(scene_paths, tmp_output,
                              scene_duration=scene_duration,
                              scene_durations=scene_durations,
                              width=width, height=height, fps=fps,
@@ -908,14 +922,15 @@ def _render_slideshow(scene_paths: Sequence[Path], output: Path,
             "Crossfade slideshow render failed (%s) — retrying with hard cuts.",
             exc,
         )
-        output.unlink(missing_ok=True)
-        cmd = _slideshow_cmd(scene_paths, output,
+        tmp_output.unlink(missing_ok=True)
+        cmd = _slideshow_cmd(scene_paths, tmp_output,
                              scene_duration=scene_duration,
                              scene_durations=scene_durations,
                              width=width, height=height, fps=fps,
                              crossfade=0.0,
                              kb_seed=kb_seed, kb_extended=kb_extended)
         _run_ffmpeg(cmd, label="slideshow render (hard cut fallback)")
+    os.replace(tmp_output, output)
     return output
 
 
@@ -951,7 +966,7 @@ def _hybrid_filter_graph(visuals: Sequence[tuple], *,
             # Same duration-normalised, centred Ken Burns as the pure
             # slideshow — the stills between clips used to freeze after
             # 5 s and drift to the top-left exactly like every other one.
-            frames = int(float(duration) * fps)
+            frames = max(2, round(float(duration) * fps))
             chains.append(_ken_burns_chain(
                 f"[{i}:v]", f"[s{i}]",
                 frames=frames, index=i,
@@ -992,9 +1007,12 @@ def _hybrid_slideshow_cmd(visuals: Sequence[tuple], output: Path, *,
                              kb_seed=kb_seed, kb_extended=kb_extended),
         "-map", "[v]",
         "-r", str(fps),
-        *_VIDEO_ENCODE,
+        # FAST profile: this file is a stage-1 intermediate that stage 2
+        # re-encodes at delivery quality — paying preset medium + crf 22
+        # here compounded generation loss AND wall-clock for a file that
+        # is deleted minutes later (_slideshow_cmd already used FAST).
+        *_VIDEO_ENCODE_FAST,
         "-an",
-        "-movflags", "+faststart",
         str(output),
     ]
 
@@ -1007,13 +1025,18 @@ def _render_hybrid_slideshow(visuals: Sequence[tuple], output: Path, *,
     """Render the stage-1 hybrid (stills + clips) MP4. Idempotent."""
     if output.exists():
         return output
-    cmd = _hybrid_slideshow_cmd(visuals, output,
+    # Same anti-partial-file guard as _render_slideshow: never let a
+    # truncated intermediate from a killed run satisfy the exists() check.
+    tmp_output = output.with_name(output.stem + ".part" + output.suffix)
+    tmp_output.unlink(missing_ok=True)
+    cmd = _hybrid_slideshow_cmd(visuals, tmp_output,
                                 width=width, height=height, fps=fps,
                                 kb_seed=kb_seed, kb_extended=kb_extended)
     n_clips = sum(1 for _p, is_v, _d in visuals if is_v)
     logger.info("Rendering hybrid slideshow (%d segments, %d clips, %dx%d) → %s",
                 len(visuals), n_clips, width, height, output.name)
     _run_ffmpeg(cmd, label="hybrid slideshow render")
+    os.replace(tmp_output, output)
     return output
 
 
@@ -1040,7 +1063,15 @@ def _build_hybrid_sequence(scene_paths: Sequence[Path],
     if remaining > 0:
         hold = max(6.0, remaining / len(stills))
         if hold > max_scene_hold_s and len(stills) > 1:
+            # Clamp to the same slot ceiling as _uniform_slideshow_plan —
+            # this third copy of the cycling rule was never brought in
+            # line when Ep537's 74 uncapped slots timed out the pipeline,
+            # so a long episode with clips could still ask ffmpeg for
+            # ~70 inputs on the hybrid path.
+            from engine.scene_scheduler import _MAX_SLIDESHOW_SLOTS
+
             target = max(len(stills), math.ceil(remaining / max_scene_hold_s))
+            target = min(target, _MAX_SLIDESHOW_SLOTS)
             stills = [stills[i % len(stills)] for i in range(target)]
             hold = max(6.0, remaining / len(stills))
     else:
@@ -1162,8 +1193,14 @@ def _build_short_hybrid_sequence(
     if not clips:
         raise ValueError("no usable clips for the hybrid Shorts background")
 
+    # Accent clamp, mirroring the long-form _MAX_BROLL_SEGMENT_S: without
+    # a per-clip cap, one long stock master (NASA b-roll runs 229-2442 s)
+    # probed at `min(clip_len, duration)` and consumed the ENTIRE Short —
+    # 33 s of one continuous stock clip, zero of the episode's paid
+    # imagery. 6 s reads as an accent at Shorts pace.
+    _max_seg = min(6.0, float(duration))
     measured = [
-        min(_probe_video_duration(c, nominal_clip_seconds), float(duration))
+        min(_probe_video_duration(c, nominal_clip_seconds), _max_seg)
         for c in clips
     ]
 
@@ -1578,12 +1615,34 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
     """
     font_path = _drawtext_escape(_find_font())
 
-    bg_chain = (
-        f"[0:v]"
-        f"scale={width}:{height}:force_original_aspect_ratio=increase,"
-        f"crop={width}:{height},setsar=1,"
-        f"{_GRADE_CHAIN},{_SHORTS_SHARPEN},format=yuv420p[bg]"
-    )
+    if bg_is_video:
+        bg_chain = (
+            f"[0:v]"
+            f"scale={width}:{height}:force_original_aspect_ratio=increase"
+            f":{_SCALE_FLAGS},"
+            f"crop={width}:{height},setsar=1,"
+            f"{_GRADE_CHAIN},{_SHORTS_SHARPEN},format=yuv420p[bg]"
+        )
+    else:
+        # Degraded path (cover fallback): the old chain shipped a frozen
+        # JPEG for the whole 35 s — the ONE render path with zero motion
+        # — and upscaled it with ffmpeg's default bicubic (every other
+        # upscale in this module uses lanczos), which _SHORTS_SHARPEN
+        # then sharpened. Mirror the long-form degraded branch: lanczos
+        # prescale + a slow centred push-in so the Short is never a
+        # static frame.
+        pre_w = int(width * _PRESCALE)
+        pre_h = int(height * _PRESCALE)
+        bg_chain = (
+            f"[0:v]"
+            f"scale={pre_w}:{pre_h}:force_original_aspect_ratio=increase"
+            f":{_SCALE_FLAGS},"
+            f"crop={pre_w}:{pre_h},setsar=1,"
+            f"zoompan=z='min(zoom+0.00006,1.08)'"
+            f":x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
+            f":d=1:s={width}x{height}:fps={fps},"
+            f"{_GRADE_CHAIN},{_SHORTS_SHARPEN},format=yuv420p[bg]"
+        )
 
     # Show brand pill goes top-right (anchor point for vertical Shorts).
     base = (
@@ -1708,20 +1767,24 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
             )
             post_brand_label = line_label
 
-    if subtitles_path:
+    # Subtitles used to burn in HERE, with the end card overlaid on top
+    # afterwards — and the PNG card is fully opaque, so the last ~3 s of
+    # every Short played speech with its caption text hidden under the
+    # card (8.6% of a 35 s Short, landing on the clip's final thought).
+    # The caption stage now runs AFTER the end-card overlay: the caption
+    # card paints its own 50%-black box, so it stays legible over the
+    # CTA, and no spoken word loses its text.
+    if subtitles_path and not end_card:
         escaped_sub = _subtitles_path_escape(subtitles_path)
         # Use the dedicated Shorts force-style so font + position
         # are tuned for the 1080x1920 vertical frame and don't
         # overlap the hook (above) or the URL pill (below).
-        sub_label = "[capted]" if end_card else "[v]"
         chain += (
             f";{post_brand_label}subtitles='{escaped_sub}'"
-            f":force_style='{_shorts_subtitle_style(caption_margin_v)}'{sub_label}"
+            f":force_style='{_shorts_subtitle_style(caption_margin_v)}'[v]"
         )
-        post_brand_label = sub_label
-        if not end_card:
-            return chain
-    elif hook and not end_card:
+        return chain
+    if hook and not end_card and not subtitles_path:
         # Hook was the last filter — already terminated at [v].
         return chain
 
@@ -1754,6 +1817,9 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
         enable_clause = (
             f"between(t,{end_card_start:.2f},{end_card_end:.2f})"
         )
+        # When captions follow, the card terminates at [carded] and the
+        # subtitles stage below produces the final [v].
+        card_out = "[carded]" if subtitles_path else "[v]"
 
         if end_card_image_input_label:
             # PNG path. The input is added as a video stream
@@ -1771,8 +1837,14 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
                 f";{end_card_image_input_label}format=rgba,"
                 f"fade=t=in:st={end_card_start:.2f}:d=0.45:alpha=1[endcard];"
                 f"{post_brand_label}[endcard]overlay="
-                f"x=0:y=0:enable='{enable_clause}'[v]"
+                f"x=0:y=0:enable='{enable_clause}'{card_out}"
             )
+            if subtitles_path:
+                escaped_sub = _subtitles_path_escape(subtitles_path)
+                chain += (
+                    f";{card_out}subtitles='{escaped_sub}'"
+                    f":force_style='{_shorts_subtitle_style(caption_margin_v)}'[v]"
+                )
             return chain
 
         # Drawtext fallback path. July 31 2026 (C4): the two drawtext
@@ -1806,8 +1878,14 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
             f"borderw=3:bordercolor=black:"
             f"alpha='{end_card_alpha}':"
             f"enable='{enable_clause}'"
-            f"[v]"
+            f"{card_out}"
         )
+        if subtitles_path:
+            escaped_sub = _subtitles_path_escape(subtitles_path)
+            chain += (
+                f";{card_out}subtitles='{escaped_sub}'"
+                f":force_style='{_shorts_subtitle_style(caption_margin_v)}'[v]"
+            )
         return chain
 
     return chain + f";{post_brand_label}null[v]"
@@ -2015,7 +2093,12 @@ def _single_pass_long_form_filter_graph(
     # bg_is_video branch so the two render paths ship the same look.
     if not slideshow.endswith("[v]"):
         raise ValueError("slideshow graph did not end with [v]")
-    graph = slideshow[: -len("[v]")] + f",{_GRADE_CHAIN}[bg]"
+    # format=yuv420p pins the composite's pixel-format negotiation the
+    # same way the two-stage bg_is_video branch does — without it, the
+    # rgba pill inputs let ffmpeg pick an RGB path for the whole
+    # composite (a full-frame colorspace round-trip per frame, and
+    # different chroma handling on overlay edges vs the two-stage path).
+    graph = slideshow[: -len("[v]")] + f",{_GRADE_CHAIN},format=yuv420p[bg]"
 
     # Scenes consume inputs 0..n-1, so audio/brand/pill shift up.
     brand_idx = scene_count + 1
@@ -2708,7 +2791,12 @@ def build_long_form_video(
                 )
                 bg_path = slideshow_path
                 bg_is_video = True
-            except subprocess.CalledProcessError as exc:
+            except (subprocess.CalledProcessError, RuntimeError) as exc:
+                # _run_ffmpeg raises RuntimeError — catching only
+                # CalledProcessError made this documented fallback dead
+                # code, so a slideshow failure lost the WHOLE long-form
+                # (and the video-podcast episode) instead of shipping
+                # the cover render.
                 logger.warning(
                     "Slideshow render failed (%s) — falling back to single cover",
                     exc,
@@ -2936,7 +3024,9 @@ def build_short_video(audio_path: Path, cover_path: Path,
                 )
                 bg_path = slideshow_path
                 bg_is_video = True
-            except subprocess.CalledProcessError as exc:
+            except (subprocess.CalledProcessError, RuntimeError) as exc:
+                # Same dead-fallback shape as the long-form path above:
+                # _run_ffmpeg raises RuntimeError.
                 logger.warning(
                     "Shorts slideshow render failed (%s) — falling back to cover",
                     exc,

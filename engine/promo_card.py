@@ -239,15 +239,25 @@ def generate_outro_card(
 
     # QR to the funnel-tagged show link, bottom-right (long-form is
     # watched on TVs/desktops where a phone-scan is the natural bridge).
+    # Geometry (Aug 2026 fix): the old 200 px block at y=760 overlapped
+    # the right screenshot's framed bottom corner (screenshots end at
+    # y≈794), and the localized scan label was centred on the QR's own
+    # 200 px width — the French label is 413 px wide and rendered 46 px
+    # off the right edge of the frame.
     if link_url:
-        qr = _qr_image(link_url, size=200)
+        qsize = 180
+        qr = _qr_image(link_url, size=qsize)
         if qr is not None:
-            qx, qy = width - 200 - 60, height - 200 - 120
+            qx, qy = width - qsize - 60, 840  # clears the shots at y≈794
             card.paste(qr, (qx, qy))
             scan_font = _load_font(26)
             scan = t["scan"]
             scw = scan_font.getbbox(scan)[2]
-            draw.text((qx + (200 - scw) // 2, qy + 210), scan,
+            sx = qx + (qsize - scw) // 2
+            # Clamp inside the frame — long localized labels shift left
+            # rather than clipping off-screen.
+            sx = max(20, min(sx, width - 40 - scw))
+            draw.text((sx, qy + qsize + 10), scan,
                       font=scan_font, fill=_MUTED)
 
     card.save(output_path, format="PNG", optimize=True)

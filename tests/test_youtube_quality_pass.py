@@ -88,9 +88,17 @@ class TestObservability:
         assert "YOUTUBE_REFRESH_TOKEN_%s is not set" in src
         assert 'suffix != "EN"' in src
 
-    def test_shorts_captions_path_metric(self):
+    def test_shorts_caption_mode_metric(self):
+        # Key must match what engine/pipeline.record_youtube_outcomes
+        # reads (shorts_caption_mode) — the old shorts_captions_path key
+        # was recorded by nothing, so the ASS-vs-SRT-fallback rate never
+        # reached metrics.
         src = (_ROOT / "run_show.py").read_text(encoding="utf-8")
-        assert 'result["shorts_captions_path"]' in src
+        assert 'result["shorts_caption_mode"]' in src
+        assert 'result["shorts_captions_path"]' not in src
+        pipeline_src = (_ROOT / "engine" / "pipeline.py").read_text(
+            encoding="utf-8")
+        assert '"shorts_caption_mode"' in pipeline_src
 
     def test_grok_degraded_slideshow_is_loud(self):
         """June 14 2026: with six shows on Grok Imagine, a silent outage that

@@ -636,6 +636,12 @@ class YouTubeConfig:
     tags: List[str] = field(default_factory=list)
     synthetic_disclosure: str = ""
     podcast_playlist_id: Optional[str] = None
+    # Optional playlist for Shorts. Shorts used to be inserted into
+    # ``podcast_playlist_id`` — the playlist YouTube Music ingests as the
+    # show's podcast — so every episode added 1-3 vertical 35 s clips as
+    # "podcast episodes" beside the real one. Shorts now go here, or
+    # nowhere when unset (never into the podcast playlist).
+    shorts_playlist_id: Optional[str] = None
     # ---- Russian-dub YouTube (June 2026) ----
     # When true, the decoupled multilingual flow also builds a Russian-dubbed
     # video from the show's auto-generated `ru` audio track (reusing the same

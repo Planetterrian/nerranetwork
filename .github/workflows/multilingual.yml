@@ -293,7 +293,11 @@ jobs:
           YOUTUBE_REFRESH_TOKEN_RU: ${{ secrets.YOUTUBE_REFRESH_TOKEN_RU }}
           YOUTUBE_REFRESH_TOKEN_FR: ${{ secrets.YOUTUBE_REFRESH_TOKEN_FR }}
         run: |
-          python scripts/post_scheduled_short_comments.py || \
+          # --show scopes the sweep to this matrix job's sidecar: three
+          # parallel jobs each running a GLOBAL sweep saw the same pending
+          # entries and each posted them — 2-3 identical bot comments per
+          # Short. The nightly single-job sweep stays global.
+          python scripts/post_scheduled_short_comments.py --show "${{ matrix.show }}" || \
             echo "::warning::scheduled-Short comment sweep failed (non-fatal)"
 
       - name: Build ${{ matrix.show }} language feeds

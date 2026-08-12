@@ -166,9 +166,8 @@ def _build_video_body(
             "privacyStatus": privacy_status,
             "selfDeclaredMadeForKids": made_for_kids,
             "containsSyntheticMedia": contains_synthetic_media,
-            # Skip YouTube's gradual rollout to subscribers' homepages
-            # (we have RSS + X for that). False = publish to subs feed.
-            "publishToSubscriptions": True,
+            # NOTE: "publishToSubscriptions" is not a real status field;
+            # notifySubscribers (query param, default true) is the control.
         },
     }
 

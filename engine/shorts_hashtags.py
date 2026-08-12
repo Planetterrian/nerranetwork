@@ -49,6 +49,11 @@ _STOPWORDS = frozenset((
     "Is", "Are", "Was", "Were", "Be", "Been", "Being",
     "Has", "Have", "Had", "Do", "Does", "Did",
     "Just", "Even", "Also", "Only", "Still", "More", "Less",
+    "We", "I", "You", "They", "It", "He", "She", "Its", "Our", "Your",
+    "New", "Will", "Can", "Could", "Should", "Would", "Says", "Say",
+    "Said", "Gets", "Get", "Got", "Goes", "Go", "Went", "Makes", "Make",
+    "Ships", "Ship", "Not", "No", "Yes", "As", "At", "By", "For", "From",
+    "In", "Of", "On", "To", "With", "Next", "Ago",
     "May", "June", "July", "August", "September", "October",
     "November", "December", "January", "February", "March", "April",
     "Monday", "Tuesday", "Wednesday", "Thursday", "Friday",
@@ -121,7 +126,12 @@ def _extract_multi_word_entities(hook: str) -> List[str]:
                 run.append(tokens[j])
                 j += 1
             if len(run) >= 2:
-                joined = "".join(_clean_for_tag(t) for t in run)
+                # Cap the run like extract_entity_phrases does — an
+                # uncapped Title-Case sentence ("Musk Says Optimus Will
+                # Ship") became one unsearchable mega-tag whose
+                # substring guard then blocked #Musk and #Optimus.
+                joined = "".join(
+                    _clean_for_tag(t) for t in run[:_MAX_ENTITY_WORDS])
                 key = joined.lower()
                 if joined and key not in seen:
                     seen.add(key)
@@ -224,6 +234,14 @@ def extract_hashtags(
 
     ordered: List[str] = []
     seen: set = set()
+    seen_words: List[frozenset] = []
+
+    def _word_set(body: str) -> frozenset:
+        # Split a CamelCase tag body back into its word tokens
+        # ("TeslaCybercab" -> {tesla, cybercab}; "TSLA" -> {tsla}).
+        parts = re.findall(r"[A-Z]+(?=[A-Z][a-z])|[A-Z]?[a-z]+|[A-Z]+|\d+",
+                           body)
+        return frozenset(p.lower() for p in parts if p)
 
     def _add(token: str) -> bool:
         body = _clean_for_tag(token)
@@ -232,18 +250,18 @@ def extract_hashtags(
         key = body.lower()
         if key in seen:
             return False
-        # Also block adding "Tesla" if "TeslaCybercab" was already
-        # picked — substring match in both directions.
-        for picked in seen:
-            if key in picked or picked in key:
-                # Prefer the LONGER form. If we already have a
-                # superset, skip the substring. If the new entity
-                # is longer than an existing one, the existing one
-                # already won its slot — accept the duplicate-by-
-                # substring just to keep ordering predictable.
-                if key in picked:
+        # Block adding "Tesla" when "TeslaCybercab" already took a slot —
+        # WORD-level containment, not character substring: the old
+        # ``key in picked`` check silently ate #AI whenever #Ukraine (or
+        # Chain/Domain/Air) was picked first, because "ai" is a character
+        # substring of all of them.
+        words = _word_set(body)
+        if words:
+            for picked_words in seen_words:
+                if words <= picked_words:
                     return False
         seen.add(key)
+        seen_words.append(words)
         ordered.append(body)
         return True
 

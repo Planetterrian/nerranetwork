@@ -3204,33 +3204,16 @@ def run(args: argparse.Namespace) -> None:
         metrics.record("youtube_uploads_this_episode", q.uploads)
     except Exception as exc:
         logger.debug("Could not record YouTube quota metrics: %s", exc)
-        # Smart Shorts segment selection (May 2026): record the chosen
-        # offset and which mode resolved to it so the dashboard can
-        # surface smart-vs-fallback rate per show.
-        if "shorts_start_offset" in youtube_urls:
-            metrics.record(
-                "shorts_start_offset",
-                float(youtube_urls["shorts_start_offset"]),
-            )
-        if "shorts_start_mode_resolved" in youtube_urls:
-            metrics.record(
-                "shorts_start_mode_resolved",
-                str(youtube_urls["shorts_start_mode_resolved"]),
-            )
-        # Multi-Shorts counters (May 2026). Single-Short runs still
-        # report ``requested=1, uploaded=0/1`` so the dashboard can
-        # compute the fallback rate across the network without
-        # special-casing the legacy path.
-        if "shorts_count_requested" in youtube_urls:
-            metrics.record(
-                "shorts_count_requested",
-                int(youtube_urls.get("shorts_count_requested", 1) or 1),
-            )
-        if "shorts_count_uploaded" in youtube_urls:
-            metrics.record(
-                "shorts_count_uploaded",
-                int(youtube_urls.get("shorts_count_uploaded", 0) or 0),
-            )
+
+    # NOTE (Aug 2026): everything below used to live INSIDE the except
+    # handler above, so it only ran when estimate_episode_units raised —
+    # i.e. never. The keys engine/pipeline.record_youtube_outcomes also
+    # records (smart-Shorts offsets/counters, gallery_skipped_reason)
+    # were deleted from here as duplicates; shorts_ab and the Grok
+    # degradation surface below are recorded NOWHERE else, and the
+    # Shorts A/B spend report has been reading an absent counter since
+    # the block broke.
+    try:
         # Shorts motion A/B (July 2026). Recorded on every episode of an
         # enrolled show, including all-stills days, so the report can tell
         # "control only today" apart from "the experiment stopped running"
@@ -3238,11 +3221,6 @@ def run(args: argparse.Namespace) -> None:
         # from the config's ceiling.
         if youtube_urls.get("shorts_ab"):
             metrics.record("shorts_ab", youtube_urls["shorts_ab"])
-        if youtube_urls.get("gallery_skipped_reason"):
-            metrics.record(
-                "gallery_skipped_reason",
-                str(youtube_urls["gallery_skipped_reason"]),
-            )
         # Surface the first 5 Grok Imagine failure messages when the
         # provider is grok / hybrid AND the run produced 0 images. Tells
         # the operator WHY the slideshow fell back to the cover (bad
@@ -5648,14 +5626,30 @@ def _publish_youtube(
                         "Русский" if lang_code == "ru" else lang_code.upper()
                     )
                     try:
-                        upload_caption_track(
+                        # upload_caption_track returns False on HttpError
+                        # (its documented 403 force-ssl path) WITHOUT
+                        # raising — recording True unconditionally here
+                        # reported success for the most likely failure
+                        # mode while the video shipped captionless.
+                        _cap_ok = upload_caption_track(
                             credentials=credentials,
                             video_id=upload.video_id,
                             srt_path=srt_path,
                             language=lang_code,
                             name=track_name,
                         )
-                        result["caption_track_uploaded"] = True
+                        result["caption_track_uploaded"] = bool(_cap_ok)
+                        if not _cap_ok:
+                            result["caption_track_error"] = (
+                                "upload_caption_track returned False "
+                                "(HttpError — see log)")
+                            logger.warning(
+                                "::warning::%s long-form shipped with NO "
+                                "captions — caption-track upload was "
+                                "refused (likely missing youtube.force-ssl "
+                                "scope). Burn-in is off by default, so the "
+                                "track is the only layer.", config.slug,
+                            )
                     except Exception as _cap_exc:  # noqa: BLE001
                         # Its own try/except: a caption failure must not
                         # abort the surrounding publish block, and now that
@@ -5885,6 +5879,11 @@ def _publish_youtube(
                             "Shorts end-card PNG render failed: %s — "
                             "falling back to drawtext-only end card", exc,
                         )
+            # engine/pipeline.record_youtube_outcomes reads this key; it
+            # was never written, so the PNG-vs-drawtext end-card rate was
+            # invisible in metrics.
+            if _end_card_enabled:
+                result["shorts_end_card_generated"] = bool(_end_card_image_path)
 
             _caption_offset = float(
                 getattr(config.audio, "voice_intro_delay", 0.0) or 0.0
@@ -6008,12 +6007,17 @@ def _publish_youtube(
                             )
                             if has_word_cues:
                                 this_srt_path = ass_candidate
-                                result["shorts_captions_path"] = "ass"
+                                # Key must match what engine/pipeline.py
+                                # records (shorts_caption_mode) — the old
+                                # shorts_captions_path key was read by
+                                # nothing, so the ASS-vs-SRT-fallback rate
+                                # was never in metrics.
+                                result["shorts_caption_mode"] = "ass"
                                 logger.info(
                                     "Shorts captions: per-word ASS path",
                                 )
                             else:
-                                result["shorts_captions_path"] = "srt_fallback"
+                                result["shorts_caption_mode"] = "srt_fallback"
                                 logger.info(
                                     "Shorts captions: SRT fallback (no "
                                     "word-level cues in transcript)",
@@ -6177,6 +6181,22 @@ def _publish_youtube(
                         yt_short_titles[short_idx]
                         if short_idx < len(yt_short_titles) else ""
                     ) or None
+                    # Aug 2026: when the bundle has no title for a
+                    # non-hook window, the legacy fallback shipped the
+                    # window's mid-sentence 80-char excerpt as the
+                    # headline ("…they said the pad would be…"). Both
+                    # dub channels already repair this via
+                    # headline_from_excerpt; the EN channel — highest
+                    # volume — never did. Best-effort; "" keeps legacy.
+                    if (not _opt_short_title
+                            and _fill_mode not in ("hook_open", "")
+                            and this_hook):
+                        try:
+                            from engine.translate import headline_from_excerpt
+                            _opt_short_title = headline_from_excerpt(
+                                this_hook, "en", max_chars=70) or None
+                        except Exception:  # noqa: BLE001
+                            _opt_short_title = None
                     meta = build_short_metadata(
                         config,
                         episode_num=episode_num,
@@ -6186,6 +6206,10 @@ def _publish_youtube(
                         optimized_title=_opt_short_title,
                         channel=_yt_channel,
                         variant=(_variant.variant if _ab_on else ""),
+                        # Hashtags/entity tags come from the EPISODE hook —
+                        # a window excerpt often has no proper nouns and
+                        # collapsed the clickable tag row to #Shorts.
+                        topic_hook=hook,
                     )
                     upload_thumb = (
                         this_short_thumb_path
@@ -6243,15 +6267,15 @@ def _publish_youtube(
                         )
                     except Exception as _exc:
                         logger.debug("video index (short) skipped: %s", _exc)
+                    # Shorts never join the PODCAST playlist (YouTube
+                    # Music ingests it as the show's podcast — a 35 s
+                    # vertical clip in there is a broken "episode").
+                    # They join the dedicated Shorts playlist when the
+                    # show has one, otherwise no playlist at all.
                     playlist_id = (
-                        getattr(config.youtube, "podcast_playlist_id", None) or ""
+                        getattr(config.youtube, "shorts_playlist_id", None) or ""
                     ).strip()
-                    if not playlist_id:
-                        if short_idx == 0:
-                            logger.info(
-                                "Podcast playlist ID empty — skipping playlist add."
-                            )
-                    else:
+                    if playlist_id:
                         try:
                             add_video_to_playlist(
                                 credentials=credentials,

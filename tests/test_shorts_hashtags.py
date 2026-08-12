@@ -309,3 +309,35 @@ class TestEntityPhraseFragments:
             show_keywords=["spacex", "starship"])
         for expected in ("spacex", "starship", "starbase"):
             assert expected in out, expected
+
+
+class TestAug2026ExtractionFixes:
+    def test_short_acronym_survives_unrelated_superstring(self):
+        # "ai" is a CHARACTER substring of "ukraine" — the old dedup ate
+        # #AI whenever #Ukraine took a slot first. Containment is
+        # word-level now.
+        tags = extract_hashtags(
+            "Ukraine drone strike disrupts AI data center construction",
+            show_keywords=[],
+        )
+        assert "Ukraine" in tags
+        assert "AI" in tags
+
+    def test_title_case_sentence_does_not_become_a_mega_tag(self):
+        # An uncapped Title-Case run became one unsearchable tag whose
+        # substring guard then blocked the real entities inside it.
+        tags = extract_hashtags("Musk Says Optimus Will Ship", show_keywords=[])
+        assert "MuskSaysOptimusWillShip" not in tags
+        assert "Musk" in tags
+        assert "Optimus" in tags
+
+    def test_word_subset_still_deduped(self):
+        # The word-level rule keeps the original intent: #Tesla never
+        # takes a slot when #TeslaCybercab already covers it.
+        tags = extract_hashtags(
+            "Tesla Cybercab wireless charging revealed, Tesla stock up",
+            show_keywords=[],
+        )
+        joined = [t for t in tags if t.lower() == "teslacybercab"]
+        assert joined
+        assert "Tesla" not in tags

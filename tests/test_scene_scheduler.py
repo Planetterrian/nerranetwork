@@ -172,6 +172,29 @@ class TestChapterAlignment:
         assert uncapped_floor > _MAX_SLIDESHOW_SLOTS
         assert len(plan) < uncapped_floor
 
+    def test_cap_merge_spares_the_accelerating_open(self):
+        """Aug 2026: the cap used to merge the SHORTEST adjacent pair
+        first — which is the 7.5-8 s accelerating-open slots by
+        construction, so the retention-critical opening scene changes
+        were the first thing deleted (Ep537 shape shipped a 40 s first
+        hold). In-open pairs are now last-resort merges."""
+        from engine.scene_scheduler import _OPEN_FAST_WINDOW_S, _OPEN_MAX_HOLD_S
+        pool = _scenes("fresh", 4)
+        starts = [0, 60, 150, 250, 350, 450, 550, 650, 750, 900, 1000]
+        chapters = _chapters(*[(float(s), f"Ch{i}") for i, s in enumerate(starts)])
+        plan = plan_chapter_schedule(pool, [], chapters, 1044.0,
+                                     max_hold_s=15.0, min_hold_s=6.0)
+        assert len(plan) <= _MAX_SLIDESHOW_SLOTS
+        t = 0.0
+        opening = []
+        for _p, d in plan:
+            if t < _OPEN_FAST_WINDOW_S:
+                opening.append(d)
+            t += d
+        # Every hold that starts inside the open keeps the fast cadence.
+        assert opening, "no slots landed in the opening window"
+        assert max(opening) <= _OPEN_MAX_HOLD_S + 0.5
+
 
 # ---------------------------------------------------------------------------
 # Accelerating open (July 31 2026 — D1)
