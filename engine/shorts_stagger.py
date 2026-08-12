@@ -74,6 +74,9 @@ FALLBACK_GAP_HOURS = 3
 # A queued comment older than this is dropped (loudly) instead of posted
 # onto a week-old Short nobody will scroll past again.
 COMMENT_MAX_AGE_DAYS = 7
+# A permanently-failing comment (403 comments-disabled) is dropped after
+# this many attempts instead of re-charging quota every sweep for 7 days.
+COMMENT_MAX_ATTEMPTS = 3
 
 _SIDECAR_NAME = "scheduled_comments.json"
 
@@ -134,12 +137,16 @@ def stagger_publish_times(
                 candidates.append(t)
     times = sorted(candidates)[:count]
 
-    k = 1
+    # Fallback fills EXTEND THE TAIL by a fixed gap. The old loop only
+    # appended ``now + k*gap`` when it beat the last slot candidate — so
+    # with one late-evening slot left, k had to climb past tomorrow's
+    # slot before anything was appended and the "3 hours from now" fill
+    # landed ~18 h out. A 0/negative gap (reachable kwarg) also made the
+    # loop spin forever.
+    gap = max(1, int(fallback_gap_hours or 0))
     while len(times) < count:
-        t = now + _dt.timedelta(hours=fallback_gap_hours * k)
-        if not times or t > times[-1]:
-            times.append(t)
-        k += 1
+        tail = times[-1] if times else (now + lead)
+        times.append(max(tail, now + lead) + _dt.timedelta(hours=gap))
     return times[:count]
 
 
@@ -195,13 +202,25 @@ def queue_comment(
 def post_due_comments(
     project_root: Path,
     now: Optional[_dt.datetime] = None,
+    *,
+    show_dir: Optional[str] = None,
 ) -> Dict[str, int]:
     """Post every queued comment whose Short has gone public. Sweep entry
     point for ``scripts/post_scheduled_short_comments.py``.
 
+    *show_dir* narrows the sweep to one ``digests/<dir>`` sidecar. The
+    multilingual workflow runs this INSIDE its per-show matrix with
+    max-parallel 3 — three concurrent jobs globbing every sidecar each
+    saw the same pending entries and each posted them, so the network's
+    strongest Shorts→long placement shipped as 2-3 identical bot
+    comments on the same Short. Matrix jobs pass their own show; only
+    single-job sweeps (nightly) run the full glob.
+
     Returns counters: posted / kept (not yet due) / dropped (too old or
-    repeatedly failing past max age). Missing credentials for a channel
-    keep its entries queued for the next sweep.
+    repeatedly failing). Missing credentials for a channel keep its
+    entries queued for the next sweep; an entry that fails 3 attempts is
+    dropped early (a 403 comments-disabled channel used to be retried
+    every sweep for 7 days at real quota cost).
     """
     from engine.youtube import (
         get_channel_credentials_from_env,
@@ -214,7 +233,9 @@ def post_due_comments(
     stats = {"posted": 0, "kept": 0, "dropped": 0}
     creds_cache: Dict[str, object] = {}
 
-    for path in sorted(Path(project_root).glob(f"digests/*/{_SIDECAR_NAME}")):
+    pattern = (f"digests/{show_dir}/{_SIDECAR_NAME}"
+               if show_dir else f"digests/*/{_SIDECAR_NAME}")
+    for path in sorted(Path(project_root).glob(pattern)):
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
         except Exception as exc:  # noqa: BLE001
@@ -271,8 +292,19 @@ def post_due_comments(
                 posted_here += 1
                 changed = True
             else:
-                keep.append(entry)
-                stats["kept"] += 1
+                entry["attempts"] = int(entry.get("attempts", 0) or 0) + 1
+                if entry["attempts"] >= COMMENT_MAX_ATTEMPTS:
+                    logger.warning(
+                        "scheduled comment for %s dropped after %d failed "
+                        "attempts (video %s) — likely comments disabled "
+                        "on the channel/video", path.parent.name,
+                        entry["attempts"], entry.get("video_id"))
+                    stats["dropped"] += 1
+                    changed = True
+                else:
+                    keep.append(entry)
+                    stats["kept"] += 1
+                    changed = True  # persist the attempt count
         if changed or len(keep) != len(data.get("pending", [])):
             try:
                 # Rolling per-show counter for the dashboard's stagger-

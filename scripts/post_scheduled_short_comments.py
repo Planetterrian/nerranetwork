@@ -34,9 +34,38 @@ logger = logging.getLogger("post_scheduled_short_comments")
 
 
 def main() -> int:
+    import argparse
+
     from engine.shorts_stagger import post_due_comments
 
-    stats = post_due_comments(PROJECT_ROOT)
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument(
+        "--show", default="",
+        help="Sweep only this show's digests/<dir> sidecar. REQUIRED when "
+             "run inside a parallel per-show matrix (multilingual.yml) — "
+             "concurrent global sweeps each posted the same pending "
+             "comments, shipping 2-3 identical bot comments per Short.")
+    args = ap.parse_args()
+
+    show_dir = None
+    slug = args.show.strip()
+    if slug:
+        # The sidecar lives under the show's OUTPUT dir, which is not
+        # always the slug (tesla -> digests/tesla_shorts_time). Resolve
+        # via the show config; fall back to the literal value.
+        show_dir = slug
+        try:
+            from engine.config import load_config
+
+            cfg = load_config(f"shows/{slug}.yaml")
+            out_dir = Path(getattr(cfg.episode, "output_dir", "") or "")
+            if out_dir.name and out_dir.name != "digests":
+                show_dir = out_dir.name
+        except Exception as exc:  # noqa: BLE001 — literal fallback is fine
+            logger.info("--show %s: config resolve failed (%s) — using the "
+                        "value as a directory name", slug, exc)
+
+    stats = post_due_comments(PROJECT_ROOT, show_dir=show_dir)
     logger.info(
         "Scheduled-Short comments: %d posted, %d kept for a later sweep, "
         "%d dropped.", stats["posted"], stats["kept"], stats["dropped"],

@@ -228,3 +228,74 @@ class TestWiring:
         # The nightly add-paths whitelist landmine: the sweep edits the
         # sidecar, and a whitelist gap silently drops that edit for days.
         assert "digests/**/scheduled_comments.json" in nightly
+
+
+class TestFallbackTailAndScoping:
+    """Aug 2026 sweep fixes: tail-extending fallback fills, bounded
+    retries, and per-show sweep scoping."""
+
+    def test_fallback_extends_tail_not_k_climb(self):
+        # Late-night run, single slot: the fill lands gap-hours after
+        # the last slot instead of climbing k past tomorrow's slot
+        # (which used to push a "3 hours out" fill ~18 h out).
+        times = stagger_publish_times(_at(23, 30), 3, slot_hours=[17])
+        assert times[0] == _at(17, day=6)   # tomorrow's slot
+        assert times[1] == _at(20, day=6)   # +3h tail extension
+        assert times[2] == _at(23, day=6)
+
+    def test_zero_gap_cannot_spin_forever(self):
+        times = stagger_publish_times(_at(11), 3, slot_hours=[17],
+                                      fallback_gap_hours=0)
+        assert len(times) == 3
+        assert times == sorted(set(times))
+
+    def test_failed_comment_drops_after_max_attempts(self, tmp_path,
+                                                     monkeypatch):
+        from engine import shorts_stagger as st
+
+        side = tmp_path / "digests" / "showdir"
+        side.mkdir(parents=True)
+        entry = {"video_id": "v1", "channel": "en", "text": "hi",
+                 "publish_at": "2026-08-01T00:00:00Z",
+                 "attempts": st.COMMENT_MAX_ATTEMPTS - 1}
+        (side / "scheduled_comments.json").write_text(
+            json.dumps({"schema_version": 1, "pending": [entry]}))
+        monkeypatch.setattr(
+            "engine.youtube.get_channel_credentials_from_env",
+            lambda ch: object())
+        monkeypatch.setattr(
+            "engine.youtube.post_video_comment",
+            lambda **kw: None)  # permanent failure (comments disabled)
+        now = dt.datetime(2026, 8, 2, tzinfo=dt.timezone.utc)
+        stats = st.post_due_comments(tmp_path, now=now)
+        assert stats["dropped"] == 1
+        data = json.loads((side / "scheduled_comments.json").read_text())
+        assert data["pending"] == []
+
+    def test_show_dir_scopes_the_sweep(self, tmp_path, monkeypatch):
+        from engine import shorts_stagger as st
+
+        posted = []
+        for d in ("show_a", "show_b"):
+            side = tmp_path / "digests" / d
+            side.mkdir(parents=True)
+            (side / "scheduled_comments.json").write_text(json.dumps({
+                "schema_version": 1,
+                "pending": [{"video_id": d, "channel": "en", "text": "hi",
+                             "publish_at": "2026-08-01T00:00:00Z"}]}))
+        monkeypatch.setattr(
+            "engine.youtube.get_channel_credentials_from_env",
+            lambda ch: object())
+        monkeypatch.setattr(
+            "engine.youtube.post_video_comment",
+            lambda **kw: posted.append(kw["video_id"]) or "cid")
+        now = dt.datetime(2026, 8, 2, tzinfo=dt.timezone.utc)
+        stats = st.post_due_comments(tmp_path, now=now, show_dir="show_a")
+        assert posted == ["show_a"]
+        assert stats["posted"] == 1
+        # show_b's entry untouched — the parallel matrix job for show_b
+        # owns it.
+        data_b = json.loads(
+            (tmp_path / "digests" / "show_b" /
+             "scheduled_comments.json").read_text())
+        assert len(data_b["pending"]) == 1
