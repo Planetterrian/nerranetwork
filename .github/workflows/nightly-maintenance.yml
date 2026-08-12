@@ -181,7 +181,14 @@ jobs:
         run: python scripts/build_shorts_ab_report.py --out api/shorts_ab.json || echo "::warning::Shorts A/B report failed (non-fatal)"
 
       - name: Generate Management Dashboard
-        run: python scripts/generate_dashboard.py --out api/dashboard.json
+        # The generator exits 1 when any landmine card is "fail" — keep that
+        # loud (an ::error:: annotation) but never let it kill the job: this
+        # step runs AFTER the analytics fetches and BEFORE the commit step,
+        # so a hard failure here throws away a whole night of fetched
+        # YouTube/OP3 data and starves the adaptive publishing policy
+        # (observed 2026-08-10/11: a malformed feed flipped one card to fail
+        # and two nights of analytics were computed and discarded).
+        run: python scripts/generate_dashboard.py --out api/dashboard.json || echo "::error::Dashboard reports a failing landmine card — investigate, but nightly commit proceeds"
 
       - name: Daily Show Health Check (Grok Tier 1)
         # Pattern-based surface checks (chapters, phonetic garbles, word count).
