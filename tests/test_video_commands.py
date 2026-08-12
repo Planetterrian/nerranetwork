@@ -110,8 +110,20 @@ def test_long_form_filter_graph_respects_fps():
 # ---------------------------------------------------------------------------
 
 def test_short_form_filter_graph_uses_vertical_dims_and_brand():
+    # Default (static cover) path: lanczos prescale at 2x + a slow
+    # centred zoompan push-in ending at the 1080x1920 frame — the cover
+    # fallback used to ship a frozen bicubic-upscaled JPEG for the whole
+    # Short (the one render path with zero motion).
     graph = _short_form_filter_graph()
-    assert "scale=1080:1920" in graph
+    assert "scale=2160:3840" in graph
+    assert "flags=lanczos" in graph
+    assert "zoompan=" in graph
+    assert "s=1080x1920" in graph
+    # Video background (real slideshow): motion is baked in — plain
+    # fill-scale at frame size, no zoompan.
+    vgraph = _short_form_filter_graph(bg_is_video=True)
+    assert "scale=1080:1920" in vgraph
+    assert "zoompan=" not in vgraph
     # Brand pill is anchored top-right (W-w-24).
     assert "x=W-w-24:y=24" in graph
     assert graph.endswith("[v]")
@@ -303,9 +315,10 @@ def test_short_form_cmd_clips_audio():
     assert i_indices[1] > t_idx
     # Two looped image inputs (cover + brand pill); audio is not looped.
     assert cmd.count("-loop") == 2
-    # Filter graph references vertical Shorts geometry.
+    # Filter graph references vertical Shorts geometry (static-cover
+    # path prescales 2x for the zoompan push-in, ending at 1080x1920).
     graph = cmd[cmd.index("-filter_complex") + 1]
-    assert "scale=1080:1920" in graph
+    assert "s=1080x1920" in graph
     # Brand pill is overlaid; spectrum band was removed.
     assert "[bg][brand]overlay" in graph
     assert cmd[-1] == "short.mp4"
@@ -1685,7 +1698,7 @@ def test_build_long_form_video_uses_scene_schedule(tmp_path, monkeypatch):
 
     assert len(captured_cmds) == 2
     stage1 = captured_cmds[0]
-    assert stage1[-1].endswith("_slides_sched.mp4")
+    assert stage1[-1].endswith("_slides_sched.part.mp4")  # .part -> atomic replace
     # Scheduled ORDER (scene2 before scene1), not the input list order.
     i_indices = [i for i, x in enumerate(stage1) if x == "-i"]
     input_paths = [stage1[i + 1] for i in i_indices]
@@ -1732,8 +1745,8 @@ def test_build_long_form_video_short_schedule_keeps_legacy_path(tmp_path,
     build_long_form_video(audio, cover, out, scene_paths=scenes,
                           scene_schedule=[(scenes[0], 36.0)])
     assert len(captured_cmds) == 2
-    assert captured_cmds[0][-1].endswith("_slides.mp4")
-    assert not captured_cmds[0][-1].endswith("_slides_sched.mp4")
+    assert captured_cmds[0][-1].endswith("_slides.part.mp4")  # .part -> atomic replace
+    assert "_slides_sched" not in captured_cmds[0][-1]
 
 
 def test_build_long_form_video_none_schedule_is_byte_identical(tmp_path,
@@ -1811,14 +1824,16 @@ def test_build_short_video_scene_change_times_drops_stream_loop(tmp_path,
     stage1, stage2 = captured_cmds
     # Stage 1: full-length scheduled slideshow (7 segments summing 55 s),
     # cumulative xfade offsets at the requested cut times.
-    assert stage1[-1].endswith("_short_slides_sched.mp4")
+    assert stage1[-1].endswith("_short_slides_sched.part.mp4")  # .part -> atomic replace
     graph1 = stage1[stage1.index("-filter_complex") + 1]
     assert "offset=6.80" in graph1
     assert "offset=14.00" in graph1
     assert "offset=44.00" in graph1
-    # Stage 2: bg is the slideshow, WITHOUT the loop.
+    # Stage 2: bg is the slideshow, WITHOUT the loop. Stage 1 renders to
+    # a .part temp that is atomically replaced, so stage 2 sees the
+    # final name.
     assert "-stream_loop" not in stage2
-    assert stage1[-1] in stage2
+    assert stage1[-1].removesuffix(".part.mp4") + ".mp4" in stage2
     # Only the brand pill remains a looped image input.
     assert stage2.count("-loop") == 1
 
@@ -1904,7 +1919,7 @@ def test_build_short_video_unusable_cut_times_keep_flat_loop_path(tmp_path,
     build_short_video(audio, cover, out, duration=55.0,
                       scene_paths=scenes, scene_change_times=[54.9])
     assert len(captured_cmds) == 2
-    assert captured_cmds[0][-1].endswith("_short_slides.mp4")
+    assert captured_cmds[0][-1].endswith("_short_slides.part.mp4")  # .part -> atomic replace
     assert "-stream_loop" in captured_cmds[1]
 
 
@@ -1958,7 +1973,7 @@ def test_build_long_form_video_broll_uses_hybrid_renderer(tmp_path,
     # Stage 1 = hybrid render (stills + clips), stage 2 = composite.
     assert len(captured_cmds) == 2
     hybrid = captured_cmds[0]
-    assert hybrid[-1].endswith("_hybrid.mp4")
+    assert hybrid[-1].endswith("_hybrid.part.mp4")  # .part -> atomic replace
     # Both clips appear as plain (non-looped) inputs.
     for clip in clips:
         assert str(clip) in hybrid
@@ -2014,7 +2029,7 @@ def test_build_long_form_video_broll_failure_degrades_to_slideshow(tmp_path,
 
     def fake_run(cmd, **kw):
         captured_cmds.append(list(cmd))
-        if cmd[-1].endswith("_hybrid.mp4"):
+        if cmd[-1].endswith((".part.mp4", "_hybrid.mp4")) and "_hybrid" in cmd[-1]:
             raise _subprocess.CalledProcessError(1, cmd, stderr="boom")
         if "-an" in cmd:
             Path(cmd[-1]).write_bytes(b"\x00")
@@ -2029,8 +2044,8 @@ def test_build_long_form_video_broll_failure_degrades_to_slideshow(tmp_path,
                           broll_clips=clips)
     # hybrid (failed) → pure slideshow → composite.
     assert len(captured_cmds) == 3
-    assert captured_cmds[0][-1].endswith("_hybrid.mp4")
-    assert captured_cmds[1][-1].endswith("_slides.mp4")
+    assert captured_cmds[0][-1].endswith("_hybrid.part.mp4")  # .part -> atomic replace
+    assert captured_cmds[1][-1].endswith("_slides.part.mp4")  # .part -> atomic replace
     assert "-stream_loop" in captured_cmds[2]
     # No clip reaches the fallback slideshow.
     for clip in clips:
@@ -2063,7 +2078,7 @@ def test_build_long_form_video_broll_with_schedule_keeps_scene_order(
     build_long_form_video(audio, cover, out, scene_schedule=schedule,
                           broll_clips=clips)
     hybrid = captured_cmds[0]
-    assert hybrid[-1].endswith("_hybrid.mp4")
+    assert hybrid[-1].endswith("_hybrid.part.mp4")  # .part -> atomic replace
     i_indices = [i for i, x in enumerate(hybrid) if x == "-i"]
     input_paths = [hybrid[i + 1] for i in i_indices]
     # Clip opens the sequence; scheduled still order preserved after it.

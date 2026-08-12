@@ -194,20 +194,35 @@ def _cap_slots(
     the shortest adjacent pair — so chapter-boundary switches on longer
     chapters survive when a long episode would otherwise explode the
     ffmpeg input count. Durations always sum to the original total.
+
+    Merges are position-aware (Aug 2026): pairs inside the accelerating
+    open (first ``_OPEN_FAST_WINDOW_S`` of the timeline) are only merge
+    candidates when nothing after the open can be merged. The old
+    smallest-pair-first rule targeted the 7.5-8 s D1 opening slots by
+    construction — the retention-critical scene changes the accelerating
+    open exists to create were the FIRST thing the cap deleted, while a
+    12-chapter/17-min episode shipped 85 s tail holds.
     """
     if max_slots < 1 or len(plan) <= max_slots:
         return plan
     out = list(plan)
     while len(out) > max_slots:
         best_i = 0
-        best_key: Optional[Tuple[int, float]] = None
+        best_key: Optional[Tuple[int, int, float]] = None
+        start = 0.0
         for i in range(len(out) - 1):
             same = 0 if out[i][0] == out[i + 1][0] else 1
             combined = out[i][1] + out[i + 1][1]
-            key = (same, combined)
+            # 0 = pair begins after the accelerating open (merge freely);
+            # 1 = pair begins inside it (merge only as a last resort).
+            # Same-path merges stay rank-0 regardless — collapsing two
+            # copies of one image changes nothing on screen.
+            in_open = 1 if (start < _OPEN_FAST_WINDOW_S and same) else 0
+            key = (same, in_open, combined)
             if best_key is None or key < best_key:
                 best_key = key
                 best_i = i
+            start += out[i][1]
         left_path, left_d = out[best_i]
         _right_path, right_d = out[best_i + 1]
         out[best_i] = (left_path, left_d + right_d)
