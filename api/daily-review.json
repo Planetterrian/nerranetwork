@@ -1,53 +1,57 @@
 {
-  "date": "2026-08-11",
-  "generated_at": "2026-08-11T17:11:23.743862+00:00",
+  "date": "2026-08-12",
+  "generated_at": "2026-08-12T17:10:33.514243+00:00",
   "summary": {
-    "episodes_reviewed": 10,
-    "critical_issues": 3,
-    "warning_issues": 15,
-    "missed_episodes": 0,
+    "episodes_reviewed": 9,
+    "critical_issues": 5,
+    "warning_issues": 12,
+    "missed_episodes": 1,
     "skipped_episodes": 0
   },
   "remediation": {
-    "auto_retry_shows": [],
-    "recommendation": "No automatic retries recommended."
+    "auto_retry_shows": [
+      "fascinating_frontiers"
+    ],
+    "recommendation": "Run `gh workflow run run-show.yml -f show=<slug>` for the shows above if they are not intentionally skipped."
   },
-  "missed_and_skipped": [],
+  "missed_and_skipped": [
+    {
+      "show": "fascinating_frontiers",
+      "severity": "critical",
+      "title": "Missed episode: Fascinating Frontiers",
+      "detail": "Fascinating Frontiers was scheduled to produce an episode on 2026-08-12 (schedule: daily) but no output files were found in digests/fascinating_frontiers/ and no skip marker was present. The pipeline may have failed or the workflow did not trigger."
+    }
+  ],
   "episodes": [
     {
       "show": "tesla",
-      "episode_num": 569,
-      "critical": 0,
+      "episode_num": 570,
+      "critical": 1,
       "warnings": 1,
       "issues": [
         {
           "severity": "warning",
-          "title": "Podcast script below target (1422 words)",
-          "detail": "Script has 1422 words (target: 2000+). Episode may feel shorter than usual."
+          "title": "Podcast script below target (1482 words)",
+          "detail": "Script has 1482 words (target: 2000+). Episode may feel shorter than usual."
+        },
+        {
+          "severity": "critical",
+          "title": "AI review: Repetitive",
+          "detail": "The $10.1 billion Texas solar cell plant is mentioned verbatim three separate times."
         },
         {
           "severity": "info",
-          "title": "AI quality score: 8/10",
-          "detail": "Solid, well-structured daily briefing with clear segments and no noticeable flaws."
+          "title": "AI quality score: 7/10",
+          "detail": "Solid episode with minor repetition of the Texas plant story; otherwise clear, well-structured coverage."
         }
       ]
     },
     {
       "show": "omni_view",
-      "episode_num": 140,
-      "critical": 1,
-      "warnings": 4,
+      "episode_num": 141,
+      "critical": 0,
+      "warnings": 2,
       "issues": [
-        {
-          "severity": "warning",
-          "title": "Podcast script below target (1321 words)",
-          "detail": "Script has 1321 words (target: 1400+). Episode may feel shorter than usual."
-        },
-        {
-          "severity": "warning",
-          "title": "Excessive repetition: 'the strait of' (5x)",
-          "detail": "The phrase 'the strait of' appears 5 times, suggesting possible LLM hallucination or loop."
-        },
         {
           "severity": "info",
           "title": "Slow news mode active (trigger: stale_repeats)",
@@ -64,150 +68,132 @@
           "detail": "This show has been in slow news mode for 6 of the last 6 episodes. This may indicate stale RSS sources, an overly aggressive content tracker, or insufficient source diversity. Consider:\n  - Running a feed audit: python scripts/audit_feeds.py\n  - Adding more RSS sources to shows/omni_view.yaml\n  - Expanding slow news segments: shows/segments/omni_view.json\n  - Checking content tracker cooldown settings"
         },
         {
-          "severity": "critical",
-          "title": "AI review: Repetitive",
-          "detail": "The phrase \u201cThe programs are already operating in multiple countries\u201d appears twice in the fashion-repair segment."
-        },
-        {
           "severity": "info",
           "title": "AI quality score: 8/10",
-          "detail": "Solid, well-structured episode with only minor repetition; otherwise clean and listener-ready."
-        }
-      ]
-    },
-    {
-      "show": "fascinating_frontiers",
-      "episode_num": 158,
-      "critical": 0,
-      "warnings": 0,
-      "issues": [
-        {
-          "severity": "info",
-          "title": "AI quality score: 8/10",
-          "detail": "Strong, well-structured episode with smooth transitions and accurate content; minor room for deeper detail on some stories."
+          "detail": "Strong, well-structured episode with clear sourcing, balanced analysis, and no major issues."
         }
       ]
     },
     {
       "show": "planetterrian",
-      "episode_num": 148,
+      "episode_num": 149,
       "critical": 0,
-      "warnings": 1,
+      "warnings": 2,
       "issues": [
         {
           "severity": "warning",
-          "title": "Podcast script below target (1180 words)",
-          "detail": "Script has 1180 words (target: 1600+). Episode may feel shorter than usual."
+          "title": "Podcast script below target (1566 words)",
+          "detail": "Script has 1566 words (target: 1600+). Episode may feel shorter than usual."
+        },
+        {
+          "severity": "warning",
+          "title": "Excessive repetition: 'phys dot org' (11x)",
+          "detail": "The phrase 'phys dot org' appears 11 times, suggesting possible LLM hallucination or loop."
         },
         {
           "severity": "info",
           "title": "AI quality score: 8/10",
-          "detail": "Solid, well-structured episode with clear segment transitions and no noticeable flaws."
+          "detail": "Strong, well-paced episode with clear, non-repetitive segments and no factual or structural issues."
         }
       ]
     },
     {
       "show": "models_agents",
-      "episode_num": 138,
-      "critical": 1,
-      "warnings": 2,
+      "episode_num": 139,
+      "critical": 0,
+      "warnings": 1,
       "issues": [
         {
           "severity": "warning",
-          "title": "Podcast script below target (1336 words)",
-          "detail": "Script has 1336 words (target: 1500+). Episode may feel shorter than usual."
-        },
-        {
-          "severity": "warning",
-          "title": "Possible story duplication (2 block pairs)",
-          "detail": "Found 2 pairs of non-adjacent paragraph blocks with high proper-noun overlap. The same story may be covered twice."
-        },
-        {
-          "severity": "critical",
-          "title": "AI review: Repetitive",
-          "detail": "Daybreak program and GPT 5.6-Cyber details are repeated nearly verbatim in the first three paragraphs."
+          "title": "Podcast script below target (1329 words)",
+          "detail": "Script has 1329 words (target: 1500+). Episode may feel shorter than usual."
         },
         {
           "severity": "info",
-          "title": "AI quality score: 7/10",
-          "detail": "Solid, well-organized episode with strong technical coverage; minor repetition of the Daybreak announcement is the only noticeable flaw."
+          "title": "AI quality score: 8/10",
+          "detail": "Strong, well-organized daily briefing with clear technical insights and actionable takeaways."
         }
       ]
     },
     {
       "show": "models_agents_beginners",
-      "episode_num": 130,
+      "episode_num": 131,
       "critical": 0,
       "warnings": 1,
       "issues": [
         {
           "severity": "warning",
-          "title": "Podcast script below target (866 words)",
-          "detail": "Script has 866 words (target: 1200+). Episode may feel shorter than usual."
+          "title": "Podcast script below target (914 words)",
+          "detail": "Script has 914 words (target: 1200+). Episode may feel shorter than usual."
         },
         {
           "severity": "info",
           "title": "AI quality score: 8/10",
-          "detail": "Solid, well-structured episode with engaging examples and clear explanations; minor polish on transitions could push it to 9-10."
+          "detail": "Solid beginner-friendly episode with clear explanations and practical examples; minor room for deeper coverage but no major issues."
         }
       ]
     },
     {
       "show": "modern_investing",
-      "episode_num": 134,
-      "critical": 0,
+      "episode_num": 135,
+      "critical": 1,
       "warnings": 1,
       "issues": [
         {
           "severity": "warning",
-          "title": "Podcast script below target (1657 words)",
-          "detail": "Script has 1657 words (target: 1800+). Episode may feel shorter than usual."
+          "title": "Podcast script below target (1504 words)",
+          "detail": "Script has 1504 words (target: 1800+). Episode may feel shorter than usual."
+        },
+        {
+          "severity": "critical",
+          "title": "AI review: Repetitive",
+          "detail": "The CPI/inflation print explanation is repeated almost verbatim in two separate segments."
         },
         {
           "severity": "info",
-          "title": "AI quality score: 8/10",
-          "detail": "Solid, well-structured episode with clear educational value and no noticeable issues."
+          "title": "AI quality score: 6/10",
+          "detail": "Solid educational episode marred by noticeable repetition of the CPI explanation; otherwise well-structured and publishable with minor editing."
         }
       ]
     },
     {
       "show": "spacex",
-      "episode_num": 66,
-      "critical": 1,
-      "warnings": 3,
+      "episode_num": 67,
+      "critical": 2,
+      "warnings": 2,
       "issues": [
         {
           "severity": "warning",
-          "title": "Podcast script below target (1263 words)",
-          "detail": "Script has 1263 words (target: 1300+). Episode may feel shorter than usual."
+          "title": "AI review: Factual Errors",
+          "detail": "\"ex A I\" and \"S P C X\" appear to be garbled company names; \"Minihard\" is likely a typo for \"Memphis\" or similar; \"Super Micro\" is misspelled (should be \"Super Micro Computer\"); \"DC Blox\" lawsuit details are too vague to verify but the phrasing suggests possible fabrication."
         },
         {
-          "severity": "warning",
-          "title": "AI review: Factual Errors",
-          "detail": "The claim that SpaceX is pursuing a $60 billion Cursor acquisition is implausible (Cursor is a small AI coding tool); the $2.3 billion Canadian contract and Vietnam VinSpace deal lack verifiable public evidence; the Chinese Long March 7A failure and its impact on Starlink cadence are not corroborated."
+          "severity": "critical",
+          "title": "AI review: Incoherent",
+          "detail": "\"The launch added another batch of satellites...\" appears mid-paragraph without a subject or transition, breaking narrative flow."
         },
         {
           "severity": "critical",
           "title": "AI review: Repetitive",
-          "detail": "The closing stock-price recap and Indian Ocean recovery teaser are repeated almost verbatim at the end."
+          "detail": "Stock price \"S P C X at one hundred thirty-three dollars and twenty-nine cents\" is stated twice in nearly identical wording."
         },
         {
           "severity": "warning",
           "title": "AI quality score: 4/10",
-          "detail": "Grok rated this episode 4/10. The episode mixes plausible Starlink/Falcon 9 updates with several unverifiable or dubious claims and ends with noticeable repetition, giving it a thin, uneven feel."
+          "detail": "Grok rated this episode 4/10. Garbled company names, a broken sentence, and repeated stock-price mention drag an otherwise coherent episode down to publishable only after heavy editing."
         }
       ]
     },
     {
       "show": "first_principles",
-      "episode_num": 67,
+      "episode_num": 68,
       "critical": 0,
       "warnings": 1,
       "issues": [
         {
           "severity": "warning",
-          "title": "Podcast script below target (1437 words)",
-          "detail": "Script has 1437 words (target: 1500+). Episode may feel shorter than usual."
+          "title": "Podcast script below target (1450 words)",
+          "detail": "Script has 1450 words (target: 1500+). Episode may feel shorter than usual."
         },
         {
           "severity": "info",
@@ -216,26 +202,26 @@
         },
         {
           "severity": "info",
-          "title": "AI quality score: 9/10",
-          "detail": "Strong, well-structured episode that cleanly explains how the UPC collapsed a high labor-cost index; minor caveat only on the slightly repetitive emphasis on labor vs. material cost near the end."
+          "title": "AI quality score: 8/10",
+          "detail": "Strong, well-structured episode that uses clear cost breakdowns and regulatory analysis to illustrate its thesis; minor caveat is reliance on broad estimates rather than specific sources."
         }
       ]
     },
     {
       "show": "unintended_consequences",
-      "episode_num": 86,
+      "episode_num": 87,
       "critical": 0,
       "warnings": 1,
       "issues": [
         {
           "severity": "warning",
-          "title": "Podcast script below target (1118 words)",
-          "detail": "Script has 1118 words (target: 1300+). Episode may feel shorter than usual."
+          "title": "Podcast script below target (1114 words)",
+          "detail": "Script has 1114 words (target: 1300+). Episode may feel shorter than usual."
         },
         {
           "severity": "info",
-          "title": "AI quality score: 8/10",
-          "detail": "Strong, well-structured episode that clearly explains Peltzman\u2019s risk-compensation thesis with historical detail and contemporary relevance; minor room for deeper data examples."
+          "title": "AI quality score: 9/10",
+          "detail": "Strong, well-structured episode that accurately traces the Montreal Protocol\u2019s unintended climate consequences without factual or stylistic issues."
         }
       ]
     }
