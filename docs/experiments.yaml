@@ -199,3 +199,40 @@ experiments:
       digest/fetch stage stays on grok-4.3 by design — facts are locked
       before the script model runs. Audio change — landmine #17 A/B.
       Scored against the 2026-08-10 dp_pod review ledger predictions.
+
+  - id: youtube-chapters-live
+    title: "Seek-bar chapters ship in every long-form description"
+    area: reach
+    shipped: 2026-08-12
+    readout: 2026-08-26
+    status: reading
+    metric: long_form_median_avp_en_14d
+    baseline: 13.4
+    target: >
+      Long-form median AVP up vs the 13.4% (14d) baseline, and
+      chapter-driven "Key moments" appearing in search — chapters had
+      NEVER shipped (0 of 1,333 committed chapter files started at
+      0:00, so the formatter discarded every block).
+    notes: >
+      Synthetic localized "0:00 Intro" line prepended when chapter 1
+      starts after the music intro (clamped when it starts <10s).
+      Metadata-only — outside landmine #17. Confounded with the
+      caption-hold + end-card caption fixes shipping the same day;
+      read AVP as the joint effect of the retention batch.
+
+  - id: shorts-caption-continuity
+    title: "Shorts captions hold through pauses + stay visible over the end card"
+    area: retention
+    shipped: 2026-08-12
+    readout: 2026-08-26
+    status: reading
+    target: >
+      Shorts median averageViewPercentage up vs the 50.8% EN / 43.6% RU
+      (14d) baselines; specifically less drop-off in the final 3 s
+      (end-card window) once retention curves are fetched.
+    notes: >
+      Per-word ASS cues extend to the next word's start (card no longer
+      flickers off 10-20x per Short at breaths) and the subtitles stage
+      runs after the end-card overlay (last ~3 s of speech kept its
+      text hidden under the opaque CTA card). Render-only — outside
+      landmine #17.
