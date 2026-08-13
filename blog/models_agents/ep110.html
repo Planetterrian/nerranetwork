@@ -107,23 +107,7 @@
       "url": "https://nerranetwork.com/models-agents.html"
     },
     "image": "https://nerranetwork.com/assets/covers/models-agents.jpg",
-    "transcript": "https://nerranetwork.com/blog/models_agents/ep110.html#transcript",
-    "associatedMedia": [
-      {
-        "@type": "MediaObject",
-        "contentUrl": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep110_20260713.mp3",
-        "inLanguage": "en"
-      },
-      {
-        "@type": "MediaObject",
-        "contentUrl": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep110_20260713.fr.mp3",
-        "inLanguage": "fr"
-      }
-    ],
-    "availableLanguage": [
-      "en",
-      "fr"
-    ]
+    "transcript": "https://nerranetwork.com/blog/models_agents/ep110.html#transcript"
   }
 ]
     </script>
@@ -1349,27 +1333,6 @@
     </header>
 
     
-    <section class="nn-i18n" aria-label="Listen in another language">
-        <div class="nn-i18n-inner">
-            <div class="nn-i18n-row">
-                <span class="nn-i18n-label">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-                    Listen in
-                </span>
-                <button type="button" class="nn-i18n-pill" data-lang="en" aria-pressed="true">English</button>
-                
-                <button type="button" class="nn-i18n-pill" data-lang="fr" aria-pressed="false">Français</button>
-                
-            </div>
-            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://audio.nerranetwork.com/models_agents/Models_Agents_Ep110_20260713.mp3"></audio>
-        </div>
-        <script type="application/json" id="nn-i18n-tracks">
-{
-  "en": {"url": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep110_20260713.mp3", "title": "A new 30B-parameter sovereign MoE model delivers frontier-class English and German performance while activating just 3B parameters per token.", "desc": "A new 30B-parameter sovereign MoE model delivers frontier-class English and German performance while activating just 3B parameters per token."},
-  "fr": {"url": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep110_20260713.fr.mp3", "title": "Ép 110 : Un nouveau modèle MoE souverain de 30B paramètres atteint des performances de classe frontier en anglais et en allemand tout en n’activant que 3B paramètres par token.", "desc": "Un nouveau modèle MoE souverain de 30B paramètres atteint des performances de classe frontier en anglais et en allemand tout en n’activant que 3B paramètres par token."}
-}
-        </script>
-    </section>
     
 
     <!-- Article with TOC sidebar -->
@@ -1452,81 +1415,6 @@
 <li>Ant Group’s SingGuard-NSFA safety models will likely see rapid community fine-tunes for specific agent tool-use policies.</li>
 <li>Additional long-context benchmarks that stay inside naturally occurring documents are expected as WILDTRACE gains adoption.</li>
 </ul>
-            </div>
-            
-            <div class="blog-body-lang" data-lang="fr" hidden>
-                <p class="blog-translated-note">Français — AI-translated from the English episode.</p>
-                <p>Content que vous soyez là — bienvenue dans Models and Agents, épisode cent dix, pour le treize juillet deux mille vingt-six. Lundi dans le monde de l’IA, ce qui signifie une série d’annonces du week-end à rattraper. Allons-y.</p>
-<p>Un nouveau modèle souverain MoE de trente milliards de paramètres offre des performances de pointe en anglais et en allemand tout en n’activant que trois milliards de paramètres par token.</p>
-<p>Soofi S 30B-A3B est lancé comme un modèle hybride Mamba-Transformer entraîné sur vingt-sept billions de tokens avec un fort accent sur l’allemand.</p>
-<p>Il atteint ou dépasse des modèles denses plus volumineux sur les benchmarks de code et bilingues tout en maintenant une taille de cache d’inférence presque constante à mesure que le contexte s’allonge.</p>
-<p>Le modèle a été entraîné de bout en bout sur le German Industrial AI Cloud et est livré avec les poids, les checkpoints intermédiaires, la comptabilité complète des données et le code d’entraînement sous des termes permissifs.</p>
-<p>Cette dernière sortie open-weight poursuit le schéma observé hier avec des familles comme Llama et Mistral qui réduisent l’écart de performance avec les systèmes fermés de pointe, notamment sur les tâches non anglophones.</p>
-<p>Les développeurs travaillant sur des tâches européennes bilingues ou à long contexte devraient le tester immédiatement face aux équivalents actuels de Llama et Mistral.</p>
-<p>À surveiller ensuite : l’impact des checkpoints publiés sur les recettes de fine-tuning pour des agents allemands spécialisés.</p>
-<p>Le système TRACE de Stanford transforme les échecs récurrents des agents en environnements RL synthétiques ciblés.</p>
-<p>L’approche diagnostique les lacunes de capacité à partir des trajectoires propres de l’agent, synthétise un environnement RL vérifiable par lacune, entraîne un adaptateur Laura et route les tokens entre experts.</p>
-<p>Elle améliore τ²-Bench de quinze virgule trois points et atteint soixante-treize virgule deux pour cent de Pass@1 sur SWE-bench Verified.</p>
-<p>Les concepteurs d’agents devraient capturer les logs de trajectoire et les injecter dans une logique de ciblage de capacité de type TRACE plutôt que dans un fine-tuning générique.</p>
-<p>Prime Intellect a publié Verifiers v1, qui scinde les environnements en couches taskset, harness et runtime avec un serveur d’interception qui enregistre des traces prêtes pour l’entraînement.</p>
-<p>Chaque taskset fonctionne sous n’importe quel harness compatible et est livré avec un support complet prime-rl.</p>
-<p>La réécriture sous l’espace de noms verifiers.v1 rend les pipelines RL agentiques modulaires et reproductibles.</p>
-<p>Les praticiens du RL peuvent désormais échanger les harness d’évaluation sans réentraîner les politiques.</p>
-<p>AgentKGV combine routage dynamique et réécriture itérative des requêtes pour la vérification de faits au niveau graphe de connaissances documentaire, puis applique une distillation SFT au niveau des tours suivie d’un GRPO au niveau des trajectoires.</p>
-<p>Sur le split long-tail T-REx, il gagne neuf virgule quatre points de macro-F1 par rapport à un RAG mono-tour tout en réduisant les appels de recherche moyens de trois virgule vingt-quatre à un virgule soixante-trois.</p>
-<p>La recette en deux étapes transfère le raisonnement d’un grand modèle enseignant vers un modèle plus petit déployable.</p>
-<p>Les équipes de maintenance de graphes de connaissances devraient évaluer l’étape de politique GRPO pour réduire les coûts de récupération.</p>
-<p>HALO ajoute une étape de raffinement grossier puis un raffinement latent sélectif en deuxième passe sur un sous-ensemble de tokens notés avec un arrêt monotone.</p>
-<p>Sur les benchmarks MMLU Pro et GPQA Diamond, il affiche la meilleure moyenne parmi les méthodes présentées dans les articles tout en utilisant moins d’étapes de raffinement moyennes que les baselines fixed-1 ou fixed-2.</p>
-<p>L’approche montre que c’est une meilleure allocation du raffinement, et non simplement plus de raffinement, qui génère les gains.</p>
-<p>Les équipes qui exécutent de longues traces de raisonnement devraient tester des contrôleurs de notation de tokens pour réduire le calcul inutile.</p>
-<p>Freya-TTS est un modèle non autorégressif de cent quatre-vingt-trois virgule deux millions de paramètres basé sur un conditional flow-matching Diffusion Transformer qui mappe directement un vocabulaire de quatre-vingt-douze symboles turcs vers l’espace latent figé d’AudioVAE2.</p>
-<p>Il atteint huit virgule zéro pour cent de WER et trois virgule zéro pour cent de CER sur le benchmark Freya-TR-Eval tout en tournant à zéro virgule onze facteur temps réel sur GPU grand public.</p>
-<p>La recette de post-entraînement en deux étapes verrouille l’identité du locuteur et couvre les énoncés courts pour une robustesse en production.</p>
-<p>Les développeurs d’agents vocaux turcs disposent désormais d’une option compacte sans tokenizer qui surpasse les systèmes ouverts plus volumineux.</p>
-<p>S-TTT permet au modèle d’abord d’identifier les passages de preuves pertinents dans un long contexte, puis d’appliquer une adaptation par modélisation du langage uniquement sur ces passages.</p>
-<p>Sur LongBench-v2 et LongBench-Pro, il apporte jusqu’à quinze pour cent de gains relatifs de précision pour Qwen trois virgule quatre B-Thinking-2507 et Llama trois point un à huit B-Instruct.</p>
-<p>L’entraînement test-time sur des passages aléatoires dégrade les performances tandis que l’entraînement sur passages oracle l’améliore fortement, confirmant la valeur d’une sélection auto-guidée.</p>
-<p>Les équipes RAG à long contexte devraient tester l’étape de sélection de passages avant une adaptation sur tout le contexte.</p>
-<p>L’entropie de workspace issue du Jacobian Lens d’Anthropic complète la confiance de sortie pour la récupération factuelle sur PopQA et TriviaQA mais échoue à signaler les idées fausses internalisées sur TruthfulQA.</p>
-<p>La calibration dépend fortement de la tâche, et un seuil TriviaQA s’effondre sur GSM huit mille.</p>
-<p>L’étude fournit des notebooks complets et des métriques brutes pour validation inter-modèles.</p>
-<p>Les équipes RAG peuvent l’ajouter comme signal de routage à faible coût pour des réponses factuelles à haute confiance.</p>
-<p>WILDTRACE propose quatre cent quatre-vingt-un tâches sur deux cent quatorze documents longs naturels où les chaînes de preuves suivent la logique causale et narrative propre de la source plutôt que des aiguilles plantées.</p>
-<p>Il définit sept géométries de preuves internes à la source et applique une validation multi-étapes pour la fidélité et la résistance à la contamination.</p>
-<p>Les benchmarks de raisonnement à long contexte ont historiquement reposé sur des distributions artificielles.</p>
-<p>Les suites d’évaluation devraient ajouter WILDTRACE pour mesurer l’intégration multi-hop réelle.</p>
-<p>DKCD exploite la connaissance de domaine pour faire émerger des facteurs causaux latents, puis utilise cette connaissance pour guider le raisonnement et produire des annotations précises pour la construction de graphes.</p>
-<p>Sur deux jeux de données de domaine à haute expertise, il améliore sensiblement à la fois l’identification des facteurs et la qualité finale du graphe par rapport à des baselines LLM simples.</p>
-<p>Le pipeline en trois étapes attaque directement le manque d’ancrage domaine qui limitait auparavant la découverte causale non structurée.</p>
-<p>Les analystes de domaine peuvent désormais amorcer des graphes causaux à partir de rapports sans recenser manuellement tous les facteurs.</p>
-<p>Ant Group a publié SingGuard-NSFA, un modèle de sécurité open-source destiné aux agents et aux systèmes multimodaux.</p>
-<p>La sortie cible les paradigmes de sécurité pour l’opération autonome plutôt que le filtrage générique de contenu.</p>
-<p>Les déploiements d’agents qui interagissent avec des outils externes ou des entrées multimodales disposent désormais d’un point de départ concret pour des couches de sécurité.</p>
-<p>Les équipes devraient examiner les poids du modèle et les schémas d’intégration pour leurs propres piles de garde-fous.</p>
-<p>Très bien, regardons de plus près le raffinement sélectif de tokens.</p>
-<p>Tout le monde parle d’ajouter plus d’étapes de réflexion comme si le raffinement supplémentaire était toujours gratuit.</p>
-<p>En pratique, le raffinement est un problème d’allocation par étapes où chaque passe supplémentaire coûte un calcul sur toute la séquence.</p>
-<p>Les systèmes de type HALO exécutent d’abord une passe grossière peu coûteuse sur chaque token, puis notent les tokens et appliquent un raffinement plus lourd en deuxième passe uniquement sur un sous-ensemble arrêté.</p>
-<p>La fonction de notation apprend à prédire quels tokens conservent encore une erreur résiduelle élevée après la première passe.</p>
-<p>L’arrêt monotone empêche les tokens ultérieurs de déclencher du travail inutile.</p>
-<p>Cela donne presque la même précision au niveau des tokens qu’en effectuant toujours deux passes complètes tout en réduisant le nombre moyen d’étapes appliquées en dessous même d’une seule passe fixe.</p>
-<p>Le gain de qualité disparaît une fois que les modèles dépassent environ soixante-dix milliards de paramètres, car les représentations de base sont déjà à faible erreur.</p>
-<p>Donc quand vos traces sont longues et que la plupart des tokens sont déjà stables après une passe, le raffinement sélectif l’emporte.</p>
-<p>Quand chaque token a encore besoin de travail, le multi-pass fixe ou l’entraînement test-time complet reste plus simple.</p>
-<p>Testez Soofi S 30B-A3B sur des tâches de code bilingues allemand-anglais pour voir si l’empreinte de trois milliards de paramètres actifs modifie votre budget de latence par rapport aux alternatives denses de quatorze milliards.</p>
-<p>Exécutez Stanford TRACE sur les trajectoires d’échec récentes de votre agent pour générer des adaptateurs Laura ciblés plutôt qu’un pré-entraînement continu générique.</p>
-<p>Intégrez les tasksets de Prime Intellect Verifiers v1 à votre harness d’évaluation d’agent actuel pour mesurer l’impact des runtimes modulaires sur le coût de collecte des traces.</p>
-<p>Ajoutez les tâches WILDTRACE à votre suite d’évaluation à long contexte afin d’arrêter d’optimiser pour des aiguilles plantées et de commencer à mesurer l’intégration réelle des preuves.</p>
-<p>Prototypez l’étape de raisonnement guidé par la connaissance de DKCD sur vos rapports de domaine pour faire émerger les facteurs causaux latents avant de construire des graphes en production.</p>
-<p>Attendez-vous à d’autres sorties open-weight hybrides Mamba-Transformer à mesure que les équipes reproduisent l’échelle à cache constant de Soofi.</p>
-<p>Surveillez les déploiements en production de l’entraînement ciblé par capacité de type TRACE une fois que le code de génération d’environnements synthétiques sera partagé.</p>
-<p>Les modèles de sécurité SingGuard-NSFA d’Ant Group devraient rapidement faire l’objet de fine-tunes communautaires pour des politiques d’utilisation d’outils spécifiques aux agents.</p>
-<p>Demain, surveillez comment les checkpoints Soofi publiés influencent les recettes de fine-tuning pour des agents allemands spécialisés.</p>
-<p>C’était Models and Agents pour aujourd’hui. Si vous avez trouvé cela utile, partagez-le avec quelqu’un qui essaie de suivre tous ces changements et abonnez-vous pour ne pas manquer la mise à jour de demain. Le monde de l’IA avance vite. Nous vous aidons à rester à jour. À demain. Et si vous préférez regarder plutôt qu’écouter, retrouvez-nous sur YouTube à Nerra Network — le lien est dans les notes de l’émission.</p>
-<p>Et avant de partir : cette émission fait partie du Nerra Network, une famille de podcasts quotidiens sur la tech, la science et les marchés, chacun étant un briefing court et percutant que vous pouvez finir pendant votre trajet. Si aujourd’hui a mérité sa place dans votre flux, voici votre prochaine écoute : The Do Positive Pod, les bonnes nouvelles en science et tech, plus une action concrète à entreprendre. Retrouvez toutes les émissions, gratuitement, sur nerranetwork point com. Vous préférez lire ?</p>
-<p>L’article complet d’aujourd’hui, les sources et la transcription sont sur le blog de l’épisode à nerranetwork point com — le même briefing, en version lisible.</p>
-<p>Cet épisode a utilisé une synthèse vocale IA de ma voix — la sélection éditoriale et l’analyse sont les miennes.</p>
             </div>
             
 
