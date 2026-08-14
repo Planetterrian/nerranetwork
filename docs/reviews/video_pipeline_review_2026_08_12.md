@@ -96,6 +96,21 @@ the tests named per item.
   candidate index is carried instead of dict-equality `.index()`
   (duplicate filler segments scored the wrong window; O(n²)).
 
+## Round 2 — shipped 2026-08-14 (from the list below)
+
+Items 1, 2, 4 (in full: guarded tags + caption tracks + Short
+thumbnails + Shorts out of dub podcast playlists), 6 (traffic sources,
+search terms, retention curves for top recent longs), 7 (shorts-count
+hysteresis; retention gating still open), 8 (FR channel + policy-driven
+dub Shorts count + caption-track cost), and 9 (transport-error retry).
+The slot cap rose 24 → 36 on the back of item 1, with
+`gallery_blend_max_long` 16 → 24 so the pool covers the deeper plan.
+Performance context at ship time: RU Shorts median retention 43→54%
+WoW, FR Shorts 46→71% (small n), EN Shorts flat ~44-46%; the motion
+A/B is STALLED (treatment frozen at n=4 — `shorts_ab_enabled: false`
+landed via the merged spacex review PR #973) and is now a `decide`
+entry in the experiments register.
+
 ## Proposed — NOT shipped (each needs its own decision)
 
 1. **ffmpeg input dedup for cycled slideshows** (render #12): one

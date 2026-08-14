@@ -72,8 +72,13 @@ class TestSlideshowSceneCycling:
         sched_src = (_ROOT / "engine" / "scene_scheduler.py").read_text(
             encoding="utf-8")
         assert "_MAX_SLIDESHOW_SLOTS" in video_src
-        assert "_MAX_SLIDESHOW_SLOTS = 24" in sched_src
-        assert _MAX_SLIDESHOW_SLOTS == 24
+        # Aug 2026: cap raised 24 -> 36 after the command builders began
+        # deduping ffmpeg inputs (one -i per unique image + split) — the
+        # Ep537 blowup was 74 DEMUXERS, not 74 zoompan stages, and input
+        # count no longer scales with slots.
+        assert "_MAX_SLIDESHOW_SLOTS = 36" in sched_src
+        assert _MAX_SLIDESHOW_SLOTS == 36
+        assert "_dedupe_scene_inputs" in video_src
         assert "PIPELINE_TIMEOUT_SECONDS: '3000'" in (
             _ROOT / ".github" / "workflows" / "run-show.yml"
         ).read_text(encoding="utf-8")
