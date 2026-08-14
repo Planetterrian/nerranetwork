@@ -82,6 +82,10 @@ _RAW_RULES: List[Tuple[str, str, str]] = [
     # Tesla / generic single-line labels at the top of a daily digest.
     # Match the whole line including a trailing newline.
     (r"(?im)^\s*\*\*HOOK:\*\*\s*", "", "**HOOK:**"),
+    # **TITLE:** is a whole-line strip, unlike **HOOK:** (whose text doubles
+    # as the content lead): the short display title is pure metadata
+    # (offshore_north v2 prompt) and must vanish entirely from body text.
+    (r"(?im)^\s*\*{0,2}TITLE:\*{0,2}[^\n]*\n?", "", "**TITLE:** line"),
     (r"(?im)^\s*\*\*Date:\*\*[^\n]*\n?", "", "**Date:** line"),
     (r"(?im)^\s*\*\*Theme:\*\*[^\n]*\n?", "", "**Theme:** line"),
     (r"(?im)^\s*\*\*Episode:\*\*[^\n]*\n?", "", "**Episode:** line"),

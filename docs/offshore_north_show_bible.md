@@ -437,3 +437,51 @@ Ocean Race Atlantic. Design for it rather than being surprised by it.
    (interview access, corrections channel) or a relationship to keep at
    arm's length for editorial independence. Either is defensible; drifting
    into it accidentally is not.
+
+---
+
+## August 2026 editorial review (v2)
+
+Dan reviewed Ep001-002 and supplied a standing-facts file, a master-prompt
+rewrite, and source-automation guidance. Shipped 2026-08-14:
+
+- **Standing facts layer** — `shows/prompts/offshore_north_standing_facts.txt`
+  is injected into the digest AND podcast prompts via `<<include:>>`.
+  Authoritative campaign background (EMIRA IV's pedigree, Shawyer's bio, the
+  published schedule, the Route du Rhum focal point), plus **standing
+  corrections** (Ep2 asserted the campaign has no boat — from one article,
+  against the campaign's own site) and **open items** that must stay flagged
+  until sourced (the Vendée 2028 qualification mechanism). A weekly source
+  conflicting with standing facts is flagged for editorial review, never
+  asserted. Maintained by Dan; review monthly and after milestones.
+- **Single-source rule** — one article supporting a claim means report it,
+  attribute it, stop. No extrapolated consequences/timelines/risks (the Ep2
+  crisis-narrative failure). In digest, system, and podcast prompts.
+- **Scope exclusions** — America's Cup/AC75, SailGP, Olympic/dinghy/kite,
+  inshore, cruising/charter, general marine industry: dropped before the
+  brief. A shorter Fleet beats an off-topic one.
+- **Lengths** — episode band 1,400–1,800 words (~12 min, was 1,500–2,200);
+  segments ~350–450 each; Plain Sailing hard ceiling 600 → 450 words and it
+  must contain specifics (real numbers/names/races/distances) or pick a
+  different concept; Countdown ≈60 words = days to the Vendée Globe + next
+  concrete milestone with date (qualification specifics stay out until
+  sourced from IMOCA/Vendée official sites).
+- **Short display title** — the digest emits an optional `**TITLE:**` line
+  (≤60-char headline; podcast apps truncate). `run_show._extract_short_title`
+  uses it for RSS/chapters/summaries display titles, falls back to the hook,
+  and the sanitizer strips the line from body text. The hard cap remains
+  `engine.titles.PODCAST_EPISODE_TITLE_MAX` — no new truncation surface.
+- **Sources** — the campaign site's WordPress feeds were already wired at
+  launch; added the official YouTube channel Atom feed
+  (`channel_id=UCbyLJ8WsopLJ0fLjkCAVQjg`, verified serving 15 entries).
+  The channel posts ~biweekly, so the prompt treats a new video as bonus
+  tier-1 material. Facebook/Instagram deliberately parked (no native RSS,
+  brittle bridges, content mirrors site+YouTube). Google News stays as a
+  discovery backfill only — never a primary source, never a cited URL.
+- **Deferred**: yt-dlp auto-captions of campaign videos (turns biweekly
+  videos into pipeline-readable text — revisit if descriptions prove thin);
+  a host-notes input channel for Dan's firsthand dock observations (the
+  bible's open question #2, still the cheapest authenticity upgrade).
+
+Drift guards: `tests/test_offshore_north_weekly_fixes.py` (August 2026
+section). Prompt edits change shipped audio — A/B-listen per landmine #17.

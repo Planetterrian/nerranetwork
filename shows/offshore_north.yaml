@@ -44,6 +44,17 @@ sources:
     label: Canada Ocean Racing
   - url: "https://www.canadaoceanracing.com/category/news/feed/"
     label: Canada Ocean Racing — News
+  # Official YouTube channel feed (Atom; feedparser handles it like RSS).
+  # Channel ID resolved from youtube.com/@CanadaOceanRacing page source and
+  # the feed VERIFIED serving 15 entries on 2026-08-14. The channel posts
+  # roughly every two weeks, so most weeks it contributes nothing — the
+  # digest prompt treats a new video as bonus tier-1 material, never as an
+  # expected weekly input. (Facebook/Instagram deliberately NOT wired:
+  # no native RSS, third-party bridges are brittle, and their posts mirror
+  # the site + YouTube. Parked until the automated sources prove to miss
+  # something — August 2026 editorial review.)
+  - url: "https://www.youtube.com/feeds/videos.xml?channel_id=UCbyLJ8WsopLJ0fLjkCAVQjg"
+    label: Canada Ocean Racing — YouTube
 
   # ---- Tier 2: class + organizers ----
   # NOTE: imoca.org and theoceanrace.com publish NO RSS feed (verified
@@ -256,10 +267,11 @@ llm:
   podcast_temperature: 0.7
   max_tokens: 4500
   podcast_max_tokens: 8000
-  # ONE length target: 10-15 minutes ≈ 1,500-2,200 words at ~150 wpm.
-  # 1,600 sits inside that band so the expand-retry fires on genuinely
-  # short episodes, not on every good 1,550-word one.
-  min_podcast_words: 1600
+  # ONE length target: ~12 minutes = 1,400-1,800 words (August 2026
+  # editorial review — was 1,500-2,200). 1,500 sits inside the band so the
+  # digest-side expand-retry fires on genuinely short episodes, not on
+  # every good 1,450-word one.
+  min_podcast_words: 1500
   # Lowered 1150 -> 950 on 2026-08-04. Ep001 generated a 1124-word script
   # and was skipped for being 26 words under its own floor, which was set
   # nearly 2x the network default of 600. 950 still sits just under the

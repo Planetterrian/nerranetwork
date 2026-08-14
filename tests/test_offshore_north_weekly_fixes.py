@@ -331,7 +331,10 @@ class TestScriptNaturalness:
     def test_plain_sailing_has_a_hard_ceiling(self):
         src = self._prompt()
         assert "HARD CEILING" in src
-        assert "600 spoken words" in src
+        # Tightened 600 -> 450 by the August 2026 editorial review (v2
+        # prompt): 350-450 target, never more than a quarter of the episode.
+        assert "450 spoken words" in src
+        assert "600 spoken words" not in src
 
 
 class TestXSourcingIsScaffoldedButDormant:
@@ -348,3 +351,182 @@ class TestXSourcingIsScaffoldedButDormant:
             assert "VERIFY" in acct["label"], (
                 f"{acct['handle']}: handle was never confirmed against live X"
             )
+
+
+# ---------------------------------------------------------------------------
+# August 2026 editorial review (v2): standing facts, scope, single-source
+# rule, tightened lengths, short display title, YouTube source feed.
+# Canonical inputs: the reviewer's standing-facts file + master prompt v2.
+# ---------------------------------------------------------------------------
+
+_PROMPTS = _ROOT / "shows" / "prompts"
+_FACTS = _PROMPTS / "offshore_north_standing_facts.txt"
+
+
+def _digest_prompt():
+    return (_PROMPTS / "offshore_north_digest.txt").read_text(encoding="utf-8")
+
+
+def _podcast_prompt():
+    return (_PROMPTS / "offshore_north_podcast.txt").read_text(encoding="utf-8")
+
+
+def _system_prompt():
+    return (_PROMPTS / "offshore_north_system.txt").read_text(encoding="utf-8")
+
+
+class TestStandingFactsLayer:
+    """Ep002 asserted the campaign has no boat — from one article, against
+    a fact the campaign's own site has carried since 2025. The standing
+    facts file is the fix: verified background injected into every prompt,
+    outranking any single weekly source."""
+
+    def test_facts_file_exists_and_carries_the_essentials(self):
+        text = _FACTS.read_text(encoding="utf-8")
+        for essential in ("EMIRA IV", "Scott Shawyer", "Canada Ocean Racing",
+                          "12 November 2028", "Route du Rhum"):
+            assert essential in text, f"standing facts lost: {essential}"
+
+    def test_facts_file_carries_the_ep2_standing_correction(self):
+        text = _FACTS.read_text(encoding="utf-8")
+        assert "HAS a boat" in text, (
+            "the Ep2 boat-denial correction is the reason this file exists"
+        )
+        assert "Standing corrections" in text
+
+    def test_both_generation_prompts_include_the_facts(self):
+        inc = "<<include: offshore_north_standing_facts.txt>>"
+        assert inc in _digest_prompt(), "digest prompt must inject standing facts"
+        assert inc in _podcast_prompt(), "podcast prompt must inject standing facts"
+
+    def test_includes_actually_resolve(self):
+        """load_prompt must expand the include — a typo'd path would ship
+        the literal directive as prompt text."""
+        from engine.generator import load_prompt
+        for name in ("offshore_north_digest.txt", "offshore_north_podcast.txt"):
+            rendered = load_prompt(str(_PROMPTS / name))
+            assert "<<include" not in rendered, f"{name}: include did not resolve"
+            assert "Standing corrections" in rendered, (
+                f"{name}: standing facts content missing after include expansion"
+            )
+
+    def test_conflict_rule_flags_rather_than_asserts(self):
+        src = _digest_prompt()
+        assert "conflicts with standing facts" in src.lower() or (
+            "CONFLICTS with the standing facts" in src
+        ), "the digest prompt must route conflicts to a VERIFY flag"
+
+    def test_facts_file_has_no_prompt_placeholders(self):
+        """The include expands BEFORE {placeholder} substitution; a stray
+        brace in the facts file would crash every render."""
+        text = _FACTS.read_text(encoding="utf-8")
+        assert "{" not in text and "}" not in text
+
+
+class TestScopeExclusions:
+    """The reviewer's Fleet complaint: aggregation pulls in America's Cup
+    and Olympic content that is not offshore ocean racing."""
+
+    def test_digest_prompt_names_the_exclusions(self):
+        src = _digest_prompt()
+        for banned in ("America's Cup", "SailGP", "Olympic"):
+            assert banned in src, f"digest scope must exclude: {banned}"
+
+    def test_system_prompt_names_the_exclusions(self):
+        src = _system_prompt()
+        for banned in ("America's Cup", "SailGP"):
+            assert banned in src, f"system scope must exclude: {banned}"
+
+
+class TestSingleSourceRule:
+    """Ep002 built a multi-paragraph crisis narrative from one newspaper
+    article. One source = report the claim and stop."""
+
+    def test_digest_prompt_carries_the_rule(self):
+        assert "SINGLE-SOURCE RULE" in _digest_prompt()
+
+    def test_system_prompt_carries_the_rule(self):
+        assert "single-source rule" in _system_prompt()
+
+    def test_podcast_prompt_respects_it_downstream(self):
+        assert "single-source rule" in _podcast_prompt()
+
+
+class TestEpisodeLengthBandV2:
+    def test_podcast_prompt_uses_the_v2_band(self):
+        src = _podcast_prompt()
+        assert "1,400–1,800" in src
+        assert "1,500–2,200" not in src
+
+    def test_yaml_target_sits_inside_the_band(self):
+        words = _cfg().llm.min_podcast_words
+        assert 1400 <= words <= 1800, (
+            f"min_podcast_words={words} is outside the 1,400-1,800 band — "
+            "the expand-retry would fire on every good episode"
+        )
+
+
+class TestShortDisplayTitle:
+    """The v2 prompt adds a **TITLE:** metadata line (<=60-char headline —
+    podcast apps truncate). run_show extracts it for display-title surfaces
+    and falls back to the hook; the sanitizer strips the line from body
+    text. The hard RSS cap stays in engine.titles, unchanged."""
+
+    def _extract(self):
+        import run_show
+        return run_show._extract_short_title
+
+    def test_digest_prompt_asks_for_the_line(self):
+        src = _digest_prompt()
+        assert "**TITLE:**" in src
+        assert "60 characters" in src
+
+    def test_extractor_finds_the_line(self):
+        fn = self._extract()
+        digest = (
+            "# Offshore North\n**HOOK:** A full consequence sentence.\n\n"
+            "**TITLE:** [EMIRA IV's last week in Collingwood]\n\n## The Canadian Boat\n"
+        )
+        assert fn(digest) == "EMIRA IV's last week in Collingwood"
+
+    def test_extractor_returns_none_when_absent(self):
+        fn = self._extract()
+        assert fn("**HOOK:** Something happened.\n\n## Body\n") is None
+
+    def test_extractor_does_not_eat_the_hook(self):
+        import run_show
+        digest = (
+            "**HOOK:** The real hook.\n**TITLE:** Short headline\n## Body\n"
+        )
+        assert run_show._extract_hook(digest) == "The real hook."
+
+    def test_sanitizer_strips_the_title_line(self):
+        from engine.newsletter_sanitizer import scrub_scaffold
+        body = "**HOOK:** Kept as lead.\n**TITLE:** Metadata only\nReal prose stays.\n"
+        cleaned = scrub_scaffold(body)
+        assert "Metadata only" not in cleaned
+        assert "TITLE" not in cleaned
+        assert "Real prose stays." in cleaned
+
+    def test_run_show_wires_title_hook_into_rss_title(self):
+        src = (_ROOT / "run_show.py").read_text(encoding="utf-8")
+        assert "title_hook = _extract_short_title(x_thread) or hook" in src
+        assert "_build_episode_title(\n            title_hook," in src
+
+
+class TestYouTubeSourceFeed:
+    """Reviewer item 2: the campaign's YouTube channel has an official
+    Atom feed keyed by raw channel ID (verified serving entries Aug 2026)."""
+
+    def test_feed_is_wired_with_the_verified_channel_id(self):
+        urls = [s["url"] for s in yaml.safe_load(
+            _SHOW_YAML.read_text(encoding="utf-8"))["sources"]]
+        yt = [u for u in urls if "youtube.com/feeds/videos.xml" in u]
+        assert yt, "Canada Ocean Racing YouTube feed missing from sources"
+        assert "channel_id=UCbyLJ8WsopLJ0fLjkCAVQjg" in yt[0]
+
+    def test_digest_prompt_treats_video_as_bonus(self):
+        src = _digest_prompt()
+        assert "every two weeks" in src, (
+            "the prompt must not expect a weekly video from a biweekly channel"
+        )
