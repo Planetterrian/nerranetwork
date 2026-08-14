@@ -504,6 +504,13 @@ _MAX_SCENE_HOLD_S = 15.0
 # path falls back to hard-cut concat if the xfade chain ever fails, so this
 # can never make a render fail outright.
 _SLIDESHOW_XFADE_S = 0.6
+# A2 (Aug 2026, un-held when the motion A/B was formally ended): the
+# transition treatment SPLITS by format. A 0.6 s dissolve reads cinematic
+# on a 12-29 s long-form hold but eats 10-15% of a 4-8 s Shorts segment
+# and reads slow against short-form editing grammar — Shorts join on a
+# fast 0.25 s crossfade instead (still softer than a hard cut, so the
+# slideshow never looks broken).
+_SHORTS_XFADE_S = 0.25
 # dissolve/fadeblack were removed from the rotation (Aug 2026): ffmpeg's
 # dissolve is a random per-pixel threshold — on photographic stills it
 # reads as a burst of noise, and it is the worst possible input for the
@@ -657,16 +664,26 @@ def _kb_seed_from_stem(stem) -> int:
 
 
 def _ken_burns(frames: int, move: str, *,
-               zoom_max: float = _ZOOM_MAX) -> Tuple[str, str, str]:
+               zoom_max: float = _ZOOM_MAX,
+               ease: str = "linear") -> Tuple[str, str, str]:
     """Return ``(z, x, y)`` zoompan expressions for one scene.
 
     *frames* is the scene's own output frame count, which is what makes
     the motion duration-independent: a 4 s scene and a 15 s scene both
     travel the full zoom range over their own length.
+
+    ``ease="out"`` (Aug 2026 — E1 punch-ins, un-held when the motion
+    A/B was formally ended) front-loads the travel: progress runs
+    ``p*(2-p)`` instead of linear, so ~75% of the move lands in the
+    first half of the segment and then settles — the short-form
+    "punch-in" cut. Same total travel, same clamps; only the velocity
+    profile changes, so the feasibility math below is untouched.
     """
     n = max(2, int(frames))
     # Normalised progress 0..1 across this scene, in OUTPUT frames.
     p = f"(min(on/{n - 1},1))"
+    if ease == "out":
+        p = f"({p}*(2-{p}))"
     amp = round(zoom_max - 1.0, 6)
 
     if move.startswith("out"):
@@ -718,7 +735,9 @@ def _ken_burns_chain(src: str, out_label: str, *, frames: int, index: int,
                      prescale: float = _PRESCALE,
                      trim_seconds: Optional[float] = None,
                      kb_seed: int = 0,
-                     kb_extended: bool = True) -> str:
+                     kb_extended: bool = True,
+                     ease: str = "linear",
+                     closing_beat: bool = False) -> str:
     """The full scale -> crop -> zoompan chain for one still.
 
     ``kb_extended=True`` (July 31 2026, A1) uses the widened 8-move
@@ -756,7 +775,15 @@ def _ken_burns_chain(src: str, out_label: str, *, frames: int, index: int,
         # Legacy mode stays byte-pinned (Shorts motion A/B control arm).
         move = _KB_MOVES[index % _KB_LEGACY_MOVE_COUNT]
         zoom_max = _ZOOM_MAX
-    z, x, y = _ken_burns(frames, move, zoom_max=zoom_max)
+    if closing_beat and kb_extended:
+        # D2 (long-form ending beat): the FINAL scene always settles on
+        # a slow centred push-in at a gentle amplitude — the episode
+        # visually comes to rest before the outro card fades in, instead
+        # of ending mid-pan on whatever the rotation happened to deal.
+        move = "in_centre"
+        zoom_max = min(zoom_max, 1.06)
+    z, x, y = _ken_burns(frames, move, zoom_max=zoom_max,
+                         ease=ease if kb_extended else "linear")
     chain = (
         f"{src}"
         f"scale={pre_w}:{pre_h}:force_original_aspect_ratio=increase"
@@ -857,6 +884,7 @@ def _slideshow_filter_graph(scene_count: int, *,
         def _src(i: int) -> str:
             return f"[{i}:v]"
 
+    is_vertical = height > width
     for i in range(scene_count):
         clip_len = durs[i] + xfade_pad
         frames_per_scene = max(2, round(clip_len * fps))
@@ -866,6 +894,14 @@ def _slideshow_filter_graph(scene_count: int, *,
             width=width, height=height, fps=fps,
             trim_seconds=clip_len,
             kb_seed=kb_seed, kb_extended=kb_extended,
+            # E1: alternate Shorts segments punch in (ease-out travel —
+            # ~75% of the move in the first half, then settle); long-form
+            # keeps the linear drift.
+            ease=("out" if is_vertical and i % 2 == 1 else "linear"),
+            # D2: the final LONG-FORM scene settles on a gentle centred
+            # push-in before the outro card fades in.
+            closing_beat=(not is_vertical and i == scene_count - 1
+                          and scene_count >= 2),
         ))
 
     if not use_xfade:
@@ -978,7 +1014,8 @@ def _render_slideshow(scene_paths: Sequence[Path], output: Path,
                       width: int = 1920, height: int = 1080,
                       fps: int = 30,
                       kb_seed: int = 0,
-                      kb_extended: bool = True) -> Path:
+                      kb_extended: bool = True,
+                      crossfade: float = _SLIDESHOW_XFADE_S) -> Path:
     """Render the stage-1 slideshow MP4. Idempotent (skips if output exists).
 
     Tries the crossfade graph first; if ffmpeg rejects it for any reason,
@@ -1005,6 +1042,7 @@ def _render_slideshow(scene_paths: Sequence[Path], output: Path,
                              scene_duration=scene_duration,
                              scene_durations=scene_durations,
                              width=width, height=height, fps=fps,
+                             crossfade=crossfade,
                              kb_seed=kb_seed, kb_extended=kb_extended)
         _run_ffmpeg(cmd, label="slideshow render (crossfade)")
     except (subprocess.CalledProcessError, RuntimeError) as exc:
@@ -3103,6 +3141,7 @@ def build_short_video(audio_path: Path, cover_path: Path,
                         scene_durations=seg_durations,
                         width=1080, height=1920, fps=fps,
                         kb_seed=kb_seed, kb_extended=kb_extended,
+                        crossfade=_SHORTS_XFADE_S,
                     )
                     bg_path = slideshow_path
                     bg_is_video = True
@@ -3121,6 +3160,7 @@ def build_short_video(audio_path: Path, cover_path: Path,
                     scene_duration=_SHORT_SCENE_DURATION_SECONDS,
                     width=1080, height=1920, fps=fps,
                     kb_seed=kb_seed, kb_extended=kb_extended,
+                    crossfade=_SHORTS_XFADE_S,
                 )
                 bg_path = slideshow_path
                 bg_is_video = True

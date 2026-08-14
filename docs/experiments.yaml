@@ -238,25 +238,25 @@ experiments:
       landmine #17.
 
   - id: shorts-motion-ab-stalled
-    title: "Shorts motion A/B — enrollment stalled, decide: re-enable or end"
+    title: "Shorts motion A/B — ENDED (operator, 2026-08-14): unreadable"
     area: retention
     shipped: 2026-07-30
-    readout: 2026-08-21
-    status: decide
+    readout: 2026-08-14
+    status: done
     criteria: >
-      The treatment arm has been frozen at n=4 since ~Aug 9:
-      shows/spacex.yaml carries shorts_ab_enabled: false (arrived via
-      the merged spacex review PR #973), so no new grok_video Shorts
-      enroll and the 14-per-arm bar can never be reached. Operator
-      decision: (a) re-enable enrollment on spacex (one YAML flag) and
-      let it run ~2 more weeks, or (b) formally end the experiment as
-      unreadable — which also un-holds the four render items gated on
-      its verdict (Shorts transition split, progress bar, punch-ins,
-      long-form ending beat) for fresh evaluation on their own merits.
+      RESOLVED 2026-08-14 — operator chose (b): formally ended as
+      unreadable. The treatment arm froze at n=4 when
+      shorts_ab_enabled: false landed via the merged spacex review PR
+      #973; final data (4 vs 12) is not significant and stills remain
+      the network default (no Grok Video spend on Shorts). The four
+      render items the verdict was holding are now shipped on their own
+      merits: progress bar (A3, shipped earlier), Shorts transition
+      split (A2), punch-in easing (E1), long-form closing beat (D2) —
+      all in the scene-cadence-36-slots reading window.
     notes: >
-      Interim data (n=4 vs 12, NOT significant): treatment mean AVP
-      reads higher but is dominated by one outlier; views are flat.
-      ~$1.05/enrolled episode while enrollment is on.
+      The A/B machinery (engine/shorts_ab.py, the nightly report) stays
+      dormant and re-usable; kb_extended=False keeps reproducing the
+      legacy control render if a future experiment wants it.
 
   - id: scene-cadence-36-slots
     title: "Long-form scene cadence — input dedup + 36-slot cap + adaptive Ken Burns"

@@ -797,10 +797,16 @@ the starting hook sequence"). Render/metadata-only — outside landmine
   `\t` pop; 8-move episode-seeded Ken Burns at 1.06/1.09/1.12
   (CRC32-of-stem seed; `kb_extended=False` keeps byte-identical legacy
   for A/B-enrolled shows); accelerating open (<60s slots cap holds at
-  8s); supersampled v2/v3 pills. Deliberately HELD for the A/B verdict:
-  Shorts transition split, progress bar, punch-ins, long-form ending
-  beat (in `docs/…/video_render_plan` items A2/A3/E1/D2 — re-propose
-  after `api/shorts_ab.json` reads out).
+  8s); supersampled v2/v3 pills. The four items HELD for the motion-A/B
+  verdict all shipped once the A/B was formally ENDED as unreadable
+  (operator, 2026-08-14 — enrollment froze at n=4 via the merged spacex
+  review PR #973; see `docs/experiments.yaml` `shorts-motion-ab-stalled`):
+  progress bar (A3, earlier), Shorts transition split (A2 — vertical
+  slideshows join on `_SHORTS_XFADE_S` 0.25 s vs long-form 0.6 s),
+  punch-in easing (E1 — alternate Shorts segments front-load their Ken
+  Burns travel, `ease="out"`), long-form closing beat (D2 — the final
+  scene settles on a gentle centred push-in before the outro card).
+  Drift guards: `tests/test_video_commands.py::TestUnheldRenderUpgrades`.
 - **Learning loop:** title hints mined per-kind (Shorts retention no
   longer steers long-form titles) with fragment/dateline exemplars
   banned; gallery-retention flywheel CLOSED (bounded ±10 ranking prior
