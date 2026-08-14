@@ -81,14 +81,18 @@ _MIN_CHAPTER_GAP_S = 1.0
 _OPEN_FAST_WINDOW_S = 60.0
 _OPEN_MAX_HOLD_S = 8.0
 
-# Hard cap on ffmpeg slideshow inputs. The xfade+zoompan filter graph
-# scales poorly past ~30–40 scenes; Tesla Ep537 (1044 s @ 15 s hold →
-# 74 slots, only 4 unique images after gallery CDN 403s) timed out the
-# 2400 s pipeline mid-slideshow. 24 matches the historical ~10-min /
-# 25 s-hold cadence and keeps a 17-min episode renderable (~43 s holds,
-# still watchable under Ken Burns). Shared with engine.video's uniform
-# cycling path.
-_MAX_SLIDESHOW_SLOTS = 24
+# Hard cap on slideshow SLOTS (scene holds), shared with engine.video's
+# uniform cycling path. History: Tesla Ep537 (1044 s @ 15 s hold -> 74
+# slots over only 4 unique images) timed out the 2400 s pipeline, and
+# the cap was set to 24 — because every slot was its own ffmpeg input
+# (74 demuxers/decoders of identical pixels). Aug 2026: the command
+# builders dedupe inputs (one -i per UNIQUE image + split fan-out), so
+# input count no longer scales with slots and the cap can afford real
+# scene changes on long episodes: 36 slots holds a 17-min episode to
+# ~29 s per scene (was 85+ s after the old cap's merges). Still a cap —
+# each slot is a zoompan+xfade stage, and 36 keeps the graph well under
+# the shapes that have ever timed out.
+_MAX_SLIDESHOW_SLOTS = 36
 
 
 def _tokenize(text: Optional[str]) -> frozenset:

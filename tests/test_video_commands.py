@@ -1867,7 +1867,15 @@ def test_build_short_video_cut_times_scenes_rotate_across_segments(tmp_path,
     stage1 = captured_cmds[0]
     i_indices = [i for i, x in enumerate(stage1) if x == "-i"]
     input_paths = [stage1[i + 1] for i in i_indices]
-    assert input_paths == [str(scenes[i % 3]) for i in range(6)]
+    # Aug 2026 input dedup: 6 slots over a 3-scene pool open each unique
+    # file ONCE and fan out via split — the rotation now lives in the
+    # filter graph's consumption order, not in duplicate -i entries.
+    assert input_paths == [str(s) for s in scenes]
+    graph = stage1[stage1.index("-filter_complex") + 1]
+    for j in range(3):
+        assert f"[{j}:v]split=2[in{j}c0][in{j}c1]" in graph
+    # 6 Ken Burns chains still render — one per slot.
+    assert graph.count("zoompan=") == 6
 
 
 def test_build_short_video_none_cut_times_is_byte_identical(tmp_path,
