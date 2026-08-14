@@ -2652,3 +2652,54 @@ class TestPillV2:
         # Stale v1 names must not be written.
         assert not (tmp_path / "_show_pill_tesla_shorts_time.png").exists()
         assert not (tmp_path / "_url_pill_v1.png").exists()
+
+
+class TestUnheldRenderUpgrades:
+    """A2/E1/D2 — un-held when the Shorts motion A/B was formally ended
+    (Aug 14 2026, operator-directed; treatment arm froze at n=4)."""
+
+    def test_shorts_transition_split(self):
+        # A2: vertical slideshows join on the fast 0.25 s crossfade;
+        # long-form keeps the cinematic 0.6 s.
+        from engine.video import _SHORTS_XFADE_S, _SLIDESHOW_XFADE_S
+        assert _SHORTS_XFADE_S == 0.25
+        assert _SLIDESHOW_XFADE_S == 0.6
+        import engine.video as _video
+        vsrc = Path(_video.__file__.replace(".pyc", ".py")).read_text(
+            encoding="utf-8")
+        # Both Shorts stage-1 render sites pass the split constant.
+        assert vsrc.count("crossfade=_SHORTS_XFADE_S") == 2
+
+    def test_punch_in_easing_on_alternate_vertical_segments(self):
+        # E1: odd vertical segments front-load their travel (p*(2-p));
+        # even segments and all long-form segments stay linear.
+        graph_v = _slideshow_filter_graph(
+            scene_count=3, width=1080, height=1920,
+            scene_durations=[5.0, 5.0, 5.0])
+        assert "*(2-" in graph_v
+        chains = graph_v.split(";")
+        eased = [c for c in chains if "*(2-" in c and "zoompan" in c]
+        assert len(eased) == 1  # exactly the middle (index 1) segment
+        graph_h = _slideshow_filter_graph(
+            scene_count=3, scene_durations=[12.0, 12.0, 12.0])
+        assert "*(2-" not in graph_h
+
+    def test_long_form_closing_beat(self):
+        # D2: the final long-form scene settles on a gentle centred
+        # push-in (zoom-in, no pan) before the outro card fades in.
+        import re as _re
+        graph = _slideshow_filter_graph(
+            scene_count=3, scene_durations=[12.0, 12.0, 12.0])
+        last = [c for c in graph.split(";") if "[s2]" in c][0]
+        # Zoom-in form, amplitude capped at the gentle 0.06...
+        m = _re.search(r"zoompan=z='\(1\+([0-9.]+)\*", last)
+        assert m, last
+        assert float(m.group(1)) <= 0.06 + 1e-9
+        # ...and centred (no pan ramp in x/y).
+        assert "0.5" in last and "ramp" not in last
+        # Shorts do NOT get the closing beat (the end card owns their
+        # ending) — pinned at the wiring: the flag is long-form only.
+        import engine.video as _video
+        vsrc = Path(_video.__file__.replace(".pyc", ".py")).read_text(
+            encoding="utf-8")
+        assert "closing_beat=(not is_vertical" in vsrc
