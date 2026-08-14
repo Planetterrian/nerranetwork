@@ -36,7 +36,7 @@ _NEW_KNOBS = {
     # generated per episode against up to 24 scheduler slots, so
     # the old pool repeated every image several times per episode.
     # Library scenes are already generated and already paid for.
-    "gallery_blend_max_long": 16,
+    "gallery_blend_max_long": 24,  # raised with the 36-slot cap
     "gallery_blend_max_short": 6,
     "chapter_aligned_scenes": True,
     "long_form_thumbnail_from_scene": True,

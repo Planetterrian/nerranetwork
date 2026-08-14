@@ -154,7 +154,9 @@ def test_ru_dub_shows_count_against_ru_channel(tmp_path):
     assert "flag (ru dub)" in ru["enabled_slugs"]
     assert ru["uploads"] == 2  # dub long + dub Short count toward ru cadence
     # 2 video inserts + thumbnail/playlist each; no caption track on the dub.
-    assert ru["total_units"] == 2 * (1600 + 50 + 50)
+    # 2 uploads x (insert 1600 + thumbnail 50 + playlist 50) + the
+    # caption track the dub long-form uploads since Aug 2026 (400).
+    assert ru["total_units"] == 2 * (1600 + 50 + 50) + 400
     # The dub never leaks into the EN bucket.
     assert summary["per_channel"]["en"]["enabled_slugs"] == ["flag"]
 
@@ -206,3 +208,19 @@ def test_over_quota_is_per_channel(tmp_path):
     msg = format_quota_warning(summary)
     assert "channel 'en'" in msg
     assert "channel 'ru'" not in msg
+
+
+def test_dub_languages_channel_is_visible(tmp_path):
+    # Aug 2026: youtube.dub_languages was never read, so the whole FR
+    # channel was invisible to estimate_network_daily_units and the
+    # daily preflight.
+    shows = tmp_path / "shows"
+    shows.mkdir()
+    (shows / "flag.yaml").write_text(
+        "name: F\nslug: flag\nyoutube:\n  enabled: true\n  channel: en\n"
+        "  dub_languages: [fr]\n",
+        encoding="utf-8",
+    )
+    summary = estimate_network_daily_units(shows)
+    assert "fr" in summary["per_channel"]
+    assert "flag (fr dub)" in summary["per_channel"]["fr"]["enabled_slugs"]

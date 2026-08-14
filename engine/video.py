@@ -636,6 +636,13 @@ _KB_LEGACY_MOVE_COUNT = 4
 # between the stronger pushes. The legacy path stays pinned at
 # ``_ZOOM_MAX`` (1.09).
 _KB_ZOOM_AMPLITUDES = (1.06, 1.09, 1.12)
+# Duration-adaptive Ken Burns (Aug 2026): amplitude per second of hold,
+# with floor/ceiling. 0.006/s x 15 s = 0.09 — the historical middle rung,
+# so the common case is unchanged; longer holds travel proportionally
+# further instead of slowing to sub-perceptual drift.
+_KB_AMP_PER_SECOND = 0.006
+_KB_AMP_MIN = 0.04
+_KB_AMP_MAX = 0.24
 
 
 def _kb_seed_from_stem(stem) -> int:
@@ -726,8 +733,27 @@ def _ken_burns_chain(src: str, out_label: str, *, frames: int, index: int,
     pre_w, pre_h = int(width * prescale), int(height * prescale)
     if kb_extended:
         move = _KB_MOVES[(index + kb_seed) % len(_KB_MOVES)]
-        zoom_max = _KB_ZOOM_AMPLITUDES[(index + kb_seed) % len(_KB_ZOOM_AMPLITUDES)]
+        ladder = _KB_ZOOM_AMPLITUDES[
+            (index + kb_seed) % len(_KB_ZOOM_AMPLITUDES)] - 1.0
+        if trim_seconds and trim_seconds > 0:
+            # Duration-adaptive amplitude (Aug 2026): a fixed amplitude
+            # means perceived velocity is inversely proportional to hold
+            # length — a 4 s Shorts segment moved at ~2.3%/s while a
+            # post-cap 29 s hold crawls at ~0.3%/s (functionally the
+            # frozen still the motion pass exists to eliminate). Scale
+            # the zoom range with the hold so travel speed stays in a
+            # visible band; the ladder survives as a ±1/3 rhythm
+            # multiplier (0.006/s reproduces the 1.09 middle rung at
+            # the historical 15 s hold exactly). Floor keeps short
+            # segments calm; ceiling keeps long holds from swimming.
+            rel = ladder / 0.09
+            amp = min(_KB_AMP_MAX,
+                      max(_KB_AMP_MIN, _KB_AMP_PER_SECOND * trim_seconds * rel))
+            zoom_max = round(1.0 + amp, 4)  # clean float repr in the graph
+        else:
+            zoom_max = 1.0 + ladder
     else:
+        # Legacy mode stays byte-pinned (Shorts motion A/B control arm).
         move = _KB_MOVES[index % _KB_LEGACY_MOVE_COUNT]
         zoom_max = _ZOOM_MAX
     z, x, y = _ken_burns(frames, move, zoom_max=zoom_max)
@@ -756,7 +782,8 @@ def _slideshow_filter_graph(scene_count: int, *,
                             fps: int = 30,
                             crossfade: float = _SLIDESHOW_XFADE_S,
                             kb_seed: int = 0,
-                            kb_extended: bool = True) -> str:
+                            kb_extended: bool = True,
+                            input_map: Optional[Sequence[int]] = None) -> str:
     """Build the filter_complex for a Ken Burns slideshow.
 
     Each scene gets a 1.00 → 1.12 zoom over its window. When *crossfade* > 0
@@ -785,6 +812,10 @@ def _slideshow_filter_graph(scene_count: int, *,
             f"scene_durations length {len(scene_durations)} != "
             f"scene_count {scene_count}"
         )
+    if input_map is not None and len(input_map) != scene_count:
+        raise ValueError(
+            f"input_map length {len(input_map)} != scene_count {scene_count}"
+        )
     use_xfade = crossfade and crossfade > 0 and scene_count >= 2
     xfade_pad = crossfade if use_xfade else 0.0
     durs: List[float] = (
@@ -794,11 +825,43 @@ def _slideshow_filter_graph(scene_count: int, *,
     )
 
     chains: List[str] = []
+
+    # Input dedup (Aug 2026): a cycled plan used to open the SAME 4-8
+    # image files once per slot — 24+ demuxers/decoders/input buffers of
+    # identical pixels, the actual mechanism behind the Ep537 input
+    # blowup the slot cap papered over. With ``input_map`` (slot ->
+    # unique ffmpeg input index), each unique file is one ``-i`` and a
+    # ``split`` fans its frames out to the per-slot Ken Burns chains
+    # (zoompan pulls lazily, so each branch still only decodes a frame
+    # or two). ``None`` keeps the legacy one-input-per-slot graph
+    # byte-for-byte.
+    if input_map is not None:
+        from collections import Counter
+
+        counts = Counter(input_map)
+        for j in sorted(set(input_map)):
+            k = counts[j]
+            if k > 1:
+                outs = "".join(f"[in{j}c{m}]" for m in range(k))
+                chains.append(f"[{j}:v]split={k}{outs}")
+        _consumed: dict = {}
+
+        def _src(i: int) -> str:
+            j = input_map[i]
+            if counts[j] == 1:
+                return f"[{j}:v]"
+            m = _consumed.get(j, 0)
+            _consumed[j] = m + 1
+            return f"[in{j}c{m}]"
+    else:
+        def _src(i: int) -> str:
+            return f"[{i}:v]"
+
     for i in range(scene_count):
         clip_len = durs[i] + xfade_pad
         frames_per_scene = max(2, round(clip_len * fps))
         chains.append(_ken_burns_chain(
-            f"[{i}:v]", f"[s{i}]",
+            _src(i), f"[s{i}]",
             frames=frames_per_scene, index=i,
             width=width, height=height, fps=fps,
             trim_seconds=clip_len,
@@ -827,6 +890,27 @@ def _slideshow_filter_graph(scene_count: int, *,
     return ";".join(chains)
 
 
+def _dedupe_scene_inputs(
+    scene_paths: Sequence[Path],
+) -> Tuple[List[Path], List[int]]:
+    """Collapse a (cycled) slot list to unique ffmpeg inputs.
+
+    Returns ``(unique_paths, input_map)`` where ``input_map[slot]`` is the
+    index into ``unique_paths``. A cycled 24-slot plan over 4 images
+    becomes 4 inputs instead of 24 demuxers of identical pixels.
+    """
+    unique: List[Path] = []
+    index_of: dict = {}
+    input_map: List[int] = []
+    for p in scene_paths:
+        key = str(p)
+        if key not in index_of:
+            index_of[key] = len(unique)
+            unique.append(p)
+        input_map.append(index_of[key])
+    return unique, input_map
+
+
 def _slideshow_cmd(scene_paths: Sequence[Path], output: Path,
                    *, scene_duration: float = _SCENE_DURATION_SECONDS,
                    scene_durations: Optional[Sequence[float]] = None,
@@ -853,12 +937,17 @@ def _slideshow_cmd(scene_paths: Sequence[Path], output: Path,
         if scene_durations is not None
         else [scene_duration] * len(scene_paths)
     )
+    unique_inputs, input_map = _dedupe_scene_inputs(scene_paths)
+    # Each unique input's -t must cover its LONGEST consumer slot.
+    input_t = {}
+    for i, j in enumerate(input_map):
+        input_t[j] = max(input_t.get(j, 0.0), durs[i] + input_pad)
     inputs: List[str] = []
-    for i, path in enumerate(scene_paths):
+    for j, path in enumerate(unique_inputs):
         inputs.extend([
             "-loop", "1",
             "-framerate", str(fps),
-            "-t", f"{durs[i] + input_pad:.2f}",
+            "-t", f"{input_t[j]:.2f}",
             "-i", str(path),
         ])
     return [
@@ -870,7 +959,8 @@ def _slideshow_cmd(scene_paths: Sequence[Path], output: Path,
                                 scene_durations=scene_durations,
                                 width=width, height=height, fps=fps,
                                 crossfade=crossfade,
-                                kb_seed=kb_seed, kb_extended=kb_extended),
+                                kb_seed=kb_seed, kb_extended=kb_extended,
+                                input_map=input_map),
         "-map", "[v]",
         "-r", str(fps),
         *_VIDEO_ENCODE_FAST,
@@ -2054,6 +2144,7 @@ def _single_pass_long_form_filter_graph(
     hook: Optional[str] = None,
     kb_seed: int = 0,
     kb_extended: bool = True,
+    input_map: Optional[Sequence[int]] = None,
 ) -> str:
     """One filter graph for slideshow + overlays + captions (P1-2).
 
@@ -2084,6 +2175,7 @@ def _single_pass_long_form_filter_graph(
         width=width, height=height, fps=fps,
         crossfade=crossfade,
         kb_seed=kb_seed, kb_extended=kb_extended,
+        input_map=input_map,
     )
     # The slideshow graph's terminal label is always ``[v]``; the
     # composite needs it as ``[bg]``. Only the final occurrence is the
@@ -2100,9 +2192,12 @@ def _single_pass_long_form_filter_graph(
     # different chroma handling on overlay edges vs the two-stage path).
     graph = slideshow[: -len("[v]")] + f",{_GRADE_CHAIN},format=yuv420p[bg]"
 
-    # Scenes consume inputs 0..n-1, so audio/brand/pill shift up.
-    brand_idx = scene_count + 1
-    pill_idx = scene_count + 2
+    # Scene inputs occupy 0..n_inputs-1 (deduped when input_map is
+    # given — a cycled plan's audio/brand/pill sit right after the
+    # UNIQUE images, not after every slot), so audio/brand/pill shift up.
+    n_inputs = (max(input_map) + 1) if input_map else scene_count
+    brand_idx = n_inputs + 1
+    pill_idx = n_inputs + 2
 
     graph += (
         f";[{brand_idx}:v]format=rgba[brand];"
@@ -2188,16 +2283,20 @@ def _single_pass_long_form_cmd(
         else [scene_duration] * len(scene_paths)
     )
 
+    unique_inputs, input_map = _dedupe_scene_inputs(scene_paths)
+    input_t = {}
+    for i, j in enumerate(input_map):
+        input_t[j] = max(input_t.get(j, 0.0), durs[i] + input_pad)
     inputs: List[str] = []
-    for i, path in enumerate(scene_paths):
+    for j, path in enumerate(unique_inputs):
         inputs.extend([
             "-loop", "1",
             "-framerate", str(fps),
-            "-t", f"{durs[i] + input_pad:.2f}",
+            "-t", f"{input_t[j]:.2f}",
             "-i", str(path),
         ])
 
-    n = len(scene_paths)
+    n = len(unique_inputs)
     inputs.extend(["-i", audio_in])
     inputs.extend(["-loop", "1", "-framerate", str(fps), "-i", brand_in])
     next_index = n + 2
@@ -2225,7 +2324,8 @@ def _single_pass_long_form_cmd(
         meta_map = ["-map_metadata", str(next_index)]
 
     graph = _single_pass_long_form_filter_graph(
-        n,
+        len(scene_paths),
+        input_map=input_map,
         scene_duration=scene_duration,
         scene_durations=scene_durations,
         width=width, height=height, fps=fps,

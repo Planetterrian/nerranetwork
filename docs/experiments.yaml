@@ -236,3 +236,43 @@ experiments:
       runs after the end-card overlay (last ~3 s of speech kept its
       text hidden under the opaque CTA card). Render-only — outside
       landmine #17.
+
+  - id: shorts-motion-ab-stalled
+    title: "Shorts motion A/B — enrollment stalled, decide: re-enable or end"
+    area: retention
+    shipped: 2026-07-30
+    readout: 2026-08-21
+    status: decide
+    criteria: >
+      The treatment arm has been frozen at n=4 since ~Aug 9:
+      shows/spacex.yaml carries shorts_ab_enabled: false (arrived via
+      the merged spacex review PR #973), so no new grok_video Shorts
+      enroll and the 14-per-arm bar can never be reached. Operator
+      decision: (a) re-enable enrollment on spacex (one YAML flag) and
+      let it run ~2 more weeks, or (b) formally end the experiment as
+      unreadable — which also un-holds the four render items gated on
+      its verdict (Shorts transition split, progress bar, punch-ins,
+      long-form ending beat) for fresh evaluation on their own merits.
+    notes: >
+      Interim data (n=4 vs 12, NOT significant): treatment mean AVP
+      reads higher but is dominated by one outlier; views are flat.
+      ~$1.05/enrolled episode while enrollment is on.
+
+  - id: scene-cadence-36-slots
+    title: "Long-form scene cadence — input dedup + 36-slot cap + adaptive Ken Burns"
+    area: retention
+    shipped: 2026-08-14
+    readout: 2026-08-28
+    status: reading
+    metric: long_form_median_avp_en_14d
+    target: >
+      Long-form median AVP up vs the 13.4%/11.4% (14d) recent band. A
+      17-min episode now changes scene every ~29 s instead of holding
+      85+ s, the accelerating open survives, and Ken Burns speed no
+      longer collapses on long holds (0.006/s adaptive amplitude).
+      Reads jointly with youtube-chapters-live (both target the same
+      metric; this is the render half).
+    notes: >
+      Enabled by ffmpeg input dedup (one -i per unique image + split),
+      which removed the per-slot demuxer cost behind the old 24-slot
+      cap. Render-only — outside landmine #17.

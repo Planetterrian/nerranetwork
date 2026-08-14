@@ -276,14 +276,30 @@ def _load_description_body_from_template(
     return _strip_markdown(body)
 
 
-def _build_tags(
+def _quoted_tag_cost(tags: List[str]) -> int:
+    """YouTube's real accounting: a tag containing a space is stored
+    quoted (+2 chars), and the commas between tags count too. A naive
+    ``len(",".join(tags))`` under-counts space-y tag sets and ships a
+    400 invalidTags on the whole upload."""
+    if not tags:
+        return 0
+    per = [len(t) + (2 if " " in t else 0) for t in tags]
+    return sum(per) + (len(tags) - 1)
+
+
+def build_tags(
     extra: List[str],
     keywords: List[str],
     *,
     network_tags: List[str],
     max_tags: int = 30,
 ) -> List[str]:
-    """Build a deduped list of tags that fits inside YouTube's 500-char cap."""
+    """Build a deduped tag list inside YouTube's 500-char cap.
+
+    Public since Aug 2026 so the RU/FR dub upload paths can stop passing
+    raw ``config.keywords`` with no length guard (modern_investing's dub
+    tag set measured 40 chars from a 400 on every upload).
+    """
     seen = set()
     ordered: List[str] = []
     for tag in list(extra) + list(network_tags) + list(keywords):
@@ -297,10 +313,14 @@ def _build_tags(
         if len(ordered) >= max_tags:
             break
 
-    # Trim from the tail while the comma-joined length exceeds the cap.
-    while ordered and len(",".join(ordered)) > YOUTUBE_TAG_TOTAL_MAX:
+    # Trim from the tail while the QUOTED cost exceeds the cap.
+    while ordered and _quoted_tag_cost(ordered) > YOUTUBE_TAG_TOTAL_MAX:
         ordered.pop()
     return ordered
+
+
+# Backwards-compatible alias for in-module callers.
+_build_tags = build_tags
 
 
 # ---------------------------------------------------------------------------

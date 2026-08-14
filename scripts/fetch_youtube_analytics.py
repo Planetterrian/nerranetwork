@@ -268,6 +268,96 @@ def _geography(service, start: str, end: str, limit: int = 25) -> List[dict]:
     return rows
 
 
+def _traffic_sources(service, start: str, end: str) -> List[dict]:
+    """Views by traffic source type (Shorts feed / browse / SEARCH /
+    suggested / external). [] on any failure.
+
+    Aug 2026: the policy treated a search-driven view and a Shorts-feed
+    view as identical evidence; this is the free split that says whether
+    titles/tags are doing anything at all.
+    """
+    try:
+        resp = service.reports().query(
+            ids="channel==MINE", startDate=start, endDate=end,
+            metrics="views,estimatedMinutesWatched",
+            dimensions="insightTrafficSourceType",
+            sort="-views", maxResults=25,
+        ).execute()
+    except Exception as exc:  # noqa: BLE001
+        logger.info("traffic-source query skipped: %s", str(exc)[:160])
+        return []
+    headers = [h["name"] for h in resp.get("columnHeaders", [])]
+    rows = []
+    for row in resp.get("rows", []) or []:
+        rec = dict(zip(headers, row))
+        rows.append({
+            "source": rec.get("insightTrafficSourceType", ""),
+            "views": int(float(rec.get("views") or 0)),
+            "minutes": round(float(
+                rec.get("estimatedMinutesWatched") or 0), 1),
+        })
+    return rows
+
+
+def _search_terms(service, start: str, end: str, limit: int = 20) -> List[dict]:
+    """The literal YouTube search queries that reached this channel.
+
+    The single best free input for tags and the title prompt. [] on any
+    failure (the detail dimension needs YT_SEARCH traffic to exist).
+    """
+    try:
+        resp = service.reports().query(
+            ids="channel==MINE", startDate=start, endDate=end,
+            metrics="views", dimensions="insightTrafficSourceDetail",
+            filters="insightTrafficSourceType==YT_SEARCH",
+            sort="-views", maxResults=limit,
+        ).execute()
+    except Exception as exc:  # noqa: BLE001
+        logger.info("search-terms query skipped: %s", str(exc)[:160])
+        return []
+    headers = [h["name"] for h in resp.get("columnHeaders", [])]
+    rows = []
+    for row in resp.get("rows", []) or []:
+        rec = dict(zip(headers, row))
+        term = str(rec.get("insightTrafficSourceDetail", "")).strip()
+        if term:
+            rows.append({"term": term,
+                         "views": int(float(rec.get("views") or 0))})
+    return rows
+
+
+def _retention_curve(service, video_id: str, start: str, end: str) -> List[dict]:
+    """The audience-retention curve for ONE video — where viewers leave.
+
+    averageViewPercentage is one scalar; the curve says WHERE the drop
+    happens, which is what the scene scheduler and the hook-first
+    directive actually need measured. [] on any failure.
+    """
+    try:
+        resp = service.reports().query(
+            ids="channel==MINE", startDate=start, endDate=end,
+            metrics="audienceWatchRatio",
+            dimensions="elapsedVideoTimeRatio",
+            filters=f"video=={video_id}",
+        ).execute()
+    except Exception as exc:  # noqa: BLE001
+        logger.info("retention-curve query skipped (%s): %s",
+                    video_id, str(exc)[:120])
+        return []
+    headers = [h["name"] for h in resp.get("columnHeaders", [])]
+    curve = []
+    for row in resp.get("rows", []) or []:
+        rec = dict(zip(headers, row))
+        try:
+            curve.append({
+                "t": round(float(rec.get("elapsedVideoTimeRatio")), 3),
+                "ratio": round(float(rec.get("audienceWatchRatio")), 4),
+            })
+        except (TypeError, ValueError):
+            continue
+    return curve
+
+
 def _summarise_demographics(rows: List[dict]) -> dict:
     """Marginals worth putting on a dashboard card."""
     if not rows:
@@ -441,13 +531,37 @@ def fetch(digests_dir: Path, days: int) -> Optional[dict]:
                     demo[kind] = kind_rows
                     demo[f"{kind}_summary"] = _summarise_demographics(kind_rows)
         geo = _geography(service, demo_start, end)
+        traffic = _traffic_sources(service, demo_start, end)
+        search_terms = _search_terms(service, demo_start, end)
 
-        if snap or series or all_rows or geo:
+        # Retention curves for the channel's top recent LONGS (28d, by
+        # views, capped at 5 — one API call each). The curve is the
+        # measurement the scene scheduler + hook-first directive have
+        # been missing; Shorts curves are less actionable (35 s clips).
+        _recent_longs = sorted(
+            (r for r in rows
+             if (r.get("kind") or "") == "long"
+             and (r.get("published") or "") >= demo_start),
+            key=lambda r: -float((metrics_by_video.get(r["video_id"]) or {})
+                                 .get("views", 0) or 0))[:5]
+        for r in _recent_longs:
+            curve = _retention_curve(service, r["video_id"],
+                                     demo_start, end)
+            if curve:
+                m = metrics_by_video.get(r["video_id"])
+                if m is not None:
+                    m["retention_curve"] = curve
+
+        if snap or series or all_rows or geo or traffic:
             snap["day_series"] = series
             if all_rows:
                 snap["demographics"] = demo
             if geo:
                 snap["geography"] = geo
+            if traffic:
+                snap["traffic_sources"] = traffic
+            if search_terms:
+                snap["search_terms"] = search_terms
             channels_block[channel] = snap
 
     if not any_data:
@@ -487,6 +601,10 @@ def fetch(digests_dir: Path, days: int) -> Optional[dict]:
             "average_view_percentage": float(m.get("averageViewPercentage", 0) or 0),
             "subscribers_gained": int(float(m.get("subscribersGained", 0) or 0)),
             "subscribers_lost": int(float(m.get("subscribersLost", 0) or 0)),
+            # Present only on the channel's top recent longs (one API
+            # call each) — where viewers actually leave the video.
+            **({"retention_curve": m["retention_curve"]}
+               if m.get("retention_curve") else {}),
         })
 
     return {

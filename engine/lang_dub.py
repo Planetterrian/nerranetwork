@@ -42,6 +42,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional
 
+from engine.ru_dub import _dub_tags
 from engine.youtube_policy import MAX_SHORTS_PER_EPISODE
 from engine.ru_dub import (  # language-neutral helpers — single source
     PROJECT_ROOT,
@@ -77,6 +78,7 @@ class DubLanguage:
     end_card_sub: str
     comment_full_episode: str  # "{url}" placeholder; funnel comment on Shorts
     second_short_tail: str    # appended when a 2nd Short needs a fallback title
+    caption_track_name: str = ""   # CC track display name (native), e.g. "Français"
     # Leading episode-label to strip when deriving the Short title
     ep_prefix_re: re.Pattern = field(
         default_factory=lambda: re.compile(
@@ -105,6 +107,7 @@ DUB_LANGUAGES: Dict[str, DubLanguage] = {
             "🔔 Abonnez-vous — nouveaux épisodes chaque jour"
         ),
         second_short_tail=" — encore un moment",
+        caption_track_name="Français",
         ep_prefix_re=re.compile(
             r"^\s*(?:Ép\.?|Épisode|Ep\.?)\s*#?\s*\d+\s*[:：.\-—]\s*",
             re.IGNORECASE),
@@ -459,13 +462,14 @@ def publish_lang_dub(
                     description=_long_description(config, desc, lang,
                                                   episode_num=episode_num,
                                                   kind="long"),
-                    tags=list(getattr(config, "keywords", []) or []),
+                    tags=_dub_tags(config, title),
                     category_id=int(getattr(yt, "category_id", 28)),
                     default_language=lang.default_language,
                     privacy_status=getattr(yt, "privacy_status", "public"),
                     thumbnail_path=thumb_path,
                 )
                 long_url = up.watch_url
+                long_video_id = up.video_id
                 result["long_url"] = long_url
                 record_video(
                     video_id=up.video_id, show_slug=config.slug,
@@ -529,6 +533,30 @@ def publish_lang_dub(
                 logger.warning("lang_dub[%s]: transcript/selection failed "
                                "(%s) — voice-start short without captions",
                                lang.code, exc)
+
+            # Caption track on the dub long-form (Aug 2026 parity): the
+            # Whisper transcript exists in-process — one captions.insert
+            # gives the dub a CC button, auto-translate into 100+
+            # locales, and caption search indexing. Best-effort.
+            if tr_json is not None and result.get("long_url"):
+                try:
+                    from engine.captions import transcript_to_srt
+                    from engine.youtube import upload_caption_track
+                    _srt = tmp / f"{lang.code}_ep{episode_num:03d}_long.srt"
+                    transcript_to_srt(tr_json, _srt,
+                                      audio_offset_seconds=base_offset)
+                    if _srt.exists() and _srt.stat().st_size > 0:
+                        _cc_ok = upload_caption_track(
+                            credentials=creds, video_id=long_video_id,
+                            srt_path=_srt,
+                            language=lang.default_language,
+                            name=(lang.caption_track_name
+                                  or lang.default_language.upper()))
+                        result["caption_track_uploaded"] = bool(_cc_ok)
+                except Exception as exc:  # noqa: BLE001
+                    logger.warning("lang_dub[%s]: caption-track upload "
+                                   "failed (%s) — ships without CC",
+                                   lang.code, exc)
 
             # Hook-first (July 31 2026 operator directive, all channels):
             # Short #1 is the dub's opening hook sequence — same rule as
@@ -686,17 +714,36 @@ def publish_lang_dub(
                         and (short_idx - 1) < len(_stagger_times)
                         else None
                     )
+                    # Custom Short thumbnail (Aug 2026 parity with EN):
+                    # otherwise YouTube auto-picks a frame, frequently a
+                    # mid-crossfade blur on a slideshow render.
+                    _short_thumb = None
+                    if short_scenes:
+                        try:
+                            from engine.publisher import (
+                                generate_shorts_thumbnail,
+                            )
+                            _cand = (tmp / f"{lang.code}_short"
+                                     f"{short_idx + 1}_thumb.jpg")
+                            generate_shorts_thumbnail(
+                                short_scenes[short_idx % len(short_scenes)],
+                                _cand, show_name=config.name)
+                            if _cand.exists():
+                                _short_thumb = _cand
+                        except Exception:  # noqa: BLE001
+                            _short_thumb = None
                     sup = upload_video(
                         short_mp4, credentials=creds,
                         title=st,
                         description=_long_description(config, desc, lang,
                                                       episode_num=episode_num,
                                                       kind="short"),
-                        tags=list(getattr(config, "keywords", []) or []),
+                        tags=_dub_tags(config, opening_text or title),
                         category_id=int(getattr(yt, "category_id", 28)),
                         default_language=lang.default_language,
                         privacy_status=getattr(yt, "privacy_status",
                                                "public"),
+                        thumbnail_path=_short_thumb,
                         publish_at=_publish_at)
                     short_urls_out.append(sup.watch_url)
                     record_video(
@@ -710,13 +757,9 @@ def publish_lang_dub(
                         watch_url=sup.watch_url,
                         channel=lang.channel, window=window_label,
                         index_path=idx_path)
-                    if playlist:
-                        try:
-                            add_video_to_playlist(credentials=creds,
-                                                  video_id=sup.video_id,
-                                                  playlist_id=playlist)
-                        except Exception:  # noqa: BLE001
-                            pass
+                    # Shorts never join the podcast playlist (YouTube
+                    # Music ingests it as the show's podcast) — same fix
+                    # as the EN + RU paths, Aug 2026.
                     # Funnel comment — only when a language long exists
                     # this run (never link a different-language video).
                     if long_url and bool(getattr(yt, "auto_comment", True)):
