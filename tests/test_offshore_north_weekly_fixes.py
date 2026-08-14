@@ -530,3 +530,41 @@ class TestYouTubeSourceFeed:
         assert "every two weeks" in src, (
             "the prompt must not expect a weekly video from a biweekly channel"
         )
+
+
+class TestWebSearchAlways:
+    """2026-08-14 Ep2 redo: 16 on-topic articles (mostly Google News
+    Vendée aggregation) kept the count gate shut, so the eight
+    load-bearing queries — the only route to imoca.org and
+    theoceanrace.com — never ran. Digest 493 words, script 904, skip.
+    The show's YAML has declared web search load-bearing since launch;
+    the gate now honors that with a per-show always-on flag."""
+
+    def test_yaml_flag_survives_into_dataclass(self):
+        """Silent config-drop class (landmine: _build_nested)."""
+        raw = yaml.safe_load(_SHOW_YAML.read_text(encoding="utf-8"))
+        assert raw.get("web_search_always") is True
+        assert _cfg().web_search_always is True
+
+    def test_dataclass_defaults_false(self):
+        from engine.config import ShowConfig
+        assert ShowConfig().web_search_always is False
+
+    def test_every_other_show_keeps_the_count_gate(self):
+        offenders = []
+        for path in sorted((_ROOT / "shows").glob("*.yaml")):
+            if path.stem.startswith("_") or path.stem == "offshore_north":
+                continue
+            data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+            if not isinstance(data, dict) or "slug" not in data:
+                continue
+            if data.get("web_search_always"):
+                offenders.append(path.stem)
+        assert not offenders, (
+            f"these shows gained always-on web search — intentional? {offenders}"
+        )
+
+    def test_gate_honors_the_flag(self):
+        src = (_ROOT / "run_show.py").read_text(encoding="utf-8")
+        assert 'getattr(config, "web_search_always", False)' in src
+        assert "_search_wanted" in src

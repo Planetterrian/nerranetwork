@@ -975,6 +975,13 @@ class ShowConfig:
     # history") — see engine.utils.drop_excluded_titles.
     exclude_title_patterns: List[str] = field(default_factory=list)
     web_search_queries: List[str] = field(default_factory=list)
+    # Run web_search_queries on EVERY episode, not only when the on-topic
+    # article count falls below min_articles. For shows whose key sources
+    # publish no RSS (offshore_north: imoca.org, theoceanrace.com), web
+    # search is load-bearing — a healthy RSS count from aggregators must
+    # not silence the only route to the primary sources. Default False:
+    # every other show keeps the count-gated behavior.
+    web_search_always: bool = False
     min_articles: int = 3  # Minimum articles before expanding search
     min_articles_skip: int = 3  # Hard cutoff — skip episode if fewer articles
     # Progressive fetch-window ladder, in hours, widest last. Empty = use
@@ -1197,6 +1204,7 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
         keywords=data.get("keywords", []),
         exclude_title_patterns=data.get("exclude_title_patterns", []),
         web_search_queries=data.get("web_search_queries", []),
+        web_search_always=bool(data.get("web_search_always", False)),
         min_articles=data.get("min_articles", 3),
         min_articles_skip=data.get("min_articles_skip", 3),
         fetch_expansion_hours=[
