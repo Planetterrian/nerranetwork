@@ -335,10 +335,39 @@ def build_policy(
             # once.
             if short_vpd is not None:
                 shorts = shorts_for_vpd(short_vpd)
+            # Asymmetric hysteresis on the COUNT (Aug 2026): the July 30
+            # ladder added a 20 vpd -> 3 band, and a show oscillating
+            # around a band edge toggled 2<->3 nightly — render cost,
+            # upload cadence, and the marginal window's quality all
+            # flapping with it. RAISING the count now needs the same
+            # computed value on 2 consecutive runs (own pending/streak
+            # pair, mirroring the tier state machine); LOWERING applies
+            # immediately, matching resolve_publish_plan's rule that
+            # cutting supply is always allowed.
+            prev_shorts = None
+            if isinstance(prev_entry, dict):
+                try:
+                    prev_shorts = int(
+                        prev_entry.get("shorts_per_episode") or 0) or None
+                except (TypeError, ValueError):
+                    prev_shorts = None
+            shorts_pending = shorts
+            shorts_streak = 1
+            if prev_shorts is not None and shorts > prev_shorts:
+                prev_sp = prev_entry.get("shorts_pending")
+                try:
+                    prev_ss = int(prev_entry.get("shorts_streak") or 0)
+                except (TypeError, ValueError):
+                    prev_ss = 0
+                shorts_streak = prev_ss + 1 if shorts == prev_sp else 1
+                if shorts_streak < STREAK_TO_FLIP:
+                    shorts = prev_shorts   # hold until the raise confirms
             channels[channel][slug] = {
                 "tier": active,
                 "publish_long_form": publish_long,
                 "shorts_per_episode": shorts,
+                "shorts_pending": shorts_pending,
+                "shorts_streak": shorts_streak,
                 "long_vpd": round(long_vpd, 3) if long_vpd is not None else None,
                 "short_vpd": round(short_vpd, 3) if short_vpd is not None else None,
                 "video_count_14d": len(long_vpds) + len(short_vpds),

@@ -869,3 +869,44 @@ class TestMaxShortsCeiling:
             policy, slug="tesla", channel="ru", yaml_publish_long=False,
             yaml_shorts=1, smart_mode=False, adaptive_enabled=True)
         assert plan["shorts"] == 1
+
+
+class TestShortsCountHysteresis:
+    """Aug 2026: raising the Shorts count needs 2 consecutive computed
+    runs (band-edge oscillation around 20 vpd toggled 2<->3 nightly);
+    lowering applies immediately."""
+
+    def _build(self, mod, prev_entry, short_vpd):
+        stats = _stats([])
+        # Build a minimal previous policy carrying the entry under test.
+        previous = {"channels": {"ru": {"spacex": prev_entry}}}
+        vids = []
+        import datetime as dt
+        gen = dt.date.fromisoformat(stats["generated"][:10])
+        for i in range(6):
+            pub = (gen - dt.timedelta(days=i + 1)).isoformat()
+            vids.append({"show_slug": "spacex", "channel": "ru",
+                         "kind": "short", "published": pub,
+                         "views": int(short_vpd * (i + 1))})
+        stats["shows"]["somedir"]["videos"] = vids
+        return mod.build_policy(stats, previous)
+
+    def test_raise_holds_for_one_run_then_applies(self):
+        mod = _load_script()
+        prev = {"tier": "C", "shorts_per_episode": 2, "pending": "C",
+                "streak": 5}
+        out1 = self._build(mod, prev, short_vpd=25.0)
+        e1 = out1["channels"]["ru"]["spacex"]
+        assert e1["shorts_per_episode"] == 2      # held on first sighting
+        assert e1["shorts_pending"] == 3
+        out2 = self._build(mod, e1, short_vpd=25.0)
+        e2 = out2["channels"]["ru"]["spacex"]
+        assert e2["shorts_per_episode"] == 3      # confirmed on run 2
+
+    def test_lowering_applies_immediately(self):
+        mod = _load_script()
+        prev = {"tier": "C", "shorts_per_episode": 3, "pending": "C",
+                "streak": 5, "shorts_pending": 3, "shorts_streak": 9}
+        out = self._build(mod, prev, short_vpd=5.0)
+        e = out["channels"]["ru"]["spacex"]
+        assert e["shorts_per_episode"] == 2

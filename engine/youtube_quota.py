@@ -9,6 +9,8 @@ from typing import List, Optional
 
 import yaml
 
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
 # Documented costs (units per call) — keep in sync with engine/youtube.py.
 QUOTA_VIDEO_INSERT = 1600
 QUOTA_THUMBNAIL_SET = 50
@@ -162,22 +164,40 @@ def estimate_network_daily_units(
     per_show_uploads: dict[str, int] = {}
     show_channel: dict[str, str] = {}
 
-    def _add_ru_dub(slug: str, publish_shorts: bool) -> None:
-        # RU-dub uploads (July 2026 fix): shows with youtube.ru_dub_enabled
-        # push 1 long + 1 Short per episode to @NerraRU via the decoupled
-        # multilingual flow — previously invisible to the estimate because
-        # only youtube.channel was bucketed. No caption track is inserted on
-        # the dub; the thumbnail/playlist paper costs match the main model.
+    def _policy_shorts(channel: str, slug: str, default: int = 1) -> int:
+        # Read the ACTUAL Shorts count from the committed policy — the
+        # ru dub was hardcoded at 1 while the 3-Short band's members are
+        # exactly the RU dubs, so the paper model undercounted the
+        # hottest channel by up to 2 uploads/show/day.
+        try:
+            import json as _json
+
+            pol = _json.loads(
+                (PROJECT_ROOT / "api" / "youtube_policy.json").read_text(
+                    encoding="utf-8"))
+            entry = (pol.get("channels", {}).get(channel, {})
+                     .get(slug) or {})
+            return max(1, int(entry.get("shorts_per_episode") or default))
+        except Exception:  # noqa: BLE001 — paper model, best-effort
+            return default
+
+    def _add_dub(slug: str, channel: str, publish_shorts: bool) -> None:
+        # Dub uploads: shows with youtube.ru_dub_enabled push to @NerraRU;
+        # shows with youtube.dub_languages push to each language channel
+        # (@NerraFR, ...). The FR channel was previously INVISIBLE to the
+        # estimate — dub_languages was never read, so the whole channel
+        # was missing from estimate_network_daily_units and the preflight.
+        # Aug 2026: the dubs now upload a caption track too.
         est = estimate_episode_units(
             publish_long_form=True,
             publish_shorts=publish_shorts,
-            shorts_count=1,
-            with_caption_track=False,
+            shorts_count=_policy_shorts(channel, slug),
+            with_caption_track=True,
         )
-        key = f"{slug} (ru dub)"
+        key = f"{slug} ({channel} dub)"
         per_show[key] = est.units
         per_show_uploads[key] = est.uploads
-        show_channel[key] = "ru"
+        show_channel[key] = channel
 
     for slug in discover_show_slugs(shows_dir):
         yaml_path = shows_dir / f"{slug}.yaml"
@@ -185,7 +205,10 @@ def estimate_network_daily_units(
             cfg = load_config(yaml_path)
             yt = getattr(cfg, "youtube", None)
             if getattr(yt, "ru_dub_enabled", False):
-                _add_ru_dub(slug, bool(getattr(yt, "publish_shorts", True)))
+                _add_dub(slug, "ru", bool(getattr(yt, "publish_shorts", True)))
+            for _lang in (getattr(yt, "dub_languages", None) or []):
+                _add_dub(slug, str(_lang).lower(),
+                         bool(getattr(yt, "publish_shorts", True)))
             if not getattr(yt, "enabled", False):
                 continue
             est = estimate_episode_units(
@@ -201,7 +224,10 @@ def estimate_network_daily_units(
             raw = yaml.safe_load(yaml_path.read_text(encoding="utf-8")) or {}
             yt = raw.get("youtube") or {}
             if yt.get("ru_dub_enabled") is True:
-                _add_ru_dub(slug, bool(yt.get("publish_shorts", True)))
+                _add_dub(slug, "ru", bool(yt.get("publish_shorts", True)))
+            for _lang in (yt.get("dub_languages") or []):
+                _add_dub(slug, str(_lang).lower(),
+                         bool(yt.get("publish_shorts", True)))
             if yt.get("enabled") is not True:
                 continue
             est = estimate_episode_units(
