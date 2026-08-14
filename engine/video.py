@@ -636,6 +636,13 @@ _KB_LEGACY_MOVE_COUNT = 4
 # between the stronger pushes. The legacy path stays pinned at
 # ``_ZOOM_MAX`` (1.09).
 _KB_ZOOM_AMPLITUDES = (1.06, 1.09, 1.12)
+# Duration-adaptive Ken Burns (Aug 2026): amplitude per second of hold,
+# with floor/ceiling. 0.006/s x 15 s = 0.09 — the historical middle rung,
+# so the common case is unchanged; longer holds travel proportionally
+# further instead of slowing to sub-perceptual drift.
+_KB_AMP_PER_SECOND = 0.006
+_KB_AMP_MIN = 0.04
+_KB_AMP_MAX = 0.24
 
 
 def _kb_seed_from_stem(stem) -> int:
@@ -726,8 +733,27 @@ def _ken_burns_chain(src: str, out_label: str, *, frames: int, index: int,
     pre_w, pre_h = int(width * prescale), int(height * prescale)
     if kb_extended:
         move = _KB_MOVES[(index + kb_seed) % len(_KB_MOVES)]
-        zoom_max = _KB_ZOOM_AMPLITUDES[(index + kb_seed) % len(_KB_ZOOM_AMPLITUDES)]
+        ladder = _KB_ZOOM_AMPLITUDES[
+            (index + kb_seed) % len(_KB_ZOOM_AMPLITUDES)] - 1.0
+        if trim_seconds and trim_seconds > 0:
+            # Duration-adaptive amplitude (Aug 2026): a fixed amplitude
+            # means perceived velocity is inversely proportional to hold
+            # length — a 4 s Shorts segment moved at ~2.3%/s while a
+            # post-cap 29 s hold crawls at ~0.3%/s (functionally the
+            # frozen still the motion pass exists to eliminate). Scale
+            # the zoom range with the hold so travel speed stays in a
+            # visible band; the ladder survives as a ±1/3 rhythm
+            # multiplier (0.006/s reproduces the 1.09 middle rung at
+            # the historical 15 s hold exactly). Floor keeps short
+            # segments calm; ceiling keeps long holds from swimming.
+            rel = ladder / 0.09
+            amp = min(_KB_AMP_MAX,
+                      max(_KB_AMP_MIN, _KB_AMP_PER_SECOND * trim_seconds * rel))
+            zoom_max = round(1.0 + amp, 4)  # clean float repr in the graph
+        else:
+            zoom_max = 1.0 + ladder
     else:
+        # Legacy mode stays byte-pinned (Shorts motion A/B control arm).
         move = _KB_MOVES[index % _KB_LEGACY_MOVE_COUNT]
         zoom_max = _ZOOM_MAX
     z, x, y = _ken_burns(frames, move, zoom_max=zoom_max)
