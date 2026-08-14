@@ -728,3 +728,47 @@ class TestClauseTrim:
                     f"{name} word-trims a Short title from opening_text at "
                     f"offset {match.start()} — use _clause_trim"
                 )
+
+
+class TestDubMetadataParity:
+    """Aug 2026: dub uploads route tags through the guarded builder,
+    ship a caption track, give Shorts real thumbnails, and keep Shorts
+    out of the podcast playlist."""
+
+    def _srcs(self):
+        import pathlib
+        root = pathlib.Path(__file__).resolve().parent.parent
+        return {
+            n: (root / "engine" / f"{n}.py").read_text(encoding="utf-8")
+            for n in ("ru_dub", "lang_dub")
+        }
+
+    def test_no_raw_keyword_tags_remain(self):
+        for name, src in self._srcs().items():
+            assert 'tags=list(getattr(config, "keywords"' not in src, name
+            assert "_dub_tags(" in src, name
+
+    def test_caption_track_uploads_exist(self):
+        for name, src in self._srcs().items():
+            assert "upload_caption_track" in src, name
+            assert "transcript_to_srt" in src, name
+
+    def test_shorts_have_thumbnails(self):
+        for name, src in self._srcs().items():
+            assert "generate_shorts_thumbnail" in src, name
+
+    def test_dub_tags_are_length_guarded(self):
+        from types import SimpleNamespace
+        from engine.ru_dub import _dub_tags
+        cfg = SimpleNamespace(
+            keywords=[f"long keyword phrase number {i}" for i in range(40)],
+            youtube=SimpleNamespace(tags=[]),
+        )
+        tags = _dub_tags(cfg, "Tesla Cybercab wireless charging revealed")
+        from engine.video_metadata import _quoted_tag_cost
+        assert _quoted_tag_cost(tags) <= 500
+
+    def test_quoted_cost_counts_spaces(self):
+        from engine.video_metadata import _quoted_tag_cost
+        # "a b" stored quoted (+2) + comma + "c" -> 3+2+1+1 = 7
+        assert _quoted_tag_cost(["a b", "c"]) == 7

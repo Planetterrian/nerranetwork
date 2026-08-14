@@ -1,0 +1,117 @@
+Gemini 3.7 Flash arrive avec des gains ciblés en ingénierie logicielle et dans les tâches de connaissances, tout en affichant un prix de lancement fixé à la moitié du coût d'origine de la 3.6 Flash.
+
+Le modèle tourne aussi nettement plus vite que les versions Flash précédentes, selon Demis Hassabis.
+
+C'est Models and Agents, épisode cent quarante-et-un.
+
+Google a lancé le nouveau modèle Flash avec des améliorations majeures pour l'ingénierie logicielle, le développement web et le travail de connaissances.
+
+Demis Hassabis a mis en avant les gains de vitesse et a présenté cette sortie comme immédiatement utilisable pour les créateurs.
+
+Ce geste répond directement à la question de la trajectoire entre gains de capacité et coûts, une question qui était d'actualité hier.
+
+Les équipes qui travaillent sur des agents de code ou des outils web devraient d'abord tester le nouveau palier tarifaire pour voir où il l'emporte sur les options existantes.
+
+DeepMind a lancé SL2T, un modèle de langue des signes vers texte qui permet pour la première fois aux utilisateurs de signer directement devant un téléphone.
+
+Le modèle a été développé en étroite collaboration avec la communauté sourde.
+
+Cela marque la première fois qu'un système de qualité production prend en charge une saisie directe en langue des signes sur des appareils grand public, sans étapes de traduction intermédiaires.
+
+DeepSeek a relevé les prix de ses modèles phares d'un facteur quatre.
+
+Cette décision inverse les rabais agressifs d'avant et va affecter les calculs de coûts pour les équipes qui s'appuient sur la famille à poids ouverts.
+
+Les entreprises qui avaient bâti leurs flux de travail autour de l'ancien tarif doivent maintenant réévaluer leur dépense totale d'inférence.
+
+Le changement s'applique à toute la gamme principale de modèles de l'entreprise et entre en vigueur immédiatement.
+
+Une analyse dédiée de Latent Space présente le lancement de Gemini 3.7 Flash comme ce qui ramène Google DeepMind à l'avant-garde de la course aux modèles de pointe.
+
+L'article examine comment la combinaison de la vitesse, de l'accent mis sur l'ingénierie et de la réduction de prix positionne le modèle face aux offres concurrentes.
+
+Open A I a ajouté Computer History à l'application de bureau ChatGPT, ce qui permet au modèle de se souvenir de l'activité à travers les applications et les sites web sur l'ordinateur de l'utilisateur.
+
+La fonctionnalité s'appuie sur l'aperçu Chronicle précédent, avec une consommation de jetons plus basse et des contrôles de confidentialité ajoutés, notamment une vue chronologique, un effacement sélectif, et des exclusions d'applications ou de sites web.
+
+Les utilisateurs des forfaits Pro, Business et Enterprise peuvent l'activer via Réglages puis Intégrations sur Mac, le déploiement dans l'Espace économique européen arrivant plus tard.
+
+Le système permet aussi de mettre en pause et de reprendre la collecte de l'historique directement depuis la barre de menus.
+
+Open A I a lancé un mode Ultrafast propulsé par Cerebras qui atteint jusqu'à sept cent cinquante jetons par seconde sur son modèle le plus intelligent.
+
+L'offre vise la voix en temps réel, le service client, le code, le design, la recherche financière et les flux de travail de sécurité, là où la latence compte.
+
+Il est positionné pour les cas d'usage entreprise qui ont besoin d'une intelligence de pointe sans attendre une génération plus lente.
+
+Une nouvelle vue chronologique permet aux utilisateurs de revoir leur travail passé et d'identifier les tâches fréquentes pour le développement de compétences.
+
+Les contrôles permettent de mettre l'historique en pause, d'exclure des applications ou des sites spécifiques, et d'effacer des enregistrements partiels ou complets directement depuis la barre de menus.
+
+L'implémentation réduit la consommation globale de jetons par rapport à l'aperçu Chronicle précédent, tout en conservant les bénéfices de personnalisation.
+
+Pour activer Computer History, les utilisateurs sélectionnent la fonctionnalité sous Réglages puis Intégrations, dans l'application de bureau ChatGPT sur Mac.
+
+Le déploiement est actuellement mondial pour les paliers Pro, Business et Enterprise, avec un accès dans l'Espace économique européen, au Royaume-Uni et en Suisse prévu dans les semaines à venir.
+
+Simon Willison a partagé un moteur de rendu Markdown vers SVG en direct qui accepte une URL de gist et produit le rendu aux niveaux de réflexion élevé, moyen et bas.
+
+L'outil révèle comment différents budgets de raisonnement affectent la qualité du résultat sur la même consigne.
+
+Les développeurs qui travaillent sur des chaînes de génération visuelle peuvent le tester immédiatement sur la démo en lien.
+
+Le moteur de rendu fait aussi apparaître des différences de rendu spécifiques aux navigateurs qui affectent le résultat final.
+
+Willison a publié une image de haute qualité d'un pélican à bicyclette, produite uniquement quand le modèle tournait au plus haut niveau de réflexion.
+
+Les niveaux plus bas ont produit des résultats visiblement plus faibles sur la même consigne.
+
+Cet exemple illustre la valeur pratique de dépenser du calcul supplémentaire au moment du test sur des tâches visuelles créatives.
+
+Willison a aussi publié des liens directs vers les transcriptions complètes des passages à réflexion élevée, moyenne et basse, pour que d'autres puissent inspecter les traces exactes de raisonnement.
+
+Bon, ouvrons le capot du raisonnement sous contraintes.
+
+Tout le monde dit que les grands modèles de langage connaissent une règle quand la précision augmente, pourtant le mécanisme réel n'est souvent qu'une correspondance de motifs en surface, plutôt qu'un routage interne de la contrainte.
+
+En pratique, le modèle encode la contrainte de façon symétrique, que la consigne la contienne ou non, mais n'active cet encodage que parfois lors de l'étape de décision finale.
+
+Quand l'activation échoue, le modèle se rabat sur une réponse conservatrice, même si la contrainte était représentée dans les états cachés avec une précision de sonde supérieure à quatre-vingt-huit pour cent.
+
+Le patchage d'activation peut restaurer le comportement correct dans un mode de défaillance, en relevant la log-probabilité d'environ six nats, tandis que le second mode ne montre presque aucune réparation.
+
+Cette distinction compte, parce que les interventions basées sur la consigne ne font qu'amplifier le biais conservateur à travers un seul chemin de médiation, et n'ouvrent jamais le canal de routage bloqué.
+
+Un quatuor de tests diagnostiques menés sur quatorze modèles a confirmé deux modes de défaillance distincts, plutôt qu'un seul déficit uniforme.
+
+Les équipes qui construisent des agents devant respecter des contraintes de faisabilité implicites doivent donc mesurer le succès du routage, pas seulement la précision finale, et devraient préférer des architectures ou des régimes de réglage fin qui renforcent l'étape d'activation plutôt que d'ajouter davantage d'instructions de surface.
+
+Le même schéma apparaît à la fois dans les modèles à poids ouverts et dans les modèles fermés, ce qui indique que le goulot d'étranglement est architectural plutôt que spécifique aux données d'entraînement.
+
+Quand la contrainte est présente mais non routée, la réparation en aval via des activations donneuses ne réussit que dans un des deux modes observés.
+
+Alors, quand devriez-vous vraiment vous tourner vers ça plutôt que vers l'alternative.
+
+Lancez d'abord le diagnostic à quatre conditions pour déterminer si les manques de précision viennent d'une connaissance manquante ou d'une activation ratée.
+
+Testez Gemini 3.7 Flash sur une tâche actuelle de code ou de développement web pour voir si le prix divisé par deux et les gains de vitesse changent votre choix de modèle au quotidien.
+
+Activez Computer History dans l'application de bureau ChatGPT si vous travaillez sur plusieurs sites et que vous voulez que le modèle retienne le contexte sans explications répétées.
+
+Lancez le moteur de rendu SVG de Simon Willison sur une consigne de génération visuelle, au niveau de réflexion élevé par rapport au niveau moyen, pour observer vous-même le saut de qualité.
+
+Comparez le nouveau point d'accès Ultrafast propulsé par Cerebras à votre configuration d'inférence actuelle, sur un flux de travail sensible à la latence, comme le support en temps réel ou la complétion de code.
+
+Un déploiement régional supplémentaire de ChatGPT Computer History vers les utilisateurs de l'Espace économique européen, du Royaume-Uni et de la Suisse est attendu dans les semaines à venir.
+
+Les expériences de prix et de vitesse sur les modèles de classe Flash de pointe vont probablement se poursuivre, alors que les laboratoires répondent à la récente sortie de Gemini.
+
+D'autres sorties multimodales autour de la langue des signes et de l'accessibilité pourraient suivre le schéma SL2T d'entraînement collaboratif avec la communauté.
+
+Avant de partir, d'autres ajustements de prix d'autres laboratoires méritent d'être surveillés, alors que la récente multiplication par quatre des prix chez DeepSeek se propage vers l'extérieur.
+
+Voilà qui clôt le briefing I A du jour. Partagez ceci avec un développeur ou un créateur qui veut rester à jour. Abonnez-vous où que vous écoutiez. À demain. Et si vous préférez regarder plutôt qu'écouter, retrouvez-nous sur YouTube chez Nerra Network — le lien est dans les notes de l'émission. Cette émission vous vient du Nerra Network.
+
+Si vous voulez un autre briefing quotidien bien tranché, Offshore North s'occupe de vous — la course océanique au large expliquée chaque lundi, avec un angle canadien. Toutes nos émissions sont gratuites sur nerranetwork point com. Nouveau sur le réseau ? nerranetwork point com start here choisit le bon briefing quotidien pour vous en environ deux minutes.
+
+Cet épisode a utilisé une synthèse vocale I A de ma voix — la sélection éditoriale et l'analyse sont les miennes.

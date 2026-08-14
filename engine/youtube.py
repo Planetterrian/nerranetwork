@@ -217,17 +217,30 @@ def _build_video_body(
 
 
 def _is_retryable_upload_error(exc: BaseException) -> bool:
-    """Retry transient failures only — not 400 invalidDescription / auth."""
+    """Retry transient failures only — not 400 invalidDescription / auth.
+
+    A resumable multi-chunk upload of a 40-minute MP4 fails far more
+    often with a plain transport error (connection reset, TLS EOF,
+    incomplete read, broken pipe) than with a retryable HTTP status —
+    and the old HttpError-only predicate meant a single TCP hiccup cost
+    the whole long-form for the day. socket.timeout is TimeoutError and
+    ConnectionResetError/BrokenPipeError are ConnectionError subclasses
+    on py3.10+, so the tuple below covers the observed failure set.
+    """
     if _is_retryable_http_error(exc):
         return True
-    try:
-        from googleapiclient.errors import HttpError
-    except ImportError:  # pragma: no cover
-        return False
-    if isinstance(exc, HttpError):
-        status = getattr(getattr(exc, "resp", None), "status", 0)
-        return status in (429, 500, 502, 503, 504)
-    return False
+    import http.client
+    import ssl
+
+    if isinstance(exc, ssl.SSLCertVerificationError):
+        return False  # deterministic — surface it, don't retry
+    return isinstance(exc, (
+        ConnectionError,          # ConnectionResetError, BrokenPipeError, …
+        TimeoutError,             # socket.timeout
+        ssl.SSLError,             # SSLEOFError mid-chunk
+        http.client.IncompleteRead,
+        http.client.RemoteDisconnected,
+    ))
 
 
 @retry(

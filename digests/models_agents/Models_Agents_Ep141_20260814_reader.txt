@@ -1,0 +1,117 @@
+Gemini 3.7 Flash ships with targeted gains in software engineering and knowledge tasks while carrying an introductory price set at half the original 3.6 Flash cost.
+
+The model also runs noticeably faster than prior Flash versions according to Demis Hassabis.
+
+This is Models and Agents, episode 141.
+
+Google released the new Flash model with major upgrades for software engineering, web development, and knowledge work.
+
+Demis Hassabis highlighted the speed gains and positioned the release as immediately usable for builders.
+
+The move directly addresses the capability gains versus cost trajectory question that was active yesterday.
+
+Teams working on coding agents or web tooling should test the new pricing tier first to see where it beats existing options.
+
+DeepMind launched SL2T, a sign-language-to-text model that lets users sign directly to phones for the first time.
+
+The model was developed in close collaboration with the Deaf community.
+
+It marks the first time a production-grade system supports direct signing input on consumer devices without intermediate translation steps.
+
+DeepSeek raised prices on its flagship models by a factor of four.
+
+The move reverses earlier aggressive discounting and will affect cost calculations for teams relying on the open-weight family.
+
+Enterprises that had built workflows around the previous pricing must now re-evaluate total inference spend.
+
+The change applies across the company’s main model lineup and takes effect immediately.
+
+A dedicated analysis from Latent Space frames the Gemini 3.7 Flash launch as bringing Google DeepMind back to the forefront of the frontier-model race.
+
+The piece examines how the combination of speed, engineering focus, and price reduction positions the model against competing offerings.
+
+OpenAI added Computer History to the ChatGPT desktop app, allowing the model to remember activity across apps and websites on the user’s computer.
+
+The feature builds on the earlier Chronicle preview with lower token usage and added privacy controls including timeline view, selective clearing, and app or website exclusions.
+
+Users on Pro, Business, and Enterprise plans can opt in via Settings to Integrations on Mac, with EEA rollout coming later.
+
+The system also supports pausing and resuming history collection directly from the menu bar.
+
+OpenAI released an Ultrafast mode powered by Cerebras that reaches up to seven hundred fifty tokens per second on its most intelligent model.
+
+The offering targets real-time voice, customer support, coding, design, financial research, and security workflows where latency matters.
+
+It is positioned for enterprise use cases that need frontier intelligence without waiting on slower generation.
+
+A new timeline view lets users review past work and identify frequent tasks for skill-building.
+
+Controls allow pausing history, excluding specific apps or sites, and clearing partial or full records directly from the menu bar.
+
+The implementation reduces overall token consumption compared with the prior Chronicle preview while maintaining personalization benefits.
+
+To activate Computer History, users select the feature under Settings to Integrations inside the ChatGPT desktop app on Mac.
+
+The rollout is currently global for Pro, Business, and Enterprise tiers, with access in the EEA, UK, and Switzerland scheduled for the coming weeks.
+
+Simon Willison shared a live Markdown-to-SVG renderer that accepts a gist URL and renders at high, medium, and low thinking levels.
+
+The tool exposes how different reasoning budgets affect output quality on the same prompt.
+
+Developers working on visual generation pipelines can test it immediately at the linked demo.
+
+The renderer also surfaces browser-specific rendering differences that affect final output.
+
+Willison posted a high-quality pelican-riding-a-bicycle image produced only when the model ran at the highest thinking level.
+
+Lower levels produced visibly weaker results on the same prompt.
+
+The example illustrates the practical value of spending extra test-time compute on creative visual tasks.
+
+Willison also posted direct links to the full transcripts for the high, medium, and low thinking runs so others can inspect the exact reasoning traces.
+
+OK, let's pop the hood on constraint reasoning.
+
+Everyone talks about large language models knowing a rule when accuracy rises, yet the actual mechanism is often just surface-level pattern matching rather than internal routing of the constraint.
+
+In practice the model encodes the constraint symmetrically whether the prompt contains it or not, but only sometimes activates that encoding during the final decision step.
+
+When activation fails, the model defaults to a conservative answer even though the constraint was represented in the hidden states at above eighty-eight percent probe accuracy.
+
+Activation patching can restore the correct behavior in one failure mode, lifting log-probability by roughly six nats, while the second mode shows almost no repair.
+
+The distinction matters because prompt-based interventions only inflate conservative bias through a single mediation path and never open the blocked routing channel.
+
+A quartet of diagnostic tests run across fourteen models confirmed two distinct failure modes rather than a single uniform deficit.
+
+Teams building agents that must respect implicit feasibility constraints therefore need to measure routing success, not just final accuracy, and should prefer architectures or fine-tuning regimes that strengthen the activation step rather than adding more surface instructions.
+
+The same pattern appears in both open-weight and closed models, indicating the bottleneck is architectural rather than training-data specific.
+
+When the constraint is present but not routed, downstream repair via donor activations succeeds in only one of the two observed modes.
+
+So when should you actually reach for this versus the alternative.
+
+Run the four-condition diagnostic first to determine whether accuracy shortfalls stem from missing knowledge or from failed activation.
+
+Test Gemini 3.7 Flash on a current coding or web-dev task to see whether the halved price and speed gains change your daily model choice.
+
+Enable Computer History in the ChatGPT desktop app if you work across multiple sites and want the model to retain context without repeated explanations.
+
+Run Simon Willison’s SVG renderer on a visual generation prompt at high versus medium thinking levels to observe the quality jump for yourself.
+
+Compare the new Ultrafast Cerebras-backed endpoint against your current inference setup on a latency-sensitive workflow such as real-time support or code completion.
+
+Further regional rollout of ChatGPT Computer History to EEA, UK, and Switzerland users is expected in the coming weeks.
+
+Continued price and speed experiments across frontier Flash-class models will likely continue as labs respond to the recent Gemini release.
+
+More sign-language and accessibility multimodal releases may follow the SL2T pattern of community-collaborative training.
+
+Before we go, further price adjustments from other labs are worth watching as the recent fourfold increase from DeepSeek ripples outward.
+
+That wraps up today's AI briefing. Share this with a developer or builder who wants to stay current. Subscribe wherever you listen. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes. This show comes to you from the Nerra Network.
+
+If you want another sharp daily briefing, Offshore North has you covered — offshore ocean racing explained every Monday, with a Canadian angle. All our shows are free at nerranetwork.com. New to the network? nerranetwork.com/start-here picks the right daily briefing for you in about two minutes.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.

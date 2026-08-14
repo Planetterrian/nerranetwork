@@ -236,3 +236,43 @@ experiments:
       runs after the end-card overlay (last ~3 s of speech kept its
       text hidden under the opaque CTA card). Render-only — outside
       landmine #17.
+
+  - id: shorts-motion-ab-stalled
+    title: "Shorts motion A/B — ENDED (operator, 2026-08-14): unreadable"
+    area: retention
+    shipped: 2026-07-30
+    readout: 2026-08-14
+    status: done
+    criteria: >
+      RESOLVED 2026-08-14 — operator chose (b): formally ended as
+      unreadable. The treatment arm froze at n=4 when
+      shorts_ab_enabled: false landed via the merged spacex review PR
+      #973; final data (4 vs 12) is not significant and stills remain
+      the network default (no Grok Video spend on Shorts). The four
+      render items the verdict was holding are now shipped on their own
+      merits: progress bar (A3, shipped earlier), Shorts transition
+      split (A2), punch-in easing (E1), long-form closing beat (D2) —
+      all in the scene-cadence-36-slots reading window.
+    notes: >
+      The A/B machinery (engine/shorts_ab.py, the nightly report) stays
+      dormant and re-usable; kb_extended=False keeps reproducing the
+      legacy control render if a future experiment wants it.
+
+  - id: scene-cadence-36-slots
+    title: "Long-form scene cadence — input dedup + 36-slot cap + adaptive Ken Burns"
+    area: retention
+    shipped: 2026-08-14
+    readout: 2026-08-28
+    status: reading
+    metric: long_form_median_avp_en_14d
+    target: >
+      Long-form median AVP up vs the 13.4%/11.4% (14d) recent band. A
+      17-min episode now changes scene every ~29 s instead of holding
+      85+ s, the accelerating open survives, and Ken Burns speed no
+      longer collapses on long holds (0.006/s adaptive amplitude).
+      Reads jointly with youtube-chapters-live (both target the same
+      metric; this is the render half).
+    notes: >
+      Enabled by ffmpeg input dedup (one -i per unique image + split),
+      which removed the per-slot demuxer cost behind the old 24-slot
+      cap. Render-only — outside landmine #17.

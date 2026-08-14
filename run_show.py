@@ -1906,6 +1906,14 @@ def run(args: argparse.Namespace) -> None:
         else:
             logger.warning("No HOOK found in digest — using generic episode title")
 
+        # Optional short display title (**TITLE:** digest line — offshore_north
+        # v2 prompt). Used for the episode's display-title surfaces (RSS item
+        # title, chapters, summaries); the hook remains the spoken cold open
+        # and the blog/description material. Absent line = hook, unchanged.
+        title_hook = _extract_short_title(x_thread) or hook
+        if title_hook != hook:
+            logger.info("Short title: %s", title_hook)
+
         # Log slow news mode but do NOT tag the episode title — slow news
         # episodes should be indistinguishable from regular episodes.
         if slow_news_mode:
@@ -3032,7 +3040,7 @@ def run(args: argparse.Namespace) -> None:
                         music_intro_offset=music_intro_offset,
                     )
 
-                    ep_title = f"Ep {episode_num}: {hook}" if hook else f"{config.name} - Episode {episode_num}"
+                    ep_title = f"Ep {episode_num}: {title_hook}" if title_hook else f"{config.name} - Episode {episode_num}"
                     chapters_json_path = digests_dir / f"chapters_ep{episode_num:03d}.json"
                     write_chapters_json(
                         episode_chapters,
@@ -3283,7 +3291,7 @@ def run(args: argparse.Namespace) -> None:
         # action is required. 75% of items were over the cap before this.
         from engine.titles import episode_title as _build_episode_title
         episode_title = _build_episode_title(
-            hook,
+            title_hook,
             episode_num,
             prefix=_ep_prefix,
             fallback=f"{config.name} - {_ep_word} {episode_num} - {today_str}",
@@ -3434,7 +3442,7 @@ def run(args: argparse.Namespace) -> None:
         podcast_name=config.publishing.summaries_podcast_name or config.slug,
         episode_num=episode_num,
         episode_title=_titles.episode_title(
-            hook, episode_num,
+            title_hook, episode_num,
             fallback=f"{config.name} - Episode {episode_num} - {today_str}"),
         audio_url=audio_url,
         rss_url=f"{config.publishing.base_url}/{config.publishing.rss_file}",
@@ -3952,6 +3960,33 @@ def _extract_hook(digest: str) -> str | None:
             hook = m.group(1).strip()
             if hook:
                 return hook
+    return None
+
+
+def _extract_short_title(digest: str) -> str | None:
+    """Extract the optional ``**TITLE:**`` line from a generated digest.
+
+    Opt-in per show: only a digest prompt that asks for a TITLE line emits
+    one (offshore_north's August 2026 v2 prompt — a <=60-char headline for
+    podcast apps, distinct from the spoken HOOK, which is a full consequence
+    sentence the apps would truncate). Shows without the line return None
+    and fall back to the hook everywhere, byte-identical to before.
+
+    The 60-char figure is a WRITING guideline enforced by the prompt, not a
+    truncation surface: the hard cap on the RSS item title stays in
+    engine.titles (PODCAST_EPISODE_TITLE_MAX) exactly as for every show.
+    The sanitizer strips the line from the canonical digest, so it never
+    reaches the blog / RSS notes / newsletter (same contract as **HOOK:**).
+    """
+    import re
+
+    for line in digest.splitlines():
+        m = re.match(r"^\s*\*{0,2}TITLE:?\*{0,2}\s*(.+)", line, re.IGNORECASE)
+        if m:
+            title = m.group(1).strip()
+            title = re.sub(r"^\[|\]$", "", title).strip()
+            if title:
+                return title
     return None
 
 def _clean_digest_for_podcast(digest: str) -> str:

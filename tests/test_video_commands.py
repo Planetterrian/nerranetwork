@@ -638,13 +638,21 @@ def test_slideshow_filter_graph_zoom_per_scene():
     range whatever the hold length and never stops. The ceiling is still
     asserted against the constant so the two cannot drift apart.
     """
-    from engine.video import _ZOOM_MAX
-
     graph = _slideshow_filter_graph(scene_count=2)
     # Duration-normalised: progress is a function of the output frame
     # number, not an accumulator against a cap.
     assert "on/" in graph
-    assert str(_ZOOM_MAX) in graph
+    # Aug 2026: amplitude is duration-adaptive — 0.006/s of hold, scaled
+    # by the rung's ±1/3 rhythm factor and clamped to [0.04, 0.24].
+    from engine.video import (_KB_AMP_PER_SECOND, _KB_AMP_MIN, _KB_AMP_MAX,
+                              _KB_ZOOM_AMPLITUDES, _SCENE_DURATION_SECONDS,
+                              _SLIDESHOW_XFADE_S)
+    trim = _SCENE_DURATION_SECONDS + _SLIDESHOW_XFADE_S
+    rung0 = (_KB_ZOOM_AMPLITUDES[0] - 1.0) / 0.09
+    expected = round(min(_KB_AMP_MAX,
+                         max(_KB_AMP_MIN,
+                             _KB_AMP_PER_SECOND * trim * rung0)), 4)
+    assert f"{expected}" in graph
     assert "min(zoom+0.0006" not in graph, (
         "the capped-accumulator zoom is back — it freezes the image for "
         "the remainder of every scene once the cap is reached"
@@ -1867,7 +1875,15 @@ def test_build_short_video_cut_times_scenes_rotate_across_segments(tmp_path,
     stage1 = captured_cmds[0]
     i_indices = [i for i, x in enumerate(stage1) if x == "-i"]
     input_paths = [stage1[i + 1] for i in i_indices]
-    assert input_paths == [str(scenes[i % 3]) for i in range(6)]
+    # Aug 2026 input dedup: 6 slots over a 3-scene pool open each unique
+    # file ONCE and fan out via split — the rotation now lives in the
+    # filter graph's consumption order, not in duplicate -i entries.
+    assert input_paths == [str(s) for s in scenes]
+    graph = stage1[stage1.index("-filter_complex") + 1]
+    for j in range(3):
+        assert f"[{j}:v]split=2[in{j}c0][in{j}c1]" in graph
+    # 6 Ken Burns chains still render — one per slot.
+    assert graph.count("zoompan=") == 6
 
 
 def test_build_short_video_none_cut_times_is_byte_identical(tmp_path,
@@ -2482,10 +2498,43 @@ class TestKenBurnsVocabulary:
         assert g0 != g1
 
     def test_extended_graph_alternates_amplitudes(self):
-        """Three consecutive slots at seed 0 carry the 1.06/1.09/1.12
-        alternation (rounded amps appear in the zoom expressions)."""
+        """Three consecutive slots at seed 0 carry three DISTINCT
+        rung-scaled amplitudes (the 1.06/1.09/1.12 ladder survives as a
+        ±1/3 rhythm multiplier on the duration-adaptive base)."""
+        import re as _re
         graph = _slideshow_filter_graph(scene_count=3, kb_seed=0)
-        assert "0.06" in graph and "0.09" in graph and "0.12" in graph
+        amps = set(_re.findall(r"zoompan=z='\((?:1\+|[0-9.]+-)([0-9.]+)\*", graph))
+        assert len(amps) == 3, amps
+
+    def test_amplitude_scales_with_hold_length(self):
+        """Aug 2026: a fixed amplitude made a 29 s hold crawl at
+        ~0.3%/s — sub-perceptual, functionally a frozen still. The zoom
+        range now grows with the hold so travel speed stays visible."""
+        import re as _re
+
+        def amp_of(graph):
+            return float(_re.search(r"zoompan=z='\((?:1\+|[0-9.]+-)([0-9.]+)\*", graph).group(1))
+
+        short_hold = _slideshow_filter_graph(
+            scene_count=2, scene_durations=[5.0, 5.0])
+        long_hold = _slideshow_filter_graph(
+            scene_count=2, scene_durations=[29.0, 29.0])
+        assert amp_of(long_hold) > amp_of(short_hold) * 2
+
+    def test_amplitude_floor_and_ceiling(self):
+        import re as _re
+        from engine.video import _KB_AMP_MIN, _KB_AMP_MAX
+
+        def amps(graph):
+            return [float(a) for a in
+                    _re.findall(r"zoompan=z='\((?:1\+|[0-9.]+-)([0-9.]+)\*", graph)]
+
+        tiny = _slideshow_filter_graph(scene_count=2,
+                                       scene_durations=[2.0, 2.0])
+        huge = _slideshow_filter_graph(scene_count=2,
+                                       scene_durations=[90.0, 90.0])
+        assert all(a >= _KB_AMP_MIN - 1e-9 for a in amps(tiny))
+        assert all(a <= _KB_AMP_MAX + 1e-9 for a in amps(huge))
 
     def test_legacy_mode_pins_four_moves_at_109(self):
         """kb_extended=False must reproduce the pre-A1 graph: first 4
@@ -2603,3 +2652,54 @@ class TestPillV2:
         # Stale v1 names must not be written.
         assert not (tmp_path / "_show_pill_tesla_shorts_time.png").exists()
         assert not (tmp_path / "_url_pill_v1.png").exists()
+
+
+class TestUnheldRenderUpgrades:
+    """A2/E1/D2 — un-held when the Shorts motion A/B was formally ended
+    (Aug 14 2026, operator-directed; treatment arm froze at n=4)."""
+
+    def test_shorts_transition_split(self):
+        # A2: vertical slideshows join on the fast 0.25 s crossfade;
+        # long-form keeps the cinematic 0.6 s.
+        from engine.video import _SHORTS_XFADE_S, _SLIDESHOW_XFADE_S
+        assert _SHORTS_XFADE_S == 0.25
+        assert _SLIDESHOW_XFADE_S == 0.6
+        import engine.video as _video
+        vsrc = Path(_video.__file__.replace(".pyc", ".py")).read_text(
+            encoding="utf-8")
+        # Both Shorts stage-1 render sites pass the split constant.
+        assert vsrc.count("crossfade=_SHORTS_XFADE_S") == 2
+
+    def test_punch_in_easing_on_alternate_vertical_segments(self):
+        # E1: odd vertical segments front-load their travel (p*(2-p));
+        # even segments and all long-form segments stay linear.
+        graph_v = _slideshow_filter_graph(
+            scene_count=3, width=1080, height=1920,
+            scene_durations=[5.0, 5.0, 5.0])
+        assert "*(2-" in graph_v
+        chains = graph_v.split(";")
+        eased = [c for c in chains if "*(2-" in c and "zoompan" in c]
+        assert len(eased) == 1  # exactly the middle (index 1) segment
+        graph_h = _slideshow_filter_graph(
+            scene_count=3, scene_durations=[12.0, 12.0, 12.0])
+        assert "*(2-" not in graph_h
+
+    def test_long_form_closing_beat(self):
+        # D2: the final long-form scene settles on a gentle centred
+        # push-in (zoom-in, no pan) before the outro card fades in.
+        import re as _re
+        graph = _slideshow_filter_graph(
+            scene_count=3, scene_durations=[12.0, 12.0, 12.0])
+        last = [c for c in graph.split(";") if "[s2]" in c][0]
+        # Zoom-in form, amplitude capped at the gentle 0.06...
+        m = _re.search(r"zoompan=z='\(1\+([0-9.]+)\*", last)
+        assert m, last
+        assert float(m.group(1)) <= 0.06 + 1e-9
+        # ...and centred (no pan ramp in x/y).
+        assert "0.5" in last and "ramp" not in last
+        # Shorts do NOT get the closing beat (the end card owns their
+        # ending) — pinned at the wiring: the flag is long-form only.
+        import engine.video as _video
+        vsrc = Path(_video.__file__.replace(".pyc", ".py")).read_text(
+            encoding="utf-8")
+        assert "closing_beat=(not is_vertical" in vsrc
