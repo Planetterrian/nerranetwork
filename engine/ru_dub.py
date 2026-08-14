@@ -207,6 +207,34 @@ def _cover_path(config) -> Optional[Path]:
     return next((c for c in cands if c.exists()), None)
 
 
+def _dub_tags(config, topic_text: str = "") -> list:
+    """Length-guarded tag list for a dub upload (Aug 2026 parity fix).
+
+    The dub paths used to pass raw ``config.keywords`` with no 500-char
+    guard (modern_investing measured 40 chars from a 400 on every dub
+    upload), no per-episode entities, and no dedupe. Routes through
+    ``engine.video_metadata.build_tags`` — the same builder the EN path
+    uses. Entity extraction is Latin-script (helps FR titles; a Cyrillic
+    title just yields the guarded static set).
+    """
+    try:
+        from engine.shorts_hashtags import extract_entity_phrases
+        from engine.video_metadata import build_tags
+
+        entities = extract_entity_phrases(
+            topic_text or "",
+            show_keywords=list(getattr(config, "keywords", []) or []),
+            max_phrases=8,
+        )
+        return build_tags(
+            entities + list(getattr(config.youtube, "tags", []) or []),
+            list(getattr(config, "keywords", []) or []),
+            network_tags=[],
+        )
+    except Exception:  # noqa: BLE001 — tags must never block an upload
+        return list(getattr(config, "keywords", []) or [])[:20]
+
+
 def _hashtags(config) -> str:
     tags = [t for t in (getattr(config, "keywords", []) or [])][:3]
     parts = []
@@ -649,13 +677,14 @@ def publish_ru_dub(
                     description=_ru_long_description(
                         config, ru_desc,
                         episode_num=episode_num, kind="long"),
-                    tags=list(getattr(config, "keywords", []) or []),
+                    tags=_dub_tags(config, ru_title),
                     category_id=int(getattr(yt, "category_id", 28)),
                     default_language="ru",
                     privacy_status=getattr(yt, "privacy_status", "public"),
                     thumbnail_path=thumb_path,
                 )
                 long_url = up.watch_url
+                long_video_id = up.video_id
                 result["long_url"] = long_url
                 record_video(
                     video_id=up.video_id, show_slug=config.slug, episode=episode_num,
@@ -731,6 +760,28 @@ def publish_ru_dub(
             except Exception as exc:  # noqa: BLE001
                 logger.warning("ru_dub: RU transcript/selection failed (%s) — "
                                "voice-start short without captions", exc)
+
+            # Caption track on the RU long-form (Aug 2026 parity): the
+            # Whisper RU transcript already exists in-process for the
+            # Shorts — writing it as an SRT and uploading it gives the
+            # dub a CC button, YouTube's auto-translate into 100+
+            # locales, and caption search indexing, all for one API
+            # call. Best-effort; the video already shipped.
+            if tr_json is not None and result.get("long_url"):
+                try:
+                    from engine.captions import transcript_to_srt
+                    from engine.youtube import upload_caption_track
+                    _srt = tmp / f"ru_ep{episode_num:03d}_long.srt"
+                    transcript_to_srt(tr_json, _srt,
+                                      audio_offset_seconds=base_offset)
+                    if _srt.exists() and _srt.stat().st_size > 0:
+                        _cc_ok = upload_caption_track(
+                            credentials=creds, video_id=long_video_id,
+                            srt_path=_srt, language="ru", name="Русский")
+                        result["caption_track_uploaded"] = bool(_cc_ok)
+                except Exception as exc:  # noqa: BLE001
+                    logger.warning("ru_dub: caption-track upload failed "
+                                   "(%s) — long-form ships without CC", exc)
 
             # Hook-first (July 31 2026 operator directive, all channels):
             # Short #1 is the dub's opening hook sequence — the RU/FR
@@ -889,16 +940,36 @@ def publish_ru_dub(
                         and (short_idx - 1) < len(_stagger_times)
                         else None
                     )
+                    # Custom Short thumbnail (Aug 2026 parity): dub
+                    # Shorts used to take YouTube's auto-picked frame —
+                    # frequently a mid-crossfade blur on a slideshow
+                    # render. Cycle the episode's scene images like the
+                    # EN path does. Best-effort.
+                    _short_thumb = None
+                    if short_scenes:
+                        try:
+                            from engine.publisher import (
+                                generate_shorts_thumbnail,
+                            )
+                            _cand = tmp / f"ru_short{short_idx + 1}_thumb.jpg"
+                            generate_shorts_thumbnail(
+                                short_scenes[short_idx % len(short_scenes)],
+                                _cand, show_name=config.name)
+                            if _cand.exists():
+                                _short_thumb = _cand
+                        except Exception:  # noqa: BLE001
+                            _short_thumb = None
                     sup = upload_video(
                         short_mp4, credentials=creds,
                         title=short_title,
                         description=_ru_long_description(
                             config, ru_desc,
                             episode_num=episode_num, kind="short"),
-                        tags=list(getattr(config, "keywords", []) or []),
+                        tags=_dub_tags(config, opening_text or ru_title),
                         category_id=int(getattr(yt, "category_id", 28)),
                         default_language="ru",
                         privacy_status=getattr(yt, "privacy_status", "public"),
+                        thumbnail_path=_short_thumb,
                         publish_at=_publish_at)
                     short_urls_out.append(sup.watch_url)
                     # July 18 2026 (operator-approved): RU funnel comment.
@@ -968,7 +1039,10 @@ def publish_ru_dub(
                         window=window_label,
                         index_path=PROJECT_ROOT / config.episode.output_dir
                         / "youtube_videos.ru.json")
-                    pl = (getattr(yt, "ru_podcast_playlist_id", None) or "").strip()
+                    # Shorts never join the PODCAST playlist (YouTube
+                    # Music ingests it as the show's podcast) — same fix
+                    # as the EN path, Aug 2026.
+                    pl = ""
                     if pl:
                         try:
                             add_video_to_playlist(credentials=creds,
