@@ -228,4 +228,79 @@ reviews:
       ab_listen_required: true
       rationale: Mirror digest de-seed; podcast faithfully echoes digest opener
     agent_cost_usd: 0.0492
-do_not_retry: []
+  - date: '2026-08-10'
+    pr: null
+    doc: docs/reviews/env_intel_review_2026_08_10.md
+    generated_by: grok-4.5
+    summary: Post-July-31 digest length lever is working on the two newest episodes (ep62/63 both >1000w) but the 10-ep window is still 7/10 under floor; the third-generation deep-dive opener tic partially cleared by drift while a 'Consider a…' successor converged; highest-yield fixes are TTS garble/pronunciation (Simpcw, Kincardine, Terrace/Kamloops, spoken underscore/hyphen, The Tyee) plus banning spoken absence-of-news lines that shipped in ep57.
+    scored_prior_predictions:
+    - metric: episodes below min_podcast_words:900, last 10
+      verdict: partial
+      evidence: Still 7/10 under floor in ep54–63, but 2/2 post-July-31 digest-lever episodes (ep62=1023w, ep63=1021w) cleared 900+; pre-lever shorts dominate the window.
+    - metric: transcripts using 'There's a nuance here worth understanding' as deep-dive opener, last 10
+      verdict: partial
+      evidence: 4/10 (ep54–57 only; absent ep58–63). July-27 menu-removal never shipped; successor opener 'Consider a…' now 4/10 (ep58/60/62/63).
+    - metric: episodes whose LAST chapter is Closing (chapters_ep*.json)
+      verdict: hit
+      evidence: 10/10 of ep54–63 end with title Closing after the July-2 marker reorder.
+    shipped: []
+    deferred:
+    - Digest-driven / position-aware mid-section chapter titles (shared engine; carried since 2026-06-10) — ep56 missing Deep Dive chapter and ep60 collapsed mid-markers are symptoms but full fix is cross-show.
+    - 'Numbers/dates spell-out drift (Protocol 4, digit dates, ''PM, 2.5'' comma pause) — landmine #17; needs A/B before any repair layer; never phonetic injection.'
+    - 'If next 5+ post-lever episodes median still <900w: operator decision on raising min_digest_words further and/or full-text article fetch / licensed-knowledge floors — do NOT re-file podcast-side length levers (escalate, don''t repeat).'
+    - French-language / QC-SK-Atlantic source coverage gap vs Phase-4 web_search_queries promise (operator/editorial).
+    - OP3 download collapse [20,21,10,3] — distribution/discoverability operator review (Apple/Spotify/YouTube Shorts), not a prompt change this pass.
+    - Thin-news blog <title> intelligence re-score — no clean post-fix absence-hook episode observed in ep54–63 window.
+    predictions:
+    - metric: deep-dive openers using 'There's a nuance here worth understanding' OR 'Consider a…' (or close paraphrase), last 10 transcripts
+      baseline: nuance 4/10 + Consider-a 4/10 (ep54–63); combined unique eps 8/10
+      expected: ≤2/10 within 2 weeks of post-merge episodes after shape de-seed + verbatim ban + recent-MEMORY; openers rotate without a new single template
+      verdict: pending
+      evidence: null
+    - metric: episodes below min_podcast_words:900 among episodes generated after digest lever (ep62+)
+      baseline: 0/2 (ep62=1023, ep63=1021); full last-10 still 7/10
+      expected: ≤2/10 of the next 10 post-lever episodes under 900; median ≥900 — if miss, escalate to operator decision on min_digest_words/fetch, do not re-file podcast-side length
+      verdict: pending
+      evidence: null
+    - metric: transcripts containing spoken absence-of-section lines ('No qualifying… appeared today' / 'No major… appeared') or spoken bare URLs
+      baseline: ep57 absence lines + ep54 news.gov.bc.ca URL in current window
+      expected: 0 in post-merge episodes
+      verdict: pending
+      evidence: null
+    - metric: transcripts reading hyphen/underscore as words ('contaminated underscore/dash/hyphen sites')
+      baseline: ep54 (3 instances in one episode)
+      expected: 0 post-merge after sanitization guard
+      verdict: pending
+      evidence: null
+    - metric: successor deep-dive opener tic prediction (third-generation watch)
+      baseline: none yet post-proposed-deseeds
+      expected: next review checks whether openers converged on 'Picture a…', 'A client calls…', or bare unmarked scene; if ≥5/10, reopen with MEMORY ban of that shape
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/hooks/env_intel.py
+      kind: code
+      ab_listen_required: false
+      rationale: Highest-yield category (~100% hit historically). ep58 mangled Simpcw six ways; ep61 Kincardine three ways; ep59 Terrace→terrorists, Kamloops→cam loops; ep54 Tyee→TAE; ep55 Nerra→Narrow. Extend the existing hook channel only — no prompt phonetic injection.
+    - file: shows/prompts/env_intel_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 'Locks three verified P0/P1 classes: (1) fourth-generation deep-dive opener convergence on ''Consider a…'' after nuance partially cleared by drift; (2) ep57 spoken empty-section failure mode; (3) ''Tomorrow'' cadence on an odd-weekday show. De-seed by shape + verbatim ban + MEMORY per July 2026 ledger rule — no quotable replacement example.'
+    - file: shows/prompts/env_intel_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Podcast faithfully echoes digest deep-dive openers (June-15/July-2/July-27 lineage). Digest is the seed surface; de-seed here or the podcast ban alone will lose. Also hardens thin-day double-tell and Canada Gazette / proper-noun spelling at source.
+    - file: engine/generator.py
+      kind: code
+      ab_listen_required: false
+      rationale: ep54 shipped hyphen/underscore read as words and a spoken URL despite prompt bans. Prompt-only bans have incomplete hit rate on this class; a deterministic sanitizer + drift-guard is the garble-restore pattern that historically hits ~100% and needs no A/B.
+    - file: tests/test_env_intel_quality_pass.py
+      kind: code
+      ab_listen_required: false
+      rationale: Every behavioral fix gets a drift-guard per playbook; pins the length-lever policy so a future pass cannot reintroduce podcast_expand_below_target (meta-review miss class).
+    agent_cost_usd: 0.1165
+do_not_retry:
+  - idea: Podcast-side length levers for env_intel (word floors in podcast prompt, podcast_expand_below_target re-enable, expand-retries aimed at _tts.txt length) — banned network-wide by July 2026 meta-review; EI now has digest_expand_below_target + min_digest_words:950; further length work is digest/fetch only.
+    evidence: flagged 2026-08-10 (Grok review)
+  - idea: Replacing deep-dive opener ban with a new quotable example phrase in the prompt menu (the June-15 'nuance' replacement and the 'Consider a' convergence both came from example echo) — de-seed by shape + MEMORY only.
+    evidence: flagged 2026-08-10 (Grok review)
