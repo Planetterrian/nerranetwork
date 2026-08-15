@@ -1,0 +1,117 @@
+Z.ai just showed how far post-training alone can push a fixed base model into serious coding and cyber agent territory.
+
+This is Models and Agents, episode 142.
+
+The same seven hundred forty three to seven hundred fifty three billion parameter base that powered GLM five point two now delivers twenty eight point three on Terminal Bench three point zero after expanded post training.
+
+DeepSWE version one point one rose from forty six point two to sixty six point nine.
+
+AutomationBench moved from twenty six point two to forty eight point two.
+
+Agents Last Exam CLI climbed from twenty three point eight to twenty eight point five.
+
+On the private Z.ai Code Bench the new model reaches thirty four point five percent at maximum reasoning effort while using roughly seventy five thousand output tokens per task.
+
+CyberGym accuracy increased from seventy seven point two percent to eighty four point five percent.
+
+ExploitBench jumped from twenty four point four percent to fifty four point four percent.
+
+ExploitGym completed one hundred five tasks in a two hour budget and one hundred thirty tasks in six hours.
+
+The model already surfaced a potentially serious vulnerability in Cursor, prompting Z.ai to add trusted access controls and postpone open weights plus general API access.
+
+Enterprise users can now run autonomous coding agents that plan, implement, test, and verify multi day tasks inside the ZCode environment on macOS, Windows, or Linux.
+
+Three explicit reasoning effort levels must be chosen because thinking can no longer be disabled.
+
+Open weight labs continue narrowing the gap with closed frontier systems through targeted post training rather than new pretraining runs.
+
+Simon Willison shared a direct link to LM Studio’s seventeen gigabyte Q four K M quantized build of the corrected Qwen three point eight twenty seven B model.
+
+The build runs locally and resolves earlier version number confusion in community discussion.
+
+Builders working with local inference can test the model immediately through LM Studio.
+
+Anthropic published an FAQ confirming watermarking will be added to meet the EU AI Act Code of Practice.
+
+The method adds no tokens, hidden characters, or quality degradation and cannot be traced to any individual user or conversation.
+
+Developers using Claude outputs in regulated environments gain a compliance path that leaves existing prompts, pricing, and output behavior unchanged.
+
+The company also released its second detailed Risk Report under the Responsible Scaling Policy.
+
+The redacted PDF is now public and covers system risks and preparedness measures.
+
+NEC launched what it describes as the first all AI department staffed by seventeen autonomous agents.
+
+The setup targets internal operations without human staff in the loop for routine tasks.
+
+Organizations experimenting with fully agentic teams now have a concrete enterprise example to study for scaling patterns and failure modes.
+
+Reports highlight Gemini three point seven Flash as a potential benchmark environment for autonomous agents operating in crypto markets.
+
+The model’s speed and cost profile make it attractive for high frequency, tool using agent loops.
+
+Developers building financial or on chain agents can use the Flash tier to prototype before moving to higher capability variants.
+
+A one hundred fifty million parameter BDH CQ system updates recurrent memory from in context demonstrations and solves queries through iterative latent space computation without verbalizing intermediate steps.
+
+It reaches twenty nine point five percent pass at two on ARC AGI one at roughly zero point zero zero zero seven zero dollars per task.
+
+Researchers exploring memory augmented or non verbal reasoning architectures can examine the approach for tasks where token level chain of thought is undesirable.
+
+A twenty one billion parameter transformer was created by compiling Doom’s rendering algorithm directly into weights using a custom computation graph compiler with no training involved.
+
+The resulting Hugging Face checkpoint accepts scene prompts and outputs pixel drawing commands that produce the E one M one frame after fifty three thousand seven hundred forty seven generated tokens from a three thousand six hundred fourteen token prompt.
+
+One frame takes approximately forty minutes on a B two hundred GPU.
+
+The open source oncothresh Python package plus web dashboard computes sensitivity, specificity, PPV, NPV, decision curve net benefit, and bootstrap intervals at user specified clinical thresholds for continuous oncology model outputs.
+
+It targets tasks such as Ki sixty seven or PD L one scoring where global metrics like AUC are insufficient.
+
+Pathologists and model developers working with threshold based decisions can run the library locally via Docker without cloud dependencies.
+
+OK, let’s pop the hood on post training scaling without new pretraining.
+
+Everyone treats post training as a simple add more RL step, yet the engineering reality is a carefully staged expansion of environments, task diversity, and reinforcement learning compute that can unlock capabilities the base model never saw in pretraining.
+
+The process begins by reusing the identical foundation weights and then progressively exposing the model to longer horizon scenarios such as full codebases, multi day engineering jobs, and vulnerability discovery chains while keeping the parameter count fixed.
+
+Each added environment increases the density of useful gradients but also raises the risk that capabilities such as exploitation chain construction emerge faster than safety evaluations can track.
+
+In GLM five point three’s case the same base moved from four point six to twenty eight point three on Terminal Bench and from twenty four point four percent to fifty four point four percent on ExploitBench solely through this scaling.
+
+The practical tradeoff is that teams gain substantial capability without another multi hundred million dollar pretraining run, yet they inherit the same difficult access control problem that closed labs already face.
+
+Use this route when your base model already covers the domain and you can afford extensive environment engineering.
+
+Fall back to fresh pretraining only when the target capability lies outside the current weight distribution.
+
+The approach also forces changes in how applications call the model since reasoning effort must now be explicitly chosen and thinking cannot be turned off.
+
+Load LM Studio’s Q four K M build of Qwen three point eight twenty seven B locally and compare its coding throughput against your current seven to thirteen B models on a representative SWE bench subset.
+
+Review Anthropic’s redacted Risk Report PDF to see how one lab structures capability evaluations ahead of any EU mandated watermarking rollout.
+
+Clone the BDH CQ repository once released and test the one hundred fifty M recurrent latent setup on a small ARC AGI subset to measure the claimed cost accuracy improvement.
+
+Run the oncothresh dashboard on your own oncology model outputs to generate threshold specific calibration and net benefit curves before the next clinical review.
+
+Experiment with ZCode’s Goal tasks on the GLM Coding Plan to observe how the new reasoning effort controls affect long horizon agent workflows.
+
+Z.ai plans to release GLM five point three weights roughly two weeks after launch once safety hardening completes.
+
+Staged GLM five point three API access is expected after the current trusted access controls are validated.
+
+Additional labs are expected to publish their own EU AI Act watermarking details in the coming weeks as the Code of Practice deadline approaches.
+
+Before we go, watch for the first public results from those trusted access users running multi day autonomous coding tasks in ZCode.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The AI world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+And before you go: this show is part of the Nerra Network — a family of daily podcasts on tech, science, and markets, each one a short, sharp briefing you can finish on the commute. If today earned its place in your feed, here's your next listen — Tesla Shorts Time, your daily deep dive into everything Tesla. Find every show, free, at nerranetwork.com.
+
+The Age of AI puts real builders on the phone with an AI host — apply at nerranetwork.com/age-of-ai-apply.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
