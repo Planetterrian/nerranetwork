@@ -1008,15 +1008,27 @@ def run(args: argparse.Namespace) -> None:
                 "Relevance check: %d of %d articles match this show's keywords",
                 _relevant, len(articles),
             )
+        # web_search_always (offshore_north, Aug 2026): a healthy on-topic
+        # COUNT from aggregators is not the same as usable material. The
+        # 2026-08-14 rerun had 16 on-topic articles (mostly Google News
+        # Vendée aggregation), the gate stayed shut, and the digest came
+        # out at 493 words — the show's only route to imoca.org and
+        # theoceanrace.com never ran. Shows that declare web search
+        # load-bearing fire it every episode.
+        _search_wanted = (
+            min(len(articles), _relevant) < min_quality
+            or getattr(config, "web_search_always", False)
+        )
         if (
             not _topic_driven
-            and min(len(articles), _relevant) < min_quality
+            and _search_wanted
             and getattr(config, "web_search_queries", None)
         ):
             logger.info(
-                "Articles (%d total, %d on-topic) below quality threshold (%d) "
-                "— trying web search ...",
+                "Web search firing (%d articles, %d on-topic, threshold %d, "
+                "always=%s) ...",
                 len(articles), _relevant, min_quality,
+                getattr(config, "web_search_always", False),
             )
             try:
                 from engine.fetcher import fetch_web_search_articles
