@@ -37,15 +37,20 @@ concurrency:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    # ffmpeg + network calls; the 6h GitHub default is not a real guard.
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v7
         with:
-          fetch-depth: 0
-      - uses: actions/setup-python@v7
+          # Publish only reads working-tree files and pushes; no history
+          # needed (landmine #1: full clones of this repo are ~2.5 GB).
+          fetch-depth: 1
+      - uses: ./.github/actions/setup-python
         with:
           python-version: '3.12'
+          requirements-file: 'pipelines/requirements.txt'
+          skip-checkout: 'true'
       - uses: FedericoCarboni/setup-ffmpeg@v3
-      - run: pip install -r pipelines/requirements.txt
       - run: python pipelines/voices/publish_episode.py
         env:
           INTERVIEW_ID: ${{ github.event.inputs.interview_id || github.event.client_payload.interview_id }}
@@ -53,16 +58,22 @@ jobs:
           SUPABASE_SERVICE_KEY: ${{ secrets.VOICES_SUPABASE_SERVICE_KEY }}
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
           NOTIFICATION_WEBHOOK_URL: ${{ secrets.NOTIFICATION_WEBHOOK_URL }}
+      # Aug 15 2026: replaced a naive 4-attempt push loop. By this point
+      # the Supabase row already reads `published` and the audio is on R2,
+      # so a lost push silently strands the RSS entry / digest / site
+      # pages with no retry path (the sweep skips published rows). The
+      # composite adds rebase-conflict cleanup between attempts and, on
+      # exhaustion, opens a draft recovery PR instead of dropping the
+      # episode.
       - name: Commit RSS + summaries + pages
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add age_of_ai_podcast.rss digests/age_of_ai/ age-of-ai.html age-of-ai-summaries.html blog/age_of_ai/ 2>/dev/null || true
-          git diff --cached --quiet && echo "Nothing to commit" && exit 0
-          git commit -m "Publish: Age of AI episode ($(date -u +%F))"
-          for i in 1 2 3 4; do
-            git pull --rebase origin main && git push origin main && exit 0
-            sleep $((2**i))
-          done
-          echo "::error::Publish push failed after retries"
-          exit 1
+        uses: ./.github/actions/safe-commit-push
+        with:
+          add-paths: |
+            age_of_ai_podcast.rss
+            digests/age_of_ai/
+            age-of-ai.html
+            age-of-ai-summaries.html
+            blog/age_of_ai/
+          commit-message: "Publish: Age of AI episode"
+          recovery-on-failure: "true"
+          recovery-show: "age_of_ai"

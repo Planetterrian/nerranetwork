@@ -65,17 +65,21 @@ jobs:
           INPUT_MIN_SCORE: ${{ github.event.inputs.min_score || '' }}
           INPUT_AUTO_APPLY: ${{ github.event.inputs.auto_apply || '' }}
         run: |
-          ARGS="--report"
+          # Bash array, not a quoted string: `"$ARGS"` passed every flag
+          # as ONE argv entry, so any dispatch with a show or min-score
+          # misparsed (Aug 15 2026 audit). Same pattern as
+          # backfill-dub-playlists.yml.
+          ARGS=(--report)
           if [ "$INPUT_SHOW" != "" ] && [ "$INPUT_SHOW" != "all" ]; then
-            ARGS="$ARGS $INPUT_SHOW"
+            ARGS+=("$INPUT_SHOW")
           fi
           if [ "$INPUT_MIN_SCORE" != "" ]; then
-            ARGS="$ARGS --min-score $INPUT_MIN_SCORE"
+            ARGS+=(--min-score "$INPUT_MIN_SCORE")
           fi
           if [ "$INPUT_AUTO_APPLY" = "true" ]; then
-            ARGS="$ARGS --apply"
+            ARGS+=(--apply)
           fi
-          python discover_sources.py "$ARGS"
+          python discover_sources.py "${ARGS[@]}"
 
       - uses: ./.github/actions/safe-commit-push
         with:

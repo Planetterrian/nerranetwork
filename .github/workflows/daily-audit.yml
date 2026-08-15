@@ -83,6 +83,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          # No git history needed (landmine #1: full clone is ~2.5 GB).
+          fetch-depth: 1
 
       - uses: ./.github/actions/setup-python
         with:
@@ -136,6 +139,11 @@ jobs:
           fi
 
       - name: RSS Feed Freshness Health Check
+        # always(): without it, a missed-episode failure in the audit step
+        # above skips this step entirely — so on the day a show is broken
+        # enough to miss an episode AND its feed is stale, only the first
+        # signal surfaces. The two checks are independent; run both.
+        if: always()
         shell: python3 {0}
         run: |
           import os
@@ -149,11 +157,17 @@ jobs:
               "omni_view_podcast.rss": ("Omni View", 96),
               "fascinating_frontiers_podcast.rss": ("Fascinating Frontiers", 96),
               "planetterrian_podcast.rss": ("Planetterrian Daily", 96),
-              "env_intel_podcast.rss": ("Environmental Intelligence", 120),
+              # Monday-only since the Aug 2026 cadence alignment (CRON_MAP
+              # "7 8 * * 1") — a full week between episodes, so the daily/
+              # alt-cadence limits below would page every Saturday. 240h =
+              # one missed Monday + slack, same band as Offshore North.
+              "env_intel_podcast.rss": ("Environmental Intelligence", 240),
               "models_agents_podcast.rss": ("Models & Agents", 96),
               "models_agents_beginners_podcast.rss": ("Models & Agents for Beginners", 96),
-              "finansy_prosto_podcast.rss": ("Finansy Prosto", 96),
-              "privet_russian_podcast.rss": ("Privet Russian", 96),
+              # Monday-only (CRON_MAP "37 9 * * 1" / "7 6 * * 1") — see
+              # Environmental Intelligence note above.
+              "finansy_prosto_podcast.rss": ("Finansy Prosto", 240),
+              "privet_russian_podcast.rss": ("Privet Russian", 240),
               "modern_investing_podcast.rss": ("Modern Investing", 120),
               "unintended_consequences_podcast.rss": ("Unintended Consequences", 120),
               "first_principles_podcast.rss": ("First Principles Daily", 96),
@@ -164,6 +178,13 @@ jobs:
               # Monday-only — a full week between episodes, so the limit
               # matches the dashboard's Monday cadence band, not the daily 96.
               "offshore_north_podcast.rss": ("Offshore North", 240),
+              # DELIBERATELY EXCLUDED: age_of_ai_podcast.rss — episodes
+              # publish only when an interview clears both human gates
+              # (Nerra Voices pipeline, not run_show), so there is no
+              # cadence to hold it to; any threshold would either page
+              # constantly or never. Guarded by the cadence test in
+              # tests/test_scheduling_punctuality.py, which requires an
+              # entry only for CRON_MAP-scheduled shows.
           }
 
           now = datetime.now(timezone.utc)

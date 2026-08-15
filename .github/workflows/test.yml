@@ -6,12 +6,22 @@ on:
   pull_request:
     branches: [main]
 
+# Cancel superseded runs on the same PR; on main every push gets its own
+# group (run_id) so nothing is cancelled there.
+concurrency:
+  group: test-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          # No git history needed (landmine #1: full clone is ~2.5 GB).
+          fetch-depth: 1
 
       - uses: ./.github/actions/setup-python
         with:

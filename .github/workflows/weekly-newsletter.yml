@@ -39,10 +39,15 @@ concurrency:
 jobs:
   generate:
     runs-on: ubuntu-latest
+    # Grok synthesis + Buttondown sends can hang; cap below the 6h default.
+    timeout-minutes: 45
 
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          # No git history needed (landmine #1: full clone is ~2.5 GB).
+          fetch-depth: 1
 
       - uses: ./.github/actions/setup-python
         with:
@@ -77,7 +82,8 @@ jobs:
           python scripts/run_weekly_newsletters.py "${ARGS[@]}"
 
       - name: Generate cross-network intelligence briefing
-        # Editorial synthesis across all 11 shows for the past 7 days.
+        # Editorial synthesis across the network's shows for the past 7
+        # days (count drifts as shows launch — don't hardcode it here).
         # Output: outputs/cross_network/cross_network_briefing_<YYYY-WW>.md.
         # The synthesizer skips when fewer than 10 episodes are in
         # window, so the script is no-op friendly.

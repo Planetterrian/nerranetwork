@@ -141,9 +141,13 @@ class TestWorkflowWiring:
         assert "GROK_API_KEY" in wf
         # Post-restock validation must run BEFORE the commit step.
         assert wf.find("TestNarrativeQueueRunway") < wf.find("safe-commit-push")
-        # Both queue files whitelisted for commit (the history-file landmine).
-        assert "shows/topic_queues/first_principles.yaml" in wf
-        assert "shows/topic_queues/unintended_consequences.yaml" in wf
+        # The commit whitelist is a glob, not per-show hardcoding: with
+        # explicit files listed, a third narrative show's restocked queue
+        # would be generated and then silently never committed (Aug 15
+        # 2026 audit — same silent-drop class as youtube_channel_history).
+        # Age of AI's deliberately-empty queue is not in the restock
+        # registry, so the glob can never stage a restock for it.
+        assert "shows/topic_queues/*.yaml" in wf
 
     def test_runway_alarm_comment_updated(self):
         src = (ROOT / "tests/test_network_quality_pass.py").read_text()

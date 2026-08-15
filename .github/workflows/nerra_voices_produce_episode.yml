@@ -9,16 +9,29 @@ on:
 permissions:
   contents: read
 
+# Duplicate webhook deliveries for the same interview must not assemble
+# the episode twice concurrently.
+concurrency:
+  group: nerra-voices-produce-${{ github.event.client_payload.interview_id || github.run_id }}
+  cancel-in-progress: false
+
 jobs:
   produce:
     runs-on: ubuntu-latest
+    # Narration TTS + ffmpeg assembly + waveform render; cap well below
+    # the 6h GitHub default.
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
+        with:
+          # No git history needed (landmine #1: full clone is ~2.5 GB).
+          fetch-depth: 1
+      - uses: ./.github/actions/setup-python
         with:
           python-version: '3.12'
+          requirements-file: 'pipelines/requirements.txt'
+          skip-checkout: 'true'
       - uses: FedericoCarboni/setup-ffmpeg@v3
-      - run: pip install -r pipelines/requirements.txt
       - run: python pipelines/voices/produce_episode.py
         env:
           INTERVIEW_ID: ${{ github.event.client_payload.interview_id }}

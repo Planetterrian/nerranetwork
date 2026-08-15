@@ -111,3 +111,45 @@ def test_review_schedules_match_cron_day_filters():
                 f"{show}: review_episodes says Monday-only but the cron "
                 "has no Monday day-filter"
             )
+
+
+def _audit_rss_limits() -> dict:
+    """Parse the daily-audit RSS-freshness FEEDS dict: feed file -> limit."""
+    audit = (_ROOT / ".github" / "workflows" / "daily-audit.yml").read_text(
+        encoding="utf-8"
+    )
+    entries = {}
+    for m in re.finditer(r'"([\w.]+\.rss)":\s*\("[^"]+",\s*(\d+)\)', audit):
+        entries[m.group(1)] = int(m.group(2))
+    return entries
+
+
+def test_audit_rss_limits_match_cron_cadence():
+    """Aug 15 2026: env_intel/finansy_prosto/privet_russian moved to
+    Monday-only cadence but the daily audit's RSS staleness limits kept
+    their old daily/alt-cadence values (96-120h), so the audit paged the
+    operator every Saturday for feeds that were exactly on schedule. The
+    limit must follow the cadence CRON_MAP declares: a Monday-only show
+    needs headroom past one full week (>=192h), and a daily show must
+    stay tight enough (<=120h) that a real outage still pages within a
+    few missed cycles."""
+    cron_map = _cron_map()
+    limits = _audit_rss_limits()
+    assert limits, "no FEEDS limits parsed from daily-audit.yml"
+    for show, (_h, _m, day_filter) in cron_map.items():
+        feed = "podcast.rss" if show == "tesla" else f"{show}_podcast.rss"
+        assert feed in limits, (
+            f"{show}: scheduled in CRON_MAP but missing from the daily "
+            "audit's RSS freshness FEEDS — a dead feed would never page"
+        )
+        limit = limits[feed]
+        if day_filter == "monday":
+            assert limit >= 192, (
+                f"{show}: Monday-only cadence but audit limit is {limit}h "
+                "(<192h) — pages every week for an on-schedule feed"
+            )
+        else:
+            assert limit <= 120, (
+                f"{show}: daily cadence but audit limit is {limit}h "
+                "(>120h) — a real outage would go unnoticed for days"
+            )
