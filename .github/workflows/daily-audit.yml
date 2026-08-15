@@ -149,11 +149,17 @@ jobs:
               "omni_view_podcast.rss": ("Omni View", 96),
               "fascinating_frontiers_podcast.rss": ("Fascinating Frontiers", 96),
               "planetterrian_podcast.rss": ("Planetterrian Daily", 96),
-              "env_intel_podcast.rss": ("Environmental Intelligence", 120),
+              # Monday-only since the Aug 2026 cadence alignment (CRON_MAP
+              # "7 8 * * 1") — a full week between episodes, so the daily/
+              # alt-cadence limits below would page every Saturday. 240h =
+              # one missed Monday + slack, same band as Offshore North.
+              "env_intel_podcast.rss": ("Environmental Intelligence", 240),
               "models_agents_podcast.rss": ("Models & Agents", 96),
               "models_agents_beginners_podcast.rss": ("Models & Agents for Beginners", 96),
-              "finansy_prosto_podcast.rss": ("Finansy Prosto", 96),
-              "privet_russian_podcast.rss": ("Privet Russian", 96),
+              # Monday-only (CRON_MAP "37 9 * * 1" / "7 6 * * 1") — see
+              # Environmental Intelligence note above.
+              "finansy_prosto_podcast.rss": ("Finansy Prosto", 240),
+              "privet_russian_podcast.rss": ("Privet Russian", 240),
               "modern_investing_podcast.rss": ("Modern Investing", 120),
               "unintended_consequences_podcast.rss": ("Unintended Consequences", 120),
               "first_principles_podcast.rss": ("First Principles Daily", 96),

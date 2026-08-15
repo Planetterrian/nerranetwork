@@ -23,8 +23,10 @@ sources:
 # been dead long enough to drag the show's article volume from a median
 # of 274 (ep90-119) to 50-64 (ep120-137). Replacements below were probed
 # live with the production User-Agent before being added.
-- url: https://finance.yahoo.com/news/rssindex
-  label: Yahoo Finance
+# NOTE: Yahoo Finance was briefly among those replacements but is on
+# shows/_blocked_sources.yaml (blocked 2026-03-16 for editorial quality,
+# not reachability) — the live probe checks the wrong axis for it. It
+# failed check_sources --check-blocked and was removed 2026-08-15.
 - url: https://news.google.com/rss/search?q=earnings+beat+OR+guidance+stock+when%3A1d&hl=en-CA&gl=CA&ceid=CA:en
   label: Google News Earnings
 - url: https://news.google.com/rss/search?q=Federal+Reserve+OR+%22Bank+of+Canada%22+interest+rate+when%3A1d&hl=en-CA&gl=CA&ceid=CA:en
