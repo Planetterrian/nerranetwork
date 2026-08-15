@@ -42,4 +42,93 @@ reviews:
         evidence: null
     agent_cost_usd: null
 
+  - date: '2026-08-13'
+    pr: null
+    doc: docs/reviews/privet_russian_review_2026_08_13.md
+    generated_by: grok-4.5
+    summary: Prior curriculum fixes hit (themes/WOTD diversity), but every recent episode still ships under-length, banned Word-Origins tics, thin/mis-marked chapters, residual ungrammatical Russian, and a garbled spoken AI-disclosure tail.
+    scored_prior_predictions:
+    - metric: distinct themes across the next 8 episodes
+      verdict: hit
+      evidence: ep56–65 themes School/Feelings/Animals/Weather/Food/Shopping/Nature/Travel/Home/Clothing = 10 distinct (expected ≥6)
+    - metric: repeated Word-of-the-Day within any 12-day span
+      verdict: hit
+      evidence: WOTDs школа/счастливый/собака/солнце/яблоко/магазин/дерево/путешествие/дом/одежда — zero repeats in window
+    - metric: share of taught word-slots that are NEW words
+      verdict: partial
+      evidence: Theme-gap forces mostly new lists, but transcripts still reteach/callback high-frequency items (мышь/кот, фрукты, летает, большая) inside builder segments
+    shipped: []
+    deferred:
+    - 'Operator: June-22 2026 double-publish (Ep046+Ep047) + June 26/28 skip forensics — still listed open from 2026-07-02 ledger unless closed elsewhere'
+    - 'Product: rss_language ru vs English-majority learner audience / podcast-directory filing — do not silent-flip'
+    - 'Product: dedicated spaced-repetition review episode cadence beyond vocab_tracker callbacks'
+    - Full written scope-and-sequence (CEFR-ish beginner path) outside vocab_tracker windows
+    - No podcast-side min_podcast_words raise / expand-below-target paraphrase retry (network length do_not_retry class)
+    - 'No phonetic respellings or speech-tag injection (landmine #17)'
+    - Stop narrating plan-field labels ('The memory hook notes that…') — July deferred; not re-observed as dominant in ep56-65 evidence sample, keep watching
+    predictions:
+    - metric: tts_word_count last 5 episodes vs min_podcast_words 800
+      baseline: 10/10 episodes 627–777 words (all below 800)
+      expected: ≥4/5 episodes ≥800 words after section-band + digest-floor proposals ship (no script expand-retry)
+      verdict: pending
+      evidence: null
+    - metric: want_to_know_a_secret opener rate in Word Origins (last 8 eps)
+      baseline: 7/10 episodes (snapshot)
+      expected: 0/8 after ban+MEMORY de-seed ships
+      verdict: pending
+      evidence: null
+    - metric: chapters with ≥6 pedagogical sections (Welcome/WOTD/Vocab/Grammar/Origins/Culture/Practice/Closing)
+      baseline: multiple eps with 4 sections or WOTD spanning most of runtime (ep56/58/59/61/63)
+      expected: ≥8/10 episodes with ≥6 distinct section titles and Origins chapter duration >15s
+      verdict: pending
+      evidence: null
+    - metric: spoken AI disclosure intelligibility (English, stable wording)
+      baseline: ep56–65 tails Whisper-garble IE synth / end-of-video / left for the person
+      expected: last 10 transcripts end with the same short English credit line, no garble class
+      verdict: pending
+      evidence: null
+    - metric: Я есть / ungrammatical eat-construction in shipped _tts.txt
+      baseline: Ep060 class still in window; prompt-only already missed twice historically
+      expected: 0 hits of \bЯ есть\b and 0 'I eat' glosses on bare есть in next 8 episodes after lint ships
+      verdict: pending
+      evidence: null
+    - metric: off-theme магазин false-friend in Origins when магазин ∉ episode vocab
+      baseline: ep60 (tea/apple ep) and ep63 (passport/travel) both insert magazine→shop filler
+      expected: 0 off-list magazine false-friend drops in next 8 Origins segments
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/prompts/privet_russian_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Verbatim ban alone failed (7/10 still use the secret question). Shape-ban + on-list word constraint + rotation MEMORY matches network de-seed lesson; keeps chapter glue phrase.
+    - file: shows/prompts/privet_russian_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 'Same arithmetic-cap fix class as DP Pod section floors: current bands cannot reach min_podcast_words. Glue lines fix missing Grammar/Origins/Culture chapters without TTS hacks.'
+    - file: shows/prompts/privet_russian_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 'Network length rule: digest-substrate levers only. Countable floors beat vague ''meaty'' language that already failed.'
+    - file: shows/hooks/privet_russian.py
+      kind: code
+      ab_listen_required: false
+      rationale: Data-side rotation memory for Origins openers/closers — prompt-only ban already missed; same pattern as DP Pod lever memory.
+    - file: engine/generator.py
+      kind: code
+      ab_listen_required: false
+      rationale: Prompt grammar rules shipped and still missed (Ep060 class). Code lint is deterministic P0 guard; no phonetic/TTS landmine.
+    - file: shows/privet_russian.yaml
+      kind: config
+      ab_listen_required: false
+      rationale: Align markers with forced glue; stop 'did you know' stealing Culture/Origins boundaries; ep59 WOTD megachapter / 7s Origins stubs.
+    - file: engine/publisher.py
+      kind: code
+      ab_listen_required: true
+      rationale: July deferred English AI disclosure; current tails are listener-facing garbage on an EN teaching show. A/B-listen credit only.
+    - file: tests/test_privet_russian_quality_pass.py
+      kind: code
+      ab_listen_required: false
+      rationale: 'Playbook: every behavioral fix gets a drift-guard test.'
+    agent_cost_usd: 0.1085
 do_not_retry: []
