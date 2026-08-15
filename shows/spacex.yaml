@@ -316,7 +316,14 @@ chapters:
     - pattern: "that.?s.*for today|that.?s a wrap|that covers|see you (tomorrow|next time)"
       title: "Closing"
       where: end
-    - pattern: "on the market side|market watch|S ?P ?C ?X (closed|is at|is trading|opened)"
+    # Aug 15 2026 widen: the July prompt de-seed told the model to vary
+    # its market transition daily, so it rotated to phrasings the old
+    # pattern never knew — Ep68 "A quick note on the markets … closing
+    # at", Ep70 "a quick look at the tape shows S P C X at" — and those
+    # episodes shipped with no Market Watch chapter. Closing stays listed
+    # FIRST with where:end so sign-off-only price lines remain Closing
+    # (Ep3 / Ep62-64 class).
+    - pattern: "on the market side|market watch|quick (market note|note on the market|look at the (tape|market))|S ?P ?C ?X (closed|closing|is at|at \\$|at [a-z]+ hundred|is trading|trading at|trades at|opened)"
       title: "Market Watch"
     - pattern: "one thing worth watching|worth keeping an eye on|the counterpoint"
       title: "The Counterpoint"

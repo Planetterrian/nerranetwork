@@ -248,6 +248,11 @@ class TestPatternCoverage:
             # Added in the description+voice polish follow-up — Tesla
             # Ep459 leaked the literal ``Catchy Title:`` placeholder.
             "**Catchy Title: ...**",
+            # Aug 15 2026 — SpaceX Ep55/57/58/60/66/68/70 + DP Pod Ep35
+            # reproduced the digest FORMATTING template's literal
+            # ``**Title: Source Name**`` heading label; blog <li> items
+            # rendered "Title: SpaceX knocks out 50th launch…".
+            "'**Title:' heading label",
         ]
         for r in required:
             assert r in names, (

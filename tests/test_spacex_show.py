@@ -728,3 +728,89 @@ class TestLaunchTimePronunciation:
         out = self._conv("Liftoff occurred at 0850:45 UTC after checks")
         assert "oh eight fifty U T C" in out
         assert "0850" not in out and ":45" not in out
+
+
+class TestTitleLabelSanitation:
+    """Aug 15 2026 pass — the ``Title:`` junk-chapter class root-caused.
+
+    Four consecutive reviews scored this off the chapters JSONs; the real
+    source is the digest FORMATTING template's literal ``**Title: Source
+    Name**`` line, which the model periodically reproduces (Ep55/57/58/
+    60/66/68/70; on Ep70 it substituted the PUBLISHER for every
+    headline). Defense in depth: prompt no longer carries the literal,
+    scrub_scaffold repairs the canonical .md, engine.chapters and
+    engine.grok_imagine strip the label, and the committed Ep58/Ep60
+    chapter files were cleaned in place (URLs unchanged).
+    """
+
+    def test_committed_chapter_files_carry_no_title_label(self):
+        import json
+        for path in sorted((_ROOT / "digests" / "spacex").glob("chapters_ep*.json")):
+            data = json.loads(path.read_text(encoding="utf-8"))
+            chapters = data.get("chapters", data) if isinstance(data, dict) else data
+            for ch in chapters:
+                title = (ch.get("title") or "")
+                assert not re.match(r"(?i)^\s*title\s*[:\-—]", title), (
+                    f"{path.name}: chapter title {title!r} still carries "
+                    "the leaked 'Title:' label"
+                )
+
+    def test_chapter_title_helpers_strip_title_label(self):
+        from engine.chapters import _clip_title, _first_sentence_as_title
+        assert _clip_title("Title: SpaceX knocks out 50th launch") == (
+            "SpaceX knocks out 50th launch")
+        assert not _first_sentence_as_title(
+            "Title: Danuri captures before-and-after images of the site."
+        ).lower().startswith("title")
+
+    def test_digest_prompts_have_no_literal_title_source_placeholder(self):
+        for name in ("spacex_digest.txt", "dp_pod_digest.txt"):
+            text = (_ROOT / "shows" / "prompts" / name).read_text(encoding="utf-8")
+            assert "**Title: Source Name**" not in text, (
+                f"{name}: the literal placeholder is back — the model "
+                "reproduces it verbatim (Ep58/60/66/68/70 class)"
+            )
+
+    def test_scrub_repairs_leaked_heading_label(self):
+        from engine.newsletter_sanitizer import scrub_scaffold
+        out = scrub_scaffold("1. **Title: SpaceX knocks out 50th launch**")
+        assert out == "1. **SpaceX knocks out 50th launch**"
+
+    def test_snapshot_audits_digest_headings(self):
+        src = (_ROOT / "scripts" / "review_snapshot.py").read_text(encoding="utf-8")
+        assert "Digest heading integrity" in src
+
+
+class TestMarketWatchPatternWiden:
+    """Aug 15 2026 — the July prompt de-seed made the model vary its
+    market transition daily, and the rotated phrasings (Ep68 "quick note
+    on the markets … closing at", Ep70 "quick look at the tape shows
+    S P C X at") never matched the old pattern, so those episodes shipped
+    with no Market Watch chapter."""
+
+    def _market_watch_pattern(self):
+        cfg = yaml.safe_load((_ROOT / "shows" / "spacex.yaml").read_text())
+        for marker in cfg["chapters"]["section_markers"]:
+            if marker["title"] == "Market Watch":
+                return re.compile(marker["pattern"], re.IGNORECASE)
+        raise AssertionError("Market Watch marker missing")
+
+    def test_rotated_transitions_match(self):
+        rx = self._market_watch_pattern()
+        for line in (
+            "A quick note on the markets shows S P C X closing at one "
+            "hundred forty-six dollars and fifteen cents.",
+            "a quick look at the tape shows S P C X at one hundred forty dollars.",
+            "A quick market note: S P C X closed at one hundred "
+            "thirty-three dollars and eleven cents.",
+            "S P C X is trading at one hundred forty dollars",
+        ):
+            assert rx.search(line), f"Market Watch pattern misses: {line!r}"
+
+    def test_closing_still_listed_before_market_watch(self):
+        cfg = yaml.safe_load((_ROOT / "shows" / "spacex.yaml").read_text())
+        titles = [m["title"] for m in cfg["chapters"]["section_markers"]]
+        assert titles.index("Closing") < titles.index("Market Watch"), (
+            "Closing must stay listed before Market Watch (where:end wins "
+            "sign-off-only price lines — Ep3/Ep62-64 class)"
+        )

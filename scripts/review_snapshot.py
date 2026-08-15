@@ -296,6 +296,56 @@ def build_snapshot(slug: str, episodes: int = 10) -> str:
             lines.append("- 0 hits — excluded-class content absent from shipped digests")
         lines.append("")
 
+    # --- Digest heading integrity ---
+    # Aug 15 2026: four consecutive spacex reviews scored the "Title:"
+    # junk off the chapters JSONs and called the window clean while the
+    # digest .md — the canonical source every reader surface renders —
+    # was leaking the FORMATTING template's literal ``**Title: Source
+    # Name**`` label on 3 of 10 episodes (and on Ep70 the model replaced
+    # every headline with its PUBLISHER). Chapters are a downstream copy;
+    # audit the source.
+    if digest_files:
+        label_hits: list[tuple[int, str]] = []
+        publisher_hits: list[tuple[int, str]] = []
+        _pub_shape = re.compile(
+            r"^[A-Z][\w'&. -]{2,28}(\.(com|org|net|ca|io))?$"
+        )
+        for num, path in digest_files:
+            text = path.read_text(encoding="utf-8", errors="replace")
+            for line in text.splitlines():
+                m = re.match(
+                    r"\s*(?:\d+\.|[-*•])?\s*\*\*\s*(Title|Headline)\s*[:\-—]\s*(.*?)\*\*",
+                    line,
+                )
+                if not m:
+                    continue
+                label_hits.append((num, line.strip()[:90]))
+                # Publisher-as-headline mutation: the "headline" is just a
+                # short name / domain with no verb-length content.
+                if _pub_shape.match(m.group(2).strip()):
+                    publisher_hits.append((num, m.group(2).strip()))
+        lines.append(
+            f"## Digest heading integrity (last {len(digest_files)} digests)"
+        )
+        if label_hits:
+            eps = sorted({n for n, _ in label_hits})
+            lines.append(
+                f"- ⚠ leaked 'Title:' heading label in ep{', ep'.join(map(str, eps))} "
+                f"({len(label_hits)} headings)"
+            )
+            for num, excerpt in label_hits[:5]:
+                lines.append(f"  - ep{num}: “{excerpt}”")
+            if publisher_hits:
+                pe = sorted({n for n, _ in publisher_hits})
+                lines.append(
+                    f"- ⚠⚠ publisher-as-headline mutation in ep{', ep'.join(map(str, pe))} "
+                    "(the real headline is GONE — prompt-side failure, "
+                    "not repairable by scrubbing)"
+                )
+        else:
+            lines.append("- 0 leaked heading labels")
+        lines.append("")
+
     # --- Chapter shape ---
     chapter_files = _latest(out_dir.glob("chapters_ep*.json"), episodes)
     lines.append(f"## Chapter shape (last {len(chapter_files)} episodes)")
