@@ -1526,8 +1526,41 @@ class TestSourceDecayAlarm:
         # All three returned hard 403s to the production User-Agent.
         assert "cnbc.com" not in urls
         assert "benzinga.com" not in urls
-        # Live replacements probed before adding.
-        assert "finance.yahoo.com/news/rssindex" in urls
+        # Yahoo Finance was briefly among the Aug-15 replacements but is
+        # on shows/_blocked_sources.yaml (blocked 2026-03-16 for editorial
+        # quality) — the live probe checked reachability, the wrong axis.
+        # Removed same day; the volume floor rests on the remaining
+        # replacements.
+        assert "finance.yahoo.com" not in urls
+        assert "feeds.bloomberg.com/markets" in urls
+        assert "marketwatch.com/rss" in urls
+
+    def test_no_show_uses_a_blocked_source(self):
+        """Network-wide mirror of `check_sources.py --check-blocked`.
+
+        That check runs in the weekly source-discovery workflow, so a
+        blocked source re-added to a show YAML sails through CI and only
+        fails days later on the cron (exactly how Yahoo Finance shipped
+        on 2026-08-15). This makes the blocklist a merge gate.
+        """
+        import yaml as _yaml
+        blocked_file = _ROOT / "shows/_blocked_sources.yaml"
+        blocked = _yaml.safe_load(blocked_file.read_text()) or {}
+        patterns = [b["url"] for b in blocked.get("blocked", [])
+                    if isinstance(b, dict) and b.get("url")]
+        assert patterns, "blocklist parse drift — no patterns found"
+        for cfg in sorted((_ROOT / "shows").glob("*.yaml")):
+            if cfg.name.startswith("_"):
+                continue
+            y = _yaml.safe_load(cfg.read_text()) or {}
+            for src in y.get("sources") or []:
+                url = src.get("url", "") if isinstance(src, dict) else ""
+                for pat in patterns:
+                    assert pat not in url, (
+                        f"{cfg.name}: source {url!r} matches blocked "
+                        f"pattern {pat!r} (see shows/_blocked_sources.yaml "
+                        "for the reason and date)"
+                    )
 
 
 class TestScriptStageModelOverride:

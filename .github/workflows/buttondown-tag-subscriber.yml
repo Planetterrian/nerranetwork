@@ -67,12 +67,16 @@ jobs:
         id: run_tool
         env:
           BUTTONDOWN_API_KEY: ${{ secrets.BUTTONDOWN_API_KEY }}
+          # env-var indirection, not inline '${{ }}' interpolation into
+          # shell quotes — an input containing a single quote would break
+          # out of the string (same rationale documented in
+          # backfill-dub-playlists.yml).
+          MODE: ${{ github.event.inputs.mode }}
+          EMAIL: ${{ github.event.inputs.email }}
+          SHOWS: ${{ github.event.inputs.shows }}
+          CSV: ${{ github.event.inputs.csv }}
         run: |
           set -e
-          MODE='${{ github.event.inputs.mode }}'
-          EMAIL='${{ github.event.inputs.email }}'
-          SHOWS='${{ github.event.inputs.shows }}'
-          CSV='${{ github.event.inputs.csv }}'
           ARGS=()
           OUTPUT_FILE=""
 

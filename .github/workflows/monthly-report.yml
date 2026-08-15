@@ -63,6 +63,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          # No git history needed (landmine #1).
+          fetch-depth: 1
 
       - uses: ./.github/actions/setup-python
         with:
@@ -78,17 +81,22 @@ jobs:
           INPUT_MONTH: ${{ github.event.inputs.month || '' }}
           INPUT_YEAR: ${{ github.event.inputs.year || '' }}
         run: |
-          ARGS=""
+          # Bash array, not a quoted string: `"$ARGS"` passed every flag
+          # as ONE argv entry (argparse saw `--show tesla --month 7` as a
+          # single unknown argument), and the scheduled path passed a
+          # literal empty-string arg. Same pattern as
+          # backfill-dub-playlists.yml.
+          ARGS=()
           if [ "$INPUT_SHOW" != "" ] && [ "$INPUT_SHOW" != "all" ]; then
-            ARGS="--show $INPUT_SHOW"
+            ARGS+=(--show "$INPUT_SHOW")
           fi
           if [ "$INPUT_MONTH" != "" ]; then
-            ARGS="$ARGS --month $INPUT_MONTH"
+            ARGS+=(--month "$INPUT_MONTH")
           fi
           if [ "$INPUT_YEAR" != "" ]; then
-            ARGS="$ARGS --year $INPUT_YEAR"
+            ARGS+=(--year "$INPUT_YEAR")
           fi
-          python scripts/run_monthly_report.py "$ARGS"
+          python scripts/run_monthly_report.py "${ARGS[@]}"
 
       - name: Generate cross-show briefing
         env:
@@ -106,6 +114,8 @@ jobs:
     # the last trading day of the calendar month. Manual dispatch can
     # force a run via the mit_monthly input.
     runs-on: ubuntu-latest
+    # Full TTS + mix pipeline; cap well below the 6h GitHub default.
+    timeout-minutes: 60
     if: >-
       ${{
         (github.event_name == 'schedule' && github.event.schedule == '0 22 * * 1-5')
@@ -115,6 +125,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          # No git history needed (landmine #1).
+          fetch-depth: 1
 
       - uses: ./.github/actions/setup-python
         with:
@@ -141,7 +154,12 @@ jobs:
           fi
           python scripts/run_monthly_mit_episode.py $ARGS
 
+      # A full generated episode (TTS spend + R2 upload already done) —
+      # exactly the class the recovery-PR hatch exists for. Without it a
+      # push-retry exhaustion drops the episode's RSS entry + digest.
       - uses: ./.github/actions/safe-commit-push
         with:
           add-paths: "digests/modern_investing/ modern_investing_podcast.rss"
           commit-message: "MIT monthly recap — $(date -u +%Y-%m)"
+          recovery-on-failure: "true"
+          recovery-show: "mit-monthly"

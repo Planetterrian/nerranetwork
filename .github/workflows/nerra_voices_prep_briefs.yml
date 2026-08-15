@@ -13,12 +13,17 @@ permissions:
 jobs:
   prep_briefs:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
+        with:
+          # No git history needed (landmine #1: full clone is ~2.5 GB).
+          fetch-depth: 1
+      - uses: ./.github/actions/setup-python
         with:
           python-version: '3.12'
-      - run: pip install -r pipelines/requirements.txt
+          requirements-file: 'pipelines/requirements.txt'
+          skip-checkout: 'true'
       - run: python pipelines/voices/generate_briefs.py
         env:
           SUPABASE_URL: ${{ secrets.VOICES_SUPABASE_URL }}

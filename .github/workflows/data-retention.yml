@@ -26,12 +26,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          # No git history needed (landmine #1). NOTE: the composite's
+          # own fetch-depth input is ignored under skip-checkout — the
+          # depth must be set on THIS checkout.
+          fetch-depth: 1
 
       - uses: ./.github/actions/setup-python
         with:
           python-version: '3.12'
           requirements-file: 'requirements.txt'
-          fetch-depth: "1"
           skip-checkout: 'true'
 
       - name: Archive old data files
@@ -39,20 +43,14 @@ jobs:
           KEEP_DAYS="${{ inputs.keep_days || '180' }}"
           python scripts/archive_old_data.py --keep-days "$KEEP_DAYS"
 
+      # Aug 15 2026: replaced a naive push loop (no `rebase --abort`
+      # between attempts, so one conflict poisoned all four retries) with
+      # the shared composite. The archive move is re-runnable next month,
+      # so no recovery PR is needed — a failed push stays visible.
       - name: Commit archives + pruned files
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -A data/archives/ digests/
-          if git diff --cached --quiet; then
-            echo "No files to archive this month"
-            exit 0
-          fi
-          git commit -m "Monthly data retention: archive files older than ${{ inputs.keep_days || '180' }}d"
-          for attempt in 1 2 3 4; do
-            git pull --rebase origin main && git push origin main && exit 0
-            echo "Push failed (attempt $attempt), retrying in $((attempt * 2))s..."
-            sleep $((attempt * 2))
-          done
-          echo "All push attempts failed"
-          exit 1
+        uses: ./.github/actions/safe-commit-push
+        with:
+          add-paths: |
+            data/archives/
+            digests/
+          commit-message: "Monthly data retention: archive files older than ${{ inputs.keep_days || '180' }}d"

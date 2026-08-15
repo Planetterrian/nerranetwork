@@ -798,7 +798,14 @@ class TestShortsSupplyLadder:
         assert f"-> {entry['shorts_per_episode']} Short(s)" in entry["reason"]
 
     def test_committed_policy_agrees_with_the_ladder(self):
-        """api/youtube_policy.json is regenerated, not hand-edited."""
+        """api/youtube_policy.json is regenerated, not hand-edited.
+
+        Since the shorts-count hysteresis (commit defdef51), the ACTIVE
+        count may lawfully lag the ladder while a change is confirmed
+        over consecutive runs — but then the entry must carry the ladder
+        value as ``shorts_pending``. An active count that disagrees with
+        the ladder with no pending record is a hand-edit or a script bug.
+        """
         mod = _load_script()
         policy = json.loads(
             (_ROOT / "api" / "youtube_policy.json").read_text(encoding="utf-8"))
@@ -807,9 +814,14 @@ class TestShortsSupplyLadder:
                 vpd = entry.get("short_vpd")
                 if vpd is None:
                     continue    # held — the count follows the active tier
-                assert entry["shorts_per_episode"] == mod.shorts_for_vpd(vpd), (
-                    f"{channel}/{slug}: {vpd} vpd recorded as "
-                    f"{entry['shorts_per_episode']} Short(s)"
+                ladder = mod.shorts_for_vpd(vpd)
+                if entry["shorts_per_episode"] == ladder:
+                    continue
+                assert entry.get("shorts_pending") == ladder, (
+                    f"{channel}/{slug}: {vpd} vpd -> ladder {ladder} but "
+                    f"active {entry['shorts_per_episode']} Short(s) with "
+                    f"pending {entry.get('shorts_pending')!r} — neither "
+                    "current nor mid-hysteresis"
                 )
 
 

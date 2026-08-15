@@ -69,7 +69,8 @@ jobs:
       - uses: actions/checkout@v7
         with:
           ref: main
-          fetch-depth: 0
+          # No git history needed (landmine #1: full clone is ~2.5 GB).
+          fetch-depth: 1
 
       - uses: ./.github/actions/setup-python
         with:

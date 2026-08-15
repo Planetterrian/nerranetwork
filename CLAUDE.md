@@ -1828,8 +1828,11 @@ decision); everything else has a live status card.
     the repo for the operator to merge. This is the hardened path for the
     "Commit and push output" step (the finalize shared-pages push has a 5-attempt
     loop + warning but no recovery PR because those pages are fully regenerable).
-    The `safe-commit-push` composite used by nightly + 8 other workflows does not
-    yet have the recovery escape hatch (lower risk callers). The multilingual
+    The `safe-commit-push` composite now has an opt-in `recovery-on-failure`
+    input wired for the two callers whose commits are expensive to regenerate
+    (nightly maintenance, topic-queue restock); the other composite callers
+    deliberately stay fail-visible because their artifacts are regenerable
+    (stale note corrected 2026-08-15). The multilingual
     sweep's commit step (`.github/workflows/multilingual.yml`) also uses the
     recovery-PR escape hatch now, since it commits large translation-track +
     per-language-feed diffs on the same push-contended `main`. Drift guard:

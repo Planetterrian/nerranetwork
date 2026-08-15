@@ -17,6 +17,13 @@ name: Check YouTube Caption Scope
 # replacing that channel's YOUTUBE_REFRESH_TOKEN_* secret.
 
 on:
+  # Monthly cron (Aug 15 2026): token scope decays silently — a refresh
+  # token can lose force-ssl and every episode ships captionless while
+  # uploads stay green. Dispatch-only meant someone had to remember to
+  # check; a cheap read-only monthly run makes decay a monitored signal
+  # (same reasoning as check_apple_reporter_freshness in the nightly).
+  schedule:
+    - cron: '7 5 3 * *'  # 3rd of each month, 05:07 UTC (off-peak)
   workflow_dispatch:
     inputs:
       channel:

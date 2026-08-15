@@ -26,12 +26,20 @@ concurrency:
 jobs:
   fire:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
+      # Shallow checkout + cached pip. This job runs ~288×/day on the */5
+      # cron; the previous bare checkout full-cloned the repo (~2.5 GB of
+      # MP3 history, landmine #1) and reinstalled pip deps from scratch
+      # on every tick.
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
+        with:
+          fetch-depth: 1
+      - uses: ./.github/actions/setup-python
         with:
           python-version: '3.12'
-      - run: pip install -r pipelines/requirements.txt
+          requirements-file: 'pipelines/requirements.txt'
+          skip-checkout: 'true'
       - run: python pipelines/voices/fire_interviews.py
         env:
           SUPABASE_URL: ${{ secrets.VOICES_SUPABASE_URL }}

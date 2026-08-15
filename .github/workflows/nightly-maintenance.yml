@@ -43,6 +43,9 @@ concurrency:
 jobs:
   generate-artifacts:
     runs-on: ubuntu-latest
+    # 6 external API fetches + site regen; the connector budget bounds
+    # the fetchers (docs/analytics.md) but nothing bounded the job.
+    timeout-minutes: 120
 
     steps:
       - uses: actions/checkout@v7

@@ -29,7 +29,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          fetch-depth: 0
+          # No git history needed (landmine #1: full clone is ~2.5 GB).
+          fetch-depth: 1
 
       - uses: actions/setup-python@v7
         with:
@@ -73,3 +74,9 @@ jobs:
         with:
           add-paths: digests/modern_investing/live_execution_state.json
           commit-message: "MIT live executor state: ${{ github.run_id }}"
+          # ARM-BLOCKER hardening (Aug 15 2026 audit): this file holds the
+          # halt flag and the open-position index. A dropped push resets
+          # the halt flag and orphans open positions from the --exits
+          # slot. Must be in place BEFORE live trading is ever armed.
+          recovery-on-failure: "true"
+          recovery-show: "mit-live-executor"
