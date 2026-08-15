@@ -86,6 +86,19 @@ GROK_PRICING = {
         "output_per_1m": 6.00,
         "cached_input_per_1m": 0.30,
     },
+    # Grok 4.6 (August 12 2026) — post-training upgrade over 4.5, not a
+    # larger base model: 500k context, an added `xhigh` reasoning level,
+    # tuned for long-running agents and coding. Same list price as 4.5.
+    # Wired for the modern_investing SCRIPT-stage A/B only. Do NOT promote
+    # it to any digest/fetch stage without measuring hallucination rate
+    # first: the network's reason for holding digests on 4.3 is that 4.5
+    # regressed confident-hallucination 25% -> 54%, and 4.6 is built on
+    # 4.5's post-training — there is no evidence either way yet.
+    "grok-4.6": {
+        "input_per_1m": 2.00,
+        "output_per_1m": 6.00,
+        "cached_input_per_1m": 0.30,
+    },
     # Grok 4 (legacy refusal fallback — retained because older
     # credit_usage JSONs still report it, and _estimate_grok_cost may be
     # re-run against them).

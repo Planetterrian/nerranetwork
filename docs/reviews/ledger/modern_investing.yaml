@@ -421,34 +421,173 @@ reviews:
         baseline: "Ep111 CNR.TO lost; Ep113 BTC-USD truncated to BTC"
         expected: "0 lost or mangled suffixed picks; every crypto pick
           resolves to the -USD pair"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "2026-08-15: Ep133 IPCO.TO and Ep135 X.TO both recorded
+          with the suffix intact and resolved_symbol matching; no pick lost
+          to no_pick_extracted in the window. No crypto pick occurred, so
+          the -USD half is untested — carried into the next entry."
       - metric: non-voided trades with stop/reference ratio outside
           [1/3, 3]
         baseline: "1 (Ep113 BTC, open, stop 2240x reference)"
         expected: "0 — the tripwire voids at record time and the
           migration self-heals any that slip through"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "2026-08-15: 0 across all 50 non-voided trades; the Ep113
+          BTC pick remains voided with instrument_scale_mismatch."
       - metric: alpha mentions carrying the significance qualifier
           (while t<2)
         baseline: "1/6 (17%) with the em-dash instruction form"
         expected: ">=70% with the data-shaped parenthetical; a third
           miss escalates to an operator accept-or-abandon decision
           instead of a fourth mechanism"
-        verdict: pending
-        evidence: null
+        verdict: miss
+        evidence: "2026-08-15: 0 of 22 alpha mentions across Ep126-137
+          carried any significance hedge. THIRD miss on this metric; per
+          the playbook no fourth mechanism was written. Escalated to the
+          operator as accept-or-abandon (see the 2026-08-15 review).
+          Confound worth noting before abandoning: the alpha figure being
+          quoted was the blended 45-trade number, which the 08-15 pass
+          replaced with a verified-window figure that carries its own
+          sample size inside the sentence — re-score once that has run."
       - metric: median script words, last-10 snapshot
         baseline: "~1382w (all 10 below the 1800 floor)"
         expected: ">=1550w within 10 episodes of the digest retry
           shipping (digest-substrate lever, min_digest_words 1500)"
-        verdict: pending
-        evidence: null
+        verdict: partial
+        evidence: "2026-08-15: median 1535w over Ep128-137 (1382 -> 1535,
+          +11%) but short of the 1550 target and 9 of 10 still below the
+          1800 floor. The digest substrate moved and then plateaued, which
+          points at the script stage — hence the grok-4.6 script-model A/B
+          (experiment mit-script-model-46)."
       - metric: episodes with >2 x.com Source citations on a
           normal-fetch day (article_count > 100)
         baseline: "Ep115: 6/6 x.com (collapsed-fetch day)"
         expected: "0; collapsed-fetch days additionally emit
           article_count_degraded"
+        verdict: miss
+        evidence: "2026-08-15: 6 of the last 12 episodes exceed 2 x.com
+          citations (Ep128 6/7, Ep131 5/8, Ep134 5/8, Ep136 5/8). The
+          prediction's own >100-article precondition turned out to be
+          unmeetable: MIT's fetch had collapsed from a median of 274
+          (ep90-119) to 50-64 (ep120-137) because three RSS sources began
+          returning 403, and the degradation alarm went silent as its
+          rolling baseline decayed with the problem. Root cause fixed
+          2026-08-15 (dead feeds replaced + long-baseline decay alarm);
+          re-score against restored volume."
+    agent_cost_usd: null
+
+  - date: 2026-08-15
+    pr: null
+    doc: docs/reviews/modern_investing_review_2026_08_15.md
+    reviewer: claude-code (operator-directed pipeline/data/learning-loop pass)
+    summary: >
+      Operator asked for a deep pass on the pipeline's data, analytics,
+      recursive learning and goal adjustment. The mechanisms built by the
+      July 3-24 passes all still work; what had failed was three loops
+      whose correctness depended on data that moved underneath them, none
+      of them visible from the dashboard or metrics. P0: the on-air
+      headline alpha (+9.28% across 45 trades, spoken Ep137) was carried
+      by the 35 trades whose benchmark windows the July-3 pass itself
+      disowned — the 10 trades with pick-date-aligned windows were at
+      -1.95% — because the operator recompute has never run. P0: the
+      Portfolio Performance section was ABSENT from 13 of the last 20
+      digests and the podcast stage filled the gap by telling listeners
+      the performance feed was down (Ep134/135 verbatim); root cause was
+      that the digest prompt's FORMATTING template, the part the model
+      actually follows, never listed the section. P0: the July review-once
+      guard only ever examined closed[-1], so once the pick cadence became
+      roughly daily every close but the newest was skipped permanently —
+      43 of 50 closed trades never narrated, five within the preceding ten
+      days including MU's +5.12%, while their P&L still counted in the
+      totals the segment reported. P1: "Weekly Hold" holds ran 0-6 days
+      (median 3) against a five-day thesis, structurally, because exits
+      are pinned to the Friday pre-market run which prices Thursday's bar.
+      P1: article fetch had fallen 274 -> ~57 median for three weeks after
+      CNBC x2 and Benzinga began returning 403, and the July-24 collapse
+      alarm went quiet because its 10-episode rolling baseline decayed
+      with the problem.
+    shipped:
+      - verified-window alpha (verified_window_alpha_pct / _trades /
+        unverified_window_trades / verified t-stat) computed over
+        entry_bar_date trades only; on-air headline switched to it with
+        the trade count fused into the sentence and an explicit NOT-for-air
+        line on the blended figure (A/B-listen)
+      - "### Portfolio Performance added to the digest FORMATTING template
+        (the actual root cause), plus an explicit ban in both digest and
+        podcast prompts on narrating the performance data as unavailable
+        or pending (A/B-listen)"
+      - trade review drains the backlog oldest-first, one per episode,
+        bounded by REVIEW_BACKLOG_MAX_DAYS=14; stale backlog retired in
+        place; newest close never retired so an outage cannot silence the
+        segment
+      - "review block states the actual hold span (\"Actual hold: N
+        calendar day(s), Monday -> Thursday\") with a ban on five-day
+        framing the dates do not support (A/B-listen)"
+      - source-decay alarm — second, longer baseline (last 10 vs the 50
+        before) catches a slide as well as a cliff; both medians recorded
+        as metrics; metrics paths sorted by episode number
+      - three dead feeds (CNBC x2, Benzinga — hard 403 to the production
+        UA) replaced with live probed feeds (Yahoo Finance, Google News
+        earnings, Google News rates)
+      - "llm.podcast_model: grok-4.6 — SCRIPT STAGE ONLY A/B (experiment
+        mit-script-model-46); digest/fetch stay on grok-4.3 because 4.6 is
+        post-trained on 4.5 and 4.5's confident-hallucination regression
+        (25% -> 54%) is unmeasured for it, not disproven"
+      - engine/generator.py falls back to config.llm.model with a loud
+        warning when a script-stage override model is unreachable, so a
+        bad id costs the experiment and never an episode
+      - grok-4.6 pricing in engine/tracking.py
+      - 16 new drift guards in tests/test_mit_benchmark_integrity.py
+    deferred:
+      - "operator: run scripts/recompute_mit_benchmarks.py --apply — open
+        since 2026-07-03 and now the highest-value action on the show; it
+        collapses the verified/legacy split and takes the honest alpha
+        sample from n=10 to n=45"
+      - "operator: accept-or-abandon on the significance qualifier (third
+        miss, no fourth mechanism written per the playbook)"
+      - "operator: weekly-hold cadence — fixed five bars from entry vs the
+        current Friday-close calendar; the shadow executor's exit calendar
+        would have to move with it"
+      - "x.com source concentration — root cause (feed rot) fixed, but
+        re-score against restored volume before adding a source-mix rule"
+      - "carried: SnapTrade Phase-0 verification; closing-price lesson
+        retirement"
+    predictions:
+      - metric: episodes whose digest contains a Portfolio Performance
+          section
+        baseline: "7 of the last 20 (13 missing)"
+        expected: ">=18 of the next 20; ZERO episodes narrating the
+          performance data as unavailable/pending/awaiting a tracker
+          update"
+        verdict: pending
+        evidence: null
+      - metric: closed trades never narrated on air (excluding the
+          retired pre-2026-08-15 backlog)
+        baseline: "43 of 50; 5 closed within the preceding 10 days"
+        expected: "0 — the backlog drains one per episode and every new
+          close is narrated exactly once"
+        verdict: pending
+        evidence: null
+      - metric: alpha figures spoken on air that come from the blended
+          45-trade window
+        baseline: "every alpha mention; Ep137 said '9.3% across 45
+          benchmarked trades'"
+        expected: "0; every spoken alpha is the verified-window figure
+          and states its trade count in the same sentence"
+        verdict: pending
+        evidence: null
+      - metric: median article_count, last-10 snapshot
+        baseline: "~57 (down from 274 over ep90-119)"
+        expected: ">=120 within 10 episodes of the feed replacement; the
+          decay alarm fires on any future slide below half the long
+          baseline"
+        verdict: pending
+        evidence: null
+      - metric: median script words, last-10 snapshot
+        baseline: "1535w (9 of 10 below the 1800 floor)"
+        expected: ">=1700w under the grok-4.6 script stage, with zero
+          numbers/tickers/prices in the script that are absent from the
+          digest — a single invented figure reverts the experiment"
         verdict: pending
         evidence: null
     agent_cost_usd: null

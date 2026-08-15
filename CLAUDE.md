@@ -204,6 +204,34 @@ today's work, not just explain yesterday's):
   is dormant behind a kill switch. Two operator to-dos remain open:
   `scripts/recompute_mit_benchmarks.py --apply` (needs market-data
   access) and SnapTrade Phase-0 verification.
+- **MIT speaks the VERIFIED-window alpha, never the blended one**
+  (Aug 15 2026 review:
+  [`docs/reviews/modern_investing_review_2026_08_15.md`](docs/reviews/modern_investing_review_2026_08_15.md)).
+  `matched_window_alpha_pct` compounds every trade with a
+  `nasdaq_return_pct` — including the 35 whose windows the July-3
+  integrity pass itself disowned, because the recompute above has never
+  run. That blend put **+9.28% across 45 trades** on air while the 10
+  pick-date-aligned trades were at **−1.95%**.
+  `verified_window_alpha_pct` / `verified_window_trades` (trades carrying
+  `entry_bar_date`) are the on-air numbers; the blended pair stays for
+  the performance page and the recompute script. Running
+  `recompute_mit_benchmarks.py --apply` collapses the split — do not
+  "simplify" the two back into one before then. Same pass fixed three
+  more silent-number failures: the digest FORMATTING template never
+  listed `### Portfolio Performance` (missing from 13 of 20 episodes, and
+  the script then told listeners the feed was down), `_build_trade_review`
+  only examined `closed[-1]` so 43 of 50 closed trades were never
+  narrated once the pick cadence went daily (now drains oldest-first,
+  bounded by `REVIEW_BACKLOG_MAX_DAYS`), and the source-collapse alarm's
+  10-episode rolling baseline decayed with the collapse it was watching
+  (article median 274 → ~57 for three weeks; now a second long baseline
+  catches a slide, and three hard-403 feeds were replaced). Drift guards:
+  `tests/test_mit_benchmark_integrity.py`.
+- **The lesson from that pass, network-wide:** loops that operate on TEXT
+  fail loudly (a tic shows up in a snapshot); loops that operate on
+  NUMBERS fail silently, because a wrong number looks exactly like a
+  right one. Any watchdog whose baseline is a rolling window of the thing
+  it watches can only catch a cliff, never a slide.
 
 - **FF and PT** are "nearly identical twins" — same structure, same functions,
   different news topics and X account
