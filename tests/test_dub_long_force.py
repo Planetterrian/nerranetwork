@@ -66,11 +66,16 @@ class TestForceLongResolution:
 
 
 class TestBigThreeYamlFlags:
-    def test_big_three_force_ru_and_fr_longs(self):
+    def test_big_three_no_longer_force_dub_longs(self):
+        """Probe ENDED 2026-08-15 per its own exit rule: ru_long_vpd 1.52
+        vs the 2.0 floor, 52 forced longs at ~9 views/video, net -2 subs
+        (the July demotion numbers repeated). The flags are gone and the
+        adaptive policy decides again — re-adding one re-opens a negative
+        experiment (see docs/experiments.yaml dub-long-form-probe)."""
         for slug in ("tesla", "spacex", "fascinating_frontiers"):
             cfg = load_config(PROJECT_ROOT / "shows" / f"{slug}.yaml")
             chans = list(getattr(cfg.youtube, "dub_force_long_channels", []))
-            assert chans == ["ru", "fr"], (slug, chans)
+            assert chans == [], (slug, chans)
 
     def test_other_dub_show_not_forced(self):
         cfg = load_config(PROJECT_ROOT / "shows" / "modern_investing.yaml")
@@ -100,7 +105,7 @@ class TestExperimentRegistered:
             (PROJECT_ROOT / "docs" / "experiments.yaml").read_text())
         by_id = {e["id"]: e for e in data["experiments"]}
         e = by_id["dub-long-form-probe"]
-        assert e["status"] == "reading" and e["readout"]
+        assert e["status"] == "done" and "NEGATIVE" in e.get("criteria", "")
         assert by_id["shorts-progress-bar"]["status"] == "reading"
 
 

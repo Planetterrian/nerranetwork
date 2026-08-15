@@ -1478,6 +1478,11 @@ def run(args: argparse.Namespace) -> None:
         # episode without the quote/debut framing, never a KeyError.
         template_vars.setdefault("spcx_market_block", "")
         template_vars.setdefault("ipo_debut_section", "")
+        # SpaceX engineering-anchor rotation (Aug 15 2026) — hook-supplied;
+        # a hook failure degrades to the historical default phrase, never
+        # a KeyError.
+        template_vars.setdefault("engineering_anchor",
+                                 "from an engineering standpoint")
         # Tone hint (Tesla + SpaceX prompts reference it; supplied by their
         # hooks from the day's stock tape). Neutral default on hook failure.
         template_vars.setdefault("tone_hint", "steady day — natural and conversational")

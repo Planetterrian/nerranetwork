@@ -41,6 +41,17 @@ _PRICE_MIN, _PRICE_MAX = 30.0, 2000.0
 _MAX_DEVIATION = 0.35
 
 
+# All four variants are accepted by the Engineering Angle chapter pattern
+# in shows/spacex.yaml ("engineering deep dive|engineering angle|from an
+# engineering standpoint|the engineering reality").
+_ENGINEERING_ANCHORS = (
+    "from an engineering standpoint",
+    "the engineering angle",
+    "the engineering reality",
+    "engineering deep dive",
+)
+
+
 def pre_fetch(config, *, episode_num=None, today_str=None) -> dict:
     context = show_memory.memory_pre_fetch(config, "spacex")
 
@@ -58,6 +69,20 @@ def pre_fetch(config, *, episode_num=None, today_str=None) -> dict:
     context["closing_block"] = _pick_closing(price, change_str, source)
 
     context["ipo_debut_section"] = _ipo_debut_section(episode_num)
+
+    # Engineering Deep Dive chapter anchor, date-rotated (Aug 15 2026).
+    # The prompt used to offer a two-item menu ("from an engineering
+    # standpoint" or "the engineering angle") and the model elected the
+    # first option 10/10 for five consecutive review windows — a verbatim
+    # tic on the episode's centerpiece segment. Prompt-only rotation
+    # instructions are 0-for-2 on this show, so the rotation is
+    # DATA-side, the same anti-fossilization pattern as the closing
+    # variants: the hook hands the prompt exactly one anchor per day.
+    # Every variant matches the Engineering Angle chapter pattern in
+    # shows/spacex.yaml, so chapter coverage cannot regress (drift guard
+    # in tests/test_spacex_show.py).
+    context["engineering_anchor"] = _ENGINEERING_ANCHORS[
+        datetime.date.today().toordinal() % len(_ENGINEERING_ANCHORS)]
 
     # Refresh the public launch-dashboard data (best-effort, non-fatal).
     # Writes api/spacex_launches.json for spacex-dashboard.html; a failure

@@ -55,12 +55,59 @@ logging.basicConfig(level=logging.INFO, stream=sys.stdout,
                     format="%(levelname)s %(message)s")
 log = logging.getLogger("ru_spacex_weekly")
 
+# Per-show profiles (Aug 15 2026): the Tesla RU funnel reuses this whole
+# letter pipeline — same Worker capture, same honesty rules, same
+# same-week guard — parameterized instead of forked. ``--slug`` selects a
+# profile; module-level constants stay the spacex values so every
+# existing import/test is byte-compatible.
+PROFILES = {
+    "spacex": {
+        "digest_dir": "spacex",
+        "capture_tag": "ru-spacex",
+        "landing_url": "https://nerranetwork.com/ru/spacex.html",
+        "feed_url": "https://nerranetwork.com/spacex_podcast.ru.rss",
+        "brand_name": "Хроника SpaceX",
+        "brand_emoji": "🚀",
+        # SpaceX-only: the letter carries the next launch window.
+        "include_launch": True,
+    },
+    "tesla": {
+        "digest_dir": "tesla_shorts_time",
+        "capture_tag": "ru-tesla",
+        "landing_url": "https://nerranetwork.com/ru/tesla.html",
+        "feed_url": "https://nerranetwork.com/podcast.ru.rss",
+        "brand_name": "Хроника Tesla",
+        "brand_emoji": "⚡",
+        "include_launch": False,
+    },
+}
+
 SHOW_SLUG = "spacex"
+DIGEST_DIR = "spacex"
 CAPTURE_TAG = "ru-spacex"
 LANDING_URL = "https://nerranetwork.com/ru/spacex.html"
 FEED_URL = "https://nerranetwork.com/spacex_podcast.ru.rss"
 YOUTUBE_URL = "https://www.youtube.com/@NerraRU"
-SEND_MARKER = _ROOT / "digests" / SHOW_SLUG / "_ru_weekly_lastsend.txt"
+BRAND_NAME = "Хроника SpaceX"
+BRAND_EMOJI = "🚀"
+INCLUDE_LAUNCH = True
+SEND_MARKER = _ROOT / "digests" / DIGEST_DIR / "_ru_weekly_lastsend.txt"
+
+
+def _apply_profile(slug: str) -> None:
+    """Point the module globals at *slug*'s profile."""
+    global SHOW_SLUG, DIGEST_DIR, CAPTURE_TAG, LANDING_URL, FEED_URL
+    global BRAND_NAME, BRAND_EMOJI, INCLUDE_LAUNCH, SEND_MARKER
+    p = PROFILES[slug]
+    SHOW_SLUG = slug
+    DIGEST_DIR = p["digest_dir"]
+    CAPTURE_TAG = p["capture_tag"]
+    LANDING_URL = p["landing_url"]
+    FEED_URL = p["feed_url"]
+    BRAND_NAME = p["brand_name"]
+    BRAND_EMOJI = p["brand_emoji"]
+    INCLUDE_LAUNCH = p["include_launch"]
+    SEND_MARKER = _ROOT / "digests" / DIGEST_DIR / "_ru_weekly_lastsend.txt"
 
 _AI_DISCLOSURE_RU = (
     "Раскрытие: выпуски готовит Патрик, озвучка создаётся ИИ-синтезом "
@@ -109,7 +156,7 @@ def recent_ru_episodes(days: int = 7,
     # plain `days` span covered 8 calendar days and re-included last
     # Sunday's episode in this Sunday's letter.
     cutoff = today - dt.timedelta(days=max(0, days - 1))
-    path = _ROOT / "digests" / SHOW_SLUG / f"summaries_{SHOW_SLUG}.json"
+    path = _ROOT / "digests" / DIGEST_DIR / f"summaries_{SHOW_SLUG}.json"
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
     except Exception as exc:  # noqa: BLE001
@@ -181,9 +228,9 @@ def build_subject(episodes: List[Dict],
     # One limit module owns every title cut in this repo (CLAUDE.md).
     from engine.titles import clip_words, NEWSLETTER_SUBJECT_MAX
 
-    brand = " · Хроника SpaceX 🚀"
+    brand = f" · {BRAND_NAME} {BRAND_EMOJI}"
     if not lead:
-        return f"Хроника SpaceX · {_ru_date(week_ending.isoformat())} 🚀"
+        return f"{BRAND_NAME} · {_ru_date(week_ending.isoformat())} {BRAND_EMOJI}"
     body = clip_words(lead, max(20, NEWSLETTER_SUBJECT_MAX - len(brand)))
     return f"{body}{brand}"
 
@@ -193,13 +240,15 @@ def build_body(episodes: List[Dict], launch: Optional[Dict],
     """Compose the Russian markdown body Buttondown will render."""
     lines: List[str] = []
     lines.append(
-        f"**Хроника SpaceX** — неделя по {_ru_date(week_ending.isoformat())}"
+        f"**{BRAND_NAME}** — неделя по {_ru_date(week_ending.isoformat())}"
     )
     lines.append("")
     lines.append(
         f"Главное за семь дней: {len(episodes)} "
         f"{'выпуск' if len(episodes) == 1 else 'выпуска' if len(episodes) < 5 else 'выпусков'}"
-        " на русском, окно следующего запуска и ссылки на аудио."
+        " на русском"
+        + (", окно следующего запуска" if INCLUDE_LAUNCH else "")
+        + " и ссылки на аудио."
     )
     lines.append("")
     lines.append("---")
@@ -251,8 +300,9 @@ def build_body(episodes: List[Dict], launch: Optional[Dict],
     lines.append("")
     lines.append(f"_{_AI_DISCLOSURE_RU}_")
     lines.append("")
+    ticker = "SPCX" if SHOW_SLUG == "spacex" else "TSLA"
     lines.append(
-        "_Не является инвестиционной рекомендацией. SPCX упоминается "
+        f"_Не является инвестиционной рекомендацией. {ticker} упоминается "
         "в информационных целях._"
     )
     return "\n".join(lines)
@@ -292,7 +342,15 @@ def main(argv: Optional[List[str]] = None) -> int:
                         help="lookback window in days (default 7)")
     parser.add_argument("--force", action="store_true",
                         help="ignore the same-week send guard")
+    parser.add_argument("--slug", choices=sorted(PROFILES), default="spacex",
+                        help="which show's RU weekly to send (default spacex)")
     args = parser.parse_args(argv)
+    # Only switch when the slug actually differs: re-applying the current
+    # profile would clobber test monkeypatches of the module globals
+    # (SEND_MARKER et al.) and buys nothing — the defaults ARE the
+    # spacex profile.
+    if args.slug != SHOW_SLUG:
+        _apply_profile(args.slug)
 
     today = dt.date.today()
     episodes = recent_ru_episodes(days=args.days, today=today)
@@ -304,7 +362,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         )
         return 0
 
-    launch = next_launch()
+    launch = next_launch() if INCLUDE_LAUNCH else None
     subject = build_subject(episodes, today)
     body = build_body(episodes, launch, today)
 
@@ -355,14 +413,14 @@ def main(argv: Optional[List[str]] = None) -> int:
         # Buttondown derives archive slugs from the subject, which is
         # Cyrillic here and comes back percent-escaped — an unreadable
         # public URL. Force an ASCII one (same fix the Russian shows use).
-        slug=f"ru-spacex-{today.isoformat()}",
+        slug=f"ru-{SHOW_SLUG}-{today.isoformat()}",
     )
     if not email_id:
         log.error("Buttondown send failed — see the log above")
         return 1
     _record_send(today)
-    log.info("Sent «Хроника SpaceX» (%d episode(s), id=%s)",
-             len(episodes), email_id)
+    log.info("Sent «%s» (%d episode(s), id=%s)",
+             BRAND_NAME, len(episodes), email_id)
     return 0
 
 

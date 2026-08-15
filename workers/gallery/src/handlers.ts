@@ -87,6 +87,10 @@ const COOKIE_NAME = "nn_gallery";
 const SUBSCRIBE_LISTS: Record<string, string[]> = {
   gallery: [SUBSCRIBER_TAG],
   "ru-spacex": ["ru-spacex"],
+  // Aug 15 2026: Tesla RU funnel (second rollout of the pilot shape).
+  // Same isolation rule as ru-spacex: these subscribers asked for a
+  // Russian weekly («Хроника Tesla»), never the English daily sends.
+  "ru-tesla": ["ru-tesla"],
 };
 const DEFAULT_LIST = "gallery";
 

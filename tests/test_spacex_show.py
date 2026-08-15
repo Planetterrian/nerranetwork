@@ -264,9 +264,12 @@ class TestXaiEngineeringScope:
         assert "xai" in t and ("ai-infrastructure" in t or "software-systems" in t), t[:200]
 
     def test_deep_dive_chapter_anchor_preserved(self):
-        # Broadening must not drop the REQUIRED chapter-key phrase.
+        # Broadening must not drop the REQUIRED chapter-key phrase. Since
+        # Aug 15 2026 the deep-dive anchor is the date-rotated
+        # {engineering_anchor} hook variable (every rotation value matches
+        # the chapter pattern — see TestEngineeringAnchorRotation).
         t = self._txt("spacex_podcast.txt")
-        assert "from an engineering standpoint" in t and "on the ai front" in t
+        assert "{engineering_anchor}" in t and "on the ai front" in t
 
 
 class TestIpoPositioning:
@@ -433,7 +436,10 @@ class TestEp001RegressionChapters:
         # prompt now REQUIRES them.
         text = (_ROOT / "shows/prompts/spacex_podcast.txt").read_text(encoding="utf-8")
         assert 'REQUIRED: open the segment with the words "One thing worth watching"' in text
-        assert '"from an engineering standpoint" or "the engineering angle"' in text
+        # Aug 15 2026: the two-item menu became a date-rotated hook
+        # variable ({engineering_anchor}) after the first option ran
+        # 10/10 for five consecutive reviews.
+        assert '"{engineering_anchor}"' in text
 
 
 class TestLaunchDashboard:
@@ -813,4 +819,34 @@ class TestMarketWatchPatternWiden:
         assert titles.index("Closing") < titles.index("Market Watch"), (
             "Closing must stay listed before Market Watch (where:end wins "
             "sign-off-only price lines — Ep3/Ep62-64 class)"
+        )
+
+
+
+class TestEngineeringAnchorRotation:
+    """Aug 15 2026 — the Deep Dive opener rotates DATA-side by date
+    (prompt-only rotation instructions went 0-for-2 on this show)."""
+
+    def test_every_anchor_matches_the_chapter_pattern(self):
+        import importlib
+        hook = importlib.import_module("shows.hooks.spacex")
+        cfg = yaml.safe_load((_ROOT / "shows" / "spacex.yaml").read_text())
+        pattern = next(m["pattern"] for m in cfg["chapters"]["section_markers"]
+                       if m["title"] == "The Engineering Angle")
+        rx = re.compile(pattern, re.IGNORECASE)
+        for anchor in hook._ENGINEERING_ANCHORS:
+            assert rx.search(anchor), (
+                f"anchor {anchor!r} would not fire the Engineering Angle "
+                "chapter — rotation must never cost chapter coverage")
+
+    def test_run_show_defaults_the_anchor(self):
+        src = (_ROOT / "run_show.py").read_text(encoding="utf-8")
+        assert 'template_vars.setdefault("engineering_anchor"' in src
+
+    def test_market_watch_is_qualitative_price_once(self):
+        text = (_ROOT / "shows/prompts/spacex_podcast.txt").read_text(
+            encoding="utf-8")
+        assert "Do NOT speak the precise dollar figure here" in text, (
+            "the price-once rule is gone — the same number aired twice "
+            "~30s apart for weeks (escalated since 2026-06-13)"
         )

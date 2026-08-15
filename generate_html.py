@@ -241,9 +241,45 @@ def _collect_language_feeds(rss_file: str, prefix: str) -> list:
     feeds = []
     for lang, (autonym, _locale) in LANGUAGE_META.items():
         fname = feed_filename(rss_file, lang)
-        if (ROOT / fname).exists():
-            feeds.append({"lang": lang, "label": autonym, "url": f"{prefix}{fname}"})
+        if not (ROOT / fname).exists():
+            continue
+        # Freshness gate (Aug 15 2026): existence alone kept advertising
+        # DEAD tracks — the ES feeds stopped updating 2026-06-18 but both
+        # flagship pages still rendered an "Español" chip linking a
+        # two-month-stale feed. A track whose newest item is >45 days old
+        # (generous vs the slowest Monday cadence) is delisted until it
+        # publishes again — the chip self-heals on relaunch, no code
+        # change needed.
+        if _language_feed_is_stale(ROOT / fname):
+            continue
+        feeds.append({"lang": lang, "label": autonym, "url": f"{prefix}{fname}"})
     return feeds
+
+
+def _language_feed_is_stale(path, max_age_days: int = 45) -> bool:
+    """True when the feed's newest item pubDate is older than *max_age_days*.
+
+    Unparseable dates fail OPEN (not stale) — a parsing regression must
+    not silently delist every language overnight.
+    """
+    import datetime as _dt
+    import re as _re
+    from email.utils import parsedate_to_datetime as _p2d
+
+    try:
+        text = path.read_text(encoding="utf-8", errors="replace")
+        dates = []
+        for m in _re.finditer(r"<pubDate>([^<]+)</pubDate>", text):
+            try:
+                dates.append(_p2d(m.group(1)))
+            except Exception:
+                continue
+        if not dates:
+            return False
+        age = _dt.datetime.now(_dt.timezone.utc) - max(dates)
+        return age.days > max_age_days
+    except OSError:
+        return False
 
 
 # ---------------------------------------------------------------------------
@@ -3491,6 +3527,34 @@ _RU_LANDING_COPY = {
             "тот же сценарий, тот же день."
         ),
         "launches": True,
+    },
+    # Aug 15 2026 — second rollout of the pilot shape. Tesla's RU Shorts
+    # are its highest-reach surface (~19,300 views/90d) and pointed at
+    # the English tesla.html until now.
+    "tesla": {
+        "show_name_ru": "Tesla по-русски",
+        "hero_title": "Tesla. Каждый день. По-русски.",
+        "hero_description": (
+            "Все важные сюжеты Tesla за 10–12 минут в день: FSD и "
+            "автономность, Optimus, Cybercab, энергетика и 4680, курс "
+            "TSLA и один честный контраргумент в каждом выпуске. "
+            "Источники названы, без рекламы и без пересказа заголовков."
+        ),
+        "magnet_title": "«Хроника Tesla» — письмо по воскресеньям",
+        "magnet_description": (
+            "Одно письмо в неделю: главное о Tesla за семь дней одним "
+            "списком и ссылки на выпуски, которые стоит послушать. "
+            "По-русски."
+        ),
+        "magnet_note": (
+            "Одно письмо в неделю, ничего кроме. Отписка — одной ссылкой "
+            "в каждом письме."
+        ),
+        "listen_note": (
+            "Русская озвучка выходит вслед за английским выпуском — "
+            "тот же сценарий, тот же день."
+        ),
+        "launches": False,
     },
 }
 
