@@ -151,6 +151,19 @@ def _alert_webhook(text: str) -> None:
 _NON_SHOW_YAMLS = {"pronunciation_map"}  # kept for backward compat in CLI help text only
 
 
+def _episode_num_from_metrics_path(path: Path) -> int:
+    """Sort key for ``metrics_epNNN.json`` paths, by episode number.
+
+    Filenames are zero-padded to three digits, so lexicographic order
+    happens to be correct today — and stops being correct the day a show
+    reaches episode 1000. The source-collapse alarm slices the tail of
+    this list to build its baselines, so a wrong order silently compares
+    the wrong episodes rather than failing.
+    """
+    match = re.search(r"ep(\d+)", path.stem)
+    return int(match.group(1)) if match else -1
+
+
 def _discover_shows() -> list[str]:
     """Find all show slugs.
 
@@ -1092,30 +1105,83 @@ def run(args: argparse.Namespace) -> None:
         # annotation) so a degraded-fetch day is visible the same morning.
         # Log-only — never blocks the episode.
         try:
-            _recent_counts = []
-            for _mf in sorted(Path(config.episode.output_dir).glob("metrics_ep*.json"))[-10:]:
-                try:
-                    _mc = json.loads(_mf.read_text(encoding="utf-8")).get(
-                        "counters", {}).get("article_count")
-                    if isinstance(_mc, (int, float)) and _mc > 0:
-                        _recent_counts.append(int(_mc))
-                except (json.JSONDecodeError, OSError, ValueError):
-                    continue
-            if len(_recent_counts) >= 5:
-                _median = sorted(_recent_counts)[len(_recent_counts) // 2]
-                if _median >= 40 and len(articles) < _median * 0.25:
-                    metrics.record("article_count_degraded", True)
-                    print(
-                        f"::warning::{config.slug}: article fetch collapsed — "
-                        f"{len(articles)} articles vs recent median {_median}. "
-                        f"Digest will lean on X/web-search sources; check feed "
-                        f"health.",
-                        flush=True,
-                    )
-                    logger.warning(
-                        "Article fetch collapsed: %d vs recent median %d",
-                        len(articles), _median,
-                    )
+            # Two baselines, because one is not enough (August 2026, MIT).
+            # The original alarm compared today against the median of the
+            # last 10 episodes only. That catches a cliff and is blind to a
+            # slide: MIT's fetch fell from a median of 274 articles
+            # (ep90-119) to 50-64 (ep120-137) and the alarm went quiet
+            # after three firings, because the decayed counts became the
+            # baseline the next comparison used. Three of its RSS sources
+            # had started returning 403/500 and nothing said so for
+            # eighteen episodes. The short window still catches a sudden
+            # cliff; a long window that reaches back BEFORE the slide
+            # catches the slide itself.
+            def _counts_from(paths) -> list[int]:
+                out: list[int] = []
+                for _mf in paths:
+                    try:
+                        _mc = json.loads(_mf.read_text(encoding="utf-8")).get(
+                            "counters", {}).get("article_count")
+                        if isinstance(_mc, (int, float)) and _mc > 0:
+                            out.append(int(_mc))
+                    except (json.JSONDecodeError, OSError, ValueError):
+                        continue
+                return out
+
+            _metric_files = sorted(
+                Path(config.episode.output_dir).glob("metrics_ep*.json"),
+                key=_episode_num_from_metrics_path,
+            )
+            _recent_counts = _counts_from(_metric_files[-10:])
+            _baseline_counts = _counts_from(_metric_files[-60:-10])
+
+            def _median_of(vals: list[int]) -> int | None:
+                return sorted(vals)[len(vals) // 2] if vals else None
+
+            _median = _median_of(_recent_counts)
+            _baseline = _median_of(_baseline_counts)
+            if _median is not None:
+                metrics.record("article_count_recent_median", _median)
+            if _baseline is not None:
+                metrics.record("article_count_baseline_median", _baseline)
+
+            _alarm = None
+            if (
+                len(_recent_counts) >= 5
+                and _median is not None
+                and _median >= 40
+                and len(articles) < _median * 0.25
+            ):
+                _alarm = (
+                    f"article fetch collapsed — {len(articles)} articles vs "
+                    f"recent median {_median}"
+                )
+            elif (
+                len(_baseline_counts) >= 10
+                and _baseline is not None
+                and _baseline >= 40
+                and _median is not None
+                and _median < _baseline * 0.5
+            ):
+                # Slow decay: the last 10 episodes are running at under half
+                # the volume of the 50 before them. Fires every episode until
+                # the feeds are repaired or the new level becomes the
+                # baseline — which is the point, since silence is what let
+                # the previous slide run for three weeks.
+                _alarm = (
+                    f"article fetch has DECAYED — recent median {_median} vs "
+                    f"longer-run baseline {_baseline} (sources may be "
+                    f"returning errors; probe the feed list)"
+                )
+
+            if _alarm:
+                metrics.record("article_count_degraded", True)
+                print(
+                    f"::warning::{config.slug}: {_alarm}. Digest will lean on "
+                    f"X/web-search sources; check feed health.",
+                    flush=True,
+                )
+                logger.warning("%s: %s", config.slug, _alarm)
         except (OSError, TypeError, ValueError, AttributeError) as exc:
             # Alarm must never break a run — degrade to a debug line.
             logger.debug("article-collapse check failed: %s", exc)

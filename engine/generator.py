@@ -2217,15 +2217,43 @@ def generate_podcast_script(
     # Use podcast-specific max_tokens if configured, otherwise fall back to shared max_tokens
     podcast_tokens = getattr(config.llm, "podcast_max_tokens", 0) or config.llm.max_tokens
 
-    text, meta = _call_grok(
-        prompt,
-        model=script_model,
-        system_prompt=system_prompt,
-        temperature=config.llm.podcast_temperature,
-        max_tokens=podcast_tokens,
-        cache_key=_show_cache_key(config),
-        reasoning_effort=_llm_reasoning_effort(config),
-    )
+    def _script_call(model_id: str):
+        return _call_grok(
+            prompt,
+            model=model_id,
+            system_prompt=system_prompt,
+            temperature=config.llm.podcast_temperature,
+            max_tokens=podcast_tokens,
+            cache_key=_show_cache_key(config),
+            reasoning_effort=_llm_reasoning_effort(config),
+        )
+
+    try:
+        text, meta = _script_call(script_model)
+    except Exception as exc:
+        # A per-stage override names a model this account may not be able
+        # to reach — a new release the key is not enrolled for, a
+        # retired snapshot, a typo in one show's YAML. The override is an
+        # experiment; an experiment must not be able to cost a show its
+        # episode. Fall back to the configured default and record it, so
+        # a silently-unused override shows up as a metric instead of as
+        # an A/B result that never actually ran.
+        if script_model == config.llm.model:
+            raise
+        logger.warning(
+            "Script-stage model override '%s' failed (%s: %s) — falling back "
+            "to '%s' for this episode",
+            script_model, type(exc).__name__, exc, config.llm.model,
+        )
+        print(
+            f"::warning::{getattr(config, 'slug', '?')}: script-stage model "
+            f"override '{script_model}' unavailable — episode generated on "
+            f"'{config.llm.model}'. The A/B is NOT running; fix or remove "
+            f"llm.podcast_model.",
+            flush=True,
+        )
+        script_model = config.llm.model
+        text, meta = _script_call(script_model)
 
     # Retry once with 50% more tokens if the response was truncated
     if meta.get("finish_reason") == "length":

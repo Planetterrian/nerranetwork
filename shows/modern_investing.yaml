@@ -18,16 +18,21 @@ sources:
   label: Motley Fool Canada
 - url: https://www.fool.com/feeds/index.aspx
   label: Motley Fool
-- url: https://www.cnbc.com/id/100003114/device/rss/rss.html
-  label: CNBC Investing
-- url: https://www.cnbc.com/id/10001147/device/rss/rss.html
-  label: CNBC Top Stories
+# CNBC (both feeds) and Benzinga were REMOVED 2026-08-15: all three
+# returned hard 403s to the production fetcher, not rate limits, and had
+# been dead long enough to drag the show's article volume from a median
+# of 274 (ep90-119) to 50-64 (ep120-137). Replacements below were probed
+# live with the production User-Agent before being added.
+- url: https://finance.yahoo.com/news/rssindex
+  label: Yahoo Finance
+- url: https://news.google.com/rss/search?q=earnings+beat+OR+guidance+stock+when%3A1d&hl=en-CA&gl=CA&ceid=CA:en
+  label: Google News Earnings
+- url: https://news.google.com/rss/search?q=Federal+Reserve+OR+%22Bank+of+Canada%22+interest+rate+when%3A1d&hl=en-CA&gl=CA&ceid=CA:en
+  label: Google News Rates
 - url: https://feeds.bloomberg.com/markets/news.rss
   label: Bloomberg Markets
 - url: https://www.bankofcanada.ca/feed/
   label: Bank of Canada
-- url: https://www.benzinga.com/feed
-  label: Benzinga
 - url: https://www.marketwatch.com/rss/topstories
   label: MarketWatch
 - url: https://etfdb.com/feed/
@@ -125,6 +130,20 @@ llm:
   max_tokens: 4000
   podcast_max_tokens: 8000
   min_podcast_words: 1800
+  # SCRIPT-STAGE ONLY A/B (2026-08-15, experiment mit-script-model-46).
+  # The digest stays on grok-4.3: the network holds facts-first stages
+  # there because grok-4.5 regressed confident-hallucination 25% -> 54%,
+  # and 4.6 is a post-training upgrade over 4.5, so that risk is
+  # unmeasured, not disproven. MIT is the show where a hallucinated
+  # number is most expensive (real tickers, real prices, a published
+  # track record), which is exactly why the newer model is pointed at
+  # the one stage that introduces no facts — it rewrites an
+  # already-verified digest into a script. The problem it is aimed at is
+  # measurable: 9 of the last 10 scripts came in under the 1800-word
+  # floor (median ~1535w). Readout 2026-08-29. Revert = delete this line.
+  # An unreachable model id falls back to llm.model with a loud warning
+  # (engine/generator.py), so a bad id costs the A/B, never the episode.
+  podcast_model: grok-4.6
   # DISABLED July 29 2026 (cost + quality). Measured over 901 committed
   # episodes: 81% still shipped BELOW target WITH this retry running (Tesla
   # 96.7%, M&A 95.2%) — it fires on nearly every episode and almost never

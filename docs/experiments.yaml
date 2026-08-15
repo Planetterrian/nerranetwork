@@ -276,3 +276,55 @@ experiments:
       Enabled by ffmpeg input dedup (one -i per unique image + split),
       which removed the per-slot demuxer cost behind the old 24-slot
       cap. Render-only — outside landmine #17.
+
+  - id: mit-script-model-46
+    title: "Modern Investing script stage on grok-4.6 (podcast_model A/B)"
+    area: quality
+    shipped: 2026-08-15
+    readout: 2026-08-29
+    status: reading
+    baseline: "median script 1535w against an 1800w floor; 9 of the last 10 episodes below it"
+    target: >
+      Median script length reaches the 1800w floor (or at least clears
+      1700w) with NO facts, tickers, prices or performance figures beyond
+      what the digest carries. Length has been attacked at the digest
+      substrate since July 24 and moved only 1382w -> 1535w, which points
+      at the script stage as the remaining ceiling.
+    criteria: >
+      Operator A/B-listens the first post-merge episodes and checks the
+      spoken numbers against the digest. Keep grok-4.6 only if length
+      improves AND factuality is unchanged; revert is deleting the one
+      podcast_model line in shows/modern_investing.yaml. If ANY invented
+      number reaches a script, revert immediately — this is the show
+      where that costs the most.
+    notes: >
+      grok-4.6 (2026-08-12) is a post-training upgrade over 4.5, so the
+      confident-hallucination regression that keeps digests on 4.3 (25%
+      -> 54% on 4.5) is unmeasured for it, not disproven. That is exactly
+      why it is pointed at the one stage that introduces no facts. Digest
+      and fetch stages stay on grok-4.3. Audio change — landmine #17 A/B.
+      An unreachable model id falls back to grok-4.3 with a loud warning,
+      so a bad id costs the experiment, never the episode.
+
+  - id: mit-verified-window-alpha
+    title: "Modern Investing states verified-window alpha only"
+    area: quality
+    shipped: 2026-08-15
+    readout: 2026-08-29
+    status: decide
+    baseline: "+9.28% across 45 trades spoken on air; the 10 honestly-measured trades were at -1.95%"
+    target: >
+      Every alpha figure spoken on air comes from the 10 (and growing)
+      trades with pick-date-aligned benchmark windows, with the trade
+      count in the same sentence. No blended lifetime alpha reaches air.
+    criteria: >
+      OPERATOR DECISION at readout: run
+      `scripts/recompute_mit_benchmarks.py --apply` (needs market-data
+      access) to rebuild the 35 legacy windows. That collapses the split
+      — every trade gains entry_bar_date and the verified figure simply
+      becomes the whole record. Until it runs, the show's headline is
+      honest but built on n=10.
+    notes: >
+      The recompute has been an open operator item in the MIT ledger
+      since 2026-07-03. This change stops the unrun backfill from
+      silently flattering the on-air number in the meantime.

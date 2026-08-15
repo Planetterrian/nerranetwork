@@ -58,6 +58,14 @@ LESSONS_LEARNED_FILENAME = "lessons_learned.json"
 MONTHLY_EPISODES_FILENAME = "monthly_episodes.json"
 NASDAQ_SYMBOL = "^IXIC"
 
+# How stale a closed trade may be and still be narrated in the Trade
+# Review segment. Anything older is retired unreviewed rather than
+# presented as a fresh result (August 2026 review — see
+# ``_build_trade_review``). Two weeks covers a missed weekly hold plus
+# the weekend either side; the 43-trade historical backlog is far
+# outside it and drains on the first run without ever reaching air.
+REVIEW_BACKLOG_MAX_DAYS = 14
+
 # Multi-index benchmarking (July 2026 "beat all major indices" pass).
 # ^IXIC stays THE headline benchmark (the show's identity and every legacy
 # field); the other two majors are scored over the same matched windows so
@@ -1537,6 +1545,23 @@ def _recompute_summary(tracker: dict) -> None:
     comp_port = 1.0
     comp_ndq = 1.0
     n_matched = 0
+    # VERIFIED subset (August 2026 review): the same compounding restricted
+    # to trades whose benchmark window was built by the July-3 pick-date-
+    # aligned code path — identified by ``entry_bar_date`` (only that path
+    # writes it). Everything older carries a window the July-3 integrity
+    # pass itself declared untrustworthy ("old-window inflation", carried
+    # in the ledger as an unrun operator recompute since 2026-07-03), and
+    # blending the two produced a headline the show states on air EVERY
+    # episode: +9.28% across 45 trades, while the 10 honestly-measured
+    # trades were at -1.95%. A number that survives only because it is
+    # averaged with numbers we know are wrong is not a measurement.
+    # ``scripts/recompute_mit_benchmarks.py --apply`` backfills the legacy
+    # windows; when it runs, every trade gains ``entry_bar_date`` and the
+    # verified figure simply becomes the whole record.
+    comp_v_port = 1.0
+    comp_v_ndq = 1.0
+    n_verified = 0
+    verified_alphas: list[float] = []
     for t in closed:
         pnl = t.get("pnl_pct")
         ndq = t.get("nasdaq_return_pct")
@@ -1547,6 +1572,21 @@ def _recompute_summary(tracker: dict) -> None:
             comp_port *= 1 + pnl / 100
             comp_ndq *= 1 + ndq / 100
             n_matched += 1
+            if t.get("entry_bar_date"):
+                comp_v_port *= 1 + pnl / 100
+                comp_v_ndq *= 1 + ndq / 100
+                n_verified += 1
+                verified_alphas.append(pnl - ndq)
+
+    # Significance on the VERIFIED subset only — a t-stat computed over
+    # windows we do not trust answers a question nobody asked.
+    verified_t_stat = None
+    if len(verified_alphas) >= 2:
+        _mean = sum(verified_alphas) / len(verified_alphas)
+        _var = sum((a - _mean) ** 2 for a in verified_alphas) / (len(verified_alphas) - 1)
+        _std = _var ** 0.5
+        if _std > 0:
+            verified_t_stat = round(_mean / (_std / len(verified_alphas) ** 0.5), 2)
 
     # Per-index matched-window scores (July 2026 multi-index pass): the
     # same compounding, one score per major index, so the show can state
@@ -1612,6 +1652,20 @@ def _recompute_summary(tracker: dict) -> None:
         "compounded_nasdaq_matched_pct": round((comp_ndq - 1) * 100, 2),
         "matched_window_alpha_pct": round((comp_port - comp_ndq) * 100, 2),
         "matched_window_trades": n_matched,
+        # Verified-window figures (August 2026). These are what the show
+        # states on air; the blended pair above is retained for continuity
+        # with the performance page and the recompute script.
+        "verified_window_alpha_pct": round((comp_v_port - comp_v_ndq) * 100, 2)
+        if n_verified else None,
+        "verified_window_return_pct": round((comp_v_port - 1) * 100, 2)
+        if n_verified else None,
+        "verified_window_nasdaq_pct": round((comp_v_ndq - 1) * 100, 2)
+        if n_verified else None,
+        "verified_window_trades": n_verified,
+        "unverified_window_trades": n_matched - n_verified,
+        "verified_alpha_t_stat": verified_t_stat,
+        "verified_alpha_statistically_significant": bool(
+            verified_t_stat is not None and abs(verified_t_stat) >= 2.0),
         "benchmark_scores": benchmark_scores,
         "indices_beaten": indices_beaten,
         "indices_scored": len(benchmark_scores),
@@ -2160,7 +2214,55 @@ def _build_trade_review(tracker: dict, episode_num: int | None = None) -> str:
         # Check for open weekly hold — provide mid-week update
         return void_note + _weekly_hold_update(open_trades)
 
-    last = closed[-1]
+    # Pick the OLDEST unreviewed close, not the newest (August 2026
+    # review). The guard shipped in July fixed over-reviewing (the MU
+    # flash trade narrated three times) by stamping the trade it
+    # narrated — but it only ever looked at ``closed[-1]``, the last
+    # trade APPENDED. Once the pick cadence went to roughly one a day,
+    # more than one trade routinely closed between reviews, and every
+    # close except the newest was silently skipped forever: 43 of 50
+    # closed trades had never been narrated, including five that closed
+    # in the ten days before this review (LNTH, MU, TBBK, IPCO.TO,
+    # AAPL). Those results still counted in the running totals, so the
+    # segment was reporting an aggregate built from trades the audience
+    # never heard resolve. Draining the backlog oldest-first keeps every
+    # result narrated exactly once and self-heals the existing gap at
+    # one trade per episode.
+    # Bounded by freshness: a result older than REVIEW_BACKLOG_MAX_DAYS is
+    # stale news, so the historical backlog is retired in place (stamped
+    # ``review_skipped_stale``) instead of being narrated as if it just
+    # happened. Only genuinely recent closes are drained.
+    def _closed_on(t: dict) -> datetime.date | None:
+        for key in ("exit_bar_date", "date"):
+            try:
+                return datetime.date.fromisoformat(t.get(key) or "")
+            except ValueError:
+                continue
+        return None
+
+    unreviewed = [t for t in closed if t.get("reviewed_in_episode") is None]
+
+    def _is_stale(t: dict) -> bool:
+        when = _closed_on(t)
+        return when is not None and (today - when).days > REVIEW_BACKLOG_MAX_DAYS
+
+    if unreviewed:
+        fresh = [t for t in unreviewed if not _is_stale(t)]
+        # The newest unreviewed close is never retired, however old it is.
+        # Staleness exists to stop a months-old backlog being narrated as
+        # today's news, not to make the segment go silent — if the
+        # pipeline has been down long enough that nothing is fresh, the
+        # most recent result is still the right thing to report.
+        last = fresh[0] if fresh else unreviewed[-1]
+        for t in unreviewed:
+            if t is not last and _is_stale(t):
+                # Retired in place: never claimed as a fresh result,
+                # never re-examined on a later run.
+                if episode_num is not None and not _hooks_readonly():
+                    t["review_skipped_stale"] = True
+                    t["reviewed_in_episode"] = 0
+    else:
+        last = closed[-1]
 
     # Double-review guard: don't re-narrate an already-reviewed result.
     already = last.get("reviewed_in_episode")
@@ -2218,6 +2320,30 @@ def _build_trade_review(tracker: dict, episode_num: int | None = None) -> str:
             f"({summary.get('win_rate_pct', 0):.0f}%)\n"
         )
 
+    # State the hold length that actually happened (August 2026 review).
+    # "Weekly Hold" is the label the digest prompt assigns at pick time,
+    # but exits are pinned to the Friday pre-market run — which prices
+    # Thursday's bar — so a Wednesday pick resolves after a single
+    # session. Across the ten trades with verified windows the holds ran
+    # 0-6 calendar days (median 3), while the scripts kept describing a
+    # "five-day window" that the pick's own target range was written
+    # against. Handing the real span to the model stops the mismatch at
+    # the source instead of asking it to remember.
+    hold_note = ""
+    try:
+        if last.get("entry_bar_date") and last.get("exit_bar_date"):
+            _in = datetime.date.fromisoformat(last["entry_bar_date"])
+            _out = datetime.date.fromisoformat(last["exit_bar_date"])
+            _days = (_out - _in).days
+            hold_note = (
+                f"**Actual hold:** {_days} calendar day(s) of market data "
+                f"({_in.strftime('%A')} → {_out.strftime('%A')}). Describe "
+                f"the window you actually held — never call it a five-day "
+                f"or full-week hold unless the dates say so.\n"
+            )
+    except ValueError:
+        pass
+
     direction = "gained" if pnl_pct >= 0 else "lost"
     stop_note = ""
     if last.get("stopped_out"):
@@ -2229,6 +2355,7 @@ def _build_trade_review(tracker: dict, episode_num: int | None = None) -> str:
         )
     return void_note + (
         f"**Last {type_label}:** {symbol} — {strategy}\n"
+        f"{hold_note}"
         f"{stop_note}"
         f"**Entry:** ${entry:.2f} ({entry_label}) → **Exit:** ${exit_:.2f} ({exit_label})\n"
         f"**Result:** {direction} {abs(pnl_pct):.2f}% (${pnl_dollars:+.2f} on $1,000 position)\n"
@@ -2892,7 +3019,30 @@ def _build_portfolio_summary(tracker: dict) -> str:
     if trades_with_alpha:
         matched_alpha = summary.get("matched_window_alpha_pct")
         matched_n = summary.get("matched_window_trades", 0)
-        if matched_n and matched_alpha is not None:
+        verified_alpha = summary.get("verified_window_alpha_pct")
+        verified_n = summary.get("verified_window_trades", 0)
+        unverified_n = summary.get("unverified_window_trades", 0)
+        if verified_n and verified_alpha is not None:
+            # The headline is the verified subset only (August 2026). The
+            # qualifier is fused into the value the way mechanism 3 did it
+            # — the sample size is part of the number, not a separate
+            # instruction the model can paraphrase away.
+            alpha_line = (
+                f"- Matched-window alpha vs NASDAQ: "
+                f"{_finite(verified_alpha):+.1f}% across {verified_n} "
+                f"verified-window trades — THE headline number; state it on "
+                f"air every episode, always call it the 'matched-window' "
+                f"score, and always say the trade count in the same "
+                f"sentence so the sample size travels with the claim\n"
+            )
+            if unverified_n:
+                alpha_line += (
+                    f"- NOT for air: {unverified_n} older trades have "
+                    f"benchmark windows that predate the pick-date "
+                    f"alignment fix and are excluded from the headline. "
+                    f"Never quote a blended lifetime alpha figure.\n"
+                )
+        elif matched_n and matched_alpha is not None:
             alpha_line = (
                 f"- Matched-window alpha vs NASDAQ (compounded over each "
                 f"trade's own holding window): {_finite(matched_alpha):+.1f}% "

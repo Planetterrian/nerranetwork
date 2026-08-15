@@ -1312,3 +1312,243 @@ class TestArticleCollapseAlarm:
         y = _yaml.safe_load((_ROOT / "shows/modern_investing.yaml").read_text())
         assert y["llm"]["digest_expand_below_target"] is True
         assert y["llm"]["min_digest_words"] == 1500
+
+
+# ---------------------------------------------------------------------------
+# August 15 2026 pass — data honesty, review coverage, alarm sensitivity
+# ---------------------------------------------------------------------------
+
+
+class TestVerifiedWindowAlpha:
+    """The spoken alpha must come only from windows we trust.
+
+    The July 3 pass rebuilt the benchmark window to align with the pick
+    date and recorded ``entry_bar_date`` on every trade it priced. It
+    also declared every OLDER window untrustworthy ("old-window
+    inflation") and left the backfill to an operator script that has
+    never been run. ``matched_window_alpha_pct`` compounded both sets
+    together, so the number the show stated on air every episode —
+    +9.28% across 45 trades — was carried by the 35 trades whose windows
+    the pass itself had disowned; the 10 honestly-measured trades were
+    at -1.95%.
+    """
+
+    @staticmethod
+    def _tracker():
+        return {
+            "metadata": {"position_size": 1000},
+            "trades": [
+                # Verified: carries entry_bar_date (only the aligned path
+                # writes it).
+                {"symbol": "AAA", "status": "closed", "pnl_pct": 1.0,
+                 "nasdaq_return_pct": 3.0, "alpha_pct": -2.0,
+                 "entry_bar_date": "2026-08-03",
+                 "exit_bar_date": "2026-08-06", "pnl_dollars": 10.0},
+                {"symbol": "BBB", "status": "closed", "pnl_pct": -1.0,
+                 "nasdaq_return_pct": 1.0, "alpha_pct": -2.0,
+                 "entry_bar_date": "2026-08-07",
+                 "exit_bar_date": "2026-08-10", "pnl_dollars": -10.0},
+                # Legacy: no entry_bar_date, wildly flattering window.
+                {"symbol": "CCC", "status": "closed", "pnl_pct": 20.0,
+                 "nasdaq_return_pct": 0.0, "alpha_pct": 20.0,
+                 "pnl_dollars": 200.0},
+            ],
+            "summary": {},
+        }
+
+    def test_verified_subset_excludes_legacy_windows(self):
+        tracker = self._tracker()
+        mi._recompute_summary(tracker)
+        s = tracker["summary"]
+        assert s["verified_window_trades"] == 2
+        assert s["unverified_window_trades"] == 1
+        # Verified alpha is negative; the blended figure is dragged
+        # positive by the legacy trade. They must not be the same number.
+        assert s["verified_window_alpha_pct"] < 0
+        assert s["matched_window_alpha_pct"] > s["verified_window_alpha_pct"]
+
+    def test_headline_block_states_verified_figure_and_its_n(self):
+        tracker = self._tracker()
+        mi._recompute_summary(tracker)
+        block = mi._build_portfolio_summary(tracker)
+        n = tracker["summary"]["verified_window_trades"]
+        # The sample size travels with the claim, in the same line.
+        headline = [ln for ln in block.splitlines()
+                    if "Matched-window alpha" in ln][0]
+        assert f"{n} verified-window trades" in headline
+        # The blended lifetime figure must never be offered as the number
+        # to say out loud.
+        assert "NOT for air" in block
+
+    def test_no_verified_trades_falls_back_to_legacy_wording(self):
+        tracker = {
+            "metadata": {"position_size": 1000},
+            "trades": [{"symbol": "CCC", "status": "closed", "pnl_pct": 5.0,
+                        "nasdaq_return_pct": 1.0, "alpha_pct": 4.0,
+                        "pnl_dollars": 50.0}],
+            "summary": {},
+        }
+        mi._recompute_summary(tracker)
+        assert tracker["summary"]["verified_window_trades"] == 0
+        assert tracker["summary"]["verified_window_alpha_pct"] is None
+        # Still produces a usable block rather than crashing or going silent.
+        assert "Matched-window alpha" in mi._build_portfolio_summary(tracker)
+
+    def test_significance_is_measured_on_the_verified_subset(self):
+        tracker = self._tracker()
+        mi._recompute_summary(tracker)
+        s = tracker["summary"]
+        assert "verified_alpha_t_stat" in s
+        assert s["verified_alpha_statistically_significant"] is False
+
+
+class TestReviewBacklogDrain:
+    """Every closed trade is narrated exactly once — including the ones
+    that closed while another trade was closing.
+
+    The July guard fixed over-reviewing by stamping the trade it
+    narrated, but only ever looked at ``closed[-1]``. Once the pick
+    cadence reached roughly one a day, several trades closed between
+    reviews and all but the newest were skipped permanently: 43 of 50
+    closed trades had never been narrated, five of them within the
+    preceding ten days, while their results still counted in the running
+    totals the segment reported.
+    """
+
+    @staticmethod
+    def _tracker(days_ago_list):
+        today = datetime.date.today()
+        return {
+            "metadata": {"position_size": 1000},
+            "trades": [
+                {"symbol": f"S{i}", "status": "closed", "trade_type": "weekly",
+                 "strategy": "test", "entry_price": 100.0, "exit_price": 101.0,
+                 "pnl_pct": 1.0, "pnl_dollars": 10.0,
+                 "date": (today - datetime.timedelta(days=d)).isoformat(),
+                 "exit_bar_date": (today - datetime.timedelta(days=d)).isoformat()}
+                for i, d in enumerate(days_ago_list)
+            ],
+            "summary": {"cumulative_pnl": 0.0, "total_trades": len(days_ago_list),
+                        "wins": 0, "win_rate_pct": 0.0, "current_streak": 0},
+        }
+
+    def test_oldest_fresh_close_is_reviewed_first(self):
+        tracker = self._tracker([5, 3, 1])
+        review = mi._build_trade_review(tracker, episode_num=200)
+        assert "S0" in review          # oldest fresh, not the newest
+        assert tracker["trades"][0]["reviewed_in_episode"] == 200
+        assert tracker["trades"][2].get("reviewed_in_episode") is None
+
+    def test_backlog_drains_one_per_episode(self):
+        tracker = self._tracker([5, 3, 1])
+        seen = []
+        for ep in (200, 201, 202):
+            review = mi._build_trade_review(tracker, episode_num=ep)
+            seen.append(next(s for s in ("S0", "S1", "S2") if s in review))
+        assert seen == ["S0", "S1", "S2"]
+
+    def test_stale_backlog_is_retired_not_narrated(self):
+        # Months-old closes must never be presented as a fresh result.
+        tracker = self._tracker([400, 380, 2])
+        review = mi._build_trade_review(tracker, episode_num=200)
+        assert "S2" in review
+        assert "S0" not in review and "S1" not in review
+        assert tracker["trades"][0]["review_skipped_stale"] is True
+        assert tracker["trades"][1]["review_skipped_stale"] is True
+        assert "review_skipped_stale" not in tracker["trades"][2]
+
+    def test_newest_close_is_never_retired_even_when_stale(self):
+        # A long pipeline outage must not silence the segment entirely.
+        tracker = self._tracker([400, 380])
+        review = mi._build_trade_review(tracker, episode_num=200)
+        assert "S1" in review
+        assert tracker["trades"][1].get("review_skipped_stale") is None
+
+    def test_readonly_runs_do_not_retire_the_backlog(self, monkeypatch):
+        monkeypatch.setenv("NERRA_HOOKS_READONLY", "1")
+        tracker = self._tracker([400, 380, 2])
+        mi._build_trade_review(tracker, episode_num=200)
+        assert all("review_skipped_stale" not in t for t in tracker["trades"])
+
+
+class TestHonestHoldLength:
+    """The review states the window actually held.
+
+    Exits are pinned to the Friday pre-market run, which prices
+    Thursday's bar, so a mid-week pick resolves after one or two
+    sessions. Across the ten verified-window trades the holds ran 0-6
+    days (median 3) while the scripts described a five-day window.
+    """
+
+    def test_review_states_actual_hold_span(self):
+        tracker = {
+            "metadata": {"position_size": 1000},
+            "trades": [{
+                "symbol": "X.TO", "status": "closed", "trade_type": "weekly",
+                "strategy": "catalyst entry", "entry_price": 53.03,
+                "exit_price": 54.06, "pnl_pct": 1.94, "pnl_dollars": 19.42,
+                "entry_bar_date": "2026-08-12", "exit_bar_date": "2026-08-13",
+            }],
+            "summary": {"cumulative_pnl": 0.0, "total_trades": 1, "wins": 1,
+                        "win_rate_pct": 100.0, "current_streak": 1},
+        }
+        review = mi._build_trade_review(tracker, episode_num=200)
+        assert "Actual hold:** 1 calendar day" in review
+        assert "never call it a five-day" in review
+
+
+class TestSourceDecayAlarm:
+    """The collapse alarm must catch a slide, not only a cliff.
+
+    Comparing today against the median of the last 10 episodes uses a
+    baseline that decays with the problem: MIT's fetch fell from a median
+    of 274 (ep90-119) to 50-64 (ep120-137) after three of its RSS sources
+    began returning 403/500, and the alarm went quiet after three
+    firings.
+    """
+
+    def test_long_baseline_comparison_present(self):
+        src = (_ROOT / "run_show.py").read_text(encoding="utf-8")
+        assert "article_count_baseline_median" in src
+        assert "article fetch has DECAYED" in src
+        # Still non-blocking.
+        block = src.split("Source-collapse alarm")[1].split("if not articles")[0]
+        assert "_skip_episode" not in block
+
+    def test_metrics_path_sorted_by_episode_number(self):
+        src = (_ROOT / "run_show.py").read_text(encoding="utf-8")
+        assert "_episode_num_from_metrics_path" in src
+
+    def test_dead_feeds_removed_from_mit(self):
+        import yaml as _yaml
+        y = _yaml.safe_load((_ROOT / "shows/modern_investing.yaml").read_text())
+        urls = " ".join(s["url"] for s in y["sources"])
+        # All three returned hard 403s to the production User-Agent.
+        assert "cnbc.com" not in urls
+        assert "benzinga.com" not in urls
+        # Live replacements probed before adding.
+        assert "finance.yahoo.com/news/rssindex" in urls
+
+
+class TestScriptStageModelOverride:
+    """MIT runs a script-stage-only model A/B; the digest stays on 4.3."""
+
+    def test_mit_overrides_only_the_script_stage(self):
+        import yaml as _yaml
+        y = _yaml.safe_load((_ROOT / "shows/modern_investing.yaml").read_text())
+        assert y["llm"]["podcast_model"] == "grok-4.6"
+        # The digest/fetch stage must NOT follow it — grok-4.6 is built on
+        # 4.5's post-training and 4.5 regressed confident-hallucination
+        # 25% -> 54%. This is the show where a hallucinated number costs
+        # the most.
+        assert "model" not in y["llm"] or y["llm"]["model"] != "grok-4.6"
+
+    def test_override_model_is_priced(self):
+        from engine.tracking import GROK_PRICING
+        assert "grok-4.6" in GROK_PRICING
+
+    def test_unavailable_override_falls_back_instead_of_failing(self):
+        src = (_ROOT / "engine/generator.py").read_text(encoding="utf-8")
+        block = src.split("Per-stage model override")[1][:3000]
+        assert "falling back" in block
+        assert "config.llm.model" in block
