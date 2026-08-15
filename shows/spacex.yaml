@@ -316,7 +316,14 @@ chapters:
     - pattern: "that.?s.*for today|that.?s a wrap|that covers|see you (tomorrow|next time)"
       title: "Closing"
       where: end
-    - pattern: "on the market side|market watch|S ?P ?C ?X (closed|is at|is trading|opened)"
+    # Aug 15 2026 widen: the July prompt de-seed told the model to vary
+    # its market transition daily, so it rotated to phrasings the old
+    # pattern never knew — Ep68 "A quick note on the markets … closing
+    # at", Ep70 "a quick look at the tape shows S P C X at" — and those
+    # episodes shipped with no Market Watch chapter. Closing stays listed
+    # FIRST with where:end so sign-off-only price lines remain Closing
+    # (Ep3 / Ep62-64 class).
+    - pattern: "on the market side|market watch|quick (market note|note on the market|look at the (tape|market))|S ?P ?C ?X (closed|closing|is at|at \\$|at [a-z]+ hundred|is trading|trading at|trades at|opened)"
       title: "Market Watch"
     - pattern: "one thing worth watching|worth keeping an eye on|the counterpoint"
       title: "The Counterpoint"
@@ -387,10 +394,12 @@ youtube:
   # language-dub engine). Dormant until YOUTUBE_REFRESH_TOKEN_FR is set;
   # playlist via dub_playlist_ids: {fr: PL...} once created (landmine #15).
   dub_languages: [fr]
-  # Aug 2026 operator-directed probe: publish the LONG-FORM dub on RU+FR
-  # regardless of the adaptive tier (Shorts ladder untouched). Registered
-  # as dub-long-form-probe in docs/experiments.yaml — readout 2026-08-21.
-  dub_force_long_channels: [ru, fr]
+  # dub-long-form-probe ENDED EARLY 2026-08-15 (operator-directed): the
+  # readout repeated the July numbers it was meant to re-test — across
+  # the enrolled shows the forced RU/FR longs earned ~9 views/video
+  # (52 videos, 461 views, net -2 subscribers) and ru_long_vpd sat at
+  # 1.52 against the 2.0 floor. The flag is removed per the experiment's
+  # own exit rule; the adaptive policy's shorts-only tier decides again.
   dub_playlist_ids: {fr: PLZq4npjtAaVU}
   ru_podcast_playlist_id: PLFEpVo-xftdQ
   category_id: 28               # Science & Technology

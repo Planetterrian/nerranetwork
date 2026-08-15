@@ -173,6 +173,17 @@ _RAW_RULES: List[Tuple[str, str, str]] = [
     # already leaked or slip through (``Title:** Source Name`` / ``Title: Source Name``).
     (r"(?i)\s*:\*{0,2}\s*Source Name\b", "", "': Source Name' placeholder"),
     (r"(?im)^\s*\*{0,2}Source Name\*{0,2}\s*$", "", "bare 'Source Name' line"),
+    # Digest FORMATTING templates show the Top News heading shape as the
+    # literal ``1. **Title: Source Name**`` and the model periodically
+    # reproduces the ``Title:`` label instead of substituting — SpaceX
+    # shipped it on Ep55/57/58/60/66/68/70 (blog <li> items read
+    # "Title: SpaceX knocks out 50th launch…"), DP Pod on Ep35. Strips
+    # the label wherever a numbered/bulleted bold heading starts with it;
+    # the headline text itself is untouched. (The Ep70 mutation — the
+    # model substituting the PUBLISHER for the headline — cannot be
+    # repaired here; that's the prompt-side fix.)
+    (r"(?im)^(\s*(?:\d+\.|[-*•])?\s*\*\*)\s*Title\s*[:\-—]\s*", r"\1",
+     "'**Title:' heading label"),
     # NOTE: box-drawing horizontal rules (━━━ / ─── / ═══) are NOT
     # scrubbed here — they're converted to proper ``<hr>`` separators
     # by ``engine.newsletter_body.replace_box_rules_with_hr`` in the

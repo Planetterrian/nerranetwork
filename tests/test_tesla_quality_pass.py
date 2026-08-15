@@ -634,3 +634,90 @@ class TestFullBusinessCoverageJuly2026:
         for needed in ("tesla_energy", "tesla_solar", "cortex_dojo",
                        "semi", "supercharger_network"):
             assert needed in mentioned, (needed, mentioned)
+
+
+class TestFetchFilterWiden:
+    """Aug 15 2026 pass — two verified leak paths closed.
+
+    (1) The four exclude patterns all required the "… in tesla" form, so
+    noun-first 13F spam sailed through: Ep566 COLD-OPENED on "Deutsche
+    Bank Boosts Tesla Stake by $623M" and Ep569 spoke "Defender Capital
+    LLC purchased 4,143 shares" on air. (2) X posts merged at
+    run_show.py's X-merge site bypassed exclude_title_patterns entirely
+    (the filter ran only on the RSS and web-search routes) — both
+    TSLAming (X) leaks came through that channel.
+    """
+
+    def _patterns(self):
+        import yaml
+        cfg = yaml.safe_load((_ROOT / "shows" / "tesla.yaml").read_text())
+        return cfg["exclude_title_patterns"]
+
+    def test_leaked_titles_now_dropped(self):
+        from engine.utils import drop_excluded_titles
+        leaked = [
+            {"title": "Deutsche Bank Boosts Tesla Stake by $623M in Q2 2026: TSLAming (X)"},
+            {"title": "Defender Capital LLC. Buys 4,143 Shares of Tesla, Inc. $TSLA: MarketBeat"},
+            {"title": 'Tesla, Inc. (NASDAQ:TSLA) Given Consensus Recommendation of "Hold" by Analysts: MarketBeat'},
+        ]
+        kept, dropped = drop_excluded_titles(leaked, self._patterns())
+        assert dropped == 3 and not kept
+
+    def test_legitimate_titles_survive(self):
+        from engine.utils import drop_excluded_titles
+        legit = [
+            {"title": "Tesla shares jump 5% on robotaxi news"},
+            # A NAMED analyst call with an anchor is allowed by the
+            # digest prompt's own analyst rule — do not blanket-drop.
+            {"title": "TD Cowen Stays Bullish on Tesla with $460 Price Target"},
+            {"title": "Tesla plans $10B solar cell factory in Fort Bend County"},
+        ]
+        kept, dropped = drop_excluded_titles(legit, self._patterns())
+        assert dropped == 0 and len(kept) == 3
+
+    def test_x_posts_pass_through_exclude_filter(self):
+        src = (_ROOT / "run_show.py").read_text(encoding="utf-8")
+        assert "Excluded %d X post(s) via exclude_title_patterns" in src, (
+            "the X-merge exclude pass is gone — 13F spam relayed by X "
+            "accounts will reach digests again (Ep566/Ep573 class)"
+        )
+
+
+class TestChapterMarkerHygiene:
+    """Aug 15 2026 — markers the script can never (or should never) speak.
+
+    The bare "First Principles" content marker fired on 1 of 26 episodes
+    and that one hit was Ep565's 417-second mislabel of the entire news
+    body (the podcast prompt FORBIDS announcing the section). "keep an
+    eye on" is verbatim-banned in the prompt, so keeping it as a teaser
+    marker alternate only risked a mid-story false fire.
+    """
+
+    def _markers(self):
+        import yaml
+        cfg = yaml.safe_load((_ROOT / "shows" / "tesla.yaml").read_text())
+        return cfg["chapters"]["section_markers"]
+
+    def test_no_bare_first_principles_marker(self):
+        for m in self._markers():
+            if m["title"] == "First Principles":
+                assert m.get("where"), (
+                    "the un-anchored First Principles marker is back — "
+                    "its only firing mode was the Ep565 mislabel"
+                )
+
+    def test_teaser_marker_drops_banned_phrase(self):
+        teaser = next(m for m in self._markers()
+                      if m["title"] == "Tomorrow Teaser")
+        assert "keep an eye on" not in teaser["pattern"]
+
+    def test_narrative_page_carries_title(self):
+        src = (_ROOT / "generate_html.py").read_text(encoding="utf-8")
+        idx = src.index("def generate_tesla_narrative_page")
+        block = src[idx:idx + 2500]
+        assert '"page_title"' in block, (
+            "generate_tesla_narrative_page must pass page_title — "
+            "base.html.j2 renders a VARIABLE, not the template's dead "
+            "{% block title %}; without it the flagship Story Tracker "
+            "ships <title></title>"
+        )

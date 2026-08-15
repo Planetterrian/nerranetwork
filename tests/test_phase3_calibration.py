@@ -69,7 +69,12 @@ class TestRecalibratedMinPodcastWords:
     weren't changed in this pass."""
 
     EXPECTED = {
-        "tesla":                   2000,  # June 10 2026 review: single 2,200-2,400-word target
+        # Aug 15 2026: 2000 -> 1400. Four consecutive review windows
+        # shipped 10/10 episodes below the 2000 floor (the ceiling is the
+        # digest; podcast-side levers banned) — the floor now matches the
+        # prompt's own "under ~1,400 words is unacceptable" line so it
+        # flags genuinely thin episodes instead of all of them.
+        "tesla":                   1400,
         "fascinating_frontiers":   1700,  # June 10 2026 review: single 1,900-2,200-word target
         "planetterrian":           1600,  # June 10 2026 PT pass: single 1,800-2,100-word target
         "modern_investing":        1800,  # June 10 2026 review: single 2,000-2,200-word target

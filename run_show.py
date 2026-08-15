@@ -967,6 +967,22 @@ def run(args: argparse.Namespace) -> None:
 
         # Merge X posts into articles, deduplicating against existing RSS articles
         if x_posts:
+            # Aug 15 2026: X posts merged here bypassed exclude_title_patterns
+            # entirely — the filter runs inside _fetch_with_expansion (RSS)
+            # and the web-search route, but this merge happens after both,
+            # so 13F/fund-position spam relayed by X accounts sailed into
+            # digests (Tesla Ep566 cold-opened on "Deutsche Bank Boosts
+            # Tesla Stake by $623M: TSLAming (X)"). Same filter, same
+            # patterns, third call site.
+            _x_excl = getattr(config, "exclude_title_patterns", None) or []
+            if _x_excl:
+                from engine.utils import drop_excluded_titles as _drop_x
+                x_posts, _x_dropped = _drop_x(x_posts, _x_excl)
+                if _x_dropped:
+                    logger.info(
+                        "Excluded %d X post(s) via exclude_title_patterns",
+                        _x_dropped)
+        if x_posts:
             logger.info("Merging %d X posts from %d account(s) into %d RSS articles",
                          len(x_posts), len(config.x_accounts), len(articles))
             from engine.utils import calculate_similarity
@@ -1462,6 +1478,11 @@ def run(args: argparse.Namespace) -> None:
         # episode without the quote/debut framing, never a KeyError.
         template_vars.setdefault("spcx_market_block", "")
         template_vars.setdefault("ipo_debut_section", "")
+        # SpaceX engineering-anchor rotation (Aug 15 2026) — hook-supplied;
+        # a hook failure degrades to the historical default phrase, never
+        # a KeyError.
+        template_vars.setdefault("engineering_anchor",
+                                 "from an engineering standpoint")
         # Tone hint (Tesla + SpaceX prompts reference it; supplied by their
         # hooks from the day's stock tape). Neutral default on hook failure.
         template_vars.setdefault("tone_hint", "steady day — natural and conversational")

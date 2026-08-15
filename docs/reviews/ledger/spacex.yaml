@@ -509,4 +509,79 @@ reviews:
       ab_listen_required: false
       rationale: Drift-guards for P0 chapter sanitizer, Market Watch pattern widen, and intro/closing regressions; code-only.
     agent_cost_usd: 0.1568
+  - date: '2026-08-15'
+    pr: null
+    doc: docs/reviews/spacex_review_2026_08_15.md
+    generated_by: claude-code-session
+    summary: 'Operator-directed flagship pass, implement mode. Root-caused the four-review "Title:" chapter class to the digest FORMATTING template''s literal "**Title: Source Name**" placeholder (model reproduces it; Ep70 shipped every headline as its PUBLISHER, driving 6 spoken aggregator attributions on air). Shipped defense in depth (prompt de-seed A/B-flagged, canonical-digest scrub, chapter+headline strippers, 6 archive files cleaned incl. 4 no review had found, snapshot digest-heading audit) plus the Market Watch pattern widen and dub-title brand restores.'
+    scored_prior_predictions:
+    - metric: chapters_ep*.json titles matching /^Title:\s*/ or bare truncated headline chapters
+      verdict: miss
+      evidence: Sanitizer never shipped (4th review); guard sweep found Ep34/39/44/49 also polluted. Root cause is digest-side; all layers now shipped, archive cleaned.
+    - metric: exact phrase 'from an engineering standpoint' in next 10 daily transcripts
+      verdict: miss
+      evidence: 10/10 Ep61-70, fifth consecutive review, zero movement. ESCALATED to operator decision (two identical proposal misses) — not re-filed.
+    - metric: Market Watch chapter present when non-special daily has a mid-body price line
+      verdict: miss
+      evidence: Widen never shipped; the July transition de-seed rotated phrasings the pattern never knew — Ep68 + Ep70 shipped with no Market Watch chapter. Widen now shipped.
+    - metric: on-air xAI facility attributed as SpaceX in next 10 transcripts
+      verdict: partial
+      evidence: 0 clear mis-attrs Ep61-70; entity-discipline prompt still unshipped (regression guard only).
+    shipped:
+    - file: shows/prompts/spacex_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 'Literal "**Title: Source Name**" placeholder replaced with a bracketed instruction naming both observed failure modes — the only layer that can fix the Ep70 publisher-as-headline mutation. Same fix to dp_pod_digest.txt (DP Pod Ep35 leaks the same class).'
+    - file: engine/newsletter_sanitizer.py
+      kind: code
+      ab_listen_required: false
+      rationale: Leading-"Title:" heading scrub in the canonical digest scrub — heals blog/RSS/summaries/newsletter/podcast substrate at once. Deterministic-repair class.
+    - file: engine/chapters.py
+      kind: code
+      ab_listen_required: false
+      rationale: _strip_title_label in all three title-producing helpers (the fix youtube_titles has carried since July); engine/grok_imagine.py headline extractor strips it too.
+    - file: digests/spacex/chapters_ep*.json
+      kind: data
+      ab_listen_required: false
+      rationale: 'Committed junk titles cleaned in place, URLs unchanged: Ep58 (7), Ep60 (3), Ep34/39/44/49 (18 the reviews never found — leak recurred ~every 5 episodes).'
+    - file: shows/spacex.yaml
+      kind: config
+      ab_listen_required: false
+      rationale: Market Watch pattern widened to the rotated transitions (quick note on the markets / quick look at the tape / closing at / SPCX at); Closing stays listed first with where:end.
+    - file: scripts/review_snapshot.py
+      kind: code
+      ab_listen_required: false
+      rationale: New "Digest heading integrity" section — audits the digest .md (the canonical surface) for the label leak + publisher mutation; the blind spot that let this survive four reviews.
+    - file: engine/translate.py
+      kind: code
+      ab_listen_required: false
+      rationale: 'restore_brand_names inside translate_metadata — shipped dub titles read "Grog 4.6", «Спейс-Экс», "Cloud Fable 5", "Global Star" on the network''s highest-reach surface (RU Shorts, 380 views/video). Finite verified set, fix_phonetic_garbles class.'
+    - file: digests/spacex/channel_i18n.json
+      kind: data
+      ab_listen_required: false
+      rationale: RU channel title was untranslated English on the pilot's own feed; now "SpaceX Ежедневно" (cache + live XML).
+    deferred:
+    - 'OPERATOR DECISION (engineering anchor, 10/10 across 5 reviews, 2 identical proposal misses): ship the rotation-set de-seed (A/B; chapter pattern already accepts 4 variants, and tests/test_spacex_show.py pins the current prompt string) or accept the phrase as a brand anchor and close the item.'
+    - 'OPERATOR DECISION (SPCX price-once, 10th review): structural double — the hook''s closing always appends a price and the digest''s Market Watch supplies another (6/10 episodes, same number ~30s apart). Coupled prompt+closing_block A/B, or accept as brand.'
+    - Length 6/10 below 1300 (Ep61 863w) — digest-substrate only, carried.
+    - 'Specials runbook: Ep59 shipped 1775w vs its own 2400 floor and published into a 9-upload day (worst RU performer by 3 orders of magnitude). flight-14-catch-reaction is time-critical; do not stack it on the daily''s publish day.'
+    - Entity-discipline prompt (xAI/SpaceX) — regression guard, A/B, carried.
+    - api/shorts_ab.json still says "collecting" for the experiment ended 2026-08-14 — report builder should mark it ended.
+    predictions:
+    - metric: digests with leaked "Title:" heading labels (snapshot Digest heading integrity section)
+      baseline: 3/10 (Ep66/68/70) + Ep68/70 publisher-as-headline mutation
+      expected: 0 leaked labels in the next 10 digests (scrub is deterministic); publisher-as-headline 0 IF the prompt de-seed ships after A/B — score that half n/a-lever-not-shipped if it doesn't
+      verdict: pending
+      evidence: null
+    - metric: non-special dailies with a mid-body SPCX price/tape line and NO Market Watch chapter
+      baseline: 2/10 (Ep68, Ep70)
+      expected: 0/10 after the pattern widen; Ep62-64 sign-off-only class still correctly Closing
+      verdict: pending
+      evidence: null
+    - metric: brand garbles (Grog|Спейс-Экс|Cloud Fable|Global Star) in new youtube_videos.{ru,fr}.json titles
+      baseline: 6 shipped titles in the 2026-08-13..15 window across tesla+spacex dubs
+      expected: 0 in titles published after merge
+      verdict: pending
+      evidence: null
+    agent_cost_usd: null
 do_not_retry: []

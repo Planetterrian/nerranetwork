@@ -144,7 +144,13 @@ def extract_story_headlines(digest_text: str, max_count: int = 12) -> List[str]:
     seen: set[str] = set()
 
     def _add(raw: str) -> bool:
-        h = _strip_source_suffix(raw.strip()).rstrip(":.,;").strip()
+        # Strip a leaked "Title:" label first — digest FORMATTING templates
+        # show the heading shape literally and the model periodically
+        # reproduces it (SpaceX Ep58/60/66/68/70). Without this, the junk
+        # flows into scene prompts and chapter titles downstream.
+        raw = re.sub(r"^(?:title|headline)\s*\d*\s*[:\-—]\s*", "", raw.strip(),
+                     flags=re.IGNORECASE)
+        h = _strip_source_suffix(raw).rstrip(":.,;").strip()
         # Drop obvious junk: too short, too long, or already seen
         # (case-insensitive — same story sometimes appears in two
         # sections with slight casing changes).

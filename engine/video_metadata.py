@@ -452,15 +452,15 @@ def build_long_form_metadata(
     subscribe_line = (
         f"🎧 Subscribe to {show_label} on the Nerra Network: {utm_link}"
     )
-    # Direct, no-frills show-page line at the top of the description.
-    # YouTube auto-hyperlinks the URL; keeps the show page one click away
-    # for any viewer who scrolls into "Show more". The bare URL (no UTM)
-    # is the canonical identity of the show on the network — operators
-    # use this URL on flyers, podcast directories, and so on, so it
-    # should match exactly when listeners cross-reference. The
-    # ``subscribe_line`` below carries the UTM-tracked variant for
-    # attribution.
-    show_page_line = f"🌐 Show page: {rss_link}"
+    # Show-page line at the top of the description. This USED to carry
+    # the bare canonical URL (readability rationale in git history) with
+    # only the subscribe line tagged — but the Aug 15 2026 funnel audit
+    # found 100% of GA4 site sessions unattributed (58 youtube.com
+    # referrals, 0 with a campaign): the above-the-fold line is the one
+    # viewers actually click, and every click on it was invisible.
+    # Attribution now outranks URL aesthetics; the canonical bare URL
+    # still lives on directories/flyers, not here.
+    show_page_line = f"🌐 Show page: {utm_link}"
 
     # Rotating network-discovery line (gallery / blogs / trackers / …) —
     # metadata-only, no audio. Same date-deterministic surface rotation
@@ -701,8 +701,10 @@ def build_short_metadata(
         channel=channel, kind="short", variant=variant,
         placement=_funnel.PLACEMENT_DESCRIPTION,
     ) or rss_link
-    pieces.append(f"🌐 Show page: {rss_link}")
-    pieces.append(f"Subscribe to the podcast: {utm_link}")
+    # Tagged for the same reason as the long-form show-page line: the
+    # Aug 15 2026 funnel audit found 0 attributed sessions network-wide —
+    # a bare link here is a click the funnel can never see.
+    pieces.append(f"🌐 Show page: {utm_link}")
     disclosure = (config.youtube.synthetic_disclosure or "").strip()
     if disclosure:
         pieces.append(disclosure)

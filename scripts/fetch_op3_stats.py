@@ -373,6 +373,25 @@ def main(argv: Optional[List[str]] = None) -> int:
                     **prev_langs[target["key"]],
                     "not_refreshed_this_run": True,
                 }
+            else:
+                # Aug 15 2026: a language that never resolved ONCE was
+                # invisible forever — ZH is translated daily on both
+                # flagships (30/30 episodes, OP3-prefixed enclosures) yet
+                # had no entry at all, so the July-29 "zero across several
+                # weeks = switch-off candidate" rule could never even see
+                # it. Emit an explicit unresolved marker instead: paid-for
+                # and unmeasured must be distinguishable from unpaid.
+                language_feeds[target["key"]] = {
+                    "show_slug": target["slug"],
+                    "language": target["lang"],
+                    "resolved": False,
+                    "downloads_7d": None,
+                    "downloads_30d": None,
+                    "note": "OP3 has not indexed this feed (404) — "
+                            "downloads attach retroactively once it does; "
+                            "a 404 persisting for weeks means check the "
+                            "prefix (docs/analytics.md)",
+                }
             continue
         result["show_slug"] = target["slug"]
         result["language"] = target["lang"]

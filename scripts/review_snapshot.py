@@ -38,12 +38,25 @@ def count_words(text: str) -> int:
 
 
 def _tokens(text: str) -> list[str]:
-    # Unicode-aware word tokens (letters only, internal apostrophes kept).
-    # The old ``[a-z']+`` pattern was Cyrillic-blind: every Russian word
+    # Unicode-aware word tokens (internal apostrophes kept). The old
+    # ``[a-z']+`` pattern was Cyrillic-blind: every Russian word
     # tokenized to nothing, so the tic detector reported "no cross-episode
     # repeated phrases" for Финансы Просто while a template ran 7/8
     # episodes (July 2026 network editorial pass).
-    return re.findall(r"[^\W\d_]+(?:['’][^\W\d_]+)*", text.lower())
+    #
+    # Aug 15 2026: numbers now tokenize as a ``0`` placeholder instead of
+    # vanishing. The digit-blind tokenizer turned Tesla's well-formed
+    # closer "TSLA closed at $328.58, up $9.05, 2.8%." into the phantom
+    # tic "tsla closed at up", which two reviews filed as a bug and a
+    # third ledger prediction chased ("_pick_closing harden") — the
+    # closer was never broken. With the placeholder, a phrase repeats
+    # across episodes only if its WORDING repeats; changing numbers no
+    # longer collapse into a fake invariant.
+    return [
+        ("0" if t[0].isdigit() else t)
+        for t in re.findall(
+            r"[^\W\d_]+(?:['’][^\W\d_]+)*|\d[\d.,%]*", text.lower())
+    ]
 
 
 def _stitch_windows(grams: dict[str, int], n: int) -> dict[str, int]:
@@ -294,6 +307,56 @@ def build_snapshot(slug: str, episodes: int = 10) -> str:
                 lines.append(f"- (+{len(hits) - 10} more)")
         else:
             lines.append("- 0 hits — excluded-class content absent from shipped digests")
+        lines.append("")
+
+    # --- Digest heading integrity ---
+    # Aug 15 2026: four consecutive spacex reviews scored the "Title:"
+    # junk off the chapters JSONs and called the window clean while the
+    # digest .md — the canonical source every reader surface renders —
+    # was leaking the FORMATTING template's literal ``**Title: Source
+    # Name**`` label on 3 of 10 episodes (and on Ep70 the model replaced
+    # every headline with its PUBLISHER). Chapters are a downstream copy;
+    # audit the source.
+    if digest_files:
+        label_hits: list[tuple[int, str]] = []
+        publisher_hits: list[tuple[int, str]] = []
+        _pub_shape = re.compile(
+            r"^[A-Z][\w'&. -]{2,28}(\.(com|org|net|ca|io))?$"
+        )
+        for num, path in digest_files:
+            text = path.read_text(encoding="utf-8", errors="replace")
+            for line in text.splitlines():
+                m = re.match(
+                    r"\s*(?:\d+\.|[-*•])?\s*\*\*\s*(Title|Headline)\s*[:\-—]\s*(.*?)\*\*",
+                    line,
+                )
+                if not m:
+                    continue
+                label_hits.append((num, line.strip()[:90]))
+                # Publisher-as-headline mutation: the "headline" is just a
+                # short name / domain with no verb-length content.
+                if _pub_shape.match(m.group(2).strip()):
+                    publisher_hits.append((num, m.group(2).strip()))
+        lines.append(
+            f"## Digest heading integrity (last {len(digest_files)} digests)"
+        )
+        if label_hits:
+            eps = sorted({n for n, _ in label_hits})
+            lines.append(
+                f"- ⚠ leaked 'Title:' heading label in ep{', ep'.join(map(str, eps))} "
+                f"({len(label_hits)} headings)"
+            )
+            for num, excerpt in label_hits[:5]:
+                lines.append(f"  - ep{num}: “{excerpt}”")
+            if publisher_hits:
+                pe = sorted({n for n, _ in publisher_hits})
+                lines.append(
+                    f"- ⚠⚠ publisher-as-headline mutation in ep{', ep'.join(map(str, pe))} "
+                    "(the real headline is GONE — prompt-side failure, "
+                    "not repairable by scrubbing)"
+                )
+        else:
+            lines.append("- 0 leaked heading labels")
         lines.append("")
 
     # --- Chapter shape ---

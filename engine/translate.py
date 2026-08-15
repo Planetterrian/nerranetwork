@@ -431,7 +431,32 @@ def translate_metadata(
         obj = json.loads(m.group(0) if m else raw)
         t = str(obj.get("title") or title).strip()
         d = str(obj.get("description") or description).strip()
-        return t, d
+        return restore_brand_names(t), restore_brand_names(d)
     except Exception as exc:  # noqa: BLE001 — metadata is best-effort
         logger.warning("Metadata translation (%s) failed, using English: %s", lang, exc)
         return title, description
+
+
+# Brand names the translation model has garbled in SHIPPED dub titles on
+# @NerraRU / @NerraFR — the network's highest-reach surface (RU Shorts,
+# ~380 views/video). Aug 15 2026 review, all verified in committed
+# youtube_videos.{ru,fr}.json: "Grog 4.6" (Grok), «Спейс-Экс» (SpaceX,
+# transliterated), "Cloud Fable 5" (Claude Fable), "Global Star" mission
+# names (Globalstar). Deterministic restore of a known finite failure
+# set — the same class as fix_phonetic_garbles. The prompt already asks
+# for brand names to be kept intact; this is the enforcement layer.
+_BRAND_RESTORES: list[tuple[re.Pattern, str]] = [
+    (re.compile(r"\bGrog\b"), "Grok"),
+    (re.compile(r"\bСпейс[\s-]?[Ээ]кс\b"), "SpaceX"),
+    (re.compile(r"\bCloud Fable\b"), "Claude Fable"),
+    (re.compile(r"\bGlobal ?Star\b"), "Globalstar"),
+]
+
+
+def restore_brand_names(text: str) -> str:
+    """Repair known brand-name garbles in translated metadata."""
+    if not text:
+        return text
+    for pat, repl in _BRAND_RESTORES:
+        text = pat.sub(repl, text)
+    return text

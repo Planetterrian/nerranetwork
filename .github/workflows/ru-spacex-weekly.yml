@@ -1,4 +1,4 @@
-name: RU SpaceX Weekly Letter
+name: RU Weekly Letters (SpaceX + Tesla)
 
 # «Хроника SpaceX» — the Russian weekly letter promised by the RU funnel
 # landing page (ru/spacex.html). Its own workflow rather than a job inside
@@ -58,16 +58,33 @@ jobs:
             ${{ inputs.dry_run && '--dry-run' || '' }} \
             ${{ inputs.force && '--force' || '' }}
 
+      # Aug 15 2026: Tesla joined the RU funnel (same lander/letter shape,
+      # --slug profile in the same script). A Tesla failure must not block
+      # the SpaceX marker commit below — if: always() keeps the steps
+      # independent while the shared same-week guards keep each list safe.
+      - name: Send «Хроника Tesla»
+        if: always()
+        env:
+          BUTTONDOWN_API_KEY: ${{ secrets.BUTTONDOWN_API_KEY }}
+        run: |
+          python scripts/send_ru_spacex_weekly.py --slug tesla \
+            ${{ inputs.dry_run && '--dry-run' || '' }} \
+            ${{ inputs.force && '--force' || '' }}
+
       # The send marker is what stops a retried run from mailing the list
       # twice, so it has to survive the runner — including when the push
       # retry loop exhausts. Without recovery-on-failure the composite
       # exits 1 and DROPS the marker, and the next run double-mails real
       # subscribers (Aug 15 2026 audit).
+      # always(): a failed send step must not skip committing the OTHER
+      # show's already-written marker — a dropped marker is the
+      # double-send path.
       - uses: ./.github/actions/safe-commit-push
-        if: ${{ !inputs.dry_run }}
+        if: ${{ always() && !inputs.dry_run }}
         with:
           add-paths: |
             digests/spacex/_ru_weekly_lastsend.txt
-          commit-message: 'RU SpaceX weekly letter sent'
+            digests/tesla_shorts_time/_ru_weekly_lastsend.txt
+          commit-message: 'RU weekly letters sent'
           recovery-on-failure: "true"
           recovery-show: "ru-spacex-weekly"

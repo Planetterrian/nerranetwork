@@ -241,9 +241,45 @@ def _collect_language_feeds(rss_file: str, prefix: str) -> list:
     feeds = []
     for lang, (autonym, _locale) in LANGUAGE_META.items():
         fname = feed_filename(rss_file, lang)
-        if (ROOT / fname).exists():
-            feeds.append({"lang": lang, "label": autonym, "url": f"{prefix}{fname}"})
+        if not (ROOT / fname).exists():
+            continue
+        # Freshness gate (Aug 15 2026): existence alone kept advertising
+        # DEAD tracks — the ES feeds stopped updating 2026-06-18 but both
+        # flagship pages still rendered an "Español" chip linking a
+        # two-month-stale feed. A track whose newest item is >45 days old
+        # (generous vs the slowest Monday cadence) is delisted until it
+        # publishes again — the chip self-heals on relaunch, no code
+        # change needed.
+        if _language_feed_is_stale(ROOT / fname):
+            continue
+        feeds.append({"lang": lang, "label": autonym, "url": f"{prefix}{fname}"})
     return feeds
+
+
+def _language_feed_is_stale(path, max_age_days: int = 45) -> bool:
+    """True when the feed's newest item pubDate is older than *max_age_days*.
+
+    Unparseable dates fail OPEN (not stale) — a parsing regression must
+    not silently delist every language overnight.
+    """
+    import datetime as _dt
+    import re as _re
+    from email.utils import parsedate_to_datetime as _p2d
+
+    try:
+        text = path.read_text(encoding="utf-8", errors="replace")
+        dates = []
+        for m in _re.finditer(r"<pubDate>([^<]+)</pubDate>", text):
+            try:
+                dates.append(_p2d(m.group(1)))
+            except Exception:
+                continue
+        if not dates:
+            return False
+        age = _dt.datetime.now(_dt.timezone.utc) - max(dates)
+        return age.days > max_age_days
+    except OSError:
+        return False
 
 
 # ---------------------------------------------------------------------------
@@ -2142,6 +2178,18 @@ def generate_tesla_narrative_page(*, dry_run=False):
 
     context = {
         "narrative": narrative_data,
+        # base.html.j2 renders <title>{{ page_title }}</title> — a
+        # VARIABLE, not a block. The template's {% block title %} was dead
+        # markup, and because this bespoke generator (unlike the generic
+        # generate_narrative_page) never passed page_title, the flagship
+        # show's Story Tracker shipped with an empty <title></title> and
+        # blank og:title/description (Aug 15 2026 review).
+        "page_title": "Tesla Shorts Time — Narrative Tracker | Nerra Network",
+        "meta_description": (
+            "The ongoing storylines Tesla Shorts Time tracks over time — "
+            "current status, key open questions, and real progress across "
+            "episodes."
+        ),
         "path_prefix": "",
         "is_russian": False,
         "t": {
@@ -3480,6 +3528,34 @@ _RU_LANDING_COPY = {
         ),
         "launches": True,
     },
+    # Aug 15 2026 — second rollout of the pilot shape. Tesla's RU Shorts
+    # are its highest-reach surface (~19,300 views/90d) and pointed at
+    # the English tesla.html until now.
+    "tesla": {
+        "show_name_ru": "Tesla по-русски",
+        "hero_title": "Tesla. Каждый день. По-русски.",
+        "hero_description": (
+            "Все важные сюжеты Tesla за 10–12 минут в день: FSD и "
+            "автономность, Optimus, Cybercab, энергетика и 4680, курс "
+            "TSLA и один честный контраргумент в каждом выпуске. "
+            "Источники названы, без рекламы и без пересказа заголовков."
+        ),
+        "magnet_title": "«Хроника Tesla» — письмо по воскресеньям",
+        "magnet_description": (
+            "Одно письмо в неделю: главное о Tesla за семь дней одним "
+            "списком и ссылки на выпуски, которые стоит послушать. "
+            "По-русски."
+        ),
+        "magnet_note": (
+            "Одно письмо в неделю, ничего кроме. Отписка — одной ссылкой "
+            "в каждом письме."
+        ),
+        "listen_note": (
+            "Русская озвучка выходит вслед за английским выпуском — "
+            "тот же сценарий, тот же день."
+        ),
+        "launches": False,
+    },
 }
 
 _RU_AI_DISCLOSURE = (
@@ -4014,6 +4090,20 @@ def main():
         help="Generate pages for a specific show slug (e.g. tesla, omni_view)",
     )
     parser.add_argument(
+        "--blog-aggregates",
+        action="store_true",
+        help=(
+            "Regenerate ONLY the cross-show blog aggregates: blog/index.html, "
+            "blog.rss, network per-show blog_*.rss. Cheap (no per-post HTML "
+            "re-render). Added Aug 15 2026: the run-show finalize job "
+            "regenerates these but deliberately EXCLUDES them from its "
+            "per-show commit (matrix-race protection), and no other job "
+            "committed them — blog.rss served a feed frozen at Jul 28 for "
+            "18 days. The nightly runs this and commits the result "
+            "(single writer, no contention)."
+        ),
+    )
+    parser.add_argument(
         "--sitemap",
         action="store_true",
         help="Generate sitemap.xml",
@@ -4055,10 +4145,25 @@ def main():
     _any_flag = (
         args.summaries or args.shows or args.network or args.all or args.show
         or args.blogs or args.sitemap or args.player or args.how_to_listen
-        or args.start_here or args.faq or args.about
+        or args.start_here or args.faq or args.about or args.blog_aggregates
     )
     if not _any_flag:
         args.all = True
+
+    if args.blog_aggregates:
+        generate_network_blog_index(dry_run=args.dry_run)
+        if not args.dry_run:
+            from engine.blog import (
+                regenerate_network_blog_rss,
+                regenerate_show_blog_rss,
+            )
+            for _slug, _cfg in NETWORK_SHOWS.items():
+                regenerate_show_blog_rss(
+                    _slug, _cfg["name"], ROOT,
+                    channel_image=_cfg.get("podcast_image", ""),
+                )
+            regenerate_network_blog_rss(ROOT, NETWORK_SHOWS)
+            print("Blog aggregates regenerated (index + RSS feeds)")
 
     if args.show:
         if args.show not in NETWORK_SHOWS:

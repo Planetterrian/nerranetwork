@@ -245,6 +245,14 @@ jobs:
           # Start Here / FAQ / About are cheap static pages that drift when
           # shows launch — regenerate so onboarding stays current.
           python generate_html.py --start-here --faq --about
+          # Cross-show blog aggregates (blog/index.html + blog.rss +
+          # blog_*.rss). Aug 15 2026: the run-show finalize regenerates
+          # these but deliberately EXCLUDES them from its commit (matrix
+          # race protection) and nothing else committed them — blog.rss
+          # served a feed frozen at Jul 28 for 18 days while every
+          # per-show blog feed stayed current. The nightly is the single
+          # writer, so no contention.
+          python generate_html.py --blog-aggregates
           # Optionally regenerate full site if needed:
           # python generate_html.py --all
 
@@ -345,6 +353,9 @@ jobs:
             tesla.html
             tesla-dashboard.html
             spacex-dashboard.html
+            blog.rss
+            blog_*.rss
+            blog/index.html
           commit-message: "Nightly maintenance: update dashboards + gallery + search index + MIT + Tesla/SpaceX data pages"
           recovery-on-failure: "true"
           recovery-show: "nightly"

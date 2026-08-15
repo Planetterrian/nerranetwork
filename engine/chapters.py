@@ -42,6 +42,19 @@ class Chapter:
 _SENTENCE_END_RE = re.compile(r"([.!?…])\s+")
 
 
+# Digest FORMATTING templates show the heading shape as a literal
+# ``**Title: Source Name**`` and the model periodically reproduces the
+# label instead of substituting (SpaceX Ep58/60/66/68/70, DP Pod Ep35 —
+# Aug 2026 review). Chapter titles were one of the two surfaces with no
+# defense (the other, the digest itself, is repaired at generation time).
+# Same fix engine/youtube_titles.py has carried since July.
+_TITLE_LABEL_RE = re.compile(r"^(?:title|headline)\s*\d*\s*[:\-—]\s*", re.IGNORECASE)
+
+
+def _strip_title_label(title: str) -> str:
+    return _TITLE_LABEL_RE.sub("", title or "").strip()
+
+
 def _first_sentence_as_title(text: str, max_chars: int = 60) -> str:
     """Extract the first sentence of *text* and return a chapter-title
     string (max ``max_chars``).
@@ -66,7 +79,7 @@ def _first_sentence_as_title(text: str, max_chars: int = 60) -> str:
     if not candidate:
         return ""
     # Strip residual inline markdown so the title reads cleanly.
-    candidate = re.sub(r"[*_`]+", "", candidate).strip()
+    candidate = _strip_title_label(re.sub(r"[*_`]+", "", candidate).strip())
     # Truncate to max_chars on a word boundary (no mid-word ellipses).
     if len(candidate) > max_chars:
         truncated = candidate[: max_chars - 1].rsplit(" ", 1)[0]
@@ -133,14 +146,14 @@ def _best_headline_for_segment(
     if not best_title:
         return ""
     used.add(best_title)  # claim the headline so the next segment can't reuse it
-    title = re.sub(r"[*_`]+", "", best_title).strip()
+    title = _strip_title_label(re.sub(r"[*_`]+", "", best_title).strip())
     if len(title) > max_chars:
         title = title[: max_chars - 1].rsplit(" ", 1)[0].rstrip(",;:") + "…"
     return title
 
 
 def _clip_title(raw: str, max_chars: int = 60) -> str:
-    title = re.sub(r"[*_`]+", "", raw or "").strip()
+    title = _strip_title_label(re.sub(r"[*_`]+", "", raw or "").strip())
     if len(title) > max_chars:
         title = title[: max_chars - 1].rsplit(" ", 1)[0].rstrip(",;:") + "…"
     return title

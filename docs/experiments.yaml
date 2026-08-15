@@ -43,7 +43,9 @@ experiments:
     area: retention
     shipped: 2026-07-30
     readout: 2026-08-15
-    status: reading
+    status: done
+    criteria: >
+      RESOLVED 2026-08-15 — POSITIVE. long_form_median_avp_en_14d 11.3 -> 13.4 (+2.1pp, ~19% relative). The cold open stays; no revert. Long-form retention remains far below Shorts (~72-77%), so the next retention lever is content-shape, not the intro.
     metric: long_form_median_avp_en_14d
     baseline: 11.3
     target: "long-form median AVP off the ~11% floor"
@@ -57,7 +59,9 @@ experiments:
     area: reach
     shipped: 2026-08-06
     readout: 2026-08-13
-    status: reading
+    status: done
+    criteria: >
+      RESOLVED 2026-08-15 — ADOPTED. channel_views_wow_ru +29.7% in the read window with the sweep healthy and zero stranded Shorts. Honesty note: the ru-3-short-band shipped in the same window, so the WoW lift is confounded — adopted on mechanism (scheduler flips reliably, spread confirmed in publish timestamps) rather than on the confounded headline number.
     metric: channel_views_wow_ru
     target: "RU/EN Short views up WoW with unchanged supply"
     notes: >
@@ -70,7 +74,9 @@ experiments:
     area: reach
     shipped: 2026-07-30
     readout: 2026-08-13
-    status: reading
+    status: done
+    criteria: >
+      RESOLVED 2026-08-15 — POSITIVE. ru_short_vpd_max 60.9 -> 72.5 with 50% more supply: vpd GREW while supply expanded, so the RU audience was not saturated. Band stays; ceiling remains MAX_SHORTS_PER_EPISODE.
     metric: ru_short_vpd_max
     baseline: 60.9
     target: "short_vpd holds or grows with 50% more supply"
@@ -83,7 +89,9 @@ experiments:
     area: quality
     shipped: 2026-08-07
     readout: 2026-08-14
-    status: reading
+    status: done
+    criteria: >
+      RESOLVED 2026-08-15 — METRIC HIT (0.66 -> 0.10 fragment share). Residual quality defects the metric cannot see (brand garbles: 'Grog 4.6', 'Спейс-Экс', 'Cloud Fable') were fixed separately the same day via restore_brand_names in engine/translate.py. Keep the fragment metric on the dashboard as a regression watch.
     metric: dub_fragment_title_share_14d
     baseline: 0.66
     target: "fragment share of window-Short titles near zero"
@@ -116,7 +124,9 @@ experiments:
     area: reach
     shipped: 2026-08-07
     readout: 2026-08-21
-    status: reading
+    status: done
+    criteria: >
+      RESOLVED 2026-08-15 — NEGATIVE, ended 6 days early per the experiment's own exit rule: ru_long_vpd 1.52 vs the 2.0 floor, 52 forced RU/FR longs earned 461 total views (~9/video) and a net -2 subscribers — the July demotion numbers repeated almost exactly. dub_force_long_channels removed from tesla/spacex/FF; the adaptive policy's shorts-only tier decides again. Do not re-probe without a materially different format (e.g. native-RU presentation rather than a dubbed EN render).
     metric: ru_long_vpd_max
     baseline: 2.0
     target: >
@@ -151,7 +161,9 @@ experiments:
     area: reach
     shipped: 2026-08-05
     readout: 2026-08-12
-    status: reading
+    status: done
+    criteria: >
+      RESOLVED 2026-08-15 — NEGATIVE. The Q2 special (spacex Ep59) was the WORST RU performer in its neighbourhood by three orders of magnitude (3 RU views vs 2,469 for Ep60) and second-lowest EN long AVP (12.0%), partly because it landed on a 9-upload day (3/day norm). Verdict: specials do not outperform dailies as published; keep them rare, give each its OWN publish day, and enforce the deep-dive brief floor (Ep59 shipped 1775w vs its 2400 floor). Applies to the queued flight-14-catch-reaction special.
     target: "special out-performs the daily episodes around it"
     notes: >
       Ep059 (Q2 earnings) is the pilot: compare its 7d views/downloads
