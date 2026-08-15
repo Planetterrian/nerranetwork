@@ -198,6 +198,16 @@ today's work, not just explain yesterday's):
   template tic in this network's history came from a prompt supplying the
   literal sentence it wanted; three generations of them are in the
   archive. New prompt guidance describes the shape and bans the verbatim.
+  **This applies to FORMAT specs too** (Aug 15 2026): a digest FORMATTING
+  line showing the literal `**Title: Source Name**` was reproduced
+  verbatim by the model for months (SpaceX Ep34→70 every ~5 episodes;
+  on Ep70 every headline shipped as its PUBLISHER name). Never write a
+  format template whose placeholder reads as plausible content —
+  `engine/newsletter_sanitizer.py` scrubs the known label,
+  `engine/chapters.py` strips it from titles, and `review_snapshot.py`'s
+  "Digest heading integrity" section audits the canonical .md (the
+  chapters JSONs are a downstream copy — four reviews scored the wrong
+  surface).
 - **The grok-4.3 narrative-length plateau is accepted** (operator
   confirmed; it resists escalation). Not a bug to re-open.
 - **MIT is NOT ready for live trading** and its `execution/live.py` layer

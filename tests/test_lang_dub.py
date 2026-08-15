@@ -371,3 +371,29 @@ class TestAnalyticsCredentialsCoverEveryDubChannel:
         env = self._nightly_env()
         for var in ("YOUTUBE_REFRESH_TOKEN_EN", "YOUTUBE_REFRESH_TOKEN_RU"):
             assert var in env, var
+
+
+class TestBrandNameRestore:
+    """Aug 15 2026 — deterministic repair of translation brand garbles
+    that SHIPPED in dub Short titles on @NerraRU/@NerraFR (the network's
+    highest-reach surface): "Grog 4.6", «Спейс-Экс», "Cloud Fable 5",
+    "Global Star". Applied inside translate_metadata so every dub title
+    and description passes through it."""
+
+    def test_known_garbles_restored(self):
+        from engine.translate import restore_brand_names
+        assert restore_brand_names("présentent Grog 4.6") == "présentent Grok 4.6"
+        assert "SpaceX" in restore_brand_names("что Спейс-Экс попытается")
+        assert "Claude Fable 5" in restore_brand_names("о Cloud Fable 5")
+        assert "Globalstar" in restore_brand_names("La mission Global Star avec 9")
+
+    def test_clean_text_untouched(self):
+        from engine.translate import restore_brand_names
+        for s in ("Илон Маск и Tesla", "Grok 5 est là", "SpaceX запускает"):
+            assert restore_brand_names(s) == s
+
+    def test_wired_into_translate_metadata(self):
+        import inspect
+        from engine import translate
+        src = inspect.getsource(translate.translate_metadata)
+        assert "restore_brand_names" in src

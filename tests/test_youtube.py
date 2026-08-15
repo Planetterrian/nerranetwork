@@ -378,10 +378,17 @@ def test_build_long_form_metadata_includes_show_page_link_above_fold():
         audio_url="https://audio.nerranetwork.com/tesla/ep042.mp3",
     )
     desc = meta["description"]
-    # A visible "Show page:" line carries the bare canonical URL.
+    # A visible "Show page:" line, now FUNNEL-TAGGED (Aug 15 2026): the
+    # bare-URL design left the above-the-fold link — the one viewers
+    # actually click — invisible to GA4, and the funnel audit found 100%
+    # of youtube.com-referral sessions unattributed.
     assert "Show page:" in desc
-    # The link itself (no UTM — that's the subscribe line below).
     assert "https://nerranetwork.com/tesla.html" in desc
+    _sp_line = next(l for l in desc.splitlines() if "Show page:" in l)
+    assert "utm_campaign=" in _sp_line, (
+        "the show-page line must carry the funnel campaign — a bare link "
+        "here is a click the funnel can never see"
+    )
     # Above-the-fold ordering: show page line appears before the body.
     sp_idx = desc.index("Show page:")
     body_idx = desc.index("robotaxi expansion")
@@ -406,6 +413,9 @@ def test_build_short_metadata_includes_show_page_link():
     desc = meta["description"]
     assert "Show page:" in desc
     assert "https://nerranetwork.com/tesla.html" in desc
+    # Funnel-tagged since Aug 15 2026 (see the long-form test above).
+    _sp_line = next(l for l in desc.splitlines() if "Show page:" in l)
+    assert "utm_campaign=" in _sp_line
 
 
 def test_build_long_form_metadata_strips_angle_brackets_from_hook():

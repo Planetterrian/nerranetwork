@@ -102,6 +102,19 @@ exclude_title_patterns:
 - invests \$[\d.,]+ (million|billion) in tesla
 - tesla.{0,25}\bshares (purchased|sold|acquired|bought) by\b
 - (stake|position|holdings) in tesla.{0,40}(llc|inc\b|trust|ltd|capital|management|advisors|advisers|wealth|group)
+# Aug 15 2026 widen — the four patterns above all require the "… in
+# tesla" form, so noun-first 13F spam sailed through: Ep566 led its
+# COLD OPEN with "Deutsche Bank Boosts Tesla Stake by $623M" and Ep569
+# spoke "Defender Capital LLC purchased 4,143 shares" on air. Verified
+# against real leaked titles; anchored on the fund-trade shape so real
+# news ("Tesla shares jump 5%") still passes.
+- (boosts?|raises?|trims?|cuts?|lowers?|increases?|reduces?) (its )?tesla (stake|position|holdings)
+- (buys?|sells?|acquires?|purchases?) [\d,]+ shares of tesla
+# MarketBeat-style aggregator consensus spam ("Given Consensus
+# Recommendation of Hold by Analysts") — no named analyst, no anchor,
+# violates the digest prompt's own analyst rule. A NAMED analyst call
+# with a price target (TD Cowen $460) is deliberately NOT excluded.
+- consensus recommendation
 
 web_search_queries:
   - "Tesla news today"
@@ -331,8 +344,15 @@ chapters:
       title: "Tesla X Takeover"
     - pattern: "one thing worth watching|challenge worth discussing|Short Spot|short.?seller"
       title: "The Counterpoint"
-    - pattern: "First Principles"
-      title: "First Principles"
+    # Aug 15 2026: the bare "First Principles" marker was REMOVED. The
+    # podcast prompt forbids announcing the section, so over Ep548-573 it
+    # fired on 1 of 26 episodes — and that one hit was Ep565's disaster:
+    # a casual mid-news mention ("a special First Principles look at…")
+    # at 186s opened a 417-second chapter mislabeling the entire news
+    # body. Digest-driven headline titles cover the body; a marker whose
+    # only firing mode is a false positive is worse than none. Do not
+    # re-add without a `where:` anchor and a phrase the script actually
+    # speaks.
     # Closing BEFORE Tomorrow Teaser (EI June-11 / SpaceX June-18 ordering
     # rule): when the LLM merges teaser + sign-off onto one line, Closing
     # must win the first-marker-per-line race so episodes don't ship with
@@ -340,7 +360,10 @@ chapters:
     - pattern: "That's Tesla Shorts Time|that.?s.*for today|that.?s a wrap|that covers it|everything worth knowing|until next time|have a great"
       title: "Closing"
       where: end
-    - pattern: "Before we go|before we wrap|before I go|keep an eye on|we.?ll be watching"
+    # "keep an eye on" removed from the alternates Aug 15 2026 — the
+    # phrase is verbatim-BANNED in the podcast prompt (Aug 1 de-seed), so
+    # keeping it as a marker only risks a mid-story false fire.
+    - pattern: "Before we go|before we wrap|before I go|we.?ll be watching"
       title: "Tomorrow Teaser"
       where: end
 

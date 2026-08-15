@@ -176,6 +176,67 @@ reviews:
       ab_listen_required: false
       rationale: Drift-guard pattern from prior Tesla quality passes; locks P0 closer fix and CTA rotation without touching audio settings.
     agent_cost_usd: 0.0902
+  - date: '2026-08-15'
+    pr: null
+    doc: docs/reviews/tesla_review_2026_08_15.md
+    generated_by: claude-code-session
+    summary: Operator-directed flagship pass. The "closed at up" closer tic of the last two reviews was a snapshot-tokenizer artifact (digit-blind) — closer verified well-formed; tokenizer fixed. Shipped the two verified P0s (13F/analyst fetch-filter gaps incl. the X-post bypass that cold-opened Ep566 on fund spam; Ep565's 417-second First Principles chapter mislabel) plus the empty tesla-narrative.html title and RU channel-description translation leaks.
+    scored_prior_predictions:
+    - metric: episodes whose spoken closer matches /closed at (up|down)/i in last-10 Whisper transcripts or _tts.txt
+      verdict: n/a-invalid-baseline
+      evidence: 'Snapshot tokenizer dropped digits, so "closed at $328.58, up $9.05" tokenized to "closed at up" — the closer was never broken (verified in _tts.txt + Whisper both windows). Tokenizer fixed (numbers -> 0 placeholder) so the phantom cannot be re-filed.'
+    - metric: episodes containing verbatim teaser opener "keep an eye on" in last-10 transcripts
+      verdict: hit
+      evidence: 0/10 Ep564-573 — but the de-seed mandated "Before we go" verbatim, manufacturing a 10/10 successor with a "should/could clarify" sub-template in 6/10.
+    - metric: single CTA bigram (e.g. "rating or review") frequency in last-10 closers
+      verdict: n/a-lever-not-shipped
+      evidence: closer-tail rotation never merged (hooks/tesla.py unchanged); "rating or review" 4/10.
+    shipped:
+    - file: shows/tesla.yaml
+      kind: config
+      ab_listen_required: false
+      rationale: 'Fetch-filter widen: noun-first 13F spam ("Boosts Tesla Stake", "Buys 4,143 Shares of Tesla") + aggregator "consensus recommendation" now excluded; named-analyst calls with anchors still pass. Chapter hygiene: bare First Principles marker removed (1/26 fire rate, the one fire was Ep565''s 417s news-body mislabel); banned "keep an eye on" dropped from teaser marker.'
+    - file: run_show.py
+      kind: code
+      ab_listen_required: false
+      rationale: X posts merged after both filter call sites bypassed exclude_title_patterns entirely — both TSLAming (X) leaks (Ep566 cold-open, Ep573) came through that channel. Filter now applied at the X-merge site.
+    - file: generate_html.py
+      kind: code
+      ab_listen_required: false
+      rationale: tesla-narrative.html shipped <title></title> — base template renders a page_title VARIABLE the bespoke Tesla generator never passed ({% block title %} is dead markup). Page regenerated.
+    - file: scripts/review_snapshot.py
+      kind: code
+      ab_listen_required: false
+      rationale: Digit-blind tokenizer produced the phantom closer tic two reviews chased; numbers now tokenize as a placeholder so only wording-invariant phrases register as tics.
+    - file: digests/tesla_shorts_time/channel_i18n.json
+      kind: data
+      ab_listen_required: false
+      rationale: RU channel description carried untranslated "buzzing"/"bearish"/"recap"; fixed in the rebuild cache + live podcast.ru.rss.
+    deferred:
+    - 'OPERATOR DECISION (length, 4th consecutive 10/10-below window; digest floor itself missed 3/10): (a) raise digest substrate via full-text fetch, or (b) accept ~1250-1700w, lower min_podcast_words, and fix the "15 focused minutes" RSS copy (real durations 8:56-12:17). No podcast-side lever (do_not_retry).'
+    - Teaser successor de-seed (ban the "should/could clarify" reveal shape + different-story-than-yesterday rule; keep the "Before we go" chapter anchor) — A/B-listen.
+    - Named-entity recurrence memory for story repetition (Fort Bend story ran 5/10 episodes and 4x inside Ep573; lookback_days 2 cannot see multi-day recurrence) — data-side, DP Pod lever-memory pattern.
+    - Implication-filler enforcement (89 "The move/This change…" openers per 10 eps vs an unenforced prompt ban) — A/B.
+    - Narrative tracker curation ~85 days stale (newest last_major_update Ep482; 6 programs never curated; status text contradicts on-air facts) — operator task via scripts/update_tesla_narrative.py.
+    - Tesla RU funnel (19,353 RU Short views resolving to the English tesla.html with no capture path) — add funnel block + RU lander after the RU SpaceX pilot click-through reads out.
+    - Weekend closer "Friday''s close" qualifier — small A/B.
+    predictions:
+    - metric: excluded-class 13F/fund/consensus items in last-10 tesla digests (incl. X-sourced)
+      baseline: 4 in Ep564-573 (Ep566 hook, Ep569 x2, Ep573)
+      expected: 0 in the next 10 episodes after the filter widen + X-merge pass
+      verdict: pending
+      evidence: null
+    - metric: chapters files with a First Principles chapter mislabeling news-body content
+      baseline: 'Ep565: 417s chapter spanning the whole news body'
+      expected: 0 in the next 10 episodes (marker removed; body titled by digest headlines)
+      verdict: pending
+      evidence: null
+    - metric: 'successor teaser tic watch: "should clarify|could clarify" reveal in last-10 teasers'
+      baseline: 6/10 (Ep564-573)
+      expected: scored next pass; if >=6/10 persists, ship the shape de-seed (A/B) rather than re-observing
+      verdict: pending
+      evidence: null
+    agent_cost_usd: null
 do_not_retry:
   - idea: phonetic respellings or programmatic speech-tag injection
     evidence: 100% regression rate on custom voice kdif6sqjcyiq (May 2026,

@@ -38,12 +38,25 @@ def count_words(text: str) -> int:
 
 
 def _tokens(text: str) -> list[str]:
-    # Unicode-aware word tokens (letters only, internal apostrophes kept).
-    # The old ``[a-z']+`` pattern was Cyrillic-blind: every Russian word
+    # Unicode-aware word tokens (internal apostrophes kept). The old
+    # ``[a-z']+`` pattern was Cyrillic-blind: every Russian word
     # tokenized to nothing, so the tic detector reported "no cross-episode
     # repeated phrases" for Финансы Просто while a template ran 7/8
     # episodes (July 2026 network editorial pass).
-    return re.findall(r"[^\W\d_]+(?:['’][^\W\d_]+)*", text.lower())
+    #
+    # Aug 15 2026: numbers now tokenize as a ``0`` placeholder instead of
+    # vanishing. The digit-blind tokenizer turned Tesla's well-formed
+    # closer "TSLA closed at $328.58, up $9.05, 2.8%." into the phantom
+    # tic "tsla closed at up", which two reviews filed as a bug and a
+    # third ledger prediction chased ("_pick_closing harden") — the
+    # closer was never broken. With the placeholder, a phrase repeats
+    # across episodes only if its WORDING repeats; changing numbers no
+    # longer collapse into a fake invariant.
+    return [
+        ("0" if t[0].isdigit() else t)
+        for t in re.findall(
+            r"[^\W\d_]+(?:['’][^\W\d_]+)*|\d[\d.,%]*", text.lower())
+    ]
 
 
 def _stitch_windows(grams: dict[str, int], n: int) -> dict[str, int]:

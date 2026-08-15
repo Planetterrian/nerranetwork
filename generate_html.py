@@ -2142,6 +2142,18 @@ def generate_tesla_narrative_page(*, dry_run=False):
 
     context = {
         "narrative": narrative_data,
+        # base.html.j2 renders <title>{{ page_title }}</title> — a
+        # VARIABLE, not a block. The template's {% block title %} was dead
+        # markup, and because this bespoke generator (unlike the generic
+        # generate_narrative_page) never passed page_title, the flagship
+        # show's Story Tracker shipped with an empty <title></title> and
+        # blank og:title/description (Aug 15 2026 review).
+        "page_title": "Tesla Shorts Time — Narrative Tracker | Nerra Network",
+        "meta_description": (
+            "The ongoing storylines Tesla Shorts Time tracks over time — "
+            "current status, key open questions, and real progress across "
+            "episodes."
+        ),
         "path_prefix": "",
         "is_russian": False,
         "t": {
@@ -4014,6 +4026,20 @@ def main():
         help="Generate pages for a specific show slug (e.g. tesla, omni_view)",
     )
     parser.add_argument(
+        "--blog-aggregates",
+        action="store_true",
+        help=(
+            "Regenerate ONLY the cross-show blog aggregates: blog/index.html, "
+            "blog.rss, network per-show blog_*.rss. Cheap (no per-post HTML "
+            "re-render). Added Aug 15 2026: the run-show finalize job "
+            "regenerates these but deliberately EXCLUDES them from its "
+            "per-show commit (matrix-race protection), and no other job "
+            "committed them — blog.rss served a feed frozen at Jul 28 for "
+            "18 days. The nightly runs this and commits the result "
+            "(single writer, no contention)."
+        ),
+    )
+    parser.add_argument(
         "--sitemap",
         action="store_true",
         help="Generate sitemap.xml",
@@ -4055,10 +4081,25 @@ def main():
     _any_flag = (
         args.summaries or args.shows or args.network or args.all or args.show
         or args.blogs or args.sitemap or args.player or args.how_to_listen
-        or args.start_here or args.faq or args.about
+        or args.start_here or args.faq or args.about or args.blog_aggregates
     )
     if not _any_flag:
         args.all = True
+
+    if args.blog_aggregates:
+        generate_network_blog_index(dry_run=args.dry_run)
+        if not args.dry_run:
+            from engine.blog import (
+                regenerate_network_blog_rss,
+                regenerate_show_blog_rss,
+            )
+            for _slug, _cfg in NETWORK_SHOWS.items():
+                regenerate_show_blog_rss(
+                    _slug, _cfg["name"], ROOT,
+                    channel_image=_cfg.get("podcast_image", ""),
+                )
+            regenerate_network_blog_rss(ROOT, NETWORK_SHOWS)
+            print("Blog aggregates regenerated (index + RSS feeds)")
 
     if args.show:
         if args.show not in NETWORK_SHOWS:
