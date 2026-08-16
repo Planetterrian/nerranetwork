@@ -95,6 +95,11 @@ ENGLISH_ORDER: list[str] = list(ENGLISH_SHOWS.keys())
 # Shows that must never receive or appear in the cross-promo.
 RUSSIAN_SHOWS = ("finansy_prosto", "privet_russian")
 
+# Shows whose sign-off is "one line, then out": they always speak the
+# shortest promo frame and never the website-surface add-on (Aug 2026,
+# offshore_north editorial review — no stacked cross-promos).
+COMPACT_PROMO_SHOWS = frozenset({"offshore_north"})
+
 # Network discovery surfaces — website destinations beyond sibling shows.
 # Spoken copy must avoid chapter-marker trigger phrases (bare "deep dive",
 # "next time", "under the hood") that collide with show YAML chapter patterns.
@@ -348,6 +353,13 @@ def build_network_promo(
     )
     frame_idx = (date.toordinal() + ENGLISH_ORDER.index(show_slug)) % len(frames)
     promo = frames[frame_idx]
+    # Compact-promo shows (Aug 2026, offshore_north editorial review: the
+    # sign-off is "one line, then out — no stacked cross-promos"). Ep2
+    # shipped a sibling plug AND a website-surface plug back to back. These
+    # shows always speak the shortest frame and never the surface add-on:
+    # one compact plug, then out.
+    if show_slug in COMPACT_PROMO_SHOWS:
+        return frames[2]
     surface = pick_featured_surface(show_slug, date)
     if surface and surface.get("spoken"):
         promo = f"{promo} {surface['spoken']}"

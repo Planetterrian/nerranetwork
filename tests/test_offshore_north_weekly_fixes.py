@@ -568,3 +568,163 @@ class TestWebSearchAlways:
         src = (_ROOT / "run_show.py").read_text(encoding="utf-8")
         assert 'getattr(config, "web_search_always", False)' in src
         assert "_search_wanted" in src
+
+
+# ---------------------------------------------------------------------------
+# August 2026 editorial review, round three (post-Ep2-redo listen):
+# forward-plan-as-fact, absence claims, audience disparagement, Dan's real
+# background, position report, campaign channel freshness.
+# ---------------------------------------------------------------------------
+
+
+class TestTimeSensitiveStandingFacts:
+    """Ep2 (redo) said the boat 'stays in Collingwood through mid-August'
+    after it had already departed (weekend of 8-9 Aug). Plans decay; the
+    facts file now marks its location/schedule sections time-sensitive."""
+
+    def test_facts_file_carries_the_warning_and_correction(self):
+        text = _FACTS.read_text(encoding="utf-8")
+        assert "TIME-SENSITIVE" in text
+        assert "departed Collingwood the weekend of 8–9 August 2026" in text
+
+    def test_forward_plan_rule_in_all_three_prompts(self):
+        for src, name in ((_digest_prompt(), "digest"),
+                          (_podcast_prompt(), "podcast"),
+                          (_system_prompt(), "system")):
+            assert "forward-looking plan as current fact".lower() in src.lower(), (
+                f"{name} prompt lost the forward-plan rule"
+            )
+
+
+class TestNoAbsenceClaims:
+    """'Canada Ocean Racing made no public announcements this week' ran on
+    air in the same week the boat left Collingwood. Absence is unverifiable
+    from inside the pipeline; verified channel freshness is."""
+
+    def test_rule_in_all_three_prompts(self):
+        for src, name in ((_digest_prompt(), "digest"),
+                          (_podcast_prompt(), "podcast"),
+                          (_system_prompt(), "system")):
+            assert "absence" in src.lower(), f"{name} prompt lost the absence rule"
+
+    def test_digest_no_longer_instructs_the_one_sentence_absence(self):
+        assert "write exactly one sentence saying so" not in _digest_prompt()
+
+    def test_digest_has_freshness_block(self):
+        src = _digest_prompt()
+        assert "{campaign_freshness}" in src
+        assert "CAMPAIGN CHANNEL FRESHNESS" in src
+
+
+class TestCampaignFreshnessPlumbing:
+    def test_yaml_flags_the_campaign_feeds(self):
+        raw = yaml.safe_load(_SHOW_YAML.read_text(encoding="utf-8"))
+        flagged = [s["label"] for s in raw["sources"] if s.get("freshness_report")]
+        assert len(flagged) == 3, f"expected the 3 campaign channels, got {flagged}"
+        assert all("Canada Ocean Racing" in l for l in flagged)
+
+    def test_flag_survives_into_dataclass(self):
+        """Silent config-drop class."""
+        flagged = [s for s in _cfg().sources if s.freshness_report]
+        assert len(flagged) == 3
+
+    def test_no_other_show_flags_feeds(self):
+        offenders = []
+        for path in sorted((_ROOT / "shows").glob("*.yaml")):
+            if path.stem.startswith("_") or path.stem == "offshore_north":
+                continue
+            data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+            if not isinstance(data, dict) or "slug" not in data:
+                continue
+            for s in data.get("sources") or []:
+                if isinstance(s, dict) and s.get("freshness_report"):
+                    offenders.append(path.stem)
+        assert not offenders, f"freshness_report leaked to: {offenders}"
+
+    def test_collector_is_a_noop_without_flags(self):
+        from engine.fetcher import collect_feed_freshness
+        from engine.config import SourceConfig
+        assert collect_feed_freshness([]) == ""
+        assert collect_feed_freshness([SourceConfig(url="https://x/feed")]) == ""
+
+    def test_run_show_supplies_the_placeholder(self):
+        src = (_ROOT / "run_show.py").read_text(encoding="utf-8")
+        assert '"campaign_freshness": _campaign_freshness' in src
+
+
+class TestNoAudienceDisparagement:
+    """Ep2's sign-off: 'Send this to the one other person you know who
+    follows this sport — there aren't many of us.' Reads as apology; CTA
+    must be about the listener's enthusiasm, never the show's reach."""
+
+    def test_prompt_bans_it(self):
+        src = _podcast_prompt()
+        assert "DISPARAGE" in src.upper()
+        assert "there aren't many of us" in src  # quoted as the banned example
+
+    def test_no_closing_variant_carries_it(self):
+        from engine.intros import _SHOW_PERSONALITIES
+        closings = _SHOW_PERSONALITIES["offshore_north"]["closings"]
+        for c in closings:
+            low = c.lower()
+            assert "aren't many of us" not in low
+            assert "one other person" not in low
+            # every variant must still end on the chapter-marker sign-off
+            assert "fair winds" in low
+
+
+class TestCompactCrossPromo:
+    """Dan: 'Sign-off — one line, then out. No stacked cross-promos.'
+    Ep2 shipped a sibling plug AND a website-surface plug back to back."""
+
+    def test_offshore_is_compact(self):
+        from engine.network_promo import COMPACT_PROMO_SHOWS
+        assert "offshore_north" in COMPACT_PROMO_SHOWS
+
+    def test_promo_is_single_frame_no_surface(self):
+        import datetime as dt
+        from engine.network_promo import build_network_promo
+        # Any date: offshore must always get the short frame, never the
+        # surface add-on (Dispatch Wall / gallery / tracker sentences).
+        for day in range(1, 15):
+            promo = build_network_promo("offshore_north", dt.date(2026, 8, day))
+            assert promo.startswith("Quick tip from the network:"), promo
+            assert "Dispatch Wall" not in promo
+            assert "gallery" not in promo.lower()
+
+    def test_other_shows_keep_full_rotation(self):
+        import datetime as dt
+        from engine.network_promo import build_network_promo
+        # Tesla must still rotate through all four frames over a fortnight.
+        starts = {build_network_promo("tesla", dt.date(2026, 8, d)).split(" ")[0]
+                  for d in range(1, 15)}
+        assert len(starts) > 1, "compact mode leaked to other shows"
+
+
+class TestDanBackgroundIsReal:
+    """The voice section now carries Dan's actual background, with a hard
+    one-personal-reference-per-episode limit."""
+
+    def test_prompt_has_the_real_background(self):
+        src = _podcast_prompt()
+        for fact in ("Boeing 737", "wing foil", "Hobie 18", "bareboat"):
+            assert fact in src, f"voice section lost: {fact}"
+
+    def test_one_reference_limit(self):
+        src = _podcast_prompt()
+        assert "ONE personal reference per episode" in src
+        assert "TWO first-person touches" not in src
+
+    def test_never_upgrade_experience(self):
+        src = _podcast_prompt()
+        assert "has not raced across an ocean" in src
+
+
+class TestPositionReport:
+    def test_both_prompts_open_canadian_boat_with_it(self):
+        assert "POSITION REPORT" in _digest_prompt()
+        assert "POSITION REPORT" in _podcast_prompt()
+
+    def test_accumulation_framing_present(self):
+        src = _digest_prompt()
+        assert "Never inflate a lock transit into a milestone" in src

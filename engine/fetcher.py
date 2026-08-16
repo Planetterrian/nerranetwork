@@ -1087,3 +1087,63 @@ def fetch_web_search_articles(
     else:
         logger.info("Web search summary: %d queries, %d articles returned", len(queries), len(all_articles))
     return all_articles
+
+
+# ---------------------------------------------------------------------------
+# Campaign channel freshness (Aug 2026 — offshore_north verified-absence rule)
+# ---------------------------------------------------------------------------
+
+def collect_feed_freshness(sources) -> str:
+    """Report the newest entry on each ``freshness_report``-flagged feed.
+
+    Returns formatted lines like::
+
+        - Canada Ocean Racing: newest post 2026-08-09 — "EMIRA IV departs..."
+
+    for every source whose ``freshness_report`` attribute is true —
+    REGARDLESS of the recency window, which is the whole point: the digest
+    prompt's verified-absence rule needs "this channel was last updated on
+    [date], with [subject]" even (especially) when that update is older
+    than the episode's window and therefore invisible in the fetched
+    articles. An unreachable feed is reported as unreachable rather than
+    silently dropped — an absence claim built on a fetch failure is the
+    exact error class this exists to prevent.
+
+    Returns ``""`` when no source carries the flag, so shows without it
+    produce an empty ``{campaign_freshness}`` block and are untouched.
+    """
+    import feedparser
+
+    flagged = [s for s in (sources or []) if getattr(s, "freshness_report", False)]
+    if not flagged:
+        return ""
+
+    lines: list[str] = []
+    for src in flagged:
+        label = getattr(src, "label", "") or src.url
+        try:
+            response = _fetch_url_with_retry(src.url)
+            feed = feedparser.parse(response.content)
+            newest_date, newest_title = None, ""
+            for entry in feed.entries or []:
+                dt = _parse_entry_date(entry)
+                if dt is not None and (newest_date is None or dt > newest_date):
+                    newest_date = dt
+                    newest_title = (getattr(entry, "title", "") or "").strip()
+            if newest_date is None:
+                lines.append(
+                    f"- {label}: reachable, but no dated entries found this run "
+                    "(do not interpret as an absence of posts)"
+                )
+            else:
+                lines.append(
+                    f"- {label}: newest post {newest_date.date().isoformat()} — "
+                    f"\"{newest_title[:120]}\""
+                )
+        except Exception as exc:  # noqa: BLE001 — freshness must never break a run
+            logger.warning("Freshness check failed for %s: %s", label, exc)
+            lines.append(
+                f"- {label}: UNREACHABLE this run (fetch failed — say nothing "
+                "about this channel's recent activity)"
+            )
+    return "\n".join(lines)

@@ -68,11 +68,19 @@ _SHOW_PERSONALITIES: dict[str, dict[str, Any]] = {
                 "Spotify genuinely helps other people find it. "
                 "I'm Dan. Fair winds \u2014 and eyes on the horizon."
             ),
+            # Aug 2026 editorial review: this variant used to say "Send this
+            # to the one other person you know who follows this sport \u2014
+            # there aren't many of us", which disparages the audience's size
+            # (reads as apology, tells a new listener the show isn't worth
+            # their time, makes sharing feel like a favour to the host).
+            # CTAs are about the listener's enthusiasm and the sport's
+            # appeal, never the show's reach. Do not reintroduce
+            # audience-size framing in any variant.
             (
                 "And that's the week in offshore racing. "
                 "Sources are in the episode notes, as always. "
-                "Send this to the one other person you know who follows this sport \u2014 "
-                "there aren't many of us. "
+                "If someone you sail with would enjoy this sport the way you do, "
+                "pass the show along. "
                 "I'm Dan. Fair winds \u2014 and eyes on the horizon."
             ),
             (

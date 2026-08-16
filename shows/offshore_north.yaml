@@ -40,10 +40,18 @@ fetch_expansion_hours: [48, 96, 168]
 
 sources:
   # ---- Tier 1: the campaign itself (primary, low volume, highest value) ----
+  # freshness_report: the fetch stage reports each flagged feed's newest
+  # entry (date + title) into the digest's {campaign_freshness} block,
+  # WINDOW-INDEPENDENT — so the show can say "the team's site was last
+  # updated on [date], with [subject]" instead of the banned "no news
+  # this week" (Aug 2026 editorial review: Ep2 claimed an absence while
+  # the boat had already departed Collingwood).
   - url: "https://www.canadaoceanracing.com/feed/"
     label: Canada Ocean Racing
+    freshness_report: true
   - url: "https://www.canadaoceanracing.com/category/news/feed/"
     label: Canada Ocean Racing — News
+    freshness_report: true
   # Official YouTube channel feed (Atom; feedparser handles it like RSS).
   # Channel ID resolved from youtube.com/@CanadaOceanRacing page source and
   # the feed VERIFIED serving 15 entries on 2026-08-14. The channel posts
@@ -55,6 +63,7 @@ sources:
   # something — August 2026 editorial review.)
   - url: "https://www.youtube.com/feeds/videos.xml?channel_id=UCbyLJ8WsopLJ0fLjkCAVQjg"
     label: Canada Ocean Racing — YouTube
+    freshness_report: true
 
   # ---- Tier 2: class + organizers ----
   # NOTE: imoca.org and theoceanrace.com publish NO RSS feed (verified
