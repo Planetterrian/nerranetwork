@@ -1,0 +1,53 @@
+Models sound most sure of themselves exactly when their answers are wrong, and a new eVal harness is making that gap impossible to ignore. This is Models & Agents, Episode 143. The biggest thread this week has been the steady drum beat of new evaluation methods for both closed and open weight systems, alongside continued momentum in agent harness design and open model adoption. Those threads set the stage for today's concrete results on confidence
+versus correctness. Venture Beat published a detailed account of an eVal harness that exposed a consistent failure mode in LLM-assisted tooling. The model was most confident precisely on the cases where its ranked explanations were wrong. The harness used controlled synthetic drift events, with known ground truth causes, including schema changes, transformation logic bugs, and overlapping signals. It then scored both presence of the correct root cause and its rank with
+the model's output list. Schema changes were handled reliably when the evidence was distinctive. Transformation logic bugs led the model to identify the general category, while misattributing the specific change, particularly when multiple modifications occurred close together. Overlapping signal scenarios proved hardest, producing the highest rate of confidently wrong explanations that qualitative review had never surfaced.
+Builders shipping root cause or compliance tools now have a concrete template for measuring accuracy against labeled cases, instead of relying on seams reasonable. This fits the ongoing conversation around AI safety and policy that we tracked yesterday, where evaluation standardization remains a key open question.
+Quen 3.827b over things by default in LM studio. Simon Willison noted that the model running with the default extra high reasoning setting produces long, repetitive internal chains, even on simple prompts. He said he kind of loves it after testing on both an M5 MacBook Pro and an NVIDIA DGX Spark.
+Builders experimenting with reasoning models can test the same setting to see whether the extra tokens improve or degrade final output quality on their tasks. This sits inside the broader open weight models arc we have followed, where the performance gap with closed systems continues to narrow, but new behaviors like overthinking emerge at each checkpoint.
+A researcher applied the published Jacobian lens for Quen 3.627b unchanged to the 3.827b successor 113 days later. The test used 40 prompts where the middle entity is never stated, drawn from a 248,320 token vocabulary.
+Media and rank at layer 48 moved from 4 on the original model to 17 on the successor. At layer 24 the successor actually performed better. On wiki text, teacher forced next token prediction across 700 positions transfer cost 1.2 to 1.3 times mid network and about 2 times by layer 48.
+Steering directions derived from the older checkpoint successfully suppressed the word paradox in generations on both models, while preserving coherent output when prompted to describe Escher's impossible staircase.
+The work shows that interpretability instruments can survive version bumps within the same model family when architecture and tokenizer stay constant.
+Alibaba reported its open models have now been downloaded more than 3 billion times, surpassing the cumulative downloads of Metas Lama family and Google's Gemma models.
+The milestone reflects strong adoption of the Quen series in both research and production settings. Dario Ahmode responded to Gavin Baker with a two-part thread arguing that regulation need not equal regulatory capture.
+He highlighted anthropic supported California SB 53, which exempts companies below $500 million revenue. Proposed Kaisi and White House testing regimes apply strict or scrutiny to frontier models than to off frontier ones.
+Ahmode described AI as structurally concentrating power due to scaling laws, with open weights shifting but not solving the concentration toward those controlling compute.
+Fred Schott, creator of Astro, released Flu2, which adds hooks to his meta harness for defining agents. The update treats agent behavior as composable hooks rather than monolithic scripts, mirroring reacts mental model for state and side effects.
+Schott argues that the harness, not the underlying model, is what ultimately defines an agent's capabilities and failure modes.
+Early users can explore the new hook permitives to compose long-running agents without rewriting coordination logic for each new model.
+This development builds directly on the agents and tool use thread we covered yesterday, where standardization of agent protocols remains an open question.
+Simon Willison released Kores Chat, a small web UI that connects to any open AI responses compatible chat endpoint and persists conversations locally.
+It correctly renders streaming SVG images as they are generated and has been tested successfully against LM studio with the Kores flag and against open router.
+The tool is intended for quick local validation of new model deployments on both Apple Silicon and Nvidia hardware.
+Simon Willison showed that simply raising the context limit allowed an unspecified model to output a working animated SVG circle after an earlier attempt failed due to token truncation.
+The just link contains the exact prompt and resulting animation. A follow-up post documented the failure case. With the default context length, the server rejected the generation before the model could finish drawing its circle.
+The pair of posts illustrates the narrow margin between success and truncation on even simple visual output tasks.
+Okay, let's pop the hood on linear attention. Everyone talks about linear attention as a simple drop in replacement that removes the quadratic cost of softmax.
+In practice, it compresses the entire history into a fixed size state vector whose capacity does not grow with sequence length.
+That compression works reasonably at 16,000 tokens, where a small model still achieved 50-60% recall on needle in haystack DNA sequences.
+Recall collapses to chance, 25%, once the same architecture faces 1 million token contexts.
+The researcher also tested hyena DNA on the identical benchmark and observed the same 25-27% floor.
+External memory banks or hybrid softmax fallbacks can paper over the gap. Yet they reintroduce the very memory and compute costs linear attention was meant to avoid.
+The core engineering trade-off is therefore whether your workload can tolerate irreversible loss of distant tokens or whether you must keep a growing key value cache after all.
+When the task is retrieval over million token DNA or logs, the current linear formulations remain fundamentally lossy.
+Teams should benchmark exact recall curves on their own data before assuming the compressed state will suffice.
+This engineering reality directly informs the AI compute and inference questions we have tracked, especially around whether inference cost curves can keep falling without hidden accuracy trade-offs.
+Run QN 3.827B in LM studio with extra high reasoning and compare output length and accuracy on a task you already know well.
+Port the venture beats synthetic drift eVal harness pattern to your own root cause tooling to measure whether confidence correlates with correctness.
+Test Flu 2's new hooks on a multi-step agent workflow you have previously built with Land Graph or Crew AI.
+Use CORE's chat to validate any new open AI compatible endpoint you deploy locally before wiring it into production front ends.
+Apply the Jacobian lens transfer protocol to your own interpretability tools when the next checkpoint in a model family drops.
+Continue testing of pre-deployment evaluation regimes for frontier and near frontier open-weight models under the reported Trump administration approach.
+More labs releasing Jacobian style or activation-based interpretability tools that survive checkpoint updates.
+Additional agent harness projects adopting hook or component models after the Flu 2 release.
+Before we go, the next wave of linear attention variance will face the same recall tests on long DNA sequences that we just walked through.
+That's models and agents for today.
+If you found this useful, share it with someone who's trying to keep up with all these changes and subscribe so you don't miss tomorrow's update.
+The AI world moves fast. We'll help you keep up. See you tomorrow.
+And if you'd rather watch than listen, find us on YouTube at Narra Network, links in the show notes.
+One more thing. If you like today's episode, our sister show OmniView is worth a spot in your feed.
+A balanced daily world news briefing that takes every side seriously.
+It's one of the Narra Network's daily briefings, all free at Narra Network dot com.
+The due positive pod is the club for people who do something about it.
+Episodes and the dispatch wall at Narra Network dot com, the DP pod.
+This episode used AI voice synthesis of my voice. Editorial selection and analysis are my own.

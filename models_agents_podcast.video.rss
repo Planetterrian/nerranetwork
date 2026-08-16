@@ -9,7 +9,7 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>en-us</language>
-    <lastBuildDate>Sat, 15 Aug 2026 08:30:27 +0000</lastBuildDate>
+    <lastBuildDate>Sun, 16 Aug 2026 08:31:07 +0000</lastBuildDate>
     <itunes:author>Patrick</itunes:author>
     <itunes:category text="Technology" />
     <itunes:category text="News">
@@ -23,6 +23,122 @@
     </itunes:owner>
     <itunes:summary>Your daily briefing on AI models and agents: new releases from the frontier labs, open-weight drops, agent frameworks, benchmarks, pricing, and practical tools you can use the same day — with long-running program tracking so you always know where the big stories stand. For developers, builders, and AI practitioners.</itunes:summary>
     <itunes:type>episodic</itunes:type>
+    <item>
+      <title>Ep 143: Models sound most sure of themselves exactly when their answers are wrong — and a new eval…</title>
+      <description>Models &amp; Agents
+&lt;b&gt;Models sound most sure of themselves exactly when their answers are wrong — and a new eval harness is making that gap impossible to ignore.&lt;/b&gt;
+
+&lt;b&gt;What You Need to Know:&lt;/b&gt; An enterprise architect built a synthetic ground-truth harness that revealed LLMs confidently misattribute root causes in data-drift scenarios, especially when signals overlap. Open-weight Qwen 3.8 27B drew attention for over-thinking in LM Studio and for successful Jacobian-lens transfer from the prior 3.6 checkpoint. Anthropic’s Dario Amodei laid out a detailed case for regulation that deliberately advantages smaller labs and open weights while addressing frontier risks.
+
+DEPTH OVER BREADTH (news items)
+
+Top Story
+VentureBeat published a detailed account of an eval harness that exposed a consistent failure mode in LLM-assisted tooling: the model was most confident precisely on the cases where its ranked explanations were wrong. The harness used controlled synthetic drift events with known ground-truth causes including schema changes, transformation logic bugs, and overlapping signals, then scored both presence of the correct root cause and its rank within the model’s output list. Schema changes were handled reliably when the evidence was distinctive, but transformation logic bugs led the model to identify the general category while misattributing the specific change, particularly when multiple modifications occurred close together. Overlapping-signal scenarios proved hardest, producing the highest rate of confidently wrong explanations that qualitative review had never surfaced. Builders shipping root-cause or compliance tools now have a concrete template for measuring accuracy against labeled cases instead of relying on “seems reasonable.” The practical takeaway is that any system influencing real decisions needs this style of harness before production, because fluency and correctness diverge sharply once multiple plausible signals appear close together. Source: &lt;a href="https://venturebeat.com/orchestration/an-eval-harness-found-what-qualitative-review-couldnt-ai-models-are-most-confident-when-wrong"&gt;venturebeat.com&lt;/a&gt;
+
+Model Updates
+&lt;b&gt;Qwen 3.8 27B over-thinks by default in LM Studio: Simon Willison (AI builder)&lt;/b&gt;
+Qwen 3.8 27B running in LM Studio with the default “extra high” reasoning setting produces long, repetitive internal chains even on simple prompts. Simon Willison noted the behavior as a chronic over-thinker and said he kind of loves it. The observation comes from direct local runs on both an M5 MacBook Pro and an NVIDIA DGX Spark. Builders experimenting with reasoning models can test the same setting to see whether the extra tokens improve or degrade final output quality on their tasks. Source: &lt;a href="https://x.com/simonw/status/2088646238933840153"&gt;x.com&lt;/a&gt;
+
+&lt;b&gt;Jacobian lens from Qwen3.6-27B transfers to Qwen3.8-27B with no refitting: r/MachineLearning&lt;/b&gt;
+A researcher applied the published Jacobian lens for Qwen3.6-27B unchanged to the 3.8-27B successor 113 days later and measured only modest degradation on two-hop entity recall tasks. The test used 40 prompts where the middle entity is never stated, drawn from a 248,320-token vocabulary, and tracked median rank of the latent entity at layers 24 and 48. Median rank at layer 48 moved from 4 on the original model to 17 on the successor; at layer 24 the successor actually performed better. On WikiText teacher-forced next-token prediction across 700 positions, transfer cost 1.2–1.3× mid-network and about 2× by layer 48. Steering directions derived from the older checkpoint successfully suppressed the word “paradox” in generations on both models while preserving coherent output when prompted to describe Escher’s impossible staircase. The work shows that interpretability instruments can survive version bumps within the same model family when architecture and tokenizer stay constant. Source: &lt;a href="https://www.reddit.com/r/MachineLearning/comments/1vpa5cv/survival_of_the_fitted_qwen3627bs_jacobian_lens/"&gt;reddit.com&lt;/a&gt;
+
+&lt;b&gt;Alibaba AI models reach 3 billion downloads, passing Meta and Google: Bloomberg.com&lt;/b&gt;
+Alibaba reported its open models have now been downloaded more than three billion times, surpassing the cumulative downloads of Meta’s Llama family and Google’s Gemma models. The milestone reflects strong adoption of the Qwen series in both research and production settings. No new capability numbers were released with the announcement, but the download figure underscores how quickly open-weight checkpoints are propagating beyond the original lab. Source: &lt;a href="https://news.google.com/rss/articles/CBMisgFBVV95cUxQNkdXS05xRW1WQ2ItQmhUZEd1SVowVkJISVhwQ1Z5STF5dnJkV2pVRmExN1JoLXNEMkZKdGV1eGZnWnVvV2I1QllUZ3JJTktoeFdKa3JtY3NSMFlBRUYta3k5d2RJdnFzVUJIMGVGY2V0SThGTG94SlEzMl9KQWRsZkduN0RycGx1SjBGOVViQVNvbXE4TS1WdTU2MGhLNjhYLUtUVHM2WVF3ZGZKalBmOURR?oc=5"&gt;Google News&lt;/a&gt;
+
+&lt;b&gt;Dario Amodei outlines regulation that advantages challengers and open weights: &lt;a href="https://x.com/DarioAmodei"&gt;@DarioAmodei&lt;/a&gt; (X)&lt;/b&gt;
+Dario Amodei responded to Gavin Baker with a two-part thread arguing that regulation need not equal regulatory capture and can instead decentralize power through objective institutional processes. He highlighted Anthropic-supported California SB53, which exempts companies below $500M revenue, and noted that proposed CAISI and White House testing regimes apply stricter scrutiny to frontier models than to off-frontier ones. Amodei described AI as structurally concentrating power due to scaling laws, with open weights shifting but not solving the concentration toward those controlling compute. He also addressed messaging balance, pointing to his “Machines of Loving Grace” essay on health and biology benefits and his personal motivation from losing his father to Hepatitis C before direct-acting antivirals existed. This builds on yesterday’s discussion of regulatory trajectories by outlining specific mechanisms that favor smaller players. Source: &lt;a href="https://x.com/DarioAmodei/status/2088758816376807762"&gt;x.com&lt;/a&gt;
+
+Agent &amp; Tool Developments
+&lt;b&gt;Flue 2 brings React-style hooks to agent harnesses: Latent Space&lt;/b&gt;
+Fred Schott, creator of Astro, released Flue 2, which adds hooks to his meta-harness for defining agents. The update treats agent behavior as composable hooks rather than monolithic scripts, mirroring React’s mental model for state and side effects. Schott argues that the harness, not the underlying model, is what ultimately defines an agent’s capabilities and failure modes. Early users can explore the new hook primitives to compose long-running agents without rewriting coordination logic for each new model. Source: &lt;a href="https://www.latent.space/p/flue-2"&gt;latent.space&lt;/a&gt;
+
+&lt;b&gt;CORS Chat provides a browser-based test UI for OpenAI-compatible endpoints: Simon Willison&lt;/b&gt;
+Simon Willison released CORS Chat, a small web UI that connects to any OpenAI-Responses-compatible chat endpoint and persists conversations locally. It correctly renders streaming SVG images as they are generated and has been tested successfully against LM Studio with the --cors flag and against OpenRouter. The tool is intended for quick local validation of new model deployments on both Apple Silicon and NVIDIA hardware. Source: &lt;a href="https://simonwillison.net/2026/Aug/15/cors-chat/"&gt;simonwillison.net&lt;/a&gt;
+
+Practical &amp; Community
+&lt;b&gt;Bumped context limit lets model produce animated circle: Simon Willison (AI builder)&lt;/b&gt;
+Simon Willison showed that simply raising the context limit allowed an unspecified model to output a working animated SVG circle after an earlier attempt failed due to token truncation. The gist link contains the exact prompt and resulting animation. The quick experiment highlights how context-window headroom directly affects even trivial generative tasks. Source: &lt;a href="https://x.com/simonw/status/2088670465057497143"&gt;x.com&lt;/a&gt;
+
+&lt;b&gt;Server rejected circle when context length stayed at default: Simon Willison (AI builder)&lt;/b&gt;
+A follow-up post documented the failure case: with the default context length the server rejected the generation before the model could finish drawing its circle. The pair of posts illustrates the narrow margin between success and truncation on even simple visual output tasks. Source: &lt;a href="https://x.com/simonw/status/2088648622942638557"&gt;x.com&lt;/a&gt;
+
+Under the Hood: Long-range recall limits in linear attention
+Everyone talks about linear attention as a simple drop-in replacement that removes the quadratic cost of softmax. In practice it compresses the entire history into a fixed-size state vector whose capacity does not grow with sequence length. That compression works reasonably at 16 k tokens, where a small model still achieved 50–60 % recall on needle-in-haystack DNA sequences, but recall collapses to chance (25 %) once the same architecture faces 1 M-token contexts. The researcher also tested HyenaDNA on the identical benchmark and observed the same 25–27 % floor, indicating the limitation is not unique to one linear-attention implementation. External memory banks or hybrid softmax fallbacks can paper over the gap, yet they re-introduce the very memory and compute costs linear attention was meant to avoid. The core engineering tradeoff is therefore whether your workload can tolerate irreversible loss of distant tokens or whether you must keep a growing key-value cache after all. When the task is retrieval over million-token DNA or logs, the current linear formulations remain fundamentally lossy; teams should benchmark exact recall curves on their own data before assuming the compressed state will suffice.
+
+Things to Try This Week
+• Run Qwen 3.8 27B in LM Studio with “extra high” reasoning and compare output length and accuracy on a task you already know well.
+• Port the VentureBeat synthetic-drift eval harness pattern to your own root-cause tooling to measure whether confidence correlates with correctness.
+• Test Flue 2’s new hooks on a multi-step agent workflow you have previously built with LangGraph or CrewAI.
+• Use CORS Chat to validate any new OpenAI-compatible endpoint you deploy locally before wiring it into production front-ends.
+• Apply the Jacobian-lens transfer protocol to your own interpretability tools when the next checkpoint in a model family drops.
+
+On the Horizon
+• Continued testing of pre-deployment evaluation regimes for frontier and near-frontier open-weight models under the reported Trump-administration approach.
+• More labs releasing Jacobian-style or activation-based interpretability tools that survive checkpoint updates.
+• Additional agent harness projects adopting hook or component models after the Flue 2 release.
+• Further experiments with linear-attention variants on long DNA or log sequences to quantify recall degradation at scale.</description>
+      <guid isPermaLink="false">models-agents-video-ep143-20260816</guid>
+      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep143_20260816.mp4" length="254646772" type="video/mp4" />
+      <pubDate>Sun, 16 Aug 2026 08:00:00 +0000</pubDate>
+      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep143_20260816.jpg" />
+      <itunes:duration>10:18</itunes:duration>
+      <itunes:explicit>no</itunes:explicit>
+      <itunes:summary># Models &amp; Agents
+&gt; **Models sound most sure of themselves exactly when their answers are wrong — and a new eval harness is making that gap impossible to ignore.**
+
+**What You Need to Know:** An enterprise architect built a synthetic ground-truth harness that revealed LLMs confidently misattribute root causes in data-drift scenarios, especially when signals overlap. Open-weight Qwen 3.8 27B drew attention for over-thinking in LM Studio and for successful Jacobian-lens transfer from the prior 3.6 checkpoint. Anthropic’s Dario Amodei laid out a detailed case for regulation that deliberately advantages smaller labs and open weights while addressing frontier risks.
+---
+### DEPTH OVER BREADTH (news items)
+
+### Top Story
+VentureBeat published a detailed account of an eval harness that exposed a consistent failure mode in LLM-assisted tooling: the model was most confident precisely on the cases where its ranked explanations were wrong. The harness used controlled synthetic drift events with known ground-truth causes including schema changes, transformation logic bugs, and overlapping signals, then scored both presence of the correct root cause and its rank within the model’s output list. Schema changes were handled reliably when the evidence was distinctive, but transformation logic bugs led the model to identify the general category while misattributing the specific change, particularly when multiple modifications occurred close together. Overlapping-signal scenarios proved hardest, producing the highest rate of confidently wrong explanations that qualitative review had never surfaced. Builders shipping root-cause or compliance tools now have a concrete template for measuring accuracy against labeled cases instead of relying on “seems reasonable.” The practical takeaway is that any system influencing real decisions needs this style of harness before production, because fluency and correctness diverge sharply once multiple plausible signals appear close together. Source: [venturebeat.com](https://venturebeat.com/orchestration/an-eval-harness-found-what-qualitative-review-couldnt-ai-models-are-most-confident-when-wrong)
+---
+### Model Updates
+**Qwen 3.8 27B over-thinks by default in LM Studio: Simon Willison (AI builder)**
+Qwen 3.8 27B running in LM Studio with the default “extra high” reasoning setting produces long, repetitive internal chains even on simple prompts. Simon Willison noted the behavior as a chronic over-thinker and said he kind of loves it. The observation comes from direct local runs on both an M5 MacBook Pro and an NVIDIA DGX Spark. Builders experimenting with reasoning models can test the same setting to see whether the extra tokens improve or degrade final output quality on their tasks. Source: [x.com](https://x.com/simonw/status/2088646238933840153)
+
+**Jacobian lens from Qwen3.6-27B transfers to Qwen3.8-27B with no refitting: r/MachineLearning**
+A researcher applied the published Jacobian lens for Qwen3.6-27B unchanged to the 3.8-27B successor 113 days later and measured only modest degradation on two-hop entity recall tasks. The test used 40 prompts where the middle entity is never stated, drawn from a 248,320-token vocabulary, and tracked median rank of the latent entity at layers 24 and 48. Median rank at layer 48 moved from 4 on the original model to 17 on the successor; at layer 24 the successor actually performed better. On WikiText teacher-forced next-token prediction across 700 positions, transfer cost 1.2–1.3× mid-network and about 2× by layer 48. Steering directions derived from the older checkpoint successfully suppressed the word “paradox” in generations on both models while preserving coherent output when prompted to describe Escher’s impossible staircase. The work shows that interpretability instruments can survive version bumps within the same model family when architecture and tokenizer stay constant. Source: [reddit.com](https://www.reddit.com/r/MachineLearning/comments/1vpa5cv/survival_of_the_fitted_qwen3627bs_jacobian_lens/)
+
+**Alibaba AI models reach 3 billion downloads, passing Meta and Google: Bloomberg.com**
+Alibaba reported its open models have now been downloaded more than three billion times, surpassing the cumulative downloads of Meta’s Llama family and Google’s Gemma models. The milestone reflects strong adoption of the Qwen series in both research and production settings. No new capability numbers were released with the announcement, but the download figure underscores how quickly open-weight checkpoints are propagating beyond the original lab. Source: [Google News](https://news.google.com/rss/articles/CBMisgFBVV95cUxQNkdXS05xRW1WQ2ItQmhUZEd1SVowVkJISVhwQ1Z5STF5dnJkV2pVRmExN1JoLXNEMkZKdGV1eGZnWnVvV2I1QllUZ3JJTktoeFdKa3JtY3NSMFlBRUYta3k5d2RJdnFzVUJIMGVGY2V0SThGTG94SlEzMl9KQWRsZkduN0RycGx1SjBGOVViQVNvbXE4TS1WdTU2MGhLNjhYLUtUVHM2WVF3ZGZKalBmOURR?oc=5)
+
+**Dario Amodei outlines regulation that advantages challengers and open weights: [@DarioAmodei](https://x.com/DarioAmodei) (X)**
+Dario Amodei responded to Gavin Baker with a two-part thread arguing that regulation need not equal regulatory capture and can instead decentralize power through objective institutional processes. He highlighted Anthropic-supported California SB53, which exempts companies below $500M revenue, and noted that proposed CAISI and White House testing regimes apply stricter scrutiny to frontier models than to off-frontier ones. Amodei described AI as structurally concentrating power due to scaling laws, with open weights shifting but not solving the concentration toward those controlling compute. He also addressed messaging balance, pointing to his “Machines of Loving Grace” essay on health and biology benefits and his personal motivation from losing his father to Hepatitis C before direct-acting antivirals existed. This builds on yesterday’s discussion of regulatory trajectories by outlining specific mechanisms that favor smaller players. Source: [x.com](https://x.com/DarioAmodei/status/2088758816376807762)
+---
+### Agent &amp; Tool Developments
+**Flue 2 brings React-style hooks to agent harnesses: Latent Space**
+Fred Schott, creator of Astro, released Flue 2, which adds hooks to his meta-harness for defining agents. The update treats agent behavior as composable hooks rather than monolithic scripts, mirroring React’s mental model for state and side effects. Schott argues that the harness, not the underlying model, is what ultimately defines an agent’s capabilities and failure modes. Early users can explore the new hook primitives to compose long-running agents without rewriting coordination logic for each new model. Source: [latent.space](https://www.latent.space/p/flue-2)
+
+**CORS Chat provides a browser-based test UI for OpenAI-compatible endpoints: Simon Willison**
+Simon Willison released CORS Chat, a small web UI that connects to any OpenAI-Responses-compatible chat endpoint and persists conversations locally. It correctly renders streaming SVG images as they are generated and has been tested successfully against LM Studio with the --cors flag and against OpenRouter. The tool is intended for quick local validation of new model deployments on both Apple Silicon and NVIDIA hardware. Source: [simonwillison.net](https://simonwillison.net/2026/Aug/15/cors-chat/)
+---
+### Practical &amp; Community
+**Bumped context limit lets model produce animated circle: Simon Willison (AI builder)**
+Simon Willison showed that simply raising the context limit allowed an unspecified model to output a working animated SVG circle after an earlier attempt failed due to token truncation. The gist link contains the exact prompt and resulting animation. The quick experiment highlights how context-window headroom directly affects even trivial generative tasks. Source: [x.com](https://x.com/simonw/status/2088670465057497143)
+
+**Server rejected circle when context length stayed at default: Simon Willison (AI builder)**
+A follow-up post documented the failure case: with the default context length the server rejected the generation before the model could finish drawing its circle. The pair of posts illustrates the narrow margin between success and truncation on even simple visual output tasks. Source: [x.com](https://x.com/simonw/status/2088648622942638557)
+---
+### Under the Hood: Long-range recall limits in linear attention
+Everyone talks about linear attention as a simple drop-in replacement that removes the quadratic cost of softmax. In practice it compresses the entire history into a fixed-size state vector whose capacity does not grow with sequence length. That compression works reasonably at 16 k tokens, where a small model still achieved 50–60 % recall on needle-in-haystack DNA sequences, but recall collapses to chance (25 %) once the same architecture faces 1 M-token contexts. The researcher also tested HyenaDNA on the identical benchmark and observed the same 25–27 % floor, indicating the limitation is not unique to one linear-attention implementation. External memory banks or hybrid softmax fallbacks can paper over the gap, yet they re-introduce the very memory and compute costs linear attention was meant to avoid. The core engineering tradeoff is therefore whether your workload can tolerate irreversible loss of distant tokens or whether you must keep a growing key-value cache after all. When the task is retrieval over million-token DNA or logs, the current linear formulations remain fundamentally lossy; teams should benchmark exact recall curves on their own data before assuming the compressed state will suffice.
+---
+### Things to Try This Week
+- Run Qwen 3.8 27B in LM Studio with “extra high” reasoning and compare output length and accuracy on a task you already know well.
+- Port the VentureBeat synthetic-drift eval harness pattern to your own root-cause tooling to measure whether confidence correlates with correctness.
+- Test Flue 2’s new hooks on a multi-step agent workflow you have previously built with LangGraph or CrewAI.
+- Use CORS Chat to validate any new OpenAI-compatible endpoint you deploy locally before wiring it into production front-ends.
+- Apply the Jacobian-lens transfer protocol to your own interpretability tools when the next checkpoint in a model family drops.
+---
+### On the Horizon
+- Continued testing of pre-deployment evaluation regimes for frontier and near-frontier open-weight models under the reported Trump-administration approach.
+- More labs releasing Jacobian-style or activation-based interpretability tools that survive checkpoint updates.
+- Additional agent harness projects adopting hook or component models after the Flue 2 release.
+- Further experiments with linear-attention variants on long DNA or log sequences to quantify recall degradation at scale.</itunes:summary>
+      <itunes:episode>143</itunes:episode>
+      <itunes:title>Ep 143: Models sound most sure of themselves exactly when their answers are wrong — and a new eval…</itunes:title>
+      <itunes:episodeType>full</itunes:episodeType>
+    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep143_20260816_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep143.json" type="application/json+chapters" /></item>
     <item>
       <title>Ep 142: Z.ai just showed how far post-training alone can push a fixed base model into serious…</title>
       <description>Models &amp; Agents
