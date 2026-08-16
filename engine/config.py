@@ -24,6 +24,13 @@ logger = logging.getLogger(__name__)
 class SourceConfig:
     url: str
     label: str = ""
+    # When true, the fetch stage reports this feed's newest entry (date +
+    # title) into the digest prompt's {campaign_freshness} block even when
+    # that entry falls outside the recency window. Powers the Aug 2026
+    # offshore_north verified-absence rule: "the team's site was last
+    # updated on [date], with [subject]" is checkable; "no news this week"
+    # is not. Default false — shows without the flag are untouched.
+    freshness_report: bool = False
 
 
 @dataclass
@@ -1057,7 +1064,11 @@ def _build_sources(raw: list) -> List[SourceConfig]:
         if isinstance(item, str):
             sources.append(SourceConfig(url=item))
         elif isinstance(item, dict):
-            sources.append(SourceConfig(url=item.get("url", ""), label=item.get("label", "")))
+            sources.append(SourceConfig(
+                url=item.get("url", ""),
+                label=item.get("label", ""),
+                freshness_report=bool(item.get("freshness_report", False)),
+            ))
     return sources
 
 

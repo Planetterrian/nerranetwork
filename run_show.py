@@ -1379,6 +1379,26 @@ def run(args: argparse.Namespace) -> None:
         else:
             deep_dive_topics_text = "(No previous deep dives — you have full freedom to choose any topic.)"
 
+        # Campaign channel freshness (Aug 2026, offshore_north): newest post
+        # per freshness_report-flagged feed, window-independent, so the
+        # digest can say "the team's site was last updated on [date]"
+        # instead of the banned "no news this week". "" for every show
+        # without a flagged source — their prompts don't reference the
+        # placeholder and the block never renders.
+        _campaign_freshness = ""
+        try:
+            from engine.fetcher import collect_feed_freshness
+            _campaign_freshness = collect_feed_freshness(config.sources)
+        except Exception as _fresh_exc:  # noqa: BLE001 — never break a run
+            logger.warning("Campaign freshness collection failed: %s", _fresh_exc)
+        if _campaign_freshness:
+            logger.info("Campaign channel freshness:\n%s", _campaign_freshness)
+        else:
+            _campaign_freshness = (
+                "(no campaign channels are flagged for freshness reporting "
+                "on this show)"
+            )
+
         template_vars = {
             "today_str": today_str,
             "date_human": today_str,  # alias used by Omni View prompts
@@ -1387,6 +1407,7 @@ def run(args: argparse.Namespace) -> None:
             "episode_num": episode_num,
             "recent_content_summary": content_tracker_summary,
             "recent_deep_dive_topics": deep_dive_topics_text,
+            "campaign_freshness": _campaign_freshness,
         }
         # Topic-driven runs (narrative-mode shows + deep-dive episodes) feed a
         # single curated topic into the digest prompt instead of news articles.

@@ -485,3 +485,44 @@ rewrite, and source-automation guidance. Shipped 2026-08-14:
 
 Drift guards: `tests/test_offshore_north_weekly_fixes.py` (August 2026
 section). Prompt edits change shipped audio — A/B-listen per landmine #17.
+
+## August 2026 editorial review — round three (post-redo listen)
+
+Dan's second review, after hearing the regenerated Ep2. Three new error
+classes, each now structurally blocked:
+
+- **Forward-looking plan stated as fact.** Ep2 said the boat "stays in
+  Collingwood through mid-August" — it had departed the weekend of
+  Aug 8–9. The standing facts' location/schedule sections now carry a
+  TIME-SENSITIVE warning + the known correction, and all three prompts
+  require future-dated items to be attributed and dated ("as of the
+  team's [date] update, the plan was…"); a plan whose date has passed is
+  unrepeatable.
+- **Absence claims.** "The campaign made no public announcements this
+  week" is unverifiable from inside the pipeline and was false. Banned in
+  all three prompts. Replaced by CHECKABLE channel freshness: sources can
+  flag `freshness_report: true` (the 3 campaign feeds do), and
+  `engine.fetcher.collect_feed_freshness` reports each flagged feed's
+  newest post (date + subject, window-independent) into the digest's
+  `{campaign_freshness}` block — "the team's site was last updated on
+  [date], with [subject]".
+- **Audience self-deprecation.** The rotation closing "Send this to the
+  one other person you know who follows this sport — there aren't many of
+  us" shipped on Ep2. Variant rewritten in `engine/intros.py` (CTA about
+  the listener's enthusiasm, never the show's reach) and the ban is in
+  the podcast prompt. Related: `engine/network_promo.py` gained
+  `COMPACT_PROMO_SHOWS` — offshore always speaks the shortest promo frame
+  and never the website-surface add-on (Ep2 had stacked two plugs).
+- **Voice v2.1**: Dan's real background (737 captain crossing the North
+  Atlantic, Lasers/Hobie 18, Caribbean + BC charters, learning to wing
+  foil on Georgian Bay) with per-topic usage mapping, and the lived-
+  experience budget tightened to ONE personal reference per episode,
+  none if nothing illuminates. Never upgrade his experience.
+- **The Canadian Boat opens with a one-line position report** — small
+  updates strung week to week ARE the story; never inflate a transit,
+  never treat a quiet week as empty.
+
+Ep2 was retired a second time (feeds spliced, numbering re-verified at 2;
+both credit records kept). Drift guards: the round-three classes in
+`tests/test_offshore_north_weekly_fixes.py`. Prompt + closing changes
+alter shipped audio — A/B-listen per landmine #17.
