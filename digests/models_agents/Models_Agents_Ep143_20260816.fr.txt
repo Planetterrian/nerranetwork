@@ -1,0 +1,147 @@
+Les modèles ont l’air le plus sûrs d’eux précisément quand leurs réponses sont fausses — et un nouveau harnais d’évaluation rend cet écart impossible à ignorer.
+
+Voici Models and Agents, l’épisode cent quarante-trois.
+
+Le plus gros fil cette semaine a été le rythme soutenu de nouvelles méthodes d’évaluation pour les systèmes fermés comme pour ceux à poids ouverts, en parallèle de l’élan qui continue dans la conception de harnais pour agents et l’adoption de modèles ouverts.
+
+Ces fils préparent le terrain pour les résultats concrets d’aujourd’hui sur la confiance face à la justesse.
+
+VentureBeat a publié un compte rendu détaillé d’un harnais d’évaluation qui a mis au jour un mode de défaillance récurrent dans les outils assistés par grands modèles de langage.
+
+Le modèle était le plus confiant précisément sur les cas où ses explications classées étaient fausses.
+
+Le harnais a utilisé des événements de dérive synthétiques contrôlés avec des causes de vérité terrain connues, notamment des changements de schéma, des bugs dans la logique de transformation, et des signaux qui se chevauchent.
+
+Il a ensuite noté à la fois la présence de la bonne cause racine et son rang dans la liste de sorties du modèle.
+
+Les changements de schéma étaient gérés de façon fiable quand les preuves étaient distinctives.
+
+Les bugs de logique de transformation ont amené le modèle à identifier la catégorie générale tout en se trompant sur le changement spécifique, surtout quand plusieurs modifications se produisaient presque en même temps.
+
+Les scénarios de signaux superposés se sont révélés les plus difficiles, produisant le plus haut taux d’explications faussement confiantes que l’examen qualitatif n’avait jamais fait apparaître.
+
+Les développeurs qui mettent en production des outils de recherche de cause racine ou de conformité ont maintenant un modèle concret pour mesurer la précision par rapport à des cas étiquetés au lieu de se fier à « ça a l’air raisonnable ».
+
+Ça s’inscrit dans la conversation en cours autour de la sécurité de l’intelligence artificielle et des politiques que nous avons suivie hier, où la standardisation de l’évaluation reste une question ouverte majeure.
+
+Qwen trois virgule huit vingt-sept B réfléchit trop par défaut dans LM Studio.
+
+Simon Willison a noté que le modèle qui tourne avec le réglage de raisonnement extra élevé par défaut produit de longues chaînes internes répétitives même sur des invites simples.
+
+Il a dit qu’il l’aime plutôt bien après l’avoir testé à la fois sur un MacBook Pro M cinq et un Nvidia DGX Spark.
+
+Les développeurs qui expérimentent avec des modèles de raisonnement peuvent tester le même réglage pour voir si les jetons en plus améliorent ou dégradent la qualité de la sortie finale sur leurs tâches.
+
+Ça s’inscrit dans l’arc plus large des modèles à poids ouverts que nous suivons, où l’écart de performance avec les systèmes fermés continue de se réduire mais de nouveaux comportements comme la sur-réflexion apparaissent à chaque nouveau point de contrôle.
+
+Un chercheur a appliqué la lentille jacobienne publiée pour Qwen trois virgule six vingt-sept B sans changement au successeur trois virgule huit vingt-sept B cent treize jours plus tard.
+
+Le test a utilisé quarante invites où l’entité du milieu n’est jamais mentionnée, tirées d’un vocabulaire de deux cent quarante-huit mille trois cent vingt jetons.
+
+Le rang médian à la couche quarante-huit est passé de quatre sur le modèle d’origine à dix-sept sur le successeur.
+
+À la couche vingt-quatre, le successeur a en fait mieux réussi.
+
+Sur la prédiction du jeton suivant forcée par l’enseignant sur WikiText à travers sept cents positions, le coût de transfert était d’une virgule deux à une virgule trois fois au milieu du réseau et environ deux fois à la couche quarante-huit.
+
+Les directions de guidage tirées de l’ancien point de contrôle ont réussi à supprimer le mot paradoxe dans les générations sur les deux modèles tout en gardant une sortie cohérente quand on lui demandait de décrire l’escalier impossible d’Escher.
+
+Le travail montre que les instruments d’interprétabilité peuvent survivre aux changements de version au sein de la même famille de modèles quand l’architecture et le tokeniseur restent les mêmes.
+
+Alibaba a annoncé que ses modèles ouverts ont maintenant été téléchargés plus de trois milliards de fois, dépassant les téléchargements cumulés de la famille Llama de Meta et des modèles Gemma de Google.
+
+Cette étape reflète une forte adoption de la série Qwen aussi bien en recherche qu’en production.
+
+Dario Amodei a répondu à Gavin Baker avec un fil en deux parties en arguant que la régulation n’équivaut pas forcément à la capture réglementaire.
+
+Il a mis en avant le SB cinquante-trois de Californie soutenu par Anthropic, qui exempte les entreprises en dessous de cinq cents millions de dollars de chiffre d’affaires.
+
+Les régimes de tests proposés CAISI et de la Maison-Blanche appliquent un examen plus strict aux modèles de frontière qu’à ceux qui ne le sont pas.
+
+Amodei a décrit l’intelligence artificielle comme concentrant structurellement le pouvoir à cause des lois d’échelle, les poids ouverts déplaçant mais ne résolvant pas la concentration vers ceux qui contrôlent le calcul.
+
+Fred Schott, le créateur d’Astro, a sorti Flue two, qui ajoute des crochets à son méta-harnais pour définir des agents.
+
+La mise à jour traite le comportement de l’agent comme des crochets composables plutôt que des scripts monolithiques, en miroir du modèle mental de React pour l’état et les effets de bord.
+
+Schott soutient que c’est le harnais, et non le modèle sous-jacent, qui définit finalement les capacités et les modes de défaillance d’un agent.
+
+Les premiers utilisateurs peuvent explorer les nouvelles primitives de crochets pour composer des agents de longue haleine sans réécrire la logique de coordination pour chaque nouveau modèle.
+
+Ce développement s’appuie directement sur le fil des agents et de l’usage d’outils que nous avons couvert hier, où la standardisation des protocoles d’agents reste une question ouverte.
+
+Simon Willison a sorti CORS Chat, une petite interface web qui se connecte à n’importe quel point de terminaison de chat compatible Open A I Responses et conserve les conversations en local.
+
+Elle affiche correctement les images SVG en flux au fur et à mesure de leur génération et a été testée avec succès avec LM Studio en activant le drapeau cors et avec OpenRouter.
+
+L’outil est conçu pour une validation locale rapide des nouveaux déploiements de modèles aussi bien sur Apple Silicon que sur du matériel Nvidia.
+
+Simon Willison a montré que simplement relever la limite de contexte a permis à un modèle non précisé de produire un cercle SVG animé qui fonctionne après qu’une tentative précédente avait échoué à cause de la troncature des jetons.
+
+Le lien gist contient l’invite exacte et l’animation obtenue.
+
+Un article de suivi a documenté le cas d’échec.
+
+Avec la longueur de contexte par défaut, le serveur a rejeté la génération avant que le modèle puisse terminer de dessiner son cercle.
+
+La paire d’articles illustre la marge étroite entre le succès et la troncature même sur des tâches de sortie visuelle simples.
+
+Bon, soulevons le capot sur l’attention linéaire.
+
+Tout le monde parle de l’attention linéaire comme d’un remplacement simple à brancher qui élimine le coût quadratique de la softmax.
+
+En pratique, elle comprime toute l’histoire dans un vecteur d’état de taille fixe dont la capacité ne grandit pas avec la longueur de la séquence.
+
+Cette compression marche raisonnablement à seize mille jetons, où un petit modèle a encore atteint cinquante à soixante pour cent de rappel sur des séquences d’A D N de type aiguille dans une botte de foin.
+
+Le rappel s’effondre au niveau du hasard, vingt-cinq pour cent, dès que la même architecture affronte des contextes d’un million de jetons.
+
+Le chercheur a aussi testé HyenaDNA sur le même test de référence et a observé le même plancher de vingt-cinq à vingt-sept pour cent.
+
+Des banques de mémoire externes ou des replis hybrides softmax peuvent masquer l’écart, mais ils réintroduisent justement les coûts de mémoire et de calcul que l’attention linéaire était censée éviter.
+
+Le vrai compromis d’ingénierie est donc de savoir si votre charge de travail peut tolérer une perte irréversible des jetons lointains ou s’il faut quand même garder un cache clé-valeur qui grandit.
+
+Quand la tâche est de retrouver de l’information dans de l’A D N ou des journaux d’un million de jetons, les formulations linéaires actuelles restent fondamentalement avec pertes.
+
+Les équipes devraient tracer les courbes de rappel exactes sur leurs propres données avant de supposer que l’état comprimé suffira.
+
+Cette réalité d’ingénierie éclaire directement les questions de calcul et d’inférence de l’intelligence artificielle que nous suivons, surtout pour savoir si les courbes de coût d’inférence peuvent continuer à baisser sans compromis cachés sur la précision.
+
+Lancez Qwen trois virgule huit vingt-sept B dans LM Studio avec le raisonnement extra élevé et comparez la longueur et la précision de la sortie sur une tâche que vous connaissez déjà bien.
+
+Adaptez le patron de harnais d’évaluation de dérive synthétique de VentureBeat à vos propres outils de cause racine pour mesurer si la confiance va de pair avec la justesse.
+
+Testez les nouveaux crochets de Flue two sur un flux de travail d’agent en plusieurs étapes que vous avez déjà construit avec LangGraph ou CrewAI.
+
+Utilisez CORS Chat pour valider n’importe quel nouveau point de terminaison compatible Open A I que vous déployez en local avant de l’intégrer dans les interfaces de production.
+
+Appliquez le protocole de transfert de la lentille jacobienne à vos propres outils d’interprétabilité quand le prochain point de contrôle d’une famille de modèles sort.
+
+Poursuite des tests des régimes d’évaluation avant déploiement pour les modèles à poids ouverts de frontière et quasi-frontière selon l’approche rapportée de l’administration Trump.
+
+Plus de laboratoires qui sortent des outils d’interprétabilité de type jacobien ou basés sur les activations qui survivent aux mises à jour de points de contrôle.
+
+D’autres projets de harnais d’agents qui adoptent des modèles de crochets ou de composants après la sortie de Flue two.
+
+Avant de nous quitter, la prochaine vague de variantes d’attention linéaire affrontera les mêmes tests de rappel sur de longues séquences d’A D N que nous venons de détailler.
+
+Voilà pour Models and Agents aujourd’hui.
+
+Si vous avez trouvé ça utile, partagez-le avec quelqu’un qui essaie de suivre tous ces changements, et abonnez-vous pour ne pas rater la mise à jour de demain.
+
+Le monde de l’intelligence artificielle avance vite.
+
+On vous aide à suivre.
+
+À demain.
+
+Et si vous préférez regarder plutôt qu’écouter, retrouvez-nous sur YouTube à Nerra Network — le lien est dans les notes de l’émission.
+
+Une dernière chose — si vous avez aimé l’épisode d’aujourd’hui, notre émission sœur Omni View mérite une place dans votre fil : un briefing quotidien équilibré sur l’actualité mondiale qui prend chaque camp au sérieux.
+
+C’est l’un des briefings quotidiens de Nerra Network, tous gratuits sur nerranetwork point com.
+
+Le Do Positive Pod est le club pour ceux qui passent à l’action — les épisodes et le Mur Dispatch sur nerranetwork point com thedppod.
+
+Cet épisode a utilisé la synthèse vocale par intelligence artificielle de ma voix — la sélection éditoriale et l’analyse sont les miennes.
