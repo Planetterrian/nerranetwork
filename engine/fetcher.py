@@ -1009,7 +1009,16 @@ def fetch_web_search_articles(
                 cache_key="nerra-fetch-web",
             )
 
-            if not text or "NO_RECENT_ARTICLES" in text:
+            # The sentinel check must not discard real results: on the
+            # 2026-08-16 offshore_north run the model returned a valid
+            # ARTICLE_TITLE/URL block (a Toronto Star feature on the very
+            # campaign the query asked about) FOLLOWED by a stray
+            # NO_RECENT_ARTICLES, and the old `in text` check threw the
+            # whole response away. Treat the sentinel as "empty" only when
+            # no article block accompanies it.
+            if not text or (
+                "NO_RECENT_ARTICLES" in text and "ARTICLE_TITLE" not in text
+            ):
                 logger.info("Web search: no recent articles for '%s'", query)
                 continue
 

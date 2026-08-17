@@ -728,3 +728,56 @@ class TestPositionReport:
     def test_accumulation_framing_present(self):
         src = _digest_prompt()
         assert "Never inflate a lock transit into a milestone" in src
+
+
+class TestWebSearchSentinelParsing:
+    """2026-08-16: query 1 returned a valid ARTICLE_TITLE/URL block (a
+    Toronto Star feature on the campaign) followed by a stray
+    NO_RECENT_ARTICLES — and the `in text` sentinel check discarded the
+    whole response. The sentinel is only meaningful with no article."""
+
+    def _run(self, fake_text, monkeypatch):
+        import engine.fetcher as fetcher
+        monkeypatch.setattr(
+            "digests.xai_grok.grok_generate_text",
+            lambda **kw: (fake_text, {}),
+            raising=False,
+        )
+        monkeypatch.setenv("GROK_API_KEY", "test-key")
+        return fetcher.fetch_web_search_articles(["test query"], keywords=[])
+
+    def test_article_plus_stray_sentinel_is_kept(self, monkeypatch):
+        text = (
+            "ARTICLE_TITLE: A real campaign feature\n"
+            "ARTICLE_URL: https://example.com/story\n"
+            "ARTICLE_DESCRIPTION: Something substantive.\n"
+            "ARTICLE_SOURCE: Toronto Star\n\n"
+            "NO_RECENT_ARTICLES"
+        )
+        articles = self._run(text, monkeypatch)
+        assert len(articles) == 1
+        assert articles[0]["title"] == "A real campaign feature"
+
+    def test_bare_sentinel_still_means_empty(self, monkeypatch):
+        assert self._run("NO_RECENT_ARTICLES", monkeypatch) == []
+
+
+class TestNoSeededTitleExample:
+    """The 2026-08-16 draft's TITLE was 'EMIRA IV's last week in
+    Collingwood' — the prompt's own example copied verbatim, asserting a
+    location the boat had left. De-seed by shape (network rule): no
+    quotable, plausible-content example in the TITLE or HOOK spec."""
+
+    def test_title_spec_has_no_quotable_example(self):
+        src = _digest_prompt()
+        assert "last week in Collingwood" not in src
+        assert "**TITLE:**" in src  # the spec itself survives
+
+    def test_hook_spec_has_no_location_asserting_example(self):
+        src = _digest_prompt()
+        assert "now training on Georgian Bay" not in src
+
+    def test_hook_and_title_specs_carry_the_accuracy_tie(self):
+        src = _digest_prompt()
+        # both metadata fields must be explicitly bound to the accuracy rules
+        assert src.count("obeys the accuracy rules") >= 2
