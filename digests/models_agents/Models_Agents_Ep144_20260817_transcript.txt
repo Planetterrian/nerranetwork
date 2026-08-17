@@ -1,0 +1,68 @@
+Language server retrieval costs more tokens than GRIP for most coding agent tasks and rarely improve success rates. This is Models & Agents, episode 144. A new measurement study on Claude Opus 4.8,
+Sonnet 4.6, and Haiku 4.5, finds that language server protocol-based semantic retrieval increases token use by 6 to 118% on symbol localization.
+The work introduces a tokens to success metric and shows that an adaptive router keyed on task class and model strength is the only configuration that sometimes saves tokens.
+Builders should test task-specific retrieval routing rather than defaulting to semantic indexes. A five-arm ablation on Python and TypeScript repositories measured whether language server protocol retrieval saves tokens for coding agents compared with lexical GRIP. On symbol name localization, the language server protocol approach raised token counts and was ignored by agents when free.
+On reference completeness tasks, it improved precision but could not raise the recall ceiling set by agent thoroughness. It saved tokens only for the weakest model. On real test execution edits, GRIP solved multi-file renames perfectly, while a location only language server protocol missed call sites in three quarters of cases.
+Even a complete index warmed language server protocol recovered most but not all of the gap because renames must touch comments and strings excluded from semantic references.
+The study concludes that tool choice must be task dependent rather than universally semantic. Builders working on agent retrieval layers should implement a lightweight router that defaults to GRIP for localization and reaches for language server protocol only on reference heavy work.
+JIS 270B is the largest open Arabic centric model trained from scratch paired with an 8B variant. Both use a custom Arabic centric vocabulary and an optimized training recipe that reaches strong results on OALL2 and ARAGEN with a smaller token budget than comparable models.
+The family leads evaluated open models on culturally grounded benchmarks covering poetry, religion, cuisine, and dream interpretation while remaining competitive on English tasks. Models are released under a commercially permissive license on hugging face, with the 70B chat app available on web, iOS, and Android running up to 2000 tokens per second on cerebrus hardware.
+Teams building Arabic or multilingual applications should test the 8B variant first for cost sensitive deployments. SELR trains a single model with a joint answer loss and chain of thought loss, so latent reasoning trajectories remain both task effective and directly decodable into human readable steps without external decoders.
+The approach was validated on large language models and vision language models delivering better token efficiency and accuracy than coconut or high-mastile baselines while providing built-in explainability.
+Project page and code are linked in the paper. Researchers exploring latent reasoning should examine the multitask objective as a way to avoid the usual accuracy interpretability trade-off.
+Inflation agent measures token inflation reaching 4.25 times on 7B models for multi-hop question answering. It uses chain of thought branching entropy computed from local inference to predict high inflation queries with an area under the receiver operating characteristic of 0.887.
+On GSM 8K under fixed budget, it reaches 94.7% accuracy versus 91% for frugal GPT while using 31% fewer tokens by applying a semantic exchange rate router and fresh escalation policy.
+Forwarding failed chains to GPT 40 can drop accuracy by up to 34.8 points, validating the fresh escalation design. Agent teams should add inflation prediction before routing to stronger models.
+BCMT decouples local token interactions from global context by applying dense causal self-attention only inside blocks. It propagates adaptive summaries through an exponential causal memory that is injected back into representations.
+The design remains fully parallelizable and compatible with standard dense self-attention implementations while cutting memory consumption and raising training throughput on contexts up to 1024 tokens.
+Oblations confirm the memory mechanism drives the gains. Long context teams evaluating alternatives to full attention should benchmark BCMT against recurrent memory baselines.
+The 9 agent CLAIR FIN system decomposes questions into atomic claims stored in a typed financial claim ledger. It applies asymmetric evidence authority, chain of custody verification, and an adaptive rebuttal cycle whose depth scales with debate findings.
+On the new BB FIN QAX benchmark, it raises faithfulness from 0.780 to 0.889 over single pass retrieval augmented generation, while abstaining on 5.4% of questions when evidence is insufficient.
+Financial question answering teams should examine the claim ledger and entailment audit stages for grounding guarantees.
+TeachMate GPT replaces flat chunking with a hierarchical syllabus graph called COPE. It routes retrieval through coverage gates and applies SAVER verification that scores faithfulness and hallucination risk against retrieved evidence.
+On the new NCTB SyGen 8 data set of 198 items, it lifts faithfulness from 0.68 to 0.96 and answer relevancy from 0.60 to 0.89 over vanilla retrieval augmented generation.
+Education tool builders should test the staged fail-plosed pipeline when generating from structured curricula.
+HERMES coordinates a large language model with domain constraints and evidence tracing to extract structured records from 55 volumes of the treatise on invertebrate paleontology.
+It produced 32,277 fossil taxonomic entities and 451,878 attributes.
+Extraction F1 remains stable near 0.90 to 0.91 across fossil groups and delivered roughly six times efficiency gain versus fully manual baselines.
+The same pipeline transferred to paleo magnetism and geochemistry without retraining.
+Teams handling legacy scientific monographs should review the document level extraction loop.
+Stream here, fine tunes and offline transducer teacher on labeled data, generate pseudo labels on unlabeled audio, then fine tunes the streaming student with a prior regularized realignment step.
+Across four domain shifted data sets, it consistently beats supervised student fine tuning and narrows the gap to the offline teacher.
+Speech teams working on low resource streaming automatic speech recognition should test the pseudo label plus realignment recipe.
+Simon Willison traces his productivity focus from Django through large language models to coding agents as a consistent search for tools that minimize time to result.
+The thread offers concrete examples of how each layer compounds the last.
+Builders evaluating agent stacks should read the full thread for the progression framing.
+Willison positions coding agents as the latest step in a decades long pattern of adopting higher leverage tooling.
+The post emphasizes measurable time savings over hype practitioners comparing agent frameworks will find the framing useful for prioritization.
+Google details Gemini and pixel integrations for real time soccer analysis and fan experiences through the new football club partnerships.
+The post shows multimodal use cases that combine on device and cloud models.
+Mobile developers interested in sports adjacent multimodal apps should examine the pixel Gemini pairing.
+CSIRO argues that alignment challenges previously theoretical are now operational for deployed systems and outlines practical research directions.
+Safety teams tracking regulatory and evaluation trends should review the concrete framing.
+Everyone treats per token pricing as a reliable cost signal for agentic systems.
+In practice, the real cost is the ratio of full workflow tokens to the first call cost and that ratio can exceed four times on harder tasks.
+The gap appears because failed reasoning chains are discarded and retried with stronger models.
+Each retry multiplies tokens without any change to the original price table.
+Inflation agent measures this ratio across model tiers then trains a local predictor using chain of thought branching entropy that flags high inflation queries before execution.
+Routing then maximizes expected accuracy divided by predicted true cost and applies a fresh escalation rule that never forwards a failed chain.
+The approach delivered 31% fewer tokens than frugal GPT on GSM 8K at higher accuracy.
+Use inflation-aware routing when your workload contains multi-hop or open-ended questions.
+Stick to single-call pricing only for short, high-success rate tasks where retries are rare.
+Run the tokens to success ablation from the language server protocol paper on your own code basis to decide between grip and semantic retrieval per task type.
+Test GIS 28B on Arabic or culturally grounded prompts before committing to larger closed models.
+Prototype a lightweight inflation predictor using local chain of thought entropy before adding stronger models to agent loops.
+Explore the HERMES extraction pipeline on any long technical PDF corpus you maintain.
+More multilingual GRPO studies are expected as teams expand beyond English-centric reasoning training.
+Additional claim-level verification frameworks for financial and scientific domains are on the way.
+Further measurements of token inflation across new agent benchmarks are coming.
+Before we go, the next round of Arabic-centric open model releases will show whether the 8B GIS 2 variant scales to production workloads without extra fine-tuning.
+That wraps up today's AI briefing.
+Share this with a developer or builder who wants to stay current.
+Subscribe wherever you listen. See you tomorrow.
+And if you'd rather watch than listen, find us on YouTube at Nerra Network. Links in the show notes.
+Quick tip from the network. Try fascinating frontiers next. The most fascinating news from space and science.
+Every Nerra network show is free at NerraNetwork.com.
+And on the website, every episode's visuals live in our free image gallery at NerraNetwork.com slash gallery.
+Royalty free under Creative Commons, download with Attribution.
+This episode used AI voice synthesis of my voice. Editorial selection and analysis are my own.

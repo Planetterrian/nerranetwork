@@ -1,0 +1,157 @@
+Language-server retrieval costs more tokens than grep for most coding-agent tasks and rarely improves success rates.
+
+This is Models and Agents, episode one hundred forty-four.
+
+A new measurement study on Claude Opus four point eight, Sonnet four point six, and Haiku four point five finds that language server protocol based semantic retrieval increases token use by six to one hundred eighteen percent on symbol localization.
+
+The work introduces a tokens to success metric and shows that an adaptive router keyed on task class and model strength is the only configuration that sometimes saves tokens.
+
+Builders should test task specific retrieval routing rather than defaulting to semantic indexes.
+
+A five arm ablation on Python and TypeScript repositories measured whether language server protocol retrieval saves tokens for coding agents compared with lexical grep.
+
+On symbol named localization the language server protocol approach raised token counts and was ignored by agents when free.
+
+On reference completeness tasks it improved precision but could not raise the recall ceiling set by agent thoroughness.
+
+It saved tokens only for the weakest model.
+
+On real test execution edits grep solved multi file renames perfectly while a location only language server protocol missed call sites in three quarters of cases.
+
+Even a complete index warmed language server protocol recovered most but not all of the gap because renames must touch comments and strings excluded from semantic references.
+
+The study concludes that tool choice must be task dependent rather than universally semantic.
+
+Builders working on agent retrieval layers should implement a lightweight router that defaults to grep for localization and reaches for language server protocol only on reference heavy work.
+
+Jais two seventy B is the largest open Arabic centric model trained from scratch, paired with an eight B variant.
+
+Both use a custom Arabic centric vocabulary and an optimized training recipe that reaches strong results on O A L L two and Ara Gen with a smaller token budget than comparable models.
+
+The family leads evaluated open models on culturally grounded benchmarks covering poetry, religion, cuisine, and dream interpretation while remaining competitive on English tasks.
+
+Models are released under a commercially permissive license on Hugging Face, with the seventy B chat app available on web, iOS, and Android running up to two thousand tokens per second on Cerebras hardware.
+
+Teams building Arabic or multilingual applications should test the eight B variant first for cost sensitive deployments.
+
+S E L R trains a single model with a joint answer loss and chain of thought loss so latent reasoning trajectories remain both task effective and directly decodable into human readable steps without external decoders.
+
+The approach was validated on large language models and vision language models, delivering better token efficiency and accuracy than Coconut or Heima style baselines while providing built in explainability.
+
+Project page and code are linked in the paper.
+
+Researchers exploring latent reasoning should examine the multi task objective as a way to avoid the usual accuracy interpretability tradeoff.
+
+Inflation Agent measures token inflation reaching four point two five times on seven B models for multi hop question answering.
+
+It uses chain of thought branching entropy computed from local inference to predict high inflation queries with an area under the receiver operating characteristic of zero point eight eight seven.
+
+On G S M eight K under fixed budget it reaches ninety four point seven percent accuracy versus ninety one percent for Frugal G P T while using thirty one percent fewer tokens by applying a semantic exchange rate router and fresh escalation policy.
+
+Forwarding failed chains to G P T four o can drop accuracy by up to thirty four point eight points, validating the fresh escalation design.
+
+Agent teams should add inflation prediction before routing to stronger models.
+
+B C M T decouples local token interactions from global context by applying dense causal self attention only inside blocks.
+
+It propagates adaptive summaries through an exponential causal memory that is injected back into representations.
+
+The design remains fully parallelizable and compatible with standard dense self attention implementations while cutting memory consumption and raising training throughput on contexts up to one thousand twenty four tokens.
+
+Ablations confirm the memory mechanism drives the gains.
+
+Long context teams evaluating alternatives to full attention should benchmark B C M T against recurrent memory baselines.
+
+The nine agent C L A I R Fin system decomposes questions into atomic claims stored in a typed financial claim ledger.
+
+It applies asymmetric evidence authority, chain of custody verification, and an adaptive rebuttal cycle whose depth scales with debate findings.
+
+On the new B B Fin Q A X benchmark it raises faithfulness from zero point seven eight zero to zero point eight eight nine over single pass retrieval augmented generation while abstaining on five point four percent of questions when evidence is insufficient.
+
+Financial question answering teams should examine the claim ledger and entailment audit stages for grounding guarantees.
+
+Teach Mate G P T replaces flat chunking with a hierarchical syllabus graph called C O P E.
+
+It routes retrieval through coverage gates and applies S A V E R verification that scores faithfulness and hallucination risk against retrieved evidence.
+
+On the new N C T B Sci Gen eight dataset of one hundred ninety eight items it lifts faithfulness from zero point six eight to zero point nine six and answer relevancy from zero point six zero to zero point eight nine over vanilla retrieval augmented generation.
+
+Education tool builders should test the staged fail closed pipeline when generating from structured curricula.
+
+H E R M E S coordinates a large language model with domain constraints and evidence tracing to extract structured records from fifty five volumes of the Treatise on Invertebrate Paleontology.
+
+It produced thirty two thousand two hundred seventy seven fossil taxonomic entities and four hundred fifty one thousand eight hundred seventy eight attributes.
+
+Extraction F one remained stable near zero point nine zero to zero point nine one across fossil groups and delivered roughly six times efficiency gain versus fully manual baselines.
+
+The same pipeline transferred to palaeomagnetism and geochemistry without retraining.
+
+Teams handling legacy scientific monographs should review the document level extraction loop.
+
+Stream Hear fine tunes an offline transducer teacher on labeled data, generates pseudo labels on unlabeled audio, then fine tunes the streaming student with a prior regularized realignment step.
+
+Across four domain shifted datasets it consistently beats supervised student fine tuning and narrows the gap to the offline teacher.
+
+Speech teams working on low resource streaming automatic speech recognition should test the pseudo label plus realignment recipe.
+
+Simon Willison traces his productivity focus from Django through large language models to coding agents as a consistent search for tools that minimize time to result.
+
+The thread offers concrete examples of how each layer compounds the last.
+
+Builders evaluating agent stacks should read the full thread for the progression framing.
+
+Willison positions coding agents as the latest step in a decades long pattern of adopting higher leverage tooling.
+
+The post emphasizes measurable time savings over hype.
+
+Practitioners comparing agent frameworks will find the framing useful for prioritization.
+
+Google details Gemini and Pixel integrations for real time soccer analysis and fan experiences through the new Football Club partnerships.
+
+The post shows multimodal use cases that combine on device and cloud models.
+
+Mobile developers interested in sports adjacent multimodal apps should examine the Pixel Gemini pairing.
+
+C S I R O argues that alignment challenges previously theoretical are now operational for deployed systems and outlines practical research directions.
+
+Safety teams tracking regulatory and evaluation trends should review the concrete framing.
+
+Everyone treats per token pricing as a reliable cost signal for agentic systems.
+
+In practice the real cost is the ratio of full workflow tokens to the first call cost, and that ratio can exceed four times on harder tasks.
+
+The gap appears because failed reasoning chains are discarded and retried with stronger models.
+
+Each retry multiplies tokens without any change to the original price table.
+
+Inflation Agent measures this ratio across model tiers, then trains a local predictor using chain of thought branching entropy that flags high inflation queries before execution.
+
+Routing then maximizes expected accuracy divided by predicted true cost and applies a fresh escalation rule that never forwards a failed chain.
+
+The approach delivered thirty one percent fewer tokens than Frugal G P T on G S M eight K at higher accuracy.
+
+Use inflation aware routing when your workload contains multi hop or open ended questions.
+
+Stick to single call pricing only for short, high success rate tasks where retries are rare.
+
+Run the tokens to success ablation from the language server protocol paper on your own codebases to decide between grep and semantic retrieval per task type.
+
+Test Jais two eight B on Arabic or culturally grounded prompts before committing to larger closed models.
+
+Prototype a lightweight inflation predictor using local chain of thought entropy before adding stronger models to agent loops.
+
+Explore the H E R M E S extraction pipeline on any long technical PDF corpus you maintain.
+
+More multilingual G R P O studies are expected as teams expand beyond English centric reasoning training.
+
+Additional claim level verification frameworks for financial and scientific domains are on the way.
+
+Further measurements of token inflation across new agent benchmarks are coming.
+
+Before we go, the next round of Arabic centric open model releases will show whether the eight B Jais two variant scales to production workloads without extra fine tuning.
+
+That wraps up today's A I briefing. Share this with a developer or builder who wants to stay current. Subscribe wherever you listen. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes. Quick tip from the network: try Fascinating Frontiers next — the most fascinating news from space and science.
+
+Every Nerra Network show is free at nerranetwork dot com. And on the website: every episode's visuals live in our free image gallery at nerranetwork dot com gallery — royalty-free under Creative Commons, download with attribution.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
