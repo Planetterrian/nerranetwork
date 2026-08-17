@@ -781,3 +781,52 @@ class TestNoSeededTitleExample:
         src = _digest_prompt()
         # both metadata fields must be explicitly bound to the accuracy rules
         assert src.count("obeys the accuracy rules") >= 2
+
+
+class TestVerifyFlagsNeverSpoken:
+    """2026-08-17: the first [VERIFY:] flag this show ever produced —
+    correctly marking the Toronto Star's stale acquisition framing — was
+    SPOKEN ON AIR ("Verify, conflict with standing facts on acquisition
+    date" is in the shipped Ep2 transcript). The prompts promise flags
+    are stripped before production; now something actually does it."""
+
+    def test_strip_removes_inline_and_lone_line_flags(self):
+        from engine.utils import strip_verify_flags
+        text = (
+            "A real sentence. [VERIFY: translated from French source] More.\n\n"
+            "[VERIFY: conflict with standing facts on acquisition date]\n\n"
+            "Final sentence."
+        )
+        cleaned, flags = strip_verify_flags(text)
+        assert len(flags) == 2
+        assert "VERIFY" not in cleaned
+        assert "A real sentence. More." in cleaned
+        assert "Final sentence." in cleaned
+
+    def test_no_flags_is_a_noop(self):
+        from engine.utils import strip_verify_flags
+        cleaned, flags = strip_verify_flags("Plain text.\n\nTwo paragraphs.")
+        assert flags == []
+        assert cleaned == "Plain text.\n\nTwo paragraphs."
+
+    def test_run_show_strips_before_tts_and_reader(self):
+        src = (_ROOT / "run_show.py").read_text(encoding="utf-8")
+        assert "strip_verify_flags as _strip_verify" in src
+        # spoken path: strip assigned back onto podcast_script
+        assert "podcast_script, _verify_flags = _strip_verify(podcast_script)" in src
+        # public blog transcript: same rule
+        assert "_reader_body, _ = _strip_verify(_reader_body)" in src
+        # the flag must surface to the operator, not vanish silently
+        assert "Editorial flag stripped from spoken script" in src
+
+
+class TestOldEventNewArticle:
+    """2026-08-17: a weekend Toronto Star profile retold the early-2025
+    boat purchase, and the digest framed it as this week's development
+    (hook, title, and a 'from planning to preparation' consequence). The
+    news was the coverage, not the event."""
+
+    def test_digest_prompt_carries_the_rule(self):
+        src = _digest_prompt()
+        assert "OLD EVENT, NEW ARTICLE" in src
+        assert "the news is the COVERAGE, not the event" in src

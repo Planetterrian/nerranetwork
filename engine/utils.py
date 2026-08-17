@@ -629,6 +629,33 @@ def strip_speech_tags(text: str) -> str:
     return out
 
 
+_VERIFY_FLAG_RE = re.compile(r"\[VERIFY:[^\]]*\]", flags=re.IGNORECASE)
+
+
+def strip_verify_flags(text: str) -> tuple[str, list[str]]:
+    """Remove ``[VERIFY: ...]`` editorial flags before a PUBLIC surface.
+
+    The flags are an editorial-review channel (offshore_north Aug 2026):
+    the prompts instruct the model to mark uncertain claims inline, and
+    the digest .md keeps them as the canonical editorial record. But the
+    TTS path had no strip, so the first flag the show ever produced —
+    correctly marking a stale acquisition date — WAS SPOKEN ON AIR in
+    Offshore North Ep2 (2026-08-17): "Verify, conflict with standing
+    facts on acquisition date" is in the shipped episode's transcript.
+
+    Returns ``(cleaned_text, flags)`` so the caller can log each stripped
+    flag loudly — a flag the operator never sees defeats its purpose.
+    """
+    flags = [m.group(0) for m in _VERIFY_FLAG_RE.finditer(text or "")]
+    if not flags:
+        return text or "", []
+    out = _VERIFY_FLAG_RE.sub("", text)
+    out = re.sub(r"  +", " ", out)
+    # A flag on its own line leaves an empty line behind — collapse it.
+    out = re.sub(r"\n[ \t]*\n[ \t]*\n+", "\n\n", out)
+    return out.strip(), flags
+
+
 # ---------------------------------------------------------------------------
 # Lone-surrogate scrubbing
 # ---------------------------------------------------------------------------
