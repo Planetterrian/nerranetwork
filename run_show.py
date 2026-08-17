@@ -2744,6 +2744,24 @@ def run(args: argparse.Namespace) -> None:
             except Exception:  # noqa: BLE001 — tripwire must never break a run
                 pass
 
+            # Strip [VERIFY: ...] editorial flags before ANY public surface.
+            # The prompts promise flags are "stripped before production";
+            # nothing did — and the first flag offshore_north ever produced
+            # (correctly marking a stale acquisition date, 2026-08-17) was
+            # spoken on air. The digest .md keeps its flags as the editorial
+            # record; the spoken script, tts.txt, and reader must not.
+            from engine.utils import strip_verify_flags as _strip_verify
+            podcast_script, _verify_flags = _strip_verify(podcast_script)
+            for _vf in _verify_flags:
+                logger.warning(
+                    "::warning::Editorial flag stripped from spoken script "
+                    "(review the digest/logs): %s", _vf,
+                )
+            try:
+                metrics.record("verify_flags_stripped", len(_verify_flags))
+            except Exception:  # noqa: BLE001 — tripwire must never break a run
+                pass
+
             # Save TTS-ready script for debugging pronunciation/intro issues
             from engine.utils import strip_lone_surrogates as _scrub
             tts_script_path = digests_dir / f"{config.episode.prefix}_Ep{episode_num:03d}_{today:%Y%m%d}_tts.txt"
@@ -2784,6 +2802,9 @@ def run(args: argparse.Namespace) -> None:
                         _reader_body = _re.sub(
                             r"(?<=[.!?])\s+" + _esc + r"\s*", " ", _reader_body)
                 _reader_body = _re.sub(r"\n{3,}", "\n\n", _reader_body).strip()
+                # The reader snapshot predates the spoken-path VERIFY strip,
+                # and the blog is public — same rule as the audio.
+                _reader_body, _ = _strip_verify(_reader_body)
 
                 # Append the same AI disclosure the spoken script carries,
                 # stripped of speech tags, so the on-page transcript matches
