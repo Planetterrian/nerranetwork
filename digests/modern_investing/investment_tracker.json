@@ -6,7 +6,7 @@
     "position_size": 1000,
     "currency": "USD",
     "created": "2026-03-16",
-    "last_updated": "2026-08-16",
+    "last_updated": "2026-08-17",
     "inception_date": "2026-03-16",
     "benchmark_symbol": "^IXIC",
     "nasdaq_inception_close": 22374.18,
@@ -29,6 +29,13 @@
     "compounded_nasdaq_matched_pct": 17.59,
     "matched_window_alpha_pct": 9.28,
     "matched_window_trades": 45,
+    "verified_window_alpha_pct": -1.95,
+    "verified_window_return_pct": 2.69,
+    "verified_window_nasdaq_pct": 4.64,
+    "verified_window_trades": 10,
+    "unverified_window_trades": 35,
+    "verified_alpha_t_stat": -0.2,
+    "verified_alpha_statistically_significant": false,
     "benchmark_scores": {
       "nasdaq": {
         "portfolio_pct": 26.87,
@@ -1431,7 +1438,8 @@
         "nasdaq": 0.46,
         "sp500": 0.61,
         "tsx": 1.13
-      }
+      },
+      "reviewed_in_episode": 140
     },
     {
       "episode_num": 133,
@@ -1584,14 +1592,41 @@
         "LL-015"
       ],
       "resolved_symbol": "BNS.TO",
-      "pick_reference_price": 126.98
+      "pick_reference_price": 126.98,
+      "current_price": 126.98
+    },
+    {
+      "episode_num": 140,
+      "date": "2026-08-17",
+      "symbol": "QEC.TO",
+      "market": "TSX",
+      "strategy": "Catalyst entry on Quebec gas policy progress and HCCO technology updates",
+      "confidence": "Medium",
+      "target_range": "+4% to +8% over the five-day window if momentum holds.",
+      "trade_type": "weekly",
+      "status": "open",
+      "entry_price": null,
+      "exit_price": null,
+      "pnl_pct": null,
+      "pnl_dollars": null,
+      "lesson": "",
+      "sector": "energy",
+      "rules_in_effect": [
+        "LL-054",
+        "LL-041",
+        "LL-028",
+        "LL-017",
+        "LL-015"
+      ],
+      "resolved_symbol": "QEC.TO",
+      "pick_reference_price": 0.27
     }
   ],
   "benchmark": {
     "current_close": 26729.16,
     "inception_to_date_pct": 19.46,
     "ytd_pct": 15.04,
-    "last_updated": "2026-08-16"
+    "last_updated": "2026-08-17"
   },
   "alpha": {
     "inception_to_date_pct": -18.79,
@@ -1599,14 +1634,9 @@
     "monthly": {}
   },
   "sectors": {
-    "other": {
-      "trade_count": 5,
-      "exposure_pct": 50.0,
-      "cumulative_pnl": 29.4
-    },
     "energy": {
-      "trade_count": 1,
-      "exposure_pct": 10.0,
+      "trade_count": 2,
+      "exposure_pct": 20.0,
       "cumulative_pnl": -14.48
     },
     "healthcare": {
@@ -1618,6 +1648,11 @@
       "trade_count": 3,
       "exposure_pct": 30.0,
       "cumulative_pnl": 52.94
+    },
+    "other": {
+      "trade_count": 4,
+      "exposure_pct": 40.0,
+      "cumulative_pnl": 43.5
     }
   },
   "monthly_snapshots": [
@@ -1669,7 +1704,6 @@
     }
   ],
   "used_segment_ids": [
-    "mit_utility_portfolio_review",
     "mit_guide_first_10k",
     "mit_etf_strategies",
     "mit_technical_analysis",
@@ -1728,6 +1762,7 @@
     "mit_history_index_fund",
     "mit_contrarian_passive",
     "mit_contrarian_home_bias",
-    "mit_utility_brokerage"
+    "mit_utility_brokerage",
+    "mit_utility_portfolio_review"
   ]
 }
