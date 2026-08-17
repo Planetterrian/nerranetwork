@@ -990,3 +990,62 @@ class TestAudienceBreadthDoctrine:
                               .read_text(encoding="utf-8"))["offshore_north"]
         assert "alone" in meta["tagline"].lower()
         assert "No sailing knowledge required" in meta["description"]
+
+
+class TestDebutCarriesTheDoctrine:
+    """Aug 2026 fresh start: the debut is the show's permanent front door
+    (frozen once directories index it). It must open on the quest, plant
+    the Birch lineage seed, invite all three rings, and never say 'we'."""
+
+    def test_quest_leads_in_both_appendices(self):
+        d = first_episode_digest_appendix(1, "Offshore North", "offshore_north")
+        p = first_episode_podcast_appendix(1, "Offshore North", "offshore_north")
+        assert "QUEST LEADS" in d and "QUEST LEADS" in p
+        assert "Everest of the seas" in p
+
+    def test_lineage_seed_planted(self):
+        p = first_episode_podcast_appendix(1, "Offshore North", "offshore_north")
+        assert "LINEAGE SEED" in p
+        assert "ninety-eight seconds" in p
+
+    def test_three_ring_invitation(self):
+        p = first_episode_podcast_appendix(1, "Offshore North", "offshore_north")
+        low = " ".join(p.lower().split())
+        assert "never sailed" in low
+        assert "no sailing knowledge required" in low
+        assert "no canadian passport required" in low
+
+    def test_solo_show_bans_we(self):
+        p = first_episode_podcast_appendix(1, "Offshore North", "offshore_north")
+        assert 'never "we"' in p
+
+    def test_dan_bio_matches_round_three(self):
+        p = first_episode_podcast_appendix(1, "Offshore North", "offshore_north")
+        assert "airline captain" in p
+        assert "commercial airline pilot and a Nerra Network" not in p
+
+
+class TestFreshStartState:
+    """Everything retired so the next run is Episode 1 with the full stack."""
+
+    def test_no_episode_artifacts_remain(self):
+        digests = _ROOT / "digests" / "offshore_north"
+        leftovers = [p.name for p in digests.iterdir()
+                     if p.name not in {".gitkeep"}
+                     and not p.name.startswith("credit_usage_")]
+        assert not leftovers, f"unexpected files: {leftovers}"
+
+    def test_feeds_absent_so_numbering_restarts(self):
+        assert not (_ROOT / "offshore_north_podcast.rss").exists()
+        assert not (_ROOT / "blog_offshore_north.rss").exists()
+        from engine.publisher import get_next_episode_number
+        n = get_next_episode_number(
+            _ROOT / "offshore_north_podcast.rss",
+            _ROOT / "digests" / "offshore_north",
+            "Offshore_North_Ep*.mp3")
+        assert n == 1
+
+    def test_spend_records_kept(self):
+        digests = _ROOT / "digests" / "offshore_north"
+        credits = list(digests.glob("credit_usage_*.json"))
+        assert len(credits) == 4, "real spend must stay on the books"

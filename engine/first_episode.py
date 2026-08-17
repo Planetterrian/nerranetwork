@@ -42,15 +42,20 @@ standard hook line and the standard section headings — the pipeline and the
 blog both read them — and add ONE new section directly after the hook:
 
 **## What This Show Is** (250-350 words, first episode only)
-- The gap: one of the great endurance sports on earth is reported almost
-  entirely in French, leaving English-speaking fans with the results but
-  not the meaning. This show closes that gap weekly. State it once,
-  plainly — no grievance, no hype.
-- The spine: every four years a small number of people sail alone, without
-  stopping and without assistance, around the world, and no Canadian has
-  ever finished. Scott Shawyer and Canada Ocean Racing are trying to change
-  that at the Vendee Globe starting 12 November 2028. The show follows that
-  attempt week by week and uses it as a door into the whole sport.
+- THE QUEST LEADS. Open on the story, not the show: every four years a
+  small number of people sail alone, without stopping and without
+  assistance, around the world — the hardest thing in sailing, the kind
+  of race that gets called the Everest of the seas — and no Canadian has
+  ever finished it. Scott Shawyer and Canada Ocean Racing are trying to
+  change that at the Vendee Globe starting 12 November 2028. The show
+  follows that attempt week by week and uses it as a door into the whole
+  sport.
+- The lineage seed, one or two sentences: Canadians have history here —
+  a Canadian won the very first Route du Rhum, in 1978, by 98 seconds
+  after 23 days at sea. This series is the next chapter of that story.
+- The gap: this sport is reported almost entirely in French, so the
+  stories reach English speakers late and stripped of meaning. This show
+  closes that gap weekly. State it once, plainly — no grievance, no hype.
 - The weekly shape: The Canadian Boat (consequence, not recap), The Fleet
   (the week in offshore racing with the why-it-matters layer), Plain
   Sailing (one concept explained properly), The Countdown (days to the
@@ -58,8 +63,10 @@ blog both read them — and add ONE new section directly after the hook:
 - The promise: sources named and linked every week; no hype; no
   play-by-play that is stale by Monday; nothing stated that the sources do
   not support, and uncertainty flagged as uncertainty.
-- Who it is for: people who are enthusiastic, not expert — and never
-  treated as though those are the same thing.
+- Who it is for — all three rings, explicitly: lifelong offshore fans,
+  weekend sailors, and people who have never touched a rope and never
+  will. No sailing knowledge is required and none is assumed; whatever
+  needs explaining gets explained, one clean sentence at a time.
 - The network, in two or three sentences: Offshore North is part of the
   Nerra Network, an independent, ad-free network of daily shows built by
   two friends (Novak plus Perra equals Nerra) covering technology, science,
@@ -141,16 +148,23 @@ Order and shape:
 3. **[THE INTRODUCTION — 450-600 WORDS, first episode only]** Dan explains,
    in his own plain voice, what this show is. Cover, in whatever order
    reads naturally — as talk, not as a list read aloud:
-   - **WHY IT EXISTS.** One of the great endurance sports on earth is
-     reported almost entirely in French, which leaves English-speaking
-     fans with the results but not the meaning. This show closes that gap
-     every Monday. Say it once, without grievance and without hype.
-   - **THE SPINE OF THE SERIES.** Every four years a small number of
-     people sail alone, without stopping and without assistance, all the
-     way around the world, and no Canadian has ever finished. Scott
+   - **THE QUEST LEADS — this is the first thing the introduction earns.**
+     Every four years a small number of people sail alone, without
+     stopping and without assistance, all the way around the world — the
+     hardest thing in this sport, the kind of race that gets called the
+     Everest of the seas — and no Canadian has ever finished. Scott
      Shawyer and Canada Ocean Racing are trying to change that at the
      Vendee Globe starting 12 November 2028. The show follows that attempt
-     week by week and uses it as a door into the whole sport.
+     week by week and uses it as a door into the whole sport. Tell it as
+     a story a stranger would lean into, not as a mission statement.
+   - **THE LINEAGE SEED.** One or two sentences, planted not lectured:
+     Canadians have history in this sport — a Canadian won the very first
+     Route du Rhum, in 1978, by ninety-eight seconds after twenty-three
+     days at sea — and this series is the next chapter of that story.
+   - **WHY IT EXISTS.** This sport is reported almost entirely in French,
+     which leaves English speakers with the results but not the meaning.
+     This show closes that gap every Monday. Say it once, without
+     grievance and without hype.
    - **WHAT LISTENERS GET EACH WEEK.** Describe the four recurring
      segments in your own words. CRITICAL: do NOT speak any segment's
      announcement phrase here — those phrases are chapter triggers and the
@@ -170,15 +184,21 @@ Order and shape:
    - **WHO IT IS FOR, AND WHO IS TALKING.** Say who the show is for as
      Dan would say it out loud to one person — warm, first person,
      contractions, no policy language, and NOT a restatement of this
-     bullet. Dan is a commercial airline pilot and a Nerra Network
-     co-founder, not an offshore racing expert, and says so plainly. He
-     may name the two things he does bring — a working life spent reading
-     weather, trading a shorter track against a faster one, and making
-     irreversible calls on incomplete information; and having felt, at a
-     far smaller scale, what it is like when a hull comes unstuck and
-     starts to fly. ONE such touch, briefly. No career history, no resume,
-     no life story. Do NOT invent any specific past event, place, date or
-     anecdote for Dan — he is a real person.
+     bullet. The invitation is explicitly wide: lifelong offshore fans,
+     weekend sailors, and people who have never sailed and never will —
+     no sailing knowledge required, no Canadian passport required; the
+     story is the ticket in. Dan is an airline captain, a lifelong
+     recreational sailor, and a Nerra Network co-founder — not an
+     offshore racing expert, and he says so plainly. He may name the two
+     things he does bring — a working life spent reading weather, trading
+     a shorter track against a faster one, and making irreversible calls
+     on incomplete information; and having felt, at a far smaller scale,
+     what it is like when a hull comes unstuck and starts to fly. ONE
+     such touch, briefly. No career history, no resume, no life story.
+     Do NOT invent any specific past event, place, date or anecdote for
+     Dan — he is a real person. And there is ONE host: say "I" or "the
+     show", never "we", "us", or "our" — Ep001's debut said "we follow
+     their attempt" on a solo show.
    - **WHAT THE NERRA NETWORK IS.** Offshore North is part of it, so say
      what it is: an independent, ad-free network of daily shows built by
      two friends — Novak plus Perra equals Nerra — covering technology,
