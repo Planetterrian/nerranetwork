@@ -184,6 +184,12 @@ _RAW_RULES: List[Tuple[str, str, str]] = [
     # repaired here; that's the prompt-side fix.)
     (r"(?im)^(\s*(?:\d+\.|[-*•])?\s*\*\*)\s*Title\s*[:\-—]\s*", r"\1",
      "'**Title:' heading label"),
+    # Story-recurrence annotations (Aug 2026, engine/story_recurrence.py)
+    # are instruction text injected into the digest prompt's article
+    # listing — if the model ever echoes one into the digest body, strip
+    # the whole line before any reader surface sees it.
+    (r"(?im)^\s*\[?ALREADY-COVERED NOTE\b.*(?:\n|$)", "",
+     "'[ALREADY-COVERED NOTE' echo"),
     # NOTE: box-drawing horizontal rules (━━━ / ─── / ═══) are NOT
     # scrubbed here — they're converted to proper ``<hr>`` separators
     # by ``engine.newsletter_body.replace_box_rules_with_hr`` in the

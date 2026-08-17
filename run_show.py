@@ -1351,6 +1351,39 @@ def run(args: argparse.Namespace) -> None:
 
         from engine.utils import prompt_pub_date
 
+        # Story-recurrence memory (Aug 2026): inline "already covered —
+        # update, don't re-tell" notes attached to the exact articles the
+        # model is deciding about. Reads the dated headline window the
+        # ContentTracker already persists; matching is salient-token
+        # overlap with an automatic common-token filter so re-headlined
+        # versions of a story are caught (the class the 0.72 title-
+        # similarity dedup and the flat DO-NOT-REPEAT list both missed —
+        # Fort Bend ran 5 of 10 Tesla episodes). Best-effort: any failure
+        # renders the legacy listing.
+        _recurrence_notes: dict = {}
+        _recurrence_index = None
+        if getattr(config, "story_recurrence", False):
+            try:
+                from engine.story_recurrence import (
+                    RecurrenceIndex, annotate_articles)
+                _recurrence_index = RecurrenceIndex(
+                    content_tracker.data.get("episodes", []),
+                    exclude_date=datetime.date.today().isoformat(),
+                )
+                _recurrence_notes = annotate_articles(
+                    articles, _recurrence_index)
+                if _recurrence_notes:
+                    logger.info(
+                        "Story recurrence: %d of %d articles matched the "
+                        "recent-coverage window and carry update-don't-"
+                        "retell notes", len(_recurrence_notes), len(articles))
+                metrics.record("story_recurrence_annotated",
+                               len(_recurrence_notes))
+            except Exception as _rec_exc:  # noqa: BLE001 — never block a run
+                logger.warning("Story recurrence annotation failed "
+                               "(non-fatal): %s", _rec_exc)
+                _recurrence_notes = {}
+
         news_lines = []
         for i, art in enumerate(articles, 1):
             title = art.get("title", "Untitled")
@@ -1363,6 +1396,8 @@ def run(args: argparse.Namespace) -> None:
                 f"{i}. **{title}** — {source}"
                 + (f" ({pub})" if pub else "")
                 + f"\n   {desc}\n   URL: {url}"
+                + ("\n" + _recurrence_notes[i - 1]
+                   if (i - 1) in _recurrence_notes else "")
             )
         news_section = "\n\n".join(news_lines)
 
@@ -1536,6 +1571,22 @@ def run(args: argparse.Namespace) -> None:
             )
             save_usage(tracker, digests_dir)
             sys.exit(1)
+
+        # Story-recurrence outcome metric (Aug 2026): how many of the
+        # SHIPPED digest's stories match the recent-coverage window. THE
+        # scoreable number for the recurrence lever — computed against
+        # the pre-record index (excludes today, so the digest never
+        # matches itself; the FF Ep128 lesson). Reviews score this
+        # against the Fort Bend baseline (same story 5 of 10 episodes).
+        if _recurrence_index is not None:
+            try:
+                from engine.story_recurrence import recurrence_in_digest
+                metrics.record(
+                    "story_recurrence_in_digest",
+                    recurrence_in_digest(x_thread, _recurrence_index))
+            except Exception as _rec_exc:  # noqa: BLE001
+                logger.warning("Story recurrence metric failed "
+                               "(non-fatal): %s", _rec_exc)
 
         # Record episode content in the cross-episode tracker
         if section_patterns:

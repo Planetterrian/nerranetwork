@@ -1,5 +1,6 @@
 name: Omni View
 slug: omni_view
+memory_enabled: true   # Aug 2026 expansion: narrative memory (regulatory arcs / world-news arcs) — see engine/show_memory.py.
 weekly_summary_segment: true   # July 2026: daily cadence; Sunday episode includes a short "week in review" segment (content lake).
 description: The day's most important stories from around the world — explained calmly,
   from every side, in plain language for everyone from teens to seniors.
@@ -125,6 +126,14 @@ x_accounts:
   label: Semafor
   max_posts: 3
 min_articles_skip: 4
+
+# Story-recurrence memory (Aug 2026): inline "already covered — update,
+# don't re-tell" notes on fetched articles matching the ContentTracker's
+# recent-headline window. Built after the Fort Bend story ran in 5 of 10
+# Tesla episodes past three existing dedup layers. Data-side and
+# deterministic (engine/story_recurrence.py).
+story_recurrence: true
+
 keywords:
 - election
 - president

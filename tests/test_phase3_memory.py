@@ -141,9 +141,25 @@ class TestRegistryAndConfig:
         assert cfg.memory_enabled is True
 
     def test_non_memory_show_defaults_false(self):
+        # omni_view joined the memory registry in the Aug 2026 expansion,
+        # so the no-memory example is now a lesson show that will never
+        # carry narrative memory (vocab_tracker owns its continuity).
         from engine.config import load_config
-        cfg = load_config(PROJECT_ROOT / "shows" / "omni_view.yaml")
+        cfg = load_config(PROJECT_ROOT / "shows" / "privet_russian.yaml")
         assert cfg.memory_enabled is False
+
+    def test_aug_2026_expansion_shows_enabled(self):
+        """env_intel (regulatory arcs) + omni_view (world-news arcs) —
+        the last two news-driven shows without narrative memory."""
+        from engine.config import load_config
+        from engine import show_memory
+        for slug in ("env_intel", "omni_view"):
+            cfg = load_config(PROJECT_ROOT / "shows" / f"{slug}.yaml")
+            assert cfg.memory_enabled is True, slug
+            assert show_memory.get_config(slug) is not None, slug
+            prompt = (PROJECT_ROOT / "shows" / "prompts" /
+                      f"{slug}_digest.txt").read_text(encoding="utf-8")
+            assert "{narrative_memory_section}" in prompt, slug
 
 
 # ---------------------------------------------------------------------------

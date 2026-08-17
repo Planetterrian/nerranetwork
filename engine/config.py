@@ -981,6 +981,14 @@ class ShowConfig:
     # content (moon calendars, planet-visibility roundups, "this day in
     # history") — see engine.utils.drop_excluded_titles.
     exclude_title_patterns: List[str] = field(default_factory=list)
+    # Story-recurrence memory (Aug 2026): annotate fetched articles that
+    # match the ContentTracker's recent-headline window with an inline
+    # "already covered — update, don't re-tell" note in the digest
+    # prompt's article listing. Data-side, deterministic, no LLM calls
+    # (engine/story_recurrence.py). Built after the Fort Bend story ran
+    # in 5 of 10 Tesla episodes past three existing dedup layers.
+    # Default False; the daily news shows opt in per-YAML.
+    story_recurrence: bool = False
     web_search_queries: List[str] = field(default_factory=list)
     # Run web_search_queries on EVERY episode, not only when the on-topic
     # article count falls below min_articles. For shows whose key sources
@@ -1214,6 +1222,7 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
         x_fetch_enabled=data.get("x_fetch_enabled"),
         keywords=data.get("keywords", []),
         exclude_title_patterns=data.get("exclude_title_patterns", []),
+        story_recurrence=bool(data.get("story_recurrence", False)),
         web_search_queries=data.get("web_search_queries", []),
         web_search_always=bool(data.get("web_search_always", False)),
         min_articles=data.get("min_articles", 3),
