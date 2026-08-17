@@ -1,0 +1,157 @@
+La récupération par serveur de langage coûte plus de jetons que grep pour la plupart des tâches d’agents de codage, et améliore rarement les taux de succès.
+
+Ici Modèles et Agents, épisode cent quarante-quatre.
+
+Une nouvelle étude de mesure sur Claude Opus quatre virgule huit, Sonnet quatre virgule six et Haiku quatre virgule cinq établit que la récupération sémantique fondée sur le protocole de serveur de langage augmente l’usage de jetons de six à cent dix-huit pour cent sur la localisation de symboles.
+
+Le travail introduit une métrique de jetons par succès et montre qu’un routeur adaptatif calé sur la classe de tâche et la puissance du modèle est la seule configuration qui économise parfois des jetons.
+
+Les créateurs devraient tester un routage de récupération propre à chaque tâche plutôt que de basculer par défaut sur des index sémantiques.
+
+Une ablation à cinq bras sur des dépôts Python et TypeScript a mesuré si la récupération par protocole de serveur de langage économise des jetons pour les agents de codage, comparée au grep lexical.
+
+Sur la localisation par nom de symbole, l’approche protocole de serveur de langage a fait monter le nombre de jetons et a été ignorée par les agents dès qu’elle était gratuite.
+
+Sur les tâches de complétude des références, elle a amélioré la précision mais n’a pas pu relever le plafond de rappel imposé par la minutie de l’agent.
+
+Elle n’a économisé des jetons que pour le modèle le plus faible.
+
+Sur de vraies éditions d’exécution de tests, grep a résolu parfaitement les renommages multi-fichiers, tandis qu’un protocole de serveur de langage limité à la localisation a manqué les sites d’appel dans trois quarts des cas.
+
+Même un protocole de serveur de langage à index complet préchauffé a comblé l’essentiel, mais pas la totalité, de l’écart, parce que les renommages doivent toucher les commentaires et les chaînes exclus des références sémantiques.
+
+L’étude conclut que le choix d’outil doit dépendre de la tâche plutôt que d’être universellement sémantique.
+
+Les créateurs qui travaillent sur les couches de récupération des agents devraient implémenter un routeur léger qui bascule par défaut sur grep pour la localisation et n’atteint le protocole de serveur de langage que pour le travail lourd en références.
+
+Jais deux cent soixante-dix B est le plus grand modèle ouvert centré sur l’arabe entraîné à partir de zéro, associé à une variante huit B.
+
+Tous les deux utilisent un vocabulaire personnalisé centré sur l’arabe et une recette d’entraînement optimisée qui atteint de solides résultats sur O A L L deux et Ara Gen avec un budget de jetons plus petit que les modèles comparables.
+
+La famille mène les modèles ouverts évalués sur des bancs d’essai ancrés culturellement, qui couvrent la poésie, la religion, la cuisine et l’interprétation des rêves, tout en restant compétitive sur les tâches en anglais.
+
+Les modèles sont publiés sous une licence commercialement permissive sur Hugging Face, avec l’application de discussion soixante-dix B disponible sur le web, iOS et Android, capable de tourner jusqu’à deux mille jetons par seconde sur le matériel Cerebras.
+
+Les équipes qui construisent des applications arabes ou multilingues devraient d’abord tester la variante huit B pour les déploiements sensibles au coût.
+
+S E L R entraîne un seul modèle avec une perte de réponse conjointe et une perte de chaîne de pensée, pour que les trajectoires de raisonnement latent restent à la fois efficaces pour la tâche et directement décodables en étapes lisibles par un humain, sans décodeurs externes.
+
+L’approche a été validée sur de grands modèles de langage et des modèles vision-langage, offrant une meilleure efficacité en jetons et une meilleure exactitude que les lignes de base de style Coconut ou Heima, tout en fournissant une explicabilité intégrée.
+
+La page du projet et le code sont liés dans l’article.
+
+Les chercheurs qui explorent le raisonnement latent devraient examiner l’objectif multi-tâches comme un moyen d’éviter le classique compromis entre exactitude et interprétabilité.
+
+Inflation Agent mesure une inflation de jetons qui atteint quatre virgule vingt-cinq fois sur les modèles sept B pour le question-réponse multi-sauts.
+
+Il utilise l’entropie de branchement de la chaîne de pensée, calculée à partir de l’inférence locale, pour prédire les requêtes à forte inflation, avec une aire sous la courbe caractéristique de fonctionnement du récepteur de zéro virgule huit cent quatre-vingt-sept.
+
+Sur G S M huit K sous budget fixe, il atteint quatre-vingt-quatorze virgule sept pour cent d’exactitude contre quatre-vingt-onze pour cent pour Frugal G P T, tout en utilisant trente et un pour cent de jetons en moins, en appliquant un routeur de taux de change sémantique et une politique d’escalade neuve.
+
+Transférer des chaînes échouées vers G P T quatre o peut faire chuter l’exactitude jusqu’à trente-quatre virgule huit points, ce qui valide la conception d’escalade neuve.
+
+Les équipes d’agents devraient ajouter une prédiction d’inflation avant de router vers des modèles plus forts.
+
+B C M T découple les interactions locales de jetons du contexte global en appliquant l’auto-attention causale dense uniquement à l’intérieur des blocs.
+
+Il propage des résumés adaptatifs à travers une mémoire causale exponentielle qui est réinjectée dans les représentations.
+
+La conception reste pleinement parallélisable et compatible avec les implémentations standard d’auto-attention dense, tout en réduisant la consommation mémoire et en relevant le débit d’entraînement sur des contextes allant jusqu’à mille vingt-quatre jetons.
+
+Les ablations confirment que le mécanisme de mémoire porte les gains.
+
+Les équipes contexte long qui évaluent des alternatives à l’attention complète devraient comparer B C M T aux lignes de base à mémoire récurrente.
+
+Le système à neuf agents C L A I R Fin décompose les questions en affirmations atomiques stockées dans un grand livre de revendications financières typé.
+
+Il applique une autorité de preuve asymétrique, une vérification de la chaîne de garde, et un cycle de réfutation adaptatif dont la profondeur s’échelonne avec les constatations du débat.
+
+Sur le nouveau banc d’essai B B Fin Q A X, il relève la fidélité de zéro virgule sept cent quatre-vingts à zéro virgule huit cent quatre-vingt-neuf par rapport à la génération augmentée par récupération en une seule passe, tout en s’abstenant sur cinq virgule quatre pour cent des questions quand la preuve est insuffisante.
+
+Les équipes de question-réponse financière devraient examiner le grand livre de revendications et les étapes d’audit d’implication pour des garanties d’ancrage.
+
+Teach Mate G P T remplace le découpage plat par un graphe de programme hiérarchique appelé C O P E.
+
+Il route la récupération à travers des portes de couverture et applique la vérification S A V E R, qui note la fidélité et le risque d’hallucination par rapport aux preuves récupérées.
+
+Sur le nouveau jeu de données N C T B Sci Gen huit de cent quatre-vingt-dix-huit éléments, il hisse la fidélité de zéro virgule soixante-huit à zéro virgule quatre-vingt-seize et la pertinence de la réponse de zéro virgule soixante à zéro virgule quatre-vingt-neuf par rapport à la génération augmentée par récupération classique.
+
+Les créateurs d’outils éducatifs devraient tester la chaîne de traitement échelonnée à fermeture sur échec quand ils génèrent à partir de programmes structurés.
+
+H E R M E S coordonne un grand modèle de langage avec des contraintes de domaine et un traçage de preuves pour extraire des enregistrements structurés de cinquante-cinq volumes du Traité de paléontologie des invertébrés.
+
+Il a produit trente-deux mille deux cent soixante-dix-sept entités taxonomiques fossiles et quatre cent cinquante et un mille huit cent soixante-dix-huit attributs.
+
+Le F un d’extraction est resté stable près de zéro virgule quatre-vingt-dix à zéro virgule quatre-vingt-onze à travers les groupes fossiles et a livré un gain d’efficacité d’environ six fois par rapport aux lignes de base entièrement manuelles.
+
+La même chaîne de traitement s’est transférée au paléomagnétisme et à la géochimie sans réentraînement.
+
+Les équipes qui traitent des monographies scientifiques héritées devraient examiner la boucle d’extraction au niveau du document.
+
+Stream Hear affine un enseignant transducteur hors ligne sur des données étiquetées, génère des pseudo-étiquettes sur de l’audio non étiqueté, puis affine l’élève en flux avec une étape de réalignement régularisée par un a priori.
+
+Sur quatre jeux de données à décalage de domaine, il bat de façon constante l’affinage supervisé de l’élève et resserre l’écart avec l’enseignant hors ligne.
+
+Les équipes parole qui travaillent sur la reconnaissance automatique de la parole en flux à faibles ressources devraient tester la recette pseudo-étiquettes plus réalignement.
+
+Simon Willison retrace sa priorité productivité, de Django en passant par les grands modèles de langage jusqu’aux agents de codage, comme une quête constante d’outils qui minimisent le temps jusqu’au résultat.
+
+Le fil offre des exemples concrets de la façon dont chaque couche compose la précédente.
+
+Les créateurs qui évaluent des piles d’agents devraient lire le fil entier pour le cadrage de la progression.
+
+Willison positionne les agents de codage comme la dernière étape d’un schéma vieux de plusieurs décennies : adopter des outils à plus fort levier.
+
+Le billet met l’accent sur des gains de temps mesurables plutôt que sur le battage.
+
+Les praticiens qui comparent des cadres d’agents trouveront ce cadrage utile pour la priorisation.
+
+Google détaille les intégrations Gemini et Pixel pour l’analyse du football en temps réel et les expériences pour les supporters, via les nouveaux partenariats Football Club.
+
+Le billet montre des cas d’usage multimodaux qui combinent des modèles sur l’appareil et dans le nuage.
+
+Les développeurs mobiles intéressés par des applis multimodales proches du sport devraient examiner le duo Pixel Gemini.
+
+C S I R O avance que les défis d’alignement, auparavant théoriques, sont désormais opérationnels pour les systèmes déployés, et esquisse des directions de recherche pratiques.
+
+Les équipes sûreté qui suivent les tendances réglementaires et d’évaluation devraient examiner ce cadrage concret.
+
+Tout le monde traite le tarif au jeton comme un signal de coût fiable pour les systèmes agentiques.
+
+En pratique, le vrai coût est le ratio des jetons du flux de travail complet sur le coût du premier appel, et ce ratio peut dépasser quatre fois sur les tâches plus dures.
+
+L’écart apparaît parce que les chaînes de raisonnement échouées sont jetées et relancées avec des modèles plus forts.
+
+Chaque relance multiplie les jetons sans aucun changement à la grille de prix d’origine.
+
+Inflation Agent mesure ce ratio à travers les paliers de modèles, puis entraîne un prédicteur local qui utilise l’entropie de branchement de la chaîne de pensée pour signaler les requêtes à forte inflation avant l’exécution.
+
+Le routage maximise ensuite l’exactitude attendue divisée par le vrai coût prédit, et applique une règle d’escalade neuve qui ne transfère jamais une chaîne échouée.
+
+L’approche a livré trente et un pour cent de jetons en moins que Frugal G P T sur G S M huit K, avec une exactitude plus élevée.
+
+Utilisez un routage conscient de l’inflation quand votre charge de travail contient des questions multi-sauts ou ouvertes.
+
+Tenez-vous au tarif à un seul appel uniquement pour les tâches courtes à fort taux de succès, où les relances sont rares.
+
+Lancez l’ablation jetons par succès de l’article sur le protocole de serveur de langage sur vos propres bases de code, pour décider entre grep et récupération sémantique par type de tâche.
+
+Testez Jais deux huit B sur des invites arabes ou ancrées culturellement avant de vous engager sur de plus grands modèles fermés.
+
+Prototyppez un prédicteur d’inflation léger qui utilise l’entropie locale de chaîne de pensée avant d’ajouter des modèles plus forts aux boucles d’agents.
+
+Explorez la chaîne de traitement d’extraction H E R M E S sur n’importe quel corpus technique long en P D F que vous maintenez.
+
+D’autres études G R P O multilingues sont attendues, alors que les équipes s’étendent au-delà de l’entraînement au raisonnement centré sur l’anglais.
+
+Des cadres supplémentaires de vérification au niveau des affirmations pour les domaines financiers et scientifiques sont en route.
+
+D’autres mesures de l’inflation de jetons à travers de nouveaux bancs d’essai d’agents arrivent.
+
+Avant de partir, la prochaine vague de sorties de modèles ouverts centrés sur l’arabe montrera si la variante huit B de Jais deux monte en charge sur des charges de production sans affinage supplémentaire.
+
+Voilà qui clôt le point I A d’aujourd’hui. Partagez ceci avec un développeur ou un créateur qui veut rester à jour. Abonnez-vous où que vous écoutiez. À demain. Et si vous préférez regarder plutôt qu’écouter, retrouvez-nous sur YouTube à Nerra Network — le lien est dans les notes de l’émission. Petit conseil du réseau : essayez Fascinating Frontiers ensuite — les nouvelles les plus fascinantes de l’espace et de la science.
+
+Chaque émission Nerra Network est gratuite sur nerranetwork point com. Et sur le site : les visuels de chaque épisode vivent dans notre galerie d’images gratuite à nerranetwork point com gallery — libres de droits sous Creative Commons, à télécharger avec mention de la source.
+
+Cet épisode a utilisé une synthèse vocale I A de ma voix — la sélection éditoriale et l’analyse sont les miennes.
