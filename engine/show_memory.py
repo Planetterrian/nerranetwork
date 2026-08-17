@@ -1192,5 +1192,61 @@ SHOW_MEMORY_CONFIGS: Dict[str, MemoryConfig] = {
             "displacement", "augment", "creativity", "trust", "disclosure",
         ],
     ),
+    # Aug 2026 field review: the show's spine IS a two-year longitudinal
+    # story (the first Canadian campaign to finish the Vendée Globe,
+    # 12 Nov 2028) — the exact shape this engine chronicles. Seeded from
+    # web-verified facts only (routedurhum.com / imoca.org /
+    # vendeeglobe.org, Aug 2026); statuses dated so plan-decay is visible.
+    "offshore_north": MemoryConfig(
+        slug="offshore_north",
+        label="OFFSHORE NORTH",
+        file_prefix="offshore_north",
+        default_programs={
+            "road_to_rhum": _prog(
+                "EMIRA IV — Road to the Route du Rhum",
+                "Departed Collingwood 8-9 Aug 2026 (earlier than the "
+                "published mid-August plan); transatlantic delivery to "
+                "France, then Route du Rhum prep. Race starts 1 Nov 2026, "
+                "Saint-Malo — Shawyer's first solo transatlantic on a "
+                "foiling IMOCA.",
+                ["Where the boat is right now (position decays weekly)",
+                 "Refit scope and shore base in France"],
+                confidence="high",
+            ),
+            "vg2028_qualification": _prog(
+                "Vendée Globe 2028 Qualification",
+                "Published outline (imoca.org / vendeeglobe.org): one "
+                "Grade 2 solo race finished on the race boat within 2x the "
+                "winner's time, top-37 Globe Series cut, 40-boat cap; "
+                "registration opened 16 Feb 2026.",
+                ["What the campaign has banked vs what remains",
+                 "Which designated races Shawyer will enter"],
+                confidence="high",
+            ),
+            "fleet_2028_cycle": _prog(
+                "The 2028 Fleet Arms Race",
+                "New-generation builds entering the water through 2026-27 "
+                "(Simon's Groupe Dubreuil II launched Aug 2026); the cycle "
+                "races in the shadow of Charlie Dalin's death (11 Jun 2026).",
+                ["Which campaigns build new vs optimise proven hulls",
+                 "Who emerges as the cycle's favourite"],
+            ),
+            "canadian_lineage": _prog(
+                "The Canadian Lineage",
+                "Birch (won the first Route du Rhum, 1978, by 98 seconds) — "
+                "Roufs (lost in the 1996-97 Vendée) — Hatfield — Shawyer. "
+                "No Canadian has completed the Vendée Globe.",
+                ["Canadian media and public attention as the campaign grows",
+                 "Youth Pathway Programme progress"],
+                confidence="high",
+            ),
+        },
+        theme_keywords=[
+            "imoca", "vendée", "vendee", "route du rhum", "foil", "shawyer",
+            "emira", "qualification", "globe series", "transat", "solo",
+            "saint-malo", "refit", "collingwood", "atlantic", "southern ocean",
+            "class40", "ultim", "défi azimut", "defi azimut",
+        ],
+    ),
 }
 

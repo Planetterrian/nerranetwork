@@ -85,6 +85,24 @@ sources:
   - url: "https://sailorz.com/en/feed/"
     label: "Sailorz (Tip & Shaft, English)"
 
+  # ---- Tier 3b: FRENCH PRIMARY PRESS (Aug 2026 field review) ----
+  # The sport is reported in French; three weekly skips traced to an
+  # English-only feed list starving the digest. The show's premise IS
+  # contextual translation — these are the sources it exists to translate.
+  # French-language items flow through the normal keyword filter (the
+  # sport's proper nouns are identical in French) and the digest's
+  # translated-French VERIFY rule applies to claims sourced only here.
+  # Both feeds VERIFIED serving valid RSS on 2026-08-17.
+  - url: "https://www.courseaularge.com/feed"
+    label: "Course au Large (FR)"
+  - url: "https://sailorz.com/feed/"
+    label: "Sailorz (Tip & Shaft, French)"
+  # Voiles et Voiliers (Ouest-France) publishes no direct RSS — reach it
+  # via a Google News site query (VERIFIED serving items 2026-08-17).
+  # url_utils resolves GN redirects to the publisher at fetch time.
+  - url: "https://news.google.com/rss/search?q=site:voilesetvoiliers.ouest-france.fr&hl=fr&gl=FR&ceid=FR:fr"
+    label: "Voiles et Voiliers (via GN)"
+
   # ---- Tier 4: daily aggregation ----
   - url: "https://www.sailingscuttlebutt.com/feed/"
     label: Scuttlebutt Sailing News
@@ -250,7 +268,20 @@ keywords:
   - circumnavigation
   - On Board Reporter
   - 24-hour record
+  # French-language coverage terms (Aug 2026 — the FR feeds above; the
+  # sport's proper nouns are identical, these catch the generic phrases)
+  - course au large
+  - transat
+  - mise à l'eau
+  - Pointe-à-Pitre
+  - Ocean Fifty
+  - trimaran
+  # Canadian lineage (history features are on-topic for this show)
+  - Mike Birch
+  - Gerry Roufs
+  - Derek Hatfield
   # Skippers most likely to drive the week's news
+  - Charlie Dalin
   - Boris Herrmann
   - Malizia
   - Sam Goodchild
@@ -316,8 +347,21 @@ tts:
 audio:
   # No dedicated theme at launch — ships as a clean voice-only briefing.
   # When a track exists, point this at assets/music/offshore_north.mp3 and
-  # the network's standard mix parameters apply from _defaults.yaml.
+  # the network's standard mix parameters apply from _defaults.yaml
+  # (sidechain ducking, -16 LUFS master — the full broadcast chain only
+  # engages when music exists, so a theme is the single biggest remaining
+  # "sounds great" lever; see the operator item in the show bible for a
+  # ready-to-use generation prompt).
   music_file: null
+
+# Narrative memory (Aug 2026 field review): the show's spine IS a
+# two-year longitudinal story — the campaign's road to 12 Nov 2028 —
+# which is exactly what the show_memory engine chronicles. Registered in
+# engine/show_memory.py SHOW_MEMORY_CONFIGS + shows/hooks/offshore_north.py;
+# gives the narrative tracker, the public Story Tracker page, and
+# continuity injection into both prompts. Prompt-context change →
+# A/B-listen per landmine #17 (operator-directed).
+memory_enabled: true
 
 publishing:
   rss_file: offshore_north_podcast.rss

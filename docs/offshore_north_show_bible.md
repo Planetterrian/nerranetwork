@@ -526,3 +526,62 @@ Ep2 was retired a second time (feeds spliced, numbering re-verified at 2;
 both credit records kept). Drift guards: the round-three classes in
 `tests/test_offshore_north_weekly_fixes.py`. Prompt + closing changes
 alter shipped audio — A/B-listen per landmine #17.
+
+---
+
+## August 2026 field-depth review (round four)
+
+Operator-directed deep review of the SPORT itself, translated into show
+machinery. Everything below is web-verified (imoca.org, vendeeglobe.org,
+routedurhum.com, CBC and mainstream press, 2026-08-17) or marked
+"(confirm before use)" in the guide.
+
+- **Field guide** — `shows/prompts/offshore_north_field_guide.txt`,
+  injected into both prompts beside the standing facts, same usage
+  rules. Carries: the class ladder; the verified 2026–28 season map
+  (Défi Azimut 15–20 Sept 2026; **Route du Rhum starts 1 Nov 2026,
+  13:02, Saint-Malo, 117 skippers**; VG registration opened 16 Feb 2026;
+  start 12 Nov 2028); the **published VG 2028 qualification outline**
+  (one Grade-2 solo finish on the race boat within 2× winner's time,
+  top-37 Globe Series cut, 40-boat cap) — this SOURCES the standing
+  facts' open item, which Dan may now close; the people of the cycle,
+  including **Charlie Dalin's death (11 June 2026)** with a
+  handle-with-dignity rule; the **Canadian lineage** (Mike Birch won the
+  FIRST Route du Rhum, 1978, by 98 seconds — the show's signature frame
+  for the autumn arc; Gerry Roufs; Derek Hatfield; Shawyer as chapter
+  four); the France-owns-this-sport business background; and a
+  storyteller's physics bank.
+- **French primary feeds** — the root cause of three weekly skips was an
+  English-only feed list for a French-reported sport. Added (verified
+  live): Course au Large, Sailorz French edition, and Voiles et Voiliers
+  via a Google News site query. French coverage terms + lineage names
+  added to keywords. The translated-French VERIFY rule covers claims
+  sourced only there.
+- **Narrative memory ON** — registered in `SHOW_MEMORY_CONFIGS` with four
+  seeded programs (Road to the Rhum; VG 2028 qualification; the 2028
+  fleet cycle; the Canadian lineage), `shows/hooks/offshore_north.py`,
+  `memory_enabled: true`. The campaign IS a two-year story; the show now
+  chronicles it (Story Tracker page included). A/B-listen per #17.
+- **Engagement spec** — "HOW IT EARNS THE NEXT MINUTE" in the podcast
+  prompt: stakes before details, one number made physical, the serial
+  thread, picture-it moments, close the cold-open loop. Shapes only,
+  de-seeded.
+- **Explainer bank 40 → 45** — the missing Canadian lineage (Birch,
+  Roufs, four-chapters) plus connectivity-changed-the-sport and
+  why-ocean-races-finish-in-minutes.
+- **The Countdown upgraded** — qualification stakes may now be named
+  from the published outline (previously embargoed pending sourcing).
+
+**Operator item — theme music (the biggest remaining "sounds great"
+lever):** the show ships voice-only; the network's full broadcast chain
+(sidechain ducking, cinematic mix) only engages when
+`assets/music/offshore_north.mp3` exists. Suggested generation prompt
+for the usual tool: "Cinematic maritime theme, 60–90s: low strings and
+a slow building pulse like a long swell, subtle rope-and-rigging
+percussion, a bright resolving figure at the end — determined, vast,
+cold air and speed; no vocals, instrumental, broadcast-clean." Then set
+`audio.music_file: assets/music/offshore_north.mp3` — one YAML line.
+
+Ep2 (2026-08-17) retired a fourth time so the regeneration carries all
+of this; all three ep002 credit records kept. Drift guards: the
+field-review classes in `tests/test_offshore_north_weekly_fixes.py`.
