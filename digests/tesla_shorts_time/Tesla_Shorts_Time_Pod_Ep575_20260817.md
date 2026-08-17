@@ -1,0 +1,71 @@
+# Tesla Shorts Time
+**REAL-TIME TSLA price:** $342.27 ▲ $2.31 (0.7%)
+> **Barclays buying over a million Tesla shares after three quarters of selling shows institutions returning despite mixed market signals.**
+---
+### Top 12 News Items
+1. **Barclays Resumes Buying TSLA Shares in Q2 2026 — TSLAming (X)**
+   After three straight quarters of net selling, Barclays added 1,016,703 shares worth $427.625 million. The bank now holds 11,521,936 shares valued at $4.846 billion, representing 1.5313% of its $316.48 billion portfolio. The move reverses a prior selling streak and signals renewed institutional accumulation. Daily price action remains driven by net supply and demand, with some institutions buying while others plus retail and shorts sell more. Long-term holders are reminded that the position can still fluctuate yet the broader outlook stays intact. Source: [x.com](https://x.com/tslaming/status/2089232471045054877)
+
+2. **Netherlands FSD Drive Raises Questions — CleanTechnica**
+   Tesla FSD received activation permission in the Netherlands, the first European country to allow it. Early driver Dick Helders of XpengCam, who sometimes comments on CleanTechnica, was one of the first to drive the system in the country and brought a unique perspective to the experience. The rollout marks the initial supervised deployment in the region and surfaces questions around system behavior on local roads with different signage and markings. Source: [cleantechnica.com](https://cleantechnica.com/2026/08/17/netherlands-fsd-drive-raises-questions/)
+
+3. **California Just Cut Tesla Out Of Its New EV Incentive — Mshale**
+   California excluded Tesla from its latest EV incentive program. The decision removes a direct purchase subsidy channel for Tesla buyers in the state. No official reason was detailed in the filing. The change narrows Tesla's price advantage in its largest U.S. market and could slow retail momentum there. Source: [Google News](https://news.google.com/rss/articles/CBMiYEFVX3lxTE93Nm1DUkFEVEhBOGN3V2UwVmRlUFkxamhOZkxkVjF1OUptcDd2N2oyUXZwZ2VLOGU5eWVLbExfS212dVI5ejZPbW9mVWVrVlQwckpGdmRPbGhBTkdMYXRNaQ?oc=5)
+
+4. **Tesla to Open First Shikoku Location on August 28 at Major Shopping Mall in Ehime — finance.biggo.com**
+   Tesla will open its first Shikoku showroom on August 28 inside a major Ehime shopping mall. The location expands the brand's physical presence across Japan's four main islands. No sales volume targets were disclosed. The new site follows the pattern of placing showrooms in high-traffic retail centers to reach customers who may not visit dedicated service centers. Source: [Google News](https://news.google.com/rss/articles/CBMidkFVX3qxTE9OSjhtNVBIWm1YQXB2amp3LVB6UWRlV0g1Zm43TGp1a1lEd2pFNExMWGJnd3lSNWRiS0RCNDNuM1lIbWMwaWVVTzhhVTdVX3BuSlcwREJzVnN5Q2tPRnRVWFVua1FhSnk3WnVrWmEyUHJrUWF4cVE?oc=5)
+
+5. **Tesla Megapack Powers 385,000 Homes in Poway, California — BASENOR - Tesla Accessories**
+   A Megapack installation in Poway supplies backup power equivalent to 385,000 homes. The project adds to Tesla Energy's growing utility-scale footprint in California. No capacity figure in megawatt-hours was released. The deployment continues the pattern of large battery systems providing grid support during peak demand or outages. Source: [BASENOR - Tesla Accessories](https://news.google.com/rss/articles/CBMilAFBVV95cUxPa2RVRlFJbzNzekt2MllKZmJzYXVpX1NMQlR2Rnprc3lqcmdWanlnd0hnM3BjYlNVN1Aya2NtNEJGT0s0U1F2Q0pLR3lub2E3OXltR242YTRoalhTc3RXZElkYWZoLVFUdWFIOENyM1NCVXhJLVZKaG9ibDc4TkF0ZWVZVXBtTlVBRFNJQ2FRcTZ3enZh?oc=5)
+
+6. **Fleet of Tesla Cybercabs sitting in a Nashville parking lot — r/teslamotors**
+   A group of Cybercabs was photographed parked together in Nashville. The sighting adds to scattered reports of pre-production units appearing in multiple cities. No delivery timeline was attached to the images. The vehicles remain in testing configurations as production and regulatory paths continue to develop. Source: [reddit.com](https://www.reddit.com/r/teslamotors/comments/1vq9p76/fleet_of_tesla_cybercabs_sitting_in_a_nasvhille/)
+
+7. **Rivian's Tesla-Style Point-to-Point Driving Coming to Owners This Year — Yahoo Autos**
+   Rivian plans to release point-to-point assisted driving to owners before year end. The system mirrors Tesla's highway-to-highway routing approach. No regulatory approval details were provided. The feature will allow drivers to set a destination and have the vehicle handle the route segment without constant steering input on approved roads. Source: [Yahoo Autos](https://news.google.com/rss/articles/CBMinwFBVV95cUxQVF9odkZBWjJHSERSOW9GdUR2ck4xT0Fnb1Z6SXgtYXN2aHNJYTBER2I4NUVYdVp0Y19JWUhuWmNrbG1VdFhVaElmTzVETmtJMWVSUkJVcUQ5ako4QThzMlVRcWZneW5DVzE2ZlZUYjlOZ3Q2bmFfcHRDQ2dtVzdlZk9vVE16Y2RpVHBUQzhkUUlyNXVYQ2F6RXl1LVdxZEE?oc=5)
+
+8. **Morgan Stanley Says Tesla Has To Prove The Robots Are Real — thewealthadvisor.com**
+   Morgan Stanley analysts stated Tesla must demonstrate working Optimus units at scale before valuation models can incorporate robotics revenue. The note highlights the gap between prototype videos and factory output. No price target change was announced. The assessment focuses on the difference between early demonstrations and repeatable production volumes that could affect future earnings. Source: [Google News](https://news.google.com/rss/articles/CBMilwFBVV95cUxPdk1Hd1VIUUVaOTV5eGNaODYzWjJfVlZnTkExZHF0RUpEZzg0NjlUY2ZLcE1RcjdlNmt2rnFuT21OaVNjUndLZzhKM2M4TWk5UnhVeW4zaVlDc0R2NFJRVEJ6T0NpMnBxcFBaV3pwbHZLeFN3TTg5VG1EOGtCNGtZeVRpXzNhNkxfb0lfdHJQWXpVSlZPRVFZ?oc=5)
+
+9. **Tesla Launches Hidden Storage Tray for Model Y — Not A Tesla App**
+   Tesla added a $40 under-seat storage tray for newer Model Y vehicles. The tray fits beneath the front seats and provides concealed cargo space. Availability is limited to recent builds. The addition gives owners a practical way to organize small items without using visible cabin space. Source: [notateslaapp.com](https://www.notateslaapp.com/news/4584/tesla-launches-hidden-storage-tray-for-model-y)
+
+10. **Dodge Challenger SRT Drags Tesla Cybertruck — autoevolution.com**
+    A Dodge Challenger SRT raced a Cybertruck in a straight-line comparison. The video shows the gas-powered muscle car pulling ahead in the published footage. No official Tesla response was issued. The test highlights differences in acceleration profiles between the electric pickup and a high-output internal-combustion vehicle under identical conditions. Source: [autoevolution.com](https://news.google.com/rss/articles/CBMi0wFBVV95cUxQNjRpWE5QeGtkR0FkNy1uZ1lWVjNNSUszVU1aOEY3RlU0NWF6WjMtZ2gycy1VaVN3cWtJeEFQMnZrc1VTTExTblptUlBRRFpKN2dfQWtHdlJlemxzQXgxeXlwTlNvaHRBY1FieGtvVFFmUzZTUVdzU2FWTWQ5MklheGdDZ3VZNThNaVI1ZHgxbW1KeFZwczNPSnV1LU40TU5uZmJWRi1vQXMxUFV0cUl4MU9STmZBOGs2VDAxcHZjaG16TEhHSTR4ZjZTM0VvY2JLbko0?oc=5)
+
+11. **Tesla FSD Captures Solar Eclipse in Spain — TSLAming (X)**
+    An owner recorded a solar eclipse using Tesla FSD in Spain. The clip shows the vehicle maintaining lane and speed while the driver focused on the sky. The post highlights everyday supervised use cases. The footage demonstrates how the system handles normal driving tasks during unusual visual conditions. Source: [x.com](https://x.com/tslaming/status/2089266526847463519)
+
+12. **Tesla to reportedly unveil the next-gen Roadster in August, with SpaceX thrusters of-course — teslaoracle.com**
+    Reports indicate Tesla may unveil the updated Roadster this month, including SpaceX-derived thrusters. The timing aligns with earlier internal targets for a public reveal. No production start date was confirmed. The vehicle is expected to feature performance upgrades tied to the thruster integration. Source: [teslaoracle.com](https://news.google.com/rss/articles/CBMiygFBVV95cUxPSWptZV9DUnZjMmk3TmhSOW1hYTM1Qlk3eUlhOTJFLTlCVDFaVzdzSnZJbjNJSEFDMUtHZU5GY2s0amdNS2VhTGpDanN6amc2bko1cWR2XzV0YnBVbHBScXB5SldkZnkzSFRyX0dDYU1oLU5fYmVEQkN2VHhTUE5ZYmt3eGFZTkd0SjduUk0xQU1oVHFsdG5EaUFkckJEZGVzTlUzM0dqSnl4RDk3bE8yUUtGaGhoLWhKNVA1YXdYc0ZTME5TMGpzVWd3?oc=5)
+---
+## Tesla X Takeover: What's Hot Right Now
+Tesla X Takeover - What's breaking in the Tesla world today! Here are the most interesting, fresh Tesla developments that have everyone talking.
+
+1. **Portable Solar Powered Electric Vehicle Charging Stations — teslarati.com**
+   Tesla is exploring portable solar charging units that can top up vehicles without grid connection. The approach targets remote or temporary sites where fixed chargers are impractical. Early concepts pair panels directly with vehicle inlets. The design could support events, construction sites, or rural locations that lack permanent infrastructure. Source: [Google News](https://news.google.com/rss/articles/CBMijAFBVV95cUxPQUExZnRxWVozNG10Z2M3R2kxMllGSjBHUDhGaW1kdjI1NklLVDY3MmNJNHhWN3MwZFIxUkZGME5yX29pWGxFaTk2MFFnQmN0a085eXpJSmw3Mk9xVzNuRk0wZldVTXZVRXpmOXljdHVaQ3BNY1c0MUlBQjJZbUg5bHIxdmpxTU84MEJfNw?oc=5)
+
+2. **Tesla Updates Model Y With V2L Support and Under-Seat Storage — hi-Tech.ua**
+   Newer Model Y vehicles in the U.S. and Puerto Rico now support vehicle-to-load power export via an $80 adapter. The same update adds a factory under-seat storage tray option. Owners of older builds must check compatibility through the parts catalog. The changes give Model Y owners access to features previously limited to other electric vehicles. Source: [hi-Tech.ua](https://news.google.com/rss/articles/CBMijAFBVV95cUxPS2JPTGh3c2lrdHRxejJzYWVRSHBQV1NFMm5UNFVYZVRvamVpLXByYVpTdDJWM2kwTS1hcnZuV2RWZnBzYmdJVVdtTUZnTXA5aVBpS3IxME9WTHdCZnhxNV9qLVNrTkVVMGhQcS1TbEhDcFBDb3dKZGhNdmxVTC1hNXJkVDY2THBkNU9RYg?oc=5)
+
+3. **Tesla showcases new Cybercab, now with Starlink integrated — The Driven IO**
+   A refreshed Cybercab prototype appeared with Starlink hardware integrated for connectivity. The addition suggests Tesla is testing satellite fallback for areas without cellular coverage. No timeline for customer vehicles was given. The integration could improve reliability for robotaxi operations in regions with spotty mobile networks. Source: [Google News](https://news.google.com/rss/articles/CBMilAFBVV95cUxPMWRTeUFBdWJuWHE4VlRMZWNCOFdORZpkbGQ5WExXaXJmRmZpQnQxc3IzTm1NRmxIU19ZVEF5eU0wS0t5UVFqVjJTUlZWMDZrX3d3Zm9aaDJfUlAtVXFIMldoUDdIaG1LOThiV1pQQ25OYTBvaTNXTWJoMjVEQmZoZ0taNWh6TXprbWQwa0xqSVRIVEpz?oc=5)
+
+4. **Tesla V2L adapter for Model Y stirs up a new complaint among owners — teslarati.com**
+   Some owners of recent Model Y builds discovered their vehicles cannot use the new V2L adapter despite the software update. The incompatibility has prompted questions about which VIN ranges qualify. Tesla has not issued a broader compatibility list. The issue affects owners who expected the feature to work on the newest vehicles after the recent software push. Source: [teslarati.com](https://news.google.com/rss/articles/CBMikgFBVV95cUxOTklpbk1rVjJTWDFBOXQySTE0blFlYzBDU2ozUEJqT0pDWlJsTU9oNVd5N0Y4aG5HbmRDdmJJQXdJdHdCSmFEbnpFRm1GLW96WnBfVVA1LXN2ZnBKVndnVkJFYjB0NXBEMU03LXk4NE5VUkNuSTJsVkFYallTWEpqNXBTekU0QUFDYW10bXpMeUlqQQ?oc=5)
+
+5. **CyberCab spotted heading to Chicago — r/teslamotors**
+   An owner filmed a Cybercab traveling toward downtown Chicago from the suburbs. The video leaves unclear whether the unit carries a steering wheel. The sighting continues the pattern of test vehicles appearing in new metro areas. Observers are watching for more frequent sightings as the testing fleet expands. Source: [reddit.com](https://www.reddit.com/r/teslamotors/comments/1vq2z5v/cybercab_spotted_heading_to_chicago/)
+---
+## Short Spot
+California removed Tesla from its latest EV purchase incentive program, cutting buyers off from state rebates that competitors still receive. Tesla has not commented on whether it will adjust pricing or financing offers to offset the change. The move leaves Tesla owners without access to the same direct subsidies available on rival electric vehicles sold in the state. Source/Post: [Google News](https://news.google.com/rss/articles/CBMiYEFVX3qxTE93Nm1DUkFEVEhBOGN3V2UwVmRlUFkxamhOZkxkVjF1OUptcDd2N2oyUXZwZ2VLOGU5eWVLbExfS212dVI5ejZPbW9mVWVrVlQwckpGdmRPbGhBTkdMYXRNaQ?oc=5)
+---
+### Tesla First Principles
+
+Regulatory approval for supervised FSD in the Netherlands arrived before any other European country, yet the system still requires a driver ready to intervene at any moment. That gap between permission and true unsupervised operation is the real constraint on scaling robotaxi economics. Until regulators accept zero human oversight on public roads, each new market adds only incremental data rather than a new revenue stream. The Netherlands rollout therefore functions as an early indicator of how quickly the model can adapt to European road conditions without crossing into full autonomy.
+
+Tesla's approach relies on collecting edge cases from every supervised mile to train toward unsupervised capability. European roads introduce different signage, lane markings, and driver behavior than U.S. training sets, so the Netherlands experience tests how rapidly the software adjusts to those variables. If interventions remain low, the data collected could accelerate approval in neighboring countries. Persistent issues would instead extend the timeline for broader European deployment and delay the shift from ownership assistance to fleet operations.
+
+The business implication is straightforward. Supervised FSD can improve the ownership experience and support higher used-car values, but only unsupervised operation unlocks the robotaxi margin model Tesla has described. Every new country that green-lights the supervised version therefore serves as both a data source and a reminder that the larger prize remains gated by safety validation, not just software releases. The distinction matters for long-term unit economics because supervised features enhance vehicle utility while unsupervised capability is what enables the high-margin, driverless service Tesla has outlined in prior updates.
+---
+Send your thoughts and clips to [@teslashortstime](https://x.com/teslashortstime).
