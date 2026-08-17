@@ -943,3 +943,50 @@ class TestCanadianLineageExplainers:
             assert sid in ids, f"segment missing: {sid}"
         for s in d["segments"]:
             assert s.get("prompt_template") and s.get("estimated_words")
+
+
+class TestAudienceBreadthDoctrine:
+    """Aug 2026 (operator-directed): three rings — offshore fans, casual
+    sailors, general listeners — with ring-3 stakes stated first and
+    Canada as doorway, never requirement."""
+
+    def test_system_prompt_carries_the_three_rings(self):
+        src = _system_prompt()
+        assert "three rings" in src.lower()
+        assert "never a nationality requirement" in src
+
+    def test_podcast_prompt_has_quest_line_and_door(self):
+        src = _podcast_prompt()
+        assert "The quest line" in src
+        assert "never the same phrasing twice" in src  # de-seeded
+        assert "THE DOOR IS HUMAN" in src
+
+    def test_digest_prompt_has_dinner_table_and_ring_rotation(self):
+        src = _digest_prompt()
+        assert "DINNER-TABLE TEST" in src
+        assert "ROTATE THE RING" in src
+
+    def test_field_guide_carries_bridges_and_cast(self):
+        text = _GUIDE.read_text(encoding="utf-8")
+        assert "three audiences" in text.lower()
+        assert "cast principle" in text.lower()
+        assert "door rule" in text.lower()
+
+    def test_crossover_segments_exist_and_are_tagged(self):
+        import json
+        d = json.loads((_ROOT / "shows" / "segments" / "offshore_north.json")
+                       .read_text(encoding="utf-8"))
+        crossover = [s for s in d["segments"] if "crossover" in s.get("tags", [])]
+        assert len(crossover) >= 4
+        ids = [s["id"] for s in d["segments"]]
+        assert len(ids) == len(set(ids))
+
+    def test_public_positioning_leads_with_the_quest(self):
+        raw = yaml.safe_load(_SHOW_YAML.read_text(encoding="utf-8"))
+        desc = raw["publishing"]["rss_description"]
+        assert "No Canadian has ever finished" in desc
+        assert "never touched a rope" in desc
+        meta = yaml.safe_load((_ROOT / "shows" / "network_meta.yaml")
+                              .read_text(encoding="utf-8"))["offshore_north"]
+        assert "alone" in meta["tagline"].lower()
+        assert "No sailing knowledge required" in meta["description"]

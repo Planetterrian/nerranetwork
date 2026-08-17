@@ -585,3 +585,46 @@ cold air and speed; no vocals, instrumental, broadcast-clean." Then set
 Ep2 (2026-08-17) retired a fourth time so the regeneration carries all
 of this; all three ep002 credit records kept. Drift guards: the
 field-review classes in `tests/test_offshore_north_weekly_fixes.py`.
+
+---
+
+## August 2026 audience-breadth doctrine (round four, part two)
+
+Operator-directed before the field-review merge: the show must grip
+casual sailors AND people who've never sailed, drawing both into the
+spine rather than filtering for Canadians and offshore devotees.
+
+**The analysis.** The field's own evidence says the wide audience exists
+when — and only when — the sport is told as human quest: mainstream
+outlets cover the campaign with zero jargon and total human stakes (the
+Toronto Star feature); the Vendée's virtual game draws casual players at
+mass scale; a skipper's death led national news in France. What loses
+outsiders is equally consistent: class alphabet soup, results-feed
+framing, insider stakes.
+
+**The doctrine — three rings, served simultaneously:**
+ring 1 offshore fans (depth), ring 2 casual/recreational sailors (the
+natural core), ring 3 curious general listeners (adventure-doc, F1,
+endurance-story people). Binding rule: every segment states its stakes
+in ring-3 terms FIRST, then adds depth. Canada is a doorway, never a
+requirement.
+
+**Encoded as:**
+- System prompt: the three-ring audience model + door rule.
+- Podcast prompt: the QUEST LINE (one fresh-worded sentence after the
+  identity line re-anchoring the spine for first-time listeners) and
+  "THE DOOR IS HUMAN" leading the engagement moves.
+- Digest prompt: the DINNER-TABLE TEST (≥1 Fleet item per episode must
+  stand on human/business/adventure stakes alone) and Plain Sailing's
+  ROTATE-THE-RING rule (alternate sport-internal and crossover
+  concepts).
+- Field guide: "The three audiences & the bridges" — the translation
+  table (Everest, F1, flight planning, pit lane, the space station over
+  Point Nemo, sponsorship as media buying), the cast principle
+  (introduce skippers like serial-drama characters), the door rule.
+- Explainer bank 45 → 49: four "crossover"-tagged segments (deciding at
+  3 a.m., what forty knots feels like, Point Nemo isolation, why a
+  company buys a boat's name).
+- Public positioning rewritten (network_meta tagline/hero/description +
+  RSS description + YAML description): leads with the universal quest,
+  promises "no sailing knowledge required", keeps the depth pledge.
