@@ -1049,3 +1049,27 @@ class TestFreshStartState:
         digests = _ROOT / "digests" / "offshore_north"
         credits = list(digests.glob("credit_usage_*.json"))
         assert len(credits) == 4, "real spend must stay on the books"
+
+
+class TestThemeMusicPreWiring:
+    """"Eyes on the Horizon" (Aug 2026): the YAML pre-points at the theme
+    path so the broadcast chain engages the moment the operator saves the
+    Suno track — safe because run_show gates on music_path.exists()."""
+
+    def test_yaml_points_at_the_agreed_path(self):
+        assert _cfg().audio.music_file == "assets/music/offshore_north.mp3"
+
+    def test_missing_file_is_gated_in_run_show(self):
+        src = (_ROOT / "run_show.py").read_text(encoding="utf-8")
+        assert "if music_path.exists():" in src, (
+            "pre-wiring relies on the existence gate — if this moved, "
+            "verify voice-only fallback before keeping the pre-wire"
+        )
+
+    def test_brief_and_lyrics_are_canonical(self):
+        brief = (_ROOT / "assets" / "music" / "offshore_north_theme.md")
+        text = brief.read_text(encoding="utf-8")
+        assert "instrumental" in text.lower()
+        assert "Fair winds — and eyes on the horizon" in text  # sign-off = chorus
+        assert "Ninety-eight seconds" in text                   # Birch, verified
+        assert "offshore_north.mp3" in text

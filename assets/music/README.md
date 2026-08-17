@@ -127,6 +127,15 @@ continues through the outro.
 > energy — think Bloomberg terminal meets algorithmic trading. Professional but
 > not corporate. Emerald green energy. 110–120 BPM. 30–45 seconds, clean ending.
 
+**ON (Offshore North):**
+> Full song brief + canonical lyrics in `offshore_north_theme.md` (the dp_pod
+> pattern: one anthem, "Eyes on the Horizon", doubling as the intro/outro bed).
+> Epic cinematic maritime anthem, 95 BPM, deep strings and wave-slow drums,
+> subtle North-Atlantic fiddle colour, warm male vocal — MUST open with 35–45 s
+> of purely instrumental build (no vocals; the mixer uses t=0 as the ducked
+> intro bed under the cold open). Clean resolved ending. Save the track as
+> `offshore_north.mp3` — the show YAML is pre-wired to that path.
+
 ### Audio Specifications
 
 All music files must meet these specifications for compatibility:

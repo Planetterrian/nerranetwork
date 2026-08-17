@@ -345,14 +345,16 @@ tts:
   speed: 1.02
 
 audio:
-  # No dedicated theme at launch — ships as a clean voice-only briefing.
-  # When a track exists, point this at assets/music/offshore_north.mp3 and
-  # the network's standard mix parameters apply from _defaults.yaml
-  # (sidechain ducking, -16 LUFS master — the full broadcast chain only
-  # engages when music exists, so a theme is the single biggest remaining
-  # "sounds great" lever; see the operator item in the show bible for a
-  # ready-to-use generation prompt).
-  music_file: null
+  # PRE-WIRED for the theme (Aug 2026): "Eyes on the Horizon" — full Suno
+  # brief + canonical lyrics in assets/music/offshore_north_theme.md. The
+  # pipeline gates on the file's existence (run_show checks
+  # music_path.exists() before mixing), so this is a clean voice-only
+  # no-op until the operator saves the generated track at this exact
+  # path — then the full broadcast chain (sidechain ducking, -16 LUFS)
+  # engages automatically with no further config change. The track MUST
+  # open with 35-45 s of purely instrumental build: the mixer uses t=0
+  # as the ducked intro bed under Dan's cold open.
+  music_file: assets/music/offshore_north.mp3
 
 # Narrative memory (Aug 2026 field review): the show's spine IS a
 # two-year longitudinal story — the campaign's road to 12 Nov 2028 —
