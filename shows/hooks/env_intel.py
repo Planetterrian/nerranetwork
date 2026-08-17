@@ -12,6 +12,23 @@ as smooth letter sequences without explicit spelling.
 
 from __future__ import annotations
 
+from engine import show_memory
+
+_SLUG = "env_intel"
+
+
+def pre_fetch(config, *, episode_num=None, today_str=None) -> dict:
+    """Narrative memory (Aug 2026 expansion) — thin wrapper over
+    engine.show_memory, same shape as shows/hooks/fascinating_frontiers.py.
+    EI's compliance beats are multi-year regulatory arcs, the best fit for
+    longitudinal memory in the network."""
+    return show_memory.memory_pre_fetch(config, _SLUG)
+
+
+def post_generate(config, *, digest_text="", episode_num=None) -> None:
+    show_memory.memory_post_generate(
+        config, _SLUG, digest_text or "", episode_num or 0)
+
 
 def pronunciation_overrides() -> dict:
     """Return EI-specific pronunciation overrides."""

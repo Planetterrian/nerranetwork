@@ -1054,6 +1054,111 @@ SHOW_MEMORY_CONFIGS: Dict[str, MemoryConfig] = {
             "rewilding", "clean energy", "carbon", "biodiversity",
         ],
     ),
+    # Aug 2026 expansion (operator-directed): env_intel and omni_view were
+    # the two remaining news-driven shows without narrative memory — and
+    # both are longitudinal by nature. EI's compliance beats ARE multi-year
+    # regulatory arcs (a consultation today is a gazetted rule next year);
+    # OV's world-news stories run for months and its Steel Man format
+    # benefits most from knowing where each arc stood last time. Seeded
+    # conservatively: arc descriptions + open questions, no speculative
+    # status claims — statuses accrue from coverage via
+    # auto_update_narrative_from_digest.
+    "env_intel": MemoryConfig(
+        slug="env_intel",
+        label="ENVIRONMENTAL INTELLIGENCE",
+        file_prefix="env_intel",
+        default_programs={
+            "federal_assessment_reform": _prog(
+                "Federal Impact Assessment & Permitting",
+                "The IAA-era assessment and permitting regime for major "
+                "projects — timelines, jurisdictional friction, and how "
+                "approvals actually move.",
+                ["How assessment timelines change for major projects",
+                 "Where federal-provincial jurisdiction friction lands"],
+            ),
+            "pfas_contaminants": _prog(
+                "PFAS & Emerging Contaminants",
+                "The regulatory arc for PFAS and other emerging "
+                "contaminants under CEPA — reporting, listing, and "
+                "remediation practice.",
+                ["Scope and timing of class-based PFAS requirements",
+                 "What reporting obligations reach practitioners first"],
+            ),
+            "carbon_pricing": _prog(
+                "Carbon Pricing & Industrial Emissions",
+                "Federal and provincial carbon-pricing systems and "
+                "industrial emissions rules as they bind operators.",
+                ["How output-based systems evolve per province",
+                 "Which compliance deadlines bind operators next"],
+            ),
+            "species_habitat": _prog(
+                "Species at Risk & Habitat Protection",
+                "SARA listings, habitat orders, and the project-level "
+                "practice they drive.",
+                ["Which listings change project screening practice",
+                 "How habitat protection orders are enforced"],
+            ),
+            "water_effluent": _prog(
+                "Water & Effluent Regulation",
+                "Effluent regulations, groundwater permitting, and "
+                "monitoring practice across provinces.",
+                ["Where effluent limits tighten next",
+                 "How monitoring expectations shift for practitioners"],
+            ),
+        },
+        theme_keywords=[
+            "cepa", "pfas", "carbon", "emission", "assessment", "permit",
+            "effluent", "groundwater", "remediation", "contamin", "habitat",
+            "species", "consultation", "gazette", "compliance",
+        ],
+    ),
+    "omni_view": MemoryConfig(
+        slug="omni_view",
+        label="OMNI VIEW",
+        file_prefix="omni_view",
+        default_programs={
+            "us_china": _prog(
+                "US-China Relations",
+                "The trade, technology, and security relationship between "
+                "the US and China — the axis many other stories bend "
+                "around.",
+                ["Where trade and export-control policy moves next",
+                 "How the technology decoupling actually plays out"],
+            ),
+            "russia_ukraine": _prog(
+                "Russia-Ukraine War",
+                "The war and the diplomacy around it — battlefield, "
+                "sanctions, and negotiation tracks.",
+                ["What shifts the battlefield or negotiation calculus",
+                 "How sanctions regimes evolve and leak"],
+            ),
+            "middle_east": _prog(
+                "Middle East Realignment",
+                "Regional conflicts and diplomatic realignment across the "
+                "Middle East.",
+                ["Which ceasefire and normalization tracks hold",
+                 "How regional powers reposition"],
+            ),
+            "global_trade": _prog(
+                "Global Trade & Tariffs",
+                "Tariff regimes, supply-chain shifts, and the trade "
+                "architecture underneath them.",
+                ["Where tariff escalation lands next",
+                 "Which supply chains actually move"],
+            ),
+            "ai_governance": _prog(
+                "AI Governance",
+                "How governments regulate, adopt, and compete over AI.",
+                ["Which jurisdictions' rules bind first",
+                 "How compute and model access get governed"],
+            ),
+        },
+        theme_keywords=[
+            "china", "russia", "ukraine", "tariff", "sanction", "election",
+            "ceasefire", "diplomac", "trade", "nato", "regulation",
+            "parliament", "treaty", "summit",
+        ],
+    ),
     # Age of AI does NOT run through run_show (Nerra Voices pipeline), so the
     # digest-driven hooks never fire — its memory feeds the interview
     # pipeline instead (pipelines/voices/common.py:episode_memory_block reads

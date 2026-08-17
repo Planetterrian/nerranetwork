@@ -1,5 +1,6 @@
 name: Environmental Intelligence
 slug: env_intel
+memory_enabled: true   # Aug 2026 expansion: narrative memory (regulatory arcs / world-news arcs) — see engine/show_memory.py.
 description: Daily environmental regulatory, science, and compliance briefing for Canadian environmental professionals covering all provinces, territories, and federal jurisdictions.
 
 sources:
@@ -173,6 +174,14 @@ keywords:
 
 min_articles: 5
 min_articles_skip: 2
+
+# Story-recurrence memory (Aug 2026): inline "already covered — update,
+# don't re-tell" notes on fetched articles matching the ContentTracker's
+# recent-headline window. Built after the Fort Bend story ran in 5 of 10
+# Tesla episodes past three existing dedup layers. Data-side and
+# deterministic (engine/story_recurrence.py).
+story_recurrence: true
+
 
 # Per-show translation set (June 2026 "Spanish dropped network-wide" decision).
 # Env Intel is a lighter daily show like Models & Agents / First Principles —

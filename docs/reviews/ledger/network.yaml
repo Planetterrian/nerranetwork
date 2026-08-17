@@ -225,6 +225,45 @@ reviews:
         evidence: null
     agent_cost_usd: null
 
+  - date: '2026-08-16'
+    pr: null
+    doc: null
+    generated_by: claude-code-session
+    summary: 'Operator-directed build: story-recurrence memory (engine/story_recurrence.py) — inline update-don''t-retell notes on fetched articles matching the ContentTracker''s dated headline window, enabled on the 9 daily news shows; narrative show_memory expanded to env_intel (regulatory arcs) and omni_view (world-news arcs), the last two news-driven shows without it. Built after the Fort Bend story ran on 11 distinct days of Tesla''s current 15-episode window past three existing dedup layers.'
+    scored_prior_predictions: []
+    shipped:
+    - file: engine/story_recurrence.py
+      kind: code
+      ab_listen_required: false
+      rationale: 'Data-side, deterministic, no LLM calls, no new storage (reads the tracker''s window). Salient-token matching with an automatic common-token filter catches re-headlined variants the 0.72 title-similarity dedup missed; verified against the real Tesla tracker (all 5 shipped Fort Bend variants match, unrelated stories do not). Inline annotation in the article listing — the ContentTracker''s separate DO-NOT-REPEAT block demonstrably failed; the annotation instructs update-don''t-retell instead of banning (a real new development deserves coverage as an update).'
+    - file: run_show.py
+      kind: code
+      ab_listen_required: false
+      rationale: 'Annotation gated on the new story_recurrence YAML flag (9 news shows opted in; lesson/narrative shows deliberately off). Outcome metric story_recurrence_in_digest recorded per episode against a window that excludes today (FF Ep128 self-match class). Best-effort: any failure renders the legacy listing.'
+    - file: engine/show_memory.py
+      kind: code
+      ab_listen_required: true
+      rationale: 'env_intel + omni_view MemoryConfig entries seeded conservatively (arc descriptions + open questions, no speculative status claims). Memory-section injection changes prompt context for both shows -> A/B-listen per landmine #17 (same note as the July 24 MIT/DP Pod expansion).'
+    deferred:
+    - dp_pod + offshore_north have no ContentTracker section patterns, so story_recurrence would be a silent no-op there — give them tracker patterns first if their repetition ever bites.
+    - The recurrence annotation is digest-side only; if a recurring story still gets RE-TOLD (not updated) in scripts after 2 weeks, the next lever is podcast-prompt-side framing (A/B) — not a data change.
+    predictions:
+    - metric: 'tesla: same-story full re-telling across >=3 episodes of a 10-episode review window (Fort Bend class)'
+      baseline: Fort Bend ran 5 of 10 episodes (Ep565-573) re-told from scratch each time, and on 11 distinct days of the tracker window
+      expected: 0 stories re-told from scratch across >=3 episodes in the next tesla review window; legitimate developments framed as updates are a PASS, verbatim re-telling is the fail condition
+      verdict: pending
+      evidence: null
+    - metric: mean story_recurrence_annotated per episode on tesla+spacex (metrics_ep*.json)
+      baseline: 'unmeasured (new metric); real-window probe: ~1-3 articles/episode expected to match'
+      expected: metric present and nonzero within 3 post-merge episodes on both shows (proves the wiring fired); if 0 across 5 episodes, the flag or tracker wiring silently broke
+      verdict: pending
+      evidence: null
+    - metric: env_intel + omni_view narrative trackers exist and auto-freshness advances
+      baseline: no tracker files exist for either show
+      expected: digests/<dir>/<slug>_narrative_tracker.json committed within 3 episodes of merge, last_mentioned_episode advancing; narrative pages render
+      verdict: pending
+      evidence: null
+    agent_cost_usd: null
 do_not_retry:
   - idea: podcast-side length levers (word floors, expand-retries, prompt
       pressure on the podcast stage) for ANY show

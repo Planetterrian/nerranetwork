@@ -1435,7 +1435,33 @@ become longitudinal chronicles, not disposable daily recaps.
   `SHOW_MEMORY_CONFIGS` registers **Models & Agents, Fascinating Frontiers,
   Planetterrian** (MIT already has its own `investment_tracker`; Tesla keeps
   its bespoke `engine/tesla_memory.py` — a future cleanup could fold Tesla into
-  this engine).
+  this engine). **Aug 16 2026 expansion: env_intel (regulatory arcs — a
+  consultation today is a gazetted rule next year) and omni_view
+  (world-news arcs feeding the Steel Man format) joined the registry** —
+  the last two news-driven shows without memory; seeded conservatively,
+  injection is A/B-gated per landmine #17.
+
+- **Story-recurrence memory (Aug 16 2026, `engine/story_recurrence.py`;
+  drift guards `tests/test_story_recurrence.py`).** The Fort Bend
+  solar-factory story ran on 11 distinct days of Tesla's tracker window
+  (5 of 10 episodes re-told from scratch, 4× inside Ep573) past THREE
+  existing dedup layers — the 0.72 title-similarity/2-day
+  `content_freshness` check misses re-headlined multi-day recurrence,
+  the ContentTracker's flat DO-NOT-REPEAT block is ignored, and
+  banning is editorially wrong anyway (a new filing deserves coverage
+  as an UPDATE). The fix is the DP Pod lever-memory pattern applied to
+  news: salient-token matching (auto common-token filter, so the brand
+  name can't manufacture a match) over the dated headline window the
+  ContentTracker already persists, delivered as INLINE
+  `[ALREADY-COVERED NOTE …]` annotations under the exact matched
+  articles in the digest prompt, framed update-don't-retell. Data-side,
+  deterministic, no LLM calls, no new storage. Enabled via
+  `story_recurrence: true` on the 9 daily news shows (lesson shows'
+  recurrence is curriculum, narrative-queue shows have their own
+  history; dp_pod/offshore_north lack tracker section patterns so it
+  would no-op). Outcome metric: `story_recurrence_in_digest` per
+  episode, scored against the Fort Bend baseline; the sanitizer strips
+  any echoed annotation.
 - **Flag-gated, single placeholder.** Prompts carry one
   `{narrative_memory_section}` placeholder; the show's thin hook
   (`shows/hooks/<slug>.py` → `show_memory.memory_pre_fetch/`
