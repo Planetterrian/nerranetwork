@@ -2000,7 +2000,81 @@ def _experiment_live_metrics(root: Path) -> Dict[str, Any]:
             frag += 1
     out["dub_fragment_title_share_14d"] = (
         round(frag / total, 2) if total else None)
+
+    # Long-form open hold (Aug 2026, from the retention CURVES): mean
+    # audienceWatchRatio at 5% elapsed across the EN longs that carry a
+    # curve. The 2026-08-17 baseline read ~0.50 — half the audience gone
+    # inside the first ~30-45 s — making the open the dominant remaining
+    # retention lever. None until curves exist.
+    holds = []
+    for show in (stats.get("shows") or {}).values():
+        for v in show.get("videos", []):
+            curve = v.get("retention_curve")
+            if not curve or (v.get("channel") or "en") != "en":
+                continue
+            try:
+                pts = {float(p["t"]): float(p["ratio"]) for p in curve}
+                k = min(pts, key=lambda t: abs(t - 0.05))
+                holds.append(pts[k])
+            except (KeyError, TypeError, ValueError):
+                continue
+    out["long_open_hold_5pct_en"] = (
+        round(sum(holds) / len(holds), 2) if holds else None)
     return out
+
+
+def build_retention_curves_section(root: Path) -> Dict[str, Any]:
+    """Where long-form viewers actually LEAVE, from the per-video
+    audience-retention curves the analytics fetch collects for each
+    channel's top recent longs (Aug 2026). Renders as a dashboard card;
+    the honest-null rules apply — no curves means an unconfigured card,
+    never zeros.
+    """
+    stats = _load_json(root / "api" / "youtube_stats.json") or {}
+    rows: List[Dict[str, Any]] = []
+    by_channel: Dict[str, List[float]] = {}
+    for dir_name, show in (stats.get("shows") or {}).items():
+        for v in show.get("videos", []):
+            curve = v.get("retention_curve")
+            if not curve:
+                continue
+            try:
+                pts = {float(p["t"]): float(p["ratio"]) for p in curve}
+
+                def at(t, _p=pts):
+                    return _p[min(_p, key=lambda x: abs(x - t))]
+
+                ch = (v.get("channel") or "en").lower()
+                row = {
+                    "show": dir_name,
+                    "channel": ch,
+                    "episode": v.get("episode"),
+                    "views": v.get("views"),
+                    "hold_5pct": round(at(0.05), 2),
+                    "hold_10pct": round(at(0.10), 2),
+                    "hold_25pct": round(at(0.25), 2),
+                    "hold_50pct": round(at(0.50), 2),
+                }
+                rows.append(row)
+                by_channel.setdefault(ch, []).append(row["hold_5pct"])
+            except (KeyError, TypeError, ValueError):
+                continue
+    if not rows:
+        return {"configured": False,
+                "note": "No retention curves yet — they accrue from the "
+                        "nightly analytics fetch (top 5 recent longs per "
+                        "channel)."}
+    rows.sort(key=lambda r: -(r.get("views") or 0))
+    return {
+        "configured": True,
+        "as_of": stats.get("generated"),
+        "note": ("audienceWatchRatio at 5/10/25/50% elapsed. The 5% mark "
+                 "is ~30-45 s in — the open cliff. Baseline 2026-08-17: "
+                 "EN mean ~0.50 at 5%."),
+        "mean_hold_5pct_by_channel": {
+            ch: round(sum(v) / len(v), 2) for ch, v in by_channel.items()},
+        "videos": rows[:20],
+    }
 
 
 def build_experiments_section(root: Path) -> Dict[str, Any]:
@@ -2729,6 +2803,7 @@ def build_dashboard(root: Path, *, offline: bool = False, previous_flat: Optiona
         "content_lake": lake_section,
         "distribution": build_distribution_section(root),
         "youtube_policy": build_youtube_policy_section(root),
+        "retention_curves": build_retention_curves_section(root),
         "funnel": build_funnel_section(root),
         "benchmarks": benchmarks,
         "investor": investor,

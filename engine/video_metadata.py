@@ -327,6 +327,27 @@ _build_tags = build_tags
 # Public API
 # ---------------------------------------------------------------------------
 
+def _live_search_terms(config) -> List[str]:
+    """Live YouTube search queries matched to this show (best-effort).
+
+    Written by scripts/update_youtube_performance.py into the show's
+    youtube_performance.json from the Analytics search-terms report —
+    the literal queries already reaching the channel (EN measured 15%
+    of views from search, 2026-08-17). Prepending them as upload tags
+    aims the videos at demand that provably exists. [] on any failure.
+    """
+    try:
+        out_dir = Path(getattr(config.episode, "output_dir", "") or "")
+        path = (_REPO_ROOT / out_dir / "youtube_performance.json"
+                if not out_dir.is_absolute()
+                else out_dir / "youtube_performance.json")
+        data = json.loads(path.read_text(encoding="utf-8"))
+        terms = [str(t).strip() for t in (data.get("search_terms") or [])]
+        return [t for t in terms if 3 <= len(t) <= 60][:6]
+    except Exception:  # noqa: BLE001 — tags must never block an upload
+        return []
+
+
 def build_pinned_comment_text(
     config, *, hook: str = "", episode_num: int = 0, today_str: str = "",
     rss_link: str = "", audio_url: str = "",
@@ -597,7 +618,8 @@ def build_long_form_metadata(
     except Exception:  # noqa: BLE001 — tags must never block an upload
         _entity_tags = []
     tags = _build_tags(
-        _entity_tags + list(config.youtube.tags or []),
+        _live_search_terms(config) + _entity_tags
+        + list(config.youtube.tags or []),
         list(getattr(config, "keywords", []) or []),
         network_tags=[],  # already merged into youtube.tags via _defaults.yaml
     )
@@ -726,7 +748,8 @@ def build_short_metadata(
     except Exception:  # noqa: BLE001
         _entity_tags = []
     tags = _build_tags(
-        _entity_tags + list(config.youtube.tags or []) + ["shorts", "podcast clip"],
+        _live_search_terms(config) + _entity_tags
+        + list(config.youtube.tags or []) + ["shorts", "podcast clip"],
         list(getattr(config, "keywords", []) or []),
         network_tags=[],
     )

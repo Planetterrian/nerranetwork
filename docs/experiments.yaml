@@ -340,3 +340,43 @@ experiments:
       The recompute has been an open operator item in the MIT ledger
       since 2026-07-03. This change stops the unrun backfill from
       silently flattering the on-air number in the meantime.
+
+  - id: search-terms-loop
+    title: "Live search queries feed titles + tags"
+    area: reach
+    shipped: 2026-08-17
+    readout: 2026-08-31
+    status: reading
+    baseline: "EN search share 15% of channel views (2026-08-17); terms: starship flight 14, fsd v14.1 lite, ..."
+    target: >
+      EN YT_SEARCH share of views up vs 15%, and search terms appearing
+      in shipped titles/tags. The Analytics search-terms report now
+      flows per-show (token-matched, conservative) into
+      youtube_performance.json — the title prompt gets a LIVE SEARCH
+      QUERIES line and uploads prepend the matched terms as tags.
+    notes: >
+      Channel-level terms are attributed to a show only when they share
+      a meaningful token with its recent titles/hooks; unmatched terms
+      are dropped rather than sprayed across the channel. Metadata-only.
+
+  - id: long-open-cliff
+    title: "Long-form open cliff — hold at the 5% mark"
+    area: retention
+    shipped: 2026-08-17
+    readout: 2026-09-07
+    status: reading
+    metric: long_open_hold_5pct_en
+    baseline: 0.51
+    target: >
+      Mean EN audienceWatchRatio at 5% elapsed above 0.55. The curves
+      show ~half the audience gone inside the first 30-45 s while decay
+      flattens after 25% — the open is the dominant remaining retention
+      lever. This entry TRACKS the instrument (new dashboard card +
+      metric); the accelerating open, chapters, and the motion batch are
+      the levers currently in flight against it. Content-side changes
+      to the spoken open are audio (landmine #17) and stay operator-gated.
+    notes: >
+      Curves accrue nightly for each channel's top 5 recent longs.
+      Outliers worth studying: tesla-RU ep554 held 72% at 5%,
+      spacex ep65 68% — both had thumbnail/title promises the opening
+      delivered immediately.
