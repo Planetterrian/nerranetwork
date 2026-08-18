@@ -563,6 +563,39 @@ def _validate_llm_output(
     def _is_structural_framing(phrase: str) -> bool:
         return any(frag in phrase for frag in _STRUCTURAL_FRAMING)
 
+    def _is_titlecase_entity(phrase: str) -> bool:
+        """True when the phrase's occurrences in the ORIGINAL text are
+        predominantly Title-Case — a story-of-the-day proper noun.
+
+        The ``known_entities`` exemption only covers the show's YAML
+        keywords; the entities of any single day's lead story can't be
+        pre-listed. 2026-08-18: SpaceX Ep073's lead story (Starship Ship
+        40 towed to Christmas Island after 24 days at sea) scored 4 on
+        its own entities — 'christmas island' 6x, 'ship 40' 4x — and a
+        committed, published, perfectly sound digest read as a
+        regeneration candidate. Hallucination loops live in lowercase
+        running prose ('watch for' 12x, 'the kicker is' 5x); a phrase
+        that is capitalized nearly every time it appears is a NAME the
+        news is about. Numeric tokens pass through unchanged ('Ship 40'),
+        but at least one alphabetic token must be capitalized so numeric
+        facts ('24 days') stay countable.
+        """
+        toks = phrase.split()
+        if not any(t[:1].isalpha() for t in toks):
+            return False
+        cap_pattern = r"\b" + r"[\s,]+".join(
+            (re.escape(t[:1].upper()) + re.escape(t[1:]))
+            if t[:1].isalpha() else re.escape(t)
+            for t in toks
+        )
+        any_pattern = r"\b" + r"[\s,]+".join(re.escape(t) for t in toks)
+        try:
+            cap = len(re.findall(cap_pattern, text))
+            total = len(re.findall(any_pattern, text, re.IGNORECASE))
+        except re.error:  # noqa: BLE001 — never let the exemption crash scoring
+            return False
+        return total > 0 and cap / total >= 0.8
+
     if not text or not text.strip():
         logger.error(
             "LLM returned EMPTY %s for '%s' — treating as retryable failure",
@@ -749,6 +782,9 @@ def _validate_llm_output(
             # Skip framing the show's own memory block supplies.
             if _is_structural_framing(phrase):
                 continue
+            # Skip story-of-the-day proper nouns ("Christmas Island").
+            if _is_titlecase_entity(phrase):
+                continue
             if count >= _rep_threshold:
                 _suspicious_count += 1
                 logger.warning(
@@ -831,6 +867,9 @@ def _validate_llm_output(
                 continue
             # Skip framing the show's own memory block supplies.
             if _is_structural_framing(phrase):
+                continue
+            # Skip story-of-the-day proper nouns ("vera rubin nvl72").
+            if _is_titlecase_entity(phrase):
                 continue
             if count >= _rep_threshold:
                 _suspicious_count += 1
