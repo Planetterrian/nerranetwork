@@ -62,12 +62,42 @@ def _close_to(a: float, b: float) -> bool:
     return b > 0 and abs(a - b) / b <= PRICE_TOLERANCE
 
 
-def _match_bar(bars, price: float, *, field: int):
-    """Bar whose open (field=1) or close (field=2) matches *price*."""
+def _match_bar(bars, price: float, *, field: int, not_before=None):
+    """Best bar whose open (field=1) or close (field=2) matches *price*.
+
+    Two constraints, both added 2026-08-18 after a dry run showed this
+    script would have CORRUPTED the record it exists to repair.
+
+    ``not_before`` — the search window opens 10 days BEFORE the pick date
+    (to tolerate date skew), and this function used to return the FIRST
+    price match found while scanning it forward. For any stock in a tight
+    range, an earlier bar sits inside the +/-2% tolerance, so the match
+    landed pre-pick and the script re-created the exact hindsight
+    backdating it was written to remove. Every one of the ten trades
+    already carrying a correct, pick-date-aligned entry bar was pushed
+    backwards: Ep135 X.TO 2026-08-12 -> 2026-08-04, Ep130 MU 2026-08-07
+    -> 2026-07-31. Entries are now confined to bars on or after the pick
+    date, and exits to bars on or after the entry.
+
+    Closest-match, not first-match — among the bars that qualify, take
+    the smallest relative price error rather than whichever came first.
+    First-match made the result depend on how wide the fetch window
+    happened to be.
+    """
+    best = None
+    best_err = None
     for bar in bars:
-        if _close_to(price, bar[field]):
-            return bar
-    return None
+        if not_before is not None and bar[0] < not_before:
+            continue
+        ref = bar[field]
+        if not ref or ref <= 0:
+            continue
+        err = abs(price - ref) / ref
+        if err > PRICE_TOLERANCE:
+            continue
+        if best_err is None or err < best_err:
+            best, best_err = bar, err
+    return best
 
 
 def main() -> int:
@@ -105,8 +135,14 @@ def main() -> int:
             unmatched.append((ep, sym, "no market data"))
             continue
 
-        entry_bar = _match_bar(bars, entry_price, field=1)
-        exit_bar = _match_bar(bars, exit_price, field=2)
+        # A trade cannot be entered before it was picked, and cannot be
+        # exited before it was entered.
+        entry_bar = _match_bar(bars, entry_price, field=1,
+                               not_before=pick_date)
+        exit_bar = (
+            _match_bar(bars, exit_price, field=2, not_before=entry_bar[0])
+            if entry_bar is not None else None
+        )
         if entry_bar is None or exit_bar is None:
             unmatched.append((
                 ep, sym,

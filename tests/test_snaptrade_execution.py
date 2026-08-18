@@ -323,13 +323,18 @@ class TestShadowExits:
         })
         return ledger
 
-    def test_weekly_exit_due_friday(self):
-        # Monday pick → due this Friday.
+    def test_weekly_exit_is_a_fixed_session_horizon(self):
+        """SUPERSEDED 2026-08-18: exits follow the session horizon in
+        shows/_trading_policy.yaml, not the Friday calendar. A Monday pick
+        still lands on Friday because that IS five sessions; a Friday pick
+        now lands on the following Thursday for the same reason, instead
+        of waiting a full extra week."""
+        # Monday pick → Friday (Mon,Tue,Wed,Thu,Fri = 5 sessions).
         assert shadow._exit_due_date(
             datetime.date(2026, 7, 6), "weekly") == datetime.date(2026, 7, 10)
-        # Friday pick → due NEXT Friday (matches _evaluate_open_trade).
+        # Friday pick → next Thursday (Fri,Mon,Tue,Wed,Thu = 5 sessions).
         assert shadow._exit_due_date(
-            datetime.date(2026, 7, 10), "weekly") == datetime.date(2026, 7, 17)
+            datetime.date(2026, 7, 10), "weekly") == datetime.date(2026, 7, 16)
 
     def test_flash_exit_due_next_weekday(self):
         assert shadow._exit_due_date(

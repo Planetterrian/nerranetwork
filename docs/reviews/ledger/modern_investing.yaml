@@ -559,35 +559,244 @@ reviews:
         expected: ">=18 of the next 20; ZERO episodes narrating the
           performance data as unavailable/pending/awaiting a tracker
           update"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "2026-08-18: present in 3/3 post-merge episodes
+          (Ep138/139/140) and zero outage claims, against 6 in the prior
+          20. Thin n but the mechanism is a template line, so it either
+          fires or does not — re-score at 20 episodes."
       - metric: closed trades never narrated on air (excluding the
           retired pre-2026-08-15 backlog)
         baseline: "43 of 50; 5 closed within the preceding 10 days"
         expected: "0 — the backlog drains one per episode and every new
           close is narrated exactly once"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "2026-08-18: LNTH reviewed in Ep138, MU in Ep139, TBBK
+          in Ep140 — exactly one per episode, oldest first. 38 stale
+          trades retired without reaching air; 2 fresh closes remain
+          queued (IPCO.TO, AAPL) and drain next."
       - metric: alpha figures spoken on air that come from the blended
           45-trade window
         baseline: "every alpha mention; Ep137 said '9.3% across 45
           benchmarked trades'"
         expected: "0; every spoken alpha is the verified-window figure
           and states its trade count in the same sentence"
-        verdict: pending
-        evidence: null
+        verdict: miss
+        evidence: "2026-08-18: 2 of 3. Only Ep140 spoke the verified
+          figure. The pass fixed _build_portfolio_summary and left
+          _build_benchmark_block — the 'state every episode' scoreboard —
+          on the blend, so both reached the same prompt and the model
+          fused them: Ep138 aired '+9.28% across forty-five VERIFIED-window
+          trades', the inflated number wearing the honest label, which is
+          worse than the original bug. Fixed 2026-08-18; guarded by
+          TestSingleAlphaSource."
       - metric: median article_count, last-10 snapshot
         baseline: "~57 (down from 274 over ep90-119)"
         expected: ">=120 within 10 episodes of the feed replacement; the
           decay alarm fires on any future slide below half the long
           baseline"
-        verdict: pending
-        evidence: null
+        verdict: partial
+        evidence: "2026-08-18: volume did NOT recover (Ep138-140 at
+          67/30/45) — one of the three replacement feeds (Yahoo Finance)
+          was removed by the repo's blocked-source check, since a
+          reachability probe cannot see an editorial ban. The alarm half
+          of the prediction HIT: article_count_degraded fires on all three
+          episodes, which is the correct reading. Deliberately no
+          fetch-config change this pass: source COUNT does not track
+          article volume (Ep139 cited 8 sources from 30 articles vs Ep138
+          3 from 67), so the mechanism is not understood yet."
       - metric: median script words, last-10 snapshot
         baseline: "1535w (9 of 10 below the 1800 floor)"
         expected: ">=1700w under the grok-4.6 script stage, with zero
           numbers/tickers/prices in the script that are absent from the
           digest — a single invented figure reverts the experiment"
+        verdict: hit
+        evidence: "2026-08-18: Ep138-140 at 2256/2366/2078 words — all
+          three clear the 1800 floor for the first time in the show's
+          recent history, against 1441-1576 in the four episodes before.
+          Factuality audit traced every spelled-out number in all three
+          scripts to its digest (incl. $1.799T/$1.775T deficit figures,
+          Anthropic $190-200B/$2T, Cerebras $842M); no invented tickers.
+          Continue to the 08-29 readout. Cosmetic only: 4.6 said 'one
+          trillion seven hundred ninety-nine billion dollars' twice."
+    agent_cost_usd: null
+
+  - date: 2026-08-18
+    pr: null
+    doc: docs/reviews/modern_investing_review_2026_08_18.md
+    reviewer: claude-code (operator-directed impact review of the 08-15 pass)
+    summary: >
+      Three-day impact read on the August 15 changes, plus the first
+      successful execution of the realignment dry run. Five of seven
+      shipped items verified working; the grok-4.6 script stage is the
+      clearest win the show has had on length (1441-1576w -> 2078-2366w,
+      first episodes to clear the 1800 floor) with factuality intact.
+      P0 REGRESSION found and fixed - the verified-alpha switch was
+      applied to _build_portfolio_summary but not to _build_benchmark_block,
+      the "state every episode" scoreboard; both reach the same prompt, so
+      the model fused label and value and Ep138 aired "+9.28% across
+      forty-five VERIFIED-window trades", the inflated number wearing the
+      honest label. Fixing one of two call sites was worse than fixing
+      neither. The index sweep had the same shape - its NASDAQ leg fell
+      back to nasdaq_return_pct (45 trades) beside 10-trade S&P/TSX legs,
+      printing "+9.28%" two sentences after the corrected "-1.95%"; the
+      July-18 n>=5 gate missed it because it checks sample SIZE, not that
+      the legs share the same TRADES. Separately, the recompute script
+      that this ledger has recommended since 2026-07-03 - and that the
+      08-15 review called the highest-value action on the show - would
+      have CORRUPTED the record: it searches bars from 10 days before the
+      pick and took the FIRST price match inside +/-2%, so it re-created
+      the hindsight backdating it exists to remove, flagging 25 trades
+      including all ten whose entry bars were already correct. Matcher
+      fixed (entry on/after pick, exit on/after entry, closest match not
+      first); it now reports 0 backdated entries and reproduces 8 of the
+      10 known-good windows exactly.
+    shipped:
+      - "_build_benchmark_block reads the verified-window figures
+        (alpha, portfolio leg, index leg, t-stat, trade count) with a
+        labelled fallback to the blend when no verified windows exist"
+      - "benchmark_scores drops the NASDAQ legacy fallback so all three
+        index legs score the same trades; sweep now reads beating 0 of 3"
+      - "recompute matcher: entry confined to bars on/after the pick,
+        exit to bars on/after the entry, closest price wins over first"
+      - 9 new drift guards (TestSingleAlphaSource,
+        TestRecomputeMatcherCannotBackdate) + one superseded guard re-pinned
+        to the same-trade-set contract
+    deferred:
+      - "operator: adjudicate the 8 unreconciled trades, then run the
+        corrected recompute --apply. NOT run here - it rewrites published
+        performance numbers. Corrected dry run says alpha -3.35% across 42
+        trades, beating 1 of 3 indices (TSX only)"
+      - "operator: the 8 unreconciled trades include the record's best
+        (+20.11% DLTR), second-best (+13.36% AMD) and worst (-11.80% MDA)
+        - the extremes are exactly what cannot be matched to market data"
+      - "confidence is a dead field: 48 of 50 closed trades are Medium, 2
+        Low, ZERO High. It informs sizing and the rule scoreboard while
+        carrying no information. Make it calibrated or stop presenting it"
+      - "exit timing is an artifact, not a decision: verified holds ran
+        0-6 days (median 3) against a five-day thesis because exits are
+        pinned to the Friday pre-market run. Per-trade alpha currently
+        measures pick quality and an arbitrary exit date together"
+      - "carried: significance-qualifier accept-or-abandon; SnapTrade
+        Phase-0; closing-price lesson retirement"
+    predictions:
+      - metric: alpha figures spoken on air that come from the blended
+          window (either block)
+        baseline: "2 of 3 (Ep138 mislabelled, Ep139 blended, Ep140 correct)"
+        expected: "0 of the next 10 - both blocks now read one source, so
+          a blended number reaching air means a THIRD call site exists"
+        verdict: pending
+        evidence: null
+      - metric: index-sweep legs scored from different trade counts
+        baseline: "NASDAQ 45 vs S&P/TSX 10; sweep claimed beating 1 of 3"
+        expected: "0 - all legs share one trade set every episode"
+        verdict: pending
+        evidence: null
+      - metric: median script words, last-10 snapshot (grok-4.6 readout)
+        baseline: "2078w over the first 3 episodes"
+        expected: ">=1800w sustained at the 08-29 readout with zero
+          numbers or tickers absent from the digest"
+        verdict: pending
+        evidence: null
+      - metric: trades whose entry bar predates their pick date after a
+          recompute dry run
+        baseline: "25 of 50 under the first-match matcher"
+        expected: "0 - and the 10 pick-date-aligned trades reproduce
+          unchanged, which is the validation that matters"
+        verdict: pending
+        evidence: null
+    agent_cost_usd: null
+
+  - date: 2026-08-18b
+    pr: null
+    doc: docs/reviews/modern_investing_review_2026_08_18b.md
+    reviewer: claude-code (operator-directed rules-based restart)
+    summary: >
+      Operator asked to start fresh alpha tracking from today's show with
+      clear and reproducible entry/exit decisions, a working recursive
+      learning loop, and continuous learning for the show and the
+      audience. Root cause of five months of uninterpretable alpha was
+      that the EXIT was never a decision - weekly holds closed on
+      whichever bar the Friday pre-market run priced (Thursday's), so a
+      Monday pick got five sessions and a Wednesday pick got one, and
+      per-trade alpha measured pick quality and pick weekday together.
+      Shipped a rulebook the code reads, a fixed session horizon, an era
+      boundary so the on-air record starts today, one shared alpha
+      selector, graded confidence, and a published methodology page.
+    shipped:
+      - "shows/_trading_policy.yaml - the rules as a file the code reads
+        (load_policy / horizon_sessions / era_inception); entry at the
+        first session open on/after the pick, exit at the stop or a fixed
+        5-session horizon (flash 1), no discretionary exits"
+      - "_pick_weekly_bars returns window[horizon-1] not window[-1], and
+        _evaluate_open_trade counts printed sessions instead of asking
+        whether today is Friday - every weekday pick now gets the same
+        holding period"
+      - "a fetch failure returns 0 sessions and reads as NOT due, so a bad
+        network day can no longer close every open position; _close_trade
+        takes the caller's bars so the exit decision and the exit pricing
+        read one snapshot"
+      - "execution/shadow.py derives its exit calendar from the same
+        policy, guarded so sim and shadow cannot drift"
+      - "era_* summary fields; the on-air record is trades picked on/after
+        2026-08-18. Earlier trades stay published as history, are never
+        blended, and lifetime totals are labelled HISTORY ONLY in the
+        prompt while the era is empty"
+      - "_alpha_scope() - ONE selector (era -> verified -> blended) used by
+        both prompt blocks, each scope carrying its own label and trade
+        count; direct fix for the Aug 15 two-source fusion"
+      - "picks record Invalidation (the observable condition that would
+        prove the thesis wrong), policy_version and horizon_sessions;
+        confidence extraction accepts both label forms"
+      - "get_mit_confidence_calibration is era-scoped and carries a rubric;
+        a SECOND calibration function written during this pass was deleted
+        before commit rather than shipping two sources of one number"
+      - "docs/mit_trading_method.md - public methodology and an audit
+        checklist for any track record; podcast prompt requires the rules
+        and the invalidation line on air"
+      - "6 method-literacy segments added to the existing evergreen library
+        (invalidation, fixed horizons, what alpha measures, sample size,
+        calibration, auditing a record) using its existing cooldowns"
+      - 12 new drift guards (TestTradingPolicy, TestEraScopedRecord,
+        TestReproducibleDecisions) + 5 superseded guards re-pinned
+    deferred:
+      - "operator: the 8 pre-era trades that reconcile to no price bar
+        (incl. the record's best, second-best and worst) still need
+        adjudication, then the corrected recompute --apply. They no longer
+        contaminate the on-air number, so this is now history cleanup
+        rather than a live integrity problem"
+      - "the headline goes to zero for about a week and then to a sample
+        too small to claim an edge - the prompts require saying so"
+      - "carried: significance-qualifier accept-or-abandon; SnapTrade
+        Phase-0; closing-price lesson retirement"
+    predictions:
+      - metric: era trades whose hold is not exactly the policy horizon
+          (or an earlier stop-out)
+        baseline: "pre-era holds ran 0-6 sessions, median 3"
+        expected: "0 - every weekly hold spans exactly 5 sessions unless
+          stopped out, whichever weekday it was picked"
+        verdict: pending
+        evidence: null
+      - metric: alpha figures spoken on air sourced from pre-era trades
+        baseline: "2 of 3 episodes on 2026-08-15/16 quoted the blend"
+        expected: "0 - the era record or an explicit no-trades-yet
+          statement, never a lifetime number"
+        verdict: pending
+        evidence: null
+      - metric: distinct confidence ratings used across the era's picks
+        baseline: "48 Medium / 2 Low / 0 High across 50 pre-era trades"
+        expected: ">=2 distinct ratings within 10 picks, and no single
+          rating above 90%"
+        verdict: pending
+        evidence: null
+      - metric: picks carrying an Invalidation line
+        baseline: "0 - the field did not exist"
+        expected: ">=90% of picks, each naming a checkable condition
+          rather than a direction"
+        verdict: pending
+        evidence: null
+      - metric: sim vs shadow exit-date disagreements
+        baseline: "n/a - different rules by construction"
+        expected: "0 - both derive the horizon from the policy file"
         verdict: pending
         evidence: null
     agent_cost_usd: null

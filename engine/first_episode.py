@@ -209,9 +209,14 @@ Order and shape:
      many shows or listeners there are. Break it into TWO OR THREE SHORT
      SPOKEN SENTENCES — Ep001 delivered this as a single 47-word run-on
      that no person would say out loud in one breath.
-   - **HOW ALL OF THIS SHOULD SOUND.** This introduction is Dan talking,
-     not a charter being read. First person throughout ("I built this
-     because...", "what I want to do every Monday is..."). Contractions.
+   - **HOW ALL OF THIS SHOULD SOUND.** (Delivery guidance for you, the
+     writer — NEVER a line of script. Ep1 2026-08-18 paraphrased this
+     very bullet onto the air as "This introduction is me talking, not a
+     charter being read", which is the show describing its own delivery
+     policy instead of telling the listener something. If a sentence
+     would only make sense to someone who had read these instructions,
+     cut it.) First person throughout ("I built this because...", "what
+     I want to do every Monday is..."). Contractions.
      Vary sentence length hard — a four-word sentence next to a long one
      is what makes speech sound human. ACTIVE voice only: Ep001 produced
      "No hype gets added", "nothing gets stated", "The audience is assumed

@@ -151,30 +151,44 @@ def run_shadow(
 # Shadow exits (Phase 2.5) — the round trip that makes shadow P&L real
 # ---------------------------------------------------------------------------
 
-def _exit_due_date(pick_date: datetime.date, trade_type: str) -> datetime.date:
-    """The first executor run day on/after the sim's exit.
+def _weekly_horizon_sessions() -> int:
+    """Weekly holding period in sessions, from the shared rulebook."""
+    try:
+        from shows.hooks import modern_investing as _mi
+        return _mi.horizon_sessions("weekly")
+    except Exception:  # noqa: BLE001 — the executor must never die on this
+        return 5
 
-    Mirrors the sim's calendar: flash trades close the next trading day
-    (executor runs weekdays, so the next weekday); weekly holds close on
-    the Friday run (this week's Friday for Mon-Thu picks, NEXT Friday
-    for Fri/Sat/Sun picks — a Friday pick isn't open yet on its own
-    Friday run, matching ``_evaluate_open_trade``).
+
+def _exit_due_date(pick_date: datetime.date, trade_type: str) -> datetime.date:
+    """The executor run day matching the sim's scheduled exit.
+
+    Mirrors the sim's rule: flash trades close the next trading day;
+    weekly holds close after a fixed number of SESSIONS counted from the
+    first session on/after the pick (shows/_trading_policy.yaml).
     """
     wd = pick_date.weekday()
     if trade_type == "flash":
         days = 3 if wd == 4 else (2 if wd == 5 else 1)  # Fri→Mon, Sat→Mon
         return pick_date + datetime.timedelta(days=days)
-    if wd == 3:
-        # Thursday-picked weekly: this-week Friday would be a 1-day
-        # "weekly hold" (the sim's Ep101 COST degenerate) — next Friday.
-        return pick_date + datetime.timedelta(days=8)
-    if wd == 4:
-        return pick_date + datetime.timedelta(days=7)
-    if wd == 5:
-        return pick_date + datetime.timedelta(days=6)
-    if wd == 6:
-        return pick_date + datetime.timedelta(days=5)
-    return pick_date + datetime.timedelta(days=4 - wd)
+
+    # Weekly holds run a fixed number of SESSIONS (2026-08-18 policy),
+    # not "until Friday". The sim counts printed bars; the shadow layer
+    # has no bar feed, so it counts weekdays forward from the first
+    # session on/after the pick — the same span, computed the only way
+    # this layer can. If these two ever disagree the shadow ledger stops
+    # being a check on the sim and becomes a second opinion about the
+    # calendar, which is worth nothing.
+    horizon = _weekly_horizon_sessions()
+    day = pick_date
+    while day.weekday() > 4:            # weekend pick -> first session Monday
+        day += datetime.timedelta(days=1)
+    sessions = 1                        # the entry session itself
+    while sessions < horizon:
+        day += datetime.timedelta(days=1)
+        if day.weekday() <= 4:
+            sessions += 1
+    return day
 
 
 def run_shadow_exits(

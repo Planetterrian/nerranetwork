@@ -1025,56 +1025,34 @@ class TestDebutCarriesTheDoctrine:
         assert "commercial airline pilot and a Nerra Network" not in p
 
 
-# Relaunch boundary: the Aug-2026 retirement purged every pre-relaunch
-# artifact so numbering restarts at 1; the relaunched Episode 1 published
-# 2026-08-18. This class was originally the PRE-launch "fresh start"
-# guard (no artifacts, no feeds, next episode == 1); Ep001 shipping made
-# that shape permanently false, so it now guards what the purge actually
-# established: nothing from the pre-relaunch era resurfaces, numbering
-# restarted at 1, and the retired era's real spend stays on the books.
-_RELAUNCH_DATE = "20260818"
-_PRE_RELAUNCH_CREDIT_FILES = 4  # 2026-08-05..2026-08-17, old ep numbering
+class TestPremiereReset:
+    """The 2026-08-18 premiere was retired after review found three
+    defects (generic debut closing, spine stated twice, delivery guidance
+    spoken aloud) — all fixed in #1021. The show is back to pre-launch so
+    the regeneration is Episode 1 again."""
 
-
-class TestRelaunchBoundary:
-    """The retirement purge holds: no pre-relaunch artifact resurfaces."""
-
-    def test_no_pre_relaunch_episode_artifacts(self):
+    def test_no_episode_artifacts_remain(self):
         digests = _ROOT / "digests" / "offshore_north"
-        stale = []
-        for p in digests.iterdir():
-            m = re.match(r"Offshore_North_Ep\d+_(\d{8})", p.name)
-            if m and m.group(1) < _RELAUNCH_DATE:
-                stale.append(p.name)
-        assert not stale, (
-            f"pre-relaunch episode artifacts resurfaced: {stale} — the "
-            "Aug-2026 retirement purged these so numbering could restart"
-        )
+        leftovers = [
+            p.name for p in digests.iterdir()
+            if p.name != ".gitkeep"
+            and not p.name.startswith("credit_usage_")
+            # narrative memory is cumulative and not episode-pinned; it
+            # survives resets by design
+            and not p.name.endswith(("_narrative_tracker.json", "_theme_history.json"))
+        ]
+        assert not leftovers, f"unexpected files: {leftovers}"
 
-    def test_numbering_restarted_at_one(self):
-        feed = _ROOT / "offshore_north_podcast.rss"
-        if not feed.exists():
-            # Between purge and first publish the feed is legitimately
-            # absent and the next episode must be 1.
-            from engine.publisher import get_next_episode_number
-            assert get_next_episode_number(
-                feed, _ROOT / "digests" / "offshore_north",
-                "Offshore_North_Ep*.mp3") == 1
-            return
-        nums = [int(n) for n in re.findall(
-            r"<itunes:episode>(\d+)</itunes:episode>",
-            feed.read_text(encoding="utf-8"))]
-        assert nums and min(nums) == 1, (
-            f"relaunched feed must start at Episode 1, got {sorted(nums)[:5]}"
-        )
+    def test_numbering_restarts_at_one(self):
+        from engine.publisher import get_next_episode_number
+        assert get_next_episode_number(
+            _ROOT / "offshore_north_podcast.rss",
+            _ROOT / "digests" / "offshore_north",
+            "Offshore_North_Ep*.mp3") == 1
 
-    def test_pre_relaunch_spend_records_kept(self):
-        digests = _ROOT / "digests" / "offshore_north"
-        old = [p for p in digests.glob("credit_usage_*.json")
-               if p.name.split("_")[2][:10].replace("-", "") < _RELAUNCH_DATE]
-        assert len(old) == _PRE_RELAUNCH_CREDIT_FILES, (
-            "the retired era's real spend must stay on the books"
-        )
+    def test_every_attempt_s_spend_is_kept(self):
+        credits = list((_ROOT / "digests" / "offshore_north").glob("credit_usage_*.json"))
+        assert len(credits) >= 5, f"spend records lost: {len(credits)}"
 
 
 class TestThemeMusicInstalled:
@@ -1114,3 +1092,53 @@ class TestThemeMusicInstalled:
         assert "Fair winds — and eyes on the horizon" in text  # sign-off = chorus
         assert "Ninety-eight seconds" in text                   # Birch, verified
         assert "PRODUCED AND INSTALLED" in text
+
+
+class TestDebutClosingUsesShowPersonality:
+    """Ep1 (2026-08-18) shipped the GENERIC network debut closing — "we'll
+    see you tomorrow for episode two" — on a weekly, single-host show,
+    because the personality-closing branch in engine/pipeline.py was gated
+    on dialogue_mode (i.e. The DP Pod only). Any show with a personality
+    must debut on its own closing, which also carries its sign-off line."""
+
+    def test_helper_identifies_personality_shows(self):
+        from engine.intros import has_show_personality
+        assert has_show_personality("offshore_north") is True
+        assert has_show_personality("dp_pod") is True
+        assert has_show_personality("no_such_show") is False
+
+    def test_pipeline_uses_personality_closing_for_ep1(self):
+        src = (_ROOT / "engine" / "pipeline.py").read_text(encoding="utf-8")
+        assert "elif has_show_personality(_slug):" in src, (
+            "Ep1 must fall back to the generic closing ONLY for shows with "
+            "no personality of their own"
+        )
+
+    def test_offshore_closings_never_promise_tomorrow(self):
+        from engine.intros import _SHOW_PERSONALITIES
+        for c in _SHOW_PERSONALITIES["offshore_north"]["closings"]:
+            low = c.lower()
+            assert "tomorrow" not in low, "weekly show cannot promise tomorrow"
+            assert "fair winds" in low, "sign-off chapter marker would not latch"
+
+
+class TestQuestLineNotDuplicatedOnDebut:
+    """Ep1 stated the spine twice — the quest line and the debut
+    introduction's opening, back to back and near-identical."""
+
+    def test_prompt_skips_quest_line_on_episode_one(self):
+        src = _podcast_prompt()
+        assert "EPISODE 1 ONLY: SKIP this line entirely" in src
+        assert "One statement of the spine per episode" in src
+
+
+class TestDebutDeliveryGuidanceNotSpoken:
+    """Ep1 (2026-08-18) aired "This introduction is me talking, not a
+    charter being read" — the debut template's own delivery bullet,
+    paraphrased into script. Policy-recital class, new phrasing."""
+
+    def test_bullet_is_marked_as_writer_only(self):
+        p = first_episode_podcast_appendix(1, "Offshore North", "offshore_north")
+        assert "NEVER a line of script" in p
+        assert "charter being read" in p  # quoted as the banned output
+        assert "only make sense to someone who had read these instructions" in p
