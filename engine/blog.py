@@ -19,6 +19,7 @@ import json
 import logging
 import re
 from datetime import datetime
+from functools import lru_cache
 from pathlib import Path
 from typing import Optional
 from urllib.parse import urlparse
@@ -295,6 +296,103 @@ def _clip_words(text: str, limit: int) -> str:
     return clip_words(text, limit)
 
 
+@lru_cache(maxsize=64)
+def _show_host_name(show_slug: str) -> str:
+    """Host name for *show_slug*, read from the show's YAML.
+
+    The blog byline was hardcoded "By Patrick" in the template, so every
+    Offshore North post credited the wrong person — Dan hosts it. The
+    show YAML's ``publishing.host_name`` is the network's single source
+    of truth for who speaks; this reads it rather than duplicating a map.
+    Falls back to the network default when the YAML is unreadable.
+    """
+    try:
+        import yaml
+        path = Path(__file__).resolve().parent.parent / "shows" / f"{show_slug}.yaml"
+        data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        host = ((data.get("publishing") or {}).get("host_name") or "").strip()
+        if host:
+            return host
+    except Exception:  # noqa: BLE001 — a byline must never break a build
+        pass
+    return "Patrick"
+
+
+_EPISODE_TITLE_PREFIX_RE = re.compile(r"^\s*(?:Ep|Episode)\s*\d+\s*[:\u2014\u2013-]\s*", re.I)
+
+
+@lru_cache(maxsize=32)
+def _short_titles_for_show(show_slug: str, json_path: str) -> tuple:
+    """Map episode number -> short display headline, from the summaries file.
+
+    Shows whose digest prompt emits a ``**TITLE:**`` line (Offshore North)
+    get a <=60-char headline distinct from the spoken hook, which is a full
+    consequence sentence. The sanitizer strips that line from the canonical
+    .md before the blog ever reads it, so the blog fell back to the hook and
+    put a whole sentence in the <h1>. The runner persists the headline into
+    the summaries record as ``episode_title`` — this is the wire that brings
+    it back. Shows without one return an empty map and keep the hook.
+
+    Returned as a tuple of pairs so the lru_cache value stays hashable.
+    """
+    try:
+        data = json.loads(Path(json_path).read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001
+        return ()
+    records = data.get("summaries", data) if isinstance(data, dict) else data
+    if not isinstance(records, list):
+        return ()
+    out = []
+    for record in records:
+        if not isinstance(record, dict):
+            continue
+        num = record.get("episode_num")
+        title = (record.get("episode_title") or "").strip()
+        if not isinstance(num, int) or not title:
+            continue
+        title = _EPISODE_TITLE_PREFIX_RE.sub("", title).strip()
+        if title:
+            out.append((num, title))
+    return tuple(out)
+
+
+@lru_cache(maxsize=64)
+def _show_emits_short_title(show_slug: str) -> bool:
+    """True when this show's digest prompt asks for a ``**TITLE:**`` line.
+
+    The opt-in gate. Every show persists ``episode_title`` in its summaries
+    record, but for a show without a TITLE spec that value is the CLIPPED
+    hook — using it as the <h1> would replace a full headline with a
+    truncated one. Only a show whose prompt actually produces a short
+    headline may override the hook.
+    """
+    try:
+        path = (
+            Path(__file__).resolve().parent.parent
+            / "shows" / "prompts" / f"{show_slug}_digest.txt"
+        )
+        return "**TITLE:**" in path.read_text(encoding="utf-8")
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def _short_title(show_slug: str, episode_num: int) -> str:
+    """Short display headline for one episode, or "" when the show has none."""
+    if not episode_num or not _show_emits_short_title(show_slug):
+        return ""
+    try:
+        from generate_html import NETWORK_SHOWS
+        json_path = (NETWORK_SHOWS.get(show_slug) or {}).get("json_path", "")
+    except Exception:  # noqa: BLE001
+        return ""
+    if not json_path:
+        return ""
+    for num, title in _short_titles_for_show(show_slug, json_path):
+        if num == episode_num:
+            return title
+    return ""
+
+
 def extract_blog_metadata(
     md_text: str,
     show_slug: str,
@@ -406,6 +504,14 @@ def extract_blog_metadata(
             _show_name = ""
         if _show_name and (title == _show_name or title.startswith(_show_name)):
             title = hook
+
+    # A show whose digest emits a short **TITLE:** headline (stripped from
+    # the .md by the sanitizer, preserved in the summaries record) uses it
+    # for the <h1>, the index card and the blog feed. The hook stays as the
+    # hero sub-line, where a full sentence belongs.
+    _short = _short_title(show_slug, episode_num)
+    if _short:
+        title = _short
 
     # Fallback: derive hook from first substantive content paragraph
     if not hook:
@@ -1088,6 +1194,7 @@ def generate_blog_post_html(
         "show_color_dark": show_config.get("brand_color_dark", show_config["brand_color"]),
         "all_shows": _build_all_shows_list(),
         # Blog-specific
+        "blog_author": _show_host_name(show_slug),
         "show_name": show_config["name"],
         "show_slug": show_slug,
         "podcast_image": show_config.get("podcast_image", ""),

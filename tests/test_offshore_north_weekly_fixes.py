@@ -1181,3 +1181,239 @@ class TestCountdownMarkerCannotBeStolen:
         p = first_episode_podcast_appendix(1, "Offshore North", "offshore_north")
         assert "days-to-the-start count" in p
         assert 'DO NOT use the bare word "countdown" here' in p
+
+
+# ---------------------------------------------------------------------------
+_DIGEST_DIR = _ROOT / "digests" / "offshore_north"
+
+
+def _run_show_func(name: str):
+    """Extract one helper from run_show.py without importing the module."""
+    import ast
+
+    source = (_ROOT / "run_show.py").read_text(encoding="utf-8")
+    tree = ast.parse(source)
+    for node in tree.body:
+        if isinstance(node, ast.FunctionDef) and node.name == name:
+            ns: dict = {}
+            exec(compile(ast.Module(body=[node], type_ignores=[]), "<run_show>", "exec"), ns)  # noqa: S102
+            return ns[name]
+    raise AssertionError(f"{name} not found in run_show.py")
+
+
+# August 18 2026 — Ep001 post-publication defect pass
+#
+# Four things the operator caught in the shipped debut:
+#   1. The host read the show-notes block aloud ("Sources, show notes, not
+#      spoken. Canada Ocean Racing...").
+#   2. Google News redirect URLs were back in the Sources section — and
+#      RETYPED by the model, so two of them were dead.
+#   3. The blog credited "By Patrick" (Dan hosts this show) and put the
+#      whole hook sentence in the <h1>.
+#   4. The chapter list ran out of segment order.
+# ---------------------------------------------------------------------------
+
+
+class TestScriptNeverCarriesShowNotes:
+    """Defect 1: the sources block must not reach the script, or the TTS."""
+
+    def test_podcast_prompt_does_not_ask_for_an_appended_sources_block(self):
+        text = (_PROMPTS / "offshore_north_podcast.txt").read_text(encoding="utf-8")
+        assert "SOURCES (SHOW NOTES" not in text, (
+            "The prompt asked for a sources block after the closing and labelled "
+            "it not-spoken. Nothing downstream removed it, so Ep001's host read "
+            "the label and the list on air."
+        )
+        assert "ENDS at the closing block" in text
+
+    def test_runner_strips_a_trailing_sources_block(self):
+        strip = _run_show_func("_strip_trailing_sources_block")
+        body = "".join(
+            f"Dan: Paragraph {n} of the episode, with enough words in it to "
+            "look like a real segment rather than a stub.\n\n"
+            for n in range(20)
+        )
+        script = (
+            "Dan: This is Offshore North, episode two.\n\n"
+            + body
+            + "Dan: I'm Dan. Fair winds — and eyes on the horizon.\n\n"
+            "SOURCES (SHOW NOTES — NOT SPOKEN)\n\n"
+            "- Canada Ocean Racing — \"Something\" (2026-08-17) —\n"
+        )
+        out = strip(script)
+        assert "SOURCES" not in out
+        assert "Canada Ocean Racing" not in out
+        assert "eyes on the horizon" in out
+
+    def test_strip_leaves_a_normal_script_untouched(self):
+        strip = _run_show_func("_strip_trailing_sources_block")
+        script = (
+            "Dan: This is Offshore North, episode two.\n\n"
+            "Dan: The sources for this all agree on one thing.\n\n"
+            "Dan: Links between the two campaigns are old news.\n\n"
+            "Dan: Credits where they are due, that was a good week.\n\n"
+            "Dan: I'm Dan. Fair winds — and eyes on the horizon.\n"
+        )
+        assert strip(script) == script, (
+            "Sentences that merely contain the words sources/links/credits are "
+            "prose, not a heading — the cut point must be a standalone heading."
+        )
+
+    def test_strip_refuses_to_take_a_third_of_the_script(self):
+        strip = _run_show_func("_strip_trailing_sources_block")
+        script = (
+            "Dan: Line one.\n\n"
+            "Dan: Line two.\n\n"
+            "Dan: Line three.\n\n"
+            "Dan: Line four.\n\n"
+            "Sources\n\n"
+            + "Dan: A long closing passage that must survive. " * 40
+        )
+        assert strip(script) == script, (
+            "A cut that would take a third of the script is a false positive, "
+            "not an appended list — the closing block must never go with it."
+        )
+
+    def test_cleaner_runs_the_strip(self):
+        source = (_ROOT / "run_show.py").read_text(encoding="utf-8")
+        body = source.split("def _clean_podcast_script(", 1)[1]
+        assert "_strip_trailing_sources_block(script)" in body.split("\ndef ", 1)[0]
+
+
+class TestAggregatorUrlsNeverReachPublishedSources:
+    """Defect 2: Google News redirects, and the model's retyped copies."""
+
+    def test_repair_maps_a_retyped_url_back_to_the_publisher(self):
+        from engine.url_utils import repair_aggregator_urls
+
+        aggregator = (
+            "https://news.google.com/rss/articles/CBMi"
+            + "Aa1s3dcK08HcS878i" * 30
+            + "?oc=5"
+        )
+        # The model retypes the opaque id and flips one character — exactly
+        # what Ep001 shipped (the two URLs differed at index 332 of 468).
+        retyped = aggregator[:200] + ("Z" if aggregator[200] != "Z" else "Q") + aggregator[201:]
+        articles = [{
+            "url": "https://voilesetvoiliers.ouest-france.fr/real-article",
+            "aggregator_url": aggregator,
+        }]
+        text = f"- Voiles et Voiliers — \"Titre\" (2026-08-11) — {retyped}\n"
+        out, count = repair_aggregator_urls(text, articles)
+        assert count == 1
+        assert "news.google.com" not in out
+        assert "https://voilesetvoiliers.ouest-france.fr/real-article" in out
+
+    def test_repair_leaves_an_unknown_aggregator_url_alone(self):
+        from engine.url_utils import repair_aggregator_urls
+
+        articles = [{
+            "url": "https://example.com/real",
+            "aggregator_url": "https://news.google.com/rss/articles/CBMi" + "A" * 400,
+        }]
+        stray = "https://news.google.com/rss/articles/CBMi" + "B" * 400
+        out, count = repair_aggregator_urls(f"see {stray}", articles)
+        assert count == 0 and stray in out
+
+    def test_repair_is_a_noop_without_articles(self):
+        from engine.url_utils import repair_aggregator_urls
+
+        text = "https://news.google.com/rss/articles/CBMiabc"
+        assert repair_aggregator_urls(text, []) == (text, 0)
+        assert repair_aggregator_urls("", [{"url": "x"}]) == ("", 0)
+
+    def test_fetcher_records_the_aggregator_url_it_resolved_away(self):
+        source = (_ROOT / "engine" / "fetcher.py").read_text(encoding="utf-8")
+        assert '"aggregator_url": aggregator_url,' in source, (
+            "repair_aggregator_urls matches strays against the ORIGINAL feed "
+            "URL — without it the repair has nothing to key on."
+        )
+
+    def test_runner_repairs_before_relabelling(self):
+        source = (_ROOT / "run_show.py").read_text(encoding="utf-8")
+        assert source.index("repair_aggregator_urls(") < source.index(
+            "x_thread, _relabelled = relabel_aggregator_links("
+        ), "Repair first: relabelling keys on the URL, so it must be the real one."
+
+    def test_resolver_falls_back_to_the_google_news_rpc(self):
+        source = (_ROOT / "engine" / "url_utils.py").read_text(encoding="utf-8")
+        assert "_gn_resolve_via_batchexecute" in source
+        assert "Fbv4je" in source, (
+            "Redirect-following alone cannot resolve the modern opaque ids — "
+            "Google serves a JS interstitial. The RPC is the only route."
+        )
+
+    def test_published_episode_one_has_no_aggregator_urls(self):
+        for path in (_DIGEST_DIR.glob("Offshore_North_Ep001_*.md")):
+            assert "news.google.com" not in path.read_text(encoding="utf-8"), path
+
+
+class TestBlogBylineAndHeadline:
+    """Defect 3: the byline named the wrong host; the <h1> was a sentence."""
+
+    def test_template_byline_is_not_hardcoded(self):
+        text = (_ROOT / "templates" / "blog_post.html.j2").read_text(encoding="utf-8")
+        assert "By Patrick</span>" not in text, (
+            "A hardcoded byline credits Patrick on every show's blog, "
+            "including the ones he does not host."
+        )
+        assert "{{ blog_author }}" in text
+
+    def test_host_name_comes_from_the_show_yaml(self):
+        from engine.blog import _show_host_name
+
+        assert _show_host_name("offshore_north") == "Dan"
+        assert _show_host_name("tesla") == "Patrick"
+        assert _show_host_name("no_such_show_at_all") == "Patrick"
+
+    def test_short_title_is_opt_in_per_show(self):
+        from engine.blog import _show_emits_short_title
+
+        assert _show_emits_short_title("offshore_north") is True
+        assert _show_emits_short_title("tesla") is False, (
+            "Shows without a **TITLE:** spec persist a CLIPPED HOOK as "
+            "episode_title — using it as the <h1> would be a downgrade."
+        )
+
+    def test_blog_prefers_the_short_headline_over_the_hook(self):
+        from engine.blog import extract_blog_metadata
+
+        md = (_DIGEST_DIR / "Offshore_North_Ep001_20260818.md").read_text(encoding="utf-8")
+        meta = extract_blog_metadata(
+            md, "offshore_north", "Offshore_North_Ep001_20260818.md",
+        )
+        title, hook = meta["title"], meta["hook"]
+        assert title and hook and title != hook
+        assert len(title) <= 70, f"headline, not a sentence: {title!r}"
+        assert not title.lower().startswith("ep "), (
+            "The Ep-number prefix belongs to the podcast app title, not the <h1>."
+        )
+
+    def test_published_blog_post_carries_both_fixes(self):
+        page = (_ROOT / "blog" / "offshore_north" / "ep001.html").read_text(encoding="utf-8")
+        assert 'post-author">By Dan' in page
+        assert "<h1><span class=\"nn-i18n-title\">Toronto Star" in page
+
+
+class TestChapterOrderFollowsTheRundown:
+    """Defect 4: The Countdown was listed second; it closes the show."""
+
+    def test_published_chapter_titles_are_in_segment_order(self):
+        import json
+
+        data = json.loads((_DIGEST_DIR / "chapters_ep001.json").read_text(encoding="utf-8"))
+        titles = [c["title"] for c in data["chapters"]]
+        for earlier, later in (
+            ("The Canadian Boat", "The Fleet"),
+            ("The Fleet", "Plain Sailing"),
+            ("Plain Sailing", "The Countdown"),
+            ("The Countdown", "Sign-Off"),
+        ):
+            assert titles.index(earlier) < titles.index(later), titles
+
+    def test_published_chapter_times_ascend(self):
+        import json
+
+        data = json.loads((_DIGEST_DIR / "chapters_ep001.json").read_text(encoding="utf-8"))
+        starts = [c["startTime"] for c in data["chapters"]]
+        assert starts == sorted(starts)
