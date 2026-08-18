@@ -180,6 +180,48 @@ def _compose_kind_hints(videos: List[dict], *, channel: str = "en") -> str:
     return _build_hint(videos, channel=channel)
 
 
+def _show_search_terms(channels_block: Dict[str, dict],
+                       videos: List[dict],
+                       max_terms: int = 6) -> List[str]:
+    """The live YouTube search queries plausibly aimed at THIS show.
+
+    The Analytics API reports search terms per CHANNEL, but a channel
+    carries many shows — so a term is attributed to a show when it
+    shares a meaningful token with the show's recent video titles/hooks.
+    Deliberately conservative: an unmatched term is dropped rather than
+    handed to every show on the channel. These are the literal queries
+    already reaching the channel (EN measured 15% of views from search,
+    2026-08-17) — the highest-value tag/title input there is.
+    """
+    import re as _re
+
+    show_tokens: set = set()
+    for v in videos[-40:]:
+        for field in ("title", "hook"):
+            show_tokens.update(
+                t for t in _re.findall(r"[a-zа-яё0-9]+",
+                                       str(v.get(field) or "").lower())
+                if len(t) >= 4)
+    if not show_tokens:
+        return []
+    seen: set = set()
+    out: List[str] = []
+    show_channels = {(v.get("channel") or "en").lower() for v in videos}
+    for ch in sorted(show_channels):
+        for row in (channels_block.get(ch) or {}).get("search_terms") or []:
+            term = str(row.get("term") or "").strip().lower()
+            if not term or term in seen:
+                continue
+            term_tokens = {t for t in _re.findall(r"[a-zа-яё0-9]+", term)
+                           if len(t) >= 4}
+            if term_tokens & show_tokens:
+                seen.add(term)
+                out.append(term)
+            if len(out) >= max_terms:
+                return out
+    return out
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--stats", default="api/youtube_stats.json")
@@ -191,9 +233,9 @@ def main() -> int:
                     stats_path)
         return 0
     try:
-        shows: Dict[str, dict] = (
-            json.loads(stats_path.read_text(encoding="utf-8")).get("shows") or {}
-        )
+        _stats_doc = json.loads(stats_path.read_text(encoding="utf-8"))
+        shows: Dict[str, dict] = _stats_doc.get("shows") or {}
+        channels_block: Dict[str, dict] = _stats_doc.get("channels") or {}
     except Exception as exc:
         logger.warning("Could not parse %s: %s — skipping", stats_path, exc)
         return 0
@@ -226,11 +268,17 @@ def main() -> int:
         if not out_dir.exists():
             logger.info("%s: no output dir — skipped", dir_name)
             continue
+        matched_terms = _show_search_terms(channels_block, videos)
+        if matched_terms:
+            hint = (hint + "\nLIVE SEARCH QUERIES already reaching this "
+                    "channel (fold the phrasing in when honest): "
+                    + "; ".join(matched_terms))
         out = {
             "schema_version": 2,
             "generated": _dt.datetime.now(_dt.timezone.utc).isoformat(),
             "video_count": len(videos),
             "title_hint": hint,
+            "search_terms": matched_terms,
         }
         for ch, h in hints.items():
             out[f"title_hint_{ch}"] = h

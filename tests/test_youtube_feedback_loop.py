@@ -449,3 +449,54 @@ class TestGalleryRetentionPrior:
         b = {"image_id": "b", "episode_date": "2026-07-01", "tags": [],
              "prompt": "", "caption": ""}
         assert [e["image_id"] for e in _rank([b, a], "")] == ["a", "b"]
+
+
+class TestSearchTermsLoop:
+    """Aug 2026: the Analytics search-terms report flows per-show into
+    youtube_performance.json (title hint line + upload tags)."""
+
+    def _mod(self):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "upd_perf", _ROOT / "scripts" / "update_youtube_performance.py")
+        m = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(m)
+        return m
+
+    def test_terms_match_by_token_overlap(self):
+        m = self._mod()
+        videos = [{"title": "Starship Flight 14 stacks for launch",
+                   "hook": "Starship news", "channel": "en"}]
+        channels = {"en": {"search_terms": [
+            {"term": "starship flight 14", "views": 50},
+            {"term": "house of the dragon", "views": 40},
+        ]}}
+        terms = m._show_search_terms(channels, videos)
+        assert "starship flight 14" in terms
+        # Unmatched terms are dropped, not sprayed across the channel.
+        assert "house of the dragon" not in terms
+
+    def test_no_terms_without_overlap(self):
+        m = self._mod()
+        assert m._show_search_terms({"en": {"search_terms": [
+            {"term": "starship", "views": 5}]}}, []) == []
+
+    def test_upload_tags_read_perf_search_terms(self, tmp_path):
+        from types import SimpleNamespace
+        import json as _json
+        import engine.video_metadata as vm
+        out_dir = tmp_path / "digests" / "showdir"
+        out_dir.mkdir(parents=True)
+        (out_dir / "youtube_performance.json").write_text(_json.dumps(
+            {"search_terms": ["starship flight 14", "fsd v14.1 lite"]}))
+        cfg = SimpleNamespace(episode=SimpleNamespace(
+            output_dir=str(out_dir)))
+        terms = vm._live_search_terms(cfg)
+        assert terms == ["starship flight 14", "fsd v14.1 lite"]
+
+    def test_live_search_terms_absent_file_is_empty(self):
+        from types import SimpleNamespace
+        import engine.video_metadata as vm
+        cfg = SimpleNamespace(episode=SimpleNamespace(
+            output_dir="/nonexistent/nowhere"))
+        assert vm._live_search_terms(cfg) == []

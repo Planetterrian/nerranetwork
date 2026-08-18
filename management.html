@@ -1180,6 +1180,36 @@
       grid.appendChild(card);
     }
 
+    // Where long-form viewers LEAVE — audience-retention curves (Aug 2026).
+    {
+      const rc = data.retention_curves || {};
+      const card = sectionCard("Long-form open cliff",
+        "audienceWatchRatio at 5/10/25/50% elapsed");
+      if (!rc.configured) {
+        card.appendChild(h("p", { class: "fine-list",
+          text: rc.note || "No retention curves yet." }));
+      } else {
+        const means = rc.mean_hold_5pct_by_channel || {};
+        const meanTxt = Object.keys(means).sort().map(
+          (ch) => ch.toUpperCase() + " " + Math.round(means[ch] * 100) + "%"
+        ).join(" · ");
+        card.appendChild(h("div", { class: "fine-list", style: "font-weight:600;",
+          text: "Audience still watching at the 5% mark (~30-45s): " +
+                (meanTxt || "—") }));
+        (rc.videos || []).slice(0, 8).forEach((r) => {
+          card.appendChild(h("div", { class: "fine-list",
+            text: r.show + " " + r.channel + " ep" + r.episode +
+                  " (" + fmtOrDash(r.views) + " views): " +
+                  Math.round(r.hold_5pct * 100) + "% → " +
+                  Math.round(r.hold_10pct * 100) + "% → " +
+                  Math.round(r.hold_25pct * 100) + "% → " +
+                  Math.round(r.hold_50pct * 100) + "%" }));
+        });
+        card.appendChild(h("p", { class: "fine-list", text: rc.note || "" }));
+      }
+      grid.appendChild(card);
+    }
+
     // Experiments in flight — the continuous-improvement register.
     {
       const card = sectionCard("Levers in flight",
