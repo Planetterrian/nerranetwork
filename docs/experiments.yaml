@@ -326,8 +326,8 @@ experiments:
     title: "Network-wide grok-4.6 — all LLM stages off 4.3 (operator-directed)"
     area: quality
     shipped: 2026-08-18
-    readout: 2026-09-01
-    status: reading
+    readout: 2026-08-18
+    status: reverted
     baseline: >
       grok-4.3 on digest/fetch/scripts/synth/titles/reviewer; 30d LLM
       token spend ~$25 (would be ~$47 at 4.6 rates on the same tokens);
@@ -357,6 +357,21 @@ experiments:
       grok-4.20-reasoning -> grok-4.3 (different snapshot than the new
       primary, retires the aging 4.20 dependency). Translation was
       already pinned 4.6 same-day. ~+$22-25/mo at current volume.
+      REVERTED SAME DAY (2026-08-18, operator-directed): the trigger was
+      OPERATIONAL, not on the registered list — 4.6 digest latency ran
+      5-10x 4.3 on every show measured (planetterrian 44s -> 420s, MAB
+      36s -> 242s, dp_pod 55s -> 225s, first_principles 36s -> 205s) and
+      on the four largest digest prompts (tesla, spacex, omni_view,
+      modern_investing) requests exceeded the 300s client timeout or were
+      server-disconnected. Nested SDK+tenacity retries amplified each
+      stall into a 41-45 min burn; 7 of 12 shows failed on day one
+      (2026-08-18 07:37-10:33 UTC). Rolled back to grok-4.3 everywhere
+      except the translation pin (already 4.6 via the alias freeze, small
+      chunks, no timeouts observed). The hallucination-profile question
+      is UNANSWERED — the experiment never reached an editorial readout.
+      Any retry follows docs/model_upgrade_playbook.md: one show first,
+      digest-latency gate before network-wide.
+  - id: mit-verified-window-alpha
     title: "Modern Investing states verified-window alpha only"
     area: quality
     shipped: 2026-08-15

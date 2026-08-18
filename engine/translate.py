@@ -16,7 +16,11 @@ Design notes
   pin freezes today's behavior (grok-4.6, what the alias resolves to now);
   moving it is a deliberate edit + listen-check, not a vendor release.
   Scoped to the translation calls only — the English generation pipeline
-  has its own pins (network-wide grok-4.6 since 2026-08-18).
+  has its own pins (grok-4.3; the 2026-08-18 network-wide 4.6 upgrade was
+  reverted the same day for latency, but THIS pin deliberately stays on
+  4.6: it froze what ``grok-latest`` was already serving, translation
+  chunks are small enough that 4.6 latency never tripped a timeout, and
+  moving it would change shipped dub audio — a listen-check edit).
 - Proper nouns / tickers are preserved; a per-language phonetic overrides
   map (``shows/translation_overrides.yaml``) is injected into the prompt as
   guidance AND applied as a post-process safety net (mirrors
