@@ -897,6 +897,44 @@ the starting hook sequence"). Render/metadata-only — outside landmine
   legacy order); motion-A/B window-parity de-confound (top-two windows
   swap by episode parity on enrolled shows).
 
+### Anthology books — ebook + audiobook from the narrative shows (Aug 2026)
+
+Product B6 (operator-directed): a SERIES machine, not one-off books.
+`books/series/<show>.yaml` is the branding contract (author **Patrick
+Novak**, series title, subtitle template, show brand colors, Grok-art
+style guides, `volume_size` 10–20 — enforced); `plan_next_volumes()`
+(`engine/book_compiler.py`) cuts the next thin
+`books/volumes/<id>.yaml` automatically as episodes accrue
+(append-only — published volumes never change), and
+`scripts/build_book.py` (Actions "Build Book": manual per-volume, or
+monthly-cron planner mode that plans + builds everything pending)
+compiles digests into a store-ready EPUB 3 + Grok-TTS-narrated
+chaptered M4B. Text transform is **deterministic — no LLM**; art is
+`engine/book_art.py` on **pinned** `grok-imagine-image-quality` (never
+a floating -latest alias): one 16:9 illustration per chapter (embedded
+in the EPUB, re-encoded ≤~1000px JPEG for KDP delivery fees) + fresh
+portrait cover art per volume under FIXED series typography
+(`compose_cover` — consistency is the series branding; style guides ban
+text inside generated images). Every generated image also uploads to
+the show's public gallery with `intended_use` `book_chapter`/
+`book_cover` — values the video scene selector must NEVER match (the
+thumbnail_variant precedent). Cost/volume ≈ $1 art + $2 TTS, gated by
+`--max-image-cost-usd` / `--max-tts-cost-usd`. Rules that bind: chapter
+titles clip via `engine.titles.BOOK_CHAPTER_TITLE_MAX`; EVERY
+reader-facing link goes through `engine.funnel` `kind="book"` (campaign
+carries the VOLUME number; each chapter ends on a funnel-tagged link to
+its source episode page); artifacts to R2 keyspace `books/<id>/` ONLY
+(never a show's audio prefix); `outputs/books/` gitignored (landmine
+#1); both audiobook credits speak the AI-narration disclosure — never
+remove it (every retail channel requires it; Audible/ACX takes no
+third-party AI narration at all). Committed record: series + volume
+YAMLs + `books/catalog.json` → `/books.html` (`generate_html.py
+--books`, in `--all` + sitemap + footer). Live: UC Vols 1–4 (eps 1–80),
+First Principles Vols 1–3 (eps 1–60), 20 stories each. Spot-listen +
+eyeball art on a new volume before store submission (landmine-#17
+habit). Store checklist + policies: [`docs/books.md`](docs/books.md).
+Drift guards: `tests/test_book_compiler.py`.
+
 ### Site-showcase video endings (Aug 2026, operator-directed)
 
 Every long-form video now ends on a 1920×1080 **outro card** built from
