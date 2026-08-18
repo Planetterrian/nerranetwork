@@ -264,6 +264,51 @@ reviews:
       verdict: pending
       evidence: null
     agent_cost_usd: null
+  - date: '2026-08-18'
+    pr: null
+    doc: docs/reviews/llm_usage_review_2026_08_18.md
+    generated_by: claude-code-session
+    summary: 'Operator-directed network LLM usage review against the August 2026 xAI product state (grok-4.6, Grok Voice July-6 update, Imagine video 1.5, the May-15 retirement, TTS GA pricing, per-call search billing). Verdict: no model upgrades warranted today — the dp_pod 4.5 / MIT 4.6 script A/Bs are the right probes and read out within two weeks. Found and fixed three silent-number/silent-drift failures: search accounting multiplied a $0.025 per-source rate by a sources field xAI stopped reporting (782 August calls untracked), the episode reviewer sat on a slug retired 05-15 (served by grok-4.3 at 4.3 billing, costed at the retired model''s 6x-cheaper rates), and the translation stage rode the floating grok-latest alias (vendor releases silently changed shipped dub audio; cost proxied at 4.3 rates). Dashboard cost rollup gained images+search categories (41 percent of tracked spend, previously invisible).'
+    scored_prior_predictions: []
+    shipped:
+    - file: engine/tracking.py
+      kind: code
+      ab_listen_required: false
+      rationale: 'Search billed per CALL ($0.005, env XAI_SEARCH_COST_PER_CALL) per 2026 xAI Agent Tools pricing; per-source term kept at zero-effect for any future source-count reporting. Retired grok-4-1-fast pricing rows annotated as historical-only.'
+    - file: review_episodes.py
+      kind: code
+      ab_listen_required: false
+      rationale: 'Reviewer pinned to grok-4.3 with explicit reasoning_effort none — exact parity with the retired-slug redirect that has served it since 05-15; nothing changes but the honesty of the model name and the cost.'
+    - file: engine/translate.py
+      kind: code
+      ab_listen_required: true
+      rationale: 'Translation pinned to grok-4.6 (what grok-latest resolves to today) with env override NERRA_TRANSLATION_MODEL; intended as behavior-freezing, but if the alias in fact still resolved to 4.5 this is a small translation change — listen-check the first post-merge dub track per landmine #17. engine/multilingual.py now prices the actual pinned model.'
+    - file: scripts/generate_dashboard.py
+      kind: code
+      ab_listen_required: false
+      rationale: 'cost_rollup breaks out images + search (additive keys); the two categories were 41 percent of tracked 30d spend and invisible.'
+    deferred:
+    - Digest/fetch stay on grok-4.3 — 4.6 factuality unproven for the confident-hallucination failure mode and 2.4x output cost; revisit only with the MIT readout plus a digest-side factuality probe.
+    - Multilingual flagship-voice A/B on dub tracks — sequenced AFTER the language cull (FR decision 08-25, per-language OP3); do not invest in voice quality for languages that may be switched off.
+    - Imagine image-quality tier — only if gallery-retention data shows image fidelity binds retention; would 2.5x the image category on no evidence today.
+    predictions:
+    - metric: search_api estimated_cost_usd in new credit files (search-fetching shows)
+      baseline: 'token-only; 100 percent of 136 files since 07-29 had sources:0 and $0 tool fees'
+      expected: nonzero per-call fee (calls x $0.005) present within 3 post-merge episodes on tesla/MIT/omni_view; network 30d search category on the dashboard rises to roughly $6-8/mo
+      verdict: pending
+      evidence: null
+    - metric: reviewer + translation model ids recorded in configs/credit files
+      baseline: retired slug grok-4-1-fast-non-reasoning in 3 config sites; grok-latest in translate.py
+      expected: no retired slug or floating alias reachable from live config (tests/test_llm_usage_pass.py stays green); dub-track brand-garble rate does NOT rise after the 4.6 pin (translate restore_brand_names holds)
+      verdict: pending
+      evidence: null
+    - metric: script-stage model A/B outcomes vs this review's no-upgrade verdict
+      baseline: dp_pod 4.5 and MIT 4.6 reading; digests on 4.3
+      expected: at least one of the two A/Bs resolves at its readout date with an explicit keep/revert in experiments.yaml, and NO digest/fetch stage moves off grok-4.3 before a measured factuality probe exists
+      verdict: pending
+      evidence: null
+    agent_cost_usd: null
+
 do_not_retry:
   - idea: podcast-side length levers (word floors, expand-retries, prompt
       pressure on the podcast stage) for ANY show

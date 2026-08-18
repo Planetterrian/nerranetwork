@@ -278,10 +278,15 @@ def generate_for_episode(
 
 def _estimate_track_cost(english_chars: int, translated_chars: int) -> float:
     """Per-track translation cost: Grok TTS on the translated script + the
-    translation LLM call (grok-latest, priced like grok-4.3; tokens ≈ chars/4)."""
+    translation LLM call, priced at the ACTUAL pinned translation model's
+    rates (tokens ≈ chars/4). Until 2026-08-18 this hardcoded grok-4.3
+    rates while the stage rode the floating grok-latest alias — a silent
+    ~2.4x under-estimate once the alias resolved to 4.5/4.6."""
     from engine.tracking import GROK_PRICING, GROK_TTS_COST_PER_1K_CHARS
+    from engine.translate import _TRANSLATION_MODEL
     tts_cost = (translated_chars / 1000.0) * GROK_TTS_COST_PER_1K_CHARS
-    pr = GROK_PRICING.get("grok-4.3", {"input_per_1m": 1.25, "output_per_1m": 2.50})
+    pr = GROK_PRICING.get(_TRANSLATION_MODEL) or GROK_PRICING.get(
+        "grok-4.3", {"input_per_1m": 1.25, "output_per_1m": 2.50})
     llm_cost = ((english_chars / 4.0) / 1e6) * pr["input_per_1m"] \
         + ((translated_chars / 4.0) / 1e6) * pr["output_per_1m"]
     return tts_cost + llm_cost

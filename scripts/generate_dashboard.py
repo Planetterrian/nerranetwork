@@ -1164,15 +1164,19 @@ def aggregate_costs(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]:
     d30 = today - _dt.timedelta(days=30)
 
     per_show: Dict[str, Dict[str, Any]] = {}
-    network_7 = {"grok": 0.0, "tts": 0.0, "total": 0.0, "episodes": 0}
-    network_30 = {"grok": 0.0, "tts": 0.0, "total": 0.0, "episodes": 0}
+    network_7 = {"grok": 0.0, "tts": 0.0, "images": 0.0, "search": 0.0,
+                 "total": 0.0, "episodes": 0}
+    network_30 = {"grok": 0.0, "tts": 0.0, "images": 0.0, "search": 0.0,
+                  "total": 0.0, "episodes": 0}
 
     for s in shows:
         slug = s["slug"]
         ddir = _digests_dir_for(slug, root)
         files = sorted(ddir.glob("credit_usage_*.json")) if ddir.exists() else []
-        show_7 = {"grok": 0.0, "tts": 0.0, "total": 0.0, "episodes": 0}
-        show_30 = {"grok": 0.0, "tts": 0.0, "total": 0.0, "episodes": 0}
+        show_7 = {"grok": 0.0, "tts": 0.0, "images": 0.0, "search": 0.0,
+                  "total": 0.0, "episodes": 0}
+        show_30 = {"grok": 0.0, "tts": 0.0, "images": 0.0, "search": 0.0,
+                   "total": 0.0, "episodes": 0}
         daily_series: Dict[str, float] = {}
 
         for f in files:
@@ -1191,30 +1195,37 @@ def aggregate_costs(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]:
             tts = float(
                 ((data.get("services") or {}).get("tts_api") or {}).get("estimated_cost_usd") or 0.0
             )
-            total = float(data.get("total_estimated_cost_usd") or (grok + tts))
+            # Images + search were 41% of tracked 30d spend in Aug 2026 yet
+            # invisible as categories (absorbed into `total` only) — the
+            # 2026-08-18 LLM usage review broke them out.
+            images = float(
+                ((data.get("services") or {}).get("image_api") or {}).get("estimated_cost_usd") or 0.0
+            )
+            search = float(
+                ((data.get("services") or {}).get("search_api") or {}).get("estimated_cost_usd") or 0.0
+            )
+            total = float(data.get("total_estimated_cost_usd") or (grok + tts + images + search))
             daily_series[date_str] = round(daily_series.get(date_str, 0.0) + total, 4)
 
             if when >= d30:
-                show_30["grok"] += grok
-                show_30["tts"] += tts
-                show_30["total"] += total
-                show_30["episodes"] += 1
-                network_30["grok"] += grok
-                network_30["tts"] += tts
-                network_30["total"] += total
-                network_30["episodes"] += 1
+                for bucket in (show_30, network_30):
+                    bucket["grok"] += grok
+                    bucket["tts"] += tts
+                    bucket["images"] += images
+                    bucket["search"] += search
+                    bucket["total"] += total
+                    bucket["episodes"] += 1
             if when >= d7:
-                show_7["grok"] += grok
-                show_7["tts"] += tts
-                show_7["total"] += total
-                show_7["episodes"] += 1
-                network_7["grok"] += grok
-                network_7["tts"] += tts
-                network_7["total"] += total
-                network_7["episodes"] += 1
+                for bucket in (show_7, network_7):
+                    bucket["grok"] += grok
+                    bucket["tts"] += tts
+                    bucket["images"] += images
+                    bucket["search"] += search
+                    bucket["total"] += total
+                    bucket["episodes"] += 1
 
         for bucket in (show_7, show_30):
-            for k in ("grok", "tts", "total"):
+            for k in ("grok", "tts", "images", "search", "total"):
                 bucket[k] = round(bucket[k], 4)
         # Last 30 daily series, oldest → newest, for sparkline rendering.
         daily_sorted = sorted(daily_series.items())[-30:]
@@ -1225,7 +1236,7 @@ def aggregate_costs(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]:
         }
 
     for bucket in (network_7, network_30):
-        for k in ("grok", "tts", "total"):
+        for k in ("grok", "tts", "images", "search", "total"):
             bucket[k] = round(bucket[k], 4)
 
     # Projection = actual last-7d burn (honest "current weekly rate").

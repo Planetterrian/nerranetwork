@@ -128,10 +128,12 @@ class TestSceneGenerationFollowsTheRender:
 
 
 class TestSearchSpendIsCounted:
-    """xAI bills server-side search per SOURCE consulted. The Responses
-    path returned only text, so every search-fetching show under-reported
-    its spend — flagged as uncounted by the July 24 pass and still missing
-    after the July 28 cost fix."""
+    """xAI bills server-side search per tool CALL ($5/1k, 2026 pricing) on
+    top of tokens; the launch-era per-SOURCE fee ($25/1k) only applies if
+    the usage object ever reports source counts again. The 2026-08-18 LLM
+    usage review found EVERY credit file since the July 29 accounting
+    shipped had ``sources: 0`` — the per-source term multiplied by zero
+    while the real per-call fee went untracked."""
 
     def test_tracker_has_a_search_section(self):
         from engine.tracking import create_tracker
@@ -139,9 +141,10 @@ class TestSearchSpendIsCounted:
         t = create_tracker("Test Show", 1)
         assert "search_api" in t["services"]
 
-    def test_cost_is_sources_plus_tokens(self):
+    def test_cost_is_calls_plus_sources_plus_tokens(self):
         from engine.tracking import (
-            SEARCH_COST_PER_SOURCE, create_tracker, record_search_usage,
+            SEARCH_COST_PER_CALL, SEARCH_COST_PER_SOURCE,
+            create_tracker, record_search_usage,
         )
 
         t = create_tracker("Test Show", 1)
@@ -149,17 +152,31 @@ class TestSearchSpendIsCounted:
                             prompt_tokens=1000, completion_tokens=500,
                             model="grok-4.3")
         got = t["services"]["search_api"]["estimated_cost_usd"]
-        expected = 10 * SEARCH_COST_PER_SOURCE + (
+        expected = 2 * SEARCH_COST_PER_CALL + 10 * SEARCH_COST_PER_SOURCE + (
             1000 * 1.25 + 500 * 2.50) / 1_000_000
         assert got == pytest.approx(expected)
 
-    def test_rate_is_env_overridable(self, monkeypatch):
+    def test_calls_bill_even_with_zero_sources(self):
+        """The live 2026 shape: xAI reports no source count, bills per
+        call. sources=0 must not zero the search cost."""
+        from engine.tracking import (
+            SEARCH_COST_PER_CALL, create_tracker, record_search_usage,
+        )
+
+        t = create_tracker("Test Show", 1)
+        record_search_usage(t, calls=6, sources=0)
+        assert t["services"]["search_api"]["estimated_cost_usd"] == pytest.approx(
+            6 * SEARCH_COST_PER_CALL)
+
+    def test_rates_are_env_overridable(self, monkeypatch):
         from engine.tracking import create_tracker, record_search_usage
 
         monkeypatch.setenv("XAI_SEARCH_COST_PER_SOURCE", "0.01")
+        monkeypatch.setenv("XAI_SEARCH_COST_PER_CALL", "0.002")
         t = create_tracker("Test Show", 1)
         record_search_usage(t, calls=1, sources=10)
-        assert t["services"]["search_api"]["estimated_cost_usd"] == pytest.approx(0.1)
+        assert t["services"]["search_api"]["estimated_cost_usd"] == pytest.approx(
+            1 * 0.002 + 10 * 0.01)
 
     def test_search_cost_reaches_the_episode_total(self, tmp_path):
         from engine.tracking import create_tracker, record_search_usage, save_usage

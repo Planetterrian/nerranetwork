@@ -109,9 +109,11 @@ class LLMConfig:
     synth_model: str = "grok-4.3"
     synth_max_tokens: int = 8000
     synth_temperature: float = 0.4
-    # Episode quality reviewer defaults. Fast/cheap variant is appropriate
-    # here — reviewer reads a truncated transcript and emits a short score.
-    reviewer_model: str = "grok-4-1-fast-non-reasoning"
+    # Episode quality reviewer defaults. grok-4.3 pinned explicitly since
+    # 2026-08-18: the grok-4-1-fast slugs were retired 2026-05-15 and
+    # redirect here at grok-4.3 billing, so the pin changes nothing served
+    # and fixes a ~6x cost under-count.
+    reviewer_model: str = "grok-4.3"
     reviewer_max_tokens: int = 1500
     reviewer_temperature: float = 0.3
     # Optional xAI reasoning depth for models that support it (grok-4.5:
