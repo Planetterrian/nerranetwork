@@ -384,6 +384,14 @@ def _fetch_single_feed(
                 )
                 continue
             link = resolve_google_news_url(link_clean)
+            # Keep the aggregator URL the feed gave us. The digest
+            # prompt sees the article list and the LLM sometimes
+            # retypes a URL into its Sources section — a 468-char
+            # opaque Google News id is retyped WRONG (Ep001 shipped
+            # two that differed from the real one by a single
+            # character). `repair_aggregator_urls` maps any such
+            # stray back to the publisher URL by matching on this.
+            aggregator_url = link_clean if link != link_clean else ""
 
             # Transparent sourcing: when this is a Google News item (the URL
             # is still a redirect, or the feed itself is Google News), cite the
@@ -434,6 +442,7 @@ def _fetch_single_feed(
                     ),
                     "relevance_score": 0.0,
                     "author": entry.get("author", ""),
+                    "aggregator_url": aggregator_url,
                 }
             )
 
