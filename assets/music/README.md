@@ -20,6 +20,11 @@ assets/music/
 ├── ПриветРусский.mp3              # PR — Russian language-learning theme (May 2026; on-disk filename
 │                                  #       is in Unicode NFD form — keep YAML music_file in sync if
 │                                  #       the file is ever renamed; see shows/privet_russian.yaml)
+├── offshore_north.mp3             # ON — "Eyes on the Horizon" anthem (Aug 2026): every-episode
+│                                  #   bed AND the Episode 1 play-out (audio.debut_song_file)
+├── offshore_north_theme.md        # ON — canonical Suno brief + lyrics (on-air quotes must match)
+├── dp_pod.mp3                     # DP — "Do Positive" anthem: bed + Episode 1 play-out
+├── dp_pod_lyrics.md               # DP — canonical lyrics
 ├── LubechangeOilers.mp3           # ORPHANED (May 2026) — OV moved to OmniView.mp3; kept on disk
 │                                  #   for rollback. Safe to delete after a few clean OV runs.
 └── README.md                      # This file
@@ -127,11 +132,23 @@ continues through the outro.
 > energy — think Bloomberg terminal meets algorithmic trading. Professional but
 > not corporate. Emerald green energy. 110–120 BPM. 30–45 seconds, clean ending.
 
+**ON (Offshore North):**
+> PRODUCED Aug 2026 — track installed at `offshore_north.mp3` (3:03, -13.7 LUFS).
+> Full song brief + canonical lyrics in `offshore_north_theme.md` (the dp_pod
+> pattern: one anthem, "Eyes on the Horizon", doubling as the intro/outro bed
+> and the Episode 1 play-out).
+> Epic cinematic maritime anthem, 95 BPM, deep strings and wave-slow drums,
+> subtle North-Atlantic fiddle colour, warm male vocal, clean resolved ending.
+> The brief asks for an instrumental opening; the delivered track starts at
+> full weight instead, which is fine — only ~3 s play alone before the first
+> spoken line and the bed is sidechain-ducked under voice thereafter.
+
 ### Audio Specifications
 
 All music files must meet these specifications for compatibility:
 - **Format:** MP3
-- **Sample rate:** 44100 Hz
+- **Sample rate:** 48000 Hz (every track in this library is 48 kHz; the
+  pipeline resamples as needed, but match the library to avoid surprises)
 - **Channels:** Stereo
 - **Bitrate:** 192 kbps or higher
 - **Duration:** 30–60 seconds (loops via `-stream_loop` for outro)

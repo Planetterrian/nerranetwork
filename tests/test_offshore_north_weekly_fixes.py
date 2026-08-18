@@ -830,3 +830,261 @@ class TestOldEventNewArticle:
         src = _digest_prompt()
         assert "OLD EVENT, NEW ARTICLE" in src
         assert "the news is the COVERAGE, not the event" in src
+
+
+# ---------------------------------------------------------------------------
+# August 2026 field-depth review (round four): field guide, French primary
+# feeds, narrative memory, engagement spec, Canadian-lineage explainers.
+# ---------------------------------------------------------------------------
+
+_GUIDE = _PROMPTS / "offshore_north_field_guide.txt"
+
+
+class TestFieldGuide:
+    def test_exists_and_carries_the_verified_anchors(self):
+        text = _GUIDE.read_text(encoding="utf-8")
+        for anchor in (
+            "1 November 2026",            # Route du Rhum start (verified)
+            "98 seconds",                  # Mike Birch, 1978 (verified)
+            "Gerry Roufs",
+            "Grade 2 solo race",          # published VG 2028 outline
+            "top 37",
+            "11 June 2026",               # Dalin — handle with dignity
+            "confirm before use",         # the decay discipline
+        ):
+            assert anchor in text, f"field guide lost: {anchor}"
+
+    def test_dalin_carries_the_dignity_rule(self):
+        text = _GUIDE.read_text(encoding="utf-8")
+        assert "dignity" in text.lower()
+
+    def test_no_prompt_placeholders(self):
+        text = _GUIDE.read_text(encoding="utf-8")
+        assert "{" not in text and "}" not in text
+
+    def test_included_in_both_prompts_and_renders(self):
+        inc = "<<include: offshore_north_field_guide.txt>>"
+        assert inc in _digest_prompt() and inc in _podcast_prompt()
+        from engine.generator import load_prompt
+        for name in ("offshore_north_digest.txt", "offshore_north_podcast.txt"):
+            rendered = load_prompt(str(_PROMPTS / name))
+            assert "Mike Birch" in rendered, f"{name}: guide include did not resolve"
+
+    def test_countdown_may_use_published_outline(self):
+        src = _digest_prompt()
+        assert "published outline" in src
+        assert "Grade-2 solo finish" in src or "Grade 2 solo" in src
+
+
+class TestFrenchPrimaryFeeds:
+    """Three weekly skips traced to an English-only feed list for a
+    French-reported sport. Both direct feeds verified serving RSS and the
+    GN site-query verified serving items, 2026-08-17."""
+
+    def test_feeds_wired(self):
+        urls = " ".join(s.url for s in _cfg().sources)
+        assert "courseaularge.com/feed" in urls
+        assert 'sailorz.com/feed/' in urls          # French root edition
+        assert "sailorz.com/en/feed/" in urls       # English edition kept
+        assert "voilesetvoiliers.ouest-france.fr" in urls  # via GN site query
+
+    def test_french_coverage_keywords(self):
+        kws = [k.lower() for k in _cfg().keywords]
+        for kw in ("course au large", "transat", "mike birch", "gerry roufs"):
+            assert kw in kws, f"keyword missing: {kw}"
+
+
+class TestNarrativeMemoryRegistered:
+    def test_registry_entry(self):
+        from engine.show_memory import SHOW_MEMORY_CONFIGS
+        assert "offshore_north" in SHOW_MEMORY_CONFIGS
+        mem = SHOW_MEMORY_CONFIGS["offshore_north"]
+        assert "road_to_rhum" in mem.default_programs
+        assert "canadian_lineage" in mem.default_programs
+        assert "vg2028_qualification" in mem.default_programs
+
+    def test_yaml_flag_and_hook(self):
+        assert _cfg().memory_enabled is True
+        import importlib
+        hooks = importlib.import_module("shows.hooks.offshore_north")
+        assert callable(hooks.pre_fetch) and callable(hooks.post_generate)
+
+    def test_pre_fetch_produces_the_section(self):
+        from engine import show_memory
+        ctx = show_memory.memory_pre_fetch(_cfg(), "offshore_north")
+        sec = ctx.get("narrative_memory_section", "")
+        assert "Road to the Route du Rhum" in sec
+        assert "Canadian Lineage" in sec
+
+
+class TestEngagementSpec:
+    def test_podcast_prompt_carries_the_craft_moves(self):
+        src = _podcast_prompt()
+        assert "HOW IT EARNS THE NEXT MINUTE" in src
+        for move in ("STAKES BEFORE DETAILS", "ONE NUMBER, MADE PHYSICAL",
+                     "THE THREAD", "CLOSE THE LOOP"):
+            assert move in src, f"engagement spec lost: {move}"
+
+    def test_moves_are_shapes_not_scripts(self):
+        src = _podcast_prompt()
+        assert "never reuse any wording from this list" in src
+
+
+class TestCanadianLineageExplainers:
+    def test_bank_gained_the_lineage(self):
+        import json
+        d = json.loads((_ROOT / "shows" / "segments" / "offshore_north.json")
+                       .read_text(encoding="utf-8"))
+        ids = [s["id"] for s in d["segments"]]
+        assert len(ids) == len(set(ids)), "duplicate segment ids"
+        for sid in ("on_canada_mike_birch", "on_canada_gerry_roufs",
+                    "on_canada_lineage", "on_race_connectivity",
+                    "on_race_finish_margins"):
+            assert sid in ids, f"segment missing: {sid}"
+        for s in d["segments"]:
+            assert s.get("prompt_template") and s.get("estimated_words")
+
+
+class TestAudienceBreadthDoctrine:
+    """Aug 2026 (operator-directed): three rings — offshore fans, casual
+    sailors, general listeners — with ring-3 stakes stated first and
+    Canada as doorway, never requirement."""
+
+    def test_system_prompt_carries_the_three_rings(self):
+        src = _system_prompt()
+        assert "three rings" in src.lower()
+        assert "never a nationality requirement" in src
+
+    def test_podcast_prompt_has_quest_line_and_door(self):
+        src = _podcast_prompt()
+        assert "The quest line" in src
+        assert "never the same phrasing twice" in src  # de-seeded
+        assert "THE DOOR IS HUMAN" in src
+
+    def test_digest_prompt_has_dinner_table_and_ring_rotation(self):
+        src = _digest_prompt()
+        assert "DINNER-TABLE TEST" in src
+        assert "ROTATE THE RING" in src
+
+    def test_field_guide_carries_bridges_and_cast(self):
+        text = _GUIDE.read_text(encoding="utf-8")
+        assert "three audiences" in text.lower()
+        assert "cast principle" in text.lower()
+        assert "door rule" in text.lower()
+
+    def test_crossover_segments_exist_and_are_tagged(self):
+        import json
+        d = json.loads((_ROOT / "shows" / "segments" / "offshore_north.json")
+                       .read_text(encoding="utf-8"))
+        crossover = [s for s in d["segments"] if "crossover" in s.get("tags", [])]
+        assert len(crossover) >= 4
+        ids = [s["id"] for s in d["segments"]]
+        assert len(ids) == len(set(ids))
+
+    def test_public_positioning_leads_with_the_quest(self):
+        raw = yaml.safe_load(_SHOW_YAML.read_text(encoding="utf-8"))
+        desc = raw["publishing"]["rss_description"]
+        assert "No Canadian has ever finished" in desc
+        assert "never touched a rope" in desc
+        meta = yaml.safe_load((_ROOT / "shows" / "network_meta.yaml")
+                              .read_text(encoding="utf-8"))["offshore_north"]
+        assert "alone" in meta["tagline"].lower()
+        assert "No sailing knowledge required" in meta["description"]
+
+
+class TestDebutCarriesTheDoctrine:
+    """Aug 2026 fresh start: the debut is the show's permanent front door
+    (frozen once directories index it). It must open on the quest, plant
+    the Birch lineage seed, invite all three rings, and never say 'we'."""
+
+    def test_quest_leads_in_both_appendices(self):
+        d = first_episode_digest_appendix(1, "Offshore North", "offshore_north")
+        p = first_episode_podcast_appendix(1, "Offshore North", "offshore_north")
+        assert "QUEST LEADS" in d and "QUEST LEADS" in p
+        assert "Everest of the seas" in p
+
+    def test_lineage_seed_planted(self):
+        p = first_episode_podcast_appendix(1, "Offshore North", "offshore_north")
+        assert "LINEAGE SEED" in p
+        assert "ninety-eight seconds" in p
+
+    def test_three_ring_invitation(self):
+        p = first_episode_podcast_appendix(1, "Offshore North", "offshore_north")
+        low = " ".join(p.lower().split())
+        assert "never sailed" in low
+        assert "no sailing knowledge required" in low
+        assert "no canadian passport required" in low
+
+    def test_solo_show_bans_we(self):
+        p = first_episode_podcast_appendix(1, "Offshore North", "offshore_north")
+        assert 'never "we"' in p
+
+    def test_dan_bio_matches_round_three(self):
+        p = first_episode_podcast_appendix(1, "Offshore North", "offshore_north")
+        assert "airline captain" in p
+        assert "commercial airline pilot and a Nerra Network" not in p
+
+
+class TestFreshStartState:
+    """Everything retired so the next run is Episode 1 with the full stack."""
+
+    def test_no_episode_artifacts_remain(self):
+        digests = _ROOT / "digests" / "offshore_north"
+        leftovers = [p.name for p in digests.iterdir()
+                     if p.name not in {".gitkeep"}
+                     and not p.name.startswith("credit_usage_")]
+        assert not leftovers, f"unexpected files: {leftovers}"
+
+    def test_feeds_absent_so_numbering_restarts(self):
+        assert not (_ROOT / "offshore_north_podcast.rss").exists()
+        assert not (_ROOT / "blog_offshore_north.rss").exists()
+        from engine.publisher import get_next_episode_number
+        n = get_next_episode_number(
+            _ROOT / "offshore_north_podcast.rss",
+            _ROOT / "digests" / "offshore_north",
+            "Offshore_North_Ep*.mp3")
+        assert n == 1
+
+    def test_spend_records_kept(self):
+        digests = _ROOT / "digests" / "offshore_north"
+        credits = list(digests.glob("credit_usage_*.json"))
+        assert len(credits) == 4, "real spend must stay on the books"
+
+
+class TestThemeMusicInstalled:
+    """"Eyes on the Horizon" (Aug 2026) — produced in Suno from the brief,
+    installed as the every-episode bed AND the Episode 1 play-out (the DP
+    Pod pattern). Verified on install: 3:03, 48 kHz stereo, -13.7 LUFS,
+    dead centre of the network library, so no level correction applied."""
+
+    def test_track_is_installed_and_plausible(self):
+        mp3 = _ROOT / "assets" / "music" / "offshore_north.mp3"
+        assert mp3.exists(), "theme track missing"
+        # ~3 minutes at ~190 kbps — guards against a truncated/placeholder file
+        assert mp3.stat().st_size > 2_000_000, "theme file suspiciously small"
+
+    def test_yaml_wires_bed_and_debut_playout(self):
+        audio = _cfg().audio
+        assert audio.music_file == "assets/music/offshore_north.mp3"
+        assert audio.debut_song_file == "assets/music/offshore_north.mp3"
+        assert audio.debut_song_episode == 1
+
+    def test_debut_script_introduces_the_song(self):
+        p = first_episode_podcast_appendix(1, "Offshore North", "offshore_north")
+        assert "Eyes on the Horizon" in p
+        assert "appended by production" in p, (
+            "the script must not write anything after the closing — the song "
+            "audio is appended by run_show"
+        )
+
+    def test_missing_file_would_still_be_gated(self):
+        """The bed is only mixed when the file exists (voice-only fallback)."""
+        src = (_ROOT / "run_show.py").read_text(encoding="utf-8")
+        assert "if music_path.exists():" in src
+
+    def test_brief_and_lyrics_are_canonical(self):
+        text = (_ROOT / "assets" / "music" / "offshore_north_theme.md").read_text(
+            encoding="utf-8")
+        assert "Fair winds — and eyes on the horizon" in text  # sign-off = chorus
+        assert "Ninety-eight seconds" in text                   # Birch, verified
+        assert "PRODUCED AND INSTALLED" in text

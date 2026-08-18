@@ -9,7 +9,7 @@
 # Design notes live in docs/offshore_north_show_bible.md.
 name: Offshore North
 slug: offshore_north
-description: "The weekly English-language guide to offshore ocean racing — the first Canadian campaign to the Vendée Globe, the wider IMOCA fleet, and one thing explained properly every week."
+description: "The quest to become the first Canadian to sail alone, non-stop, around the world — and the wild sport it happens in. Weekly, no sailing knowledge required: the campaign, the fleet, and one thing explained properly."
 
 # Already a weekly show, so no Sunday week-in-review branch. Do NOT add
 # this slug to DAILY_SHOWS in tests/test_schedule.py.
@@ -84,6 +84,24 @@ sources:
   # The site root is French; /en/ is the English edition.
   - url: "https://sailorz.com/en/feed/"
     label: "Sailorz (Tip & Shaft, English)"
+
+  # ---- Tier 3b: FRENCH PRIMARY PRESS (Aug 2026 field review) ----
+  # The sport is reported in French; three weekly skips traced to an
+  # English-only feed list starving the digest. The show's premise IS
+  # contextual translation — these are the sources it exists to translate.
+  # French-language items flow through the normal keyword filter (the
+  # sport's proper nouns are identical in French) and the digest's
+  # translated-French VERIFY rule applies to claims sourced only here.
+  # Both feeds VERIFIED serving valid RSS on 2026-08-17.
+  - url: "https://www.courseaularge.com/feed"
+    label: "Course au Large (FR)"
+  - url: "https://sailorz.com/feed/"
+    label: "Sailorz (Tip & Shaft, French)"
+  # Voiles et Voiliers (Ouest-France) publishes no direct RSS — reach it
+  # via a Google News site query (VERIFIED serving items 2026-08-17).
+  # url_utils resolves GN redirects to the publisher at fetch time.
+  - url: "https://news.google.com/rss/search?q=site:voilesetvoiliers.ouest-france.fr&hl=fr&gl=FR&ceid=FR:fr"
+    label: "Voiles et Voiliers (via GN)"
 
   # ---- Tier 4: daily aggregation ----
   - url: "https://www.sailingscuttlebutt.com/feed/"
@@ -250,7 +268,20 @@ keywords:
   - circumnavigation
   - On Board Reporter
   - 24-hour record
+  # French-language coverage terms (Aug 2026 — the FR feeds above; the
+  # sport's proper nouns are identical, these catch the generic phrases)
+  - course au large
+  - transat
+  - mise à l'eau
+  - Pointe-à-Pitre
+  - Ocean Fifty
+  - trimaran
+  # Canadian lineage (history features are on-topic for this show)
+  - Mike Birch
+  - Gerry Roufs
+  - Derek Hatfield
   # Skippers most likely to drive the week's news
+  - Charlie Dalin
   - Boris Herrmann
   - Malizia
   - Sam Goodchild
@@ -314,15 +345,42 @@ tts:
   speed: 1.02
 
 audio:
-  # No dedicated theme at launch — ships as a clean voice-only briefing.
-  # When a track exists, point this at assets/music/offshore_north.mp3 and
-  # the network's standard mix parameters apply from _defaults.yaml.
-  music_file: null
+  # "Eyes on the Horizon" — the show's own anthem (operator-produced in
+  # Suno from the brief + lyrics in assets/music/offshore_north_theme.md,
+  # Aug 2026). Used as the intro/outro bed on every episode via the
+  # standard network mix; timing/volume params inherit _defaults.yaml
+  # (3 s music alone under the cold open, then sidechain-ducked under
+  # voice, 30 s outro). VERIFIED on install: 3:03, 48 kHz stereo,
+  # ~191 kbps, integrated loudness -13.7 LUFS — dead centre of the
+  # network library (-12.9 to -14.7 LUFS), so no level correction was
+  # needed and the shared volume params apply as designed. The track
+  # starts at full weight rather than fading in; the mixer's 50 ms
+  # click-guard fade (engine/audio.py) handles that, and the result is
+  # an immediate hit of theme before Dan's first line.
+  music_file: assets/music/offshore_north.mp3
+  # Episode 1 only: after the closing sign-off ("Fair winds — and eyes on
+  # the horizon"), the FULL anthem plays the debut out — the script
+  # introduces it on air and run_show appends the audio AFTER chapter
+  # timestamps are computed. No-op for every other episode. Same pattern
+  # as The DP Pod's Episode 1.
+  debut_song_file: assets/music/offshore_north.mp3
+  debut_song_episode: 1
+
+# Narrative memory (Aug 2026 field review): the show's spine IS a
+# two-year longitudinal story — the campaign's road to 12 Nov 2028 —
+# which is exactly what the show_memory engine chronicles. Registered in
+# engine/show_memory.py SHOW_MEMORY_CONFIGS + shows/hooks/offshore_north.py;
+# gives the narrative tracker, the public Story Tracker page, and
+# continuity injection into both prompts. Prompt-context change →
+# A/B-listen per landmine #17 (operator-directed).
+memory_enabled: true
 
 publishing:
   rss_file: offshore_north_podcast.rss
   rss_title: "Offshore North"
-  rss_description: "Offshore ocean racing, explained weekly for English-speaking fans — with a Canadian angle. Every Monday: what Canada Ocean Racing did on the road to the Vendée Globe and what it actually means, the week in the IMOCA fleet and the wider offshore world, and one concept explained properly for people who love this sport without living inside it. Sources in every episode. No hype, no play-by-play."
+  # Positioning rewritten Aug 2026 (audience-breadth review): lead with the
+  # universal quest, promise no-knowledge-required, keep the depth pledge.
+  rss_description: "No Canadian has ever finished the Vendée Globe — solo, non-stop, around the world, the Everest of the seas. Offshore North follows the campaign trying to change that, and the extraordinary sport around it: carbon boats that fly at highway speed, skippers who sleep in 20-minute fragments, races decided by seconds after weeks alone at sea. Every Monday: the Canadian campaign's week, the stories moving the wider fleet, and one thing explained properly — for lifelong sailors and for people who've never touched a rope. Sources in every episode. No hype, no jargon walls, no play-by-play."
   rss_link: https://nerranetwork.com/offshore-north.html
   rss_author: "Nerra Network"
   rss_email: patrick@planetterrian.com
