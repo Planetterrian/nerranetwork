@@ -1030,5 +1030,5 @@ class TestLeverRotationMemory:
         network review). The digest/fetch stage must stay on the network
         default — grok-4.5's confident-hallucination rate is the wrong
         trade for the facts-first stage."""
-        assert CFG.llm.podcast_model in ("", "grok-4.5")
+        assert CFG.llm.podcast_model in ("", "grok-4.5", "grok-4.6")
         assert CFG.llm.model != "grok-4.5"

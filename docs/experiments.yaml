@@ -327,7 +327,10 @@ experiments:
     area: quality
     shipped: 2026-08-18
     readout: 2026-08-18
-    status: reverted
+    # 'done' is the register's closed state (the dashboard coerces unknown
+    # statuses to 'reading', which would render this as still active);
+    # the outcome — REVERTED same day — is the notes' first line.
+    status: done
     baseline: >
       grok-4.3 on digest/fetch/scripts/synth/titles/reviewer; 30d LLM
       token spend ~$25 (would be ~$47 at 4.6 rates on the same tokens);
@@ -371,6 +374,53 @@ experiments:
       is UNANSWERED — the experiment never reached an editorial readout.
       Any retry follows docs/model_upgrade_playbook.md: one show first,
       digest-latency gate before network-wide.
+  - id: staged-grok-46-trial
+    title: "grok-4.6 staged trial — dp_pod script, FPD+UC whole-show, synth, reviewer"
+    area: quality
+    shipped: 2026-08-18
+    readout: 2026-09-01
+    status: reading
+    baseline: >
+      All stages on grok-4.3 after the same-day revert of the network-wide
+      4.6 upgrade. dp_pod on 4.3: zero exclamation points in 27/30
+      episodes, Ep22 65% verbatim digest paste. FPD/UC: the accepted
+      grok-4.3 narrative-length plateau (briefs 848-1116w vs 1600 ask).
+      FPD/UC digest latency on 4.3: ~30-50s.
+    target: >
+      dp_pod scripts follow the delivery spec (exclamations/voice tags
+      present, shingle overlap with the digest clearly below the 65%/42%
+      worst cases). FPD/UC briefs come off the 4.3 plateau without the
+      banned podcast-side retries. No latency regressions: stage durations
+      in metrics_ep*.json stay under 50% of NERRA_LLM_TIMEOUT_SECONDS
+      (600s) and zero 'Slow LLM completion' warnings after week one.
+    criteria: >
+      Operator-directed staged rollout per docs/model_upgrade_playbook.md
+      (the first trial run under it). SCOPE: dp_pod llm.podcast_model
+      ONLY (digest stays 4.3); first_principles + unintended_consequences
+      whole-show (narrative — the brief is model-knowledge prose);
+      synth_model + reviewer_model in _defaults. Every daily NEWS show's
+      digest/fetch stays grok-4.3. REVERT TRIGGERS, any one suffices,
+      revert = delete the named pin: (1) an invented fact/date/name in an
+      FPD or UC story (these are factual histories) — judged against the
+      other shows' FACTUAL_ERRORS under the SAME 4.6 reviewer, never
+      against pre-08-18 history (the reviewer instrument changed this
+      date too); (2) a digest/script stage exceeding ~300s repeatedly or
+      any request timeout on a trial show; (3) a missed episode
+      attributable to the model; (4) dp_pod A/B-listen verdict against
+      the 4.6 scripts (landmine #17 — prose changes with the model).
+    notes: >
+      Follow-up to network-grok-46-upgrade (reverted for latency, not
+      quality — the quality question was never answered). Trial shows
+      were picked benefit-over-risk: dp_pod's dialogue writing is its
+      product and its 4.3 failures are documented writing-model
+      limitations; FPD/UC have no news fetch so a stronger model is the
+      only sanctioned length/depth lever; synth + reviewer are
+      analysis-stage, operator-gated or non-published. The four
+      biggest-prompt news shows (tesla, spacex, omni_view, MIT) stay
+      OFF 4.6 — highest hallucination stakes and the four that timed
+      out on outage day. NERRA_LLM_TIMEOUT_SECONDS raised 300 -> 600 in
+      run-show.yml (worst-case per stage 3 x 600s = 30 min, still under
+      the 50-min watchdog). Cost: ~+$3-5/mo at trial scope.
   - id: mit-verified-window-alpha
     title: "Modern Investing states verified-window alpha only"
     area: quality

@@ -512,6 +512,15 @@ jobs:
           # what ends an overrun (2026-08-18 outage; drift guard in
           # tests/test_pipeline_safety.py::TestTimeoutEnvelope).
           PIPELINE_TIMEOUT_SECONDS: '3000'
+          # Per-request LLM timeout (engine/generator._call_grok). Raised
+          # 300 -> 600 for the 2026-08-18 staged grok-4.6 trial: measured
+          # 4.6 latency on the trial shows is 205-242s, and 600 gives the
+          # tail room without letting one hung stage burn the job — with
+          # SDK retries off, worst-case is 3 tenacity attempts x 600s =
+          # 30 min per LLM stage, still under the 50-min watchdog above.
+          # A grok-4.3 call is unaffected (this only bounds how long we
+          # wait for a hung request, it never slows a fast one).
+          NERRA_LLM_TIMEOUT_SECONDS: '600'
           # Single-pass video render (engine.video._single_pass_enabled).
           # Fuses the slideshow and composite into one ffmpeg graph,
           # removing an intermediate 1080p encode+decode: 23-34% faster

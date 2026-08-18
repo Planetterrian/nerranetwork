@@ -1345,7 +1345,17 @@ def ai_review_episode(ep: EpisodeReview) -> None:
     reviewer_model, reviewer_max_tokens, reviewer_temperature = _load_reviewer_settings(ep.show_slug)
     try:
         from openai import OpenAI
-        client = OpenAI(api_key=api_key, base_url="https://api.x.ai/v1", timeout=120)
+        # max_retries=0: same contract as engine.generator._call_grok
+        # (2026-08-18 outage — the SDK's hidden internal retries tripled
+        # every hang under the caller's own retry logic). Timeout raised
+        # 120 -> 300 for the grok-4.6 reviewer (staged-grok-46-trial):
+        # 4.6 reasons before answering, and 120s was tuned for the
+        # effort-none 4.3 redirect this call used to ride.
+        client = OpenAI(
+            api_key=api_key, base_url="https://api.x.ai/v1",
+            timeout=float(os.environ.get("NERRA_LLM_TIMEOUT_SECONDS", 300)),
+            max_retries=0,
+        )
         extra = {}
         if reviewer_model.startswith("grok-4.3"):
             # Parity with the retired-slug redirect this call ran on from

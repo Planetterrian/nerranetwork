@@ -65,19 +65,18 @@ class TestNoLiveRetiredSlugs:
     def test_reviewer_default_is_an_explicit_priced_model(self):
         """The reviewer ran on the retired grok-4-1-fast-non-reasoning slug
         from 2026-05-15 to 2026-08-18 — served by grok-4.3 (effort none)
-        but costed at the retired model's 6x-cheaper rates. It is now
-        pinned to grok-4.3 explicitly (the same-day 4.6 upgrade was
-        reverted for latency) — the invariant is: an explicit, priced,
-        non-retired model id."""
+        but costed at the retired model's 6x-cheaper rates. grok-4.6
+        since the 2026-08-18 staged trial (staged-grok-46-trial) — the
+        invariant is: an explicit, priced, non-retired model id."""
         from engine.config import LLMConfig
         from engine.tracking import GROK_PRICING
 
-        assert LLMConfig().reviewer_model == "grok-4.3"
+        assert LLMConfig().reviewer_model == "grok-4.6"
 
         defaults = yaml.safe_load(
             (REPO_ROOT / "shows" / "_defaults.yaml").read_text(
                 encoding="utf-8"))
-        assert defaults["llm"]["reviewer_model"] == "grok-4.3"
+        assert defaults["llm"]["reviewer_model"] == "grok-4.6"
         assert defaults["llm"]["reviewer_model"] in GROK_PRICING
 
     def test_review_episodes_fallback_is_pinned_and_priced(self):
@@ -166,3 +165,78 @@ class TestDashboardCostBreakout:
         assert net30["images"] == pytest.approx(0.16)
         assert net30["search"] == pytest.approx(0.03)
         assert net30["total"] == pytest.approx(0.31)
+
+
+class TestStagedGrok46Trial:
+    """Scope guards for the 2026-08-18 staged grok-4.6 trial
+    (experiment ``staged-grok-46-trial`` — the first rollout run under
+    docs/model_upgrade_playbook.md).
+
+    The trial's whole safety argument is its SCOPE: dialogue/narrative
+    writing and analysis stages move, the facts-first news digests do
+    not. A pin quietly widening (or quietly disappearing) is exactly the
+    silent-config drift class this file exists for.
+    """
+
+    TRIAL_NARRATIVE_SHOWS = ("first_principles", "unintended_consequences")
+    NEWS_SHOWS_STAY_43 = (
+        "tesla", "spacex", "omni_view", "modern_investing",
+        "models_agents", "models_agents_beginners", "planetterrian",
+        "fascinating_frontiers", "env_intel", "finansy_prosto",
+        "privet_russian", "offshore_north",
+    )
+
+    def _load(self, slug):
+        from engine.config import load_config
+        return load_config(REPO_ROOT / "shows" / f"{slug}.yaml")
+
+    def test_trial_narrative_shows_are_on_46(self):
+        for slug in self.TRIAL_NARRATIVE_SHOWS:
+            assert self._load(slug).llm.model == "grok-4.6", slug
+
+    def test_dp_pod_script_stage_only(self):
+        """dp_pod's DIGEST must keep inheriting the grok-4.3 network
+        default — only the script stage rides 4.6."""
+        cfg = self._load("dp_pod")
+        assert cfg.llm.podcast_model == "grok-4.6"
+        assert cfg.llm.model == "grok-4.3"
+
+    def test_every_news_show_digest_stays_on_43(self):
+        """The four biggest-prompt shows timed out on 4.6 and the
+        facts-first digests carry the hallucination stakes — none of
+        them may follow the trial by accident."""
+        for slug in self.NEWS_SHOWS_STAY_43:
+            path = REPO_ROOT / "shows" / f"{slug}.yaml"
+            if not path.exists():
+                continue
+            assert self._load(slug).llm.model == "grok-4.3", slug
+
+    def test_request_timeout_covers_46_latency(self):
+        """Measured 4.6 latency on the trial shows is 205-242s — the
+        workflow must carry NERRA_LLM_TIMEOUT_SECONDS >= 600 while any
+        show is on 4.6, and the envelope arithmetic must still hold
+        (3 tenacity attempts x timeout under the 50-min watchdog)."""
+        wf = yaml.safe_load(
+            (REPO_ROOT / ".github" / "workflows" / "run-show.yml")
+            .read_text(encoding="utf-8"))
+        step = next(s for s in wf["jobs"]["run"]["steps"]
+                    if s.get("name") == "Run show pipeline")
+        llm_timeout = int(step["env"]["NERRA_LLM_TIMEOUT_SECONDS"])
+        watchdog = int(step["env"]["PIPELINE_TIMEOUT_SECONDS"])
+        assert llm_timeout >= 600
+        assert 3 * llm_timeout <= watchdog + 600, (
+            "one worst-case LLM stage must not be able to consume the "
+            "whole watchdog budget by itself"
+        )
+
+    def test_trial_models_are_priced(self):
+        from engine.tracking import GROK_PRICING
+        assert "grok-4.6" in GROK_PRICING
+        assert "grok-4.3" in GROK_PRICING
+
+    def test_trial_is_registered(self):
+        reg = yaml.safe_load(
+            (REPO_ROOT / "docs" / "experiments.yaml").read_text(
+                encoding="utf-8"))
+        ids = {e.get("id") for e in reg["experiments"]}
+        assert "staged-grok-46-trial" in ids

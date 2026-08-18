@@ -134,9 +134,16 @@ llm:
   # 2026-08-18: the grok-4.5 podcast_model pin (experiment
   # dp-pod-script-model-45) was superseded by the operator-directed
   # NETWORK grok-4.6 upgrade — which was itself REVERTED the same day
-  # for latency, so the script stage now follows the grok-4.3 default
-  # like every other show. Score the 08-24 ledger predictions against
-  # the 4.5 episodes actually shipped (08-10 .. 08-18).
+  # for latency. Score the 08-24 ledger predictions against the 4.5
+  # episodes actually shipped (08-10 .. 08-18).
+  # 2026-08-18 (later, operator-directed STAGED trial per
+  # docs/model_upgrade_playbook.md — experiment staged-grok-46-trial):
+  # script stage back on 4.6. SCRIPT ONLY — the digest (the facts) stays
+  # on the grok-4.3 network default; dialogue quality is this show's
+  # product and its documented 4.3 failures (zero exclamations 27/30,
+  # 65% verbatim digest paste) are writing-model limitations. Revert =
+  # delete this line. A/B-listen the first episode (landmine #17).
+  podcast_model: grok-4.6
 
 tts:
   # Two-host dialogue mode: DAN:/PATRICK: labeled turns, one Grok voice per

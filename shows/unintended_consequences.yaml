@@ -13,6 +13,16 @@ multilingual:
   enabled: false
 llm:
   provider: xai
+  # 2026-08-18 STAGED grok-4.6 trial (operator-directed; experiment
+  # staged-grok-46-trial, per docs/model_upgrade_playbook.md). Narrative
+  # show: no news fetch — the brief is model-knowledge prose. Measured
+  # 4.6 latency on this show: digest ~215s, script ~208s (both fit the
+  # raised NERRA_LLM_TIMEOUT_SECONDS=600 with margin — this show's Ep093
+  # ran the full pipeline successfully on 4.6 on outage day). These are
+  # FACTUAL history stories, so the sharpest watch is invented
+  # facts/dates: reviewer FACTUAL_ERRORS vs the other shows on the same
+  # reviewer. Revert = delete this line. A/B-listen the first ep (#17).
+  model: grok-4.6
   system_prompt_file: shows/prompts/unintended_consequences_system.txt
   digest_prompt_file: shows/prompts/unintended_consequences_episode.txt
   podcast_prompt_file: shows/prompts/unintended_consequences_podcast.txt
