@@ -897,6 +897,30 @@ the starting hook sequence"). Render/metadata-only — outside landmine
   legacy order); motion-A/B window-parity de-confound (top-two windows
   swap by episode parity on enrolled shows).
 
+### Anthology books — ebook + audiobook from the narrative shows (Aug 2026)
+
+Product B6 (operator-directed): `books/volumes/<id>.yaml` +
+`scripts/build_book.py` (Actions: "Build Book", manual dispatch) compile
+narrative-show digests into a store-ready EPUB 3 + typographic cover +
+Grok-TTS-narrated chaptered M4B. The digest→chapter transform is
+**deterministic — no LLM** (digests verified free of podcast-isms), so
+the ebook costs $0 and a 50-chapter audiobook ~$4 (estimate gated by
+`--max-tts-cost-usd`). Modules: `engine/book_compiler.py`,
+`engine/audiobook.py`. Rules that bind: chapter titles clip via
+`engine.titles.BOOK_CHAPTER_TITLE_MAX` (titles rule); back-matter links
+via `engine.funnel` `kind="book"` (campaign carries the VOLUME number);
+artifacts go to R2 keyspace `books/<id>/` ONLY (never a show's audio
+prefix) and `outputs/books/` is gitignored (landmine #1); both audiobook
+credits speak the AI-narration disclosure — never remove it, every
+retail channel requires it and Audible/ACX takes no third-party AI
+narration at all. Committed record: `books/catalog.json` → `/books.html`
+(`generate_html.py --books`, in `--all` + sitemap + footer). First
+volume: `uc_vol1` = UC eps 1–50 (~36k words); Vol 2 = eps 51–100 when
+the show gets there. Spot-listen a new volume before store submission
+(landmine-#17 habit). Store checklist + policies:
+[`docs/books.md`](docs/books.md). Drift guards:
+`tests/test_book_compiler.py`.
+
 ### Site-showcase video endings (Aug 2026, operator-directed)
 
 Every long-form video now ends on a 1920×1080 **outro card** built from

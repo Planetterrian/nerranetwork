@@ -57,6 +57,13 @@ WEB_TITLE_LEAD_MAX = 62
 #: Email clients truncate subject lines around here on mobile.
 NEWSLETTER_SUBJECT_MAX = 78
 
+#: Anthology-book chapter titles (EPUB table of contents + audiobook
+#: chapter markers). Not a platform cap — a readability one: store TOC
+#: panes and audiobook-app chapter lists wrap ugly past ~9 words. The
+#: full episode hook always survives as the chapter epigraph, so the
+#: clip loses nothing.
+BOOK_CHAPTER_TITLE_MAX = 72
+
 ELLIPSIS = "…"
 
 # Trailing characters that read as debris once the tail is gone.

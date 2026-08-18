@@ -1,0 +1,98 @@
+# Build one anthology volume (Aug 2026, product B6 in
+# docs/product_opportunities_2026_08.md): EPUB + cover from the committed
+# digests (free), audiobook narration through Grok TTS (~$4 per 50-chapter
+# volume, hard-capped by --max-tts-cost-usd), artifacts to R2 under the
+# books/<volume_id>/ keyspace, and the volume recorded in
+# books/catalog.json + rendered onto /books.html.
+#
+# Manual dispatch only — a book build is an operator decision, not a cron.
+# Store submission (KDP, Apple Books, Google Play, Kobo, Spotify) is
+# operator work: the checklist lives in docs/books.md, and the buy links
+# go back into books/volumes/<id>.yaml as each listing goes live.
+name: Build Book
+
+on:
+  workflow_dispatch:
+    inputs:
+      volume:
+        description: "Volume id (books/volumes/<id>.yaml)"
+        required: true
+        default: "uc_vol1"
+      skip_audio:
+        description: "Ebook only — skip TTS narration"
+        required: false
+        default: "false"
+      max_tts_cost_usd:
+        description: "Refuse to narrate past this TTS estimate (USD)"
+        required: false
+        default: "10"
+
+concurrency:
+  group: build-book-${{ github.event.inputs.volume }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    # A 50-chapter narration is ~50 sequential TTS calls; generous but
+    # well under the 6h default.
+    timeout-minutes: 120
+    permissions:
+      contents: write
+      pull-requests: write  # recovery PR if push to main exhausts
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # No git history needed (landmine #1: full clone is ~2.5 GB).
+          fetch-depth: 1
+
+      - uses: ./.github/actions/setup-python
+        with:
+          python-version: "3.12"
+          requirements-file: "requirements.txt"
+          skip-checkout: "true"
+
+      - name: Install ffmpeg
+        if: github.event.inputs.skip_audio != 'true'
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+
+      - name: Build volume
+        env:
+          GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+          XAI_API_KEY: ${{ secrets.GROK_API_KEY }}
+          R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: |
+          FLAGS="--max-tts-cost-usd ${{ github.event.inputs.max_tts_cost_usd }}"
+          if [ "${{ github.event.inputs.skip_audio }}" = "true" ]; then
+            FLAGS="$FLAGS --skip-audio"
+          fi
+          python scripts/build_book.py --volume "${{ github.event.inputs.volume }}" $FLAGS
+
+      - name: Verify book integrity
+        run: python -m pytest tests/test_book_compiler.py -q
+
+      - name: Regenerate Books page
+        run: python generate_html.py --books
+
+      - uses: ./.github/actions/safe-commit-push
+        with:
+          add-paths: |
+            books/catalog.json
+            books.html
+          commit-message: "Build book: ${{ github.event.inputs.volume }}"
+          recovery-on-failure: "true"
+          recovery-show: "books"
+
+      - name: Notify operator
+        if: success()
+        env:
+          NOTIFICATION_WEBHOOK_URL: ${{ secrets.NOTIFICATION_WEBHOOK_URL }}
+        run: |
+          if [ -n "$NOTIFICATION_WEBHOOK_URL" ]; then
+            printf '{"text":"Book built: %s — artifacts on R2 under books/%s/. Store checklist: docs/books.md"}' \
+              "${{ github.event.inputs.volume }}" "${{ github.event.inputs.volume }}" \
+              | curl -sf -X POST -H "Content-Type: application/json" -d @- \
+                  "$NOTIFICATION_WEBHOOK_URL" || true
+          fi

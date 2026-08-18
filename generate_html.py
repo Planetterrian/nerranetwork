@@ -3344,7 +3344,7 @@ def generate_sitemap(*, dry_run=False, out=None):
     for extra in ["modern-investing-resources.html", "start-here.html",
                   "about.html", "how-to-listen.html", "faq.html",
                   "press.html", "contact.html", "editorial.html",
-                  "gallery.html", "player.html", "data.html",
+                  "gallery.html", "books.html", "player.html", "data.html",
                   "modern-investing-performance.html",
                   "spacex-dashboard.html", "tesla-dashboard.html"]:
         if (ROOT / extra).exists():
@@ -3814,6 +3814,65 @@ def generate_gallery_page(*, dry_run=False):
     return out_path
 
 
+def generate_books_page(*, dry_run=False):
+    """Generate the /books.html storefront page from books/catalog.json.
+
+    The catalog is written by ``scripts/build_book.py`` (metadata + R2
+    artifact URLs); this page renders it statically — no client-side
+    hydration, books are few. Missing/empty catalog renders the friendly
+    empty state, so wiring this into ``--all`` before the first volume
+    ships is a clean no-op page rather than a crash.
+    """
+    env = _get_jinja_env()
+    template = env.get_template("books_page.html.j2")
+
+    volumes = []
+    catalog_path = ROOT / "books" / "catalog.json"
+    if catalog_path.exists():
+        try:
+            volumes = json.loads(
+                catalog_path.read_text(encoding="utf-8")).get("volumes", [])
+        except (json.JSONDecodeError, OSError) as exc:
+            print(f"Warning: books catalog unreadable ({exc}) — "
+                  "rendering empty Books page", file=sys.stderr)
+
+    context = {
+        "path_prefix": "",
+        "page_title": "Books — Nerra Network",
+        "page_description": (
+            "Anthologies compiled from the network's narrative podcasts — "
+            "ebooks and audiobooks of the stories, edited for the page."
+        ),
+        "meta_description": (
+            "Nerra Network books — story anthologies from the Unintended "
+            "Consequences and First Principles podcasts, as ebook and "
+            "audiobook."
+        ),
+        "meta_keywords": (
+            "Nerra Network books, Unintended Consequences book, podcast "
+            "anthology, audiobook"
+        ),
+        "theme_color": "#6B47FF",
+        "og_image": "",
+        "canonical_url": "https://nerranetwork.com/books.html",
+        "show_color": "",
+        "show_color_dark": "",
+        "all_shows": _build_all_shows_list(),
+        "volumes": volumes,
+    }
+
+    html = template.render(**context)
+    out_path = ROOT / "books.html"
+
+    if dry_run:
+        print(f"[dry-run] Would write {out_path}")
+        return None
+
+    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
+    print(f"Wrote {out_path}")
+    return out_path
+
+
 def generate_about_page(*, dry_run=False):
     """Generate the About page with founder, mission, and network stats."""
     env = _get_jinja_env()
@@ -4134,6 +4193,11 @@ def main():
         help="Generate the About page",
     )
     parser.add_argument(
+        "--books",
+        action="store_true",
+        help="Generate the Books page from books/catalog.json",
+    )
+    parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Preview output without writing files",
@@ -4208,6 +4272,7 @@ def main():
         generate_start_here_page(dry_run=args.dry_run)
         generate_about_page(dry_run=args.dry_run)
         generate_gallery_page(dry_run=args.dry_run)
+        generate_books_page(dry_run=args.dry_run)
         generate_spacex_dashboard(dry_run=args.dry_run)
         generate_tesla_dashboard(dry_run=args.dry_run)
         generate_data_hub_page(dry_run=args.dry_run)
@@ -4261,6 +4326,8 @@ def main():
         generate_faq_page(dry_run=args.dry_run)
     if args.about:
         generate_about_page(dry_run=args.dry_run)
+    if args.books:
+        generate_books_page(dry_run=args.dry_run)
 
 
 if __name__ == "__main__":

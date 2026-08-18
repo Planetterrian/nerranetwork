@@ -1,0 +1,144 @@
+{% extends "base.html.j2" %}
+
+{% block head_extra %}
+    <link rel="stylesheet" href="{{ path_prefix }}styles/main.css">
+    <style>
+        .nn-books-hero {
+            padding: calc(var(--nav-height) + var(--sp-12)) var(--sp-6) var(--sp-8);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .nn-books-hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at 50% 0%, rgba(0, 212, 255, 0.14), transparent 70%);
+            pointer-events: none;
+        }
+        .nn-books-hero h1 {
+            font-family: var(--font-heading);
+            font-size: clamp(2rem, 5vw, 3rem);
+            margin: 0 0 var(--sp-3);
+            background: var(--nn-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .nn-books-hero p {
+            font-family: var(--font-ui);
+            color: var(--nn-text-muted);
+            max-width: 640px;
+            margin: 0 auto;
+        }
+        .nn-books-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: var(--sp-8);
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: var(--sp-8) var(--sp-6) var(--sp-16);
+        }
+        .nn-book-card {
+            background: var(--nn-surface);
+            border: 1px solid var(--nn-border);
+            border-radius: 16px;
+            padding: var(--sp-6);
+            display: flex;
+            flex-direction: column;
+            gap: var(--sp-4);
+        }
+        .nn-book-card img {
+            width: 60%;
+            max-width: 240px;
+            margin: 0 auto;
+            border-radius: 6px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+        }
+        .nn-book-card h2 {
+            font-family: var(--font-heading);
+            font-size: 1.3rem;
+            margin: 0;
+        }
+        .nn-book-card .nn-book-sub {
+            color: var(--nn-text-muted);
+            font-style: italic;
+            margin: 0;
+        }
+        .nn-book-meta {
+            font-family: var(--font-ui);
+            font-size: 0.85rem;
+            color: var(--nn-text-muted);
+        }
+        .nn-book-desc { margin: 0; }
+        .nn-book-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--sp-2);
+            margin-top: auto;
+        }
+        .nn-book-buttons a {
+            font-family: var(--font-ui);
+            font-size: 0.85rem;
+            padding: 8px 14px;
+            border-radius: 999px;
+            border: 1px solid var(--nn-border);
+            text-decoration: none;
+            color: var(--nn-text);
+        }
+        .nn-book-buttons a.nn-book-primary {
+            background: var(--nn-cyan, #00D4FF);
+            color: #04121f;
+            border-color: transparent;
+            font-weight: 600;
+        }
+        .nn-books-empty {
+            text-align: center;
+            color: var(--nn-text-muted);
+            padding: var(--sp-16) var(--sp-6);
+            font-family: var(--font-ui);
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<section class="nn-books-hero">
+    <h1>Books</h1>
+    <p>Anthologies compiled from the network's narrative shows — the same
+    stories, edited for the page and narrated as audiobooks. Every story
+    also remains free in the original podcast feeds.</p>
+</section>
+
+{% if volumes %}
+<section class="nn-books-grid">
+    {% for v in volumes %}
+    <article class="nn-book-card">
+        {% if v.files.cover %}<img src="{{ v.files.cover }}" alt="Cover of {{ v.title }}">{% endif %}
+        <h2>{{ v.title }}{% if v.volume_number %} — Volume {{ v.volume_number }}{% endif %}</h2>
+        {% if v.subtitle %}<p class="nn-book-sub">{{ v.subtitle }}</p>{% endif %}
+        <p class="nn-book-meta">
+            {{ v.chapters }} stories · {{ "{:,}".format(v.word_count) }} words
+            {%- if v.audiobook and v.audiobook.duration_seconds %} ·
+            {{ (v.audiobook.duration_seconds // 3600) }}h
+            {{ ((v.audiobook.duration_seconds % 3600) // 60) }}m audiobook
+            {%- endif %}
+            {%- if v.price_usd %} · from ${{ "%.2f"|format(v.price_usd) }}{% endif %}
+        </p>
+        <p class="nn-book-desc">{{ v.description }}</p>
+        <div class="nn-book-buttons">
+            {% if v.buy_links.amazon %}<a class="nn-book-primary" href="{{ v.buy_links.amazon }}" rel="noopener">Amazon</a>{% endif %}
+            {% if v.buy_links.apple_books %}<a href="{{ v.buy_links.apple_books }}" rel="noopener">Apple Books</a>{% endif %}
+            {% if v.buy_links.google_play %}<a href="{{ v.buy_links.google_play }}" rel="noopener">Google Play</a>{% endif %}
+            {% if v.buy_links.kobo %}<a href="{{ v.buy_links.kobo }}" rel="noopener">Kobo</a>{% endif %}
+            {% if v.buy_links.spotify %}<a href="{{ v.buy_links.spotify }}" rel="noopener">Spotify</a>{% endif %}
+            {% if v.files.sample_epub %}<a href="{{ v.files.sample_epub }}">Free sample (EPUB)</a>{% endif %}
+        </div>
+    </article>
+    {% endfor %}
+</section>
+{% else %}
+<p class="nn-books-empty">The first volume is at the printers — well, the
+build pipeline. Check back soon, or subscribe to the newsletter to hear
+when it lands.</p>
+{% endif %}
+{% endblock %}
