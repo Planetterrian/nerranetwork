@@ -26,7 +26,11 @@ def _load_clean_fn():
     tree = ast.parse(source)
 
     # Find the function definitions we need
-    needed = {"_clean_podcast_script", "_break_long_paragraphs"}
+    needed = {
+        "_clean_podcast_script",
+        "_break_long_paragraphs",
+        "_strip_trailing_sources_block",
+    }
     funcs = {}
     for node in ast.walk(tree):
         if isinstance(node, ast.FunctionDef) and node.name in needed:
@@ -36,7 +40,11 @@ def _load_clean_fn():
 
     # Also extract the module-level _SENTENCE_SPLIT_RE
     ns = {"_SENTENCE_SPLIT_RE": None}
-    for name in ("_break_long_paragraphs", "_clean_podcast_script"):
+    for name in (
+        "_break_long_paragraphs",
+        "_strip_trailing_sources_block",
+        "_clean_podcast_script",
+    ):
         exec(funcs[name], ns)  # noqa: S102
 
     return ns["_clean_podcast_script"]

@@ -563,40 +563,38 @@ def _validate_llm_output(
     def _is_structural_framing(phrase: str) -> bool:
         return any(frag in phrase for frag in _STRUCTURAL_FRAMING)
 
-    # Proper-noun phrases (Aug 18 2026). "Christmas Island" 6× and a
-    # splashdown countdown in a Starship flight-test story (SpaceX Ep073)
-    # are the SUBJECT being named, not a tic — the same class as the
-    # show-entity exemption, but for story-specific names no keyword
-    # list can anticipate. A token counts as proper-noun when the text
-    # itself capitalizes it mid-prose strictly more often than not; a
-    # phrase is exempt only when EVERY checked (alphabetic, non-stopword)
-    # token is proper-noun. Stylistic tics — the detector's real prey
-    # ("watch for", "the question worth") — are lowercase in prose and
-    # stay caught.
-    from collections import Counter
+    def _is_titlecase_entity(phrase: str) -> bool:
+        """True when the phrase's occurrences in the ORIGINAL text are
+        predominantly Title-Case — a story-of-the-day proper noun.
 
-    _cap_counts = Counter()
-    _low_counts = Counter()
-    for _m in re.finditer(r"[A-Za-z][\w'’\-]*", text or ""):
-        _t = _m.group(0)
-        _low = _t.lower()
-        if _low in _STOPWORDS or len(_low) <= 2:
-            continue
-        if _t[0].isupper():
-            _cap_counts[_low] += 1
-        else:
-            _low_counts[_low] += 1
-
-    def _is_proper_noun_phrase(phrase: str) -> bool:
-        checked = 0
-        for tok in phrase.split():
-            base = tok.strip(".,;:!?\"'’()[]#").lower()
-            if not base or base in _STOPWORDS or not base[0].isalpha():
-                continue  # numbers / stopwords / markup are neutral
-            checked += 1
-            if _cap_counts.get(base, 0) <= _low_counts.get(base, 0):
-                return False
-        return checked > 0
+        The ``known_entities`` exemption only covers the show's YAML
+        keywords; the entities of any single day's lead story can't be
+        pre-listed. 2026-08-18: SpaceX Ep073's lead story (Starship Ship
+        40 towed to Christmas Island after 24 days at sea) scored 4 on
+        its own entities — 'christmas island' 6x, 'ship 40' 4x — and a
+        committed, published, perfectly sound digest read as a
+        regeneration candidate. Hallucination loops live in lowercase
+        running prose ('watch for' 12x, 'the kicker is' 5x); a phrase
+        that is capitalized nearly every time it appears is a NAME the
+        news is about. Numeric tokens pass through unchanged ('Ship 40'),
+        but at least one alphabetic token must be capitalized so numeric
+        facts ('24 days') stay countable.
+        """
+        toks = phrase.split()
+        if not any(t[:1].isalpha() for t in toks):
+            return False
+        cap_pattern = r"\b" + r"[\s,]+".join(
+            (re.escape(t[:1].upper()) + re.escape(t[1:]))
+            if t[:1].isalpha() else re.escape(t)
+            for t in toks
+        )
+        any_pattern = r"\b" + r"[\s,]+".join(re.escape(t) for t in toks)
+        try:
+            cap = len(re.findall(cap_pattern, text))
+            total = len(re.findall(any_pattern, text, re.IGNORECASE))
+        except re.error:  # noqa: BLE001 — never let the exemption crash scoring
+            return False
+        return total > 0 and cap / total >= 0.8
 
     if not text or not text.strip():
         logger.error(
@@ -784,8 +782,8 @@ def _validate_llm_output(
             # Skip framing the show's own memory block supplies.
             if _is_structural_framing(phrase):
                 continue
-            # Skip story-specific proper nouns ("christmas island").
-            if _is_proper_noun_phrase(phrase):
+            # Skip story-of-the-day proper nouns ("Christmas Island").
+            if _is_titlecase_entity(phrase):
                 continue
             if count >= _rep_threshold:
                 _suspicious_count += 1
@@ -870,8 +868,8 @@ def _validate_llm_output(
             # Skip framing the show's own memory block supplies.
             if _is_structural_framing(phrase):
                 continue
-            # Skip story-specific proper nouns ("the small magellanic").
-            if _is_proper_noun_phrase(phrase):
+            # Skip story-of-the-day proper nouns ("vera rubin nvl72").
+            if _is_titlecase_entity(phrase):
                 continue
             if count >= _rep_threshold:
                 _suspicious_count += 1

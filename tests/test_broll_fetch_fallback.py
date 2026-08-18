@@ -49,9 +49,26 @@ class TestPublicUrlDetection:
         assert not gl.is_public_media_url(
             f"{_ENDPOINT}/nerra-gallery/broll/spacex/a.mp4")
 
-    def test_custom_domain_is_public(self):
-        assert gl.is_public_media_url(
+    def test_gallery_original_is_not_public(self):
+        """Everything on the gallery host except .thumb.webp/.json is
+        403'd BY DESIGN by the zone's WAF rule ("Gallery originals
+        private") — it is the email gate, not an outage. This test
+        encodes the 2026-08-18 lesson: the old assumption here (custom
+        domain ⇒ public) is what turned that 403 into a bogus
+        'check the bucket config' recommendation."""
+        assert not gl.is_public_media_url(
+            "https://gallery.nerranetwork.com/spacex/2026-08-18/ep70/a.jpeg")
+        assert not gl.is_public_media_url(
             "https://gallery.nerranetwork.com/spacex/a.mp4")
+
+    def test_gallery_public_shapes_stay_public(self):
+        assert gl.is_public_media_url(
+            "https://gallery.nerranetwork.com/spacex/a.thumb.webp")
+        assert gl.is_public_media_url(
+            "https://gallery.nerranetwork.com/spacex/a.json")
+
+    def test_other_custom_domains_are_public(self):
+        assert gl.is_public_media_url("https://cdn.example.com/spacex/a.mp4")
 
     def test_empty_url_is_treated_as_public(self):
         # Nothing to special-case; the normal path reports the failure.
@@ -110,8 +127,10 @@ class TestBrollFallback:
         assert called["get"] == 0
 
     def test_public_failure_falls_back_to_r2(self, tmp_path, monkeypatch):
+        # A public-shape host (NOT the gated gallery domain — gallery
+        # paths never reach the public GET at all since 2026-08-18).
         d = _pool(tmp_path / "digests", [
-            {"url": "https://gallery.nerranetwork.com/broll/a.mp4",
+            {"url": "https://cdn.example.com/broll/a.mp4",
              "key": "broll/spacex/a.mp4"},
         ])
 
@@ -173,6 +192,38 @@ class TestBrollFallback:
         assert gl.select_broll_clips("spacex", digests_dir=d, limit=3,
                                      cache_dir=tmp_path / "cache") == []
         assert "::warning::" not in capsys.readouterr().out
+
+
+class TestGatedGalleryBrollSkipsCdn:
+    def test_gallery_host_clip_never_hits_the_public_cdn(self, tmp_path,
+                                                         monkeypatch):
+        """A gallery-host clip is behind the WAF gate like every other
+        non-thumb/json path — the ladder must go straight to R2 and,
+        if R2 fails too, must NOT spend the doomed public round-trip."""
+        d = _pool(tmp_path / "digests", [
+            {"url": "https://gallery.nerranetwork.com/broll/a.mp4",
+             "key": "broll/spacex/a.mp4"},
+        ])
+
+        def _never(*a, **k):
+            raise AssertionError("public CDN must not be contacted for a "
+                                 "gated gallery URL")
+
+        monkeypatch.setattr(gl.requests, "get", _never)
+
+        def _r2_ok(entry, dest):
+            dest.write_bytes(b"video")
+            return True
+
+        monkeypatch.setattr(gl, "_download_via_r2", _r2_ok)
+        got = gl.select_broll_clips("spacex", digests_dir=d, limit=1,
+                                    cache_dir=tmp_path / "cache")
+        assert len(got) == 1
+
+        monkeypatch.setattr(gl, "_download_via_r2", lambda e, dst: False)
+        got = gl.select_broll_clips("spacex", digests_dir=d, limit=1,
+                                    cache_dir=tmp_path / "cache2")
+        assert got == []
 
 
 class TestCommittedPoolIsRecoverable:

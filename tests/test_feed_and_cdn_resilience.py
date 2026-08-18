@@ -122,8 +122,12 @@ class TestGalleryCdnVisibility:
         raise err
 
     def _entry(self, name="b"):
+        # A PUBLIC-shape URL (not the gated gallery host): since
+        # 2026-08-18 gallery originals never reach the CDN path at all,
+        # so the loud-annotation contract is exercised on a URL that is
+        # genuinely supposed to be publicly gettable.
         return {
-            "original_url": f"https://gallery.nerranetwork.com/a/{name}.jpeg",
+            "original_url": f"https://media.example.com/a/{name}.jpeg",
             "image_id": name,
             "original_key": f"a/{name}.jpeg",
         }
@@ -135,7 +139,7 @@ class TestGalleryCdnVisibility:
 
         assert result is None
         out = capsys.readouterr().out
-        assert "::warning::gallery CDN rejected a public read" in out
+        assert "::warning::gallery CDN rejected a PUBLIC-shape read" in out
         assert "403" in out
         # And the breaker flipped, so the rest of the run skips the CDN.
         assert gallery_library._prefer_r2_download is True
@@ -148,7 +152,7 @@ class TestGalleryCdnVisibility:
                 gallery_library._download_entry(self._entry(f"img{i}"), tmp_path)
 
         out = capsys.readouterr().out
-        assert out.count("::warning::gallery CDN rejected a public read") == 1
+        assert out.count("::warning::gallery CDN rejected a PUBLIC-shape read") == 1
 
     def test_healthy_cdn_stays_silent(self, tmp_path, capsys):
         ok = Mock(content=b"jpegbytes", raise_for_status=Mock())
@@ -158,6 +162,84 @@ class TestGalleryCdnVisibility:
         assert result is not None
         assert "::warning::" not in capsys.readouterr().out
         assert gallery_library._prefer_r2_download is False
+
+
+class TestPrivateOriginalsNeverHitCdn:
+    """The 2026-08-18 near-miss, encoded.
+
+    Gallery ORIGINALS are 403'd by the zone's WAF rule *by design* — the
+    email-gated download funnel (workers/gallery/README.md). The old code
+    burned one doomed public round-trip per original and then printed the
+    loud check-your-bucket-config annotation, which very nearly talked
+    the operator into deleting the gate rule (publishing all ~5.5k
+    originals for free). Contract now: a private original never touches
+    the CDN, stays silent, never flips the run-wide R2 preference, and
+    still reports an honest reason when R2 itself fails.
+    """
+
+    @pytest.fixture(autouse=True)
+    def _reset_breaker(self):
+        gallery_library._prefer_r2_download = False
+        yield
+        gallery_library._prefer_r2_download = False
+
+    def _entry(self, name="orig"):
+        return {
+            "original_url":
+                f"https://gallery.nerranetwork.com/a/2026-08-18/ep1/{name}.jpeg",
+            "image_id": name,
+            "original_key": f"a/2026-08-18/ep1/{name}.jpeg",
+        }
+
+    def _never_get(self, *args, **kwargs):
+        raise AssertionError(
+            "the public CDN must never be contacted for a gated original")
+
+    def test_goes_straight_to_r2_and_stays_silent(self, tmp_path, capsys):
+        def _r2_ok(entry, dest):
+            dest.write_bytes(b"jpegbytes")
+            return True
+
+        with patch.object(gallery_library.requests, "get", side_effect=self._never_get), \
+             patch.object(gallery_library, "_download_via_r2", _r2_ok):
+            result = gallery_library._download_entry(self._entry(), tmp_path)
+
+        assert result is not None
+        assert "::warning::" not in capsys.readouterr().out
+        assert gallery_library._prefer_r2_download is False
+
+    def test_r2_failure_is_honest_but_quiet_and_no_breaker_flip(
+            self, tmp_path, capsys):
+        failures = []
+        with patch.object(gallery_library.requests, "get", side_effect=self._never_get), \
+             patch.object(gallery_library, "_download_via_r2", return_value=False):
+            result = gallery_library._download_entry(
+                self._entry(), tmp_path, failures=failures)
+
+        assert result is None
+        # Honest reason for the degraded blend...
+        assert failures and "private original" in failures[0]
+        # ...but no CDN-outage theater and no run-wide degradation.
+        assert "::warning::" not in capsys.readouterr().out
+        assert gallery_library._prefer_r2_download is False
+
+    def test_thumbnail_shapes_still_use_the_public_path(self, tmp_path):
+        """.thumb.webp/.json pass the WAF rule — they keep the CDN fast
+        path (this pins that the private-original branch didn't
+        overreach)."""
+        entry = {
+            "original_url":
+                "https://gallery.nerranetwork.com/a/ep1/x.thumb.webp",
+            "image_id": "x",
+            "original_key": "a/ep1/x.thumb.webp",
+        }
+        ok = Mock(content=b"webpbytes", raise_for_status=Mock())
+        with patch.object(gallery_library.requests, "get", return_value=ok) as got, \
+             patch.object(gallery_library, "_download_via_r2",
+                          side_effect=AssertionError("R2 not needed")):
+            result = gallery_library._download_entry(entry, tmp_path)
+        assert result is not None
+        assert got.called
 
 
 class TestNewsletterSendingBlock:
