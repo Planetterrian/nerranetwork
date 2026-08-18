@@ -115,3 +115,61 @@ class TestSummaryBuilder:
     def test_builder_tolerates_empty_dashboard(self):
         text = prs.build_summary_text({})
         assert "Nerra Network daily summary" in text
+
+
+# ---------------------------------------------------------------------------
+# Timeout envelope (2026-08-18 grok-4.6 outage post-mortem)
+# ---------------------------------------------------------------------------
+#
+# The outage's amplifier was a mis-ordered timeout stack: the in-process
+# SIGALRM watchdog (PIPELINE_TIMEOUT_SECONDS) sat ABOVE the CI step's
+# hard-kill, so it could never fire — jobs died mid-write with commit
+# steps skipped, and unintended_consequences Ep093 was orphaned (published
+# everywhere, committed nowhere) when the kill landed 0.35 s after the
+# pipeline finished. These guards pin the ordering and the retry contract.
+
+class TestTimeoutEnvelope:
+    WORKFLOW = PROJECT_ROOT / ".github" / "workflows" / "run-show.yml"
+
+    def _run_show_job(self):
+        import yaml
+        wf = yaml.safe_load(self.WORKFLOW.read_text(encoding="utf-8"))
+        return wf["jobs"]["run"]
+
+    def _pipeline_step(self):
+        job = self._run_show_job()
+        for step in job["steps"]:
+            if step.get("name") == "Run show pipeline":
+                return step
+        raise AssertionError("'Run show pipeline' step not found")
+
+    def test_watchdog_fires_before_ci_hard_kill(self):
+        """PIPELINE_TIMEOUT_SECONDS (SIGALRM, clean abort with a reason)
+        must sit at least 5 minutes BELOW the step's timeout-minutes
+        (hard kill, skipped commit steps). At 45/3000 the watchdog was
+        unreachable in CI."""
+        step = self._pipeline_step()
+        step_limit_s = int(step["timeout-minutes"]) * 60
+        watchdog_s = int(step["env"]["PIPELINE_TIMEOUT_SECONDS"])
+        assert watchdog_s + 300 <= step_limit_s, (
+            f"PIPELINE_TIMEOUT_SECONDS={watchdog_s} must be >=300s below "
+            f"the step hard-kill ({step_limit_s}s) or it can never fire"
+        )
+
+    def test_llm_client_owns_no_retries(self):
+        """_call_grok must create its OpenAI client with max_retries=0.
+
+        The SDK's default internal retry (2) sat UNDER the tenacity
+        wrappers, so one hanging upstream became 3 SDK requests x 3
+        tenacity attempts = nine 5-minute stalls (grok-4.6, 2026-08-18).
+        Retries belong to exactly one layer: tenacity."""
+        src = (PROJECT_ROOT / "engine" / "generator.py").read_text(
+            encoding="utf-8")
+        assert "max_retries=0" in src
+
+    def test_llm_timeout_is_env_tunable(self):
+        """A slower model must be accommodated by raising
+        NERRA_LLM_TIMEOUT_SECONDS, never by letting requests hang."""
+        src = (PROJECT_ROOT / "engine" / "generator.py").read_text(
+            encoding="utf-8")
+        assert "NERRA_LLM_TIMEOUT_SECONDS" in src

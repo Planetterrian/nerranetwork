@@ -1383,13 +1383,22 @@ directed a NETWORK-WIDE upgrade to grok-4.6** (all LLM stages — digest,
 fetch, scripts, synth, titles, reviewer, review agent — off grok-4.3;
 refusal fallback repointed to grok-4.3; the dp_pod-4.5 / MIT-4.6
 `podcast_model` pins removed as superseded/absorbed; ~+$22-25/mo).
-Registered as experiment **`network-grok-46-upgrade`, readout
-2026-09-01** — its revert triggers are load-bearing: any invented
-number in an MIT script = immediate one-line revert
-(`model: grok-4.3` in `_defaults.yaml`); reviewer FACTUAL_ERRORS rate
-clearly above the pre-08-18 baseline; fetch tool-calls failing on 4.6.
-grok-4.6's confident-hallucination profile is UNMEASURED for this
-network — do not treat the upgrade as validation; the readout decides.
+**REVERTED the SAME DAY (2026-08-18, operator-directed)** — the trigger
+was operational, not editorial: grok-4.6 digest latency ran **5-10×
+grok-4.3** on every show measured (planetterrian 44s → 420s, MAB 36s →
+242s, dp_pod 55s → 225s) and the four largest digest prompts (tesla,
+spacex, omni_view, modern_investing) blew the 300 s request timeout or
+were server-disconnected; nested SDK+tenacity retries amplified each
+stall into a 41-45 min burn and **7 of 12 scheduled shows failed on day
+one**. Everything is back on grok-4.3 (refusal fallback back on
+grok-4.20-reasoning; the translation pin deliberately stays grok-4.6 —
+it froze what `grok-latest` already served, and its small chunks never
+tripped a timeout). Experiment `network-grok-46-upgrade` is closed
+`reverted`; grok-4.6's hallucination profile remains UNMEASURED. **Any
+future model upgrade follows
+[`docs/model_upgrade_playbook.md`](docs/model_upgrade_playbook.md)** —
+staged one-show-first rollout with a digest-latency gate — never a
+network-wide day-one flip.
 The review also shipped three silent-number fixes: (1) **search billed per CALL** ($5/1k, env
 `XAI_SEARCH_COST_PER_CALL`) — xAI dropped per-source billing and the usage
 object's source count, so 100% of credit files since 07-29 recorded $0

@@ -1255,10 +1255,10 @@ def _load_reviewer_settings(show_slug: str) -> tuple[str, int, float]:
     ``shows/_defaults.yaml`` (or any per-show override). Falls back to
     the historical hardcoded values if the config can't be loaded.
     """
-    # Follows the network primary (2026-08-18 grok-4.6 upgrade). The
-    # grok-4.3 branch below keeps redirect-parity (effort none) for anyone
-    # pinning reviewer_model back to 4.3.
-    default_model = "grok-4.6"
+    # grok-4.3 with the 2026-08-18 revert of the same-day 4.6 upgrade.
+    # The grok-4.3 branch below keeps redirect-parity (effort none) with
+    # the retired grok-4-1-fast-non-reasoning slug this replaced.
+    default_model = "grok-4.3"
     default_tokens = 1500
     default_temp = 0.3
     try:

@@ -10,15 +10,18 @@
 
 llm:
   provider: xai
-  # Grok 4.6 (released 2026-08-12) — OPERATOR-DIRECTED network upgrade
-  # 2026-08-18 ($2/$6 per 1M vs 4.3's $1.25/$2.50, ~+$22/mo network-wide;
-  # experiment `network-grok-46-upgrade`, readout 2026-09-01). This
-  # supersedes the July-31 digests-stay-on-4.3 decision by explicit
-  # operator override — 4.6's confident-hallucination profile is
-  # UNMEASURED for this network's failure mode, so the readout watches the
-  # episode reviewer's FACTUAL_ERRORS rate. Rollback is this one line back
-  # to grok-4.3.
-  model: grok-4.6
+  # Grok 4.3 — REVERTED here 2026-08-18 (operator-directed), one day after
+  # the operator-directed grok-4.6 upgrade (experiment
+  # `network-grok-46-upgrade`, ended reverted). The revert trigger was
+  # OPERATIONAL, not editorial: 4.6 digest latency ran 5-10× 4.3 on every
+  # show measured (planetterrian 44s → 420s, MAB 36s → 242s, dp_pod 55s →
+  # 225s), and on the four biggest digest prompts (tesla, spacex,
+  # omni_view, modern_investing) requests exceeded the 300 s client
+  # timeout or were server-disconnected — 7 of 12 shows failed on day one
+  # (see docs/model_upgrade_playbook.md for the post-mortem + the staged
+  # rollout any future model upgrade must follow). Any re-attempt at 4.6
+  # goes through that playbook, one show first, never network-wide day one.
+  model: grok-4.3
   digest_temperature: 0.5
   podcast_temperature: 0.7
   max_tokens: 3500
@@ -27,21 +30,21 @@ llm:
   podcast_chain: false
   # Refusal fallback — must be a DIFFERENT training snapshot than the
   # primary so a refusal genuinely switches model rather than retrying the
-  # same one. grok-4.3 since the 2026-08-18 upgrade (primary is now 4.6):
-  # cheaper, battle-tested on 3+ months of this network's prompts, and it
-  # retires the aging grok-4.20-family dependency.
-  fallback_model: grok-4.3
+  # same one. Back on grok-4.20-reasoning with the 2026-08-18 revert
+  # (primary is grok-4.3 again, so 4.3 can no longer be its own fallback).
+  fallback_model: grok-4.20-reasoning
   # Synthesizer (weekly newsletter, monthly report, cross-show briefing).
-  # Follows the network primary (2026-08-18 upgrade).
-  synth_model: grok-4.6
+  # Follows the network primary (reverted with it 2026-08-18 — synth calls
+  # are the network's LARGEST completions, the worst case for 4.6 latency).
+  synth_model: grok-4.3
   synth_max_tokens: 8000
   synth_temperature: 0.4
-  # Episode quality reviewer. Follows the network primary since the
-  # 2026-08-18 upgrade. (History: the original grok-4-1-fast-non-reasoning
-  # slug was RETIRED by xAI on May 15 and silently redirected to grok-4.3
-  # at 4.3 billing; the same-day LLM usage pass pinned that explicitly
-  # before the operator-directed 4.6 upgrade landed hours later.)
-  reviewer_model: grok-4.6
+  # Episode quality reviewer. grok-4.3 pinned explicitly (2026-08-18 LLM
+  # usage pass; reverted from the same-day 4.6 upgrade with the primary).
+  # History: the original grok-4-1-fast-non-reasoning slug was RETIRED by
+  # xAI on May 15 and silently redirected to grok-4.3 at 4.3 billing —
+  # this pin makes that explicit.
+  reviewer_model: grok-4.3
   reviewer_max_tokens: 1500
   reviewer_temperature: 0.3
   # Optional (July 2026): set to low|medium|high only when using a model

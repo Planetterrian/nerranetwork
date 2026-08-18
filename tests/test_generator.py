@@ -118,10 +118,10 @@ class TestFallbackModel:
 
     def test_falls_back_to_module_default_when_unset(self):
         cfg = types.SimpleNamespace(llm=types.SimpleNamespace(fallback_model=""))
-        assert _resolve_fallback_model(cfg) == "grok-4.3"
+        assert _resolve_fallback_model(cfg) == "grok-4.20-reasoning"
 
     def test_handles_missing_llm_attr(self):
-        assert _resolve_fallback_model(types.SimpleNamespace()) == "grok-4.3"
+        assert _resolve_fallback_model(types.SimpleNamespace()) == "grok-4.20-reasoning"
 
 
 # ---------------------------------------------------------------------------
@@ -286,6 +286,18 @@ class TestCallGrok:
         # The request carried our model + the user message.
         assert recorder["model"] == "grok-4.3"
         assert recorder["messages"][-1] == {"role": "user", "content": "hello"}
+
+    def test_client_disables_sdk_retries(self, fake_openai, monkeypatch):
+        """SDK-internal retries must stay OFF (max_retries=0) and the
+        request timeout must honor NERRA_LLM_TIMEOUT_SECONDS — the
+        2026-08-18 grok-4.6 outage turned each hang into 9 stalls because
+        the SDK retried under tenacity (see TestTimeoutEnvelope)."""
+        from engine.generator import _call_grok
+        recorder, _ = fake_openai
+        monkeypatch.setenv("NERRA_LLM_TIMEOUT_SECONDS", "123")
+        _call_grok("hello")
+        assert recorder["client_kwargs"]["max_retries"] == 0
+        assert recorder["client_kwargs"]["timeout"] == 123.0
 
     def test_system_prompt_is_prepended(self, fake_openai):
         from engine.generator import _call_grok

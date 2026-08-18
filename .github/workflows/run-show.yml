@@ -451,7 +451,19 @@ jobs:
             exit 0
           fi
           exit $EXIT_CODE
-        timeout-minutes: 45
+        # INVARIANT (2026-08-18 outage): this hard-kill must sit ABOVE the
+        # in-process watchdog (PIPELINE_TIMEOUT_SECONDS below, 3000 s =
+        # 50 min) with real margin, so an overrun aborts via SIGALRM with a
+        # clear reason instead of being killed mid-write. At 45 the watchdog
+        # could NEVER fire in CI — and unintended_consequences Ep093
+        # finished a fully-published episode 0.35 s before the 45-minute
+        # kill, so the commit step was skipped and the episode orphaned
+        # (live on YouTube/R2/newsletter, nothing in git). Normal days run
+        # ~35-45 min when the long-form render is slow; 60 gives the
+        # watchdog room to be the one that decides.
+        # tests/test_pipeline_safety.py::TestTimeoutEnvelope pins the
+        # ordering — change both together or CI fails.
+        timeout-minutes: 60
         env:
           # June 2026: secrets are passed directly as env vars instead of
           # being written to a .env file via a heredoc + sed strip — same
@@ -495,6 +507,10 @@ jobs:
           # 50 min — Tesla Ep537 timed out at 40 min mid-slideshow after a
           # 15-min TTS + 74-scene xfade graph. Slot cap (24) is the primary
           # fix; this headroom covers long TTS + long-form + 2 Shorts.
+          # MUST stay comfortably BELOW the step's timeout-minutes above
+          # (60 min) so the SIGALRM watchdog — not the CI hard-kill — is
+          # what ends an overrun (2026-08-18 outage; drift guard in
+          # tests/test_pipeline_safety.py::TestTimeoutEnvelope).
           PIPELINE_TIMEOUT_SECONDS: '3000'
           # Single-pass video render (engine.video._single_pass_enabled).
           # Fuses the slideshow and composite into one ffmpeg graph,
