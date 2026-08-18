@@ -1025,30 +1025,56 @@ class TestDebutCarriesTheDoctrine:
         assert "commercial airline pilot and a Nerra Network" not in p
 
 
-class TestFreshStartState:
-    """Everything retired so the next run is Episode 1 with the full stack."""
+# Relaunch boundary: the Aug-2026 retirement purged every pre-relaunch
+# artifact so numbering restarts at 1; the relaunched Episode 1 published
+# 2026-08-18. This class was originally the PRE-launch "fresh start"
+# guard (no artifacts, no feeds, next episode == 1); Ep001 shipping made
+# that shape permanently false, so it now guards what the purge actually
+# established: nothing from the pre-relaunch era resurfaces, numbering
+# restarted at 1, and the retired era's real spend stays on the books.
+_RELAUNCH_DATE = "20260818"
+_PRE_RELAUNCH_CREDIT_FILES = 4  # 2026-08-05..2026-08-17, old ep numbering
 
-    def test_no_episode_artifacts_remain(self):
+
+class TestRelaunchBoundary:
+    """The retirement purge holds: no pre-relaunch artifact resurfaces."""
+
+    def test_no_pre_relaunch_episode_artifacts(self):
         digests = _ROOT / "digests" / "offshore_north"
-        leftovers = [p.name for p in digests.iterdir()
-                     if p.name not in {".gitkeep"}
-                     and not p.name.startswith("credit_usage_")]
-        assert not leftovers, f"unexpected files: {leftovers}"
+        stale = []
+        for p in digests.iterdir():
+            m = re.match(r"Offshore_North_Ep\d+_(\d{8})", p.name)
+            if m and m.group(1) < _RELAUNCH_DATE:
+                stale.append(p.name)
+        assert not stale, (
+            f"pre-relaunch episode artifacts resurfaced: {stale} — the "
+            "Aug-2026 retirement purged these so numbering could restart"
+        )
 
-    def test_feeds_absent_so_numbering_restarts(self):
-        assert not (_ROOT / "offshore_north_podcast.rss").exists()
-        assert not (_ROOT / "blog_offshore_north.rss").exists()
-        from engine.publisher import get_next_episode_number
-        n = get_next_episode_number(
-            _ROOT / "offshore_north_podcast.rss",
-            _ROOT / "digests" / "offshore_north",
-            "Offshore_North_Ep*.mp3")
-        assert n == 1
+    def test_numbering_restarted_at_one(self):
+        feed = _ROOT / "offshore_north_podcast.rss"
+        if not feed.exists():
+            # Between purge and first publish the feed is legitimately
+            # absent and the next episode must be 1.
+            from engine.publisher import get_next_episode_number
+            assert get_next_episode_number(
+                feed, _ROOT / "digests" / "offshore_north",
+                "Offshore_North_Ep*.mp3") == 1
+            return
+        nums = [int(n) for n in re.findall(
+            r"<itunes:episode>(\d+)</itunes:episode>",
+            feed.read_text(encoding="utf-8"))]
+        assert nums and min(nums) == 1, (
+            f"relaunched feed must start at Episode 1, got {sorted(nums)[:5]}"
+        )
 
-    def test_spend_records_kept(self):
+    def test_pre_relaunch_spend_records_kept(self):
         digests = _ROOT / "digests" / "offshore_north"
-        credits = list(digests.glob("credit_usage_*.json"))
-        assert len(credits) == 4, "real spend must stay on the books"
+        old = [p for p in digests.glob("credit_usage_*.json")
+               if p.name.split("_")[2][:10].replace("-", "") < _RELAUNCH_DATE]
+        assert len(old) == _PRE_RELAUNCH_CREDIT_FILES, (
+            "the retired era's real spend must stay on the books"
+        )
 
 
 class TestThemeMusicInstalled:
