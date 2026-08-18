@@ -563,6 +563,41 @@ def _validate_llm_output(
     def _is_structural_framing(phrase: str) -> bool:
         return any(frag in phrase for frag in _STRUCTURAL_FRAMING)
 
+    # Proper-noun phrases (Aug 18 2026). "Christmas Island" 6× and a
+    # splashdown countdown in a Starship flight-test story (SpaceX Ep073)
+    # are the SUBJECT being named, not a tic — the same class as the
+    # show-entity exemption, but for story-specific names no keyword
+    # list can anticipate. A token counts as proper-noun when the text
+    # itself capitalizes it mid-prose strictly more often than not; a
+    # phrase is exempt only when EVERY checked (alphabetic, non-stopword)
+    # token is proper-noun. Stylistic tics — the detector's real prey
+    # ("watch for", "the question worth") — are lowercase in prose and
+    # stay caught.
+    from collections import Counter
+
+    _cap_counts = Counter()
+    _low_counts = Counter()
+    for _m in re.finditer(r"[A-Za-z][\w'’\-]*", text or ""):
+        _t = _m.group(0)
+        _low = _t.lower()
+        if _low in _STOPWORDS or len(_low) <= 2:
+            continue
+        if _t[0].isupper():
+            _cap_counts[_low] += 1
+        else:
+            _low_counts[_low] += 1
+
+    def _is_proper_noun_phrase(phrase: str) -> bool:
+        checked = 0
+        for tok in phrase.split():
+            base = tok.strip(".,;:!?\"'’()[]#").lower()
+            if not base or base in _STOPWORDS or not base[0].isalpha():
+                continue  # numbers / stopwords / markup are neutral
+            checked += 1
+            if _cap_counts.get(base, 0) <= _low_counts.get(base, 0):
+                return False
+        return checked > 0
+
     if not text or not text.strip():
         logger.error(
             "LLM returned EMPTY %s for '%s' — treating as retryable failure",
@@ -749,6 +784,9 @@ def _validate_llm_output(
             # Skip framing the show's own memory block supplies.
             if _is_structural_framing(phrase):
                 continue
+            # Skip story-specific proper nouns ("christmas island").
+            if _is_proper_noun_phrase(phrase):
+                continue
             if count >= _rep_threshold:
                 _suspicious_count += 1
                 logger.warning(
@@ -831,6 +869,9 @@ def _validate_llm_output(
                 continue
             # Skip framing the show's own memory block supplies.
             if _is_structural_framing(phrase):
+                continue
+            # Skip story-specific proper nouns ("the small magellanic").
+            if _is_proper_noun_phrase(phrase):
                 continue
             if count >= _rep_threshold:
                 _suspicious_count += 1
