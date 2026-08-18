@@ -101,7 +101,33 @@ In the Cloudflare dashboard, R2 → `nerra-gallery` → Settings:
 
 A simple WAF rule that returns 403 for any path on
 `gallery.nerranetwork.com` not ending in `.thumb.webp` or `.json`
-achieves the split cleanly.
+achieves the split cleanly. **This rule is LIVE** on the
+`nerranetwork.com` zone (verified 2026-08-18):
+
+```
+Name:       Gallery originals private (403 except .thumb.webp/.json)
+Expression: (http.host eq "gallery.nerranetwork.com" and not
+             (ends_with(http.request.uri.path, ".thumb.webp") or
+              ends_with(http.request.uri.path, ".json")))
+Action:     Block   Order: First
+```
+
+> **⚠️ Do not remove or bypass this rule. A 403 on a gallery original
+> is the email gate WORKING, not an outage.** On 2026-08-18 a pipeline
+> warning ("check the bucket's public-access configuration") led
+> straight to three proposed "fixes" that were all the same edit:
+> (1) deleting the rule, (2) adding a Skip exception for
+> `gallery.nerranetwork.com`, and (3) appending
+> `and http.host ne "gallery.nerranetwork.com"` to its expression —
+> the hostname is the rule's only condition, so each one publishes
+> every original for free and leaves the Buttondown funnel decorative.
+> The pipeline reads originals through authenticated R2
+> (`engine/gallery_library.py` treats gallery originals as non-public
+> by design and never GETs them over the CDN); the public serves
+> `.thumb.webp`/`.json` only; humans get originals through the
+> Worker's cookie-gated `/api/download`. The R2 bucket's Public
+> Development URL (`pub-*.r2.dev`) is deliberately disabled, so this
+> custom domain is the only public route and the rule covers all of it.
 
 ### 2. DNS + custom domain
 

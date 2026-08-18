@@ -47,10 +47,11 @@ DEFAULT_MANIFEST = PROJECT_ROOT / "site" / "data" / "gallery-manifest.json"
 DOWNLOAD_TIMEOUT_SECONDS = 20
 
 # Abort library blending after this many consecutive download failures.
-# Without a breaker, a CDN outage (gallery.nerranetwork.com 403 from GHA —
-# Tesla Ep537) walks every historical candidate (~150+ HTTP round-trips)
-# and still returns zero paths. Fail fast; the caller already degrades to
-# fresh-only scenes.
+# Without a breaker, a run where every fetch fails (Tesla Ep537 — at the
+# time read as a "CDN outage", later understood to be the originals gate
+# doing its job before the code knew originals were private) walks every
+# historical candidate (~150+ HTTP round-trips) and still returns zero
+# paths. Fail fast; the caller already degrades to fresh-only scenes.
 _MAX_CONSECUTIVE_DOWNLOAD_FAILURES = 5
 
 # After the public CDN 403s once in-process, skip it for the rest of the
@@ -234,17 +235,49 @@ def _cache_filename(entry: dict) -> str:
     return f"{stem}{ext}"
 
 
-def is_public_media_url(url: str) -> bool:
-    """False for an S3-API endpoint URL, which no plain GET can read.
+# The gallery custom domain's WAF rule (Cloudflare zone nerranetwork.com,
+# rule "Gallery originals private (403 except .thumb.webp/.json)"):
+#   (http.host eq "gallery.nerranetwork.com" and not
+#    (ends_with(http.request.uri.path, ".thumb.webp") or
+#     ends_with(http.request.uri.path, ".json")))  → Block
+# That 403 is the Phase-3 email gate WORKING, not an outage — originals
+# are only reachable via the Worker's cookie-gated /api/download (or CI's
+# authenticated R2 credentials). See workers/gallery/README.md and
+# docs/gallery_storage.md before concluding anything from a gallery 403.
+_GALLERY_GATE_HOST = "gallery.nerranetwork.com"
+_GALLERY_PUBLIC_SUFFIXES = (".thumb.webp", ".json")
 
-    ``upload_to_r2`` returns the raw
-    ``https://<account>.r2.cloudflarestorage.com/<bucket>/<key>`` endpoint
-    when ``R2_GALLERY_PUBLIC_BASE_URL`` is unset — that address requires
-    SigV4 signing, so an unauthenticated GET is answered 400, not 403.
-    Recognising it lets the caller go straight to the authenticated path
+
+def is_public_media_url(url: str) -> bool:
+    """False for a URL no plain unauthenticated GET can read. Two shapes:
+
+    * An S3-API endpoint URL: ``upload_to_r2`` returns the raw
+      ``https://<account>.r2.cloudflarestorage.com/<bucket>/<key>``
+      endpoint when ``R2_GALLERY_PUBLIC_BASE_URL`` is unset — that
+      address requires SigV4 signing, so an unauthenticated GET is
+      answered 400, not 403.
+    * A gallery ORIGINAL: everything on ``gallery.nerranetwork.com``
+      except ``.thumb.webp`` / ``.json`` is 403'd by the zone's WAF rule
+      BY DESIGN (the email-gated download funnel — see the rule quoted
+      above). The 2026-08-18 near-miss: that 403 was misread as a CDN
+      outage and the "fix" on the table was deleting the rule, i.e.
+      publishing all ~5.5k originals for free.
+
+    Recognising both lets callers go straight to the authenticated path
     instead of spending a doomed request per object.
     """
-    return ".r2.cloudflarestorage.com" not in (url or "").lower()
+    u = (url or "").lower()
+    if ".r2.cloudflarestorage.com" in u:
+        return False
+    try:
+        from urllib.parse import urlparse
+        parsed = urlparse(u)
+    except Exception:  # noqa: BLE001 — unparseable ≈ nothing to special-case
+        return True
+    if parsed.netloc == _GALLERY_GATE_HOST and not parsed.path.endswith(
+            _GALLERY_PUBLIC_SUFFIXES):
+        return False
+    return True
 
 
 def _r2_object_key(entry: dict) -> Optional[str]:
@@ -271,8 +304,10 @@ def _r2_object_key(entry: dict) -> Optional[str]:
         # An S3-endpoint URL puts the BUCKET in the path
         # (/nerra-gallery/broll/…), but the bucket is passed separately
         # to the client — leaving it in would look up a key that does
-        # not exist.
-        if not is_public_media_url(url):
+        # not exist. (Deliberately NOT is_public_media_url() here: gallery
+        # originals are also non-public but their custom-domain path is
+        # already the bare object key.)
+        if ".r2.cloudflarestorage.com" in url.lower():
             try:
                 from engine.gallery_uploader import gallery_config_from_env
                 bucket = (gallery_config_from_env().bucket or "").strip("/")
@@ -329,12 +364,13 @@ def _download_entry(
 ) -> Optional[Path]:
     """Fetch one image into the cache (or reuse); None on failure.
 
-    Tries the public CDN URL first (fast path when the custom domain is
-    healthy). On any HTTP/network failure, falls back to an authenticated
-    R2 get via ``original_key`` — the Ep537 failure mode was a blanket
-    403 from ``gallery.nerranetwork.com`` while the same bucket accepted
-    uploads with the CI credentials. Once the CDN 403s in-process, later
-    downloads skip straight to R2 (``_prefer_r2_download``).
+    PRIVATE urls (gallery originals behind the WAF gate, S3-endpoint
+    urls) go straight to authenticated R2 — the public CDN is not an
+    option for them and a 403 there is by design, not a failure (the
+    "Ep537 blanket 403" this code originally treated as an outage was
+    exactly that gate). Public shapes try the CDN first (fast path),
+    fall back to R2 on failure, and flip ``_prefer_r2_download`` after
+    the first 401/403 so the rest of the run skips the doomed requests.
 
     When ``failures`` is given, a short human-readable reason is appended
     on each failed fetch so the caller can report WHY the blend degraded.
@@ -344,6 +380,28 @@ def _download_entry(
     if dest.exists() and dest.stat().st_size > 0:
         _PATH_REGISTRY[dest] = entry
         return dest
+
+    # Gallery ORIGINALS are private BY DESIGN (the WAF email gate — see
+    # is_public_media_url). Go straight to authenticated R2: no doomed
+    # public round-trip, no loud CDN warning (nothing is wrong), and the
+    # run-wide _prefer_r2_download flip stays untouched so genuinely
+    # public shapes keep using the CDN fast path.
+    if not is_public_media_url(entry.get("original_url") or ""):
+        if _download_via_r2(entry, dest):
+            _PATH_REGISTRY[dest] = entry
+            return dest
+        if failures is not None:
+            r2_state = ("authenticated R2 fetch failed" if _r2_configured()
+                        else "R2 credentials unset")
+            failures.append(
+                f"private original (gated by design, no public route): "
+                f"{r2_state}")
+        logger.warning(
+            "gallery_library: R2 fetch failed for private original %s "
+            "(the public CDN is not an option for originals — WAF gate)",
+            entry.get("image_id") or dest.name,
+        )
+        return None
 
     if _prefer_r2_download and _download_via_r2(entry, dest):
         _PATH_REGISTRY[dest] = entry
@@ -369,14 +427,21 @@ def _download_entry(
             # ("R2 fallback OK"), so a CDN that had been rejecting every
             # public GET for weeks looked like a healthy pipeline —
             # renders just silently paid the slower authenticated path up
-            # to 16 times each. A public bucket that stops being public
-            # is a config regression and should be seen the same day.
+            # to 16 times each. RESCOPED 2026-08-18: private originals
+            # never reach this path any more (they are 403'd by design —
+            # the WAF email gate), so this warning now fires only when a
+            # URL that is SUPPOSED to be public goes dark — the real
+            # regression signal. It very nearly talked an operator into
+            # deleting the gate rule when it fired on originals.
             if not _prefer_r2_download:
                 print(
-                    "::warning::gallery CDN rejected a public read "
+                    "::warning::gallery CDN rejected a PUBLIC-shape read "
                     f"(HTTP {status or 'error'}) — falling back to "
-                    "authenticated R2 for the rest of this run. Check the "
-                    "bucket's public-access / custom-domain configuration.",
+                    "authenticated R2 for the rest of this run. Public "
+                    "shapes are .thumb.webp/.json (originals are gated by "
+                    "design and never fetched publicly) — if this fired, "
+                    "a public shape went dark: check the custom-domain / "
+                    "WAF config, but do NOT touch the originals gate rule.",
                     flush=True,
                 )
                 logger.warning(
@@ -771,6 +836,18 @@ def select_broll_clips(
             if not is_public_media_url(url) or _prefer_r2_download:
                 if _download_via_r2(entry, dest):
                     paths.append(dest)
+                    continue
+                # A PRIVATE url has no public route to fall through to —
+                # an S3-endpoint GET answers 400 and a gated gallery path
+                # answers 403 either way. Report honestly and move on
+                # rather than spending the doomed round-trip.
+                if not is_public_media_url(url):
+                    logger.warning(
+                        "gallery_library: R2 fetch failed for private "
+                        "b-roll %s (%s; no public route exists for it)",
+                        dest.name,
+                        "R2 error" if _r2_configured()
+                        else "R2 credentials unset")
                     continue
             public_err: Optional[Exception] = None
             try:
