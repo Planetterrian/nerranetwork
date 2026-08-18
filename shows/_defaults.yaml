@@ -34,17 +34,24 @@ llm:
   # (primary is grok-4.3 again, so 4.3 can no longer be its own fallback).
   fallback_model: grok-4.20-reasoning
   # Synthesizer (weekly newsletter, monthly report, cross-show briefing).
-  # Follows the network primary (reverted with it 2026-08-18 — synth calls
-  # are the network's LARGEST completions, the worst case for 4.6 latency).
-  synth_model: grok-4.3
+  # grok-4.6 (2026-08-18 staged trial, operator-directed — experiment
+  # staged-grok-46-trial): analysis-stage output, not the daily critical
+  # path — synth jobs run in their own workflows with their own timeouts,
+  # and the raised NERRA_LLM_TIMEOUT_SECONDS covers 4.6 latency. The
+  # daily digest/script default above stays grok-4.3.
+  synth_model: grok-4.6
   synth_max_tokens: 8000
   synth_temperature: 0.4
-  # Episode quality reviewer. grok-4.3 pinned explicitly (2026-08-18 LLM
-  # usage pass; reverted from the same-day 4.6 upgrade with the primary).
-  # History: the original grok-4-1-fast-non-reasoning slug was RETIRED by
-  # xAI on May 15 and silently redirected to grok-4.3 at 4.3 billing —
-  # this pin makes that explicit.
-  reviewer_model: grok-4.3
+  # Episode quality reviewer. grok-4.6 (2026-08-18 staged trial,
+  # operator-directed — experiment staged-grok-46-trial): a sharper
+  # analyst on a short, non-published output; small calls, low latency
+  # risk. NOTE the instrument-change caveat: FACTUAL_ERRORS rates from
+  # this date on come from a different reviewer than the historical
+  # baseline, so the 4.6 shows' rates are read AGAINST THE OTHER SHOWS
+  # under this same reviewer, never against pre-08-18 history.
+  # (History: the original grok-4-1-fast-non-reasoning slug was RETIRED
+  # by xAI on May 15 and silently served by grok-4.3 at 4.3 billing.)
+  reviewer_model: grok-4.6
   reviewer_max_tokens: 1500
   reviewer_temperature: 0.3
   # Optional (July 2026): set to low|medium|high only when using a model

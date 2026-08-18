@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import calendar
 import json
+import os
 import logging
 import re
 from collections import Counter
@@ -18,6 +19,14 @@ from typing import Any, Dict, List, Optional
 
 from engine.content_lake import query_all_shows_range, query_show_range
 from engine.generator import _call_grok
+
+# Synth calls are the network's LARGEST completions (8k tokens), and the
+# synth workflows (weekly newsletter, monthly report) don't carry the
+# run-show env, so give them their own generous request timeout instead
+# of inheriting _call_grok's 300s default. 2026-08-18 staged grok-4.6
+# trial: 4.6 latency scales with completion size — 300s risks a timeout
+# on exactly the calls this module makes. Env-tunable for rollback.
+_SYNTH_TIMEOUT_S = float(os.environ.get("NERRA_SYNTH_TIMEOUT_SECONDS", "900"))
 
 logger = logging.getLogger(__name__)
 
@@ -564,6 +573,7 @@ def synthesize_weekly_newsletter(
             temperature=synth_temperature,
             max_tokens=synth_max_tokens,
             system_prompt=system_prompt,
+            timeout=_SYNTH_TIMEOUT_S,
         )
         envelope = _parse_envelope(
             text, show_name=show_name, week_ending=week_ending
@@ -711,6 +721,7 @@ Keep the tone authoritative and analytical. Target 2500-3500 words."""
             temperature=synth_temperature,
             max_tokens=synth_max_tokens,
             system_prompt=system_prompt,
+            timeout=_SYNTH_TIMEOUT_S,
         )
         logger.info(
             "[Synthesizer] Monthly report for %s %d-%02d: %d chars (model=%s)",
@@ -831,6 +842,7 @@ on connections that no single-domain publication would catch."""
                 "independent podcast network. You specialize in finding "
                 "cross-domain connections."
             ),
+            timeout=_SYNTH_TIMEOUT_S,
         )
         logger.info(
             "[Synthesizer] Cross-show briefing: %d chars (model=%s)",

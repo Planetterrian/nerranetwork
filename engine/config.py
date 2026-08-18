@@ -109,15 +109,16 @@ class LLMConfig:
     # A/B-listen required (landmine #17).
     podcast_model: str = ""
     # Synthesizer (weekly newsletter, monthly report, cross-show briefing)
-    # defaults. Empty synth_model means "use model".
-    synth_model: str = "grok-4.3"
+    # defaults. Empty synth_model means "use model". grok-4.6 since the
+    # 2026-08-18 staged trial (staged-grok-46-trial) — mirrors
+    # shows/_defaults.yaml.
+    synth_model: str = "grok-4.6"
     synth_max_tokens: int = 8000
     synth_temperature: float = 0.4
-    # Episode quality reviewer defaults. grok-4.3 pinned explicitly (the
-    # retired grok-4-1-fast-non-reasoning slug had been silently served
-    # by 4.3 since May 15); reverted from the short-lived 4.6 upgrade
-    # together with the primary on 2026-08-18.
-    reviewer_model: str = "grok-4.3"
+    # Episode quality reviewer defaults. grok-4.6 since the 2026-08-18
+    # staged trial (staged-grok-46-trial) — mirrors shows/_defaults.yaml,
+    # including the instrument-change caveat documented there.
+    reviewer_model: str = "grok-4.6"
     reviewer_max_tokens: int = 1500
     reviewer_temperature: float = 0.3
     # Optional xAI reasoning depth for models that support it (grok-4.5:
