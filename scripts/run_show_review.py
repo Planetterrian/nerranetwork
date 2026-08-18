@@ -58,7 +58,7 @@ from engine.tracking import _estimate_grok_cost  # noqa: E402
 # ANALYZES committed transcripts and its proposals are operator-gated
 # behind a draft PR, so a sharper analyst is pure upside. Cost moves
 # ~$0.30 -> ~$0.75/run at 2 runs/week. Env-overridable for rollback.
-REVIEW_MODEL = os.environ.get("REVIEW_MODEL", "grok-4.5")
+REVIEW_MODEL = os.environ.get("REVIEW_MODEL", "grok-4.6")
 
 # Context caps so a huge show can't blow past Grok's window or run up cost.
 MAX_EPISODES = 10

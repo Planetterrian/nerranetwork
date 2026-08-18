@@ -62,23 +62,28 @@ class TestNoLiveRetiredSlugs:
             for slug in RETIRED_SLUGS:
                 assert slug not in text, f"{path.name} references {slug}"
 
-    def test_reviewer_default_is_explicit_grok_43(self):
+    def test_reviewer_default_is_an_explicit_priced_model(self):
         """The reviewer ran on the retired grok-4-1-fast-non-reasoning slug
         from 2026-05-15 to 2026-08-18 — served by grok-4.3 (effort none)
-        but costed at the retired model's 6x-cheaper rates."""
+        but costed at the retired model's 6x-cheaper rates. It now follows
+        the network primary (grok-4.6, operator-directed upgrade) — the
+        invariant is: an explicit, priced, non-retired model id."""
         from engine.config import LLMConfig
+        from engine.tracking import GROK_PRICING
 
-        assert LLMConfig().reviewer_model == "grok-4.3"
+        assert LLMConfig().reviewer_model == "grok-4.6"
 
         defaults = yaml.safe_load(
             (REPO_ROOT / "shows" / "_defaults.yaml").read_text(
                 encoding="utf-8"))
-        assert defaults["llm"]["reviewer_model"] == "grok-4.3"
+        assert defaults["llm"]["reviewer_model"] == "grok-4.6"
+        assert defaults["llm"]["reviewer_model"] in GROK_PRICING
 
-    def test_review_episodes_fallback_is_grok_43(self):
+    def test_review_episodes_fallback_is_pinned_and_priced(self):
         src = (REPO_ROOT / "review_episodes.py").read_text(encoding="utf-8")
-        assert 'default_model = "grok-4.3"' in src
-        # Effort parity with the retired-slug redirect the call ran on.
+        assert 'default_model = "grok-4.6"' in src
+        # The grok-4.3 redirect-parity branch (effort none) must survive
+        # for anyone pinning reviewer_model back to 4.3.
         assert '"reasoning_effort": "none"' in src
 
 

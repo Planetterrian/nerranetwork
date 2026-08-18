@@ -191,11 +191,11 @@ experiments:
       scripts/capture_site_screens.py.
 
   - id: dp-pod-script-model-45
-    title: "DP Pod script stage on grok-4.5 (podcast_model A/B)"
+    title: "DP Pod script stage on grok-4.5 — SUPERSEDED by network 4.6 upgrade"
     area: quality
     shipped: 2026-08-10
     readout: 2026-08-24
-    status: reading
+    status: done
     baseline: "27/30 episodes with zero exclamation points; ~30% median digest-to-script 10-word shingle overlap (Ep22 65%)"
     target: >
       Scripts stop reading the brief verbatim (<=15% median shingle
@@ -203,14 +203,15 @@ experiments:
       points in most episodes, voice tags actually used) with NO new
       facts beyond the digest.
     criteria: >
-      Operator A/B-listens the first post-merge episodes; keep grok-4.5
-      only if the energy is real and factuality holds — revert is
-      deleting the one podcast_model line in shows/dp_pod.yaml.
+      SUPERSEDED 2026-08-18 — the operator-directed network-wide grok-4.6
+      upgrade moved dp_pod's script stage (and every other stage) to 4.6,
+      ending the 4.5 arm early. The 08-10..08-18 4.5 episodes are still a
+      usable partial read: score the shingle-overlap/exclamation ledger
+      predictions against them at the original 08-24 date, then judge 4.6
+      under network-grok-46-upgrade.
     notes: >
-      First (only) show on the July-31 script-stage model knob. The
-      digest/fetch stage stays on grok-4.3 by design — facts are locked
-      before the script model runs. Audio change — landmine #17 A/B.
-      Scored against the 2026-08-10 dp_pod review ledger predictions.
+      Was the first show on the July-31 script-stage model knob. Audio
+      change — landmine #17 A/B applied at ship time.
 
   - id: youtube-chapters-live
     title: "Seek-bar chapters ship in every long-form description"
@@ -290,11 +291,11 @@ experiments:
       cap. Render-only — outside landmine #17.
 
   - id: mit-script-model-46
-    title: "Modern Investing script stage on grok-4.6 (podcast_model A/B)"
+    title: "Modern Investing script stage on grok-4.6 — ABSORBED into network 4.6 upgrade"
     area: quality
     shipped: 2026-08-15
     readout: 2026-08-29
-    status: reading
+    status: done
     baseline: "median script 1535w against an 1800w floor; 9 of the last 10 episodes below it"
     target: >
       Median script length reaches the 1800w floor (or at least clears
@@ -303,22 +304,54 @@ experiments:
       substrate since July 24 and moved only 1382w -> 1535w, which points
       at the script stage as the remaining ceiling.
     criteria: >
-      Operator A/B-listens the first post-merge episodes and checks the
-      spoken numbers against the digest. Keep grok-4.6 only if length
-      improves AND factuality is unchanged; revert is deleting the one
-      podcast_model line in shows/modern_investing.yaml. If ANY invented
-      number reaches a script, revert immediately — this is the show
-      where that costs the most.
+      ABSORBED 2026-08-18 into the operator-directed network-wide 4.6
+      upgrade (the explicit podcast_model pin was removed — the network
+      default now equals what this A/B was trialling, and the digest
+      moved too, so the script-vs-digest isolation this experiment relied
+      on no longer exists). At 08-29 still score the length target
+      (median script vs the 1800w floor) from the 08-15+ episodes; the
+      factuality check transfers to network-grok-46-upgrade, where MIT
+      remains the revert trigger.
     notes: >
-      grok-4.6 (2026-08-12) is a post-training upgrade over 4.5, so the
-      confident-hallucination regression that keeps digests on 4.3 (25%
-      -> 54% on 4.5) is unmeasured for it, not disproven. That is exactly
-      why it is pointed at the one stage that introduces no facts. Digest
-      and fetch stages stay on grok-4.3. Audio change — landmine #17 A/B.
-      An unreachable model id falls back to grok-4.3 with a loud warning,
-      so a bad id costs the experiment, never the episode.
+      Ran 3 days as a script-stage-only A/B before the network upgrade
+      landed. The MIT rule carries forward unchanged: any invented
+      number/ticker/price reaching a script is an immediate revert.
 
-  - id: mit-verified-window-alpha
+  - id: network-grok-46-upgrade
+    title: "Network-wide grok-4.6 — all LLM stages off 4.3 (operator-directed)"
+    area: quality
+    shipped: 2026-08-18
+    readout: 2026-09-01
+    status: reading
+    baseline: >
+      grok-4.3 on digest/fetch/scripts/synth/titles/reviewer; 30d LLM
+      token spend ~$25 (would be ~$47 at 4.6 rates on the same tokens);
+      script under-floor share 81% network-wide (MIT 9/10 under 1800w);
+      episode-reviewer FACTUAL_ERRORS flags at the pre-upgrade rate
+      (establish from review_report history at readout).
+    target: >
+      Script length off the 4.3 plateau (MIT median clears 1700w+; the
+      chronically-short shows' under-floor share drops), reviewer
+      FACTUAL_ERRORS flag rate NOT above the pre-upgrade baseline, and
+      refusal-fallback fires stay rare. LLM cost line lands ~$45-50/30d.
+    criteria: >
+      OPERATOR OVERRIDE of the July-31 digests-stay-on-4.3 decision
+      (explicitly directed 2026-08-18, risks acknowledged: 4.6's
+      confident-hallucination profile is unmeasured for this network).
+      REVERT TRIGGERS, checked daily via the audit, decided at readout:
+      (1) any invented number/ticker/price in an MIT script — immediate
+      one-line revert (model: grok-4.3 in _defaults.yaml); (2) reviewer
+      FACTUAL_ERRORS rate clearly above baseline across shows; (3) fetch
+      tool-calls (x_search/web_search) failing on 4.6. Also A/B-listen
+      the first post-merge episode on 2-3 shows per landmine #17 — every
+      script's prose changes with this merge.
+    notes: >
+      Everything moved together: digest/fetch, scripts (dp_pod's 4.5 and
+      MIT's 4.6 pins removed — superseded/absorbed), synth, titles,
+      reviewer, review agent, restock; refusal fallback repointed
+      grok-4.20-reasoning -> grok-4.3 (different snapshot than the new
+      primary, retires the aging 4.20 dependency). Translation was
+      already pinned 4.6 same-day. ~+$22-25/mo at current volume.
     title: "Modern Investing states verified-window alpha only"
     area: quality
     shipped: 2026-08-15

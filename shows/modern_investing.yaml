@@ -131,7 +131,6 @@ multilingual:
   languages: [ru, fr]
 llm:
   provider: xai
-  fallback_model: grok-4.20-non-reasoning
   system_prompt_file: shows/prompts/modern_investing_system.txt
   digest_prompt_file: shows/prompts/modern_investing_digest.txt
   podcast_prompt_file: shows/prompts/modern_investing_podcast.txt
@@ -140,20 +139,12 @@ llm:
   max_tokens: 4000
   podcast_max_tokens: 8000
   min_podcast_words: 1800
-  # SCRIPT-STAGE ONLY A/B (2026-08-15, experiment mit-script-model-46).
-  # The digest stays on grok-4.3: the network holds facts-first stages
-  # there because grok-4.5 regressed confident-hallucination 25% -> 54%,
-  # and 4.6 is a post-training upgrade over 4.5, so that risk is
-  # unmeasured, not disproven. MIT is the show where a hallucinated
-  # number is most expensive (real tickers, real prices, a published
-  # track record), which is exactly why the newer model is pointed at
-  # the one stage that introduces no facts — it rewrites an
-  # already-verified digest into a script. The problem it is aimed at is
-  # measurable: 9 of the last 10 scripts came in under the 1800-word
-  # floor (median ~1535w). Readout 2026-08-29. Revert = delete this line.
-  # An unreachable model id falls back to llm.model with a loud warning
-  # (engine/generator.py), so a bad id costs the A/B, never the episode.
-  podcast_model: grok-4.6
+  # 2026-08-18: the mit-script-model-46 A/B's explicit podcast_model pin
+  # was absorbed by the operator-directed NETWORK grok-4.6 upgrade (the
+  # default now equals what the A/B was trialling). MIT stays the
+  # sharpest factuality watch: a hallucinated number here (real tickers,
+  # real prices, a published track record) is the upgrade's revert
+  # trigger — see experiment network-grok-46-upgrade.
   # DISABLED July 29 2026 (cost + quality). Measured over 901 committed
   # episodes: 81% still shipped BELOW target WITH this retry running (Tesla
   # 96.7%, M&A 95.2%) — it fires on nearly every episode and almost never

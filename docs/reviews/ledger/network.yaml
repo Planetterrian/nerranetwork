@@ -309,6 +309,46 @@ reviews:
       evidence: null
     agent_cost_usd: null
 
+  - date: '2026-08-18'
+    pr: null
+    doc: docs/reviews/llm_usage_review_2026_08_18.md
+    generated_by: claude-code-session
+    summary: 'OPERATOR OVERRIDE, same day as the LLM usage review: network-wide upgrade to grok-4.6 across every LLM stage (digest, fetch/search, podcast script, synth, titles, episode reviewer, review agent), overriding both the July-31 digests-on-4.3 decision and the morning review''s own no-upgrades verdict. Refusal fallback repointed grok-4.20-reasoning -> grok-4.3 (different snapshot than the new primary; retires the 4.20 dependency). dp_pod''s grok-4.5 and MIT''s grok-4.6 podcast_model pins removed — superseded/absorbed by the network default; their experiment entries record what still gets scored at the original readout dates. Registered as experiment network-grok-46-upgrade (readout 2026-09-01) with explicit revert triggers; rollback is one line (model: grok-4.3 in _defaults.yaml). Cost ~+$22-25/mo (30d LLM token base ~$25 -> ~$47 at 4.6 rates).'
+    scored_prior_predictions: []
+    shipped:
+    - file: shows/_defaults.yaml
+      kind: config
+      ab_listen_required: true
+      rationale: 'model/synth_model/reviewer_model -> grok-4.6, fallback_model -> grok-4.3. Every script''s prose changes with this merge — A/B-listen the first post-merge episode on 2-3 shows (tesla, MIT, dp_pod suggested) per landmine #17. Operator directed with risks acknowledged (May-13 fast-wrap override precedent).'
+    - file: engine/config.py + engine/generator.py + digests/xai_grok.py + engine/synthesizer.py + engine/youtube_titles.py + scripts/run_show_review.py + review_episodes.py
+      kind: code
+      ab_listen_required: false
+      rationale: 'Code-side defaults follow the YAML flip so a config-load failure cannot silently split the network across models. Generator fallback constant moved to grok-4.3.'
+    - file: shows/modern_investing.yaml + shows/dp_pod.yaml + shows/tesla.yaml
+      kind: config
+      ab_listen_required: false
+      rationale: 'Stale per-show pins removed (podcast_model A/B pins absorbed; 4.20 fallback overrides retired). Guard: tests/test_mit_benchmark_integrity.py::TestScriptStageModelOverride now asserts NO per-show model pins sneak back without a new experiment entry.'
+    deferred:
+    - Grok Imagine stays on the $0.02 base model and video stays off — the upgrade is LLM-only; image-quality tier still waits on gallery-retention evidence.
+    - TTS/voice unchanged (no model param exists; do_not_retry on tags/respellings stands).
+    predictions:
+    - metric: episode-reviewer FACTUAL_ERRORS flag rate, network-wide, 14d post-upgrade vs 14d pre
+      baseline: pre-08-18 rate from review_report history (establish exact number at readout)
+      expected: NOT above baseline; if clearly above, the upgrade reverts per the experiment''s trigger (1-line rollback)
+      verdict: pending
+      evidence: null
+    - metric: MIT median script words vs the 1800w floor (the length ceiling 4.6 was aimed at)
+      baseline: median ~1535w, 9 of last 10 episodes under the floor
+      expected: median clears 1700w within 10 episodes of the upgrade WITHOUT any invented number/ticker/price (an invented number is an immediate revert, not a partial)
+      verdict: pending
+      evidence: null
+    - metric: tracked 30d LLM spend (dashboard grok category + search tokens)
+      baseline: ~$25/30d at 4.3 rates (08-18 token base)
+      expected: lands ~$45-50/30d; materially above that means reasoning-token growth on 4.6 needs the reasoning_effort dial
+      verdict: pending
+      evidence: null
+    agent_cost_usd: null
+
 do_not_retry:
   - idea: podcast-side length levers (word floors, expand-retries, prompt
       pressure on the podcast stage) for ANY show

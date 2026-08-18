@@ -187,3 +187,55 @@ No new spend. Tracked totals will rise slightly (~$8–10/mo) because
 previously-invisible real spend (search per-call fees, reviewer at true
 grok-4.3 rates, translation at true 4.6 rates) is now counted — the
 bill was already being paid; now the dashboard admits it.
+
+---
+
+## ADDENDUM — Operator override, same day (2026-08-18)
+
+Hours after this review shipped its "no model upgrades" verdict, the
+operator explicitly directed a **network-wide upgrade to grok-4.6** with
+full awareness of the risks laid out above (the May-13 `<fast>` re-enable
+precedent: operator override, documented as such, engineered to be safe).
+This addendum records what shipped and how the risk is instrumented.
+
+**What moved** (experiment `network-grok-46-upgrade`, readout
+2026-09-01): the network default `llm.model` (digest, fetch/search, X
+thread, podcast script), `synth_model`, `reviewer_model`, the review
+agent's `REVIEW_MODEL`, and the generator/xai_grok/titles code defaults —
+all `grok-4.3` → `grok-4.6`. The refusal fallback repointed
+`grok-4.20-reasoning` → `grok-4.3` (a genuinely different snapshot from
+the new primary; retires the aging 4.20-family dependency this review had
+flagged as a watch item). The dp_pod (`grok-4.5`) and MIT (`grok-4.6`)
+`podcast_model` pins were removed — superseded/absorbed by the network
+default; both experiment entries record the early end and what still gets
+scored at their original readout dates. Translation was already pinned
+4.6 by this review's fix #3.
+
+**Cost**: ~+$22–25/mo (30d LLM token base re-priced: ~$25 → ~$47; the
+reviewer adds ~$1.4). TTS/images/search unchanged. Network total moves
+from ~$110–125 to ~$135–150/mo.
+
+**Risk instrumentation** (this is the part that makes the override an
+experiment rather than a bet):
+
+- **Revert is one line** — `model: grok-4.3` in `shows/_defaults.yaml`
+  (code defaults follow config; nothing else needs touching same-day).
+- **MIT is the tripwire show**: any invented number/ticker/price in a
+  script is an immediate revert (rule carried forward from
+  `mit-script-model-46`).
+- **The episode reviewer's `FACTUAL_ERRORS` flag rate** is the
+  network-wide readout metric — it runs on every episode via the daily
+  audit; compare post-upgrade rate against the pre-08-18 baseline at
+  readout.
+- **Fetch verification**: grok-4.6 supports function calling, but the
+  first post-merge runs should confirm the server-side `x_search` /
+  `web_search` tools behave on 4.6 (a failure is loud — fetch errors
+  surface in the run logs, and the refusal fallback path is 4.3).
+- **Landmine #17**: every script's prose changes with this merge —
+  A/B-listen the first post-merge episode on 2–3 shows (suggested:
+  tesla, MIT, dp_pod — dp_pod also just lost its 4.5 pin).
+
+**What this supersedes**: the July-31 "digests stay on 4.3" decision and
+this review's own "wait for the readouts" recommendation — both by
+explicit operator direction, recorded here and in the network ledger so
+the next review scores the outcome instead of relitigating the decision.

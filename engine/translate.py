@@ -15,8 +15,8 @@ Design notes
   A/B — and the cost estimate priced it at grok-4.3 rates regardless. The
   pin freezes today's behavior (grok-4.6, what the alias resolves to now);
   moving it is a deliberate edit + listen-check, not a vendor release.
-  Scoped to the translation calls only — it does NOT touch the English
-  generation pipeline's ``grok-4.3``.
+  Scoped to the translation calls only — the English generation pipeline
+  has its own pins (network-wide grok-4.6 since 2026-08-18).
 - Proper nouns / tickers are preserved; a per-language phonetic overrides
   map (``shows/translation_overrides.yaml``) is injected into the prompt as
   guidance AND applied as a post-process safety net (mirrors

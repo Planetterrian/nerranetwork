@@ -64,7 +64,7 @@ class LLMEmptyOutputError(LLMRefusalError):
 # prefer ``config.llm.fallback_model`` where possible. Points at the older
 # grok-4.20-reasoning so a refusal switches model family/snapshot rather
 # than re-asking the same primary (grok-4.3).
-_LLM_FALLBACK_MODEL = "grok-4.20-reasoning"
+_LLM_FALLBACK_MODEL = "grok-4.3"
 
 
 def _resolve_fallback_model(config) -> str:
@@ -165,7 +165,7 @@ def _get_api_key() -> str:
 def _call_grok(
     prompt: str,
     *,
-    model: str = "grok-4.3",
+    model: str = "grok-4.6",
     system_prompt: Optional[str] = None,
     temperature: float = 0.7,
     max_tokens: int = 3500,

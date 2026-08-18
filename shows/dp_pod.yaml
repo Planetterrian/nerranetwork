@@ -131,12 +131,11 @@ llm:
   # exclamation points, ~5 voice-direction tags total across the whole
   # run, and high-verbatim briefing paste (Ep22 65%, Ep29 42% 10-word
   # shingle overlap with the digest, 44 digest sentences copied exactly).
-  # grok-4.5 writes better prose but hallucinates more confidently — the
-  # right trade HERE because the digest/fetch stage stays on grok-4.3
-  # (facts are locked before this model ever runs). A/B-listen per
-  # landmine #17; revert = delete this line (empty default is
-  # byte-identical grok-4.3 behaviour).
-  podcast_model: grok-4.5
+  # 2026-08-18: the grok-4.5 podcast_model pin (experiment
+  # dp-pod-script-model-45) was superseded by the operator-directed
+  # NETWORK grok-4.6 upgrade — the script stage now follows the 4.6
+  # default like every other show. Score the 08-24 ledger predictions
+  # against the 4.5 episodes actually shipped (08-10 .. 08-18).
 
 tts:
   # Two-host dialogue mode: DAN:/PATRICK: labeled turns, one Grok voice per

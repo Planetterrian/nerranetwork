@@ -167,7 +167,7 @@ class TestDefaultValues:
     def test_llm_defaults(self):
         c = LLMConfig()
         assert c.provider == "xai"
-        assert c.model == "grok-4.3"
+        assert c.model == "grok-4.6"
         assert c.system_prompt_file == ""
         assert c.digest_prompt_file == ""
         assert c.podcast_prompt_file == ""
@@ -445,10 +445,9 @@ class TestLoadConfigRealFiles:
         joined = " ".join(cfg.web_search_queries).lower()
         for term in ("optimus", "megapack", "solar", "cortex", "robotaxi"):
             assert term in joined, term
-        # Tesla inherits the network default (grok-4.3) — always-on
-        # reasoning at lower cost than the previous grok-4.20-reasoning
-        # override.
-        assert cfg.llm.model == "grok-4.3"
+        # Tesla inherits the network default (grok-4.6 since the
+        # operator-directed 2026-08-18 upgrade).
+        assert cfg.llm.model == "grok-4.6"
         assert cfg.llm.digest_temperature == 0.5
         assert cfg.llm.podcast_temperature == 0.7
         # Tesla migrated off ElevenLabs in May 2026; now inherits the
@@ -470,7 +469,7 @@ class TestLoadConfigRealFiles:
         assert len(cfg.sources) == 25
         assert cfg.sources[0].label == "NASA Breaking"
         assert "space" in cfg.keywords
-        assert cfg.llm.model == "grok-4.3"
+        assert cfg.llm.model == "grok-4.6"
         # English shows migrated to Grok TTS (sal voice) in May 2026.
         assert cfg.tts.provider == "grok"
         assert cfg.tts.voice_id == "kdif6sqjcyiq"
@@ -513,7 +512,7 @@ class TestLoadConfigRealFiles:
         assert len(cfg.sources) == 37
         assert cfg.sources[0].label == "NPR"
         assert "election" in cfg.keywords
-        assert cfg.llm.model == "grok-4.3"
+        assert cfg.llm.model == "grok-4.6"
         assert cfg.llm.digest_temperature == 0.5
         # Raised 4000 -> 10000 so the multi-perspective digest completes
         # without truncation, then 10000 -> 13000 (July 28 2026) because it
@@ -540,7 +539,7 @@ class TestLoadConfigRealFiles:
         assert cfg.sources[0].label == "BC Ministry of Environment"
         assert "contaminated sites" in cfg.keywords
         assert "CCME" in cfg.keywords
-        assert cfg.llm.model == "grok-4.3"
+        assert cfg.llm.model == "grok-4.6"
         assert cfg.llm.digest_temperature == 0.5
         # English shows migrated to Grok TTS (sal voice) in May 2026. The
         # ElevenLabs settings (stability/style) still inherit from the

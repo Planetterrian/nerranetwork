@@ -118,10 +118,10 @@ class TestFallbackModel:
 
     def test_falls_back_to_module_default_when_unset(self):
         cfg = types.SimpleNamespace(llm=types.SimpleNamespace(fallback_model=""))
-        assert _resolve_fallback_model(cfg) == "grok-4.20-reasoning"
+        assert _resolve_fallback_model(cfg) == "grok-4.3"
 
     def test_handles_missing_llm_attr(self):
-        assert _resolve_fallback_model(types.SimpleNamespace()) == "grok-4.20-reasoning"
+        assert _resolve_fallback_model(types.SimpleNamespace()) == "grok-4.3"
 
 
 # ---------------------------------------------------------------------------

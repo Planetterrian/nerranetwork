@@ -298,7 +298,7 @@ class TestGrokReviewScript:
         grok-4.5 on 2026-07-31 (analysis-only task, operator-gated
         output, ~$0.75/run); env-overridable for rollback."""
         text = self.SCRIPT.read_text(encoding="utf-8")
-        assert 'REVIEW_MODEL = os.environ.get("REVIEW_MODEL", "grok-4.5")' \
+        assert 'REVIEW_MODEL = os.environ.get("REVIEW_MODEL", "grok-4.6")' \
             in text
 
     def test_script_opens_draft_pr_with_review_branch_prefix(self):

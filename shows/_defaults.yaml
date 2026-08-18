@@ -10,34 +10,38 @@
 
 llm:
   provider: xai
-  # Grok 4.3 (released 2026-04-30) — always-on reasoning, $1.25/$2.50 per
-  # 1M tokens (vs grok-4.20 at $2/$6). ~55% cheaper per episode at higher
-  # intelligence tier; supersedes the previous grok-4.20-non-reasoning
-  # default and the grok-4.20-reasoning override on Tesla / Modern
-  # Investing (reasoning is no longer a separate variant).
-  model: grok-4.3
+  # Grok 4.6 (released 2026-08-12) — OPERATOR-DIRECTED network upgrade
+  # 2026-08-18 ($2/$6 per 1M vs 4.3's $1.25/$2.50, ~+$22/mo network-wide;
+  # experiment `network-grok-46-upgrade`, readout 2026-09-01). This
+  # supersedes the July-31 digests-stay-on-4.3 decision by explicit
+  # operator override — 4.6's confident-hallucination profile is
+  # UNMEASURED for this network's failure mode, so the readout watches the
+  # episode reviewer's FACTUAL_ERRORS rate. Rollback is this one line back
+  # to grok-4.3.
+  model: grok-4.6
   digest_temperature: 0.5
   podcast_temperature: 0.7
   max_tokens: 3500
   podcast_max_tokens: 8000
   min_podcast_words: 1500
   podcast_chain: false
-  # Refusal fallback — keep on the older 4.20-reasoning variant so a
-  # refusal genuinely switches model family/training-snapshot rather than
-  # retrying the same model. Still cheaper than the historical grok-4
-  # fallback ($3/$15) we replaced in April 2026.
-  fallback_model: grok-4.20-reasoning
+  # Refusal fallback — must be a DIFFERENT training snapshot than the
+  # primary so a refusal genuinely switches model rather than retrying the
+  # same one. grok-4.3 since the 2026-08-18 upgrade (primary is now 4.6):
+  # cheaper, battle-tested on 3+ months of this network's prompts, and it
+  # retires the aging grok-4.20-family dependency.
+  fallback_model: grok-4.3
   # Synthesizer (weekly newsletter, monthly report, cross-show briefing).
-  # Inherits the cheaper, smarter primary by default.
-  synth_model: grok-4.3
+  # Follows the network primary (2026-08-18 upgrade).
+  synth_model: grok-4.6
   synth_max_tokens: 8000
   synth_temperature: 0.4
-  # Episode quality reviewer. Pinned to grok-4.3 explicitly (2026-08-18):
-  # the old grok-4-1-fast-non-reasoning slug was RETIRED by xAI on May 15
-  # and has been silently redirecting here (reasoning effort none) at
-  # grok-4.3 billing ever since — the explicit pin makes the model and the
-  # tracked cost match what actually serves the request.
-  reviewer_model: grok-4.3
+  # Episode quality reviewer. Follows the network primary since the
+  # 2026-08-18 upgrade. (History: the original grok-4-1-fast-non-reasoning
+  # slug was RETIRED by xAI on May 15 and silently redirected to grok-4.3
+  # at 4.3 billing; the same-day LLM usage pass pinned that explicitly
+  # before the operator-directed 4.6 upgrade landed hours later.)
+  reviewer_model: grok-4.6
   reviewer_max_tokens: 1500
   reviewer_temperature: 0.3
   # Optional (July 2026): set to low|medium|high only when using a model
