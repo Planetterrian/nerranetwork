@@ -37,7 +37,8 @@ from engine.book_compiler import (  # noqa: E402
 )
 from engine.titles import BOOK_CHAPTER_TITLE_MAX, fits  # noqa: E402
 
-VOL_PATH = _ROOT / "books" / "volumes" / "uc_vol1.yaml"
+VOL_PATH = (_ROOT / "books" / "volumes" /
+            "unintended_consequences_vol1.yaml")
 
 
 def _volume():
@@ -158,6 +159,45 @@ class TestEpubStructure:
         assert "utm_source=" in page, "back-matter link must be funnel-tagged"
         assert "utm_campaign=nn-unintended_consequences-en-book-ep001" in page
 
+    def test_every_chapter_links_back_to_its_episode(self, tmp_path):
+        """The book's job includes routing readers to the podcast: each
+        chapter ends on a funnel-tagged link to its source episode."""
+        _, chapters, epub = self._built(tmp_path)
+        with zipfile.ZipFile(epub) as z:
+            for c in chapters:
+                page = z.read(f"OEBPS/chap_{c.number:03d}.xhtml").decode(
+                    "utf-8")
+                assert "Hear this story as it first aired" in page
+                assert (f"blog/unintended_consequences/"
+                        f"ep{c.episode_num:03d}.html") in page
+                assert "utm_medium=book" in page
+
+    def test_chapter_images_embed_when_provided(self, tmp_path):
+        import io
+        from PIL import Image
+        v = _volume()
+        chapters = [_chapter(1, 1), _chapter(2, 2)]
+        buf = io.BytesIO()
+        Image.new("RGB", (1000, 570), "#222").save(buf, "JPEG")
+        epub = build_epub(v, chapters, tmp_path / "img.epub",
+                          chapter_images={1: buf.getvalue()})
+        with zipfile.ZipFile(epub) as z:
+            assert "OEBPS/art_001.jpg" in z.namelist()
+            opf = z.read("OEBPS/package.opf").decode("utf-8")
+            assert 'href="art_001.jpg" media-type="image/jpeg"' in opf
+            ch1 = z.read("OEBPS/chap_001.xhtml").decode("utf-8")
+            assert '<img src="art_001.jpg"' in ch1
+            # Chapter 2 got no art: no dangling manifest entry or tag.
+            assert "art_002" not in opf
+            assert "<img" not in z.read("OEBPS/chap_002.xhtml").decode(
+                "utf-8")
+
+    def test_store_title_includes_volume_number(self, tmp_path):
+        _, _, epub = self._built(tmp_path)
+        with zipfile.ZipFile(epub) as z:
+            opf = z.read("OEBPS/package.opf").decode("utf-8")
+        assert "Unintended Consequences, Volume 1" in opf
+
 
 # ---------------------------------------------------------------------------
 # Narration text + credits
@@ -247,10 +287,10 @@ class TestFunnelBookKind:
 # ---------------------------------------------------------------------------
 
 class TestVolumeConfig:
-    def test_uc_vol1_loads_and_every_episode_has_a_digest(self):
+    def test_vol1_loads_and_every_episode_has_a_digest(self):
         v = _volume()
         assert v.volume_number == 1
-        assert len(v.episodes) == 50
+        assert len(v.episodes) == 20
         for ep in v.episodes:
             assert find_digest(v, ep).exists()
 
@@ -263,6 +303,120 @@ class TestVolumeConfig:
             pass
         else:
             raise AssertionError("incomplete volume config must raise")
+
+
+class TestSeriesInheritance:
+    def test_volume_inherits_author_branding_and_art_config(self):
+        v = _volume()
+        assert v.author == "Patrick Novak"
+        assert v.title == "Unintended Consequences"
+        assert v.cover_color == "#B45309"        # show brand amber
+        assert v.image_model == "grok-imagine-image-quality"
+        assert "no text" in v.chapter_art_style.lower()
+        assert "no text" in v.cover_art_style.lower()
+
+    def test_subtitle_counts_the_volume_in_words(self):
+        v = _volume()
+        assert v.subtitle.startswith("Twenty ")
+
+    def test_full_title_carries_the_volume_number(self):
+        assert _volume().full_title == "Unintended Consequences, Volume 1"
+
+    def test_both_series_register_and_stay_in_the_size_band(self):
+        from engine.book_compiler import SERIES_DIR, load_series
+        slugs = sorted(p.stem for p in SERIES_DIR.glob("*.yaml"))
+        assert slugs == ["first_principles", "unintended_consequences"]
+        for slug in slugs:
+            s = load_series(slug)
+            assert s["author"] == "Patrick Novak"
+            assert 10 <= int(s["volume_size"]) <= 20
+
+    def test_volume_size_outside_band_raises(self, tmp_path):
+        from engine.book_compiler import load_series
+        bad = tmp_path / "s.yaml"
+        bad.write_text(
+            "show_slug: x\nshow_name: X\nseries_title: X\n"
+            "author: A\nvolume_size: 50\n", encoding="utf-8")
+        try:
+            load_series(bad)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError("volume_size 50 must be rejected (10-20)")
+
+
+class TestVolumePlanner:
+    def test_planner_is_currently_drained(self):
+        """Both series' complete volumes are already cut; the tails
+        (UC 81-93, FPD 61-74) are below volume_size and must wait."""
+        from engine.book_compiler import plan_next_volumes
+        for slug in ("unintended_consequences", "first_principles"):
+            assert plan_next_volumes(slug, write=False) == []
+
+    def test_committed_volumes_are_contiguous_and_disjoint(self):
+        from engine.book_compiler import VOLUMES_DIR
+        by_show = {}
+        for p in sorted(VOLUMES_DIR.glob("*.yaml")):
+            data = yaml.safe_load(p.read_text(encoding="utf-8"))
+            by_show.setdefault(data.get("series"), []).extend(
+                data["episodes"])
+        for slug, eps in by_show.items():
+            assert len(eps) == len(set(eps)), f"{slug}: episode in 2 volumes"
+            assert eps == sorted(eps)
+            assert eps[0] == 1 and eps == list(range(1, len(eps) + 1)), (
+                f"{slug}: volumes must cover episodes contiguously from 1"
+            )
+
+
+class TestBookArt:
+    def test_prompts_carry_style_and_subject_and_text_ban(self):
+        from engine.book_art import chapter_art_prompt, cover_art_prompt
+        v = _volume()
+        ch = _chapter(1)
+        p = chapter_art_prompt(v.chapter_art_style, ch)
+        assert "No words" in p or "no text" in p.lower()
+        assert (ch.epigraph[:40] in p) or (ch.title[:40] in p)
+        cp = cover_art_prompt(v.cover_art_style, v, [ch])
+        assert "ONE strong unifying visual metaphor" in cp
+
+    def test_chapter_jpeg_is_resized_and_jpeg(self):
+        import io
+        from PIL import Image
+        from engine.book_art import CHAPTER_IMAGE_WIDTH, to_chapter_jpeg
+        buf = io.BytesIO()
+        Image.new("RGB", (1792, 1024), "#333").save(buf, "PNG")
+        out = Image.open(io.BytesIO(to_chapter_jpeg(buf.getvalue())))
+        assert out.format == "JPEG"
+        assert out.width == CHAPTER_IMAGE_WIDTH
+
+    def test_cover_composites_art_and_falls_back_without(self, tmp_path):
+        import io
+        from PIL import Image
+        from engine.book_compiler import generate_cover
+        v = _volume()
+        art = io.BytesIO()
+        Image.new("RGB", (1024, 1792), "#654321").save(art, "PNG")
+        with_art = generate_cover(v, tmp_path / "a.png",
+                                  art_bytes=art.getvalue())
+        without = generate_cover(v, tmp_path / "b.png")
+        assert Image.open(with_art).size == (1600, 2560)
+        assert Image.open(without).size == (1600, 2560)
+
+    def test_gallery_intended_uses_are_invisible_to_scene_selector(self):
+        """book_chapter / book_cover must never match the video scene
+        selector's intended_use filters (the thumbnail_variant
+        precedent) — book art enriches the gallery, not episode
+        renders."""
+        lib = (_ROOT / "engine" / "gallery_library.py").read_text(
+            encoding="utf-8")
+        assert "book_chapter" not in lib
+        assert "book_cover" not in lib
+
+    def test_quality_model_is_pinned_not_floating(self):
+        v = _volume()
+        assert not v.image_model.endswith("latest"), (
+            "published artifacts never ride floating model aliases"
+        )
 
 
 class TestCatalog:

@@ -4210,6 +4210,7 @@ def main():
         args.summaries or args.shows or args.network or args.all or args.show
         or args.blogs or args.sitemap or args.player or args.how_to_listen
         or args.start_here or args.faq or args.about or args.blog_aggregates
+        or args.books
     )
     if not _any_flag:
         args.all = True

@@ -1,20 +1,41 @@
 # Books — anthology ebooks & audiobooks from the narrative shows
 
 **Shipped:** 2026-08-18 (product B6 in
-[`docs/product_opportunities_2026_08.md`](product_opportunities_2026_08.md)).
-**First volume:** `uc_vol1` — *Unintended Consequences*, Volume 1: episodes
-1–50, ~36k words, ~4h narrated.
+[`docs/product_opportunities_2026_08.md`](product_opportunities_2026_08.md));
+series machinery + Grok art + auto-planner same day (operator-directed).
+**Author on every volume: Patrick Novak.**
+**Live series:** *Unintended Consequences* Vols 1–4 (episodes 1–80) and
+*First Principles* Vols 1–3 (episodes 1–60) — 20 stories per volume.
 
 ## What the pipeline does
 
 ```
-books/volumes/<id>.yaml          volume config (show, episodes, title, links)
+books/series/<show>.yaml       SERIES config — author, series title,
+        │                      subtitle template, brand colors, Grok art
+        │                      style guides, volume_size (10-20)
+        │  plan_next_volumes() cuts the next 20-episode volume config
+        │  automatically as the show publishes (append-only; published
+        │  volumes never change)
+        ▼
+books/volumes/<id>.yaml        thin volume config (episodes + buy links);
+        │                      everything else inherits from the series
         │
-scripts/build_book.py --volume <id>          (or Actions: "Build Book")
-        │
+scripts/build_book.py --volume <id>            (or Actions: "Build Book";
+        │                                       monthly cron = planner mode)
+        ├─ engine/book_art.py        Grok Imagine (quality tier, pinned):
+        │                            one 16:9 editorial illustration PER
+        │                            CHAPTER + fresh portrait cover art
+        │                            per volume; every image also lands in
+        │                            the show's public gallery
+        │                            (intended_use book_chapter/book_cover
+        │                            — invisible to the video scene
+        │                            selector)
         ├─ engine/book_compiler.py   digests → chapters (DETERMINISTIC — no
-        │                            LLM; digests verified free of
-        │                            podcast-isms) → EPUB 3 + cover PNG +
+        │                            LLM) → EPUB 3 with embedded chapter
+        │                            art + per-chapter funnel-tagged
+        │                            "hear this episode" links + series-
+        │                            branded cover (fixed typography
+        │                            composited over the fresh art) +
         │                            free-sample EPUB
         ├─ engine/audiobook.py       chapters → Grok TTS (network voice) →
         │                            per-chapter MP3s → chaptered M4B
@@ -24,41 +45,54 @@ scripts/build_book.py --volume <id>          (or Actions: "Build Book")
                                      --all and the nightly regen)
 ```
 
-Cost per 50-chapter volume: **$0 ebook** (pure transform of committed
-digests) + **~$4 audiobook** (Grok TTS at $/char; the build prints the
-estimate and refuses past `--max-tts-cost-usd`, default $10) + $0 cover
-(typographic PIL render — replace `outputs/books/<id>/cover.png` before
-store submission if a designed cover is worth it).
+Cost per 20-chapter volume: **$0 ebook text** (pure transform of
+committed digests) + **~$1.05 art** (21 images × $0.05 on
+`grok-imagine-image-quality`, gated by `--max-image-cost-usd`, default
+$5) + **~$2 audiobook** (Grok TTS, gated by `--max-tts-cost-usd`,
+default $10). Chapter images are re-encoded to ~1000px JPEGs so a
+volume's EPUB stays ~2 MB (Amazon charges per-MB delivery on the 70%
+royalty plan).
 
-Chapter TITLES come from the show RSS ("Ep N: hook") clipped through
-`engine.titles.BOOK_CHAPTER_TITLE_MAX` — the titles rule applies to books
-like every other surface. Back-matter links are funnel-tagged through
-`engine.funnel` (`kind="book"`, campaign `nn-<show>-en-book-ep<volume>`),
-so book-driven site visits are attributable in `api/funnel.json` like any
-other surface.
+Rules that bind: chapter TITLES clip through
+`engine.titles.BOOK_CHAPTER_TITLE_MAX` (titles rule); ALL reader-facing
+links are funnel-tagged through `engine.funnel` (`kind="book"`, campaign
+`nn-<show>-en-book-ep<volume>` — every chapter ends on a link to its
+source episode's page, the strongest podcast-conversion surface in the
+book); art style guides in the series configs BAN text inside generated
+images (typography is composited separately so series branding stays
+identical across volumes while every cover's art is new).
 
-## Building a volume
+## Building volumes
 
-From Actions: **Build Book** → volume id (`uc_vol1`), optional
-ebook-only. Locally without credentials the EPUB + cover still build
-(`python scripts/build_book.py --volume uc_vol1 --skip-audio --no-upload`);
-narration and upload need `GROK_API_KEY` + `R2_*`, which live in Actions.
+- **One volume:** Actions → **Build Book** → volume id
+  (e.g. `unintended_consequences_vol2`).
+- **Planner mode:** leave the volume input empty (or let the monthly
+  cron run) — every series with ≥ `volume_size` uncollected episodes
+  gets its next volume config generated, built, uploaded, and rendered
+  onto /books.html automatically. Store submission stays manual below.
+- **Locally without credentials** the EPUB + branded cover still build
+  (text-only, flat-color cover):
+  `python scripts/build_book.py --volume <id> --skip-audio --skip-images --no-upload`.
 
 Artifacts land in `outputs/books/<id>/` (gitignored) and on R2 under
-`books/<id>/`. The workflow commits only `books/catalog.json` + `books.html`.
+`books/<id>/`. The workflow commits `books/catalog.json`, any new
+volume YAMLs the planner wrote, and `books.html`.
 
-**Listen before you ship.** The audiobook is new spoken audio on the
-network voice — spot-listen the first and one middle chapter of every
-volume before submitting to stores (the landmine-#17 habit applies to
-paid audio more, not less).
+**Listen and look before you ship.** The audiobook is new spoken audio
+and the cover/chapter art is fresh generation — spot-listen two
+chapters and eyeball the cover + a few illustrations of every volume
+before submitting to stores (the landmine-#17 habit applies to paid
+product more, not less). A weak cover: delete
+`outputs/books/<id>/art/cover_art.png` and rebuild for a fresh roll, or
+drop in your own art at that path.
 
-## Adding the next volume
+## Adding a new series
 
-Copy `books/volumes/uc_vol1.yaml`, bump `volume_id`/`volume_number`,
-set the episode list. Conventions: split volumes at equal word counts
-(~35k); UC Volume 2 is episodes 51–100 once the show reaches Ep100.
-First Principles Daily is the second candidate show (evergreen
-narrative essays, same digest structure).
+Copy a file in `books/series/`, set the show, author, subtitle
+template, brand colors (match the show page's brand color), and the two
+art style guides. The planner picks it up on the next run. Series files
+are the branding contract — editing one rebrands every FUTURE build of
+that series.
 
 ## Store submission checklist (operator work, per volume)
 

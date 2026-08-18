@@ -40,12 +40,23 @@ from engine.audiobook import (  # noqa: E402
     synthesize_tracks,
     total_duration_seconds,
 )
+from engine.book_art import (  # noqa: E402
+    COVER_ART_SIZE,
+    CHAPTER_ART_SIZE,
+    chapter_art_prompt,
+    cover_art_prompt,
+    generate_art,
+    model_cost_usd,
+    to_chapter_jpeg,
+    upload_book_image_to_gallery,
+)
 from engine.book_compiler import (  # noqa: E402
     R2_BOOKS_PREFIX,
     build_epub,
     collect_chapters,
     generate_cover,
     load_volume,
+    plan_next_volumes,
     update_catalog,
 )
 
@@ -81,17 +92,117 @@ def _have_r2() -> bool:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--volume", required=True,
+    ap.add_argument("--volume",
                     help="volume id (books/volumes/<id>.yaml)")
+    ap.add_argument("--plan-series", action="append", default=[],
+                    metavar="SERIES",
+                    help="run the volume planner for this series "
+                         "(books/series/<slug>.yaml) before building; "
+                         "repeatable. With --build-planned, newly planned "
+                         "volumes are built too.")
+    ap.add_argument("--build-planned", action="store_true",
+                    help="build every volume the planner just created")
     ap.add_argument("--skip-audio", action="store_true",
                     help="build the ebook only")
+    ap.add_argument("--skip-images", action="store_true",
+                    help="skip Grok Imagine chapter/cover art")
     ap.add_argument("--no-upload", action="store_true",
                     help="skip R2 upload even if credentials are present")
     ap.add_argument("--max-tts-cost-usd", type=float, default=10.0,
                     help="refuse to narrate past this estimate (default 10)")
+    ap.add_argument("--max-image-cost-usd", type=float, default=5.0,
+                    help="refuse to generate art past this estimate "
+                         "(default 5)")
     args = ap.parse_args()
 
-    vol_path = ROOT / "books" / "volumes" / f"{args.volume}.yaml"
+    to_build = []
+    for series_slug in args.plan_series:
+        planned = plan_next_volumes(series_slug)
+        logger.info("series %s: planned %d new volume(s)", series_slug,
+                    len(planned))
+        if args.build_planned:
+            to_build.extend(p.stem for p in planned)
+    if args.volume:
+        to_build.append(args.volume)
+    if not to_build:
+        logger.info("nothing to build")
+        return 0
+
+    for volume_id in to_build:
+        rc = _build_one(volume_id, args)
+        if rc != 0:
+            return rc
+    return 0
+
+
+def _generate_book_art(volume, chapters, out_dir, api_key, args):
+    """Chapter illustrations + cover art via Grok Imagine; every image
+    also lands in the show's public gallery. Returns
+    (chapter_images, cover_art_bytes, images_generated, cost_usd)."""
+    chapter_images, cover_art, generated = {}, None, 0
+    if args.skip_images:
+        logger.info("book art: skipped (--skip-images)")
+        return chapter_images, cover_art, generated, 0.0
+    if not (volume.image_model and volume.chapter_art_style):
+        logger.info("book art: no image_model/style in series config — "
+                    "skipping")
+        return chapter_images, cover_art, generated, 0.0
+    if not api_key:
+        logger.warning("book art: no GROK_API_KEY — text-only build")
+        return chapter_images, cover_art, generated, 0.0
+
+    per_image = model_cost_usd(volume.image_model)
+    est = per_image * (len(chapters) + 1)
+    logger.info("book art: %d images on %s, estimated $%.2f",
+                len(chapters) + 1, volume.image_model, est)
+    if est > args.max_image_cost_usd:
+        logger.error("book art: estimate $%.2f exceeds --max-image-cost-usd "
+                     "%.2f — refusing", est, args.max_image_cost_usd)
+        raise SystemExit(1)
+
+    art_dir = out_dir / "art"
+    art_dir.mkdir(parents=True, exist_ok=True)
+    for ch in chapters:
+        cached = art_dir / f"chapter_{ch.number:03d}.jpg"
+        if cached.exists() and cached.stat().st_size > 0:
+            chapter_images[ch.number] = cached.read_bytes()
+            continue
+        prompt = chapter_art_prompt(volume.chapter_art_style, ch)
+        raw = generate_art(prompt, api_key=api_key,
+                           model=volume.image_model, size=CHAPTER_ART_SIZE)
+        if not raw:
+            continue  # soft: this chapter ships without art
+        jpeg = to_chapter_jpeg(raw)
+        cached.write_bytes(jpeg)
+        chapter_images[ch.number] = jpeg
+        generated += 1
+        upload_book_image_to_gallery(
+            raw, volume, prompt=prompt, model=volume.image_model,
+            intended_use="book_chapter", chapter=ch)
+
+    cover_cache = art_dir / "cover_art.png"
+    if cover_cache.exists() and cover_cache.stat().st_size > 0:
+        cover_art = cover_cache.read_bytes()
+    elif volume.cover_art_style:
+        prompt = cover_art_prompt(volume.cover_art_style, volume, chapters)
+        cover_art = generate_art(prompt, api_key=api_key,
+                                 model=volume.image_model,
+                                 size=COVER_ART_SIZE)
+        if cover_art:
+            cover_cache.write_bytes(cover_art)
+            generated += 1
+            upload_book_image_to_gallery(
+                cover_art, volume, prompt=prompt, model=volume.image_model,
+                intended_use="book_cover")
+
+    cost = generated * per_image
+    logger.info("book art: %d generated ($%.2f), %d chapters illustrated",
+                generated, cost, len(chapter_images))
+    return chapter_images, cover_art, generated, cost
+
+
+def _build_one(volume_id: str, args) -> int:
+    vol_path = ROOT / "books" / "volumes" / f"{volume_id}.yaml"
     if not vol_path.exists():
         logger.error("no such volume config: %s", vol_path)
         return 1
@@ -104,15 +215,22 @@ def main() -> int:
     logger.info("volume %s: %d chapters, %d words",
                 volume.volume_id, len(chapters), words)
 
-    cover = generate_cover(volume, out_dir / "cover.png")
+    api_key = (os.getenv("GROK_API_KEY") or os.getenv("XAI_API_KEY")
+               or "").strip()
+    chapter_images, cover_art, images_generated, images_cost = (
+        _generate_book_art(volume, chapters, out_dir, api_key, args))
+
+    cover = generate_cover(volume, out_dir / "cover.png",
+                           art_bytes=cover_art)
     epub = build_epub(volume, chapters, out_dir / f"{volume.volume_id}.epub",
-                      cover_png=cover)
+                      cover_png=cover, chapter_images=chapter_images)
 
     # Free sample: the first chapter as its own mini-EPUB, for the site's
     # Books page (email capture's lead magnet).
     sample = build_epub(
         volume, chapters[:1],
         out_dir / f"{volume.volume_id}_sample.epub", cover_png=cover,
+        chapter_images={1: chapter_images[1]} if 1 in chapter_images else None,
     )
 
     entry = {
@@ -121,6 +239,7 @@ def main() -> int:
         "show_name": volume.show_name,
         "volume_number": volume.volume_number,
         "title": volume.title,
+        "full_title": volume.full_title,
         "subtitle": volume.subtitle,
         "author": volume.author,
         "description": volume.description,
@@ -131,6 +250,12 @@ def main() -> int:
         "price_usd": volume.price_usd,
         "buy_links": {k: v for k, v in volume.buy_links.items() if v},
         "built_date": date.today().isoformat(),
+        "images": {
+            "chapters_illustrated": len(chapter_images),
+            "generated": images_generated,
+            "model": volume.image_model,
+            "estimated_cost_usd": round(images_cost, 2),
+        },
         "files": {},
         "audiobook": None,
     }
@@ -139,8 +264,6 @@ def main() -> int:
     if args.skip_audio:
         logger.info("audiobook: skipped (--skip-audio)")
     else:
-        api_key = (os.getenv("GROK_API_KEY") or os.getenv("XAI_API_KEY")
-                   or "").strip()
         if not api_key:
             logger.warning("audiobook: no GROK_API_KEY — skipping narration "
                            "(ebook still built)")

@@ -72,6 +72,8 @@ class BookChapter:
     title: str                       # clipped, TOC-safe
     epigraph: str = ""               # the full episode hook, if present
     sections: List[Tuple[str, List[str]]] = field(default_factory=list)
+    episode_date: str = ""           # YYYY-MM-DD from the digest filename
+    image_name: str = ""             # EPUB-internal filename when art exists
 
     @property
     def word_count(self) -> int:
@@ -100,6 +102,10 @@ class BookVolume:
     keywords: List[str] = field(default_factory=list)
     cover_color: str = "#0f1b2d"     # deep navy default
     cover_accent: str = "#00D4FF"    # Nerra cyan
+    # Series-inherited art config (empty = art generation disabled).
+    image_model: str = ""
+    chapter_art_style: str = ""
+    cover_art_style: str = ""
 
     def resolved_digest_dir(self) -> Path:
         return ROOT / (self.digest_dir or f"digests/{self.show_slug}")
@@ -107,13 +113,77 @@ class BookVolume:
     def resolved_rss(self) -> Path:
         return ROOT / (self.rss_file or f"{self.show_slug}_podcast.rss")
 
+    @property
+    def full_title(self) -> str:
+        """Store-listing title: series title + volume number."""
+        return f"{self.title}, Volume {self.volume_number}"
+
+    @property
+    def built_date_hint(self) -> str:
+        return date.today().isoformat()
+
 
 # ---------------------------------------------------------------------------
-# Volume config
+# Series + volume config
 # ---------------------------------------------------------------------------
+
+SERIES_DIR = ROOT / "books" / "series"
+VOLUMES_DIR = ROOT / "books" / "volumes"
+
+#: Series-level keys a volume inherits. ``subtitle`` is derived from
+#: ``subtitle_template`` at load time so per-volume story counts read
+#: naturally ("Twenty true stories…", "Fourteen…").
+_SERIES_INHERITED = (
+    "show_slug", "show_name", "author", "language", "description",
+    "price_usd", "keywords", "cover_color", "cover_accent",
+    "image_model", "chapter_art_style", "cover_art_style",
+)
+
+
+def load_series(slug_or_path: str | Path) -> Dict:
+    path = Path(slug_or_path)
+    if not path.suffix:
+        path = SERIES_DIR / f"{slug_or_path}.yaml"
+    data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    required = ("show_slug", "show_name", "series_title", "author",
+                "volume_size")
+    missing = [k for k in required if not data.get(k)]
+    if missing:
+        raise ValueError(f"series config {path} missing fields: {missing}")
+    size = int(data["volume_size"])
+    if not 10 <= size <= 20:
+        raise ValueError(
+            f"series {data['show_slug']}: volume_size {size} outside the "
+            "10-20 stories-per-volume band"
+        )
+    return data
+
+
+def _subtitle_for(series: Dict, count: int) -> str:
+    template = series.get("subtitle_template", "")
+    if not template:
+        return ""
+    from engine.utils import number_to_words
+    words = number_to_words(count)
+    return template.format(
+        count_words=words[:1].upper() + words[1:], count=count)
+
 
 def load_volume(path: str | Path) -> BookVolume:
     data = yaml.safe_load(Path(path).read_text(encoding="utf-8")) or {}
+
+    series_slug = data.pop("series", "")
+    if series_slug:
+        series = load_series(series_slug)
+        merged: Dict = {k: series[k] for k in _SERIES_INHERITED
+                        if k in series}
+        merged["title"] = series["series_title"]
+        merged["subtitle"] = _subtitle_for(
+            series, len(data.get("episodes", [])))
+        # Volume file wins on any key it sets explicitly.
+        merged.update(data)
+        data = merged
+
     required = ("volume_id", "show_slug", "show_name", "volume_number",
                 "title", "episodes")
     missing = [k for k in required if not data.get(k)]
@@ -127,6 +197,96 @@ def load_volume(path: str | Path) -> BookVolume:
         logger.warning("volume config %s has unknown keys (ignored): %s",
                        path, unknown)
     return BookVolume(**{k: v for k, v in data.items() if k in known})
+
+
+# ---------------------------------------------------------------------------
+# Volume planner — the automated pipeline of volumes
+# ---------------------------------------------------------------------------
+
+def _available_episode_numbers(series: Dict) -> List[int]:
+    digest_dir = ROOT / f"digests/{series['show_slug']}"
+    nums = set()
+    for p in digest_dir.glob("*_Ep[0-9][0-9][0-9]_*.md"):
+        m = re.search(r"_Ep(\d{3})_", p.name)
+        if m:
+            nums.add(int(m.group(1)))
+    return sorted(nums)
+
+
+def _episodes_already_in_volumes(show_slug: str) -> set:
+    covered: set = set()
+    for p in sorted(VOLUMES_DIR.glob("*.yaml")):
+        data = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
+        slug = data.get("show_slug") or data.get("series", "")
+        if slug == show_slug:
+            covered.update(int(e) for e in data.get("episodes", []))
+    return covered
+
+
+def _max_volume_number(show_slug: str) -> int:
+    highest = 0
+    for p in sorted(VOLUMES_DIR.glob("*.yaml")):
+        data = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
+        slug = data.get("show_slug") or data.get("series", "")
+        if slug == show_slug:
+            highest = max(highest, int(data.get("volume_number", 0)))
+    return highest
+
+
+def plan_next_volumes(series_slug: str, *, write: bool = True) -> List[Path]:
+    """Cut the next volume config(s) from episodes not yet in any volume.
+
+    Only FULL volumes are cut (a partial tail waits for the show to
+    publish more episodes), episodes are consumed in broadcast order,
+    and existing volume files are never modified — the planner is
+    append-only, so a published volume's contents can never drift.
+    Returns the volume YAML paths it wrote (or would write).
+    """
+    series = load_series(series_slug)
+    size = int(series["volume_size"])
+    covered = _episodes_already_in_volumes(series["show_slug"])
+    pending = [n for n in _available_episode_numbers(series)
+               if n not in covered]
+
+    written: List[Path] = []
+    next_num = _max_volume_number(series["show_slug"]) + 1
+    while len(pending) >= size:
+        block, pending = pending[:size], pending[size:]
+        vol_id = f"{series_slug}_vol{next_num}"
+        out = VOLUMES_DIR / f"{vol_id}.yaml"
+        if out.exists():
+            raise RuntimeError(f"planner refuses to overwrite {out}")
+        doc = {
+            "volume_id": vol_id,
+            "series": series_slug,
+            "volume_number": next_num,
+            "episodes": block,
+            "buy_links": {k: "" for k in
+                          ("amazon", "apple_books", "google_play",
+                           "kobo", "spotify")},
+        }
+        if write:
+            header = (
+                f"# {series['series_title']}, Volume {next_num} — "
+                f"episodes {block[0]}-{block[-1]}.\n"
+                "# Generated by plan_next_volumes(); branding/title/author "
+                "inherit from\n"
+                f"# books/series/{series_slug}.yaml. Paste store URLs into "
+                "buy_links as\n# listings go live.\n"
+            )
+            out.write_text(
+                header + yaml.safe_dump(doc, sort_keys=False,
+                                        allow_unicode=True),
+                encoding="utf-8")
+        written.append(out)
+        logger.info("planned %s: episodes %d-%d", vol_id, block[0],
+                    block[-1])
+        next_num += 1
+    if not written:
+        logger.info("series %s: %d uncollected episode(s), below the "
+                    "volume size %d — nothing to plan",
+                    series_slug, len(pending), size)
+    return written
 
 
 # ---------------------------------------------------------------------------
@@ -258,12 +418,16 @@ def collect_chapters(volume: BookVolume) -> List[BookChapter]:
     chapters: List[BookChapter] = []
     for idx, ep in enumerate(volume.episodes, start=1):
         digest = find_digest(volume, ep)
-        chapters.append(parse_digest_to_chapter(
+        chapter = parse_digest_to_chapter(
             digest.read_text(encoding="utf-8"),
             number=idx,
             episode_num=ep,
             rss_title=rss_titles.get(ep, ""),
-        ))
+        )
+        m = re.search(r"_(\d{4})(\d{2})(\d{2})", digest.name)
+        if m:
+            chapter.episode_date = "-".join(m.groups())
+        chapters.append(chapter)
     return chapters
 
 
@@ -326,6 +490,10 @@ h2 { font-size: 1.05em; margin: 1.6em 0 0.4em; letter-spacing: 0.04em;
      text-transform: uppercase; }
 p { margin: 0 0 0.9em; text-align: justify; }
 .epigraph { font-style: italic; margin: 1em 0 2em; color: #444; }
+.chapart { margin: 1.2em 0; text-align: center; }
+.chapart img { max-width: 100%; border-radius: 4px; }
+.listen { margin-top: 2.2em; padding-top: 0.9em; border-top: 1px dashed
+          #999; font-size: 0.92em; color: #444; text-align: left; }
 .chapnum { font-size: 0.85em; letter-spacing: 0.15em; color: #666;
            text-transform: uppercase; margin-top: 3em; }
 .frontmatter p { text-align: left; }
@@ -350,16 +518,41 @@ def _xhtml(title: str, body: str, lang: str = "en") -> str:
     )
 
 
-def _chapter_xhtml(chapter: BookChapter, lang: str) -> str:
+def _episode_page_link(volume: BookVolume, chapter: BookChapter) -> str:
+    """Funnel-tagged link to the chapter's source episode page — every
+    chapter routes readers back to the podcast (engine.funnel owns the
+    tagging; campaign carries the VOLUME number)."""
+    from engine.funnel import PLACEMENT_BODY, episode_link
+    url = (f"https://nerranetwork.com/blog/{volume.show_slug}/"
+           f"ep{chapter.episode_num:03d}.html")
+    return episode_link(url, volume.show_slug, volume.volume_number,
+                        kind="book", placement=PLACEMENT_BODY)
+
+
+def _chapter_xhtml(chapter: BookChapter, lang: str,
+                   volume: Optional[BookVolume] = None) -> str:
     parts = [
         f'<p class="chapnum">Chapter {chapter.number}</p>',
         f"<h1>{xml_escape(chapter.title)}</h1>",
     ]
+    if chapter.image_name:
+        parts.append(
+            f'<p class="chapart"><img src="{xml_escape(chapter.image_name)}" '
+            f'alt="{xml_escape(chapter.title)}"/></p>'
+        )
     if chapter.epigraph:
         parts.append(f'<p class="epigraph">{xml_escape(chapter.epigraph)}</p>')
     for sec_title, paras in chapter.sections:
         parts.append(f"<h2>{xml_escape(sec_title)}</h2>")
         parts.extend(f"<p>{xml_escape(p)}</p>" for p in paras)
+    if volume is not None:
+        link = _episode_page_link(volume, chapter)
+        parts.append(
+            f'<p class="listen">♪ Hear this story as it first aired: '
+            f'<a href="{xml_escape(link)}">episode '
+            f"{chapter.episode_num} of {xml_escape(volume.show_name)}</a>, "
+            "free wherever you get podcasts.</p>"
+        )
     return _xhtml(chapter.title, "\n".join(parts), lang)
 
 
@@ -450,8 +643,13 @@ def _package_opf(volume: BookVolume, chapters: List[BookChapter],
             f'<item id="{cid}" href="chap_{c.number:03d}.xhtml" '
             'media-type="application/xhtml+xml"/>'
         )
+        if c.image_name:
+            manifest.append(
+                f'<item id="art{c.number:03d}" href="{c.image_name}" '
+                'media-type="image/jpeg"/>'
+            )
         spine.append(f'<itemref idref="{cid}"/>')
-    meta_title = xml_escape(volume.title)
+    meta_title = xml_escape(volume.full_title)
     if volume.subtitle:
         meta_title += f": {xml_escape(volume.subtitle)}"
     return (
@@ -478,14 +676,23 @@ def build_epub(
     out_path: Path,
     *,
     cover_png: Optional[Path] = None,
+    chapter_images: Optional[Dict[int, bytes]] = None,
 ) -> Path:
     """Assemble a store-ready EPUB 3. Hand-rolled (zip + XHTML) so the
     pipeline gains no new dependency; the structure follows the EPUB 3.3
     packaging spec (mimetype first + stored, container.xml, package.opf
-    with a nav document)."""
+    with a nav document).
+
+    *chapter_images* maps chapter number -> JPEG bytes; chapters present
+    in the map get their illustration embedded above the epigraph.
+    """
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     has_cover = bool(cover_png and Path(cover_png).exists())
+    chapter_images = chapter_images or {}
+    for c in chapters:
+        c.image_name = (f"art_{c.number:03d}.jpg"
+                        if c.number in chapter_images else "")
     with zipfile.ZipFile(out_path, "w") as z:
         # Spec: first entry, uncompressed, exact bytes.
         z.writestr(
@@ -511,7 +718,10 @@ def build_epub(
             z.write(cover_png, "OEBPS/cover.png")
         for c in chapters:
             z.writestr(f"OEBPS/chap_{c.number:03d}.xhtml",
-                       _chapter_xhtml(c, volume.language))
+                       _chapter_xhtml(c, volume.language, volume))
+            if c.image_name:
+                z.writestr(f"OEBPS/{c.image_name}",
+                           chapter_images[c.number])
     logger.info("EPUB written: %s (%d chapters, %d words)",
                 out_path, len(chapters), sum(c.word_count for c in chapters))
     return out_path
@@ -522,80 +732,16 @@ def build_epub(
 # ---------------------------------------------------------------------------
 
 def generate_cover(volume: BookVolume, out_png: Path,
-                   *, size: Tuple[int, int] = (1600, 2560)) -> Path:
-    """Typographic cover at KDP's recommended 1600x2560. Deliberately
-    text-only (no Grok Imagine spend); the operator can replace the PNG
-    before store submission if a designed cover is worth it."""
-    from PIL import Image, ImageDraw, ImageFont
+                   *, art_bytes: bytes = None,
+                   size: Tuple[int, int] = (1600, 2560)) -> Path:
+    """Series-branded cover at KDP's 1600x2560. With *art_bytes* (fresh
+    Grok-Imagine art from ``engine.book_art``) the fixed series
+    typography is composited over it; without, the same layout renders
+    over the series color — so unbranded fallbacks still look like the
+    series. Composition lives in ``engine.book_art.compose_cover``."""
+    from engine.book_art import compose_cover
 
-    w, h = size
-    img = Image.new("RGB", size, volume.cover_color)
-    draw = ImageDraw.Draw(img)
-
-    def _font(px: int):
-        for name in ("DejaVuSerif-Bold.ttf", "DejaVuSerif.ttf",
-                     "DejaVuSans-Bold.ttf", "DejaVuSans.ttf"):
-            try:
-                return ImageFont.truetype(name, px)
-            except OSError:
-                continue
-        return ImageFont.load_default()
-
-    def _wrap(text: str, font, max_w: int) -> List[str]:
-        lines, line = [], ""
-        for word in text.split():
-            trial = f"{line} {word}".strip()
-            if draw.textlength(trial, font=font) <= max_w or not line:
-                line = trial
-            else:
-                lines.append(line)
-                line = word
-        if line:
-            lines.append(line)
-        return lines
-
-    margin = int(w * 0.1)
-    max_text_w = w - 2 * margin
-
-    # Title block — shrink-to-fit (same pattern as the thumbnail autofit).
-    title_px = 160
-    while title_px > 72:
-        font = _font(title_px)
-        lines = _wrap(volume.title, font, max_text_w)
-        if len(lines) <= 5:
-            break
-        title_px -= 12
-    font = _font(title_px)
-    lines = _wrap(volume.title, font, max_text_w)
-    y = int(h * 0.16)
-    for ln in lines:
-        draw.text((w // 2, y), ln, font=font, fill="#f5f2ea", anchor="ma")
-        y += int(title_px * 1.18)
-
-    # Accent rule.
-    y += int(h * 0.02)
-    draw.rectangle([margin, y, w - margin, y + 8], fill=volume.cover_accent)
-    y += int(h * 0.035)
-
-    if volume.subtitle:
-        sub_font = _font(64)
-        for ln in _wrap(volume.subtitle, sub_font, max_text_w):
-            draw.text((w // 2, y), ln, font=sub_font, fill="#c9d4e0",
-                      anchor="ma")
-            y += 80
-
-    author_font = _font(72)
-    draw.text((w // 2, int(h * 0.86)), volume.author.upper(),
-              font=author_font, fill="#f5f2ea", anchor="ma")
-    series_font = _font(44)
-    draw.text((w // 2, int(h * 0.92)),
-              f"Volume {volume.volume_number} · {volume.show_name}",
-              font=series_font, fill="#8fa3b8", anchor="ma")
-
-    out_png = Path(out_png)
-    out_png.parent.mkdir(parents=True, exist_ok=True)
-    img.save(out_png, "PNG")
-    return out_png
+    return compose_cover(volume, out_png, art_bytes=art_bytes, size=size)
 
 
 # ---------------------------------------------------------------------------
