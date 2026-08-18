@@ -44,9 +44,11 @@ class XAccountConfig:
 @dataclass
 class LLMConfig:
     provider: str = "xai"
-    # grok-4.6 network-wide since 2026-08-18 (operator-directed upgrade;
-    # experiment network-grok-46-upgrade, rollback = grok-4.3).
-    model: str = "grok-4.6"
+    # grok-4.3 — the 2026-08-18 grok-4.6 upgrade was REVERTED the same
+    # day (4.6 digest latency 5-10× 4.3; 7 of 12 shows failed). Future
+    # upgrades follow docs/model_upgrade_playbook.md (staged, one show
+    # first, latency-gated).
+    model: str = "grok-4.3"
     system_prompt_file: str = ""
     digest_prompt_file: str = ""
     podcast_prompt_file: str = ""
@@ -94,9 +96,9 @@ class LLMConfig:
     # Model used when the primary refuses after educational retry. A
     # different model (or different variant of the same family) often
     # has different refusal thresholds and can succeed where the primary
-    # won't. grok-4.3 since the 2026-08-18 upgrade (primary is 4.6) — a
-    # genuinely different snapshot, battle-tested on this network.
-    fallback_model: str = "grok-4.3"
+    # won't. Back on grok-4.20-reasoning with the 2026-08-18 revert —
+    # the primary is grok-4.3 again, so 4.3 cannot be its own fallback.
+    fallback_model: str = "grok-4.20-reasoning"
     # Podcast SCRIPT stage override (2026-07-31). Empty = use ``model``
     # (byte-identical). Exists so a newer Grok release can be A/B'd on
     # the prose stage of ONE show without touching the facts-first
@@ -108,14 +110,14 @@ class LLMConfig:
     podcast_model: str = ""
     # Synthesizer (weekly newsletter, monthly report, cross-show briefing)
     # defaults. Empty synth_model means "use model".
-    synth_model: str = "grok-4.6"
+    synth_model: str = "grok-4.3"
     synth_max_tokens: int = 8000
     synth_temperature: float = 0.4
-    # Episode quality reviewer defaults. Follows the network primary
-    # (2026-08-18 upgrade); its FACTUAL_ERRORS flag rate is the upgrade's
-    # readout instrument, so it deliberately reviews with the same model
-    # family that generated the content plus full reasoning.
-    reviewer_model: str = "grok-4.6"
+    # Episode quality reviewer defaults. grok-4.3 pinned explicitly (the
+    # retired grok-4-1-fast-non-reasoning slug had been silently served
+    # by 4.3 since May 15); reverted from the short-lived 4.6 upgrade
+    # together with the primary on 2026-08-18.
+    reviewer_model: str = "grok-4.3"
     reviewer_max_tokens: int = 1500
     reviewer_temperature: float = 0.3
     # Optional xAI reasoning depth for models that support it (grok-4.5:

@@ -850,10 +850,12 @@ class TestSystemPrompts:
         if not config_path.exists():
             pytest.skip(f"Config not found: {config_path}")
 
-        # grok-4.6 network-wide since 2026-08-18 (operator-directed);
-        # grok-4.3 stays allowed as the sanctioned rollback pin.
+        # grok-4.3 network-wide again since the 2026-08-18 revert of the
+        # same-day grok-4.6 upgrade (4.6 digest latency ran 5-10x and
+        # timed out the four biggest shows — docs/model_upgrade_playbook.md).
+        # A future re-upgrade goes through that playbook's staged rollout,
+        # which will re-widen this set deliberately, one show at a time.
         allowed = {
-            "grok-4.6",
             "grok-4.3",
         }
         config = load_config(config_path)

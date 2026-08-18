@@ -10,6 +10,7 @@ from __future__ import annotations
 import logging
 import os
 import re
+import time
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -64,7 +65,7 @@ class LLMEmptyOutputError(LLMRefusalError):
 # prefer ``config.llm.fallback_model`` where possible. Points at the older
 # grok-4.20-reasoning so a refusal switches model family/snapshot rather
 # than re-asking the same primary (grok-4.3).
-_LLM_FALLBACK_MODEL = "grok-4.3"
+_LLM_FALLBACK_MODEL = "grok-4.20-reasoning"
 
 
 def _resolve_fallback_model(config) -> str:
@@ -165,11 +166,11 @@ def _get_api_key() -> str:
 def _call_grok(
     prompt: str,
     *,
-    model: str = "grok-4.6",
+    model: str = "grok-4.3",
     system_prompt: Optional[str] = None,
     temperature: float = 0.7,
     max_tokens: int = 3500,
-    timeout: float = 300.0,
+    timeout: Optional[float] = None,
     cache_key: Optional[str] = None,
     reasoning_effort: Optional[str] = None,
 ) -> tuple[str, Dict[str, Any]]:
@@ -194,7 +195,25 @@ def _call_grok(
     if not api_key:
         raise RuntimeError("Missing GROK_API_KEY (or XAI_API_KEY).")
 
-    client = OpenAI(api_key=api_key, base_url="https://api.x.ai/v1", timeout=timeout)
+    # Timeout-envelope contract (2026-08-18 grok-4.6 outage post-mortem;
+    # docs/model_upgrade_playbook.md):
+    #   - Per-request timeout is env-tunable (NERRA_LLM_TIMEOUT_SECONDS) so
+    #     a slower model generation can be accommodated by config, not by
+    #     letting requests hang.
+    #   - max_retries=0: the OpenAI SDK's default internal retry (2) sat
+    #     UNDER our tenacity wrappers, so one hanging upstream turned into
+    #     3 SDK requests x 3 tenacity attempts = 9 five-minute stalls — a
+    #     45-minute burn that hit the CI hard-kill. Retries belong to ONE
+    #     layer: tenacity (which logs each attempt); the SDK makes exactly
+    #     one HTTP request per call.
+    if timeout is None:
+        timeout = float(os.environ.get("NERRA_LLM_TIMEOUT_SECONDS", 300))
+    client = OpenAI(
+        api_key=api_key,
+        base_url="https://api.x.ai/v1",
+        timeout=timeout,
+        max_retries=0,
+    )
 
     messages: list[dict] = []
     if system_prompt:
@@ -219,7 +238,20 @@ def _call_grok(
             "reasoning_effort": effort,
         }
 
+    _started = time.monotonic()
     resp = client.chat.completions.create(**create_kwargs)
+    _elapsed = time.monotonic() - _started
+    # Latency canary (model-upgrade early warning): a completion that
+    # takes most of its timeout budget is one capacity dip away from a
+    # hard stall. The grok-4.6 day-one failure would have printed this on
+    # every successful show hours before the big shows started timing out.
+    if _elapsed > 0.6 * timeout:
+        logger.warning(
+            "Slow LLM completion: %s took %.0fs (%.0f%% of the %.0fs request "
+            "timeout). If a model change caused this, see "
+            "docs/model_upgrade_playbook.md before it becomes a timeout.",
+            model, _elapsed, 100 * _elapsed / timeout, timeout,
+        )
 
     # content can come back None on degraded responses (all-reasoning
     # completions during capacity incidents) — normalize to "" so callers
