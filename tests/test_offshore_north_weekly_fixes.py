@@ -16,6 +16,7 @@ every other show.
 
 from __future__ import annotations
 
+import json
 import re
 import sys
 from pathlib import Path
@@ -1028,27 +1029,25 @@ class TestDebutCarriesTheDoctrine:
 class TestPremiereReset:
     """The 2026-08-18 premiere was retired after review found three
     defects (generic debut closing, spine stated twice, delivery guidance
-    spoken aloud) — all fixed in #1021. The show is back to pre-launch so
-    the regeneration is Episode 1 again."""
+    spoken aloud) — all fixed in #1021 — and regenerated the same day.
+    The original no-artifacts / numbering-restarts-at-one assertions were
+    point-in-time guards on the emptied state; the regeneration that the
+    reset existed to enable recreated Ep001 and turned them red on main,
+    so the durable shape is asserted instead: the rebuilt catalogue
+    starts at Episode 1 on/after the reset date, and every attempt's
+    spend is kept."""
 
-    def test_no_episode_artifacts_remain(self):
-        digests = _ROOT / "digests" / "offshore_north"
-        leftovers = [
-            p.name for p in digests.iterdir()
-            if p.name != ".gitkeep"
-            and not p.name.startswith("credit_usage_")
-            # narrative memory is cumulative and not episode-pinned; it
-            # survives resets by design
-            and not p.name.endswith(("_narrative_tracker.json", "_theme_history.json"))
-        ]
-        assert not leftovers, f"unexpected files: {leftovers}"
-
-    def test_numbering_restarts_at_one(self):
-        from engine.publisher import get_next_episode_number
-        assert get_next_episode_number(
-            _ROOT / "offshore_north_podcast.rss",
-            _ROOT / "digests" / "offshore_north",
-            "Offshore_North_Ep*.mp3") == 1
+    def test_catalogue_restarts_at_episode_one(self):
+        summaries_path = (
+            _ROOT / "digests" / "offshore_north" / "summaries_offshore_north.json"
+        )
+        records = json.loads(summaries_path.read_text(encoding="utf-8"))["summaries"]
+        assert records, "regenerated premiere missing from summaries"
+        first = min(records, key=lambda r: r["episode_num"])
+        assert first["episode_num"] == 1
+        assert first["date"] >= "2026-08-18", (
+            "an episode predating the premiere reset resurfaced"
+        )
 
     def test_every_attempt_s_spend_is_kept(self):
         credits = list((_ROOT / "digests" / "offshore_north").glob("credit_usage_*.json"))
