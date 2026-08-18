@@ -49,6 +49,29 @@ if str(_ROOT) not in sys.path:
 from shows.hooks import modern_investing as mi  # noqa: E402
 
 
+def _frozen_datetime(today: datetime.date):
+    """A stand-in for the ``datetime`` MODULE with a fixed ``date.today()``.
+
+    Patched onto the hook module's own ``datetime`` attribute, so the real
+    module — which pandas, numpy and yfinance initialise against — is never
+    touched. ``date`` is a genuine subclass, not a mock, so every
+    ``isinstance``/arithmetic path behaves normally.
+    """
+
+    class _Date(datetime.date):
+        @classmethod
+        def today(cls) -> datetime.date:
+            return today
+
+    return SimpleNamespace(
+        date=_Date,
+        datetime=datetime.datetime,
+        timedelta=datetime.timedelta,
+        timezone=datetime.timezone,
+        time=datetime.time,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Symbol resolution (Ep50 CNR wrong-company class)
 # ---------------------------------------------------------------------------
@@ -1081,11 +1104,21 @@ class TestWeeklyMinHold:
                    "trades": [{"symbol": "COST", "market": "NYSE",
                                "trade_type": "weekly", "status": "open",
                                "date": thursday.isoformat()}]}
-        with patch.object(mi.datetime, "date", wraps=datetime.date) as mock_date, \
+        # NOTE: patch the hook's module-local ``datetime`` NAME, never the
+        # real datetime module. ``patch.object(mi.datetime, "date", ...)``
+        # replaced datetime.date GLOBALLY with a MagicMock, and any pandas
+        # import landing inside that window died in its C-extension setup
+        # ("datetime.date is not a type object"), leaving pandas
+        # half-initialised in sys.modules for the rest of the session —
+        # every later "import yfinance" then failed with "numpy._core.
+        # multiarray failed to import". That took out all 38 tests in
+        # test_tesla_hook.py whenever this file ran first, locally AND in
+        # CI (PR #1027). A real date subclass keeps isinstance/type checks
+        # honest where a mock could not.
+        with patch.object(mi, "datetime", _frozen_datetime(friday)), \
              patch.object(mi, "_snapshot_trade") as snap, \
              patch.object(mi, "_close_trade") as close, \
              patch.object(mi, "_save_tracker"):
-            mock_date.today.return_value = friday
             mi._evaluate_open_trade(tracker, Path("/nope"))
         close.assert_not_called()
         snap.assert_called_once()
