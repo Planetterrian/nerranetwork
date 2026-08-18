@@ -19,6 +19,17 @@ multilingual:
   - fr
 llm:
   provider: xai
+  # 2026-08-18 STAGED grok-4.6 trial (operator-directed; experiment
+  # staged-grok-46-trial, per docs/model_upgrade_playbook.md). Narrative
+  # show: no news fetch — the brief IS model-knowledge prose, so a
+  # stronger model is the first sanctioned lever against the accepted
+  # grok-4.3 narrative-length plateau (podcast-side retries stay banned).
+  # Measured 4.6 latency on this show's digest: ~205s (fits the raised
+  # NERRA_LLM_TIMEOUT_SECONDS=600 with wide margin). Watch: reviewer
+  # FACTUAL_ERRORS vs the other shows on the same reviewer, stage
+  # durations in metrics_ep*.json, Slow-LLM-completion warnings.
+  # Revert = delete this line. A/B-listen the first episode (#17).
+  model: grok-4.6
   system_prompt_file: shows/prompts/first_principles_system.txt
   digest_prompt_file: shows/prompts/first_principles_episode.txt
   podcast_prompt_file: shows/prompts/first_principles_podcast.txt

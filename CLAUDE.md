@@ -1394,11 +1394,21 @@ one**. Everything is back on grok-4.3 (refusal fallback back on
 grok-4.20-reasoning; the translation pin deliberately stays grok-4.6 —
 it froze what `grok-latest` already served, and its small chunks never
 tripped a timeout). Experiment `network-grok-46-upgrade` is closed
-`reverted`; grok-4.6's hallucination profile remains UNMEASURED. **Any
-future model upgrade follows
+(status `done`, outcome REVERTED); grok-4.6's hallucination profile
+remains UNMEASURED. **Any future model upgrade follows
 [`docs/model_upgrade_playbook.md`](docs/model_upgrade_playbook.md)** —
 staged one-show-first rollout with a digest-latency gate — never a
-network-wide day-one flip.
+network-wide day-one flip. **The first staged trial started the same
+day** (operator-directed; experiment `staged-grok-46-trial`, readout
+2026-09-01): grok-4.6 on dp_pod's SCRIPT stage only, first_principles +
+unintended_consequences whole-show (narrative — no news fetch), and the
+synth + reviewer stages; `NERRA_LLM_TIMEOUT_SECONDS` raised to 600 in
+run-show.yml to cover 4.6 latency. Every daily NEWS show's digest/fetch
+stays grok-4.3 — scope pinned by
+`tests/test_llm_usage_pass.py::TestStagedGrok46Trial`. Reviewer
+FACTUAL_ERRORS comparisons from 2026-08-18 on must be cross-show under
+the same 4.6 reviewer, never against pre-08-18 history (the instrument
+changed with the trial).
 The review also shipped three silent-number fixes: (1) **search billed per CALL** ($5/1k, env
 `XAI_SEARCH_COST_PER_CALL`) — xAI dropped per-source billing and the usage
 object's source count, so 100% of credit files since 07-29 recorded $0
