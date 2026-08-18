@@ -1025,34 +1025,42 @@ class TestDebutCarriesTheDoctrine:
         assert "commercial airline pilot and a Nerra Network" not in p
 
 
-class TestPremiereReset:
-    """The 2026-08-18 premiere was retired after review found three
-    defects (generic debut closing, spine stated twice, delivery guidance
-    spoken aloud) — all fixed in #1021. The show is back to pre-launch so
-    the regeneration is Episode 1 again."""
+class TestEpisodeStateInvariants:
+    """Phase-agnostic. Earlier versions of this class pinned either the
+    pre-launch reset or the launched state, and flip-flopped every time
+    the premiere was retired or regenerated (three times in two days).
+    Assert what is true in BOTH phases instead."""
 
-    def test_no_episode_artifacts_remain(self):
-        digests = _ROOT / "digests" / "offshore_north"
-        leftovers = [
-            p.name for p in digests.iterdir()
-            if p.name != ".gitkeep"
-            and not p.name.startswith("credit_usage_")
-            # narrative memory is cumulative and not episode-pinned; it
-            # survives resets by design
-            and not p.name.endswith(("_narrative_tracker.json", "_theme_history.json"))
-        ]
-        assert not leftovers, f"unexpected files: {leftovers}"
+    def _digests(self):
+        return _ROOT / "digests" / "offshore_north"
 
-    def test_numbering_restarts_at_one(self):
-        from engine.publisher import get_next_episode_number
-        assert get_next_episode_number(
-            _ROOT / "offshore_north_podcast.rss",
-            _ROOT / "digests" / "offshore_north",
-            "Offshore_North_Ep*.mp3") == 1
-
-    def test_every_attempt_s_spend_is_kept(self):
-        credits = list((_ROOT / "digests" / "offshore_north").glob("credit_usage_*.json"))
+    def test_spend_records_are_never_deleted(self):
+        """Every generation attempt cost real money; resets keep the books."""
+        credits = list(self._digests().glob("credit_usage_*.json"))
         assert len(credits) >= 5, f"spend records lost: {len(credits)}"
+
+    def test_feed_and_digests_agree(self):
+        """Either pre-launch (no feed, no episode files) or launched (feed
+        item count == committed digest count) — never half-torn."""
+        import re as _re
+        feed = _ROOT / "offshore_north_podcast.rss"
+        digests = sorted(self._digests().glob("Offshore_North_Ep*.md"))
+        if not feed.exists():
+            assert not digests, "digests exist with no feed — torn reset"
+            return
+        items = _re.findall(r"<item>", feed.read_text(encoding="utf-8"))
+        assert len(items) == len(digests), (
+            f"feed has {len(items)} item(s) but {len(digests)} digest(s)"
+        )
+
+    def test_narrative_memory_survives_resets(self):
+        """Memory is cumulative and not episode-pinned, so a retired
+        premiere must not wipe the chronicle."""
+        tracker = self._digests() / "offshore_north_narrative_tracker.json"
+        if tracker.exists():
+            import json
+            data = json.loads(tracker.read_text(encoding="utf-8"))
+            assert data.get("programs"), "tracker present but empty"
 
 
 class TestThemeMusicInstalled:
@@ -1142,3 +1150,34 @@ class TestDebutDeliveryGuidanceNotSpoken:
         assert "NEVER a line of script" in p
         assert "charter being read" in p  # quoted as the banned output
         assert "only make sense to someone who had read these instructions" in p
+
+
+class TestCountdownMarkerCannotBeStolen:
+    """Ep1 (2026-08-18 v2) listed the segments as "...and the countdown
+    with the days left" in its introduction, which matched the unanchored
+    Countdown trigger — so that chapter latched at 79 s INSIDE the intro
+    and the real segment got none. Two fixes: the debut template no
+    longer suggests the bare word, and the marker is line-anchored."""
+
+    def _countdown_pattern(self):
+        raw = yaml.safe_load(_SHOW_YAML.read_text(encoding="utf-8"))
+        return [m for m in raw["chapters"]["section_markers"]
+                if m["title"] == "The Countdown"][0]["pattern"]
+
+    def test_prose_mention_does_not_match(self):
+        rx = re.compile(self._countdown_pattern(), re.MULTILINE)
+        prose = ("Each week the programme covers the fleet round-up, the "
+                 "weekly explainer, and the countdown with the days left.")
+        assert not rx.search(prose), "a descriptive mention still steals the marker"
+
+    def test_real_announcements_still_match(self):
+        rx = re.compile(self._countdown_pattern(), re.MULTILINE)
+        for spoken in ("And the countdown.",
+                       "Before we go, the countdown.",
+                       "The countdown stands at 817 days."):
+            assert rx.search(spoken), f"announcement no longer latches: {spoken}"
+
+    def test_debut_template_avoids_the_bare_word(self):
+        p = first_episode_podcast_appendix(1, "Offshore North", "offshore_north")
+        assert "days-to-the-start count" in p
+        assert 'DO NOT use the bare word "countdown" here' in p

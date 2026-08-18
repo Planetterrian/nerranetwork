@@ -172,8 +172,13 @@ Order and shape:
      introduction moves the chapter to the wrong place (Ep001 put "The
      Canadian Boat" at 61 seconds, inside this introduction, instead of at
      the segment). Refer to them descriptively instead: the Canadian
-     campaign segment, the fleet round-up, the weekly explainer, the
-     countdown. One clause each on what each is FOR.
+     campaign segment, the fleet round-up, the weekly explainer, and the
+     days-to-the-start count. DO NOT use the bare word "countdown" here
+     at all — Ep1 (2026-08-18 v2) listed the segments as "...and the
+     countdown with the days left", which matches the Countdown chapter
+     trigger, so that chapter latched at 79 seconds INSIDE this
+     introduction and the real segment got none. One clause each on what
+     each is FOR.
    - **THE PROMISE.** Convey — in your own phrasing, as one or two spoken
      sentences, NOT as a recited list — that sources are named and linked,
      that the show does not hype or run stale play-by-play, and that

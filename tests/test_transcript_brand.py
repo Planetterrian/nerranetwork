@@ -324,3 +324,45 @@ class TestBackfillScript:
         assert [w["start"] for w in seg["words"]] == [0.0, 0.2, 0.5]
         assert [w["end"] for w in seg["words"]] == [0.2, 0.5, 1.0]
         assert data["duration"] == 12.5
+
+
+class TestOriginLineRepair:
+    """The debut explains the network's name as "Novak plus Perra equals
+    Nerra". Whisper mangled all three at once on Offshore North Ep1
+    (2026-08-18): "NoVAC plus PARA equals NARA." — with no "network"
+    token anywhere near, so the anchored repairs correctly declined and
+    the misspelling reached the published transcript."""
+
+    def test_text_pass_repairs_the_whole_phrase(self):
+        from engine.transcripts import correct_brand_text
+        assert correct_brand_text("NoVAC plus PARA equals NARA.") == (
+            "Novak plus Perra equals Nerra."
+        )
+
+    def test_text_pass_is_idempotent(self):
+        from engine.transcripts import correct_brand_text
+        good = "Novak plus Perra equals Nerra."
+        assert correct_brand_text(good) == good
+
+    def test_word_array_repairs_all_three_tokens(self):
+        from engine.transcripts import correct_brand_words
+        words = [{"word": " NoVAC"}, {"word": " plus"}, {"word": " PARA"},
+                 {"word": " equals"}, {"word": " NARA."}, {"word": " The"}]
+        got = [w["word"] for w in correct_brand_words(words)]
+        assert got == [" Novak", " plus", " Perra", " equals", " Nerra.", " The"]
+
+    def test_national_archives_is_never_rewritten(self):
+        """An unanchored NARA is a real organisation — the reason the
+        bare stem was never repairable on its own."""
+        from engine.transcripts import correct_brand_text, correct_brand_words
+        assert correct_brand_text("records held at NARA in Washington") == (
+            "records held at NARA in Washington"
+        )
+        words = [{"word": " at"}, {"word": " NARA"}, {"word": " in"}]
+        assert [w["word"] for w in correct_brand_words(words)] == [
+            " at", " NARA", " in"]
+
+    def test_existing_forward_anchor_still_works(self):
+        from engine.transcripts import correct_brand_words
+        words = [{"word": " NARA"}, {"word": " Network"}]
+        assert [w["word"] for w in correct_brand_words(words)][0] == " Nerra"
