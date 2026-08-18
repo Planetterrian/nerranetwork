@@ -1123,3 +1123,15 @@ class TestQuestLineNotDuplicatedOnDebut:
         src = _podcast_prompt()
         assert "EPISODE 1 ONLY: SKIP this line entirely" in src
         assert "One statement of the spine per episode" in src
+
+
+class TestDebutDeliveryGuidanceNotSpoken:
+    """Ep1 (2026-08-18) aired "This introduction is me talking, not a
+    charter being read" — the debut template's own delivery bullet,
+    paraphrased into script. Policy-recital class, new phrasing."""
+
+    def test_bullet_is_marked_as_writer_only(self):
+        p = first_episode_podcast_appendix(1, "Offshore North", "offshore_north")
+        assert "NEVER a line of script" in p
+        assert "charter being read" in p  # quoted as the banned output
+        assert "only make sense to someone who had read these instructions" in p
