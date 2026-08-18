@@ -606,15 +606,46 @@ class TestMultiIndexBenchmark:
         # Beats nasdaq (7.8 vs 3.02), sp500 (7.8 vs 1.5), tsx (7.8 vs -0.6).
         assert tracker["summary"]["indices_beaten"] == 3
 
-    def test_legacy_trades_fall_back_to_nasdaq_field_only(self):
+    def test_legacy_trades_are_excluded_from_every_index_leg(self):
+        """SUPERSEDED 2026-08-18 (was: legacy trades fall back to the
+        NASDAQ field).
+
+        The fallback let the NASDAQ leg count trades no other leg could
+        see: ``nasdaq_return_pct`` exists on 45 trades, ``benchmark_returns``
+        on 10, so the sweep put a 45-trade NASDAQ score beside 10-trade
+        S&P/TSX scores and announced "beating 1 of 3". The July-18 n>=5
+        gate passed it because it checks each sample's SIZE, not that the
+        legs share the same trades — and the number it produced (+9.28%)
+        then contradicted the verified headline (-1.95%) in the same
+        paragraph. Every leg now reads the same verified windows.
+        """
         legacy = {"status": "closed", "pnl_pct": 5.0, "pnl_dollars": 50.0,
                   "nasdaq_return_pct": 2.0, "alpha_pct": 3.0}
         tracker = {"metadata": {"position_size": 1000}, "summary": {},
                    "trades": [legacy]}
         mi._recompute_summary(tracker)
         scores = tracker["summary"]["benchmark_scores"]
-        assert scores["nasdaq"]["trades"] == 1
-        assert "sp500" not in scores  # no data — not silently zeroed
+        # No index leg is scored from a trade with no benchmark_returns.
+        assert scores == {}
+        # The legacy figure is still available for the blended pair, which
+        # the performance page and the recompute script continue to use.
+        assert tracker["summary"]["matched_window_trades"] == 1
+
+    def test_index_legs_always_share_the_same_trade_count(self):
+        """The sweep is a like-for-like comparison or it is nothing."""
+        tracker = {"metadata": {"position_size": 1000}, "summary": {},
+                   "trades": [
+                       self._closed(10.0, 2.0, sp500=1.0, tsx=-1.0),
+                       self._closed(-2.0, 1.0, sp500=0.5, tsx=0.2),
+                       # Legacy trade: must not inflate the NASDAQ leg.
+                       {"status": "closed", "pnl_pct": 30.0,
+                        "pnl_dollars": 300.0, "nasdaq_return_pct": 0.0,
+                        "alpha_pct": 30.0},
+                   ]}
+        mi._recompute_summary(tracker)
+        scores = tracker["summary"]["benchmark_scores"]
+        assert len({s["trades"] for s in scores.values()}) == 1
+        assert scores["nasdaq"]["trades"] == 2
 
     def test_annotate_fills_benchmark_returns_for_all_indices(self):
         trade = {"symbol": "MU", "date": "2026-07-01",
@@ -1585,3 +1616,146 @@ class TestScriptStageModelOverride:
         block = src.split("Per-stage model override")[1][:3000]
         assert "falling back" in block
         assert "config.llm.model" in block
+
+
+class TestSingleAlphaSource:
+    """Both prompt blocks must quote the SAME alpha from the SAME subset.
+
+    The August 15 pass switched ``_build_portfolio_summary`` to the
+    verified-window figure and left ``_build_benchmark_block`` — the
+    "state every episode" scoreboard — on the blended one. Both reach the
+    same prompt, so the model was handed two different alphas under two
+    labels and fused them: Ep138 aired "+9.28% across forty-five
+    VERIFIED-window trades", the inflated number wearing the honest
+    label. Ep139 quoted the blend outright. Only Ep140 was right.
+    """
+
+    @staticmethod
+    def _tracker():
+        return {
+            "metadata": {"position_size": 1000},
+            "benchmark": {"current_close": 26000.0, "ytd_pct": 15.0,
+                          "inception_to_date_pct": 19.0},
+            "alpha": {"ytd_pct": -14.0, "inception_to_date_pct": -18.0},
+            "trades": [
+                {"symbol": "AAA", "status": "closed", "pnl_pct": 1.0,
+                 "nasdaq_return_pct": 3.0, "alpha_pct": -2.0,
+                 "pnl_dollars": 10.0, "entry_bar_date": "2026-08-03",
+                 "exit_bar_date": "2026-08-06",
+                 "benchmark_returns": {"nasdaq": 3.0, "sp500": 2.0, "tsx": 1.0}},
+                {"symbol": "BBB", "status": "closed", "pnl_pct": -1.0,
+                 "nasdaq_return_pct": 1.0, "alpha_pct": -2.0,
+                 "pnl_dollars": -10.0, "entry_bar_date": "2026-08-07",
+                 "exit_bar_date": "2026-08-10",
+                 "benchmark_returns": {"nasdaq": 1.0, "sp500": 1.0, "tsx": 1.0}},
+                # Legacy window — flattering, and must reach neither block.
+                {"symbol": "CCC", "status": "closed", "pnl_pct": 40.0,
+                 "nasdaq_return_pct": 0.0, "alpha_pct": 40.0,
+                 "pnl_dollars": 400.0},
+            ],
+            "summary": {},
+        }
+
+    def test_both_blocks_quote_the_verified_figure(self):
+        tracker = self._tracker()
+        mi._recompute_summary(tracker)
+        verified = tracker["summary"]["verified_window_alpha_pct"]
+        blended = tracker["summary"]["matched_window_alpha_pct"]
+        assert verified != blended  # fixture is only meaningful if they differ
+
+        bench = mi._build_benchmark_block(tracker)
+        port = mi._build_portfolio_summary(tracker)
+        for block in (bench, port):
+            assert f"{verified:+.2f}%" in block or f"{verified:+.1f}%" in block
+            assert f"{blended:+.2f}%" not in block
+            assert f"{blended:+.1f}%" not in block
+
+    def test_trade_count_spoken_is_the_verified_count(self):
+        tracker = self._tracker()
+        mi._recompute_summary(tracker)
+        n = tracker["summary"]["verified_window_trades"]
+        assert n == 2
+        bench = mi._build_benchmark_block(tracker)
+        # The count travels with the number, and it is never the blend's.
+        assert f"across {n} verified-window trades" in bench
+        assert "across 3 " not in bench
+
+    def test_significance_follows_the_verified_subset(self):
+        tracker = self._tracker()
+        mi._recompute_summary(tracker)
+        bench = mi._build_benchmark_block(tracker)
+        t = tracker["summary"]["verified_alpha_t_stat"]
+        if t is not None:
+            assert f"t={t:+.2f}" in bench
+
+    def test_falls_back_to_blended_and_labels_it_when_no_verified_windows(self):
+        tracker = self._tracker()
+        for t in tracker["trades"]:
+            t.pop("entry_bar_date", None)
+            t.pop("benchmark_returns", None)
+        mi._recompute_summary(tracker)
+        assert tracker["summary"]["verified_window_trades"] == 0
+        bench = mi._build_benchmark_block(tracker)
+        # Still speaks a scoreboard, but never calls the blend "verified".
+        assert "benchmarked trades" in bench
+        assert "verified-window trades" not in bench
+
+
+class TestRecomputeMatcherCannotBackdate:
+    """The realignment script must not re-create the bug it repairs.
+
+    ``recompute_mit_benchmarks`` fetches bars from ten days BEFORE the
+    pick (to tolerate date skew) and used to return the first bar whose
+    price fell inside the +/-2% tolerance while scanning that window
+    forward. For any stock in a tight range an earlier bar qualifies, so
+    the entry matched pre-pick and the script reproduced exactly the
+    hindsight backdating it exists to remove. A 2026-08-18 dry run
+    against live market data flagged 25 trades as "backdated" — including
+    all ten whose entry bars were already correct (Ep135 X.TO 2026-08-12
+    -> 2026-08-04). Running --apply would have corrupted the record.
+    """
+
+    @staticmethod
+    def _rc():
+        import importlib
+        return importlib.import_module("scripts.recompute_mit_benchmarks")
+
+    def test_entry_never_matches_a_bar_before_the_pick(self):
+        rc = self._rc()
+        pick = datetime.date(2026, 8, 12)
+        bars = [
+            # Pre-pick bars inside the price tolerance — must be ignored.
+            (datetime.date(2026, 8, 4), 53.00, 53.10, 52.9),
+            (datetime.date(2026, 8, 11), 53.02, 53.20, 52.8),
+            # The true entry bar, on the pick date.
+            (datetime.date(2026, 8, 12), 53.03, 53.71, 52.7),
+        ]
+        bar = rc._match_bar(bars, 53.03, field=1, not_before=pick)
+        assert bar[0] == pick
+
+    def test_exit_never_precedes_entry(self):
+        rc = self._rc()
+        entry_date = datetime.date(2026, 8, 12)
+        bars = [
+            (datetime.date(2026, 8, 5), 54.05, 54.06, 53.0),
+            (datetime.date(2026, 8, 12), 53.03, 53.71, 52.7),
+            (datetime.date(2026, 8, 13), 53.80, 54.06, 53.5),
+        ]
+        bar = rc._match_bar(bars, 54.06, field=2, not_before=entry_date)
+        assert bar[0] == datetime.date(2026, 8, 13)
+
+    def test_closest_price_wins_not_the_first_seen(self):
+        rc = self._rc()
+        d = datetime.date(2026, 8, 12)
+        bars = [
+            (d, 53.90, 54.00, 53.0),                                  # 1.6% off
+            (datetime.date(2026, 8, 13), 53.05, 54.00, 53.0),         # 0.04% off
+        ]
+        bar = rc._match_bar(bars, 53.03, field=1, not_before=d)
+        assert bar[0] == datetime.date(2026, 8, 13)
+
+    def test_no_qualifying_bar_returns_none(self):
+        rc = self._rc()
+        d = datetime.date(2026, 8, 12)
+        bars = [(datetime.date(2026, 8, 4), 53.03, 53.10, 52.9)]
+        assert rc._match_bar(bars, 53.03, field=1, not_before=d) is None

@@ -1603,8 +1603,16 @@ def _recompute_summary(tracker: dict) -> None:
         for t in closed:
             pnl = t.get("pnl_pct")
             ret = (t.get("benchmark_returns") or {}).get(key)
-            if key == "nasdaq" and ret is None:
-                ret = t.get("nasdaq_return_pct")
+            # No legacy fallback (August 18 2026). The NASDAQ leg used to
+            # fall back to ``nasdaq_return_pct``, which exists on 45 trades
+            # while ``benchmark_returns`` exists on 10 — so the sweep put a
+            # 45-trade NASDAQ score beside 10-trade S&P/TSX scores and
+            # reported "beating 1 of 3". The July-18 n>=5 gate passed it
+            # because it checks each sample's SIZE, not that the samples
+            # are the SAME TRADES. A head-to-head across different trade
+            # sets is not a comparison. All three legs now read the same
+            # verified windows, so the NASDAQ leg equals the headline
+            # alpha instead of contradicting it in the same paragraph.
             if _finite_num(pnl) and _finite_num(ret):
                 comp_p *= 1 + pnl / 100
                 comp_i *= 1 + ret / 100
@@ -2409,10 +2417,26 @@ def _build_benchmark_block(tracker: dict) -> str:
     # interchangeably (+11% one day, -13.1% the Sunday recap — July 2026
     # review). Label them so the script can never conflate the two.
     summary = tracker.get("summary", {}) or {}
-    matched_alpha = summary.get("matched_window_alpha_pct")
+    # VERIFIED subset only (August 18 2026). The August 15 pass switched
+    # ``_build_portfolio_summary`` to the verified-window figure but left
+    # THIS block — the "PORTFOLIO vs NASDAQ COMPOSITE (state every
+    # episode)" scoreboard — reading the blended one. Both blocks reach
+    # the same prompt, so the model was handed two different alphas under
+    # two labels and fused them: Ep138 said "+9.28% across forty-five
+    # VERIFIED-window trades" — the inflated number wearing the honest
+    # label, which is strictly worse than the bug the pass set out to fix.
+    # One number, one source, both blocks.
+    matched_alpha = summary.get("verified_window_alpha_pct")
+    matched_n = summary.get("verified_window_trades", 0)
+    _verified = True
+    if not matched_n or matched_alpha is None:
+        # No verified windows yet (a fresh tracker, or history before the
+        # July-3 alignment). Fall back to the blended pair and SAY so.
+        matched_alpha = summary.get("matched_window_alpha_pct")
+        matched_n = summary.get("matched_window_trades", 0)
+        _verified = False
     if isinstance(matched_alpha, float) and not math.isfinite(matched_alpha):
         matched_alpha = None
-    matched_n = summary.get("matched_window_trades", 0)
     matched_line = ""
     if matched_n and matched_alpha is not None:
         # July 18 2026: the significance caveat now lives INSIDE the alpha
@@ -2428,8 +2452,11 @@ def _build_benchmark_block(tracker: dict) -> str:
         # when it rides the data line. Third mechanism: make the caveat
         # part of the alpha VALUE itself, a data-shaped parenthetical the
         # model has to copy to quote the number at all.
-        t_stat = summary.get("alpha_t_stat")
-        if summary.get("alpha_statistically_significant"):
+        t_stat = (summary.get("verified_alpha_t_stat") if _verified
+                  else summary.get("alpha_t_stat"))
+        if (summary.get("verified_alpha_statistically_significant")
+                if _verified else
+                summary.get("alpha_statistically_significant")):
             alpha_phrase = (
                 f"{_sign(matched_alpha)} (statistically significant, "
                 f"t={t_stat:+.2f})"
@@ -2441,14 +2468,18 @@ def _build_benchmark_block(tracker: dict) -> str:
             )
         else:
             alpha_phrase = _sign(matched_alpha)
+        _port = (summary.get("verified_window_return_pct") if _verified
+                 else summary.get("compounded_return_pct"))
+        _idx = (summary.get("verified_window_nasdaq_pct") if _verified
+                else summary.get("compounded_nasdaq_matched_pct"))
+        _n_label = "verified-window" if _verified else "benchmarked"
         matched_line = (
-            f"1) MATCHED-WINDOW SCORE (the honest head-to-head — each $1,000 "
-            f"trade vs the NASDAQ over the SAME holding window, compounded): "
-            f"portfolio {_sign(summary.get('compounded_return_pct'))} vs NASDAQ "
-            f"{_sign(summary.get('compounded_nasdaq_matched_pct'))} → alpha "
-            f"{alpha_phrase} across {matched_n} benchmarked trades. The "
-            f"parenthetical after the alpha number is PART OF the statistic "
-            f"— speak them together. "
+            f"1) MATCHED-WINDOW SCORE (the honest head-to-head — each "
+            f"$1,000 trade vs the NASDAQ over the SAME holding window, "
+            f"compounded): portfolio {_sign(_port)} vs NASDAQ "
+            f"{_sign(_idx)} → alpha {alpha_phrase} across {matched_n} "
+            f"{_n_label} trades. Speak the alpha, the trade count and "
+            f"the parenthetical together — they are one statistic. "
         )
         # Index sweep — only from samples big enough to mean something.
         # July 18 2026: before the gate, the sweep compared a 37-trade
