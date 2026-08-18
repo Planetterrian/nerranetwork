@@ -9,7 +9,7 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>en-us</language>
-    <lastBuildDate>Mon, 17 Aug 2026 09:00:05 +0000</lastBuildDate>
+    <lastBuildDate>Tue, 18 Aug 2026 14:51:31 +0000</lastBuildDate>
     <itunes:author>Patrick</itunes:author>
     <itunes:category text="Technology" />
     <itunes:category text="News">
@@ -23,6 +23,118 @@
     </itunes:owner>
     <itunes:summary>Your daily briefing on AI models and agents: new releases from the frontier labs, open-weight drops, agent frameworks, benchmarks, pricing, and practical tools you can use the same day — with long-running program tracking so you always know where the big stories stand. For developers, builders, and AI practitioners.</itunes:summary>
     <itunes:type>episodic</itunes:type>
+    <item>
+      <title>Ep 145: OpenAI ships ChatGPT for Teens with stronger safeguards and parent controls, giving…</title>
+      <description>Models &amp; Agents
+&lt;b&gt;OpenAI ships ChatGPT for Teens with stronger safeguards and parent controls, giving builders a new production template for age-gated agents.&lt;/b&gt;
+
+&lt;b&gt;What You Need to Know:&lt;/b&gt; OpenAI released ChatGPT for Teens today with built-in protections, healthy-use features, and parent controls aimed at learning rather than shortcuts. Snowflake added dynamic model routing to Cortex AI Gateway that can cut token costs up to 3x by sending simple tasks to smaller models. A 264 KB RAM diffusion model and Qwen 3.8 27B experiments show how far edge and open-weight work have progressed this week.
+
+Top Story
+OpenAI launched ChatGPT for Teens, a dedicated mode with stronger built-in protections, healthy-use limits, and additional parent controls. The system emphasizes critical thinking and learning support instead of direct answers that could shortcut education. It arrives alongside separate announcements from NDTV Profit and ABC News confirming the same rollout. The mode includes features that encourage teens to think through problems rather than receive complete solutions. Parent dashboards allow oversight of usage patterns and conversation themes while preserving teen privacy boundaries. Builders working on consumer agents now have a concrete reference implementation for age-appropriate guardrails and escalation paths. Watch how usage patterns and safety metrics evolve once the mode reaches wider teen accounts. Source: &lt;a href="https://openai.com/index/chatgpt-for-teens"&gt;openai.com&lt;/a&gt;
+
+Model Updates
+&lt;b&gt;Fantastic pelican from Qwen 38 27B experiment: Simon Willison (AI builder)&lt;/b&gt;
+Simon Willison generated high-quality images from the Qwen 3.8 27B variant and shared the output on X. The result demonstrates usable creative capability from a relatively compact open-weight model. The experiment produced a detailed pelican image that highlights the checkpoint’s multimodal strengths without requiring frontier-scale resources. Builders can test the same checkpoint for lightweight image or multimodal tasks where full frontier models are overkill. The post also notes compatibility notes for upcoming hardware such as the RTX 5090. Source: &lt;a href="https://x.com/simonw/status/2089635473803071704"&gt;x.com&lt;/a&gt;
+
+&lt;b&gt;Razorpay launches Vulcan, an AI foundation model for payments: MediaNama&lt;/b&gt;
+Razorpay released Vulcan, a foundation model trained specifically for payments workflows. The announcement leaves open questions about training data composition and licensing. The model targets core payments operations including transaction classification, fraud signal detection, and reconciliation logic. Teams building fintech agents should monitor the release notes for API access and fine-tuning options. No public benchmarks or training corpus details were disclosed at launch. Source: &lt;a href="https://news.google.com/rss/articles/CBMiiwFBVV95cUxNbUtsRGhRY2doZXdyRjA3U1ZlMU80RGVLNEFGaW4zdVRvdDFWZWY5bXZ6ZjloOGxLZ3V6N2VsZnZjSWJablBhaUVaTDk0UllCWHh6d1pZcWNIXzRCUVlKR3dwTlVwSHVCUExnWGtGcEItRUJFT1B6Ni10bmxHU09CMjQ5b1NaNnBGV0xn?oc=5"&gt;MediaNama&lt;/a&gt;
+
+&lt;b&gt;Trained a diffusion model that runs on 264KB of RAM: r/MachineLearning&lt;/b&gt;
+A developer trained a 32×32 image diffusion model on a Shrike Lite microcontroller with only 264 KB SRAM and an on-board FPGA for INT8 MAC acceleration. The quantized model ran slower with parallel engines due to I/O bottlenecks but still produced recognizable outputs. Without the FPGA the system completed images in roughly 70 seconds; with parallel MAC engines the time rose to approximately 220 seconds because of memory-bus saturation. The images showed heavy quantization artifacts yet remained identifiable, proving that diffusion remains feasible far below typical edge hardware thresholds. Full case-study code and weights are linked in the thread. Source: &lt;a href="https://www.reddit.com/r/MachineLearning/comments/1vrk7t5/trained_an_diffusion_model_that_runs_on_264kb_of/"&gt;reddit.com&lt;/a&gt;
+
+Agent &amp; Tool Developments
+&lt;b&gt;TestMu AI Launches Agent Assurance to Verify AI Agents Before They Ship: pressreleasehub.pa.media&lt;/b&gt;
+TestMu AI introduced Agent Assurance, a verification layer that checks agent behavior prior to deployment. The tool targets teams shipping autonomous agents and provides pre-release validation across safety, policy compliance, and task-completion metrics. It integrates into existing CI pipelines so agents can be scanned for harmful actions or unintended tool use before they reach production. Early users should evaluate how it integrates with existing CI pipelines for agent testing. Source: &lt;a href="https://news.google.com/rss/articles/CBMiwAFBVV95cUxNV0wwSld5M0pBOTlpMGJZd1JTcE5LSTRpdXFKezhrWUZzaFRKMFFlSVR2X2IwNE1hcGhuX3A4amROMXRFU1JoLV9qLWtVMXNELVotQWRmR1pwSDQzNWxCMzdLVXFBcnhFTTQ2TWNFNzlERWxZai1QTzB3U3NwZ01nTUZwMTdadm0xbkRNQnRtdjlkbGIydGNDRS00T0JXQ215d21ITDBDajA1eHZJanZvOGFLcTZMdDdPNGRWYXZnd2g?oc=5"&gt;Google News&lt;/a&gt;
+
+&lt;b&gt;Alvys launches AI agents for freight TMS workflows: AI News&lt;/b&gt;
+Alvys released AI agents purpose-built for freight TMS operations. The agents handle workflow automation inside transportation management systems including load matching, carrier onboarding, and exception handling. Logistics teams can test the agents against current manual processes to measure time savings on routine tasks. The release focuses on domain-specific actions rather than general-purpose tool calling. Source: &lt;a href="https://news.google.com/rss/articles/CBMigwFBVV95cUxPQ2QzX1QtRzR1dUkydEt0MkFBUkFzTU9XQkxUQkpjeFV6eU9FVW1pa0RvZlE2Sl9OVGhyYzd3WXE3UGluNDVFS1h1bHltVlZCUlozUlRIcTRnejB3WTZSUnJtUTJLandKdnJZcjhlY1hueDlhRVk2eUt5cjN6Nmx5ZFNRMA?oc=5"&gt;AI News&lt;/a&gt;
+
+&lt;b&gt;AgenC Earns a 91.56 Proof of Usefulness Score With an On-Chain Marketplace for AI Agents: HackerNoon&lt;/b&gt;
+AgenC launched an on-chain marketplace for AI agents and recorded a 91.56 Proof of Usefulness score. The platform enables discovery and transactions between autonomous agents using smart-contract settlement. Developers exploring agent economies should review the marketplace mechanics and smart-contract interfaces. The score reflects measured utility across completed deals rather than simulated benchmarks. Source: &lt;a href="https://news.google.com/rss/articles/CBMirwFBVV95cUxQcmcxMnFNSWhQRDZOR0dBNGRxNWFxRkVzb2dRUndhNGI4ZDhBSGx3TjVCc2tpWWN0M3ppc3NtQzdGOFVvU2stSkJfU0UzSzRRaFVzemtlWHZ0YUZiSThMZEJlVHJMaVVpak84SVBTT055bmNyazNZamJWcHpUaGV3M2R3NjV2MHdMQ1Framg4a2ZKd3FDS05mTURQa2lnVzE5Y2NVRXhLZ1h0VnBobkVr?oc=5"&gt;HackerNoon&lt;/a&gt;
+
+Practical &amp; Community
+&lt;b&gt;Enterprises are overpaying for simple AI queries — Snowflake's gateway now auto-routes to cut costs up to 3x: VentureBeat&lt;/b&gt;
+Snowflake added dynamic routing to Cortex AI Gateway so tasks automatically move between models based on an advisor pattern and a history-trained classifier. A small model first attempts each task; if it cannot finish, it calls a larger model as a tool and continues. A separate classifier trained on past queries routes straightforward questions to lighter models before the advisor runs. The change requires no extra fee beyond token usage and works with open models such as DeepSeek-V4-Flash and GLM-5.3 while keeping all inference inside Snowflake’s security boundary. Context from the recently announced Horizon Context and Cortex Sense tools is packaged in advance so simpler models can succeed without exploratory SQL or search steps. Agent memory is folded back into future queries, preventing repeated work. Governance and role-based access controls travel with the task rather than stopping at the data layer. Teams already on Snowflake can enable “auto” routing immediately to test cost reduction on repetitive agent workloads. The approach also incorporates connectors from the Natoma acquisition, allowing scoped tool access such as read-only email permissions. Source: &lt;a href="https://venturebeat.com/orchestration/enterprises-are-overpaying-for-simple-ai-queries-snowflakes-gateway-now-auto-routes-to-cut-costs-up-to-3x"&gt;venturebeat.com&lt;/a&gt;
+
+&lt;b&gt;Graph Engineering Isn’t About More Connections — It’s About Which Ones Get Used: Towards Data Science&lt;/b&gt;
+A controlled experiment across 50 runs found that multi-agent recovery stayed stable even as relationship density dropped from 100 % to 20 %, while the fraction of edges actually used fell sharply in denser graphs. Recovery performance remained remarkably consistent across the full density range, indicating that additional configured links do not translate into additional behavioral links. The gap between configured connectivity and behavioral connectivity matters more than raw link count. Agent builders should measure which edges their systems actually traverse rather than adding more pathways by default. The study used reproducible task graphs and tracked every message passed between agents. Source: &lt;a href="https://towardsdatascience.com/graph-engineering-isnt-about-more-connections-its-about-which-ones-get-used/"&gt;towardsdatascience.com&lt;/a&gt;
+
+Under the Hood: Dynamic Model Routing Tradeoffs
+Everyone treats model routing as a simple cost switch. In practice it is a two-stage decision process that trades latency, governance, and context quality. A small advisor model first attempts the task; only when it fails does it invoke a larger model as a tool, adding one extra forward pass but avoiding the full cost of the large model on every call. A separate classifier trained on historical queries routes obvious cases to cheap models before the advisor even runs, cutting the number of advisor invocations on repetitive workloads. The approach works because most agent traffic is repetitive and low-complexity once memory and access context are pre-packaged. When context is missing the advisor itself becomes expensive, erasing the savings and forcing more escalations. Teams already inside a governed data platform gain the most because routing decisions inherit the same role-based controls used for data access. Those needing maximum model choice still prefer neutral gateways that sit outside any single vendor boundary. The practical limit appears when the advisor’s failure rate exceeds roughly 30 %—at that point the extra latency outweighs the token savings for latency-sensitive agents. Routing also respects data-residency rules by keeping open-model inference inside the customer’s chosen region rather than calling external providers.
+
+Things to Try This Week
+• Enable “auto” routing in Snowflake Cortex AI Gateway on a non-production workload to measure token-cost reduction on repetitive queries.
+• Test the Qwen 3.8 27B checkpoint Simon Willison used for lightweight image generation tasks before scaling to larger models.
+• Run the 264 KB diffusion model experiment on any microcontroller with an FPGA to explore extreme edge image generation.
+• Evaluate TestMu Agent Assurance against your current agent test suite to see pre-shipment verification coverage.
+• Compare AgenC’s on-chain marketplace mechanics with existing agent directories if you are exploring agent-to-agent transactions.
+
+On the Horizon
+• More labs are expected to release teen or education-specific modes following OpenAI’s template.
+• Additional cloud providers will likely add advisor-pattern routing to their model gateways.
+• On-device diffusion and small-model creative tools will continue to appear on microcontrollers and edge silicon.
+• On-chain agent marketplaces will see further Proof of Usefulness benchmarks as adoption grows.</description>
+      <guid isPermaLink="false">models-agents-video-ep145-20260818</guid>
+      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep145_20260818.mp4" length="272932887" type="video/mp4" />
+      <pubDate>Tue, 18 Aug 2026 08:00:00 +0000</pubDate>
+      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep145_20260818.jpg" />
+      <itunes:duration>10:59</itunes:duration>
+      <itunes:explicit>no</itunes:explicit>
+      <itunes:summary># Models &amp; Agents
+&gt; **OpenAI ships ChatGPT for Teens with stronger safeguards and parent controls, giving builders a new production template for age-gated agents.**
+
+**What You Need to Know:** OpenAI released ChatGPT for Teens today with built-in protections, healthy-use features, and parent controls aimed at learning rather than shortcuts. Snowflake added dynamic model routing to Cortex AI Gateway that can cut token costs up to 3x by sending simple tasks to smaller models. A 264 KB RAM diffusion model and Qwen 3.8 27B experiments show how far edge and open-weight work have progressed this week.
+---
+### Top Story
+OpenAI launched ChatGPT for Teens, a dedicated mode with stronger built-in protections, healthy-use limits, and additional parent controls. The system emphasizes critical thinking and learning support instead of direct answers that could shortcut education. It arrives alongside separate announcements from NDTV Profit and ABC News confirming the same rollout. The mode includes features that encourage teens to think through problems rather than receive complete solutions. Parent dashboards allow oversight of usage patterns and conversation themes while preserving teen privacy boundaries. Builders working on consumer agents now have a concrete reference implementation for age-appropriate guardrails and escalation paths. Watch how usage patterns and safety metrics evolve once the mode reaches wider teen accounts. Source: [openai.com](https://openai.com/index/chatgpt-for-teens)
+---
+### Model Updates
+**Fantastic pelican from Qwen 38 27B experiment: Simon Willison (AI builder)**
+Simon Willison generated high-quality images from the Qwen 3.8 27B variant and shared the output on X. The result demonstrates usable creative capability from a relatively compact open-weight model. The experiment produced a detailed pelican image that highlights the checkpoint’s multimodal strengths without requiring frontier-scale resources. Builders can test the same checkpoint for lightweight image or multimodal tasks where full frontier models are overkill. The post also notes compatibility notes for upcoming hardware such as the RTX 5090. Source: [x.com](https://x.com/simonw/status/2089635473803071704)
+
+**Razorpay launches Vulcan, an AI foundation model for payments: MediaNama**
+Razorpay released Vulcan, a foundation model trained specifically for payments workflows. The announcement leaves open questions about training data composition and licensing. The model targets core payments operations including transaction classification, fraud signal detection, and reconciliation logic. Teams building fintech agents should monitor the release notes for API access and fine-tuning options. No public benchmarks or training corpus details were disclosed at launch. Source: [MediaNama](https://news.google.com/rss/articles/CBMiiwFBVV95cUxNbUtsRGhRY2doZXdyRjA3U1ZlMU80RGVLNEFGaW4zdVRvdDFWZWY5bXZ6ZjloOGxLZ3V6N2VsZnZjSWJablBhaUVaTDk0UllCWHh6d1pZcWNIXzRCUVlKR3dwTlVwSHVCUExnWGtGcEItRUJFT1B6Ni10bmxHU09CMjQ5b1NaNnBGV0xn?oc=5)
+
+**Trained a diffusion model that runs on 264KB of RAM: r/MachineLearning**
+A developer trained a 32×32 image diffusion model on a Shrike Lite microcontroller with only 264 KB SRAM and an on-board FPGA for INT8 MAC acceleration. The quantized model ran slower with parallel engines due to I/O bottlenecks but still produced recognizable outputs. Without the FPGA the system completed images in roughly 70 seconds; with parallel MAC engines the time rose to approximately 220 seconds because of memory-bus saturation. The images showed heavy quantization artifacts yet remained identifiable, proving that diffusion remains feasible far below typical edge hardware thresholds. Full case-study code and weights are linked in the thread. Source: [reddit.com](https://www.reddit.com/r/MachineLearning/comments/1vrk7t5/trained_an_diffusion_model_that_runs_on_264kb_of/)
+---
+### Agent &amp; Tool Developments
+**TestMu AI Launches Agent Assurance to Verify AI Agents Before They Ship: pressreleasehub.pa.media**
+TestMu AI introduced Agent Assurance, a verification layer that checks agent behavior prior to deployment. The tool targets teams shipping autonomous agents and provides pre-release validation across safety, policy compliance, and task-completion metrics. It integrates into existing CI pipelines so agents can be scanned for harmful actions or unintended tool use before they reach production. Early users should evaluate how it integrates with existing CI pipelines for agent testing. Source: [Google News](https://news.google.com/rss/articles/CBMiwAFBVV95cUxNV0wwSld5M0pBOTlpMGJZd1JTcE5LSTRpdXFKezhrWUZzaFRKMFFlSVR2X2IwNE1hcGhuX3A4amROMXRFU1JoLV9qLWtVMXNELVotQWRmR1pwSDQzNWxCMzdLVXFBcnhFTTQ2TWNFNzlERWxZai1QTzB3U3NwZ01nTUZwMTdadm0xbkRNQnRtdjlkbGIydGNDRS00T0JXQ215d21ITDBDajA1eHZJanZvOGFLcTZMdDdPNGRWYXZnd2g?oc=5)
+
+**Alvys launches AI agents for freight TMS workflows: AI News**
+Alvys released AI agents purpose-built for freight TMS operations. The agents handle workflow automation inside transportation management systems including load matching, carrier onboarding, and exception handling. Logistics teams can test the agents against current manual processes to measure time savings on routine tasks. The release focuses on domain-specific actions rather than general-purpose tool calling. Source: [AI News](https://news.google.com/rss/articles/CBMigwFBVV95cUxPQ2QzX1QtRzR1dUkydEt0MkFBUkFzTU9XQkxUQkpjeFV6eU9FVW1pa0RvZlE2Sl9OVGhyYzd3WXE3UGluNDVFS1h1bHltVlZCUlozUlRIcTRnejB3WTZSUnJtUTJLandKdnJZcjhlY1hueDlhRVk2eUt5cjN6Nmx5ZFNRMA?oc=5)
+
+**AgenC Earns a 91.56 Proof of Usefulness Score With an On-Chain Marketplace for AI Agents: HackerNoon**
+AgenC launched an on-chain marketplace for AI agents and recorded a 91.56 Proof of Usefulness score. The platform enables discovery and transactions between autonomous agents using smart-contract settlement. Developers exploring agent economies should review the marketplace mechanics and smart-contract interfaces. The score reflects measured utility across completed deals rather than simulated benchmarks. Source: [HackerNoon](https://news.google.com/rss/articles/CBMirwFBVV95cUxQcmcxMnFNSWhQRDZOR0dBNGRxNWFxRkVzb2dRUndhNGI4ZDhBSGx3TjVCc2tpWWN0M3ppc3NtQzdGOFVvU2stSkJfU0UzSzRRaFVzemtlWHZ0YUZiSThMZEJlVHJMaVVpak84SVBTT055bmNyazNZamJWcHpUaGV3M2R3NjV2MHdMQ1Framg4a2ZKd3FDS05mTURQa2lnVzE5Y2NVRXhLZ1h0VnBobkVr?oc=5)
+---
+### Practical &amp; Community
+**Enterprises are overpaying for simple AI queries — Snowflake's gateway now auto-routes to cut costs up to 3x: VentureBeat**
+Snowflake added dynamic routing to Cortex AI Gateway so tasks automatically move between models based on an advisor pattern and a history-trained classifier. A small model first attempts each task; if it cannot finish, it calls a larger model as a tool and continues. A separate classifier trained on past queries routes straightforward questions to lighter models before the advisor runs. The change requires no extra fee beyond token usage and works with open models such as DeepSeek-V4-Flash and GLM-5.3 while keeping all inference inside Snowflake’s security boundary. Context from the recently announced Horizon Context and Cortex Sense tools is packaged in advance so simpler models can succeed without exploratory SQL or search steps. Agent memory is folded back into future queries, preventing repeated work. Governance and role-based access controls travel with the task rather than stopping at the data layer. Teams already on Snowflake can enable “auto” routing immediately to test cost reduction on repetitive agent workloads. The approach also incorporates connectors from the Natoma acquisition, allowing scoped tool access such as read-only email permissions. Source: [venturebeat.com](https://venturebeat.com/orchestration/enterprises-are-overpaying-for-simple-ai-queries-snowflakes-gateway-now-auto-routes-to-cut-costs-up-to-3x)
+
+**Graph Engineering Isn’t About More Connections — It’s About Which Ones Get Used: Towards Data Science**
+A controlled experiment across 50 runs found that multi-agent recovery stayed stable even as relationship density dropped from 100 % to 20 %, while the fraction of edges actually used fell sharply in denser graphs. Recovery performance remained remarkably consistent across the full density range, indicating that additional configured links do not translate into additional behavioral links. The gap between configured connectivity and behavioral connectivity matters more than raw link count. Agent builders should measure which edges their systems actually traverse rather than adding more pathways by default. The study used reproducible task graphs and tracked every message passed between agents. Source: [towardsdatascience.com](https://towardsdatascience.com/graph-engineering-isnt-about-more-connections-its-about-which-ones-get-used/)
+---
+### Under the Hood: Dynamic Model Routing Tradeoffs
+Everyone treats model routing as a simple cost switch. In practice it is a two-stage decision process that trades latency, governance, and context quality. A small advisor model first attempts the task; only when it fails does it invoke a larger model as a tool, adding one extra forward pass but avoiding the full cost of the large model on every call. A separate classifier trained on historical queries routes obvious cases to cheap models before the advisor even runs, cutting the number of advisor invocations on repetitive workloads. The approach works because most agent traffic is repetitive and low-complexity once memory and access context are pre-packaged. When context is missing the advisor itself becomes expensive, erasing the savings and forcing more escalations. Teams already inside a governed data platform gain the most because routing decisions inherit the same role-based controls used for data access. Those needing maximum model choice still prefer neutral gateways that sit outside any single vendor boundary. The practical limit appears when the advisor’s failure rate exceeds roughly 30 %—at that point the extra latency outweighs the token savings for latency-sensitive agents. Routing also respects data-residency rules by keeping open-model inference inside the customer’s chosen region rather than calling external providers. 
+---
+### Things to Try This Week
+- Enable “auto” routing in Snowflake Cortex AI Gateway on a non-production workload to measure token-cost reduction on repetitive queries.
+- Test the Qwen 3.8 27B checkpoint Simon Willison used for lightweight image generation tasks before scaling to larger models.
+- Run the 264 KB diffusion model experiment on any microcontroller with an FPGA to explore extreme edge image generation.
+- Evaluate TestMu Agent Assurance against your current agent test suite to see pre-shipment verification coverage.
+- Compare AgenC’s on-chain marketplace mechanics with existing agent directories if you are exploring agent-to-agent transactions.
+---
+### On the Horizon
+- More labs are expected to release teen or education-specific modes following OpenAI’s template.
+- Additional cloud providers will likely add advisor-pattern routing to their model gateways.
+- On-device diffusion and small-model creative tools will continue to appear on microcontrollers and edge silicon.
+- On-chain agent marketplaces will see further Proof of Usefulness benchmarks as adoption grows.</itunes:summary>
+      <itunes:episode>145</itunes:episode>
+      <itunes:title>Ep 145: OpenAI ships ChatGPT for Teens with stronger safeguards and parent controls, giving…</itunes:title>
+      <itunes:episodeType>full</itunes:episodeType>
+    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep145_20260818_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep145.json" type="application/json+chapters" /></item>
     <item>
       <title>Ep 144: Language-server retrieval costs more tokens than grep for most coding-agent tasks and…</title>
       <description>Models &amp; Agents
@@ -3335,150 +3447,5 @@ Everyone treats token embeddings as a fixed lookup table whose nearest neighbors
       <itunes:title>Ep 116: Perplexity’s new WANDR benchmark forces research agents to hunt wide and deep with verifiable citations, exposing where current systems still fall short.</itunes:title>
       <itunes:episodeType>full</itunes:episodeType>
     <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep116_20260719_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep116.json" type="application/json+chapters" /></item>
-    <item>
-      <title>Ep 115: Moonshot just dropped the largest open-source model yet at 2.8 trillion parameters, matching top closed systems on long-horizon agentic benchmarks.</title>
-      <description>Models &amp; Agents
-&lt;b&gt;Moonshot just dropped the largest open-source model yet at 2.8 trillion parameters, matching top closed systems on long-horizon agentic benchmarks.&lt;/b&gt;
-
-&lt;b&gt;What You Need to Know:&lt;/b&gt; Moonshot AI released Kimi K3 with a 1-million-token context window, native vision, and always-on reasoning mode. It leads on BrowseComp at 91.2 and ranks second on AA-Briefcase behind only Claude Fable 5. Full weights land July 27. Builders should test its single-agent long-horizon workflows immediately.
-
-Top Story
-Moonshot AI released Kimi K3, a 2.8-trillion-parameter frontier model with a 1-million-token context window, native visual understanding, and an always-on "thinking mode." The model uses two internal architectural innovations—Kimi Delta Attention (hybrid linear attention) and Attention Residuals—and is priced at $3 per million input tokens and $15 per million output tokens, with cached inputs at $0.30. On GDPval-AA v2 it scored 1,687 (third overall), on AA-Briefcase it reached 1,527 (second), and it set a new state of the art on BrowseComp at 91.2 in a single-agent setup without context compression. The company also demonstrated 48-hour autonomous chip design and compressed multi-week astrophysics research into two hours. This moves the open-weight frontier forward from last week's coverage of DeepSeek and earlier Chinese releases, directly addressing the open-vs-closed performance gap. Full weights arrive July 27; watch for community fine-tunes and agent harness integrations. Source: &lt;a href="https://venturebeat.com/technology/chinas-moonshot-ai-releases-kimi-k3-the-largest-open-source-model-ever-rivaling-top-u-s-systems"&gt;venturebeat.com&lt;/a&gt;
-
-Model Updates
-&lt;b&gt;Kimi K3: Moonshot AI&lt;/b&gt;
-Moonshot AI released Kimi K3, a 2.8-trillion-parameter model with a 1-million-token context window and always-on reasoning. It scored 1,687 on GDPval-AA v2 and 1,527 on AA-Briefcase while using 21% fewer output tokens than its predecessor. Pricing sits at $3/$15 per million tokens with automatic context caching. Builders should try its long-horizon single-agent BrowseComp workflow this week.
-
-&lt;b&gt;GPT-5.6 Sol: OpenAI&lt;/b&gt;
-OpenAI announced GPT-5.6 Sol reached a new state of the art in cybersecurity on “The Last Ones” cyber range. The model now powers Codex Security for finding, validating, and fixing real-world vulnerabilities. It is already integrated into the Codex Security plugin workflow. Source: &lt;a href="https://x.com/OpenAI/status/2078243667081617826"&gt;x.com&lt;/a&gt;
-
-&lt;b&gt;Inkling: Thinking Machines Lab&lt;/b&gt;
-Mira Murati’s Thinking Machines Lab released Inkling, an Apache-2.0 multimodal MoE model with 975B total parameters (41B active) trained on 45 trillion tokens of text, images, audio, and video. A smaller 276B (12B active) variant is in testing. It is positioned as a strong base for fine-tuning via the Tinker platform rather than a raw frontier leader. Source: &lt;a href="https://simonwillison.net/2026/Jul/16/inkling/#atom-everything"&gt;simonwillison.net&lt;/a&gt;
-
-&lt;b&gt;ZUNA1.1: Zyphra&lt;/b&gt;
-Zyphra released ZUNA1.1, a 380M masked diffusion autoencoder for scalp EEG under Apache 2.0. It accepts variable-length inputs from 0.5 to 30 seconds (versus the original fixed five seconds) while holding or improving NMSE across arbitrary channel layouts. Source: &lt;a href="https://www.marktechpost.com/2026/07/17/zyphra-releases-zuna1-1-an-apache-2-0-eeg-foundation-model-with-variable-length-inputs-from-0-5-to-30-seconds/"&gt;marktechpost.com&lt;/a&gt;
-
-&lt;b&gt;Error Diffusion: Sakana AI&lt;/b&gt;
-Sakana AI introduced Error Diffusion, a backpropagation-free training method for dual-stream excitatory/inhibitory networks that obey Dale’s principle. The approach reached 96.7% on MNIST and 61.7% on CIFAR-10 and scales to reinforcement learning via modulo error routing. Source: &lt;a href="https://www.marktechpost.com/2026/07/17/sakana-ais-error-diffusion-trains-dale-compliant-dual-stream-networks-reaching-96-7-mnist-and-61-7-cifar-10-without-backpropagation/"&gt;marktechpost.com&lt;/a&gt;
-
-Agent &amp; Tool Developments
-&lt;b&gt;VulnHunter: Capital One&lt;/b&gt;
-Capital One open-sourced VulnHunter, an agentic security tool that performs attacker-first forward analysis from APIs and file uploads, then runs a falsification engine to discard false positives before surfacing findings with proposed fixes. It currently runs on Claude Opus 4.8 inside Claude Code and is released under Apache 2.0. The three-stage workflow (forward analysis → falsification → remediation) was validated across thousands of internal repositories. Source: &lt;a href="https://venturebeat.com/technology/capital-one-releases-vulnhunter-an-open-source-ai-tool-that-finds-software-flaws-before-hackers-do"&gt;venturebeat.com&lt;/a&gt;
-
-&lt;b&gt;CrabTrap: Brex&lt;/b&gt;
-Brex released CrabTrap, an open-source HTTP/HTTPS proxy that intercepts all agent network traffic and uses an LLM-as-a-judge (only on the long tail, &lt;3% of requests) plus deterministic rules to enforce policy. It is framework- and API-agnostic; users simply set HTTP_PROXY. The policy builder bootstraps from observed traffic rather than hand-written rules and includes an eval system that replays thousands of requests in minutes. Source: &lt;a href="https://venturebeat.com/orchestration/brex-built-its-ai-agent-policy-by-watching-what-agents-actually-do-not-by-writing-rules-first"&gt;venturebeat.com&lt;/a&gt;
-
-&lt;b&gt;Always-On Memory Agent: Google Cloud&lt;/b&gt;
-Google Cloud shipped the Always-On Memory Agent, a reference implementation on Google ADK and Gemini 3.1 Flash-Lite that replaces vector databases and embeddings with continuous LLM-driven consolidation into SQLite. An orchestrator routes between Ingest, Consolidate, and Query sub-agents that maintain structured memory 24/7 without RAG. Source: &lt;a href="https://www.marktechpost.com/2026/07/18/google-clouds-always-on-memory-agent-replaces-rag-and-embeddings-with-continuous-llm-consolidation-on-gemini-3-1-flash-lite/"&gt;marktechpost.com&lt;/a&gt;
-
-&lt;b&gt;Agent Architecture Rebuilds: Intuit&lt;/b&gt;
-Intuit rebuilt its production agent system twice in four months, moving from specialist agents to a central orchestrator and then to a skills-and-tools architecture after natural-language handoffs caused compounding errors. The second rebuild took 60 days; evals became the primary measurement mechanism and a human handoff feature is now in 1% production testing. Source: &lt;a href="https://venturebeat.com/orchestration/intuit-scrapped-its-own-ai-agent-architecture-twice-in-four-months-at-vb-transform-2026-its-ai-vp-called-that-the-fast-path"&gt;venturebeat.com&lt;/a&gt;
-
-&lt;b&gt;Infrastructure Panel: LinkedIn, Walmart, Zendesk&lt;/b&gt;
-LinkedIn, Walmart, and Zendesk reported that legacy infrastructure—not models—is the primary bottleneck when moving agents to production. LinkedIn pre-provisions container pools and pushes LLMs to the leaves of deterministic workflows; Walmart added governance to deduplicate citizen-developer agents; Zendesk emphasized investing in data pipelines over simply handing 20 billion conversations to large context windows. Source: &lt;a href="https://venturebeat.com/data/agents-think-in-milliseconds-legacy-infrastructure-doesnt-linkedin-walmart-and-zendesk-shared-how-they-closed-the-gap-at-vb-transform-2026"&gt;venturebeat.com&lt;/a&gt;
-
-Practical &amp; Community
-&lt;b&gt;Claude Code web session fixes: Simon Willison&lt;/b&gt;
-Simon Willison highlighted ongoing regressions in Claude Code on the web that block cloning public GitHub repos into /tmp from existing sessions. He is requesting an automated test suite to prevent future breakage of this core functionality. Source: &lt;a href="https://x.com/simonw/status/2078343997119172705"&gt;x.com&lt;/a&gt;
-
-&lt;b&gt;Firefox in WebAssembly: Puter&lt;/b&gt;
-Puter compiled Firefox to WebAssembly so the full browser runs inside another browser, with all traffic proxied over WebSocket using the Wisp protocol. The project used roughly $25,000 of Claude Opus and Fable tokens under a Max subscription and supports end-to-end encryption.
-
-&lt;b&gt;grok-build open source: xAI&lt;/b&gt;
-xAI open-sourced the entire Grok Build codebase (844k lines of Rust) under Apache 2.0 after earlier data-upload concerns. The repo includes the main system prompt, subagent prompt, a self-contained Mermaid terminal renderer, and tool implementations ported from Codex and OpenCode.
-
-&lt;b&gt;Cars24 + OpenAI agents: OpenAI&lt;/b&gt;
-Cars24 uses OpenAI-powered voice and chat agents to handle over 1 million monthly conversation minutes, recover 12% of lost leads, and extend agentic workflows across internal teams. Source: &lt;a href="https://openai.com/index/cars24"&gt;openai.com&lt;/a&gt;
-
-Under the Hood: Agent Identity and Credential Sharing
-Everyone treats agent identity as a simple “give each agent its own key” checkbox. In practice it is a three-layer enforcement problem that most production systems still solve with borrowed human or service-account credentials. The first layer is issuance: creating a scoped, revocable identity at agent spawn time instead of reusing a shared API key. The second layer is runtime mediation: every outbound call must carry that identity so policy engines can evaluate it before the request reaches the target API. The third layer is attribution: logging which identity performed which action so post-incident forensics can isolate the blast radius. When these layers are missing, a single compromised agent can act with the full permissions of every other agent sharing its credential, which is exactly the pattern seen in 69% of the surveyed enterprises. The practical tradeoff is latency versus safety—adding a network proxy or sidecar for identity enforcement adds measurable overhead but collapses the blast radius from “entire fleet” to “single agent.” Most teams discover the gap only after the first incident; the fix that actually moves the needle is treating non-human identity as infrastructure rather than an application-level afterthought.
-
-Things to Try This Week
-• Test Kimi K3 on long-horizon information-seeking tasks using its 1M context window directly instead of multi-agent workarounds.
-• Deploy VulnHunter on a non-production codebase to see the attacker-first forward analysis plus falsification engine in action.
-• Point CrabTrap at an existing agent harness and let it bootstrap policy from a few days of real traffic.
-• Run the Always-On Memory Agent reference implementation on a small persistent task to compare continuous consolidation against traditional RAG.
-
-On the Horizon
-• Kimi K3 full weights scheduled for July 27.
-• Intuit plans to scale its human-in-the-loop handoff feature beyond the current 1% of customers in the coming weeks.
-• Brex is accepting community contributions to CrabTrap for SSO, RBAC, and escalation workflows.
-• OpenAI continues internal work on GPT-Red to improve multi-turn and image-based attack coverage.</description>
-      <guid isPermaLink="false">models-agents-video-ep115-20260718</guid>
-      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep115_20260718.mp4" length="205115842" type="video/mp4" />
-      <pubDate>Sat, 18 Jul 2026 08:00:00 +0000</pubDate>
-      <itunes:duration>11:51</itunes:duration>
-      <itunes:explicit>no</itunes:explicit>
-      <itunes:summary># Models &amp; Agents
-&gt; **Moonshot just dropped the largest open-source model yet at 2.8 trillion parameters, matching top closed systems on long-horizon agentic benchmarks.**
-
-**What You Need to Know:** Moonshot AI released Kimi K3 with a 1-million-token context window, native vision, and always-on reasoning mode. It leads on BrowseComp at 91.2 and ranks second on AA-Briefcase behind only Claude Fable 5. Full weights land July 27. Builders should test its single-agent long-horizon workflows immediately.
----
-### Top Story
-Moonshot AI released Kimi K3, a 2.8-trillion-parameter frontier model with a 1-million-token context window, native visual understanding, and an always-on "thinking mode." The model uses two internal architectural innovations—Kimi Delta Attention (hybrid linear attention) and Attention Residuals—and is priced at $3 per million input tokens and $15 per million output tokens, with cached inputs at $0.30. On GDPval-AA v2 it scored 1,687 (third overall), on AA-Briefcase it reached 1,527 (second), and it set a new state of the art on BrowseComp at 91.2 in a single-agent setup without context compression. The company also demonstrated 48-hour autonomous chip design and compressed multi-week astrophysics research into two hours. This moves the open-weight frontier forward from last week's coverage of DeepSeek and earlier Chinese releases, directly addressing the open-vs-closed performance gap. Full weights arrive July 27; watch for community fine-tunes and agent harness integrations. Source: [venturebeat.com](https://venturebeat.com/technology/chinas-moonshot-ai-releases-kimi-k3-the-largest-open-source-model-ever-rivaling-top-u-s-systems)
----
-### Model Updates
-**Kimi K3: Moonshot AI**
-Moonshot AI released Kimi K3, a 2.8-trillion-parameter model with a 1-million-token context window and always-on reasoning. It scored 1,687 on GDPval-AA v2 and 1,527 on AA-Briefcase while using 21% fewer output tokens than its predecessor. Pricing sits at $3/$15 per million tokens with automatic context caching. Builders should try its long-horizon single-agent BrowseComp workflow this week.
-
-**GPT-5.6 Sol: OpenAI**
-OpenAI announced GPT-5.6 Sol reached a new state of the art in cybersecurity on “The Last Ones” cyber range. The model now powers Codex Security for finding, validating, and fixing real-world vulnerabilities. It is already integrated into the Codex Security plugin workflow. Source: [x.com](https://x.com/OpenAI/status/2078243667081617826)
-
-**Inkling: Thinking Machines Lab**
-Mira Murati’s Thinking Machines Lab released Inkling, an Apache-2.0 multimodal MoE model with 975B total parameters (41B active) trained on 45 trillion tokens of text, images, audio, and video. A smaller 276B (12B active) variant is in testing. It is positioned as a strong base for fine-tuning via the Tinker platform rather than a raw frontier leader. Source: [simonwillison.net](https://simonwillison.net/2026/Jul/16/inkling/#atom-everything)
-
-**ZUNA1.1: Zyphra**
-Zyphra released ZUNA1.1, a 380M masked diffusion autoencoder for scalp EEG under Apache 2.0. It accepts variable-length inputs from 0.5 to 30 seconds (versus the original fixed five seconds) while holding or improving NMSE across arbitrary channel layouts. Source: [marktechpost.com](https://www.marktechpost.com/2026/07/17/zyphra-releases-zuna1-1-an-apache-2-0-eeg-foundation-model-with-variable-length-inputs-from-0-5-to-30-seconds/)
-
-**Error Diffusion: Sakana AI**
-Sakana AI introduced Error Diffusion, a backpropagation-free training method for dual-stream excitatory/inhibitory networks that obey Dale’s principle. The approach reached 96.7% on MNIST and 61.7% on CIFAR-10 and scales to reinforcement learning via modulo error routing. Source: [marktechpost.com](https://www.marktechpost.com/2026/07/17/sakana-ais-error-diffusion-trains-dale-compliant-dual-stream-networks-reaching-96-7-mnist-and-61-7-cifar-10-without-backpropagation/)
----
-### Agent &amp; Tool Developments
-**VulnHunter: Capital One**
-Capital One open-sourced VulnHunter, an agentic security tool that performs attacker-first forward analysis from APIs and file uploads, then runs a falsification engine to discard false positives before surfacing findings with proposed fixes. It currently runs on Claude Opus 4.8 inside Claude Code and is released under Apache 2.0. The three-stage workflow (forward analysis → falsification → remediation) was validated across thousands of internal repositories. Source: [venturebeat.com](https://venturebeat.com/technology/capital-one-releases-vulnhunter-an-open-source-ai-tool-that-finds-software-flaws-before-hackers-do)
-
-**CrabTrap: Brex**
-Brex released CrabTrap, an open-source HTTP/HTTPS proxy that intercepts all agent network traffic and uses an LLM-as-a-judge (only on the long tail, &lt;3% of requests) plus deterministic rules to enforce policy. It is framework- and API-agnostic; users simply set HTTP_PROXY. The policy builder bootstraps from observed traffic rather than hand-written rules and includes an eval system that replays thousands of requests in minutes. Source: [venturebeat.com](https://venturebeat.com/orchestration/brex-built-its-ai-agent-policy-by-watching-what-agents-actually-do-not-by-writing-rules-first)
-
-**Always-On Memory Agent: Google Cloud**
-Google Cloud shipped the Always-On Memory Agent, a reference implementation on Google ADK and Gemini 3.1 Flash-Lite that replaces vector databases and embeddings with continuous LLM-driven consolidation into SQLite. An orchestrator routes between Ingest, Consolidate, and Query sub-agents that maintain structured memory 24/7 without RAG. Source: [marktechpost.com](https://www.marktechpost.com/2026/07/18/google-clouds-always-on-memory-agent-replaces-rag-and-embeddings-with-continuous-llm-consolidation-on-gemini-3-1-flash-lite/)
-
-**Agent Architecture Rebuilds: Intuit**
-Intuit rebuilt its production agent system twice in four months, moving from specialist agents to a central orchestrator and then to a skills-and-tools architecture after natural-language handoffs caused compounding errors. The second rebuild took 60 days; evals became the primary measurement mechanism and a human handoff feature is now in 1% production testing. Source: [venturebeat.com](https://venturebeat.com/orchestration/intuit-scrapped-its-own-ai-agent-architecture-twice-in-four-months-at-vb-transform-2026-its-ai-vp-called-that-the-fast-path)
-
-**Infrastructure Panel: LinkedIn, Walmart, Zendesk**
-LinkedIn, Walmart, and Zendesk reported that legacy infrastructure—not models—is the primary bottleneck when moving agents to production. LinkedIn pre-provisions container pools and pushes LLMs to the leaves of deterministic workflows; Walmart added governance to deduplicate citizen-developer agents; Zendesk emphasized investing in data pipelines over simply handing 20 billion conversations to large context windows. Source: [venturebeat.com](https://venturebeat.com/data/agents-think-in-milliseconds-legacy-infrastructure-doesnt-linkedin-walmart-and-zendesk-shared-how-they-closed-the-gap-at-vb-transform-2026)
----
-### Practical &amp; Community
-**Claude Code web session fixes: Simon Willison**
-Simon Willison highlighted ongoing regressions in Claude Code on the web that block cloning public GitHub repos into /tmp from existing sessions. He is requesting an automated test suite to prevent future breakage of this core functionality. Source: [x.com](https://x.com/simonw/status/2078343997119172705)
-
-**Firefox in WebAssembly: Puter**
-Puter compiled Firefox to WebAssembly so the full browser runs inside another browser, with all traffic proxied over WebSocket using the Wisp protocol. The project used roughly $25,000 of Claude Opus and Fable tokens under a Max subscription and supports end-to-end encryption.
-
-**grok-build open source: xAI**
-xAI open-sourced the entire Grok Build codebase (844k lines of Rust) under Apache 2.0 after earlier data-upload concerns. The repo includes the main system prompt, subagent prompt, a self-contained Mermaid terminal renderer, and tool implementations ported from Codex and OpenCode.
-
-**Cars24 + OpenAI agents: OpenAI**
-Cars24 uses OpenAI-powered voice and chat agents to handle over 1 million monthly conversation minutes, recover 12% of lost leads, and extend agentic workflows across internal teams. Source: [openai.com](https://openai.com/index/cars24)
----
-### Under the Hood: Agent Identity and Credential Sharing
-Everyone treats agent identity as a simple “give each agent its own key” checkbox. In practice it is a three-layer enforcement problem that most production systems still solve with borrowed human or service-account credentials. The first layer is issuance: creating a scoped, revocable identity at agent spawn time instead of reusing a shared API key. The second layer is runtime mediation: every outbound call must carry that identity so policy engines can evaluate it before the request reaches the target API. The third layer is attribution: logging which identity performed which action so post-incident forensics can isolate the blast radius. When these layers are missing, a single compromised agent can act with the full permissions of every other agent sharing its credential, which is exactly the pattern seen in 69% of the surveyed enterprises. The practical tradeoff is latency versus safety—adding a network proxy or sidecar for identity enforcement adds measurable overhead but collapses the blast radius from “entire fleet” to “single agent.” Most teams discover the gap only after the first incident; the fix that actually moves the needle is treating non-human identity as infrastructure rather than an application-level afterthought.
----
-### Things to Try This Week
-- Test Kimi K3 on long-horizon information-seeking tasks using its 1M context window directly instead of multi-agent workarounds.
-- Deploy VulnHunter on a non-production codebase to see the attacker-first forward analysis plus falsification engine in action.
-- Point CrabTrap at an existing agent harness and let it bootstrap policy from a few days of real traffic.
-- Run the Always-On Memory Agent reference implementation on a small persistent task to compare continuous consolidation against traditional RAG.
----
-### On the Horizon
-- Kimi K3 full weights scheduled for July 27.
-- Intuit plans to scale its human-in-the-loop handoff feature beyond the current 1% of customers in the coming weeks.
-- Brex is accepting community contributions to CrabTrap for SSO, RBAC, and escalation workflows.
-- OpenAI continues internal work on GPT-Red to improve multi-turn and image-based attack coverage.</itunes:summary>
-      <itunes:episode>115</itunes:episode>
-      <itunes:title>Ep 115: Moonshot just dropped the largest open-source model yet at 2.8 trillion parameters, matching top closed systems on long-horizon agentic benchmarks.</itunes:title>
-      <itunes:episodeType>full</itunes:episodeType>
-    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep115_20260718_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep115.json" type="application/json+chapters" /></item>
   <podcast:locked owner="patrick@planetterrian.com">yes</podcast:locked><itunes:keywords>ai, llm, machine learning, openai, anthropic, agents, claude, gpt, ai news</itunes:keywords></channel>
 </rss>
