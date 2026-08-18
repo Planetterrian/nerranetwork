@@ -167,3 +167,43 @@ entry in the experiments register.
 - `pytest -x`/`maxfail=1` hid the second failure behind the first for
   two days — worth considering `--maxfail=5` in CI so one red guard
   can't mask others.
+
+## Effectiveness audit — 2026-08-17 (3 production days on)
+
+Measured from `api/youtube_stats.json` (generated 08-17, analytics
+through ~08-15; the 08-15+ motion-era renders are still inside the
+2-day analytics lag):
+
+- **Long-form median AVP 13.1% → 16.2%** (n=129 pre / 20 post-08-13) —
+  the chapters + caption-continuity batch is the change in that window.
+  Early and small-n, but the direction is right and the size (~24%
+  relative) is larger than any prior single-week move.
+- **Shorts median AVP 49.3% → 51.2%** (n=357/62).
+- **Retention curves (new instrument) localize the remaining lever**:
+  mean audienceWatchRatio at the 5% mark is EN 0.51 / RU 0.54 / FR
+  0.55 — half the audience leaves inside the first 30-45 s, then decay
+  flattens after 25%. Outliers that held (tesla-RU ep554 0.72, spacex
+  ep65 0.68) opened on exactly what the title promised.
+- **Traffic mix**: EN is 53% Shorts feed / 16% suggested / **15%
+  search** / 10% subscribers; RU is 98% Shorts feed; FR 89%. The EN
+  search queries are concrete and content-adjacent ("starship flight
+  14", "fsd v14.1 lite", "spacex flight 14") — demand that provably
+  exists and that nothing was feeding back into titles or tags.
+- All round-2 instruments verified live in production: traffic_sources
+  + search_terms on all 3 channels, 15 retention curves, policy
+  `shorts_pending`/`shorts_streak` hysteresis fields present (ru/spacex
+  correctly holding 3 with streak tracking).
+
+### Round 3 — shipped 2026-08-17
+
+- **Search-terms loop closed**: channel-level search terms are
+  token-matched to shows (conservative — unmatched terms drop) into
+  `youtube_performance.json`; the title prompt gains a LIVE SEARCH
+  QUERIES line and uploads prepend the matched terms as tags (through
+  the guarded `build_tags`). Register: `search-terms-loop`.
+- **Open-cliff instrument**: dashboard card "Long-form open cliff"
+  (mean hold at 5% by channel + per-video 5/10/25/50% ladder) and the
+  `long_open_hold_5pct_en` live metric (baseline 0.51). Register:
+  `long-open-cliff`. Content-side changes to the spoken open are audio
+  (landmine #17) and stay operator-gated; the in-flight levers against
+  it are chapters, the accelerating open, and the motion batch.
