@@ -1025,30 +1025,27 @@ class TestDebutCarriesTheDoctrine:
         assert "commercial airline pilot and a Nerra Network" not in p
 
 
-class TestFreshStartState:
-    """Everything retired so the next run is Episode 1 with the full stack."""
+class TestLaunchedState:
+    """Superseded TestFreshStartState (which pinned the pre-launch reset).
+    Episode 1 published 2026-08-18 with the full relaunch stack; these
+    pin the LAUNCHED invariants instead."""
 
-    def test_no_episode_artifacts_remain(self):
+    def test_episode_one_published(self):
         digests = _ROOT / "digests" / "offshore_north"
-        leftovers = [p.name for p in digests.iterdir()
-                     if p.name not in {".gitkeep"}
-                     and not p.name.startswith("credit_usage_")]
-        assert not leftovers, f"unexpected files: {leftovers}"
+        assert list(digests.glob("Offshore_North_Ep001_*.md")), "Ep1 digest missing"
+        assert (_ROOT / "offshore_north_podcast.rss").exists(), "podcast feed missing"
 
-    def test_feeds_absent_so_numbering_restarts(self):
-        assert not (_ROOT / "offshore_north_podcast.rss").exists()
-        assert not (_ROOT / "blog_offshore_north.rss").exists()
-        from engine.publisher import get_next_episode_number
-        n = get_next_episode_number(
-            _ROOT / "offshore_north_podcast.rss",
-            _ROOT / "digests" / "offshore_north",
-            "Offshore_North_Ep*.mp3")
-        assert n == 1
+    def test_all_spend_records_kept(self):
+        """Every generation attempt's cost stays on the books, including
+        the four retired drafts."""
+        credits = list((_ROOT / "digests" / "offshore_north").glob("credit_usage_*.json"))
+        assert len(credits) >= 4, f"spend records lost: {len(credits)}"
 
-    def test_spend_records_kept(self):
-        digests = _ROOT / "digests" / "offshore_north"
-        credits = list(digests.glob("credit_usage_*.json"))
-        assert len(credits) == 4, "real spend must stay on the books"
+    def test_feed_has_exactly_one_episode(self):
+        import re as _re
+        xml = (_ROOT / "offshore_north_podcast.rss").read_text(encoding="utf-8")
+        items = _re.findall(r"<item>", xml)
+        assert len(items) == 1, f"expected the single debut, found {len(items)}"
 
 
 class TestThemeMusicInstalled:
@@ -1088,3 +1085,41 @@ class TestThemeMusicInstalled:
         assert "Fair winds — and eyes on the horizon" in text  # sign-off = chorus
         assert "Ninety-eight seconds" in text                   # Birch, verified
         assert "PRODUCED AND INSTALLED" in text
+
+
+class TestDebutClosingUsesShowPersonality:
+    """Ep1 (2026-08-18) shipped the GENERIC network debut closing — "we'll
+    see you tomorrow for episode two" — on a weekly, single-host show,
+    because the personality-closing branch in engine/pipeline.py was gated
+    on dialogue_mode (i.e. The DP Pod only). Any show with a personality
+    must debut on its own closing, which also carries its sign-off line."""
+
+    def test_helper_identifies_personality_shows(self):
+        from engine.intros import has_show_personality
+        assert has_show_personality("offshore_north") is True
+        assert has_show_personality("dp_pod") is True
+        assert has_show_personality("no_such_show") is False
+
+    def test_pipeline_uses_personality_closing_for_ep1(self):
+        src = (_ROOT / "engine" / "pipeline.py").read_text(encoding="utf-8")
+        assert "elif has_show_personality(_slug):" in src, (
+            "Ep1 must fall back to the generic closing ONLY for shows with "
+            "no personality of their own"
+        )
+
+    def test_offshore_closings_never_promise_tomorrow(self):
+        from engine.intros import _SHOW_PERSONALITIES
+        for c in _SHOW_PERSONALITIES["offshore_north"]["closings"]:
+            low = c.lower()
+            assert "tomorrow" not in low, "weekly show cannot promise tomorrow"
+            assert "fair winds" in low, "sign-off chapter marker would not latch"
+
+
+class TestQuestLineNotDuplicatedOnDebut:
+    """Ep1 stated the spine twice — the quest line and the debut
+    introduction's opening, back to back and near-identical."""
+
+    def test_prompt_skips_quest_line_on_episode_one(self):
+        src = _podcast_prompt()
+        assert "EPISODE 1 ONLY: SKIP this line entirely" in src
+        assert "One statement of the spine per episode" in src
