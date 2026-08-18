@@ -6,7 +6,7 @@
     "position_size": 1000,
     "currency": "USD",
     "created": "2026-03-16",
-    "last_updated": "2026-08-17",
+    "last_updated": "2026-08-18",
     "inception_date": "2026-03-16",
     "benchmark_symbol": "^IXIC",
     "nasdaq_inception_close": 22374.18,
@@ -36,12 +36,22 @@
     "unverified_window_trades": 35,
     "verified_alpha_t_stat": -0.2,
     "verified_alpha_statistically_significant": false,
+    "era_name": "Era 2 — rules-based",
+    "era_inception": "2026-08-18",
+    "era_trades": 0,
+    "era_alpha_pct": null,
+    "era_return_pct": null,
+    "era_nasdaq_pct": null,
+    "era_beat_benchmark": 0,
+    "era_mean_alpha_pct": null,
+    "era_alpha_t_stat": null,
+    "era_alpha_statistically_significant": false,
     "benchmark_scores": {
       "nasdaq": {
-        "portfolio_pct": 26.87,
-        "index_pct": 17.59,
-        "alpha_pct": 9.28,
-        "trades": 45
+        "portfolio_pct": 2.69,
+        "index_pct": 4.64,
+        "alpha_pct": -1.95,
+        "trades": 10
       },
       "sp500": {
         "portfolio_pct": 2.69,
@@ -56,7 +66,7 @@
         "trades": 10
       }
     },
-    "indices_beaten": 1,
+    "indices_beaten": 0,
     "indices_scored": 3,
     "alpha_t_stat": 0.36,
     "alpha_statistically_significant": false,
@@ -1479,7 +1489,8 @@
         "nasdaq": 0.46,
         "sp500": 0.61,
         "tsx": 1.13
-      }
+      },
+      "reviewed_in_episode": 141
     },
     {
       "episode_num": 134,
@@ -1593,7 +1604,7 @@
       ],
       "resolved_symbol": "BNS.TO",
       "pick_reference_price": 126.98,
-      "current_price": 126.98
+      "current_price": 125.85
     },
     {
       "episode_num": 140,
@@ -1619,26 +1630,51 @@
         "LL-015"
       ],
       "resolved_symbol": "QEC.TO",
-      "pick_reference_price": 0.27
+      "pick_reference_price": 0.27,
+      "current_price": 0.27
+    },
+    {
+      "episode_num": 141,
+      "date": "2026-08-18",
+      "symbol": "NFI.TO",
+      "market": "TSX",
+      "strategy": "Catalyst-driven entry on domestic demand recovery narrative for transit equipment",
+      "confidence": "Medium",
+      "target_range": "+3% to +6% over the five-session window if domestic orders materialize.",
+      "invalidation": "If Canadian transit orders in the next quarterly fall below the prior-year level, the demand thesis is dead.",
+      "trade_type": "weekly",
+      "policy_version": 2,
+      "horizon_sessions": 5,
+      "status": "open",
+      "entry_price": null,
+      "exit_price": null,
+      "pnl_pct": null,
+      "pnl_dollars": null,
+      "lesson": "",
+      "sector": "other",
+      "rules_in_effect": [
+        "LL-066",
+        "LL-054",
+        "LL-041",
+        "LL-028",
+        "LL-017"
+      ],
+      "resolved_symbol": "NFI.TO",
+      "pick_reference_price": 23.92
     }
   ],
   "benchmark": {
-    "current_close": 26729.16,
-    "inception_to_date_pct": 19.46,
-    "ytd_pct": 15.04,
-    "last_updated": "2026-08-17"
+    "current_close": 26314.38,
+    "inception_to_date_pct": 17.61,
+    "ytd_pct": 13.25,
+    "last_updated": "2026-08-18"
   },
   "alpha": {
-    "inception_to_date_pct": -18.79,
-    "ytd_pct": -14.37,
+    "inception_to_date_pct": -16.94,
+    "ytd_pct": -12.58,
     "monthly": {}
   },
   "sectors": {
-    "energy": {
-      "trade_count": 2,
-      "exposure_pct": 20.0,
-      "cumulative_pnl": -14.48
-    },
     "healthcare": {
       "trade_count": 1,
       "exposure_pct": 10.0,
@@ -1650,9 +1686,14 @@
       "cumulative_pnl": 52.94
     },
     "other": {
-      "trade_count": 4,
-      "exposure_pct": 40.0,
+      "trade_count": 5,
+      "exposure_pct": 50.0,
       "cumulative_pnl": 43.5
+    },
+    "energy": {
+      "trade_count": 1,
+      "exposure_pct": 10.0,
+      "cumulative_pnl": 0.0
     }
   },
   "monthly_snapshots": [
@@ -1704,7 +1745,6 @@
     }
   ],
   "used_segment_ids": [
-    "mit_guide_first_10k",
     "mit_etf_strategies",
     "mit_technical_analysis",
     "mit_options_basics",
@@ -1763,6 +1803,7 @@
     "mit_contrarian_passive",
     "mit_contrarian_home_bias",
     "mit_utility_brokerage",
-    "mit_utility_portfolio_review"
+    "mit_utility_portfolio_review",
+    "mit_method_invalidation"
   ]
 }
