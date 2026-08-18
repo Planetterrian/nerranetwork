@@ -447,7 +447,12 @@ chapters:
       title: "The Fleet"
     - pattern: "time for Plain Sailing|brings us to Plain Sailing|now for Plain Sailing"
       title: "Plain Sailing"
-    - pattern: "and the countdown|before we go,? the countdown|the countdown stands"
+    # Anchored (Aug 2026): the announcement is its own short line, so the
+    # pattern requires the line to START with it. The old unanchored
+    # "and the countdown" matched mid-sentence in the debut's segment tour
+    # ("...and the countdown with the days left"), stealing the marker to
+    # 79 s inside the introduction and leaving the real segment unmarked.
+    - pattern: "^\\s*(?:And |Before we go,? )?[Tt]he countdown\\b"
       title: "The Countdown"
 
 slow_news:
