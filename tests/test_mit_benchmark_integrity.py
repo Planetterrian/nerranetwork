@@ -1115,7 +1115,18 @@ class TestWeeklyMinHold:
         # test_tesla_hook.py whenever this file ran first, locally AND in
         # CI (PR #1027). A real date subclass keeps isinstance/type checks
         # honest where a mock could not.
+        # One printed session — Thursday's own bar — which is what the
+        # Friday pre-market run can actually see. Every sibling test
+        # patches the fetch; this one did not, and it passed only because
+        # the old global datetime patch ALSO broke the pandas import
+        # inside _fetch_bars_for_trade, so the fetch raised and no bars
+        # came back. With the datetime patch corrected the fetch worked,
+        # pulled 14 REAL COST bars off the network, and the horizon was
+        # complete — so the trade closed and this test failed (CI, #1027).
+        # It was passing for the wrong reason and hitting the live market.
+        thursday_bar = [(thursday, 100.0, 101.0, 99.0)]
         with patch.object(mi, "datetime", _frozen_datetime(friday)), \
+             patch.object(mi, "_fetch_bars_for_trade", return_value=thursday_bar), \
              patch.object(mi, "_snapshot_trade") as snap, \
              patch.object(mi, "_close_trade") as close, \
              patch.object(mi, "_save_tracker"):
