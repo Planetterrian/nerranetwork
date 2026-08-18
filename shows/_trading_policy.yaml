@@ -1,0 +1,81 @@
+# Modern Investing Techniques — the simulated trading rulebook.
+#
+# THIS FILE IS THE RULES. The show's code reads it, the show states it on
+# air, and the published methodology page renders it. If a rule is not
+# here it is not a rule, and if the code disagrees with this file the code
+# is wrong.
+#
+# Why it exists (2026-08-18): for five months the sim's exit was not a
+# decision, it was a side effect. Weekly holds closed on whichever bar the
+# Friday pre-market run happened to price — which is Thursday's — so a
+# Wednesday pick resolved after one session while a Monday pick got five.
+# Measured across the ten trades with trustworthy windows, holds ran 0-6
+# days (median 3) against picks written to a five-day thesis. Per-trade
+# alpha was therefore measuring two things at once: whether the pick was
+# good, and which weekday it happened to land on. No amount of additional
+# data can separate those. The fix is not a better estimator — it is
+# making the exit a rule that was stated before the trade opened.
+#
+# Reproducibility contract: given a trade's pick date, symbol, stop and
+# this file, anyone with daily bars can recompute the entry, the exit and
+# the benchmark window and get the same numbers the show reports. That is
+# the whole point.
+
+version: 2
+
+era:
+  # Alpha spoken on air is measured from this date forward, on trades that
+  # followed the rules below. Earlier trades are NOT deleted — they remain
+  # in the tracker and on the performance page as the show's history — but
+  # they were produced under exits that were not decisions and benchmark
+  # windows that were partly reconstructed, so they cannot answer "is the
+  # method beating the NASDAQ?" and are not quoted as if they could.
+  name: "Era 2 — rules-based"
+  inception_date: "2026-08-18"
+  first_episode: 141
+  rationale: >
+    A clean baseline where every entry, exit and benchmark window follows
+    a rule published in advance. The prior record stands as history; this
+    is the one the show is judged on.
+
+position_size_usd: 1000
+
+entry:
+  # No discretion, no backdating. The pick is announced pre-market; the
+  # trade enters at the open of the first session on or after the pick.
+  rule: first_session_on_or_after_pick
+  fill: open
+  max_days_to_fill: 10        # no session in 10 days -> void, never guess
+
+exit:
+  # Evaluated in this order every run. The FIRST rule that fires closes
+  # the trade. There is no discretionary exit and no "let it run".
+  precedence:
+    - stop            # intraday low <= stop price
+    - horizon         # fixed number of sessions held
+  horizon_sessions:
+    weekly: 5         # enter at session 1 open, exit at session 5 close
+    flash: 1          # same-session open -> close
+  stop:
+    source: narrated  # parsed from the episode's Risk Assessment, never guessed
+    fill: at_stop_price
+    gap_aware: true   # a gap through the stop fills at the open, not the stop
+    entry_bar_breach_claimed: false   # daily bars cannot prove same-day sequence
+
+benchmark:
+  # The index is bought and sold on the SAME sessions as the trade, so the
+  # comparison answers "did this pick beat the index over the time it was
+  # actually held" and nothing else.
+  window: matched_sessions
+  indices:
+    nasdaq: "^IXIC"
+    sp500: "^GSPC"
+    tsx: "^GSPTSE"
+  headline: nasdaq
+
+reporting:
+  # Honesty rules that bind what may be said out loud.
+  min_trades_for_rate_claims: 5
+  significance_t_threshold: 2.0
+  never_blend_eras: true
+  state_sample_size_with_every_alpha: true

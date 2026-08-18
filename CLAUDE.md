@@ -214,6 +214,51 @@ today's work, not just explain yesterday's):
   is dormant behind a kill switch. Two operator to-dos remain open:
   `scripts/recompute_mit_benchmarks.py --apply` (needs market-data
   access) and SnapTrade Phase-0 verification.
+- **The MIT recompute was, until 2026-08-18, unsafe to run.**
+  `_match_bar` scanned a window opening TEN DAYS BEFORE the pick and
+  returned the FIRST bar inside the ±2% price tolerance, so the tool
+  built to remove hindsight backdating re-created it — a live dry run
+  flagged 25 trades, including all ten whose entry bars were already
+  correct. Entries are now confined to bars on/after the pick, exits to
+  bars on/after the entry, and the CLOSEST price wins over the first;
+  the corrected run reports 0 backdated entries and reproduces 8 of the
+  10 known-good windows exactly. **Never widen that window back, and
+  validate any matcher change against those ten trades** — they are the
+  only ones written by the trusted path. Corrected dry run:
+  **−3.35% alpha across 42 trades**, beating 1 of 3 indices; 8 trades
+  reconcile to no bar at all, and they include the record's best
+  (+20.11% DLTR), second-best (+13.36% AMD) and worst (−11.80% MDA).
+  `--apply` rewrites published performance numbers — operator's call.
+- **MIT's simulated trading has a RULEBOOK and an ERA** (2026-08-18):
+  [`shows/_trading_policy.yaml`](shows/_trading_policy.yaml) is the rules
+  — entry at the first session open on/after the pick, exit at the stop
+  or a FIXED 5-session horizon (flash: 1), $1,000, no discretionary
+  exits — and the code reads it (`load_policy` / `horizon_sessions` /
+  `era_inception`). Before this, the exit was not a decision: weekly
+  holds closed on whichever bar the Friday pre-market run priced, so a
+  Wednesday pick got one session and a Monday pick five, and per-trade
+  alpha measured pick quality and pick weekday together. Alpha spoken on
+  air is now the ERA record only (`era_*` in the summary, trades picked
+  on/after the inception date); earlier trades stay published as history
+  and are NEVER blended in. `_alpha_scope()` is the ONE selector both
+  prompt blocks use — era → verified → blended — so a value and a label
+  can never come from different sources again. The sim and
+  `execution/shadow.py` both derive the holding period from the same
+  policy; if they drift the shadow ledger stops being a check. Public
+  methodology: [`docs/mit_trading_method.md`](docs/mit_trading_method.md).
+  Drift guards: `TestTradingPolicy`, `TestEraScopedRecord`,
+  `TestReproducibleDecisions`.
+- **Two functions speak MIT's alpha, and they must never disagree:**
+  `_build_portfolio_summary` and `_build_benchmark_block`. The Aug 15
+  pass fixed only the first, and because both reach the same prompt the
+  model fused label and value — Ep138 aired "+9.28% across forty-five
+  VERIFIED-window trades", the inflated number wearing the honest label.
+  Fixing one of two call sites was worse than fixing neither. Same shape
+  in the index sweep: its NASDAQ leg fell back to `nasdaq_return_pct`
+  (45 trades) beside 10-trade S&P/TSX legs, and the July-18 `n>=5` gate
+  missed it because it checks sample SIZE, not that the legs share the
+  same TRADES. Guards: `tests/test_mit_benchmark_integrity.py`
+  (`TestSingleAlphaSource`, `TestRecomputeMatcherCannotBackdate`).
 - **MIT speaks the VERIFIED-window alpha, never the blended one**
   (Aug 15 2026 review:
   [`docs/reviews/modern_investing_review_2026_08_15.md`](docs/reviews/modern_investing_review_2026_08_15.md)).

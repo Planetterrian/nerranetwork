@@ -296,6 +296,11 @@ experiments:
     readout: 2026-08-29
     status: reading
     baseline: "median script 1535w against an 1800w floor; 9 of the last 10 episodes below it"
+    interim: >
+      2026-08-18, first 3 episodes: 2256/2366/2078 words — all clear the
+      1800 floor, against 1441-1576 in the four before. Factuality audit
+      traced every spelled-out number to its digest; no invented tickers.
+      Tracking to a HIT; hold to the 08-29 readout for sustain.
     target: >
       Median script length reaches the 1800w floor (or at least clears
       1700w) with NO facts, tickers, prices or performance figures beyond
@@ -325,6 +330,13 @@ experiments:
     readout: 2026-08-29
     status: decide
     baseline: "+9.28% across 45 trades spoken on air; the 10 honestly-measured trades were at -1.95%"
+    interim: >
+      2026-08-18: 2 of the first 3 episodes still spoke the blend —
+      _build_benchmark_block was a second, unfixed call site and Ep138
+      fused the two ("+9.28% across forty-five VERIFIED-window trades").
+      Both blocks now read one source. Separately, the recompute that
+      would retire this split was found to backdate entries and was
+      fixed; its corrected dry run says -3.35% across 42 trades.
     target: >
       Every alpha figure spoken on air comes from the 10 (and growing)
       trades with pick-date-aligned benchmark windows, with the trade
@@ -380,3 +392,27 @@ experiments:
       Outliers worth studying: tesla-RU ep554 held 72% at 5%,
       spacex ep65 68% — both had thumbnail/title promises the opening
       delivered immediately.
+
+  - id: mit-rules-based-era
+    title: "Modern Investing restarts its track record on published rules"
+    area: quality
+    shipped: 2026-08-18
+    readout: 2026-09-15
+    status: reading
+    baseline: "holds ran 0-6 sessions (median 3) against a five-day thesis; alpha conflated pick quality with pick weekday"
+    target: >
+      Every weekly hold spans exactly 5 sessions unless stopped out, so
+      per-trade alpha is attributable to the pick. The on-air record is
+      the era only, with its trade count in every sentence, and a listener
+      can reproduce any reported number from the pick date, the symbol and
+      public price data.
+    criteria: >
+      At readout, score: zero holds off the horizon; zero pre-era figures
+      spoken; confidence ratings actually varying; every pick carrying an
+      invalidation. If holds are still drifting, the exit rule is not
+      being enforced somewhere and that is a bug, not a tuning question.
+    notes: >
+      The headline alpha goes to zero for about a week and then to a
+      sample too small to claim an edge — that is the intended cost of a
+      reproducible record, and the prompts require the show to say so.
+      Prompt + audio change — landmine #17 A/B.
