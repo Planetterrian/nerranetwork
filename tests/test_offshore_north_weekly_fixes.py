@@ -1051,25 +1051,40 @@ class TestFreshStartState:
         assert len(credits) == 4, "real spend must stay on the books"
 
 
-class TestThemeMusicPreWiring:
-    """"Eyes on the Horizon" (Aug 2026): the YAML pre-points at the theme
-    path so the broadcast chain engages the moment the operator saves the
-    Suno track — safe because run_show gates on music_path.exists()."""
+class TestThemeMusicInstalled:
+    """"Eyes on the Horizon" (Aug 2026) — produced in Suno from the brief,
+    installed as the every-episode bed AND the Episode 1 play-out (the DP
+    Pod pattern). Verified on install: 3:03, 48 kHz stereo, -13.7 LUFS,
+    dead centre of the network library, so no level correction applied."""
 
-    def test_yaml_points_at_the_agreed_path(self):
-        assert _cfg().audio.music_file == "assets/music/offshore_north.mp3"
+    def test_track_is_installed_and_plausible(self):
+        mp3 = _ROOT / "assets" / "music" / "offshore_north.mp3"
+        assert mp3.exists(), "theme track missing"
+        # ~3 minutes at ~190 kbps — guards against a truncated/placeholder file
+        assert mp3.stat().st_size > 2_000_000, "theme file suspiciously small"
 
-    def test_missing_file_is_gated_in_run_show(self):
-        src = (_ROOT / "run_show.py").read_text(encoding="utf-8")
-        assert "if music_path.exists():" in src, (
-            "pre-wiring relies on the existence gate — if this moved, "
-            "verify voice-only fallback before keeping the pre-wire"
+    def test_yaml_wires_bed_and_debut_playout(self):
+        audio = _cfg().audio
+        assert audio.music_file == "assets/music/offshore_north.mp3"
+        assert audio.debut_song_file == "assets/music/offshore_north.mp3"
+        assert audio.debut_song_episode == 1
+
+    def test_debut_script_introduces_the_song(self):
+        p = first_episode_podcast_appendix(1, "Offshore North", "offshore_north")
+        assert "Eyes on the Horizon" in p
+        assert "appended by production" in p, (
+            "the script must not write anything after the closing — the song "
+            "audio is appended by run_show"
         )
 
+    def test_missing_file_would_still_be_gated(self):
+        """The bed is only mixed when the file exists (voice-only fallback)."""
+        src = (_ROOT / "run_show.py").read_text(encoding="utf-8")
+        assert "if music_path.exists():" in src
+
     def test_brief_and_lyrics_are_canonical(self):
-        brief = (_ROOT / "assets" / "music" / "offshore_north_theme.md")
-        text = brief.read_text(encoding="utf-8")
-        assert "instrumental" in text.lower()
+        text = (_ROOT / "assets" / "music" / "offshore_north_theme.md").read_text(
+            encoding="utf-8")
         assert "Fair winds — and eyes on the horizon" in text  # sign-off = chorus
         assert "Ninety-eight seconds" in text                   # Birch, verified
-        assert "offshore_north.mp3" in text
+        assert "PRODUCED AND INSTALLED" in text

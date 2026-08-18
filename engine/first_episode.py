@@ -227,8 +227,18 @@ Order and shape:
    genuinely foundational concept — the thing a new listener most needs in
    order to follow every future episode.
 7. **[The Countdown]** As normal, announced by name.
-8. **[Sign-off]** The supplied closing block, copied VERBATIM. Final spoken
-   words are the fixed sign-off line.
+8. **[Sign-off + the theme]** IMMEDIATELY BEFORE the supplied closing,
+   Dan introduces the show's theme song in his own words: the show has
+   its own song, it's called "Eyes on the Horizon", and the whole thing
+   plays out the very first episode — stay for it. He may quote ONE
+   line of the chorus verbatim to set it up (exact words only: "Fair
+   winds — and eyes on the horizon" or "Around the world and home
+   again"), noting lightly that the chorus is where the show's sign-off
+   comes from. Two or three short spoken sentences, warm and
+   understated — not a sales pitch. Then the supplied closing block,
+   copied VERBATIM; its final spoken words are the fixed sign-off line.
+   The song audio is appended by production after your last line —
+   write NOTHING after the closing.
 
 Debut discipline: do NOT say "welcome back", do not reference earlier
 episodes, and do not promise anything you cannot guarantee weekly. Every

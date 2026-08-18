@@ -345,16 +345,26 @@ tts:
   speed: 1.02
 
 audio:
-  # PRE-WIRED for the theme (Aug 2026): "Eyes on the Horizon" — full Suno
-  # brief + canonical lyrics in assets/music/offshore_north_theme.md. The
-  # pipeline gates on the file's existence (run_show checks
-  # music_path.exists() before mixing), so this is a clean voice-only
-  # no-op until the operator saves the generated track at this exact
-  # path — then the full broadcast chain (sidechain ducking, -16 LUFS)
-  # engages automatically with no further config change. The track MUST
-  # open with 35-45 s of purely instrumental build: the mixer uses t=0
-  # as the ducked intro bed under Dan's cold open.
+  # "Eyes on the Horizon" — the show's own anthem (operator-produced in
+  # Suno from the brief + lyrics in assets/music/offshore_north_theme.md,
+  # Aug 2026). Used as the intro/outro bed on every episode via the
+  # standard network mix; timing/volume params inherit _defaults.yaml
+  # (3 s music alone under the cold open, then sidechain-ducked under
+  # voice, 30 s outro). VERIFIED on install: 3:03, 48 kHz stereo,
+  # ~191 kbps, integrated loudness -13.7 LUFS — dead centre of the
+  # network library (-12.9 to -14.7 LUFS), so no level correction was
+  # needed and the shared volume params apply as designed. The track
+  # starts at full weight rather than fading in; the mixer's 50 ms
+  # click-guard fade (engine/audio.py) handles that, and the result is
+  # an immediate hit of theme before Dan's first line.
   music_file: assets/music/offshore_north.mp3
+  # Episode 1 only: after the closing sign-off ("Fair winds — and eyes on
+  # the horizon"), the FULL anthem plays the debut out — the script
+  # introduces it on air and run_show appends the audio AFTER chapter
+  # timestamps are computed. No-op for every other episode. Same pattern
+  # as The DP Pod's Episode 1.
+  debut_song_file: assets/music/offshore_north.mp3
+  debut_song_episode: 1
 
 # Narrative memory (Aug 2026 field review): the show's spine IS a
 # two-year longitudinal story — the campaign's road to 12 Nov 2028 —
