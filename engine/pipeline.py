@@ -387,6 +387,7 @@ def run_generation_phase(
     from engine.intros import (
         build_intro_line,
         build_closing_block,
+        has_show_personality,
         build_cold_open_spec,
         build_delivery_spec,
         _maybe_append_youtube_cta,
@@ -484,6 +485,32 @@ def run_generation_phase(
             pod_vars.setdefault(
                 "intro_line",
                 f"{_lead}: Welcome to the very first episode of {config.name}! "
+                f"Today is {today_str}. {effective_hook}",
+            )
+            pod_vars.setdefault(
+                "closing_block",
+                build_closing_block(
+                    _slug,
+                    episode_num=episode_num,
+                    today_str=today_str,
+                    date=__import__("datetime").date.today(),
+                    extra_context=extra_context,
+                    youtube_channel_handle=_yt_handle,
+                ),
+            )
+        elif has_show_personality(_slug):
+            # Aug 2026: a show with its own personality debuts on ITS OWN
+            # closing. The generic block below says "we'll see you TOMORROW
+            # for episode two" and uses we/us/our — wrong on any weekly or
+            # solo show, and it omits the show's fixed sign-off line, which
+            # is what the Sign-Off chapter marker keys on. Offshore North
+            # Ep1 (2026-08-18) shipped exactly that: a weekly, single-host
+            # premiere promising a daily follow-up. The debut INTRO stays
+            # generic on purpose ("the very first episode of…"), which the
+            # per-show debut templates are written around.
+            pod_vars.setdefault(
+                "intro_line",
+                f"Welcome to the very first episode of {config.name}! "
                 f"Today is {today_str}. {effective_hook}",
             )
             pod_vars.setdefault(

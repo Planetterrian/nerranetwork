@@ -1374,3 +1374,16 @@ def get_show_host(show_slug: str) -> str:
     if personality:
         return personality["host"]
     return "Patrick"
+
+
+def has_show_personality(show_slug: str) -> bool:
+    """True when the show has its own greetings/closings in this module.
+
+    Used by the Episode 1 path in :mod:`engine.pipeline`: a show with a
+    personality must debut on ITS OWN closing (which carries the show's
+    fixed sign-off and therefore its Sign-Off chapter marker), not on the
+    generic network debut text — that text says "we'll see you tomorrow
+    for episode two", which is wrong on any show that is weekly, solo, or
+    both. Offshore North Ep1 (2026-08-18) shipped exactly that.
+    """
+    return show_slug in _SHOW_PERSONALITIES
