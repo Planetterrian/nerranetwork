@@ -1707,17 +1707,21 @@ class TestSourceDecayAlarm:
 
 
 class TestScriptStageModelOverride:
-    """MIT runs a script-stage-only model A/B; the digest stays on 4.3."""
+    """History: MIT ran a script-stage-only grok-4.6 A/B (08-15..08-18)
+    until the operator-directed NETWORK 4.6 upgrade absorbed it. The pin
+    is gone on purpose — MIT now inherits the network default like every
+    show, and the show-level guard is that no stale per-show pin sneaks
+    back in silently."""
 
-    def test_mit_overrides_only_the_script_stage(self):
+    def test_mit_carries_no_stale_model_pins(self):
         import yaml as _yaml
         y = _yaml.safe_load((_ROOT / "shows/modern_investing.yaml").read_text())
-        assert y["llm"]["podcast_model"] == "grok-4.6"
-        # The digest/fetch stage must NOT follow it — grok-4.6 is built on
-        # 4.5's post-training and 4.5 regressed confident-hallucination
-        # 25% -> 54%. This is the show where a hallucinated number costs
-        # the most.
-        assert "model" not in y["llm"] or y["llm"]["model"] != "grok-4.6"
+        # Absorbed into the network default 2026-08-18 — re-adding a
+        # per-show podcast_model/model pin needs a new experiments.yaml
+        # entry, not a leftover.
+        assert "podcast_model" not in y["llm"]
+        assert "model" not in y["llm"]
+        assert "fallback_model" not in y["llm"]
 
     def test_override_model_is_priced(self):
         from engine.tracking import GROK_PRICING

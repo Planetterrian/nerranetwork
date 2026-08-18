@@ -1255,7 +1255,10 @@ def _load_reviewer_settings(show_slug: str) -> tuple[str, int, float]:
     ``shows/_defaults.yaml`` (or any per-show override). Falls back to
     the historical hardcoded values if the config can't be loaded.
     """
-    default_model = "grok-4-1-fast-non-reasoning"
+    # Follows the network primary (2026-08-18 grok-4.6 upgrade). The
+    # grok-4.3 branch below keeps redirect-parity (effort none) for anyone
+    # pinning reviewer_model back to 4.3.
+    default_model = "grok-4.6"
     default_tokens = 1500
     default_temp = 0.3
     try:
@@ -1343,11 +1346,19 @@ def ai_review_episode(ep: EpisodeReview) -> None:
     try:
         from openai import OpenAI
         client = OpenAI(api_key=api_key, base_url="https://api.x.ai/v1", timeout=120)
+        extra = {}
+        if reviewer_model.startswith("grok-4.3"):
+            # Parity with the retired-slug redirect this call ran on from
+            # 2026-05-15 to 2026-08-18: grok-4-1-fast-non-reasoning mapped
+            # to grok-4.3 with reasoning effort "none". Keep effort none so
+            # the explicit pin changes nothing about the served review.
+            extra["extra_body"] = {"reasoning_effort": "none"}
         resp = client.chat.completions.create(
             model=reviewer_model,
             messages=[{"role": "user", "content": prompt}],
             temperature=reviewer_temperature,
             max_tokens=reviewer_max_tokens,
+            **extra,
         )
         review_text = resp.choices[0].message.content.strip()
     except Exception as exc:

@@ -363,7 +363,12 @@ class TestGrokPricing:
         )
 
     def test_reviewer_model_priced(self):
-        """Reviewer model must have pricing so its cost is attributed."""
+        """The LIVE reviewer model must have pricing so its cost is
+        attributed. The retired grok-4-1-fast rows stay priced only for
+        historical credit-file re-scoring."""
+        from engine.config import LLMConfig
+
+        assert LLMConfig().reviewer_model in GROK_PRICING
         assert "grok-4-1-fast-non-reasoning" in GROK_PRICING
 
     def test_pruned_models_removed(self):

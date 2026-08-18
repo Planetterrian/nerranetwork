@@ -1373,6 +1373,39 @@ dp_pod's Network-pick rotation is enforced data-side (recently picked
 shows excluded from the candidate list) after the instruction-only fix
 was violated six days straight.
 
+### LLM usage review vs the Aug-2026 xAI product state (Aug 18, 2026)
+
+Canonical writeup:
+[`docs/reviews/llm_usage_review_2026_08_18.md`](docs/reviews/llm_usage_review_2026_08_18.md);
+drift guards: `tests/test_llm_usage_pass.py`. The review's verdict was
+"no model upgrades", but the **operator overrode it the same day and
+directed a NETWORK-WIDE upgrade to grok-4.6** (all LLM stages — digest,
+fetch, scripts, synth, titles, reviewer, review agent — off grok-4.3;
+refusal fallback repointed to grok-4.3; the dp_pod-4.5 / MIT-4.6
+`podcast_model` pins removed as superseded/absorbed; ~+$22-25/mo).
+Registered as experiment **`network-grok-46-upgrade`, readout
+2026-09-01** — its revert triggers are load-bearing: any invented
+number in an MIT script = immediate one-line revert
+(`model: grok-4.3` in `_defaults.yaml`); reviewer FACTUAL_ERRORS rate
+clearly above the pre-08-18 baseline; fetch tool-calls failing on 4.6.
+grok-4.6's confident-hallucination profile is UNMEASURED for this
+network — do not treat the upgrade as validation; the readout decides.
+The review also shipped three silent-number fixes: (1) **search billed per CALL** ($5/1k, env
+`XAI_SEARCH_COST_PER_CALL`) — xAI dropped per-source billing and the usage
+object's source count, so 100% of credit files since 07-29 recorded $0
+tool fees; (2) **episode reviewer pinned `grok-4.3` + effort `none`** —
+its configured slug was retired 05-15 and had been silently served by 4.3
+at 4.3 billing while costed 6× cheaper; (3) **translation pinned
+`grok-4.6`** (env `NERRA_TRANSLATION_MODEL`) — it rode `grok-latest`, so
+vendor releases silently changed shipped dub audio; never put a published
+stage on a floating alias. Dashboard `cost_rollup` now breaks out
+`images` + `search` (41% of tracked spend, previously invisible). Voice:
+the TTS request has NO model param — server-side updates arrive
+unpinnable, so spot-listen after major xAI voice announcements;
+multilingual-voice A/Bs wait until after the language cull (FR decision
+08-25). Imagine stays on `grok-imagine-image` $0.02; the $0.05 quality
+tier only if gallery-retention data ever demands it.
+
 ### Website review (June 10, 2026)
 
 Full public-site review — canonical writeup:

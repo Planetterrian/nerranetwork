@@ -1,15 +1,22 @@
 """Spoken-delivery translation stage for the multilingual audio pipeline.
 
 Takes a finalized English episode script (and its title/description) and
-produces natural, for-the-ear translations via Grok (``grok-latest``), one
-call per language. The English script stays the canonical master; these are
-derived artifacts that feed the per-language TTS render.
+produces natural, for-the-ear translations via Grok, one call per language.
+The English script stays the canonical master; these are derived artifacts
+that feed the per-language TTS render.
 
 Design notes
 ------------
-- Model id is ``grok-latest`` per the network multilingual convention
-  (never a version-pinned string). This is scoped to the translation calls
-  only — it does NOT touch the English generation pipeline's ``grok-4.3``.
+- Model id is PINNED (``_TRANSLATION_MODEL``, env override
+  ``NERRA_TRANSLATION_MODEL``). This stage ran on the floating
+  ``grok-latest`` alias until 2026-08-18, which meant every xAI flagship
+  release silently changed the translations behind every shipped dub track
+  (4.5 on 2026-07-08, 4.6 on 2026-08-12) with no experiment entry and no
+  A/B — and the cost estimate priced it at grok-4.3 rates regardless. The
+  pin freezes today's behavior (grok-4.6, what the alias resolves to now);
+  moving it is a deliberate edit + listen-check, not a vendor release.
+  Scoped to the translation calls only — the English generation pipeline
+  has its own pins (network-wide grok-4.6 since 2026-08-18).
 - Proper nouns / tickers are preserved; a per-language phonetic overrides
   map (``shows/translation_overrides.yaml``) is injected into the prompt as
   guidance AND applied as a post-process safety net (mirrors
@@ -24,6 +31,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
 import unicodedata
 from pathlib import Path
@@ -42,7 +50,9 @@ LANGUAGE_NAMES: Dict[str, str] = {
     "zh": "Simplified Chinese",
 }
 
-_TRANSLATION_MODEL = "grok-latest"
+_TRANSLATION_MODEL = (
+    os.getenv("NERRA_TRANSLATION_MODEL", "").strip() or "grok-4.6"
+)
 
 # Per-language guidance injected into the translation prompt. Pointed, native-
 # broadcaster notes — the Chinese block is the most detailed because that's

@@ -129,7 +129,7 @@ def drain_search_usage() -> Dict[str, int]:
 def grok_generate_text(
     *,
     prompt: str,
-    model: str = "grok-4.3",
+    model: str = "grok-4.6",
     temperature: float = 0.7,
     max_tokens: int = 3500,
     timeout_seconds: float = 3600.0,

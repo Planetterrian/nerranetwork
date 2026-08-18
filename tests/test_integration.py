@@ -850,10 +850,11 @@ class TestSystemPrompts:
         if not config_path.exists():
             pytest.skip(f"Config not found: {config_path}")
 
+        # grok-4.6 network-wide since 2026-08-18 (operator-directed);
+        # grok-4.3 stays allowed as the sanctioned rollback pin.
         allowed = {
+            "grok-4.6",
             "grok-4.3",
-            "grok-4.20-non-reasoning",
-            "grok-4.20-reasoning",
         }
         config = load_config(config_path)
         assert config.llm.model in allowed, (

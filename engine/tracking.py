@@ -54,12 +54,17 @@ TTS_PROVIDER_PRICING = {
     "grok": GROK_TTS_COST_PER_1K_CHARS,
 }
 
-# xAI server-side search tools are billed per SOURCE consulted (xAI's
-# published Agent Tools rate is $25 per 1,000 sources). Env-overridable
-# because it is the one rate here that is not pinned by a model id — if
-# xAI moves it, the operator sets XAI_SEARCH_COST_PER_SOURCE rather than
-# waiting on a code change. A run that reports no source count costs
-# nothing extra beyond its tokens, which is the honest floor.
+# xAI server-side search tools are billed per tool CALL ($5 per 1,000
+# calls, 2026 Agent Tools pricing) on top of tokens. The original launch
+# pricing billed per SOURCE consulted ($25 per 1,000) and the usage object
+# reported ``num_sources_used``; that field stopped appearing when xAI
+# moved to per-call billing — every credit file since the July 29 pass
+# shows ``sources: 0``, so the per-source term multiplied by zero while
+# the real per-call fee went untracked (found by the 2026-08-18 LLM usage
+# review). Both rates are env-overridable because they are the ones here
+# not pinned by a model id; the per-source rate stays so any future
+# source-count reporting is priced rather than dropped.
+SEARCH_COST_PER_CALL = 0.005
 SEARCH_COST_PER_SOURCE = 0.025
 
 # xAI Grok pricing per 1M tokens (input/output/cached_input).
@@ -115,6 +120,12 @@ GROK_PRICING = {
     # Dated beta snapshot — still referenced in ~40 historical usage JSONs
     "grok-4.20-beta-0309-non-reasoning": {"input_per_1m": 2.00, "output_per_1m": 6.00},
     # Grok 4.1 Fast — reviewer
+    # RETIRED 2026-05-15: xAI redirects these slugs to grok-4.3 (reasoning
+    # effort none/low) and bills at grok-4.3 rates. Rows kept ONLY so
+    # pre-retirement credit files re-score correctly; no live call site may
+    # use them (the episode reviewer moved to an explicit grok-4.3 pin in
+    # the 2026-08-18 LLM usage review — usage after 05-15 under these slugs
+    # was silently under-costed ~6x).
     "grok-4-1-fast-non-reasoning": {"input_per_1m": 0.20, "output_per_1m": 0.50},
     "grok-4-1-fast-reasoning": {"input_per_1m": 0.20, "output_per_1m": 0.50},
 }
@@ -344,7 +355,8 @@ def record_search_usage(
     combined total.
 
     Token cost is priced through the normal Grok table when *model* is
-    known; the per-source fee is the part that was invisible.
+    known; the per-call fee (and the per-source fee, when xAI reports a
+    source count) is the part that was invisible.
     """
     search = tracker["services"].setdefault(
         "search_api",
@@ -359,14 +371,17 @@ def record_search_usage(
     search["prompt_tokens"] += int(prompt_tokens or 0)
     search["completion_tokens"] += int(completion_tokens or 0)
 
-    try:
-        rate = float(
-            os.getenv("XAI_SEARCH_COST_PER_SOURCE", "").strip()
-            or SEARCH_COST_PER_SOURCE
-        )
-    except ValueError:
-        rate = SEARCH_COST_PER_SOURCE
-    cost = int(sources or 0) * rate
+    def _env_rate(env_name: str, default: float) -> float:
+        try:
+            return float(os.getenv(env_name, "").strip() or default)
+        except ValueError:
+            return default
+
+    per_call = _env_rate("XAI_SEARCH_COST_PER_CALL", SEARCH_COST_PER_CALL)
+    per_source = _env_rate("XAI_SEARCH_COST_PER_SOURCE", SEARCH_COST_PER_SOURCE)
+    # Per-call is the live 2026 billing model; per-source only contributes
+    # if xAI ever reports source counts again (currently always 0).
+    cost = int(calls or 0) * per_call + int(sources or 0) * per_source
     if model and (prompt_tokens or completion_tokens):
         cost += _estimate_grok_cost(model, prompt_tokens, completion_tokens)
     search["estimated_cost_usd"] = round(
