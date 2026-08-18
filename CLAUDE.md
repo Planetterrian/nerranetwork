@@ -229,6 +229,25 @@ today's work, not just explain yesterday's):
   reconcile to no bar at all, and they include the record's best
   (+20.11% DLTR), second-best (+13.36% AMD) and worst (−11.80% MDA).
   `--apply` rewrites published performance numbers — operator's call.
+- **MIT's simulated trading has a RULEBOOK and an ERA** (2026-08-18):
+  [`shows/_trading_policy.yaml`](shows/_trading_policy.yaml) is the rules
+  — entry at the first session open on/after the pick, exit at the stop
+  or a FIXED 5-session horizon (flash: 1), $1,000, no discretionary
+  exits — and the code reads it (`load_policy` / `horizon_sessions` /
+  `era_inception`). Before this, the exit was not a decision: weekly
+  holds closed on whichever bar the Friday pre-market run priced, so a
+  Wednesday pick got one session and a Monday pick five, and per-trade
+  alpha measured pick quality and pick weekday together. Alpha spoken on
+  air is now the ERA record only (`era_*` in the summary, trades picked
+  on/after the inception date); earlier trades stay published as history
+  and are NEVER blended in. `_alpha_scope()` is the ONE selector both
+  prompt blocks use — era → verified → blended — so a value and a label
+  can never come from different sources again. The sim and
+  `execution/shadow.py` both derive the holding period from the same
+  policy; if they drift the shadow ledger stops being a check. Public
+  methodology: [`docs/mit_trading_method.md`](docs/mit_trading_method.md).
+  Drift guards: `TestTradingPolicy`, `TestEraScopedRecord`,
+  `TestReproducibleDecisions`.
 - **Two functions speak MIT's alpha, and they must never disagree:**
   `_build_portfolio_summary` and `_build_benchmark_block`. The Aug 15
   pass fixed only the first, and because both reach the same prompt the

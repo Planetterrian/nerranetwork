@@ -706,4 +706,99 @@ reviews:
         evidence: null
     agent_cost_usd: null
 
+  - date: 2026-08-18b
+    pr: null
+    doc: docs/reviews/modern_investing_review_2026_08_18b.md
+    reviewer: claude-code (operator-directed rules-based restart)
+    summary: >
+      Operator asked to start fresh alpha tracking from today's show with
+      clear and reproducible entry/exit decisions, a working recursive
+      learning loop, and continuous learning for the show and the
+      audience. Root cause of five months of uninterpretable alpha was
+      that the EXIT was never a decision - weekly holds closed on
+      whichever bar the Friday pre-market run priced (Thursday's), so a
+      Monday pick got five sessions and a Wednesday pick got one, and
+      per-trade alpha measured pick quality and pick weekday together.
+      Shipped a rulebook the code reads, a fixed session horizon, an era
+      boundary so the on-air record starts today, one shared alpha
+      selector, graded confidence, and a published methodology page.
+    shipped:
+      - "shows/_trading_policy.yaml - the rules as a file the code reads
+        (load_policy / horizon_sessions / era_inception); entry at the
+        first session open on/after the pick, exit at the stop or a fixed
+        5-session horizon (flash 1), no discretionary exits"
+      - "_pick_weekly_bars returns window[horizon-1] not window[-1], and
+        _evaluate_open_trade counts printed sessions instead of asking
+        whether today is Friday - every weekday pick now gets the same
+        holding period"
+      - "a fetch failure returns 0 sessions and reads as NOT due, so a bad
+        network day can no longer close every open position; _close_trade
+        takes the caller's bars so the exit decision and the exit pricing
+        read one snapshot"
+      - "execution/shadow.py derives its exit calendar from the same
+        policy, guarded so sim and shadow cannot drift"
+      - "era_* summary fields; the on-air record is trades picked on/after
+        2026-08-18. Earlier trades stay published as history, are never
+        blended, and lifetime totals are labelled HISTORY ONLY in the
+        prompt while the era is empty"
+      - "_alpha_scope() - ONE selector (era -> verified -> blended) used by
+        both prompt blocks, each scope carrying its own label and trade
+        count; direct fix for the Aug 15 two-source fusion"
+      - "picks record Invalidation (the observable condition that would
+        prove the thesis wrong), policy_version and horizon_sessions;
+        confidence extraction accepts both label forms"
+      - "get_mit_confidence_calibration is era-scoped and carries a rubric;
+        a SECOND calibration function written during this pass was deleted
+        before commit rather than shipping two sources of one number"
+      - "docs/mit_trading_method.md - public methodology and an audit
+        checklist for any track record; podcast prompt requires the rules
+        and the invalidation line on air"
+      - "6 method-literacy segments added to the existing evergreen library
+        (invalidation, fixed horizons, what alpha measures, sample size,
+        calibration, auditing a record) using its existing cooldowns"
+      - 12 new drift guards (TestTradingPolicy, TestEraScopedRecord,
+        TestReproducibleDecisions) + 5 superseded guards re-pinned
+    deferred:
+      - "operator: the 8 pre-era trades that reconcile to no price bar
+        (incl. the record's best, second-best and worst) still need
+        adjudication, then the corrected recompute --apply. They no longer
+        contaminate the on-air number, so this is now history cleanup
+        rather than a live integrity problem"
+      - "the headline goes to zero for about a week and then to a sample
+        too small to claim an edge - the prompts require saying so"
+      - "carried: significance-qualifier accept-or-abandon; SnapTrade
+        Phase-0; closing-price lesson retirement"
+    predictions:
+      - metric: era trades whose hold is not exactly the policy horizon
+          (or an earlier stop-out)
+        baseline: "pre-era holds ran 0-6 sessions, median 3"
+        expected: "0 - every weekly hold spans exactly 5 sessions unless
+          stopped out, whichever weekday it was picked"
+        verdict: pending
+        evidence: null
+      - metric: alpha figures spoken on air sourced from pre-era trades
+        baseline: "2 of 3 episodes on 2026-08-15/16 quoted the blend"
+        expected: "0 - the era record or an explicit no-trades-yet
+          statement, never a lifetime number"
+        verdict: pending
+        evidence: null
+      - metric: distinct confidence ratings used across the era's picks
+        baseline: "48 Medium / 2 Low / 0 High across 50 pre-era trades"
+        expected: ">=2 distinct ratings within 10 picks, and no single
+          rating above 90%"
+        verdict: pending
+        evidence: null
+      - metric: picks carrying an Invalidation line
+        baseline: "0 - the field did not exist"
+        expected: ">=90% of picks, each naming a checkable condition
+          rather than a direction"
+        verdict: pending
+        evidence: null
+      - metric: sim vs shadow exit-date disagreements
+        baseline: "n/a - different rules by construction"
+        expected: "0 - both derive the horizon from the policy file"
+        verdict: pending
+        evidence: null
+    agent_cost_usd: null
+
 do_not_retry: []

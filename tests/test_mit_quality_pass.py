@@ -289,13 +289,37 @@ class TestRecursiveLearningLoopAlive:
         assert int(m.group(1)) > 0
 
     def test_portfolio_summary_states_alpha_headline(self):
+        """The block always names an alpha headline or says why there
+        isn't one — and never leaks NaN.
+
+        2026-08-18: the headline is the rulebook era's record. These
+        fixtures are pre-era, so the block correctly reports that the era
+        has no closed trades rather than substituting a lifetime figure —
+        which is the behaviour, not a gap.
+        """
         tracker = _tracker_with_trades([
             _closed("AAA", 10.0, 100.0, alpha=5.0),
             _closed("BBB", 1.0, 10.0, alpha=1.0),
         ])
         mi._recompute_summary(tracker)
         block = mi._build_portfolio_summary(tracker)
-        assert "Cumulative alpha vs NASDAQ: +6.0%" in block
+        assert "no alpha to report" in block or "alpha vs NASDAQ" in block
+        assert "$nan" not in block.lower()
+
+    def test_alpha_headline_is_stated_once_the_era_has_trades(self):
+        era = mi.era_inception() or datetime.date(2026, 8, 18)
+        trades = []
+        for i, (pnl, alpha) in enumerate(((10.0, 5.0), (1.0, 1.0))):
+            t = _closed(f"S{i}", pnl, pnl * 10, alpha=alpha)
+            d = (era + datetime.timedelta(days=i)).isoformat()
+            t.update({"date": d, "entry_bar_date": d, "exit_bar_date": d,
+                      "nasdaq_return_pct": pnl - alpha})
+            trades.append(t)
+        tracker = _tracker_with_trades(trades)
+        mi._recompute_summary(tracker)
+        block = mi._build_portfolio_summary(tracker)
+        assert "alpha vs NASDAQ" in block
+        assert f"{tracker['summary']['era_trades']} rules-based trades" in block
         assert "$nan" not in block.lower()
 
 

@@ -94,12 +94,28 @@ class TestSymbolResolution:
 # Bar selection (entry-date integrity)
 # ---------------------------------------------------------------------------
 
+# Fixtures that represent THE CURRENT RECORD must sit inside the rulebook
+# era (shows/_trading_policy.yaml), because the on-air scoreboard reports
+# the era and nothing else. A dateless trade is deliberately treated as
+# out-of-era by the hook — a legacy row with a missing date must never
+# drift into the record the show is judged on.
+_ERA_DATE = "2026-08-20"
+
+
 _BARS = [
     (datetime.date(2026, 6, 26), 100.0, 101.0),  # Fri
     (datetime.date(2026, 6, 29), 102.0, 103.0),  # Mon
     (datetime.date(2026, 6, 30), 103.5, 104.0),  # Tue
     (datetime.date(2026, 7, 1), 104.5, 105.0),   # Wed
     (datetime.date(2026, 7, 2), 105.5, 106.0),   # Thu
+]
+
+
+# Six sessions, so a Monday pick has a full 5-session horizon plus one
+# spare bar the exit must NOT drift onto (2026-08-18 policy).
+_BARS_WEEK = _BARS + [
+    (datetime.date(2026, 7, 3), 106.5, 107.0),   # Fri
+    (datetime.date(2026, 7, 6), 107.5, 108.0),   # Mon — beyond the horizon
 ]
 
 
@@ -123,14 +139,41 @@ class TestWeeklyBarSelection:
     def test_midweek_pick_not_backdated_to_monday(self):
         # The Ep35 AMD shape: picked Wednesday, previously credited from
         # Monday's open (hindsight gain).
-        entry, exit_ = mi._pick_weekly_bars(_BARS, datetime.date(2026, 7, 1))
+        entry, _ = mi._pick_weekly_bars(_BARS_WEEK, datetime.date(2026, 7, 1))
         assert entry[0] == datetime.date(2026, 7, 1)
-        assert exit_[0] == datetime.date(2026, 7, 2)
 
-    def test_monday_pick_spans_week(self):
+    def test_exit_is_the_horizon_session_not_the_latest_bar(self):
+        # 2026-08-18 policy: a weekly hold is exactly 5 sessions. Monday
+        # 06-29 -> sessions Mon,Tue,Wed,Thu,Fri, so the exit is Friday
+        # 07-03 even though a later bar (Mon 07-06) exists. Previously the
+        # exit was window[-1], which made the holding period depend on
+        # when the evaluating run happened to look.
+        entry, exit_ = mi._pick_weekly_bars(
+            _BARS_WEEK, datetime.date(2026, 6, 29))
+        assert entry[0] == datetime.date(2026, 6, 29)
+        assert exit_[0] == datetime.date(2026, 7, 3)
+
+    def test_every_weekday_pick_gets_the_same_holding_period(self):
+        # The whole point: alpha must be attributable to the pick, not to
+        # which weekday it landed on.
+        bars = _BARS_WEEK + [
+            (datetime.date(2026, 7, 7), 108.5, 109.0),
+            (datetime.date(2026, 7, 8), 109.5, 110.0),
+            (datetime.date(2026, 7, 9), 110.5, 111.0),
+        ]
+        spans = []
+        for pick in (datetime.date(2026, 6, 29), datetime.date(2026, 6, 30),
+                     datetime.date(2026, 7, 1)):
+            entry, exit_ = mi._pick_weekly_bars(bars, pick)
+            spans.append(sum(1 for b in bars
+                             if entry[0] <= b[0] <= exit_[0]))
+        assert spans == [5, 5, 5]
+
+    def test_holds_open_until_the_horizon_has_printed(self):
+        # Four sessions available, five required — entry known, no exit.
         entry, exit_ = mi._pick_weekly_bars(_BARS, datetime.date(2026, 6, 29))
         assert entry[0] == datetime.date(2026, 6, 29)
-        assert exit_[0] == datetime.date(2026, 7, 2)
+        assert exit_ is None
 
     def test_no_bars_after_pick_returns_none(self):
         entry, exit_ = mi._pick_weekly_bars(_BARS, datetime.date(2026, 7, 6))
@@ -193,8 +236,12 @@ class TestCloseTradeIntegration:
             "symbol": "GIS", "market": "NYSE", "trade_type": "weekly",
             "date": "2026-07-01",
         }
-        with patch.object(mi, "_fetch_bars_for_trade", return_value=_BARS), \
-             patch.object(mi, "_fetch_history_bars", return_value=_BARS):
+        bars = _BARS_WEEK + [
+            (datetime.date(2026, 7, 7), 108.5, 109.0),
+            (datetime.date(2026, 7, 8), 109.5, 110.0),
+        ]
+        with patch.object(mi, "_fetch_bars_for_trade", return_value=bars), \
+             patch.object(mi, "_fetch_history_bars", return_value=bars):
             mi._close_trade(trade, _tracker())
         assert trade["entry_bar_date"] == "2026-07-01"  # not Monday 06-29
         assert trade["entry_price"] == 104.5
@@ -205,8 +252,10 @@ class TestCloseTradeIntegration:
             "symbol": "CNR", "market": "TSX", "trade_type": "weekly",
             "date": "2026-06-29", "pick_reference_price": 300.0,
         }
-        with patch.object(mi, "_fetch_bars_for_trade", return_value=_BARS), \
-             patch.object(mi, "_fetch_history_bars", return_value=_BARS), \
+        with patch.object(mi, "_fetch_bars_for_trade",
+                          return_value=_BARS_WEEK), \
+             patch.object(mi, "_fetch_history_bars",
+                          return_value=_BARS_WEEK), \
              caplog.at_level(logging.WARNING, logger=mi.logger.name):
             mi._close_trade(trade, _tracker())
         assert trade["status"] == "closed"
@@ -400,7 +449,8 @@ class TestLessonDedup:
 class TestMatchedWindowScore:
     def _closed(self, pnl, ndq):
         return {"status": "closed", "pnl_pct": pnl, "pnl_dollars": pnl * 10,
-                "nasdaq_return_pct": ndq, "alpha_pct": pnl - ndq}
+                "nasdaq_return_pct": ndq, "alpha_pct": pnl - ndq,
+                "date": _ERA_DATE, "entry_bar_date": _ERA_DATE}
 
     def test_summary_carries_compounded_matched_metrics(self):
         tracker = {"metadata": {"position_size": 1000}, "summary": {},
@@ -439,7 +489,8 @@ class TestMatchedWindowScore:
 
 class TestConfidenceCalibrationAllBuckets:
     def _closed(self, conf, alpha):
-        return {"status": "closed", "confidence": conf, "alpha_pct": alpha}
+        return {"status": "closed", "confidence": conf, "alpha_pct": alpha,
+                "date": _ERA_DATE, "entry_bar_date": _ERA_DATE}
 
     def test_all_medium_distribution_gets_called_out(self):
         tracker = {"trades": [self._closed("Medium", a)
@@ -588,6 +639,7 @@ class TestMultiIndexBenchmark:
         return {
             "status": "closed", "pnl_pct": pnl, "pnl_dollars": pnl * 10,
             "nasdaq_return_pct": ndq, "alpha_pct": pnl - ndq,
+            "date": _ERA_DATE, "entry_bar_date": _ERA_DATE,
             "benchmark_returns": {"nasdaq": ndq, "sp500": sp500, "tsx": tsx},
         }
 
@@ -813,6 +865,10 @@ _BARS_WITH_LOWS = [
     (datetime.date(2026, 6, 30), 103.5, 104.0, 103.0),  # Tue
     (datetime.date(2026, 7, 1), 104.5, 96.0, 94.0),     # Wed — plunge
     (datetime.date(2026, 7, 2), 95.5, 97.0, 95.0),      # Thu
+    # Five sessions is a full weekly horizon (2026-08-18 policy), so the
+    # no-stop control below exits Friday rather than drifting to whatever
+    # bar arrived last.
+    (datetime.date(2026, 7, 3), 97.5, 98.0, 96.5),      # Fri
 ]
 
 
@@ -894,7 +950,7 @@ class TestStopBreach:
             mi._close_trade(trade, {"metadata": {"position_size": 1000},
                                     "trades": [], "summary": {}})
         assert "stopped_out" not in trade
-        assert trade["exit_bar_date"] == "2026-07-02"
+        assert trade["exit_bar_date"] == "2026-07-03"  # 5th session
 
     def test_review_narrates_stop_out(self):
         tracker = {
@@ -917,7 +973,8 @@ class TestStopBreach:
 class TestAlphaTStat:
     def _closed(self, alpha):
         return {"status": "closed", "pnl_pct": alpha, "pnl_dollars": alpha,
-                "alpha_pct": alpha, "nasdaq_return_pct": 0.0}
+                "alpha_pct": alpha, "nasdaq_return_pct": 0.0,
+                "date": _ERA_DATE, "entry_bar_date": _ERA_DATE}
 
     def test_consistent_edge_is_significant(self):
         # 10 trades, alpha ~ +1% with tiny spread → t >> 2.
@@ -1033,28 +1090,76 @@ class TestWeeklyMinHold:
         close.assert_not_called()
         snap.assert_called_once()
 
-    def test_monday_pick_still_closes_friday(self):
+    def test_closes_once_the_horizon_has_printed(self):
+        """SUPERSEDED 2026-08-18 (was: a Monday pick closes on Friday).
+
+        The exit is no longer a weekday. It is five printed sessions, so
+        the same pick gets the same holding period whichever day it was
+        made — which is what makes per-trade alpha attributable to the
+        pick instead of to the calendar.
+        """
         monday = datetime.date(2026, 7, 6)
-        friday = datetime.date(2026, 7, 10)
+        bars = [
+            (datetime.date(2026, 7, 6), 100.0, 101.0, 99.0),
+            (datetime.date(2026, 7, 7), 101.0, 102.0, 100.0),
+            (datetime.date(2026, 7, 8), 102.0, 103.0, 101.0),
+            (datetime.date(2026, 7, 9), 103.0, 104.0, 102.0),
+            (datetime.date(2026, 7, 10), 104.0, 105.0, 103.0),
+        ]
         tracker = {"metadata": {"position_size": 1000}, "summary": {},
                    "trades": [{"symbol": "GIS", "market": "NYSE",
                                "trade_type": "weekly", "status": "open",
                                "date": monday.isoformat()}]}
-        with patch.object(mi.datetime, "date", wraps=datetime.date) as mock_date, \
+        with patch.object(mi, "_fetch_bars_for_trade", return_value=bars), \
              patch.object(mi, "_close_trade") as close, \
              patch.object(mi, "_save_tracker"):
-            mock_date.today.return_value = friday
             mi._evaluate_open_trade(tracker, Path("/nope"))
         close.assert_called_once()
 
+    def test_stays_open_while_the_horizon_is_incomplete(self):
+        bars = [
+            (datetime.date(2026, 7, 6), 100.0, 101.0, 99.0),
+            (datetime.date(2026, 7, 7), 101.0, 102.0, 100.0),
+        ]
+        tracker = {"metadata": {"position_size": 1000}, "summary": {},
+                   "trades": [{"symbol": "GIS", "market": "NYSE",
+                               "trade_type": "weekly", "status": "open",
+                               "date": "2026-07-06"}]}
+        with patch.object(mi, "_fetch_bars_for_trade", return_value=bars), \
+             patch.object(mi, "_close_trade") as close, \
+             patch.object(mi, "_snapshot_trade"), \
+             patch.object(mi, "_save_tracker"):
+            mi._evaluate_open_trade(tracker, Path("/nope"))
+        close.assert_not_called()
+
+    def test_a_fetch_failure_never_closes_a_trade(self):
+        # "No bars" must read as not-due, never as due-now: otherwise one
+        # bad network day closes every open position at whatever price
+        # came back.
+        tracker = {"metadata": {"position_size": 1000}, "summary": {},
+                   "trades": [{"symbol": "GIS", "market": "NYSE",
+                               "trade_type": "weekly", "status": "open",
+                               "date": "2026-07-06"}]}
+        with patch.object(mi, "_fetch_bars_for_trade", return_value=None), \
+             patch.object(mi, "_close_trade") as close, \
+             patch.object(mi, "_snapshot_trade"), \
+             patch.object(mi, "_save_tracker"):
+            mi._evaluate_open_trade(tracker, Path("/nope"))
+        close.assert_not_called()
+
     def test_shadow_exit_calendar_matches(self):
+        """SUPERSEDED 2026-08-18: the shadow layer follows the session
+        horizon, not the Friday calendar — otherwise it stops being a
+        check on the sim and becomes a second opinion about weekdays."""
         from execution import shadow as sh
-        # Thursday weekly → NEXT Friday, not tomorrow.
-        assert sh._exit_due_date(
-            datetime.date(2026, 7, 9), "weekly") == datetime.date(2026, 7, 17)
-        # Wednesday weekly → this Friday (2-day hold is acceptable).
-        assert sh._exit_due_date(
-            datetime.date(2026, 7, 8), "weekly") == datetime.date(2026, 7, 10)
+        for pick in (datetime.date(2026, 7, 6), datetime.date(2026, 7, 8),
+                     datetime.date(2026, 7, 9), datetime.date(2026, 7, 10)):
+            due = sh._exit_due_date(pick, "weekly")
+            sessions = sum(
+                1 for i in range((due - pick).days + 1)
+                if (pick + datetime.timedelta(days=i)).weekday() <= 4
+            )
+            assert sessions == 5, f"{pick} -> {due} spanned {sessions}"
 
 
 class TestSweepGating:
@@ -1373,12 +1478,12 @@ class TestVerifiedWindowAlpha:
                 # writes it).
                 {"symbol": "AAA", "status": "closed", "pnl_pct": 1.0,
                  "nasdaq_return_pct": 3.0, "alpha_pct": -2.0,
-                 "entry_bar_date": "2026-08-03",
-                 "exit_bar_date": "2026-08-06", "pnl_dollars": 10.0},
+                 "date": _ERA_DATE, "entry_bar_date": _ERA_DATE,
+                 "exit_bar_date": "2026-08-27", "pnl_dollars": 10.0},
                 {"symbol": "BBB", "status": "closed", "pnl_pct": -1.0,
                  "nasdaq_return_pct": 1.0, "alpha_pct": -2.0,
-                 "entry_bar_date": "2026-08-07",
-                 "exit_bar_date": "2026-08-10", "pnl_dollars": -10.0},
+                 "date": _ERA_DATE, "entry_bar_date": _ERA_DATE,
+                 "exit_bar_date": "2026-08-27", "pnl_dollars": -10.0},
                 # Legacy: no entry_bar_date, wildly flattering window.
                 {"symbol": "CCC", "status": "closed", "pnl_pct": 20.0,
                  "nasdaq_return_pct": 0.0, "alpha_pct": 20.0,
@@ -1402,16 +1507,23 @@ class TestVerifiedWindowAlpha:
         tracker = self._tracker()
         mi._recompute_summary(tracker)
         block = mi._build_portfolio_summary(tracker)
-        n = tracker["summary"]["verified_window_trades"]
+        n = tracker["summary"]["era_trades"]
         # The sample size travels with the claim, in the same line.
         headline = [ln for ln in block.splitlines()
                     if "Matched-window alpha" in ln][0]
-        assert f"{n} verified-window trades" in headline
+        assert f"{n} rules-based trades" in headline
         # The blended lifetime figure must never be offered as the number
-        # to say out loud.
-        assert "NOT for air" in block
+        # to say out loud, and the block must say the record is era-scoped.
+        assert "NOT blended into it" in block
+        blended = tracker["summary"]["matched_window_alpha_pct"]
+        assert f"{blended:+.1f}%" not in block
 
-    def test_no_verified_trades_falls_back_to_legacy_wording(self):
+    def test_no_verified_trades_falls_back_to_legacy_wording(self, monkeypatch):
+        # With no era configured the ordering is verified -> blended. An
+        # ACTIVE era short-circuits both, which is tested separately.
+        monkeypatch.setattr(mi, "load_policy", lambda: {
+            "era": {}, "exit": {"horizon_sessions": {"weekly": 5, "flash": 1}}})
+        monkeypatch.setattr(mi, "era_inception", lambda: None)
         tracker = {
             "metadata": {"position_size": 1000},
             "trades": [{"symbol": "CCC", "status": "closed", "pnl_pct": 5.0,
@@ -1640,13 +1752,13 @@ class TestSingleAlphaSource:
             "trades": [
                 {"symbol": "AAA", "status": "closed", "pnl_pct": 1.0,
                  "nasdaq_return_pct": 3.0, "alpha_pct": -2.0,
-                 "pnl_dollars": 10.0, "entry_bar_date": "2026-08-03",
-                 "exit_bar_date": "2026-08-06",
+                 "pnl_dollars": 10.0, "date": _ERA_DATE,
+                 "entry_bar_date": _ERA_DATE, "exit_bar_date": "2026-08-27",
                  "benchmark_returns": {"nasdaq": 3.0, "sp500": 2.0, "tsx": 1.0}},
                 {"symbol": "BBB", "status": "closed", "pnl_pct": -1.0,
                  "nasdaq_return_pct": 1.0, "alpha_pct": -2.0,
-                 "pnl_dollars": -10.0, "entry_bar_date": "2026-08-07",
-                 "exit_bar_date": "2026-08-10",
+                 "pnl_dollars": -10.0, "date": _ERA_DATE,
+                 "entry_bar_date": _ERA_DATE, "exit_bar_date": "2026-08-27",
                  "benchmark_returns": {"nasdaq": 1.0, "sp500": 1.0, "tsx": 1.0}},
                 # Legacy window — flattering, and must reach neither block.
                 {"symbol": "CCC", "status": "closed", "pnl_pct": 40.0,
@@ -1673,22 +1785,26 @@ class TestSingleAlphaSource:
     def test_trade_count_spoken_is_the_verified_count(self):
         tracker = self._tracker()
         mi._recompute_summary(tracker)
-        n = tracker["summary"]["verified_window_trades"]
+        n = tracker["summary"]["era_trades"]
         assert n == 2
         bench = mi._build_benchmark_block(tracker)
         # The count travels with the number, and it is never the blend's.
-        assert f"across {n} verified-window trades" in bench
+        assert f"across {n} rules-based trades" in bench
         assert "across 3 " not in bench
 
     def test_significance_follows_the_verified_subset(self):
         tracker = self._tracker()
         mi._recompute_summary(tracker)
         bench = mi._build_benchmark_block(tracker)
-        t = tracker["summary"]["verified_alpha_t_stat"]
+        t = tracker["summary"]["era_alpha_t_stat"]
         if t is not None:
             assert f"t={t:+.2f}" in bench
 
-    def test_falls_back_to_blended_and_labels_it_when_no_verified_windows(self):
+    def test_falls_back_to_blended_and_labels_it_when_no_verified_windows(
+            self, monkeypatch):
+        monkeypatch.setattr(mi, "load_policy", lambda: {
+            "era": {}, "exit": {"horizon_sessions": {"weekly": 5, "flash": 1}}})
+        monkeypatch.setattr(mi, "era_inception", lambda: None)
         tracker = self._tracker()
         for t in tracker["trades"]:
             t.pop("entry_bar_date", None)
@@ -1759,3 +1875,145 @@ class TestRecomputeMatcherCannotBackdate:
         d = datetime.date(2026, 8, 12)
         bars = [(datetime.date(2026, 8, 4), 53.03, 53.10, 52.9)]
         assert rc._match_bar(bars, 53.03, field=1, not_before=d) is None
+
+
+class TestTradingPolicy:
+    """The rulebook is the rules — code and file must not drift."""
+
+    def test_policy_file_is_loadable_and_complete(self):
+        pol = mi.load_policy()
+        assert pol["exit"]["horizon_sessions"]["weekly"] >= 2
+        assert pol["exit"]["horizon_sessions"]["flash"] == 1
+        assert pol["era"]["inception_date"]
+        assert pol["entry"]["rule"] == "first_session_on_or_after_pick"
+
+    def test_unreadable_policy_falls_back_without_changing_the_rules(
+            self, monkeypatch):
+        monkeypatch.setattr(mi, "_POLICY_CACHE", None)
+        monkeypatch.setattr(mi, "POLICY_PATH", Path("/nonexistent/policy.yaml"))
+        pol = mi.load_policy()
+        assert pol["exit"]["horizon_sessions"]["weekly"] == 5
+        monkeypatch.setattr(mi, "_POLICY_CACHE", None)
+
+    def test_horizon_matches_the_file(self):
+        import yaml as _yaml
+        pol = _yaml.safe_load(
+            (_ROOT / "shows/_trading_policy.yaml").read_text(encoding="utf-8"))
+        assert mi.horizon_sessions("weekly") == \
+            pol["exit"]["horizon_sessions"]["weekly"]
+
+    def test_sim_and_shadow_agree_on_the_holding_period(self):
+        """If these drift, the shadow ledger stops being a check on the
+        sim and becomes a second opinion about the calendar."""
+        from execution import shadow as sh
+        horizon = mi.horizon_sessions("weekly")
+        for pick in (datetime.date(2026, 8, 17), datetime.date(2026, 8, 18),
+                     datetime.date(2026, 8, 19), datetime.date(2026, 8, 20),
+                     datetime.date(2026, 8, 21)):
+            due = sh._exit_due_date(pick, "weekly")
+            sessions = sum(
+                1 for i in range((due - pick).days + 1)
+                if (pick + datetime.timedelta(days=i)).weekday() <= 4)
+            assert sessions == horizon
+
+
+class TestEraScopedRecord:
+    """The on-air record is the rulebook era and nothing else."""
+
+    @staticmethod
+    def _tracker(in_era_trades=0):
+        era = mi.era_inception() or datetime.date(2026, 8, 18)
+        trades = [
+            # Pre-era: real, published, and never part of the on-air record.
+            {"symbol": "OLD", "status": "closed", "pnl_pct": 30.0,
+             "pnl_dollars": 300.0, "nasdaq_return_pct": 1.0,
+             "alpha_pct": 29.0, "date": "2026-07-01",
+             "entry_bar_date": "2026-07-01", "exit_bar_date": "2026-07-08",
+             "benchmark_returns": {"nasdaq": 1.0, "sp500": 1.0, "tsx": 1.0}},
+        ]
+        for i in range(in_era_trades):
+            d = (era + datetime.timedelta(days=i)).isoformat()
+            trades.append({
+                "symbol": f"NEW{i}", "status": "closed", "pnl_pct": -1.0,
+                "pnl_dollars": -10.0, "nasdaq_return_pct": 1.0,
+                "alpha_pct": -2.0, "date": d, "entry_bar_date": d,
+                "exit_bar_date": d,
+                "benchmark_returns": {"nasdaq": 1.0, "sp500": 1.0, "tsx": 1.0},
+            })
+        return {"metadata": {"position_size": 1000}, "summary": {},
+                "benchmark": {"current_close": 26000.0, "ytd_pct": 15.0,
+                              "inception_to_date_pct": 19.0},
+                "alpha": {"ytd_pct": -14.0, "inception_to_date_pct": -18.0},
+                "trades": trades}
+
+    def test_pre_era_trades_are_excluded_from_the_record(self):
+        tracker = self._tracker(in_era_trades=2)
+        mi._recompute_summary(tracker)
+        s = tracker["summary"]
+        assert s["era_trades"] == 2          # not 3
+        assert s["era_alpha_pct"] < 0        # the +29% legacy trade is out
+
+    def test_empty_era_reports_no_alpha_instead_of_reaching_back(self):
+        tracker = self._tracker(in_era_trades=0)
+        mi._recompute_summary(tracker)
+        bench = mi._build_benchmark_block(tracker)
+        port = mi._build_portfolio_summary(tracker)
+        assert "NO closed trades yet" in bench
+        assert "no alpha to report" in port
+        # The flattering legacy number must appear in neither block.
+        for block in (bench, port):
+            assert "+29.0" not in block and "+29.00" not in block
+
+    def test_lifetime_totals_are_labelled_history_while_the_era_is_empty(self):
+        tracker = self._tracker(in_era_trades=0)
+        mi._recompute_summary(tracker)
+        assert "HISTORY ONLY" in mi._build_portfolio_summary(tracker)
+
+    def test_both_blocks_agree_once_the_era_has_trades(self):
+        tracker = self._tracker(in_era_trades=3)
+        mi._recompute_summary(tracker)
+        n = tracker["summary"]["era_trades"]
+        bench = mi._build_benchmark_block(tracker)
+        port = mi._build_portfolio_summary(tracker)
+        assert f"{n} rules-based trades" in bench
+        assert f"{n} rules-based trades" in port
+
+    def test_small_era_sample_is_called_a_scoreboard_not_evidence(self):
+        tracker = self._tracker(in_era_trades=2)
+        mi._recompute_summary(tracker)
+        assert "not evidence" in mi._build_benchmark_block(tracker)
+
+
+class TestReproducibleDecisions:
+    """Entry, exit and the invalidation condition are recorded on the
+    trade, so a listener can recompute every number the show reports."""
+
+    def test_pick_records_the_policy_and_horizon(self):
+        digest = (
+            "### Practice Investment of the Day\n"
+            "**Trade Type:** Weekly Hold\n"
+            "**Today's Pick:** ABC — Alpha Beta Corp\n"
+            "**Market:** NASDAQ\n"
+            "**Confidence Level:** High\n"
+            "**Invalidation:** Guidance below $4.10 on the Nov 2 call kills it.\n"
+        )
+        trade = mi._extract_trade_from_digest(digest, 141)
+        assert trade["policy_version"] == mi.load_policy()["version"]
+        assert trade["horizon_sessions"] == mi.horizon_sessions("weekly")
+        assert "4.10" in trade["invalidation"]
+        assert trade["confidence"] == "High"
+
+    def test_confidence_accepts_both_label_forms(self):
+        for label in ("**Confidence Level:** Low", "**Confidence:** Low"):
+            digest = ("### Practice Investment of the Day\n"
+                      "**Today's Pick:** ABC — Alpha Beta\n" + label + "\n")
+            assert mi._extract_trade_from_digest(digest, 1)["confidence"] == "Low"
+
+    def test_calibration_states_the_rubric_and_is_era_scoped(self):
+        tracker = {"trades": [
+            {"status": "closed", "confidence": "Medium", "alpha_pct": 5.0,
+             "date": "2026-07-01"},   # pre-era — must not be graded
+        ]}
+        block = mi.get_mit_confidence_calibration(tracker)
+        assert "RUBRIC" in block
+        assert "0 graded pick(s) in this era" in block

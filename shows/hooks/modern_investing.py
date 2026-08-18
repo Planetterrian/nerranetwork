@@ -58,6 +58,80 @@ LESSONS_LEARNED_FILENAME = "lessons_learned.json"
 MONTHLY_EPISODES_FILENAME = "monthly_episodes.json"
 NASDAQ_SYMBOL = "^IXIC"
 
+# ---------------------------------------------------------------------------
+# Trading policy (2026-08-18) — the rules live in shows/_trading_policy.yaml
+# ---------------------------------------------------------------------------
+
+POLICY_PATH = Path(__file__).resolve().parents[1] / "_trading_policy.yaml"
+
+_POLICY_FALLBACK = {
+    "version": 2,
+    "era": {"name": "Era 2 — rules-based", "inception_date": "2026-08-18"},
+    "position_size_usd": 1000,
+    "entry": {"max_days_to_fill": 10},
+    "exit": {"horizon_sessions": {"weekly": 5, "flash": 1}},
+    "reporting": {"min_trades_for_rate_claims": 5,
+                  "significance_t_threshold": 2.0},
+}
+
+
+def load_policy() -> dict:
+    """The simulated-trading rulebook, or a pinned fallback.
+
+    Read once per process. A missing or unparseable file must not stop an
+    episode — but it must not silently change the rules either, so the
+    fallback mirrors the committed file and says so in the log.
+    """
+    global _POLICY_CACHE
+    if _POLICY_CACHE is not None:
+        return _POLICY_CACHE
+    try:
+        import yaml
+        with open(POLICY_PATH, encoding="utf-8") as fh:
+            loaded = yaml.safe_load(fh) or {}
+        if not loaded.get("exit", {}).get("horizon_sessions"):
+            raise ValueError("policy missing exit.horizon_sessions")
+        _POLICY_CACHE = loaded
+    except Exception as exc:  # noqa: BLE001
+        logger.warning(
+            "Trading policy unreadable (%s) — using the pinned fallback. "
+            "Entry/exit rules are UNCHANGED; fix %s.", exc, POLICY_PATH,
+        )
+        _POLICY_CACHE = dict(_POLICY_FALLBACK)
+    return _POLICY_CACHE
+
+
+_POLICY_CACHE: dict | None = None
+
+
+def era_inception() -> datetime.date | None:
+    """First pick date counted in the on-air track record."""
+    raw = (load_policy().get("era") or {}).get("inception_date")
+    try:
+        return datetime.date.fromisoformat(raw)
+    except (TypeError, ValueError):
+        return None
+
+
+def horizon_sessions(trade_type: str) -> int:
+    """Sessions a trade is held before the scheduled exit."""
+    table = (load_policy().get("exit") or {}).get("horizon_sessions") or {}
+    default = 1 if trade_type == "flash" else 5
+    try:
+        return max(1, int(table.get(trade_type, default)))
+    except (TypeError, ValueError):
+        return default
+
+
+def _in_era(trade: dict) -> bool:
+    """True when the trade was picked on/after the era inception date."""
+    start = era_inception()
+    if start is None:
+        return True
+    pick = _trade_pick_date(trade)
+    return pick is not None and pick >= start
+
+
 # How stale a closed trade may be and still be narrated in the Trade
 # Review segment. Anything older is retired unreviewed rather than
 # presented as a fresh result (August 2026 review — see
@@ -1219,7 +1293,18 @@ def _pick_weekly_bars(bars, pick_date):
         window = [b for b in bars if b[0] >= pick_date]
     if not window:
         return None, None
-    return window[0], window[-1]
+    # Hold exactly ``horizon`` sessions (2026-08-18 policy). Returning
+    # window[-1] made the exit whatever bar the evaluating run happened to
+    # see: the Friday pre-market run prices THURSDAY, so a Wednesday pick
+    # closed after one session and a Monday pick after four, from the same
+    # rule. Across the ten trades with trustworthy windows the holds ran
+    # 0-6 sessions against picks written to a five-day thesis, so per-trade
+    # alpha measured pick quality and pick weekday together. The exit index
+    # is now fixed at entry time and does not depend on when the sim looks.
+    horizon = horizon_sessions("weekly")
+    if len(window) < horizon:
+        return window[0], None  # not enough sessions yet — stay open
+    return window[0], window[horizon - 1]
 
 
 _STOP_PRICE_RE = re.compile(
@@ -1296,6 +1381,50 @@ def _trade_pick_date(trade: dict) -> datetime.date | None:
     return None
 
 
+def _sessions_since_pick(bars, pick_date) -> int:
+    """How many sessions have printed on/after the pick date.
+
+    Session 1 is the entry bar itself, so a weekly hold with a 5-session
+    horizon closes once this reaches 5. Returns 0 when bars are missing —
+    a fetch failure must read as "not due yet", never as "due now", or a
+    bad network day would close every open trade at whatever price came
+    back.
+    """
+    if not bars:
+        return 0
+    if pick_date is None:
+        return len(bars)
+    return sum(1 for b in bars if b[0] >= pick_date)
+
+
+def _stop_already_breached(trade: dict, bars, pick_date) -> bool:
+    """True when a narrated stop was hit before the scheduled exit.
+
+    Only a cheap pre-check so a stopped-out trade does not sit open for
+    the rest of its horizon; ``_close_trade`` does the authoritative
+    gap-aware fill. Entry-bar breaches are deliberately not claimed —
+    daily bars cannot show whether the low came before or after the open.
+    """
+    stop = trade.get("stop_loss")
+    if not isinstance(stop, dict) or not bars:
+        return False
+    window = [b for b in bars if pick_date is None or b[0] >= pick_date]
+    if len(window) < 2:
+        return False
+    entry_price = window[0][1]
+    if isinstance(stop.get("price"), (int, float)):
+        stop_price = float(stop["price"])
+    elif isinstance(stop.get("pct"), (int, float)):
+        stop_price = entry_price * (1 - float(stop["pct"]) / 100)
+    else:
+        return False
+    for bar in window[1:]:
+        low = bar[3] if len(bar) > 3 else None
+        if isinstance(low, (int, float)) and low <= stop_price:
+            return True
+    return False
+
+
 def _evaluate_open_trade(tracker: dict, tracker_path: Path) -> None:
     """Evaluate open trades using the hybrid model.
 
@@ -1309,7 +1438,6 @@ def _evaluate_open_trade(tracker: dict, tracker_path: Path) -> None:
         return
 
     today = datetime.date.today()
-    is_friday = today.weekday() == 4  # Monday=0, Friday=4
 
     for trade in open_trades:
         symbol = trade.get("symbol", "")
@@ -1319,25 +1447,36 @@ def _evaluate_open_trade(tracker: dict, tracker_path: Path) -> None:
 
         trade_type = trade.get("trade_type", "weekly")
 
-        # Flash trades close the next day; weekly holds close on Friday —
-        # but ONLY when the hold spans at least 2 calendar days (July 18
-        # 2026 review: Ep101 COST was picked Thursday and closed on the
-        # very next Friday pre-market run with a single bar of data —
-        # entry AND exit on Thursday's bar, a same-day trade wearing a
-        # "Weekly Hold" costume. A Thu/Fri-picked weekly now rolls to the
-        # NEXT Friday, matching the shadow executor's exit calendar).
+        # The exit is a rule, not a weekday (2026-08-18 policy). A trade
+        # closes when its stated horizon of sessions has actually printed
+        # — five for a weekly hold, one for a flash — or earlier if its
+        # narrated stop was breached (enforced inside _close_trade). The
+        # old test was "is today Friday, and is the pick at least two
+        # calendar days old", which let the evaluating run's timing decide
+        # the holding period. Counting real sessions means a pick made any
+        # weekday gets the same holding period, so alpha is attributable
+        # to the pick instead of to the calendar.
         pick_date = _trade_pick_date(trade)
-        weekly_held_long_enough = (
-            pick_date is None
-            or (datetime.date.today() - pick_date).days >= 2
-        )
-        should_close = (trade_type == "flash") or (
-            is_friday and weekly_held_long_enough)
+        bars = _fetch_bars_for_trade(trade)
+        sessions = _sessions_since_pick(bars, pick_date)
 
-        if should_close:
-            _close_trade(trade, tracker)
+        if trade_type == "flash":
+            should_close = sessions >= 1
         else:
-            # Mid-week snapshot for weekly holds
+            should_close = sessions >= horizon_sessions("weekly")
+
+        # A stop breach exits early — check it before the horizon so a
+        # stopped-out trade does not sit open for the remaining sessions.
+        if not should_close and _stop_already_breached(trade, bars, pick_date):
+            logger.info("%s breached its stop before the horizon — closing",
+                        symbol)
+            should_close = True
+
+        # Nothing has printed since the pick (weekend/holiday pick) — hold,
+        # unless it has been stale long enough that the pick is dead.
+        if should_close:
+            _close_trade(trade, tracker, bars=bars)
+        else:
             _snapshot_trade(trade, symbol)
 
     # Recompute summary stats and save
@@ -1346,13 +1485,19 @@ def _evaluate_open_trade(tracker: dict, tracker_path: Path) -> None:
     _save_tracker(tracker, tracker_path)
 
 
-def _close_trade(trade: dict, tracker: dict) -> None:
-    """Close a trade with real market data (pick-date-aligned bars)."""
+def _close_trade(trade: dict, tracker: dict, *, bars=None) -> None:
+    """Close a trade with real market data (pick-date-aligned bars).
+
+    ``bars`` may be supplied by the caller so the exit decision and the
+    exit pricing read the SAME data — re-fetching between the two would
+    let a trade be judged due on one snapshot and priced from another.
+    """
     symbol = trade.get("symbol", "")
     trade_type = trade.get("trade_type", "weekly")
     pick_date = _trade_pick_date(trade)
 
-    bars = _fetch_bars_for_trade(trade)
+    if bars is None:
+        bars = _fetch_bars_for_trade(trade)
 
     entry_bar = exit_bar = None
     if bars:
@@ -1562,6 +1707,19 @@ def _recompute_summary(tracker: dict) -> None:
     comp_v_ndq = 1.0
     n_verified = 0
     verified_alphas: list[float] = []
+    # ERA subset (2026-08-18): trades picked on/after the rulebook's
+    # inception date, i.e. the ones whose entry, exit and benchmark window
+    # all followed rules published before the trade opened. This is the
+    # record the show is judged on. Earlier trades are kept — they are the
+    # show's history — but their exits were a side effect of when the
+    # evaluating run happened to look, so they cannot answer "is the
+    # method beating the NASDAQ?" and are never blended into an on-air
+    # figure with the ones that can.
+    comp_e_port = 1.0
+    comp_e_ndq = 1.0
+    n_era = 0
+    era_alphas: list[float] = []
+    era_wins = 0
     for t in closed:
         pnl = t.get("pnl_pct")
         ndq = t.get("nasdaq_return_pct")
@@ -1577,9 +1735,24 @@ def _recompute_summary(tracker: dict) -> None:
                 comp_v_ndq *= 1 + ndq / 100
                 n_verified += 1
                 verified_alphas.append(pnl - ndq)
+                if _in_era(t):
+                    comp_e_port *= 1 + pnl / 100
+                    comp_e_ndq *= 1 + ndq / 100
+                    n_era += 1
+                    era_alphas.append(pnl - ndq)
+                    if pnl > ndq:
+                        era_wins += 1
 
     # Significance on the VERIFIED subset only — a t-stat computed over
     # windows we do not trust answers a question nobody asked.
+    era_t_stat = None
+    if len(era_alphas) >= 2:
+        _m = sum(era_alphas) / len(era_alphas)
+        _v = sum((a - _m) ** 2 for a in era_alphas) / (len(era_alphas) - 1)
+        _s = _v ** 0.5
+        if _s > 0:
+            era_t_stat = round(_m / (_s / len(era_alphas) ** 0.5), 2)
+
     verified_t_stat = None
     if len(verified_alphas) >= 2:
         _mean = sum(verified_alphas) / len(verified_alphas)
@@ -1674,6 +1847,20 @@ def _recompute_summary(tracker: dict) -> None:
         "verified_alpha_t_stat": verified_t_stat,
         "verified_alpha_statistically_significant": bool(
             verified_t_stat is not None and abs(verified_t_stat) >= 2.0),
+        # The on-air record (2026-08-18 rulebook era).
+        "era_name": (load_policy().get("era") or {}).get("name"),
+        "era_inception": (load_policy().get("era") or {}).get("inception_date"),
+        "era_trades": n_era,
+        "era_alpha_pct": round((comp_e_port - comp_e_ndq) * 100, 2)
+        if n_era else None,
+        "era_return_pct": round((comp_e_port - 1) * 100, 2) if n_era else None,
+        "era_nasdaq_pct": round((comp_e_ndq - 1) * 100, 2) if n_era else None,
+        "era_beat_benchmark": era_wins,
+        "era_mean_alpha_pct": round(sum(era_alphas) / len(era_alphas), 2)
+        if era_alphas else None,
+        "era_alpha_t_stat": era_t_stat,
+        "era_alpha_statistically_significant": bool(
+            era_t_stat is not None and abs(era_t_stat) >= 2.0),
         "benchmark_scores": benchmark_scores,
         "indices_beaten": indices_beaten,
         "indices_scored": len(benchmark_scores),
@@ -2376,6 +2563,55 @@ def _build_trade_review(tracker: dict, episode_num: int | None = None) -> str:
     )
 
 
+def _alpha_scope(summary: dict) -> dict:
+    """Which alpha the show is allowed to speak, and what to call it.
+
+    THE single source for both prompt blocks. They previously chose
+    independently and the model fused a value from one with a label from
+    the other (Ep138: "+9.28% across forty-five VERIFIED-window trades").
+    Order: the rulebook era -> verified windows -> the blended legacy
+    pair. ``scope == "era_empty"`` means the era has started but nothing
+    has closed, which is a statement, not a number.
+    """
+    era_n = summary.get("era_trades", 0)
+    era_alpha = summary.get("era_alpha_pct")
+    era_start = summary.get("era_inception")
+    if era_n and era_alpha is not None:
+        return {
+            "scope": "era", "alpha": era_alpha, "n": era_n,
+            "portfolio": summary.get("era_return_pct"),
+            "index": summary.get("era_nasdaq_pct"),
+            "t": summary.get("era_alpha_t_stat"),
+            "significant": summary.get("era_alpha_statistically_significant"),
+            "label": "rules-based", "era_start": era_start,
+            "era_name": summary.get("era_name"),
+        }
+    if era_start and not era_n:
+        return {"scope": "era_empty", "alpha": None, "n": 0,
+                "era_start": era_start, "era_name": summary.get("era_name")}
+    alpha = summary.get("verified_window_alpha_pct")
+    n = summary.get("verified_window_trades", 0)
+    if n and alpha is not None:
+        return {
+            "scope": "verified", "alpha": alpha, "n": n,
+            "portfolio": summary.get("verified_window_return_pct"),
+            "index": summary.get("verified_window_nasdaq_pct"),
+            "t": summary.get("verified_alpha_t_stat"),
+            "significant": summary.get(
+                "verified_alpha_statistically_significant"),
+            "label": "verified-window",
+        }
+    return {
+        "scope": "blended", "alpha": summary.get("matched_window_alpha_pct"),
+        "n": summary.get("matched_window_trades", 0),
+        "portfolio": summary.get("compounded_return_pct"),
+        "index": summary.get("compounded_nasdaq_matched_pct"),
+        "t": summary.get("alpha_t_stat"),
+        "significant": summary.get("alpha_statistically_significant"),
+        "label": "benchmarked",
+    }
+
+
 def _build_benchmark_block(tracker: dict) -> str:
     """One-line benchmark block fed to the digest/podcast prompt.
 
@@ -2426,17 +2662,34 @@ def _build_benchmark_block(tracker: dict) -> str:
     # VERIFIED-window trades" — the inflated number wearing the honest
     # label, which is strictly worse than the bug the pass set out to fix.
     # One number, one source, both blocks.
-    matched_alpha = summary.get("verified_window_alpha_pct")
-    matched_n = summary.get("verified_window_trades", 0)
-    _verified = True
-    if not matched_n or matched_alpha is None:
-        # No verified windows yet (a fresh tracker, or history before the
-        # July-3 alignment). Fall back to the blended pair and SAY so.
-        matched_alpha = summary.get("matched_window_alpha_pct")
-        matched_n = summary.get("matched_window_trades", 0)
-        _verified = False
+    # ONE scope, ONE render (2026-08-18) — see _alpha_scope.
+    _sc = _alpha_scope(summary)
+    if _sc["scope"] == "era_empty":
+        return _compose_benchmark(
+            close, bench_ytd, bench_itd, alpha_ytd, alpha_itd,
+            portfolio_ytd, portfolio_itd,
+            (f"1) TRACK RECORD — {_sc.get('era_name') or 'current era'} "
+             f"began {_sc['era_start']} and has NO closed trades yet. Say "
+             f"exactly that: the rules-based record starts now and the "
+             f"first result arrives when the first hold completes its five "
+             f"sessions. Do NOT quote any lifetime or historical alpha as "
+             f"though it measured the current method — earlier trades were "
+             f"exited on whatever day the evaluating run happened to look, "
+             f"so they cannot answer whether these rules beat the index. "
+             f"The earlier record remains published as history. "),
+            _sign)
+    matched_alpha, matched_n = _sc["alpha"], _sc["n"]
+    _port, _idx = _sc.get("portfolio"), _sc.get("index")
+    _t, _sig, _n_label = _sc.get("t"), _sc.get("significant"), _sc["label"]
+    _scope_note = (
+        f"This is the {_sc.get('era_name') or 'current'} record, started "
+        f"{_sc.get('era_start')}: every trade entered and exited on the "
+        f"published rules. " if _sc["scope"] == "era" else ""
+    )
+
     if isinstance(matched_alpha, float) and not math.isfinite(matched_alpha):
         matched_alpha = None
+
     matched_line = ""
     if matched_n and matched_alpha is not None:
         # July 18 2026: the significance caveat now lives INSIDE the alpha
@@ -2452,11 +2705,8 @@ def _build_benchmark_block(tracker: dict) -> str:
         # when it rides the data line. Third mechanism: make the caveat
         # part of the alpha VALUE itself, a data-shaped parenthetical the
         # model has to copy to quote the number at all.
-        t_stat = (summary.get("verified_alpha_t_stat") if _verified
-                  else summary.get("alpha_t_stat"))
-        if (summary.get("verified_alpha_statistically_significant")
-                if _verified else
-                summary.get("alpha_statistically_significant")):
+        t_stat = _t
+        if _sig:
             alpha_phrase = (
                 f"{_sign(matched_alpha)} (statistically significant, "
                 f"t={t_stat:+.2f})"
@@ -2468,19 +2718,19 @@ def _build_benchmark_block(tracker: dict) -> str:
             )
         else:
             alpha_phrase = _sign(matched_alpha)
-        _port = (summary.get("verified_window_return_pct") if _verified
-                 else summary.get("compounded_return_pct"))
-        _idx = (summary.get("verified_window_nasdaq_pct") if _verified
-                else summary.get("compounded_nasdaq_matched_pct"))
-        _n_label = "verified-window" if _verified else "benchmarked"
         matched_line = (
             f"1) MATCHED-WINDOW SCORE (the honest head-to-head — each "
             f"$1,000 trade vs the NASDAQ over the SAME holding window, "
-            f"compounded): portfolio {_sign(_port)} vs NASDAQ "
+            f"compounded): {_scope_note}portfolio {_sign(_port)} vs NASDAQ "
             f"{_sign(_idx)} → alpha {alpha_phrase} across {matched_n} "
             f"{_n_label} trades. Speak the alpha, the trade count and "
             f"the parenthetical together — they are one statistic. "
         )
+        if matched_n < _MIN_SAMPLE_TRADES:
+            matched_line += (
+                "With this few trades it is a scoreboard, not evidence — "
+                "say so rather than implying an edge. "
+            )
         # Index sweep — only from samples big enough to mean something.
         # July 18 2026: before the gate, the sweep compared a 37-trade
         # NASDAQ score against 2-trade S&P/TSX scores ("beating 1 of 3")
@@ -2506,16 +2756,24 @@ def _build_benchmark_block(tracker: dict) -> str:
                 + ". NASDAQ stays the headline benchmark; mention the sweep "
                   "at most once per episode. "
             )
+    return _compose_benchmark(close, bench_ytd, bench_itd, alpha_ytd,
+                              alpha_itd, portfolio_ytd, portfolio_itd,
+                              matched_line, _sign)
+
+
+def _compose_benchmark(close, bench_ytd, bench_itd, alpha_ytd, alpha_itd,
+                       portfolio_ytd, portfolio_itd, matched_line, _sign):
+    """Render the scoreboard text once, for every caller path."""
     if close is None:
-        # Live index quote failed (NaN/missing) — still speak the matched-
-        # window scoreboard when we have it (MIT Ep117 went silent on alpha
-        # even though matched_window_alpha_pct was healthy).
+        # Live index quote failed (NaN/missing) — still speak the
+        # scoreboard when we have it (MIT Ep117 went silent on alpha even
+        # though the score was healthy).
         if matched_line:
             return (
                 "NASDAQ Composite: live index level temporarily unavailable — "
                 "acknowledge the gap on air; do NOT invent a level or a YTD "
-                "benchmark move. Still report the MATCHED-WINDOW SCOREBOARD "
-                "below (it does not need today's quote):\n"
+                "benchmark move. Still report the SCOREBOARD below (it does "
+                "not need today's quote):\n"
                 f"{matched_line}\n"
                 "Skip the buy-and-hold gap numbers today — they need the "
                 "live NASDAQ level."
@@ -3053,7 +3311,36 @@ def _build_portfolio_summary(tracker: dict) -> str:
         verified_alpha = summary.get("verified_window_alpha_pct")
         verified_n = summary.get("verified_window_trades", 0)
         unverified_n = summary.get("unverified_window_trades", 0)
-        if verified_n and verified_alpha is not None:
+        _sc = _alpha_scope(summary)
+        if _sc["scope"] == "era_empty":
+            alpha_line = (
+                f"- Track record: {_sc.get('era_name') or 'current era'} "
+                f"began {_sc['era_start']}; NO closed trades yet, so there "
+                f"is no alpha to report. State that the rules-based record "
+                f"starts now. Never substitute a lifetime or historical "
+                f"figure for it.\n"
+            )
+        elif _sc["alpha"] is not None and _sc["n"]:
+            alpha_line = (
+                f"- Matched-window alpha vs NASDAQ: {_finite(_sc['alpha']):+.1f}% "
+                f"across {_sc['n']} {_sc['label']} trades — THE headline "
+                f"number; state it on air every episode, always call it the "
+                f"'matched-window' score, and always say the trade count in "
+                f"the same sentence so the sample size travels with the "
+                f"claim\n"
+            )
+            if _sc["scope"] == "era":
+                alpha_line += (
+                    f"- This record began {_sc.get('era_start')} under the "
+                    f"published rules; earlier trades are history and are "
+                    f"NOT blended into it\n"
+                )
+            if _sc["n"] < _MIN_SAMPLE_TRADES:
+                alpha_line += (
+                    "- Too few trades to call an edge — a scoreboard, not "
+                    "evidence\n"
+                )
+        elif verified_n and verified_alpha is not None:
             # The headline is the verified subset only (August 2026). The
             # qualifier is fused into the value the way mechanism 3 did it
             # — the sample size is part of the number, not a separate
@@ -3091,8 +3378,20 @@ def _build_portfolio_summary(tracker: dict) -> str:
                 f"number; state it on air every episode\n"
             )
 
+    # Label the lifetime figures as history whenever the on-air record is
+    # the era. Leaving "Total trades: 50 / Win rate: 56%" unlabelled above
+    # a line that says the era has no trades yet invites exactly the
+    # conflation this whole design exists to prevent — the model reaches
+    # for the nearest impressive number and attaches it to the current
+    # method.
+    _era_n = summary.get("era_trades", 0)
+    _hist = "" if _era_n else (
+        " — HISTORY ONLY, produced under the pre-2026-08-18 exit rules; "
+        "never present these as the current method's results"
+    )
     return (
         f"Portfolio Performance (simulated, $1,000 per trade):\n"
+        f"- Lifetime totals{_hist}\n"
         f"- Total trades: {total}\n"
         f"- Win rate: {summary.get('win_rate_pct', 0):.0f}% "
         f"({summary.get('wins', 0)}W / {summary.get('losses', 0)}L / "
@@ -3185,7 +3484,7 @@ def _extract_trade_from_digest(digest_text: str, episode_num: int | None = None)
 
     # Extract confidence
     confidence_match = re.search(
-        r"\*\*Confidence Level:\*\*\s*(Low|Medium|High)",
+        r"\*\*Confidence(?: Level)?:\*\*\s*\[?(Low|Medium|High)",
         digest_text, re.IGNORECASE,
     )
     confidence = confidence_match.group(1).capitalize() if confidence_match else "Unknown"
@@ -3196,6 +3495,19 @@ def _extract_trade_from_digest(digest_text: str, episode_num: int | None = None)
         digest_text,
     )
     target = target_match.group(1).strip() if target_match else ""
+
+    # Invalidation (2026-08-18): the observable condition that would prove
+    # the thesis wrong. Recorded on the trade so a closed position can be
+    # scored on whether the thesis broke or the trade simply ran out of
+    # sessions — two very different lessons that P&L alone cannot tell
+    # apart, and the difference the show is supposed to be teaching.
+    invalidation_match = re.search(
+        r"\*\*Invalidation:\*\*\s*(.+?)(?:\n\*\*|\n\n|\Z)",
+        digest_text, re.DOTALL,
+    )
+    invalidation = (
+        invalidation_match.group(1).strip() if invalidation_match else ""
+    )
 
     # Extract trade type (hybrid model: weekly hold vs flash trade)
     trade_type_match = re.search(
@@ -3222,7 +3534,10 @@ def _extract_trade_from_digest(digest_text: str, episode_num: int | None = None)
         "strategy": strategy,
         "confidence": confidence,
         "target_range": target,
+        "invalidation": invalidation,
         "trade_type": trade_type,
+        "policy_version": load_policy().get("version"),
+        "horizon_sessions": horizon_sessions(trade_type),
         "status": "open",
         "entry_price": None,
         "exit_price": None,
@@ -3405,14 +3720,32 @@ def get_mit_confidence_calibration(tracker: dict) -> str:
     distribution so the model starts committing to High/Low when the
     rubric supports it.
     """
+    # Era-scoped (2026-08-18): calibration computed over trades exited
+    # under the old rules would grade the model on a different game —
+    # those exits landed on whatever session the evaluating run happened
+    # to price, so a "wrong" High-confidence call might only have been an
+    # unlucky weekday.
     closed = [
         t for t in tracker.get("trades", [])
         if t.get("status") == "closed" and t.get("confidence")
+        and _in_era(t)
         and isinstance(t.get("alpha_pct"), (int, float))
         and math.isfinite(t["alpha_pct"])
     ]
+    rubric = (
+        " RUBRIC — High: the catalyst is already confirmed and the setup "
+        "is one this record has scored well on. Medium: the thesis is "
+        "sound but the catalyst is pending. Low: a reasonable idea you "
+        "would size smaller. The rating is a FORECAST and it is graded "
+        "when the trade closes; if every pick is Medium the field is "
+        "noise. Across the 50 trades before this era, 48 were Medium, 2 "
+        "Low and none High — do not repeat that."
+    )
     if len(closed) < 5:
-        return "Not enough data for confidence calibration yet."
+        return (
+            f"Confidence calibration: {len(closed)} graded pick(s) in this "
+            f"era — not enough to score the buckets yet." + rubric
+        )
 
     buckets: dict[str, list[float]] = {}
     for t in closed:
@@ -3429,15 +3762,24 @@ def get_mit_confidence_calibration(tracker: dict) -> str:
             f"{label}: {wins}/{len(alphas)} positive-alpha "
             f"(avg {sum(alphas) / len(alphas):+.1f}%)"
         )
-    line = "Calibration by stated confidence — " + " · ".join(parts) + "."
+    line = ("Calibration by stated confidence (this era only) — "
+            + " · ".join(parts) + ".")
     dominant = max(buckets.values(), key=len)
     if len(dominant) / len(closed) > 0.9:
         line += (
             " NOTE: over 90% of picks used a single confidence level, which "
             "makes the field uninformative — commit to High or Low whenever "
-            "the calibration rubric supports it, and say WHY."
+            "the rubric supports it, and say WHY."
         )
-    return line
+    _hi = buckets.get("High") or []
+    _lo = buckets.get("Low") or []
+    if len(_hi) >= 3 and len(_lo) >= 3 and (
+            sum(_hi) / len(_hi) <= sum(_lo) / len(_lo)):
+        line += (
+            " WARNING: High-confidence picks are NOT outperforming Low ones "
+            "— say so on air and tighten what earns a High."
+        )
+    return line + rubric
 
 
 def _maybe_record_monthly_snapshot(tracker: dict, today: "datetime.date") -> None:
