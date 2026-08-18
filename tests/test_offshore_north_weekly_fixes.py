@@ -1025,27 +1025,34 @@ class TestDebutCarriesTheDoctrine:
         assert "commercial airline pilot and a Nerra Network" not in p
 
 
-class TestLaunchedState:
-    """Superseded TestFreshStartState (which pinned the pre-launch reset).
-    Episode 1 published 2026-08-18 with the full relaunch stack; these
-    pin the LAUNCHED invariants instead."""
+class TestPremiereReset:
+    """The 2026-08-18 premiere was retired after review found three
+    defects (generic debut closing, spine stated twice, delivery guidance
+    spoken aloud) — all fixed in #1021. The show is back to pre-launch so
+    the regeneration is Episode 1 again."""
 
-    def test_episode_one_published(self):
+    def test_no_episode_artifacts_remain(self):
         digests = _ROOT / "digests" / "offshore_north"
-        assert list(digests.glob("Offshore_North_Ep001_*.md")), "Ep1 digest missing"
-        assert (_ROOT / "offshore_north_podcast.rss").exists(), "podcast feed missing"
+        leftovers = [
+            p.name for p in digests.iterdir()
+            if p.name != ".gitkeep"
+            and not p.name.startswith("credit_usage_")
+            # narrative memory is cumulative and not episode-pinned; it
+            # survives resets by design
+            and not p.name.endswith(("_narrative_tracker.json", "_theme_history.json"))
+        ]
+        assert not leftovers, f"unexpected files: {leftovers}"
 
-    def test_all_spend_records_kept(self):
-        """Every generation attempt's cost stays on the books, including
-        the four retired drafts."""
+    def test_numbering_restarts_at_one(self):
+        from engine.publisher import get_next_episode_number
+        assert get_next_episode_number(
+            _ROOT / "offshore_north_podcast.rss",
+            _ROOT / "digests" / "offshore_north",
+            "Offshore_North_Ep*.mp3") == 1
+
+    def test_every_attempt_s_spend_is_kept(self):
         credits = list((_ROOT / "digests" / "offshore_north").glob("credit_usage_*.json"))
-        assert len(credits) >= 4, f"spend records lost: {len(credits)}"
-
-    def test_feed_has_exactly_one_episode(self):
-        import re as _re
-        xml = (_ROOT / "offshore_north_podcast.rss").read_text(encoding="utf-8")
-        items = _re.findall(r"<item>", xml)
-        assert len(items) == 1, f"expected the single debut, found {len(items)}"
+        assert len(credits) >= 5, f"spend records lost: {len(credits)}"
 
 
 class TestThemeMusicInstalled:
