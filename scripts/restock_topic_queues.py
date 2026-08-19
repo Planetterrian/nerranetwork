@@ -315,8 +315,14 @@ def restock_show(cfg: RestockConfig, *, dry_run: bool, force: bool) -> dict:
     # Ask for extras so validation losses don't leave us short.
     from engine.generator import _call_grok  # deferred: needs GROK_API_KEY
     prompt = build_prompt(cfg, queue, needed + max(4, needed // 3))
+    # grok-4.6 (2026-08-19, experiment grok-46-funnel-and-ops): topic
+    # briefs become episodes for weeks — the deepest-thinking model pays
+    # compound interest here, and this workflow has no latency pressure.
+    # Env-overridable for rollback.
+    import os as _os
     text, _ = _call_grok(
         prompt,
+        model=_os.environ.get("NERRA_RESTOCK_MODEL", "").strip() or "grok-4.6",
         temperature=0.8,
         max_tokens=8000,
     )

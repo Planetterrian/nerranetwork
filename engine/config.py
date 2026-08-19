@@ -571,6 +571,12 @@ class DeepDiveConfig:
     # a daily-sized script (MIT Ep059 shipped 1,252 words against a 1,300 daily
     # target — far short of a real deep dive). 0 = inherit the show's value.
     min_podcast_words: int = 0
+    # Model override for deep-dive runs only (2026-08-19, experiment
+    # grok-46-funnel-and-ops). Specials are where depth is the whole
+    # point and latency doesn't matter (manual-force, no daily slot), so
+    # a show whose daily digest stays on grok-4.3 can run its specials
+    # on grok-4.6. Empty = inherit the show's llm.model.
+    model: str = ""
 
 
 @dataclass
