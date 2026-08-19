@@ -156,6 +156,23 @@ class TestTimeoutEnvelope:
             f"the step hard-kill ({step_limit_s}s) or it can never fire"
         )
 
+    def test_setup_steps_carry_a_hang_guard(self):
+        """2026-08-19: a GitHub-side stall froze the setup-python step for
+        SIX HOURS on four shows' scheduled runs (killed only by the 6h job
+        limit — four missed episodes, recovered by the audit's retry path
+        at 16:52). Every setup step in this workflow must carry its own
+        timeout so a hung dependency install fails fast and loud instead
+        of silently eating the day's slot."""
+        import yaml
+        wf = yaml.safe_load(self.WORKFLOW.read_text(encoding="utf-8"))
+        for job_name in ("run", "finalize"):
+            for step in wf["jobs"][job_name]["steps"]:
+                if str(step.get("uses", "")).endswith("actions/setup-python"):
+                    assert step.get("timeout-minutes"), (
+                        f"{job_name}: setup-python step needs timeout-minutes"
+                    )
+                    assert int(step["timeout-minutes"]) <= 60
+
     def test_llm_client_owns_no_retries(self):
         """_call_grok must create its OpenAI client with max_retries=0.
 
