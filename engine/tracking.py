@@ -266,7 +266,17 @@ def record_llm_usage(
     """
     grok = tracker["services"]["grok_api"]
     if model:
+        # File-level "model" is last-write-wins and CANNOT represent a
+        # split-model episode (2026-08-19: dp_pod's 4.3 digest tokens were
+        # labeled grok-4.6 because the 4.6 script recorded last). Keep the
+        # field for back-compat, but "models" carries every model that
+        # billed this episode, and each stage entry records its own below —
+        # that per-stage id is what lets analytics segment quality/cost by
+        # model era (the RENDER_LOOK_VERSION pattern applied to LLMs).
         grok["model"] = model
+        models = grok.setdefault("models", [])
+        if model not in models:
+            models.append(model)
     if step not in grok:
         grok[step] = {
             "prompt_tokens": 0,
@@ -275,6 +285,8 @@ def record_llm_usage(
             "cached_tokens": 0,
             "estimated_cost_usd": 0.0,
         }
+    if model:
+        grok[step]["model"] = model
     grok[step]["prompt_tokens"] += prompt_tokens
     grok[step]["completion_tokens"] += completion_tokens
     grok[step]["total_tokens"] += prompt_tokens + completion_tokens

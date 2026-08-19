@@ -1,0 +1,155 @@
+Claude designed novel protein binders from scratch for fourteen of fifteen targets, with twenty-two to thirty-five percent success rates that beat the field's typical ten to fifteen percent.
+
+This is Models and Agents, episode one hundred forty-six.
+
+Anthropic demonstrated Claude autonomously creating functional protein binders that were then built and validated by Adaptyv Bio and Twist Bioscience.
+
+Open-weight releases from Ornith and inclusionAI add new dense and MoE options for local use.
+
+Open A I paused frontier RL training for two weeks to strengthen security and monitoring before resuming larger runs.
+
+Anthropic tested whether Claude could perform de novo protein binder design using a prompt written by a human expert.
+
+The model produced candidate binders against fourteen out of fifteen targets.
+
+Independent labs synthesized and tested the designs, confirming that twenty-two to thirty-five percent of them bound successfully depending on the experimental setup.
+
+Some binders showed several times tighter affinity than the best previously published de novo examples.
+
+Protein binders represent only the first step toward drug development, not drugs themselves.
+
+Anthropic also reiterated plans to launch a scientist access program and noted that Opus five remains its most capable model for life-science research.
+
+This builds on yesterday's frontier model coverage by showing concrete capability gains in a specialized scientific domain.
+
+Ornith A I released the Ornith one point five family that includes a nine billion dense model, a thirty-five billion MoE, and a three hundred ninety-seven billion MoE.
+
+The largest variant reports eighty-six point one on Terminal-Bench two point one, eighty-six on SWE-Bench verified, sixty-five point one on SWE-Bench pro, and fifty-six on DeepSWE.
+
+These scores place the three hundred ninety-seven billion model in the same range as Claude Opus four point eight on reasoning, agentic, and coding tasks.
+
+Checkpoints are available on Hugging Face under the Ornith A I collection.
+
+InclusionAI released six base-model checkpoints for the Ling three point zero tiny base at seven point nine billion active parameters and the Ling three point zero flash base at one hundred twenty-four billion total with five point one billion active.
+
+None have received post-training, giving researchers clean starting points for continued pre-training, fine-tuning, and MoE studies.
+
+The tiny-base model delivers performance comparable or superior to Ling two point five mini-base on most benchmarks despite having only half the total parameters, with particularly strong coding results.
+
+The flash variant shows strong results on coding, reasoning, and long-context tasks relative to models two to three times larger.
+
+The WSM merging technique replaces traditional learning-rate decay, enabling offline exploration of different decay strategies on the shared training recipe.
+
+A controlled head-to-head compared Kimi K three with a full one hundred twenty-seven thousand token prompt against a top-five rag pipeline on the same twelve questions using identical system prompts.
+
+Blind grading measured correctness, completeness, and grounding while tracking cost and latency differences.
+
+The experiment isolates the effect of providing the entire context window versus retrieval-augmented generation on answer quality.
+
+Results highlight tradeoffs in token cost, response latency, and grounding accuracy when the model can attend to one hundred twenty-seven thousand tokens directly.
+
+Unsloth released new ten percent higher-accuracy GGUFs for the Qwen three point eight twenty-seven billion model along with one-bit quants that retain seventy-seven percent accuracy and run on eight gigabytes of RAM.
+
+The update uses post-training quantization only, with the imatrix file published for community reuse.
+
+The team also released an updated Unsloth Desktop build introducing auto compaction and external A P I tool calling support.
+
+Droidrun gives A I agents direct control over Android apps and devices, extending agent reach beyond browser and desktop environments.
+
+It targets mobile-specific workflows such as in-app navigation and device-level automation on Android.
+
+Early demonstrations focus on giving agents the same level of control previously limited to mobile ChatGPT apps.
+
+HoneyBook added a native Claude connector that lets small businesses run autonomous agents for client management and operations.
+
+The integration focuses on streamlining repetitive service-business tasks without requiring custom infrastructure or additional orchestration layers.
+
+Small merchants and solopreneurs can now connect their existing HoneyBook workflows directly to Claude for agent-driven automation.
+
+ForwardLane is helping financial firms move agentic A I past pilot stage by providing production-grade orchestration and compliance layers.
+
+The work targets repeatable deployment patterns for regulated environments where auditability and policy enforcement are required.
+
+Financial institutions receive concrete guidance on moving from isolated experiments to scaled agent populations that respect data residency and oversight constraints.
+
+Apodex released TRACES, a new benchmark specifically designed to measure A I performance on scientific discovery tasks.
+
+The benchmark aims to provide standardized evaluation for models operating in research workflows where success metrics differ from general coding or reasoning suites.
+
+It fills a gap between existing agent benchmarks and the specialized requirements of hypothesis generation, experimental design, and result interpretation in life sciences.
+
+A Beijing bar is offering unlimited free DeepSeek coding tokens with every one dollar fifty drink, running on two Nvidia DGX systems.
+
+The owner reports the promotion is losing money but continues as a marketing draw that attracts developers and A I enthusiasts.
+
+The setup uses the bar's DGX infrastructure to serve tokens on-site, creating a physical location where local model experimentation is subsidized by beverage sales.
+
+A new pull request adds CPU offload controls for dense-model FFN layers to llama dot cpp, mirroring the existing n-cpu-moe flags.
+
+Early testers report it enables Qwen three point eight twenty-seven billion Q four K M at one hundred thirty thousand context on sixteen gigabytes of VRAM systems.
+
+The change provides fine-grained control over which feed-forward layers stay on G P U versus CPU for dense architectures that previously lacked equivalent flexibility to MoE models.
+
+A recent paper argues that intermediate thinking tokens function as prompt augmentation rather than human-like reasoning traces.
+
+Models trained on corrupted traces still achieve comparable accuracy, and trace length shows little correlation with problem difficulty.
+
+The study finds no consistent link between trace validity and solution correctness, and reinforcement learning can improve final accuracy while sometimes decreasing trace validity.
+
+OK, let's pop the hood on agent population scaling.
+
+Everyone talks about more agents as if simply adding instances will produce better collective behavior.
+
+In practice, the transition from single agents to populations introduces coordination overhead, communication topology choices, and emergent failure modes that are not visible at small scale.
+
+At low agent counts, simple voting or sequential hand-off works because conflicts remain rare and shared state stays consistent with minimal synchronization.
+
+Once dozens of agents operate concurrently on shared state, message volume grows quadratically unless explicit summarization or hierarchical routing is added to keep each agent's context window manageable.
+
+Experiments show that beyond roughly twenty to thirty agents the dominant cost shifts from individual inference to maintaining consistent world models across the group, often requiring dedicated memory or consensus layers.
+
+The practical decision point is whether your workflow benefits from parallel exploration, favoring loose coupling and periodic merge steps, or requires tight consensus, favoring explicit coordination layers and shared memory buses.
+
+Teams that skip this analysis usually hit either redundant work or deadlock once population size exceeds the single-agent regime they originally tested.
+
+When scaling past thirty agents, start by measuring message volume and world-model divergence before adding more instances.
+
+The first bottleneck is almost always coordination rather than raw compute.
+
+Try the Ornith one point five thirty-five billion MoE checkpoint on SWE-Bench-style tasks to see how self-improving training affects long-horizon coding compared with Qwen three point eight twenty-seven billion.
+
+Run the new Unsloth Dynamic version three Qwen three point eight twenty-seven billion GGUF on an eight gigabyte system and measure whether the one-bit quant preserves enough accuracy for your local agent loops.
+
+Test Droidrun on a mobile app workflow you currently handle with browser agents to quantify the reduction in context switching.
+
+Compare Kimi K three full-context prompting against your existing rag stack on a one hundred thousand plus token internal document set using the same grading rubric.
+
+Open A I expects to resume larger frontier RL runs once the two-week security hardening period completes and smaller-scale evaluations validate the new isolation and monitoring controls.
+
+Anthropic plans to share details soon on the scientist access program for its most capable models.
+
+ALL IN twenty twenty-six will feature sessions with leaders from Cohere, Mistral A I, Nvidia, and Open A I on production agent deployments.
+
+Before we go, Open A I's resumed frontier runs should produce the first public signals on whether the new isolation controls change training throughput.
+
+That's Models and Agents for today.
+
+If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update.
+
+The A I world moves fast.
+
+We'll help you keep up.
+
+See you tomorrow.
+
+And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+And before you go: this show is part of the Nerra Network — a family of daily podcasts on tech, science, and markets, each one a short, sharp briefing you can finish on the commute.
+
+If today earned its place in your feed, here's your next listen — Environmental Intelligence, the environment and climate-policy brief for Canada.
+
+Find every show, free, at nerranetwork dot com.
+
+Want the written briefing with source links? Each show keeps a summaries page on nerranetwork dot com — scannable, dated, and free.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.

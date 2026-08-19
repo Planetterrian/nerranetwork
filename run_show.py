@@ -874,6 +874,11 @@ def run(args: argparse.Namespace) -> None:
                 # Deep dives want a fuller episode than the show's daily target.
                 if getattr(_dd_cfg, "min_podcast_words", 0):
                     config.llm.min_podcast_words = _dd_cfg.min_podcast_words
+                # Specials may run a deeper model than the daily pipeline
+                # (same per-run-object swap as the prompt files above).
+                if getattr(_dd_cfg, "model", ""):
+                    config.llm.model = _dd_cfg.model
+                    logger.info("Deep-dive model override: %s", _dd_cfg.model)
                 logger.info(
                     "Deep-dive mode: topic %r (%s)%s",
                     deep_dive_topic.get("id"), deep_dive_topic.get("title"),
@@ -2509,6 +2514,16 @@ def run(args: argparse.Namespace) -> None:
             # let us compute the actual/target ratio over time.
             metrics.record("podcast_script_word_count", _script_word_count)
             metrics.record("podcast_script_target_words", _TARGET_WORDS)
+            # Model-era stamps (2026-08-19): the RENDER_LOOK_VERSION pattern
+            # applied to LLMs — per-episode model ids so analytics can
+            # segment length/LV/retention/cost by model era instead of
+            # arguing from memory (the grok-4.6 staged trial made episodes
+            # split-model, which the credit file's single label can't show).
+            metrics.record("llm_digest_model", config.llm.model)
+            metrics.record(
+                "llm_script_model",
+                getattr(config.llm, "podcast_model", "") or config.llm.model,
+            )
 
             # 8c. Pre-TTS duration estimate — skip obviously doomed episodes before
             #     burning TTS credits.  ~150 words/minute for podcast speech.
