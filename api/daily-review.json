@@ -1,47 +1,82 @@
 {
-  "date": "2026-08-17",
-  "generated_at": "2026-08-17T16:44:09.489420+00:00",
+  "date": "2026-08-19",
+  "generated_at": "2026-08-19T16:52:16.043942+00:00",
   "summary": {
-    "episodes_reviewed": 13,
-    "critical_issues": 5,
-    "warning_issues": 15,
-    "missed_episodes": 0,
+    "episodes_reviewed": 6,
+    "critical_issues": 8,
+    "warning_issues": 12,
+    "missed_episodes": 4,
     "skipped_episodes": 0
   },
   "remediation": {
-    "auto_retry_shows": [],
-    "recommendation": "No automatic retries recommended."
+    "auto_retry_shows": [
+      "fascinating_frontiers",
+      "models_agents",
+      "models_agents_beginners",
+      "modern_investing"
+    ],
+    "recommendation": "Run `gh workflow run run-show.yml -f show=<slug>` for the shows above if they are not intentionally skipped."
   },
-  "missed_and_skipped": [],
+  "missed_and_skipped": [
+    {
+      "show": "fascinating_frontiers",
+      "severity": "critical",
+      "title": "Missed episode: Fascinating Frontiers",
+      "detail": "Fascinating Frontiers was scheduled to produce an episode on 2026-08-19 (schedule: daily) but no output files were found in digests/fascinating_frontiers/ and no skip marker was present. The pipeline may have failed or the workflow did not trigger."
+    },
+    {
+      "show": "models_agents",
+      "severity": "critical",
+      "title": "Missed episode: Models & Agents",
+      "detail": "Models & Agents was scheduled to produce an episode on 2026-08-19 (schedule: daily) but no output files were found in digests/models_agents/ and no skip marker was present. The pipeline may have failed or the workflow did not trigger."
+    },
+    {
+      "show": "models_agents_beginners",
+      "severity": "critical",
+      "title": "Missed episode: Models & Agents for Beginners",
+      "detail": "Models & Agents for Beginners was scheduled to produce an episode on 2026-08-19 (schedule: daily) but no output files were found in digests/models_agents_beginners/ and no skip marker was present. The pipeline may have failed or the workflow did not trigger."
+    },
+    {
+      "show": "modern_investing",
+      "severity": "critical",
+      "title": "Missed episode: Modern Investing Techniques",
+      "detail": "Modern Investing Techniques was scheduled to produce an episode on 2026-08-19 (schedule: daily) but no output files were found in digests/modern_investing/ and no skip marker was present. The pipeline may have failed or the workflow did not trigger."
+    }
+  ],
   "episodes": [
     {
       "show": "tesla",
-      "episode_num": 575,
-      "critical": 0,
-      "warnings": 1,
+      "episode_num": 577,
+      "critical": 1,
+      "warnings": 2,
       "issues": [
         {
           "severity": "warning",
-          "title": "Podcast script below target (1042 words)",
-          "detail": "Script has 1042 words (target: 1400+). Episode may feel shorter than usual."
+          "title": "Podcast script below target (1231 words)",
+          "detail": "Script has 1231 words (target: 1400+). Episode may feel shorter than usual."
         },
         {
-          "severity": "info",
-          "title": "AI quality score: 8/10",
-          "detail": "Solid, well-structured daily briefing with accurate figures and smooth transitions; minor room for deeper context on regulatory or financial items."
+          "severity": "critical",
+          "title": "AI review: Repetitive",
+          "detail": "The Austin robotaxi bollard incident is restated in successive paragraphs, and the gold Cybercab/Philadelphia/Starlink/Austin hub story is repeated nearly verbatim later."
+        },
+        {
+          "severity": "warning",
+          "title": "AI quality score: 5/10",
+          "detail": "Grok rated this episode 5/10. Covers multiple Tesla stories with useful energy-supply analysis, but heavy near-verbatim repetition of two items makes the episode feel padded and sloppy."
         }
       ]
     },
     {
       "show": "omni_view",
-      "episode_num": 146,
-      "critical": 0,
+      "episode_num": 148,
+      "critical": 1,
       "warnings": 3,
       "issues": [
         {
-          "severity": "warning",
-          "title": "Podcast script below target (1301 words)",
-          "detail": "Script has 1301 words (target: 1400+). Episode may feel shorter than usual."
+          "severity": "info",
+          "title": "Slow news mode active (trigger: stale_repeats)",
+          "detail": "This episode was produced in slow news mode (trigger: stale_repeats). Verify it sounds natural and doesn't reveal the slow news status."
         },
         {
           "severity": "warning",
@@ -50,219 +85,98 @@
         },
         {
           "severity": "warning",
-          "title": "High cross-episode repetition (21 stories)",
-          "detail": "The content tracker found 21 stories in this episode that were already covered in recent episodes. This indicates the show may be repeating content across days. Check that {recent_content_summary} is wired into the digest prompt (shows/prompts/{slug}_digest.txt) and that the content tracker JSON is being updated correctly.\n  Config: shows/omni_view.yaml\n  Prompt: shows/prompts/omni_view_digest.txt\n  Tracker: digests/omni_view/omni_view_content_tracker.json"
+          "title": "High cross-episode repetition (23 stories)",
+          "detail": "The content tracker found 23 stories in this episode that were already covered in recent episodes. This indicates the show may be repeating content across days. Check that {recent_content_summary} is wired into the digest prompt (shows/prompts/{slug}_digest.txt) and that the content tracker JSON is being updated correctly.\n  Config: shows/omni_view.yaml\n  Prompt: shows/prompts/omni_view_digest.txt\n  Tracker: digests/omni_view/omni_view_content_tracker.json"
         },
         {
-          "severity": "info",
-          "title": "AI quality score: 8/10",
-          "detail": "Solid, well-structured episode with balanced coverage and no noticeable production or factual issues."
-        }
-      ]
-    },
-    {
-      "show": "fascinating_frontiers",
-      "episode_num": 164,
-      "critical": 1,
-      "warnings": 1,
-      "issues": [
-        {
           "severity": "warning",
-          "title": "Podcast script below target (1394 words)",
-          "detail": "Script has 1394 words (target: 1700+). Episode may feel shorter than usual."
+          "title": "Chronic slow news mode (6 recent episodes)",
+          "detail": "This show has been in slow news mode for 6 of the last 6 episodes. This may indicate stale RSS sources, an overly aggressive content tracker, or insufficient source diversity. Consider:\n  - Running a feed audit: python scripts/audit_feeds.py\n  - Adding more RSS sources to shows/omni_view.yaml\n  - Expanding slow news segments: shows/segments/omni_view.json\n  - Checking content tracker cooldown settings"
         },
         {
           "severity": "critical",
           "title": "AI review: Repetitive",
-          "detail": "Titan aerobots concept is described in nearly identical wording twice in succession."
+          "detail": "multiple near-verbatim sentence repeats (Japan earnings attribution, India currency/commodity caveats, and restated Ukraine martial-law points)"
         },
         {
           "severity": "info",
-          "title": "AI quality score: 7/10",
-          "detail": "Solid episode with one noticeable repetition of the Titan segment; otherwise well-structured and factually sound."
+          "title": "AI quality score: 6/10",
+          "detail": "Coherent multi-story news recap with useful legal framing on Ukraine, but noticeable copy-paste phrasing and thin treatment of several items make it feel padded rather than polished."
         }
       ]
     },
     {
       "show": "planetterrian",
-      "episode_num": 154,
-      "critical": 0,
-      "warnings": 1,
+      "episode_num": 156,
+      "critical": 2,
+      "warnings": 2,
       "issues": [
         {
           "severity": "warning",
-          "title": "Podcast script below target (1385 words)",
-          "detail": "Script has 1385 words (target: 1600+). Episode may feel shorter than usual."
-        },
-        {
-          "severity": "info",
-          "title": "AI quality score: 8/10",
-          "detail": "Strong, well-organized episode with clear science reporting and no notable issues."
-        }
-      ]
-    },
-    {
-      "show": "env_intel",
-      "episode_num": 64,
-      "critical": 1,
-      "warnings": 1,
-      "issues": [
-        {
-          "severity": "warning",
-          "title": "Possible story duplication (2 block pairs)",
-          "detail": "Found 2 pairs of non-adjacent paragraph blocks with high proper-noun overlap. The same story may be covered twice."
-        },
-        {
-          "severity": "critical",
-          "title": "AI review: Repetitive",
-          "detail": "[Alberta county EPEA position and data-centre GHG jurisdiction discussed multiple times with near-identical phrasing]"
-        },
-        {
-          "severity": "info",
-          "title": "AI quality score: 6/10",
-          "detail": "Solid regulatory briefing undermined by noticeable repetition of the Alberta data-centre story; otherwise coherent and on-topic."
-        }
-      ]
-    },
-    {
-      "show": "models_agents",
-      "episode_num": 144,
-      "critical": 1,
-      "warnings": 1,
-      "issues": [
-        {
-          "severity": "warning",
-          "title": "Excessive repetition: 'language server protocol' (7x)",
-          "detail": "The phrase 'language server protocol' appears 7 times, suggesting possible LLM hallucination or loop."
-        },
-        {
-          "severity": "critical",
-          "title": "AI review: Repetitive",
-          "detail": "The Inflation Agent summary is repeated almost verbatim in the closing advice section."
-        },
-        {
-          "severity": "info",
-          "title": "AI quality score: 7/10",
-          "detail": "Solid, well-structured episode with one noticeable repetition; otherwise clear, informative, and publishable."
-        }
-      ]
-    },
-    {
-      "show": "models_agents_beginners",
-      "episode_num": 136,
-      "critical": 0,
-      "warnings": 1,
-      "issues": [
-        {
-          "severity": "warning",
-          "title": "Podcast script below target (1035 words)",
-          "detail": "Script has 1035 words (target: 1200+). Episode may feel shorter than usual."
-        },
-        {
-          "severity": "info",
-          "title": "AI quality score: 8/10",
-          "detail": "Solid, engaging episode with clear explanations and practical examples; minor room for deeper detail on the tools mentioned."
-        }
-      ]
-    },
-    {
-      "show": "finansy_prosto",
-      "episode_num": 79,
-      "critical": 1,
-      "warnings": 1,
-      "issues": [
-        {
-          "severity": "warning",
-          "title": "Podcast script below target (768 words)",
-          "detail": "Script has 768 words (target: 1000+). Episode may feel shorter than usual."
-        },
-        {
-          "severity": "info",
-          "title": "Script may be missing intro greeting",
-          "detail": "The first 500 characters don't contain a recognizable intro pattern (e.g. 'Welcome to', 'Thanks for tuning in', host name). The episode may start abruptly."
-        },
-        {
-          "severity": "critical",
-          "title": "AI review: Repetitive",
-          "detail": "[multiple near-verbatim repetitions of phrases like \"\u0421\u0442\u043e\u0438\u0442 \u043e\u0431\u0441\u0443\u0434\u0438\u0442\u044c \u0441 \u0441\u043e\u0432\u0435\u0442\u043d\u0438\u043a\u043e\u043c\" and \"\u043a\u0430\u043a \u0431\u0443\u0434\u0442\u043e \u0432\u044b \u0441\u043a\u043b\u0430\u0434\u044b\u0432\u0430\u0435\u0442\u0435 \u0434\u0435\u043d\u044c\u0433\u0438 \u0432 \u043e\u0442\u0434\u0435\u043b\u044c\u043d\u0443\u044e \u043a\u043e\u0440\u043e\u0431\u043a\u0443\"]"
-        },
-        {
-          "severity": "info",
-          "title": "AI quality score: 6/10",
-          "detail": "Solid educational content on Canadian retirement and tax planning, but weakened by repetitive phrasing and formulaic transitions."
-        }
-      ]
-    },
-    {
-      "show": "modern_investing",
-      "episode_num": 140,
-      "critical": 0,
-      "warnings": 0,
-      "issues": [
-        {
-          "severity": "info",
-          "title": "AI quality score: 8/10",
-          "detail": "Strong, well-structured episode with clear educational value on AI valuation methods and risk management; minor caveat is the simulated trade performance tracking could be more detailed."
-        }
-      ]
-    },
-    {
-      "show": "privet_russian",
-      "episode_num": 66,
-      "critical": 1,
-      "warnings": 3,
-      "issues": [
-        {
-          "severity": "warning",
-          "title": "Podcast script below target (699 words)",
-          "detail": "Script has 699 words (target: 800+). Episode may feel shorter than usual."
-        },
-        {
-          "severity": "info",
-          "title": "Possible duplicate transition (1 instance)",
-          "detail": "One consecutive line pair has near-duplicate content."
-        },
-        {
-          "severity": "warning",
-          "title": "AI review: Factual Errors",
-          "detail": "\"My month over month loves tea\" is a mistranslation of \"\u041c\u043e\u044f \u043c\u0430\u043c\u0430 \u043b\u044e\u0431\u0438\u0442 \u0447\u0430\u0439\" (should be \"My mom loves tea\")."
+          "title": "Podcast script below target (1381 words)",
+          "detail": "Script has 1381 words (target: 1600+). Episode may feel shorter than usual."
         },
         {
           "severity": "critical",
           "title": "AI review: Incoherent",
-          "detail": "The sentence \"My month over month loves tea\" is garbled and nonsensical."
+          "detail": "mismatched transitions announce sleep/protein regulation then immediately discuss shrew skulls; stellar-death astronomy is dropped into a biology compilation; stories jump without logical links"
+        },
+        {
+          "severity": "critical",
+          "title": "AI review: Repetitive",
+          "detail": "bacterial energy-cable story is told twice with near-identical details and wording, plus restated epigenetics points"
         },
         {
           "severity": "warning",
           "title": "AI quality score: 5/10",
-          "detail": "Grok rated this episode 5/10. A solid family-vocabulary lesson undermined by one obvious translation error that breaks coherence."
+          "detail": "Grok rated this episode 5/10. Scattershot science/policy roundup with coherent individual items but broken flow, a blatant repeated segment, and thin connective tissue that a listener would notice."
         }
       ]
     },
     {
       "show": "spacex",
-      "episode_num": 72,
+      "episode_num": 74,
       "critical": 0,
-      "warnings": 1,
+      "warnings": 4,
       "issues": [
         {
           "severity": "warning",
-          "title": "Podcast script below target (1121 words)",
-          "detail": "Script has 1121 words (target: 1300+). Episode may feel shorter than usual."
+          "title": "Podcast script below target (1055 words)",
+          "detail": "Script has 1055 words (target: 1300+). Episode may feel shorter than usual."
+        },
+        {
+          "severity": "warning",
+          "title": "Possible story duplication (3 block pairs)",
+          "detail": "Found 3 pairs of non-adjacent paragraph blocks with high proper-noun overlap. The same story may be covered twice."
+        },
+        {
+          "severity": "warning",
+          "title": "AI review: Factual Errors",
+          "detail": "Falcon Heavy has 27 Merlin engines (9 per core), not the \u201cnine Merlin engines\u201d repeatedly cited in the deep-dive/Idiot Index section."
+        },
+        {
+          "severity": "warning",
+          "title": "AI review: Off Topic",
+          "detail": "Multi-paragraph segments on Cursor\u2019s rebrand, GitHub outage, Southeast data-center moratoriums, and GLM-5.3 have no connection to SpaceX."
         },
         {
           "severity": "info",
-          "title": "AI quality score: 8/10",
-          "detail": "Strong, well-structured episode with solid factual grounding and clear analysis; minor polish could elevate it to 9-10."
+          "title": "AI quality score: 6/10",
+          "detail": "Relevant SpaceX news plus a substantial first-principles deep dive on Dragonfly, but a glaring engine-count error and several pasted-in unrelated AI/tech items keep it from being strong."
         }
       ]
     },
     {
       "show": "first_principles",
-      "episode_num": 73,
+      "episode_num": 75,
       "critical": 0,
-      "warnings": 0,
+      "warnings": 1,
       "issues": [
+        {
+          "severity": "warning",
+          "title": "Excessive repetition: 'a meter of' (5x)",
+          "detail": "The phrase 'a meter of' appears 5 times, suggesting possible LLM hallucination or loop."
+        },
         {
           "severity": "info",
           "title": "Significant story overlap with unintended_consequences",
@@ -270,26 +184,21 @@
         },
         {
           "severity": "info",
-          "title": "AI quality score: 8/10",
-          "detail": "Strong, well-structured episode that effectively applies first-principles analysis to the history of washing machines with clear technical detail and logical progression."
+          "title": "AI quality score: 9/10",
+          "detail": "A tightly argued, historically grounded first-principles account of the zipper that stays on theme, reads cleanly, and shows no script-level defects in the excerpt."
         }
       ]
     },
     {
       "show": "unintended_consequences",
-      "episode_num": 92,
+      "episode_num": 94,
       "critical": 0,
-      "warnings": 1,
+      "warnings": 0,
       "issues": [
         {
-          "severity": "warning",
-          "title": "Podcast script below target (1052 words)",
-          "detail": "Script has 1052 words (target: 1300+). Episode may feel shorter than usual."
-        },
-        {
           "severity": "info",
-          "title": "AI quality score: 8/10",
-          "detail": "Strong, well-structured episode that clearly traces the causal chain from sugar tariffs and corn subsidies to the HFCS shift and candy-plant migration."
+          "title": "AI quality score: 9/10",
+          "detail": "A tightly reported, well-structured episode that traces TB 117 from a reasonable 1970s fire rule to a continental chemical-exposure story, with accurate names, dates, and appropriate caveats on contested claims. Strong narrative craft and on-topic throughout."
         }
       ]
     }
