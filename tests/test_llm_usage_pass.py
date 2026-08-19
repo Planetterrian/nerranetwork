@@ -240,3 +240,48 @@ class TestStagedGrok46Trial:
                 encoding="utf-8"))
         ids = {e.get("id") for e in reg["experiments"]}
         assert "staged-grok-46-trial" in ids
+
+
+class TestGrok46FunnelAndOpsWave:
+    """Scope guards for experiment grok-46-funnel-and-ops (2026-08-19):
+    grok-4.6 on the metadata/ops surfaces where writing quality is the
+    product and latency doesn't gate a daily slot. Each pin is a
+    one-line revert; none touches a daily news digest."""
+
+    def test_title_bundle_runs_on_46(self):
+        src = (REPO_ROOT / "engine" / "youtube_titles.py").read_text(
+            encoding="utf-8")
+        assert src.count('model: str = "grok-4.6"') == 3
+        assert 'model: str = "grok-4.3"' not in src
+
+    def test_restock_runs_on_46_with_env_rollback(self):
+        src = (REPO_ROOT / "scripts" / "restock_topic_queues.py").read_text(
+            encoding="utf-8")
+        assert "NERRA_RESTOCK_MODEL" in src
+        assert '"grok-4.6"' in src
+
+    def test_spacex_specials_run_on_46_daily_stays_43(self):
+        from engine.config import load_config
+        cfg = load_config(REPO_ROOT / "shows" / "spacex.yaml")
+        assert cfg.deep_dive.model == "grok-4.6"
+        assert cfg.llm.model == "grok-4.3"
+
+    def test_deep_dive_model_default_is_inherit(self):
+        from engine.config import DeepDiveConfig
+        assert DeepDiveConfig().model == ""
+
+    def test_run_show_applies_the_deep_dive_model_swap(self):
+        src = (REPO_ROOT / "run_show.py").read_text(encoding="utf-8")
+        assert "config.llm.model = _dd_cfg.model" in src
+
+    def test_model_era_stamps_are_recorded(self):
+        """Per-episode model ids (the RENDER_LOOK_VERSION pattern for
+        LLMs): without them, split-model episodes are unattributable in
+        analytics — the credit file's single label proved that on the
+        trial's first day."""
+        src = (REPO_ROOT / "run_show.py").read_text(encoding="utf-8")
+        assert 'metrics.record("llm_digest_model"' in src
+        assert '"llm_script_model"' in src
+        tsrc = (REPO_ROOT / "engine" / "tracking.py").read_text(
+            encoding="utf-8")
+        assert 'grok[step]["model"] = model' in tsrc

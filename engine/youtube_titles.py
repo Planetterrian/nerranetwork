@@ -16,6 +16,13 @@ Design contract:
     landmine #17 A/B-listen gate.
 """
 
+# Model note (2026-08-19, experiment grok-46-funnel-and-ops): the title
+# bundle runs on grok-4.6 — titles/punch text are the network's biggest
+# discovery lever, this is one small metadata-only call per episode
+# (outside landmine #17), and the 4.6 trial showed materially sharper
+# instruction-following on writing tasks. Rollback: flip the three
+# ``model:`` defaults below to grok-4.3.
+
 from __future__ import annotations
 
 import logging
@@ -108,7 +115,7 @@ def generate_youtube_titles(
     episode_num: int,
     keywords: Optional[List[str]] = None,
     n: int = 3,
-    model: str = "grok-4.3",
+    model: str = "grok-4.6",
     perf_dir: Optional[Path] = None,
     channel: str = "en",
 ) -> List[str]:
@@ -196,7 +203,7 @@ def generate_title_bundle(
     episode_num: int,
     keywords: Optional[List[str]] = None,
     n: int = 3,
-    model: str = "grok-4.3",
+    model: str = "grok-4.6",
     perf_dir: Optional[Path] = None,
     short_window_texts: Optional[List[str]] = None,
     channel: str = "en",
@@ -291,7 +298,7 @@ def best_youtube_title(
     show_name: str,
     episode_num: int,
     keywords: Optional[List[str]] = None,
-    model: str = "grok-4.3",
+    model: str = "grok-4.6",
     perf_dir: Optional[Path] = None,
 ) -> Optional[str]:
     """Convenience: the single best candidate, or ``None`` on failure."""

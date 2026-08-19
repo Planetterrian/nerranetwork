@@ -421,6 +421,54 @@ experiments:
       out on outage day. NERRA_LLM_TIMEOUT_SECONDS raised 300 -> 600 in
       run-show.yml (worst-case per stage 3 x 600s = 30 min, still under
       the 50-min watchdog). Cost: ~+$3-5/mo at trial scope.
+    interim: >
+      2026-08-19 first episodes: all three shipped, zero envelope
+      issues (digest 53-236s). dp_pod: verbatim digest overlap 1.8%
+      (best ever; 4.3-era 20-65%), exclamations/voice tags present,
+      LV in band — the clearest win. UC 2354w/15:38 is ON-SPEC for the
+      first time (its prompt always asked 2200-2800w; the 4.3 plateau
+      under-delivered and the network tuned around it). FPD overshot
+      its own 1800-2400 spec (3204w) via the "longer is better" clause
+      — capped at ~2600 same day (A/B-listen applies); its
+      anti-repetition retry also fired once — watch for chronic firing.
+      Reviewer FACTUAL_ERRORS read pending (4.6 reviewer, cross-show).
+  - id: grok-46-funnel-and-ops
+    title: "grok-4.6 on the funnel + ops surfaces — titles, restock, specials"
+    area: growth
+    shipped: 2026-08-19
+    readout: 2026-09-05
+    status: reading
+    baseline: >
+      YouTube title bundle, topic-queue restock, and deep-dive specials
+      all on grok-4.3. EN long-form CTR/velocity per the youtube_stats
+      trailing window; restock briefs at the 4.3 depth the queues carry
+      today; the one shipped deep-dive special (spacex q2-2026-earnings)
+      generated on 4.3.
+    target: >
+      Title bundle: long-form vpd / Shorts velocity on 4.6-era titles at
+      least matches the trailing window (titles are metadata-only —
+      outside landmine 17 — so this can simply run and be read).
+      Restock: next restock cycle's briefs pass validation at the same
+      or better rate. Specials: next forced spacex deep-dive ships on
+      4.6 with no timeout (specials have no daily-slot pressure).
+    criteria: >
+      Rollback is per-surface and one line each: the three model
+      defaults in engine/youtube_titles.py; NERRA_RESTOCK_MODEL env or
+      the pin in scripts/restock_topic_queues.py; deep_dive.model in
+      shows/spacex.yaml. Revert a surface if its output quality visibly
+      regresses (title truncation/garbling, restock validation-failure
+      spike, special timeout) — latency canary and envelope guards from
+      the 08-18 outage apply everywhere.
+    notes: >
+      Wave shipped alongside per-stage model-era stamps
+      (llm_digest_model / llm_script_model in metrics_ep*.json and
+      per-stage model ids in credit files) so every future model
+      question is answerable by query — the credit file's single
+      file-level model label could not represent the trial's
+      split-model episodes. Wave 2 (script-stage pins for omni_view /
+      MAB / MIT + dp_pod comedy-spec re-tightening) is deliberately
+      HELD for the staged-grok-46-trial readout 2026-09-01 per
+      docs/model_upgrade_playbook.md.
   - id: mit-verified-window-alpha
     title: "Modern Investing states verified-window alpha only"
     area: quality
