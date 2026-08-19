@@ -1,0 +1,69 @@
+Claude designed novel protein binders from scratch for 14 of 15 targets, with 22 to 35 percent success rates that beat the field's typical 10 to 15 percent. This is Models & Agents, episode 146. Andthropic demonstrated Claude autonomously creating functional protein binders that were then built and validated by adaptive bio and twist bioscience. Open weight releases from Ornith and Inclusion ai add new dense
+and MOE options for local use. Open ai paused frontier RL training for two weeks to strengthen security and monitoring before resuming larger runs. Anthropic tested whether Claude could perform denovo protein binder design, using a prompt written by a human expert.
+The model produced candidate binders against 14 out of 15 targets, independent labs synthesized and tested the designs, confirming that 22 to 35 percent of them bound successfully, depending on the experimental setup. Some binders showed several times tighter affinity than the best previously published denovo examples.
+Protein binders represent only the first step toward drug development, not drugs themselves. Anthropic also reiterated plans to launch a scientist access program and noted that Opus 5 remains its most capable model for life science research.
+This builds on yesterday's frontier model coverage by showing concrete capability gains in a specialized scientific domain. Ornith ai released the Ornith 1.5 family
+that includes a 9 billion dense model, a 35 billion MOE, and a 397 billion MOE. The largest variant reports 86.1 on terminal bench 2.1, 86 on sweet bench verified, 65.1 on sweet bench pro, and 56 on deep sweet.
+These scores place the 397 billion model in the same range as Claude Opus 4.8 on reasoning, agentic, and coding tasks. Checkpoints are available on hugging face under the Ornith ai collection.
+Inclusion ai released six base model checkpoints for the Ling 3.0 tiny base, at 7.9 billion active parameters, and the Ling 3.0 flash base at 124 billion total, with 5.1 billion active.
+None have received post-training, giving researchers clean starting points for continued pre-training, fine-tuning, and MOE studies.
+The tiny base model delivers performance comparable or superior to Ling 2.5 mini base on most benchmarks, despite having only half the total parameters, with particularly strong coding results.
+The flash variant shows strong results on coding, reasoning, and long context tasks relative to models 2 to 3 times larger.
+The WSM merging technique replaces traditional learning rate decay, enabling offline exploration of different decay strategies on the shared training recipe.
+A controlled head-to-head compared Kimi K3, with a full 127,000 token prompt, against a top 5 rag pipeline on the same 12 questions, using identical system prompts.
+Blind grading measured correctness, completeness, and grounding, while tracking cost and latency differences.
+The experiment isolates the effect of providing the entire context window, versus retrieval augmented generation on anso quality.
+Results highlight trade-offs in token cost, response latency, and grounding accuracy, when the model can attend to 127,000 tokens directly.
+Unsloth released new 10% higher accuracy GGUFs for the Quinn 3.827 billion model, along with 1-bit quants that retain 77% accuracy, and run on 8GB of RAM.
+The update uses post-training quantization only, with the iMatrix file published for community reuse.
+The team also released an updated unsloth desktop build, introducing auto-compaction and external API tool calling support.
+Droid Run gives AI agents direct control over Android apps and devices, extending agent reach beyond browser and desktop environments.
+It targets mobile specific workflows, such as in-app navigation, and device level automation on Android.
+Early demonstrations focus on giving agents the same level of control previously limited to mobile chat GPT apps.
+Honeybook added a native cloud connector that lets small businesses run autonomous agents for client management and operations.
+The integration focuses on streamlining repetitive service business tasks, without requiring custom infrastructure or additional orchestration layers.
+Small merchants and solopreneurs can now connect their existing Honeybook workflows directly to cloud for agent driven automation.
+Forward Lane is helping financial firms move agent AI past pilot stage by providing production grade orchestration and compliance layers.
+The work targets repeatable deployment patterns for regulated environments, where auditability and policy enforcement are required.
+Financial institutions receive concrete guidance on moving from isolated experiments to scaled agent populations that respect data residency and oversight constraints.
+Apodex released traces, a new benchmark specifically designed to measure AI performance on scientific discovery tasks.
+The benchmark aims to provide standardized evaluation for models operating in research workflows, where success metrics differ from general coding or reasoning suites.
+It fills a gap between existing agent benchmarks and the specialized requirements of hypothesis generation, experimental design, and result interpretation in life sciences.
+A Beijing bar is offering unlimited free deep seat coding tokens with every $1.50 drink, running on two Nvidia DGX systems.
+The owner reports the promotion is losing money but continues as a marketing draw that attracts developers and AI enthusiasts.
+The setup uses the bar's DGX infrastructure to serve tokens on site, creating a physical location where local model experimentation is subsidized by beverage sales.
+A new pull request adds CPU offload controls for dense model FFN layers to llama dot CPP, mirroring the existing NCPU MOE flags.
+Early testers report it enables quen 3.827 billion Q4KM at 130,000 context on 16 gigabytes of VRAM systems.
+The change provides fine grained control over which feed forward layers stay on GPU versus CPU for dense architectures that previously lacked equivalent flexibility to MOE models.
+A recent paper argues that intermediate thinking tokens function as prompt augmentation rather than human-like reasoning traces.
+Models trained on corrupted traces still achieve comparable accuracy and trace length shows little correlation with problem difficulty.
+The study finds no consistent link between trace validity and solution correctness and reinforcement learning can improve final accuracy while sometimes decreasing trace validity.
+Okay, let's pop the hood on agent population scaling.
+Everyone talks about more agents as if simply adding instances will produce better collective behavior.
+In practice, the transition from single agents to populations introduces coordination overhead, communication topology choices, and emergent failure modes that are not visible at small scale.
+At low agent counts, simple voting or sequential handoff works because conflicts remain rare and shared state stays consistent with minimal synchronization.
+Once dozens of agents operate concurrently on shared state, message volume grows quadratically unless explicit summarization or hierarchical routing is added to keep each agent's context window manageable.
+Experiments show that beyond roughly 20 to 30 agents, the dominant cost shifts from individual inference to maintaining consistent world models across the group, often requiring dedicated memory or consensus layers.
+The practical decision point is whether your workflow benefits from parallel exploration, favoring loose coupling and periodic merge steps, or requires tight consensus, favoring explicit coordination layers and shared memory buses.
+Teams that skip this analysis usually hit either redundant work or deadlock once population size exceeds the single agent regime they originally tested.
+When scaling past 30 agents, start by measuring message volume and world model divergence before adding more instances.
+The first bottleneck is almost always coordination rather than raw compute.
+Try the Ornith 1.535 billion MOE checkpoint on SWE bench style tasks to see how self-improving training affects long horizon coding compared with Quinn 3.827 billion.
+Run the new unslothed dynamic version 3 Quinn 3.827 billion GGUF on an 8 gigabyte system and measure whether the one bit quant preserves enough accuracy for your local agent loops.
+Test droid run on a mobile app workflow you currently handle with browser agents to quantify their deduction in context switching.
+Compare Kimi K3 full context prompting against your existing RAG stack on a 100,000 plus token internal documents set using the same grading rubric.
+Open AI expects to resume larger frontier RL runs once the two week security hardening period completes and smaller scale evaluations validate the new isolation and monitoring controls.
+And Thropic plans to share details soon on the scientist access program for its most capable models.
+All in 2026 will feature sessions with leaders from co here, Meestral AI, NVIDIA and Open AI on production agent deployments.
+Before we go, open AI's resumed frontier runs should produce the first public signals on whether the new isolation controls change training throughput.
+That's models and agents for today.
+If you found this useful, share it with someone who's trying to keep up with all these changes and subscribe so you don't miss tomorrow's update.
+The AI world moves fast. We'll help you keep up. See you tomorrow.
+And if you'd rather watch than listen, find us on YouTube at Nerra Network.
+Links in the show notes. And before you go, this show is part of the Nerra network, a family of daily podcasts on tech, science and markets.
+Each one a short, sharp briefing you can finish on the commute.
+If today earned its place in your feed, here's your next listen, environmental intelligence, the environment and climate policy brief for Canada.
+Find every show free at www.nerranetwork.com.
+Want the written briefing with source links?
+Each show keeps a summaries page on www.nerranetwork.com, scanable, dated and free.
+This episode used AI voice synthesis of my voice. Editorial selection and analysis are my own.
