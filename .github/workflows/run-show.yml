@@ -308,6 +308,15 @@ jobs:
           fetch-depth: 1
 
       - uses: ./.github/actions/setup-python
+        # Hung-setup guard (2026-08-19): a GitHub-side cache/download
+        # stall froze this step for SIX HOURS on four shows' scheduled
+        # runs (FF/M&A/MAB/MIT all cancelled at the 6h job limit having
+        # produced nothing; FF's setup had already taken 46 min the day
+        # before). Normal is 1-2 min; 45 gives a degraded-but-moving
+        # install room while turning a genuine hang into a fast, LOUD
+        # failure the daily audit's retry path can recover the same
+        # morning instead of after the whole slot is gone.
+        timeout-minutes: 45
         with:
           python-version: '3.12'
           requirements-file: 'requirements.txt'
@@ -804,6 +813,7 @@ jobs:
           fetch-depth: 1
 
       - uses: ./.github/actions/setup-python
+        timeout-minutes: 45   # hung-setup guard — see the run job's note
         with:
           python-version: '3.12'
           requirements-file: 'requirements.txt'
