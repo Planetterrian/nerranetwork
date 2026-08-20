@@ -62,6 +62,48 @@ exit:
     gap_aware: true   # a gap through the stop fills at the open, not the stop
     entry_bar_breach_claimed: false   # daily bars cannot prove same-day sequence
 
+options:
+  # The show teaches options in roughly 4 of every 5 episodes and had
+  # never traded one: 0 of 61 simulated positions used a derivative while
+  # "covered call" alone had been taught 33 times. A show that teaches a
+  # tactic it never puts its own (simulated) money behind is asking the
+  # audience to take its word for something it has not tested.
+  #
+  # The honesty constraint that shapes this whole design: an option's
+  # premium cannot be reconstructed after the fact from free data. So the
+  # premium is a REAL QUOTE RECORDED AT PICK TIME, and the payoff is
+  # computed at expiry from the underlying's close by arithmetic that has
+  # no free parameters. Nothing is modelled. If the chain cannot be
+  # fetched, the pick falls back to an equity trade or is skipped — a
+  # premium is NEVER estimated, because an unverifiable number is exactly
+  # what this record exists not to contain.
+  enabled: true
+  structures: [covered_call, cash_secured_put]
+  contracts: 1                    # 100 shares per contract
+  expiry:
+    # Fixed, so strike/expiry selection is reproducible rather than taste.
+    min_days: 21
+    max_days: 45
+    rule: nearest_listed_expiry_in_window
+  strike:
+    target_otm_pct: 4.0           # closest LISTED strike to 4% out of the money
+    rule: closest_listed_strike_to_target
+  premium:
+    source: mid_of_bid_ask        # falls back to lastPrice only if a side is missing
+    require_positive: true        # a zero/absent quote disqualifies the contract
+  exit:
+    rule: hold_to_expiry          # no stop; the structure itself defines the risk
+    payoff: intrinsic_at_expiry_from_underlying_close
+    early_assignment_modelled: false   # say so on air; American options can be
+                                       # assigned early and this sim does not
+                                       # simulate that
+  capital_base:
+    # Returns are reported as a percentage of capital actually committed,
+    # which is what makes an options position and a $1,000 equity position
+    # comparable at all — and what alpha compares.
+    covered_call: hundred_times_underlying_entry
+    cash_secured_put: hundred_times_strike
+
 benchmark:
   # The index is bought and sold on the SAME sessions as the trade, so the
   # comparison answers "did this pick beat the index over the time it was

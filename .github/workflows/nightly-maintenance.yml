@@ -178,6 +178,12 @@ jobs:
       - name: Build the funnel (reach -> click -> visit -> capture)
         run: python scripts/build_funnel.py --out api/funnel.json || echo "::warning::Funnel build failed (non-fatal)"
 
+      # The MIT audit ledger: every simulated trade with the full decision
+      # record, so "you can reproduce our numbers" is a link rather than a
+      # claim. Non-fatal — a missing ledger must never fail the nightly.
+      - name: Publish the Modern Investing trade ledger
+        run: python scripts/build_mit_ledger.py --out api/mit_trade_ledger.json --csv api/mit_trade_ledger.csv || echo "::warning::MIT ledger build failed (non-fatal)"
+
       - name: Score the Shorts motion A/B
         # Reads the variant recorded on each published Short. Clean no-op
         # ("not_started") until the experiment has published Shorts.
@@ -319,6 +325,8 @@ jobs:
             api/youtube_policy.json
             api/gallery_retention.json
             api/funnel.json
+            api/mit_trade_ledger.json
+            api/mit_trade_ledger.csv
             api/shorts_ab.json
             digests/**/youtube_performance.json
             api/op3_stats.json

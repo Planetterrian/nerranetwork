@@ -801,4 +801,101 @@ reviews:
         evidence: null
     agent_cost_usd: null
 
+  - date: 2026-08-19
+    pr: null
+    doc: docs/reviews/modern_investing_review_2026_08_19.md
+    reviewer: claude-code (operator audit — learning loop, options, transparency)
+    summary: >
+      Three operator questions, all checked against data. (1) LEARNING:
+      the loop ran but its verdicts were artifacts - the rule scoreboard
+      emitted FIVE identical RETIREMENT CANDIDATE findings (same 10
+      trades, same -0.17% vs +0.43%) because all five rules were stamped
+      on exactly the same trades and are perfectly collinear, while the
+      control group was the pre-era trades whose windows the integrity
+      passes had disowned. Six of thirteen active "rules" are production
+      hygiene (re-teach cooldowns, "state the NASDAQ level", and three
+      variants of "verify price data from multiple providers" - the
+      pipeline's own data-fetch bugs taught as investing wisdom), and
+      three more are the same volume rule in different scopes, scoring
+      0.51-0.61 against a 0.62 dedup threshold. No rule had ever been
+      scored or retired. (2) OPTIONS: 32 of the last 40 episodes discuss
+      options and covered_call has been taught 33 times, against 0 of 61
+      trades using any derivative. (3) TRANSPARENCY: solid aggregates, but
+      the performance page showed five trades and nothing published
+      carried entry/exit bar dates, stops, horizons, invalidations, rules
+      in effect or confidence - none of what a listener needs to check the
+      record or learn the process.
+    shipped:
+      - "rule scoreboard is era-scoped, refuses a verdict when every
+        stamped trade carried the same rule set, flags collinear rules as
+        ONE piece of evidence, requires >=5 trades on BOTH arms, and says
+        'not measurable yet' rather than going silent"
+      - "_is_trading_rule classifies production-hygiene lessons out of the
+        pick prompt and the scoreboard (retires the long-carried LL-054
+        closing-price item automatically)"
+      - "_rule_core dedups on the rule's CONSTRAINT with its scope clause
+        stripped - collapses LL-017 into LL-067 at 0.796 and admits the
+        sector-cap rule instead"
+      - "options positions: covered calls and cash-secured puts held to
+        expiry. Contract quoted LIVE at pick time (real strike/expiry/
+        bid-ask mid); payoff at expiry is arithmetic on the underlying
+        close with no free parameters, verified against hand calculations"
+      - "deterministic selection - nearest listed expiry 21-45d out,
+        listed strike closest to 4% OTM, ITM and unquoted strikes skipped"
+      - "if the chain cannot be quoted the pick degrades to shares and
+        records option_quote_failed; a premium is NEVER estimated"
+      - "settlement requires evidence the market traded on/after expiry (a
+        test caught this settling a fresh position against its own entry
+        day)"
+      - "shows/_trading_policy.yaml gains the options rulebook; both
+        prompts require the structure, its mechanics and the
+        early-assignment caveat on air"
+      - "scripts/build_mit_ledger.py -> api/mit_trade_ledger.json + .csv,
+        published nightly: every trade with the full decision record,
+        including the 7 voided picks and the pre-era trades, flagged
+        rather than hidden"
+      - 20 new drift guards (TestOptionsPositions, TestRuleScoreboardHonesty,
+        TestTradingVsPipelineRules, TestPublicLedger) + 4 superseded guards
+        re-pinned with reasons
+    deferred:
+      - "per-strategy performance: the 61 strategy strings are unique
+        free-text, so there is nothing to group on. Tagging them into
+        families is the next tractable step and would let the show report
+        which APPROACHES work, not just which sectors"
+      - "the loop has still produced zero scored rules - it is now capable
+        and refuses to fake it, but a first verdict needs the rule set to
+        vary across roughly a dozen era trades"
+      - "operator: the 8 pre-era trades reconciling to no market bar still
+        need adjudication (now history cleanup, not a live problem)"
+      - "carried: significance-qualifier accept-or-abandon; SnapTrade
+        Phase-0"
+    predictions:
+      - metric: rule-effectiveness verdicts emitted from a single
+          undivided sample
+        baseline: "5 identical RETIREMENT CANDIDATE flags from one 10-trade set"
+        expected: "0 - the scoreboard reports 'not measurable' until the
+          rule set genuinely varies"
+        verdict: pending
+        evidence: null
+      - metric: production-hygiene rules appearing in the pick prompt
+        baseline: "6 of 13 active rules"
+        expected: "0 - only trading rules are stamped and scored"
+        verdict: pending
+        evidence: null
+      - metric: simulated trades using an options structure
+        baseline: "0 of 61, against options taught in 32 of 40 episodes"
+        expected: ">=1 within 20 episodes, with a real recorded premium
+          and an expiry-settled payoff; ZERO positions carrying an
+          estimated premium"
+        verdict: pending
+        evidence: null
+      - metric: trades published with their full decision record
+        baseline: "5 rows on the performance page, no entry/exit dates,
+          stops, horizons or invalidations anywhere public"
+        expected: "100% of trades in api/mit_trade_ledger.json, voided
+          ones included"
+        verdict: pending
+        evidence: null
+    agent_cost_usd: null
+
 do_not_retry: []

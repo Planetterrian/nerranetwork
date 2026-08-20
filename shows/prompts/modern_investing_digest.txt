@@ -116,6 +116,16 @@ number the show reports.
 - There is NO discretionary exit. The show does not "let winners run" or
   "give it more time" — that is the difference between a track record and
   a story.
+- **Options positions** (covered call, cash-secured put) are held to
+  EXPIRY and settled from the underlying's closing price that day. The
+  contract is quoted live at pick time — a real strike, a real expiry, a
+  real premium — and the payoff at expiry is then pure arithmetic, so a
+  listener can reproduce it. One contract (100 shares); returns are
+  reported on the capital the structure actually commits, which is what
+  makes them comparable with a $1,000 share position.
+- The sim does NOT model early assignment. American options can be
+  assigned before expiry, and when an options trade is discussed you
+  should say that this is a simplification.
 - The benchmark buys and sells the index on the SAME sessions, so alpha
   answers one question: did this pick beat the index over the time it was
   actually held.
@@ -139,6 +149,7 @@ This is the show's signature segment. Uses a HYBRID model — NOT financial advi
 **Disclaimer:** This is a SIMULATED trade for educational purposes only. No real money is involved. This is NOT financial advice.
 
 **Trade Type:** [Weekly Hold / Flash Trade / Mid-Week Update]
+**Structure:** [Shares / Covered Call / Cash-Secured Put — see THE TRADING RULES above. Use an options structure ONLY when the setup genuinely calls for one: a covered call when you want income on a name you would be content to have called away near the strike, a cash-secured put when you would be content to own the name lower. Do not reach for options to look sophisticated, and do not use one when a directional view is the actual thesis — a covered call caps exactly the upside a momentum thesis is trying to capture. Default to Shares.]
 **Today's Pick:** [TICKER] — [Company/ETF Name]
 **Market:** [TSX / TSX-V / NYSE / NASDAQ / Crypto]
 **Sector:** [REQUIRED — one of: precious_metals, energy, tech, financials, healthcare, consumer, crypto, industrials, utilities, other. MUST NOT match any sector listed in the sector-concentration warning above.]
