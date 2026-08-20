@@ -2548,3 +2548,96 @@ class TestReviewCatchUp:
         # Without persistence the catch-up pass re-reviews the same
         # episodes every run and never drains.
         assert "api/review_coverage.json" in wf
+
+
+class TestMethodologyDisclosure:
+    """The old cumulative-alpha figure vanished from air when the
+    era-scoped record started.
+
+    A number that quietly disappears is indistinguishable, from the
+    listener's seat, from a number being buried — and here the truth is
+    the opposite (it could not be reproduced, so it was not ours to
+    claim). The correction is a one-off segment, not a standing
+    changelog: it must retire itself, it must never re-air on the same
+    episode twice, and it must stay out of pipeline internals.
+    """
+
+    @staticmethod
+    def _tracker():
+        return {"metadata": {}, "trades": []}
+
+    def test_airs_then_retires(self, monkeypatch):
+        monkeypatch.setattr(mi, "_hooks_readonly", lambda: False)
+        tracker = self._tracker()
+        aired = [
+            bool(mi._build_methodology_disclosure(tracker, episode_num=ep))
+            for ep in range(200, 210)
+        ]
+        assert aired[:mi.METHODOLOGY_DISCLOSURE_EPISODES] == (
+            [True] * mi.METHODOLOGY_DISCLOSURE_EPISODES)
+        assert not any(aired[mi.METHODOLOGY_DISCLOSURE_EPISODES:]), (
+            "the correction became a permanent segment")
+
+    def test_same_episode_never_consumes_two_airings(self, monkeypatch):
+        # get_prompt_context can run more than once per episode; without
+        # this guard a single episode would burn the whole allowance.
+        monkeypatch.setattr(mi, "_hooks_readonly", lambda: False)
+        tracker = self._tracker()
+        first = mi._build_methodology_disclosure(tracker, episode_num=200)
+        second = mi._build_methodology_disclosure(tracker, episode_num=200)
+        assert first and not second
+        assert tracker["metadata"]["methodology_disclosure_episodes"] == [200]
+
+    def test_readonly_runs_do_not_stamp(self, monkeypatch):
+        monkeypatch.setattr(mi, "_hooks_readonly", lambda: True)
+        tracker = self._tracker()
+        assert mi._build_methodology_disclosure(tracker, episode_num=200)
+        assert not tracker["metadata"].get(
+            "methodology_disclosure_episodes"), (
+            "a rehearsal run consumed a real airing")
+
+    def test_covers_the_four_audit_questions(self, monkeypatch):
+        # The transferable lesson is the reason this segment is worth
+        # airing at all: how to audit any track record you are shown.
+        monkeypatch.setattr(mi, "_hooks_readonly", lambda: False)
+        text = mi._build_methodology_disclosure(self._tracker(), 200).lower()
+        for probe in ("exit rule", "losers", "published", "reproduce"):
+            assert probe in text, f"missing audit question: {probe}"
+
+    def test_stays_out_of_pipeline_internals(self, monkeypatch):
+        # A listener cares what the numbers mean, not how the repo is
+        # wired. Naming internal machinery on air is noise at best.
+        monkeypatch.setattr(mi, "_hooks_readonly", lambda: False)
+        block = mi._build_methodology_disclosure(self._tracker(), 200)
+        # Everything from the closing directive on is guidance to the
+        # model, never spoken — the ban applies to the content above it.
+        marker = "Do NOT discuss"
+        assert marker in block, "the internals ban went missing"
+        text = block.split(marker)[0].lower()
+        # "scoreboard" is deliberately absent from this list — it is the
+        # show's own on-air word for the benchmark block, not internals.
+        for leak in ("rotation", "prompt", "pipeline", "codebase",
+                     "repository", "workflow"):
+            assert leak not in text, f"internal detail leaked on air: {leak}"
+
+    def test_prompt_and_runner_are_wired(self):
+        prompt = (_ROOT / "shows/prompts/modern_investing_digest.txt").read_text(
+            encoding="utf-8")
+        assert "{methodology_disclosure}" in prompt
+        runner = (_ROOT / "run_show.py").read_text(encoding="utf-8")
+        # Defaulted in the runner so a hook failure degrades to an
+        # episode without the correction rather than a KeyError.
+        assert 'setdefault("methodology_disclosure", "")' in runner
+
+    def test_published_sources_are_reachable_from_the_site(self):
+        # The segment tells listeners the rulebook and the trade-by-trade
+        # ledger are published "for anyone to check". Before this pass the
+        # ledger was built nightly into api/ and linked from nowhere, so
+        # the claim was true only for someone who knew the repo layout.
+        tpl = (_ROOT / "templates/mit_performance_page.html.j2").read_text(
+            encoding="utf-8")
+        for target in ("docs/mit_trading_method.md",
+                       "api/mit_trade_ledger.json",
+                       "api/mit_trade_ledger.csv"):
+            assert target in tpl, f"performance page does not link {target}"
+            assert (_ROOT / target).exists(), f"linked file missing: {target}"

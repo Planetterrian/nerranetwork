@@ -1547,6 +1547,10 @@ def run(args: argparse.Namespace) -> None:
         # Tone hint (Tesla + SpaceX prompts reference it; supplied by their
         # hooks from the day's stock tape). Neutral default on hook failure.
         template_vars.setdefault("tone_hint", "steady day — natural and conversational")
+        # Modern Investing one-off methodology correction (Aug 2026) —
+        # hook-supplied and self-retiring. Empty default so a hook failure
+        # degrades to an episode without the correction, never a KeyError.
+        template_vars.setdefault("methodology_disclosure", "")
 
         # 7. Generate digest
         #
