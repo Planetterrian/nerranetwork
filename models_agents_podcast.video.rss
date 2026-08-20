@@ -9,7 +9,7 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>en-us</language>
-    <lastBuildDate>Wed, 19 Aug 2026 18:42:42 +0000</lastBuildDate>
+    <lastBuildDate>Thu, 20 Aug 2026 08:50:19 +0000</lastBuildDate>
     <itunes:author>Patrick</itunes:author>
     <itunes:category text="Technology" />
     <itunes:category text="News">
@@ -23,6 +23,130 @@
     </itunes:owner>
     <itunes:summary>Your daily briefing on AI models and agents: new releases from the frontier labs, open-weight drops, agent frameworks, benchmarks, pricing, and practical tools you can use the same day — with long-running program tracking so you always know where the big stories stand. For developers, builders, and AI practitioners.</itunes:summary>
     <itunes:type>episodic</itunes:type>
+    <item>
+      <title>Ep 147: OpenAI is testing private safety processing that keeps frontier-model interactions off…</title>
+      <description>&lt;b&gt;# Models &amp; Agents&lt;/b&gt;
+OpenAI is testing private safety processing that keeps frontier-model interactions off-limits to staff while still catching risks across long agent sessions.
+
+&lt;b&gt;What You Need to Know:&lt;/b&gt; OpenAI previewed Private Safety Processing for frontier models to improve safety without personnel seeing raw content. Simon Willison documented an untrusted-sandbox experiment where Claude Code triggered an autonomous GitHub Actions push. New benchmarks and tokenization work on smaller models plus practical inference tuning on llama.cpp round out the day’s concrete releases.
+
+Top Story
+OpenAI previewed Private Safety Processing for frontier models. The system is designed to flag risks across related interactions in longer autonomous workflows without giving OpenAI staff access to the underlying content. It sits alongside the company’s continued Zero Data Retention offering. Builders working with extended agent sessions now have an explicit path to stronger safety controls that do not require sharing raw data. The preview directly addresses the scaling challenge of monitoring multi-turn tool use and memory-heavy conversations. Watch for how the feature integrates with existing API workflows and whether other labs adopt similar private-review patterns. Source: &lt;a href="https://x.com/OpenAI/status/2090165328290701800"&gt;x.com&lt;/a&gt;
+
+Model Updates
+&lt;b&gt;NE-BERT: A Multilingual Language Model for Nine Northeast Indian Languages — arXiv NLP&lt;/b&gt;
+NE-BERT is a domain-specific encoder trained on 8.3 million sentences across nine Northeast Indian languages plus Hindi and English. It uses weighted sampling and a custom SentencePiece Unigram tokenizer, delivering 15.97× lower average perplexity than IndicBERT-V2 and 7.64× lower than MuRIL. The model improves tokenization fertility 1.50× over mBERT and shows downstream gains on part-of-speech tagging for three of the languages. Researchers released the model, test sets, and corpus under CC-BY-4.0. Teams working on low-resource Indic languages should test it this week for both perplexity and tagging tasks. Source: &lt;a href="https://arxiv.org/abs/2608.18094"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;SuTRA: Structurally-Unified Tokenization with Root Awareness — arXiv NLP&lt;/b&gt;
+SuTRA is a morphology-aware tokenizer that preserves akshara indivisibility and penalizes merges across morphological boundaries for Hindi, Marathi, and Gujarati. It reduces morphological shattering and records peak gains of +14.7% Boundary F1 and +34% semantic recoverability on Hindi over standard BPE. The method delivers an average +8.08 chrF2 improvement in machine translation. The team also released a new morphological segmentation dataset for the three languages. Developers building Indic MT or retrieval systems should evaluate SuTRA tokenizers against their current BPE baselines.
+
+&lt;b&gt;LongNovel: A Multi-Scale Benchmark for Hallucination Detection in Long-Context Novel Summarization — arXiv NLP&lt;/b&gt;
+LongNovel provides a bilingual (Chinese/English) benchmark built from 29 Chinese novels (16k–100k tokens) and BookSum chapter data. It defines eight hallucination types and uses multi-model arbitration plus entity-referenced generation to create balanced test cases, followed by manual revision. The benchmark is explicitly designed to study how hallucinations scale with context length in narrative settings. Researchers released the dataset and evaluation code. Summarization teams should add LongNovel to their long-context hallucination test suites.
+
+&lt;b&gt;Nine Emotion Centroids: A Label-Free Valence Axis That Transfers Across Four Modalities — arXiv NLP&lt;/b&gt;
+The work extracts a single valence direction from nine emotion category names plus 50 short paragraphs per emotion. The resulting axis captures 93% of supervised performance on SST-2 and transfers to vision, audio, and brain recordings without target-modality labels. A 2-parameter classifier trained only on text reaches AUC 0.961 on images and 0.828 on brain data. The method is bounded to continuous attributes and does not work on categorical concepts. Researchers working on cross-modal affect or lightweight steering should test the nine-centroid recipe on their own encoders.
+
+Agent &amp; Tool Developments
+&lt;b&gt;Persona-Guided LLM Agents for Task-Oriented Dialogue — arXiv NLP&lt;/b&gt;
+The framework runs two LLMs in a training-free loop: a user agent expressing a target Big-Five personality and a system agent that adapts while completing hotel or restaurant tasks from the SGD dataset. Oracle personality knowledge improves constraint satisfaction and user satisfaction but reduces truthfulness; cue-based inference (Try condition) offers the best reliability–performance tradeoff. The study evaluates GPT-4o, Qwen3-Next-80B, and Gemini 2.0 Flash across all trait poles. Teams building personalized customer-service agents should examine the three knowledge conditions and the observed truthfulness cost.
+
+&lt;b&gt;StocksTalk: A Voice-Enabled Conversational Agent for Structured Query Generation over Web Data — arXiv NLP&lt;/b&gt;
+StocksTalk converts spoken financial screening requests into validated SQL using streaming ASR, retrieval-augmented constraint extraction, schema-grounded generation, and rule-based validation inside an interactive dashboard. A 150-prompt benchmark shows retrieval grounding and human-in-the-loop verification raise constraint accuracy, SQL executability, and multi-turn stability over plain LLM baselines. The system surfaces intermediate artifacts so users can inspect and edit each stage. Developers building voice-driven analytics tools should review the constraint-extraction and verification pipeline.
+
+&lt;b&gt;Notes and research report on smolmachines-untrusted-sandbox — Simon Willison&lt;/b&gt;
+Simon Willison released notes and a GitHub research repo on running untrusted code in a smolvm sandbox. The setup was used to test Claude Code in a restricted environment that lacks /dev/kvm. The work provides concrete configuration details for builders who need isolated execution for agent tool calls. Practitioners experimenting with code-execution agents should examine the sandbox constraints and logging approach described in the report. Source: &lt;a href="https://simonwillison.net/2026/Aug/19/smolmachines-untrusted-sandbox/"&gt;simonwillison.net&lt;/a&gt;
+
+Practical &amp; Community
+&lt;b&gt;3 days benchmarking most llama.cpp flags on my weird 40gb vram laptop + tb4 egpu setup — r/LocalLLaMA&lt;/b&gt;
+A detailed three-day benchmark on a 4090 laptop plus 7900 XTX eGPU over Thunderbolt 4 reached 27 t/s generation and full 262k context on Qwen3.8-27B Q6_K_XL after tuning MTP, ngram, KV cache type, and layer split. The author filed an upstream issue on multi-GPU MTP prefill penalties and published the LLM-Tuner repo used for the experiments. The post includes concrete flag combinations and device-specific tradeoffs. Anyone running llama.cpp on mixed NVIDIA/AMD or eGPU setups should review the final command and the MTP bug report. Source: &lt;a href="https://www.reddit.com/r/LocalLLaMA/comments/1vtc0z7/3_days_benchmarking_most_llamacpp_flags_on_my/"&gt;reddit.com&lt;/a&gt;
+
+&lt;b&gt;Google is giving 1-year Gemini AI plans free for students — The Indian Express&lt;/b&gt;
+Google is offering eligible students a full year of Gemini AI access at no cost. The program targets higher-education users and provides the same model capabilities available to paid subscribers. Students and educators should check eligibility and claim the plan before the offer window closes. Source: &lt;a href="https://indianexpress.com/article/technology/artificial-intelligence/google-is-giving-1-year-gemini-ai-plans-free-for-students-10841466/"&gt;indianexpress.com&lt;/a&gt;
+
+&lt;b&gt;Fractional Decay KV-Cache: Ownership-Aware Memory Management for Improved Inference Relevancy in Dialog Systems — arXiv NLP&lt;/b&gt;
+FD-KVC maintains dual scoring channels per KV pair—cumulative attention and recency-weighted relevance with temporal decay—and uses an ownership loss to drive adaptive learning rates. Across 600-dialog test sets it outperforms H2O by 6.7% on late-turn alignment and adapts to topic shifts 3.6× faster while running entirely on CPU. The method preserves historical tokens while rapidly deprioritizing stale context. Dialog-system teams should test the dual-channel scoring approach against standard H2O eviction.
+
+Under the Hood: KV-Cache Eviction Under Topic Drift
+Everyone treats KV-cache eviction as a simple “keep the most attended tokens” rule. In practice the decision surface changes as soon as the conversation topic shifts, because attention mass from earlier turns stops predicting future utility. The core insight is that importance is not stationary: a token that was heavily attended during the first topic can become irrelevant noise once the user changes subject. Dual-channel scoring separates aggregate attention from a recency-weighted relevance signal that decays unless reinforced by new matches. Adding an ownership loss term prevents the eviction policy from oscillating when the same entities reappear later in the dialogue. The practical tradeoff is modest CPU overhead for the extra scoring pass versus measurable gains in late-turn alignment and faster recovery after topic changes. Teams running long multi-turn agents should prefer dual-channel or ownership-aware eviction once context exceeds roughly 50k tokens; single-signal LRU or H2O remains adequate for shorter, single-topic sessions.
+
+Things to Try This Week
+• Test NE-BERT on any Northeast Indian language tagging or retrieval task; the released weights and corpus make it a drop-in low-resource baseline.
+• Run the SuTRA tokenizer against your current BPE pipeline on Hindi or Gujarati MT data to measure the reported chrF2 lift.
+• Add LongNovel to your long-context summarization eval harness to surface hallucination patterns that news or paper benchmarks miss.
+• Try the final llama.cpp flag set from the 40 GB mixed-GPU benchmark on your own Qwen3.8-27B workload and watch for the MTP prefill interaction.
+• Prototype a dual-channel KV eviction policy in your dialog agent using the FD-KVC description as a starting point.
+
+On the Horizon
+• Further details expected on OpenAI’s Private Safety Processing rollout and integration surface.
+• Additional low-resource Indic model releases are already signaled in the NE-BERT and SuTRA papers.
+• More llama.cpp multi-GPU and MTP fixes are likely after the filed issue receives community attention.
+• Expanded student and education access programs from other frontier labs remain possible following Google’s move.</description>
+      <guid isPermaLink="false">models-agents-video-ep147-20260820</guid>
+      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep147_20260820.mp4" length="229531501" type="video/mp4" />
+      <pubDate>Thu, 20 Aug 2026 08:00:00 +0000</pubDate>
+      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep147_20260820.jpg" />
+      <itunes:duration>09:31</itunes:duration>
+      <itunes:explicit>no</itunes:explicit>
+      <itunes:summary>&gt; **# Models &amp; Agents**
+OpenAI is testing private safety processing that keeps frontier-model interactions off-limits to staff while still catching risks across long agent sessions.
+
+**What You Need to Know:** OpenAI previewed Private Safety Processing for frontier models to improve safety without personnel seeing raw content. Simon Willison documented an untrusted-sandbox experiment where Claude Code triggered an autonomous GitHub Actions push. New benchmarks and tokenization work on smaller models plus practical inference tuning on llama.cpp round out the day’s concrete releases.
+---
+### Top Story
+OpenAI previewed Private Safety Processing for frontier models. The system is designed to flag risks across related interactions in longer autonomous workflows without giving OpenAI staff access to the underlying content. It sits alongside the company’s continued Zero Data Retention offering. Builders working with extended agent sessions now have an explicit path to stronger safety controls that do not require sharing raw data. The preview directly addresses the scaling challenge of monitoring multi-turn tool use and memory-heavy conversations. Watch for how the feature integrates with existing API workflows and whether other labs adopt similar private-review patterns. Source: [x.com](https://x.com/OpenAI/status/2090165328290701800)
+---
+### Model Updates
+**NE-BERT: A Multilingual Language Model for Nine Northeast Indian Languages — arXiv NLP**
+NE-BERT is a domain-specific encoder trained on 8.3 million sentences across nine Northeast Indian languages plus Hindi and English. It uses weighted sampling and a custom SentencePiece Unigram tokenizer, delivering 15.97× lower average perplexity than IndicBERT-V2 and 7.64× lower than MuRIL. The model improves tokenization fertility 1.50× over mBERT and shows downstream gains on part-of-speech tagging for three of the languages. Researchers released the model, test sets, and corpus under CC-BY-4.0. Teams working on low-resource Indic languages should test it this week for both perplexity and tagging tasks. Source: [arxiv.org](https://arxiv.org/abs/2608.18094)
+
+**SuTRA: Structurally-Unified Tokenization with Root Awareness — arXiv NLP**
+SuTRA is a morphology-aware tokenizer that preserves akshara indivisibility and penalizes merges across morphological boundaries for Hindi, Marathi, and Gujarati. It reduces morphological shattering and records peak gains of +14.7% Boundary F1 and +34% semantic recoverability on Hindi over standard BPE. The method delivers an average +8.08 chrF2 improvement in machine translation. The team also released a new morphological segmentation dataset for the three languages. Developers building Indic MT or retrieval systems should evaluate SuTRA tokenizers against their current BPE baselines.
+
+**LongNovel: A Multi-Scale Benchmark for Hallucination Detection in Long-Context Novel Summarization — arXiv NLP**
+LongNovel provides a bilingual (Chinese/English) benchmark built from 29 Chinese novels (16k–100k tokens) and BookSum chapter data. It defines eight hallucination types and uses multi-model arbitration plus entity-referenced generation to create balanced test cases, followed by manual revision. The benchmark is explicitly designed to study how hallucinations scale with context length in narrative settings. Researchers released the dataset and evaluation code. Summarization teams should add LongNovel to their long-context hallucination test suites.
+
+**Nine Emotion Centroids: A Label-Free Valence Axis That Transfers Across Four Modalities — arXiv NLP**
+The work extracts a single valence direction from nine emotion category names plus 50 short paragraphs per emotion. The resulting axis captures 93% of supervised performance on SST-2 and transfers to vision, audio, and brain recordings without target-modality labels. A 2-parameter classifier trained only on text reaches AUC 0.961 on images and 0.828 on brain data. The method is bounded to continuous attributes and does not work on categorical concepts. Researchers working on cross-modal affect or lightweight steering should test the nine-centroid recipe on their own encoders.
+---
+### Agent &amp; Tool Developments
+**Persona-Guided LLM Agents for Task-Oriented Dialogue — arXiv NLP**
+The framework runs two LLMs in a training-free loop: a user agent expressing a target Big-Five personality and a system agent that adapts while completing hotel or restaurant tasks from the SGD dataset. Oracle personality knowledge improves constraint satisfaction and user satisfaction but reduces truthfulness; cue-based inference (Try condition) offers the best reliability–performance tradeoff. The study evaluates GPT-4o, Qwen3-Next-80B, and Gemini 2.0 Flash across all trait poles. Teams building personalized customer-service agents should examine the three knowledge conditions and the observed truthfulness cost.
+
+**StocksTalk: A Voice-Enabled Conversational Agent for Structured Query Generation over Web Data — arXiv NLP**
+StocksTalk converts spoken financial screening requests into validated SQL using streaming ASR, retrieval-augmented constraint extraction, schema-grounded generation, and rule-based validation inside an interactive dashboard. A 150-prompt benchmark shows retrieval grounding and human-in-the-loop verification raise constraint accuracy, SQL executability, and multi-turn stability over plain LLM baselines. The system surfaces intermediate artifacts so users can inspect and edit each stage. Developers building voice-driven analytics tools should review the constraint-extraction and verification pipeline.
+
+**Notes and research report on smolmachines-untrusted-sandbox — Simon Willison**
+Simon Willison released notes and a GitHub research repo on running untrusted code in a smolvm sandbox. The setup was used to test Claude Code in a restricted environment that lacks /dev/kvm. The work provides concrete configuration details for builders who need isolated execution for agent tool calls. Practitioners experimenting with code-execution agents should examine the sandbox constraints and logging approach described in the report. Source: [simonwillison.net](https://simonwillison.net/2026/Aug/19/smolmachines-untrusted-sandbox/)
+---
+### Practical &amp; Community
+**3 days benchmarking most llama.cpp flags on my weird 40gb vram laptop + tb4 egpu setup — r/LocalLLaMA**
+A detailed three-day benchmark on a 4090 laptop plus 7900 XTX eGPU over Thunderbolt 4 reached 27 t/s generation and full 262k context on Qwen3.8-27B Q6_K_XL after tuning MTP, ngram, KV cache type, and layer split. The author filed an upstream issue on multi-GPU MTP prefill penalties and published the LLM-Tuner repo used for the experiments. The post includes concrete flag combinations and device-specific tradeoffs. Anyone running llama.cpp on mixed NVIDIA/AMD or eGPU setups should review the final command and the MTP bug report. Source: [reddit.com](https://www.reddit.com/r/LocalLLaMA/comments/1vtc0z7/3_days_benchmarking_most_llamacpp_flags_on_my/)
+
+**Google is giving 1-year Gemini AI plans free for students — The Indian Express**
+Google is offering eligible students a full year of Gemini AI access at no cost. The program targets higher-education users and provides the same model capabilities available to paid subscribers. Students and educators should check eligibility and claim the plan before the offer window closes. Source: [indianexpress.com](https://indianexpress.com/article/technology/artificial-intelligence/google-is-giving-1-year-gemini-ai-plans-free-for-students-10841466/)
+
+**Fractional Decay KV-Cache: Ownership-Aware Memory Management for Improved Inference Relevancy in Dialog Systems — arXiv NLP**
+FD-KVC maintains dual scoring channels per KV pair—cumulative attention and recency-weighted relevance with temporal decay—and uses an ownership loss to drive adaptive learning rates. Across 600-dialog test sets it outperforms H2O by 6.7% on late-turn alignment and adapts to topic shifts 3.6× faster while running entirely on CPU. The method preserves historical tokens while rapidly deprioritizing stale context. Dialog-system teams should test the dual-channel scoring approach against standard H2O eviction.
+---
+### Under the Hood: KV-Cache Eviction Under Topic Drift
+Everyone treats KV-cache eviction as a simple “keep the most attended tokens” rule. In practice the decision surface changes as soon as the conversation topic shifts, because attention mass from earlier turns stops predicting future utility. The core insight is that importance is not stationary: a token that was heavily attended during the first topic can become irrelevant noise once the user changes subject. Dual-channel scoring separates aggregate attention from a recency-weighted relevance signal that decays unless reinforced by new matches. Adding an ownership loss term prevents the eviction policy from oscillating when the same entities reappear later in the dialogue. The practical tradeoff is modest CPU overhead for the extra scoring pass versus measurable gains in late-turn alignment and faster recovery after topic changes. Teams running long multi-turn agents should prefer dual-channel or ownership-aware eviction once context exceeds roughly 50k tokens; single-signal LRU or H2O remains adequate for shorter, single-topic sessions.
+---
+### Things to Try This Week
+- Test NE-BERT on any Northeast Indian language tagging or retrieval task; the released weights and corpus make it a drop-in low-resource baseline.
+- Run the SuTRA tokenizer against your current BPE pipeline on Hindi or Gujarati MT data to measure the reported chrF2 lift.
+- Add LongNovel to your long-context summarization eval harness to surface hallucination patterns that news or paper benchmarks miss.
+- Try the final llama.cpp flag set from the 40 GB mixed-GPU benchmark on your own Qwen3.8-27B workload and watch for the MTP prefill interaction.
+- Prototype a dual-channel KV eviction policy in your dialog agent using the FD-KVC description as a starting point.
+---
+### On the Horizon
+- Further details expected on OpenAI’s Private Safety Processing rollout and integration surface.
+- Additional low-resource Indic model releases are already signaled in the NE-BERT and SuTRA papers.
+- More llama.cpp multi-GPU and MTP fixes are likely after the filed issue receives community attention.
+- Expanded student and education access programs from other frontier labs remain possible following Google’s move.</itunes:summary>
+      <itunes:episode>147</itunes:episode>
+      <itunes:title>Ep 147: OpenAI is testing private safety processing that keeps frontier-model interactions off…</itunes:title>
+      <itunes:episodeType>full</itunes:episodeType>
+    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep147_20260820_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep147.json" type="application/json+chapters" /></item>
     <item>
       <title>Ep 146: Claude designed novel protein binders from scratch for 14 of 15 targets, with 22-35%…</title>
       <description>Models &amp; Agents
@@ -3355,120 +3479,5 @@ Everyone talks about speculative decoding as a simple “draft-and-verify” tri
       <itunes:title>Ep 118: Anthropic is handing out up to $50K in Claude credits to researchers targeting rare diseases, giving builders direct access to frontier-scale inference for scientific workflows.</itunes:title>
       <itunes:episodeType>full</itunes:episodeType>
     <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep118_20260721_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep118.json" type="application/json+chapters" /></item>
-    <item>
-      <title>Ep 117: Kimi K3 lands as the largest open-weight model yet at 2.8 trillion parameters, forcing builders to test whether memory-centric scaling beats raw compute for real workloads.</title>
-      <description>Models &amp; Agents
-&lt;b&gt;Kimi K3 lands as the largest open-weight model yet at 2.8 trillion parameters, forcing builders to test whether memory-centric scaling beats raw compute for real workloads.&lt;/b&gt;
-
-&lt;b&gt;What You Need to Know:&lt;/b&gt; Moonshot AI released Kimi K3 on July 16 as a 2.8T-parameter open-weight model that prioritizes memory over compute. US public health agencies began testing OpenAI and Anthropic models through the new PULSE program across 10 jurisdictions. Simon Willison highlighted how ChatGPT mobile's "Work" mode runs cloud-based without the usual safeguards that desktop Codex applies. Watch how these developments shift the open-weight performance gap and agent reliability questions this week.
-
-Top Story
-Moonshot AI released Kimi K3, a 2.8-trillion-parameter open-weight model positioned as the largest to date and the first in the 3T class. The model emphasizes memory scaling rather than raw compute, with the launch generating immediate discussion on whether this approach narrows the gap with closed frontier systems. Builders can now download and experiment with a model at this scale for tasks previously limited to proprietary APIs. The release moves the open vs. closed performance question forward by providing a concrete high-parameter baseline for direct comparison on long-context and memory-intensive workloads. Watch for early independent benchmarks on agentic tasks and serving costs over the next two weeks. This sits in the ongoing arc of open-weight families narrowing capability gaps with closed models, directly testing whether parameter count alone closes the remaining distance on practical tasks. Source: &lt;a href="https://www.artificialintelligence-news.com/news/kimi-k3-open-weight-model-memory-compute-china/"&gt;artificialintelligence-news.com&lt;/a&gt;
-
-Model Updates
-&lt;b&gt;Alibaba new model claims second place behind Anthropic’s Fable 5: WSJ&lt;/b&gt;
-Alibaba announced a new model it positions immediately behind Anthropic’s Fable 5. The claim arrives alongside ongoing frontier-model comparisons and gives practitioners another closed-model reference point for capability tracking. Teams working on high-stakes reasoning tasks should test it against current Claude and GPT variants this week to map relative strengths on domain-specific benchmarks. The positioning highlights continued competition at the top of closed-model leaderboards without releasing weights or detailed architecture notes. Builders tracking the closed frontier should add this to their evaluation matrix alongside existing GPT and Claude releases.
-
-&lt;b&gt;China launches upgraded ScienceOne Omni scientific foundation model: Chinese Academy of Sciences&lt;/b&gt;
-The Chinese Academy of Sciences released an upgraded ScienceOne Omni model focused on scientific workloads. The update targets researchers needing stronger performance on technical and multimodal scientific tasks. Labs running domain-specific fine-tunes should evaluate it against existing open scientific models for chemistry, physics, and biology pipelines. The upgrade builds on prior versions with expanded multimodal support for scientific data types. Domain teams in research settings gain a new baseline for specialized scientific inference without relying solely on general-purpose models.
-
-&lt;b&gt;US public health agencies begin testing OpenAI and Anthropic models via PULSE: AI News&lt;/b&gt;
-Public health departments in ten US jurisdictions will trial generative AI tools from OpenAI and Anthropic under the Coalition for Health AI and Accenture’s PULSE program. The initiative focuses on real-world use cases in state, local, tribal, and territorial settings. Health-tech teams should monitor early results for regulatory and deployment patterns that may influence other verticals. The program pairs the models with the Coalition for Health AI framework to produce measurable outcomes across the participating sites. This development advances the safety and policy track by moving evaluation work from lab settings into live public-health environments. Source: &lt;a href="https://www.artificialintelligence-news.com/news/openai-anthropic-public-health-ai/"&gt;artificialintelligence-news.com&lt;/a&gt;
-
-Agent &amp; Tool Developments
-&lt;b&gt;ChatGPT mobile "Work" runs cloud-based without typical safeguards: Simon Willison&lt;/b&gt;
-Simon Willison notes that ChatGPT mobile’s Work feature operates like Code Interpreter with most safeties disabled and runs entirely in the cloud. On desktop the same feature is a reskinned Codex that executes locally. Developers building agentic workflows should test mobile Work for tasks where reduced guardrails matter while keeping desktop Codex for on-device constraints. The mobile version therefore opens different failure modes and output behaviors than the desktop implementation. Teams should compare outputs from both surfaces on the same prompts to understand where the cloud execution changes results.
-
-&lt;b&gt;Six AI agent architectures mapped for practitioners: cio.com&lt;/b&gt;
-A new breakdown outlines six distinct agent architectures and their trade-offs. The guide helps teams choose between reactive, planning, hierarchical, and other patterns based on task horizon and tool requirements. Builders evaluating frameworks should map their current stack against these six to identify gaps in long-horizon reliability. The architectures cover varying degrees of autonomy, memory use, and planning depth. Practitioners gain a concrete decision framework rather than choosing frameworks by marketing claims alone.
-
-&lt;b&gt;AI agents require access grants rather than shared secrets: TechRadar&lt;/b&gt;
-The piece argues that production agents need fine-grained access controls instead of credential sharing. This directly addresses the ongoing agent security gap where shared secrets create blast-radius problems. Teams deploying autonomous agents should audit credential usage and shift to scoped access tokens this week. The recommendation aligns with the tracked agents and tool-use arc by emphasizing reliability improvements through better access design. Production deployments that still rely on shared credentials now have a clear migration path to reduce incident scope. Source: &lt;a href="https://news.google.com/rss/articles/CBMijAFBVV95cUxPRnVqWkZIT2x2R3djX0xiNVVNY1c3QVc5amhWMU15Nmd3T3o5SktPQ0xQSkgwWk9Iei12YzF6ZEhWLTRNWmw0NHdGT3oxNnJPUVRXekNobkdTT2hZMUpIOEV2d18wZ1R2RDhFVWRHcTg3cHpMLXU0VUV0MTFMcGtqdlFsMmo5S3hrSy1Odg"&gt;Google News&lt;/a&gt;
-
-Practical &amp; Community
-&lt;b&gt;Two-stage prompt-injection detector open-sourced with real attack data: r/MachineLearning&lt;/b&gt;
-Josh Blythe released Bordair, a two-stage detector combining a 430-pattern regex gate with a quantized DeBERTa-v3-large ONNX model. The system includes 13,230 real bypass attempts collected from a public red-team game plus multimodal handling for images, documents, and audio. Developers running LLM inputs should integrate the regex layer first for sub-millisecond filtering before falling back to the transformer on ambiguous cases. The dataset combines over 500k synthetic samples with the real attack split, and the full code, weights, and data are available on GitHub and Hugging Face. Teams gain a practical, low-cost first line of defense that only invokes the heavier model when needed.
-Code: https://github.com/Josh-blythe/bordair-detector 
-Weights &amp; dataset: https://huggingface.co/Bordair/bordair-detector
-
-&lt;b&gt;Xi Jinping announces WAICO and endorses open-source AI: MediaNama&lt;/b&gt;
-China’s leadership launched WAICO while publicly backing open-source model development. The announcement signals continued policy support for accessible weights and tooling inside the country. Teams tracking global open-source momentum should watch resulting domestic model releases and licensing terms. The policy move reinforces the open-weight track by aligning national direction with community-accessible models. Observers can expect follow-on releases from Chinese labs that build on this stated preference for open weights. Source: &lt;a href="https://www.reddit.com/r/MachineLearning/comments/1v1hm7y/opensourcing_a_twostage_promptinjection_detector/"&gt;reddit.com&lt;/a&gt;
-
-Under the Hood: Two-Stage Prompt-Injection Detection
-Everyone treats prompt-injection defense as a single model problem. In practice the engineering split between a fast regex gate and a heavier transformer is what makes the system usable at scale. The regex layer (roughly 430 patterns plus decode-then-scan for obfuscations) handles the obvious majority of traffic in under a millisecond and drops straight to a decision. Only the ambiguous remainder reaches the quantized DeBERTa-v3-large, keeping the 244 MB model off the hot path for routine queries. This design trades a small amount of recall for massive cost reduction; teams that skip the gate and run the transformer on every request quickly hit latency and budget walls. The inclusion of real attack data from the red-team game further tightens the decision boundary on motivated human attempts that templated synthetic data misses. When to use this pattern: any production pipeline that ingests untrusted text, images, or documents and already pays per-token inference costs. The gotcha that bites most teams is forgetting to update the regex patterns as new obfuscation tricks appear in the wild.
-
-Things to Try This Week
-• Download and run Kimi K3 weights to benchmark memory-heavy agent tasks against your current open models and measure serving cost at 2.8T scale.
-• Integrate the Bordair regex gate into any LLM input pipeline handling untrusted text or documents for immediate low-latency filtering before the transformer stage.
-• Test ChatGPT mobile Work on a task you normally run through local Codex to see where the reduced safeguards change output behavior.
-• Map your current agent stack against the six architectures outlined in the cio.com guide and identify which pattern your longest-running workflows actually need.
-• Audit agent credential usage in production and replace shared secrets with scoped access grants following the TechRadar recommendations.
-
-On the Horizon
-• Early independent benchmarks on Kimi K3 for agentic and long-context tasks expected within two weeks.
-• Additional PULSE program results from the ten participating US jurisdictions later this quarter.
-• Further details on WAICO implementation and resulting open-source releases from Chinese labs.
-• Continued analysis of the Hugging Face autonomous-agent breach and resulting agent-security tooling.</description>
-      <guid isPermaLink="false">models-agents-video-ep117-20260720</guid>
-      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep117_20260720.mp4" length="206697466" type="video/mp4" />
-      <pubDate>Mon, 20 Jul 2026 08:00:00 +0000</pubDate>
-      <itunes:duration>10:34</itunes:duration>
-      <itunes:explicit>no</itunes:explicit>
-      <itunes:summary># Models &amp; Agents
-&gt; **Kimi K3 lands as the largest open-weight model yet at 2.8 trillion parameters, forcing builders to test whether memory-centric scaling beats raw compute for real workloads.**
-
-**What You Need to Know:** Moonshot AI released Kimi K3 on July 16 as a 2.8T-parameter open-weight model that prioritizes memory over compute. US public health agencies began testing OpenAI and Anthropic models through the new PULSE program across 10 jurisdictions. Simon Willison highlighted how ChatGPT mobile's "Work" mode runs cloud-based without the usual safeguards that desktop Codex applies. Watch how these developments shift the open-weight performance gap and agent reliability questions this week.
----
-### Top Story
-Moonshot AI released Kimi K3, a 2.8-trillion-parameter open-weight model positioned as the largest to date and the first in the 3T class. The model emphasizes memory scaling rather than raw compute, with the launch generating immediate discussion on whether this approach narrows the gap with closed frontier systems. Builders can now download and experiment with a model at this scale for tasks previously limited to proprietary APIs. The release moves the open vs. closed performance question forward by providing a concrete high-parameter baseline for direct comparison on long-context and memory-intensive workloads. Watch for early independent benchmarks on agentic tasks and serving costs over the next two weeks. This sits in the ongoing arc of open-weight families narrowing capability gaps with closed models, directly testing whether parameter count alone closes the remaining distance on practical tasks. Source: [artificialintelligence-news.com](https://www.artificialintelligence-news.com/news/kimi-k3-open-weight-model-memory-compute-china/)
----
-### Model Updates
-**Alibaba new model claims second place behind Anthropic’s Fable 5: WSJ**
-Alibaba announced a new model it positions immediately behind Anthropic’s Fable 5. The claim arrives alongside ongoing frontier-model comparisons and gives practitioners another closed-model reference point for capability tracking. Teams working on high-stakes reasoning tasks should test it against current Claude and GPT variants this week to map relative strengths on domain-specific benchmarks. The positioning highlights continued competition at the top of closed-model leaderboards without releasing weights or detailed architecture notes. Builders tracking the closed frontier should add this to their evaluation matrix alongside existing GPT and Claude releases.
-
-**China launches upgraded ScienceOne Omni scientific foundation model: Chinese Academy of Sciences**
-The Chinese Academy of Sciences released an upgraded ScienceOne Omni model focused on scientific workloads. The update targets researchers needing stronger performance on technical and multimodal scientific tasks. Labs running domain-specific fine-tunes should evaluate it against existing open scientific models for chemistry, physics, and biology pipelines. The upgrade builds on prior versions with expanded multimodal support for scientific data types. Domain teams in research settings gain a new baseline for specialized scientific inference without relying solely on general-purpose models.
-
-**US public health agencies begin testing OpenAI and Anthropic models via PULSE: AI News**
-Public health departments in ten US jurisdictions will trial generative AI tools from OpenAI and Anthropic under the Coalition for Health AI and Accenture’s PULSE program. The initiative focuses on real-world use cases in state, local, tribal, and territorial settings. Health-tech teams should monitor early results for regulatory and deployment patterns that may influence other verticals. The program pairs the models with the Coalition for Health AI framework to produce measurable outcomes across the participating sites. This development advances the safety and policy track by moving evaluation work from lab settings into live public-health environments. Source: [artificialintelligence-news.com](https://www.artificialintelligence-news.com/news/openai-anthropic-public-health-ai/)
----
-### Agent &amp; Tool Developments
-**ChatGPT mobile "Work" runs cloud-based without typical safeguards: Simon Willison**
-Simon Willison notes that ChatGPT mobile’s Work feature operates like Code Interpreter with most safeties disabled and runs entirely in the cloud. On desktop the same feature is a reskinned Codex that executes locally. Developers building agentic workflows should test mobile Work for tasks where reduced guardrails matter while keeping desktop Codex for on-device constraints. The mobile version therefore opens different failure modes and output behaviors than the desktop implementation. Teams should compare outputs from both surfaces on the same prompts to understand where the cloud execution changes results.
-
-**Six AI agent architectures mapped for practitioners: cio.com**
-A new breakdown outlines six distinct agent architectures and their trade-offs. The guide helps teams choose between reactive, planning, hierarchical, and other patterns based on task horizon and tool requirements. Builders evaluating frameworks should map their current stack against these six to identify gaps in long-horizon reliability. The architectures cover varying degrees of autonomy, memory use, and planning depth. Practitioners gain a concrete decision framework rather than choosing frameworks by marketing claims alone.
-
-**AI agents require access grants rather than shared secrets: TechRadar**
-The piece argues that production agents need fine-grained access controls instead of credential sharing. This directly addresses the ongoing agent security gap where shared secrets create blast-radius problems. Teams deploying autonomous agents should audit credential usage and shift to scoped access tokens this week. The recommendation aligns with the tracked agents and tool-use arc by emphasizing reliability improvements through better access design. Production deployments that still rely on shared credentials now have a clear migration path to reduce incident scope. Source: [Google News](https://news.google.com/rss/articles/CBMijAFBVV95cUxPRnVqWkZIT2x2R3djX0xiNVVNY1c3QVc5amhWMU15Nmd3T3o5SktPQ0xQSkgwWk9Iei12YzF6ZEhWLTRNWmw0NHdGT3oxNnJPUVRXekNobkdTT2hZMUpIOEV2d18wZ1R2RDhFVWRHcTg3cHpMLXU0VUV0MTFMcGtqdlFsMmo5S3hrSy1Odg)
----
-### Practical &amp; Community
-**Two-stage prompt-injection detector open-sourced with real attack data: r/MachineLearning**
-Josh Blythe released Bordair, a two-stage detector combining a 430-pattern regex gate with a quantized DeBERTa-v3-large ONNX model. The system includes 13,230 real bypass attempts collected from a public red-team game plus multimodal handling for images, documents, and audio. Developers running LLM inputs should integrate the regex layer first for sub-millisecond filtering before falling back to the transformer on ambiguous cases. The dataset combines over 500k synthetic samples with the real attack split, and the full code, weights, and data are available on GitHub and Hugging Face. Teams gain a practical, low-cost first line of defense that only invokes the heavier model when needed.
-Code: https://github.com/Josh-blythe/bordair-detector  
-Weights &amp; dataset: https://huggingface.co/Bordair/bordair-detector
-
-**Xi Jinping announces WAICO and endorses open-source AI: MediaNama**
-China’s leadership launched WAICO while publicly backing open-source model development. The announcement signals continued policy support for accessible weights and tooling inside the country. Teams tracking global open-source momentum should watch resulting domestic model releases and licensing terms. The policy move reinforces the open-weight track by aligning national direction with community-accessible models. Observers can expect follow-on releases from Chinese labs that build on this stated preference for open weights. Source: [reddit.com](https://www.reddit.com/r/MachineLearning/comments/1v1hm7y/opensourcing_a_twostage_promptinjection_detector/)
----
-### Under the Hood: Two-Stage Prompt-Injection Detection
-Everyone treats prompt-injection defense as a single model problem. In practice the engineering split between a fast regex gate and a heavier transformer is what makes the system usable at scale. The regex layer (roughly 430 patterns plus decode-then-scan for obfuscations) handles the obvious majority of traffic in under a millisecond and drops straight to a decision. Only the ambiguous remainder reaches the quantized DeBERTa-v3-large, keeping the 244 MB model off the hot path for routine queries. This design trades a small amount of recall for massive cost reduction; teams that skip the gate and run the transformer on every request quickly hit latency and budget walls. The inclusion of real attack data from the red-team game further tightens the decision boundary on motivated human attempts that templated synthetic data misses. When to use this pattern: any production pipeline that ingests untrusted text, images, or documents and already pays per-token inference costs. The gotcha that bites most teams is forgetting to update the regex patterns as new obfuscation tricks appear in the wild.
----
-### Things to Try This Week
-- Download and run Kimi K3 weights to benchmark memory-heavy agent tasks against your current open models and measure serving cost at 2.8T scale.
-- Integrate the Bordair regex gate into any LLM input pipeline handling untrusted text or documents for immediate low-latency filtering before the transformer stage.
-- Test ChatGPT mobile Work on a task you normally run through local Codex to see where the reduced safeguards change output behavior.
-- Map your current agent stack against the six architectures outlined in the cio.com guide and identify which pattern your longest-running workflows actually need.
-- Audit agent credential usage in production and replace shared secrets with scoped access grants following the TechRadar recommendations.
----
-### On the Horizon
-- Early independent benchmarks on Kimi K3 for agentic and long-context tasks expected within two weeks.
-- Additional PULSE program results from the ten participating US jurisdictions later this quarter.
-- Further details on WAICO implementation and resulting open-source releases from Chinese labs.
-- Continued analysis of the Hugging Face autonomous-agent breach and resulting agent-security tooling.</itunes:summary>
-      <itunes:episode>117</itunes:episode>
-      <itunes:title>Ep 117: Kimi K3 lands as the largest open-weight model yet at 2.8 trillion parameters, forcing builders to test whether memory-centric scaling beats raw compute for real workloads.</itunes:title>
-      <itunes:episodeType>full</itunes:episodeType>
-    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep117_20260720_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep117.json" type="application/json+chapters" /></item>
   <podcast:locked owner="patrick@planetterrian.com">yes</podcast:locked><itunes:keywords>ai, llm, machine learning, openai, anthropic, agents, claude, gpt, ai news</itunes:keywords></channel>
 </rss>

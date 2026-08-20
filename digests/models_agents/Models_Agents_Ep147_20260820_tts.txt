@@ -1,0 +1,141 @@
+Open A I is testing private safety processing that keeps frontier-model interactions off-limits to staff while still catching risks across long agent sessions.
+
+This is Models and Agents, episode one hundred forty-seven.
+
+Open A I previewed Private Safety Processing for frontier models.
+
+The system flags risks across related interactions in longer autonomous workflows.
+
+It does so without giving Open A I staff access to the underlying content.
+
+The preview sits alongside the company's continued Zero Data Retention offering.
+
+Builders working with extended agent sessions now have an explicit path to stronger safety controls that do not require sharing raw data.
+
+The approach directly addresses the scaling challenge of monitoring multi-turn tool use and memory-heavy conversations.
+
+Watch for how the feature integrates with existing A P I workflows.
+
+On the safety track we covered yesterday, this moves the open question of evaluation standardization forward by testing private review at frontier scale.
+
+NE-BERT is a domain-specific encoder trained on eight point three million sentences across nine Northeast Indian languages plus Hindi and English.
+
+It uses weighted sampling and a custom SentencePiece Unigram tokenizer.
+
+The model delivers fifteen point nine seven times lower average perplexity than IndicBERT-V2.
+
+It also shows seven point six four times lower perplexity than MuRIL.
+
+Tokenization fertility improves one point five times over mBERT.
+
+Downstream gains appear on part-of-speech tagging for three of the languages.
+
+Researchers released the model, test sets, and corpus under CC-BY-four point zero.
+
+SuTRA is a morphology-aware tokenizer that preserves akshara indivisibility for Hindi, Marathi, and Gujarati.
+
+It penalizes merges across morphological boundaries.
+
+The tokenizer records peak gains of fourteen point seven percent Boundary F1 and thirty four percent semantic recoverability on Hindi over standard BPE.
+
+It delivers an average eight point zero eight chrF2 improvement in machine translation.
+
+The team also released a new morphological segmentation dataset for the three languages.
+
+LongNovel provides a bilingual Chinese and English benchmark built from twenty nine Chinese novels ranging from sixteen thousand to one hundred thousand tokens plus BookSum chapter data.
+
+It defines eight hallucination types and uses multi-model arbitration plus entity-referenced generation to create balanced test cases.
+
+Researchers released the dataset and evaluation code.
+
+Nine Emotion Centroids extracts a single valence direction from nine emotion category names plus fifty short paragraphs per emotion.
+
+The resulting axis captures ninety three percent of supervised performance on SST-two.
+
+It transfers to vision, audio, and brain recordings without target-modality labels.
+
+A two-parameter classifier trained only on text reaches AUC zero point nine six one on images and zero point eight two eight on brain data.
+
+The Persona-Guided framework runs two L L M's in a training-free loop.
+
+A user agent expresses a target Big-Five personality while a system agent adapts to complete hotel or restaurant tasks from the SGD dataset.
+
+Oracle personality knowledge improves constraint satisfaction and user satisfaction but reduces truthfulness.
+
+Cue-based inference offers the best reliability-performance tradeoff.
+
+The study evaluates G P T four o, Qwen three Next eighty B, and Gemini two point zero Flash across all trait poles.
+
+StocksTalk converts spoken financial screening requests into validated SQL.
+
+It uses streaming ASR, retrieval-augmented constraint extraction, schema-grounded generation, and rule-based validation inside an interactive dashboard.
+
+A one hundred fifty prompt benchmark shows retrieval grounding and human-in-the-loop verification raise constraint accuracy, SQL executability, and multi-turn stability over plain L L M baselines.
+
+Simon Willison released notes and a GitHub research repo on running untrusted code in a smolvm sandbox.
+
+The setup tested Claude Code in a restricted environment that lacks dev kvm.
+
+The work provides concrete configuration details for builders who need isolated execution for agent tool calls.
+
+A three-day benchmark on a four zero nine zero laptop plus seven nine zero zero XTX eGPU over Thunderbolt four reached twenty seven tokens per second generation and full two hundred sixty two k context on Qwen three point eight twenty seven B Q six K XL.
+
+The author filed an upstream issue on multi-G P U MTP prefill penalties and published the L L M Tuner repo used for the experiments.
+
+Google is offering eligible students a full year of Gemini A I access at no cost.
+
+The program targets higher-education users and provides the same model capabilities available to paid subscribers.
+
+FD-KVC maintains dual scoring channels per KV pair using cumulative attention and recency-weighted relevance with temporal decay.
+
+It uses an ownership loss to drive adaptive learning rates.
+
+Across six hundred dialog test sets it outperforms H two O by six point seven percent on late-turn alignment and adapts to topic shifts three point six times faster while running entirely on CPU.
+
+OK, let's pop the hood on KV-cache eviction under topic drift.
+
+Everyone treats KV-cache eviction as a simple keep-the-most-attended-tokens rule.
+
+In practice the decision surface changes as soon as the conversation topic shifts because attention mass from earlier turns stops predicting future utility.
+
+The core insight is that importance is not stationary.
+
+A token that was heavily attended during the first topic can become irrelevant noise once the user changes subject.
+
+Dual-channel scoring separates aggregate attention from a recency-weighted relevance signal that decays unless reinforced by new matches.
+
+Adding an ownership loss term prevents the eviction policy from oscillating when the same entities reappear later in the dialogue.
+
+The practical tradeoff is modest CPU overhead for the extra scoring pass versus measurable gains in late-turn alignment and faster recovery after topic changes.
+
+Teams running long multi-turn agents should prefer dual-channel or ownership-aware eviction once context exceeds roughly fifty k tokens.
+
+Single-signal LRU or H two O remains adequate for shorter single-topic sessions.
+
+Test NE-BERT on any Northeast Indian language tagging or retrieval task.
+
+The released weights and corpus make it a drop-in low-resource baseline.
+
+Run the SuTRA tokenizer against your current BPE pipeline on Hindi or Gujarati MT data to measure the reported chrF2 lift.
+
+Add LongNovel to your long-context summarization eval harness to surface hallucination patterns that news or paper benchmarks miss.
+
+Try the final llama dot cpp flag set from the forty GB mixed-G P U benchmark on your own Qwen three point eight twenty seven B workload.
+
+Prototype a dual-channel KV eviction policy in your dialog agent using the FD-KVC description as a starting point.
+
+Further details are expected on Open A I's Private Safety Processing rollout and integration surface.
+
+Additional low-resource Indic model releases are already signaled in the NE-BERT and SuTRA papers.
+
+More llama dot cpp multi-G P U and MTP fixes are likely after the filed issue receives community attention.
+
+Before we go, the next wave of details on how Private Safety Processing will surface in the A P I should land in the coming days.
+
+That wraps up today's A I briefing. Share this with a developer or builder who wants to stay current. Subscribe wherever you listen. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+One more thing — if you liked today's episode, our sister show Models and Agents for Beginners is worth a spot in your feed: artificial intelligence explained simply, for beginners and curious teens. It's one of the Nerra Network's daily briefings, all free at nerranetwork dot com.
+
+And on the website: every episode's visuals live in our free image gallery at nerranetwork dot com gallery — royalty-free under Creative Commons, download with attribution.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
