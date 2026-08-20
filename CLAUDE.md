@@ -248,6 +248,40 @@ today's work, not just explain yesterday's):
   methodology: [`docs/mit_trading_method.md`](docs/mit_trading_method.md).
   Drift guards: `TestTradingPolicy`, `TestEraScopedRecord`,
   `TestReproducibleDecisions`.
+- **MIT trades options now, and the premium is never modelled**
+  (2026-08-19). The show taught options in 32 of 40 episodes and had
+  traded one in 0 of 61 positions. Covered calls and cash-secured puts
+  are now real: the contract is quoted LIVE at pick time (listed strike,
+  listed expiry, bid/ask mid) because a premium cannot be reconstructed
+  afterwards from free data, and the position is held to EXPIRY where the
+  payoff is arithmetic on the underlying close with no free parameters.
+  **If the chain cannot be quoted the pick degrades to shares** and
+  records `option_quote_failed` — never an estimated premium. Selection
+  is by rule (nearest listed expiry 21-45d, strike closest to 4% OTM,
+  ITM/unquoted skipped) so it is reproducible. Returns are on capital
+  actually committed, which is what makes them comparable with a $1,000
+  share position. Early assignment is NOT modelled and the prompts
+  require saying so. Guards: `TestOptionsPositions`.
+- **MIT's rule scoreboard must refuse to claim what it cannot measure.**
+  It was emitting FIVE identical `RETIREMENT CANDIDATE` verdicts (same 10
+  trades, same -0.17% vs +0.43%) because all five rules were stamped on
+  exactly the same trades — perfectly collinear, one undivided sample
+  reported as five findings — with the disowned pre-era trades as its
+  control group. It is now era-scoped, refuses a verdict when the stamped
+  rule set never varies, flags collinear rules as ONE piece of evidence,
+  requires >=5 trades on BOTH arms, and says "not measurable yet" instead
+  of going silent (silence is how the artifacts rode for weeks). Also:
+  `_is_trading_rule` keeps production-hygiene lessons — re-teach
+  cooldowns, "state the NASDAQ level", the sim's own data-fetch bugs —
+  out of the pick prompt, and `_rule_core` dedups on the rule's
+  constraint with its scope clause stripped. Guards:
+  `TestRuleScoreboardHonesty`, `TestTradingVsPipelineRules`.
+- **The MIT trade ledger is public** (`scripts/build_mit_ledger.py` ->
+  `api/mit_trade_ledger.json` + `.csv`, nightly): every trade with entry/
+  exit bar dates, stop, horizon, invalidation, confidence, rules in
+  effect and option contract. Voided picks and pre-era trades are
+  INCLUDED and flagged — a ledger that drops its failures is marketing.
+  Guards: `TestPublicLedger`.
 - **Two functions speak MIT's alpha, and they must never disagree:**
   `_build_portfolio_summary` and `_build_benchmark_block`. The Aug 15
   pass fixed only the first, and because both reach the same prompt the
