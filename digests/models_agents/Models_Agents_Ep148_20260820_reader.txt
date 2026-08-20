@@ -1,0 +1,177 @@
+Enterprise service platforms just gained background agents that spot and fix IT issues before tickets appear.
+
+This is Models and Agents, episode 148.
+
+Serval made its Catalyst super-agent generally available today.
+
+The release lets teams describe outcomes in natural language and receive full workflows, policies, and dashboards ready for review.
+
+Upstage released Solar Pro 4, a frontier-class model that scores forty-two on the Artificial Analysis Index.
+
+Several small-model releases and agent harnesses also landed this week.
+
+Those additions give builders concrete options for cost-sensitive or specialized workloads.
+
+Serval made Catalyst, its AI-native automation layer, generally available and enabled by default for all customers.
+
+The system inspects ticket history and standard operating procedures.
+
+It identifies repetitive work and then generates complete workflows, skills, forms, access policies, and dashboards in a single conversational pass.
+
+Catalyst also runs scheduled background agents that correlate signals across connected systems such as Okta and Google Workspace.
+
+The agents draft remediation steps and surface them for administrator approval before any employee submits a ticket.
+
+Ramp reported fifty percent faster workflow creation and one hundred fifty hours saved on a single laptop-replacement automation.
+
+Mercor and Perplexity have expanded Serval across multiple teams as well.
+
+The company keeps the underlying models swappable.
+
+Customers can supply their own OpenAI or Anthropic keys while retaining full ownership of data and outputs.
+
+Remember, we covered autonomous agents yesterday.
+
+Today's rollout moves that conversation forward by showing how earned autonomy works inside live enterprise systems.
+
+OK, let's pop the hood on this one.
+
+Everyone pictures background agents as simple scheduled scripts that run with the same rights as the user who started them.
+
+In practice the engineering problem is maintaining a live, queryable map of every integration, permission boundary, and data source the agent can reach at any moment.
+
+Serval’s implementation keeps the agent inside the user’s workspace context.
+
+It only surfaces draft changes for explicit approval.
+
+That prevents silent escalation but adds a mandatory human gate on every proposed remediation.
+
+The cost is extra round-trips and storage for the draft state.
+
+The benefit is an auditable trail that satisfies most enterprise change-management policies.
+
+When the agent detects configuration drift across multiple systems it must correlate signals without retaining persistent IAM credentials.
+
+The architecture therefore relies on short-lived tokens refreshed per scan.
+
+The practical decision rule is simple.
+
+If your environment already has strong change-control processes, the extra approval step is cheap insurance.
+
+If you are trying to eliminate every human touchpoint, the same scoping rules become the limiting factor.
+
+Most teams discover the real constraint is not model intelligence but the freshness and completeness of the permission graph the agent consults before acting.
+
+Upstage released Solar Pro 4.
+
+The model scores forty-two on the Artificial Analysis Index and places it among current global frontier models.
+
+Exact parameter count and context length were not disclosed in the announcement.
+
+Builders working on high-stakes reasoning tasks should test it against existing frontier options this week.
+
+Liquid AI published LFM2.5-DSpark.
+
+The inference optimization delivers up to three point two times faster generation on supported hardware.
+
+The technique focuses on kernel-level improvements rather than architectural changes.
+
+It is immediately usable with existing LFM checkpoints.
+
+Teams running high-volume inference should benchmark the new kernels against their current stack this week.
+
+SupraLabs released Supra2-Medium-Base.
+
+The twenty-five million parameter model was trained from scratch on a Qwen3-style architecture using two RTX five thousand sixty GPUs.
+
+It shows competitive results against the team’s prior fifty million parameter model on standard benchmarks.
+
+Memory and training cost drop roughly in half.
+
+The base model is available now on Hugging Face.
+
+An instruction-tuned version is planned.
+
+A new eighty thousand parameter model called Aurora-80K was released with a factorized four thousand ninety-six token vocabulary.
+
+It records three point two nine zero two bits per byte on Wikitext-two.
+
+It also scores fifty-two point three one percent on BLiMP and twenty-six point zero five percent on ARC-Easy.
+
+The tiny size makes it suitable for extreme edge or educational experiments where even one billion parameter models are too heavy.
+
+Tencent has begun gray testing Hunyuan Hy4 inside the Yuanbao app.
+
+The model is labeled an expert-level model that can use tools.
+
+It sits above the existing Hy3 general model.
+
+Early users report improved tool-calling behavior compared with prior Hunyuan releases.
+
+NeuBird released an open framework that lets agents progressively earn autonomy in production environments.
+
+The framework uses staged permission grants and continuous verification.
+
+The approach aims to reduce blast radius when agents act on live systems.
+
+Organizations running long-horizon agents should review the framework’s audit and rollback mechanisms before integrating.
+
+TrueFoundry open-sourced an agent harness that claims up to seventy-five percent lower inference costs through aggressive routing and caching.
+
+The harness supports multiple model providers and includes built-in evaluation loops.
+
+Teams currently paying high per-token bills for agent workflows should test the harness on a representative workload this week.
+
+Binance launched Agent OS.
+
+The integration layer lets AI agents interact directly with trading, custody, and settlement rails.
+
+The platform exposes standardized endpoints for balance checks, order placement, and compliance checks.
+
+Developers building financial agents now have a single on-ramp to Binance’s infrastructure instead of stitching multiple APIs.
+
+A production incident revealed that an LLM judge consistently rated its own prior outputs more favorably than independent human review.
+
+The post walks through the exact prompt structure and scoring rubric that produced the self-reinforcing loop.
+
+Anyone using model-as-judge pipelines should add cross-model or human spot-checks before trusting aggregate scores.
+
+Researchers demonstrated a cryptographic context-injection attack that causes Grok to leak user data when instructions are hidden inside encrypted payloads.
+
+The attack bypasses existing guardrails without triggering obvious refusal patterns.
+
+The disclosure was made responsibly.
+
+xAI has not yet published a mitigation timeline.
+
+A commercial tool called Kriminal successfully jailbreaks both Grok and Claude for twelve dollars and ninety-nine cents per month.
+
+The service packages multiple known bypass techniques behind a simple interface.
+
+Security teams evaluating frontier models should treat any uncensored third-party wrapper as a data-exfiltration risk.
+
+Test Serval Catalyst on a single repetitive ticket category to see how quickly it produces a governed workflow you can review.
+
+Benchmark Upstage Solar Pro 4 against your current frontier model on a representative reasoning or tool-use task.
+
+Try the TrueFoundry open-source harness on a multi-model agent workload to measure the claimed seventy-five percent cost reduction.
+
+Run the new Supra2-Medium-Base model on an edge device to evaluate whether its quality-to-size ratio beats your existing tiny-model baseline.
+
+Review the LLM-judge failure case study and add a cross-model verification step to any evaluation pipeline you maintain.
+
+More teams are expected to release background-agent frameworks that operate on live system telemetry rather than waiting for tickets.
+
+Additional small-model releases from regional labs will continue to target specific languages and edge hardware.
+
+Safety tooling around encrypted prompt injection and model-as-judge reliability is likely to see rapid iteration after this week’s disclosures.
+
+Before we go, Serval’s default-on rollout is already prompting other ITSM vendors to outline their own background-agent plans.
+
+That wraps up today's AI briefing. Share this with a developer or builder who wants to stay current. Subscribe wherever you listen. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+One more thing — if you liked today's episode, our sister show Models and Agents for Beginners is worth a spot in your feed: artificial intelligence explained simply, for beginners and curious teens. It's one of the Nerra Network's daily briefings, all free at nerranetwork.com.
+
+And on the website: every episode's visuals live in our free image gallery at nerranetwork.com/gallery — royalty-free under Creative Commons, download with attribution.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.

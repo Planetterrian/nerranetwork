@@ -1,0 +1,59 @@
+Enterprise service platforms just gained background agents that spot and fix IT issues before tickets appear. This is Models & Agents, episode 148. Serval made its catalysts super agent generally available today. The release lets teams describe outcomes in natural language and receive full workflows, policies, and dashboards ready for review. Upstage released Solar Pro 4, a frontier class model that scores 42 on the artificial analysis
+index. Several small model releases and agent harnesses also landed this week. Those additions give builders concrete options for cost-sensitive or specialized workloads. Serval made catalyst, its AI native automation layer, generally available and enabled by default for all customers. The system inspects ticket history and standard operating procedures. It identifies repetitive work and then generates complete workflows, skills, forms, access policies, etc.
+and dashboards in a single conversation of pass. Catalyst also runs scheduled background agents that correlate signals across connected systems such as Octa and Google workspace. The agents draft remediation steps and surface them for administrator approval before any employee submits a ticket. Ram purported 50% faster workflow creation and 150 hours saved on a single laptop replacement automation.
+Mercore and perplexity have expanded serval across multiple teams as well. The company keeps the underlying models swappable. Customers can supply their own open AI or anthropic keys while retaining full ownership of data and outputs.
+Remember, we covered Autonomous Agents yesterday. Today's rollout moves that conversation forward by showing how earned autonomy works inside live enterprise systems.
+Okay, let's pop the hood on this one. Everyone pictures background agents as simple scheduled scripts that run with the same rights as the user who started them. In practice, the engineering problem is maintaining a live, queryable map of every integration, permission boundary and data source the agent can reach at any moment.
+Serval's implementation keeps the agent inside the user's workspace context. It only surfaces draft changes for explicit approval.
+That prevents silent escalation, but adds a mandatory human gate on every proposed remediation. The cost is extra round trips and storage for the draft state.
+The benefit is an auditable trail that satisfies most enterprise change management policies. When the agent detects configuration drift across multiple systems, it must correlate signals without retaining persistent IAM credentials.
+The architecture therefore relies on short-lived tokens refreshed per scan. The practical decision rule is simple. If your environment already has strong change control processes, the extra approval step is cheap insurance.
+If you are trying to eliminate every human touch point, the same scoping rules become the limiting factor.
+Most teams discover the real constraint is not model intelligence, but the freshness and completeness of the permission graph the agent consults before acting.
+Upstage released Solar Pro 4. The model scores 42 on the artificial analysis index and places it among current global frontier models.
+Exact parameter count and context length were not disclosed in the announcement. Builders working on high stakes reasoning tasks should test it against existing frontier options this week.
+Liquid AI published LFM 2.5D Spark. The inference optimization delivers up to 3.2 times faster generation on supported hardware.
+The technique focuses on kernel-level improvements rather than architectural changes. It is immediately usable with existing LFM checkpoints.
+Teams running high-volume inference should benchmark the new kernels against their current stack this week.
+Superlabs released Super2-medium base. The 25 million parameter model was trained from scratch on a Quinn 3-style architecture using two RTX 5,060 GPUs.
+It shows competitive results against the team's prior 50 million parameter model on standard benchmarks. Memory and training costs drop roughly in half.
+The base model is available now on hugging face. An instruction tuned version is planned. A new 80,000 parameter model called Aurora 80,000 was released with a factorized 4,096 token vocabulary.
+It records 3.2902 bits per byte on wicketx2. It also scores 52.31% on blimp and 26.05% on arc easy.
+The tiny size makes it suitable for extreme edge or educational experiments where even 1 billion parameter models are too heavy.
+Tencent has begun gray testing Hoon Yuan High 4 inside the Yuan Bow app. The model is labeled an expert level model that can use tools.
+It sits above the existing High 3 general model. Early users report improved tool calling behavior compared with prior Hoon Yuan releases.
+Newbird released an open framework that lets agents progressively earn autonomy in production environments.
+The framework uses staged permission grants and continuous verification. The approach aims to reduce blast radius when agents act on live systems.
+Organizations running long horizon agents should review the frameworks audit and rollback mechanisms before integrating.
+True Foundry opens sourced an agent harness that claims up to 75% lower inference costs through aggressive routing and caching.
+The harness supports multiple model providers and includes built-in evaluation loops.
+Teams currently paying high per token bills for agent workflows should test the harness on a representative of workload this week.
+Binance launched agent OS. The integration layer lets AI agents interact directly with trading, custody and settlement rails.
+The platform exposes standardized endpoints for balance checks, order placement and compliance checks.
+Developers building financial agents now have a single on ramp to finances infrastructure instead of stitching multiple APIs.
+A production incident revealed that an LLM judge consistently rated its own prior outputs more favorably than independent human review.
+The post walks through the exact prompt structure and scoring rubric that produced the self reinforcing loop.
+Anyone using model as judge pipelines should add cross model or human spot checks before trusting aggregate scores.
+Researchers demonstrated a cryptographic context injection attack that causes GROC to leak user data when instructions are hidden inside encrypted payloads.
+The attack bypasses existing guard rails without triggering obvious refusal patterns.
+The disclosure was made responsibly. XAI has not yet published a mitigation timeline.
+A commercial tool called Criminal successfully jail breaks both GROC and Clawed for $12.99 per month.
+The service package is multiple known bypass techniques behind a simple interface.
+Security teams evaluating frontier models should treat any uncensored third-party wrapper as a data exfiltration risk.
+Tests serve a catalyst on a single repetitive ticket category to see how quickly it produces a govern workflow you can review.
+Benchmark Upstage Solar Pro 4 against your current frontier model on a representative reasoning or tool use task.
+Tried the true foundry open source harness on a multi-model agent workload to measure the claimed 75% cost reduction.
+Run the new super-to-medium base model on an edge device to evaluate whether its quality to size ratio beats your existing tiny model baseline.
+Review the LLM Judge Failure Case Study and add a cross model verification step to any evaluation pipeline you maintain.
+More teams are expected to release background agent frameworks that operate on live system telemetry rather than waiting for tickets.
+Additional small model releases from regional labs will continue to target specific languages and edge hardware.
+Safety tooling around encrypted prompt injection and model as judge reliability is likely to see rapid iteration after this week's disclosures.
+Before we go, Servals default on rollout is already prompting other ITSM vendors to outline their own background agent plans.
+That wraps up today's AI briefing. Share this with a developer or builder who wants to stay current.
+Subscribe wherever you listen. See you tomorrow.
+And if you'd rather watch then listen, find us on YouTube at Nerra Network, links in the show notes.
+One more thing. If you like today's episode, our sister show Models and Agents for Beginners is worth a spot in your feed.
+Artificial intelligence explains simply, for beginners and curious teens.
+It's one of the Nerra Network's daily briefings, all free at NerraNetwork.com.
+And on the website, every episode's visuals live in our free image gallery at NerraNetwork.com gallery, royalty free under Creative Commons, download with Attribution.
+This episode used AI voice synthesis of my voice. Editorial selection and analysis are my own.
