@@ -331,6 +331,8 @@ def pre_fetch(config, *, episode_num: int | None = None, today_str: str | None =
     # are producing alpha and which are underperforming, so it can refine
     # future trade selection. The regime check (rolling streak + drawdown
     # → selection pressure) rides in the same prompt slot.
+    context["strategy_family_performance"] = (
+        _build_strategy_family_performance(tracker))
     strategy_block = _build_strategy_performance(tracker)
     regime = _build_regime_block(tracker)
     if regime:
@@ -681,7 +683,9 @@ def post_generate(config, *, digest_text: str = "", episode_num: int | None = No
             pick_day_lessons = _load_lessons_learned(
                 output_dir / LESSONS_LEARNED_FILENAME)
             trade["rules_in_effect"] = [
-                e["id"] for e in _selected_active_rules(pick_day_lessons)
+                e["id"] for e in _selected_active_rules(
+                    pick_day_lessons, episode_num=episode_num,
+                    tracker=tracker)
             ]
         except Exception as exc:  # noqa: BLE001
             logger.warning("rules_in_effect stamping failed: %s", exc)
@@ -3373,7 +3377,180 @@ def _is_trading_rule(entry: dict) -> bool:
     return not _PIPELINE_RULE_RE.search(text)
 
 
-def _selected_active_rules(data: dict, *, max_active: int = 5) -> list[dict]:
+# ---------------------------------------------------------------------------
+# Strategy families (2026-08-20)
+# ---------------------------------------------------------------------------
+# 61 trades produced 61 UNIQUE free-text strategy strings, so the show could
+# report which SECTORS worked but never which APPROACHES did — "are our
+# momentum entries better than our valuation screens?" was unanswerable for
+# the operator and for the audience. A closed vocabulary makes per-strategy
+# alpha reportable; deriving it from the existing text makes the 61 historic
+# trades usable immediately instead of starting the count from zero.
+#
+# Order matters: the first family whose pattern matches wins, so the more
+# specific ones are listed first.
+STRATEGY_FAMILIES: list[tuple[str, str]] = [
+    ("merger_arb", r"\bm&a\b|merger|acquisition|takeover|arb\b|spread capture"),
+    ("earnings_surprise", r"earnings[- ](beat|surprise|revision|driven|momentum)|"
+                          r"beat and|post-earnings|reported beat"),
+    ("dividend_income", r"dividend|distribution|yield|buyback|issuer bid|"
+                        r"covered call|cash[- ]secured put"),
+    ("catalyst_event", r"catalyst|announced|launch|approval|contract win|"
+                       r"policy|regulatory|phase 3|data readout"),
+    ("valuation", r"valuation|value assessment|multiple|cheap|discount|"
+                  r"free cash flow|screen on"),
+    ("mean_reversion", r"mean[- ]reversion|contrarian|oversold|recovery from|"
+                       r"fade of|rebound"),
+    ("technical_breakout", r"breakout|technical|moving average|range|"
+                           r"chart|support|resistance"),
+    ("macro_rotation", r"macro|sector rotation|rotation into|geopolitical|"
+                       r"rate|cross-asset|commodity"),
+    ("momentum", r"momentum|follow-through|price action|relative strength"),
+]
+
+
+def strategy_family(trade: dict) -> str:
+    """The closed-vocabulary family for a trade's strategy.
+
+    Prefers an explicit ``strategy_family`` written by the digest; falls
+    back to deriving one from the free-text strategy so the historic
+    record is groupable too. ``other`` when nothing matches — an honest
+    bucket beats forcing a wrong label.
+    """
+    explicit = (trade.get("strategy_family") or "").strip().lower()
+    known = {name for name, _ in STRATEGY_FAMILIES}
+    if explicit in known:
+        return explicit
+    text = f"{trade.get('strategy', '')} {trade.get('target_range', '')}".lower()
+    for name, pattern in STRATEGY_FAMILIES:
+        if re.search(pattern, text):
+            return name
+    return "other"
+
+
+def _build_strategy_family_performance(tracker: dict, *,
+                                       min_trades: int = 3) -> str:
+    """Per-approach scoreboard for the pick prompt.
+
+    Sector performance answers "what have we been buying"; this answers
+    "which of our methods actually works", which is the question the show
+    is nominally in business to resolve.
+    """
+    from collections import defaultdict
+
+    def _usable(t: dict) -> bool:
+        alpha = t.get("alpha_pct")
+        return (t.get("status") == "closed"
+                and isinstance(alpha, (int, float)) and math.isfinite(alpha))
+
+    # Same window discipline as every other number this show speaks:
+    # prefer trades whose benchmark window was built by the pick-date
+    # aligned path. Fall back to the legacy windows only when the verified
+    # set is too thin to say anything — and then SAY it is legacy, so this
+    # block can never be quoted as if it carried the same weight.
+    closed = [t for t in tracker.get("trades", []) if _usable(t)]
+    verified = [t for t in closed if t.get("entry_bar_date")]
+    if len(verified) >= min_trades * 2:
+        pool, scope = verified, "verified-window trades"
+    else:
+        pool, scope = closed, (
+            "trades that INCLUDE pre-2026-08-18 benchmark windows — "
+            "indicative only, do NOT quote these as measured results on air"
+        )
+
+    buckets: dict[str, list[float]] = defaultdict(list)
+    for t in pool:
+        buckets[strategy_family(t)].append(t["alpha_pct"])
+
+    if not buckets:
+        return ""
+    ranked = sorted(
+        ((name, vals) for name, vals in buckets.items()
+         if len(vals) >= min_trades),
+        key=lambda kv: sum(kv[1]) / len(kv[1]), reverse=True,
+    )
+    if not ranked:
+        return ""
+    lines = [f"STRATEGY-FAMILY RECORD (alpha by APPROACH, not by sector; "
+             f"computed over {scope}):"]
+    for name, vals in ranked:
+        mean = sum(vals) / len(vals)
+        beat = sum(1 for a in vals if a > 0)
+        note = ""
+        if len(vals) < _MIN_SAMPLE_TRADES:
+            note = " — too few to lean on"
+        lines.append(
+            f"- {name}: {mean:+.2f}% mean alpha over {len(vals)} trades "
+            f"({beat} beat the benchmark){note}"
+        )
+    thin = [n for n, v in buckets.items() if len(v) < min_trades]
+    if thin:
+        lines.append(
+            f"- Not yet scoreable ({min_trades}-trade minimum): "
+            + ", ".join(sorted(thin))
+        )
+    lines.append(
+        "Favour approaches with a positive record and enough trades behind "
+        "it. When choosing one with a negative record, say what is "
+        "different about today's setup rather than ignoring the history."
+    )
+    return "\n".join(lines) + "\n"
+
+
+def _proven_rule_ids(tracker: dict | None, data: dict) -> set[str]:
+    """Rules that have demonstrated an edge, or are pinned by hand.
+
+    A proven rule is never rotated out: the point of rotation is to learn
+    which heuristics work, not to withhold one already known to.
+    """
+    pinned = {
+        e["id"] for e in (data.get("entries") or [])
+        if e.get("always_on") and e.get("id")
+    }
+    if not tracker:
+        return pinned
+    closed = [
+        t for t in tracker.get("trades", [])
+        if t.get("status") == "closed" and _in_era(t)
+        and isinstance(t.get("alpha_pct"), (int, float))
+        and math.isfinite(t["alpha_pct"])
+    ]
+    for entry in (data.get("entries") or []):
+        rid = entry.get("id")
+        if not rid:
+            continue
+        with_rule = [t for t in closed
+                     if rid in (t.get("rules_in_effect") or [])]
+        without = [t for t in closed
+                   if rid not in (t.get("rules_in_effect") or [])]
+        if len(with_rule) < _MIN_SAMPLE_TRADES or len(without) < _MIN_SAMPLE_TRADES:
+            continue
+        avg_with = sum(t["alpha_pct"] for t in with_rule) / len(with_rule)
+        avg_without = sum(t["alpha_pct"] for t in without) / len(without)
+        if avg_with > avg_without:
+            pinned.add(rid)
+    return pinned
+
+
+def _rotate(pool: list[dict], slots: int, episode_num: int | None) -> list[dict]:
+    """A deterministic, evenly-cycling subset of *pool*.
+
+    Deterministic on the episode number so the selection is reproducible
+    from the trade record — a listener auditing the ledger can recompute
+    which rules were in effect. Consecutive-with-wraparound gives every
+    rule the same exposure over a cycle instead of the lumpy coverage a
+    hash would produce.
+    """
+    if slots >= len(pool) or slots <= 0:
+        return pool
+    offset = (episode_num or 0) % len(pool)
+    doubled = pool + pool
+    return doubled[offset:offset + slots]
+
+
+def _selected_active_rules(data: dict, *, max_active: int = 5,
+                           episode_num: int | None = None,
+                           tracker: dict | None = None) -> list[dict]:
     """The distinct active rules shown to the LLM today (most recent first).
 
     Shared by the prompt block AND the trade-stamping in post_generate so
@@ -3384,21 +3561,38 @@ def _selected_active_rules(data: dict, *, max_active: int = 5) -> list[dict]:
         e for e in (data.get("entries") or [])
         if e.get("status") == "active" and _is_trading_rule(e)
     ]
-    selected: list[dict] = []
+
+    # Distinct rules, most recent first. Deduped over the WHOLE pool, not
+    # just the first max_active, so pinning below can reach a proven rule
+    # that recency alone would have pushed out of the window.
+    eligible: list[dict] = []
     for entry in reversed(entries):
-        if len(selected) >= max_active:
-            break
         if any(
             _lesson_similarity(entry.get("adjustment", ""), s.get("adjustment", ""))
             >= _LESSON_SIMILARITY_THRESHOLD
             or _lesson_similarity(
                 _rule_core(entry.get("adjustment", "")),
                 _rule_core(s.get("adjustment", ""))) >= _RULE_CORE_THRESHOLD
-            for s in selected
+            for s in eligible
         ):
             continue
-        selected.append(entry)
-    return selected
+        eligible.append(entry)
+
+    # Rotation (2026-08-20). Without it the stamped rule set is constant
+    # between ledger edits, every trade carries the same rules, and no
+    # rule can ever be told apart from any other — the scoreboard is
+    # honest and permanently silent. Proven rules stay pinned; the rest
+    # cycle so each accrues both a with-rule and a without-rule arm.
+    pol = ((load_policy().get("learning") or {}).get("rule_rotation") or {})
+    if pol.get("enabled") and len(eligible) > 1:
+        proven = (_proven_rule_ids(tracker, data)
+                  if pol.get("pin_proven", True) else set())
+        pinned = [e for e in eligible if e.get("id") in proven]
+        pool = [e for e in eligible if e.get("id") not in proven]
+        slots = max(1, int(pol.get("slots", 4)) - len(pinned))
+        return (pinned + _rotate(pool, slots, episode_num))[:max(
+            max_active, len(pinned) + 1)]
+    return eligible[:max_active]
 
 
 def _build_lessons_learned_block(data: dict, *, max_active: int = 5) -> str:
@@ -3941,6 +4135,11 @@ def _extract_trade_from_digest(digest_text: str, episode_num: int | None = None)
 
     # Options structure (2026-08-19). Absent or "shares" => a plain long
     # equity position, which is every trade before this date.
+    family_match = re.search(
+        r"\*\*Strategy Family:\*\*\s*\[?([a-z_]+)", digest_text, re.IGNORECASE)
+    strategy_family_raw = (
+        family_match.group(1).strip().lower() if family_match else "")
+
     structure_match = re.search(
         r"\*\*Structure:\*\*\s*\[?([A-Za-z \-_]+)", digest_text)
     structure = ""
@@ -3978,6 +4177,7 @@ def _extract_trade_from_digest(digest_text: str, episode_num: int | None = None)
         "target_range": target,
         "invalidation": invalidation,
         "structure": structure or "long_equity",
+        "strategy_family": strategy_family_raw,
         "trade_type": trade_type,
         "policy_version": load_policy().get("version"),
         "horizon_sessions": horizon_sessions(trade_type),

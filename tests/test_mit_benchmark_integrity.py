@@ -2335,3 +2335,216 @@ class TestPublicLedger:
             encoding="utf-8")
         assert "scripts/build_mit_ledger.py" in wf
         assert "api/mit_trade_ledger.json" in wf.split("add-paths")[1]
+
+
+class TestRuleRotation:
+    """The scoreboard can only attribute an effect to a rule if some picks
+    were made WITH it and some WITHOUT.
+
+    Across the first 15 stamped trades only two rule sets were ever used
+    — differing by a single rule, and arising because the lesson ledger
+    happened to change rather than by design. The honest scoreboard was
+    therefore permanently silent. Rotation supplies the variation.
+    """
+
+    # Genuinely distinct constraints — near-identical wording would be
+    # collapsed by the near-duplicate filter before rotation ever runs,
+    # which is correct behaviour but makes for a useless fixture.
+    _ADJUSTMENTS = [
+        "Require volume above the 20-day average",
+        "Cap any single sector at 30% of the trailing window",
+        "Wait for a confirmed earnings beat",
+        "Avoid names inside an active short squeeze",
+        "Size down when the VIX is above 25",
+        "Skip picks with earnings inside the holding window",
+    ]
+
+    @classmethod
+    def _ledger(cls, n=6):
+        return {"entries": [
+            {"id": f"LL-{i + 1:03d}", "status": "active",
+             "adjustment": cls._ADJUSTMENTS[i]}
+            for i in range(min(n, len(cls._ADJUSTMENTS)))
+        ]}
+
+    def test_rule_set_varies_between_episodes(self):
+        data = self._ledger()
+        sets = {tuple(e["id"] for e in mi._selected_active_rules(
+            data, episode_num=ep)) for ep in range(100, 112)}
+        assert len(sets) > 1, "rotation produced a constant rule set"
+
+    def test_every_rule_gets_both_arms_over_a_cycle(self):
+        from collections import Counter
+        data = self._ledger()
+        seen = Counter()
+        episodes = list(range(100, 130))
+        for ep in episodes:
+            for e in mi._selected_active_rules(data, episode_num=ep):
+                seen[e["id"]] += 1
+        # Each rule appears sometimes and is absent sometimes — without
+        # both arms no rule can ever be scored.
+        for rid, count in seen.items():
+            assert 0 < count < len(episodes), f"{rid} never varies"
+
+    def test_rotation_is_deterministic(self):
+        data = self._ledger()
+        a = [e["id"] for e in mi._selected_active_rules(data, episode_num=207)]
+        b = [e["id"] for e in mi._selected_active_rules(data, episode_num=207)]
+        assert a == b  # reproducible from the trade record
+
+    def test_proven_rules_are_never_rotated_out(self):
+        data = self._ledger()
+        era = mi.era_inception() or datetime.date(2026, 8, 18)
+
+        def closed(alpha, rules, i):
+            d = (era + datetime.timedelta(days=i)).isoformat()
+            return {"status": "closed", "alpha_pct": alpha, "pnl_pct": alpha,
+                    "nasdaq_return_pct": 0.0, "date": d, "entry_bar_date": d,
+                    "rules_in_effect": rules}
+
+        # LL-001 clearly outperforms; it must stop rotating.
+        tracker = {"trades": [closed(5.0, ["LL-001"], i) for i in range(6)]
+                   + [closed(-2.0, ["LL-002"], i + 6) for i in range(6)]}
+        assert "LL-001" in mi._proven_rule_ids(tracker, data)
+        for ep in range(100, 112):
+            ids = [e["id"] for e in mi._selected_active_rules(
+                data, episode_num=ep, tracker=tracker)]
+            assert "LL-001" in ids
+
+    def test_hand_pinned_rules_are_never_rotated_out(self):
+        data = self._ledger()
+        data["entries"][3]["always_on"] = True
+        pinned = data["entries"][3]["id"]
+        for ep in range(100, 112):
+            ids = [e["id"] for e in mi._selected_active_rules(
+                data, episode_num=ep)]
+            assert pinned in ids
+
+    def test_small_pool_is_not_rotated_away(self):
+        # With fewer rules than slots there is nothing to rotate and every
+        # rule must still be shown.
+        data = self._ledger(n=2)
+        ids = [e["id"] for e in mi._selected_active_rules(data, episode_num=5)]
+        assert len(ids) == 2
+
+
+class TestStrategyFamilies:
+    """61 trades produced 61 unique free-text strategy strings, so the show
+    could report which SECTORS worked but never which APPROACHES did."""
+
+    def test_families_are_derived_from_free_text(self):
+        cases = [
+            ("Momentum play on earnings beat", "earnings_surprise"),
+            ("Mean-reversion entry on 80% recovery from lows", "mean_reversion"),
+            ("M&A spread capture on announced acquisition", "merger_arb"),
+            ("Dividend-compounding entry on a midstream pipeline", "dividend_income"),
+            ("Technical breakout attempt from one-month range", "technical_breakout"),
+            ("Valuation screen on memory-chip names", "valuation"),
+        ]
+        for text, expected in cases:
+            assert mi.strategy_family({"strategy": text}) == expected, text
+
+    def test_explicit_family_wins_over_derivation(self):
+        trade = {"strategy": "Momentum play on earnings beat",
+                 "strategy_family": "macro_rotation"}
+        assert mi.strategy_family(trade) == "macro_rotation"
+
+    def test_unknown_explicit_family_falls_back_to_derivation(self):
+        trade = {"strategy": "Dividend-growth entry",
+                 "strategy_family": "not_a_real_family"}
+        assert mi.strategy_family(trade) == "dividend_income"
+
+    def test_unmatched_strategy_is_other_not_forced(self):
+        assert mi.strategy_family({"strategy": "Something entirely novel"}) == "other"
+
+    def test_record_prefers_verified_windows_and_labels_its_scope(self):
+        era = mi.era_inception() or datetime.date(2026, 8, 18)
+        trades = []
+        for i in range(8):
+            d = (era + datetime.timedelta(days=i)).isoformat()
+            trades.append({"status": "closed", "alpha_pct": 1.0 + i,
+                           "strategy": "Momentum play on earnings beat",
+                           "date": d, "entry_bar_date": d})
+        block = mi._build_strategy_family_performance({"trades": trades})
+        assert "verified-window trades" in block
+        assert "earnings_surprise" in block
+
+    def test_legacy_only_record_is_labelled_indicative(self):
+        trades = [{"status": "closed", "alpha_pct": 5.0,
+                   "strategy": "Momentum play on earnings beat"}
+                  for _ in range(4)]
+        block = mi._build_strategy_family_performance({"trades": trades})
+        assert "indicative only" in block
+        assert "do NOT quote" in block
+
+    def test_thin_buckets_are_flagged_not_hidden(self):
+        trades = [{"status": "closed", "alpha_pct": 2.0,
+                   "strategy": "Momentum play on earnings beat"}
+                  for _ in range(3)]
+        block = mi._build_strategy_family_performance({"trades": trades})
+        assert "too few to lean on" in block
+
+    def test_digest_prompt_requires_a_family(self):
+        prompt = (_ROOT / "shows/prompts/modern_investing_digest.txt").read_text(
+            encoding="utf-8")
+        assert "**Strategy Family:**" in prompt
+        assert "{strategy_family_performance}" in prompt
+        for name, _ in mi.STRATEGY_FAMILIES:
+            assert name in prompt, name
+
+
+class TestReviewCatchUp:
+    """The daily audit runs on a fixed cron; shows finish at wildly
+    different times (MIT has landed 09:32-19:41 UTC). Anything finishing
+    after the audit was logged 'critical: Missed episode' and auto-closed
+    the next day by confirming the FILE EXISTS — its content was never
+    reviewed. On 2026-08-19 that was four shows at once.
+    """
+
+    @staticmethod
+    def _mod():
+        import importlib
+        return importlib.import_module("review_episodes")
+
+    def test_catch_up_helpers_exist_and_are_bounded(self):
+        mod = self._mod()
+        assert mod.CATCH_UP_DAYS >= 1
+        assert mod.CATCH_UP_MAX_PER_RUN >= 1
+        assert callable(mod.find_catch_up_episodes)
+
+    def test_coverage_key_and_day_parsing(self):
+        mod = self._mod()
+        day = datetime.date(2026, 8, 19)
+        assert mod._coverage_key("modern_investing", day) == \
+            "modern_investing|2026-08-19"
+        ep = SimpleNamespace(show_slug="x", date="2026-08-19")
+        assert mod._episode_day(ep, datetime.date(2000, 1, 1)) == day
+        compact = SimpleNamespace(show_slug="x", date="20260819")
+        assert mod._episode_day(compact, datetime.date(2000, 1, 1)) == day
+
+    def test_unparseable_date_falls_back_instead_of_raising(self):
+        mod = self._mod()
+        fallback = datetime.date(2026, 1, 2)
+        ep = SimpleNamespace(show_slug="x", date="not-a-date")
+        assert mod._episode_day(ep, fallback) == fallback
+
+    def test_coverage_prunes_old_entries(self, tmp_path, monkeypatch):
+        mod = self._mod()
+        monkeypatch.setattr(mod, "REVIEW_COVERAGE_PATH",
+                            tmp_path / "review_coverage.json")
+        today = datetime.date(2026, 8, 20)
+        state = {"reviewed": {
+            "a|2026-08-19": True,          # recent — kept
+            "b|2026-01-01": True,          # ancient — pruned
+        }}
+        mod._save_coverage(state, today)
+        reloaded = mod._load_coverage()["reviewed"]
+        assert "a|2026-08-19" in reloaded
+        assert "b|2026-01-01" not in reloaded
+
+    def test_audit_workflow_persists_coverage(self):
+        wf = (_ROOT / ".github/workflows/daily-audit.yml").read_text(
+            encoding="utf-8")
+        # Without persistence the catch-up pass re-reviews the same
+        # episodes every run and never drains.
+        assert "api/review_coverage.json" in wf

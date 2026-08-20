@@ -104,6 +104,32 @@ options:
     covered_call: hundred_times_underlying_entry
     cash_secured_put: hundred_times_strike
 
+learning:
+  # The rule scoreboard can only attribute an effect to a rule if some
+  # picks were made WITH it and some WITHOUT. Across the first 15 stamped
+  # trades only two rule sets were ever used, differing by a single rule
+  # and arising by accident (the lesson ledger changed) rather than by
+  # design — so no rule could be scored, and the honest scoreboard was
+  # permanently silent. Rotation gives the experiment the variation it
+  # needs.
+  rule_rotation:
+    enabled: true
+    # How many unproven rules are shown on any one pick. Fewer than the
+    # pool size, or nothing ever rotates out. With a pool of 6 and 4
+    # slots, each rule is absent from a third of picks and both arms
+    # accrue in ~20 trades.
+    slots: 4
+    # A rule that has DEMONSTRATED an edge is pinned and never rotated
+    # out — the point is to learn which heuristics work, not to withhold
+    # ones already known to. Rules can also be pinned by hand with
+    # `always_on: true` in lessons_learned.json (use it for anything
+    # safety-shaped, never for a hunch).
+    pin_proven: true
+  disclosure: >
+    Which rules were in effect on each pick is recorded on the trade and
+    published in the ledger, so the rotation is auditable rather than a
+    hidden variable.
+
 benchmark:
   # The index is bought and sold on the SAME sessions as the trade, so the
   # comparison answers "did this pick beat the index over the time it was
