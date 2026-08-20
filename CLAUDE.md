@@ -286,6 +286,30 @@ today's work, not just explain yesterday's):
   window discipline: verified-window trades when there are enough,
   otherwise labelled indicative-only and explicitly not for air. Guards:
   `TestStrategyFamilies`.
+- **MIT accounts on air for the number that DISAPPEARED** (2026-08-20).
+  Ep141-143 all announced the new era-scoped record; one of three said
+  why, none pointed at the rulebook or ledger, and none mentioned the
+  **+9.28% across forty-five trades** the show had been quoting — which
+  simply stopped appearing. A strong figure that quietly vanishes is
+  indistinguishable from one being buried, and here the truth is the
+  opposite (it could not be reproduced, so it was not ours to claim).
+  `_build_methodology_disclosure` is a SELF-RETIRING correction —
+  `METHODOLOGY_DISCLOSURE_EPISODES = 3` airings, stamped as a list of
+  episode numbers so a second `get_prompt_context` call in one episode
+  cannot burn two, never consumed by read-only runs — and it is NOT a
+  recurring changelog: do not extend it, and keep pipeline internals
+  (rule rotation, review coverage, scoreboard mechanics) out of it. Its
+  payload is the transferable skill, not the apology: the four questions
+  that audit ANY track record (when did it start and was the date chosen
+  after the fact; what is the exit rule and was it fixed in advance; are
+  losers and abandoned positions included; are individual trades
+  published or only the summary). The segment claims the rules and
+  ledger are "published for anyone to check" — that claim was FALSE in
+  practice until this pass, because `api/mit_trade_ledger.*` was built
+  nightly and linked from nowhere; the performance page now carries a
+  *Verify this record yourself* panel and a guard asserts the links and
+  the files both exist. Prompt change => A/B-listen per landmine #17.
+  Guards: `TestMethodologyDisclosure`.
 - **The daily audit reviews late episodes on a CATCH-UP pass** — it runs
   at a fixed 16:15 UTC while shows finish anywhere from 09:32 to 19:41,
   and anything later was logged "critical: Missed episode" then

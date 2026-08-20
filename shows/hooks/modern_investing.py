@@ -272,6 +272,13 @@ def pre_fetch(config, *, episode_num: int | None = None, today_str: str | None =
     # guard) — persist it immediately so a later benchmark-refresh failure
     # can't lose the stamp and re-review the same trade next episode.
     context["yesterday_trade_review"] = _build_trade_review(tracker, episode_num)
+
+    # One-off methodology correction (August 2026). Stamps the tracker the
+    # same way the trade review does, so it rides the save below rather
+    # than risking a re-air if a later step raises.
+    context["methodology_disclosure"] = _build_methodology_disclosure(
+        tracker, episode_num)
+
     if not readonly:
         _save_tracker(tracker, tracker_path)
 
@@ -2667,6 +2674,106 @@ def _weekly_hold_update(open_trades: list) -> str:
             f"**Status:** Holding until Friday evaluation\n"
         )
     return ""
+
+
+# How many episodes carry the one-off methodology correction. The record
+# the show used to quote (+9.28% across 45 trades) DISAPPEARED from air
+# when the era-scoped record started, and from a listener's seat a show
+# that stops quoting a strong number looks exactly like a show burying a
+# bad result. The truth is the opposite — the old number could not be
+# reproduced — and saying so is both the honest move and the single most
+# transferable lesson the show has ever had to teach. Three episodes is
+# enough for the correction to reach a daily audience without becoming a
+# recurring changelog; internal plumbing (rule rotation, review coverage,
+# scoreboard mechanics) is deliberately NOT in scope — a listener cares
+# what the numbers mean, not how the repo is wired.
+METHODOLOGY_DISCLOSURE_EPISODES = 3
+
+
+def _build_methodology_disclosure(
+    tracker: dict, episode_num: int | None = None
+) -> str:
+    """One-off on-air correction explaining why the record restarted.
+
+    Returns an empty string once the disclosure has aired
+    ``METHODOLOGY_DISCLOSURE_EPISODES`` times, so this can never become a
+    permanent segment. The airing count is stamped on the tracker (a list
+    of episode numbers, so the record shows exactly which episodes carry
+    it) and, like every other stamp in this module, is skipped on
+    read-only (test/rehearse) runs.
+    """
+    aired = list(
+        (tracker.get("metadata") or {}).get(
+            "methodology_disclosure_episodes", []
+        )
+    )
+    if len(aired) >= METHODOLOGY_DISCLOSURE_EPISODES:
+        return ""
+    if episode_num is not None and episode_num in aired:
+        return ""
+
+    start = era_inception()
+    start_str = start.strftime("%B %-d, %Y") if start else "the inception date"
+
+    if episode_num is not None and not _hooks_readonly():
+        aired.append(episode_num)
+        tracker.setdefault("metadata", {})[
+            "methodology_disclosure_episodes"
+        ] = aired
+
+    remaining = METHODOLOGY_DISCLOSURE_EPISODES - len(aired)
+    return (
+        "**METHODOLOGY CORRECTION — include this as a short segment "
+        "(roughly 200-300 words) inside Portfolio Performance, then move "
+        f"on. This airs {remaining} more time(s) after today and is then "
+        "retired — do NOT turn it into a recurring feature.**\n"
+        "\n"
+        "The show recently restarted its simulated track record, and a "
+        "listener who was here before deserves to be told why in plain "
+        "language. Cover these points in your own words, in this order, "
+        "without jargon and without defensiveness:\n"
+        "\n"
+        "1. The show used to quote a cumulative alpha figure across "
+        "roughly forty-five trades. It is gone from the scoreboard, and "
+        "that is deliberate. Say so directly — a number that quietly "
+        "vanishes is the oldest tell in performance reporting.\n"
+        "2. Why it went: that figure blended trades whose entry and exit "
+        "prices could not be tied back to the actual sessions the trade "
+        "was held. An audit could not reproduce it, so it was not the "
+        "show's to claim.\n"
+        "3. The exit rule was the deeper problem. A position used to be "
+        "closed on whichever session the next pre-market run happened to "
+        "price it — so a Monday pick was held about five sessions and a "
+        "Wednesday pick about one. Per-trade performance was measuring "
+        "the day of the week as much as the quality of the idea. The "
+        "hold is now a fixed, published number of sessions.\n"
+        "4. Some older trades match no market prices at all, and they "
+        "include the best and the worst results on the books. They stay "
+        "published as history, flagged, and they are never blended into "
+        "what the show says on air.\n"
+        f"5. What replaced it: from {start_str}, every pick is scored "
+        "under one written rulebook — entry at the first session open on "
+        "or after the pick, exit at the stop or at the fixed horizon, "
+        "one position, one thousand dollars, no discretionary exits. The "
+        "rules and the full trade-by-trade ledger, including the losers "
+        "and the voided picks, are published for anyone to check.\n"
+        "6. The honest cost, stated plainly: the record is now small, so "
+        "for the next several weeks the alpha number will be based on a "
+        "handful of trades and will not mean much on its own. That is "
+        "what an honest track record looks like early. Do not spin it.\n"
+        "7. Close on the transferable skill, because this is the point "
+        "of the segment: this is exactly how a listener should audit ANY "
+        "track record they are shown — ask when the record started and "
+        "whether that date was chosen after the fact, ask what the exit "
+        "rule is and whether it was fixed in advance, ask whether losers "
+        "and abandoned positions are included, and ask whether the "
+        "individual trades are published or only the summary. A record "
+        "that cannot answer those four questions is a story.\n"
+        "\n"
+        "Do NOT discuss internal tooling, code, prompts, or pipeline "
+        "mechanics. Speak only about the trading method and what it "
+        "means for the listener."
+    )
 
 
 def _build_trade_review(tracker: dict, episode_num: int | None = None) -> str:

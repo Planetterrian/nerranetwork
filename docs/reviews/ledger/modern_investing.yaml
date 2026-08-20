@@ -985,4 +985,62 @@ reviews:
         evidence: null
     agent_cost_usd: null
 
+  - date: 2026-08-20b
+    pr: null
+    doc: docs/reviews/modern_investing_review_2026_08_20b.md
+    reviewer: claude-code (operator question - announce the changes on air)
+    summary: >
+      Checked what Ep141-143 actually aired after the record restarted.
+      All three announced the new regime; one of three said WHY it
+      restarted; none pointed at the rulebook or the ledger; and none
+      mentioned the figure the show used to quote. From a listener's
+      seat the old "+9.28% across forty-five trades" simply vanished -
+      which is indistinguishable from burying a bad result, when the
+      truth is the opposite (it could not be reproduced, so it was not
+      ours to claim). Shipped a NARROW one-off correction rather than a
+      recurring changelog, and made the "published for anyone to check"
+      claim actually true - the ledger was built nightly into api/ and
+      linked from nowhere.
+    shipped:
+      - "_build_methodology_disclosure - a self-retiring on-air segment
+        (METHODOLOGY_DISCLOSURE_EPISODES = 3) covering why the old figure
+        went, the weekday-dependent exit that was the deeper problem, the
+        pre-era trades that match no bars, the published rulebook, the
+        honest cost of a small record, and how to audit ANY track record"
+      - "stamped on the tracker as a list of episode numbers, so a second
+        get_prompt_context call in one episode cannot consume two airings
+        and the record shows which episodes carried it"
+      - "read-only (test/rehearse) runs never consume an airing"
+      - "internals are deliberately out of scope - rule rotation, review
+        coverage and scoreboard mechanics are not listener content, and a
+        drift guard fails if they leak into the spoken portion"
+      - "performance page gained a Verify this record yourself panel
+        linking the rulebook and the trade ledger (JSON + CSV); a guard
+        asserts both the links and the files exist"
+    predictions:
+      - metric: episodes carrying the methodology correction
+        baseline: "0 - Ep141-143 announced the new regime but never
+          explained the disappearance of the old figure"
+        expected: "exactly 3, then 0 forever; if a 4th airs the
+          self-retirement is broken"
+        verdict: pending
+        evidence: null
+      - metric: listener-value score on the correction episodes
+        baseline: "~7.3 steady state since Ep128"
+        expected: "no regression below 7.0 - the segment displaces
+          roughly 250 words of regular content, and if it costs more than
+          it teaches it should not have aired 3 times"
+        verdict: pending
+        evidence: null
+      - metric: visits to modern-investing-performance.html in the 14
+          days after the correction airs
+        baseline: "unmeasured - the page existed but the show never
+          pointed at the primary sources"
+        expected: "measurable and non-zero; if it stays flat the on-air
+          pointer is not working and the ask needs rewording, not
+          repeating"
+        verdict: pending
+        evidence: null
+    agent_cost_usd: null
+
 do_not_retry: []
