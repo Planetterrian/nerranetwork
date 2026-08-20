@@ -601,3 +601,58 @@ experiments:
       The loop is allowed to say nothing — that is the fix. What would
       falsify it is a retirement flag appearing while every stamped trade
       still carries the same rule set.
+
+  - id: mit-rule-rotation
+    title: "Rule rotation gives the learning loop the variation it needs"
+    area: quality
+    shipped: 2026-08-20
+    readout: 2026-10-01
+    status: reading
+    baseline: "2 rule sets across 15 stamped trades, differing by one rule, arising by accident — 0 rules scoreable, ever"
+    target: >
+      >=4 distinct rule sets within 20 era trades, every rule carrying
+      both arms, and at least one genuinely scored rule by ~25 era trades.
+    criteria: >
+      If 0 rules are scoreable at readout despite the rotation running,
+      the pool (6 rules) is too small and needs widening — not more
+      waiting. If a rule scores well it is pinned automatically and stops
+      rotating, which is the intended end state, not a bug.
+    notes: >
+      This is an intervention on the product, not just the measurement:
+      some picks are now made without some rules. Proven and hand-pinned
+      rules never rotate out. Rotation is a pure function of the episode
+      number, so any pick's rule set is reproducible from the ledger.
+
+  - id: mit-strategy-families
+    title: "Alpha reported by approach, not only by sector"
+    area: quality
+    shipped: 2026-08-20
+    readout: 2026-10-01
+    status: reading
+    baseline: "61 trades, 61 unique free-text strategy strings, 0 groupable"
+    target: >
+      >=90% of new picks carry an explicit family, and at least one family
+      reaches 5 verified-window trades so the show can say on air which
+      approach is actually earning its keep.
+    notes: >
+      Derived retroactively for the 61 historic trades so the record is
+      groupable now. Inherits the window discipline — indicative-only and
+      not for air until computed over verified windows.
+
+  - id: network-review-catch-up
+    title: "Late-finishing episodes finally get content-reviewed"
+    area: quality
+    shipped: 2026-08-20
+    readout: 2026-09-10
+    status: reading
+    baseline: "4 shows unreviewed on 2026-08-19; a 32-episode network-wide backlog"
+    target: >
+      Zero episodes that finish after the audit window go permanently
+      unreviewed. The backlog drains at <=10/run and stays at 0.
+    criteria: >
+      Watch the AI-review cost line while the backlog drains — if it
+      spikes, lower CATCH_UP_MAX_PER_RUN rather than dropping the pass.
+    notes: >
+      Network-wide, not MIT-specific. The first run surfaced real findings
+      that had been invisible, including high cross-episode repetition on
+      MIT Ep139/140.

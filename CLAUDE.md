@@ -262,6 +262,40 @@ today's work, not just explain yesterday's):
   actually committed, which is what makes them comparable with a $1,000
   share position. Early assignment is NOT modelled and the prompts
   require saying so. Guards: `TestOptionsPositions`.
+- **MIT's learned rules ROTATE, or the loop can never score any of them**
+  (2026-08-20). Across the first 15 stamped trades only two rule sets
+  ever existed, differing by one rule and only because the ledger
+  happened to change — four of five rules were common to both, so no rule
+  could be told apart from another and the (honest) scoreboard would have
+  stayed silent forever while looking like a working feedback loop.
+  `learning.rule_rotation` in [`shows/_trading_policy.yaml`](shows/_trading_policy.yaml)
+  now shows a rotating subset (4 slots from a ~6-rule pool, cycling on
+  the episode number, so it is reproducible from the trade record) which
+  gives every rule BOTH a with-rule and a without-rule arm. A rule that
+  demonstrates an edge is PINNED and stops rotating (`_proven_rule_ids`,
+  >=5 trades on both arms); `always_on: true` pins by hand for
+  safety-shaped rules. Do not "simplify" the selector back to
+  most-recent-N — that is what made attribution impossible. Guards:
+  `TestRuleRotation`.
+- **MIT reports alpha by strategy FAMILY, not just by sector**
+  (2026-08-20). 61 trades produced 61 unique free-text strategy strings,
+  so "are our momentum entries better than our valuation screens" was
+  unanswerable. `STRATEGY_FAMILIES` / `strategy_family()` is a closed
+  vocabulary REQUIRED on new picks and DERIVED from the free text for
+  history (unmatched => `other`, never forced). The block inherits the
+  window discipline: verified-window trades when there are enough,
+  otherwise labelled indicative-only and explicitly not for air. Guards:
+  `TestStrategyFamilies`.
+- **The daily audit reviews late episodes on a CATCH-UP pass** — it runs
+  at a fixed 16:15 UTC while shows finish anywhere from 09:32 to 19:41,
+  and anything later was logged "critical: Missed episode" then
+  auto-closed next day by confirming the FILE EXISTS, so its content was
+  never reviewed at all (four shows on 2026-08-19; a 32-episode
+  network-wide backlog at first run). `review_episodes.py` now reviews
+  the previous 3 days' unmarked episodes, tracked in
+  `api/review_coverage.json` (14-day prune, committed by daily-audit so
+  the pass is idempotent), capped at 10/run oldest-first because the AI
+  review calls Grok per episode. Guards: `TestReviewCatchUp`.
 - **MIT's rule scoreboard must refuse to claim what it cannot measure.**
   It was emitting FIVE identical `RETIREMENT CANDIDATE` verdicts (same 10
   trades, same -0.17% vs +0.43%) because all five rules were stamped on

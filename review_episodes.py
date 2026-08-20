@@ -1937,6 +1937,100 @@ def _review_exit_code(
     return 0
 
 
+REVIEW_COVERAGE_PATH = PROJECT_ROOT / "api" / "review_coverage.json"
+CATCH_UP_DAYS = 3
+# Bound per run: the AI review calls Grok once per episode, and the first
+# run after this shipped found a 32-episode backlog. Draining it over a
+# few days costs the same in total but never spikes a single run, and the
+# oldest are taken first so nothing is starved.
+CATCH_UP_MAX_PER_RUN = 10
+_COVERAGE_RETENTION_DAYS = 14
+
+
+def _load_coverage() -> dict:
+    try:
+        return json.loads(REVIEW_COVERAGE_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {"reviewed": {}}
+
+
+def _save_coverage(state: dict, today: datetime.date) -> None:
+    """Persist which episodes have been content-reviewed, pruned to 14 days."""
+    cutoff = (today - datetime.timedelta(days=_COVERAGE_RETENTION_DAYS)).isoformat()
+    state["reviewed"] = {
+        k: v for k, v in (state.get("reviewed") or {}).items()
+        if k.split("|")[-1] >= cutoff
+    }
+    try:
+        REVIEW_COVERAGE_PATH.parent.mkdir(parents=True, exist_ok=True)
+        REVIEW_COVERAGE_PATH.write_text(
+            json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    except OSError as exc:
+        logger.warning("Could not persist review coverage: %s", exc)
+
+
+def _episode_day(ep: "EpisodeReview", fallback: datetime.date) -> datetime.date:
+    """The date an episode belongs to, from its ``date`` field.
+
+    Accepts both the ISO and compact forms the discovery path produces;
+    a mangled value falls back to the run date rather than raising, since
+    coverage bookkeeping must never break a review.
+    """
+    raw = str(getattr(ep, "date", "") or "")
+    for fmt in ("%Y-%m-%d", "%Y%m%d"):
+        try:
+            return datetime.datetime.strptime(raw, fmt).date()
+        except ValueError:
+            continue
+    return fallback
+
+
+def _coverage_key(slug: str, day: datetime.date) -> str:
+    return f"{slug}|{day.isoformat()}"
+
+
+def find_catch_up_episodes(
+    target_date: datetime.date, show_filter: str = "",
+    days: int = CATCH_UP_DAYS,
+) -> List[EpisodeReview]:
+    """Episodes from recent days that were never content-reviewed.
+
+    The audit runs on a fixed daily cron, but shows finish at wildly
+    different times — MIT's episodes have landed anywhere from 09:32 to
+    19:41 UTC. Anything finishing after the audit was recorded as
+    "critical: Missed episode" and then auto-closed the next day by
+    confirming the FILE EXISTS, so its digest, script and audio were
+    never actually checked. On 2026-08-19 that was four shows at once
+    (modern_investing, fascinating_frontiers, models_agents,
+    models_agents_beginners) — a quality loop that reported itself
+    healthy while reviewing nothing.
+
+    Returns episodes that now exist, were scheduled, and carry no
+    coverage mark.
+    """
+    covered = (_load_coverage().get("reviewed") or {})
+    caught: List[EpisodeReview] = []
+    for back in range(1, max(1, days) + 1):
+        day = target_date - datetime.timedelta(days=back)
+        for ep in discover_episodes(day, show_filter):
+            if covered.get(_coverage_key(ep.show_slug, day)):
+                continue
+            info = SHOW_REGISTRY.get(ep.show_slug, {})
+            if not _should_run_on(info.get("schedule", "daily"), day):
+                continue
+            caught.append(ep)
+    # Oldest first, then capped — a starved episode would otherwise sit
+    # behind newer ones forever.
+    caught.sort(key=lambda e: (str(getattr(e, "date", "")), e.show_slug))
+    if len(caught) > CATCH_UP_MAX_PER_RUN:
+        logger.info(
+            "Catch-up backlog is %d episodes; taking the oldest %d this run.",
+            len(caught), CATCH_UP_MAX_PER_RUN,
+        )
+        caught = caught[:CATCH_UP_MAX_PER_RUN]
+    return caught
+
+
 def run_review(
     target_date: datetime.date,
     create_issues: bool = False,
@@ -1958,6 +2052,24 @@ def run_review(
             logger.warning("Auto-close encountered an error: %s", exc)
 
     episodes = discover_episodes(target_date, show_filter)
+
+    # Catch-up: episodes that finished after a previous run's audit window
+    # and have therefore never been content-reviewed (see
+    # find_catch_up_episodes). Without this a late show is permanently
+    # invisible to the quality loop.
+    try:
+        catch_up = find_catch_up_episodes(target_date, show_filter)
+    except Exception as exc:  # pragma: no cover — never block the review
+        logger.warning("Catch-up discovery failed: %s", exc)
+        catch_up = []
+    if catch_up:
+        logger.info(
+            "Catch-up: %d episode(s) from previous days were never reviewed "
+            "(finished after their audit window): %s",
+            len(catch_up),
+            ", ".join(f"{e.show_slug} Ep{e.episode_num:03d}" for e in catch_up),
+        )
+        episodes = episodes + catch_up
 
     # --- Missed episode detection ---
     missed_issues = check_missed_episodes(target_date, episodes, show_filter)
@@ -1993,6 +2105,19 @@ def run_review(
         check_story_duplication(ep)
         check_tts_artifacts(ep)
         check_hallucination_patterns(ep)  # New: detect common LLM fabrication patterns from past incidents (e.g. May 29 2026)
+
+    # Mark every episode reviewed in this run, so the catch-up pass never
+    # re-reports the same one and a late show is caught exactly once.
+    if not show_filter:
+        try:
+            state = _load_coverage()
+            reviewed = state.setdefault("reviewed", {})
+            for ep in episodes:
+                day = _episode_day(ep, target_date)
+                reviewed[_coverage_key(ep.show_slug, day)] = True
+            _save_coverage(state, target_date)
+        except Exception as exc:  # pragma: no cover — never block the review
+            logger.warning("Could not record review coverage: %s", exc)
 
     # Cross-episode checks
     check_cross_episode_duplicates(episodes)

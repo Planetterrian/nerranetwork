@@ -898,4 +898,91 @@ reviews:
         evidence: null
     agent_cost_usd: null
 
+  - date: 2026-08-20
+    pr: null
+    doc: docs/reviews/modern_investing_review_2026_08_20.md
+    reviewer: claude-code (operator question — further improvements)
+    summary: >
+      Audit for remaining improvements found four; three shipped. (1) The
+      learning loop was honest but POWERLESS - across 15 stamped trades
+      only two rule sets ever existed, differing by one rule and only
+      because the ledger happened to change. Four of five rules were
+      common to both, so no rule could ever be told apart from another and
+      the scoreboard would have stayed silent indefinitely while looking
+      like a working feedback loop. (2) 61 trades produced 61 UNIQUE
+      free-text strategy strings, so the show could report alpha by sector
+      but never by APPROACH - "are our momentum entries better than our
+      valuation screens" was unanswerable. (3) The daily audit runs at a
+      fixed 16:15 UTC while shows finish anywhere from 09:32 to 19:41; a
+      late episode was logged "critical: Missed episode" and auto-closed
+      next day by confirming the FILE EXISTS, so its content was never
+      reviewed. On 2026-08-19 that hit four shows at once, and the first
+      catch-up run found a 32-episode network-wide backlog.
+    shipped:
+      - "deterministic rule rotation (shows/_trading_policy.yaml
+        learning.rule_rotation) - 4 slots from a ~6-rule pool cycling by
+        episode number, giving every rule both a with-rule and a
+        without-rule arm; reproducible from the trade record"
+      - "proven rules are pinned and stop rotating; always_on: true pins
+        by hand for safety-shaped rules"
+      - "_proven_rule_ids scores a rule as proven only with >=5 trades on
+        both arms and a positive difference"
+      - "closed strategy-family vocabulary (10 families) REQUIRED on new
+        picks and DERIVED from free text for the 61 historic trades, so
+        per-approach alpha is reportable immediately"
+      - "_build_strategy_family_performance feeds the pick prompt and
+        inherits the window discipline - verified-window trades when there
+        are enough, otherwise labelled indicative-only and not for air"
+      - "review_episodes.py catch-up pass: episodes from the previous 3
+        days with no coverage mark are reviewed, tracked in
+        api/review_coverage.json (14-day prune), capped at 10 per run
+        oldest-first so the AI review cost never spikes"
+      - "daily-audit.yml commits api/review_coverage.json so the pass is
+        idempotent across CI runs"
+      - 18 new drift guards (TestRuleRotation, TestStrategyFamilies,
+        TestReviewCatchUp)
+    deferred:
+      - "LISTENER FEEDBACK LOOP - the biggest remaining gap. The system
+        learns from its trades, its rules, YouTube retention and an LLM
+        judge, but has NO path for a listener's experience to enter the
+        loop (zero mentions of reply/email/question in the podcast
+        prompt) despite running a newsletter that could carry one. For a
+        show that exists to teach investing, the one signal it never
+        collects is whether anyone learned anything. Needs an inbox and a
+        triage path — operator decision, not just code"
+      - "long-form YouTube retention 10% vs 33% on Shorts across 169
+        videos; long-form is where subscribers convert, but this is a
+        network-wide video problem"
+      - "audience flat at 221 downloads/30d (weekly 52/44/61/50)"
+      - "carried: the 8 pre-era trades reconciling to no market bar;
+        significance-qualifier accept-or-abandon; SnapTrade Phase-0"
+    predictions:
+      - metric: distinct rule sets stamped across era trades
+        baseline: "2 sets across 15 trades, differing by one rule, by accident"
+        expected: ">=4 distinct sets within 20 era trades, and every
+          active rule carrying both a with-rule and a without-rule arm"
+        verdict: pending
+        evidence: null
+      - metric: rules with enough evidence to be scored (>=5 trades on
+          both arms)
+        baseline: "0 - structurally impossible before rotation"
+        expected: ">=1 scored rule within ~25 era trades; if still 0 by
+          then, the pool is too small and needs widening rather than more
+          waiting"
+        verdict: pending
+        evidence: null
+      - metric: picks carrying an explicit strategy family
+        baseline: "0 - the field did not exist; 61 unique free-text strings"
+        expected: ">=90% of new picks, and a per-family record the show
+          can quote once any family reaches 5 verified-window trades"
+        verdict: pending
+        evidence: null
+      - metric: episodes that finish after the audit window and are never
+          content-reviewed
+        baseline: "4 on 2026-08-19 alone; a 32-episode backlog at first run"
+        expected: "0 - the catch-up pass reviews them within 3 days"
+        verdict: pending
+        evidence: null
+    agent_cost_usd: null
+
 do_not_retry: []
