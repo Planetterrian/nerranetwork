@@ -78,7 +78,15 @@ concurrency:
 jobs:
   audit:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # 45, not 20. The review step calls Grok once per episode, and the
+    # catch-up pass (Aug 2026) adds up to CATCH_UP_MAX_PER_RUN more. On
+    # 2026-08-20 the step ran 19m15s and the JOB timeout cancelled it
+    # mid-review; 2026-08-18 died the same way BEFORE catch-up existed,
+    # so 20 was already marginal. A cancelled review still persists its
+    # coverage (the pass is idempotent and resumes), but the audit's own
+    # findings for that run are lost — which is the failure mode the
+    # catch-up pass was built to end.
+    timeout-minutes: 45
 
     steps:
       - name: Checkout
@@ -96,6 +104,10 @@ jobs:
 
       - name: Run Episode Quality Review + Structured Output
         id: audit
+        # Below the job budget on purpose: a hung review is capped here
+        # so the persist/remediation steps always have room to run,
+        # instead of the job timeout taking the whole run down with it.
+        timeout-minutes: 35
         env:
           GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
           XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
