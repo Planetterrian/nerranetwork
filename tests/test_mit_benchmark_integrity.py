@@ -2663,6 +2663,10 @@ class TestMethodologyDisclosure:
             (_ROOT / ".github/workflows/daily-audit.yml").read_text(
                 encoding="utf-8"))
         job = wf["jobs"]["audit"]
+        # Pin the runner too: yaml.safe_load happily parses a job that
+        # has lost its runs-on, so a timeout edit can silently delete it
+        # and only actionlint notices.
+        assert job.get("runs-on"), "audit job lost its runs-on"
         assert job["timeout-minutes"] >= 45
         step = next(s for s in job["steps"] if s.get("id") == "audit")
         # Strictly below the job budget, so the persist step always runs.
