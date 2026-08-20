@@ -90,3 +90,47 @@ working and needs rewording rather than repeating.
 
 This is a prompt change and it changes shipped audio. **A/B-listen the
 first episode that carries the correction** before trusting it.
+
+## Verified on air — Ep144, not Ep145
+
+The episode shipped at 17:38 UTC, *after* both merges landed, so Ep144
+was the first carrier rather than Ep145 as expected. All four checks
+pass:
+
+| Check | Result |
+|---|---|
+| Correction present in `### Portfolio Performance` | ✅ |
+| `methodology_disclosure_episodes` | `[144]` |
+| Pick carries a strategy family | `catalyst_event` |
+| Stamped rule set varies | `LL-002, LL-067, LL-066, LL-041` vs Ep142's `LL-066, LL-054, LL-041, LL-028, LL-017` |
+
+Rule rotation is live: two rules never stamped before (LL-002, LL-067)
+entered, three rotated out. The catch-up pass wrote its first
+`api/review_coverage.json` — 10 backlog entries from 2026-08-17 plus the
+day's 10, exactly the per-run cap, oldest first.
+
+### Two gaps the first airing exposed
+
+**The segment invited verification and named no destination.** It said
+the rules and ledger are "published for anyone to check" and stopped
+there. A listener had nowhere to go — and the page-traffic prediction
+was untestable, because nobody was ever told where to look. The
+disclosure now names the performance page in the show's usual spoken-URL
+style, guarded by `test_names_where_to_check`.
+
+**The correction and the performance numbers fused into one block.** The
+whole segment ran into "Portfolio Performance (simulated, $1,000 per
+trade): Total trades: 51…" as a single paragraph. The prompt now
+requires the correction to stand as its own paragraph ahead of the
+numbers.
+
+### Unrelated finding: the daily audit is timing out
+
+The 2026-08-20 audit was **cancelled at its 20-minute job ceiling** with
+the review step killed at 19m15s. 2026-08-18 died the same way *before*
+the catch-up pass existed, so 20 minutes was already marginal; adding up
+to ten Grok calls made it binding. Coverage still persisted (the pass is
+idempotent and resumes), but that run's audit findings were lost — the
+exact failure the catch-up pass exists to end. Job budget raised to 45
+minutes with a 35-minute step cap beneath it, so a hung review can never
+take the persist and remediation steps down with it.

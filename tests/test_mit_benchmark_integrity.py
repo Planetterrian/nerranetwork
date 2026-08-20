@@ -2629,6 +2629,17 @@ class TestMethodologyDisclosure:
         # episode without the correction rather than a KeyError.
         assert 'setdefault("methodology_disclosure", "")' in runner
 
+    def test_names_where_to_check(self, monkeypatch):
+        # Ep144 aired the correction and said the rules and ledger were
+        # "published for anyone to check" without naming a destination.
+        # An invitation to verify with nowhere to go is not an
+        # invitation — and it makes the page-traffic prediction
+        # untestable, since no listener was ever told where to look.
+        monkeypatch.setattr(mi, "_hooks_readonly", lambda: False)
+        text = mi._build_methodology_disclosure(self._tracker(), 200)
+        assert "nerranetwork dot com" in text, (
+            "the segment invites verification but names no destination")
+
     def test_published_sources_are_reachable_from_the_site(self):
         # The segment tells listeners the rulebook and the trade-by-trade
         # ledger are published "for anyone to check". Before this pass the
@@ -2641,3 +2652,18 @@ class TestMethodologyDisclosure:
                        "api/mit_trade_ledger.csv"):
             assert target in tpl, f"performance page does not link {target}"
             assert (_ROOT / target).exists(), f"linked file missing: {target}"
+
+    def test_audit_job_has_room_for_the_catch_up_pass(self):
+        # The catch-up pass adds up to CATCH_UP_MAX_PER_RUN Grok calls to
+        # a job that was already hitting its 20-minute ceiling (cancelled
+        # 2026-08-18 and 2026-08-20). A cancelled review loses that run's
+        # findings even though coverage still persists.
+        import yaml
+        wf = yaml.safe_load(
+            (_ROOT / ".github/workflows/daily-audit.yml").read_text(
+                encoding="utf-8"))
+        job = wf["jobs"]["audit"]
+        assert job["timeout-minutes"] >= 45
+        step = next(s for s in job["steps"] if s.get("id") == "audit")
+        # Strictly below the job budget, so the persist step always runs.
+        assert step["timeout-minutes"] < job["timeout-minutes"]
