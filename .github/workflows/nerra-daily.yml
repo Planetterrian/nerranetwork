@@ -1,0 +1,132 @@
+name: Nerra Daily Edition
+
+# Assembles the network's combined daily edition (Nerra Daily): splices
+# the day's already-published English episode MP3s (pulled back from R2)
+# into one ~2 h episode with Mira's host links between segments, and
+# publishes it as a virtual show (RSS + summaries + chapters + blog +
+# pages). No show content is regenerated — the cost per episode is one
+# small Grok call + a few thousand TTS characters + one R2 upload.
+#
+# Trigger shape mirrors multilingual.yml: a workflow_run trigger fires
+# after every "Run Podcast Show" completion, and the ready gate inside
+# scripts/build_daily_edition.py exits 0 quietly until every show
+# expected that weekday has published — so the edition assembles minutes
+# after the LAST show of the morning lands. The scheduled sweeps are
+# late-day idempotent fallbacks: past 14:00 UTC the gate stops waiting
+# for stragglers (a show that skipped its day would otherwise block the
+# edition forever) and builds with whatever published. Re-runs are free:
+# the committed summaries entry for the edition date is the idempotency
+# key.
+
+on:
+  workflow_run:
+    workflows: ["Run Podcast Show"]
+    types: [completed]
+  schedule:
+    # Idempotent sweeps after the morning slate (GitHub cron is often
+    # hours late — fine, the gate handles it).
+    - cron: '23 14 * * *'
+    - cron: '23 17 * * *'
+  workflow_dispatch:
+    inputs:
+      date:
+        description: 'Edition date YYYY-MM-DD (default: today UTC)'
+        required: false
+        default: ''
+        type: string
+      force:
+        description: 'Build now with whatever segments exist (skip the ready gate)'
+        required: false
+        default: false
+        type: boolean
+
+# One edition build at a time — two sweeps must never race the same feed
+# file / git push.
+concurrency:
+  group: nerra-daily
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    # On workflow_run, only proceed when the triggering episode pipeline
+    # succeeded — a failed run can't have added a segment.
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          # ALWAYS the current tip of main, never the event's pinned SHA:
+          # a workflow_run event resolves GITHUB_SHA at dispatch time, so a
+          # run queued behind an in-flight build would otherwise start from
+          # a tree WITHOUT the edition commit, see the date as unpublished,
+          # and rebuild it — overwriting the live R2 object under the
+          # enclosure URL the first build already published.
+          ref: main
+          fetch-depth: 1
+
+      # Cheap pre-setup gate: ~10 of the day's ~13 triggers fire after the
+      # edition has already published, and each was paying ~90 s of pip
+      # install just to learn that. Runner-native python3 reads the
+      # committed summaries (the idempotency key) with zero dependencies;
+      # a force dispatch always proceeds.
+      - name: Fast gate — already published today?
+        id: fastgate
+        env:
+          EDITION_DATE: ${{ github.event.inputs.date }}
+        run: |
+          python3 - <<'EOF' >> "$GITHUB_OUTPUT"
+          import datetime, json, os
+          date = (os.environ.get("EDITION_DATE") or "").strip() or \
+              datetime.datetime.now(datetime.timezone.utc).date().isoformat()
+          done = False
+          try:
+              with open("digests/nerra_daily/summaries_nerra_daily.json") as fh:
+                  data = json.load(fh)
+              done = any(e.get("date") == date for e in data.get("summaries", [])
+                         if isinstance(e, dict))
+          except Exception:
+              pass
+          print(f"published={'true' if done else 'false'}")
+          EOF
+
+      - uses: ./.github/actions/setup-python
+        if: steps.fastgate.outputs.published != 'true' || github.event.inputs.force == 'true'
+        timeout-minutes: 45
+        with:
+          python-version: '3.12'
+          requirements-file: 'requirements.txt'
+          system-packages: 'ffmpeg'
+          skip-checkout: 'true'
+
+      - name: Build and publish the edition
+        if: steps.fastgate.outputs.published != 'true' || github.event.inputs.force == 'true'
+        env:
+          GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+          R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          EDITION_DATE: ${{ github.event.inputs.date }}
+          EDITION_FORCE: ${{ github.event.inputs.force }}
+        run: |
+          ARGS="--edition en --when-ready"
+          if [ -n "$EDITION_DATE" ]; then ARGS="$ARGS --date $EDITION_DATE"; fi
+          if [ "$EDITION_FORCE" = "true" ]; then ARGS="$ARGS --force"; fi
+          python scripts/build_daily_edition.py $ARGS
+          echo "EDITION_DAY=${EDITION_DATE:-$(date -u +%F)}" >> "$GITHUB_ENV"
+
+      - name: Commit edition artifacts
+        if: steps.fastgate.outputs.published != 'true' || github.event.inputs.force == 'true'
+        uses: ./.github/actions/safe-commit-push
+        with:
+          add-paths: |
+            digests/nerra_daily
+            nerra_daily_podcast.rss
+            blog/nerra_daily
+            nerra-daily.html
+            nerra-daily-summaries.html
+          commit-message: "Nerra Daily edition ${{ env.EDITION_DAY }}"

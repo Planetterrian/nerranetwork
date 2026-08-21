@@ -61,6 +61,40 @@ evidence about the current method, because they cannot be.
 intended outcome. Five trades is a scoreboard, not evidence, and the show
 says so on air rather than implying an edge it has not earned.
 
+## Options positions
+
+The show teaches covered calls and cash-secured puts constantly — and for
+its first 61 simulated trades it never placed one. That gap is closed, but
+only in a way that keeps the record reproducible.
+
+An option's premium cannot be reconstructed after the fact from free data.
+So the contract is **quoted live when the pick is made** — a real listed
+strike, a real expiry, a real bid/ask — and recorded. The position is then
+**held to expiry**, where the payoff is arithmetic on the underlying's
+closing price with no free parameters:
+
+- **Covered call** — own 100 shares, sell one out-of-the-money call. At
+  expiry the shares are worth `min(close, strike) × 100`, plus the premium
+  kept. Gains are capped at the strike; that cap is the trade.
+- **Cash-secured put** — set aside `strike × 100` in cash, sell one
+  out-of-the-money put. At expiry you keep the premium, less
+  `(strike − close) × 100` if the stock finished below the strike.
+
+Strike and expiry are chosen by rule, not by taste: the nearest listed
+expiry 21–45 days out, and the listed strike closest to 4% out of the
+money. Returns are reported on the capital the structure actually
+commits, which is what makes them comparable with a $1,000 share position.
+
+Two honesty limits, stated on air whenever an options trade is discussed:
+
+1. **If the chain cannot be quoted, no option trade happens.** The pick
+   degrades to plain shares. A premium is never estimated — an
+   unverifiable number is exactly what this record exists not to contain.
+2. **Early assignment is not modelled.** American options can be assigned
+   before expiry. This simulation holds to expiry, which slightly
+   flatters short-option positions in a way the show should keep saying
+   out loud.
+
 ## What gets recorded on every pick
 
 | Field | Why it exists |
@@ -71,6 +105,21 @@ says so on air rather than implying an edge it has not earned.
 | **Invalidation** | The specific, observable thing that would prove the thesis wrong — named *before* the money is at risk |
 | Stop-loss | Where the trade is wrong in price terms, derived from the invalidation |
 | Horizon | Sessions to be held, fixed at entry |
+| **Structure** | Shares, covered call, or cash-secured put |
+| **Rules in effect** | Which of the show's own learned rules it was obeying |
+
+## Check the homework
+
+The complete ledger — every trade, including the voided ones and the ones
+that reconcile to no market bar — is published as
+[`api/mit_trade_ledger.json`](https://nerranetwork.com/api/mit_trade_ledger.json)
+and as CSV. It carries the entry and exit bar dates, the stop, the
+horizon, the option contract, the stated invalidation, and the rules in
+effect on the day of the pick: everything needed to recompute the numbers
+without taking the show's word for anything.
+
+A ledger that omitted its failures would be marketing, so the failures are
+in there and labelled.
 
 The **invalidation** line is the habit worth stealing. "I'll sell if it
 drops" is not a plan. "If Q3 guidance comes in below $4.10 on the November

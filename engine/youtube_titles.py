@@ -16,6 +16,13 @@ Design contract:
     landmine #17 A/B-listen gate.
 """
 
+# Model note (2026-08-19, experiment grok-46-funnel-and-ops): the title
+# bundle runs on grok-4.6 — titles/punch text are the network's biggest
+# discovery lever, this is one small metadata-only call per episode
+# (outside landmine #17), and the 4.6 trial showed materially sharper
+# instruction-following on writing tasks. Rollback: flip the three
+# ``model:`` defaults below to grok-4.3.
+
 from __future__ import annotations
 
 import logging

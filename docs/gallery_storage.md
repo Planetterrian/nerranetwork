@@ -263,6 +263,22 @@ the R2 bucket policy keeps originals private. The Phase 2 stub
 exists so the UI is complete and reviewable end-to-end now, and so
 Phase 3 only has to swap the network calls — not the UX.
 
+> **Since Phase 3, the 403 on originals is permanent and deliberate**:
+> the `nerranetwork.com` zone carries the WAF rule
+> `Gallery originals private (403 except .thumb.webp/.json)` —
+> expression `(http.host eq "gallery.nerranetwork.com" and not
+> (ends_with(http.request.uri.path, ".thumb.webp") or
+> ends_with(http.request.uri.path, ".json")))`, action Block, order
+> First. It IS the email gate. Do not delete it, do not add a Skip for
+> the gallery hostname, and do not "narrow" its expression with
+> `http.host ne "gallery.nerranetwork.com"` (that hostname is its only
+> condition — all three edits publish all originals for free; each was
+> nearly recommended on 2026-08-18 after the pipeline's 403 warning was
+> misread as a CDN outage). The pipeline fetches originals via
+> authenticated R2 only; see `workers/gallery/README.md` for the full
+> note and `engine/gallery_library.py::is_public_media_url` for the
+> code-side encoding of the rule.
+
 ## Phase 3 — email-gated downloads (shipped)
 
 ### Endpoints (Cloudflare Worker at `api.nerranetwork.com`)

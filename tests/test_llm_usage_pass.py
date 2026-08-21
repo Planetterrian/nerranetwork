@@ -65,8 +65,8 @@ class TestNoLiveRetiredSlugs:
     def test_reviewer_default_is_an_explicit_priced_model(self):
         """The reviewer ran on the retired grok-4-1-fast-non-reasoning slug
         from 2026-05-15 to 2026-08-18 — served by grok-4.3 (effort none)
-        but costed at the retired model's 6x-cheaper rates. It now follows
-        the network primary (grok-4.6, operator-directed upgrade) — the
+        but costed at the retired model's 6x-cheaper rates. grok-4.6
+        since the 2026-08-18 staged trial (staged-grok-46-trial) — the
         invariant is: an explicit, priced, non-retired model id."""
         from engine.config import LLMConfig
         from engine.tracking import GROK_PRICING
@@ -81,7 +81,7 @@ class TestNoLiveRetiredSlugs:
 
     def test_review_episodes_fallback_is_pinned_and_priced(self):
         src = (REPO_ROOT / "review_episodes.py").read_text(encoding="utf-8")
-        assert 'default_model = "grok-4.6"' in src
+        assert 'default_model = "grok-4.3"' in src
         # The grok-4.3 redirect-parity branch (effort none) must survive
         # for anyone pinning reviewer_model back to 4.3.
         assert '"reasoning_effort": "none"' in src
@@ -165,3 +165,144 @@ class TestDashboardCostBreakout:
         assert net30["images"] == pytest.approx(0.16)
         assert net30["search"] == pytest.approx(0.03)
         assert net30["total"] == pytest.approx(0.31)
+
+
+class TestStagedGrok46Trial:
+    """Scope guards for the 2026-08-18 staged grok-4.6 trial
+    (experiment ``staged-grok-46-trial`` — the first rollout run under
+    docs/model_upgrade_playbook.md).
+
+    The trial's whole safety argument is its SCOPE: dialogue/narrative
+    writing and analysis stages move, the facts-first news digests do
+    not. A pin quietly widening (or quietly disappearing) is exactly the
+    silent-config drift class this file exists for.
+    """
+
+    TRIAL_NARRATIVE_SHOWS = ("first_principles", "unintended_consequences")
+    NEWS_SHOWS_STAY_43 = (
+        "tesla", "spacex", "omni_view", "modern_investing",
+        "models_agents", "models_agents_beginners", "planetterrian",
+        "fascinating_frontiers", "env_intel", "finansy_prosto",
+        "privet_russian", "offshore_north",
+    )
+
+    def _load(self, slug):
+        from engine.config import load_config
+        return load_config(REPO_ROOT / "shows" / f"{slug}.yaml")
+
+    def test_trial_narrative_shows_are_on_46(self):
+        for slug in self.TRIAL_NARRATIVE_SHOWS:
+            assert self._load(slug).llm.model == "grok-4.6", slug
+
+    def test_dp_pod_script_stage_only(self):
+        """dp_pod's DIGEST must keep inheriting the grok-4.3 network
+        default — only the script stage rides 4.6."""
+        cfg = self._load("dp_pod")
+        assert cfg.llm.podcast_model == "grok-4.6"
+        assert cfg.llm.model == "grok-4.3"
+
+    def test_every_news_show_digest_stays_on_43(self):
+        """The four biggest-prompt shows timed out on 4.6 and the
+        facts-first digests carry the hallucination stakes — none of
+        them may follow the trial by accident."""
+        for slug in self.NEWS_SHOWS_STAY_43:
+            path = REPO_ROOT / "shows" / f"{slug}.yaml"
+            if not path.exists():
+                continue
+            assert self._load(slug).llm.model == "grok-4.3", slug
+
+    def test_request_timeout_covers_46_latency(self):
+        """Measured 4.6 latency on the trial shows is 205-242s — the
+        workflow must carry NERRA_LLM_TIMEOUT_SECONDS >= 600 while any
+        show is on 4.6, and the envelope arithmetic must still hold
+        (3 tenacity attempts x timeout under the 50-min watchdog)."""
+        wf = yaml.safe_load(
+            (REPO_ROOT / ".github" / "workflows" / "run-show.yml")
+            .read_text(encoding="utf-8"))
+        step = next(s for s in wf["jobs"]["run"]["steps"]
+                    if s.get("name") == "Run show pipeline")
+        llm_timeout = int(step["env"]["NERRA_LLM_TIMEOUT_SECONDS"])
+        watchdog = int(step["env"]["PIPELINE_TIMEOUT_SECONDS"])
+        assert llm_timeout >= 600
+        assert 3 * llm_timeout <= watchdog + 600, (
+            "one worst-case LLM stage must not be able to consume the "
+            "whole watchdog budget by itself"
+        )
+
+    def test_trial_models_are_priced(self):
+        from engine.tracking import GROK_PRICING
+        assert "grok-4.6" in GROK_PRICING
+        assert "grok-4.3" in GROK_PRICING
+
+    def test_trial_is_registered(self):
+        reg = yaml.safe_load(
+            (REPO_ROOT / "docs" / "experiments.yaml").read_text(
+                encoding="utf-8"))
+        ids = {e.get("id") for e in reg["experiments"]}
+        assert "staged-grok-46-trial" in ids
+
+
+class TestGrok46FunnelAndOpsWave:
+    """Scope guards for experiment grok-46-funnel-and-ops (2026-08-19):
+    grok-4.6 on the metadata/ops surfaces where writing quality is the
+    product and latency doesn't gate a daily slot. Each pin is a
+    one-line revert; none touches a daily news digest."""
+
+    def test_title_bundle_runs_on_46(self):
+        src = (REPO_ROOT / "engine" / "youtube_titles.py").read_text(
+            encoding="utf-8")
+        assert src.count('model: str = "grok-4.6"') == 3
+        assert 'model: str = "grok-4.3"' not in src
+
+    def test_restock_runs_on_46_with_env_rollback(self):
+        src = (REPO_ROOT / "scripts" / "restock_topic_queues.py").read_text(
+            encoding="utf-8")
+        assert "NERRA_RESTOCK_MODEL" in src
+        assert '"grok-4.6"' in src
+
+    def test_spacex_specials_run_on_46_daily_stays_43(self):
+        from engine.config import load_config
+        cfg = load_config(REPO_ROOT / "shows" / "spacex.yaml")
+        assert cfg.deep_dive.model == "grok-4.6"
+        assert cfg.llm.model == "grok-4.3"
+
+    def test_deep_dive_model_default_is_inherit(self):
+        from engine.config import DeepDiveConfig
+        assert DeepDiveConfig().model == ""
+
+    def test_run_show_applies_the_deep_dive_model_swap(self):
+        src = (REPO_ROOT / "run_show.py").read_text(encoding="utf-8")
+        assert "config.llm.model = _dd_cfg.model" in src
+
+    def test_model_era_stamps_are_recorded(self):
+        """Per-episode model ids (the RENDER_LOOK_VERSION pattern for
+        LLMs): without them, split-model episodes are unattributable in
+        analytics — the credit file's single label proved that on the
+        trial's first day."""
+        src = (REPO_ROOT / "run_show.py").read_text(encoding="utf-8")
+        assert 'metrics.record("llm_digest_model"' in src
+        assert '"llm_script_model"' in src
+        tsrc = (REPO_ROOT / "engine" / "tracking.py").read_text(
+            encoding="utf-8")
+        assert 'grok[step]["model"] = model' in tsrc
+
+
+class TestReviewerLatencyEnvelope:
+    """2026-08-21: the grok-4.6 reviewer at default (high) effort blew the
+    300s request timeout on ~1/3 of episodes; with a 20-episode catch-up
+    backlog the 35-minute audit job died WITHOUT writing its report or
+    issue — the audit's whole job is to always report. Two contracts:"""
+
+    SRC = (REPO_ROOT / "review_episodes.py").read_text(encoding="utf-8")
+
+    def test_46_reviewer_runs_at_low_effort(self):
+        """Structured YES/NO + score doesn't need deep reasoning; 'low'
+        keeps 4.6's judgment at a latency the audit can afford."""
+        assert 'reviewer_model.startswith("grok-4.6")' in self.SRC
+        assert '"reasoning_effort": "low"' in self.SRC
+
+    def test_ai_review_loop_has_a_wall_clock_budget(self):
+        """Past the budget, episodes keep structural checks and skip the
+        AI layer — the report and GitHub issue always ship."""
+        assert "REVIEW_AI_BUDGET_SECONDS" in self.SRC
+        assert "budget" in self.SRC.lower()

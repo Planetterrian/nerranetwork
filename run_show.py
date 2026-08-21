@@ -874,6 +874,11 @@ def run(args: argparse.Namespace) -> None:
                 # Deep dives want a fuller episode than the show's daily target.
                 if getattr(_dd_cfg, "min_podcast_words", 0):
                     config.llm.min_podcast_words = _dd_cfg.min_podcast_words
+                # Specials may run a deeper model than the daily pipeline
+                # (same per-run-object swap as the prompt files above).
+                if getattr(_dd_cfg, "model", ""):
+                    config.llm.model = _dd_cfg.model
+                    logger.info("Deep-dive model override: %s", _dd_cfg.model)
                 logger.info(
                     "Deep-dive mode: topic %r (%s)%s",
                     deep_dive_topic.get("id"), deep_dive_topic.get("title"),
@@ -1542,6 +1547,10 @@ def run(args: argparse.Namespace) -> None:
         # Tone hint (Tesla + SpaceX prompts reference it; supplied by their
         # hooks from the day's stock tape). Neutral default on hook failure.
         template_vars.setdefault("tone_hint", "steady day — natural and conversational")
+        # Modern Investing one-off methodology correction (Aug 2026) —
+        # hook-supplied and self-retiring. Empty default so a hook failure
+        # degrades to an episode without the correction, never a KeyError.
+        template_vars.setdefault("methodology_disclosure", "")
 
         # 7. Generate digest
         #
@@ -2124,7 +2133,25 @@ def run(args: argparse.Namespace) -> None:
         # Deterministic and keyed on the exact URL: no prompt change, so
         # no generated prose moves, and no network call (July 28 2026).
         try:
-            from engine.url_utils import relabel_aggregator_links
+            from engine.url_utils import (
+                relabel_aggregator_links,
+                repair_aggregator_urls,
+            )
+            # The fetcher resolves aggregated items to publisher URLs
+            # before they reach the prompt, but the model writes its own
+            # Sources section and RETYPES long URLs into it — Offshore
+            # North Ep001 shipped two 468-char Google News ids that each
+            # differed from the real link by one character, so both were
+            # dead. Map any stray back to the resolved publisher URL.
+            x_thread, _repaired = repair_aggregator_urls(
+                x_thread, locals().get("articles") or []
+            )
+            if _repaired:
+                logger.info(
+                    "Repaired %d aggregator URL(s) to their publisher form",
+                    _repaired,
+                )
+                metrics.record("sources_url_repaired", _repaired)
             x_thread, _relabelled = relabel_aggregator_links(
                 x_thread, locals().get("articles") or []
             )
@@ -2491,6 +2518,16 @@ def run(args: argparse.Namespace) -> None:
             # let us compute the actual/target ratio over time.
             metrics.record("podcast_script_word_count", _script_word_count)
             metrics.record("podcast_script_target_words", _TARGET_WORDS)
+            # Model-era stamps (2026-08-19): the RENDER_LOOK_VERSION pattern
+            # applied to LLMs — per-episode model ids so analytics can
+            # segment length/LV/retention/cost by model era instead of
+            # arguing from memory (the grok-4.6 staged trial made episodes
+            # split-model, which the credit file's single label can't show).
+            metrics.record("llm_digest_model", config.llm.model)
+            metrics.record(
+                "llm_script_model",
+                getattr(config.llm, "podcast_model", "") or config.llm.model,
+            )
 
             # 8c. Pre-TTS duration estimate — skip obviously doomed episodes before
             #     burning TTS credits.  ~150 words/minute for podcast speech.
@@ -4238,6 +4275,51 @@ def _clean_digest_for_podcast(digest: str) -> str:
     return cleaned
 
 
+def _strip_trailing_sources_block(script: str) -> str:
+    """Drop a sources / show-notes list the LLM appended after the script.
+
+    Offshore North Ep001 shipped with the host reading "Sources, show
+    notes, not spoken. Canada Ocean Racing..." on air: the prompt asked
+    for a SOURCES block after the closing and labelled it not-spoken, but
+    nothing downstream removed it, so TTS voiced the label and the list.
+    The published show notes are built from the digest, never from the
+    script, so anything shaped like a source list at the tail of a script
+    is a leak with no legitimate reader.
+
+    Conservative by construction: the cut point must be a short standalone
+    heading line (no sentence-ending punctuation) in the last third of the
+    script, AND the tail it removes must be under a third of the script —
+    so a false positive can never take the closing block with it. A script
+    with no such heading is returned unchanged.
+    """
+    import re
+
+    lines = script.splitlines()
+    if len(lines) < 6:
+        return script
+
+    max_removed = len(script) // 3
+
+    heading = re.compile(
+        r"(?i)^[#*\s>-]*"
+        r"(sources?|show\s*notes?|episode\s*notes?|links?|references?|credits?)"
+        r"\b[^.!?]{0,60}$"
+    )
+    start = max(1, (len(lines) * 2) // 3)
+    for idx in range(len(lines) - 1, start - 1, -1):
+        line = lines[idx].strip()
+        if not line or len(line) > 80:
+            continue
+        if heading.match(line):
+            kept = "\n".join(lines[:idx]).rstrip()
+            if len(script) - len(kept) <= max_removed:
+                return kept
+            # Too much would go: this is prose that happens to open with
+            # one of those words, not an appended list. Leave it alone.
+            return script
+    return script
+
+
 def _clean_podcast_script(
     script: str, host_name: str = "Patrick", dialogue_mode: bool = False,
 ) -> str:
@@ -4252,6 +4334,8 @@ def _clean_podcast_script(
     cleaning (metadata lines, stage directions, leaked targets) still runs.
     """
     import re
+
+    script = _strip_trailing_sources_block(script)
 
     host_prefix = f"{host_name}:"
     # Common speaker/stage-direction prefixes that LLMs generate.

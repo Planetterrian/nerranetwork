@@ -152,6 +152,37 @@ class TestRealLoopsStillCaught:
         assert _validate_llm_output(text, "digest", "tesla", 0,
                                     ("tesla", "model y")) >= 1
 
+    def test_titlecase_story_entities_are_exempt(self):
+        """Story-of-the-day proper nouns are what the news is about, not
+        a loop. SpaceX Ep073 (2026-08-18): 'Christmas Island' 6x and
+        'Ship 40' 4x scored a committed, published, perfectly sound
+        digest as a regeneration candidate — the entities of one day's
+        lead story can never be pre-listed in the show's YAML keywords."""
+        filler = " ".join(f"unique{i} token{i} filler{i}" for i in range(40))
+        # Six mentions each, every surrounding adjacency distinct — only
+        # the Title-Case entities themselves repeat.
+        sentences = [
+            "Crews reached Christmas Island and secured Ship 40 quickly.",
+            "Weather held over Christmas Island while Ship 40 waited offshore.",
+            "Inspectors boarded near Christmas Island once Ship 40 stabilized.",
+            "Photos from Christmas Island showed Ship 40 listing slightly.",
+            "Logistics around Christmas Island kept Ship 40 supplied daily.",
+            "Departure past Christmas Island returns Ship 40 to Starbase.",
+        ]
+        text = filler + " " + " ".join(sentences)
+        assert _validate_llm_output(text, "digest", "spacex", 0,
+                                    ("spacex", "starship")) == 0
+
+    def test_lowercase_prose_loop_is_not_exempted(self):
+        """The exemption must key on capitalization IN THE TEXT — a
+        lowercase clause repeated in running prose is still the
+        hallucination-loop shape."""
+        filler = " ".join(f"unique{i} token{i} filler{i}" for i in range(40))
+        text = filler + " " + (
+            "the towing operation shows the towing operation works. " * 5)
+        assert _validate_llm_output(text, "digest", "spacex", 0,
+                                    ("spacex",)) >= 1
+
 
 class TestNoNetworkRegressionOnCommittedDigests:
     def test_recent_digests_do_not_trigger_regeneration(self):
@@ -343,7 +374,7 @@ class TestTagIdIsSeparateFromDisplayName:
         """The site helper reads newsletter.tag — with the id split out,
         the form value is a name again."""
         import importlib.util
-        spec = importlib.util.spec_from_file_location(
+        importlib.util.spec_from_file_location(
             "_gh", PROJECT_ROOT / "generate_html.py")
         src = (PROJECT_ROOT / "generate_html.py").read_text(encoding="utf-8")
         assert '(data.get("newsletter") or {}).get("tag")' in src

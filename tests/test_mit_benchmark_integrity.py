@@ -34,6 +34,7 @@ integrity the product. This pass fixed the measurement layer:
 from __future__ import annotations
 
 import datetime
+import itertools
 import json
 import sys
 from pathlib import Path
@@ -47,6 +48,29 @@ if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
 from shows.hooks import modern_investing as mi  # noqa: E402
+
+
+def _frozen_datetime(today: datetime.date):
+    """A stand-in for the ``datetime`` MODULE with a fixed ``date.today()``.
+
+    Patched onto the hook module's own ``datetime`` attribute, so the real
+    module — which pandas, numpy and yfinance initialise against — is never
+    touched. ``date`` is a genuine subclass, not a mock, so every
+    ``isinstance``/arithmetic path behaves normally.
+    """
+
+    class _Date(datetime.date):
+        @classmethod
+        def today(cls) -> datetime.date:
+            return today
+
+    return SimpleNamespace(
+        date=_Date,
+        datetime=datetime.datetime,
+        timedelta=datetime.timedelta,
+        timezone=datetime.timezone,
+        time=datetime.time,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -744,8 +768,17 @@ class TestRuleEffectiveness:
                "observation": "Sector concentration built up",
                "adjustment": "Cap any single sector at 30% of the trailing window"}
 
+    _seq = itertools.count()
+
     def _closed(self, alpha, rules):
-        return {"status": "closed", "alpha_pct": alpha,
+        # Era-dated (2026-08-19): the scoreboard scores the current record
+        # only. Its control group used to be the pre-era trades, so it was
+        # comparing new trades against old ones and calling the difference
+        # rule effectiveness.
+        era = mi.era_inception() or datetime.date(2026, 8, 18)
+        d = (era + datetime.timedelta(days=next(self._seq) % 60)).isoformat()
+        return {"status": "closed", "alpha_pct": alpha, "pnl_pct": alpha,
+                "nasdaq_return_pct": 0.0, "date": d, "entry_bar_date": d,
                 "rules_in_effect": rules}
 
     def test_post_generate_stamps_rules_in_effect(self, tmp_path, monkeypatch):
@@ -777,19 +810,31 @@ class TestRuleEffectiveness:
         assert "RETIREMENT" not in board  # positive edge — keep
 
     def test_ineffective_rule_flagged_for_retirement(self):
+        # The CONTROL group needs a real sample too (2026-08-19): retiring
+        # a rule because it lost to four trades is the same coin-flip
+        # reasoning the July-18 pass removed from the index sweep. Both
+        # arms must clear _MIN_SAMPLE_TRADES.
         lessons = {"entries": [self._RULE_A]}
         tracker = {"trades": (
             [self._closed(0.0, ["LL-017"]) for _ in range(8)]
-            + [self._closed(1.0, []) for _ in range(4)]
+            + [self._closed(1.0, []) for _ in range(5)]
         )}
         board = mi._build_rule_scoreboard(lessons, tracker)
         assert "RETIREMENT CANDIDATE" in board
         assert "keep obeying it until retired" in board  # never auto-retired
 
-    def test_too_few_stamped_trades_yields_empty_board(self):
+    def test_too_few_stamped_trades_says_so_rather_than_going_silent(self):
+        """CHANGED 2026-08-19: was `== ""`.
+
+        An empty block is indistinguishable from a block that had nothing
+        to report, and silence is how five bogus RETIREMENT CANDIDATE
+        verdicts rode unnoticed. Thin evidence now says it is thin.
+        """
         lessons = {"entries": [self._RULE_A]}
         tracker = {"trades": [self._closed(2.0, ["LL-017"])]}
-        assert mi._build_rule_scoreboard(lessons, tracker) == ""
+        board = mi._build_rule_scoreboard(lessons, tracker)
+        assert "RETIREMENT CANDIDATE" not in board
+        assert "not measurable yet" in board or "UNMEASURED" in board
 
     def test_selected_rules_match_block_content(self):
         lessons = {"entries": [self._RULE_A, self._RULE_B]}
@@ -1081,11 +1126,32 @@ class TestWeeklyMinHold:
                    "trades": [{"symbol": "COST", "market": "NYSE",
                                "trade_type": "weekly", "status": "open",
                                "date": thursday.isoformat()}]}
-        with patch.object(mi.datetime, "date", wraps=datetime.date) as mock_date, \
+        # NOTE: patch the hook's module-local ``datetime`` NAME, never the
+        # real datetime module. ``patch.object(mi.datetime, "date", ...)``
+        # replaced datetime.date GLOBALLY with a MagicMock, and any pandas
+        # import landing inside that window died in its C-extension setup
+        # ("datetime.date is not a type object"), leaving pandas
+        # half-initialised in sys.modules for the rest of the session —
+        # every later "import yfinance" then failed with "numpy._core.
+        # multiarray failed to import". That took out all 38 tests in
+        # test_tesla_hook.py whenever this file ran first, locally AND in
+        # CI (PR #1027). A real date subclass keeps isinstance/type checks
+        # honest where a mock could not.
+        # One printed session — Thursday's own bar — which is what the
+        # Friday pre-market run can actually see. Every sibling test
+        # patches the fetch; this one did not, and it passed only because
+        # the old global datetime patch ALSO broke the pandas import
+        # inside _fetch_bars_for_trade, so the fetch raised and no bars
+        # came back. With the datetime patch corrected the fetch worked,
+        # pulled 14 REAL COST bars off the network, and the horizon was
+        # complete — so the trade closed and this test failed (CI, #1027).
+        # It was passing for the wrong reason and hitting the live market.
+        thursday_bar = [(thursday, 100.0, 101.0, 99.0)]
+        with patch.object(mi, "datetime", _frozen_datetime(friday)), \
+             patch.object(mi, "_fetch_bars_for_trade", return_value=thursday_bar), \
              patch.object(mi, "_snapshot_trade") as snap, \
              patch.object(mi, "_close_trade") as close, \
              patch.object(mi, "_save_tracker"):
-            mock_date.today.return_value = friday
             mi._evaluate_open_trade(tracker, Path("/nope"))
         close.assert_not_called()
         snap.assert_called_once()
@@ -2021,3 +2087,587 @@ class TestReproducibleDecisions:
         block = mi.get_mit_confidence_calibration(tracker)
         assert "RUBRIC" in block
         assert "0 graded pick(s) in this era" in block
+
+
+class TestOptionsPositions:
+    """The show teaches options in ~4 of 5 episodes and had never traded
+    one: 0 of 61 positions used a derivative while "covered call" alone
+    had been taught 33 times.
+
+    The constraint that shapes the design: an option premium cannot be
+    reconstructed after the fact from free data. So the premium is a real
+    quote recorded at pick time and the payoff at expiry is arithmetic
+    with no free parameters. A premium is NEVER estimated — if the chain
+    cannot be quoted the pick degrades to equity.
+    """
+
+    def test_covered_call_payoff_matches_hand_calculation(self):
+        pos = {"structure": "covered_call", "contracts": 1, "strike": 43.0,
+               "premium": 0.58, "capital_usd": 4120.0, "underlying_entry": 41.20}
+        # Assigned: shares capped at the strike, premium kept.
+        r = mi.option_payoff(pos, 46.00)
+        assert r["pnl_dollars"] == pytest.approx(43 * 100 + 0.58 * 100 - 4120)
+        assert r["assigned"] is True
+        # Unassigned below the strike: share move plus the premium.
+        r2 = mi.option_payoff(pos, 39.00)
+        assert r2["pnl_dollars"] == pytest.approx(39 * 100 + 0.58 * 100 - 4120)
+        assert r2["assigned"] is False
+        # Upside is capped — that is the trade-off the show must explain.
+        assert (mi.option_payoff(pos, 99.0)["pnl_dollars"]
+                == pytest.approx(r["pnl_dollars"]))
+
+    def test_cash_secured_put_payoff_matches_hand_calculation(self):
+        pos = {"structure": "cash_secured_put", "contracts": 1, "strike": 38.0,
+               "premium": 0.75, "capital_usd": 3800.0, "underlying_entry": 41.20}
+        assert mi.option_payoff(pos, 41.0)["pnl_dollars"] == pytest.approx(75.0)
+        assert mi.option_payoff(pos, 36.0)["pnl_dollars"] == pytest.approx(
+            0.75 * 100 - (38 - 36) * 100)
+        # Gain is capped at the premium however far the underlying rises.
+        assert mi.option_payoff(pos, 200.0)["pnl_dollars"] == pytest.approx(75.0)
+
+    def test_returns_are_on_capital_actually_committed(self):
+        pos = {"structure": "covered_call", "contracts": 1, "strike": 43.0,
+               "premium": 0.58, "capital_usd": 4120.0, "underlying_entry": 41.20}
+        r = mi.option_payoff(pos, 46.00)
+        assert r["pnl_pct"] == pytest.approx(r["pnl_dollars"] / 4120 * 100, abs=1e-3)
+
+    def test_strike_selection_is_deterministic_and_skips_itm(self):
+        calls = [
+            {"strike": 40, "bid": 1.9, "ask": 2.1},    # in the money — skip
+            {"strike": 43, "bid": 0.55, "ask": 0.61},  # closest to 4% OTM
+            {"strike": 44, "bid": 0.30, "ask": 0.36},
+        ]
+        assert mi._select_contract(calls, 41.20, "covered_call") == (43.0, 0.58)
+
+    def test_contract_without_a_real_quote_is_never_filled(self):
+        calls = [{"strike": 43, "bid": 0, "ask": 0, "lastPrice": 0}]
+        assert mi._select_contract(calls, 41.20, "covered_call") is None
+
+    def test_expiry_selection_follows_the_policy_window(self):
+        pick = datetime.date(2026, 8, 19)
+        # 2 days out is inside no window; 30 days is; 58 is too far.
+        chosen = mi._select_expiry(
+            ["2026-08-21", "2026-09-18", "2026-10-16"], pick)
+        assert chosen == "2026-09-18"
+        assert mi._select_expiry(["2026-08-21"], pick) is None
+
+    def test_settlement_uses_the_last_bar_on_or_before_expiry(self):
+        trade = {"symbol": "MFC.TO", "date": "2026-08-19",
+                 "structure": "covered_call",
+                 "option": {"structure": "covered_call", "expiry": "2026-09-18",
+                            "strike": 43.0, "premium": 0.58, "contracts": 1,
+                            "underlying_entry": 41.20, "capital_usd": 4120.0}}
+        bars = [(datetime.date(2026, 8, 19), 41.0, 41.20, 40.8),
+                (datetime.date(2026, 9, 18), 45.6, 46.00, 45.2),
+                (datetime.date(2026, 9, 21), 46.5, 47.00, 46.0)]  # after expiry
+        with patch.object(mi, "_annotate_trade_with_nasdaq"):
+            assert mi._settle_option_trade(trade, trade["option"], bars, {}) is True
+        assert trade["exit_bar_date"] == "2026-09-18"   # not the later bar
+        assert trade["pnl_dollars"] == pytest.approx(238.0)
+
+    def test_no_expiry_bar_yet_leaves_the_trade_open(self):
+        trade = {"symbol": "X", "date": "2026-08-19",
+                 "option": {"structure": "covered_call", "expiry": "2026-09-18",
+                            "strike": 43.0, "premium": 0.58, "contracts": 1,
+                            "underlying_entry": 41.2, "capital_usd": 4120.0}}
+        bars = [(datetime.date(2026, 8, 19), 41.0, 41.2, 40.8)]
+        assert mi._settle_option_trade(trade, trade["option"], bars, {}) is False
+        assert trade.get("status") != "closed"
+
+    def test_structure_is_parsed_from_the_digest(self):
+        for text, expected in (
+            ("**Structure:** Covered Call", "covered_call"),
+            ("**Structure:** Cash-Secured Put", "cash_secured_put"),
+            ("**Structure:** Shares", "long_equity"),
+            ("", "long_equity"),                     # absent => equity
+        ):
+            digest = ("### Practice Investment of the Day\n"
+                      "**Today's Pick:** ABC — Alpha Beta\n" + text + "\n")
+            assert mi._extract_trade_from_digest(digest, 1)["structure"] == expected
+
+    def test_policy_declares_only_the_structures_the_code_settles(self):
+        allowed = set(mi.load_policy()["options"]["structures"])
+        assert allowed <= set(mi.OPTION_STRUCTURES)
+        for structure in allowed:
+            mi.option_payoff(
+                {"structure": structure, "contracts": 1, "strike": 10.0,
+                 "premium": 0.5, "capital_usd": 1000.0}, 11.0)
+
+
+class TestRuleScoreboardHonesty:
+    """The scoreboard reported five identical RETIREMENT CANDIDATE verdicts
+    (same 10 trades, same -0.17% vs +0.43%) because all five rules were
+    stamped on exactly the same trades — one undivided sample presented as
+    five findings, with the pre-era trades as its control group."""
+
+    @staticmethod
+    def _closed(alpha, rules, i):
+        era = mi.era_inception() or datetime.date(2026, 8, 18)
+        d = (era + datetime.timedelta(days=i)).isoformat()
+        return {"status": "closed", "alpha_pct": alpha, "pnl_pct": alpha,
+                "nasdaq_return_pct": 0.0, "date": d, "entry_bar_date": d,
+                "rules_in_effect": rules}
+
+    _RULES = {"entries": [{"id": "LL-A", "status": "active",
+                           "adjustment": "Require volume confirmation"},
+                          {"id": "LL-B", "status": "active",
+                           "adjustment": "Cap sector concentration"},
+                          {"id": "LL-C", "status": "active",
+                           "adjustment": "Wait for a catalyst"}]}
+
+    def test_identical_rule_sets_produce_no_verdict(self):
+        tracker = {"trades": [self._closed(1.0, ["LL-A", "LL-B"], i)
+                              for i in range(12)]}
+        out = mi._build_rule_scoreboard(self._RULES, tracker)
+        assert "not measurable yet" in out
+        assert "RETIREMENT CANDIDATE" not in out
+
+    def test_collinear_rules_are_flagged_as_one_piece_of_evidence(self):
+        tracker = {"trades": [self._closed(2.0, ["LL-A", "LL-B"], i)
+                              for i in range(8)]
+                   + [self._closed(-1.0, ["LL-C"], i + 8) for i in range(8)]}
+        out = mi._build_rule_scoreboard(self._RULES, tracker)
+        assert "indistinguishable from" in out
+
+    def test_pre_era_trades_are_not_the_control_group(self):
+        legacy = {"status": "closed", "alpha_pct": 30.0, "pnl_pct": 30.0,
+                  "nasdaq_return_pct": 0.0, "date": "2026-06-01"}
+        tracker = {"trades": [legacy] + [self._closed(1.0, ["LL-A"], i)
+                                         for i in range(6)]}
+        out = mi._build_rule_scoreboard(self._RULES, tracker)
+        assert "+30" not in out   # the legacy trade never enters the comparison
+
+    def test_no_closed_trades_says_so_instead_of_going_silent(self):
+        out = mi._build_rule_scoreboard(self._RULES, {"trades": []})
+        assert "no closed trades" in out.lower()
+
+
+class TestTradingVsPipelineRules:
+    """Six of thirteen active 'recursive improvement rules' were production
+    hygiene — re-teach cooldowns, 'every episode must state the NASDAQ
+    level', and three variants of 'verify price data from multiple
+    providers', which are the sim's own historical data-fetch bugs written
+    up as investing wisdom and fed back into the pick prompt."""
+
+    def test_pipeline_rules_are_excluded_from_the_pick_prompt(self):
+        data = {"entries": [
+            {"id": "P1", "status": "active",
+             "adjustment": "Verify price data from multiple providers before entering"},
+            {"id": "P2", "status": "active",
+             "adjustment": "Every episode must state the NASDAQ Composite level"},
+            {"id": "P3", "status": "active",
+             "adjustment": "Never re-teach bid_ask_spread within its cooldown window"},
+            {"id": "T1", "status": "active",
+             "adjustment": "Cap any single sector at 30% of the trailing window"},
+        ]}
+        ids = [e["id"] for e in mi._selected_active_rules(data)]
+        assert ids == ["T1"]
+
+    def test_explicit_kind_overrides_the_heuristic(self):
+        assert mi._is_trading_rule(
+            {"kind": "trading", "adjustment": "verify price data"}) is True
+        assert mi._is_trading_rule(
+            {"kind": "pipeline", "adjustment": "cap sector exposure"}) is False
+
+    def test_same_constraint_different_scope_is_one_rule(self):
+        data = {"entries": [
+            {"id": "LL-017", "status": "active", "adjustment":
+             "Always require volume confirmation above the 20-day average "
+             "before entering momentum trades on earnings beats"},
+            {"id": "LL-067", "status": "active", "adjustment":
+             "Require volume above the 20-day average before entering any "
+             "catalyst-driven name already in a sector rotation"},
+        ]}
+        assert len(mi._selected_active_rules(data)) == 1
+
+
+class TestPublicLedger:
+    """'You can reproduce our numbers' has to be a link, not a claim."""
+
+    @staticmethod
+    def _mod():
+        import importlib
+        return importlib.import_module("scripts.build_mit_ledger")
+
+    def test_ledger_carries_the_full_decision_record(self):
+        mod = self._mod()
+        tracker = {
+            "summary": {"era_inception": "2026-08-18", "era_name": "Era 2"},
+            "trades": [{
+                "episode_num": 141, "date": "2026-08-19", "symbol": "ABC",
+                "status": "open", "confidence": "High",
+                "invalidation": "Guidance below $4.10 kills it",
+                "horizon_sessions": 5, "policy_version": 2,
+                "rules_in_effect": ["LL-A", "LL-B"],
+                "stop_loss": {"pct": 6.0},
+                "option": {"structure": "covered_call", "strike": 43.0,
+                           "premium": 0.58, "expiry": "2026-09-18"},
+            }],
+        }
+        payload = mod.build(tracker)
+        row = payload["trades"][0]
+        for key in ("invalidation", "horizon_sessions", "policy_version",
+                    "rules_in_effect", "stop_pct", "option_strike",
+                    "option_premium", "in_current_era"):
+            assert key in row, key
+        assert row["in_current_era"] is True
+
+    def test_voided_and_pre_era_trades_are_published_not_hidden(self):
+        mod = self._mod()
+        tracker = {"summary": {"era_inception": "2026-08-18"}, "trades": [
+            {"episode_num": 50, "date": "2026-05-01", "symbol": "CNR",
+             "status": "voided", "void_reason": "instrument_scale_mismatch"},
+        ]}
+        payload = mod.build(tracker)
+        assert payload["counts"]["voided"] == 1
+        assert payload["trades"][0]["void_reason"] == "instrument_scale_mismatch"
+        assert payload["trades"][0]["in_current_era"] is False
+
+    def test_era_rationale_is_published_with_the_ledger(self):
+        mod = self._mod()
+        payload = mod.build({"summary": {"era_inception": "2026-08-18"},
+                             "trades": []})
+        assert "excluded from the on-air record, not deleted" in \
+            payload["era"]["why"]
+
+    def test_nightly_publishes_and_commits_the_ledger(self):
+        wf = (_ROOT / ".github/workflows/nightly-maintenance.yml").read_text(
+            encoding="utf-8")
+        assert "scripts/build_mit_ledger.py" in wf
+        assert "api/mit_trade_ledger.json" in wf.split("add-paths")[1]
+
+
+class TestRuleRotation:
+    """The scoreboard can only attribute an effect to a rule if some picks
+    were made WITH it and some WITHOUT.
+
+    Across the first 15 stamped trades only two rule sets were ever used
+    — differing by a single rule, and arising because the lesson ledger
+    happened to change rather than by design. The honest scoreboard was
+    therefore permanently silent. Rotation supplies the variation.
+    """
+
+    # Genuinely distinct constraints — near-identical wording would be
+    # collapsed by the near-duplicate filter before rotation ever runs,
+    # which is correct behaviour but makes for a useless fixture.
+    _ADJUSTMENTS = [
+        "Require volume above the 20-day average",
+        "Cap any single sector at 30% of the trailing window",
+        "Wait for a confirmed earnings beat",
+        "Avoid names inside an active short squeeze",
+        "Size down when the VIX is above 25",
+        "Skip picks with earnings inside the holding window",
+    ]
+
+    @classmethod
+    def _ledger(cls, n=6):
+        return {"entries": [
+            {"id": f"LL-{i + 1:03d}", "status": "active",
+             "adjustment": cls._ADJUSTMENTS[i]}
+            for i in range(min(n, len(cls._ADJUSTMENTS)))
+        ]}
+
+    def test_rule_set_varies_between_episodes(self):
+        data = self._ledger()
+        sets = {tuple(e["id"] for e in mi._selected_active_rules(
+            data, episode_num=ep)) for ep in range(100, 112)}
+        assert len(sets) > 1, "rotation produced a constant rule set"
+
+    def test_every_rule_gets_both_arms_over_a_cycle(self):
+        from collections import Counter
+        data = self._ledger()
+        seen = Counter()
+        episodes = list(range(100, 130))
+        for ep in episodes:
+            for e in mi._selected_active_rules(data, episode_num=ep):
+                seen[e["id"]] += 1
+        # Each rule appears sometimes and is absent sometimes — without
+        # both arms no rule can ever be scored.
+        for rid, count in seen.items():
+            assert 0 < count < len(episodes), f"{rid} never varies"
+
+    def test_rotation_is_deterministic(self):
+        data = self._ledger()
+        a = [e["id"] for e in mi._selected_active_rules(data, episode_num=207)]
+        b = [e["id"] for e in mi._selected_active_rules(data, episode_num=207)]
+        assert a == b  # reproducible from the trade record
+
+    def test_proven_rules_are_never_rotated_out(self):
+        data = self._ledger()
+        era = mi.era_inception() or datetime.date(2026, 8, 18)
+
+        def closed(alpha, rules, i):
+            d = (era + datetime.timedelta(days=i)).isoformat()
+            return {"status": "closed", "alpha_pct": alpha, "pnl_pct": alpha,
+                    "nasdaq_return_pct": 0.0, "date": d, "entry_bar_date": d,
+                    "rules_in_effect": rules}
+
+        # LL-001 clearly outperforms; it must stop rotating.
+        tracker = {"trades": [closed(5.0, ["LL-001"], i) for i in range(6)]
+                   + [closed(-2.0, ["LL-002"], i + 6) for i in range(6)]}
+        assert "LL-001" in mi._proven_rule_ids(tracker, data)
+        for ep in range(100, 112):
+            ids = [e["id"] for e in mi._selected_active_rules(
+                data, episode_num=ep, tracker=tracker)]
+            assert "LL-001" in ids
+
+    def test_hand_pinned_rules_are_never_rotated_out(self):
+        data = self._ledger()
+        data["entries"][3]["always_on"] = True
+        pinned = data["entries"][3]["id"]
+        for ep in range(100, 112):
+            ids = [e["id"] for e in mi._selected_active_rules(
+                data, episode_num=ep)]
+            assert pinned in ids
+
+    def test_small_pool_is_not_rotated_away(self):
+        # With fewer rules than slots there is nothing to rotate and every
+        # rule must still be shown.
+        data = self._ledger(n=2)
+        ids = [e["id"] for e in mi._selected_active_rules(data, episode_num=5)]
+        assert len(ids) == 2
+
+
+class TestStrategyFamilies:
+    """61 trades produced 61 unique free-text strategy strings, so the show
+    could report which SECTORS worked but never which APPROACHES did."""
+
+    def test_families_are_derived_from_free_text(self):
+        cases = [
+            ("Momentum play on earnings beat", "earnings_surprise"),
+            ("Mean-reversion entry on 80% recovery from lows", "mean_reversion"),
+            ("M&A spread capture on announced acquisition", "merger_arb"),
+            ("Dividend-compounding entry on a midstream pipeline", "dividend_income"),
+            ("Technical breakout attempt from one-month range", "technical_breakout"),
+            ("Valuation screen on memory-chip names", "valuation"),
+        ]
+        for text, expected in cases:
+            assert mi.strategy_family({"strategy": text}) == expected, text
+
+    def test_explicit_family_wins_over_derivation(self):
+        trade = {"strategy": "Momentum play on earnings beat",
+                 "strategy_family": "macro_rotation"}
+        assert mi.strategy_family(trade) == "macro_rotation"
+
+    def test_unknown_explicit_family_falls_back_to_derivation(self):
+        trade = {"strategy": "Dividend-growth entry",
+                 "strategy_family": "not_a_real_family"}
+        assert mi.strategy_family(trade) == "dividend_income"
+
+    def test_unmatched_strategy_is_other_not_forced(self):
+        assert mi.strategy_family({"strategy": "Something entirely novel"}) == "other"
+
+    def test_record_prefers_verified_windows_and_labels_its_scope(self):
+        era = mi.era_inception() or datetime.date(2026, 8, 18)
+        trades = []
+        for i in range(8):
+            d = (era + datetime.timedelta(days=i)).isoformat()
+            trades.append({"status": "closed", "alpha_pct": 1.0 + i,
+                           "strategy": "Momentum play on earnings beat",
+                           "date": d, "entry_bar_date": d})
+        block = mi._build_strategy_family_performance({"trades": trades})
+        assert "verified-window trades" in block
+        assert "earnings_surprise" in block
+
+    def test_legacy_only_record_is_labelled_indicative(self):
+        trades = [{"status": "closed", "alpha_pct": 5.0,
+                   "strategy": "Momentum play on earnings beat"}
+                  for _ in range(4)]
+        block = mi._build_strategy_family_performance({"trades": trades})
+        assert "indicative only" in block
+        assert "do NOT quote" in block
+
+    def test_thin_buckets_are_flagged_not_hidden(self):
+        trades = [{"status": "closed", "alpha_pct": 2.0,
+                   "strategy": "Momentum play on earnings beat"}
+                  for _ in range(3)]
+        block = mi._build_strategy_family_performance({"trades": trades})
+        assert "too few to lean on" in block
+
+    def test_digest_prompt_requires_a_family(self):
+        prompt = (_ROOT / "shows/prompts/modern_investing_digest.txt").read_text(
+            encoding="utf-8")
+        assert "**Strategy Family:**" in prompt
+        assert "{strategy_family_performance}" in prompt
+        for name, _ in mi.STRATEGY_FAMILIES:
+            assert name in prompt, name
+
+
+class TestReviewCatchUp:
+    """The daily audit runs on a fixed cron; shows finish at wildly
+    different times (MIT has landed 09:32-19:41 UTC). Anything finishing
+    after the audit was logged 'critical: Missed episode' and auto-closed
+    the next day by confirming the FILE EXISTS — its content was never
+    reviewed. On 2026-08-19 that was four shows at once.
+    """
+
+    @staticmethod
+    def _mod():
+        import importlib
+        return importlib.import_module("review_episodes")
+
+    def test_catch_up_helpers_exist_and_are_bounded(self):
+        mod = self._mod()
+        assert mod.CATCH_UP_DAYS >= 1
+        assert mod.CATCH_UP_MAX_PER_RUN >= 1
+        assert callable(mod.find_catch_up_episodes)
+
+    def test_coverage_key_and_day_parsing(self):
+        mod = self._mod()
+        day = datetime.date(2026, 8, 19)
+        assert mod._coverage_key("modern_investing", day) == \
+            "modern_investing|2026-08-19"
+        ep = SimpleNamespace(show_slug="x", date="2026-08-19")
+        assert mod._episode_day(ep, datetime.date(2000, 1, 1)) == day
+        compact = SimpleNamespace(show_slug="x", date="20260819")
+        assert mod._episode_day(compact, datetime.date(2000, 1, 1)) == day
+
+    def test_unparseable_date_falls_back_instead_of_raising(self):
+        mod = self._mod()
+        fallback = datetime.date(2026, 1, 2)
+        ep = SimpleNamespace(show_slug="x", date="not-a-date")
+        assert mod._episode_day(ep, fallback) == fallback
+
+    def test_coverage_prunes_old_entries(self, tmp_path, monkeypatch):
+        mod = self._mod()
+        monkeypatch.setattr(mod, "REVIEW_COVERAGE_PATH",
+                            tmp_path / "review_coverage.json")
+        today = datetime.date(2026, 8, 20)
+        state = {"reviewed": {
+            "a|2026-08-19": True,          # recent — kept
+            "b|2026-01-01": True,          # ancient — pruned
+        }}
+        mod._save_coverage(state, today)
+        reloaded = mod._load_coverage()["reviewed"]
+        assert "a|2026-08-19" in reloaded
+        assert "b|2026-01-01" not in reloaded
+
+    def test_audit_workflow_persists_coverage(self):
+        wf = (_ROOT / ".github/workflows/daily-audit.yml").read_text(
+            encoding="utf-8")
+        # Without persistence the catch-up pass re-reviews the same
+        # episodes every run and never drains.
+        assert "api/review_coverage.json" in wf
+
+
+class TestMethodologyDisclosure:
+    """The old cumulative-alpha figure vanished from air when the
+    era-scoped record started.
+
+    A number that quietly disappears is indistinguishable, from the
+    listener's seat, from a number being buried — and here the truth is
+    the opposite (it could not be reproduced, so it was not ours to
+    claim). The correction is a one-off segment, not a standing
+    changelog: it must retire itself, it must never re-air on the same
+    episode twice, and it must stay out of pipeline internals.
+    """
+
+    @staticmethod
+    def _tracker():
+        return {"metadata": {}, "trades": []}
+
+    def test_airs_then_retires(self, monkeypatch):
+        monkeypatch.setattr(mi, "_hooks_readonly", lambda: False)
+        tracker = self._tracker()
+        aired = [
+            bool(mi._build_methodology_disclosure(tracker, episode_num=ep))
+            for ep in range(200, 210)
+        ]
+        assert aired[:mi.METHODOLOGY_DISCLOSURE_EPISODES] == (
+            [True] * mi.METHODOLOGY_DISCLOSURE_EPISODES)
+        assert not any(aired[mi.METHODOLOGY_DISCLOSURE_EPISODES:]), (
+            "the correction became a permanent segment")
+
+    def test_same_episode_never_consumes_two_airings(self, monkeypatch):
+        # get_prompt_context can run more than once per episode; without
+        # this guard a single episode would burn the whole allowance.
+        monkeypatch.setattr(mi, "_hooks_readonly", lambda: False)
+        tracker = self._tracker()
+        first = mi._build_methodology_disclosure(tracker, episode_num=200)
+        second = mi._build_methodology_disclosure(tracker, episode_num=200)
+        assert first and not second
+        assert tracker["metadata"]["methodology_disclosure_episodes"] == [200]
+
+    def test_readonly_runs_do_not_stamp(self, monkeypatch):
+        monkeypatch.setattr(mi, "_hooks_readonly", lambda: True)
+        tracker = self._tracker()
+        assert mi._build_methodology_disclosure(tracker, episode_num=200)
+        assert not tracker["metadata"].get(
+            "methodology_disclosure_episodes"), (
+            "a rehearsal run consumed a real airing")
+
+    def test_covers_the_four_audit_questions(self, monkeypatch):
+        # The transferable lesson is the reason this segment is worth
+        # airing at all: how to audit any track record you are shown.
+        monkeypatch.setattr(mi, "_hooks_readonly", lambda: False)
+        text = mi._build_methodology_disclosure(self._tracker(), 200).lower()
+        for probe in ("exit rule", "losers", "published", "reproduce"):
+            assert probe in text, f"missing audit question: {probe}"
+
+    def test_stays_out_of_pipeline_internals(self, monkeypatch):
+        # A listener cares what the numbers mean, not how the repo is
+        # wired. Naming internal machinery on air is noise at best.
+        monkeypatch.setattr(mi, "_hooks_readonly", lambda: False)
+        block = mi._build_methodology_disclosure(self._tracker(), 200)
+        # Everything from the closing directive on is guidance to the
+        # model, never spoken — the ban applies to the content above it.
+        marker = "Do NOT discuss"
+        assert marker in block, "the internals ban went missing"
+        text = block.split(marker)[0].lower()
+        # "scoreboard" is deliberately absent from this list — it is the
+        # show's own on-air word for the benchmark block, not internals.
+        for leak in ("rotation", "prompt", "pipeline", "codebase",
+                     "repository", "workflow"):
+            assert leak not in text, f"internal detail leaked on air: {leak}"
+
+    def test_prompt_and_runner_are_wired(self):
+        prompt = (_ROOT / "shows/prompts/modern_investing_digest.txt").read_text(
+            encoding="utf-8")
+        assert "{methodology_disclosure}" in prompt
+        runner = (_ROOT / "run_show.py").read_text(encoding="utf-8")
+        # Defaulted in the runner so a hook failure degrades to an
+        # episode without the correction rather than a KeyError.
+        assert 'setdefault("methodology_disclosure", "")' in runner
+
+    def test_names_where_to_check(self, monkeypatch):
+        # Ep144 aired the correction and said the rules and ledger were
+        # "published for anyone to check" without naming a destination.
+        # An invitation to verify with nowhere to go is not an
+        # invitation — and it makes the page-traffic prediction
+        # untestable, since no listener was ever told where to look.
+        monkeypatch.setattr(mi, "_hooks_readonly", lambda: False)
+        text = mi._build_methodology_disclosure(self._tracker(), 200)
+        assert "nerranetwork dot com" in text, (
+            "the segment invites verification but names no destination")
+
+    def test_published_sources_are_reachable_from_the_site(self):
+        # The segment tells listeners the rulebook and the trade-by-trade
+        # ledger are published "for anyone to check". Before this pass the
+        # ledger was built nightly into api/ and linked from nowhere, so
+        # the claim was true only for someone who knew the repo layout.
+        tpl = (_ROOT / "templates/mit_performance_page.html.j2").read_text(
+            encoding="utf-8")
+        for target in ("docs/mit_trading_method.md",
+                       "api/mit_trade_ledger.json",
+                       "api/mit_trade_ledger.csv"):
+            assert target in tpl, f"performance page does not link {target}"
+            assert (_ROOT / target).exists(), f"linked file missing: {target}"
+
+    def test_audit_job_has_room_for_the_catch_up_pass(self):
+        # The catch-up pass adds up to CATCH_UP_MAX_PER_RUN Grok calls to
+        # a job that was already hitting its 20-minute ceiling (cancelled
+        # 2026-08-18 and 2026-08-20). A cancelled review loses that run's
+        # findings even though coverage still persists.
+        import yaml
+        wf = yaml.safe_load(
+            (_ROOT / ".github/workflows/daily-audit.yml").read_text(
+                encoding="utf-8"))
+        job = wf["jobs"]["audit"]
+        # Pin the runner too: yaml.safe_load happily parses a job that
+        # has lost its runs-on, so a timeout edit can silently delete it
+        # and only actionlint notices.
+        assert job.get("runs-on"), "audit job lost its runs-on"
+        assert job["timeout-minutes"] >= 45
+        step = next(s for s in job["steps"] if s.get("id") == "audit")
+        # Strictly below the job budget, so the persist step always runs.
+        assert step["timeout-minutes"] < job["timeout-minutes"]

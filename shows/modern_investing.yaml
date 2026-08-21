@@ -140,11 +140,11 @@ llm:
   podcast_max_tokens: 8000
   min_podcast_words: 1800
   # 2026-08-18: the mit-script-model-46 A/B's explicit podcast_model pin
-  # was absorbed by the operator-directed NETWORK grok-4.6 upgrade (the
-  # default now equals what the A/B was trialling). MIT stays the
-  # sharpest factuality watch: a hallucinated number here (real tickers,
-  # real prices, a published track record) is the upgrade's revert
-  # trigger — see experiment network-grok-46-upgrade.
+  # was absorbed by the operator-directed NETWORK grok-4.6 upgrade, which
+  # was itself REVERTED the same day for latency (MIT's own digest was one
+  # of the four that timed out) — so MIT is back on the grok-4.3 default,
+  # and the 4.6 script A/B is over. See experiment network-grok-46-upgrade
+  # (ended reverted) + docs/model_upgrade_playbook.md.
   # DISABLED July 29 2026 (cost + quality). Measured over 901 committed
   # episodes: 81% still shipped BELOW target WITH this retry running (Tesla
   # 96.7%, M&A 95.2%) — it fires on nearly every episode and almost never

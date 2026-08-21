@@ -90,10 +90,11 @@ MEDIUM_EPISODE = "episode"      # podcast show notes / RSS
 MEDIUM_EMAIL = "email"
 MEDIUM_SOCIAL = "social"
 MEDIUM_WEB = "web"
+MEDIUM_BOOK = "book"
 
 MEDIUMS = frozenset({
     MEDIUM_SHORT, MEDIUM_LONG, MEDIUM_EPISODE,
-    MEDIUM_EMAIL, MEDIUM_SOCIAL, MEDIUM_WEB,
+    MEDIUM_EMAIL, MEDIUM_SOCIAL, MEDIUM_WEB, MEDIUM_BOOK,
 })
 
 # utm_content — WHICH PLACEMENT inside that thing.
@@ -113,7 +114,10 @@ PLACEMENTS = frozenset({
 })
 
 # The ``kind`` component of a campaign id — the asset that carried the link.
-KINDS = frozenset({"short", "long", "episode", "email", "post"})
+# ``book`` (Aug 2026): anthology ebook/audiobook back matter. The campaign's
+# ``episode`` component carries the VOLUME number, not an episode number —
+# a volume is one asset the way an episode is.
+KINDS = frozenset({"short", "long", "episode", "email", "post", "book"})
 
 # YouTube channel token -> utm_source. Unknown channels fall back to a
 # generic ``youtube_<token>`` so a new dub channel is attributable the day
@@ -329,6 +333,7 @@ def episode_link(
         "episode": MEDIUM_EPISODE,
         "email": MEDIUM_EMAIL,
         "post": MEDIUM_SOCIAL,
+        "book": MEDIUM_BOOK,
     }.get(kind_norm, MEDIUM_WEB)
     return funnel_link(
         destination,

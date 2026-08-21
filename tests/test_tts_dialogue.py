@@ -235,7 +235,11 @@ def _load_run_show_fns():
     """AST-extract the run_show helpers (avoids heavy top-level imports)."""
     source = (PROJECT_ROOT / "run_show.py").read_text(encoding="utf-8")
     tree = ast.parse(source)
-    needed = {"_clean_podcast_script", "_break_long_paragraphs"}
+    needed = {
+        "_clean_podcast_script",
+        "_break_long_paragraphs",
+        "_strip_trailing_sources_block",
+    }
     funcs = {}
     for node in ast.walk(tree):
         if isinstance(node, ast.FunctionDef) and node.name in needed:
@@ -248,6 +252,7 @@ def _load_run_show_fns():
     if m:
         exec(m.group(0), ns)  # noqa: S102
     exec(funcs["_break_long_paragraphs"], ns)  # noqa: S102
+    exec(funcs["_strip_trailing_sources_block"], ns)  # noqa: S102
     exec(funcs["_clean_podcast_script"], ns)  # noqa: S102
     return ns["_clean_podcast_script"]
 

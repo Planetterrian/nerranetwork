@@ -555,6 +555,75 @@ reviews:
       ab_listen_required: true
       rationale: De-seed by shape + verbatim ban + rotation (playbook July 2026 rule). Prompt-example 'Keep an eye on...' is now a 10/10 tic across ep154–163; prior passes predicted persistence while no prompt change shipped. Predict successor tics for next review.
     agent_cost_usd: 0.1421
+  - date: '2026-08-18'
+    pr: null
+    doc: docs/reviews/fascinating_frontiers_review_2026_08_18.md
+    generated_by: grok-4.5
+    summary: Almanac/anniversary leakage still ships in digests (ep156/159/163/164), the prompt-seeded “Keep an eye on” teaser remains ~9–10/10, and 8/10 scripts stay under the 1700 floor—escalate Cosmic Deep Dive digest depth rather than re-filing banned podcast length levers.
+    scored_prior_predictions:
+    - metric: ephemeris/sky-almanac/this-day-in-history items in FF Top-15 digests (shower peak guides, pure anniversaries, viewing calendars)
+      verdict: miss
+      evidence: ep156 Hipparcos-1989, ep159 Perseid peak guide, ep163 Big Ear 1977, ep164 Phoebe 1898 still in digests; Aug-16 filter+backstop not applied
+    - metric: occurrences of verbatim teaser opener 'Keep an eye on' in next 10 _tts.txt
+      verdict: miss
+      evidence: 9/10 Ep156–165 teasers still use keep-an-eye-on (Ep164 used Next-time-watching-for); podcast prompt example unchanged
+    - metric: successor teaser-tic openers ('Before we go, we'll be watching for' / 'Next time, watch for' / 'The thing to watch next') count in next 10 _tts.txt
+      verdict: hit
+      evidence: Only Ep164 used a successor shape once; keep-an-eye still saturates — no third-generation convergence yet
+    - metric: episodes below 1700-word floor (digest-ceiling trajectory; no podcast-side lever)
+      verdict: hit
+      evidence: 8/10 ep156–165 under 1700w (only ep158=1939, ep165=1717 clear); ceiling still digest-side
+    - metric: presence of Closing as last semantic chapter marker on new episodes
+      verdict: hit
+      evidence: chapters_ep156–165.json all end Tomorrow Teaser → Closing
+    - metric: 0 market-action items / 0 launch false-drops (June-16 lineage holding)
+      verdict: hit
+      evidence: No SPCX/IPO/funding in ep156–165; Falcon 9/Starlink/mission coverage retained
+    shipped: []
+    deferred:
+    - 'OPERATOR DECISION (escalate after carrying since 2026-06-12): Cosmic Deep Dive digest licensed-knowledge length lever — ship enforced thin-day floor (~12–16 sentences / ~250–320w) with --test before/after, OR explicitly kill and accept ~1400–1600w podcasts. Only sanctioned length path; do not re-file podcast-side pressure (do_not_retry).'
+    - Align min_podcast_words down to ~1500 to silence every-episode script_below_target — cosmetic ops choice, does not add facts.
+    - Mid-section digest-driven chapter titles (network lever; Spotlight/Deep Dive markers rarely fire because prompt forbids announcing them).
+    - Theme residual 'science nasa' (low-harm adjacency / bare science.nasa.gov).
+    - 'Curated narrative-tracker status pass (operator task: scripts/update_tesla_narrative.py --slug fascinating_frontiers).'
+    - review_snapshot.py sparse-chapter / missing-Introduction detector (Ep147 false 'clean') — network tooling owner.
+    - Aggressive brand-level telescope product title bans — try digest curation bullet first to avoid false drops.
+    - Routine comsat/Falcon cadence de-prioritization vs SpaceX Daily beat (editorial; monitor only this pass).
+    predictions:
+    - metric: ephemeris/sky-almanac/this-day-in-history items in FF Top-15 digests (shower peak guides, pure anniversaries, viewing calendars)
+      baseline: 4/10 title-pattern leaks in ep156–165 (ep156/159/163/164) plus broader transcript almanac
+      expected: 0 almanac-led hooks and 0 Perseid-peak / on-this-day anniversary bullets in digests after filter+digest backstop merge; real mission/space-based eclipse science retained
+      verdict: pending
+      evidence: null
+    - metric: occurrences of verbatim teaser opener 'Keep an eye on' in next 10 _tts.txt
+      baseline: 9/10 (ep156–165)
+      expected: 0/10 after teaser de-seed merges; teasers still one concrete forward-looking sentence
+      verdict: pending
+      evidence: null
+    - metric: successor teaser-tic openers ('Before we go, we'll be watching for' / 'Next time, watch for' / 'The thing to watch next') count in next 10 _tts.txt
+      baseline: 1/10 (Ep164 Next-time-watching-for only)
+      expected: flag if any single successor shape reaches ≥6/10 (third-generation convergence)
+      verdict: pending
+      evidence: null
+    - metric: episodes below 1700-word floor (digest-ceiling trajectory; no podcast-side lever)
+      baseline: 8/10 (ep156–165; only ep158/165 ≥1700)
+      expected: still ≥7/10 below floor at next review unless operator ships Cosmic Deep Dive digest depth lever
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/fascinating_frontiers.yaml
+      kind: config
+      ab_listen_required: false
+      rationale: Deterministic fetch-time tighten for residual shower-peak / how-to-watch / anniversary classes still leaking in ep156/159/163/164 without bare planet names or bare 'passes near' (June-16 Falcon-9 false-drop lesson).
+    - file: shows/prompts/fascinating_frontiers_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Digest-side scope backstop (same dual-layer pattern as June-16 stock fix). Fetch title filters miss re-headlined guides, web-search bodies, and anniversary features paraphrased into item text (ep156/159/163/164/165).
+    - file: shows/prompts/fascinating_frontiers_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: De-seed by shape + verbatim ban + rotation (playbook July 2026 rule). Prompt-example 'Keep an eye on...' is a 9/10 tic across ep156–165; prior passes predicted persistence while no prompt change shipped. Predict successor tics for next review.
+    agent_cost_usd: 0.1469
 do_not_retry:
   - idea: Phonetic respellings or programmatic speech-tag injection.
     evidence: >-

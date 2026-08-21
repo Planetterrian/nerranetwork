@@ -1,0 +1,79 @@
+OpenAI is testing private safety processing that keeps frontier model interactions off limits
+to staff while still catching risks across long agent sessions.
+This is Models & Agents, episode 147.
+OpenAI previewed private safety processing for frontier models.
+The system flags risks across related interactions in longer autonomous workflows.
+It does so without giving OpenAI staff access to the underlying content.
+The previews sits alongside the company's continued zero data retention offering.
+Builders working with extended agent sessions now have an explicit path to stronger safety controls
+that do not require sharing raw data.
+The approach directly addresses the scaling challenge of monitoring multi-turn tool use and memory heavy conversations.
+Watch for how the feature integrates with existing API workflows.
+On the safety track we covered yesterday, this moves the open question of evaluation standardization forward
+by testing private review at frontier scale.
+Kneebert is a domain specific encoder trained on 8.3 million sentences across nine northeast Indian languages,
+plus Hindi and English.
+It uses weighted sampling and a custom sentence piece unigram tokenizer.
+The model delivers 15.97 times lower average perplexity than IndicBert V2.
+It also shows 7.64 times lower perplexity than Muriel.
+Tokenization fertility improves 1.5 times over Embert.
+Downstream gains appear on part of speech tagging for three of the languages.
+Researchers release the model, test sets, and corpus under CC by 4.0.
+Sutra is a morphology aware tokenizer that preserves Akshara Indivisibility for Hindi, Marathi, and Gujarati.
+It penalizes merges across morphological boundaries.
+The tokenizer records peak gains of 14.7% in boundary F1 and 34% semantic recoverability on Hindi over standard BPE.
+It delivers an average 8.08 char F2 improvement in machine translation.
+The team also released a new morphological segmentation data set for the three languages.
+Long novel provides a bilingual Chinese and English benchmark built from 29 Chinese novels,
+ranging from 16,000 to 100,000 tokens, plus book some chapter data.
+It defines 8 hallucination types and uses multi-model arbitration, plus entity reference generation, to create balanced test cases.
+Researchers release the data set and evaluation code.
+Nine emotion centroid extracts a single valence direction from nine emotion category names, plus 50 short paragraphs per emotion.
+The resulting axis captures 93% of supervised performance on SST2.
+It transfers to vision, audio, and brain recordings without target modality labels.
+A two parameter classifier trained only on text reaches AUC 0.961 on images and 0.828 on brain data.
+The persona guided framework runs two LLMs in a training free loop.
+A user agent expresses a target big five personality, while a system agent adapts to complete hotel or restaurant tasks from the SGD data set.
+Oracle personality knowledge improves constraint satisfaction and user satisfaction, but reduces truthfulness.
+Q-based inference offers the best reliability performance trade-off.
+The study evaluates GPT 40, Quinn 3 next ADB, and Gemini 2.0 flash across all trade pulls.
+Stocks talk converts spoken financial screening requests into validated SQL.
+It uses streaming ASR, retrieval augmented constraint extraction, schema grounded generation, and rule based validation inside an interactive dashboard.
+A 150 prompt benchmark shows retrieval grounding and human in the loop verification, raise constraint accuracy, SQL executability, and multi-turn stability over plain LLM baselines.
+Simon Willison released notes and a GitHub research repo on running untrusted code in a small VMM sandbox.
+The setup tested cloud code in a restricted environment that lacks dev KVM.
+The work provides concrete configuration details for builders who need isolated execution for agent tool calls.
+A 3-day benchmark on a 4090 laptop plus 7900 XTX EGPU over Thunderbolt 4 reached 27 tokens per second generation and full 262K context on Quinn 3.827 BQ6K XL.
+The author filed an upstream issue on multi-GPU MTP pre-fill penalties and published the LLM tuner repo used for the experiments.
+Google is offering eligible students a full year of Gemini AI access at no cost.
+The program targets higher education users and provides the same model capabilities available to paid subscribers.
+FD-KVC maintains dual scoring channels per KV pair using cumulative attention and recency weighted relevance with temporal decay.
+It uses an ownership loss to drive adaptive learning rates.
+Across 600 dialogue test sets, it outperforms H2O by 6.7% on late-turn alignment and adapts to topic shifts 3.6 times faster while running entirely on CPU.
+Okay, let's pop the hood on KV cache eviction under topic drift.
+Everyone treats KV cache eviction as a simple keep the most attended tokens rule.
+In practice, the decision surface changes as soon as the conversation topic shifts because attention mass from earlier turns stops predicting future utility.
+The core insight is that importance is not stationary.
+A token that was heavily attended during the first topic can become irrelevant noise once the user changes subject.
+Dual channel scoring separates aggregate attention from a recency weighted relevance signal that decays unless reinforced by new matches.
+Adding an ownership loss term prevents the eviction policy from oscillating when the same entities reappear later in the dialogue.
+The practical tradeoff is modest CPU overhead for the extra scoring pass versus measurable gains in late-turn alignment and faster recovery after topic changes.
+Teams running long multi-turn agents should prefer dual channel or ownership aware eviction once context exceeds roughly 50K tokens.
+Single signal LRU or H2O remains adequate for shorter single topic sessions.
+Test NE BERT on any Northeast Indian language tagging or retrieval task.
+The released weights and corpus make it a drop-in low resource baseline.
+Run the Sutra tokenizer against your current BPE pipeline on Hindi or Gujarati MT data to measure the reported Char F2 lift.
+Add long novel to your long context summarization eval, harness to surface hallucination patterns that news or paper benchmarks miss.
+Try the final llama.cpp flag set from the 40GB mixed GPU benchmark on your own Quen 3.827b workload.
+Prototype a dual channel KV eviction policy in your dialogue agent using the FDKBC description as a starting point.
+Further details are expected on open AI's private safety processing rollout and integration surface.
+Additional low resource Indic model releases are already signaled in the NE BERT and Sutra papers.
+More llama.cpp multi-GPU and MTP fixes are likely after the file issue receives community attention.
+Before we go, the next wave of details on how private safety processing will surface in the API should land in the coming days.
+That wraps up today's AI briefing. Share this with a developer or builder who wants to stay current.
+Subscribe wherever you listen. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network, links in the show notes.
+One more thing. If you like today's episode, our sister show models and agents for beginners is worth a spot in your feed.
+Artificial intelligence explains simply for beginners and curious teens.
+It's one of the Nerra Network's daily briefings, all free at nerranetwork.com.
+And on the website, every episode's visuals live in our free image gallery at nerranetwork.com gallery, royalty free under creative commons, download with attribution.
+This episode used AI voice synthesis of my voice. Editorial selection and analysis are my own.

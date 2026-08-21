@@ -272,6 +272,13 @@ def pre_fetch(config, *, episode_num: int | None = None, today_str: str | None =
     # guard) — persist it immediately so a later benchmark-refresh failure
     # can't lose the stamp and re-review the same trade next episode.
     context["yesterday_trade_review"] = _build_trade_review(tracker, episode_num)
+
+    # One-off methodology correction (August 2026). Stamps the tracker the
+    # same way the trade review does, so it rides the save below rather
+    # than risking a re-air if a later step raises.
+    context["methodology_disclosure"] = _build_methodology_disclosure(
+        tracker, episode_num)
+
     if not readonly:
         _save_tracker(tracker, tracker_path)
 
@@ -331,6 +338,8 @@ def pre_fetch(config, *, episode_num: int | None = None, today_str: str | None =
     # are producing alpha and which are underperforming, so it can refine
     # future trade selection. The regime check (rolling streak + drawdown
     # → selection pressure) rides in the same prompt slot.
+    context["strategy_family_performance"] = (
+        _build_strategy_family_performance(tracker))
     strategy_block = _build_strategy_performance(tracker)
     regime = _build_regime_block(tracker)
     if regime:
@@ -681,7 +690,9 @@ def post_generate(config, *, digest_text: str = "", episode_num: int | None = No
             pick_day_lessons = _load_lessons_learned(
                 output_dir / LESSONS_LEARNED_FILENAME)
             trade["rules_in_effect"] = [
-                e["id"] for e in _selected_active_rules(pick_day_lessons)
+                e["id"] for e in _selected_active_rules(
+                    pick_day_lessons, episode_num=episode_num,
+                    tracker=tracker)
             ]
         except Exception as exc:  # noqa: BLE001
             logger.warning("rules_in_effect stamping failed: %s", exc)
@@ -693,6 +704,40 @@ def post_generate(config, *, digest_text: str = "", episode_num: int | None = No
             _probe_pick(trade)
         except Exception as exc:
             logger.warning("Pick validation probe failed for %s: %s", trade.get("symbol"), exc)
+        # Options position (2026-08-19): quote the contract NOW, because
+        # a premium cannot be reconstructed later from free data. If the
+        # chain cannot be quoted the position degrades to plain long
+        # equity — the sim never fills an option at an estimated price.
+        if trade.get("structure") in OPTION_STRUCTURES:
+            try:
+                ref = trade.get("pick_reference_price") or trade.get("current_price")
+                pos = build_option_position(
+                    trade.get("resolved_symbol") or trade.get("symbol", ""),
+                    trade["structure"],
+                    _trade_pick_date(trade) or datetime.date.today(),
+                    float(ref) if ref else 0.0,
+                ) if ref else None
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("option quote failed for %s: %s",
+                               trade.get("symbol"), exc)
+                pos = None
+            if pos:
+                trade["option"] = pos
+                logger.info(
+                    "%s: %s %s $%s strike, premium $%s (capital $%s)",
+                    trade.get("symbol"), pos["structure"], pos["expiry"],
+                    pos["strike"], pos["premium"], pos["capital_usd"],
+                )
+            else:
+                print(
+                    f"::warning::modern_investing: could not quote a "
+                    f"{trade['structure']} on {trade.get('symbol')} — "
+                    f"recorded as long equity instead. The premium is never "
+                    f"estimated.", flush=True,
+                )
+                trade["structure"] = "long_equity"
+                trade["option_quote_failed"] = True
+
         # Wrong-instrument tripwire (July 24 2026, Ep113 BTC): if the
         # narrated stop and the resolved listing's price are on different
         # scales, the resolution is wrong — void at record time so the
@@ -1381,6 +1426,201 @@ def _trade_pick_date(trade: dict) -> datetime.date | None:
     return None
 
 
+# ---------------------------------------------------------------------------
+# Options positions (2026-08-19) — real quotes in, exact arithmetic out
+# ---------------------------------------------------------------------------
+
+OPTION_STRUCTURES = ("covered_call", "cash_secured_put")
+
+
+def _options_policy() -> dict:
+    return (load_policy().get("options") or {})
+
+
+def _fetch_option_chain(symbol: str, expiry: str, *, attempts: int = 3):
+    """(calls, puts) for one expiry, or None.
+
+    yfinance for the same reason every other price path here uses it: it
+    manages Yahoo's cookie/crumb session, which the bare HTTP endpoints
+    now require. Returns None on total failure — and None must never be
+    turned into an estimated premium downstream.
+    """
+    import time as _time
+    for attempt in range(attempts):
+        try:
+            import yfinance as yf
+            chain = yf.Ticker(symbol).option_chain(expiry)
+            return (
+                chain.calls.to_dict("records"),
+                chain.puts.to_dict("records"),
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("option chain attempt %d for %s %s failed: %s",
+                           attempt + 1, symbol, expiry, exc)
+        if attempt < attempts - 1:
+            _time.sleep(2 ** (attempt + 1))
+    return None
+
+
+def _list_option_expiries(symbol: str) -> list[str] | None:
+    try:
+        import yfinance as yf
+        return list(yf.Ticker(symbol).options or [])
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("option expiry list for %s failed: %s", symbol, exc)
+        return None
+
+
+def _select_expiry(expiries, pick_date: datetime.date) -> str | None:
+    """Nearest listed expiry inside the policy's day window.
+
+    A rule, not a preference: given the pick date and the listed expiries,
+    every reader picks the same one.
+    """
+    pol = (_options_policy().get("expiry") or {})
+    lo = int(pol.get("min_days", 21))
+    hi = int(pol.get("max_days", 45))
+    best = None
+    for raw in (expiries or []):
+        try:
+            d = datetime.date.fromisoformat(str(raw))
+        except ValueError:
+            continue
+        days = (d - pick_date).days
+        if lo <= days <= hi and (best is None or days < best[0]):
+            best = (days, raw)
+    return best[1] if best else None
+
+
+def _contract_premium(row: dict) -> float | None:
+    """Mid of bid/ask, else lastPrice. Never a guess, never zero."""
+    pol = (_options_policy().get("premium") or {})
+    bid, ask = row.get("bid"), row.get("ask")
+    if (isinstance(bid, (int, float)) and isinstance(ask, (int, float))
+            and bid > 0 and ask > 0 and ask >= bid):
+        return round((bid + ask) / 2, 4)
+    if pol.get("source") == "mid_of_bid_ask":
+        last = row.get("lastPrice")
+        if isinstance(last, (int, float)) and last > 0:
+            return round(float(last), 4)
+    return None
+
+
+def _select_contract(rows, underlying: float, structure: str):
+    """The listed strike closest to the policy's OTM target, with a real quote.
+
+    Returns (strike, premium) or None. Contracts with no usable quote are
+    skipped rather than filled at a made-up price, so a thin chain
+    produces no trade instead of a fictional one.
+    """
+    pol = (_options_policy().get("strike") or {})
+    target_pct = float(pol.get("target_otm_pct", 4.0))
+    if not rows or not underlying or underlying <= 0:
+        return None
+    if structure == "covered_call":
+        target = underlying * (1 + target_pct / 100)
+    else:
+        target = underlying * (1 - target_pct / 100)
+
+    best = None
+    for row in rows:
+        strike = row.get("strike")
+        if not isinstance(strike, (int, float)) or strike <= 0:
+            continue
+        # Only genuinely out-of-the-money strikes: an in-the-money covered
+        # call is a different trade than the one the show describes.
+        if structure == "covered_call" and strike <= underlying:
+            continue
+        if structure == "cash_secured_put" and strike >= underlying:
+            continue
+        premium = _contract_premium(row)
+        if premium is None:
+            continue
+        gap = abs(strike - target)
+        if best is None or gap < best[0]:
+            best = (gap, float(strike), premium)
+    return (best[1], best[2]) if best else None
+
+
+def build_option_position(symbol: str, structure: str, pick_date: datetime.date,
+                          underlying: float) -> dict | None:
+    """A fully-specified options position, or None.
+
+    None means "could not be quoted" and the caller must fall back to an
+    equity trade — never to an invented premium.
+    """
+    if structure not in OPTION_STRUCTURES:
+        return None
+    expiries = _list_option_expiries(symbol)
+    expiry = _select_expiry(expiries, pick_date)
+    if not expiry:
+        logger.warning("%s: no listed expiry in the policy window — no option "
+                       "trade today", symbol)
+        return None
+    chain = _fetch_option_chain(symbol, expiry)
+    if not chain:
+        return None
+    calls, puts = chain
+    rows = calls if structure == "covered_call" else puts
+    picked = _select_contract(rows, underlying, structure)
+    if not picked:
+        logger.warning("%s %s: no strike with a usable quote — no option trade",
+                       symbol, expiry)
+        return None
+    strike, premium = picked
+    contracts = int(_options_policy().get("contracts", 1) or 1)
+    shares = 100 * contracts
+    capital = (underlying if structure == "covered_call" else strike) * shares
+    return {
+        "structure": structure,
+        "expiry": expiry,
+        "strike": round(strike, 4),
+        "premium": premium,
+        "contracts": contracts,
+        "underlying_entry": round(underlying, 4),
+        "capital_usd": round(capital, 2),
+        "premium_received_usd": round(premium * shares, 2),
+        "quoted_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "quote_source": "yahoo_option_chain",
+    }
+
+
+def option_payoff(position: dict, underlying_close: float) -> dict:
+    """Exact payoff at expiry. No pricing model, no free parameters.
+
+    Covered call: hold 100 shares per contract and sell a call.
+      settle = min(close, strike) * shares + premium * shares
+    Cash-secured put: set aside strike * shares and sell a put.
+      settle = capital + premium*shares - max(0, strike - close) * shares
+
+    Both reduce to arithmetic on the underlying's closing price, which is
+    why a reader with public data can reproduce them exactly.
+    """
+    structure = position.get("structure")
+    shares = 100 * int(position.get("contracts", 1) or 1)
+    strike = float(position["strike"])
+    premium = float(position["premium"])
+    capital = float(position["capital_usd"])
+    close = float(underlying_close)
+
+    if structure == "covered_call":
+        share_value = min(close, strike) * shares
+        pnl = share_value + premium * shares - capital
+        assigned = close > strike
+    elif structure == "cash_secured_put":
+        pnl = premium * shares - max(0.0, strike - close) * shares
+        assigned = close < strike
+    else:
+        raise ValueError(f"unknown option structure: {structure!r}")
+
+    return {
+        "pnl_dollars": round(pnl, 2),
+        "pnl_pct": round((pnl / capital) * 100, 4) if capital else 0.0,
+        "assigned": assigned,
+        "underlying_exit": round(close, 4),
+    }
+
+
 def _sessions_since_pick(bars, pick_date) -> int:
     """How many sessions have printed on/after the pick date.
 
@@ -1460,14 +1700,28 @@ def _evaluate_open_trade(tracker: dict, tracker_path: Path) -> None:
         bars = _fetch_bars_for_trade(trade)
         sessions = _sessions_since_pick(bars, pick_date)
 
-        if trade_type == "flash":
+        option = trade.get("option")
+        if option:
+            # Held to expiry (policy). The horizon rule governs equity;
+            # an option's life is set by the contract, and closing it on
+            # session five would price a contract that has not expired —
+            # which needs a pricing model, which is exactly what this
+            # design refuses to introduce.
+            try:
+                expiry = datetime.date.fromisoformat(option["expiry"])
+            except (KeyError, ValueError):
+                expiry = None
+            should_close = bool(
+                expiry and bars and max(b[0] for b in bars) >= expiry)
+        elif trade_type == "flash":
             should_close = sessions >= 1
         else:
             should_close = sessions >= horizon_sessions("weekly")
 
         # A stop breach exits early — check it before the horizon so a
         # stopped-out trade does not sit open for the remaining sessions.
-        if not should_close and _stop_already_breached(trade, bars, pick_date):
+        if (not should_close and not option
+                and _stop_already_breached(trade, bars, pick_date)):
             logger.info("%s breached its stop before the horizon — closing",
                         symbol)
             should_close = True
@@ -1483,6 +1737,63 @@ def _evaluate_open_trade(tracker: dict, tracker_path: Path) -> None:
     _recompute_summary(tracker)
     _maybe_record_monthly_snapshot(tracker, today)
     _save_tracker(tracker, tracker_path)
+
+
+def _settle_option_trade(trade: dict, option: dict, bars, tracker: dict) -> bool:
+    """Settle a held-to-expiry option from the underlying's closing price.
+
+    Returns True when the trade was closed. The payoff is arithmetic with
+    no free parameters (see ``option_payoff``), so anyone with the
+    underlying's expiry-date close can reproduce it.
+    """
+    try:
+        expiry = datetime.date.fromisoformat(option["expiry"])
+    except (KeyError, ValueError):
+        logger.warning("Option on %s has no usable expiry — cannot settle",
+                       trade.get("symbol"))
+        return False
+
+    # Expiry must actually have PASSED. Without this the "last bar on or
+    # before expiry" is simply the most recent bar — so a freshly opened
+    # position settles against its own entry day at a premium it has not
+    # yet earned. Require evidence that the market has traded on or after
+    # the expiry date before settling anything.
+    if not bars or max(b[0] for b in bars) < expiry:
+        return False
+    # Then the last bar on/before expiry IS the settlement close (an expiry
+    # falling on a holiday settles against the prior session, which is what
+    # a broker does too).
+    candidates = [b for b in bars if b[0] <= expiry]
+    if not candidates:
+        return False
+    settle_bar = candidates[-1]
+
+    result = option_payoff(option, settle_bar[2])
+    trade["status"] = "closed"
+    trade["entry_price"] = option["underlying_entry"]
+    trade["exit_price"] = round(settle_bar[2], 4)
+    trade["pnl_pct"] = result["pnl_pct"]
+    trade["pnl_dollars"] = result["pnl_dollars"]
+    trade["option_result"] = result
+    trade["entry_bar_date"] = (
+        trade.get("entry_bar_date") or (_trade_pick_date(trade) or expiry).isoformat()
+    )
+    trade["exit_bar_date"] = settle_bar[0].isoformat()
+
+    try:
+        _annotate_trade_with_nasdaq(trade)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("benchmark annotation failed for %s: %s",
+                       trade.get("symbol"), exc)
+
+    logger.info(
+        "Settled %s %s on %s: underlying %.2f vs strike %.2f -> %s%.2f%% "
+        "(%s)", trade.get("symbol"), option["structure"], settle_bar[0],
+        settle_bar[2], option["strike"],
+        "+" if result["pnl_pct"] >= 0 else "", result["pnl_pct"],
+        "assigned" if result["assigned"] else "expired worthless",
+    )
+    return True
 
 
 def _close_trade(trade: dict, tracker: dict, *, bars=None) -> None:
@@ -1550,6 +1861,14 @@ def _close_trade(trade: dict, tracker: dict, *, bars=None) -> None:
         trade["pnl_dollars"] = None
         trade["lesson"] = "Trade voided — market data was unavailable for evaluation."
         return
+
+    option = trade.get("option")
+    if option:
+        settled = _settle_option_trade(trade, option, bars, tracker)
+        if settled:
+            return
+        # Fall through only when the expiry bar is genuinely missing; the
+        # generic path below then voids rather than guessing.
 
     entry_date, entry_price = entry_bar[0], entry_bar[1]
     exit_date, exit_price = exit_bar[0], exit_bar[2]
@@ -2357,6 +2676,112 @@ def _weekly_hold_update(open_trades: list) -> str:
     return ""
 
 
+# How many episodes carry the one-off methodology correction. The record
+# the show used to quote (+9.28% across 45 trades) DISAPPEARED from air
+# when the era-scoped record started, and from a listener's seat a show
+# that stops quoting a strong number looks exactly like a show burying a
+# bad result. The truth is the opposite — the old number could not be
+# reproduced — and saying so is both the honest move and the single most
+# transferable lesson the show has ever had to teach. Three episodes is
+# enough for the correction to reach a daily audience without becoming a
+# recurring changelog; internal plumbing (rule rotation, review coverage,
+# scoreboard mechanics) is deliberately NOT in scope — a listener cares
+# what the numbers mean, not how the repo is wired.
+METHODOLOGY_DISCLOSURE_EPISODES = 3
+
+
+def _build_methodology_disclosure(
+    tracker: dict, episode_num: int | None = None
+) -> str:
+    """One-off on-air correction explaining why the record restarted.
+
+    Returns an empty string once the disclosure has aired
+    ``METHODOLOGY_DISCLOSURE_EPISODES`` times, so this can never become a
+    permanent segment. The airing count is stamped on the tracker (a list
+    of episode numbers, so the record shows exactly which episodes carry
+    it) and, like every other stamp in this module, is skipped on
+    read-only (test/rehearse) runs.
+    """
+    aired = list(
+        (tracker.get("metadata") or {}).get(
+            "methodology_disclosure_episodes", []
+        )
+    )
+    if len(aired) >= METHODOLOGY_DISCLOSURE_EPISODES:
+        return ""
+    if episode_num is not None and episode_num in aired:
+        return ""
+
+    start = era_inception()
+    start_str = start.strftime("%B %-d, %Y") if start else "the inception date"
+
+    if episode_num is not None and not _hooks_readonly():
+        aired.append(episode_num)
+        tracker.setdefault("metadata", {})[
+            "methodology_disclosure_episodes"
+        ] = aired
+
+    remaining = METHODOLOGY_DISCLOSURE_EPISODES - len(aired)
+    return (
+        "**METHODOLOGY CORRECTION — include this as a short segment "
+        "(roughly 200-300 words) inside Portfolio Performance, then move "
+        f"on. This airs {remaining} more time(s) after today and is then "
+        "retired — do NOT turn it into a recurring feature.**\n"
+        "\n"
+        "The show recently restarted its simulated track record, and a "
+        "listener who was here before deserves to be told why in plain "
+        "language. Cover these points in your own words, in this order, "
+        "without jargon and without defensiveness:\n"
+        "\n"
+        "1. The show used to quote a cumulative alpha figure across "
+        "roughly forty-five trades. It is gone from the scoreboard, and "
+        "that is deliberate. Say so directly — a number that quietly "
+        "vanishes is the oldest tell in performance reporting.\n"
+        "2. Why it went: that figure blended trades whose entry and exit "
+        "prices could not be tied back to the actual sessions the trade "
+        "was held. An audit could not reproduce it, so it was not the "
+        "show's to claim.\n"
+        "3. The exit rule was the deeper problem. A position used to be "
+        "closed on whichever session the next pre-market run happened to "
+        "price it — so a Monday pick was held about five sessions and a "
+        "Wednesday pick about one. Per-trade performance was measuring "
+        "the day of the week as much as the quality of the idea. The "
+        "hold is now a fixed, published number of sessions.\n"
+        "4. Some older trades match no market prices at all, and they "
+        "include the best and the worst results on the books. They stay "
+        "published as history, flagged, and they are never blended into "
+        "what the show says on air.\n"
+        f"5. What replaced it: from {start_str}, every pick is scored "
+        "under one written rulebook — entry at the first session open on "
+        "or after the pick, exit at the stop or at the fixed horizon, "
+        "one position, one thousand dollars, no discretionary exits. The "
+        "rules and the full trade-by-trade ledger, including the losers "
+        "and the voided picks, are published for anyone to check — say "
+        "WHERE, out loud, in the show's usual spoken-URL style: the "
+        "Modern Investing performance page at nerranetwork dot com. An "
+        "invitation to check with no destination is not an invitation.\n"
+        "6. The honest cost, stated plainly: the record is now small, so "
+        "for the next several weeks the alpha number will be based on a "
+        "handful of trades and will not mean much on its own. That is "
+        "what an honest track record looks like early. Do not spin it.\n"
+        "7. Close on the transferable skill, because this is the point "
+        "of the segment: this is exactly how a listener should audit ANY "
+        "track record they are shown — ask when the record started and "
+        "whether that date was chosen after the fact, ask what the exit "
+        "rule is and whether it was fixed in advance, ask whether losers "
+        "and abandoned positions are included, and ask whether the "
+        "individual trades are published or only the summary. A record "
+        "that cannot answer those four questions is a story.\n"
+        "\n"
+        "Keep this as its own paragraph, ahead of the usual performance "
+        "numbers — do not run the two together into one block.\n"
+        "\n"
+        "Do NOT discuss internal tooling, code, prompts, or pipeline "
+        "mechanics. Speak only about the trading method and what it "
+        "means for the listener."
+    )
+
+
 def _build_trade_review(tracker: dict, episode_num: int | None = None) -> str:
     """Build the Trade Review text block for the digest prompt.
 
@@ -3013,26 +3438,274 @@ def _append_lesson_learned(
     return entry
 
 
-def _selected_active_rules(data: dict, *, max_active: int = 5) -> list[dict]:
+# Rules that describe how the PIPELINE must behave, not how to invest.
+# Six of the thirteen active "recursive improvement rules" were of this
+# kind (2026-08-19 audit): re-teach cooldowns, "every episode must state
+# the NASDAQ level", "every Quick Hit ends with an Action line", and
+# three variants of "verify price data from multiple providers" — the
+# last of which are the sim's OWN historical data-fetch bugs, written up
+# as though they were investing wisdom and fed back into the pick prompt.
+# They are real production requirements and stay enforced elsewhere; they
+# simply are not evidence about how to beat an index, and stamping them
+# on trades pollutes the rule scoreboard with rules that cannot possibly
+# have an effect on returns.
+# Two rules whose CONSTRAINTS match this closely are the same rule
+# wearing different scopes.
+_RULE_CORE_THRESHOLD = 0.72
+
+_PIPELINE_RULE_RE = re.compile(
+    r"data availability|data provider|price (data|feed)s?|multiple "
+    r"(independent )?(providers|sources)|closing-price confirmation|"
+    r"every episode must|every quick hit|re-?teach|cooldown window",
+    re.IGNORECASE,
+)
+
+
+_RULE_SCOPE_SPLIT = re.compile(
+    r"\s+(?:before|when|unless|for|on|in)\s+", re.IGNORECASE)
+
+
+def _rule_core(text: str) -> str:
+    """The rule's constraint, with its scope clause removed.
+
+    Whole-sentence similarity misses the paraphrase family that actually
+    forms here: LL-017 "require volume confirmation above the 20-day
+    average BEFORE ENTERING MOMENTUM TRADES ON EARNINGS BEATS", LL-041
+    "...BEFORE COMMITTING CAPITAL TO HEALTHCARE LAUNCHES", LL-067
+    "...BEFORE ENTERING ANY CATALYST-DRIVEN NAME". One constraint, three
+    scopes, scoring 0.51-0.61 against a 0.62 threshold — so all three
+    reached the prompt as separate rules and all three got stamped on
+    every trade. Comparing the constraint alone collapses them.
+    """
+    return _RULE_SCOPE_SPLIT.split((text or "").strip(), maxsplit=1)[0]
+
+
+def _is_trading_rule(entry: dict) -> bool:
+    """True when a lesson is about investing rather than about the show."""
+    text = f"{entry.get('adjustment', '')} {entry.get('observation', '')}"
+    if entry.get("kind") == "pipeline":
+        return False
+    if entry.get("kind") == "trading":
+        return True
+    return not _PIPELINE_RULE_RE.search(text)
+
+
+# ---------------------------------------------------------------------------
+# Strategy families (2026-08-20)
+# ---------------------------------------------------------------------------
+# 61 trades produced 61 UNIQUE free-text strategy strings, so the show could
+# report which SECTORS worked but never which APPROACHES did — "are our
+# momentum entries better than our valuation screens?" was unanswerable for
+# the operator and for the audience. A closed vocabulary makes per-strategy
+# alpha reportable; deriving it from the existing text makes the 61 historic
+# trades usable immediately instead of starting the count from zero.
+#
+# Order matters: the first family whose pattern matches wins, so the more
+# specific ones are listed first.
+STRATEGY_FAMILIES: list[tuple[str, str]] = [
+    ("merger_arb", r"\bm&a\b|merger|acquisition|takeover|arb\b|spread capture"),
+    ("earnings_surprise", r"earnings[- ](beat|surprise|revision|driven|momentum)|"
+                          r"beat and|post-earnings|reported beat"),
+    ("dividend_income", r"dividend|distribution|yield|buyback|issuer bid|"
+                        r"covered call|cash[- ]secured put"),
+    ("catalyst_event", r"catalyst|announced|launch|approval|contract win|"
+                       r"policy|regulatory|phase 3|data readout"),
+    ("valuation", r"valuation|value assessment|multiple|cheap|discount|"
+                  r"free cash flow|screen on"),
+    ("mean_reversion", r"mean[- ]reversion|contrarian|oversold|recovery from|"
+                       r"fade of|rebound"),
+    ("technical_breakout", r"breakout|technical|moving average|range|"
+                           r"chart|support|resistance"),
+    ("macro_rotation", r"macro|sector rotation|rotation into|geopolitical|"
+                       r"rate|cross-asset|commodity"),
+    ("momentum", r"momentum|follow-through|price action|relative strength"),
+]
+
+
+def strategy_family(trade: dict) -> str:
+    """The closed-vocabulary family for a trade's strategy.
+
+    Prefers an explicit ``strategy_family`` written by the digest; falls
+    back to deriving one from the free-text strategy so the historic
+    record is groupable too. ``other`` when nothing matches — an honest
+    bucket beats forcing a wrong label.
+    """
+    explicit = (trade.get("strategy_family") or "").strip().lower()
+    known = {name for name, _ in STRATEGY_FAMILIES}
+    if explicit in known:
+        return explicit
+    text = f"{trade.get('strategy', '')} {trade.get('target_range', '')}".lower()
+    for name, pattern in STRATEGY_FAMILIES:
+        if re.search(pattern, text):
+            return name
+    return "other"
+
+
+def _build_strategy_family_performance(tracker: dict, *,
+                                       min_trades: int = 3) -> str:
+    """Per-approach scoreboard for the pick prompt.
+
+    Sector performance answers "what have we been buying"; this answers
+    "which of our methods actually works", which is the question the show
+    is nominally in business to resolve.
+    """
+    from collections import defaultdict
+
+    def _usable(t: dict) -> bool:
+        alpha = t.get("alpha_pct")
+        return (t.get("status") == "closed"
+                and isinstance(alpha, (int, float)) and math.isfinite(alpha))
+
+    # Same window discipline as every other number this show speaks:
+    # prefer trades whose benchmark window was built by the pick-date
+    # aligned path. Fall back to the legacy windows only when the verified
+    # set is too thin to say anything — and then SAY it is legacy, so this
+    # block can never be quoted as if it carried the same weight.
+    closed = [t for t in tracker.get("trades", []) if _usable(t)]
+    verified = [t for t in closed if t.get("entry_bar_date")]
+    if len(verified) >= min_trades * 2:
+        pool, scope = verified, "verified-window trades"
+    else:
+        pool, scope = closed, (
+            "trades that INCLUDE pre-2026-08-18 benchmark windows — "
+            "indicative only, do NOT quote these as measured results on air"
+        )
+
+    buckets: dict[str, list[float]] = defaultdict(list)
+    for t in pool:
+        buckets[strategy_family(t)].append(t["alpha_pct"])
+
+    if not buckets:
+        return ""
+    ranked = sorted(
+        ((name, vals) for name, vals in buckets.items()
+         if len(vals) >= min_trades),
+        key=lambda kv: sum(kv[1]) / len(kv[1]), reverse=True,
+    )
+    if not ranked:
+        return ""
+    lines = [f"STRATEGY-FAMILY RECORD (alpha by APPROACH, not by sector; "
+             f"computed over {scope}):"]
+    for name, vals in ranked:
+        mean = sum(vals) / len(vals)
+        beat = sum(1 for a in vals if a > 0)
+        note = ""
+        if len(vals) < _MIN_SAMPLE_TRADES:
+            note = " — too few to lean on"
+        lines.append(
+            f"- {name}: {mean:+.2f}% mean alpha over {len(vals)} trades "
+            f"({beat} beat the benchmark){note}"
+        )
+    thin = [n for n, v in buckets.items() if len(v) < min_trades]
+    if thin:
+        lines.append(
+            f"- Not yet scoreable ({min_trades}-trade minimum): "
+            + ", ".join(sorted(thin))
+        )
+    lines.append(
+        "Favour approaches with a positive record and enough trades behind "
+        "it. When choosing one with a negative record, say what is "
+        "different about today's setup rather than ignoring the history."
+    )
+    return "\n".join(lines) + "\n"
+
+
+def _proven_rule_ids(tracker: dict | None, data: dict) -> set[str]:
+    """Rules that have demonstrated an edge, or are pinned by hand.
+
+    A proven rule is never rotated out: the point of rotation is to learn
+    which heuristics work, not to withhold one already known to.
+    """
+    pinned = {
+        e["id"] for e in (data.get("entries") or [])
+        if e.get("always_on") and e.get("id")
+    }
+    if not tracker:
+        return pinned
+    closed = [
+        t for t in tracker.get("trades", [])
+        if t.get("status") == "closed" and _in_era(t)
+        and isinstance(t.get("alpha_pct"), (int, float))
+        and math.isfinite(t["alpha_pct"])
+    ]
+    for entry in (data.get("entries") or []):
+        rid = entry.get("id")
+        if not rid:
+            continue
+        with_rule = [t for t in closed
+                     if rid in (t.get("rules_in_effect") or [])]
+        without = [t for t in closed
+                   if rid not in (t.get("rules_in_effect") or [])]
+        if len(with_rule) < _MIN_SAMPLE_TRADES or len(without) < _MIN_SAMPLE_TRADES:
+            continue
+        avg_with = sum(t["alpha_pct"] for t in with_rule) / len(with_rule)
+        avg_without = sum(t["alpha_pct"] for t in without) / len(without)
+        if avg_with > avg_without:
+            pinned.add(rid)
+    return pinned
+
+
+def _rotate(pool: list[dict], slots: int, episode_num: int | None) -> list[dict]:
+    """A deterministic, evenly-cycling subset of *pool*.
+
+    Deterministic on the episode number so the selection is reproducible
+    from the trade record — a listener auditing the ledger can recompute
+    which rules were in effect. Consecutive-with-wraparound gives every
+    rule the same exposure over a cycle instead of the lumpy coverage a
+    hash would produce.
+    """
+    if slots >= len(pool) or slots <= 0:
+        return pool
+    offset = (episode_num or 0) % len(pool)
+    doubled = pool + pool
+    return doubled[offset:offset + slots]
+
+
+def _selected_active_rules(data: dict, *, max_active: int = 5,
+                           episode_num: int | None = None,
+                           tracker: dict | None = None) -> list[dict]:
     """The distinct active rules shown to the LLM today (most recent first).
 
     Shared by the prompt block AND the trade-stamping in post_generate so
     the ``rules_in_effect`` recorded on each trade is exactly the set the
     model was told to obey when it made the pick.
     """
-    entries = [e for e in (data.get("entries") or []) if e.get("status") == "active"]
-    selected: list[dict] = []
+    entries = [
+        e for e in (data.get("entries") or [])
+        if e.get("status") == "active" and _is_trading_rule(e)
+    ]
+
+    # Distinct rules, most recent first. Deduped over the WHOLE pool, not
+    # just the first max_active, so pinning below can reach a proven rule
+    # that recency alone would have pushed out of the window.
+    eligible: list[dict] = []
     for entry in reversed(entries):
-        if len(selected) >= max_active:
-            break
         if any(
             _lesson_similarity(entry.get("adjustment", ""), s.get("adjustment", ""))
             >= _LESSON_SIMILARITY_THRESHOLD
-            for s in selected
+            or _lesson_similarity(
+                _rule_core(entry.get("adjustment", "")),
+                _rule_core(s.get("adjustment", ""))) >= _RULE_CORE_THRESHOLD
+            for s in eligible
         ):
             continue
-        selected.append(entry)
-    return selected
+        eligible.append(entry)
+
+    # Rotation (2026-08-20). Without it the stamped rule set is constant
+    # between ledger edits, every trade carries the same rules, and no
+    # rule can ever be told apart from any other — the scoreboard is
+    # honest and permanently silent. Proven rules stay pinned; the rest
+    # cycle so each accrues both a with-rule and a without-rule arm.
+    pol = ((load_policy().get("learning") or {}).get("rule_rotation") or {})
+    if pol.get("enabled") and len(eligible) > 1:
+        proven = (_proven_rule_ids(tracker, data)
+                  if pol.get("pin_proven", True) else set())
+        pinned = [e for e in eligible if e.get("id") in proven]
+        pool = [e for e in eligible if e.get("id") not in proven]
+        slots = max(1, int(pol.get("slots", 4)) - len(pinned))
+        return (pinned + _rotate(pool, slots, episode_num))[:max(
+            max_active, len(pinned) + 1)]
+    return eligible[:max_active]
 
 
 def _build_lessons_learned_block(data: dict, *, max_active: int = 5) -> str:
@@ -3068,15 +3741,54 @@ def _build_rule_scoreboard(data: dict, tracker: dict, *,
     evidence and no measurable edge are flagged as retirement candidates
     — surfaced for the OPERATOR (rules are never auto-retired).
     """
+    # Era-scoped (2026-08-19). The comparison used to be "trades carrying
+    # this rule" against ALL other closed trades — but stamping only began
+    # in July, so the control group WAS the pre-era trades whose benchmark
+    # windows the integrity passes disowned. The scoreboard was therefore
+    # measuring new-trades-vs-old-trades and reporting it as rule
+    # effectiveness.
     closed = [
         t for t in tracker.get("trades", [])
         if t.get("status") == "closed"
+        and _in_era(t)
         and isinstance(t.get("alpha_pct"), (int, float))
         and math.isfinite(t["alpha_pct"])
     ]
     active = [e for e in (data.get("entries") or []) if e.get("status") == "active"]
-    if not closed or not active:
+    if not active:
         return ""
+    if not closed:
+        # Say so rather than injecting nothing. Silence is what let the
+        # previous scoreboard's artifacts ride unnoticed for weeks.
+        return (
+            "RULE EFFECTIVENESS: no closed trades in the current record "
+            "yet, so no rule has been scored. Obey them all; claim nothing "
+            "about which of them works.\n"
+        )
+
+    # A rule can only be scored if some trades carried it and some did
+    # NOT. Every stamped trade so far carried the SAME five rules, so the
+    # five were perfectly collinear and the scoreboard emitted five
+    # identical verdicts — the same 10 trades, the same -0.17% vs +0.43%,
+    # five separate "RETIREMENT CANDIDATE" flags — from one undivided
+    # sample. Identical numbers under different rule names is the
+    # signature of an experiment that never varied its treatment, and
+    # reporting it as five findings invited the model to act on evidence
+    # that does not exist. Say what is measurable and nothing more.
+    # "No rules stamped" is itself a treatment arm — a trade made without
+    # a rule is exactly the control the comparison needs — so the empty
+    # set counts as a distinct set rather than being filtered out.
+    stamp_sets = {
+        tuple(sorted(t.get("rules_in_effect") or [])) for t in closed
+    }
+    if len(stamp_sets) < 2:
+        return (
+            "RULE EFFECTIVENESS: not measurable yet — every stamped trade "
+            "so far carried the SAME rule set, so no rule can be told apart "
+            "from any other. Do not treat any rule as proven or disproven; "
+            "keep obeying them all. (Attribution becomes possible once the "
+            "rule set varies between picks.)\n"
+        )
 
     lines = []
     for entry in active:
@@ -3085,6 +3797,25 @@ def _build_rule_scoreboard(data: dict, tracker: dict, *,
         if len(stamped) < min_trades:
             continue
         others = [t for t in closed if rid not in (t.get("rules_in_effect") or [])]
+        if len(others) < min_trades:
+            # No usable control group: "trades without this rule" is too
+            # small to compare against, so any difference is noise.
+            lines.append(
+                f"- [{rid}] in effect for {len(stamped)} closed trades — no "
+                f"comparison group yet ({len(others)} trades without it), so "
+                f"its effect is UNMEASURED, not zero"
+            )
+            continue
+        # Perfectly collinear with another rule => the two cannot be told
+        # apart, and presenting them as separate findings double-counts one
+        # piece of evidence.
+        twins = [
+            other.get("id") for other in active
+            if other.get("id") != rid
+            and {id(t) for t in stamped} == {
+                id(t) for t in closed
+                if other.get("id") in (t.get("rules_in_effect") or [])}
+        ]
         avg_with = sum(t["alpha_pct"] for t in stamped) / len(stamped)
         line = (
             f"- [{rid}] in effect for {len(stamped)} closed trades: "
@@ -3093,7 +3824,13 @@ def _build_rule_scoreboard(data: dict, tracker: dict, *,
         if others:
             avg_without = sum(t["alpha_pct"] for t in others) / len(others)
             line += f" (trades without it: {avg_without:+.2f}%)"
-            if len(stamped) >= retire_after and avg_with <= avg_without:
+            if twins:
+                line += (
+                    f" — NOTE: indistinguishable from {', '.join(sorted(twins))}"
+                    f" (identical trade set); treat these as ONE piece of"
+                    f" evidence, not several"
+                )
+            elif len(stamped) >= retire_after and avg_with <= avg_without:
                 line += (
                     " → RETIREMENT CANDIDATE: no measurable edge — flag for "
                     "the operator; keep obeying it until retired"
@@ -3509,6 +4246,23 @@ def _extract_trade_from_digest(digest_text: str, episode_num: int | None = None)
         invalidation_match.group(1).strip() if invalidation_match else ""
     )
 
+    # Options structure (2026-08-19). Absent or "shares" => a plain long
+    # equity position, which is every trade before this date.
+    family_match = re.search(
+        r"\*\*Strategy Family:\*\*\s*\[?([a-z_]+)", digest_text, re.IGNORECASE)
+    strategy_family_raw = (
+        family_match.group(1).strip().lower() if family_match else "")
+
+    structure_match = re.search(
+        r"\*\*Structure:\*\*\s*\[?([A-Za-z \-_]+)", digest_text)
+    structure = ""
+    if structure_match:
+        raw = structure_match.group(1).strip().lower().replace("-", " ")
+        if "covered call" in raw:
+            structure = "covered_call"
+        elif "cash secured put" in raw or "cash-secured put" in raw:
+            structure = "cash_secured_put"
+
     # Extract trade type (hybrid model: weekly hold vs flash trade)
     trade_type_match = re.search(
         r"\*\*Trade Type:\*\*\s*(Weekly Hold|Flash Trade|Mid-Week Update)",
@@ -3535,6 +4289,8 @@ def _extract_trade_from_digest(digest_text: str, episode_num: int | None = None)
         "confidence": confidence,
         "target_range": target,
         "invalidation": invalidation,
+        "structure": structure or "long_equity",
+        "strategy_family": strategy_family_raw,
         "trade_type": trade_type,
         "policy_version": load_policy().get("version"),
         "horizon_sessions": horizon_sessions(trade_type),

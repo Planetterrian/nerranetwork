@@ -102,6 +102,23 @@ _SEPARATED_RE = re.compile(
     rf"\b(?:at?)?{_STEM}\b(?=[\s\-]{{1,3}}networks?\b)", re.I
 )
 
+# 4. The ORIGIN LINE. Every show's debut explains the network's name as
+#    "Novak plus Perra equals Nerra", and Whisper mangles all three
+#    proper nouns at once with no "network" token anywhere near them:
+#    Offshore North Ep1 (2026-08-18) transcribed "NoVAC plus PARA
+#    equals NARA." The bare stem cannot be repaired on its own — an
+#    unanchored "NARA" is legitimately the US National Archives — so
+#    the anchor here is the equation itself. All three parts are
+#    rewritten together, and the pattern requires the full
+#    "<name> plus <name> equals <stem>" shape, which no ordinary prose
+#    produces.
+_ORIGIN_LINE_RE = re.compile(
+    r"\b(?:no\s*vac|novak|no\s*vak)\b(\s+plus\s+)"
+    r"\b(?:para|perra|parra|pera)\b(\s+equals\s+)"
+    rf"\b{_STEM}\b",
+    re.I,
+)
+
 
 def _match_case(replacement: str, original: str) -> str:
     """Return *replacement* cased to match *original*.
@@ -127,9 +144,13 @@ def correct_brand_text(text: str) -> str:
 
     # Cheap bail-out: the stem is absent from the overwhelming
     # majority of segments, and this runs per-segment per-episode.
-    if "nara" not in text.lower():
+    lowered = text.lower()
+    if "nara" not in lowered:
         return text
 
+    text = _ORIGIN_LINE_RE.sub(
+        lambda m: f"Novak{m.group(1)}Perra{m.group(2)}Nerra", text
+    )
     text = _RU_CHANNEL_RE.sub("NerraRU", text)
     text = _TORN_RE.sub(lambda m: _match_case("Nerra", m.group(0)), text)
     text = _JOINED_RE.sub(
@@ -172,6 +193,33 @@ def _repair_with_external_anchor(token: str) -> str:
     return _STEM_ONLY_RE.sub(lambda m: _match_case("Nerra", m.group(0)), token)
 
 
+def _prev_token_anchors_origin(token: str) -> bool:
+    """True when the PRECEDING word is the origin line's "equals".
+
+    The debut explains the network's name as "Novak plus Perra equals
+    Nerra"; in the word array the brand arrives as a bare "NARA." with
+    its only anchor BEHIND it, which the forward-looking anchor cannot
+    see. "equals" is a safe anchor — an unanchored "NARA" stays the US
+    National Archives ("records held at NARA in Washington").
+    """
+    return token.strip().strip(".,!?").lower() == "equals"
+
+
+# The founders' names in that same line, which Whisper mangles alongside
+# the brand ("NoVAC plus PARA equals NARA"). Repaired only in the exact
+# origin-line position, so ordinary words are never touched.
+_ORIGIN_FOUNDER_FIRST_RE = re.compile(r"^\W*(?:no\s*va[ck]|novak)\W*$", re.I)
+_ORIGIN_FOUNDER_SECOND_RE = re.compile(r"^\W*(?:para|parra|pera|perra)\W*$", re.I)
+
+
+def _next_word(words: Sequence[dict], i: int, fallback: str = "") -> str:
+    return words[i + 1].get("word", "") if i + 1 < len(words) else fallback
+
+
+def _norm(token: str) -> str:
+    return token.strip().strip(".,!?").lower()
+
+
 def correct_brand_words(
     words: Sequence[dict], *, next_token: str = "",
 ) -> list[dict]:
@@ -189,7 +237,24 @@ def correct_brand_words(
     out: list[dict] = []
     for i, entry in enumerate(words):
         token = entry.get("word")
-        if not token or "nara" not in token.lower():
+        if not token:
+            out.append(entry)
+            continue
+
+        # Founder names in the origin line, positionally anchored:
+        # "<Novak> plus <Perra> equals <Nerra>".
+        if _ORIGIN_FOUNDER_FIRST_RE.match(token) and _norm(
+            _next_word(words, i, next_token)
+        ) == "plus":
+            out.append({**entry, "word": token.replace(token.strip(), "Novak")})
+            continue
+        if _ORIGIN_FOUNDER_SECOND_RE.match(token) and _norm(
+            _next_word(words, i, next_token)
+        ) == "equals":
+            out.append({**entry, "word": token.replace(token.strip(), "Perra")})
+            continue
+
+        if "nara" not in token.lower():
             out.append(entry)
             continue
 
@@ -199,7 +264,8 @@ def correct_brand_words(
             following = (
                 words[i + 1].get("word", "") if i + 1 < len(words) else next_token
             )
-            if _next_token_anchors(following):
+            previous = words[i - 1].get("word", "") if i > 0 else ""
+            if _next_token_anchors(following) or _prev_token_anchors_origin(previous):
                 fixed = _repair_with_external_anchor(token)
 
         if fixed != token:

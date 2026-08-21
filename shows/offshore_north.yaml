@@ -99,7 +99,10 @@ sources:
     label: "Sailorz (Tip & Shaft, French)"
   # Voiles et Voiliers (Ouest-France) publishes no direct RSS — reach it
   # via a Google News site query (VERIFIED serving items 2026-08-17).
-  # url_utils resolves GN redirects to the publisher at fetch time.
+  # url_utils resolves each GN redirect to the publisher URL at fetch
+  # time via Google's own batchexecute RPC (plain redirect-following
+  # does not penetrate the JS interstitial), and run_show repairs any
+  # GN URL the model retypes into its Sources section.
   - url: "https://news.google.com/rss/search?q=site:voilesetvoiliers.ouest-france.fr&hl=fr&gl=FR&ceid=FR:fr"
     label: "Voiles et Voiliers (via GN)"
 
@@ -447,7 +450,12 @@ chapters:
       title: "The Fleet"
     - pattern: "time for Plain Sailing|brings us to Plain Sailing|now for Plain Sailing"
       title: "Plain Sailing"
-    - pattern: "and the countdown|before we go,? the countdown|the countdown stands"
+    # Anchored (Aug 2026): the announcement is its own short line, so the
+    # pattern requires the line to START with it. The old unanchored
+    # "and the countdown" matched mid-sentence in the debut's segment tour
+    # ("...and the countdown with the days left"), stealing the marker to
+    # 79 s inside the introduction and leaving the real segment unmarked.
+    - pattern: "^\\s*(?:And |Before we go,? )?[Tt]he countdown\\b"
       title: "The Countdown"
 
 slow_news:

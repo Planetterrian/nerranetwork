@@ -167,4 +167,82 @@ reviews:
       evidence: null
     proposed_changes_in_pr: []
     agent_cost_usd: 0.0564
+  - date: '2026-08-19'
+    pr: null
+    doc: docs/reviews/planetterrian_review_2026_08_19.md
+    generated_by: grok-4.5
+    summary: Astronomy fetch-filter is clean (0 leakage) and chapters still parse, but 8/10 scripts remain under the 1600-word floor, the show still ships as a general-science firehose (archaeology/physics/policy crowding out longevity), and several episodes collapse the whole mid-body under one Science Deep Dive chapter.
+    scored_prior_predictions:
+    - metric: episodes under 1600-word floor, last 10
+      verdict: hit
+      evidence: 8/10 ep147–156 under 1600 (only ep150=1681, ep155=1857 clear the floor) — matches expected 8+/10 with digest ceiling unchanged
+    - metric: unique boilerplate phrases recurring in 10/10 transcripts
+      verdict: hit
+      evidence: still 10/10 on AI-voice disclosure + YouTube/network CTA blocks; no prompt change shipped since prior review
+    - metric: fetch-filter leakage matches in last 10 digests
+      verdict: hit
+      evidence: 'snapshot fetch-filter section: 0 hits vs 21 exclude_title_patterns (was 6)'
+    - metric: pure-astronomy items per PT episode digest
+      verdict: hit
+      evidence: 0 exclude-pattern leakage in last 10 digests; astronomy filter holding
+    - metric: article volume vs min_articles_skip (2) after the filter
+      verdict: hit
+      evidence: ep147–156 all produced; no filter-induced skip days visible in snapshot window
+    - metric: median _tts.txt words, last 10 eps
+      verdict: miss
+      evidence: still chronically short — 8/10 below 1600; median remains well under 1600 floor
+    shipped: []
+    deferred:
+    - 'Operator decision on chronic under-length after repeated misses with digest_expand already on: full-text journal fetch vs higher digest floors only vs lower min_podcast_words vs accept short days — do not re-propose podcast_expand_below_target or podcast word-pressure'
+    - Engine-level split so content after Science Deep Dive can re-enter story auto-segments (body-swallow on ep148/149/152/153/156) — shared chapter architecture, not PT prompt padding
+    - Garbage mid-body LLM auto-segment titles — shared Tesla/M&A-deferred class
+    - 'Network pronunciation of Nerra / Planetterrian (Whisper: Narra/Narrow/Planetarian) — no phonetic respelling (landmine #17)'
+    predictions:
+    - metric: life-science / longevity / clinical-health items in Top 15 per digest (manual count, last 10)
+      baseline: often well under 8/15 — transcripts show multi-item archaeology, materials, policy, music, maritime blocks (ep147–149, 153, 156)
+      expected: ≥8/15 core life-science items on ≥8/10 post-merge episodes if digest scope floor ships
+      verdict: pending
+      evidence: null
+    - metric: fetch-filter leakage matches in last 10 digests
+      baseline: '0'
+      expected: remain 0 (no regression from scope-prompt change; filter stays)
+      verdict: pending
+      evidence: null
+    - metric: episodes under 1600-word floor, last 10
+      baseline: 8/10
+      expected: ≤6/10 if min_digest_words 1700 ships and holds; else still 7+/10 (digest ceiling) — score n/a-lever-not-shipped if operator defers bump
+      verdict: pending
+      evidence: null
+    - metric: transcripts with verbatim transition 'shifting to a very different area of research', last 10
+      baseline: majority of ep147–156 use this or near-identical handoff
+      expected: ≤2/10 post-merge if podcast de-seed ships
+      verdict: pending
+      evidence: null
+    - metric: episodes whose Science Deep Dive chapter spans >50% of runtime (body swallow), last 10
+      baseline: 5/10 (ep148,149,152,153,156)
+      expected: monitor only unless engine split ships; pattern widen alone may not fix swallow
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/prompts/planetterrian_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: July-2 astronomy filter hit (0 leakage) but transcripts ep147–156 still ship archaeology, materials, lasers, maritime policy, music psychology — the longevity/health brand promise in shows/planetterrian.yaml description is not enforced at selection time.
+    - file: shows/planetterrian.yaml
+      kind: config
+      ab_listen_required: false
+      rationale: Sanctioned length attack is digest-side only; 1400 has not lifted scripts past the 1600 floor on 8/10 recent episodes. No podcast expand/retry.
+    - file: shows/prompts/planetterrian_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Whisper transcripts ep147–156 show the same handoff line dominating; de-seed by ban + shape, not a new quotable example list (meta-review successor-tic rule).
+    - file: shows/prompts/planetterrian_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 'Snapshot: “keep an eye on” in 8/10 episodes — prompt-seeded convergence. Chapter YAML already accepts Before we go|Next time|before we wrap|keep an eye on|watch for, so rotation stays parseable.'
+    - file: shows/planetterrian.yaml
+      kind: config
+      ab_listen_required: true
+      rationale: 'Ep147 dairy segment used “most people have heard that…” and got no Dive chapter; aligns marker with prompt-seeded myth-bust openers without phonetic hacks. A/B-listen: changes player chapter boundaries.'
+    agent_cost_usd: 0.1194
 do_not_retry: []

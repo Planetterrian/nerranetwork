@@ -850,11 +850,17 @@ class TestSystemPrompts:
         if not config_path.exists():
             pytest.skip(f"Config not found: {config_path}")
 
-        # grok-4.6 network-wide since 2026-08-18 (operator-directed);
-        # grok-4.3 stays allowed as the sanctioned rollback pin.
+        # grok-4.3 is the network default since the 2026-08-18 revert of
+        # the same-day grok-4.6 upgrade (4.6 digest latency ran 5-10x and
+        # timed out the four biggest shows — docs/model_upgrade_playbook.md).
+        # grok-4.6 is allowed for the playbook's STAGED trial shows
+        # (experiment staged-grok-46-trial: first_principles + UC, both
+        # narrative). TestStagedGrok46Trial in test_llm_usage_pass.py pins
+        # the trial's exact scope — this set only says both ids are
+        # currently blessed somewhere on the network.
         allowed = {
-            "grok-4.6",
             "grok-4.3",
+            "grok-4.6",
         }
         config = load_config(config_path)
         assert config.llm.model in allowed, (

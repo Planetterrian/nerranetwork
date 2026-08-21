@@ -508,6 +508,10 @@ class TestFetchSingleFeed:
         expected_keys = {
             "title", "description", "url", "source_name",
             "published_date", "relevance_score", "author",
+            # The aggregator URL we resolved away, kept so a Google News
+            # URL the model later retypes into its Sources section can be
+            # mapped back to the publisher (engine.url_utils).
+            "aggregator_url",
         }
         assert set(article.keys()) == expected_keys
         assert article["author"] == "John Doe"

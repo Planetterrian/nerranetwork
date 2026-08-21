@@ -118,10 +118,10 @@ class TestFallbackModel:
 
     def test_falls_back_to_module_default_when_unset(self):
         cfg = types.SimpleNamespace(llm=types.SimpleNamespace(fallback_model=""))
-        assert _resolve_fallback_model(cfg) == "grok-4.3"
+        assert _resolve_fallback_model(cfg) == "grok-4.20-reasoning"
 
     def test_handles_missing_llm_attr(self):
-        assert _resolve_fallback_model(types.SimpleNamespace()) == "grok-4.3"
+        assert _resolve_fallback_model(types.SimpleNamespace()) == "grok-4.20-reasoning"
 
 
 # ---------------------------------------------------------------------------
@@ -287,6 +287,18 @@ class TestCallGrok:
         assert recorder["model"] == "grok-4.3"
         assert recorder["messages"][-1] == {"role": "user", "content": "hello"}
 
+    def test_client_disables_sdk_retries(self, fake_openai, monkeypatch):
+        """SDK-internal retries must stay OFF (max_retries=0) and the
+        request timeout must honor NERRA_LLM_TIMEOUT_SECONDS — the
+        2026-08-18 grok-4.6 outage turned each hang into 9 stalls because
+        the SDK retried under tenacity (see TestTimeoutEnvelope)."""
+        from engine.generator import _call_grok
+        recorder, _ = fake_openai
+        monkeypatch.setenv("NERRA_LLM_TIMEOUT_SECONDS", "123")
+        _call_grok("hello")
+        assert recorder["client_kwargs"]["max_retries"] == 0
+        assert recorder["client_kwargs"]["timeout"] == 123.0
+
     def test_system_prompt_is_prepended(self, fake_openai):
         from engine.generator import _call_grok
         recorder, _ = fake_openai
@@ -396,6 +408,56 @@ class TestStructuralLabelAndSteelManRepetitionSkip:
     def test_genuine_prose_loop_still_caught(self):
         txt = ("# X\n\n" + ("the engine stalls and the engine stalls once more. " * 8)
                + " ".join(f"separate remark {i} on a distinct subject." for i in range(40)))
+        assert self._validate()(txt, stage="digest", show_name="Test") >= 1
+
+
+class TestProperNounRepetitionSkip:
+    """Story-specific proper nouns (Aug 18 2026). SpaceX Ep073 named its
+    splashdown zone 'Christmas Island' 6× and FF Ep165 said 'the Milky
+    Way's' 5× — the SUBJECT being named, not a tic — and both turned PR
+    CI red via TestNoNetworkRegressionOnCommittedDigests (and would burn
+    futile runtime regenerations, the Ep548 class). A phrase whose
+    alphabetic non-stopword tokens the text itself capitalizes mid-prose
+    is exempt; lowercase stylistic tics stay caught."""
+
+    def _validate(self):
+        from engine.generator import _validate_llm_output
+        return _validate_llm_output
+
+    @staticmethod
+    def _filler(n, seed):
+        import random
+        random.seed(seed)
+        words = ["alpha", "bravo", "cobalt", "delta", "ember", "flint",
+                 "gust", "hazel", "ion", "jade", "kelp", "lumen", "mica"]
+        return " ".join(random.choice(words) for _ in range(n))
+
+    def test_capitalized_place_name_not_flagged(self):
+        # Only the NAME repeats — every surrounding frame is unique, the
+        # shape of a story naming its subject.
+        frames = ["Recovery ships reached", "Charts pinned", "Radar found",
+                  "Crews near", "Weather over", "Tracking left"]
+        sentences = [
+            f"{frames[i]} Christmas Island {self._filler(9, i)}."
+            for i in range(6)
+        ]
+        txt = "# X\n\n" + " ".join(sentences) + " " + self._filler(120, 99)
+        assert self._validate()(txt, stage="digest", show_name="Test") == 0
+
+    def test_lowercase_tic_still_caught_alongside_names(self):
+        tic = "the payload verdict lands hard. " * 6
+        names = " ".join(
+            f"Christmas Island drew {self._filler(7, i)}." for i in range(5))
+        txt = "# X\n\n" + tic + names + " " + self._filler(120, 98)
+        assert self._validate()(txt, stage="digest", show_name="Test") >= 1
+
+    def test_word_capitalized_only_at_sentence_starts_not_exempt(self):
+        # 'engine' capitalized at sentence starts but common in lowercase
+        # prose: cap count must not beat lowercase count, so the loop is
+        # still flagged.
+        txt = ("# X\n\n"
+               + ("Engine stalls follow the engine stalls in every engine test. " * 6)
+               + self._filler(120, 97))
         assert self._validate()(txt, stage="digest", show_name="Test") >= 1
 
 

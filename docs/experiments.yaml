@@ -326,8 +326,11 @@ experiments:
     title: "Network-wide grok-4.6 — all LLM stages off 4.3 (operator-directed)"
     area: quality
     shipped: 2026-08-18
-    readout: 2026-09-01
-    status: reading
+    readout: 2026-08-18
+    # 'done' is the register's closed state (the dashboard coerces unknown
+    # statuses to 'reading', which would render this as still active);
+    # the outcome — REVERTED same day — is the notes' first line.
+    status: done
     baseline: >
       grok-4.3 on digest/fetch/scripts/synth/titles/reviewer; 30d LLM
       token spend ~$25 (would be ~$47 at 4.6 rates on the same tokens);
@@ -357,6 +360,143 @@ experiments:
       grok-4.20-reasoning -> grok-4.3 (different snapshot than the new
       primary, retires the aging 4.20 dependency). Translation was
       already pinned 4.6 same-day. ~+$22-25/mo at current volume.
+      REVERTED SAME DAY (2026-08-18, operator-directed): the trigger was
+      OPERATIONAL, not on the registered list — 4.6 digest latency ran
+      5-10x 4.3 on every show measured (planetterrian 44s -> 420s, MAB
+      36s -> 242s, dp_pod 55s -> 225s, first_principles 36s -> 205s) and
+      on the four largest digest prompts (tesla, spacex, omni_view,
+      modern_investing) requests exceeded the 300s client timeout or were
+      server-disconnected. Nested SDK+tenacity retries amplified each
+      stall into a 41-45 min burn; 7 of 12 shows failed on day one
+      (2026-08-18 07:37-10:33 UTC). Rolled back to grok-4.3 everywhere
+      except the translation pin (already 4.6 via the alias freeze, small
+      chunks, no timeouts observed). The hallucination-profile question
+      is UNANSWERED — the experiment never reached an editorial readout.
+      Any retry follows docs/model_upgrade_playbook.md: one show first,
+      digest-latency gate before network-wide.
+  - id: staged-grok-46-trial
+    title: "grok-4.6 staged trial — dp_pod script, FPD+UC whole-show, synth, reviewer"
+    area: quality
+    shipped: 2026-08-18
+    readout: 2026-09-01
+    status: reading
+    baseline: >
+      All stages on grok-4.3 after the same-day revert of the network-wide
+      4.6 upgrade. dp_pod on 4.3: zero exclamation points in 27/30
+      episodes, Ep22 65% verbatim digest paste. FPD/UC: the accepted
+      grok-4.3 narrative-length plateau (briefs 848-1116w vs 1600 ask).
+      FPD/UC digest latency on 4.3: ~30-50s.
+    target: >
+      dp_pod scripts follow the delivery spec (exclamations/voice tags
+      present, shingle overlap with the digest clearly below the 65%/42%
+      worst cases). FPD/UC briefs come off the 4.3 plateau without the
+      banned podcast-side retries. No latency regressions: stage durations
+      in metrics_ep*.json stay under 50% of NERRA_LLM_TIMEOUT_SECONDS
+      (600s) and zero 'Slow LLM completion' warnings after week one.
+    criteria: >
+      Operator-directed staged rollout per docs/model_upgrade_playbook.md
+      (the first trial run under it). SCOPE: dp_pod llm.podcast_model
+      ONLY (digest stays 4.3); first_principles + unintended_consequences
+      whole-show (narrative — the brief is model-knowledge prose);
+      synth_model + reviewer_model in _defaults. Every daily NEWS show's
+      digest/fetch stays grok-4.3. REVERT TRIGGERS, any one suffices,
+      revert = delete the named pin: (1) an invented fact/date/name in an
+      FPD or UC story (these are factual histories) — judged against the
+      other shows' FACTUAL_ERRORS under the SAME 4.6 reviewer, never
+      against pre-08-18 history (the reviewer instrument changed this
+      date too); (2) a digest/script stage exceeding ~300s repeatedly or
+      any request timeout on a trial show; (3) a missed episode
+      attributable to the model; (4) dp_pod A/B-listen verdict against
+      the 4.6 scripts (landmine #17 — prose changes with the model).
+    notes: >
+      Follow-up to network-grok-46-upgrade (reverted for latency, not
+      quality — the quality question was never answered). Trial shows
+      were picked benefit-over-risk: dp_pod's dialogue writing is its
+      product and its 4.3 failures are documented writing-model
+      limitations; FPD/UC have no news fetch so a stronger model is the
+      only sanctioned length/depth lever; synth + reviewer are
+      analysis-stage, operator-gated or non-published. The four
+      biggest-prompt news shows (tesla, spacex, omni_view, MIT) stay
+      OFF 4.6 — highest hallucination stakes and the four that timed
+      out on outage day. NERRA_LLM_TIMEOUT_SECONDS raised 300 -> 600 in
+      run-show.yml (worst-case per stage 3 x 600s = 30 min, still under
+      the 50-min watchdog). Cost: ~+$3-5/mo at trial scope.
+    interim: >
+      2026-08-19 first episodes: all three shipped, zero envelope
+      issues (digest 53-236s). dp_pod: verbatim digest overlap 1.8%
+      (best ever; 4.3-era 20-65%), exclamations/voice tags present,
+      LV in band — the clearest win. UC 2354w/15:38 is ON-SPEC for the
+      first time (its prompt always asked 2200-2800w; the 4.3 plateau
+      under-delivered and the network tuned around it). FPD overshot
+      its own 1800-2400 spec (3204w) via the "longer is better" clause
+      — capped at ~2600 same day (A/B-listen applies); its
+      anti-repetition retry also fired once — watch for chronic firing.
+      Reviewer FACTUAL_ERRORS read pending (4.6 reviewer, cross-show).
+      2026-08-20 OPERATOR LISTEN VERDICT on FPD: repetitive, not tight
+      like before — the trial's first negative ear. Diagnosis: not
+      verbatim looping (0 near-dup sentence pairs in Ep075/076) but
+      CONCEPTUAL restatement — both FPD prompts carried
+      write-past-the-floor / restate-in-plain-words scaffolding tuned
+      for 4.3's chronic under-delivery, and 4.6 obeys it literally
+      (briefs 1,432w -> ~2,900w; scripts ~1,400w -> 3,000+w; runtime
+      doubled to ~20 min). Fix shipped same day: both prompts rewritten
+      to bounded ranges + say-each-fact-once discipline (brief
+      1,300-1,700w; script 1,500-1,900w, stop ~2,100), retry floors
+      retuned under the bands (min_digest_words 1200, min_podcast_words
+      1400). FPD STAYS on 4.6 — the verdict indicts the prompt-model
+      interaction, not the model; if the next 2-3 episodes still read
+      repetitive at the tightened spec, THEN revert the model pin.
+      UC untouched (on-spec, no complaint); dp_pod Ep041 swung short
+      (1,101w vs 1,550 target, LV 7.9) — single-day watch item.
+      2026-08-21 retune VERDICT: Ep077 landed in band (brief 1,752w,
+      script 1,960w, 0 near-dup pairs, 13:16 vs 20:00) — say-it-once
+      worked; FPD stays on 4.6. New watch: FPD digest ran 506s under
+      the tightened band (vs 190-236s before) — close to the 600s
+      timeout; if it trends up, the model pin is the lever. Same day:
+      the 4.6 REVIEWER at default effort timed out the whole daily
+      audit (no report written); reviewer now runs reasoning_effort
+      LOW + the audit's AI loop has a wall-clock budget
+      (REVIEW_AI_BUDGET_SECONDS, default 1200s) so the report always
+      ships. FACTUAL_ERRORS rates from 08-21 on are 4.6-LOW — compare
+      cross-show within a day, never across effort eras.
+  - id: grok-46-funnel-and-ops
+    title: "grok-4.6 on the funnel + ops surfaces — titles, restock, specials"
+    area: growth
+    shipped: 2026-08-19
+    readout: 2026-09-05
+    status: reading
+    baseline: >
+      YouTube title bundle, topic-queue restock, and deep-dive specials
+      all on grok-4.3. EN long-form CTR/velocity per the youtube_stats
+      trailing window; restock briefs at the 4.3 depth the queues carry
+      today; the one shipped deep-dive special (spacex q2-2026-earnings)
+      generated on 4.3.
+    target: >
+      Title bundle: long-form vpd / Shorts velocity on 4.6-era titles at
+      least matches the trailing window (titles are metadata-only —
+      outside landmine 17 — so this can simply run and be read).
+      Restock: next restock cycle's briefs pass validation at the same
+      or better rate. Specials: next forced spacex deep-dive ships on
+      4.6 with no timeout (specials have no daily-slot pressure).
+    criteria: >
+      Rollback is per-surface and one line each: the three model
+      defaults in engine/youtube_titles.py; NERRA_RESTOCK_MODEL env or
+      the pin in scripts/restock_topic_queues.py; deep_dive.model in
+      shows/spacex.yaml. Revert a surface if its output quality visibly
+      regresses (title truncation/garbling, restock validation-failure
+      spike, special timeout) — latency canary and envelope guards from
+      the 08-18 outage apply everywhere.
+    notes: >
+      Wave shipped alongside per-stage model-era stamps
+      (llm_digest_model / llm_script_model in metrics_ep*.json and
+      per-stage model ids in credit files) so every future model
+      question is answerable by query — the credit file's single
+      file-level model label could not represent the trial's
+      split-model episodes. Wave 2 (script-stage pins for omni_view /
+      MAB / MIT + dp_pod comedy-spec re-tightening) is deliberately
+      HELD for the staged-grok-46-trial readout 2026-09-01 per
+      docs/model_upgrade_playbook.md.
+  - id: mit-verified-window-alpha
     title: "Modern Investing states verified-window alpha only"
     area: quality
     shipped: 2026-08-15
@@ -449,3 +589,128 @@ experiments:
       sample too small to claim an edge — that is the intended cost of a
       reproducible record, and the prompts require the show to say so.
       Prompt + audio change — landmine #17 A/B.
+
+  - id: mit-options-positions
+    title: "Modern Investing trades the options it teaches"
+    area: quality
+    shipped: 2026-08-19
+    readout: 2026-09-19
+    status: reading
+    baseline: "0 of 61 simulated trades used an options structure, against options taught in 32 of the last 40 episodes"
+    target: >
+      At least one covered call or cash-secured put per ~10 episodes when
+      the setup genuinely calls for one, each with a real recorded premium
+      and an expiry-settled payoff a listener can reproduce from the
+      underlying's close.
+    criteria: >
+      Keep if the structures are chosen for the right reason (income on a
+      name worth owning / willingness to own lower) rather than to look
+      sophisticated, and if every position carries a real quote. ANY
+      position recorded with an estimated premium is a revert — that is
+      the whole design constraint. If the show never picks one, the
+      prompt guidance is too weak and needs a nudge, not a mandate.
+    notes: >
+      Early assignment is not modelled and the prompts require saying so.
+      Audio change — landmine #17 A/B.
+
+  - id: mit-learning-loop-honesty
+    title: "Rule scoreboard stops manufacturing verdicts"
+    area: quality
+    shipped: 2026-08-19
+    readout: 2026-09-19
+    status: reading
+    baseline: "5 identical RETIREMENT CANDIDATE verdicts from one undivided 10-trade sample, controlled against the disowned pre-era trades"
+    target: >
+      Zero verdicts from collinear rule sets; production-hygiene lessons
+      out of the pick prompt entirely; and a FIRST genuinely scored rule
+      once the era's rule set varies across ~a dozen trades.
+    criteria: >
+      The loop is allowed to say nothing — that is the fix. What would
+      falsify it is a retirement flag appearing while every stamped trade
+      still carries the same rule set.
+
+  - id: mit-rule-rotation
+    title: "Rule rotation gives the learning loop the variation it needs"
+    area: quality
+    shipped: 2026-08-20
+    readout: 2026-10-01
+    status: reading
+    baseline: "2 rule sets across 15 stamped trades, differing by one rule, arising by accident — 0 rules scoreable, ever"
+    target: >
+      >=4 distinct rule sets within 20 era trades, every rule carrying
+      both arms, and at least one genuinely scored rule by ~25 era trades.
+    criteria: >
+      If 0 rules are scoreable at readout despite the rotation running,
+      the pool (6 rules) is too small and needs widening — not more
+      waiting. If a rule scores well it is pinned automatically and stops
+      rotating, which is the intended end state, not a bug.
+    notes: >
+      This is an intervention on the product, not just the measurement:
+      some picks are now made without some rules. Proven and hand-pinned
+      rules never rotate out. Rotation is a pure function of the episode
+      number, so any pick's rule set is reproducible from the ledger.
+
+  - id: mit-strategy-families
+    title: "Alpha reported by approach, not only by sector"
+    area: quality
+    shipped: 2026-08-20
+    readout: 2026-10-01
+    status: reading
+    baseline: "61 trades, 61 unique free-text strategy strings, 0 groupable"
+    target: >
+      >=90% of new picks carry an explicit family, and at least one family
+      reaches 5 verified-window trades so the show can say on air which
+      approach is actually earning its keep.
+    notes: >
+      Derived retroactively for the 61 historic trades so the record is
+      groupable now. Inherits the window discipline — indicative-only and
+      not for air until computed over verified windows.
+
+  - id: network-review-catch-up
+    title: "Late-finishing episodes finally get content-reviewed"
+    area: quality
+    shipped: 2026-08-20
+    readout: 2026-09-10
+    status: reading
+    baseline: "4 shows unreviewed on 2026-08-19; a 32-episode network-wide backlog"
+    target: >
+      Zero episodes that finish after the audit window go permanently
+      unreviewed. The backlog drains at <=10/run and stays at 0.
+    criteria: >
+      Watch the AI-review cost line while the backlog drains — if it
+      spikes, lower CATCH_UP_MAX_PER_RUN rather than dropping the pass.
+    notes: >
+      Network-wide, not MIT-specific. The first run surfaced real findings
+      that had been invisible, including high cross-episode repetition on
+      MIT Ep139/140.
+
+  - id: mit-methodology-correction
+    title: "MIT accounts on air for the record that disappeared"
+    area: quality
+    shipped: 2026-08-20
+    readout: 2026-09-15
+    status: reading
+    baseline: >
+      Ep141-143 all announced the new era-scoped record; 1 of 3 said why,
+      0 of 3 pointed at the rulebook or ledger, and 0 of 3 mentioned the
+      +9.28%-across-45-trades figure the show had been quoting.
+    target: >
+      Exactly 3 episodes carry the correction and then it retires. No
+      listener-value regression below 7.0 on those episodes, and
+      measurable traffic to modern-investing-performance.html within 14
+      days of the first airing.
+    criteria: >
+      A 4th airing means the self-retirement is broken. Flat page traffic
+      means the on-air pointer is not working and needs rewording rather
+      than repeating — do NOT extend the run to compensate.
+    notes: >
+      Deliberately narrow. Pipeline internals are out of scope and a
+      drift guard fails if they leak into the spoken portion. The
+      "published for anyone to check" claim required shipping the
+      performance-page verification panel in the same pass — the ledger
+      was built nightly into api/ and linked from nowhere.
+      First airing was Ep144 (2026-08-20), not Ep145 — the episode
+      shipped after the merge. It exposed two gaps, both fixed: the
+      segment invited verification without naming a destination (so the
+      page-traffic reading would have been meaningless), and it fused
+      with the performance numbers into one paragraph.

@@ -1,0 +1,135 @@
+# Build one anthology volume (Aug 2026, product B6 in
+# docs/product_opportunities_2026_08.md): EPUB + cover from the committed
+# digests (free), audiobook narration through Grok TTS (~$4 per 50-chapter
+# volume, hard-capped by --max-tts-cost-usd), artifacts to R2 under the
+# books/<volume_id>/ keyspace, and the volume recorded in
+# books/catalog.json + rendered onto /books.html.
+#
+# Two ways in:
+#   - Manual dispatch: build one named volume, or leave volume empty to
+#     run the PLANNER (books/series/*.yaml) and build every newly
+#     complete volume.
+#   - Monthly cron: planner mode automatically — as the narrative shows
+#     accumulate another 20 episodes, the next volume plans itself,
+#     builds itself (fresh Grok-Imagine cover + chapter art, narration),
+#     and lands on /books.html. Store submission stays operator work:
+#     the checklist lives in docs/books.md, and the buy links go back
+#     into books/volumes/<id>.yaml as each listing goes live.
+name: Build Book
+
+on:
+  schedule:
+    # Monthly, 1st at 15:37 UTC (off-peak :37 per landmine #24, after
+    # the morning shows finish).
+    - cron: "37 15 1 * *"
+  workflow_dispatch:
+    inputs:
+      volume:
+        description: "Volume id (books/volumes/<id>.yaml); empty = plan + build new volumes"
+        required: false
+        default: ""
+      skip_audio:
+        description: "Ebook only — skip TTS narration"
+        required: false
+        default: "false"
+      skip_images:
+        description: "Skip Grok Imagine cover/chapter art"
+        required: false
+        default: "false"
+      max_tts_cost_usd:
+        description: "Refuse to narrate past this TTS estimate (USD)"
+        required: false
+        default: "10"
+
+concurrency:
+  group: build-book
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    # A 50-chapter narration is ~50 sequential TTS calls; generous but
+    # well under the 6h default.
+    timeout-minutes: 120
+    permissions:
+      contents: write
+      pull-requests: write  # recovery PR if push to main exhausts
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # No git history needed (landmine #1: full clone is ~2.5 GB).
+          fetch-depth: 1
+
+      - uses: ./.github/actions/setup-python
+        with:
+          python-version: "3.12"
+          requirements-file: "requirements.txt"
+          skip-checkout: "true"
+
+      - name: Install ffmpeg
+        if: github.event.inputs.skip_audio != 'true'
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+
+      - name: Build volume(s)
+        env:
+          GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+          XAI_API_KEY: ${{ secrets.GROK_API_KEY }}
+          R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          # Gallery bucket for chapter/cover art sidecars (same vars the
+          # episode pipeline uses; soft no-op when unset).
+          R2_GALLERY_BUCKET: ${{ vars.R2_GALLERY_BUCKET || 'nerra-gallery' }}
+          R2_GALLERY_PUBLIC_BASE_URL: ${{ vars.R2_GALLERY_PUBLIC_BASE_URL }}
+        run: |
+          FLAGS="--max-tts-cost-usd ${{ github.event.inputs.max_tts_cost_usd || '10' }}"
+          if [ "${{ github.event.inputs.skip_audio }}" = "true" ]; then
+            FLAGS="$FLAGS --skip-audio"
+          fi
+          if [ "${{ github.event.inputs.skip_images }}" = "true" ]; then
+            FLAGS="$FLAGS --skip-images"
+          fi
+          VOLUME="${{ github.event.inputs.volume }}"
+          if [ -n "$VOLUME" ]; then
+            python scripts/build_book.py --volume "$VOLUME" $FLAGS
+          else
+            # Planner mode (cron + empty dispatch): cut and build every
+            # newly complete volume across all registered series.
+            PLAN_FLAGS=""
+            for s in books/series/*.yaml; do
+              PLAN_FLAGS="$PLAN_FLAGS --plan-series $(basename "$s" .yaml)"
+            done
+            python scripts/build_book.py $PLAN_FLAGS --build-planned $FLAGS
+          fi
+
+      - name: Verify book integrity
+        run: python -m pytest tests/test_book_compiler.py -q
+
+      - name: Regenerate Books page
+        run: python generate_html.py --books
+
+      - uses: ./.github/actions/safe-commit-push
+        with:
+          # Glob on volumes: planner mode creates new volume YAMLs that
+          # must be committed with the catalog (the youtube_channel_history
+          # silent-drop class — never hardcode a file list a generator
+          # can outgrow).
+          add-paths: |
+            books/catalog.json
+            books/volumes/*.yaml
+            books.html
+          commit-message: "Build book: ${{ github.event.inputs.volume || 'planned volumes' }}"
+          recovery-on-failure: "true"
+          recovery-show: "books"
+
+      - name: Notify operator
+        if: success()
+        env:
+          NOTIFICATION_WEBHOOK_URL: ${{ secrets.NOTIFICATION_WEBHOOK_URL }}
+        run: |
+          if [ -n "$NOTIFICATION_WEBHOOK_URL" ]; then
+            printf '{"text":"Book built: %s — artifacts on R2 under books/%s/. Store checklist: docs/books.md"}' \
+              "${{ github.event.inputs.volume }}" "${{ github.event.inputs.volume }}" \
+              | curl -sf -X POST -H "Content-Type: application/json" -d @- \
+                  "$NOTIFICATION_WEBHOOK_URL" || true
+          fi

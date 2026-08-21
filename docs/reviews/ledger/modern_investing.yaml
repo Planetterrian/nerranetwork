@@ -801,4 +801,246 @@ reviews:
         evidence: null
     agent_cost_usd: null
 
+  - date: 2026-08-19
+    pr: null
+    doc: docs/reviews/modern_investing_review_2026_08_19.md
+    reviewer: claude-code (operator audit — learning loop, options, transparency)
+    summary: >
+      Three operator questions, all checked against data. (1) LEARNING:
+      the loop ran but its verdicts were artifacts - the rule scoreboard
+      emitted FIVE identical RETIREMENT CANDIDATE findings (same 10
+      trades, same -0.17% vs +0.43%) because all five rules were stamped
+      on exactly the same trades and are perfectly collinear, while the
+      control group was the pre-era trades whose windows the integrity
+      passes had disowned. Six of thirteen active "rules" are production
+      hygiene (re-teach cooldowns, "state the NASDAQ level", and three
+      variants of "verify price data from multiple providers" - the
+      pipeline's own data-fetch bugs taught as investing wisdom), and
+      three more are the same volume rule in different scopes, scoring
+      0.51-0.61 against a 0.62 dedup threshold. No rule had ever been
+      scored or retired. (2) OPTIONS: 32 of the last 40 episodes discuss
+      options and covered_call has been taught 33 times, against 0 of 61
+      trades using any derivative. (3) TRANSPARENCY: solid aggregates, but
+      the performance page showed five trades and nothing published
+      carried entry/exit bar dates, stops, horizons, invalidations, rules
+      in effect or confidence - none of what a listener needs to check the
+      record or learn the process.
+    shipped:
+      - "rule scoreboard is era-scoped, refuses a verdict when every
+        stamped trade carried the same rule set, flags collinear rules as
+        ONE piece of evidence, requires >=5 trades on BOTH arms, and says
+        'not measurable yet' rather than going silent"
+      - "_is_trading_rule classifies production-hygiene lessons out of the
+        pick prompt and the scoreboard (retires the long-carried LL-054
+        closing-price item automatically)"
+      - "_rule_core dedups on the rule's CONSTRAINT with its scope clause
+        stripped - collapses LL-017 into LL-067 at 0.796 and admits the
+        sector-cap rule instead"
+      - "options positions: covered calls and cash-secured puts held to
+        expiry. Contract quoted LIVE at pick time (real strike/expiry/
+        bid-ask mid); payoff at expiry is arithmetic on the underlying
+        close with no free parameters, verified against hand calculations"
+      - "deterministic selection - nearest listed expiry 21-45d out,
+        listed strike closest to 4% OTM, ITM and unquoted strikes skipped"
+      - "if the chain cannot be quoted the pick degrades to shares and
+        records option_quote_failed; a premium is NEVER estimated"
+      - "settlement requires evidence the market traded on/after expiry (a
+        test caught this settling a fresh position against its own entry
+        day)"
+      - "shows/_trading_policy.yaml gains the options rulebook; both
+        prompts require the structure, its mechanics and the
+        early-assignment caveat on air"
+      - "scripts/build_mit_ledger.py -> api/mit_trade_ledger.json + .csv,
+        published nightly: every trade with the full decision record,
+        including the 7 voided picks and the pre-era trades, flagged
+        rather than hidden"
+      - 20 new drift guards (TestOptionsPositions, TestRuleScoreboardHonesty,
+        TestTradingVsPipelineRules, TestPublicLedger) + 4 superseded guards
+        re-pinned with reasons
+    deferred:
+      - "per-strategy performance: the 61 strategy strings are unique
+        free-text, so there is nothing to group on. Tagging them into
+        families is the next tractable step and would let the show report
+        which APPROACHES work, not just which sectors"
+      - "the loop has still produced zero scored rules - it is now capable
+        and refuses to fake it, but a first verdict needs the rule set to
+        vary across roughly a dozen era trades"
+      - "operator: the 8 pre-era trades reconciling to no market bar still
+        need adjudication (now history cleanup, not a live problem)"
+      - "carried: significance-qualifier accept-or-abandon; SnapTrade
+        Phase-0"
+    predictions:
+      - metric: rule-effectiveness verdicts emitted from a single
+          undivided sample
+        baseline: "5 identical RETIREMENT CANDIDATE flags from one 10-trade set"
+        expected: "0 - the scoreboard reports 'not measurable' until the
+          rule set genuinely varies"
+        verdict: pending
+        evidence: null
+      - metric: production-hygiene rules appearing in the pick prompt
+        baseline: "6 of 13 active rules"
+        expected: "0 - only trading rules are stamped and scored"
+        verdict: pending
+        evidence: null
+      - metric: simulated trades using an options structure
+        baseline: "0 of 61, against options taught in 32 of 40 episodes"
+        expected: ">=1 within 20 episodes, with a real recorded premium
+          and an expiry-settled payoff; ZERO positions carrying an
+          estimated premium"
+        verdict: pending
+        evidence: null
+      - metric: trades published with their full decision record
+        baseline: "5 rows on the performance page, no entry/exit dates,
+          stops, horizons or invalidations anywhere public"
+        expected: "100% of trades in api/mit_trade_ledger.json, voided
+          ones included"
+        verdict: pending
+        evidence: null
+    agent_cost_usd: null
+
+  - date: 2026-08-20
+    pr: null
+    doc: docs/reviews/modern_investing_review_2026_08_20.md
+    reviewer: claude-code (operator question — further improvements)
+    summary: >
+      Audit for remaining improvements found four; three shipped. (1) The
+      learning loop was honest but POWERLESS - across 15 stamped trades
+      only two rule sets ever existed, differing by one rule and only
+      because the ledger happened to change. Four of five rules were
+      common to both, so no rule could ever be told apart from another and
+      the scoreboard would have stayed silent indefinitely while looking
+      like a working feedback loop. (2) 61 trades produced 61 UNIQUE
+      free-text strategy strings, so the show could report alpha by sector
+      but never by APPROACH - "are our momentum entries better than our
+      valuation screens" was unanswerable. (3) The daily audit runs at a
+      fixed 16:15 UTC while shows finish anywhere from 09:32 to 19:41; a
+      late episode was logged "critical: Missed episode" and auto-closed
+      next day by confirming the FILE EXISTS, so its content was never
+      reviewed. On 2026-08-19 that hit four shows at once, and the first
+      catch-up run found a 32-episode network-wide backlog.
+    shipped:
+      - "deterministic rule rotation (shows/_trading_policy.yaml
+        learning.rule_rotation) - 4 slots from a ~6-rule pool cycling by
+        episode number, giving every rule both a with-rule and a
+        without-rule arm; reproducible from the trade record"
+      - "proven rules are pinned and stop rotating; always_on: true pins
+        by hand for safety-shaped rules"
+      - "_proven_rule_ids scores a rule as proven only with >=5 trades on
+        both arms and a positive difference"
+      - "closed strategy-family vocabulary (10 families) REQUIRED on new
+        picks and DERIVED from free text for the 61 historic trades, so
+        per-approach alpha is reportable immediately"
+      - "_build_strategy_family_performance feeds the pick prompt and
+        inherits the window discipline - verified-window trades when there
+        are enough, otherwise labelled indicative-only and not for air"
+      - "review_episodes.py catch-up pass: episodes from the previous 3
+        days with no coverage mark are reviewed, tracked in
+        api/review_coverage.json (14-day prune), capped at 10 per run
+        oldest-first so the AI review cost never spikes"
+      - "daily-audit.yml commits api/review_coverage.json so the pass is
+        idempotent across CI runs"
+      - 18 new drift guards (TestRuleRotation, TestStrategyFamilies,
+        TestReviewCatchUp)
+    deferred:
+      - "LISTENER FEEDBACK LOOP - the biggest remaining gap. The system
+        learns from its trades, its rules, YouTube retention and an LLM
+        judge, but has NO path for a listener's experience to enter the
+        loop (zero mentions of reply/email/question in the podcast
+        prompt) despite running a newsletter that could carry one. For a
+        show that exists to teach investing, the one signal it never
+        collects is whether anyone learned anything. Needs an inbox and a
+        triage path — operator decision, not just code"
+      - "long-form YouTube retention 10% vs 33% on Shorts across 169
+        videos; long-form is where subscribers convert, but this is a
+        network-wide video problem"
+      - "audience flat at 221 downloads/30d (weekly 52/44/61/50)"
+      - "carried: the 8 pre-era trades reconciling to no market bar;
+        significance-qualifier accept-or-abandon; SnapTrade Phase-0"
+    predictions:
+      - metric: distinct rule sets stamped across era trades
+        baseline: "2 sets across 15 trades, differing by one rule, by accident"
+        expected: ">=4 distinct sets within 20 era trades, and every
+          active rule carrying both a with-rule and a without-rule arm"
+        verdict: pending
+        evidence: null
+      - metric: rules with enough evidence to be scored (>=5 trades on
+          both arms)
+        baseline: "0 - structurally impossible before rotation"
+        expected: ">=1 scored rule within ~25 era trades; if still 0 by
+          then, the pool is too small and needs widening rather than more
+          waiting"
+        verdict: pending
+        evidence: null
+      - metric: picks carrying an explicit strategy family
+        baseline: "0 - the field did not exist; 61 unique free-text strings"
+        expected: ">=90% of new picks, and a per-family record the show
+          can quote once any family reaches 5 verified-window trades"
+        verdict: pending
+        evidence: null
+      - metric: episodes that finish after the audit window and are never
+          content-reviewed
+        baseline: "4 on 2026-08-19 alone; a 32-episode backlog at first run"
+        expected: "0 - the catch-up pass reviews them within 3 days"
+        verdict: pending
+        evidence: null
+    agent_cost_usd: null
+
+  - date: 2026-08-20b
+    pr: null
+    doc: docs/reviews/modern_investing_review_2026_08_20b.md
+    reviewer: claude-code (operator question - announce the changes on air)
+    summary: >
+      Checked what Ep141-143 actually aired after the record restarted.
+      All three announced the new regime; one of three said WHY it
+      restarted; none pointed at the rulebook or the ledger; and none
+      mentioned the figure the show used to quote. From a listener's
+      seat the old "+9.28% across forty-five trades" simply vanished -
+      which is indistinguishable from burying a bad result, when the
+      truth is the opposite (it could not be reproduced, so it was not
+      ours to claim). Shipped a NARROW one-off correction rather than a
+      recurring changelog, and made the "published for anyone to check"
+      claim actually true - the ledger was built nightly into api/ and
+      linked from nowhere.
+    shipped:
+      - "_build_methodology_disclosure - a self-retiring on-air segment
+        (METHODOLOGY_DISCLOSURE_EPISODES = 3) covering why the old figure
+        went, the weekday-dependent exit that was the deeper problem, the
+        pre-era trades that match no bars, the published rulebook, the
+        honest cost of a small record, and how to audit ANY track record"
+      - "stamped on the tracker as a list of episode numbers, so a second
+        get_prompt_context call in one episode cannot consume two airings
+        and the record shows which episodes carried it"
+      - "read-only (test/rehearse) runs never consume an airing"
+      - "internals are deliberately out of scope - rule rotation, review
+        coverage and scoreboard mechanics are not listener content, and a
+        drift guard fails if they leak into the spoken portion"
+      - "performance page gained a Verify this record yourself panel
+        linking the rulebook and the trade ledger (JSON + CSV); a guard
+        asserts both the links and the files exist"
+    predictions:
+      - metric: episodes carrying the methodology correction
+        baseline: "0 - Ep141-143 announced the new regime but never
+          explained the disappearance of the old figure"
+        expected: "exactly 3, then 0 forever; if a 4th airs the
+          self-retirement is broken"
+        verdict: pending
+        evidence: null
+      - metric: listener-value score on the correction episodes
+        baseline: "~7.3 steady state since Ep128"
+        expected: "no regression below 7.0 - the segment displaces
+          roughly 250 words of regular content, and if it costs more than
+          it teaches it should not have aired 3 times"
+        verdict: pending
+        evidence: null
+      - metric: visits to modern-investing-performance.html in the 14
+          days after the correction airs
+        baseline: "unmeasured - the page existed but the show never
+          pointed at the primary sources"
+        expected: "measurable and non-zero; if it stays flat the on-air
+          pointer is not working and the ask needs rewording, not
+          repeating"
+        verdict: pending
+        evidence: null
+    agent_cost_usd: null
+
 do_not_retry: []

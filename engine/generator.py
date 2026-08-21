@@ -10,6 +10,7 @@ from __future__ import annotations
 import logging
 import os
 import re
+import time
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -64,7 +65,7 @@ class LLMEmptyOutputError(LLMRefusalError):
 # prefer ``config.llm.fallback_model`` where possible. Points at the older
 # grok-4.20-reasoning so a refusal switches model family/snapshot rather
 # than re-asking the same primary (grok-4.3).
-_LLM_FALLBACK_MODEL = "grok-4.3"
+_LLM_FALLBACK_MODEL = "grok-4.20-reasoning"
 
 
 def _resolve_fallback_model(config) -> str:
@@ -165,11 +166,11 @@ def _get_api_key() -> str:
 def _call_grok(
     prompt: str,
     *,
-    model: str = "grok-4.6",
+    model: str = "grok-4.3",
     system_prompt: Optional[str] = None,
     temperature: float = 0.7,
     max_tokens: int = 3500,
-    timeout: float = 300.0,
+    timeout: Optional[float] = None,
     cache_key: Optional[str] = None,
     reasoning_effort: Optional[str] = None,
 ) -> tuple[str, Dict[str, Any]]:
@@ -194,7 +195,25 @@ def _call_grok(
     if not api_key:
         raise RuntimeError("Missing GROK_API_KEY (or XAI_API_KEY).")
 
-    client = OpenAI(api_key=api_key, base_url="https://api.x.ai/v1", timeout=timeout)
+    # Timeout-envelope contract (2026-08-18 grok-4.6 outage post-mortem;
+    # docs/model_upgrade_playbook.md):
+    #   - Per-request timeout is env-tunable (NERRA_LLM_TIMEOUT_SECONDS) so
+    #     a slower model generation can be accommodated by config, not by
+    #     letting requests hang.
+    #   - max_retries=0: the OpenAI SDK's default internal retry (2) sat
+    #     UNDER our tenacity wrappers, so one hanging upstream turned into
+    #     3 SDK requests x 3 tenacity attempts = 9 five-minute stalls — a
+    #     45-minute burn that hit the CI hard-kill. Retries belong to ONE
+    #     layer: tenacity (which logs each attempt); the SDK makes exactly
+    #     one HTTP request per call.
+    if timeout is None:
+        timeout = float(os.environ.get("NERRA_LLM_TIMEOUT_SECONDS", 300))
+    client = OpenAI(
+        api_key=api_key,
+        base_url="https://api.x.ai/v1",
+        timeout=timeout,
+        max_retries=0,
+    )
 
     messages: list[dict] = []
     if system_prompt:
@@ -219,7 +238,20 @@ def _call_grok(
             "reasoning_effort": effort,
         }
 
+    _started = time.monotonic()
     resp = client.chat.completions.create(**create_kwargs)
+    _elapsed = time.monotonic() - _started
+    # Latency canary (model-upgrade early warning): a completion that
+    # takes most of its timeout budget is one capacity dip away from a
+    # hard stall. The grok-4.6 day-one failure would have printed this on
+    # every successful show hours before the big shows started timing out.
+    if _elapsed > 0.6 * timeout:
+        logger.warning(
+            "Slow LLM completion: %s took %.0fs (%.0f%% of the %.0fs request "
+            "timeout). If a model change caused this, see "
+            "docs/model_upgrade_playbook.md before it becomes a timeout.",
+            model, _elapsed, 100 * _elapsed / timeout, timeout,
+        )
 
     # content can come back None on degraded responses (all-reasoning
     # completions during capacity incidents) — normalize to "" so callers
@@ -531,6 +563,39 @@ def _validate_llm_output(
     def _is_structural_framing(phrase: str) -> bool:
         return any(frag in phrase for frag in _STRUCTURAL_FRAMING)
 
+    def _is_titlecase_entity(phrase: str) -> bool:
+        """True when the phrase's occurrences in the ORIGINAL text are
+        predominantly Title-Case — a story-of-the-day proper noun.
+
+        The ``known_entities`` exemption only covers the show's YAML
+        keywords; the entities of any single day's lead story can't be
+        pre-listed. 2026-08-18: SpaceX Ep073's lead story (Starship Ship
+        40 towed to Christmas Island after 24 days at sea) scored 4 on
+        its own entities — 'christmas island' 6x, 'ship 40' 4x — and a
+        committed, published, perfectly sound digest read as a
+        regeneration candidate. Hallucination loops live in lowercase
+        running prose ('watch for' 12x, 'the kicker is' 5x); a phrase
+        that is capitalized nearly every time it appears is a NAME the
+        news is about. Numeric tokens pass through unchanged ('Ship 40'),
+        but at least one alphabetic token must be capitalized so numeric
+        facts ('24 days') stay countable.
+        """
+        toks = phrase.split()
+        if not any(t[:1].isalpha() for t in toks):
+            return False
+        cap_pattern = r"\b" + r"[\s,]+".join(
+            (re.escape(t[:1].upper()) + re.escape(t[1:]))
+            if t[:1].isalpha() else re.escape(t)
+            for t in toks
+        )
+        any_pattern = r"\b" + r"[\s,]+".join(re.escape(t) for t in toks)
+        try:
+            cap = len(re.findall(cap_pattern, text))
+            total = len(re.findall(any_pattern, text, re.IGNORECASE))
+        except re.error:  # noqa: BLE001 — never let the exemption crash scoring
+            return False
+        return total > 0 and cap / total >= 0.8
+
     if not text or not text.strip():
         logger.error(
             "LLM returned EMPTY %s for '%s' — treating as retryable failure",
@@ -717,6 +782,9 @@ def _validate_llm_output(
             # Skip framing the show's own memory block supplies.
             if _is_structural_framing(phrase):
                 continue
+            # Skip story-of-the-day proper nouns ("Christmas Island").
+            if _is_titlecase_entity(phrase):
+                continue
             if count >= _rep_threshold:
                 _suspicious_count += 1
                 logger.warning(
@@ -799,6 +867,9 @@ def _validate_llm_output(
                 continue
             # Skip framing the show's own memory block supplies.
             if _is_structural_framing(phrase):
+                continue
+            # Skip story-of-the-day proper nouns ("vera rubin nvl72").
+            if _is_titlecase_entity(phrase):
                 continue
             if count >= _rep_threshold:
                 _suspicious_count += 1

@@ -308,6 +308,15 @@ jobs:
           fetch-depth: 1
 
       - uses: ./.github/actions/setup-python
+        # Hung-setup guard (2026-08-19): a GitHub-side cache/download
+        # stall froze this step for SIX HOURS on four shows' scheduled
+        # runs (FF/M&A/MAB/MIT all cancelled at the 6h job limit having
+        # produced nothing; FF's setup had already taken 46 min the day
+        # before). Normal is 1-2 min; 45 gives a degraded-but-moving
+        # install room while turning a genuine hang into a fast, LOUD
+        # failure the daily audit's retry path can recover the same
+        # morning instead of after the whole slot is gone.
+        timeout-minutes: 45
         with:
           python-version: '3.12'
           requirements-file: 'requirements.txt'
@@ -451,7 +460,19 @@ jobs:
             exit 0
           fi
           exit $EXIT_CODE
-        timeout-minutes: 45
+        # INVARIANT (2026-08-18 outage): this hard-kill must sit ABOVE the
+        # in-process watchdog (PIPELINE_TIMEOUT_SECONDS below, 3000 s =
+        # 50 min) with real margin, so an overrun aborts via SIGALRM with a
+        # clear reason instead of being killed mid-write. At 45 the watchdog
+        # could NEVER fire in CI — and unintended_consequences Ep093
+        # finished a fully-published episode 0.35 s before the 45-minute
+        # kill, so the commit step was skipped and the episode orphaned
+        # (live on YouTube/R2/newsletter, nothing in git). Normal days run
+        # ~35-45 min when the long-form render is slow; 60 gives the
+        # watchdog room to be the one that decides.
+        # tests/test_pipeline_safety.py::TestTimeoutEnvelope pins the
+        # ordering — change both together or CI fails.
+        timeout-minutes: 60
         env:
           # June 2026: secrets are passed directly as env vars instead of
           # being written to a .env file via a heredoc + sed strip — same
@@ -495,7 +516,20 @@ jobs:
           # 50 min — Tesla Ep537 timed out at 40 min mid-slideshow after a
           # 15-min TTS + 74-scene xfade graph. Slot cap (24) is the primary
           # fix; this headroom covers long TTS + long-form + 2 Shorts.
+          # MUST stay comfortably BELOW the step's timeout-minutes above
+          # (60 min) so the SIGALRM watchdog — not the CI hard-kill — is
+          # what ends an overrun (2026-08-18 outage; drift guard in
+          # tests/test_pipeline_safety.py::TestTimeoutEnvelope).
           PIPELINE_TIMEOUT_SECONDS: '3000'
+          # Per-request LLM timeout (engine/generator._call_grok). Raised
+          # 300 -> 600 for the 2026-08-18 staged grok-4.6 trial: measured
+          # 4.6 latency on the trial shows is 205-242s, and 600 gives the
+          # tail room without letting one hung stage burn the job — with
+          # SDK retries off, worst-case is 3 tenacity attempts x 600s =
+          # 30 min per LLM stage, still under the 50-min watchdog above.
+          # A grok-4.3 call is unaffected (this only bounds how long we
+          # wait for a hung request, it never slows a fast one).
+          NERRA_LLM_TIMEOUT_SECONDS: '600'
           # Single-pass video render (engine.video._single_pass_enabled).
           # Fuses the slideshow and composite into one ffmpeg graph,
           # removing an intermediate 1080p encode+decode: 23-34% faster
@@ -779,6 +813,7 @@ jobs:
           fetch-depth: 1
 
       - uses: ./.github/actions/setup-python
+        timeout-minutes: 45   # hung-setup guard — see the run job's note
         with:
           python-version: '3.12'
           requirements-file: 'requirements.txt'

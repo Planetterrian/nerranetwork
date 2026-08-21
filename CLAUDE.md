@@ -53,7 +53,7 @@ and the Shorts motion A/B: [`docs/funnel.md`](docs/funnel.md).
 
 ## Project Overview
 
-Automated daily podcast generation system running 16 shows via a unified
+Automated daily podcast generation system running 17 shows via a unified
 `run_show.py` runner + per-show YAML configs, plus 4 legacy standalone scripts
 (deprecated — see note below). Shows use **Grok TTS** (`engine.tts.grok_speak_chunk`)
 and (where enabled) post to X/Twitter via `engine/publisher.post_to_x()`.
@@ -76,6 +76,7 @@ and (where enabled) post to X/Twitter via `engine/publisher.post_to_x()`.
 | The DP Pod | — | `shows/dp_pod.yaml` | Daily | — (X disabled) | Grok TTS (two-voice: Patrick + Dan) |
 | The Age of AI | — | `shows/age_of_ai.yaml` | When an interview is ready (Nerra Voices pipeline, NOT run_show) | — (X disabled) | Real guest phone audio + Mira narration (Grok voice `ara`) |
 | Offshore North | — | `shows/offshore_north.yaml` | Monday | — (X disabled) | Grok TTS (Dan `0vscf8u8yrxc`, single-narrator) |
+| Nerra Daily | — | registry-only (`shows/network_meta.yaml`; NOT run_show — assembled by `scripts/build_daily_edition.py`) | Daily, after the English slate | — (X disabled) | Splices published show audio + Mira links (Grok voice `ara`) |
 
 > Weekly-summary segment (July 2026): shows on a daily cadence with
 > `weekly_summary_segment: true` in their YAML run a NORMAL daily episode on
@@ -248,6 +249,98 @@ today's work, not just explain yesterday's):
   methodology: [`docs/mit_trading_method.md`](docs/mit_trading_method.md).
   Drift guards: `TestTradingPolicy`, `TestEraScopedRecord`,
   `TestReproducibleDecisions`.
+- **MIT trades options now, and the premium is never modelled**
+  (2026-08-19). The show taught options in 32 of 40 episodes and had
+  traded one in 0 of 61 positions. Covered calls and cash-secured puts
+  are now real: the contract is quoted LIVE at pick time (listed strike,
+  listed expiry, bid/ask mid) because a premium cannot be reconstructed
+  afterwards from free data, and the position is held to EXPIRY where the
+  payoff is arithmetic on the underlying close with no free parameters.
+  **If the chain cannot be quoted the pick degrades to shares** and
+  records `option_quote_failed` — never an estimated premium. Selection
+  is by rule (nearest listed expiry 21-45d, strike closest to 4% OTM,
+  ITM/unquoted skipped) so it is reproducible. Returns are on capital
+  actually committed, which is what makes them comparable with a $1,000
+  share position. Early assignment is NOT modelled and the prompts
+  require saying so. Guards: `TestOptionsPositions`.
+- **MIT's learned rules ROTATE, or the loop can never score any of them**
+  (2026-08-20). Across the first 15 stamped trades only two rule sets
+  ever existed, differing by one rule and only because the ledger
+  happened to change — four of five rules were common to both, so no rule
+  could be told apart from another and the (honest) scoreboard would have
+  stayed silent forever while looking like a working feedback loop.
+  `learning.rule_rotation` in [`shows/_trading_policy.yaml`](shows/_trading_policy.yaml)
+  now shows a rotating subset (4 slots from a ~6-rule pool, cycling on
+  the episode number, so it is reproducible from the trade record) which
+  gives every rule BOTH a with-rule and a without-rule arm. A rule that
+  demonstrates an edge is PINNED and stops rotating (`_proven_rule_ids`,
+  >=5 trades on both arms); `always_on: true` pins by hand for
+  safety-shaped rules. Do not "simplify" the selector back to
+  most-recent-N — that is what made attribution impossible. Guards:
+  `TestRuleRotation`.
+- **MIT reports alpha by strategy FAMILY, not just by sector**
+  (2026-08-20). 61 trades produced 61 unique free-text strategy strings,
+  so "are our momentum entries better than our valuation screens" was
+  unanswerable. `STRATEGY_FAMILIES` / `strategy_family()` is a closed
+  vocabulary REQUIRED on new picks and DERIVED from the free text for
+  history (unmatched => `other`, never forced). The block inherits the
+  window discipline: verified-window trades when there are enough,
+  otherwise labelled indicative-only and explicitly not for air. Guards:
+  `TestStrategyFamilies`.
+- **MIT accounts on air for the number that DISAPPEARED** (2026-08-20).
+  Ep141-143 all announced the new era-scoped record; one of three said
+  why, none pointed at the rulebook or ledger, and none mentioned the
+  **+9.28% across forty-five trades** the show had been quoting — which
+  simply stopped appearing. A strong figure that quietly vanishes is
+  indistinguishable from one being buried, and here the truth is the
+  opposite (it could not be reproduced, so it was not ours to claim).
+  `_build_methodology_disclosure` is a SELF-RETIRING correction —
+  `METHODOLOGY_DISCLOSURE_EPISODES = 3` airings, stamped as a list of
+  episode numbers so a second `get_prompt_context` call in one episode
+  cannot burn two, never consumed by read-only runs — and it is NOT a
+  recurring changelog: do not extend it, and keep pipeline internals
+  (rule rotation, review coverage, scoreboard mechanics) out of it. Its
+  payload is the transferable skill, not the apology: the four questions
+  that audit ANY track record (when did it start and was the date chosen
+  after the fact; what is the exit rule and was it fixed in advance; are
+  losers and abandoned positions included; are individual trades
+  published or only the summary). The segment claims the rules and
+  ledger are "published for anyone to check" — that claim was FALSE in
+  practice until this pass, because `api/mit_trade_ledger.*` was built
+  nightly and linked from nowhere; the performance page now carries a
+  *Verify this record yourself* panel and a guard asserts the links and
+  the files both exist. Prompt change => A/B-listen per landmine #17.
+  Guards: `TestMethodologyDisclosure`.
+- **The daily audit reviews late episodes on a CATCH-UP pass** — it runs
+  at a fixed 16:15 UTC while shows finish anywhere from 09:32 to 19:41,
+  and anything later was logged "critical: Missed episode" then
+  auto-closed next day by confirming the FILE EXISTS, so its content was
+  never reviewed at all (four shows on 2026-08-19; a 32-episode
+  network-wide backlog at first run). `review_episodes.py` now reviews
+  the previous 3 days' unmarked episodes, tracked in
+  `api/review_coverage.json` (14-day prune, committed by daily-audit so
+  the pass is idempotent), capped at 10/run oldest-first because the AI
+  review calls Grok per episode. Guards: `TestReviewCatchUp`.
+- **MIT's rule scoreboard must refuse to claim what it cannot measure.**
+  It was emitting FIVE identical `RETIREMENT CANDIDATE` verdicts (same 10
+  trades, same -0.17% vs +0.43%) because all five rules were stamped on
+  exactly the same trades — perfectly collinear, one undivided sample
+  reported as five findings — with the disowned pre-era trades as its
+  control group. It is now era-scoped, refuses a verdict when the stamped
+  rule set never varies, flags collinear rules as ONE piece of evidence,
+  requires >=5 trades on BOTH arms, and says "not measurable yet" instead
+  of going silent (silence is how the artifacts rode for weeks). Also:
+  `_is_trading_rule` keeps production-hygiene lessons — re-teach
+  cooldowns, "state the NASDAQ level", the sim's own data-fetch bugs —
+  out of the pick prompt, and `_rule_core` dedups on the rule's
+  constraint with its scope clause stripped. Guards:
+  `TestRuleScoreboardHonesty`, `TestTradingVsPipelineRules`.
+- **The MIT trade ledger is public** (`scripts/build_mit_ledger.py` ->
+  `api/mit_trade_ledger.json` + `.csv`, nightly): every trade with entry/
+  exit bar dates, stop, horizon, invalidation, confidence, rules in
+  effect and option contract. Voided picks and pre-era trades are
+  INCLUDED and flagged — a ledger that drops its failures is marketing.
+  Guards: `TestPublicLedger`.
 - **Two functions speak MIT's alpha, and they must never disagree:**
   `_build_portfolio_summary` and `_build_benchmark_block`. The Aug 15
   pass fixed only the first, and because both reach the same prompt the
@@ -421,6 +514,38 @@ today's work, not just explain yesterday's):
   artifacts, dispatch-event coherence, validators, the two human gates).
   RSS + site only at launch; X/YouTube/newsletter/multilingual off until
   the phase-8 public launch.
+- **NDaily** (Nerra Daily) — the network's **combined daily edition**
+  (Aug 2026): one ~2 h episode/day that SPLICES the day's already-published
+  English episode MP3s (pulled back from R2) with short Mira host links
+  (Grok voice `ara`) between them — operator-set fixed rundown (SpaceX →
+  Tesla → FF → M&A → Planetterrian → Omni View → the rest), DP Pod
+  closes; Monday adds EI + Offshore North. Mira also speaks a midpoint
+  **field note** — one web-search-grounded item of her own, own chapter,
+  honest-SKIP on unverifiable days (`shows/prompts/nerra_daily_find.txt`). **Not a run_show show and it
+  must never become one**: registry entry in `shows/network_meta.yaml`
+  only (no `shows/nerra_daily.yaml`, deliberately — that keeps it out of
+  the review rotation and every shows-glob consumer), assembled by
+  `scripts/build_daily_edition.py` + `engine/daily_edition.py`, workflow
+  `.github/workflows/nerra-daily.yml` (workflow_run after each Run Podcast
+  Show + ready gate: builds minutes after the last expected show lands;
+  ≥14:00 UTC sweeps build with whatever published; committed summaries
+  entry per date = idempotency key). **Each segment's baked-in outro tail
+  (network sibling plug → surface plug → AI disclosure) is trimmed via
+  the committed Whisper word timestamps** (`find_promo_cut` — fuzzy on
+  Whisper's brand spellings, anchored on the four `network_promo` frames;
+  no match = segment ships whole, never a guessed cut) and Mira speaks ONE
+  network-level AI disclosure at the end — the standalone feeds keep their
+  plugs untouched. Marginal cost ≈ one small Grok call (links, grok-4.3) +
+  ~4k TTS chars + one R2 upload (`nerra_daily/` keyspace) — no content
+  regenerated. Mira's link LLM output is JSON-validated with a
+  deterministic titles-based fallback; her Age of AI self-reference
+  rotates by date and a new AOAI episode is plugged, never spliced.
+  Editions are language-parameterized (`EditionSpec`) for future RU/FR.
+  Surfaces at launch: own RSS (`nerra_daily_podcast.rss`, exact spliced
+  chapter markers), show page, daily rundown blog (links into each show's
+  post — never duplicates their digests). Docs:
+  [`docs/nerra_daily.md`](docs/nerra_daily.md). Drift guards:
+  `tests/test_daily_edition.py`.
 - All shows delegate X posting to `engine.publisher.post_to_x()`
 - TST/FF/PT delegate voice normalization to `engine.audio.normalize_voice()`
 - All shows use `engine.audio.mix_with_music()` for music mixing (3 modes:
@@ -896,6 +1021,44 @@ the starting hook sequence"). Render/metadata-only — outside landmine
   in `gallery_library._rank` — overlap stays primary, missing report =
   legacy order); motion-A/B window-parity de-confound (top-two windows
   swap by episode parity on enrolled shows).
+
+### Anthology books — ebook + audiobook from the narrative shows (Aug 2026)
+
+Product B6 (operator-directed): a SERIES machine, not one-off books.
+`books/series/<show>.yaml` is the branding contract (author **Patrick
+Novak**, series title, subtitle template, show brand colors, Grok-art
+style guides, `volume_size` 10–20 — enforced); `plan_next_volumes()`
+(`engine/book_compiler.py`) cuts the next thin
+`books/volumes/<id>.yaml` automatically as episodes accrue
+(append-only — published volumes never change), and
+`scripts/build_book.py` (Actions "Build Book": manual per-volume, or
+monthly-cron planner mode that plans + builds everything pending)
+compiles digests into a store-ready EPUB 3 + Grok-TTS-narrated
+chaptered M4B. Text transform is **deterministic — no LLM**; art is
+`engine/book_art.py` on **pinned** `grok-imagine-image-quality` (never
+a floating -latest alias): one 16:9 illustration per chapter (embedded
+in the EPUB, re-encoded ≤~1000px JPEG for KDP delivery fees) + fresh
+portrait cover art per volume under FIXED series typography
+(`compose_cover` — consistency is the series branding; style guides ban
+text inside generated images). Every generated image also uploads to
+the show's public gallery with `intended_use` `book_chapter`/
+`book_cover` — values the video scene selector must NEVER match (the
+thumbnail_variant precedent). Cost/volume ≈ $1 art + $2 TTS, gated by
+`--max-image-cost-usd` / `--max-tts-cost-usd`. Rules that bind: chapter
+titles clip via `engine.titles.BOOK_CHAPTER_TITLE_MAX`; EVERY
+reader-facing link goes through `engine.funnel` `kind="book"` (campaign
+carries the VOLUME number; each chapter ends on a funnel-tagged link to
+its source episode page); artifacts to R2 keyspace `books/<id>/` ONLY
+(never a show's audio prefix); `outputs/books/` gitignored (landmine
+#1); both audiobook credits speak the AI-narration disclosure — never
+remove it (every retail channel requires it; Audible/ACX takes no
+third-party AI narration at all). Committed record: series + volume
+YAMLs + `books/catalog.json` → `/books.html` (`generate_html.py
+--books`, in `--all` + sitemap + footer). Live: UC Vols 1–4 (eps 1–80),
+First Principles Vols 1–3 (eps 1–60), 20 stories each. Spot-listen +
+eyeball art on a new volume before store submission (landmine-#17
+habit). Store checklist + policies: [`docs/books.md`](docs/books.md).
+Drift guards: `tests/test_book_compiler.py`.
 
 ### Site-showcase video endings (Aug 2026, operator-directed)
 
@@ -1383,13 +1546,32 @@ directed a NETWORK-WIDE upgrade to grok-4.6** (all LLM stages — digest,
 fetch, scripts, synth, titles, reviewer, review agent — off grok-4.3;
 refusal fallback repointed to grok-4.3; the dp_pod-4.5 / MIT-4.6
 `podcast_model` pins removed as superseded/absorbed; ~+$22-25/mo).
-Registered as experiment **`network-grok-46-upgrade`, readout
-2026-09-01** — its revert triggers are load-bearing: any invented
-number in an MIT script = immediate one-line revert
-(`model: grok-4.3` in `_defaults.yaml`); reviewer FACTUAL_ERRORS rate
-clearly above the pre-08-18 baseline; fetch tool-calls failing on 4.6.
-grok-4.6's confident-hallucination profile is UNMEASURED for this
-network — do not treat the upgrade as validation; the readout decides.
+**REVERTED the SAME DAY (2026-08-18, operator-directed)** — the trigger
+was operational, not editorial: grok-4.6 digest latency ran **5-10×
+grok-4.3** on every show measured (planetterrian 44s → 420s, MAB 36s →
+242s, dp_pod 55s → 225s) and the four largest digest prompts (tesla,
+spacex, omni_view, modern_investing) blew the 300 s request timeout or
+were server-disconnected; nested SDK+tenacity retries amplified each
+stall into a 41-45 min burn and **7 of 12 scheduled shows failed on day
+one**. Everything is back on grok-4.3 (refusal fallback back on
+grok-4.20-reasoning; the translation pin deliberately stays grok-4.6 —
+it froze what `grok-latest` already served, and its small chunks never
+tripped a timeout). Experiment `network-grok-46-upgrade` is closed
+(status `done`, outcome REVERTED); grok-4.6's hallucination profile
+remains UNMEASURED. **Any future model upgrade follows
+[`docs/model_upgrade_playbook.md`](docs/model_upgrade_playbook.md)** —
+staged one-show-first rollout with a digest-latency gate — never a
+network-wide day-one flip. **The first staged trial started the same
+day** (operator-directed; experiment `staged-grok-46-trial`, readout
+2026-09-01): grok-4.6 on dp_pod's SCRIPT stage only, first_principles +
+unintended_consequences whole-show (narrative — no news fetch), and the
+synth + reviewer stages; `NERRA_LLM_TIMEOUT_SECONDS` raised to 600 in
+run-show.yml to cover 4.6 latency. Every daily NEWS show's digest/fetch
+stays grok-4.3 — scope pinned by
+`tests/test_llm_usage_pass.py::TestStagedGrok46Trial`. Reviewer
+FACTUAL_ERRORS comparisons from 2026-08-18 on must be cross-show under
+the same 4.6 reviewer, never against pre-08-18 history (the instrument
+changed with the trial).
 The review also shipped three silent-number fixes: (1) **search billed per CALL** ($5/1k, env
 `XAI_SEARCH_COST_PER_CALL`) — xAI dropped per-source billing and the usage
 object's source count, so 100% of credit files since 07-29 recorded $0
