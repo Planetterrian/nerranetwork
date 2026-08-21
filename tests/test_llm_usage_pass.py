@@ -285,3 +285,24 @@ class TestGrok46FunnelAndOpsWave:
         tsrc = (REPO_ROOT / "engine" / "tracking.py").read_text(
             encoding="utf-8")
         assert 'grok[step]["model"] = model' in tsrc
+
+
+class TestReviewerLatencyEnvelope:
+    """2026-08-21: the grok-4.6 reviewer at default (high) effort blew the
+    300s request timeout on ~1/3 of episodes; with a 20-episode catch-up
+    backlog the 35-minute audit job died WITHOUT writing its report or
+    issue — the audit's whole job is to always report. Two contracts:"""
+
+    SRC = (REPO_ROOT / "review_episodes.py").read_text(encoding="utf-8")
+
+    def test_46_reviewer_runs_at_low_effort(self):
+        """Structured YES/NO + score doesn't need deep reasoning; 'low'
+        keeps 4.6's judgment at a latency the audit can afford."""
+        assert 'reviewer_model.startswith("grok-4.6")' in self.SRC
+        assert '"reasoning_effort": "low"' in self.SRC
+
+    def test_ai_review_loop_has_a_wall_clock_budget(self):
+        """Past the budget, episodes keep structural checks and skip the
+        AI layer — the report and GitHub issue always ship."""
+        assert "REVIEW_AI_BUDGET_SECONDS" in self.SRC
+        assert "budget" in self.SRC.lower()
