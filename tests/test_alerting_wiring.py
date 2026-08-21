@@ -257,8 +257,12 @@ class TestAuditRetrySkipsStrandedEpisodes:
 
         mod = _load_script("dispatch_audit_retries")
         (tmp_path / "api").mkdir()
+        # date must be TODAY: the 2026-08-21 stale-report guard refuses to
+        # dispatch from any other day's report before the stranded check runs.
+        _today = datetime.datetime.now(datetime.timezone.utc).date().isoformat()
         (tmp_path / "api" / "daily-review.json").write_text(
-            _json.dumps({"remediation": {"auto_retry_shows": ["tesla"]}}),
+            _json.dumps({"date": _today,
+                         "remediation": {"auto_retry_shows": ["tesla"]}}),
             encoding="utf-8",
         )
         monkeypatch.chdir(tmp_path)  # main() reads api/daily-review.json from cwd
