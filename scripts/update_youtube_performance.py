@@ -182,7 +182,7 @@ def _compose_kind_hints(videos: List[dict], *, channel: str = "en") -> str:
 
 def _show_search_terms(channels_block: Dict[str, dict],
                        videos: List[dict],
-                       max_terms: int = 6) -> List[str]:
+                       max_terms: int = 6) -> Dict[str, List[str]]:
     """The live YouTube search queries plausibly aimed at THIS show.
 
     The Analytics API reports search terms per CHANNEL, but a channel
@@ -193,32 +193,73 @@ def _show_search_terms(channels_block: Dict[str, dict],
     already reaching the channel (EN measured 15% of views from search,
     2026-08-17) — the highest-value tag/title input there is.
     """
+    import collections as _collections
     import re as _re
 
-    show_tokens: set = set()
-    for v in videos[-40:]:
-        for field in ("title", "hook"):
-            show_tokens.update(
-                t for t in _re.findall(r"[a-zа-яё0-9]+",
-                                       str(v.get(field) or "").lower())
-                if len(t) >= 4)
-    if not show_tokens:
-        return []
-    seen: set = set()
-    out: List[str] = []
-    show_channels = {(v.get("channel") or "en").lower() for v in videos}
-    for ch in sorted(show_channels):
+    # 2026-08-21 tightening. The original single-shared-token match let
+    # (a) pure-numeric tokens attribute terms — "2026" appears in half the
+    # catalog, so the Tesla firmware query "tesla update 2026.21.6" landed
+    # in FASCINATING FRONTIERS' and ФИНАНСЫ ПРОСТО's tags — and (b) one
+    # stray cross-show mention (a single FF hook naming Tesla) hand
+    # another show's core entity over as a tag. Off-topic tags are the
+    # "misleading metadata" shape YouTube demotes, on every upload, daily.
+    def _tokens(text: str) -> set:
+        return {t for t in _re.findall(r"[a-zа-яё0-9]+", str(text).lower())
+                if len(t) >= 4 and not t.isdigit()}
+
+    # Tesla-firmware-style version strings ("2026.21.6") are queries about
+    # a software build, not a show — never a tag. Model-number queries
+    # ("gemini 3.7 flash") survive: their version core has no 4-digit lead.
+    _VERSIONY = _re.compile(r"\b\d{4}\.\d+(\.\d+)?\b")
+
+    # Per-channel token counts: a term reported for channel X may only
+    # match tokens from THIS show's channel-X videos (an RU query must not
+    # ride an EN show's tags via its dub titles), and a token counts for
+    # the show only when it recurs (>= 2 recent videos) — one stray
+    # mention is not this show's subject.
+    by_channel_videos: Dict[str, List[dict]] = _collections.defaultdict(list)
+    for v in videos:
+        by_channel_videos[(v.get("channel") or "en").lower()].append(v)
+    per_channel: Dict[str, _collections.Counter] = _collections.defaultdict(
+        _collections.Counter)
+    for ch, vids in by_channel_videos.items():
+        # Recency window PER CHANNEL — a flat videos[-40:] tail can be all
+        # dub rows, starving the EN token set entirely.
+        for v in vids[-40:]:
+            for field in ("title", "hook"):
+                per_channel[ch].update(_tokens(v.get(field) or ""))
+    if not per_channel:
+        return {}
+    # Per-channel output: an RU query belongs on RU dub uploads only —
+    # the flat list consumed by the EN metadata builders is the "en" key.
+    out: Dict[str, List[str]] = {}
+    for ch in sorted(per_channel):
+        show_tokens = {t for t, n in per_channel[ch].items() if n >= 2}
+        if not show_tokens:
+            continue
+        seen: set = set()
+        terms: List[str] = []
         for row in (channels_block.get(ch) or {}).get("search_terms") or []:
             term = str(row.get("term") or "").strip().lower()
-            if not term or term in seen:
+            if not term or term in seen or _VERSIONY.search(term):
                 continue
-            term_tokens = {t for t in _re.findall(r"[a-zа-яё0-9]+", term)
-                           if len(t) >= 4}
-            if term_tokens & show_tokens:
+            tt = _tokens(term)
+            shared = tt & show_tokens
+            # One shared common word is not attribution ("flash" put
+            # Gemini queries on Fascinating Frontiers): a multi-word term
+            # needs two shared tokens; a single-word term must be one of
+            # the show's genuinely core tokens (>= 4 recent mentions).
+            if len(tt) >= 2:
+                ok = len(shared) >= 2
+            else:
+                ok = bool(tt) and per_channel[ch].get(next(iter(tt)), 0) >= 4
+            if ok:
                 seen.add(term)
-                out.append(term)
-            if len(out) >= max_terms:
-                return out
+                terms.append(term)
+            if len(terms) >= max_terms:
+                break
+        if terms:
+            out[ch] = terms
     return out
 
 
@@ -268,7 +309,11 @@ def main() -> int:
         if not out_dir.exists():
             logger.info("%s: no output dir — skipped", dir_name)
             continue
-        matched_terms = _show_search_terms(channels_block, videos)
+        terms_by_channel = _show_search_terms(channels_block, videos)
+        # Flat list = EN terms only: it feeds the EN upload tag builders
+        # and the EN title prompt (RU queries were riding EN tags via the
+        # dub titles — misleading-metadata shape, 2026-08-21 fix).
+        matched_terms = terms_by_channel.get("en") or []
         if matched_terms:
             hint = (hint + "\nLIVE SEARCH QUERIES already reaching this "
                     "channel (fold the phrasing in when honest): "
@@ -279,6 +324,7 @@ def main() -> int:
             "video_count": len(videos),
             "title_hint": hint,
             "search_terms": matched_terms,
+            "search_terms_by_channel": terms_by_channel,
         }
         for ch, h in hints.items():
             out[f"title_hint_{ch}"] = h

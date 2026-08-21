@@ -466,20 +466,65 @@ class TestSearchTermsLoop:
     def test_terms_match_by_token_overlap(self):
         m = self._mod()
         videos = [{"title": "Starship Flight 14 stacks for launch",
-                   "hook": "Starship news", "channel": "en"}]
+                   "hook": "Starship news", "channel": "en"},
+                  {"title": "Starship flight window narrows",
+                   "hook": "flight prep at the pad", "channel": "en"}]
         channels = {"en": {"search_terms": [
             {"term": "starship flight 14", "views": 50},
             {"term": "house of the dragon", "views": 40},
         ]}}
         terms = m._show_search_terms(channels, videos)
-        assert "starship flight 14" in terms
+        assert "starship flight 14" in terms.get("en", [])
         # Unmatched terms are dropped, not sprayed across the channel.
-        assert "house of the dragon" not in terms
+        assert "house of the dragon" not in terms.get("en", [])
 
     def test_no_terms_without_overlap(self):
         m = self._mod()
         assert m._show_search_terms({"en": {"search_terms": [
-            {"term": "starship", "views": 5}]}}, []) == []
+            {"term": "starship", "views": 5}]}}, []) == {}
+
+    def test_numeric_and_version_junk_never_matches(self):
+        """2026-08-21: "2026" tokens attributed Tesla firmware queries to
+        every show on the channel — pure-numeric tokens and X.Y.Z build
+        strings must never make or carry a match."""
+        m = self._mod()
+        videos = [
+            {"title": "Nebula Watch 2026 begins tonight", "hook": "space 2026",
+             "channel": "en"},
+            {"title": "Nebula colors explained", "hook": "nebula imaging",
+             "channel": "en"},
+        ]
+        channels = {"en": {"search_terms": [
+            {"term": "tesla update 2026.21.6", "views": 90},
+            {"term": "2026.21.6", "views": 80},
+            {"term": "nebula imaging", "views": 10},
+        ]}}
+        videos.append({"title": "Nebula imaging survey expands",
+                       "hook": "imaging run two", "channel": "en"})
+        terms = m._show_search_terms(channels, videos).get("en", [])
+        assert terms == ["nebula imaging"]
+
+    def test_terms_stay_on_their_channel(self):
+        """An RU query matched via dub titles must land under "ru", never
+        in the EN list the EN tag builders consume."""
+        m = self._mod()
+        videos = [
+            {"title": "Starship stacks again", "hook": "starship pad",
+             "channel": "en"},
+            {"title": "Starship pad rebuild continues",
+             "hook": "pad work advances", "channel": "en"},
+            {"title": "Starship снова в деле", "hook": "старт starship",
+             "channel": "ru"},
+            {"title": "Второй старт Starship за неделю",
+             "hook": "старт прошел штатно", "channel": "ru"},
+        ]
+        channels = {
+            "en": {"search_terms": [{"term": "starship pad", "views": 5}]},
+            "ru": {"search_terms": [{"term": "старт starship", "views": 9}]},
+        }
+        terms = m._show_search_terms(channels, videos)
+        assert "старт starship" in terms.get("ru", [])
+        assert "старт starship" not in terms.get("en", [])
 
     def test_upload_tags_read_perf_search_terms(self, tmp_path):
         from types import SimpleNamespace
@@ -500,3 +545,49 @@ class TestSearchTermsLoop:
         cfg = SimpleNamespace(episode=SimpleNamespace(
             output_dir="/nonexistent/nowhere"))
         assert vm._live_search_terms(cfg) == []
+
+
+class TestViewCliffDetector:
+    """2026-08-21: the Aug 17-19 view collapse ran four days unalarmed —
+    the nightly fetch now compares each channel's daily view flow to its
+    own 7-day median and warns loudly on a >50% one-day drop."""
+
+    def _mod(self):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "fetch_yt", _ROOT / "scripts" / "fetch_youtube_analytics.py")
+        m = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(m)
+        return m
+
+    @staticmethod
+    def _rows(channel, daily, start_total=10000):
+        import datetime as dt
+        rows, total = [], start_total
+        day = dt.date(2026, 8, 1)
+        rows.append({"date": day.isoformat(), "channel": channel,
+                     "total_views": total})
+        for i, d in enumerate(daily, 1):
+            total += d
+            rows.append({"date": (day + dt.timedelta(days=i)).isoformat(),
+                         "channel": channel, "total_views": total})
+        return rows
+
+    def test_cliff_fires_on_halving(self):
+        m = self._mod()
+        rows = self._rows("ru", [4000] * 7 + [800])  # real Aug-18 shape
+        warnings = m.detect_view_cliffs(rows)
+        assert len(warnings) == 1 and warnings[0].startswith("ru:")
+
+    def test_steady_flow_is_silent(self):
+        m = self._mod()
+        assert m.detect_view_cliffs(self._rows("en", [1500] * 8)) == []
+
+    def test_small_channels_never_page(self):
+        # FR at ~30 views/day must not wake anyone over noise.
+        m = self._mod()
+        assert m.detect_view_cliffs(self._rows("fr", [30] * 7 + [5])) == []
+
+    def test_short_history_is_silent(self):
+        m = self._mod()
+        assert m.detect_view_cliffs(self._rows("en", [1500] * 3)) == []

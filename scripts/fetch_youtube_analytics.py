@@ -461,6 +461,49 @@ def append_channel_history(channels: Dict[str, dict],
     )
 
 
+def detect_view_cliffs(rows: List[dict],
+                       min_baseline: float = 200.0) -> List[str]:
+    """Per-channel daily-views cliff detector (2026-08-21).
+
+    The Aug 17-19 2026 collapse (RU -78%, EN subs +9/day -> +1/day) ran
+    for four days before anyone looked: the dashboard tracked freshness
+    and totals but nothing compared today's view FLOW to its own recent
+    baseline. For each channel, compare the latest day's total_views
+    delta against the median of the prior seven daily deltas; a drop
+    past 50% of a meaningful baseline (>= *min_baseline* views/day)
+    returns a warning line. A cliff detector by design — the numbers
+    lesson says a rolling baseline can't catch a slide, but a one-day
+    halving is exactly what it can catch, loudly, the next morning.
+    """
+    import statistics
+    by_channel: Dict[str, List[dict]] = {}
+    for r in rows:
+        if isinstance(r, dict) and r.get("date"):
+            by_channel.setdefault(str(r.get("channel") or ""), []).append(r)
+    warnings: List[str] = []
+    for channel, series in sorted(by_channel.items()):
+        series = sorted(series, key=lambda r: r["date"])
+        deltas = []
+        for prev, cur in zip(series, series[1:]):
+            try:
+                deltas.append(
+                    (cur["date"],
+                     float(cur.get("total_views", 0))
+                     - float(prev.get("total_views", 0))))
+            except (TypeError, ValueError):
+                continue
+        if len(deltas) < 8:
+            continue
+        *baseline, (day, latest) = deltas[-8:]
+        med = statistics.median(d for _, d in baseline)
+        if med >= min_baseline and latest < 0.5 * med:
+            warnings.append(
+                f"{channel}: {latest:.0f} views on {day} vs a "
+                f"{med:.0f}/day baseline ({latest / med:.0%}) — "
+                "check recent uploads, metadata changes, and Studio")
+    return warnings
+
+
 def fetch(digests_dir: Path, days: int) -> Optional[dict]:
     """Build the stats payload, or None if there is nothing to do."""
     videos = _load_index(digests_dir)
@@ -649,6 +692,14 @@ def main() -> int:
             "Channel history appended: %s",
             {c: s.get("subscribers") for c, s in payload["channels"].items()},
         )
+        try:
+            hist = json.loads(
+                (_ROOT / _CHANNEL_HISTORY_PATH).read_text(encoding="utf-8"))
+            for warning in detect_view_cliffs(hist.get("rows", [])):
+                print(f"::warning::CHANNEL VIEW CLIFF — {warning}",
+                      flush=True)
+        except Exception:  # noqa: BLE001 — the alarm never blocks the fetch
+            logger.debug("view-cliff check failed", exc_info=True)
 
     out_path = _ROOT / args.out
     out_path.parent.mkdir(parents=True, exist_ok=True)
