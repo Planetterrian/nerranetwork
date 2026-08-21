@@ -1363,6 +1363,16 @@ def ai_review_episode(ep: EpisodeReview) -> None:
             # to grok-4.3 with reasoning effort "none". Keep effort none so
             # the explicit pin changes nothing about the served review.
             extra["extra_body"] = {"reasoning_effort": "none"}
+        elif reviewer_model.startswith("grok-4.6"):
+            # 2026-08-21: at its default (high) effort the 4.6 reviewer
+            # blew the 300s request timeout on ~1/3 of episodes and the
+            # 35-min audit job died with no report written. This is a
+            # structured YES/NO + score task — "low" keeps 4.6's sharper
+            # judgment (the 08-19 cross-show read) at a latency the audit
+            # can actually afford. Instrument note: FACTUAL_ERRORS rates
+            # from 08-21 on are 4.6-LOW; compare cross-show within a day,
+            # never across effort eras.
+            extra["extra_body"] = {"reasoning_effort": "low"}
         resp = client.chat.completions.create(
             model=reviewer_model,
             messages=[{"role": "user", "content": prompt}],
@@ -2123,10 +2133,29 @@ def run_review(
     check_cross_episode_duplicates(episodes)
     check_content_freshness(episodes, target_date)
 
-    # Optional AI review
+    # Optional AI review — under a wall-clock budget (2026-08-21: with a
+    # 20-episode catch-up backlog and several reviews timing out at 300s
+    # each, the loop alone blew the 35-minute job limit and the audit
+    # died WITHOUT writing daily-review.json or the GitHub issue. The
+    # budget guarantees the report always ships: episodes past the budget
+    # keep every structural check and simply skip the AI layer, loudly.
     if os.getenv("GROK_API_KEY") or os.getenv("XAI_API_KEY"):
+        import time as _time
+        _ai_budget = float(os.getenv("REVIEW_AI_BUDGET_SECONDS", "1200"))
+        _ai_started = _time.monotonic()
+        _ai_skipped = 0
         for ep in episodes:
+            if _time.monotonic() - _ai_started > _ai_budget:
+                _ai_skipped += 1
+                continue
             ai_review_episode(ep)
+        if _ai_skipped:
+            logger.warning(
+                "AI-review budget (%ds) exhausted — %d of %d episodes "
+                "got structural checks only (their AI layer is skipped "
+                "for good; coverage marks them reviewed).",
+                int(_ai_budget), _ai_skipped, len(episodes),
+            )
     else:
         logger.info("Skipping AI review (no GROK_API_KEY)")
 
