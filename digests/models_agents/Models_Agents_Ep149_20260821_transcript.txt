@@ -1,0 +1,61 @@
+Multi-model agent workflows just got dramatically cheaper. NVIDIA's linear KV cache mapping lets you handoff between model sizes without repre-filling the entire context. This is Models & Agents, episode 149. NVIDIA published a cross-model KV cache transfer technique that uses simple per-head ridge regression to move memory state between different sized models in the same family. The method runs 2.7 to 25 times faster than recompense
+computing the pre-fill while retaining 73 to 98% of target accuracy on matched KV pairs. Builders running long horizon agent systems with mixed model sizes should test the closed-form mapper on Quinn, Lama, or Ministral families this week. The techniques strips rope encodings before mapping so the linear transform generalizes to longer sequences than the 500 sequence calibration set.
+On 6 matched KV families it delivered 72.8 to 98% of target pre-fill accuracy on the 8B to 70B Lama leap and completed a 32K token transfer in 278 milliseconds versus nearly 7 seconds for full rep refill.
+The approach works for both small to large upgrades on hard reasoning steps and large to small cost savings on routine turns, with drifts staying low across 10 turn conversations.
+Limitations appeared on two Ministral pairs where the linear fit failed, requiring a small non-linear MLP to recover above 90% accuracy.
+Experiments covered Quinn 3, Lama 3.1, and Ministral 3 families ranging from 3B to 70B parameters and used 5 accuracy benchmarks plus wiki text 2 perplexity and co-QA multi-turn evaluation.
+This development continues the inference cost curve we tracked yesterday by showing how cross-model handoffs can cut repeated pre-fill work without new hardware.
+FireRed team open-sourced two unified audio models built on a shared 9B LLM backbone. FireRed audio decouples an audio encoder path for understanding from a red AE pathway for generation, supporting ASR, zero-shot TTS, instruct TTS, semantic and acoustic editing, and hour-long temporal grounding.
+FireRed TTS 3 adds multilingual zero-shot cloning across 24 languages plus 21 Chinese dialects and natural language voice design.
+The FireRed TTS 3-base variant achieves best average WER and CER of 3.754%, and speaker similarity of 84.8% on Minimax MLS test, while the instruct variant handles freeform semantic and acoustic edits from plain language instructions.
+Developers working on voice agents or long-context audio should pull the hugging-face checkpoints and test the instruct editing pathway.
+A community run of OX Alpha through the official mini-swee agent bash-only scaffold resolved 48 of 50 tasks on the Swee Bench verified mini-subset.
+The run used the unchanged Swee Bench.yaml template with a 250-step limit and was scored locally with the official Docker harness.
+Failures occurred only on Django underscore Django-11790 and Django underscore Django-11815.
+Average steps per task reached 40 with a maximum of 116 and total wall clock time of roughly 2 hours on 4 parallel workers.
+Per repo breakdown showed 23 of 25 resolved on Django and 25 of 25 on SphinxDoc.
+Ornith 1.5 to 35ba3b reached 250 tokens per second, with 5 to 8k pre-fill on an RTX 5,090 using the infer Windows back end.
+At long context, the speed drops to 21 to 22 tokens per second while remaining faster than older dense 27b class models that top out at 13 to 17 tokens per second.
+The same user previously ran Quinn 3.635ba3b and Quinn 3.827b and found Ornith 1.5 noticeably quicker for real-time sessions.
+Deepseek released version 0.1.1 of its harness, adding native support for Deepseek V4 Flash Vision X and image input on slash goal and slash plan commands.
+MCP and ACP now persist image attachments and PTC mode forwards nested images.
+Commands such as slash goal and slash plan accept both text and image input while the app menu can reference files and sessions.
+A maintainer forked continue stripped every agentic and chat feature and kept only the fill in the middle engine with tree sitter plus LSP context.
+The extension supports 16 plus model families via Olamma, Lama.cpp, VLLM or any open AI compatible endpoint and ships no telemetry.
+Version 0.4.0 adds relevance ranked context and structural soundness scoring before suggestions appear.
+Mega router launched as an orchestration layer that lets developers route requests across multiple models with intelligent coordination for agent workflows.
+The platform focuses on reducing lock in by exposing a single API while handling model selection and handoff logic internally.
+The post argues that when tables are present each body row plus its column headers should be treated as an atomic retrieval unit rather than chunking by page or paragraph.
+Enterprise document intelligence pipelines that ingest financial statements, inventory lists or regulatory tables benefit most because queries often target a single line item rather than the whole grid.
+The article walks through adding uncertainty estimates to automated decision systems so the model defers when prediction confidence is low and the cost of error is high.
+It contrasts simple point prediction pipelines with calibrated posterior methods that can quantify risk before acting.
+The technique applies directly to safety critical or high stakes routing where a wrong automation decision carries measurable downside.
+Analysis of three years of model outputs shows creative text from different providers converging in style and structure.
+The study examines stylistic markers and structural patterns rather than factual correctness, highlighting a homogenization effect that may affect downstream creative applications.
+Okay, let's pop the hood on Bayesian uncertainty for automated decisions.
+Everyone treats a model's softmax probability as a reliable signal for whether to act.
+In practice, that number is often miscalibrated and ignores the downstream cost of being wrong.
+Start with a point prediction, the model outputs a class or value, then fit a posterior over the weights or use an ensemble to obtain a distribution of possible outputs instead of a single number.
+The width of that distribution gives a direct uncertainty estimate you can threshold against the cost of an error.
+On tabular or low-dimensional tasks, this adds only modest compute.
+On large language models, you typically need cheaper approximations such as Monte Carlo dropout or temperature scaled ensembles.
+The payoff appears when the cost of a false positive is asymmetric, medical dosing or financial routing.
+Because you can route uncertain cases to a human or a slower verification model.
+The practical gacha is that most public APIs return only the mode, so you must either self-host or use providers that expose low-gits or multiple samples.
+Calibration curves on held out data quickly reveal whether the raw probabilities match observed error rates.
+If they diverge, a simple isotonic regression or temperature scaling step often restores reliability without retraining the underlying model.
+Teams that skip this step frequently discover that high confidence errors cluster exactly where automation would have been most damaging.
+Pull the fire-read audio and fire-read TTS-3 checkpoints and test the instruct voice design pathway on a 30-second reference clip.
+Run the Navidia KV cache mapper on a Quinn 14b-32b handoff inside an existing multi-turn agent loop and measure pre-fill time savings.
+Install the FIM auto-complete versus code extension and compare inline completion quality against your current setup on Python and TypeScript.
+Add row-level chunking to any rag pipeline that ingests tables and measure retrieval precision on queries that target specific rows.
+Experiment with Ornith 1.5 to 35b a3b at 250 tokens per second on a 5,090 for interactive coding sessions.
+Further open releases of cross-family KV cache mappers are expected once the linear technique is validated beyond matched KV pairs.
+Additional multilingual audio models following the fire-read decoupled encoder pattern are likely in the coming months.
+NCSC Interim Agentech AI Security Guidance will probably influence enterprise evaluation checklists within the next quarter.
+Before we go, the full 500-task SWE-bench verified numbers for AUX-Alpha should clarify whether the mini-set result holds.
+That's models and agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes and subscribe so you don't miss tomorrow's update.
+The AI world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Narrow Network.
+Links in the show notes. Quick tip from the network. Try modern investing techniques next. Modern strategies for Canadian and US investors.
+Every Narrow Network show is free at NarrowNetwork.com. Following the long arcs, story trackers on NarrowNetwork.com follow major programs across episodes.
+Tesla, SpaceX, AI, Space Science, and more. This episode used AI voice synthesis of my voice. Editorial selection and analysis are my own.
