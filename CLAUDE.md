@@ -53,7 +53,7 @@ and the Shorts motion A/B: [`docs/funnel.md`](docs/funnel.md).
 
 ## Project Overview
 
-Automated daily podcast generation system running 16 shows via a unified
+Automated daily podcast generation system running 17 shows via a unified
 `run_show.py` runner + per-show YAML configs, plus 4 legacy standalone scripts
 (deprecated — see note below). Shows use **Grok TTS** (`engine.tts.grok_speak_chunk`)
 and (where enabled) post to X/Twitter via `engine/publisher.post_to_x()`.
@@ -76,6 +76,7 @@ and (where enabled) post to X/Twitter via `engine/publisher.post_to_x()`.
 | The DP Pod | — | `shows/dp_pod.yaml` | Daily | — (X disabled) | Grok TTS (two-voice: Patrick + Dan) |
 | The Age of AI | — | `shows/age_of_ai.yaml` | When an interview is ready (Nerra Voices pipeline, NOT run_show) | — (X disabled) | Real guest phone audio + Mira narration (Grok voice `ara`) |
 | Offshore North | — | `shows/offshore_north.yaml` | Monday | — (X disabled) | Grok TTS (Dan `0vscf8u8yrxc`, single-narrator) |
+| Nerra Daily | — | registry-only (`shows/network_meta.yaml`; NOT run_show — assembled by `scripts/build_daily_edition.py`) | Daily, after the English slate | — (X disabled) | Splices published show audio + Mira links (Grok voice `ara`) |
 
 > Weekly-summary segment (July 2026): shows on a daily cadence with
 > `weekly_summary_segment: true` in their YAML run a NORMAL daily episode on
@@ -513,6 +514,35 @@ today's work, not just explain yesterday's):
   artifacts, dispatch-event coherence, validators, the two human gates).
   RSS + site only at launch; X/YouTube/newsletter/multilingual off until
   the phase-8 public launch.
+- **NDaily** (Nerra Daily) — the network's **combined daily edition**
+  (Aug 2026): one ~2 h episode/day that SPLICES the day's already-published
+  English episode MP3s (pulled back from R2) with short Mira host links
+  (Grok voice `ara`) between them — flagships-first fixed rundown, DP Pod
+  closes; Monday adds EI + Offshore North. **Not a run_show show and it
+  must never become one**: registry entry in `shows/network_meta.yaml`
+  only (no `shows/nerra_daily.yaml`, deliberately — that keeps it out of
+  the review rotation and every shows-glob consumer), assembled by
+  `scripts/build_daily_edition.py` + `engine/daily_edition.py`, workflow
+  `.github/workflows/nerra-daily.yml` (workflow_run after each Run Podcast
+  Show + ready gate: builds minutes after the last expected show lands;
+  ≥14:00 UTC sweeps build with whatever published; committed summaries
+  entry per date = idempotency key). **Each segment's baked-in outro tail
+  (network sibling plug → surface plug → AI disclosure) is trimmed via
+  the committed Whisper word timestamps** (`find_promo_cut` — fuzzy on
+  Whisper's brand spellings, anchored on the four `network_promo` frames;
+  no match = segment ships whole, never a guessed cut) and Mira speaks ONE
+  network-level AI disclosure at the end — the standalone feeds keep their
+  plugs untouched. Marginal cost ≈ one small Grok call (links, grok-4.3) +
+  ~4k TTS chars + one R2 upload (`nerra_daily/` keyspace) — no content
+  regenerated. Mira's link LLM output is JSON-validated with a
+  deterministic titles-based fallback; her Age of AI self-reference
+  rotates by date and a new AOAI episode is plugged, never spliced.
+  Editions are language-parameterized (`EditionSpec`) for future RU/FR.
+  Surfaces at launch: own RSS (`nerra_daily_podcast.rss`, exact spliced
+  chapter markers), show page, daily rundown blog (links into each show's
+  post — never duplicates their digests). Docs:
+  [`docs/nerra_daily.md`](docs/nerra_daily.md). Drift guards:
+  `tests/test_daily_edition.py`.
 - All shows delegate X posting to `engine.publisher.post_to_x()`
 - TST/FF/PT delegate voice normalization to `engine.audio.normalize_voice()`
 - All shows use `engine.audio.mix_with_music()` for music mixing (3 modes:
