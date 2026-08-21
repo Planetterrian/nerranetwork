@@ -304,9 +304,16 @@ def discover_segments(
                 content=str(entry.get("content") or ""),
                 digest_dir=digest_dir,
                 transcript_path=_transcript_path_for(digest_dir, audio_url),
-                music_intro_offset=float(
-                    (cfg.audio.voice_intro_delay or 0.0) + (cfg.audio.intro_duration or 0.0)
-                ),
+                # Raw-voice-track time -> final-MP3 time. The mixer shifts
+                # the voice by ``voice_intro_delay`` ONLY (engine/audio.py's
+                # delayed-intro branch; engine/config.py documents it) —
+                # ``intro_duration`` is music played UNDER the cold open,
+                # not before it, and every show pins delay 0.0. Adding
+                # intro_duration here landed every cut 3 s late and leaked
+                # the plug's opening words into the edition (caught in the
+                # 2026-08-21 review — verified against Ep578: final 563.1 s
+                # = raw 533.1 s + 30 s outro + 0 s shift).
+                music_intro_offset=float(cfg.audio.voice_intro_delay or 0.0),
             )
         )
     return segments, missing
