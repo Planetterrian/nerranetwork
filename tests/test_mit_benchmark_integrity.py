@@ -2671,3 +2671,64 @@ class TestMethodologyDisclosure:
         step = next(s for s in job["steps"] if s.get("id") == "audit")
         # Strictly below the job budget, so the persist step always runs.
         assert step["timeout-minutes"] < job["timeout-minutes"]
+
+
+class TestAuditRegistryCoversEveryShow:
+    """A show absent from the audit's registry is never reviewed at all.
+
+    The catch-up pass ended "reviewed late"; it could not end "never in
+    the registry", because catch-up iterates the same registry. dp_pod
+    had published daily since 2026-07-04 and offshore_north since
+    2026-08-18 with no quality review ever run against them, and nothing
+    looked wrong: api/review_coverage.json recorded exactly the day's
+    slate every day, because the shows it omits are invisible to it.
+
+    The tell was only visible by diffing recorded coverage against what
+    actually shipped on disk. This guard does that comparison against
+    the show configs instead, so a newly scaffolded show cannot repeat
+    it.
+    """
+
+    @staticmethod
+    def _mod():
+        import importlib
+        return importlib.import_module("review_episodes")
+
+    def test_every_show_yaml_is_audited_or_explicitly_exempt(self):
+        mod = self._mod()
+        configured = {
+            p.stem for p in (_ROOT / "shows").glob("*.yaml")
+            # A leading underscore marks a non-show config (_defaults,
+            # _trading_policy); the others are shared data files.
+            if not p.stem.startswith("_")
+            and p.stem not in {
+                "network_meta", "pronunciation_map",
+                "translation_overrides", "scaffold_pending",
+            }
+        }
+        missing = configured - set(mod.SHOW_REGISTRY) - mod.AUDIT_EXEMPT_SLUGS
+        assert not missing, (
+            f"shows publish with no daily-audit coverage: {sorted(missing)}. "
+            "Add a SHOW_REGISTRY entry, or add the slug to "
+            "AUDIT_EXEMPT_SLUGS with the reason it cannot be audited."
+        )
+
+    def test_exemptions_are_real_shows_and_stay_deliberate(self):
+        mod = self._mod()
+        for slug in mod.AUDIT_EXEMPT_SLUGS:
+            assert (_ROOT / "shows" / f"{slug}.yaml").exists(), (
+                f"exempt slug {slug} has no show config — stale exemption")
+            assert slug not in mod.SHOW_REGISTRY, (
+                f"{slug} is both registered and exempt")
+
+    def test_added_shows_have_the_schedule_the_cron_actually_uses(self):
+        # A wrong schedule is the other way an audit lies: it invents
+        # "missed episode" criticals on days the show never runs, which
+        # is what the env_intel odd_weekday bug did.
+        mod = self._mod()
+        cron = (_ROOT / ".github/workflows/run-show.yml").read_text(
+            encoding="utf-8")
+        assert '"46 9 * * *":       ("dp_pod",                   None)' in cron
+        assert mod.SHOW_REGISTRY["dp_pod"]["schedule"] == "daily"
+        assert '"1 10 * * 1":       ("offshore_north",          "monday")' in cron
+        assert mod.SHOW_REGISTRY["offshore_north"]["schedule"] == "monday"
