@@ -264,7 +264,14 @@ SHOW_REGISTRY = {
         "max_audio_s": 1200,
         "required_sections": [],
         "narrative": True,   # topic-queue show — fetches no articles by design
-        "schedule": "weekday",
+        # DAILY, not weekday. The cron is "1 9 * * *" with no day gate and
+        # the show ships all seven days (3 Saturdays + 3 Sundays in the
+        # last 21 episodes). While this said "weekday" the audit treated
+        # UC as not-due at weekends, so a MISSED Saturday or Sunday
+        # episode raised nothing — under-alerting, the quiet direction of
+        # the same bug env_intel had loudly. Found 2026-08-21 by
+        # cross-checking every registry schedule against the cron.
+        "schedule": "daily",
     },
     # Added 2026-08-21. Both shows had been publishing with NO quality
     # review at all — dp_pod daily since 2026-07-04, offshore_north since

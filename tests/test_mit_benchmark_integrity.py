@@ -2721,14 +2721,56 @@ class TestAuditRegistryCoversEveryShow:
             assert slug not in mod.SHOW_REGISTRY, (
                 f"{slug} is both registered and exempt")
 
-    def test_added_shows_have_the_schedule_the_cron_actually_uses(self):
-        # A wrong schedule is the other way an audit lies: it invents
-        # "missed episode" criticals on days the show never runs, which
-        # is what the env_intel odd_weekday bug did.
+    def test_every_registry_schedule_matches_the_cron(self):
+        """The audit must believe the schedule the runner actually uses.
+
+        A wrong schedule breaks the missed-episode check in whichever
+        direction it errs. Too broad invents criticals on days a show
+        never runs — the env_intel ``odd_weekday`` bug, which also
+        auto-dispatched off-schedule episodes. Too narrow is quieter and
+        worse: ``unintended_consequences`` was registered ``weekday``
+        while its cron runs daily and it ships every day, so a missed
+        Saturday or Sunday raised nothing at all.
+
+        Checking the pair mechanically is the only way to keep them
+        honest — reading either one alone looks fine.
+        """
+        import re
         mod = self._mod()
-        cron = (_ROOT / ".github/workflows/run-show.yml").read_text(
+        cron_src = (_ROOT / ".github/workflows/run-show.yml").read_text(
             encoding="utf-8")
-        assert '"46 9 * * *":       ("dp_pod",                   None)' in cron
-        assert mod.SHOW_REGISTRY["dp_pod"]["schedule"] == "daily"
-        assert '"1 10 * * 1":       ("offshore_north",          "monday")' in cron
-        assert mod.SHOW_REGISTRY["offshore_north"]["schedule"] == "monday"
+        pairs = re.findall(
+            r'"(\S+ \S+ \S+ \S+ \S+)":\s*\("(\w+)",\s*(None|"[a-z_]+")\)',
+            cron_src)
+        assert pairs, "could not parse the runner's CRON_MAP"
+
+        checked = 0
+        for expression, slug, gate in pairs:
+            entry = mod.SHOW_REGISTRY.get(slug)
+            if entry is None:
+                continue  # covered by the registry-coverage test above
+            day_of_week = expression.split()[4]
+            if day_of_week == "*" and gate == "None":
+                expected = "daily"
+            elif day_of_week == "1" and gate == '"monday"':
+                expected = "monday"
+            else:
+                # A cadence shape this check does not model yet. Fail
+                # rather than skip silently — an unmodelled shape is
+                # exactly where a mismatch would hide.
+                raise AssertionError(
+                    f"{slug}: unmodelled cron shape {expression!r} "
+                    f"with gate {gate} — teach this guard the shape "
+                    "rather than leaving it unchecked."
+                )
+            assert entry["schedule"] == expected, (
+                f"{slug}: cron {expression!r} (gate {gate}) means "
+                f"{expected!r}, but the audit registry says "
+                f"{entry['schedule']!r}. A schedule the runner does not "
+                "use makes the missed-episode check lie."
+            )
+            checked += 1
+        assert checked >= 15, (
+            f"only cross-checked {checked} shows — the CRON_MAP parse "
+            "probably drifted"
+        )
