@@ -1,0 +1,79 @@
+Agent reliability benchmarks just expose the gap between occasional success and consistent, stateful execution in real business workflows. This is Models & Agents, episode 148. Thinking Box introduces a sandbox and 507 workflow benchmark across retail, insurance, and IT support domains that measures end-to-end state transitions rather than isolated tool calls. Several Arc-IZ papers released today examine attention allocations
+to the application, KV cache reuse, and multi-agent hypothesis generation. Builders should watch how these evaluation and efficiency techniques affect long-running agent deployments this week. Microsoft released Thinking Box, a sandbox and benchmark for agents operating in stateful business workflows. The benchmark contains 507 policy-conditioned workflows spanning retail, hospitality, auto insurance, neo-bank IT, and consulting support.
+Each workflow is evaluated by executable checks on terminal backend state rather than surface level tool calls or responses. The strongest model reached 65.36% pass at 1, but only 25.25% pass to the power of 20. This shows that many failures produce clean terminations and valid state changes, yet still mis-required outcomes.
+This directly tests multi-turn information gathering, policy adherence, and persistent state transitions that current agent benchmarks largely ignore.
+Teams-building production agents should examine the released repository to see where their current evaluation harnesses fall short on these dimensions.
+A paper titled asymmetric attention heads introduces structured head wise context allocation for transformer attention. The method assigns different causal context windows to individual attention heads or groups, instead of giving every head the full span.
+In 4,096 token experiments, several variants achieved lower validation loss than standard full attention, while preserving the flat multi-head output interface.
+The approach groups heads by feature statistics and uses hierarchical allocation with attention coverage ratio reported as a diagnostic.
+Builders working on long context models should test whether per-head window assignment improves quality at fixed compute budgets.
+Another paper titled compliance, capability, and conflict benchmarks multi-modal large language models under system messages.
+V-Sysbench evaluates 16 multi-modal large language models on system message constraints across five main categories and 22 subcategories.
+It scores both constraint compliance and answer correctness via joint satisfaction rate.
+Imposing system messages substantially reduced base task accuracy for all models.
+Open weight models showed sharp compliance drops under user conflict while top proprietary models remain stable.
+Vision grounded constraints proved hearted across every model tested.
+Developers deploying multi-modal large language models with strict system prompts should add this benchmark to their evaluation suite.
+Flash pre-fill V2 adds a mean correction term to suppress approximation error at high sparsity.
+It redesigns the sparse operator with pack GQA and warp specialization and supports paged KV cache plus continuous batching.
+On NVIDIA H-20 GPUs it delivered up to 47.26 times speed up over flash attention to at 128K context under FP8.
+It also achieved 30.49 times against an FA3-4 align dense baseline.
+The implementation is positioned for integration into frameworks such as SGLANG.
+Teams serving long context workloads should benchmark the FP8 path on their hardware.
+SWE Bench Science introduces a new benchmark with 119 tasks from 98 GitHub repositories across 20 scientific domains.
+Cloud code with Opus 5 max achieved below 50% pass at 1.
+Four recurring failure modes were identified.
+Deficits in scientific knowledge, misguided exploration, incomplete repair coverage, and failures to generalize beyond observed cases.
+An ablation showed that well-grounded scientific guidance can improve both performance and token efficiency, while poorly aligned guidance induces anchoring.
+Scientific software teams should incorporate the benchmark when testing coding agents.
+Personal bench evaluates inference time personalization across 50 authors and 1000 generations using LOR, LLM as judge and stylometrics.
+All tested methods produced author differentiated output with LOR AUC of 0.918.
+Yet outputs remained below the human cross author similarity floor with the model's own fingerprint dominating.
+Developers building personalized writing tools should add this benchmark to quantify how close outputs actually come to target authors.
+ReCache caches resource representations independently using resource wise attention that removes cross resource interactions and produces composition in variant KV blocks.
+On a benchmark assembled from seven public tool use data sets, it matched dense invocation performance at 82.3% versus 82.4% in F1.
+It delivered a 3.655 times time to first token speed up and reduced allocated KV tensor memory by 92.43%.
+The framework also accelerates attention by 1.423 times and supports resource disjoint test cases.
+Agent developers facing repeated tool schema encoding should evaluate the released implementation.
+A post on our slash machine learning introduces drift guard, an open source detector that measures relevance and self-drift against an agent's own history using bag of words by default.
+It fires only after the breach holds across 25 consecutive windows.
+It achieved zero false alarms on 600 step healthy runs while detecting derailment at step 228 in a 400 step trace.
+The package has no dependencies runs offline on Python 3.10 plus and is available at the linked GitHub repository.
+Teams running long agent loops should integrate the detector to halt drifting executions early.
+Analysts warn that agentic AI is lowering barriers for organized crime groups running large scale scams across Asia.
+The report highlights how autonomous agents can handle multi-step social engineering campaigns at scale with reduced human oversight.
+Security team's monitoring agent deployments should review current guard rail coverage against these emerging misuse patterns.
+Remember, we covered agent reliability yesterday and today's releases move that forward by adding concrete state transition metrics and drift detection tools that directly target the open question of long horizon consistency.
+CIN flow converts linguistic observations into period specific distributions and applies a shared workflow across dependency co-occurrences, morphological features, construction patterns, and frame semantics.
+It supports multiple distance measures, value level decomposition, statistical testing, and incremental clustering.
+A case study on the German adjective viral demonstrates how a single semantic shift appears across syntactic, lexical, and morphological dimensions.
+Researchers tracking lexical change should test the open source toolkit on their corpora.
+A method uses a large language model to automatically generate personas with added communication style personality traits.
+This increases utterance variation in user simulators.
+Experiments showed the approach produces greater behavioral diversity than manually crafted personas while reducing labor.
+Dialogue system developers should adopt the technique when scaling test coverage beyond small handwritten persona sets.
+Work on forking fast shows that uncertainty dynamics in large language model reasoning chains converge to stable patterns once enough rollouts are collected.
+This allows a statistical smoothing model to approximate high sample results from lower sample data.
+The approach reduces the computational cost of resampling based uncertainty analysis.
+Teams analyzing reasoning chain variability should examine the smoothing approach to lower their sampling budget.
+Okay, let's pop the hood on flash pre-fill V2. Everyone talks about sparse attention as if it is simply turning off some tokens.
+In practice, it is a sequence of decisions about pattern discovery, error correction, memory layout, and integration with existing inference stacks.
+Flash pre-fill V2 first discovers a sparse pattern on the fly. Then it applies a mean correction term that keeps approximation error manageable even at extreme sparsity levels.
+The operator is then rewritten with PAC-GQA memory access, warp specialization, and ping pong pipelining so it aligns with flash attention three slash four kernels and supports FP8.
+These changes deliver 30 times plus speed ups at 128K context on H20 GPUs while preserving nearly identical task performance.
+The practical engineering takeaway is that teams should first validate the mean correction term on their workload before investing in custom kernel integration.
+Without it, quality degrades faster than the latency savings justify.
+Run thinking box workflows on your current agent setup to measure past to the power of 20 rather than pass at one and identify where state transition failures occur.
+Test recache on repeated tool schema workloads to quantify KV cache memory reduction and time to first token gains.
+Add V6 bench to multimodal evaluation pipelines to check how system message constraints affect both compliance and task accuracy.
+Experiment with per-head context allocation from the asymmetric attention heads paper on long context fine tuning runs.
+Integrate drift guard into existing agent loops to halt executions once relevance or self drift thresholds are breached.
+More agent benchmarks that evaluate persistent state changes rather than isolated tool calls are expected in the coming weeks.
+Additional block sparse and KV cache reuse techniques for long context serving will likely appear as inference frameworks adopt flash pre-fill style operators.
+Further work on multi agent hypothesis generation and evaluation frameworks is anticipated following today's archive releases.
+Before we go, the next round of agent reliability results will test whether the new state transition metrics hold up on even larger workflow sets.
+That's models and agents for today. If you found this useful share it with someone who's trying to keep up with all these changes and subscribe so you don't miss tomorrow's update.
+The AI world moves fast will help you keep up see you tomorrow.
+And if you'd rather watch then listen find us on YouTube at nera network links in the show notes quick tip from the network try modern investing techniques next modern strategies for Canadian and US investors.
+Every nera network show is free at nera network dot com following the long arcs story trackers on nera network dot com follow major programs across episodes.
+Tesla SpaceX AI space science and more this episode used AI voice synthesis of my voice editorial selection and analysis are my own.
