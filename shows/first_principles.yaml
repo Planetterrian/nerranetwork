@@ -37,7 +37,10 @@ llm:
   podcast_temperature: 0.7
   max_tokens: 4800
   podcast_max_tokens: 9000
-  min_podcast_words: 1500
+  # 1,400 floor under the script prompt's 1,500-1,900w target (2026-08-20
+  # retune) — the below-target signal fires only meaningfully under the
+  # band, not at 1,499.
+  min_podcast_words: 1400
   # DISABLED July 29 2026 (cost + quality). Measured over 901 committed
   # episodes: 81% still shipped BELOW target WITH this retry running (Tesla
   # 96.7%, M&A 95.2%) — it fires on nearly every episode and almost never
@@ -50,12 +53,13 @@ llm:
   # now attacked only at the sanctioned substrate below
   # (digest_expand_below_target). ~$39/yr of retry calls recovered.
   podcast_expand_below_target: false
-  # Digest-stage expansion retry (June 2026 FP pass). Briefs shipped
-  # 848-1116w vs the prompt's 1600 floor, capping the podcast even after
-  # the podcast-stage retry. 1400 is the retry TRIGGER, set below the
-  # observed grok-4.3 ~1200-1500w plateau so it rescues genuinely-thin
-  # briefs (~900w) without fighting the ceiling.
-  min_digest_words: 1400
+  # Digest-stage expansion retry (June 2026 FP pass; retuned 2026-08-20).
+  # On grok-4.6 the brief prompt now targets 1,300-1,700w (the old
+  # write-past-the-floor wording doubled the show's runtime — operator
+  # listen verdict: repetitive). The trigger sits BELOW that band so the
+  # retry rescues genuinely-thin briefs (~900-1,100w) without firing on
+  # an in-band 1,3xx brief.
+  min_digest_words: 1200
   digest_expand_below_target: true
   podcast_chain: true
 tts: {}
