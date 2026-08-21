@@ -127,6 +127,15 @@ def _append_summary(
                     encoding="utf-8")
 
 
+def _annotate(kind: str, message: str) -> None:
+    """GitHub Actions annotation. Workflow commands must START the line,
+    so this bypasses the logger (whose format prefixes the level name and
+    would make GitHub ignore the command) — the backfill_content_lake
+    convention."""
+    print(f"::{kind}::{message}", flush=True)
+    (logger.error if kind == "error" else logger.warning)(message)
+
+
 def _run(cmd: List[str], what: str) -> None:
     proc = subprocess.run(cmd, capture_output=True, text=True)
     if proc.returncode != 0:
@@ -174,11 +183,11 @@ def _generate_links(
             links = parse_links_json(text, handoff_count)
             if links:
                 return links
-            logger.warning("::warning::Nerra Daily link generation returned an "
-                           "unusable shape — using the deterministic fallback")
+            _annotate("warning", "Nerra Daily link generation returned an "
+                                 "unusable shape — using the deterministic fallback")
         except Exception as exc:  # noqa: BLE001 — links must never sink the edition
-            logger.warning("::warning::Nerra Daily link generation failed (%s) — "
-                           "using the deterministic fallback", exc)
+            _annotate("warning", f"Nerra Daily link generation failed ({exc}) "
+                                 "— using the deterministic fallback")
     return fallback_links(spec, segments, target_date)
 
 
@@ -218,9 +227,10 @@ def build_edition(
     if missing:
         logger.warning("expected but absent today: %s", ", ".join(missing))
     if len(segments) < spec.min_segments:
-        logger.error("::error::only %d segment(s) available for %s — refusing "
-                     "to publish below the %d-segment floor",
-                     len(segments), target_date, spec.min_segments)
+        _annotate("error",
+                  f"only {len(segments)} segment(s) available for "
+                  f"{target_date} — refusing to publish below the "
+                  f"{spec.min_segments}-segment floor")
         return 1
     logger.info("lineup today (%d segments): %s", len(segments),
                 ", ".join(s.slug for s in segments))
@@ -232,34 +242,57 @@ def build_edition(
     aoai_today = aoai_new_episode(ROOT, target_date)
     tracker = create_tracker(spec.name, episode_num)
 
-    links = _generate_links(spec, segments, target_date, aoai_today, tracker,
-                            skip_llm=skip_llm)
-
     workdir = Path(tempfile.mkdtemp(prefix=f"{spec.slug}_"))
     try:
-        # --- Segments: download, locate the promo cut, trim + re-encode.
+        # --- Segments FIRST (before any LLM/TTS spend): download, locate
+        # the promo cut, trim + re-encode. A failing segment (404 on a
+        # fallback audio_url after an R2 upload failure, a transient CDN
+        # error) is DROPPED loudly rather than sinking the whole edition —
+        # Mira's links are written afterward against the survivors, so the
+        # rundown she speaks always matches what actually spliced.
         pieces: List[Path] = []
         chapter_pieces: List[tuple] = []
+        survivors: List[Segment] = []
         for seg in segments:
             raw = workdir / f"raw_{seg.slug}.mp3"
-            _download(seg.audio_url, raw)
-            cut_final = None
-            if seg.transcript_path:
-                transcript = load_transcript(seg.transcript_path)
-                hit = find_promo_cut(transcript) if transcript else None
-                if hit:
-                    cut_final = hit["raw_seconds"] + seg.music_intro_offset
-                    seg.cut_kind = hit["kind"]
-            if cut_final is None:
-                logger.warning("no promo cut found for %s Ep%s — segment ships "
-                               "whole (plug included)", seg.slug, seg.episode_num)
             trimmed = workdir / f"seg_{seg.slug}.mp3"
-            _run(segment_trim_cmd(raw, trimmed, cut_final),
-                 f"trim/encode {seg.slug}")
+            try:
+                _download(seg.audio_url, raw)
+                cut_final = None
+                if seg.transcript_path:
+                    transcript = load_transcript(seg.transcript_path)
+                    hit = find_promo_cut(transcript) if transcript else None
+                    if hit:
+                        cut_final = hit["raw_seconds"] + seg.music_intro_offset
+                        seg.cut_kind = hit["kind"]
+                if cut_final is None:
+                    logger.warning("no promo cut found for %s Ep%s — segment "
+                                   "ships whole (plug included)",
+                                   seg.slug, seg.episode_num)
+                _run(segment_trim_cmd(raw, trimmed, cut_final),
+                     f"trim/encode {seg.slug}")
+            except Exception as exc:  # noqa: BLE001 — one segment never sinks the day
+                _annotate("warning",
+                          f"segment {seg.slug} Ep{seg.episode_num} dropped "
+                          f"from the edition: {exc}")
+                continue
+            finally:
+                raw.unlink(missing_ok=True)
             seg.cut_final_seconds = cut_final
             seg.duration_seconds = get_audio_duration(trimmed) or 0.0
-            raw.unlink(missing_ok=True)
+            survivors.append(seg)
             pieces.append(trimmed)
+
+        segments = survivors
+        if len(segments) < spec.min_segments:
+            _annotate("error",
+                      f"only {len(segments)} segment(s) assembled for "
+                      f"{target_date} — below the {spec.min_segments}-segment "
+                      "floor; not publishing")
+            return 1
+
+        links = _generate_links(spec, segments, target_date, aoai_today,
+                                tracker, skip_llm=skip_llm)
 
         # --- Mira's links: TTS + normalize to the segment format.
         def mira(name: str, text: str) -> Path:
@@ -390,9 +423,9 @@ def build_edition(
             [sys.executable, "generate_html.py", "--show", spec.slug, "--blogs"],
             cwd=ROOT, capture_output=True, text=True, timeout=900)
         if proc.returncode != 0:
-            logger.warning("::warning::page regeneration failed (episode is "
-                           "published; nightly will repair): %s",
-                           proc.stderr[-500:])
+            _annotate("warning", "page regeneration failed (episode is "
+                                 "published; nightly will repair): "
+                                 + proc.stderr[-500:])
 
         logger.info("published %s Ep%d (%s) -> %s",
                     spec.name, episode_num, title, r2_url)

@@ -54,7 +54,10 @@ are noise, so each segment is trimmed:
   outside the edition's own paths.
 
 Transcript times are raw-voice-track times; the final-MP3 cut adds the
-show's `voice_intro_delay + intro_duration` (3.0 s network-wide).
+show's `voice_intro_delay` ONLY (0.0 network-wide since the July 2026
+cold-open pass — `intro_duration` is music under the opening line, not
+before it, so it shifts nothing). Verified against Ep578: final 563.1 s
+= raw 533.1 s + 30 s music outro + 0 s shift.
 
 ## Audio assembly
 

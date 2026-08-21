@@ -60,6 +60,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
         with:
+          # ALWAYS the current tip of main, never the event's pinned SHA:
+          # a workflow_run event resolves GITHUB_SHA at dispatch time, so a
+          # run queued behind an in-flight build would otherwise start from
+          # a tree WITHOUT the edition commit, see the date as unpublished,
+          # and rebuild it — overwriting the live R2 object under the
+          # enclosure URL the first build already published.
+          ref: main
           fetch-depth: 1
 
       - uses: ./.github/actions/setup-python

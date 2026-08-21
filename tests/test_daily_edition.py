@@ -161,6 +161,20 @@ class TestPromoCutRealTranscripts:
         lo, hi = window
         assert lo <= hit["raw_seconds"] <= hi, (rel_path, hit)
 
+    def test_offset_is_voice_intro_delay_only(self):
+        """Raw-voice-track -> final-MP3 mapping. The mixer shifts voice by
+        ``voice_intro_delay`` ONLY (intro music plays UNDER the cold open,
+        not before it) — adding intro_duration landed every cut 3 s late
+        and leaked the plug's opening words into every edition segment
+        (2026-08-21 review; Ep578: final 563.1 s = raw 533.1 s + 30 s
+        outro + 0 s shift). Every current show pins delay 0.0."""
+        date = dt.date(2026, 8, 20)
+        segments, _ = discover_segments(SPEC, ROOT, date)
+        if not segments:
+            pytest.skip("2026-08-20 summaries entries pruned")
+        for seg in segments:
+            assert seg.music_intro_offset == 0.0, seg.slug
+
     def test_all_lineup_shows_cut_on_a_real_day(self):
         """Every English show's committed transcript from one full slate
         must yield a promo cut — a show whose outro shape drifts past the
