@@ -266,7 +266,47 @@ SHOW_REGISTRY = {
         "narrative": True,   # topic-queue show — fetches no articles by design
         "schedule": "weekday",
     },
+    # Added 2026-08-21. Both shows had been publishing with NO quality
+    # review at all — dp_pod daily since 2026-07-04, offshore_north since
+    # its 2026-08-18 launch. The catch-up pass could never reach them
+    # because catch-up iterates this same registry, so the coverage file
+    # looked healthy (exactly the day's slate, every day) while two shows
+    # sat outside the gate entirely. Found by diffing the recorded
+    # coverage against what actually shipped on disk.
+    "dp_pod": {
+        "name": "The DP Pod",
+        "output_dir": "digests/dp_pod",
+        "prefix": "DP_Pod_Ep",
+        "min_digest_chars": 2000,
+        "max_digest_chars": 20000,
+        # YAML floor is 1550; the audit reads llm.min_podcast_words first
+        # and only falls back to this.
+        "min_tts_words": 1550,
+        "min_audio_s": 300,
+        "max_audio_s": 1500,
+        "required_sections": [],
+        # Fresh episode all 7 days — deliberately no Sunday recap.
+        "schedule": "daily",
+    },
+    "offshore_north": {
+        "name": "Offshore North",
+        "output_dir": "digests/offshore_north",
+        "prefix": "Offshore_North_Ep",
+        "min_digest_chars": 2000,
+        "max_digest_chars": 20000,
+        "min_tts_words": 1500,
+        "min_audio_s": 300,
+        "max_audio_s": 1500,
+        "required_sections": [],
+        "schedule": "monday",
+    },
 }
+
+# Shows deliberately outside the daily audit. age_of_ai never runs through
+# run_show (the Nerra Voices pipeline publishes it), so schedule-based
+# "missed episode" detection would fire every single day. Its quality gate
+# is the two human review gates in that pipeline instead.
+AUDIT_EXEMPT_SLUGS = frozenset({"age_of_ai"})
 
 
 # ---------------------------------------------------------------------------
