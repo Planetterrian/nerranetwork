@@ -60,10 +60,14 @@ class TestEditionSpec:
             "dp_pod",
         }
 
-    def test_lineup_flagships_first_dp_pod_closes(self):
-        # Flagships first (Tesla/M&A/SpaceX are 53% of downloads), and the
-        # good-news show is the deliberate warm close.
-        assert SPEC.lineup[:3] == ("tesla", "models_agents", "spacex")
+    def test_lineup_operator_order(self):
+        # Operator-set rundown (2026-08-21, after hearing Ep1): SpaceX ->
+        # Tesla -> FF -> M&A -> Planetterrian -> Omni View lead; the
+        # good-news show stays the deliberate warm close.
+        assert SPEC.lineup[:6] == (
+            "spacex", "tesla", "fascinating_frontiers", "models_agents",
+            "planetterrian", "omni_view",
+        )
         assert SPEC.lineup[-1] == "dp_pod"
 
     def test_no_russian_shows(self):
@@ -124,6 +128,17 @@ class TestRegistration:
         assert "workflow_run" in wf          # assembles right after the last show
         assert "group: nerra-daily" in wf    # sweeps never race each other
         assert "safe-commit-push" in wf
+        assert "ref: main" in wf             # never the event's stale SHA
+        # Fast gate: post-publish triggers must not pay the dep install.
+        assert "fastgate" in wf
+        assert wf.count("steps.fastgate.outputs.published != 'true'") >= 3
+
+    def test_find_prompt_file(self):
+        assert SPEC.daily_find
+        text = (ROOT / SPEC.find_prompt_file).read_text(encoding="utf-8")
+        for ph in ("{date_spoken}", "{lineup_titles}"):
+            assert ph in text, ph
+        assert "SKIP" in text  # the honest no-item escape hatch
 
     def test_disclosure_still_spoken(self):
         # The trim removes every per-segment AI disclosure; the edition's
@@ -370,3 +385,27 @@ class TestLinks:
 
     def test_sanitize_spoken(self):
         assert sanitize_spoken("**Bold** [link](https://x.com) `code`") == "Bold link code"
+
+    def test_parse_find_text_skip_and_bounds(self):
+        from engine.daily_edition import parse_find_text
+
+        assert parse_find_text("SKIP") is None
+        assert parse_find_text("") is None
+        assert parse_find_text("too short to air") is None
+        good = ("According to the European Space Agency, a spacecraft " +
+                "measured something remarkable this week. " * 5)
+        parsed = parse_find_text(good)
+        assert parsed and "European Space Agency" in parsed
+
+    def test_digest_md_carries_field_note(self):
+        from engine.daily_edition import build_digest_md
+
+        segs = self._segments(4)
+        links = fallback_links(SPEC, segs, dt.date(2026, 8, 21))
+        md = build_digest_md(SPEC, ROOT, 2, dt.date(2026, 8, 21), segs,
+                             links, None, find_text="A note from Mira.")
+        assert "## Mira's field note" in md
+        assert "A note from Mira." in md
+        md_none = build_digest_md(SPEC, ROOT, 2, dt.date(2026, 8, 21), segs,
+                                  links, None, find_text=None)
+        assert "field note" not in md_none

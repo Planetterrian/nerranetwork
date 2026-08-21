@@ -100,9 +100,11 @@ class EditionSpec:
     host: str
     language: str
     voice_id: str
-    #: Fixed rundown order (operator decision 2026-08-21: flagships first
-    #: by audience — Tesla / M&A / SpaceX are 53% of network downloads —
-    #: with The DP Pod's good-news show as the deliberate warm close).
+    #: Fixed rundown order. Operator-set (2026-08-21, after hearing Ep1):
+    #: SpaceX -> Tesla -> Fascinating Frontiers -> Models & Agents ->
+    #: Planetterrian -> Omni View, then the rest by editorial judgment
+    #: (markets, the narrative shows, the beginner track, the Monday
+    #: weeklies) with The DP Pod's good news as the deliberate warm close.
     lineup: Tuple[str, ...]
     #: Lineup members that only publish on Mondays. Discovery is purely
     #: date-driven (a late Monday episode found on Tuesday still splices);
@@ -120,6 +122,13 @@ class EditionSpec:
     channel_subcategory: str = "Daily News"
     channel_keywords: str = ""
     cover_url: str = ""
+    #: Mira's field note (Aug 21 2026, operator-directed "share some
+    #: interesting daily news to develop her voice"): one short
+    #: web-search-grounded item of HER OWN, spoken at the episode's
+    #: midpoint under its own chapter. Best-effort — any failure or an
+    #: unverifiable day skips the segment entirely, never filler.
+    daily_find: bool = True
+    find_prompt_file: str = ""
     #: Below this many available segments the build refuses to publish —
     #: a two-show "network edition" misrepresents the product.
     min_segments: int = 4
@@ -134,13 +143,13 @@ EDITIONS: Dict[str, EditionSpec] = {
         language="en",
         voice_id=MIRA_VOICE_ID,
         lineup=(
-            "tesla",
-            "models_agents",
             "spacex",
-            "modern_investing",
-            "omni_view",
+            "tesla",
             "fascinating_frontiers",
+            "models_agents",
             "planetterrian",
+            "omni_view",
+            "modern_investing",
             "unintended_consequences",
             "first_principles",
             "models_agents_beginners",
@@ -168,6 +177,7 @@ EDITIONS: Dict[str, EditionSpec] = {
             "podcast network, daily briefing, Nerra Network"
         ),
         cover_url="https://nerranetwork.com/assets/covers/nerra-daily.jpg",
+        find_prompt_file="shows/prompts/nerra_daily_find.txt",
     ),
 }
 
@@ -673,6 +683,33 @@ def fallback_links(
     return {"intro": intro, "handoffs": handoffs, "signoff": signoff}
 
 
+def build_find_prompt(
+    spec: EditionSpec, root: Path, segments: List[Segment], target_date: _dt.date
+) -> str:
+    template = (root / spec.find_prompt_file).read_text(encoding="utf-8")
+    titles = "\n".join(
+        f"- {seg.show_name}: {seg.hook or seg.episode_title}" for seg in segments
+    )
+    return template.format(
+        date_spoken=target_date.strftime("%A, %B %-d, %Y"),
+        lineup_titles=titles,
+    )
+
+
+def parse_find_text(text: str) -> Optional[str]:
+    """Validate Mira's field-note output. None = skip the segment (the
+    prompt's SKIP escape, an empty reply, or an implausible length —
+    never publish filler)."""
+    cleaned = sanitize_spoken(text or "")
+    if not cleaned or "SKIP" in cleaned[:20].upper():
+        return None
+    words = len(cleaned.split())
+    if not 30 <= words <= 140:
+        logger.warning("field note rejected at %d words", words)
+        return None
+    return cleaned
+
+
 def aoai_new_episode(root: Path, target_date: _dt.date) -> Optional[dict]:
     """A new Age of AI interview published on *target_date*, if any."""
     path = root / "digests" / "age_of_ai" / "summaries_age_of_ai.json"
@@ -727,6 +764,7 @@ def build_digest_md(
     segments: List[Segment],
     links: dict,
     aoai_today: Optional[dict],
+    find_text: Optional[str] = None,
 ) -> str:
     """The committed daily digest markdown — the blog post's source. It is
     deliberately a RUNDOWN (Mira's words + titles + links into each show's
@@ -743,9 +781,10 @@ def build_digest_md(
         "",
         links["intro"],
         "",
-        "## Today's rundown",
-        "",
     ]
+    if find_text:
+        parts += ["## Mira's field note", "", find_text, ""]
+    parts += ["## Today's rundown", ""]
     try:
         from generate_html import NETWORK_SHOWS as _ns  # noqa: PLC0415 — canonical page names
     except Exception:  # noqa: BLE001 — page links degrade to the slug convention

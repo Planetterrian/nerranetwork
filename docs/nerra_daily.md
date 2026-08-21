@@ -20,9 +20,9 @@ rationale lives in the `engine/daily_edition.py` module docstring, and
   review rotation (`tests/test_review_agent.py` derives from
   `shows/*.yaml`), multilingual auto-discovery, and every other
   shows-glob consumer. Do not add one.
-- **Fixed, consistent rundown** (operator decision 2026-08-21):
-  flagships first — tesla, models_agents, spacex, modern_investing —
-  then omni_view, fascinating_frontiers, planetterrian,
+- **Fixed, consistent rundown** (operator-set 2026-08-21, revised after
+  hearing Ep1): spacex, tesla, fascinating_frontiers, models_agents,
+  planetterrian, omni_view, then modern_investing,
   unintended_consequences, first_principles, models_agents_beginners,
   the Monday weeklies (env_intel, offshore_north), and dp_pod as the
   deliberate good-news close. Shows that skipped their day are simply
@@ -79,6 +79,19 @@ none), and a new Age of AI episode published that day is always plugged
 in the opening. Any LLM failure falls back to deterministic
 titles-based announcer lines — the edition never fails for want of
 links, and even the fallback is never two days identical.
+
+## Mira's field note
+
+Operator-directed (2026-08-21): a short segment of Mira's OWN at the
+episode midpoint, under its own chapter — one verifiable item from
+today's wider world that the lineup did not cover, found via a single
+`web_search`-grounded Grok call (`shows/prompts/nerra_daily_find.txt`).
+Rules that bind: the source is named aloud, the item must not duplicate
+the lineup (titles are injected), and **any failure or unverifiable day
+skips the segment entirely** — the model's `SKIP` escape and
+`parse_find_text`'s length bounds mean filler is never aired. Adds
+~$0.01/day (one search call + ~500 TTS chars). This is the beat that
+develops Mira's editorial voice beyond announcing.
 
 ## Orchestration
 
