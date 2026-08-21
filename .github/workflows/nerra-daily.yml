@@ -69,7 +69,33 @@ jobs:
           ref: main
           fetch-depth: 1
 
+      # Cheap pre-setup gate: ~10 of the day's ~13 triggers fire after the
+      # edition has already published, and each was paying ~90 s of pip
+      # install just to learn that. Runner-native python3 reads the
+      # committed summaries (the idempotency key) with zero dependencies;
+      # a force dispatch always proceeds.
+      - name: Fast gate — already published today?
+        id: fastgate
+        env:
+          EDITION_DATE: ${{ github.event.inputs.date }}
+        run: |
+          python3 - <<'EOF' >> "$GITHUB_OUTPUT"
+          import datetime, json, os
+          date = (os.environ.get("EDITION_DATE") or "").strip() or \
+              datetime.datetime.now(datetime.timezone.utc).date().isoformat()
+          done = False
+          try:
+              with open("digests/nerra_daily/summaries_nerra_daily.json") as fh:
+                  data = json.load(fh)
+              done = any(e.get("date") == date for e in data.get("summaries", [])
+                         if isinstance(e, dict))
+          except Exception:
+              pass
+          print(f"published={'true' if done else 'false'}")
+          EOF
+
       - uses: ./.github/actions/setup-python
+        if: steps.fastgate.outputs.published != 'true' || github.event.inputs.force == 'true'
         timeout-minutes: 45
         with:
           python-version: '3.12'
@@ -78,6 +104,7 @@ jobs:
           skip-checkout: 'true'
 
       - name: Build and publish the edition
+        if: steps.fastgate.outputs.published != 'true' || github.event.inputs.force == 'true'
         env:
           GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
           R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
@@ -93,6 +120,7 @@ jobs:
           echo "EDITION_DAY=${EDITION_DATE:-$(date -u +%F)}" >> "$GITHUB_ENV"
 
       - name: Commit edition artifacts
+        if: steps.fastgate.outputs.published != 'true' || github.event.inputs.force == 'true'
         uses: ./.github/actions/safe-commit-push
         with:
           add-paths: |

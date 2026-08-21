@@ -517,8 +517,11 @@ today's work, not just explain yesterday's):
 - **NDaily** (Nerra Daily) — the network's **combined daily edition**
   (Aug 2026): one ~2 h episode/day that SPLICES the day's already-published
   English episode MP3s (pulled back from R2) with short Mira host links
-  (Grok voice `ara`) between them — flagships-first fixed rundown, DP Pod
-  closes; Monday adds EI + Offshore North. **Not a run_show show and it
+  (Grok voice `ara`) between them — operator-set fixed rundown (SpaceX →
+  Tesla → FF → M&A → Planetterrian → Omni View → the rest), DP Pod
+  closes; Monday adds EI + Offshore North. Mira also speaks a midpoint
+  **field note** — one web-search-grounded item of her own, own chapter,
+  honest-SKIP on unverifiable days (`shows/prompts/nerra_daily_find.txt`). **Not a run_show show and it
   must never become one**: registry entry in `shows/network_meta.yaml`
   only (no `shows/nerra_daily.yaml`, deliberately — that keeps it out of
   the review rotation and every shows-glob consumer), assembled by

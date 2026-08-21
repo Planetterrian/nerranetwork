@@ -47,6 +47,7 @@ from engine.daily_edition import (  # noqa: E402
     aoai_new_episode,
     build_chapters,
     build_digest_md,
+    build_find_prompt,
     build_links_prompt,
     daily_title,
     edition,
@@ -56,6 +57,7 @@ from engine.daily_edition import (  # noqa: E402
     find_promo_cut,
     load_transcript,
     mira_piece_cmd,
+    parse_find_text,
     parse_links_json,
     segment_trim_cmd,
 )
@@ -191,6 +193,55 @@ def _generate_links(
     return fallback_links(spec, segments, target_date)
 
 
+def _generate_daily_find(
+    spec: EditionSpec,
+    segments: List[Segment],
+    target_date: dt.date,
+    tracker: Optional[dict],
+) -> Optional[str]:
+    """Mira's field note: one web-search-grounded item of her own for the
+    episode midpoint. Best-effort — None (skip the segment) on any
+    failure or an honest SKIP from the model; never fabricated filler."""
+    if not spec.daily_find or not spec.find_prompt_file:
+        return None
+    try:
+        from digests.xai_grok import drain_search_usage, grok_generate_text
+
+        prompt = build_find_prompt(spec, ROOT, segments, target_date)
+        text, meta = grok_generate_text(
+            prompt=prompt, model=LINKS_MODEL, temperature=0.7,
+            max_tokens=900, timeout_seconds=600, enable_web_search=True,
+        )
+        if tracker is not None:
+            from engine.tracking import record_llm_usage, record_search_usage
+
+            usage = (meta or {}).get("usage")
+            record_llm_usage(
+                tracker, "edition_find_generation",
+                int(getattr(usage, "prompt_tokens", 0) or 0),
+                int(getattr(usage, "completion_tokens", 0) or 0),
+                model=str((meta or {}).get("model") or LINKS_MODEL),
+            )
+            search = drain_search_usage()
+            if search.get("calls"):
+                record_search_usage(
+                    tracker,
+                    calls=search.get("calls", 0),
+                    sources=search.get("sources", 0),
+                    prompt_tokens=search.get("input_tokens", 0),
+                    completion_tokens=search.get("output_tokens", 0),
+                    model=LINKS_MODEL,
+                )
+        find_text = parse_find_text(text)
+        if find_text is None:
+            logger.info("field note skipped today (model returned SKIP or "
+                        "an unusable shape)")
+        return find_text
+    except Exception as exc:  # noqa: BLE001 — the field note never sinks the edition
+        logger.warning("field-note generation failed (%s) — segment skipped", exc)
+        return None
+
+
 def _tts_mira(spec: EditionSpec, text: str, dest: Path, tracker: Optional[dict]) -> Path:
     from engine.tts import synthesize
 
@@ -322,7 +373,16 @@ def build_edition(
         signoff_piece = mira(
             "signoff", f"{links['signoff']} {MIRA_AI_DISCLOSURE}")
 
-        # --- Splice order: intro, seg1, handoff1, seg2, ... segN, signoff.
+        # Mira's field note — her own web-grounded discovery, spoken at
+        # the episode midpoint under its own chapter (skipped cleanly on
+        # any failure).
+        find_text = None if skip_llm else _generate_daily_find(
+            spec, segments, target_date, tracker)
+        find_piece = mira("find", find_text) if find_text else None
+        find_before = max(1, len(segments) // 2) if find_piece else None
+
+        # --- Splice order: intro, seg1, handoff1, seg2, ... segN, signoff,
+        # with the field note between the two segments at the midpoint.
         # Chapters: each show's chapter opens on the handoff that introduces
         # it, so skipping to a chapter always lands on Mira setting it up.
         splice: List[Path] = [intro_piece]
@@ -331,6 +391,12 @@ def build_edition(
             get_audio_duration(intro_piece) or 0.0,
         ))
         for i, seg in enumerate(segments):
+            if find_before == i:
+                splice.append(find_piece)
+                chapter_pieces.append((
+                    f"{spec.host}'s field note",
+                    get_audio_duration(find_piece) or 0.0,
+                ))
             lead = 0.0
             if i > 0:
                 handoff = handoff_pieces[i - 1]
@@ -366,6 +432,7 @@ def build_edition(
                     for s in segments
                 ],
                 "links": links,
+                "field_note": find_text,
             }
             print(json.dumps(plan, indent=2, ensure_ascii=False))
             return 0
@@ -391,7 +458,8 @@ def build_edition(
             encoding="utf-8")
 
         digest_md = build_digest_md(
-            spec, ROOT, episode_num, target_date, segments, links, aoai_today)
+            spec, ROOT, episode_num, target_date, segments, links, aoai_today,
+            find_text=find_text)
         md_path = digest_dir / f"{spec.episode_prefix}_Ep{episode_num:03d}_{target_date:%Y%m%d}.md"
         md_path.write_text(digest_md, encoding="utf-8")
 
