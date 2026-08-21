@@ -77,6 +77,23 @@ def main() -> None:
         print(f"Failed to parse {review_path}: {exc}")
         sys.exit(0)
 
+    # Stale-report guard (2026-08-21): when review_episodes.py dies before
+    # writing a fresh report (that day: grok-4.6 reviewer timeouts blew the
+    # job budget), this file still holds an EARLIER day's remediation list —
+    # and replaying it dispatches full duplicate episode pipelines, YouTube
+    # and R2 uploads included. The 2026-08-19 list was replayed on BOTH the
+    # 20th and 21st (4 duplicate episodes/day, 6 recovery PRs). A retry
+    # decision is only ever valid for the day it was computed.
+    today = datetime.datetime.now(datetime.timezone.utc).date().isoformat()
+    review_date = str(data.get("date") or "")
+    if review_date != today:
+        msg = (f"api/daily-review.json is dated {review_date or 'unknown'}, "
+               f"not {today} — refusing to dispatch retries from a stale "
+               "report (today's audit did not ship one)")
+        print(f"::warning::{msg}")
+        _post_webhook(f"⚠️ Daily audit: {msg}")
+        return
+
     shows = data.get("remediation", {}).get("auto_retry_shows", []) or []
     if not shows:
         print("No auto-retries needed")
