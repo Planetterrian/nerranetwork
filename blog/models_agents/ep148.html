@@ -108,11 +108,22 @@
     },
     "image": "https://nerranetwork.com/assets/covers/models-agents.jpg",
     "transcript": "https://nerranetwork.com/blog/models_agents/ep148.html#transcript",
-    "associatedMedia": {
-      "@type": "MediaObject",
-      "contentUrl": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep148_20260821.mp3",
-      "inLanguage": "en"
-    }
+    "associatedMedia": [
+      {
+        "@type": "MediaObject",
+        "contentUrl": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep148_20260821.mp3",
+        "inLanguage": "en"
+      },
+      {
+        "@type": "MediaObject",
+        "contentUrl": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep148_20260821.fr.mp3",
+        "inLanguage": "fr"
+      }
+    ],
+    "availableLanguage": [
+      "en",
+      "fr"
+    ]
   }
 ]
     </script>
@@ -1358,6 +1369,27 @@
     </header>
 
     
+    <section class="nn-i18n" aria-label="Listen in another language">
+        <div class="nn-i18n-inner">
+            <div class="nn-i18n-row">
+                <span class="nn-i18n-label">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    Listen in
+                </span>
+                <button type="button" class="nn-i18n-pill" data-lang="en" aria-pressed="true">English</button>
+                
+                <button type="button" class="nn-i18n-pill" data-lang="fr" aria-pressed="false">Français</button>
+                
+            </div>
+            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://audio.nerranetwork.com/models_agents/Models_Agents_Ep148_20260821.mp3"></audio>
+        </div>
+        <script type="application/json" id="nn-i18n-tracks">
+{
+  "en": {"url": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep148_20260821.mp3", "title": "# Models \u0026 Agents", "desc": "# Models \u0026 Agents"},
+  "fr": {"url": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep148_20260821.fr.mp3", "title": "Ép. 148 : Les benchmarks de fiabilité des agents viennent d\u0027exposer l\u0027écart entre le succès occasionnel et…", "desc": "# Modèles \u0026 Agents"}
+}
+        </script>
+    </section>
     
 
     <!-- Article with TOC sidebar -->
@@ -1442,6 +1474,96 @@
 <li>Additional block-sparse and KV-cache reuse techniques for long-context serving will likely appear as inference frameworks adopt FlashPrefill-style operators.</li>
 <li>Further work on multi-agent hypothesis generation and evaluation frameworks is anticipated following today’s arXiv releases.</li>
 </ul>
+            </div>
+            
+            <div class="blog-body-lang" data-lang="fr" hidden>
+                <p class="blog-translated-note">Français — AI-translated from the English episode.</p>
+                <p>Les évaluations de fiabilité des agents viennent d’exposer le fossé entre un succès occasionnel et une exécution cohérente avec conservation d’état dans de vrais flux de travail d’entreprise.</p>
+<p>Voici Models and Agents, épisode cent quarante-huit.</p>
+<p>Thinkingbox introduit un bac à sable et une évaluation de cinq cent sept flux de travail dans les domaines de la vente au détail, de l’assurance et du support informatique, qui mesure les transitions d’état de bout en bout plutôt que des appels d’outils isolés.</p>
+<p>Plusieurs articles arXiv publiés aujourd’hui examinent l’allocation de l’attention, la réutilisation du cache de clés-valeurs et la génération d’hypothèses multi-agents.</p>
+<p>Les développeurs devraient surveiller comment ces techniques d’évaluation et d’efficacité affectent les déploiements d’agents de longue durée cette semaine.</p>
+<p>Microsoft a publié Thinkingbox, un bac à sable et une évaluation pour les agents opérant dans des flux de travail métier avec conservation d’état.</p>
+<p>L’évaluation contient cinq cent sept flux de travail conditionnés par des politiques, couvrant la vente au détail, l’hôtellerie, l’assurance automobile, l’informatique des néobanques et le support en conseil.</p>
+<p>Chaque flux de travail est évalué par des vérifications exécutables sur l’état terminal du serveur dorsal plutôt que par des appels d’outils de surface ou des réponses.</p>
+<p>Le modèle le plus fort a atteint soixante-cinq virgule trente-six pour cent de réussite au premier essai, mais seulement vingt-cinq virgule vingt-cinq pour cent de réussite à la puissance vingt.</p>
+<p>Cela montre que de nombreux échecs produisent des terminaisons propres et des changements d’état valides, mais manquent encore les résultats requis.</p>
+<p>Cela teste directement la collecte d’informations sur plusieurs tours, le respect des politiques et les transitions d’état persistantes que les évaluations d’agents actuelles ignorent largement.</p>
+<p>Les équipes qui construisent des agents de production devraient examiner le dépôt publié pour voir où leurs cadres d’évaluation actuels pèchent sur ces dimensions.</p>
+<p>Un article intitulé Têtes d’attention asymétriques introduit une allocation de contexte structurée par tête pour l’attention des transformeurs.</p>
+<p>La méthode assigne différentes fenêtres de contexte causal à des têtes d’attention individuelles ou à des groupes, au lieu de donner à chaque tête toute l’étendue.</p>
+<p>Dans des expériences de quatre mille quatre-vingt-seize jetons, plusieurs variantes ont atteint une perte de validation plus basse que l’attention complète standard, tout en préservant l’interface de sortie multi-têtes plate.</p>
+<p>L’approche groupe les têtes par statistiques de caractéristiques et utilise une allocation hiérarchique avec le ratio de couverture d’attention rapporté comme diagnostic.</p>
+<p>Les développeurs travaillant sur des modèles à long contexte devraient tester si l’attribution de fenêtres par tête améliore la qualité à budgets de calcul fixes.</p>
+<p>Un autre article intitulé Conformité, capacité et conflit évalue les grands modèles de langage multimodaux sous messages système.</p>
+<p>VSysBench évalue seize grands modèles de langage multimodaux sur les contraintes de messages système à travers cinq catégories principales et vingt-deux sous-catégories.</p>
+<p>Il note à la fois la conformité aux contraintes et l’exactitude des réponses via le taux de satisfaction conjoint.</p>
+<p>Imposer des messages système a substantiellement réduit la précision des tâches de base pour tous les modèles.</p>
+<p>Les modèles à poids ouverts ont montré des chutes nettes de conformité sous conflit utilisateur, tandis que les meilleurs modèles propriétaires sont restés stables.</p>
+<p>Les contraintes ancrées dans la vision se sont avérées les plus dures pour tous les modèles testés.</p>
+<p>Les développeurs déployant des grands modèles de langage multimodaux avec des consignes système strictes devraient ajouter cette évaluation à leur suite d’évaluation.</p>
+<p>FlashPrefill V2 ajoute un terme de correction de moyenne pour supprimer l’erreur d’approximation à haute sparsité.</p>
+<p>Il redessine l’opérateur parcimonieux avec PackGQA et la spécialisation des warps et prend en charge le cache de clés-valeurs paginé plus le traitement par lots continu.</p>
+<p>Sur les GPU H vingt de Nvidia, il a livré jusqu’à quarante-sept virgule vingt-six fois d’accélération par rapport à FlashAttention deux à un contexte de cent vingt-huit K sous FP huit.</p>
+<p>Il a aussi atteint trente virgule quarante-neuf fois contre une base dense alignée FA trois slash quatre.</p>
+<p>L’implémentation est positionnée pour l’intégration dans des cadres tels que SGLang.</p>
+<p>Les équipes servant des charges de travail à long contexte devraient évaluer le chemin FP huit sur leur matériel.</p>
+<p>SWE bench Science introduit une nouvelle évaluation avec cent dix-neuf tâches provenant de quatre-vingt-dix-huit dépôts GitHub à travers vingt domaines scientifiques.</p>
+<p>Claude Code avec Opus cinq max a atteint moins de cinquante pour cent de réussite au premier essai.</p>
+<p>Quatre modes d’échec récurrents ont été identifiés : déficits en connaissances scientifiques, exploration malavisée, couverture de réparation incomplète, et échecs à généraliser au-delà des cas observés.</p>
+<p>Une ablation a montré qu’une guidance scientifique bien ancrée peut améliorer à la fois la performance et l’efficacité en jetons, tandis qu’une guidance mal alignée induit un ancrage.</p>
+<p>Les équipes de logiciels scientifiques devraient incorporer l’évaluation lors des tests d’agents de codage.</p>
+<p>PersonalBench évalue la personnalisation au moment de l’inférence à travers cinquante auteurs et mille générations en utilisant LUAR, le grand modèle de langage comme juge, et la stylométrie.</p>
+<p>Toutes les méthodes testées ont produit une sortie différenciée par auteur avec un AUC LUAR de zéro virgule neuf cent dix-huit.</p>
+<p>Pourtant les sorties sont restées en dessous du plancher de similarité croisée humaine entre auteurs, avec l’empreinte propre du modèle dominant.</p>
+<p>Les développeurs construisant des outils d’écriture personnalisés devraient ajouter cette évaluation pour quantifier à quel point les sorties se rapprochent réellement des auteurs cibles.</p>
+<p>ReCache met en cache les représentations de ressources indépendamment en utilisant une attention par ressource qui retire les interactions croisées entre ressources et produit des blocs de clés-valeurs invariants à la composition.</p>
+<p>Sur une évaluation assemblée à partir de sept jeux de données publics d’utilisation d’outils, il a égalé la performance d’invocation dense à quatre-vingt-deux virgule trois pour cent versus quatre-vingt-deux virgule quatre pour cent de F un d’invocation.</p>
+<p>Il a livré une accélération de trois virgule six cent cinquante-cinq fois du temps jusqu’au premier jeton et a réduit la mémoire allouée au tenseur de clés-valeurs de quatre-vingt-douze virgule quarante-trois pour cent.</p>
+<p>Le cadre accélère aussi l’attention de un virgule quatre cent vingt-trois fois et prend en charge les cas de test disjoints en ressources.</p>
+<p>Les développeurs d’agents confrontés à l’encodage répété de schémas d’outils devraient évaluer l’implémentation publiée.</p>
+<p>Un message sur r slash MachineLearning introduit DriftGuard, un détecteur à code ouvert qui mesure la pertinence et la dérive de soi contre l’historique propre d’un agent en utilisant le sac de mots par défaut.</p>
+<p>Il se déclenche seulement après que la brèche se maintient à travers vingt-cinq fenêtres consécutives.</p>
+<p>Il a atteint zéro fausse alarme sur des exécutions saines de six cents étapes tout en détectant le déraillement à l’étape deux cent vingt-huit dans une trace de quatre cents étapes.</p>
+<p>Le paquet n’a aucune dépendance, tourne hors ligne sur Python trois point dix plus, et est disponible au dépôt GitHub lié.</p>
+<p>Les équipes exécutant de longues boucles d’agents devraient intégrer le détecteur pour arrêter tôt les exécutions en dérive.</p>
+<p>Des analystes avertissent que l’IA agentique abaisse les barrières pour les groupes de crime organisé menant des arnaques à grande échelle à travers l’Asie.</p>
+<p>Le rapport met en lumière comment les agents autonomes peuvent gérer des campagnes d’ingénierie sociale en plusieurs étapes à l’échelle avec une supervision humaine réduite.</p>
+<p>Les équipes de sécurité surveillant les déploiements d’agents devraient revoir la couverture actuelle des garde-fous contre ces schémas d’usage abusif émergents.</p>
+<p>Rappelez-vous, nous avons couvert la fiabilité des agents hier et les publications d’aujourd’hui font avancer cela en ajoutant des métriques concrètes de transition d’état et des outils de détection de dérive qui ciblent directement la question ouverte de la consistance à long horizon.</p>
+<p>SynFlow convertit les observations linguistiques en distributions spécifiques à la période et applique un flux de travail partagé à travers les cooccurrences de dépendances, les caractéristiques morphologiques, les patrons constructionnels et la sémantique des cadres.</p>
+<p>Il prend en charge plusieurs mesures de distance, la décomposition au niveau des valeurs, les tests statistiques et le regroupement incrémental.</p>
+<p>Une étude de cas sur l’adjectif allemand viral démontre comment un seul glissement sémantique apparaît à travers les dimensions syntaxiques, lexicales et morphologiques.</p>
+<p>Les chercheurs suivant le changement lexical devraient tester la boîte à outils à code ouvert sur leurs corpus.</p>
+<p>Une méthode utilise un grand modèle de langage pour générer automatiquement des personas avec des traits de personnalité de style de communication ajoutés.</p>
+<p>Cela augmente la variation des énoncés dans les simulateurs d’utilisateurs.</p>
+<p>Les expériences ont montré que l’approche produit une plus grande diversité comportementale que les personas élaborés manuellement tout en réduisant le travail.</p>
+<p>Les développeurs de systèmes de dialogue devraient adopter la technique lors de l’extension de la couverture de tests au-delà de petits ensembles de personas écrits à la main.</p>
+<p>Des travaux sur le forking rapide montrent que les dynamiques d’incertitude dans les chaînes de raisonnement des grands modèles de langage convergent vers des motifs stables une fois assez de déploiements collectés.</p>
+<p>Cela permet à un modèle de lissage statistique d’approximer les résultats à haut échantillonage à partir de données à plus bas échantillonage.</p>
+<p>L’approche réduit le coût computationnel de l’analyse d’incertitude basée sur le rééchantillonnage.</p>
+<p>Les équipes analysant la variabilité des chaînes de raisonnement devraient examiner l’approche de lissage pour baisser leur budget d’échantillonnage.</p>
+<p>Bon, soulevons le capot sur FlashPrefill V2.</p>
+<p>Tout le monde parle de l’attention parcimonieuse comme s’il s’agissait simplement d’éteindre certains jetons.</p>
+<p>En pratique, c’est une séquence de décisions sur la découverte de motifs, la correction d’erreur, la disposition mémoire et l’intégration avec les piles d’inférence existantes.</p>
+<p>FlashPrefill V2 découvre d’abord un motif parcimonieux à la volée.</p>
+<p>Puis il applique un terme de correction de moyenne qui garde l’erreur d’approximation gérable même à des niveaux de sparsité extrêmes.</p>
+<p>L’opérateur est ensuite réécrit avec l’accès mémoire PackGQA, la spécialisation des warps et le pipelining ping-pong pour s’aligner avec les noyaux FlashAttention trois slash quatre et supporter le FP huit.</p>
+<p>Ces changements livrent des accélérations de trente fois plus à un contexte de cent vingt-huit K sur les GPU H vingt tout en préservant une performance de tâche presque identique.</p>
+<p>Le point pratique d’ingénierie est que les équipes devraient d’abord valider le terme de correction de moyenne sur leur charge de travail avant d’investir dans l’intégration de noyaux personnalisés.</p>
+<p>Sans lui, la qualité se dégrade plus vite que les économies de latence ne le justifient.</p>
+<p>Exécutez les flux de travail Thinkingbox sur votre configuration d’agent actuelle pour mesurer la réussite à la puissance vingt plutôt qu’au premier essai et identifier où les échecs de transition d’état se produisent.</p>
+<p>Testez ReCache sur des charges de travail de schémas d’outils répétés pour quantifier la réduction de mémoire du cache de clés-valeurs et les gains de temps jusqu’au premier jeton.</p>
+<p>Ajoutez VSysBench aux pipelines d’évaluation multimodale pour vérifier comment les contraintes de messages système affectent à la fois la conformité et la précision des tâches.</p>
+<p>Expérimentez avec l’allocation de contexte par tête de l’article Têtes d’attention asymétriques sur des exécutions de réglage fin à long contexte.</p>
+<p>Intégrez DriftGuard dans les boucles d’agents existantes pour arrêter les exécutions une fois les seuils de pertinence ou de dérive de soi franchis.</p>
+<p>Davantage d’évaluations d’agents qui évaluent les changements d’état persistants plutôt que des appels d’outils isolés sont attendues dans les semaines à venir.</p>
+<p>Des techniques supplémentaires de sparsité par blocs et de réutilisation du cache de clés-valeurs pour le service à long contexte apparaîtront probablement alors que les cadres d’inférence adoptent des opérateurs de style FlashPrefill.</p>
+<p>Davantage de travaux sur la génération d’hypothèses multi-agents et les cadres d’évaluation sont anticipés suite aux publications arXiv d’aujourd’hui.</p>
+<p>Avant de partir, le prochain round de résultats de fiabilité des agents testera si les nouvelles métriques de transition d’état tiennent sur des ensembles de flux encore plus grands.</p>
+<p>Voilà Models and Agents pour aujourd’hui. Si vous avez trouvé cela utile, partagez-le avec quelqu’un qui essaie de suivre tous ces changements, et abonnez-vous pour ne pas rater la mise à jour de demain. Le monde de l’IA bouge vite. Nous vous aiderons à suivre. À demain. Et si vous préférez regarder plutôt qu’écouter, retrouvez-nous sur YouTube à Nerra Network — le lien est dans les notes de l’émission.</p>
+<p>Petit conseil du réseau : essayez Modern Investing Techniques ensuite — des stratégies modernes pour les investisseurs canadiens et américains. Chaque émission de Nerra Network est gratuite sur nerranetwork point com. Vous suivez les longs arcs ? Les Story Trackers sur nerranetwork point com suivent les programmes majeurs à travers les épisodes — Tesla, Space X, IA, sciences de l’espace, et plus.</p>
+<p>Cet épisode a utilisé la synthèse vocale IA de ma voix — la sélection éditoriale et l’analyse sont les miennes.</p>
             </div>
             
 
