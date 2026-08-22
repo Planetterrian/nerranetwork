@@ -1,0 +1,123 @@
+A 250 million parameter model trained on 30 billion tokens now deploys in 60 megabytes with million token retrieval from disk.
+
+This is Models and Agents, episode 149.
+
+A solo developer released SHADOW-250M, a heavily quantized large language model that keeps recent context in fp sixteen while compressing older tokens to one bit on disk.
+
+Nvidia published a linear mapping technique that transfers key value caches between model sizes without full re-prefill.
+
+Simon Willison shipped llm zero point three two point one and llm openrouter zero point seven with new tool support and compatibility fixes.
+
+Builders should test the tiny model for offline retrieval tasks and the key value transfer method for multi-model agent pipelines.
+
+The top story today centers on SHADOW-250M.
+
+A developer released the 250 million parameter model trained from scratch on 30 billion FineWeb tokens and quantized below two bits.
+
+The full deployment fits in 60 megabytes and runs at roughly 400 tokens per second on a laptop central processing unit with no graphics processing unit.
+
+Recent 2048 tokens stay in fp sixteen key value cache while older tokens compress to one bit on disk at 320 bytes each.
+
+This supports up to 100 million tokens of history that the model was trained to retrieve.
+
+Language modeling quality on held out educational web text reached 3.15 nats cross entropy and 23.3 perplexity.
+
+The vocabulary uses fixed 512 bit codes with no trained embedding parameters.
+
+That scores 0.619 Spearman on WordSim-353 versus 0.029 for random codes.
+
+Example greedy output on photosynthesis reads: Photosynthesis is a process in which plants convert sunlight into chemical energy, which is then used to produce oxygen and other chemicals.
+
+The full training kit, master weights for fine tuning, test scripts, and demo are available in the repo.
+
+In model updates, SHADOW-250M reaches 23.3 perplexity on unseen educational web text while fitting in 60 megabytes after sub two bit quantization.
+
+The system keeps the most recent 2048 tokens in fp sixteen key value cache and compresses everything older to one bit on disk at 320 bytes per token.
+
+A fixed 512 bit code vocabulary replaces learned embeddings and scores 0.619 Spearman correlation on WordSim-353.
+
+The repo includes training scripts, fine tuning weights, and reproducible example outputs for photosynthesis explanations and poetry.
+
+Builders working on offline long context retrieval should clone the repo and test archive mode queries this week.
+
+The model was never trained to reason over the long archive, only to retrieve and answer from it.
+
+In agent and tool developments, a post shows how to turn Codex from an interactive assistant into a programmable automation component that can be called directly from scripts or pipelines.
+
+The approach removes the chat interface so agents can invoke the model as a library function.
+
+The technique targets developers who already use Codex for code generation and want to embed it inside larger workflows without manual prompting.
+
+Simon Willison released llm zero point three two point one which pins the OpenAI Python library to avoid a broken httpx dependency and prepares for an upcoming switch to httpx two.
+
+llm openrouter zero point seven adds display of reasoning traces, adopts OpenRouter’s Responses API, and introduces three new server side tools: Shell, WebFetch, and WebSearch.
+
+Both releases are free and open source and install with the usual pip commands.
+
+The updates make it easier to run agents that need external tool calls through OpenRouter models.
+
+In practical and community items, By Its Cover uses only CLIP embeddings for semantic search over book covers plus a two tower neural collaborative filtering model for personalized recommendations.
+
+The site currently holds a few thousand books and grows when users search, with new titles scraped asynchronously via the Hardcover API.
+
+Reciprocal Rank Fusion combines CLIP semantic results with GLiNER named entity recognition keyword search, and a Determinantal Point Process diversifies output.
+
+The full stack runs on AWS with Lambda, ECS, SQS, and Terraform.
+
+A separate tutorial explains how to measure prediction uncertainty so an AI system can defer decisions whose mistakes would be costly.
+
+It walks through adding a Bayesian layer that outputs both a prediction and a calibrated uncertainty estimate.
+
+The core tradeoff is extra inference cost for the uncertainty estimate versus reduced risk on high stakes calls.
+
+OK, let's pop the hood on the Nvidia key value cache transfer work.
+
+Everyone talks about swapping models mid agent session as a simple routing decision.
+
+In practice the receiving model must normally re run the entire prefill to rebuild its key value cache, which scales linearly with context length and model size.
+
+Nvidia’s approach observes that key value caches within the same model family are approximately linear structures.
+
+A closed form per head ridge regression fitted on a few hundred calibration sequences can map source keys and values into the target model’s expected format.
+
+The mapper strips RoPE encodings first, then selects the most predictive source layers for each target layer.
+
+This turns what used to be a full prefill into a few hundred milliseconds of linear algebra.
+
+On matched key value pairs the technique retains 73 to 98 percent of the target model’s standalone accuracy while running 2.7 to 25 times faster than recomputing the cache.
+
+The eight billion to 70 billion Llama leap still recovered 72.8 percent accuracy.
+
+A single source layer recovered 56 percent of target key variance and 32 percent of value variance.
+
+Combining multiple layers raised those figures to 79 percent and 65 percent.
+
+Two Ministral pairs needed a small nonlinear multilayer perceptron fallback because the linear fit failed to extrapolate.
+
+This builds on yesterday’s discussion of inference economics by showing a concrete way to cut the prefill tax in multi model workflows.
+
+Use the linear mapper when you control both models and need low latency handoff on long contexts.
+
+Fall back to full prefill or a trained adapter only when accuracy on a specific pair drops below acceptable thresholds.
+
+Things to try this week include cloning and running the archive mode retrieval demo on a laptop to see million token context without a graphics processing unit.
+
+Add the new WebSearch and WebFetch tools from llm openrouter zero point seven to an existing agent script to test server side tool calling without extra API keys.
+
+Deploy the By Its Cover recommendation system locally and seed it with your own book cover searches to watch the vector database grow.
+
+Prototype a two model agent workflow using Nvidia’s linear key value mapper on any Qwen or Llama family pair to measure the latency savings on long sessions.
+
+On the horizon, more quantized and compressed open weight models are expected as developers chase 60 megabyte class deployments.
+
+Additional cross model key value cache techniques will likely appear once the linear mapping baseline is public.
+
+Simon Willison’s zero point three three release of llm is due soon with the httpx two migration.
+
+Before we go, watch for further agent harness experiments that test whether models can absorb more of the scaffolding into weights.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The AI world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes. This show comes to you from the Nerra Network.
+
+If you want another sharp daily briefing, Unintended Consequences has you covered — true stories of good intentions that backfired. All our shows are free at nerranetwork.com. Live dashboards — TSLA, SpaceX launches, the investing scoreboard — are all at nerranetwork.com/data.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
