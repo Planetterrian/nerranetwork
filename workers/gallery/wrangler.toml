@@ -49,11 +49,27 @@ bucket_name = "nerra-gallery"
 # id = ""
 # preview_id = ""  # Optional preview namespace
 
+# Nerra Personal (Aug 2026): the private personalized-feed audio bucket.
+# COMMENTED OUT for the same reason as the KV block above — uncommenting
+# before the bucket exists blocks every wrangler command. To enable:
+#     wrangler r2 bucket create nerra-personal
+# then uncomment. The /api/feed, /api/account and Stripe endpoints answer
+# 503 "not configured" until this + the KV namespace + the secrets exist;
+# nothing else in the Worker changes behaviour.
+# [[r2_buckets]]
+# binding = "PERSONAL_BUCKET"
+# bucket_name = "nerra-personal"
+
 # Secrets are set out-of-band via:
 #   wrangler secret put JWT_SECRET
 #   wrangler secret put BUTTONDOWN_API_KEY
 #   wrangler secret put RESEND_API_KEY
 #   wrangler secret put RESEND_FROM_EMAIL
+# Nerra Personal additionally needs:
+#   wrangler secret put STRIPE_WEBHOOK_SECRET   # from the Stripe webhook endpoint
+#   wrangler secret put PERSONAL_ADMIN_TOKEN    # any long random string; the
+#                                               # batch builder presents it
+#   wrangler secret put MEMBER_BOOK_CODE        # store discount code members see
 # Do NOT commit them here.
 
 [observability]

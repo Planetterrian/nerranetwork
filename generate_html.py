@@ -3345,6 +3345,7 @@ def generate_sitemap(*, dry_run=False, out=None):
                   "about.html", "how-to-listen.html", "faq.html",
                   "press.html", "contact.html", "editorial.html",
                   "gallery.html", "books.html", "player.html", "data.html",
+                  "join.html", "support.html",
                   "modern-investing-performance.html",
                   "spacex-dashboard.html", "tesla-dashboard.html"]:
         if (ROOT / extra).exists():
@@ -3873,6 +3874,95 @@ def generate_books_page(*, dry_run=False):
     return out_path
 
 
+def _member_page_context(title, description, canonical):
+    import os
+    return {
+        "path_prefix": "",
+        "page_title": title,
+        "page_description": description,
+        "meta_description": description,
+        "meta_keywords": ("Nerra Network membership, personalized podcast, "
+                          "Nerra Personal, support Nerra Network"),
+        "theme_color": "#00D4FF",
+        "og_image": "https://nerranetwork.com/assets/covers/nerra-daily.jpg",
+        "canonical_url": canonical,
+        "show_color": "",
+        "show_color_dark": "",
+        "all_shows": _build_all_shows_list(),
+        # Stripe links are operator-created (dashboard, no code) and flow
+        # in via env so the repo never hardcodes payment URLs. Empty =
+        # the templates render their coming-soon states.
+        "stripe_personal_url": os.environ.get("STRIPE_LINK_PERSONAL", ""),
+        "stripe_personal_local_url": os.environ.get(
+            "STRIPE_LINK_PERSONAL_LOCAL", ""),
+        "donate_monthly_url": os.environ.get("STRIPE_LINK_DONATE_MONTHLY", ""),
+        "donate_once_url": os.environ.get("STRIPE_LINK_DONATE_ONCE", ""),
+        "monthly_cost_usd": 120,
+    }
+
+
+def generate_join_page(*, dry_run=False):
+    """Generate /join.html — the Nerra Personal membership lander."""
+    env = _get_jinja_env()
+    html = env.get_template("join_page.html.j2").render(
+        **_member_page_context(
+            "Nerra Personal — your own daily show | Nerra Network",
+            "One free account for the newsletter, gallery and member perks — "
+            "or your own private daily show: the shows you choose, in your "
+            "order, anchored by Mira.",
+            "https://nerranetwork.com/join.html"))
+    out_path = ROOT / "join.html"
+    if dry_run:
+        print(f"[dry-run] Would write {out_path}")
+        return None
+    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
+    print(f"Wrote {out_path}")
+    return out_path
+
+
+def generate_account_page(*, dry_run=False):
+    """Generate /account.html — the member console (client-side app
+    against api.nerranetwork.com; the page itself is static)."""
+    env = _get_jinja_env()
+    from engine.personal_edition import PERSONAL_SHOW_SLUGS
+    names = {s: NETWORK_SHOWS.get(s, {}).get("name", s)
+             for s in PERSONAL_SHOW_SLUGS}
+    ctx = _member_page_context(
+        "Your account | Nerra Network",
+        "Manage your Nerra account: your personal feed lineup, newsletter, "
+        "gallery access and member perks.",
+        "https://nerranetwork.com/account.html")
+    ctx["show_names"] = names
+    html = env.get_template("account_page.html.j2").render(**ctx)
+    out_path = ROOT / "account.html"
+    if dry_run:
+        print(f"[dry-run] Would write {out_path}")
+        return None
+    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
+    print(f"Wrote {out_path}")
+    return out_path
+
+
+def generate_support_page(*, dry_run=False):
+    """Generate /support.html — donations + cost transparency. This is
+    also the target of every feed's podcast:funding tag."""
+    env = _get_jinja_env()
+    html = env.get_template("support_page.html.j2").render(
+        **_member_page_context(
+            "Support the Nerra Network",
+            "Seventeen daily shows, free and ad-free. See what the network "
+            "actually costs to run, and chip in if you want it to keep "
+            "existing.",
+            "https://nerranetwork.com/support.html"))
+    out_path = ROOT / "support.html"
+    if dry_run:
+        print(f"[dry-run] Would write {out_path}")
+        return None
+    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
+    print(f"Wrote {out_path}")
+    return out_path
+
+
 def generate_about_page(*, dry_run=False):
     """Generate the About page with founder, mission, and network stats."""
     env = _get_jinja_env()
@@ -4277,6 +4367,13 @@ def main():
         generate_spacex_dashboard(dry_run=args.dry_run)
         generate_tesla_dashboard(dry_run=args.dry_run)
         generate_data_hub_page(dry_run=args.dry_run)
+        # Member surface (Aug 2026): join/support/account are static and
+        # cheap; regenerating with the network keeps Stripe-link env
+        # changes and lineup names current. account.html is deliberately
+        # NOT in the sitemap (it's a console, not content).
+        generate_join_page(dry_run=args.dry_run)
+        generate_support_page(dry_run=args.dry_run)
+        generate_account_page(dry_run=args.dry_run)
         generate_how_to_listen_page(dry_run=args.dry_run)
         generate_press_page(dry_run=args.dry_run)
         generate_contact_page(dry_run=args.dry_run)
@@ -4310,6 +4407,11 @@ def main():
         generate_spacex_dashboard(dry_run=args.dry_run)
         generate_tesla_dashboard(dry_run=args.dry_run)
         generate_data_hub_page(dry_run=args.dry_run)
+        # Member surface (Aug 2026): static + cheap; regenerating with the
+        # network keeps Stripe-link env changes and lineup names current.
+        generate_join_page(dry_run=args.dry_run)
+        generate_support_page(dry_run=args.dry_run)
+        generate_account_page(dry_run=args.dry_run)
         # --network --blogs: regenerate network blog index only (not all posts)
         if args.blogs:
             generate_network_blog_index(dry_run=args.dry_run)

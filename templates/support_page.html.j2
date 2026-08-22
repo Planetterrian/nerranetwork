@@ -1,0 +1,70 @@
+{% extends "base.html.j2" %}
+
+{% block head_extra %}
+    <link rel="stylesheet" href="{{ path_prefix }}styles/main.css">
+    <style>
+        .nn-support { max-width: 720px; margin: 0 auto; padding: calc(var(--nav-height) + var(--sp-10)) var(--sp-6) var(--sp-12); }
+        .nn-support h1 { font-family: var(--font-heading); background: var(--nn-gradient); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .nn-support .lede { color: var(--nn-text-muted); font-size: 1.05rem; }
+        .nn-costs { border: 1px solid var(--nn-border); border-radius: 14px; background: var(--nn-surface); padding: var(--sp-5); margin: var(--sp-6) 0; }
+        .nn-costs h2 { margin: 0 0 var(--sp-3); font-size: 1.1rem; font-family: var(--font-heading); }
+        .nn-cost-row { display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px dashed var(--nn-border); font-size: 0.95rem; }
+        .nn-donate-row { display: flex; gap: var(--sp-4); flex-wrap: wrap; margin: var(--sp-6) 0; }
+        .nn-donate-row a { flex: 1; min-width: 200px; text-align: center; padding: 0.9rem 1rem; border-radius: 12px; font-weight: 600; text-decoration: none; background: var(--nn-gradient); color: #fff; }
+        .nn-donate-row a.ghost { background: transparent; border: 1px solid var(--nn-border); color: inherit; }
+        .nn-fineprint { font-size: 0.85rem; color: var(--nn-text-muted); }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="nn-support">
+    <h1>Support the Nerra Network</h1>
+    <p class="lede">Seventeen daily shows, five languages, zero ads, zero
+       paywalls. Everything we publish is free and stays free — supported by
+       listeners who want it to exist.</p>
+
+    <div class="nn-costs">
+        <h2>What it actually costs</h2>
+        <p>In the spirit of this network's honesty rules, here's the real
+           ledger — the entire operation runs on roughly
+           <strong>${{ monthly_cost_usd }}/month</strong>:</p>
+        <div class="nn-cost-row"><span>Voice synthesis (every episode, every language)</span><span>~40%</span></div>
+        <div class="nn-cost-row"><span>Writing &amp; research models</span><span>~25%</span></div>
+        <div class="nn-cost-row"><span>Artwork &amp; video imagery</span><span>~25%</span></div>
+        <div class="nn-cost-row"><span>Hosting, storage &amp; delivery</span><span>~10%</span></div>
+        <p class="nn-fineprint" style="margin-top: var(--sp-3);">A $3 monthly
+           donation covers about a day of the whole network. Every dollar past
+           costs goes to making the shows better — new formats, better
+           research, more languages.</p>
+    </div>
+
+    {% if donate_monthly_url and donate_monthly_url != '#' %}
+    <div class="nn-donate-row">
+        <a href="{{ donate_monthly_url }}">Donate monthly</a>
+        <a class="ghost" href="{{ donate_once_url or donate_monthly_url }}">One-time donation</a>
+    </div>
+    {% else %}
+    <div class="nn-costs">
+        <h2>Donations are almost ready</h2>
+        <p>We're wiring up secure payments now. Meanwhile, the best ways to
+           support the network cost nothing: subscribe to a show, share an
+           episode, <a href="{{ path_prefix }}join.html">create a free
+           account</a>.</p>
+    </div>
+    {% endif %}
+
+    <h2>Prefer to get something back?</h2>
+    <p><a href="{{ path_prefix }}join.html">Nerra Personal</a> is our
+       membership: your own private daily show — the shows you pick, in your
+       order, anchored by Mira — from $4.99/month. Members also get gallery
+       downloads and deep discounts on
+       <a href="{{ path_prefix }}books.html">Nerra Network books</a>.</p>
+
+    <h2 style="margin-top: var(--sp-8);">The fine print</h2>
+    <p class="nn-fineprint">Donations support an independent media project and
+       are not tax-deductible charitable contributions. Payments are processed
+       by Stripe; we never see your card details. Monthly donations can be
+       cancelled any time from your Stripe receipt email. Questions:
+       reply to any Nerra newsletter.</p>
+</div>
+{% endblock %}

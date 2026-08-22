@@ -367,10 +367,13 @@
                 to action and the wrong one. Default false, so every
                 other page renders byte-for-byte as before. -#}
             {%- if not hide_footer_subscribe %}
-            <!-- Newsletter Subscribe -->
+            <!-- Newsletter Subscribe — posts to the account Worker (Aug
+                 2026): every newsletter signup now creates a Nerra
+                 account (same identity as the gallery gate), so the
+                 member surface and the list grow together. -->
             <div class="nn-footer-subscribe">
-                <form action="https://buttondown.com/api/emails/embed-subscribe/patricknovak1" method="post" target="popupwindow" class="nn-subscribe-form"
-                      onsubmit="var btn=this.querySelector('button[type=submit]');btn.disabled=true;btn.textContent={{ t.subscribe_button_loading | tojson }};setTimeout(function(){btn.textContent={{ t.subscribe_button_done | tojson }};btn.disabled=false;},500);">
+                <form class="nn-subscribe-form"
+                      onsubmit="var f=this,btn=f.querySelector('button[type=submit]');btn.disabled=true;btn.textContent={{ t.subscribe_button_loading | tojson }};var tags=Array.prototype.map.call(f.querySelectorAll('input[name=tag]:checked'),function(c){return c.value;});fetch('https://api.nerranetwork.com/api/subscribe',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:f.email.value,list:'member',tags:tags})}).then(function(r){btn.textContent=r.ok?{{ t.subscribe_button_done | tojson }}:{{ t.subscribe_button | tojson }};if(r.ok){var a=f.querySelector('.nn-account-link');if(a)a.style.display='inline';}}).catch(function(){btn.textContent={{ t.subscribe_button | tojson }};}).then(function(){btn.disabled=false;});return false;">
                     <h4>{{ t.subscribe_h4 }}</h4>
                     <p>{{ t.subscribe_subtitle }}</p>
                     <div class="nn-subscribe-tags">
@@ -388,9 +391,12 @@
                     </div>
                     <div class="nn-subscribe-row">
                         <input type="email" name="email" placeholder="{{ t.subscribe_email_placeholder }}" required aria-label="{{ t.subscribe_email_aria }}">
-                        <input type="hidden" value="1" name="embed">
                         <button type="submit">{{ t.subscribe_button }}</button>
                     </div>
+                    <p style="margin-top:0.5rem;font-size:0.85rem;">
+                        <a href="{{ path_prefix }}join.html">Nerra Personal — your own daily show, gallery &amp; member perks →</a>
+                        <a class="nn-account-link" href="{{ path_prefix }}account.html" style="display:none;margin-left:0.75rem;">Your account →</a>
+                    </p>
                 </form>
             </div>
             {%- endif %}
@@ -401,6 +407,7 @@
             <div class="nn-footer-legal">
                 <p class="ai-notice">{{ t.ai_notice }} <a href="{{ path_prefix }}ai-disclosure.html">{{ t.learn_more }}</a></p>
                 <div>
+                    <a href="{{ path_prefix }}support.html">Support the network</a> &middot;
                     <a href="{{ path_prefix }}privacy-policy.html">{{ t.footer_privacy }}</a> &middot;
                     <a href="{{ path_prefix }}terms-of-service.html">{{ t.footer_terms }}</a> &middot;
                     <a href="{{ path_prefix }}ai-disclosure.html">{{ t.footer_ai_disclosure }}</a>

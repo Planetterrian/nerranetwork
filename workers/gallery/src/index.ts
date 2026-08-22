@@ -20,10 +20,20 @@ import {
   handleMagic,
   handleSubscribe,
 } from "./handlers";
+import {
+  handleAccount,
+  handleAdminSpecs,
+  handlePersonalFeed,
+  handlePreferences,
+  handleStripeWebhook,
+} from "./personal";
 import * as resend from "./resend";
 import type { Env, HandlerDeps } from "./types";
 
 const DEPS: HandlerDeps = { buttondown, resend };
+
+// /api/feed/<token>/<file> — the one wildcard route (private feeds).
+const FEED_PATH_RE = /^\/api\/feed\/([a-f0-9]{16,64})\/([A-Za-z0-9_.-]+)$/;
 
 
 export default {
@@ -34,6 +44,13 @@ export default {
     const url = new URL(request.url);
     const route = `${request.method} ${url.pathname}`;
     try {
+      const feedMatch = request.method === "GET"
+        ? url.pathname.match(FEED_PATH_RE)
+        : null;
+      if (feedMatch) {
+        return await handlePersonalFeed(
+          request, env, feedMatch[1], feedMatch[2]);
+      }
       switch (route) {
         case "POST /api/subscribe":
           return await handleSubscribe(request, env, DEPS);
@@ -43,6 +60,14 @@ export default {
           return await handleMagic(request, env, DEPS);
         case "GET /api/download":
           return await handleDownload(request, env, DEPS);
+        case "GET /api/account":
+          return await handleAccount(request, env);
+        case "POST /api/account/preferences":
+          return await handlePreferences(request, env);
+        case "POST /api/stripe/webhook":
+          return await handleStripeWebhook(request, env);
+        case "GET /api/admin/personal-specs":
+          return await handleAdminSpecs(request, env);
         case "GET /api/health":
           return jsonResponse(request, 200, { ok: true });
         default:

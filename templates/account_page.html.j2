@@ -1,0 +1,211 @@
+{% extends "base.html.j2" %}
+
+{% block head_extra %}
+    <link rel="stylesheet" href="{{ path_prefix }}styles/main.css">
+    <style>
+        .nn-account { max-width: 760px; margin: 0 auto; padding: calc(var(--nav-height) + var(--sp-10)) var(--sp-6) var(--sp-12); }
+        .nn-account h1 { font-family: var(--font-heading); }
+        .nn-card { border: 1px solid var(--nn-border); border-radius: 14px; background: var(--nn-surface); padding: var(--sp-5); margin-bottom: var(--sp-5); }
+        .nn-card h2 { margin: 0 0 var(--sp-3); font-size: 1.1rem; font-family: var(--font-heading); }
+        .nn-account input[type=email], .nn-account input[type=text] { width: 100%; padding: 0.7rem 0.9rem; border-radius: 10px; border: 1px solid var(--nn-border); background: var(--nn-bg, transparent); color: inherit; }
+        .nn-account button { padding: 0.65rem 1.4rem; border-radius: 10px; border: none; background: var(--nn-gradient); color: #fff; font-weight: 600; cursor: pointer; }
+        .nn-account button.ghost { background: transparent; border: 1px solid var(--nn-border); color: inherit; }
+        .nn-lineup-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.2rem; border-bottom: 1px dashed var(--nn-border); }
+        .nn-lineup-row .movers { margin-left: auto; display: flex; gap: 0.25rem; }
+        .nn-lineup-row .movers button { padding: 0.15rem 0.55rem; font-size: 0.9rem; }
+        .nn-feedurl { font-family: var(--font-mono, monospace); font-size: 0.8rem; word-break: break-all; background: var(--nn-bg, rgba(0,0,0,0.15)); padding: 0.6rem 0.8rem; border-radius: 8px; }
+        .nn-perk { display: flex; justify-content: space-between; gap: 1rem; padding: 0.5rem 0; border-bottom: 1px dashed var(--nn-border); }
+        .nn-muted { color: var(--nn-text-muted); font-size: 0.9rem; }
+        #nn-status { min-height: 1.2rem; font-size: 0.9rem; }
+        [hidden] { display: none !important; }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="nn-account">
+    <h1>Your Nerra account</h1>
+    <p id="nn-status" class="nn-muted">Loading…</p>
+
+    <!-- Signed-out: magic-link request -->
+    <div class="nn-card" id="nn-signin" hidden>
+        <h2>Sign in</h2>
+        <p class="nn-muted">No passwords here — enter the email you joined with
+           and we'll send you a sign-in link.</p>
+        <form onsubmit="NN.login(this);return false;" style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+            <input type="email" name="email" placeholder="you@example.com" required style="flex:1;min-width:220px;">
+            <button type="submit">Email me a link</button>
+        </form>
+        <p class="nn-muted" style="margin-top:0.75rem;">New here?
+            <a href="{{ path_prefix }}join.html">Create your free account →</a></p>
+    </div>
+
+    <div id="nn-member" hidden>
+        <!-- Personal feed -->
+        <div class="nn-card">
+            <h2>Your personal daily show</h2>
+            <div id="nn-feed-active" hidden>
+                <p>Mira builds your edition every morning. Add this private
+                   feed to any podcast app — it's yours alone; sharing the
+                   URL shares your subscription.</p>
+                <p class="nn-feedurl" id="nn-feed-url"></p>
+                <button class="ghost" onclick="NN.copyFeed()">Copy feed URL</button>
+            </div>
+            <div id="nn-feed-upsell" hidden>
+                <p>Pick your shows and order below, then start your
+                   subscription — your feed exists within a day.</p>
+                {% if stripe_personal_url and stripe_personal_url != '#' %}
+                <p>
+                    <a href="{{ stripe_personal_url }}"><button>Personal — $4.99/mo</button></a>
+                    {% if stripe_personal_local_url and stripe_personal_local_url != '#' %}
+                    <a href="{{ stripe_personal_local_url }}"><button class="ghost">+ Local brief — $8.99/mo</button></a>
+                    {% endif %}
+                </p>
+                <p class="nn-muted">Use the same email at checkout that you
+                   signed in with — that's how your feed finds you.</p>
+                {% else %}
+                <p class="nn-muted">Personal feeds are launching soon — your
+                   saved lineup will be ready on day one.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Lineup + preferences -->
+        <div class="nn-card">
+            <h2>Your lineup</h2>
+            <p class="nn-muted">Choose at least two shows; order them the way
+               you want your morning to run. Mira handles the rest.</p>
+            <div id="nn-lineup"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-top:var(--sp-4);">
+                <label>First name <span class="nn-muted">(Mira greets you by it)</span>
+                    <input type="text" id="nn-name" maxlength="40" placeholder="Optional"></label>
+                <label>City <span class="nn-muted">(for the local brief tier)</span>
+                    <input type="text" id="nn-city" maxlength="80" placeholder="Optional"></label>
+            </div>
+            <p style="margin-top:var(--sp-4);"><button onclick="NN.save()">Save preferences</button>
+               <span id="nn-save-status" class="nn-muted"></span></p>
+        </div>
+
+        <!-- Member perks -->
+        <div class="nn-card">
+            <h2>Member perks</h2>
+            <div class="nn-perk"><span>Newsletter</span>
+                <span class="nn-muted">You're on the list — manage shows in any email's footer</span></div>
+            <div class="nn-perk"><span>Image gallery downloads</span>
+                <a href="{{ path_prefix }}gallery.html">Browse the gallery →</a></div>
+            <div class="nn-perk"><span>Book discount</span>
+                <span id="nn-book-perk" class="nn-muted">—</span></div>
+            <div class="nn-perk"><span>Support the network</span>
+                <a href="{{ path_prefix }}support.html">Donate →</a></div>
+        </div>
+    </div>
+</div>
+
+<script>
+var NN = (function () {
+  var API = 'https://api.nerranetwork.com';
+  var state = { shows: [], all: [], names: {} };
+  var SHOW_NAMES = {{ show_names | tojson }};
+
+  function el(id) { return document.getElementById(id); }
+
+  function renderLineup() {
+    var box = el('nn-lineup');
+    box.innerHTML = '';
+    var chosen = state.shows.slice();
+    var rest = state.all.filter(function (s) { return chosen.indexOf(s) === -1; });
+    chosen.concat(rest).forEach(function (slug) {
+      var idx = chosen.indexOf(slug);
+      var row = document.createElement('div');
+      row.className = 'nn-lineup-row';
+      var cb = document.createElement('input');
+      cb.type = 'checkbox'; cb.checked = idx !== -1;
+      cb.onchange = function () {
+        if (cb.checked) { state.shows.push(slug); }
+        else { state.shows = state.shows.filter(function (s) { return s !== slug; }); }
+        renderLineup();
+      };
+      var label = document.createElement('span');
+      label.textContent = (idx !== -1 ? (idx + 1) + '. ' : '') + (SHOW_NAMES[slug] || slug);
+      row.appendChild(cb); row.appendChild(label);
+      if (idx !== -1) {
+        var movers = document.createElement('span');
+        movers.className = 'movers';
+        [['↑', -1], ['↓', 1]].forEach(function (m) {
+          var b = document.createElement('button');
+          b.className = 'ghost'; b.textContent = m[0]; b.type = 'button';
+          b.onclick = function () {
+            var j = idx + m[1];
+            if (j < 0 || j >= state.shows.length) return;
+            state.shows.splice(idx, 1);
+            state.shows.splice(j, 0, slug);
+            renderLineup();
+          };
+          movers.appendChild(b);
+        });
+        row.appendChild(movers);
+      }
+      box.appendChild(row);
+    });
+  }
+
+  function load() {
+    fetch(API + '/api/account', { credentials: 'include' })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function (data) {
+        el('nn-status').textContent = '';
+        el('nn-member').hidden = false;
+        state.all = data.shows || [];
+        var prefs = (data.member && data.member.preferences) || {};
+        state.shows = prefs.shows || [];
+        el('nn-name').value = prefs.first_name || '';
+        el('nn-city').value = prefs.city || '';
+        renderLineup();
+        var feedUrl = data.member && data.member.feed_url;
+        el('nn-feed-active').hidden = !feedUrl;
+        el('nn-feed-upsell').hidden = !!feedUrl;
+        if (feedUrl) { el('nn-feed-url').textContent = feedUrl; }
+        var code = data.perks && data.perks.book_discount_code;
+        el('nn-book-perk').innerHTML = code
+          ? 'Use code <strong>' + code + '</strong> at the book store — '
+            + '<a href="{{ path_prefix }}books.html">see the books →</a>'
+          : 'Member codes appear here as new volumes launch';
+      })
+      .catch(function () {
+        el('nn-status').textContent = '';
+        el('nn-signin').hidden = false;
+      });
+  }
+
+  return {
+    login: function (form) {
+      var btn = form.querySelector('button');
+      btn.disabled = true; btn.textContent = 'Sending…';
+      fetch(API + '/api/login?email=' + encodeURIComponent(form.email.value))
+        .then(function () { btn.textContent = 'Check your inbox'; })
+        .catch(function () { btn.textContent = 'Try again'; btn.disabled = false; });
+    },
+    save: function () {
+      el('nn-save-status').textContent = 'Saving…';
+      fetch(API + '/api/account/preferences', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          shows: state.shows,
+          first_name: el('nn-name').value,
+          city: el('nn-city').value,
+        }),
+      }).then(function (r) {
+        el('nn-save-status').textContent = r.ok
+          ? 'Saved — changes reach tomorrow’s edition'
+          : 'Save failed (are personal accounts live yet?)';
+      }).catch(function () { el('nn-save-status').textContent = 'Save failed'; });
+    },
+    copyFeed: function () {
+      navigator.clipboard.writeText(el('nn-feed-url').textContent);
+    },
+    load: load,
+  };
+})();
+NN.load();
+</script>
+{% endblock %}
