@@ -90,6 +90,81 @@ def _have_r2() -> bool:
                ("R2_ENDPOINT_URL", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY"))
 
 
+def _unbuilt_volume_ids() -> list:
+    """Volume configs whose catalog entry is absent or has no files."""
+    import json
+    built = {}
+    catalog = ROOT / "books" / "catalog.json"
+    if catalog.exists():
+        for v in json.loads(catalog.read_text(encoding="utf-8")).get(
+                "volumes", []):
+            built[v.get("volume_id")] = bool(v.get("files"))
+    return [p.stem for p in sorted((ROOT / "books" / "volumes").glob("*.yaml"))
+            if not built.get(p.stem)]
+
+
+def _r2_client():
+    import boto3
+    from botocore.config import Config as BotoConfig
+    return boto3.client(
+        "s3",
+        endpoint_url=os.getenv("R2_ENDPOINT_URL", "").strip(),
+        aws_access_key_id=os.getenv("R2_ACCESS_KEY_ID", "").strip(),
+        aws_secret_access_key=os.getenv("R2_SECRET_ACCESS_KEY", "").strip(),
+        config=BotoConfig(signature_version="s3v4"),
+    )
+
+
+def _books_bucket() -> str:
+    return os.getenv("R2_BOOKS_BUCKET", "podcast-audio").strip()
+
+
+def _restore_audio_cache(volume, audio_dir: Path) -> int:
+    """Pull previously narrated tracks (and their text-hash sidecars)
+    down from R2 so a CI re-run resumes instead of re-billing TTS. The
+    hash sidecar is what makes reuse safe: engine.audiobook regenerates
+    any track whose narration text changed. Soft-fails to zero restores."""
+    if not _have_r2():
+        return 0
+    prefix = f"{R2_BOOKS_PREFIX}/{volume.volume_id}/audio/"
+    restored = 0
+    try:
+        s3 = _r2_client()
+        paginator = s3.get_paginator("list_objects_v2")
+        audio_dir.mkdir(parents=True, exist_ok=True)
+        for page in paginator.paginate(Bucket=_books_bucket(), Prefix=prefix):
+            for obj in page.get("Contents", []):
+                name = obj["Key"].rsplit("/", 1)[-1]
+                local = audio_dir / name
+                if name.startswith("track_") and not local.exists():
+                    s3.download_file(_books_bucket(), obj["Key"], str(local))
+                    restored += 1
+    except Exception as exc:  # noqa: BLE001 — cache is never build-fatal
+        logger.warning("audio cache restore failed (continuing cold): %s",
+                       exc)
+    if restored:
+        logger.info("audio cache: restored %d object(s) from R2", restored)
+    return restored
+
+
+def _persist_audio_cache(volume, audio_dir: Path) -> None:
+    """Push narrated tracks + hash sidecars to R2. Doubles as the
+    per-chapter MP3 delivery for audiobook-store submission (Spotify's
+    ingest wants chapterized MP3s — they now live at
+    books/<id>/audio/track_NNN.mp3)."""
+    if not _have_r2() or not audio_dir.exists():
+        return
+    try:
+        for f in sorted(audio_dir.glob("track_*")):
+            ctype = "audio/mpeg" if f.suffix == ".mp3" else "text/plain"
+            _r2_upload(
+                f, f"{R2_BOOKS_PREFIX}/{volume.volume_id}/audio/{f.name}",
+                ctype)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("audio cache persist failed (tracks stay local "
+                       "only): %s", exc)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--volume",
@@ -122,10 +197,27 @@ def main() -> int:
                     len(planned))
         if args.build_planned:
             to_build.extend(p.stem for p in planned)
+    if args.build_planned:
+        # A volume config with no artifacts in the catalog is pending work
+        # regardless of WHEN it was planned. Without this, planner mode
+        # only ever built volumes created in the same run — the first
+        # live dispatch (2026-08-22) went green in 70 s having built
+        # nothing, and the monthly cron would have no-opped forever.
+        pending = _unbuilt_volume_ids()
+        if pending:
+            logger.info("planner mode: %d committed volume(s) have no "
+                        "built artifacts: %s", len(pending), pending)
+            to_build.extend(pending)
     if args.volume:
         to_build.append(args.volume)
+    # Dedup, order-preserving (a just-planned volume is also "unbuilt").
+    to_build = list(dict.fromkeys(to_build))
     if not to_build:
-        logger.info("nothing to build")
+        if args.build_planned:
+            logger.info("planner mode: every committed volume is built "
+                        "and cataloged — nothing to do")
+        else:
+            logger.info("nothing to build")
         return 0
 
     for volume_id in to_build:
@@ -142,14 +234,14 @@ def _generate_book_art(volume, chapters, out_dir, api_key, args):
     chapter_images, cover_art, generated = {}, None, 0
     if args.skip_images:
         logger.info("book art: skipped (--skip-images)")
-        return chapter_images, cover_art, generated, 0.0
+        return chapter_images, cover_art, generated, 0.0, []
     if not (volume.image_model and volume.chapter_art_style):
         logger.info("book art: no image_model/style in series config — "
                     "skipping")
-        return chapter_images, cover_art, generated, 0.0
+        return chapter_images, cover_art, generated, 0.0, []
     if not api_key:
         logger.warning("book art: no GROK_API_KEY — text-only build")
-        return chapter_images, cover_art, generated, 0.0
+        return chapter_images, cover_art, generated, 0.0, []
 
     per_image = model_cost_usd(volume.image_model)
     est = per_image * (len(chapters) + 1)
@@ -170,8 +262,12 @@ def _generate_book_art(volume, chapters, out_dir, api_key, args):
         prompt = chapter_art_prompt(volume.chapter_art_style, ch)
         raw = generate_art(prompt, api_key=api_key,
                            model=volume.image_model, size=CHAPTER_ART_SIZE)
+        if not raw:  # one retry — transient API failures are common enough
+            raw = generate_art(prompt, api_key=api_key,
+                               model=volume.image_model,
+                               size=CHAPTER_ART_SIZE)
         if not raw:
-            continue  # soft: this chapter ships without art
+            continue  # soft: this chapter ships without art (reported below)
         jpeg = to_chapter_jpeg(raw)
         cached.write_bytes(jpeg)
         chapter_images[ch.number] = jpeg
@@ -198,7 +294,14 @@ def _generate_book_art(volume, chapters, out_dir, api_key, args):
     cost = generated * per_image
     logger.info("book art: %d generated ($%.2f), %d chapters illustrated",
                 generated, cost, len(chapter_images))
-    return chapter_images, cover_art, generated, cost
+    missing = [c.number for c in chapters if c.number not in chapter_images]
+    if missing:
+        # Loud but non-fatal — the first live build shipped 19/20
+        # illustrated with zero report. The ::warning:: renders as a GitHub
+        # Actions annotation; the catalog records it durably (see caller).
+        print(f"::warning::book art: volume {volume.volume_id} chapters "
+              f"WITHOUT illustration after retry: {missing}")
+    return chapter_images, cover_art, generated, cost, missing
 
 
 def _build_one(volume_id: str, args) -> int:
@@ -217,7 +320,7 @@ def _build_one(volume_id: str, args) -> int:
 
     api_key = (os.getenv("GROK_API_KEY") or os.getenv("XAI_API_KEY")
                or "").strip()
-    chapter_images, cover_art, images_generated, images_cost = (
+    chapter_images, cover_art, images_generated, images_cost, art_missing = (
         _generate_book_art(volume, chapters, out_dir, api_key, args))
 
     cover = generate_cover(volume, out_dir / "cover.png",
@@ -252,6 +355,7 @@ def _build_one(volume_id: str, args) -> int:
         "built_date": date.today().isoformat(),
         "images": {
             "chapters_illustrated": len(chapter_images),
+            "chapters_missing_art": art_missing,
             "generated": images_generated,
             "model": volume.image_model,
             "estimated_cost_usd": round(images_cost, 2),
@@ -278,10 +382,15 @@ def _build_one(volume_id: str, args) -> int:
                              est, args.max_tts_cost_usd)
                 return 1
             voice_id = os.getenv("BOOK_VOICE_ID", "kdif6sqjcyiq").strip()
+            audio_dir = out_dir / "audio"
+            if not args.no_upload:
+                _restore_audio_cache(volume, audio_dir)
             tracks = synthesize_tracks(
-                volume, chapters, out_dir / "audio",
+                volume, chapters, audio_dir,
                 api_key=api_key, voice_id=voice_id,
             )
+            if not args.no_upload:
+                _persist_audio_cache(volume, audio_dir)
             m4b = build_m4b(volume, tracks,
                             out_dir / f"{volume.volume_id}.m4b",
                             cover_png=cover)
@@ -309,8 +418,25 @@ def _build_one(volume_id: str, args) -> int:
         logger.info("uploaded %d artifacts to R2 under %s/",
                     len(entry["files"]), prefix)
 
-    update_catalog(entry)
-    logger.info("catalog updated: books/catalog.json")
+    # A CI build that was SUPPOSED to upload but produced no files is a
+    # failure, not a green run — the "Verify book integrity" step used to
+    # pass on a zero-output run because it only exercised the compiler.
+    if not args.no_upload and _have_r2() and not entry["files"].get("epub"):
+        logger.error("build produced no uploaded EPUB for %s — failing "
+                     "instead of cataloging an empty volume",
+                     volume.volume_id)
+        return 1
+
+    if entry["files"]:
+        update_catalog(entry)
+        logger.info("catalog updated: books/catalog.json")
+    else:
+        # A build with nothing uploaded (--no-upload dry run, or missing
+        # R2 creds) must not clobber a previously published entry: the
+        # catalog records what SHIPPED, and a local rebuild of vol1 once
+        # replaced its live files block with an empty one.
+        logger.info("catalog NOT updated — no uploaded artifacts "
+                    "(local artifacts remain under outputs/books/)")
     print(json.dumps({k: entry[k] for k in
                       ("volume_id", "chapters", "word_count", "files",
                        "audiobook")}, indent=2))

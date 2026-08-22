@@ -25,7 +25,6 @@ clipped through ``engine.titles`` — never sliced here (titles rule).
 
 from __future__ import annotations
 
-import html
 import json
 import logging
 import re
@@ -58,9 +57,6 @@ _SEGMENT_RE = re.compile(
 #: chapter epigraph rather than a section.
 _HOOK_SECTION_TITLES = {"the hook", "the cold open", "cold open", "hook"}
 
-_RSS_TITLE_RE = re.compile(r"<title>\s*Ep\s+(\d+):\s*(.*?)\s*</title>", re.DOTALL)
-
-
 # ---------------------------------------------------------------------------
 # Data model
 # ---------------------------------------------------------------------------
@@ -82,6 +78,15 @@ class BookChapter:
             words += sum(len(p.split()) for p in paras)
         return words
 
+    @property
+    def heading(self) -> str:
+        """Printed heading / TOC entry / audiobook chapter-marker name.
+        Deliberately NEVER spoken — narration says only "Chapter N." so a
+        title edit can re-mux metadata without re-narrating audio."""
+        if self.title:
+            return f"Chapter {self.number} · {self.title}"
+        return f"Chapter {self.number}"
+
 
 @dataclass
 class BookVolume:
@@ -95,6 +100,10 @@ class BookVolume:
     description: str = ""
     language: str = "en"
     episodes: List[int] = field(default_factory=list)
+    #: Curated short chapter titles keyed by EPISODE number. Written by a
+    #: person (or reviewed in a PR); never derived from the hook — see
+    #: parse_digest_to_chapter. Missing entries print as bare "Chapter N".
+    chapter_titles: Dict[int, str] = field(default_factory=dict)
     digest_dir: str = ""             # default: digests/<show_slug>
     rss_file: str = ""               # default: <show_slug>_podcast.rss
     buy_links: Dict[str, str] = field(default_factory=dict)
@@ -196,7 +205,13 @@ def load_volume(path: str | Path) -> BookVolume:
         # loudly rather than discard.
         logger.warning("volume config %s has unknown keys (ignored): %s",
                        path, unknown)
-    return BookVolume(**{k: v for k, v in data.items() if k in known})
+    vol = BookVolume(**{k: v for k, v in data.items() if k in known})
+    # YAML may deliver chapter_titles keys as ints or strings; normalize
+    # to int so lookups by episode number always hit.
+    vol.chapter_titles = {int(k): str(v).strip()
+                          for k, v in (vol.chapter_titles or {}).items()
+                          if str(v).strip()}
+    return vol
 
 
 # ---------------------------------------------------------------------------
@@ -261,6 +276,11 @@ def plan_next_volumes(series_slug: str, *, write: bool = True) -> List[Path]:
             "series": series_slug,
             "volume_number": next_num,
             "episodes": block,
+            # Curated short titles (2-5 words) per episode — REQUIRED
+            # before store submission; empty prints as bare "Chapter N".
+            # Never paste the episode hook here: hooks are full sentences
+            # and truncate in store TOCs (the 2026-08-22 launch blocker).
+            "chapter_titles": {ep: "" for ep in block},
             "buy_links": {k: "" for k in
                           ("amazon", "apple_books", "google_play",
                            "kobo", "spotify")},
@@ -306,25 +326,6 @@ def find_digest(volume: BookVolume, episode_num: int) -> Path:
     return matches[-1]
 
 
-def episode_titles_from_rss(rss_path: Path) -> Dict[int, str]:
-    """Map episode number -> hook sentence from the feed's item titles.
-
-    The feed's titles were built by ``engine.titles.episode_title`` so
-    they are already clean ("Ep N: <hook>"); we strip the numeric prefix
-    back off. Episodes that have left the feed window simply aren't in
-    the map — callers fall back to the digest's own hook line.
-    """
-    titles: Dict[int, str] = {}
-    if not rss_path.exists():
-        return titles
-    text = rss_path.read_text(encoding="utf-8")
-    for num, title in _RSS_TITLE_RE.findall(text):
-        cleaned = html.unescape(title).strip()
-        if cleaned:
-            titles.setdefault(int(num), cleaned)
-    return titles
-
-
 def _clean_inline(text: str) -> str:
     """Markdown inline debris -> plain prose (bold/italic markers kept
     OUT of the book body; emphasis in flowing prose reads fine without
@@ -362,7 +363,7 @@ def parse_digest_to_chapter(
     *,
     number: int,
     episode_num: int,
-    rss_title: str = "",
+    title: str = "",
 ) -> BookChapter:
     """Deterministic digest-markdown -> chapter transform.
 
@@ -370,6 +371,15 @@ def parse_digest_to_chapter(
     (later episodes) and the hook living inside a "Segment 1 — The Hook"
     section (early episodes). Segment scaffolding ("Segment N —") never
     reaches the book; the editorial section titles do.
+
+    *title* is the CURATED short chapter title from the volume YAML's
+    ``chapter_titles`` map — never derived from the episode hook. The
+    hook is a full podcast sentence; clipping it produced truncated
+    "Delhi's British government paid for dead cobras to cut snake…"
+    TOC entries on the first store submission attempt (2026-08-22).
+    With no curated title the chapter prints as bare "Chapter N" (a
+    normal essay-collection convention) and the hook survives as the
+    epigraph either way.
     """
     md_text = md_text.replace("\r\n", "\n")
 
@@ -401,28 +411,35 @@ def parse_digest_to_chapter(
             "format changed? Refusing to ship an empty chapter."
         )
 
-    title_source = rss_title or epigraph or sections[0][0]
-    title = clip_words(title_source, BOOK_CHAPTER_TITLE_MAX)
-
     return BookChapter(
         number=number,
         episode_num=episode_num,
-        title=title,
+        title=clip_words(title, BOOK_CHAPTER_TITLE_MAX) if title else "",
         epigraph=epigraph,
         sections=sections,
     )
 
 
 def collect_chapters(volume: BookVolume) -> List[BookChapter]:
-    rss_titles = episode_titles_from_rss(volume.resolved_rss())
     chapters: List[BookChapter] = []
+    curated = volume.chapter_titles or {}
+    missing = [ep for ep in volume.episodes if not curated.get(ep)]
+    if missing:
+        # Loud, not fatal: bare "Chapter N" is an acceptable convention,
+        # but a planner-fresh volume should get its titles written before
+        # store submission.
+        logger.warning(
+            "volume %s: no curated chapter_titles for episode(s) %s — "
+            "those chapters print as bare 'Chapter N'",
+            volume.volume_id, missing,
+        )
     for idx, ep in enumerate(volume.episodes, start=1):
         digest = find_digest(volume, ep)
         chapter = parse_digest_to_chapter(
             digest.read_text(encoding="utf-8"),
             number=idx,
             episode_num=ep,
-            rss_title=rss_titles.get(ep, ""),
+            title=str(curated.get(ep) or "").strip(),
         )
         m = re.search(r"_(\d{4})(\d{2})(\d{2})", digest.name)
         if m:
@@ -445,7 +462,9 @@ AI_NARRATION_DISCLOSURE = (
 
 def chapter_tts_text(chapter: BookChapter) -> str:
     """Plain narration text for one chapter — no markdown, no tags."""
-    parts = [f"Chapter {chapter.number}. {chapter.title.rstrip('.…')}."]
+    # Spoken form is JUST the number — deliberately decoupled from the
+    # printed title so title edits never invalidate narrated audio.
+    parts = [f"Chapter {chapter.number}."]
     if chapter.epigraph:
         parts.append(chapter.epigraph)
     for sec_title, paras in chapter.sections:
@@ -531,10 +550,9 @@ def _episode_page_link(volume: BookVolume, chapter: BookChapter) -> str:
 
 def _chapter_xhtml(chapter: BookChapter, lang: str,
                    volume: Optional[BookVolume] = None) -> str:
-    parts = [
-        f'<p class="chapnum">Chapter {chapter.number}</p>',
-        f"<h1>{xml_escape(chapter.title)}</h1>",
-    ]
+    parts = [f'<p class="chapnum">Chapter {chapter.number}</p>']
+    if chapter.title:
+        parts.append(f"<h1>{xml_escape(chapter.title)}</h1>")
     if chapter.image_name:
         parts.append(
             f'<p class="chapart"><img src="{xml_escape(chapter.image_name)}" '
@@ -553,7 +571,7 @@ def _chapter_xhtml(chapter: BookChapter, lang: str,
             f"{chapter.episode_num} of {xml_escape(volume.show_name)}</a>, "
             "free wherever you get podcasts.</p>"
         )
-    return _xhtml(chapter.title, "\n".join(parts), lang)
+    return _xhtml(chapter.heading, "\n".join(parts), lang)
 
 
 def _title_page_xhtml(volume: BookVolume) -> str:
@@ -608,7 +626,7 @@ def _nav_xhtml(volume: BookVolume, chapters: List[BookChapter]) -> str:
     ]
     items += [
         f'<li><a href="chap_{c.number:03d}.xhtml">'
-        f"{xml_escape(c.title)}</a></li>"
+        f"{xml_escape(c.heading)}</a></li>"
         for c in chapters
     ]
     body = (
