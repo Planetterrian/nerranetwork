@@ -108,11 +108,22 @@
     },
     "image": "https://nerranetwork.com/assets/covers/models-agents.jpg",
     "transcript": "https://nerranetwork.com/blog/models_agents/ep149.html#transcript",
-    "associatedMedia": {
-      "@type": "MediaObject",
-      "contentUrl": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep149_20260822.mp3",
-      "inLanguage": "en"
-    }
+    "associatedMedia": [
+      {
+        "@type": "MediaObject",
+        "contentUrl": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep149_20260822.mp3",
+        "inLanguage": "en"
+      },
+      {
+        "@type": "MediaObject",
+        "contentUrl": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep149_20260822.fr.mp3",
+        "inLanguage": "fr"
+      }
+    ],
+    "availableLanguage": [
+      "en",
+      "fr"
+    ]
   }
 ]
     </script>
@@ -1358,6 +1369,27 @@
     </header>
 
     
+    <section class="nn-i18n" aria-label="Listen in another language">
+        <div class="nn-i18n-inner">
+            <div class="nn-i18n-row">
+                <span class="nn-i18n-label">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    Listen in
+                </span>
+                <button type="button" class="nn-i18n-pill" data-lang="en" aria-pressed="true">English</button>
+                
+                <button type="button" class="nn-i18n-pill" data-lang="fr" aria-pressed="false">Français</button>
+                
+            </div>
+            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://audio.nerranetwork.com/models_agents/Models_Agents_Ep149_20260822.mp3"></audio>
+        </div>
+        <script type="application/json" id="nn-i18n-tracks">
+{
+  "en": {"url": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep149_20260822.mp3", "title": "A 250M-parameter model trained on 30B tokens now deploys in 60 MB with million-token retrieval from disk.", "desc": "A 250M-parameter model trained on 30B tokens now deploys in 60 MB with million-token retrieval from disk."},
+  "fr": {"url": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep149_20260822.fr.mp3", "title": "Ép. 149 : Un modèle de 250 M paramètres entraîné sur 30 B tokens se déploie désormais en 60 Mo avec million-token…", "desc": "Un modèle de 250 millions de paramètres entraîné sur 30 milliards de tokens se déploie désormais en 60 Mo avec une récupération de millions de tokens depuis le disque."}
+}
+        </script>
+    </section>
     
 
     <!-- Article with TOC sidebar -->
@@ -1432,6 +1464,72 @@
 <li>Simon Willison’s 0.33 release of llm is due soon with the httpx2 migration.</li>
 <li>Further agent-harness experiments will test whether models can absorb more of the scaffolding into weights.</li>
 </ul>
+            </div>
+            
+            <div class="blog-body-lang" data-lang="fr" hidden>
+                <p class="blog-translated-note">Français — AI-translated from the English episode.</p>
+                <p>Un modèle de deux cent cinquante millions de paramètres entraîné sur trente milliards de jetons se déploie désormais en soixante mégaoctets avec une récupération d’un million de jetons depuis le disque.</p>
+<p>Voici Models and Agents, l’épisode cent quarante-neuf.</p>
+<p>Un développeur solo a publié SHADOW-250M, un grand modèle de langage fortement quantifié qui conserve le contexte récent en virgule flottante seize bits tout en compressant les jetons plus anciens à un bit sur le disque.</p>
+<p>Nvidia a publié une technique de correspondance linéaire qui transfère les caches clé-valeur entre différentes tailles de modèles sans un pré-remplissage complet.</p>
+<p>Simon Willison a livré L L M zéro point trente-deux point un et L L M openrouter zéro point sept avec un nouveau support d’outils et des correctifs de compatibilité.</p>
+<p>Les constructeurs devraient tester le tout petit modèle pour les tâches de récupération hors ligne et la méthode de transfert des caches clé-valeur pour les pipelines d’agents multi-modèles.</p>
+<p>L’histoire principale aujourd’hui se centre sur SHADOW-250M.</p>
+<p>Un développeur a publié le modèle de deux cent cinquante millions de paramètres entraîné de zéro sur trente milliards de jetons FineWeb et quantifié en dessous de deux bits.</p>
+<p>Le déploiement complet tient dans soixante mégaoctets et tourne à environ quatre cents jetons par seconde sur le processeur central d’un ordinateur portable, sans aucun processeur graphique.</p>
+<p>Les deux mille quarante-huit jetons les plus récents restent dans le cache clé-valeur en virgule flottante seize bits tandis que les jetons plus anciens se compressent à un bit sur le disque, à trois cent vingt octets chacun.</p>
+<p>Cela prend en charge jusqu’à cent millions de jetons d’historique que le modèle a été entraîné à récupérer.</p>
+<p>La qualité de modélisation du langage sur du texte web éducatif tenu à l’écart a atteint trois virgule quinze nats d’entropie croisée et vingt-trois virgule trois de perplexité.</p>
+<p>Le vocabulaire utilise des codes fixes de cinq cent douze bits sans aucun paramètre de plongement entraîné.</p>
+<p>Cela obtient zéro virgule six cent dix-neuf de Spearman sur WordSim-353 contre zéro virgule zéro vingt-neuf pour des codes aléatoires.</p>
+<p>Un exemple de sortie gloutonne sur la photosynthèse donne : « La photosynthèse est un processus dans lequel les plantes convertissent la lumière du soleil en énergie chimique, qui est ensuite utilisée pour produire de l’oxygène et d’autres produits chimiques. »</p>
+<p>Le kit d’entraînement complet, les poids maîtres pour l’ajustement fin, les scripts de test et la démo sont disponibles dans le dépôt.</p>
+<p>Dans les mises à jour de modèles, SHADOW-250M atteint vingt-trois virgule trois de perplexité sur du texte web éducatif jamais vu tout en tenant dans soixante mégaoctets après une quantification sous deux bits.</p>
+<p>Le système conserve les deux mille quarante-huit jetons les plus récents dans le cache clé-valeur en virgule flottante seize bits et compresse tout ce qui est plus ancien à un bit sur le disque, à trois cent vingt octets par jeton.</p>
+<p>Un vocabulaire de codes fixes de cinq cent douze bits remplace les plongements appris et obtient zéro virgule six cent dix-neuf de corrélation de Spearman sur WordSim-353.</p>
+<p>Le dépôt inclut les scripts d’entraînement, les poids pour l’ajustement fin et des sorties d’exemple reproductibles pour les explications de la photosynthèse et la poésie.</p>
+<p>Les constructeurs qui travaillent sur la récupération de contexte long hors ligne devraient cloner le dépôt et tester les requêtes en mode archive dès cette semaine.</p>
+<p>Le modèle n’a jamais été entraîné à raisonner sur la longue archive, seulement à récupérer et à répondre à partir de celle-ci.</p>
+<p>Dans les développements d’agents et d’outils, une publication montre comment transformer Codex d’un assistant interactif en un composant d’automatisation programmable que l’on peut appeler directement depuis des scripts ou des pipelines.</p>
+<p>L’approche retire l’interface de conversation pour que les agents puissent invoquer le modèle comme une fonction de bibliothèque.</p>
+<p>La technique vise les développeurs qui utilisent déjà Codex pour la génération de code et veulent l’intégrer dans des flux de travail plus larges sans invitation manuelle.</p>
+<p>Simon Willison a publié L L M zéro point trente-deux point un qui fige la bibliothèque Python d’OpenAI pour éviter une dépendance httpx cassée et prépare le prochain passage à httpx deux.</p>
+<p>L L M openrouter zéro point sept ajoute l’affichage des traces de raisonnement, adopte l’interface Responses d’OpenRouter et introduit trois nouveaux outils côté serveur : Shell, WebFetch et WebSearch.</p>
+<p>Les deux publications sont gratuites et à code source ouvert et s’installent avec les commandes pip habituelles.</p>
+<p>Les mises à jour facilitent l’exécution d’agents qui ont besoin d’appels d’outils externes via les modèles OpenRouter.</p>
+<p>Dans les éléments pratiques et communautaires, By Its Cover utilise uniquement les plongements CLIP pour la recherche sémantique sur les couvertures de livres, plus un modèle de filtrage collaboratif neuronal à deux tours pour les recommandations personnalisées.</p>
+<p>Le site détient actuellement quelques milliers de livres et grandit lorsque les utilisateurs recherchent, avec de nouveaux titres extraits de manière asynchrone via l’interface Hardcover.</p>
+<p>La fusion de rangs réciproques combine les résultats sémantiques CLIP avec la recherche par mots-clés de reconnaissance d’entités nommées GLiNER, et un processus de point déterminantal diversifie la sortie.</p>
+<p>La pile complète tourne sur AWS avec Lambda, ECS, SQS et Terraform.</p>
+<p>Un tutoriel séparé explique comment mesurer l’incertitude de prédiction pour qu’un système d’intelligence artificielle puisse différer les décisions dont les erreurs seraient coûteuses.</p>
+<p>Il guide pas à pas l’ajout d’une couche bayésienne qui produit à la fois une prédiction et une estimation d’incertitude calibrée.</p>
+<p>Le compromis central est un coût d’inférence supplémentaire pour l’estimation d’incertitude contre un risque réduit sur les appels à hauts enjeux.</p>
+<p>D’accord, soulevons le capot sur le travail de transfert de cache clé-valeur de Nvidia.</p>
+<p>Tout le monde parle d’échanger des modèles au milieu d’une session d’agent comme une simple décision de routage.</p>
+<p>En pratique, le modèle destinataire doit normalement relancer tout le pré-remplissage pour reconstruire son cache clé-valeur, ce qui évolue linéairement avec la longueur du contexte et la taille du modèle.</p>
+<p>L’approche de Nvidia observe que les caches clé-valeur au sein de la même famille de modèles sont des structures approximativement linéaires.</p>
+<p>Une régression ridge par tête sous forme fermée, ajustée sur quelques centaines de séquences de calibration, peut faire correspondre les clés et les valeurs sources au format attendu du modèle cible.</p>
+<p>Le mappeur retire d’abord les encodages RoPE, puis sélectionne les couches sources les plus prédictives pour chaque couche cible.</p>
+<p>Cela transforme ce qui était un pré-remplissage complet en quelques centaines de millisecondes d’algèbre linéaire.</p>
+<p>Sur des paires clé-valeur correspondantes, la technique conserve soixante-treize à quatre-vingt-dix-huit pour cent de la précision autonome du modèle cible tout en s’exécutant deux virgule sept à vingt-cinq fois plus vite que de recalculer le cache.</p>
+<p>Le saut de huit milliards à soixante-dix milliards de Llama a quand même récupéré soixante-douze virgule huit pour cent de précision.</p>
+<p>Une seule couche source a récupéré cinquante-six pour cent de la variance des clés cibles et trente-deux pour cent de la variance des valeurs.</p>
+<p>La combinaison de plusieurs couches a élevé ces chiffres à soixante-dix-neuf pour cent et soixante-cinq pour cent.</p>
+<p>Deux paires Ministral ont nécessité un petit perceptron multicouche non linéaire de repli parce que l’ajustement linéaire n’a pas réussi à extrapoler.</p>
+<p>Cela s’appuie sur la discussion d’hier sur l’économie de l’inférence en montrant une façon concrète de réduire la taxe de pré-remplissage dans les flux de travail multi-modèles.</p>
+<p>Utilisez le mappeur linéaire lorsque vous contrôlez les deux modèles et avez besoin d’un transfert à faible latence sur de longs contextes.</p>
+<p>Revenez au pré-remplissage complet ou à un adaptateur entraîné seulement lorsque la précision sur une paire spécifique tombe en dessous des seuils acceptables.</p>
+<p>Les choses à essayer cette semaine comprennent de cloner et d’exécuter la démo de récupération en mode archive sur un ordinateur portable pour voir un contexte d’un million de jetons sans processeur graphique.</p>
+<p>Ajouter les nouveaux outils WebSearch et WebFetch de L L M openrouter zéro point sept à un script d’agent existant pour tester l’appel d’outils côté serveur sans clés d’interface supplémentaires.</p>
+<p>Déployer le système de recommandation By Its Cover en local et l’alimenter avec vos propres recherches de couvertures de livres pour voir la base de données vectorielle grandir.</p>
+<p>Prototyper un flux de travail d’agent à deux modèles en utilisant le mappeur linéaire de cache clé-valeur de Nvidia sur n’importe quelle paire de la famille Qwen ou Llama pour mesurer les économies de latence sur de longues sessions.</p>
+<p>À l’horizon, davantage de modèles à poids ouverts quantifiés et compressés sont attendus alors que les développeurs poursuivent les déploiements de la classe soixante mégaoctets.</p>
+<p>Des techniques supplémentaires de cache clé-valeur inter-modèles apparaîtront probablement une fois que la base de correspondance linéaire sera publique.</p>
+<p>La version zéro point trente-trois de L L M de Simon Willison est prévue bientôt avec la migration vers httpx deux.</p>
+<p>Avant de partir, surveillez d’autres expériences de harnais d’agents qui testent si les modèles peuvent absorber davantage de l’échafaudage dans les poids.</p>
+<p>C’est Models and Agents pour aujourd’hui. Si vous avez trouvé cela utile, partagez-le avec quelqu’un qui essaie de suivre tous ces changements, et abonnez-vous pour ne pas manquer la mise à jour de demain. Le monde de l’intelligence artificielle bouge vite. Nous vous aiderons à suivre. À demain. Et si vous préférez regarder plutôt qu’écouter, trouvez-nous sur YouTube à Nerra Network — le lien est dans les notes de l’émission. Cette émission vous est proposée par le Nerra Network.</p>
+<p>Si vous voulez un autre briefing quotidien percutant, Unintended Consequences vous couvre — de vraies histoires de bonnes intentions qui ont mal tourné. Toutes nos émissions sont gratuites sur nerranetwork point com. Les tableaux de bord en direct — T-S-L-A, les lancements Space X, le tableau des scores d’investissement — sont tous sur nerranetwork point com data.</p>
+<p>Cet épisode a utilisé la synthèse vocale par intelligence artificielle de ma voix — la sélection éditoriale et l’analyse sont les miennes.</p>
             </div>
             
 
