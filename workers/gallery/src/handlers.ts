@@ -91,6 +91,11 @@ const SUBSCRIBE_LISTS: Record<string, string[]> = {
   // Same isolation rule as ru-spacex: these subscribers asked for a
   // Russian weekly («Хроника Tesla»), never the English daily sends.
   "ru-tesla": ["ru-tesla"],
+  // Aug 2026: the Nerra Account join flow (join.html). A member signup
+  // IS a newsletter signup IS a gallery unlock — one identity. The
+  // gallery tag rides along so the existing download gate recognises
+  // members without a second enrolment.
+  member: ["nerra-member", SUBSCRIBER_TAG],
 };
 const DEFAULT_LIST = "gallery";
 
@@ -107,10 +112,38 @@ const SOURCE_TAGS = new Set([
   "src-nerranetwork",
 ]);
 
-/** Resolve the client's `list` + `source` into the tags we will send. */
+// Per-show newsletter tags a member may opt into from the join/footer
+// forms (Aug 2026: the footer form moved off Buttondown's direct embed so
+// every newsletter signup creates a Nerra account). Same closed-set rule
+// as everything else here: values mirror each show YAML's
+// ``newsletter.tag`` (rendered as ``newsletter_tag`` in NETWORK_SHOWS) —
+// keep in sync when a show is added.
+const SHOW_NEWSLETTER_TAGS = new Set([
+  "Tesla Shorts Time",
+  "Omni View",
+  "Fascinating Frontiers",
+  "Planetterrian Daily",
+  "Environmental Intelligence",
+  "Models & Agents",
+  "Models & Agents for Beginners",
+  "Finansy Prosto",
+  "Privet Russian",
+  "Modern Investing Techniques",
+  "Unintended Consequences",
+  "First Principles Daily",
+  "The DP Pod: The Do Positive Podcast",
+  "SpaceX Daily",
+  "The Age of AI",
+  "Offshore North",
+  "Nerra Daily",
+]);
+
+/** Resolve the client's `list` + `source` (+ optional show newsletter
+ * `tags`) into the tags we will send. */
 export function resolveSubscribeTags(
   list: unknown,
   source: unknown,
+  showTags?: unknown,
 ): { tags: string[]; list: string } {
   const listKey =
     typeof list === "string" && Object.prototype.hasOwnProperty.call(
@@ -122,6 +155,14 @@ export function resolveSubscribeTags(
   const src = typeof source === "string" ? source.trim().toLowerCase() : "";
   if (SOURCE_TAGS.has(src) && !tags.includes(src)) {
     tags.push(src);
+  }
+  if (Array.isArray(showTags)) {
+    for (const raw of showTags.slice(0, 20)) {
+      const tag = typeof raw === "string" ? raw.trim() : "";
+      if (SHOW_NEWSLETTER_TAGS.has(tag) && !tags.includes(tag)) {
+        tags.push(tag);
+      }
+    }
   }
   return { tags, list: listKey };
 }
@@ -228,7 +269,8 @@ export async function handleSubscribe(
     return jsonResponse(request, 400, { ok: false, error: "invalid email" });
   }
 
-  const { tags, list } = resolveSubscribeTags(body?.list, body?.source);
+  const { tags, list } = resolveSubscribeTags(
+    body?.list, body?.source, body?.tags);
   const result = await deps.buttondown.subscribe(
     env.BUTTONDOWN_API_KEY,
     email,

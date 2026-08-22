@@ -481,6 +481,8 @@ def build_edition(
             channel_keywords=spec.channel_keywords,
             guid_prefix=spec.guid_prefix,
             chapters_url=f"https://nerranetwork.com/{spec.digest_dir}/{chapters_path.name}",
+            funding_url="https://nerranetwork.com/support.html",
+            funding_label="Support the Nerra Network",
         )
 
         _append_summary(spec, target_date, digest_md, episode_num, title, r2_url)

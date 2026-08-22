@@ -3636,12 +3636,13 @@ def run(args: argparse.Namespace) -> None:
             audio_url=feed_audio_url,  # Use R2/OP3-prefixed URL if available
             chapters_url=chapters_url,
             transcript_url=transcript_url,
-            # Podcasting 2.0 channel tags (June 2026 growth pass): funding
-            # points at the newsletter signup (the network's support ask is
-            # "subscribe", not money), person credits the host for
-            # host-based discovery in 2.0 apps.
-            funding_url=f"{config.publishing.base_url}/#newsletter",
-            funding_label="Free newsletter — best of the network weekly",
+            # Podcasting 2.0 channel tags. Aug 2026: funding now points at
+            # the support/donations page (the highest-intent surface a
+            # podcast app offers — Apple renders it as a "Support" button);
+            # the page itself cross-sells the free account + membership,
+            # so the old "subscribe" ask is still one tap away.
+            funding_url=f"{config.publishing.base_url}/support.html",
+            funding_label="Support the Nerra Network",
             person_name=config.publishing.host_name or "Patrick",
             person_url=f"{config.publishing.base_url}/about.html",
         )

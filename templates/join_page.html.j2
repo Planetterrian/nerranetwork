@@ -1,0 +1,100 @@
+{% extends "base.html.j2" %}
+
+{% block head_extra %}
+    <link rel="stylesheet" href="{{ path_prefix }}styles/main.css">
+    <style>
+        .nn-join-hero { padding: calc(var(--nav-height) + var(--sp-12)) var(--sp-6) var(--sp-8); text-align: center; position: relative; overflow: hidden; }
+        .nn-join-hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 0%, rgba(0, 212, 255, 0.14), transparent 70%); pointer-events: none; }
+        .nn-join-hero h1 { font-family: var(--font-heading); font-size: clamp(2rem, 5vw, 3rem); margin: 0 0 var(--sp-3); background: var(--nn-gradient); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .nn-join-hero p { font-family: var(--font-ui); color: var(--nn-text-muted); max-width: 640px; margin: 0 auto; }
+        .nn-tiers { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: var(--sp-6); max-width: 1080px; margin: 0 auto; padding: var(--sp-8) var(--sp-6); }
+        .nn-tier { border: 1px solid var(--nn-border); border-radius: 16px; padding: var(--sp-6); background: var(--nn-surface); display: flex; flex-direction: column; }
+        .nn-tier.featured { border-color: var(--nn-cyan, #00D4FF); box-shadow: 0 0 32px rgba(0,212,255,0.12); }
+        .nn-tier h2 { font-family: var(--font-heading); margin: 0 0 var(--sp-1); font-size: 1.3rem; }
+        .nn-tier .price { font-size: 2rem; font-weight: 700; margin: 0 0 var(--sp-3); }
+        .nn-tier .price small { font-size: 0.9rem; font-weight: 400; color: var(--nn-text-muted); }
+        .nn-tier ul { list-style: none; padding: 0; margin: 0 0 var(--sp-5); flex: 1; }
+        .nn-tier li { padding: 0.35rem 0; border-bottom: 1px dashed var(--nn-border); font-size: 0.95rem; }
+        .nn-tier li::before { content: '✓ '; color: var(--nn-cyan, #00D4FF); }
+        .nn-tier .cta { display: block; text-align: center; padding: 0.8rem 1rem; border-radius: 10px; font-weight: 600; text-decoration: none; background: var(--nn-gradient); color: #fff; }
+        .nn-tier .cta.secondary { background: transparent; border: 1px solid var(--nn-border); color: inherit; }
+        .nn-join-form { max-width: 480px; margin: 0 auto var(--sp-10); padding: 0 var(--sp-6); text-align: center; }
+        .nn-join-form input[type=email] { width: 100%; padding: 0.8rem 1rem; border-radius: 10px; border: 1px solid var(--nn-border); background: var(--nn-surface); color: inherit; margin-bottom: var(--sp-3); }
+        .nn-join-form button { padding: 0.8rem 2rem; border-radius: 10px; border: none; background: var(--nn-gradient); color: #fff; font-weight: 600; cursor: pointer; }
+        .nn-join-note { font-size: 0.85rem; color: var(--nn-text-muted); max-width: 640px; margin: 0 auto var(--sp-12); padding: 0 var(--sp-6); text-align: center; }
+    </style>
+{% endblock %}
+
+{% block content %}
+<section class="nn-join-hero">
+    <h1>Nerra Personal</h1>
+    <p>Seventeen shows, every day, free — and now, a version of the network
+       that knows you. One account unlocks the newsletter, the image
+       gallery, and member perks. One small subscription gets you your own
+       daily show: the shows you choose, in your order, anchored by Mira.</p>
+</section>
+
+<section class="nn-tiers">
+    <div class="nn-tier">
+        <h2>Nerra Account</h2>
+        <p class="price">Free</p>
+        <ul>
+            <li>Every show &amp; episode — always free, no ads</li>
+            <li>The newsletter, per-show — pick what lands in your inbox</li>
+            <li>Full-resolution downloads from the image gallery</li>
+            <li>Member perks: deep discounts on Nerra Network books</li>
+            <li>Configure your personal lineup, ready when you upgrade</li>
+        </ul>
+        <a class="cta secondary" href="#join-free">Create your free account</a>
+    </div>
+    <div class="nn-tier featured">
+        <h2>Personal</h2>
+        <p class="price">$4.99<small>/month</small></p>
+        <ul>
+            <li>Everything in the free account</li>
+            <li><strong>Your own private daily show</strong> — pick the shows, set the order</li>
+            <li>Mira anchors it and greets you by name</li>
+            <li>Private RSS feed — works in every podcast app</li>
+            <li>Chapter markers for every segment</li>
+        </ul>
+        {% if stripe_personal_url and stripe_personal_url != '#' %}
+        <a class="cta" href="{{ stripe_personal_url }}">Start Personal</a>
+        {% else %}
+        <a class="cta secondary" href="#join-free">Launching soon — join free for first access</a>
+        {% endif %}
+    </div>
+    <div class="nn-tier">
+        <h2>Personal + Local</h2>
+        <p class="price">$8.99<small>/month</small></p>
+        <ul>
+            <li>Everything in Personal</li>
+            <li><strong>Your city's morning brief</strong>, in your feed</li>
+            <li>Today's weather, spoken by Mira</li>
+            <li>One local story or event worth knowing, source named</li>
+            <li>Honest by design: no local news worth your time, no filler</li>
+        </ul>
+        {% if stripe_personal_local_url and stripe_personal_local_url != '#' %}
+        <a class="cta" href="{{ stripe_personal_local_url }}">Start Personal + Local</a>
+        {% else %}
+        <a class="cta secondary" href="#join-free">Launching soon — join free for first access</a>
+        {% endif %}
+    </div>
+</section>
+
+<section class="nn-join-form" id="join-free">
+    <h2>Create your free Nerra account</h2>
+    <p>One email. No password — we send you a sign-in link whenever you need one.</p>
+    <form onsubmit="var f=this,b=f.querySelector('button');b.disabled=true;b.textContent='Joining…';fetch('https://api.nerranetwork.com/api/subscribe',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:f.email.value,list:'member'})}).then(function(r){if(r.ok){window.location='{{ path_prefix }}account.html';}else{b.textContent='Try again';b.disabled=false;}}).catch(function(){b.textContent='Try again';b.disabled=false;});return false;">
+        <input type="email" name="email" placeholder="you@example.com" required aria-label="Email address">
+        <button type="submit">Join free</button>
+    </form>
+    <p style="margin-top: var(--sp-3); font-size: 0.9rem;">Already a member?
+        <a href="{{ path_prefix }}account.html">Go to your account →</a></p>
+</section>
+
+<p class="nn-join-note">Joining subscribes you to the Nerra newsletter (unsubscribe
+   any time — the account stays). Paid tiers are billed by Stripe and cancel in
+   one click; your private feed stops at the end of the billing period. Prefer
+   to just chip in? <a href="{{ path_prefix }}support.html">Support the network</a>
+   with a one-time or monthly donation instead.</p>
+{% endblock %}

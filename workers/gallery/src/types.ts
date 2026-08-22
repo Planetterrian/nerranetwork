@@ -16,8 +16,17 @@ export interface Env {
   RESEND_API_KEY: string;
   RESEND_FROM_EMAIL: string;
 
-  // KV binding for rate limiting (medium item)
+  // KV binding for rate limiting, revocation, AND (Aug 2026) member
+  // accounts — one namespace, prefix-separated (rl:/revoke:/member:/
+  // feedtok:/sub:). Every consumer degrades gracefully when absent.
   RATE_LIMIT_KV?: KVNamespace;
+
+  // --- Nerra Personal (Aug 2026) — all optional until provisioned; the
+  // personal endpoints answer 503 "not configured" without them.
+  PERSONAL_BUCKET?: R2Bucket;          // bucket: nerra-personal
+  STRIPE_WEBHOOK_SECRET?: string;      // wrangler secret put
+  PERSONAL_ADMIN_TOKEN?: string;       // wrangler secret put (batch builder)
+  MEMBER_BOOK_CODE?: string;           // member perks: book discount code
 }
 
 export interface ButtondownClient {
