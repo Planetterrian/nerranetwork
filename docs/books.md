@@ -53,30 +53,59 @@ default $10). Chapter images are re-encoded to ~1000px JPEGs so a
 volume's EPUB stays ~2 MB (Amazon charges per-MB delivery on the 70%
 royalty plan).
 
-Rules that bind: chapter TITLES clip through
-`engine.titles.BOOK_CHAPTER_TITLE_MAX` (titles rule); ALL reader-facing
-links are funnel-tagged through `engine.funnel` (`kind="book"`, campaign
-`nn-<show>-en-book-ep<volume>` — every chapter ends on a link to its
-source episode's page, the strongest podcast-conversion surface in the
-book); art style guides in the series configs BAN text inside generated
-images (typography is composited separately so series branding stays
-identical across volumes while every cover's art is new).
+Rules that bind:
+
+- **Chapter titles are CURATED, never derived.** Each volume YAML
+  carries a `chapter_titles:` map (episode number → 2-5-word title,
+  e.g. `1: "The Cobra Bounty"`). The original design clipped the
+  episode hook — a full podcast sentence — and every store TOC entry
+  read "Delhi's British government paid for dead cobras to…" (the
+  2026-08-22 launch blocker). A missing title prints as bare
+  "Chapter N" with a loud build warning; the planner scaffolds empty
+  placeholders in every new volume, and
+  `tests/test_book_compiler.py::TestChapterTitles` requires full
+  coverage on committed volumes. Titles still clip through
+  `engine.titles.BOOK_CHAPTER_TITLE_MAX` (titles rule).
+- **The spoken form is decoupled from the printed title.** Narration
+  says only "Chapter N."; the curated title appears in the heading,
+  TOC, and M4B chapter markers (metadata). Editing a title therefore
+  re-muxes, never re-narrates — title polish is free after the fact.
+- ALL reader-facing links are funnel-tagged through `engine.funnel`
+  (`kind="book"`, campaign `nn-<show>-en-book-ep<volume>` — every
+  chapter ends on a link to its source episode's page, the strongest
+  podcast-conversion surface in the book).
+- Art style guides in the series configs BAN text inside generated
+  images (typography is composited separately so series branding stays
+  identical across volumes while every cover's art is new).
 
 ## Building volumes
 
 - **One volume:** Actions → **Build Book** → volume id
   (e.g. `unintended_consequences_vol2`).
 - **Planner mode:** leave the volume input empty (or let the monthly
-  cron run) — every series with ≥ `volume_size` uncollected episodes
-  gets its next volume config generated, built, uploaded, and rendered
-  onto /books.html automatically. Store submission stays manual below.
+  cron run) — plans the next volume for every series with ≥
+  `volume_size` uncollected episodes AND builds every committed volume
+  whose catalog entry has no artifacts (the 2026-08-22 fix: planner
+  mode originally built only volumes created in that same run, so the
+  first live dispatch went green having built nothing). A volume that
+  was already built is NOT rebuilt by planner mode — to rebuild one
+  (new titles, re-rolled cover), dispatch it by name.
 - **Locally without credentials** the EPUB + branded cover still build
   (text-only, flat-color cover):
   `python scripts/build_book.py --volume <id> --skip-audio --skip-images --no-upload`.
+  A build that uploads nothing never touches `books/catalog.json` —
+  the catalog records what SHIPPED.
 
 Artifacts land in `outputs/books/<id>/` (gitignored) and on R2 under
-`books/<id>/`. The workflow commits `books/catalog.json`, any new
-volume YAMLs the planner wrote, and `books.html`.
+`books/<id>/`. Narrated tracks + text-hash sidecars persist to R2 at
+`books/<id>/audio/track_NNN.mp3` — this is what makes CI re-runs
+genuinely resumable (an ephemeral runner restores the cache and only
+re-bills tracks whose narration text changed), and it doubles as the
+per-chapter MP3 delivery audiobook stores ingest. The workflow commits
+`books/catalog.json`, any new volume YAMLs the planner wrote, and
+`books.html`, then verifies every claimed artifact answers 200 on R2
+(`scripts/verify_book_catalog.py` — the original verify step passed on
+a zero-output run).
 
 **Listen and look before you ship.** The audiobook is new spoken audio
 and the cover/chapter art is fresh generation — spot-listen two

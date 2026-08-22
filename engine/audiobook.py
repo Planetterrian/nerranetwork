@@ -56,7 +56,7 @@ def narration_texts(volume: BookVolume,
         ("Opening Credits", opening_credits_text(volume))
     ]
     tracks += [
-        (f"Chapter {c.number}: {c.title}", chapter_tts_text(c))
+        (c.heading, chapter_tts_text(c))
         for c in chapters
     ]
     tracks.append(("Closing Credits", closing_credits_text(volume)))
@@ -74,9 +74,16 @@ def synthesize_tracks(
 ) -> List[Tuple[str, Path]]:
     """Narrate every track to ``track_NNN.mp3`` in *out_dir*.
 
-    Idempotent per track: an existing non-empty MP3 is kept, so a run
-    interrupted at chapter 14 resumes instead of re-billing 13 chapters.
+    Idempotent per track — and SAFELY so: each MP3 gets a
+    ``track_NNN.txthash`` sidecar holding the hash of the narration text
+    it was synthesized from, and a cached MP3 is reused only when the
+    hash still matches. That is what lets the caller persist/restore
+    this directory through R2 across ephemeral CI runners without ever
+    reusing audio whose script has since changed (e.g. the 2026-08-22
+    spoken-title change invalidates every chapter open automatically).
     """
+    import hashlib
+
     from engine.tts import prepare_text_for_tts, synthesize
 
     out_dir = Path(out_dir)
@@ -84,9 +91,18 @@ def synthesize_tracks(
     produced: List[Tuple[str, Path]] = []
     for i, (title, text) in enumerate(narration_texts(volume, chapters)):
         mp3 = out_dir / f"track_{i:03d}.mp3"
-        if mp3.exists() and mp3.stat().st_size > 0:
-            logger.info("audiobook: keeping existing %s", mp3.name)
+        sidecar = out_dir / f"track_{i:03d}.txthash"
+        text_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
+        cached = (mp3.exists() and mp3.stat().st_size > 0
+                  and sidecar.exists()
+                  and sidecar.read_text(encoding="utf-8").strip() == text_hash)
+        if cached:
+            logger.info("audiobook: keeping existing %s (text unchanged)",
+                        mp3.name)
         else:
+            if mp3.exists():
+                logger.info("audiobook: narration text changed — "
+                            "re-synthesizing %s", mp3.name)
             logger.info("audiobook: narrating %r (%d chars)", title, len(text))
             synthesize(
                 prepare_text_for_tts(text),
@@ -98,6 +114,7 @@ def synthesize_tracks(
                 # No speech wrap: books read at an even register; the
                 # <fast> energy wrap is an episode convention.
             )
+            sidecar.write_text(text_hash, encoding="utf-8")
         produced.append((title, mp3))
     return produced
 

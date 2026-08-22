@@ -1045,7 +1045,18 @@ the show's public gallery with `intended_use` `book_chapter`/
 `book_cover` — values the video scene selector must NEVER match (the
 thumbnail_variant precedent). Cost/volume ≈ $1 art + $2 TTS, gated by
 `--max-image-cost-usd` / `--max-tts-cost-usd`. Rules that bind: chapter
-titles clip via `engine.titles.BOOK_CHAPTER_TITLE_MAX`; EVERY
+titles are CURATED (`chapter_titles:` map in each volume YAML — never
+derived from the episode hook, which is a full sentence and truncated
+in every store TOC on the first submission attempt, 2026-08-22) and
+clip via `engine.titles.BOOK_CHAPTER_TITLE_MAX`; narration speaks only
+"Chapter N." (deliberately decoupled from the printed title so title
+edits re-mux, never re-narrate); planner mode builds any committed
+volume with no cataloged artifacts (not just same-run plans), a
+no-upload build never writes the catalog, narrated tracks persist to
+R2 `books/<id>/audio/` keyed by narration-text hash (true CI
+resumability + the stores' per-chapter MP3s), and
+`scripts/verify_book_catalog.py` asserts claimed artifacts answer 200
+after every workflow build; EVERY
 reader-facing link goes through `engine.funnel` `kind="book"` (campaign
 carries the VOLUME number; each chapter ends on a funnel-tagged link to
 its source episode page); artifacts to R2 keyspace `books/<id>/` ONLY

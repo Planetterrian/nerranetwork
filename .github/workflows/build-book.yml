@@ -50,7 +50,10 @@ jobs:
     runs-on: ubuntu-latest
     # A 50-chapter narration is ~50 sequential TTS calls; generous but
     # well under the 6h default.
-    timeout-minutes: 120
+    # A full seven-volume rebuild is ~23 min/volume of sequential TTS +
+    # art; 120 was not enough for planner mode. Builds are resumable
+    # (R2 audio cache), so even a timeout loses only wall clock.
+    timeout-minutes: 360
     permissions:
       contents: write
       pull-requests: write  # recovery PR if push to main exhausts
@@ -104,6 +107,23 @@ jobs:
 
       - name: Verify book integrity
         run: python -m pytest tests/test_book_compiler.py -q
+
+      - name: Verify built artifacts are live
+        # The compiler tests above pass whether or not the run built
+        # anything (they did, on the zero-output run of 2026-08-22).
+        # This step asserts what the run claims: catalog files exist and
+        # every R2 object answers 200.
+        run: |
+          NOAUDIO=""
+          if [ "${{ github.event.inputs.skip_audio }}" = "true" ]; then
+            NOAUDIO="--no-audio"
+          fi
+          VOLUME="${{ github.event.inputs.volume }}"
+          if [ -n "$VOLUME" ]; then
+            python scripts/verify_book_catalog.py --volume "$VOLUME" $NOAUDIO
+          else
+            python scripts/verify_book_catalog.py --require-all $NOAUDIO
+          fi
 
       - name: Regenerate Books page
         run: python generate_html.py --books

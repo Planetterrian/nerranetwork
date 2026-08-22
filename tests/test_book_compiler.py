@@ -28,7 +28,6 @@ from engine.book_compiler import (  # noqa: E402
     chapter_tts_text,
     closing_credits_text,
     collect_chapters,
-    episode_titles_from_rss,
     find_digest,
     load_volume,
     opening_credits_text,
@@ -100,20 +99,64 @@ class TestDigestParsing:
 
 
 class TestChapterTitles:
-    def test_titles_go_through_the_titles_module(self):
-        """The titles rule: books clip via engine.titles, never a slice."""
-        v = _volume()
-        for ch in collect_chapters(v)[:10]:
-            assert fits(ch.title, BOOK_CHAPTER_TITLE_MAX), (
-                f"chapter {ch.number} title over limit: {ch.title!r}"
-            )
+    """Curated titles (2026-08-22). The original derivation clipped the
+    episode hook — a full podcast sentence — so every store-TOC entry was
+    a truncated "Delhi's British government paid for dead cobras to…".
+    Titles now come ONLY from the volume YAML's ``chapter_titles`` map;
+    a missing entry prints as bare "Chapter N", never a clipped hook."""
 
-    def test_rss_titles_strip_the_ep_prefix(self):
-        titles = episode_titles_from_rss(_volume().resolved_rss())
-        if not titles:  # feed window may have rolled past early episodes
-            return
-        for num, title in titles.items():
-            assert not title.lower().startswith(f"ep {num}"), title
+    def test_titles_are_book_titles_not_truncated_hooks(self):
+        from engine.titles import ELLIPSIS
+        for vp in sorted((_ROOT / "books" / "volumes").glob("*.yaml")):
+            v = load_volume(vp)
+            for ch in collect_chapters(v):
+                assert fits(ch.title, BOOK_CHAPTER_TITLE_MAX)
+                assert not ch.title.endswith(ELLIPSIS), (
+                    f"{v.volume_id} ch{ch.number}: clipped-hook title "
+                    f"shape returned: {ch.title!r}"
+                )
+                assert len(ch.title) <= 60, (
+                    f"{v.volume_id} ch{ch.number}: {ch.title!r} reads as "
+                    "a sentence, not a title"
+                )
+
+    def test_all_current_volumes_have_full_title_coverage(self):
+        """Every committed volume must be store-ready: a curated title
+        for every episode. (Planner-fresh FUTURE volumes may run bare
+        'Chapter N' until titled — that is a warning, not an error.)"""
+        for vp in sorted((_ROOT / "books" / "volumes").glob("*.yaml")):
+            v = load_volume(vp)
+            missing = [ep for ep in v.episodes
+                       if not v.chapter_titles.get(ep)]
+            assert not missing, f"{v.volume_id}: untitled episodes {missing}"
+
+    def test_titles_are_unique_within_a_series(self):
+        by_show = {}
+        for vp in sorted((_ROOT / "books" / "volumes").glob("*.yaml")):
+            v = load_volume(vp)
+            by_show.setdefault(v.show_slug, []).extend(
+                v.chapter_titles.values())
+        for slug, titles in by_show.items():
+            dupes = {t for t in titles if titles.count(t) > 1}
+            assert not dupes, f"{slug}: duplicate chapter titles {dupes}"
+
+    def test_heading_carries_number_and_title(self):
+        ch = collect_chapters(_volume())[0]
+        assert ch.heading == f"Chapter 1 · {ch.title}"
+
+    def test_untitled_chapter_prints_bare_number(self):
+        ch = _chapter(5)  # helper passes no curated title
+        assert ch.title == ""
+        assert ch.heading == "Chapter 1"
+
+    def test_planner_template_emits_title_placeholders(self):
+        import inspect
+        from engine.book_compiler import plan_next_volumes
+        src = inspect.getsource(plan_next_volumes)
+        assert "chapter_titles" in src, (
+            "planner must scaffold the chapter_titles map so new volumes "
+            "can't silently ship hook-less AND title-less"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -209,6 +252,24 @@ class TestNarrationText:
         assert text.startswith("Chapter 1.")
         for bad in ("**", "###", "](", "<fast>", "[pause]", "<emphasis>"):
             assert bad not in text
+
+    def test_spoken_form_is_decoupled_from_printed_title(self):
+        """Narration says ONLY 'Chapter N.' — the curated title is printed
+        metadata. This is what lets a title edit re-mux the M4B without
+        re-narrating (and re-billing) a single track."""
+        chapters = collect_chapters(_volume())
+        ch = chapters[0]
+        assert ch.title, "fixture needs a curated title"
+        text = chapter_tts_text(ch)
+        first_line = text.split("\n", 1)[0]
+        assert first_line == "Chapter 1."
+        assert ch.title not in first_line
+
+    def test_track_names_use_the_printed_heading(self):
+        from engine.audiobook import narration_texts
+        chapters = collect_chapters(_volume())[:1]
+        tracks = narration_texts(_volume(), chapters)
+        assert tracks[1][0] == chapters[0].heading
 
     def test_both_credits_carry_the_disclosure(self):
         v = _volume()
@@ -430,6 +491,69 @@ class TestCatalog:
         data = json.loads(path.read_text(encoding="utf-8"))
         assert len(data["volumes"]) == 1
         assert data["volumes"][0]["word_count"] == 5
+
+
+class TestBuildPipelineIntegrity:
+    """The 2026-08-22 submission attempt found three silent-failure
+    shapes around the (correct) compiler: planner mode built nothing and
+    went green; the verify step verified nothing; CI re-runs re-billed
+    narration. Pin the fixes."""
+
+    def test_planner_mode_picks_up_unbuilt_committed_volumes(self, tmp_path,
+                                                             monkeypatch):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "build_book", _ROOT / "scripts" / "build_book.py")
+        bb = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(bb)
+        # Fake repo: two volume configs, one built, one with empty files.
+        (tmp_path / "books" / "volumes").mkdir(parents=True)
+        (tmp_path / "books" / "volumes" / "a_vol1.yaml").write_text("x: 1")
+        (tmp_path / "books" / "volumes" / "b_vol1.yaml").write_text("x: 1")
+        (tmp_path / "books" / "catalog.json").write_text(json.dumps({
+            "volumes": [
+                {"volume_id": "a_vol1", "files": {"epub": "https://x/e"}},
+                {"volume_id": "b_vol1", "files": {}},
+            ]}))
+        monkeypatch.setattr(bb, "ROOT", tmp_path)
+        assert bb._unbuilt_volume_ids() == ["b_vol1"]
+
+    def test_workflow_verifies_live_artifacts_not_just_the_compiler(self):
+        wf = (_ROOT / ".github" / "workflows" / "build-book.yml").read_text(
+            encoding="utf-8")
+        assert "scripts/verify_book_catalog.py" in wf, (
+            "the verify step must assert built artifacts are live — "
+            "pytest alone passed on a zero-output run"
+        )
+
+    def test_track_cache_is_keyed_by_narration_text(self, tmp_path,
+                                                    monkeypatch):
+        """A cached MP3 is reused only while its narration text is
+        unchanged — the sidecar hash is what makes the R2-persisted
+        cache safe across script changes."""
+        import engine.audiobook as ab
+        calls = []
+
+        def fake_synth(text, voice, path, **kw):
+            calls.append(str(path))
+            Path(path).write_bytes(b"mp3")
+
+        import engine.tts as tts
+        monkeypatch.setattr(tts, "synthesize", fake_synth)
+        monkeypatch.setattr(tts, "prepare_text_for_tts", lambda t: t)
+        v = _volume()
+        chapters = collect_chapters(v)[:1]
+        out = tmp_path / "audio"
+        ab.synthesize_tracks(v, chapters, out, api_key="k", voice_id="v")
+        n_first = len(calls)
+        assert n_first == 3  # opening + 1 chapter + closing
+        # Unchanged text: full reuse.
+        ab.synthesize_tracks(v, chapters, out, api_key="k", voice_id="v")
+        assert len(calls) == n_first
+        # Text change (simulate stale cache): only that track re-runs.
+        (out / "track_001.txthash").write_text("stale")
+        ab.synthesize_tracks(v, chapters, out, api_key="k", voice_id="v")
+        assert len(calls) == n_first + 1
 
 
 class TestWiring:
