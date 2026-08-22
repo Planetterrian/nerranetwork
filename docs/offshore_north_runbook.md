@@ -187,7 +187,7 @@ human job is the editorial read.
 5. That the sign-off promised nothing.
 
 **Monthly:** check which sources actually contributed. This beat's feed
-landscape is unstable — sites get rebuilt, feeds move. `check_sources.py` in
+landscape is unstable — sites get rebuilt, feeds move. `check_feeds.py` in
 the repo root exists for exactly this.
 
 **Quarterly:** re-read the show bible §9 running threads. If the qualification

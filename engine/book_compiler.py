@@ -70,6 +70,11 @@ class BookChapter:
     sections: List[Tuple[str, List[str]]] = field(default_factory=list)
     episode_date: str = ""           # YYYY-MM-DD from the digest filename
     image_name: str = ""             # EPUB-internal filename when art exists
+    #: Verified claim-ledger entries from the episode's committed
+    #: ``*_claims.json`` sidecar (engine.claims, Aug 2026). Episodes
+    #: published before the ledger existed have none — the sources page
+    #: renders only what was actually verified, never a reconstruction.
+    claims: List[Dict] = field(default_factory=list)
 
     @property
     def word_count(self) -> int:
@@ -444,6 +449,13 @@ def collect_chapters(volume: BookVolume) -> List[BookChapter]:
         m = re.search(r"_(\d{4})(\d{2})(\d{2})", digest.name)
         if m:
             chapter.episode_date = "-".join(m.groups())
+        # Inherit the episode's verified claim ledger (engine.claims
+        # sidecar) so the volume gets a real sources page for free.
+        try:
+            from engine.claims import load_ledger
+            chapter.claims = load_ledger(digest)
+        except Exception as exc:  # noqa: BLE001 — never block a build on this
+            logger.warning("claims sidecar unreadable for ep %s: %s", ep, exc)
         chapters.append(chapter)
     return chapters
 
@@ -619,6 +631,46 @@ def _copyright_xhtml(volume: BookVolume) -> str:
     return _xhtml("Copyright", body, volume.language)
 
 
+def _has_sources(chapters: List[BookChapter]) -> bool:
+    return any(c.claims for c in chapters)
+
+
+def _sources_xhtml(volume: BookVolume, chapters: List[BookChapter]) -> str:
+    """Endnotes rendered from the episodes' verified claim ledgers.
+
+    Every entry here passed the source-integrity gate at publish time
+    (URL resolved, supporting quote found in the source) — this page is
+    the ledger made reader-visible, not an authoring step. URLs are
+    deduped across the volume; a source cited by several chapters is
+    listed where it first appears.
+    """
+    seen_urls: set = set()
+    parts = [
+        "<h1>Sources</h1>",
+        "<p>The specific studies, reports and statistics cited in these "
+        "chapters were verified against the sources below when each story "
+        "was first published. Where a chapter speaks in general terms, it "
+        "is because a claim could not be traced to a source we could "
+        "check.</p>",
+    ]
+    for c in chapters:
+        entries = []
+        for claim in c.claims:
+            url = str(claim.get("source_url") or "").strip()
+            if not url or url in seen_urls:
+                continue
+            seen_urls.add(url)
+            title = str(claim.get("source_title") or "").strip() or url
+            entries.append(
+                f"<li>{xml_escape(title)} — "
+                f'<a href="{xml_escape(url)}">{xml_escape(url)}</a></li>'
+            )
+        if entries:
+            parts.append(f"<h2>{xml_escape(c.heading)}</h2>")
+            parts.append("<ol>" + "".join(entries) + "</ol>")
+    return _xhtml("Sources", "\n".join(parts), volume.language)
+
+
 def _nav_xhtml(volume: BookVolume, chapters: List[BookChapter]) -> str:
     items = [
         '<li><a href="titlepage.xhtml">Title Page</a></li>',
@@ -629,6 +681,8 @@ def _nav_xhtml(volume: BookVolume, chapters: List[BookChapter]) -> str:
         f"{xml_escape(c.heading)}</a></li>"
         for c in chapters
     ]
+    if _has_sources(chapters):
+        items.append('<li><a href="sources.xhtml">Sources</a></li>')
     body = (
         '<nav epub:type="toc" id="toc"><h1>Contents</h1><ol>'
         + "".join(items) + "</ol></nav>"
@@ -667,6 +721,12 @@ def _package_opf(volume: BookVolume, chapters: List[BookChapter],
                 'media-type="image/jpeg"/>'
             )
         spine.append(f'<itemref idref="{cid}"/>')
+    if _has_sources(chapters):
+        manifest.append(
+            '<item id="sources" href="sources.xhtml" '
+            'media-type="application/xhtml+xml"/>'
+        )
+        spine.append('<itemref idref="sources"/>')
     meta_title = xml_escape(volume.full_title)
     if volume.subtitle:
         meta_title += f": {xml_escape(volume.subtitle)}"
@@ -740,6 +800,9 @@ def build_epub(
             if c.image_name:
                 z.writestr(f"OEBPS/{c.image_name}",
                            chapter_images[c.number])
+        if _has_sources(chapters):
+            z.writestr("OEBPS/sources.xhtml",
+                       _sources_xhtml(volume, chapters))
     logger.info("EPUB written: %s (%d chapters, %d words)",
                 out_path, len(chapters), sum(c.word_count for c in chapters))
     return out_path

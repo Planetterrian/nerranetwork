@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""RSS Source Quality Auditor for Nerra Network.
+"""RSS FEED health auditor for Nerra Network.
+
+Renamed from check_sources.py (Aug 2026): this tool grades whether a FEED
+is healthy — reachability, parse quality, freshness, volume. It has no view
+on whether anything written FROM a feed is true; that is
+scripts/verify_claims.py + engine/claims.py (the source-integrity gate).
+The old name implied a guarantee this file never provided.
 
 Checks every RSS source across all show configs for:
   1. Reachability — can we fetch the feed at all?
@@ -11,11 +17,11 @@ Checks every RSS source across all show configs for:
   7. Candidate discovery — optionally suggests new high-quality sources
 
 Usage:
-    python check_sources.py                  # Audit all shows
-    python check_sources.py tesla            # Audit one show
-    python check_sources.py --suggest tesla  # Suggest new sources for a show
-    python check_sources.py --report         # Generate full JSON report
-    python check_sources.py --grade          # Show letter grades per source
+    python check_feeds.py                  # Audit all shows
+    python check_feeds.py tesla            # Audit one show
+    python check_feeds.py --suggest tesla  # Suggest new sources for a show
+    python check_feeds.py --report         # Generate full JSON report
+    python check_feeds.py --grade          # Show letter grades per source
 """
 
 from __future__ import annotations

@@ -1745,7 +1745,7 @@ class TestSourceDecayAlarm:
         assert "marketwatch.com/rss" in urls
 
     def test_no_show_uses_a_blocked_source(self):
-        """Network-wide mirror of `check_sources.py --check-blocked`.
+        """Network-wide mirror of `check_feeds.py --check-blocked`.
 
         That check runs in the weekly source-discovery workflow, so a
         blocked source re-added to a show YAML sails through CI and only

@@ -287,7 +287,7 @@ def _extract_domain(url: str) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Feed auditing (lightweight version of check_sources.py)
+# Feed auditing (lightweight version of check_feeds.py)
 # ---------------------------------------------------------------------------
 
 @dataclass
@@ -378,7 +378,7 @@ def _audit_candidate(url: str, label: str, show: str) -> CandidateResult:
     if newest_date:
         result.newest_article_age_hours = (now - newest_date).total_seconds() / 3600
 
-    # Score (same algorithm as check_sources.py)
+    # Score (same algorithm as check_feeds.py)
     score = 0.0
     score += 10  # reachable
     if result.response_time_ms < 2000:
