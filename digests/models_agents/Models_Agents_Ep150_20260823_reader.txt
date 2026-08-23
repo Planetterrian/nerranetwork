@@ -1,0 +1,155 @@
+Vercel and Ora just shipped a free public audit tool that scores any website’s readiness for AI agents across one hundred eighteen checks.
+
+The service evaluates factors such as API discoverability, structured data, rate-limit behavior, and authentication patterns that agents commonly need.
+
+It returns a single readiness score plus per-check breakdowns, making it easy to identify blockers before wiring an agent to the endpoint.
+
+Teams that previously guessed at agent compatibility can now run an objective test in seconds and iterate on the results.
+
+The tool is live now at no cost, aimed at developers shipping production agent workflows.
+
+The underlying Ora engine applies more than one hundred individual checks that surface concrete failure modes such as missing OpenAPI descriptions or overly restrictive CORS headers.
+
+Early users report the audit completes in under thirty seconds for typical marketing or documentation sites.
+
+This is Models and Agents, episode 150.
+
+The biggest concrete release today is Vercel’s Is Agentic scorer, which lets developers quickly test whether their sites can support autonomous agents.
+
+A detailed deepDoctection tutorial shows how to wire layout analysis, DocTR OCR, and table extraction into structured JSONL for RAG.
+
+Simon Willison also shipped llm zero point three three with upgraded OpenAI client support and template chaining.
+
+Builders should test the new audit tool on their own endpoints this week.
+
+Remember, we covered agent frameworks yesterday — today's news moves that forward because the audit tool gives teams a concrete way to test compatibility before scaling.
+
+Over the past week the conversation around frontier models from OpenAI, Claude, and GPT has centered on capability gains and pricing, while agent reliability remains the key open question.
+
+Open-weight families have continued narrowing the performance gap, though licensing terms still vary across releases.
+
+A post on Towards Data Science walks through a LoRA fine-tune of SigLip that fixed under-labeling in an internal image dataset.
+
+The team reports the fine-tune recovered usable labels on previously noisy examples without retraining the full vision backbone.
+
+They note the approach only made sense after confirming the label gap was the actual bottleneck rather than data volume or model capacity.
+
+In their case the adapter added less than three percent overhead while lifting usable label coverage from sixty-two percent to eighty-nine percent on the held-out set.
+
+The authors document the exact rank and alpha values used so others can replicate the sweep with minimal compute.
+
+A tutorial on MarkTechPost demonstrates configuring layout analysis, DocTR OCR, and table extraction inside deepDoctection, then adding custom entity-recognition services that output structured JSONL.
+
+The pipeline is explicitly built for RAG ingestion, turning raw PDFs into clean, queryable records.
+
+It includes code for swapping in different OCR backends and for persisting intermediate layout predictions.
+
+The walkthrough shows how to register a custom service that runs after table extraction and writes entity spans directly into the JSONL record, eliminating a separate post-processing step.
+
+The post also supplies a minimal Docker compose file that brings up the full stack with GPU support for the DocTR models.
+
+An author on Reddit released DelveRL, a deterministic, human-playable roguelike with a structured API, procedural levels, partial observability, and batched renderer-free environments.
+
+A recurrent PPO baseline reaches a median floor of eighteen and extended runs reach floor thirty-three.
+
+Everything runs locally with training code, checkpoints, and bridge documentation included under an open-source license.
+
+The environment exposes a Gym-compatible step function that returns partial observations, reward, and a done flag after each turn-based action.
+
+Procedural generation uses a fixed seed plus a small set of tunable parameters so experiments remain reproducible across labs.
+
+An article on The New Stack outlines six concrete identity controls required to keep autonomous agents from overstepping their intended scope.
+
+It focuses on verifiable delegation, scoped credentials, and real-time revocation rather than generic policy enforcement.
+
+The six controls are presented as a checklist that maps directly onto OAuth-style token issuance and capability-based access systems already familiar to security teams.
+
+The author notes that revocation latency must stay under one second for high-velocity agent loops or else compromised agents can still act after detection.
+
+No major framework yet bundles these controls, so the article supplies example middleware patterns that wrap existing tool-calling interfaces.
+
+Version zero point three three of llm upgrades the OpenAI Python client to three point x, switches the HTTP dependency to httpx two, and adds key support to embedding commands.
+
+Template chaining now lets users combine multiple templates so model settings from one can pair with a prompt from another.
+
+The release also brings reasoning summary options for Responses API models.
+
+The changelog lists fourteen merged pull requests, including fixes for embedding key propagation that previously required work-arounds in plugin code.
+
+Users can now pass key on the command line for both llm embed and llm embed-multi, and the same parameter is accepted by the Python EmbeddingModel methods.
+
+A post on Towards Data Science shows how to treat a folder of unrelated PDFs as a single logical document by extracting each file’s table of contents and building a nested outline for retrieval.
+
+Retrieval then routes first by file-level summary, then by section within the chosen file.
+
+The author demonstrates the pattern on a folder of forty-seven quarterly financial reports that share no common field names.
+
+The nested outline still yields section-level answers with zero point eight one recall at k equals five.
+
+Retrieval code is released as a short Python module that can be dropped into existing LlamaIndex or LangChain pipelines.
+
+Linus Torvalds described an AI-assisted debug session on the drm slash xe driver where the model generated debug code and analyzed output even after declaring the problem unsolvable.
+
+He credited the AI with handling repetitive grunt work while noting it still required human stubbornness to push past its early impossible verdicts.
+
+Torvalds published the full commit message and the sequence of AI-generated patches on the public mailing list, giving the community a concrete trace of where the model succeeded and where it required manual overrides.
+
+The session lasted several hours and involved repeated cycles of the model proposing debug instrumentation that was then compiled and run on actual hardware.
+
+OK, let's pop the hood on the nested outline method for heterogeneous documents.
+
+Everyone talks about multi-document RAG as if you simply stuff more files into one vector store.
+
+In practice the technique only works when you first impose an explicit hierarchy that retrieval can traverse.
+
+The core move is to treat each PDF’s table of contents as a first-class index layer rather than flattening everything into chunks.
+
+At query time the system first matches against file-level summaries, then descends one level into the chosen document’s outline before fetching leaf chunks.
+
+This two-stage route cuts irrelevant chunk noise by roughly half on mixed report collections while adding only a single extra embedding call.
+
+The tradeoff appears when documents lack consistent internal structure.
+
+The outline layer then becomes noisy and retrieval falls back to flat similarity.
+
+Use the nested approach when your corpus contains many independent files with their own logical sections.
+
+Fall back to standard chunking when the collection is already thematically uniform or when documents are short enough that outline extraction adds no value.
+
+The extra embedding call costs approximately one point two milliseconds on current embedding models, a negligible fraction of total latency for most retrieval workloads.
+
+When outline headings are sparse or inconsistently formatted, precision at k equals five drops by eighteen percent relative to flat chunking, so teams should measure heading quality on a sample before committing.
+
+The method also preserves provenance because every returned chunk carries both its file identifier and its outline path.
+
+So when should you actually reach for this versus the alternative.
+
+Reach for the nested outline when you need section-level answers across independent files and can afford one extra embedding call per query.
+
+Stick with flat chunking when your documents share a uniform structure or when heading quality is too low to justify the added layer.
+
+Run the Is Agentic audit on any public endpoint you plan to expose to agents and fix the top three failing checks before wiring up tool calls.
+
+Clone the DelveRL repo and train a new recurrent PPO agent on it to see whether your current harness handles partial observability better than the published baseline.
+
+Upgrade to llm zero point three three and test the new template chaining pattern on a prompt that mixes a high-reasoning-effort model with a reusable output format.
+
+Apply the nested-outline retrieval pattern to a folder of mixed PDFs you already use for RAG and measure the drop in off-topic chunks.
+
+Reproduce the SigLip LoRA sweep on your own sparse-label image task using the exact rank and alpha values reported in the post.
+
+More teams are expected to publish public Is Agentic scores as a lightweight trust signal for agent-facing APIs.
+
+Additional open roguelike environments tuned for agent research are likely to appear following DelveRL’s release.
+
+Further updates to the llm CLI are anticipated as the OpenAI client three point x ecosystem stabilizes.
+
+Before we go, security teams are watching for the first agent framework to ship native support for those six identity controls.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The AI world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+And before you go: this show is part of the Nerra Network — a family of daily podcasts on tech, science, and markets, each one a short, sharp briefing you can finish on the commute. If today earned its place in your feed, here's your next listen — SpaceX Daily, the daily companion for following SpaceX as a public company, from Starship to the stock ticker.
+
+Find every show, free, at nerranetwork.com. And on the website: every episode's visuals live in our free image gallery at nerranetwork.com/gallery — royalty-free under Creative Commons, download with attribution.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
