@@ -51,6 +51,42 @@ Full context — the funnel report's honesty rules (null vs 0, the
 30-denominator floor, `attribution_coverage_pct`), the RU SpaceX pilot,
 and the Shorts motion A/B: [`docs/funnel.md`](docs/funnel.md).
 
+## Provenance: one module owns the claim ledger
+
+**A claim's provenance is DATA, not formatting — `engine/claims.py` owns
+it.** Never add a new stripper for source/citation text without checking
+the ledger path first, and never soften the gate's failure policy to a
+warning where `source_integrity.enforce` is true.
+
+Same shape as the two rules above, discovered Aug 2026: three functions
+in `run_show.py` stripped every attribution the model produced (each for
+a good reason — Offshore North Ep001 read its sources block ALOUD) while
+nothing anywhere verified that an asserted fact traced to anything, so
+**fabricated citations were the expected output** — three unrelated
+chapters in two published book volumes each cited "a 1962 paper in
+*Nature*" for findings actually published elsewhere (Wagner 1960
+*Br J Ind Med*; Fryer 1960 *E Afr Agric J*) or nowhere (the Huxley/Aswan
+paper does not exist). True facts wearing false provenance: the model
+supplied the citation SHAPE, the pipeline deleted the citation, nothing
+checked the difference.
+
+Now: digest generation emits a fenced `claims` JSON ledger (extracted
+before any published surface sees it), the gate verifies every entry
+(URL resolves + supporting quote fuzzy-appears in the source) and lints
+citation-shaped prose against it (`CITATION_SHAPE_PATTERNS` — the
+fabrication signature). Verified ledgers commit as
+`digests/<slug>/*_claims.json`; books render them as endnotes. Rollout:
+network-wide SHADOW (`_defaults.yaml`), **enforce: true on the narrative
+shows** (UC/FPD — a blocked episode there costs a rerun, never a burned
+queue slot: the gate runs before the digest save). Widen enforcement per
+show only, never a network-wide flip. The three strippers stay — they
+remove leakage; the ledger carries provenance. Audit tools:
+`scripts/verify_claims.py` (re-verify committed ledgers),
+`scripts/measure_citation_exposure.py` (corpus exposure),
+`scripts/soften_citations.py` (backfill, dry-run default). `check_feeds.py`
+(ex-`check_sources.py`) grades FEED health only — it has no view on
+truth. Drift guards: `tests/test_source_integrity.py`.
+
 ## Project Overview
 
 Automated daily podcast generation system running 17 shows via a unified

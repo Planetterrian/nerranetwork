@@ -540,6 +540,15 @@ def _validate_llm_output(
     """
     import re
 
+    # Source-integrity ledger (Aug 2026): the fenced ``claims`` JSON block
+    # is repetitive by construction (identical keys on every entry) — hide
+    # it from the repetition detectors so a well-formed ledger never burns
+    # a lower-temperature regen. Extraction proper happens at
+    # generate_digest's return; this is validation-only.
+    if "```claims" in text:
+        from engine.claims import strip_claims_block_for_validation
+        text = strip_claims_block_for_validation(text)
+
     # Non-stopword tokens of the show's own entity keywords. A repeated
     # phrase containing one of these tokens is the show doing its job.
     _entity_tokens = set()
@@ -1660,6 +1669,15 @@ def generate_digest(
         if appendix:
             prompt += "\n\n" + appendix
 
+    # Source-integrity ledger (Aug 2026): claims are generated as a
+    # first-class artifact alongside the prose, extracted at the return
+    # below, and verified by run_show's gate before anything is published.
+    _si_cfg = getattr(config, "source_integrity", None)
+    _si_enabled = bool(_si_cfg and getattr(_si_cfg, "enabled", False))
+    if _si_enabled:
+        from engine.claims import claims_prompt_appendix
+        prompt += "\n\n---\n" + claims_prompt_appendix()
+
     system_prompt = None
     if config.llm.system_prompt_file:
         sp_path = Path(config.llm.system_prompt_file)
@@ -2031,6 +2049,16 @@ def generate_digest(
     # the podcast script. This keeps the .md (blog, RSS show notes, newsletter,
     # GitHub Pages, etc.) consistent with the spoken version.
     text = _correct_common_llm_text_mistakes(text)
+
+    # Source-integrity ledger: split the fenced claims block off the prose
+    # and stash it for run_show's verification gate. Every generate_digest
+    # call path (refusal retries, slow-news fallback, structural retry)
+    # funnels through this return, so the stash always belongs to the last
+    # generated digest. The returned text is CLEAN — the ledger never
+    # reaches the podcast prompt, blog, RSS or X surfaces.
+    if _si_enabled:
+        from engine.claims import extract_and_stash
+        text = extract_and_stash(text)
 
     return text
 

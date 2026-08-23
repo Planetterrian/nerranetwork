@@ -2168,6 +2168,82 @@ def run(args: argparse.Namespace) -> None:
             from shows.hooks.tesla import scrub_unavailable_tsla_from_digest
             x_thread = scrub_unavailable_tsla_from_digest(x_thread)
 
+        # --- Source-integrity gate (Aug 2026, engine/claims.py) ---
+        # The generation stage emitted a claim ledger alongside the prose
+        # (extracted+stashed inside generate_digest). Verify it against the
+        # FINAL digest text here — before the digest is saved and before a
+        # narrative show's topic-queue slot is marked produced, so a blocked
+        # episode costs a rerun, never a burned slot. enforce=false runs the
+        # same checks in shadow: loud warnings + metrics, episode ships.
+        _si_cfg = getattr(config, "source_integrity", None)
+        _si_gate = None
+        _si_mod = None
+        if _si_cfg and getattr(_si_cfg, "enabled", False):
+            _si_enforce = bool(getattr(_si_cfg, "enforce", False))
+            try:
+                from engine import claims as _si_mod
+                _si_claims = _si_mod.drain_stashed_claims()
+                with metrics.stage("source_integrity_gate"):
+                    _si_gate = _si_mod.run_source_integrity_gate(
+                        x_thread, _si_claims,
+                        verify_sources=getattr(_si_cfg, "verify_sources", True),
+                    )
+                metrics.record("source_integrity_claims", _si_gate.claims_total)
+                metrics.record("source_integrity_verified", _si_gate.claims_verified)
+                metrics.record(
+                    "source_integrity_failed_verifications",
+                    len(_si_gate.failed_verifications))
+                metrics.record(
+                    "source_integrity_uncovered_shapes",
+                    len(_si_gate.uncovered_shapes))
+                metrics.record("source_integrity_passed", _si_gate.passed)
+                metrics.record("source_integrity_enforced", _si_enforce)
+                if not _si_gate.passed:
+                    logger.error(
+                        "Source-integrity gate FAILED: %s", _si_gate.summary())
+                    for _v in _si_gate.failed_verifications:
+                        logger.error(
+                            "  claim %s: %s (%s)",
+                            _v.get("id"), _v.get("reason"), _v.get("url"))
+                    for _u in _si_gate.uncovered_shapes:
+                        logger.error(
+                            "  uncovered citation shape %r in: %s",
+                            _u.get("match"), _u.get("sentence"))
+                    for _e in _si_gate.shape_errors:
+                        logger.error("  malformed ledger entry: %s", _e)
+                    if _si_enforce:
+                        save_usage(tracker, digests_dir)
+                        _skip_episode(
+                            "source_integrity_failed",
+                            "Claim-ledger verification failed: "
+                            + _si_gate.summary()
+                            + " — a citation-shaped assertion could not be "
+                            "traced to a real source. Fix the prompt/topic "
+                            "or rerun; nothing was published.",
+                        )
+                    print(
+                        "::warning::Source-integrity gate failed in shadow "
+                        f"mode for {config.name}: {_si_gate.summary()}"
+                    )
+            except SystemExit:
+                raise
+            except Exception as _si_exc:  # noqa: BLE001
+                # Fail CLOSED under enforcement: an unverifiable episode is
+                # exactly what the gate exists to stop. Shadow mode stays
+                # non-fatal.
+                if _si_enforce:
+                    logger.error("Source-integrity gate crashed: %s", _si_exc)
+                    save_usage(tracker, digests_dir)
+                    _skip_episode(
+                        "source_integrity_error",
+                        f"Gate crashed under enforcement: {_si_exc}",
+                    )
+                logger.warning(
+                    "Source-integrity gate errored (shadow, non-fatal): %s",
+                    _si_exc,
+                )
+                _si_gate = None
+
         # Save digest to file. Strip lone UTF-16 surrogates (the LLM
         # occasionally emits one); ``write_text`` would otherwise abort the
         # whole pipeline on ``UnicodeEncodeError``. See engine.utils.
@@ -2175,6 +2251,19 @@ def run(args: argparse.Namespace) -> None:
         digest_md = digests_dir / f"{config.episode.prefix}_Ep{episode_num:03d}_{today:%Y%m%d}.md"
         digest_md.write_text(_scrub(x_thread), encoding="utf-8")
         logger.info("Digest saved: %s", digest_md)
+
+        # Persist the verified claim ledger next to the digest (committed by
+        # the same `git add -A digests/` as the episode output). Written even
+        # when empty — an empty ledger documents that the gate ran and the
+        # episode asserts nothing needing external provenance. Show notes and
+        # the book compiler render real citations from this sidecar.
+        if _si_gate is not None and _si_mod is not None:
+            try:
+                _ledger_path = _si_mod.save_ledger(digest_md, _si_gate)
+                logger.info("Claim ledger saved: %s", _ledger_path)
+            except Exception as _ledger_exc:  # noqa: BLE001
+                logger.warning(
+                    "Failed to save claim ledger (non-fatal): %s", _ledger_exc)
 
         # Tesla Shorts Time: update narrative, performance, and theme memory
         # (the core of TST's recursive improvement system). Non-fatal.
@@ -2650,6 +2739,58 @@ def run(args: argparse.Namespace) -> None:
             # *_tts.txt after the final clean passes.
             from engine.utils import strip_speech_tags as _strip_tags_for_reader
             reader_script = _strip_tags_for_reader(podcast_script)
+
+            # Source-integrity lint on the SPOKEN script (Aug 2026). The
+            # digest gate above vetted the canonical text, but the script
+            # stage can invent citation-shaped provenance of its own. A
+            # shape here is covered if a verified ledger claim covers it OR
+            # the same construction already appears in the gated digest
+            # (paraphrase of vetted material). Runs on the reader snapshot
+            # (canonical spelling — pronunciation transforms would break
+            # matching), before any TTS spend.
+            if _si_gate is not None and _si_mod is not None:
+                try:
+                    _script_shapes = _si_mod.lint_uncovered_shapes(
+                        reader_script, _si_gate.verified_claims,
+                    )
+                    _digest_shapes = {
+                        f["match"].lower()
+                        for f in _si_mod.find_citation_shapes(x_thread)
+                    }
+                    _script_uncovered = [
+                        f for f in _script_shapes
+                        if f["match"].lower() not in _digest_shapes
+                    ]
+                    metrics.record(
+                        "source_integrity_script_uncovered",
+                        len(_script_uncovered))
+                    if _script_uncovered:
+                        for _u in _script_uncovered:
+                            logger.error(
+                                "Script invented citation shape %r in: %s",
+                                _u.get("match"), _u.get("sentence"))
+                        if getattr(_si_cfg, "enforce", False):
+                            logger.error(
+                                "Source-integrity script lint FAILED — %d "
+                                "citation-shaped assertion(s) appear in the "
+                                "script with no verified claim and no "
+                                "counterpart in the gated digest. Aborting "
+                                "before TTS.", len(_script_uncovered),
+                            )
+                            save_usage(tracker, digests_dir)
+                            sys.exit(1)
+                        print(
+                            "::warning::Script-stage citation shapes "
+                            f"uncovered ({len(_script_uncovered)}) for "
+                            f"{config.name} — shadow mode, shipping anyway"
+                        )
+                except SystemExit:
+                    raise
+                except Exception as _sl_exc:  # noqa: BLE001
+                    logger.warning(
+                        "Script-stage source lint errored (non-fatal): %s",
+                        _sl_exc,
+                    )
 
             # Apply pronunciation fixes
             podcast_script = _apply_pronunciation(podcast_script, args.show)

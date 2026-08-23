@@ -509,6 +509,26 @@ class ChaptersConfig:
 
 
 @dataclass
+class SourceIntegrityConfig:
+    """Claim-ledger + verification gate (Aug 2026, engine/claims.py).
+
+    ``enabled`` injects the ledger constraint into digest generation,
+    extracts the fenced claims block, verifies it (URL resolves +
+    supporting quote appears in the source) and lints citation-shaped
+    prose against it — in SHADOW mode: loud warnings + metrics, never a
+    blocked episode. ``enforce`` makes the gate BLOCKING (skip before the
+    digest is saved / the topic-queue slot is burned). Enforcement rolls
+    out per show, narrative shows first — never a network-wide day-one
+    flip (model-upgrade-playbook lesson).
+    """
+    enabled: bool = False
+    enforce: bool = False
+    # Skip the HTTP source checks (span-anchoring + lint still run). For
+    # offline/test runs; production leaves this on.
+    verify_sources: bool = True
+
+
+@dataclass
 class ContentTrackingConfig:
     """Cross-episode content tracking configuration.
 
@@ -1040,6 +1060,7 @@ class ShowConfig:
     newsletter: NewsletterConfig = field(default_factory=NewsletterConfig)
     chapters: ChaptersConfig = field(default_factory=ChaptersConfig)
     content_tracking: ContentTrackingConfig = field(default_factory=ContentTrackingConfig)
+    source_integrity: SourceIntegrityConfig = field(default_factory=SourceIntegrityConfig)
     slow_news: SlowNewsConfig = field(default_factory=SlowNewsConfig)
     content_freshness: ContentFreshnessConfig = field(default_factory=ContentFreshnessConfig)
     youtube: YouTubeConfig = field(default_factory=YouTubeConfig)
@@ -1263,6 +1284,7 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
         newsletter=_build_nested(NewsletterConfig, data.get("newsletter")),
         chapters=_build_chapters(data.get("chapters")),
         content_tracking=_build_nested(ContentTrackingConfig, data.get("content_tracking")),
+        source_integrity=_build_nested(SourceIntegrityConfig, data.get("source_integrity")),
         slow_news=_build_nested(SlowNewsConfig, data.get("slow_news")),
         content_freshness=_build_nested(ContentFreshnessConfig, data.get("content_freshness")),
         youtube=_build_nested(YouTubeConfig, data.get("youtube")),

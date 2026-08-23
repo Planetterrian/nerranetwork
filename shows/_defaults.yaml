@@ -354,6 +354,19 @@ content_tracking:
   enabled: true
   max_days: 14
 
+# Source-integrity claim ledger (Aug 2026, engine/claims.py). enabled=true
+# makes digest generation emit a verifiable claims ledger (extracted before
+# any published surface sees it), verifies every claim (URL resolves +
+# supporting quote appears in the source) and lints citation-shaped prose
+# against it. Network default is SHADOW mode: loud warnings + metrics +
+# committed *_claims.json sidecars, never a blocked episode. enforce=true
+# (per show — narrative shows first; never a network-wide day-one flip, per
+# docs/model_upgrade_playbook.md) makes the gate blocking: a citation-shaped
+# assertion that traces to nothing skips the episode instead of publishing.
+source_integrity:
+  enabled: true
+  enforce: false
+
 youtube:
   # Off by default — flip per-show in the show YAML once an OAuth refresh
   # token is provisioned for that channel.
