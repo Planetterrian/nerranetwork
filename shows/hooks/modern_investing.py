@@ -277,7 +277,7 @@ def pre_fetch(config, *, episode_num: int | None = None, today_str: str | None =
     # same way the trade review does, so it rides the save below rather
     # than risking a re-air if a later step raises.
     context["methodology_disclosure"] = _build_methodology_disclosure(
-        tracker, episode_num)
+        tracker, episode_num, output_dir=output_dir)
 
     if not readonly:
         _save_tracker(tracker, tracker_path)
@@ -2689,9 +2689,80 @@ def _weekly_hold_update(open_trades: list) -> str:
 # what the numbers mean, not how the repo is wired.
 METHODOLOGY_DISCLOSURE_EPISODES = 3
 
+# Phrases that only the methodology correction produces, used to confirm
+# it actually reached the SPOKEN script. Validated against all 147
+# committed MIT scripts: exactly one match (Ep145, the one airing that
+# genuinely happened). "Monday pick" was in an earlier draft of this set
+# and had to go — Ep100 says "The next Monday pick will target the
+# energy sector", which is ordinary show language, not the correction.
+_DISCLOSURE_MARKERS = (
+    "used to quote",
+    "could not be reproduced",
+    "cannot be reproduced",
+    "not ours to claim",
+    "restarted its track record",
+    "restarted its simulated track record",
+    "chosen after the fact",
+    "whichever session the",
+)
+
+
+def _disclosure_reached_air(output_dir: Path, episode_num: int) -> bool | None:
+    """Did the correction survive into the episode's spoken script?
+
+    Returns True/False, or None when the script cannot be read — a
+    missing file is absence of evidence, never evidence of absence, and
+    must never cost an airing.
+    """
+    try:
+        matches = sorted(output_dir.glob(f"*Ep{episode_num:03d}_*_tts.txt"))
+    except OSError:
+        return None
+    if not matches:
+        return None
+    try:
+        spoken = matches[-1].read_text(encoding="utf-8", errors="ignore").lower()
+    except OSError:
+        return None
+    return any(marker in spoken for marker in _DISCLOSURE_MARKERS)
+
+
+def _reconcile_disclosure_airings(tracker: dict, output_dir: Path) -> None:
+    """Drop stamped episodes whose script never carried the correction.
+
+    The stamp is applied at the DIGEST stage, but the podcast script is a
+    separate LLM call made much later, and it does not always carry the
+    segment through. Ep144/145/146 were all stamped; only Ep145 actually
+    said it on air. So the counter was measuring prompt injections and
+    reporting them as airings — it retired a correction that had reached
+    listeners once out of three times.
+
+    Reconciling here makes the count mean what it claims. It runs at the
+    next episode's digest stage, by which point the previous episode's
+    script is on disk, so no new hook contract is needed.
+    """
+    meta = tracker.setdefault("metadata", {})
+    aired = list(meta.get("methodology_disclosure_episodes", []))
+    if not aired:
+        return
+    confirmed = []
+    for ep in aired:
+        reached = _disclosure_reached_air(output_dir, ep)
+        if reached is False:
+            logger.warning(
+                "Methodology correction was stamped for Ep%s but never "
+                "reached the spoken script — releasing that airing so the "
+                "count reflects what listeners actually heard.", ep,
+            )
+            continue
+        confirmed.append(ep)
+    if confirmed != aired:
+        meta["methodology_disclosure_episodes"] = confirmed
+
 
 def _build_methodology_disclosure(
-    tracker: dict, episode_num: int | None = None
+    tracker: dict, episode_num: int | None = None,
+    output_dir: Path | None = None,
 ) -> str:
     """One-off on-air correction explaining why the record restarted.
 
@@ -2702,6 +2773,8 @@ def _build_methodology_disclosure(
     it) and, like every other stamp in this module, is skipped on
     read-only (test/rehearse) runs.
     """
+    if output_dir is not None and not _hooks_readonly():
+        _reconcile_disclosure_airings(tracker, output_dir)
     aired = list(
         (tracker.get("metadata") or {}).get(
             "methodology_disclosure_episodes", []
