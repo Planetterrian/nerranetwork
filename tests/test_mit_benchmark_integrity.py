@@ -2774,3 +2774,79 @@ class TestAuditRegistryCoversEveryShow:
             f"only cross-checked {checked} shows — the CRON_MAP parse "
             "probably drifted"
         )
+
+
+class TestDisclosureCountsAirings(TestMethodologyDisclosure):
+    """The stamp has to mean "listeners heard it", not "we asked for it".
+
+    Ep144, Ep145 and Ep146 were all stamped and the correction retired
+    itself as complete. Only **Ep145** actually said it: the stamp is
+    applied at the digest stage, but the podcast script is a separate
+    LLM call made much later, and it dropped the segment two times in
+    three. So a correction meant to run three times reached listeners
+    once, and the counter reported success either way.
+
+    That is the same failure shape as the record it was correcting — a
+    number that measures the wrong event, reported as if it measured
+    the right one.
+    """
+
+    _AIRED = "The show used to quote a cumulative alpha figure."
+    _NOT_AIRED = "The portfolio sits at two hundred dollars across fifty trades."
+
+    def _script(self, tmp_path, episode_num, text):
+        (tmp_path / f"Modern_Investing_Ep{episode_num:03d}_20260101_tts.txt"
+         ).write_text(text, encoding="utf-8")
+
+    def test_stamp_survives_when_the_script_carried_it(self, tmp_path):
+        self._script(tmp_path, 145, self._AIRED)
+        tracker = {"metadata": {"methodology_disclosure_episodes": [145]}}
+        mi._reconcile_disclosure_airings(tracker, tmp_path)
+        assert tracker["metadata"]["methodology_disclosure_episodes"] == [145]
+
+    def test_stamp_is_released_when_the_script_dropped_it(self, tmp_path):
+        self._script(tmp_path, 144, self._NOT_AIRED)
+        self._script(tmp_path, 145, self._AIRED)
+        tracker = {"metadata": {"methodology_disclosure_episodes": [144, 145]}}
+        mi._reconcile_disclosure_airings(tracker, tmp_path)
+        assert tracker["metadata"]["methodology_disclosure_episodes"] == [145]
+
+    def test_missing_script_never_costs_an_airing(self, tmp_path):
+        # Absence of evidence is not evidence of absence. A script that
+        # cannot be read (not yet written, unreadable, pruned) must leave
+        # the stamp alone rather than silently re-arming the segment.
+        tracker = {"metadata": {"methodology_disclosure_episodes": [145]}}
+        mi._reconcile_disclosure_airings(tracker, tmp_path)
+        assert tracker["metadata"]["methodology_disclosure_episodes"] == [145]
+        assert mi._disclosure_reached_air(tmp_path, 145) is None
+
+    def test_released_airing_is_offered_again(self, tmp_path, monkeypatch):
+        # The point of reconciling: an airing that never happened comes
+        # back, instead of the segment retiring on a miscount.
+        monkeypatch.setattr(mi, "_hooks_readonly", lambda: False)
+        self._script(tmp_path, 144, self._NOT_AIRED)
+        self._script(tmp_path, 145, self._AIRED)
+        self._script(tmp_path, 146, self._NOT_AIRED)
+        tracker = {"metadata": {
+            "methodology_disclosure_episodes": [144, 145, 146]}}
+        text = mi._build_methodology_disclosure(
+            tracker, episode_num=148, output_dir=tmp_path)
+        assert text, "a correction that aired once must not be retired"
+        assert tracker["metadata"]["methodology_disclosure_episodes"] == [
+            145, 148]
+
+    def test_markers_do_not_fire_on_ordinary_show_language(self):
+        # Ep100 says "The next Monday pick will target the energy
+        # sector" — an earlier marker set matched that and would have
+        # confirmed an airing that never happened. Every marker must be
+        # language only the correction produces.
+        scripts = sorted(
+            (_ROOT / "digests/modern_investing").glob("*_tts.txt"))
+        assert len(scripts) > 100, "corpus too small to validate markers"
+        hits = [
+            s.name for s in scripts
+            if any(m in s.read_text(encoding="utf-8", errors="ignore").lower()
+                   for m in mi._DISCLOSURE_MARKERS)
+        ]
+        assert hits == ["Modern_Investing_Ep145_20260821_tts.txt"], (
+            f"markers matched unexpected scripts: {hits}")
