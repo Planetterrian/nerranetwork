@@ -297,7 +297,8 @@ class TestWO6CombinedVolume:
         order = re.findall(r'idref="([^"]+)"', spine)
         assert order[:6] == ["titlepage", "copyright", "contents",
                              "introduction", "part01", "chap001"]
-        assert order[-3:] == ["conclusion", "authorbio", "alsoby"]
+        assert order[-4:] == ["conclusion", "sources", "authorbio",
+                              "alsoby"]
 
     def test_nav_nests_chapters_under_parts(self, built):
         vol, _, z = built
@@ -338,6 +339,34 @@ class TestWO6CombinedVolume:
             encoding="utf-8")
         with pytest.raises(ValueError):
             load_volume(bad)
+
+    def test_every_collected_chapter_has_a_verified_ledger(self):
+        """WO-4: all 30 shipping chapters carry a committed, non-empty
+        claims sidecar, and each passes the offline gate (anchoring +
+        lint) against the current digest — zero uncovered citation
+        shapes. Live URL/quote verification happened at ledger save;
+        re-audits run via scripts/verify_claims.py."""
+        from engine import claims as C
+        vol = yaml.safe_load(
+            (VOLS / "unintended_consequences_collected.yaml")
+            .read_text(encoding="utf-8"))
+        for ep in vol["episodes"]:
+            md = sorted(p for p in UC_DIR.glob(f"*_Ep{ep:03d}_*.md")
+                        if "_transcript" not in p.name
+                        and "_tts" not in p.name)[-1]
+            ledger = C.load_ledger(md)
+            assert ledger, f"ep{ep}: no ledger sidecar"
+            gate = C.run_source_integrity_gate(
+                md.read_text(encoding="utf-8"), ledger,
+                verify_sources=False)
+            assert gate.passed, f"ep{ep}: {gate.summary()}"
+
+    def test_sources_page_populates_from_ledgers(self, built):
+        _, _, z = built
+        assert "OEBPS/sources.xhtml" in z.namelist()
+        src = z.read("OEBPS/sources.xhtml").decode("utf-8")
+        assert src.count("<h2>") == 30  # one group per chapter
+        assert src.count('<a href="http') >= 100
 
     def test_single_volume_builds_unaffected_by_parts_machinery(self,
                                                                 tmp_path):
