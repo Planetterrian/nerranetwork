@@ -1,5 +1,14 @@
 # Citation-shape exposure across the published corpus
 
+> **A count is a floor, not a measurement. These patterns detect known
+> fabrication templates; novel shapes are not detected.** Tested against 14
+> fabrications independently verified by hand fact-check, the template set
+> this report was measured with caught **4 of 14 (28%)** — the counts below
+> measure *one template*, not exposure. Superseded by
+> [`citation_exposure_2026_08_23.md`](citation_exposure_2026_08_23.md)
+> (widened pattern set); this file is retained because the delta between the
+> two is the useful artifact.
+
 Measured 2026-08-22 by `scripts/measure_citation_exposure.py` — deterministic regex counts of citation-shaped constructions (`engine.claims.CITATION_SHAPE_PATTERNS`, the fabrication signature) over every committed digest `.md`. A count is EXPOSURE, not a verdict: each match is a sentence asserting provenance that no ledger backs, which may be true, stale, or invented — unverifiable either way.
 
 This ranking is the triage order for the backfill (soften-in-place / re-source / regenerate — operator decision per show).

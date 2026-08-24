@@ -119,6 +119,12 @@ def render_report(result: dict, top: int) -> str:
     out = [
         "# Citation-shape exposure across the published corpus",
         "",
+        "> **A count is a floor, not a measurement. These patterns detect "
+        "known fabrication templates; novel shapes are not detected.** "
+        "The Aug 22 report's original template set caught 4 of 14 "
+        "hand-verified fabrications — a low per-show number here is not "
+        "evidence of health.",
+        "",
         f"Measured {date.today().isoformat()} by "
         "`scripts/measure_citation_exposure.py` — deterministic regex counts "
         "of citation-shaped constructions "
