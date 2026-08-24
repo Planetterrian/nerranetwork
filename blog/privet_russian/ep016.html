@@ -991,6 +991,11 @@
                             Offshore North
                         </a>
                         
+                        <a href="../../nerra-daily.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/nerra-daily-400.webp"><img src="../../assets/covers/nerra-daily.jpg" alt="Nerra Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Nerra Daily
+                        </a>
+                        
                     </div>
                 </li>
                 <li class="nn-nav-dropdown">
@@ -1081,6 +1086,11 @@
                         <a href="../../blog/offshore_north/index.html">
                             <picture><source type="image/webp" srcset="../../assets/covers/offshore-north-400.webp"><img src="../../assets/covers/offshore-north.jpg" alt="Offshore North cover art" width="1400" height="1400" loading="lazy"></picture>
                             Offshore North блог
+                        </a>
+                        
+                        <a href="../../blog/nerra_daily/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/nerra-daily-400.webp"><img src="../../assets/covers/nerra-daily.jpg" alt="Nerra Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Nerra Daily блог
                         </a>
                         
                     </div>
@@ -1190,6 +1200,11 @@
                 Offshore North
             </a>
             
+            <a href="../../nerra-daily.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
+                <picture><source type="image/webp" srcset="../../assets/covers/nerra-daily-400.webp"><img src="../../assets/covers/nerra-daily.jpg" alt="Nerra Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                Nerra Daily
+            </a>
+            
         </div>
         <div class="nn-mobile-shows">
             <div class="nn-mobile-shows-title">Блоги</div>
@@ -1277,6 +1292,11 @@
                 Offshore North блог
             </a>
             
+            <a href="../../blog/nerra_daily/index.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
+                <picture><source type="image/webp" srcset="../../assets/covers/nerra-daily-400.webp"><img src="../../assets/covers/nerra-daily.jpg" alt="Nerra Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                Nerra Daily блог
+            </a>
+            
         </div>
     </div>
 
@@ -1305,7 +1325,7 @@
             <p class="blog-hero-hook">Weather</p>
             
             <div class="blog-meta-bar">
-                <span class="post-author">By Patrick</span>
+                <span class="post-author">By Оля</span>
                 <span>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                     April 30, 2026
@@ -1983,6 +2003,8 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
                     
                     <a href="../../offshore-north.html">Offshore North</a>
                     
+                    <a href="../../nerra-daily.html">Nerra Daily</a>
+                    
                 </div>
                 <div class="nn-footer-col">
                     <h4>Блог</h4>
@@ -2019,6 +2041,8 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
                     <a href="../../blog/age_of_ai/index.html">The Age of AI</a>
                     
                     <a href="../../blog/offshore_north/index.html">Offshore North</a>
+                    
+                    <a href="../../blog/nerra_daily/index.html">Nerra Daily</a>
                     
                     <a href="../../blog.rss">RSS блога (все подкасты)</a>
                 </div>
@@ -2061,6 +2085,8 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
                     
                     <a href="../../offshore_north_podcast.rss">Offshore North RSS</a>
                     
+                    <a href="../../nerra_daily_podcast.rss">Nerra Daily RSS</a>
+                    
                 </div>
                 <div class="nn-footer-col">
                     <h4>Контакты</h4>
@@ -2082,13 +2108,17 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
                 <a href="../../ai-disclosure.html">ИИ-раскрытие</a>
                 <a href="../../editorial.html">Редакционная политика</a>
                 <a href="../../gallery.html">Галерея</a>
+                <a href="../../books.html">Книги</a>
                 <a href="../../data.html">Данные и дашборды</a>
                 <a href="../../management.html">Статус сети</a>
             </div>
-            <!-- Newsletter Subscribe -->
+            <!-- Newsletter Subscribe — posts to the account Worker (Aug
+                 2026): every newsletter signup now creates a Nerra
+                 account (same identity as the gallery gate), so the
+                 member surface and the list grow together. -->
             <div class="nn-footer-subscribe">
-                <form action="https://buttondown.com/api/emails/embed-subscribe/patricknovak1" method="post" target="popupwindow" class="nn-subscribe-form"
-                      onsubmit="var btn=this.querySelector('button[type=submit]');btn.disabled=true;btn.textContent="Подписка…";setTimeout(function(){btn.textContent="Проверьте почту ✓";btn.disabled=false;},500);">
+                <form class="nn-subscribe-form"
+                      onsubmit="var f=this,btn=f.querySelector('button[type=submit]');btn.disabled=true;btn.textContent="Подписка…";var tags=Array.prototype.map.call(f.querySelectorAll('input[name=tag]:checked'),function(c){return c.value;});fetch('https://api.nerranetwork.com/api/subscribe',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:f.email.value,list:'member',tags:tags})}).then(function(r){btn.textContent=r.ok?"Проверьте почту ✓":"Подписаться";if(r.ok){var a=f.querySelector('.nn-account-link');if(a)a.style.display='inline';}}).catch(function(){btn.textContent="Подписаться";}).then(function(){btn.disabled=false;});return false;">
                     <h4>Подписка на обновления</h4>
                     <p>Выберите подкасты, которые хотите получать на почту:</p>
                     <div class="nn-subscribe-tags">
@@ -2124,12 +2154,17 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
                         
                         <label><input type="checkbox" name="tag" value="Offshore North"> Offshore North</label>
                         
+                        <label><input type="checkbox" name="tag" value="Nerra Daily"> Nerra Daily</label>
+                        
                     </div>
                     <div class="nn-subscribe-row">
                         <input type="email" name="email" placeholder="ваш@email.ru" required aria-label="Адрес электронной почты">
-                        <input type="hidden" value="1" name="embed">
                         <button type="submit">Подписаться</button>
                     </div>
+                    <p style="margin-top:0.5rem;font-size:0.85rem;">
+                        <a href="../../join.html">Nerra Personal — your own daily show, gallery &amp; member perks →</a>
+                        <a class="nn-account-link" href="../../account.html" style="display:none;margin-left:0.75rem;">Your account →</a>
+                    </p>
                 </form>
             </div>
             <div class="nn-footer-bottom">
@@ -2139,6 +2174,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
             <div class="nn-footer-legal">
                 <p class="ai-notice">Nerra Network использует ИИ-инструменты в производстве контента. <a href="../../ai-disclosure.html">Подробнее</a></p>
                 <div>
+                    <a href="../../support.html">Support the network</a> &middot;
                     <a href="../../privacy-policy.html">Конфиденциальность</a> &middot;
                     <a href="../../terms-of-service.html">Условия</a> &middot;
                     <a href="../../ai-disclosure.html">ИИ-раскрытие</a>
