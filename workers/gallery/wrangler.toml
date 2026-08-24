@@ -26,39 +26,33 @@ routes = [
 binding = "GALLERY_BUCKET"
 bucket_name = "nerra-gallery"
 
-# KV namespace for rate limiting on subscribe/login, and for the
-# per-email revocation list. COMMENTED OUT because no namespace has ever
-# been provisioned — so this is not a regression, it is the config
-# finally matching production. Both consumers fail open when the binding
-# is absent (see checkRateLimit / isEmailRevoked in src/handlers.ts), so
-# the Worker runs correctly without it; it simply has no rate limiting.
+# KV namespace for rate limiting on subscribe/login, for the per-email
+# revocation list, and (Aug 2026) for the Nerra Personal member records
+# (`member:<email>`) and feed tokens (`feedtok:<token>`). Provisioned
+# 2026-08-23 as `gallery_rate_limits`; the id below is that namespace.
 #
-# DO NOT uncomment these lines with a blank `id`. Wrangler validates the
-# whole config before running ANY command, so a blank id doesn't just
-# fail `deploy` — it also blocks `wrangler kv namespace list`, which is
-# how you'd look the id up. That loop cost the operator five failed
-# deploys on 2026-07-30.
+# Both rate-limit consumers fail open when the binding is absent (see
+# checkRateLimit / isEmailRevoked in src/handlers.ts), but the Personal
+# endpoints do NOT — they answer 503 "not configured" without it.
 #
-# To enable rate limiting, from a directory WITHOUT this wrangler.toml
-# (so the same validation doesn't block you):
+# NEVER leave `id` blank here. Wrangler validates the whole config before
+# running ANY command, so a blank id doesn't just fail `deploy` — it also
+# blocks `wrangler kv namespace list`, which is how you'd look the id up.
+# That loop cost the operator five failed deploys on 2026-07-30. To look
+# up ids, run from a directory WITHOUT this wrangler.toml:
 #     cd <repo root>
-#     workers/gallery/node_modules/.bin/wrangler kv namespace create gallery_rate_limits
-# then paste the returned id below and uncomment all four lines.
-# [[kv_namespaces]]
-# binding = "RATE_LIMIT_KV"
-# id = ""
-# preview_id = ""  # Optional preview namespace
+#     workers/gallery/node_modules/.bin/wrangler kv namespace list
+[[kv_namespaces]]
+binding = "RATE_LIMIT_KV"
+id = "6bef8549fdb541009f43ce92ee3fbdbd"
 
-# Nerra Personal (Aug 2026): the private personalized-feed audio bucket.
-# COMMENTED OUT for the same reason as the KV block above — uncommenting
-# before the bucket exists blocks every wrangler command. To enable:
-#     wrangler r2 bucket create nerra-personal
-# then uncomment. The /api/feed, /api/account and Stripe endpoints answer
-# 503 "not configured" until this + the KV namespace + the secrets exist;
-# nothing else in the Worker changes behaviour.
-# [[r2_buckets]]
-# binding = "PERSONAL_BUCKET"
-# bucket_name = "nerra-personal"
+# Nerra Personal (Aug 2026): the private personalized-feed audio bucket,
+# created 2026-08-23. Keys live under `personal/<token>/` and are served
+# ONLY through the Worker's token-checked /api/feed endpoint — the bucket
+# stays private, so cancelling a subscription revokes the feed at once.
+[[r2_buckets]]
+binding = "PERSONAL_BUCKET"
+bucket_name = "nerra-personal"
 
 # Secrets are set out-of-band via:
 #   wrangler secret put JWT_SECRET
