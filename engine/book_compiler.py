@@ -265,8 +265,13 @@ def plan_next_volumes(series_slug: str, *, write: bool = True) -> List[Path]:
     series = load_series(series_slug)
     size = int(series["volume_size"])
     covered = _episodes_already_in_volumes(series["show_slug"])
+    # Episodes editorially excluded from BOOKS (the podcast episodes stay
+    # published). Without this, an episode removed from a volume config
+    # (the WO-3 chapter cuts) would look uncollected and the planner
+    # would sweep it into the FRONT of the next volume.
+    excluded = {int(e) for e in series.get("excluded_episodes", []) or []}
     pending = [n for n in _available_episode_numbers(series)
-               if n not in covered]
+               if n not in covered and n not in excluded]
 
     written: List[Path] = []
     next_num = _max_volume_number(series["show_slug"]) + 1
