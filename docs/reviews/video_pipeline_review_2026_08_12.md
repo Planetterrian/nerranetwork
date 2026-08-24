@@ -207,3 +207,43 @@ through ~08-15; the 08-15+ motion-era renders are still inside the
   `long-open-cliff`. Content-side changes to the spoken open are audio
   (landmine #17) and stay operator-gated; the in-flight levers against
   it are chapters, the accelerating open, and the motion batch.
+
+## Effectiveness audit — 2026-08-24 (full week on every batch)
+
+Verdicts per lever, from lag-corrected production data (the audit also
+found and fixed the lag bug below):
+
+- **Motion package (36 slots, adaptive KB, transition split, punch-ins,
+  closing beat): WORKING.** EN Shorts views-per-day jumped ~6x by
+  cohort (08-10..14 med 1.0 → 08-15..18 med 5.4 → 08-19..23 med 6.0)
+  and Shorts AVP rose through the motion era (49.4 → 53.8% network;
+  RU motion-era Shorts retain 58-62% vs 50-52% before). EN channel
+  views +13.3% WoW, FR +74.4% WoW on the same code.
+- **Chapters: NO measurable AVP lift yet.** Long-form median AVP is
+  flat (13.0 pre → 13.4-13.6 after); the +3.1pt read on 08-17 was
+  young-video bias and regressed as views accrued. Chapters are
+  costless and still pay via search/"key moments" surfaces — keep, but
+  score the 08-26 readout honestly as "flat on AVP".
+- **Search-terms loop: FIRING.** 4 shows carry live matched queries
+  (tesla "fsd v14.1 lite", spacex "starship flight 14", M&A/MAB
+  "gemini 3.7 flash") in youtube_performance.json → title hints +
+  upload tags. EN search share 14% (flat vs 15% baseline — days in).
+- **Dub fragment titles: FIXED in the data** —
+  dub_fragment_title_share_14d = 0.04 (was 26% on FR).
+- **Open cliff: UNCHANGED** (EN hold@5% 0.51 = baseline). Remains the
+  dominant retention lever; the motion batch hasn't moved the first
+  30-45 s because that loss is decided by promise-match, which is
+  title/thumbnail/spoken-open territory (the last is landmine #17).
+- **RU cooling is real but demand-side**: RU -29.8% WoW after lag
+  correction, with steady uploads (10-13/day), IMPROVED retention, and
+  EN/FR growing on identical code — consistent with Shorts-feed
+  rotation / mean reversion off the 08-10..14 hot streak (37 vpd med),
+  not a pipeline fault. Recommendation: hold course; rising retention
+  typically precedes re-distribution. Watch the scorecard, don't thrash.
+- **Instrument bug found by this audit, fixed**: the WoW scorecard and
+  zero_view_share counted the ~48 h of unreported YouTube Analytics
+  lag as real zeros — every channel "lost" its newest 2 days of
+  uploads, RU WoW read -43% during plain lag, and EN zero-view share
+  read 0.22 (honest: 0.10). Windows are now lag-trimmed (_LAG_DAYS=2)
+  in both the scorecard and the experiment WoW metrics; guard in
+  tests/test_dashboard_growth.py::TestLagAwareAnalyticsWindows.

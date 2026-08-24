@@ -1867,10 +1867,16 @@ def build_channel_scorecard(root: Path) -> Dict[str, Any]:
     hist = _load_json(root / "api" / "youtube_channel_history.json") or {}
     hist_rows = hist.get("rows", [])
 
-    # Complete upload counts (14d window ending at the analytics anchor)
-    # from the indexes; analytics rows for the same window from stats.
-    win_lo = (anchor_d - _dt.timedelta(days=14)).isoformat()
-    win_hi = anchor_d.isoformat()
+    # Complete upload counts from the indexes; analytics rows for the
+    # same window from stats. LAG-AWARE (Aug 24 2026): YouTube Analytics
+    # day-data finalizes ~48 h behind, so the window ENDS 2 days before
+    # the anchor — uploads from the unreported tail used to count as
+    # zero-view (every channel "lost" its newest 2 days of uploads) and
+    # the RU WoW read -43% during a plain reporting lag, over-alarming
+    # the scorecard the moment anyone looked.
+    _LAG_DAYS = 2
+    win_lo = (anchor_d - _dt.timedelta(days=14 + _LAG_DAYS)).isoformat()
+    win_hi = (anchor_d - _dt.timedelta(days=_LAG_DAYS)).isoformat()
     uploads: Dict[str, int] = {}
     for v in _iter_video_index_rows(root):
         pub = str(v.get("published") or "")[:10]
@@ -1894,6 +1900,8 @@ def build_channel_scorecard(root: Path) -> Dict[str, Any]:
     channels_out: Dict[str, Any] = {}
     for ch, c in (stats.get("channels") or {}).items():
         ds = [d for d in (c.get("day_series") or []) if isinstance(d, dict)]
+        # Trailing 2 rows are the unreported/partial tail — see _LAG_DAYS.
+        ds = ds[:-2] if len(ds) > 2 else ds
         last7 = ds[-7:]
         prior7 = ds[-14:-7]
         v7 = sum(int(d.get("views") or 0) for d in last7)
@@ -1935,10 +1943,12 @@ def build_channel_scorecard(root: Path) -> Dict[str, Any]:
         "configured": True,
         "as_of": stats.get("generated"),
         "window_note": (
-            "WoW = last 7 analytics days vs the 7 before, anchored to the "
-            "analytics fetch. zero_view_share compares INDEX uploads (the "
-            "complete record) with analytics rows — the API omits zero-"
-            "activity videos, so this is the FR-launch early warning."),
+            "WoW = last 7 COMPLETE analytics days vs the 7 before (the "
+            "trailing 2 days are excluded as unreported lag), anchored to "
+            "the analytics fetch. zero_view_share compares INDEX uploads "
+            "with analytics rows over the same lag-trimmed window — the "
+            "API omits zero-activity videos, so this is the FR-launch "
+            "early warning."),
         "channels": channels_out,
         "subscriber_series": {ch: s[-30:] for ch, s in subs_series.items()},
     }
@@ -1975,6 +1985,10 @@ def _experiment_live_metrics(root: Path) -> Dict[str, Any]:
     # Channel views WoW from the day series.
     for ch in ("en", "ru"):
         ds = ((stats.get("channels") or {}).get(ch) or {}).get("day_series") or []
+        # Lag-aware: the trailing 2 analytics days are unreported/partial
+        # (same rule as the channel scorecard) — without the trim this
+        # metric reported RU -43% WoW during a plain reporting lag.
+        ds = ds[:-2] if len(ds) > 2 else ds
         v7 = sum(int(d.get("views") or 0) for d in ds[-7:])
         vp7 = sum(int(d.get("views") or 0) for d in ds[-14:-7])
         out[f"channel_views_wow_{ch}"] = (
