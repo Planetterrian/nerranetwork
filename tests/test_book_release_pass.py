@@ -347,6 +347,20 @@ class TestWO6CombinedVolume:
         with pytest.raises(ValueError):
             load_volume(bad)
 
+    def test_sample_epub_builds_from_chapter_subset(self, built, tmp_path):
+        """build_book's free-sample EPUB passes chapters[:1]; parts that
+        reference absent episodes must collapse, not KeyError — the exact
+        failure that killed the first collected-edition CI build."""
+        import zipfile
+        from engine.book_compiler import build_epub
+        vol, chapters, _ = built
+        out = tmp_path / "sample.epub"
+        build_epub(vol, chapters[:1], out)  # raised KeyError before the fix
+        names = zipfile.ZipFile(out).namelist()
+        assert "OEBPS/chap_001.xhtml" in names
+        assert "OEBPS/part_01.xhtml" in names
+        assert "OEBPS/part_02.xhtml" not in names
+
     def test_every_collected_chapter_has_a_verified_ledger(self):
         """WO-4: all 30 shipping chapters carry a committed, non-empty
         claims sidecar, and each passes the offline gate (anchoring +
