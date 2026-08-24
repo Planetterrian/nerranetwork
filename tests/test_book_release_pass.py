@@ -163,3 +163,115 @@ class TestWO7CoverRerolls:
         doc = (ROOT / "docs" / "books.md").read_text("utf-8")
         assert "re-rolled cover), dispatch it by name" not in doc
         assert "cover_variant" in doc
+
+
+class TestWO6CombinedVolume:
+    """The combined 30-chapter edition + the parts/front-matter machinery."""
+
+    @pytest.fixture(scope="class")
+    def built(self, tmp_path_factory):
+        import zipfile
+        from engine.book_compiler import (build_epub, collect_chapters,
+                                          load_volume)
+        vol = load_volume(VOLS / "unintended_consequences_collected.yaml")
+        chapters = collect_chapters(vol)
+        out = tmp_path_factory.mktemp("epub") / "collected.epub"
+        build_epub(vol, chapters, out)
+        return vol, chapters, zipfile.ZipFile(out)
+
+    def test_thirty_chapters_five_parts_kudzu_opens(self, built):
+        vol, chapters, _ = built
+        assert len(chapters) == 30 and len(vol.parts) == 5
+        assert all(len(p["episodes"]) == 6 for p in vol.parts)
+        # Kudzu (ep59) opens the book: it debunks a myth the reader
+        # arrives believing — the inverse of the cut Cobra opener.
+        assert chapters[0].episode_num == 59
+        assert chapters[0].title.lower().startswith("kudzu")
+        # No cut episode sneaks back in via the anthology.
+        assert not CUT_EPISODES & {c.episode_num for c in chapters}
+
+    def test_anthology_identity_and_price(self, built):
+        vol, _, _ = built
+        assert vol.anthology and vol.volume_number == 0
+        assert vol.full_title == "Unintended Consequences: The Collected Edition"
+        assert float(vol.price_usd) == 7.99
+        assert vol.subtitle.startswith("Thirty ")
+
+    def test_epub_structure_with_parts(self, built):
+        _, _, z = built
+        names = z.namelist()
+        for page in ("OEBPS/contents.xhtml", "OEBPS/introduction.xhtml",
+                     "OEBPS/conclusion.xhtml", "OEBPS/author.xhtml",
+                     "OEBPS/alsoby.xhtml"):
+            assert page in names, page
+        for i in range(1, 6):
+            assert f"OEBPS/part_{i:02d}.xhtml" in names
+
+    def test_spine_order(self, built):
+        import re
+        _, _, z = built
+        opf = z.read("OEBPS/package.opf").decode("utf-8")
+        spine = re.search(r"<spine>(.*?)</spine>", opf, re.S).group(1)
+        order = re.findall(r'idref="([^"]+)"', spine)
+        assert order[:6] == ["titlepage", "copyright", "contents",
+                             "introduction", "part01", "chap001"]
+        assert order[-3:] == ["conclusion", "authorbio", "alsoby"]
+
+    def test_nav_nests_chapters_under_parts(self, built):
+        vol, _, z = built
+        nav = z.read("OEBPS/nav.xhtml").decode("utf-8")
+        for part in vol.parts:
+            assert part["title"] in nav
+        # nested <ol> per part inside the top-level list
+        assert nav.count("<ol>") >= 6
+
+    def test_toc_page_has_descriptor_per_chapter(self, built):
+        _, chapters, z = built
+        toc = z.read("OEBPS/contents.xhtml").decode("utf-8")
+        assert toc.count("tocentry") >= len(chapters)
+
+    def test_crosspromo_links_are_funnel_tagged(self, built):
+        _, _, z = built
+        page = z.read("OEBPS/alsoby.xhtml").decode("utf-8")
+        assert "utm_campaign=nn-" in page and "book" in page
+
+    def test_front_matter_is_authored_files_not_generated(self, built):
+        vol, _, _ = built
+        for f in (vol.introduction_file, vol.conclusion_file,
+                  vol.author_bio_file):
+            assert f and (ROOT / f).exists(), f
+        # a missing authored file must fail loudly, never render empty
+        from engine.book_compiler import _load_prose_file
+        with pytest.raises(FileNotFoundError):
+            _load_prose_file("books/frontmatter/does_not_exist.md")
+
+    def test_parts_must_partition_episodes(self, tmp_path):
+        from engine.book_compiler import load_volume
+        bad = tmp_path / "bad.yaml"
+        bad.write_text(
+            "volume_id: x\nshow_slug: unintended_consequences\n"
+            "show_name: UC\nvolume_number: 9\ntitle: T\n"
+            "episodes: [2, 3, 4]\n"
+            "parts:\n- title: P\n  episodes: [2, 3]\n",
+            encoding="utf-8")
+        with pytest.raises(ValueError):
+            load_volume(bad)
+
+    def test_single_volume_builds_unaffected_by_parts_machinery(self,
+                                                                tmp_path):
+        """A numbered volume (no parts, no intro/conclusion) keeps its
+        pre-WO-6 chapter structure; it gains only the series bio page
+        and the cross-promotion page."""
+        import zipfile
+        from engine.book_compiler import (build_epub, collect_chapters,
+                                          load_volume)
+        vol = load_volume(VOLS / "unintended_consequences_vol1.yaml")
+        chapters = collect_chapters(vol)[:2]
+        out = tmp_path / "v1.epub"
+        build_epub(vol, chapters, out)
+        names = zipfile.ZipFile(out).namelist()
+        assert "OEBPS/contents.xhtml" not in names
+        assert "OEBPS/introduction.xhtml" not in names
+        assert not any(n.startswith("OEBPS/part_") for n in names)
+        assert "OEBPS/author.xhtml" in names
+        assert "OEBPS/alsoby.xhtml" in names

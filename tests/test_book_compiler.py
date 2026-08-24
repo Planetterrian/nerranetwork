@@ -134,6 +134,8 @@ class TestChapterTitles:
         by_show = {}
         for vp in sorted((_ROOT / "books" / "volumes").glob("*.yaml")):
             v = load_volume(vp)
+            if v.anthology:
+                continue  # a combined edition REUSES chapters by design
             by_show.setdefault(v.show_slug, []).extend(
                 v.chapter_titles.values())
         for slug, titles in by_show.items():
@@ -448,6 +450,8 @@ class TestVolumePlanner:
         by_show = {}
         for p in sorted(VOLUMES_DIR.glob("*.yaml")):
             data = yaml.safe_load(p.read_text(encoding="utf-8"))
+            if data.get("anthology"):
+                continue  # combined editions reuse episodes by design
             by_show.setdefault(data.get("series"), []).extend(
                 data["episodes"])
         from engine.book_compiler import load_series
