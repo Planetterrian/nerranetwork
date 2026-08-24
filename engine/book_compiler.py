@@ -280,7 +280,15 @@ def resolve_parts(volume: BookVolume,
     by_ep = {c.episode_num: c for c in chapters}
     layout: List[Tuple[str, List[BookChapter]]] = []
     for part in volume.parts:
-        layout.append((part["title"], [by_ep[e] for e in part["episodes"]]))
+        # Tolerate a chapter SUBSET: the free-sample EPUB builds from
+        # chapters[:1], so a part may reference episodes not present.
+        # (The full partition is validated at load_volume; the KeyError
+        # here killed the first collected-edition CI build.)
+        chs = [by_ep[e] for e in part["episodes"] if e in by_ep]
+        if chs:
+            layout.append((part["title"], chs))
+    if not layout:
+        return None
     flat = [c.number for _, chs in layout for c in chs]
     if flat != sorted(flat):
         raise ValueError(
