@@ -185,14 +185,19 @@ class TestWO5FirstPrinciplesArithmetic:
          "reversible minimum of about 33 kWh"),
         (7, "brings the combined floor to something like 8.5–9 MWh",
          "exothermic, releasing about 2.7 GJ per ton"),
-        # Solar: real 1990s prices; index eras reconciled
+        # Solar: real 1990s prices (nominal-vs-real stated as prose);
+        # index eras reconciled
         (8, "still tens of dollars per watt into the 1990s",
-         "five or six dollars per watt by 1990"),
-        # Atlantic cable: 1866 conductor ~215 t; index 20-40 not 2-3
+         "five or six dollars per watt by 1990 in the "
+         "dollars of the day"),
+        # Atlantic cable: 1866 conductor ~215 t; the index moved to
+        # 'the tens' (ledger verification could source the company's
+        # capital raisings but not the million-pound contract price the
+        # 20-40 arithmetic presumed)
         (33, "several thousand tons of copper whose commodity value",
          "complete armoured cable"),
         (33, "Idiot Index on the order of two to three",
-         "Idiot Index on the order of twenty to forty"),
+         "Idiot Index in the tens"),
         # Watt: lede matches the body (one-third the fuel = 2/3 cut);
         # the impossible whole-cylinder-per-stroke calc is gone
         (55, "cut fuel use by roughly three-quarters",
