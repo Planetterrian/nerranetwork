@@ -165,6 +165,88 @@ class TestWO7CoverRerolls:
         assert "cover_variant" in doc
 
 
+FP_DIR = ROOT / "digests" / "first_principles"
+
+
+def _fp_digest(ep: int) -> str:
+    matches = sorted(p for p in FP_DIR.glob(f"*_Ep{ep:03d}_*.md")
+                     if "_transcript" not in p.name and "_tts" not in p.name)
+    assert matches, f"no digest for FP ep {ep}"
+    return matches[-1].read_text(encoding="utf-8")
+
+
+class TestWO5FirstPrinciplesArithmetic:
+    """The corrected numbers are load-bearing: this series invites
+    readers to check the arithmetic, and its audience will."""
+
+    @pytest.mark.parametrize("ep,gone,present", [
+        # Ammonia: HHV is not a minimum; exothermic synthesis adds no floor
+        (7, "theoretical minimum of 39.4 kWh",
+         "reversible minimum of about 33 kWh"),
+        (7, "brings the combined floor to something like 8.5–9 MWh",
+         "exothermic, releasing about 2.7 GJ per ton"),
+        # Solar: real 1990s prices; index eras reconciled
+        (8, "still tens of dollars per watt into the 1990s",
+         "five or six dollars per watt by 1990"),
+        # Atlantic cable: 1866 conductor ~215 t; index 20-40 not 2-3
+        (33, "several thousand tons of copper whose commodity value",
+         "complete armoured cable"),
+        (33, "Idiot Index on the order of two to three",
+         "Idiot Index on the order of twenty to forty"),
+        # Watt: lede matches the body (one-third the fuel = 2/3 cut);
+        # the impossible whole-cylinder-per-stroke calc is gone
+        (55, "cut fuel use by roughly three-quarters",
+         "cut fuel use by roughly two-thirds"),
+        (55, "two tons of iron cooled and reheated by 80 degrees",
+         "well under one percent"),
+        # Heat pump: capital vs seasonal operating separated
+        (32, "yields another few hundred dollars in energy cost",
+         "belongs in the operating column"),
+        # Two-Billion-Dollar Mile: like-for-like index
+        (34, "Idiot Index on the order of two hundred or more",
+         "Dividing like by like matters"),
+        # Nuclear: 10-20x understated its own case ~8x
+        (5, "one-tenth to one-twentieth of the overnight capital cost",
+         "one-eightieth to one-one-hundred-sixtieth"),
+        # Geothermal: consistent tonnage, real OCTG price
+        (22, "a few hundred dollars per ton plus a few dozen tons",
+         "$1,200–2,500 per tonne"),
+        # Wright brothers: real tunnel dimensions; cables warp, chains
+        # drive propellers
+        (23, "six inches square and twenty inches long",
+         "sixteen inches square and six feet long"),
+        (23, "four lengths of bicycle-chain cable",
+         "the bicycle chains went to the propeller drive"),
+        # Recycling: pellet prices are 5-10x the stated figure
+        (26, "perhaps two hundred dollars per ton once pelletized",
+         "$1,300–2,600 per ton once cleaned and pelletized"),
+        # Blood test: the honest denominator is what is actually paid
+        (9, "implied Idiot Index therefore sits somewhere between fifty",
+         "roughly fifteen dollars Medicare actually pays"),
+    ])
+    def test_correction_applied(self, ep, gone, present):
+        text = _fp_digest(ep)
+        assert gone not in text, f"ep{ep}: wrong text returned: {gone!r}"
+        assert present in text, f"ep{ep}: correction missing: {present!r}"
+
+    def test_index_accounting_rule_stated_once_for_series(self):
+        note = ROOT / "books" / "frontmatter" / \
+            "first_principles_index_note.md"
+        assert "same boundary" in note.read_text(encoding="utf-8")
+        for n in (1, 2, 3):
+            data = yaml.safe_load(
+                (VOLS / f"first_principles_vol{n}.yaml")
+                .read_text(encoding="utf-8"))
+            assert data.get("introduction_file", "").endswith(
+                "first_principles_index_note.md"), n
+
+    def test_heat_pump_chapter_retitled(self):
+        """'Beating 100 Percent' conflated COP with efficiency."""
+        data = yaml.safe_load(
+            (VOLS / "first_principles_vol2.yaml").read_text(encoding="utf-8"))
+        assert data["chapter_titles"][32] == "Moving Heat, Not Making It"
+
+
 class TestWO6CombinedVolume:
     """The combined 30-chapter edition + the parts/front-matter machinery."""
 
