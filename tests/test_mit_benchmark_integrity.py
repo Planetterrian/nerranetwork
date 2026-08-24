@@ -2850,3 +2850,55 @@ class TestDisclosureCountsAirings(TestMethodologyDisclosure):
         ]
         assert hits == ["Modern_Investing_Ep145_20260821_tts.txt"], (
             f"markers matched unexpected scripts: {hits}")
+
+
+class TestPodcastPromptCarriesTheCorrection:
+    """The digest-side fix alone was not enough.
+
+    Ep148 proved the reconcile works — the tracker went [144,145,146] ->
+    [145] and re-offered the airing — and then the podcast stage dropped
+    the segment for the THIRD time in four attempts. Cause: the
+    correction lands inside the digest's Portfolio Performance section,
+    and the podcast prompt budgets that segment at "3-4 sentences /
+    30-45 seconds". A ~250-word passage cannot survive a 3-sentence
+    budget, so the model was compressing it away while following
+    instructions correctly.
+
+    Counting airings honestly stops the segment retiring on a miscount;
+    it does not make the segment air. The budget has to yield.
+    """
+
+    @staticmethod
+    def _prompt():
+        return (_ROOT / "shows/prompts/modern_investing_podcast.txt").read_text(
+            encoding="utf-8")
+
+    def test_correction_is_exempt_from_the_segment_budget(self):
+        text = self._prompt()
+        assert "methodology" in text.lower(), (
+            "the podcast prompt does not mention the correction at all — "
+            "it will be compressed away like any other overlong passage")
+        # The length spec and the segment body must BOTH carry the
+        # exemption: the model reads the spec when planning lengths and
+        # the segment body when writing, and one without the other is
+        # how it got dropped.
+        assert "3-4 sentences — EXCEPT" in text
+        lower = text.lower()
+        assert "speak it in full" in lower
+        assert "not a candidate for compression" in lower
+
+    def test_prompt_supplies_no_quotable_correction_sentence(self):
+        # De-seed by shape, never with a quotable example (CLAUDE.md).
+        # The correction's wording comes from the digest; the prompt must
+        # describe the SHAPE only, or the model will parrot the example
+        # on episodes that carry no correction at all.
+        text = self._prompt()
+        for seeded in ("forty-five", "forty five", "+9.28", "9.28"):
+            assert seeded not in text.lower(), (
+                f"prompt seeds a quotable figure: {seeded!r}")
+
+    def test_no_correction_means_normal_length(self):
+        # The exemption must be conditional. An unconditional "run long"
+        # would stretch Portfolio Performance on every episode forever.
+        lower = self._prompt().lower()
+        assert "no such passage" in lower and "normal length" in lower
