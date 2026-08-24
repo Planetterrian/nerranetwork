@@ -185,6 +185,11 @@ def main() -> int:
                     help="skip R2 upload even if credentials are present")
     ap.add_argument("--max-tts-cost-usd", type=float, default=10.0,
                     help="refuse to narrate past this estimate (default 10)")
+    ap.add_argument("--cover-variant", default="",
+                    help="Override the volume's cover_variant for local "
+                    "iteration. The value that ships MUST end up committed "
+                    "as cover_variant: in the volume YAML — the shipped "
+                    "cover has to be reproducible from the repo.")
     ap.add_argument("--max-image-cost-usd", type=float, default=5.0,
                     help="refuse to generate art past this estimate "
                          "(default 5)")
@@ -276,11 +281,17 @@ def _generate_book_art(volume, chapters, out_dir, api_key, args):
             raw, volume, prompt=prompt, model=volume.image_model,
             intended_use="book_chapter", chapter=ch)
 
-    cover_cache = art_dir / "cover_art.png"
+    # Cache keys on the variant: a bumped cover_variant must never be
+    # served the previous variant's cached image.
+    _variant = str(getattr(args, "cover_variant", "") or
+                   volume.cover_variant or "").strip()
+    _suffix = f"_v{_variant}" if _variant else ""
+    cover_cache = art_dir / f"cover_art{_suffix}.png"
     if cover_cache.exists() and cover_cache.stat().st_size > 0:
         cover_art = cover_cache.read_bytes()
     elif volume.cover_art_style:
-        prompt = cover_art_prompt(volume.cover_art_style, volume, chapters)
+        prompt = cover_art_prompt(volume.cover_art_style, volume, chapters,
+                                  variant=_variant)
         cover_art = generate_art(prompt, api_key=api_key,
                                  model=volume.image_model,
                                  size=COVER_ART_SIZE)

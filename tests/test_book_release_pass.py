@@ -103,3 +103,63 @@ class TestWO3ChapterCuts:
     @pytest.mark.parametrize("ep,ceiling", [(25, 1), (26, 2)])
     def test_ports_added_no_citation_shapes(self, ep, ceiling):
         assert len(find_citation_shapes(_uc_digest(ep))) <= ceiling
+
+
+class TestWO7CoverRerolls:
+    """cover_art_prompt() is deterministic — same inputs, byte-identical
+    image from Grok Imagine (UC Vol 1's cover matched md5 across two
+    cold-cache CI runs). cover_variant is the only sanctioned re-roll."""
+
+    def _chapters(self):
+        from engine.book_compiler import BookChapter
+        return [BookChapter(number=i, episode_num=i, title=f"T{i}")
+                for i in range(1, 7)]
+
+    def test_variant_perturbs_prompt_and_empty_is_legacy(self):
+        from engine.book_art import cover_art_prompt
+        from engine.book_compiler import load_volume
+        vol = load_volume(VOLS / "unintended_consequences_vol1.yaml")
+        chapters = self._chapters()
+        base = cover_art_prompt(vol.cover_art_style, vol, chapters)
+        rolled = cover_art_prompt(vol.cover_art_style, vol, chapters,
+                                  variant="7")
+        assert base != rolled and "Composition variant 7." in rolled
+        assert cover_art_prompt(vol.cover_art_style, vol, chapters,
+                                variant="") == base
+
+    def test_rejected_covers_carry_a_committed_variant(self):
+        """UC Vol 2 (garbled stone lettering) and Vol 4 (illegible bag
+        text; rope-reads-as-noose flagged for Patrick) re-roll on the
+        next build; approved volumes carry NO variant."""
+        from engine.book_compiler import load_volume
+        for name, expect in (("unintended_consequences_vol2", True),
+                             ("unintended_consequences_vol4", True),
+                             ("unintended_consequences_vol1", False),
+                             ("unintended_consequences_vol3", False),
+                             ("first_principles_vol1", False)):
+            vol = load_volume(VOLS / f"{name}.yaml")
+            assert bool(str(vol.cover_variant).strip()) is expect, name
+
+    def test_cover_styles_ban_text_bearing_objects(self):
+        """Both rejects failed the same way — the artwork depicted
+        text-bearing OBJECTS (carved document, printed bag) that the
+        generic no-text clause did not prevent."""
+        for series in ("unintended_consequences", "first_principles"):
+            data = yaml.safe_load(
+                (ROOT / "books" / "series" / f"{series}.yaml")
+                .read_text(encoding="utf-8"))
+            style = data["cover_art_style"]
+            assert "object whose surface carries writing" in style, series
+
+    def test_build_script_threads_variant_and_keys_cache(self):
+        src = (ROOT / "scripts" / "build_book.py").read_text("utf-8")
+        assert "--cover-variant" in src
+        assert "cover_art_prompt(volume.cover_art_style, volume, chapters,"\
+            in src
+        # A bumped variant must never be served the old cached image.
+        assert 'f"cover_art{_suffix}.png"' in src
+
+    def test_runbook_no_longer_claims_rerun_rerolls(self):
+        doc = (ROOT / "docs" / "books.md").read_text("utf-8")
+        assert "re-rolled cover), dispatch it by name" not in doc
+        assert "cover_variant" in doc

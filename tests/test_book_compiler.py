@@ -351,7 +351,10 @@ class TestVolumeConfig:
     def test_vol1_loads_and_every_episode_has_a_digest(self):
         v = _volume()
         assert v.volume_number == 1
-        assert len(v.episodes) == 20
+        # 19 since WO-3: ep1 (Cobra Bounty) is editorially excluded from
+        # the books — the podcast episode stays published.
+        assert len(v.episodes) == 19
+        assert 1 not in v.episodes
         for ep in v.episodes:
             assert find_digest(v, ep).exists()
 
@@ -378,7 +381,9 @@ class TestSeriesInheritance:
 
     def test_subtitle_counts_the_volume_in_words(self):
         v = _volume()
-        assert v.subtitle.startswith("Twenty ")
+        # Nineteen since the WO-3 cut — the subtitle counts the stories
+        # actually in the volume, so it must track the episode list.
+        assert v.subtitle.startswith("Nineteen ")
 
     def test_full_title_carries_the_volume_number(self):
         assert _volume().full_title == "Unintended Consequences, Volume 1"
@@ -421,11 +426,19 @@ class TestVolumePlanner:
             data = yaml.safe_load(p.read_text(encoding="utf-8"))
             by_show.setdefault(data.get("series"), []).extend(
                 data["episodes"])
+        from engine.book_compiler import load_series
         for slug, eps in by_show.items():
             assert len(eps) == len(set(eps)), f"{slug}: episode in 2 volumes"
             assert eps == sorted(eps)
-            assert eps[0] == 1 and eps == list(range(1, len(eps) + 1)), (
-                f"{slug}: volumes must cover episodes contiguously from 1"
+            # Since WO-3, coverage is contiguous from 1 MINUS the
+            # series-level excluded_episodes (book-inclusion cuts —
+            # the podcast episodes stay published).
+            excluded = set(load_series(slug).get("excluded_episodes", []))
+            expected = [n for n in range(1, max(eps) + 1)
+                        if n not in excluded]
+            assert eps == expected, (
+                f"{slug}: volumes must cover episodes contiguously from 1 "
+                f"apart from the excluded set {sorted(excluded)}"
             )
 
 

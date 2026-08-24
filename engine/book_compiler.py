@@ -120,6 +120,14 @@ class BookVolume:
     image_model: str = ""
     chapter_art_style: str = ""
     cover_art_style: str = ""
+    #: Cover re-roll knob (WO-7). cover_art_prompt() is deterministic —
+    #: same style + volume + chapter titles returns the byte-identical
+    #: image from Grok Imagine (UC Vol 1's cover matched md5 across two
+    #: cold-cache CI runs), so "re-run the workflow" NEVER re-rolls a
+    #: cover; it re-bills for the same image. Set/bump this in the
+    #: volume YAML to get a genuinely fresh cover; the committed value
+    #: keeps the shipped cover reproducible. Empty = legacy prompt.
+    cover_variant: str = ""
 
     def resolved_digest_dir(self) -> Path:
         return ROOT / (self.digest_dir or f"digests/{self.show_slug}")

@@ -89,7 +89,18 @@ Rules that bind:
   mode originally built only volumes created in that same run, so the
   first live dispatch went green having built nothing). A volume that
   was already built is NOT rebuilt by planner mode — to rebuild one
-  (new titles, re-rolled cover), dispatch it by name.
+  (new titles), dispatch it by name. **A plain re-run does NOT
+  re-roll the cover:** `cover_art_prompt()` is deterministic and
+  Grok Imagine returns the byte-identical image for the same prompt
+  (verified — UC Vol 1's cover matched md5 across two cold-cache CI
+  runs), so a re-run reproduces the same cover and re-bills for it.
+  To actually re-roll, set/bump `cover_variant:` in the volume YAML
+  (`--cover-variant` for local iteration — the shipped value must be
+  committed so the cover stays reproducible), then dispatch. Note:
+  any edit to the series `cover_art_style` (e.g. the Aug 2026
+  anti-signage clause) changes EVERY volume's cover prompt, so the
+  next rebuild regenerates all covers — the operator cover review
+  before store submission is the gate.
 - **Locally without credentials** the EPUB + branded cover still build
   (text-only, flat-color cover):
   `python scripts/build_book.py --volume <id> --skip-audio --skip-images --no-upload`.
