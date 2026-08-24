@@ -64,18 +64,87 @@ logger = logging.getLogger(__name__)
 # scripts/measure_citation_exposure.py).
 
 CITATION_SHAPE_PATTERNS: List[str] = [
-    r"\ba \d{4} (?:study|paper|report|memo|survey|analysis|bulletin|note)\b",
-    r"\b(?:researchers|scientists|analysts|officials) "
+    # ---- Original template set (Aug 22) — the dated-artifact shape.
+    # These carry no capitalization anchors, so they compile
+    # case-insensitively via the (?i) prefix. ----
+    r"(?i)\ba \d{4} (?:study|paper|report|memo|survey|analysis|bulletin|note)\b",
+    r"(?i)\b(?:researchers|scientists|analysts|officials) "
     r"(?:found|noted|estimated|documented)\b",
-    r"\binternal (?:documents|memos|reports)\b",
-    r"\baccording to (?:a|an|the) [a-z]",
-    r"\bestimates (?:from|compiled by)\b",
-    r"\bstudies (?:later )?(?:showed|estimated|found)\b",
-    r"\btrade data show\b",
-    r"\bmost accounts\b",
+    r"(?i)\binternal (?:documents|memos|reports)\b",
+    r"(?i)\baccording to (?:a|an|the) [a-z]",
+    r"(?i)\bestimates (?:from|compiled by)\b",
+    r"(?i)\bstudies (?:later )?(?:showed|estimated|found)\b",
+    r"(?i)\btrade data show\b",
+    r"(?i)\bmost accounts\b",
+    # ---- WO-1 widening (Aug 23) — the original set caught 4 of 14
+    # hand-verified fabrications. Each pattern below maps to a verified
+    # miss category; the fixture in tests/test_citation_shapes.py pins
+    # all 14 catches and the general-form guards. The distinction that
+    # binds: unnamed PEOPLE ("contemporary observers warned") are the
+    # sanctioned general form; non-existent DOCUMENTS, records,
+    # institutions and datasets are the fabrication signature.
+    #
+    # The [A-Z] classes below are LOAD-BEARING named-entity anchors and
+    # must stay case-sensitive — the first measurement pass compiled
+    # everything IGNORECASE and precision collapsed ("data collected by
+    # the rover's instruments", "the record cadence established in
+    # 2025" both flagged). Sentence-initial words use [Xx] classes;
+    # keyword alternations use scoped (?i:...) groups instead. ----
+    # dated institutional action: "In 1962 the WHO issued guidance"
+    r"\b(?:[Ii]n|[Bb]y)\s+\d{4},?\s+the\s+[A-Z][\w'&.\- ]{3,50}?\s+"
+    r"(?i:issued|published|released|adopted|recommended|established|"
+    r"introduced|required|banned|mandated|approved|suspended)\b",
+    # invented regulatory history: "The FTC briefly required X in 1957"
+    r"\b[Tt]he\s+[A-Z][\w'&.\- ]{3,50}?\s+(?i:briefly\s+|formally\s+|"
+    r"first\s+|quietly\s+)?(?i:issued|published|adopted|recommended|"
+    r"established|introduced|required|banned|mandated|approved|"
+    r"suspended|authorized)\b[^.]{0,60}?\bin\s+\d{4}\b",
+    # archival / data custody: "records are preserved by the X Museum"
+    r"\b(?i:records|documents|archives|papers|files|data|figures|"
+    r"statistics)\s+(?i:(?:are|were|is|now)\s+)?(?i:preserved|held|"
+    r"housed|maintained|tracked|compiled|collected|published)\s+"
+    r"(?i:by|at|in)\s+(?:the\s+)?[A-Z]",
+    # institutional data custody: "waste now tracked by the Ellen
+    # MacArthur Foundation" — the custodied noun varies too much to
+    # enumerate, so anchor on the custody verb + named institution.
+    r"\b(?i:tracked|compiled|catalogued|documented|"
+    r"maintained|preserved)\s+by\s+the\s+[A-Z]",
+    # named-expert attribution: "pharmacologist Sir Robert Robinson had
+    # noted" — a titled, named person lending authority to a claim.
+    r"\b(?i:physician|pharmacologist|chemist|biologist|economist|"
+    r"engineer|scientist|professor|researcher|historian|epidemiologist|"
+    r"statistician)\s+(?:Sir\s+|Dr\.?\s+)?[A-Z][a-z]+\s+[A-Z][a-z]+"
+    r"\b[^.]{0,80}?\b(?i:noted|found|warned|observed|argued|reported|"
+    r"showed|concluded|estimated)\b",
+    # quoted document: "a 1974 internal memo ... observed that '..."
+    r"(?i)\b(?:memo|memorandum|report|study|letter|document|paper|bulletin)"
+    r"\b[^.]{0,90}?\b(?:observed|noted|stated|concluded|said|wrote|"
+    r"argued)\s+that\s+[\"'‘“]",
+    # attributed survey / data: "according to surveys by X"
+    r"(?i)\baccording to\s+(?:surveys?|data|figures|records|analyses?|"
+    r"estimates?|reports?|research)\s+(?:by|from|conducted by)\b",
+    # invented empirical finding: "sampling in several cities detected"
+    r"(?i)\b(?:sampling|testing|monitoring|surveys?|measurements?|audits?)"
+    r"\s+(?:in|across|of|at)\s+[^.]{0,70}?\b(?:detected|found|showed|"
+    r"revealed|recorded|documented)\b",
+    # dated periodical: "a 1954 British textile journal noted"
+    r"(?i)\ba\s+\d{4}\s+[\w\- ]{0,35}?(?:journal|magazine|newspaper|"
+    r"publication|periodical|trade press|newsletter)\b",
+    # invented archival record: "accounts from the period describe".
+    # Deliberately excludes bare "contemporary observers warned" —
+    # unnamed people are the sanctioned general form; non-existent
+    # documents are not.
+    r"(?i)\b(?:accounts?|records?|reports?|sources?)\s+from\s+the\s+"
+    r"(?:period|time|era|day)\b",
+    r"(?i)\bcontemporary\s+(?:accounts?|records?|reports?|sources?|"
+    r"documentation)\s+(?:describe|record|show|indicate|note|suggest|"
+    r"confirm)\b",
 ]
 
-_CITATION_SHAPE_RES = [re.compile(p, re.IGNORECASE) for p in CITATION_SHAPE_PATTERNS]
+# Case handling lives INSIDE each pattern ((?i) prefix or scoped (?i:...)
+# groups) — a global IGNORECASE here would nullify the [A-Z] named-entity
+# anchors that keep the widened set precise.
+_CITATION_SHAPE_RES = [re.compile(p) for p in CITATION_SHAPE_PATTERNS]
 
 # Fenced ledger block the generation stage appends after the prose.
 _CLAIMS_FENCE_RE = re.compile(
