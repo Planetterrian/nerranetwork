@@ -264,21 +264,32 @@ export async function handleStripeWebhook(
 
   if (event.type === "checkout.session.completed") {
     const session = event.data?.object ?? {};
+    // Tier comes from the Payment Link's metadata, which Stripe copies
+    // onto every Checkout Session the link creates (operator sets
+    // {"tier": "personal"|"personal_local"} on each membership link).
+    //
+    // The marker is REQUIRED, not a hint. This endpoint receives EVERY
+    // completed checkout in the account, and since 2026-08-23 that
+    // includes the /support.html donation links. The earlier
+    // `amount_total >= 799` fallback was written when memberships were
+    // the only thing that could complete a checkout here; with donations
+    // live it would hand a paid feed to anyone who gave $10 once. An
+    // untagged session is not a membership purchase, so it is ignored.
+    const tier = session.metadata?.tier;
+    if (tier !== "personal" && tier !== "personal_local") {
+      console.log(
+        "stripe: ignoring non-membership checkout",
+        session.metadata?.kind || "untagged",
+      );
+      return jsonResponse(request, 200, { ok: true });
+    }
     const email = String(
       session.customer_details?.email || session.customer_email || "",
     ).toLowerCase();
     if (!email) {
-      console.warn("stripe: completed session with no email");
+      console.warn("stripe: membership checkout with no email");
       return jsonResponse(request, 200, { ok: true });
     }
-    // Tier comes from the Payment Link's metadata (operator sets
-    // {"tier": "personal"|"personal_local"} on each link); amount is the
-    // fallback so an unmetadata'd link still activates the right tier.
-    const tier =
-      session.metadata?.tier === "personal_local" ||
-      (session.amount_total ?? 0) >= 799
-        ? "personal_local"
-        : "personal";
     const existing = (await loadMember(env, email)) || {
       shows: [], first_name: "", city: "", tier: "none", status: "none",
       updated_at: "",
