@@ -43,7 +43,16 @@ Worker's 90-day JWT cookie + Buttondown record). Nothing was forked:
 Pricing (operator sets the amounts in Stripe; the pages read the links
 from env): **Personal $4.99/mo**, **Personal + Local $8.99/mo**. Tier is
 carried on the Payment Link's `metadata.tier`
-(`personal` / `personal_local`); amount ≥ $7.99 is the fallback mapping.
+(`personal` / `personal_local`), which Stripe copies onto every Checkout
+Session the link creates.
+
+That marker is **required**, not a hint. The webhook endpoint receives
+every completed checkout in the Stripe account — including the
+`/support.html` donations, which live in the same account. An earlier
+`amount_total >= $7.99` fallback would have handed a paid feed to anyone
+who donated $10 once, so it was removed on 2026-08-23: a session without
+a known `tier` is ignored and logged, never activated. Donation links
+carry `metadata.kind = "donation"` so the log line says which.
 
 The builder's cost discipline: each show's episode is downloaded and
 promo-trimmed ONCE per day into a shared cache (the same
