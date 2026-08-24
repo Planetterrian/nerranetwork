@@ -376,8 +376,8 @@ def plan_next_volumes(series_slug: str, *, write: bool = True) -> List[Path]:
             # and truncate in store TOCs (the 2026-08-22 launch blocker).
             "chapter_titles": {ep: "" for ep in block},
             "buy_links": {k: "" for k in
-                          ("amazon", "apple_books", "google_play",
-                           "kobo", "spotify")},
+                          ("direct", "amazon", "apple_books",
+                           "google_play", "kobo", "spotify")},
         }
         if write:
             header = (

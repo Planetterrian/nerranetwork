@@ -194,3 +194,31 @@ AI-disclosure presence in both credits, M4B chapter-offset math and
 ffmpeg command shape, funnel round-trip for `kind="book"`, catalog
 upsert idempotence, volume-config episode existence, and the workflow's
 wiring.
+
+## Direct sales (WO-9 — dormant until Patrick provisions Payhip)
+
+The site scaffolding ships ready: paste a live Payhip product URL into a
+volume YAML's `buy_links.direct` and the Books page renders a "Buy
+direct" button plus the formats/sideloading/refunds section (and loads
+payhip.js). No URL = nothing renders. Net on a $4.99 ebook: ~$4.26
+direct vs ~$3.49 retail; on a $9.99 audiobook ~$8.82 vs $5.00 (Spotify)
+— audiobooks are where direct selling roughly doubles the economics.
+
+**Non-negotiable operating rules:**
+
+1. **Never price direct below the retail list price.** Amazon's terms
+   allow price-matching at 70% of the *matched* price — a $2.99 direct
+   sale can cost ~$1.33 on every Amazon sale until reversed.
+   Differentiate on bundles and formats, never price.
+2. **Plain KDP only. Never KDP Select** — Select forbids distributing
+   "anywhere else, including on your website."
+
+**Before going live (Patrick, not Claude Code):** get written
+confirmation from Payhip of which jurisdictions they act as
+merchant-of-record for (their marketing page and help centre
+contradict each other); book an hour with a Canadian accountant on the
+CAD $30,000 *worldwide* small-supplier threshold (zero-rated exports
+count) and whether retailer royalties count toward it. EU digital VAT
+has no registration threshold for non-EU sellers; UK zero-rates ebooks
+but standard-rates audiobooks at 20%. A merchant-of-record platform
+absorbs registration/filing/remittance/liability; raw Stripe does not.
