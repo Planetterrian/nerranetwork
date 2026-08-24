@@ -477,9 +477,15 @@ def collect_chapters(volume: BookVolume) -> List[BookChapter]:
 # Audiobook narration text
 # ---------------------------------------------------------------------------
 
-#: Spoken on every audiobook, non-negotiable: the network disclosure
-#: policy applies to paid products exactly as it does to free episodes,
-#: and every retail channel that accepts digital narration requires it.
+#: Store-level digital-narration DECLARATIONS are non-negotiable and
+#: live at upload time (KDP questionnaire, Spotify's ticked box, Google
+#: Play's declaration — never remove those). No retail channel requires
+#: a SPOKEN in-file disclosure line, though — an earlier comment here
+#: claimed "every retail channel that accepts digital narration
+#: requires it", which conflated the upload declaration with a line in
+#: the audio. The spoken credits dropped the line in Aug 2026 (WO-8,
+#: operator-directed); the constant remains for any surface that wants
+#: the canonical wording (e.g. store listing copy).
 AI_NARRATION_DISCLOSURE = (
     "This audiobook is narrated by a digital voice."
 )
@@ -503,7 +509,6 @@ def opening_credits_text(volume: BookVolume) -> str:
     if volume.subtitle:
         bits.append(volume.subtitle.rstrip(".") + ".")
     bits.append(f"Written and produced by {volume.author}.")
-    bits.append(AI_NARRATION_DISCLOSURE)
     return " ".join(bits)
 
 
@@ -516,8 +521,7 @@ def closing_credits_text(volume: BookVolume) -> str:
     return (
         f"This has been {volume.title.rstrip('.')}, from {volume.author}. "
         f"Every story in this collection began as an episode of "
-        f"{source}, free wherever you get podcasts. "
-        f"{AI_NARRATION_DISCLOSURE} "
+        f"{source}, available wherever you get podcasts. "
         "Find the whole network at nerra network dot com."
     )
 
@@ -594,7 +598,7 @@ def _chapter_xhtml(chapter: BookChapter, lang: str,
             f'<p class="listen">♪ Hear this story as it first aired: '
             f'<a href="{xml_escape(link)}">episode '
             f"{chapter.episode_num} of {xml_escape(volume.show_name)}</a>, "
-            "free wherever you get podcasts.</p>"
+            "wherever you get podcasts.</p>"
         )
     return _xhtml(chapter.heading, "\n".join(parts), lang)
 
@@ -634,9 +638,8 @@ def _copyright_xhtml(volume: BookVolume) -> str:
         "All rights reserved.</p>"
         "<p>The stories in this collection were first published as "
         f"episodes of <i>{xml_escape(volume.show_name)}</i>, a Nerra "
-        "Network podcast, where they remain free to listen to. This "
-        "collection was produced with AI assistance and reviewed for "
-        "publication.</p>"
+        "Network podcast. Researched and directed by the author, with "
+        "AI assistance in drafting, and reviewed before publication.</p>"
         f'<p>Hear every story, and the ones that came after, at '
         f'<a href="{xml_escape(link)}">nerranetwork.com</a>.</p>'
         "</div>"

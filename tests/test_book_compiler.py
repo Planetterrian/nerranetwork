@@ -194,13 +194,24 @@ class TestEpubStructure:
                 assert f"chap_{c.number:03d}.xhtml" in opf
                 assert f"chap_{c.number:03d}.xhtml" in nav
 
-    def test_copyright_page_carries_disclosure_and_funnel_link(self, tmp_path):
+    def test_copyright_page_carries_funnel_link(self, tmp_path):
+        """Split from the old combined test (WO-8): the funnel-link half
+        keeps its guard unchanged."""
         _, _, epub = self._built(tmp_path)
         with zipfile.ZipFile(epub) as z:
             page = z.read("OEBPS/copyright.xhtml").decode("utf-8")
-        assert "AI assistance" in page
         assert "utm_source=" in page, "back-matter link must be funnel-tagged"
         assert "utm_campaign=nn-unintended_consequences-en-book-ep001" in page
+
+    def test_copyright_page_ai_note_softened(self, tmp_path):
+        """WO-8: the AI note is the author's own wording (no store
+        requires it) — honest about AI drafting, minus 'free'."""
+        _, _, epub = self._built(tmp_path)
+        with zipfile.ZipFile(epub) as z:
+            page = z.read("OEBPS/copyright.xhtml").decode("utf-8")
+        assert "AI assistance in drafting" in page
+        assert "remain free to listen" not in page
+        assert "reviewed before publication" in page
 
     def test_every_chapter_links_back_to_its_episode(self, tmp_path):
         """The book's job includes routing readers to the podcast: each
@@ -271,10 +282,23 @@ class TestNarrationText:
         tracks = narration_texts(_volume(), chapters)
         assert tracks[1][0] == chapters[0].heading
 
-    def test_both_credits_carry_the_disclosure(self):
+    def test_credits_do_not_speak_the_narration_disclosure(self):
+        """WO-8 (operator-directed): store-level digital-narration
+        DECLARATIONS stay (KDP questionnaire, Spotify tick, Google Play)
+        — but no retail channel requires a SPOKEN in-file line, so the
+        credits dropped it. The constant survives for listing copy."""
         v = _volume()
-        assert AI_NARRATION_DISCLOSURE in opening_credits_text(v)
-        assert AI_NARRATION_DISCLOSURE in closing_credits_text(v)
+        assert AI_NARRATION_DISCLOSURE not in opening_credits_text(v)
+        assert AI_NARRATION_DISCLOSURE not in closing_credits_text(v)
+        assert "digital voice" not in closing_credits_text(v)
+
+    def test_credits_keep_neutral_provenance_without_free(self):
+        """'free' dropped from reader/listener-facing provenance copy
+        (WO-8); the podcast origin itself stays named."""
+        v = _volume()
+        closing = closing_credits_text(v)
+        assert "began as an episode of" in closing
+        assert "free" not in closing.lower()
 
     def test_closing_does_not_echo_the_show_name(self):
         """Title == show name: the closing names 'the podcast' instead of
