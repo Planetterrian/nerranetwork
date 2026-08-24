@@ -131,3 +131,18 @@ class TestHtmlWiring:
                        "Staggered Shorts", "Specials queue",
                        "Analytics freshness"):
             assert marker in html, f"missing card: {marker}"
+
+
+class TestLagAwareAnalyticsWindows:
+    """Aug 24 2026: YouTube Analytics day-data finalizes ~48h behind.
+    Without trimming the unreported tail, every channel 'lost' its
+    newest 2 days of uploads to zero-view counting and the RU WoW read
+    -43% during a plain reporting lag."""
+
+    def test_scorecard_trims_the_lag_tail(self):
+        src = (ROOT / "scripts" / "generate_dashboard.py").read_text(
+            encoding="utf-8")
+        assert "_LAG_DAYS = 2" in src
+        # Both the scorecard and the experiment WoW metric trim.
+        assert src.count("ds = ds[:-2] if len(ds) > 2 else ds") == 2
+        assert "excluded as unreported lag" in src
