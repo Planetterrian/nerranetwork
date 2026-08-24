@@ -220,9 +220,11 @@ class TestWO5FirstPrinciplesArithmetic:
         # Recycling: pellet prices are 5-10x the stated figure
         (26, "perhaps two hundred dollars per ton once pelletized",
          "$1,300–2,600 per ton once cleaned and pelletized"),
-        # Blood test: the honest denominator is what is actually paid
+        # Blood test: the honest denominator is what is actually paid —
+        # $10.33 on the current (post-PAMA) CLFS; the WO's ~$14.50 was
+        # the pre-PAMA rate, refined during ledger verification
         (9, "implied Idiot Index therefore sits somewhere between fifty",
-         "roughly fifteen dollars Medicare actually pays"),
+         "roughly ten and a half dollars Medicare actually pays"),
     ])
     def test_correction_applied(self, ep, gone, present):
         text = _fp_digest(ep)
