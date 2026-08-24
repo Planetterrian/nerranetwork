@@ -120,6 +120,33 @@ class BookVolume:
     image_model: str = ""
     chapter_art_style: str = ""
     cover_art_style: str = ""
+    # ---- Combined-volume / front-matter machinery (WO-6, Aug 2026) ----
+    #: Optional part groupings: a list of {title: str, episodes: [int]}
+    #: mappings. When set, the episodes across parts must exactly
+    #: partition the volume's episode list (validated at load); the EPUB
+    #: gains part-title pages and the TOC nests chapters under parts.
+    #: Empty = single-volume behavior unchanged.
+    parts: List[Dict] = field(default_factory=list)
+    #: Authored prose files (paths relative to repo root), NOT generated:
+    #: an introduction and conclusion per volume, and a series-inherited
+    #: author bio. Empty = page omitted.
+    introduction_file: str = ""
+    conclusion_file: str = ""
+    author_bio_file: str = ""
+    #: True for a combined/best-of volume that REUSES episodes already
+    #: published in the numbered volumes. Anthologies are exempt from the
+    #: contiguous/disjoint coverage invariant and from the planner's
+    #: covered-set arithmetic concerns; full_title drops the
+    #: ", Volume N" suffix.
+    anthology: bool = False
+    #: Cover re-roll knob (WO-7). cover_art_prompt() is deterministic —
+    #: same style + volume + chapter titles returns the byte-identical
+    #: image from Grok Imagine (UC Vol 1's cover matched md5 across two
+    #: cold-cache CI runs), so "re-run the workflow" NEVER re-rolls a
+    #: cover; it re-bills for the same image. Set/bump this in the
+    #: volume YAML to get a genuinely fresh cover; the committed value
+    #: keeps the shipped cover reproducible. Empty = legacy prompt.
+    cover_variant: str = ""
 
     def resolved_digest_dir(self) -> Path:
         return ROOT / (self.digest_dir or f"digests/{self.show_slug}")
@@ -129,7 +156,10 @@ class BookVolume:
 
     @property
     def full_title(self) -> str:
-        """Store-listing title: series title + volume number."""
+        """Store-listing title: series title + volume number (bare title
+        for anthologies — a combined edition is not Volume N)."""
+        if self.anthology:
+            return self.title
         return f"{self.title}, Volume {self.volume_number}"
 
     @property
@@ -151,6 +181,7 @@ _SERIES_INHERITED = (
     "show_slug", "show_name", "author", "language", "description",
     "price_usd", "keywords", "cover_color", "cover_accent",
     "image_model", "chapter_art_style", "cover_art_style",
+    "author_bio_file",
 )
 
 
@@ -200,7 +231,10 @@ def load_volume(path: str | Path) -> BookVolume:
 
     required = ("volume_id", "show_slug", "show_name", "volume_number",
                 "title", "episodes")
-    missing = [k for k in required if not data.get(k)]
+    # volume_number 0 is legal (anthology) — absent/empty is missing,
+    # falsy-but-present is not.
+    missing = [k for k in required
+               if data.get(k) is None or data.get(k) in ("", [])]
     if missing:
         raise ValueError(f"volume config {path} missing fields: {missing}")
     known = {f for f in BookVolume.__dataclass_fields__}
@@ -216,7 +250,57 @@ def load_volume(path: str | Path) -> BookVolume:
     vol.chapter_titles = {int(k): str(v).strip()
                           for k, v in (vol.chapter_titles or {}).items()
                           if str(v).strip()}
+    if vol.parts:
+        vol.parts = [
+            {"title": str(p.get("title", "")).strip(),
+             "episodes": [int(e) for e in (p.get("episodes") or [])]}
+            for p in vol.parts
+        ]
+        part_eps = [e for p in vol.parts for e in p["episodes"]]
+        if sorted(part_eps) != sorted(int(e) for e in vol.episodes) or \
+                len(part_eps) != len(set(part_eps)):
+            raise ValueError(
+                f"volume config {path}: parts must exactly partition the "
+                "episode list (every episode in exactly one part)")
+        if any(not p["title"] for p in vol.parts):
+            raise ValueError(f"volume config {path}: every part needs a title")
     return vol
+
+
+def resolve_parts(volume: BookVolume,
+                  chapters: List[BookChapter]) -> Optional[List[Tuple[str, List[BookChapter]]]]:
+    """(part_title, chapters) in reading order, or None when no parts.
+
+    Chapter numbering (1..N) already follows the volume's episode order;
+    parts just group them, so the volume's ``episodes:`` list must be in
+    reading order and the parts must follow it — validated here.
+    """
+    if not volume.parts:
+        return None
+    by_ep = {c.episode_num: c for c in chapters}
+    layout: List[Tuple[str, List[BookChapter]]] = []
+    for part in volume.parts:
+        layout.append((part["title"], [by_ep[e] for e in part["episodes"]]))
+    flat = [c.number for _, chs in layout for c in chs]
+    if flat != sorted(flat):
+        raise ValueError(
+            f"volume {volume.volume_id}: parts out of reading order — the "
+            "episodes: list defines chapter numbering and the parts must "
+            "follow it")
+    return layout
+
+
+def _load_prose_file(path_str: str) -> str:
+    """Authored front/back-matter prose (repo-relative path), '' if unset."""
+    if not str(path_str or "").strip():
+        return ""
+    path = ROOT / path_str
+    if not path.exists():
+        raise FileNotFoundError(
+            f"authored prose file missing: {path_str} — front matter is "
+            "written by a person, never generated; fix the path or drop "
+            "the field")
+    return path.read_text(encoding="utf-8").strip()
 
 
 # ---------------------------------------------------------------------------
@@ -265,8 +349,13 @@ def plan_next_volumes(series_slug: str, *, write: bool = True) -> List[Path]:
     series = load_series(series_slug)
     size = int(series["volume_size"])
     covered = _episodes_already_in_volumes(series["show_slug"])
+    # Episodes editorially excluded from BOOKS (the podcast episodes stay
+    # published). Without this, an episode removed from a volume config
+    # (the WO-3 chapter cuts) would look uncollected and the planner
+    # would sweep it into the FRONT of the next volume.
+    excluded = {int(e) for e in series.get("excluded_episodes", []) or []}
     pending = [n for n in _available_episode_numbers(series)
-               if n not in covered]
+               if n not in covered and n not in excluded]
 
     written: List[Path] = []
     next_num = _max_volume_number(series["show_slug"]) + 1
@@ -287,8 +376,8 @@ def plan_next_volumes(series_slug: str, *, write: bool = True) -> List[Path]:
             # and truncate in store TOCs (the 2026-08-22 launch blocker).
             "chapter_titles": {ep: "" for ep in block},
             "buy_links": {k: "" for k in
-                          ("amazon", "apple_books", "google_play",
-                           "kobo", "spotify")},
+                          ("direct", "amazon", "apple_books",
+                           "google_play", "kobo", "spotify")},
         }
         if write:
             header = (
@@ -464,9 +553,15 @@ def collect_chapters(volume: BookVolume) -> List[BookChapter]:
 # Audiobook narration text
 # ---------------------------------------------------------------------------
 
-#: Spoken on every audiobook, non-negotiable: the network disclosure
-#: policy applies to paid products exactly as it does to free episodes,
-#: and every retail channel that accepts digital narration requires it.
+#: Store-level digital-narration DECLARATIONS are non-negotiable and
+#: live at upload time (KDP questionnaire, Spotify's ticked box, Google
+#: Play's declaration — never remove those). No retail channel requires
+#: a SPOKEN in-file disclosure line, though — an earlier comment here
+#: claimed "every retail channel that accepts digital narration
+#: requires it", which conflated the upload declaration with a line in
+#: the audio. The spoken credits dropped the line in Aug 2026 (WO-8,
+#: operator-directed); the constant remains for any surface that wants
+#: the canonical wording (e.g. store listing copy).
 AI_NARRATION_DISCLOSURE = (
     "This audiobook is narrated by a digital voice."
 )
@@ -490,7 +585,6 @@ def opening_credits_text(volume: BookVolume) -> str:
     if volume.subtitle:
         bits.append(volume.subtitle.rstrip(".") + ".")
     bits.append(f"Written and produced by {volume.author}.")
-    bits.append(AI_NARRATION_DISCLOSURE)
     return " ".join(bits)
 
 
@@ -503,8 +597,7 @@ def closing_credits_text(volume: BookVolume) -> str:
     return (
         f"This has been {volume.title.rstrip('.')}, from {volume.author}. "
         f"Every story in this collection began as an episode of "
-        f"{source}, free wherever you get podcasts. "
-        f"{AI_NARRATION_DISCLOSURE} "
+        f"{source}, available wherever you get podcasts. "
         "Find the whole network at nerra network dot com."
     )
 
@@ -533,6 +626,15 @@ p { margin: 0 0 0.9em; text-align: justify; }
 .titlepage .subtitle { font-style: italic; margin-top: 1em; }
 .titlepage .author { margin-top: 3em; letter-spacing: 0.1em;
                      text-transform: uppercase; }
+.partpage { text-align: center; margin-top: 30%; }
+.partpage .partnum { font-size: 0.9em; letter-spacing: 0.2em; color: #666;
+                     text-transform: uppercase; }
+.partpage h1 { font-size: 1.8em; margin-top: 0.4em; }
+.tocpage h2 { margin-top: 1.4em; }
+.tocentry { text-align: left; margin: 0 0 0.7em; }
+.tocdesc { font-style: italic; color: #444; }
+.frontmatter-page p { text-align: justify; }
+.alsoby-entry { text-align: left; margin: 0 0 0.9em; }
 """
 
 
@@ -581,7 +683,7 @@ def _chapter_xhtml(chapter: BookChapter, lang: str,
             f'<p class="listen">♪ Hear this story as it first aired: '
             f'<a href="{xml_escape(link)}">episode '
             f"{chapter.episode_num} of {xml_escape(volume.show_name)}</a>, "
-            "free wherever you get podcasts.</p>"
+            "wherever you get podcasts.</p>"
         )
     return _xhtml(chapter.heading, "\n".join(parts), lang)
 
@@ -621,9 +723,8 @@ def _copyright_xhtml(volume: BookVolume) -> str:
         "All rights reserved.</p>"
         "<p>The stories in this collection were first published as "
         f"episodes of <i>{xml_escape(volume.show_name)}</i>, a Nerra "
-        "Network podcast, where they remain free to listen to. This "
-        "collection was produced with AI assistance and reviewed for "
-        "publication.</p>"
+        "Network podcast. Researched and directed by the author, with "
+        "AI assistance in drafting, and reviewed before publication.</p>"
         f'<p>Hear every story, and the ones that came after, at '
         f'<a href="{xml_escape(link)}">nerranetwork.com</a>.</p>'
         "</div>"
@@ -671,18 +772,157 @@ def _sources_xhtml(volume: BookVolume, chapters: List[BookChapter]) -> str:
     return _xhtml("Sources", "\n".join(parts), volume.language)
 
 
-def _nav_xhtml(volume: BookVolume, chapters: List[BookChapter]) -> str:
+def _prose_xhtml(title: str, prose: str, lang: str,
+                 css_class: str = "frontmatter-page") -> str:
+    """Render authored markdown-lite prose (paragraphs on blank lines,
+    ``#``/``##`` headings) as a simple page. Emphasis markers are kept
+    out of the rendered text the same way chapter prose handles them."""
+    parts = [f'<div class="{css_class}">', f"<h1>{xml_escape(title)}</h1>"]
+    for block in re.split(r"\n\s*\n", prose):
+        block = block.strip()
+        if not block:
+            continue
+        m = re.match(r"^(#{1,3})\s+(.*)$", block)
+        if m:
+            parts.append(f"<h2>{xml_escape(_clean_inline(m.group(2)))}</h2>")
+            continue
+        text = re.sub(r"\s*\n\s*", " ", block)
+        parts.append(f"<p>{xml_escape(_clean_inline(text))}</p>")
+    parts.append("</div>")
+    return _xhtml(title, "\n".join(parts), lang)
+
+
+def _part_xhtml(number: int, title: str, lang: str) -> str:
+    words = ["One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight"]
+    label = words[number - 1] if 1 <= number <= len(words) else str(number)
+    body = (
+        '<div class="partpage">'
+        f'<p class="partnum">Part {xml_escape(label)}</p>'
+        f"<h1>{xml_escape(title)}</h1>"
+        "</div>"
+    )
+    return _xhtml(f"Part {label} · {title}", body, lang)
+
+
+def _toc_page_xhtml(volume: BookVolume,
+                    chapters: List[BookChapter]) -> str:
+    """Browsable contents page — one line per chapter (the episode hook
+    serves as the descriptor), grouped under parts when they exist.
+    Distinct from the machine nav document."""
+    layout = resolve_parts(volume, chapters)
+    groups = layout if layout is not None else [("", chapters)]
+    parts = ['<div class="tocpage">', "<h1>Contents</h1>"]
+    for title, chs in groups:
+        if title:
+            parts.append(f"<h2>{xml_escape(title)}</h2>")
+        for c in chs:
+            desc = c.epigraph or ""
+            parts.append(
+                '<p class="tocentry">'
+                f'<a href="chap_{c.number:03d}.xhtml">{xml_escape(c.heading)}'
+                "</a>"
+                + (f' — <span class="tocdesc">{xml_escape(desc)}</span>'
+                   if desc else "")
+                + "</p>"
+            )
+    parts.append("</div>")
+    return _xhtml("Contents", "\n".join(parts), volume.language)
+
+
+def _other_books(volume: BookVolume) -> List[Dict]:
+    """Other live volumes across both series, from the committed catalog
+    — the cross-promotion page's data. Never raises; empty = no page."""
+    out: List[Dict] = []
+    try:
+        catalog = json.loads(
+            (CATALOG_PATH).read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001 — no catalog, no page
+        return out
+    volumes = catalog.get("volumes", catalog if isinstance(catalog, list)
+                          else [])
+    for entry in volumes:
+        vid = entry.get("volume_id", "")
+        if not vid or vid == volume.volume_id:
+            continue
+        out.append(entry)
+    return out
+
+
+def _crosspromo_xhtml(volume: BookVolume) -> str:
+    """'Also from the Nerra Network' — the other volumes in this series
+    and the sibling series. Every reader-facing link goes through
+    engine.funnel (the only module allowed to build campaign links)."""
+    from engine.funnel import PLACEMENT_BODY, episode_link
+
+    entries = _other_books(volume)
+    if not entries:
+        return ""
+    parts = ['<div class="alsoby">', "<h1>Also from the Nerra Network</h1>"]
+    for e in entries:
+        title = str(e.get("full_title") or e.get("title")
+                    or e.get("volume_id"))
+        slug = str(e.get("show_slug") or volume.show_slug)
+        link = episode_link(
+            "https://nerranetwork.com/books.html", slug,
+            int(e.get("volume_number") or 0), kind="book",
+            placement=PLACEMENT_BODY,
+        )
+        desc = str(e.get("subtitle") or e.get("description") or "").strip()
+        parts.append(
+            f'<p class="alsoby-entry"><a href="{xml_escape(link)}">'
+            f"{xml_escape(title)}</a>"
+            + (f" — {xml_escape(desc)}" if desc else "") + "</p>"
+        )
+    parts.append(
+        '<p class="alsoby-entry">Every story began as a Nerra Network '
+        "podcast episode. Find all the shows and books at "
+        "nerranetwork.com.</p>")
+    parts.append("</div>")
+    return _xhtml("Also from the Nerra Network", "\n".join(parts),
+                  volume.language)
+
+
+def _nav_xhtml(volume: BookVolume, chapters: List[BookChapter],
+               *, extras: Optional[Dict[str, bool]] = None) -> str:
+    extras = extras or {}
     items = [
         '<li><a href="titlepage.xhtml">Title Page</a></li>',
         '<li><a href="copyright.xhtml">Copyright</a></li>',
     ]
-    items += [
-        f'<li><a href="chap_{c.number:03d}.xhtml">'
-        f"{xml_escape(c.heading)}</a></li>"
-        for c in chapters
-    ]
+    if extras.get("toc_page"):
+        items.append('<li><a href="contents.xhtml">Contents</a></li>')
+    if extras.get("introduction"):
+        items.append(
+            '<li><a href="introduction.xhtml">Introduction</a></li>')
+    layout = resolve_parts(volume, chapters)
+    if layout is None:
+        items += [
+            f'<li><a href="chap_{c.number:03d}.xhtml">'
+            f"{xml_escape(c.heading)}</a></li>"
+            for c in chapters
+        ]
+    else:
+        for i, (title, chs) in enumerate(layout, start=1):
+            sub = "".join(
+                f'<li><a href="chap_{c.number:03d}.xhtml">'
+                f"{xml_escape(c.heading)}</a></li>"
+                for c in chs
+            )
+            items.append(
+                f'<li><a href="part_{i:02d}.xhtml">'
+                f"{xml_escape(title)}</a><ol>{sub}</ol></li>"
+            )
+    if extras.get("conclusion"):
+        items.append('<li><a href="conclusion.xhtml">Conclusion</a></li>')
     if _has_sources(chapters):
         items.append('<li><a href="sources.xhtml">Sources</a></li>')
+    if extras.get("author_bio"):
+        items.append(
+            '<li><a href="author.xhtml">About the Author</a></li>')
+    if extras.get("crosspromo"):
+        items.append(
+            '<li><a href="alsoby.xhtml">Also from the Nerra Network</a>'
+            "</li>")
     body = (
         '<nav epub:type="toc" id="toc"><h1>Contents</h1><ol>'
         + "".join(items) + "</ol></nav>"
@@ -691,7 +931,9 @@ def _nav_xhtml(volume: BookVolume, chapters: List[BookChapter]) -> str:
 
 
 def _package_opf(volume: BookVolume, chapters: List[BookChapter],
-                 *, has_cover: bool) -> str:
+                 *, has_cover: bool,
+                 extras: Optional[Dict[str, bool]] = None) -> str:
+    extras = extras or {}
     uid = f"urn:nerranetwork:book:{volume.volume_id}"
     modified = date.today().isoformat() + "T00:00:00Z"
     manifest = [
@@ -709,7 +951,29 @@ def _package_opf(volume: BookVolume, chapters: List[BookChapter],
             '<item id="cover-image" href="cover.png" media-type="image/png" '
             'properties="cover-image"/>'
         )
+
+    def _extra(flag: str, item_id: str, href: str) -> None:
+        if extras.get(flag):
+            manifest.append(
+                f'<item id="{item_id}" href="{href}" '
+                'media-type="application/xhtml+xml"/>')
+            spine.append(f'<itemref idref="{item_id}"/>')
+
+    _extra("toc_page", "contents", "contents.xhtml")
+    _extra("introduction", "introduction", "introduction.xhtml")
+
+    layout = resolve_parts(volume, chapters)
+    part_of = {}
+    if layout is not None:
+        for i, (_title, chs) in enumerate(layout, start=1):
+            part_of[chs[0].number] = i
     for c in chapters:
+        if c.number in part_of:
+            i = part_of[c.number]
+            manifest.append(
+                f'<item id="part{i:02d}" href="part_{i:02d}.xhtml" '
+                'media-type="application/xhtml+xml"/>')
+            spine.append(f'<itemref idref="part{i:02d}"/>')
         cid = f"chap{c.number:03d}"
         manifest.append(
             f'<item id="{cid}" href="chap_{c.number:03d}.xhtml" '
@@ -721,12 +985,15 @@ def _package_opf(volume: BookVolume, chapters: List[BookChapter],
                 'media-type="image/jpeg"/>'
             )
         spine.append(f'<itemref idref="{cid}"/>')
+    _extra("conclusion", "conclusion", "conclusion.xhtml")
     if _has_sources(chapters):
         manifest.append(
             '<item id="sources" href="sources.xhtml" '
             'media-type="application/xhtml+xml"/>'
         )
         spine.append('<itemref idref="sources"/>')
+    _extra("author_bio", "authorbio", "author.xhtml")
+    _extra("crosspromo", "alsoby", "alsoby.xhtml")
     meta_title = xml_escape(volume.full_title)
     if volume.subtitle:
         meta_title += f": {xml_escape(volume.subtitle)}"
@@ -771,6 +1038,21 @@ def build_epub(
     for c in chapters:
         c.image_name = (f"art_{c.number:03d}.jpg"
                         if c.number in chapter_images else "")
+
+    # WO-6 front/back matter — all optional; a volume configured with
+    # none of it builds the exact pre-WO-6 structure.
+    intro_prose = _load_prose_file(volume.introduction_file)
+    conclusion_prose = _load_prose_file(volume.conclusion_file)
+    bio_prose = _load_prose_file(volume.author_bio_file)
+    crosspromo_page = _crosspromo_xhtml(volume)
+    layout = resolve_parts(volume, chapters)
+    extras = {
+        "toc_page": layout is not None,
+        "introduction": bool(intro_prose),
+        "conclusion": bool(conclusion_prose),
+        "author_bio": bool(bio_prose),
+        "crosspromo": bool(crosspromo_page),
+    }
     with zipfile.ZipFile(out_path, "w") as z:
         # Spec: first entry, uncompressed, exact bytes.
         z.writestr(
@@ -787,22 +1069,45 @@ def build_epub(
             "</container>",
         )
         z.writestr("OEBPS/package.opf",
-                   _package_opf(volume, chapters, has_cover=has_cover))
-        z.writestr("OEBPS/nav.xhtml", _nav_xhtml(volume, chapters))
+                   _package_opf(volume, chapters, has_cover=has_cover,
+                                extras=extras))
+        z.writestr("OEBPS/nav.xhtml",
+                   _nav_xhtml(volume, chapters, extras=extras))
         z.writestr("OEBPS/style.css", _EPUB_CSS)
         z.writestr("OEBPS/titlepage.xhtml", _title_page_xhtml(volume))
         z.writestr("OEBPS/copyright.xhtml", _copyright_xhtml(volume))
+        if extras["toc_page"]:
+            z.writestr("OEBPS/contents.xhtml",
+                       _toc_page_xhtml(volume, chapters))
+        if intro_prose:
+            z.writestr("OEBPS/introduction.xhtml",
+                       _prose_xhtml("Introduction", intro_prose,
+                                    volume.language))
         if has_cover:
             z.write(cover_png, "OEBPS/cover.png")
+        if layout is not None:
+            for i, (title, _chs) in enumerate(layout, start=1):
+                z.writestr(f"OEBPS/part_{i:02d}.xhtml",
+                           _part_xhtml(i, title, volume.language))
         for c in chapters:
             z.writestr(f"OEBPS/chap_{c.number:03d}.xhtml",
                        _chapter_xhtml(c, volume.language, volume))
             if c.image_name:
                 z.writestr(f"OEBPS/{c.image_name}",
                            chapter_images[c.number])
+        if conclusion_prose:
+            z.writestr("OEBPS/conclusion.xhtml",
+                       _prose_xhtml("Conclusion", conclusion_prose,
+                                    volume.language))
         if _has_sources(chapters):
             z.writestr("OEBPS/sources.xhtml",
                        _sources_xhtml(volume, chapters))
+        if bio_prose:
+            z.writestr("OEBPS/author.xhtml",
+                       _prose_xhtml("About the Author", bio_prose,
+                                    volume.language))
+        if crosspromo_page:
+            z.writestr("OEBPS/alsoby.xhtml", crosspromo_page)
     logger.info("EPUB written: %s (%d chapters, %d words)",
                 out_path, len(chapters), sum(c.word_count for c in chapters))
     return out_path

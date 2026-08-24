@@ -134,6 +134,8 @@ class TestChapterTitles:
         by_show = {}
         for vp in sorted((_ROOT / "books" / "volumes").glob("*.yaml")):
             v = load_volume(vp)
+            if v.anthology:
+                continue  # a combined edition REUSES chapters by design
             by_show.setdefault(v.show_slug, []).extend(
                 v.chapter_titles.values())
         for slug, titles in by_show.items():
@@ -194,13 +196,24 @@ class TestEpubStructure:
                 assert f"chap_{c.number:03d}.xhtml" in opf
                 assert f"chap_{c.number:03d}.xhtml" in nav
 
-    def test_copyright_page_carries_disclosure_and_funnel_link(self, tmp_path):
+    def test_copyright_page_carries_funnel_link(self, tmp_path):
+        """Split from the old combined test (WO-8): the funnel-link half
+        keeps its guard unchanged."""
         _, _, epub = self._built(tmp_path)
         with zipfile.ZipFile(epub) as z:
             page = z.read("OEBPS/copyright.xhtml").decode("utf-8")
-        assert "AI assistance" in page
         assert "utm_source=" in page, "back-matter link must be funnel-tagged"
         assert "utm_campaign=nn-unintended_consequences-en-book-ep001" in page
+
+    def test_copyright_page_ai_note_softened(self, tmp_path):
+        """WO-8: the AI note is the author's own wording (no store
+        requires it) — honest about AI drafting, minus 'free'."""
+        _, _, epub = self._built(tmp_path)
+        with zipfile.ZipFile(epub) as z:
+            page = z.read("OEBPS/copyright.xhtml").decode("utf-8")
+        assert "AI assistance in drafting" in page
+        assert "remain free to listen" not in page
+        assert "reviewed before publication" in page
 
     def test_every_chapter_links_back_to_its_episode(self, tmp_path):
         """The book's job includes routing readers to the podcast: each
@@ -271,10 +284,23 @@ class TestNarrationText:
         tracks = narration_texts(_volume(), chapters)
         assert tracks[1][0] == chapters[0].heading
 
-    def test_both_credits_carry_the_disclosure(self):
+    def test_credits_do_not_speak_the_narration_disclosure(self):
+        """WO-8 (operator-directed): store-level digital-narration
+        DECLARATIONS stay (KDP questionnaire, Spotify tick, Google Play)
+        — but no retail channel requires a SPOKEN in-file line, so the
+        credits dropped it. The constant survives for listing copy."""
         v = _volume()
-        assert AI_NARRATION_DISCLOSURE in opening_credits_text(v)
-        assert AI_NARRATION_DISCLOSURE in closing_credits_text(v)
+        assert AI_NARRATION_DISCLOSURE not in opening_credits_text(v)
+        assert AI_NARRATION_DISCLOSURE not in closing_credits_text(v)
+        assert "digital voice" not in closing_credits_text(v)
+
+    def test_credits_keep_neutral_provenance_without_free(self):
+        """'free' dropped from reader/listener-facing provenance copy
+        (WO-8); the podcast origin itself stays named."""
+        v = _volume()
+        closing = closing_credits_text(v)
+        assert "began as an episode of" in closing
+        assert "free" not in closing.lower()
 
     def test_closing_does_not_echo_the_show_name(self):
         """Title == show name: the closing names 'the podcast' instead of
@@ -351,7 +377,10 @@ class TestVolumeConfig:
     def test_vol1_loads_and_every_episode_has_a_digest(self):
         v = _volume()
         assert v.volume_number == 1
-        assert len(v.episodes) == 20
+        # 19 since WO-3: ep1 (Cobra Bounty) is editorially excluded from
+        # the books — the podcast episode stays published.
+        assert len(v.episodes) == 19
+        assert 1 not in v.episodes
         for ep in v.episodes:
             assert find_digest(v, ep).exists()
 
@@ -378,7 +407,9 @@ class TestSeriesInheritance:
 
     def test_subtitle_counts_the_volume_in_words(self):
         v = _volume()
-        assert v.subtitle.startswith("Twenty ")
+        # Nineteen since the WO-3 cut — the subtitle counts the stories
+        # actually in the volume, so it must track the episode list.
+        assert v.subtitle.startswith("Nineteen ")
 
     def test_full_title_carries_the_volume_number(self):
         assert _volume().full_title == "Unintended Consequences, Volume 1"
@@ -419,13 +450,23 @@ class TestVolumePlanner:
         by_show = {}
         for p in sorted(VOLUMES_DIR.glob("*.yaml")):
             data = yaml.safe_load(p.read_text(encoding="utf-8"))
+            if data.get("anthology"):
+                continue  # combined editions reuse episodes by design
             by_show.setdefault(data.get("series"), []).extend(
                 data["episodes"])
+        from engine.book_compiler import load_series
         for slug, eps in by_show.items():
             assert len(eps) == len(set(eps)), f"{slug}: episode in 2 volumes"
             assert eps == sorted(eps)
-            assert eps[0] == 1 and eps == list(range(1, len(eps) + 1)), (
-                f"{slug}: volumes must cover episodes contiguously from 1"
+            # Since WO-3, coverage is contiguous from 1 MINUS the
+            # series-level excluded_episodes (book-inclusion cuts —
+            # the podcast episodes stay published).
+            excluded = set(load_series(slug).get("excluded_episodes", []))
+            expected = [n for n in range(1, max(eps) + 1)
+                        if n not in excluded]
+            assert eps == expected, (
+                f"{slug}: volumes must cover episodes contiguously from 1 "
+                f"apart from the excluded set {sorted(excluded)}"
             )
 
 

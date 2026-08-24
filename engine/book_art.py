@@ -57,15 +57,28 @@ def chapter_art_prompt(style: str, chapter: BookChapter) -> str:
 
 
 def cover_art_prompt(style: str, volume: BookVolume,
-                     chapters: List[BookChapter]) -> str:
+                     chapters: List[BookChapter],
+                     variant: str = "") -> str:
     """Series cover style + a motif drawn from the volume's stories, so
-    each volume's art is new while the style stays constant."""
+    each volume's art is new while the style stays constant.
+
+    Deterministic by design — Grok Imagine returns the same image for
+    the same prompt, so a re-run reproduces the identical cover.
+    *variant* (``cover_variant`` in the volume YAML, or the build
+    script's ``--cover-variant``) is the ONLY sanctioned way to re-roll:
+    it perturbs the prompt while the committed value keeps the shipped
+    cover reproducible.
+    """
     motifs = "; ".join(c.title for c in chapters[:6])
-    return (
+    prompt = (
         f"{style.strip()} This volume's stories include: {motifs}. "
         "Choose ONE strong unifying visual metaphor — do not depict a "
         "collage of every story."
     )
+    variant = str(variant or "").strip()
+    if variant:
+        prompt += f" Composition variant {variant}."
+    return prompt
 
 
 def generate_art(prompt: str, *, api_key: str, model: str,

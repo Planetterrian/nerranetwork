@@ -126,6 +126,13 @@
         </p>
         <p class="nn-book-desc">{{ v.description }}</p>
         <div class="nn-book-buttons">
+            {# Direct sales (WO-9, Payhip merchant-of-record). Renders only
+               when the operator has pasted a live Payhip URL into the
+               volume YAML's buy_links.direct — dormant until then. Never
+               price direct below retail list (Amazon price-matches and
+               pays 70% of the MATCHED price); differentiate on bundles
+               and formats, never price. #}
+            {% if v.buy_links.direct %}<a class="nn-book-primary payhip-buy-button" data-theme="none" href="{{ v.buy_links.direct }}" rel="noopener">Buy direct</a>{% endif %}
             {% if v.buy_links.amazon %}<a class="nn-book-primary" href="{{ v.buy_links.amazon }}" rel="noopener">Amazon</a>{% endif %}
             {% if v.buy_links.apple_books %}<a href="{{ v.buy_links.apple_books }}" rel="noopener">Apple Books</a>{% endif %}
             {% if v.buy_links.google_play %}<a href="{{ v.buy_links.google_play }}" rel="noopener">Google Play</a>{% endif %}
@@ -136,6 +143,25 @@
     </article>
     {% endfor %}
 </section>
+{% set has_direct = volumes | selectattr("buy_links.direct") | list %}
+{% if has_direct %}
+<script src="https://payhip.com/payhip.js" defer></script>
+<section class="nn-direct-sales" id="direct">
+    <h2>Buying direct</h2>
+    <p>Buying direct gets you every format at once — EPUB for Apple
+    Books, Kobo and most readers, plus the chaptered audiobook — and
+    more of the price reaches the network. Files arrive by email
+    immediately after checkout.</p>
+    <p><strong>Loading the EPUB:</strong> on Kindle, email the file to
+    your Send-to-Kindle address or use Amazon's Send to Kindle app; on
+    Apple Books or Kobo, open the file and it imports. The audiobook is
+    plain MP3 chapters — any podcast or music app plays them.</p>
+    <p><strong>Refunds:</strong> if a file won't open or you bought the
+    wrong edition, reply to your receipt email within 14 days and we
+    will fix it or refund it. Questions: the contact address on the
+    receipt.</p>
+</section>
+{% endif %}
 {% else %}
 <p class="nn-books-empty">The first volume is at the printers — well, the
 build pipeline. Check back soon, or subscribe to the newsletter to hear

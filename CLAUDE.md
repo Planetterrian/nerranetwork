@@ -1130,9 +1130,13 @@ reader-facing link goes through `engine.funnel` `kind="book"` (campaign
 carries the VOLUME number; each chapter ends on a funnel-tagged link to
 its source episode page); artifacts to R2 keyspace `books/<id>/` ONLY
 (never a show's audio prefix); `outputs/books/` gitignored (landmine
-#1); both audiobook credits speak the AI-narration disclosure — never
-remove it (every retail channel requires it; Audible/ACX takes no
-third-party AI narration at all). Committed record: series + volume
+#1); **store-level digital-narration DECLARATIONS are non-negotiable
+(KDP AI questionnaire stays YES, Spotify's digital-narration box stays
+ticked, Google Play stays declared — never remove any of them;
+Audible/ACX takes no third-party AI narration at all), but the SPOKEN
+in-file disclosure line was removed from the audiobook credits Aug 2026
+(WO-8, operator-directed) — no retail channel requires a spoken line,
+only the upload declaration; an earlier note here conflated the two.** Committed record: series + volume
 YAMLs + `books/catalog.json` → `/books.html` (`generate_html.py
 --books`, in `--all` + sitemap + footer). Live: UC Vols 1–4 (eps 1–80),
 First Principles Vols 1–3 (eps 1–60), 20 stories each. Spot-listen +

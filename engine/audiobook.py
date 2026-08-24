@@ -12,9 +12,12 @@ volume of ~2,000-word essays is ~250k characters, roughly $1 of TTS — the
 whole point of product B6 is that the audiobook is a rounding error on
 top of content the network already paid to write.
 
-Every volume opens and closes with the AI-narration disclosure
-(``book_compiler.AI_NARRATION_DISCLOSURE``): network policy, and a listing
-requirement on every retail channel that accepts digital narration.
+Digital-narration disclosure lives at the STORE level (KDP AI
+questionnaire, Spotify's digital-narration box, Google Play's
+declaration — non-negotiable at upload). The credits no longer SPEAK a
+disclosure line (WO-8, Aug 2026, operator-directed): no retail channel
+requires one in the audio itself — an earlier version of this docstring
+conflated the upload declaration with an in-file line.
 """
 
 from __future__ import annotations
