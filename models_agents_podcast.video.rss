@@ -9,7 +9,7 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>en-us</language>
-    <lastBuildDate>Sun, 23 Aug 2026 08:32:13 +0000</lastBuildDate>
+    <lastBuildDate>Mon, 24 Aug 2026 08:59:31 +0000</lastBuildDate>
     <itunes:author>Patrick</itunes:author>
     <itunes:category text="Technology" />
     <itunes:category text="News">
@@ -23,6 +23,160 @@
     </itunes:owner>
     <itunes:summary>Your daily briefing on AI models and agents: new releases from the frontier labs, open-weight drops, agent frameworks, benchmarks, pricing, and practical tools you can use the same day — with long-running program tracking so you always know where the big stories stand. For developers, builders, and AI practitioners.</itunes:summary>
     <itunes:type>episodic</itunes:type>
+    <item>
+      <title>Ep 151: AI agents are shifting from experimental tools to major API consumers, changing how…</title>
+      <description>Models &amp; Agents
+&lt;b&gt;AI agents are shifting from experimental tools to major API consumers, changing how developers price and secure their endpoints.&lt;/b&gt;
+
+&lt;b&gt;What You Need to Know:&lt;/b&gt; PYMNTS reports agents now drive significant API traffic as businesses deploy them for routine transactions. Several arXiv papers detail concrete gains in reasoning speed, style control, and domain-specific deployment. Builders should watch agent reliability patterns and test new inference optimizations this week.
+
+Top Story
+AI agents are becoming the API economy’s largest new customer segment, with businesses routing increasing volumes of calls through autonomous systems rather than human users. The shift forces API providers to rethink rate limits, authentication, and pricing tiers originally designed for interactive human traffic. PYMNTS notes agents handle repetitive, high-frequency tasks that previously required manual orchestration. Developers gain predictable usage patterns but must add safeguards against coordinated or unexpected agent behavior. Watch for updated documentation and SDKs that expose agent-specific endpoints. Remember, we covered agent frameworks yesterday — today's news moves that forward because agents are now driving API usage at scale. Source: &lt;a href="https://www.pymnts.com/news/artificial-intelligence/2026/ai-agents-become-the-api-economys-biggest-new-customers/"&gt;pymnts.com&lt;/a&gt;
+
+Model Updates
+&lt;b&gt;OneModel: arXiv&lt;/b&gt;
+OneModel internalizes complex business workflows into a single model via continual pre-training and logic-compilation SFT, replacing modular pipelines of router, planner, and executor components. Deployed in a global financial service system, it cut end-to-end latency from 18.7 seconds to 8.0 seconds while raising Intelligent Resolution Rate from 64.3 percent to 83.3 percent. The approach trades brittle engineering logic for internalized cognitive intuition. Builders working on industrial agents should test whether their SOPs fit inside one attention space before adding more modules. Source: &lt;a href="https://arxiv.org/abs/2608.20350"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;TriPLU: arXiv&lt;/b&gt;
+TriPLU replaces gated FFN branches with a degree-3 product-only branch that multiplies three projected streams coordinatewise in tiny decoder-only models. On character-level TinyStories it reached 1.0637 validation loss versus 1.1017 for matched SwiGLU. Gains appear under low-learning-rate, fixed-budget regimes but remain optimization-sensitive. Teams training sub-100M models should try the product branch when memory is the binding constraint.
+
+&lt;b&gt;Self-Speculation for Faster Reasoning Models: arXiv&lt;/b&gt;
+SSR uses partial chain-of-thought distributions as drafter and full-budget distributions as verifier within the same model, accepting long draft prefixes due to semantic overlap. It delivers up to 24.1 percent relative reduction in total generation latency on Qwen3.5 and Gemma-4 for structured tasks. Suffix decoding further recovers useful spans beyond the accepted prefix. Developers building latency-sensitive reasoning agents should benchmark SSR before adding external speculative decoding layers.
+
+&lt;b&gt;GRAFT: arXiv&lt;/b&gt;
+GRAFT introduces Target-Distilled Edge Scoring and State-Aware Budget Allocation for diffusion-language-model draft trees, achieving 2.13×–6.36× end-to-end speedup over autoregressive decoding with under 0.5 ms overhead per round. It selects target-compatible edges and dynamically balances expected draft gain against verification cost. The method is most useful when the drafter produces high lexical overlap with the target. Inference teams should evaluate GRAFT on long-form generation workloads this week.
+
+&lt;b&gt;VA-DPO: arXiv&lt;/b&gt;
+VA-DPO steers Llama-3.1-8B-Instruct to continuous valence-arousal targets, cutting mean distance to target by 33 percent over system prompting and 25 percent over few-shot while preserving MMLU, HellaSwag, and TruthfulQA scores. The method keeps only candidate pairs whose Euclidean distance gap exceeds margin tau before applying standard DPO loss. Researchers needing fine-grained emotion control without capability regression should examine the released preference-construction pipeline.
+
+&lt;b&gt;Libra: arXiv&lt;/b&gt;
+Libra decouples vision and language systems connected by cross-modal bridges, using switch attention and switch FFN modules to route computation between self-modal and cross-modal paths. Libra-1 targets understanding-only image-to-text; Libra-2 adds text-to-image generation. The design lets each modality maintain unique representations while supporting mutual improvement on both understanding and generation benchmarks. Multimodal teams should compare Libra against fused architectures on their specific task mix.
+
+Agent &amp; Tool Developments
+&lt;b&gt;Ansari: arXiv&lt;/b&gt;
+Ansari is a retrieval-grounded Islamic AI assistant that has processed over 140,000 conversations across 25+ languages since June 2023, issuing searches only against authenticated Qur'an, hadith, fiqh, and tafsir corpora before answering with citations. It tops the public IslamicMMLU leaderboard and resists false premises on IslamicLegalBench. The agentic retrieval loop plus strict system prompt form the core safety mechanism. Teams building domain-grounded assistants should study how the editorial policy is encoded in the prompt.
+
+&lt;b&gt;Intent Engine: arXiv&lt;/b&gt;
+Intent Engine translates natural-language intents into validated SLO artifacts for compute-continuum service placement using schema-constrained extraction, retrieval-grounded value construction, and constraint validation. With GPT-4.1 mini it reached 0.941 total F1 and reduced downstream placement failure from 30.8 percent to 2.1 percent while cutting aggregate hallucination by 85.1 percent. It sits in front of existing orchestration frameworks rather than replacing them. Developers deploying intent-driven placement should test the 716-record evaluation dataset.
+
+&lt;b&gt;EditPPT: arXiv&lt;/b&gt;
+EditPPT reformulates slide editing as constrained tool selection against the native PowerPoint COM interface, paired with dual-modal validators for instruction fidelity and visual quality. On DeckEdit-Bench (28 decks, 582 slides) it achieved 99.5 percent execution rate, 88.7 percent slide-targeting F1, and 91.5 percent object preservation even on long decks. The framework avoids open-ended code generation that cascades in large presentations. Teams automating presentation maintenance should examine the released benchmark.
+
+&lt;b&gt;Evaluation-as-Search: arXiv&lt;/b&gt;
+Evaluation-as-Search adaptively probes meeting-assistant grounding fidelity by learning from evaluator feedback to focus on discourse structures that trigger failures. It surfaces 2.5× more failures than random probing across 3,000+ question-answer pairs from three meeting genres. Eight recurring failure categories are dominated by discourse-pragmatic challenges rather than factual recall. Assistant builders should adopt the UCB-scored coverage map approach for targeted evaluation.
+
+Practical &amp; Community
+&lt;b&gt;Best GPU Neoclouds 2026: MarkTechPost&lt;/b&gt;
+CoreWeave, Nebius, Lambda, Crusoe, and Groq now publish live rate cards, Q2 2026 financials, contracted gigawatts, and SemiAnalysis ClusterMAX tiers. Nebius posts the lowest H100 rate and the only published B300 price; Lambda offers the cheapest B200; Crusoe alone lists AMD GPUs; CoreWeave charges a 10–15 percent premium as the sole Platinum-rated provider. Figures were verified August 21, 2026. Teams choosing inference providers should compare current contracted power alongside published pricing. Source: &lt;a href="https://www.marktechpost.com/2026/08/23/best-gpu-neoclouds-2026/"&gt;marktechpost.com&lt;/a&gt;
+
+&lt;b&gt;ASTAR: arXiv&lt;/b&gt;
+ASTAR uses an LLM-based pipeline to induce standardized radiology reporting templates from 4,215 fetal brain MRI reports, outperforming two expert-curated templates on coverage, information fidelity, diagnostic fidelity, and usability while reducing template development from weeks to hours. The induced template is released with code at https://github.com/birthlab/ASTAR. Clinical NLP teams should test the pipeline on their own report corpora.
+
+&lt;b&gt;Poly-InstructTTS: arXiv&lt;/b&gt;
+Poly-InstructTTS trains on a 1,000-hour instruction-annotated corpus covering 1,000+ fine-grained emotions and styles extracted from in-the-wild audiovisual data. A prompt-free GPT with attribute-based thinking tokens plus flow-matching timbre injection enables open-ended instruction control. Speaker fine-tuning transfers control while preserving persona. TTS developers needing natural-language style specification should review the expanded InstructTTSEval test set.
+
+&lt;b&gt;Synthetic Bengali Speech Resource: arXiv&lt;/b&gt;
+The 10,000-pair telecom customer-care dataset provides 26.82 hours of 24 kHz synthetic Bengali speech with normalized transcripts for ASR/STT training, released under CC-BY-4.0 on Hugging Face. A domain-adapted Whisper model reports 2.54 percent average WER and 0.59 percent average CER. Speech teams working on low-resource customer-care scenarios should download the splits for immediate use.
+
+Under the Hood: Speculative Decoding with Internal Drafts
+Everyone talks about speculative decoding as if it simply adds a smaller model that guesses tokens ahead. In practice it requires careful alignment between drafter and target distributions so that accepted prefixes remain semantically coherent rather than just locally probable. The core insight is that later partial reasoning traces already contain high lexical overlap with the final answer; using the model’s own intermediate states as the drafter exploits that overlap without training an extra network. This approach adds almost no extra parameters yet still needs suffix caching to recover non-contiguous matches that standard prefix acceptance would miss. The latency win scales with how structured the output is—long-form reasoning or code shows the largest gains, while open-ended chat sees smaller benefits because overlap drops. The practical decision is straightforward: when your workload already produces long, internally consistent traces and you control the full model weights, internal self-speculation beats external drafters on both cost and simplicity; otherwise the engineering overhead of maintaining two models may still be lower. The gotcha that bites most teams is assuming the speedup will hold once output diversity increases—monitor acceptance length per task rather than average latency alone.
+
+Things to Try This Week
+• Test OneModel-style internalization on your own SOP-heavy workflow to see whether latency drops below the 18-second baseline reported for financial services.
+• Run GRAFT draft-tree construction on a long-form generation task with Qwen3.5 or Gemma-4 and measure the 2×–6× speedup range against your current autoregressive setup.
+• Compare VA-DPO steering against few-shot prompting for any application that needs continuous affect control rather than discrete emotion labels.
+• Download the 10,000-pair Bengali telecom dataset and fine-tune a Whisper variant to check whether 2.54 percent WER holds on your own customer-care audio.
+• Evaluate Ansari’s retrieval loop pattern on a different authenticated corpus to see how strictly the system prompt must encode domain policy.
+
+On the Horizon
+• More GPU neoclouds are expected to publish B200 and B300 rates as contracted power figures are updated quarterly.
+• Additional arXiv submissions on agentic retrieval and grounded generation are likely to appear before the next major conference cycle.
+• Clinical and regulatory NLP benchmarks will continue to surface new ambiguity taxonomies as LLM use in registry abstraction expands.
+• Open-weight reasoning models will see further speculative-decoding variants as teams publish acceptance-length diagnostics.
+
+```claims
+[]</description>
+      <guid isPermaLink="false">models-agents-video-ep151-20260824</guid>
+      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep151_20260824.mp4" length="256001588" type="video/mp4" />
+      <pubDate>Mon, 24 Aug 2026 08:00:00 +0000</pubDate>
+      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep151_20260824.jpg" />
+      <itunes:duration>10:40</itunes:duration>
+      <itunes:explicit>no</itunes:explicit>
+      <itunes:summary># Models &amp; Agents
+&gt; **AI agents are shifting from experimental tools to major API consumers, changing how developers price and secure their endpoints.**
+
+**What You Need to Know:** PYMNTS reports agents now drive significant API traffic as businesses deploy them for routine transactions. Several arXiv papers detail concrete gains in reasoning speed, style control, and domain-specific deployment. Builders should watch agent reliability patterns and test new inference optimizations this week.
+---
+### Top Story
+AI agents are becoming the API economy’s largest new customer segment, with businesses routing increasing volumes of calls through autonomous systems rather than human users. The shift forces API providers to rethink rate limits, authentication, and pricing tiers originally designed for interactive human traffic. PYMNTS notes agents handle repetitive, high-frequency tasks that previously required manual orchestration. Developers gain predictable usage patterns but must add safeguards against coordinated or unexpected agent behavior. Watch for updated documentation and SDKs that expose agent-specific endpoints. Remember, we covered agent frameworks yesterday — today's news moves that forward because agents are now driving API usage at scale. Source: [pymnts.com](https://www.pymnts.com/news/artificial-intelligence/2026/ai-agents-become-the-api-economys-biggest-new-customers/)
+---
+### Model Updates
+**OneModel: arXiv**
+OneModel internalizes complex business workflows into a single model via continual pre-training and logic-compilation SFT, replacing modular pipelines of router, planner, and executor components. Deployed in a global financial service system, it cut end-to-end latency from 18.7 seconds to 8.0 seconds while raising Intelligent Resolution Rate from 64.3 percent to 83.3 percent. The approach trades brittle engineering logic for internalized cognitive intuition. Builders working on industrial agents should test whether their SOPs fit inside one attention space before adding more modules. Source: [arxiv.org](https://arxiv.org/abs/2608.20350)
+
+**TriPLU: arXiv**
+TriPLU replaces gated FFN branches with a degree-3 product-only branch that multiplies three projected streams coordinatewise in tiny decoder-only models. On character-level TinyStories it reached 1.0637 validation loss versus 1.1017 for matched SwiGLU. Gains appear under low-learning-rate, fixed-budget regimes but remain optimization-sensitive. Teams training sub-100M models should try the product branch when memory is the binding constraint.  
+
+**Self-Speculation for Faster Reasoning Models: arXiv**
+SSR uses partial chain-of-thought distributions as drafter and full-budget distributions as verifier within the same model, accepting long draft prefixes due to semantic overlap. It delivers up to 24.1 percent relative reduction in total generation latency on Qwen3.5 and Gemma-4 for structured tasks. Suffix decoding further recovers useful spans beyond the accepted prefix. Developers building latency-sensitive reasoning agents should benchmark SSR before adding external speculative decoding layers.  
+
+**GRAFT: arXiv**
+GRAFT introduces Target-Distilled Edge Scoring and State-Aware Budget Allocation for diffusion-language-model draft trees, achieving 2.13×–6.36× end-to-end speedup over autoregressive decoding with under 0.5 ms overhead per round. It selects target-compatible edges and dynamically balances expected draft gain against verification cost. The method is most useful when the drafter produces high lexical overlap with the target. Inference teams should evaluate GRAFT on long-form generation workloads this week.  
+
+**VA-DPO: arXiv**
+VA-DPO steers Llama-3.1-8B-Instruct to continuous valence-arousal targets, cutting mean distance to target by 33 percent over system prompting and 25 percent over few-shot while preserving MMLU, HellaSwag, and TruthfulQA scores. The method keeps only candidate pairs whose Euclidean distance gap exceeds margin tau before applying standard DPO loss. Researchers needing fine-grained emotion control without capability regression should examine the released preference-construction pipeline.  
+
+**Libra: arXiv**
+Libra decouples vision and language systems connected by cross-modal bridges, using switch attention and switch FFN modules to route computation between self-modal and cross-modal paths. Libra-1 targets understanding-only image-to-text; Libra-2 adds text-to-image generation. The design lets each modality maintain unique representations while supporting mutual improvement on both understanding and generation benchmarks. Multimodal teams should compare Libra against fused architectures on their specific task mix.  
+---
+### Agent &amp; Tool Developments
+**Ansari: arXiv**
+Ansari is a retrieval-grounded Islamic AI assistant that has processed over 140,000 conversations across 25+ languages since June 2023, issuing searches only against authenticated Qur'an, hadith, fiqh, and tafsir corpora before answering with citations. It tops the public IslamicMMLU leaderboard and resists false premises on IslamicLegalBench. The agentic retrieval loop plus strict system prompt form the core safety mechanism. Teams building domain-grounded assistants should study how the editorial policy is encoded in the prompt.  
+
+**Intent Engine: arXiv**
+Intent Engine translates natural-language intents into validated SLO artifacts for compute-continuum service placement using schema-constrained extraction, retrieval-grounded value construction, and constraint validation. With GPT-4.1 mini it reached 0.941 total F1 and reduced downstream placement failure from 30.8 percent to 2.1 percent while cutting aggregate hallucination by 85.1 percent. It sits in front of existing orchestration frameworks rather than replacing them. Developers deploying intent-driven placement should test the 716-record evaluation dataset.  
+
+**EditPPT: arXiv**
+EditPPT reformulates slide editing as constrained tool selection against the native PowerPoint COM interface, paired with dual-modal validators for instruction fidelity and visual quality. On DeckEdit-Bench (28 decks, 582 slides) it achieved 99.5 percent execution rate, 88.7 percent slide-targeting F1, and 91.5 percent object preservation even on long decks. The framework avoids open-ended code generation that cascades in large presentations. Teams automating presentation maintenance should examine the released benchmark.  
+
+**Evaluation-as-Search: arXiv**
+Evaluation-as-Search adaptively probes meeting-assistant grounding fidelity by learning from evaluator feedback to focus on discourse structures that trigger failures. It surfaces 2.5× more failures than random probing across 3,000+ question-answer pairs from three meeting genres. Eight recurring failure categories are dominated by discourse-pragmatic challenges rather than factual recall. Assistant builders should adopt the UCB-scored coverage map approach for targeted evaluation.  
+---
+### Practical &amp; Community
+**Best GPU Neoclouds 2026: MarkTechPost**
+CoreWeave, Nebius, Lambda, Crusoe, and Groq now publish live rate cards, Q2 2026 financials, contracted gigawatts, and SemiAnalysis ClusterMAX tiers. Nebius posts the lowest H100 rate and the only published B300 price; Lambda offers the cheapest B200; Crusoe alone lists AMD GPUs; CoreWeave charges a 10–15 percent premium as the sole Platinum-rated provider. Figures were verified August 21, 2026. Teams choosing inference providers should compare current contracted power alongside published pricing. Source: [marktechpost.com](https://www.marktechpost.com/2026/08/23/best-gpu-neoclouds-2026/)
+
+**ASTAR: arXiv**
+ASTAR uses an LLM-based pipeline to induce standardized radiology reporting templates from 4,215 fetal brain MRI reports, outperforming two expert-curated templates on coverage, information fidelity, diagnostic fidelity, and usability while reducing template development from weeks to hours. The induced template is released with code at https://github.com/birthlab/ASTAR. Clinical NLP teams should test the pipeline on their own report corpora.  
+
+**Poly-InstructTTS: arXiv**
+Poly-InstructTTS trains on a 1,000-hour instruction-annotated corpus covering 1,000+ fine-grained emotions and styles extracted from in-the-wild audiovisual data. A prompt-free GPT with attribute-based thinking tokens plus flow-matching timbre injection enables open-ended instruction control. Speaker fine-tuning transfers control while preserving persona. TTS developers needing natural-language style specification should review the expanded InstructTTSEval test set.  
+
+**Synthetic Bengali Speech Resource: arXiv**
+The 10,000-pair telecom customer-care dataset provides 26.82 hours of 24 kHz synthetic Bengali speech with normalized transcripts for ASR/STT training, released under CC-BY-4.0 on Hugging Face. A domain-adapted Whisper model reports 2.54 percent average WER and 0.59 percent average CER. Speech teams working on low-resource customer-care scenarios should download the splits for immediate use.  
+---
+### Under the Hood: Speculative Decoding with Internal Drafts
+Everyone talks about speculative decoding as if it simply adds a smaller model that guesses tokens ahead. In practice it requires careful alignment between drafter and target distributions so that accepted prefixes remain semantically coherent rather than just locally probable. The core insight is that later partial reasoning traces already contain high lexical overlap with the final answer; using the model’s own intermediate states as the drafter exploits that overlap without training an extra network. This approach adds almost no extra parameters yet still needs suffix caching to recover non-contiguous matches that standard prefix acceptance would miss. The latency win scales with how structured the output is—long-form reasoning or code shows the largest gains, while open-ended chat sees smaller benefits because overlap drops. The practical decision is straightforward: when your workload already produces long, internally consistent traces and you control the full model weights, internal self-speculation beats external drafters on both cost and simplicity; otherwise the engineering overhead of maintaining two models may still be lower. The gotcha that bites most teams is assuming the speedup will hold once output diversity increases—monitor acceptance length per task rather than average latency alone.
+---
+### Things to Try This Week
+- Test OneModel-style internalization on your own SOP-heavy workflow to see whether latency drops below the 18-second baseline reported for financial services.
+- Run GRAFT draft-tree construction on a long-form generation task with Qwen3.5 or Gemma-4 and measure the 2×–6× speedup range against your current autoregressive setup.
+- Compare VA-DPO steering against few-shot prompting for any application that needs continuous affect control rather than discrete emotion labels.
+- Download the 10,000-pair Bengali telecom dataset and fine-tune a Whisper variant to check whether 2.54 percent WER holds on your own customer-care audio.
+- Evaluate Ansari’s retrieval loop pattern on a different authenticated corpus to see how strictly the system prompt must encode domain policy.
+---
+### On the Horizon
+- More GPU neoclouds are expected to publish B200 and B300 rates as contracted power figures are updated quarterly.
+- Additional arXiv submissions on agentic retrieval and grounded generation are likely to appear before the next major conference cycle.
+- Clinical and regulatory NLP benchmarks will continue to surface new ambiguity taxonomies as LLM use in registry abstraction expands.
+- Open-weight reasoning models will see further speculative-decoding variants as teams publish acceptance-length diagnostics.
+
+```claims
+[]</itunes:summary>
+      <itunes:episode>151</itunes:episode>
+      <itunes:title>Ep 151: AI agents are shifting from experimental tools to major API consumers, changing how…</itunes:title>
+      <itunes:episodeType>full</itunes:episodeType>
+    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep151_20260824_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep151.json" type="application/json+chapters" /></item>
     <item>
       <title>Ep 150: Vercel and Ora just shipped a free public audit tool that scores any website’s readiness…</title>
       <description>Models &amp; Agents
@@ -3359,114 +3513,5 @@ Everyone talks about agent “jailbreaks” as if the model suddenly became mali
       <itunes:title>Ep 122: Claude Opus 5 ships at the same price as its predecessor but doubles agentic coding scores, shifting the build decision from “which lab leads” to “which model delivers frontier results per token.”</itunes:title>
       <itunes:episodeType>full</itunes:episodeType>
     <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep122_20260725_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep122.json" type="application/json+chapters" /></item>
-    <item>
-      <title>Ep 121: Voice now drives multi-agent work on desktop and iOS while a new 10B European reasoning model ships open weights.</title>
-      <description>Models &amp; Agents
-&lt;b&gt;Voice now drives multi-agent work on desktop and iOS while a new 10B European reasoning model ships open weights.&lt;/b&gt;
-
-&lt;b&gt;What You Need to Know:&lt;/b&gt; OpenAI rolled out ChatGPT Voice to the desktop app with GPT-Live for simultaneous speaking, listening, and agent coordination, plus iOS remote access to Codex. Domyn-Small, a 10B open-weight reasoning model from a European team, completed pre-training on 9T tokens and post-training with GRPO and DPO across math, code, and tool-calling domains. Builders should watch how voice orchestration and smaller open reasoning models shift daily workflows this week.
-
-Top Story
-OpenAI made ChatGPT Voice available in the desktop app on macOS and Windows for Plus, Pro, Business, Edu, and Enterprise users, with control over multiple agents in ChatGPT Work or Codex using only voice input. The feature runs on GPT-Live so the model can speak, listen, and coordinate work inside the app at the same time. It also extends to Codex via the iOS app with paired remote access, while Android support is scheduled soon. This moves voice from a chat convenience into a practical interface for directing agent teams without switching contexts. Teams already using voice in mobile workflows can now run the same patterns on desktop hardware. Watch for how the rollout affects agent reliability when voice becomes the primary control layer. The announcement covers global availability starting today across the listed plans and explicitly pairs the voice layer with existing Work and Codex agent environments. Source: &lt;a href="https://x.com/OpenAI/status/2080378182469857576"&gt;x.com&lt;/a&gt;
-
-Model Updates
-&lt;b&gt;Domyn-Small 10B: arXiv NLP&lt;/b&gt;
-Domyn-Small is a 10B open-weight reasoning model released under MIT after pre-training on 9 trillion multilingual tokens followed by continued pre-training that doubled context to 32K native tokens. Post-training included math-focused SFT annealing, GRPO with verifiable rewards, DPO, and a multi-environment GRPO stage covering mathematics, code, multiple-choice QA, instruction following, and tool calling. The model extends to 128K at inference via YaRN and supports a chat-template toggle for dual-mode reasoning. It produces roughly one-third the tokens of Qwen3.5-9B on core reasoning benchmarks while scoring 79.9 on IFEval and 50.0 on GPQA-Diamond. Builders working on local reasoning workloads should test it against Qwen3.5-9B and Ministral-3-8B this week to compare token efficiency on math and tool tasks. The release also ships Domyn Swarm, an Apache-2.0 inference framework developed for HPC clusters during the same program. Source: &lt;a href="https://arxiv.org/abs/2607.20448"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;FLUX 3 multimodal flow models: Latent Space&lt;/b&gt;
-Black Forest Labs released FLUX 3, a multimodal flow model family that reportedly outperforms Seedance 2.0, Gemini Omni, and Grok Imagine on image and video tasks, plus a FLUX-mimic variant for video-action robotics. The release marks a significant capability jump for the lab in both generation quality and cross-modal consistency. Practitioners focused on high-fidelity image or robotics simulation work now have a new open contender to benchmark against closed frontier systems. Expect follow-up fine-tunes and community adapters in the coming weeks. The announcement positions the new models as a broad advance across both static and dynamic generation domains. Source: &lt;a href="https://www.latent.space/p/ainews-black-forest-labs-flux-3-multimodal"&gt;latent.space&lt;/a&gt;
-
-&lt;b&gt;Health-focused model improvements: &lt;a href="https://x.com/OpenAI"&gt;@OpenAI&lt;/a&gt;&lt;/b&gt;
-OpenAI stated that GPT-5.5 Instant brought frontier health intelligence to all free users while GPT-5.6 Sol improves performance on more complex medical questions. The updates build on work with hundreds of physicians measuring accuracy, safety, context awareness, and appropriate escalation. More than 300 million weekly health queries already reach ChatGPT, and the new models target better handling of those cases. Users working on consumer health tools should test the free tier first to see where the capability jump appears. The company continues to track accuracy, safety, communication, completeness, and escalation metrics across the physician network.
-
-Agent &amp; Tool Developments
-&lt;b&gt;ChatGPT Sites on Cloudflare Workers: Simon Willison&lt;/b&gt;
-ChatGPT in Work mode can now build and deploy public websites that run on Cloudflare Workers with SQLite persistence. The platform handles the deployment details, though OpenAI does not surface the underlying stack clearly. This gives builders a zero-config path from prompt to live site with durable storage. Teams prototyping public tools should try generating a simple data-backed site to see how the persistence layer behaves under real traffic. The approach combines the existing Work-mode agent capabilities with Cloudflare’s serverless runtime and embedded database. Source: &lt;a href="https://x.com/simonw/status/2080315993101115485"&gt;x.com&lt;/a&gt;
-
-&lt;b&gt;OpenAI Presence enterprise agents: AI News&lt;/b&gt;
-OpenAI Presence delivers enterprise AI agents through a managed program rather than self-serve, with deployments led by OpenAI’s own Forward Deployed Engineers. The offering is currently in limited general availability and not yet available for direct online purchase. It pairs agents with attached engineering support for production use cases. Organizations evaluating enterprise agent rollouts should compare this managed path against self-hosted alternatives for speed versus control tradeoffs. The program was announced on July 22 and remains restricted to invited participants. Source: &lt;a href="https://www.artificialintelligence-news.com/news/openai-presence-enterprise-ai-agents/"&gt;artificialintelligence-news.com&lt;/a&gt;
-
-&lt;b&gt;Baidu Unlimited-OCR pipeline: MarkTechPost&lt;/b&gt;
-A new tutorial walks through an end-to-end OCR workflow using Baidu’s Unlimited-OCR model on high-resolution document images and multi-page PDFs. It covers GPU setup, tiled high-detail inference versus faster base modes, and handling dense layouts, tables, and cross-page content. The pipeline is reproducible and aimed at production document processing. Developers working with scanned or PDF-heavy corpora should run the base versus tiled comparison on their own data to measure accuracy versus speed. The guide includes configuration steps for both high-detail Gundam-style tiling and the lighter Base mode. Source: &lt;a href="https://www.marktechpost.com/2026/07/23/how-to-build-an-end-to-end-ocr-pipeline-with-baidus-unlimited-ocr-for-high-resolution-images-and-multi-page-pdf-parsing/"&gt;marktechpost.com&lt;/a&gt;
-
-Practical &amp; Community
-&lt;b&gt;Health records integration in ChatGPT: &lt;a href="https://x.com/OpenAI"&gt;@OpenAI&lt;/a&gt;&lt;/b&gt;
-Health in ChatGPT is rolling out to U.S. users, letting them securely connect Apple Health and supported medical records for contextual analysis and change tracking. The feature emphasizes informed conversations while maintaining privacy controls. Users with existing health data on Apple platforms can test the integration to see how well the model surfaces trends and flags issues. Watch for expansion beyond the initial U.S. cohort. The rollout pairs the new data sources with the same GPT-5.5 Instant and GPT-5.6 Sol models already improving general health query handling.
-
-&lt;b&gt;Basic agent loops discussion: Simon Willison&lt;/b&gt;
-Simon Willison notes that the simple ReAct-style agent loop explored since 2022 may be what much of the current “loops” excitement actually refers to. The observation pushes back against hype that treats loops as a novel breakthrough. Builders should verify whether their current agent implementations already capture the core pattern before adding unnecessary complexity. The post questions whether recent enthusiasm around agent loops simply rediscovers the original ReAct formulation rather than introducing new mechanisms.
-
-Under the Hood: MoE Routing as Huffman Coding
-Everyone treats MoE routing as a learned load-balancing trick, yet the paper shows it spontaneously implements Huffman coding: high-frequency tokens get short, low-diversity expert paths while rare or complex tokens trigger high-diversity expert committees. The Frequency-Diversity Law emerges directly from training dynamics in models such as Phi-3.5-MoE and Gemma-4-27B-A4B, where effective sparsity already approximates minimum-description-length optimality. When load-balancing forces too many experts active (low k/E_eff), functional redundancy appears and the Huffman signal collapses, as seen in Qwen3.5-35B-A3B. Subset Difference Pruning removes those duplicates without hurting downstream reasoning, restoring the efficient short-code paths for common tokens. The practical takeaway is to measure effective sparsity on your target workload before adding extra load-balancing loss; if the ratio is already low, pruning the redundant experts will usually cut both memory and latency with no accuracy cost. The authors demonstrate that the pruning step preserves GSM8K accuracy on Qwen3-8B after 20,000 AlphaEdit batch edits, retaining 79.9 percent versus 10.9 percent with a Wikipedia baseline.
-
-Things to Try This Week
-• Enable ChatGPT Voice on desktop if you have a Plus or higher plan and test directing two agents in the same session to see coordination latency.
-• Download Domyn-Small weights and run the math annealing checkpoint on a local 32K context task to compare token usage against Qwen3.5-9B.
-• Follow the MarkTechPost Baidu Unlimited-OCR tutorial on a multi-page PDF from your own documents and measure tiled versus base mode accuracy.
-• Connect Apple Health data in ChatGPT (U.S. users) and ask for trend summaries on a 90-day window to evaluate context handling.
-
-On the Horizon
-• Android support for ChatGPT Voice in Codex expected in the coming weeks.
-• Further FLUX 3 fine-tunes and robotics adapters likely from the community.
-• Expanded U.S. rollout of Health in ChatGPT to additional medical record providers.
-• Continued pre-training and RL stages for other 7-10B open models following Domyn-Small’s recipe.</description>
-      <guid isPermaLink="false">models-agents-video-ep121-20260724</guid>
-      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep121_20260724.mp4" length="183282165" type="video/mp4" />
-      <pubDate>Fri, 24 Jul 2026 08:00:00 +0000</pubDate>
-      <itunes:duration>11:03</itunes:duration>
-      <itunes:explicit>no</itunes:explicit>
-      <itunes:summary># Models &amp; Agents
-&gt; **Voice now drives multi-agent work on desktop and iOS while a new 10B European reasoning model ships open weights.**
-
-**What You Need to Know:** OpenAI rolled out ChatGPT Voice to the desktop app with GPT-Live for simultaneous speaking, listening, and agent coordination, plus iOS remote access to Codex. Domyn-Small, a 10B open-weight reasoning model from a European team, completed pre-training on 9T tokens and post-training with GRPO and DPO across math, code, and tool-calling domains. Builders should watch how voice orchestration and smaller open reasoning models shift daily workflows this week.
----
-### Top Story
-OpenAI made ChatGPT Voice available in the desktop app on macOS and Windows for Plus, Pro, Business, Edu, and Enterprise users, with control over multiple agents in ChatGPT Work or Codex using only voice input. The feature runs on GPT-Live so the model can speak, listen, and coordinate work inside the app at the same time. It also extends to Codex via the iOS app with paired remote access, while Android support is scheduled soon. This moves voice from a chat convenience into a practical interface for directing agent teams without switching contexts. Teams already using voice in mobile workflows can now run the same patterns on desktop hardware. Watch for how the rollout affects agent reliability when voice becomes the primary control layer. The announcement covers global availability starting today across the listed plans and explicitly pairs the voice layer with existing Work and Codex agent environments. Source: [x.com](https://x.com/OpenAI/status/2080378182469857576)
----
-### Model Updates
-**Domyn-Small 10B: arXiv NLP**
-Domyn-Small is a 10B open-weight reasoning model released under MIT after pre-training on 9 trillion multilingual tokens followed by continued pre-training that doubled context to 32K native tokens. Post-training included math-focused SFT annealing, GRPO with verifiable rewards, DPO, and a multi-environment GRPO stage covering mathematics, code, multiple-choice QA, instruction following, and tool calling. The model extends to 128K at inference via YaRN and supports a chat-template toggle for dual-mode reasoning. It produces roughly one-third the tokens of Qwen3.5-9B on core reasoning benchmarks while scoring 79.9 on IFEval and 50.0 on GPQA-Diamond. Builders working on local reasoning workloads should test it against Qwen3.5-9B and Ministral-3-8B this week to compare token efficiency on math and tool tasks. The release also ships Domyn Swarm, an Apache-2.0 inference framework developed for HPC clusters during the same program. Source: [arxiv.org](https://arxiv.org/abs/2607.20448)
-
-**FLUX 3 multimodal flow models: Latent Space**
-Black Forest Labs released FLUX 3, a multimodal flow model family that reportedly outperforms Seedance 2.0, Gemini Omni, and Grok Imagine on image and video tasks, plus a FLUX-mimic variant for video-action robotics. The release marks a significant capability jump for the lab in both generation quality and cross-modal consistency. Practitioners focused on high-fidelity image or robotics simulation work now have a new open contender to benchmark against closed frontier systems. Expect follow-up fine-tunes and community adapters in the coming weeks. The announcement positions the new models as a broad advance across both static and dynamic generation domains. Source: [latent.space](https://www.latent.space/p/ainews-black-forest-labs-flux-3-multimodal)
-
-**Health-focused model improvements: [@OpenAI](https://x.com/OpenAI)**
-OpenAI stated that GPT-5.5 Instant brought frontier health intelligence to all free users while GPT-5.6 Sol improves performance on more complex medical questions. The updates build on work with hundreds of physicians measuring accuracy, safety, context awareness, and appropriate escalation. More than 300 million weekly health queries already reach ChatGPT, and the new models target better handling of those cases. Users working on consumer health tools should test the free tier first to see where the capability jump appears. The company continues to track accuracy, safety, communication, completeness, and escalation metrics across the physician network.
----
-### Agent &amp; Tool Developments
-**ChatGPT Sites on Cloudflare Workers: Simon Willison**
-ChatGPT in Work mode can now build and deploy public websites that run on Cloudflare Workers with SQLite persistence. The platform handles the deployment details, though OpenAI does not surface the underlying stack clearly. This gives builders a zero-config path from prompt to live site with durable storage. Teams prototyping public tools should try generating a simple data-backed site to see how the persistence layer behaves under real traffic. The approach combines the existing Work-mode agent capabilities with Cloudflare’s serverless runtime and embedded database. Source: [x.com](https://x.com/simonw/status/2080315993101115485)
-
-**OpenAI Presence enterprise agents: AI News**
-OpenAI Presence delivers enterprise AI agents through a managed program rather than self-serve, with deployments led by OpenAI’s own Forward Deployed Engineers. The offering is currently in limited general availability and not yet available for direct online purchase. It pairs agents with attached engineering support for production use cases. Organizations evaluating enterprise agent rollouts should compare this managed path against self-hosted alternatives for speed versus control tradeoffs. The program was announced on July 22 and remains restricted to invited participants. Source: [artificialintelligence-news.com](https://www.artificialintelligence-news.com/news/openai-presence-enterprise-ai-agents/)
-
-**Baidu Unlimited-OCR pipeline: MarkTechPost**
-A new tutorial walks through an end-to-end OCR workflow using Baidu’s Unlimited-OCR model on high-resolution document images and multi-page PDFs. It covers GPU setup, tiled high-detail inference versus faster base modes, and handling dense layouts, tables, and cross-page content. The pipeline is reproducible and aimed at production document processing. Developers working with scanned or PDF-heavy corpora should run the base versus tiled comparison on their own data to measure accuracy versus speed. The guide includes configuration steps for both high-detail Gundam-style tiling and the lighter Base mode. Source: [marktechpost.com](https://www.marktechpost.com/2026/07/23/how-to-build-an-end-to-end-ocr-pipeline-with-baidus-unlimited-ocr-for-high-resolution-images-and-multi-page-pdf-parsing/)
----
-### Practical &amp; Community
-**Health records integration in ChatGPT: [@OpenAI](https://x.com/OpenAI)**
-Health in ChatGPT is rolling out to U.S. users, letting them securely connect Apple Health and supported medical records for contextual analysis and change tracking. The feature emphasizes informed conversations while maintaining privacy controls. Users with existing health data on Apple platforms can test the integration to see how well the model surfaces trends and flags issues. Watch for expansion beyond the initial U.S. cohort. The rollout pairs the new data sources with the same GPT-5.5 Instant and GPT-5.6 Sol models already improving general health query handling.
-
-**Basic agent loops discussion: Simon Willison**
-Simon Willison notes that the simple ReAct-style agent loop explored since 2022 may be what much of the current “loops” excitement actually refers to. The observation pushes back against hype that treats loops as a novel breakthrough. Builders should verify whether their current agent implementations already capture the core pattern before adding unnecessary complexity. The post questions whether recent enthusiasm around agent loops simply rediscovers the original ReAct formulation rather than introducing new mechanisms.
----
-### Under the Hood: MoE Routing as Huffman Coding
-Everyone treats MoE routing as a learned load-balancing trick, yet the paper shows it spontaneously implements Huffman coding: high-frequency tokens get short, low-diversity expert paths while rare or complex tokens trigger high-diversity expert committees. The Frequency-Diversity Law emerges directly from training dynamics in models such as Phi-3.5-MoE and Gemma-4-27B-A4B, where effective sparsity already approximates minimum-description-length optimality. When load-balancing forces too many experts active (low k/E_eff), functional redundancy appears and the Huffman signal collapses, as seen in Qwen3.5-35B-A3B. Subset Difference Pruning removes those duplicates without hurting downstream reasoning, restoring the efficient short-code paths for common tokens. The practical takeaway is to measure effective sparsity on your target workload before adding extra load-balancing loss; if the ratio is already low, pruning the redundant experts will usually cut both memory and latency with no accuracy cost. The authors demonstrate that the pruning step preserves GSM8K accuracy on Qwen3-8B after 20,000 AlphaEdit batch edits, retaining 79.9 percent versus 10.9 percent with a Wikipedia baseline.
----
-### Things to Try This Week
-- Enable ChatGPT Voice on desktop if you have a Plus or higher plan and test directing two agents in the same session to see coordination latency.
-- Download Domyn-Small weights and run the math annealing checkpoint on a local 32K context task to compare token usage against Qwen3.5-9B.
-- Follow the MarkTechPost Baidu Unlimited-OCR tutorial on a multi-page PDF from your own documents and measure tiled versus base mode accuracy.
-- Connect Apple Health data in ChatGPT (U.S. users) and ask for trend summaries on a 90-day window to evaluate context handling.
----
-### On the Horizon
-- Android support for ChatGPT Voice in Codex expected in the coming weeks.
-- Further FLUX 3 fine-tunes and robotics adapters likely from the community.
-- Expanded U.S. rollout of Health in ChatGPT to additional medical record providers.
-- Continued pre-training and RL stages for other 7-10B open models following Domyn-Small’s recipe.</itunes:summary>
-      <itunes:episode>121</itunes:episode>
-      <itunes:title>Ep 121: Voice now drives multi-agent work on desktop and iOS while a new 10B European reasoning model ships open weights.</itunes:title>
-      <itunes:episodeType>full</itunes:episodeType>
-    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep121_20260724_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep121.json" type="application/json+chapters" /></item>
   <podcast:locked owner="patrick@planetterrian.com">yes</podcast:locked><itunes:keywords>ai, llm, machine learning, openai, anthropic, agents, claude, gpt, ai news</itunes:keywords></channel>
 </rss>
