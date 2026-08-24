@@ -141,6 +141,7 @@ describe("stripe webhook lifecycle", () => {
       type: "checkout.session.completed",
       data: { object: {
         customer_email: "fan@example.com",
+        metadata: { tier: "personal" },
         subscription: "sub_9",
         amount_total: 499,
       } },
@@ -153,6 +154,40 @@ describe("stripe webhook lifecycle", () => {
     expect(kv.store.has(`feedtok:${rec.feed_token}`)).toBe(false);
     const after = JSON.parse(kv.store.get("member:fan@example.com")!);
     expect(after.status).toBe("cancelled");
+  });
+
+  it("ignores a donation checkout instead of minting a feed", async () => {
+    // /support.html donations hit the SAME endpoint as memberships. A $10
+    // gift used to clear the old amount>=799 fallback and hand the donor a
+    // paid feed. The tier marker is what separates the two.
+    const env = envWith();
+    const kv = env.RATE_LIMIT_KV as unknown as FakeKV;
+    const res = await post(env, {
+      type: "checkout.session.completed",
+      data: { object: {
+        customer_details: { email: "donor@example.com" },
+        metadata: { kind: "donation", interval: "once" },
+        amount_total: 1000,
+      } },
+    });
+    expect(res.status).toBe(200);
+    expect(kv.store.has("member:donor@example.com")).toBe(false);
+    expect([...kv.store.keys()].some((k) => k.startsWith("feedtok:")))
+      .toBe(false);
+  });
+
+  it("ignores an untagged checkout however large the amount", async () => {
+    const env = envWith();
+    const kv = env.RATE_LIMIT_KV as unknown as FakeKV;
+    const res = await post(env, {
+      type: "checkout.session.completed",
+      data: { object: {
+        customer_details: { email: "stranger@example.com" },
+        amount_total: 99999,
+      } },
+    });
+    expect(res.status).toBe(200);
+    expect(kv.store.has("member:stranger@example.com")).toBe(false);
   });
 
   it("rejects a bad signature outright", async () => {
