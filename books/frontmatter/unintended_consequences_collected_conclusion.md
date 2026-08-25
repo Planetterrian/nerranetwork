@@ -1,12 +1,12 @@
-Thirty stories, five kinds of terrain, and a handful of mechanisms that
+Seventy-three stories, eight kinds of terrain, and a handful of mechanisms that
 kept reappearing no matter the century or the country. It is worth
 naming them plainly on the way out.
 
 Incentives are honest. People respond to what a system rewards, not to
-what its designers hoped it would reward — the bounty hunters, the
-test-focused school districts, and the landlords converting rental
-units were all behaving exactly as the rules they were handed suggested
-they should. When a policy produces surprising behavior, the surprise
+what its designers hoped it would reward — the test-focused school
+districts, the landlords converting rental units, and the drivers
+adjusting to their mandated seatbelts were all behaving exactly as
+the rules they were handed suggested they should. When a policy produces surprising behavior, the surprise
 is usually in the policy, not the people.
 
 Measurement changes the thing measured. A target that stands in for a
