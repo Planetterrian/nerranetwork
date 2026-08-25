@@ -91,12 +91,15 @@ class TestFactualCorrections:
         assert "mid-1970s" in t and "7 percent" in t
 
     def test_9_gig_work_sources(self):
-        """BLS publishes no such worker estimate (CWS last ran 2017); the
-        MIT/CEEPR revision ($3.37 -> $8.55-10) is noted; the
-        Uber-commissioned study is 2015 with a $16-30 median range."""
+        """BLS publishes no app-gig worker estimate; the ledger pass
+        found the CWS was fielded again in July 2023, so 'last ran
+        2017' was itself stale by the digest's 2026 date. The MIT/CEEPR
+        revision ($3.37 -> $8.55-10) is noted; the Uber-commissioned
+        study is 2015 with a $16-30 median range."""
         t = _digest(69)
         assert "Estimates from the Bureau of Labor Statistics" not in t
-        assert "contingent-worker survey in 2017" in t
+        assert "No official government count of gig workers exists" in t
+        assert "run in 2017 and again in 2023" in t
         assert "$3.37" in t and "revised the figure" in t
         assert "a 2014 study commissioned by Uber" not in t
         assert "a 2015 study commissioned by Uber" in t
