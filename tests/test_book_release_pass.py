@@ -254,6 +254,77 @@ class TestWO5FirstPrinciplesArithmetic:
         assert data["chapter_titles"][32] == "Moving Heat, Not Making It"
 
 
+class TestFPOmnibus:
+    """First Principles: The Collected Edition — 58 chapters (the two
+    true retellings dropped: ep21 re-derives ep7's ammonia cost
+    argument, ep25 retells ep6's container story), ~63k words, opens
+    on The Price of Light."""
+
+    @pytest.fixture(scope="class")
+    def fp_vol(self):
+        from engine.book_compiler import collect_chapters, load_volume
+        vol = load_volume(VOLS / "first_principles_collected.yaml")
+        return vol, collect_chapters(vol)
+
+    def test_shape_and_opener(self, fp_vol):
+        vol, chapters = fp_vol
+        assert len(chapters) == 58 and len(vol.parts) == 5
+        assert chapters[0].episode_num == 27  # The Price of Light
+        assert sum(c.word_count for c in chapters) > 55000
+        eps = {c.episode_num for c in chapters}
+        assert 21 not in eps and 25 not in eps  # the retellings
+
+    def test_identity(self, fp_vol):
+        vol, _ = fp_vol
+        assert vol.anthology and float(vol.price_usd) == 7.99
+        assert vol.introduction_file.endswith(
+            "first_principles_index_note.md")
+        assert vol.subtitle.startswith("Fifty-eight ")
+
+    def test_contradictions_harmonized(self):
+        """The curation pass found two same-quantity contradictions
+        between kept chapters; both are fixed in the digests."""
+        t56 = _fp_digest(56)
+        assert "well below one kilowatt-hour per cubic meter in modern" \
+            not in t56
+        assert "three to four that real reverse-osmosis plants draw" in t56
+        t1 = _fp_digest(1)
+        assert "Idiot Index between four and five" not in t1
+        assert "five-to-fifteen range in this book's housing chapter" in t1
+
+
+class TestBiggerBooksShift:
+    """The forward pipeline can never cut pamphlets again, and the
+    storefront sells only the collected editions."""
+
+    def test_series_volume_size_is_book_length(self):
+        from engine.book_compiler import load_series
+        for slug in ("unintended_consequences", "first_principles"):
+            assert int(load_series(slug)["volume_size"]) == 50, slug
+
+    def test_thin_numbered_volumes_are_unlisted(self):
+        for name in ("unintended_consequences_vol1",
+                     "unintended_consequences_vol2",
+                     "unintended_consequences_vol3",
+                     "unintended_consequences_vol4",
+                     "first_principles_vol1", "first_principles_vol2",
+                     "first_principles_vol3"):
+            data = yaml.safe_load(
+                (VOLS / f"{name}.yaml").read_text(encoding="utf-8"))
+            assert data.get("unlisted") is True, name
+
+    def test_collected_editions_are_listed(self):
+        for name in ("unintended_consequences_collected",
+                     "first_principles_collected"):
+            data = yaml.safe_load(
+                (VOLS / f"{name}.yaml").read_text(encoding="utf-8"))
+            assert not data.get("unlisted"), name
+
+    def test_books_page_filters_unlisted(self):
+        src = (ROOT / "generate_html.py").read_text(encoding="utf-8")
+        assert 'vdata.get("unlisted")' in src
+
+
 class TestWO6CombinedVolume:
     """The combined 30-chapter edition + the parts/front-matter machinery."""
 
