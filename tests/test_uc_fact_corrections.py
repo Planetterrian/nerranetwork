@@ -68,9 +68,16 @@ class TestFactualCorrections:
         assert "two to six percent" in t
 
     def test_6_maya_bay_cap(self):
+        """WO-2 replaced the wrong 'daily cap of 375' with '380 per
+        hour'; the ledger pass then found no source for ANY specific
+        per-hour figure, so the digest now states the verified facts
+        (June 2018 closure, early-2022 reopening, hourly caps, boats
+        moored offshore) without an unverifiable number."""
         t = _digest(79)
         assert "daily cap of 375" not in t
-        assert "380 per hour" in t and "January 2022" in t
+        assert "380 per hour" not in t
+        assert "closed Maya Bay in June 2018" in t
+        assert "reopening it in early 2022 with strict hourly visitor caps" in t
 
     def test_7_maginot_depth(self):
         t = _digest(9)
