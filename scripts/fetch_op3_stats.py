@@ -88,6 +88,32 @@ def _list_show_yaml_paths(shows_dir: Path) -> List[Path]:
     )
 
 
+def _virtual_show_targets(root: Path, covered: set) -> List[Dict[str, str]]:
+    """Registry-only virtual shows (``shows/network_meta.yaml`` entries with
+    no ``shows/<slug>.yaml`` — Nerra Daily is the first) whose feeds carry
+    the OP3 prefix like any other. Without this the combined edition's
+    audience was measured NOWHERE: absent from this file, a show with no
+    listeners looks exactly like one that was never fetched — the same
+    hole the July 2026 language-feed fix closed for multilingual."""
+    import yaml
+
+    meta_path = root / "shows" / "network_meta.yaml"
+    try:
+        meta = yaml.safe_load(meta_path.read_text(encoding="utf-8")) or {}
+    except Exception as exc:  # noqa: BLE001 — registry damage must not kill the run
+        log.warning("op3: cannot parse network_meta.yaml: %s", exc)
+        return []
+    targets: List[Dict[str, str]] = []
+    for slug, entry in meta.items():
+        if not isinstance(entry, dict) or slug in covered:
+            continue
+        rss_file = str(entry.get("rss_file") or "").strip()
+        if not rss_file or not (root / rss_file).is_file():
+            continue
+        targets.append({"slug": slug, "rss_file": rss_file})
+    return sorted(targets, key=lambda t: t["slug"])
+
+
 def _blog_url_for_title(slug: str, title: str) -> str:
     """Relative blog URL when the episode HTML exists (underscored dirs)."""
     import re
@@ -348,6 +374,19 @@ def main(argv: Optional[List[str]] = None) -> int:
             time.sleep(2)  # politeness — OP3 rate-limits bursts (429)
         result = _fetch_show_stats(
             slug, _feed_url_for(rss_file), token, cached_uuid,
+        )
+        if result is not None:
+            shows[slug] = result
+
+    # Registry-only virtual shows (no shows/<slug>.yaml): Nerra Daily etc.
+    covered = {p.stem for p in _list_show_yaml_paths(root / "shows")}
+    for target in _virtual_show_targets(root, covered):
+        slug = target["slug"]
+        if shows:
+            time.sleep(2)  # politeness — OP3 rate-limits bursts (429)
+        result = _fetch_show_stats(
+            slug, _feed_url_for(target["rss_file"]), token,
+            (prev_shows.get(slug) or {}).get("show_uuid"),
         )
         if result is not None:
             shows[slug] = result

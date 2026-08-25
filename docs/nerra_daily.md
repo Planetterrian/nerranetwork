@@ -109,9 +109,33 @@ develops Mira's editorial voice beyond announcing.
   the same R2 key).
 - Publish surface: `nerra_daily_podcast.rss` (OP3-prefixed enclosures,
   `podcast:chapters` link), `digests/nerra_daily/` (summaries JSON,
-  chapters JSON, daily rundown .md, credit file), blog post via
-  `generate_html.py --show nerra_daily --blogs`. The rundown blog links
-  into each show's own episode post rather than duplicating digests.
+  chapters JSON, daily rundown .md, credit file, `metrics_ep*.json`),
+  blog post via `generate_html.py --show nerra_daily --blogs`. The
+  rundown blog links into each show's own episode post rather than
+  duplicating digests — and carries Mira's actual spoken prose (intro,
+  each handoff under its show's section, field note, sign-off) plus a
+  `> **<Weekday> edition — <lead hook>**` blockquote that
+  `engine/blog.py` needs for per-day blog titles (without it every
+  post titled itself with the italic byline — Aug 25 2026 review).
+- **Observability (Aug 25 2026):** each build commits
+  `metrics_ep*.json` — per-segment `cut_kind`/`cut_final_seconds`,
+  `segments_shipped_whole`, `missing_expected` (a show that published
+  AFTER the force-build, like Offshore North at 17:04 on Monday
+  2026-08-24), `segments_dropped`, `links_source` (llm vs fallback)
+  and the field-note flag. A trim that silently stops matching or a
+  chronic Monday miss is countable now instead of a lost log line.
+  Virtual-show registration: the OP3 fetcher (`_virtual_show_targets`
+  reads `network_meta.yaml`) and the dashboard cost rollup
+  (`_VIRTUAL_COST_SLUGS`) both had to learn about registry-only shows —
+  a future edition must be picked up by both or its audience and cost
+  are invisible.
+- **Rotation memory (Aug 25 2026):** `build_links_prompt` injects the
+  opening words of the last 10 committed intros (`{recent_openers}`)
+  and `build_find_prompt` the last 10 field-note topics
+  (`{recent_field_notes}`) as do-not-repeat blocks — data-side, the DP
+  Pod lever-memory pattern (all four launch intros opened "Good
+  morning.", and nothing stopped the field note from re-finding a
+  recently covered item).
 
 ## Operator checklist (one-time)
 

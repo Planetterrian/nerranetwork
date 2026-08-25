@@ -146,3 +146,17 @@ class TestLagAwareAnalyticsWindows:
         # Both the scorecard and the experiment WoW metric trim.
         assert src.count("ds = ds[:-2] if len(ds) > 2 else ds") == 2
         assert "excluded as unreported lag" in src
+
+
+class TestVirtualShowCosts:
+    """Nerra Daily's credit files live under digests/nerra_daily but the
+    dashboard derives its show list from shows/*.yaml, so the edition's
+    spend was invisible to every cost rollup (2026-08-25 review). The
+    virtual-slug list keeps registry-only shows in the money math."""
+
+    def test_nerra_daily_in_virtual_cost_slugs(self):
+        assert "nerra_daily" in gd._VIRTUAL_COST_SLUGS
+
+    def test_aggregate_costs_includes_virtual_shows(self):
+        costs = gd.aggregate_costs(ROOT, [])
+        assert "nerra_daily" in costs["per_show"]

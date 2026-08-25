@@ -562,6 +562,56 @@ def build_chapters(
 _MD_NOISE_RE = re.compile(r"[#*_`>\[\]]|\(https?://[^)]*\)")
 _WS_RE = re.compile(r"\s+")
 
+#: How many committed rundowns feed the do-not-repeat memory blocks below.
+RECENT_MEMORY_EPISODES = 10
+
+
+def _recent_rundowns(spec: EditionSpec, root: Path,
+                     limit: int = RECENT_MEMORY_EPISODES) -> List[str]:
+    """The last *limit* committed rundown .md files, oldest first."""
+    digest_dir = root / spec.digest_dir
+    if not digest_dir.exists():
+        return []
+    texts: List[str] = []
+    for path in sorted(digest_dir.glob(f"{spec.episode_prefix}_Ep*_*.md"))[-limit:]:
+        try:
+            texts.append(path.read_text(encoding="utf-8"))
+        except OSError:
+            continue
+    return texts
+
+
+def recent_intro_openers(spec: EditionSpec, root: Path,
+                         limit: int = RECENT_MEMORY_EPISODES,
+                         words: int = 8) -> List[str]:
+    """Opening words of recent editions' intros — data-side rotation memory
+    (the DP Pod lever-memory pattern). All four launch editions opened
+    "Good morning." because the model had no view of yesterday's opening;
+    an instruction alone cannot fix what the model cannot see."""
+    openers: List[str] = []
+    for text in _recent_rundowns(spec, root, limit):
+        for line in text.splitlines():
+            s = line.strip()
+            if not s or s.startswith(("#", ">", "*", "|", "-")):
+                continue
+            openers.append(" ".join(s.split()[:words]))
+            break
+    return openers
+
+
+def recent_field_note_topics(spec: EditionSpec, root: Path,
+                             limit: int = RECENT_MEMORY_EPISODES,
+                             words: int = 28) -> List[str]:
+    """Compact topics of recent field notes, so Mira never re-discovers the
+    same item two days running (the find prompt only excludes the DAY'S
+    lineup — without this, nothing excludes her own recent notes)."""
+    topics: List[str] = []
+    for text in _recent_rundowns(spec, root, limit):
+        m = re.search(r"^## Mira's field note\s*\n+(.+)$", text, re.MULTILINE)
+        if m:
+            topics.append(" ".join(m.group(1).strip().split()[:words]))
+    return topics
+
 
 def sanitize_spoken(text: str) -> str:
     """Make LLM output safe to hand to TTS: strip markdown residue, URLs
@@ -626,6 +676,15 @@ def build_links_prompt(
         )
     else:
         aoai_block = "No new Age of AI episode today. " + reflection
+    openers = recent_intro_openers(spec, root)
+    recent_openers = ""
+    if openers:
+        recent_openers = (
+            "Recent editions opened with these lines. Today's intro must not "
+            "reuse their opening words or repeat their sentence shape — vary "
+            "the greeting itself, not just what follows it:\n"
+            + "\n".join(f"- {o}" for o in openers)
+        )
     return template.format(
         date_spoken=target_date.strftime("%A, %B %-d, %Y"),
         weekday=target_date.strftime("%A"),
@@ -633,6 +692,7 @@ def build_links_prompt(
         handoff_count=max(0, len(segments) - 1),
         lineup_block="\n".join(lineup_lines),
         aoai_block=aoai_block,
+        recent_openers=recent_openers,
     )
 
 
@@ -690,9 +750,18 @@ def build_find_prompt(
     titles = "\n".join(
         f"- {seg.show_name}: {seg.hook or seg.episode_title}" for seg in segments
     )
+    topics = recent_field_note_topics(spec, root)
+    recent_notes = ""
+    if topics:
+        recent_notes = (
+            "Your recent field notes covered these items — today's find must "
+            "overlap with none of them (a different subject, not the same "
+            "story re-angled):\n" + "\n".join(f"- {t}" for t in topics)
+        )
     return template.format(
         date_spoken=target_date.strftime("%A, %B %-d, %Y"),
         lineup_titles=titles,
+        recent_field_notes=recent_notes,
     )
 
 
@@ -729,13 +798,19 @@ def aoai_new_episode(root: Path, target_date: _dt.date) -> Optional[dict]:
 # Titles, descriptions, digest markdown
 # ---------------------------------------------------------------------------
 
+def edition_hook(target_date: _dt.date, segments: List[Segment]) -> str:
+    """``"<Weekday> edition — <lead hook>"`` — the edition's per-day hook,
+    shared by the episode title and the digest's blockquote hook line."""
+    lead = segments[0].hook or segments[0].episode_title if segments else ""
+    return f"{target_date.strftime('%A')} edition — {lead}".rstrip(" —")
+
+
 def daily_title(episode_num: int, target_date: _dt.date, segments: List[Segment]) -> str:
     """``"Ep N: <Weekday> edition — <lead hook>"``, clipped by the one
     module that owns title limits (engine.titles)."""
     from engine.titles import episode_title  # noqa: PLC0415
 
-    lead = segments[0].hook or segments[0].episode_title if segments else ""
-    hook = f"{target_date.strftime('%A')} edition — {lead}"
+    hook = edition_hook(target_date, segments)
     return episode_title(hook, episode_num, fallback=f"Nerra Daily — {target_date.isoformat()}")
 
 
@@ -776,6 +851,13 @@ def build_digest_md(
         "",
         f"**Date:** {target_date.strftime('%B %d, %Y')}",
         "",
+        # The blockquote hook is what engine.blog's ``_HOOK_PATTERNS``
+        # match (the PR #292 ``> **<hook>**`` shape). Without it the blog's
+        # hook fallback grabbed the italic byline below, and — because the
+        # H1 starts with the show name — every post's <title>/<h1>/og:title
+        # became "Hosted by Mira · Episode N · …" (caught 2026-08-25).
+        f"> **{edition_hook(target_date, segments)}**",
+        "",
         f"*Hosted by {spec.host} · Episode {episode_num} · every English "
         f"show the Nerra Network published today, in one listen.*",
         "",
@@ -789,7 +871,8 @@ def build_digest_md(
         from generate_html import NETWORK_SHOWS as _ns  # noqa: PLC0415 — canonical page names
     except Exception:  # noqa: BLE001 — page links degrade to the slug convention
         _ns = {}
-    for seg in segments:
+    handoffs = links.get("handoffs") or []
+    for i, seg in enumerate(segments):
         blog_link = root / "blog" / seg.slug / f"ep{seg.episode_num:03d}.html"
         link_bits = []
         if blog_link.exists():
@@ -801,6 +884,15 @@ def build_digest_md(
         parts += [
             f"### {seg.show_name} — {seg.hook or seg.episode_title}",
             "",
+        ]
+        # Mira's spoken handoff introduces segment i (handoff i-1). It is
+        # the edition's only per-section prose — committing it makes the
+        # rundown blog more than a link list AND gives future reviews the
+        # cross-episode text the tic detector needs (nothing else records
+        # what Mira actually says between segments).
+        if 0 < i <= len(handoffs) and handoffs[i - 1]:
+            parts += [handoffs[i - 1], ""]
+        parts += [
             " · ".join(link_bits),
             "",
         ]
@@ -814,3 +906,50 @@ def build_digest_md(
         ]
     parts += ["## Sign-off", "", links["signoff"], ""]
     return "\n".join(parts)
+
+
+def build_edition_metrics(
+    episode_num: int,
+    target_date: _dt.date,
+    duration_seconds: float,
+    segments: List[Segment],
+    *,
+    links_source: str,
+    field_note_included: bool,
+    missing_expected: List[str],
+    dropped: List[str],
+) -> dict:
+    """The committed ``metrics_ep*.json`` record for one edition build.
+
+    The edition previously committed NO per-build record of what the
+    splice actually did — which expected shows were absent, which
+    segments shipped whole (plug included), whether the links came from
+    the LLM or the fallback. A trim that silently stops matching, or a
+    show that keeps missing the build window (Offshore North published
+    17:04 on 2026-08-24; the edition force-built 15:07 — the Monday
+    edition shipped without a show that DID publish that day), looks
+    identical to a healthy day without this file.
+    """
+    return {
+        "date": target_date.isoformat(),
+        "episode_num": episode_num,
+        "duration_seconds": round(duration_seconds, 1),
+        "segment_count": len(segments),
+        "segments": [
+            {
+                "slug": s.slug,
+                "episode_num": s.episode_num,
+                "cut_kind": s.cut_kind or "none",
+                "cut_final_seconds": s.cut_final_seconds,
+                "duration_seconds": round(s.duration_seconds or 0.0, 1),
+            }
+            for s in segments
+        ],
+        "segments_shipped_whole": sum(
+            1 for s in segments if s.cut_final_seconds is None
+        ),
+        "missing_expected": list(missing_expected),
+        "segments_dropped": list(dropped),
+        "links_source": links_source,
+        "field_note_included": bool(field_note_included),
+    }

@@ -115,7 +115,7 @@ class TestRegistration:
     def test_prompt_file_placeholders(self):
         text = (ROOT / SPEC.prompt_file).read_text(encoding="utf-8")
         for ph in ("{date_spoken}", "{segment_count}", "{handoff_count}",
-                   "{lineup_block}", "{aoai_block}"):
+                   "{lineup_block}", "{aoai_block}", "{recent_openers}"):
             assert ph in text, ph
         # De-seed by shape: the prompt must never supply a quotable example
         # sentence for Mira to copy (the three-generations-of-tics lesson).
@@ -136,7 +136,7 @@ class TestRegistration:
     def test_find_prompt_file(self):
         assert SPEC.daily_find
         text = (ROOT / SPEC.find_prompt_file).read_text(encoding="utf-8")
-        for ph in ("{date_spoken}", "{lineup_titles}"):
+        for ph in ("{date_spoken}", "{lineup_titles}", "{recent_field_notes}"):
             assert ph in text, ph
         assert "SKIP" in text  # the honest no-item escape hatch
 
@@ -409,3 +409,224 @@ class TestLinks:
         md_none = build_digest_md(SPEC, ROOT, 2, dt.date(2026, 8, 21), segs,
                                   links, None, find_text=None)
         assert "field note" not in md_none
+
+
+# ---------------------------------------------------------------------------
+# Blog surface — the rundown must give engine.blog a real hook (2026-08-25)
+# ---------------------------------------------------------------------------
+
+class TestBlogSurface:
+    """The first four editions' blog posts all titled themselves with the
+    italic byline ("Hosted by Mira · Episode N · …") because the rundown
+    .md carried no hook line and engine.blog's June-2026 normalization
+    replaces a show-name-prefixed H1 with the derived hook. Pins: the
+    digest emits the ``> **<hook>**`` blockquote engine.blog matches, the
+    handoffs are committed as per-section prose, and metadata extraction
+    lands on the per-day hook."""
+
+    def _segments(self, n=4):
+        return [
+            Segment(slug=f"s{i}", show_name=f"Show {i}", episode_num=i,
+                    episode_title=f"Ep {i}: hook {i}", hook=f"hook {i}",
+                    date="2026-08-24", audio_url="", content="",
+                    digest_dir=Path("."), transcript_path=None,
+                    music_intro_offset=0.0)
+            for i in range(1, n + 1)
+        ]
+
+    def _md(self, links=None):
+        from engine.daily_edition import build_digest_md
+
+        segs = self._segments()
+        links = links or fallback_links(SPEC, segs, dt.date(2026, 8, 24))
+        return build_digest_md(SPEC, ROOT, 4, dt.date(2026, 8, 24), segs,
+                               links, None)
+
+    def test_digest_carries_blockquote_hook(self):
+        md = self._md()
+        assert "> **Monday edition — hook 1**" in md
+        # The hook precedes the byline, so _HOOK_PATTERNS win before the
+        # fallback scan ever runs.
+        assert md.index("> **Monday edition") < md.index("*Hosted by")
+
+    def test_blog_metadata_title_is_the_edition_hook(self):
+        from engine.blog import extract_blog_metadata
+
+        meta = extract_blog_metadata(
+            self._md(), "nerra_daily", "Nerra_Daily_Ep004_20260824.md")
+        assert meta["title"].startswith("Monday edition — hook 1")
+        assert "Hosted by" not in meta["title"]
+
+    def test_byline_never_becomes_hook_even_without_blockquote(self):
+        # Legacy shape (pre-backfill rundowns): no blockquote hook. The
+        # italic byline must be skipped by the hook fallback; the intro
+        # prose is an acceptable last resort.
+        from engine.blog import extract_blog_metadata
+
+        md = self._md()
+        md = "\n".join(l for l in md.splitlines() if not l.startswith("> **"))
+        meta = extract_blog_metadata(
+            md, "nerra_daily", "Nerra_Daily_Ep004_20260824.md")
+        assert not meta["hook"].startswith("Hosted by")
+        assert not meta["title"].startswith("Hosted by")
+
+    def test_committed_rundowns_carry_the_hook(self):
+        # The four launch rundowns were backfilled; every future rundown
+        # gets the hook from build_digest_md. A committed rundown without
+        # one regresses the whole blog surface for that day.
+        paths = sorted((ROOT / SPEC.digest_dir).glob(
+            f"{SPEC.episode_prefix}_Ep*_*.md"))
+        assert paths, "no committed rundowns found"
+        for p in paths:
+            assert "\n> **" in p.read_text(encoding="utf-8"), p.name
+
+    def test_handoffs_committed_as_section_prose(self):
+        segs = self._segments()
+        links = fallback_links(SPEC, segs, dt.date(2026, 8, 24))
+        links["handoffs"] = ["Handoff into two.", "Handoff into three.",
+                             "Handoff into four."]
+        from engine.daily_edition import build_digest_md
+
+        md = build_digest_md(SPEC, ROOT, 4, dt.date(2026, 8, 24), segs,
+                             links, None)
+        # Handoff i-1 sits under section i (it is what introduces it);
+        # the first section has no handoff (the intro covers it).
+        assert "Handoff into two." in md
+        assert md.index("### Show 2") < md.index("Handoff into two.")
+        assert md.index("Handoff into two.") < md.index("### Show 3")
+        assert md.index("### Show 1") < md.index("### Show 2")
+        first_section = md[md.index("### Show 1"):md.index("### Show 2")]
+        assert "Handoff" not in first_section
+
+
+# ---------------------------------------------------------------------------
+# Edition metrics — the committed per-build record (2026-08-25)
+# ---------------------------------------------------------------------------
+
+class TestEditionMetrics:
+    """The edition previously committed NO record of what the splice did:
+    a trim that stopped matching, a fallback-links day, or an expected
+    show missing the build window (Offshore North, Monday 2026-08-24)
+    looked identical to a healthy day."""
+
+    def test_metrics_shape(self):
+        from engine.daily_edition import build_edition_metrics
+
+        seg = Segment(slug="tesla", show_name="Tesla Shorts Time",
+                      episode_num=582, episode_title="Ep 582: t", hook="t",
+                      date="2026-08-24", audio_url="", content="",
+                      digest_dir=Path("."), transcript_path=None,
+                      music_intro_offset=0.0,
+                      cut_final_seconds=345.4, cut_kind="promo",
+                      duration_seconds=345.4)
+        whole = Segment(slug="dp_pod", show_name="The DP Pod",
+                        episode_num=45, episode_title="Ep 45: d", hook="d",
+                        date="2026-08-24", audio_url="", content="",
+                        digest_dir=Path("."), transcript_path=None,
+                        music_intro_offset=0.0, duration_seconds=689.9)
+        m = build_edition_metrics(
+            4, dt.date(2026, 8, 24), 5095.8, [seg, whole],
+            links_source="llm", field_note_included=True,
+            missing_expected=["offshore_north"], dropped=[])
+        assert m["episode_num"] == 4 and m["date"] == "2026-08-24"
+        assert m["segment_count"] == 2
+        assert m["segments"][0]["cut_kind"] == "promo"
+        assert m["segments"][1]["cut_kind"] == "none"
+        assert m["segments_shipped_whole"] == 1
+        assert m["missing_expected"] == ["offshore_north"]
+        assert m["links_source"] == "llm"
+        assert m["field_note_included"] is True
+
+    def test_orchestrator_writes_metrics(self):
+        # The publish path must write metrics_ep*.json — pinned at the
+        # source level so a refactor cannot silently drop the record.
+        src = (ROOT / "scripts" / "build_daily_edition.py").read_text(
+            encoding="utf-8")
+        assert "build_edition_metrics" in src
+        assert 'metrics_ep{episode_num:03d}.json' in src
+
+
+# ---------------------------------------------------------------------------
+# Rotation memory — data-side do-not-repeat blocks (2026-08-25)
+# ---------------------------------------------------------------------------
+
+class TestRotationMemory:
+    """All four launch editions opened "Good morning." and nothing stopped
+    Mira's field note from re-finding a recent item: the prompts only ever
+    saw one day. The fix is the DP Pod lever-memory pattern — committed
+    rundowns are parsed back into do-not-repeat blocks. Instruction-only
+    variety asks were violated six days straight on dp_pod; memory must
+    stay DATA-side."""
+
+    def test_recent_intro_openers_from_committed_rundowns(self):
+        from engine.daily_edition import recent_intro_openers
+
+        openers = recent_intro_openers(SPEC, ROOT)
+        assert openers, "no openers parsed from committed rundowns"
+        # The launch tic this memory exists to break:
+        assert any(o.startswith("Good morning") for o in openers)
+        # Never a heading/byline — always spoken prose.
+        for o in openers:
+            assert not o.startswith(("#", "*", ">")), o
+
+    def test_recent_field_note_topics_from_committed_rundowns(self):
+        from engine.daily_edition import recent_field_note_topics
+
+        topics = recent_field_note_topics(SPEC, ROOT)
+        # Eps 2-4 carry field notes at minimum.
+        assert len(topics) >= 2
+        for t in topics:
+            assert len(t.split()) <= 28
+
+    def test_links_prompt_injects_opener_memory(self):
+        from engine.daily_edition import build_links_prompt
+
+        segs = [
+            Segment(slug="s1", show_name="Show 1", episode_num=1,
+                    episode_title="Ep 1: hook", hook="hook",
+                    date="2026-08-24", audio_url="", content="prose here",
+                    digest_dir=Path("."), transcript_path=None,
+                    music_intro_offset=0.0)
+        ]
+        prompt = build_links_prompt(SPEC, ROOT, segs, dt.date(2026, 8, 25), None)
+        assert "Recent editions opened with these lines" in prompt
+        assert "Good morning" in prompt
+
+    def test_find_prompt_injects_field_note_memory(self):
+        from engine.daily_edition import build_find_prompt
+
+        segs = [
+            Segment(slug="s1", show_name="Show 1", episode_num=1,
+                    episode_title="Ep 1: hook", hook="hook",
+                    date="2026-08-24", audio_url="", content="",
+                    digest_dir=Path("."), transcript_path=None,
+                    music_intro_offset=0.0)
+        ]
+        prompt = build_find_prompt(SPEC, ROOT, segs, dt.date(2026, 8, 25))
+        assert "recent field notes covered these items" in prompt
+
+    def test_memory_blocks_empty_on_fresh_edition(self, tmp_path):
+        # A brand-new edition (no committed rundowns) must render the
+        # prompts with EMPTY memory blocks, not crash — copy the prompt
+        # files into a bare root and build against it.
+        import shutil
+
+        from engine.daily_edition import (
+            build_find_prompt, build_links_prompt, recent_intro_openers,
+        )
+
+        (tmp_path / "shows" / "prompts").mkdir(parents=True)
+        for f in (SPEC.prompt_file, SPEC.find_prompt_file):
+            shutil.copy(ROOT / f, tmp_path / f)
+        assert recent_intro_openers(SPEC, tmp_path) == []
+        segs = [
+            Segment(slug="s1", show_name="Show 1", episode_num=1,
+                    episode_title="Ep 1: hook", hook="hook",
+                    date="2026-08-24", audio_url="", content="",
+                    digest_dir=Path("."), transcript_path=None,
+                    music_intro_offset=0.0)
+        ]
+        p1 = build_links_prompt(SPEC, tmp_path, segs, dt.date(2026, 8, 25), None)
+        p2 = build_find_prompt(SPEC, tmp_path, segs, dt.date(2026, 8, 25))
+        assert "Recent editions opened" not in p1
+        assert "recent field notes covered" not in p2

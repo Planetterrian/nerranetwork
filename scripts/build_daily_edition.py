@@ -47,6 +47,7 @@ from engine.daily_edition import (  # noqa: E402
     aoai_new_episode,
     build_chapters,
     build_digest_md,
+    build_edition_metrics,
     build_find_prompt,
     build_links_prompt,
     daily_title,
@@ -162,7 +163,10 @@ def _generate_links(
     tracker: Optional[dict],
     *,
     skip_llm: bool,
-) -> dict:
+) -> tuple:
+    """Returns ``(links, source)`` where source is ``"llm"`` or
+    ``"fallback"`` — recorded in the edition metrics so a quietly failing
+    LLM (every day on announcer lines) is visible, not just logged."""
     handoff_count = max(0, len(segments) - 1)
     if not skip_llm:
         try:
@@ -184,13 +188,13 @@ def _generate_links(
                 )
             links = parse_links_json(text, handoff_count)
             if links:
-                return links
+                return links, "llm"
             _annotate("warning", "Nerra Daily link generation returned an "
                                  "unusable shape — using the deterministic fallback")
         except Exception as exc:  # noqa: BLE001 — links must never sink the edition
             _annotate("warning", f"Nerra Daily link generation failed ({exc}) "
                                  "— using the deterministic fallback")
-    return fallback_links(spec, segments, target_date)
+    return fallback_links(spec, segments, target_date), "fallback"
 
 
 def _generate_daily_find(
@@ -276,7 +280,15 @@ def build_edition(
 
     segments, missing = discover_segments(spec, ROOT, target_date)
     if missing:
-        logger.warning("expected but absent today: %s", ", ".join(missing))
+        # Loud: an expected show absent at build time means the published
+        # edition is INCOMPLETE for the day even though the build succeeds
+        # (Offshore North published 17:04 on 2026-08-24, after the 15:07
+        # force-build — the Monday edition shipped without it). The
+        # annotation + the metrics record make the miss countable.
+        _annotate("warning",
+                  f"building the {target_date} edition WITHOUT expected "
+                  f"show(s): {', '.join(missing)} — they had not published "
+                  "at build time")
     if len(segments) < spec.min_segments:
         _annotate("error",
                   f"only {len(segments)} segment(s) available for "
@@ -304,6 +316,7 @@ def build_edition(
         pieces: List[Path] = []
         chapter_pieces: List[tuple] = []
         survivors: List[Segment] = []
+        dropped: List[str] = []
         for seg in segments:
             raw = workdir / f"raw_{seg.slug}.mp3"
             trimmed = workdir / f"seg_{seg.slug}.mp3"
@@ -326,6 +339,7 @@ def build_edition(
                 _annotate("warning",
                           f"segment {seg.slug} Ep{seg.episode_num} dropped "
                           f"from the edition: {exc}")
+                dropped.append(seg.slug)
                 continue
             finally:
                 raw.unlink(missing_ok=True)
@@ -342,8 +356,9 @@ def build_edition(
                       "floor; not publishing")
             return 1
 
-        links = _generate_links(spec, segments, target_date, aoai_today,
-                                tracker, skip_llm=skip_llm)
+        links, links_source = _generate_links(spec, segments, target_date,
+                                              aoai_today, tracker,
+                                              skip_llm=skip_llm)
 
         # --- Mira's links: TTS + normalize to the segment format.
         def mira(name: str, text: str) -> Path:
@@ -432,6 +447,7 @@ def build_edition(
                     for s in segments
                 ],
                 "links": links,
+                "links_source": links_source,
                 "field_note": find_text,
             }
             print(json.dumps(plan, indent=2, ensure_ascii=False))
@@ -487,6 +503,17 @@ def build_edition(
 
         _append_summary(spec, target_date, digest_md, episode_num, title, r2_url)
         save_usage(tracker, digest_dir)
+
+        metrics = build_edition_metrics(
+            episode_num, target_date, duration, segments,
+            links_source=links_source,
+            field_note_included=bool(find_text),
+            missing_expected=missing,
+            dropped=dropped,
+        )
+        (digest_dir / f"metrics_ep{episode_num:03d}.json").write_text(
+            json.dumps(metrics, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8")
 
         # Show page + summaries page + blog post for the day.
         proc = subprocess.run(
