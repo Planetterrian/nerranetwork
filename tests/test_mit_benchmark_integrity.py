@@ -36,6 +36,7 @@ from __future__ import annotations
 import datetime
 import itertools
 import json
+import re
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -2839,7 +2840,17 @@ class TestDisclosureCountsAirings(TestMethodologyDisclosure):
         # Ep100 says "The next Monday pick will target the energy
         # sector" — an earlier marker set matched that and would have
         # confirmed an airing that never happened. Every marker must be
-        # language only the correction produces.
+        # language only the correction produces — so markers may match
+        # ONLY episodes the tracker has stamped as disclosure airings.
+        # (The correction airs up to METHODOLOGY_DISCLOSURE_EPISODES
+        # times; a pinned one-episode list here broke the day the
+        # second legitimate airing shipped.)
+        tracker = json.loads(
+            (_ROOT / "digests/modern_investing/investment_tracker.json")
+            .read_text(encoding="utf-8"))
+        stamped = set(
+            tracker["metadata"]["methodology_disclosure_episodes"])
+        assert 145 in stamped, "the known Ep145 airing must stay stamped"
         scripts = sorted(
             (_ROOT / "digests/modern_investing").glob("*_tts.txt"))
         assert len(scripts) > 100, "corpus too small to validate markers"
@@ -2848,8 +2859,12 @@ class TestDisclosureCountsAirings(TestMethodologyDisclosure):
             if any(m in s.read_text(encoding="utf-8", errors="ignore").lower()
                    for m in mi._DISCLOSURE_MARKERS)
         ]
-        assert hits == ["Modern_Investing_Ep145_20260821_tts.txt"], (
-            f"markers matched unexpected scripts: {hits}")
+        hit_eps = {int(re.search(r"_Ep(\d+)_", h).group(1)) for h in hits}
+        assert 145 in hit_eps, "the Ep145 airing must match the markers"
+        unstamped = sorted(hit_eps - stamped)
+        assert not unstamped, (
+            f"markers matched episodes never stamped as disclosure "
+            f"airings (ordinary show language?): {unstamped} in {hits}")
 
 
 class TestPodcastPromptCarriesTheCorrection:

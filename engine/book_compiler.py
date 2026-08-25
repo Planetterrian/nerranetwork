@@ -133,6 +133,11 @@ class BookVolume:
     introduction_file: str = ""
     conclusion_file: str = ""
     author_bio_file: str = ""
+    #: Hidden from the public Books page (still built, still in the
+    #: catalog — bundle/direct extras). The bigger-books shift unlisted
+    #: the pamphlet-thin numbered volumes; the collected editions are
+    #: the store products.
+    unlisted: bool = False
     #: True for a combined/best-of volume that REUSES episodes already
     #: published in the numbered volumes. Anthologies are exempt from the
     #: contiguous/disjoint coverage invariant and from the planner's
@@ -196,10 +201,15 @@ def load_series(slug_or_path: str | Path) -> Dict:
     if missing:
         raise ValueError(f"series config {path} missing fields: {missing}")
     size = int(data["volume_size"])
-    if not 10 <= size <= 20:
+    # Band widened 10-20 -> 10-60 (Aug 2026, operator-directed): the
+    # 20-chapter volumes the planner cut came out at 12-24k words —
+    # pamphlet-length at store prices. Future auto-planned volumes are
+    # book-length annual collections (volume_size ~50 => ~40-55k words
+    # at current chapter lengths).
+    if not 10 <= size <= 60:
         raise ValueError(
             f"series {data['show_slug']}: volume_size {size} outside the "
-            "10-20 stories-per-volume band"
+            "10-60 stories-per-volume band"
         )
     return data
 

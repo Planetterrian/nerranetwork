@@ -421,14 +421,16 @@ class TestSeriesInheritance:
         for slug in slugs:
             s = load_series(slug)
             assert s["author"] == "Patrick Novak"
-            assert 10 <= int(s["volume_size"]) <= 20
+            # Band widened to 10-60 (Aug 2026 bigger-books shift):
+            # future planner-cut volumes are book-length.
+            assert 10 <= int(s["volume_size"]) <= 60
 
     def test_volume_size_outside_band_raises(self, tmp_path):
         from engine.book_compiler import load_series
         bad = tmp_path / "s.yaml"
         bad.write_text(
             "show_slug: x\nshow_name: X\nseries_title: X\n"
-            "author: A\nvolume_size: 50\n", encoding="utf-8")
+            "author: A\nvolume_size: 99\n", encoding="utf-8")
         try:
             load_series(bad)
         except ValueError:
