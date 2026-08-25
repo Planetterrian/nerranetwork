@@ -541,6 +541,13 @@ def extract_blog_metadata(
                 continue
             if all(c in "━─═" for c in stripped):
                 continue
+            # Full-line italics are bylines/decorations, never hook prose —
+            # Nerra Daily's "*Hosted by Mira · Episode N · …*" byline was
+            # elected the hook here, and because the H1 starts with the
+            # show name the June-2026 normalization then replaced every
+            # post's <title>/<h1>/og:title with it (caught 2026-08-25).
+            if re.fullmatch(r"\*[^*].*\*", stripped):
+                continue
             # Lines with internal `**...**` bold are decorations / show
             # subtitles ("🌍 **Planetterrian Daily** - Science, Longevity
             # & Health Discoveries"), never the hook prose. The hook is

@@ -582,6 +582,28 @@ today's work, not just explain yesterday's):
   post — never duplicates their digests). Docs:
   [`docs/nerra_daily.md`](docs/nerra_daily.md). Drift guards:
   `tests/test_daily_edition.py`.
+  **Aug 25 2026 first quality pass** (review:
+  [`docs/reviews/nerra_daily_review_2026_08_25.md`](docs/reviews/nerra_daily_review_2026_08_25.md);
+  ledger `docs/reviews/ledger/nerra_daily.yaml`): audio core verified
+  healthy (promo cut 44/44 segments, all `kind=promo`), but the
+  periphery wasn't — every blog post titled itself with the italic
+  byline (fixed: the rundown now emits the `> **<hook>**` blockquote
+  via `edition_hook()`, `engine/blog.py` skips full-italic bylines,
+  four rundowns backfilled), and **being a virtual show made it
+  invisible to every shows-glob loop**: OP3 never resolved its feed
+  (fetcher now reads registry-only shows from `network_meta.yaml` —
+  `_virtual_show_targets`), the dashboard cost rollup missed its
+  credit files (`_VIRTUAL_COST_SLUGS`), and no per-build record
+  existed (now `metrics_ep*.json`: cut kinds, `missing_expected` —
+  Offshore North published 17:04 on Monday 2026-08-24, after the
+  15:07 force-build, and the miss was uncountable). A new virtual
+  show must be added to those two lists or it repeats the hole.
+  Mira's handoffs now commit into the rundown .md (tic-detection
+  substrate + unique blog prose), and both prompts gained data-side
+  rotation memory (`{recent_openers}` / `{recent_field_notes}` — all
+  four intros had opened "Good morning."). Launch registered as
+  experiment `nerra-daily-launch` (readout 2026-09-22; needs the
+  Apple/Spotify submission from the operator checklist).
 - All shows delegate X posting to `engine.publisher.post_to_x()`
 - TST/FF/PT delegate voice normalization to `engine.audio.normalize_voice()`
 - All shows use `engine.audio.mix_with_music()` for music mixing (3 modes:

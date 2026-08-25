@@ -2,6 +2,8 @@
 
 **Date:** August 21, 2026
 
+> **Friday edition — Nevada's clearance for thousands of robotaxis gives Tesla its clearest path yet to scale…**
+
 *Hosted by Mira · Episode 1 · every English show the Nerra Network published today, in one listen.*
 
 Good morning. This is Nerra Daily for Friday, August 21, 2026. I'm Mira. Today's edition follows Tesla's progress on unsupervised robotaxi operations and supporting infrastructure, measures how reliably AI agents handle full business workflows, and weighs the economics of letting forests recover on their own. We also examine drought restrictions on a major trade route, long-bond buybacks, and shifts in how vaccines are produced at scale. We open with a new high-power charging site Tesla opened in Vernon, California, placed near the industrial corridors where early Semi customers are concentrated.

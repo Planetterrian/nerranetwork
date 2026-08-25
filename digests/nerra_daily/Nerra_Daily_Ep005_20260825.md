@@ -2,6 +2,8 @@
 
 **Date:** August 25, 2026
 
+> **Tuesday edition — Louisiana launch pad plans would give Starship a new Gulf Coast site that directly raises…**
+
 *Hosted by Mira · Episode 5 · every English show the Nerra Network published today, in one listen.*
 
 Good morning. This is Mira with Nerra Daily for Tuesday, August 25, 2026. The day moves from planned launch infrastructure on the Gulf Coast to tests of high-volume electric truck production, a long-delayed arrival at Mercury, and small-scale models completing full coding tasks without cloud support. Health data, institutional warnings, market signals in crypto, the breakdown of formula pricing, a browser-based chat with no account required, and fresh renewable capacity all appear as well. SpaceX plans to detail its Louisiana site later today, with Vermilion Parish residents set to learn the location near Pecan Island and the timeline that would follow.

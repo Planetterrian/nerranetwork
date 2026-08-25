@@ -289,3 +289,32 @@ class TestLanguageFeedMeasurement:
         entry = json.loads(out.read_text())["language_feeds"]["tesla:fr"]
         assert entry["downloads_30d"] == 42
         assert entry["not_refreshed_this_run"] is True
+
+
+class TestVirtualShowTargets:
+    """Registry-only virtual shows (network_meta.yaml entries with no
+    shows/<slug>.yaml — Nerra Daily is the first) must be resolved
+    against OP3 like any other show: absent from api/op3_stats.json, a
+    show with zero listeners is indistinguishable from one that was
+    never measured (2026-08-25 Nerra Daily review)."""
+
+    def test_nerra_daily_is_a_virtual_target(self):
+        from scripts.fetch_op3_stats import (
+            _list_show_yaml_paths, _virtual_show_targets,
+        )
+
+        covered = {p.stem for p in _list_show_yaml_paths(_ROOT / "shows")}
+        targets = _virtual_show_targets(_ROOT, covered)
+        slugs = {t["slug"] for t in targets}
+        assert "nerra_daily" in slugs
+        by_slug = {t["slug"]: t for t in targets}
+        assert by_slug["nerra_daily"]["rss_file"] == "nerra_daily_podcast.rss"
+
+    def test_yaml_covered_shows_never_duplicated(self):
+        from scripts.fetch_op3_stats import (
+            _list_show_yaml_paths, _virtual_show_targets,
+        )
+
+        covered = {p.stem for p in _list_show_yaml_paths(_ROOT / "shows")}
+        targets = _virtual_show_targets(_ROOT, covered)
+        assert not covered & {t["slug"] for t in targets}
