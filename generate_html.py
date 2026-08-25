@@ -3833,6 +3833,22 @@ def generate_books_page(*, dry_run=False):
         try:
             volumes = json.loads(
                 catalog_path.read_text(encoding="utf-8")).get("volumes", [])
+            # The bigger-books shift (Aug 2026): volumes flagged
+            # unlisted in their YAML stay built + cataloged but are
+            # hidden from the storefront — the collected editions are
+            # the store products. The flag lives in the volume YAML so
+            # visibility can change without a rebuild.
+            import yaml as _yaml
+            unlisted = set()
+            for vp in (ROOT / "books" / "volumes").glob("*.yaml"):
+                try:
+                    vdata = _yaml.safe_load(vp.read_text(encoding="utf-8"))
+                    if vdata and vdata.get("unlisted"):
+                        unlisted.add(vdata.get("volume_id"))
+                except Exception:  # noqa: BLE001 — visibility is best-effort
+                    pass
+            volumes = [v for v in volumes
+                       if v.get("volume_id") not in unlisted]
         except (json.JSONDecodeError, OSError) as exc:
             print(f"Warning: books catalog unreadable ({exc}) — "
                   "rendering empty Books page", file=sys.stderr)

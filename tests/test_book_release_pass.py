@@ -268,23 +268,27 @@ class TestWO6CombinedVolume:
         build_epub(vol, chapters, out)
         return vol, chapters, zipfile.ZipFile(out)
 
-    def test_thirty_chapters_five_parts_kudzu_opens(self, built):
+    def test_omnibus_shape_kudzu_opens(self, built):
+        """The complete edition: all 73 surviving chapters (~54k words —
+        a real book at $7.99, per the operator's bigger-books
+        direction), 8 parts, Kudzu first (it debunks a myth the reader
+        arrives believing — the inverse of the cut Cobra opener)."""
         vol, chapters, _ = built
-        assert len(chapters) == 30 and len(vol.parts) == 5
-        assert all(len(p["episodes"]) == 6 for p in vol.parts)
-        # Kudzu (ep59) opens the book: it debunks a myth the reader
-        # arrives believing — the inverse of the cut Cobra opener.
+        assert len(chapters) == 73 and len(vol.parts) == 8
         assert chapters[0].episode_num == 59
         assert chapters[0].title.lower().startswith("kudzu")
         # No cut episode sneaks back in via the anthology.
         assert not CUT_EPISODES & {c.episode_num for c in chapters}
+        # Word count stays book-length — a regression here means the
+        # store listing is thin again.
+        assert sum(c.word_count for c in chapters) > 45000
 
     def test_anthology_identity_and_price(self, built):
         vol, _, _ = built
         assert vol.anthology and vol.volume_number == 0
         assert vol.full_title == "Unintended Consequences: The Collected Edition"
         assert float(vol.price_usd) == 7.99
-        assert vol.subtitle.startswith("Thirty ")
+        assert vol.subtitle.startswith("Seventy-three ")
 
     def test_epub_structure_with_parts(self, built):
         _, _, z = built
@@ -386,8 +390,8 @@ class TestWO6CombinedVolume:
         _, _, z = built
         assert "OEBPS/sources.xhtml" in z.namelist()
         src = z.read("OEBPS/sources.xhtml").decode("utf-8")
-        assert src.count("<h2>") == 30  # one group per chapter
-        assert src.count('<a href="http') >= 100
+        assert src.count("<h2>") == 73  # one group per chapter
+        assert src.count('<a href="http') >= 250
 
     def test_single_volume_builds_unaffected_by_parts_machinery(self,
                                                                 tmp_path):
