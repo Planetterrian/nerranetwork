@@ -100,10 +100,19 @@ develops Mira's editorial voice beyond announcing.
 - `workflow_run` after every "Run Podcast Show" completion + the
   `--when-ready` gate in `scripts/build_daily_edition.py`: the edition
   assembles minutes after the LAST show expected that weekday lands.
-- Scheduled sweeps (14:23 / 17:23 UTC) are idempotent fallbacks; past
-  14:00 UTC the gate stops waiting for stragglers (a show that
-  legitimately skipped would otherwise block the edition forever) and
-  builds with whatever published, refusing below 4 segments.
+- Scheduled sweeps (12:23 / 14:23 / 17:23 UTC) are idempotent
+  fallbacks; past **12:00 UTC** (was 14:00 — Aug 2026
+  land-by-6am-Pacific pass) the gate stops waiting for stragglers (a
+  show that legitimately skipped would otherwise block the edition
+  forever) and builds with whatever published, refusing below 4
+  segments. The punctual force driver is the Cloudflare scheduler
+  Worker's 12:07 UTC dispatch (`EDITION_DISPATCH` in
+  `workers/scheduler` — GitHub sweeps run hours late), so a straggler
+  day lands ~12:40 UTC = 5:40am PDT / 4:40am PST; a complete day still
+  assembles minutes after the last show (~10:30-11:00 UTC). A show
+  publishing between 12:00 and its old 14:00 window now misses the
+  edition — `metrics_ep*.json` `missing_expected` counts those, so the
+  hour can be revisited on data.
 - Idempotency key: the committed summaries entry for the edition date.
   Re-runs after a failed commit rebuild cleanly (the MP3 re-uploads to
   the same R2 key).

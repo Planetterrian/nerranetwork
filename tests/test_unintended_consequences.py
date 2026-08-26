@@ -357,3 +357,91 @@ def test_cron_entry_exists_for_unintended_consequences():
         "CRON_MAP entry for Unintended Consequences missing — show "
         "would fire but never run"
     )
+
+
+class TestGateBlockCooldown:
+    """Loop-breaker (Aug 25 2026): the source-integrity gate's skip
+    preserves the queue slot by design, which turned one 403-heavy topic
+    into an indefinite outage (UC re-picked the Philippine land-reform
+    topic on 8/24 AND 8/25 and published nothing either day). A topic the
+    gate has blocked GATE_BLOCK_DEFER_THRESHOLD times is deferred by the
+    picker — loudly, staying in the queue for the operator."""
+
+    def _queue(self, tmp_path: Path, first_extra=None):
+        queue_file = tmp_path / "q.yaml"
+        first = {"id": "hot", "title": "Hot topic", "brief": "sources 403",
+                 "category": "classic", "produced": False,
+                 "episode_number": None, "produced_date": None}
+        first.update(first_extra or {})
+        queue_file.write_text(yaml.safe_dump({
+            "queue": [
+                first,
+                {"id": "next", "title": "Next", "brief": "fine sources",
+                 "category": "tech", "produced": False,
+                 "episode_number": None, "produced_date": None},
+            ],
+        }))
+        return queue_file
+
+    def test_below_threshold_still_picked(self, tmp_path: Path):
+        from engine.topic_queue import pick_next_topic
+        queue_file = self._queue(tmp_path, {"gate_blocks": 1})
+        assert pick_next_topic(queue_file)["id"] == "hot"
+
+    def test_at_threshold_deferred(self, tmp_path: Path):
+        from engine.topic_queue import (
+            GATE_BLOCK_DEFER_THRESHOLD, pick_next_topic,
+        )
+        queue_file = self._queue(
+            tmp_path, {"gate_blocks": GATE_BLOCK_DEFER_THRESHOLD,
+                       "gate_blocked_last": "2026-08-25"})
+        assert pick_next_topic(queue_file)["id"] == "next"
+
+    def test_all_deferred_returns_none(self, tmp_path: Path):
+        from engine.topic_queue import pick_next_topic
+        queue_file = tmp_path / "q.yaml"
+        queue_file.write_text(yaml.safe_dump({
+            "queue": [
+                {"id": "hot", "title": "Hot", "brief": "blocked",
+                 "category": "classic", "produced": False, "gate_blocks": 2,
+                 "episode_number": None, "produced_date": None},
+            ],
+        }))
+        assert pick_next_topic(queue_file) is None
+
+    def test_record_gate_block_increments_and_is_idempotent_per_day(
+            self, tmp_path: Path):
+        from engine.topic_queue import pick_next_topic, record_gate_block
+        queue_file = self._queue(tmp_path)
+        assert record_gate_block(queue_file, "hot", "2026-08-24") is True
+        # Same-day rerun must not double-count.
+        assert record_gate_block(queue_file, "hot", "2026-08-24") is False
+        assert pick_next_topic(queue_file)["id"] == "hot"  # 1 < threshold
+        assert record_gate_block(queue_file, "hot", "2026-08-25") is True
+        data = yaml.safe_load(queue_file.read_text())
+        entry = data["queue"][0]
+        assert entry["gate_blocks"] == 2
+        assert entry["gate_blocked_last"] == "2026-08-25"
+        # Threshold reached -> deferred; the next topic runs.
+        assert pick_next_topic(queue_file)["id"] == "next"
+
+    def test_queue_health_surfaces_deferred(self, tmp_path: Path):
+        from engine.topic_queue import queue_health
+        queue_file = self._queue(tmp_path, {"gate_blocks": 2})
+        health = queue_health(queue_file)
+        assert health["remaining"] == 2
+        assert health["gate_deferred"] == 1
+
+    def test_run_show_records_block_before_skip(self):
+        src = (Path(__file__).resolve().parent.parent / "run_show.py").read_text(
+            encoding="utf-8")
+        assert "record_gate_block" in src
+        assert src.index("record_gate_block") < src.index(
+            '"source_integrity_failed"')
+
+    def test_workflow_commits_cooldown_state_on_skip(self):
+        wf = (Path(__file__).resolve().parent.parent / ".github" / "workflows"
+              / "run-show.yml").read_text(encoding="utf-8")
+        assert "Commit topic-queue cooldown state" in wf
+        assert "steps.pipeline.outputs.skipped == 'true'" in wf
+        assert "git add shows/topic_queues/" in wf

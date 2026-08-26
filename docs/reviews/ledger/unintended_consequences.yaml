@@ -77,4 +77,54 @@ reviews:
         evidence: null
     agent_cost_usd: null
 
+  - date: 2026-08-25
+    pr: null
+    doc: null
+    reviewer: claude-code (operator-directed outage forensics + pipeline fix)
+    summary: >-
+      UC published nothing 8/24-8/25: the source-integrity gate blocked
+      the Philippine land-reform topic both days (officialgazette.gov.ph
+      403s automated readers - six of eight claims on 8/24; statute pages
+      defeat the quote match), and the gate's queue-preserving skip
+      re-picked the same topic daily with no persisted state. The 16:56
+      audit retries died on an unrelated stale test guard (8/25) or
+      grok-4.6 APIConnectionError (8/24, first_principles).
+    shipped:
+      - >-
+        Gate labels 403/429/5xx/transport failures `unreachable` (still a
+        FAILURE - the enforce contract is untouched) distinct from the
+        fabrication signature (engine/claims.py).
+      - >-
+        One-shot claim repair before an enforce-mode block: the model
+        re-sources ONLY failed claims with fetchable alternatives (claim
+        text + anchor pinned), then the FULL mechanical gate re-runs.
+      - >-
+        Gate-block cooldown: record_gate_block() annotates the queue
+        entry (committed by run-show.yml's skip-path step); the picker
+        defers a topic at 2 blocks, loudly. queue_health gains
+        gate_deferred.
+      - >-
+        Philippine land-reform topic annotated gate_blocks: 2 so UC runs
+        its next topic (Brazil ethanol) immediately after merge.
+    deferred:
+      - >-
+        Re-clear the Philippine topic once the repair pass has a track
+        record (delete gate_blocks/gate_blocked_last to retry it).
+      - >-
+        grok-4.6 staged-trial signals for the 2026-09-01 readout: FPD
+        APIConnectionError retry death (8/24), UC digest truncation retry
+        + repetition warnings ("rice and corn" x5, "### segment" x6).
+    predictions:
+      - metric: "UC consecutive missed days from a single gate-blocked topic"
+        baseline: "2 (2026-08-24/25, same topic re-picked daily)"
+        expected: "max 2 by construction - the cooldown defers on the 2nd block; 0 missed days from this class over the next 30 days"
+        verdict: pending
+        evidence: null
+      - metric: "enforce-mode gate blocks recovered by claim repair (metrics: source_integrity_repair_succeeded)"
+        baseline: "0 (no repair path existed)"
+        expected: ">=1 recovery in the first 30 days of narrative episodes, with zero unverified claims shipped (gate contract intact)"
+        verdict: pending
+        evidence: null
+    agent_cost_usd: null
+
 do_not_retry: []

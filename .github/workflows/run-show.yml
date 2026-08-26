@@ -547,6 +547,32 @@ jobs:
           # can break a run.
           NERRA_SINGLE_PASS_RENDER: ${{ vars.NERRA_SINGLE_PASS_RENDER }}
 
+      - name: Commit topic-queue cooldown state (gate-block skips)
+        # A source_integrity_failed skip publishes nothing and the normal
+        # commit step is skipped — so the ONLY durable record that a topic
+        # blocked the gate is the queue annotation run_show wrote
+        # (gate_blocks / gate_blocked_last, engine/topic_queue.py).
+        # Without this commit the loop-breaker has amnesia and the same
+        # topic is re-picked every day (UC 2026-08-24/25: two lost days on
+        # one 403-heavy topic). Narrow by design: commits ONLY the
+        # shows/topic_queues/ path, best-effort, never fails the job.
+        if: always() && steps.pipeline.outputs.skipped == 'true'
+        run: |
+          if git diff --quiet -- shows/topic_queues/; then
+            echo "No topic-queue cooldown state to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add shows/topic_queues/
+          git commit -m "Topic-queue gate-block state: ${{ matrix.show }} $(date -u +%F)"
+          for i in 1 2 3 4; do
+            git pull --rebase origin main && git push origin main && exit 0
+            sleep $((2 ** i))
+          done
+          echo "::warning::Could not push topic-queue cooldown state (non-fatal; a rerun re-records it)"
+          exit 0
+
       - name: Validate output
         if: steps.pipeline.outputs.skipped != 'true'
         run: |

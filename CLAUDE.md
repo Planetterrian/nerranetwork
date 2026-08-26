@@ -87,6 +87,29 @@ remove leakage; the ledger carries provenance. Audit tools:
 (ex-`check_sources.py`) grades FEED health only — it has no view on
 truth. Drift guards: `tests/test_source_integrity.py`.
 
+**Aug 25 2026 — unreachable ≠ fabricated, plus two loop-breakers.** UC
+lost two days because its next topic's authoritative sources
+(officialgazette.gov.ph) 403 GitHub runners: the gate read "cannot
+fetch" as "fabricated", the queue-preserving skip re-picked the same
+topic daily, and nothing persisted the failure. Now: (1) verification
+labels 403/429/5xx/transport failures `unreachable` — **still a gate
+FAILURE** (the enforce contract is untouched), but distinct from the
+fabrication signature (404 / quote-not-found); (2) an enforce-mode
+block first gets ONE `attempt_claim_repair` pass (the model re-sources
+only the failed claims with fetchable alternatives — claim text and
+anchor are pinned, the repaired ledger re-runs the FULL mechanical
+gate, so repair can never launder an unverifiable claim); (3) a topic
+the gate blocks twice is **deferred by the picker**
+(`gate_blocks`/`gate_blocked_last` on the queue entry, committed by
+run-show.yml's skip-path step — the annotation is the only thing that
+survives a skip; threshold in
+`engine.topic_queue.GATE_BLOCK_DEFER_THRESHOLD`). Deferred topics stay
+in the queue for the operator and are surfaced by
+`queue_health()["gate_deferred"]`. Guards:
+`TestUnreachableClassification`, `TestClaimRepair`
+(`tests/test_source_integrity.py`), `TestGateBlockCooldown`
+(`tests/test_unintended_consequences.py`).
+
 ## Project Overview
 
 Automated daily podcast generation system running 17 shows via a unified
@@ -564,7 +587,9 @@ today's work, not just explain yesterday's):
   `scripts/build_daily_edition.py` + `engine/daily_edition.py`, workflow
   `.github/workflows/nerra-daily.yml` (workflow_run after each Run Podcast
   Show + ready gate: builds minutes after the last expected show lands;
-  ≥14:00 UTC sweeps build with whatever published; committed summaries
+  ≥12:00 UTC sweeps build with whatever published (12:00 force hour +
+  the scheduler Worker's 12:07 dispatch land straggler days ~5:40am PT
+  — Aug 2026 pass); committed summaries
   entry per date = idempotency key). **Each segment's baked-in outro tail
   (network sibling plug → surface plug → AI disclosure) is trimmed via
   the committed Whisper word timestamps** (`find_promo_cut` — fuzzy on
