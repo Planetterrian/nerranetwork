@@ -636,6 +636,14 @@ jobs:
           GOOGLE_ADS_ID: ${{ secrets.GOOGLE_ADS_ID }}
           GOOGLE_ADS_SIGNUP_LABEL: ${{ secrets.GOOGLE_ADS_SIGNUP_LABEL }}
           PLAUSIBLE_DOMAIN: ${{ secrets.PLAUSIBLE_DOMAIN }}
+          # Nerra Personal + donations: the four live Stripe Payment
+          # Links (public URLs — they render into join/support pages).
+          # Repo variables override these committed defaults so the
+          # operator can rotate links without a commit.
+          STRIPE_LINK_PERSONAL: ${{ vars.STRIPE_LINK_PERSONAL || 'https://buy.stripe.com/8x26oI4Ho7Lc6Qa1VB0Ba00' }}
+          STRIPE_LINK_PERSONAL_LOCAL: ${{ vars.STRIPE_LINK_PERSONAL_LOCAL || 'https://buy.stripe.com/dRm6oI7TAfdEgqK9o30Ba01' }}
+          STRIPE_LINK_DONATE_MONTHLY: ${{ vars.STRIPE_LINK_DONATE_MONTHLY || 'https://buy.stripe.com/7sYcN61vc6H8b6q1VB0Ba02' }}
+          STRIPE_LINK_DONATE_ONCE: ${{ vars.STRIPE_LINK_DONATE_ONCE || 'https://donate.stripe.com/dRm8wQ8XEd5weiC0Rx0Ba03' }}
         run: |
           # Regenerate show page (static episodes) + blog posts for this show
           python generate_html.py --show ${{ matrix.show }} --blogs
@@ -857,6 +865,14 @@ jobs:
           GOOGLE_ADS_ID: ${{ secrets.GOOGLE_ADS_ID }}
           GOOGLE_ADS_SIGNUP_LABEL: ${{ secrets.GOOGLE_ADS_SIGNUP_LABEL }}
           PLAUSIBLE_DOMAIN: ${{ secrets.PLAUSIBLE_DOMAIN }}
+          # Nerra Personal + donations: the four live Stripe Payment
+          # Links (public URLs — they render into join/support pages).
+          # Repo variables override these committed defaults so the
+          # operator can rotate links without a commit.
+          STRIPE_LINK_PERSONAL: ${{ vars.STRIPE_LINK_PERSONAL || 'https://buy.stripe.com/8x26oI4Ho7Lc6Qa1VB0Ba00' }}
+          STRIPE_LINK_PERSONAL_LOCAL: ${{ vars.STRIPE_LINK_PERSONAL_LOCAL || 'https://buy.stripe.com/dRm6oI7TAfdEgqK9o30Ba01' }}
+          STRIPE_LINK_DONATE_MONTHLY: ${{ vars.STRIPE_LINK_DONATE_MONTHLY || 'https://buy.stripe.com/7sYcN61vc6H8b6q1VB0Ba02' }}
+          STRIPE_LINK_DONATE_ONCE: ${{ vars.STRIPE_LINK_DONATE_ONCE || 'https://donate.stripe.com/dRm8wQ8XEd5weiC0Rx0Ba03' }}
           # R2 read creds for the gallery-manifest rebuild (clean no-op
           # when unset — the builder writes an empty manifest).
           R2_GALLERY_BUCKET: ${{ secrets.R2_GALLERY_BUCKET }}
