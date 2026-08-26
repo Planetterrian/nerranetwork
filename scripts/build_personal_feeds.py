@@ -131,8 +131,16 @@ def load_specs(args) -> List[PersonalSpec]:
 
         token = os.environ.get("PERSONAL_ADMIN_TOKEN", "")
         if not token:
-            logger.error("PERSONAL_ADMIN_TOKEN required for --fetch")
-            return []
+            # Raise, don't return []. An empty list flows into main()'s
+            # "no active subscribers — nothing to do" and exits 0, so a
+            # host that cannot authenticate looks exactly like a healthy
+            # idle one — green run, zero output, no subscriber served.
+            # The batch repo's first three scheduled runs (2026-08-24 to
+            # 08-26) were green that way before the secret was set.
+            raise SystemExit(
+                "PERSONAL_ADMIN_TOKEN required for --fetch: refusing to "
+                "report zero subscribers when the real answer is unknown"
+            )
         resp = requests.get(
             f"{API_BASE}/api/admin/personal-specs",
             headers={"Authorization": f"Bearer {token}"}, timeout=60,
