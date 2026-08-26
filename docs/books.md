@@ -176,9 +176,34 @@ each at submission time.
    (192k CBR 44.1kHz mono).
 6. **Direct on nerranetwork.com** — /books.html lists volumes with buy
    buttons + the free sample EPUB (email-capture lead magnet). Direct
-   *sales* (Stripe/Gumroad checkout delivering the EPUB/M4B) are the
-   Gallery-Pro payment-rail work item — when that rail exists, books
-   plug into it; until then the page routes to the stores.
+   *sales* go through Payhip as merchant-of-record (see "Direct sales"
+   below): Payhip holds its own copy of the EPUB/M4B and delivers it to
+   the buyer, so the network never serves the paid files itself.
+
+## Where the artifacts live (two buckets, on purpose)
+
+| Artifact | Bucket | Reachable by |
+|---|---|---|
+| `cover.png`, `<id>_sample.epub` | `podcast-audio` (public, audio.nerranetwork.com) | anyone — these are the marketing assets |
+| `<id>.epub`, `<id>.m4b`, `audio/track_*.mp3` | `nerra-books` (private, no public hostname) | credentialed clients only |
+
+The catalog records public assets as https URLs and paid masters as
+`r2://nerra-books/<key>` references — a location, not a promise that
+anyone can fetch it. `scripts/verify_book_catalog.py` checks the first
+kind with an HTTP HEAD and the second with `head_object`, and fails the
+build if a paid master ever carries an https URL again.
+
+**Why the split exists.** Until 2026-08-26 everything went to the public
+bucket and every URL was committed to `books/catalog.json` in this
+*public* repo: 596 objects, 3.1 GB — nine volumes of finished EPUBs,
+audiobooks and per-chapter masters, free to anyone who opened the JSON,
+months before the first one went on sale. The lost sales were the
+smaller half of the problem: Amazon price-matches against a cheaper copy
+found anywhere else and then pays 70% of the *matched* price, so a
+single public master can zero out KDP royalties across the whole
+catalogue. Drift guards:
+`tests/test_book_compiler.py::TestBuildPipelineIntegrity::test_paid_masters_are_never_published_at_a_public_url`
+and its sibling that reads `build_book.py` itself.
 
 Pricing guidance (from the product doc's market research): $4.99–6.99
 ebook, $9.99–14.99 audiobook. The audiobook's unit economics are absurd

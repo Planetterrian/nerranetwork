@@ -67,22 +67,50 @@ logger = logging.getLogger("build_book")
 OUT_ROOT = ROOT / "outputs" / "books"
 
 
-def _r2_upload(local: Path, key: str, content_type: str) -> str:
+def _r2_upload(local: Path, key: str, content_type: str, *,
+               private: bool = False) -> str:
+    """Upload one artifact and return the reference the catalog records.
+
+    The books keyspace spans TWO buckets, and which one a file lands in
+    is a commercial decision, not a technical one:
+
+    * **public** (``podcast-audio``, https://audio.nerranetwork.com) —
+      ``cover.png`` and the sample EPUB. Marketing assets: the cover
+      feeds /books.html, the sample is the email-capture lead magnet.
+      These return ordinary https URLs.
+    * **private** (``nerra-books``, no public hostname) — the full EPUB,
+      the M4B, and the per-chapter narration masters. This is the PAID
+      product. Buyers receive it from the store they bought it at
+      (Payhip is merchant-of-record for direct sales); the network never
+      serves it. These return an ``r2://bucket/key`` reference, which
+      says where the master lives without implying anyone can fetch it.
+
+    Until 2026-08-26 every artifact went to the public bucket and its URL
+    was committed to ``books/catalog.json`` in a PUBLIC repo: 596
+    objects, 3.1 GB, the entire paid catalogue free to anyone who opened
+    the JSON. The lost sales are the smaller half. Amazon price-matches
+    against a cheaper copy found elsewhere and then pays 70% of the
+    MATCHED price, so one public master can zero out KDP royalties
+    across every volume at once — which is why docs/books.md's first
+    operating rule is never to undercut retail.
+    """
     from engine.storage import upload_to_r2
 
-    return upload_to_r2(
+    bucket = _books_private_bucket() if private else _books_bucket()
+    url = upload_to_r2(
         local, key,
-        # Same bucket + public host the podcast enclosures use, but under
-        # the books/ keyspace — never inside a show's audio prefix.
-        bucket=os.getenv("R2_BOOKS_BUCKET", "podcast-audio").strip(),
+        bucket=bucket,
         endpoint_url=os.getenv("R2_ENDPOINT_URL", "").strip(),
         access_key=os.getenv("R2_ACCESS_KEY_ID", "").strip(),
         secret_key=os.getenv("R2_SECRET_ACCESS_KEY", "").strip(),
-        public_base_url=os.getenv(
+        # A private bucket has no public host; passing one would mint a
+        # URL that 404s and read like a promise the bucket cannot keep.
+        public_base_url="" if private else os.getenv(
             "R2_BOOKS_PUBLIC_BASE_URL",
             "https://audio.nerranetwork.com").strip(),
         content_type=content_type,
     )
+    return f"r2://{bucket}/{key}" if private else url
 
 
 def _have_r2() -> bool:
@@ -116,7 +144,14 @@ def _r2_client():
 
 
 def _books_bucket() -> str:
+    """Public bucket: covers and samples only."""
     return os.getenv("R2_BOOKS_BUCKET", "podcast-audio").strip()
+
+
+def _books_private_bucket() -> str:
+    """Private bucket holding the paid masters. Created 2026-08-26 with
+    public access disabled; nothing serves out of it."""
+    return os.getenv("R2_BOOKS_PRIVATE_BUCKET", "nerra-books").strip()
 
 
 def _restore_audio_cache(volume, audio_dir: Path) -> int:
@@ -132,12 +167,14 @@ def _restore_audio_cache(volume, audio_dir: Path) -> int:
         s3 = _r2_client()
         paginator = s3.get_paginator("list_objects_v2")
         audio_dir.mkdir(parents=True, exist_ok=True)
-        for page in paginator.paginate(Bucket=_books_bucket(), Prefix=prefix):
+        for page in paginator.paginate(Bucket=_books_private_bucket(),
+                                       Prefix=prefix):
             for obj in page.get("Contents", []):
                 name = obj["Key"].rsplit("/", 1)[-1]
                 local = audio_dir / name
                 if name.startswith("track_") and not local.exists():
-                    s3.download_file(_books_bucket(), obj["Key"], str(local))
+                    s3.download_file(_books_private_bucket(),
+                                     obj["Key"], str(local))
                     restored += 1
     except Exception as exc:  # noqa: BLE001 — cache is never build-fatal
         logger.warning("audio cache restore failed (continuing cold): %s",
@@ -150,8 +187,9 @@ def _restore_audio_cache(volume, audio_dir: Path) -> int:
 def _persist_audio_cache(volume, audio_dir: Path) -> None:
     """Push narrated tracks + hash sidecars to R2. Doubles as the
     per-chapter MP3 delivery for audiobook-store submission (Spotify's
-    ingest wants chapterized MP3s — they now live at
-    books/<id>/audio/track_NNN.mp3)."""
+    ingest wants chapterized MP3s — they live at
+    books/<id>/audio/track_NNN.mp3 in the PRIVATE bucket, and are handed
+    to an aggregator by upload, never by URL)."""
     if not _have_r2() or not audio_dir.exists():
         return
     try:
@@ -159,7 +197,7 @@ def _persist_audio_cache(volume, audio_dir: Path) -> None:
             ctype = "audio/mpeg" if f.suffix == ".mp3" else "text/plain"
             _r2_upload(
                 f, f"{R2_BOOKS_PREFIX}/{volume.volume_id}/audio/{f.name}",
-                ctype)
+                ctype, private=True)
     except Exception as exc:  # noqa: BLE001
         logger.warning("audio cache persist failed (tracks stay local "
                        "only): %s", exc)
@@ -418,14 +456,15 @@ def _build_one(volume_id: str, args) -> int:
     else:
         prefix = f"{R2_BOOKS_PREFIX}/{volume.volume_id}"
         entry["files"]["epub"] = _r2_upload(
-            epub, f"{prefix}/{epub.name}", "application/epub+zip")
+            epub, f"{prefix}/{epub.name}", "application/epub+zip",
+            private=True)
         entry["files"]["sample_epub"] = _r2_upload(
             sample, f"{prefix}/{sample.name}", "application/epub+zip")
         entry["files"]["cover"] = _r2_upload(
             cover, f"{prefix}/cover.png", "image/png")
         if m4b:
             entry["files"]["m4b"] = _r2_upload(
-                m4b, f"{prefix}/{m4b.name}", "audio/mp4")
+                m4b, f"{prefix}/{m4b.name}", "audio/mp4", private=True)
         logger.info("uploaded %d artifacts to R2 under %s/",
                     len(entry["files"]), prefix)
 
