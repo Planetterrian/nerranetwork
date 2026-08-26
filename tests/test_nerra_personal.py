@@ -210,6 +210,32 @@ class TestSurfaces:
         assert "api.nerranetwork.com/api/subscribe" in base
         assert "list:'member'" in base
 
+    def test_missing_admin_token_fails_loudly(self):
+        """A host that cannot authenticate must not look idle.
+
+        load_specs used to return [] when PERSONAL_ADMIN_TOKEN was unset.
+        That flows into main()'s "no active subscribers — nothing to do"
+        and exits 0, so a misconfigured batch host produces a green run
+        with zero output — indistinguishable from a healthy day with no
+        subscribers, every day, forever. The batch repo's first three
+        scheduled runs (2026-08-24 through 08-26) were green exactly that
+        way, logging ERROR and succeeding anyway.
+        """
+        src = (ROOT / "scripts" / "build_personal_feeds.py"
+               ).read_text(encoding="utf-8")
+        head, _, tail = src.partition('token = os.environ.get("PERSONAL_ADMIN_TOKEN"')
+        assert tail, "the --fetch token lookup vanished"
+        guard = tail[:600]
+        assert "raise SystemExit" in guard, (
+            "a missing PERSONAL_ADMIN_TOKEN must abort the run, not "
+            "return an empty spec list that reads as 'no subscribers'"
+        )
+        code = "\n".join(
+            line for line in guard.split("raise SystemExit")[0].splitlines()
+            if not line.lstrip().startswith("#")
+        )
+        assert "return []" not in code, "the silent empty-list path is back"
+
     def test_batch_builder_importable_and_piiless_logging(self):
         src = (ROOT / "scripts" / "build_personal_feeds.py"
                ).read_text(encoding="utf-8")
