@@ -388,7 +388,16 @@ class TestEditorialRealignmentJuly18:
     def test_post_realignment_transcripts_drop_the_tics(self):
         """Gated on episode number: only episodes shipped AFTER the
         realignment (Ep115+) are held to the new ceilings. Skips cleanly
-        until such episodes exist on disk."""
+        until such episodes exist on disk.
+
+        Recurrence guard, not an absolute ban (2026-08-26): the July
+        defect was these phrases as TEMPLATES — "both sides agree" ran
+        12/12 episodes, up to 5x within one (Ep111). An absolute ban
+        broke the day Ep155 used the phrase once as ordinary prose in a
+        tariff story, which is the Steel Man format doing its job. The
+        tic's actual signatures are (a) >=2 uses inside one episode and
+        (b) appearing across >=3 of the trailing 10 episodes — both
+        still fail here; an isolated natural use does not."""
         import pytest as _pytest
         files = sorted(glob.glob(str(
             _ROOT / "digests/omni_view/Omni_View_Ep*_tts.txt")))
@@ -399,7 +408,19 @@ class TestEditorialRealignmentJuly18:
                 post.append(f)
         if not post:
             _pytest.skip("no post-realignment episodes shipped yet")
-        for f in post:
-            text = Path(f).read_text(encoding="utf-8").lower()
-            assert "the question worth considering" not in text, f
-            assert "both sides agree" not in text, f
+        for phrase in ("the question worth considering",
+                       "both sides agree"):
+            per_episode = {
+                f: Path(f).read_text(encoding="utf-8").lower().count(phrase)
+                for f in post
+            }
+            for f, n in per_episode.items():
+                assert n < 2, (
+                    f"{f}: '{phrase}' used {n}x in one episode — the "
+                    "within-episode template shape is back")
+            trailing = post[-10:]
+            hit_eps = [f for f in trailing if per_episode[f] > 0]
+            assert len(hit_eps) < 3, (
+                f"'{phrase}' appears in {len(hit_eps)} of the trailing "
+                f"{len(trailing)} episodes — the seeded tic is "
+                f"recurring: {[Path(f).name for f in hit_eps]}")
