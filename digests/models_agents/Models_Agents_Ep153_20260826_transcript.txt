@@ -1,0 +1,49 @@
+OpenAI's first custom inference chip is entering production, delivering higher throughput and lower latency in one architecture. This is Models & Agents, Episode 153. OpenAI plans to deploy its jalapeno inference chip into production clusters by year end. Early tests show the design improves both throughput and latency at once, raising intelligence per watt for chat GPT and agent workloads. A new chat GPT business premium seats plan
+launches at $100 per seat for small teams. Quen 3.8 FlashNext reaches release today with weights already posted on hugging face and model scope. Liquid AI open sourced the pipette benchmarking suite for on-device model evaluation. OpenAI plans to begin deploying jalapeno, its first custom inference chip into production compute infrastructure by year end.
+Testing results indicate the architecture delivers both higher throughput and lower latency without efficiency trade-offs. This setup supports faster chat GPT responses, more responsive codex sessions and agents under growing demand. Gen 2 is already deep in development and Gen 3 is taking shape.
+The company also introduced chat GPT business premium seats at $100 per seat. The plan targets small businesses and startups that need advanced tools previously limited to large enterprises.
+Remember we covered AI compute and inference yesterday. Today's jalapeno deployment moves the inference cost curve forward by integrating custom silicon into existing clusters first.
+Quen 3.8 FlashNext arrives today with an estimated release at 1,500 UTC. Official weights are posted on hugging face and model scope for immediate download.
+Community discussion centers on quants, fine tunes, chat templates and inference server support. The model targets multimodal and high speed use cases following recent quen family releases.
+A fully NVFP-4 quantized Quen 3.8-27B checkpoint was released after 2446 steps of quantization-aware distillation. The model runs in VLLM on Nvidia Blackwell GPUs with a 262,144 token context.
+It retains near BF-16 performance on GPQA diamond and AIME-26 despite aggressive W4A4 quantization across all linear layers. Attention and GDN layers stay at higher precision because full quantization there causes larger quality loss.
+The checkpoint sits at Quasar-QAT-QN 3.8-27B-Quasar-NVFP-4 and supports the VLLM serve command with max model length 262,144.
+IBM released Granite 4.2, a family of open reasoning models in 3 billion, 8 billion and 30 billion sizes, under Apache 2.0.
+Every model exposes a thinking, low effort or non-thinking switch plus native tool calling. The 8 billion and 30 billion variants receive additional agentic reinforcement learning training for code editing, terminal use and web search inside sandboxed environments.
+The 30 billion model reports 57 on sweet bench verified and 29.24 on terminal bench 2.1.
+SSE Bio maintains a structured state and uses a trainable proxy policy with group relative policy optimization.
+The agent decides retrieval of knowledge triplets and prior templates, improving reasoning memory through fine-grained template editing.
+On three biomedical multi-hop QA benchmarks, it outperforms the strongest self-evolving baseline by 6.56 absolute points on BioHOP R.
+A dual-layer agentic memory framework routes incoming information through a small to large model cascade.
+The cascade labels each item non-write, write new, or write update, pruning up to 68% of redundant external memory.
+High-value memories later consolidate into parameters via supervised fine-tuning while retaining over 98% of downstream QA exact match.
+Paul Dick's noted that AI wrote and iteratively refined 1 million lines of code into reliable software, now running on millions of machines.
+Verification systems and clear direction enabled the outcome even with an Oracle for comparison.
+Liquid AI open-socused pipette, a benchmarking suite developed with artificial analysis.
+The suite measures on-device model quality, quantization, runtime, and hardware together.
+It addresses the gap between server-class model cards and real-phone behavior.
+Try the Quasar QAT NVFP4 QN3.8-27B checkpoint in VLLM on Blackwell GPUs.
+If you need 27 billion class performance at roughly one-third the memory footprint of BF-16.
+Benchmark your edge models with the newly open-sourced pipette suite to see how quantization and runtime choices behave on target hardware.
+Test Quin 3.8-flash-next once released against current 8 billion open models on agent tool-calling tasks where speed matters more than peak capability.
+Run the SSE BioProxy Policy Training Loop on a small biomedical multi-hop data set to see whether structured state plus fine-grained template editing reduces instruction drift.
+Compare the granite 4.2-30 billion models' agentic reinforcement learning results on suite-bunch verified against your current open-coding agents.
+Gen 2 of OpenAI's inference chip roadmap is already in deep development.
+Quin 3.8-flash-next community quants and fine-tunes are expected within days of today's release.
+More on-device benchmarking results using pipette will likely surface as edge teams adopt the suite.
+Everyone talks about custom inference chips as a simple efficiency win.
+In practice, the design centers on balancing throughput, latency, and power within a fixed thermal envelope.
+Halipaneos reported gains come from a single architecture that raises both throughput and lowers latency rather than trading one for the other.
+The first production step is integration into existing OpenAI clusters, which limits initial risk while the team validates system-level behavior.
+Later generations will target further efficiency and speed, but each step must still clear the same power and cooling constraints that limit GPU clusters today.
+The practical decision for teams is whether the resulting token-cost curve justifies moving workloads onto the new silicon once access expands beyond OpenAI's own services.
+When your workload is dominated by high-volume, latency-sensitive inference, and you already sit inside OpenAI's ecosystem, the chip becomes worth testing first.
+Before we go, early signals from OpenAI's Gen2 inference chip should surface later this year.
+That's models and agents for today.
+If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update.
+The AI world moves fast. We'll help you keep up. See you tomorrow.
+And if you'd rather watch than listen, find us on YouTube at Nerra Network, links in the show notes.
+This show comes to you from the Nerra Network. If you want another sharp daily briefing, Offshore North has you covered. Offshore Ocean Racing explained every Monday with a Canadian angle.
+All our shows are free at NerraNetwork.com. The do-positive pod is the club for people who do something about it.
+Episodes and the dispatch wall at NerraNetwork.com, the D.P. pod.
+This episode used AI voice synthesis of my voice. Editorial selection and analysis are my own.

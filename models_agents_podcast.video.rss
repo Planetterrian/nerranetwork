@@ -9,7 +9,7 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>en-us</language>
-    <lastBuildDate>Tue, 25 Aug 2026 08:59:29 +0000</lastBuildDate>
+    <lastBuildDate>Wed, 26 Aug 2026 08:50:16 +0000</lastBuildDate>
     <itunes:author>Patrick</itunes:author>
     <itunes:category text="Technology" />
     <itunes:category text="News">
@@ -23,6 +23,117 @@
     </itunes:owner>
     <itunes:summary>Your daily briefing on AI models and agents: new releases from the frontier labs, open-weight drops, agent frameworks, benchmarks, pricing, and practical tools you can use the same day — with long-running program tracking so you always know where the big stories stand. For developers, builders, and AI practitioners.</itunes:summary>
     <itunes:type>episodic</itunes:type>
+    <item>
+      <title>Ep 153: OpenAI’s first custom inference chip is entering production, delivering higher throughput…</title>
+      <description>Models &amp; Agents
+&lt;b&gt;OpenAI’s first custom inference chip is entering production, delivering higher throughput and lower latency in one architecture.&lt;/b&gt;
+
+&lt;b&gt;What You Need to Know:&lt;/b&gt; OpenAI announced deployment plans for its Jalapeño inference chip by year-end, with testing showing gains in intelligence per watt and response speed for ChatGPT and agents. A new Qwen3.8-Flash-Next model is slated for release today, and Liquid AI open-sourced Pipette for on-device benchmarking. Builders should watch how custom silicon shifts the inference cost curve this quarter.
+
+DEPTH OVER BREADTH (news items)
+
+Top Story
+OpenAI plans to begin deploying Jalapeño, its first custom inference chip, into production compute infrastructure by year-end as the initial step in a multigenerational roadmap. Testing results indicate the architecture delivers both higher throughput and lower latency without efficiency tradeoffs, yielding more intelligence per watt. This enables faster ChatGPT responses, more responsive Codex sessions and agents, and reliable access under growing demand. Gen 2 is already deep in development and Gen 3 is taking shape. The company simultaneously introduced ChatGPT Business Premium Seats at $100 per seat, a flexible plan aimed at small businesses and startups that gives lean teams access to advanced tools and workflows previously available only to large enterprises. The Premium seat offering scales with team ambition and is positioned as a direct complement to the efficiency gains expected from Jalapeño deployment. Source: &lt;a href="https://x.com/OpenAI/status/2092300851482108064"&gt;x.com&lt;/a&gt;
+
+Model Updates
+&lt;b&gt;Qwen3.8-Flash-Next Release Day: r/LocalLLaMA&lt;/b&gt;
+The upcoming Qwen3.8-Flash-Next model arrives today with an estimated release at 15:00 UTC. Official weights are posted on Hugging Face and ModelScope. Community discussion focuses on quants, fine-tunes, chat templates, inference server support, and benchmark comparisons. This follows recent Qwen family releases and targets multimodal and high-speed use cases. The megathread is intended to consolidate discussion and reduce duplicate posts around the release. Builders should test early quants against existing 8B-class models for speed-sensitive agent workloads. Source: &lt;a href="https://www.reddit.com/r/LocalLLaMA/comments/1vyq2v4/megathread_qwen38flashnext_release_day/"&gt;reddit.com&lt;/a&gt;
+
+&lt;b&gt;Fully Quantized NVFP4 Qwen3.8-27B with QUASAR QAD: r/LocalLLaMA&lt;/b&gt;
+A fully NVFP4-quantized Qwen3.8-27B checkpoint was released after 2,446 steps of quantization-aware distillation using the new QUASAR algorithm. The model runs in vLLM on NVIDIA Blackwell GPUs with a 262144-token context and retains near-BF16 performance on GPQA-Diamond and AIME26 despite aggressive W4A4 quantization across all linear layers. Attention and GDN layers remain at higher precision because full quantization there causes larger quality loss. The checkpoint is available at QUASAR-QAT/Qwen3.8-27B-QUASAR-NVFP4 and supports the command `vllm serve QUASAR-QAT/Qwen3.8-27B-QUASAR-NVFP4 --max-model-len 262144 --gpu-memory-utilization 0.85`. Teams running 27B models on Blackwell hardware should benchmark this against unsloth and Inferact NVFP4 variants for memory and quality tradeoffs. Source: &lt;a href="https://www.reddit.com/r/LocalLLaMA/comments/1vyie86/fully_quantized_nvfp4_qwen3827b_with_quasar_qad/"&gt;reddit.com&lt;/a&gt;
+
+&lt;b&gt;IBM Releases Granite 4.2: MarkTechPost&lt;/b&gt;
+Granite 4.2 introduces a family of open reasoning models in 3B, 8B, and 30B sizes under Apache 2.0. Every model exposes a thinking/low-effort/non-thinking switch plus native tool calling; the 8B and 30B variants receive additional agentic RL training for code editing, terminal use, and web search inside sandboxed environments. The 30B model reports 57.00 on SWE-Bench Verified and 29.24 on Terminal-Bench 2.1. The release brings native reasoning capabilities and agentic reinforcement learning directly to open enterprise models. Developers working on enterprise agent stacks should evaluate the switchable reasoning modes against current open models. Source: &lt;a href="https://www.marktechpost.com/2026/08/25/ibm-releases-granite-4-2-bringing-native-reasoning-and-agentic-rl-to-open-enterprise-models/"&gt;marktechpost.com&lt;/a&gt;
+
+Agent &amp; Tool Developments
+&lt;b&gt;SSE-Bio: A Structured Self-Evolving Agent: arXiv NLP&lt;/b&gt;
+SSE-Bio maintains a structured state and uses a trainable proxy policy with group relative policy optimization to decide retrieval of knowledge triplets and prior templates. It improves reasoning memory through fine-grained template editing rather than global instruction rewriting. On three biomedical multi-hop QA benchmarks it outperforms the strongest self-evolving baseline by 6.56 absolute points on BioHopR. The approach targets instruction drift in long-horizon biomedical reasoning by selectively retrieving prior templates through the proxy policy. Researchers building multi-hop agents should examine the proxy-training strategy for domains with evolving evidence. Source: &lt;a href="https://arxiv.org/abs/2608.22132"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Dual-Layer Agentic Memory with Fast Write Routing: arXiv NLP&lt;/b&gt;
+The framework routes incoming information through a small-to-large model cascade as non-write, write-new, or write-update, pruning up to 68% of redundant external memory while escalating fewer than 50% of inputs. High-value memories are later consolidated into parameters via supervised fine-tuning, retaining over 98% of downstream QA Exact Match. A 1.7B/8B cascade demonstrates the dual efficiency of selective externalization followed by selective internalization. The design draws from Complementary Learning Systems theory to manage the knowledge lifecycle instead of treating external memory as a monotonically growing store. Agent developers facing growing external memory costs should test the cost-aware epistemic routing on long-running tasks. Source: &lt;a href="https://arxiv.org/abs/2608.22215"&gt;arxiv.org&lt;/a&gt;
+
+Practical &amp; Community
+&lt;b&gt;Quoting Paul Dix: Simon Willison&lt;/b&gt;
+Paul Dix highlights that AI wrote and iteratively refined one million lines of code into reliable software now running on millions of machines, crediting verification systems and clear direction for the outcome. The post underscores that even with an oracle for comparison, the refinement loop itself is significant. Developers using AI for large-scale code migration or complex system building should study the verification-system pattern Dix describes. The example involves porting from one language to another while maintaining correctness through repeated refinement. Source: &lt;a href="https://simonwillison.net/2026/Aug/26/paul-dix/"&gt;simonwillison.net&lt;/a&gt;
+
+&lt;b&gt;Liquid AI Open-Sources Pipette: MarkTechPost&lt;/b&gt;
+Pipette is an open-source benchmarking suite, developed with Artificial Analysis, that measures on-device model quality, quantization, runtime, and hardware together. It addresses the gap between server-class model cards and real phone behavior. The suite treats on-device performance as a first-class concern rather than an afterthought. Edge and mobile teams should integrate Pipette into their evaluation pipelines when comparing quantized models across devices. The release provides a reproducible methodology for measuring how the same model behaves once deployed on actual hardware. Source: &lt;a href="https://www.marktechpost.com/2026/08/25/liquid-ai-open-sources-pipette-a-reproducible-benchmarking-suite-that-measures-on-device-models-quantization-runtime-and-hardware-together/"&gt;marktechpost.com&lt;/a&gt;
+
+Under the Hood: Custom Inference Silicon Tradeoffs
+Everyone talks about custom inference chips as a simple efficiency win. In practice the design centers on balancing throughput, latency, and power within a fixed thermal envelope. Jalapeño’s reported gains come from a single architecture that raises both throughput and lowers latency rather than trading one for the other. The first production step is integration into existing OpenAI clusters, which limits initial risk while the team validates system-level behavior. Later generations will target further efficiency and speed, but each step must still clear the same power and cooling constraints that limit GPU clusters today. The practical decision for teams is whether the resulting token-cost curve justifies moving workloads onto the new silicon once access expands beyond OpenAI’s own services. When your workload is dominated by high-volume, latency-sensitive inference and you already sit inside OpenAI’s ecosystem, the chip becomes worth testing first; otherwise the software stack and availability timeline remain the gating factors.
+
+Things to Try This Week
+• Try the QUASAR-QAT NVFP4 Qwen3.8-27B checkpoint in vLLM on Blackwell GPUs if you need 27B-class performance at roughly one-third the memory footprint of BF16.
+• Benchmark your edge models with the newly open-sourced Pipette suite to see how quantization and runtime choices actually behave on target hardware.
+• Test Qwen3.8-Flash-Next (once released) against current 8B open models on agent tool-calling tasks where speed matters more than peak capability.
+• Run the SSE-Bio proxy policy training loop on a small biomedical multi-hop dataset to see whether structured state plus fine-grained template editing reduces instruction drift in your own agents.
+• Compare the Granite 4.2 30B model’s agentic RL training results on SWE-Bench Verified against your current open coding agents to assess whether the native tool-calling switch changes your deployment choice.
+
+On the Horizon
+• Gen 2 of OpenAI’s inference chip roadmap is already in deep development; watch for early performance signals later this year.
+• Qwen3.8-Flash-Next community quants and fine-tunes are expected within days of today’s release.
+• More on-device benchmarking results using Pipette will likely surface as edge teams adopt the suite.
+• Additional agentic RL training details for Granite 4.2 variants may appear as the 30B model sees wider use on SWE-Bench-style tasks.</description>
+      <guid isPermaLink="false">models-agents-video-ep153-20260826</guid>
+      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep153_20260826.mp4" length="205325210" type="video/mp4" />
+      <pubDate>Wed, 26 Aug 2026 08:00:00 +0000</pubDate>
+      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep153_20260826.jpg" />
+      <itunes:duration>08:40</itunes:duration>
+      <itunes:explicit>no</itunes:explicit>
+      <itunes:summary># Models &amp; Agents
+&gt; **OpenAI’s first custom inference chip is entering production, delivering higher throughput and lower latency in one architecture.**
+
+**What You Need to Know:** OpenAI announced deployment plans for its Jalapeño inference chip by year-end, with testing showing gains in intelligence per watt and response speed for ChatGPT and agents. A new Qwen3.8-Flash-Next model is slated for release today, and Liquid AI open-sourced Pipette for on-device benchmarking. Builders should watch how custom silicon shifts the inference cost curve this quarter.
+---
+### DEPTH OVER BREADTH (news items)
+
+### Top Story
+OpenAI plans to begin deploying Jalapeño, its first custom inference chip, into production compute infrastructure by year-end as the initial step in a multigenerational roadmap. Testing results indicate the architecture delivers both higher throughput and lower latency without efficiency tradeoffs, yielding more intelligence per watt. This enables faster ChatGPT responses, more responsive Codex sessions and agents, and reliable access under growing demand. Gen 2 is already deep in development and Gen 3 is taking shape. The company simultaneously introduced ChatGPT Business Premium Seats at $100 per seat, a flexible plan aimed at small businesses and startups that gives lean teams access to advanced tools and workflows previously available only to large enterprises. The Premium seat offering scales with team ambition and is positioned as a direct complement to the efficiency gains expected from Jalapeño deployment. Source: [x.com](https://x.com/OpenAI/status/2092300851482108064)
+---
+### Model Updates
+**Qwen3.8-Flash-Next Release Day: r/LocalLLaMA**
+The upcoming Qwen3.8-Flash-Next model arrives today with an estimated release at 15:00 UTC. Official weights are posted on Hugging Face and ModelScope. Community discussion focuses on quants, fine-tunes, chat templates, inference server support, and benchmark comparisons. This follows recent Qwen family releases and targets multimodal and high-speed use cases. The megathread is intended to consolidate discussion and reduce duplicate posts around the release. Builders should test early quants against existing 8B-class models for speed-sensitive agent workloads. Source: [reddit.com](https://www.reddit.com/r/LocalLLaMA/comments/1vyq2v4/megathread_qwen38flashnext_release_day/)
+
+**Fully Quantized NVFP4 Qwen3.8-27B with QUASAR QAD: r/LocalLLaMA**
+A fully NVFP4-quantized Qwen3.8-27B checkpoint was released after 2,446 steps of quantization-aware distillation using the new QUASAR algorithm. The model runs in vLLM on NVIDIA Blackwell GPUs with a 262144-token context and retains near-BF16 performance on GPQA-Diamond and AIME26 despite aggressive W4A4 quantization across all linear layers. Attention and GDN layers remain at higher precision because full quantization there causes larger quality loss. The checkpoint is available at QUASAR-QAT/Qwen3.8-27B-QUASAR-NVFP4 and supports the command `vllm serve QUASAR-QAT/Qwen3.8-27B-QUASAR-NVFP4 --max-model-len 262144 --gpu-memory-utilization 0.85`. Teams running 27B models on Blackwell hardware should benchmark this against unsloth and Inferact NVFP4 variants for memory and quality tradeoffs. Source: [reddit.com](https://www.reddit.com/r/LocalLLaMA/comments/1vyie86/fully_quantized_nvfp4_qwen3827b_with_quasar_qad/)
+
+**IBM Releases Granite 4.2: MarkTechPost**
+Granite 4.2 introduces a family of open reasoning models in 3B, 8B, and 30B sizes under Apache 2.0. Every model exposes a thinking/low-effort/non-thinking switch plus native tool calling; the 8B and 30B variants receive additional agentic RL training for code editing, terminal use, and web search inside sandboxed environments. The 30B model reports 57.00 on SWE-Bench Verified and 29.24 on Terminal-Bench 2.1. The release brings native reasoning capabilities and agentic reinforcement learning directly to open enterprise models. Developers working on enterprise agent stacks should evaluate the switchable reasoning modes against current open models. Source: [marktechpost.com](https://www.marktechpost.com/2026/08/25/ibm-releases-granite-4-2-bringing-native-reasoning-and-agentic-rl-to-open-enterprise-models/)
+---
+### Agent &amp; Tool Developments
+**SSE-Bio: A Structured Self-Evolving Agent: arXiv NLP**
+SSE-Bio maintains a structured state and uses a trainable proxy policy with group relative policy optimization to decide retrieval of knowledge triplets and prior templates. It improves reasoning memory through fine-grained template editing rather than global instruction rewriting. On three biomedical multi-hop QA benchmarks it outperforms the strongest self-evolving baseline by 6.56 absolute points on BioHopR. The approach targets instruction drift in long-horizon biomedical reasoning by selectively retrieving prior templates through the proxy policy. Researchers building multi-hop agents should examine the proxy-training strategy for domains with evolving evidence. Source: [arxiv.org](https://arxiv.org/abs/2608.22132)
+
+**Dual-Layer Agentic Memory with Fast Write Routing: arXiv NLP**
+The framework routes incoming information through a small-to-large model cascade as non-write, write-new, or write-update, pruning up to 68% of redundant external memory while escalating fewer than 50% of inputs. High-value memories are later consolidated into parameters via supervised fine-tuning, retaining over 98% of downstream QA Exact Match. A 1.7B/8B cascade demonstrates the dual efficiency of selective externalization followed by selective internalization. The design draws from Complementary Learning Systems theory to manage the knowledge lifecycle instead of treating external memory as a monotonically growing store. Agent developers facing growing external memory costs should test the cost-aware epistemic routing on long-running tasks. Source: [arxiv.org](https://arxiv.org/abs/2608.22215)
+---
+### Practical &amp; Community
+**Quoting Paul Dix: Simon Willison**
+Paul Dix highlights that AI wrote and iteratively refined one million lines of code into reliable software now running on millions of machines, crediting verification systems and clear direction for the outcome. The post underscores that even with an oracle for comparison, the refinement loop itself is significant. Developers using AI for large-scale code migration or complex system building should study the verification-system pattern Dix describes. The example involves porting from one language to another while maintaining correctness through repeated refinement. Source: [simonwillison.net](https://simonwillison.net/2026/Aug/26/paul-dix/)
+
+**Liquid AI Open-Sources Pipette: MarkTechPost**
+Pipette is an open-source benchmarking suite, developed with Artificial Analysis, that measures on-device model quality, quantization, runtime, and hardware together. It addresses the gap between server-class model cards and real phone behavior. The suite treats on-device performance as a first-class concern rather than an afterthought. Edge and mobile teams should integrate Pipette into their evaluation pipelines when comparing quantized models across devices. The release provides a reproducible methodology for measuring how the same model behaves once deployed on actual hardware. Source: [marktechpost.com](https://www.marktechpost.com/2026/08/25/liquid-ai-open-sources-pipette-a-reproducible-benchmarking-suite-that-measures-on-device-models-quantization-runtime-and-hardware-together/)
+---
+### Under the Hood: Custom Inference Silicon Tradeoffs
+Everyone talks about custom inference chips as a simple efficiency win. In practice the design centers on balancing throughput, latency, and power within a fixed thermal envelope. Jalapeño’s reported gains come from a single architecture that raises both throughput and lowers latency rather than trading one for the other. The first production step is integration into existing OpenAI clusters, which limits initial risk while the team validates system-level behavior. Later generations will target further efficiency and speed, but each step must still clear the same power and cooling constraints that limit GPU clusters today. The practical decision for teams is whether the resulting token-cost curve justifies moving workloads onto the new silicon once access expands beyond OpenAI’s own services. When your workload is dominated by high-volume, latency-sensitive inference and you already sit inside OpenAI’s ecosystem, the chip becomes worth testing first; otherwise the software stack and availability timeline remain the gating factors.
+---
+### Things to Try This Week
+- Try the QUASAR-QAT NVFP4 Qwen3.8-27B checkpoint in vLLM on Blackwell GPUs if you need 27B-class performance at roughly one-third the memory footprint of BF16.
+- Benchmark your edge models with the newly open-sourced Pipette suite to see how quantization and runtime choices actually behave on target hardware.
+- Test Qwen3.8-Flash-Next (once released) against current 8B open models on agent tool-calling tasks where speed matters more than peak capability.
+- Run the SSE-Bio proxy policy training loop on a small biomedical multi-hop dataset to see whether structured state plus fine-grained template editing reduces instruction drift in your own agents.
+- Compare the Granite 4.2 30B model’s agentic RL training results on SWE-Bench Verified against your current open coding agents to assess whether the native tool-calling switch changes your deployment choice.
+---
+### On the Horizon
+- Gen 2 of OpenAI’s inference chip roadmap is already in deep development; watch for early performance signals later this year.
+- Qwen3.8-Flash-Next community quants and fine-tunes are expected within days of today’s release.
+- More on-device benchmarking results using Pipette will likely surface as edge teams adopt the suite.
+- Additional agentic RL training details for Granite 4.2 variants may appear as the 30B model sees wider use on SWE-Bench-style tasks.
+</itunes:summary>
+      <itunes:episode>153</itunes:episode>
+      <itunes:title>Ep 153: OpenAI’s first custom inference chip is entering production, delivering higher throughput…</itunes:title>
+      <itunes:episodeType>full</itunes:episodeType>
+    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep153_20260826_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep153.json" type="application/json+chapters" /></item>
     <item>
       <title>Ep 152: Local 27B models just wrote and merged their first production feature on a single 4060 Ti.</title>
       <description>Models &amp; Agents
@@ -3429,102 +3540,5 @@ Everyone talks about parameter-efficient fine-tuning for MoE models as if unifor
       <itunes:title>Ep 124: Autonomous support agents just proved they can handle real volume — G2A’s Dave closed 14,400 tickets without human help.</itunes:title>
       <itunes:episodeType>full</itunes:episodeType>
     <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep124_20260727_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep124.json" type="application/json+chapters" /></item>
-    <item>
-      <title>Ep 123: Photon-1 pretrains on raw video alone to simulate desktops and play checkers, removing the action-label requirement that has limited most video agents.</title>
-      <description>Models &amp; Agents
-&lt;b&gt;Photon-1 pretrains on raw video alone to simulate desktops and play checkers, removing the action-label requirement that has limited most video agents.&lt;/b&gt;
-
-&lt;b&gt;What You Need to Know:&lt;/b&gt; Induction Labs released Photon-1, a 106B-A5B sparse MoE imagination model trained without action labels. Sakana AI shipped Fugu-Cyber, a security-tuned orchestration model scoring 86.9% on CyberGym. Ruff 0.16.0 now enables 413 rules by default, surfacing thousands of issues in existing codebases. Builders should test the new Ruff defaults on their largest projects this week and watch for more action-free video foundation models.
-
-Top Story
-Induction Labs released Photon-1, a 106B-A5B sparse mixture-of-experts imagination model pretrained on raw video with no action labels. The architecture removes the requirement that most video agents need explicit action-frame pairings, letting the model learn desktop simulation, checkers play, and billiard physics from passive video alone. This approach directly targets the data bottleneck that has constrained prior video-based agents. The test system uses a sparse 106B-A5B MoE design and argues that eliminating the need for action labels per frame opens new pretraining paths. Builders working on long-horizon agents or world models can now explore pretraining pipelines that skip expensive action annotation. Watch for follow-up releases that test whether the same label-free pretraining scales to more complex environments. Source: &lt;a href="https://www.marktechpost.com/2026/07/26/induction-labs-photon-1-simulates-desktops-plays-checkers-and-models-billiard-physics-from-one-pretraining-run/"&gt;marktechpost.com&lt;/a&gt;
-
-Model Updates
-&lt;b&gt;Gemma 4 and series milestones: Demis Hassabis (DeepMind)&lt;/b&gt;
-The Gemma 4 family has now been downloaded more than 300 million times, while the full Gemma open model series exceeds 900 million downloads. DeepMind continues to position these releases as core contributions to an open ecosystem alongside JAX and Transformers. The numbers reflect sustained adoption of the open-weight family even as closed frontier models advance. Demis Hassabis noted that a strong open ecosystem supports responsible deployment of both open and proprietary models. Builders evaluating open models for production should factor these download figures into decisions about community support and fine-tuning momentum. Source: &lt;a href="https://x.com/demishassabis/status/2081075346208600103"&gt;x.com&lt;/a&gt;
-
-&lt;b&gt;Fugu-Cyber orchestration model: Sakana AI&lt;/b&gt;
-Sakana AI released Fugu-Cyber, a security-tuned endpoint on its Fugu orchestration model that reports 86.9% on CyberGym and 72.1% on CTI-REALM. The scores edge past GPT-5.5-Cyber and Claude Mythos Preview on the same benchmarks. Access requires manual approval plus a defensive-use policy and Token Plan. The release positions the model for endpoint security tasks where orchestration across multiple tools matters. Security teams evaluating orchestration models for endpoint tasks should request access and run their own CyberGym evaluations before deployment. Source: &lt;a href="https://www.marktechpost.com/2026/07/25/sakana-ai-releases-fugu-cyber-orchestration-model-cybergym-cti-realm/"&gt;marktechpost.com&lt;/a&gt;
-
-&lt;b&gt;YOLO26n from-scratch inference: r/MachineLearning&lt;/b&gt;
-A bachelor's project implemented full YOLO26n inference in ARM64 assembly plus C on Raspberry Pi 4, including NEON SIMD, Winograd convolution, optimized GEMM kernels, and custom micro-kernels for Conv, C3K2, SPPF, C2PSA, and Detect layers. The custom binary format and operator fusion produced correct detections, though measured speedups fell short of initial targets. The implementation also incorporated cache-aware tiling and attention mechanisms while extracting model parameters into a custom memory layout. Edge developers targeting ARM devices without full frameworks can study the released repository for memory-layout and cache-tiling patterns. Source: &lt;a href="https://www.reddit.com/r/MachineLearning/comments/1v6w394/i_implemented_the_yolo26n_model_inference_from/"&gt;reddit.com&lt;/a&gt;
-
-Agent &amp; Tool Developments
-&lt;b&gt;IMO 2026 model comparison: r/MachineLearning&lt;/b&gt;
-SignalPilot Labs evaluated frontier and sub-frontier models on the 2026 International Mathematical Olympiad problems using multiple harnesses including AutoFyn. Frontier models reached perfect or near-perfect scores regardless of harness, while Sonnet, Opus, and GLM-4 improved with the multi-agent harness but still trailed. Every sub-frontier model missed the key reduction on the hardest problem (P3) even in 20-hour runs that proved all other problems. Grading combined a separate frontier model with manual verification by former IMO medalists. Teams building math or reasoning agents should test whether their current harness supplies the missing high-level idea generation rather than only retrieval and verification. Source: &lt;a href="https://www.reddit.com/r/MachineLearning/comments/1v6wskz/we_compared_different_llms_on_imo_2026_r/"&gt;reddit.com&lt;/a&gt;
-
-Practical &amp; Community
-&lt;b&gt;Ruff 0.16.0: Simon Willison&lt;/b&gt;
-Ruff 0.16.0 raised the number of default-enabled rules from 59 to 413 and flagged 1,618 issues across sqlite-utils alone. The update also expanded the total rule count from 708 to 968 since the last default change. Simon Willison used `uvx ruff@latest check . --fix --unsafe-fixes` to auto-resolve the bulk of issues in Datasette, sqlite-utils, and LLM, leaving roughly 80 issues per project for manual review. Remaining issues included DTZ005 datetime calls without timezone arguments, BLE001 blind exception handling, and B018 useless attribute access. Python developers should run the latest Ruff with unsafe fixes on their largest repositories this week and review the remaining 80 issues per project for manual attention. Source: &lt;a href="https://simonwillison.net/2026/Jul/25/ruff/"&gt;simonwillison.net&lt;/a&gt;
-
-&lt;b&gt;Open Dreamer: MarkTechPost&lt;/b&gt;
-Reactor released Open Dreamer, a JAX/Flax NNX reproduction of the Dreamer 4 world-model pipeline that includes the full training recipe. The repositories provide a causal video tokenizer, action-conditioned latent dynamics model, rollout generation, and FVD scoring. Two separate repos were published: next-state/open-dreamer holds the training pipeline while reactor-team/open-dreamer contains supporting components. Researchers reproducing world models can now start from the published training code instead of reimplementing the pipeline from papers. Source: &lt;a href="https://www.marktechpost.com/2026/07/25/meet-open-dreamer-a-jax-flax-reproduction-of-the-dreamer-4-world-model-pipeline-with-the-full-training-recipe-published/"&gt;marktechpost.com&lt;/a&gt;
-
-Under the Hood: On-Disk ANN Indexes
-Everyone talks about vector search as if you simply choose HNSW and move on. In practice the decision between keeping indexes in RAM or moving them to disk is a set of concrete latency, cost, and recall trade-offs that change with dataset size. In-memory HNSW delivers single-digit millisecond queries but requires the entire graph to fit in RAM, so teams quickly hit expensive instance sizes once collections exceed a few hundred million vectors. Disk-based approaches such as SPANN and DiskANN keep only a small hot set in memory and fetch compressed neighbor lists from SSD, adding roughly 10-30 ms per query while cutting RAM needs by 5-10x on the same dataset. The quality gap appears mainly at high recall targets above 95 percent, where disk methods need extra re-ranking passes that erase some of the cost savings. When your working set stays under roughly 50 million vectors and sub-10 ms latency matters more than cost, stay in RAM; once collections grow larger or you need to serve many tenants on the same hardware, move to a disk-aware index and budget for the extra re-ranking step. The gotcha that bites most teams is underestimating how quickly re-ranking cost grows once recall targets push past 0.95 on billion-scale collections.
-
-Things to Try This Week
-• Run `uvx ruff@latest check . --fix --unsafe-fixes` on your largest Python project to surface the new default rules before they break CI.
-• Request access to Fugu-Cyber and run it on your own CyberGym subset to see whether the 86.9% score holds on your security tasks.
-• Clone the Open Dreamer repositories and train a small world model on your own video data to test label-free pretraining.
-• Study the ARM64 YOLO26n repository if you need to deploy detection without heavy frameworks on Raspberry Pi-class hardware.
-
-On the Horizon
-• More label-free video foundation models are expected as teams replicate the Photon-1 pretraining approach.
-• Sakana AI may expand the Fugu family beyond the security-tuned endpoint now under manual approval.
-• Additional IMO-style benchmarks from independent groups will likely appear as the 2026 problems circulate.
-• Further Ruff rule expansions are probable given Astral’s recent pace of enabling previously opt-in checks.</description>
-      <guid isPermaLink="false">models-agents-video-ep123-20260726</guid>
-      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep123_20260726.mp4" length="194774242" type="video/mp4" />
-      <pubDate>Sun, 26 Jul 2026 08:00:00 +0000</pubDate>
-      <itunes:duration>09:34</itunes:duration>
-      <itunes:explicit>no</itunes:explicit>
-      <itunes:summary># Models &amp; Agents
-&gt; **Photon-1 pretrains on raw video alone to simulate desktops and play checkers, removing the action-label requirement that has limited most video agents.**
-
-**What You Need to Know:** Induction Labs released Photon-1, a 106B-A5B sparse MoE imagination model trained without action labels. Sakana AI shipped Fugu-Cyber, a security-tuned orchestration model scoring 86.9% on CyberGym. Ruff 0.16.0 now enables 413 rules by default, surfacing thousands of issues in existing codebases. Builders should test the new Ruff defaults on their largest projects this week and watch for more action-free video foundation models.
----
-### Top Story
-Induction Labs released Photon-1, a 106B-A5B sparse mixture-of-experts imagination model pretrained on raw video with no action labels. The architecture removes the requirement that most video agents need explicit action-frame pairings, letting the model learn desktop simulation, checkers play, and billiard physics from passive video alone. This approach directly targets the data bottleneck that has constrained prior video-based agents. The test system uses a sparse 106B-A5B MoE design and argues that eliminating the need for action labels per frame opens new pretraining paths. Builders working on long-horizon agents or world models can now explore pretraining pipelines that skip expensive action annotation. Watch for follow-up releases that test whether the same label-free pretraining scales to more complex environments. Source: [marktechpost.com](https://www.marktechpost.com/2026/07/26/induction-labs-photon-1-simulates-desktops-plays-checkers-and-models-billiard-physics-from-one-pretraining-run/)
----
-### Model Updates
-**Gemma 4 and series milestones: Demis Hassabis (DeepMind)**
-The Gemma 4 family has now been downloaded more than 300 million times, while the full Gemma open model series exceeds 900 million downloads. DeepMind continues to position these releases as core contributions to an open ecosystem alongside JAX and Transformers. The numbers reflect sustained adoption of the open-weight family even as closed frontier models advance. Demis Hassabis noted that a strong open ecosystem supports responsible deployment of both open and proprietary models. Builders evaluating open models for production should factor these download figures into decisions about community support and fine-tuning momentum. Source: [x.com](https://x.com/demishassabis/status/2081075346208600103)
-
-**Fugu-Cyber orchestration model: Sakana AI**
-Sakana AI released Fugu-Cyber, a security-tuned endpoint on its Fugu orchestration model that reports 86.9% on CyberGym and 72.1% on CTI-REALM. The scores edge past GPT-5.5-Cyber and Claude Mythos Preview on the same benchmarks. Access requires manual approval plus a defensive-use policy and Token Plan. The release positions the model for endpoint security tasks where orchestration across multiple tools matters. Security teams evaluating orchestration models for endpoint tasks should request access and run their own CyberGym evaluations before deployment. Source: [marktechpost.com](https://www.marktechpost.com/2026/07/25/sakana-ai-releases-fugu-cyber-orchestration-model-cybergym-cti-realm/)
-
-**YOLO26n from-scratch inference: r/MachineLearning**
-A bachelor's project implemented full YOLO26n inference in ARM64 assembly plus C on Raspberry Pi 4, including NEON SIMD, Winograd convolution, optimized GEMM kernels, and custom micro-kernels for Conv, C3K2, SPPF, C2PSA, and Detect layers. The custom binary format and operator fusion produced correct detections, though measured speedups fell short of initial targets. The implementation also incorporated cache-aware tiling and attention mechanisms while extracting model parameters into a custom memory layout. Edge developers targeting ARM devices without full frameworks can study the released repository for memory-layout and cache-tiling patterns. Source: [reddit.com](https://www.reddit.com/r/MachineLearning/comments/1v6w394/i_implemented_the_yolo26n_model_inference_from/)
----
-### Agent &amp; Tool Developments
-**IMO 2026 model comparison: r/MachineLearning**
-SignalPilot Labs evaluated frontier and sub-frontier models on the 2026 International Mathematical Olympiad problems using multiple harnesses including AutoFyn. Frontier models reached perfect or near-perfect scores regardless of harness, while Sonnet, Opus, and GLM-4 improved with the multi-agent harness but still trailed. Every sub-frontier model missed the key reduction on the hardest problem (P3) even in 20-hour runs that proved all other problems. Grading combined a separate frontier model with manual verification by former IMO medalists. Teams building math or reasoning agents should test whether their current harness supplies the missing high-level idea generation rather than only retrieval and verification. Source: [reddit.com](https://www.reddit.com/r/MachineLearning/comments/1v6wskz/we_compared_different_llms_on_imo_2026_r/)
----
-### Practical &amp; Community
-**Ruff 0.16.0: Simon Willison**
-Ruff 0.16.0 raised the number of default-enabled rules from 59 to 413 and flagged 1,618 issues across sqlite-utils alone. The update also expanded the total rule count from 708 to 968 since the last default change. Simon Willison used `uvx ruff@latest check . --fix --unsafe-fixes` to auto-resolve the bulk of issues in Datasette, sqlite-utils, and LLM, leaving roughly 80 issues per project for manual review. Remaining issues included DTZ005 datetime calls without timezone arguments, BLE001 blind exception handling, and B018 useless attribute access. Python developers should run the latest Ruff with unsafe fixes on their largest repositories this week and review the remaining 80 issues per project for manual attention. Source: [simonwillison.net](https://simonwillison.net/2026/Jul/25/ruff/)
-
-**Open Dreamer: MarkTechPost**
-Reactor released Open Dreamer, a JAX/Flax NNX reproduction of the Dreamer 4 world-model pipeline that includes the full training recipe. The repositories provide a causal video tokenizer, action-conditioned latent dynamics model, rollout generation, and FVD scoring. Two separate repos were published: next-state/open-dreamer holds the training pipeline while reactor-team/open-dreamer contains supporting components. Researchers reproducing world models can now start from the published training code instead of reimplementing the pipeline from papers. Source: [marktechpost.com](https://www.marktechpost.com/2026/07/25/meet-open-dreamer-a-jax-flax-reproduction-of-the-dreamer-4-world-model-pipeline-with-the-full-training-recipe-published/)
----
-### Under the Hood: On-Disk ANN Indexes
-Everyone talks about vector search as if you simply choose HNSW and move on. In practice the decision between keeping indexes in RAM or moving them to disk is a set of concrete latency, cost, and recall trade-offs that change with dataset size. In-memory HNSW delivers single-digit millisecond queries but requires the entire graph to fit in RAM, so teams quickly hit expensive instance sizes once collections exceed a few hundred million vectors. Disk-based approaches such as SPANN and DiskANN keep only a small hot set in memory and fetch compressed neighbor lists from SSD, adding roughly 10-30 ms per query while cutting RAM needs by 5-10x on the same dataset. The quality gap appears mainly at high recall targets above 95 percent, where disk methods need extra re-ranking passes that erase some of the cost savings. When your working set stays under roughly 50 million vectors and sub-10 ms latency matters more than cost, stay in RAM; once collections grow larger or you need to serve many tenants on the same hardware, move to a disk-aware index and budget for the extra re-ranking step. The gotcha that bites most teams is underestimating how quickly re-ranking cost grows once recall targets push past 0.95 on billion-scale collections.
----
-### Things to Try This Week
-- Run `uvx ruff@latest check . --fix --unsafe-fixes` on your largest Python project to surface the new default rules before they break CI.
-- Request access to Fugu-Cyber and run it on your own CyberGym subset to see whether the 86.9% score holds on your security tasks.
-- Clone the Open Dreamer repositories and train a small world model on your own video data to test label-free pretraining.
-- Study the ARM64 YOLO26n repository if you need to deploy detection without heavy frameworks on Raspberry Pi-class hardware.
----
-### On the Horizon
-- More label-free video foundation models are expected as teams replicate the Photon-1 pretraining approach.
-- Sakana AI may expand the Fugu family beyond the security-tuned endpoint now under manual approval.
-- Additional IMO-style benchmarks from independent groups will likely appear as the 2026 problems circulate.
-- Further Ruff rule expansions are probable given Astral’s recent pace of enabling previously opt-in checks.</itunes:summary>
-      <itunes:episode>123</itunes:episode>
-      <itunes:title>Ep 123: Photon-1 pretrains on raw video alone to simulate desktops and play checkers, removing the action-label requirement that has limited most video agents.</itunes:title>
-      <itunes:episodeType>full</itunes:episodeType>
-    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep123_20260726_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep123.json" type="application/json+chapters" /></item>
   <podcast:locked owner="patrick@planetterrian.com">yes</podcast:locked><itunes:keywords>ai, llm, machine learning, openai, anthropic, agents, claude, gpt, ai news</itunes:keywords></channel>
 </rss>
