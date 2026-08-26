@@ -380,6 +380,35 @@ class TestWO11ShipBlockers:
         assert "under chief Ferdinand Silcox" in t
 
 
+class TestNoReviewerAnnotationLeaks:
+    """Research-agent meta-commentary must never survive into a digest.
+
+    Six leaks shipped in the 2026-08-25 builds ('(The DEA-1973 fact is
+    verified as c3; …)', '…could not be verified against a fetchable
+    source', 'a general form would be: …'). These phrases are the
+    verification workflow talking to itself — they can appear in ledger
+    sidecars and review docs, never in published prose."""
+
+    _BANNED = ("fetchable source", "verified as c", "a general form",
+               "suggested fix", "episode_span", "supporting_quote",
+               "could not be verified", "could not be anchored",
+               "[NOTE:", "(Note:")
+
+    @pytest.mark.parametrize("show", ["unintended_consequences",
+                                      "first_principles"])
+    def test_no_annotation_shapes_in_digests(self, show):
+        hits = []
+        for p in sorted((ROOT / "digests" / show).glob("*_Ep*_*.md")):
+            if any(s in p.name for s in ("_transcript", "_tts",
+                                         "_reader", "_claims")):
+                continue
+            t = p.read_text(encoding="utf-8")
+            for b in self._BANNED:
+                if b in t:
+                    hits.append((p.name, b))
+        assert not hits, hits
+
+
 class TestFPLedgerCoverage:
     """WO-11 Part B: FP's ledger backfill reached parity with UC's —
     every collected chapter carries a verified ledger and the Sources
