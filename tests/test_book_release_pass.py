@@ -355,12 +355,14 @@ class TestWO11ShipBlockers:
         assert "filed for bankruptcy in September 2019" in t
         assert "announced in October 2020" in t
 
-    def test_no_duplication_seams_in_any_uc_digest(self):
+    @pytest.mark.parametrize("show", ["unintended_consequences",
+                                      "first_principles"])
+    def test_no_duplication_seams_in_any_digest(self, show):
         """The '.,' hits were rewrite seams that duplicated clause
-        tails. 'D.C.,' -style abbreviations are legitimate."""
+        tails (found in both shows). 'D.C.,' -style abbreviations are
+        legitimate."""
         import re
-        for p in sorted((ROOT / "digests/unintended_consequences")
-                        .glob("*.md")):
+        for p in sorted((ROOT / "digests" / show).glob("*.md")):
             t = p.read_text(encoding="utf-8")
             for m in re.finditer(r"\.,", t):
                 ctx = t[max(0, m.start() - 4):m.start() + 2]
