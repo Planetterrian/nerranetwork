@@ -213,9 +213,13 @@ class TestWO5FirstPrinciplesArithmetic:
         # Nuclear: 10-20x understated its own case ~8x
         (5, "one-tenth to one-twentieth of the overnight capital cost",
          "one-eightieth to one-one-hundred-sixtieth"),
-        # Geothermal: consistent tonnage, real OCTG price
+        # Geothermal: consistent tonnage. The WO-5 pass pinned the real
+        # OCTG price ($1,200–2,500/t); the WO-11 ledger pass could not
+        # tie the 150-ton casing figure to a fetchable source, so the
+        # sentence now carries the honest general form instead.
         (22, "a few hundred dollars per ton plus a few dozen tons",
-         "$1,200–2,500 per tonne"),
+         "a hundred tons or more of steel — a few hundred thousand "
+         "dollars of pipe at commodity prices"),
         # Wright brothers: real tunnel dimensions; cables warp, chains
         # drive propellers
         (23, "six inches square and twenty inches long",
@@ -374,6 +378,45 @@ class TestWO11ShipBlockers:
         t = _uc_digest(47)
         assert "In 1935 the agency formalized" not in t
         assert "under chief Ferdinand Silcox" in t
+
+
+class TestFPLedgerCoverage:
+    """WO-11 Part B: FP's ledger backfill reached parity with UC's —
+    every collected chapter carries a verified ledger and the Sources
+    page renders one endnote group per chapter."""
+
+    FP_DIR = ROOT / "digests" / "first_principles"
+
+    def test_every_fp_collected_chapter_has_a_verified_ledger(self):
+        from engine import claims as C
+        vol = yaml.safe_load(
+            (VOLS / "first_principles_collected.yaml")
+            .read_text(encoding="utf-8"))
+        for ep in vol["episodes"]:
+            md = sorted(p for p in self.FP_DIR.glob(f"*_Ep{ep:03d}_*.md")
+                        if "_transcript" not in p.name
+                        and "_tts" not in p.name
+                        and "_reader" not in p.name)[-1]
+            ledger = C.load_ledger(md)
+            assert ledger, f"ep{ep}: no ledger sidecar"
+            gate = C.run_source_integrity_gate(
+                md.read_text(encoding="utf-8"), ledger,
+                verify_sources=False)
+            assert gate.passed, f"ep{ep}: {gate.summary()}"
+
+    def test_fp_sources_page_reaches_parity(self, tmp_path):
+        import zipfile
+        from engine.book_compiler import (build_epub, collect_chapters,
+                                          load_volume)
+        vol = load_volume(VOLS / "first_principles_collected.yaml")
+        chapters = collect_chapters(vol)
+        out = tmp_path / "fp.epub"
+        build_epub(vol, chapters, out)
+        z = zipfile.ZipFile(out)
+        assert "OEBPS/sources.xhtml" in z.namelist()
+        src = z.read("OEBPS/sources.xhtml").decode("utf-8")
+        assert src.count("<h2>") == 58  # one group per chapter
+        assert src.count('<a href="http') >= 170
 
 
 class TestBiggerBooksShift:
