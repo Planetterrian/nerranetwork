@@ -23,19 +23,68 @@ import requests
 ROOT = Path(__file__).resolve().parent.parent
 
 
+PAID_KINDS = ("epub", "m4b")
+
+
+def _check_private(kind: str, ref: str) -> list:
+    """Verify an ``r2://bucket/key`` master exists, with credentials.
+
+    Soft-passes when no R2 credentials are present (a fork, or a local
+    run) — an unverifiable master is not the same as a missing one, and
+    failing here would make the check useless everywhere but CI.
+    """
+    import os
+
+    bucket, _, key = ref[len("r2://"):].partition("/")
+    if not all(os.getenv(k, "").strip() for k in
+               ("R2_ENDPOINT_URL", "R2_ACCESS_KEY_ID",
+                "R2_SECRET_ACCESS_KEY")):
+        return []
+    try:
+        import boto3
+        from botocore.config import Config as BotoConfig
+
+        boto3.client(
+            "s3",
+            endpoint_url=os.environ["R2_ENDPOINT_URL"].strip(),
+            aws_access_key_id=os.environ["R2_ACCESS_KEY_ID"].strip(),
+            aws_secret_access_key=os.environ["R2_SECRET_ACCESS_KEY"].strip(),
+            config=BotoConfig(signature_version="s3v4"),
+        ).head_object(Bucket=bucket, Key=key)
+    except Exception as exc:  # noqa: BLE001
+        return [f"{kind}: private master missing ({exc}) at {ref}"]
+    return []
+
+
 def check_volume(entry: dict, *, expect_audio: bool) -> list:
     problems = []
     files = entry.get("files") or {}
     if not files.get("epub"):
         problems.append("no epub in catalog files")
         return problems
-    for kind, url in sorted(files.items()):
+    # The regression that matters more than reachability: a paid master
+    # that carries an https URL is a paid master anyone can download.
+    for kind in PAID_KINDS:
+        ref = files.get(kind)
+        if ref and not ref.startswith("r2://"):
+            problems.append(
+                f"{kind}: paid master is published at a public URL "
+                f"({ref}) — it belongs in the private bucket")
+    for kind, ref in sorted(files.items()):
+        if ref.startswith("r2://"):
+            # The paid masters (epub, m4b) live in a private bucket and
+            # MUST NOT answer to an anonymous HTTP request — that was the
+            # 2026-08-26 exposure. Reachability for these means "the
+            # object exists to a credentialed client", so check it the
+            # only way that is true: head_object.
+            problems.extend(_check_private(kind, ref))
+            continue
         try:
-            r = requests.head(url, timeout=30, allow_redirects=True)
+            r = requests.head(ref, timeout=30, allow_redirects=True)
             if r.status_code != 200:
-                problems.append(f"{kind}: HTTP {r.status_code} at {url}")
+                problems.append(f"{kind}: HTTP {r.status_code} at {ref}")
         except requests.RequestException as exc:
-            problems.append(f"{kind}: unreachable ({exc}) at {url}")
+            problems.append(f"{kind}: unreachable ({exc}) at {ref}")
     if expect_audio and not entry.get("audiobook"):
         problems.append("catalog entry has no audiobook block")
     return problems
