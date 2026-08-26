@@ -213,9 +213,13 @@ class TestWO5FirstPrinciplesArithmetic:
         # Nuclear: 10-20x understated its own case ~8x
         (5, "one-tenth to one-twentieth of the overnight capital cost",
          "one-eightieth to one-one-hundred-sixtieth"),
-        # Geothermal: consistent tonnage, real OCTG price
+        # Geothermal: consistent tonnage. The WO-5 pass pinned the real
+        # OCTG price ($1,200–2,500/t); the WO-11 ledger pass could not
+        # tie the 150-ton casing figure to a fetchable source, so the
+        # sentence now carries the honest general form instead.
         (22, "a few hundred dollars per ton plus a few dozen tons",
-         "$1,200–2,500 per tonne"),
+         "a hundred tons or more of steel — a few hundred thousand "
+         "dollars of pipe at commodity prices"),
         # Wright brothers: real tunnel dimensions; cables warp, chains
         # drive propellers
         (23, "six inches square and twenty inches long",
@@ -291,6 +295,128 @@ class TestFPOmnibus:
         t1 = _fp_digest(1)
         assert "Idiot Index between four and five" not in t1
         assert "five-to-fifteen range in this book's housing chapter" in t1
+
+
+class TestWO11ShipBlockers:
+    """WO-11: defects verified against the 2026-08-25 built EPUBs."""
+
+    def test_cover_badge_never_renders_zero(self):
+        from engine.book_art import cover_badge_text
+        from engine.book_compiler import load_volume
+        for name in ("unintended_consequences_collected",
+                     "first_principles_collected"):
+            vol = load_volume(VOLS / f"{name}.yaml")
+            badge = cover_badge_text(vol)
+            assert badge == "COLLECTED EDITION", name
+        numbered = load_volume(VOLS / "unintended_consequences_vol1.yaml")
+        assert cover_badge_text(numbered) == "VOLUME 1"
+        # the invariant itself: no badge string ever contains a bare 0
+        for name in sorted(p.stem for p in VOLS.glob("*.yaml")):
+            vol = load_volume(VOLS / f"{name}.yaml")
+            assert cover_badge_text(vol) != "VOLUME 0", name
+
+    def test_epub_escaping_validator_catches_double_escape(self, tmp_path):
+        import zipfile
+        from engine.book_compiler import validate_epub_escaping
+        bad = tmp_path / "bad.epub"
+        with zipfile.ZipFile(bad, "w") as z:
+            z.writestr("OEBPS/x.xhtml",
+                       "<html><body><p>Turner &amp;amp; Newall</p>"
+                       "</body></html>")
+        with pytest.raises(ValueError, match="double-escaped"):
+            validate_epub_escaping(bad)
+        good = tmp_path / "good.epub"
+        with zipfile.ZipFile(good, "w") as z:
+            z.writestr("OEBPS/x.xhtml",
+                       "<html><body><p>Turner &amp; Newall</p>"
+                       "</body></html>")
+        validate_epub_escaping(good)  # must not raise
+
+    def test_built_epub_is_validated_and_renders_real_ampersands(
+            self, tmp_path):
+        import xml.etree.ElementTree as ET
+        import zipfile
+        from engine.book_compiler import (build_epub, collect_chapters,
+                                          load_volume)
+        vol = load_volume(VOLS / "unintended_consequences_collected.yaml")
+        chapters = collect_chapters(vol)
+        out = tmp_path / "uc.epub"
+        build_epub(vol, chapters, out)  # validate_epub_escaping runs inside
+        with zipfile.ZipFile(out) as z:
+            t = z.read("OEBPS/chap_021.xhtml").decode("utf-8")
+        text = "".join(ET.fromstring(t.encode("utf-8")).itertext())
+        assert "Turner & Newall" in text
+        assert "&amp;" not in text
+
+    def test_purdue_chronology(self):
+        t = _uc_digest(34)
+        assert ("filed for bankruptcy in 2019 after agreeing to "
+                "settlements") not in t
+        assert "filed for bankruptcy in September 2019" in t
+        assert "announced in October 2020" in t
+
+    def test_no_duplication_seams_in_any_uc_digest(self):
+        """The '.,' hits were rewrite seams that duplicated clause
+        tails. 'D.C.,' -style abbreviations are legitimate."""
+        import re
+        for p in sorted((ROOT / "digests/unintended_consequences")
+                        .glob("*.md")):
+            t = p.read_text(encoding="utf-8")
+            for m in re.finditer(r"\.,", t):
+                ctx = t[max(0, m.start() - 4):m.start() + 2]
+                assert re.search(r"\b[A-Z]\.[A-Z]?\.,$", ctx), (
+                    f"{p.name}: seam at "
+                    f"{t[max(0, m.start() - 60):m.start() + 60]!r}")
+
+    def test_textile_waste_attribution(self):
+        t = _uc_digest(63)
+        assert "now tracked by the Ellen MacArthur Foundation" not in t
+        assert ("a figure reported in a 2020 review in Nature Reviews "
+                "Earth & Environment") in t
+
+    def test_ten_am_policy_softened_to_sourced_form(self):
+        t = _uc_digest(47)
+        assert "In 1935 the agency formalized" not in t
+        assert "under chief Ferdinand Silcox" in t
+
+
+class TestFPLedgerCoverage:
+    """WO-11 Part B: FP's ledger backfill reached parity with UC's —
+    every collected chapter carries a verified ledger and the Sources
+    page renders one endnote group per chapter."""
+
+    FP_DIR = ROOT / "digests" / "first_principles"
+
+    def test_every_fp_collected_chapter_has_a_verified_ledger(self):
+        from engine import claims as C
+        vol = yaml.safe_load(
+            (VOLS / "first_principles_collected.yaml")
+            .read_text(encoding="utf-8"))
+        for ep in vol["episodes"]:
+            md = sorted(p for p in self.FP_DIR.glob(f"*_Ep{ep:03d}_*.md")
+                        if "_transcript" not in p.name
+                        and "_tts" not in p.name
+                        and "_reader" not in p.name)[-1]
+            ledger = C.load_ledger(md)
+            assert ledger, f"ep{ep}: no ledger sidecar"
+            gate = C.run_source_integrity_gate(
+                md.read_text(encoding="utf-8"), ledger,
+                verify_sources=False)
+            assert gate.passed, f"ep{ep}: {gate.summary()}"
+
+    def test_fp_sources_page_reaches_parity(self, tmp_path):
+        import zipfile
+        from engine.book_compiler import (build_epub, collect_chapters,
+                                          load_volume)
+        vol = load_volume(VOLS / "first_principles_collected.yaml")
+        chapters = collect_chapters(vol)
+        out = tmp_path / "fp.epub"
+        build_epub(vol, chapters, out)
+        z = zipfile.ZipFile(out)
+        assert "OEBPS/sources.xhtml" in z.namelist()
+        src = z.read("OEBPS/sources.xhtml").decode("utf-8")
+        assert src.count("<h2>") == 58  # one group per chapter
+        assert src.count('<a href="http') >= 170
 
 
 class TestBiggerBooksShift:

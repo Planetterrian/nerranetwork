@@ -128,11 +128,19 @@ def upload_book_image_to_gallery(
         episode_id = f"{volume.show_slug}_ep{chapter.episode_num:03d}"
         title = chapter.title
         date = chapter.episode_date
-        caption = f"Chapter illustration — {volume.title}, Vol. {volume.volume_number}"
+        if getattr(volume, "anthology", False) or not volume.volume_number:
+            caption = f"Chapter illustration — {volume.title}"
+        else:
+            caption = (f"Chapter illustration — {volume.title}, "
+                       f"Vol. {volume.volume_number}")
         tags = ["book", volume.volume_id, f"ep{chapter.episode_num:03d}"]
     else:
-        episode_id = f"{volume.show_slug}_book_vol{volume.volume_number}"
-        title = f"{volume.title}, Volume {volume.volume_number}"
+        if getattr(volume, "anthology", False) or not volume.volume_number:
+            episode_id = f"{volume.show_slug}_book_collected"
+            title = volume.title
+        else:
+            episode_id = f"{volume.show_slug}_book_vol{volume.volume_number}"
+            title = f"{volume.title}, Volume {volume.volume_number}"
         date = volume.built_date_hint
         caption = "Cover art"
         tags = ["book", "cover", volume.volume_id]
@@ -161,6 +169,18 @@ def upload_book_image_to_gallery(
 # ---------------------------------------------------------------------------
 # Cover composition — fixed series typography over per-volume art
 # ---------------------------------------------------------------------------
+
+def cover_badge_text(volume: BookVolume) -> str:
+    """The cover badge label.
+
+    A numbered volume reads "VOLUME N"; a collected edition (anthology,
+    volume_number 0) reads "COLLECTED EDITION" — a badge must never
+    render a 0 (WO-11: "VOLUME 0" shipped on both collected covers).
+    """
+    if getattr(volume, "anthology", False) or not volume.volume_number:
+        return "COLLECTED EDITION"
+    return f"VOLUME {volume.volume_number}"
+
 
 def compose_cover(
     volume: BookVolume,
@@ -265,9 +285,11 @@ def compose_cover(
                       anchor="ma")
             y += 74
 
-    # Volume badge — the series-continuity cue.
+    # Volume badge — the series-continuity cue. A collected edition has
+    # no meaningful number (volume_number 0), and "VOLUME 0" on a front
+    # cover is a defect (WO-11): those covers badge as COLLECTED EDITION.
     badge_font = _font(54)
-    badge_text = f"VOLUME {volume.volume_number}"
+    badge_text = cover_badge_text(volume)
     bw = draw.textlength(badge_text, font=badge_font)
     bx, by = w // 2, int(h * 0.80)
     draw.rounded_rectangle(
