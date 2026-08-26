@@ -111,8 +111,16 @@ jobs:
       - name: Verify built artifacts are live
         # The compiler tests above pass whether or not the run built
         # anything (they did, on the zero-output run of 2026-08-22).
-        # This step asserts what the run claims: catalog files exist and
-        # every R2 object answers 200.
+        # This step asserts what the run claims: public assets answer
+        # 200, and the paid masters exist in the private bucket.
+        env:
+          # Needed since 2026-08-26: the epub and m4b are r2:// refs into
+          # the private bucket, so verifying them is a credentialed
+          # head_object, not an anonymous HEAD. Without these the check
+          # soft-passes and stops being a check.
+          R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
         run: |
           NOAUDIO=""
           if [ "${{ github.event.inputs.skip_audio }}" = "true" ]; then
