@@ -33,6 +33,15 @@ import yaml
 
 logger = logging.getLogger(__name__)
 
+#: A topic whose episode the source-integrity gate has blocked this many
+#: times is DEFERRED by the picker (it stays in the queue, annotated, for
+#: the operator to prune or re-clear). Without this, the gate's
+#: queue-preserving skip turns one pathological topic into an indefinite
+#: outage: UC re-picked "the-philippine-land-reform-and" on 2026-08-24 AND
+#: -25 — its authoritative sources 403 GitHub runners, so the block was
+#: deterministic and the show simply stopped publishing.
+GATE_BLOCK_DEFER_THRESHOLD = 2
+
 
 def _load_queue(queue_path: Path) -> Dict[str, Any]:
     """Load a queue YAML. Empty dict on missing file (callers handle)."""
@@ -59,10 +68,24 @@ def pick_next_topic(queue_path: Path) -> Optional[Dict[str, Any]]:
     """
     data = _load_queue(queue_path)
     queue = data.get("queue", [])
+    deferred = 0
     for entry in queue:
         if not isinstance(entry, dict):
             continue
         if entry.get("produced") is True:
+            continue
+        if int(entry.get("gate_blocks") or 0) >= GATE_BLOCK_DEFER_THRESHOLD:
+            # Loop-breaker: the source-integrity gate has blocked this
+            # topic repeatedly — defer it so one bad topic can never take
+            # the show down indefinitely. Loud, never silent.
+            deferred += 1
+            logger.warning(
+                "Topic %r deferred: source-integrity gate blocked it %s "
+                "time(s) (last %s) — operator should re-source or prune it "
+                "in %s",
+                entry.get("id"), entry.get("gate_blocks"),
+                entry.get("gate_blocked_last", "?"), queue_path.name,
+            )
             continue
         # Defensive — make sure required fields are present.
         for required in ("id", "title", "brief"):
@@ -75,9 +98,10 @@ def pick_next_topic(queue_path: Path) -> Optional[Dict[str, Any]]:
         else:
             return dict(entry)  # shallow copy
     logger.warning(
-        "Topic queue %s: every topic has been produced. "
+        "Topic queue %s: every topic has been produced%s. "
         "Append new topics to keep the show running.",
         queue_path,
+        f" or gate-deferred ({deferred})" if deferred else "",
     )
     return None
 
@@ -200,6 +224,58 @@ def mark_topic_produced(
     return True
 
 
+def record_gate_block(queue_path: Path, topic_id: str,
+                      date_str: str) -> bool:
+    """Record that the source-integrity gate blocked *topic_id* today.
+
+    Increments the entry's ``gate_blocks`` counter and stamps
+    ``gate_blocked_last`` — the committed state the picker's defer
+    threshold reads (the skip path publishes nothing, so this annotation
+    is the ONLY thing that survives to the next day's fresh checkout;
+    run-show.yml commits it on gate-block skips). Idempotent per day: a
+    rerun on the same date does not double-count.
+
+    Returns True if the file changed."""
+    if not queue_path.exists():
+        logger.error("record_gate_block: queue file missing: %s", queue_path)
+        return False
+    with queue_path.open("r", encoding="utf-8") as fh:
+        data = yaml.safe_load(fh) or {}
+    queue = data.get("queue", [])
+    blocks = 0
+    updated = False
+    for entry in queue:
+        if isinstance(entry, dict) and entry.get("id") == topic_id:
+            if str(entry.get("gate_blocked_last") or "") == date_str:
+                logger.info(
+                    "record_gate_block: %r already recorded for %s",
+                    topic_id, date_str)
+                return False
+            blocks = int(entry.get("gate_blocks") or 0) + 1
+            entry["gate_blocks"] = blocks
+            entry["gate_blocked_last"] = date_str
+            updated = True
+            break
+    if not updated:
+        logger.warning(
+            "record_gate_block: topic_id %r not found in %s",
+            topic_id, queue_path)
+        return False
+    with queue_path.open("w", encoding="utf-8") as fh:
+        yaml.safe_dump(
+            data, fh,
+            allow_unicode=True,
+            sort_keys=False,
+            default_flow_style=False,
+            width=10000,
+        )
+    logger.warning(
+        "record_gate_block: %r now at %d gate block(s) (defer threshold %d)",
+        topic_id, blocks, GATE_BLOCK_DEFER_THRESHOLD,
+    )
+    return True
+
+
 def queue_health(queue_path: Path) -> Dict[str, int]:
     """Return ``{"total", "produced", "remaining"}`` for monitoring.
 
@@ -210,4 +286,17 @@ def queue_health(queue_path: Path) -> Dict[str, int]:
     queue = data.get("queue", [])
     total = len(queue)
     produced = sum(1 for e in queue if isinstance(e, dict) and e.get("produced") is True)
-    return {"total": total, "produced": produced, "remaining": total - produced}
+    gate_deferred = sum(
+        1 for e in queue
+        if isinstance(e, dict) and e.get("produced") is not True
+        and int(e.get("gate_blocks") or 0) >= GATE_BLOCK_DEFER_THRESHOLD
+    )
+    return {
+        "total": total,
+        "produced": produced,
+        "remaining": total - produced,
+        # Deferred topics still count in ``remaining`` (they are runway an
+        # operator can re-clear) but are surfaced separately so a queue
+        # full of gate-deferred topics doesn't read as healthy.
+        "gate_deferred": gate_deferred,
+    }

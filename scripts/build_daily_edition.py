@@ -69,8 +69,15 @@ logger = logging.getLogger("nerra_daily")
 
 #: After this UTC hour the gate stops waiting for missing shows and builds
 #: with whatever published (a show that legitimately skipped its day would
-#: otherwise hold the edition hostage forever).
-FORCE_BUILD_UTC_HOUR = 14
+#: otherwise hold the edition hostage forever). 12:00 UTC (was 14:00,
+#: Aug 2026 "land by 6am Pacific" pass): with the ~30 min build, a
+#: force-built edition lands ~12:40 UTC = 5:40am PDT / 4:40am PST — the
+#: old 14:00 hour put straggler days at ~8am PT. The trade (a show
+#: publishing 12:00-14:00 UTC now misses the edition) is measured by
+#: metrics_ep*.json ``missing_expected``; revisit the hour on that data.
+#: Punctual force trigger: workers/scheduler dispatches nerra-daily.yml
+#: at 12:07 UTC; the 12:23 GitHub sweep is the delayed fallback.
+FORCE_BUILD_UTC_HOUR = 12
 
 LINKS_MODEL = os.environ.get("NERRA_DAILY_LINKS_MODEL", "grok-4.3")
 

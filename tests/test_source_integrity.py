@@ -406,3 +406,133 @@ class TestDiagnosedFabricationsSoftened:
     def test_fabricated_citation_gone(self, filename, phrase):
         path = ROOT / "digests" / "unintended_consequences" / filename
         assert phrase not in path.read_text(encoding="utf-8")
+
+
+class TestUnreachableClassification:
+    """403/429/5xx/transport failures are 'source could not be READ', not
+    the fabrication signature (officialgazette.gov.ph 403'd six of eight
+    UC Ep99 claims, 2026-08-24, and took the show down for two days).
+    Still a gate FAILURE — the contract stays 'nothing unverified ships' —
+    but labelled so repair can ask for a fetchable alternative."""
+
+    def test_403_marks_unreachable_and_still_blocks(self):
+        gate = run_source_integrity_gate(
+            EPISODE_WITH_CLAIM, [GOOD_CLAIM],
+            fetch=_fetch_with("", status=403))
+        assert not gate.passed
+        assert gate.failed_verifications[0]["unreachable"] is True
+        assert "unreachable_sources=1" in gate.summary()
+
+    def test_404_is_not_unreachable(self):
+        # A source that says it does not exist IS the fabrication signal.
+        gate = run_source_integrity_gate(
+            EPISODE_WITH_CLAIM, [GOOD_CLAIM], fetch=_fetch_dead)
+        assert not gate.passed
+        assert gate.failed_verifications[0]["unreachable"] is False
+
+    def test_transport_error_marks_unreachable(self):
+        def _boom(url):
+            raise OSError("connection refused")
+        gate = run_source_integrity_gate(
+            EPISODE_WITH_CLAIM, [GOOD_CLAIM], fetch=_boom)
+        assert not gate.passed
+        assert gate.failed_verifications[0]["unreachable"] is True
+
+    def test_quote_mismatch_is_not_unreachable(self):
+        gate = run_source_integrity_gate(
+            EPISODE_WITH_CLAIM, [GOOD_CLAIM],
+            fetch=_fetch_with("entirely different text about markets"))
+        assert not gate.passed
+        assert gate.failed_verifications[0]["unreachable"] is False
+
+
+class TestClaimRepair:
+    """One bounded chance to re-source failed claims — the repaired ledger
+    re-runs the FULL mechanical gate, so repair can never launder an
+    unverifiable claim into publication."""
+
+    def _repaired_entry(self, url="https://example.edu/alt-source"):
+        return {
+            "id": "c1",
+            "claim": "IGNORED — repair may not rewrite the claim",
+            "episode_span": "IGNORED",
+            "source_url": url,
+            "source_title": "Alternative source",
+            "supporting_quote": GOOD_CLAIM["supporting_quote"],
+            "confidence": "high",
+        }
+
+    def _routed_fetch(self, good_url):
+        def _fetch(url):
+            if url == good_url:
+                return 200, f"<html>{GOOD_CLAIM['supporting_quote']}</html>"
+            return 403, ""
+        return _fetch
+
+    def test_repair_recovers_unreachable_claim(self):
+        from engine.claims import attempt_claim_repair
+
+        fetch = self._routed_fetch("https://example.edu/alt-source")
+        gate = run_source_integrity_gate(
+            EPISODE_WITH_CLAIM, [GOOD_CLAIM], fetch=fetch)
+        assert not gate.passed
+
+        def generate(prompt):
+            assert "could not be fetched" in prompt
+            return json.dumps([self._repaired_entry()])
+
+        new_gate, new_claims = attempt_claim_repair(
+            EPISODE_WITH_CLAIM, gate, [GOOD_CLAIM], generate, fetch=fetch)
+        assert new_gate.passed
+        assert new_gate.claims_verified == 1
+        # Claim text + anchor are the ORIGINAL's — repair only re-sources.
+        assert new_claims[0]["claim"] == GOOD_CLAIM["claim"]
+        assert new_claims[0]["episode_span"] == GOOD_CLAIM["episode_span"]
+        assert new_claims[0]["source_url"] == "https://example.edu/alt-source"
+
+    def test_repair_with_bad_replacement_still_blocks(self):
+        from engine.claims import attempt_claim_repair
+
+        fetch = self._routed_fetch("https://example.edu/never-returned")
+        gate = run_source_integrity_gate(
+            EPISODE_WITH_CLAIM, [GOOD_CLAIM], fetch=fetch)
+
+        def generate(prompt):
+            return json.dumps(
+                [self._repaired_entry(url="https://example.edu/still-403")])
+
+        new_gate, _ = attempt_claim_repair(
+            EPISODE_WITH_CLAIM, gate, [GOOD_CLAIM], generate, fetch=fetch)
+        assert not new_gate.passed
+
+    def test_repair_llm_garbage_returns_original(self):
+        from engine.claims import attempt_claim_repair
+
+        fetch = self._routed_fetch("https://example.edu/x")
+        gate = run_source_integrity_gate(
+            EPISODE_WITH_CLAIM, [GOOD_CLAIM], fetch=fetch)
+        new_gate, new_claims = attempt_claim_repair(
+            EPISODE_WITH_CLAIM, gate, [GOOD_CLAIM],
+            lambda p: "no json here", fetch=fetch)
+        assert new_gate is gate and new_claims == [GOOD_CLAIM]
+
+    def test_repair_noop_on_passing_gate(self):
+        from engine.claims import attempt_claim_repair
+
+        fetch = _fetch_with(GOOD_CLAIM["supporting_quote"])
+        gate = run_source_integrity_gate(
+            EPISODE_WITH_CLAIM, [GOOD_CLAIM], fetch=fetch)
+        assert gate.passed
+
+        def generate(prompt):
+            raise AssertionError("repair must not call the LLM when passing")
+
+        new_gate, _ = attempt_claim_repair(
+            EPISODE_WITH_CLAIM, gate, [GOOD_CLAIM], generate, fetch=fetch)
+        assert new_gate.passed
+
+    def test_run_show_wires_repair_before_block(self):
+        # The enforce path must attempt repair before _skip_episode.
+        assert "attempt_claim_repair" in RUN_SHOW_SRC
+        assert RUN_SHOW_SRC.index("attempt_claim_repair") < RUN_SHOW_SRC.index(
+            '"source_integrity_failed"')

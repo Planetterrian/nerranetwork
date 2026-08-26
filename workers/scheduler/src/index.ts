@@ -14,6 +14,17 @@ interface Env {
 const REPO = "Planetterrian/nerranetwork";
 const WORKFLOW = "run-show.yml";
 
+// Nerra Daily edition force-dispatch (Aug 2026, "land by 6am Pacific"):
+// the edition's when-ready gate stops waiting for stragglers at
+// FORCE_BUILD_UTC_HOUR (12:00 UTC, scripts/build_daily_edition.py), but
+// its GitHub sweep crons are as late as any other — on 2026-08-24/25 the
+// 14:23 sweep ran 15:07/15:13 and the edition landed ~8am PT. This slot
+// fires nerra-daily.yml at 12:07 UTC sharp (a minute the wrangler cron
+// already covers), so a straggler day still assembles by ~12:40 UTC =
+// 5:40am PDT / 4:40am PST. Deliberately an OBJECT, not a SLOTS row —
+// tests/test_scheduling_punctuality.py parses SLOTS rows as shows.
+const EDITION_DISPATCH = { hour: 12, minute: 7, workflow: "nerra-daily.yml" };
+
 // [utcHour, utcMinute, show, dayFilter]
 const SLOTS: Array<[number, number, string, string | null]> = [
   [6, 7,  "privet_russian",          "monday"],
@@ -53,9 +64,14 @@ function dayFilterPasses(filter: string | null, now: Date): boolean {
   }
 }
 
-async function dispatch(env: Env, show: string): Promise<void> {
+async function dispatchWorkflow(
+  env: Env,
+  workflow: string,
+  inputs: Record<string, string>,
+  label: string,
+): Promise<void> {
   const res = await fetch(
-    `https://api.github.com/repos/${REPO}/actions/workflows/${WORKFLOW}/dispatches`,
+    `https://api.github.com/repos/${REPO}/actions/workflows/${workflow}/dispatches`,
     {
       method: "POST",
       headers: {
@@ -64,19 +80,32 @@ async function dispatch(env: Env, show: string): Promise<void> {
         "User-Agent": "nerra-scheduler",
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ ref: "main", inputs: { show } }),
+      body: JSON.stringify({ ref: "main", inputs }),
     },
   );
   if (res.status !== 204) {
     const body = await res.text();
-    throw new Error(`workflow_dispatch for ${show} failed: ${res.status} ${body}`);
+    throw new Error(`workflow_dispatch for ${label} failed: ${res.status} ${body}`);
   }
-  console.log(`Dispatched ${show}`);
+  console.log(`Dispatched ${label}`);
+}
+
+async function dispatch(env: Env, show: string): Promise<void> {
+  await dispatchWorkflow(env, WORKFLOW, { show }, show);
 }
 
 export default {
   async scheduled(controller: ScheduledController, env: Env): Promise<void> {
     const now = new Date(controller.scheduledTime);
+    if (
+      now.getUTCHours() === EDITION_DISPATCH.hour &&
+      now.getUTCMinutes() === EDITION_DISPATCH.minute
+    ) {
+      // The edition workflow's own gate decides whether there is anything
+      // to build (already-published days no-op on the fast gate).
+      await dispatchWorkflow(env, EDITION_DISPATCH.workflow, {}, "nerra-daily");
+      return;
+    }
     const slot = SLOTS.find(
       ([h, m]) => h === now.getUTCHours() && m === now.getUTCMinutes(),
     );
