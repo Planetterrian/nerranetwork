@@ -567,6 +567,10 @@ jobs:
           git add shows/topic_queues/
           git commit -m "Topic-queue gate-block state: ${{ matrix.show }} $(date -u +%F)"
           for i in 1 2 3 4; do
+            # A conflicting concurrent push leaves a stopped rebase behind;
+            # without this abort every later attempt dies on "unmerged
+            # files" (the 2026-08-26 shared-pages failure shape).
+            git rebase --abort 2>/dev/null || true
             git pull --rebase origin main && git push origin main && exit 0
             sleep $((2 ** i))
           done
@@ -948,7 +952,33 @@ jobs:
           # (lower stakes than per-episode artifacts; pages are fully regenerable
           # from the per-show commits that already landed).
           for attempt in 1 2 3 4 5; do
-            if git pull --rebase origin main && git push origin main; then
+            if git pull --rebase origin main; then
+              :
+            else
+              # A concurrent push can land newer copies of the very files
+              # this commit carries (search-index.json, gallery-manifest.json
+              # — observed 2026-08-26). The old loop retried WITHOUT
+              # aborting the stopped rebase, so attempts 2-5 died instantly
+              # on "unmerged files". These are regenerable snapshots: on
+              # conflict keep origin's copy (in a rebase, --ours is the
+              # upstream side, which may carry another job's newer data;
+              # ours returns on the next regeneration) and continue. A
+              # commit emptied by that resolution is skipped; anything else
+              # aborts so the next attempt starts from a clean tree.
+              CONFLICTS=$(git diff --name-only --diff-filter=U || true)
+              if [ -n "$CONFLICTS" ]; then
+                echo "$CONFLICTS" | while IFS= read -r f; do
+                  git checkout --ours -- "$f" 2>/dev/null || true
+                  git add -- "$f" 2>/dev/null || true
+                done
+                GIT_EDITOR=true git rebase --continue \
+                  || GIT_EDITOR=true git rebase --skip \
+                  || git rebase --abort || true
+              else
+                git rebase --abort 2>/dev/null || true
+              fi
+            fi
+            if git push origin main; then
               echo "Push succeeded on attempt $attempt"
               exit 0
             fi
