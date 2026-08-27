@@ -1,0 +1,79 @@
+# Review ledger — Nerra Daily (virtual show; registry-only, assembled by
+# scripts/build_daily_edition.py — NOT in the shows/*.yaml rotation, so
+# reviews are operator-invoked, not scheduled). See README.md for schema.
+reviews:
+  - date: 2026-08-25
+    pr: null
+    doc: docs/reviews/nerra_daily_review_2026_08_25.md
+    reviewer: claude-code (first pass, operator-directed deep review)
+    summary: >-
+      First review, four episodes in. Audio core verified healthy
+      (promo-cut detection 44/44 segments all kind=promo across the four
+      editions; exact chapters; valid feed; ~$0.073/ep). Broken was the
+      periphery: every blog post titled itself with the italic byline
+      ("Hosted by Mira · Episode N…"), and the edition was invisible to
+      OP3, the dashboard cost rollup, and any per-build observability
+      (no metrics file, Mira's handoffs committed nowhere). Monday
+      2026-08-24 shipped without Offshore North even though it published
+      that day (17:04 vs the 15:07 force-build — cron lateness).
+    shipped:
+      - blockquote hook in the rundown .md (edition_hook) + engine/blog
+        italic-byline skip + 4 committed rundowns backfilled + pages
+        regenerated — per-day blog titles
+      - Mira's handoffs committed under each rundown section (blog prose
+        + future tic-detection substrate)
+      - metrics_ep*.json per build (cut kinds, shipped-whole count,
+        missing_expected, dropped, links_source, field-note flag) +
+        ::warning:: annotation when force-building without expected shows
+      - OP3 fetcher resolves registry-only virtual shows from
+        network_meta.yaml (nerra_daily measurable at last)
+      - dashboard cost rollup counts nerra_daily credit files
+        (_VIRTUAL_COST_SLUGS)
+      - data-side rotation memory injected into both prompts
+        ({recent_openers} from committed intros, {recent_field_notes}
+        from committed field notes) — A/B-listen flagged
+      - nerra-daily-launch entry in docs/experiments.yaml (readout
+        2026-09-22)
+    deferred:
+      - Monday force-hour trade-off (wait longer for weeklies vs later
+        edition for everyone) — operator decision; metrics now count the
+        misses so the decision can be data-driven
+      - content-lake/site-search inclusion of rundowns + field notes
+        (same registry mechanism as the OP3 fix)
+      - podcast:person tag for Mira on the channel
+      - offshore_north dispatcher forensics (published 17:04 vs 10:01
+        Worker slot on 2026-08-24) — scheduler scope, not edition scope
+    predictions:
+      - metric: "distinct blog <title> per Nerra Daily post (no byline-titled posts)"
+        baseline: "4/4 posts titled 'Hosted by Mira · Episode N · …'"
+        expected: "0 byline-titled posts; every post titled '<Weekday> edition — <lead hook>'"
+        verdict: pending
+        evidence: null
+      - metric: "consecutive editions opening with identical first words (committed intros)"
+        baseline: "4/4 open 'Good morning.'"
+        expected: "no two consecutive editions share opening words over the next 10 eps"
+        verdict: pending
+        evidence: null
+      - metric: "field-note topic repeated within 10 editions"
+        baseline: "unmeasurable (no memory; 3 notes so far, distinct)"
+        expected: "0 repeats in the next 10 field notes"
+        verdict: pending
+        evidence: null
+      - metric: "successor tic after the opener de-seed (the shape the model converges to next)"
+        baseline: "sign-offs already lean 'thread/through-line' (3/4)"
+        expected: "next review checks sign-off framing + whatever replaces 'Good morning' for a new 3+/5 convergence"
+        verdict: pending
+        evidence: null
+      - metric: "nerra_daily present in api/op3_stats.json shows section"
+        baseline: "absent (fetcher never resolved the feed)"
+        expected: "entry exists within 2 weeks of merge (nightly runs); if OP3 still 404s the feed, check the prefix per the dp_pod/age_of_ai lesson"
+        verdict: pending
+        evidence: null
+      - metric: "editions built with missing_expected non-empty (metrics_ep*.json)"
+        baseline: "1 known miss in 4 editions (offshore_north, 2026-08-24) — previously uncounted"
+        expected: "measured rate available at next review; if Monday weeklies miss ≥2 more times, escalate the force-hour decision"
+        verdict: pending
+        evidence: null
+    agent_cost_usd: null
+
+do_not_retry: []

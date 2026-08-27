@@ -87,6 +87,29 @@ remove leakage; the ledger carries provenance. Audit tools:
 (ex-`check_sources.py`) grades FEED health only — it has no view on
 truth. Drift guards: `tests/test_source_integrity.py`.
 
+**Aug 25 2026 — unreachable ≠ fabricated, plus two loop-breakers.** UC
+lost two days because its next topic's authoritative sources
+(officialgazette.gov.ph) 403 GitHub runners: the gate read "cannot
+fetch" as "fabricated", the queue-preserving skip re-picked the same
+topic daily, and nothing persisted the failure. Now: (1) verification
+labels 403/429/5xx/transport failures `unreachable` — **still a gate
+FAILURE** (the enforce contract is untouched), but distinct from the
+fabrication signature (404 / quote-not-found); (2) an enforce-mode
+block first gets ONE `attempt_claim_repair` pass (the model re-sources
+only the failed claims with fetchable alternatives — claim text and
+anchor are pinned, the repaired ledger re-runs the FULL mechanical
+gate, so repair can never launder an unverifiable claim); (3) a topic
+the gate blocks twice is **deferred by the picker**
+(`gate_blocks`/`gate_blocked_last` on the queue entry, committed by
+run-show.yml's skip-path step — the annotation is the only thing that
+survives a skip; threshold in
+`engine.topic_queue.GATE_BLOCK_DEFER_THRESHOLD`). Deferred topics stay
+in the queue for the operator and are surfaced by
+`queue_health()["gate_deferred"]`. Guards:
+`TestUnreachableClassification`, `TestClaimRepair`
+(`tests/test_source_integrity.py`), `TestGateBlockCooldown`
+(`tests/test_unintended_consequences.py`).
+
 ## Project Overview
 
 Automated daily podcast generation system running 17 shows via a unified
@@ -564,7 +587,9 @@ today's work, not just explain yesterday's):
   `scripts/build_daily_edition.py` + `engine/daily_edition.py`, workflow
   `.github/workflows/nerra-daily.yml` (workflow_run after each Run Podcast
   Show + ready gate: builds minutes after the last expected show lands;
-  ≥14:00 UTC sweeps build with whatever published; committed summaries
+  ≥12:00 UTC sweeps build with whatever published (12:00 force hour +
+  the scheduler Worker's 12:07 dispatch land straggler days ~5:40am PT
+  — Aug 2026 pass); committed summaries
   entry per date = idempotency key). **Each segment's baked-in outro tail
   (network sibling plug → surface plug → AI disclosure) is trimmed via
   the committed Whisper word timestamps** (`find_promo_cut` — fuzzy on
@@ -582,6 +607,28 @@ today's work, not just explain yesterday's):
   post — never duplicates their digests). Docs:
   [`docs/nerra_daily.md`](docs/nerra_daily.md). Drift guards:
   `tests/test_daily_edition.py`.
+  **Aug 25 2026 first quality pass** (review:
+  [`docs/reviews/nerra_daily_review_2026_08_25.md`](docs/reviews/nerra_daily_review_2026_08_25.md);
+  ledger `docs/reviews/ledger/nerra_daily.yaml`): audio core verified
+  healthy (promo cut 44/44 segments, all `kind=promo`), but the
+  periphery wasn't — every blog post titled itself with the italic
+  byline (fixed: the rundown now emits the `> **<hook>**` blockquote
+  via `edition_hook()`, `engine/blog.py` skips full-italic bylines,
+  four rundowns backfilled), and **being a virtual show made it
+  invisible to every shows-glob loop**: OP3 never resolved its feed
+  (fetcher now reads registry-only shows from `network_meta.yaml` —
+  `_virtual_show_targets`), the dashboard cost rollup missed its
+  credit files (`_VIRTUAL_COST_SLUGS`), and no per-build record
+  existed (now `metrics_ep*.json`: cut kinds, `missing_expected` —
+  Offshore North published 17:04 on Monday 2026-08-24, after the
+  15:07 force-build, and the miss was uncountable). A new virtual
+  show must be added to those two lists or it repeats the hole.
+  Mira's handoffs now commit into the rundown .md (tic-detection
+  substrate + unique blog prose), and both prompts gained data-side
+  rotation memory (`{recent_openers}` / `{recent_field_notes}` — all
+  four intros had opened "Good morning."). Launch registered as
+  experiment `nerra-daily-launch` (readout 2026-09-22; needs the
+  Apple/Spotify submission from the operator checklist).
 - All shows delegate X posting to `engine.publisher.post_to_x()`
 - TST/FF/PT delegate voice normalization to `engine.audio.normalize_voice()`
 - All shows use `engine.audio.mix_with_music()` for music mixing (3 modes:

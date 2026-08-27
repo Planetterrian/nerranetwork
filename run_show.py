@@ -2198,6 +2198,51 @@ def run(args: argparse.Namespace) -> None:
                     len(_si_gate.uncovered_shapes))
                 metrics.record("source_integrity_passed", _si_gate.passed)
                 metrics.record("source_integrity_enforced", _si_enforce)
+
+                # One bounded repair pass before an enforce-mode block
+                # (Aug 25 2026: UC lost two days because its topic's
+                # authoritative sources 403 GitHub runners — the gate read
+                # "cannot fetch" as "fabricated"). The model gets ONE
+                # chance to re-source the failed claims with fetchable
+                # alternatives; the repaired ledger then re-runs the FULL
+                # mechanical gate. Still failing => block, exactly as
+                # before — the enforce contract is untouched.
+                if (not _si_gate.passed and _si_enforce
+                        and _si_gate.failed_verifications):
+                    metrics.record("source_integrity_repair_attempted", True)
+                    logger.warning(
+                        "Source-integrity gate failing (%s) — attempting a "
+                        "one-shot claim repair before blocking",
+                        _si_gate.summary())
+
+                    def _repair_llm(prompt: str) -> str:
+                        from digests.xai_grok import grok_generate_text
+                        from engine.tracking import record_llm_usage
+                        text, _meta = grok_generate_text(
+                            prompt=prompt,
+                            model=getattr(config.llm, "model", "grok-4.3"),
+                            temperature=0.2, max_tokens=2000,
+                            timeout_seconds=300,
+                        )
+                        _usage = (_meta or {}).get("usage")
+                        record_llm_usage(
+                            tracker, "claim_repair",
+                            int(getattr(_usage, "prompt_tokens", 0) or 0),
+                            int(getattr(_usage, "completion_tokens", 0) or 0),
+                            model=str((_meta or {}).get("model")
+                                      or getattr(config.llm, "model", "")),
+                        )
+                        return text
+
+                    _si_gate, _si_claims = _si_mod.attempt_claim_repair(
+                        x_thread, _si_gate, _si_claims or [], _repair_llm)
+                    metrics.record(
+                        "source_integrity_repair_succeeded", _si_gate.passed)
+                    if _si_gate.passed:
+                        logger.info(
+                            "Claim repair recovered the episode: %s",
+                            _si_gate.summary())
+
                 if not _si_gate.passed:
                     logger.error(
                         "Source-integrity gate FAILED: %s", _si_gate.summary())
@@ -2212,6 +2257,27 @@ def run(args: argparse.Namespace) -> None:
                     for _e in _si_gate.shape_errors:
                         logger.error("  malformed ledger entry: %s", _e)
                     if _si_enforce:
+                        # Loop-breaker state: annotate the topic-queue
+                        # entry so tomorrow's picker can defer a topic the
+                        # gate keeps blocking (the skip preserves the
+                        # queue slot BY DESIGN, which made one 403-heavy
+                        # topic an indefinite outage — UC 2026-08-24/25).
+                        # run-show.yml commits the annotation on skip.
+                        if narrative_topic.get("id"):
+                            try:
+                                from engine.topic_queue import (
+                                    record_gate_block,
+                                )
+                                record_gate_block(
+                                    queue_path,
+                                    narrative_topic["id"],
+                                    today.isoformat(),
+                                )
+                            except Exception as _rb_exc:  # noqa: BLE001
+                                logger.warning(
+                                    "could not record gate block on topic "
+                                    "%r: %s",
+                                    narrative_topic.get("id"), _rb_exc)
                         save_usage(tracker, digests_dir)
                         _skip_episode(
                             "source_integrity_failed",

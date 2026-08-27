@@ -213,9 +213,13 @@ class TestWO5FirstPrinciplesArithmetic:
         # Nuclear: 10-20x understated its own case ~8x
         (5, "one-tenth to one-twentieth of the overnight capital cost",
          "one-eightieth to one-one-hundred-sixtieth"),
-        # Geothermal: consistent tonnage, real OCTG price
+        # Geothermal: consistent tonnage. The WO-5 pass pinned the real
+        # OCTG price ($1,200–2,500/t); the WO-11 ledger pass could not
+        # tie the 150-ton casing figure to a fetchable source, so the
+        # sentence now carries the honest general form instead.
         (22, "a few hundred dollars per ton plus a few dozen tons",
-         "$1,200–2,500 per tonne"),
+         "a hundred tons or more of steel — a few hundred thousand "
+         "dollars of pipe at commodity prices"),
         # Wright brothers: real tunnel dimensions; cables warp, chains
         # drive propellers
         (23, "six inches square and twenty inches long",
@@ -254,6 +258,230 @@ class TestWO5FirstPrinciplesArithmetic:
         assert data["chapter_titles"][32] == "Moving Heat, Not Making It"
 
 
+class TestFPOmnibus:
+    """First Principles: The Collected Edition — 58 chapters (the two
+    true retellings dropped: ep21 re-derives ep7's ammonia cost
+    argument, ep25 retells ep6's container story), ~63k words, opens
+    on The Price of Light."""
+
+    @pytest.fixture(scope="class")
+    def fp_vol(self):
+        from engine.book_compiler import collect_chapters, load_volume
+        vol = load_volume(VOLS / "first_principles_collected.yaml")
+        return vol, collect_chapters(vol)
+
+    def test_shape_and_opener(self, fp_vol):
+        vol, chapters = fp_vol
+        assert len(chapters) == 58 and len(vol.parts) == 5
+        assert chapters[0].episode_num == 27  # The Price of Light
+        assert sum(c.word_count for c in chapters) > 55000
+        eps = {c.episode_num for c in chapters}
+        assert 21 not in eps and 25 not in eps  # the retellings
+
+    def test_identity(self, fp_vol):
+        vol, _ = fp_vol
+        assert vol.anthology and float(vol.price_usd) == 7.99
+        assert vol.introduction_file.endswith(
+            "first_principles_index_note.md")
+        assert vol.subtitle.startswith("Fifty-eight ")
+
+    def test_contradictions_harmonized(self):
+        """The curation pass found two same-quantity contradictions
+        between kept chapters; both are fixed in the digests."""
+        t56 = _fp_digest(56)
+        assert "well below one kilowatt-hour per cubic meter in modern" \
+            not in t56
+        assert "three to four that real reverse-osmosis plants draw" in t56
+        t1 = _fp_digest(1)
+        assert "Idiot Index between four and five" not in t1
+        assert "five-to-fifteen range in this book's housing chapter" in t1
+
+
+class TestWO11ShipBlockers:
+    """WO-11: defects verified against the 2026-08-25 built EPUBs."""
+
+    def test_cover_badge_never_renders_zero(self):
+        from engine.book_art import cover_badge_text
+        from engine.book_compiler import load_volume
+        for name in ("unintended_consequences_collected",
+                     "first_principles_collected"):
+            vol = load_volume(VOLS / f"{name}.yaml")
+            badge = cover_badge_text(vol)
+            assert badge == "COLLECTED EDITION", name
+        numbered = load_volume(VOLS / "unintended_consequences_vol1.yaml")
+        assert cover_badge_text(numbered) == "VOLUME 1"
+        # the invariant itself: no badge string ever contains a bare 0
+        for name in sorted(p.stem for p in VOLS.glob("*.yaml")):
+            vol = load_volume(VOLS / f"{name}.yaml")
+            assert cover_badge_text(vol) != "VOLUME 0", name
+
+    def test_epub_escaping_validator_catches_double_escape(self, tmp_path):
+        import zipfile
+        from engine.book_compiler import validate_epub_escaping
+        bad = tmp_path / "bad.epub"
+        with zipfile.ZipFile(bad, "w") as z:
+            z.writestr("OEBPS/x.xhtml",
+                       "<html><body><p>Turner &amp;amp; Newall</p>"
+                       "</body></html>")
+        with pytest.raises(ValueError, match="double-escaped"):
+            validate_epub_escaping(bad)
+        good = tmp_path / "good.epub"
+        with zipfile.ZipFile(good, "w") as z:
+            z.writestr("OEBPS/x.xhtml",
+                       "<html><body><p>Turner &amp; Newall</p>"
+                       "</body></html>")
+        validate_epub_escaping(good)  # must not raise
+
+    def test_built_epub_is_validated_and_renders_real_ampersands(
+            self, tmp_path):
+        import xml.etree.ElementTree as ET
+        import zipfile
+        from engine.book_compiler import (build_epub, collect_chapters,
+                                          load_volume)
+        vol = load_volume(VOLS / "unintended_consequences_collected.yaml")
+        chapters = collect_chapters(vol)
+        out = tmp_path / "uc.epub"
+        build_epub(vol, chapters, out)  # validate_epub_escaping runs inside
+        with zipfile.ZipFile(out) as z:
+            t = z.read("OEBPS/chap_021.xhtml").decode("utf-8")
+        text = "".join(ET.fromstring(t.encode("utf-8")).itertext())
+        assert "Turner & Newall" in text
+        assert "&amp;" not in text
+
+    def test_purdue_chronology(self):
+        t = _uc_digest(34)
+        assert ("filed for bankruptcy in 2019 after agreeing to "
+                "settlements") not in t
+        assert "filed for bankruptcy in September 2019" in t
+        assert "announced in October 2020" in t
+
+    @pytest.mark.parametrize("show", ["unintended_consequences",
+                                      "first_principles"])
+    def test_no_duplication_seams_in_any_digest(self, show):
+        """The '.,' hits were rewrite seams that duplicated clause
+        tails (found in both shows). 'D.C.,' -style abbreviations are
+        legitimate."""
+        import re
+        for p in sorted((ROOT / "digests" / show).glob("*.md")):
+            t = p.read_text(encoding="utf-8")
+            for m in re.finditer(r"\.,", t):
+                ctx = t[max(0, m.start() - 4):m.start() + 2]
+                assert re.search(r"\b[A-Z]\.[A-Z]?\.,$", ctx), (
+                    f"{p.name}: seam at "
+                    f"{t[max(0, m.start() - 60):m.start() + 60]!r}")
+
+    def test_textile_waste_attribution(self):
+        t = _uc_digest(63)
+        assert "now tracked by the Ellen MacArthur Foundation" not in t
+        assert ("a figure reported in a 2020 review in Nature Reviews "
+                "Earth & Environment") in t
+
+    def test_ten_am_policy_softened_to_sourced_form(self):
+        t = _uc_digest(47)
+        assert "In 1935 the agency formalized" not in t
+        assert "under chief Ferdinand Silcox" in t
+
+
+class TestNoReviewerAnnotationLeaks:
+    """Research-agent meta-commentary must never survive into a digest.
+
+    Six leaks shipped in the 2026-08-25 builds ('(The DEA-1973 fact is
+    verified as c3; …)', '…could not be verified against a fetchable
+    source', 'a general form would be: …'). These phrases are the
+    verification workflow talking to itself — they can appear in ledger
+    sidecars and review docs, never in published prose."""
+
+    _BANNED = ("fetchable source", "verified as c", "a general form",
+               "suggested fix", "episode_span", "supporting_quote",
+               "could not be verified", "could not be anchored",
+               "[NOTE:", "(Note:")
+
+    @pytest.mark.parametrize("show", ["unintended_consequences",
+                                      "first_principles"])
+    def test_no_annotation_shapes_in_digests(self, show):
+        hits = []
+        for p in sorted((ROOT / "digests" / show).glob("*_Ep*_*.md")):
+            if any(s in p.name for s in ("_transcript", "_tts",
+                                         "_reader", "_claims")):
+                continue
+            t = p.read_text(encoding="utf-8")
+            for b in self._BANNED:
+                if b in t:
+                    hits.append((p.name, b))
+        assert not hits, hits
+
+
+class TestFPLedgerCoverage:
+    """WO-11 Part B: FP's ledger backfill reached parity with UC's —
+    every collected chapter carries a verified ledger and the Sources
+    page renders one endnote group per chapter."""
+
+    FP_DIR = ROOT / "digests" / "first_principles"
+
+    def test_every_fp_collected_chapter_has_a_verified_ledger(self):
+        from engine import claims as C
+        vol = yaml.safe_load(
+            (VOLS / "first_principles_collected.yaml")
+            .read_text(encoding="utf-8"))
+        for ep in vol["episodes"]:
+            md = sorted(p for p in self.FP_DIR.glob(f"*_Ep{ep:03d}_*.md")
+                        if "_transcript" not in p.name
+                        and "_tts" not in p.name
+                        and "_reader" not in p.name)[-1]
+            ledger = C.load_ledger(md)
+            assert ledger, f"ep{ep}: no ledger sidecar"
+            gate = C.run_source_integrity_gate(
+                md.read_text(encoding="utf-8"), ledger,
+                verify_sources=False)
+            assert gate.passed, f"ep{ep}: {gate.summary()}"
+
+    def test_fp_sources_page_reaches_parity(self, tmp_path):
+        import zipfile
+        from engine.book_compiler import (build_epub, collect_chapters,
+                                          load_volume)
+        vol = load_volume(VOLS / "first_principles_collected.yaml")
+        chapters = collect_chapters(vol)
+        out = tmp_path / "fp.epub"
+        build_epub(vol, chapters, out)
+        z = zipfile.ZipFile(out)
+        assert "OEBPS/sources.xhtml" in z.namelist()
+        src = z.read("OEBPS/sources.xhtml").decode("utf-8")
+        assert src.count("<h2>") == 58  # one group per chapter
+        assert src.count('<a href="http') >= 170
+
+
+class TestBiggerBooksShift:
+    """The forward pipeline can never cut pamphlets again, and the
+    storefront sells only the collected editions."""
+
+    def test_series_volume_size_is_book_length(self):
+        from engine.book_compiler import load_series
+        for slug in ("unintended_consequences", "first_principles"):
+            assert int(load_series(slug)["volume_size"]) == 50, slug
+
+    def test_thin_numbered_volumes_are_unlisted(self):
+        for name in ("unintended_consequences_vol1",
+                     "unintended_consequences_vol2",
+                     "unintended_consequences_vol3",
+                     "unintended_consequences_vol4",
+                     "first_principles_vol1", "first_principles_vol2",
+                     "first_principles_vol3"):
+            data = yaml.safe_load(
+                (VOLS / f"{name}.yaml").read_text(encoding="utf-8"))
+            assert data.get("unlisted") is True, name
+
+    def test_collected_editions_are_listed(self):
+        for name in ("unintended_consequences_collected",
+                     "first_principles_collected"):
+            data = yaml.safe_load(
+                (VOLS / f"{name}.yaml").read_text(encoding="utf-8"))
+            assert not data.get("unlisted"), name
+
+    def test_books_page_filters_unlisted(self):
+        src = (ROOT / "generate_html.py").read_text(encoding="utf-8")
+        assert 'vdata.get("unlisted")' in src
+
+
 class TestWO6CombinedVolume:
     """The combined 30-chapter edition + the parts/front-matter machinery."""
 
@@ -268,23 +496,27 @@ class TestWO6CombinedVolume:
         build_epub(vol, chapters, out)
         return vol, chapters, zipfile.ZipFile(out)
 
-    def test_thirty_chapters_five_parts_kudzu_opens(self, built):
+    def test_omnibus_shape_kudzu_opens(self, built):
+        """The complete edition: all 73 surviving chapters (~54k words —
+        a real book at $7.99, per the operator's bigger-books
+        direction), 8 parts, Kudzu first (it debunks a myth the reader
+        arrives believing — the inverse of the cut Cobra opener)."""
         vol, chapters, _ = built
-        assert len(chapters) == 30 and len(vol.parts) == 5
-        assert all(len(p["episodes"]) == 6 for p in vol.parts)
-        # Kudzu (ep59) opens the book: it debunks a myth the reader
-        # arrives believing — the inverse of the cut Cobra opener.
+        assert len(chapters) == 73 and len(vol.parts) == 8
         assert chapters[0].episode_num == 59
         assert chapters[0].title.lower().startswith("kudzu")
         # No cut episode sneaks back in via the anthology.
         assert not CUT_EPISODES & {c.episode_num for c in chapters}
+        # Word count stays book-length — a regression here means the
+        # store listing is thin again.
+        assert sum(c.word_count for c in chapters) > 45000
 
     def test_anthology_identity_and_price(self, built):
         vol, _, _ = built
         assert vol.anthology and vol.volume_number == 0
         assert vol.full_title == "Unintended Consequences: The Collected Edition"
         assert float(vol.price_usd) == 7.99
-        assert vol.subtitle.startswith("Thirty ")
+        assert vol.subtitle.startswith("Seventy-three ")
 
     def test_epub_structure_with_parts(self, built):
         _, _, z = built
@@ -386,8 +618,8 @@ class TestWO6CombinedVolume:
         _, _, z = built
         assert "OEBPS/sources.xhtml" in z.namelist()
         src = z.read("OEBPS/sources.xhtml").decode("utf-8")
-        assert src.count("<h2>") == 30  # one group per chapter
-        assert src.count('<a href="http') >= 100
+        assert src.count("<h2>") == 73  # one group per chapter
+        assert src.count('<a href="http') >= 250
 
     def test_single_volume_builds_unaffected_by_parts_machinery(self,
                                                                 tmp_path):

@@ -12,7 +12,7 @@ name: Nerra Daily Edition
 # scripts/build_daily_edition.py exits 0 quietly until every show
 # expected that weekday has published — so the edition assembles minutes
 # after the LAST show of the morning lands. The scheduled sweeps are
-# late-day idempotent fallbacks: past 14:00 UTC the gate stops waiting
+# late-day idempotent fallbacks: past 12:00 UTC the gate stops waiting
 # for stragglers (a show that skipped its day would otherwise block the
 # edition forever) and builds with whatever published. Re-runs are free:
 # the committed summaries entry for the edition date is the idempotency
@@ -24,7 +24,11 @@ on:
     types: [completed]
   schedule:
     # Idempotent sweeps after the morning slate (GitHub cron is often
-    # hours late — fine, the gate handles it).
+    # hours late — fine, the gate handles it). The 12:23 sweep backs the
+    # force hour (12:00 UTC since the Aug 2026 land-by-6am-Pacific pass);
+    # the exact-time driver is the Cloudflare Worker's 12:07 UTC dispatch
+    # (workers/scheduler EDITION_DISPATCH).
+    - cron: '23 12 * * *'
     - cron: '23 14 * * *'
     - cron: '23 17 * * *'
   workflow_dispatch:

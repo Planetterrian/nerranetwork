@@ -100,18 +100,51 @@ develops Mira's editorial voice beyond announcing.
 - `workflow_run` after every "Run Podcast Show" completion + the
   `--when-ready` gate in `scripts/build_daily_edition.py`: the edition
   assembles minutes after the LAST show expected that weekday lands.
-- Scheduled sweeps (14:23 / 17:23 UTC) are idempotent fallbacks; past
-  14:00 UTC the gate stops waiting for stragglers (a show that
-  legitimately skipped would otherwise block the edition forever) and
-  builds with whatever published, refusing below 4 segments.
+- Scheduled sweeps (12:23 / 14:23 / 17:23 UTC) are idempotent
+  fallbacks; past **12:00 UTC** (was 14:00 — Aug 2026
+  land-by-6am-Pacific pass) the gate stops waiting for stragglers (a
+  show that legitimately skipped would otherwise block the edition
+  forever) and builds with whatever published, refusing below 4
+  segments. The punctual force driver is the Cloudflare scheduler
+  Worker's 12:07 UTC dispatch (`EDITION_DISPATCH` in
+  `workers/scheduler` — GitHub sweeps run hours late), so a straggler
+  day lands ~12:40 UTC = 5:40am PDT / 4:40am PST; a complete day still
+  assembles minutes after the last show (~10:30-11:00 UTC). A show
+  publishing between 12:00 and its old 14:00 window now misses the
+  edition — `metrics_ep*.json` `missing_expected` counts those, so the
+  hour can be revisited on data.
 - Idempotency key: the committed summaries entry for the edition date.
   Re-runs after a failed commit rebuild cleanly (the MP3 re-uploads to
   the same R2 key).
 - Publish surface: `nerra_daily_podcast.rss` (OP3-prefixed enclosures,
   `podcast:chapters` link), `digests/nerra_daily/` (summaries JSON,
-  chapters JSON, daily rundown .md, credit file), blog post via
-  `generate_html.py --show nerra_daily --blogs`. The rundown blog links
-  into each show's own episode post rather than duplicating digests.
+  chapters JSON, daily rundown .md, credit file, `metrics_ep*.json`),
+  blog post via `generate_html.py --show nerra_daily --blogs`. The
+  rundown blog links into each show's own episode post rather than
+  duplicating digests — and carries Mira's actual spoken prose (intro,
+  each handoff under its show's section, field note, sign-off) plus a
+  `> **<Weekday> edition — <lead hook>**` blockquote that
+  `engine/blog.py` needs for per-day blog titles (without it every
+  post titled itself with the italic byline — Aug 25 2026 review).
+- **Observability (Aug 25 2026):** each build commits
+  `metrics_ep*.json` — per-segment `cut_kind`/`cut_final_seconds`,
+  `segments_shipped_whole`, `missing_expected` (a show that published
+  AFTER the force-build, like Offshore North at 17:04 on Monday
+  2026-08-24), `segments_dropped`, `links_source` (llm vs fallback)
+  and the field-note flag. A trim that silently stops matching or a
+  chronic Monday miss is countable now instead of a lost log line.
+  Virtual-show registration: the OP3 fetcher (`_virtual_show_targets`
+  reads `network_meta.yaml`) and the dashboard cost rollup
+  (`_VIRTUAL_COST_SLUGS`) both had to learn about registry-only shows —
+  a future edition must be picked up by both or its audience and cost
+  are invisible.
+- **Rotation memory (Aug 25 2026):** `build_links_prompt` injects the
+  opening words of the last 10 committed intros (`{recent_openers}`)
+  and `build_find_prompt` the last 10 field-note topics
+  (`{recent_field_notes}`) as do-not-repeat blocks — data-side, the DP
+  Pod lever-memory pattern (all four launch intros opened "Good
+  morning.", and nothing stopped the field note from re-finding a
+  recently covered item).
 
 ## Operator checklist (one-time)
 

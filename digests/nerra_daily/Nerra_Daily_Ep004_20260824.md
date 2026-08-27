@@ -2,6 +2,8 @@
 
 **Date:** August 24, 2026
 
+> **Monday edition — Proprietary alloys and a dedicated gas trader for Texas facilities show SpaceX tightening…**
+
 *Hosted by Mira · Episode 4 · every English show the Nerra Network published today, in one listen.*
 
 Good morning. This is Mira with Nerra Daily for Monday, August 24, 2026. Across the lineup the network tracks how hardware builders are locking down their own materials and power sources, how measurement fleets are redrawing the scale of solar events, and how protein timing and vaccine design are altering assumptions about development and immunity. AI traffic patterns and investor responses to heavy infrastructure bets appear as well. SpaceX has replaced the stainless steel of its first prototypes with alloys built for the temperature and load conditions that now define flight.

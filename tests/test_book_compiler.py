@@ -421,14 +421,16 @@ class TestSeriesInheritance:
         for slug in slugs:
             s = load_series(slug)
             assert s["author"] == "Patrick Novak"
-            assert 10 <= int(s["volume_size"]) <= 20
+            # Band widened to 10-60 (Aug 2026 bigger-books shift):
+            # future planner-cut volumes are book-length.
+            assert 10 <= int(s["volume_size"]) <= 60
 
     def test_volume_size_outside_band_raises(self, tmp_path):
         from engine.book_compiler import load_series
         bad = tmp_path / "s.yaml"
         bad.write_text(
             "show_slug: x\nshow_name: X\nseries_title: X\n"
-            "author: A\nvolume_size: 50\n", encoding="utf-8")
+            "author: A\nvolume_size: 99\n", encoding="utf-8")
         try:
             load_series(bad)
         except ValueError:
@@ -558,6 +560,49 @@ class TestBuildPipelineIntegrity:
             ]}))
         monkeypatch.setattr(bb, "ROOT", tmp_path)
         assert bb._unbuilt_volume_ids() == ["b_vol1"]
+
+    def test_paid_masters_are_never_published_at_a_public_url(self):
+        """The shipped catalog must not hand out the product for free.
+
+        On 2026-08-26 every volume's full EPUB, M4B and per-chapter
+        narration masters sat in the PUBLIC podcast bucket, with their
+        URLs committed to this repo's books/catalog.json — 596 objects,
+        3.1 GB, the whole paid catalogue downloadable by anyone who
+        opened the JSON. Covers and samples are meant to be public; the
+        product is not. A public master also invites Amazon's
+        price-matching, which pays 70% of the MATCHED price.
+        """
+        catalog = json.loads(
+            (_ROOT / "books" / "catalog.json").read_text(encoding="utf-8"))
+        offenders = [
+            f"{v['volume_id']}.{kind}"
+            for v in catalog.get("volumes", [])
+            for kind in ("epub", "m4b")
+            if (v.get("files") or {}).get(kind, "").startswith("http")
+        ]
+        assert not offenders, (
+            "paid masters published at public URLs: "
+            + ", ".join(offenders)
+            + " — they belong in the private bucket as r2:// refs"
+        )
+
+    def test_build_uploads_paid_masters_privately(self):
+        """The catalog guard above only catches what already shipped.
+        This one catches the build that would ship it again."""
+        src = (_ROOT / "scripts" / "build_book.py").read_text(
+            encoding="utf-8")
+        for needle in (
+            'entry["files"]["epub"] = _r2_upload(',
+            'entry["files"]["m4b"] = _r2_upload(',
+        ):
+            block = src.split(needle, 1)
+            assert len(block) == 2, f"{needle} vanished from build_book.py"
+            assert "private=True" in block[1][:220], (
+                f"{needle} must upload to the private bucket"
+            )
+        assert "ctype, private=True)" in src, (
+            "per-chapter narration masters must upload privately too"
+        )
 
     def test_workflow_verifies_live_artifacts_not_just_the_compiler(self):
         wf = (_ROOT / ".github" / "workflows" / "build-book.yml").read_text(

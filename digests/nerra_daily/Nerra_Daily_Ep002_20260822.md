@@ -2,6 +2,8 @@
 
 **Date:** August 22, 2026
 
+> **Saturday edition — Trump's new space transportation policy could open federal land for heavy-lift spaceports…**
+
 *Hosted by Mira · Episode 2 · every English show the Nerra Network published today, in one listen.*
 
 Good morning. This is Mira with Nerra Daily for Saturday, August 22, 2026. Today the lineup follows policy changes that could expand launch capacity, security flaws that cross vendor lines in charging networks, and the movement of older vehicles out of Norway after its rapid shift to electric cars. We also hear about tariff responses between the United States and Canada, compact models that run from disk, and a new hybrid plant now supplying power in Africa. We begin with SpaceX Daily, where federal agencies have been told to locate sites on public land that can handle heavy and super-heavy vehicles.

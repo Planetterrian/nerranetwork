@@ -153,3 +153,36 @@ def test_audit_rss_limits_match_cron_cadence():
                 f"{show}: daily cadence but audit limit is {limit}h "
                 "(>120h) — a real outage would go unnoticed for days"
             )
+
+
+def test_edition_dispatch_slot():
+    """Nerra Daily's force-build must have an exact-time driver (Aug 2026
+    land-by-6am-Pacific pass): the Worker dispatches nerra-daily.yml at
+    12:07 UTC — a minute the existing cron trigger already covers — and
+    the edition's force hour sits just before it. Deliberately NOT a
+    SLOTS row (those parse as shows above)."""
+    m = re.search(
+        r"EDITION_DISPATCH = \{ hour: (\d+), minute: (\d+), "
+        r'workflow: "([\w.-]+)" \}', _TS)
+    assert m, "EDITION_DISPATCH missing from workers/scheduler"
+    hour, minute, workflow = int(m.group(1)), int(m.group(2)), m.group(3)
+    assert workflow == "nerra-daily.yml"
+    # The wrangler cron ("1,7,16,31,37,46 6-12 * * *") must cover the slot.
+    toml = (_ROOT / "workers" / "scheduler" / "wrangler.toml").read_text(
+        encoding="utf-8")
+    cron = re.search(r'crons = \["([^"]+)"\]', toml).group(1)
+    minutes, hours = cron.split()[0], cron.split()[1]
+    assert str(minute) in minutes.split(",")
+    lo, hi = hours.split("-")
+    assert int(lo) <= hour <= int(hi)
+    # The force hour precedes the dispatch, so the dispatched run builds.
+    build_src = (_ROOT / "scripts" / "build_daily_edition.py").read_text(
+        encoding="utf-8")
+    force = int(re.search(r"FORCE_BUILD_UTC_HOUR = (\d+)", build_src).group(1))
+    assert force <= hour
+    # 6am Pacific is 13:00 UTC in summer; force + ~30 min build must beat it.
+    assert force <= 12, "force hour past 12 UTC cannot land by 6am PDT"
+    # The GitHub sweep fallback for the force hour exists.
+    edition_wf = (_ROOT / ".github" / "workflows" / "nerra-daily.yml"
+                  ).read_text(encoding="utf-8")
+    assert f"- cron: '23 {force} * * *'" in edition_wf

@@ -68,9 +68,16 @@ class TestFactualCorrections:
         assert "two to six percent" in t
 
     def test_6_maya_bay_cap(self):
+        """WO-2 replaced the wrong 'daily cap of 375' with '380 per
+        hour'; the ledger pass then found no source for ANY specific
+        per-hour figure, so the digest now states the verified facts
+        (June 2018 closure, early-2022 reopening, hourly caps, boats
+        moored offshore) without an unverifiable number."""
         t = _digest(79)
         assert "daily cap of 375" not in t
-        assert "380 per hour" in t and "January 2022" in t
+        assert "380 per hour" not in t
+        assert "closed Maya Bay in June 2018" in t
+        assert "reopening it in early 2022 with strict hourly visitor caps" in t
 
     def test_7_maginot_depth(self):
         t = _digest(9)
@@ -84,12 +91,15 @@ class TestFactualCorrections:
         assert "mid-1970s" in t and "7 percent" in t
 
     def test_9_gig_work_sources(self):
-        """BLS publishes no such worker estimate (CWS last ran 2017); the
-        MIT/CEEPR revision ($3.37 -> $8.55-10) is noted; the
-        Uber-commissioned study is 2015 with a $16-30 median range."""
+        """BLS publishes no app-gig worker estimate; the ledger pass
+        found the CWS was fielded again in July 2023, so 'last ran
+        2017' was itself stale by the digest's 2026 date. The MIT/CEEPR
+        revision ($3.37 -> $8.55-10) is noted; the Uber-commissioned
+        study is 2015 with a $16-30 median range."""
         t = _digest(69)
         assert "Estimates from the Bureau of Labor Statistics" not in t
-        assert "contingent-worker survey in 2017" in t
+        assert "No official government count of gig workers exists" in t
+        assert "run in 2017 and again in 2023" in t
         assert "$3.37" in t and "revised the figure" in t
         assert "a 2014 study commissioned by Uber" not in t
         assert "a 2015 study commissioned by Uber" in t

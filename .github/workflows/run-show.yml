@@ -547,6 +547,36 @@ jobs:
           # can break a run.
           NERRA_SINGLE_PASS_RENDER: ${{ vars.NERRA_SINGLE_PASS_RENDER }}
 
+      - name: Commit topic-queue cooldown state (gate-block skips)
+        # A source_integrity_failed skip publishes nothing and the normal
+        # commit step is skipped — so the ONLY durable record that a topic
+        # blocked the gate is the queue annotation run_show wrote
+        # (gate_blocks / gate_blocked_last, engine/topic_queue.py).
+        # Without this commit the loop-breaker has amnesia and the same
+        # topic is re-picked every day (UC 2026-08-24/25: two lost days on
+        # one 403-heavy topic). Narrow by design: commits ONLY the
+        # shows/topic_queues/ path, best-effort, never fails the job.
+        if: always() && steps.pipeline.outputs.skipped == 'true'
+        run: |
+          if git diff --quiet -- shows/topic_queues/; then
+            echo "No topic-queue cooldown state to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add shows/topic_queues/
+          git commit -m "Topic-queue gate-block state: ${{ matrix.show }} $(date -u +%F)"
+          for i in 1 2 3 4; do
+            # A conflicting concurrent push leaves a stopped rebase behind;
+            # without this abort every later attempt dies on "unmerged
+            # files" (the 2026-08-26 shared-pages failure shape).
+            git rebase --abort 2>/dev/null || true
+            git pull --rebase origin main && git push origin main && exit 0
+            sleep $((2 ** i))
+          done
+          echo "::warning::Could not push topic-queue cooldown state (non-fatal; a rerun re-records it)"
+          exit 0
+
       - name: Validate output
         if: steps.pipeline.outputs.skipped != 'true'
         run: |
@@ -610,6 +640,14 @@ jobs:
           GOOGLE_ADS_ID: ${{ secrets.GOOGLE_ADS_ID }}
           GOOGLE_ADS_SIGNUP_LABEL: ${{ secrets.GOOGLE_ADS_SIGNUP_LABEL }}
           PLAUSIBLE_DOMAIN: ${{ secrets.PLAUSIBLE_DOMAIN }}
+          # Nerra Personal + donations: the four live Stripe Payment
+          # Links (public URLs — they render into join/support pages).
+          # Repo variables override these committed defaults so the
+          # operator can rotate links without a commit.
+          STRIPE_LINK_PERSONAL: ${{ vars.STRIPE_LINK_PERSONAL || 'https://buy.stripe.com/8x26oI4Ho7Lc6Qa1VB0Ba00' }}
+          STRIPE_LINK_PERSONAL_LOCAL: ${{ vars.STRIPE_LINK_PERSONAL_LOCAL || 'https://buy.stripe.com/dRm6oI7TAfdEgqK9o30Ba01' }}
+          STRIPE_LINK_DONATE_MONTHLY: ${{ vars.STRIPE_LINK_DONATE_MONTHLY || 'https://buy.stripe.com/7sYcN61vc6H8b6q1VB0Ba02' }}
+          STRIPE_LINK_DONATE_ONCE: ${{ vars.STRIPE_LINK_DONATE_ONCE || 'https://donate.stripe.com/dRm8wQ8XEd5weiC0Rx0Ba03' }}
         run: |
           # Regenerate show page (static episodes) + blog posts for this show
           python generate_html.py --show ${{ matrix.show }} --blogs
@@ -831,6 +869,14 @@ jobs:
           GOOGLE_ADS_ID: ${{ secrets.GOOGLE_ADS_ID }}
           GOOGLE_ADS_SIGNUP_LABEL: ${{ secrets.GOOGLE_ADS_SIGNUP_LABEL }}
           PLAUSIBLE_DOMAIN: ${{ secrets.PLAUSIBLE_DOMAIN }}
+          # Nerra Personal + donations: the four live Stripe Payment
+          # Links (public URLs — they render into join/support pages).
+          # Repo variables override these committed defaults so the
+          # operator can rotate links without a commit.
+          STRIPE_LINK_PERSONAL: ${{ vars.STRIPE_LINK_PERSONAL || 'https://buy.stripe.com/8x26oI4Ho7Lc6Qa1VB0Ba00' }}
+          STRIPE_LINK_PERSONAL_LOCAL: ${{ vars.STRIPE_LINK_PERSONAL_LOCAL || 'https://buy.stripe.com/dRm6oI7TAfdEgqK9o30Ba01' }}
+          STRIPE_LINK_DONATE_MONTHLY: ${{ vars.STRIPE_LINK_DONATE_MONTHLY || 'https://buy.stripe.com/7sYcN61vc6H8b6q1VB0Ba02' }}
+          STRIPE_LINK_DONATE_ONCE: ${{ vars.STRIPE_LINK_DONATE_ONCE || 'https://donate.stripe.com/dRm8wQ8XEd5weiC0Rx0Ba03' }}
           # R2 read creds for the gallery-manifest rebuild (clean no-op
           # when unset — the builder writes an empty manifest).
           R2_GALLERY_BUCKET: ${{ secrets.R2_GALLERY_BUCKET }}
@@ -906,7 +952,33 @@ jobs:
           # (lower stakes than per-episode artifacts; pages are fully regenerable
           # from the per-show commits that already landed).
           for attempt in 1 2 3 4 5; do
-            if git pull --rebase origin main && git push origin main; then
+            if git pull --rebase origin main; then
+              :
+            else
+              # A concurrent push can land newer copies of the very files
+              # this commit carries (search-index.json, gallery-manifest.json
+              # — observed 2026-08-26). The old loop retried WITHOUT
+              # aborting the stopped rebase, so attempts 2-5 died instantly
+              # on "unmerged files". These are regenerable snapshots: on
+              # conflict keep origin's copy (in a rebase, --ours is the
+              # upstream side, which may carry another job's newer data;
+              # ours returns on the next regeneration) and continue. A
+              # commit emptied by that resolution is skipped; anything else
+              # aborts so the next attempt starts from a clean tree.
+              CONFLICTS=$(git diff --name-only --diff-filter=U || true)
+              if [ -n "$CONFLICTS" ]; then
+                echo "$CONFLICTS" | while IFS= read -r f; do
+                  git checkout --ours -- "$f" 2>/dev/null || true
+                  git add -- "$f" 2>/dev/null || true
+                done
+                GIT_EDITOR=true git rebase --continue \
+                  || GIT_EDITOR=true git rebase --skip \
+                  || git rebase --abort || true
+              else
+                git rebase --abort 2>/dev/null || true
+              fi
+            fi
+            if git push origin main; then
               echo "Push succeeded on attempt $attempt"
               exit 0
             fi

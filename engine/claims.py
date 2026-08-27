@@ -437,6 +437,24 @@ def default_fetch(url: str) -> Tuple[int, str]:
     return resp.status_code, ""
 
 
+#: HTTP statuses that mean "this source could not be READ from our
+#: infrastructure", not "this source does not support the claim". A 403
+#: from a bot-blocking government site (officialgazette.gov.ph 403'd six
+#: of eight claims on UC Ep99, 2026-08-24, and took the show down for two
+#: days) says nothing about the citation's truth — unlike a 404 (the
+#: source does not exist: the fabrication signature) or a 200 whose body
+#: lacks the quote. Unreachable claims still FAIL the gate — the contract
+#: stays "nothing unverified ships" — but they are labelled so the repair
+#: pass can ask for a *fetchable* alternative source instead of treating
+#: the model as a fabricator.
+_UNREACHABLE_STATUSES = frozenset({401, 403, 407, 408, 425, 429,
+                                   500, 502, 503, 504, 522, 524})
+
+
+def _is_unreachable(status: Optional[int]) -> bool:
+    return status is None or status in _UNREACHABLE_STATUSES
+
+
 def verify_claim_sources(
     claims: List[dict],
     fetch: Optional[Callable[[str], Tuple[int, str]]] = None,
@@ -444,8 +462,11 @@ def verify_claim_sources(
     """Run the §2.2 source checks; return one result dict per claim.
 
     Each result: ``{"id", "url", "resolved", "quote_found", "passed",
-    "reason"}``. URLs are fetched once each (deduped) with one retry on
-    transport error. No model calls — HTTP + string matching only.
+    "unreachable", "reason"}``. URLs are fetched once each (deduped) with
+    one retry on transport error. No model calls — HTTP + string matching
+    only. ``unreachable`` marks fetch-blocked sources (403/429/5xx/
+    transport) — still a failure, but distinct from the fabrication
+    signature, and repairable with an alternative source.
     """
     if fetch is None:
         fetch = default_fetch
@@ -493,6 +514,7 @@ def verify_claim_sources(
             "resolved": resolved,
             "quote_found": quote_found,
             "passed": resolved and quote_found,
+            "unreachable": not resolved and _is_unreachable(status),
             "reason": reason,
         })
     return results
@@ -563,11 +585,14 @@ class GateResult:
     verified_claims: List[dict] = field(default_factory=list)
 
     def summary(self) -> str:
+        unreachable = sum(
+            1 for v in self.failed_verifications if v.get("unreachable"))
         return (
             f"ledger={'yes' if self.ledger_present else 'MISSING'} "
             f"claims={self.claims_total} anchored={self.claims_anchored} "
             f"verified={self.claims_verified} "
             f"failed_verifications={len(self.failed_verifications)} "
+            f"(unreachable_sources={unreachable}) "
             f"uncovered_citation_shapes={len(self.uncovered_shapes)}"
         )
 
@@ -647,6 +672,130 @@ def run_source_integrity_gate(
         or result.shape_errors
     )
     return result
+
+
+# ---------------------------------------------------------------------------
+# Claim repair — one bounded chance to re-source failed claims
+# ---------------------------------------------------------------------------
+# Discovered 2026-08-25 (UC Ep99, two lost days): the gate blocked because
+# the topic's authoritative sources 403 GitHub's runner IPs and long
+# statute pages defeat the fuzzy quote match — the FACTS were never
+# disproven, the citations could not be READ. Repair asks the model, once,
+# to re-source ONLY the failed claims (same claim text, a different
+# fetchable source + verbatim quote), then re-verifies MECHANICALLY. The
+# gate's contract is untouched: nothing ships unless every claim traces to
+# a fetched, quote-matched source — repair just stops a bot-blocked
+# government site from reading as fabrication.
+
+REPAIR_MAX_CLAIMS = 10
+
+
+def build_repair_prompt(episode_text: str, failed: List[dict],
+                        claims: List[dict]) -> str:
+    """Prompt for the one-shot repair call. *failed* are verification
+    results; *claims* the original ledger entries (for claim text)."""
+    by_id = {str(c.get("id", "")): c for c in claims}
+    lines = []
+    for v in failed[:REPAIR_MAX_CLAIMS]:
+        cid = str(v.get("id", ""))
+        claim = by_id.get(cid, {})
+        why = ("the source could not be fetched from our verification "
+               "infrastructure (it may block automated readers)"
+               if v.get("unreachable")
+               else f"verification failed: {v.get('reason', 'unknown')}")
+        lines.append(
+            f"- id: {cid}\n"
+            f"  claim: {claim.get('claim', '')}\n"
+            f"  episode_span: {claim.get('episode_span', '')}\n"
+            f"  original_source: {v.get('url', '')}\n"
+            f"  problem: {why}"
+        )
+    return (
+        "Some claims in an episode's source ledger failed automated "
+        "verification. For EACH claim below, provide a replacement ledger "
+        "entry with a DIFFERENT source_url that (a) directly supports the "
+        "claim, (b) is publicly fetchable without login or bot-blocking "
+        "(prefer major encyclopedias, news organizations, .edu pages, "
+        "archived copies), and (c) a supporting_quote of 5-25 words copied "
+        "VERBATIM from that source's text. Keep the claim and episode_span "
+        "EXACTLY as given — only the sourcing changes. If you cannot find "
+        "a genuine source for a claim, omit it (an omitted claim blocks "
+        "publication — never invent a source).\n\n"
+        "Failed claims:\n" + "\n".join(lines) + "\n\n"
+        "Episode text (for context):\n---\n" + episode_text[:6000] + "\n---\n\n"
+        "Reply with ONLY a JSON array of objects with keys: id, claim, "
+        "episode_span, source_url, supporting_quote."
+    )
+
+
+def parse_repair_response(text: str) -> List[dict]:
+    """Extract the repair call's JSON array; [] on any shape problem."""
+    if not text:
+        return []
+    m = re.search(r"\[.*\]", text, re.DOTALL)
+    if not m:
+        return []
+    try:
+        data = json.loads(m.group(0))
+    except json.JSONDecodeError:
+        return []
+    return [e for e in data if isinstance(e, dict)]
+
+
+def attempt_claim_repair(
+    episode_text: str,
+    gate: GateResult,
+    claims: List[dict],
+    generate: Callable[[str], str],
+    fetch: Optional[Callable[[str], Tuple[int, str]]] = None,
+) -> Tuple[GateResult, List[dict]]:
+    """One bounded repair pass. Returns ``(new_gate_result, new_claims)``.
+
+    *generate* is the injected LLM call (prompt -> text). The repaired
+    ledger replaces failed entries with the model's re-sourced versions
+    (id-matched; a claim the model omitted stays failed), then the FULL
+    gate re-runs — anchoring, mechanical verification, and the lint all
+    apply to the repaired ledger exactly as to the original. Any error
+    returns the original result unchanged (repair can only help, never
+    mask)."""
+    if gate.passed or not gate.failed_verifications:
+        return gate, claims
+    try:
+        prompt = build_repair_prompt(
+            episode_text, gate.failed_verifications, claims)
+        replacements = parse_repair_response(generate(prompt))
+    except Exception as exc:  # noqa: BLE001 — repair is best-effort
+        logger.warning("claim repair call failed: %s", exc)
+        return gate, claims
+    if not replacements:
+        logger.info("claim repair produced no usable replacements")
+        return gate, claims
+
+    failed_ids = {str(v.get("id", "")) for v in gate.failed_verifications}
+    by_id = {str(r.get("id", "")): r for r in replacements
+             if str(r.get("id", "")) in failed_ids}
+    if not by_id:
+        return gate, claims
+    repaired: List[dict] = []
+    for claim in claims:
+        cid = str(claim.get("id", ""))
+        if cid in by_id:
+            replacement = dict(by_id[cid])
+            # The claim text and anchor are NOT the model's to rewrite in
+            # a repair — only the sourcing. Keep the originals.
+            replacement["claim"] = claim.get("claim", "")
+            replacement["episode_span"] = claim.get("episode_span", "")
+            replacement["id"] = cid
+            repaired.append(replacement)
+        else:
+            repaired.append(claim)
+    new_gate = run_source_integrity_gate(episode_text, repaired, fetch=fetch)
+    logger.info(
+        "claim repair: %d replacement(s) tried — gate now %s (%s)",
+        len(by_id), "PASSED" if new_gate.passed else "still failing",
+        new_gate.summary(),
+    )
+    return new_gate, repaired
 
 
 # ---------------------------------------------------------------------------

@@ -133,6 +133,11 @@ class BookVolume:
     introduction_file: str = ""
     conclusion_file: str = ""
     author_bio_file: str = ""
+    #: Hidden from the public Books page (still built, still in the
+    #: catalog — bundle/direct extras). The bigger-books shift unlisted
+    #: the pamphlet-thin numbered volumes; the collected editions are
+    #: the store products.
+    unlisted: bool = False
     #: True for a combined/best-of volume that REUSES episodes already
     #: published in the numbered volumes. Anthologies are exempt from the
     #: contiguous/disjoint coverage invariant and from the planner's
@@ -196,10 +201,15 @@ def load_series(slug_or_path: str | Path) -> Dict:
     if missing:
         raise ValueError(f"series config {path} missing fields: {missing}")
     size = int(data["volume_size"])
-    if not 10 <= size <= 20:
+    # Band widened 10-20 -> 10-60 (Aug 2026, operator-directed): the
+    # 20-chapter volumes the planner cut came out at 12-24k words —
+    # pamphlet-length at store prices. Future auto-planned volumes are
+    # book-length annual collections (volume_size ~50 => ~40-55k words
+    # at current chapter lengths).
+    if not 10 <= size <= 60:
         raise ValueError(
             f"series {data['show_slug']}: volume_size {size} outside the "
-            "10-20 stories-per-volume band"
+            "10-60 stories-per-volume band"
         )
     return data
 
@@ -1118,7 +1128,46 @@ def build_epub(
             z.writestr("OEBPS/alsoby.xhtml", crosspromo_page)
     logger.info("EPUB written: %s (%d chapters, %d words)",
                 out_path, len(chapters), sum(c.word_count for c in chapters))
+    validate_epub_escaping(out_path)
     return out_path
+
+
+_DOUBLE_ESCAPE_RE = re.compile(r"&amp;(?:amp|lt|gt|quot|apos|#\d+);")
+
+
+def validate_epub_escaping(epub_path: Path) -> None:
+    """Fail the build if any packaged XML document is mis-escaped.
+
+    Locks the WO-11 acceptance criterion at build time: every
+    .xhtml/.opf/.ncx must (1) contain no double-escape (``&amp;amp;`` and
+    friends — the sequence that renders a literal "&amp;" to readers),
+    (2) parse as well-formed XML (a bare ``&`` would fail here), and
+    (3) yield extracted text with no literal "&amp;" — i.e. what the
+    reader displays is "&", never the entity spelling.
+    """
+    import xml.etree.ElementTree as ET
+    import zipfile
+
+    with zipfile.ZipFile(epub_path) as z:
+        for name in z.namelist():
+            if not name.endswith((".xhtml", ".opf", ".ncx")):
+                continue
+            raw = z.read(name).decode("utf-8")
+            if _DOUBLE_ESCAPE_RE.search(raw):
+                raise ValueError(
+                    f"{epub_path.name}:{name} contains a double-escaped "
+                    f"entity ({_DOUBLE_ESCAPE_RE.search(raw).group(0)}) — "
+                    "it would render literally to readers")
+            try:
+                root = ET.fromstring(raw.encode("utf-8"))
+            except ET.ParseError as exc:
+                raise ValueError(
+                    f"{epub_path.name}:{name} is not well-formed XML: "
+                    f"{exc}") from exc
+            if "&amp;" in "".join(root.itertext()):
+                raise ValueError(
+                    f"{epub_path.name}:{name} renders a literal '&amp;' "
+                    "in its text")
 
 
 # ---------------------------------------------------------------------------

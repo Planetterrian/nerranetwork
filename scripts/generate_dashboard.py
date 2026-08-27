@@ -1158,6 +1158,14 @@ def aggregate_metrics(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]
     return per_show
 
 
+#: Registry-only virtual shows (no shows/<slug>.yaml — Nerra Daily is the
+#: first) whose per-episode credit files must still count in the network
+#: cost rollup. Discovered 2026-08-25: the edition's spend (~$0.08/ep) was
+#: invisible because every cost loop derives its show list from the YAML
+#: glob — the "true total is what matters" lesson from the July 29 pass.
+_VIRTUAL_COST_SLUGS = ("nerra_daily",)
+
+
 def aggregate_costs(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]:
     today = _dt.date.today()
     d7 = today - _dt.timedelta(days=7)
@@ -1169,7 +1177,11 @@ def aggregate_costs(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]:
     network_30 = {"grok": 0.0, "tts": 0.0, "images": 0.0, "search": 0.0,
                   "total": 0.0, "episodes": 0}
 
-    for s in shows:
+    known = {s.get("slug") for s in shows}
+    cost_shows = list(shows) + [
+        {"slug": slug} for slug in _VIRTUAL_COST_SLUGS if slug not in known
+    ]
+    for s in cost_shows:
         slug = s["slug"]
         ddir = _digests_dir_for(slug, root)
         files = sorted(ddir.glob("credit_usage_*.json")) if ddir.exists() else []
