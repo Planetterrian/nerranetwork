@@ -565,26 +565,34 @@
     <div id="nn-member" hidden>
         <!-- Personal feed -->
         <div class="nn-card">
-            <h2>Your personal daily show</h2>
+            <h2>Your personal daily show <span id="nn-tier-badge" class="nn-muted" style="font-size:0.85rem;font-weight:400;"></span></h2>
             <div id="nn-feed-active" hidden>
                 <p>Mira builds your edition every morning. Add this private
                    feed to any podcast app — it's yours alone; sharing the
                    URL shares your subscription.</p>
                 <p class="nn-feedurl" id="nn-feed-url"></p>
                 <button class="ghost" onclick="NN.copyFeed()">Copy feed URL</button>
+                <p class="nn-muted" id="nn-feed-note" style="margin-top:0.6rem;">
+                   Just subscribed? Your first edition lands with the next
+                   morning build — the feed link works from then on.</p>
+                <p class="nn-muted" id="nn-starter-note" hidden>
+                   You haven't picked your shows yet, so Mira is using the
+                   <strong>starter lineup</strong> (SpaceX, Tesla, Models &amp;
+                   Agents, Planetterrian, DP Pod). Choose 2+ shows below and
+                   save to make it yours — changes reach tomorrow's edition.</p>
+            </div>
+            <div id="nn-feed-cancelled" hidden>
+                <p>Your subscription has ended and the private feed is off.
+                   Your lineup and preferences are saved — restart any time
+                   and tomorrow's edition picks up where you left off.</p>
+                
             </div>
             <div id="nn-feed-upsell" hidden>
                 <p>Pick your shows and order below, then start your
                    subscription — your feed exists within a day.</p>
                 
-                <p>
-                    <a href="https://buy.stripe.com/8x26oI4Ho7Lc6Qa1VB0Ba00"><button>Personal — $4.99/mo</button></a>
-                    
-                    <a href="https://buy.stripe.com/dRm6oI7TAfdEgqK9o30Ba01"><button class="ghost">+ Local brief — $8.99/mo</button></a>
-                    
-                </p>
-                <p class="nn-muted">Use the same email at checkout that you
-                   signed in with — that's how your feed finds you.</p>
+                <p class="nn-muted">Personal feeds are launching soon — your
+                   saved lineup will be ready on day one.</p>
                 
             </div>
         </div>
@@ -601,6 +609,10 @@
                 <label>City <span class="nn-muted">(for the local brief tier)</span>
                     <input type="text" id="nn-city" maxlength="80" placeholder="Optional"></label>
             </div>
+            <p class="nn-muted" id="nn-city-nudge" hidden style="margin-top:0.5rem;">
+               You're on <strong>Personal + Local</strong> but haven't set a
+               city — add one above and save so Mira can include your
+               morning brief.</p>
             <p style="margin-top:var(--sp-4);"><button onclick="NN.save()">Save preferences</button>
                <span id="nn-save-status" class="nn-muted"></span></p>
         </div>
@@ -681,9 +693,24 @@ var NN = (function () {
         el('nn-city').value = prefs.city || '';
         renderLineup();
         var feedUrl = data.member && data.member.feed_url;
+        var tier = (data.member && data.member.tier) || 'none';
+        var status = (data.member && data.member.status) || 'none';
+        var cancelled = status === 'cancelled';
         el('nn-feed-active').hidden = !feedUrl;
-        el('nn-feed-upsell').hidden = !!feedUrl;
+        el('nn-feed-upsell').hidden = !!feedUrl || cancelled;
+        el('nn-feed-cancelled').hidden = !cancelled || !!feedUrl;
         if (feedUrl) { el('nn-feed-url').textContent = feedUrl; }
+        el('nn-tier-badge').textContent =
+          status === 'active'
+            ? (tier === 'personal_local' ? '· Personal + Local — active'
+                                         : '· Personal — active')
+            : (cancelled ? '· subscription ended' : '');
+        // A paying member with <2 chosen shows rides the starter lineup
+        // until they save their own (the Worker fills it server-side).
+        el('nn-starter-note').hidden = !(feedUrl && state.shows.length < 2);
+        el('nn-city-nudge').hidden = !(
+          status === 'active' && tier === 'personal_local' && !el('nn-city').value
+        );
         var code = data.perks && data.perks.book_discount_code;
         el('nn-book-perk').innerHTML = code
           ? 'Use code <strong>' + code + '</strong> at the book store — '

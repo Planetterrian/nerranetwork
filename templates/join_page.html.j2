@@ -22,6 +22,28 @@
         .nn-join-form input[type=email] { width: 100%; padding: 0.8rem 1rem; border-radius: 10px; border: 1px solid var(--nn-border); background: var(--nn-surface); color: inherit; margin-bottom: var(--sp-3); }
         .nn-join-form button { padding: 0.8rem 2rem; border-radius: 10px; border: none; background: var(--nn-gradient); color: #fff; font-weight: 600; cursor: pointer; }
         .nn-join-note { font-size: 0.85rem; color: var(--nn-text-muted); max-width: 640px; margin: 0 auto var(--sp-12); padding: 0 var(--sp-6); text-align: center; }
+        .nn-section-head { text-align: center; max-width: 680px; margin: 0 auto var(--sp-6); padding: 0 var(--sp-6); }
+        .nn-section-head h2 { font-family: var(--font-heading); margin: 0 0 var(--sp-2); }
+        .nn-section-head p { color: var(--nn-text-muted); margin: 0; }
+        .nn-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--sp-5); max-width: 1080px; margin: 0 auto var(--sp-10); padding: 0 var(--sp-6); }
+        .nn-step { border: 1px solid var(--nn-border); border-radius: 14px; padding: var(--sp-5); background: var(--nn-surface); }
+        .nn-step .num { display: inline-flex; width: 2rem; height: 2rem; border-radius: 50%; background: var(--nn-gradient); color: #fff; align-items: center; justify-content: center; font-weight: 700; margin-bottom: var(--sp-3); }
+        .nn-step h3 { margin: 0 0 var(--sp-2); font-size: 1.05rem; font-family: var(--font-heading); }
+        .nn-step p { margin: 0; color: var(--nn-text-muted); font-size: 0.95rem; }
+        .nn-showgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: var(--sp-4); max-width: 1080px; margin: 0 auto var(--sp-10); padding: 0 var(--sp-6); }
+        .nn-showcard { border: 1px solid var(--nn-border); border-radius: 12px; padding: var(--sp-4); background: var(--nn-surface); text-decoration: none; color: inherit; display: block; transition: border-color 0.15s; }
+        .nn-showcard:hover { border-color: var(--nn-cyan, #00D4FF); }
+        .nn-showcard strong { display: block; font-family: var(--font-heading); margin-bottom: 0.3rem; }
+        .nn-showcard span { font-size: 0.85rem; color: var(--nn-text-muted); display: block; }
+        .nn-showcard em { font-size: 0.75rem; color: var(--nn-cyan, #00D4FF); font-style: normal; }
+        .nn-products { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--sp-4); max-width: 1080px; margin: 0 auto var(--sp-10); padding: 0 var(--sp-6); }
+        .nn-product { border: 1px solid var(--nn-border); border-radius: 12px; padding: var(--sp-4); background: var(--nn-surface); }
+        .nn-product h3 { margin: 0 0 var(--sp-1); font-size: 1rem; font-family: var(--font-heading); }
+        .nn-product p { margin: 0 0 var(--sp-2); font-size: 0.9rem; color: var(--nn-text-muted); }
+        .nn-faq { max-width: 760px; margin: 0 auto var(--sp-10); padding: 0 var(--sp-6); }
+        .nn-faq details { border: 1px solid var(--nn-border); border-radius: 10px; background: var(--nn-surface); margin-bottom: var(--sp-3); padding: var(--sp-3) var(--sp-4); }
+        .nn-faq summary { cursor: pointer; font-weight: 600; }
+        .nn-faq p { color: var(--nn-text-muted); font-size: 0.95rem; margin: var(--sp-3) 0 0; }
     </style>
 {% endblock %}
 
@@ -79,6 +101,124 @@
         <a class="cta secondary" href="#join-free">Launching soon — join free for first access</a>
         {% endif %}
     </div>
+</section>
+
+<div class="nn-section-head">
+    <h2>How Personal works</h2>
+    <p>No app to install, no algorithm — a real private podcast feed,
+       assembled for you every morning.</p>
+</div>
+<section class="nn-steps">
+    <div class="nn-step"><span class="num">1</span>
+        <h3>Pick your shows</h3>
+        <p>Choose any of the network's English shows and drag them into the
+           order you want your morning to run. Two minutes, changeable any
+           time — edits reach the very next edition.</p></div>
+    <div class="nn-step"><span class="num">2</span>
+        <h3>Mira builds your edition</h3>
+        <p>Every morning, after the day's episodes publish, Mira — the
+           network's AI anchor — stitches your picks into one continuous
+           show, greets you by name, and hands off between segments. On the
+           Local tier she opens with your city's weather and one local story
+           worth knowing, source named aloud.</p></div>
+    <div class="nn-step"><span class="num">3</span>
+        <h3>Listen anywhere</h3>
+        <p>You get a private RSS feed that works in Apple Podcasts, Spotify
+           (via add-by-URL apps), Overcast, Pocket Casts — anywhere. Chapter
+           markers let you skip between your shows. Cancel in one click and
+           billing stops; your lineup stays saved.</p></div>
+</section>
+
+{% if personal_shows %}
+<div class="nn-section-head">
+    <h2>{{ personal_shows | length }} shows to build from</h2>
+    <p>Every one produced daily or weekly by the network — tap any card to
+       hear it free before you add it to your lineup.</p>
+</div>
+<section class="nn-showgrid">
+    {% for s in personal_shows %}
+    <a class="nn-showcard" href="{{ path_prefix }}{{ s.page }}">
+        <strong>{{ s.name }}</strong>
+        {% if s.schedule %}<em>{{ s.schedule }}</em>{% endif %}
+        <span>{{ s.tagline | truncate(110) }}</span>
+    </a>
+    {% endfor %}
+</section>
+{% endif %}
+
+<div class="nn-section-head">
+    <h2>Your account unlocks the whole network</h2>
+    <p>Personal is the headline act, but one Nerra account carries every
+       product the network makes.</p>
+</div>
+<section class="nn-products">
+    <div class="nn-product">
+        <h3>📚 Anthology books</h3>
+        <p>The narrative shows, compiled into illustrated ebooks and
+           AI-narrated audiobooks — members get a discount code on every
+           volume.</p>
+        <a href="{{ path_prefix }}books.html">Browse the books →</a>
+    </div>
+    <div class="nn-product">
+        <h3>🖼️ Image gallery</h3>
+        <p>Thousands of CC-licensed images generated for the shows,
+           full-resolution downloads included with your account.</p>
+        <a href="{{ path_prefix }}gallery.html">Open the gallery →</a>
+    </div>
+    <div class="nn-product">
+        <h3>🎧 Nerra Daily</h3>
+        <p>Not ready to customize? The whole English network in one free
+           ~2-hour daily edition, anchored by Mira.</p>
+        <a href="{{ path_prefix }}nerra-daily.html">Try Nerra Daily →</a>
+    </div>
+    <div class="nn-product">
+        <h3>✉️ The newsletter</h3>
+        <p>Each show's briefing in your inbox, per-show opt-in — reading
+           and listening stay in sync.</p>
+        <a href="#join-free">Included with your account →</a>
+    </div>
+</section>
+
+<div class="nn-section-head">
+    <h2>Honest answers</h2>
+</div>
+<section class="nn-faq">
+    <details>
+        <summary>What exactly arrives in my Personal feed?</summary>
+        <p>One episode each morning: the day's real episodes of the shows
+           you picked, in your order, joined by Mira's short spoken handoffs.
+           Nothing is summarized or cut down — you get the full episodes,
+           minus the cross-promo tails that don't make sense mid-edition.
+           Chapters mark every segment so you can skip freely.</p>
+    </details>
+    <details>
+        <summary>How does the Local morning brief stay honest?</summary>
+        <p>Weather comes from measured forecast data for your city. The
+           local story is found with a live web search and Mira names the
+           source out loud. On a day with nothing verifiable worth your
+           time, she says so and moves on — no filler, ever.</p>
+    </details>
+    <details>
+        <summary>Can I cancel easily?</summary>
+        <p>Yes — billing is by Stripe with self-serve cancellation, one
+           click, no email required. Your private feed runs to the end of
+           the paid period, and your lineup stays saved on your free
+           account if you ever come back.</p>
+    </details>
+    <details>
+        <summary>Is this AI-generated?</summary>
+        <p>The shows are AI-assisted productions with human editorial
+           oversight, and every episode says so on air. Mira is an AI
+           anchor and is always introduced as one. The full policy is at
+           <a href="{{ path_prefix }}ai-disclosure.html">our AI disclosure</a>.</p>
+    </details>
+    <details>
+        <summary>What happens with my email and city?</summary>
+        <p>Your email is your account and newsletter address — it's never
+           sold or shared. Your first name and city exist only so Mira can
+           greet you and build your brief; they're stored with your
+           account, never published, and deleted with it.</p>
+    </details>
 </section>
 
 <section class="nn-join-form" id="join-free">

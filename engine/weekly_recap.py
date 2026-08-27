@@ -155,15 +155,20 @@ def build_weekly_summary_segment(
         "## WEEKLY SUMMARY SEGMENT (host instructions — do not read this heading aloud)",
         (
             "Today is Sunday. This is a NORMAL daily episode built on today's "
-            "news above — that stays the main focus. In ADDITION, weave in ONE "
-            "short 'week in review' segment (about 45-90 seconds, 3-5 sentences) "
-            "at a natural spot: a brief beat just after the intro, or right "
-            "before the close. In it, catch listeners up on the 2-3 biggest "
-            "threads from the PAST WEEK and where each stands now, in a warm "
-            "'here's what you may have missed' tone. Keep it TIGHT — this is a "
-            "segment, not the whole episode. Do NOT recite a calendar date "
-            "range, do NOT re-report today's stories inside it, and never read "
-            "URLs aloud."
+            "news above — that stays the main focus. In ADDITION, the episode "
+            "MUST include ONE short 'week in review' segment (about 45-90 "
+            "seconds, 3-5 sentences) at a natural spot: a brief beat just "
+            "after the intro, or right before the close. This segment is "
+            "REQUIRED on Sundays — a script without it is incomplete and "
+            "fails the episode spec; do not skip it even on a busy news day. "
+            "Signpost it plainly: the segment's first sentence must make "
+            "unmistakable that you are looking back over the past week (name "
+            "the week itself, in your own words — not a calendar date range). "
+            "In it, catch listeners up on the 2-3 biggest threads from the "
+            "PAST WEEK and where each stands now, in a warm 'here's what you "
+            "may have missed' tone. Keep it TIGHT — this is a segment, not "
+            "the whole episode. Do NOT re-report today's stories inside it, "
+            "and never read URLs aloud."
         ),
     ]
     if recurring_threads:

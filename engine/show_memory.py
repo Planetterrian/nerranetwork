@@ -498,6 +498,11 @@ def update_theme_history_from_digest(output_dir: Path, cfg: MemoryConfig,
     # that survives (e.g. a plain "Source: https://…" with no markdown).
     _no_links = re.sub(r"\[[^\]]*\]\([^)]*\)", " ", digest_text or "")
     text_lower = re.sub(r"https?://\S+", " ", _no_links.lower())
+    # Bare domains survive the protocol strip and pair into junk bigrams
+    # (Tesla "google notateslaapp" class, Aug 27 2026) — same strip as the
+    # bespoke Tesla module.
+    text_lower = re.sub(r"\b[\w-]+\.(?:com|org|net|io|dev|ai|app)\b", " ",
+                        text_lower)
     for kw in cfg.theme_keywords:
         if kw in text_lower:
             themes[kw] = themes.get(kw, 0) + 1

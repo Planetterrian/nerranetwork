@@ -486,6 +486,15 @@ _THEME_STOPWORDS = {
     # Generic coverage vocabulary + URL tokens (June 10 2026: "google
     # https" / "announced discussed" bigrams were polluting the history).
     "announced", "discussed", "covered", "https", "http",
+    # Calendar month names (Aug 27 2026 memory review): date+outlet
+    # adjacency in article metadata mined "june teslarati" x32 /
+    # "june yahoo" x12 into Tesla's top themes — a month is calendar
+    # noise, never a theme component. The load-time scrub (any-stopword
+    # rule) purges the committed histories on the next run.
+    "january", "february", "march", "april", "june", "july",
+    "august", "september", "october", "november", "december",
+    # "may" deliberately absent — it is a common modal verb the 4-char
+    # floor already drops (len("may") == 3), so listing it is dead.
 }
 
 
@@ -606,6 +615,11 @@ def update_theme_history_from_digest(output_dir: Path, digest_text: str, episode
     # strip and pairs into junk bigrams), then any bare URL.
     _no_links = re.sub(r"\[[^\]]*\]\([^)]*\)", " ", digest_text or "")
     text_lower = re.sub(r"https?://\S+", " ", _no_links.lower())
+    # Bare domains survive the protocol strip ("notateslaapp.com" in plain
+    # prose) and their name token pairs into junk ("google notateslaapp"
+    # x13, Aug 27 2026 review). Drop the whole dotted token.
+    text_lower = re.sub(r"\b[\w-]+\.(?:com|org|net|io|dev|ai|app)\b", " ",
+                        text_lower)
     for kw in _THEME_KEYWORDS:
         if kw in text_lower:
             themes[kw] = themes.get(kw, 0) + 1

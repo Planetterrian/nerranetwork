@@ -409,11 +409,21 @@ def extract_entities_and_topics(
     entities: set[str] = set()
     topics: set[str] = set()
 
-    # Extract bold-text items (often company/product names in digests)
+    # Extract bold-text items (often company/product names in digests).
+    # Aug 27 2026: bold SECTION LABELS were being stored as entities —
+    # Omni View's every-episode "What happened (neutral):", "Context &
+    # perspectives:" and "Read more (sources):" labels each recorded as a
+    # recurring "entity", which polluted query_by_entity and made the
+    # weekly-summary segment's recurring-threads signal name a formatting
+    # label as the week's biggest ongoing story. A label announces itself:
+    # it ends with a colon. Real names never do.
     bold_items = re.findall(r"\*\*([^*]+)\*\*", digest_text)
     for item in bold_items:
+        item = item.strip()
+        if item.endswith(":"):
+            continue
         if len(item.split()) <= 5 and item[0:1].isupper():
-            entities.add(item.strip())
+            entities.add(item)
 
     # Match known entities
     text_lower = digest_text.lower()

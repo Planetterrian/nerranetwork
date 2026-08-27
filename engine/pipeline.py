@@ -187,7 +187,12 @@ def record_youtube_outcomes(
         # Smart Shorts selector + multi-Shorts (May 2026)
         if "shorts_start_mode_resolved" in youtube_urls:
             metrics.record("shorts_start_mode_resolved", str(youtube_urls["shorts_start_mode_resolved"]))
-        metrics.record("shorts_count_requested", int(youtube_urls.get("shorts_count_requested", 1) or 1))
+        # Default 0, not 1 (Aug 27 2026): YouTube-disabled shows (dp_pod,
+        # offshore_north) return an empty publish result, and the old
+        # default recorded a phantom "1 Short requested / 0 uploaded"
+        # every episode — polluting the multi-Shorts hit-rate the
+        # dashboard plots. No key = nothing was requested.
+        metrics.record("shorts_count_requested", int(youtube_urls.get("shorts_count_requested", 0) or 0))
         metrics.record("shorts_count_uploaded", int(youtube_urls.get("shorts_count_uploaded", 0) or 0))
         if "shorts_start_offset" in youtube_urls:
             metrics.record("shorts_start_offset", float(youtube_urls["shorts_start_offset"]))

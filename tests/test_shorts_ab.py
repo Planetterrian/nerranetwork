@@ -505,3 +505,17 @@ class TestWindowParityDeconfound:
         # their plan order untouched.
         swap_block = src.split("Window-parity de-confound")[1][:800]
         assert "_shorts_ab.is_enabled(config)" in swap_block
+
+
+class TestReportEndsWithTheExperiment:
+    """Aug 27 2026: the operator ended the motion A/B on 2026-08-14 but the
+    report said "collecting" forever — sample counts can never say ended;
+    the experiments register is the lifecycle source of truth."""
+
+    def test_register_done_forces_ended_status(self):
+        import importlib
+        mod = importlib.import_module("scripts.build_shorts_ab_report")
+        assert mod._experiment_ended() is True  # register marks it done
+        data = mod.build()
+        assert data["status"] == "ended"
+        assert any("ENDED" in n for n in data["notes"])

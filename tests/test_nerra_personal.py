@@ -243,3 +243,46 @@ class TestSurfaces:
         assert "token[:8]" in src
         assert not re.search(r'logger\.\w+\([^)]*spec\.first_name', src)
         assert not re.search(r'logger\.\w+\([^)]*spec\.city', src)
+
+
+class TestLandingAndConsoleSurfaces:
+    """Aug 27 2026 website pass drift guards."""
+
+    def test_join_template_shows_the_pickable_lineup(self):
+        src = _read("templates/join_page.html.j2")
+        assert "personal_shows" in src, (
+            "the landing page must SHOW the closed show vocabulary it sells")
+        assert "How Personal works" in src
+
+    def test_join_generator_passes_the_vocabulary(self):
+        src = _read("generate_html.py")
+        assert "PERSONAL_SHOW_SLUGS" in src
+
+    def test_homepage_carries_personal_promo(self):
+        src = _read("templates/network_page.html.j2")
+        assert "personal-promo" in src
+
+    def test_account_console_is_state_aware(self):
+        src = _read("templates/account_page.html.j2")
+        for marker in ("nn-feed-cancelled", "nn-starter-note",
+                       "nn-city-nudge", "nn-tier-badge"):
+            assert marker in src, marker
+
+    def test_worker_starter_lineup_within_vocabulary(self):
+        # A paying member with <2 shows now gets DEFAULT_LINEUP instead of
+        # silent exclusion; the starter must stay inside the closed set.
+        import re as _re
+        src = _read("workers/gallery/src/personal.ts")
+        assert "DEFAULT_LINEUP" in src
+        block = src.split("DEFAULT_LINEUP = [", 1)[1].split("]", 1)[0]
+        slugs = _re.findall(r'"([a-z_]+)"', block)
+        from engine.personal_edition import PERSONAL_SHOW_SLUGS
+        assert len(slugs) >= 2
+        for s in slugs:
+            assert s in PERSONAL_SHOW_SLUGS, s
+
+
+def _read(rel):
+    from pathlib import Path
+    return (Path(__file__).resolve().parent.parent / rel).read_text(
+        encoding="utf-8")
