@@ -32,6 +32,20 @@ export interface SubscribeResult {
   alreadySubscribed: boolean;
   error?: string;
   status?: number;
+  /** Redacted upstream body, for the Worker log only — never returned
+   *  to the client. Without it a Buttondown 400 is unreadable: the code
+   *  alone cannot tell "duplicate" from "tag rejected" from "plan
+   *  limit", which cost an afternoon on 2026-08-26 when signup broke
+   *  and the log said only BUTTONDOWN_HTTP_400. */
+  detail?: string;
+}
+
+
+/** Strip anything email-shaped before an upstream body reaches a log. */
+export function redact(body: string): string {
+  return body
+    .replace(/[\w.+-]+@[\w-]+\.[\w.-]+/g, "<email>")
+    .slice(0, 300);
 }
 
 export async function subscribe(
@@ -88,6 +102,7 @@ export async function subscribe(
     alreadySubscribed: false,
     status: resp.status,
     error: `BUTTONDOWN_HTTP_${resp.status}`,
+    detail: redact(body),
   };
 }
 
