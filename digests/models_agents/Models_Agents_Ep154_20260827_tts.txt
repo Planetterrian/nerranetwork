@@ -1,0 +1,173 @@
+Researchers can now analyze real Claude usage data outside labs.
+
+Anthropic released privacy-preserved tools and two hundred fifty thousand conversations for independent impact studies.
+
+This is Models and Agents, episode one hundred fifty-four.
+
+Anthropic opened aggregated Claude conversation data from April and May twenty twenty-six to Stanford SALT Lab, Oxford Human Information Processing Lab, and METR.
+
+The analysis showed over half the chats involved consequential tasks that affect others or prove hard to undo.
+
+Open A I published its technical report on the Hugging Face agent incident along with third-party assessments from METR and Redwood.
+
+Visa shipped an open-source agentic security harness that auto-remediates vulnerabilities before human review.
+
+Builders should watch how these data-access and governance moves affect agent deployment decisions this week.
+
+Anthropic released privacy-preserved Claude usage data and analysis tools to external researchers for the first time.
+
+Three independent groups examined two hundred fifty thousand aggregated conversations from April and May twenty twenty-six.
+
+The company now invites additional researchers to apply for access via a public form to pursue studies previously possible only inside labs.
+
+This shifts A I impact research from internal-only to distributed across academia while keeping raw user data protected.
+
+Watch for follow-on papers and whether other labs adopt similar data-sharing models.
+
+A new arXiv survey catalogs eighty strict unsupervised post-training methods organized by the internal signal supplying the update.
+
+The signals include prediction statistics, sample relations, self-generated targets, or internal evaluators.
+
+The paper maps how each choice of signal and task structure determines whether post-training improves the model or amplifies error.
+
+An orthogonal Input Visibility by Update Persistence view defines deployment regimes and a unified selection framework.
+
+Builders working on post-training pipelines should test the catalog against their unlabeled data sources this week.
+
+Another arXiv study tests stability of embedded steering for refusal suppression and brevity induction across five instruction-tuned models from three billion to fourteen billion parameters.
+
+The tests cover non-adversarial supervised fine-tuning and reinforcement learning from human feedback.
+
+Behavioral preservation tracks training data pressure while the weight edit itself survives with mean vector recovery of zero point zero zero four.
+
+Fine-tuning does not dismantle the steering mechanism even when behavior reverts.
+
+Teams using activation steering should re-validate behavioral effects after any downstream fine-tuning run.
+
+A third arXiv paper shows parallel English dialect corpora where modern language models encode dialectal texts unequally at tokenization, pre-training, post-training, and inference stages.
+
+The gaps appear across model families.
+
+Character-level tokenization removes neither input nor output asymmetries nor accuracy gaps.
+
+Reward models exhibit contextual, unstable dialect preferences during post-training.
+
+Developers targeting global audiences should measure dialect performance explicitly rather than assuming semantic equivalence holds.
+
+Visa open-sourced the Vulnerability Agentic Harness that runs eleven stages to discover, verify, remediate, validate, and iterate on vulnerabilities using an abstract syntax tree call graph.
+
+The default flow writes candidate fixes to a working copy then runs an adversarial validation panel at stage eleven.
+
+The panel returns validated, failed, or needs-review verdicts without bypassing team build, test, or review gates.
+
+It supports per-stage model choice across Anthropic, Open A I compatible, and open-weight backends and ships with MTTA observability.
+
+The harness is intended for authorized operators on code they own in controlled environments.
+
+Operators must still fence repos and use scoped credentials.
+
+This builds directly on the agent reliability questions from yesterday by showing how operational controls can be embedded before deployment scales.
+
+A VentureBeat piece argues that agent governance must be enforced at the operational data layer through role- and attribute-based access, dynamic column masking, and session-level audit logging.
+
+The approach treats the agent as a first-class principal with declared purpose.
+
+Nine controls grouped under Enforce, See and prove, and Unify and harden appear as executable policies already present in databases rather than prompt guardrails.
+
+EDB Postgres A I is positioned as the open foundation delivering these controls with data sovereignty.
+
+Teams running autonomous agents should map their current IAM rules to agent identities and declared purposes before scaling deployments.
+
+Cyber insurers are updating policies in response to autonomous agent incidents.
+
+They are shifting from traditional controls to new risk assessments around agent behavior.
+
+The article notes the Hugging Face incident as a reference point for emerging coverage questions.
+
+Organizations deploying agents should review policy language for explicit agent-identity and action-scope clauses in the coming quarter.
+
+A Towards Data Science post demonstrates replacing open search with typed tools, hard bounds, and an U N bypassable gate when walking a knowledge graph.
+
+Four models tested on a wrong-prediction scenario show the bounded approach reduces hallucination while preserving useful traversal.
+
+Builders should prototype the gate pattern on any agent that currently receives unrestricted context windows.
+
+Another Towards Data Science guide focuses on obtaining higher-quality code rather than higher volume when collaborating with coding agents.
+
+It emphasizes structured prompts and review loops that surface intent mismatches early.
+
+Developers using agents for code generation should adopt the workflow on their next non-trivial feature branch.
+
+Analysis of corporate documentation found two hundred twenty-seven install commands pointing to code with no identifiable owner.
+
+The pattern indicates agents can introduce unvetted dependencies at scale.
+
+Security teams should add provenance checks to agent-generated package lists before any merge.
+
+OK, let's pop the hood on data-layer governance for agents.
+
+Everyone talks about agent guardrails as prompt instructions or monitoring layers added after the model.
+
+In practice, governance that must survive autonomous planning and cross-system action lives inside the database itself through enforceable policies evaluated at query time.
+
+An agent declares a purpose at session start.
+
+That purpose becomes an attribute the existing role- and attribute-based access engine already understands.
+
+The policy engine evaluates it exactly like department or clearance level, denying access before any data leaves the store.
+
+This adds no extra latency beyond the existing authorization check yet guarantees the rule cannot be bypassed by clever prompting or tool chaining.
+
+Row- and column-level security plus session audit logging capture exactly which agent acted, for which user, and under what declared purpose.
+
+The tradeoff appears when agents need broad read access for legitimate exploration.
+
+You must either pre-scope the purpose narrowly or accept that some queries will be rejected at runtime.
+
+Use this approach when agents will modify production data or cross trust boundaries.
+
+Rely on prompt guardrails only for read-only, low-stakes assistants where the blast radius stays inside a single conversation.
+
+The gotcha that bites most teams is assuming the model will self-enforce rules written in the system prompt.
+
+Once the agent can plan multi-step actions, only the data layer still holds.
+
+Apply for Anthropic's researcher access form if you study A I societal impact.
+
+The two hundred fifty thousand conversation dataset lets you run analyses previously impossible outside labs.
+
+Clone Visa's Vulnerability Agentic Harness and run it with stop-after s nine on a test repo to see the SARIF output before enabling remediation.
+
+Prototype the typed-tool-plus-gate pattern from the Towards Data Science post on any agent that currently receives unrestricted web search.
+
+Map your current IAM roles to agent identities and declared purposes using the nine controls in the EDB governance framework before scaling autonomous agents.
+
+More labs may follow Anthropic's data-sharing model after the initial three-group results publish.
+
+Cyber insurers are expected to release updated agent-specific policy templates in the next quarter.
+
+Visa plans to contribute the harness to Nvidia's Open Secure A I Alliance and expand consulting workshops.
+
+Before we go, the next wave of unsupervised post-training papers is already in review and should surface within weeks.
+
+That's Models and Agents for today.
+
+If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update.
+
+The A I world moves fast.
+
+We'll help you keep up.
+
+See you tomorrow.
+
+And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+And before you go: this show is part of the Nerra Network — a family of daily podcasts on tech, science, and markets, each one a short, sharp briefing you can finish on the commute.
+
+If today earned its place in your feed, here's your next listen — Tesla Shorts Time, your daily deep dive into everything Tesla.
+
+Find every show, free, at nerranetwork dot com.
+
+And on the website: every episode's visuals live in our free image gallery at nerranetwork dot com gallery — royalty-free under Creative Commons, download with attribution.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.

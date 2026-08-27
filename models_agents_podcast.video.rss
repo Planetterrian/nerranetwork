@@ -9,7 +9,7 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>en-us</language>
-    <lastBuildDate>Wed, 26 Aug 2026 08:50:16 +0000</lastBuildDate>
+    <lastBuildDate>Thu, 27 Aug 2026 14:39:40 +0000</lastBuildDate>
     <itunes:author>Patrick</itunes:author>
     <itunes:category text="Technology" />
     <itunes:category text="News">
@@ -23,6 +23,132 @@
     </itunes:owner>
     <itunes:summary>Your daily briefing on AI models and agents: new releases from the frontier labs, open-weight drops, agent frameworks, benchmarks, pricing, and practical tools you can use the same day — with long-running program tracking so you always know where the big stories stand. For developers, builders, and AI practitioners.</itunes:summary>
     <itunes:type>episodic</itunes:type>
+    <item>
+      <title>Ep 154: Researchers can now analyze real Claude usage data outside labs — Anthropic released…</title>
+      <description>Models &amp; Agents
+&lt;b&gt;Researchers can now analyze real Claude usage data outside labs — Anthropic released privacy-preserved tools and 250k conversations for independent impact studies.&lt;/b&gt;
+
+&lt;b&gt;What You Need to Know:&lt;/b&gt; Anthropic opened aggregated Claude conversation data from April-May 2026 to Stanford SALT Lab, Oxford, and METR, revealing over half of chats involve consequential tasks. OpenAI published its technical report on the Hugging Face agent incident with third-party assessments from METR and Redwood. Visa shipped an open-source agentic security harness that auto-remediates vulnerabilities before human review. Builders should watch how these data-access and governance moves affect agent deployment decisions this week.
+
+DEPTH OVER BREADTH (news items)
+
+Top Story
+Anthropic released privacy-preserved Claude usage data and analysis tools to external researchers for the first time. Three independent groups—Stanford SALT Lab, Oxford Human Information Processing Lab, and METR—examined 250,000 aggregated conversations from April-May 2026. SALT Lab found over half the chats involved consequential tasks that affect others or are hard to undo. The company now invites additional researchers to apply for access via a public form to pursue studies previously possible only inside labs. This shifts AI impact research from internal-only to distributed across academia while keeping raw user data protected. Watch for follow-on papers and whether other labs adopt similar data-sharing models. Source: &lt;a href="https://www.anthropic.com/research/enabling-independent-research"&gt;anthropic.com&lt;/a&gt;
+
+Model Updates
+&lt;b&gt;Unsupervised Post-Training of Foundation Models: A Survey — arXiv NLP&lt;/b&gt;
+The paper catalogs 80 strict unsupervised post-training methods organized by the internal signal supplying the update: prediction statistics, sample relations, self-generated targets, or internal evaluators. It maps how each choice of signal and task structure determines whether post-training improves the model or amplifies error. An orthogonal Input Visibility × Update Persistence view defines deployment regimes and a unified selection framework. Builders working on post-training pipelines should test the catalog against their unlabeled data sources this week. Source: &lt;a href="https://arxiv.org/abs/2608.24982"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Does Fine-Tuning Undo Activation Steering? — arXiv NLP&lt;/b&gt;
+The study tests stability of embedded steering for refusal suppression and brevity induction across five instruction-tuned models from 3B to 14B parameters under non-adversarial SFT and RLHF. Behavioral preservation tracks training data pressure while the weight edit itself survives with mean vector recovery ρ = 0.004. Fine-tuning does not dismantle the steering mechanism even when behavior reverts. Teams using activation steering should re-validate behavioral effects after any downstream fine-tuning run. Source: &lt;a href="https://arxiv.org/abs/2608.24988"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;The Dialect Tax: Dialectal Biases Persist throughout the Language Modeling Pipeline — arXiv NLP&lt;/b&gt;
+Parallel English dialect corpora show modern LMs encode dialectal texts unequally at tokenization, pre-training, post-training, and inference stages across model families. Character-level tokenization removes neither input/output asymmetries nor accuracy gaps. Reward models exhibit contextual, unstable dialect preferences during post-training. Developers targeting global audiences should measure dialect performance explicitly rather than assuming semantic equivalence holds. Source: &lt;a href="https://arxiv.org/abs/2608.24952"&gt;arxiv.org&lt;/a&gt;
+
+Agent &amp; Tool Developments
+&lt;b&gt;Visa ships a security AI that patches production code before any human reviews it — VentureBeat&lt;/b&gt;
+Visa open-sourced the Vulnerability Agentic Harness that runs 11 stages to discover, verify, remediate, validate, and iterate on vulnerabilities using an abstract syntax tree call graph. The default flow writes candidate fixes to a working copy then runs an adversarial validation panel at stage 11 that returns validated, failed, or needs-review verdicts without bypassing team build/test/review gates. It supports per-stage model choice across Anthropic, OpenAI-compatible, and open-weight backends and ships with MTTA observability. The harness is intended for authorized operators on code they own in controlled environments; operators must still fence repos and use scoped credentials. Source: &lt;a href="https://venturebeat.com/security/visa-agentic-security-harness-autonomous-fix"&gt;venturebeat.com&lt;/a&gt;
+
+&lt;b&gt;When agents act on their own, governance has to live in the data layer — VentureBeat&lt;/b&gt;
+The piece argues that agent governance must be enforced at the operational data layer through role- and attribute-based access, dynamic column masking, and session-level audit logging that treats the agent as a first-class principal with declared purpose. Nine controls grouped under Enforce, See and prove, and Unify and harden are presented as executable policies already present in databases rather than prompt guardrails. EDB Postgres AI is positioned as the open foundation delivering these controls with data sovereignty. Teams running autonomous agents should map their current IAM rules to agent identities and declared purposes before scaling deployments. Source: &lt;a href="https://venturebeat.com/security/when-agents-act-on-their-own-governance-has-to-live-in-the-data-layer"&gt;venturebeat.com&lt;/a&gt;
+
+&lt;b&gt;Focus: As AI agents go rogue, cyber insurers are adapting their policies — Reuters&lt;/b&gt;
+Cyber insurers are updating policies in response to autonomous agent incidents, shifting from traditional controls to new risk assessments around agent behavior. The article notes the Hugging Face incident as a reference point for emerging coverage questions. Organizations deploying agents should review policy language for explicit agent-identity and action-scope clauses in the coming quarter. Source: &lt;a href="https://www.reuters.com/legal/litigation/ai-agents-go-rogue-cyber-insurers-are-adapting-their-policies-2026-08-27/"&gt;reuters.com&lt;/a&gt;
+
+Practical &amp; Community
+&lt;b&gt;Stop Giving Your AI Agent a Search Box and Start Giving It Typed Tools, Hard Bounds, and a Gate It Cannot Talk Past — Towards Data Science&lt;/b&gt;
+The post demonstrates replacing open search with typed tools, hard bounds, and an un-bypassable gate when walking a knowledge graph. Four models tested on a wrong-prediction scenario show the bounded approach reduces hallucination while preserving useful traversal. Builders should prototype the gate pattern on any agent that currently receives unrestricted context windows. Source: &lt;a href="https://towardsdatascience.com/stop-giving-your-ai-agent-a-search-box-and-start-giving-it-typed-tools-hard-bounds-and-a-gate-it-cannot-talk-past/"&gt;towardsdatascience.com&lt;/a&gt;
+
+&lt;b&gt;How to Work with AI Coding Agents — Towards Data Science&lt;/b&gt;
+The guide focuses on obtaining higher-quality code rather than higher volume when collaborating with coding agents. It emphasizes structured prompts and review loops that surface intent mismatches early. Developers using agents for code generation should adopt the workflow on their next non-trivial feature branch. Source: &lt;a href="https://towardsdatascience.com/how-to-work-with-ai-coding-agents/"&gt;towardsdatascience.com&lt;/a&gt;
+
+&lt;b&gt;Claude, Codex, and Hermes installed unowned code inside corporate networks — Ars Technica AI&lt;/b&gt;
+Analysis of corporate documentation found 227 install commands pointing to code with no identifiable owner. The pattern indicates agents can introduce unvetted dependencies at scale. Security teams should add provenance checks to agent-generated package lists before any merge. Source: &lt;a href="https://arstechnica.com/security/2026/08/claude-codex-and-hermes-installed-unowned-code-inside-corporate-networks/"&gt;arstechnica.com&lt;/a&gt;
+
+Under the Hood: Data-Layer Governance for Agents
+Everyone talks about agent guardrails as prompt instructions or monitoring layers you add after the model. In practice, governance that must survive autonomous planning and cross-system action lives inside the database itself through enforceable policies evaluated at query time. Start with the core requirement: an agent declares a purpose at session start; that purpose becomes an attribute the existing role- and attribute-based access engine already understands. The policy engine then evaluates it exactly like department or clearance level, denying access before any data leaves the store. This adds no extra latency beyond the existing authorization check yet guarantees the rule cannot be bypassed by clever prompting or tool chaining. Row- and column-level security plus session audit logging capture exactly which agent acted, for which user, and under what declared purpose, giving regulators and incident responders a single source of truth. The tradeoff appears when agents need broad read access for legitimate exploration: you must either pre-scope the purpose narrowly or accept that some queries will be rejected at runtime. Use this approach when agents will modify production data or cross trust boundaries; rely on prompt guardrails only for read-only, low-stakes assistants where the blast radius stays inside a single conversation. The gotcha that bites most teams is assuming the model will self-enforce rules written in the system prompt—once the agent can plan multi-step actions, only the data layer still holds.
+
+Things to Try This Week
+• Apply for Anthropic’s researcher access form if you study AI societal impact — the 250k conversation dataset lets you run analyses previously impossible outside labs.
+• Clone Visa’s Vulnerability Agentic Harness and run it with --stop-after s9 on a test repo to see the SARIF output before enabling remediation.
+• Prototype the typed-tool-plus-gate pattern from the Towards Data Science post on any agent that currently receives unrestricted web search.
+• Map your current IAM roles to agent identities and declared purposes using the nine controls in the EDB governance framework before scaling autonomous agents.
+
+On the Horizon
+• More labs may follow Anthropic’s data-sharing model after the initial three-group results publish.
+• Cyber insurers are expected to release updated agent-specific policy templates in the next quarter.
+• Visa plans to contribute the harness to Nvidia’s Open Secure AI Alliance and expand consulting workshops.
+• Additional arXiv releases on unsupervised post-training and dialect bias are likely to appear in the coming weeks.
+
+```claims
+[]</description>
+      <guid isPermaLink="false">models-agents-video-ep154-20260827</guid>
+      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep154_20260827.mp4" length="274256595" type="video/mp4" />
+      <pubDate>Thu, 27 Aug 2026 08:00:00 +0000</pubDate>
+      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep154_20260827.jpg" />
+      <itunes:duration>10:50</itunes:duration>
+      <itunes:explicit>no</itunes:explicit>
+      <itunes:summary># Models &amp; Agents
+&gt; **Researchers can now analyze real Claude usage data outside labs — Anthropic released privacy-preserved tools and 250k conversations for independent impact studies.**
+
+**What You Need to Know:** Anthropic opened aggregated Claude conversation data from April-May 2026 to Stanford SALT Lab, Oxford, and METR, revealing over half of chats involve consequential tasks. OpenAI published its technical report on the Hugging Face agent incident with third-party assessments from METR and Redwood. Visa shipped an open-source agentic security harness that auto-remediates vulnerabilities before human review. Builders should watch how these data-access and governance moves affect agent deployment decisions this week.
+---
+### DEPTH OVER BREADTH (news items)
+
+### Top Story
+Anthropic released privacy-preserved Claude usage data and analysis tools to external researchers for the first time. Three independent groups—Stanford SALT Lab, Oxford Human Information Processing Lab, and METR—examined 250,000 aggregated conversations from April-May 2026. SALT Lab found over half the chats involved consequential tasks that affect others or are hard to undo. The company now invites additional researchers to apply for access via a public form to pursue studies previously possible only inside labs. This shifts AI impact research from internal-only to distributed across academia while keeping raw user data protected. Watch for follow-on papers and whether other labs adopt similar data-sharing models. Source: [anthropic.com](https://www.anthropic.com/research/enabling-independent-research)
+---
+### Model Updates
+**Unsupervised Post-Training of Foundation Models: A Survey — arXiv NLP**
+The paper catalogs 80 strict unsupervised post-training methods organized by the internal signal supplying the update: prediction statistics, sample relations, self-generated targets, or internal evaluators. It maps how each choice of signal and task structure determines whether post-training improves the model or amplifies error. An orthogonal Input Visibility × Update Persistence view defines deployment regimes and a unified selection framework. Builders working on post-training pipelines should test the catalog against their unlabeled data sources this week. Source: [arxiv.org](https://arxiv.org/abs/2608.24982)
+
+**Does Fine-Tuning Undo Activation Steering? — arXiv NLP**
+The study tests stability of embedded steering for refusal suppression and brevity induction across five instruction-tuned models from 3B to 14B parameters under non-adversarial SFT and RLHF. Behavioral preservation tracks training data pressure while the weight edit itself survives with mean vector recovery ρ = 0.004. Fine-tuning does not dismantle the steering mechanism even when behavior reverts. Teams using activation steering should re-validate behavioral effects after any downstream fine-tuning run. Source: [arxiv.org](https://arxiv.org/abs/2608.24988)
+
+**The Dialect Tax: Dialectal Biases Persist throughout the Language Modeling Pipeline — arXiv NLP**
+Parallel English dialect corpora show modern LMs encode dialectal texts unequally at tokenization, pre-training, post-training, and inference stages across model families. Character-level tokenization removes neither input/output asymmetries nor accuracy gaps. Reward models exhibit contextual, unstable dialect preferences during post-training. Developers targeting global audiences should measure dialect performance explicitly rather than assuming semantic equivalence holds. Source: [arxiv.org](https://arxiv.org/abs/2608.24952)
+---
+### Agent &amp; Tool Developments
+**Visa ships a security AI that patches production code before any human reviews it — VentureBeat**
+Visa open-sourced the Vulnerability Agentic Harness that runs 11 stages to discover, verify, remediate, validate, and iterate on vulnerabilities using an abstract syntax tree call graph. The default flow writes candidate fixes to a working copy then runs an adversarial validation panel at stage 11 that returns validated, failed, or needs-review verdicts without bypassing team build/test/review gates. It supports per-stage model choice across Anthropic, OpenAI-compatible, and open-weight backends and ships with MTTA observability. The harness is intended for authorized operators on code they own in controlled environments; operators must still fence repos and use scoped credentials. Source: [venturebeat.com](https://venturebeat.com/security/visa-agentic-security-harness-autonomous-fix)
+
+**When agents act on their own, governance has to live in the data layer — VentureBeat**
+The piece argues that agent governance must be enforced at the operational data layer through role- and attribute-based access, dynamic column masking, and session-level audit logging that treats the agent as a first-class principal with declared purpose. Nine controls grouped under Enforce, See and prove, and Unify and harden are presented as executable policies already present in databases rather than prompt guardrails. EDB Postgres AI is positioned as the open foundation delivering these controls with data sovereignty. Teams running autonomous agents should map their current IAM rules to agent identities and declared purposes before scaling deployments. Source: [venturebeat.com](https://venturebeat.com/security/when-agents-act-on-their-own-governance-has-to-live-in-the-data-layer)
+
+**Focus: As AI agents go rogue, cyber insurers are adapting their policies — Reuters**
+Cyber insurers are updating policies in response to autonomous agent incidents, shifting from traditional controls to new risk assessments around agent behavior. The article notes the Hugging Face incident as a reference point for emerging coverage questions. Organizations deploying agents should review policy language for explicit agent-identity and action-scope clauses in the coming quarter. Source: [reuters.com](https://www.reuters.com/legal/litigation/ai-agents-go-rogue-cyber-insurers-are-adapting-their-policies-2026-08-27/)
+---
+### Practical &amp; Community
+**Stop Giving Your AI Agent a Search Box and Start Giving It Typed Tools, Hard Bounds, and a Gate It Cannot Talk Past — Towards Data Science**
+The post demonstrates replacing open search with typed tools, hard bounds, and an un-bypassable gate when walking a knowledge graph. Four models tested on a wrong-prediction scenario show the bounded approach reduces hallucination while preserving useful traversal. Builders should prototype the gate pattern on any agent that currently receives unrestricted context windows. Source: [towardsdatascience.com](https://towardsdatascience.com/stop-giving-your-ai-agent-a-search-box-and-start-giving-it-typed-tools-hard-bounds-and-a-gate-it-cannot-talk-past/)
+
+**How to Work with AI Coding Agents — Towards Data Science**
+The guide focuses on obtaining higher-quality code rather than higher volume when collaborating with coding agents. It emphasizes structured prompts and review loops that surface intent mismatches early. Developers using agents for code generation should adopt the workflow on their next non-trivial feature branch. Source: [towardsdatascience.com](https://towardsdatascience.com/how-to-work-with-ai-coding-agents/)
+
+**Claude, Codex, and Hermes installed unowned code inside corporate networks — Ars Technica AI**
+Analysis of corporate documentation found 227 install commands pointing to code with no identifiable owner. The pattern indicates agents can introduce unvetted dependencies at scale. Security teams should add provenance checks to agent-generated package lists before any merge. Source: [arstechnica.com](https://arstechnica.com/security/2026/08/claude-codex-and-hermes-installed-unowned-code-inside-corporate-networks/)
+---
+### Under the Hood: Data-Layer Governance for Agents
+Everyone talks about agent guardrails as prompt instructions or monitoring layers you add after the model. In practice, governance that must survive autonomous planning and cross-system action lives inside the database itself through enforceable policies evaluated at query time. Start with the core requirement: an agent declares a purpose at session start; that purpose becomes an attribute the existing role- and attribute-based access engine already understands. The policy engine then evaluates it exactly like department or clearance level, denying access before any data leaves the store. This adds no extra latency beyond the existing authorization check yet guarantees the rule cannot be bypassed by clever prompting or tool chaining. Row- and column-level security plus session audit logging capture exactly which agent acted, for which user, and under what declared purpose, giving regulators and incident responders a single source of truth. The tradeoff appears when agents need broad read access for legitimate exploration: you must either pre-scope the purpose narrowly or accept that some queries will be rejected at runtime. Use this approach when agents will modify production data or cross trust boundaries; rely on prompt guardrails only for read-only, low-stakes assistants where the blast radius stays inside a single conversation. The gotcha that bites most teams is assuming the model will self-enforce rules written in the system prompt—once the agent can plan multi-step actions, only the data layer still holds.
+---
+### Things to Try This Week
+- Apply for Anthropic’s researcher access form if you study AI societal impact — the 250k conversation dataset lets you run analyses previously impossible outside labs.
+- Clone Visa’s Vulnerability Agentic Harness and run it with --stop-after s9 on a test repo to see the SARIF output before enabling remediation.
+- Prototype the typed-tool-plus-gate pattern from the Towards Data Science post on any agent that currently receives unrestricted web search.
+- Map your current IAM roles to agent identities and declared purposes using the nine controls in the EDB governance framework before scaling autonomous agents.
+---
+### On the Horizon
+- More labs may follow Anthropic’s data-sharing model after the initial three-group results publish.
+- Cyber insurers are expected to release updated agent-specific policy templates in the next quarter.
+- Visa plans to contribute the harness to Nvidia’s Open Secure AI Alliance and expand consulting workshops.
+- Additional arXiv releases on unsupervised post-training and dialect bias are likely to appear in the coming weeks.
+
+```claims
+[]</itunes:summary>
+      <itunes:episode>154</itunes:episode>
+      <itunes:title>Ep 154: Researchers can now analyze real Claude usage data outside labs — Anthropic released…</itunes:title>
+      <itunes:episodeType>full</itunes:episodeType>
+    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep154_20260827_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep154.json" type="application/json+chapters" /></item>
     <item>
       <title>Ep 153: OpenAI’s first custom inference chip is entering production, delivering higher throughput…</title>
       <description>Models &amp; Agents
@@ -3445,100 +3571,5 @@ Everyone talks about RL post-training as a single forward pass that just gets be
       <itunes:title>Ep 125: MCP’s largest update removes session stickiness so agents can scale behind ordinary load balancers.</itunes:title>
       <itunes:episodeType>full</itunes:episodeType>
     <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep125_20260728_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep125.json" type="application/json+chapters" /></item>
-    <item>
-      <title>Ep 124: Autonomous support agents just proved they can handle real volume — G2A’s Dave closed 14,400 tickets without human help.</title>
-      <description>Models &amp; Agents
-&lt;b&gt;Autonomous support agents just proved they can handle real volume — G2A’s Dave closed 14,400 tickets without human help.&lt;/b&gt;
-
-&lt;b&gt;What You Need to Know:&lt;/b&gt; G2A deployed an autonomous AI agent named Dave that resolved 14,400 seller support tickets over 63 days. Meta confirmed it will release a new open-source model. Qwen3.6-27B showed stronger speculative decoding gains on heavier quantization levels. Builders should watch how these agent and inference improvements translate to production workloads this week.
-
-Top Story
-G2A.COM deployed its Autonomous AI Agent Dave to handle seller support tickets. The agent resolved 14,400 tickets across 63 days with no reported human intervention in the loop. This demonstrates concrete throughput for a narrow but high-volume customer-support workflow. The result gives teams a data point on what fully autonomous ticket resolution looks like in practice today. Companies running similar high-ticket-volume operations should test comparable agent setups against their own support logs this week. Watch for follow-up metrics on resolution quality and escalation rates. Source: &lt;a href="https://news.google.com/rss/articles/CBMi0AFBVV95cUxOX3FqRFRSUWZ2N2dIdnNYZ3hlMmNsMHZIQkg3eHlmWHNZTm8yUFppaS1BWUhUek1iTGExb3ByVFJiVGpMaTdxZF9DVWYxYjBKbmR1TldsMWhTTFpJNDdRUEs0Yzd6X1o2aUViMHBnSXJPOV95cTRXTVVPRTdOb29UaXpLd0Q4aXJCZEZkU0lvdmRvMk05cUNsYWFiNDlrZW9iOUpQeDJ5bWJUZWUzMlpnazVFbWU3SjRvdnNYWmpfSGdocVlsUmRlbTJQVVhDNHJH?oc=5"&gt;Google News&lt;/a&gt;
-
-Model Updates
-&lt;b&gt;Qwen3.6-27B speculative decoding gains on heavier quants: r/LocalLLaMA&lt;/b&gt;
-Qwen3.6-27B showed the largest speculative decoding speedups on Q8 weights, with gains decreasing through Q6 and Q4. Ten of ten tested speculative configurations ranked Q8 highest by multiplier. Acceptance rates stayed consistent across matched quant depths while base step speed dropped with higher weight byte counts. DFlash delivered the highest absolute tokens per second overall; MTP ranked second across most setups. The nvfp4/SGLang pair proved fastest overall among quant and engine combinations. Weaver appeared as an outlier because it is fork-only with per-target heads, limiting it to specific model and quant pairings. Llama.cpp’s MTP path on UD-Q4 ran pathologically slow, producing lower absolute tokens per second than the Q6 MTP-3 variant at identical acceptance rates. Builders running local inference on 27B-class models should benchmark DFlash or MTP on their target quant this week to capture the reported gains. The tests used short outputs, greedy decoding, and batch size one, so the multipliers represent an upper bound rather than a general concurrency result. Source: &lt;a href="https://www.reddit.com/r/LocalLLaMA/comments/1v7wh6g/qwen3627b_speculative_decoding_gets_better_on/"&gt;reddit.com&lt;/a&gt;
-
-&lt;b&gt;Meta confirms upcoming open-source model release: r/LocalLLaMA&lt;/b&gt;
-The announcement came via a screenshot of a post by Alexandr Wang. No architecture details, parameter count, or release timeline were provided in the post. Community discussion centers on how the new model will compare to existing open-weight families. Developers tracking open releases should monitor Meta’s official channels for the first weights drop. Source: &lt;a href="https://www.reddit.com/r/LocalLLaMA/comments/1v7smm5/meta_has_confirmed_that_it_will_release_an_open/"&gt;reddit.com&lt;/a&gt;
-
-Agent &amp; Tool Developments
-&lt;b&gt;Siemens adds characterisation AI agent for design iteration: Electronics Weekly&lt;/b&gt;
-Siemens introduced a characterisation AI agent that automates design iteration loops. The agent targets electronics design workflows where repeated characterisation steps are common. No specific performance numbers or integration details were released. Hardware and EDA teams should watch for the first public demos or API access. Source: &lt;a href="https://news.google.com/rss/articles/CBMitgFBVV95cUxOVU4zdGRhVWV6dWIzcE9qWFhXZTlneFpmZHkzTEoxZ1VlR1dSek9MZGJfVU4xTV9fbjAtTFRkMkU3Yk1MaGpocDM2ZG84VUxqMlMwNjZIZjFrM0JsdEU3ZGxldzZNaHJiQzlPaTBGd1Q3N2FVZ1pZSHNYTkZWSzBEd0F3b3JkUnhBd0tCYkRYM0lOaUFuM3FfYVgwMHhZc1ludVZ2YlotNi1vRjMzQTNhU3ZjNmxZUQ?oc=5"&gt;Google News&lt;/a&gt;
-
-&lt;b&gt;iLands launches shared economic network for AI agents and humans: The Manila Times&lt;/b&gt;
-iLands launched as a shared economic network where autonomous AI agents and humans can work, trade, and co-evolve. The platform positions itself as infrastructure for agent-to-agent and human-to-agent economic interactions. No technical architecture, APIs, or early access details were disclosed. Teams exploring multi-agent marketplaces should track the project’s first public documentation. Source: &lt;a href="https://news.google.com/rss/articles/CBMiigJBVV95cUxNSVNOTnIzbjQ1dFA3cXNodWpCcGVRV21Za0lWTnozT0NkTDhhU2t4dnhud2FvNTlfOThIV2dFRXRHRlF0LVRoMWVqN3phVzJkYlBqeFR2QmJodjh3cXNFTTBnLXVnN2RRRm45aGY4aWJ3c3BLOUlBNVl4LVNfcGRzay1YbTZ2SkpUMHprVzFYMnhpRjhjRlRhQTR0bmZvcWd1Vl9ybXNfckU2bFJKZVdwSzZVMTFqR2xkazFBalJ4amtIOC1MZUJtRVZBX0hCY2NrdjVyc24tNGhoRi0yQVFiS1JadWtWMmp3T2s0SFBDcmNCSHJTVVlDWlJsTnVydWFPNHJrMzExQ3Z6Z9IBjwJBVV95cUxPby00dG1xUERhQ2NVWjdhQy1xUGhraHJpUHNCQnBzWm0yanpDTjZEU3VmQjJCbW5OUmlvM3BKX3Z6N2h3VDJkLUpGd1RXY05XVTFPM2dMQUdYNzVHc1FmRTVNMDdVWlpRSEVMblFteXBhcG80STg2UU51UmpNYmFSTnRCWnotSVpueExUbEd5STgwV0RVT2FpcVJSLTQxbUVfZmdGRDdUcGZJakR0TDB5YVNrcnJ1UG9kalNVVjFaXzJ4bEdPNS1sVTF4cXZjbHF4aXpvNXg2bkh5OC1kSE42MlJpOEY3U3pVdnlxcVBMUDN6VHh6eXBRWGUzVERKOTBkMVpwZ1JvTVJRak5leEhn?oc=5"&gt;Google News&lt;/a&gt;
-
-Practical &amp; Community
-&lt;b&gt;Image segmentation request for Gemini 2.5: Simon Willison (X)&lt;/b&gt;
-Simon Willison posted that image segmentation capabilities similar to those demonstrated in Gemini 2.5 would be useful. The tweet links to his earlier write-up on Gemini image segmentation. No new implementation was shared. Developers working on multimodal tooling should review the linked post for context on current segmentation behavior. Source: &lt;a href="https://x.com/simonw/status/2081546026792673767"&gt;x.com&lt;/a&gt;
-
-&lt;b&gt;ChatGPT handles complex group trip planning from phone: Sam Altman (X)&lt;/b&gt;
-Sam Altman shared a detailed prompt that used full chat history to generate three trip options, build a coordination site, reach group consensus, and draft reservation emails. The system completed the end-to-end task from a mobile prompt. The example illustrates current multi-step agentic planning reach. Builders should test similar long-horizon prompts against their own coordination workflows. Source: &lt;a href="https://x.com/sama/status/2081396796174282900"&gt;x.com&lt;/a&gt;
-
-Under the Hood: MoE-Style Low-Rank Adaptation
-Everyone talks about parameter-efficient fine-tuning for MoE models as if uniform adapters are the obvious default. In practice, MoE²-LoRA couples the pretrained router directly to task-specific LoRA routing through a dual-channel Routing-Conditioned Projection module. The router activations already computed by the base model are reused to decide which LoRA experts activate, avoiding a second full routing pass. A single global LoRA expert pool is shared across all layers, allowing emergent layer-wise affinities while keeping total added parameters low. This design reduces the risk of overwriting base expert specialization compared with static adapter placement. The approach delivered state-of-the-art downstream accuracy on multiple MoE backbones while preserving more general capabilities than prior MoE PEFT methods. Teams fine-tuning MoE models should test MoE²-LoRA first when router reuse is feasible; the main gotcha is ensuring the base router remains frozen during adaptation so routing priors are not disturbed.
-
-Things to Try This Week
-• Test DFlash or MTP speculative decoding on Qwen3.6-27B at Q8 weights to measure the reported speedups on your hardware.
-• Review Simon Willison’s Gemini image segmentation write-up if you need multimodal region extraction in current workflows.
-• Run Sam Altman’s group-trip prompt style against your own multi-step planning tasks to see where current agents succeed or break.
-• Monitor Meta’s channels for the promised open-source model weights and compare early releases against Qwen and Llama families on your target tasks.
-
-On the Horizon
-• Siemens characterisation agent expected to reach public demos or early access.
-• iLands platform documentation and APIs anticipated for agent-to-agent trading experiments.
-• Further Meta open-source model details likely within the next release cycle.</description>
-      <guid isPermaLink="false">models-agents-video-ep124-20260727</guid>
-      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep124_20260727.mp4" length="178060584" type="video/mp4" />
-      <pubDate>Mon, 27 Jul 2026 08:00:00 +0000</pubDate>
-      <itunes:duration>08:43</itunes:duration>
-      <itunes:explicit>no</itunes:explicit>
-      <itunes:summary># Models &amp; Agents
-&gt; **Autonomous support agents just proved they can handle real volume — G2A’s Dave closed 14,400 tickets without human help.**
-
-**What You Need to Know:** G2A deployed an autonomous AI agent named Dave that resolved 14,400 seller support tickets over 63 days. Meta confirmed it will release a new open-source model. Qwen3.6-27B showed stronger speculative decoding gains on heavier quantization levels. Builders should watch how these agent and inference improvements translate to production workloads this week.
----
-### Top Story
-G2A.COM deployed its Autonomous AI Agent Dave to handle seller support tickets. The agent resolved 14,400 tickets across 63 days with no reported human intervention in the loop. This demonstrates concrete throughput for a narrow but high-volume customer-support workflow. The result gives teams a data point on what fully autonomous ticket resolution looks like in practice today. Companies running similar high-ticket-volume operations should test comparable agent setups against their own support logs this week. Watch for follow-up metrics on resolution quality and escalation rates. Source: [Google News](https://news.google.com/rss/articles/CBMi0AFBVV95cUxOX3FqRFRSUWZ2N2dIdnNYZ3hlMmNsMHZIQkg3eHlmWHNZTm8yUFppaS1BWUhUek1iTGExb3ByVFJiVGpMaTdxZF9DVWYxYjBKbmR1TldsMWhTTFpJNDdRUEs0Yzd6X1o2aUViMHBnSXJPOV95cTRXTVVPRTdOb29UaXpLd0Q4aXJCZEZkU0lvdmRvMk05cUNsYWFiNDlrZW9iOUpQeDJ5bWJUZWUzMlpnazVFbWU3SjRvdnNYWmpfSGdocVlsUmRlbTJQVVhDNHJH?oc=5)
----
-### Model Updates
-**Qwen3.6-27B speculative decoding gains on heavier quants: r/LocalLLaMA**
-Qwen3.6-27B showed the largest speculative decoding speedups on Q8 weights, with gains decreasing through Q6 and Q4. Ten of ten tested speculative configurations ranked Q8 highest by multiplier. Acceptance rates stayed consistent across matched quant depths while base step speed dropped with higher weight byte counts. DFlash delivered the highest absolute tokens per second overall; MTP ranked second across most setups. The nvfp4/SGLang pair proved fastest overall among quant and engine combinations. Weaver appeared as an outlier because it is fork-only with per-target heads, limiting it to specific model and quant pairings. Llama.cpp’s MTP path on UD-Q4 ran pathologically slow, producing lower absolute tokens per second than the Q6 MTP-3 variant at identical acceptance rates. Builders running local inference on 27B-class models should benchmark DFlash or MTP on their target quant this week to capture the reported gains. The tests used short outputs, greedy decoding, and batch size one, so the multipliers represent an upper bound rather than a general concurrency result. Source: [reddit.com](https://www.reddit.com/r/LocalLLaMA/comments/1v7wh6g/qwen3627b_speculative_decoding_gets_better_on/)
-
-**Meta confirms upcoming open-source model release: r/LocalLLaMA**
-The announcement came via a screenshot of a post by Alexandr Wang. No architecture details, parameter count, or release timeline were provided in the post. Community discussion centers on how the new model will compare to existing open-weight families. Developers tracking open releases should monitor Meta’s official channels for the first weights drop. Source: [reddit.com](https://www.reddit.com/r/LocalLLaMA/comments/1v7smm5/meta_has_confirmed_that_it_will_release_an_open/)
----
-### Agent &amp; Tool Developments
-**Siemens adds characterisation AI agent for design iteration: Electronics Weekly**
-Siemens introduced a characterisation AI agent that automates design iteration loops. The agent targets electronics design workflows where repeated characterisation steps are common. No specific performance numbers or integration details were released. Hardware and EDA teams should watch for the first public demos or API access. Source: [Google News](https://news.google.com/rss/articles/CBMitgFBVV95cUxOVU4zdGRhVWV6dWIzcE9qWFhXZTlneFpmZHkzTEoxZ1VlR1dSek9MZGJfVU4xTV9fbjAtTFRkMkU3Yk1MaGpocDM2ZG84VUxqMlMwNjZIZjFrM0JsdEU3ZGxldzZNaHJiQzlPaTBGd1Q3N2FVZ1pZSHNYTkZWSzBEd0F3b3JkUnhBd0tCYkRYM0lOaUFuM3FfYVgwMHhZc1ludVZ2YlotNi1vRjMzQTNhU3ZjNmxZUQ?oc=5)
-
-**iLands launches shared economic network for AI agents and humans: The Manila Times**
-iLands launched as a shared economic network where autonomous AI agents and humans can work, trade, and co-evolve. The platform positions itself as infrastructure for agent-to-agent and human-to-agent economic interactions. No technical architecture, APIs, or early access details were disclosed. Teams exploring multi-agent marketplaces should track the project’s first public documentation. Source: [Google News](https://news.google.com/rss/articles/CBMiigJBVV95cUxNSVNOTnIzbjQ1dFA3cXNodWpCcGVRV21Za0lWTnozT0NkTDhhU2t4dnhud2FvNTlfOThIV2dFRXRHRlF0LVRoMWVqN3phVzJkYlBqeFR2QmJodjh3cXNFTTBnLXVnN2RRRm45aGY4aWJ3c3BLOUlBNVl4LVNfcGRzay1YbTZ2SkpUMHprVzFYMnhpRjhjRlRhQTR0bmZvcWd1Vl9ybXNfckU2bFJKZVdwSzZVMTFqR2xkazFBalJ4amtIOC1MZUJtRVZBX0hCY2NrdjVyc24tNGhoRi0yQVFiS1JadWtWMmp3T2s0SFBDcmNCSHJTVVlDWlJsTnVydWFPNHJrMzExQ3Z6Z9IBjwJBVV95cUxPby00dG1xUERhQ2NVWjdhQy1xUGhraHJpUHNCQnBzWm0yanpDTjZEU3VmQjJCbW5OUmlvM3BKX3Z6N2h3VDJkLUpGd1RXY05XVTFPM2dMQUdYNzVHc1FmRTVNMDdVWlpRSEVMblFteXBhcG80STg2UU51UmpNYmFSTnRCWnotSVpueExUbEd5STgwV0RVT2FpcVJSLTQxbUVfZmdGRDdUcGZJakR0TDB5YVNrcnJ1UG9kalNVVjFaXzJ4bEdPNS1sVTF4cXZjbHF4aXpvNXg2bkh5OC1kSE42MlJpOEY3U3pVdnlxcVBMUDN6VHh6eXBRWGUzVERKOTBkMVpwZ1JvTVJRak5leEhn?oc=5)
----
-### Practical &amp; Community
-**Image segmentation request for Gemini 2.5: Simon Willison (X)**
-Simon Willison posted that image segmentation capabilities similar to those demonstrated in Gemini 2.5 would be useful. The tweet links to his earlier write-up on Gemini image segmentation. No new implementation was shared. Developers working on multimodal tooling should review the linked post for context on current segmentation behavior. Source: [x.com](https://x.com/simonw/status/2081546026792673767)
-
-**ChatGPT handles complex group trip planning from phone: Sam Altman (X)**
-Sam Altman shared a detailed prompt that used full chat history to generate three trip options, build a coordination site, reach group consensus, and draft reservation emails. The system completed the end-to-end task from a mobile prompt. The example illustrates current multi-step agentic planning reach. Builders should test similar long-horizon prompts against their own coordination workflows. Source: [x.com](https://x.com/sama/status/2081396796174282900)
----
-### Under the Hood: MoE-Style Low-Rank Adaptation
-Everyone talks about parameter-efficient fine-tuning for MoE models as if uniform adapters are the obvious default. In practice, MoE²-LoRA couples the pretrained router directly to task-specific LoRA routing through a dual-channel Routing-Conditioned Projection module. The router activations already computed by the base model are reused to decide which LoRA experts activate, avoiding a second full routing pass. A single global LoRA expert pool is shared across all layers, allowing emergent layer-wise affinities while keeping total added parameters low. This design reduces the risk of overwriting base expert specialization compared with static adapter placement. The approach delivered state-of-the-art downstream accuracy on multiple MoE backbones while preserving more general capabilities than prior MoE PEFT methods. Teams fine-tuning MoE models should test MoE²-LoRA first when router reuse is feasible; the main gotcha is ensuring the base router remains frozen during adaptation so routing priors are not disturbed.
----
-### Things to Try This Week
-- Test DFlash or MTP speculative decoding on Qwen3.6-27B at Q8 weights to measure the reported speedups on your hardware.
-- Review Simon Willison’s Gemini image segmentation write-up if you need multimodal region extraction in current workflows.
-- Run Sam Altman’s group-trip prompt style against your own multi-step planning tasks to see where current agents succeed or break.
-- Monitor Meta’s channels for the promised open-source model weights and compare early releases against Qwen and Llama families on your target tasks.
----
-### On the Horizon
-- Siemens characterisation agent expected to reach public demos or early access.
-- iLands platform documentation and APIs anticipated for agent-to-agent trading experiments.
-- Further Meta open-source model details likely within the next release cycle.</itunes:summary>
-      <itunes:episode>124</itunes:episode>
-      <itunes:title>Ep 124: Autonomous support agents just proved they can handle real volume — G2A’s Dave closed 14,400 tickets without human help.</itunes:title>
-      <itunes:episodeType>full</itunes:episodeType>
-    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep124_20260727_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep124.json" type="application/json+chapters" /></item>
   <podcast:locked owner="patrick@planetterrian.com">yes</podcast:locked><itunes:keywords>ai, llm, machine learning, openai, anthropic, agents, claude, gpt, ai news</itunes:keywords></channel>
 </rss>
