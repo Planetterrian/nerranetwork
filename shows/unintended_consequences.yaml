@@ -21,16 +21,17 @@ multilingual:
   enabled: false
 llm:
   provider: xai
-  # 2026-08-18 STAGED grok-4.6 trial (operator-directed; experiment
-  # staged-grok-46-trial, per docs/model_upgrade_playbook.md). Narrative
-  # show: no news fetch — the brief is model-knowledge prose. Measured
-  # 4.6 latency on this show: digest ~215s, script ~208s (both fit the
-  # raised NERRA_LLM_TIMEOUT_SECONDS=600 with margin — this show's Ep093
-  # ran the full pipeline successfully on 4.6 on outage day). These are
-  # FACTUAL history stories, so the sharpest watch is invented
-  # facts/dates: reviewer FACTUAL_ERRORS vs the other shows on the same
-  # reviewer. Revert = delete this line. A/B-listen the first ep (#17).
-  model: grok-4.6
+  # 2026-08-27 WITHDRAWN from the staged grok-4.6 trial (operator-
+  # directed, per the model-upgrade playbook's latency gate): on
+  # 2026-08-27 both of this show's runs died mid-pipeline while its
+  # sibling trial show first_principles hit the 4.6 stall-then-server-
+  # disconnect signature outright (~260s per attempt, three attempts,
+  # twice) — the same operational failure that forced the Aug-18
+  # network-wide 4.6 revert. The deleted `model: grok-4.6` pin means
+  # this show inherits the grok-4.3 network default again; the accepted
+  # 4.3 narrative-length plateau applies and podcast-side retries stay
+  # banned. Do not re-pin 4.6 here without a fresh staged trial per
+  # docs/model_upgrade_playbook.md.
   system_prompt_file: shows/prompts/unintended_consequences_system.txt
   digest_prompt_file: shows/prompts/unintended_consequences_episode.txt
   podcast_prompt_file: shows/prompts/unintended_consequences_podcast.txt

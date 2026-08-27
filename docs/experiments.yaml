@@ -375,11 +375,26 @@ experiments:
       Any retry follows docs/model_upgrade_playbook.md: one show first,
       digest-latency gate before network-wide.
   - id: staged-grok-46-trial
-    title: "grok-4.6 staged trial — dp_pod script, FPD+UC whole-show, synth, reviewer"
+    title: "grok-4.6 staged trial — dp_pod script, synth, reviewer (FPD+UC arms withdrawn 2026-08-27)"
     area: quality
     shipped: 2026-08-18
     readout: 2026-09-01
     status: reading
+    interim: >
+      2026-08-27 (operator-directed): the first_principles and
+      unintended_consequences WHOLE-SHOW arms are withdrawn — on the
+      GitHub-cron outage day, FPD's grok-4.6 digest calls stalled ~260s
+      and the server disconnected without a response (three tenacity
+      attempts, on both of its runs) and UC died on both of its runs;
+      both shows missed their slots twice in one day, the same
+      operational signature that forced the Aug-18 same-day network
+      revert. Both shows are back on the grok-4.3 network default (the
+      playbook's latency gate: an arm that costs episodes is over,
+      whatever its editorial promise). The 4.3-vs-4.6 narrative-length
+      question for FPD/UC is UNANSWERED, not answered negative — a
+      retry needs xAI-side latency to be demonstrably fixed first. The
+      dp_pod script-stage arm and the synth + reviewer stages continue
+      to the 2026-09-01 readout unchanged.
     baseline: >
       All stages on grok-4.3 after the same-day revert of the network-wide
       4.6 upgrade. dp_pod on 4.3: zero exclamation points in 27/30

@@ -1697,7 +1697,14 @@ day** (operator-directed; experiment `staged-grok-46-trial`, readout
 2026-09-01): grok-4.6 on dp_pod's SCRIPT stage only, first_principles +
 unintended_consequences whole-show (narrative — no news fetch), and the
 synth + reviewer stages; `NERRA_LLM_TIMEOUT_SECONDS` raised to 600 in
-run-show.yml to cover 4.6 latency. Every daily NEWS show's digest/fetch
+run-show.yml to cover 4.6 latency. **2026-08-27: the FPD + UC whole-show
+arms were WITHDRAWN (operator-directed, playbook latency gate)** — on
+the GitHub-cron outage day FPD's 4.6 digest calls stalled ~260 s and
+server-disconnected on both of its runs and UC died on both of its
+runs, so both shows are back on the grok-4.3 network default; the
+narrative-length question is unanswered, not answered negative, and a
+re-pin needs a fresh staged trial. dp_pod's script arm and the synth +
+reviewer stages continue. Every daily NEWS show's digest/fetch
 stays grok-4.3 — scope pinned by
 `tests/test_llm_usage_pass.py::TestStagedGrok46Trial`. Reviewer
 FACTUAL_ERRORS comparisons from 2026-08-18 on must be cross-show under

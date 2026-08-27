@@ -26,17 +26,18 @@ multilingual:
   - fr
 llm:
   provider: xai
-  # 2026-08-18 STAGED grok-4.6 trial (operator-directed; experiment
-  # staged-grok-46-trial, per docs/model_upgrade_playbook.md). Narrative
-  # show: no news fetch — the brief IS model-knowledge prose, so a
-  # stronger model is the first sanctioned lever against the accepted
-  # grok-4.3 narrative-length plateau (podcast-side retries stay banned).
-  # Measured 4.6 latency on this show's digest: ~205s (fits the raised
-  # NERRA_LLM_TIMEOUT_SECONDS=600 with wide margin). Watch: reviewer
-  # FACTUAL_ERRORS vs the other shows on the same reviewer, stage
-  # durations in metrics_ep*.json, Slow-LLM-completion warnings.
-  # Revert = delete this line. A/B-listen the first episode (#17).
-  model: grok-4.6
+  # 2026-08-27 WITHDRAWN from the staged grok-4.6 trial (operator-
+  # directed, per the model-upgrade playbook's latency gate): on outage
+  # day the 4.6 digest calls stalled ~260s each and the server
+  # disconnected without a response — three tenacity attempts, twice in
+  # a row, and the show missed its slot both times (runs 33080123951 /
+  # 33084796001). Same operational signature as the Aug-18 network-wide
+  # revert. The deleted `model: grok-4.6` pin means this show inherits
+  # the grok-4.3 network default again; the accepted 4.3 narrative-
+  # length plateau applies, attacked only via the sanctioned digest-side
+  # lever below (min_digest_words + digest_expand_below_target). Do not
+  # re-pin 4.6 here without a fresh staged trial per
+  # docs/model_upgrade_playbook.md.
   system_prompt_file: shows/prompts/first_principles_system.txt
   digest_prompt_file: shows/prompts/first_principles_episode.txt
   podcast_prompt_file: shows/prompts/first_principles_podcast.txt
@@ -61,11 +62,12 @@ llm:
   # (digest_expand_below_target). ~$39/yr of retry calls recovered.
   podcast_expand_below_target: false
   # Digest-stage expansion retry (June 2026 FP pass; retuned 2026-08-20).
-  # On grok-4.6 the brief prompt now targets 1,300-1,700w (the old
+  # The brief prompt targets a 1,300-1,700w band (the old
   # write-past-the-floor wording doubled the show's runtime — operator
   # listen verdict: repetitive). The trigger sits BELOW that band so the
   # retry rescues genuinely-thin briefs (~900-1,100w) without firing on
-  # an in-band 1,3xx brief.
+  # an in-band 1,3xx brief. On grok-4.3 (post-trial) briefs land lower
+  # in the band; the same trigger remains the sanctioned length lever.
   min_digest_words: 1200
   digest_expand_below_target: true
   podcast_chain: true
