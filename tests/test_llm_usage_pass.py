@@ -178,7 +178,15 @@ class TestStagedGrok46Trial:
     silent-config drift class this file exists for.
     """
 
-    TRIAL_NARRATIVE_SHOWS = ("first_principles", "unintended_consequences")
+    # 2026-08-27: the two whole-show narrative arms were WITHDRAWN from
+    # the trial (operator-directed, playbook latency gate) after grok-4.6
+    # digest calls stalled ~260s and server-disconnected on both of
+    # first_principles' runs and unintended_consequences died on both of
+    # its runs — the shows missed their slots twice on the same day. They
+    # are pinned BACK to the grok-4.3 network default below; the trial
+    # continues only for dp_pod's script stage and the synth + reviewer
+    # stages.
+    WITHDRAWN_NARRATIVE_SHOWS = ("first_principles", "unintended_consequences")
     NEWS_SHOWS_STAY_43 = (
         "tesla", "spacex", "omni_view", "modern_investing",
         "models_agents", "models_agents_beginners", "planetterrian",
@@ -190,9 +198,14 @@ class TestStagedGrok46Trial:
         from engine.config import load_config
         return load_config(REPO_ROOT / "shows" / f"{slug}.yaml")
 
-    def test_trial_narrative_shows_are_on_46(self):
-        for slug in self.TRIAL_NARRATIVE_SHOWS:
-            assert self._load(slug).llm.model == "grok-4.6", slug
+    def test_withdrawn_narrative_shows_back_on_43(self):
+        for slug in self.WITHDRAWN_NARRATIVE_SHOWS:
+            assert self._load(slug).llm.model == "grok-4.3", (
+                f"{slug} was withdrawn from the grok-4.6 trial on "
+                "2026-08-27 (server-disconnect latency blocked its "
+                "episodes twice in one day) — a 4.6 pin returning here "
+                "needs a fresh staged trial, never a silent re-pin"
+            )
 
     def test_dp_pod_script_stage_only(self):
         """dp_pod's DIGEST must keep inheriting the grok-4.3 network
