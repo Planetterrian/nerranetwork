@@ -6,6 +6,7 @@
 
 import { describe, expect, it } from "vitest";
 import {
+  DEFAULT_LINEUP,
   PERSONAL_SHOWS,
   handleAdminSpecs,
   handlePersonalFeed,
@@ -269,7 +270,35 @@ describe("admin specs export", () => {
     const body = await res.json() as { specs: Record<string, unknown>[] };
     expect(body.specs).toHaveLength(1);
     expect(body.specs[0].token).toBe("c".repeat(32));
+    expect(body.specs[0].default_lineup).toBe(false);
     expect(JSON.stringify(body)).not.toContain("fan@example.com");
+  });
+
+  it("a paying member with no lineup gets the starter lineup, not silence", async () => {
+    // Aug 27 2026: <2 chosen shows used to silently EXCLUDE the member
+    // from the build — they paid and their feed URL 404'd forever.
+    const env = envWith();
+    const kv = env.RATE_LIMIT_KV as unknown as FakeKV;
+    kv.store.set("member:new@example.com", JSON.stringify({
+      shows: [], first_name: "", city: "",
+      tier: "personal", status: "active",
+      feed_token: "d".repeat(32), updated_at: "",
+    }));
+    const res = await handleAdminSpecs(
+      new Request("https://api.example.com/api/admin/personal-specs", {
+        headers: { Authorization: "Bearer admin-token" },
+      }), env);
+    const body = await res.json() as { specs: Record<string, unknown>[] };
+    expect(body.specs).toHaveLength(1);
+    expect(body.specs[0].shows).toEqual([...DEFAULT_LINEUP]);
+    expect(body.specs[0].default_lineup).toBe(true);
+  });
+
+  it("every starter-lineup slug is in the closed show vocabulary", () => {
+    for (const slug of DEFAULT_LINEUP) {
+      expect(PERSONAL_SHOWS).toContain(slug);
+    }
+    expect(DEFAULT_LINEUP.length).toBeGreaterThanOrEqual(2);
   });
 });
 

@@ -47,6 +47,20 @@ export const PERSONAL_SHOWS = [
   "dp_pod",
 ] as const;
 
+// Starter lineup for a paying subscriber who hasn't picked 2+ shows yet
+// (Aug 27 2026): the builder needs at least two segments to make an
+// edition, and the old spec filter silently EXCLUDED such members — they
+// paid, their feed URL 404'd forever, and nothing anywhere said why. A
+// subscription must always produce a feed; the starter is the network's
+// flagship mix, replaced the moment they save their own lineup.
+export const DEFAULT_LINEUP = [
+  "spacex",
+  "tesla",
+  "models_agents",
+  "planetterrian",
+  "dp_pod",
+] as const;
+
 const COOKIE_NAME = "nn_gallery";
 const FEED_FILE_RE = /^[A-Za-z0-9_.-]+$/;
 const TOKEN_RE = /^[a-f0-9]{16,64}$/;
@@ -404,15 +418,21 @@ export async function handleAdminSpecs(
       } catch {
         continue;
       }
-      if (rec.status === "active" && rec.feed_token &&
-          (rec.shows?.length ?? 0) >= 2) {
+      if (rec.status === "active" && rec.feed_token) {
+        // A paying member ALWAYS gets a feed: fewer than 2 chosen shows
+        // falls back to the starter lineup instead of silently dropping
+        // the member from the build (their feed URL used to 404 forever).
+        const chosen = (rec.shows?.length ?? 0) >= 2
+          ? rec.shows
+          : [...DEFAULT_LINEUP];
         // Deliberately NO email: the batch builder is PII-light.
         specs.push({
           token: rec.feed_token,
-          shows: rec.shows,
+          shows: chosen,
           tier: rec.tier,
           first_name: rec.first_name || "",
           city: rec.city || "",
+          default_lineup: (rec.shows?.length ?? 0) < 2,
         });
       }
     }

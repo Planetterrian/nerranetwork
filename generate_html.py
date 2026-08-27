@@ -3920,13 +3920,29 @@ def _member_page_context(title, description, canonical):
 def generate_join_page(*, dry_run=False):
     """Generate /join.html — the Nerra Personal membership lander."""
     env = _get_jinja_env()
-    html = env.get_template("join_page.html.j2").render(
-        **_member_page_context(
-            "Nerra Personal — your own daily show | Nerra Network",
-            "One free account for the newsletter, gallery and member perks — "
-            "or your own private daily show: the shows you choose, in your "
-            "order, anchored by Mira.",
-            "https://nerranetwork.com/join.html"))
+    # The pickable lineup, rendered as real cards (Aug 27 2026): the page
+    # used to ASSERT "pick the shows" without ever showing what there is
+    # to pick — the closed vocabulary from engine.personal_edition is the
+    # product, so show it.
+    from engine.personal_edition import PERSONAL_SHOW_SLUGS
+    personal_shows = []
+    for slug in PERSONAL_SHOW_SLUGS:
+        meta = NETWORK_SHOWS.get(slug, {})
+        personal_shows.append({
+            "slug": slug,
+            "name": meta.get("name", slug),
+            "tagline": meta.get("tagline") or meta.get("description") or "",
+            "page": meta.get("show_page", f"{slug.replace('_', '-')}.html"),
+            "schedule": meta.get("schedule", ""),
+        })
+    ctx = _member_page_context(
+        "Nerra Personal — your own daily show | Nerra Network",
+        "One free account for the newsletter, gallery and member perks — "
+        "or your own private daily show: the shows you choose, in your "
+        "order, anchored by Mira.",
+        "https://nerranetwork.com/join.html")
+    ctx["personal_shows"] = personal_shows
+    html = env.get_template("join_page.html.j2").render(**ctx)
     out_path = ROOT / "join.html"
     if dry_run:
         print(f"[dry-run] Would write {out_path}")
