@@ -3928,20 +3928,34 @@ def generate_join_page(*, dry_run=False):
     personal_shows = []
     for slug in PERSONAL_SHOW_SLUGS:
         meta = NETWORK_SHOWS.get(slug, {})
+        cover = meta.get("podcast_image", "")
+        cover_base = cover[:-4] if cover.endswith(".jpg") else cover
         personal_shows.append({
             "slug": slug,
             "name": meta.get("name", slug),
             "tagline": meta.get("tagline") or meta.get("description") or "",
             "page": meta.get("show_page", f"{slug.replace('_', '-')}.html"),
             "schedule": meta.get("schedule", ""),
+            "cover": cover,
+            "cover_webp": f"{cover_base}-400.webp" if cover_base else "",
         })
     ctx = _member_page_context(
         "Nerra Personal — your own daily show | Nerra Network",
-        "One free account for the newsletter, gallery and member perks — "
-        "or your own private daily show: the shows you choose, in your "
-        "order, anchored by Mira.",
+        "Pick your shows, set the order, and every morning Mira builds "
+        "them into one private podcast episode made just for you. From "
+        "$4.99/month; the account itself is free.",
         "https://nerranetwork.com/join.html")
     ctx["personal_shows"] = personal_shows
+    ctx["total_episodes"] = _count_total_episodes()
+    # The hero's player mockup shows a believable edition using real
+    # show identities (covers + names) with illustrative durations.
+    _by_slug = {s["slug"]: s for s in personal_shows}
+    ctx["mock_lineup"] = [
+        {**_by_slug[s], "length": t} for s, t in (
+            ("spacex", "9:41"), ("tesla", "8:12"),
+            ("models_agents", "9:56"), ("dp_pod", "10:03"),
+        ) if s in _by_slug
+    ]
     html = env.get_template("join_page.html.j2").render(**ctx)
     out_path = ROOT / "join.html"
     if dry_run:

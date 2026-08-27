@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="One free account for the newsletter, gallery and member perks — or your own private daily show: the shows you choose, in your order, anchored by Mira.">
+    <meta name="description" content="Pick your shows, set the order, and every morning Mira builds them into one private podcast episode made just for you. From $4.99/month; the account itself is free.">
     
     <meta name="keywords" content="Nerra Network membership, personalized podcast, Nerra Personal, support Nerra Network">
     <title>Nerra Personal — your own daily show | Nerra Network</title>
@@ -11,7 +11,7 @@
 
     <!-- Open Graph -->
     <meta property="og:title" content="Nerra Personal — your own daily show | Nerra Network">
-    <meta property="og:description" content="One free account for the newsletter, gallery and member perks — or your own private daily show: the shows you choose, in your order, anchored by Mira.">
+    <meta property="og:description" content="Pick your shows, set the order, and every morning Mira builds them into one private podcast episode made just for you. From $4.99/month; the account itself is free.">
     <meta property="og:type" content="website">
     <meta property="og:image" content="https://nerranetwork.com/assets/covers/nerra-daily.jpg">
     <meta property="og:url" content="https://nerranetwork.com/join.html">
@@ -20,7 +20,7 @@
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Nerra Personal — your own daily show | Nerra Network">
-    <meta name="twitter:description" content="One free account for the newsletter, gallery and member perks — or your own private daily show: the shows you choose, in your order, anchored by Mira.">
+    <meta name="twitter:description" content="Pick your shows, set the order, and every morning Mira builds them into one private podcast episode made just for you. From $4.99/month; the account itself is free.">
     <meta name="twitter:image" content="https://nerranetwork.com/assets/covers/nerra-daily.jpg">
 
     <link rel="canonical" href="https://nerranetwork.com/join.html">
@@ -62,13 +62,60 @@
     
     <link rel="stylesheet" href="styles/main.css">
     <style>
-        .nn-join-hero { padding: calc(var(--nav-height) + var(--sp-12)) var(--sp-6) var(--sp-8); text-align: center; position: relative; overflow: hidden; }
-        .nn-join-hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 0%, rgba(0, 212, 255, 0.14), transparent 70%); pointer-events: none; }
-        .nn-join-hero h1 { font-family: var(--font-heading); font-size: clamp(2rem, 5vw, 3rem); margin: 0 0 var(--sp-3); background: var(--nn-gradient); -webkit-background-clip: text; background-clip: text; color: transparent; }
-        .nn-join-hero p { font-family: var(--font-ui); color: var(--nn-text-muted); max-width: 640px; margin: 0 auto; }
-        .nn-tiers { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: var(--sp-6); max-width: 1080px; margin: 0 auto; padding: var(--sp-8) var(--sp-6); }
+        /* ---------- Hero ---------- */
+        .np-hero { position: relative; overflow: hidden; padding: calc(var(--nav-height) + var(--sp-12)) var(--sp-6) var(--sp-10); }
+        .np-hero::before { content: ''; position: absolute; inset: 0; background:
+            radial-gradient(ellipse 60% 50% at 20% 10%, rgba(0, 212, 255, 0.16), transparent 65%),
+            radial-gradient(ellipse 50% 45% at 85% 70%, rgba(124, 92, 255, 0.14), transparent 65%);
+            pointer-events: none; }
+        .np-hero-grid { position: relative; max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1.1fr 0.9fr; gap: var(--sp-10); align-items: center; }
+        @media (max-width: 860px) { .np-hero-grid { grid-template-columns: 1fr; } }
+        .np-eyebrow { font-family: var(--font-ui); font-size: 0.78rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--nn-cyan, #00D4FF); font-weight: 700; margin-bottom: var(--sp-3); }
+        .np-hero h1 { font-family: var(--font-heading); font-size: clamp(2.2rem, 5.5vw, 3.4rem); line-height: 1.08; margin: 0 0 var(--sp-4); }
+        .np-hero h1 .grad { background: var(--nn-gradient); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .np-hero-sub { font-family: var(--font-ui); color: var(--nn-text-muted); font-size: 1.08rem; max-width: 520px; margin: 0 0 var(--sp-5); line-height: 1.6; }
+        .np-cta-row { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-bottom: var(--sp-3); }
+        .np-cta { display: inline-block; padding: 0.85rem 1.6rem; border-radius: 12px; font-weight: 700; text-decoration: none; font-family: var(--font-ui); }
+        .np-cta.primary { background: var(--nn-gradient); color: #fff; box-shadow: 0 8px 28px rgba(0, 160, 220, 0.35); }
+        .np-cta.ghost { border: 1px solid var(--nn-border); color: inherit; }
+        .np-trust { font-size: 0.85rem; color: var(--nn-text-muted); }
+        .np-trust span { white-space: nowrap; }
+
+        /* ---------- Player mockup ---------- */
+        .np-player { position: relative; border: 1px solid var(--nn-border); border-radius: 22px; background: var(--nn-surface); padding: var(--sp-5); box-shadow: 0 24px 60px rgba(0,0,0,0.35), 0 0 0 1px rgba(0,212,255,0.06); max-width: 420px; margin: 0 auto; }
+        .np-player::after { content: 'PRIVATE FEED'; position: absolute; top: -12px; right: 18px; font-size: 0.62rem; letter-spacing: 0.14em; font-weight: 800; padding: 0.3rem 0.6rem; border-radius: 999px; background: var(--nn-gradient); color: #fff; }
+        .np-player-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: var(--sp-2); }
+        .np-player-top .date { font-size: 0.8rem; color: var(--nn-text-muted); }
+        .np-player-top .mira { font-size: 0.68rem; letter-spacing: 0.1em; font-weight: 700; color: var(--nn-cyan, #00D4FF); }
+        .np-greeting { font-family: var(--font-heading); font-size: 1.12rem; margin: 0 0 var(--sp-4); }
+        .np-progress { display: flex; align-items: center; gap: 0.7rem; margin-bottom: var(--sp-4); }
+        .np-play { width: 44px; height: 44px; border-radius: 50%; background: var(--nn-gradient); flex: none; position: relative; }
+        .np-play::after { content: ''; position: absolute; left: 17px; top: 13px; border-style: solid; border-width: 9px 0 9px 14px; border-color: transparent transparent transparent #fff; }
+        .np-bar { flex: 1; height: 6px; border-radius: 3px; background: var(--nn-border); position: relative; overflow: hidden; }
+        .np-bar::after { content: ''; position: absolute; inset: 0 62% 0 0; background: var(--nn-gradient); border-radius: 3px; }
+        .np-time { font-size: 0.75rem; color: var(--nn-text-muted); flex: none; }
+        .np-chapters { display: flex; flex-direction: column; gap: 0.45rem; }
+        .np-ch { display: flex; align-items: center; gap: 0.65rem; padding: 0.45rem 0.55rem; border-radius: 10px; background: rgba(127,127,127,0.06); }
+        .np-ch img { width: 34px; height: 34px; border-radius: 8px; display: block; }
+        .np-ch .nm { font-size: 0.88rem; font-weight: 600; flex: 1; }
+        .np-ch .ln { font-size: 0.75rem; color: var(--nn-text-muted); font-variant-numeric: tabular-nums; }
+        .np-ch.local { border: 1px dashed var(--nn-border); background: transparent; }
+        .np-ch.local .ic { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1rem; background: rgba(0,212,255,0.12); }
+
+        /* ---------- Stats strip ---------- */
+        .np-stats { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--sp-8); padding: var(--sp-6); max-width: 900px; margin: 0 auto var(--sp-4); border-top: 1px solid var(--nn-border); border-bottom: 1px solid var(--nn-border); }
+        .np-stat { text-align: center; font-family: var(--font-ui); }
+        .np-stat strong { display: block; font-size: 1.5rem; font-family: var(--font-heading); }
+        .np-stat span { font-size: 0.8rem; color: var(--nn-text-muted); letter-spacing: 0.05em; text-transform: uppercase; }
+
+        /* ---------- Shared sections ---------- */
+        .nn-section-head { text-align: center; max-width: 680px; margin: var(--sp-10) auto var(--sp-6); padding: 0 var(--sp-6); }
+        .nn-section-head h2 { font-family: var(--font-heading); margin: 0 0 var(--sp-2); font-size: 1.7rem; }
+        .nn-section-head p { color: var(--nn-text-muted); margin: 0; }
+        .nn-tiers { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: var(--sp-6); max-width: 1080px; margin: 0 auto; padding: var(--sp-4) var(--sp-6); }
         .nn-tier { border: 1px solid var(--nn-border); border-radius: 16px; padding: var(--sp-6); background: var(--nn-surface); display: flex; flex-direction: column; }
-        .nn-tier.featured { border-color: var(--nn-cyan, #00D4FF); box-shadow: 0 0 32px rgba(0,212,255,0.12); }
+        .nn-tier.featured { border-color: var(--nn-cyan, #00D4FF); box-shadow: 0 0 32px rgba(0,212,255,0.12); position: relative; }
+        .nn-tier.featured::before { content: 'MOST POPULAR'; position: absolute; top: -11px; left: 50%; transform: translateX(-50%); font-size: 0.62rem; letter-spacing: 0.14em; font-weight: 800; padding: 0.28rem 0.7rem; border-radius: 999px; background: var(--nn-gradient); color: #fff; }
         .nn-tier h2 { font-family: var(--font-heading); margin: 0 0 var(--sp-1); font-size: 1.3rem; }
         .nn-tier .price { font-size: 2rem; font-weight: 700; margin: 0 0 var(--sp-3); }
         .nn-tier .price small { font-size: 0.9rem; font-weight: 400; color: var(--nn-text-muted); }
@@ -77,32 +124,31 @@
         .nn-tier li::before { content: '✓ '; color: var(--nn-cyan, #00D4FF); }
         .nn-tier .cta { display: block; text-align: center; padding: 0.8rem 1rem; border-radius: 10px; font-weight: 600; text-decoration: none; background: var(--nn-gradient); color: #fff; }
         .nn-tier .cta.secondary { background: transparent; border: 1px solid var(--nn-border); color: inherit; }
-        .nn-join-form { max-width: 480px; margin: 0 auto var(--sp-10); padding: 0 var(--sp-6); text-align: center; }
-        .nn-join-form input[type=email] { width: 100%; padding: 0.8rem 1rem; border-radius: 10px; border: 1px solid var(--nn-border); background: var(--nn-surface); color: inherit; margin-bottom: var(--sp-3); }
-        .nn-join-form button { padding: 0.8rem 2rem; border-radius: 10px; border: none; background: var(--nn-gradient); color: #fff; font-weight: 600; cursor: pointer; }
-        .nn-join-note { font-size: 0.85rem; color: var(--nn-text-muted); max-width: 640px; margin: 0 auto var(--sp-12); padding: 0 var(--sp-6); text-align: center; }
-        .nn-section-head { text-align: center; max-width: 680px; margin: 0 auto var(--sp-6); padding: 0 var(--sp-6); }
-        .nn-section-head h2 { font-family: var(--font-heading); margin: 0 0 var(--sp-2); }
-        .nn-section-head p { color: var(--nn-text-muted); margin: 0; }
-        .nn-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--sp-5); max-width: 1080px; margin: 0 auto var(--sp-10); padding: 0 var(--sp-6); }
+        .nn-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--sp-5); max-width: 1080px; margin: 0 auto var(--sp-6); padding: 0 var(--sp-6); }
         .nn-step { border: 1px solid var(--nn-border); border-radius: 14px; padding: var(--sp-5); background: var(--nn-surface); }
         .nn-step .num { display: inline-flex; width: 2rem; height: 2rem; border-radius: 50%; background: var(--nn-gradient); color: #fff; align-items: center; justify-content: center; font-weight: 700; margin-bottom: var(--sp-3); }
         .nn-step h3 { margin: 0 0 var(--sp-2); font-size: 1.05rem; font-family: var(--font-heading); }
         .nn-step p { margin: 0; color: var(--nn-text-muted); font-size: 0.95rem; }
-        .nn-showgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: var(--sp-4); max-width: 1080px; margin: 0 auto var(--sp-10); padding: 0 var(--sp-6); }
-        .nn-showcard { border: 1px solid var(--nn-border); border-radius: 12px; padding: var(--sp-4); background: var(--nn-surface); text-decoration: none; color: inherit; display: block; transition: border-color 0.15s; }
-        .nn-showcard:hover { border-color: var(--nn-cyan, #00D4FF); }
-        .nn-showcard strong { display: block; font-family: var(--font-heading); margin-bottom: 0.3rem; }
-        .nn-showcard span { font-size: 0.85rem; color: var(--nn-text-muted); display: block; }
-        .nn-showcard em { font-size: 0.75rem; color: var(--nn-cyan, #00D4FF); font-style: normal; }
-        .nn-products { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--sp-4); max-width: 1080px; margin: 0 auto var(--sp-10); padding: 0 var(--sp-6); }
+        .nn-showgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: var(--sp-4); max-width: 1080px; margin: 0 auto var(--sp-6); padding: 0 var(--sp-6); }
+        .nn-showcard { border: 1px solid var(--nn-border); border-radius: 12px; padding: var(--sp-4); background: var(--nn-surface); text-decoration: none; color: inherit; display: flex; gap: 0.8rem; align-items: flex-start; transition: border-color 0.15s, transform 0.15s; }
+        .nn-showcard:hover { border-color: var(--nn-cyan, #00D4FF); transform: translateY(-2px); }
+        .nn-showcard img { width: 52px; height: 52px; border-radius: 10px; flex: none; }
+        .nn-showcard strong { display: block; font-family: var(--font-heading); margin-bottom: 0.2rem; line-height: 1.25; }
+        .nn-showcard span { font-size: 0.82rem; color: var(--nn-text-muted); display: block; line-height: 1.45; }
+        .nn-showcard em { font-size: 0.72rem; color: var(--nn-cyan, #00D4FF); font-style: normal; letter-spacing: 0.04em; }
+        .nn-products { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--sp-4); max-width: 1080px; margin: 0 auto var(--sp-6); padding: 0 var(--sp-6); }
         .nn-product { border: 1px solid var(--nn-border); border-radius: 12px; padding: var(--sp-4); background: var(--nn-surface); }
         .nn-product h3 { margin: 0 0 var(--sp-1); font-size: 1rem; font-family: var(--font-heading); }
         .nn-product p { margin: 0 0 var(--sp-2); font-size: 0.9rem; color: var(--nn-text-muted); }
-        .nn-faq { max-width: 760px; margin: 0 auto var(--sp-10); padding: 0 var(--sp-6); }
+        .nn-faq { max-width: 760px; margin: 0 auto var(--sp-8); padding: 0 var(--sp-6); }
         .nn-faq details { border: 1px solid var(--nn-border); border-radius: 10px; background: var(--nn-surface); margin-bottom: var(--sp-3); padding: var(--sp-3) var(--sp-4); }
         .nn-faq summary { cursor: pointer; font-weight: 600; }
         .nn-faq p { color: var(--nn-text-muted); font-size: 0.95rem; margin: var(--sp-3) 0 0; }
+        .nn-join-form { max-width: 480px; margin: 0 auto var(--sp-8); padding: 0 var(--sp-6); text-align: center; }
+        .nn-join-form h2 { font-family: var(--font-heading); }
+        .nn-join-form input[type=email] { width: 100%; padding: 0.8rem 1rem; border-radius: 10px; border: 1px solid var(--nn-border); background: var(--nn-surface); color: inherit; margin-bottom: var(--sp-3); }
+        .nn-join-form button { padding: 0.8rem 2rem; border-radius: 10px; border: none; background: var(--nn-gradient); color: #fff; font-weight: 600; cursor: pointer; }
+        .nn-join-note { font-size: 0.85rem; color: var(--nn-text-muted); max-width: 640px; margin: 0 auto var(--sp-12); padding: 0 var(--sp-6); text-align: center; }
     </style>
 
 
@@ -571,24 +617,92 @@
 
     <main id="main-content">
     
-<section class="nn-join-hero">
-    <h1>Nerra Personal</h1>
-    <p>Seventeen shows, every day, free — and now, a version of the network
-       that knows you. One account unlocks the newsletter, the image
-       gallery, and member perks. One small subscription gets you your own
-       daily show: the shows you choose, in your order, anchored by Mira.</p>
+<section class="np-hero">
+    <div class="np-hero-grid">
+        <div>
+            <div class="np-eyebrow">Nerra Personal</div>
+            <h1>Your own <span class="grad">daily show.</span></h1>
+            <p class="np-hero-sub">Seventeen shows publish every day, free.
+               Personal turns the ones you love into one continuous morning
+               show — your picks, in your order, anchored by Mira, delivered
+               as a private podcast feed that works in any app.</p>
+            <div class="np-cta-row">
+                <a class="np-cta primary" href="#plans">Start from $4.99/mo</a>
+                <a class="np-cta ghost" href="#join-free">Create a free account</a>
+            </div>
+            <p class="np-trust"><span>Cancel in one click</span> ·
+               <span>Chapters for every segment</span> ·
+               <span>Yours alone — no algorithm</span></p>
+        </div>
+        <div class="np-player" aria-label="Illustration of a personal edition in a podcast player">
+            <div class="np-player-top">
+                <span class="date">Thursday edition · 1 h 42 m</span>
+                <span class="mira">MIRA · AI ANCHOR</span>
+            </div>
+            <p class="np-greeting">“Good morning, Alex — here's your Thursday.”</p>
+            <div class="np-progress">
+                <span class="np-play" aria-hidden="true"></span>
+                <span class="np-bar" aria-hidden="true"></span>
+                <span class="np-time">38:12</span>
+            </div>
+            <div class="np-chapters">
+                
+                <div class="np-ch">
+                    <img src="assets/covers/spacex-400.webp" alt="" loading="lazy" width="34" height="34">
+                    <span class="nm">SpaceX Daily</span>
+                    <span class="ln">9:41</span>
+                </div>
+                
+                <div class="np-ch">
+                    <img src="assets/covers/tesla-shorts-time-400.webp" alt="" loading="lazy" width="34" height="34">
+                    <span class="nm">Tesla Shorts Time</span>
+                    <span class="ln">8:12</span>
+                </div>
+                
+                <div class="np-ch">
+                    <img src="assets/covers/models-agents-400.webp" alt="" loading="lazy" width="34" height="34">
+                    <span class="nm">Models & Agents</span>
+                    <span class="ln">9:56</span>
+                </div>
+                
+                <div class="np-ch">
+                    <img src="assets/covers/dp-pod-400.webp" alt="" loading="lazy" width="34" height="34">
+                    <span class="nm">The DP Pod: The Do Positive Podcast</span>
+                    <span class="ln">10:03</span>
+                </div>
+                
+                <div class="np-ch local">
+                    <span class="ic" aria-hidden="true">🌤️</span>
+                    <span class="nm">Your city's morning brief</span>
+                    <span class="ln">with Local</span>
+                </div>
+            </div>
+        </div>
+    </div>
 </section>
 
+<div class="np-stats" aria-label="Network stats">
+    <div class="np-stat"><strong>13</strong><span>shows to pick from</span></div>
+    <div class="np-stat"><strong>1671+</strong><span>episodes shipped</span></div>
+    <div class="np-stat"><strong>0</strong><span>ads, ever</span></div>
+    <div class="np-stat"><strong>1</strong><span>feed made for you</span></div>
+</div>
+
+<div class="nn-section-head" id="plans">
+    <h2>Simple, honest pricing</h2>
+    <p>The account is free forever. Personal is the price of a coffee a
+       month, and stopping takes one click.</p>
+</div>
 <section class="nn-tiers">
     <div class="nn-tier">
         <h2>Nerra Account</h2>
         <p class="price">Free</p>
         <ul>
             <li>Every show &amp; episode — always free, no ads</li>
-            <li>The newsletter, per-show — pick what lands in your inbox</li>
-            <li>Full-resolution downloads from the image gallery</li>
-            <li>Member perks: deep discounts on Nerra Network books</li>
-            <li>Configure your personal lineup, ready when you upgrade</li>
+            <li>Pick &amp; order your lineup — saved, ready when you upgrade</li>
+            <li>The newsletter, per-show — you choose what lands</li>
+            <li>Member discounts on Nerra Network books</li>
+            <li>Full-resolution image gallery downloads</li>
         </ul>
         <a class="cta secondary" href="#join-free">Create your free account</a>
     </div>
@@ -597,7 +711,7 @@
         <p class="price">$4.99<small>/month</small></p>
         <ul>
             <li>Everything in the free account</li>
-            <li><strong>Your own private daily show</strong> — pick the shows, set the order</li>
+            <li><strong>Your own private daily show</strong> — your picks, your order</li>
             <li>Mira anchors it and greets you by name</li>
             <li>Private RSS feed — works in every podcast app</li>
             <li>Chapter markers for every segment</li>
@@ -611,10 +725,10 @@
         <p class="price">$8.99<small>/month</small></p>
         <ul>
             <li>Everything in Personal</li>
-            <li><strong>Your city's morning brief</strong>, in your feed</li>
+            <li><strong>Your city's morning brief</strong>, opening your feed</li>
             <li>Today's weather, spoken by Mira</li>
-            <li>One local story or event worth knowing, source named</li>
-            <li>Honest by design: no local news worth your time, no filler</li>
+            <li>One local story worth knowing, source named aloud</li>
+            <li>Honest by design: nothing worth your time, no filler</li>
         </ul>
         
         <a class="cta secondary" href="#join-free">Launching soon — join free for first access</a>
@@ -624,15 +738,15 @@
 
 <div class="nn-section-head">
     <h2>How Personal works</h2>
-    <p>No app to install, no algorithm — a real private podcast feed,
-       assembled for you every morning.</p>
+    <p>No app to install, no algorithm deciding for you — a real private
+       podcast feed, assembled fresh every morning.</p>
 </div>
 <section class="nn-steps">
     <div class="nn-step"><span class="num">1</span>
         <h3>Pick your shows</h3>
-        <p>Choose any of the network's English shows and drag them into the
-           order you want your morning to run. Two minutes, changeable any
-           time — edits reach the very next edition.</p></div>
+        <p>Choose any of the network's English shows and order them the way
+           you want your morning to run. Two minutes, changeable any time —
+           edits reach the very next edition.</p></div>
     <div class="nn-step"><span class="num">2</span>
         <h3>Mira builds your edition</h3>
         <p>Every morning, after the day's episodes publish, Mira — the
@@ -642,10 +756,10 @@
            worth knowing, source named aloud.</p></div>
     <div class="nn-step"><span class="num">3</span>
         <h3>Listen anywhere</h3>
-        <p>You get a private RSS feed that works in Apple Podcasts, Spotify
-           (via add-by-URL apps), Overcast, Pocket Casts — anywhere. Chapter
-           markers let you skip between your shows. Cancel in one click and
-           billing stops; your lineup stays saved.</p></div>
+        <p>You get a private RSS feed that works in Apple Podcasts, Overcast,
+           Pocket Casts — anywhere you already listen. Chapter markers let
+           you skip between your shows. Cancel in one click; your lineup
+           stays saved.</p></div>
 </section>
 
 
@@ -657,116 +771,181 @@
 <section class="nn-showgrid">
     
     <a class="nn-showcard" href="spacex.html">
-        <strong>SpaceX Daily</strong>
-        <em>Daily</em>
-        <span>Follow SpaceX as a public company — launches, Starlink, Starship, and the SPCX market picture, every day.</span>
+        
+        <img src="assets/covers/spacex-400.webp" alt="SpaceX Daily cover art" loading="lazy" width="52" height="52">
+        
+        <span>
+            <strong>SpaceX Daily</strong>
+            <em>Daily</em>
+            <span>Follow SpaceX as a public company — launches, Starlink, Starship, and the SPCX market picture, every day.</span>
+        </span>
     </a>
     
     <a class="nn-showcard" href="tesla.html">
-        <strong>Tesla Shorts Time</strong>
-        <em>Daily</em>
-        <span>Shorting Tesla? Time's Up.</span>
+        
+        <img src="assets/covers/tesla-shorts-time-400.webp" alt="Tesla Shorts Time cover art" loading="lazy" width="52" height="52">
+        
+        <span>
+            <strong>Tesla Shorts Time</strong>
+            <em>Daily</em>
+            <span>Shorting Tesla? Time's Up.</span>
+        </span>
     </a>
     
     <a class="nn-showcard" href="fascinating-frontiers.html">
-        <strong>Fascinating Frontiers</strong>
-        <em>Daily</em>
-        <span>Journey to the stars with today's discoveries.</span>
+        
+        <img src="assets/covers/fascinating-frontiers-400.webp" alt="Fascinating Frontiers cover art" loading="lazy" width="52" height="52">
+        
+        <span>
+            <strong>Fascinating Frontiers</strong>
+            <em>Daily</em>
+            <span>Journey to the stars with today's discoveries.</span>
+        </span>
     </a>
     
     <a class="nn-showcard" href="models-agents.html">
-        <strong>Models & Agents</strong>
-        <em>Daily</em>
-        <span>Daily AI models, agents, and practical developments.</span>
+        
+        <img src="assets/covers/models-agents-400.webp" alt="Models & Agents cover art" loading="lazy" width="52" height="52">
+        
+        <span>
+            <strong>Models & Agents</strong>
+            <em>Daily</em>
+            <span>Daily AI models, agents, and practical developments.</span>
+        </span>
     </a>
     
     <a class="nn-showcard" href="planetterrian.html">
-        <strong>Planetterrian Daily</strong>
-        <em>Daily</em>
-        <span>Science, longevity, and the frontier of human health.</span>
+        
+        <img src="assets/covers/planetterrian-daily-400.webp" alt="Planetterrian Daily cover art" loading="lazy" width="52" height="52">
+        
+        <span>
+            <strong>Planetterrian Daily</strong>
+            <em>Daily</em>
+            <span>Science, longevity, and the frontier of human health.</span>
+        </span>
     </a>
     
     <a class="nn-showcard" href="omni-view.html">
-        <strong>Omni View</strong>
-        <em>Daily</em>
-        <span>See every side. Decide for yourself.</span>
+        
+        <img src="assets/covers/omni-view-400.webp" alt="Omni View cover art" loading="lazy" width="52" height="52">
+        
+        <span>
+            <strong>Omni View</strong>
+            <em>Daily</em>
+            <span>See every side. Decide for yourself.</span>
+        </span>
     </a>
     
     <a class="nn-showcard" href="modern-investing.html">
-        <strong>Modern Investing Techniques</strong>
-        <em>Daily</em>
-        <span>AI-Powered Market Intelligence</span>
+        
+        <img src="assets/covers/modern-investing-400.webp" alt="Modern Investing Techniques cover art" loading="lazy" width="52" height="52">
+        
+        <span>
+            <strong>Modern Investing Techniques</strong>
+            <em>Daily</em>
+            <span>AI-Powered Market Intelligence</span>
+        </span>
     </a>
     
     <a class="nn-showcard" href="unintended-consequences.html">
-        <strong>Unintended Consequences</strong>
-        <em>Weekdays</em>
-        <span>Good intentions. Surprising results. Real lessons.</span>
+        
+        <img src="assets/covers/unintended-consequences-400.webp" alt="Unintended Consequences cover art" loading="lazy" width="52" height="52">
+        
+        <span>
+            <strong>Unintended Consequences</strong>
+            <em>Weekdays</em>
+            <span>Good intentions. Surprising results. Real lessons.</span>
+        </span>
     </a>
     
     <a class="nn-showcard" href="first-principles.html">
-        <strong>First Principles Daily</strong>
-        <em>Daily</em>
-        <span>Reason from raw materials, not analogy.</span>
+        
+        <img src="assets/covers/first-principles-daily-400.webp" alt="First Principles Daily cover art" loading="lazy" width="52" height="52">
+        
+        <span>
+            <strong>First Principles Daily</strong>
+            <em>Daily</em>
+            <span>Reason from raw materials, not analogy.</span>
+        </span>
     </a>
     
     <a class="nn-showcard" href="models-agents-beginners.html">
-        <strong>Models & Agents for Beginners</strong>
-        <em>Daily</em>
-        <span>AI explained simply — for beginners and teens.</span>
+        
+        <img src="assets/covers/models-agents-beginners-400.webp" alt="Models & Agents for Beginners cover art" loading="lazy" width="52" height="52">
+        
+        <span>
+            <strong>Models & Agents for Beginners</strong>
+            <em>Daily</em>
+            <span>AI explained simply — for beginners and teens.</span>
+        </span>
     </a>
     
     <a class="nn-showcard" href="env-intel.html">
-        <strong>Environmental Intelligence</strong>
-        <em>Odd weekdays</em>
-        <span>Environmental regulatory and compliance briefing.</span>
+        
+        <img src="assets/covers/environmental-intelligence-400.webp" alt="Environmental Intelligence cover art" loading="lazy" width="52" height="52">
+        
+        <span>
+            <strong>Environmental Intelligence</strong>
+            <em>Odd weekdays</em>
+            <span>Environmental regulatory and compliance briefing.</span>
+        </span>
     </a>
     
     <a class="nn-showcard" href="offshore-north.html">
-        <strong>Offshore North</strong>
-        <em>Weekly — Mondays</em>
-        <span>One man. One boat. Around the world, alone.</span>
+        
+        <img src="assets/covers/offshore-north-400.webp" alt="Offshore North cover art" loading="lazy" width="52" height="52">
+        
+        <span>
+            <strong>Offshore North</strong>
+            <em>Weekly — Mondays</em>
+            <span>One man. One boat. Around the world, alone.</span>
+        </span>
     </a>
     
     <a class="nn-showcard" href="thedppod.html">
-        <strong>The DP Pod: The Do Positive Podcast</strong>
-        <em>Daily</em>
-        <span>The club for people who do something about it — good news, honest numbers, one action a day.</span>
+        
+        <img src="assets/covers/dp-pod-400.webp" alt="The DP Pod: The Do Positive Podcast cover art" loading="lazy" width="52" height="52">
+        
+        <span>
+            <strong>The DP Pod: The Do Positive Podcast</strong>
+            <em>Daily</em>
+            <span>The club for people who do something about it — good news, honest numbers, one action a day.</span>
+        </span>
     </a>
     
 </section>
 
 
 <div class="nn-section-head">
-    <h2>Your account unlocks the whole network</h2>
-    <p>Personal is the headline act, but one Nerra account carries every
+    <h2>One account, the whole network</h2>
+    <p>Personal is the headline act — the same free account carries every
        product the network makes.</p>
 </div>
 <section class="nn-products">
     <div class="nn-product">
-        <h3>📚 Anthology books</h3>
-        <p>The narrative shows, compiled into illustrated ebooks and
-           AI-narrated audiobooks — members get a discount code on every
-           volume.</p>
-        <a href="books.html">Browse the books →</a>
-    </div>
-    <div class="nn-product">
-        <h3>🖼️ Image gallery</h3>
-        <p>Thousands of CC-licensed images generated for the shows,
-           full-resolution downloads included with your account.</p>
-        <a href="gallery.html">Open the gallery →</a>
-    </div>
-    <div class="nn-product">
         <h3>🎧 Nerra Daily</h3>
         <p>Not ready to customize? The whole English network in one free
            ~2-hour daily edition, anchored by Mira.</p>
-        <a href="nerra-daily.html">Try Nerra Daily →</a>
+        <a href="nerra-daily.html">Try Nerra Daily free →</a>
+    </div>
+    <div class="nn-product">
+        <h3>📚 Anthology books</h3>
+        <p>The narrative shows, compiled into illustrated ebooks and
+           narrated audiobooks — members get a discount code on every
+           volume.</p>
+        <a href="books.html">Browse the books →</a>
     </div>
     <div class="nn-product">
         <h3>✉️ The newsletter</h3>
         <p>Each show's briefing in your inbox, per-show opt-in — reading
            and listening stay in sync.</p>
         <a href="#join-free">Included with your account →</a>
+    </div>
+    <div class="nn-product">
+        <h3>🖼️ Image gallery</h3>
+        <p>Thousands of CC-licensed images generated for the shows —
+           full-resolution downloads included with your account.</p>
+        <a href="gallery.html">Open the gallery →</a>
     </div>
 </section>
 
