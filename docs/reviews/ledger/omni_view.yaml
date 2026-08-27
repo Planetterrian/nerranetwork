@@ -198,4 +198,102 @@ reviews:
       verdict: pending
       evidence: null
     agent_cost_usd: 0.0
+  - date: '2026-08-23'
+    pr: null
+    doc: docs/reviews/omni_view_review_2026_08_23.md
+    generated_by: grok-4.5
+    summary: July-18 realignment largely held (no Both-sides/question-worth-considering tics, Progress Watch on 9/10, tabloid slots gone) but median length still misses (~1449 vs ≥1700), Ep145 shipped the podcast EXAMPLE’s “compliance deadlines” line onto a North Korea story, Progress Watch keeps accepting disasters/non-progress, and deep-dive openers plus a new “shared facts / interpretations split” scaffold have saturated.
+    scored_prior_predictions:
+    - metric: tabloid/gossip/celebrity items per episode (Ep115+)
+      verdict: hit
+      evidence: Ep143–152 have no gossip/celebrity slots; snapshot fetch-filter leakage 0; structural July-18 slate held
+    - metric: '"Both sides agree" family occurrences per 10 episodes'
+      verdict: hit
+      evidence: 0 verbatim Both-sides-agree/accept/recognize frames in Ep143–152 transcripts (baseline ~38)
+    - metric: '"the question worth considering" per 10 episodes'
+      verdict: hit
+      evidence: 0 hits in Ep143–152 transcripts (baseline 23)
+    - metric: median _tts.txt words (Ep115+)
+      verdict: miss
+      evidence: Ep143–152 median ≈1449 words; expected ≥1700; 4/10 under 1400 floor
+    - metric: distinct regions per episode (lead+world)
+      verdict: hit
+      evidence: Window episodes routinely cover ≥3 regions in lead+world (e.g. Ep143, Ep152)
+    - metric: episodes with a Progress Watch chapter
+      verdict: hit
+      evidence: 9/10 chapters_ep143–152 include Progress Watch (only ep147 missing)
+    - metric: episodes (last 10) with _tts.txt word count >=1400
+      verdict: miss
+      evidence: 6/10 ≥1400 (snapshot ep143–152); expected 10/10
+    - metric: '"Both sides agree" constructions per episode digest'
+      verdict: hit
+      evidence: Superseded Jul-18 de-seed; spoken window clean of the family (urgency prediction resolved by shipped realignment)
+    shipped: []
+    deferred:
+    - 'Chronic under-length: escalate to operator — audit last-10 digest word counts vs min_digest_words 1500 and deepen-expansion hit rate before any further length config; do NOT re-propose podcast_expand_below_target, min_podcast_words hikes, or prompt word-pressure (multiple misses; network do_not_retry class)'
+    - Reuters/AP Google News proxy label attribution still cosmetic (July-18 carry)
+    - BBC Latin America feed low-volume monitor (July-18 carry)
+    - 'Network tooling: mechanical digest lint for template-saturation counts (shared-facts/interpretations-split family)'
+    - Watch third-generation steel-man convergence next pass if dual-scaffold ban ships
+    predictions:
+    - metric: verbatim podcast-EXAMPLE lines in _tts/transcripts (e.g. compliance-deadlines what-happens-next)
+      baseline: 1 confirmed (Ep145)
+      expected: 0 in next 10 episodes after EXAMPLE rewrite ships
+      verdict: pending
+      evidence: null
+    - metric: episodes (last 10) opening Understanding deep-dive with exact 'something most coverage leaves out' + 'Most coverage treats'
+      baseline: 8/10
+      expected: ≤2/10 once de-seed + pattern broaden ships
+      verdict: pending
+      evidence: null
+    - metric: Progress Watch slots that are disasters/accidents/deaths (last 10)
+      baseline: ≥1 (Ep144 earthquake)
+      expected: '0'
+      verdict: pending
+      evidence: null
+    - metric: episodes with Progress Watch chapter (last 10)
+      baseline: 9/10
+      expected: 10/10
+      verdict: pending
+      evidence: null
+    - metric: '"strongest argument for/against" dual-scaffold uses per episode (last 10 max)'
+      baseline: 2 in Ep148
+      expected: ≤1 combined 'strongest case|argument' phrase per episode
+      verdict: pending
+      evidence: null
+    - metric: median _tts.txt words (last 10) — observation only, no new podcast lever
+      baseline: ≈1449
+      expected: n/a-lever-not-shipped (score only if operator ships digest-depth change)
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/prompts/omni_view_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Ep145 shipped the EXAMPLE's compliance-deadlines closer on a North Korea troop lead — verified transcript bleed. Rewrite the line and add an explicit anti-paste rule (de-seed-by-shape; no quotable stock closer).
+    - file: shows/prompts/omni_view_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Ep144 used an earthquake as Progress Watch; Ep149 used a thin hotel-CEO/safety item; Ep147 skipped the segment. Mirror digest eligibility at script stage so audio cannot reframe tragedies as progress.
+    - file: shows/prompts/omni_view_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Banned frames cleared, but Ep148 dual 'strongest argument' and recurring 'undisputed fact / interpretations split' are the audible third-generation scaffold. De-seed by shape + verbatim caps; ledger predicts successor watch.
+    - file: shows/prompts/omni_view_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Snapshot 8/10 on both deep-dive stock phrases; de-seed by shape while preserving one chapter-anchor token so markers do not die (coordinate with yaml pattern broaden).
+    - file: shows/omni_view.yaml
+      kind: config
+      ab_listen_required: true
+      rationale: If podcast openers rotate off the old stock pair, chapter detection must accept the new shapes in the same change set (PT dead-marker class). Metadata/chapter-only risk is audio-adjacent → A/B-listen.
+    - file: shows/prompts/omni_view_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Digest is where Ep144-class mis-picks start; tighten eligibility with negative shapes (no quotable 'good' example that becomes the next tic).
+    - file: tests/test_omni_view_quality_pass.py
+      kind: code
+      ab_listen_required: false
+      rationale: Every behavioral fix needs a drift-guard per playbook; mirrors TestEditorialRealignmentJuly18 style without weakening hard guardrails.
+    agent_cost_usd: 0.126
 do_not_retry: []
