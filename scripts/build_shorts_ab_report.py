@@ -55,6 +55,32 @@ log = logging.getLogger("shorts_ab_report")
 
 SCHEMA_VERSION = 1
 
+
+def _experiment_ended() -> bool:
+    """True when docs/experiments.yaml marks the motion A/B done.
+
+    The register is the lifecycle source of truth (the operator ended the
+    experiment there on 2026-08-14); sample counts alone can never say
+    "ended", only "not enough yet". Best-effort: an unreadable register
+    keeps the count-derived status.
+    """
+    try:
+        import yaml
+        experiments = yaml.safe_load(
+            (_ROOT / "docs" / "experiments.yaml").read_text(encoding="utf-8"))
+        entries = experiments.get("experiments", experiments) or []
+        if isinstance(entries, dict):
+            entries = entries.values()
+        for e in entries:
+            if not isinstance(e, dict):
+                continue
+            if str(e.get("id", "")).startswith("shorts-motion-ab") and \
+                    e.get("status") == "done":
+                return True
+    except Exception:  # noqa: BLE001 — register is optional here
+        pass
+    return False
+
 # Below this many Shorts per arm, no comparison is reported at all. The
 # experiment ships one treatment Short a day, so this is ~2 weeks — long
 # enough that a single viral Short cannot decide the result.
@@ -261,6 +287,14 @@ def build() -> Dict[str, Any]:
         "collecting" if videos else
         "not_started"
     )
+    # Aug 27 2026: the operator formally ENDED the motion A/B on
+    # 2026-08-14 (unreadable — the treatment arm froze at n=4), but this
+    # report kept saying "collecting" forever because it only ever looked
+    # at sample counts. The experiments register is the source of truth
+    # for an experiment's lifecycle; when it marks the motion A/B done,
+    # the report says so instead of implying data is still accruing.
+    if _experiment_ended():
+        status = "ended"
 
     return {
         "schema_version": SCHEMA_VERSION,
@@ -281,7 +315,12 @@ def build() -> Dict[str, Any]:
                    for variant, rows in sorted(arms.items())}
             for slug, arms in sorted(by_show.items())
         },
-        "notes": [
+        "notes": ([
+            "Experiment ENDED by the operator on 2026-08-14 as unreadable "
+            "(treatment arm froze at n=4; see docs/experiments.yaml "
+            "'shorts-motion-ab-stalled'). Numbers below are the frozen "
+            "final state, not an accruing sample.",
+        ] if status == "ended" else []) + [
             f"No comparison is reported until BOTH arms reach "
             f"{MIN_PER_ARM} Shorts.",
             "A Short that intended the video arm but fell back to stills "

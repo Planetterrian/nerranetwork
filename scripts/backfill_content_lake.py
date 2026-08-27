@@ -97,9 +97,82 @@ def extract_hook_from_digest(text: str) -> str:
     match = re.search(r"\[HOOK:\s*(.+?)\]", text)
     if match:
         return match.group(1).strip()
+    # Blockquote hook (``> **...**``) — the Tesla/FF/PT lead shape, also
+    # emitted by Nerra Daily rundowns since Aug 25 2026. Checked before
+    # the generic bold fallback because hooks routinely run past 100
+    # chars, which the fallback's length window rejects (Aug 27 2026:
+    # every Nerra Daily episode indexed as the unsearchable "Episode N").
+    match = re.search(r"^>\s*\*\*(.{20,220}?)\*\*", text, re.MULTILINE)
+    if match:
+        return match.group(1).strip()
     # Fallback: first bold line of reasonable length
     match = re.search(r"\*\*(.{20,100})\*\*", text)
     return match.group(1).strip() if match else ""
+
+
+def import_virtual_shows() -> int:
+    """Import registry-only shows (network_meta entries with no YAML).
+
+    Returns the number of episodes stored. Best-effort: a malformed
+    registry or digest never blocks the main backfill.
+    """
+    imported = 0
+    meta_path = SHOWS_DIR / "network_meta.yaml"
+    if not meta_path.exists():
+        return 0
+    try:
+        import yaml
+        meta = yaml.safe_load(meta_path.read_text(encoding="utf-8")) or {}
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("virtual shows: could not read network_meta.yaml: %s", exc)
+        return 0
+
+    from engine.content_lake import store_episode, EpisodeRecord, extract_entities_and_topics
+
+    for slug, entry in meta.items():
+        if not isinstance(entry, dict):
+            continue
+        if (SHOWS_DIR / f"{slug}.yaml").exists():
+            continue  # a real run_show show — the main loop owns it
+        show_name = str(entry.get("name") or slug)
+        out_dir = Path("digests") / slug
+        if not out_dir.exists():
+            continue
+        show_imported = 0
+        for md_file in sorted(out_dir.glob("*.md")):
+            if "_tts" in md_file.stem:
+                continue
+            info = extract_episode_info(md_file)
+            if not info:
+                continue
+            digest_text = md_file.read_text(errors="replace")
+            hook = extract_hook_from_digest(digest_text)
+            et = extract_entities_and_topics(digest_text, slug)
+            store_episode(EpisodeRecord(
+                show_slug=slug,
+                episode_num=info["episode_num"],
+                date=info["date"],
+                title=hook or f"Episode {info['episode_num']}",
+                hook=hook,
+                digest_md=digest_text,
+                podcast_script="",
+                summary=digest_text[:500],
+                headlines=[],
+                source_urls=[],
+                entities=et["entities"],
+                topics=et["topics"],
+                word_count=len(digest_text.split()),
+                show_name=show_name,
+                language="en",
+            ))
+            show_imported += 1
+        if show_imported:
+            logger.info(
+                "%s: imported %d episode(s) as a VIRTUAL (registry-only) show",
+                slug, show_imported,
+            )
+        imported += show_imported
+    return imported
 
 
 def main(argv=None):
@@ -238,6 +311,18 @@ def main(argv=None):
                         )
                 except Exception as exc:  # noqa: BLE001 — fallback is best-effort
                     logger.warning("%s summaries fallback failed: %s", show_slug, exc)
+
+    # Virtual (registry-only) shows — Aug 27 2026. Nerra Daily is
+    # deliberately not a shows/*.yaml show (that keeps it out of every
+    # shows-glob consumer), which made it invisible to this loop: its
+    # committed rundown .md files never entered the lake, so site search
+    # returned nothing for the daily edition and Mira's link/field-note
+    # prose had no recurrence substrate. Third instance of the
+    # virtual-show hole (OP3 fetcher and the cost rollup were patched
+    # Aug 25). Import any network_meta entry that has no shows/<slug>.yaml
+    # but does have a digests directory with dated .md files; fall back to
+    # its summaries JSON like the Age of AI path above.
+    total_imported += import_virtual_shows()
 
     stats = get_lake_stats()
     logger.info("\n%s", "=" * 60)

@@ -91,7 +91,41 @@ _HEADLINE_PATTERNS = (
     re.compile(r"^###\s+\d+[.)]\s+(.+?)\s*$", re.MULTILINE),
     # MAB / M&A item heads: ``**[Title]: source**``
     re.compile(r"\*\*\[([^\]\n]+)\]"),
+    # M&A / MIT / MAB item heads: a line that is ENTIRELY one bold span
+    # (``**Qwen3.8-Flash-Next Release Day: r/LocalLLaMA**``). Added Aug 27
+    # 2026: these shows' digests carry their story titles this way (plain
+    # bold under ### section headings, not numbered), so the extractor
+    # returned only the hook — story_recurrence_in_digest was structurally
+    # pinned to 0-1, every slideshow image reused the hook as its context,
+    # and headline-anchored chapters had nothing to anchor. The trailing
+    # ``: Source`` tail is stripped by ``_strip_bold_line_source_tail``;
+    # short label-only bolds (``**Portfolio Performance**``) are dropped by
+    # the >=3-token guard in the extraction loop (real 3-token titles like
+    # "Qwen3.8-Flash-Next Release Day" must survive).
+    re.compile(r"^\s*\*\*([^*\n]+)\*\*\s*$", re.MULTILINE),
 )
+
+# The standalone-bold pattern (last entry above) needs its own guards; the
+# other patterns must keep their existing behaviour byte-for-byte.
+_BOLD_LINE_PATTERN_INDEX = len(_HEADLINE_PATTERNS) - 1
+
+
+def _strip_bold_line_source_tail(headline: str) -> str:
+    """Drop a trailing ``: Source`` tail from a bold-line item title.
+
+    The M&A convention is ``Title: Source`` where Source is a short outlet
+    name (``r/LocalLLaMA``, ``MarkTechPost``, ``arXiv NLP``). Only strip
+    when the tail looks like an outlet — at most 3 words and 25 chars —
+    and a substantial title remains, so titles whose colon introduces real
+    content ("Starlink update: 42 new satellites") survive intact.
+    """
+    if ":" not in headline:
+        return headline
+    head, _, tail = headline.rpartition(":")
+    head, tail = head.strip(), tail.strip()
+    if tail and len(tail) <= 25 and len(tail.split()) <= 3 and len(head) >= 12:
+        return head
+    return headline
 
 
 def _strip_source_suffix(headline: str) -> str:
@@ -160,9 +194,18 @@ def extract_story_headlines(digest_text: str, max_count: int = 12) -> List[str]:
             headlines.append(h)
         return len(headlines) >= max_count
 
-    for pattern in _HEADLINE_PATTERNS:
+    for i, pattern in enumerate(_HEADLINE_PATTERNS):
         for match in pattern.finditer(digest_text):
-            if _add(match.group(1)):
+            raw = match.group(1)
+            if i == _BOLD_LINE_PATTERN_INDEX:
+                # Standalone-bold lines carry ``Title: Source`` tails and
+                # can also be bare section labels ("Portfolio Performance")
+                # — strip the outlet tail, then require a sentence-like
+                # title (>=4 tokens) so labels never become "headlines".
+                raw = _strip_bold_line_source_tail(raw.strip())
+                if len(raw.split()) < 3:
+                    continue
+            if _add(raw):
                 return headlines
 
     return headlines

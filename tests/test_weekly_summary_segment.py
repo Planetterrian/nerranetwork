@@ -111,3 +111,19 @@ def test_segment_returns_none_below_two_episodes():
             "tesla", "Tesla Shorts Time", date(2026, 5, 3),
         )
     assert out is None
+
+
+class TestSegmentIsRequiredLanguage:
+    """Aug 27 2026: the segment instruction read as optional and the model
+    ignored it on most Sundays (planetterrian: 5 of its last 6 —
+    weekly_summary_segment_effective False while telemetry said appended).
+    The block must state the segment is REQUIRED and demand an explicit
+    week signpost in its first sentence."""
+
+    def test_block_carries_required_and_signpost_language(self):
+        import inspect
+        from engine import weekly_recap
+        src = inspect.getsource(weekly_recap.build_weekly_summary_segment)
+        assert "REQUIRED" in src
+        assert "incomplete" in src
+        assert "Signpost" in src or "signpost" in src

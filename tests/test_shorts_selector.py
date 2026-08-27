@@ -744,3 +744,16 @@ class TestHookFirstWindows:
         idx = (root / "engine" / "youtube_index.py").read_text(
             encoding="utf-8")
         assert 'row["window"] = window' in idx
+
+
+class TestRequestedCountDefaultsToZero:
+    """Aug 27 2026: YouTube-disabled shows (dp_pod, offshore_north) return
+    an empty publish result, and the metrics recorder's old default wrote a
+    phantom "1 Short requested / 0 uploaded" per episode — 13 fake misses a
+    fortnight in the dashboard's multi-Shorts hit rate. No key = 0."""
+
+    def test_pipeline_records_zero_when_publish_result_empty(self):
+        src = open("engine/pipeline.py", encoding="utf-8").read()
+        assert 'youtube_urls.get("shorts_count_requested", 0)' in src, (
+            "shorts_count_requested default regressed to a phantom 1"
+        )

@@ -543,3 +543,52 @@ class TestSourceSuffixStripping:
         assert "SpaceX catches its booster at the tower again" in hs
         assert "Starlink crosses ten thousand active satellites" in hs
         assert all(" - Ars Technica" not in h and " — Space.com" not in h for h in hs)
+
+
+class TestBoldLineHeadlines:
+    """Aug 27 2026: M&A / MIT / MAB digests carry story titles as
+    standalone bold lines (``**Title: Source**``) under ### sections — a
+    shape the extractor didn't know, so those shows yielded only the hook:
+    story_recurrence_in_digest was structurally pinned to 0-1, every
+    slideshow image reused the hook, and headline-anchored chapters had
+    nothing to anchor."""
+
+    DIGEST = (
+        "# Models & Agents\n"
+        "> **OpenAI's first custom inference chip is entering production.**\n\n"
+        "**What You Need to Know:** something summarised inline here.\n\n"
+        "### Model Updates\n"
+        "**Qwen3.8-Flash-Next Release Day: r/LocalLLaMA**\n"
+        "Body text about the release.\n\n"
+        "**IBM Releases Granite 4.2: MarkTechPost**\n"
+        "Body text about Granite.\n\n"
+        "**Portfolio Performance**\n"
+        "A bare section label that must not become a headline.\n\n"
+        "**Starlink update: 42 new satellites reached orbit overnight**\n"
+        "A colon whose tail is real content, not an outlet.\n"
+    )
+
+    def test_bold_line_items_extracted_with_source_tail_stripped(self):
+        from engine.grok_imagine import extract_story_headlines
+        heads = extract_story_headlines(self.DIGEST, max_count=12)
+        assert "Qwen3.8-Flash-Next Release Day" in heads
+        assert "IBM Releases Granite 4.2" in heads
+
+    def test_label_bolds_and_inline_bolds_are_not_headlines(self):
+        from engine.grok_imagine import extract_story_headlines
+        heads = extract_story_headlines(self.DIGEST, max_count=12)
+        assert "Portfolio Performance" not in heads          # <3 tokens: label
+        assert not any(h.startswith("What You Need") for h in heads)
+
+    def test_content_colon_survives(self):
+        from engine.grok_imagine import extract_story_headlines
+        heads = extract_story_headlines(self.DIGEST, max_count=12)
+        assert any("42 new satellites" in h for h in heads), heads
+
+    def test_source_tail_stripper_bounds(self):
+        from engine.grok_imagine import _strip_bold_line_source_tail as strip
+        assert strip("IBM Releases Granite 4.2: MarkTechPost") == "IBM Releases Granite 4.2"
+        assert strip("SSE-Bio: A Structured Self-Evolving Agent") == \
+            "SSE-Bio: A Structured Self-Evolving Agent"  # long tail = content
+        assert strip("Treasury May Tap $1T Account: arXiv NLP") == \
+            "Treasury May Tap $1T Account"

@@ -213,3 +213,56 @@ class TestLakeOrchestration:
     def test_backfill_summaries_fallback_present(self):
         src = (ROOT / "scripts/backfill_content_lake.py").read_text()
         assert "summaries fallback" in src.lower() or "summaries_json" in src
+
+
+class TestAug27PipelineHygiene:
+    """Aug 27 2026 pipeline review drift guards."""
+
+    def test_bold_section_labels_are_not_entities(self):
+        from engine.content_lake import extract_entities_and_topics
+        text = (
+            "**What happened (neutral):** Something occurred.\n"
+            "**Read more (sources):** links here.\n"
+            "**Context & perspectives:** framing here.\n"
+            "**Tesla** shipped a thing. **SpaceX** launched.\n"
+        )
+        ents = extract_entities_and_topics(text, "omni_view")["entities"]
+        assert "Tesla" in ents and "SpaceX" in ents
+        assert not any(e.endswith(":") for e in ents), ents
+
+    def test_month_names_are_theme_stopwords(self):
+        from engine.tesla_memory import _THEME_STOPWORDS, _extract_bigrams
+        for m in ("january", "june", "december"):
+            assert m in _THEME_STOPWORDS
+        # "june teslarati" x32 class: the month can never pair into a bigram
+        assert "june teslarati" not in _extract_bigrams("in june teslarati reported")
+
+    def test_bare_domains_do_not_become_theme_tokens(self):
+        # "google notateslaapp" x13: notateslaapp.com survives the protocol
+        # strip in prose; both theme miners now drop dotted tokens.
+        import re as _re
+        for path in ("engine/tesla_memory.py", "engine/show_memory.py"):
+            src = open(path, encoding="utf-8").read()
+            assert _re.search(r"com\|org\|net\|io\|dev\|ai\|app", src), path
+
+    def test_virtual_shows_reach_the_lake(self):
+        # Third instance of the virtual-show hole (OP3 + cost rollup were
+        # patched Aug 25; the lake was not): registry-only shows with
+        # committed .md digests must be importable.
+        import scripts.backfill_content_lake as bf
+        assert callable(getattr(bf, "import_virtual_shows", None))
+        src = open("scripts/backfill_content_lake.py", encoding="utf-8").read()
+        assert "import_virtual_shows()" in src, (
+            "main() no longer calls the virtual-show import — nerra_daily "
+            "drops out of the lake and site search again")
+
+    def test_blockquote_hooks_extracted_for_lake_titles(self):
+        from scripts.backfill_content_lake import extract_hook_from_digest
+        text = (
+            "# Nerra Daily — Wednesday\n\n**Date:** August 26, 2026\n\n"
+            "> **Wednesday edition — SpaceX's planned $100 billion Louisiana "
+            "Starbase would support thousands of annual Starship launches "
+            "from a new Gulf Coast hub…**\n"
+        )
+        hook = extract_hook_from_digest(text)
+        assert hook.startswith("Wednesday edition"), hook

@@ -111,6 +111,11 @@ def _prompt_phrases(prompt: str) -> List[str]:
         phrase = " ".join(chunk.lower().split())
         if not phrase or len(phrase.split()) > _MAX_PHRASE_WORDS:
             continue
+        # A 1-2 char "phrase" carries no style information — the Aug 27
+        # 2026 report ranked the literal tag "x" (from "X platform" /
+        # "x.com" prompt fragments) as spacex's TOP retention tag.
+        if len(phrase) < 3:
+            continue
         out.append(phrase)
     return out
 
