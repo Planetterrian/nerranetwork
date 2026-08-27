@@ -584,4 +584,61 @@ reviews:
       verdict: pending
       evidence: null
     agent_cost_usd: null
+  - date: '2026-08-26'
+    pr: null
+    doc: docs/reviews/spacex_review_2026_08_26.md
+    generated_by: grok-4.5
+    summary: 'Aug-15 ships held (0 Title: heading leaks; Market Watch present on mid-body price lines; engineering-anchor rotation broke the 10/10 monoculture), but 10/10 scripts remain under 1300w, SPCX is still spoken twice on most dailies, Ep077 mid-body headline chapters returned, and Ep081 repeated the Louisiana story across segments.'
+    scored_prior_predictions:
+    - metric: digests with leaked "Title:" heading labels (snapshot Digest heading integrity section)
+      verdict: hit
+      evidence: 'review_snapshot Digest heading integrity: 0 leaked heading labels on last 10 spacex digests'
+    - metric: non-special dailies with a mid-body SPCX price/tape line and NO Market Watch chapter
+      verdict: hit
+      evidence: Ep072/074-077/079-081 chapters include Market Watch on mid-body tape/price; Ep073/078 correctly omit (sign-off-only)
+    - metric: brand garbles (Grog|Спейс-Экс|Cloud Fable|Global Star) in new youtube_videos.{ru,fr}.json titles
+      verdict: partial
+      evidence: No new garble instances flagged on spacex dub surfaces in this window; 08-15 restore shipped — confirm on next publish batch
+    shipped: []
+    deferred:
+    - 'OPERATOR DECISION (escalation after repeated misses): accept grok-4.3 daily length plateau vs further digest-substrate only (min_digest_words / full-text fetch / licensed section floors) — do not re-propose podcast expand, podcast word floors, or conditional ''7+/10 if lever ships'' predictions'
+    - 'OPERATOR DECISION (escalation since 2026-06-13): SPCX price-once — Market Watch qualitative + single precise quote only in closing_block; coupled A/B-listen; or accept double price as brand and close — stop carrying the same unshipped fix as a silent proposal'
+    - 'Q2/special path: richer spacex_deep_dive.txt briefs so specials clear deep_dive.min_podcast_words 2400; do not stack time-critical specials on the daily publish day (Ep059 lesson)'
+    - Entity-discipline prompt (xAI/SpaceX Memphis/Colossus operator) — regression guard only; A/B; carried while window stays clean
+    - api/shorts_ab.json still 'collecting' after experiment ended 2026-08-14 — report builder should mark ended (non-audio)
+    - NASA public-domain b-roll pool vs retired shorts_ab generated motion — render-side follow-up, not audio
+    - Scheduler forensics for any missed Sunday weekly_summary_segment run (June-28 class) — operator
+    predictions:
+    - metric: chapters_ep*.json titles outside known section set (Introduction|Counterpoint|AI & Compute|The Engineering Angle|Market Watch|Tomorrow Teaser|Closing) in next 10 spacex episodes
+      baseline: 1/10 (Ep077 four mid-body headline chapters)
+      expected: 0/10 new episodes after known-section allowlist sanitizer ships; Ep077 cleaned or accepted as frozen archive
+      verdict: pending
+      evidence: null
+    - metric: same-episode multi-section full retell of one mega-story (same dollar figure + pad/site count restated in Engineering + AI + body) in next 10 transcripts
+      baseline: 1/10 (Ep081 Louisiana $100B / 10-pad / 2027-2029 restated across segments)
+      expected: 0/10 if single-primary-section prompt ships after A/B; else n/a-lever-not-shipped
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: engine/chapters.py
+      kind: code
+      ab_listen_required: false
+      rationale: 'P0 listener-facing metadata: Ep077 shipped four non-section headline chapters. Deterministic garble/filter class (~100% hit per meta-review); no A/B. Complements Aug-15 Title:-strip which does not catch bare headlines.'
+    - file: digests/spacex/chapters_ep077.json
+      kind: code
+      ab_listen_required: false
+      rationale: One-time archive cleanup so the public chapter surface matches the known section set; pairs with the allowlist guard.
+    - file: tests/test_spacex_show.py
+      kind: code
+      ab_listen_required: false
+      rationale: Locks P0 allowlist so Ep077-class regression cannot return unnoticed.
+    - file: shows/prompts/spacex_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 'P1: Ep081 restated Louisiana $100B/10-pad/2027-2029 across cold-open substrate, Engineering, body, and AI. Shape-only rule + verbatim ban on repeated key figures; no quotable example sentence (de-seed-by-shape).'
+    - file: shows/prompts/spacex_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 'Podcast-side mirror of the digest mega-story rule so Ep081-class multi-section echo cannot be re-emitted from a clean digest. A/B-listen required (landmine #17). Shape + ban; no new example sentence.'
+    agent_cost_usd: 0.1499
 do_not_retry: []
