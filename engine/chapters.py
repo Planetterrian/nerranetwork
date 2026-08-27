@@ -256,6 +256,7 @@ def parse_chapters(
     auto_segment_target_seconds: float = 90.0,
     estimated_words_per_minute: float = 165.0,
     story_headlines: Optional[List[str]] = None,
+    known_sections_only: bool = False,
 ) -> List[Chapter]:
     """Parse a podcast script to identify section boundaries.
 
@@ -420,7 +421,20 @@ def parse_chapters(
         and (chapters[0].word_end - chapters[0].word_start)
         >= int(total_words * 0.50)
     )
-    if (len(chapters) < min_chapters or head_spans_most) and total_words > 0:
+    # Aug 27 2026 (spacex Ep077): shows whose prompts speak a full, fixed
+    # section set opt out of auto-segmentation entirely — every inserted
+    # chapter would carry a digest headline / first-sentence title outside
+    # the known section set, which ships as listener-facing spam in the
+    # chapter UI ("SpaceX is hiring for natural gas trading to support
+    # energy…" between Introduction and Counterpoint). For those shows the
+    # matched markers ARE the navigation.
+    if known_sections_only and (len(chapters) < min_chapters or head_spans_most):
+        logger.info(
+            "known_sections_only: skipping auto-segmentation for %s "
+            "(%d marker chapters stand as-is)",
+            show_name or "show", len(chapters),
+        )
+    elif (len(chapters) < min_chapters or head_spans_most) and total_words > 0:
         words_per_segment = max(
             int(estimated_words_per_minute * (auto_segment_target_seconds / 60.0)),
             120,

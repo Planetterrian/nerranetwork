@@ -23,11 +23,12 @@ from engine.tts import prepare_text_for_tts as tts_prepare
 from engine.utils import _PHONETIC_GARBLES, fix_phonetic_garbles
 
 
-# ``NVIDIA`` -> "En-vidia" is reverted by the garble layer to "Nvidia" (a
-# DIFFERENT token than the "NVIDIA" key), so removing it could let an all-caps
-# "NVIDIA" reach Grok and letter-split. Kept until the A/B-listen batch settles
-# it; every other garble-reverted respelling has been dropped.
-_TOLERATED_ROUND_TRIPS = {"NVIDIA"}
+# 2026-08-27: the last tolerated round-trip (``NVIDIA`` -> "En-vidia") was
+# resolved the same way as every other one — moved to the audio-only YAML
+# layer. The round trip was not protective after all: fix_phonetic_garbles
+# matches case-insensitively, so the revert fired on "En-vidia" and TTS
+# received plain "Nvidia", which shipped as "navidia" / "in video" on air.
+_TOLERATED_ROUND_TRIPS: set = set()
 
 
 def test_no_new_garble_redundant_respellings():
@@ -48,7 +49,7 @@ def test_no_new_garble_redundant_respellings():
 def test_removed_garble_redundant_entries_stay_removed():
     for word in (
         "Teslarati", "Anthropic", "Enceladus", "Qwen",
-        "Llama", "Starmer", "Tianwen", "Hassabis",
+        "Llama", "Starmer", "Tianwen", "Hassabis", "NVIDIA",
     ):
         assert word not in WORD_PRONUNCIATIONS, (
             f"{word} respelling was removed as a dead round-trip — re-adding it "
@@ -73,6 +74,10 @@ def test_garble_layer_still_protects_against_llm_garbles():
 #   2. the synthesis layer (engine.tts, shows/pronunciation_map.yaml) still
 #      emits the respelling -> audio is unchanged.
 _MOVED = {
+    # 2026-08-27: Nvidia joined the moved set — the script-save NVIDIA entry
+    # was reverted by the garble layer before TTS, so the voice never got the
+    # guide ("navidia" shipped on MIT/M&A/OV). Audio-only layer now owns it.
+    "Nvidia": "En-vidia",
     "Milei": "Mee-lay",
     "Mistral": "Mee-stral",
     "Cassini": "Kah-see-nee",

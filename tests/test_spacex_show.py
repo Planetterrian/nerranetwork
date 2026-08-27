@@ -352,13 +352,14 @@ class TestStockClosing:
         from shows.hooks.spacex import _pick_closing
         import datetime
         closing = _pick_closing(0.0, "", "", date=datetime.date(2026, 6, 13))
+        assert "Ess Pee See Ex" not in closing
         assert "S P C X" not in closing
         assert "unavailable" not in closing.lower()
 
     def test_price_sentence_phrasing_by_source(self):
         from shows.hooks.spacex import _price_sentence
         closed = _price_sentence(161.0, "+19.2%", "yfinance_history")
-        assert closed.startswith("S P C X closed at")
+        assert closed.startswith("Ess Pee See Ex closed at")
         assert "percent" in closed
         live = _price_sentence(161.0, "+19.2%", "yfinance_fast_info")
         assert "is trading at" in live and "closed" not in live
@@ -380,10 +381,45 @@ class TestStockClosing:
         assert "down market day" in _tone_from_change(150.0, "-3.1%")
 
     def test_spcx_ticker_letter_spelled_for_tts(self):
+        # Aug 27 2026: letter-NAME words, not spaced letters — Grok's
+        # text_normalization read the "S P" bigram as the S&P index and
+        # Ep051 aired "S&P CX closed at $112.20". The map value, the hook's
+        # script-save expansion, and the spoken market lines must all agree
+        # or the saved _tts.txt stops matching the audio input.
+        from shows.hooks.spacex import pronunciation_overrides
         pron = yaml.safe_load(
             (_ROOT / "shows/pronunciation_map.yaml").read_text(encoding="utf-8")
         )
-        assert pron["corrections"].get("SPCX") == "S P C X"
+        assert pron["corrections"].get("SPCX") == "Ess Pee See Ex"
+        assert pronunciation_overrides()["extra_acronyms"]["SPCX"] == "Ess Pee See Ex"
+
+    def test_spcx_spelling_cannot_trigger_sp_index_merge(self):
+        # The regression signature: a spelling whose spoken form starts with
+        # the bare "S P" bigram gets merged to "S&P" by Grok's server-side
+        # normalizer. Whatever the spelling becomes, it must never reopen that.
+        pron = yaml.safe_load(
+            (_ROOT / "shows/pronunciation_map.yaml").read_text(encoding="utf-8")
+        )
+        spoken = pron["corrections"]["SPCX"]
+        assert not re.match(r"^S\s+P\b", spoken), (
+            f"SPCX spelling {spoken!r} leads with the 'S P' bigram — Grok "
+            "text_normalization reads that as the S&P index (Ep051 aired "
+            "'S&P CX')"
+        )
+
+    def test_new_spcx_spelling_matches_market_watch_pattern(self):
+        # Chapter patterns parse the saved script, which now carries the
+        # letter-name spelling — Market Watch must fire on it (and the old
+        # spaced form stays tolerated for the committed archive).
+        markers = _spacex_markers()
+        mw = next(m for m in markers if m["title"] == "Market Watch")
+        for line in (
+            "And a quick market note: Ess Pee See Ex is trading at two "
+            "hundred one dollars.",
+            "Ess Pee See Ex closed at one hundred sixty dollars.",
+            "A quick look at the tape shows S P C X at one hundred forty dollars.",
+        ):
+            assert re.search(mw["pattern"], line, re.IGNORECASE), line
 
     def test_tf_thrust_unit_expanded_for_tts(self):
         """Ep2 lesson: "thrust now exceeds 280 tf" was spoken as "280 T F"
@@ -850,3 +886,70 @@ class TestEngineeringAnchorRotation:
             "the price-once rule is gone — the same number aired twice "
             "~30s apart for weeks (escalated since 2026-06-13)"
         )
+
+
+class TestKnownSectionsOnlyChapters:
+    """Aug 27 2026 (Ep077): the auto-segment fallback spliced four truncated
+    digest-headline chapters ("SpaceX is hiring for natural gas trading to
+    support energy…") between Introduction and Counterpoint. SpaceX speaks a
+    full fixed section set — chapters must come only from the YAML markers."""
+
+    KNOWN_TITLES = {
+        "Introduction", "The Counterpoint", "AI & Compute",
+        "The Engineering Angle", "Market Watch", "Tomorrow Teaser", "Closing",
+    }
+
+    def test_yaml_pins_known_sections_only(self):
+        cfg = load_config(_ROOT / "shows/spacex.yaml")
+        assert cfg.chapters.known_sections_only is True
+
+    def test_marker_titles_are_the_known_set(self):
+        assert {m["title"] for m in _spacex_markers()} == self.KNOWN_TITLES
+
+    def test_no_committed_chapters_json_outside_known_set(self):
+        # Scoped to Ep077+ — thirteen older files (Ep021-Ep060) carry
+        # auto-segment headline chapters from days when the mid-body
+        # markers never fired; those ARE that episode's only navigation,
+        # so they stay as frozen archive (the review's "cleaned or
+        # accepted as frozen archive" split). Ep077 was cleaned; from
+        # known_sections_only onward no new file can regress.
+        import json
+        offenders = {}
+        for path in sorted((_ROOT / "digests/spacex").glob("chapters_ep*.json")):
+            ep = int(re.search(r"ep(\d+)", path.name).group(1))
+            if ep < 77:
+                continue
+            data = json.loads(path.read_text(encoding="utf-8"))
+            bad = [c["title"] for c in data.get("chapters", [])
+                   if c.get("title") not in self.KNOWN_TITLES]
+            if bad:
+                offenders[path.name] = bad
+        assert not offenders, (
+            "committed spacex chapter files carry non-section titles "
+            f"(Ep077 class): {offenders}"
+        )
+
+    def test_parse_chapters_does_not_invent_titles(self):
+        # A long head span used to trigger auto-segmentation with digest
+        # headlines as titles; with known_sections_only the marker chapters
+        # stand as-is.
+        body = " ".join(
+            f"filler sentence number {i} about natural gas trading and pads."
+            for i in range(120)
+        )
+        script = (
+            "Welcome to SpaceX Daily, episode seventy-seven.\n\n"
+            + body + "\n\n"
+            + "One thing worth watching is the permitting question.\n\n"
+            + "That's a wrap on today's SpaceX developments. See you tomorrow."
+        )
+        headlines = [
+            "SpaceX is hiring for natural gas trading to support energy needs",
+            "Cape Canaveral studying impact of future Starship launches",
+        ]
+        chapters = parse_chapters(
+            script, _spacex_markers(), show_name="SpaceX Daily",
+            story_headlines=headlines, known_sections_only=True,
+        )
+        titles = {c.title for c in chapters}
+        assert titles <= self.KNOWN_TITLES, titles

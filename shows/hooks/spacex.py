@@ -121,15 +121,19 @@ def pronunciation_overrides() -> dict:
         "extra_words": {"tf": "tons-force"},
         # SPCX is already letter-spelled at TTS-call time by
         # shows/pronunciation_map.yaml, but that leaves the saved _tts.txt
-        # carrying the raw ticker while the voice receives "S P C X" — the
-        # 2026-07-31 Ep051 ticker investigation had to reconstruct what the
-        # voice was actually sent because the on-disk script didn't show it.
-        # Expanding at script-save time too makes the committed TTS text
+        # carrying the raw ticker while the voice receives the spelling —
+        # the 2026-07-31 Ep051 ticker investigation had to reconstruct what
+        # the voice was actually sent because the on-disk script didn't show
+        # it. Expanding at script-save time too makes the committed TTS text
         # match the audio input byte-for-byte (the TTS-call map then finds
         # nothing left to replace — the voice receives the identical string,
         # so this is bookkeeping, not an audio change). The chapter patterns
-        # in shows/spacex.yaml already tolerate both forms.
-        "extra_acronyms": {"SPCX": "S P C X"},
+        # in shows/spacex.yaml tolerate the raw ticker and both spellings.
+        # Aug 27 2026: spelling changed "S P C X" -> "Ess Pee See Ex" —
+        # Grok's text_normalization read the "S P" bigram as the S&P index
+        # (Ep051 aired "S&P CX"); letter-name words can't be merged. MUST
+        # stay identical to the SPCX value in shows/pronunciation_map.yaml.
+        "extra_acronyms": {"SPCX": "Ess Pee See Ex"},
     }
 
 
@@ -308,8 +312,8 @@ def _price_sentence(price: float, change_str: str, source: str) -> str:
         except (TypeError, ValueError):
             change_part = ""
     if source == "yfinance_history":
-        return f"S P C X closed at {spoken}{change_part}. "
-    return f"S P C X is trading at {spoken}{change_part}. "
+        return f"Ess Pee See Ex closed at {spoken}{change_part}. "
+    return f"Ess Pee See Ex is trading at {spoken}{change_part}. "
 
 
 # Closing variants, rotated by calendar date (the TST anti-fossilization

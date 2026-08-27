@@ -33,7 +33,16 @@ corrections:
   AAPL: "A A P L"
   # SPCX added June 13 2026 (SpaceX IPO'd June 12; SpaceX Daily carries a
   # daily Market Watch on the ticker — same letter-spelling class as TSLA).
-  SPCX: "S P C X"
+  # CHANGED Aug 27 2026 (operator-reported, transcript-evidenced): the
+  # spaced letter form "S P C X" collides with Grok's server-side
+  # text_normalization, which reads the leading "S P" bigram as the S&P
+  # index — Ep051's Whisper transcript shipped "S&P CX closed at $112.20"
+  # verbatim. Letter-NAME words are immune to that merge (same class as
+  # DSPy -> "D S Pie"): still a literal letter spelling, not a phonetic
+  # respelling of a word. Kept in sync with shows/hooks/spacex.py
+  # (script-save expansion + spoken market lines) and the Market Watch
+  # chapter pattern in shows/spacex.yaml.
+  SPCX: "Ess Pee See Ex"
 
   # ---------------- Canadian registered accounts ----------------
   # Spelled-out is universally how listeners refer to these vehicles
@@ -150,6 +159,17 @@ corrections:
   "IG Metall": "I G Metall"
   "IF Metall": "I F Metall"
   # Companies / brands / missions
+  # Nvidia added Aug 27 2026 (operator-reported, transcript-evidenced):
+  # the plain written form ships garbled on the production voice — Whisper
+  # heard "navidia" (MIT Ep083/110/132, M&A Ep091, OV Ep117) and even
+  # "in video Vera Rubin chips". The old script-save guide
+  # (assets/pronunciation.py NVIDIA -> "En-vidia") was a dead round-trip:
+  # engine.utils.fix_phonetic_garbles reverts "en-vidia" -> "Nvidia"
+  # before the script is saved, so TTS never received the guide. This
+  # audio-only layer runs at synthesis, AFTER the garble repair, so the
+  # guide finally reaches the voice. Case-insensitive match covers
+  # NVIDIA / Nvidia / nvidia.
+  Nvidia: "En-vidia"
   Mistral: "Mee-stral"
   AstraZeneca: "Astra-Zeneca"
   Alnylam: "Al-nye-lam"
