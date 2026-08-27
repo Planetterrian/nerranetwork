@@ -641,4 +641,46 @@ reviews:
       ab_listen_required: true
       rationale: 'Podcast-side mirror of the digest mega-story rule so Ep081-class multi-section echo cannot be re-emitted from a clean digest. A/B-listen required (landmine #17). Shape + ban; no new example sentence.'
     agent_cost_usd: 0.1499
+  - date: '2026-08-27'
+    pr: null
+    doc: docs/reviews/spacex_review_2026_08_27.md
+    generated_by: grok-4.5
+    summary: Aug-26 chapter allowlist and mega-story prompt ships held on Ep073–082 surfaces, but Ep082 dropped both Counterpoint and Engineering Angle chapter anchors (P1), 9/10 dailies remain under 1300w, and SPCX price-twice stays an escalated operator decision.
+    scored_prior_predictions:
+    - metric: chapters_ep*.json titles outside known section set (Introduction|Counterpoint|AI & Compute|The Engineering Angle|Market Watch|Tomorrow Teaser|Closing) in next 10 spacex episodes
+      verdict: hit
+      evidence: 'Ep073–082 committed chapters use only known section titles; spacex.yaml known_sections_only: true (Aug 27); Ep077 headline-chapter spam absent from current chapters_ep077.json'
+    - metric: same-episode multi-section full retell of one mega-story (same dollar figure + pad/site count restated in Engineering + AI + body) in next 10 transcripts
+      verdict: partial
+      evidence: MEGA-STORY rules present in digest/podcast prompts; Ep081 still multi-retells Louisiana $100B/10-pad across segments; Ep082 has no equivalent full multi-section retell
+    shipped: []
+    deferred:
+    - 'OPERATOR DECISION (repeated misses): accept grok-4.3 daily length plateau vs further digest-substrate only (min_digest_words / full-text fetch / licensed section floors) — do not re-propose podcast expand, podcast word floors, or conditional 7+/10 if lever ships predictions'
+    - 'OPERATOR DECISION (since 2026-06-13): SPCX price-once — Market Watch qualitative + single precise quote only in closing_block; coupled A/B-listen; or accept double price as brand and close'
+    - 'Q2/special path: richer spacex_deep_dive.txt briefs so specials clear deep_dive.min_podcast_words 2400; do not stack time-critical specials on the daily publish day'
+    - Entity-discipline prompt (xAI/SpaceX Memphis/Colossus operator) — regression guard only; A/B; carried while window stays clean
+    - api/shorts_ab.json still collecting after experiment ended 2026-08-14 — report builder should mark ended (non-audio)
+    - NASA public-domain b-roll pool vs retired shorts_ab generated motion — render-side follow-up, not audio
+    - Scheduler forensics for any missed Sunday weekly_summary_segment run (June-28 class) — operator
+    predictions:
+    - metric: non-special dailies missing Counterpoint chapter and/or Engineering Angle chapter (or missing required anchor strings in _tts.txt) in next 10 spacex episodes
+      baseline: '1/10 (Ep082: chapters lack Counterpoint + Engineering Angle; Whisper lacks counterpoint openers and all four engineering anchors)'
+      expected: 0/10 after mandatory-anchor prompt reinforcement + drift-guard test ship
+      verdict: pending
+      evidence: null
+    - metric: Ep081-class same-episode full retell of one mega-story’s key figures across Engineering + body + AI in next 10 transcripts
+      baseline: 1/10 historical (Ep081); 0/1 in first post-baseline daily (Ep082)
+      expected: 0/10 sustained without further prompt seeding; if a hit returns, escalate rather than third identical de-seed
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/prompts/spacex_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 'P1: Ep082 Whisper/chapters dropped Counterpoint + Engineering anchors while still speaking those segments under Introduction (~5 min). Shape + verbatim required anchors + injected {engineering_anchor}; no new quotable example sentence (de-seed-by-shape). A/B-listen landmine #17.'
+    - file: tests/test_spacex_show.py
+      kind: code
+      ab_listen_required: false
+      rationale: Code-only guard so Ep082-class missing section anchors cannot return unnoticed; pairs with prompt reinforcement; no audio change.
+    agent_cost_usd: 0.1465
 do_not_retry: []
