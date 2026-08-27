@@ -1,0 +1,173 @@
+Les chercheurs peuvent désormais analyser de vraies données d'usage de Claude, hors des laboratoires.
+
+Anthropic a mis à disposition des outils préservant la vie privée, ainsi que deux cent cinquante mille conversations, pour des études d'impact indépendantes.
+
+C'est Models and Agents, épisode cent cinquante-quatre.
+
+Anthropic a ouvert l'accès aux données agrégées de conversations Claude d'avril et mai deux mille vingt-six au Stanford SALT Lab, à l'Oxford Human Information Processing Lab, et à METR.
+
+L'analyse a montré que plus de la moitié des discussions portaient sur des tâches lourdes de conséquences, qui affectent d'autres personnes ou qui s'avèrent difficiles à défaire.
+
+OpenAI a publié son rapport technique sur l'incident de l'agent Hugging Face, ainsi que des évaluations de tiers menées par METR et Redwood.
+
+Visa a sorti un harnais de sécurité agentique à code ouvert qui corrige automatiquement les vulnérabilités avant toute revue humaine.
+
+Les équipes devraient surveiller comment ces ouvertures d'accès aux données et ces mouvements de gouvernance influencent les décisions de déploiement d'agents cette semaine.
+
+Anthropic a publié pour la première fois des données d'usage de Claude préservant la vie privée, ainsi que des outils d'analyse, à des chercheurs externes.
+
+Trois groupes indépendants ont examiné deux cent cinquante mille conversations agrégées d'avril et mai deux mille vingt-six.
+
+L'entreprise invite désormais d'autres chercheurs à demander l'accès via un formulaire public, pour mener des études jusqu'ici possibles uniquement à l'intérieur des laboratoires.
+
+Ça fait passer la recherche sur l'impact de l'I A d'un modèle uniquement interne à une recherche répartie dans le monde académique, tout en protégeant les données brutes des utilisateurs.
+
+Surveillez les articles qui suivront, et voyez si d'autres laboratoires adoptent des modèles similaires de partage de données.
+
+Une nouvelle revue sur arXiv recense quatre-vingts méthodes strictes de post-entraînement non supervisé, organisées selon le signal interne qui alimente la mise à jour.
+
+Les signaux comprennent les statistiques de prédiction, les relations entre échantillons, les cibles auto-générées, ou des évaluateurs internes.
+
+L'article cartographie comment chaque choix de signal et de structure de tâche détermine si le post-entraînement améliore le modèle ou amplifie l'erreur.
+
+Une vue orthogonale, visibilité de l'entrée par persistance de la mise à jour, définit des régimes de déploiement et un cadre unifié de sélection.
+
+Les équipes qui travaillent sur des chaînes de post-entraînement devraient tester ce catalogue à l'aune de leurs sources de données non étiquetées, cette semaine.
+
+Une autre étude sur arXiv teste la stabilité du guidage embarqué pour la suppression du refus et l'induction de brièveté, sur cinq modèles ajustés aux instructions, de trois milliards à quatorze milliards de paramètres.
+
+Les tests couvrent l'ajustement supervisé non adverse et l'apprentissage par renforcement à partir de retours humains.
+
+La préservation du comportement suit la pression des données d'entraînement, tandis que la modification des poids elle-même survit, avec une récupération du vecteur moyen de zéro virgule zéro zéro quatre.
+
+L'ajustement fin ne démonte pas le mécanisme de guidage, même quand le comportement revient en arrière.
+
+Les équipes qui utilisent le guidage par activations devraient revalider les effets comportementaux après tout passage d'ajustement en aval.
+
+Un troisième article sur arXiv montre, sur des corpus parallèles de dialectes de l'anglais, que les modèles de langue modernes encodent les textes dialectaux de façon inégale, aux étapes de tokenisation, de pré-entraînement, de post-entraînement et d'inférence.
+
+Les écarts apparaissent d'une famille de modèles à l'autre.
+
+La tokenisation au niveau des caractères n'élimine ni les asymétries d'entrée, ni celles de sortie, ni les écarts de précision.
+
+Les modèles de récompense font preuve de préférences dialectales contextuelles et instables pendant le post-entraînement.
+
+Les développeurs qui visent un public mondial devraient mesurer explicitement la performance sur les dialectes, plutôt que de partir du principe que l'équivalence sémantique tient.
+
+Visa a passé en code ouvert le Vulnerability Agentic Harness, qui enchaîne onze étapes pour découvrir, vérifier, corriger, valider et itérer sur les vulnérabilités, en s'appuyant sur un graphe d'appels fondé sur l'arbre de syntaxe abstraite.
+
+Le flux par défaut écrit les correctifs candidats dans une copie de travail, puis lance un panel de validation adverse à l'étape onze.
+
+Le panel renvoie des verdicts « validé », « échoué », ou « à revoir », sans contourner les portes de compilation, de test ou de revue de l'équipe.
+
+Il prend en charge le choix du modèle à chaque étape, parmi Anthropic, les moteurs compatibles OpenAI, et les modèles à poids ouverts, et il est livré avec une observabilité MTTA.
+
+Le harnais est destiné à des opérateurs autorisés, sur du code dont ils sont propriétaires, dans des environnements contrôlés.
+
+Les opérateurs doivent malgré tout cloisonner les dépôts et utiliser des identifiants à périmètre restreint.
+
+Ça s'enchaîne directement sur les questions de fiabilité des agents d'hier, en montrant comment des contrôles opérationnels peuvent être intégrés avant que le déploiement ne prenne de l'ampleur.
+
+Un article de VentureBeat avance que la gouvernance des agents doit être appliquée à la couche de données opérationnelle, via un accès fondé sur les rôles et les attributs, le masquage dynamique de colonnes, et la journalisation d'audit au niveau de la session.
+
+L'approche traite l'agent comme un principal à part entière, avec un objectif déclaré.
+
+Neuf contrôles, regroupés sous Appliquer, Voir et prouver, et Unifier et durcir, apparaissent comme des politiques exécutables déjà présentes dans les bases de données, plutôt que comme des garde-fous de consignes.
+
+EDB Postgres AI est présenté comme la fondation ouverte qui délivre ces contrôles, avec la souveraineté des données.
+
+Les équipes qui font tourner des agents autonomes devraient faire correspondre leurs règles actuelles de gestion des identités aux identités d'agents et aux objectifs déclarés, avant de monter en charge les déploiements.
+
+Les assureurs cyber mettent à jour leurs polices en réponse aux incidents d'agents autonomes.
+
+Ils passent des contrôles traditionnels à de nouvelles évaluations de risque autour du comportement des agents.
+
+L'article cite l'incident Hugging Face comme point de référence pour les questions de couverture qui émergent.
+
+Les organisations qui déploient des agents devraient revoir le libellé de leurs polices, à la recherche de clauses explicites d'identité d'agent et de périmètre d'action, au cours du trimestre à venir.
+
+Un billet de Towards Data Science montre comment remplacer la recherche ouverte par des outils typés, des bornes strictes, et une porte impossible à contourner, quand on parcourt un graphe de connaissances.
+
+Quatre modèles testés sur un scénario de prédiction erronée montrent que l'approche bornée réduit les hallucinations tout en préservant un parcours utile.
+
+Les équipes devraient prototyper ce motif de porte sur tout agent qui reçoit aujourd'hui des fenêtres de contexte sans restriction.
+
+Un autre guide de Towards Data Science se concentre sur l'obtention d'un code de meilleure qualité, plutôt que d'un plus grand volume, quand on collabore avec des agents de code.
+
+Il insiste sur des consignes structurées et des boucles de revue qui font remonter tôt les décalages d'intention.
+
+Les développeurs qui utilisent des agents pour générer du code devraient adopter ce flux de travail sur leur prochaine branche de fonctionnalité non triviale.
+
+L'analyse de documentation d'entreprise a trouvé deux cent vingt-sept commandes d'installation qui pointent vers du code sans propriétaire identifiable.
+
+Ce schéma indique que les agents peuvent introduire à grande échelle des dépendances non vérifiées.
+
+Les équipes de sécurité devraient ajouter des contrôles de provenance aux listes de paquets générées par des agents, avant toute fusion.
+
+Bon. Soulevons le capot de la gouvernance à la couche données pour les agents.
+
+Tout le monde parle des garde-fous d'agents comme d'instructions de consigne, ou de couches de surveillance ajoutées après le modèle.
+
+En pratique, la gouvernance qui doit survivre à la planification autonome et à l'action à travers les systèmes, elle vit à l'intérieur de la base de données elle-même, à travers des politiques exécutoires évaluées au moment de la requête.
+
+Un agent déclare un objectif au démarrage de la session.
+
+Cet objectif devient un attribut que le moteur d'accès fondé sur les rôles et les attributs comprend déjà.
+
+Le moteur de politiques l'évalue exactement comme un département ou un niveau d'habilitation, et refuse l'accès avant que la moindre donnée ne quitte le stockage.
+
+Ça n'ajoute aucune latence au-delà du contrôle d'autorisation existant, et pourtant ça garantit que la règle ne peut pas être contournée par une consigne maligne ou un chaînage d'outils.
+
+La sécurité au niveau des lignes et des colonnes, plus la journalisation d'audit de session, capturent exactement quel agent a agi, pour quel utilisateur, et sous quel objectif déclaré.
+
+Le compromis apparaît quand les agents ont besoin d'un accès en lecture large pour une exploration légitime.
+
+Il faut soit borner l'objectif à l'avance de façon étroite, soit accepter que certaines requêtes seront rejetées à l'exécution.
+
+Utilisez cette approche quand les agents modifieront des données de production ou traverseront des frontières de confiance.
+
+Appuyez-vous sur les garde-fous de consignes uniquement pour des assistants en lecture seule, à faible enjeu, où le rayon d'impact reste à l'intérieur d'une seule conversation.
+
+Le piège qui rattrape le plus d'équipes, c'est de supposer que le modèle s'appliquera tout seul des règles écrites dans la consigne système.
+
+Une fois que l'agent peut planifier des actions en plusieurs étapes, seule la couche données tient encore.
+
+Candidatez via le formulaire d'accès chercheurs d'Anthropic si vous étudiez l'impact sociétal de l'I A.
+
+Le jeu de données de deux cent cinquante mille conversations vous permet de mener des analyses jusqu'ici impossibles hors des laboratoires.
+
+Récupérez le Vulnerability Agentic Harness de Visa et lancez-le avec un arrêt après l'étape neuf sur un dépôt de test, pour voir la sortie SARIF avant d'activer la correction.
+
+Prototypez le motif outils typés plus porte du billet Towards Data Science, sur tout agent qui reçoit aujourd'hui une recherche internet sans restriction.
+
+Faites correspondre vos rôles actuels de gestion des identités aux identités d'agents et aux objectifs déclarés, en vous appuyant sur les neuf contrôles du cadre de gouvernance EDB, avant de déployer des agents autonomes à l'échelle.
+
+D'autres laboratoires pourraient suivre le modèle de partage de données d'Anthropic, une fois publiés les résultats des trois premiers groupes.
+
+Les assureurs cyber devraient publier des modèles de polices spécifiques aux agents au cours du prochain trimestre.
+
+Visa prévoit de contribuer le harnais à l'Open Secure AI Alliance de Nvidia, et d'élargir les ateliers de conseil.
+
+Avant de nous quitter, la prochaine vague d'articles sur le post-entraînement non supervisé est déjà en relecture et devrait apparaître d'ici quelques semaines.
+
+Voilà pour Models and Agents aujourd'hui.
+
+Si ça vous a été utile, partagez-le avec quelqu'un qui essaie de suivre tous ces changements, et abonnez-vous pour ne pas rater la mise à jour de demain.
+
+Le monde de l'I A avance vite.
+
+On vous aide à suivre.
+
+À demain.
+
+Et si vous préférez regarder plutôt qu'écouter, retrouvez-nous sur YouTube chez Nerra Network — le lien est dans les notes de l'émission.
+
+Et avant de partir : cette émission fait partie du Nerra Network — une famille de podcasts quotidiens sur la technologie, la science et les marchés, chacun un point court et tranchant que vous pouvez finir dans les transports.
+
+Si aujourd'hui a mérité sa place dans votre flux, voici votre prochaine écoute — Tesla Shorts Time, votre plongée quotidienne dans tout ce qui touche Tesla.
+
+Retrouvez chaque émission, gratuitement, sur nerranetwork point com.
+
+Et sur le site : les visuels de chaque épisode se trouvent dans notre galerie d'images gratuite, à nerranetwork point com gallery — libres de droits sous licence Creative Commons, à télécharger avec attribution.
+
+Cet épisode a utilisé une synthèse vocale I A de ma voix — la sélection éditoriale et l'analyse sont les miennes.
