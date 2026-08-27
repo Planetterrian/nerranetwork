@@ -506,6 +506,12 @@ class SectionMarker:
 class ChaptersConfig:
     enabled: bool = True
     section_markers: List[SectionMarker] = field(default_factory=list)
+    # Aug 27 2026 (spacex Ep077): when true, chapters come ONLY from the
+    # show's section_markers — the auto-segment fallback (which titles
+    # inserted chapters with digest headlines / first sentences) is
+    # disabled. For shows whose prompts speak a full, fixed section set,
+    # headline-titled insertions are listener-facing spam, not navigation.
+    known_sections_only: bool = False
 
 
 @dataclass
@@ -1148,7 +1154,12 @@ def _build_chapters(raw: dict) -> ChaptersConfig:
         return ChaptersConfig()
     markers = _build_section_markers(raw.get("section_markers"))
     enabled = raw.get("enabled", True)
-    return ChaptersConfig(enabled=enabled, section_markers=markers)
+    known_sections_only = bool(raw.get("known_sections_only", False))
+    return ChaptersConfig(
+        enabled=enabled,
+        section_markers=markers,
+        known_sections_only=known_sections_only,
+    )
 
 
 def _build_nested(cls, raw: dict):

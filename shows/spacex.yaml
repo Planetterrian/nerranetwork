@@ -311,13 +311,21 @@ episode:
 
 chapters:
   enabled: true
+  # Aug 27 2026 (Ep077): the auto-segment fallback spliced four truncated
+  # digest-headline chapters between Introduction and Counterpoint. This
+  # show's prompt speaks a full fixed section set — chapters must come only
+  # from the markers below (drift guard: tests/test_spacex_show.py).
+  known_sections_only: true
   # June 2026 lessons baked in at launch: positional `where` anchors
   # (the Tesla chapter-bug class) and a Closing pattern that covers
   # EVERY closing-pool variant in engine/intros.py (guarded by
   # tests/test_spacex_show.py).
   # NOTE: chapters parse the POST-pronunciation script (Ep001 lesson):
-  # assets/pronunciation.py maps "SpaceX" -> "Space X" and "SPCX" ->
-  # "S P C X" for TTS, so every pattern must tolerate both forms.
+  # assets/pronunciation.py maps "SpaceX" -> "Space X" and the spacex hook
+  # maps "SPCX" -> "Ess Pee See Ex" for TTS (was "S P C X" until Aug 27
+  # 2026 — Grok normalization read "S P" as the S&P index), so every
+  # pattern must tolerate the raw ticker and BOTH spellings (older
+  # committed scripts keep the spaced-letter form).
   section_markers:
     - pattern: "Space ?X Daily|welcome to Space ?X"
       title: "Introduction"
@@ -341,7 +349,7 @@ chapters:
     # episodes shipped with no Market Watch chapter. Closing stays listed
     # FIRST with where:end so sign-off-only price lines remain Closing
     # (Ep3 / Ep62-64 class).
-    - pattern: "on the market side|market watch|quick (market note|note on the market|look at the (tape|market))|S ?P ?C ?X (closed|closing|is at|at \\$|at [a-z]+ hundred|is trading|trading at|trades at|opened)"
+    - pattern: "on the market side|market watch|quick (market note|note on the market|look at the (tape|market))|(S ?P ?C ?X|Ess Pee See Ex) (closed|closing|is at|at \\$|at [a-z]+ hundred|is trading|trading at|trades at|opened)"
       title: "Market Watch"
     - pattern: "one thing worth watching|worth keeping an eye on|the counterpoint"
       title: "The Counterpoint"

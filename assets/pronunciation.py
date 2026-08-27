@@ -439,8 +439,14 @@ WORD_PRONUNCIATIONS: Dict[str, str] = {
     # SoFi, NOIRLab, Afeela, DSPy, HarmfulQA, TheoremQA, VideoQA, MedQuAD,
     # Cassini, Oberth, Karpathy, Milei, Zelensky(+yy/yj), Altman, Amodei.
     #
-    # ``NVIDIA`` stays (its garble revert lands on the different token "Nvidia";
-    # moving it would change the audio). ``Lifespan.io`` stays (strip_urls
+    # ``NVIDIA`` -> "En-vidia" REMOVED 2026-08-27: it was a dead round-trip
+    # after all — engine.utils.fix_phonetic_garbles reverts "en-vidia" ->
+    # "Nvidia" (case-insensitively) before the script is saved, so TTS never
+    # received the guide and the voice shipped "navidia" / "in video" on air
+    # (MIT Ep083/110/132, M&A Ep091, OV Ep117 Whisper transcripts). The guide
+    # now lives in shows/pronunciation_map.yaml (audio-only, applied at
+    # synthesis AFTER the garble repair, case-insensitive so it covers
+    # NVIDIA / Nvidia / nvidia). ``Lifespan.io`` stays (strip_urls
     # rewrites the .io domain before this map runs, so it needs the script-save
     # layer).
     #
@@ -452,7 +458,6 @@ WORD_PRONUNCIATIONS: Dict[str, str] = {
     # changes shipped audio → A/B-listened. If one regresses, re-add it to
     # shows/pronunciation_map.yaml (audio-only), not here.
     "Lifespan.io": "Life-span dot i o",
-    "NVIDIA": "En-vidia",
 
     # --- Scientific names ---
     # ``Cassini`` / ``Oberth`` MOVED to shows/pronunciation_map.yaml on
