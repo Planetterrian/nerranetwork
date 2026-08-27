@@ -279,7 +279,8 @@ export async function handleSubscribe(
 
   if (!result.ok) {
     // Don't leak upstream detail to the client; logged in the Worker tail.
-    console.warn("subscribe: buttondown failure", result.error, result.status);
+    console.warn("subscribe: buttondown failure", result.error,
+                 result.status, result.detail ?? "");
     return jsonResponse(request, 502, { ok: false, error: "subscribe failed" });
   }
   console.log("subscribe: ok", list, tags.join(","));
