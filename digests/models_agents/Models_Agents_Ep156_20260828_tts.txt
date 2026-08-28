@@ -1,0 +1,109 @@
+Anthropic's new hardware standard gives A I agents a unified way to control lab and manufacturing equipment without custom drivers per device.
+
+This is Models and Agents, episode one hundred fifty-six.
+
+Anthropic opened a research preview of its Model Hardware Standard today.
+
+The preview invites partners in science, robotics, and manufacturing to extend Claude Code's hardware reach.
+
+Google released Gemini 3.5 Transcribe with separate streaming and batch endpoints.
+
+A community developer reverse-engineered an Axera NPU engine format to run GGUF models directly at one point five times the vendor runtime speed on Raspberry Pi hardware.
+
+Anthropic launched the research preview of the Model Hardware Standard in collaboration that began with the Howard Hughes Medical Institute.
+
+The standard currently covers lab and manufacturing equipment best.
+
+The preview aims to extend it to boards, cameras, and other devices already driven by Claude Code so everything works through one interface.
+
+Anthropic notes that large language models still lack physical intuition because they learned the physical world only from text and images.
+
+The preview will also produce more safety evaluations before any open-source release.
+
+Builders working on physical-world agents should watch the preview for early access and feedback channels.
+
+The effort directly addresses the gap between text-only agents and real hardware control.
+
+Google released Gemini 3.5 Transcribe as two endpoints rather than one.
+
+The streaming endpoint delivers sub-second transcription but drops speaker diarization and word timestamps.
+
+The batch endpoint retains both features at half the cost.
+
+Google reports four point zero percent word error rate on streaming and two point six percent on non-streaming, with seventy percent faster finalization than Chirp three.
+
+Community users report Ornith one point five delivers strong tool-calling performance at roughly one hundred thirty tokens per second with MTP on consumer hardware.
+
+Testers describe it as filling the gap between Qwen three point eight twenty seven B and a hypothetical faster thirty five B variant.
+
+The model runs well where larger Qwen variants felt too slow.
+
+Researchers released TelecomGPT-Rone to nineB, a unified open-source reasoner fine-tuned from Qwen three point five nine B on a sixty seven thousand four hundred twenty seven example corpus.
+
+The model ranks first among open-source telecom large language models on seven public benchmarks after multi-teacher Laura SFT followed by GRPO with axis-aligned verifiers.
+
+It reaches performance comparable to closed frontier reasoners on telco-specific tasks.
+
+A developer reverse-engineered the Axera AX8850 NPU engine format to patch GGUF weights directly into precompiled engines without vendor compilation.
+
+The approach stores int eight weights as two nibble planes and achieves ninety six percent token agreement with CPU reference while running at twenty four point five tokens per second decode on a Raspberry Pi five.
+
+The same work fixed a previously unused batched-prefill path, reaching seven hundred sixteen tokens per second prompt processing.
+
+The full backend is a single four point five k line file in a llama dot cpp fork.
+
+TreeGraft introduces a multi-drafter framework where drafters of different sizes jointly build a shared draft tree for speculative decoding.
+
+A lightweight scheduler distilled from an offline value system decides when to invoke the stronger drafter.
+
+Across ten model pairs and six benchmarks the method outperforms the better single-drafter baseline by fifteen point one percent on average.
+
+FIRSTPASS provides three thousand six hundred sixty eight multi-round editorial dialogues from Nature Communications across biology, chemistry, neuroscience, physics, and earth science.
+
+The dataset captures initial referee reports, author responses, and updated assessments.
+
+UPHELD supplies hundreds of complete human-to-human dialogues written by professional script writers with thirty six thousand plus per-turn human annotations.
+
+A Mixture-of-Judges framework improves correlation by approximately thirty percent.
+
+Vagdhenu adds a vrutta-aware frontend and reference-matching mechanism to an off-the-shelf flow-matching TTS backbone for faithful Sanskrit chant output.
+
+Two deployments already cover five thousand one hundred eighty three verses and eighteen thousand verses respectively.
+
+Everyone talks about adaptive thinking in multimodal models as if the model simply decides how hard to reason.
+
+In practice the decision lives at a single token whose probability distribution entropy becomes the training signal.
+
+High entropy at that token means the model is still exploring whether to engage chain-of-thought.
+
+Low entropy signals convergence on a policy.
+
+The training process therefore moves from high-entropy exploration, where many thinking strategies are tried, to low-entropy convergence where the model confidently chooses when to think.
+
+The practical payoff appears on mixed workloads.
+
+Complex questions receive full reasoning while simple ones skip it, cutting unnecessary compute without accuracy loss on easy items.
+
+The gotcha that bites most teams is assuming the entropy threshold transfers across domains.
+
+Test Gemini 3.5 Transcribe batch endpoint on any existing transcription pipeline to measure the seventy percent faster finalization against your current latency budget.
+
+Build a small hardware-control prototype against the Model Hardware Standard research preview if you have access to lab or robotics equipment already driven by Claude Code.
+
+Run the llama dot cpp AXCL backend on an aarch sixty four device with the provided quick-start to compare twenty four point five tokens per second decode against your current edge inference setup.
+
+Evaluate Ornith one point five on a tool-calling loop you currently run with Qwen three point eight twenty seven B to see whether the reported one hundred thirty tokens per second speed justifies switching your daily driver.
+
+Anthropic expects to share more Model Hardware Standard safety evaluations once the research preview gathers sufficient partner feedback.
+
+Google has not yet announced whether Gemini 3.5 Transcribe will receive additional language coverage beyond the current eighty five plus.
+
+The TreeGraft authors plan to release full training code after the anonymous review period.
+
+Before we go, Anthropic will gather partner feedback on the Model Hardware Standard preview before releasing further safety evaluations.
+
+That wraps up today's A I briefing. Share this with a developer or builder who wants to stay current. Subscribe wherever you listen. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+One more thing — if you liked today's episode, our sister show Omni View is worth a spot in your feed: a balanced daily world-news briefing that takes every side seriously. It's one of the Nerra Network's daily briefings, all free at nerranetwork dot com. Prefer reading? Today's full write-up, sources, and transcript are on the episode blog at nerranetwork dot com — same briefing, readable format.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
