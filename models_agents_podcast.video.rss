@@ -9,7 +9,7 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>en-us</language>
-    <lastBuildDate>Thu, 27 Aug 2026 14:39:40 +0000</lastBuildDate>
+    <lastBuildDate>Fri, 28 Aug 2026 01:19:31 +0000</lastBuildDate>
     <itunes:author>Patrick</itunes:author>
     <itunes:category text="Technology" />
     <itunes:category text="News">
@@ -23,6 +23,111 @@
     </itunes:owner>
     <itunes:summary>Your daily briefing on AI models and agents: new releases from the frontier labs, open-weight drops, agent frameworks, benchmarks, pricing, and practical tools you can use the same day — with long-running program tracking so you always know where the big stories stand. For developers, builders, and AI practitioners.</itunes:summary>
     <itunes:type>episodic</itunes:type>
+    <item>
+      <title>Ep 155: Anthropic’s new hardware standard gives AI agents a unified way to control lab equipment…</title>
+      <description>Models &amp; Agents
+&lt;b&gt;Anthropic’s new hardware standard gives AI agents a unified way to control lab equipment, boards, and cameras through one interface.&lt;/b&gt;
+
+&lt;b&gt;What You Need to Know:&lt;/b&gt; Anthropic opened a research preview of its Model Hardware Standard (MHS) today, inviting partners in science, robotics, and manufacturing to help shape a common driver layer for physical devices. The effort starts with lab and manufacturing gear and will expand via Claude Code to boards and cameras. Builders should watch how safety evaluations for physical-world use evolve during the preview.
+
+DEPTH OVER BREADTH (news items)
+
+Top Story
+Anthropic launched a research preview of the Model Hardware Standard (MHS) to create a standardized driver interface for AI agents to operate physical equipment. The standard currently focuses on lab and manufacturing devices but will extend to boards, cameras, and similar hardware through Claude Code so everything works under one interface. Developers already using Claude Code for hardware tasks can join the preview to test extensions. The preview will also produce new safety evaluations because current models still lack physical intuition from text-and-image training alone. Stakeholders from science, robotics, electronics, and manufacturing are invited to participate before any open-source release. The collaboration began with HHMI and now seeks input across multiple industries to shape the interface before broader open-source involvement. Source: &lt;a href="https://www.anthropic.com/news/model-hardware-standard-research-preview"&gt;anthropic.com&lt;/a&gt;
+
+Model Updates
+&lt;b&gt;ChatGPT plus critical-thinking training improves student performance: OpenAI Blog&lt;/b&gt;
+OpenAI ran a randomized study with more than 1,000 students on a real university assignment. Students who combined ChatGPT use with explicit critical-thinking training produced stronger answers and broader thinking than either approach alone. The result shows measurable gains in originality and assignment scores when the tool is paired with structured guidance rather than used in isolation. The study examined both originality metrics and overall performance on the assignment task. Builders working on educational agents should test similar training scaffolds before deploying raw model access. The findings highlight that tool access alone does not automatically improve outcomes without additional instructional structure. Source: &lt;a href="https://openai.com/index/what-students-gain-from-chatgpt-critical-thinking-training"&gt;openai.com&lt;/a&gt;
+
+Agent &amp; Tool Developments
+&lt;b&gt;Cisco deploys custom AI agent to 90,000-person workforce: PYMNTS.com&lt;/b&gt;
+Cisco rolled out a single custom AI agent across its entire employee base. The deployment gives every worker the same agent tooling rather than scattered point solutions. Early results tie the rollout to measurable productivity lifts inside the company. The agent was built internally and distributed uniformly rather than through multiple vendor tools. Teams evaluating enterprise agent platforms should examine how Cisco handled access controls and audit logging at this scale. The move reflects a deliberate choice to standardize on one agent surface for consistency across departments. Source: &lt;a href="https://www.pymnts.com/news/artificial-intelligence/2026/cisco-deploys-custom-ai-agent-to-entire-90000-person-workforce/"&gt;pymnts.com&lt;/a&gt;
+
+&lt;b&gt;Build agentic creative workflows with Amazon Quick and fal: Amazon Web Services (AWS)&lt;/b&gt;
+AWS released guidance for combining Amazon Quick with the fal platform to create agent-driven creative pipelines. The setup lets agents orchestrate image and video generation steps with explicit tool calls. Developers can follow the published notebook to wire agents directly to fal endpoints without custom orchestration code. The pattern supports step-by-step agent control over generation parameters and output handling. The pattern is useful when you need reproducible, auditable creative pipelines rather than one-off generation calls. The notebook demonstrates direct integration that avoids building separate orchestration layers from scratch. Source: &lt;a href="https://aws.amazon.com/blogs/machine-learning/build-agentic-creative-workflows-with-amazon-quick-and-fal/"&gt;aws.amazon.com&lt;/a&gt;
+
+&lt;b&gt;py-evoFE: Automated evolutionary feature engineering for tabular ML: r/MachineLearning&lt;/b&gt;
+The py-evoFE library (v0.3.0) uses genetic programming to discover and chain feature transformations for tabular datasets. It ships with 40+ built-in transformers, Polars-backed vectorized execution, and multi-fidelity screening to keep search tractable. The package is 100% scikit-learn compatible and includes an interactive HTML replay viewer for inspecting the evolutionary process. Hierarchical chaining allows evolved features to serve as building blocks for later generations. Install with `pip install py-evoFE` and point it at any pandas or Polars DataFrame for classification or regression tasks. The library also supports island-model parallel search across multiple topologies and post-search Caruana ensembling of island winners. Source: &lt;a href="https://www.reddit.com/r/MachineLearning/comments/1w0788j/pyevofe_automated_evolutionary_feature/"&gt;reddit.com&lt;/a&gt;
+
+Practical &amp; Community
+&lt;b&gt;Workday reports higher profit and revenue tied to AI agent adoption: WSJ&lt;/b&gt;
+Workday linked recent earnings growth directly to internal AI agent usage. The company highlighted agent-driven automation in finance and HR workflows as a primary driver. Enterprises watching agent ROI should review how Workday measured time saved versus error rates in production. The earnings report explicitly attributes profit and revenue increases to these agent deployments. The case provides a concrete example of agent impact tracked at the level of quarterly financial results. Source: &lt;a href="https://www.wsj.com/business/earnings/workday-reports-higher-profit-revenue-on-ai-agent-adoption-a94e8f10"&gt;wsj.com&lt;/a&gt;
+
+&lt;b&gt;Simon Willison asks ChatGPT iPhone users about Chat vs Work modes: X&lt;/b&gt;
+Simon Willison posted an open question on when users switch between the Chat and Work modes in the ChatGPT iPhone app. The thread is collecting real usage patterns around task routing and default settings. Builders shipping mobile agent clients can mine the replies for concrete workflow distinctions users actually notice. The post specifically asks whether Work has become the default for certain task categories. Early replies are surfacing distinctions in how people route different kinds of work between the two modes. Source: &lt;a href="https://x.com/simonw/status/2093081897517674630"&gt;x.com&lt;/a&gt;
+
+Under the Hood: Evidence Frontloading in RAG
+Everyone talks about reranking as a simple quality knob you turn up or down. In practice it is a shifting bottleneck whose location depends on query rate and the relative cost of the reranker versus the downstream LLM. When query load is high, the reranker itself becomes the dominant latency source; lowering its budget frees capacity but risks dropping useful evidence. Evidence frontloading reorders candidates by marginal coverage of the query so the first few documents already contain most of the necessary facts and multi-hop chains. Because the coverage objective is monotone submodular, a greedy selection step guarantees a (1-1/e) approximation while keeping the candidate list short. The second half of the technique, pressure-adaptive budgeting, measures current load on both stages and shrinks the rerank budget only when the reranker is the slower component. The net result is higher recall at lower p95 latency on multi-hop QA workloads, but only when the frontloaded set truly captures complementary evidence; otherwise recall still drops. The approach was tested on three multi-hop QA datasets plus online serving simulations. Use this pattern when your serving trace shows reranker latency dominating; fall back to full reranking when the LLM generation step is the clear bottleneck instead. The key engineering decision is detecting which stage is currently the limiter before adjusting the budget.
+
+Things to Try This Week
+• Join Anthropic’s MHS research preview if you work with lab or robotics hardware; the preview is the fastest way to test a unified driver layer before it reaches open source.
+• Install py-evoFE and run it on one of your tabular datasets this week; the evolutionary search plus Caruana ensembling often beats manual feature work on structured data.
+• Follow the AWS notebook for Amazon Quick + fal agentic workflows if you need reproducible image or video pipelines that agents can call safely.
+• Read the OpenAI student study results and test a similar critical-thinking scaffold on your own internal prompt library before shipping raw model access to end users.
+• Review Workday’s earnings discussion for concrete metrics on agent-driven time savings in finance and HR processes.
+
+On the Horizon
+• Anthropic plans to extend MHS coverage to additional device classes during the research preview.
+• More labs are expected to publish joint cyber-defense guidance following today’s OpenAI and Anthropic statements.
+• Additional multi-turn diagnostic datasets for clinical LLMs are already appearing on arXiv following the MTDiag release.
+• Further earnings reports from enterprise software companies are likely to include agent adoption metrics in coming quarters.</description>
+      <guid isPermaLink="false">models-agents-video-ep155-20260828</guid>
+      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep155_20260828.mp4" length="188163880" type="video/mp4" />
+      <pubDate>Fri, 28 Aug 2026 08:00:00 +0000</pubDate>
+      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep155_20260828.jpg" />
+      <itunes:duration>07:38</itunes:duration>
+      <itunes:explicit>no</itunes:explicit>
+      <itunes:summary># Models &amp; Agents
+&gt; **Anthropic’s new hardware standard gives AI agents a unified way to control lab equipment, boards, and cameras through one interface.**
+
+**What You Need to Know:** Anthropic opened a research preview of its Model Hardware Standard (MHS) today, inviting partners in science, robotics, and manufacturing to help shape a common driver layer for physical devices. The effort starts with lab and manufacturing gear and will expand via Claude Code to boards and cameras. Builders should watch how safety evaluations for physical-world use evolve during the preview.
+---
+### DEPTH OVER BREADTH (news items)
+
+### Top Story
+Anthropic launched a research preview of the Model Hardware Standard (MHS) to create a standardized driver interface for AI agents to operate physical equipment. The standard currently focuses on lab and manufacturing devices but will extend to boards, cameras, and similar hardware through Claude Code so everything works under one interface. Developers already using Claude Code for hardware tasks can join the preview to test extensions. The preview will also produce new safety evaluations because current models still lack physical intuition from text-and-image training alone. Stakeholders from science, robotics, electronics, and manufacturing are invited to participate before any open-source release. The collaboration began with HHMI and now seeks input across multiple industries to shape the interface before broader open-source involvement. Source: [anthropic.com](https://www.anthropic.com/news/model-hardware-standard-research-preview)
+---
+### Model Updates
+**ChatGPT plus critical-thinking training improves student performance: OpenAI Blog**
+OpenAI ran a randomized study with more than 1,000 students on a real university assignment. Students who combined ChatGPT use with explicit critical-thinking training produced stronger answers and broader thinking than either approach alone. The result shows measurable gains in originality and assignment scores when the tool is paired with structured guidance rather than used in isolation. The study examined both originality metrics and overall performance on the assignment task. Builders working on educational agents should test similar training scaffolds before deploying raw model access. The findings highlight that tool access alone does not automatically improve outcomes without additional instructional structure. Source: [openai.com](https://openai.com/index/what-students-gain-from-chatgpt-critical-thinking-training)
+---
+### Agent &amp; Tool Developments
+**Cisco deploys custom AI agent to 90,000-person workforce: PYMNTS.com**
+Cisco rolled out a single custom AI agent across its entire employee base. The deployment gives every worker the same agent tooling rather than scattered point solutions. Early results tie the rollout to measurable productivity lifts inside the company. The agent was built internally and distributed uniformly rather than through multiple vendor tools. Teams evaluating enterprise agent platforms should examine how Cisco handled access controls and audit logging at this scale. The move reflects a deliberate choice to standardize on one agent surface for consistency across departments. Source: [pymnts.com](https://www.pymnts.com/news/artificial-intelligence/2026/cisco-deploys-custom-ai-agent-to-entire-90000-person-workforce/)
+
+**Build agentic creative workflows with Amazon Quick and fal: Amazon Web Services (AWS)**
+AWS released guidance for combining Amazon Quick with the fal platform to create agent-driven creative pipelines. The setup lets agents orchestrate image and video generation steps with explicit tool calls. Developers can follow the published notebook to wire agents directly to fal endpoints without custom orchestration code. The pattern supports step-by-step agent control over generation parameters and output handling. The pattern is useful when you need reproducible, auditable creative pipelines rather than one-off generation calls. The notebook demonstrates direct integration that avoids building separate orchestration layers from scratch. Source: [aws.amazon.com](https://aws.amazon.com/blogs/machine-learning/build-agentic-creative-workflows-with-amazon-quick-and-fal/)
+
+**py-evoFE: Automated evolutionary feature engineering for tabular ML: r/MachineLearning**
+The py-evoFE library (v0.3.0) uses genetic programming to discover and chain feature transformations for tabular datasets. It ships with 40+ built-in transformers, Polars-backed vectorized execution, and multi-fidelity screening to keep search tractable. The package is 100% scikit-learn compatible and includes an interactive HTML replay viewer for inspecting the evolutionary process. Hierarchical chaining allows evolved features to serve as building blocks for later generations. Install with `pip install py-evoFE` and point it at any pandas or Polars DataFrame for classification or regression tasks. The library also supports island-model parallel search across multiple topologies and post-search Caruana ensembling of island winners. Source: [reddit.com](https://www.reddit.com/r/MachineLearning/comments/1w0788j/pyevofe_automated_evolutionary_feature/)
+---
+### Practical &amp; Community
+**Workday reports higher profit and revenue tied to AI agent adoption: WSJ**
+Workday linked recent earnings growth directly to internal AI agent usage. The company highlighted agent-driven automation in finance and HR workflows as a primary driver. Enterprises watching agent ROI should review how Workday measured time saved versus error rates in production. The earnings report explicitly attributes profit and revenue increases to these agent deployments. The case provides a concrete example of agent impact tracked at the level of quarterly financial results. Source: [wsj.com](https://www.wsj.com/business/earnings/workday-reports-higher-profit-revenue-on-ai-agent-adoption-a94e8f10)
+
+**Simon Willison asks ChatGPT iPhone users about Chat vs Work modes: X**
+Simon Willison posted an open question on when users switch between the Chat and Work modes in the ChatGPT iPhone app. The thread is collecting real usage patterns around task routing and default settings. Builders shipping mobile agent clients can mine the replies for concrete workflow distinctions users actually notice. The post specifically asks whether Work has become the default for certain task categories. Early replies are surfacing distinctions in how people route different kinds of work between the two modes. Source: [x.com](https://x.com/simonw/status/2093081897517674630)
+---
+### Under the Hood: Evidence Frontloading in RAG
+Everyone talks about reranking as a simple quality knob you turn up or down. In practice it is a shifting bottleneck whose location depends on query rate and the relative cost of the reranker versus the downstream LLM. When query load is high, the reranker itself becomes the dominant latency source; lowering its budget frees capacity but risks dropping useful evidence. Evidence frontloading reorders candidates by marginal coverage of the query so the first few documents already contain most of the necessary facts and multi-hop chains. Because the coverage objective is monotone submodular, a greedy selection step guarantees a (1-1/e) approximation while keeping the candidate list short. The second half of the technique, pressure-adaptive budgeting, measures current load on both stages and shrinks the rerank budget only when the reranker is the slower component. The net result is higher recall at lower p95 latency on multi-hop QA workloads, but only when the frontloaded set truly captures complementary evidence; otherwise recall still drops. The approach was tested on three multi-hop QA datasets plus online serving simulations. Use this pattern when your serving trace shows reranker latency dominating; fall back to full reranking when the LLM generation step is the clear bottleneck instead. The key engineering decision is detecting which stage is currently the limiter before adjusting the budget.
+---
+### Things to Try This Week
+- Join Anthropic’s MHS research preview if you work with lab or robotics hardware; the preview is the fastest way to test a unified driver layer before it reaches open source.
+- Install py-evoFE and run it on one of your tabular datasets this week; the evolutionary search plus Caruana ensembling often beats manual feature work on structured data.
+- Follow the AWS notebook for Amazon Quick + fal agentic workflows if you need reproducible image or video pipelines that agents can call safely.
+- Read the OpenAI student study results and test a similar critical-thinking scaffold on your own internal prompt library before shipping raw model access to end users.
+- Review Workday’s earnings discussion for concrete metrics on agent-driven time savings in finance and HR processes.
+---
+### On the Horizon
+- Anthropic plans to extend MHS coverage to additional device classes during the research preview.
+- More labs are expected to publish joint cyber-defense guidance following today’s OpenAI and Anthropic statements.
+- Additional multi-turn diagnostic datasets for clinical LLMs are already appearing on arXiv following the MTDiag release.
+- Further earnings reports from enterprise software companies are likely to include agent adoption metrics in coming quarters.
+</itunes:summary>
+      <itunes:episode>155</itunes:episode>
+      <itunes:title>Ep 155: Anthropic’s new hardware standard gives AI agents a unified way to control lab equipment…</itunes:title>
+      <itunes:episodeType>full</itunes:episodeType>
+    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep155_20260828_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep155.json" type="application/json+chapters" /></item>
     <item>
       <title>Ep 154: Researchers can now analyze real Claude usage data outside labs — Anthropic released…</title>
       <description>Models &amp; Agents
@@ -3460,116 +3565,5 @@ Everyone talks about instruction hierarchies as if a single prompt or training s
       <itunes:title>Ep 126: OpenAI's GPT-5.6 Sol just tripled its ARC-AGI-3 score using two API settings that also cut…</itunes:title>
       <itunes:episodeType>full</itunes:episodeType>
     <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep126_20260730_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep126.json" type="application/json+chapters" /></item>
-    <item>
-      <title>Ep 125: MCP’s largest update removes session stickiness so agents can scale behind ordinary load balancers.</title>
-      <description>Models &amp; Agents
-&lt;b&gt;MCP’s largest update removes session stickiness so agents can scale behind ordinary load balancers.&lt;/b&gt;
-
-&lt;b&gt;What You Need to Know:&lt;/b&gt; The Model Context Protocol gained a fully stateless architecture, mandatory issuer validation, and official extensions for interactive UIs and long-running tasks. Snowflake released Cortex AI Gateway to give enterprises centralized policy, identity, and cost controls over agents touching their data. Microsoft shipped a 5B-active-parameter cyber-defense model and a .NET library that lets agents pull skills directly from MCP servers.
-
-Top Story
-The Model Context Protocol received its largest architectural revision since launch, moving to a fully stateless design, hardening authentication against mix-up attacks, and graduating MCP Apps and MCP Tasks to official extensions. Servers can now sit behind standard load balancers without sticky sessions, and clients receive durable task handles for work that outlives a single connection. Payloads grow modestly but remain compressible; out-of-band logging was dropped after telemetry showed almost no usage. The 12-month deprecation policy and Enterprise Managed Authorization extension (developed with Okta) give large organizations the stability and governance guarantees they demanded. SDK downloads have reached roughly 250 million per week, and the Agentic AI Foundation now has 240 members. The update also finalizes support for more than 100 MCP servers in the new transport layer and adds multi-round-trip request negotiation. Builders running production agents should test the new transport layer and the Tasks extension for any workflow that previously required persistent connections. Source: &lt;a href="https://venturebeat.com/infrastructure/mcp-just-got-its-biggest-update-ever-heres-what-changes-for-ai-agents"&gt;venturebeat.com&lt;/a&gt;
-
-Model Updates
-&lt;b&gt;MAI-Cyber-1-Flash: MarkTechPost&lt;/b&gt;
-Microsoft released MAI-Cyber-1-Flash, a 137B-total, 5B-active sparse MoE fine-tune of MAI-Code-1-Flash with a 256k context window. The model runs inside the MDASH agentic scanning harness, where it handles up to 90% of tasks and lifts the system to 95.95% on CyberGym. It is not offered as a standalone endpoint. The fine-tune targets cyber-defense workloads and integrates directly into Microsoft’s multi-model agentic scanning pipeline. Security teams evaluating automated defense tooling should watch how MDASH routes tasks to this model versus larger general-purpose backends. Source: &lt;a href="https://www.marktechpost.com/2026/07/28/microsoft-ai-releases-mai-cyber-1-flash-a-5b-active-parameter-cyber-model-that-pushes-mdash-to-95-95-on-cybergym/"&gt;marktechpost.com&lt;/a&gt;
-
-&lt;b&gt;1-Bit Bonsai-27B deployment: MarkTechPost&lt;/b&gt;
-A tutorial shows how to run the 1-bit Bonsai-27B model using the PrismML fork of llama.cpp and its specialized CUDA kernels for the Q1_0_g128 GGUF format. The setup exposes an OpenAI-compatible endpoint for local inference. The quantization format requires the PrismML kernels to decode correctly on consumer GPUs. Developers working with extreme quantization on consumer GPUs now have a documented path that preserves usable output quality. Source: &lt;a href="https://www.marktechpost.com/2026/07/28/deploying-a-1-bit-bonsai-27b-model-with-prismml-llama-cpp-and-openai-compatible-local-inference-workflows/"&gt;marktechpost.com&lt;/a&gt;
-
-&lt;b&gt;Anthropic open-weights stance: AnthropicAI&lt;/b&gt;
-Anthropic published its formal position on open-weights models after weeks of speculation. The post clarifies the company’s views on safety, proliferation, and commercial use without announcing any new model releases. The document addresses licensing, safety commitments, and the divergence between open-weight support and security practices across the industry. Teams deciding between closed frontier APIs and open-weight deployments should read the full document for the lab’s explicit risk assessment. Source: &lt;a href="https://x.com/AnthropicAI/status/2081864750296658008"&gt;x.com&lt;/a&gt;
-
-Agent &amp; Tool Developments
-&lt;b&gt;Cortex AI Gateway: VentureBeat&lt;/b&gt;
-Snowflake launched Cortex AI Gateway, a control plane that enforces identity, policy, and audit for agents accessing enterprise data, including third-party agents from Anthropic, Cursor, and others. It supports more than 100 MCP servers, provides dual attribution (agent identity plus human delegator), and adds spend limits to curb runaway costs. The gateway builds on the May 2026 Natoma acquisition and integrates with 1Password, SailPoint, Saviynt, Aembit, and Linx Security in private preview. Task-scoped access tokens replace inherited user permissions, and runtime monitoring compares every action against the original human intent. Enterprises moving agents into production should evaluate the gateway’s task-scoped access model before granting broad credentials. Source: &lt;a href="https://venturebeat.com/security/snowflake-launches-cortex-ai-gateway-to-control-ai-agents-and-prevent-runaway-enterprise-costs"&gt;venturebeat.com&lt;/a&gt;
-
-&lt;b&gt;Tines 3B: PR Newswire&lt;/b&gt;
-Tines released version 3B focused on governing AI workflows, apps, and agents at enterprise scale. The update adds centralized controls for automation builders who need policy enforcement across multiple agent platforms. Security and operations teams already using Tines for no-code workflows can now apply the same governance layer to autonomous agents. The release targets organizations that must audit and constrain agent actions across heterogeneous tool ecosystems. Source: &lt;a href="https://news.google.com/rss/articles/CBMiyAFBVV95cUxQQW1SaFJoY0dmQS1sSURmVDNoa18zTU1yZ0p4SnBmY1RhRjBfbWxabWVTVjRiVmVCMDc1TnNacTYtZWpwZVJmQ2pvWTE5dFhDa2VkNjRCVHNZcnQ4eWRnclg2cXJNVXpQcVBhYmlnUlhDZHlTS20weElPc0o2eW5YWmRpd3ZKLUFJM2xOanJ6a081dHBZYkFfU0xZUXNmNlY0Vkp0dHFGLXYzUGZpdFNBMjVHSnZjUE9kV0ZSQ2pESUJvTmdia0x6WQ?oc=5"&gt;Google News&lt;/a&gt;
-
-&lt;b&gt;Agent Skills from MCP in .NET: Microsoft Semantic Kernel&lt;/b&gt;
-Semantic Kernel now lets agents discover and load skills directly from any MCP server at runtime instead of embedding them in the application binary. A central team can publish skills once and have agents pull only what they need per deployment. The change removes the need to copy skill folders into every container image or binary distribution. .NET developers building agentic applications should test the new discovery flow on existing MCP servers. Source: &lt;a href="https://devblogs.microsoft.com/agent-framework/discover-agent-skills-from-mcp-servers-in-net/"&gt;devblogs.microsoft.com&lt;/a&gt;
-
-Practical &amp; Community
-&lt;b&gt;PIRL / PIPO: r/MachineLearning&lt;/b&gt;
-A new Policy Improvement Reinforcement Learning framework adds a retrospective verification step after each base-algorithm update (PPO, GRPO, DAPO, etc.). If the updated policy improves on a sliding historical window it reinforces the change; otherwise it corrects the direction. The authors released code at github.com/JacckMa/pipo_verl and report gains across math, code, and tool-use tasks plus better training stability. The method works as a plug-and-play layer that does not replace the base algorithm’s local credit assignment. RL practitioners should try PIPO as a plug-in layer on top of their current post-training loop. Source: &lt;a href="https://www.reddit.com/r/MachineLearning/comments/1v8wq2b/pirl_from_openloop_exploration_to_closedloop/"&gt;reddit.com&lt;/a&gt;
-
-&lt;b&gt;GPT-Live availability: OpenAI&lt;/b&gt;
-GPT-Live in ChatGPT Voice is now rolled out to Education, Business, and Enterprise plans worldwide. The feature gives teams real-time voice interaction with the model without consumer-plan restrictions. Organizations already on those plans can enable it immediately for internal tooling and customer-facing prototypes. The rollout removes previous geographic and plan-based gating that had limited the voice mode to individual consumer accounts. Source: &lt;a href="https://x.com/OpenAI/status/2081794871795589485"&gt;x.com&lt;/a&gt;
-
-Under the Hood: Closed-Loop Policy Improvement
-Everyone talks about RL post-training as a single forward pass that just gets better each step. In practice the update can degrade performance because of sampling noise, imperfect credit assignment, and stochastic generation, yet most algorithms never check the result before moving on. PIRL adds a second verification phase: after the base optimizer (PPO, GRPO, etc.) takes its exploratory step, the next iteration measures whether the new policy actually outperforms a sliding historical anchor. If the measured gain is positive the direction is reinforced; if negative the update is suppressed or reversed. This adds one extra forward pass per cycle and a small amount of historical state, but the overhead stays modest because the verification re-uses the same reward model already in the loop. The quality gain is largest on tasks where local advantage estimates are noisy—math reasoning and multi-step tool use—and shrinks once models exceed roughly 30B parameters and the base optimizer already produces stable improvements. The two-phase structure also improves cross-seed stability without requiring larger batch sizes or more gradient steps. Teams should reach for PIPO-style verification when they observe high variance across random seeds or when wall-clock efficiency matters more than squeezing the last point of benchmark score; the simpler alternative remains plain on-policy updates when training budgets are extremely tight and variance is already low.
-
-Things to Try This Week
-• Point a Semantic Kernel agent at an existing MCP server and let it load skills on demand instead of baking them into the binary.
-• Add the PIPO verification layer to your current RL post-training run on math or code tasks and compare seed-to-seed stability.
-• Enable GPT-Live on an Enterprise workspace and test real-time voice workflows that previously required separate transcription + LLM steps.
-• Evaluate Cortex AI Gateway’s task-scoped tokens if you are already routing agents through Snowflake data.
-• Run the 1-bit Bonsai-27B tutorial on a single consumer GPU to see whether the quality trade-off is acceptable for your offline use case.
-
-On the Horizon
-• Cortex AI Gateway enters public preview in the coming weeks.
-• Additional MCP servers and identity-provider integrations are expected from the new coalition partners.
-• More labs are expected to publish their own positions on open-weights models following Anthropic’s release.
-• Further MCP transport and authorization extensions remain on the AAIF working-group agenda.</description>
-      <guid isPermaLink="false">models-agents-video-ep125-20260728</guid>
-      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep125_20260728.mp4" length="209696555" type="video/mp4" />
-      <pubDate>Tue, 28 Jul 2026 08:00:00 +0000</pubDate>
-      <itunes:duration>11:44</itunes:duration>
-      <itunes:explicit>no</itunes:explicit>
-      <itunes:summary># Models &amp; Agents
-&gt; **MCP’s largest update removes session stickiness so agents can scale behind ordinary load balancers.**
-
-**What You Need to Know:** The Model Context Protocol gained a fully stateless architecture, mandatory issuer validation, and official extensions for interactive UIs and long-running tasks. Snowflake released Cortex AI Gateway to give enterprises centralized policy, identity, and cost controls over agents touching their data. Microsoft shipped a 5B-active-parameter cyber-defense model and a .NET library that lets agents pull skills directly from MCP servers.
----
-### Top Story
-The Model Context Protocol received its largest architectural revision since launch, moving to a fully stateless design, hardening authentication against mix-up attacks, and graduating MCP Apps and MCP Tasks to official extensions. Servers can now sit behind standard load balancers without sticky sessions, and clients receive durable task handles for work that outlives a single connection. Payloads grow modestly but remain compressible; out-of-band logging was dropped after telemetry showed almost no usage. The 12-month deprecation policy and Enterprise Managed Authorization extension (developed with Okta) give large organizations the stability and governance guarantees they demanded. SDK downloads have reached roughly 250 million per week, and the Agentic AI Foundation now has 240 members. The update also finalizes support for more than 100 MCP servers in the new transport layer and adds multi-round-trip request negotiation. Builders running production agents should test the new transport layer and the Tasks extension for any workflow that previously required persistent connections. Source: [venturebeat.com](https://venturebeat.com/infrastructure/mcp-just-got-its-biggest-update-ever-heres-what-changes-for-ai-agents)
----
-### Model Updates
-**MAI-Cyber-1-Flash: MarkTechPost**
-Microsoft released MAI-Cyber-1-Flash, a 137B-total, 5B-active sparse MoE fine-tune of MAI-Code-1-Flash with a 256k context window. The model runs inside the MDASH agentic scanning harness, where it handles up to 90% of tasks and lifts the system to 95.95% on CyberGym. It is not offered as a standalone endpoint. The fine-tune targets cyber-defense workloads and integrates directly into Microsoft’s multi-model agentic scanning pipeline. Security teams evaluating automated defense tooling should watch how MDASH routes tasks to this model versus larger general-purpose backends. Source: [marktechpost.com](https://www.marktechpost.com/2026/07/28/microsoft-ai-releases-mai-cyber-1-flash-a-5b-active-parameter-cyber-model-that-pushes-mdash-to-95-95-on-cybergym/)
-
-**1-Bit Bonsai-27B deployment: MarkTechPost**
-A tutorial shows how to run the 1-bit Bonsai-27B model using the PrismML fork of llama.cpp and its specialized CUDA kernels for the Q1_0_g128 GGUF format. The setup exposes an OpenAI-compatible endpoint for local inference. The quantization format requires the PrismML kernels to decode correctly on consumer GPUs. Developers working with extreme quantization on consumer GPUs now have a documented path that preserves usable output quality. Source: [marktechpost.com](https://www.marktechpost.com/2026/07/28/deploying-a-1-bit-bonsai-27b-model-with-prismml-llama-cpp-and-openai-compatible-local-inference-workflows/)
-
-**Anthropic open-weights stance: AnthropicAI**
-Anthropic published its formal position on open-weights models after weeks of speculation. The post clarifies the company’s views on safety, proliferation, and commercial use without announcing any new model releases. The document addresses licensing, safety commitments, and the divergence between open-weight support and security practices across the industry. Teams deciding between closed frontier APIs and open-weight deployments should read the full document for the lab’s explicit risk assessment. Source: [x.com](https://x.com/AnthropicAI/status/2081864750296658008)
----
-### Agent &amp; Tool Developments
-**Cortex AI Gateway: VentureBeat**
-Snowflake launched Cortex AI Gateway, a control plane that enforces identity, policy, and audit for agents accessing enterprise data, including third-party agents from Anthropic, Cursor, and others. It supports more than 100 MCP servers, provides dual attribution (agent identity plus human delegator), and adds spend limits to curb runaway costs. The gateway builds on the May 2026 Natoma acquisition and integrates with 1Password, SailPoint, Saviynt, Aembit, and Linx Security in private preview. Task-scoped access tokens replace inherited user permissions, and runtime monitoring compares every action against the original human intent. Enterprises moving agents into production should evaluate the gateway’s task-scoped access model before granting broad credentials. Source: [venturebeat.com](https://venturebeat.com/security/snowflake-launches-cortex-ai-gateway-to-control-ai-agents-and-prevent-runaway-enterprise-costs)
-
-**Tines 3B: PR Newswire**
-Tines released version 3B focused on governing AI workflows, apps, and agents at enterprise scale. The update adds centralized controls for automation builders who need policy enforcement across multiple agent platforms. Security and operations teams already using Tines for no-code workflows can now apply the same governance layer to autonomous agents. The release targets organizations that must audit and constrain agent actions across heterogeneous tool ecosystems. Source: [Google News](https://news.google.com/rss/articles/CBMiyAFBVV95cUxQQW1SaFJoY0dmQS1sSURmVDNoa18zTU1yZ0p4SnBmY1RhRjBfbWxabWVTVjRiVmVCMDc1TnNacTYtZWpwZVJmQ2pvWTE5dFhDa2VkNjRCVHNZcnQ4eWRnclg2cXJNVXpQcVBhYmlnUlhDZHlTS20weElPc0o2eW5YWmRpd3ZKLUFJM2xOanJ6a081dHBZYkFfU0xZUXNmNlY0Vkp0dHFGLXYzUGZpdFNBMjVHSnZjUE9kV0ZSQ2pESUJvTmdia0x6WQ?oc=5)
-
-**Agent Skills from MCP in .NET: Microsoft Semantic Kernel**
-Semantic Kernel now lets agents discover and load skills directly from any MCP server at runtime instead of embedding them in the application binary. A central team can publish skills once and have agents pull only what they need per deployment. The change removes the need to copy skill folders into every container image or binary distribution. .NET developers building agentic applications should test the new discovery flow on existing MCP servers. Source: [devblogs.microsoft.com](https://devblogs.microsoft.com/agent-framework/discover-agent-skills-from-mcp-servers-in-net/)
----
-### Practical &amp; Community
-**PIRL / PIPO: r/MachineLearning**
-A new Policy Improvement Reinforcement Learning framework adds a retrospective verification step after each base-algorithm update (PPO, GRPO, DAPO, etc.). If the updated policy improves on a sliding historical window it reinforces the change; otherwise it corrects the direction. The authors released code at github.com/JacckMa/pipo_verl and report gains across math, code, and tool-use tasks plus better training stability. The method works as a plug-and-play layer that does not replace the base algorithm’s local credit assignment. RL practitioners should try PIPO as a plug-in layer on top of their current post-training loop. Source: [reddit.com](https://www.reddit.com/r/MachineLearning/comments/1v8wq2b/pirl_from_openloop_exploration_to_closedloop/)
-
-**GPT-Live availability: OpenAI**
-GPT-Live in ChatGPT Voice is now rolled out to Education, Business, and Enterprise plans worldwide. The feature gives teams real-time voice interaction with the model without consumer-plan restrictions. Organizations already on those plans can enable it immediately for internal tooling and customer-facing prototypes. The rollout removes previous geographic and plan-based gating that had limited the voice mode to individual consumer accounts. Source: [x.com](https://x.com/OpenAI/status/2081794871795589485)
----
-### Under the Hood: Closed-Loop Policy Improvement
-Everyone talks about RL post-training as a single forward pass that just gets better each step. In practice the update can degrade performance because of sampling noise, imperfect credit assignment, and stochastic generation, yet most algorithms never check the result before moving on. PIRL adds a second verification phase: after the base optimizer (PPO, GRPO, etc.) takes its exploratory step, the next iteration measures whether the new policy actually outperforms a sliding historical anchor. If the measured gain is positive the direction is reinforced; if negative the update is suppressed or reversed. This adds one extra forward pass per cycle and a small amount of historical state, but the overhead stays modest because the verification re-uses the same reward model already in the loop. The quality gain is largest on tasks where local advantage estimates are noisy—math reasoning and multi-step tool use—and shrinks once models exceed roughly 30B parameters and the base optimizer already produces stable improvements. The two-phase structure also improves cross-seed stability without requiring larger batch sizes or more gradient steps. Teams should reach for PIPO-style verification when they observe high variance across random seeds or when wall-clock efficiency matters more than squeezing the last point of benchmark score; the simpler alternative remains plain on-policy updates when training budgets are extremely tight and variance is already low.
----
-### Things to Try This Week
-- Point a Semantic Kernel agent at an existing MCP server and let it load skills on demand instead of baking them into the binary.
-- Add the PIPO verification layer to your current RL post-training run on math or code tasks and compare seed-to-seed stability.
-- Enable GPT-Live on an Enterprise workspace and test real-time voice workflows that previously required separate transcription + LLM steps.
-- Evaluate Cortex AI Gateway’s task-scoped tokens if you are already routing agents through Snowflake data.
-- Run the 1-bit Bonsai-27B tutorial on a single consumer GPU to see whether the quality trade-off is acceptable for your offline use case.
----
-### On the Horizon
-- Cortex AI Gateway enters public preview in the coming weeks.
-- Additional MCP servers and identity-provider integrations are expected from the new coalition partners.
-- More labs are expected to publish their own positions on open-weights models following Anthropic’s release.
-- Further MCP transport and authorization extensions remain on the AAIF working-group agenda.</itunes:summary>
-      <itunes:episode>125</itunes:episode>
-      <itunes:title>Ep 125: MCP’s largest update removes session stickiness so agents can scale behind ordinary load balancers.</itunes:title>
-      <itunes:episodeType>full</itunes:episodeType>
-    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep125_20260728_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep125.json" type="application/json+chapters" /></item>
   <podcast:locked owner="patrick@planetterrian.com">yes</podcast:locked><itunes:keywords>ai, llm, machine learning, openai, anthropic, agents, claude, gpt, ai news</itunes:keywords></channel>
 </rss>
