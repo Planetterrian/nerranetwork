@@ -1,0 +1,109 @@
+Le nouveau standard matériel d'Anthropic donne aux agents d'IA une façon unifiée de contrôler les équipements de laboratoire et de fabrication, sans pilotes sur mesure pour chaque appareil.
+
+Ici Models and Agents, épisode cent cinquante-six.
+
+Anthropic a ouvert aujourd'hui un aperçu de recherche de son Model Hardware Standard.
+
+L'aperçu invite les partenaires en science, en robotique et en fabrication à étendre la portée matérielle de Claude Code.
+
+Google a lancé Gemini trois virgule cinq Transcribe, avec des points de terminaison distincts en flux et par lots.
+
+Un développeur de la communauté a rétroconçu un format de moteur de processeur neuronal Axera pour faire tourner des modèles GGUF directement à une virgule cinq fois la vitesse d'exécution du fournisseur, sur du matériel Raspberry Pi.
+
+Anthropic a lancé l'aperçu de recherche du Model Hardware Standard dans le cadre d'une collaboration née avec le Howard Hughes Medical Institute.
+
+Pour l'instant, le standard couvre surtout les équipements de laboratoire et de fabrication.
+
+L'aperçu vise à l'étendre aux cartes, aux caméras et aux autres appareils déjà pilotés par Claude Code, pour que tout fonctionne à travers une seule interface.
+
+Anthropic souligne que les grands modèles de langage manquent encore d'intuition physique, parce qu'ils n'ont appris le monde physique qu'à partir de textes et d'images.
+
+L'aperçu produira aussi davantage d'évaluations de sécurité avant toute publication en source ouverte.
+
+Les créateurs qui travaillent sur des agents du monde physique devraient surveiller cet aperçu, pour un accès anticipé et des canaux de retours.
+
+Cet effort s'attaque directement au fossé entre les agents purement textuels et le véritable contrôle du matériel.
+
+Google a publié Gemini trois virgule cinq Transcribe sous la forme de deux points de terminaison plutôt qu'un seul.
+
+Le point de terminaison en flux livre une transcription en moins d'une seconde, mais abandonne la diarisation des locuteurs et l'horodatage des mots.
+
+Le point de terminaison par lots conserve les deux fonctionnalités, pour la moitié du coût.
+
+Google annonce un taux d'erreur de mots de quatre virgule zéro pour cent en flux et de deux virgule six pour cent hors flux, avec une finalisation soixante-dix pour cent plus rapide que Chirp trois.
+
+Les utilisateurs de la communauté rapportent qu'Ornith un virgule cinq offre de solides performances d'appel d'outils, à environ cent trente jetons par seconde avec la prédiction multi-jetons, sur du matériel grand public.
+
+Les testeurs le décrivent comme ce qui comble l'écart entre Qwen trois virgule huit vingt-sept B et une variante hypothétique plus rapide de trente-cinq B.
+
+Le modèle tourne bien là où les plus grandes variantes de Qwen paraissaient trop lentes.
+
+Des chercheurs ont publié TelecomGPT-R un neuf B, un raisonneur unifié en source ouverte, affiné à partir de Qwen trois virgule cinq neuf B sur un corpus de soixante-sept mille quatre cent vingt-sept exemples.
+
+Le modèle se classe premier parmi les grands modèles de langage télécoms en source ouverte sur sept bancs d'essai publics, après un affinage supervisé LoRA multi-enseignants, suivi de GRPO avec des vérificateurs alignés sur les axes.
+
+Il atteint des performances comparables aux raisonneurs propriétaires de pointe sur les tâches spécifiques aux télécoms.
+
+Un développeur a rétroconçu le format de moteur du processeur neuronal Axera AX8850 pour greffer les poids GGUF directement dans des moteurs précompilés, sans compilation du fournisseur.
+
+L'approche stocke les poids en entier huit bits sous forme de deux plans de quartets, et atteint quatre-vingt-seize pour cent d'accord des jetons avec la référence processeur, tout en tournant à vingt-quatre virgule cinq jetons par seconde en décodage sur un Raspberry Pi cinq.
+
+Le même travail a réparé un chemin de préremplissage par lots jusqu'alors inutilisé, atteignant sept cent seize jetons par seconde en traitement de l'invite.
+
+Tout le moteur tient dans un seul fichier de quatre mille cinq cents lignes, dans une variante de llama point c p p.
+
+TreeGraft introduit un cadre à plusieurs rédacteurs d'ébauche, où des rédacteurs de tailles différentes construisent ensemble un arbre d'ébauche partagé pour le décodage spéculatif.
+
+Un ordonnanceur léger, distillé à partir d'un système de valeur hors ligne, décide quand invoquer le rédacteur plus puissant.
+
+Sur dix paires de modèles et six bancs d'essai, la méthode dépasse en moyenne de quinze virgule un pour cent la meilleure base à un seul rédacteur.
+
+FIRSTPASS fournit trois mille six cent soixante-huit dialogues éditoriaux en plusieurs tours, tirés de Nature Communications, en biologie, chimie, neurosciences, physique et sciences de la Terre.
+
+Le jeu de données capture les rapports initiaux des évaluateurs, les réponses des auteurs, et les évaluations mises à jour.
+
+UPHELD fournit des centaines de dialogues complets d'humain à humain, écrits par des scénaristes professionnels, avec plus de trente-six mille annotations humaines par tour.
+
+Un cadre de mélange de juges améliore la corrélation d'environ trente pour cent.
+
+Vagdhenu ajoute un frontal conscient des vrutta et un mécanisme d'appariement de références à une dorsale de synthèse vocale par appariement de flux, prête à l'emploi, pour une sortie fidèle de chants sanskrits.
+
+Deux déploiements couvrent déjà respectivement cinq mille cent quatre-vingt-trois versets et dix-huit mille versets.
+
+Tout le monde parle de la pensée adaptative dans les modèles multimodaux comme si le modèle décidait simplement à quel point raisonner.
+
+En pratique, la décision vit dans un seul jeton, dont l'entropie de la distribution de probabilités devient le signal d'entraînement.
+
+Une entropie élevée à ce jeton signifie que le modèle est encore en train d'explorer s'il doit engager une chaîne de pensée.
+
+Une entropie basse signale une convergence vers une politique.
+
+Le processus d'entraînement passe donc d'une exploration à haute entropie, où de nombreuses stratégies de pensée sont essayées, à une convergence à basse entropie, où le modèle choisit avec confiance quand réfléchir.
+
+Le gain pratique apparaît sur les charges de travail mixtes.
+
+Les questions complexes reçoivent un raisonnement complet, tandis que les simples le sautent, ce qui coupe du calcul inutile sans perte de précision sur les cas faciles.
+
+Le piège qui attrape le plus d'équipes, c'est de supposer que le seuil d'entropie se transfère d'un domaine à l'autre.
+
+Testez le point de terminaison par lots de Gemini trois virgule cinq Transcribe sur n'importe quelle chaîne de transcription existante, pour mesurer la finalisation soixante-dix pour cent plus rapide par rapport à votre budget de latence actuel.
+
+Construisez un petit prototype de contrôle matériel s'appuyant sur l'aperçu de recherche du Model Hardware Standard si vous avez accès à du matériel de laboratoire ou de robotique déjà piloté par Claude Code.
+
+Lancez le moteur AXCL de llama point c p p sur un appareil aarch soixante-quatre avec le démarrage rapide fourni, pour comparer les vingt-quatre virgule cinq jetons par seconde en décodage à votre configuration actuelle d'inférence en périphérie.
+
+Évaluez Ornith un virgule cinq sur une boucle d'appel d'outils que vous faites actuellement tourner avec Qwen trois virgule huit vingt-sept B, pour voir si la vitesse rapportée de cent trente jetons par seconde justifie de changer votre outil du quotidien.
+
+Anthropic s'attend à partager davantage d'évaluations de sécurité du Model Hardware Standard une fois que l'aperçu de recherche aura rassemblé suffisamment de retours des partenaires.
+
+Google n'a pas encore annoncé si Gemini trois virgule cinq Transcribe recevra une couverture linguistique supplémentaire au-delà des quatre-vingt-cinq et plus actuelles.
+
+Les auteurs de TreeGraft prévoient de publier le code d'entraînement complet après la période d'évaluation anonyme.
+
+Avant de nous quitter, Anthropic rassemblera les retours des partenaires sur l'aperçu du Model Hardware Standard avant de publier d'autres évaluations de sécurité.
+
+Voilà qui clôt le briefing IA du jour. Partagez-le avec un développeur ou un créateur qui veut rester à jour. Abonnez-vous partout où vous nous écoutez. À demain. Et si vous préférez regarder plutôt qu'écouter, retrouvez-nous sur YouTube chez Nerra Network — le lien est dans les notes de l'émission.
+
+Encore une chose — si l'épisode d'aujourd'hui vous a plu, notre émission sœur Omni View mérite une place dans votre flux : un briefing quotidien équilibré sur l'actualité mondiale, qui prend chaque camp au sérieux. C'est l'un des briefings quotidiens du Nerra Network, entièrement gratuits sur nerranetwork point com. Vous préférez lire ? Le compte-rendu complet du jour, les sources et la transcription sont sur le blog de l'épisode à nerranetwork point com — le même briefing, en format lisible.
+
+Cet épisode a utilisé une synthèse vocale par IA de ma voix — la sélection éditoriale et l'analyse sont les miennes.
