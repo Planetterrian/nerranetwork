@@ -63,8 +63,18 @@ runs:
         # Hash Sum mismatches and exit 100, which killed an entire
         # episode run (FF, June 11 2026) even though our packages come
         # from the Ubuntu archives and install fine from cached indexes.
-        sudo apt-get update -qq || sudo apt-get update -qq ||           echo "::warning::apt-get update failed twice — installing from cached indexes"
-        sudo apt-get install -y -qq ${{ inputs.system-packages }}
+        #
+        # Aug 28 2026: each command also gets a HARD TIMEOUT. The retry
+        # only helps when apt FAILS — on outage day a stalled mirror made
+        # `apt-get update` HANG for ~44 minutes with no output until the
+        # job-level 45-minute hang guard killed the whole run (spacex run
+        # 33151417188: apt woke up at 08:11:13, finished installing at
+        # 08:11:19, and the guard fired at 08:11:20). With per-command
+        # timeouts a stalled mirror costs ~6 minutes total and the run
+        # proceeds from cached indexes; the 45-minute step guard stays as
+        # the outer backstop.
+        sudo timeout 120 apt-get update -qq || sudo timeout 120 apt-get update -qq ||           echo "::warning::apt-get update failed or timed out twice — installing from cached indexes"
+        sudo timeout 300 apt-get install -y -qq ${{ inputs.system-packages }} ||           sudo timeout 300 apt-get install -y -qq ${{ inputs.system-packages }}
 
     - name: Install dependencies
       shell: bash
