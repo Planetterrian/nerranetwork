@@ -1,96 +1,286 @@
 {
   "date": "2026-08-29",
-  "generated_at": "2026-08-29T00:33:16.104368+00:00",
+  "generated_at": "2026-08-29T19:25:57.871531+00:00",
   "summary": {
-    "episodes_reviewed": 0,
-    "critical_issues": 11,
-    "warning_issues": 0,
-    "missed_episodes": 11,
+    "episodes_reviewed": 11,
+    "critical_issues": 5,
+    "warning_issues": 19,
+    "missed_episodes": 0,
     "skipped_episodes": 0
   },
   "remediation": {
-    "auto_retry_shows": [
-      "dp_pod",
-      "fascinating_frontiers",
-      "first_principles",
-      "models_agents",
-      "models_agents_beginners",
-      "modern_investing",
-      "omni_view",
-      "planetterrian",
-      "spacex",
-      "tesla",
-      "unintended_consequences"
-    ],
-    "recommendation": "Run `gh workflow run run-show.yml -f show=<slug>` for the shows above if they are not intentionally skipped."
+    "auto_retry_shows": [],
+    "recommendation": "No automatic retries recommended."
   },
-  "missed_and_skipped": [
+  "missed_and_skipped": [],
+  "episodes": [
     {
       "show": "tesla",
-      "severity": "critical",
-      "title": "Missed episode: Tesla Shorts Time",
-      "detail": "Tesla Shorts Time was scheduled to produce an episode on 2026-08-29 (schedule: daily) but no output files were found in digests/tesla_shorts_time/ and no skip marker was present. The pipeline may have failed or the workflow did not trigger."
+      "episode_num": 588,
+      "critical": 1,
+      "warnings": 1,
+      "issues": [
+        {
+          "severity": "warning",
+          "title": "Podcast script below target (1064 words)",
+          "detail": "Script has 1064 words (target: 1400+). Episode may feel shorter than usual."
+        },
+        {
+          "severity": "critical",
+          "title": "AI review: Repetitive",
+          "detail": "Europe FSD approval delays (Germany/UK/France, no clearances) are restated near-verbatim later in the episode."
+        },
+        {
+          "severity": "info",
+          "title": "AI quality score: 7/10",
+          "detail": "Coherent Tesla news roundup with a clear close and CTAs; the main quality issue is duplicated regulatory copy and loosely stitched segments, but it remains publishable."
+        }
+      ]
     },
     {
       "show": "omni_view",
-      "severity": "critical",
-      "title": "Missed episode: Omni View",
-      "detail": "Omni View was scheduled to produce an episode on 2026-08-29 (schedule: daily) but no output files were found in digests/omni_view/ and no skip marker was present. The pipeline may have failed or the workflow did not trigger."
+      "episode_num": 159,
+      "critical": 2,
+      "warnings": 7,
+      "issues": [
+        {
+          "severity": "warning",
+          "title": "Podcast script below target (1251 words)",
+          "detail": "Script has 1251 words (target: 1400+). Episode may feel shorter than usual."
+        },
+        {
+          "severity": "info",
+          "title": "Slow news mode active (trigger: stale_repeats)",
+          "detail": "This episode was produced in slow news mode (trigger: stale_repeats). Verify it sounds natural and doesn't reveal the slow news status."
+        },
+        {
+          "severity": "warning",
+          "title": "Possible story duplication (2 block pairs)",
+          "detail": "Found 2 pairs of non-adjacent paragraph blocks with high proper-noun overlap. The same story may be covered twice."
+        },
+        {
+          "severity": "warning",
+          "title": "High cross-episode repetition (21 stories)",
+          "detail": "The content tracker found 21 stories in this episode that were already covered in recent episodes. This indicates the show may be repeating content across days. Check that {recent_content_summary} is wired into the digest prompt (shows/prompts/{slug}_digest.txt) and that the content tracker JSON is being updated correctly.\n  Config: shows/omni_view.yaml\n  Prompt: shows/prompts/omni_view_digest.txt\n  Tracker: digests/omni_view/omni_view_content_tracker.json"
+        },
+        {
+          "severity": "warning",
+          "title": "Chronic slow news mode (6 recent episodes)",
+          "detail": "This show has been in slow news mode for 6 of the last 6 episodes. This may indicate stale RSS sources, an overly aggressive content tracker, or insufficient source diversity. Consider:\n  - Running a feed audit: python scripts/audit_feeds.py\n  - Adding more RSS sources to shows/omni_view.yaml\n  - Expanding slow news segments: shows/segments/omni_view.json\n  - Checking content tracker cooldown settings"
+        },
+        {
+          "severity": "warning",
+          "title": "AI review: Factual Errors",
+          "detail": "Venezuela\u2019s proven oil reserves are typically cited near ~300 billion barrels, not 65 billion; \u201ctake control of\u201d those reserves is also an extraordinary, poorly specified claim."
+        },
+        {
+          "severity": "critical",
+          "title": "AI review: Incoherent",
+          "detail": "Mid-script sentence cuts off at \u201ccoordination between multiple U.S.\u201d"
+        },
+        {
+          "severity": "critical",
+          "title": "AI review: Repetitive",
+          "detail": "Xanadu loan is restated nearly verbatim; Treasury licensing/sanctions explanation is repeated."
+        },
+        {
+          "severity": "warning",
+          "title": "AI review: Incomplete",
+          "detail": "Truncated sentence and duplicated \u201cprogress\u201d block make the middle feel unfinished even though the outro is present."
+        },
+        {
+          "severity": "warning",
+          "title": "AI quality score: 5/10",
+          "detail": "Grok rated this episode 5/10. Publishable news-roundup structure with a clear closer, but a bad reserve figure, a cut-off sentence, and near-verbatim repeats (Xanadu, OFAC licensing) drag it into significant quality-gap territory."
+        }
+      ]
     },
     {
       "show": "fascinating_frontiers",
-      "severity": "critical",
-      "title": "Missed episode: Fascinating Frontiers",
-      "detail": "Fascinating Frontiers was scheduled to produce an episode on 2026-08-29 (schedule: daily) but no output files were found in digests/fascinating_frontiers/ and no skip marker was present. The pipeline may have failed or the workflow did not trigger."
+      "episode_num": 177,
+      "critical": 1,
+      "warnings": 2,
+      "issues": [
+        {
+          "severity": "warning",
+          "title": "Podcast script below target (1398 words)",
+          "detail": "Script has 1398 words (target: 1700+). Episode may feel shorter than usual."
+        },
+        {
+          "severity": "critical",
+          "title": "AI review: Repetitive",
+          "detail": "The MIT/NASA waste-to-powder story is restated several times with the same details (mixed grind, $775k, no sorting, radiation/properties caveats)."
+        },
+        {
+          "severity": "warning",
+          "title": "AI quality score: 5/10",
+          "detail": "Grok rated this episode 5/10. Coherent space-news briefing with a complete outro, but the recycling segment is padded with near-duplicate paragraphs, which undercuts quality despite otherwise publishable structure."
+        }
+      ]
     },
     {
       "show": "planetterrian",
-      "severity": "critical",
-      "title": "Missed episode: Planetterrian Daily",
-      "detail": "Planetterrian Daily was scheduled to produce an episode on 2026-08-29 (schedule: daily) but no output files were found in digests/planetterrian/ and no skip marker was present. The pipeline may have failed or the workflow did not trigger."
+      "episode_num": 167,
+      "critical": 0,
+      "warnings": 1,
+      "issues": [
+        {
+          "severity": "warning",
+          "title": "Podcast script below target (1078 words)",
+          "detail": "Script has 1078 words (target: 1600+). Episode may feel shorter than usual."
+        },
+        {
+          "severity": "info",
+          "title": "AI quality score: 8/10",
+          "detail": "Clean, well-structured science briefing with clear transitions and a purposeful Spotlight recap of the lead story; publishable with only minor caveats around unverifiable paper-level details."
+        }
+      ]
     },
     {
       "show": "models_agents",
-      "severity": "critical",
-      "title": "Missed episode: Models & Agents",
-      "detail": "Models & Agents was scheduled to produce an episode on 2026-08-29 (schedule: daily) but no output files were found in digests/models_agents/ and no skip marker was present. The pipeline may have failed or the workflow did not trigger."
+      "episode_num": 157,
+      "critical": 0,
+      "warnings": 1,
+      "issues": [
+        {
+          "severity": "warning",
+          "title": "Podcast script below target (1310 words)",
+          "detail": "Script has 1310 words (target: 1500+). Episode may feel shorter than usual."
+        },
+        {
+          "severity": "info",
+          "title": "AI quality score: 7/10",
+          "detail": "Dense, on-topic AI news briefing with a clear wrap and calls to action; mild restatement of the Anthropic alignment item early on, but otherwise publishable."
+        }
+      ]
     },
     {
       "show": "models_agents_beginners",
-      "severity": "critical",
-      "title": "Missed episode: Models & Agents for Beginners",
-      "detail": "Models & Agents for Beginners was scheduled to produce an episode on 2026-08-29 (schedule: daily) but no output files were found in digests/models_agents_beginners/ and no skip marker was present. The pipeline may have failed or the workflow did not trigger."
+      "episode_num": 150,
+      "critical": 0,
+      "warnings": 1,
+      "issues": [
+        {
+          "severity": "warning",
+          "title": "Podcast script below target (945 words)",
+          "detail": "Script has 945 words (target: 1200+). Episode may feel shorter than usual."
+        },
+        {
+          "severity": "info",
+          "title": "AI quality score: 7/10",
+          "detail": "Coherent beginner-friendly briefing on alignment research, evals, creative tools, ChatGPT account linking, and Co-Scientist; analogies and CTAs are a bit salesy but the episode is complete and on-topic."
+        }
+      ]
     },
     {
       "show": "modern_investing",
-      "severity": "critical",
-      "title": "Missed episode: Modern Investing Techniques",
-      "detail": "Modern Investing Techniques was scheduled to produce an episode on 2026-08-29 (schedule: daily) but no output files were found in digests/modern_investing/ and no skip marker was present. The pipeline may have failed or the workflow did not trigger."
+      "episode_num": 154,
+      "critical": 0,
+      "warnings": 2,
+      "issues": [
+        {
+          "severity": "warning",
+          "title": "Podcast script below target (1577 words)",
+          "detail": "Script has 1577 words (target: 1800+). Episode may feel shorter than usual."
+        },
+        {
+          "severity": "warning",
+          "title": "Excessive repetition: 'the twenty day' (6x)",
+          "detail": "The phrase 'the twenty day' appears 6 times, suggesting possible LLM hallucination or loop."
+        },
+        {
+          "severity": "info",
+          "title": "AI quality score: 7/10",
+          "detail": "Coherent educational markets briefing with clear disclaimers, a usable rule (don\u2019t fund laggards), and a concrete volume-confirmation lesson. Theme and portfolio stats recur but not as copy-paste blocks; fine for a daily AI-generated show."
+        }
+      ]
     },
     {
       "show": "spacex",
-      "severity": "critical",
-      "title": "Missed episode: SpaceX Daily",
-      "detail": "SpaceX Daily was scheduled to produce an episode on 2026-08-29 (schedule: daily) but no output files were found in digests/spacex/ and no skip marker was present. The pipeline may have failed or the workflow did not trigger."
+      "episode_num": 84,
+      "critical": 0,
+      "warnings": 1,
+      "issues": [
+        {
+          "severity": "warning",
+          "title": "Podcast script below target (1244 words)",
+          "detail": "Script has 1244 words (target: 1300+). Episode may feel shorter than usual."
+        },
+        {
+          "severity": "info",
+          "title": "AI quality score: 7/10",
+          "detail": "Coherent SpaceX daily with distinct news beats and a denser engineering aside on the small-boat Starlink terminal; wrap and promos are complete. Speculative 2026 items are presented as news but contain no obvious internal contradictions."
+        }
+      ]
     },
     {
       "show": "first_principles",
-      "severity": "critical",
-      "title": "Missed episode: First Principles Daily",
-      "detail": "First Principles Daily was scheduled to produce an episode on 2026-08-29 (schedule: daily) but no output files were found in digests/first_principles/ and no skip marker was present. The pipeline may have failed or the workflow did not trigger."
+      "episode_num": 84,
+      "critical": 0,
+      "warnings": 1,
+      "issues": [
+        {
+          "severity": "warning",
+          "title": "Podcast script below target (1335 words)",
+          "detail": "Script has 1335 words (target: 1400+). Episode may feel shorter than usual."
+        },
+        {
+          "severity": "info",
+          "title": "Significant story overlap with unintended_consequences",
+          "detail": "Found 3 overlapping stories with unintended_consequences. Example: 'segment 1 \u2014 the cold open...'"
+        },
+        {
+          "severity": "info",
+          "title": "AI quality score: 8/10",
+          "detail": "Coherent first-principles cost breakdown of dry pet food versus commodity inputs, with clear arithmetic and a complete close. Argument loops on the same packaging/marketing point but stays publishable and on-topic."
+        }
+      ]
     },
     {
       "show": "unintended_consequences",
-      "severity": "critical",
-      "title": "Missed episode: Unintended Consequences",
-      "detail": "Unintended Consequences was scheduled to produce an episode on 2026-08-29 (schedule: daily) but no output files were found in digests/unintended_consequences/ and no skip marker was present. The pipeline may have failed or the workflow did not trigger."
+      "episode_num": 101,
+      "critical": 1,
+      "warnings": 1,
+      "issues": [
+        {
+          "severity": "warning",
+          "title": "AI review: Factual Errors",
+          "detail": "Script contradicts itself: labeled episode 101 then \u201cthe very first episode.\u201d"
+        },
+        {
+          "severity": "critical",
+          "title": "AI review: Incoherent",
+          "detail": "Opening numbering clash undercuts an otherwise linear six-step narrative."
+        },
+        {
+          "severity": "info",
+          "title": "AI quality score: 6/10",
+          "detail": "Solid Green Revolution / Punjab aquifer case with a clear causal chain, marred by an obvious \u201cfirst episode\u201d vs 101 intro error."
+        }
+      ]
     },
     {
       "show": "dp_pod",
-      "severity": "critical",
-      "title": "Missed episode: The DP Pod",
-      "detail": "The DP Pod was scheduled to produce an episode on 2026-08-29 (schedule: daily) but no output files were found in digests/dp_pod/ and no skip marker was present. The pipeline may have failed or the workflow did not trigger."
+      "episode_num": 51,
+      "critical": 0,
+      "warnings": 1,
+      "issues": [
+        {
+          "severity": "warning",
+          "title": "Excessive repetition: 'messenger r n' (7x)",
+          "detail": "The phrase 'messenger r n' appears 7 times, suggesting possible LLM hallucination or loop."
+        },
+        {
+          "severity": "info",
+          "title": "Script may be missing closing section",
+          "detail": "No closing indicators found in the last 500 characters. Episode may end abruptly without a proper sign-off."
+        },
+        {
+          "severity": "info",
+          "title": "AI quality score: 8/10",
+          "detail": "Clear, well-structured science-and-ops episode with honest caveats on trials, scale, and safety; minor verbal glitches (e.g. repeating \u201cmessenger RNA\u201d) do not hurt listenability."
+        }
+      ]
     }
-  ],
-  "episodes": []
+  ]
 }
