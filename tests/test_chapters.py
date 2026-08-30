@@ -926,3 +926,61 @@ class TestHeadlineAnchoredAutoSegment:
         assert len(chapters) >= 2
         assert chapters[0].title == "Introduction"
         assert chapters[-1].title == "Closing"
+
+
+class TestHookNeverBecomesChapterTitle:
+    """Aug 30 2026 (Omni View Ep160): extract_story_headlines leads with
+    the digest's blockquote HOOK — a full lead sentence kept for image
+    context. Raw token-overlap scoring favors the longest candidate, so
+    the 130-char hook beat the real summit headline in BOTH title paths
+    (per-segment matching and headline-anchored insertion) and the
+    60-char clipper shipped "Leaders from Russia, China, India and Iran
+    meet in Central…" as a listener-facing chapter title. Candidates
+    longer than the title budget are now excluded outright."""
+
+    HOOK = (
+        "Leaders from four large economies meet in Central Asia this very "
+        "week to deepen commercial ties while facing sanctions pressure "
+        "and continued trade uncertainty across every export corridor"
+    )
+
+    def _script(self):
+        pad = "More context follows in plain prose covering operational rollout numbers deployment cadence logistics supplier detail. " * 6
+        intro_pad = "Great to have you along for the ride once again this fine morning. " * 10
+        return (
+            "Welcome to Test Show, your daily update. " + intro_pad + "\n\n"
+            "Leaders from four large economies meet in Central Asia this week "
+            "to deepen ties while facing sanctions and trade pressure. "
+            + pad + "\n\n"
+            "Xpeng Australia announces several new models for that market. "
+            + pad + "\n\n"
+            "Giga Berlin hiring expands while rivals cut positions. "
+            + pad + "\n\n"
+            "That's a wrap for today. Thanks for being here.\n"
+        )
+
+    def _markers(self):
+        return [
+            SectionMarker(pattern="Welcome to Test Show", title="Introduction", where="start"),
+            SectionMarker(pattern="That's a wrap", title="Closing", where="end"),
+        ]
+
+    def test_hook_excluded_from_both_title_paths(self):
+        assert len(self.HOOK) > 60  # stays hook-shaped if the text is edited
+        headlines = [
+            self.HOOK,  # extractor puts the hook first
+            "Leaders gather for Central Asia economy summit",
+            "Xpeng Australia announces new models",
+            "Giga Berlin hiring expands against industry cuts",
+        ]
+        chapters = parse_chapters(
+            self._script(), self._markers(), show_name="test",
+            story_headlines=headlines,
+        )
+        for ch in chapters:
+            assert not ch.title.endswith("…"), ch.title
+            assert len(ch.title) <= 60, ch.title
+        # The lead segment overlaps the hook most, but must take the
+        # real (title-length) headline instead.
+        assert any("Central Asia economy summit" in c.title for c in chapters), (
+            [c.title for c in chapters])

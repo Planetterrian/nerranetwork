@@ -132,6 +132,15 @@ def _best_headline_for_segment(
     for h in headlines:
         if h in used:
             continue
+        if len(h) > max_chars:
+            # Not a title: extract_story_headlines leads with the digest's
+            # blockquote HOOK — a full sentence (needed as image context,
+            # useless here). Raw token-overlap favors the longest
+            # candidate, and a >60-char winner can only ship clipped with
+            # "…" (Omni View Ep160, 2026-08-30: the 130-char hook beat the
+            # real summit headline and the listener-facing chapter title
+            # was a mid-sentence fragment).
+            continue
         h_tokens = _tokenize_for_match(h)
         if not h_tokens:
             continue
@@ -220,6 +229,14 @@ def _headline_anchored_insertions(
     # strongest headline so two stories can't anchor the same spot.
     anchors: dict[int, tuple[int, str]] = {}  # para index -> (score, headline)
     for h in story_headlines:
+        if len(h) > max_chars:
+            # Not a title: extract_story_headlines leads with the digest's
+            # blockquote HOOK — a full lead sentence, wanted as image
+            # context but never as a chapter. It out-scores real headlines
+            # on raw token overlap and can only ship clipped with "…"
+            # (Omni View Ep160, 2026-08-30: "Leaders from Russia, China,
+            # India and Iran meet in Central…" reached listeners).
+            continue
         h_tokens = _tokenize_for_match(h)
         if not h_tokens:
             continue

@@ -202,8 +202,21 @@ def extract_story_headlines(digest_text: str, max_count: int = 12) -> List[str]:
                 # can also be bare section labels ("Portfolio Performance")
                 # — strip the outlet tail, then require a sentence-like
                 # title (>=4 tokens) so labels never become "headlines".
-                raw = _strip_bold_line_source_tail(raw.strip())
-                if len(raw.split()) < 3:
+                raw = raw.strip()
+                if raw.endswith(":"):
+                    # A trailing colon marks a label introducing content
+                    # ("Read more (sources):", "STEEL-MAN THE
+                    # DISAGREEMENT:"), never a story title.
+                    continue
+                raw = _strip_bold_line_source_tail(raw)
+                if len(raw.split()) < 3 or len(raw) > 70:
+                    # Too short = section label. Too long = the digest's
+                    # bold HOOK line — a full lead sentence. Omni View
+                    # Ep160 (2026-08-30): the 130-char hook won a
+                    # chapter's headline match and the 60-char chapter
+                    # clipper shipped "Leaders from Russia, China, India
+                    # and Iran meet in Central…" as a listener-facing
+                    # title.
                     continue
             if _add(raw):
                 return headlines
