@@ -3986,9 +3986,31 @@ def generate_account_page(*, dry_run=False):
     ctx = _member_page_context(
         "My Nerra | Nerra Network",
         "Your member home: today's episodes from your shows, your private "
-        "personal feed, lineup, and member perks.",
+        "personal feed, add-ons, lineup, and member perks.",
         "https://nerranetwork.com/account.html")
     ctx["personal_shows"] = _personal_shows_list()
+    # Add-on catalog (Aug 30 2026): ids + tiers come from the engine's
+    # closed vocabulary; display copy lives here. A new addon in the
+    # engine without a row here fails the drift guard rather than
+    # silently missing from the dashboard.
+    from engine.personal_edition import DEFAULT_ADDONS, PERSONAL_ADDONS
+    _ADDON_DISPLAY = {
+        "weather": ("🌤️", "Measured Open-Meteo forecast for your location, "
+                          "read by Mira"),
+        "local_news": ("📰", "One local story a resident would care about, "
+                             "researched and sourced aloud"),
+        "events": ("🎟️", "One notable local event coming up"),
+        "traffic": ("🚗", "A real closure, strike or disruption changing "
+                          "how you get around"),
+        "markets": ("📈", "TSLA + SPCX closes from the network's own data "
+                          "pipeline — on any paid tier"),
+    }
+    ctx["personal_addons"] = [
+        {"id": aid, "label": meta["label"], "tier": meta["tier"],
+         "emoji": _ADDON_DISPLAY[aid][0], "desc": _ADDON_DISPLAY[aid][1]}
+        for aid, meta in PERSONAL_ADDONS.items()
+    ]
+    ctx["default_addons"] = list(DEFAULT_ADDONS)
     html = env.get_template("account_page.html.j2").render(**ctx)
     out_path = ROOT / "account.html"
     if dry_run:

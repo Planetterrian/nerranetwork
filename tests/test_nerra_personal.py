@@ -286,3 +286,122 @@ def _read(rel):
     from pathlib import Path
     return (Path(__file__).resolve().parent.parent / rel).read_text(
         encoding="utf-8")
+
+
+class TestAddons:
+    """Aug 30 2026 — member add-ons (operator-directed): location news /
+    weather / events / traffic researched by Mira, plus a zero-LLM
+    markets minute. Closed vocabulary, tier-gated, defaults preserve the
+    pre-add-on behavior exactly."""
+
+    def _spec(self, **over):
+        from engine.personal_edition import validate_spec
+        raw = {"token": "a" * 32, "shows": ["tesla", "spacex"],
+               "tier": "personal_local", "city": "Vancouver"}
+        raw.update(over)
+        return validate_spec(raw)
+
+    def test_vocabulary_mirrored_in_worker(self):
+        import re as _re
+        from engine.personal_edition import PERSONAL_ADDONS
+        src = _read("workers/gallery/src/personal.ts")
+        block = src.split("PERSONAL_ADDONS = [", 1)[1].split("]", 1)[0]
+        worker_ids = _re.findall(r'"([a-z_]+)"', block)
+        assert sorted(worker_ids) == sorted(PERSONAL_ADDONS), (
+            "workers/gallery/src/personal.ts PERSONAL_ADDONS must mirror "
+            "engine.personal_edition.PERSONAL_ADDONS exactly")
+
+    def test_defaults_preserve_pre_addon_behavior(self):
+        # Never-saved (None) on the local tier = weather + news + events —
+        # the exact pre-add-on brief. Base tier defaults run nothing
+        # location-shaped and no markets (opt-in only).
+        from engine.personal_edition import DEFAULT_ADDONS
+        assert tuple(DEFAULT_ADDONS) == ("weather", "local_news", "events")
+        local = self._spec()
+        assert local.addons is None
+        assert local.effective_addons() == list(DEFAULT_ADDONS)
+        base = self._spec(tier="personal")
+        assert base.effective_addons() == []
+
+    def test_validation_drops_unknown_and_tier_gates(self):
+        s = self._spec(addons=["weather", "junk", "markets", "weather"])
+        assert s.addons == ["weather", "markets"]
+        base = self._spec(tier="personal",
+                          addons=["weather", "traffic", "markets"])
+        # stored as chosen, but tier-filtered at build time
+        assert base.effective_addons() == ["markets"]
+
+    def test_empty_list_is_a_real_choice(self):
+        s = self._spec(addons=[])
+        assert s.addons == []
+        assert s.effective_addons() == []
+        from engine.personal_edition import wants_local_brief
+        assert not wants_local_brief(s)
+
+    def test_prompt_covers_only_selected_sections(self):
+        import datetime as dt
+        from pathlib import Path
+        from engine.personal_edition import build_local_brief_prompt
+        root = Path(__file__).resolve().parent.parent
+        s = self._spec(addons=["weather", "traffic"])
+        p = build_local_brief_prompt(root, s, dt.date(2026, 8, 31),
+                                     "Today in Vancouver: a high of 21.")
+        assert "traffic or transit disruption" in p
+        assert "local news item" not in p
+        assert "local event" not in p
+        assert "Open-Meteo" in p
+        no_weather = self._spec(addons=["local_news"])
+        p2 = build_local_brief_prompt(root, no_weather, dt.date(2026, 8, 31),
+                                      "Today in Vancouver: a high of 21.")
+        assert "no weather section" in p2
+        assert "local news item" in p2
+
+    def test_weather_only_skips_the_llm(self):
+        from engine.personal_edition import needs_research_call, wants_local_brief
+        s = self._spec(addons=["weather"])
+        assert wants_local_brief(s)
+        assert not needs_research_call(s)
+
+    def test_markets_line_is_deterministic_and_ticker_safe(self, tmp_path):
+        import json
+        from engine.personal_edition import build_markets_line
+        api = tmp_path / "api"
+        api.mkdir()
+        (api / "tsla.json").write_text(json.dumps(
+            {"price": 350.0, "prev_close": 340.0}))
+        (api / "spcx.json").write_text(json.dumps(
+            {"price": 140.0, "prev_close": 141.0}))
+        line = build_markets_line(tmp_path)
+        assert "Tesla at $350.00, up 2.9 percent" in line
+        assert "Ess Pee See Ex" in line
+        # Grok TTS text normalization merges an "S P" bigram into "S&P"
+        # (the Aug 29 SPCX pronunciation landmine) — the letter-name
+        # spelling must never regress to spaced letters.
+        assert "S P C X" not in line
+        assert build_markets_line(tmp_path / "nowhere") == ""
+
+    def test_prompt_template_carries_the_new_placeholders(self):
+        src = _read("shows/prompts/nerra_personal_local.txt")
+        assert "{weather_block}" in src
+        assert "{research_requests}" in src
+        assert "{weather_line}" not in src
+
+    def test_dashboard_renders_the_catalog(self):
+        src = _read("templates/account_page.html.j2")
+        for marker in ("nn-addons", "personal_addons | tojson",
+                       "nn-addon-upsell", "nn-editions-list"):
+            assert marker in src, marker
+        gen = _read("generate_html.py")
+        assert "personal_addons" in gen
+        # Every addon id must have display copy or the dashboard silently
+        # drops it.
+        from engine.personal_edition import PERSONAL_ADDONS
+        for aid in PERSONAL_ADDONS:
+            assert f'"{aid}":' in gen, f"_ADDON_DISPLAY missing {aid}"
+
+    def test_builder_wires_markets_and_gating(self):
+        src = _read("scripts/build_personal_feeds.py")
+        assert "wants_local_brief(spec)" in src
+        assert "needs_research_call(spec)" in src
+        assert "build_markets_line(ROOT)" in src
+        assert 'if "markets" in spec.effective_addons()' in src
