@@ -96,3 +96,55 @@ class TestSharedSnippets:
                 assert out.strip(), f"_shared/{rel} resolved empty"
             finally:
                 probe.unlink(missing_ok=True)
+
+
+class TestWeeklyNewsletterPromptPlaceholders:
+    """2026-08-30: first_principles_weekly.txt carried {episodes_block} —
+    a placeholder synthesize_weekly_newsletter never supplies — so the
+    Sunday weekly-newsletter run crashed mid-loop and every show after it
+    got no newsletter that week (spacex/UC carried the same class of
+    bug, masked behind the first crash). Every weekly template must
+    format with EXACTLY the kwargs the synthesizer passes."""
+
+    SYNTH_KWARGS = dict(
+        show_name="Show", episode_count=3, start_date="2026-08-24",
+        end_date="2026-08-30", episodes_text="episodes", entities="a, b",
+    )
+
+    def test_every_weekly_prompt_formats_with_synth_kwargs(self):
+        from pathlib import Path
+        root = Path(__file__).resolve().parent.parent
+        files = sorted((root / "shows" / "prompts").glob("*_weekly.txt"))
+        assert files, "expected weekly newsletter prompt templates"
+        bad = []
+        for f in files:
+            try:
+                f.read_text(encoding="utf-8").format(**self.SYNTH_KWARGS)
+            except (KeyError, IndexError, ValueError) as exc:
+                bad.append((f.name, repr(exc)))
+        assert not bad, f"weekly prompts with unsupplied placeholders: {bad}"
+
+    def test_kwargs_pin_matches_synthesizer(self):
+        # If the synthesizer's format call gains/loses kwargs, this pin
+        # must be updated in the same change.
+        from pathlib import Path
+        src = (Path(__file__).resolve().parent.parent
+               / "engine" / "synthesizer.py").read_text(encoding="utf-8")
+        call = src.split("body_prompt = prompt_template.format(", 1)[1]
+        call = call.split("\n    )", 1)[0]
+        import re
+        supplied = set(re.findall(r"^\s*(\w+)=", call, re.MULTILINE))
+        assert supplied == set(self.SYNTH_KWARGS), (supplied,
+                                                    set(self.SYNTH_KWARGS))
+
+    def test_runner_isolates_per_show_crashes(self):
+        from pathlib import Path
+        src = (Path(__file__).resolve().parent.parent / "scripts"
+               / "run_weekly_newsletters.py").read_text(encoding="utf-8")
+        head, _, tail = src.partition("envelope = synthesize_weekly_newsletter(")
+        assert tail, "synthesize call moved"
+        assert head.rstrip().endswith("try:"), (
+            "the synthesize call must be wrapped so one show's crash "
+            "cannot sink every show after it in the loop")
+        assert 'st.startswith("failed")' in src, (
+            "crashed shows must still fail the JOB at the end")

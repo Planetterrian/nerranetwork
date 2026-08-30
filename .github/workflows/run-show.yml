@@ -568,25 +568,33 @@ jobs:
           # can break a run.
           NERRA_SINGLE_PASS_RENDER: ${{ vars.NERRA_SINGLE_PASS_RENDER }}
 
-      - name: Commit topic-queue cooldown state (gate-block skips)
+      - name: Commit skip state (queue cooldown + skip marker)
         # A source_integrity_failed skip publishes nothing and the normal
-        # commit step is skipped — so the ONLY durable record that a topic
-        # blocked the gate is the queue annotation run_show wrote
-        # (gate_blocks / gate_blocked_last, engine/topic_queue.py).
-        # Without this commit the loop-breaker has amnesia and the same
-        # topic is re-picked every day (UC 2026-08-24/25: two lost days on
-        # one 403-heavy topic). Narrow by design: commits ONLY the
-        # shows/topic_queues/ path, best-effort, never fails the job.
+        # commit step is skipped — so the ONLY durable records of the skip
+        # are the queue annotation run_show wrote (gate_blocks /
+        # gate_blocked_last, engine/topic_queue.py) and the day's skip
+        # marker. Without the annotation the loop-breaker has amnesia and
+        # the same topic is re-picked every day (UC 2026-08-24/25: two
+        # lost days on one 403-heavy topic). Without the MARKER the daily
+        # audit reads a deliberate gate skip as "[CRITICAL] Missed
+        # episode … no skip marker was present" and pages the operator
+        # for a pipeline failure that didn't happen (UC 2026-08-30).
+        # Narrow by design: commits ONLY those two paths, best-effort,
+        # never fails the job.
         if: always() && steps.pipeline.outputs.skipped == 'true'
         run: |
-          if git diff --quiet -- shows/topic_queues/; then
-            echo "No topic-queue cooldown state to commit."
+          SKIP_DIR="digests/${{ matrix.show }}"
+          [ "${{ matrix.show }}" = "tesla" ] && SKIP_DIR="digests/tesla_shorts_time"
+          SKIP_MARKER="$SKIP_DIR/.skip_$(date -u +%Y%m%d).json"
+          [ -f "$SKIP_MARKER" ] && git add -f "$SKIP_MARKER"
+          if git diff --quiet -- shows/topic_queues/ && git diff --cached --quiet; then
+            echo "No topic-queue cooldown state or skip marker to commit."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add shows/topic_queues/
-          git commit -m "Topic-queue gate-block state: ${{ matrix.show }} $(date -u +%F)"
+          git commit -m "Gate-block skip state: ${{ matrix.show }} $(date -u +%F)"
           # Discard the run's other tracked modifications (content tracker,
           # memory files — none of which should survive a skip). With them
           # in the tree, `git pull --rebase` refuses ("Please commit or
