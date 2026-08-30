@@ -587,6 +587,13 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add shows/topic_queues/
           git commit -m "Topic-queue gate-block state: ${{ matrix.show }} $(date -u +%F)"
+          # Discard the run's other tracked modifications (content tracker,
+          # memory files — none of which should survive a skip). With them
+          # in the tree, `git pull --rebase` refuses ("Please commit or
+          # stash them") whenever concurrent shows have pushed, so during
+          # a recovery wave every retry failed identically and the
+          # annotation was lost (UC 2026-08-30, wave of 11).
+          git checkout -- . 2>/dev/null || true
           for i in 1 2 3 4; do
             # A conflicting concurrent push leaves a stopped rebase behind;
             # without this abort every later attempt dies on "unmerged
