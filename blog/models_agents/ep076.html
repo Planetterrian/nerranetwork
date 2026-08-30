@@ -1102,6 +1102,9 @@
                 <li><a href="../../player.html">Player</a></li>
                 <li><a href="../../index.html">Home</a></li>
                 
+                
+                <li><a id="nn-nav-account" href="../../join.html"
+                       style="border:1px solid var(--nn-border);border-radius:999px;padding:0.3rem 0.85rem;">Join</a></li>
             </ul>
 
             <button class="nn-hamburger" aria-label="Toggle menu" aria-expanded="false" onclick="var m=document.getElementById('mobileMenu');m.classList.toggle('open');this.setAttribute('aria-expanded',m.classList.contains('open'));document.body.classList.toggle('menu-open')">&#9776;</button>
@@ -1110,6 +1113,7 @@
 
     <!-- Mobile Menu -->
     <div id="mobileMenu" class="nn-mobile-menu">
+        <a id="nn-nav-account-m" href="../../join.html" style="font-weight:600;" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">Join</a>
         
         <a href="../../start-here.html" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">Start Here</a>
         <a href="../../how-to-listen.html" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">How to Listen</a>
@@ -2104,5 +2108,23 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
     <script src="../../assets/js/language-control.js" defer></script>
+    <script>
+    // Member-aware nav (Aug 30 2026): the "Join" pill becomes "My Nerra"
+    // when the api.nerranetwork.com session cookie answers. Fail-silent —
+    // signed-out visitors, blocked cookies, or an unreachable Worker all
+    // leave the default Join link untouched.
+    (function () {
+      try {
+        fetch('https://api.nerranetwork.com/api/account', { credentials: 'include' })
+          .then(function (r) {
+            if (!r.ok) return;
+            ['nn-nav-account', 'nn-nav-account-m'].forEach(function (id) {
+              var a = document.getElementById(id);
+              if (a) { a.textContent = 'My Nerra'; a.href = '../../account.html'; }
+            });
+          }).catch(function () {});
+      } catch (e) {}
+    })();
+    </script>
 </body>
 </html>
