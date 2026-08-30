@@ -177,32 +177,11 @@
         </div>
     </div>
 
-    <!-- Stats Bar -->
-    <section class="stats-bar">
-        <div class="container">
-            <div class="stats-row">
-                <div class="stat-item">
-                    <div class="stat-number">Daily</div>
-                    <div class="stat-label">Cadence</div>
-                </div>
-                <div class="stat-divider"></div>
-                <div class="stat-item">
-                    <div class="stat-number">{{ total_episodes }}+</div>
-                    <div class="stat-label">Episodes</div>
-                </div>
-                <div class="stat-divider"></div>
-                <div class="stat-item">
-                    <div class="stat-number">4</div>
-                    <div class="stat-label">Languages</div>
-                </div>
-                <div class="stat-divider"></div>
-                <div class="stat-item">
-                    <div class="stat-number">0</div>
-                    <div class="stat-label">Ads</div>
-                </div>
-            </div>
-        </div>
-    </section>
+    {# The legacy standalone stats bar was removed Aug 30 2026: it repeated
+       the hero-proof-stats band verbatim two screens apart (operator
+       screenshot — "duplicating elements"). The hero band is the one that
+       stays; do not reintroduce a second cadence/episodes/languages/ads
+       strip below the ticker. #}
 
     {# May 2026 operator request: "Find Your Show" interactive picker
        was removed and replaced by the Fresh Episodes / Blog / Why Nerra
@@ -250,6 +229,61 @@
         {% endif %}
     </section>
 
+    <!-- Nerra Personal promo (Aug 2026: the paid product had no homepage
+         presence beyond a footer link; Aug 30: promoted into the prime
+         slot after Fresh Episodes and rebuilt as a real product band —
+         features + lineup covers + both entry points). -->
+    <section class="nn-section" id="personal-promo">
+        <div class="container" style="max-width:1040px;">
+            <div style="border:1px solid var(--nn-border);border-radius:20px;background:var(--nn-surface);position:relative;overflow:hidden;">
+                <div style="position:absolute;inset:0;background:
+                    radial-gradient(ellipse at 88% 10%, rgba(0,212,255,0.14), transparent 55%),
+                    radial-gradient(ellipse at 5% 95%, rgba(107,71,255,0.12), transparent 50%);pointer-events:none;"></div>
+                <div style="position:relative;display:grid;grid-template-columns:minmax(300px,1.2fr) minmax(260px,1fr);gap:2rem;padding:2.4rem 2.2rem;align-items:center;" class="personal-promo-grid">
+                    <div>
+                        <div class="section-label">Nerra Personal</div>
+                        <h2 style="font-family:var(--font-heading);margin:0.4rem 0 0.7rem;font-size:1.9rem;line-height:1.15;">Your own daily show, built from the shows you already love</h2>
+                        <p style="color:var(--nn-text-muted);margin:0 0 1.1rem;">
+                            Pick your shows and their order. Every morning Mira
+                            assembles them into <strong>one private podcast
+                            episode made just for you</strong> — greeting you by
+                            name, with chapters for every segment.</p>
+                        <ul style="list-style:none;margin:0 0 1.4rem;padding:0;display:grid;gap:0.45rem;color:var(--nn-text-muted);font-size:0.95rem;">
+                            <li>✓ One feed, your lineup, your order — in any podcast app</li>
+                            <li>✓ Mira anchors it and greets you by name</li>
+                            <li>✓ Free account: newsletter, gallery downloads, book discounts</li>
+                            <li>✓ $4.99/mo · cancel any time · no ads, ever</li>
+                        </ul>
+                        <p style="margin:0;display:flex;gap:0.6rem;flex-wrap:wrap;">
+                            <a class="nn-btn nn-btn-primary" href="{{ path_prefix }}join.html">Build your show →</a>
+                            <a class="nn-btn" href="{{ path_prefix }}account.html">Member sign in</a>
+                            <a class="nn-btn" href="{{ path_prefix }}nerra-daily.html">Try Nerra Daily free</a>
+                        </p>
+                    </div>
+                    <div aria-hidden="true" style="display:grid;gap:0.6rem;">
+                        <div style="font-family:var(--font-ui);font-size:0.72rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--nn-text-muted);">Your morning, one feed</div>
+                        {% for s in (all_shows[:4] if all_shows else []) %}
+                        {% set _pbase = s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image %}
+                        <div style="display:flex;align-items:center;gap:0.7rem;border:1px solid var(--nn-border);border-radius:12px;padding:0.5rem 0.7rem;background:color-mix(in srgb, var(--nn-surface) 70%, transparent);">
+                            <picture>
+                                <source type="image/webp" srcset="{{ path_prefix }}{{ _pbase }}-400.webp">
+                                <img src="{{ path_prefix }}{{ s.podcast_image }}" alt="" width="44" height="44" loading="lazy" style="width:44px;height:44px;border-radius:8px;">
+                            </picture>
+                            <span style="font-size:0.9rem;">{{ s.name }}</span>
+                            <span style="margin-left:auto;font-size:0.75rem;color:var(--nn-text-muted);">{{ loop.index }}</span>
+                        </div>
+                        {% endfor %}
+                        <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.8rem;color:var(--nn-cyan,#00D4FF);">
+                            <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:currentColor;"></span>
+                            PRIVATE FEED · chapters + Mira's links between shows
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <style>@media (max-width: 760px){ .personal-promo-grid { grid-template-columns: 1fr !important; } }</style>
+
     {% if popular_episodes %}
     <!-- Most Played This Week (OP3 download data, refreshed nightly) -->
     <section id="popular" class="nn-section">
@@ -280,28 +314,6 @@
         </div>
     </section>
     {% endif %}
-
-    <!-- Nerra Personal promo (Aug 2026: the paid product had no homepage
-         presence beyond a footer link) -->
-    <section class="nn-section" id="personal-promo">
-        <div class="container" style="max-width:960px;">
-            <div style="border:1px solid var(--nn-border);border-radius:18px;padding:2.2rem 2rem;background:var(--nn-surface);position:relative;overflow:hidden;">
-                <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 85% 15%, rgba(0,212,255,0.12), transparent 60%);pointer-events:none;"></div>
-                <div class="section-label">Nerra Personal</div>
-                <h2 style="font-family:var(--font-heading);margin:0.4rem 0 0.6rem;">Your own daily show, from the shows you already love</h2>
-                <p style="color:var(--nn-text-muted);max-width:640px;margin:0 0 1.2rem;">
-                    Pick your shows, set the order, and every morning Mira
-                    stitches them into one private podcast feed — greeting
-                    you by name, with chapters for every segment. From
-                    $4.99/month; the free account unlocks the newsletter,
-                    gallery downloads and book discounts.</p>
-                <p style="margin:0;">
-                    <a class="nn-btn nn-btn-primary" href="{{ path_prefix }}join.html">Build your show →</a>
-                    <a class="nn-btn" href="{{ path_prefix }}nerra-daily.html" style="margin-left:0.5rem;">Or try Nerra Daily free</a>
-                </p>
-            </div>
-        </div>
-    </section>
 
     <!-- Latest from the Blog -->
     {% if latest_blog_posts %}

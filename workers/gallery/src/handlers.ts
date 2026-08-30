@@ -181,7 +181,10 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // or starts with a slash (which would be an absolute path).
 const KEY_SAFE_RE = /^[A-Za-z0-9_./-]+$/;
 
-const REDIRECT_AFTER_MAGIC = "https://nerranetwork.com/gallery.html";
+// Aug 30 2026: magic links land on the member dashboard, not the gallery
+// — signing in is an account action now that accounts are the product
+// (the gallery stays one click away from the dashboard's quick actions).
+const REDIRECT_AFTER_MAGIC = "https://nerranetwork.com/account.html";
 
 // Simple KV-based rate limiting (medium item).
 // 5 attempts per 10 minutes per IP on subscribe + login routes.

@@ -3917,13 +3917,14 @@ def _member_page_context(title, description, canonical):
     }
 
 
-def generate_join_page(*, dry_run=False):
-    """Generate /join.html — the Nerra Personal membership lander."""
-    env = _get_jinja_env()
-    # The pickable lineup, rendered as real cards (Aug 27 2026): the page
-    # used to ASSERT "pick the shows" without ever showing what there is
-    # to pick — the closed vocabulary from engine.personal_edition is the
-    # product, so show it.
+def _personal_shows_list():
+    """The pickable Nerra Personal lineup as template-ready cards.
+
+    Shared by the join lander and the member dashboard (Aug 30 2026):
+    both render the closed vocabulary from engine.personal_edition with
+    real cover art, so the product looks the same before and after
+    sign-in.
+    """
     from engine.personal_edition import PERSONAL_SHOW_SLUGS
     personal_shows = []
     for slug in PERSONAL_SHOW_SLUGS:
@@ -3939,6 +3940,17 @@ def generate_join_page(*, dry_run=False):
             "cover": cover,
             "cover_webp": f"{cover_base}-400.webp" if cover_base else "",
         })
+    return personal_shows
+
+
+def generate_join_page(*, dry_run=False):
+    """Generate /join.html — the Nerra Personal membership lander."""
+    env = _get_jinja_env()
+    # The pickable lineup, rendered as real cards (Aug 27 2026): the page
+    # used to ASSERT "pick the shows" without ever showing what there is
+    # to pick — the closed vocabulary from engine.personal_edition is the
+    # product, so show it.
+    personal_shows = _personal_shows_list()
     ctx = _member_page_context(
         "Nerra Personal — your own daily show | Nerra Network",
         "Pick your shows, set the order, and every morning Mira builds "
@@ -3967,18 +3979,16 @@ def generate_join_page(*, dry_run=False):
 
 
 def generate_account_page(*, dry_run=False):
-    """Generate /account.html — the member console (client-side app
-    against api.nerranetwork.com; the page itself is static)."""
+    """Generate /account.html — "My Nerra", the member dashboard
+    (client-side app against api.nerranetwork.com; the page itself is
+    static and reads the pipeline's committed api/*.json for content)."""
     env = _get_jinja_env()
-    from engine.personal_edition import PERSONAL_SHOW_SLUGS
-    names = {s: NETWORK_SHOWS.get(s, {}).get("name", s)
-             for s in PERSONAL_SHOW_SLUGS}
     ctx = _member_page_context(
-        "Your account | Nerra Network",
-        "Manage your Nerra account: your personal feed lineup, newsletter, "
-        "gallery access and member perks.",
+        "My Nerra | Nerra Network",
+        "Your member home: today's episodes from your shows, your private "
+        "personal feed, lineup, and member perks.",
         "https://nerranetwork.com/account.html")
-    ctx["show_names"] = names
+    ctx["personal_shows"] = _personal_shows_list()
     html = env.get_template("account_page.html.j2").render(**ctx)
     out_path = ROOT / "account.html"
     if dry_run:

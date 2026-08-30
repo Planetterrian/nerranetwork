@@ -1,20 +1,79 @@
 {% extends "base.html.j2" %}
 
+{# /account.html — "My Nerra", the member home (Aug 30 2026 redesign).
+
+   v1 was a bare settings console; the operator asked for a real
+   logged-in landing page — dashboards, data, customization, and a
+   surface that keeps selling the subscription. Still a static page:
+   identity + preferences come from api.nerranetwork.com (cookie),
+   content comes from the committed same-origin JSON the pipeline
+   already refreshes (api/episodes.json, api/tsla.json, api/spcx.json).
+
+   Drift-guarded ids (tests/test_nerra_personal.py) — keep them:
+   nn-feed-cancelled, nn-starter-note, nn-city-nudge, nn-tier-badge. #}
+
 {% block head_extra %}
     <link rel="stylesheet" href="{{ path_prefix }}styles/main.css">
     <style>
-        .nn-account { max-width: 760px; margin: 0 auto; padding: calc(var(--nav-height) + var(--sp-10)) var(--sp-6) var(--sp-12); }
-        .nn-account h1 { font-family: var(--font-heading); }
-        .nn-card { border: 1px solid var(--nn-border); border-radius: 14px; background: var(--nn-surface); padding: var(--sp-5); margin-bottom: var(--sp-5); }
-        .nn-card h2 { margin: 0 0 var(--sp-3); font-size: 1.1rem; font-family: var(--font-heading); }
+        .nn-account { max-width: 1080px; margin: 0 auto; padding: calc(var(--nav-height) + var(--sp-8)) var(--sp-6) var(--sp-12); }
+        .nn-account h1 { font-family: var(--font-heading); margin: 0; font-size: clamp(1.6rem, 4vw, 2.3rem); }
+        .nn-card { border: 1px solid var(--nn-border); border-radius: 16px; background: var(--nn-surface); padding: var(--sp-5); margin-bottom: var(--sp-5); }
+        .nn-card h2 { margin: 0 0 var(--sp-3); font-size: 1.05rem; font-family: var(--font-heading); }
         .nn-account input[type=email], .nn-account input[type=text] { width: 100%; padding: 0.7rem 0.9rem; border-radius: 10px; border: 1px solid var(--nn-border); background: var(--nn-bg, transparent); color: inherit; }
         .nn-account button { padding: 0.65rem 1.4rem; border-radius: 10px; border: none; background: var(--nn-gradient); color: #fff; font-weight: 600; cursor: pointer; }
         .nn-account button.ghost { background: transparent; border: 1px solid var(--nn-border); color: inherit; }
-        .nn-lineup-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.2rem; border-bottom: 1px dashed var(--nn-border); }
+
+        /* Dashboard hero */
+        .nn-dash-hero { border: 1px solid var(--nn-border); border-radius: 20px; background: var(--nn-surface); padding: var(--sp-6); margin-bottom: var(--sp-6); position: relative; overflow: hidden; }
+        .nn-dash-hero::before { content: ""; position: absolute; inset: 0; background:
+            radial-gradient(ellipse at 90% 0%, rgba(0,212,255,0.14), transparent 55%),
+            radial-gradient(ellipse at 0% 100%, rgba(107,71,255,0.10), transparent 50%); pointer-events: none; }
+        .nn-dash-hero > * { position: relative; }
+        .nn-dash-date { font-family: var(--font-ui); font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--nn-text-muted); margin-bottom: 0.35rem; }
+        .nn-tier-pill { display: inline-block; font-family: var(--font-ui); font-size: 0.75rem; padding: 0.25rem 0.7rem; border-radius: 999px; border: 1px solid var(--nn-border); color: var(--nn-text-muted); margin-left: 0.6rem; vertical-align: middle; }
+        .nn-tier-pill.active { border-color: rgba(0,212,255,0.5); color: #00D4FF; }
+        .nn-hero-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: var(--sp-4); }
+        .nn-hero-actions a { text-decoration: none; }
+
+        /* Two-column dashboard */
+        .nn-dash-grid { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(260px, 1fr); gap: var(--sp-5); align-items: start; }
+        @media (max-width: 860px) { .nn-dash-grid { grid-template-columns: 1fr; } }
+
+        /* Today rail */
+        .nn-today-stats { display: flex; gap: var(--sp-5); margin: 0 0 var(--sp-4); }
+        .nn-today-stats .tile strong { display: block; font-family: var(--font-heading); font-size: 1.5rem; line-height: 1.1; }
+        .nn-today-stats .tile span { font-family: var(--font-ui); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--nn-text-muted); }
+        .nn-ep-card { display: grid; grid-template-columns: 52px minmax(0,1fr); gap: 0.8rem; padding: 0.8rem 0.2rem; border-bottom: 1px dashed var(--nn-border); }
+        .nn-ep-card:last-child { border-bottom: none; }
+        .nn-ep-card img { width: 52px; height: 52px; border-radius: 10px; }
+        .nn-ep-show { font-family: var(--font-ui); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 700; }
+        .nn-ep-title { font-size: 0.95rem; line-height: 1.35; margin: 0.15rem 0 0.3rem; }
+        .nn-ep-meta { font-size: 0.78rem; color: var(--nn-text-muted); }
+        .nn-ep-card audio { width: 100%; height: 32px; border-radius: 8px; margin-top: 0.4rem; }
+        .nn-ep-more { margin-top: var(--sp-3); font-size: 0.85rem; }
+
+        /* Market tiles — single-value stat tiles; delta wears a status
+           color WITH an arrow glyph (never color alone). */
+        .nn-mkt { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+        .nn-mkt .tile { border: 1px solid var(--nn-border); border-radius: 12px; padding: 0.75rem 0.9rem; }
+        .nn-mkt .sym { font-family: var(--font-ui); font-size: 0.72rem; letter-spacing: 0.1em; color: var(--nn-text-muted); }
+        .nn-mkt .px { font-family: var(--font-heading); font-size: 1.35rem; line-height: 1.2; }
+        .nn-mkt .chg { font-size: 0.8rem; }
+        .nn-mkt .chg.up { color: #2fbf71; }
+        .nn-mkt .chg.down { color: #e5484d; }
+
+        /* Lineup editor */
+        .nn-lineup-row { display: flex; align-items: center; gap: 0.6rem; padding: 0.45rem 0.2rem; border-bottom: 1px dashed var(--nn-border); }
+        .nn-lineup-row img { width: 34px; height: 34px; border-radius: 8px; }
         .nn-lineup-row .movers { margin-left: auto; display: flex; gap: 0.25rem; }
         .nn-lineup-row .movers button { padding: 0.15rem 0.55rem; font-size: 0.9rem; }
-        .nn-feedurl { font-family: var(--font-mono, monospace); font-size: 0.8rem; word-break: break-all; background: var(--nn-bg, rgba(0,0,0,0.15)); padding: 0.6rem 0.8rem; border-radius: 8px; }
+        .nn-lineup-row.off { opacity: 0.55; }
+
+        .nn-feedurl { font-family: var(--font-mono, monospace); font-size: 0.78rem; word-break: break-all; background: var(--nn-bg, rgba(0,0,0,0.15)); padding: 0.6rem 0.8rem; border-radius: 8px; }
         .nn-perk { display: flex; justify-content: space-between; gap: 1rem; padding: 0.5rem 0; border-bottom: 1px dashed var(--nn-border); }
+        .nn-perk:last-child { border-bottom: none; }
+        .nn-road li { display: grid; grid-template-columns: auto 1fr; gap: 0.5rem; padding: 0.35rem 0; color: var(--nn-text-muted); font-size: 0.9rem; }
+        .nn-road { list-style: none; margin: 0; padding: 0; }
         .nn-muted { color: var(--nn-text-muted); font-size: 0.9rem; }
         #nn-status { min-height: 1.2rem; font-size: 0.9rem; }
         [hidden] { display: none !important; }
@@ -23,104 +82,179 @@
 
 {% block content %}
 <div class="nn-account">
-    <h1>Your Nerra account</h1>
-    <p id="nn-status" class="nn-muted">Loading…</p>
+    <p id="nn-status" class="nn-muted">Loading your Nerra…</p>
 
-    <!-- Signed-out: magic-link request -->
-    <div class="nn-card" id="nn-signin" hidden>
-        <h2>Sign in</h2>
-        <p class="nn-muted">No passwords here — enter the email you joined with
-           and we'll send you a sign-in link.</p>
-        <form onsubmit="NN.login(this);return false;" style="display:flex;gap:0.5rem;flex-wrap:wrap;">
-            <input type="email" name="email" placeholder="you@example.com" required style="flex:1;min-width:220px;">
-            <button type="submit">Email me a link</button>
-        </form>
-        <p class="nn-muted" style="margin-top:0.75rem;">New here?
-            <a href="{{ path_prefix }}join.html">Create your free account →</a></p>
+    <!-- Signed-out: magic-link request + pitch -->
+    <div id="nn-guest" hidden>
+        <div class="nn-dash-hero">
+            <div class="nn-dash-date">Nerra Personal</div>
+            <h1>Sign in to your Nerra</h1>
+            <p class="nn-muted" style="max-width:560px;">Your member home: today's
+               episodes from your shows, your private feed, your lineup and
+               perks — all behind one email, no passwords.</p>
+        </div>
+        <div class="nn-dash-grid">
+            <div class="nn-card" id="nn-signin">
+                <h2>Sign in</h2>
+                <p class="nn-muted">Enter the email you joined with and we'll
+                   send you a sign-in link.</p>
+                <form onsubmit="NN.login(this);return false;" style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+                    <input type="email" name="email" placeholder="you@example.com" required style="flex:1;min-width:220px;">
+                    <button type="submit">Email me a link</button>
+                </form>
+                <p class="nn-muted" style="margin-top:0.75rem;">New here?
+                    <a href="{{ path_prefix }}join.html">Create your free account →</a></p>
+            </div>
+            <div class="nn-card">
+                <h2>What members get</h2>
+                <ul class="nn-road">
+                    <li><span>🎙️</span><span>A private daily show built from your lineup, anchored by Mira</span></li>
+                    <li><span>📬</span><span>The network newsletter, per-show topics</span></li>
+                    <li><span>🖼️</span><span>Full-resolution gallery downloads</span></li>
+                    <li><span>📚</span><span>Member discounts on the book series</span></li>
+                </ul>
+            </div>
+        </div>
     </div>
 
     <div id="nn-member" hidden>
-        <!-- Personal feed -->
-        <div class="nn-card">
-            <h2>Your personal daily show <span id="nn-tier-badge" class="nn-muted" style="font-size:0.85rem;font-weight:400;"></span></h2>
-            <div id="nn-feed-active" hidden>
-                <p>Mira builds your edition every morning. Add this private
-                   feed to any podcast app — it's yours alone; sharing the
-                   URL shares your subscription.</p>
-                <p class="nn-feedurl" id="nn-feed-url"></p>
-                <button class="ghost" onclick="NN.copyFeed()">Copy feed URL</button>
-                <p class="nn-muted" id="nn-feed-note" style="margin-top:0.6rem;">
-                   Just subscribed? Your first edition lands with the next
-                   morning build — the feed link works from then on.</p>
-                <p class="nn-muted" id="nn-starter-note" hidden>
-                   You haven't picked your shows yet, so Mira is using the
-                   <strong>starter lineup</strong> (SpaceX, Tesla, Models &amp;
-                   Agents, Planetterrian, DP Pod). Choose 2+ shows below and
-                   save to make it yours — changes reach tomorrow's edition.</p>
-            </div>
-            <div id="nn-feed-cancelled" hidden>
-                <p>Your subscription has ended and the private feed is off.
-                   Your lineup and preferences are saved — restart any time
-                   and tomorrow's edition picks up where you left off.</p>
-                {% if stripe_personal_url and stripe_personal_url != '#' %}
-                <p>
-                    <a href="{{ stripe_personal_url }}"><button>Restart Personal — $4.99/mo</button></a>
-                    {% if stripe_personal_local_url and stripe_personal_local_url != '#' %}
-                    <a href="{{ stripe_personal_local_url }}"><button class="ghost">Personal + Local — $8.99/mo</button></a>
-                    {% endif %}
-                </p>
-                {% endif %}
-            </div>
-            <div id="nn-feed-upsell" hidden>
-                <p>Pick your shows and order below, then start your
-                   subscription — your feed exists within a day.</p>
-                {% if stripe_personal_url and stripe_personal_url != '#' %}
-                <p>
-                    <a href="{{ stripe_personal_url }}"><button>Personal — $4.99/mo</button></a>
-                    {% if stripe_personal_local_url and stripe_personal_local_url != '#' %}
-                    <a href="{{ stripe_personal_local_url }}"><button class="ghost">+ Local brief — $8.99/mo</button></a>
-                    {% endif %}
-                </p>
-                <p class="nn-muted">Use the same email at checkout that you
-                   signed in with — that's how your feed finds you.</p>
-                {% else %}
-                <p class="nn-muted">Personal feeds are launching soon — your
-                   saved lineup will be ready on day one.</p>
-                {% endif %}
+        <!-- Dashboard hero -->
+        <div class="nn-dash-hero">
+            <div class="nn-dash-date" id="nn-date"></div>
+            <h1><span id="nn-greeting">Welcome back</span><span id="nn-tier-badge" class="nn-tier-pill" hidden></span></h1>
+            <p class="nn-muted" id="nn-hero-sub" style="margin:0.5rem 0 0;max-width:620px;"></p>
+            <div class="nn-hero-actions">
+                <a class="nn-btn nn-btn-primary" href="{{ path_prefix }}player.html">Open the player</a>
+                <a class="nn-btn" href="{{ path_prefix }}gallery.html">Browse the gallery</a>
+                <a class="nn-btn" href="{{ path_prefix }}blog/index.html">Read the blog</a>
             </div>
         </div>
 
-        <!-- Lineup + preferences -->
-        <div class="nn-card">
-            <h2>Your lineup</h2>
-            <p class="nn-muted">Choose at least two shows; order them the way
-               you want your morning to run. Mira handles the rest.</p>
-            <div id="nn-lineup"></div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-top:var(--sp-4);">
-                <label>First name <span class="nn-muted">(Mira greets you by it)</span>
-                    <input type="text" id="nn-name" maxlength="40" placeholder="Optional"></label>
-                <label>City <span class="nn-muted">(for the local brief tier)</span>
-                    <input type="text" id="nn-city" maxlength="80" placeholder="Optional"></label>
-            </div>
-            <p class="nn-muted" id="nn-city-nudge" hidden style="margin-top:0.5rem;">
-               You're on <strong>Personal + Local</strong> but haven't set a
-               city — add one above and save so Mira can include your
-               morning brief.</p>
-            <p style="margin-top:var(--sp-4);"><button onclick="NN.save()">Save preferences</button>
-               <span id="nn-save-status" class="nn-muted"></span></p>
-        </div>
+        <div class="nn-dash-grid">
+            <div><!-- main column -->
 
-        <!-- Member perks -->
-        <div class="nn-card">
-            <h2>Member perks</h2>
-            <div class="nn-perk"><span>Newsletter</span>
-                <span class="nn-muted">You're on the list — manage shows in any email's footer</span></div>
-            <div class="nn-perk"><span>Image gallery downloads</span>
-                <a href="{{ path_prefix }}gallery.html">Browse the gallery →</a></div>
-            <div class="nn-perk"><span>Book discount</span>
-                <span id="nn-book-perk" class="nn-muted">—</span></div>
-            <div class="nn-perk"><span>Support the network</span>
-                <a href="{{ path_prefix }}support.html">Donate →</a></div>
+                <!-- Today from your shows -->
+                <div class="nn-card">
+                    <h2>Today from your shows</h2>
+                    <div class="nn-today-stats" id="nn-today-stats" hidden>
+                        <div class="tile"><strong id="nn-stat-count">–</strong><span>new episodes</span></div>
+                        <div class="tile"><strong id="nn-stat-mins">–</strong><span>minutes of listening</span></div>
+                        <div class="tile"><strong id="nn-stat-shows">–</strong><span>shows in your lineup</span></div>
+                    </div>
+                    <div id="nn-today"><p class="nn-muted">Loading episodes…</p></div>
+                    <p class="nn-ep-more"><a href="{{ path_prefix }}index.html#latest">See everything published across the network →</a></p>
+                </div>
+
+                <!-- Lineup + preferences -->
+                <div class="nn-card">
+                    <h2>Your lineup</h2>
+                    <p class="nn-muted">Choose at least two shows; order them the way
+                       you want your morning to run. Mira handles the rest — and this
+                       page's "Today" rail follows the same picks.</p>
+                    <div id="nn-lineup"></div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-top:var(--sp-4);">
+                        <label>First name <span class="nn-muted">(Mira greets you by it)</span>
+                            <input type="text" id="nn-name" maxlength="40" placeholder="Optional"></label>
+                        <label>City <span class="nn-muted">(for the local brief tier)</span>
+                            <input type="text" id="nn-city" maxlength="80" placeholder="Optional"></label>
+                    </div>
+                    <p class="nn-muted" id="nn-city-nudge" hidden style="margin-top:0.5rem;">
+                       You're on <strong>Personal + Local</strong> but haven't set a
+                       city — add one above and save so Mira can include your
+                       morning brief.</p>
+                    <p style="margin-top:var(--sp-4);"><button onclick="NN.save()">Save preferences</button>
+                       <span id="nn-save-status" class="nn-muted"></span></p>
+                </div>
+            </div>
+
+            <div><!-- side column -->
+
+                <!-- Personal feed -->
+                <div class="nn-card">
+                    <h2>Your personal daily show</h2>
+                    <div id="nn-feed-active" hidden>
+                        <p class="nn-muted" style="margin-top:0;">Mira builds your edition every
+                           morning. Add this private feed to any podcast app — it's
+                           yours alone; sharing the URL shares your subscription.</p>
+                        <p class="nn-feedurl" id="nn-feed-url"></p>
+                        <button class="ghost" onclick="NN.copyFeed()">Copy feed URL</button>
+                        <p class="nn-muted" id="nn-feed-note" style="margin-top:0.6rem;">
+                           Just subscribed? Your first edition lands with the next
+                           morning build — the feed link works from then on.</p>
+                        <p class="nn-muted" id="nn-starter-note" hidden>
+                           You haven't picked your shows yet, so Mira is using the
+                           <strong>starter lineup</strong> (SpaceX, Tesla, Models &amp;
+                           Agents, Planetterrian, DP Pod). Choose 2+ shows and
+                           save to make it yours — changes reach tomorrow's edition.</p>
+                    </div>
+                    <div id="nn-feed-cancelled" hidden>
+                        <p class="nn-muted" style="margin-top:0;">Your subscription has ended and
+                           the private feed is off. Your lineup and preferences are
+                           saved — restart any time and tomorrow's edition picks up
+                           where you left off.</p>
+                        {% if stripe_personal_url and stripe_personal_url != '#' %}
+                        <p>
+                            <a href="{{ stripe_personal_url }}"><button>Restart Personal — $4.99/mo</button></a>
+                            {% if stripe_personal_local_url and stripe_personal_local_url != '#' %}
+                            <a href="{{ stripe_personal_local_url }}"><button class="ghost" style="margin-top:0.4rem;">Personal + Local — $8.99/mo</button></a>
+                            {% endif %}
+                        </p>
+                        {% endif %}
+                    </div>
+                    <div id="nn-feed-upsell" hidden>
+                        <p class="nn-muted" style="margin-top:0;">Pick your shows and order, then
+                           start your subscription — Mira builds your first private
+                           episode within a day.</p>
+                        {% if stripe_personal_url and stripe_personal_url != '#' %}
+                        <p style="display:grid;gap:0.4rem;">
+                            <a href="{{ stripe_personal_url }}"><button style="width:100%;">Personal — $4.99/mo</button></a>
+                            {% if stripe_personal_local_url and stripe_personal_local_url != '#' %}
+                            <a href="{{ stripe_personal_local_url }}"><button class="ghost" style="width:100%;">+ City morning brief — $8.99/mo</button></a>
+                            {% endif %}
+                        </p>
+                        <p class="nn-muted">Use the same email at checkout that you
+                           signed in with — that's how your feed finds you.</p>
+                        {% else %}
+                        <p class="nn-muted">Personal feeds are launching soon — your
+                           saved lineup will be ready on day one.</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Market snapshot (public pipeline data, refreshed daily) -->
+                <div class="nn-card" id="nn-mkt-card" hidden>
+                    <h2>Market snapshot</h2>
+                    <div class="nn-mkt" id="nn-mkt"></div>
+                    <p class="nn-muted" style="margin:0.6rem 0 0;" id="nn-mkt-asof"></p>
+                </div>
+
+                <!-- Member perks -->
+                <div class="nn-card">
+                    <h2>Member perks</h2>
+                    <div class="nn-perk"><span>Newsletter</span>
+                        <span class="nn-muted">On the list — manage topics in any email's footer</span></div>
+                    <div class="nn-perk"><span>Gallery downloads</span>
+                        <a href="{{ path_prefix }}gallery.html">Browse →</a></div>
+                    <div class="nn-perk"><span>Book discount</span>
+                        <span id="nn-book-perk" class="nn-muted">—</span></div>
+                    <div class="nn-perk"><span>Support the network</span>
+                        <a href="{{ path_prefix }}support.html">Donate →</a></div>
+                </div>
+
+                <!-- Roadmap: the page keeps selling what membership funds -->
+                <div class="nn-card">
+                    <h2>Built for members next</h2>
+                    <ul class="nn-road">
+                        <li><span>🌤️</span><span><strong>City morning brief</strong> — weather + one local story, on the Personal&nbsp;+&nbsp;Local tier</span></li>
+                        <li><span>📊</span><span><strong>Listening stats</strong> — your streaks and hours, right here</span></li>
+                        <li><span>🎚️</span><span><strong>Mira, your way</strong> — pace and framing options for your edition</span></li>
+                        <li><span>🌍</span><span><strong>More languages</strong> — FR/RU personal editions</span></li>
+                    </ul>
+                    <p class="nn-muted" style="margin:0.6rem 0 0;">Membership funds the
+                       roadmap — new value lands here first.
+                       <a href="{{ path_prefix }}join.html">See everything included →</a></p>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -129,9 +263,18 @@
 var NN = (function () {
   var API = 'https://api.nerranetwork.com';
   var state = { shows: [], all: [], names: {} };
-  var SHOW_NAMES = {{ show_names | tojson }};
+  var SHOW_META = {{ personal_shows | tojson }};
+  var META = {}; SHOW_META.forEach(function (s) { META[s.slug] = s; });
+  var STARTER = ['spacex', 'tesla', 'models_agents', 'planetterrian', 'dp_pod'];
 
   function el(id) { return document.getElementById(id); }
+  function esc(s) { var d = document.createElement('span'); d.textContent = s || ''; return d.innerHTML; }
+
+  function coverImg(slug, size) {
+    var m = META[slug] || {};
+    var src = m.cover_webp || m.cover || '';
+    return src ? '<img src="' + src + '" alt="" width="' + size + '" height="' + size + '" loading="lazy">' : '';
+  }
 
   function renderLineup() {
     var box = el('nn-lineup');
@@ -141,29 +284,34 @@ var NN = (function () {
     chosen.concat(rest).forEach(function (slug) {
       var idx = chosen.indexOf(slug);
       var row = document.createElement('div');
-      row.className = 'nn-lineup-row';
+      row.className = 'nn-lineup-row' + (idx === -1 ? ' off' : '');
       var cb = document.createElement('input');
       cb.type = 'checkbox'; cb.checked = idx !== -1;
       cb.onchange = function () {
         if (cb.checked) { state.shows.push(slug); }
         else { state.shows = state.shows.filter(function (s) { return s !== slug; }); }
-        renderLineup();
+        renderLineup(); renderToday();
       };
+      var img = document.createElement('span');
+      img.innerHTML = coverImg(slug, 34);
       var label = document.createElement('span');
-      label.textContent = (idx !== -1 ? (idx + 1) + '. ' : '') + (SHOW_NAMES[slug] || slug);
-      row.appendChild(cb); row.appendChild(label);
+      label.textContent = (idx !== -1 ? (idx + 1) + '. ' : '')
+        + ((META[slug] && META[slug].name) || slug);
+      row.appendChild(cb); row.appendChild(img); row.appendChild(label);
       if (idx !== -1) {
         var movers = document.createElement('span');
         movers.className = 'movers';
         [['↑', -1], ['↓', 1]].forEach(function (m) {
           var b = document.createElement('button');
           b.className = 'ghost'; b.textContent = m[0]; b.type = 'button';
+          b.setAttribute('aria-label', (m[1] < 0 ? 'Move up: ' : 'Move down: ')
+            + ((META[slug] && META[slug].name) || slug));
           b.onclick = function () {
             var j = idx + m[1];
             if (j < 0 || j >= state.shows.length) return;
             state.shows.splice(idx, 1);
             state.shows.splice(j, 0, slug);
-            renderLineup();
+            renderLineup(); renderToday();
           };
           movers.appendChild(b);
         });
@@ -171,6 +319,100 @@ var NN = (function () {
       }
       box.appendChild(row);
     });
+  }
+
+  // ------- Today rail (same-origin api/episodes.json, pipeline-refreshed)
+  var EPISODES = null;
+  function minutesOf(dur) {
+    var m = /([0-9]+):([0-9]{2})/.exec(dur || '');
+    return m ? (parseInt(m[1], 10) + parseInt(m[2], 10) / 60) : 0;
+  }
+  function renderToday() {
+    var box = el('nn-today');
+    if (!box || EPISODES === null) return;
+    var lineup = state.shows.length >= 2 ? state.shows : STARTER;
+    var order = {}; lineup.forEach(function (s, i) { order[s] = i; });
+    var eps = EPISODES.filter(function (e) { return order[e.show_id] !== undefined; });
+    // newest date first; inside a day, the member's own order
+    var newest = eps.length ? eps.map(function (e) { return e.date; }).sort().pop() : null;
+    var today = eps.filter(function (e) { return e.date === newest; })
+      .sort(function (a, b) { return order[a.show_id] - order[b.show_id]; });
+    if (!today.length) {
+      box.innerHTML = '<p class="nn-muted">No episodes yet from your picks — try adding a couple more shows.</p>';
+      el('nn-today-stats').hidden = true;
+      return;
+    }
+    var mins = 0;
+    box.innerHTML = today.map(function (e) {
+      mins += minutesOf(e.duration);
+      return '<div class="nn-ep-card">'
+        + '<span>' + coverImg(e.show_id, 52) + '</span>'
+        + '<span>'
+        + '<span class="nn-ep-show" style="color:' + esc(e.brand_color || '#00D4FF') + ';">' + esc(e.show_name) + '</span>'
+        + '<div class="nn-ep-title">' + (e.blog_url
+            ? '<a href="' + esc(e.blog_url) + '" style="color:inherit;text-decoration:none;">' + esc(e.title) + '</a>'
+            : esc(e.title)) + '</div>'
+        + '<span class="nn-ep-meta">' + esc(e.date) + (e.duration ? ' · ' + esc(e.duration.replace('~', '')) : '') + '</span>'
+        + (e.audio_url ? '<audio controls preload="none" src="' + esc(e.audio_url) + '"></audio>' : '')
+        + '</span></div>';
+    }).join('');
+    el('nn-stat-count').textContent = today.length;
+    el('nn-stat-mins').textContent = Math.round(mins) || '–';
+    el('nn-stat-shows').textContent = lineup.length;
+    el('nn-today-stats').hidden = false;
+  }
+  function loadEpisodes() {
+    fetch('api/episodes.json')
+      .then(function (r) { return r.json(); })
+      .then(function (d) { EPISODES = d.episodes || []; renderToday(); })
+      .catch(function () {
+        EPISODES = [];
+        el('nn-today').innerHTML = '<p class="nn-muted">Could not load today’s episodes.</p>';
+      });
+  }
+
+  // ------- Market tiles (single-value stat tiles; delta = status color + arrow)
+  function mktTile(sym, price, deltaPct, href) {
+    if (price === undefined || price === null) return '';
+    var up = deltaPct >= 0;
+    var cls = up ? 'up' : 'down';
+    var arrow = up ? '▲' : '▼';
+    return '<a class="tile" href="' + href + '" style="text-decoration:none;color:inherit;">'
+      + '<div class="sym">' + sym + '</div>'
+      + '<div class="px">$' + Number(price).toFixed(2) + '</div>'
+      + '<div class="chg ' + cls + '">' + arrow + ' ' + Math.abs(deltaPct).toFixed(1) + '%</div>'
+      + '</a>';
+  }
+  function loadMarkets() {
+    Promise.all([
+      fetch('api/tsla.json').then(function (r) { return r.json(); }).catch(function () { return null; }),
+      fetch('api/spcx.json').then(function (r) { return r.json(); }).catch(function () { return null; })
+    ]).then(function (res) {
+      var t = res[0], s = res[1], html = '';
+      if (t && t.price) {
+        var tp = (typeof t.change_pct === 'number') ? t.change_pct
+          : (t.prev_close ? (t.price - t.prev_close) / t.prev_close * 100 : 0);
+        html += mktTile('TSLA', t.price, tp, 'tesla-dashboard.html');
+      }
+      if (s && s.price) {
+        var sp = s.prev_close ? (s.price - s.prev_close) / s.prev_close * 100 : 0;
+        html += mktTile('SPCX', s.price, sp, 'spacex-dashboard.html');
+      }
+      if (html) {
+        el('nn-mkt').innerHTML = html;
+        var asof = (t && t.fetched_at) || (s && s.updated_at) || '';
+        el('nn-mkt-asof').textContent = asof ? 'As of ' + asof.slice(0, 10) + ' · from the shows’ own data pipeline' : '';
+        el('nn-mkt-card').hidden = false;
+      }
+    });
+  }
+
+  function greet(name) {
+    var h = new Date().getHours();
+    var part = h < 5 ? 'Good evening' : h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
+    el('nn-greeting').textContent = part + (name ? ', ' + name : '') + ' —';
+    el('nn-date').textContent = new Date().toLocaleDateString(undefined,
+      { weekday: 'long', month: 'long', day: 'numeric' });
   }
 
   function load() {
@@ -184,7 +426,10 @@ var NN = (function () {
         state.shows = prefs.shows || [];
         el('nn-name').value = prefs.first_name || '';
         el('nn-city').value = prefs.city || '';
+        greet(prefs.first_name || '');
         renderLineup();
+        loadEpisodes();
+        loadMarkets();
         var feedUrl = data.member && data.member.feed_url;
         var tier = (data.member && data.member.tier) || 'none';
         var status = (data.member && data.member.status) || 'none';
@@ -193,11 +438,20 @@ var NN = (function () {
         el('nn-feed-upsell').hidden = !!feedUrl || cancelled;
         el('nn-feed-cancelled').hidden = !cancelled || !!feedUrl;
         if (feedUrl) { el('nn-feed-url').textContent = feedUrl; }
-        el('nn-tier-badge').textContent =
-          status === 'active'
-            ? (tier === 'personal_local' ? '· Personal + Local — active'
-                                         : '· Personal — active')
-            : (cancelled ? '· subscription ended' : '');
+        var pill = el('nn-tier-badge');
+        if (status === 'active') {
+          pill.textContent = tier === 'personal_local' ? 'Personal + Local' : 'Personal';
+          pill.className = 'nn-tier-pill active'; pill.hidden = false;
+        } else if (cancelled) {
+          pill.textContent = 'subscription ended';
+          pill.className = 'nn-tier-pill'; pill.hidden = false;
+        } else {
+          pill.textContent = 'free account';
+          pill.className = 'nn-tier-pill'; pill.hidden = false;
+        }
+        el('nn-hero-sub').textContent = feedUrl
+          ? 'Your private edition is live — here’s what your shows published, and everything your membership includes.'
+          : 'Here’s what your shows published today. Your lineup is saved — one step from your own private daily edition.';
         // A paying member with <2 chosen shows rides the starter lineup
         // until they save their own (the Worker fills it server-side).
         el('nn-starter-note').hidden = !(feedUrl && state.shows.length < 2);
@@ -206,13 +460,13 @@ var NN = (function () {
         );
         var code = data.perks && data.perks.book_discount_code;
         el('nn-book-perk').innerHTML = code
-          ? 'Use code <strong>' + code + '</strong> at the book store — '
+          ? 'Use code <strong>' + esc(code) + '</strong> at the book store — '
             + '<a href="{{ path_prefix }}books.html">see the books →</a>'
           : 'Member codes appear here as new volumes launch';
       })
       .catch(function () {
         el('nn-status').textContent = '';
-        el('nn-signin').hidden = false;
+        el('nn-guest').hidden = false;
       });
   }
 
@@ -238,6 +492,7 @@ var NN = (function () {
         el('nn-save-status').textContent = r.ok
           ? 'Saved — changes reach tomorrow’s edition'
           : 'Save failed (are personal accounts live yet?)';
+        if (r.ok) { greet(el('nn-name').value); }
       }).catch(function () { el('nn-save-status').textContent = 'Save failed'; });
     },
     copyFeed: function () {

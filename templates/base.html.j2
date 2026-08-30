@@ -262,6 +262,14 @@
                 <li><a href="{{ path_prefix }}player.html">{{ t.nav_player }}</a></li>
                 <li><a href="{{ path_prefix }}index.html">{{ t.nav_home }}</a></li>
                 {% endblock %}
+                {# Membership entry point (Aug 30 2026): "Join" by default;
+                   assets/js/tracking-free member probe below swaps it to
+                   "My Nerra" when the api.nerranetwork.com cookie is live,
+                   so signed-in visitors always have a one-click path to
+                   their dashboard. Deliberately OUTSIDE the nav_links
+                   block so per-page nav overrides keep it. #}
+                <li><a id="nn-nav-account" href="{{ path_prefix }}join.html"
+                       style="border:1px solid var(--nn-border);border-radius:999px;padding:0.3rem 0.85rem;">{{ t.get('nav_join', 'Join') }}</a></li>
             </ul>
 
             <button class="nn-hamburger" aria-label="{{ t.toggle_menu }}" aria-expanded="false" onclick="var m=document.getElementById('mobileMenu');m.classList.toggle('open');this.setAttribute('aria-expanded',m.classList.contains('open'));document.body.classList.toggle('menu-open')">&#9776;</button>
@@ -270,6 +278,7 @@
 
     <!-- Mobile Menu -->
     <div id="mobileMenu" class="nn-mobile-menu">
+        <a id="nn-nav-account-m" href="{{ path_prefix }}join.html" style="font-weight:600;" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">{{ t.get('nav_join', 'Join') }}</a>
         {% block mobile_nav_links %}
         <a href="{{ path_prefix }}start-here.html" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">{{ t.nav_start_here }}</a>
         <a href="{{ path_prefix }}how-to-listen.html" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">{{ t.nav_how_to_listen }}</a>
@@ -446,5 +455,23 @@
     <!-- Centralized, improved global search -->
     <script src="{{ path_prefix }}assets/js/search.js" defer></script>
     <script src="{{ path_prefix }}assets/js/language-control.js" defer></script>
+    <script>
+    // Member-aware nav (Aug 30 2026): the "Join" pill becomes "My Nerra"
+    // when the api.nerranetwork.com session cookie answers. Fail-silent —
+    // signed-out visitors, blocked cookies, or an unreachable Worker all
+    // leave the default Join link untouched.
+    (function () {
+      try {
+        fetch('https://api.nerranetwork.com/api/account', { credentials: 'include' })
+          .then(function (r) {
+            if (!r.ok) return;
+            ['nn-nav-account', 'nn-nav-account-m'].forEach(function (id) {
+              var a = document.getElementById(id);
+              if (a) { a.textContent = 'My Nerra'; a.href = '{{ path_prefix }}account.html'; }
+            });
+          }).catch(function () {});
+      } catch (e) {}
+    })();
+    </script>
 </body>
 </html>
