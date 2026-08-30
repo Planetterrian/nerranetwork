@@ -70,6 +70,23 @@
         .nn-lineup-row.off { opacity: 0.55; }
 
         .nn-feedurl { font-family: var(--font-mono, monospace); font-size: 0.78rem; word-break: break-all; background: var(--nn-bg, rgba(0,0,0,0.15)); padding: 0.6rem 0.8rem; border-radius: 8px; }
+
+        /* Add-on toggle cards */
+        .nn-addon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(215px, 1fr)); gap: 0.6rem; margin-top: var(--sp-3); }
+        .nn-addon { display: grid; grid-template-columns: auto 1fr; gap: 0.55rem; align-items: start; border: 1px solid var(--nn-border); border-radius: 12px; padding: 0.65rem 0.75rem; cursor: pointer; user-select: none; }
+        .nn-addon.on { border-color: rgba(0,212,255,0.55); background: color-mix(in srgb, #00D4FF 7%, transparent); }
+        .nn-addon.locked { opacity: 0.55; cursor: default; }
+        .nn-addon .em { font-size: 1.2rem; line-height: 1.2; }
+        .nn-addon .name { font-weight: 600; font-size: 0.9rem; }
+        .nn-addon .desc { font-size: 0.76rem; color: var(--nn-text-muted); margin-top: 0.15rem; }
+        .nn-addon .lock { font-size: 0.7rem; color: var(--nn-text-muted); border: 1px solid var(--nn-border); border-radius: 999px; padding: 0.05rem 0.45rem; margin-left: 0.35rem; }
+
+        /* Recent editions list */
+        .nn-edition { padding: 0.55rem 0; border-bottom: 1px dashed var(--nn-border); }
+        .nn-edition:last-child { border-bottom: none; }
+        .nn-edition .t { font-size: 0.85rem; line-height: 1.3; }
+        .nn-edition .d { font-size: 0.74rem; color: var(--nn-text-muted); }
+        .nn-edition audio { width: 100%; height: 30px; border-radius: 8px; margin-top: 0.3rem; }
         .nn-perk { display: flex; justify-content: space-between; gap: 1rem; padding: 0.5rem 0; border-bottom: 1px dashed var(--nn-border); }
         .nn-perk:last-child { border-bottom: none; }
         .nn-road li { display: grid; grid-template-columns: auto 1fr; gap: 0.5rem; padding: 0.35rem 0; color: var(--nn-text-muted); font-size: 0.9rem; }
@@ -152,18 +169,37 @@
                        you want your morning to run. Mira handles the rest — and this
                        page's "Today" rail follows the same picks.</p>
                     <div id="nn-lineup"></div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-top:var(--sp-4);">
+                    <div style="margin-top:var(--sp-4);">
                         <label>First name <span class="nn-muted">(Mira greets you by it)</span>
-                            <input type="text" id="nn-name" maxlength="40" placeholder="Optional"></label>
-                        <label>City <span class="nn-muted">(for the local brief tier)</span>
-                            <input type="text" id="nn-city" maxlength="80" placeholder="Optional"></label>
+                            <input type="text" id="nn-name" maxlength="40" placeholder="Optional" style="max-width:320px;"></label>
+                    </div>
+                </div>
+
+                <!-- Add-ons: customize the edition itself (Aug 30 2026) -->
+                <div class="nn-card">
+                    <h2>Your add-ons</h2>
+                    <p class="nn-muted">Tell Mira what to research for
+                       <em>your</em> edition — she reads it in her own words,
+                       names her sources aloud, and skips anything she can't
+                       verify rather than padding.</p>
+                    <div style="margin:var(--sp-3) 0;">
+                        <label>Location <span class="nn-muted">(any city or town — add-ons follow it wherever you choose)</span>
+                            <input type="text" id="nn-city" maxlength="80" placeholder="e.g. Vancouver, BC" style="max-width:320px;"></label>
                     </div>
                     <p class="nn-muted" id="nn-city-nudge" hidden style="margin-top:0.5rem;">
                        You're on <strong>Personal + Local</strong> but haven't set a
-                       city — add one above and save so Mira can include your
+                       location — add one above and save so Mira can include your
                        morning brief.</p>
+                    <div id="nn-addons" class="nn-addon-grid"></div>
+                    <p class="nn-muted" id="nn-addon-upsell" hidden style="margin-top:0.6rem;">
+                       Location add-ons run on the <strong>Personal + Local</strong>
+                       tier ($8.99/mo){% if stripe_personal_local_url and stripe_personal_local_url != '#' %} —
+                       <a href="{{ stripe_personal_local_url }}">upgrade to switch them on →</a>{% endif %}.
+                       The markets minute is included on every paid tier.</p>
                     <p style="margin-top:var(--sp-4);"><button onclick="NN.save()">Save preferences</button>
                        <span id="nn-save-status" class="nn-muted"></span></p>
+                    <p class="nn-muted" style="margin:0.5rem 0 0;">Changes reach
+                       tomorrow morning's edition.</p>
                 </div>
             </div>
 
@@ -186,6 +222,10 @@
                            <strong>starter lineup</strong> (SpaceX, Tesla, Models &amp;
                            Agents, Planetterrian, DP Pod). Choose 2+ shows and
                            save to make it yours — changes reach tomorrow's edition.</p>
+                        <div id="nn-editions" style="margin-top:var(--sp-3);" hidden>
+                            <h2 style="margin-bottom:0.4rem;">Listen here</h2>
+                            <div id="nn-editions-list"></div>
+                        </div>
                     </div>
                     <div id="nn-feed-cancelled" hidden>
                         <p class="nn-muted" style="margin-top:0;">Your subscription has ended and
@@ -245,7 +285,8 @@
                 <div class="nn-card">
                     <h2>Built for members next</h2>
                     <ul class="nn-road">
-                        <li><span>🌤️</span><span><strong>City morning brief</strong> — weather + one local story, on the Personal&nbsp;+&nbsp;Local tier</span></li>
+                        <li><span>📍</span><span><strong>Multiple locations</strong> — a second city's brief on the same feed</span></li>
+                        <li><span>⚽</span><span><strong>Sports scores</strong> — your teams in the markets-minute slot</span></li>
                         <li><span>📊</span><span><strong>Listening stats</strong> — your streaks and hours, right here</span></li>
                         <li><span>🎚️</span><span><strong>Mira, your way</strong> — pace and framing options for your edition</span></li>
                         <li><span>🌍</span><span><strong>More languages</strong> — FR/RU personal editions</span></li>
@@ -262,10 +303,13 @@
 <script>
 var NN = (function () {
   var API = 'https://api.nerranetwork.com';
-  var state = { shows: [], all: [], names: {} };
+  var state = { shows: [], all: [], names: {},
+                addons: null, addonsTouched: false, tier: 'none', active: false };
   var SHOW_META = {{ personal_shows | tojson }};
   var META = {}; SHOW_META.forEach(function (s) { META[s.slug] = s; });
   var STARTER = ['spacex', 'tesla', 'models_agents', 'planetterrian', 'dp_pod'];
+  var ADDONS = {{ personal_addons | tojson }};
+  var DEFAULT_ADDONS = {{ default_addons | tojson }};
 
   function el(id) { return document.getElementById(id); }
   function esc(s) { var d = document.createElement('span'); d.textContent = s || ''; return d.innerHTML; }
@@ -319,6 +363,77 @@ var NN = (function () {
       }
       box.appendChild(row);
     });
+  }
+
+  // ------- Add-on toggles
+  function addonOn(id) {
+    var chosen = state.addons === null ? DEFAULT_ADDONS : state.addons;
+    return chosen.indexOf(id) !== -1;
+  }
+  function addonAllowed(a) {
+    if (!state.active) return false;
+    return a.tier === 'personal' || state.tier === 'personal_local';
+  }
+  function renderAddons() {
+    var box = el('nn-addons');
+    if (!box) return;
+    box.innerHTML = '';
+    var anyLocked = false;
+    ADDONS.forEach(function (a) {
+      var allowed = addonAllowed(a);
+      if (!allowed) anyLocked = true;
+      var on = allowed && addonOn(a.id);
+      var d = document.createElement('div');
+      d.className = 'nn-addon' + (on ? ' on' : '') + (allowed ? '' : ' locked');
+      d.setAttribute('role', 'switch');
+      d.setAttribute('aria-checked', on ? 'true' : 'false');
+      d.setAttribute('tabindex', allowed ? '0' : '-1');
+      d.innerHTML = '<span class="em">' + a.emoji + '</span><span>'
+        + '<span class="name">' + esc(a.label) + '</span>'
+        + (allowed ? '' : '<span class="lock">'
+            + (a.tier === 'personal_local' ? '🔒 Local tier' : '🔒 Paid tier') + '</span>')
+        + '<div class="desc">' + esc(a.desc) + '</div></span>';
+      if (allowed) {
+        var toggle = function () {
+          var chosen = (state.addons === null ? DEFAULT_ADDONS.slice() : state.addons.slice());
+          var i = chosen.indexOf(a.id);
+          if (i === -1) { chosen.push(a.id); } else { chosen.splice(i, 1); }
+          state.addons = chosen; state.addonsTouched = true;
+          renderAddons();
+        };
+        d.onclick = toggle;
+        d.onkeydown = function (ev) {
+          if (ev.key === ' ' || ev.key === 'Enter') { ev.preventDefault(); toggle(); }
+        };
+      }
+      box.appendChild(d);
+    });
+    el('nn-addon-upsell').hidden = !anyLocked;
+  }
+
+  // ------- Recent editions (the member's own private feed, CORS-enabled)
+  function loadEditions(feedUrl) {
+    fetch(feedUrl, { credentials: 'omit' })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
+      .then(function (xml) {
+        var doc = new DOMParser().parseFromString(xml, 'text/xml');
+        var items = Array.prototype.slice.call(doc.querySelectorAll('item'), 0, 5);
+        if (!items.length) return;
+        var box = el('nn-editions-list');
+        box.innerHTML = items.map(function (it) {
+          var q = function (sel) { var n = it.querySelector(sel); return n ? n.textContent : ''; };
+          var enc = it.querySelector('enclosure');
+          var url = enc ? enc.getAttribute('url') : '';
+          var date = (q('pubDate') || '').split(' ').slice(0, 4).join(' ');
+          return '<div class="nn-edition">'
+            + '<div class="t">' + esc(q('title')) + '</div>'
+            + '<div class="d">' + esc(date) + '</div>'
+            + (url ? '<audio controls preload="none" src="' + esc(url) + '"></audio>' : '')
+            + '</div>';
+        }).join('');
+        el('nn-editions').hidden = false;
+      })
+      .catch(function () {});
   }
 
   // ------- Today rail (same-origin api/episodes.json, pipeline-refreshed)
@@ -424,20 +539,23 @@ var NN = (function () {
         state.all = data.shows || [];
         var prefs = (data.member && data.member.preferences) || {};
         state.shows = prefs.shows || [];
+        state.addons = (prefs.addons === undefined) ? null : prefs.addons;
         el('nn-name').value = prefs.first_name || '';
         el('nn-city').value = prefs.city || '';
         greet(prefs.first_name || '');
-        renderLineup();
-        loadEpisodes();
-        loadMarkets();
         var feedUrl = data.member && data.member.feed_url;
         var tier = (data.member && data.member.tier) || 'none';
         var status = (data.member && data.member.status) || 'none';
         var cancelled = status === 'cancelled';
+        state.tier = tier; state.active = status === 'active';
+        renderLineup();
+        renderAddons();
+        loadEpisodes();
+        loadMarkets();
         el('nn-feed-active').hidden = !feedUrl;
         el('nn-feed-upsell').hidden = !!feedUrl || cancelled;
         el('nn-feed-cancelled').hidden = !cancelled || !!feedUrl;
-        if (feedUrl) { el('nn-feed-url').textContent = feedUrl; }
+        if (feedUrl) { el('nn-feed-url').textContent = feedUrl; loadEditions(feedUrl); }
         var pill = el('nn-tier-badge');
         if (status === 'active') {
           pill.textContent = tier === 'personal_local' ? 'Personal + Local' : 'Personal';
@@ -480,14 +598,18 @@ var NN = (function () {
     },
     save: function () {
       el('nn-save-status').textContent = 'Saving…';
+      var body = {
+        shows: state.shows,
+        first_name: el('nn-name').value,
+        city: el('nn-city').value,
+      };
+      // Send addons only once the member has a real choice — an untouched
+      // page must not overwrite "never saved" (defaults) with a snapshot.
+      if (state.addonsTouched || state.addons !== null) { body.addons = state.addons; }
       fetch(API + '/api/account/preferences', {
         method: 'POST', credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          shows: state.shows,
-          first_name: el('nn-name').value,
-          city: el('nn-city').value,
-        }),
+        body: JSON.stringify(body),
       }).then(function (r) {
         el('nn-save-status').textContent = r.ok
           ? 'Saved — changes reach tomorrow’s edition'
