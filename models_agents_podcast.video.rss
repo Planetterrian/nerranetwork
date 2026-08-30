@@ -9,7 +9,7 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>en-us</language>
-    <lastBuildDate>Sat, 29 Aug 2026 01:05:54 +0000</lastBuildDate>
+    <lastBuildDate>Sun, 30 Aug 2026 07:49:32 +0000</lastBuildDate>
     <itunes:author>Patrick</itunes:author>
     <itunes:category text="Technology" />
     <itunes:category text="News">
@@ -23,6 +23,118 @@
     </itunes:owner>
     <itunes:summary>Your daily briefing on AI models and agents: new releases from the frontier labs, open-weight drops, agent frameworks, benchmarks, pricing, and practical tools you can use the same day — with long-running program tracking so you always know where the big stories stand. For developers, builders, and AI practitioners.</itunes:summary>
     <itunes:type>episodic</itunes:type>
+    <item>
+      <title>Ep 158: Tencent just dropped a 770B-parameter open-weight MoE model with a 1M-token context and…</title>
+      <description>Models &amp; Agents
+&lt;b&gt;Tencent just dropped a 770B-parameter open-weight MoE model with a 1M-token context and explicit reasoning controls that builders can toggle today.&lt;/b&gt;
+
+&lt;b&gt;What You Need to Know:&lt;/b&gt; Tencent released Hy4 Preview, a 770B total / 49B active parameter text-only model with a 1M token context window now available on Hugging Face. The model ships with a chat template that defaults to "high" reasoning effort and supports a "no_think" mode for faster responses. Builders should test it on long-context reasoning tasks where the explicit reasoning trace and parameter scale may shift the cost/performance curve versus current open-weight options. This builds on yesterday’s discussion of open-weight progress by showing continued scaling from Chinese labs.
+
+DEPTH OVER BREADTH (news items)
+
+Top Story
+Tencent released Hy4 Preview, a new open-weight text-only LLM with 770B total parameters and 49B active parameters. It features a 1M token context window and ships as a 1.56TB download on Hugging Face, a substantial jump from the company's prior Hy3 model released in July. The chat template exposes a reasoning_effort parameter that defaults to "high" and accepts only "high" or "no_think" values, producing visible reasoning traces before the final answer. The template code explicitly raises an exception for any other value, including None, and sets the default to high when the variable is undefined. Early tests with prompts such as generating an SVG of a pelican riding a bicycle show the model producing truncated internal reasoning that still yields usable outputs, including considerations about adding a helmet or sunglasses that the model ultimately rejects. Developers working on long-context or reasoning-heavy tasks should try the model via OpenRouter this week to evaluate whether the scale and controllable reasoning deliver practical gains over smaller open-weight alternatives. Source: &lt;a href="https://simonwillison.net/2026/Aug/29/hy4/"&gt;simonwillison.net&lt;/a&gt;
+
+Model Updates
+&lt;b&gt;Benchmark Variation in Production LLMs: r/MachineLearning&lt;/b&gt;
+An analysis of 31,352 hourly benchmark scores across 49 model identifiers found within-day score variation of 2.8 points versus between-day variation of 8.4 points. The study used consistent tasks for coding, reasoning, and tool calling executed inside Docker environments, with results aggregated over five runs per task. Between-day changes proved roughly three times larger than same-day stochastic noise, supporting the use of daily medians and change-point detection for drift monitoring. The resulting open-source AIStupidLevel system now tracks 22 models across six providers after collecting 169,858 total benchmark runs and processing over 88 million tokens. The dashboard classifies models as stable, volatile, degraded, or recovering and powers an OpenAI-compatible router that selects models based on current task-specific performance, stability, and cost. Builders running production LLM workloads should integrate similar continuous evaluation to separate normal variation from sustained degradation. Source: &lt;a href="https://www.reddit.com/r/MachineLearning/comments/1w1jp1j/i_analyzed_31352_hourly_llm_benchmark_scores/"&gt;reddit.com&lt;/a&gt;
+
+&lt;b&gt;Gnani AI Releases Evon v3.3 and Plexus Platform: APAC Media&lt;/b&gt;
+Gnani AI launched Evon v3.3, its latest LLM, alongside the Plexus agentic AI platform. The release targets enterprise use cases with both the model and an accompanying agent framework. No specific parameter counts, benchmarks, or pricing details were disclosed in the announcement. Developers focused on agentic workflows in regulated industries should monitor early access programs for integration details. Source: &lt;a href="https://apacnewsnetwork.com/2026/08/gnani-ai-launches-evon-v3-3-llm-and-plexus-agentic-ai-platform/"&gt;apacnewsnetwork.com&lt;/a&gt;
+
+&lt;b&gt;Anthropic Study on Models Training Models: The Indian Express&lt;/b&gt;
+Anthropic published findings showing AI models are improving at the task of training other models. The study examines how newer systems can generate training data or supervision signals for subsequent models. No concrete benchmark numbers or training recipes were released in the coverage. Researchers tracking scaling laws and synthetic data pipelines should review the full paper for methodology details. Source: &lt;a href="https://indianexpress.com/article/technology/artificial-intelligence/ai-getting-better-training-anthropic-study-findings-10855501/"&gt;indianexpress.com&lt;/a&gt;
+
+Agent &amp; Tool Developments
+&lt;b&gt;RAG Access Control Checker: r/MachineLearning&lt;/b&gt;
+An open-source tool was released that tests whether RAG applications retrieve documents a user should not access. It supports both offline test cases and live HTTP API testing using bearer tokens or API keys. The project is available at https://github.com/InfraGuard-Labs/rag-access-check and is seeking feedback from engineers running non-sensitive environments. Teams building retrieval systems with access controls should add this checker to their test suites to catch leakage before production. Source: &lt;a href="https://www.reddit.com/r/MachineLearning/comments/1w1zm5m/opensource_accesscontrol_checker_for/"&gt;reddit.com&lt;/a&gt;
+
+&lt;b&gt;Survey on Language Models to Autonomous Agents: Bioengineer.org&lt;/b&gt;
+A new survey maps the technical progression from standard language models to autonomous AI agents. It covers capability milestones and architectural shifts that enable greater independence. No specific performance numbers or framework comparisons are provided in the summary. Researchers designing agent systems should consult the survey for a consolidated view of recent agent literature. Source: &lt;a href="https://bioengineer.org/survey-tracks-the-evolution-from-language-models-to-autonomous-ai-agents/"&gt;bioengineer.org&lt;/a&gt;
+
+Practical &amp; Community
+&lt;b&gt;Statistical Process Control Beats Modern TSAD Methods: r/MachineLearning&lt;/b&gt;
+A researcher demonstrated that a 100-year-old Statistical Process Control algorithm outperforms current state-of-the-art time series anomaly detection methods on the popular TSB-AD-M benchmark. Multiple traces, including ECG data, showed perfect detection with the simple baseline while published deep learning approaches struggled. The post includes links to supporting slide decks and argues that many benchmark datasets are too trivial to support strong claims. Practitioners evaluating anomaly detection pipelines should re-run their models against SPC before adopting newer techniques. Source: &lt;a href="https://www.reddit.com/r/MachineLearning/comments/1w1wt1s/you_can_beat_sota_time_series_anomaly_detection/"&gt;reddit.com&lt;/a&gt;
+
+&lt;b&gt;Open Weight vs Proprietary Licensing Guide: Fast Company&lt;/b&gt;
+An explainer outlines the practical differences between proprietary, open-weight, and open-source AI models for developers and organizations. It covers licensing implications for commercial use and modification rights. The piece focuses on current examples from major labs without new release details. Teams choosing between hosted APIs and self-hosted models should review the distinctions before committing to a deployment path. Source: &lt;a href="https://www.fastcompany.com/91594272/what-is-the-difference-between-proprietary-open-weight-open-source-ai-llm-openai-anthropic-llama-deepseek"&gt;fastcompany.com&lt;/a&gt;
+
+Under the Hood: Benchmark Drift Detection
+Everyone treats a single benchmark score as a stable property of a model. In practice, production APIs exhibit measurable day-to-day variation that single-point evaluations miss entirely. The core mechanism is straightforward: run the same prompt set repeatedly under fixed parameters, compute daily medians, then apply change-point detection only when movement exceeds historical within-day noise. This approach adds roughly 5–10× the evaluation cost of a one-time benchmark but surfaces sustained degradation that would otherwise be masked by stochastic sampling. The 31k-score study showed between-day swings three times larger than same-day noise, confirming that isolated hourly readings are dominated by normal variance. When the gap between daily medians crosses a minimum-effect threshold, the system flags the model as degraded or recovering. Use continuous monitoring when you route traffic across providers or when token cost differences justify switching; skip it for one-off experiments where a single benchmark snapshot is sufficient. The gotcha that bites most teams is treating every score movement as signal rather than first subtracting the expected daily variance floor.
+
+Things to Try This Week
+• Try Hy4 Preview via OpenRouter on a long-context reasoning task to see whether the 1M token window and controllable reasoning effort change your current open-weight choices.
+• Run the RAG access-control checker from InfraGuard-Labs on a test retrieval setup to verify document-level permissions before scaling to production data.
+• Re-evaluate any time-series anomaly detection pipeline against basic Statistical Process Control to establish whether newer models deliver gains beyond the trivial benchmark cases.
+• Test the AIStupidLevel continuous evaluation pipeline on your own model mix to separate normal daily variation from actual performance drift.
+
+On the Horizon
+• More details expected on Hy4 capabilities and commercial availability as Tencent expands testing.
+• Follow-up analysis likely on the Anthropic model-training study once the full paper circulates.
+• Additional open-source access and monitoring tools will probably appear as RAG and agent deployments grow.
+
+```claims
+[{"id":"1","claim":"Tencent released Hy4 Preview, a 770B total / 49B active parameter text-only model with a 1M token context window.","episode_span":"Tencent released Hy4 Preview, a 770B total / 49B active parameter text-only model with a 1M token context window now available on Hugging Face.","source_url":"https://simonwillison.net/2026/Aug/29/hy4/","source_title":"Introducing Hy4 Preview","supporting_quote":"Introducing Hy4 Preview New open weight text input (no vision) LLM from Chinese company Tencent today: 770B total parameters, 49B active parameters, 1M token context window, 1.56TB on Hugging Face .","confidence":"high"},{"id":"2","claim":"An analysis of 31,352 hourly benchmark scores across 49 model identifiers found within-day score variation of 2.8 points versus between-day variation of 8.4 points.","episode_span":"An analysis of 31,352 hourly benchmark scores across 49 model identifiers found within-day score variation of 2.8 points versus between-day variation of 8.4 points.","source_url":"https://www.reddit.com/r/MachineLearning/comments/1w1jp1j/i_analyzed_31352_hourly_llm_benchmark_scores/","source_title":"I analyzed 31,352 hourly LLM benchmark scores: within-day variation was 2.8 points, while between-day variation was 8.4","supporting_quote":"I analyzed 31,352 hourly benchmark scores across 49 model identifiers... within-day variation was 2.8 points, while between-day variation was 8.4","confidence":"high"}]</description>
+      <guid isPermaLink="false">models-agents-video-ep158-20260830</guid>
+      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep158_20260830.mp4" length="206404771" type="video/mp4" />
+      <pubDate>Sun, 30 Aug 2026 08:00:00 +0000</pubDate>
+      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep158_20260830.jpg" />
+      <itunes:duration>08:11</itunes:duration>
+      <itunes:explicit>no</itunes:explicit>
+      <itunes:summary># Models &amp; Agents
+&gt; **Tencent just dropped a 770B-parameter open-weight MoE model with a 1M-token context and explicit reasoning controls that builders can toggle today.**
+
+**What You Need to Know:** Tencent released Hy4 Preview, a 770B total / 49B active parameter text-only model with a 1M token context window now available on Hugging Face. The model ships with a chat template that defaults to "high" reasoning effort and supports a "no_think" mode for faster responses. Builders should test it on long-context reasoning tasks where the explicit reasoning trace and parameter scale may shift the cost/performance curve versus current open-weight options. This builds on yesterday’s discussion of open-weight progress by showing continued scaling from Chinese labs.
+---
+### DEPTH OVER BREADTH (news items)
+
+### Top Story
+Tencent released Hy4 Preview, a new open-weight text-only LLM with 770B total parameters and 49B active parameters. It features a 1M token context window and ships as a 1.56TB download on Hugging Face, a substantial jump from the company's prior Hy3 model released in July. The chat template exposes a reasoning_effort parameter that defaults to "high" and accepts only "high" or "no_think" values, producing visible reasoning traces before the final answer. The template code explicitly raises an exception for any other value, including None, and sets the default to high when the variable is undefined. Early tests with prompts such as generating an SVG of a pelican riding a bicycle show the model producing truncated internal reasoning that still yields usable outputs, including considerations about adding a helmet or sunglasses that the model ultimately rejects. Developers working on long-context or reasoning-heavy tasks should try the model via OpenRouter this week to evaluate whether the scale and controllable reasoning deliver practical gains over smaller open-weight alternatives. Source: [simonwillison.net](https://simonwillison.net/2026/Aug/29/hy4/)
+---
+### Model Updates
+**Benchmark Variation in Production LLMs: r/MachineLearning**
+An analysis of 31,352 hourly benchmark scores across 49 model identifiers found within-day score variation of 2.8 points versus between-day variation of 8.4 points. The study used consistent tasks for coding, reasoning, and tool calling executed inside Docker environments, with results aggregated over five runs per task. Between-day changes proved roughly three times larger than same-day stochastic noise, supporting the use of daily medians and change-point detection for drift monitoring. The resulting open-source AIStupidLevel system now tracks 22 models across six providers after collecting 169,858 total benchmark runs and processing over 88 million tokens. The dashboard classifies models as stable, volatile, degraded, or recovering and powers an OpenAI-compatible router that selects models based on current task-specific performance, stability, and cost. Builders running production LLM workloads should integrate similar continuous evaluation to separate normal variation from sustained degradation. Source: [reddit.com](https://www.reddit.com/r/MachineLearning/comments/1w1jp1j/i_analyzed_31352_hourly_llm_benchmark_scores/)
+
+**Gnani AI Releases Evon v3.3 and Plexus Platform: APAC Media**
+Gnani AI launched Evon v3.3, its latest LLM, alongside the Plexus agentic AI platform. The release targets enterprise use cases with both the model and an accompanying agent framework. No specific parameter counts, benchmarks, or pricing details were disclosed in the announcement. Developers focused on agentic workflows in regulated industries should monitor early access programs for integration details. Source: [apacnewsnetwork.com](https://apacnewsnetwork.com/2026/08/gnani-ai-launches-evon-v3-3-llm-and-plexus-agentic-ai-platform/)
+
+**Anthropic Study on Models Training Models: The Indian Express**
+Anthropic published findings showing AI models are improving at the task of training other models. The study examines how newer systems can generate training data or supervision signals for subsequent models. No concrete benchmark numbers or training recipes were released in the coverage. Researchers tracking scaling laws and synthetic data pipelines should review the full paper for methodology details. Source: [indianexpress.com](https://indianexpress.com/article/technology/artificial-intelligence/ai-getting-better-training-anthropic-study-findings-10855501/)
+---
+### Agent &amp; Tool Developments
+**RAG Access Control Checker: r/MachineLearning**
+An open-source tool was released that tests whether RAG applications retrieve documents a user should not access. It supports both offline test cases and live HTTP API testing using bearer tokens or API keys. The project is available at https://github.com/InfraGuard-Labs/rag-access-check and is seeking feedback from engineers running non-sensitive environments. Teams building retrieval systems with access controls should add this checker to their test suites to catch leakage before production. Source: [reddit.com](https://www.reddit.com/r/MachineLearning/comments/1w1zm5m/opensource_accesscontrol_checker_for/)
+
+**Survey on Language Models to Autonomous Agents: Bioengineer.org**
+A new survey maps the technical progression from standard language models to autonomous AI agents. It covers capability milestones and architectural shifts that enable greater independence. No specific performance numbers or framework comparisons are provided in the summary. Researchers designing agent systems should consult the survey for a consolidated view of recent agent literature. Source: [bioengineer.org](https://bioengineer.org/survey-tracks-the-evolution-from-language-models-to-autonomous-ai-agents/)
+---
+### Practical &amp; Community
+**Statistical Process Control Beats Modern TSAD Methods: r/MachineLearning**
+A researcher demonstrated that a 100-year-old Statistical Process Control algorithm outperforms current state-of-the-art time series anomaly detection methods on the popular TSB-AD-M benchmark. Multiple traces, including ECG data, showed perfect detection with the simple baseline while published deep learning approaches struggled. The post includes links to supporting slide decks and argues that many benchmark datasets are too trivial to support strong claims. Practitioners evaluating anomaly detection pipelines should re-run their models against SPC before adopting newer techniques. Source: [reddit.com](https://www.reddit.com/r/MachineLearning/comments/1w1wt1s/you_can_beat_sota_time_series_anomaly_detection/)
+
+**Open Weight vs Proprietary Licensing Guide: Fast Company**
+An explainer outlines the practical differences between proprietary, open-weight, and open-source AI models for developers and organizations. It covers licensing implications for commercial use and modification rights. The piece focuses on current examples from major labs without new release details. Teams choosing between hosted APIs and self-hosted models should review the distinctions before committing to a deployment path. Source: [fastcompany.com](https://www.fastcompany.com/91594272/what-is-the-difference-between-proprietary-open-weight-open-source-ai-llm-openai-anthropic-llama-deepseek)
+---
+### Under the Hood: Benchmark Drift Detection
+Everyone treats a single benchmark score as a stable property of a model. In practice, production APIs exhibit measurable day-to-day variation that single-point evaluations miss entirely. The core mechanism is straightforward: run the same prompt set repeatedly under fixed parameters, compute daily medians, then apply change-point detection only when movement exceeds historical within-day noise. This approach adds roughly 5–10× the evaluation cost of a one-time benchmark but surfaces sustained degradation that would otherwise be masked by stochastic sampling. The 31k-score study showed between-day swings three times larger than same-day noise, confirming that isolated hourly readings are dominated by normal variance. When the gap between daily medians crosses a minimum-effect threshold, the system flags the model as degraded or recovering. Use continuous monitoring when you route traffic across providers or when token cost differences justify switching; skip it for one-off experiments where a single benchmark snapshot is sufficient. The gotcha that bites most teams is treating every score movement as signal rather than first subtracting the expected daily variance floor.
+---
+### Things to Try This Week
+- Try Hy4 Preview via OpenRouter on a long-context reasoning task to see whether the 1M token window and controllable reasoning effort change your current open-weight choices.
+- Run the RAG access-control checker from InfraGuard-Labs on a test retrieval setup to verify document-level permissions before scaling to production data.
+- Re-evaluate any time-series anomaly detection pipeline against basic Statistical Process Control to establish whether newer models deliver gains beyond the trivial benchmark cases.
+- Test the AIStupidLevel continuous evaluation pipeline on your own model mix to separate normal daily variation from actual performance drift.
+---
+### On the Horizon
+- More details expected on Hy4 capabilities and commercial availability as Tencent expands testing.
+- Follow-up analysis likely on the Anthropic model-training study once the full paper circulates.
+- Additional open-source access and monitoring tools will probably appear as RAG and agent deployments grow.
+
+```claims
+[{"id":"1","claim":"Tencent released Hy4 Preview, a 770B total / 49B active parameter text-only model with a 1M token context window.","episode_span":"Tencent released Hy4 Preview, a 770B total / 49B active parameter text-only model with a 1M token context window now available on Hugging Face.","source_url":"https://simonwillison.net/2026/Aug/29/hy4/","source_title":"Introducing Hy4 Preview","supporting_quote":"Introducing Hy4 Preview New open weight text input (no vision) LLM from Chinese company Tencent today: 770B total parameters, 49B active parameters, 1M token context window, 1.56TB on Hugging Face .","confidence":"high"},{"id":"2","claim":"An analysis of 31,352 hourly benchmark scores across 49 model identifiers found within-day score variation of 2.8 points versus between-day variation of 8.4 points.","episode_span":"An analysis of 31,352 hourly benchmark scores across 49 model identifiers found within-day score variation of 2.8 points versus between-day variation of 8.4 points.","source_url":"https://www.reddit.com/r/MachineLearning/comments/1w1jp1j/i_analyzed_31352_hourly_llm_benchmark_scores/","source_title":"I analyzed 31,352 hourly LLM benchmark scores: within-day variation was 2.8 points, while between-day variation was 8.4","supporting_quote":"I analyzed 31,352 hourly benchmark scores across 49 model identifiers... within-day variation was 2.8 points, while between-day variation was 8.4","confidence":"high"}]</itunes:summary>
+      <itunes:episode>158</itunes:episode>
+      <itunes:title>Ep 158: Tencent just dropped a 770B-parameter open-weight MoE model with a 1M-token context and…</itunes:title>
+      <itunes:episodeType>full</itunes:episodeType>
+    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep158_20260830_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep158.json" type="application/json+chapters" /></item>
     <item>
       <title>Ep 157: Claude just showed it can autonomously improve alignment in other models on a single GPU…</title>
       <description>Models &amp; Agents
@@ -3430,123 +3542,5 @@ Everyone talks about giving coding agents more context as if bigger windows are 
       <itunes:title>Ep 129: OpenAI’s internal Astra model solved ten decade-old math problems for under $2,000 each in…</itunes:title>
       <itunes:episodeType>full</itunes:episodeType>
     <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep129_20260802_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep129.json" type="application/json+chapters" /></item>
-    <item>
-      <title>Ep 128: DeepSeek-V4-Flash-0731 delivers strong agentic and coding performance at roughly one-fifth…</title>
-      <description>Models &amp; Agents
-&lt;b&gt;DeepSeek-V4-Flash-0731 delivers strong agentic and coding performance at roughly one-fifth the price of comparable frontier models.&lt;/b&gt;
-
-&lt;b&gt;What You Need to Know:&lt;/b&gt; Simon Willison reports the 304B-parameter DeepSeek-V4-Flash-0731 (167 GB on Hugging Face) ranks ahead of MiniMax M3 on Artificial Analysis charts while charging $0.14 per million input tokens and $0.27 per million output tokens. MiniMax released its H3 omni-modal model that ingests text, images, video, and audio in one context and outputs 2K video clips with native stereo audio for durations of 4–15 seconds. Stateless MCP 2.0 and DataFlow-Harness both lower the barrier for reliable agent tooling by replacing session state and free-form scripts with auditable, single-request calls and persistent DAGs.
-
-Top Story
-MiniMax released MiniMax H3, a general-purpose multimodal generation model that treats text, images, video, and audio as a single unified context and returns video with native stereo sound. The model produces 2K output at integer durations between 4 and 15 seconds without bolted-on audio tracks. It is positioned as a native omni-modal system rather than a text-to-video model with separate audio components. Builders working on short-form video with synchronized sound can now generate clips directly from mixed inputs instead of stitching separate pipelines. Watch for follow-on releases that extend duration or add longer context windows. Source: &lt;a href="https://www.marktechpost.com/2026/08/01/minimax-releases-minimax-h3-an-omni-modal-video-model-that-generates-15-second-2k-clips-with-native-stereo-audio/"&gt;marktechpost.com&lt;/a&gt;
-
-Model Updates
-&lt;b&gt;DeepSeek-V4-Flash-0731: Simon Willison&lt;/b&gt;
-The 304B-parameter model ships with unchanged architecture but improved post-training that boosts agentic and coding performance. It ranks ahead of the 428B MiniMax M3 on Artificial Analysis Pareto charts while costing $0.14 per million input tokens and $0.27 per million output tokens. Simon Willison notes strong results on the Intelligence Index versus Cost chart and shows that raising reasoning effort via OpenRouter markedly improves output quality on tasks such as drawing a pelican riding a bicycle. The release appeared on Hugging Face on July 31, 2026, and the official DeepSeek API moved into public beta the same day. Builders should test it this week for agent loops or code generation where cost per successful task matters more than raw frontier scale. Source: &lt;a href="https://simonwillison.net/2026/Jul/31/deepseek-v4-flash-0731/"&gt;simonwillison.net&lt;/a&gt;
-
-&lt;b&gt;DeepSeek-V4-Flash-0731 pricing and cache behavior: Simon Willison&lt;/b&gt;
-Default runs cost 0.44 cents and high-reasoning runs cost 0.22 cents per the linked Gist; the first request in a session benefited from prompt caching. The model is available through OpenRouter and the official DeepSeek API now in public beta. Teams running repeated agent prompts can expect lower effective cost once caching activates. The Gist pricing section details how cache hits reduced the second call below the listed rates. Source: &lt;a href="https://x.com/simonw/status/2083352723068707291"&gt;x.com&lt;/a&gt;
-
-&lt;b&gt;DeepSeek upgrade details: MarkTechPost&lt;/b&gt;
-DeepSeek published the official V4-Flash-0731 checkpoint on Hugging Face on July 31, 2026, confirming it supersedes the earlier preview with the same 304B size. Gains come entirely from re-post-training rather than architectural changes. The release targets agentic and coding workloads and moves the V4-Flash API into public beta. The model card states the architecture and parameter count remain identical to the preview version. Source: &lt;a href="https://www.marktechpost.com/2026/07/31/deepseek-upgrades-deepseek-v4-flash-0731-with-major-agentic-and-coding-gains/"&gt;marktechpost.com&lt;/a&gt;
-
-Agent &amp; Tool Developments
-&lt;b&gt;Stateless MCP 2.0: Simon Willison&lt;/b&gt;
-The 2026-07-28 Model Context Protocol revision replaces the two-request initialize-plus-call flow with a single stateless POST that includes MCP-Protocol-Version and Mcp-Method headers. Simon Willison built mcp-explorer, datasette-mcp, and the llm-mcp-client plugin in one week to explore the simpler spec. The change removes server-side session storage and makes MCP tools easier to audit than full shell access. Legacy stateful calls required an initialize step that returned a Mcp-Session-Id header for all subsequent requests; the new format embeds client info inside a _meta object in the single JSON body. The stateless design also removes the need to maintain session affinity across load-balanced backend instances. Source: &lt;a href="https://simonwillison.net/2026/Jul/31/stateless-mcp/"&gt;simonwillison.net&lt;/a&gt;
-
-&lt;b&gt;DataFlow-Harness structured pipelines: VentureBeat&lt;/b&gt;
-Peking University researchers released an open-source framework that guides LLM agents to build persistent, editable DAG workflows instead of disposable Python scripts. On a 12-task benchmark it reached 93.3 % end-to-end pass rate while cutting API cost 72.5 % and latency 49.9 % versus vanilla Claude Code. The system uses typed mutations against a live operator registry and DataFlow-Skills for domain rules. It was tested with Claude Opus 4.7 as the backbone model and outperformed both MCP-only and Context-Aware CC baselines on complex tasks such as textbook-to-VQA extraction. The framework is released under Apache 2.0 and requires an adapter layer when targeting external orchestration systems such as Airflow or Spark. Source: &lt;a href="https://venturebeat.com/orchestration/structured-ai-data-pipelines-score-10-9-points-below-free-form-code-dataflow-harness-closes-the-gap"&gt;venturebeat.com&lt;/a&gt;
-
-&lt;b&gt;datasette-agent 0.4a0: Simon Willison&lt;/b&gt;
-The new release adds await context.browser_task() so agent tools can run JavaScript directly in the user’s browser. The capability lets Datasette Agent plugins expose custom browser-side actions without additional server round-trips. The change is documented in pull request #33 and targets use cases where client-side rendering or DOM inspection is required inside an agent workflow. Source: &lt;a href="https://simonwillison.net/2026/Jul/31/datasette-agent/"&gt;simonwillison.net&lt;/a&gt;
-
-Practical &amp; Community
-&lt;b&gt;smevals eval suite: Simon Willison&lt;/b&gt;
-The new tool runs small YAML-defined eval suites across models, prompts, and harnesses, then grades results with custom checkers. Commands include uvx smevals run, uvx smevals grade, and uvx smevals serve for a local results browser. It supports any model reachable by the llm library and separates execution from grading. An example eval directory contains task YAML files that define challenges such as SVG generation or haiku writing, along with grader scripts that perform string checks or call secondary models for semantic scoring. Source: &lt;a href="https://simonwillison.net/2026/Jul/31/smevals/"&gt;simonwillison.net&lt;/a&gt;
-
-&lt;b&gt;Groundcover observability: VentureBeat&lt;/b&gt;
-The company raised $100 million and now has more than 250 paying customers; it uses eBPF collection inside customer clouds (BYOC) so telemetry never leaves the user’s AWS, Azure, or GCP account. Pricing is based on monitored hosts rather than data volume, which suits high-telemetry AI agent workloads. The Series C round was led by One Peak and brings total funding to $160 million. Groundcover’s Agent Mode lets engineers query logs, metrics, traces, and Kubernetes events with natural language while keeping all raw data inside the customer’s own infrastructure. Source: &lt;a href="https://venturebeat.com/data/how-is-your-enterprise-tracking-ai-agent-telemetry-groundcover-thinks-it-should-never-leave-your-cloud"&gt;venturebeat.com&lt;/a&gt;
-
-&lt;b&gt;VLMs in radiology reporting: r/MachineLearning&lt;/b&gt;
-A new arXiv paper shows standard metrics reward repetitive “normal” templates and penalize clinically meaningful rare terms. The authors introduce a framework that measures term erasure and biased hallucination in chest X-ray report generation. The paper, titled “Measuring What VLMs Don’t Say: Validation Metrics Hide Clinical Terminology Erasure in Radiology Report Generation,” is available at arXiv:2603.01625 and was posted by u/ade17_in. Source: &lt;a href="https://www.reddit.com/r/MachineLearning/comments/1vcipzz/vlms_can_score_well_on_benchmarks_while_silently/"&gt;reddit.com&lt;/a&gt;
-
-Under the Hood: Stateless Model Context Protocol
-Everyone talks about MCP as a simple “plug in a tool” layer. In practice the original stateful design forced every client to open a session, store a Mcp-Session-Id, and route every subsequent call to the same backend instance. The 2026-07-28 revision collapses that into one HTTP request carrying protocol version and method headers, eliminating server-side session tables entirely. The engineering payoff is horizontal scaling without sticky sessions and simpler client code that no longer needs to manage or retry session IDs. The tradeoff is that servers lose any opportunity to keep per-client mutable state across calls; tool authors must therefore design purely functional operations or push state into the client-supplied _meta object. Teams that previously wrapped MCP behind a stateful proxy can now drop the proxy and expose tools directly behind ordinary load balancers. The practical decision rule is: if your tool needs only the arguments supplied in the current call, switch to stateless; if it must remember prior interactions, keep that memory in the client or in an external store the tool can reach. Implementation complexity drops further because the single-request format removes the need for servers to handle session initialization errors or timeout cleanup. Clients written against the new headers can be tested with ordinary curl commands that include the MCP-Protocol-Version and Mcp-Method fields, lowering the barrier for debugging. When load increases, stateless servers can be replicated behind any standard HTTP load balancer without custom session affinity configuration. The only retained state lives inside the _meta block or in an external system the tool itself queries, which keeps the protocol surface small and auditable.
-
-Things to Try This Week
-• Run `uvx mcp-explorer list https://agentic-mermaid.dev/mcp` then inspect and call tools to see stateless MCP in action.
-• Test DeepSeek-V4-Flash-0731 at high reasoning effort via OpenRouter on a coding or agent task and compare cost against your current model.
-• Install the alpha llm-mcp-client plugin and wire it to datasette.simonwillison.net/-/mcp to let an LLM run SQL against a live dataset.
-• Clone DataFlow-Harness and run one of the 12 benchmark tasks to see how typed DAG mutations differ from free-form script generation.
-• Build a small smevals suite for a task you care about (SVG generation, haiku writing) and grade runs across two models.
-
-On the Horizon
-• More open-weight releases from Chinese labs are expected to target the price/performance band currently occupied by DeepSeek-V4-Flash.
-• Additional MCP server implementations and client libraries will appear as the stateless spec stabilizes.
-• Further agent-telemetry platforms will adopt host-based or BYOC pricing to handle rising AI workload data volumes.
-• Evaluation harnesses like smevals and DataFlow-Harness will see community forks aimed at specific vertical domains.</description>
-      <guid isPermaLink="false">models-agents-video-ep128-20260801</guid>
-      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep128_20260801.mp4" length="198782088" type="video/mp4" />
-      <pubDate>Sat, 01 Aug 2026 08:00:00 +0000</pubDate>
-      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep128_20260801.jpg" />
-      <itunes:duration>10:03</itunes:duration>
-      <itunes:explicit>no</itunes:explicit>
-      <itunes:summary># Models &amp; Agents
-&gt; **DeepSeek-V4-Flash-0731 delivers strong agentic and coding performance at roughly one-fifth the price of comparable frontier models.**
-
-**What You Need to Know:** Simon Willison reports the 304B-parameter DeepSeek-V4-Flash-0731 (167 GB on Hugging Face) ranks ahead of MiniMax M3 on Artificial Analysis charts while charging $0.14 per million input tokens and $0.27 per million output tokens. MiniMax released its H3 omni-modal model that ingests text, images, video, and audio in one context and outputs 2K video clips with native stereo audio for durations of 4–15 seconds. Stateless MCP 2.0 and DataFlow-Harness both lower the barrier for reliable agent tooling by replacing session state and free-form scripts with auditable, single-request calls and persistent DAGs.
----
-### Top Story
-MiniMax released MiniMax H3, a general-purpose multimodal generation model that treats text, images, video, and audio as a single unified context and returns video with native stereo sound. The model produces 2K output at integer durations between 4 and 15 seconds without bolted-on audio tracks. It is positioned as a native omni-modal system rather than a text-to-video model with separate audio components. Builders working on short-form video with synchronized sound can now generate clips directly from mixed inputs instead of stitching separate pipelines. Watch for follow-on releases that extend duration or add longer context windows. Source: [marktechpost.com](https://www.marktechpost.com/2026/08/01/minimax-releases-minimax-h3-an-omni-modal-video-model-that-generates-15-second-2k-clips-with-native-stereo-audio/)
----
-### Model Updates
-**DeepSeek-V4-Flash-0731: Simon Willison**
-The 304B-parameter model ships with unchanged architecture but improved post-training that boosts agentic and coding performance. It ranks ahead of the 428B MiniMax M3 on Artificial Analysis Pareto charts while costing $0.14 per million input tokens and $0.27 per million output tokens. Simon Willison notes strong results on the Intelligence Index versus Cost chart and shows that raising reasoning effort via OpenRouter markedly improves output quality on tasks such as drawing a pelican riding a bicycle. The release appeared on Hugging Face on July 31, 2026, and the official DeepSeek API moved into public beta the same day. Builders should test it this week for agent loops or code generation where cost per successful task matters more than raw frontier scale. Source: [simonwillison.net](https://simonwillison.net/2026/Jul/31/deepseek-v4-flash-0731/)
-
-**DeepSeek-V4-Flash-0731 pricing and cache behavior: Simon Willison**
-Default runs cost 0.44 cents and high-reasoning runs cost 0.22 cents per the linked Gist; the first request in a session benefited from prompt caching. The model is available through OpenRouter and the official DeepSeek API now in public beta. Teams running repeated agent prompts can expect lower effective cost once caching activates. The Gist pricing section details how cache hits reduced the second call below the listed rates. Source: [x.com](https://x.com/simonw/status/2083352723068707291)
-
-**DeepSeek upgrade details: MarkTechPost**
-DeepSeek published the official V4-Flash-0731 checkpoint on Hugging Face on July 31, 2026, confirming it supersedes the earlier preview with the same 304B size. Gains come entirely from re-post-training rather than architectural changes. The release targets agentic and coding workloads and moves the V4-Flash API into public beta. The model card states the architecture and parameter count remain identical to the preview version. Source: [marktechpost.com](https://www.marktechpost.com/2026/07/31/deepseek-upgrades-deepseek-v4-flash-0731-with-major-agentic-and-coding-gains/)
----
-### Agent &amp; Tool Developments
-**Stateless MCP 2.0: Simon Willison**
-The 2026-07-28 Model Context Protocol revision replaces the two-request initialize-plus-call flow with a single stateless POST that includes MCP-Protocol-Version and Mcp-Method headers. Simon Willison built mcp-explorer, datasette-mcp, and the llm-mcp-client plugin in one week to explore the simpler spec. The change removes server-side session storage and makes MCP tools easier to audit than full shell access. Legacy stateful calls required an initialize step that returned a Mcp-Session-Id header for all subsequent requests; the new format embeds client info inside a _meta object in the single JSON body. The stateless design also removes the need to maintain session affinity across load-balanced backend instances. Source: [simonwillison.net](https://simonwillison.net/2026/Jul/31/stateless-mcp/)
-
-**DataFlow-Harness structured pipelines: VentureBeat**
-Peking University researchers released an open-source framework that guides LLM agents to build persistent, editable DAG workflows instead of disposable Python scripts. On a 12-task benchmark it reached 93.3 % end-to-end pass rate while cutting API cost 72.5 % and latency 49.9 % versus vanilla Claude Code. The system uses typed mutations against a live operator registry and DataFlow-Skills for domain rules. It was tested with Claude Opus 4.7 as the backbone model and outperformed both MCP-only and Context-Aware CC baselines on complex tasks such as textbook-to-VQA extraction. The framework is released under Apache 2.0 and requires an adapter layer when targeting external orchestration systems such as Airflow or Spark. Source: [venturebeat.com](https://venturebeat.com/orchestration/structured-ai-data-pipelines-score-10-9-points-below-free-form-code-dataflow-harness-closes-the-gap)
-
-**datasette-agent 0.4a0: Simon Willison**
-The new release adds await context.browser_task() so agent tools can run JavaScript directly in the user’s browser. The capability lets Datasette Agent plugins expose custom browser-side actions without additional server round-trips. The change is documented in pull request #33 and targets use cases where client-side rendering or DOM inspection is required inside an agent workflow. Source: [simonwillison.net](https://simonwillison.net/2026/Jul/31/datasette-agent/)
----
-### Practical &amp; Community
-**smevals eval suite: Simon Willison**
-The new tool runs small YAML-defined eval suites across models, prompts, and harnesses, then grades results with custom checkers. Commands include uvx smevals run, uvx smevals grade, and uvx smevals serve for a local results browser. It supports any model reachable by the llm library and separates execution from grading. An example eval directory contains task YAML files that define challenges such as SVG generation or haiku writing, along with grader scripts that perform string checks or call secondary models for semantic scoring. Source: [simonwillison.net](https://simonwillison.net/2026/Jul/31/smevals/)
-
-**Groundcover observability: VentureBeat**
-The company raised $100 million and now has more than 250 paying customers; it uses eBPF collection inside customer clouds (BYOC) so telemetry never leaves the user’s AWS, Azure, or GCP account. Pricing is based on monitored hosts rather than data volume, which suits high-telemetry AI agent workloads. The Series C round was led by One Peak and brings total funding to $160 million. Groundcover’s Agent Mode lets engineers query logs, metrics, traces, and Kubernetes events with natural language while keeping all raw data inside the customer’s own infrastructure. Source: [venturebeat.com](https://venturebeat.com/data/how-is-your-enterprise-tracking-ai-agent-telemetry-groundcover-thinks-it-should-never-leave-your-cloud)
-
-**VLMs in radiology reporting: r/MachineLearning**
-A new arXiv paper shows standard metrics reward repetitive “normal” templates and penalize clinically meaningful rare terms. The authors introduce a framework that measures term erasure and biased hallucination in chest X-ray report generation. The paper, titled “Measuring What VLMs Don’t Say: Validation Metrics Hide Clinical Terminology Erasure in Radiology Report Generation,” is available at arXiv:2603.01625 and was posted by u/ade17_in. Source: [reddit.com](https://www.reddit.com/r/MachineLearning/comments/1vcipzz/vlms_can_score_well_on_benchmarks_while_silently/)
----
-### Under the Hood: Stateless Model Context Protocol
-Everyone talks about MCP as a simple “plug in a tool” layer. In practice the original stateful design forced every client to open a session, store a Mcp-Session-Id, and route every subsequent call to the same backend instance. The 2026-07-28 revision collapses that into one HTTP request carrying protocol version and method headers, eliminating server-side session tables entirely. The engineering payoff is horizontal scaling without sticky sessions and simpler client code that no longer needs to manage or retry session IDs. The tradeoff is that servers lose any opportunity to keep per-client mutable state across calls; tool authors must therefore design purely functional operations or push state into the client-supplied _meta object. Teams that previously wrapped MCP behind a stateful proxy can now drop the proxy and expose tools directly behind ordinary load balancers. The practical decision rule is: if your tool needs only the arguments supplied in the current call, switch to stateless; if it must remember prior interactions, keep that memory in the client or in an external store the tool can reach. Implementation complexity drops further because the single-request format removes the need for servers to handle session initialization errors or timeout cleanup. Clients written against the new headers can be tested with ordinary curl commands that include the MCP-Protocol-Version and Mcp-Method fields, lowering the barrier for debugging. When load increases, stateless servers can be replicated behind any standard HTTP load balancer without custom session affinity configuration. The only retained state lives inside the _meta block or in an external system the tool itself queries, which keeps the protocol surface small and auditable.
----
-### Things to Try This Week
-- Run `uvx mcp-explorer list https://agentic-mermaid.dev/mcp` then inspect and call tools to see stateless MCP in action.
-- Test DeepSeek-V4-Flash-0731 at high reasoning effort via OpenRouter on a coding or agent task and compare cost against your current model.
-- Install the alpha llm-mcp-client plugin and wire it to datasette.simonwillison.net/-/mcp to let an LLM run SQL against a live dataset.
-- Clone DataFlow-Harness and run one of the 12 benchmark tasks to see how typed DAG mutations differ from free-form script generation.
-- Build a small smevals suite for a task you care about (SVG generation, haiku writing) and grade runs across two models.
----
-### On the Horizon
-- More open-weight releases from Chinese labs are expected to target the price/performance band currently occupied by DeepSeek-V4-Flash.
-- Additional MCP server implementations and client libraries will appear as the stateless spec stabilizes.
-- Further agent-telemetry platforms will adopt host-based or BYOC pricing to handle rising AI workload data volumes.
-- Evaluation harnesses like smevals and DataFlow-Harness will see community forks aimed at specific vertical domains.</itunes:summary>
-      <itunes:episode>128</itunes:episode>
-      <itunes:title>Ep 128: DeepSeek-V4-Flash-0731 delivers strong agentic and coding performance at roughly one-fifth…</itunes:title>
-      <itunes:episodeType>full</itunes:episodeType>
-    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep128_20260801_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep128.json" type="application/json+chapters" /></item>
   <podcast:locked owner="patrick@planetterrian.com">yes</podcast:locked><itunes:keywords>ai, llm, machine learning, openai, anthropic, agents, claude, gpt, ai news</itunes:keywords></channel>
 </rss>
