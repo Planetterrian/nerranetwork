@@ -379,7 +379,17 @@ experiments:
     area: quality
     shipped: 2026-08-18
     readout: 2026-09-01
-    status: reading
+    # Closed at readout (2026-09-01). OUTCOME: PARTIAL ADOPTION.
+    # Adopted for good: dp_pod script-stage (14/14 days incl. the 08-27
+    # bad-service day, LV 7.2-8.3, 2 factual flags in 10 reviewer-days —
+    # at/below every 4.3 news show), synth, and the reviewer (effort LOW
+    # since 08-21). Withdrawn arms stay withdrawn (FPD/UC — 4.6 digest
+    # stall/server-disconnect signature). The quality and operational
+    # verdicts split cleanly: 4.6 writes better and did NOT elevate
+    # factual flags cross-show; its service reliability on long
+    # digest-shaped calls remains the blocker. Successor:
+    # grok-46-wave2-scripts (script-stage only, the shape that survived).
+    status: done
     interim: >
       2026-08-27 (operator-directed): the first_principles and
       unintended_consequences WHOLE-SHOW arms are withdrawn — on the
@@ -479,7 +489,12 @@ experiments:
     area: growth
     shipped: 2026-08-19
     readout: 2026-09-05
-    status: reading
+    # Closed early with the trial readout (2026-09-01): ADOPTED. Titles,
+    # restock, and the specials pin ran the full window without an
+    # operational incident (small calls — the surface shape 4.6 handles
+    # reliably). Title CTR/velocity deltas stay readable in youtube_stats
+    # via the model-era stamps whenever wanted.
+    status: done
     baseline: >
       YouTube title bundle, topic-queue restock, and deep-dive specials
       all on grok-4.3. EN long-form CTR/velocity per the youtube_stats
@@ -511,6 +526,40 @@ experiments:
       MAB / MIT + dp_pod comedy-spec re-tightening) is deliberately
       HELD for the staged-grok-46-trial readout 2026-09-01 per
       docs/model_upgrade_playbook.md.
+  - id: grok-46-wave2-scripts
+    title: "grok-4.6 wave-2 script pins — omni_view Steel Man + MAB teaching prose"
+    area: quality
+    shipped: 2026-09-01
+    readout: 2026-09-12
+    status: reading
+    baseline: >
+      Both shows' scripts on grok-4.3. omni_view: 3 factual flags in 10
+      reviewer-days, Steel Man both-sides framing prone to template tics
+      (the "strongest case" family). MAB: 2 flags/10d; teaching prose is
+      the product. dp_pod's identical script-only pin is the control
+      evidence: 14/14 days, LV 7.2-8.3, 2 flags/10d.
+    target: >
+      Reviewer factual flags at or below each show's 4.3 baseline under
+      the same 4.6-low reviewer (cross-show, within-day comparisons
+      only); zero missed slots attributable to script-stage 4.6 calls;
+      audibly better delivery on the operator's A/B-listen.
+    criteria: >
+      SCRIPT STAGE ONLY — digests stay grok-4.3 (guarded). REVERT
+      TRIGGERS, one line each (delete the podcast_model pin): (1) a
+      script-stage stall/server-disconnect costing an episode its slot —
+      the FPD/UC withdrawal signature; (2) factual flags clearly above
+      the show's 4.3 baseline; (3) the operator's listen verdict.
+      MIT is deliberately EXCLUDED from this wave: its 5-flags-in-10-days
+      rate is DIGEST/data-side on 4.3 (contradictory trade counts, an
+      invented listing venue) — a better script model cannot fix that
+      and would varnish over it; MIT's digest factual quality is its own
+      work item for the review rotation.
+    notes: >
+      dp_pod's comedy/banter spec re-tightening was considered for this
+      wave and deferred to the review-agent rotation: dp_pod scripts have
+      drifted ABOVE their length target on 4.6 (2,000-2,362w vs 1,550)
+      and layering more delivery spec onto an already-long script without
+      a listen-informed pass is the FPD lesson in reverse.
   - id: mit-verified-window-alpha
     title: "Modern Investing states verified-window alpha only"
     area: quality
