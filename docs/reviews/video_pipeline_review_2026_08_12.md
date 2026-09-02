@@ -247,3 +247,47 @@ found and fixed the lag bug below):
   read 0.22 (honest: 0.10). Windows are now lag-trimmed (_LAG_DAYS=2)
   in both the scorecard and the experiment WoW metrics; guard in
   tests/test_dashboard_growth.py::TestLagAwareAnalyticsWindows.
+
+
+## All-channel analytics review — 2026-09-02 (28-day window, lag-aware)
+
+**Where the views are.** RU Shorts on the science/space shows are the
+network: FF-RU 35.4k views/28d (median 439/Short, +39 subs), spacex-RU
+31.1k (median 257, +21), tesla-RU 17.2k — ~84k of ~127k network views.
+FR has become a real channel (FF-FR 4.3k, spacex-FR 3.7k, +24/+9 subs).
+EN Shorts: spacex 8.4k (+22 subs), FF 4.3k (+19), tesla 4.1k. Long-form
+is small everywhere (best: tesla-EN 3.6k/28d, median 78 views) and the
+dub long-forms are near zero (RU FF median 3 views at 5% AVP; MIT-RU 5
+views total) — the weekly probe is the right ceiling for them.
+
+**Dead weight.** Modern Investing is dead on every YouTube surface
+(EN Shorts median 5, RU 6, FR 4; EN long AVP 7.8% — worst on the
+channel); MAB EN Shorts median 4. Both are now register decisions
+(`mit-dubs-cull`), not code.
+
+**What the curves + windows say.**
+- Long-form AVD is ~80 s regardless of episode length (<8 min 13.7% AVP,
+  8-12 min 13.2%, 12-16 min 9.5%). On YouTube the long-form is a
+  90-second product: the open decides everything, and structure past
+  it is invisible unless the video SHOWS it — hence chapter title cards.
+- Hook-first Shorts win everywhere: EN hook_open median 18 views vs
+  8 qualified / 6 filled and 47 of 56 EN Shorts subs; RU 214 vs 172;
+  FR 38 vs 34. The earlier "qualified retains 77%" was small-n noise.
+  `shorts_first_is_hook` stays on. RU 'filled' holding ~80% of the hook
+  clip's audience (n=180) is what licenses the 4-Short band.
+- Shorter Short titles win on every channel (top vs bottom quartile:
+  RU 66 vs 70 chars, EN 74 vs 81) — the " | show" tail is gone on Shorts.
+- EN traffic: 51% Shorts feed / 16% search / 16% subscribers / 11%
+  suggested. RU 98% Shorts feed. Search terms flow into 4 shows' tags.
+
+**Readouts closed** (see `docs/experiments.yaml` outcomes): chapters
++0.4pt AVP (kept, navigation value), scene cadence (kept, not an AVP
+axis), caption continuity (+4pt Shorts AVP, kept), search-terms loop
+(flat, kept as plumbing), FR channel (KEEP), progress bar + outro cards
+(no isolated instrument, kept).
+
+**Shipped this pass:** chapter title cards on long-form (both render
+paths, auto-derived from chapters JSON); Shorts titles headline-only;
+4-Short band at 60 vpd (`MAX_SHORTS_PER_EPISODE` 4); retention curves
+now carry forward across nightlies so the open-cliff instrument
+accumulates past ~15 curves; MIT dubs cull raised as a decision.

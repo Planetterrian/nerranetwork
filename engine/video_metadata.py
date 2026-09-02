@@ -672,9 +672,13 @@ def build_short_metadata(
         headline = hook.strip()
     else:
         headline = f"Ep {episode_num} highlight"
-    # Same front-loaded builder as long-form; keeps the #Shorts classifier
-    # hint even when the headline is long.
-    title = _build_seo_title(headline, rss_title, suffix="#Shorts")
+    # Headline + #Shorts only (Sep 2026): the " | <show>" tail is gone
+    # on Shorts. The Shorts player shows the channel name beside the
+    # clip already, the UI truncates titles around 40 chars, and the
+    # 45-day cut of top- vs bottom-quartile Shorts on every channel
+    # showed the winners were the SHORTER titles (RU 66 vs 70, EN 74
+    # vs 81 median chars). Front-loading the headline is what's left.
+    title = _build_seo_title(headline, "", suffix="#Shorts")
 
     # Hashtags immediately after the headline so the first 3 become
     # clickable topic links above the Shorts title (discovery lever).

@@ -95,7 +95,17 @@ STATS_MAX_AGE_DAYS = 3
 # the RU channel runs ~7-8 uploads/day against the 30/day cadence
 # ceiling (SAFE_DAILY_UPLOADS_PER_CHANNEL) and ~13k of 200k quota units,
 # so this adds ~3 uploads/day to a channel with room for 20 more.
+# Sep 2 2026: added the 4-Short band at 60 vpd. The July note above
+# said a 4th would be "extrapolation"; 45 days of the 3-Short band are
+# the measurement now: the RU 'filled' (2nd/3rd) Shorts earn a MEDIAN
+# 172 views (n=180) against 214 for the hook Short — the marginal clip
+# holds ~80% of the lead clip's audience, and every one of them out-
+# earns the best EN Short. The band's members (FF-RU 1361 vpd, spacex-RU
+# 1195, tesla-RU 663, FF-FR 165, spacex-FR 142, tesla-FR 93) add ~3
+# uploads/day to channels running 9-17/day against the 30/day ceiling.
+# Raises still need two consecutive nights (shorts_pending/streak).
 SHORT_VPD_BANDS: Tuple[Tuple[float, int], ...] = (
+    (60.0, 4),
     (20.0, 3),
     (4.0, 2),
 )
