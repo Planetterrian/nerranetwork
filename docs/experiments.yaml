@@ -105,7 +105,7 @@ experiments:
     area: reach
     shipped: 2026-07-21
     readout: 2026-08-25
-    status: decide
+    status: done
     metric: fr_short_vpd_max
     baseline: 0.26
     criteria: >
@@ -118,6 +118,8 @@ experiments:
       53 of 72 launch-window uploads had zero recorded views. Clean
       analytics only since 2026-07-29 (the glob fix), hence the late
       decision date rather than a same-day verdict.
+    outcome: >
+      READ 2026-09-02: KEEP @NerraFR. fr_short_vpd_max 0.26 -> 16.0; FF-FR 4.3k views/28d (median 65/Short, +24 subs), spacex-FR 3.7k. MIT-FR is dead (140 views/25 Shorts) — see mit-dubs-cull.
 
   - id: dub-long-form-probe
     title: "RU+FR long-form dubs on tesla / spacex / FF (operator override)"
@@ -145,7 +147,7 @@ experiments:
     area: retention
     shipped: 2026-08-07
     readout: 2026-08-21
-    status: reading
+    status: done
     target: >
       Short median AVP up vs the ~44% pre-bar level (compare EN+RU short
       retention before/after 08-07 in youtube_stats).
@@ -155,6 +157,8 @@ experiments:
       per-show opt-out youtube.shorts_progress_bar: false. NOTE: overlaps
       the staggered-shorts readout window — judge by retention (AVP),
       which stagger does not touch, not by views.
+    outcome: >
+      No isolated instrument (shipped alongside other render changes); Shorts AVP rose through the window. Kept.
 
   - id: earnings-special-format
     title: "Event specials — earnings/flight reaction episodes"
@@ -175,7 +179,7 @@ experiments:
     area: funnel
     shipped: 2026-08-09
     readout: 2026-08-23
-    status: reading
+    status: done
     target: >
       utm_content=outro sessions appearing in api/funnel.json (QR scans)
       and click-through from video surfaces up vs the pre-08-09 level;
@@ -189,6 +193,8 @@ experiments:
       youtube.shorts_end_card_site_panel. Screenshots are committed
       (assets/site_screens) and refreshed by
       scripts/capture_site_screens.py.
+    outcome: >
+      No isolated instrument; outro sessions are attributable in funnel.json (utm_content=outro). Kept.
 
   - id: dp-pod-script-model-45
     title: "DP Pod script stage on grok-4.5 — SUPERSEDED by network 4.6 upgrade"
@@ -218,7 +224,7 @@ experiments:
     area: reach
     shipped: 2026-08-12
     readout: 2026-08-26
-    status: reading
+    status: done
     metric: long_form_median_avp_en_14d
     baseline: 13.4
     target: >
@@ -232,13 +238,15 @@ experiments:
       Metadata-only — outside landmine #17. Confounded with the
       caption-hold + end-card caption fixes shipping the same day;
       read AVP as the joint effect of the retention batch.
+    outcome: >
+      READ 2026-09-02 (lag-aware 14d windows): EN long-form median AVP 13.4 -> 13.8 — small positive, inside noise; chapters ship and seek-bar 'Key moments' exist, but retention is not the axis they move. Kept (zero cost, real navigation value).
 
   - id: shorts-caption-continuity
     title: "Shorts captions hold through pauses + stay visible over the end card"
     area: retention
     shipped: 2026-08-12
     readout: 2026-08-26
-    status: reading
+    status: done
     target: >
       Shorts median averageViewPercentage up vs the 50.8% EN / 43.6% RU
       (14d) baselines; specifically less drop-off in the final 3 s
@@ -249,6 +257,8 @@ experiments:
       runs after the end-card overlay (last ~3 s of speech kept its
       text hidden under the opaque CTA card). Render-only — outside
       landmine #17.
+    outcome: >
+      READ 2026-09-02: Shorts median AVP 49.4% (pre) -> 53.8% in the motion-era cohort (n=99), 51-54% since. Positive; kept.
 
   - id: shorts-motion-ab-stalled
     title: "Shorts motion A/B — ENDED (operator, 2026-08-14): unreadable"
@@ -276,7 +286,7 @@ experiments:
     area: retention
     shipped: 2026-08-14
     readout: 2026-08-28
-    status: reading
+    status: done
     metric: long_form_median_avp_en_14d
     target: >
       Long-form median AVP up vs the 13.4%/11.4% (14d) recent band. A
@@ -289,6 +299,8 @@ experiments:
       Enabled by ffmpeg input dedup (one -i per unique image + split),
       which removed the per-slot demuxer cost behind the old 24-slot
       cap. Render-only — outside landmine #17.
+    outcome: >
+      READ 2026-09-02: shares the AVP metric with chapters (13.8); the curves say long-form AVD is ~80 s regardless of length, so scene cadence past the first minute cannot register on AVP. Kept for visual quality; the open-cliff entry is the honest instrument.
 
   - id: mit-script-model-46
     title: "Modern Investing script stage on grok-4.6 — ABSORBED into network 4.6 upgrade"
@@ -595,7 +607,7 @@ experiments:
     area: reach
     shipped: 2026-08-17
     readout: 2026-08-31
-    status: reading
+    status: done
     baseline: "EN search share 15% of channel views (2026-08-17); terms: starship flight 14, fsd v14.1 lite, ..."
     target: >
       EN YT_SEARCH share of views up vs 15%, and search terms appearing
@@ -607,6 +619,8 @@ experiments:
       Channel-level terms are attributed to a show only when they share
       a meaningful token with its recent titles/hooks; unmatched terms
       are dropped rather than sprayed across the channel. Metadata-only.
+    outcome: >
+      READ 2026-09-02: EN YT_SEARCH share 15% -> 16% (2 weeks; flat within noise). Terms are flowing (4 shows carry matched queries into tags + the title hint). Kept as infrastructure; not a lever by itself.
 
   - id: long-open-cliff
     title: "Long-form open cliff — hold at the 5% mark"
@@ -802,3 +816,76 @@ experiments:
       api/op3_stats.json (fixed 2026-08-25, same pass that added the
       edition's cost to the dashboard rollup). First honest read needs
       a few weeks of post-fix nightly data.
+
+  - id: chapter-title-cards
+    title: "Long-form chapter title cards at every chapter boundary"
+    area: retention
+    shipped: 2026-09-02
+    readout: 2026-09-23
+    status: reading
+    metric: long_open_hold_5pct_en
+    baseline: 0.49
+    target: >
+      Hold at the 5% mark up, and — the real target — the 25% hold
+      (curves) up: viewers who see what is coming next stay for it.
+      Long-form AVD sits at ~80 s regardless of episode length; the
+      video gave no visual cue of structure. Broadcast-style cards
+      (title, top-left under the brand pill, ~4 s, fade in/out) now
+      fire from the same chapters JSON that powers the seek bar.
+    notes: >
+      Render/metadata only (outside landmine #17). Auto-derived inside
+      build_long_form_video from chapters_path; chapter_cards=[] disables.
+
+  - id: shorts-4-band
+    title: "4th Short per episode at >= 60 vpd (RU/FR science + space shows)"
+    area: reach
+    shipped: 2026-09-02
+    readout: 2026-09-16
+    status: reading
+    metric: ru_short_vpd_max
+    baseline: 55.17
+    target: >
+      RU + FR channel views up with the 4th Short holding >= 60% of the
+      hook Short's median views (the 3rd holds ~80%: RU 'filled' median
+      172 vs hook 214, n=180). Abort if the 4th clip's median falls
+      under ~100 views on RU or the 3rd's median drops.
+    notes: >
+      Members at ship: FF-RU (1361 vpd), spacex-RU (1195), tesla-RU
+      (663), FF-FR (165), spacex-FR (142), tesla-FR (93). +3 uploads/day
+      on channels running 9-17 against the 30/day ceiling. Raises need
+      two consecutive nights (shorts_pending/streak).
+
+  - id: shorts-title-headline-only
+    title: "Shorts titles: headline + #Shorts, no ' | show' tail"
+    area: reach
+    shipped: 2026-09-02
+    readout: 2026-09-23
+    status: reading
+    target: >
+      Views/Short up on EN (median 18 -> 25+). The 45-day top- vs
+      bottom-quartile cut favoured SHORTER Short titles on every channel
+      (RU 66 vs 70 median chars, EN 74 vs 81); the Shorts player already
+      shows the channel name and truncates ~40 chars, so the tail spent
+      the visible budget on a redundancy.
+    notes: >
+      Metadata-only. Long-form titles keep the show tail.
+
+  - id: mit-dubs-cull
+    title: "Modern Investing RU/FR dubs — decide: cull"
+    area: quality
+    shipped: 2026-09-02
+    readout: 2026-09-09
+    status: decide
+    criteria: >
+      28d: MIT-RU 37 Shorts -> 393 views (median 6), 3 longs -> 5 views;
+      MIT-FR 25 Shorts -> 140 views (median 4), 6 longs -> 30 views.
+      That is ~$0.18/ep translation + two renders/day for ~20 views/day
+      across both channels, while the same channels' science/space
+      Shorts earn 100-400x that per clip. Operator decision: disable
+      youtube.ru_dub_enabled + dub_languages on modern_investing (the
+      audio RU/FR podcast tracks can stay if the OP3 per-language read
+      justifies them — separate instrument).
+    notes: >
+      Same shape for models_agents_beginners EN Shorts (median 4
+      views/Short) — but MAB long-form works (+6 subs), so the policy's
+      1-Short floor is the right answer there, not a cull.
