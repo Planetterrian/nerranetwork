@@ -291,3 +291,31 @@ paths, auto-derived from chapters JSON); Shorts titles headline-only;
 4-Short band at 60 vpd (`MAX_SHORTS_PER_EPISODE` 4); retention curves
 now carry forward across nightlies so the open-cliff instrument
 accumulates past ~15 curves; MIT dubs cull raised as a decision.
+
+
+## Narrative-matched imagery — 2026-09-02 (operator: "video quality
+doesn't suit the subject")
+
+Root cause, from the committed gallery prompts: every Grok Imagine
+prompt LED with one of the show's static `image_queries` and tacked the
+day's headline on as an 8-word tail — Tesla ep590 and ep591 both
+shipped `cybertruck / electric vehicle charging / tesla supercharger /
+tesla car`, whatever the stories were — and the library blend (raised
+to 24 on 08-14) padded the rest of the slideshow with older copies of
+the same generic pictures, ranked by weak token overlap but never
+REQUIRED to overlap. Four generic images + twenty random old ones over a
+narration about FSD v14 and Q3 deliveries is exactly what the comments
+describe.
+
+Shipped: `engine/scene_briefs.py` — one Grok text call per episode
+writes a concrete, photographable scene per story (deterministic
+headline-subject fallback, never raises); `build_image_prompts` leads
+with the brief and demotes `image_queries` to fill; one fresh 16:9
+scene per story (`scenes_per_episode`, cap 8, was a fixed 4) with the
+scheduler context keyed on story + brief so each chapter gets ITS
+picture; `short_scenes_per_episode` (5) 9:16 scenes from the same
+briefs; the library blend back to 8 and on-topic only
+(`gallery_blend_min_overlap` 1 — an off-topic library image is dropped,
+a repeat of the episode's own relevant image is preferred). Register:
+`scene-briefs-narrative-imagery`. Also: Modern Investing RU/FR YouTube
+dubs culled (operator-directed).

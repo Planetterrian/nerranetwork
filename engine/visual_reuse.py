@@ -200,6 +200,7 @@ def long_form_visual_plan(
                 limit=limit,
                 manifest=manifest,
                 cache_dir=cache_dir,
+                min_overlap=int(getattr(_yt(config), "gallery_blend_min_overlap", 1) or 0),
             )
         out["library_count"] = len(library)
 
@@ -310,6 +311,7 @@ def short_visual_extras(
                 context_text=context_text,
                 limit=limit,
                 cache_dir=cache_dir,
+                min_overlap=int(getattr(_yt(config), "gallery_blend_min_overlap", 1) or 0),
             )
         out["library_count"] = len(library)
         pool = _dedup(fresh, library)

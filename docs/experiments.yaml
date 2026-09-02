@@ -875,7 +875,7 @@ experiments:
     area: quality
     shipped: 2026-09-02
     readout: 2026-09-09
-    status: decide
+    status: done
     criteria: >
       28d: MIT-RU 37 Shorts -> 393 views (median 6), 3 longs -> 5 views;
       MIT-FR 25 Shorts -> 140 views (median 4), 6 longs -> 30 views.
@@ -889,3 +889,34 @@ experiments:
       Same shape for models_agents_beginners EN Shorts (median 4
       views/Short) — but MAB long-form works (+6 subs), so the policy's
       1-Short floor is the right answer there, not a cull.
+    outcome: >
+      DONE 2026-09-02 (operator): youtube.ru_dub_enabled false + dub_languages []
+      on modern_investing. Audio RU/FR tracks kept pending the OP3
+      per-language read.
+
+  - id: scene-briefs-narrative-imagery
+    title: "Story-driven scene briefs — the pictures follow the narration"
+    area: retention
+    shipped: 2026-09-02
+    readout: 2026-09-23
+    status: reading
+    metric: long_open_hold_5pct_en
+    baseline: 0.49
+    target: >
+      Viewer complaints about imagery not matching the subject stop;
+      long-form hold at 5% and Shorts AVP up. Mechanism: one Grok text
+      call per episode writes a concrete, photographable scene per
+      STORY (engine/scene_briefs.py); those briefs LEAD every Grok
+      Imagine prompt (the static image_queries — 'cybertruck',
+      'supercharger' — used to lead, so every Tesla episode shipped the
+      same four pictures); one fresh 16:9 scene per story (cap 8, was a
+      fixed 4) keyed to its chapter for the scheduler; the library
+      blend is back to 8 and ON-TOPIC ONLY (>=1 shared token with hook +
+      chapter titles) instead of padding with random older images.
+    notes: >
+      Cost: +~4 images/episode at $0.02 (+$0.08/ep, ~+$30/mo network)
+      + one ~$0.005 text call. Per-show opt-out scene_briefs_enabled;
+      counts via scenes_per_episode / short_scenes_per_episode.
+      Render/metadata only (outside landmine #17). First A/B-eyeball:
+      compare a tesla + spacex + FF episode's scenes_ep*/ against the
+      digest headlines.
