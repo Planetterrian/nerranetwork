@@ -396,10 +396,22 @@ def _api_size_for_aspect(aspect: str) -> str:
     use a portrait size matched to YouTube Shorts' 1080×1920 guidance.
     """
     if aspect.startswith("9:") or aspect == "vertical":
-        return "1024x1792"
+        return "1152x2048"
     if aspect == "1:1":
         return "1024x1024"
-    return "1792x1024"
+    return "2048x1152"
+
+
+# Sep 2026: the request size moved to the endpoint's 2K ceiling. The
+# 16:9 render prescales every still to 3840x2160 for Ken Burns, so a
+# 1792-wide source was a 2.1x upsample before any zoom — the softness
+# viewers describe. 2048 wide is the largest the endpoint documents; the
+# request ladder below falls back to the legacy size, then to no size,
+# so a revision that rejects 2K can never cost an image.
+_LEGACY_SIZE_FOR = {
+    "2048x1152": "1792x1024",
+    "1152x2048": "1024x1792",
+}
 
 
 def _post_image_request(
@@ -465,8 +477,15 @@ def _request_one_image(
     if resp.status_code == 400:
         body_text = resp.text.lower()
         if "size" in body_text or "invalid_request" in body_text:
-            payload.pop("size", None)
-            resp = _post_image_request(payload, api_key, timeout_s)
+            # Ladder: 2K -> legacy size -> no size. A rejected 2K request
+            # must never degrade straight to the endpoint's 1024 default.
+            legacy = _LEGACY_SIZE_FOR.get(size)
+            if legacy:
+                payload["size"] = legacy
+                resp = _post_image_request(payload, api_key, timeout_s)
+            if resp.status_code == 400:
+                payload.pop("size", None)
+                resp = _post_image_request(payload, api_key, timeout_s)
 
     if resp.status_code >= 400:
         # Surface the API error message; HTTP 4xx isn't retried by

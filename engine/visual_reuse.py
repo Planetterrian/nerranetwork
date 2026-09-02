@@ -261,6 +261,25 @@ def long_form_visual_plan(
         return legacy
 
 
+def rank_scenes_for_text(
+    scenes: Sequence[Path], scene_context: Dict[Path, str], text: str,
+) -> List[Path]:
+    """Stable best-first ordering of *scenes* by token overlap between
+    each scene's context (its story brief) and *text*. Ties keep the
+    input order, so scenes without context never reorder."""
+    from engine.scene_scheduler import _tokenize
+
+    toks = _tokenize(text)
+    if not toks:
+        return list(scenes)
+    scored = []
+    for i, p in enumerate(scenes):
+        ctx = _tokenize(str(scene_context.get(Path(p), "") or ""))
+        scored.append((-len(toks & ctx), i, p))
+    scored.sort()
+    return [p for _, _, p in scored]
+
+
 def short_visual_extras(
     config,
     *,
@@ -273,8 +292,16 @@ def short_visual_extras(
     cache_dir: Optional[Path] = None,
     context_text: str = "",
     blend_library: Optional[bool] = None,
+    fresh_scene_context: Optional[Dict[Path, str]] = None,
 ) -> Dict[str, Any]:
     """Per-Short visual upgrades: blended 9:16 pool + sentence-snapped cuts.
+
+    ``fresh_scene_context`` (Sep 2026) maps each fresh 9:16 scene to the
+    story brief it was generated for. The fresh scenes are then ordered
+    by overlap with ``context_text`` (the Short's own window text) so the
+    picture ABOUT this Short's story leads the clip instead of whichever
+    scene happened to be generated first — the 2nd/3rd Shorts cover
+    mid-episode stories and used to open on the hook story's image.
 
     * ``scene_paths`` — fresh vertical scenes + up to
       ``gallery_blend_max_short`` library 9:16 scenes ranked against the
@@ -298,6 +325,8 @@ def short_visual_extras(
     }
     try:
         out = dict(legacy)
+        if fresh_scene_context and context_text and len(fresh) >= 2:
+            fresh = rank_scenes_for_text(fresh, fresh_scene_context, context_text)
         library: List[Path] = []
         do_blend = (_flag(config, "gallery_blend_enabled")
                     if blend_library is None else bool(blend_library))
