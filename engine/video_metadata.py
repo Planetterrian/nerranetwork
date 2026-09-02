@@ -662,10 +662,6 @@ def build_short_metadata(
     entity tags to the show's static keywords. Pass the episode-level
     hook here; falls back to *hook* when empty.
     """
-    rss_title = (
-        getattr(config.publishing, "rss_title", "")
-        or getattr(config, "name", "")
-    )
     if optimized_title and optimized_title.strip():
         headline = optimized_title.strip()
     elif hook:
