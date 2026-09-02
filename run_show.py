@@ -6630,6 +6630,9 @@ def _publish_youtube(
                             window_start_s=this_offset - _caption_offset,
                             clip_duration_s=duration,
                             context_text=(this_hook or hook or ""),
+                            # The Short's window text picks which fresh
+                            # story scene leads (Sep 2026).
+                            fresh_scene_context=fresh_scene_prompts,
                             blend_library=(
                                 False if recap_pool_used else None
                             ),

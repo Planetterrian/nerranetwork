@@ -151,3 +151,52 @@ class TestConfigContract:
         assert src.count("generate_scene_briefs(") == 1
         assert "scene_briefs=_scene_briefs or None" in src
         assert "_fresh_short_scene_count" in src
+
+
+class TestStoryMatchedShortsScenes:
+    def test_window_text_picks_the_leading_scene(self, tmp_path):
+        from engine.visual_reuse import rank_scenes_for_text
+        a, b, c = (tmp_path / "a.jpg"), (tmp_path / "b.jpg"), (tmp_path / "c.jpg")
+        ctx = {a: "Starship upper stage lowered onto its booster at dawn",
+               b: "A Model 3 interior at night with the center screen glowing",
+               c: "A rack of humming AI accelerator servers in a data center"}
+        out = rank_scenes_for_text([a, b, c], ctx,
+                                   "and the Model 3 screen shows the new FSD build")
+        assert out[0] == b
+        # Ties keep input order.
+        assert out[1:] == [a, c]
+
+    def test_no_context_keeps_order(self, tmp_path):
+        from engine.visual_reuse import rank_scenes_for_text
+        a, b = (tmp_path / "a.jpg"), (tmp_path / "b.jpg")
+        assert rank_scenes_for_text([a, b], {}, "anything") == [a, b]
+        assert rank_scenes_for_text([a, b], {a: "x"}, "") == [a, b]
+
+    def test_run_show_passes_short_scene_context(self):
+        src = (_ROOT / "run_show.py").read_text(encoding="utf-8")
+        i = src.index("short_visual_extras(")
+        assert "fresh_scene_context=fresh_scene_prompts" in src[i:i + 1500]
+
+
+class TestRequestSizeLadder:
+    def test_2k_rejected_falls_back_to_legacy_size_not_none(self, monkeypatch):
+        import base64
+        from engine import grok_imagine as gi
+        calls = []
+
+        class R:
+            def __init__(self, code, text="", data=None):
+                self.status_code, self.text, self._d = code, text, data
+            def json(self):
+                return self._d
+
+        def fake_post(payload, api_key, timeout_s):
+            calls.append(dict(payload))
+            if payload.get("size") == "2048x1152":
+                return R(400, "invalid_request: size not supported")
+            return R(200, data={"data": [{"b64_json": base64.b64encode(b"img").decode()}]})
+
+        monkeypatch.setattr(gi, "_post_image_request", fake_post)
+        out = gi._request_one_image("p", api_key="k", model="m", size="2048x1152")
+        assert out == b"img"
+        assert [c.get("size") for c in calls] == ["2048x1152", "1792x1024"]

@@ -446,7 +446,12 @@ class TestApiSizeForAspect:
 
     def test_horizontal_returns_landscape_size(self):
         from engine.grok_imagine import _api_size_for_aspect
-        assert _api_size_for_aspect("16:9") == "1792x1024"
+        # Sep 2026: 2K ceiling (the 16:9 render prescales to 3840 wide;
+        # 1792 was a 2.1x upsample before any zoom). Legacy sizes stay as
+        # the request ladder's fallback.
+        assert _api_size_for_aspect("16:9") == "2048x1152"
+        from engine.grok_imagine import _LEGACY_SIZE_FOR
+        assert _LEGACY_SIZE_FOR["2048x1152"] == "1792x1024"
 
     def test_vertical_returns_portrait_size(self):
         from engine.grok_imagine import _api_size_for_aspect

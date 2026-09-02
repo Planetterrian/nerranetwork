@@ -319,3 +319,24 @@ briefs; the library blend back to 8 and on-topic only
 a repeat of the episode's own relevant image is preferred). Register:
 `scene-briefs-narrative-imagery`. Also: Modern Investing RU/FR YouTube
 dubs culled (operator-directed).
+
+
+## Video quality, continued — 2026-09-02 (same day, round 2)
+
+- **2K source images.** `_api_size_for_aspect` now requests the
+  endpoint's 2K ceiling (2048x1152 / 1152x2048). The 16:9 render
+  prescales every still to 3840x2160 for Ken Burns, so a 1792-wide
+  source was a 2.1x upsample before any zoom — that is the softness
+  behind the quality complaints. The request ladder (2K -> legacy ->
+  no size) means a revision that rejects 2K can never cost an image
+  (previously a size rejection dropped straight to the 1024 default).
+- **Shorts open on the scene about their own story.**
+  `short_visual_extras(fresh_scene_context=)` orders the fresh 9:16
+  scenes by overlap with the Short's window text; the 2nd/3rd Shorts
+  cover mid-episode stories and used to open on the hook story's image.
+- **Style descriptors** for the two shows that lacked a fitting one:
+  Models & Agents for Beginners (teen-safe bright classroom look —
+  it was defaulting to "photorealistic news photo") and a fuller Tesla
+  descriptor (real vehicles/factories/charging/software on screens).
+- Operator decision queued: the $0.05 quality image tier on the three
+  engine shows (~+$35/mo) if 2K + story briefs do not end the complaints.
