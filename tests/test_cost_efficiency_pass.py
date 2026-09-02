@@ -119,7 +119,7 @@ class TestSceneGenerationFollowsTheRender:
         and, unlike the 16:9 count, must NOT be gated on whether a
         long-form is produced today."""
         src = (REPO_ROOT / "run_show.py").read_text(encoding="utf-8")
-        idx = src.index('_run_grok_path(aspect="9:16"')
+        idx = src.index('aspect="9:16", label_suffix="_short"')
         assert "count=_fresh_short_scene_count" in src[idx:idx + 160]
         line = [l for l in src.splitlines()
                 if "_fresh_short_scene_count = " in l][0]
