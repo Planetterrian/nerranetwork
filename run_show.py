@@ -5393,6 +5393,27 @@ def _publish_youtube(
     except Exception:  # pragma: no cover — best-effort
         _scene_contexts = []
 
+    # Story-driven scene briefs (Sep 2026, engine.scene_briefs): one
+    # concrete visual scene per story, written once and shared by the
+    # 16:9 and 9:16 sets so the pictures follow the narration instead
+    # of the show's static keyword list.
+    _scene_briefs: list = []
+    try:
+        if str(getattr(yt, "image_provider", "pexels")) in ("grok", "hybrid"):
+            from engine.scene_briefs import generate_scene_briefs
+            _scene_briefs = generate_scene_briefs(
+                _scene_contexts,
+                hook=hook or "",
+                show_name=config.name,
+                show_descriptor=getattr(
+                    yt, "grok_image_descriptor", "photorealistic news photo"),
+                max_n=int(getattr(yt, "scenes_per_episode", 8) or 8),
+                enabled=bool(getattr(yt, "scene_briefs_enabled", True)),
+            )
+    except Exception as exc:  # pragma: no cover — best-effort
+        logger.warning("scene briefs failed (%s) — legacy prompts", exc)
+        _scene_briefs = []
+
     # Bias Grok Imagine visuals toward the show's currently-tracked narrative
     # programs so the imagery reinforces the ongoing story, not only the day's
     # hook. Tesla uses its bespoke memory module; the Phase-3 memory shows
@@ -5454,6 +5475,7 @@ def _publish_youtube(
                 ),
                 per_scene_contexts=_scene_contexts,
                 narrative_keywords=narrative_keywords if 'narrative_keywords' in locals() else None,
+                scene_briefs=_scene_briefs or None,
             )
             result = fetch_scene_images_grok(
                 work_dir=work_dir,
@@ -5485,7 +5507,18 @@ def _publish_youtube(
                 for _sp in result.scene_set.paths():
                     _m = _re_ctx.match(r"grok_(\d+)\.", Path(_sp).name)
                     if _m and 0 <= int(_m.group(1)) < len(prompts):
-                        fresh_scene_prompts[Path(_sp)] = prompts[int(_m.group(1))]
+                        _idx = int(_m.group(1))
+                        # Scene i was generated FOR story i: key its
+                        # scheduler context on the story headline + brief
+                        # so the chapter picker lands the right picture
+                        # on the right chapter (chapter titles derive from
+                        # the same headlines).
+                        _ctx = prompts[_idx]
+                        if _scene_briefs and _idx < len(_scene_briefs):
+                            _story = (_scene_contexts[_idx]
+                                      if _idx < len(_scene_contexts) else "")
+                            _ctx = f"{_story} {_scene_briefs[_idx]} {_ctx}"
+                        fresh_scene_prompts[Path(_sp)] = _ctx
                 return result.scene_set.paths()
         except Exception as exc:  # pragma: no cover — best-effort
             logger.warning("Grok Imagine scene fetch failed: %s", exc)
@@ -5652,7 +5685,14 @@ def _publish_youtube(
     # gallery contribution); drop the rest. Shorts thumbnails are
     # unaffected: they come from ``short_scene_paths`` (9:16).
     _long_form_produced = bool(_policy_publish_long or config.video_podcast.enabled)
-    _fresh_long_scene_count = 4 if _long_form_produced else 1
+    # Sep 2026: one fresh 16:9 scene per STORY (scene briefs), capped by
+    # youtube.scenes_per_episode — was a fixed 4 generic images.
+    _scene_cap = int(getattr(yt, "scenes_per_episode", 8) or 8)
+    _fresh_long_scene_count = (
+        max(4, min(_scene_cap, len(_scene_briefs) or _scene_cap))
+        if _long_form_produced else 1
+    )
+    _fresh_short_scene_count = int(getattr(yt, "short_scenes_per_episode", 5) or 5)
 
     if video_provider != "grok" and not recap_pool_used:
         if image_provider == "grok":
@@ -5666,10 +5706,14 @@ def _publish_youtube(
                 aspect="16:9", label_suffix="",
                 count=_fresh_long_scene_count,
             )
-            short_scene_paths = _run_grok_path(aspect="9:16", label_suffix="_short")
+            short_scene_paths = _run_grok_path(
+                aspect="9:16", label_suffix="_short",
+                count=_fresh_short_scene_count)
         elif image_provider == "hybrid":
             _run_pexels_path(into_long=True, into_short=False)
-            short_scene_paths = _run_grok_path(aspect="9:16", label_suffix="_short")
+            short_scene_paths = _run_grok_path(
+                aspect="9:16", label_suffix="_short",
+                count=_fresh_short_scene_count)
         else:  # pexels (default)
             _run_pexels_path(into_long=True, into_short=True)
 

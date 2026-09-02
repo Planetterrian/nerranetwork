@@ -489,8 +489,15 @@ def select_library_scenes(
     cache_dir: Optional[Path] = None,
     min_episode_date: Optional[str] = None,
     max_episode_date: Optional[str] = None,
+    min_overlap: int = 0,
 ) -> List[Path]:
     """Pick + download the show's most relevant already-generated scenes.
+
+    ``min_overlap`` (Sep 2026): when > 0 and ``context_text`` is
+    non-empty, candidates sharing fewer than that many tokens with the
+    context are DROPPED rather than ranked last — the blend used to pad
+    a slideshow with off-topic older images whenever nothing relevant
+    existed, which read as random pictures over the narration.
 
     ``aspect`` is ``"16:9"`` (long-form ``segment_card`` images) or
     ``"9:16"`` (Shorts ``social`` images). Candidates from the current
@@ -524,9 +531,12 @@ def select_library_scenes(
         paths: List[Path] = []
         failures: List[str] = []
         consecutive_failures = 0
+        ctx_tokens = _tokenize(context_text) if min_overlap > 0 else frozenset()
         for entry in _rank(entries, context_text, show_slug):
             if len(paths) >= limit:
                 break
+            if ctx_tokens and len(ctx_tokens & _entry_tokens(entry)) < min_overlap:
+                continue   # off-topic — a repeat of a relevant image beats it
             if consecutive_failures >= _MAX_CONSECUTIVE_DOWNLOAD_FAILURES:
                 logger.warning(
                     "gallery_library: aborting after %d consecutive "

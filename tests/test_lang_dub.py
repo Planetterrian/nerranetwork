@@ -212,7 +212,9 @@ class TestPolicyChannel:
 
 
 class TestShowYamls:
-    _SHOWS = ["tesla", "spacex", "fascinating_frontiers", "modern_investing"]
+    # modern_investing culled 2026-09-02 (operator): 533 views from 71 dub
+    # videos in 28 days.
+    _SHOWS = ["tesla", "spacex", "fascinating_frontiers"]
 
     def test_four_shows_opt_into_fr(self):
         for slug in self._SHOWS:

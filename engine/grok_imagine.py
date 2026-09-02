@@ -233,8 +233,17 @@ def build_image_prompts(
     show_descriptor: str = "",
     per_scene_contexts: Optional[List[str]] = None,
     narrative_keywords: Optional[List[str]] = None,
+    scene_briefs: Optional[List[str]] = None,
 ) -> List[str]:
     """Build *count* image prompts that combine each query with a context.
+
+    *scene_briefs* (Sep 2026 — engine.scene_briefs): when provided, each
+    prompt LEADS with a concrete, story-specific scene description and
+    the static ``image_queries`` are demoted to a fill for any remaining
+    slots. This is the fix for "the pictures don't match what's being
+    said": the old shape led with the generic query ("cybertruck") and
+    tacked an 8-word headline slice on the end, so every episode of a
+    show shipped the same four pictures regardless of its stories.
 
     Image queries are the show's curated phrases (Tesla → "tesla
     factory", "tesla cybertruck on highway", etc.).
@@ -253,7 +262,8 @@ def build_image_prompts(
     (e.g. "high-energy news photo") that the show's prompt template
     may want to inject for tone consistency.
     """
-    if not image_queries:
+    briefs = [b.strip().rstrip(".") for b in (scene_briefs or []) if b and b.strip()]
+    if not image_queries and not briefs:
         return []
 
     is_vertical = aspect.startswith("9:") or aspect == "vertical"
@@ -300,6 +310,17 @@ def build_image_prompts(
     narrative_boost = ""
     if narrative_keywords:
         narrative_boost = " | focus on: " + ", ".join(narrative_keywords[:4])
+
+    # Brief-first pass: the story's own scene leads; style follows.
+    for b in briefs:
+        if len(prompts) >= count:
+            break
+        prompts.append(", ".join([
+            b, descriptor, framing_hint, quality_hint, no_text_hint]))
+    if prompts and len(prompts) >= count:
+        return prompts
+    if not image_queries:
+        return prompts
 
     # First pass: one image per query, up to count.
     for i, raw_query in enumerate(image_queries):
