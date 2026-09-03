@@ -13,7 +13,9 @@
    nn-feed-cancelled, nn-starter-note, nn-city-nudge, nn-tier-badge. #}
 
 {% block head_extra %}
-    <link rel="stylesheet" href="{{ path_prefix }}styles/main.css">
+    {# A member console, not content: kept out of the sitemap on purpose,
+       and noindexed so a signed-out shell never becomes a search result. #}
+    <meta name="robots" content="noindex,follow">
     <style>
         .nn-account { max-width: 1080px; margin: 0 auto; padding: calc(var(--nav-height) + var(--sp-8)) var(--sp-6) var(--sp-12); }
         .nn-account h1 { font-family: var(--font-heading); margin: 0; font-size: clamp(1.6rem, 4vw, 2.3rem); }

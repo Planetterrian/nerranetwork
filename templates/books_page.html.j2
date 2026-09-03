@@ -140,6 +140,12 @@
             {% if v.buy_links.spotify %}<a href="{{ v.buy_links.spotify }}" rel="noopener">Spotify</a>{% endif %}
             {% if v.files.sample_epub %}<a href="{{ v.files.sample_epub }}">Free sample (EPUB)</a>{% endif %}
         </div>
+        {%- set _has_buy = v.buy_links and (v.buy_links.direct or v.buy_links.amazon or v.buy_links.apple_books or v.buy_links.google_play or v.buy_links.kobo or v.buy_links.spotify) %}
+        {%- if not _has_buy %}
+        {# Honest state (Sep 2026 review): a price with no checkout read as a
+           broken page. Say plainly that the store listing is pending. #}
+        <p class="nn-book-desc" style="font-size:0.85rem;color:var(--nn-text-muted);margin-top:var(--sp-2);">Store listings are on their way. Until then, read the free sample{% if v.files.sample_epub %} above{% endif %} and every chapter's source episode is free on the show page.</p>
+        {%- endif %}
     </article>
     {% endfor %}
 </section>

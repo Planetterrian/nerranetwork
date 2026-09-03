@@ -1,0 +1,175 @@
+{% extends "base.html.j2" %}
+
+{% block head_extra %}
+    {% include "_legal_page.html.j2" %}
+{% endblock %}
+
+{% block content %}
+<div class="page-main">
+    <section class="legal-hero">
+        <h1>Privacy Policy</h1>
+        <div class="legal-meta">Nerra Network &middot; Last updated {{ updated_label }}</div>
+        <p class="lede">
+            We collect very little, we never sell it, and this page lists
+            all of it. Nerra Network is based in Vancouver, British
+            Columbia, and follows Canada's federal privacy law, PIPEDA.
+        </p>
+    </section>
+
+    <div class="legal-body">
+        <h2>1. Information we collect</h2>
+
+        <h3>Information you give us</h3>
+        <ul>
+            <li><strong>Email address</strong>, when you subscribe to a newsletter or create a Nerra account. Subscribing is explicit and opt-in.</li>
+            <li><strong>Membership details</strong>, if you join Nerra Personal: the shows you pick, their order, and, for the morning-brief tier, the city you choose. We keep this so we can build your feed.</li>
+            <li><strong>Payment</strong> is handled entirely by Stripe. We receive a confirmation that a subscription is active; we never see or store your card number.</li>
+            <li><strong>Messages you send us</strong> (name, email, and what you wrote) when you contact us or apply to be a guest.</li>
+        </ul>
+
+        <h3>Information collected automatically</h3>
+        <ul>
+            <li><strong>Site analytics</strong> (Google Analytics 4, and optionally Plausible): pages visited, referral source, device and browser type, anonymised IP address. Google's tags load only after you accept the cookie banner; see section 3.</li>
+            <li><strong>Session cookie</strong>: when you sign in to a Nerra account, our API sets a signed cookie (valid up to 90 days) so gallery downloads and your account page work. It contains your email and a signature, nothing else.</li>
+            <li><strong>Podcast listening data</strong> collected by the app you listen in, which we do not control, and anonymised download counts from OP3 (section 3).</li>
+            <li><strong>Server logs</strong> kept by our hosting providers (GitHub Pages for the site, Cloudflare for audio, images, and the account API).</li>
+        </ul>
+
+        <h2>2. How we use it</h2>
+        <div class="legal-table-wrap">
+        <table class="legal-table">
+            <thead>
+                <tr><th>Purpose</th><th>Basis under PIPEDA</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Send the newsletters you subscribed to</td><td>Your explicit consent (opt-in)</td></tr>
+                <tr><td>Build and deliver your personal feed and member perks</td><td>Performance of the membership you bought</td></tr>
+                <tr><td>Understand how the site is used and improve it</td><td>Legitimate interest, with consent for analytics cookies</td></tr>
+                <tr><td>Reply to your messages</td><td>Your request</td></tr>
+                <tr><td>Send account and billing notices</td><td>Contract performance</td></tr>
+                <tr><td>Meet legal obligations</td><td>Legal requirement</td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <h2>3. Services we rely on</h2>
+
+        <h3>Buttondown (newsletters and account emails)</h3>
+        <ul>
+            <li>Holds your email address, the shows you chose, and open/click metrics.</li>
+            <li>Every email has an unsubscribe link; unsubscribing takes effect immediately.</li>
+        </ul>
+
+        <h3>Stripe (payments)</h3>
+        <ul>
+            <li>Processes membership and donation payments under its own privacy policy. Card details never touch our systems.</li>
+        </ul>
+
+        <h3>Cloudflare (audio hosting, image gallery, account API)</h3>
+        <ul>
+            <li>Serves episode audio, gallery images, and private member feeds, and runs the API behind sign-in and subscriptions. Member records (email, chosen shows, subscription status) are stored there.</li>
+        </ul>
+
+        <h3>GitHub Pages (website hosting)</h3>
+        <ul>
+            <li>Serves this site and keeps standard access logs. Data may be processed in the United States.</li>
+        </ul>
+
+        <h3>Google Analytics and Google Ads measurement</h3>
+        <ul>
+            <li>We use Google Consent Mode v2: analytics and advertising storage are <strong>denied by default</strong>. The cookie banner asks before any tracking cookie is set. "Reject" means none are.</li>
+            <li>If we ever run ads, Google Ads conversion tracking would count anonymous newsletter signups from those ads. We do not run cross-site retargeting and do not target individuals.</li>
+            <li>Plausible, when enabled, collects only aggregate, cookie-free traffic counts.</li>
+        </ul>
+
+        <h3>OP3 (podcast download counts)</h3>
+        <ul>
+            <li>Episode audio URLs pass through <a href="https://op3.dev/about" target="_blank" rel="noopener">OP3</a>, an open-source analytics prefix that reports anonymised downloads by app, device type, and country. It does not retain personal identifiers.</li>
+        </ul>
+
+        <h3>Podcast platforms</h3>
+        <ul>
+            <li>Apple Podcasts, Spotify, YouTube, and every other app that carries our feeds have their own privacy policies and their own listener analytics, which we do not control.</li>
+        </ul>
+
+        <div class="legal-callout">
+            <p><strong>We do not sell or rent personal information.</strong> Your email is shared only with the services above that need it to do the thing you asked for.</p>
+        </div>
+
+        <h2>4. Retention</h2>
+        <ul>
+            <li><strong>Newsletter and account email:</strong> kept while you are subscribed or a member; deleted on unsubscribe or on request.</li>
+            <li><strong>Membership records:</strong> kept while the subscription is active and for as long as needed to handle billing questions afterwards.</li>
+            <li><strong>Messages:</strong> kept for 90 days after your inquiry is resolved.</li>
+            <li><strong>Analytics:</strong> up to 12 months, non-identifying.</li>
+            <li><strong>Hosting logs:</strong> per each provider's standard retention (typically 90 days).</li>
+        </ul>
+        <p>Deletion requests are completed within 30 days, subject to any legal retention requirement.</p>
+
+        <h2>5. Your rights under PIPEDA</h2>
+        <ul>
+            <li><strong>Access</strong> the personal information we hold about you.</li>
+            <li><strong>Correct</strong> anything inaccurate or incomplete.</li>
+            <li><strong>Delete</strong> your information, subject to legal requirements.</li>
+            <li><strong>Withdraw consent</strong> for newsletters at any time.</li>
+            <li><strong>Complain</strong> to the Office of the Privacy Commissioner of Canada.</li>
+        </ul>
+        <p>To exercise any of these, use the contact details in section 11.</p>
+
+        <h2>6. Email compliance (CASL)</h2>
+        <ul>
+            <li>We email only addresses that opted in.</li>
+            <li>Every message identifies us and carries an unsubscribe link.</li>
+            <li>Unsubscribe requests are honoured immediately, well inside CASL's 10-business-day limit.</li>
+        </ul>
+
+        <h2>7. Security</h2>
+        <ul>
+            <li>HTTPS everywhere, including audio and API traffic.</li>
+            <li>Signed session cookies that cannot be forged and expire on their own.</li>
+            <li>Card data handled only by Stripe.</li>
+            <li>Access to member records limited to what running the service requires.</li>
+        </ul>
+        <p>No method of transmission over the internet is completely secure; we cannot guarantee absolute security.</p>
+
+        <h2>8. International transfers</h2>
+        <p>Some providers (GitHub, Cloudflare, Buttondown, Stripe, Google) process data outside Canada. Those transfers are necessary to run the service, and by using Nerra Network you consent to them under this policy.</p>
+
+        <h2>9. Children</h2>
+        <p>Nerra Network is not directed at children under 13 and we do not knowingly collect their information. If we learn that we have, we delete it.</p>
+
+        <h2>10. Changes</h2>
+        <p>We update this page when our practices change and revise the date at the top. Continued use after a change means you accept the updated policy.</p>
+
+        <h2>11. Contact</h2>
+        <div class="legal-box">
+            <h3>Privacy questions and data requests</h3>
+            <p>
+                <strong>Patrick Novak</strong><br>
+                Nerra Network, Vancouver, British Columbia, Canada<br>
+                <a href="mailto:patricknovak1@gmail.com">patricknovak1@gmail.com</a>
+            </p>
+            <p style="margin-top: var(--sp-3); font-size: 0.9rem;">Data access requests are answered within 30 days.</p>
+        </div>
+
+        <h2>12. Complaints</h2>
+        <div class="legal-box">
+            <h3>Office of the Privacy Commissioner of Canada</h3>
+            <p>
+                <strong>Website:</strong> <a href="https://www.priv.gc.ca" target="_blank" rel="noopener">www.priv.gc.ca</a><br>
+                <strong>Toll-free:</strong> 1-800-282-1376
+            </p>
+        </div>
+
+        <div class="legal-footer-note">
+            <p>Effective <span class="nn-highlight">March 31, 2026</span>. Last reviewed {{ updated_label }}. PIPEDA and CASL compliant.</p>
+            <div class="legal-related">
+                <a href="{{ path_prefix }}terms-of-service.html">Terms of service</a>
+                <a href="{{ path_prefix }}ai-disclosure.html">AI disclosure</a>
+                <a href="{{ path_prefix }}editorial.html">Editorial process</a>
+                <a href="{{ path_prefix }}contact.html">Contact</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
