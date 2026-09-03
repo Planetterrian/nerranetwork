@@ -124,7 +124,10 @@ class TestOnTopicLibraryBlend:
         monkeypatch.setattr(gl, "load_manifest", lambda: {})
         downloaded = []
         def fake_dl(entry, cdir, failures=None):
-            p = tmp_path / f"{entry['image_id']}.jpg"; p.write_bytes(b"x"); downloaded.append(entry["image_id"]); return p
+            p = tmp_path / f"{entry['image_id']}.jpg"
+            p.write_bytes(b"x")
+            downloaded.append(entry["image_id"])
+            return p
         monkeypatch.setattr(gl, "_download_entry", fake_dl)
         out = gl.select_library_scenes("spacex", aspect="16:9",
                                        context_text="Starship booster catch attempt",
@@ -135,6 +138,45 @@ class TestOnTopicLibraryBlend:
                                         context_text="Starship booster catch attempt",
                                         limit=8, cache_dir=tmp_path, min_overlap=0)
         assert len(out2) == 2
+
+    def test_brand_tokens_cannot_manufacture_a_match(self, tmp_path, monkeypatch):
+        """Sep 3 2026: 'tesla'/'optimus'/'cinematic' sit in ~100% of the
+        library, so overlap-on-anything matched every image. Overlap is
+        counted on salient tokens only once the candidate set is big
+        enough to measure document frequency."""
+        from engine import gallery_library as gl
+        entries = [
+            {"image_id": f"g{i}", "original_url": f"https://x/g{i}.jpg",
+             "prompt": f"tesla cinematic photojournalism optimus scene number {i}",
+             "episode_date": f"2026-08-{10 + i:02d}"}
+            for i in range(6)
+        ] + [
+            {"image_id": "roof", "original_url": "https://x/roof.jpg",
+             "prompt": "tesla cinematic photojournalism solar roof installers on a house",
+             "episode_date": "2026-07-01"},
+        ]
+        monkeypatch.setattr(gl, "_candidate_entries", lambda *a, **k: entries)
+        monkeypatch.setattr(gl, "load_manifest", lambda: {})
+        def fake_dl(entry, cdir, failures=None):
+            p = tmp_path / f"{entry['image_id']}.jpg"
+            p.write_bytes(b"x")
+            return p
+        monkeypatch.setattr(gl, "_download_entry", fake_dl)
+        out = gl.select_library_scenes(
+            "tesla", aspect="16:9",
+            context_text="Tesla drops the Solar Roof as installers face losses",
+            limit=8, cache_dir=tmp_path, min_overlap=1)
+        # Only the story-specific image survives; the six brand-only
+        # images (newer, and matching 'tesla') are dropped.
+        assert [p.stem for p in out] == ["roof"]
+        common = gl._common_tokens(entries)
+        assert {"tesla", "cinematic", "photojournalism"} <= common
+        assert "roof" not in common and "solar" not in common
+
+    def test_small_candidate_sets_keep_legacy_overlap(self):
+        from engine import gallery_library as gl
+        tiny = [{"prompt": "tesla solar"}, {"prompt": "tesla roof"}]
+        assert gl._common_tokens(tiny) == frozenset()
 
 
 class TestConfigContract:
@@ -179,24 +221,93 @@ class TestStoryMatchedShortsScenes:
 
 
 class TestRequestSizeLadder:
-    def test_2k_rejected_falls_back_to_legacy_size_not_none(self, monkeypatch):
+    """Sep 3 2026: the endpoint ignores ``size`` (7,500+ committed sidecars
+    all 1280x720 whatever was requested). The documented controls are
+    ``aspect_ratio`` + ``resolution``; ``size`` is only the ladder's
+    fallback for a revision that rejects them."""
+
+    class _R:
+        def __init__(self, code, text="", data=None):
+            self.status_code, self.text, self._d = code, text, data
+        def json(self):
+            return self._d
+
+    def _ok(self):
         import base64
+        return self._R(200, data={"data": [{"b64_json": base64.b64encode(b"img").decode()}]})
+
+    def test_documented_fields_are_sent_and_size_is_not(self, monkeypatch):
         from engine import grok_imagine as gi
         calls = []
+        def fake_post(payload, api_key, timeout_s):
+            calls.append(dict(payload))
+            return self._ok()
+        monkeypatch.setattr(gi, "_post_image_request", fake_post)
+        out = gi._request_one_image("p", api_key="k", model="m", size="2048x1152",
+                                    aspect_ratio="16:9", resolution="2k")
+        assert out == b"img"
+        assert calls == [{"model": "m", "prompt": "p", "n": 1,
+                          "response_format": "b64_json",
+                          "aspect_ratio": "16:9", "resolution": "2k"}]
 
-        class R:
-            def __init__(self, code, text="", data=None):
-                self.status_code, self.text, self._d = code, text, data
-            def json(self):
-                return self._d
+    def test_rejected_fields_fall_back_to_legacy_size_then_none(self, monkeypatch):
+        from engine import grok_imagine as gi
+        calls = []
+        def fake_post(payload, api_key, timeout_s):
+            calls.append(dict(payload))
+            if "resolution" in payload:
+                return self._R(400, "invalid_request: unknown field resolution")
+            if payload.get("size") == "2048x1152":
+                return self._R(400, "invalid_request: size not supported")
+            return self._ok()
+        monkeypatch.setattr(gi, "_post_image_request", fake_post)
+        out = gi._request_one_image("p", api_key="k", model="m", size="2048x1152",
+                                    aspect_ratio="16:9", resolution="2k")
+        assert out == b"img"
+        assert [("aspect_ratio" in c, c.get("size")) for c in calls] == [
+            (True, None), (False, "2048x1152"), (False, "1792x1024")]
 
+    def test_legacy_call_shape_without_aspect_ratio(self, monkeypatch):
+        from engine import grok_imagine as gi
+        calls = []
         def fake_post(payload, api_key, timeout_s):
             calls.append(dict(payload))
             if payload.get("size") == "2048x1152":
-                return R(400, "invalid_request: size not supported")
-            return R(200, data={"data": [{"b64_json": base64.b64encode(b"img").decode()}]})
-
+                return self._R(400, "invalid_request: size not supported")
+            return self._ok()
         monkeypatch.setattr(gi, "_post_image_request", fake_post)
         out = gi._request_one_image("p", api_key="k", model="m", size="2048x1152")
         assert out == b"img"
         assert [c.get("size") for c in calls] == ["2048x1152", "1792x1024"]
+
+    def test_aspect_ratio_mapping(self):
+        from engine.grok_imagine import _api_aspect_ratio, DEFAULT_RESOLUTION
+        assert _api_aspect_ratio("16:9") == "16:9"
+        assert _api_aspect_ratio("9:16") == "9:16"
+        assert _api_aspect_ratio("vertical") == "9:16"
+        assert _api_aspect_ratio("1:1") == "1:1"
+        assert DEFAULT_RESOLUTION == "2k"
+
+    def test_fetch_passes_fields_and_records_delivered_widths(self, tmp_path, monkeypatch):
+        import io
+        from PIL import Image
+        from engine import grok_imagine as gi
+        buf = io.BytesIO()
+        Image.new("RGB", (2048, 1152)).save(buf, "JPEG")
+        seen = []
+        def fake_req(prompt, *, api_key, model, size, **kw):
+            seen.append(kw)
+            return buf.getvalue()
+        monkeypatch.setattr(gi, "_request_one_image", fake_req)
+        cover = tmp_path / "cover.jpg"
+        cover.write_bytes(b"\xff\xd8\xff\xd9")
+        res = gi.fetch_scene_images_grok(work_dir=tmp_path, episode_num=1,
+                                         prompts=["a", "b"], fallback_cover=cover,
+                                         aspect="9:16", api_key="k")
+        assert seen[0]["aspect_ratio"] == "9:16" and seen[0]["resolution"] == "2k"
+        assert res.widths == [2048, 2048]
+
+    def test_run_show_records_delivered_px(self):
+        src = (_ROOT / "run_show.py").read_text(encoding="utf-8")
+        assert 'result["grok_image_px_max"]' in src
+        assert "grok_image_widths.extend(" in src

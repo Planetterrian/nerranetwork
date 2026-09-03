@@ -1600,7 +1600,11 @@ def _long_form_hook_stage(post_label: str, hook: str, *,
 # fade in/out, on screen ~4 s) driven by the same chapters JSON that
 # powers the seek-bar chapters. Render/metadata only.
 _CHAPTER_CARD_SECONDS = 4.0
-_CHAPTER_CARD_MAX_CHARS = 48
+# Structural chapter titles never earn a card — the viewer is watching
+# the intro / closing already; a card saying "Closing" is noise.
+_CHAPTER_CARD_SKIP_TITLES = frozenset({
+    "introduction", "intro", "closing", "outro", "tomorrow teaser", "teaser",
+})
 
 
 def _long_form_chapter_cards_stage(
@@ -1615,7 +1619,7 @@ def _long_form_chapter_cards_stage(
     open. Returns ``(chain_fragment, new_post_label)``; an empty list
     returns ``("", post_label)`` so callers' terminal logic is untouched.
     """
-    from engine.titles import clip_words
+    from engine.titles import CHAPTER_CARD_MAX, ELLIPSIS, fits
 
     usable = []
     for start, title in cards or []:
@@ -1623,9 +1627,17 @@ def _long_form_chapter_cards_stage(
             s = float(start)
         except (TypeError, ValueError):
             continue
-        t = clip_words(str(title or "").strip(), _CHAPTER_CARD_MAX_CHARS,
-                       ellipsis="").strip()
+        t = str(title or "").strip()
         if s < 5.0 or not t:
+            continue
+        # Quality gate (Sep 3 2026): only a clean headline earns a card.
+        # A title the chapter builder already clipped (trailing ellipsis
+        # = a first-sentence fallback, never a real headline), one that
+        # would not fit the card, or a structural label is skipped —
+        # never cut. The limit lives in engine.titles like every other.
+        if t.endswith(ELLIPSIS) or t.endswith("...") or not fits(t, CHAPTER_CARD_MAX):
+            continue
+        if t.lower().rstrip(".:") in _CHAPTER_CARD_SKIP_TITLES:
             continue
         usable.append((s, t))
     if not usable:

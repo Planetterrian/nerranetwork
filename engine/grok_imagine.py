@@ -413,6 +413,37 @@ _LEGACY_SIZE_FOR = {
     "1152x2048": "1024x1792",
 }
 
+# Sep 3 2026: the endpoint IGNORES ``size``. Every image the network has
+# ever received (7,500+ committed gallery sidecars, dimensions probed
+# from the real bytes) is 1280x720 / 720x1280 on ``grok-imagine-image``
+# regardless of the WIDTHxHEIGHT requested — the 2K request above
+# changed nothing. The documented controls (xai-sdk ``image.sample``)
+# are ``aspect_ratio`` ("16:9", "9:16", "1:1", ...) and ``resolution``
+# ("1k" | "2k"). ``size`` stays only as the request ladder's fallback
+# for a revision that rejects the new fields.
+DEFAULT_RESOLUTION = "2k"
+
+
+def _api_aspect_ratio(aspect: str) -> str:
+    """Translate a human aspect string to the API's ``aspect_ratio``."""
+    if aspect.startswith("9:") or aspect == "vertical":
+        return "9:16"
+    if aspect == "1:1":
+        return "1:1"
+    return "16:9"
+
+
+def probe_image_size(image_bytes: bytes) -> tuple:
+    """``(width, height)`` of *image_bytes*, or ``(0, 0)`` if Pillow can't
+    read them. Best-effort — never raises."""
+    try:
+        import io
+        from PIL import Image
+        with Image.open(io.BytesIO(image_bytes)) as im:
+            return int(im.size[0]), int(im.size[1])
+    except Exception:  # noqa: BLE001 — diagnostics only
+        return 0, 0
+
 
 def _post_image_request(
     payload: dict,
@@ -445,6 +476,8 @@ def _request_one_image(
     model: str,
     size: str,
     timeout_s: int = DEFAULT_TIMEOUT_S,
+    aspect_ratio: Optional[str] = None,
+    resolution: Optional[str] = None,
 ) -> bytes:
     """POST a single prompt to ``/v1/images/generations`` and return
     the raw image bytes. Wrapped in tenacity retry for transient
@@ -467,19 +500,39 @@ def _request_one_image(
         "model": model,
         "prompt": prompt,
         "n": 1,
-        "size": size,
         "response_format": "b64_json",
     }
+    if aspect_ratio:
+        # The documented controls. ``size`` is deliberately NOT sent
+        # alongside them — it is ignored at best and a second, possibly
+        # conflicting, shape hint at worst.
+        payload["aspect_ratio"] = aspect_ratio
+        if resolution:
+            payload["resolution"] = resolution
+    else:
+        payload["size"] = size
     resp = _post_image_request(payload, api_key, timeout_s)
 
-    # Retry without ``size`` if the API rejected it. Cover the two
-    # plausible error shapes — error.message or top-level message.
+    # Request ladder on a 400. Cover the two plausible error shapes —
+    # error.message or top-level message.
     if resp.status_code == 400:
         body_text = resp.text.lower()
-        if "size" in body_text or "invalid_request" in body_text:
+        if aspect_ratio and any(
+            k in body_text for k in ("aspect_ratio", "resolution", "invalid_request")
+        ):
+            # A revision that does not know the documented fields:
+            # fall back to the legacy WIDTHxHEIGHT request.
+            payload.pop("aspect_ratio", None)
+            payload.pop("resolution", None)
+            payload["size"] = size
+            resp = _post_image_request(payload, api_key, timeout_s)
+            body_text = resp.text.lower() if resp.status_code == 400 else ""
+        if resp.status_code == 400 and (
+            "size" in body_text or "invalid_request" in body_text
+        ):
             # Ladder: 2K -> legacy size -> no size. A rejected 2K request
             # must never degrade straight to the endpoint's 1024 default.
-            legacy = _LEGACY_SIZE_FOR.get(size)
+            legacy = _LEGACY_SIZE_FOR.get(payload.get("size", ""))
             if legacy:
                 payload["size"] = legacy
                 resp = _post_image_request(payload, api_key, timeout_s)
@@ -535,6 +588,10 @@ class GrokSceneResult:
     cost_usd: float = 0.0
     images_generated: int = 0
     failures: List[str] = field(default_factory=list)
+    # Sep 3 2026: delivered pixel widths, probed from the real bytes —
+    # the only way to know what the endpoint actually returned (a
+    # requested size is not a delivered size; see ``DEFAULT_RESOLUTION``).
+    widths: List[int] = field(default_factory=list)
 
 
 def fetch_scene_images_grok(
@@ -547,6 +604,7 @@ def fetch_scene_images_grok(
     label_suffix: str = "",
     model: str = DEFAULT_MODEL,
     api_key: Optional[str] = None,
+    resolution: str = DEFAULT_RESOLUTION,
 ) -> GrokSceneResult:
     """Generate one image per prompt and persist to the per-episode
     scenes directory.
@@ -597,10 +655,12 @@ def fetch_scene_images_grok(
         )
 
     size = _api_size_for_aspect(aspect)
+    aspect_ratio = _api_aspect_ratio(aspect)
     per_image_cost = MODEL_COST_USD.get(model, 0.0)
 
     scenes: List[Scene] = []
     failures: List[str] = []
+    widths: List[int] = []
     images_generated = 0
     cost_usd = 0.0
 
@@ -609,8 +669,18 @@ def fetch_scene_images_grok(
         try:
             img_bytes = _request_one_image(
                 prompt, api_key=api_key, model=model, size=size,
+                aspect_ratio=aspect_ratio, resolution=resolution or None,
             )
             out_path.write_bytes(img_bytes)
+            w, h = probe_image_size(img_bytes)
+            if w:
+                widths.append(w)
+                logger.info(
+                    "Grok Imagine ep%s%s prompt %d delivered %dx%d "
+                    "(requested %s @ %s)",
+                    episode_num, label_suffix, idx, w, h,
+                    aspect_ratio, resolution or "default",
+                )
             scenes.append(Scene(
                 path=out_path,
                 photographer="Grok Imagine (xAI)",
@@ -640,15 +710,18 @@ def fetch_scene_images_grok(
             cost_usd=round(cost_usd, 4),
             images_generated=images_generated,
             failures=failures,
+            widths=widths,
         )
 
     logger.info(
-        "Grok Imagine generated %d images for ep%s%s (cost=$%.2f)",
+        "Grok Imagine generated %d images for ep%s%s (cost=$%.2f, max width %s px)",
         images_generated, episode_num, label_suffix, cost_usd,
+        max(widths) if widths else "?",
     )
     return GrokSceneResult(
         scene_set=SceneSet(scenes=scenes, is_fallback=False),
         cost_usd=round(cost_usd, 4),
         images_generated=images_generated,
         failures=failures,
+        widths=widths,
     )

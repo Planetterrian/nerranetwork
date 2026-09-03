@@ -117,6 +117,37 @@ def _entry_tokens(entry: dict) -> frozenset:
     return _tokenize(" ".join(str(p) for p in parts))
 
 
+# Sep 3 2026: a token that appears in more than this share of a show's
+# candidate images says nothing about WHICH image fits today's story.
+# Measured on the committed manifest: "tesla", "optimus", "cybercab",
+# "fsd", "robotaxi" and the style boilerplate ("cinematic",
+# "photojournalism", ...) sit in 95-100% of Tesla's 436 library scenes,
+# so ``min_overlap=1`` matched EVERY image and the blend kept padding a
+# Solar-Roof episode with a pier full of Model S (Ep592, twice). Overlap
+# is now counted on SALIENT tokens only — the ones that distinguish one
+# story from another.
+_COMMON_TOKEN_DF = 0.20
+_COMMON_TOKEN_MIN_ENTRIES = 5
+
+
+def _common_tokens(entries: List[dict]) -> frozenset:
+    """Tokens present in more than ``_COMMON_TOKEN_DF`` of *entries*.
+
+    Empty for tiny candidate sets (a handful of images is not a
+    document-frequency estimate), so small libraries keep the legacy
+    whole-token overlap.
+    """
+    n = len(entries)
+    if n < _COMMON_TOKEN_MIN_ENTRIES:
+        return frozenset()
+    counts: Dict[str, int] = {}
+    for e in entries:
+        for t in _entry_tokens(e):
+            counts[t] = counts.get(t, 0) + 1
+    cutoff = _COMMON_TOKEN_DF * n
+    return frozenset(t for t, c in counts.items() if c > cutoff)
+
+
 def _candidate_entries(
     manifest: dict,
     show_slug: str,
@@ -200,10 +231,13 @@ def _retention_score(entry: dict, tag_scores: dict) -> float:
 
 
 def _rank(entries: List[dict], context_text: str,
-          show_slug: str = "") -> List[dict]:
+          show_slug: str = "",
+          common: Optional[frozenset] = None) -> List[dict]:
     """Deterministic best-first ordering.
 
-    Primary: token overlap with the context. Secondary (July 31 2026):
+    Primary: SALIENT token overlap with the context (*common* tokens —
+    ``_common_tokens`` — are removed from both sides first, so the
+    show's own brand words cannot manufacture a match). Secondary (July 31 2026):
     the bounded retention prior — among equal-overlap candidates, images
     whose tags historically held viewers rank first. Ties after that:
     newer ``episode_date`` first, then ``image_id`` — so identical inputs
@@ -211,7 +245,8 @@ def _rank(entries: List[dict], context_text: str,
     Implemented as stable sorts (least- to most-significant key);
     Python's sort is stable even with ``reverse=True``.
     """
-    ctx = _tokenize(context_text)
+    common = common or frozenset()
+    ctx = _tokenize(context_text) - common
     tag_scores = _retention_tag_scores(show_slug) if show_slug else {}
     ranked = sorted(entries, key=lambda e: e.get("image_id") or "")
     ranked.sort(key=lambda e: e.get("episode_date") or "", reverse=True)
@@ -219,7 +254,8 @@ def _rank(entries: List[dict], context_text: str,
         ranked.sort(key=lambda e: _retention_score(e, tag_scores),
                     reverse=True)
     if ctx:
-        ranked.sort(key=lambda e: len(ctx & _entry_tokens(e)), reverse=True)
+        ranked.sort(key=lambda e: len(ctx & (_entry_tokens(e) - common)),
+                    reverse=True)
     return ranked
 
 
@@ -531,11 +567,16 @@ def select_library_scenes(
         paths: List[Path] = []
         failures: List[str] = []
         consecutive_failures = 0
-        ctx_tokens = _tokenize(context_text) if min_overlap > 0 else frozenset()
-        for entry in _rank(entries, context_text, show_slug):
+        common = _common_tokens(entries)
+        ctx_tokens = (
+            (_tokenize(context_text) - common) if min_overlap > 0 else frozenset()
+        )
+        for entry in _rank(entries, context_text, show_slug, common=common):
             if len(paths) >= limit:
                 break
-            if ctx_tokens and len(ctx_tokens & _entry_tokens(entry)) < min_overlap:
+            if ctx_tokens and len(
+                ctx_tokens & (_entry_tokens(entry) - common)
+            ) < min_overlap:
                 continue   # off-topic — a repeat of a relevant image beats it
             if consecutive_failures >= _MAX_CONSECUTIVE_DOWNLOAD_FAILURES:
                 logger.warning(
