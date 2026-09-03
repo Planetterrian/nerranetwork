@@ -984,3 +984,65 @@ class TestHookNeverBecomesChapterTitle:
         # real (title-length) headline instead.
         assert any("Central Asia economy summit" in c.title for c in chapters), (
             [c.title for c in chapters])
+
+
+class TestLongHeadlinesStillTitleChapters:
+    """Sep 3 2026 (Omni View Ep163): the 08-30 hook exclusion skipped EVERY
+    candidate over the 60-char budget, and seven of that day's eight real
+    headlines were 62-91 chars — so every segment shipped a first-sentence
+    fragment ("For Beijing, Taiwan's presence at those forums is not a…").
+    Only hook-length candidates (> 2x the budget) are excluded now; a long
+    real headline competes and is shortened WITHOUT an ellipsis."""
+
+    TAIWAN = "Taiwan foreign minister criticizes Chinese actions at Pacific Islands forum"
+    NIGERIA = ("Nigerian forces report killing over 1,000 militants and rescuing "
+               "hundreds of kidnap victims")
+    HOOK = ("Renewed US and Iranian strikes have ended a lull in their conflict, "
+            "raising immediate risk of escalation across the region while "
+            "markets and allies weigh the fallout")
+
+    def test_long_real_headline_wins_and_is_shortened_cleanly(self):
+        from engine.chapters import _best_headline_for_segment
+        seg = ("For Beijing, Taiwan's presence at those forums is not a minor "
+               "matter. The foreign minister called the Chinese actions at the "
+               "Pacific Islands forum bullying, and the criticism landed.")
+        title = _best_headline_for_segment(seg, [self.HOOK, self.TAIWAN], set())
+        assert title == "Taiwan foreign minister criticizes Chinese actions"
+        assert len(title) <= 60 and not title.endswith("…")
+
+    def test_hook_length_candidates_stay_excluded(self):
+        from engine.chapters import _best_headline_for_segment
+        assert len(self.HOOK) > 120
+        seg = ("Renewed US and Iranian strikes have ended a lull in their conflict "
+               "and raised immediate risk across the region as markets weigh it.")
+        assert _best_headline_for_segment(seg, [self.HOOK], set()) == ""
+
+    def test_clip_title_drops_dangling_function_words(self):
+        from engine.chapters import _clip_title
+        assert _clip_title(self.NIGERIA) == "Nigerian forces report killing over 1,000 militants"
+        assert _clip_title("Short headline stays") == "Short headline stays"
+        # A clean cut that would lose more than half the headline keeps
+        # the legacy ellipsis clip rather than collapsing to two words.
+        long_word = "Supercalifragilisticexpialidocious" * 3
+        out = _clip_title(f"Regulators weigh {long_word} rules", 60)
+        assert len(out) <= 60
+
+    def test_shipped_omni_view_ep163_shape(self):
+        """The real Ep163 digest + script: no fragment titles reach listeners."""
+        from engine.config import load_config
+        from engine.chapters import parse_chapters
+        from engine.grok_imagine import extract_story_headlines
+        import logging
+        logging.disable(logging.CRITICAL)
+        root = Path(__file__).resolve().parent.parent
+        md = root / "digests/omni_view/Omni_View_Ep163_20260902.md"
+        tts = root / "digests/omni_view/Omni_View_Ep163_20260902_tts.txt"
+        if not (md.exists() and tts.exists()):
+            pytest.skip("Ep163 artifacts not on disk")
+        markers = load_config(str(root / "shows/omni_view.yaml")).chapters.section_markers
+        heads = extract_story_headlines(md.read_text(encoding="utf-8"), max_count=12)
+        titles = [c.title for c in parse_chapters(
+            tts.read_text(encoding="utf-8"), markers, show_name="Omni View",
+            story_headlines=heads)]
+        assert not [t for t in titles if t.endswith("…") or len(t) > 60], titles
+        assert any(t.startswith("Taiwan foreign minister") for t in titles), titles
