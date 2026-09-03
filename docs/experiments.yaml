@@ -817,6 +817,33 @@ experiments:
       edition's cost to the dashboard rollup). First honest read needs
       a few weeks of post-fix nightly data.
 
+  - id: nerra-daily-edition-titles
+    title: "Nerra Daily — LLM-written whole-day edition titles"
+    area: reach
+    shipped: 2026-09-03
+    readout: 2026-09-24
+    status: reading
+    target: >
+      Every one of the first 14 editions was titled with SpaceX Daily's
+      hook (the lead show), so the all-network product read as a SpaceX
+      show in every directory listing and blog title. The links call
+      now writes a one-line headline for the whole day; the lead hook
+      stays the fallback. Target: per-episode OP3 downloads_7d on
+      editions titled by the LLM at or above the SpaceX-titled baseline
+      (Eps 6-14, 2-5 per episode), and edition_title_source == llm on
+      at least 8 of 10 builds.
+    criteria: >
+      If validate_edition_title rejects the model's line on 3+ of 10
+      builds, loosen the bounds before judging the idea. Zero measured
+      movement with the feed still unsubmitted to Apple/Spotify means
+      distribution, not the title, is the gate — same rule as
+      nerra-daily-launch.
+    notes: >
+      Written metadata only (title, blog title, chapters title, OG
+      card) — nothing Mira speaks changed, so outside the landmine-#17
+      A/B gate. Shipped with the Sep 3 2026 review alongside the show
+      notes timestamps.
+
   - id: chapter-title-cards
     title: "Long-form chapter title cards at every chapter boundary"
     area: retention

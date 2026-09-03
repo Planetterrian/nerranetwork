@@ -437,7 +437,9 @@ def build_edition(
         final_mp3 = workdir / mp3_name
         concatenate_audio(splice, final_mp3)
         duration = get_audio_duration(final_mp3) or 0.0
-        title = daily_title(episode_num, target_date, segments)
+        title = daily_title(episode_num, target_date, segments,
+                            links.get("title", ""))
+        chapters = build_chapters(chapter_pieces, title)
         logger.info("assembled %s: %.1f min, %d segments, title=%r",
                     mp3_name, duration / 60, len(segments), title)
 
@@ -456,6 +458,8 @@ def build_edition(
                 "links": links,
                 "links_source": links_source,
                 "field_note": find_text,
+                "show_notes": feed_description(spec, segments, target_date,
+                                               chapters, find_text),
             }
             print(json.dumps(plan, indent=2, ensure_ascii=False))
             return 0
@@ -476,8 +480,7 @@ def build_edition(
 
         chapters_path = digest_dir / f"chapters_ep{episode_num:03d}.json"
         chapters_path.write_text(
-            json.dumps(build_chapters(chapter_pieces, title), indent=2,
-                       ensure_ascii=False) + "\n",
+            json.dumps(chapters, indent=2, ensure_ascii=False) + "\n",
             encoding="utf-8")
 
         digest_md = build_digest_md(
@@ -488,7 +491,9 @@ def build_edition(
 
         update_rss_feed(
             feed_path, episode_num, title,
-            feed_description(spec, segments, target_date),
+            # Show notes carry every chapter's start time (apps linkify
+            # H:MM:SS) and Mira's field note in full — Sep 3 2026 review.
+            feed_description(spec, segments, target_date, chapters, find_text),
             target_date, mp3_name, duration, final_mp3,
             audio_url=apply_op3_prefix(r2_url),
             audio_subdir=spec.digest_dir,
@@ -506,6 +511,11 @@ def build_edition(
             chapters_url=f"https://nerranetwork.com/{spec.digest_dir}/{chapters_path.name}",
             funding_url="https://nerranetwork.com/support.html",
             funding_label="Support the Nerra Network",
+            # Mira is the host in Podcasting 2.0 apps' credits/discovery
+            # (podcast:person) — the channel carried funding but no host.
+            person_name=spec.host,
+            person_url="https://nerranetwork.com/age-of-ai.html",
+            person_img=spec.cover_url,
         )
 
         _append_summary(spec, target_date, digest_md, episode_num, title, r2_url)
@@ -517,6 +527,7 @@ def build_edition(
             field_note_included=bool(find_text),
             missing_expected=missing,
             dropped=dropped,
+            links=links,
         )
         (digest_dir / f"metrics_ep{episode_num:03d}.json").write_text(
             json.dumps(metrics, indent=2, ensure_ascii=False) + "\n",

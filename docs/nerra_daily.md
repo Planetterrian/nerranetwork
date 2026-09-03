@@ -138,6 +138,25 @@ develops Mira's editorial voice beyond announcing.
   (`_VIRTUAL_COST_SLUGS`) both had to learn about registry-only shows —
   a future edition must be picked up by both or its audience and cost
   are invisible.
+- **Sep 3 2026 review — promo-cut hardening, memory v2, titles, notes:**
+  Whisper writes the frame's "our sister show X" as "sister shows X" /
+  "sisters show X"; the singular-only regex missed and the weak
+  brand-mention fallback cut The DP Pod's Dispatch + sign-off (69 s) out
+  of Ep10. The matcher accepts the variants and a weak-evidence cut is
+  capped at `WEAK_EVIDENCE_MAX_TAIL_SECONDS` (60 s; the real block is
+  17-45 s) — beyond that a mention is body content and only the
+  disclosure line is trimmed. `TestPromoCutHardening` sweeps every
+  recent lineup transcript and fails on any non-frame cut. Memory v2:
+  intro openers are date-normalized (`[date]` — the date was defeating
+  the comparison), sign-off openers (`{recent_signoffs}`) and field-note
+  closing sentences are injected too. The links call also writes a
+  validated whole-day `title` (lead hook fallback;
+  `edition_title_source` metric); show notes carry `H:MM:SS` chapter
+  timestamps plus the field note; the channel credits Mira via
+  `podcast:person`. Per-build metrics gained `intro_words`,
+  `handoffs_show_name_led`, `handoff_count`. UC's claims-gate retry
+  publishing after the 12:00 force hour (Ep14) is an open operator
+  decision.
 - **Rotation memory (Aug 25 2026):** `build_links_prompt` injects the
   opening words of the last 10 committed intros (`{recent_openers}`)
   and `build_find_prompt` the last 10 field-note topics
