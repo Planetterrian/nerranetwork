@@ -5344,6 +5344,7 @@ def _publish_youtube(
     pexels_filtered = 0
     grok_image_cost = 0.0
     grok_images_generated = 0
+    grok_image_widths: list = []   # delivered px widths (Sep 3 2026)
     grok_image_failures: list = []
     # Gallery upload counters (Phase 1 → diagnostics added May 2026).
     # Surfaced in per-episode metrics so we can tell from the dashboard
@@ -5452,6 +5453,7 @@ def _publish_youtube(
             fetch_scene_images_grok,
         )
         nonlocal grok_image_cost, grok_images_generated, grok_image_failures
+        nonlocal grok_image_widths
         try:
             prompts = build_image_prompts(
                 hook=hook or "",
@@ -5489,6 +5491,7 @@ def _publish_youtube(
             grok_image_cost += result.cost_usd
             grok_images_generated += result.images_generated
             grok_image_failures.extend(result.failures)
+            grok_image_widths.extend(getattr(result, "widths", []) or [])
             if not result.scene_set.is_fallback and len(result.scene_set) >= 2:
                 # Grok-generated images are royalty-free under xAI's
                 # terms; we still credit the model in the description
@@ -7043,6 +7046,12 @@ def _publish_youtube(
     # image generation. Zero when image_provider != grok / hybrid.
     result["grok_image_cost_usd"] = round(grok_image_cost, 4)
     result["grok_images_generated"] = grok_images_generated
+    # Delivered source resolution (max / min width across the episode's
+    # fresh images). A requested size is not a delivered size — every
+    # image before 2026-09-03 arrived at 1280 px wide whatever was asked.
+    if grok_image_widths:
+        result["grok_image_px_max"] = max(grok_image_widths)
+        result["grok_image_px_min"] = min(grok_image_widths)
     if grok_image_failures:
         result["grok_image_failures"] = grok_image_failures[:5]
     result["image_provider"] = image_provider

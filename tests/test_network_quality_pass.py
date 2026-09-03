@@ -299,8 +299,21 @@ class TestNarrativeQueueRunway:
         q = yaml.safe_load(
             (_ROOT / "shows" / "topic_queues" / "unintended_consequences.yaml").read_text(
                 encoding="utf-8"))["queue"]
-        seq = [e.get("category") for e in q if not e.get("produced")]
-        # No 3-in-a-row of the same category anywhere before the dominant
+        # Measure the sequence the picker will actually AIR: gate-deferred
+        # entries (`engine.topic_queue.GATE_BLOCK_DEFER_THRESHOLD`) are
+        # skipped by `pick_next_topic` and sit at the head until the
+        # operator re-sources them, so the picker consumes the interleaved
+        # region behind them. Counting the parked entries made this guard
+        # fail on 2026-09-02 (two deferred topics + one consumed neighbour
+        # read as an "economics, economics" cluster) and took the restock
+        # automation down with it — the queue itself was still round-robin.
+        from engine.topic_queue import GATE_BLOCK_DEFER_THRESHOLD
+        seq = [
+            e.get("category") for e in q
+            if not e.get("produced")
+            and int(e.get("gate_blocks") or 0) < GATE_BLOCK_DEFER_THRESHOLD
+        ]
+        # No 2-in-a-row of the same category anywhere before the dominant
         # category's unavoidable tail overflow (economics = 10 of 33).
         from collections import Counter
         counts = Counter(seq)

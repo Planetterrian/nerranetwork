@@ -2742,6 +2742,31 @@ class TestChapterTitleCards:
         assert (_long_form_filter_graph(hook="Hook line")
                 == _long_form_filter_graph(hook="Hook line", chapter_cards=[]))
 
+    def test_only_clean_headlines_earn_a_card(self):
+        """Sep 3 2026 (Tesla Ep592 frame check): a first-sentence fallback
+        title was clipped a second time on screen to "Several projects
+        pair storage with solar to". Cards are a FIT gate on
+        ``engine.titles.CHAPTER_CARD_MAX`` — never a clip — and
+        structural labels get no card."""
+        from engine.titles import CHAPTER_CARD_MAX
+        from engine.video import _long_form_filter_graph
+        cards = [
+            (9.7, "Introduction"),
+            (125.3, "Several projects pair storage with solar to stabilize…"),
+            (236.4, "A perfectly good headline that is simply far too long for the card"),
+            (350.6, "Lexus adopts gigacasting for a 2027 EV"),
+            (529.1, "Tomorrow Teaser"),
+            (538.5, "Closing"),
+        ]
+        g = _long_form_filter_graph(hook="Hook line", chapter_cards=cards)
+        assert "Lexus adopts gigacasting" in g
+        assert "Several projects" not in g          # clipped fragment, skipped whole
+        assert "perfectly good headline" not in g   # too long: skipped, not cut
+        assert "text='Introduction'" not in g and "Closing" not in g
+        assert "Tomorrow Teaser" not in g
+        assert "[chap0]" in g and "[chap1]" not in g   # exactly one card
+        assert len("Lexus adopts gigacasting for a 2027 EV") <= CHAPTER_CARD_MAX
+
     def test_build_long_form_video_derives_cards_from_chapters_json(
             self, tmp_path, monkeypatch):
         import json as _json

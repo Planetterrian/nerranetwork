@@ -941,3 +941,43 @@ experiments:
       grok_image_model: grok-imagine-image-quality ($0.05 vs $0.02) on
       the three engine shows (FF, spacex, tesla) ≈ +$35/mo — the honest
       next step if 2K + story briefs don't end the complaints.
+      2026-09-03 CORRECTION: the 2K `size` request was a NO-OP — the
+      endpoint ignores `size`; every one of the 7,500+ committed gallery
+      sidecars (dimensions probed from the real bytes) is 1280x720 /
+      720x1280 on grok-imagine-image whatever was requested. Replaced
+      by the documented `aspect_ratio` + `resolution: "2k"` fields
+      (video-quality-round-3). The delivered width is now recorded per
+      episode as grok_image_px_max; the first honest 2K episodes are
+      2026-09-03's — 1280 there means the endpoint ignored the
+      documented field too and the quality-tier decision moves up.
+
+  - id: video-quality-round-3
+    title: "Real 2K sources, salient-token library blend, chapter cards as a fit gate"
+    area: retention
+    shipped: 2026-09-03
+    readout: 2026-09-23
+    status: reading
+    metric: long_open_hold_5pct_en
+    baseline: 0.51
+    target: >
+      From the first-round readout (Tesla Ep592 frame check + the
+      committed gallery sidecars): (1) the endpoint ignores `size`, so
+      the request now carries the documented `aspect_ratio` +
+      `resolution: 2k` with the delivered width recorded as
+      grok_image_px_max — target 2048 on every 09-03 episode; (2) the
+      library blend counted 'tesla' / 'optimus' / 'cinematic' (95-100%
+      of the library) as relevance, so min_overlap=1 matched every image
+      and a Solar-Roof episode still opened its chapters on a pier of
+      Model S — overlap is now on SALIENT tokens (document-frequency
+      > 20% removed), target: library scenes share a story token with
+      the day's chapters or are not used; (3) a chapter card is a FIT
+      gate on engine.titles.CHAPTER_CARD_MAX, never a clip — clipped
+      first-sentence titles and structural labels get no card (Ep592
+      rendered "Several projects pair storage with solar to").
+    notes: >
+      Render/metadata only (outside landmine #17). Cost unchanged at the
+      standard model; 2K is not priced separately in the docs (flat
+      per-image) — verify on the 09-03 credit files. Guards:
+      tests/test_scene_briefs.py (TestRequestSizeLadder,
+      TestOnTopicLibraryBlend), tests/test_video_commands.py
+      (TestChapterTitleCards::test_only_clean_headlines_earn_a_card).

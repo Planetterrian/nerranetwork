@@ -340,3 +340,58 @@ dubs culled (operator-directed).
   descriptor (real vehicles/factories/charging/software on screens).
 - Operator decision queued: the $0.05 quality image tier on the three
   engine shows (~+$35/mo) if 2K + story briefs do not end the complaints.
+
+
+## First-round readout — 2026-09-03
+
+What actually shipped, checked against the artifacts rather than the
+PR descriptions:
+
+- **Scene briefs ran on every YouTube episode of 2026-09-02** (the 11
+  shows ran 07:32-08:07 UTC, after #1128 merged at 06:21). Per-episode
+  metrics moved exactly as designed: fresh scenes 8 → 11-13 (8 long +
+  5 Short; MAB/M&A returned 6/7 briefs and generated that many),
+  library padding 30 → 14, image cost $0.16 → $0.26/episode. The
+  committed gallery prompts for the day lead with the story brief.
+- **The 2K request (#1129, merged 13:31) has not reached an episode**,
+  and it would not have mattered: the endpoint ignores `size`. Every
+  one of the 7,500+ committed gallery sidecars — dimensions probed from
+  the real bytes at upload — is 1280x720 / 720x1280 on
+  `grok-imagine-image` whatever was requested (the quality tier
+  returned 1248x832 / 864x1152, i.e. 3:2 and 3:4, so its images were
+  being cropped to fit as well). The documented controls (xai-sdk
+  `image.sample`) are `aspect_ratio` ("16:9" / "9:16") and `resolution`
+  ("1k" / "2k"); the request now sends those, keeps `size` only as the
+  ladder's fallback, and records the delivered width per episode
+  (`grok_image_px_max`). The first honest read is the 09-03 slate.
+- **Frame check of Tesla Ep592** (the MP4 the video feed serves):
+  hook overlay, per-word captions, brand pills, closing beat and outro
+  card all render as designed; the fresh scenes are on-story (Solar
+  Roof panels, Megapack containers, Optimus at a Supercharger). Two
+  defects: a generic library image (a pier full of Model S) opened
+  chapter 1 AND reappeared at 8:40 — `min_overlap=1` matched it on
+  "tesla", a token present in 100% of the show's 436 library scenes
+  (with "optimus", "cybercab", "fsd", "robotaxi" at 95-96%) — and the
+  chapter card at 2:05 read "Several projects pair storage with solar
+  to": a first-sentence fallback title (the Tesla digest's 12 items
+  map poorly onto 4 spoken chapters) clipped at 60 by the chapter
+  builder and again at 48, without an ellipsis, by the card stage — a
+  truncation outside `engine/titles.py`, the exact rule at the top of
+  CLAUDE.md.
+- **Analytics cannot read any of it yet.** `api/youtube_stats.json`
+  (generated 19:34 UTC) carries no rows for videos published 09-01 or
+  09-02; the matured 08-25..31 baseline is EN long AVP 14.3% (n=57),
+  EN Short 43.2% (n=107), RU Short 44.8% (n=67). First lag-aware read
+  ~09-05; register readouts stay 09-23.
+- Side finding: the topic-queue restock workflow has failed since
+  09-02 17:18 on `test_uc_unproduced_interleaved_not_clustered` — two
+  gate-deferred UC topics parked at the queue head made the guard read
+  the airable interleaved queue as clustered. The guard now measures
+  the sequence the picker will actually air.
+
+Shipped as round 3 (`video-quality-round-3`): documented resolution
+fields + delivered-size metric; salient-token library overlap
+(`_common_tokens`, document frequency > 20% removed from both sides —
+small candidate sets keep legacy overlap); chapter cards as a fit gate
+on `engine.titles.CHAPTER_CARD_MAX` (clipped or structural titles get
+no card, never a cut); the restock guard fix.
