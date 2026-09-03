@@ -630,3 +630,306 @@ class TestRotationMemory:
         p2 = build_find_prompt(SPEC, tmp_path, segs, dt.date(2026, 8, 25))
         assert "Recent editions opened" not in p1
         assert "recent field notes covered" not in p2
+
+
+# ---------------------------------------------------------------------------
+# Sep 3 2026 review — promo-cut hardening, rotation memory v2, edition
+# title, show notes with timestamps, link-shape metrics
+# ---------------------------------------------------------------------------
+
+def _seg(i, name=None, hook=None, **kw):
+    base = dict(slug=f"s{i}", show_name=name or f"Show {i}", episode_num=i,
+                episode_title=f"Ep {i}: {hook or f'hook {i}'}",
+                hook=hook or f"hook {i}", date="2026-09-03", audio_url="",
+                content="", digest_dir=Path("."), transcript_path=None,
+                music_intro_offset=0.0)
+    base.update(kw)
+    return Segment(**base)
+
+
+class TestPromoCutHardening:
+    """Whisper renders "our sister show SpaceX Daily" as "sister shows"
+    and "sisters show" — the singular-only frame regex missed, the weak
+    brand-mention fallback matched The DP Pod's in-body Dispatch CTA
+    ("hit the dispatch button on the show page at nerranetwork.com"), and
+    Nerra Daily Ep10 (2026-08-30) shipped DP Pod Ep52 minus its Dispatch
+    invitation, both hosts' sign-off and "Do something about it" (69 s).
+    Same failure on DP Pod Ep39 (63 s, pre-launch)."""
+
+    @pytest.mark.parametrize("rel_path, max_tail", [
+        ("digests/dp_pod/DP_Pod_Ep052_20260830_transcript.json", 45.0),
+        ("digests/dp_pod/DP_Pod_Ep039_20260818_transcript.json", 45.0),
+        ("digests/first_principles/First_Principles_Ep075_20260819_transcript.json", 45.0),
+    ])
+    def test_whisper_plural_sister_show_hits_the_frame(self, rel_path, max_tail):
+        path = ROOT / rel_path
+        if not path.exists():
+            pytest.skip(f"{rel_path} not committed")
+        transcript = json.loads(path.read_text(encoding="utf-8"))
+        hit = find_promo_cut(transcript)
+        assert hit and hit["kind"] == "promo", hit
+        tail = float(transcript["duration"]) - hit["raw_seconds"]
+        assert tail <= max_tail, f"cut removed {tail:.1f}s — that is content, not the plug"
+
+    def _synthetic(self, words, duration):
+        # One transcript segment per sentence; words spaced 0.4 s apart.
+        segments, t = [], duration - 0.4 * sum(len(w.split()) for w in words) - 1
+        for sentence in words:
+            toks = sentence.split()
+            wl = [{"word": w, "start": t + 0.4 * k, "end": t + 0.4 * k + 0.3}
+                  for k, w in enumerate(toks)]
+            segments.append({"start": wl[0]["start"], "end": wl[-1]["end"],
+                             "text": sentence, "words": wl})
+            t = wl[-1]["end"] + 0.1
+        return {"duration": duration, "segments": segments}
+
+    def test_weak_mention_far_from_end_is_treated_as_body(self):
+        # Brand mention 90 s before the end (a body CTA), disclosure at the
+        # very end: the fallback must NOT cut at the mention.
+        body = ["hit the dispatch button on the show page at nerranetwork com"]
+        filler = ["and now some more real content " * 30]
+        tail = ["this episode used ai voice synthesis of our voices"]
+        t = self._synthetic(body + filler + tail, 800.0)
+        hit = find_promo_cut(t)
+        assert hit and hit["kind"] == "disclosure", hit
+        assert 800.0 - hit["raw_seconds"] < 10
+
+    def test_weak_mention_near_end_still_trims(self):
+        body = ["real content " * 40]
+        tail = ["all our shows are free at nerra network dot com",
+                "this episode used ai voice synthesis of my voice"]
+        t = self._synthetic(body + tail, 700.0)
+        hit = find_promo_cut(t)
+        assert hit and hit["kind"] == "network_mention", hit
+        assert 700.0 - hit["raw_seconds"] <= 60.0
+
+    @pytest.mark.parametrize("phrase", [
+        "one more thing if you liked today s episode our sister show spacex daily is worth a spot",
+        "one more thing if you like today s episode our sister shows spacex daily is worth a spot",
+        "one more thing if you liked today s episode our sisters show space x daily is worth a spot",
+    ])
+    def test_sister_show_whisper_variants(self, phrase):
+        from engine.daily_edition import _PRIMARY_PROMO_PATTERNS
+        assert any(p.search(phrase) for p in _PRIMARY_PROMO_PATTERNS), phrase
+
+    def test_every_recent_lineup_transcript_hits_a_frame(self):
+        # Network-wide: every committed transcript from the last ~3 weeks
+        # must trim on FRAME evidence. A weak-evidence kind here means a
+        # new Whisper spelling or a new promo frame — extend the matcher,
+        # never lean on the fallback (it cut real content twice).
+        import glob as _glob
+        import re as _re
+        weak = []
+        for slug in SPEC.lineup:
+            for p in sorted(_glob.glob(str(ROOT / "digests" / slug / "*_transcript.json"))):
+                m = _re.search(r"_(\d{8})_transcript", p)
+                if not m or m.group(1) < "20260815":
+                    continue
+                t = json.loads(Path(p).read_text(encoding="utf-8"))
+                hit = find_promo_cut(t)
+                if not hit or hit["kind"] != "promo":
+                    weak.append((Path(p).name, hit and hit["kind"]))
+        assert not weak, weak
+
+
+class TestRotationMemoryV2:
+    """The first memory pass compared raw opening words — and the date is
+    the first thing Mira says, so 'Friday, August 28, 2026, opens Nerra
+    Daily' and 'Saturday, August 29, 2026 opens Nerra Daily' looked like
+    different lines while being one sentence (5/9 post-fix editions). The
+    sign-off (7/9 'Across these segments…') and the field-note closer
+    (10/13 'It is the kind of X that quietly Y') had no memory at all."""
+
+    def test_normalize_date_tokens_exposes_the_skeleton(self):
+        from engine.daily_edition import normalize_date_tokens
+        a = normalize_date_tokens("Friday, August 28, 2026, opens Nerra Daily with Mira speaking.")
+        b = normalize_date_tokens("Saturday, August 29, 2026 opens Nerra Daily with Mira speaking.")
+        assert a == b == "[date] opens Nerra Daily with Mira speaking."
+        assert normalize_date_tokens("Monday, August 31, 2026. This is Nerra Daily.") == \
+            "[date]. This is Nerra Daily."
+        assert normalize_date_tokens("Good morning. This is Mira.") == "Good morning. This is Mira."
+
+    def test_intro_openers_are_date_normalized(self):
+        from engine.daily_edition import recent_intro_openers
+        openers = recent_intro_openers(SPEC, ROOT)
+        assert openers
+        import re as _re
+        for o in openers:
+            assert not _re.search(r"\b2026\b|\bAugust\b|\bSeptember\b", o), o
+
+    def test_signoff_and_closer_memory_from_committed_rundowns(self):
+        from engine.daily_edition import (recent_field_note_closers,
+                                          recent_signoff_openers)
+        signoffs = recent_signoff_openers(SPEC, ROOT)
+        assert signoffs and any(s.startswith("Across") for s in signoffs)
+        closers = recent_field_note_closers(SPEC, ROOT)
+        assert closers and all(c.endswith((".", "!", "?")) for c in closers)
+
+    def test_links_prompt_injects_signoff_memory(self):
+        from engine.daily_edition import build_links_prompt
+        segs = [_seg(1), _seg(2), _seg(3), _seg(4)]
+        prompt = build_links_prompt(SPEC, ROOT, segs, dt.date(2026, 9, 3), None)
+        assert "Recent sign-offs opened with these lines" in prompt
+        assert "[date] stands for" in prompt
+        assert "{recent_signoffs}" not in prompt
+
+    def test_find_prompt_injects_closer_memory(self):
+        from engine.daily_edition import build_find_prompt
+        segs = [_seg(1), _seg(2), _seg(3), _seg(4)]
+        prompt = build_find_prompt(SPEC, ROOT, segs, dt.date(2026, 9, 3))
+        assert "ENDED on these sentences" in prompt
+
+    def test_prompts_carry_no_seed_adverb(self):
+        # De-seed by shape: "quietly witty" / "quietly delighted" in the two
+        # prompts became "quietly" in 10 of 13 field-note closers.
+        for rel in (SPEC.prompt_file, SPEC.find_prompt_file):
+            text = (ROOT / rel).read_text(encoding="utf-8").lower()
+            assert "quietly witty" not in text and "quietly delighted" not in text, rel
+        find = (ROOT / SPEC.find_prompt_file).read_text(encoding="utf-8")
+        assert "closing sentence must not" in find
+        links = (ROOT / SPEC.prompt_file).read_text(encoding="utf-8")
+        assert "{recent_signoffs}" in links
+        assert '"title"' in links
+        assert "At most ONE handoff in three" in links
+
+
+class TestEditionTitle:
+    """Every one of the first 14 editions was titled with SpaceX Daily's
+    hook (the lead show), so the all-network product read as a SpaceX show
+    in every directory. The links call now also writes a one-line headline
+    for the whole day; the lead hook stays the fallback."""
+
+    def test_validate_bounds_and_rejections(self):
+        from engine.daily_edition import validate_edition_title as v
+        assert v("Starship's Louisiana site, a dementia signal, cheaper grid storage") \
+            == "Starship's Louisiana site, a dementia signal, cheaper grid storage"
+        assert v("too short") == ""
+        assert v("x" * 80) == ""
+        assert v("Nerra Daily for Thursday: rockets and rates") == ""
+        assert v("Thursday, September 3, 2026: rockets, rates and robots") == ""
+        assert v("Wednesday edition of rockets, rates and robots") == ""
+        assert v('"**Rockets, rates and a bone scaffold that grows itself.**"') == \
+            "Rockets, rates and a bone scaffold that grows itself"
+
+    def test_parse_carries_title_and_survives_without_it(self):
+        raw = json.dumps({"title": "Rockets, rates and a scaffold that grows bone",
+                          "intro": "Hello.", "handoffs": ["one", "two"], "signoff": "Bye."})
+        parsed = parse_links_json(raw, 2)
+        assert parsed["title"] == "Rockets, rates and a scaffold that grows bone"
+        legacy = parse_links_json(json.dumps({"intro": "Hello.", "handoffs": ["one", "two"],
+                                              "signoff": "Bye."}), 2)
+        assert legacy and legacy["title"] == ""
+
+    def test_edition_hook_prefers_the_written_headline(self):
+        from engine.daily_edition import edition_hook
+        segs = [_seg(1, "SpaceX Daily", "FAA clearance for a wider Starship corridor")]
+        d = dt.date(2026, 9, 3)
+        assert edition_hook(d, segs) == "Thursday edition — FAA clearance for a wider Starship corridor"
+        assert edition_hook(d, segs, "Rockets, rates and a scaffold that grows bone") == \
+            "Thursday edition — Rockets, rates and a scaffold that grows bone"
+
+    def test_daily_title_with_headline_stays_within_the_limit(self):
+        from engine.titles import PODCAST_EPISODE_TITLE_MAX
+        segs = [_seg(1, "SpaceX Daily", "lead hook")]
+        title = daily_title(14, dt.date(2026, 9, 3), segs, "x" * 72)
+        assert title.startswith("Ep 14: Thursday edition — ")
+        assert len(title) <= PODCAST_EPISODE_TITLE_MAX
+
+    def test_digest_blockquote_uses_the_headline(self):
+        from engine.daily_edition import build_digest_md
+        segs = [_seg(i) for i in range(1, 5)]
+        links = fallback_links(SPEC, segs, dt.date(2026, 9, 3))
+        links["title"] = "Rockets, rates and a scaffold that grows bone"
+        md = build_digest_md(SPEC, ROOT, 14, dt.date(2026, 9, 3), segs, links, None)
+        assert "> **Thursday edition — Rockets, rates and a scaffold that grows bone**" in md
+
+    def test_orchestrator_passes_the_title_through(self):
+        src = (ROOT / "scripts" / "build_daily_edition.py").read_text(encoding="utf-8")
+        assert 'links.get("title", "")' in src
+
+
+class TestShowNotes:
+    """A ~2 h, 13-segment episode was published with show notes that were a
+    bullet list of hooks — no way to jump to a show from the notes in the
+    apps that do not render podcast:chapters — and Mira's field note (the
+    edition's only unique text) reached no written surface but the blog."""
+
+    def test_format_timestamp(self):
+        from engine.daily_edition import format_timestamp
+        assert format_timestamp(0) == "0:00"
+        assert format_timestamp(33.2) == "0:33"
+        assert format_timestamp(491.2) == "8:11"
+        assert format_timestamp(3934.3) == "1:05:34"
+
+    def test_notes_carry_chapter_timestamps_and_field_note(self):
+        from engine.daily_edition import feed_description
+        segs = [_seg(1, "SpaceX Daily", "lead"), _seg(2, "Tesla Shorts Time", "second")]
+        chapters = build_chapters([("Welcome from Mira", 33.2),
+                                   ("SpaceX Daily — lead", 458.0),
+                                   ("Mira's field note", 23.4),
+                                   ("Tesla Shorts Time — second", 384.4),
+                                   ("Sign-off", 30.8)], "Ep 14")
+        notes = feed_description(SPEC, segs, dt.date(2026, 9, 3), chapters,
+                                 "Bats carry two sets of antibody genes.")
+        assert "0:00 Welcome from Mira" in notes
+        assert "0:33 SpaceX Daily — lead" in notes
+        assert "8:11 Mira's field note" in notes
+        assert "Mira's field note: Bats carry two sets of antibody genes." in notes
+        assert "https://nerranetwork.com" in notes
+
+    def test_notes_without_chapters_keep_the_legacy_bullets(self):
+        from engine.daily_edition import feed_description
+        segs = [_seg(1, "SpaceX Daily", "lead")]
+        notes = feed_description(SPEC, segs, dt.date(2026, 9, 3))
+        assert "• SpaceX Daily: lead" in notes
+        assert "field note" not in notes
+
+    def test_orchestrator_feeds_chapters_and_host_to_the_feed(self):
+        src = (ROOT / "scripts" / "build_daily_edition.py").read_text(encoding="utf-8")
+        assert "feed_description(spec, segments, target_date, chapters, find_text)" in src
+        assert "person_name=spec.host" in src
+        # Chapters are built ONCE and shared by the JSON file and the notes.
+        assert src.count("build_chapters(chapter_pieces, title)") == 1
+
+
+class TestLinkShapeMetrics:
+    def test_handoffs_show_name_led(self):
+        from engine.daily_edition import handoffs_show_name_led
+        segs = [_seg(1, "SpaceX Daily"), _seg(2, "Tesla Shorts Time"),
+                _seg(3, "Omni View")]
+        links = {"handoffs": ["Tesla Shorts Time follows with…",
+                              "A funding bill signed at the last minute — Omni View…"]}
+        assert handoffs_show_name_led(links, segs) == 1
+
+    def test_metrics_carry_link_shape_signals(self):
+        from engine.daily_edition import build_edition_metrics
+        segs = [_seg(1, "SpaceX Daily"), _seg(2, "Tesla Shorts Time")]
+        links = {"intro": "one two three four", "handoffs": ["Tesla Shorts Time follows"],
+                 "signoff": "bye", "title": "Rockets and rates"}
+        m = build_edition_metrics(14, dt.date(2026, 9, 3), 100.0, segs,
+                                  links_source="llm", field_note_included=False,
+                                  missing_expected=[], dropped=[], links=links)
+        assert m["intro_words"] == 4
+        assert m["handoffs_show_name_led"] == 1 and m["handoff_count"] == 1
+        assert m["edition_title_source"] == "llm"
+        legacy = build_edition_metrics(14, dt.date(2026, 9, 3), 100.0, segs,
+                                       links_source="fallback", field_note_included=False,
+                                       missing_expected=[], dropped=[])
+        assert legacy["edition_title_source"] == "lead_hook"
+        src = (ROOT / "scripts" / "build_daily_edition.py").read_text(encoding="utf-8")
+        assert "links=links," in src
+
+
+class TestRegistryCopy:
+    def test_description_long_matches_the_real_rundown(self):
+        # The show page said "flagships first: Tesla Shorts Time, Models &
+        # Agents, SpaceX Daily…" — the pre-Ep1 order. The operator's fixed
+        # rundown leads with SpaceX Daily; the copy must name the lead
+        # show before any other lineup show.
+        meta = yaml.safe_load((ROOT / "shows" / "network_meta.yaml").read_text())
+        text = meta["nerra_daily"]["description_long"]
+        lead = text.find("SpaceX Daily")
+        assert lead >= 0
+        for other in ("Tesla Shorts Time", "Models & Agents", "Modern Investing"):
+            assert text.find(other) > lead, other
+        assert "field note" in text

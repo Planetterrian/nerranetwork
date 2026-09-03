@@ -607,6 +607,28 @@ today's work, not just explain yesterday's):
   post — never duplicates their digests). Docs:
   [`docs/nerra_daily.md`](docs/nerra_daily.md). Drift guards:
   `tests/test_daily_edition.py`.
+  **Sep 3 2026 second pass** (review:
+  [`docs/reviews/nerra_daily_review_2026_09_03.md`](docs/reviews/nerra_daily_review_2026_09_03.md)):
+  the metrics file caught a **P0** — the one non-`promo` cut it ever
+  recorded was DP Pod Ep52 losing its Dispatch and sign-off (69 s) in
+  Ep10: Whisper writes "sister shows"/"sisters show", the frame regex
+  wanted the singular, and the weak brand-mention fallback matched the
+  Dispatch's own "show page at nerranetwork.com". Fixed (`sisters?
+  shows?` + `WEAK_EVIDENCE_MAX_TAIL_SECONDS` 60 s ceiling on any
+  non-frame cut; 210/210 recent transcripts trim on frame evidence and
+  `TestPromoCutHardening` sweeps them all in CI — **extend the matcher
+  for a new Whisper spelling, never lean on the fallback**). Rotation
+  memory v2: the date defeated the Aug 25 opener memory (5/9 intros were
+  "<date> opens Nerra Daily…"), so openers are date-normalized, and the
+  sign-off ("Across these segments" 7/9) and field-note closer
+  ("quietly" 10/13 — seeded by BOTH prompts' register lines) got their
+  own memory blocks + shape de-seeds (A/B-listen). Every edition had
+  been titled with SpaceX's hook (lead show) — the links call now writes
+  a validated whole-day `title` (metadata only; experiment
+  `nerra-daily-edition-titles`); show notes carry chapter timestamps +
+  the field note; `podcast:person` credits Mira. Open operator item: UC's
+  claims-gate retry lands after the 12:00 force hour, so a gate-blocked
+  UC never makes the edition.
   **Aug 25 2026 first quality pass** (review:
   [`docs/reviews/nerra_daily_review_2026_08_25.md`](docs/reviews/nerra_daily_review_2026_08_25.md);
   ledger `docs/reviews/ledger/nerra_daily.yaml`): audio core verified
