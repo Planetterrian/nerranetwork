@@ -109,7 +109,11 @@ reviews:
     deferred:
       - UC claims-gate retry lands after the 12:00 force hour (Ep14) -
         operator decision — accept / move UC's retry earlier / addendum
-        item (recommend accept or earlier retry)
+        item (recommend accept or earlier retry). Same-day follow-up
+        PR - the ready gate now reads the committed
+        .skip_<date>.json marker and stops WAITING for a show that
+        skipped, so a skip day builds ~08:15 instead of the 12:00 force
+        hour; the late-published episode is still lost to the edition
       - Apple/Spotify submission (still null in network_meta) - the
         launch experiment cannot read through zero directory presence
       - intro length under the prompt floor (75-131 vs 110-170) -
@@ -143,6 +147,11 @@ reviews:
       - metric: "successor tic after the sign-off/closer de-seed (next review names the new 3+/5 shape)"
         baseline: "n/a"
         expected: "next review checks sign-off farewells + field-note FIRST sentences for a new convergence"
+        verdict: pending
+        evidence: null
+      - metric: "edition build time (summaries datetime) on a day a lineup show skipped, next 5 such days"
+        baseline: "12:41 UTC (2026-08-30) and 12:09 UTC (2026-09-03) vs ~08:13 on complete days"
+        expected: "<= 09:00 UTC on every skip day whose marker was committed before the last expected show published; skipped_today non-empty in that edition's metrics"
         verdict: pending
         evidence: null
       - metric: "edition_title_source == llm (metrics), next 10 eps"

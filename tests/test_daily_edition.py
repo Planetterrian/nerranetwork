@@ -933,3 +933,94 @@ class TestRegistryCopy:
         for other in ("Tesla Shorts Time", "Models & Agents", "Modern Investing"):
             assert text.find(other) > lead, other
         assert "field note" in text
+
+
+class TestSkipAwareGate:
+    """On 2026-08-30 and 2026-09-03 the edition built at 12:41 / 12:09 UTC
+    against ~08:13 on a complete day, because the ready gate waited until
+    the force hour for a UC episode that had committed a skip marker at
+    07:25. A show that told the network it skipped is not "missing"."""
+
+    @staticmethod
+    def _root(tmp_path, date):
+        import dataclasses
+        root = tmp_path
+        (root / "shows").mkdir()
+        for slug in ("spacex", "unintended_consequences", "tesla"):
+            d = root / "digests" / slug
+            d.mkdir(parents=True)
+            (root / "shows" / f"{slug}.yaml").write_text("x: 1")
+        (root / "digests" / "spacex" / "summaries_spacex.json").write_text(json.dumps({
+            "summaries": [{"date": date.isoformat(), "episode_num": 90,
+                           "episode_title": "Ep 90: lead", "audio_url":
+                           "https://audio.nerranetwork.com/spacex/x.mp3",
+                           "content": ""}]}))
+        (root / "digests" / "unintended_consequences" / f".skip_{date:%Y%m%d}.json").write_text(
+            json.dumps({"date": date.isoformat(), "show": "unintended_consequences",
+                        "reason": "source_integrity_failed", "detail": "…"}))
+        spec = dataclasses.replace(SPEC, lineup=("spacex", "unintended_consequences", "tesla"),
+                                   monday_only=frozenset())
+
+        class _Cfg:
+            def __init__(self, slug):
+                self.name = slug
+                self.publishing = type("P", (), {
+                    "summaries_json": f"digests/{slug}/summaries_{slug}.json"})()
+                self.audio = type("A", (), {"voice_intro_delay": 0.0})()
+
+        def loader(path):
+            return _Cfg(Path(path).stem)
+
+        return root, spec, loader
+
+    def test_skipped_show_is_not_missing(self, tmp_path):
+        from engine.daily_edition import discover_lineup
+        date = dt.date(2026, 9, 3)
+        root, spec, loader = self._root(tmp_path, date)
+        lineup = discover_lineup(spec, root, date, config_loader=loader)
+        assert [s.slug for s in lineup.segments] == ["spacex"]
+        assert lineup.missing == ["tesla"]
+        assert lineup.skipped == [{"slug": "unintended_consequences",
+                                   "reason": "source_integrity_failed"}]
+        # The two-tuple wrapper keeps its shape and excludes the skip.
+        segments, missing = discover_segments(spec, root, date, config_loader=loader)
+        assert missing == ["tesla"]
+
+    def test_marker_for_another_date_is_ignored(self, tmp_path):
+        from engine.daily_edition import discover_lineup
+        root, spec, loader = self._root(tmp_path, dt.date(2026, 9, 2))
+        lineup = discover_lineup(spec, root, dt.date(2026, 9, 3), config_loader=loader)
+        assert "unintended_consequences" in lineup.missing
+        assert lineup.skipped == []
+
+    def test_published_after_skip_still_splices(self, tmp_path):
+        # UC 2026-09-03: gate-blocked 07:25, the late cron republished at
+        # 13:25 — an entry dated today wins over the marker.
+        from engine.daily_edition import discover_lineup
+        date = dt.date(2026, 9, 3)
+        root, spec, loader = self._root(tmp_path, date)
+        (root / "digests" / "unintended_consequences" /
+         "summaries_unintended_consequences.json").write_text(json.dumps({
+            "summaries": [{"date": date.isoformat(), "episode_num": 105,
+                           "episode_title": "Ep 105: t", "audio_url":
+                           "https://audio.nerranetwork.com/uc/x.mp3"}]}))
+        lineup = discover_lineup(spec, root, date, config_loader=loader)
+        assert [s.slug for s in lineup.segments] == ["spacex", "unintended_consequences"]
+        assert lineup.skipped == []
+
+    def test_metrics_and_gate_carry_the_skip(self):
+        from engine.daily_edition import build_edition_metrics
+        m = build_edition_metrics(15, dt.date(2026, 9, 4), 100.0, [],
+                                  links_source="llm", field_note_included=False,
+                                  missing_expected=[], dropped=[],
+                                  skipped_today=[{"slug": "unintended_consequences",
+                                                  "reason": "source_integrity_failed"}])
+        assert m["skipped_today"][0]["slug"] == "unintended_consequences"
+        src = (ROOT / "scripts" / "build_daily_edition.py").read_text(encoding="utf-8")
+        assert src.count("discover_lineup(spec, ROOT, target_date)") == 2
+        assert "skipped_today=skipped" in src
+        # run-show.yml commits the marker on EVERY graceful skip, not only
+        # gate blocks — the gate's evidence depends on that step's guard.
+        wf = (ROOT / ".github" / "workflows" / "run-show.yml").read_text(encoding="utf-8")
+        assert "steps.pipeline.outputs.skipped == 'true'" in wf
+        assert '[ -f "$SKIP_MARKER" ] && git add -f "$SKIP_MARKER"' in wf

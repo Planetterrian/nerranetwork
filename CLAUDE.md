@@ -626,9 +626,13 @@ today's work, not just explain yesterday's):
   been titled with SpaceX's hook (lead show) — the links call now writes
   a validated whole-day `title` (metadata only; experiment
   `nerra-daily-edition-titles`); show notes carry chapter timestamps +
-  the field note; `podcast:person` credits Mira. Open operator item: UC's
-  claims-gate retry lands after the 12:00 force hour, so a gate-blocked
-  UC never makes the edition.
+  the field note; `podcast:person` credits Mira. Same-day follow-up: the
+  ready gate reads the committed `.skip_<date>.json` marker
+  (`discover_lineup` → `skipped`, metrics `skipped_today`) and no
+  longer waits for a show that skipped — a UC gate-block had held the
+  edition to the 12:00 force hour (12:09 / 12:41 vs ~08:13 on complete
+  days). Open operator item: UC's claims-gate retry lands after the
+  edition, so a gate-blocked UC never makes that day's edition.
   **Aug 25 2026 first quality pass** (review:
   [`docs/reviews/nerra_daily_review_2026_08_25.md`](docs/reviews/nerra_daily_review_2026_08_25.md);
   ledger `docs/reviews/ledger/nerra_daily.yaml`): audio core verified
