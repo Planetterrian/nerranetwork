@@ -276,7 +276,7 @@ def build_edition(
     dry_run: bool = False,
 ) -> int:
     from engine.audio import concatenate_audio, get_audio_duration
-    from engine.daily_edition import discover_segments
+    from engine.daily_edition import discover_lineup
     from engine.publisher import (
         apply_op3_prefix,
         get_next_episode_number,
@@ -285,7 +285,11 @@ def build_edition(
     from engine.titles import clip_words
     from engine.tracking import create_tracker, save_usage
 
-    segments, missing = discover_segments(spec, ROOT, target_date)
+    lineup = discover_lineup(spec, ROOT, target_date)
+    segments, missing, skipped = lineup.segments, lineup.missing, lineup.skipped
+    if skipped:
+        logger.info("building without show(s) that skipped today: %s",
+                    ", ".join(f"{s['slug']} ({s['reason']})" for s in skipped))
     if missing:
         # Loud: an expected show absent at build time means the published
         # edition is INCOMPLETE for the day even though the build succeeds
@@ -528,6 +532,7 @@ def build_edition(
             missing_expected=missing,
             dropped=dropped,
             links=links,
+            skipped_today=skipped,
         )
         (digest_dir / f"metrics_ep{episode_num:03d}.json").write_text(
             json.dumps(metrics, indent=2, ensure_ascii=False) + "\n",
@@ -575,9 +580,17 @@ def main() -> int:
         return 0
 
     if args.when_ready and not args.force:
-        from engine.daily_edition import discover_segments
+        from engine.daily_edition import discover_lineup
 
-        segments, missing = discover_segments(spec, ROOT, target_date)
+        # A show with a committed .skip_<date>.json is NOT in ``missing``:
+        # it has told the network it will not publish, so the gate builds
+        # without it instead of holding every listener to the force hour
+        # (UC's claims-gate block on 2026-09-03 cost the edition four hours).
+        lineup = discover_lineup(spec, ROOT, target_date)
+        segments, missing = lineup.segments, lineup.missing
+        if lineup.skipped:
+            logger.info("not waiting for skipped show(s): %s",
+                        ", ".join(s["slug"] for s in lineup.skipped))
         now_utc = dt.datetime.now(dt.timezone.utc)
         past_force_hour = (target_date < now_utc.date()
                            or now_utc.hour >= FORCE_BUILD_UTC_HOUR)

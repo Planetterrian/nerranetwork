@@ -167,6 +167,20 @@ the show's own summaries timestamp:
 
 So of the misses, three are "published after the build" (Ep7's three,
 Ep14's UC) and the rest are genuine skips the edition handled correctly.
+
+**Shipped as a same-day follow-up (after PR #1133 merged):** the cost
+of a skip was not the missing segment, it was the WAIT. Every complete
+day builds ~08:13 UTC (the last lineup show lands ~08:10); on the two
+UC-skip days the gate held every listener to the 12:00 force hour
+(12:41 on 08-30, 12:09 on 09-03) for an episode that had committed a
+`.skip_<date>.json` marker at 07:25. `discover_lineup` now reads that
+marker (run-show.yml commits it on every graceful skip) and reports the
+show under `skipped` instead of `missing`, so the gate builds as soon
+as the rest of the roster lands; the metrics file records
+`skipped_today` with the reason, which also makes the by-hand miss
+classification above automatic. An episode that later publishes anyway
+(UC's 13:25 rerun) is still lost to that day's edition — that is the
+decision item above, unchanged. Guards: `TestSkipAwareGate`.
 The Aug 25 ledger said to escalate the force hour only if Monday
 weeklies missed twice more — they did not (Offshore North 07:34 on
 08-31). The new shape is **UC's claims-gate retry**: a gate-blocked

@@ -269,19 +269,57 @@ def _transcript_path_for(digest_dir: Path, audio_url: str) -> Optional[Path]:
     return candidate if candidate.exists() else None
 
 
-def discover_segments(
+def skip_marker_path(digest_dir: Path, target_date: _dt.date) -> Path:
+    """``digests/<show>/.skip_YYYYMMDD.json`` — the marker ``run_show.py``
+    writes on every graceful skip (insufficient articles, thin script,
+    empty narrative queue, claims-gate block) and run-show.yml commits
+    (its "Commit skip state" step runs on every ``skipped == true``)."""
+    return digest_dir / f".skip_{target_date:%Y%m%d}.json"
+
+
+def read_skip_marker(digest_dir: Path, target_date: _dt.date) -> Optional[dict]:
+    """The committed skip marker for *target_date*, or None."""
+    path = skip_marker_path(digest_dir, target_date)
+    if not path.exists():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8")) or {}
+    except (OSError, json.JSONDecodeError):
+        return {"reason": "unreadable_marker"}
+    return data if isinstance(data, dict) else {"reason": "unreadable_marker"}
+
+
+@dataclass
+class Lineup:
+    """One day's discovery result."""
+
+    segments: List[Segment]
+    #: Expected today, not published, and NOT known to have skipped — the
+    #: ready gate waits for these (until the force hour).
+    missing: List[str]
+    #: Expected today, not published, and carrying a committed skip marker
+    #: for the date: ``[{"slug", "reason"}]``. The gate does not wait for
+    #: them — a show that told the network it skipped is never going to
+    #: publish before the force hour, and waiting cost every listener four
+    #: hours on 2026-08-30 (12:41) and 2026-09-03 (12:09) against ~08:13
+    #: on a complete day.
+    skipped: List[dict]
+
+
+def discover_lineup(
     spec: EditionSpec,
     root: Path,
     target_date: _dt.date,
     *,
     config_loader=None,
-) -> Tuple[List[Segment], List[str]]:
+) -> Lineup:
     """Find every lineup show with an episode dated *target_date*.
 
-    Returns ``(segments_in_lineup_order, missing_slugs)`` where missing
-    covers only shows *expected* that day (weekday-aware) — a Monday-only
-    show absent on a Wednesday is not missing, but its episode IS spliced
-    if one happens to carry today's date (late publish).
+    ``missing`` covers only shows *expected* that day (weekday-aware) — a
+    Monday-only show absent on a Wednesday is not missing, but its episode
+    IS spliced if one happens to carry today's date (late publish). An
+    expected show whose committed ``.skip_<date>.json`` marker exists is
+    reported under ``skipped`` instead, so the ready gate stops waiting.
     """
     if config_loader is None:
         from engine.config import load_config as config_loader  # noqa: PLC0415
@@ -290,6 +328,7 @@ def discover_segments(
     expected = set(expected_slugs(spec, target_date))
     segments: List[Segment] = []
     missing: List[str] = []
+    skipped: List[dict] = []
 
     for slug in spec.lineup:
         try:
@@ -306,7 +345,14 @@ def discover_segments(
         )
         if entry is None or not entry.get("audio_url"):
             if slug in expected:
-                missing.append(slug)
+                marker = read_skip_marker(summaries_path.parent, target_date)
+                if marker is not None:
+                    skipped.append({
+                        "slug": slug,
+                        "reason": str(marker.get("reason") or "unknown"),
+                    })
+                else:
+                    missing.append(slug)
             continue
         digest_dir = summaries_path.parent
         audio_url = strip_op3(str(entry["audio_url"]))
@@ -335,7 +381,22 @@ def discover_segments(
                 music_intro_offset=float(cfg.audio.voice_intro_delay or 0.0),
             )
         )
-    return segments, missing
+    return Lineup(segments=segments, missing=missing, skipped=skipped)
+
+
+def discover_segments(
+    spec: EditionSpec,
+    root: Path,
+    target_date: _dt.date,
+    *,
+    config_loader=None,
+) -> Tuple[List[Segment], List[str]]:
+    """``(segments_in_lineup_order, missing_slugs)`` — the original
+    two-tuple shape (``build_personal_feeds`` and the tests unpack it).
+    ``missing`` excludes shows with a committed skip marker for the date;
+    use :func:`discover_lineup` when the skipped list is needed."""
+    lineup = discover_lineup(spec, root, target_date, config_loader=config_loader)
+    return lineup.segments, lineup.missing
 
 
 def expected_slugs(spec: EditionSpec, target_date: _dt.date) -> List[str]:
@@ -1116,6 +1177,7 @@ def build_edition_metrics(
     missing_expected: List[str],
     dropped: List[str],
     links: Optional[dict] = None,
+    skipped_today: Optional[List[dict]] = None,
 ) -> dict:
     """The committed ``metrics_ep*.json`` record for one edition build.
 
@@ -1147,6 +1209,11 @@ def build_edition_metrics(
             1 for s in segments if s.cut_final_seconds is None
         ),
         "missing_expected": list(missing_expected),
+        # Expected shows that committed a skip marker for the date — the
+        # gate did not wait for them (Sep 3 2026). Distinct from
+        # missing_expected so "skipped" and "not yet published" are never
+        # one bucket again (the Aug 25 miss classification was by hand).
+        "skipped_today": list(skipped_today or []),
         "segments_dropped": list(dropped),
         "links_source": links_source,
         "field_note_included": bool(field_note_included),

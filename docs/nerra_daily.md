@@ -138,6 +138,15 @@ develops Mira's editorial voice beyond announcing.
   (`_VIRTUAL_COST_SLUGS`) both had to learn about registry-only shows —
   a future edition must be picked up by both or its audience and cost
   are invisible.
+- **Skip-aware gate (Sep 3 2026):** `discover_lineup` reads each
+  expected show's committed `digests/<show>/.skip_<date>.json` (written
+  by run_show on every graceful skip, committed by run-show.yml's skip
+  step) and reports it under `skipped` rather than `missing`, so the
+  ready gate builds as soon as the rest of the roster lands instead of
+  holding the edition to the 12:00 force hour (UC's claims-gate skip
+  cost four hours on 08-30 and 09-03). `metrics_ep*.json` records
+  `skipped_today` with the reason. An episode that publishes after the
+  edition anyway is still lost to that day.
 - **Sep 3 2026 review — promo-cut hardening, memory v2, titles, notes:**
   Whisper writes the frame's "our sister show X" as "sister shows X" /
   "sisters show X"; the singular-only regex missed and the weak
