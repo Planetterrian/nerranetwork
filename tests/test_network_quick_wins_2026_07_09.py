@@ -63,12 +63,17 @@ def test_about_no_longer_promises_quiz():
 
 def test_homepage_uses_dynamic_episode_count():
     tpl = (_ROOT / "templates" / "network_page.html.j2").read_text(encoding="utf-8")
-    assert "{{ total_episodes }}+" in tpl
+    # Sep 2026: the count is formatted ("1,768") rather than "1768+".
+    assert re.search(r"format\(total_episodes\)|\{\{ total_episodes \}\}", tpl)
     assert re.search(r"<strong>900\+</strong>", tpl) is None
     assert "episode-card-title" in tpl
     assert "ep.blog_url" in tpl
-    assert "SpaceX Daily" in tpl
-    assert "The DP Pod" in tpl
+    # The July guard checked that SpaceX Daily / The DP Pod were named in the
+    # hand-maintained topic ticker. Since Sep 2026 the ticker iterates the
+    # registry, so no show can be left out — assert the loop instead.
+    ticker = tpl[tpl.index('class="topic-ticker"'):tpl.index("</div>", tpl.index('class="ticker-track"'))]
+    assert "{% for s in all_shows %}" in ticker
+    assert "SpaceX Daily" not in ticker, "hand-maintained ticker entries are back"
 
 
 def test_age_of_ai_hero_promotes_apply_not_empty_blog():
