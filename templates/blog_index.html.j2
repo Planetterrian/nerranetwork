@@ -97,10 +97,14 @@
             {% endif %}
             <h1>{{ show_name }} Blog</h1>
             <p>{{ description }}</p>
+            {# The per-show blog feed is only written once a show has posts
+               (Age of AI's link 404'd — Sep 2026 review). #}
+            {% if posts %}
             <a href="{{ blog_rss_url }}" class="blog-rss-btn">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg>
                 Subscribe via RSS
             </a>
+            {% endif %}
         </div>
     </header>
 
