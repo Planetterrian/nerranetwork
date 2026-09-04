@@ -3854,6 +3854,12 @@ def run(args: argparse.Namespace) -> None:
             funding_label="Support the Nerra Network",
             person_name=config.publishing.host_name or "Patrick",
             person_url=f"{config.publishing.base_url}/about.html",
+            # Item <link> = the episode's blog post (player + notes +
+            # transcript), the page podcast apps open as "episode website".
+            # Was the MP3 (Sep 4 2026 flagship pass).
+            episode_page_url=(
+                f"{config.publishing.base_url}/blog/{config.slug}/ep{episode_num:03d}.html"
+            ),
         )
 
         metrics.record("rss_update_duration_s", round(time.monotonic() - _t_rss, 2))

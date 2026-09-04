@@ -2,28 +2,28 @@
 > **Tuesday's rescheduled Starlink launch from Cape Canaveral keeps the year's 72nd broadband mission on track after the Monday scrub.**
 ---
 ### Top News
-1. **Title: Starlink 10-19 Scrubbed, Rescheduled Tuesday, X Report 11 Aug 2026**
+1. **Starlink 10-19 Scrubbed, Rescheduled Tuesday, X Report 11 Aug 2026**
    The Starlink 10-19 mission carrying 29 satellites is now set for 10:54 a.m. EDT Tuesday from pad 40 at Cape Canaveral Space Force Station. The Monday attempt was scrubbed, shifting the target to the next available window. This marks the 72nd Starlink flight of the year. The launch supports ongoing broadband constellation growth with direct-to-cell capabilities in development. Source: [KeepTrack](https://news.google.com/rss/articles/CBMiZ0FVX3lxTFBFdHU5eXdFOE91TU92cjhOQlY1ZGd0RmhQNktfM3hCVmY2SFZIOXp0Qy03djg5b3hSZXktTHlNR21MeUNmLWtQcTloV3R3dVh4ZE1xVGwtZmxqSFZWRjU2bHUwODNGRjg?oc=5)
 
-2. **Title: Vietnam's VinSpace signs SpaceX launch deal**
+2. **Vietnam's VinSpace signs SpaceX launch deal**
    VinSpace of Vietnam signed a launch agreement with SpaceX for an unspecified future mission. The deal adds another international customer to the manifest. No payload details or target date were released in the announcement. The agreement covers a dedicated rideshare or primary payload slot on a future Falcon 9 or Starship flight. Source: [Bangkok Post](https://news.google.com/rss/articles/CBMipwFBVV95cUxOVDdlWFNsMDA5T0NKUTBINFBvbzh3Nlh6eERrNVRxa0NDNDFwU01makdTYVJFMEpMM3c1WDQ5d3Q3WnBxbm43aXdZYzVnOXpwWklxLXMwZG9YV19GWjhic3VTSGZVdXB2Zl8zU1pDajdQaUZKdkotMlJtYU5qS2c3SUNKamgydzlkaGlGV24zVHNJaE5IbnMyVTBJZFJmbXFKRHIwQ2xWRQ?oc=5)
 
-3. **Title: SpaceX launch scheduled for Tuesday from Vandenberg Space Force Base**
+3. **SpaceX launch scheduled for Tuesday from Vandenberg Space Force Base**
    A Falcon 9 mission is now targeted for Tuesday morning from Vandenberg Space Force Base. The flight will add to the year's West Coast cadence. No payload was identified in the schedule notice. The mission continues the pattern of frequent Starlink or rideshare deployments from the California site. Source: [KSBY News](https://news.google.com/rss/articles/CBMipgFBVV95cUxNWUVsVW10Y1AyU1pzdHk3emk2Nm12LUN5dklMOTNHZXpMbGIzcXBUaDcwdF9uMGJaeTM4SXlwM1U1SFFmdHF3ZTlKNVN1WDl4ZFpKMzRDNEJ5M1d2NzdWajVWNm5GWHh6N0JZU0ttSHBoWDJZZ1FVcnpFYzlPTFBoNDhfaG0xUk1KWjdzbl9zZ0pMN2dKWHJrYnoyWmxtRmJXTW1uVUFR?oc=5)
 
-4. **Title: SpaceX Lowers 4,400 Starlink Satellites as Declining Solar Activity Raises Debris Risk**
+4. **SpaceX Lowers 4,400 Starlink Satellites as Declining Solar Activity Raises Debris Risk**
    Operators lowered the orbits of 4,400 Starlink satellites in response to reduced solar activity that increases atmospheric drag variability. The adjustment aims to manage collision risk with existing debris. The move reflects ongoing constellation maintenance under changing space-weather conditions. Lower solar output reduces upper-atmosphere density, requiring active orbit management to keep satellites in their assigned shells. Source: [Tech Times](https://news.google.com/rss/articles/CBMi0wFBVV95cUxNUDdGOEFEZWRWdlJfS0k3MFNjZ2ROeU9qdGctVl81Nm9xNDd4Tm9pXzZsYXBxTm92bloycUszSV9wQllqMFVxMTF1NUpnT2JYYm55QzRmYkRZLUFua25LZ05SRl94aTFmcWhhUHFseXlKZnZLQVNqNm5TeENnSjV2VG5ab29tZGJwVWF5OFVWX2g5Uzh2eDI5cFI0M0x5VWtGM3V3UmF1SEtXWHlDTGx2VmJPdHY5aW4ycnN3MXFKVjR6MnFBeDg1UWp1ZENuOVZOMEhJ?oc=5)
 
-5. **Title: SpaceX Will Fly the Same Falcon 9 Booster for an 18th Time Monday**
+5. **SpaceX Will Fly the Same Falcon 9 Booster for an 18th Time Monday**
    The same Falcon 9 first-stage booster is scheduled for its 18th flight on the Monday attempt. Reusability continues to drive the vehicle's cost-per-flight reduction. The booster has already completed 17 prior missions without reported structural issues. Grid-fin and landing-leg hardware on this booster have supported repeated ocean recoveries and return-to-launch-site landings. Source: [Google News](https://news.google.com/rss/articles/CBMipAFBVV95cUxNLUhMa0cxMVFraXRvdUxUVzlPMEMzeGJ6szFPcElXUUlOTVFfWUhORktlOVRkNUkwQy1UcXBVVkFMcmNWbHVDTC1aV0RaOWtpX24xLVkzZi1XSVQxVzVTWFAxY2hjMW1UaHJPVjQ1YjRYTmJlUnRRM3ZkRGdmS0oyVGU0TUFZazI0a2IzYWJCM3NBNWFYdi1BY1RfcHhIcTVYb0VRdw?oc=5)
 
-6. **Title: In Defence of Canada briefing: A $2.3B space communications contract and the SpaceX rideshare launch freeze**
+6. **In Defence of Canada briefing: A $2.3B space communications contract and the SpaceX rideshare launch freeze**
    Canada awarded a $2.3 billion space communications contract that includes SpaceX elements. The same briefing noted a temporary freeze on certain SpaceX rideshare opportunities. The contract supports national secure communications needs. The freeze affects select multi-payload missions while priority national-security slots remain open. Source: [SpaceQ](https://news.google.com/rss/articles/CBMiwgFBVV95cUxOM0FoQ0x5OWM1OERfMFpiN0dJc2FsSF92T0oyZ1ZVSEtXbHNSZmtpUGpDVGhZNUNFOVdLemtqMkZ6cWpfR0hWd0dYUVF1RC04bFpSMXNaeTZkTWZlcWJ0ei1sOTFIcElQdzNpYk1RdU9QT2lvRFNfZS1fYnc3RF9vVzZ2MzJQdk16WFUyRXpPbzFHY2tRcWdMbUo4dWdkejJXbWIzZTNBVXlCZFprOFowNTZ2cDFwOTFTcUFuLTVNR1lidw?oc=5)
 
-7. **Title: A Long March 7A failure opens a week of Starlink launches**
+7. **A Long March 7A failure opens a week of Starlink launches**
    The failure of a Chinese Long March 7A rocket created an opening for additional Starlink missions this week. SpaceX plans multiple Starlink flights to fill the gap in global broadband coverage. The week's schedule includes both Florida and California sites. The Chinese setback shifts competitive launch cadence pressure onto Falcon 9 operations at both coasts. Source: [Google News](https://news.google.com/rss/articles/CBMirwFBVV95cUxOeWM4TFdxQkpXVXdmdHVWWndpODItbFR5X2hvWkFsRERBX2ltTllQWWZyRjB2QnB0ZHhrSEs2YjNEeXIxWEZmYWNWUmYzdXRwMnZtVWZNY1hjRFVwWVNEQW9BZk84VkFGTkFLS0ozWnVRYlZwd01qeDJJcEN3dS1jTE9ZRkpzYWhEVlp5MTBqUDdMZXAwbEFyQ2JhWTdkUTA2MW5WVTZob1ZhQ2xDMFpF?oc=5)
 
-8. **Title: SpaceX plans 1 rocket launch this week in California. Here's when**
+8. **SpaceX plans 1 rocket launch this week in California. Here's when**
    One Falcon 9 mission is scheduled from California this week, with liftoff targeted for the Vandenberg window. The flight supports ongoing constellation growth. No further payload details were released. The single West Coast attempt contrasts with the denser Florida manifest for the same period. Source: [Google News](https://news.google.com/rss/articles/CBMivAFBVV95cUxNWGxPN19QdXdhOXBwRVNXTnZ2MVUzaGNTYmRpZEVpMFIxLUVzNzI0b04ydnlGNjItR0pIRnFhdkd5ZkF4Wi15clVTWjZfY2V6enhRc1VxMzZCWjRqazB3SDFaNzBBOW5sSHlXLTdfWUpZLW44eEZHWWZNUHpXd21oTjBNdFR5TW9KamI4ZGlIOUh1VTZpUnZNdnFFS2wzbS1RS3pUWk5DMklLRlU1aFphM0FlRDA1eThuWlROQw?oc=5)
 ---
 ## Community Buzz

@@ -50,9 +50,20 @@ _SENTENCE_END_RE = re.compile(r"([.!?…])\s+")
 # Same fix engine/youtube_titles.py has carried since July.
 _TITLE_LABEL_RE = re.compile(r"^(?:title|headline)\s*\d*\s*[:\-—]\s*", re.IGNORECASE)
 
+# ``[label](url)`` inside a candidate title. Models & Agents Ep161
+# (2026-09-02) shipped the chapter "Training a Misaligned Reward Seeker:
+# [@AnthropicAI](https" — the digest headline carried an X-profile link
+# as its source tail and the clipper cut through the URL. Links are
+# flattened to their label (and a lone ``@handle`` tail dropped) in every
+# title-producing helper, so no chapter surface can show a URL fragment.
+_MD_LINK_RE = re.compile(r"\[([^\]]*)\]\((?:[^)\s]*)\)")
+_HANDLE_TAIL_RE = re.compile(r"\s*[:\-—]\s*@\w+\s*$")
+
 
 def _strip_title_label(title: str) -> str:
-    return _TITLE_LABEL_RE.sub("", title or "").strip()
+    title = _MD_LINK_RE.sub(lambda m: m.group(1), title or "")
+    title = _HANDLE_TAIL_RE.sub("", title)
+    return _TITLE_LABEL_RE.sub("", title).strip()
 
 
 def _first_sentence_as_title(text: str, max_chars: int = 60) -> str:

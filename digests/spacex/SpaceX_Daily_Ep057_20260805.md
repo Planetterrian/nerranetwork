@@ -2,28 +2,28 @@
 > **Starship Flight 14's first orbital attempt this month now depends on whether the upper-stage heat shield and booster catch systems both clear their final checks.**
 ---
 ### Top News
-1. **Title: SpaceX launches 3 AST SpaceMobile BlueBird satellites on Falcon 9 rocket from Cape Canaveral**
+1. **SpaceX launches 3 AST SpaceMobile BlueBird satellites on Falcon 9 rocket from Cape Canaveral**
    SpaceX lifted three BlueBird direct-to-cell satellites on a Falcon 9 from Cape Canaveral Pad 40. The payload mass and orbital insertion profile were not released, but the mission marked the first dedicated ride for AST SpaceMobile's second-generation constellation. The booster returned to a drone ship after completing its flight profile. Engineers will review telemetry on the satellites' initial power-up and link tests over the coming days. Source: [Spaceflight Now](https://news.google.com/rss/articles/CBMi3wFBVV95cUxPa3AwZUNnS19SbkJ4TWh2aVZtMXJrXzBDaHFqN0otT2RGZHJHVHJUSmRycGRqZlMyUW1Ncm4xOEhMa1ZKTEFuRVBGY0Y5NDNOX2pMWXViTXRIS0ZEN0k1bUtxdl9hby14clRUY0lDX2tSNDd0WGEwZmJRc2U0N29kdUZfbndZT0I0WGsxanFOcXY4bHAxQ1pQdko2UjBZQU9GQzNZa29GZ1dhUkZSYVNWY0NSY0xsbUNycTNxUzhHM1d2Z2V1dDIwbzMyd1VRaXM1ZUZ4cTljRDZtX2doQTNv?oc=5)
 
-2. **Title: Musk sets 10 million-ton annual target for SpaceX’s Starship**
+2. **Musk sets 10 million-ton annual target for SpaceX’s Starship**
    Elon Musk stated a goal of lifting ten million tons of payload to orbit each year once Starship reaches full cadence. The figure assumes daily flights and full reuse of both the Super Heavy booster and the Ship upper stage. Current production tooling at Starbase and the planned Gigabay expansion are cited as the rate-limiting steps. No timeline was attached to the target. Source: [AzerNews](https://news.google.com/rss/articles/CBMiVEFVX3lxTE52UDNUcGkwYzV3T3hid2MyYktJNm1JSzI5Ymw5TGFlWFJUM0owcDRpbV9XYTFRcnh3SHNCNWJyd0VTLVhDRlNXZ0tJLWtCcW9MUWtIaw?oc=5)
 
-3. **Title: SpaceX aims to catch a Starship out of the sky this month**
+3. **SpaceX aims to catch a Starship out of the sky this month**
    SpaceX plans a tower catch attempt on the Ship upper stage during an upcoming flight test. The maneuver would require the vehicle to perform a controlled descent and precise alignment with the Mechazilla arms after reentry. Success would be the first recovery of the upper stage; the Super Heavy booster catch remains a separate objective. Ground crews are already preparing the tower hardware for the attempt. Source: [Google News](https://news.google.com/rss/articles/CBMijgFBVV95cUxNSjh4ZGl6UzVXNl9hYV84aGNGSGc5N25JVEV5S25JdTRkUk56cW82bWpMd3U1RERCblJBaDJQd0gxaGFHdXNhVVV3dlE1eGVHemFUNkdNTkd0R0NIeVpyazBiX2EyQmhnVFBKQ2pTV3BYUk1BcXBnbEo0QypiNVQ4dk5TODFWZHJmVWR6UzZ3?oc=5)
 
-4. **Title: Starship Flight 14 Targets First Orbital Run, X Report 5 Aug 2026**
+4. **Starship Flight 14 Targets First Orbital Run, X Report 5 Aug 2026**
    Flight 14 is now scheduled to attempt a full orbital insertion and coast phase. The test profile includes the first use of the updated heat-shield tile layout on the Ship upper stage. Engineers will also collect data on the booster's return trajectory ahead of the planned catch attempt. No payload is manifested for this flight. Source: [KeepTrack](https://news.google.com/rss/articles/CBMiZ0FVX3lxTE5VUGUtSXBUTDQ0aEhuQlpGZUg1U0hHeXNOcmt3Vl9pZHJaVlZvNVlyMlFlWFNqTGZnRkI1MEZaSER5R1VJTHVJZ1RGSjlTeGJLTkVkZklJbE1fUjUyOTU0dHNLTkNEZVk?oc=5)
 
-5. **Title: SpaceX launches 24 Starlink satellites on Falcon 9 rocket from Vandenberg SFB**
+5. **SpaceX launches 24 Starlink satellites on Falcon 9 rocket from Vandenberg SFB**
    A Falcon 9 from Vandenberg Space Force Base placed 24 Starlink satellites into low Earth orbit. The booster completed its 20th flight and landed on the drone ship. The mission added another plane to the constellation's coverage grid. Ground teams confirmed initial signal acquisition from the new satellites within hours of deployment. Source: [Spaceflight Now](https://news.google.com/rss/articles/CBMizwFBVV95cUxONlFmSVV1bGJKVi1UY1ZzRzA0bkp1ZkplS2VmeDZBdFlSRnBFQWpNRlA3QjBmN1d0RHJnWjk4aU5UU19PQ1dlQnlQSDhVZDg2MV90Z3Jma2U5NS1pcWx5Z2xWZ1hrVVFjRFpWRlJ1UzVhclV5NkpKX1VvSGFUV3dkbWJZUHRsOFFMMWNLeDdmLVRsQ005UUh0MzBuenVna0JvZHg4OHV1WTFzZjZhTkoxSkpuNHNhRUZ3ZDlpZklhQzFUTjBnWHBpX19BNXNuVzQ?oc=5)
 
-6. **Title: SpaceX tips Starlink Mobile 5G carrier coverage and launch date with dish base stations**
+6. **SpaceX tips Starlink Mobile 5G carrier coverage and launch date with dish base stations**
    SpaceX disclosed that Starlink Mobile will use fixed dish base stations to provide 5G backhaul for partner carriers. The service is expected to begin limited coverage in selected markets later this year. The architecture routes user traffic through the existing Starlink constellation before handing off to terrestrial networks. No pricing or exact start date was released. Source: [Notebookcheck](https://news.google.com/rss/articles/CBMizAFBVV95cUxPRmU4c21GRmExdmdZNkIwYkVFVVYyREtENmpLYkZQQXliRU9veFljVHNtTlFoVUhBTzExNkxfdDVkdEtRa2ZYQVktQTVBUlZiQkd3WlNZRmRteWxtZnpiQXVpMXVWRE9lbjBHQUdZa2l4cVoyVzBQekVzMWt6MXB4dUJwTnBnSnktWnJMcTJuX0h5bjJEWXFOS05qMjZTdHdpQWloc3lyRUdrYzd1cGkyd3RUeEtlQ21RRy1yeENWaGZfWkdoZFBOVElxZEs?oc=5)
 
-7. **Title: SpaceX and NVIDIA’s big bet: AI data centres are moving into orbit**
+7. **SpaceX and NVIDIA’s big bet: AI data centres are moving into orbit**
    SpaceX and NVIDIA are exploring orbital data-center concepts that would use Starlink laser links for low-latency interconnects. The approach would place GPU clusters on dedicated satellites rather than ground facilities. Early studies focus on power generation, thermal rejection, and radiation hardening of commercial-grade silicon. No hardware timeline or contract value was disclosed. Source: [Business Today](https://news.google.com/rss/articles/CBMizwFBVV95cUxPYTkxUXlFR0tEZHdkRWVpYTd2ZHVMSnBHR1NYYWFMUFFFbEZKUkt5Z1dCVVdUWHFNdHdxSzNhY3VJaEpDdURwczlUanhDenlHN0x6X3JZVFk1eHFheU5YQnpVemVrMENYMHdhd2d3YlhYLThwR3M4aHhtOV93RVY1d2puYUJsVVVzLTRFZzJTZkRlTjRpb0tIbXhJZzJnc1gxeEZBbXFyM1JVWFFjU3J4V0JCcG8xLUJJUEdkZzFTQ2toTzg0Z2R1Y1NSWWxXUWfSAc8BQVVfeXFMT2E5MVF5RUdLRGR3ZEVlaWE3dmR1TEpwR0dTWGFhTFBRRWxGSlJLeWdXQlVXVFhxTXR3cUszYWN1SWhKQ3VEcHM5VGp4Q3p5RzdMel9yWVRZNXhxYXlOWEJ6VXplazBDWDB3YXdnd2JYWC04cEdzOGh4bTlfd0VWNXdqbmFCbFVVcy00RWcyU2ZEZU40aW9LSG14SWcyZ3NYMXhGQW1xcjNSVVhRY1NyeFdCQnBvMS1CSVBHZGcxU0NraE84NGdkdWNTUllsV1Fn?oc=5)
 
-8. **Title: SpaceX Falcon 9 Launches from Pad 40: What You Need to Know**
+8. **SpaceX Falcon 9 Launches from Pad 40: What You Need to Know**
    The Falcon 9 mission from Pad 40 carried the three BlueBird satellites and performed a drone-ship landing. Pad 40 has now hosted multiple back-to-back launches this month, demonstrating the site's current turnaround cadence. The vehicle used a previously flown booster and fairing set. Post-flight inspection will focus on engine performance and grid-fin behavior. Source: [BASENOR - Tesla Accessories](https://news.google.com/rss/articles/CBMimAFBVV95cUxOeng1SVlqd3JTRkdvNjlvNjZJTDdsbENyeXU4QkxabFVGYXhBcXZyNWxsalZ3Q2xuVlJPNDFJS0Y0Q1M5NS1xcE1jVGY0WFU5Ml9xcFp2YXdLZmlQcGlqUDRRa1hwbUFieTJvaXFDbXE1Y2xINktBOGM3VkJnSjZaeDZJRTd4NXVSa0hnVGc5Y2M2SXZsU0Fqeg?oc=5)
 ---
 ## Community Buzz

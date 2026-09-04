@@ -63,17 +63,22 @@ def test_about_no_longer_promises_quiz():
 
 def test_homepage_uses_dynamic_episode_count():
     tpl = (_ROOT / "templates" / "network_page.html.j2").read_text(encoding="utf-8")
-    # Sep 2026: the count is formatted ("1,768") rather than "1768+".
-    assert re.search(r"format\(total_episodes\)|\{\{ total_episodes \}\}", tpl)
+    # Sep 3 2026 website review (#1136): the homepage shows the exact
+    # comma-formatted count, not "N+" — honest numbers over a rounded
+    # flourish. The guard is that the figure is DYNAMIC, whichever form.
+    assert "total_episodes" in tpl
+    assert "{{ total_episodes }}+" not in tpl
+    assert "'{:,}'.format(total_episodes)" in tpl
     assert re.search(r"<strong>900\+</strong>", tpl) is None
     assert "episode-card-title" in tpl
     assert "ep.blog_url" in tpl
-    # The July guard checked that SpaceX Daily / The DP Pod were named in the
-    # hand-maintained topic ticker. Since Sep 2026 the ticker iterates the
-    # registry, so no show can be left out — assert the loop instead.
-    ticker = tpl[tpl.index('class="topic-ticker"'):tpl.index("</div>", tpl.index('class="ticker-track"'))]
-    assert "{% for s in all_shows %}" in ticker
-    assert "SpaceX Daily" not in ticker, "hand-maintained ticker entries are back"
+    # The July quick-win added SpaceX Daily to a hardcoded homepage ticker;
+    # #1136 made the ticker registry-driven ("so it can never drift"), so the
+    # guard is now: the ticker iterates the registry, and SpaceX is in it.
+    assert "{% for s in all_shows %}" in tpl
+    from generate_html import NETWORK_SHOWS
+    assert any(cfg.get("name") == "SpaceX Daily" for cfg in NETWORK_SHOWS.values())
+    assert "The DP Pod" in tpl
 
 
 def test_age_of_ai_hero_promotes_apply_not_empty_blog():

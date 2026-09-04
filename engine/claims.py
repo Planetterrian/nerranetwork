@@ -151,6 +151,11 @@ _CLAIMS_FENCE_RE = re.compile(
     r"```claims[ \t]*\n(?P<body>.*?)\n?```[ \t]*",
     re.DOTALL,
 )
+# Opening fence with no closing fence, running to the end of the text.
+_UNCLOSED_TAIL_FENCE_RE = re.compile(
+    r"```claims[ \t]*\n(?P<body>(?:(?!```).)*?)\s*\Z",
+    re.DOTALL,
+)
 
 REQUIRED_CLAIM_KEYS = ("claim", "source_url", "supporting_quote")
 
@@ -225,6 +230,13 @@ def extract_claims_block(text: str) -> Tuple[str, Optional[List[dict]]]:
     match = None
     for match in _CLAIMS_FENCE_RE.finditer(text):
         pass  # keep the LAST block — the ledger is defined to be at the tail
+    if match is None:
+        # An UNCLOSED trailing fence (Tesla Ep585, 2026-08-27: the digest
+        # ended "```claims\n[]" with no closing fence) is still the
+        # ledger — it reached summaries_tesla.json and rendered on the
+        # blog as a <pre>[]</pre> block. Accept it when nothing but
+        # whitespace follows the body (Sep 4 2026 flagship pass).
+        match = _UNCLOSED_TAIL_FENCE_RE.search(text)
     if match is None:
         return text, None
 

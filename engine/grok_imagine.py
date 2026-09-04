@@ -110,6 +110,21 @@ _HEADLINE_PATTERNS = (
 _BOLD_LINE_PATTERN_INDEX = len(_HEADLINE_PATTERNS) - 1
 
 
+# ``[label](url)`` inside a headline. The M&A digest writes X-sourced items
+# as ``**Title: [@handle](https://x.com/handle)**`` (22 digests by Sep
+# 2026); the link is longer than any outlet name, so the tail survived the
+# outlet check below and ``rpartition(":")`` then split INSIDE the URL —
+# Ep161 shipped the chapter title "Training a Misaligned Reward Seeker:
+# [@AnthropicAI](https" (2026-09-04 flagship pass). Flatten links to
+# their label before any tail logic runs.
+_MD_LINK_RE = re.compile(r"\[([^\]]*)\]\((?:[^)\s]*)\)")
+
+
+def flatten_markdown_links(text: str) -> str:
+    """Replace every ``[label](url)`` in *text* with ``label``."""
+    return _MD_LINK_RE.sub(lambda m: m.group(1), text or "")
+
+
 def _strip_bold_line_source_tail(headline: str) -> str:
     """Drop a trailing ``: Source`` tail from a bold-line item title.
 
@@ -119,6 +134,7 @@ def _strip_bold_line_source_tail(headline: str) -> str:
     and a substantial title remains, so titles whose colon introduces real
     content ("Starlink update: 42 new satellites") survive intact.
     """
+    headline = flatten_markdown_links(headline).strip()
     if ":" not in headline:
         return headline
     head, _, tail = headline.rpartition(":")
@@ -182,8 +198,13 @@ def extract_story_headlines(digest_text: str, max_count: int = 12) -> List[str]:
         # show the heading shape literally and the model periodically
         # reproduces it (SpaceX Ep58/60/66/68/70). Without this, the junk
         # flows into scene prompts and chapter titles downstream.
-        raw = re.sub(r"^(?:title|headline)\s*\d*\s*[:\-—]\s*", "", raw.strip(),
-                     flags=re.IGNORECASE)
+        raw = re.sub(r"^(?:title|headline)\s*\d*\s*[:\-—]\s*", "",
+                     flatten_markdown_links(raw).strip(), flags=re.IGNORECASE)
+        if raw.startswith("#"):
+            # A markdown heading pasted into a headline slot (M&A Ep148's
+            # blockquote hook was literally "# Models & Agents") is the
+            # show name, not a story — it shipped as a chapter title.
+            return False
         h = _strip_source_suffix(raw).rstrip(":.,;").strip()
         # Drop obvious junk: too short, too long, or already seen
         # (case-insensitive — same story sometimes appears in two

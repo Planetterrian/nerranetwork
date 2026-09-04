@@ -456,6 +456,21 @@ _SHOW_PERSONALITIES: dict[str, dict[str, Any]] = {
                 "That wraps up today's AI briefing. Share this with a developer or builder "
                 "who wants to stay current. Subscribe wherever you listen. See you tomorrow."
             ),
+            # Sep 4 2026 flagship pass: the pool had two entries, so one
+            # closing aired in 7 of 10 episodes (the snapshot's tic
+            # detector flagged the whole paragraph). Two more variants
+            # bring the rotation to the SpaceX/Tesla shape; each keeps the
+            # "That's Models and Agents" / "that wraps up" Closing marker.
+            (
+                "That's Models and Agents for today. Something here worth building on? "
+                "Go try it before tomorrow's briefing lands — and if a colleague is "
+                "drowning in AI news, send them this way. See you tomorrow."
+            ),
+            (
+                "And that wraps up Models and Agents. The models will have changed again by "
+                "morning; we'll sort the signal from the noise when they do. Subscribe so "
+                "you don't miss it, and see you tomorrow."
+            ),
         ],
     },
     "models_agents_beginners": {
@@ -850,11 +865,17 @@ _SHOW_PERSONALITIES: dict[str, dict[str, Any]] = {
             },
         },
         "closings": [
+            # Sep 4 2026: two of the four closings asked for dispatches
+            # seconds after the Dispatch segment had just asked (a double
+            # ask every episode), and one claimed "we read every dispatch
+            # on the show" with zero dispatches ever received. The closings
+            # now carry the mission line instead — every little bit counts
+            # — and leave the ask to the segment that owns it.
             (
                 "That's The DP Pod for today. If it left you a little more hopeful, "
                 "send it to someone who's been doomscrolling — that's how this grows.\n\n"
-                "PATRICK: And tell us what you actually did — we read every dispatch on the show. "
-                "I'm Patrick Novak.\n\n"
+                "PATRICK: And whatever you do about today — however small — counts. "
+                "That's the whole idea. I'm Patrick Novak.\n\n"
                 "DAN: I'm Dan Perra. Do something about it."
             ),
             (
@@ -867,8 +888,8 @@ _SHOW_PERSONALITIES: dict[str, dict[str, Any]] = {
             (
                 "That wraps today's DP Pod. Subscribe wherever you listen so tomorrow's "
                 "good news finds you.\n\n"
-                "PATRICK: And when you pull today's lever, write in and tell us — "
-                "the dispatch only works if you do. I'm Patrick Novak.\n\n"
+                "PATRICK: Nobody fixes the world in a day. Everybody nudges it. "
+                "Pick your nudge. I'm Patrick Novak.\n\n"
                 "DAN: I'm Dan Perra. Do something about it."
             ),
             (
