@@ -931,6 +931,29 @@ def convert_md_to_blog_html(md_text: str) -> tuple[str, list[dict]]:
 # Schema.org JSON-LD
 # ---------------------------------------------------------------------------
 
+_OP3_MEASURED_HOST = "https://audio.nerranetwork.com/"
+
+
+def _measured_audio_url(url: str) -> str:
+    """Route the blog player through the OP3 prefix the RSS enclosure uses.
+
+    Sep 4 2026 flagship pass: the blog ``<audio>`` played the bare R2 URL,
+    so every play from a blog post (the page search sends readers to) was
+    invisible to OP3 while the same file in a podcast app counted. Only
+    the network's own audio host is prefixed, an already-prefixed URL is
+    left alone, and any other host (a guest recording, an external
+    embed) is untouched.
+    """
+    url = (url or "").strip()
+    if not url.startswith(_OP3_MEASURED_HOST):
+        return url
+    try:
+        from engine.publisher import apply_op3_prefix
+        return apply_op3_prefix(url)
+    except Exception:  # pragma: no cover - never let measurement break a page
+        return url
+
+
 def _build_jsonld(metadata: dict, show_name: str, blog_url: str,
                    show_config: dict | None = None,
                    *, transcript_url: str = "", audio_url: str = "",
@@ -1168,7 +1191,7 @@ def generate_blog_post_html(
     # Build JSON-LD now that the transcript is known, so the (single, canonical)
     # PodcastEpisode block can carry the transcript + audio links.
     _transcript_url = f"{blog_url}#transcript" if transcript_text else ""
-    _audio_url = metadata.get("audio_url", "")
+    _audio_url = _measured_audio_url(metadata.get("audio_url", ""))
     jsonld = _build_jsonld(
         metadata, show_config["name"], blog_url, show_config,
         transcript_url=_transcript_url, audio_url=_audio_url,
@@ -1244,7 +1267,7 @@ def generate_blog_post_html(
         # page's #transcript anchor (only when a transcript is actually present).
         "page_url": blog_url,
         "date": metadata.get("date_iso", "") or metadata.get("date", ""),
-        "audio_url": metadata.get("audio_url", ""),
+        "audio_url": _audio_url,
         # Per-language audio tracks (June 2026 multilingual). Empty/absent for
         # English-only episodes → the template renders no switcher.
         "translations": metadata.get("translations", {}) or {},

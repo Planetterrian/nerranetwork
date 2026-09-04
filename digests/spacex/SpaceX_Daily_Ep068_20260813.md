@@ -2,25 +2,25 @@
 > **Starship 14's planned tower catch tests the lighter booster's recovery hardware and moves rapid reuse one flight closer.**
 ---
 ### Top News
-1. **Title: SpaceX will ‘catch’ Starship #14**
+1. **SpaceX will ‘catch’ Starship #14**
    SpaceX plans to attempt a tower catch on the Super Heavy booster during the Starship 14 flight test. The booster carries updated hardware for the lighter vehicle configuration now in testing. A successful catch would demonstrate controlled descent and tower alignment on the revised design. The Ship upper stage will perform its own reentry and landing profile separately from the booster recovery. Observers will watch pad systems at Starbase for any changes ahead of the attempt. Source: [Advanced Television](https://news.google.com/rss/articles/CBMigwFBVV95cUxOb1JaUkxsdHpVNzl1c2NJX2JzR1JNZWdXWk5ZeGphRy1ZSlE1YUNFNXpzek5jeElxMmZkLVU3eHJ2M3lJSHhQQTNXTzlMeEdEYTVyZGlMNFpQV21jWm4xMnNhdHZ6LTdQQnQ0NGJBc0dTOTd1U2xyMHZtbWRIOGNHb3pBcw?oc=5)
 
-2. **Title: Starbase Pad 1 Renovation Underway for 2027 Return**
+2. **Starbase Pad 1 Renovation Underway for 2027 Return**
    Work has begun on Starbase Pad 1 to prepare the site for operations in 2027. The renovation targets structural and ground-support upgrades needed for higher flight rates. Crews are addressing wear from prior static-fire and launch campaigns at the pad. The effort runs alongside ongoing activity at the primary launch mount and tower. Completion would add a second active pad for Starship testing and missions. Source: [BASENOR - Tesla Accessories](https://news.google.com/rss/articles/CBMijgFBVV95cUxQdlVaXzUwMUh4azV1Q3BJUG1zaUJoYTZsZ3FXLXhaaGE5WDhvLXVtV0JoRllaZWREYUU3OEZyUlFrWnpFanVCOXVyVTZUamgwdlJWZlRfRFNiUU1UTE92SnNQZzhRSXc1NXdVbjJmWHB2OW5aZi15cWZjN2VRMlg0anEzSXhrMjZESjAtaW1B?oc=5)
 
-3. **Title: USSF-366 Mission**
+3. **USSF-366 Mission**
    SpaceX is preparing the USSF-366 national-security payload for launch. The mission uses a Falcon vehicle and supports U.S. Space Force requirements. Details remain limited ahead of the scheduled date. The flight adds to the growing list of Starshield-related or government payloads on the manifest. Source: [SpaceX](https://news.google.com/rss/articles/CBMiUEFVX3lxTE1uVXc3djI0YUVwMnV0VTRGMm45Z2cxT3dZYUl5SjVkV3NWUGJDdnp6eXpTTzNWVUkxSXRZYjBnOVBaUTFkakNXLXBQQjJyV2ow?oc=5)
 
-4. **Title: SpaceX's satellite Internet service Starlink officially launches in Vietnam**
+4. **SpaceX's satellite Internet service Starlink officially launches in Vietnam**
    Starlink service has gone live for users in Vietnam following regulatory approval. The rollout adds another market to the constellation's global coverage map. Initial capacity draws from recent satellite additions via dual-coast launches. Service activation includes both residential and enterprise terminals. Source: [TNGlobal](https://news.google.com/rss/articles/CBMirwFBVV95cUxQYzlVVUF2Z25pNTJWSXdIVW1TVmV6eFhua2hsZWRJYThtSnZfdDVCYmdaQml5S0dpaDY3bmlwVlJMUWM5Ylg4N2RHRDhaeC02LXA5VWhpcmI5NW1jcUoyNmFHRko1aVkzamotTVgyQTN0bFNPU1JqQ042VXZGai1zbk9CZHZDZUxyMHN1dVdMSEdWcE1BSVpFaDlFeGlYZkZKRDVTb0FUbHpWaXBMR2lr?oc=5)
 
-5. **Title: Elon Musk Tells SpaceX Town Hall 'We're Going to 100,000 Satellites.'**
+5. **Elon Musk Tells SpaceX Town Hall 'We're Going to 100,000 Satellites.'**
    Musk stated the long-term target for the Starlink constellation during an internal meeting. The figure reflects plans to expand orbital capacity well beyond current levels. Growth would rely on continued Starship deployment cadence once operational. The comment ties directly to ongoing satellite production and launch infrastructure work. Source: [24/7 Wall St.](https://news.google.com/rss/articles/CBMi4wFBVV95cUxNN0dKTkYtbHJUVE9TRVdDTG1vNlA3TktFOUNPTndaSkZVTjlQdjdIakFPYVpZSHFMNXhyYWVjcDgwZTh1SWZ6Vlp6NE50eFhkaTJGQ0NvY2JjX2ZJbGF0VXBSRVFzRnhCU1JaTFlRd3RsanpSd1M0enRPUWw5SmhVM2RSX21jYWw5XzNPbjdWamNmMVVVcDI0QS04LU9TaWpwbXZfZ3lhekd4YnR0d2ZxVWJsUWRQR3JVRnRtb2tWOFFZSGxHNmtsQm5QeUp5RHZNMWdZNG1KZXBTcTRWN1Vlaktvcw?oc=5)
 
-6. **Title: Starlink Hits 10,971 Active After Double Launch**
+6. **Starlink Hits 10,971 Active After Double Launch**
    The active Starlink satellite count reached 10,971 following a pair of recent launches. The additions came from both Florida and California sites on the same day. On-orbit performance data will determine how quickly the new satellites enter service. The total reflects ongoing replenishment and expansion of the network. Source: [Google News](https://news.google.com/rss/articles/CBMiZ0FVX3lxTE5ZTm1JbFgydlFEVWlTWGRobkRjN1VBFNSVVIMXpxdi1lS0VpcHVkbWVybjlZNWdBWmpmNEx6aGM0eEJWS0wtb3hWQmNGT1lSWFpMRVNBVl9yWnBFNmZzNzBaQTM4LTg?oc=5)
 
-7. **Title: SpaceX Dual-Coast Launch Adds 53 Starlink Satellites**
+7. **SpaceX Dual-Coast Launch Adds 53 Starlink Satellites**
    A coordinated launch day from Vandenberg and Cape Canaveral placed 53 new Starlink satellites into orbit. The California site is now at the midpoint of its annual launch cap. Both missions used Falcon 9 vehicles with recovered boosters. The combined cadence demonstrates current operational tempo across coasts. Source: [Tech Times](https://news.google.com/rss/articles/CBMi3gFBVV95cUxOSk9TYjZDb1FaOVhjM2c1eDdEWWdudGp4aVVCYW9lbXdlcjZscE5GUGdrbEo3NExmMV9mNEQtc2t4bDBnZ2xfTDUxMU9pWEtuOVdEQmphT3hXZGpUSkdyeFdLVlFtUUQ4Zm1vVHFrekI0d1cxNmZhTW5hQWt5dXFDR01WMXlfWGFqX3dlbUVVQVFYNUo0TUxTNy1nRTFjanVFU09pUlVla2Y3R3R2amhxYU5Yc19RUXBBQktiLTFabHFwdXJWVmJyTm83THotM2Q5Z1AzNWo2ODNqTWl5UUE?oc=5)
 ---
 ## Community Buzz

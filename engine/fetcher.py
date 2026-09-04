@@ -205,6 +205,38 @@ def _publisher_from_entry(entry, title: str = "") -> Optional[str]:
 # Date parsing
 # ---------------------------------------------------------------------------
 
+# /YYYY/MM/ or /YYYY/MM/DD/ inside a publisher URL path (WordPress-style
+# permalinks, most newspapers). Year is bounded so a numeric slug can't
+# masquerade as a date.
+_URL_DATE_RE = re.compile(r"/(20[0-9]{2})/(0[1-9]|1[0-2])(?:/(0[1-9]|[12][0-9]|3[01]))?(?=/|$)")
+
+
+def _url_path_date(url: str) -> Optional[datetime.datetime]:
+    """Publication date implied by a dated URL path, as a UTC datetime.
+
+    A month-only path (``/2024/08/``) resolves to the LAST day of that
+    month so the check below can only ever call an article stale when
+    every day of its month is older than the window — never a false
+    positive on a recent month. Returns ``None`` when the URL carries no
+    date; callers must treat that as "unknown", not "fresh".
+    """
+    if not url:
+        return None
+    m = _URL_DATE_RE.search(url)
+    if not m:
+        return None
+    year, month = int(m.group(1)), int(m.group(2))
+    day = int(m.group(3)) if m.group(3) else None
+    try:
+        if day is None:
+            nxt = datetime.datetime(year + (month == 12), (month % 12) + 1, 1,
+                                    tzinfo=datetime.timezone.utc)
+            return nxt - datetime.timedelta(days=1)
+        return datetime.datetime(year, month, day, tzinfo=datetime.timezone.utc)
+    except ValueError:
+        return None
+
+
 def _parse_entry_date(entry) -> Optional[datetime.datetime]:
     """Extract a UTC datetime from a feedparser entry."""
     for attr in ("published_parsed", "updated_parsed"):
@@ -384,6 +416,21 @@ def _fetch_single_feed(
                 )
                 continue
             link = resolve_google_news_url(link_clean)
+            # Google News search feeds re-surface OLD articles under a
+            # fresh index date, and nothing downstream checks the
+            # publisher page's own date: SpaceX Ep088 (2026-09-02) led
+            # with a two-year-old "Falcon 9 completes 23rd flight, new
+            # reuse record" and Ep080 spoke a pre-IPO story ten weeks
+            # after the listing (Sep 4 2026 flagship pass). When the
+            # resolved publisher URL carries a /YYYY/MM[/DD]/ path older
+            # than the fetch window, the feed date is the lie — drop it.
+            url_date = _url_path_date(link)
+            if url_date is not None and url_date < cutoff_time:
+                logger.info(
+                    "Dropping stale article re-surfaced by feed (URL dated %s): %s",
+                    url_date.date(), title[:80],
+                )
+                continue
             # Keep the aggregator URL the feed gave us. The digest
             # prompt sees the article list and the LLM sometimes
             # retypes a URL into its Sources section — a 468-char

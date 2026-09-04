@@ -486,6 +486,11 @@ _THEME_STOPWORDS = {
     # Generic coverage vocabulary + URL tokens (June 10 2026: "google
     # https" / "announced discussed" bigrams were polluting the history).
     "announced", "discussed", "covered", "https", "http",
+    # Sep 4 2026 flagship pass: source-label adjacency ("reddit google"
+    # x8, "insideevs google" x7) and calendar/generic fragments ("second
+    # quarter" x20, "full self" x38 — a fragment of the already-counted
+    # "self driving") were sitting in the injected top-6 theme block.
+    "google", "reddit", "quarter", "full", "insideevs", "teslarati",
     # Calendar month names (Aug 27 2026 memory review): date+outlet
     # adjacency in article metadata mined "june teslarati" x32 /
     # "june yahoo" x12 into Tesla's top themes — a month is calendar
