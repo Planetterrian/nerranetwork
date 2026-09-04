@@ -63,7 +63,12 @@ def test_about_no_longer_promises_quiz():
 
 def test_homepage_uses_dynamic_episode_count():
     tpl = (_ROOT / "templates" / "network_page.html.j2").read_text(encoding="utf-8")
-    assert "{{ total_episodes }}+" in tpl
+    # Sep 3 2026 website review (#1136): the homepage shows the exact
+    # comma-formatted count, not "N+" — honest numbers over a rounded
+    # flourish. The guard is that the figure is DYNAMIC, whichever form.
+    assert "total_episodes" in tpl
+    assert "{{ total_episodes }}+" not in tpl
+    assert "'{:,}'.format(total_episodes)" in tpl
     assert re.search(r"<strong>900\+</strong>", tpl) is None
     assert "episode-card-title" in tpl
     assert "ep.blog_url" in tpl
