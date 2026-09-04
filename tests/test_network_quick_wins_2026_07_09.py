@@ -63,11 +63,21 @@ def test_about_no_longer_promises_quiz():
 
 def test_homepage_uses_dynamic_episode_count():
     tpl = (_ROOT / "templates" / "network_page.html.j2").read_text(encoding="utf-8")
-    assert "{{ total_episodes }}+" in tpl
+    # Sep 3 2026 website review (#1136): the homepage shows the exact
+    # comma-formatted count, not "N+" — honest numbers over a rounded
+    # flourish. The guard is that the figure is DYNAMIC, whichever form.
+    assert "total_episodes" in tpl
+    assert "{{ total_episodes }}+" not in tpl
+    assert "'{:,}'.format(total_episodes)" in tpl
     assert re.search(r"<strong>900\+</strong>", tpl) is None
     assert "episode-card-title" in tpl
     assert "ep.blog_url" in tpl
-    assert "SpaceX Daily" in tpl
+    # The July quick-win added SpaceX Daily to a hardcoded homepage ticker;
+    # #1136 made the ticker registry-driven ("so it can never drift"), so the
+    # guard is now: the ticker iterates the registry, and SpaceX is in it.
+    assert "{% for s in all_shows %}" in tpl
+    from generate_html import NETWORK_SHOWS
+    assert any(cfg.get("name") == "SpaceX Daily" for cfg in NETWORK_SHOWS.values())
     assert "The DP Pod" in tpl
 
 
