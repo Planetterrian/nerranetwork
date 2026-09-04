@@ -72,7 +72,12 @@ def test_homepage_uses_dynamic_episode_count():
     assert re.search(r"<strong>900\+</strong>", tpl) is None
     assert "episode-card-title" in tpl
     assert "ep.blog_url" in tpl
-    assert "SpaceX Daily" in tpl
+    # The July quick-win added SpaceX Daily to a hardcoded homepage ticker;
+    # #1136 made the ticker registry-driven ("so it can never drift"), so the
+    # guard is now: the ticker iterates the registry, and SpaceX is in it.
+    assert "{% for s in all_shows %}" in tpl
+    from generate_html import NETWORK_SHOWS
+    assert any(cfg.get("name") == "SpaceX Daily" for cfg in NETWORK_SHOWS.values())
     assert "The DP Pod" in tpl
 
 
