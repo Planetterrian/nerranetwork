@@ -208,6 +208,7 @@ def _publisher_from_entry(entry, title: str = "") -> Optional[str]:
 # /YYYY/MM/ or /YYYY/MM/DD/ inside a publisher URL path (WordPress-style
 # permalinks, most newspapers). Year is bounded so a numeric slug can't
 # masquerade as a date.
+_URL_DATE_SLACK = datetime.timedelta(days=1)
 _URL_DATE_RE = re.compile(r"/(20[0-9]{2})/(0[1-9]|1[0-2])(?:/(0[1-9]|[12][0-9]|3[01]))?(?=/|$)")
 
 
@@ -231,8 +232,14 @@ def _url_path_date(url: str) -> Optional[datetime.datetime]:
         if day is None:
             nxt = datetime.datetime(year + (month == 12), (month % 12) + 1, 1,
                                     tzinfo=datetime.timezone.utc)
-            return nxt - datetime.timedelta(days=1)
-        return datetime.datetime(year, month, day, tzinfo=datetime.timezone.utc)
+            return nxt - datetime.timedelta(seconds=1)
+        # A day-dated path is the END of that day, not midnight: the
+        # first post-merge Planetterrian run (2026-09-04 07:24 UTC, 24 h
+        # window) dropped every STAT News / MIT Tech Review article dated
+        # /2026/09/03/ because midnight 09-03 sat seven hours before the
+        # cutoff. A path date can only ever say "no later than this".
+        return (datetime.datetime(year, month, day, tzinfo=datetime.timezone.utc)
+                + datetime.timedelta(days=1) - datetime.timedelta(seconds=1))
     except ValueError:
         return None
 
@@ -425,7 +432,10 @@ def _fetch_single_feed(
             # resolved publisher URL carries a /YYYY/MM[/DD]/ path older
             # than the fetch window, the feed date is the lie — drop it.
             url_date = _url_path_date(link)
-            if url_date is not None and url_date < cutoff_time:
+            # A full day of slack on top of the window: the guard exists
+            # for the two-year-old and ten-week-old cases, never for an
+            # article a few hours either side of the cutoff.
+            if url_date is not None and url_date < cutoff_time - _URL_DATE_SLACK:
                 logger.info(
                     "Dropping stale article re-surfaced by feed (URL dated %s): %s",
                     url_date.date(), title[:80],
