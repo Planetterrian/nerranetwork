@@ -541,6 +541,29 @@ today's work, not just explain yesterday's):
   harmless — unreferenced). `metrics_ep*/credit_usage_*` files kept as
   real spend accounting. Still open: `dispatches.json` is empty until a
   real listener/host dispatch is seeded.
+  **Sep 4 2026 naturalness pass** (review:
+  [`docs/reviews/dp_pod_review_2026_09_04.md`](docs/reviews/dp_pod_review_2026_09_04.md);
+  drift guards: `tests/test_dp_pod_show.py::TestSep4NaturalnessPass`):
+  the Aug-10 renewal scored 3 hits / 1 miss on 26 shipped episodes
+  (verbatim paste ~30% → ~3% median; the grok-4.6 script stage adopted
+  Sep 1). Successor tics, all fixed data-side: the Lever converged on
+  the "Open your <website> today…" SHAPE (13/26; 21/26 screen lookups) —
+  `_recent_levers()` now collapses fuzzy re-skins and computes BANNED
+  OPENING VERBS + REAL-WORLD ACTION DUE from the last six levers; the
+  prompt's own comedy examples calcified ("checklist" 23/26, "steel-man"
+  23/26) — `_recent_banter_phrases()` mines RETIRED BITS from the last
+  six scripts (furniture-excluded) and the comedy/dynamic examples were
+  removed by shape; the founders' notes went unused (Yukon 0/26) —
+  `_founders_detail_nudge()` fires only after five real-material-free
+  episodes. Episodes ran 11–14 min against a ten-minute promise → HARD
+  CEILING 1,750 words. Two closings double-asked for dispatches (one
+  claimed "we read every dispatch" with zero ever received) → mission
+  lines instead. **YouTube ON, Shorts-only** (experiment
+  `dp-pod-youtube-shorts`; long-form waits on the adaptive policy).
+  `review_snapshot.py` crashed on any show without
+  `exclude_title_patterns` — fixed. Do NOT re-add example actions,
+  example jokes, or example concession phrases to either prompt: three
+  generations of this show's tics came from exactly that.
 - **AOAI** (The Age of AI) — the network's **AI-hosted LIVE interview show**
   (July 2026): Mira, an AI documentarian persona (Grok voice `ara`,
   deliberately NOT the Patrick clone), phones REAL guests via a Voximplant
