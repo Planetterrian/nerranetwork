@@ -84,6 +84,40 @@ EPISODES = {
         ),
         "audio_url": "https://audio.nerranetwork.com/spacex/SpaceX_Daily_Ep012_20260623.mp3",
     },
+    # Sep 4 2026: three shows published audio + YouTube but failed the
+    # post-run enclosure check (a since-fixed sampler bug, PR #1141), so the
+    # commit step never ran and the feeds stopped one episode short.
+    "planetterrian_ep173": {
+        "show": "planetterrian",
+        "episode": 173,
+        "date": "20260904",
+        "hook": (
+            "New analysis of two tiny ant fossils shows how the dinosaur "
+            "extinction reshaped insect evolutionary paths."
+        ),
+        "audio_url": "https://audio.nerranetwork.com/planetterrian/Planetterrian_Daily_Ep173_20260904.mp3",
+    },
+    "fascinating_frontiers_ep183": {
+        "show": "fascinating_frontiers",
+        "episode": 183,
+        "date": "20260904",
+        "hook": (
+            "India's GSLV rocket has delivered a new Earth-imaging satellite "
+            "into transfer orbit, advancing the nation's geosynchronous "
+            "observation capabilities."
+        ),
+        "audio_url": "https://audio.nerranetwork.com/fascinating_frontiers/Fascinating_Frontiers_Ep183_20260904.mp3",
+    },
+    "tesla_ep594": {
+        "show": "tesla",
+        "episode": 594,
+        "date": "20260904",
+        "hook": (
+            "Electric brakes and rare-earth-free motors in Cybercab cut "
+            "manufacturing complexity for scaled robotaxi fleets."
+        ),
+        "audio_url": "https://audio.nerranetwork.com/tesla/Tesla_Shorts_Time_Pod_Ep594_20260904.mp3",
+    },
 }
 
 
@@ -202,8 +236,10 @@ def main() -> int:
         format_duration_func=format_duration,
         audio_url=feed_audio_url,
         transcript_url=transcript_url,
-        funding_url=f"{config.publishing.base_url}/#newsletter",
-        funding_label="Free newsletter — best of the network weekly",
+        # Keep the channel tags identical to run_show's, or a recovery
+        # rebuild silently rewrites the feed-level funding link.
+        funding_url=f"{config.publishing.base_url}/support.html",
+        funding_label="Support the Nerra Network",
         person_name=config.publishing.host_name or "Patrick",
         person_url=f"{config.publishing.base_url}/about.html",
     )
