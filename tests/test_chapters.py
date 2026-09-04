@@ -1046,3 +1046,40 @@ class TestLongHeadlinesStillTitleChapters:
             story_headlines=heads)]
         assert not [t for t in titles if t.endswith("…") or len(t) > 60], titles
         assert any(t.startswith("Taiwan foreign minister") for t in titles), titles
+
+
+class TestChapterTitlesNeverCarryLinks:
+    """Sep 4 2026: M&A Ep161 shipped the chapter title
+    "Training a Misaligned Reward Seeker: [@AnthropicAI](https" — a digest
+    headline whose source tail was a markdown link, clipped mid-URL. Every
+    title-producing helper now flattens links and drops a lone @handle tail."""
+
+    def test_clip_title_flattens_link_and_drops_handle_tail(self):
+        from engine.chapters import _clip_title
+        raw = "Training a Misaligned Reward Seeker: [@AnthropicAI](https://x.com/AnthropicAI)"
+        assert _clip_title(raw) == "Training a Misaligned Reward Seeker"
+        # A plain outlet tail is not a handle and is left to the headline
+        # extractor's outlet logic — this helper only removes what it
+        # knows is junk.
+        assert _clip_title("IBM Releases Granite 4.2: MarkTechPost") == \
+            "IBM Releases Granite 4.2: MarkTechPost"
+
+    def test_first_sentence_title_flattens_links(self):
+        from engine.chapters import _first_sentence_as_title
+        out = _first_sentence_as_title(
+            "Anthropic ([@AnthropicAI](https://x.com/AnthropicAI)) trained a model. More text."
+        )
+        assert "](" not in out and "http" not in out
+        assert out.startswith("Anthropic (@AnthropicAI) trained a model")
+
+    def test_committed_models_agents_chapters_carry_no_link_fragments(self):
+        import json
+        from pathlib import Path
+        root = Path(__file__).resolve().parent.parent
+        bad = []
+        for p in sorted((root / "digests/models_agents").glob("chapters_ep*.json")):
+            for ch in json.loads(p.read_text(encoding="utf-8")).get("chapters", []):
+                t = ch.get("title", "")
+                if "](" in t or "http" in t:
+                    bad.append((p.name, t))
+        assert not bad, bad

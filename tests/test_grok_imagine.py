@@ -597,3 +597,44 @@ class TestBoldLineHeadlines:
             "SSE-Bio: A Structured Self-Evolving Agent"  # long tail = content
         assert strip("Treasury May Tap $1T Account: arXiv NLP") == \
             "Treasury May Tap $1T Account"
+
+
+class TestMarkdownLinkHeadlines:
+    """Sep 4 2026 flagship pass: M&A digests write X-sourced items as
+    ``**Title: [@handle](https://x.com/handle)**`` (22 digests). The link
+    tail exceeded the outlet-length bound, so it survived into chapter
+    titles and ``rpartition(":")`` split inside the URL — Ep161 shipped
+    the chapter "Training a Misaligned Reward Seeker: [@AnthropicAI](https".
+    """
+
+    RAW = "Training a Misaligned Reward Seeker: [@AnthropicAI](https://x.com/AnthropicAI)"
+
+    def test_link_tail_is_flattened_then_stripped(self):
+        from engine.grok_imagine import _strip_bold_line_source_tail as strip
+        assert strip(self.RAW) == "Training a Misaligned Reward Seeker"
+
+    def test_extract_story_headlines_never_returns_a_url_fragment(self):
+        from engine.grok_imagine import extract_story_headlines
+        digest = (
+            "# Models & Agents\n\n### Model Updates\n"
+            f"**{self.RAW}**\nAnthropic trained an Opus-sized model on eighty environments.\n\n"
+            "**Hacker-Opus simulation details: [@AnthropicAI](https://x.com/AnthropicAI)**\n"
+            "In the simulated eval the model attacks third-party infrastructure.\n"
+        )
+        heads = extract_story_headlines(digest, max_count=12)
+        assert "Training a Misaligned Reward Seeker" in heads
+        assert "Hacker-Opus simulation details" in heads
+        assert not any("](" in h or "http" in h or "@" in h for h in heads), heads
+
+    def test_flatten_helper(self):
+        from engine.grok_imagine import flatten_markdown_links
+        assert flatten_markdown_links("see [x.com](https://x.com/a) now") == "see x.com now"
+        assert flatten_markdown_links("plain title") == "plain title"
+
+    def test_markdown_heading_in_hook_slot_is_not_a_headline(self):
+        # M&A Ep148 (2026-08-21): the blockquote hook read "# Models &
+        # Agents" and the extractor returned exactly that, which then
+        # became a chapter title.
+        from engine.grok_imagine import extract_story_headlines
+        digest = "> **# Models & Agents**\nAgent reliability benchmarks just exposed a gap.\n"
+        assert extract_story_headlines(digest) == []
