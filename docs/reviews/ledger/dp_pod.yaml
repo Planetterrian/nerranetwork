@@ -79,21 +79,96 @@ reviews:
       - metric: "distinct Lever actions in the next 10 episodes (first-sentence dedup, review_snapshot method)"
         baseline: "2 distinct in Ep21-30 (heat-pump assessment x7)"
         expected: ">=6 distinct, no action appearing more than twice"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "Ep31-40: 8 distinct actions, max repeat 2 (conservation-group contact Ep31/37, utility postcode Ep32/40). Successor tic emerged after the window: see 2026-09-04."
       - metric: "median 10-word shingle overlap between digest and script, next 10 episodes"
         baseline: "~30% median (Ep22 65%, Ep29 42%) on grok-4.3"
         expected: "<=15% median"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "Ep31-40 median 4.5% (11,5,3,8,3,7,3,4,21,2); Ep31-56 median ~3%. Two outlier days remain (Ep41 46%, Ep43 50%, both 4.6 with short 1.1k-word scripts)."
       - metric: "episodes with >=2 exclamation points in _tts.txt, next 10 episodes"
         baseline: "0/10 (27 of 30 all-time episodes shipped zero)"
         expected: ">=6/10"
-        verdict: pending
-        evidence: null
+        verdict: miss
+        evidence: "Ep31-40 (grok-4.5 arm): 2/10 at >=2, though 6/10 had >=1 (up from 0). The grok-4.6 arm that replaced it hits: Ep44-56 9/13 at >=2. Scored on the shipped 4.5 window as the experiment register requires."
       - metric: "median digest word count, next 10 episodes"
         baseline: "918 words (Ep22-30 range 667-1240 vs 1100 floor)"
         expected: ">=1050"
+        verdict: hit
+        evidence: "Ep31-40 median ~1,095 (922-1,325)."
+    agent_cost_usd: null
+
+  - date: 2026-09-04
+    pr: null
+    doc: docs/reviews/dp_pod_review_2026_09_04.md
+    reviewer: claude-code (operator-directed performance / mission / naturalness / experience pass)
+    summary: >-
+      Scored the Aug-10 renewal on 26 shipped episodes: verbatim paste
+      collapsed (~30% -> ~3% median), digest length hit the floor, the
+      grok-4.6 script stage was adopted (Sep 1) and the dialogue reads
+      like two friends. Three successor problems: (1) the Lever converged
+      on a new SHAPE — "Open your <website> today..." opened 13/26 and 21/26
+      levers were screen lookups on a show that signs off "do something
+      about it"; (2) the prompt's own comedy examples calcified into
+      catchphrases (checklist 23/26, steel-man 23/26, I'll concede 17/26);
+      (3) episodes overshoot the ten-minute promise (11-14 min on 4.6).
+      Also: two closings double-asked for dispatches and one claimed "we
+      read every dispatch" with zero ever received; the founders' notes
+      went almost unused (Yukon 0/26); review_snapshot crashed on any show
+      without exclude_title_patterns. All fixes data-side rotation memory
+      or de-seed by shape. YouTube Shorts-only enabled (operator-directed
+      reach; the A/B condition set on Aug 10 is met).
+    shipped:
+      - _recent_levers fuzzy near-dup collapse + BANNED OPENING VERBS + REAL-WORLD ACTION DUE (data-side)
+      - _recent_banter_phrases retired-bits rotation memory (mined from the last 6 scripts, furniture-excluded)
+      - _founders_detail_nudge (fires only when no real host material aired in 5 episodes)
+      - digest Lever spec de-seeded v2 (physical-world action; screen step must END in a thing done) — A/B
+      - podcast prompt comedy/dynamic examples removed (de-seed by shape), RETIRED BITS obedience, HARD CEILING 1,750 words — A/B
+      - intros.py closings: dispatch double-ask + "we read every dispatch" claim replaced with the every-little-bit mission line — A/B
+      - youtube.enabled true, publish_long_form false, smart Shorts 3.5 (reach)
+      - scripts/review_snapshot.py digest_files hoisted (crash fix for shows without exclude patterns)
+      - scripts/generate_api.py dp_pod duration ~12 min (was defaulting to ~15 against a ten-minute promise)
+      - founders notes: five concrete prompts for Dan (comment block, never reaches the prompt)
+      - tests/test_dp_pod_show.py::TestSep4NaturalnessPass (9 guards)
+    deferred:
+      - seed one real host Dispatch (operator, THIRD filing — zero dispatches after 56 episodes; Dan's solar payback in the founders notes is honest, ready material)
+      - deterministic script-quality re-roll on bad-service days (Ep41/43 shape: <1,250 words AND >30% digest overlap) — 2/26 days; revisit if the rate rises
+      - 'is "the lever" being spoken as "liver"? (Whisper wrote "brings us to the liver" in Ep30 and Ep56) — operator listen item, not a code change'
+      - weekly Lever-of-the-Week + collective counter (still blocked on real receipts)
+    predictions:
+      - metric: "levers opening with the word Open, next 10 episodes"
+        baseline: "13/26 (Ep31-56); 6 of the last 6"
+        expected: "<=3/10"
+        verdict: pending
+        evidence: null
+      - metric: "screen-lookup levers (open/website/app/portal/search/.gov regex on the first sentence), next 10 episodes"
+        baseline: "21/26 (81%)"
+        expected: "<=5/10"
+        verdict: pending
+        evidence: null
+      - metric: "fuzzy-distinct levers (content-word Jaccard < 0.4), next 10 episodes"
+        baseline: "8/10 in Ep31-40, 3 near-dup groups across Ep31-56"
+        expected: ">=9/10"
+        verdict: pending
+        evidence: null
+      - metric: "scripts containing the word 'checklist', next 10 episodes"
+        baseline: "23/26"
+        expected: "<=3/10"
+        verdict: pending
+        evidence: null
+      - metric: "scripts containing 'steel-man' or 'I'll concede', next 10 episodes"
+        baseline: "23/26 and 17/26"
+        expected: "<=3/10 each"
+        verdict: pending
+        evidence: null
+      - metric: "median audio duration (chapters end), next 10 episodes"
+        baseline: "12.2 min (Ep44-56 range 11.1-14.1)"
+        expected: "<=11.5 min, none above 13"
+        verdict: pending
+        evidence: null
+      - metric: "episodes airing at least one founders-notes marker, next 10 episodes"
+        baseline: "3/26 (Yukon 0, WestJet 0, solar 1)"
+        expected: ">=3/10"
         verdict: pending
         evidence: null
     agent_cost_usd: null

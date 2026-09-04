@@ -267,6 +267,16 @@ def build_snapshot(slug: str, episodes: int = 10) -> str:
     # reached shipped output (a filter bypass — the Ep116 web-search route
     # class), zero means the filter held.
     patterns = show_cfg.get("exclude_title_patterns") or []
+    # Sep 4 2026: defined OUTSIDE the fetch-filter branch — the heading-
+    # integrity section below reads it too, and a show with no
+    # exclude_title_patterns (dp_pod, the narrative shows) crashed the
+    # whole snapshot with UnboundLocalError, which silently took the
+    # scheduled review agent's Phase-0 numbers away for those shows.
+    digest_files = _latest(
+        [p for p in out_dir.glob("*.md")
+         if "_transcript" not in p.name and "_tts" not in p.name],
+        episodes,
+    )
     if patterns:
         compiled = []
         for p in patterns:
@@ -274,11 +284,6 @@ def build_snapshot(slug: str, episodes: int = 10) -> str:
                 compiled.append(re.compile(p, re.IGNORECASE))
             except re.error:
                 continue
-        digest_files = _latest(
-            [p for p in out_dir.glob("*.md")
-             if "_transcript" not in p.name and "_tts" not in p.name],
-            episodes,
-        )
         hits = []
         for num, path in digest_files:
             text = path.read_text(encoding="utf-8", errors="replace")

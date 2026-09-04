@@ -1008,3 +1008,43 @@ experiments:
       tests/test_scene_briefs.py (TestRequestSizeLadder,
       TestOnTopicLibraryBlend), tests/test_video_commands.py
       (TestChapterTitleCards::test_only_clean_headlines_earn_a_card).
+
+  - id: dp-pod-youtube-shorts
+    title: "DP Pod on YouTube — Shorts-only, first video surface"
+    area: reach
+    shipped: 2026-09-04
+    readout: 2026-09-25
+    status: reading
+    baseline: "0 YouTube views; OP3 113 downloads/30d, ~27/week, 3.5/episode (below network median); Spotify 0 followers"
+    target: >
+      Shorts velocity earns its own tier line in api/youtube_policy.json
+      (short_vpd measured, not null) and OP3 weekly downloads move off the
+      ~27 plateau; the funnel report shows dp_pod Shorts -> thedppod.html
+      sessions.
+    criteria: >
+      Decide at readout: keep Shorts-only, let the adaptive policy add
+      long-form if long_vpd earns it, or revert (youtube.enabled: false,
+      one line) if Shorts from a two-voice dialogue clip poorly.
+    notes: >
+      Held at launch and on Aug 10 pending the script-model A/B; the
+      staged grok-4.6 trial closed 2026-09-01 with the dp_pod script
+      stage adopted, so the audio being clipped is the audio the show
+      keeps. Operator one-time: create + flag the podcast playlist in
+      Studio (landmine #15). Render/metadata only — outside landmine #17.
+
+  - id: dp-pod-lever-shape-v2
+    title: "DP Pod Lever — real-world actions, not screen lookups"
+    area: quality
+    shipped: 2026-09-04
+    readout: 2026-09-18
+    status: reading
+    baseline: "21/26 renewed-episode levers were screen lookups; 13/26 opened with 'Open'; 3 near-duplicate groups"
+    target: >
+      <=5/10 screen-lookup levers, <=3/10 opening with the same verb,
+      >=9/10 fuzzy-distinct — scored by the 2026-09-04 ledger predictions.
+    notes: >
+      Successor tic of the Aug-10 rotation memory: exact repeats stopped
+      and the model converged on a shape instead. Fix is data-side (fuzzy
+      dedup, banned-verb and real-world-due lines computed from the last
+      six levers) plus a shape-only de-seed of the digest Lever spec.
+      Prompt change — landmine #17 A/B.
