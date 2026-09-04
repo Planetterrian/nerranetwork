@@ -1345,6 +1345,12 @@ def generate_blog_index_html(
     return template.render(**context)
 
 
+# How many posts the network blog hub renders inline (ten pages at the
+# template's 24-per-page). Per-show indexes remain complete; the hub
+# links them from its archive rail. See generate_network_blog_index_html.
+NETWORK_BLOG_INDEX_MAX_POSTS = 240
+
+
 def generate_network_blog_index_html(
     posts: list[dict],
     show_configs: dict,
@@ -1392,6 +1398,30 @@ def generate_network_blog_index_html(
     ]
     shows_for_filter.sort(key=lambda s: s["name"])
 
+    # Sep 2026 website review: the hub rendered EVERY post ever (1,674
+    # cards, 1.7 MB of HTML) and hid all but 24 with client-side
+    # pagination — every visitor paid the full download for a page of
+    # 24 cards, and it grows by ~13 posts a day. The hub now renders the
+    # most recent ``NETWORK_BLOG_INDEX_MAX_POSTS`` inline (still ten
+    # pages at 24/page) and an archive rail that links each show's own
+    # index — which stays complete — with its post count and latest date.
+    total_posts = len(sorted_posts)
+    recent_posts = sorted_posts[:NETWORK_BLOG_INDEX_MAX_POSTS]
+    archive = []
+    for cfg in show_configs.values():
+        show_posts = [p for p in sorted_posts if p.get("show_slug") == cfg["slug"]]
+        if not show_posts:
+            continue
+        archive.append({
+            "slug": cfg["slug"],
+            "name": cfg["name"],
+            "color": cfg.get("brand_color", "#6B47FF"),
+            "count": len(show_posts),
+            "latest_date": show_posts[0].get("date", ""),
+            "podcast_image": cfg.get("podcast_image", ""),
+        })
+    archive.sort(key=lambda s: s["count"], reverse=True)
+
     path_key = "blog/index.html"
 
     template = template_env.get_template("network_blog_index.html.j2")
@@ -1402,13 +1432,17 @@ def generate_network_blog_index_html(
         "meta_description": "The latest articles from all Nerra Network podcast shows.",
         "meta_keywords": "podcast, blog, news, AI, technology, finance",
         "theme_color": "",
-        "og_image": "https://nerranetwork.com/assets/nerra-logo-icon.svg",
+        # PNG, not the SVG mark: Facebook/LinkedIn/X/Slack all reject SVG
+        # for og:image, so every share of the hub rendered imageless.
+        "og_image": "https://nerranetwork.com/assets/og-preview.png",
         "canonical_url": "https://nerranetwork.com/blog/index.html",
         "show_color": "",
         "show_color_dark": "",
         "all_shows": _build_all_shows_list(),
         # Network blog specific
-        "posts": sorted_posts,
+        "posts": recent_posts,
+        "total_posts": total_posts,
+        "archive": archive,
         "shows": shows_for_filter,
         "blog_rss_url": "https://nerranetwork.com/blog.rss",
     }

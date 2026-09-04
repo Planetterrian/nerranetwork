@@ -112,6 +112,72 @@
         .blog-search input::placeholder {
             color: var(--nn-text-muted);
         }
+
+        /* Archive-by-show rail */
+        .blog-archive {
+            padding: var(--sp-12) var(--sp-6) var(--sp-8);
+        }
+        .blog-archive-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+        .blog-archive h2 {
+            font-family: var(--font-heading);
+            font-size: clamp(1.2rem, 2.5vw, 1.6rem);
+            font-weight: 700;
+            color: var(--nn-white);
+            margin: 0 0 var(--sp-2);
+            text-align: center;
+        }
+        .blog-archive-note {
+            font-family: var(--font-body);
+            color: var(--nn-text-muted);
+            text-align: center;
+            max-width: 620px;
+            margin: 0 auto var(--sp-6);
+            line-height: 1.6;
+        }
+        .blog-archive-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+            gap: var(--sp-3);
+        }
+        .blog-archive-card {
+            display: grid;
+            grid-template-columns: 48px 1fr;
+            grid-template-rows: auto auto;
+            column-gap: var(--sp-3);
+            align-items: center;
+            padding: var(--sp-3) var(--sp-4);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            background: var(--nn-card);
+            text-decoration: none;
+            color: var(--nn-text);
+            transition: border-color var(--duration) var(--ease), transform var(--duration) var(--ease);
+        }
+        .blog-archive-card:hover {
+            border-color: var(--card-show-color, var(--nn-purple));
+            transform: translateY(-2px);
+        }
+        .blog-archive-card img {
+            grid-row: 1 / span 2;
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+        .blog-archive-name {
+            font-family: var(--font-heading);
+            font-weight: 600;
+            color: var(--nn-white);
+            font-size: 0.95rem;
+        }
+        .blog-archive-meta {
+            font-family: var(--font-ui);
+            font-size: 0.78rem;
+            color: var(--nn-text-muted);
+        }
     </style>
 {% endblock %}
 
@@ -120,7 +186,7 @@
     <header class="blog-idx-hero">
         <div class="blog-idx-hero-inner">
             <h1><span class="gradient-text">Nerra Network</span> Blog</h1>
-            <p>The latest articles from all our podcast shows, in one place.</p>
+            <p>Every episode, written up: sources, key numbers, and the full transcript — from all {{ archive|length if archive else all_shows|length }} shows, in one place.{% if total_posts %} {{ '{:,}'.format(total_posts) }} articles and counting.{% endif %}</p>
             <a href="{{ blog_rss_url }}" class="blog-rss-btn">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg>
                 Subscribe via RSS
@@ -173,6 +239,29 @@
 
     <!-- Pagination -->
     <div class="blog-pagination" id="blog-pagination" style="max-width:900px;margin:var(--sp-8) auto 0;padding:0 var(--sp-6);display:flex;justify-content:center;gap:var(--sp-2);flex-wrap:wrap;"></div>
+
+    {# Archive rail (Sep 2026): the hub renders only the most recent posts
+       inline (see engine.blog.NETWORK_BLOG_INDEX_MAX_POSTS); each show's
+       own index is complete, so this is where the long tail lives. #}
+    {% if archive %}
+    <section class="blog-archive" aria-labelledby="blog-archive-h">
+        <div class="blog-archive-inner">
+            <h2 id="blog-archive-h">Browse the full archive by show</h2>
+            {% if total_posts and posts|length < total_posts %}
+            <p class="blog-archive-note">The grid above shows the {{ posts|length }} most recent articles. Every show's complete archive is one click away, and the search box in the top bar covers every episode ever published.</p>
+            {% endif %}
+            <div class="blog-archive-grid">
+                {% for s in archive %}
+                <a href="{{ s.slug }}/index.html" class="blog-archive-card" style="--card-show-color: {{ s.color }}">
+                    {% if s.podcast_image %}<img src="{{ path_prefix }}{{ s.podcast_image }}" alt="" width="48" height="48" loading="lazy">{% endif %}
+                    <span class="blog-archive-name">{{ s.name }}</span>
+                    <span class="blog-archive-meta">{{ s.count }} article{{ '' if s.count == 1 else 's' }}{% if s.latest_date %} &middot; latest {{ s.latest_date }}{% endif %}</span>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+    {% endif %}
 
     <script>
     (function() {

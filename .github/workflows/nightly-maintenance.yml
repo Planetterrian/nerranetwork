@@ -256,9 +256,11 @@ jobs:
           # two primary discovery pages until someone runs --all.
           python generate_html.py --player
           python generate_html.py --how-to-listen
-          # Start Here / FAQ / About are cheap static pages that drift when
-          # shows launch — regenerate so onboarding stays current.
-          python generate_html.py --start-here --faq --about
+          # Every cheap static page (Start Here / About / FAQ / How to Listen /
+          # press / contact / editorial / legal / gallery / books / 404) —
+          # they drift when shows launch or copy changes, and until Sep
+          # 2026 only three of them were regenerated between --all runs.
+          python generate_html.py --static-pages
           # Cross-show blog aggregates (blog/index.html + blog.rss +
           # blog_*.rss). Aug 15 2026: the run-show finalize regenerates
           # these but deliberately EXCLUDES them from its commit (matrix
