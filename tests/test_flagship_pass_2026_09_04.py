@@ -90,3 +90,49 @@ class TestLanguageAudienceNullStaysNull:
         assert out["by_language"]["zh"]["measured"] is False
         assert out["by_language"]["zh"]["downloads_30d"] == 0  # rollup sums only measured shows
         assert out["by_language"]["zh"]["unmeasured_shows"] == 1
+
+
+class TestEnclosureSamplerPicksNewestByDate:
+    """The post-run validator sampled urls[-3:] assuming oldest-first XML.
+    After feeds became newest-first, that tail was the three OLDEST
+    episodes (Planetterrian Ep011-013, audio deleted on purpose) and the
+    first post-merge run failed validation after publishing cleanly."""
+
+    _ITEM = (
+        '<item><title>Ep {n}</title><pubDate>{d}</pubDate>'
+        '<itunes:episode>{n}</itunes:episode>'
+        '<enclosure url="https://audio.example.com/ep{n:03d}.mp3" type="audio/mpeg" length="1"/></item>'
+    )
+
+    def _feed(self, tmp_path, order):
+        from email.utils import format_datetime
+        import datetime as dt
+        items = []
+        for n in order:
+            d = format_datetime(dt.datetime(2026, 1, 1, tzinfo=dt.timezone.utc) + dt.timedelta(days=n))
+            items.append(self._ITEM.format(n=n, d=d))
+        xml = ('<rss xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd"><channel>'
+               + "".join(items) + '</channel></rss>')
+        p = tmp_path / "podcast.rss"
+        p.write_text(xml, encoding="utf-8")
+        return p
+
+    def _checked(self, monkeypatch, rss):
+        import engine.post_run_validation as prv
+        seen = []
+        class _Resp:
+            status_code = 200
+        class _Req:
+            @staticmethod
+            def head(url, **kw):
+                seen.append(url)
+                return _Resp()
+        monkeypatch.setitem(sys.modules, "requests", _Req)
+        assert prv.validate_enclosure_reachability(rss, sample_count=3)
+        return sorted(seen)
+
+    def test_newest_first_and_oldest_first_sample_the_same_episodes(self, tmp_path, monkeypatch):
+        newest_first = self._checked(monkeypatch, self._feed(tmp_path, [10, 9, 8, 3, 2, 1]))
+        oldest_first = self._checked(monkeypatch, self._feed(tmp_path, [1, 2, 3, 8, 9, 10]))
+        expected = sorted(f"https://audio.example.com/ep{n:03d}.mp3" for n in (8, 9, 10))
+        assert newest_first == expected and oldest_first == expected
