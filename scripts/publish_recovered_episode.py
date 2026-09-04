@@ -190,9 +190,12 @@ def main() -> int:
     episode_desc = hook.rstrip() + "\n\n" + _AI_DISCLOSURE_RSS
     if args.youtube_url:
         episode_desc += f"\n\n🎬 Watch on YouTube: {args.youtube_url}"
+    # A recovered episode has no digest, so run_show never wrote its blog
+    # page: only link the episode page when it actually exists on disk,
+    # otherwise the footer sends every podcast app to a 404.
     try:
         from generate_html import NETWORK_SHOWS as _NS
-        has_blog = slug in _NS
+        has_blog = slug in _NS and (ROOT / "blog" / slug / f"ep{ep_num:03d}.html").exists()
     except Exception:  # noqa: BLE001
         has_blog = False
     footer = build_show_notes_footer(config.publishing.base_url, slug, ep_num, has_blog=has_blog)
