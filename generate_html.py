@@ -874,7 +874,7 @@ NETWORK_SHOWS = {
         "tagline": "Daily AI models, agents, and practical developments.",
         "hero_tagline": "Daily AI models, agents, and practical developments.",
         "schedule": "Daily",
-        "episode_length": "~15 min",
+        "episode_length": "~10 min",
         "about_text": "Daily AI briefing covering new model releases, agent frameworks, and practical developments. From GPT and Claude to OpenClaw and Agent Zero — stay on top of the most exciting developments of our generation.",
         "about_host": "Hosted by Patrick in Vancouver.",
         "description_long": "Daily AI briefing covering new model releases, agent frameworks, and practical developments. From GPT and Claude to open-source projects — stay on top of the most exciting tech developments of our generation.",
@@ -1585,7 +1585,7 @@ _SCAFFOLD_SHOW_RESOURCES: dict = {
             {"name": "Next Spaceflight", "url": "https://nextspaceflight.com", "desc": "Never miss a launch — schedules and countdowns", "badge": "Free"},
         ],
         "faq": [
-            {"q": "What is SpaceX Daily?", "a": "A daily podcast and blog that tracks SpaceX now that it's a public company (Nasdaq: SPCX). Every weekday: the day's developments with sources, what the spaceflight community is talking about, one honest counterpoint, a first-principles engineering deep dive, a dedicated AI & Compute segment (the SpaceX↔xAI/Grok thread), and the SPCX market picture. Hosted by Patrick in Vancouver."},
+            {"q": "What is SpaceX Daily?", "a": "A daily podcast and blog that tracks SpaceX now that it's a public company (Nasdaq: SPCX). Every day: the day's developments with sources, what the spaceflight community is talking about, one honest counterpoint, a first-principles engineering deep dive, a dedicated AI & Compute segment (the SpaceX↔xAI/Grok thread), and the SPCX market picture. Hosted by Patrick in Vancouver."},
             {"q": "Why does a SpaceX show cover xAI, Grok, and Cursor?", "a": "Because the businesses are increasingly one stack. SpaceX earmarked IPO proceeds for AI compute infrastructure, is developing orbital data centers and 'AI satellites', and Starlink is the backhaul for a planet-wide compute-and-connectivity play. xAI (Grok, the Colossus datacenters) and X sit on the other side of that same Musk compute ecosystem — and Cursor (Anysphere) is where Grok reaches developers day to day. So the show carries a dedicated AI & Compute segment for Grok, xAI, X, Cursor, and the partnerships that show where the models are going."},
             {"q": "What is SPCX?", "a": "SPCX is SpaceX's stock ticker on the Nasdaq. SpaceX held the largest IPO in history in June 2026, pricing at $135 per share and raising about $75 billion at a valuation near $1.8 trillion. A dual-class share structure leaves Elon Musk with a controlling majority of the voting power. Nothing on this show is financial advice."},
             {"q": "Where do the numbers come from?", "a": "Official sources wherever possible — SpaceX announcements, the SEC S-1/prospectus and later filings, and credible reporting from NASASpaceflight, SpaceNews, Ars Technica, and CNBC. Community and social posts are clearly flagged as unverified. The live SPCX price on this page is refreshed every run from market data."},

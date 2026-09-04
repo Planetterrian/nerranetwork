@@ -456,6 +456,21 @@ _SHOW_PERSONALITIES: dict[str, dict[str, Any]] = {
                 "That wraps up today's AI briefing. Share this with a developer or builder "
                 "who wants to stay current. Subscribe wherever you listen. See you tomorrow."
             ),
+            # Sep 4 2026 flagship pass: the pool had two entries, so one
+            # closing aired in 7 of 10 episodes (the snapshot's tic
+            # detector flagged the whole paragraph). Two more variants
+            # bring the rotation to the SpaceX/Tesla shape; each keeps the
+            # "That's Models and Agents" / "that wraps up" Closing marker.
+            (
+                "That's Models and Agents for today. Something here worth building on? "
+                "Go try it before tomorrow's briefing lands — and if a colleague is "
+                "drowning in AI news, send them this way. See you tomorrow."
+            ),
+            (
+                "And that wraps up Models and Agents. The models will have changed again by "
+                "morning; we'll sort the signal from the noise when they do. Subscribe so "
+                "you don't miss it, and see you tomorrow."
+            ),
         ],
     },
     "models_agents_beginners": {
