@@ -112,12 +112,20 @@ class TestSceneGenerationFollowsTheRender:
         assert "_policy_publish_long" in window
 
     def test_the_shorts_aspect_is_never_reduced(self):
-        """Shorts publish on every tier — their scenes are not optional."""
+        """Shorts publish on every tier — their scenes are not optional.
+
+        Sep 2026: the 9:16 count is config-driven
+        (youtube.short_scenes_per_episode, default 5 >= the old fixed 4)
+        and, unlike the 16:9 count, must NOT be gated on whether a
+        long-form is produced today."""
         src = (REPO_ROOT / "run_show.py").read_text(encoding="utf-8")
-        idx = src.index('_run_grok_path(aspect="9:16"')
-        assert "count=" not in src[idx:idx + 120], (
-            "the 9:16 path must keep the full default scene count"
-        )
+        idx = src.index('aspect="9:16", label_suffix="_short"')
+        assert "count=_fresh_short_scene_count" in src[idx:idx + 160]
+        line = [l for l in src.splitlines()
+                if "_fresh_short_scene_count = " in l][0]
+        assert "_long_form_produced" not in line
+        from engine.config import YouTubeConfig
+        assert YouTubeConfig().short_scenes_per_episode >= 4
 
     def test_saving_is_measured_not_assumed(self):
         from engine.pipeline import record_youtube_outcomes  # noqa: F401

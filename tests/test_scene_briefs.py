@@ -1,0 +1,313 @@
+"""Drift guards for story-driven scene briefs (Sep 2026).
+
+The fix for "the pictures don't match what's being said": prompts LEAD
+with a concrete per-story scene instead of a static show keyword, the
+library blend only pads with ON-TOPIC images, and every episode gets
+one fresh scene per story instead of a fixed four.
+"""
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+_ROOT = Path(__file__).resolve().parent.parent
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
+
+from engine import scene_briefs as sb  # noqa: E402
+from engine.grok_imagine import build_image_prompts  # noqa: E402
+
+
+STORIES = [
+    "Starship Flight 14 stacks at Starbase as FAA clears the pad",
+    "Tesla FSD v14.1 Lite rolls out to HW3 cars in Texas",
+    "Gemini 3.7 Flash beats GPT on the agent benchmark",
+]
+
+
+class TestDeterministicBriefs:
+    def test_one_subject_per_story_in_order(self):
+        out = sb.deterministic_briefs(STORIES)
+        assert len(out) == 3
+        assert out[0].lower().startswith("starship flight 14")
+        assert "gemini" in out[2].lower()
+
+    def test_dedups_and_caps(self):
+        out = sb.deterministic_briefs(STORIES + STORIES, max_n=2)
+        assert len(out) == 2
+
+
+class TestModelBriefs:
+    def _fake(self, text):
+        return lambda prompt, **kw: (text, {})
+
+    def test_uses_model_output_in_story_order(self, monkeypatch):
+        arr = ('["Starship upper stage lowered onto its booster by the launch tower arms at dawn, wide shot",'
+               ' "A Model 3 interior at night with the center screen glowing during a highway drive",'
+               ' "A rack of humming AI accelerator servers in a dim data center, telephoto"]')
+        monkeypatch.setattr("engine.generator._call_grok", self._fake(arr))
+        out = sb.generate_scene_briefs(STORIES, show_name="SpaceX Daily")
+        assert len(out) == 3
+        assert out[0].startswith("Starship upper stage lowered")
+        assert out[2].startswith("A rack of humming")
+
+    def test_texty_brief_falls_back_per_slot(self, monkeypatch):
+        arr = ('["A headline banner reading Flight 14 over the launch pad text overlay",'
+               ' "A Model 3 interior at night with the center screen glowing during a highway drive",'
+               ' "A rack of humming AI accelerator servers in a dim data center, telephoto"]')
+        monkeypatch.setattr("engine.generator._call_grok", self._fake(arr))
+        out = sb.generate_scene_briefs(STORIES)
+        # Slot 0 rejected (caption-shaped) -> deterministic brief for story 0,
+        # order preserved.
+        assert out[0].lower().startswith("starship flight 14")
+        assert out[1].startswith("A Model 3 interior")
+
+    def test_garbage_response_falls_back_entirely(self, monkeypatch):
+        monkeypatch.setattr("engine.generator._call_grok", self._fake("no json here"))
+        out = sb.generate_scene_briefs(STORIES)
+        assert out == sb.deterministic_briefs(STORIES, max_n=3)
+
+    def test_disabled_skips_the_model(self, monkeypatch):
+        def boom(*a, **k):
+            raise AssertionError("model must not be called when disabled")
+        monkeypatch.setattr("engine.generator._call_grok", boom)
+        out = sb.generate_scene_briefs(STORIES, enabled=False)
+        assert len(out) == 3
+
+    def test_hook_is_story_zero(self, monkeypatch):
+        monkeypatch.setattr("engine.generator._call_grok", self._fake("[]"))
+        out = sb.generate_scene_briefs(STORIES, hook="Raptor 3 hits full thrust on the stand")
+        assert out[0].lower().startswith("raptor 3")
+
+
+class TestBriefFirstPrompts:
+    BRIEFS = ["Starship upper stage lowered onto its booster at dawn, wide shot",
+              "A Model 3 interior at night with the center screen glowing"]
+
+    def test_briefs_lead_the_prompt(self):
+        prompts = build_image_prompts(
+            hook="h", image_queries=["cybertruck", "supercharger"],
+            count=2, scene_briefs=self.BRIEFS,
+            show_descriptor="high-energy Tesla news photo")
+        assert len(prompts) == 2
+        assert prompts[0].startswith("Starship upper stage lowered")
+        assert "cybertruck" not in prompts[0]
+        assert "ZERO text" in prompts[0]
+
+    def test_queries_fill_only_the_remainder(self):
+        prompts = build_image_prompts(
+            hook="h", image_queries=["cybertruck"], count=3,
+            scene_briefs=self.BRIEFS)
+        assert len(prompts) == 3
+        assert prompts[2].startswith("cybertruck")
+
+    def test_briefs_work_without_any_queries(self):
+        prompts = build_image_prompts(hook="h", image_queries=[], count=2,
+                                      scene_briefs=self.BRIEFS)
+        assert len(prompts) == 2
+
+    def test_legacy_shape_unchanged_without_briefs(self):
+        a = build_image_prompts(hook="h", image_queries=["cybertruck"], count=1)
+        b = build_image_prompts(hook="h", image_queries=["cybertruck"], count=1,
+                                scene_briefs=None)
+        assert a == b and a[0].startswith("cybertruck")
+
+
+class TestOnTopicLibraryBlend:
+    def test_min_overlap_drops_off_topic_entries(self, tmp_path, monkeypatch):
+        from engine import gallery_library as gl
+        entries = [
+            {"image_id": "a", "original_url": "https://x/a.jpg", "prompt": "starship booster catch at the tower", "episode_date": "2026-08-01"},
+            {"image_id": "b", "original_url": "https://x/b.jpg", "prompt": "generic city skyline at night", "episode_date": "2026-08-02"},
+        ]
+        monkeypatch.setattr(gl, "_candidate_entries", lambda *a, **k: entries)
+        monkeypatch.setattr(gl, "load_manifest", lambda: {})
+        downloaded = []
+        def fake_dl(entry, cdir, failures=None):
+            p = tmp_path / f"{entry['image_id']}.jpg"
+            p.write_bytes(b"x")
+            downloaded.append(entry["image_id"])
+            return p
+        monkeypatch.setattr(gl, "_download_entry", fake_dl)
+        out = gl.select_library_scenes("spacex", aspect="16:9",
+                                       context_text="Starship booster catch attempt",
+                                       limit=8, cache_dir=tmp_path, min_overlap=1)
+        assert [p.stem for p in out] == ["a"]
+        # Legacy (min_overlap=0) still returns both, ranked.
+        out2 = gl.select_library_scenes("spacex", aspect="16:9",
+                                        context_text="Starship booster catch attempt",
+                                        limit=8, cache_dir=tmp_path, min_overlap=0)
+        assert len(out2) == 2
+
+    def test_brand_tokens_cannot_manufacture_a_match(self, tmp_path, monkeypatch):
+        """Sep 3 2026: 'tesla'/'optimus'/'cinematic' sit in ~100% of the
+        library, so overlap-on-anything matched every image. Overlap is
+        counted on salient tokens only once the candidate set is big
+        enough to measure document frequency."""
+        from engine import gallery_library as gl
+        entries = [
+            {"image_id": f"g{i}", "original_url": f"https://x/g{i}.jpg",
+             "prompt": f"tesla cinematic photojournalism optimus scene number {i}",
+             "episode_date": f"2026-08-{10 + i:02d}"}
+            for i in range(6)
+        ] + [
+            {"image_id": "roof", "original_url": "https://x/roof.jpg",
+             "prompt": "tesla cinematic photojournalism solar roof installers on a house",
+             "episode_date": "2026-07-01"},
+        ]
+        monkeypatch.setattr(gl, "_candidate_entries", lambda *a, **k: entries)
+        monkeypatch.setattr(gl, "load_manifest", lambda: {})
+        def fake_dl(entry, cdir, failures=None):
+            p = tmp_path / f"{entry['image_id']}.jpg"
+            p.write_bytes(b"x")
+            return p
+        monkeypatch.setattr(gl, "_download_entry", fake_dl)
+        out = gl.select_library_scenes(
+            "tesla", aspect="16:9",
+            context_text="Tesla drops the Solar Roof as installers face losses",
+            limit=8, cache_dir=tmp_path, min_overlap=1)
+        # Only the story-specific image survives; the six brand-only
+        # images (newer, and matching 'tesla') are dropped.
+        assert [p.stem for p in out] == ["roof"]
+        common = gl._common_tokens(entries)
+        assert {"tesla", "cinematic", "photojournalism"} <= common
+        assert "roof" not in common and "solar" not in common
+
+    def test_small_candidate_sets_keep_legacy_overlap(self):
+        from engine import gallery_library as gl
+        tiny = [{"prompt": "tesla solar"}, {"prompt": "tesla roof"}]
+        assert gl._common_tokens(tiny) == frozenset()
+
+
+class TestConfigContract:
+    def test_defaults_wire_the_story_driven_pipeline(self):
+        from engine.config import YouTubeConfig
+        c = YouTubeConfig()
+        assert c.scene_briefs_enabled is True
+        assert c.scenes_per_episode >= 8
+        assert c.short_scenes_per_episode >= 4
+        assert c.gallery_blend_min_overlap >= 1
+
+    def test_run_show_generates_briefs_once_and_passes_them(self):
+        src = (_ROOT / "run_show.py").read_text(encoding="utf-8")
+        assert src.count("generate_scene_briefs(") == 1
+        assert "scene_briefs=_scene_briefs or None" in src
+        assert "_fresh_short_scene_count" in src
+
+
+class TestStoryMatchedShortsScenes:
+    def test_window_text_picks_the_leading_scene(self, tmp_path):
+        from engine.visual_reuse import rank_scenes_for_text
+        a, b, c = (tmp_path / "a.jpg"), (tmp_path / "b.jpg"), (tmp_path / "c.jpg")
+        ctx = {a: "Starship upper stage lowered onto its booster at dawn",
+               b: "A Model 3 interior at night with the center screen glowing",
+               c: "A rack of humming AI accelerator servers in a data center"}
+        out = rank_scenes_for_text([a, b, c], ctx,
+                                   "and the Model 3 screen shows the new FSD build")
+        assert out[0] == b
+        # Ties keep input order.
+        assert out[1:] == [a, c]
+
+    def test_no_context_keeps_order(self, tmp_path):
+        from engine.visual_reuse import rank_scenes_for_text
+        a, b = (tmp_path / "a.jpg"), (tmp_path / "b.jpg")
+        assert rank_scenes_for_text([a, b], {}, "anything") == [a, b]
+        assert rank_scenes_for_text([a, b], {a: "x"}, "") == [a, b]
+
+    def test_run_show_passes_short_scene_context(self):
+        src = (_ROOT / "run_show.py").read_text(encoding="utf-8")
+        i = src.index("short_visual_extras(")
+        assert "fresh_scene_context=fresh_scene_prompts" in src[i:i + 1500]
+
+
+class TestRequestSizeLadder:
+    """Sep 3 2026: the endpoint ignores ``size`` (7,500+ committed sidecars
+    all 1280x720 whatever was requested). The documented controls are
+    ``aspect_ratio`` + ``resolution``; ``size`` is only the ladder's
+    fallback for a revision that rejects them."""
+
+    class _R:
+        def __init__(self, code, text="", data=None):
+            self.status_code, self.text, self._d = code, text, data
+        def json(self):
+            return self._d
+
+    def _ok(self):
+        import base64
+        return self._R(200, data={"data": [{"b64_json": base64.b64encode(b"img").decode()}]})
+
+    def test_documented_fields_are_sent_and_size_is_not(self, monkeypatch):
+        from engine import grok_imagine as gi
+        calls = []
+        def fake_post(payload, api_key, timeout_s):
+            calls.append(dict(payload))
+            return self._ok()
+        monkeypatch.setattr(gi, "_post_image_request", fake_post)
+        out = gi._request_one_image("p", api_key="k", model="m", size="2048x1152",
+                                    aspect_ratio="16:9", resolution="2k")
+        assert out == b"img"
+        assert calls == [{"model": "m", "prompt": "p", "n": 1,
+                          "response_format": "b64_json",
+                          "aspect_ratio": "16:9", "resolution": "2k"}]
+
+    def test_rejected_fields_fall_back_to_legacy_size_then_none(self, monkeypatch):
+        from engine import grok_imagine as gi
+        calls = []
+        def fake_post(payload, api_key, timeout_s):
+            calls.append(dict(payload))
+            if "resolution" in payload:
+                return self._R(400, "invalid_request: unknown field resolution")
+            if payload.get("size") == "2048x1152":
+                return self._R(400, "invalid_request: size not supported")
+            return self._ok()
+        monkeypatch.setattr(gi, "_post_image_request", fake_post)
+        out = gi._request_one_image("p", api_key="k", model="m", size="2048x1152",
+                                    aspect_ratio="16:9", resolution="2k")
+        assert out == b"img"
+        assert [("aspect_ratio" in c, c.get("size")) for c in calls] == [
+            (True, None), (False, "2048x1152"), (False, "1792x1024")]
+
+    def test_legacy_call_shape_without_aspect_ratio(self, monkeypatch):
+        from engine import grok_imagine as gi
+        calls = []
+        def fake_post(payload, api_key, timeout_s):
+            calls.append(dict(payload))
+            if payload.get("size") == "2048x1152":
+                return self._R(400, "invalid_request: size not supported")
+            return self._ok()
+        monkeypatch.setattr(gi, "_post_image_request", fake_post)
+        out = gi._request_one_image("p", api_key="k", model="m", size="2048x1152")
+        assert out == b"img"
+        assert [c.get("size") for c in calls] == ["2048x1152", "1792x1024"]
+
+    def test_aspect_ratio_mapping(self):
+        from engine.grok_imagine import _api_aspect_ratio, DEFAULT_RESOLUTION
+        assert _api_aspect_ratio("16:9") == "16:9"
+        assert _api_aspect_ratio("9:16") == "9:16"
+        assert _api_aspect_ratio("vertical") == "9:16"
+        assert _api_aspect_ratio("1:1") == "1:1"
+        assert DEFAULT_RESOLUTION == "2k"
+
+    def test_fetch_passes_fields_and_records_delivered_widths(self, tmp_path, monkeypatch):
+        import io
+        from PIL import Image
+        from engine import grok_imagine as gi
+        buf = io.BytesIO()
+        Image.new("RGB", (2048, 1152)).save(buf, "JPEG")
+        seen = []
+        def fake_req(prompt, *, api_key, model, size, **kw):
+            seen.append(kw)
+            return buf.getvalue()
+        monkeypatch.setattr(gi, "_request_one_image", fake_req)
+        cover = tmp_path / "cover.jpg"
+        cover.write_bytes(b"\xff\xd8\xff\xd9")
+        res = gi.fetch_scene_images_grok(work_dir=tmp_path, episode_num=1,
+                                         prompts=["a", "b"], fallback_cover=cover,
+                                         aspect="9:16", api_key="k")
+        assert seen[0]["aspect_ratio"] == "9:16" and seen[0]["resolution"] == "2k"
+        assert res.widths == [2048, 2048]
+
+    def test_run_show_records_delivered_px(self):
+        src = (_ROOT / "run_show.py").read_text(encoding="utf-8")
+        assert 'result["grok_image_px_max"]' in src
+        assert "grok_image_widths.extend(" in src

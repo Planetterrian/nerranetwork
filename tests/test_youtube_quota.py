@@ -183,8 +183,9 @@ def test_real_ru_dub_shows_visible_in_ru_bucket():
     shows_dir = Path(__file__).resolve().parent.parent / "shows"
     summary = estimate_network_daily_units(shows_dir)
     ru_slugs = summary["per_channel"].get("ru", {}).get("enabled_slugs", [])
-    for slug in ("tesla", "spacex", "fascinating_frontiers", "modern_investing"):
+    for slug in ("tesla", "spacex", "fascinating_frontiers"):
         assert f"{slug} (ru dub)" in ru_slugs, ru_slugs
+    assert "modern_investing (ru dub)" not in ru_slugs  # culled 2026-09-02
 
 
 def test_over_quota_is_per_channel(tmp_path):

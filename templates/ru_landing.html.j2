@@ -205,7 +205,9 @@
 {% endblock %}
 
 {% block content %}
-<main id="main-content">
+{#- base.html.j2 already wraps this block in <main id="main-content">; a
+    second <main> nested inside it was invalid HTML and a duplicate id. -#}
+<div class="ru-landing-main">
 
   <!-- ============ Hero + the one ask ============ -->
   <section class="ru-hero">
@@ -289,7 +291,7 @@
       </p>
     </div>
   </section>
-</main>
+</div>
 {% endblock %}
 
 {% block scripts %}

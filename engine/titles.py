@@ -64,6 +64,13 @@ NEWSLETTER_SUBJECT_MAX = 78
 #: clip loses nothing.
 BOOK_CHAPTER_TITLE_MAX = 72
 
+# On-screen chapter title card on long-form video (Sep 2026,
+# ``engine.video._long_form_chapter_cards_stage``). A card is a FIT
+# gate, not a clip: a title longer than this is not shown at all,
+# because a cut sentence on screen reads as a broken caption (Tesla
+# Ep592 rendered "Several projects pair storage with solar to").
+CHAPTER_CARD_MAX = 48
+
 ELLIPSIS = "…"
 
 # Trailing characters that read as debris once the tail is gone.

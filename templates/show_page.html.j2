@@ -198,7 +198,7 @@
     <section style="padding:var(--sp-3) var(--sp-6);background:var(--nn-card);border-bottom:1px solid var(--nn-border);">
         <div class="container" style="max-width:760px;display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp-3);justify-content:center;">
             <span style="font-family:var(--font-ui);font-size:0.92rem;color:var(--nn-text);">
-                {% if _is_ru %}📬 Получайте новые выпуски на почту:{% else %}📬 Get tomorrow's episode in your inbox:{% endif %}
+                {% if _is_ru %}📬 Получайте новые выпуски на почту:{% elif (schedule | default('Daily')).startswith('Daily') %}📬 Get tomorrow's episode in your inbox:{% else %}📬 Get the next episode in your inbox:{% endif %}
             </span>
             <form action="https://buttondown.com/api/emails/embed-subscribe/patricknovak1" method="post" target="popupwindow" style="display:flex;gap:var(--sp-2);flex-wrap:wrap;">
                 <input type="hidden" name="tag" value="{{ newsletter_tag }}">

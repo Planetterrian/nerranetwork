@@ -24,6 +24,12 @@
   --nn-purple:      #6B47FF;
   --nn-cyan:        #00D4FF;
   --nn-gradient:    linear-gradient(135deg, var(--nn-purple), var(--nn-cyan));
+  /* Aliases the newsletter form has referenced since May 2026 without a
+     definition (checkboxes rendered browser-default blue, the Subscribe
+     button had an invalid background) — Sep 2026 review. */
+  --nn-text-secondary: var(--nn-text-muted);
+  --nn-accent:         var(--nn-purple);
+  --nn-accent-hover:   #7d5dff;
 
   /* Per-show brand color — overridden inline per page */
   --show-color:     var(--nn-purple);
@@ -61,7 +67,13 @@
 
 /* ---------- Reset ---------- */
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+html {
+  scroll-behavior: smooth;
+  /* In-page anchors (#shows, #subscribe, the skip link's #main-content)
+     landed with their heading under the sticky nav without this. */
+  scroll-padding-top: calc(var(--nav-height, 72px) + 8px);
+  -webkit-font-smoothing: antialiased;
+}
 body {
   font-family: var(--font-body);
   background: var(--nn-bg);
@@ -160,6 +172,11 @@ button { font-family: var(--font-ui); cursor: pointer; }
   position: absolute; top: 100%;
   left: 50%; transform: translateX(-50%);
   min-width: 220px;
+  /* 17 shows × ~52px rows ≈ 900px: cap and scroll so the newest shows
+     (at the bottom of the list) are reachable on a laptop screen. */
+  max-height: min(72vh, 620px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   background: rgba(17, 22, 39, 0.98);
   backdrop-filter: blur(20px);
   border: 1px solid var(--nn-border);
@@ -168,6 +185,7 @@ button { font-family: var(--font-ui); cursor: pointer; }
   box-shadow: 0 20px 60px rgba(0,0,0,0.5);
   z-index: 100;
 }
+.nn-nav-dropdown-menu--compact { min-width: 200px; }
 .nn-nav-dropdown:hover .nn-nav-dropdown-menu,
 .nn-nav-dropdown.open .nn-nav-dropdown-menu { display: block; }
 .nn-nav-dropdown-menu a {
@@ -449,7 +467,11 @@ button { font-family: var(--font-ui); cursor: pointer; }
 }
 .nn-footer-grid {
   display: grid;
-  grid-template-columns: 2fr repeat(3, 1fr);
+  /* Five tracks: brand · Shows · Blog · Listen · About · Connect is six
+     children — brand spans wider. (Sep 2026: the About column used to sit
+     OUTSIDE the grid and the 4-track grid wrapped "Connect" under the
+     brand block.) */
+  grid-template-columns: 1.6fr repeat(5, 1fr);
   gap: var(--sp-10);
   margin-bottom: var(--sp-12);
 }
@@ -1402,6 +1424,35 @@ button { font-family: var(--font-ui); cursor: pointer; }
   background: var(--nn-card-hover);
 }
 
+/* Global search results dropdown (assets/js/search.js). These rules lived
+   inside the <640px media query until Sep 2026, so desktop had no hover,
+   no keyboard-selection highlight, no match <mark> and no focus ring. */
+#nn-global-search-results {
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  border: 1px solid var(--nn-border);
+}
+.search-result {
+  transition: background 80ms ease;
+}
+.search-result:hover,
+.search-result:focus-visible {
+  background: var(--nn-surface) !important;
+  outline: none;
+}
+.search-result mark {
+  background: color-mix(in srgb, var(--show-color, #00D4FF) 35%, transparent);
+  color: inherit;
+  padding: 0 1px;
+  border-radius: 2px;
+  font-weight: 600;
+}
+.nn-global-search input:focus-visible {
+  outline: 2px solid var(--show-color, #00D4FF);
+  outline-offset: -2px;
+}
+
 /* ---------- Responsive ---------- */
 
 /* Mobile: < 640px */
@@ -1422,33 +1473,6 @@ button { font-family: var(--font-ui); cursor: pointer; }
   .nn-global-search input {
     font-size: 0.8rem !important;
     padding: 5px 6px !important;
-  }
-
-  /* Global search results dropdown (used by centralized assets/js/search.js) */
-  #nn-global-search-results {
-    border-radius: 12px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
-    overflow: hidden;
-    border: 1px solid var(--nn-border);
-  }
-  .search-result {
-    transition: background 80ms ease;
-  }
-  .search-result:hover,
-  .search-result:focus-visible {
-    background: var(--nn-surface) !important;
-    outline: none;
-  }
-  .search-result mark {
-    background: color-mix(in srgb, var(--show-color, #00D4FF) 35%, transparent);
-    color: inherit;
-    padding: 0 1px;
-    border-radius: 2px;
-    font-weight: 600;
-  }
-  .nn-global-search input:focus-visible {
-    outline: 2px solid var(--show-color, #00D4FF);
-    outline-offset: -2px;
   }
 
   .show-hero-inner {
@@ -1579,6 +1603,7 @@ button:focus-visible {
 
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
@@ -1912,7 +1937,8 @@ details[open] .faq-question::after { content: '\2212'; }
   color: var(--nn-text-muted);
   margin-left: auto;
 }
-.blog-idx-card h2 {
+.blog-idx-card h2,
+.blog-idx-card h3 {
   font-family: var(--font-heading);
   font-size: 1.05rem;
   font-weight: 600;
@@ -2039,8 +2065,13 @@ body.menu-open {
 @media (max-width: 640px) {
   .network-hero {
     min-height: auto;
-    padding: var(--sp-16) 0 var(--sp-12);
+    /* Keep the side gutters — `0` here ran the badge, H1, tagline and
+       proof stats edge-to-edge on every phone (Sep 2026 review). */
+    padding: var(--sp-16) var(--sp-5) var(--sp-12);
   }
+  /* Eight covers is a hero; seventeen is a wall that pushes the CTAs two
+     screens down on a phone. The full grid is one scroll below. */
+  .hero-show-orbit .orbit-card:nth-child(n+9) { display: none; }
 }
 
 /* ===================================================================

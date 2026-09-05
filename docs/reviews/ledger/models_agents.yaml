@@ -401,4 +401,142 @@ reviews:
       ab_listen_required: false
       rationale: Drift-guard the two prompt bans, UTH/teaser marker alternates, and no-podcast-expand so a later edit cannot silently drop them.
     agent_cost_usd: 0.1325
+  - date: '2026-09-04'
+    pr: null
+    doc: docs/reviews/flagship_review_2026_09_04.md
+    generated_by: claude-code-session
+    summary: 'Operator-directed flagship pass, implement mode. Three prior reviews proposed the same fixes with shipped: [] each time. Root cause of the 10/10 "Everyone talks about" deep-dive opener was the DIGEST prompt supplying the sentence (plus the podcast prompt); Ep153/155/156 shipped with no Under the Hood chapter; Ep161 shipped a chapter titled with a raw markdown link; the "open.source" marker alternate mis-titled the news body "Practical & Community" in 6/10; review_snapshot crashed on this show. All fixed; chapters Ep143-162 rebuilt deterministically.'
+    scored_prior_predictions:
+    - metric: '"Everyone talks about" / "Everyone treats" as UTH body opener, last 10 post-merge'
+      verdict: miss
+      evidence: 10/10 digests, 9/10 spoken (Ep153-162); seed was models_agents_digest.txt:144 + podcast:152 - three reviews aimed at the podcast layer only; both de-seeded by shape now
+    - metric: '"Before we go" as Tomorrow Teaser opener, last 10 post-merge'
+      verdict: miss
+      evidence: 10/10 - the shipped prompt REQUIRES the phrase as the chapter anchor (same as Tesla/SpaceX); closed as a brand anchor, not re-filed
+    - metric: '"keep an eye on" as teaser opener, last 10 (regression watch)'
+      verdict: hit
+      evidence: 0/10
+    - metric: 'successor UTH-opener tic: any single new contrast-cliché in >=6/10 deep-dives'
+      verdict: hit
+      evidence: none >= 6/10; companion seeds "In practice" 9/10 and "gotcha" 6/10 came from the same prompt lines and are de-seeded with them
+    - metric: 'successor teaser-opener tic: any single new framing phrase in >=6/10 teasers'
+      verdict: hit
+      evidence: max 3/10 ("the next wave/round")
+    - metric: episodes with an Under the Hood chapter when a deep-dive is present, last 10
+      verdict: miss
+      evidence: 6/10 (Ep153/155/156/157 opened with Everyone-talks and no pop-the-hood); marker alternate never shipped - now required anchor + alternates, rebuilt chapters 10/10
+    - metric: spoken episode-number continuity callbacks in last 10
+      verdict: hit
+      evidence: 0/10 beyond the identity line
+    shipped:
+    - file: shows/prompts/models_agents_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 'de-seed "Everyone talks about … single switch you flip" by shape; literal **Title: Source Name** placeholder replaced (bans links/@handles in headings); DEPTH OVER BREADTH stated as a bracketed instruction, not a heading'
+    - file: shows/prompts/models_agents_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: '"pop the hood" REQUIRED in the deep dive''s first sentence (was one of two example openers); everyone/most-people opener shape banned'
+    - file: shows/models_agents.yaml
+      kind: config
+      ab_listen_required: false
+      rationale: UTH marker + everyone (talks|thinks) about|everyone treats|most people assume; "open.source" removed from Practical & Community (fired on topic words at 7-16% of the script and suppressed headline navigation)
+    - file: engine/chapters.py + engine/grok_imagine.py
+      kind: code
+      ab_listen_required: false
+      rationale: flatten markdown links / drop @handle tails in every title helper; reject "#"-headed headline candidates (Ep148 "# Models & Agents" chapter)
+    - file: digests/models_agents/chapters_ep143-162.json
+      kind: data
+      ab_listen_required: false
+      rationale: rebuilt from the on-disk scripts with the current engine (timestamps reproduce exactly where titles were unchanged); Ep161 blog chapter repaired
+    - file: engine/intros.py
+      kind: code
+      ab_listen_required: true
+      rationale: closing pool 2 -> 4 variants (one closing aired 7/10)
+    - file: engine/show_memory.py
+      kind: code
+      ab_listen_required: true
+      rationale: quotable continuity example ("Remember, we covered [program] yesterday") replaced with shape guidance - reproduced verbatim with tracker display names in 8/10 episodes (shared by 8 memory shows)
+    - file: scripts/review_snapshot.py
+      kind: code
+      ab_listen_required: false
+      rationale: UnboundLocalError on shows without exclude_title_patterns
+    - file: generate_html.py
+      kind: code
+      ab_listen_required: false
+      rationale: show page badge ~15 min -> ~10 min (real 7:38-11:14)
+    deferred:
+    - 'OPERATOR DECISION (length, carried): 9/10 < 1500w; min_digest_words still 1300; digest expansion retry fires 7/10 unmeasured'
+    - RSS title truncation 10/10 (hooks 93-163 chars vs the prompt's "under 120" and the 100-char title cap) - tighten the hook spec (spoken cold open, A/B) or feed the title bundle's optimized title (metadata-only); decide which surface owns it
+    - Same-day double publish Ep155 + Ep156 (2026-08-28, same Top Story, four near-duplicate YouTube uploads) - operator: prune one; renumbering unsafe
+    - podcast:transcript points at raw Whisper JSON ("Quinn" for Qwen, "Laura" for LoRA, "andthropic") - post-correct with the garble map or point at reader text
+    - arXiv share 94% on Ep162 (selection rebalance carried since July 2); Under the Hood asserts unsourced numbers 5/10 or duplicates a same-day item 5/10; 8/13 items on Ep159 with no Source line - prompt (A/B)
+    - Narrative tracker seed-only (last_major_update null x6) and last_mentioned advances on broad display-name token matches so every program reads "last covered yesterday" - only advance on headline mentions (data-side)
+    - MAB sibling: Big Story / Deep Dive / Cool Stuff / Quick Bits markers fire 0/5 (host never says them) so Welcome spans 190-428 s - same required-anchor treatment
+    predictions:
+    - metric: '"Everyone talks/treats/thinks about" or "Most people assume" as the Under the Hood opener, last 10 post-merge (digest AND spoken)'
+      baseline: 10/10 digests, 9/10 spoken (Ep153-162)
+      expected: <=2/10; successor shape to watch - any single new opener in >=6/10 (ban by shape next pass)
+      verdict: pending
+      evidence: null
+    - metric: episodes with an Under the Hood chapter when a deep-dive is present, last 10
+      baseline: 6/10 (Ep153-162 as committed before the rebuild)
+      expected: '>=9/10 (required "pop the hood" anchor + alternates)'
+      verdict: pending
+      evidence: null
+    - metric: chapters_ep*.json titles containing "](" or "http", or a "Practical & Community" chapter starting before 25% of the script
+      baseline: 1 link title (Ep161) + 6/10 early P&C
+      expected: 0/10
+      verdict: pending
+      evidence: null
+    - metric: single closing variant share in last-10 transcripts
+      baseline: 7/10 one variant
+      expected: <=4/10 for any one variant
+      verdict: pending
+      evidence: null
+    - metric: 'digests carrying a "DEPTH OVER BREADTH" heading'
+      baseline: 4/10
+      expected: 0/10
+      verdict: pending
+      evidence: null
+    - metric: 'spoken continuity callbacks of the shape "we covered <tracker display name> yesterday"'
+      baseline: 8/10
+      expected: <=2/10
+      verdict: pending
+      evidence: null
+    agent_cost_usd: null
+  - date: 2026-09-05
+    pr: null
+    doc: docs/reviews/network_delivery_review_2026_09_05.md
+    summary: "Network delivery review. The spoken 'What You Need to Know' rundown made the top story the first thing heard three times; Under the Hood re-explained a news item in 5/6 episodes (HARNESSEVO x4 in Ep163) - the one exception (Ep162) was the densest episode; 24 'Builders should...' advisory tails in six episodes; 5/5 continuity callbacks were re-tells; Ep163 ran one launch as Top Story + five Model Updates items."
+    shipped:
+      - "models_agents_podcast.txt - spoken rundown removed; Under the Hood = second technical story, >=4 numbers, may not restate any news item; Things to Try may not restate; advisory / 'here's what this means for you' asks removed; worked example -> shape (A/B)"
+      - "models_agents_digest.txt - ONE STORY = ONE ITEM; Under the Hood distinct from EVERY news item; per-item 'what builders should try' tail -> Things to Try only; sentence count follows fact count (A/B)"
+      - "engine/show_memory _SECTION_INSTRUCTIONS - MANDATORY per-story arc sentence -> one delta-bearing callback"
+      - "closing pinned to one sign-off (reverses the Sep 4 four-variant pool on purpose) (A/B)"
+    deferred:
+      - "none"
+    predictions:
+    - metric: "Under the Hood subject distinct from every news item (manual)"
+      baseline: "1/6 (Ep158-163)"
+      expected: "10/10"
+      verdict: pending
+      evidence: null
+    - metric: "script_digest_overlap_pct, median of last 10"
+      baseline: "44% (Ep160-163: 45/62/43/29)"
+      expected: "<=25%"
+      verdict: pending
+      evidence: null
+    - metric: "'advisory' filler shape per episode (script_audit)"
+      baseline: "up to 11 (Ep159)"
+      expected: "0 on 9/10"
+      verdict: pending
+      evidence: null
+    - metric: "continuity callbacks that state a delta (manual)"
+      baseline: "0/5"
+      expected: "every callback names what changed, or none"
+      verdict: pending
+      evidence: null
+    agent_cost_usd: null
+
 do_not_retry: []

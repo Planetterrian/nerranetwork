@@ -123,6 +123,17 @@ exclude_title_patterns:
 # violates the digest prompt's own analyst rule. A NAMED analyst call
 # with a price target (TD Cowen $460) is deliberately NOT excluded.
 - consensus recommendation
+# Sep 4 2026 flagship pass — four shapes the Aug 15 widen still let
+# through (Ep590 SPOKE "a new institutional position of eleven thousand
+# six hundred shares according to MarketBeat"; Ep586 carried "Cathie
+# Wood Reveals Ark's Position On Tesla Stock" + a MarketBeat "Should You
+# Buy?" alert): sub-million dollar amounts, "shares of N Tesla", "N
+# shares in Tesla … acquired by", and disclosure-shaped headlines.
+- (invests|acquires|buys|purchases|sells|adds) \$[\d.,]+ (in|of|to) tesla
+- (buys|sells|acquires|purchases) shares of [\d,]+ tesla
+- '[\d,]+ shares (in|of) tesla.{0,40}(acquired|purchased|bought|sold) by'
+- (reveals|discloses) .{0,40}(position|stake) (on|in) tesla
+- should you buy\??
 
 web_search_queries:
   - "Tesla news today"
@@ -542,7 +553,7 @@ youtube:
   # back to ``pexels`` if engagement metrics don't justify the spend.
   image_provider: grok
   grok_image_model: grok-imagine-image
-  grok_image_descriptor: "high-energy Tesla news photo"
+  grok_image_descriptor: "high-energy Tesla news photo — real vehicles, factories, charging and software on screens, automotive-press lighting, ultra-detailed"
   tags:
     - tesla
     - tsla

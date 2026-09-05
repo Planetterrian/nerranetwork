@@ -164,10 +164,21 @@ def build_show_notes_footer(
 
 def _add_existing_entry_to_feed(fg, ep_data: dict, channel_image: str = "") -> None:
     """Re-add a parsed existing episode to the feed generator."""
-    entry = fg.add_entry()
+    # order="append": feedgen PREPENDS by default, which inverted the
+    # newest-first loop in update_rss_feed and serialized every feed
+    # oldest-first (Tesla's first <item> was Ep343 from 2025-12-03; Sep 4
+    # 2026 flagship pass). Podcast apps sort by pubDate, but anything that
+    # reads the first N items in document order was seeing the oldest N.
+    entry = fg.add_entry(order="append")
     entry.id(ep_data.get("guid", ""))
     entry.title(ep_data.get("title", ""))
     entry.description(ep_data.get("description", ""))
+    link = ep_data.get("link", "")
+    if link and not link.lower().endswith((".mp3", ".m4a")):
+        # An old MP3 <link> (the pre-Sep-2026 shape) is deliberately not
+        # carried forward: the enclosure already names the audio, and an
+        # "episode website" that opens the raw file is worse than none.
+        entry.link(href=link)
 
     if ep_data.get("pubDate"):
         try:
@@ -218,9 +229,15 @@ def _add_new_episode(
     audio_url: str,
     channel_image: str,
     format_duration_func,
+    episode_page_url: str = "",
 ) -> None:
     """Add the new episode entry to the feed generator."""
-    entry = fg.add_entry()
+    # order="append": feedgen PREPENDS by default, which inverted the
+    # newest-first loop in update_rss_feed and serialized every feed
+    # oldest-first (Tesla's first <item> was Ep343 from 2025-12-03; Sep 4
+    # 2026 flagship pass). Podcast apps sort by pubDate, but anything that
+    # reads the first N items in document order was seeing the oldest N.
+    entry = fg.add_entry(order="append")
     entry.id(new_guid)
     entry.title(episode_title)
     # Render the markdown digest to lightweight HTML before publishing
@@ -233,7 +250,13 @@ def _add_new_episode(
         mp3_url = audio_url
     else:
         mp3_url = f"{base_url}/{audio_subdir}/{mp3_filename}"
-    entry.link(href=mp3_url)
+    # <link> is the item's "episode website" in every podcast app. It
+    # used to be the MP3 (Sep 4 2026 flagship pass: SpaceX Ep089's
+    # website button opened the raw audio file) — the episode's blog
+    # post (player + show notes + transcript + sources) is the page a
+    # listener actually wants. Legacy MP3 link only when no page URL is
+    # supplied.
+    entry.link(href=episode_page_url or mp3_url)
 
     pub_date = datetime.datetime.combine(
         episode_date,
@@ -294,6 +317,7 @@ def update_rss_feed(
     person_name: str = "",
     person_url: str = "",
     person_img: str = "",
+    episode_page_url: str = "",
 ) -> Path:
     """Create or update an RSS feed with a new episode.
 
@@ -358,6 +382,13 @@ def update_rss_feed(
                             ep_data["description"] = elem.text or ""
                         elif tag == "guid" and elem.text:
                             ep_data["guid"] = elem.text.strip()
+                        elif tag == "link" and elem.text:
+                            # Preserved across rebuilds (Sep 4 2026): the
+                            # re-add path never wrote <link>, so only the
+                            # newest item ever carried one — and that one
+                            # pointed at the MP3. Podcast apps render
+                            # <link> as "episode website".
+                            ep_data["link"] = elem.text.strip()
                         elif tag == "pubDate":
                             ep_data["pubDate"] = elem.text or ""
                         elif tag == "enclosure":
@@ -534,6 +565,7 @@ def update_rss_feed(
         fg, new_guid, episode_title, episode_description, episode_date,
         episode_num, mp3_filename, mp3_duration, mp3_path, base_url,
         audio_subdir, audio_url, channel_image, format_duration_func,
+        episode_page_url=episode_page_url,
     )
 
     # Add remaining existing episodes (those with lower episode numbers)

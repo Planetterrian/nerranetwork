@@ -2,28 +2,28 @@
 > **Vandenberg’s 50th launch of 2026 shows Falcon 9 reuse sustaining cadence while Starship readies its next V3 test flight.**
 ---
 ### Top News
-1. **Title: Western Range supports its 50th Launch of the year**
+1. **Western Range supports its 50th Launch of the year**
    The Western Range at Vandenberg Space Force Base supported its 50th launch of 2026 on July 21. This marks the range’s busiest year on record for orbital missions. The milestone reflects sustained high launch tempo from the California site. Ground operations coordinated multiple vehicles and payloads through the same infrastructure on a single day. Range crews maintained safety and telemetry coverage without reported delays. Source: [Google News](https://news.google.com/rss/articles/CBMixAFBVV95cUxQYmlvUERPY3NPZGUxLU5EQUtDREVmNzdKWFpVSzRlOW8yeGlETzJCeHVOTmFreENCSzNkQnZ0RHpXRzc5TTZXcGxIQlU4V3I4ZnZvRzZIM2NCSHQ2M3ZvZGRQQlpKZTFaNTlXTnh4emNDYWpBR1U2NVhQOVpEUGFSLWQybUtXS2NPZU9zU0wtS2pyQkt2UXZxQ3M5TVVnOVZZdU1FZGxRanRzYTY3cGtRSk1QOHpKYTlZaXdtLThWdGFHVFpw?oc=5)
 
-2. **Title: SpaceX carries out 50th rocket launch of 2026 at Vandenberg**
+2. **SpaceX carries out 50th rocket launch of 2026 at Vandenberg**
    SpaceX completed its 50th orbital launch of the year from Vandenberg with a Falcon 9 carrying a Starlink mission. The flight followed a last-second abort the previous day on the same booster. Photos from the event show the vehicle lifting off from SLC-4E. The launch added another data point to the site’s record pace for 2026. Booster reuse allowed the same hardware to fly again within 24 hours. Source: [Google News](https://news.google.com/rss/articles/CBMizgFBVV95cUxQRXN2emRiT3FJTFNGemRKejlURzNrWGNTWnVsMVFwajRRU1FEcG5nN0RnLTZNYnVaWzB4VGRfM2RScDg3X2VOUm80S2lNNTVBVlp0NkIyT3o0WjJBa1Z0VGtnLUpjX21qdUdDYm9MdEQtaGppRUwxbDZDcGN1dGo0NjREcXY1SU1BLXpwZW9EVENTU1A5ZXFjbVUxMHhfWjZWa2dvZ0gyR1RKcTU0aDRpNU9TRTVwNzFlUDBoRkczbWY1bXNDaDhla0daeVA4UQ?oc=5)
 
-3. **Title: SpaceX launches Starlink mission from California a day after last-second abort**
+3. **SpaceX launches Starlink mission from California a day after last-second abort**
    A Falcon 9 lifted off from Vandenberg carrying another batch of Starlink satellites after scrubbing the prior attempt at engine startup. The booster had already flown 22 prior missions. The successful deployment adds to the constellation’s ongoing expansion. Recovery teams tracked the first-stage landing on the droneship. Payload fairings were recovered for reuse on future missions. Source: [Google News](https://news.google.com/rss/articles/CBMiygFBVV95cUxNMGFUeUUyR1hDT3h3SktqUFllSFBDN21sSGFTMDMzWFd1WXd5a0F3bzM4UUxLZzcwdExvNEVtQzBfXzdVVElsR1NFZldsZ1RnTXV3SHVFMlRjYUlEbF9FY2R0TDV6UDBQUktqUzU1dU1pNm1NdnNtSU92YTFuOENEYWVFb1BTMkE4aDRJdkxlVXZXczlyeFdrYnJzUGJkOEhUZFhJa3BKcGpnekNVVW5qWmZLNm4wRXJsa29BTG1BVFpBaXZRcS1nSFpn?oc=5)
 
-4. **Title: SpaceX Targets New Starship V3 Test After Launch Abort**
+4. **SpaceX Targets New Starship V3 Test After Launch Abort**
    SpaceX is preparing a new Starship V3 test flight following the recent countdown abort. The vehicle incorporates upgraded structural and propulsion elements aimed at higher payload capacity. Ground teams are reviewing data from the prior attempt to clear the next window. V3 hardware includes changes to tankage and avionics for increased performance. The test campaign continues to iterate on flight software and thermal protection. Source: [Google News](https://news.google.com/rss/articles/CBMihwFBVV95cUxQWnMwTjZiSGlxOUg2WHNrdkhnTTV2bWE2RzNURTVXNC1ReDdJTTlOTVBOakRkZ05DaDV1b01VUDEzVWxvM0tLcXhlRGZqdWxEMlFULWkyYy1CYVEtZHZaMVJGT1VpYXBfSTJXUEU2a3lUTlpWb0NfYmhfbkJoT1NjMl9xYTNqYUU?oc=5)
 
-5. **Title: SpaceX launch to send Northrop Grumman’s 2-handed rescue robot to space**
+5. **SpaceX launch to send Northrop Grumman’s 2-handed rescue robot to space**
    A Falcon 9 is scheduled to carry Northrop Grumman’s two-armed satellite servicing robot on an upcoming mission. The spacecraft is designed to perform on-orbit repairs and refueling tasks. This marks the first flight of the robotic system. The robot’s dual manipulators target legacy satellites that lack dedicated servicing ports. Mission planners expect the demonstration to validate capture and tool-use sequences in microgravity. Source: [Google News](https://news.google.com/rss/articles/CBMinAFBVV95cUxOLUQzNU5DaVpVbE94OVg0cVFJVVhnWWNFSVdPcHVMeExzYmllaGZUUHNmLXdULWhsY2ZMeW9iWWlwVnFFNEZnYnpUSFdQcTgzd3NIb01sOTF1UTFhZGNoaG00S3J1TGZnS1lKazFOdUFMeHM5c1V6YS0zRFAxQ0VsSEtMY2RrcVNyVFFvZGY5TXd0N0d1YXZ5UjlLZFQ?oc=5)
 
-6. **Title: NASA confirms Crew-13 mission updates, SpaceX Dragon launch planned for September**
+6. **NASA confirms Crew-13 mission updates, SpaceX Dragon launch planned for September**
    NASA has set briefings for the Crew-13 mission that will fly on a SpaceX Dragon spacecraft in September. The crew will rotate to the International Space Station. Dragon fleet operations continue to support both crew and cargo rotations. The mission will deliver new science payloads and return samples from prior expeditions. Crew training integrates lessons from previous Dragon flights to refine rendezvous procedures. Source: [Google News](https://news.google.com/rss/articles/CBMi1AFBVV95cUxQSnhlLW5saXI3UFA1akV4SUx2YVpnUzJ5a3ZFQWg1OTk4eTdSNXEwaEpRNWFRbVpLZXJZVTRnQTlSZHVvQVlzU3JLbk9kNFFtd2dWUXZKdzFXTy1XSFg0UFd0Vk5xVGUzYW5sREYyV0V3T3poZk5EcjFIeHFIbmNMWTJsMjR3cklPaGlEcEdLVGNFWTF4cHdndUlJLTRFeWtIUldLWjk2cW9QSU1RMnVJRlZRWDFSeFUhWFJKeThEX3ZPMjB0OW45OThyRms5Z3U2T2t5Yg?oc=5)
 
-7. **Title: Starlink launches satellite internet services in Seychelles**
+7. **Starlink launches satellite internet services in Seychelles**
    Starlink has begun offering residential and commercial internet service in Seychelles. The rollout expands coverage to another island nation in the Indian Ocean. Service activation follows regulatory approval and gateway installation. Users can now order terminals for immediate connectivity in previously underserved areas. The network uses existing satellite passes to deliver low-latency links without new orbital assets. Source: [Google News](https://news.google.com/rss/articles/CBMilwFBVV95cUxOejRnVzdiYkx3U0pjU2ZfNDBfNldzNnNJUzkxM1J0M1VicGtfcFlTS2w4N21qNDFWbjlPNUdnZnRzNkZoMnNHWFgyajFqbnk5cUp2dFlZUWhxVHpwTEJfYVZMWTh2RE82aEh2aWV0Nnd0TU1sYXhmaWMtNnltZjZKYmxxWlBzakpETU1oRENENXRoMHhfNnpz?oc=5)
 
-8. **Title: Starship Test Launch Set For Thursday**
+8. **Starship Test Launch Set For Thursday**
    SpaceX has targeted July 23 for the next Starship integrated flight test. The attempt follows analysis of the prior abort and vehicle modifications. Teams continue work at Starbase to prepare Booster and Ship hardware. The flight profile includes additional data collection on heat-shield performance and engine throttling. Success would advance the program toward orbital refueling demonstrations planned for later this year. Source: [Google News](https://news.google.com/rss/articles/CBMihwFBVV95cUxQdW5EemhWNnl0cDJzOG9CQ3haeUlndl9sSXF1VG0wMGdoa3J3Ty1tbWt6Q2RyZlRJWVdJRlltRFlFa25vNzF6alZiUGpoTUZGNjJGZ2xkTUJ0OEJKWUVKVlBxX2JqNlE3Tk1fcGtTVFMxUHk2SDdUNlc0bnVpekRtaDd1YmdiNkE?oc=5)
 ---
 ## Community Buzz
