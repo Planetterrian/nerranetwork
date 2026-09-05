@@ -357,6 +357,62 @@ def run_publish_phase(
 # Generation Phase
 # ---------------------------------------------------------------------------
 
+REWRITE_GATE_MIN_KEEP_RATIO = 0.7  # a rewrite shorter than this is a truncation, not a rewrite
+
+
+def _script_rewrite_gate(podcast_script, digest_text, config, template_vars_for_script, tracker):
+    """Re-run the script stage once when it copied the digest; return a
+    dict with the chosen ``script`` and the gate's metrics, or None when
+    the gate is off / did not fire / failed (the original script stands)."""
+    try:
+        threshold = float(getattr(config.llm, "script_rewrite_gate_overlap_pct", 0) or 0)
+    except (TypeError, ValueError):
+        threshold = 0.0
+    if threshold <= 0 or not podcast_script or not digest_text:
+        return None
+    try:
+        from engine.script_audit import copied_sentences, digest_overlap
+        before = digest_overlap(podcast_script, digest_text)
+        if before is None or before < threshold:
+            return {"script": podcast_script, "fired": False, "before_pct": round(before or 0.0, 1)}
+        copied = copied_sentences(podcast_script, digest_text)
+        appendix = (
+            "REWRITE REQUIRED — your previous draft read the digest aloud: "
+            f"{before:.0f} percent of its eight-word phrases appear word for word in "
+            "the digest, and these sentences were carried over verbatim:\n"
+            + "\n".join(f"- {s}" for s in copied)
+            + "\n\nWrite the whole script again in your own spoken sentences from the "
+            "same facts. Keep every fact, every number, every name and every required "
+            "anchor phrase; keep the identity line and the closing block exactly as "
+            "supplied. Do not shorten the episode and do not add framing — change the "
+            "WORDING, sentence by sentence, so no run of eight consecutive words "
+            "matches the digest."
+        )
+        from engine.generator import generate_podcast_script as _gen
+        rewritten = _gen(template_vars_for_script, config, tracker=tracker, prompt_appendix=appendix)
+        after = digest_overlap(rewritten or "", digest_text)
+        orig_words = len((podcast_script or "").split())
+        new_words = len((rewritten or "").split())
+        accepted = bool(
+            rewritten and after is not None and after < before
+            and new_words >= REWRITE_GATE_MIN_KEEP_RATIO * orig_words
+        )
+        logger.info(
+            "Script rewrite gate: digest-verbatim %.0f%% -> %.0f%% (%d -> %d words) — %s",
+            before, after if after is not None else -1.0, orig_words, new_words,
+            "rewrite accepted" if accepted else "original kept",
+        )
+        return {
+            "script": rewritten if accepted else podcast_script,
+            "fired": True, "before_pct": round(before, 1),
+            "after_pct": round(after, 1) if after is not None else None,
+            "accepted": accepted, "copied_sentences": len(copied),
+        }
+    except Exception as exc:  # noqa: BLE001 — the gate must never cost an episode
+        logger.warning("Script rewrite gate failed (original script kept): %s", exc)
+        return None
+
+
 def run_generation_phase(
     config: Any,
     *,
@@ -662,6 +718,21 @@ def run_generation_phase(
     podcast_script = generate_podcast_script(
         template_vars_for_script, config, tracker=tracker
     )
+
+    # Script rewrite gate (Sep 5 2026 delivery review). The first
+    # post-merge Tesla episode still carried 51% of its 8-word phrases
+    # verbatim from the digest (63% the episode before): the prompt rule
+    # alone moved the number, not far enough. One bounded retry, with the
+    # copied sentences named; kept only when it copies less and is not
+    # truncated. Off when the threshold is 0. Not a length lever.
+    _gate = _script_rewrite_gate(
+        podcast_script, template_vars_for_script.get("digest", ""), config,
+        template_vars_for_script, tracker,
+    )
+    if _gate:
+        podcast_script = _gate.pop("script")
+        if template_vars is not None:
+            template_vars["_script_rewrite_gate"] = _gate
 
     # Missing-closing guard (June 10 2026, Planetterrian review): PT
     # Ep081/Ep084 shipped without the supplied closing block — Ep084

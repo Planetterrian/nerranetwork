@@ -57,6 +57,15 @@ class LLMConfig:
     max_tokens: int = 3500
     podcast_max_tokens: int = 0  # 0 = use max_tokens for both
     min_podcast_words: int = 1500  # Minimum word count to trigger retry
+    # Sep 5 2026 delivery review: when this share (0-100) of the finished
+    # script's 8-word phrases appears verbatim in the digest, the script
+    # stage is re-run ONCE with the copied sentences named and an
+    # instruction to write them in spoken English; the rewrite is kept
+    # only when it copies less and is not truncated. 0 = off (default;
+    # the nine English news shows set it in their YAML). This is a
+    # REWRITE gate, not a length lever — it never changes a length target
+    # and never fires on word count (the banned podcast-side retry class).
+    script_rewrite_gate_overlap_pct: float = 0.0
     # Absolute hard floor below which the runner aborts the episode as
     # "clearly broken" (see run_show.py:1580). Network default 600 is
     # tuned for the news-show shape where 600 words ~ 4 minutes — well

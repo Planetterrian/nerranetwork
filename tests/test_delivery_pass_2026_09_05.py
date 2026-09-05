@@ -337,3 +337,103 @@ class TestContentDisciplineShared:
         text = load_prompt(ROOT / "shows/prompts/spacex_podcast.txt")
         assert "source material, not a draft" in text
         assert "<<include" not in text
+
+
+class TestScriptRewriteGate:
+    """Sep 5 evening follow-up: Tesla Ep595 (old prompts) copied 63% of its
+    8-word phrases from the digest, Ep596 (new prompts) 51% — the prompt
+    rule moved the number, not far enough. One bounded rewrite, kept only
+    when it copies less and is not a truncation."""
+
+    DIGEST = (
+        "### Top News\n1. **Tesla finalizes AI5 and revives Dojo 3 with Intel packaging**\n"
+        "   Tesla has finalized development of its Artificial Intelligence 5 automotive processor. "
+        "Volume production is now scheduled at both TSMC and Samsung sites. "
+        "Intel joins as a key packaging partner using EMIB technology for Dojo modules.\n"
+    )
+    COPIED = (
+        "Patrick: Tesla has finalized development of its Artificial Intelligence 5 automotive processor.\n"
+        "Patrick: Volume production is now scheduled at both TSMC and Samsung sites.\n"
+        "Patrick: Intel joins as a key packaging partner using EMIB technology for Dojo modules.\n"
+        "Patrick: That's your Tesla news for today.\n"
+    )
+    REWRITTEN = (
+        "Patrick: The AI5 car chip is done, and Tesla will build it at two foundries, TSMC and Samsung.\n"
+        "Patrick: Dojo 3 is back, with Intel packaging the modules on its EMIB process.\n"
+        "Patrick: That means two suppliers for inference silicon and a third for training hardware.\n"
+        "Patrick: That's your Tesla news for today.\n"
+    )
+
+    class _Cfg:
+        class llm:
+            script_rewrite_gate_overlap_pct = 40.0
+
+    def test_copied_sentences_names_the_verbatim_ones(self):
+        got = sa.copied_sentences(self.COPIED, self.DIGEST)
+        assert len(got) == 3
+        assert all("nerranetwork" not in s for s in got)
+        assert sa.copied_sentences(self.REWRITTEN, self.DIGEST) == []
+
+    def test_gate_rewrites_and_accepts_a_less_copied_script(self, monkeypatch):
+        from engine import pipeline
+        calls = []
+        def fake_gen(tv, config, tracker=None, prompt_appendix=""):
+            calls.append(prompt_appendix)
+            return self.REWRITTEN
+        monkeypatch.setattr("engine.generator.generate_podcast_script", fake_gen)
+        out = pipeline._script_rewrite_gate(self.COPIED, self.DIGEST, self._Cfg(), {}, None)
+        assert out["fired"] and out["accepted"]
+        assert out["script"] == self.REWRITTEN
+        assert out["before_pct"] > 40 and out["after_pct"] < out["before_pct"]
+        assert "REWRITE REQUIRED" in calls[0] and "TSMC and Samsung" in calls[0]
+
+    def test_gate_keeps_original_when_rewrite_is_truncated_or_no_better(self, monkeypatch):
+        from engine import pipeline
+        monkeypatch.setattr("engine.generator.generate_podcast_script",
+                            lambda tv, config, tracker=None, prompt_appendix="": "Patrick: Short.")
+        out = pipeline._script_rewrite_gate(self.COPIED, self.DIGEST, self._Cfg(), {}, None)
+        assert out["fired"] and not out["accepted"] and out["script"] == self.COPIED
+        monkeypatch.setattr("engine.generator.generate_podcast_script",
+                            lambda tv, config, tracker=None, prompt_appendix="": self.COPIED)
+        out = pipeline._script_rewrite_gate(self.COPIED, self.DIGEST, self._Cfg(), {}, None)
+        assert out["fired"] and not out["accepted"]
+
+    def test_gate_is_off_at_zero_and_below_threshold(self, monkeypatch):
+        from engine import pipeline
+        class Off:
+            class llm:
+                script_rewrite_gate_overlap_pct = 0
+        assert pipeline._script_rewrite_gate(self.COPIED, self.DIGEST, Off(), {}, None) is None
+        monkeypatch.setattr("engine.generator.generate_podcast_script",
+                            lambda *a, **k: pytest.fail("must not call the model below threshold"))
+        out = pipeline._script_rewrite_gate(self.REWRITTEN, self.DIGEST, self._Cfg(), {}, None)
+        assert out["fired"] is False
+
+    def test_gate_never_raises(self, monkeypatch):
+        from engine import pipeline
+        def boom(*a, **k):
+            raise RuntimeError("api down")
+        monkeypatch.setattr("engine.generator.generate_podcast_script", boom)
+        assert pipeline._script_rewrite_gate(self.COPIED, self.DIGEST, self._Cfg(), {}, None) is None
+
+    @pytest.mark.parametrize("slug", ("spacex", "tesla", "models_agents", "omni_view", "fascinating_frontiers",
+                                      "planetterrian", "modern_investing", "env_intel", "models_agents_beginners"))
+    def test_english_news_shows_enable_the_gate(self, slug):
+        from engine.config import load_config
+        cfg = load_config(str(ROOT / "shows" / f"{slug}.yaml"))
+        assert float(cfg.llm.script_rewrite_gate_overlap_pct) == 40.0
+
+    def test_narrative_and_russian_shows_leave_it_off(self):
+        from engine.config import load_config
+        for slug in ("unintended_consequences", "first_principles", "finansy_prosto", "privet_russian", "dp_pod"):
+            cfg = load_config(str(ROOT / "shows" / f"{slug}.yaml"))
+            assert float(cfg.llm.script_rewrite_gate_overlap_pct) == 0.0, slug
+
+    def test_run_show_records_gate_metrics(self):
+        src = (ROOT / "run_show.py").read_text(encoding="utf-8")
+        assert 'pop("_script_rewrite_gate"' in src
+        assert 'metrics.record("script_rewrite_gate_fired"' in src
+
+    def test_tesla_first_principles_must_not_be_a_covered_story(self):
+        text = (ROOT / "shows/prompts/tesla_digest.txt").read_text(encoding="utf-8")
+        assert "TOPIC DISTINCTNESS" in text and "Short Spot item today" in text

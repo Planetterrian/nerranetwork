@@ -204,6 +204,30 @@ def digest_overlap(script_text: str, digest_text: str) -> Optional[float]:
     return 100.0 * len(grams & dgrams) / len(grams)
 
 
+def copied_sentences(script_text: str, digest_text: str, *, limit: int = 12) -> List[str]:
+    """Script sentences that carry an 8-word run found verbatim in the digest.
+
+    Feeds the rewrite gate's corrective instruction: naming the copied
+    sentences is what turns "write it yourself" from a mood into a task.
+    Closing plugs and the disclosure are excluded like everywhere else.
+    """
+    if not script_text or not digest_text:
+        return []
+    dgrams = _ngrams(_words(digest_text))
+    if not dgrams:
+        return []
+    out: List[str] = []
+    for sent in _closing_cut(split_sentences(script_text)):
+        words = _words(sent)
+        if len(words) < _NGRAM:
+            continue
+        if any(tuple(words[i:i + _NGRAM]) in dgrams for i in range(len(words) - _NGRAM + 1)):
+            out.append(sent)
+            if len(out) >= limit:
+                break
+    return out
+
+
 def _closing_cut(sentences: List[str]) -> List[str]:
     """Drop the disclosure/CTA tail so 'nerranetwork.com' plugs never count."""
     keep = []

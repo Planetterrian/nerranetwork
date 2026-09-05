@@ -1868,6 +1868,20 @@ cause was mechanical, not the host's taste, and the rules below bind:
   rule ("versus versus Code"); `r/teslamotors` is spoken as a subreddit
   name; a line repeated inside the closing eight is collapsed (MIT Ep159's
   doubled gallery plug).
+- **Same-day readout (Tesla Ep595 old prompts vs Ep596 new):** filler
+  3 → 0, digest duplicates 0, one pinned closing — but digest-verbatim
+  only 63% → 51% and the essay still re-told a covered story. So:
+  `llm.script_rewrite_gate_overlap_pct` (40 on the nine English news
+  shows, 0 = off) re-runs the script stage ONCE with the copied sentences
+  named when the finished script carries ≥40% verbatim 8-grams; the
+  rewrite is kept only when it copies less and is ≥70% of the original
+  length (`engine.pipeline._script_rewrite_gate`; metrics
+  `script_rewrite_gate_*`). It is a REWRITE gate, never a length lever —
+  it does not fire on word count, so it is not the banned podcast-side
+  retry class. Tesla's First Principles gained the TOPIC DISTINCTNESS
+  rule M&A's Under the Hood has. A mechanical essay-vs-item overlap note
+  was prototyped and rejected (no threshold separates re-tells from
+  unrelated essays).
 - Every prompt-side item above is landmine-#17 A/B; the engine modules are
   removal-only or read-only and are not.
 
