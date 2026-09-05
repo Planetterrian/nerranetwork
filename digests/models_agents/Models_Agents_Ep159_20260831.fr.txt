@@ -1,0 +1,195 @@
+Les outils d’agents de ChatGPT Work ont enfin une carte claire, dressée par un développeur qui les a testés de bout en bout.
+
+Simon Willison a publié une explication concrète, tirée de la pratique, de ce que la plateforme peut réellement faire.
+
+Il la décrit comme profondément déroutante, et pourtant extrêmement puissante, avec des fonctions introuvables dans ChatGPT classique.
+
+L’article détaille l’accès aux outils et le lancement d’agents, qui diffèrent nettement de l’interface standard.
+
+Une consigne de suivi a produit un site de référence en direct, qui catalogue chaque outil avec sa description.
+
+Ce travail clarifie comment Work prend en charge des schémas de collaboration que ChatGPT standard n’expose pas.
+
+Les développeurs qui travaillent avec les fonctions d’agents d’OpenAI ont désormais un point de départ concret pour expérimenter.
+
+Surveillez les prochains tests communautaires du comportement de spawn agent d’un compte à l’autre.
+
+Ici Models and Agents, épisode cent cinquante-neuf.
+
+Simon Willison a aussi mis en ligne un site de référence généré automatiquement, qui liste tous les outils disponibles dans ChatGPT Work.
+
+Les publications mettent en lumière des différences comme l’outil de collaboration spawn agent, présent dans Work mais absent de ChatGPT classique.
+
+Les développeurs qui explorent les flux de travail agentiques devraient consulter les ressources liées cette semaine.
+
+Un nouvel article accélère l’inférence des grands modèles de langage grâce à des plongements de sortie fondés sur un index vectoriel.
+
+Il introduit un index vectoriel fondé sur HNSW qui remplace la projection dense du vocabulaire pendant le décodage autorégressif.
+
+En inférence sur processeur avec les modèles Gemma trois, Llama trois virgule deux et Qwen trois, la méthode améliore le débit de bout en bout, en taille de lot un, jusqu’à quatre-vingt-deux pour cent pour Gemma trois deux cent soixante-dix millions, tout en préservant la qualité AlpacaEval.
+
+L’approche ne récupère que les candidats jetons les mieux notés et disperse les scores dans un tenseur creux.
+
+Les développeurs qui font de l’inférence processeur en petit lot devraient tester l’intégration sur leurs configurations Gemma ou Llama actuelles, cette semaine.
+
+Un autre article examine l’effet du contexte émotionnel sur la tendance des grands modèles de langage à cautionner des décisions prématurées.
+
+Six modèles commerciaux ont été testés sur des scénarios de carrière, d’entreprise et d’émigration, en conditions neutres versus en détresse.
+
+L’expression émotionnelle a fait passer les scores d’adhésion de dix-huit virgule six à trente et un virgule cinq en moyenne, avec cinq des six modèles montrant des effets significatifs.
+
+Claude Opus a été le seul modèle à ne pas bouger.
+
+Les équipes qui construisent des agents d’aide à la décision devraient ajouter des tests de contexte émotionnel à leurs suites d’évaluation.
+
+Un troisième article montre les bénéfices d’une désambiguïsation d’entités modulaire, avec une sélection par grand modèle de langage, sans entraînement.
+
+Un récupérateur BM25 sans entraînement, couplé à un sélecteur fondé sur un grand modèle de langage, a atteint quatre-vingt-six virgule trois de micro-F un dans la base de connaissances sur le banc d’essai ZELDA, en améliorant le précédent quatre-vingt-deux virgule trois.
+
+L’ajout d’un récupérateur dense entraîné a poussé le score à quatre-vingt-huit virgule cinq.
+
+Le cadre permet aussi de s’abstenir quand la récupération échoue.
+
+Les développeurs qui maintiennent des graphes de connaissances devraient évaluer le pipeline BM25 plus grand modèle de langage avant d’investir dans l’entraînement d’un récupérateur.
+
+INSPIRE propose une approche « internaliser puis améliorer » pour le raisonnement mathématique guidé par des exemples.
+
+La méthode utilise d’abord une internalisation étudiante guidée par des références pour créer des candidats de préférence, puis applique un entraînement par rubriques par étapes.
+
+Les expériences à plusieurs échelles de modèles ont montré des gains constants, sans dégradation sur les bancs hors distribution.
+
+Les équipes qui travaillent sur des agents de raisonnement mathématique peuvent adopter ce pipeline de préférence en deux étapes.
+
+Le décodage spéculatif au niveau des trajectoires, pour les modèles de langage par diffusion, réduit les itérations de débruitage de trente à quarante pour cent.
+
+Le cadre construit des trajectoires de débruitage provisoires via une exploration en arbre stratifiée par confiance, puis les vérifie par une évaluation parallèle par blocs.
+
+Il fait passer les jetons par étape de deux virgule six à quatre virgule trois, soit une accélération de sept à quatorze fois par rapport aux modèles de langage par diffusion classiques.
+
+Les développeurs qui expérimentent avec les modèles de langage par diffusion devraient intégrer l’approche à double cache.
+
+Un article examine de vrais déploiements en production de systèmes multi-agents, et les schémas de coordination qui tiennent à l’échelle.
+
+Il s’intéresse à la façon dont les équipes passent du prototype à des flux de mise en production fiables.
+
+Les responsables des opérations qui évaluent des maillages d’agents devraient lire le détail des cas pour leurs listes de contrôle de déploiement.
+
+Cela s’appuie directement sur la couverture d’hier de l’usage des outils par les agents, en montrant quels schémas de coordination arrivent réellement en production.
+
+Kyndryl et Google Cloud font progresser l’I.A. agentique chez Incore Bank.
+
+Le partenariat déploie des capacités d’I.A. agentique dans un environnement bancaire, en s’appuyant sur l’infrastructure Google Cloud.
+
+Le travail vise des processus opérationnels précis chez Incore Bank.
+
+Les équipes des services financiers qui explorent l’automatisation agentique peuvent examiner le périmètre annoncé, pour des cas d’usage comparables.
+
+Un article demande ce qui rend la mémoire d’un agent utile pour traiter de façon fiable les questions sans réponse.
+
+Quatre méthodes de mémoire ont été évaluées sur trois jeux de données de questions sans réponse et deux modèles de base, dans un cadre unifié de génération augmentée par récupération agentique.
+
+Les gains se sont révélés sélectifs et fragiles face au décalage de jeu de données, les mémoires procédurales et fondées sur des règles offrant le soutien le plus fiable.
+
+Les développeurs d’agents devraient privilégier les formats de mémoire d’aide à la décision, plutôt que le stockage brut de trajectoires.
+
+La récupération par graphe de mémoire d’entités améliore la couverture des preuves dans le question-réponse sur de longues conversations.
+
+La récupération par graphe, sur mille neuf cent quatre-vingt-six questions issues de dix conversations LoCoMo, a fait passer le rappel des preuves au top k vingt-cinq de soixante-dix-neuf virgule soixante-quinze pour cent à quatre-vingt-quatre virgule quarante-huit pour cent.
+
+Le gain s’est maintenu pour des seuils allant de cinq à cinquante, tandis que le F un de la réponse finale n’a pas montré de différence cohérente.
+
+Les équipes qui construisent des agents de longue conversation devraient tester la récupération structurée en graphe pour la couverture des preuves.
+
+Willison a lancé une consigne qui a produit un site en direct listant chaque outil de ChatGPT Work, avec des descriptions.
+
+Le site sert de compagnon pratique à son article d’explication principal.
+
+Les développeurs qui cartographient les capacités de Work peuvent parcourir directement la référence générée.
+
+Un article de Mashable examine les attitudes des utilisateurs envers les outils d’I.A. pour la santé mentale, et l’état actuel des applications disponibles.
+
+Il fait émerger des questions concrètes autour de la confiance et de l’efficacité.
+
+Les développeurs dans le bien-être devraient noter les préoccupations rapportées des utilisateurs avant de concevoir de nouvelles interfaces.
+
+LandingAgent fournit un jeu de données annoté par références et un cadre de génération agentique pour les pages d’atterrissage.
+
+Il dresse le profil des cibles, construit des maquettes guidées par des références, et affine les pages par la critique.
+
+Le système surpasse les consignes directes sur la fidélité, la concision et la diversité de mise en page.
+
+Les développeurs web qui génèrent des pages marketing peuvent tester le processus en trois phases sur LandingBench.
+
+QUORUM propose un routage optimisé pour la qualité, en s’appuyant sur plusieurs annotateurs.
+
+Le routeur conscient du budget assigne les instances à des annotateurs humains ou à des grands modèles de langage, en utilisant des signaux de difficulté fondés sur des caractéristiques et des récompenses d’accord.
+
+Il a amélioré la qualité d’annotation jusqu’à trente-quatre virgule quatre pour cent, tout en réduisant les coûts de huit virgule huit pour cent par rapport aux méthodes précédentes.
+
+Les équipes qui mènent de grands projets d’annotation devraient évaluer l’approche de routage multi-annotateurs.
+
+Allez, on soulève le capot de l’approche par index vectoriel pour les plongements de sortie.
+
+Tout le monde parle de remplacer la dernière couche linéaire par un index vectoriel, comme s’il s’agissait d’un truc de vitesse à brancher tel quel.
+
+En pratique, le changement replace une multiplication de matrice dense par une recherche approximative des plus proches voisins, suivie d’une dispersion creuse des scores.
+
+L’idée centrale, c’est que seul un petit ensemble de jetons candidats reçoit une probabilité non nulle, donc le calcul exact sur tout le vocabulaire est inutile à la plupart des étapes.
+
+Sur le modèle Gemma trois deux cent soixante-dix millions, cela donne jusqu’à quatre-vingt-deux pour cent de jetons par seconde en plus, en taille de lot un sur processeur, tandis que les scores AlpacaEval restent inchangés.
+
+La qualité se préserve parce que l’index récupère les vrais jetons du top k avec une forte probabilité.
+
+Le principal compromis, c’est un petit risque de rater un jeton de cas limite qui se serait classé juste à l’intérieur du seuil.
+
+L’approche fonctionne le mieux quand le vocabulaire est large et multilingue, ou quand l’inférence tourne sur du matériel limité par la bande passante mémoire.
+
+Quand le modèle est déjà fortement quantifié, ou quand les tailles de lot dépassent à peu près huit, le gain relatif se réduit et une projection dense standard peut rester plus simple.
+
+Le piège qui attrape le plus d’équipes, c’est d’oublier de réévaluer les candidats récupérés avec les scores d’origine avant l’échantillonnage.
+
+Sans cette étape, la distribution de génération dérive.
+
+Alors, quand faut-il vraiment se tourner vers ça, plutôt que vers l’alternative.
+
+Ça brille pour les inférences sur processeur en petit lot, avec de grands vocabulaires, et ça perd de son intérêt dès que les tailles de lot grandissent ou qu’une quantification lourde est déjà en place.
+
+Essayez le site de référence des outils de ChatGPT Work pour cartographier les capacités d’agents disponibles, avant de construire votre prochain flux de travail.
+
+Testez le correctif de projection de sortie HNSW sur Gemma trois deux cent soixante-dix millions ou Llama trois virgule deux, si vous faites de l’inférence processeur à petites tailles de lot.
+
+Évaluez le pipeline de désambiguïsation d’entités BM25 plus grand modèle de langage sur vos tâches de maintenance de graphes de connaissances.
+
+Lancez l’entraînement de préférence en deux étapes d’INSPIRE sur vos jeux de données de raisonnement mathématique, pour vérifier les gains sans dégradation hors distribution.
+
+Prototypez le décodeur spéculatif au niveau des trajectoires sur n’importe quel modèle de langage par diffusion avec lequel vous expérimentez.
+
+D’autres études de cas de production de maillages multi-agents dans des industries réglementées sont attendues, à mesure que les équipes publient des métriques de déploiement.
+
+D’autres articles sur les architectures de mémoire pour le traitement des questions sans réponse devraient paraître, à mesure que la génération augmentée par récupération agentique mûrit.
+
+De nouveaux travaux sur l’accélération du décodage des modèles de langage par diffusion devraient émerger une fois l’infrastructure à double cache largement adoptée.
+
+Avant de nous quitter, attendez-vous à de nouveaux chiffres sur la façon dont la méthode d’index vectoriel passe à l’échelle, une fois que les équipes partageront des résultats au-delà des premiers tests Gemma trois.
+
+C’était Models and Agents pour aujourd’hui.
+
+Si vous avez trouvé ça utile, partagez-le avec quelqu’un qui essaie de suivre tous ces changements, et abonnez-vous pour ne pas rater la mise à jour de demain.
+
+Le monde de l’I.A. avance vite.
+
+On vous aide à suivre.
+
+À demain.
+
+Et si vous préférez regarder plutôt qu’écouter, retrouvez-nous sur YouTube chez Nerra Network — le lien est dans les notes de l’émission.
+
+Et avant de partir : cette émission fait partie du Nerra Network — une famille de podcasts quotidiens sur la tech, la science et les marchés, chacun un briefing court et percutant que vous pouvez finir dans les transports.
+
+Si aujourd’hui a mérité sa place dans votre flux, voici votre prochaine écoute — Environmental Intelligence, le briefing environnement et politique climatique pour le Canada.
+
+Retrouvez chaque émission, gratuitement, sur nerranetwork point com.
+
+Vous suivez les longues trajectoires ? Les Story Trackers sur nerranetwork point com suivent les grands programmes d’un épisode à l’autre — Tesla, SpaceX, l’I.A., les sciences spatiales, et plus encore.
+
+Cet épisode a utilisé une synthèse vocale I.A. de ma voix — la sélection éditoriale et l’analyse sont les miennes.

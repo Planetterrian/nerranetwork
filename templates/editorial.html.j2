@@ -1,8 +1,8 @@
 {% extends "base.html.j2" %}
 
 {% block head_extra %}
-    <meta name="description" content="How Nerra Network selects, fact-checks, and produces every episode. The editorial process behind our daily AI-narrated podcasts.">
-    <link rel="canonical" href="https://nerranetwork.com/editorial.html">
+    {# meta description + canonical come from base.html.j2 via the
+       generator context — a second copy here shipped two descriptions. #}
     <style>
         .editorial-hero {
             padding: calc(var(--nav-height) + var(--sp-12)) var(--sp-6) var(--sp-8);
@@ -150,14 +150,35 @@
                 tone is news-show; Models &amp; Agents for Beginners
                 explains jargon to teens; Финансы Просто speaks
                 Russian-Canadian financial terminology (TFSA, RRSP,
-                BoC). A repetition guard catches LLM hallucinations
+                BoC). A repetition guard catches degenerate output
                 and triggers a lower-temperature retry; a content
-                tracker prevents recycling the prior week's stories.
+                tracker prevents recycling the prior week's stories,
+                and a recurrence memory flags stories the show has
+                already covered so they are told as updates, not
+                re-told from scratch.
             </p>
         </div>
 
         <div class="editorial-step">
             <span class="step-num">4</span>
+            <h3>Source-integrity gate</h3>
+            <p>
+                Every digest ships a machine-readable claims ledger:
+                each asserted fact points at the source URL and the
+                supporting quote. Before an episode is saved, the gate
+                re-fetches every source and checks that the quote
+                actually appears there, and it lints the prose for
+                citation-shaped sentences that have no ledger entry
+                (the signature of a fabricated citation). On the
+                narrative shows the gate is enforced — a failed claim
+                blocks the episode rather than airing. Verified ledgers
+                are committed alongside each digest and rendered as
+                endnotes in the anthology books.
+            </p>
+        </div>
+
+        <div class="editorial-step">
+            <span class="step-num">5</span>
             <h3>Slow-news fallback</h3>
             <p>
                 On genuinely slow news days, the pipeline detects high
@@ -170,7 +191,7 @@
         </div>
 
         <div class="editorial-step">
-            <span class="step-num">5</span>
+            <span class="step-num">6</span>
             <h3>Voice synthesis (Grok TTS)</h3>
             <p>
                 The script renders to audio via xAI's Grok TTS using
@@ -186,20 +207,21 @@
         </div>
 
         <div class="editorial-step">
-            <span class="step-num">6</span>
+            <span class="step-num">7</span>
             <h3>Music + final mix</h3>
             <p>
-                Show theme music is layered around the voice with a
-                sidechain-ducked compressor and graceful fades —
-                25 seconds of music alone before voice enters, 60
-                seconds of music close after voice ends. Each show
-                has its own theme; the timing is consistent
-                network-wide.
+                Every episode opens cold on its first story: the show
+                theme runs underneath from the first second, ducked by
+                a sidechain compressor whenever the voice is present,
+                and closes with about thirty seconds of outro. The
+                whole mix is normalised to the -16 LUFS podcast
+                loudness spec. Each show has its own theme; the timing
+                is consistent network-wide.
             </p>
         </div>
 
         <div class="editorial-step">
-            <span class="step-num">7</span>
+            <span class="step-num">8</span>
             <h3>Transcript + chapter publication</h3>
             <p>
                 Every episode ships with a Whisper-generated transcript
@@ -217,7 +239,7 @@
         <ul>
             <li><strong>No undisclosed AI.</strong> Every show, every episode, every page declares the use of AI voice synthesis upfront.</li>
             <li><strong>No paid placement.</strong> Stories are not sponsored. Tools/resources mentioned are recommended on merit.</li>
-            <li><strong>No tracking listeners.</strong> The site uses no third-party analytics that profile visitors. Episode play data comes from podcast aggregators (which subscribers can disable).</li>
+            <li><strong>No profiling.</strong> Site analytics (Google Analytics) load only after you accept the cookie banner — storage is denied by default under Consent Mode v2, and "Reject" means no analytics cookies at all. Episode play counts come from <a href="https://op3.dev/about" target="_blank" rel="noopener">OP3</a>, an open-source aggregator that reports anonymised totals. We never sell data or run cross-site ad targeting. The full list is in the <a href="{{ path_prefix }}privacy-policy.html">privacy policy</a>.</li>
             <li><strong>No filler.</strong> If the day's news is thin, the slow-news fallback runs an evergreen deep-dive — but if even that fails the threshold, the run skips entirely rather than pad with low-quality content.</li>
         </ul>
     </section>

@@ -1307,3 +1307,60 @@ class TestFundingPersonTags:
             encoding="utf-8")
         assert "funding_url=" in src
         assert "person_name=" in src
+
+
+# ===================================================================
+# Sep 4 2026 flagship pass — item <link> is the episode page, preserved
+# across rebuilds
+# ===================================================================
+
+
+class TestEpisodeItemLink:
+    def _links(self, rss_path):
+        import xml.etree.ElementTree as ET
+        items = ET.parse(str(rss_path)).getroot().find("channel").findall("item")
+        return [(i.findtext("title"), i.findtext("link")) for i in items]
+
+    def test_new_episode_link_is_the_episode_page(self, tmp_path):
+        rss = _make_rss(tmp_path, episode_num=1, title="Ep 1",
+                        episode_page_url="https://nerranetwork.com/blog/spacex/ep001.html")
+        assert self._links(rss) == [("Ep 1", "https://nerranetwork.com/blog/spacex/ep001.html")]
+
+    def test_link_survives_rebuild_and_legacy_mp3_link_is_dropped(self, tmp_path):
+        # Legacy shape: no page URL -> the MP3 was the link.
+        rss = _make_rss(tmp_path, episode_num=1, title="Ep 1")
+        assert self._links(rss)[0][1].endswith(".mp3")
+        # Ep 2 with a page URL; Ep 1's MP3 link is not carried forward
+        # (the enclosure already names the audio).
+        rss = _make_rss(tmp_path, episode_num=2, title="Ep 2", mp3_name="ep002.mp3",
+                        episode_page_url="https://nerranetwork.com/blog/spacex/ep002.html")
+        links = dict(self._links(rss))
+        assert links["Ep 2"] == "https://nerranetwork.com/blog/spacex/ep002.html"
+        assert links.get("Ep 1") in (None, "")
+        # Ep 3 rebuild: Ep 2's page link is preserved.
+        rss = _make_rss(tmp_path, episode_num=3, title="Ep 3", mp3_name="ep003.mp3",
+                        episode_page_url="https://nerranetwork.com/blog/spacex/ep003.html")
+        links = dict(self._links(rss))
+        assert links["Ep 2"] == "https://nerranetwork.com/blog/spacex/ep002.html"
+        assert links["Ep 3"] == "https://nerranetwork.com/blog/spacex/ep003.html"
+
+    def test_no_page_url_keeps_legacy_behaviour(self, tmp_path):
+        rss = _make_rss(tmp_path, episode_num=1, title="Ep 1")
+        assert self._links(rss)[0][1].endswith("ep001.mp3")
+
+
+class TestFeedDocumentOrder:
+    """Sep 4 2026 flagship pass: feedgen's add_entry() PREPENDS by default,
+    which inverted update_rss_feed's newest-first loop — every flagship
+    feed was serialized oldest-first (Tesla's first <item> was Ep343 from
+    2025-12-03). Podcast apps sort by pubDate, but anything reading the
+    first N items in document order was getting the oldest N."""
+
+    def test_newest_episode_is_first_item(self, tmp_path):
+        import xml.etree.ElementTree as ET
+        for n in (1, 2, 3):
+            rss = _make_rss(tmp_path, episode_num=n, title=f"Ep {n}", mp3_name=f"ep{n:03d}.mp3",
+                            date=datetime.date(2026, 1, n))
+        titles = [i.findtext("title") for i in
+                  ET.parse(str(rss)).getroot().find("channel").findall("item")]
+        assert titles == ["Ep 3", "Ep 2", "Ep 1"]

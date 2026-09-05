@@ -27,6 +27,8 @@ the operator later prefers Vercel. Routing: the gallery worker owns
 | `POST /voices/triage-decision` · `POST /voices/editorial-decision` | The two admin actions (token-gated) |
 | `GET /voices/episode-lookup` · `GET /voices/guest-brief` · `POST /voices/fact-check` | Mira's three in-call tools (spec §3.2) |
 | `scheduled` (daily 17:00 UTC) | Gate-2 housekeeping: day-4 guest reminder, day-7 auto-approve |
+| `scheduled` (every 5 min) | Punctual fire-tick → `repository_dispatch: fire-tick` (GitHub's own 5-minute cron arrives hours late under load) |
+| `GET /voices/health` | Deploy verification: which secrets are set (never values), cron config, and a live read-only GitHub auth probe — `github_status: 401` means the stored token is bad (expired, or pasted with a trailing newline); `repository_dispatch` needs **Contents: Read and write** |
 
 ## Deploy
 
@@ -34,7 +36,7 @@ the operator later prefers Vercel. Routing: the gallery worker owns
 cd workers/voices
 wrangler secret put SUPABASE_URL
 wrangler secret put SUPABASE_SERVICE_KEY
-wrangler secret put GITHUB_DISPATCH_TOKEN   # fine-grained PAT, contents:write
+wrangler secret put GITHUB_DISPATCH_TOKEN   # fine-grained PAT, Contents: Read and write (repository_dispatch); verify with GET /voices/health
 wrangler secret put ADMIN_TOKEN             # long random string; gates /voices/admin/*
 wrangler secret put RESEND_API_KEY
 wrangler secret put VOICES_FROM_EMAIL

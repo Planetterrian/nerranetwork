@@ -926,3 +926,160 @@ class TestHeadlineAnchoredAutoSegment:
         assert len(chapters) >= 2
         assert chapters[0].title == "Introduction"
         assert chapters[-1].title == "Closing"
+
+
+class TestHookNeverBecomesChapterTitle:
+    """Aug 30 2026 (Omni View Ep160): extract_story_headlines leads with
+    the digest's blockquote HOOK — a full lead sentence kept for image
+    context. Raw token-overlap scoring favors the longest candidate, so
+    the 130-char hook beat the real summit headline in BOTH title paths
+    (per-segment matching and headline-anchored insertion) and the
+    60-char clipper shipped "Leaders from Russia, China, India and Iran
+    meet in Central…" as a listener-facing chapter title. Candidates
+    longer than the title budget are now excluded outright."""
+
+    HOOK = (
+        "Leaders from four large economies meet in Central Asia this very "
+        "week to deepen commercial ties while facing sanctions pressure "
+        "and continued trade uncertainty across every export corridor"
+    )
+
+    def _script(self):
+        pad = "More context follows in plain prose covering operational rollout numbers deployment cadence logistics supplier detail. " * 6
+        intro_pad = "Great to have you along for the ride once again this fine morning. " * 10
+        return (
+            "Welcome to Test Show, your daily update. " + intro_pad + "\n\n"
+            "Leaders from four large economies meet in Central Asia this week "
+            "to deepen ties while facing sanctions and trade pressure. "
+            + pad + "\n\n"
+            "Xpeng Australia announces several new models for that market. "
+            + pad + "\n\n"
+            "Giga Berlin hiring expands while rivals cut positions. "
+            + pad + "\n\n"
+            "That's a wrap for today. Thanks for being here.\n"
+        )
+
+    def _markers(self):
+        return [
+            SectionMarker(pattern="Welcome to Test Show", title="Introduction", where="start"),
+            SectionMarker(pattern="That's a wrap", title="Closing", where="end"),
+        ]
+
+    def test_hook_excluded_from_both_title_paths(self):
+        assert len(self.HOOK) > 60  # stays hook-shaped if the text is edited
+        headlines = [
+            self.HOOK,  # extractor puts the hook first
+            "Leaders gather for Central Asia economy summit",
+            "Xpeng Australia announces new models",
+            "Giga Berlin hiring expands against industry cuts",
+        ]
+        chapters = parse_chapters(
+            self._script(), self._markers(), show_name="test",
+            story_headlines=headlines,
+        )
+        for ch in chapters:
+            assert not ch.title.endswith("…"), ch.title
+            assert len(ch.title) <= 60, ch.title
+        # The lead segment overlaps the hook most, but must take the
+        # real (title-length) headline instead.
+        assert any("Central Asia economy summit" in c.title for c in chapters), (
+            [c.title for c in chapters])
+
+
+class TestLongHeadlinesStillTitleChapters:
+    """Sep 3 2026 (Omni View Ep163): the 08-30 hook exclusion skipped EVERY
+    candidate over the 60-char budget, and seven of that day's eight real
+    headlines were 62-91 chars — so every segment shipped a first-sentence
+    fragment ("For Beijing, Taiwan's presence at those forums is not a…").
+    Only hook-length candidates (> 2x the budget) are excluded now; a long
+    real headline competes and is shortened WITHOUT an ellipsis."""
+
+    TAIWAN = "Taiwan foreign minister criticizes Chinese actions at Pacific Islands forum"
+    NIGERIA = ("Nigerian forces report killing over 1,000 militants and rescuing "
+               "hundreds of kidnap victims")
+    HOOK = ("Renewed US and Iranian strikes have ended a lull in their conflict, "
+            "raising immediate risk of escalation across the region while "
+            "markets and allies weigh the fallout")
+
+    def test_long_real_headline_wins_and_is_shortened_cleanly(self):
+        from engine.chapters import _best_headline_for_segment
+        seg = ("For Beijing, Taiwan's presence at those forums is not a minor "
+               "matter. The foreign minister called the Chinese actions at the "
+               "Pacific Islands forum bullying, and the criticism landed.")
+        title = _best_headline_for_segment(seg, [self.HOOK, self.TAIWAN], set())
+        assert title == "Taiwan foreign minister criticizes Chinese actions"
+        assert len(title) <= 60 and not title.endswith("…")
+
+    def test_hook_length_candidates_stay_excluded(self):
+        from engine.chapters import _best_headline_for_segment
+        assert len(self.HOOK) > 120
+        seg = ("Renewed US and Iranian strikes have ended a lull in their conflict "
+               "and raised immediate risk across the region as markets weigh it.")
+        assert _best_headline_for_segment(seg, [self.HOOK], set()) == ""
+
+    def test_clip_title_drops_dangling_function_words(self):
+        from engine.chapters import _clip_title
+        assert _clip_title(self.NIGERIA) == "Nigerian forces report killing over 1,000 militants"
+        assert _clip_title("Short headline stays") == "Short headline stays"
+        # A clean cut that would lose more than half the headline keeps
+        # the legacy ellipsis clip rather than collapsing to two words.
+        long_word = "Supercalifragilisticexpialidocious" * 3
+        out = _clip_title(f"Regulators weigh {long_word} rules", 60)
+        assert len(out) <= 60
+
+    def test_shipped_omni_view_ep163_shape(self):
+        """The real Ep163 digest + script: no fragment titles reach listeners."""
+        from engine.config import load_config
+        from engine.chapters import parse_chapters
+        from engine.grok_imagine import extract_story_headlines
+        import logging
+        logging.disable(logging.CRITICAL)
+        root = Path(__file__).resolve().parent.parent
+        md = root / "digests/omni_view/Omni_View_Ep163_20260902.md"
+        tts = root / "digests/omni_view/Omni_View_Ep163_20260902_tts.txt"
+        if not (md.exists() and tts.exists()):
+            pytest.skip("Ep163 artifacts not on disk")
+        markers = load_config(str(root / "shows/omni_view.yaml")).chapters.section_markers
+        heads = extract_story_headlines(md.read_text(encoding="utf-8"), max_count=12)
+        titles = [c.title for c in parse_chapters(
+            tts.read_text(encoding="utf-8"), markers, show_name="Omni View",
+            story_headlines=heads)]
+        assert not [t for t in titles if t.endswith("…") or len(t) > 60], titles
+        assert any(t.startswith("Taiwan foreign minister") for t in titles), titles
+
+
+class TestChapterTitlesNeverCarryLinks:
+    """Sep 4 2026: M&A Ep161 shipped the chapter title
+    "Training a Misaligned Reward Seeker: [@AnthropicAI](https" — a digest
+    headline whose source tail was a markdown link, clipped mid-URL. Every
+    title-producing helper now flattens links and drops a lone @handle tail."""
+
+    def test_clip_title_flattens_link_and_drops_handle_tail(self):
+        from engine.chapters import _clip_title
+        raw = "Training a Misaligned Reward Seeker: [@AnthropicAI](https://x.com/AnthropicAI)"
+        assert _clip_title(raw) == "Training a Misaligned Reward Seeker"
+        # A plain outlet tail is not a handle and is left to the headline
+        # extractor's outlet logic — this helper only removes what it
+        # knows is junk.
+        assert _clip_title("IBM Releases Granite 4.2: MarkTechPost") == \
+            "IBM Releases Granite 4.2: MarkTechPost"
+
+    def test_first_sentence_title_flattens_links(self):
+        from engine.chapters import _first_sentence_as_title
+        out = _first_sentence_as_title(
+            "Anthropic ([@AnthropicAI](https://x.com/AnthropicAI)) trained a model. More text."
+        )
+        assert "](" not in out and "http" not in out
+        assert out.startswith("Anthropic (@AnthropicAI) trained a model")
+
+    def test_committed_models_agents_chapters_carry_no_link_fragments(self):
+        import json
+        from pathlib import Path
+        root = Path(__file__).resolve().parent.parent
+        bad = []
+        for p in sorted((root / "digests/models_agents").glob("chapters_ep*.json")):
+            for ch in json.loads(p.read_text(encoding="utf-8")).get("chapters", []):
+                t = ch.get("title", "")
+                if "](" in t or "http" in t:
+                    bad.append((p.name, t))
+        assert not bad, bad

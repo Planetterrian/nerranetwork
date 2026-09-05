@@ -2703,3 +2703,86 @@ class TestUnheldRenderUpgrades:
         vsrc = Path(_video.__file__.replace(".pyc", ".py")).read_text(
             encoding="utf-8")
         assert "closing_beat=(not is_vertical" in vsrc
+
+
+
+class TestChapterTitleCards:
+    """Sep 2026: broadcast-style chapter title cards on long-form, driven
+    by the same chapters JSON that powers the seek-bar chapters."""
+
+    CARDS = [(0.0, "Intro"), (3.0, "Too early"), (45.0, "The Counterpoint"),
+             (310.0, "AI & Compute")]
+
+    def test_cards_render_on_both_long_form_paths(self):
+        from engine.video import (_long_form_filter_graph,
+                                  _single_pass_long_form_filter_graph)
+        g2 = _long_form_filter_graph(hook="Hook line", chapter_cards=self.CARDS)
+        g1 = _single_pass_long_form_filter_graph(
+            3, scene_durations=[100.0, 200.0, 100.0], hook="Hook line",
+            chapter_cards=self.CARDS)
+        for g in (g2, g1):
+            assert "The Counterpoint" in g
+            assert "AI & Compute".replace("&", "&") in g or "AI" in g
+            # Cards inside the opening hook window (<5 s) are skipped.
+            assert "Too early" not in g and "text='Intro'" not in g
+            assert g.count("[chap") >= 2
+            assert g.endswith("[v]") and g.count("[v]") == 1
+            # After the hook, before the terminal stage.
+            assert g.index("Hook") < g.index("The Counterpoint")
+
+    def test_cards_compose_with_subtitles(self):
+        from engine.video import _long_form_filter_graph
+        g = _long_form_filter_graph(hook="Hook line", chapter_cards=self.CARDS,
+                                    subtitles_path="/tmp/x.srt")
+        assert g.index("The Counterpoint") < g.index("subtitles=")
+        assert g.endswith("[v]") and g.count("[v]") == 1
+
+    def test_no_cards_is_byte_identical_legacy(self):
+        from engine.video import _long_form_filter_graph
+        assert (_long_form_filter_graph(hook="Hook line")
+                == _long_form_filter_graph(hook="Hook line", chapter_cards=[]))
+
+    def test_only_clean_headlines_earn_a_card(self):
+        """Sep 3 2026 (Tesla Ep592 frame check): a first-sentence fallback
+        title was clipped a second time on screen to "Several projects
+        pair storage with solar to". Cards are a FIT gate on
+        ``engine.titles.CHAPTER_CARD_MAX`` — never a clip — and
+        structural labels get no card."""
+        from engine.titles import CHAPTER_CARD_MAX
+        from engine.video import _long_form_filter_graph
+        cards = [
+            (9.7, "Introduction"),
+            (125.3, "Several projects pair storage with solar to stabilize…"),
+            (236.4, "A perfectly good headline that is simply far too long for the card"),
+            (350.6, "Lexus adopts gigacasting for a 2027 EV"),
+            (529.1, "Tomorrow Teaser"),
+            (538.5, "Closing"),
+        ]
+        g = _long_form_filter_graph(hook="Hook line", chapter_cards=cards)
+        assert "Lexus adopts gigacasting" in g
+        assert "Several projects" not in g          # clipped fragment, skipped whole
+        assert "perfectly good headline" not in g   # too long: skipped, not cut
+        assert "text='Introduction'" not in g and "Closing" not in g
+        assert "Tomorrow Teaser" not in g
+        assert "[chap0]" in g and "[chap1]" not in g   # exactly one card
+        assert len("Lexus adopts gigacasting for a 2027 EV") <= CHAPTER_CARD_MAX
+
+    def test_build_long_form_video_derives_cards_from_chapters_json(
+            self, tmp_path, monkeypatch):
+        import json as _json
+        audio = tmp_path / "voice.mp3"; audio.write_bytes(b"\x00")
+        cover = tmp_path / "cover.jpg"; cover.write_bytes(b"\xFF\xD8")
+        chapters = tmp_path / "chapters.json"
+        chapters.write_text(_json.dumps({"chapters": [
+            {"startTime": 12.0, "title": "Top Stories"},
+            {"startTime": 200.0, "title": "Deep Dive"}]}))
+        cmds = []
+        def fake_run(cmd, **kw):
+            cmds.append(list(cmd))
+            return type("R", (), {"returncode": 0})()
+        monkeypatch.setattr("engine.video.subprocess.run", fake_run)
+        monkeypatch.setattr("engine.audio.get_audio_duration", lambda _p: 400.0)
+        build_long_form_video(audio, cover, tmp_path / "out.mp4",
+                              chapters_path=chapters, hook="Hook")
+        graph = cmds[-1][cmds[-1].index("-filter_complex") + 1]
+        assert "Top Stories" in graph and "Deep Dive" in graph

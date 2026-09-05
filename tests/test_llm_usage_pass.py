@@ -319,3 +319,28 @@ class TestReviewerLatencyEnvelope:
         AI layer — the report and GitHub issue always ship."""
         assert "REVIEW_AI_BUDGET_SECONDS" in self.SRC
         assert "budget" in self.SRC.lower()
+
+
+class TestGrok46Wave2Scripts:
+    """Scope guards for grok-46-wave2-scripts (2026-09-01): script-stage
+    pins for omni_view + MAB — the pin shape that survived the whole
+    trial (dp_pod: 14/14 days including the 08-27 4.6-service bad day
+    that withdrew the FPD/UC digest arms). The safety argument is still
+    scope: scripts move, facts-first digests do not, and MIT is
+    deliberately excluded (its factual flags are digest-side on 4.3)."""
+
+    def _load(self, slug):
+        from engine.config import load_config
+        return load_config(REPO_ROOT / "shows" / f"{slug}.yaml")
+
+    def test_wave2_shows_script_stage_only(self):
+        for slug in ("omni_view", "models_agents_beginners"):
+            cfg = self._load(slug)
+            assert cfg.llm.podcast_model == "grok-4.6", slug
+            assert cfg.llm.model == "grok-4.3", (
+                f"{slug}: the DIGEST must stay on the 4.3 network default")
+
+    def test_mit_stays_fully_on_43(self):
+        cfg = self._load("modern_investing")
+        assert cfg.llm.model == "grok-4.3"
+        assert not getattr(cfg.llm, "podcast_model", "")

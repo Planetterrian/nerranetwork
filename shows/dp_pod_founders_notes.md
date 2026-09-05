@@ -56,6 +56,31 @@ Personal material is a SLOW REVEAL across the season, never a front-load:
   making you feel otherwise. Numbers beat vibes. A caveat stated honestly
   is more optimistic than hype.
 
+<!--
+Sep 4 2026 review note (this comment never reaches the prompt): across the
+26 renewed episodes the hosts used almost none of this file — the Yukon race
+aired 0 times, WestJet 0, Dan's own solar payback once. Patrick's section
+carries real texture; Dan's is four bullets, so on air Dan is mostly an
+archetype ("the pilot") while Patrick gets to be a person. The hook now
+nudges the writer when nothing real has aired in five episodes, but it can
+only surface what is written here. Dan — five things that would give the
+show real material, answered in two or three sentences each, exactly as
+you'd say them on air:
+  1. Your solar install: the rough system size, what it cost, what the
+     first bills looked like. Real numbers are the show's brand.
+  2. One flight or cockpit moment that changed how you think about
+     checklists, risk, or calm under pressure (no airline-confidential
+     detail).
+  3. Something you tried around the house or the car that DIDN'T pay off.
+     Honest misses make the good ones credible.
+  4. What your daughters have asked you about the future — the question,
+     not the answer.
+  5. The one outdoor thing (skiing, foiling, sailing) that taught you the
+     most about patience.
+Paste answers below this block as plain bullets; the writer may use them
+verbatim as yours and must never embellish beyond them.
+-->
+
 ## DAN (real, on-air-safe — Dan: add your own stories here!)
 
 - WestJet captain. Two daughters; lives in Collingwood, Ontario.

@@ -317,6 +317,61 @@ def write_manifest_if_changed(manifest: Dict, out_path: Path) -> bool:
     return True
 
 
+def write_show_slices(manifest: Dict, out_path: Path) -> List[Path]:
+    """Write one per-show manifest slice next to the full manifest.
+
+    Sep 4 2026 flagship pass: every gallery-enabled show page loaded the
+    whole 14.2 MB manifest (7,680 images) and filtered it client-side to
+    the ~500 images of one show — the heaviest thing a show page did, on
+    every visit, on every phone. ``assets/js/gallery.js`` fetches
+    ``site/data/gallery/<slug>.json`` when the embed is pinned to a show
+    and falls back to the full manifest if the slice is missing.
+
+    Slices are written to ``<out_dir>/gallery/<slug>.json`` and carry the
+    same top-level shape (``schema_version``, ``generated_at``,
+    ``image_count``, ``shows``, ``images``) so the frontend needs no
+    second code path. Stale slices for shows no longer in the manifest
+    are removed. Returns the paths written.
+    """
+    slice_dir = out_path.parent / "gallery"
+    slice_dir.mkdir(parents=True, exist_ok=True)
+    by_show: Dict[str, List[Dict]] = {}
+    for img in manifest.get("images", []):
+        by_show.setdefault(str(img.get("show_slug") or ""), []).append(img)
+    written: List[Path] = []
+    keep = set()
+    for slug, images in by_show.items():
+        if not slug:
+            continue
+        keep.add(f"{slug}.json")
+        payload = {
+            "schema_version": manifest.get("schema_version", SCHEMA_VERSION),
+            "generated_at": manifest.get("generated_at"),
+            "show_slug": slug,
+            "image_count": len(images),
+            "shows": [s for s in manifest.get("shows", []) if s.get("slug") == slug],
+            "images": images,
+        }
+        target = slice_dir / f"{slug}.json"
+        try:
+            existing = json.loads(target.read_text(encoding="utf-8")) if target.exists() else None
+        except Exception:  # noqa: BLE001 — bad file → overwrite
+            existing = None
+        if existing is not None and _without_timestamp(existing) == _without_timestamp(payload):
+            continue
+        target.write_text(
+            json.dumps(payload, indent=2, ensure_ascii=False, sort_keys=True),
+            encoding="utf-8",
+        )
+        written.append(target)
+    for stale in slice_dir.glob("*.json"):
+        if stale.name not in keep:
+            stale.unlink()
+    if written:
+        logger.info("Wrote %d per-show gallery slice(s) under %s", len(written), slice_dir)
+    return written
+
+
 def empty_manifest(config: GalleryConfig) -> Dict:
     """Build the manifest representing zero images.
 
@@ -396,6 +451,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         return 0
 
     write_manifest_if_changed(manifest, args.out)
+    write_show_slices(manifest, args.out)
     return 0
 
 

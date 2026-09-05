@@ -99,7 +99,7 @@
         <div>
             <div class="np-eyebrow">Nerra Personal</div>
             <h1>Your own <span class="grad">daily show.</span></h1>
-            <p class="np-hero-sub">Seventeen shows publish every day, free.
+            <p class="np-hero-sub">{{ all_shows|length }} shows, most of them new every day, all free.
                Personal turns the ones you love into one continuous morning
                show — your picks, in your order, anchored by Mira, delivered
                as a private podcast feed that works in any app.</p>
@@ -174,6 +174,7 @@
             <li>Mira anchors it and greets you by name</li>
             <li>Private RSS feed — works in every podcast app</li>
             <li>Chapter markers for every segment</li>
+            <li>Markets-minute add-on: TSLA &amp; SPCX closes, spoken daily</li>
         </ul>
         {% if stripe_personal_url and stripe_personal_url != '#' %}
         <a class="cta" href="{{ stripe_personal_url }}">Start Personal</a>
@@ -186,10 +187,12 @@
         <p class="price">$8.99<small>/month</small></p>
         <ul>
             <li>Everything in Personal</li>
-            <li><strong>Your city's morning brief</strong>, opening your feed</li>
-            <li>Today's weather, spoken by Mira</li>
-            <li>One local story worth knowing, source named aloud</li>
-            <li>Honest by design: nothing worth your time, no filler</li>
+            <li><strong>Location add-ons, your pick</strong> — weather, local
+                news, events, traffic &amp; transit — researched by Mira for
+                any city you choose</li>
+            <li>Sources named aloud; an unverifiable item is skipped,
+                never padded</li>
+            <li>Switch add-ons and location any time from your dashboard</li>
         </ul>
         {% if stripe_personal_local_url and stripe_personal_local_url != '#' %}
         <a class="cta" href="{{ stripe_personal_local_url }}">Start Personal + Local</a>
@@ -207,7 +210,9 @@
 <section class="nn-steps">
     <div class="nn-step"><span class="num">1</span>
         <h3>Pick your shows</h3>
-        <p>Choose any of the network's English shows and order them the way
+        <p>Choose from the {{ lineup|length if lineup else 13 }} daily English shows in the Personal lineup
+           (Nerra Daily is the whole-network edition and The Age of AI is
+           interview-driven, so neither is a segment) and order them the way
            you want your morning to run. Two minutes, changeable any time —
            edits reach the very next edition.</p></div>
     <div class="nn-step"><span class="num">2</span>

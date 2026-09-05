@@ -2,28 +2,28 @@
 > **A fresh $1.6 billion Pentagon award secures 18 Falcon 9 missions through 2027 and extends national-security launch cadence from Vandenberg.**
 ---
 ### Top News
-1. **Title: SpaceX scores another massive Pentagon deal to support military satellites**
+1. **SpaceX scores another massive Pentagon deal to support military satellites**
    The U.S. Space Force awarded two task orders worth $1.6 billion for 18 Falcon 9 launches from Vandenberg Space Force Base through the end of 2027. The missions will carry satellites for the Space Based Sensing and Targeting portfolio. This contract adds to SpaceX’s existing national-security manifest and directly supports missile-tracking and targeting constellations. The launches will use the same Vandenberg pads already handling frequent national-security flights. SpaceX just picked up another $1.6 billion from the Pentagon with the awards covering the full period through 2027. Next milestone to watch is the first of these task-order missions and any associated payload integration timelines. Source: [teslarati.com](https://www.teslarati.com/spacex-scores-another-massive-pentagon-deal-to-support-military-satellites/)
 
-2. **Title: SpaceX launches classified payload for National Reconnaissance Office**
+2. **SpaceX launches classified payload for National Reconnaissance Office**
    The NROL-95 mission lifted off at 3:10 a.m. EDT from pad 40 at Cape Canaveral Space Force Station. It was the third National Reconnaissance Office payload flown under the National Security Space Launch Phase 2 procurement. The launch used a Falcon 9 and delivered a classified spacecraft into orbit. This flight adds another data point to the current cadence of national-security missions from the Cape. Liftoff occurred after the vehicle completed pre-launch checks on the same pad used for multiple prior NRO missions. Source: [spaceflightnow.com](https://spaceflightnow.com/2026/07/29/live-coverage-spacex-to-launch-classified-payload-for-national-reconnaissance-office/)
 
-3. **Title: Proposed rule would exempt commercial launch licensing from environmental regulations**
+3. **Proposed rule would exempt commercial launch licensing from environmental regulations**
    The Department of Transportation proposed exempting commercial space launch licensing from many environmental regulations. Industry groups welcomed the change as a way to shorten approval timelines. Environmental organizations have criticized the proposal for reducing oversight. If finalized, the rule would affect future launch-license applications at sites including Starbase and Vandenberg. The proposal covers licensing steps that currently require extensive environmental reviews before each new vehicle or pad configuration. Source: [spacenews.com](https://spacenews.com/proposed-rule-would-exempt-commercial-launch-licensing-from-environmental-regulations/)
 
-4. **Title: Space Force awards All Points $250 million to expand satellite processing at Vandenberg**
+4. **Space Force awards All Points $250 million to expand satellite processing at Vandenberg**
    All Points Logistics received $250 million under a Commercial Solutions Opening to add facilities at Vandenberg for satellite inspection, testing, fueling, and integration. The work will support higher launch rates by reducing ground-processing bottlenecks. This is the third company selected under the same contracting vehicle. The expanded capacity directly enables more frequent Falcon 9 and future Starship national-security missions from the base. Facilities will handle inspection, testing, fueling, and integration steps that currently limit daily throughput. Source: [spacenews.com](https://spacenews.com/space-force-awards-all-points-250-million-to-expand-satellite-processing-at-vandenberg/)
 
-5. **Title: Elon Musk sheds two new bits of detail on Starship after 13th test launch**
+5. **Elon Musk sheds two new bits of detail on Starship after 13th test launch**
    Musk shared additional information on Starship following the successful Flight 13 test. The update came after the vehicle completed its mission profile despite earlier delays from engine ignition issues and weather. The details focus on hardware and operations refinements for upcoming flights. SpaceX launched Starship for the 13th time last Friday after two delays: one on Monday when several Raptor engines did not ignite, and another on Thursday due to unfavorable weather conditions in Starbase, Texas. Remember, we covered Starship Flight 13 yesterday; today’s details move the reuse and catch questions forward by highlighting specific post-flight hardware changes. Source: [teslarati.com](https://www.teslarati.com/elon-musk-sheds-two-new-bits-detail-starship-after-13th-test-launch/)
 
-6. **Title: Actually, Starliner might fly into space this year**
+6. **Actually, Starliner might fly into space this year**
    Boeing CEO Kelly Ortberg said the company is feeling pretty good about a possible CST-100 Starliner flight this year. The statement came during updates on the vehicle’s next steps after prior crewed mission delays. NASA and Boeing continue to work on scheduling a cargo mission to the International Space Station. The timeline remains under active discussion with no firm date locked yet. Source: [arstechnica.com](https://arstechnica.com/space/2026/07/actually-starliner-might-fly-into-space-this-year/)
 
-7. **Title: Boeing still working with NASA to schedule next Starliner flight**
+7. **Boeing still working with NASA to schedule next Starliner flight**
    Boeing is still working with NASA to determine when to fly its CST-100 Starliner commercial crew vehicle on a cargo mission to the International Space Station. The companies have not yet finalized a launch date after earlier technical reviews. The next flight would serve as a cargo demonstration ahead of any crewed return. Source: [spacenews.com](https://spacenews.com/boeing-still-working-with-nasa-to-schedule-next-starliner-flight/)
 
-8. **Title: SpaceX gets an absolutely crazy price target after rough IPO**
+8. **SpaceX gets an absolutely crazy price target after rough IPO**
    SpaceX received an analyst price target from Raymond James following its Initial Public Offering on Nasdaq. The rating came after the stock experienced a tough first few weeks post-IPO. The company’s Starship Flight 13 success last Friday provided additional context for the valuation discussion. The target reflects continued belief in Starship and Starlink progress despite the recent trading volatility. Source: [teslarati.com](https://www.teslarati.com/spacex-spcx-absolutely-crazy-price-target-rough-ipo/)
 ---
 ## Community Buzz

@@ -207,6 +207,7 @@ YOUTUBE_ENABLED_SHOWS = {
     "models_agents", "models_agents_beginners",
     "unintended_consequences",
     "finansy_prosto", "privet_russian",
+    "dp_pod",  # Sep 4 2026: Shorts-only (publish_long_form: false)
 }
 
 
