@@ -2593,6 +2593,13 @@ def run(args: argparse.Namespace) -> None:
                 podcast_digest=(clean_digest
                                 if 'clean_digest' in locals() else ""),
             )
+            _gate_info = (template_vars or {}).pop("_script_rewrite_gate", None)
+            if _gate_info:
+                metrics.record("script_rewrite_gate_fired", bool(_gate_info.get("fired")))
+                metrics.record("script_rewrite_gate_before_pct", _gate_info.get("before_pct"))
+                if _gate_info.get("fired"):
+                    metrics.record("script_rewrite_gate_after_pct", _gate_info.get("after_pct"))
+                    metrics.record("script_rewrite_gate_accepted", bool(_gate_info.get("accepted")))
 
             # 8b. Podcast script length check — two-tier gate.
             #     Hard floor (true garbage): abort only when clearly broken.

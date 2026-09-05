@@ -2241,6 +2241,7 @@ def generate_podcast_script(
     template_vars: Dict[str, Any],
     config,
     tracker: Optional[dict] = None,
+    prompt_appendix: str = "",
 ) -> str:
     """Generate a podcast script from the show's podcast prompt.
 
@@ -2253,6 +2254,9 @@ def generate_podcast_script(
         A ``ShowConfig`` instance.
     tracker:
         Optional cost-tracking dict.
+    prompt_appendix:
+        Optional block appended after the rendered prompt (the rewrite
+        gate's corrective instruction). Empty = byte-identical prompt.
 
     Returns
     -------
@@ -2269,6 +2273,8 @@ def generate_podcast_script(
         )
         if appendix:
             prompt += "\n\n" + appendix
+    if prompt_appendix:
+        prompt += "\n\n" + prompt_appendix.strip()
 
     system_prompt = None
     if config.llm.system_prompt_file:

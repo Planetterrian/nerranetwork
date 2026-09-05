@@ -173,3 +173,61 @@ audio):**
   the duplicate strip removes the doubled X Takeover items from the blog
   directly; video descriptions and chapter titles come from the same
   digest headlines. No surface-specific change was needed.
+
+## Same-day readout — Tesla Ep595 (old prompts, 07:21 UTC) vs Ep596 (new prompts, manual re-run 15:44 UTC)
+
+The operator re-ran Tesla after the merge, which gives one paired
+comparison on the same day. Caveat first: a same-day re-run works from a
+depleted pool — the morning's 17 stories sit in the recently-covered
+exclusion list and the fetch found 34 articles against 69 — so Ep596's
+digest collapsed to ONE Top 12 item plus five X Takeover items (1,178 words
+against 2,145) and the episode ran 7.8 minutes against 9.7. Thinness is the
+re-run, not the prompts. What the pair does show:
+
+| | Ep595 (old) | Ep596 (new) |
+|---|---|---|
+| digest-verbatim 8-grams | 63% | 51% |
+| filler-shape sentences | 3 (4%) | 0 |
+| cross-section duplicates left in the digest | 0 | 0 (strip active) |
+| closing text | pinned | pinned |
+| same story told twice | NHTSA audit: body then Counterpoint (lines 65–73 vs 127–135) | NHTSA audit: body then First Principles (self-certification essay restates "no steering wheel", "standards written for conventional controls" ×3) |
+| within-item restatement | "The next step will show whether this chemistry moves into other lines" restates line 13 | lines 41/43 restate 37/39 (unboxed line, recycled panels) |
+| dangling references | "The ad drew attention…" with no antecedent | none |
+
+Verdict: real but partial. The filler shapes, the "watch for" tails, the
+varying closings and the digest-side duplicates are gone; the script is
+tighter sentence by sentence. Two things did not move enough:
+
+1. **Verbatim copying** fell 63 → 51 percent against a 25 percent target.
+   Shipped the same evening: a **script rewrite gate**
+   (`engine.pipeline._script_rewrite_gate`, `llm.script_rewrite_gate_overlap_pct`
+   = 40 on the nine English news shows). When the finished script carries
+   ≥40% verbatim 8-grams, the script stage re-runs ONCE with the copied
+   sentences named; the rewrite is kept only when it copies less and is at
+   least 70% of the original length. Metrics
+   `script_rewrite_gate_{fired,before_pct,after_pct,accepted}`. Cost: one
+   extra script call on days it fires (~$0.03). It is a rewrite gate, not
+   a length lever — it never fires on word count.
+2. **The essay re-tells a covered story** on both episodes (Counterpoint in
+   Ep595, First Principles in Ep596). The digest prompt chose the essay
+   subject from the day's lead; the podcast prompt's "take only the
+   mechanism" instruction was half-obeyed. Shipped: Tesla First Principles
+   gains the TOPIC DISTINCTNESS rule Models & Agents' Under the Hood already
+   has (FF and PT already had "choose the CONCEPT, not the story"). A
+   mechanical essay-vs-item overlap note was prototyped and NOT shipped:
+   salient-token overlap between an essay and the item it re-tells sits at
+   0.26–0.42 while unrelated pairs reach 0.30, so there is no threshold
+   that does not misfire.
+
+Not detectable mechanically: the Ep596 restatements are semantic
+paraphrases ("molded exterior panels… remove the conventional paint shop" /
+"recycled-content panels eliminate the need for a traditional paint booth")
+sharing three salient tokens of eight; the sentence-pair detector cannot
+see them and the prompt's restatement ban is the only lever.
+
+Other shows: no post-merge episode existed yet at this readout (every
+other show ran its scheduled slot before the 12:53 UTC merge), so the
+network verdict waits for the 2026-09-06 slate. The re-run finding that
+transfers now is the gate: every English news show copied 27–78% on its
+last four episodes, so the threshold is set network-wide rather than for
+Tesla alone.
