@@ -159,10 +159,15 @@ class TestSep2026FlagshipPass:
         assert rx.search("Everyone treats test-time scaling as simply spend more tokens.")
         assert rx.search("Okay, let's pop the hood on this one.")
 
-    def test_closing_pool_rotates_at_least_four_variants(self):
+    def test_closing_pool_is_pinned_to_one_signature(self):
+        # Sep 4 grew the pool to four to break a tic; Sep 5's delivery
+        # review reversed that on purpose — the operator asked for a
+        # consistent voice and the closing is the signature (the sibling
+        # plug and website surface still rotate after it). One closing,
+        # and it must still hit the Closing chapter marker.
         from engine.intros import _SHOW_PERSONALITIES
         closings = _SHOW_PERSONALITIES["models_agents"]["closings"]
-        assert len(closings) >= 4
+        assert len(closings) == 1
         cfg = yaml.safe_load((self._ROOT / "shows/models_agents.yaml").read_text(encoding="utf-8"))
         closing_rx = re.compile(
             next(m for m in cfg["chapters"]["section_markers"] if m["title"] == "Closing")["pattern"],

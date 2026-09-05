@@ -505,4 +505,38 @@ reviews:
       verdict: pending
       evidence: null
     agent_cost_usd: null
+  - date: 2026-09-05
+    pr: null
+    doc: docs/reviews/network_delivery_review_2026_09_05.md
+    summary: "Network delivery review. The spoken 'What You Need to Know' rundown made the top story the first thing heard three times; Under the Hood re-explained a news item in 5/6 episodes (HARNESSEVO x4 in Ep163) - the one exception (Ep162) was the densest episode; 24 'Builders should...' advisory tails in six episodes; 5/5 continuity callbacks were re-tells; Ep163 ran one launch as Top Story + five Model Updates items."
+    shipped:
+      - "models_agents_podcast.txt - spoken rundown removed; Under the Hood = second technical story, >=4 numbers, may not restate any news item; Things to Try may not restate; advisory / 'here's what this means for you' asks removed; worked example -> shape (A/B)"
+      - "models_agents_digest.txt - ONE STORY = ONE ITEM; Under the Hood distinct from EVERY news item; per-item 'what builders should try' tail -> Things to Try only; sentence count follows fact count (A/B)"
+      - "engine/show_memory _SECTION_INSTRUCTIONS - MANDATORY per-story arc sentence -> one delta-bearing callback"
+      - "closing pinned to one sign-off (reverses the Sep 4 four-variant pool on purpose) (A/B)"
+    deferred:
+      - "none"
+    predictions:
+    - metric: "Under the Hood subject distinct from every news item (manual)"
+      baseline: "1/6 (Ep158-163)"
+      expected: "10/10"
+      verdict: pending
+      evidence: null
+    - metric: "script_digest_overlap_pct, median of last 10"
+      baseline: "44% (Ep160-163: 45/62/43/29)"
+      expected: "<=25%"
+      verdict: pending
+      evidence: null
+    - metric: "'advisory' filler shape per episode (script_audit)"
+      baseline: "up to 11 (Ep159)"
+      expected: "0 on 9/10"
+      verdict: pending
+      evidence: null
+    - metric: "continuity callbacks that state a delta (manual)"
+      baseline: "0/5"
+      expected: "every callback names what changed, or none"
+      verdict: pending
+      evidence: null
+    agent_cost_usd: null
+
 do_not_retry: []

@@ -1784,6 +1784,80 @@ files. Rules that bind from this pass:
   (de-seeded by shape — M&A had reproduced it verbatim with tracker
   display names 8/10), the SpaceX/Tesla closing-line wording.
 
+### Network delivery review — content density over narration (Sep 5, 2026)
+
+Operator brief: the flagships read as "narrative driven with redundant
+repetition"; the ask is content- and information-driven episodes with a
+consistent, engaging delivery across podcast, blog and video. Canonical
+writeup:
+[`docs/reviews/network_delivery_review_2026_09_05.md`](docs/reviews/network_delivery_review_2026_09_05.md);
+ledger entries (predictions to score) in eight per-show ledgers + `network`;
+experiment `network-content-discipline-2026-09` (readout 2026-09-26). Drift
+guards: `tests/test_delivery_pass_2026_09_05.py`. Four audits agreed the
+cause was mechanical, not the host's taste, and the rules below bind:
+
+- **The script stage must WRITE, not de-markdown.** On the worst days 62–78%
+  of a script's 8-word phrases were verbatim digest text, so every digest
+  duplicate shipped as audio. `engine/script_audit.py` measures it per
+  episode (`script_digest_overlap_pct`, `script_repeated_facts`,
+  `script_filler_pct`, `script_hook_restated`; `::warning::` above
+  thresholds; `review_snapshot.py` tabulates it). It is a READ-ONLY
+  instrument — a review re-reads the baseline before moving a threshold,
+  and a rule that changes the script belongs in the prompt or in a gate,
+  never in the audit.
+- **The digest's "ZERO STORY OVERLAP" rule is enforced by code, not prose.**
+  `engine/digest_overlap.py` drops a later item that repeats an earlier
+  one (same Source URL; headline sharing ≥50% of salient words; body
+  sharing ≥50% of salient vocabulary — Tesla Ep592's five re-headlined
+  X Takeover items carried no Source lines, so URL matching alone was
+  blind). Runs before the validator and again after the structural
+  regeneration; a section it empties triggers the existing one-shot
+  regen, which is the correct outcome. Blocks split at numbered items AND
+  header lines — the templates put `### Top News` directly under the hook.
+- **Memory is for accuracy, never narration.** `show_memory`'s composed
+  section used to inject *MANDATORY CONTINUITY: add 1-2 natural sentences
+  of where today's development fits in the ongoing arc* on every story of
+  every memory show, contradicting the status block's "at most ONE" — the
+  model obeyed the mandatory line. Now: one audible callback, only with a
+  delta (what changed since prior coverage); no arc sentences, no
+  open-question recaps. Tesla's bespoke `tesla_memory` block still carried
+  the quotable "Remember, we covered…" example the shared block lost on
+  Sep 4 — gone.
+- **`shows/prompts/_shared/content_discipline.txt`** is included in the nine
+  English news-show podcast prompts: digest is source material not a
+  draft; sentences follow facts (2–6 per story, cut below two, never "no
+  details were provided"); one owner per fact; a story ends on its last
+  fact; transitions carry information or are dropped; source named once;
+  the same voice every day. It is shape-only. **Every worked example
+  sentence was removed from seven podcast prompts** (FF Ep182 L2, PT
+  Ep172/173, OV Ep164/165 and Tesla Ep594 all shipped a prompt's own
+  specimen line) — "described shape, never a quotable line" now applies to
+  the EXAMPLE OF IDEAL STORY COVERAGE blocks too, not only to tics.
+- **A deep dive is a second story, not a second pass.** M&A's Under the
+  Hood re-explained a news item in 5/6 episodes (the exception was the
+  densest episode); OV's Understanding the Issue re-narrated the lead;
+  SpaceX's Deep Dive carried two numbers, both already spoken. Every
+  deep-dive spec now forbids restating a covered body and carries a
+  numbers floor (SpaceX 5, M&A 4, Tesla 3). Chapter anchor phrases stay
+  as phrases the writer builds a sentence around.
+- **Digest items: sentence count follows fact count.** Fixed "4–5 / 5–7
+  sentences" produced a fifth sentence restating the first and generic
+  consequence prose ("Buyers gain a clearer picture…"). Per-item "what to
+  watch next" became a dated next step only when the source names one;
+  "why it matters" only when the source explains it. Tesla's X Takeover
+  items must carry Source lines; M&A gained ONE STORY = ONE ITEM.
+- **One closing per flagship** (SpaceX, Tesla, M&A, MIT) — the rotating
+  pool read as register drift. This reverses the Sep 4 M&A pool expansion
+  on purpose; the sibling plug and website surface still rotate after it.
+  MIT's Market Pulse speaks index levels only; portfolio numbers belong to
+  Portfolio Performance alone (Ep160 read the record twice).
+- Bugs from the transcripts: "VS Code" is spelled out before the versus
+  rule ("versus versus Code"); `r/teslamotors` is spoken as a subreddit
+  name; a line repeated inside the closing eight is collapsed (MIT Ep159's
+  doubled gallery plug).
+- Every prompt-side item above is landmine-#17 A/B; the engine modules are
+  removal-only or read-only and are not.
+
 ### Network prompt + LLM review (July 31, 2026)
 
 Operator-directed all-show prompt pass + model strategy — canonical

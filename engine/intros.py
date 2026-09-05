@@ -156,24 +156,13 @@ _SHOW_PERSONALITIES: dict[str, dict[str, Any]] = {
             },
         },
         "closings": [
+            # Sep 5 2026 delivery review: ONE closing, every day. The rotating pool read as register drift (four different sign-offs across six episodes); the sibling plug and website surface still rotate after it. A/B-listen.
             (
                 "That's your Tesla news for today. "
                 "If you found this useful, a rating or review on Apple Podcasts or Spotify "
                 "really helps new listeners find the show. "
                 "You can also find us on X at tesla shorts time. "
                 "I'm Patrick in Vancouver. Thanks for listening, and I'll see you tomorrow."
-            ),
-            (
-                "That's a wrap on today's Tesla news. "
-                "If you enjoyed this episode, please leave a rating or review — "
-                "it genuinely helps other Tesla fans find us. "
-                "I'm Patrick in Vancouver. See you next time."
-            ),
-            (
-                "That covers it for today's Tesla developments. "
-                "Share this with a fellow Tesla enthusiast if you found it useful, "
-                "and subscribe so you don't miss tomorrow's episode. "
-                "I'm Patrick in Vancouver. Thanks for being here."
             ),
         ],
     },
@@ -202,22 +191,12 @@ _SHOW_PERSONALITIES: dict[str, dict[str, Any]] = {
         # Every variant MUST match the Closing chapter pattern in
         # shows/spacex.yaml (drift guard in tests/test_spacex_show.py).
         "closings": [
+            # Sep 5 2026 delivery review: ONE closing, every day. The rotating pool read as register drift (four different sign-offs across six episodes); the sibling plug and website surface still rotate after it. A/B-listen.
             (
                 "That's your SpaceX news for today. "
                 "If the show saves you time, a rating or review on Apple Podcasts or "
                 "Spotify genuinely helps new listeners find it. "
                 "I'm Patrick in Vancouver. Thanks for listening — see you tomorrow."
-            ),
-            (
-                "And that's a wrap on today's SpaceX developments. "
-                "Share this with a fellow spaceflight fan if you found it useful, "
-                "and subscribe so you don't miss tomorrow's episode. "
-                "I'm Patrick in Vancouver. See you next time."
-            ),
-            (
-                "That covers everything worth knowing about SpaceX today. "
-                "A quick rating on Apple Podcasts or Spotify goes a long way. "
-                "I'm Patrick in Vancouver. See you tomorrow."
             ),
         ],
     },
@@ -446,30 +425,12 @@ _SHOW_PERSONALITIES: dict[str, dict[str, Any]] = {
             },
         },
         "closings": [
+            # Sep 5 2026 delivery review: ONE closing, every day. The rotating pool read as register drift (four different sign-offs across six episodes); the sibling plug and website surface still rotate after it. A/B-listen.
             (
                 "That's Models and Agents for today. If you found this useful, share it "
                 "with someone who's trying to keep up with all these changes, and subscribe "
                 "so you don't miss tomorrow's update. The AI world moves fast. We'll help "
                 "you keep up. See you tomorrow."
-            ),
-            (
-                "That wraps up today's AI briefing. Share this with a developer or builder "
-                "who wants to stay current. Subscribe wherever you listen. See you tomorrow."
-            ),
-            # Sep 4 2026 flagship pass: the pool had two entries, so one
-            # closing aired in 7 of 10 episodes (the snapshot's tic
-            # detector flagged the whole paragraph). Two more variants
-            # bring the rotation to the SpaceX/Tesla shape; each keeps the
-            # "That's Models and Agents" / "that wraps up" Closing marker.
-            (
-                "That's Models and Agents for today. Something here worth building on? "
-                "Go try it before tomorrow's briefing lands — and if a colleague is "
-                "drowning in AI news, send them this way. See you tomorrow."
-            ),
-            (
-                "And that wraps up Models and Agents. The models will have changed again by "
-                "morning; we'll sort the signal from the noise when they do. Subscribe so "
-                "you don't miss it, and see you tomorrow."
             ),
         ],
     },
@@ -668,26 +629,12 @@ _SHOW_PERSONALITIES: dict[str, dict[str, Any]] = {
             },
         },
         "closings": [
+            # Sep 5 2026 delivery review: ONE closing, every day. The rotating pool read as register drift (four different sign-offs across six episodes); the sibling plug and website surface still rotate after it. A/B-listen.
             (
                 "That's Modern Investing Techniques for today. If you found this useful, "
                 "share it with a fellow investor and subscribe wherever you listen. "
                 "Check the resources page for tools and platforms we discussed. "
                 "We're back tomorrow. Keep learning, keep investing."
-            ),
-            (
-                "That wraps up today's Modern Investing Techniques. Remember, every trade is "
-                "a learning opportunity, win or lose. Subscribe, share with a friend who wants "
-                "to invest smarter, and we'll see you tomorrow."
-            ),
-            (
-                "That's it for today's Modern Investing Techniques. The resources page has "
-                "links to everything we discussed. Subscribe and share with someone who "
-                "wants to go beyond index funds. See you tomorrow."
-            ),
-            (
-                "That's your Modern Investing Techniques for today. Every episode makes you "
-                "a sharper investor. Subscribe, leave a review, and we'll be back tomorrow "
-                "with more market intelligence."
             ),
         ],
     },

@@ -1048,3 +1048,28 @@ experiments:
       dedup, banned-verb and real-world-due lines computed from the last
       six levers) plus a shape-only de-seed of the digest Lever spec.
       Prompt change — landmine #17 A/B.
+
+  - id: network-content-discipline-2026-09
+    title: "Content-density pass — scripts written from the digest, not copied; one owner per fact"
+    area: quality
+    shipped: 2026-09-05
+    readout: 2026-09-26
+    status: reading
+    baseline: "flagship scripts 44-66% median digest-verbatim 8-grams (SpaceX 66, Tesla 49, M&A 44); 33 cross-section duplicate digest items in 160 digests; filler 6-10% of sentences on SpaceX; deep dive re-told a covered story in 5/6 M&A episodes"
+    target: >
+      script_digest_overlap_pct <= 25% on every flagship episode;
+      digest_cross_section_dupes_removed trending to 0; script_filler_pct
+      <= 5%; one closing text per flagship on 10/10. Read from the
+      review_snapshot "Script density audit" table and metrics_ep*.json.
+    criteria: >
+      Hit = all four numbers move as targeted on the three flagships by the
+      readout. Partial (verbatim share does not move but duplicates and
+      filler do) = ship the data-side paraphrase gate (reject + one script
+      rerun above threshold). Miss on any A/B-listened prompt = git revert
+      of that prompt only; the engine modules stay (removal-only, read-only).
+    notes: >
+      Operator brief 2026-09-05 ("narrative driven with redundant
+      repetition"). Every prompt change is landmine-#17 A/B; the engine
+      changes (engine/digest_overlap, engine/script_audit, show_memory
+      instruction, pronunciation, duplicate tail-line guard) are not.
+      Review doc: docs/reviews/network_delivery_review_2026_09_05.md.
