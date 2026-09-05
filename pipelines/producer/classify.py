@@ -145,11 +145,23 @@ def validate_classification(obj: Any) -> Dict[str, Any]:
 
 def latest_inbound(thread: Dict[str, Any], own_email: str) -> Optional[Dict[str, Any]]:
     """The most recent message NOT sent by the delegated user."""
-    own = (own_email or "").lower()
+    own = _own_set(own_email)
     for msg in reversed(thread.get("messages") or []):
-        if (msg.get("from_email") or "").lower() != own:
+        if (msg.get("from_email") or "").lower() not in own:
             return msg
     return None
+
+
+def _own_set(own_email: str) -> set:
+    """The delegated mailbox plus its send-as alias (GMAIL_SEND_AS)."""
+    import os
+    own = {(own_email or "").lower()}
+    for key in ("GMAIL_SEND_AS", "GMAIL_DELEGATED_USER"):
+        val = (os.environ.get(key) or "").strip().lower()
+        if val:
+            own.add(val)
+    own.discard("")
+    return own
 
 
 def truncate(text: str, limit: int = MAX_BODY_CHARS) -> str:

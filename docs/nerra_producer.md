@@ -84,7 +84,8 @@ writes to Supabase; every would-be action is logged.
 * `guest_followup` on a thread Patrick already answered: skip, no action.
   On a thread nobody answered: hold.
 * `platform_notice` and `newsletter_or_noise`: label processed, no reply.
-* `max_sends_per_run` (25): a circuit breaker; anything past it is drafted.
+* `max_sends_per_run` (25): a circuit breaker; anything past it is left
+  untouched for the next tick (no draft, no label).
   `PRODUCER_MAX_SENDS` overrides it.
 * `show_blurbs`: the one-line description of each interview show used in
   the invite. `pitched_show_names`: slug to display name for the daily
@@ -115,10 +116,15 @@ autoescaping (`inbox.render_text`), unlike the HTML `voices_*.j2` mails.
    API controls → Domain-wide delegation → Add new**: paste the client ID
    and the scope `https://www.googleapis.com/auth/gmail.modify`. Nothing
    else is needed on the mailbox itself; the account impersonates
-   `patrick@planetterrian.com` through the delegation grant.
+   the Workspace user through the delegation grant.
 2. **GitHub secrets.** `GMAIL_SERVICE_ACCOUNT_JSON` = the full contents of
    the downloaded JSON key (paste the file, not a path);
-   `GMAIL_DELEGATED_USER` = `patrick@planetterrian.com`. The workflow also
+   `GMAIL_DELEGATED_USER` = `patrick@avvizo.com` (the Workspace mailbox the
+   planetterrian.com mail lands in; the service account impersonates this
+   user) and `GMAIL_SEND_AS` = `patrick@planetterrian.com` (the send-as
+   alias used as the From: on every reply, so publicists see the address
+   they wrote to). Both addresses count as "us" when the Producer checks
+   whether a thread was already answered. The workflow also
    maps the existing `VOICES_SUPABASE_URL`, `VOICES_SUPABASE_SERVICE_KEY`,
    `GROK_API_KEY`, `SLACK_WEBHOOK` (or `NOTIFICATION_WEBHOOK_URL`).
 3. **Dry run first.** Actions → *Nerra Producer inbox* → *Run workflow*

@@ -188,8 +188,8 @@ class RunLog:
 # ---------------------------------------------------------------------------
 
 def already_replied(thread: Dict[str, Any], own_email: str) -> bool:
-    own = (own_email or "").lower()
-    return any((m.get("from_email") or "").lower() == own
+    own = _classify._own_set(own_email)
+    return any((m.get("from_email") or "").lower() in own
                for m in thread.get("messages") or [])
 
 

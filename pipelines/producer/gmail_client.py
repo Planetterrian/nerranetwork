@@ -36,7 +36,23 @@ DEFAULT_QUERY = "newer_than:30d in:inbox"
 
 
 def delegated_user() -> str:
+    """The Workspace mailbox the service account impersonates.
+
+    patrick@planetterrian.com is a send-as alias on the patrick@avvizo.com
+    mailbox, so in production GMAIL_DELEGATED_USER=patrick@avvizo.com and
+    GMAIL_SEND_AS=patrick@planetterrian.com (the From: on every reply).
+    """
     return (os.environ.get("GMAIL_DELEGATED_USER", "") or DEFAULT_DELEGATED_USER).strip()
+
+
+def send_as_address() -> str:
+    """The From: address for replies (a configured send-as alias, or the mailbox)."""
+    return (os.environ.get("GMAIL_SEND_AS", "") or delegated_user()).strip()
+
+
+def own_addresses() -> tuple:
+    """Every address that counts as 'us' when reading a thread."""
+    return tuple({delegated_user().lower(), send_as_address().lower()})
 
 
 def build_service(delegated: Optional[str] = None):
@@ -174,6 +190,8 @@ class GmailClient:
                  processed_label: str = PROCESSED_LABEL) -> None:
         self.service = service
         self.user = user or delegated_user()
+        # From: on replies — the send-as alias when configured, else the mailbox.
+        self.send_as = (os.environ.get("GMAIL_SEND_AS", "") or self.user).strip()
         self.dry_run = dry_run
         self.processed_label = processed_label
         self._label_ids: Dict[str, str] = {}
@@ -263,7 +281,7 @@ class GmailClient:
 
     def send_reply(self, thread_id: str, to: str, subject: str, body_text: str,
                    in_reply_to: str = "", references: str = "") -> Optional[str]:
-        raw = build_reply_mime(sender=self.user, to=to, subject=subject,
+        raw = build_reply_mime(sender=self.send_as, to=to, subject=subject,
                                body_text=body_text, in_reply_to=in_reply_to,
                                references=references)
         if self.dry_run:
@@ -277,7 +295,7 @@ class GmailClient:
 
     def create_draft(self, thread_id: str, to: str, subject: str, body_text: str,
                      in_reply_to: str = "", references: str = "") -> Optional[str]:
-        raw = build_reply_mime(sender=self.user, to=to, subject=subject,
+        raw = build_reply_mime(sender=self.send_as, to=to, subject=subject,
                                body_text=body_text, in_reply_to=in_reply_to,
                                references=references)
         if self.dry_run:
