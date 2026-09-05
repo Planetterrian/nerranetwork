@@ -2217,7 +2217,8 @@ def run(args: argparse.Namespace) -> None:
                 # mechanical gate. Still failing => block, exactly as
                 # before — the enforce contract is untouched.
                 if (not _si_gate.passed and _si_enforce
-                        and _si_gate.failed_verifications):
+                        and (_si_gate.failed_verifications
+                             or _si_gate.uncovered_shapes)):
                     metrics.record("source_integrity_repair_attempted", True)
                     logger.warning(
                         "Source-integrity gate failing (%s) — attempting a "
