@@ -184,6 +184,28 @@ _RAW_RULES: List[Tuple[str, str, str]] = [
     # repaired here; that's the prompt-side fix.)
     (r"(?im)^(\s*(?:\d+\.|[-*•])?\s*\*\*)\s*Title\s*[:\-—]\s*", r"\1",
      "'**Title:' heading label"),
+    # Tesla digest production-notes item names and template placeholders
+    # (Sep 4 2026 flagship pass): Ep590 ended with the literal line
+    # "Sign-off paragraph" (the checklist item name, rendered as a blog
+    # paragraph); Ep584's Short Spot title carried the template's
+    # ``: @username/Source`` / ``[@username](https://x.com/username)``
+    # placeholder (a live link to x.com/username on the blog); and the
+    # ``Source/Post:`` label shape rendered verbatim on 8/10 posts where
+    # every other show writes ``Source:``.
+    (r"(?im)^\s*\*{0,2}Sign-off paragraph\*{0,2}\s*\.?\s*$\n?", "",
+     "'Sign-off paragraph' checklist echo"),
+    (r"(?i)\s*\[@username\]\(https?://x\.com/username/?\)", "",
+     "'[@username](https://x.com/username)' placeholder link"),
+    (r"(?im)\s*[:\-—]\s*@username(?:/Source)?(?=\*{0,2}\s*$)", "",
+     "': @username/Source' placeholder tail"),
+    (r"(?im)\bSource/Post:", "Source:", "'Source/Post:' label"),
+    # The digest FORMATTING block's ``### DEPTH OVER BREADTH (news items)``
+    # instruction heading was reproduced as a real heading in 4/10 M&A
+    # digests and rendered as an <h4> + TOC entry on 17 blog posts (Sep 4
+    # 2026 flagship pass). The prompt no longer states it as a heading;
+    # this scrubs any echo, with or without the "(news items)" tail.
+    (r"(?im)^\s*#{1,6}\s*DEPTH OVER BREADTH\b[^\n]*\n?", "",
+     "'### DEPTH OVER BREADTH' instruction heading"),
     # Story-recurrence annotations (Aug 2026, engine/story_recurrence.py)
     # are instruction text injected into the digest prompt's article
     # listing — if the model ever echoes one into the digest body, strip

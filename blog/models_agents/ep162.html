@@ -1,0 +1,2463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Simon Willison is ignoring his X replies because AI-generated slop is wasting everyone's time. Models & Agents, episode 162.">
+    
+    <meta name="keywords" content="AI models, agent frameworks, LLM news, AI briefings, Models and Agents"><title>Simon Willison is ignoring his X replies because AI… — Ep162 | Models & Agents</title>
+    <meta name="theme-color" content="#7C3AED">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Simon Willison is ignoring his X replies because AI… — Ep162 | Models & Agents">
+    <meta property="og:description" content="Simon Willison is ignoring his X replies because AI-generated slop is wasting everyone's time. Models & Agents, episode 162.">
+    <meta property="og:type" content="article">
+    <meta property="og:image" content="https://nerranetwork.com/assets/covers/models-agents.jpg">
+    <meta property="og:url" content="https://nerranetwork.com/blog/models_agents/ep162.html">
+    <meta property="og:site_name" content="Nerra Network">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Simon Willison is ignoring his X replies because AI… — Ep162 | Models & Agents">
+    <meta name="twitter:description" content="Simon Willison is ignoring his X replies because AI-generated slop is wasting everyone's time. Models & Agents, episode 162.">
+    <meta name="twitter:image" content="https://nerranetwork.com/assets/covers/models-agents.jpg">
+
+    <link rel="canonical" href="https://nerranetwork.com/blog/models_agents/ep162.html">
+    
+    
+    
+
+    <!-- Google Fonts: DM Sans + Source Serif 4 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%230B0F1A'/><line x1='50' y1='50' x2='28' y2='28' stroke='%236B47FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='72' y2='28' stroke='%2300D4FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='28' y2='72' stroke='%236B47FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='72' y2='72' stroke='%2300D4FF' stroke-width='5' stroke-linecap='round'/><circle cx='28' cy='28' r='8' fill='%2300D4FF'/><circle cx='72' cy='28' r='8' fill='%236B47FF'/><circle cx='28' cy='72' r='8' fill='%236B47FF'/><circle cx='72' cy='72' r='8' fill='%2300D4FF'/><circle cx='50' cy='50' r='13' fill='%236B47FF'/><circle cx='50' cy='50' r='5' fill='white'/></svg>">
+
+    
+    
+    <!-- Cookie consent (Google Consent Mode v2) — loads BEFORE gtag.js -->
+    <script src="../../assets/js/consent.js"></script>
+    <!-- gtag.js — covers both GA4 and Google Ads -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-6PWJCVQQ7B"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      
+      gtag('config', 'G-6PWJCVQQ7B', { 'anonymize_ip': true });
+      
+      
+    </script>
+    
+    
+    
+    <script defer src="../../assets/js/tracking.js"></script>
+
+    <!-- Shared CSS -->
+    <link rel="stylesheet" href="../../styles/main.css">
+
+    
+    <link rel="alternate" type="application/rss+xml" title="Models & Agents Blog RSS" href="https://nerranetwork.com/blog_models_agents.rss">
+    <!-- Blog Post OG -->
+    <meta property="article:published_time" content="2026-09-03">
+    <meta property="article:author" content="Models & Agents">
+
+    <!-- JSON-LD -->
+    <script type="application/ld+json">
+[
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "Simon Willison is ignoring his X replies because AI-generated slop is wasting everyone's time.",
+    "description": "Simon Willison is ignoring his X replies because AI-generated slop is wasting everyone's time.",
+    "datePublished": "2026-09-03",
+    "wordCount": 1683,
+    "articleSection": "Models & Agents",
+    "inLanguage": "en",
+    "author": {
+      "@type": "Organization",
+      "name": "Models & Agents",
+      "url": "https://nerranetwork.com"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Nerra Network",
+      "url": "https://nerranetwork.com"
+    },
+    "url": "https://nerranetwork.com/blog/models_agents/ep162.html",
+    "mainEntityOfPage": "https://nerranetwork.com/blog/models_agents/ep162.html",
+    "image": "https://nerranetwork.com/assets/covers/models-agents.jpg",
+    "keywords": "AI models, agent frameworks, LLM news, AI briefings, Models and Agents"
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "PodcastEpisode",
+    "name": "Simon Willison is ignoring his X replies because AI-generated slop is wasting everyone's time.",
+    "description": "Simon Willison is ignoring his X replies because AI-generated slop is wasting everyone's time.",
+    "datePublished": "2026-09-03",
+    "url": "https://nerranetwork.com/blog/models_agents/ep162.html",
+    "inLanguage": "en",
+    "episodeNumber": 162,
+    "partOfSeries": {
+      "@type": "PodcastSeries",
+      "name": "Models & Agents",
+      "url": "https://nerranetwork.com/models-agents.html"
+    },
+    "image": "https://nerranetwork.com/assets/covers/models-agents.jpg",
+    "transcript": "https://nerranetwork.com/blog/models_agents/ep162.html#transcript",
+    "associatedMedia": [
+      {
+        "@type": "MediaObject",
+        "contentUrl": "https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep162_20260903.mp3",
+        "inLanguage": "en"
+      },
+      {
+        "@type": "MediaObject",
+        "contentUrl": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep162_20260903.fr.mp3",
+        "inLanguage": "fr"
+      }
+    ],
+    "availableLanguage": [
+      "en",
+      "fr"
+    ]
+  }
+]
+    </script>
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://nerranetwork.com/"},
+    {"@type": "ListItem", "position": 2, "name": "Models & Agents", "item": "https://nerranetwork.com/models-agents.html"},
+    {"@type": "ListItem", "position": 3, "name": "Blog", "item": "https://nerranetwork.com/blog/models_agents/index.html"},
+    {"@type": "ListItem", "position": 4, "name": "Episode 162"}
+  ]
+}
+    </script>
+    
+
+    <style>
+        .blog-hero {
+            position: relative;
+            padding: var(--sp-20) var(--sp-6) var(--sp-12);
+            text-align: center;
+            overflow: hidden;
+        }
+        .blog-hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at 50% 0%, color-mix(in srgb, var(--show-color) 15%, transparent), transparent 70%);
+            pointer-events: none;
+        }
+        .blog-hero-inner {
+            position: relative;
+            max-width: 760px;
+            margin: 0 auto;
+        }
+        .blog-show-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-2);
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            font-family: var(--font-ui);
+            font-size: 0.85rem;
+            color: var(--nn-text-muted);
+            margin-bottom: var(--sp-6);
+            text-decoration: none;
+            transition: border-color var(--duration) var(--ease);
+        }
+        .blog-show-badge:hover {
+            border-color: var(--show-color);
+        }
+        .blog-show-badge img {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+        }
+        .blog-hero h1 {
+            font-family: var(--font-heading);
+            font-size: clamp(1.75rem, 4vw, 2.5rem);
+            font-weight: 700;
+            line-height: 1.2;
+            color: var(--nn-white);
+            margin: 0 0 var(--sp-5);
+        }
+        .blog-hero-hook {
+            font-family: var(--font-body);
+            font-size: 1.15rem;
+            line-height: 1.6;
+            color: var(--nn-text-muted);
+            max-width: 620px;
+            margin: 0 auto var(--sp-8);
+        }
+        .blog-meta-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--sp-5);
+            flex-wrap: wrap;
+            font-family: var(--font-ui);
+            font-size: 0.85rem;
+            color: var(--nn-text-muted);
+        }
+        .blog-meta-bar span {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+        }
+        .blog-meta-pill {
+            padding: 2px 10px;
+            border-radius: 100px;
+            background: color-mix(in srgb, var(--show-color) 15%, transparent);
+            /* AA-compliant text on dark page bg — see --show-color-text in base.html.j2 */
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .post-author {
+            color: var(--nn-text-muted);
+            font-size: 0.875rem;
+        }
+
+        /* Share buttons */
+        .share-buttons {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-3);
+            margin-top: var(--sp-10);
+            padding-top: var(--sp-6);
+            border-top: 1px solid var(--nn-border);
+            font-family: var(--font-ui);
+            font-size: 0.9rem;
+            color: var(--nn-text-muted);
+            flex-wrap: wrap;
+        }
+        .share-buttons a,
+        .share-buttons button {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            padding: var(--sp-2) var(--sp-4);
+            border-radius: 8px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-card);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.85rem;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .share-buttons a:hover,
+        .share-buttons button:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+
+        /* Article body */
+        .blog-article-wrap {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 0 var(--sp-6) var(--sp-16);
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--sp-10);
+        }
+        @media (min-width: 1024px) {
+            .blog-article-wrap {
+                max-width: 1060px;
+                grid-template-columns: 200px 1fr;
+            }
+        }
+
+        /* Table of contents */
+        .blog-toc {
+            display: none;
+        }
+        @media (min-width: 1024px) {
+            .blog-toc {
+                display: block;
+                position: sticky;
+                top: calc(var(--nav-height) + var(--sp-8));
+                align-self: start;
+                max-height: calc(100vh - var(--nav-height) - var(--sp-16));
+                overflow-y: auto;
+                padding-right: var(--sp-4);
+            }
+        }
+        .blog-toc-title {
+            font-family: var(--font-ui);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--nn-text-muted);
+            margin-bottom: var(--sp-3);
+            font-weight: 600;
+        }
+        .blog-toc a {
+            display: block;
+            padding: var(--sp-1) 0;
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            text-decoration: none;
+            border-left: 2px solid transparent;
+            padding-left: var(--sp-3);
+            transition: all var(--duration) var(--ease);
+            line-height: 1.4;
+        }
+        .blog-toc a:hover,
+        .blog-toc a.active {
+            /* AA-compliant text on dark sidebar bg */
+            color: var(--show-color-text, var(--show-color));
+            border-left-color: var(--show-color);
+        }
+        .blog-toc a.toc-h3 {
+            padding-left: var(--sp-6);
+            font-size: 0.75rem;
+        }
+
+        /* Article */
+        .blog-article {
+            min-width: 0;
+        }
+        .blog-article h1 {
+            font-family: var(--font-heading);
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--nn-white);
+            margin: var(--sp-10) 0 var(--sp-4);
+            padding-left: var(--sp-4);
+            border-left: 3px solid var(--show-color);
+        }
+        .blog-article h2 {
+            font-family: var(--font-heading);
+            font-size: 1.35rem;
+            font-weight: 600;
+            color: var(--nn-white);
+            margin: var(--sp-10) 0 var(--sp-4);
+            padding-left: var(--sp-4);
+            border-left: 3px solid var(--show-color);
+        }
+        .blog-article h3 {
+            font-family: var(--font-heading);
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--nn-text);
+            margin: var(--sp-8) 0 var(--sp-3);
+        }
+        .blog-article p {
+            font-family: var(--font-body);
+            font-size: 1.05rem;
+            line-height: 1.8;
+            color: var(--nn-text);
+            margin: 0 0 var(--sp-4);
+        }
+        .blog-article a {
+            /* Body links — AA-compliant lightened brand on dark bg.
+               Saturated brand colors fail 4.5:1 on `--nn-bg`; the
+               `--show-color-text` variable lightens by 35 % white so
+               every show clears AA. */
+            color: var(--show-color-text, var(--show-color));
+            text-decoration: underline;
+            text-underline-offset: 2px;
+            text-decoration-color: color-mix(in srgb, var(--show-color-text, var(--show-color)) 40%, transparent);
+            transition: text-decoration-color var(--duration) var(--ease);
+        }
+        .blog-article a:hover {
+            text-decoration-color: var(--show-color-text, var(--show-color));
+        }
+        .blog-article strong {
+            color: var(--nn-white);
+            font-weight: 600;
+        }
+        .blog-article ul,
+        .blog-article ol {
+            margin: 0 0 var(--sp-6);
+            padding-left: var(--sp-6);
+        }
+        .blog-article li {
+            font-family: var(--font-body);
+            font-size: 1.05rem;
+            line-height: 1.8;
+            color: var(--nn-text);
+            margin-bottom: var(--sp-3);
+        }
+        .blog-article .blog-list-cont {
+            margin: var(--sp-1) 0 var(--sp-2);
+            padding-left: var(--sp-2);
+            font-size: 1rem;
+            color: var(--nn-text-muted);
+        }
+        .blog-article hr {
+            border: none;
+            border-top: 1px solid var(--nn-border);
+            margin: var(--sp-10) 0;
+        }
+        .blog-article pre {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 8px;
+            padding: var(--sp-4);
+            margin: 0 0 var(--sp-6);
+            overflow-x: auto;
+        }
+        .blog-article pre > code {
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: var(--nn-text);
+            background: none;
+            padding: 0;
+            border: none;
+            border-radius: 0;
+        }
+        .blog-article code {
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            font-size: 0.88em;
+            background: color-mix(in srgb, var(--nn-border) 50%, transparent);
+            padding: 0.15em 0.4em;
+            border-radius: 4px;
+            color: var(--nn-white);
+        }
+        .blog-article blockquote {
+            border-left: 3px solid var(--show-color);
+            margin: 0 0 var(--sp-6);
+            padding: var(--sp-3) var(--sp-6);
+            background: color-mix(in srgb, var(--show-color) 5%, transparent);
+            border-radius: 0 8px 8px 0;
+        }
+        .blog-article blockquote p {
+            font-style: italic;
+            color: var(--nn-text-muted);
+            margin-bottom: var(--sp-2);
+        }
+        .blog-article blockquote p:last-child {
+            margin-bottom: 0;
+        }
+        .blog-article h4 {
+            font-family: var(--font-heading);
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--nn-text);
+            margin: var(--sp-6) 0 var(--sp-2);
+        }
+
+        /* Sources section */
+        .blog-sources {
+            margin-top: var(--sp-10);
+            padding-top: var(--sp-8);
+            border-top: 1px solid var(--nn-border);
+        }
+        .blog-sources h2 {
+            border-left: none;
+            padding-left: 0;
+            font-size: 1.1rem;
+            margin-bottom: var(--sp-4);
+        }
+        .blog-sources-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: var(--sp-3);
+        }
+        .blog-source-card {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-3);
+            padding: var(--sp-3) var(--sp-4);
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 10px;
+            text-decoration: none;
+            transition: all var(--duration) var(--ease);
+        }
+        .blog-source-card:hover {
+            border-color: var(--show-color);
+            background: var(--nn-card-hover);
+        }
+        .blog-source-card .source-domain {
+            font-family: var(--font-ui);
+            font-size: 0.85rem;
+            color: var(--nn-text);
+            font-weight: 500;
+        }
+        .blog-source-card .source-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            background: var(--nn-surface);
+            flex-shrink: 0;
+        }
+        /* Aggregator-sourced items name the real publisher, for which we
+           have no domain to fetch a favicon from — a lettered badge is
+           honest where Google's favicon would imply Google reported it. */
+        .blog-source-card .source-initial {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-ui);
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--nn-text);
+            background: var(--nn-border, var(--nn-surface));
+        }
+
+        /* Related posts */
+        .blog-related {
+            margin-top: var(--sp-10);
+            padding-top: var(--sp-8);
+            border-top: 1px solid var(--nn-border);
+        }
+        .blog-related h2 {
+            border-left: none;
+            padding-left: 0;
+            font-size: 1.2rem;
+            margin-bottom: var(--sp-4);
+        }
+        .blog-related-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: var(--sp-4);
+        }
+        .blog-related-card {
+            display: flex;
+            flex-direction: column;
+            gap: var(--sp-2);
+            padding: var(--sp-5);
+            padding-left: calc(var(--sp-5) + 4px);
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-left: 4px solid var(--card-show-color, var(--nn-purple));
+            border-radius: 12px;
+            text-decoration: none;
+            transition: all var(--duration) var(--ease);
+        }
+        .blog-related-card:hover {
+            border-color: var(--card-show-color, var(--nn-purple));
+            background: var(--nn-card-hover);
+            transform: translateY(-2px);
+        }
+        .blog-related-show {
+            font-family: var(--font-ui);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .blog-related-card h3 {
+            font-family: var(--font-heading);
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--nn-white);
+            margin: 0;
+            line-height: 1.3;
+        }
+        .blog-related-card p {
+            font-family: var(--font-body);
+            font-size: 0.85rem;
+            color: var(--nn-text-muted);
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        /* Transcript */
+        .blog-chapters {
+            margin: var(--sp-6) 0;
+            padding-top: var(--sp-5);
+            border-top: 1px solid var(--nn-border);
+        }
+        .blog-chapters h2 {
+            font-family: var(--font-ui);
+            font-size: 1.05rem;
+            margin-bottom: var(--sp-3);
+        }
+        .blog-chapter-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        .blog-chapter-list li {
+            display: flex;
+            gap: var(--sp-3);
+            align-items: baseline;
+            padding: var(--sp-2) 0;
+            border-bottom: 1px solid var(--nn-border);
+        }
+        .blog-chapter-list li:last-child { border-bottom: none; }
+        .blog-chapter-list .chapter-time {
+            font-family: var(--font-ui);
+            font-variant-numeric: tabular-nums;
+            font-size: 0.85rem;
+            color: var(--show-color);
+            min-width: 3.5rem;
+            flex-shrink: 0;
+        }
+        /* Only looks clickable once the seek script has attached to a
+           real audio element — an English-only episode has no inline
+           player, and a cursor that promises nothing is worse than none. */
+        .blog-chapter-list li.is-seekable { cursor: pointer; }
+        .blog-chapter-list li.is-seekable:hover .chapter-title { color: var(--show-color); }
+        .blog-chapters .chapter-foot {
+            margin-top: var(--sp-3);
+            font-size: 0.85rem;
+        }
+        .blog-transcript {
+            margin-top: var(--sp-8);
+            padding-top: var(--sp-6);
+            border-top: 1px solid var(--nn-border);
+        }
+        .blog-transcript details summary {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            font-family: var(--font-heading);
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--nn-white);
+            cursor: pointer;
+            padding: var(--sp-3) 0;
+            list-style: none;
+        }
+        .blog-transcript details summary::-webkit-details-marker { display: none; }
+        .blog-transcript details summary::after {
+            content: '+';
+            margin-left: auto;
+            font-size: 1.2rem;
+            color: var(--nn-text-muted);
+        }
+        .blog-transcript details[open] summary::after { content: '\2212'; }
+        .blog-transcript .transcript-content {
+            font-family: var(--font-body);
+            font-size: 0.95rem;
+            line-height: 1.8;
+            color: var(--nn-text-muted);
+            padding: var(--sp-4) 0;
+            white-space: pre-wrap;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        /* Episode navigation */
+        .blog-ep-nav {
+            display: flex;
+            justify-content: space-between;
+            gap: var(--sp-4);
+            margin-top: var(--sp-10);
+            padding-top: var(--sp-8);
+            border-top: 1px solid var(--nn-border);
+        }
+        .blog-ep-nav a {
+            display: flex;
+            flex-direction: column;
+            gap: var(--sp-1);
+            padding: var(--sp-4) var(--sp-5);
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            text-decoration: none;
+            transition: all var(--duration) var(--ease);
+            max-width: 48%;
+        }
+        .blog-ep-nav a:hover {
+            border-color: var(--show-color);
+            background: var(--nn-card-hover);
+        }
+        .blog-ep-nav .nav-label {
+            font-family: var(--font-ui);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--nn-text-muted);
+        }
+        .blog-ep-nav .nav-title {
+            font-family: var(--font-ui);
+            font-size: 0.9rem;
+            color: var(--nn-text);
+            font-weight: 500;
+        }
+        .blog-ep-nav .next {
+            text-align: right;
+            margin-left: auto;
+        }
+
+        /* Listen CTA */
+        .blog-listen-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-2);
+            padding: var(--sp-2) var(--sp-5);
+            border-radius: 100px;
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.85rem;
+            text-decoration: none;
+            transition: all var(--duration) var(--ease);
+        }
+        .blog-listen-cta:hover {
+            border-color: var(--show-color);
+            color: var(--show-color-text, var(--show-color));
+        }
+
+        /* Hover-card citations (Phase 3.4 of the May 2026 audit).
+           A small inline pill shows the publisher domain; on hover or
+           keyboard focus a popover reveals the full URL so readers
+           can verify provenance without leaving the page. Pure CSS,
+           no JS — works in every email/RSS-rendered surface that
+           runs the page stylesheet. */
+        .cite {
+            position: relative;
+            display: inline-block;
+        }
+        .cite-pill {
+            display: inline-block;
+            padding: 0.05em 0.55em;
+            margin: 0 0.1em;
+            border-radius: 999px;
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.78em;
+            line-height: 1.4;
+            text-decoration: none;
+            transition: all var(--duration) var(--ease);
+            white-space: nowrap;
+        }
+        .cite-pill:hover,
+        .cite-pill:focus {
+            border-color: var(--show-color);
+            /* Same AA fix as body links — brand text needs to clear
+               4.5:1 on the dark card surface. */
+            color: var(--show-color-text, var(--show-color));
+            outline: none;
+        }
+        .cite-card {
+            position: absolute;
+            left: 0;
+            bottom: calc(100% + 6px);
+            z-index: 10;
+            min-width: 240px;
+            max-width: 360px;
+            padding: var(--sp-2) var(--sp-3);
+            border-radius: 8px;
+            background: var(--nn-bg);
+            border: 1px solid var(--nn-border);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+            color: var(--nn-text);
+            font-family: var(--font-ui);
+            font-size: 0.78rem;
+            line-height: 1.45;
+            word-break: break-all;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity var(--duration) var(--ease);
+            pointer-events: none;
+        }
+        .cite:hover .cite-card,
+        .cite-pill:focus + .cite-card,
+        .cite-pill:focus-within + .cite-card {
+            opacity: 1;
+            visibility: visible;
+        }
+        @media (max-width: 600px) {
+            .cite-card {
+                left: auto;
+                right: 0;
+                min-width: 0;
+                max-width: 90vw;
+            }
+        }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
+    </style>
+
+
+    
+    
+    <style>:root {
+      --show-color: #7C3AED;
+      --show-color-dark: #6D28D9;
+      --show-color-text: color-mix(in srgb, #7C3AED, white 35%);
+    }</style>
+    
+    <style>
+        @media (max-width: 768px) {
+            .nn-footer-grid { grid-template-columns: 1fr; }
+            .nn-footer-col h4 {
+                cursor: pointer;
+                position: relative;
+                padding-right: 1.5rem;
+            }
+            .nn-footer-col h4::after {
+                content: '+';
+                position: absolute;
+                right: 0;
+                font-size: 1.2rem;
+                color: var(--nn-text-muted);
+            }
+            .nn-footer-col.expanded h4::after { content: '\2212'; }
+            .nn-footer-col > a,
+            .nn-footer-col > ul { display: none; }
+            .nn-footer-col.expanded > a,
+            .nn-footer-col.expanded > ul { display: block; }
+        }
+    </style>
+</head>
+<body><a href="#main-content" class="skip-link">Skip to content</a>
+    <!-- Navigation -->
+    <nav class="nn-nav" aria-label="Main navigation">
+        <div class="nn-nav-inner">
+            <a href="../../index.html" class="nn-nav-logo">
+                <img src="../../assets/nerra-logo-icon.svg" alt="Nerra Network" width="36" height="36">
+                <span class="gradient-text">Nerra</span> <span class="nn-wordmark-rest">Network</span>
+            </a>
+
+            
+            <div class="nn-global-search" style="position:relative;margin-left:auto;margin-right:0.5rem;max-width:200px;flex:0 1 200px;min-width:110px;">
+                <input type="search" id="nn-global-search-input"
+                       placeholder="Search…"
+                       style="width:100%;padding:6px 8px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.85rem;"
+                       aria-label="Search all episodes across the network">
+                <div id="nn-global-search-results"
+                     style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
+            </div>
+
+            <ul class="nn-nav-links">
+                <li class="nn-nav-dropdown">
+                    <button class="nn-nav-dropdown-btn" aria-expanded="false" aria-haspopup="true">
+                        Shows
+                        <svg viewBox="0 0 12 12" fill="none"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                    <div class="nn-nav-dropdown-menu" role="menu">
+                        
+                        <a href="../../nerra-daily.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/nerra-daily-400.webp"><img src="../../assets/covers/nerra-daily.jpg" alt="Nerra Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Nerra Daily
+                        </a>
+                        
+                        <a href="../../models-agents.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/models-agents-400.webp"><img src="../../assets/covers/models-agents.jpg" alt="Models & Agents cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Models & Agents
+                        </a>
+                        
+                        <a href="../../planetterrian.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/planetterrian-daily-400.webp"><img src="../../assets/covers/planetterrian-daily.jpg" alt="Planetterrian Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Planetterrian Daily
+                        </a>
+                        
+                        <a href="../../omni-view.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Omni View
+                        </a>
+                        
+                        <a href="../../models-agents-beginners.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/models-agents-beginners-400.webp"><img src="../../assets/covers/models-agents-beginners.jpg" alt="Models & Agents for Beginners cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Models & Agents for Beginners
+                        </a>
+                        
+                        <a href="../../fascinating-frontiers.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/fascinating-frontiers-400.webp"><img src="../../assets/covers/fascinating-frontiers.jpg" alt="Fascinating Frontiers cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Fascinating Frontiers
+                        </a>
+                        
+                        <a href="../../modern-investing.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/modern-investing-400.webp"><img src="../../assets/covers/modern-investing.jpg" alt="Modern Investing Techniques cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Modern Investing Techniques
+                        </a>
+                        
+                        <a href="../../tesla.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/tesla-shorts-time-400.webp"><img src="../../assets/covers/tesla-shorts-time.jpg" alt="Tesla Shorts Time cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Tesla Shorts Time
+                        </a>
+                        
+                        <a href="../../spacex.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/spacex-400.webp"><img src="../../assets/covers/spacex.jpg" alt="SpaceX Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                            SpaceX Daily
+                        </a>
+                        
+                        <a href="../../env-intel.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/environmental-intelligence-400.webp"><img src="../../assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Environmental Intelligence
+                        </a>
+                        
+                        <a href="../../ru/finansy-prosto.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/finansy-prosto-400.webp"><img src="../../assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Финансы Просто
+                        </a>
+                        
+                        <a href="../../ru/privet-russian.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/privet-russian-400.webp"><img src="../../assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Привет, Русский!
+                        </a>
+                        
+                        <a href="../../unintended-consequences.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/unintended-consequences-400.webp"><img src="../../assets/covers/unintended-consequences.jpg" alt="Unintended Consequences cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Unintended Consequences
+                        </a>
+                        
+                        <a href="../../first-principles.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/first-principles-daily-400.webp"><img src="../../assets/covers/first-principles-daily.jpg" alt="First Principles Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                            First Principles Daily
+                        </a>
+                        
+                        <a href="../../thedppod.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/dp-pod-400.webp"><img src="../../assets/covers/dp-pod.jpg" alt="The DP Pod: The Do Positive Podcast cover art" width="1400" height="1400" loading="lazy"></picture>
+                            The DP Pod: The Do Positive Podcast
+                        </a>
+                        
+                        <a href="../../age-of-ai.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/age-of-ai-400.webp"><img src="../../assets/covers/age-of-ai.jpg" alt="The Age of AI cover art" width="1400" height="1400" loading="lazy"></picture>
+                            The Age of AI
+                        </a>
+                        
+                        <a href="../../offshore-north.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/offshore-north-400.webp"><img src="../../assets/covers/offshore-north.jpg" alt="Offshore North cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Offshore North
+                        </a>
+                        
+                    </div>
+                </li>
+                <li class="nn-nav-dropdown">
+                    <button class="nn-nav-dropdown-btn" aria-expanded="false" aria-haspopup="true">
+                        Blog
+                        <svg viewBox="0 0 12 12" fill="none"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                    <div class="nn-nav-dropdown-menu">
+                        <a href="../../blog/index.html" style="font-weight:600;border-bottom:1px solid var(--nn-border);padding-bottom:8px;margin-bottom:4px">
+                            All Blog Posts
+                        </a>
+                        
+                        <a href="../../blog/nerra_daily/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/nerra-daily-400.webp"><img src="../../assets/covers/nerra-daily.jpg" alt="Nerra Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Nerra Daily Blog
+                        </a>
+                        
+                        <a href="../../blog/models_agents/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/models-agents-400.webp"><img src="../../assets/covers/models-agents.jpg" alt="Models & Agents cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Models & Agents Blog
+                        </a>
+                        
+                        <a href="../../blog/planetterrian/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/planetterrian-daily-400.webp"><img src="../../assets/covers/planetterrian-daily.jpg" alt="Planetterrian Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Planetterrian Daily Blog
+                        </a>
+                        
+                        <a href="../../blog/omni_view/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Omni View Blog
+                        </a>
+                        
+                        <a href="../../blog/models_agents_beginners/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/models-agents-beginners-400.webp"><img src="../../assets/covers/models-agents-beginners.jpg" alt="Models & Agents for Beginners cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Models & Agents for Beginners Blog
+                        </a>
+                        
+                        <a href="../../blog/fascinating_frontiers/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/fascinating-frontiers-400.webp"><img src="../../assets/covers/fascinating-frontiers.jpg" alt="Fascinating Frontiers cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Fascinating Frontiers Blog
+                        </a>
+                        
+                        <a href="../../blog/modern_investing/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/modern-investing-400.webp"><img src="../../assets/covers/modern-investing.jpg" alt="Modern Investing Techniques cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Modern Investing Techniques Blog
+                        </a>
+                        
+                        <a href="../../blog/tesla/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/tesla-shorts-time-400.webp"><img src="../../assets/covers/tesla-shorts-time.jpg" alt="Tesla Shorts Time cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Tesla Shorts Time Blog
+                        </a>
+                        
+                        <a href="../../blog/spacex/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/spacex-400.webp"><img src="../../assets/covers/spacex.jpg" alt="SpaceX Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                            SpaceX Daily Blog
+                        </a>
+                        
+                        <a href="../../blog/env_intel/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/environmental-intelligence-400.webp"><img src="../../assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Environmental Intelligence Blog
+                        </a>
+                        
+                        <a href="../../blog/finansy_prosto/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/finansy-prosto-400.webp"><img src="../../assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Финансы Просто Blog
+                        </a>
+                        
+                        <a href="../../blog/privet_russian/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/privet-russian-400.webp"><img src="../../assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Привет, Русский! Blog
+                        </a>
+                        
+                        <a href="../../blog/unintended_consequences/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/unintended-consequences-400.webp"><img src="../../assets/covers/unintended-consequences.jpg" alt="Unintended Consequences cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Unintended Consequences Blog
+                        </a>
+                        
+                        <a href="../../blog/first_principles/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/first-principles-daily-400.webp"><img src="../../assets/covers/first-principles-daily.jpg" alt="First Principles Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                            First Principles Daily Blog
+                        </a>
+                        
+                        <a href="../../blog/dp_pod/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/dp-pod-400.webp"><img src="../../assets/covers/dp-pod.jpg" alt="The DP Pod: The Do Positive Podcast cover art" width="1400" height="1400" loading="lazy"></picture>
+                            The DP Pod: The Do Positive Podcast Blog
+                        </a>
+                        
+                        <a href="../../blog/age_of_ai/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/age-of-ai-400.webp"><img src="../../assets/covers/age-of-ai.jpg" alt="The Age of AI cover art" width="1400" height="1400" loading="lazy"></picture>
+                            The Age of AI Blog
+                        </a>
+                        
+                        <a href="../../blog/offshore_north/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/offshore-north-400.webp"><img src="../../assets/covers/offshore-north.jpg" alt="Offshore North cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Offshore North Blog
+                        </a>
+                        
+                    </div>
+                </li>
+                
+                <li class="nn-nav-dropdown">
+                    <button class="nn-nav-dropdown-btn" aria-expanded="false" aria-haspopup="true">
+                        More
+                        <svg viewBox="0 0 12 12" fill="none"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                    <div class="nn-nav-dropdown-menu nn-nav-dropdown-menu--compact">
+                        <a href="../../books.html">Books</a>
+                        <a href="../../gallery.html">Image Gallery</a>
+                        <a href="../../data.html">Data & Dashboards</a>
+                        <a href="../../editorial.html">Editorial Process</a>
+                        <a href="../../faq.html">FAQ</a>
+                        <a href="../../press.html">Press Kit</a>
+                        <a href="../../support.html">Support the Network</a>
+                    </div>
+                </li>
+                
+                
+                <li><a href="../../start-here.html">Start Here</a></li>
+                <li><a href="../../how-to-listen.html">Listen</a></li>
+                <li><a href="../../about.html">About</a></li>
+                <li><a href="../../player.html">Player</a></li>
+                
+                
+                <li><a id="nn-nav-account" href="../../join.html"
+                       style="border:1px solid var(--nn-border);border-radius:999px;padding:0.3rem 0.85rem;">Join</a></li>
+            </ul>
+
+            <button class="nn-hamburger" aria-label="Toggle menu" aria-expanded="false" onclick="var m=document.getElementById('mobileMenu');m.classList.toggle('open');this.setAttribute('aria-expanded',m.classList.contains('open'));document.body.classList.toggle('menu-open')">&#9776;</button>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu. Closing is handled by ONE delegated listener in the
+         script block below (any link tapped closes the menu, clears the
+         body scroll lock and resets the hamburger's aria-expanded) — the
+         per-link inline onclick handlers were removed Sep 2026 after the
+         homepage's override forgot the body class and left the page
+         scroll-locked after tapping an in-page anchor. -->
+    <div id="mobileMenu" class="nn-mobile-menu">
+        <a id="nn-nav-account-m" href="../../join.html" style="font-weight:600;">Join</a>
+        
+        <a href="../../start-here.html">Start Here</a>
+        <a href="../../how-to-listen.html">How to Listen</a>
+        <a href="../../about.html">About</a>
+        <a href="../../player.html">Player</a>
+        
+        <div class="nn-mobile-shows">
+            <div class="nn-mobile-shows-title">All Shows</div>
+            
+            <a href="../../nerra-daily.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/nerra-daily-400.webp"><img src="../../assets/covers/nerra-daily.jpg" alt="Nerra Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                Nerra Daily
+            </a>
+            
+            <a href="../../models-agents.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/models-agents-400.webp"><img src="../../assets/covers/models-agents.jpg" alt="Models & Agents cover art" width="1400" height="1400" loading="lazy"></picture>
+                Models & Agents
+            </a>
+            
+            <a href="../../planetterrian.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/planetterrian-daily-400.webp"><img src="../../assets/covers/planetterrian-daily.jpg" alt="Planetterrian Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                Planetterrian Daily
+            </a>
+            
+            <a href="../../omni-view.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View cover art" width="1400" height="1400" loading="lazy"></picture>
+                Omni View
+            </a>
+            
+            <a href="../../models-agents-beginners.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/models-agents-beginners-400.webp"><img src="../../assets/covers/models-agents-beginners.jpg" alt="Models & Agents for Beginners cover art" width="1400" height="1400" loading="lazy"></picture>
+                Models & Agents for Beginners
+            </a>
+            
+            <a href="../../fascinating-frontiers.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/fascinating-frontiers-400.webp"><img src="../../assets/covers/fascinating-frontiers.jpg" alt="Fascinating Frontiers cover art" width="1400" height="1400" loading="lazy"></picture>
+                Fascinating Frontiers
+            </a>
+            
+            <a href="../../modern-investing.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/modern-investing-400.webp"><img src="../../assets/covers/modern-investing.jpg" alt="Modern Investing Techniques cover art" width="1400" height="1400" loading="lazy"></picture>
+                Modern Investing Techniques
+            </a>
+            
+            <a href="../../tesla.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/tesla-shorts-time-400.webp"><img src="../../assets/covers/tesla-shorts-time.jpg" alt="Tesla Shorts Time cover art" width="1400" height="1400" loading="lazy"></picture>
+                Tesla Shorts Time
+            </a>
+            
+            <a href="../../spacex.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/spacex-400.webp"><img src="../../assets/covers/spacex.jpg" alt="SpaceX Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                SpaceX Daily
+            </a>
+            
+            <a href="../../env-intel.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/environmental-intelligence-400.webp"><img src="../../assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy"></picture>
+                Environmental Intelligence
+            </a>
+            
+            <a href="../../ru/finansy-prosto.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/finansy-prosto-400.webp"><img src="../../assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="1400" height="1400" loading="lazy"></picture>
+                Финансы Просто
+            </a>
+            
+            <a href="../../ru/privet-russian.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/privet-russian-400.webp"><img src="../../assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="1400" height="1400" loading="lazy"></picture>
+                Привет, Русский!
+            </a>
+            
+            <a href="../../unintended-consequences.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/unintended-consequences-400.webp"><img src="../../assets/covers/unintended-consequences.jpg" alt="Unintended Consequences cover art" width="1400" height="1400" loading="lazy"></picture>
+                Unintended Consequences
+            </a>
+            
+            <a href="../../first-principles.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/first-principles-daily-400.webp"><img src="../../assets/covers/first-principles-daily.jpg" alt="First Principles Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                First Principles Daily
+            </a>
+            
+            <a href="../../thedppod.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/dp-pod-400.webp"><img src="../../assets/covers/dp-pod.jpg" alt="The DP Pod: The Do Positive Podcast cover art" width="1400" height="1400" loading="lazy"></picture>
+                The DP Pod: The Do Positive Podcast
+            </a>
+            
+            <a href="../../age-of-ai.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/age-of-ai-400.webp"><img src="../../assets/covers/age-of-ai.jpg" alt="The Age of AI cover art" width="1400" height="1400" loading="lazy"></picture>
+                The Age of AI
+            </a>
+            
+            <a href="../../offshore-north.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/offshore-north-400.webp"><img src="../../assets/covers/offshore-north.jpg" alt="Offshore North cover art" width="1400" height="1400" loading="lazy"></picture>
+                Offshore North
+            </a>
+            
+        </div>
+        <div class="nn-mobile-shows">
+            <div class="nn-mobile-shows-title">Blogs</div>
+            <a href="../../blog/index.html" class="nn-mobile-show-link" style="font-weight:600">
+                All Blog Posts
+            </a>
+            
+            <a href="../../blog/nerra_daily/index.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/nerra-daily-400.webp"><img src="../../assets/covers/nerra-daily.jpg" alt="Nerra Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                Nerra Daily Blog
+            </a>
+            
+            <a href="../../blog/models_agents/index.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/models-agents-400.webp"><img src="../../assets/covers/models-agents.jpg" alt="Models & Agents cover art" width="1400" height="1400" loading="lazy"></picture>
+                Models & Agents Blog
+            </a>
+            
+            <a href="../../blog/planetterrian/index.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/planetterrian-daily-400.webp"><img src="../../assets/covers/planetterrian-daily.jpg" alt="Planetterrian Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                Planetterrian Daily Blog
+            </a>
+            
+            <a href="../../blog/omni_view/index.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View cover art" width="1400" height="1400" loading="lazy"></picture>
+                Omni View Blog
+            </a>
+            
+            <a href="../../blog/models_agents_beginners/index.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/models-agents-beginners-400.webp"><img src="../../assets/covers/models-agents-beginners.jpg" alt="Models & Agents for Beginners cover art" width="1400" height="1400" loading="lazy"></picture>
+                Models & Agents for Beginners Blog
+            </a>
+            
+            <a href="../../blog/fascinating_frontiers/index.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/fascinating-frontiers-400.webp"><img src="../../assets/covers/fascinating-frontiers.jpg" alt="Fascinating Frontiers cover art" width="1400" height="1400" loading="lazy"></picture>
+                Fascinating Frontiers Blog
+            </a>
+            
+            <a href="../../blog/modern_investing/index.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/modern-investing-400.webp"><img src="../../assets/covers/modern-investing.jpg" alt="Modern Investing Techniques cover art" width="1400" height="1400" loading="lazy"></picture>
+                Modern Investing Techniques Blog
+            </a>
+            
+            <a href="../../blog/tesla/index.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/tesla-shorts-time-400.webp"><img src="../../assets/covers/tesla-shorts-time.jpg" alt="Tesla Shorts Time cover art" width="1400" height="1400" loading="lazy"></picture>
+                Tesla Shorts Time Blog
+            </a>
+            
+            <a href="../../blog/spacex/index.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/spacex-400.webp"><img src="../../assets/covers/spacex.jpg" alt="SpaceX Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                SpaceX Daily Blog
+            </a>
+            
+            <a href="../../blog/env_intel/index.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/environmental-intelligence-400.webp"><img src="../../assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy"></picture>
+                Environmental Intelligence Blog
+            </a>
+            
+            <a href="../../blog/finansy_prosto/index.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/finansy-prosto-400.webp"><img src="../../assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="1400" height="1400" loading="lazy"></picture>
+                Финансы Просто Blog
+            </a>
+            
+            <a href="../../blog/privet_russian/index.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/privet-russian-400.webp"><img src="../../assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="1400" height="1400" loading="lazy"></picture>
+                Привет, Русский! Blog
+            </a>
+            
+            <a href="../../blog/unintended_consequences/index.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/unintended-consequences-400.webp"><img src="../../assets/covers/unintended-consequences.jpg" alt="Unintended Consequences cover art" width="1400" height="1400" loading="lazy"></picture>
+                Unintended Consequences Blog
+            </a>
+            
+            <a href="../../blog/first_principles/index.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/first-principles-daily-400.webp"><img src="../../assets/covers/first-principles-daily.jpg" alt="First Principles Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                First Principles Daily Blog
+            </a>
+            
+            <a href="../../blog/dp_pod/index.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/dp-pod-400.webp"><img src="../../assets/covers/dp-pod.jpg" alt="The DP Pod: The Do Positive Podcast cover art" width="1400" height="1400" loading="lazy"></picture>
+                The DP Pod: The Do Positive Podcast Blog
+            </a>
+            
+            <a href="../../blog/age_of_ai/index.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/age-of-ai-400.webp"><img src="../../assets/covers/age-of-ai.jpg" alt="The Age of AI cover art" width="1400" height="1400" loading="lazy"></picture>
+                The Age of AI Blog
+            </a>
+            
+            <a href="../../blog/offshore_north/index.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/offshore-north-400.webp"><img src="../../assets/covers/offshore-north.jpg" alt="Offshore North cover art" width="1400" height="1400" loading="lazy"></picture>
+                Offshore North Blog
+            </a>
+            
+        </div>
+        <div class="nn-mobile-shows">
+            <div class="nn-mobile-shows-title">More</div>
+            <a href="../../books.html" class="nn-mobile-show-link">Books</a>
+            <a href="../../gallery.html" class="nn-mobile-show-link">Image Gallery</a>
+            <a href="../../data.html" class="nn-mobile-show-link">Data & Dashboards</a>
+            <a href="../../editorial.html" class="nn-mobile-show-link">Editorial Process</a>
+            <a href="../../faq.html" class="nn-mobile-show-link">FAQ</a>
+            <a href="../../support.html" class="nn-mobile-show-link">Support the Network</a>
+        </div>
+    </div>
+
+    <main id="main-content">
+    
+    
+    <!-- Breadcrumb -->
+    <nav aria-label="Breadcrumb" style="max-width:900px;margin:calc(72px + var(--sp-4)) auto 0;padding:0 var(--sp-6);font-family:var(--font-ui);font-size:0.82rem;">
+        <ol style="list-style:none;display:flex;flex-wrap:wrap;gap:var(--sp-1);padding:0;margin:0;color:var(--nn-text-muted);">
+            <li><a href="../../index.html" style="color:var(--nn-text-muted);text-decoration:none;">Home</a> <span aria-hidden="true">/</span></li>
+            <li><a href="../../models-agents.html" style="color:var(--nn-text-muted);text-decoration:none;">Models & Agents</a> <span aria-hidden="true">/</span></li>
+            <li><a href="../../blog/models_agents/index.html" style="color:var(--nn-text-muted);text-decoration:none;">Blog</a> <span aria-hidden="true">/</span></li>
+            <li aria-current="page" style="color:var(--show-color-text, var(--show-color));">Episode 162</li>
+        </ol>
+    </nav>
+
+    <!-- Hero -->
+    <header class="blog-hero">
+        <div class="blog-hero-inner">
+            <a href="../../blog/models_agents/index.html" class="blog-show-badge">
+                <picture><source type="image/webp" srcset="../../assets/covers/models-agents-400.webp"><img src="../../assets/covers/models-agents.jpg" alt="Models & Agents" width="40" height="40"></picture>
+                Models & Agents Blog
+            </a>
+            <h1><span class="nn-i18n-title">Simon Willison is ignoring his X replies because AI-generated slop is wasting everyone's time.</span> — Episode 162</h1>
+            
+            <p class="blog-hero-hook">Simon Willison is ignoring his X replies because AI-generated slop is wasting everyone's time.</p>
+            
+            <div class="blog-meta-bar">
+                <span class="post-author">By Patrick</span>
+                <span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    September 03, 2026
+                </span>
+                <span class="blog-meta-pill">Ep 162</span>
+                <span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    8 min read
+                </span>
+                
+                <a href="../../models-agents.html" class="blog-listen-cta">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    Listen to podcast
+                </a>
+                
+                
+                <a href="../../models-agents-summaries.html" class="blog-listen-cta">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                    View summaries
+                </a>
+                
+                
+            </div>
+        </div>
+    </header>
+
+    
+    <section class="nn-i18n" aria-label="Listen in another language">
+        <div class="nn-i18n-inner">
+            <div class="nn-i18n-row">
+                <span class="nn-i18n-label">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    Listen in
+                </span>
+                <button type="button" class="nn-i18n-pill" data-lang="en" aria-pressed="true">English</button>
+                
+                <button type="button" class="nn-i18n-pill" data-lang="fr" aria-pressed="false">Français</button>
+                
+            </div>
+            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep162_20260903.mp3"></audio>
+        </div>
+        <script type="application/json" id="nn-i18n-tracks">
+{
+  "en": {"url": "https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep162_20260903.mp3", "title": "Simon Willison is ignoring his X replies because AI-generated slop is wasting everyone\u0027s time.", "desc": "Simon Willison is ignoring his X replies because AI-generated slop is wasting everyone\u0027s time."},
+  "fr": {"url": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep162_20260903.fr.mp3", "title": "Ep 162 : Simon Willison ignore ses réponses sur X parce que le slop généré par l\u0027IA fait perdre du temps à tout le monde…", "desc": "Simon Willison ignore ses réponses sur X parce que le slop généré par l\u0027IA fait perdre du temps à tout le monde."}
+}
+        </script>
+    </section>
+    
+
+    <!-- Article with TOC sidebar -->
+    <div class="blog-article-wrap">
+        
+        <aside class="blog-toc">
+            <div class="blog-toc-title">Contents</div>
+            
+            <a href="#models-agents" class="">Models & Agents</a>
+            
+            <a href="#top-story" class="">Top Story</a>
+            
+            <a href="#model-updates" class="">Model Updates</a>
+            
+            <a href="#agent-tool-developments" class="">Agent & Tool Developments</a>
+            
+            <a href="#practical-community" class="">Practical & Community</a>
+            
+            <a href="#under-the-hood-dimension-level-conditioning-in-activation-steering" class="">Under the Hood: Dimension-Level Conditioning in Activation Steering</a>
+            
+            <a href="#things-to-try-this-week" class="">Things to Try This Week</a>
+            
+            <a href="#on-the-horizon" class="">On the Horizon</a>
+            
+        </aside>
+        
+
+        <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
+            <h2 id="models-agents">Models & Agents</h2>
+<p><em>Simon Willison is ignoring his X replies because AI-generated slop is wasting everyone's time.</em></p>
+<p><strong>What You Need to Know:</strong> Simon Willison called out automated scripts that post pointless questions on X, noting they trick people into spending mental energy on answers nobody cares about. He added that AI slop replies have made him stop reading most of his notifications. Builders should prioritize output quality and real utility over volume when deploying models in public spaces.</p>
+<hr>
+<h4 id="top-story">Top Story</h4>
+<p>Simon Willison posted two threads on X highlighting how AI-generated questions and replies degrade online interaction. He described automated scripts that post questions with no real audience, forcing responders to expend effort on meaningless exchanges. In a follow-up he noted that the flood of low-value AI replies has led him to largely stop reading notifications on the platform. The posts underscore a practical problem for anyone building public-facing AI tools: volume without intent pollutes shared spaces and erodes trust. Watch for similar complaints from other high-profile builders as agent-driven posting increases. Source: <a href="https://x.com/simonw/status/2095362839792046181" target="_blank" rel="noopener">x.com</a></p>
+<hr>
+<h4 id="model-updates">Model Updates</h4>
+<p><strong>MemeCULT-1K: Benchmarking South Asian Cultural Context and Humor Understanding of Multimodal Models — arXiv NLP</strong></p>
+<p>The new benchmark contains 1,000 South Asian memes across Bengali, English, and Hindi, each paired with cultural context notes and human explanations plus 54 additional Bengali dialect memes. Thirteen vision-language models were tested in meme-only and context-aware settings; adding minimal cultural context lifted mean SBERT similarity from 44.6 to 56.4 and LLM-as-a-Judge scores from 2.57 to 3.43. Closed-source models mainly failed on entity identification while open-source models struggled with broader cultural gaps. Builders working on culturally grounded multimodal applications should test against this set before deployment. Source: <a href="https://arxiv.org/abs/2609.01772" target="_blank" rel="noopener">arxiv.org</a></p>
+<p><strong>VakyArth: Evaluating Pragmatic Competence in LLMs across Indic Languages — arXiv NLP</strong></p>
+<p>VakyArth introduces the first pragmatic benchmark for Hindi, Punjabi, Tamil, and Malayalam covering deixis, speech acts, implicature, social pragmatics, and coherence. Native-speaker-authored items show consistent model failures on Indic conventions, with MCQ accuracy exceeding NLI accuracy across families and sizes. Translation performance does not reliably track pragmatic understanding, and Indo-Aryan languages show an advantage over Dravidian ones. Teams building Indic-language dialogue systems should add this diagnostic to their evaluation suite. Source: <a href="https://arxiv.org/abs/2609.01788" target="_blank" rel="noopener">arxiv.org</a></p>
+<p><strong>TalkFa: A Unified Benchmark for Farsi Dialogue Generation and Understanding — arXiv NLP</strong></p>
+<p>TalkFa supplies three human-reviewed datasets totaling over 12,000 Farsi dialogues for knowledge-grounded generation, dialogue-act annotation, and sentiment-labeled theatrical exchanges. LoRA fine-tuning on Llama and Mistral models recovered over 90 percent of final performance with only 25-50 percent of the training data. FABERT led dialogue-act classification while LORA-MISTRAL-7B performed best on emotion recognition. Developers targeting Farsi conversational applications now have a native benchmark with verified data quality. Source: <a href="https://arxiv.org/abs/2609.01810" target="_blank" rel="noopener">arxiv.org</a></p>
+<p><strong>How Output Format Confounds Data Quality and Capability in Instruction Tuning — arXiv NLP</strong></p>
+<p>Gradient-signature experiments across 12 tasks and three model families demonstrate that output interface rotation leaves spectral statistics invariant while carrying the actual quality signal in the update direction. A skill that raises accuracy more than 40 points under the training format can become nearly invisible under any other interface. The work shows that both data-quality metrics and measured capability are conditioned on the surface format used during evaluation. Source: <a href="https://arxiv.org/abs/2609.02015" target="_blank" rel="noopener">arxiv.org</a></p>
+<p><strong>Selective Knowledge Edit Reversal via Gated Singular Vector Shrinkage — arXiv NLP</strong></p>
+<p>The method locates edit-sensitive components inside the dominant singular subspace of edited weights and reverses only targeted facts while preserving unrelated edits. Experiments confirm that different edits remain separable when the total number of edits stays moderate. Teams maintaining long-lived edited models now have a spectral tool for selective rollback. Source: <a href="https://arxiv.org/abs/2609.02091" target="_blank" rel="noopener">arxiv.org</a></p>
+<p><strong>Do Cantonese-Adapted Language Models Better Predict Cantonese Reading? A Cross-Model Eye-Tracking Evaluation — arXiv NLP</strong></p>
+<p>Lexical surprisal and a joint four-metric model favored the extensively continued-pretrained CantoneseLLM-7B over its base Qwen2.5-7B, while entropy reduction favored the lighter CKIP model. The results indicate that more extensive variety-specific training can improve psycholinguistic fit, though rankings shift with the chosen information-theoretic measure. Source: <a href="https://arxiv.org/abs/2609.02163" target="_blank" rel="noopener">arxiv.org</a></p>
+<hr>
+<h4 id="agent-tool-developments">Agent & Tool Developments</h4>
+<p><strong>OBJECTION! Lawyer Agents Mitigate Guilty Bias in Legal Judgment Prediction — arXiv NLP</strong></p>
+<p>OBJECTION inserts an adversarial lawyer agent into each step of a three-stage offense-unlawfulness-culpability reasoning pipeline, challenging presumptions of guilt with defense arguments. On a new Natural Innocent dataset of 3.4k real-world cases the approach cut the false guilty rate from 82.93 percent to 16.69 percent. The pipeline requires no retraining and works at inference time. Legal-tech teams should evaluate it when building judgment-support systems. Source: <a href="https://arxiv.org/abs/2609.02158" target="_blank" rel="noopener">arxiv.org</a></p>
+<p><strong>HyGRAIL: Cost-Aware and Evidence-Grounded Scientific Hypothesis Discovery over Knowledge Graphs — arXiv NLP</strong></p>
+<p>HyGRAIL routes only graph-uncertain candidates from a GNN triage step to an LLM reviewer that receives naturalized multi-hop paths from the knowledge graph. On MatKG it reached 0.429 F1 while cutting LLM calls by 54.36 percent versus exhaustive review. The framework supplies a practical cost-control pattern for hypothesis generation over incomplete scientific graphs. Source: <a href="https://arxiv.org/abs/2609.02056" target="_blank" rel="noopener">arxiv.org</a></p>
+<p><strong>AVERT: Audio-Verified Adjudication for Spoken Dialogue State Tracking — arXiv NLP</strong></p>
+<p>AVERT combines cross-turn agreement scoring with an audio-conditioned verifier and applies three targeted operators—vote, add, swap—only on slots where each error type is common. On SpokenWOZ it lifted joint goal accuracy from 38.34 to 40.13 without retraining the underlying speech-LLM. The approach shows how lightweight verification layers can correct persistent ASR-induced state errors. Source: <a href="https://arxiv.org/abs/2609.01828" target="_blank" rel="noopener">arxiv.org</a></p>
+<p><strong>A Tri-Agent Framework for Evaluating and Aligning Question Clarification Capabilities of Large Language Models — arXiv NLP</strong></p>
+<p>The framework uses a Question Clarifying Agent under test, a Respondent Agent that can give irrelevant or challenging replies, and an Evaluator Agent that scores ambiguity handling, question quality, and final intent alignment. Synthetic supply-chain data generation plus native-speaker validation provides a repeatable test harness for clarification behavior. Teams shipping conversational systems can adopt the structure to measure and improve clarification performance. Source: <a href="https://arxiv.org/abs/2609.02054" target="_blank" rel="noopener">arxiv.org</a></p>
+<p><strong>NS-Copilot: An LLM-Driven Agent System for Autonomous Neuroscience Analysis — arXiv NLP</strong></p>
+<p>NS-Copilot orchestrates specialized agents for planning, adaptive control, code generation, and result synthesis while routing to pre-trained models for EEG and spike data. Across eight trials on Alzheimer's, Parkinson's, and working-memory benchmarks it consistently outperformed strong baselines on primary metrics. Neuroscience labs gain an end-to-end natural-language interface that removes dataset-specific heuristics. Source: <a href="https://arxiv.org/abs/2609.01971" target="_blank" rel="noopener">arxiv.org</a></p>
+<hr>
+<h4 id="practical-community">Practical & Community</h4>
+<p><strong>PRO-Step: Step-level Process Reward Optimization for Retrieval-Augmented Generation — arXiv NLP</strong></p>
+<p>PRO-Step trains a generative process reward model that scores both logical validity and evidential grounding at each retrieval-reasoning step, then uses PRM-guided value tree search to build preference pairs for step-level DPO. The method achieved the best average EM and F1 across five single- and multi-hop QA benchmarks, with code, models, and training data released. RAG teams facing error propagation in multi-hop settings should examine the released artifacts. Source: <a href="https://arxiv.org/abs/2609.01658" target="_blank" rel="noopener">arxiv.org</a></p>
+<p><strong>How Do Prompt Variations Affect Energy Consumption in On-Device LLMs? — arXiv NLP</strong></p>
+<p>A broad study across models, devices, and datasets separates prefill and decode energy and shows cognitive load mainly affects energy per token while phrasing pattern acts through token count. The work supplies phase-level profiling scripts and a public energy-quality frontier for model-aware prompt design. Developers targeting on-device inference should incorporate these measurements when optimizing prompts. Source: <a href="https://arxiv.org/abs/2609.01798" target="_blank" rel="noopener">arxiv.org</a></p>
+<p><strong>Cite or Decline: A Strict Course-Grounded Chatbot for STEM Lecture Videos — arXiv NLP</strong></p>
+<p>VideoPoints retrieves only from the active course, uses chapter summaries for transcript ranking, and returns timestamped citations or declines when no evidence matches. In a semester-long deployment 70.5 percent of 833 messages included citations and none crossed course boundaries. Course-platform teams now have a concrete pattern for citation-enforced, course-isolated chatbots. Source: <a href="https://arxiv.org/abs/2609.01846" target="_blank" rel="noopener">arxiv.org</a></p>
+<p><strong>text2ql: Multi-Target Natural Language Querying via a Language-Agnostic Intermediate Representation — arXiv NLP</strong></p>
+<p>text2ql supplies a seven-stage detection pipeline and pluggable renderers that target both SQL and GraphQL from a single QueryIR representation. The deterministic zero-LLM mode delivered 100 percent execution accuracy at 3.2 ms median latency with no API cost. Schema-aware prompting contributed an 18.4-point exact-match gain. Developers building natural-language database interfaces can adopt the open-source Python package immediately. Source: <a href="https://arxiv.org/abs/2609.02115" target="_blank" rel="noopener">arxiv.org</a></p>
+<hr>
+<h4 id="under-the-hood-dimension-level-conditioning-in-activation-steering">Under the Hood: Dimension-Level Conditioning in Activation Steering</h4>
+<p>Everyone talks about activation steering as if you simply add one vector and the model behaves. In practice the technique is a set of selectivity decisions that trade precision against overhead. The core move is to decide not only when to steer but which hidden dimensions actually carry the target concept. GAPS implements this with a static separability gate that keeps only neurons showing reliable concept information via AUROC and a dynamic posterior gate that steers a neuron only when its current activation is better explained by the undesired concept under a Gaussian model. The two gates add O(D) work per token yet measurably improve the capability–behavior tradeoff; on toxicity mitigation with Gemma-3-4B the combined DSAS+GAPS pipeline dropped toxicity from 6.52 percent to 0.48 percent while staying inside the same capability budget. The practical decision rule is straightforward: if your steering vector is dense and you observe capability regression, add dimension-level gating before you increase steering strength or switch to a heavier model.</p>
+<hr>
+<h4 id="things-to-try-this-week">Things to Try This Week</h4>
+<ul>
+<li>Test the released PRO-Step code and models on your own multi-hop RAG traces to see whether step-level preference optimization reduces early retrieval errors.</li>
+<li>Run the MemeCULT-1K evaluation harness against any vision-language model you deploy for South Asian audiences before claiming cultural competence.</li>
+<li>Add the text2ql deterministic mode to a prototype natural-language query interface to measure latency and accuracy gains versus pure LLM routing.</li>
+<li>Apply the OBJECTION lawyer-agent pattern to any legal or policy judgment pipeline you maintain and track the drop in false-positive guilty labels.</li>
+<li>Profile your on-device prompts with the energy-measurement scripts from the prompt-variation study to identify which phrasing patterns cut decode energy most effectively.</li>
+</ul>
+<hr>
+<h4 id="on-the-horizon">On the Horizon</h4>
+<ul>
+<li>More labs are expected to release culturally specific pragmatic and meme benchmarks following the VakyArth and MemeCULT pattern.</li>
+<li>Inference-time verification layers like AVERT and OBJECTION will likely appear in commercial agent frameworks within the next quarter.</li>
+<li>Energy-aware prompt tooling is moving from research scripts to integrated features in on-device SDKs.</li>
+<li>Selective edit-reversal methods will be packaged as maintenance utilities for long-running fine-tuned models.</li>
+</ul>
+<pre><code>[]</code></pre>
+            </div>
+            
+            <div class="blog-body-lang" data-lang="fr" hidden>
+                <p class="blog-translated-note">Français — AI-translated from the English episode.</p>
+                <p>Simon Willison ignore ses réponses sur X, parce que la pacotille générée par l’intelligence artificielle fait perdre son temps à tout le monde.</p>
+<p>Voici Modèles et Agents, épisode cent soixante-deux.</p>
+<p>Simon Willison a dénoncé des scripts automatisés qui publient des questions creuses sur X.</p>
+<p>Ces scripts poussent les gens à dépenser de l’énergie mentale pour des réponses dont personne n’a rien à faire.</p>
+<p>Il a ajouté que les réponses de pacotille générées par l’intelligence artificielle l’ont conduit à ne plus lire la plupart de ses notifications.</p>
+<p>Les créateurs devraient privilégier la qualité des résultats et l’utilité réelle plutôt que le volume, quand ils déploient des modèles dans l’espace public.</p>
+<p>Ces publications mettent en lumière un problème concret pour quiconque construit des outils d’intelligence artificielle destinés au public.</p>
+<p>Le volume sans intention pollue les espaces partagés et érode la confiance.</p>
+<p>Surveillez l’apparition de plaintes similaires chez d’autres créateurs très en vue, à mesure que les publications pilotées par des agents se multiplient.</p>
+<p>Passons maintenant aux mises à jour des modèles.</p>
+<p>MemeCULT-mille est un nouveau banc d’essai avec mille mèmes d’Asie du Sud, en bengali, en anglais et en hindi.</p>
+<p>Chaque mème est accompagné de notes de contexte culturel et d’explications humaines, plus cinquante-quatre mèmes supplémentaires en dialecte bengali.</p>
+<p>Treize modèles vision-langage ont été testés, d’une part sur le mème seul, d’autre part avec le contexte.</p>
+<p>L’ajout d’un minimum de contexte culturel a fait passer la similarité S BERT moyenne de quarante-quatre virgule six à cinquante-six virgule quatre.</p>
+<p>Les scores du grand modèle de langage en tant que juge sont passés de deux virgule cinquante-sept à trois virgule quarante-trois.</p>
+<p>Les modèles propriétaires ont surtout échoué sur l’identification des entités, tandis que les modèles à code ouvert peinaient face à des écarts culturels plus larges.</p>
+<p>VakyArth présente le premier banc d’essai pragmatique pour l’hindi, le pendjabi, le tamoul et le malayalam.</p>
+<p>Il couvre la deixis, les actes de langage, l’implicature, la pragmatique sociale et la cohérence.</p>
+<p>Les items rédigés par des locuteurs natifs montrent des échecs constants des modèles sur les conventions indiques.</p>
+<p>La précision en questions à choix multiples dépasse la précision en inférence en langage naturel, toutes familles et toutes tailles confondues.</p>
+<p>La performance en traduction ne reflète pas de façon fiable la compréhension pragmatique.</p>
+<p>Les langues indo-aryennes présentent un avantage sur les langues dravidiennes.</p>
+<p>TalkFa fournit trois jeux de données relus par des humains, pour un total de plus de douze mille dialogues en persan.</p>
+<p>Ces jeux de données couvrent la génération ancrée dans les connaissances, l’annotation des actes de dialogue, et des échanges théâtraux étiquetés selon le sentiment.</p>
+<p>L’affinage LoRA sur les modèles Llama et Mistral a récupéré plus de quatre-vingt-dix pour cent de la performance finale avec seulement vingt-cinq à cinquante pour cent des données d’entraînement.</p>
+<p>FABERT a mené la classification des actes de dialogue, tandis que LoRA-Mistral-sept-B a obtenu les meilleurs résultats en reconnaissance des émotions.</p>
+<p>Comment le format de sortie brouille la qualité des données et les capacités dans l’ajustement par instructions : cette étude a mené des expériences de signatures de gradient sur douze tâches et trois familles de modèles.</p>
+<p>La rotation de l’interface de sortie laisse les statistiques spectrales invariantes, tout en portant le véritable signal de qualité dans la direction de la mise à jour.</p>
+<p>Une compétence qui fait gagner plus de quarante points de précision sous le format d’entraînement peut devenir presque invisible sous n’importe quelle autre interface.</p>
+<p>L’inversion sélective d’éditions de connaissances par contraction à porte des vecteurs singuliers localise les composantes sensibles à l’édition dans le sous-espace singulier dominant des poids modifiés.</p>
+<p>Elle n’inverse que les faits ciblés, tout en préservant les éditions sans rapport.</p>
+<p>Les expériences confirment que les différentes éditions restent séparables tant que le nombre total d’éditions reste modéré.</p>
+<p>Les modèles de langage adaptés au cantonais prédisent-ils mieux la lecture en cantonais : cette étude a testé la surprise lexicale et un modèle conjoint à quatre métriques.</p>
+<p>Le CantoneseLLM-sept-B, longuement préentraîné en continu, a surpassé son modèle de base Qwen deux virgule cinq sept B.</p>
+<p>La réduction d’entropie a plutôt favorisé le modèle CKIP, plus léger.</p>
+<p>Passons maintenant aux développements côté agents et outils.</p>
+<p>OBJECTION insère un agent avocat adverse à chaque étape d’une chaîne de raisonnement en trois stades : infraction, illicéité, culpabilité.</p>
+<p>Sur un nouveau jeu de données Natural Innocent de trois mille quatre cents affaires réelles, l’approche a fait chuter le taux de faux coupables de quatre-vingt-deux virgule quatre-vingt-treize pour cent à seize virgule soixante-neuf pour cent.</p>
+<p>La chaîne ne demande aucun réentraînement et fonctionne au moment de l’inférence.</p>
+<p>HyGRAIL n’achemine vers un relecteur grand modèle de langage que les candidats incertains du graphe, issus d’une étape de triage par réseau de neurones sur graphe. Ce relecteur reçoit des chemins à plusieurs sauts naturalisés extraits du graphe de connaissances.</p>
+<p>Sur MatKG, il a atteint un score F un de zéro virgule quatre cent vingt-neuf, tout en réduisant les appels au grand modèle de langage de cinquante-quatre virgule trente-six pour cent par rapport à une relecture exhaustive.</p>
+<p>AVERT combine un score d’accord d’un tour de parole à l’autre avec un vérificateur conditionné par l’audio, et n’applique trois opérateurs ciblés que sur les emplacements où chaque type d’erreur est fréquent.</p>
+<p>Sur SpokenWOZ, il a fait passer la précision d’objectif conjoint de trente-huit virgule trente-quatre à quarante virgule treize, sans réentraîner le modèle de langage vocal sous-jacent.</p>
+<p>Un cadre à trois agents pour évaluer et aligner les capacités de clarification de questions utilise un agent clarificateur de questions mis à l’épreuve, un agent répondant capable de donner des réponses hors sujet ou difficiles, et un agent évaluateur.</p>
+<p>La génération synthétique de données de chaîne d’approvisionnement, plus une validation par des locuteurs natifs, fournit un banc de test reproductible pour le comportement de clarification.</p>
+<p>NS-Copilot orchestre des agents spécialisés pour la planification, le contrôle adaptatif, la génération de code et la synthèse des résultats, tout en aiguillant vers des modèles préentraînés pour les données E E G et les données de décharges neuronales.</p>
+<p>Sur huit essais, portant sur des bancs d’essai Alzheimer, Parkinson et mémoire de travail, il a constamment dépassé de solides références sur les métriques principales.</p>
+<p>Passons maintenant aux points pratiques et communautaires.</p>
+<p>PRO-Step entraîne un modèle génératif de récompense de processus qui note à la fois la validité logique et l’ancrage dans les preuves, à chaque étape de recherche et de raisonnement.</p>
+<p>Il utilise ensuite une recherche arborescente de valeur guidée par le modèle de récompense de processus, pour construire des paires de préférence destinées à l’optimisation directe des préférences au niveau de l’étape.</p>
+<p>La méthode a obtenu les meilleures moyennes de correspondance exacte et de score F un sur cinq bancs d’essai de questions-réponses à un saut et à plusieurs sauts, avec le code, les modèles et les données d’entraînement mis en ligne.</p>
+<p>Comment les variations de consignes affectent-elles la consommation d’énergie des grands modèles de langage sur appareil : cette étude sépare l’énergie de préremplissage et l’énergie de décodage, selon les modèles, les appareils et les jeux de données.</p>
+<p>La charge cognitive affecte surtout l’énergie par jeton, tandis que le schéma de formulation agit via le nombre de jetons.</p>
+<p>Ces travaux fournissent des scripts de profilage au niveau de chaque phase, et une frontière publique énergie-qualité pour concevoir des consignes en tenant compte du modèle.</p>
+<p>Cite or Decline ne cherche que dans le cours actif, utilise des résumés de chapitres pour classer les transcriptions, et renvoie des citations horodatées, ou refuse quand aucune preuve ne correspond.</p>
+<p>Lors d’un déploiement sur un semestre, soixante-dix virgule cinq pour cent des huit cent trente-trois messages comportaient des citations, et aucun n’a franchi les limites du cours.</p>
+<p>text2ql fournit une chaîne de détection en sept étapes et des moteurs de rendu interchangeables, qui visent à la fois SQL et GraphQL à partir d’une unique représentation QueryIR.</p>
+<p>Le mode déterministe sans grand modèle de langage a livré cent pour cent de précision d’exécution, avec une latence médiane de trois virgule deux millisecondes, et sans aucun coût d’interface de programmation.</p>
+<p>Les consignes tenant compte du schéma ont apporté un gain de dix-huit virgule quatre points en correspondance exacte.</p>
+<p>Allez, ouvrons le capot du conditionnement au niveau des dimensions dans le guidage par activations.</p>
+<p>Tout le monde parle du guidage par activations comme s’il suffisait d’ajouter un vecteur pour que le modèle obéisse.</p>
+<p>En pratique, la technique est un ensemble de décisions de sélectivité qui arbitrent entre précision et surcoût.</p>
+<p>Le geste central, c’est de décider non seulement quand guider, mais quelles dimensions cachées portent vraiment le concept visé.</p>
+<p>GAPS met cela en œuvre avec une porte de séparabilité statique, qui ne conserve que les neurones montrant une information de concept fiable, mesurée par l’aire sous la courbe R O C.</p>
+<p>Une porte postérieure dynamique ne guide un neurone que lorsque son activation courante s’explique mieux par le concept non désiré, sous un modèle gaussien.</p>
+<p>Les deux portes ajoutent un coût de l’ordre de D par jeton, et améliorent pourtant de façon mesurable le compromis entre capacité et comportement.</p>
+<p>Pour la réduction de toxicité avec Gemma trois quatre B, la chaîne combinée D S A S plus GAPS a fait chuter la toxicité de six virgule cinquante-deux pour cent à zéro virgule quarante-huit pour cent, tout en restant dans le même budget de capacité.</p>
+<p>La règle de décision pratique est simple.</p>
+<p>Si votre vecteur de guidage est dense et que vous observez une régression des capacités, ajoutez un filtrage au niveau des dimensions avant d’augmenter la force de guidage ou de passer à un modèle plus lourd.</p>
+<p>Parmi les choses à essayer cette semaine : tester le code et les modèles PRO-Step publiés, sur vos propres traces de génération augmentée par recherche à plusieurs sauts.</p>
+<p>Lancez le banc d’évaluation MemeCULT-mille contre tout modèle vision-langage que vous déployez pour des publics d’Asie du Sud, avant de revendiquer une compétence culturelle.</p>
+<p>Ajoutez le mode déterministe de text2ql à un prototype d’interface de requêtes en langage naturel, pour mesurer les gains de latence et de précision par rapport à un simple aiguillage par grand modèle de langage.</p>
+<p>Appliquez le schéma de l’agent avocat d’OBJECTION à toute chaîne de jugement juridique ou politique que vous maintenez, et suivez la baisse des étiquettes « coupable » faussement positives.</p>
+<p>Profilez vos consignes sur appareil avec les scripts de mesure d’énergie de l’étude sur les variations de consignes, pour identifier quels schémas de formulation réduisent le plus efficacement l’énergie de décodage.</p>
+<p>À l’horizon, on s’attend à ce que davantage de laboratoires publient des bancs d’essai pragmatiques et de mèmes culturellement spécifiques, dans la lignée de VakyArth et de MemeCULT.</p>
+<p>Des couches de vérification au moment de l’inférence, comme AVERT et OBJECTION, devraient apparaître dans les cadres d’agents commerciaux d’ici le prochain trimestre.</p>
+<p>Les outils de consignes sensibles à l’énergie passent des scripts de recherche à des fonctionnalités intégrées dans les kits de développement sur appareil.</p>
+<p>Les méthodes d’inversion sélective d’éditions seront proposées comme utilitaires de maintenance pour les modèles affinés qui tournent sur la durée.</p>
+<p>Avant de nous quitter, plusieurs laboratoires préparent des publications de suivi qui testeront les mêmes bancs d’essai culturels et pragmatiques sur les modèles vision-langage de prochaine génération.</p>
+<p>C’était Modèles et Agents pour aujourd’hui.</p>
+<p>Si vous avez trouvé ça utile, partagez-le avec quelqu’un qui essaie de suivre tous ces changements, et abonnez-vous pour ne pas rater la mise à jour de demain.</p>
+<p>Le monde de l’intelligence artificielle va vite.</p>
+<p>On vous aide à tenir le rythme.</p>
+<p>À demain.</p>
+<p>Et si vous préférez regarder plutôt qu’écouter, retrouvez-nous sur YouTube, à Nerra Network — le lien est dans les notes de l’émission.</p>
+<p>Cette émission vous est proposée par le Nerra Network.</p>
+<p>Si vous voulez un autre point quotidien bien tranchant, Unintended Consequences est là pour vous — de vraies histoires de bonnes intentions qui ont mal tourné.</p>
+<p>Toutes nos émissions sont gratuites sur nerranetwork point com.</p>
+<p>Nouveau sur le réseau ? nerranetwork point com start here choisit le point quotidien qui vous convient en environ deux minutes.</p>
+<p>Cet épisode a utilisé une synthèse vocale de ma voix par intelligence artificielle — la sélection éditoriale et l’analyse sont les miennes.</p>
+            </div>
+            
+
+            <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://x.com/simonw/status/2095362839792046181" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=x.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">x.com</span>
+                    </a>
+                    
+                    <a href="https://arxiv.org/abs/2609.01772" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=arxiv.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">arxiv.org</span>
+                    </a>
+                    
+                    <a href="https://arxiv.org/abs/2609.01788" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=arxiv.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">arxiv.org</span>
+                    </a>
+                    
+                    <a href="https://arxiv.org/abs/2609.01810" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=arxiv.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">arxiv.org</span>
+                    </a>
+                    
+                    <a href="https://arxiv.org/abs/2609.02015" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=arxiv.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">arxiv.org</span>
+                    </a>
+                    
+                    <a href="https://arxiv.org/abs/2609.02091" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=arxiv.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">arxiv.org</span>
+                    </a>
+                    
+                    <a href="https://arxiv.org/abs/2609.02163" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=arxiv.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">arxiv.org</span>
+                    </a>
+                    
+                    <a href="https://arxiv.org/abs/2609.02158" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=arxiv.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">arxiv.org</span>
+                    </a>
+                    
+                    <a href="https://arxiv.org/abs/2609.02056" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=arxiv.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">arxiv.org</span>
+                    </a>
+                    
+                    <a href="https://arxiv.org/abs/2609.01828" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=arxiv.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">arxiv.org</span>
+                    </a>
+                    
+                    <a href="https://arxiv.org/abs/2609.02054" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=arxiv.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">arxiv.org</span>
+                    </a>
+                    
+                    <a href="https://arxiv.org/abs/2609.01971" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=arxiv.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">arxiv.org</span>
+                    </a>
+                    
+                    <a href="https://arxiv.org/abs/2609.01658" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=arxiv.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">arxiv.org</span>
+                    </a>
+                    
+                    <a href="https://arxiv.org/abs/2609.01798" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=arxiv.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">arxiv.org</span>
+                    </a>
+                    
+                    <a href="https://arxiv.org/abs/2609.01846" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=arxiv.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">arxiv.org</span>
+                    </a>
+                    
+                    <a href="https://arxiv.org/abs/2609.02115" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=arxiv.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">arxiv.org</span>
+                    </a>
+                    
+                </div>
+            </section>
+            
+
+            <!-- Chapters (July 2026): generated and shipped in the feeds
+                 for months but surfaced nowhere on the site. Data is on
+                 disk at build time, so this adds no generation cost. -->
+            
+            <section class="blog-chapters" id="chapters">
+                <h2>In this episode</h2>
+                <ol class="blog-chapter-list">
+                    <li>
+                        <span class="chapter-time" data-seconds="10.4">0:10</span>
+                        <span class="chapter-title">Introduction</span>
+                    </li>
+                    <li>
+                        <span class="chapter-time" data-seconds="57.0">0:57</span>
+                        <span class="chapter-title">Model Updates</span>
+                    </li>
+                    <li>
+                        <span class="chapter-time" data-seconds="218.5">3:38</span>
+                        <span class="chapter-title">Agent & Tool Developments</span>
+                    </li>
+                    <li>
+                        <span class="chapter-time" data-seconds="333.1">5:33</span>
+                        <span class="chapter-title">Practical & Community</span>
+                    </li>
+                    <li>
+                        <span class="chapter-time" data-seconds="432.2">7:12</span>
+                        <span class="chapter-title">Under the Hood</span>
+                    </li>
+                    <li>
+                        <span class="chapter-time" data-seconds="517.9">8:38</span>
+                        <span class="chapter-title">Things to Try</span>
+                    </li>
+                    <li>
+                        <span class="chapter-time" data-seconds="567.2">9:27</span>
+                        <span class="chapter-title">On the Horizon</span>
+                    </li>
+                    <li>
+                        <span class="chapter-time" data-seconds="598.9">9:59</span>
+                        <span class="chapter-title">Tomorrow Teaser</span>
+                    </li>
+                    <li>
+                        <span class="chapter-time" data-seconds="608.7">10:09</span>
+                        <span class="chapter-title">Closing</span>
+                    </li>
+                </ol>
+                
+                <p class="chapter-foot"><a href="#transcript">Read the full transcript &darr;</a></p>
+                
+            </section>
+            <script>
+            /* Progressive enhancement: make chapters seek the player, but
+               ONLY when there is a player on the page. Episodes without
+               alternate-language tracks render no inline <audio>, so the
+               list stays a plain, useful contents listing there. */
+            (function () {
+                var audio = document.getElementById("nn-i18n-audio");
+                if (!audio) return;
+                document.querySelectorAll(".blog-chapter-list li").forEach(function (li) {
+                    var stamp = li.querySelector(".chapter-time");
+                    if (!stamp) return;
+                    var at = parseFloat(stamp.getAttribute("data-seconds"));
+                    if (isNaN(at)) return;
+                    li.classList.add("is-seekable");
+                    li.addEventListener("click", function () {
+                        try { audio.currentTime = at; audio.play(); } catch (e) {}
+                    });
+                });
+            })();
+            </script>
+            
+
+            <!-- Transcript -->
+            
+            <section class="blog-transcript" id="transcript">
+                <details>
+                    <summary>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+                        Full Episode Transcript
+                    </summary>
+                    <div class="transcript-content">Simon Willison is ignoring his X replies because AI-generated slop is wasting everyone's time.
+
+This is Models and Agents, episode 162.
+
+Simon Willison called out automated scripts that post pointless questions on X.
+
+Those scripts trick people into spending mental energy on answers nobody cares about.
+
+He added that AI slop replies have made him stop reading most of his notifications.
+
+Builders should prioritize output quality and real utility over volume when deploying models in public spaces.
+
+The posts underscore a practical problem for anyone building public-facing AI tools.
+
+Volume without intent pollutes shared spaces and erodes trust.
+
+Watch for similar complaints from other high-profile builders as agent-driven posting increases.
+
+Now for the model updates.
+
+MemeCULT-1K is a new benchmark with one thousand South Asian memes across Bengali, English, and Hindi.
+
+Each meme comes with cultural context notes and human explanations, plus fifty-four additional Bengali dialect memes.
+
+Thirteen vision-language models were tested in meme-only and context-aware settings.
+
+Adding minimal cultural context lifted mean SBERT similarity from forty-four point six to fifty-six point four.
+
+LLM-as-a-Judge scores rose from two point five seven to three point four three.
+
+Closed-source models mainly failed on entity identification while open-source models struggled with broader cultural gaps.
+
+VakyArth introduces the first pragmatic benchmark for Hindi, Punjabi, Tamil, and Malayalam.
+
+It covers deixis, speech acts, implicature, social pragmatics, and coherence.
+
+Native-speaker-authored items show consistent model failures on Indic conventions.
+
+MCQ accuracy exceeds NLI accuracy across families and sizes.
+
+Translation performance does not reliably track pragmatic understanding.
+
+Indo-Aryan languages show an advantage over Dravidian ones.
+
+TalkFa supplies three human-reviewed datasets totaling over twelve thousand Farsi dialogues.
+
+The datasets cover knowledge-grounded generation, dialogue-act annotation, and sentiment-labeled theatrical exchanges.
+
+LoRA fine-tuning on Llama and Mistral models recovered over ninety percent of final performance with only twenty-five to fifty percent of the training data.
+
+FABERT led dialogue-act classification while LORA-MISTRAL-7B performed best on emotion recognition.
+
+How Output Format Confounds Data Quality and Capability in Instruction Tuning ran gradient-signature experiments across twelve tasks and three model families.
+
+Output interface rotation leaves spectral statistics invariant while carrying the actual quality signal in the update direction.
+
+A skill that raises accuracy more than forty points under the training format can become nearly invisible under any other interface.
+
+Selective Knowledge Edit Reversal via Gated Singular Vector Shrinkage locates edit-sensitive components inside the dominant singular subspace of edited weights.
+
+It reverses only targeted facts while preserving unrelated edits.
+
+Experiments confirm that different edits remain separable when the total number of edits stays moderate.
+
+Do Cantonese-Adapted Language Models Better Predict Cantonese Reading tested lexical surprisal and a joint four-metric model.
+
+The extensively continued-pretrained CantoneseLLM-7B outperformed its base Qwen2.5-7B.
+
+Entropy reduction favored the lighter CKIP model instead.
+
+Now for agent and tool developments.
+
+OBJECTION inserts an adversarial lawyer agent into each step of a three-stage offense-unlawfulness-culpability reasoning pipeline.
+
+On a new Natural Innocent dataset of three point four thousand real-world cases the approach cut the false guilty rate from eighty-two point nine three percent to sixteen point six nine percent.
+
+The pipeline requires no retraining and works at inference time.
+
+HyGRAIL routes only graph-uncertain candidates from a GNN triage step to an LLM reviewer that receives naturalized multi-hop paths from the knowledge graph.
+
+On MatKG it reached zero point four two nine F1 while cutting LLM calls by fifty-four point three six percent versus exhaustive review.
+
+AVERT combines cross-turn agreement scoring with an audio-conditioned verifier and applies three targeted operators only on slots where each error type is common.
+
+On SpokenWOZ it lifted joint goal accuracy from thirty-eight point three four to forty point one three without retraining the underlying speech-LLM.
+
+A Tri-Agent Framework for Evaluating and Aligning Question Clarification Capabilities uses a Question Clarifying Agent under test, a Respondent Agent that can give irrelevant or challenging replies, and an Evaluator Agent.
+
+Synthetic supply-chain data generation plus native-speaker validation provides a repeatable test harness for clarification behavior.
+
+NS-Copilot orchestrates specialized agents for planning, adaptive control, code generation, and result synthesis while routing to pre-trained models for EEG and spike data.
+
+Across eight trials on Alzheimer's, Parkinson's, and working-memory benchmarks it consistently outperformed strong baselines on primary metrics.
+
+Now for practical and community items.
+
+PRO-Step trains a generative process reward model that scores both logical validity and evidential grounding at each retrieval-reasoning step.
+
+It then uses PRM-guided value tree search to build preference pairs for step-level DPO.
+
+The method achieved the best average EM and F1 across five single- and multi-hop QA benchmarks, with code, models, and training data released.
+
+How Do Prompt Variations Affect Energy Consumption in On-Device LLMs separates prefill and decode energy across models, devices, and datasets.
+
+Cognitive load mainly affects energy per token while phrasing pattern acts through token count.
+
+The work supplies phase-level profiling scripts and a public energy-quality frontier for model-aware prompt design.
+
+Cite or Decline retrieves only from the active course, uses chapter summaries for transcript ranking, and returns timestamped citations or declines when no evidence matches.
+
+In a semester-long deployment seventy point five percent of eight hundred thirty-three messages included citations and none crossed course boundaries.
+
+text2ql supplies a seven-stage detection pipeline and pluggable renderers that target both SQL and GraphQL from a single QueryIR representation.
+
+The deterministic zero-LLM mode delivered one hundred percent execution accuracy at three point two milliseconds median latency with no API cost.
+
+Schema-aware prompting contributed an eighteen point four point exact-match gain.
+
+OK, let's pop the hood on dimension-level conditioning in activation steering.
+
+Everyone talks about activation steering as if you simply add one vector and the model behaves.
+
+In practice the technique is a set of selectivity decisions that trade precision against overhead.
+
+The core move is to decide not only when to steer but which hidden dimensions actually carry the target concept.
+
+GAPS implements this with a static separability gate that keeps only neurons showing reliable concept information via AUROC.
+
+A dynamic posterior gate steers a neuron only when its current activation is better explained by the undesired concept under a Gaussian model.
+
+The two gates add O of D work per token yet measurably improve the capability-behavior tradeoff.
+
+On toxicity mitigation with Gemma-3-4B the combined DSAS plus GAPS pipeline dropped toxicity from six point five two percent to zero point four eight percent while staying inside the same capability budget.
+
+The practical decision rule is straightforward.
+
+If your steering vector is dense and you observe capability regression, add dimension-level gating before you increase steering strength or switch to a heavier model.
+
+Things to try this week include testing the released PRO-Step code and models on your own multi-hop RAG traces.
+
+Run the MemeCULT-1K evaluation harness against any vision-language model you deploy for South Asian audiences before claiming cultural competence.
+
+Add the text2ql deterministic mode to a prototype natural-language query interface to measure latency and accuracy gains versus pure LLM routing.
+
+Apply the OBJECTION lawyer-agent pattern to any legal or policy judgment pipeline you maintain and track the drop in false-positive guilty labels.
+
+Profile your on-device prompts with the energy-measurement scripts from the prompt-variation study to identify which phrasing patterns cut decode energy most effectively.
+
+On the horizon more labs are expected to release culturally specific pragmatic and meme benchmarks following the VakyArth and MemeCULT pattern.
+
+Inference-time verification layers like AVERT and OBJECTION will likely appear in commercial agent frameworks within the next quarter.
+
+Energy-aware prompt tooling is moving from research scripts to integrated features in on-device SDKs.
+
+Selective edit-reversal methods will be packaged as maintenance utilities for long-running fine-tuned models.
+
+Before we go, several labs are preparing follow-up releases that test the same cultural and pragmatic benchmarks on next-generation vision-language models.
+
+That's Models and Agents for today.
+
+If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update.
+
+The AI world moves fast.
+
+We'll help you keep up.
+
+See you tomorrow.
+
+And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+This show comes to you from the Nerra Network.
+
+If you want another sharp daily briefing, Unintended Consequences has you covered — true stories of good intentions that backfired.
+
+All our shows are free at nerranetwork.com.
+
+New to the network? nerranetwork.com/start-here picks the right daily briefing for you in about two minutes.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.</div>
+                </details>
+            </section>
+            
+
+            <!-- Story Tracker (narrative-memory shows only) -->
+            
+            <section class="blog-story-tracker" style="margin:var(--sp-4) 0;padding:var(--sp-3);border:1px solid var(--border-color, #2a2a2a);border-radius:8px;">
+                <strong>Following the long arcs?</strong>
+                The <a href="../../models-agents-narrative.html?utm_source=blog&utm_medium=web&utm_campaign=story_tracker">Models & Agents Story Tracker</a>
+                is the show's living memory of every major ongoing storyline — where each program stands today and the open questions each episode chips away at.
+            </section>
+            
+
+            <!-- Share Buttons --><div class="share-buttons">
+                <span>Share:</span>
+                <a href="https://twitter.com/intent/tweet?url=https%3A//nerranetwork.com/blog/models_agents/ep162.html%3Futm_source%3Dtwitter%26utm_medium%3Dshare%26utm_campaign%3Dblog&text=Simon%20Willison%20is%20ignoring%20his%20X%20replies%20because%20AI%E2%80%A6%20%E2%80%94%20Ep162%20%7C%20Models%20%26%20Agents" target="_blank" rel="noopener" aria-label="Share on Twitter">&#120143; Post</a>
+                <a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A//nerranetwork.com/blog/models_agents/ep162.html%3Futm_source%3Dlinkedin%26utm_medium%3Dshare%26utm_campaign%3Dblog" target="_blank" rel="noopener" aria-label="Share on LinkedIn">in LinkedIn</a>
+                <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A//nerranetwork.com/blog/models_agents/ep162.html%3Futm_source%3Dfacebook%26utm_medium%3Dshare%26utm_campaign%3Dblog" target="_blank" rel="noopener" aria-label="Share on Facebook">Facebook</a>
+                <a href="https://wa.me/?text=Simon%20Willison%20is%20ignoring%20his%20X%20replies%20because%20AI%E2%80%A6%20%E2%80%94%20Ep162%20%7C%20Models%20%26%20Agents%20%E2%80%94%20https%3A//nerranetwork.com/blog/models_agents/ep162.html%3Futm_source%3Dwhatsapp%26utm_medium%3Dshare%26utm_campaign%3Dblog" target="_blank" rel="noopener" aria-label="Share on WhatsApp">WhatsApp</a>
+                <a href="https://t.me/share/url?url=https%3A//nerranetwork.com/blog/models_agents/ep162.html%3Futm_source%3Dtelegram%26utm_medium%3Dshare%26utm_campaign%3Dblog&amp;text=Simon%20Willison%20is%20ignoring%20his%20X%20replies%20because%20AI%E2%80%A6%20%E2%80%94%20Ep162%20%7C%20Models%20%26%20Agents" target="_blank" rel="noopener" aria-label="Share on Telegram">Telegram</a>
+                <a href="mailto:?subject=Simon%20Willison%20is%20ignoring%20his%20X%20replies%20because%20AI%E2%80%A6%20%E2%80%94%20Ep162%20%7C%20Models%20%26%20Agents&body=https%3A//nerranetwork.com/blog/models_agents/ep162.html%3Futm_source%3Demail%26utm_medium%3Dshare%26utm_campaign%3Dblog" aria-label="Share by email">&#9993; Email</a>
+                <button onclick="navigator.clipboard.writeText(window.location.href).then(function(){this.textContent='\u2713 Copied'}.bind(this))" aria-label="Copy link">&#128279; Copy link</button>
+            </div>
+
+            <!-- AI transparency badge (trust signal) -->
+            <div style="display:flex;justify-content:center;margin:var(--sp-4) 0;">
+                <a href="../../ai-disclosure.html" class="nn-ai-badge" rel="nofollow"
+   title="How we use AI — full transparency"
+   style="display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border:1px solid var(--nn-border);border-radius:100px;font-family:var(--font-ui);font-size:0.72rem;font-weight:600;color:var(--nn-text-muted);text-decoration:none;line-height:1.4;white-space:nowrap;">
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v.01M11 12h1v4h1"/></svg>
+  Made with AI — transparently
+</a>
+            </div><div class="episode-feedback" style="display:flex;gap:var(--sp-3);align-items:center;justify-content:center;flex-wrap:wrap;margin:var(--sp-6) 0;padding:var(--sp-4);border-top:1px solid var(--nn-border);border-bottom:1px solid var(--nn-border);font-family:var(--font-ui);font-size:0.95rem;color:var(--nn-text-muted);">
+                <span> Did this episode land?</span>
+                <a href="mailto:patrick@planetterrian.com?subject=I%20liked%20Models%20%26%20Agents%20Ep162&body=Re: https://nerranetwork.com/blog/models_agents/ep162.html%0A%0A" style="padding:6px 14px;border:1px solid var(--show-color);border-radius:100px;color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">\ud83d\udc4d Tell Patrick</a>
+                <a href="mailto:patrick@planetterrian.com?subject=Suggestion%20for%20Models%20%26%20Agents&body=Re: https://nerranetwork.com/blog/models_agents/ep162.html%0A%0A" style="padding:6px 14px;border:1px solid var(--nn-border);border-radius:100px;color:var(--nn-text-muted);text-decoration:none;font-weight:600;">\ud83d\udca1 Suggest a story</a>
+            </div>
+
+            <!-- Subscribe CTA -->
+            
+            <div id="subscribe-cta" class="show-subscribe-inline" style="margin-top:var(--sp-6);margin-bottom:var(--sp-6);">
+                <h3>Enjoy this episode? Get Models & Agents in your inbox</h3>
+                <p>New episode alerts — no spam, unsubscribe anytime.</p>
+                <form action="https://buttondown.com/api/emails/embed-subscribe/patricknovak1" method="post" target="popupwindow"
+                      onsubmit="var btn=this.querySelector('button[type=submit]');btn.disabled=true;btn.textContent='Subscribing…';setTimeout(function(){btn.textContent='Check your email ✓';btn.disabled=false;},500);">
+                    <input type="hidden" name="tag" value="Models & Agents">
+                    <input type="hidden" value="1" name="embed">
+                    <div class="nn-subscribe-row">
+                        <input type="email" name="email" placeholder="your@email.com" required aria-label="Email address">
+                        <button type="submit">Subscribe</button>
+                    </div>
+                </form>
+            </div>
+            
+
+            <!-- Episode Navigation -->
+            
+            <nav class="blog-ep-nav">
+                
+                <a href="ep161.html" rel="prev">
+                    <span class="nav-label">&larr; Previous</span>
+                    <span class="nav-title">Episode 161</span>
+                </a>
+                
+                
+                <a href="ep163.html" rel="next" class="next">
+                    <span class="nav-label">Next &rarr;</span>
+                    <span class="nav-title">Episode 163</span>
+                </a>
+                
+            </nav>
+            
+            <!-- Cross-show Recommendations -->
+            
+        </article>
+    </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="nn-footer">
+        <div class="container">
+            <div class="nn-footer-grid">
+                <div>
+                    <div class="nn-footer-brand"><span class="gradient-text">Nerra</span> <span class="nn-wordmark-rest">Network</span></div>
+                    <p class="nn-footer-desc">Zero fluff. Independent podcast network produced in Vancouver, Canada.</p>
+                </div>
+                <div class="nn-footer-col">
+                    <h4>Shows</h4>
+                    
+                    <a href="../../nerra-daily.html">Nerra Daily</a>
+                    
+                    <a href="../../models-agents.html">Models & Agents</a>
+                    
+                    <a href="../../planetterrian.html">Planetterrian Daily</a>
+                    
+                    <a href="../../omni-view.html">Omni View</a>
+                    
+                    <a href="../../models-agents-beginners.html">Models & Agents for Beginners</a>
+                    
+                    <a href="../../fascinating-frontiers.html">Fascinating Frontiers</a>
+                    
+                    <a href="../../modern-investing.html">Modern Investing Techniques</a>
+                    
+                    <a href="../../tesla.html">Tesla Shorts Time</a>
+                    
+                    <a href="../../spacex.html">SpaceX Daily</a>
+                    
+                    <a href="../../env-intel.html">Environmental Intelligence</a>
+                    
+                    <a href="../../ru/finansy-prosto.html">Финансы Просто</a>
+                    
+                    <a href="../../ru/privet-russian.html">Привет, Русский!</a>
+                    
+                    <a href="../../unintended-consequences.html">Unintended Consequences</a>
+                    
+                    <a href="../../first-principles.html">First Principles Daily</a>
+                    
+                    <a href="../../thedppod.html">The DP Pod: The Do Positive Podcast</a>
+                    
+                    <a href="../../age-of-ai.html">The Age of AI</a>
+                    
+                    <a href="../../offshore-north.html">Offshore North</a>
+                    
+                </div>
+                <div class="nn-footer-col">
+                    <h4>Blog</h4>
+                    <a href="../../blog/index.html">All Blog Posts</a>
+                    
+                    <a href="../../blog/nerra_daily/index.html">Nerra Daily</a>
+                    
+                    <a href="../../blog/models_agents/index.html">Models & Agents</a>
+                    
+                    <a href="../../blog/planetterrian/index.html">Planetterrian Daily</a>
+                    
+                    <a href="../../blog/omni_view/index.html">Omni View</a>
+                    
+                    <a href="../../blog/models_agents_beginners/index.html">Models & Agents for Beginners</a>
+                    
+                    <a href="../../blog/fascinating_frontiers/index.html">Fascinating Frontiers</a>
+                    
+                    <a href="../../blog/modern_investing/index.html">Modern Investing Techniques</a>
+                    
+                    <a href="../../blog/tesla/index.html">Tesla Shorts Time</a>
+                    
+                    <a href="../../blog/spacex/index.html">SpaceX Daily</a>
+                    
+                    <a href="../../blog/env_intel/index.html">Environmental Intelligence</a>
+                    
+                    <a href="../../blog/finansy_prosto/index.html">Финансы Просто</a>
+                    
+                    <a href="../../blog/privet_russian/index.html">Привет, Русский!</a>
+                    
+                    <a href="../../blog/unintended_consequences/index.html">Unintended Consequences</a>
+                    
+                    <a href="../../blog/first_principles/index.html">First Principles Daily</a>
+                    
+                    <a href="../../blog/dp_pod/index.html">The DP Pod: The Do Positive Podcast</a>
+                    
+                    <a href="../../blog/age_of_ai/index.html">The Age of AI</a>
+                    
+                    <a href="../../blog/offshore_north/index.html">Offshore North</a>
+                    
+                    <a href="../../blog.rss">Blog RSS (All Shows)</a>
+                </div>
+                <div class="nn-footer-col">
+                    <h4>Listen</h4>
+                    <a href="../../how-to-listen.html" style="font-weight:600">How to Listen</a>
+                    <a href="../../player.html" style="font-weight:600">Network Player</a>
+                    <a href="https://podcasts.apple.com/us/podcast/tesla-shorts-time/id1855142939?utm_source=nerranetwork&utm_medium=footer&utm_campaign=tesla" target="_blank" rel="noopener" data-show="tesla">Tesla Shorts Time on Apple Podcasts</a>
+                    <a href="../../network.rss">Network RSS</a>
+                    
+                    <a href="../../nerra_daily_podcast.rss">Nerra Daily RSS</a>
+                    
+                    <a href="../../models_agents_podcast.rss">Models & Agents RSS</a>
+                    
+                    <a href="../../planetterrian_podcast.rss">Planetterrian Daily RSS</a>
+                    
+                    <a href="../../omni_view_podcast.rss">Omni View RSS</a>
+                    
+                    <a href="../../models_agents_beginners_podcast.rss">Models & Agents for Beginners RSS</a>
+                    
+                    <a href="../../fascinating_frontiers_podcast.rss">Fascinating Frontiers RSS</a>
+                    
+                    <a href="../../modern_investing_podcast.rss">Modern Investing Techniques RSS</a>
+                    
+                    <a href="../../podcast.rss">Tesla Shorts Time RSS</a>
+                    
+                    <a href="../../spacex_podcast.rss">SpaceX Daily RSS</a>
+                    
+                    <a href="../../env_intel_podcast.rss">Environmental Intelligence RSS</a>
+                    
+                    <a href="../../finansy_prosto_podcast.rss">Финансы Просто RSS</a>
+                    
+                    <a href="../../privet_russian_podcast.rss">Привет, Русский! RSS</a>
+                    
+                    <a href="../../unintended_consequences_podcast.rss">Unintended Consequences RSS</a>
+                    
+                    <a href="../../first_principles_podcast.rss">First Principles Daily RSS</a>
+                    
+                    <a href="../../dp_pod_podcast.rss">The DP Pod: The Do Positive Podcast RSS</a>
+                    
+                    <a href="../../age_of_ai_podcast.rss">The Age of AI RSS</a>
+                    
+                    <a href="../../offshore_north_podcast.rss">Offshore North RSS</a>
+                    
+                </div><div class="nn-footer-col">
+                    <h4>About</h4>
+                    <a href="../../about.html">About Nerra Network</a>
+                    <a href="../../start-here.html">Start Here</a>
+                    <a href="../../faq.html">FAQ</a>
+                    <a href="../../contact.html">Contact</a>
+                    <a href="../../press.html">Press Kit</a>
+                    <a href="../../editorial.html">Editorial Process</a>
+                    <a href="../../ai-disclosure.html">AI Disclosure</a>
+                    <a href="../../privacy-policy.html">Privacy Policy</a>
+                    <a href="../../terms-of-service.html">Terms of Service</a>
+                    <a href="../../gallery.html">Image Gallery</a>
+                    <a href="../../books.html">Books</a>
+                    <a href="../../data.html">Data & Dashboards</a>
+                    <a href="../../support.html">Support the Network</a><a href="../../management.html?view=sponsor">Network Status</a>
+                </div>
+                <div class="nn-footer-col">
+                    <h4>Connect</h4>
+                    <a href="https://x.com/teslashortstime" target="_blank" rel="noopener">@teslashortstime</a>
+                    <a href="https://x.com/omniviewnews" target="_blank" rel="noopener">@omniviewnews</a>
+                    <a href="https://x.com/planetterrian" target="_blank" rel="noopener">@planetterrian</a>
+                    <a href="https://www.youtube.com/@NerraNetwork" target="_blank" rel="noopener">YouTube @NerraNetwork</a>
+                    <a href="https://www.youtube.com/@NerraRU" target="_blank" rel="noopener">YouTube @NerraRU</a>
+                    <a href="../../contact.html">Contact</a>
+                </div>
+            </div>
+            <!-- Newsletter Subscribe — posts to the account Worker (Aug
+                 2026): every newsletter signup now creates a Nerra
+                 account (same identity as the gallery gate), so the
+                 member surface and the list grow together. -->
+            <div class="nn-footer-subscribe">
+                <form class="nn-subscribe-form"
+                      onsubmit="var f=this,btn=f.querySelector('button[type=submit]');btn.disabled=true;btn.textContent="Subscribing…";var tags=Array.prototype.map.call(f.querySelectorAll('input[name=tag]:checked'),function(c){return c.value;});fetch('https://api.nerranetwork.com/api/subscribe',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:f.email.value,list:'member',tags:tags})}).then(function(r){btn.textContent=r.ok?"Check your email ✓":"Subscribe";if(r.ok){var a=f.querySelector('.nn-account-link');if(a)a.style.display='inline';}}).catch(function(){btn.textContent="Subscribe";}).then(function(){btn.disabled=false;});return false;">
+                    <h4>Get Show Updates</h4>
+                    <p>Pick the shows you want in your inbox:</p>
+                    <div class="nn-subscribe-tags">
+                        <label><input type="checkbox" name="tag" value="Nerra Daily"> Nerra Daily</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Models & Agents"> Models & Agents</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Planetterrian Daily"> Planetterrian Daily</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Omni View"> Omni View</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Models & Agents for Beginners"> Models & Agents for Beginners</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Fascinating Frontiers"> Fascinating Frontiers</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Modern Investing Techniques"> Modern Investing Techniques</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Tesla Shorts Time"> Tesla Shorts Time</label>
+                        
+                        <label><input type="checkbox" name="tag" value="SpaceX Daily"> SpaceX Daily</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Environmental Intelligence"> Environmental Intelligence</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Finansy Prosto"> Финансы Просто</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Privet Russian"> Привет, Русский!</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Unintended Consequences"> Unintended Consequences</label>
+                        
+                        <label><input type="checkbox" name="tag" value="First Principles Daily"> First Principles Daily</label>
+                        
+                        <label><input type="checkbox" name="tag" value="DP Pod"> The DP Pod: The Do Positive Podcast</label>
+                        
+                        <label><input type="checkbox" name="tag" value="The Age of AI"> The Age of AI</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Offshore North"> Offshore North</label>
+                        
+                    </div>
+                    <div class="nn-subscribe-row">
+                        <input type="email" name="email" placeholder="your@email.com" required aria-label="Email address">
+                        <button type="submit">Subscribe</button>
+                    </div>
+                    <p style="margin-top:0.5rem;font-size:0.85rem;">
+                        <a href="../../join.html">Nerra Personal — your own daily show, gallery &amp; member perks →</a>
+                        <a class="nn-account-link" href="../../account.html" style="display:none;margin-left:0.75rem;">Your account →</a>
+                    </p>
+                </form>
+            </div>
+            <div class="nn-footer-bottom">
+                <span>© 2026 Nerra Network. All shows independently produced.</span>
+                <a href="../../index.html">nerranetwork.com</a>
+            </div>
+            <div class="nn-footer-legal">
+                <p class="ai-notice">Nerra Network uses AI tools in content production. <a href="../../ai-disclosure.html">Learn more</a></p>
+                <div>
+                    <a href="../../support.html">Support the network</a> &middot;
+                    <a href="../../privacy-policy.html">Privacy</a> &middot;
+                    <a href="../../terms-of-service.html">Terms</a> &middot;
+                    <a href="../../ai-disclosure.html">AI Disclosure</a>
+                    <span style="opacity:0.5;">&middot;</span>
+                    <span style="font-size:0.7rem;opacity:0.6;">Automation: reliable nightly + post-publish pipeline</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+    // Nav dropdowns: hover opens via CSS; click / Enter / Space toggle the
+    // `.open` class so keyboard and touch users can actually open them
+    // (until Sep 2026 focus set aria-expanded="true" while nothing was
+    // visible). Escape or an outside click closes any open menu.
+    (function () {
+        var dropdowns = Array.prototype.slice.call(document.querySelectorAll('.nn-nav-dropdown'));
+        function closeAll(except) {
+            dropdowns.forEach(function (d) {
+                if (d === except) return;
+                d.classList.remove('open');
+                var b = d.querySelector('.nn-nav-dropdown-btn');
+                if (b) b.setAttribute('aria-expanded', 'false');
+            });
+        }
+        dropdowns.forEach(function (dd) {
+            var btn = dd.querySelector('.nn-nav-dropdown-btn');
+            if (!btn) return;
+            dd.addEventListener('mouseenter', function () { btn.setAttribute('aria-expanded', 'true'); });
+            dd.addEventListener('mouseleave', function () {
+                if (!dd.classList.contains('open')) btn.setAttribute('aria-expanded', 'false');
+            });
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                var willOpen = !dd.classList.contains('open');
+                closeAll(dd);
+                dd.classList.toggle('open', willOpen);
+                btn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+            });
+            dd.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') {
+                    dd.classList.remove('open');
+                    btn.setAttribute('aria-expanded', 'false');
+                    btn.focus();
+                }
+            });
+            dd.addEventListener('focusout', function () {
+                setTimeout(function () {
+                    if (!dd.contains(document.activeElement)) {
+                        dd.classList.remove('open');
+                        btn.setAttribute('aria-expanded', 'false');
+                    }
+                }, 100);
+            });
+        });
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('.nn-nav-dropdown')) closeAll(null);
+        });
+    })();
+    // Mobile menu: one delegated close handler for every link inside it.
+    (function () {
+        var menu = document.getElementById('mobileMenu');
+        var burger = document.querySelector('.nn-hamburger');
+        if (!menu) return;
+        menu.addEventListener('click', function (e) {
+            if (!e.target.closest('a')) return;
+            menu.classList.remove('open');
+            document.body.classList.remove('menu-open');
+            if (burger) burger.setAttribute('aria-expanded', 'false');
+        });
+    })();
+    // Footer accordions on narrow screens. Bound at every width (the CSS
+    // decides whether the toggle has any visible effect) so a rotate or
+    // resize after load can never strand the links hidden; headers are
+    // keyboard-operable.
+    document.querySelectorAll('.nn-footer-col h4').forEach(function (h4) {
+        h4.setAttribute('role', 'button');
+        h4.setAttribute('tabindex', '0');
+        h4.setAttribute('aria-expanded', 'false');
+        function toggle() {
+            var on = h4.parentElement.classList.toggle('expanded');
+            h4.setAttribute('aria-expanded', on ? 'true' : 'false');
+        }
+        h4.addEventListener('click', toggle);
+        h4.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+        });
+    });
+    </script>
+    
+<script>
+// Highlight active TOC entry on scroll
+(function() {
+    const toc = document.querySelector('.blog-toc');
+    if (!toc) return;
+    const links = toc.querySelectorAll('a');
+    const headings = [];
+    links.forEach(function(a) {
+        const id = a.getAttribute('href').slice(1);
+        const el = document.getElementById(id);
+        if (el) headings.push({ el: el, link: a });
+    });
+    if (!headings.length) return;
+    function onScroll() {
+        var current = headings[0];
+        for (var i = 0; i < headings.length; i++) {
+            if (headings[i].el.getBoundingClientRect().top <= 120) {
+                current = headings[i];
+            }
+        }
+        links.forEach(function(a) { a.classList.remove('active'); });
+        current.link.classList.add('active');
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+})();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
+</script>
+
+
+    <!-- Centralized, improved global search -->
+    <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
+    <script>
+    // Member-aware nav (Aug 30 2026): the "Join" pill becomes "My Nerra"
+    // when the api.nerranetwork.com session cookie answers. Fail-silent —
+    // signed-out visitors, blocked cookies, or an unreachable Worker all
+    // leave the default Join link untouched.
+    (function () {
+      try {
+        fetch('https://api.nerranetwork.com/api/account', { credentials: 'include' })
+          .then(function (r) {
+            if (!r.ok) return;
+            ['nn-nav-account', 'nn-nav-account-m'].forEach(function (id) {
+              var a = document.getElementById(id);
+              if (a) { a.textContent = 'My Nerra'; a.href = '../../account.html'; }
+            });
+          }).catch(function () {});
+      } catch (e) {}
+    })();
+    </script>
+</body>
+</html>

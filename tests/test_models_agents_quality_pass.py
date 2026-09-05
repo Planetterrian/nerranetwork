@@ -107,3 +107,103 @@ class TestUnderTheHoodMarker:
         assert "Under the Hood" in titles
         # No chapter titled from a raw mid-sentence fragment.
         assert not any(t.endswith("…") for t in titles)
+
+
+class TestSep2026FlagshipPass:
+    """Sep 4 2026 flagship pass (docs/reviews/flagship_review_2026_09_04.md).
+
+    Three Grok-generated reviews (Aug 2/4/11) proposed the same M&A fixes
+    with ``shipped: []`` each time. Verified against Ep153-162 before this
+    pass: "Everyone talks/treats about…" opened the deep dive 10/10 (the
+    podcast prompt SUPPLIED that sentence as an example opener, and the
+    digest prompt supplied it too), three episodes had no Under the Hood
+    chapter because the host elected that example over "pop the hood",
+    and one of two closings aired 7/10.
+    """
+
+    _ROOT = Path(__file__).resolve().parent.parent
+
+    def _podcast(self):
+        return (self._ROOT / "shows/prompts/models_agents_podcast.txt").read_text(encoding="utf-8")
+
+    def _digest(self):
+        return (self._ROOT / "shows/prompts/models_agents_digest.txt").read_text(encoding="utf-8")
+
+    def test_pop_the_hood_is_the_required_anchor(self):
+        text = self._podcast()
+        assert 'must contain the exact phrase "pop the hood"' in text
+        # The quotable alternate that became the tic must never return.
+        assert "everyone's been talking about" not in text.lower()
+
+    def test_everyone_talks_shape_is_banned_in_both_prompts(self):
+        for text in (self._podcast(), self._digest()):
+            low = text.lower()
+            assert "everyone talks about…" in low or "everyone talks about..." in low
+            # De-seed by SHAPE: the ban names the pattern, and the prompt
+            # no longer carries the literal example sentence.
+            assert "as if it's a single switch you flip. in practice" not in low
+
+    def test_digest_prompt_has_no_literal_title_placeholder(self):
+        # The SpaceX Aug-15 fix: the literal ``**Title: Source Name**`` was
+        # reproduced verbatim by the model. M&A's copy was never ported and
+        # additionally invited ``Title: [@handle](url)`` headings.
+        text = self._digest()
+        assert "**Title: Source" not in text
+        assert "never a link or @handle" in text or "NEVER a markdown link" in text
+
+    def test_under_the_hood_marker_catches_the_transition_shape(self):
+        cfg = yaml.safe_load((self._ROOT / "shows/models_agents.yaml").read_text(encoding="utf-8"))
+        marker = next(m for m in cfg["chapters"]["section_markers"] if m["title"] == "Under the Hood")
+        rx = re.compile(marker["pattern"], re.IGNORECASE)
+        assert rx.search("Everyone talks about reranking as a simple quality knob.")
+        assert rx.search("Everyone treats test-time scaling as simply spend more tokens.")
+        assert rx.search("Okay, let's pop the hood on this one.")
+
+    def test_closing_pool_is_pinned_to_one_signature(self):
+        # Sep 4 grew the pool to four to break a tic; Sep 5's delivery
+        # review reversed that on purpose — the operator asked for a
+        # consistent voice and the closing is the signature (the sibling
+        # plug and website surface still rotate after it). One closing,
+        # and it must still hit the Closing chapter marker.
+        from engine.intros import _SHOW_PERSONALITIES
+        closings = _SHOW_PERSONALITIES["models_agents"]["closings"]
+        assert len(closings) == 1
+        cfg = yaml.safe_load((self._ROOT / "shows/models_agents.yaml").read_text(encoding="utf-8"))
+        closing_rx = re.compile(
+            next(m for m in cfg["chapters"]["section_markers"] if m["title"] == "Closing")["pattern"],
+            re.IGNORECASE,
+        )
+        for c in closings:
+            assert closing_rx.search(c), c
+
+    def test_practical_marker_no_longer_fires_on_topic_words(self):
+        cfg = yaml.safe_load((self._ROOT / "shows/models_agents.yaml").read_text(encoding="utf-8"))
+        marker = next(m for m in cfg["chapters"]["section_markers"] if m["title"] == "Practical & Community")
+        rx = re.compile(marker["pattern"], re.IGNORECASE)
+        assert not rx.search("Liquid AI open-sourced the Pipette benchmarking suite.")
+        assert not rx.search("an open source model dropped today")
+        assert rx.search("Over in practical and community news")
+
+    def test_ep153_shape_gets_headline_navigation(self):
+        """Real Ep153 (2026-08-26): the only early marker hit was the topic
+        word "open-sourced" at 8% of the script, which titled the whole
+        news body "Practical & Community" and suppressed headline
+        auto-segmentation. With the alternate gone the episode gets real
+        per-story navigation plus its Under the Hood chapter."""
+        import logging
+        from engine.grok_imagine import extract_story_headlines
+        logging.disable(logging.CRITICAL)
+        md = self._ROOT / "digests/models_agents/Models_Agents_Ep153_20260826.md"
+        tts = self._ROOT / "digests/models_agents/Models_Agents_Ep153_20260826_tts.txt"
+        if not (md.exists() and tts.exists()):
+            import pytest
+            pytest.skip("Ep153 artifacts not on disk")
+        cfg = yaml.safe_load((self._ROOT / "shows/models_agents.yaml").read_text(encoding="utf-8"))
+        heads = extract_story_headlines(md.read_text(encoding="utf-8"), max_count=12)
+        titles = [c.title for c in parse_chapters(
+            tts.read_text(encoding="utf-8"), cfg["chapters"]["section_markers"],
+            show_name="ma", story_headlines=heads)]
+        assert "Practical & Community" not in titles, titles
+        assert "Under the Hood" in titles, titles
+        assert any(t.startswith("Qwen3.8") for t in titles), titles
+        assert len(titles) >= 7, titles

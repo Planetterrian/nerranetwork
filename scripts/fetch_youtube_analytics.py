@@ -504,7 +504,8 @@ def detect_view_cliffs(rows: List[dict],
     return warnings
 
 
-def fetch(digests_dir: Path, days: int) -> Optional[dict]:
+def fetch(digests_dir: Path, days: int,
+          out_path: Optional[Path] = None) -> Optional[dict]:
     """Build the stats payload, or None if there is nothing to do."""
     videos = _load_index(digests_dir)
     if not videos:
@@ -613,6 +614,16 @@ def fetch(digests_dir: Path, days: int) -> Optional[dict]:
 
     # Assemble per-show structure for the updater + dashboard. Keyed by the
     # show's output-dir name (where the updater writes the perf file back).
+    prev_curves: Dict[str, list] = {}
+    try:
+        _prev = json.loads(Path(out_path).read_text(encoding="utf-8")) \
+            if out_path and Path(out_path).exists() else {}
+        for _sh in (_prev.get("shows") or {}).values():
+            for _v in _sh.get("videos", []):
+                if _v.get("retention_curve") and _v.get("video_id"):
+                    prev_curves[_v["video_id"]] = _v["retention_curve"]
+    except Exception:  # noqa: BLE001 — carry-forward is best-effort
+        prev_curves = {}
     shows: Dict[str, dict] = defaultdict(lambda: {"videos": []})
     for v in videos:
         m = metrics_by_video.get(v["video_id"])
@@ -644,10 +655,15 @@ def fetch(digests_dir: Path, days: int) -> Optional[dict]:
             "average_view_percentage": float(m.get("averageViewPercentage", 0) or 0),
             "subscribers_gained": int(float(m.get("subscribersGained", 0) or 0)),
             "subscribers_lost": int(float(m.get("subscribersLost", 0) or 0)),
-            # Present only on the channel's top recent longs (one API
-            # call each) — where viewers actually leave the video.
-            **({"retention_curve": m["retention_curve"]}
-               if m.get("retention_curve") else {}),
+            # Retention curve: fetched fresh for the channel's top recent
+            # longs (one API call each), otherwise CARRIED FORWARD from
+            # the previous stats file — the top-5 set shifts nightly, so
+            # without carry-forward the instrument never accumulated
+            # past ~10-15 curves (Sep 2026).
+            **({"retention_curve": m.get("retention_curve")
+                or prev_curves.get(v["video_id"])}
+               if (m.get("retention_curve") or prev_curves.get(v["video_id"]))
+               else {}),
         })
 
     return {
@@ -673,7 +689,8 @@ def main() -> int:
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
-    payload = fetch(_ROOT / args.digests, args.days)
+    payload = fetch(_ROOT / args.digests, args.days,
+                    out_path=_ROOT / args.out)
     if payload is None:
         return 0
 

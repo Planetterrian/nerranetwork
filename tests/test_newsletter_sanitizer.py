@@ -334,3 +334,16 @@ class TestSourceNamePlaceholderScrub:
         # Defensive: ordinary sentences must survive untouched.
         s = "The model remembers the whole book at once."
         assert scrub_scaffold(s) == s
+
+
+class TestDepthOverBreadthHeading:
+    """Sep 4 2026: the digest FORMATTING block's ``### DEPTH OVER BREADTH``
+    instruction heading was echoed into 4/10 M&A digests and rendered as an
+    <h4> + TOC entry on 17 blog posts."""
+
+    def test_heading_is_scrubbed(self):
+        from engine.newsletter_sanitizer import scrub_scaffold
+        body = "### Top Story\nReal news.\n\n### DEPTH OVER BREADTH (news items)\nBuilders hate summaries.\n\n### Model Updates\n"
+        out = scrub_scaffold(body)
+        assert "DEPTH OVER BREADTH" not in out
+        assert "### Top Story" in out and "### Model Updates" in out and "Builders hate summaries." in out

@@ -348,6 +348,37 @@ reviews:
       verdict: pending
       evidence: null
     agent_cost_usd: null
+  - date: 2026-09-05
+    pr: null
+    doc: docs/reviews/network_delivery_review_2026_09_05.md
+    summary: "Network delivery review (operator brief 2026-09-05 - flagships 'narrative driven, redundant'; wants content/information-driven, consistent delivery across podcast, blog, video). Four audits agreed on four mechanisms - script copies the digest (62-78% verbatim), the digest repeats across sections (33 dupes / 160 digests), deep dives re-tell covered stories, prompts demand framing and supply the sentences (memory composer MANDATORY per-story arc line; worked examples shipping verbatim). Network-wide, two severities - OV/MIT narrative and redundant (35-50% fact density), FF/PT fact-dense with fake bridges."
+    shipped:
+      - "engine/digest_overlap (data-side cross-section strip) + engine/script_audit (density metrics + snapshot table) + run_show wiring"
+      - "engine/show_memory _SECTION_INSTRUCTIONS - one delta-bearing callback, never mandatory per-story arc sentences"
+      - "shows/prompts/_shared/content_discipline.txt included in 9 English news-show podcast prompts (A/B)"
+      - "worked-example sentences removed from 7 podcast prompts; per-item framing lines removed from 6 digest prompts (A/B)"
+      - "closings pinned to one per flagship + MIT (A/B)"
+      - "pronunciation: VS Code, r/subreddit; run_show duplicate tail-line guard"
+    deferred:
+      - "paraphrase gate (reject + one rerun above the verbatim threshold) - only if the metric does not move"
+      - "closing pins for the non-flagship shows - after the flagship A/B reads out"
+    predictions:
+    - metric: "network median script_digest_overlap_pct (9 English news shows, last 10 each)"
+      baseline: "~45%"
+      expected: "<=25%"
+      verdict: pending
+      evidence: null
+    - metric: "network median script_filler_pct"
+      baseline: "~6%"
+      expected: "<=4%"
+      verdict: pending
+      evidence: null
+    - metric: "digest_cross_section_dupes_removed, network total per week"
+      baseline: "~12 (33 / 160 digests)"
+      expected: "<=3 (prompts stop producing them)"
+      verdict: pending
+      evidence: null
+    agent_cost_usd: null
 
 do_not_retry:
   - idea: podcast-side length levers (word floors, expand-retries, prompt

@@ -264,16 +264,18 @@ def build_narrative_status_block(tracker: Dict[str, Any]) -> str:
 
     lines = [
         "### TESLA PROGRAM NARRATIVE MEMORY",
-        "Use this to give regular listeners a sense of ongoing stories and real progress (or the lack of it).",
+        "This block exists for ACCURACY and for at most one callback — it is not a storytelling layer.",
         "CONTINUITY BUDGET — at most ONE audible continuity callback in the whole episode",
         "(across all programs). Prefer the date ('yesterday' / the covered date). NEVER write",
         "'Ep505', 'Ep 505', 'ep505', or any 'EpN' abbreviation — those get voiced as letter-soup.",
-        "If a number is truly needed, write 'episode <number in words>' once. Example shape:",
-        "'Remember, we covered [program] yesterday — today's news moves that forward because...'.",
-        "Then answer naturally:",
-        "  - Where does today's development fit in the bigger arc for this program?",
-        "  - Does it meaningfully move any of the key open questions?",
-        "  - What should attentive listeners be watching for next?",
+        "If a number is truly needed, write 'episode <number in words>' once. Shape of a good",
+        "callback: name the specific prior development in your own words, then what today adds —",
+        "never a generic 'we covered <program name> yesterday' sentence, and never a callback to",
+        "a program that only appears in this memory block rather than in a recent episode.",
+        "Everything below is background so a status is not contradicted or re-announced as new.",
+        "Do NOT add 'where this fits in the bigger arc', 'what this means for the program',",
+        "open-question recaps, or 'what to watch next' framing to stories: a fact that moves a",
+        "tracked question is stated as the fact, once, and the episode moves on.",
         "If the show covered the same program YESTERDAY, do not re-explain it — say only what is NEW today.",
         "",
         "Tracked programs (with current status and open questions):"
@@ -486,6 +488,11 @@ _THEME_STOPWORDS = {
     # Generic coverage vocabulary + URL tokens (June 10 2026: "google
     # https" / "announced discussed" bigrams were polluting the history).
     "announced", "discussed", "covered", "https", "http",
+    # Sep 4 2026 flagship pass: source-label adjacency ("reddit google"
+    # x8, "insideevs google" x7) and calendar/generic fragments ("second
+    # quarter" x20, "full self" x38 — a fragment of the already-counted
+    # "self driving") were sitting in the injected top-6 theme block.
+    "google", "reddit", "quarter", "full", "insideevs", "teslarati",
     # Calendar month names (Aug 27 2026 memory review): date+outlet
     # adjacency in article metadata mined "june teslarati" x32 /
     # "june yahoo" x12 into Tesla's top themes — a month is calendar

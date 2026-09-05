@@ -186,3 +186,38 @@ def test_edition_dispatch_slot():
     edition_wf = (_ROOT / ".github" / "workflows" / "nerra-daily.yml"
                   ).read_text(encoding="utf-8")
     assert f"- cron: '23 {force} * * *'" in edition_wf
+
+
+_VOICES_TS = (_ROOT / "workers" / "voices" / "src" / "index.ts").read_text(encoding="utf-8")
+
+
+def test_cron_workers_trim_the_dispatch_token():
+    """Aug 31 2026: both cron Workers were deployed yet neither reached
+    GitHub. A token pasted into `wrangler secret put` with a trailing
+    newline authenticates as `Bearer <token>\\n` and gets a silent 401 in
+    the Worker while the operator's clean curl test passes. Both Workers
+    now trim the secret before use."""
+    assert 'GITHUB_DISPATCH_TOKEN || "").trim()' in _TS, "scheduler must trim the token"
+    assert 'GITHUB_DISPATCH_TOKEN || "").trim()' in _VOICES_TS, "voices must trim the token"
+    assert "Bearer ${env.GITHUB_DISPATCH_TOKEN}" not in _TS
+    assert "Bearer ${env.GITHUB_DISPATCH_TOKEN}" not in _VOICES_TS
+
+
+def test_cron_workers_expose_read_only_health_probes():
+    """A deploy must be verifiable from a browser, not by waiting for a
+    slot: the scheduler serves GET /health and voices GET /voices/health,
+    each with a live read-only GitHub auth probe that never dispatches."""
+    assert 'url.pathname === "/health"' in _TS
+    assert "githubSelfTest" in _TS
+    assert "actions/workflows/${WORKFLOW}`" in _TS, "scheduler probe must test the Actions permission"
+    assert 'path === "/voices/health"' in _VOICES_TS
+    assert "handleHealth" in _VOICES_TS
+    # The probes are read-only: no dispatch endpoint is exposed over HTTP.
+    fetch_body = _TS.split("async fetch(")[1].split("async scheduled(")[0]
+    assert "dispatchWorkflow(" not in fetch_body
+
+
+def test_scheduler_retries_transient_dispatch_failures():
+    assert "attempt <= 2" in _TS
+    assert "res.status < 500 && res.status !== 429" in _TS, (
+        "4xx is configuration — retrying must not mask a bad token")

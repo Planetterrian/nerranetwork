@@ -259,6 +259,43 @@ def build_snapshot(slug: str, episodes: int = 10) -> str:
         lines.append("- (no cross-episode repeated phrases above threshold)")
     lines.append("")
 
+    # --- Script density audit (Sep 5 2026 network delivery review) ---
+    # The repeated-phrase detector above sees strings that recur ACROSS
+    # episodes; the operator's "narrative-driven, redundant" complaint was
+    # about repetition and filler WITHIN an episode, and about scripts that
+    # read the digest aloud. engine.script_audit measures those; this
+    # table is the number a review scores the prompt pass against.
+    try:
+        if str(ROOT) not in sys.path:
+            sys.path.insert(0, str(ROOT))
+        from engine.script_audit import audit_script as _audit_script
+    except Exception:  # noqa: BLE001
+        _audit_script = None
+    if _audit_script and tts_files:
+        lines.append(f"## Script density audit (last {len(tts_files)} `_tts.txt`)")
+        lines.append("digest-verbatim = share of the script's 8-word phrases that "
+                     "appear word for word in the digest; facts×2 = numeric facts "
+                     "spoken more than once; filler = sentences with no fact "
+                     "(spectator / underscores / watch-for / announcing shapes).")
+        lines.append("| ep | sentences | digest-verbatim | facts×2 | filler | hook restated |")
+        lines.append("|---|---|---|---|---|---|")
+        for num, path in tts_files:
+            script_text = path.read_text(encoding="utf-8", errors="replace")
+            digest_path = path.with_name(path.name.replace("_tts.txt", ".md"))
+            digest_text = (digest_path.read_text(encoding="utf-8", errors="replace")
+                           if digest_path.exists() else "")
+            hook_m = re.search(r"\*\*HOOK:\*\*\s*(.+)", digest_text)
+            try:
+                a = _audit_script(script_text, digest_text=digest_text,
+                                  hook=hook_m.group(1).strip() if hook_m else "")
+            except Exception:  # noqa: BLE001
+                continue
+            ovl = "n/a" if a.digest_overlap_pct is None else f"{a.digest_overlap_pct:.0f}%"
+            flag = " ⚠" if a.warnings() else ""
+            lines.append(f"| ep{num} | {a.sentences} | {ovl} | {a.repeated_facts} | "
+                         f"{a.filler_pct:.0f}% | {a.hook_restated}{flag} |")
+        lines.append("")
+
     # --- Fetch-filter leakage (July 18 2026 network meta-review) ---
     # Fetch-filter predictions (PT astronomy, SpaceX junk titles, FF
     # ephemeris) sat "pending" for weeks because nothing counted them
@@ -267,6 +304,16 @@ def build_snapshot(slug: str, episodes: int = 10) -> str:
     # reached shipped output (a filter bypass — the Ep116 web-search route
     # class), zero means the filter held.
     patterns = show_cfg.get("exclude_title_patterns") or []
+    # Sep 4 2026: defined OUTSIDE the fetch-filter branch — the heading-
+    # integrity section below reads it too, and a show with no
+    # exclude_title_patterns (dp_pod, the narrative shows) crashed the
+    # whole snapshot with UnboundLocalError, which silently took the
+    # scheduled review agent's Phase-0 numbers away for those shows.
+    digest_files = _latest(
+        [p for p in out_dir.glob("*.md")
+         if "_transcript" not in p.name and "_tts" not in p.name],
+        episodes,
+    )
     if patterns:
         compiled = []
         for p in patterns:
@@ -274,11 +321,6 @@ def build_snapshot(slug: str, episodes: int = 10) -> str:
                 compiled.append(re.compile(p, re.IGNORECASE))
             except re.error:
                 continue
-        digest_files = _latest(
-            [p for p in out_dir.glob("*.md")
-             if "_transcript" not in p.name and "_tts" not in p.name],
-            episodes,
-        )
         hits = []
         for num, path in digest_files:
             text = path.read_text(encoding="utf-8", errors="replace")

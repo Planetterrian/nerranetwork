@@ -264,12 +264,25 @@ content_tracking:
   section_patterns: {}
 
 youtube:
-  # Off at launch (RSS + site page only). image_provider is pre-set to grok
-  # so a future one-line enable doesn't trip the drift guard
-  # (tests/test_config.py::test_youtube_enabled_shows_use_grok_image_provider).
-  enabled: false
+  # Sep 4 2026 (operator-directed reach pass): ON, SHORTS-ONLY. Held off at
+  # launch and again on Aug 10 pending the script-model A/B; the staged
+  # grok-4.6 trial closed 2026-09-01 with the dp_pod script stage adopted
+  # for good, so the audio the Shorts would clip is the audio the show is
+  # keeping. Shorts are the network's best-performing surface and this
+  # show's disagreement beats are the natural 35-second clip; long-form
+  # stays off (publish_long_form: false) until the adaptive policy earns
+  # it. Revert = enabled: false (one line). Operator one-time: create +
+  # flag the podcast playlist in Studio (landmine #15) — uploads publish
+  # without it, with a warning.
+  enabled: true
+  publish_long_form: false
   channel: en
   category_id: 28               # Science & Technology
+  # Fleet Shorts settings (July 22 2026 pass): smart start at the 3.5
+  # threshold so a Short never opens on the intro beat.
+  shorts_start_mode: smart
+  shorts_min_score_threshold: 3.5
+  default_language: en
   image_provider: grok
   # Required ≥3 even while YouTube is disabled
   # (tests/test_visual_assets.py::test_every_show_yaml_has_image_queries).
