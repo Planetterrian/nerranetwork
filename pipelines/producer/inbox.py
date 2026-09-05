@@ -310,7 +310,7 @@ def run_inbox(*, gmail: Optional[GmailClient] = None, policy: Optional[Policy] =
               dry_run: bool = False, limit: int = 50) -> Dict[str, Any]:
     policy = policy or load_policy()
     summary: Dict[str, Any] = {"mode": policy.mode, "dry_run": dry_run, "seen": 0,
-                               "sent": 0, "drafted": 0, "skipped": 0, "failed": 0,
+                               "sent": 0, "drafted": 0, "skipped": 0, "failed": 0, "seen_processed": 0,
                                "by_show": {}, "errors": []}
     if policy.mode == "off":
         logger.info("PRODUCER_MODE=off: inbox job does nothing")
@@ -327,6 +327,15 @@ def run_inbox(*, gmail: Optional[GmailClient] = None, policy: Optional[Policy] =
                 len(thread_ids), policy.mode, dry_run)
 
     for tid in thread_ids:
+        if summary["sent"] >= policy.max_sends_per_run:
+            # Send cap reached: stop classifying entirely (each classification
+            # costs a Grok call and every remaining pitch would only be
+            # deferred anyway). The next tick starts fresh.
+            summary["deferred"] = summary.get("deferred", 0) + (len(thread_ids) - summary["seen_processed"])
+            logger.info("send cap %d reached; leaving %d thread(s) for the next tick",
+                        policy.max_sends_per_run, len(thread_ids) - summary["seen_processed"])
+            break
+        summary["seen_processed"] = summary.get("seen_processed", 0) + 1
         try:
             process_thread(tid, gmail=gmail, policy=policy, run=run,
                            summary=summary, dry_run=dry_run)
