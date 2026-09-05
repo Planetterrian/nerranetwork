@@ -129,3 +129,19 @@ digests/modern_investing/live_ledger.json
 # patch fail to apply, because it tried to create a patch file that was
 # already sitting in the working directory.
 *.patch
+
+# Local scratch/working directories — never part of a commit.
+_claude_upload/
+_to_delete/
+broll_cuts/
+nasa_broll/
+
+# Sep 4 2026 flagship pass — three more regenerable youtube_tmp classes
+# that the `git add -A digests/` commit step was tracking (656 files /
+# 54 MB at HEAD, ~1.6 MB per 4 days): the square episode-art JPEG is
+# uploaded to R2 by engine/episode_art.py, the .social.json sidecar is
+# consumed in the same run by engine/social_publisher.py, and the
+# ffmetadata chapter file is an ffmpeg input derived from chapters_ep*.json.
+digests/*/youtube_tmp/*_square.jpg
+digests/*/youtube_tmp/*.social.json
+digests/*/youtube_tmp/*.chapters.ffmeta

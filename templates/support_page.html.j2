@@ -19,9 +19,9 @@
 {% block content %}
 <div class="nn-support">
     <h1>Support the Nerra Network</h1>
-    <p class="lede">Seventeen daily shows, five languages, zero ads, zero
-       paywalls. Everything we publish is free and stays free — supported by
-       listeners who want it to exist.</p>
+    <p class="lede">{{ all_shows|length }} shows, most of them daily, in four
+       listening languages, with zero ads. Every episode is free and stays
+       free — supported by listeners who want it to exist.</p>
 
     <div class="nn-costs">
         <h2>What it actually costs</h2>
@@ -32,7 +32,7 @@
         <div class="nn-cost-row"><span>Writing &amp; research models</span><span>~25%</span></div>
         <div class="nn-cost-row"><span>Artwork &amp; video imagery</span><span>~25%</span></div>
         <div class="nn-cost-row"><span>Hosting, storage &amp; delivery</span><span>~10%</span></div>
-        <p class="nn-fineprint" style="margin-top: var(--sp-3);">A $3 monthly
+        <p class="nn-fineprint" style="margin-top: var(--sp-3);">A ${{ ((monthly_cost_usd / 30) | round(0, 'ceil')) | int }} monthly
            donation covers about a day of the whole network. Every dollar past
            costs goes to making the shows better — new formats, better
            research, more languages.</p>

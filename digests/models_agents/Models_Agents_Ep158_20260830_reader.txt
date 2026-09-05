@@ -1,0 +1,123 @@
+Tencent just dropped a 770B-parameter open-weight MoE model with a 1M-token context and explicit reasoning controls that builders can toggle today.
+
+This is Models and Agents, episode 158.
+
+Tencent released Hy4 Preview, a 770B total parameter text-only model with forty nine billion active parameters.
+
+The model carries a one million token context window and ships as a one point five six terabyte download on Hugging Face.
+
+Its chat template defaults to high reasoning effort and accepts a no think mode for faster responses.
+
+Over the past week the biggest threads centered on agents moving into production API workloads, local models handling real code merges, and Anthropic shipping both usage data and hardware standards that let models control lab equipment directly.
+
+Those threads now sit alongside continued open-weight scaling from Chinese labs and fresh tools for spotting benchmark drift in live deployments.
+
+The top story today is the Hy4 Preview release itself.
+
+Tencent released Hy4 Preview as an open-weight text-only LLM.
+
+It carries seven hundred seventy billion total parameters and forty nine billion active parameters in a mixture of experts setup.
+
+The context window reaches one million tokens, a substantial increase over the company's prior Hy3 model from July.
+
+The chat template exposes a reasoning effort parameter locked to high or no think values.
+
+Early prompts such as generating an SVG of a pelican riding a bicycle produce visible reasoning traces before the final output.
+
+Developers can test the model via OpenRouter this week on long-context reasoning tasks.
+
+This release continues the open-weight progress tracked across recent episodes by pushing parameter scale and controllable reasoning further.
+
+Now turning to model updates.
+
+An analysis examined thirty one thousand three hundred fifty two hourly benchmark scores across forty nine model identifiers.
+
+Within-day score variation measured two point eight points.
+
+Between-day variation reached eight point four points, roughly three times larger.
+
+The study ran consistent coding, reasoning, and tool-calling tasks inside Docker environments across five runs per task.
+
+The resulting AIStupidLevel system now tracks twenty two models across six providers after one hundred sixty nine thousand eight hundred fifty eight total runs.
+
+Gnani AI launched Evon version three point three alongside the Plexus agentic AI platform.
+
+The release targets enterprise agent workflows in regulated industries.
+
+No parameter counts or benchmarks were disclosed.
+
+Anthropic published findings that newer models are improving at generating training data and supervision signals for subsequent models.
+
+The study explores synthetic data pipelines without releasing specific benchmark numbers.
+
+Researchers tracking scaling laws can review the full paper for methodology.
+
+Moving to agent and tool developments.
+
+An open-source RAG access control checker tests whether retrieval applications pull documents a user should not access.
+
+It supports offline test cases and live HTTP API testing with bearer tokens or API keys.
+
+The project seeks feedback from engineers running non-sensitive environments.
+
+A new survey maps the progression from standard language models to autonomous agents.
+
+It covers capability milestones and architectural shifts without specific performance numbers.
+
+Researchers designing agent systems can consult the survey for a consolidated literature view.
+
+In the practical and community space.
+
+A researcher showed that a one hundred year old statistical process control algorithm outperforms current state of the art time series anomaly detection methods on the TSB AD M benchmark.
+
+Multiple traces including ECG data reached perfect detection with the simple baseline while published deep learning approaches struggled.
+
+The post argues many benchmark datasets remain too trivial to support strong claims.
+
+An explainer outlines practical differences between proprietary, open-weight, and open-source AI models for commercial use and modification rights.
+
+Teams choosing between hosted APIs and self-hosted models can review the distinctions before committing to a deployment path.
+
+OK, let's pop the hood on benchmark drift detection.
+
+Production APIs show measurable day to day variation that single point evaluations miss.
+
+The mechanism runs the same prompt set repeatedly under fixed parameters, computes daily medians, then applies change point detection only when movement exceeds historical within day noise.
+
+This approach adds roughly five to ten times the evaluation cost of a one time benchmark but surfaces sustained degradation masked by stochastic sampling.
+
+The thirty one thousand score study confirmed between day swings three times larger than same day noise.
+
+When the gap between daily medians crosses a minimum effect threshold the system flags the model as degraded or recovering.
+
+Use continuous monitoring when routing traffic across providers or when token cost differences justify switching.
+
+Skip it for one off experiments where a single benchmark snapshot suffices.
+
+The common gotcha is treating every score movement as signal before subtracting the expected daily variance floor.
+
+Things to try this week.
+
+Try Hy4 Preview via OpenRouter on a long context reasoning task to check whether the one million token window and controllable reasoning effort shift your current open weight choices.
+
+Run the RAG access control checker from InfraGuard Labs on a test retrieval setup to verify document level permissions before scaling to production data.
+
+Re evaluate any time series anomaly detection pipeline against basic statistical process control to see whether newer models deliver gains beyond trivial benchmark cases.
+
+Test the AIStupidLevel continuous evaluation pipeline on your own model mix to separate normal daily variation from actual performance drift.
+
+On the horizon.
+
+More details are expected on Hy4 capabilities and commercial availability as Tencent expands testing.
+
+Follow up analysis will likely appear on the Anthropic model training study once the full paper circulates.
+
+Additional open source access and monitoring tools will probably emerge as RAG and agent deployments grow.
+
+Before we go, the Anthropic study on models training other models will likely receive deeper methodology coverage once researchers dig into the paper.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The AI world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes. This show comes to you from the Nerra Network.
+
+If you want another sharp daily briefing, Planetterrian Daily has you covered — daily breakthroughs in science, health, and longevity. All our shows are free at nerranetwork.com. And on the website: every episode's visuals live in our free image gallery at nerranetwork.com/gallery — royalty-free under Creative Commons, download with attribution.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.

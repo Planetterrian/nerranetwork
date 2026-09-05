@@ -1,0 +1,131 @@
+Claude vient de montrer qu’il peut améliorer de façon autonome l’alignement d’autres modèles sur un seul G-P-U — et faire basculer le travail d’alignement des équipes humaines vers des boucles pilotées par les modèles.
+
+Ici Models and Agents, épisode cent cinquante-sept.
+
+Des chercheurs d’Anthropic ont donné à Claude quarante-huit heures et un G-P-U pour améliorer l’alignement de petits modèles.
+
+Le modèle a recherché des méthodes, proposé des correctifs, entraîné, et évalué les résultats tout seul.
+
+Il a amélioré les scores de sûreté sur dix types courants de désalignement, tout en préservant les capacités générales.
+
+Les meilleures méthodes se sont généralisées à des bancs d’essai réservés, et à des modèles jusqu’à quatre virgule sept fois plus gros.
+
+Dans un test de suivi, Sonnet cinq a poursuivi l’entraînement d’un point de contrôle précoce d’Opus quatre virgule huit, plus capable, et a atteint des scores de sûreté proches de la version de production.
+
+Claude a mené une optimisation par montée de colline sur les bancs d’essai de sûreté pour des désalignements courants comme la tromperie ou la flagornerie, sous la contrainte de préserver les capacités générales.
+
+Ses meilleures méthodes se sont aussi généralisées à l’audit comportemental Petri.
+
+Ce travail s’inscrit dans la conversation en cours sur la sûreté et les politiques, là où les laboratoires cherchent des méthodes d’évaluation qui passent à l’échelle, au-delà des chaînes entièrement humaines.
+
+Les développeurs qui suivent l’automatisation de l’alignement devraient tester dès cette semaine les méthodes publiées sur leurs propres petits modèles.
+
+Cohere a lancé Parse cinq, un modèle vision-langage de deux virgule trois milliards de paramètres, bâti sur l’architecture North Micro Vision Instruct.
+
+Il dispose d’une fenêtre de contexte de huit mille cent quatre-vingt-douze jetons.
+
+Le modèle convertit les P-D-F, les diapositives et les images en Markdown structuré en une seule passe, et renvoie les tableaux en H-T-M-L, avec des boîtes englobantes quand c’est nécessaire.
+
+Sur ParseBench, il a marqué soixante-dix-neuf virgule deux, derrière G-P-T cinq virgule cinq à quatre-vingt-quatre virgule quatre, et Opus quatre virgule huit à quatre-vingt-quatre virgule trois.
+
+Parse cinq est tarifé à un dollar cinquante pour mille pages via l’A-P-I Cohere.
+
+Il est disponible sur Model Vault, Microsoft Foundry et AWS SageMaker.
+
+Le modèle accepte une page P-D-F, PowerPoint ou J-P-E-G sous forme d’image encodée en base soixante-quatre, et renvoie du Markdown dans l’ordre de lecture.
+
+Il prend en charge l’arabe, l’anglais, le français, l’allemand, l’italien, le japonais, le coréen, le portugais et l’espagnol, avec une précision stable.
+
+Cohere a modélisé un flux de travail de services financiers traitant sept cent cinquante millions de documents par an, et a montré que choisir Parse cinq plutôt que G-P-T cinq virgule cinq réduirait les coûts de plus de quatre-vingt-dix-huit pour cent.
+
+Des chercheurs de Meta A-I et de l’université de l’Illinois ont entraîné Qwen trois huit B avec EvoHarness R-L, un cadre en deux étapes qui apprend aux agents à gérer un espace de travail unifié Belief Progress Experience à travers quatre méta-actions.
+
+Le modèle obtenu a atteint quatre-vingt-seize virgule neuf pour cent de réussite sur ALFWorld, égalant Claude Opus quatre virgule cinq à quatre-vingt-seize virgule quatre pour cent, et battant SkillRL à quatre-vingt-neuf virgule neuf pour cent.
+
+L’approche inclut un apprentissage par renforcement sensible au coût, pour que l’agent apprenne quand interroger l’état externe vaut le budget de jetons.
+
+Pendant l’entraînement, le modèle a manifesté un recuit du harnais, réduisant les appels d’outils sur les tâches familières, tout en les augmentant sur les tâches inédites.
+
+L’espace de travail B-P-E classe les besoins externes en trois bacs : la croyance, pour l’état actuel de l’environnement, le progrès, pour les sous-objectifs terminés et en attente, et l’expérience, pour les connaissances historiques.
+
+L’agent émet les commandes track, commit, recall et note pour interagir avec ce tableau de bord.
+
+Le cadre a aussi amélioré des modèles de frontière figés, faisant monter le taux de réussite de G-P-T quatre virgule un de vingt-deux virgule un points, et celui de G-P-T cinq de vingt-cinq virgule sept points, une fois équipés du harnais B-P-E au moment de la consigne.
+
+Un développeur a implémenté un transformeur à flux latent de deux virgule quatre à quatre millions de paramètres sur le microcontrôleur R-P deux trois cinq zéro.
+
+Le modèle génère des images de visages de cent vingt-huit par cent vingt-huit en environ vingt secondes, en quantification sur huit bits.
+
+Le modèle à douze couches utilise le conditionnement AdaLN Zero, prend en charge le C-F-G, et fait affluer les poids via D-M-A pendant le calcul des couches précédentes.
+
+L’activation ReLU au carré augmente la parcimonie pour les calculs sautés.
+
+Toute la chaîne tourne en local et peut afficher la sortie sur un moniteur, ou la transférer via U-S-B.
+
+Le C-F-G a nettement relevé la qualité des images pendant les tests.
+
+Le moteur d’inférence fait affluer les poids depuis la mémoire flash pendant que la couche précédente est encore en cours de calcul.
+
+Les développeurs embarqués devraient examiner les résultats d’ablation pour des déploiements similaires sur microcontrôleur.
+
+Simon Willison a mis à jour son outil de surlignage des clichés L-L-M pour détecter trente-huit motifs.
+
+Cet utilitaire léger signale les formulations L-L-M trop usées dans le texte généré.
+
+Les développeurs qui relisent de gros volumes de sorties de modèles peuvent l’ajouter à leurs scripts de post-traitement pour améliorer la lisibilité.
+
+Simon Willison a rapporté que les failles de sécurité dans les projets à code ouvert voient désormais des tentatives d’exploitation en quelques minutes après la parution publique des discussions de correctifs.
+
+Des agents automatisés scannent les dépôts et génèrent des sondes plus vite que ne le permettent les fenêtres d’embargo traditionnelles.
+
+Les mainteneurs constatent une forte hausse des signalements, avec un projet passé de vingt signalements au total en dix ans à plus de quarante le mois dernier.
+
+Les délais d’attribution des C-V-E GitHub se sont étirés, de deux à trois jours à trois à quatre semaines, sous l’effet du volume accru.
+
+Le mainteneur de rclone a noté que soixante-quinze pour cent des signalements récents contenaient quelque chose qui demandait de l’attention.
+
+Les projets qui utilisent des dépôts publics devraient accélérer leurs processus de signalement et de correction.
+
+Tout le monde traite la compression apprise des consignes comme un simple interrupteur « garder les jetons importants ».
+
+En pratique, c’est un problème de transfert supervisé, où le compresseur apprend quels jetons écarter à partir de données d’entraînement centrées sur l’anglais.
+
+Quand on applique le même compresseur à d’autres langues, le taux de conservation qui préserve cinquante-sept à soixante-deux pour cent d’utilisation normalisée du contexte en anglais peut chuter à dix à vingt-quatre pour cent pour le lituanien, et presque à zéro pour le chinois, à budget égal.
+
+L’écart apparaît parce que le modèle internalise les schémas d’importance des jetons anglais, plutôt qu’une densité d’information indépendante de la langue.
+
+Les bases de référence déterministes évitent l’échec de transfert, mais ne peuvent pas égaler les performances de pointe en anglais.
+
+Les compresseurs entraînés de façon multilingue referment l’écart, mais exigent encore un réglage soigneux du taux.
+
+Des seuils agressifs peuvent faire passer les contextes non anglais sous l’utilité d’un contexte vide sur les tâches en aval.
+
+Les équipes devraient mesurer à la fois les économies de jetons et la précision des tâches sur leur vrai mélange de langues, avant d’adopter un compresseur appris.
+
+Envisagez une chaîne « traduire puis compresser » quand la langue cible a un fort surcoût en jetons.
+
+Testez Cohere Parse cinq sur votre jeu de documents au plus fort volume, pour mesurer le coût face à l’usage actuel d’un modèle de frontière.
+
+Lancez l’espace de travail B-P-E d’EvoHarness R-L sur l’une de vos tâches d’agent à long horizon, pour voir si le recuit du harnais réduit la dépense en jetons.
+
+Ajoutez le surligneur de clichés de Simon Willison à votre chaîne de relecture de génération si vous livrez du texte L-L-M destiné aux clients.
+
+Portez l’approche d’ablation du transformeur à flux latent du R-P deux trois cinq zéro sur votre propre matériel embarqué si vous avez besoin de génération d’images en local.
+
+Comparez la structure de sortie de Parse cinq à votre chaîne actuelle O-C-R plus modèle, sur des P-D-F d’entreprise contenant des tableaux et des graphiques.
+
+D’autres résultats des expériences d’alignement automatisé d’Anthropic sont attendus, à mesure que d’autres laboratoires reproduisent le dispositif à un seul G-P-U.
+
+Une couverture linguistique élargie et des fonctions d’extraction de graphiques sont prévues pour les prochaines versions de Parse cinq.
+
+D’autres tests de montée en échelle d’EvoHarness R-L sur des modèles au-delà de huit B sont probables dans les semaines à venir.
+
+Une discussion continue sur le calendrier d’embargo du code ouvert, face à une découverte plus rapide de pistes d’exploitation pilotée par l’I-A, est aussi attendue.
+
+Avant de nous quitter, surveillez les premières reproductions indépendantes de la boucle d’alignement sur un seul G-P-U, et si elles font apparaître de nouvelles limites de généralisation sur des modèles plus grands.
+
+Voilà pour le briefing I-A du jour. Partagez-le avec un développeur ou un créateur qui veut rester à jour. Abonnez-vous là où vous nous écoutez. À demain. Et si vous préférez regarder plutôt qu’écouter, retrouvez-nous sur YouTube chez Nerra Network — le lien est dans les notes de l’épisode. Petit conseil du réseau : enchaînez avec Fascinating Frontiers — l’actualité la plus fascinante de l’espace et des sciences.
+
+Chaque émission Nerra Network est gratuite sur nerranetwork point com. Vous voulez le briefing écrit avec les liens vers les sources ? Chaque émission tient une page de résumés sur nerranetwork point com — facile à parcourir, datée, et gratuite.
+
+Cet épisode a utilisé une synthèse vocale par I-A de ma voix — la sélection éditoriale et l’analyse sont les miennes.

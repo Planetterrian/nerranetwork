@@ -60,6 +60,10 @@ def _shows_from_network() -> List[Dict[str, Any]]:
         "finansy_prosto":          ("Even days",     "~12 min", "Finance"),
         "privet_russian":          ("Even days",     "~10 min", "Education"),
         "unintended_consequences": ("Weekdays",      "~12 min", "Education"),
+        # Sep 4 2026: the API had defaulted this to "~15 min" while the club
+        # page promises ten minutes a day; measured Ep44-56 run 11-14 min
+        # and the script now carries a hard word ceiling aimed at ~11-12.
+        "dp_pod":                  ("Daily",         "~12 min", "Science"),
     }
     out: List[Dict[str, Any]] = []
     for slug, cfg in NETWORK_SHOWS.items():

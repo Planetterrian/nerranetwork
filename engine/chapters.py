@@ -50,9 +50,20 @@ _SENTENCE_END_RE = re.compile(r"([.!?…])\s+")
 # Same fix engine/youtube_titles.py has carried since July.
 _TITLE_LABEL_RE = re.compile(r"^(?:title|headline)\s*\d*\s*[:\-—]\s*", re.IGNORECASE)
 
+# ``[label](url)`` inside a candidate title. Models & Agents Ep161
+# (2026-09-02) shipped the chapter "Training a Misaligned Reward Seeker:
+# [@AnthropicAI](https" — the digest headline carried an X-profile link
+# as its source tail and the clipper cut through the URL. Links are
+# flattened to their label (and a lone ``@handle`` tail dropped) in every
+# title-producing helper, so no chapter surface can show a URL fragment.
+_MD_LINK_RE = re.compile(r"\[([^\]]*)\]\((?:[^)\s]*)\)")
+_HANDLE_TAIL_RE = re.compile(r"\s*[:\-—]\s*@\w+\s*$")
+
 
 def _strip_title_label(title: str) -> str:
-    return _TITLE_LABEL_RE.sub("", title or "").strip()
+    title = _MD_LINK_RE.sub(lambda m: m.group(1), title or "")
+    title = _HANDLE_TAIL_RE.sub("", title)
+    return _TITLE_LABEL_RE.sub("", title).strip()
 
 
 def _first_sentence_as_title(text: str, max_chars: int = 60) -> str:
@@ -129,8 +140,20 @@ def _best_headline_for_segment(
         return ""
     best_title = ""
     best_score = 0
-    for h in headlines:
+    for idx, h in enumerate(headlines):
         if h in used:
+            continue
+        if _is_hook_candidate(h, idx, max_chars):
+            # Not a title: extract_story_headlines leads with the digest's
+            # blockquote HOOK — a full sentence (needed as image context,
+            # useless here). Raw token-overlap favors the longest
+            # candidate (Omni View Ep160, 2026-08-30: the 130-char hook
+            # beat the real summit headline). The 08-30 fix skipped
+            # EVERYTHING over max_chars, which on 2026-09-02 (Ep163)
+            # threw away 7 of 8 real headlines (62-91 chars) and shipped
+            # first-sentence fragments instead. Only hook-length
+            # candidates are skipped now; a long real headline competes
+            # and is shortened cleanly by ``_clip_title``.
             continue
         h_tokens = _tokenize_for_match(h)
         if not h_tokens:
@@ -146,17 +169,61 @@ def _best_headline_for_segment(
     if not best_title:
         return ""
     used.add(best_title)  # claim the headline so the next segment can't reuse it
-    title = _strip_title_label(re.sub(r"[*_`]+", "", best_title).strip())
-    if len(title) > max_chars:
-        title = title[: max_chars - 1].rsplit(" ", 1)[0].rstrip(",;:") + "…"
-    return title
+    return _clip_title(best_title, max_chars)
+
+
+# A candidate longer than ``max_chars * _HOOK_LENGTH_FACTOR`` is the
+# digest's lead HOOK (a full sentence), never a headline.
+_HOOK_LENGTH_FACTOR = 2
+
+
+def _is_hook_candidate(h: str, idx: int, max_chars: int) -> bool:
+    """True when *h* is the digest's lead hook rather than a headline.
+
+    ``extract_story_headlines`` puts the blockquote hook FIRST, so an
+    over-budget first candidate is the hook (Tesla Ep592: the 104-char
+    hook "Installers face six-figure losses after Tesla stopped…" would
+    otherwise out-score every real headline for the lead segment).
+    Anything longer than twice the budget is a sentence, not a title,
+    wherever it sits.
+    """
+    n = len(h)
+    return n > max_chars * _HOOK_LENGTH_FACTOR or (idx == 0 and n > max_chars)
+
+# Function words a shortened headline must not end on — "…criticizes
+# Chinese actions at" reads as a cut; "…criticizes Chinese actions" reads
+# as a title.
+_DANGLING_TAIL = frozenset(
+    "a an the and or but nor of at in on for to with by as from after over "
+    "into amid while than that its their his her our this these those "
+    "under before between against about via per not no is are was were be "
+    "has have had will would could should can may might who which when "
+    "where how what why if so yet up more".split()
+)
 
 
 def _clip_title(raw: str, max_chars: int = 60) -> str:
+    """Fit a real digest headline into *max_chars* WITHOUT an ellipsis.
+
+    A headline is a title, so a trailing "…" is wrong on every surface
+    (seek bar, description, on-screen card): it reads as a broken
+    sentence and the on-screen card stage rightly refuses such titles.
+    The cut goes through ``engine.titles.clip_words`` (the one sanctioned
+    clipper) and then drops any dangling function word. Only when the
+    clean cut would lose more than half the headline does the legacy
+    ellipsis clip remain, so a title can never collapse to two words.
+    """
     title = _strip_title_label(re.sub(r"[*_`]+", "", raw or "").strip())
-    if len(title) > max_chars:
-        title = title[: max_chars - 1].rsplit(" ", 1)[0].rstrip(",;:") + "…"
-    return title
+    if len(title) <= max_chars:
+        return title
+    from engine.titles import clip_words
+    words = clip_words(title, max_chars, ellipsis="").split()
+    while words and words[-1].lower().strip(",;:'\"") in _DANGLING_TAIL:
+        words.pop()
+    clean = " ".join(words).rstrip(",;:—–-")
+    if len(clean) >= max_chars // 2:
+        return clean
+    return title[: max_chars - 1].rsplit(" ", 1)[0].rstrip(",;:") + "…"
 
 
 def _headline_anchored_insertions(
@@ -219,7 +286,16 @@ def _headline_anchored_insertions(
     # Best-matching paragraph per headline; a paragraph keeps only its
     # strongest headline so two stories can't anchor the same spot.
     anchors: dict[int, tuple[int, str]] = {}  # para index -> (score, headline)
-    for h in story_headlines:
+    for idx, h in enumerate(story_headlines):
+        if _is_hook_candidate(h, idx, max_chars):
+            # Not a title: extract_story_headlines leads with the digest's
+            # blockquote HOOK — a full lead sentence, wanted as image
+            # context but never as a chapter. It out-scores real headlines
+            # on raw token overlap (Omni View Ep160, 2026-08-30: "Leaders
+            # from Russia, China, India and Iran meet in Central…" reached
+            # listeners). Real headlines between max_chars and twice that
+            # stay eligible and are shortened cleanly (see _clip_title).
+            continue
         h_tokens = _tokenize_for_match(h)
         if not h_tokens:
             continue

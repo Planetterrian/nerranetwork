@@ -8,20 +8,24 @@
    page while still exposing the homepage-specific jump links. #}
 {% block nav_links %}
 <li><a href="{{ path_prefix }}start-here.html">{{ t.nav_start_here }}</a></li>
-<li><a href="{{ path_prefix }}how-to-listen.html">{{ t.nav_listen }}</a></li>
+<li><a href="{{ path_prefix }}how-to-listen.html">{{ t.nav_how_to_listen }}</a></li>
 <li><a href="{{ path_prefix }}about.html">{{ t.nav_about }}</a></li>
 <li><a href="{{ path_prefix }}player.html">{{ t.nav_player }}</a></li>
 <li><a href="#latest">Latest</a></li>
 <li><a href="#subscribe">Subscribe</a></li>
 {% endblock %}
 
+{# Mobile links carry no inline onclick: base.html.j2 closes the menu (and
+   clears the body scroll lock) with one delegated listener. The previous
+   per-link handlers here forgot the body class, so tapping "Latest" or
+   "Subscribe" left the homepage scroll-locked (Sep 2026 review). #}
 {% block mobile_nav_links %}
-<a href="{{ path_prefix }}start-here.html" onclick="document.getElementById('mobileMenu').classList.remove('open')">{{ t.nav_start_here }}</a>
-<a href="{{ path_prefix }}how-to-listen.html" onclick="document.getElementById('mobileMenu').classList.remove('open')">{{ t.nav_listen }}</a>
-<a href="{{ path_prefix }}about.html" onclick="document.getElementById('mobileMenu').classList.remove('open')">{{ t.nav_about }}</a>
-<a href="{{ path_prefix }}player.html" onclick="document.getElementById('mobileMenu').classList.remove('open')">{{ t.nav_player }}</a>
-<a href="#latest" onclick="document.getElementById('mobileMenu').classList.remove('open')">Latest</a>
-<a href="#subscribe" onclick="document.getElementById('mobileMenu').classList.remove('open')">Subscribe</a>
+<a href="{{ path_prefix }}start-here.html">{{ t.nav_start_here }}</a>
+<a href="{{ path_prefix }}how-to-listen.html">{{ t.nav_how_to_listen }}</a>
+<a href="{{ path_prefix }}about.html">{{ t.nav_about }}</a>
+<a href="{{ path_prefix }}player.html">{{ t.nav_player }}</a>
+<a href="#latest">Latest</a>
+<a href="#subscribe">Subscribe</a>
 {% endblock %}
 
 {% block head_extra %}
@@ -48,42 +52,11 @@
   ]
 }
     </script>
-    <style>
-        @keyframes cardFloat {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-12px) rotate(1deg); }
-        }
-        .hero-show-orbit .orbit-card {
-            animation: cardFloat 4s ease-in-out infinite;
-            transition: transform 0.3s ease;
-        }
-        .hero-show-orbit .orbit-card:nth-child(1) { animation-delay: 0s; }
-        .hero-show-orbit .orbit-card:nth-child(2) { animation-delay: 0.4s; }
-        .hero-show-orbit .orbit-card:nth-child(3) { animation-delay: 0.8s; }
-        .hero-show-orbit .orbit-card:nth-child(4) { animation-delay: 1.2s; }
-        .hero-show-orbit .orbit-card:nth-child(5) { animation-delay: 1.6s; }
-        .hero-show-orbit .orbit-card:nth-child(6) { animation-delay: 2.0s; }
-        .hero-show-orbit .orbit-card:nth-child(7) { animation-delay: 2.4s; }
-        .hero-show-orbit .orbit-card:nth-child(8) { animation-delay: 2.8s; }
-        .hero-show-orbit .orbit-card:nth-child(9) { animation-delay: 3.2s; }
-        .hero-show-orbit .orbit-card:nth-child(10) { animation-delay: 3.6s; }
-        .hero-show-orbit .orbit-card:nth-child(11) { animation-delay: 4.0s; }
-
-        @keyframes ctaPulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(124, 92, 255, 0.4); }
-            50% { box-shadow: 0 0 20px 5px rgba(124, 92, 255, 0.2); }
-        }
-        .hero-cta-primary {
-            animation: ctaPulse 3s ease-in-out infinite;
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-            .hero-show-orbit .orbit-card,
-            .hero-cta-primary {
-                animation: none;
-            }
-        }
-    </style>
+    {# Orbit float, CTA pulse and their reduced-motion gates live in
+       styles/main.css (`.orbit-card` uses the per-card `--i` delay). The
+       inline copy that used to sit here overrode them with a second,
+       conflicting keyframe set and an nth-child stagger that stopped at
+       the 11th show — removed Sep 2026. #}
 {% endblock %}
 
 {% block content %}
@@ -101,33 +74,36 @@
             <div class="hero-badge">Independent Podcast Network</div>
             <h1><span class="gradient-text">Nerra</span> Network</h1>
             <p class="network-hero-tagline">Feed your curiosity. Not your anxiety.</p>
-            <p class="hero-subtitle">Daily ad-free shows covering Tesla, SpaceX, world news, space, science, AI, investing, first-principles thinking, good news, and more. Produced in Vancouver.</p>
+            <p class="hero-subtitle">{{ all_shows|length }} ad-free shows on Tesla, SpaceX, AI, markets, space, science, world news, first-principles thinking and more — most of them new every day, in four listening languages. Independently produced in Vancouver, Canada.</p>
             <div class="hero-show-orbit">
                 {% for s in all_shows %}
                 {% set _pbase = s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image %}
-                <a href="{{ path_prefix }}{{ s.show_page }}" class="orbit-card" style="--i: {{ loop.index0 }};">
+                <a href="{{ path_prefix }}{{ s.show_page }}" class="orbit-card" style="--i: {{ loop.index0 }};" title="{{ s.name }}">
                     <picture>
                         <source type="image/webp" srcset="{{ path_prefix }}{{ _pbase }}-400.webp 400w, {{ path_prefix }}{{ _pbase }}-800.webp 800w" sizes="120px">
-                        <img src="{{ path_prefix }}{{ s.podcast_image }}" alt="{{ s.name }} cover art" width="1400" height="1400" loading="eager" fetchpriority="high" />
+                        {#- Only the first row of covers competes for early bandwidth;
+                            17 `fetchpriority=high` images starved the hero text and
+                            font CSS (Sep 2026 review). -#}
+                        <img src="{{ path_prefix }}{{ s.podcast_image }}" alt="{{ s.name }} cover art" width="1400" height="1400"{% if loop.index0 < 7 %} loading="eager" fetchpriority="high"{% else %} loading="lazy"{% endif %} />
                     </picture>
                 </a>
                 {% endfor %}
             </div>
             <div class="hero-cta-row">
-                <a href="#shows" class="nn-btn nn-btn-primary nn-btn-lg hero-cta-primary" style="--show-color:#6B47FF;">Explore Shows</a>
+                <a href="#shows" class="nn-btn nn-btn-primary nn-btn-lg hero-cta-primary" style="--show-color:var(--nn-purple);">Explore Shows</a>
+                <a href="{{ path_prefix }}start-here.html" class="nn-btn nn-btn-lg">Start Here</a>
                 <a href="{{ path_prefix }}player.html" class="nn-btn nn-btn-lg">Open Player</a>
                 <a href="#subscribe" class="nn-btn nn-btn-lg">Subscribe Free</a>
-                <a href="{{ path_prefix }}blog/index.html" class="nn-btn nn-btn-lg">Read Blog</a>
             </div>
 
             <!-- Network proof stats -->
             <div class="hero-proof-stats" aria-label="Network stats">
                 <div class="proof-stat">
-                    <strong>Daily</strong>
-                    <span>cadence</span>
+                    <strong>{{ all_shows|length }}</strong>
+                    <span>shows</span>
                 </div>
                 <div class="proof-stat">
-                    <strong>{{ total_episodes }}+</strong>
+                    <strong>{{ '{:,}'.format(total_episodes) }}</strong>
                     <span>episodes shipped</span>
                 </div>
                 <div class="proof-stat">
@@ -136,73 +112,28 @@
                 </div>
                 <div class="proof-stat">
                     <strong>4</strong>
-                    <span>languages</span>
+                    <span>listening languages</span>
                 </div>
             </div>
         </div>
     </section>
 
-    <div class="topic-ticker">
+    {# Decorative ticker, driven from the registry so it can never drift
+       from the lineup (the hand-maintained list was stuck at 15 of 17
+       shows). Hidden from assistive tech — it duplicates the show grid. #}
+    <div class="topic-ticker" aria-hidden="true">
         <div class="ticker-track">
-            <span>🔋 Tesla & EV Markets</span>
-            <span>🚀 SpaceX Daily</span>
-            <span>📈 Modern Investing</span>
-            <span>🤖 AI Models & Agents</span>
-            <span>🚀 Space & Astronomy</span>
-            <span>🧬 Longevity & Biotech</span>
-            <span>🌍 Environmental Policy</span>
-            <span>📰 Balanced Global News</span>
-            <span>🧠 First Principles</span>
-            <span>✨ The DP Pod</span>
-            <span>🎙️ The Age of AI</span>
-            <span>🇷🇺 Learn Russian</span>
-            <span>💰 Finance (RU)</span>
-            <span>💡 AI for Beginners</span>
-            <span>📜 Unintended Consequences</span>
-            <span>🔋 Tesla & EV Markets</span>
-            <span>🚀 SpaceX Daily</span>
-            <span>📈 Modern Investing</span>
-            <span>🤖 AI Models & Agents</span>
-            <span>🚀 Space & Astronomy</span>
-            <span>🧬 Longevity & Biotech</span>
-            <span>🌍 Environmental Policy</span>
-            <span>📰 Balanced Global News</span>
-            <span>🧠 First Principles</span>
-            <span>✨ The DP Pod</span>
-            <span>🎙️ The Age of AI</span>
-            <span>🇷🇺 Learn Russian</span>
-            <span>💰 Finance (RU)</span>
-            <span>💡 AI for Beginners</span>
-            <span>📜 Unintended Consequences</span>
+            {% for _pass in range(2) %}{% for s in all_shows %}
+            <span>{{ s.name }}</span>
+            {% endfor %}{% endfor %}
         </div>
     </div>
 
-    <!-- Stats Bar -->
-    <section class="stats-bar">
-        <div class="container">
-            <div class="stats-row">
-                <div class="stat-item">
-                    <div class="stat-number">Daily</div>
-                    <div class="stat-label">Cadence</div>
-                </div>
-                <div class="stat-divider"></div>
-                <div class="stat-item">
-                    <div class="stat-number">{{ total_episodes }}+</div>
-                    <div class="stat-label">Episodes</div>
-                </div>
-                <div class="stat-divider"></div>
-                <div class="stat-item">
-                    <div class="stat-number">4</div>
-                    <div class="stat-label">Languages</div>
-                </div>
-                <div class="stat-divider"></div>
-                <div class="stat-item">
-                    <div class="stat-number">0</div>
-                    <div class="stat-label">Ads</div>
-                </div>
-            </div>
-        </div>
-    </section>
+    {# The legacy standalone stats bar was removed Aug 30 2026: it repeated
+       the hero-proof-stats band verbatim two screens apart (operator
+       screenshot — "duplicating elements"). The hero band is the one that
+       stays; do not reintroduce a second cadence/episodes/languages/ads
+       strip below the ticker. #}
 
     {# May 2026 operator request: "Find Your Show" interactive picker
        was removed and replaced by the Fresh Episodes / Blog / Why Nerra
@@ -220,7 +151,7 @@
             <div class="nn-section-header">
                 <div class="section-label">Fresh Episodes</div>
                 <h2>Latest Across the Network</h2>
-                <p>The most recent episodes from all shows.</p>
+                <p>The ten newest episodes across the network, freshest first.</p>
             </div>
         </div>
         {% if latest_episodes %}
@@ -250,6 +181,64 @@
         {% endif %}
     </section>
 
+    <!-- Nerra Personal promo (Aug 2026: the paid product had no homepage
+         presence beyond a footer link; Aug 30: promoted into the prime
+         slot after Fresh Episodes and rebuilt as a real product band —
+         features + lineup covers + both entry points). -->
+    <section class="nn-section" id="personal-promo">
+        <div class="container" style="max-width:1040px;">
+            <div style="border:1px solid var(--nn-border);border-radius:20px;background:var(--nn-surface);position:relative;overflow:hidden;">
+                <div style="position:absolute;inset:0;background:
+                    radial-gradient(ellipse at 88% 10%, rgba(0,212,255,0.14), transparent 55%),
+                    radial-gradient(ellipse at 5% 95%, rgba(107,71,255,0.12), transparent 50%);pointer-events:none;"></div>
+                <div style="position:relative;display:grid;grid-template-columns:minmax(300px,1.2fr) minmax(260px,1fr);gap:2rem;padding:2.4rem 2.2rem;align-items:center;" class="personal-promo-grid">
+                    <div>
+                        <div class="section-label">Nerra Personal</div>
+                        <h2 style="font-family:var(--font-heading);margin:0.4rem 0 0.7rem;font-size:1.9rem;line-height:1.15;">Your own daily show, built from the shows you already love</h2>
+                        <p style="color:var(--nn-text-muted);margin:0 0 1.1rem;">
+                            Pick your shows and their order. Every morning Mira
+                            assembles them into <strong>one private podcast
+                            episode made just for you</strong> — greeting you by
+                            name, with chapters for every segment.</p>
+                        <ul style="list-style:none;margin:0 0 1.4rem;padding:0;display:grid;gap:0.45rem;color:var(--nn-text-muted);font-size:0.95rem;">
+                            <li>✓ One feed, your lineup, your order — in any podcast app</li>
+                            <li>✓ Mira anchors it and greets you by name</li>
+                            <li>✓ Free account: newsletter, gallery downloads, book discounts</li>
+                            <li>✓ $4.99/mo · cancel any time · no ads, ever</li>
+                        </ul>
+                        <p style="margin:0;display:flex;gap:0.6rem;flex-wrap:wrap;">
+                            <a class="nn-btn nn-btn-primary" href="{{ path_prefix }}join.html">Build your show →</a>
+                            <a class="nn-btn" href="{{ path_prefix }}account.html">Member sign in</a>
+                            <a class="nn-btn" href="{{ path_prefix }}nerra-daily.html">Try Nerra Daily free</a>
+                        </p>
+                    </div>
+                    <div aria-hidden="true" style="display:grid;gap:0.6rem;">
+                        <div style="font-family:var(--font-ui);font-size:0.72rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--nn-text-muted);">Your morning, one feed</div>
+                        {#- Sample lineup: only shows that are actually in the
+                            Personal lineup (Nerra Daily and Age of AI are not). -#}
+                        {% set _lineup_sample = all_shows | rejectattr('slug', 'in', ['nerra_daily', 'age_of_ai', 'finansy_prosto', 'privet_russian']) | list %}
+                        {% for s in _lineup_sample[:4] %}
+                        {% set _pbase = s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image %}
+                        <div style="display:flex;align-items:center;gap:0.7rem;border:1px solid var(--nn-border);border-radius:12px;padding:0.5rem 0.7rem;background:color-mix(in srgb, var(--nn-surface) 70%, transparent);">
+                            <picture>
+                                <source type="image/webp" srcset="{{ path_prefix }}{{ _pbase }}-400.webp">
+                                <img src="{{ path_prefix }}{{ s.podcast_image }}" alt="" width="44" height="44" loading="lazy" style="width:44px;height:44px;border-radius:8px;">
+                            </picture>
+                            <span style="font-size:0.9rem;">{{ s.name }}</span>
+                            <span style="margin-left:auto;font-size:0.75rem;color:var(--nn-text-muted);">{{ loop.index }}</span>
+                        </div>
+                        {% endfor %}
+                        <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.8rem;color:var(--nn-cyan,#00D4FF);">
+                            <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:currentColor;"></span>
+                            PRIVATE FEED · chapters + Mira's links between shows
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <style>@media (max-width: 760px){ .personal-promo-grid { grid-template-columns: 1fr !important; } }</style>
+
     {% if popular_episodes %}
     <!-- Most Played This Week (OP3 download data, refreshed nightly) -->
     <section id="popular" class="nn-section">
@@ -257,7 +246,7 @@
             <div class="nn-section-header">
                 <div class="section-label">Listener Favorites</div>
                 <h2>Most Played This Week</h2>
-                <p>The episodes our listeners played most over the last seven days.</p>
+                <p>The episodes listeners played most over the last seven days — at most two per show, so you see the breadth of the network.</p>
             </div>
         </div>
         <div class="latest-scroll-row">
@@ -281,28 +270,6 @@
     </section>
     {% endif %}
 
-    <!-- Nerra Personal promo (Aug 2026: the paid product had no homepage
-         presence beyond a footer link) -->
-    <section class="nn-section" id="personal-promo">
-        <div class="container" style="max-width:960px;">
-            <div style="border:1px solid var(--nn-border);border-radius:18px;padding:2.2rem 2rem;background:var(--nn-surface);position:relative;overflow:hidden;">
-                <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 85% 15%, rgba(0,212,255,0.12), transparent 60%);pointer-events:none;"></div>
-                <div class="section-label">Nerra Personal</div>
-                <h2 style="font-family:var(--font-heading);margin:0.4rem 0 0.6rem;">Your own daily show, from the shows you already love</h2>
-                <p style="color:var(--nn-text-muted);max-width:640px;margin:0 0 1.2rem;">
-                    Pick your shows, set the order, and every morning Mira
-                    stitches them into one private podcast feed — greeting
-                    you by name, with chapters for every segment. From
-                    $4.99/month; the free account unlocks the newsletter,
-                    gallery downloads and book discounts.</p>
-                <p style="margin:0;">
-                    <a class="nn-btn nn-btn-primary" href="{{ path_prefix }}join.html">Build your show →</a>
-                    <a class="nn-btn" href="{{ path_prefix }}nerra-daily.html" style="margin-left:0.5rem;">Or try Nerra Daily free</a>
-                </p>
-            </div>
-        </div>
-    </section>
-
     <!-- Latest from the Blog -->
     {% if latest_blog_posts %}
     <section class="nn-section">
@@ -314,7 +281,7 @@
             </div>
             <div class="blog-idx-grid" style="max-width:900px;margin:0 auto;padding-bottom:var(--sp-8)">
                 {% for post in latest_blog_posts %}
-                <a href="blog/{{ post.show_slug }}/ep{{ '%03d' % post.episode_num }}.html"
+                <a href="{{ path_prefix }}blog/{{ post.show_slug }}/ep{{ '%03d' % post.episode_num }}.html"
                    class="blog-idx-card"
                    style="--card-show-color: {{ post.show_color }}">
                     <div class="blog-idx-card-top">
@@ -323,8 +290,10 @@
                         <span class="blog-idx-ep">Ep {{ post.episode_num }}</span>
                         <span class="blog-idx-reading">{{ post.reading_time_min }} min</span>
                     </div>
-                    <h2>{{ post.title }}</h2>
-                    {% if post.hook %}
+                    <h3>{{ post.title }}</h3>
+                    {#- The hook IS the title on most shows (blog.py falls back
+                        to it); don't print the same sentence twice. -#}
+                    {% if post.hook and post.hook != post.title %}
                     <p>{{ post.hook[:140] }}{% if post.hook|length > 140 %}&hellip;{% endif %}</p>
                     {% endif %}
                     <span class="blog-idx-read-more" style="color:{{ post.show_color }}">Read article &rarr;</span>
@@ -332,7 +301,7 @@
                 {% endfor %}
             </div>
             <div style="text-align:center">
-                <a href="blog/index.html" class="nn-btn nn-btn-primary" style="font-size:0.9rem;padding:var(--sp-3) var(--sp-8)">View all blog posts</a>
+                <a href="{{ path_prefix }}blog/index.html" class="nn-btn nn-btn-primary" style="font-size:0.9rem;padding:var(--sp-3) var(--sp-8)">View all blog posts</a>
             </div>
         </div>
     </section>
@@ -348,33 +317,33 @@
             <div class="features-grid">
                 <div class="feature-card glass-card">
                     <div class="feature-icon">&#9889;</div>
-                    <h3>AI-Enhanced Research</h3>
-                    <p>Every episode is backed by real-time news analysis across dozens of sources, curated and verified by a human host.</p>
+                    <h3>Sourced, Not Vibes</h3>
+                    <p>Every episode is built from dozens of named sources, and every article links to them. A source-integrity gate checks that cited claims actually appear where we say they do. <a href="{{ path_prefix }}editorial.html">See how an episode is made</a>.</p>
                 </div>
                 <div class="feature-card glass-card">
                     <div class="feature-icon">&#127911;</div>
                     <h3>Zero Ads. Zero Sponsors.</h3>
-                    <p>No ad reads, no sponsor segments, no paywalls. Just pure content, every single day. Free forever.</p>
+                    <p>No ad reads, no sponsor segments, no clickbait. Every episode on every show is free; <a href="{{ path_prefix }}join.html">Nerra Personal</a> is the optional upgrade for people who want one custom feed.</p>
                 </div>
                 <div class="feature-card glass-card">
                     <div class="feature-icon">&#127758;</div>
                     <h3>Multi-Perspective Coverage</h3>
-                    <p>We pull from diverse sources to present balanced, nuanced takes — not echo chambers or clickbait.</p>
+                    <p>Omni View argues each side of a story in its strongest form. Across the network we pull from diverse sources to present balanced, nuanced takes &mdash; not echo chambers.</p>
                 </div>
                 <div class="feature-card glass-card">
                     <div class="feature-icon">&#128197;</div>
-                    <h3>Daily Consistency</h3>
-                    <p>New episodes every day (or weekday), rain or shine. Build a daily learning habit you can rely on.</p>
+                    <h3>A Cadence You Can Set Your Morning By</h3>
+                    <p>Most shows publish every day; the rest weekly or when an interview is ready, and each show page says which. Build a daily habit you can rely on.</p>
                 </div>
                 <div class="feature-card glass-card">
                     <div class="feature-icon">&#127463;&#127464;</div>
                     <h3>Made in Canada</h3>
-                    <p>Independently produced in Vancouver by Patrick. No corporate backing, no editorial interference.</p>
+                    <p>Independently produced in Vancouver by Patrick Novak. No corporate backing, no editorial interference.</p>
                 </div>
                 <div class="feature-card glass-card">
                     <div class="feature-icon">&#128266;</div>
-                    <h3>Multilingual</h3>
-                    <p>Shows produced in English, Fran&ccedil;ais, Русский and 中文 &mdash; and you can pick your listening language with the globe in the menu. Knowledge shouldn't have a language barrier.</p>
+                    <h3>Four Listening Languages</h3>
+                    <p>English originals with Fran&ccedil;ais, Русский and 中文 audio tracks, plus two shows made natively in Russian. Pick your audio language with the globe in the menu.</p>
                 </div>
             </div>
         </div>
@@ -392,7 +361,7 @@
             <div class="nn-section-header">
                 <div class="section-label">Our Shows</div>
                 <h2>Daily intelligence on the topics that matter</h2>
-                <p>Every show is ad-free, independently produced, and published daily. Pick one or subscribe to all.</p>
+                <p>Every show is ad-free and independently produced; most publish every day. Pick one, or let <a href="{{ path_prefix }}nerra-daily.html">Nerra Daily</a> hand you the whole network in one episode.</p>
             </div>
             <div class="show-showcase" id="show-showcase-grid">
                 {% for s in all_shows %}
@@ -403,15 +372,16 @@
                      data-language="{{ s.picker_tags.language | default([]) | join(' ') }}"
                      style="--show-color:{{ s.brand_color }};">
                     {% set _scbase = s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image %}
-                    <a href="{{ s.show_page }}" class="show-card glass-card">
+                    <a href="{{ path_prefix }}{{ s.show_page }}" class="show-card glass-card">
                         <picture>
-                            <source type="image/webp" srcset="{{ _scbase }}-400.webp 400w, {{ _scbase }}-800.webp 800w" sizes="(max-width: 600px) 180px, 280px">
-                            <img src="{{ s.podcast_image }}" alt="{{ s.name }} cover art" class="show-card-image" width="1400" height="1400" loading="lazy">
+                            <source type="image/webp" srcset="{{ path_prefix }}{{ _scbase }}-400.webp 400w, {{ path_prefix }}{{ _scbase }}-800.webp 800w" sizes="(max-width: 600px) 180px, 280px">
+                            <img src="{{ path_prefix }}{{ s.podcast_image }}" alt="{{ s.name }} cover art" class="show-card-image" width="1400" height="1400" loading="lazy">
                         </picture>
                         <div class="show-card-name">{{ s.name }}</div>
                         <div class="show-card-badges">
                             {% if s.schedule %}<span class="show-card-badge">{{ s.schedule }}</span>{% endif %}
                             {% if s.episode_length %}<span class="show-card-badge">{{ s.episode_length }}</span>{% endif %}
+                            {% if s.picker_tags and s.picker_tags.language and 'russian' in s.picker_tags.language %}<span class="show-card-badge">In Russian</span>{% endif %}
                         </div>
                         <div class="show-card-tagline">{{ s.description_long | default(s.tagline) }}</div>
                         {% if s.audience %}
@@ -428,7 +398,7 @@
                             <svg viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         </div>
                     </a>
-                    <a href="{{ s.blog_page }}" class="show-card-blog-link">
+                    <a href="{{ path_prefix }}{{ s.blog_page }}" class="show-card-blog-link">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
                         Read Blog
                     </a>
@@ -452,7 +422,7 @@
             </div>
             <div class="about-section-text">
                 <p><strong>Ad-free shows on the ideas shaping tomorrow.</strong></p>
-                <p>Nerra Network is an independent podcast network covering Tesla, SpaceX, balanced world news, space and astronomy, science and longevity, environmental intelligence, AI, first-principles thinking, good news with agency (The DP Pod), live AI-hosted interviews (The Age of AI), financial literacy, language learning, and modern investing. All produced in Vancouver, Canada by Patrick.</p>
+                <p>Nerra Network is an independent podcast network of {{ all_shows|length }} shows covering Tesla, SpaceX, AI for experts and beginners, modern investing, balanced world news, space and astronomy, science and longevity, environmental policy, first-principles thinking, the unintended consequences of big decisions, good news with something you can do about it (The DP Pod), Canada's offshore energy story (Offshore North), live AI-hosted interviews (The Age of AI), and financial literacy and language learning in Russian &mdash; plus Nerra Daily, the whole network in one daily edition. All produced in Vancouver, Canada by Patrick Novak, with AI doing the writing and narration and a human owning the standards. <a href="{{ path_prefix }}ai-disclosure.html">How we use AI</a>.</p>
                 <p>Our mission: stimulating conversation, supporting positive developments that benefit all, and providing unbiased coverage with varying perspectives.</p>
             </div>
         </div>
@@ -467,10 +437,10 @@
                 <p>Every show has its own RSS feed. Paste it into any podcast app — Apple Podcasts, Spotify, Pocket Casts, Overcast — and new episodes arrive automatically.</p>
             </div>
             <div class="subscribe-badges">
-                <a href="network.rss" class="subscribe-badge">
+                <a href="{{ path_prefix }}network.rss" class="subscribe-badge">
                     Network RSS (All Shows)
                 </a>
-                <a href="blog.rss" class="subscribe-badge">
+                <a href="{{ path_prefix }}blog.rss" class="subscribe-badge">
                     Network Blog RSS
                 </a>
             </div>
@@ -479,8 +449,8 @@
                 {% set _subbase = s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image %}
                 <div class="subscribe-show-row">
                     <picture>
-                        <source type="image/webp" srcset="{{ _subbase }}-400.webp">
-                        <img src="{{ s.podcast_image }}" alt="{{ s.name }} cover art" width="1400" height="1400" loading="lazy">
+                        <source type="image/webp" srcset="{{ path_prefix }}{{ _subbase }}-400.webp">
+                        <img src="{{ path_prefix }}{{ s.podcast_image }}" alt="{{ s.name }} cover art" width="1400" height="1400" loading="lazy">
                     </picture>
                     <div class="subscribe-show-meta">
                         <div class="subscribe-show-name">{{ s.name }}</div>
@@ -493,12 +463,12 @@
                         {% if s.spotify_url %}
                         <a href="{{ s.spotify_url | with_utm(campaign=s.slug) }}" target="_blank" rel="noopener" class="subscribe-link-btn" aria-label="Subscribe to {{ s.name }} on Spotify" data-show="{{ s.slug }}">Spotify</a>
                         {% endif %}
-                        <a href="{{ s.rss_file }}" class="subscribe-link-btn subscribe-link-rss" aria-label="Subscribe to {{ s.name }} via RSS" data-show="{{ s.slug }}">RSS</a>
+                        <a href="{{ path_prefix }}{{ s.rss_file }}" class="subscribe-link-btn subscribe-link-rss" aria-label="Subscribe to {{ s.name }} via RSS" data-show="{{ s.slug }}">RSS</a>
                     </div>
                 </div>
                 {% endfor %}
             </div>
-            <p style="text-align:center;color:var(--nn-text-muted);font-family:var(--font-ui);font-size:0.88rem;margin-top:var(--sp-6);">Apple Podcasts and Spotify submission is ongoing — every show is fully subscribable via RSS today.</p>
+            <p style="text-align:center;color:var(--nn-text-muted);font-family:var(--font-ui);font-size:0.88rem;margin-top:var(--sp-6);">Every feed works in every podcast app today &mdash; copy the RSS link into yours. Apple Podcasts and Spotify buttons appear as each show's directory listing goes live. <a href="{{ path_prefix }}how-to-listen.html" style="color:var(--nn-text-muted);">How to listen</a>.</p>
         </div>
     </section>
 
@@ -506,25 +476,23 @@
     <section id="newsletter" class="nn-section" style="border-top:1px solid var(--nn-border);background:radial-gradient(ellipse at 50% 0%, rgba(124,92,255,0.12), transparent 70%);">
         <div class="container" style="max-width:680px;">
             <div class="nn-section-header">
-                <div class="section-label">Weekly digest</div>
-                <h2>Get the best of the network in your inbox</h2>
-                <p>One email per week. Top episodes from every show you follow. Unsubscribe anytime.</p>
+                <div class="section-label">Episode briefings by email</div>
+                <h2>Get the shows you follow in your inbox</h2>
+                <p>Each show sends a short briefing when a new episode lands: the sources, the key numbers, and a link to listen. Pick the shows; unsubscribe anytime.</p>
                 {% if newsletter_subscriber_count %}
                 <p style="font-family:var(--font-ui);font-size:0.85rem;color:var(--nn-text-muted);margin-top:var(--sp-2);">Join {{ "{:,}".format(newsletter_subscriber_count) }}+ readers already subscribed.</p>
                 {% endif %}
             </div>
-            <form action="https://buttondown.com/api/emails/embed-subscribe/patricknovak1" method="post" target="popupwindow"
-                  class="nn-subscribe-form" style="max-width:none;"
-                  onsubmit="
-                    var boxes = this.querySelectorAll('input[name=tag]:checked');
-                    if (boxes.length === 0) {
-                      alert('Please pick at least one show to subscribe to.');
-                      return false;
-                    }
-                    var btn=this.querySelector('button[type=submit]');
-                    btn.disabled=true;btn.textContent='Subscribing…';
-                    setTimeout(function(){btn.textContent='Check your email ✓';},500);
-                  ">
+            {# Posts to the account Worker like every other signup form on the
+               site (Sep 2026 review). This form was the last one still
+               POSTing straight to Buttondown's embed endpoint: it opened the
+               raw response in a new tab, declared "Check your email ✓" on a
+               timer whether or not the request worked, and — because it
+               bypassed the Worker — created no Nerra account, so homepage
+               subscribers never got the gallery downloads and book discount
+               the join page promises. #}
+            <form class="nn-subscribe-form" style="max-width:none;"
+                  onsubmit="var f=this,boxes=f.querySelectorAll('input[name=tag]:checked');if(boxes.length===0){alert('Please pick at least one show to subscribe to.');return false;}var btn=f.querySelector('button[type=submit]');btn.disabled=true;btn.textContent='Subscribing…';var tags=Array.prototype.map.call(boxes,function(c){return c.value;});fetch('https://api.nerranetwork.com/api/subscribe',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:f.email.value,list:'member',tags:tags})}).then(function(r){btn.textContent=r.ok?'Check your email ✓':'Something went wrong — try again';if(r.ok){var a=f.querySelector('.nn-account-link');if(a)a.style.display='inline';}}).catch(function(){btn.textContent='Something went wrong — try again';}).then(function(){btn.disabled=false;});return false;">
                 <p style="font-family:var(--font-ui);font-size:0.85rem;color:var(--nn-text-muted);margin-bottom:var(--sp-3);">
                     Pick the shows you want — everything's selected by default. Uncheck any you'd rather skip.
                     <a href="#" onclick="event.preventDefault();this.closest('form').querySelectorAll('input[name=tag]').forEach(function(b){b.checked=false;});return false;" style="color:var(--nn-text-muted);font-size:0.8rem;">Clear all</a>
@@ -538,12 +506,12 @@
                 </div>
                 <div class="nn-subscribe-row">
                     <input type="email" name="email" placeholder="your@email.com" required aria-label="Email address">
-                    <input type="hidden" value="1" name="embed">
                     <button type="submit">Subscribe</button>
                 </div>
                 <p style="font-family:var(--font-ui);font-size:0.75rem;color:var(--nn-text-muted);margin-top:var(--sp-2);">
-                    No spam. We never share your email. Read our
-                    <a href="privacy-policy.html" style="color:var(--nn-text-muted);">privacy policy</a>.
+                    Subscribing creates a free Nerra account (gallery downloads, member perks). No spam, and we never share your email. Read our
+                    <a href="{{ path_prefix }}privacy-policy.html" style="color:var(--nn-text-muted);">privacy policy</a>.
+                    <a class="nn-account-link" href="{{ path_prefix }}account.html" style="display:none;margin-left:0.5rem;color:var(--nn-cyan);">Your account →</a>
                 </p>
             </form>
         </div>

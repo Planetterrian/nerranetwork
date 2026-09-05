@@ -296,4 +296,31 @@ reviews:
       ab_listen_required: false
       rationale: Every behavioral fix needs a drift-guard per playbook; mirrors TestEditorialRealignmentJuly18 style without weakening hard guardrails.
     agent_cost_usd: 0.126
+  - date: 2026-09-05
+    pr: null
+    doc: docs/reviews/network_delivery_review_2026_09_05.md
+    summary: "Network delivery review sample. The lead story told four to five times per episode (hook, lead, deep dive, go-deeper, teaser); 'Now, to really understand this story...' and 'Now, some progress worth knowing about.' shipped as the prompt's own sentences; four 'What happens next is...' closers in Ep164; five stories in Ep165 ended on 'No X has been announced'."
+    shipped:
+      - "shared CONTENT DISCIPLINE block (A/B)"
+      - "omni_view_podcast.txt - chapter anchors kept as phrases, recited transitions removed; Understanding the Issue explains the mechanism only and may not restate the lead's body; 'End with what happens next' removed (A/B)"
+    deferred:
+      - "closing pool pin (three essay-style closings) - after the flagship A/B reads out"
+    predictions:
+    - metric: "lead-story tellings per episode (manual: hook + body + deep dive + go-deeper + teaser)"
+      baseline: "4-5 (Ep164/165)"
+      expected: "<=2"
+      verdict: pending
+      evidence: null
+    - metric: "'watch-for' + 'nothing-to-say' filler shapes per episode (script_audit)"
+      baseline: "5 + 1 (Ep164/165)"
+      expected: "<=1"
+      verdict: pending
+      evidence: null
+    - metric: "script_digest_overlap_pct median"
+      baseline: "~48% (Ep162-165)"
+      expected: "<=25%"
+      verdict: pending
+      evidence: null
+    agent_cost_usd: null
+
 do_not_retry: []

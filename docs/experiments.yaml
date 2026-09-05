@@ -105,7 +105,7 @@ experiments:
     area: reach
     shipped: 2026-07-21
     readout: 2026-08-25
-    status: decide
+    status: done
     metric: fr_short_vpd_max
     baseline: 0.26
     criteria: >
@@ -118,6 +118,8 @@ experiments:
       53 of 72 launch-window uploads had zero recorded views. Clean
       analytics only since 2026-07-29 (the glob fix), hence the late
       decision date rather than a same-day verdict.
+    outcome: >
+      READ 2026-09-02: KEEP @NerraFR. fr_short_vpd_max 0.26 -> 16.0; FF-FR 4.3k views/28d (median 65/Short, +24 subs), spacex-FR 3.7k. MIT-FR is dead (140 views/25 Shorts) — see mit-dubs-cull.
 
   - id: dub-long-form-probe
     title: "RU+FR long-form dubs on tesla / spacex / FF (operator override)"
@@ -145,7 +147,7 @@ experiments:
     area: retention
     shipped: 2026-08-07
     readout: 2026-08-21
-    status: reading
+    status: done
     target: >
       Short median AVP up vs the ~44% pre-bar level (compare EN+RU short
       retention before/after 08-07 in youtube_stats).
@@ -155,6 +157,8 @@ experiments:
       per-show opt-out youtube.shorts_progress_bar: false. NOTE: overlaps
       the staggered-shorts readout window — judge by retention (AVP),
       which stagger does not touch, not by views.
+    outcome: >
+      No isolated instrument (shipped alongside other render changes); Shorts AVP rose through the window. Kept.
 
   - id: earnings-special-format
     title: "Event specials — earnings/flight reaction episodes"
@@ -175,7 +179,7 @@ experiments:
     area: funnel
     shipped: 2026-08-09
     readout: 2026-08-23
-    status: reading
+    status: done
     target: >
       utm_content=outro sessions appearing in api/funnel.json (QR scans)
       and click-through from video surfaces up vs the pre-08-09 level;
@@ -189,6 +193,8 @@ experiments:
       youtube.shorts_end_card_site_panel. Screenshots are committed
       (assets/site_screens) and refreshed by
       scripts/capture_site_screens.py.
+    outcome: >
+      No isolated instrument; outro sessions are attributable in funnel.json (utm_content=outro). Kept.
 
   - id: dp-pod-script-model-45
     title: "DP Pod script stage on grok-4.5 — SUPERSEDED by network 4.6 upgrade"
@@ -218,7 +224,7 @@ experiments:
     area: reach
     shipped: 2026-08-12
     readout: 2026-08-26
-    status: reading
+    status: done
     metric: long_form_median_avp_en_14d
     baseline: 13.4
     target: >
@@ -232,13 +238,15 @@ experiments:
       Metadata-only — outside landmine #17. Confounded with the
       caption-hold + end-card caption fixes shipping the same day;
       read AVP as the joint effect of the retention batch.
+    outcome: >
+      READ 2026-09-02 (lag-aware 14d windows): EN long-form median AVP 13.4 -> 13.8 — small positive, inside noise; chapters ship and seek-bar 'Key moments' exist, but retention is not the axis they move. Kept (zero cost, real navigation value).
 
   - id: shorts-caption-continuity
     title: "Shorts captions hold through pauses + stay visible over the end card"
     area: retention
     shipped: 2026-08-12
     readout: 2026-08-26
-    status: reading
+    status: done
     target: >
       Shorts median averageViewPercentage up vs the 50.8% EN / 43.6% RU
       (14d) baselines; specifically less drop-off in the final 3 s
@@ -249,6 +257,8 @@ experiments:
       runs after the end-card overlay (last ~3 s of speech kept its
       text hidden under the opaque CTA card). Render-only — outside
       landmine #17.
+    outcome: >
+      READ 2026-09-02: Shorts median AVP 49.4% (pre) -> 53.8% in the motion-era cohort (n=99), 51-54% since. Positive; kept.
 
   - id: shorts-motion-ab-stalled
     title: "Shorts motion A/B — ENDED (operator, 2026-08-14): unreadable"
@@ -276,7 +286,7 @@ experiments:
     area: retention
     shipped: 2026-08-14
     readout: 2026-08-28
-    status: reading
+    status: done
     metric: long_form_median_avp_en_14d
     target: >
       Long-form median AVP up vs the 13.4%/11.4% (14d) recent band. A
@@ -289,6 +299,8 @@ experiments:
       Enabled by ffmpeg input dedup (one -i per unique image + split),
       which removed the per-slot demuxer cost behind the old 24-slot
       cap. Render-only — outside landmine #17.
+    outcome: >
+      READ 2026-09-02: shares the AVP metric with chapters (13.8); the curves say long-form AVD is ~80 s regardless of length, so scene cadence past the first minute cannot register on AVP. Kept for visual quality; the open-cliff entry is the honest instrument.
 
   - id: mit-script-model-46
     title: "Modern Investing script stage on grok-4.6 — ABSORBED into network 4.6 upgrade"
@@ -379,7 +391,17 @@ experiments:
     area: quality
     shipped: 2026-08-18
     readout: 2026-09-01
-    status: reading
+    # Closed at readout (2026-09-01). OUTCOME: PARTIAL ADOPTION.
+    # Adopted for good: dp_pod script-stage (14/14 days incl. the 08-27
+    # bad-service day, LV 7.2-8.3, 2 factual flags in 10 reviewer-days —
+    # at/below every 4.3 news show), synth, and the reviewer (effort LOW
+    # since 08-21). Withdrawn arms stay withdrawn (FPD/UC — 4.6 digest
+    # stall/server-disconnect signature). The quality and operational
+    # verdicts split cleanly: 4.6 writes better and did NOT elevate
+    # factual flags cross-show; its service reliability on long
+    # digest-shaped calls remains the blocker. Successor:
+    # grok-46-wave2-scripts (script-stage only, the shape that survived).
+    status: done
     interim: >
       2026-08-27 (operator-directed): the first_principles and
       unintended_consequences WHOLE-SHOW arms are withdrawn — on the
@@ -479,7 +501,12 @@ experiments:
     area: growth
     shipped: 2026-08-19
     readout: 2026-09-05
-    status: reading
+    # Closed early with the trial readout (2026-09-01): ADOPTED. Titles,
+    # restock, and the specials pin ran the full window without an
+    # operational incident (small calls — the surface shape 4.6 handles
+    # reliably). Title CTR/velocity deltas stay readable in youtube_stats
+    # via the model-era stamps whenever wanted.
+    status: done
     baseline: >
       YouTube title bundle, topic-queue restock, and deep-dive specials
       all on grok-4.3. EN long-form CTR/velocity per the youtube_stats
@@ -511,6 +538,40 @@ experiments:
       MAB / MIT + dp_pod comedy-spec re-tightening) is deliberately
       HELD for the staged-grok-46-trial readout 2026-09-01 per
       docs/model_upgrade_playbook.md.
+  - id: grok-46-wave2-scripts
+    title: "grok-4.6 wave-2 script pins — omni_view Steel Man + MAB teaching prose"
+    area: quality
+    shipped: 2026-09-01
+    readout: 2026-09-12
+    status: reading
+    baseline: >
+      Both shows' scripts on grok-4.3. omni_view: 3 factual flags in 10
+      reviewer-days, Steel Man both-sides framing prone to template tics
+      (the "strongest case" family). MAB: 2 flags/10d; teaching prose is
+      the product. dp_pod's identical script-only pin is the control
+      evidence: 14/14 days, LV 7.2-8.3, 2 flags/10d.
+    target: >
+      Reviewer factual flags at or below each show's 4.3 baseline under
+      the same 4.6-low reviewer (cross-show, within-day comparisons
+      only); zero missed slots attributable to script-stage 4.6 calls;
+      audibly better delivery on the operator's A/B-listen.
+    criteria: >
+      SCRIPT STAGE ONLY — digests stay grok-4.3 (guarded). REVERT
+      TRIGGERS, one line each (delete the podcast_model pin): (1) a
+      script-stage stall/server-disconnect costing an episode its slot —
+      the FPD/UC withdrawal signature; (2) factual flags clearly above
+      the show's 4.3 baseline; (3) the operator's listen verdict.
+      MIT is deliberately EXCLUDED from this wave: its 5-flags-in-10-days
+      rate is DIGEST/data-side on 4.3 (contradictory trade counts, an
+      invented listing venue) — a better script model cannot fix that
+      and would varnish over it; MIT's digest factual quality is its own
+      work item for the review rotation.
+    notes: >
+      dp_pod's comedy/banter spec re-tightening was considered for this
+      wave and deferred to the review-agent rotation: dp_pod scripts have
+      drifted ABOVE their length target on 4.6 (2,000-2,362w vs 1,550)
+      and layering more delivery spec onto an already-long script without
+      a listen-informed pass is the FPD lesson in reverse.
   - id: mit-verified-window-alpha
     title: "Modern Investing states verified-window alpha only"
     area: quality
@@ -546,7 +607,7 @@ experiments:
     area: reach
     shipped: 2026-08-17
     readout: 2026-08-31
-    status: reading
+    status: done
     baseline: "EN search share 15% of channel views (2026-08-17); terms: starship flight 14, fsd v14.1 lite, ..."
     target: >
       EN YT_SEARCH share of views up vs 15%, and search terms appearing
@@ -558,6 +619,8 @@ experiments:
       Channel-level terms are attributed to a show only when they share
       a meaningful token with its recent titles/hooks; unmatched terms
       are dropped rather than sprayed across the channel. Metadata-only.
+    outcome: >
+      READ 2026-09-02: EN YT_SEARCH share 15% -> 16% (2 weeks; flat within noise). Terms are flowing (4 shows carry matched queries into tags + the title hint). Kept as infrastructure; not a lever by itself.
 
   - id: long-open-cliff
     title: "Long-form open cliff — hold at the 5% mark"
@@ -753,3 +816,260 @@ experiments:
       api/op3_stats.json (fixed 2026-08-25, same pass that added the
       edition's cost to the dashboard rollup). First honest read needs
       a few weeks of post-fix nightly data.
+
+  - id: nerra-daily-edition-titles
+    title: "Nerra Daily — LLM-written whole-day edition titles"
+    area: reach
+    shipped: 2026-09-03
+    readout: 2026-09-24
+    status: reading
+    target: >
+      Every one of the first 14 editions was titled with SpaceX Daily's
+      hook (the lead show), so the all-network product read as a SpaceX
+      show in every directory listing and blog title. The links call
+      now writes a one-line headline for the whole day; the lead hook
+      stays the fallback. Target: per-episode OP3 downloads_7d on
+      editions titled by the LLM at or above the SpaceX-titled baseline
+      (Eps 6-14, 2-5 per episode), and edition_title_source == llm on
+      at least 8 of 10 builds.
+    criteria: >
+      If validate_edition_title rejects the model's line on 3+ of 10
+      builds, loosen the bounds before judging the idea. Zero measured
+      movement with the feed still unsubmitted to Apple/Spotify means
+      distribution, not the title, is the gate — same rule as
+      nerra-daily-launch.
+    notes: >
+      Written metadata only (title, blog title, chapters title, OG
+      card) — nothing Mira speaks changed, so outside the landmine-#17
+      A/B gate. Shipped with the Sep 3 2026 review alongside the show
+      notes timestamps.
+
+  - id: chapter-title-cards
+    title: "Long-form chapter title cards at every chapter boundary"
+    area: retention
+    shipped: 2026-09-02
+    readout: 2026-09-23
+    status: reading
+    metric: long_open_hold_5pct_en
+    baseline: 0.49
+    target: >
+      Hold at the 5% mark up, and — the real target — the 25% hold
+      (curves) up: viewers who see what is coming next stay for it.
+      Long-form AVD sits at ~80 s regardless of episode length; the
+      video gave no visual cue of structure. Broadcast-style cards
+      (title, top-left under the brand pill, ~4 s, fade in/out) now
+      fire from the same chapters JSON that powers the seek bar.
+    notes: >
+      Render/metadata only (outside landmine #17). Auto-derived inside
+      build_long_form_video from chapters_path; chapter_cards=[] disables.
+
+  - id: shorts-4-band
+    title: "4th Short per episode at >= 60 vpd (RU/FR science + space shows)"
+    area: reach
+    shipped: 2026-09-02
+    readout: 2026-09-16
+    status: reading
+    metric: ru_short_vpd_max
+    baseline: 55.17
+    target: >
+      RU + FR channel views up with the 4th Short holding >= 60% of the
+      hook Short's median views (the 3rd holds ~80%: RU 'filled' median
+      172 vs hook 214, n=180). Abort if the 4th clip's median falls
+      under ~100 views on RU or the 3rd's median drops.
+    notes: >
+      Members at ship: FF-RU (1361 vpd), spacex-RU (1195), tesla-RU
+      (663), FF-FR (165), spacex-FR (142), tesla-FR (93). +3 uploads/day
+      on channels running 9-17 against the 30/day ceiling. Raises need
+      two consecutive nights (shorts_pending/streak).
+
+  - id: shorts-title-headline-only
+    title: "Shorts titles: headline + #Shorts, no ' | show' tail"
+    area: reach
+    shipped: 2026-09-02
+    readout: 2026-09-23
+    status: reading
+    target: >
+      Views/Short up on EN (median 18 -> 25+). The 45-day top- vs
+      bottom-quartile cut favoured SHORTER Short titles on every channel
+      (RU 66 vs 70 median chars, EN 74 vs 81); the Shorts player already
+      shows the channel name and truncates ~40 chars, so the tail spent
+      the visible budget on a redundancy.
+    notes: >
+      Metadata-only. Long-form titles keep the show tail.
+
+  - id: mit-dubs-cull
+    title: "Modern Investing RU/FR dubs — decide: cull"
+    area: quality
+    shipped: 2026-09-02
+    readout: 2026-09-09
+    status: done
+    criteria: >
+      28d: MIT-RU 37 Shorts -> 393 views (median 6), 3 longs -> 5 views;
+      MIT-FR 25 Shorts -> 140 views (median 4), 6 longs -> 30 views.
+      That is ~$0.18/ep translation + two renders/day for ~20 views/day
+      across both channels, while the same channels' science/space
+      Shorts earn 100-400x that per clip. Operator decision: disable
+      youtube.ru_dub_enabled + dub_languages on modern_investing (the
+      audio RU/FR podcast tracks can stay if the OP3 per-language read
+      justifies them — separate instrument).
+    notes: >
+      Same shape for models_agents_beginners EN Shorts (median 4
+      views/Short) — but MAB long-form works (+6 subs), so the policy's
+      1-Short floor is the right answer there, not a cull.
+    outcome: >
+      DONE 2026-09-02 (operator): youtube.ru_dub_enabled false + dub_languages []
+      on modern_investing. Audio RU/FR tracks kept pending the OP3
+      per-language read.
+
+  - id: scene-briefs-narrative-imagery
+    title: "Story-driven scene briefs — the pictures follow the narration"
+    area: retention
+    shipped: 2026-09-02
+    readout: 2026-09-23
+    status: reading
+    metric: long_open_hold_5pct_en
+    baseline: 0.49
+    target: >
+      Viewer complaints about imagery not matching the subject stop;
+      long-form hold at 5% and Shorts AVP up. Mechanism: one Grok text
+      call per episode writes a concrete, photographable scene per
+      STORY (engine/scene_briefs.py); those briefs LEAD every Grok
+      Imagine prompt (the static image_queries — 'cybertruck',
+      'supercharger' — used to lead, so every Tesla episode shipped the
+      same four pictures); one fresh 16:9 scene per story (cap 8, was a
+      fixed 4) keyed to its chapter for the scheduler; the library
+      blend is back to 8 and ON-TOPIC ONLY (>=1 shared token with hook +
+      chapter titles) instead of padding with random older images.
+    notes: >
+      Cost: +~4 images/episode at $0.02 (+$0.08/ep, ~+$30/mo network)
+      + one ~$0.005 text call. Per-show opt-out scene_briefs_enabled;
+      counts via scenes_per_episode / short_scenes_per_episode.
+      Render/metadata only (outside landmine #17). First A/B-eyeball:
+      compare a tesla + spacex + FF episode's scenes_ep*/ against the
+      digest headlines.
+
+  - id: image-source-2k-and-story-matched-shorts
+    title: "2K source images + Shorts open on the scene about THEIR story"
+    area: retention
+    shipped: 2026-09-02
+    readout: 2026-09-23
+    status: reading
+    target: >
+      Sharper stills (the 16:9 render prescales to 3840 wide for Ken
+      Burns; a 1792-wide source was a 2.1x upsample before any zoom —
+      the softness viewers describe); every Short now leads with the
+      fresh scene whose brief best matches its own window text instead
+      of whichever scene was generated first. Reads jointly with
+      scene-briefs-narrative-imagery on Shorts AVP + long-form hold.
+    notes: >
+      Request size ladder 2K -> legacy -> none, so a revision rejecting
+      2K can never cost an image (guarded). Zero extra cost at the
+      standard model. DECISION for the operator (separate, cost-bearing):
+      grok_image_model: grok-imagine-image-quality ($0.05 vs $0.02) on
+      the three engine shows (FF, spacex, tesla) ≈ +$35/mo — the honest
+      next step if 2K + story briefs don't end the complaints.
+      2026-09-03 CORRECTION: the 2K `size` request was a NO-OP — the
+      endpoint ignores `size`; every one of the 7,500+ committed gallery
+      sidecars (dimensions probed from the real bytes) is 1280x720 /
+      720x1280 on grok-imagine-image whatever was requested. Replaced
+      by the documented `aspect_ratio` + `resolution: "2k"` fields
+      (video-quality-round-3). The delivered width is now recorded per
+      episode as grok_image_px_max; the first honest 2K episodes are
+      2026-09-03's — 1280 there means the endpoint ignored the
+      documented field too and the quality-tier decision moves up.
+
+  - id: video-quality-round-3
+    title: "Real 2K sources, salient-token library blend, chapter cards as a fit gate"
+    area: retention
+    shipped: 2026-09-03
+    readout: 2026-09-23
+    status: reading
+    metric: long_open_hold_5pct_en
+    baseline: 0.51
+    target: >
+      From the first-round readout (Tesla Ep592 frame check + the
+      committed gallery sidecars): (1) the endpoint ignores `size`, so
+      the request now carries the documented `aspect_ratio` +
+      `resolution: 2k` with the delivered width recorded as
+      grok_image_px_max — target 2048 on every 09-03 episode; (2) the
+      library blend counted 'tesla' / 'optimus' / 'cinematic' (95-100%
+      of the library) as relevance, so min_overlap=1 matched every image
+      and a Solar-Roof episode still opened its chapters on a pier of
+      Model S — overlap is now on SALIENT tokens (document-frequency
+      > 20% removed), target: library scenes share a story token with
+      the day's chapters or are not used; (3) a chapter card is a FIT
+      gate on engine.titles.CHAPTER_CARD_MAX, never a clip — clipped
+      first-sentence titles and structural labels get no card (Ep592
+      rendered "Several projects pair storage with solar to").
+    notes: >
+      Render/metadata only (outside landmine #17). Cost unchanged at the
+      standard model; 2K is not priced separately in the docs (flat
+      per-image) — verify on the 09-03 credit files. Guards:
+      tests/test_scene_briefs.py (TestRequestSizeLadder,
+      TestOnTopicLibraryBlend), tests/test_video_commands.py
+      (TestChapterTitleCards::test_only_clean_headlines_earn_a_card).
+
+  - id: dp-pod-youtube-shorts
+    title: "DP Pod on YouTube — Shorts-only, first video surface"
+    area: reach
+    shipped: 2026-09-04
+    readout: 2026-09-25
+    status: reading
+    baseline: "0 YouTube views; OP3 113 downloads/30d, ~27/week, 3.5/episode (below network median); Spotify 0 followers"
+    target: >
+      Shorts velocity earns its own tier line in api/youtube_policy.json
+      (short_vpd measured, not null) and OP3 weekly downloads move off the
+      ~27 plateau; the funnel report shows dp_pod Shorts -> thedppod.html
+      sessions.
+    criteria: >
+      Decide at readout: keep Shorts-only, let the adaptive policy add
+      long-form if long_vpd earns it, or revert (youtube.enabled: false,
+      one line) if Shorts from a two-voice dialogue clip poorly.
+    notes: >
+      Held at launch and on Aug 10 pending the script-model A/B; the
+      staged grok-4.6 trial closed 2026-09-01 with the dp_pod script
+      stage adopted, so the audio being clipped is the audio the show
+      keeps. Operator one-time: create + flag the podcast playlist in
+      Studio (landmine #15). Render/metadata only — outside landmine #17.
+
+  - id: dp-pod-lever-shape-v2
+    title: "DP Pod Lever — real-world actions, not screen lookups"
+    area: quality
+    shipped: 2026-09-04
+    readout: 2026-09-18
+    status: reading
+    baseline: "21/26 renewed-episode levers were screen lookups; 13/26 opened with 'Open'; 3 near-duplicate groups"
+    target: >
+      <=5/10 screen-lookup levers, <=3/10 opening with the same verb,
+      >=9/10 fuzzy-distinct — scored by the 2026-09-04 ledger predictions.
+    notes: >
+      Successor tic of the Aug-10 rotation memory: exact repeats stopped
+      and the model converged on a shape instead. Fix is data-side (fuzzy
+      dedup, banned-verb and real-world-due lines computed from the last
+      six levers) plus a shape-only de-seed of the digest Lever spec.
+      Prompt change — landmine #17 A/B.
+
+  - id: network-content-discipline-2026-09
+    title: "Content-density pass — scripts written from the digest, not copied; one owner per fact"
+    area: quality
+    shipped: 2026-09-05
+    readout: 2026-09-26
+    status: reading
+    baseline: "flagship scripts 44-66% median digest-verbatim 8-grams (SpaceX 66, Tesla 49, M&A 44); 33 cross-section duplicate digest items in 160 digests; filler 6-10% of sentences on SpaceX; deep dive re-told a covered story in 5/6 M&A episodes"
+    target: >
+      script_digest_overlap_pct <= 25% on every flagship episode;
+      digest_cross_section_dupes_removed trending to 0; script_filler_pct
+      <= 5%; one closing text per flagship on 10/10. Read from the
+      review_snapshot "Script density audit" table and metrics_ep*.json.
+    criteria: >
+      Hit = all four numbers move as targeted on the three flagships by the
+      readout. Partial (verbatim share does not move but duplicates and
+      filler do) = ship the data-side paraphrase gate (reject + one script
+      rerun above threshold). Miss on any A/B-listened prompt = git revert
+      of that prompt only; the engine modules stay (removal-only, read-only).
+    notes: >
+      Operator brief 2026-09-05 ("narrative driven with redundant
+      repetition"). Every prompt change is landmine-#17 A/B; the engine
+      changes (engine/digest_overlap, engine/script_audit, show_memory
+      instruction, pronunciation, duplicate tail-line guard) are not.
+      Review doc: docs/reviews/network_delivery_review_2026_09_05.md.

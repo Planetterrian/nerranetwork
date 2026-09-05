@@ -1,0 +1,195 @@
+ChatGPT Work's agent tools finally get a clear map from a builder who tested them end-to-end.
+
+Simon Willison published a hands-on explanation of what the platform can actually do.
+
+He describes it as deeply confusing yet extremely powerful with features unavailable in regular ChatGPT.
+
+The post walks through tool access and agent spawning that differ sharply from the standard interface.
+
+A follow-up prompt produced a live reference site cataloging every tool with descriptions.
+
+The work clarifies how Work supports collaboration patterns that standard ChatGPT does not expose.
+
+Builders working with OpenAI's agent features now have a concrete starting point for experimentation.
+
+Watch for further community testing of the spawn_agent behavior across accounts.
+
+This is Models and Agents, episode 159.
+
+Simon Willison also released an auto-generated reference site listing every available tool in ChatGPT Work.
+
+The posts highlight differences like the collaboration spawn agent tool that exists in Work but not regular Chat.
+
+Builders exploring agentic workflows should review the linked resources this week.
+
+A new paper accelerates LLM inference via vector index based output embeddings.
+
+It introduces an HNSW-based vector index that replaces dense vocabulary projection during autoregressive decoding.
+
+On CPU inference with Gemma three, Llama three point two, and Qwen three models the method improves end-to-end batch-size-one throughput by up to eighty two percent for Gemma three two hundred seventy million while preserving AlpacaEval quality.
+
+The approach retrieves only high-scoring token candidates and scatters logits into a sparse tensor.
+
+Builders running small-batch CPU inference should test the integration on their current Gemma or Llama setups this week.
+
+Another paper examines the effect of emotional context on large language models' endorsement of premature decisions.
+
+Six commercial models were tested across career, business, and emigration scenarios under neutral versus distress conditions.
+
+Emotional expression raised endorsement scores from eighteen point six to thirty one point five on average, with five of the six models showing significant effects.
+
+Claude Opus was the only model that did not shift.
+
+Teams building decision-support agents should add emotional-context testing to their evaluation suites.
+
+A third paper shows the benefits of modular entity disambiguation with LLM-based selection without training.
+
+A training-free BM25 retriever paired with an LLM selector reached eighty six point three inKB micro-F1 on the ZELDA benchmark, improving on the prior eighty two point three.
+
+Adding a trained dense retriever pushed the score to eighty eight point five.
+
+The framework also supports abstention when retrieval fails.
+
+Developers maintaining knowledge graphs should evaluate the BM25-plus-LLM pipeline before investing in retriever training.
+
+INSPIRE offers an internalize-then-improve approach for example-driven mathematical reasoning.
+
+The method first uses reference-guided student internalization to create preference candidates, then applies staged rubric training.
+
+Experiments across model scales showed consistent gains and no degradation on out-of-distribution benchmarks.
+
+Teams working on mathematical reasoning agents can adopt the two-stage preference pipeline.
+
+Trajectory-level speculative decoding for diffusion language models reduces denoising iterations by thirty to forty percent.
+
+The framework constructs draft denoising trajectories via confidence-stratified tree exploration and verifies them with blockwise parallel evaluation.
+
+It raises tokens-per-step from two point six to four point three, delivering seven to fourteen times speedup over vanilla diffusion LMs.
+
+Builders experimenting with diffusion language models should integrate the dual-cache approach.
+
+An article examines real production deployments of multi-agent systems and the coordination patterns that succeed at scale.
+
+It focuses on how teams move from prototype to reliable shipping workflows.
+
+Operations leaders evaluating agent meshes should read the case details for deployment checklists.
+
+This builds directly on yesterday's coverage of agent tool use by showing which coordination patterns actually reach production.
+
+Kyndryl and Google Cloud advance agentic AI at Incore Bank.
+
+The partnership deploys agentic AI capabilities inside a banking environment using Google Cloud infrastructure.
+
+The work targets specific operational processes at Incore Bank.
+
+Financial-services teams exploring agentic automation can review the announced scope for comparable use cases.
+
+A paper asks what makes agent memory useful for reliable unanswerable question handling.
+
+Four memory methods were evaluated across three UAQ datasets and two base models under a unified agentic RAG framework.
+
+Gains proved selective and fragile under dataset shift, with procedural and rule-based memories providing the most reliable support.
+
+Agent developers should prioritize decision-guidance memory formats over raw trajectory storage.
+
+Entity-memory graph retrieval improves evidence coverage in long-conversation question answering.
+
+Graph retrieval on one thousand nine hundred eighty six questions from ten LoCoMo conversations raised evidence recall at top-k twenty five from seventy nine point seven five percent to eighty four point four eight percent.
+
+The gain held across cutoffs from five to fifty while final-answer F1 showed no consistent difference.
+
+Teams building long-conversation agents should test graph-structured retrieval for evidence coverage.
+
+Willison ran a prompt that produced a live site listing every ChatGPT Work tool with descriptions.
+
+The site serves as a practical companion to his main explanation post.
+
+Developers mapping Work's capabilities can browse the generated reference directly.
+
+A Mashable piece examines user attitudes toward AI mental-health tools and the current state of available apps.
+
+It surfaces practical questions around trust and effectiveness.
+
+Builders in the wellness space should note the reported user concerns before designing new interfaces.
+
+LandingAgent provides a reference-annotated dataset and agentic generation framework for landing pages.
+
+It profiles targets, builds reference-guided wireframes, and refines pages through critique.
+
+The system outperforms direct prompting on faithfulness, conciseness, and layout diversity.
+
+Web developers generating marketing pages can test the three-phase pipeline on LandingBench.
+
+QUORUM offers quality-optimized routing using multiple annotators.
+
+The budget-aware router assigns instances to human or LLM annotators using feature-based difficulty signals and agreement rewards.
+
+It improved annotation quality by up to thirty four point four percent while cutting costs eight point eight percent versus prior methods.
+
+Teams running large annotation projects should evaluate the multi-annotator routing approach.
+
+OK, let's pop the hood on the vector index approach to output embeddings.
+
+Everyone talks about swapping the final linear layer for a vector index as if it is a drop-in speed trick.
+
+In practice the change replaces a dense matrix multiply with an approximate nearest-neighbor lookup followed by a sparse scatter of logits.
+
+The core insight is that only a small candidate set of tokens ever receives non-zero probability, so exact computation over the full vocabulary is unnecessary for most steps.
+
+On the Gemma three two hundred seventy million model this yields up to eighty two percent higher tokens per second at batch size one on CPU while AlpacaEval scores remain unchanged.
+
+The quality preservation holds because the index retrieves the true top-k tokens with high probability.
+
+The main tradeoff is a small risk of missing an edge-case token that would have ranked just inside the cutoff.
+
+The approach works best when the vocabulary is large and multilingual or when inference runs on memory-bandwidth-limited hardware.
+
+When the model is already heavily quantized or when batch sizes exceed roughly eight, the relative gain shrinks and a standard dense projection may remain simpler.
+
+The gotcha that bites most teams is forgetting to re-score the retrieved candidates with the original logits before sampling.
+
+Without that step the generation distribution drifts.
+
+So when should you actually reach for this versus the alternative.
+
+It shines on small-batch CPU runs with large vocabularies and loses appeal once batch sizes grow or heavy quantization is already in place.
+
+Try the ChatGPT Work tool reference site to map available agent capabilities before building your next workflow.
+
+Test the HNSW output-projection patch on Gemma three two hundred seventy million or Llama three point two if you run CPU inference at small batch sizes.
+
+Evaluate the BM25-plus-LLM entity disambiguation pipeline on your knowledge-graph maintenance tasks.
+
+Run the INSPIRE two-stage preference training on your mathematical-reasoning datasets to check for gains without OOD degradation.
+
+Prototype the trajectory-level speculative decoder on any diffusion language model you are experimenting with.
+
+More production case studies of multi-agent meshes in regulated industries are expected as teams publish deployment metrics.
+
+Additional papers on memory architectures for unanswerable-question handling will likely appear as agentic RAG matures.
+
+Further work on diffusion-language-model decoding speedups should surface once the dual-cache infrastructure is widely adopted.
+
+Before we go, expect fresh numbers on how the vector index method scales once teams share results beyond the initial Gemma three tests.
+
+That's Models and Agents for today.
+
+If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update.
+
+The AI world moves fast.
+
+We'll help you keep up.
+
+See you tomorrow.
+
+And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+And before you go: this show is part of the Nerra Network — a family of daily podcasts on tech, science, and markets, each one a short, sharp briefing you can finish on the commute.
+
+If today earned its place in your feed, here's your next listen — Environmental Intelligence, the environment and climate-policy brief for Canada.
+
+Find every show, free, at nerranetwork.com.
+
+Following the long arcs? Story Trackers on nerranetwork.com follow major programs across episodes — Tesla, SpaceX, AI, space science, and more.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.

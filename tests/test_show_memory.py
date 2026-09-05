@@ -151,3 +151,19 @@ class TestCorruptionTolerance:
         (tmp_path / tm.NARRATIVE_TRACKER_FILENAME).write_text("{ not valid json", encoding="utf-8")
         tracker = tm.load_narrative_tracker(tmp_path)
         assert "programs" in tracker  # graceful fallback, no exception
+
+
+class TestContinuityExampleDeSeeded:
+    """Sep 4 2026: the shared status block supplied a quotable callback
+    sentence ('Remember, we covered [program] yesterday — …') that Models &
+    Agents reproduced verbatim in 8/10 episodes, each time naming a tracker
+    display name rather than real prior coverage. De-seeded by shape."""
+
+    def test_status_block_has_no_quotable_callback(self):
+        from engine import show_memory
+        tracker = {"programs": {"compute": {"display_name": "AI Compute & Inference",
+                                             "status": "seeded", "key_open_questions": ["q"]}}}
+        block = show_memory.build_narrative_status_block(tracker, "MODELS & AGENTS")
+        assert block, "block should render with one program"
+        assert "Remember, we covered" not in block
+        assert "never a generic" in block

@@ -761,7 +761,7 @@ class TestShortsSupplyLadder:
     def test_ladder_bands(self):
         mod = _load_script()
         cases = [(0.0, 1), (3.9, 1), (4.0, 2), (19.9, 2), (20.0, 3),
-                 (62.3, 3), (1000.0, 3)]
+                 (59.9, 3), (60.0, 4), (62.3, 4), (1000.0, 4)]
         for vpd, expected in cases:
             assert mod.shorts_for_vpd(vpd) == expected, f"vpd {vpd}"
 
@@ -773,13 +773,29 @@ class TestShortsSupplyLadder:
 
     def test_hot_shorts_only_show_earns_a_third(self):
         mod = _load_script()
+        # 30 views one day after publish = 30 vpd -> the 3-Short band
+        # (Sep 2026: 60 vpd now earns a 4th, so the fixture sits inside
+        # [20, 60) to keep testing the third).
         stats = _stats(
             [_vid(kind="short", channel="ru", published="2026-07-12",
-                  views=60)] * 4)
+                  views=30)] * 4)
         policy = mod.build_policy(stats, None)
         entry = policy["channels"]["ru"]["tesla"]
         assert entry["shorts_per_episode"] == 3
         assert entry["publish_long_form"] is False   # RU longs stay gated
+
+    def test_very_hot_shorts_only_show_earns_a_fourth(self):
+        """Sep 2 2026: the 4-Short band at 60 vpd. 45 days of the 3-Short
+        band showed RU 'filled' (2nd/3rd) Shorts earn a median 172 views
+        (n=180) vs 214 for the hook Short — the marginal clip holds ~80%
+        of the lead's audience and out-earns every EN Short."""
+        mod = _load_script()
+        stats = _stats(
+            [_vid(kind="short", channel="ru", published="2026-07-12",
+                  views=70)] * 4)
+        policy = mod.build_policy(stats, None)
+        entry = policy["channels"]["ru"]["tesla"]
+        assert entry["shorts_per_episode"] == 4
 
     def test_written_count_matches_the_logged_computation(self):
         """The writer must not carry its own copy of the threshold rule.

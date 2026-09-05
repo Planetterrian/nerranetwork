@@ -214,10 +214,15 @@ class TestGalleryBlendPoolSize:
         can place up to 24 slots. The library blend is the free way to
         stop images repeating five times in one episode."""
         from engine.config import YouTubeConfig
-        from engine.scene_scheduler import _MAX_SLIDESHOW_SLOTS
 
-        fresh = 4
-        pool = fresh + YouTubeConfig().gallery_blend_max_long
-        assert pool >= _MAX_SLIDESHOW_SLOTS * 0.75, (
-            f"pool of {pool} against {_MAX_SLIDESHOW_SLOTS} slots still "
-            f"repeats heavily")
+        # Sep 2026: the pool is no longer measured against the slot count.
+        # One fresh scene PER STORY (scene briefs) means an image repeating
+        # across a chapter's slots is the DESIGN — the chapter keeps its
+        # own picture — not the defect this guard was written for. What
+        # must hold: fresh + on-topic library can cover a typical
+        # 8-12 chapter episode without an off-topic filler.
+        cfg = YouTubeConfig()
+        pool = cfg.scenes_per_episode + cfg.gallery_blend_max_long
+        assert cfg.scenes_per_episode >= 8
+        assert cfg.gallery_blend_min_overlap >= 1
+        assert pool >= 12, f"pool of {pool} cannot cover a 12-chapter episode"

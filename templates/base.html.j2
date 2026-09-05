@@ -6,7 +6,12 @@
     <meta name="description" content="{{ meta_description }}">
     {% if marketing.gsc_verification %}<meta name="google-site-verification" content="{{ marketing.gsc_verification }}">{% endif %}
     {% if meta_keywords %}<meta name="keywords" content="{{ meta_keywords }}">{% endif %}
-    <title>{{ page_title }}</title>
+    {#- Templates may override ``block title``; the default is the
+        ``page_title`` context value. Six templates declared a title
+        block that nothing rendered (Sep 2026 review) — the MIT
+        performance page shipped an EMPTY <title> because it relied
+        on the block alone. Both paths now work. -#}
+    <title>{% block title %}{{ page_title }}{% endblock %}</title>
     {% if theme_color %}<meta name="theme-color" content="{{ theme_color }}">{% endif %}
 
     <!-- Open Graph -->
@@ -30,9 +35,9 @@
     {# Bilingual hreflang — English root ↔ Russian root. Only emitted on the
        top-level Nerra landing pages, not per-show pages. #}
     {% if emit_bilingual_hreflang %}
-    <link rel="alternate" hreflang="en" href="https://nerranetwork.com/index.html">
-    <link rel="alternate" hreflang="ru" href="https://nerranetwork.com/ru/index.html">
-    <link rel="alternate" hreflang="x-default" href="https://nerranetwork.com/index.html">
+    <link rel="alternate" hreflang="en" href="https://nerranetwork.com/">
+    <link rel="alternate" hreflang="ru" href="https://nerranetwork.com/ru/">
+    <link rel="alternate" hreflang="x-default" href="https://nerranetwork.com/">
     {% endif %}
 
     <!-- Google Fonts: DM Sans + Source Serif 4 -->
@@ -162,6 +167,12 @@
         'footer_terms_of_service': 'Условия использования' if _is_ru else 'Terms of Service',
         'footer_ai_disclosure': 'ИИ-раскрытие' if _is_ru else 'AI Disclosure',
         'footer_network_status': 'Статус сети' if _is_ru else 'Network Status',
+        'nav_more': 'Ещё' if _is_ru else 'More',
+        'nav_books': 'Книги' if _is_ru else 'Books',
+        'nav_gallery': 'Галерея' if _is_ru else 'Image Gallery',
+        'nav_data': 'Данные и дашборды' if _is_ru else 'Data & Dashboards',
+        'nav_editorial': 'Редакционная политика' if _is_ru else 'Editorial Process',
+        'nav_support': 'Поддержать сеть' if _is_ru else 'Support the Network',
         'subscribe_h4': 'Подписка на обновления' if _is_ru else 'Get Show Updates',
         'subscribe_subtitle': 'Выберите подкасты, которые хотите получать на почту:' if _is_ru else 'Pick the shows you want in your inbox:',
         'subscribe_email_placeholder': 'ваш@email.ru' if _is_ru else 'your@email.com',
@@ -169,7 +180,7 @@
         'subscribe_button': 'Подписаться' if _is_ru else 'Subscribe',
         'subscribe_button_loading': 'Подписка…' if _is_ru else 'Subscribing…',
         'subscribe_button_done': 'Проверьте почту ✓' if _is_ru else 'Check your email ✓',
-        'copyright_line': '© 2026 Nerra Network. Все шоу — независимое производство.' if _is_ru else '© 2026 Nerra Network. All shows independently produced.',
+        'copyright_line': ('© ' ~ current_year ~ ' Nerra Network. Все шоу — независимое производство.') if _is_ru else ('© ' ~ current_year ~ ' Nerra Network. All shows independently produced.'),
         'ai_notice': 'Nerra Network использует ИИ-инструменты в производстве контента.' if _is_ru else 'Nerra Network uses AI tools in content production.',
         'learn_more': 'Подробнее' if _is_ru else 'Learn more',
     } -%}
@@ -255,32 +266,66 @@
                         {% endfor %}
                     </div>
                 </li>
+                {# "More" (Sep 2026 review): Books, the gallery, the data
+                   dashboards, the editorial page and the support page are
+                   real products that were reachable only from the ~70-link
+                   footer. One compact dropdown, mirrored in the mobile menu. #}
+                <li class="nn-nav-dropdown">
+                    <button class="nn-nav-dropdown-btn" aria-expanded="false" aria-haspopup="true">
+                        {{ t.nav_more }}
+                        <svg viewBox="0 0 12 12" fill="none"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                    <div class="nn-nav-dropdown-menu nn-nav-dropdown-menu--compact">
+                        <a href="{{ path_prefix }}books.html">{{ t.nav_books }}</a>
+                        <a href="{{ path_prefix }}gallery.html">{{ t.nav_gallery }}</a>
+                        <a href="{{ path_prefix }}data.html">{{ t.nav_data }}</a>
+                        <a href="{{ path_prefix }}editorial.html">{{ t.nav_editorial }}</a>
+                        <a href="{{ path_prefix }}faq.html">{{ t.footer_faq }}</a>
+                        <a href="{{ path_prefix }}press.html">{{ t.footer_press }}</a>
+                        <a href="{{ path_prefix }}support.html">{{ t.nav_support }}</a>
+                    </div>
+                </li>
+                {# The logo is the home link; a separate "Home" item was
+                   redundant on every page but the homepage (which already
+                   overrode it away) — removed Sep 2026. #}
                 {% block nav_links %}
                 <li><a href="{{ path_prefix }}start-here.html">{{ t.nav_start_here }}</a></li>
                 <li><a href="{{ path_prefix }}how-to-listen.html">{{ t.nav_listen }}</a></li>
                 <li><a href="{{ path_prefix }}about.html">{{ t.nav_about }}</a></li>
                 <li><a href="{{ path_prefix }}player.html">{{ t.nav_player }}</a></li>
-                <li><a href="{{ path_prefix }}index.html">{{ t.nav_home }}</a></li>
                 {% endblock %}
+                {# Membership entry point (Aug 30 2026): "Join" by default;
+                   assets/js/tracking-free member probe below swaps it to
+                   "My Nerra" when the api.nerranetwork.com cookie is live,
+                   so signed-in visitors always have a one-click path to
+                   their dashboard. Deliberately OUTSIDE the nav_links
+                   block so per-page nav overrides keep it. #}
+                <li><a id="nn-nav-account" href="{{ path_prefix }}join.html"
+                       style="border:1px solid var(--nn-border);border-radius:999px;padding:0.3rem 0.85rem;">{{ t.get('nav_join', 'Join') }}</a></li>
             </ul>
 
             <button class="nn-hamburger" aria-label="{{ t.toggle_menu }}" aria-expanded="false" onclick="var m=document.getElementById('mobileMenu');m.classList.toggle('open');this.setAttribute('aria-expanded',m.classList.contains('open'));document.body.classList.toggle('menu-open')">&#9776;</button>
         </div>
     </nav>
 
-    <!-- Mobile Menu -->
+    <!-- Mobile Menu. Closing is handled by ONE delegated listener in the
+         script block below (any link tapped closes the menu, clears the
+         body scroll lock and resets the hamburger's aria-expanded) — the
+         per-link inline onclick handlers were removed Sep 2026 after the
+         homepage's override forgot the body class and left the page
+         scroll-locked after tapping an in-page anchor. -->
     <div id="mobileMenu" class="nn-mobile-menu">
+        <a id="nn-nav-account-m" href="{{ path_prefix }}join.html" style="font-weight:600;">{{ t.get('nav_join', 'Join') }}</a>
         {% block mobile_nav_links %}
-        <a href="{{ path_prefix }}start-here.html" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">{{ t.nav_start_here }}</a>
-        <a href="{{ path_prefix }}how-to-listen.html" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">{{ t.nav_how_to_listen }}</a>
-        <a href="{{ path_prefix }}about.html" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">{{ t.nav_about }}</a>
-        <a href="{{ path_prefix }}player.html" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">{{ t.nav_player }}</a>
-        <a href="{{ path_prefix }}index.html" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">{{ t.nav_home }}</a>
+        <a href="{{ path_prefix }}start-here.html">{{ t.nav_start_here }}</a>
+        <a href="{{ path_prefix }}how-to-listen.html">{{ t.nav_how_to_listen }}</a>
+        <a href="{{ path_prefix }}about.html">{{ t.nav_about }}</a>
+        <a href="{{ path_prefix }}player.html">{{ t.nav_player }}</a>
         {% endblock %}
         <div class="nn-mobile-shows">
             <div class="nn-mobile-shows-title">{{ t.mobile_all_shows }}</div>
             {% for s in all_shows %}
-            <a href="{{ path_prefix }}{{ s.show_page }}" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
+            <a href="{{ path_prefix }}{{ s.show_page }}" class="nn-mobile-show-link">
                 <picture><source type="image/webp" srcset="{{ path_prefix }}{{ s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image }}-400.webp"><img src="{{ path_prefix }}{{ s.podcast_image }}" alt="{{ s.name }} cover art" width="1400" height="1400" loading="lazy"></picture>
                 {{ s.name }}
             </a>
@@ -288,15 +333,24 @@
         </div>
         <div class="nn-mobile-shows">
             <div class="nn-mobile-shows-title">{{ t.mobile_blogs }}</div>
-            <a href="{{ path_prefix }}blog/index.html" class="nn-mobile-show-link" style="font-weight:600" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
+            <a href="{{ path_prefix }}blog/index.html" class="nn-mobile-show-link" style="font-weight:600">
                 {{ t.all_blog_posts }}
             </a>
             {% for s in all_shows %}
-            <a href="{{ path_prefix }}{{ s.blog_page }}" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
+            <a href="{{ path_prefix }}{{ s.blog_page }}" class="nn-mobile-show-link">
                 <picture><source type="image/webp" srcset="{{ path_prefix }}{{ s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image }}-400.webp"><img src="{{ path_prefix }}{{ s.podcast_image }}" alt="{{ s.name }} cover art" width="1400" height="1400" loading="lazy"></picture>
                 {{ s.name }} {{ t.show_blog_suffix }}
             </a>
             {% endfor %}
+        </div>
+        <div class="nn-mobile-shows">
+            <div class="nn-mobile-shows-title">{{ t.nav_more }}</div>
+            <a href="{{ path_prefix }}books.html" class="nn-mobile-show-link">{{ t.nav_books }}</a>
+            <a href="{{ path_prefix }}gallery.html" class="nn-mobile-show-link">{{ t.nav_gallery }}</a>
+            <a href="{{ path_prefix }}data.html" class="nn-mobile-show-link">{{ t.nav_data }}</a>
+            <a href="{{ path_prefix }}editorial.html" class="nn-mobile-show-link">{{ t.nav_editorial }}</a>
+            <a href="{{ path_prefix }}faq.html" class="nn-mobile-show-link">{{ t.footer_faq }}</a>
+            <a href="{{ path_prefix }}support.html" class="nn-mobile-show-link">{{ t.nav_support }}</a>
         </div>
     </div>
 
@@ -330,35 +384,44 @@
                     <h4>{{ t.footer_listen }}</h4>
                     <a href="{{ path_prefix }}how-to-listen.html" style="font-weight:600">{{ t.nav_how_to_listen }}</a>
                     <a href="{{ path_prefix }}player.html" style="font-weight:600">{{ t.footer_network_player }}</a>
-                    <a href="{{ 'https://podcasts.apple.com/us/podcast/tesla-shorts-time/id1855142939' | with_utm(campaign='tesla', medium='footer') }}" target="_blank" rel="noopener" data-show="tesla">Apple Podcasts</a>
+                    <a href="{{ 'https://podcasts.apple.com/us/podcast/tesla-shorts-time/id1855142939' | with_utm(campaign='tesla', medium='footer') }}" target="_blank" rel="noopener" data-show="tesla">Tesla Shorts Time on Apple Podcasts</a>
                     <a href="{{ path_prefix }}network.rss">{{ t.footer_network_rss }}</a>
                     {% for s in all_shows %}
                     <a href="{{ path_prefix }}{{ s.rss_file }}">{{ s.name }} RSS</a>
                     {% endfor %}
+                </div>
+                {#- The About column used to sit OUTSIDE .nn-footer-grid
+                    (after its closing div), so it rendered as a full-width
+                    block under a 4-track grid that already had 5 children.
+                    Now inside the grid, which is 5 tracks (main.css). -#}
+                <div class="nn-footer-col">
+                    <h4>{{ t.footer_about }}</h4>
+                    <a href="{{ path_prefix }}about.html">{{ t.footer_about_network }}</a>
+                    <a href="{{ path_prefix }}start-here.html">{{ t.nav_start_here }}</a>
+                    <a href="{{ path_prefix }}faq.html">{{ t.footer_faq }}</a>
+                    <a href="{{ path_prefix }}contact.html">{{ t.footer_contact }}</a>
+                    <a href="{{ path_prefix }}press.html">{{ t.footer_press }}</a>
+                    <a href="{{ path_prefix }}editorial.html">{{ t.nav_editorial }}</a>
+                    <a href="{{ path_prefix }}ai-disclosure.html">{{ t.footer_ai_disclosure }}</a>
+                    <a href="{{ path_prefix }}privacy-policy.html">{{ t.footer_privacy_policy }}</a>
+                    <a href="{{ path_prefix }}terms-of-service.html">{{ t.footer_terms_of_service }}</a>
+                    <a href="{{ path_prefix }}gallery.html">{{ t.nav_gallery }}</a>
+                    <a href="{{ path_prefix }}books.html">{{ t.nav_books }}</a>
+                    <a href="{{ path_prefix }}data.html">{{ t.nav_data }}</a>
+                    <a href="{{ path_prefix }}support.html">{{ t.nav_support }}</a>
+                    {#- Public visitors land on the sponsor view (audience +
+                        catalogue); the operator bookmarks management.html. -#}
+                    <a href="{{ path_prefix }}management.html?view=sponsor">{{ t.footer_network_status }}</a>
                 </div>
                 <div class="nn-footer-col">
                     <h4>{{ t.footer_connect }}</h4>
                     <a href="https://x.com/teslashortstime" target="_blank" rel="noopener">@teslashortstime</a>
                     <a href="https://x.com/omniviewnews" target="_blank" rel="noopener">@omniviewnews</a>
                     <a href="https://x.com/planetterrian" target="_blank" rel="noopener">@planetterrian</a>
+                    <a href="https://www.youtube.com/@NerraNetwork" target="_blank" rel="noopener">YouTube @NerraNetwork</a>
+                    <a href="https://www.youtube.com/@NerraRU" target="_blank" rel="noopener">YouTube @NerraRU</a>
+                    <a href="{{ path_prefix }}contact.html">{{ t.footer_contact }}</a>
                 </div>
-            </div>
-            <div class="nn-footer-col">
-                <h4>{{ t.footer_about }}</h4>
-                <a href="{{ path_prefix }}about.html">{{ t.footer_about_network }}</a>
-                <a href="{{ path_prefix }}start-here.html">{{ t.nav_start_here }}</a>
-                <a href="{{ path_prefix }}how-to-listen.html">{{ t.nav_how_to_listen }}</a>
-                <a href="{{ path_prefix }}faq.html">{{ t.footer_faq }}</a>
-                <a href="{{ path_prefix }}contact.html">{{ t.footer_contact }}</a>
-                <a href="{{ path_prefix }}press.html">{{ t.footer_press }}</a>
-                <a href="{{ path_prefix }}privacy-policy.html">{{ t.footer_privacy_policy }}</a>
-                <a href="{{ path_prefix }}terms-of-service.html">{{ t.footer_terms_of_service }}</a>
-                <a href="{{ path_prefix }}ai-disclosure.html">{{ t.footer_ai_disclosure }}</a>
-                <a href="{{ path_prefix }}editorial.html">{% if _is_ru %}Редакционная политика{% else %}Editorial Process{% endif %}</a>
-                <a href="{{ path_prefix }}gallery.html">{% if _is_ru %}Галерея{% else %}Image Gallery{% endif %}</a>
-                <a href="{{ path_prefix }}books.html">{% if _is_ru %}Книги{% else %}Books{% endif %}</a>
-                <a href="{{ path_prefix }}data.html">{% if _is_ru %}Данные и дашборды{% else %}Data &amp; Dashboards{% endif %}</a>
-                <a href="{{ path_prefix }}management.html">{{ t.footer_network_status }}</a>
             </div>
             {#- Funnel landing pages set ``hide_footer_subscribe`` (July
                 2026). Their single ask is one named letter; this block
@@ -419,32 +482,106 @@
     </footer>
 
     <script>
-    // Toggle aria-expanded on dropdown hover/focus
-    document.querySelectorAll('.nn-nav-dropdown').forEach(function(dd) {
-        var btn = dd.querySelector('.nn-nav-dropdown-btn');
-        if (!btn) return;
-        dd.addEventListener('mouseenter', function() { btn.setAttribute('aria-expanded', 'true'); });
-        dd.addEventListener('mouseleave', function() { btn.setAttribute('aria-expanded', 'false'); });
-        btn.addEventListener('focus', function() { btn.setAttribute('aria-expanded', 'true'); });
-        btn.addEventListener('blur', function() {
-            setTimeout(function() {
-                if (!dd.contains(document.activeElement)) btn.setAttribute('aria-expanded', 'false');
-            }, 100);
-        });
-    });
-    // Mobile footer accordions
-    if (window.innerWidth <= 768) {
-        document.querySelectorAll('.nn-footer-col h4').forEach(function(h4) {
-            h4.addEventListener('click', function() {
-                h4.parentElement.classList.toggle('expanded');
+    // Nav dropdowns: hover opens via CSS; click / Enter / Space toggle the
+    // `.open` class so keyboard and touch users can actually open them
+    // (until Sep 2026 focus set aria-expanded="true" while nothing was
+    // visible). Escape or an outside click closes any open menu.
+    (function () {
+        var dropdowns = Array.prototype.slice.call(document.querySelectorAll('.nn-nav-dropdown'));
+        function closeAll(except) {
+            dropdowns.forEach(function (d) {
+                if (d === except) return;
+                d.classList.remove('open');
+                var b = d.querySelector('.nn-nav-dropdown-btn');
+                if (b) b.setAttribute('aria-expanded', 'false');
+            });
+        }
+        dropdowns.forEach(function (dd) {
+            var btn = dd.querySelector('.nn-nav-dropdown-btn');
+            if (!btn) return;
+            dd.addEventListener('mouseenter', function () { btn.setAttribute('aria-expanded', 'true'); });
+            dd.addEventListener('mouseleave', function () {
+                if (!dd.classList.contains('open')) btn.setAttribute('aria-expanded', 'false');
+            });
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                var willOpen = !dd.classList.contains('open');
+                closeAll(dd);
+                dd.classList.toggle('open', willOpen);
+                btn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+            });
+            dd.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') {
+                    dd.classList.remove('open');
+                    btn.setAttribute('aria-expanded', 'false');
+                    btn.focus();
+                }
+            });
+            dd.addEventListener('focusout', function () {
+                setTimeout(function () {
+                    if (!dd.contains(document.activeElement)) {
+                        dd.classList.remove('open');
+                        btn.setAttribute('aria-expanded', 'false');
+                    }
+                }, 100);
             });
         });
-    }
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('.nn-nav-dropdown')) closeAll(null);
+        });
+    })();
+    // Mobile menu: one delegated close handler for every link inside it.
+    (function () {
+        var menu = document.getElementById('mobileMenu');
+        var burger = document.querySelector('.nn-hamburger');
+        if (!menu) return;
+        menu.addEventListener('click', function (e) {
+            if (!e.target.closest('a')) return;
+            menu.classList.remove('open');
+            document.body.classList.remove('menu-open');
+            if (burger) burger.setAttribute('aria-expanded', 'false');
+        });
+    })();
+    // Footer accordions on narrow screens. Bound at every width (the CSS
+    // decides whether the toggle has any visible effect) so a rotate or
+    // resize after load can never strand the links hidden; headers are
+    // keyboard-operable.
+    document.querySelectorAll('.nn-footer-col h4').forEach(function (h4) {
+        h4.setAttribute('role', 'button');
+        h4.setAttribute('tabindex', '0');
+        h4.setAttribute('aria-expanded', 'false');
+        function toggle() {
+            var on = h4.parentElement.classList.toggle('expanded');
+            h4.setAttribute('aria-expanded', on ? 'true' : 'false');
+        }
+        h4.addEventListener('click', toggle);
+        h4.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+        });
+    });
     </script>
     {% block scripts %}{% endblock %}
 
     <!-- Centralized, improved global search -->
     <script src="{{ path_prefix }}assets/js/search.js" defer></script>
     <script src="{{ path_prefix }}assets/js/language-control.js" defer></script>
+    <script>
+    // Member-aware nav (Aug 30 2026): the "Join" pill becomes "My Nerra"
+    // when the api.nerranetwork.com session cookie answers. Fail-silent —
+    // signed-out visitors, blocked cookies, or an unreachable Worker all
+    // leave the default Join link untouched.
+    (function () {
+      try {
+        fetch('https://api.nerranetwork.com/api/account', { credentials: 'include' })
+          .then(function (r) {
+            if (!r.ok) return;
+            ['nn-nav-account', 'nn-nav-account-m'].forEach(function (id) {
+              var a = document.getElementById(id);
+              if (a) { a.textContent = 'My Nerra'; a.href = '{{ path_prefix }}account.html'; }
+            });
+          }).catch(function () {});
+      } catch (e) {}
+    })();
+    </script>
 </body>
 </html>

@@ -7,6 +7,7 @@
 import { describe, expect, it } from "vitest";
 import {
   DEFAULT_LINEUP,
+  PERSONAL_ADDONS,
   PERSONAL_SHOWS,
   handleAdminSpecs,
   handlePersonalFeed,
@@ -299,6 +300,43 @@ describe("admin specs export", () => {
       expect(PERSONAL_SHOWS).toContain(slug);
     }
     expect(DEFAULT_LINEUP.length).toBeGreaterThanOrEqual(2);
+  });
+});
+
+
+describe("add-ons (Aug 30 2026)", () => {
+  it("admin specs carry a member's saved addons, absent when never saved", async () => {
+    const env = envWith();
+    const kv = env.RATE_LIMIT_KV as unknown as FakeKV;
+    kv.store.set("member:a@example.com", JSON.stringify({
+      shows: ["tesla", "spacex"], first_name: "", city: "Lyon",
+      tier: "personal_local", status: "active",
+      addons: ["weather", "traffic"],
+      feed_token: "e".repeat(32), updated_at: "",
+    }));
+    kv.store.set("member:b@example.com", JSON.stringify({
+      shows: ["tesla", "spacex"], first_name: "", city: "",
+      tier: "personal", status: "active",
+      feed_token: "f".repeat(32), updated_at: "",
+    }));
+    const res = await handleAdminSpecs(
+      new Request("https://api.example.com/api/admin/personal-specs", {
+        headers: { Authorization: "Bearer admin-token" },
+      }), env);
+    const body = await res.json() as { specs: Record<string, unknown>[] };
+    const withAddons = body.specs.find((sp) => sp.token === "e".repeat(32))!;
+    const withoutAddons = body.specs.find((sp) => sp.token === "f".repeat(32))!;
+    expect(withAddons.addons).toEqual(["weather", "traffic"]);
+    // Never-saved must stay ABSENT (the builder treats absent as
+    // "defaults apply"), never an empty list ("no add-ons" choice).
+    expect("addons" in withoutAddons).toBe(false);
+  });
+
+  it("addon vocabulary stays closed and non-trivial", () => {
+    expect(PERSONAL_ADDONS.length).toBeGreaterThanOrEqual(4);
+    for (const id of PERSONAL_ADDONS) {
+      expect(id).toMatch(/^[a-z_]+$/);
+    }
   });
 });
 

@@ -3,433 +3,1193 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Disclosure Policy - Nerra Network</title>
+    <meta name="description" content="How Nerra Network uses AI: what is automated (writing, narration, imagery, translation), what humans own (briefs, sources, standards, corrections), and the source-integrity safeguards between the two.">
+    
+    <meta name="keywords" content="AI disclosure, AI podcast transparency, AI-narrated podcast, Nerra Network AI policy"><title>AI Disclosure — Nerra Network</title>
+    <meta name="theme-color" content="#6B47FF">
 
-    <!-- Google Analytics 4 + Consent Mode v2 -->
-    <script src="/assets/js/consent.js"></script>
+    <!-- Open Graph -->
+    <meta property="og:title" content="AI Disclosure — Nerra Network">
+    <meta property="og:description" content="How Nerra Network uses AI: what is automated (writing, narration, imagery, translation), what humans own (briefs, sources, standards, corrections), and the source-integrity safeguards between the two.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://nerranetwork.com/assets/og-preview.png">
+    <meta property="og:url" content="https://nerranetwork.com/ai-disclosure.html">
+    <meta property="og:site_name" content="Nerra Network">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="AI Disclosure — Nerra Network">
+    <meta name="twitter:description" content="How Nerra Network uses AI: what is automated (writing, narration, imagery, translation), what humans own (briefs, sources, standards, corrections), and the source-integrity safeguards between the two.">
+    <meta name="twitter:image" content="https://nerranetwork.com/assets/og-preview.png">
+
+    <link rel="canonical" href="https://nerranetwork.com/ai-disclosure.html">
+    
+    
+    
+
+    <!-- Google Fonts: DM Sans + Source Serif 4 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%230B0F1A'/><line x1='50' y1='50' x2='28' y2='28' stroke='%236B47FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='72' y2='28' stroke='%2300D4FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='28' y2='72' stroke='%236B47FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='72' y2='72' stroke='%2300D4FF' stroke-width='5' stroke-linecap='round'/><circle cx='28' cy='28' r='8' fill='%2300D4FF'/><circle cx='72' cy='28' r='8' fill='%236B47FF'/><circle cx='28' cy='72' r='8' fill='%236B47FF'/><circle cx='72' cy='72' r='8' fill='%2300D4FF'/><circle cx='50' cy='50' r='13' fill='%236B47FF'/><circle cx='50' cy='50' r='5' fill='white'/></svg>">
+
+    
+    
+    <!-- Cookie consent (Google Consent Mode v2) — loads BEFORE gtag.js -->
+    <script src="assets/js/consent.js"></script>
+    <!-- gtag.js — covers both GA4 and Google Ads -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-6PWJCVQQ7B"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
+      
       gtag('config', 'G-6PWJCVQQ7B', { 'anonymize_ip': true });
+      
+      
     </script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    
+    
+    <script defer src="assets/js/tracking.js"></script>
+
+    <!-- Shared CSS -->
+    <link rel="stylesheet" href="styles/main.css">
+
+    
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+    .legal-hero {
+        padding: calc(var(--nav-height) + var(--sp-12)) var(--sp-6) var(--sp-8);
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    .legal-hero::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(ellipse at 50% 0%, rgba(107, 71, 255, 0.15), transparent 70%);
+        pointer-events: none;
+    }
+    .legal-hero h1 {
+        font-family: var(--font-heading);
+        font-size: clamp(2rem, 4.5vw, 2.8rem);
+        font-weight: 700;
+        color: var(--nn-white);
+        margin: 0 0 var(--sp-3);
+        line-height: 1.15;
+    }
+    .legal-hero .legal-meta {
+        font-family: var(--font-ui);
+        font-size: 0.85rem;
+        color: var(--nn-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+    }
+    .legal-hero p.lede {
+        font-family: var(--font-body);
+        font-size: clamp(1rem, 1.8vw, 1.15rem);
+        color: var(--nn-text);
+        line-height: 1.6;
+        max-width: 680px;
+        margin: var(--sp-4) auto 0;
+    }
+    .legal-body {
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 0 var(--sp-6) var(--sp-12);
+    }
+    .legal-body h2 {
+        font-family: var(--font-heading);
+        font-size: clamp(1.25rem, 2.4vw, 1.6rem);
+        font-weight: 700;
+        color: var(--nn-white);
+        margin: var(--sp-10) 0 var(--sp-3);
+        padding-top: var(--sp-4);
+        border-top: 1px solid var(--nn-border);
+    }
+    .legal-body h3 {
+        font-family: var(--font-heading);
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: var(--nn-cyan);
+        margin: var(--sp-6) 0 var(--sp-2);
+    }
+    .legal-body p,
+    .legal-body li {
+        font-family: var(--font-body);
+        font-size: 1rem;
+        color: var(--nn-text);
+        line-height: 1.7;
+    }
+    .legal-body p { margin: 0 0 var(--sp-3); }
+    .legal-body ul, .legal-body ol {
+        padding-left: var(--sp-6);
+        margin: 0 0 var(--sp-4);
+    }
+    .legal-body li { margin-bottom: var(--sp-2); }
+    .legal-body strong { color: var(--nn-white); }
+    .legal-body a { color: var(--nn-cyan); }
+    .legal-body a:hover { color: var(--nn-white); }
+    .legal-callout {
+        background: linear-gradient(135deg, rgba(107, 71, 255, 0.15) 0%, rgba(0, 212, 255, 0.08) 100%);
+        border-left: 4px solid var(--nn-purple);
+        border-radius: 6px;
+        padding: var(--sp-5);
+        margin: var(--sp-6) 0;
+    }
+    .legal-callout p:last-child { margin-bottom: 0; }
+    .legal-callout p { color: var(--nn-white); font-size: 1.05rem; }
+    .legal-box {
+        background: var(--nn-card);
+        border: 1px solid var(--nn-border);
+        border-radius: 12px;
+        padding: var(--sp-5);
+        margin: var(--sp-5) 0;
+    }
+    .legal-box h3 { margin-top: 0; }
+    .legal-box p:last-child, .legal-box ul:last-child { margin-bottom: 0; }
+    .legal-warning {
+        background: rgba(255, 171, 64, 0.08);
+        border-left: 4px solid #FFAB40;
+        border-radius: 6px;
+        padding: var(--sp-4) var(--sp-5);
+        margin: var(--sp-5) 0;
+    }
+    .legal-warning p { margin: 0; }
+    .legal-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: var(--sp-3);
+        margin: var(--sp-5) 0;
+    }
+    .legal-grid .legal-box { margin: 0; }
+    .legal-grid h4 {
+        font-family: var(--font-heading);
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: var(--nn-purple);
+        margin: 0 0 var(--sp-2);
+    }
+    .legal-grid p { font-size: 0.92rem; margin: 0; }
+    .legal-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: var(--sp-4) 0 var(--sp-5);
+        font-family: var(--font-ui);
+        font-size: 0.92rem;
+    }
+    .legal-table th, .legal-table td {
+        text-align: left;
+        padding: var(--sp-2) var(--sp-3);
+        border-bottom: 1px solid var(--nn-border);
+        vertical-align: top;
+        color: var(--nn-text);
+    }
+    .legal-table th {
+        color: var(--nn-white);
+        font-weight: 600;
+        background: var(--nn-surface);
+    }
+    .legal-table-wrap { overflow-x: auto; }
+    .legal-checklist { list-style: none; padding-left: 0; }
+    .legal-checklist li { padding-left: 1.6rem; position: relative; }
+    .legal-checklist li::before {
+        content: '✓';
+        position: absolute;
+        left: 0;
+        color: var(--nn-cyan);
+        font-weight: 700;
+    }
+    .legal-footer-note {
+        margin-top: var(--sp-10);
+        padding-top: var(--sp-5);
+        border-top: 1px solid var(--nn-border);
+        text-align: center;
+        font-family: var(--font-ui);
+        font-size: 0.85rem;
+        color: var(--nn-text-muted);
+    }
+    .legal-footer-note .nn-highlight { color: var(--nn-purple); font-weight: 500; }
+    .legal-related {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--sp-2);
+        justify-content: center;
+        margin-top: var(--sp-4);
+    }
+    .legal-related a {
+        font-family: var(--font-ui);
+        font-size: 0.82rem;
+        padding: 0.35rem 0.9rem;
+        border: 1px solid var(--nn-border);
+        border-radius: 999px;
+        color: var(--nn-text);
+        text-decoration: none;
+    }
+    .legal-related a:hover { border-color: var(--nn-purple); color: var(--nn-white); }
+    @media (max-width: 640px) {
+        .legal-body { padding: 0 var(--sp-4) var(--sp-10); }
+    }
+</style>
 
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background-color: #0B0F1A;
-            color: #E0E8F0;
-            line-height: 1.6;
-        }
 
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 60px 24px;
-        }
 
-        header {
-            margin-bottom: 60px;
-            padding-bottom: 40px;
-            border-bottom: 1px solid #2A3142;
-        }
-
-        h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 12px;
-            background: linear-gradient(135deg, #6B47FF 0%, #00D4FF 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .meta {
-            color: #8892A6;
-            font-size: 0.95rem;
-        }
-
-        h2 {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #6B47FF;
-            margin-top: 48px;
-            margin-bottom: 20px;
-            padding-top: 20px;
-        }
-
-        h3 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #00D4FF;
-            margin-top: 28px;
-            margin-bottom: 12px;
-        }
-
-        p {
-            margin-bottom: 16px;
-            color: #B0B8C8;
-        }
-
-        ul, ol {
-            margin-left: 24px;
-            margin-bottom: 16px;
-        }
-
-        li {
-            margin-bottom: 8px;
-            color: #B0B8C8;
-        }
-
-        .core-statement {
-            background: linear-gradient(135deg, rgba(124, 92, 255, 0.15) 0%, rgba(0, 212, 255, 0.1) 100%);
-            border-left: 4px solid #6B47FF;
-            padding: 24px;
-            margin: 32px 0;
-            border-radius: 4px;
-            border-right: 1px solid rgba(0, 212, 255, 0.3);
-        }
-
-        .core-statement p {
-            margin-bottom: 0;
-            font-size: 1.05rem;
-            font-weight: 500;
-            color: #E0E8F0;
-        }
-
-        .control-box {
-            background-color: #1A1F2E;
-            border: 1px solid #2A3142;
-            padding: 24px;
-            border-radius: 8px;
-            margin: 24px 0;
-        }
-
-        .control-box h3 {
-            margin-top: 0;
-            color: #00D4FF;
-        }
-
-        .checklist {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin: 16px 0;
-        }
-
-        .checklist-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-        }
-
-        .checkmark {
-            color: #00D4FF;
-            font-weight: bold;
-            flex-shrink: 0;
-            margin-top: 2px;
-        }
-
-        .checklist-item p {
-            margin-bottom: 0;
-        }
-
-        .tool-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-            margin: 24px 0;
-        }
-
-        .tool-card {
-            background-color: #1A1F2E;
-            border: 1px solid #2A3142;
-            padding: 16px;
-            border-radius: 8px;
-        }
-
-        .tool-card h4 {
-            color: #6B47FF;
-            font-size: 0.95rem;
-            margin-bottom: 8px;
-        }
-
-        .tool-card p {
-            font-size: 0.9rem;
-            margin-bottom: 0;
-        }
-
-        .compliance-section {
-            background-color: rgba(0, 212, 255, 0.05);
-            border-left: 4px solid #00D4FF;
-            padding: 20px;
-            margin: 24px 0;
-            border-radius: 4px;
-        }
-
-        .compliance-section h3 {
-            margin-top: 0;
-        }
-
-        .strength-badge {
-            display: inline-block;
-            background-color: rgba(0, 212, 255, 0.2);
-            color: #00D4FF;
-            padding: 8px 12px;
-            border-radius: 4px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            margin-bottom: 16px;
-        }
-
-        footer {
-            margin-top: 60px;
-            padding-top: 24px;
-            border-top: 1px solid #2A3142;
-            text-align: center;
-            color: #8892A6;
-            font-size: 0.9rem;
-        }
-
-        .last-updated {
-            color: #6B47FF;
-            font-weight: 500;
-        }
-
+    
+    <style>
         @media (max-width: 768px) {
-            h1 {
-                font-size: 1.8rem;
+            .nn-footer-grid { grid-template-columns: 1fr; }
+            .nn-footer-col h4 {
+                cursor: pointer;
+                position: relative;
+                padding-right: 1.5rem;
             }
-
-            h2 {
+            .nn-footer-col h4::after {
+                content: '+';
+                position: absolute;
+                right: 0;
                 font-size: 1.2rem;
+                color: var(--nn-text-muted);
             }
-
-            .tool-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .container {
-                padding: 40px 16px;
-            }
+            .nn-footer-col.expanded h4::after { content: '\2212'; }
+            .nn-footer-col > a,
+            .nn-footer-col > ul { display: none; }
+            .nn-footer-col.expanded > a,
+            .nn-footer-col.expanded > ul { display: block; }
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <header>
-            <h1>AI Content Disclosure</h1>
-            <div class="meta">Nerra Network • Effective: March 31, 2026</div>
-        </header>
+<body><a href="#main-content" class="skip-link">Skip to content</a>
+    <!-- Navigation -->
+    <nav class="nn-nav" aria-label="Main navigation">
+        <div class="nn-nav-inner">
+            <a href="index.html" class="nn-nav-logo">
+                <img src="assets/nerra-logo-icon.svg" alt="Nerra Network" width="36" height="36">
+                <span class="gradient-text">Nerra</span> <span class="nn-wordmark-rest">Network</span>
+            </a>
 
-        <section>
-            <p>Nerra Network is transparent about its use of artificial intelligence tools in content creation. This policy explains what we use AI for, how we maintain editorial integrity, and why we believe AI-assisted content—with human direction—is beneficial for our audience.</p>
-
-            <div class="strength-badge">
-                Transparency is our strength, not our weakness
+            
+            <div class="nn-global-search" style="position:relative;margin-left:auto;margin-right:0.5rem;max-width:200px;flex:0 1 200px;min-width:110px;">
+                <input type="search" id="nn-global-search-input"
+                       placeholder="Search…"
+                       style="width:100%;padding:6px 8px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.85rem;"
+                       aria-label="Search all episodes across the network">
+                <div id="nn-global-search-results"
+                     style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
             </div>
-        </section>
 
-        <h2>Our Commitment to Transparency</h2>
-
-        <div class="core-statement">
-            <p>Nerra Network uses AI tools to enhance content quality and production speed, but humans maintain full editorial control. AI assists with research and synthesis; Patrick Novak (human creator) directs strategy, selects topics, fact-checks, and approves all final content.</p>
-        </div>
-
-        <p>This hybrid approach allows Nerra Network to deliver daily, high-quality content while maintaining editorial integrity and human judgment in every decision that matters.</p>
-
-        <h2>How We Use AI</h2>
-
-        <h3>Specific AI Applications</h3>
-
-        <div class="tool-grid">
-            <div class="tool-card">
-                <h4>Research Assistance</h4>
-                <p>AI helps gather, organize, and synthesize information from multiple sources. Patrick reviews all research for accuracy and relevance before use.</p>
-            </div>
-            <div class="tool-card">
-                <h4>Content Summarization</h4>
-                <p>AI assists in condensing longer documents or sources into key points. All summaries are reviewed for accuracy and context.</p>
-            </div>
-            <div class="tool-card">
-                <h4>Text-to-Speech</h4>
-                <p>AI narration tools generate audio from written content. Patrick selects tone and verifies output quality before publishing.</p>
-            </div>
-            <div class="tool-card">
-                <h4>Outline Generation</h4>
-                <p>AI suggests content structure and organization. Patrick refines, rejects, or modifies these outlines as needed.</p>
-            </div>
-        </div>
-
-        <p>These tools make content creation faster and allow daily output, but they do not make editorial decisions.</p>
-
-        <h2>What Humans Control</h2>
-
-        <div class="control-box">
-            <h3>Patrick Novak's Editorial Control</h3>
-            <div class="checklist">
-                <div class="checklist-item">
-                    <div class="checkmark">✓</div>
-                    <p><strong>Topic Selection:</strong> Patrick chooses what to cover based on newsworthiness, audience interest, and expertise</p>
-                </div>
-                <div class="checklist-item">
-                    <div class="checkmark">✓</div>
-                    <p><strong>Editorial Direction:</strong> Patrick sets the angle, perspective, and narrative approach</p>
-                </div>
-                <div class="checklist-item">
-                    <div class="checkmark">✓</div>
-                    <p><strong>Fact-Checking:</strong> All claims, statistics, and citations are verified by Patrick</p>
-                </div>
-                <div class="checklist-item">
-                    <div class="checkmark">✓</div>
-                    <p><strong>Final Review:</strong> Every episode and article is personally reviewed and approved by Patrick</p>
-                </div>
-                <div class="checklist-item">
-                    <div class="checkmark">✓</div>
-                    <p><strong>Quality Standards:</strong> Patrick maintains quality, accuracy, and brand standards for all content</p>
-                </div>
-                <div class="checklist-item">
-                    <div class="checkmark">✓</div>
-                    <p><strong>Strategic Direction:</strong> Patrick decides where content goes, how often, and in what format</p>
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
                 </div>
             </div>
-        </div>
 
-        <h2>Why This Matters: AI-Assisted is Better</h2>
-
-        <p>We believe transparency about AI use is a competitive advantage, not a liability:</p>
-
-        <ul>
-            <li><strong>Honesty builds trust:</strong> We tell you how we work instead of hiding it</li>
-            <li><strong>Better content:</strong> AI assistance allows daily output without sacrificing quality</li>
-            <li><strong>Efficiency:</strong> AI handles routine research and synthesis, freeing Patrick to focus on editorial judgment</li>
-            <li><strong>Scalability:</strong> With AI assistance, we can cover more topics and produce more content for our audience</li>
-            <li><strong>Consistency:</strong> AI tools help maintain consistent quality and formatting across all content</li>
-        </ul>
-
-        <p>Many content creators use AI without disclosing it. We believe the honest approach is stronger.</p>
-
-        <h2>Regulatory Compliance</h2>
-
-        <h3>FTC Guidelines (United States)</h3>
-
-        <div class="compliance-section">
-            <h3>FTC AI Disclosures</h3>
-            <p>The Federal Trade Commission (FTC) issued guidance on AI-generated content disclosures. Nerra Network complies by:</p>
-            <ul>
-                <li>Clearly disclosing use of AI tools in content creation</li>
-                <li>Being specific about which tools we use and what they do</li>
-                <li>Emphasizing human editorial control and final review</li>
-                <li>Maintaining transparency as content is created</li>
+            <ul class="nn-nav-links">
+                <li class="nn-nav-dropdown">
+                    <button class="nn-nav-dropdown-btn" aria-expanded="false" aria-haspopup="true">
+                        Shows
+                        <svg viewBox="0 0 12 12" fill="none"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                    <div class="nn-nav-dropdown-menu" role="menu">
+                        
+                        <a href="nerra-daily.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="assets/covers/nerra-daily-400.webp"><img src="assets/covers/nerra-daily.jpg" alt="Nerra Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Nerra Daily
+                        </a>
+                        
+                        <a href="models-agents.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="assets/covers/models-agents-400.webp"><img src="assets/covers/models-agents.jpg" alt="Models & Agents cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Models & Agents
+                        </a>
+                        
+                        <a href="planetterrian.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="assets/covers/planetterrian-daily-400.webp"><img src="assets/covers/planetterrian-daily.jpg" alt="Planetterrian Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Planetterrian Daily
+                        </a>
+                        
+                        <a href="omni-view.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="assets/covers/omni-view-400.webp"><img src="assets/covers/omni-view.jpg" alt="Omni View cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Omni View
+                        </a>
+                        
+                        <a href="models-agents-beginners.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="assets/covers/models-agents-beginners-400.webp"><img src="assets/covers/models-agents-beginners.jpg" alt="Models & Agents for Beginners cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Models & Agents for Beginners
+                        </a>
+                        
+                        <a href="fascinating-frontiers.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="assets/covers/fascinating-frontiers-400.webp"><img src="assets/covers/fascinating-frontiers.jpg" alt="Fascinating Frontiers cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Fascinating Frontiers
+                        </a>
+                        
+                        <a href="modern-investing.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="assets/covers/modern-investing-400.webp"><img src="assets/covers/modern-investing.jpg" alt="Modern Investing Techniques cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Modern Investing Techniques
+                        </a>
+                        
+                        <a href="tesla.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="assets/covers/tesla-shorts-time-400.webp"><img src="assets/covers/tesla-shorts-time.jpg" alt="Tesla Shorts Time cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Tesla Shorts Time
+                        </a>
+                        
+                        <a href="spacex.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="assets/covers/spacex-400.webp"><img src="assets/covers/spacex.jpg" alt="SpaceX Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                            SpaceX Daily
+                        </a>
+                        
+                        <a href="env-intel.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="assets/covers/environmental-intelligence-400.webp"><img src="assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Environmental Intelligence
+                        </a>
+                        
+                        <a href="ru/finansy-prosto.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="assets/covers/finansy-prosto-400.webp"><img src="assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Финансы Просто
+                        </a>
+                        
+                        <a href="ru/privet-russian.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="assets/covers/privet-russian-400.webp"><img src="assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Привет, Русский!
+                        </a>
+                        
+                        <a href="unintended-consequences.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="assets/covers/unintended-consequences-400.webp"><img src="assets/covers/unintended-consequences.jpg" alt="Unintended Consequences cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Unintended Consequences
+                        </a>
+                        
+                        <a href="first-principles.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="assets/covers/first-principles-daily-400.webp"><img src="assets/covers/first-principles-daily.jpg" alt="First Principles Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                            First Principles Daily
+                        </a>
+                        
+                        <a href="thedppod.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="assets/covers/dp-pod-400.webp"><img src="assets/covers/dp-pod.jpg" alt="The DP Pod: The Do Positive Podcast cover art" width="1400" height="1400" loading="lazy"></picture>
+                            The DP Pod: The Do Positive Podcast
+                        </a>
+                        
+                        <a href="age-of-ai.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="assets/covers/age-of-ai-400.webp"><img src="assets/covers/age-of-ai.jpg" alt="The Age of AI cover art" width="1400" height="1400" loading="lazy"></picture>
+                            The Age of AI
+                        </a>
+                        
+                        <a href="offshore-north.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="assets/covers/offshore-north-400.webp"><img src="assets/covers/offshore-north.jpg" alt="Offshore North cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Offshore North
+                        </a>
+                        
+                    </div>
+                </li>
+                <li class="nn-nav-dropdown">
+                    <button class="nn-nav-dropdown-btn" aria-expanded="false" aria-haspopup="true">
+                        Blog
+                        <svg viewBox="0 0 12 12" fill="none"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                    <div class="nn-nav-dropdown-menu">
+                        <a href="blog/index.html" style="font-weight:600;border-bottom:1px solid var(--nn-border);padding-bottom:8px;margin-bottom:4px">
+                            All Blog Posts
+                        </a>
+                        
+                        <a href="blog/nerra_daily/index.html">
+                            <picture><source type="image/webp" srcset="assets/covers/nerra-daily-400.webp"><img src="assets/covers/nerra-daily.jpg" alt="Nerra Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Nerra Daily Blog
+                        </a>
+                        
+                        <a href="blog/models_agents/index.html">
+                            <picture><source type="image/webp" srcset="assets/covers/models-agents-400.webp"><img src="assets/covers/models-agents.jpg" alt="Models & Agents cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Models & Agents Blog
+                        </a>
+                        
+                        <a href="blog/planetterrian/index.html">
+                            <picture><source type="image/webp" srcset="assets/covers/planetterrian-daily-400.webp"><img src="assets/covers/planetterrian-daily.jpg" alt="Planetterrian Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Planetterrian Daily Blog
+                        </a>
+                        
+                        <a href="blog/omni_view/index.html">
+                            <picture><source type="image/webp" srcset="assets/covers/omni-view-400.webp"><img src="assets/covers/omni-view.jpg" alt="Omni View cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Omni View Blog
+                        </a>
+                        
+                        <a href="blog/models_agents_beginners/index.html">
+                            <picture><source type="image/webp" srcset="assets/covers/models-agents-beginners-400.webp"><img src="assets/covers/models-agents-beginners.jpg" alt="Models & Agents for Beginners cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Models & Agents for Beginners Blog
+                        </a>
+                        
+                        <a href="blog/fascinating_frontiers/index.html">
+                            <picture><source type="image/webp" srcset="assets/covers/fascinating-frontiers-400.webp"><img src="assets/covers/fascinating-frontiers.jpg" alt="Fascinating Frontiers cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Fascinating Frontiers Blog
+                        </a>
+                        
+                        <a href="blog/modern_investing/index.html">
+                            <picture><source type="image/webp" srcset="assets/covers/modern-investing-400.webp"><img src="assets/covers/modern-investing.jpg" alt="Modern Investing Techniques cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Modern Investing Techniques Blog
+                        </a>
+                        
+                        <a href="blog/tesla/index.html">
+                            <picture><source type="image/webp" srcset="assets/covers/tesla-shorts-time-400.webp"><img src="assets/covers/tesla-shorts-time.jpg" alt="Tesla Shorts Time cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Tesla Shorts Time Blog
+                        </a>
+                        
+                        <a href="blog/spacex/index.html">
+                            <picture><source type="image/webp" srcset="assets/covers/spacex-400.webp"><img src="assets/covers/spacex.jpg" alt="SpaceX Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                            SpaceX Daily Blog
+                        </a>
+                        
+                        <a href="blog/env_intel/index.html">
+                            <picture><source type="image/webp" srcset="assets/covers/environmental-intelligence-400.webp"><img src="assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Environmental Intelligence Blog
+                        </a>
+                        
+                        <a href="blog/finansy_prosto/index.html">
+                            <picture><source type="image/webp" srcset="assets/covers/finansy-prosto-400.webp"><img src="assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Финансы Просто Blog
+                        </a>
+                        
+                        <a href="blog/privet_russian/index.html">
+                            <picture><source type="image/webp" srcset="assets/covers/privet-russian-400.webp"><img src="assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Привет, Русский! Blog
+                        </a>
+                        
+                        <a href="blog/unintended_consequences/index.html">
+                            <picture><source type="image/webp" srcset="assets/covers/unintended-consequences-400.webp"><img src="assets/covers/unintended-consequences.jpg" alt="Unintended Consequences cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Unintended Consequences Blog
+                        </a>
+                        
+                        <a href="blog/first_principles/index.html">
+                            <picture><source type="image/webp" srcset="assets/covers/first-principles-daily-400.webp"><img src="assets/covers/first-principles-daily.jpg" alt="First Principles Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                            First Principles Daily Blog
+                        </a>
+                        
+                        <a href="blog/dp_pod/index.html">
+                            <picture><source type="image/webp" srcset="assets/covers/dp-pod-400.webp"><img src="assets/covers/dp-pod.jpg" alt="The DP Pod: The Do Positive Podcast cover art" width="1400" height="1400" loading="lazy"></picture>
+                            The DP Pod: The Do Positive Podcast Blog
+                        </a>
+                        
+                        <a href="blog/age_of_ai/index.html">
+                            <picture><source type="image/webp" srcset="assets/covers/age-of-ai-400.webp"><img src="assets/covers/age-of-ai.jpg" alt="The Age of AI cover art" width="1400" height="1400" loading="lazy"></picture>
+                            The Age of AI Blog
+                        </a>
+                        
+                        <a href="blog/offshore_north/index.html">
+                            <picture><source type="image/webp" srcset="assets/covers/offshore-north-400.webp"><img src="assets/covers/offshore-north.jpg" alt="Offshore North cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Offshore North Blog
+                        </a>
+                        
+                    </div>
+                </li>
+                
+                <li class="nn-nav-dropdown">
+                    <button class="nn-nav-dropdown-btn" aria-expanded="false" aria-haspopup="true">
+                        More
+                        <svg viewBox="0 0 12 12" fill="none"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                    <div class="nn-nav-dropdown-menu nn-nav-dropdown-menu--compact">
+                        <a href="books.html">Books</a>
+                        <a href="gallery.html">Image Gallery</a>
+                        <a href="data.html">Data & Dashboards</a>
+                        <a href="editorial.html">Editorial Process</a>
+                        <a href="faq.html">FAQ</a>
+                        <a href="press.html">Press Kit</a>
+                        <a href="support.html">Support the Network</a>
+                    </div>
+                </li>
+                
+                
+                <li><a href="start-here.html">Start Here</a></li>
+                <li><a href="how-to-listen.html">Listen</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="player.html">Player</a></li>
+                
+                
+                <li><a id="nn-nav-account" href="join.html"
+                       style="border:1px solid var(--nn-border);border-radius:999px;padding:0.3rem 0.85rem;">Join</a></li>
             </ul>
-            <p><strong>Guidance:</strong> <a href="https://www.ftc.gov/news-events/news/2023/11/ftc-warns-companies-disclosing-when-ai-writes-your-emails" style="color: #00D4FF;">FTC Warns Companies About AI Disclosures</a></p>
+
+            <button class="nn-hamburger" aria-label="Toggle menu" aria-expanded="false" onclick="var m=document.getElementById('mobileMenu');m.classList.toggle('open');this.setAttribute('aria-expanded',m.classList.contains('open'));document.body.classList.toggle('menu-open')">&#9776;</button>
         </div>
+    </nav>
 
-        <h3>California AI Transparency Act (AB 942)</h3>
-
-        <div class="compliance-section">
-            <h3>California AB 942 Compliance</h3>
-            <p>California's AI Transparency Act (effective January 2026) requires disclosure of deceptive AI-generated content used for advertising or political purposes. Nerra Network is not a political entity and does not use deceptive AI for advertising, but we proactively disclose all AI use regardless.</p>
-            <ul>
-                <li>This disclosure satisfies California law requirements</li>
-                <li>We transparently identify AI-assisted content</li>
-                <li>We maintain human editorial control</li>
-            </ul>
-            <p><strong>Regulation:</strong> California Assembly Bill 942 (effective Jan 2026)</p>
+    <!-- Mobile Menu. Closing is handled by ONE delegated listener in the
+         script block below (any link tapped closes the menu, clears the
+         body scroll lock and resets the hamburger's aria-expanded) — the
+         per-link inline onclick handlers were removed Sep 2026 after the
+         homepage's override forgot the body class and left the page
+         scroll-locked after tapping an in-page anchor. -->
+    <div id="mobileMenu" class="nn-mobile-menu">
+        <a id="nn-nav-account-m" href="join.html" style="font-weight:600;">Join</a>
+        
+        <a href="start-here.html">Start Here</a>
+        <a href="how-to-listen.html">How to Listen</a>
+        <a href="about.html">About</a>
+        <a href="player.html">Player</a>
+        
+        <div class="nn-mobile-shows">
+            <div class="nn-mobile-shows-title">All Shows</div>
+            
+            <a href="nerra-daily.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="assets/covers/nerra-daily-400.webp"><img src="assets/covers/nerra-daily.jpg" alt="Nerra Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                Nerra Daily
+            </a>
+            
+            <a href="models-agents.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="assets/covers/models-agents-400.webp"><img src="assets/covers/models-agents.jpg" alt="Models & Agents cover art" width="1400" height="1400" loading="lazy"></picture>
+                Models & Agents
+            </a>
+            
+            <a href="planetterrian.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="assets/covers/planetterrian-daily-400.webp"><img src="assets/covers/planetterrian-daily.jpg" alt="Planetterrian Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                Planetterrian Daily
+            </a>
+            
+            <a href="omni-view.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="assets/covers/omni-view-400.webp"><img src="assets/covers/omni-view.jpg" alt="Omni View cover art" width="1400" height="1400" loading="lazy"></picture>
+                Omni View
+            </a>
+            
+            <a href="models-agents-beginners.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="assets/covers/models-agents-beginners-400.webp"><img src="assets/covers/models-agents-beginners.jpg" alt="Models & Agents for Beginners cover art" width="1400" height="1400" loading="lazy"></picture>
+                Models & Agents for Beginners
+            </a>
+            
+            <a href="fascinating-frontiers.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="assets/covers/fascinating-frontiers-400.webp"><img src="assets/covers/fascinating-frontiers.jpg" alt="Fascinating Frontiers cover art" width="1400" height="1400" loading="lazy"></picture>
+                Fascinating Frontiers
+            </a>
+            
+            <a href="modern-investing.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="assets/covers/modern-investing-400.webp"><img src="assets/covers/modern-investing.jpg" alt="Modern Investing Techniques cover art" width="1400" height="1400" loading="lazy"></picture>
+                Modern Investing Techniques
+            </a>
+            
+            <a href="tesla.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="assets/covers/tesla-shorts-time-400.webp"><img src="assets/covers/tesla-shorts-time.jpg" alt="Tesla Shorts Time cover art" width="1400" height="1400" loading="lazy"></picture>
+                Tesla Shorts Time
+            </a>
+            
+            <a href="spacex.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="assets/covers/spacex-400.webp"><img src="assets/covers/spacex.jpg" alt="SpaceX Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                SpaceX Daily
+            </a>
+            
+            <a href="env-intel.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="assets/covers/environmental-intelligence-400.webp"><img src="assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy"></picture>
+                Environmental Intelligence
+            </a>
+            
+            <a href="ru/finansy-prosto.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="assets/covers/finansy-prosto-400.webp"><img src="assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="1400" height="1400" loading="lazy"></picture>
+                Финансы Просто
+            </a>
+            
+            <a href="ru/privet-russian.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="assets/covers/privet-russian-400.webp"><img src="assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="1400" height="1400" loading="lazy"></picture>
+                Привет, Русский!
+            </a>
+            
+            <a href="unintended-consequences.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="assets/covers/unintended-consequences-400.webp"><img src="assets/covers/unintended-consequences.jpg" alt="Unintended Consequences cover art" width="1400" height="1400" loading="lazy"></picture>
+                Unintended Consequences
+            </a>
+            
+            <a href="first-principles.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="assets/covers/first-principles-daily-400.webp"><img src="assets/covers/first-principles-daily.jpg" alt="First Principles Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                First Principles Daily
+            </a>
+            
+            <a href="thedppod.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="assets/covers/dp-pod-400.webp"><img src="assets/covers/dp-pod.jpg" alt="The DP Pod: The Do Positive Podcast cover art" width="1400" height="1400" loading="lazy"></picture>
+                The DP Pod: The Do Positive Podcast
+            </a>
+            
+            <a href="age-of-ai.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="assets/covers/age-of-ai-400.webp"><img src="assets/covers/age-of-ai.jpg" alt="The Age of AI cover art" width="1400" height="1400" loading="lazy"></picture>
+                The Age of AI
+            </a>
+            
+            <a href="offshore-north.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="assets/covers/offshore-north-400.webp"><img src="assets/covers/offshore-north.jpg" alt="Offshore North cover art" width="1400" height="1400" loading="lazy"></picture>
+                Offshore North
+            </a>
+            
         </div>
-
-        <h2>Content Quality & Accuracy</h2>
-
-        <p>Using AI does not mean lower quality. In fact:</p>
-
-        <ul>
-            <li>Patrick's fact-checking is more rigorous than ever—he verifies every AI-generated summary</li>
-            <li>Daily content output means more frequent updates on breaking news</li>
-            <li>Consistent formatting and structure improve user experience</li>
-            <li>AI handles routine synthesis, allowing Patrick to focus on judgment and analysis</li>
-        </ul>
-
-        <p>If you ever identify an inaccuracy in our content, please contact us immediately at patricknovak1@gmail.com.</p>
-
-        <h2>Copyright & Ownership</h2>
-
-        <h3>AI-Generated Content Copyright</h3>
-
-        <p><strong>US Copyright Office Position (March 2026):</strong> The US Copyright Office and US Supreme Court have determined that AI-generated content cannot be copyrighted without substantial human authorship.</p>
-
-        <p>At Nerra Network:</p>
-
-        <ul>
-            <li>All content is substantially written or directed by Patrick (human)</li>
-            <li>AI is used as a tool, not as the primary author</li>
-            <li>Patrick's editorial direction, fact-checking, and approval constitute substantial human authorship</li>
-            <li>Therefore, Nerra Network content is protected by copyright</li>
-            <li>You may not reproduce, distribute, or commercialize our content without permission</li>
-        </ul>
-
-        <h2>Audience Trust & Feedback</h2>
-
-        <p>We value your questions and feedback about our use of AI. If you have concerns about any piece of content:</p>
-
-        <ul>
-            <li>Contact us at <a href="mailto:patricknovak1@gmail.com" style="color: #00D4FF;">patricknovak1@gmail.com</a></li>
-            <li>Ask about the specific AI tools used for any piece of content</li>
-            <li>Request verification of facts or sources</li>
-            <li>Share feedback on how we can improve transparency</li>
-        </ul>
-
-        <div class="control-box">
-            <h3>Our Promise</h3>
-            <p>We promise to:</p>
-            <ul>
-                <li>Continue disclosing AI use transparently</li>
-                <li>Never use AI to deceive or misrepresent content</li>
-                <li>Maintain Patrick's editorial control in all content decisions</li>
-                <li>Fact-check all AI-generated research before publishing</li>
-                <li>Prioritize accuracy over speed</li>
-                <li>Update this disclosure as our AI tools and practices evolve</li>
-            </ul>
+        <div class="nn-mobile-shows">
+            <div class="nn-mobile-shows-title">Blogs</div>
+            <a href="blog/index.html" class="nn-mobile-show-link" style="font-weight:600">
+                All Blog Posts
+            </a>
+            
+            <a href="blog/nerra_daily/index.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="assets/covers/nerra-daily-400.webp"><img src="assets/covers/nerra-daily.jpg" alt="Nerra Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                Nerra Daily Blog
+            </a>
+            
+            <a href="blog/models_agents/index.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="assets/covers/models-agents-400.webp"><img src="assets/covers/models-agents.jpg" alt="Models & Agents cover art" width="1400" height="1400" loading="lazy"></picture>
+                Models & Agents Blog
+            </a>
+            
+            <a href="blog/planetterrian/index.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="assets/covers/planetterrian-daily-400.webp"><img src="assets/covers/planetterrian-daily.jpg" alt="Planetterrian Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                Planetterrian Daily Blog
+            </a>
+            
+            <a href="blog/omni_view/index.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="assets/covers/omni-view-400.webp"><img src="assets/covers/omni-view.jpg" alt="Omni View cover art" width="1400" height="1400" loading="lazy"></picture>
+                Omni View Blog
+            </a>
+            
+            <a href="blog/models_agents_beginners/index.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="assets/covers/models-agents-beginners-400.webp"><img src="assets/covers/models-agents-beginners.jpg" alt="Models & Agents for Beginners cover art" width="1400" height="1400" loading="lazy"></picture>
+                Models & Agents for Beginners Blog
+            </a>
+            
+            <a href="blog/fascinating_frontiers/index.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="assets/covers/fascinating-frontiers-400.webp"><img src="assets/covers/fascinating-frontiers.jpg" alt="Fascinating Frontiers cover art" width="1400" height="1400" loading="lazy"></picture>
+                Fascinating Frontiers Blog
+            </a>
+            
+            <a href="blog/modern_investing/index.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="assets/covers/modern-investing-400.webp"><img src="assets/covers/modern-investing.jpg" alt="Modern Investing Techniques cover art" width="1400" height="1400" loading="lazy"></picture>
+                Modern Investing Techniques Blog
+            </a>
+            
+            <a href="blog/tesla/index.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="assets/covers/tesla-shorts-time-400.webp"><img src="assets/covers/tesla-shorts-time.jpg" alt="Tesla Shorts Time cover art" width="1400" height="1400" loading="lazy"></picture>
+                Tesla Shorts Time Blog
+            </a>
+            
+            <a href="blog/spacex/index.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="assets/covers/spacex-400.webp"><img src="assets/covers/spacex.jpg" alt="SpaceX Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                SpaceX Daily Blog
+            </a>
+            
+            <a href="blog/env_intel/index.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="assets/covers/environmental-intelligence-400.webp"><img src="assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy"></picture>
+                Environmental Intelligence Blog
+            </a>
+            
+            <a href="blog/finansy_prosto/index.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="assets/covers/finansy-prosto-400.webp"><img src="assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="1400" height="1400" loading="lazy"></picture>
+                Финансы Просто Blog
+            </a>
+            
+            <a href="blog/privet_russian/index.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="assets/covers/privet-russian-400.webp"><img src="assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="1400" height="1400" loading="lazy"></picture>
+                Привет, Русский! Blog
+            </a>
+            
+            <a href="blog/unintended_consequences/index.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="assets/covers/unintended-consequences-400.webp"><img src="assets/covers/unintended-consequences.jpg" alt="Unintended Consequences cover art" width="1400" height="1400" loading="lazy"></picture>
+                Unintended Consequences Blog
+            </a>
+            
+            <a href="blog/first_principles/index.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="assets/covers/first-principles-daily-400.webp"><img src="assets/covers/first-principles-daily.jpg" alt="First Principles Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                First Principles Daily Blog
+            </a>
+            
+            <a href="blog/dp_pod/index.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="assets/covers/dp-pod-400.webp"><img src="assets/covers/dp-pod.jpg" alt="The DP Pod: The Do Positive Podcast cover art" width="1400" height="1400" loading="lazy"></picture>
+                The DP Pod: The Do Positive Podcast Blog
+            </a>
+            
+            <a href="blog/age_of_ai/index.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="assets/covers/age-of-ai-400.webp"><img src="assets/covers/age-of-ai.jpg" alt="The Age of AI cover art" width="1400" height="1400" loading="lazy"></picture>
+                The Age of AI Blog
+            </a>
+            
+            <a href="blog/offshore_north/index.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="assets/covers/offshore-north-400.webp"><img src="assets/covers/offshore-north.jpg" alt="Offshore North cover art" width="1400" height="1400" loading="lazy"></picture>
+                Offshore North Blog
+            </a>
+            
         </div>
-
-        <h2>Future of AI at Nerra Network</h2>
-
-        <p>As AI technology evolves, we may adopt new tools. We will always:</p>
-
-        <ul>
-            <li>Disclose any new AI tools we use</li>
-            <li>Maintain human editorial control</li>
-            <li>Prioritize transparency over concealment</li>
-            <li>Comply with all applicable regulations (FTC, California AB 942, etc.)</li>
-            <li>Seek audience feedback on our approach</li>
-        </ul>
-
-        <h2>Questions?</h2>
-
-        <div class="control-box">
-            <h3>Contact Us</h3>
-            <p>If you have questions about our use of AI, this disclosure, or any content on Nerra Network:</p>
-            <p style="margin-top: 16px;">
-                <strong>Patrick Novak</strong><br>
-                Nerra Network<br>
-                Vancouver, British Columbia, Canada<br>
-                Email: <a href="mailto:patricknovak1@gmail.com" style="color: #00D4FF; text-decoration: none;">patricknovak1@gmail.com</a>
-            </p>
-            <p style="margin-top: 16px; font-size: 0.9rem;">
-                We aim to respond to all inquiries within 48 hours.
-            </p>
+        <div class="nn-mobile-shows">
+            <div class="nn-mobile-shows-title">More</div>
+            <a href="books.html" class="nn-mobile-show-link">Books</a>
+            <a href="gallery.html" class="nn-mobile-show-link">Image Gallery</a>
+            <a href="data.html" class="nn-mobile-show-link">Data & Dashboards</a>
+            <a href="editorial.html" class="nn-mobile-show-link">Editorial Process</a>
+            <a href="faq.html" class="nn-mobile-show-link">FAQ</a>
+            <a href="support.html" class="nn-mobile-show-link">Support the Network</a>
         </div>
-
-        <footer>
-            <p>This AI Disclosure Policy is effective as of <span class="last-updated">March 31, 2026</span></p>
-            <p>Version 1.0 • Compliant with FTC Guidelines and California AB 942 • Last reviewed: March 2026</p>
-        </footer>
     </div>
+
+    <main id="main-content">
+    
+<div class="page-main">
+    <section class="legal-hero">
+        <h1>AI Disclosure</h1>
+        <div class="legal-meta">Nerra Network &middot; Effective March 31, 2026 &middot; Updated September 3, 2026</div>
+        <p class="lede">
+            Nerra Network is an AI-produced podcast network with human
+            editorial ownership. This page says exactly what that means:
+            what the machines do, what people do, and what safeguards sit
+            between the two.
+        </p>
+    </section>
+
+    <div class="legal-body">
+        <div class="legal-callout">
+            <p>
+                Every Nerra Network episode is written and voiced by AI from
+                sources a human curated, under rules a human wrote, and
+                ships through an automated pipeline. A person sets the
+                brief, chooses the sources, owns the editorial standards,
+                reviews the output, and answers for it. No episode hides
+                that it was made this way: each one says so out loud, and
+                every page on this site carries the disclosure.
+            </p>
+        </div>
+
+        <h2>What AI does</h2>
+        <div class="legal-grid">
+            <div class="legal-box">
+                <h4>Writing</h4>
+                <p>Each episode's digest and script are generated by a large language model (xAI's Grok) from that day's curated articles, feeds, and web searches, using a show-specific prompt.</p>
+            </div>
+            <div class="legal-box">
+                <h4>Narration</h4>
+                <p>English shows are voiced by a custom voice trained on founder Patrick Novak's own speech. Russian shows use a custom Russian voice. Two shows, <a href="age-of-ai.html">The Age of AI</a> and <a href="nerra-daily.html">Nerra Daily</a>, are hosted by Mira, an AI persona that introduces itself as one.</p>
+            </div>
+            <div class="legal-box">
+                <h4>Imagery and video</h4>
+                <p>Episode artwork, video scenes, and the <a href="gallery.html">image gallery</a> are generated with Grok Imagine. Show cover art and logos are designed by people.</p>
+            </div>
+            <div class="legal-box">
+                <h4>Translation</h4>
+                <p>French, Russian, and Chinese audio tracks are machine-translated from the English script and re-voiced. English is always the canonical version.</p>
+            </div>
+            <div class="legal-box">
+                <h4>Books</h4>
+                <p>Our anthology <a href="books.html">books</a> compile published episodes; the audiobook editions are digitally narrated and declared as such on every store that sells them.</p>
+            </div>
+            <div class="legal-box">
+                <h4>Quality review</h4>
+                <p>An automated reviewer reads every episode after publication and flags factual, structural, or tone problems to the editor. It is a second pair of eyes, not the last word.</p>
+            </div>
+        </div>
+
+        <h2>What people do</h2>
+        <p>
+            Nerra Network is built and run by one person, Patrick Novak, in
+            Vancouver. Production is automated so that seventeen shows can
+            publish daily; editorial ownership is not. Concretely, a human:
+        </p>
+        <ul class="legal-checklist">
+            <li><strong>Decides what each show is.</strong> The brief, the tone, the audience, the segments, and the rules each show's prompt enforces are written and revised by hand.</li>
+            <li><strong>Curates the sources.</strong> Every show pulls from a hand-picked list of outlets, feeds, and search queries. Sources that prove unreliable are removed.</li>
+            <li><strong>Sets the editorial standards.</strong> No undisclosed AI, no paid placement, no filler, no invented facts. Those rules are enforced in code, and the code is public.</li>
+            <li><strong>Listens and reviews.</strong> Patrick spot-listens to episodes, reads the automated quality reports, and A/B-listens before any change to how a voice sounds ships.</li>
+            <li><strong>Owns corrections.</strong> Reported errors are investigated by a person, and substantive corrections are noted in the next episode's show notes.</li>
+        </ul>
+        <p>
+            What a human does <strong>not</strong> do is read and approve
+            every episode before it publishes. We say this plainly because
+            the alternative claim would be false, and because the safeguards
+            below exist precisely to make an automated pipeline trustworthy.
+        </p>
+
+        <h2>Safeguards against AI mistakes</h2>
+        <p>Language models can state things confidently and wrongly. We build for that assumption rather than against it:</p>
+        <ul>
+            <li><strong>Source-integrity gate.</strong> Each digest carries a claims ledger that ties every asserted fact to a source URL and a supporting quote. Before an episode is saved, the pipeline re-fetches each source and checks the quote is really there, and it flags citation-shaped sentences that have no ledger entry, the signature of a fabricated reference. On our narrative shows a failed claim blocks the episode.</li>
+            <li><strong>Grounding rules.</strong> Prompts forbid filling gaps from the model's training data; if the day's sources are thin, the run skips rather than pads.</li>
+            <li><strong>Repetition and recurrence checks.</strong> Degenerate output triggers a retry; stories the show has already covered are flagged so they are told as updates, not re-told as news.</li>
+            <li><strong>Spoken disclosure.</strong> Every episode ends with a spoken line stating that it was produced with AI.</li>
+            <li><strong>Real guests stay verbatim.</strong> On The Age of AI, guests are real people interviewed by Mira. Their words are never rewritten, and each guest approves their transcript before the episode publishes.</li>
+        </ul>
+        <p>
+            The full process, step by step, is on our
+            <a href="editorial.html">editorial process</a> page.
+        </p>
+
+        <h2>Why we work this way</h2>
+        <ul>
+            <li><strong>Honesty builds trust.</strong> We would rather tell you how the shows are made than have you guess.</li>
+            <li><strong>Breadth.</strong> Automation is what lets a one-person network cover Tesla, SpaceX, AI, investing, space science, and environmental policy every day in four languages, ad-free.</li>
+            <li><strong>Accountability.</strong> Because the pipeline is code, every rule it follows can be read, audited, and improved, and every mistake can be traced to its cause.</li>
+        </ul>
+
+        <h2>Regulatory notes</h2>
+        <h3>United States (FTC)</h3>
+        <p>The Federal Trade Commission expects clear disclosure when AI-generated content could mislead. We disclose AI use on every page, in every feed description, and in every episode's audio.</p>
+        <h3>California AI Transparency Act (AB 942)</h3>
+        <p>California requires disclosure of AI-generated content in certain contexts. Nerra Network is not a political entity and runs no advertising, but discloses all AI use regardless.</p>
+        <h3>Copyright</h3>
+        <p>Show formats, prompts, source curation, music briefs, and editorial rules are human-authored work. Where the law limits protection for machine-generated material, we do not claim more than it grants. You may share individual episodes with attribution; please ask before reproducing or commercialising our content.</p>
+
+        <h2>Report a problem</h2>
+        <div class="legal-box">
+            <h3>Found an error?</h3>
+            <p>If something in an episode or article is wrong, tell us and we will check it against the sources and correct the record.</p>
+            <p style="margin-top: var(--sp-3);">
+                <strong>Patrick Novak</strong><br>
+                Nerra Network, Vancouver, British Columbia, Canada<br>
+                <a href="mailto:patricknovak1@gmail.com">patricknovak1@gmail.com</a>
+            </p>
+            <p style="margin-top: var(--sp-3); font-size: 0.9rem;">We aim to respond within 48 hours.</p>
+        </div>
+
+        <div class="legal-footer-note">
+            <p>Effective <span class="nn-highlight">March 31, 2026</span>. Last reviewed September 3, 2026.</p>
+            <div class="legal-related">
+                <a href="editorial.html">Editorial process</a>
+                <a href="privacy-policy.html">Privacy policy</a>
+                <a href="terms-of-service.html">Terms of service</a>
+                <a href="about.html">About the network</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="nn-footer">
+        <div class="container">
+            <div class="nn-footer-grid">
+                <div>
+                    <div class="nn-footer-brand"><span class="gradient-text">Nerra</span> <span class="nn-wordmark-rest">Network</span></div>
+                    <p class="nn-footer-desc">Zero fluff. Independent podcast network produced in Vancouver, Canada.</p>
+                </div>
+                <div class="nn-footer-col">
+                    <h4>Shows</h4>
+                    
+                    <a href="nerra-daily.html">Nerra Daily</a>
+                    
+                    <a href="models-agents.html">Models & Agents</a>
+                    
+                    <a href="planetterrian.html">Planetterrian Daily</a>
+                    
+                    <a href="omni-view.html">Omni View</a>
+                    
+                    <a href="models-agents-beginners.html">Models & Agents for Beginners</a>
+                    
+                    <a href="fascinating-frontiers.html">Fascinating Frontiers</a>
+                    
+                    <a href="modern-investing.html">Modern Investing Techniques</a>
+                    
+                    <a href="tesla.html">Tesla Shorts Time</a>
+                    
+                    <a href="spacex.html">SpaceX Daily</a>
+                    
+                    <a href="env-intel.html">Environmental Intelligence</a>
+                    
+                    <a href="ru/finansy-prosto.html">Финансы Просто</a>
+                    
+                    <a href="ru/privet-russian.html">Привет, Русский!</a>
+                    
+                    <a href="unintended-consequences.html">Unintended Consequences</a>
+                    
+                    <a href="first-principles.html">First Principles Daily</a>
+                    
+                    <a href="thedppod.html">The DP Pod: The Do Positive Podcast</a>
+                    
+                    <a href="age-of-ai.html">The Age of AI</a>
+                    
+                    <a href="offshore-north.html">Offshore North</a>
+                    
+                </div>
+                <div class="nn-footer-col">
+                    <h4>Blog</h4>
+                    <a href="blog/index.html">All Blog Posts</a>
+                    
+                    <a href="blog/nerra_daily/index.html">Nerra Daily</a>
+                    
+                    <a href="blog/models_agents/index.html">Models & Agents</a>
+                    
+                    <a href="blog/planetterrian/index.html">Planetterrian Daily</a>
+                    
+                    <a href="blog/omni_view/index.html">Omni View</a>
+                    
+                    <a href="blog/models_agents_beginners/index.html">Models & Agents for Beginners</a>
+                    
+                    <a href="blog/fascinating_frontiers/index.html">Fascinating Frontiers</a>
+                    
+                    <a href="blog/modern_investing/index.html">Modern Investing Techniques</a>
+                    
+                    <a href="blog/tesla/index.html">Tesla Shorts Time</a>
+                    
+                    <a href="blog/spacex/index.html">SpaceX Daily</a>
+                    
+                    <a href="blog/env_intel/index.html">Environmental Intelligence</a>
+                    
+                    <a href="blog/finansy_prosto/index.html">Финансы Просто</a>
+                    
+                    <a href="blog/privet_russian/index.html">Привет, Русский!</a>
+                    
+                    <a href="blog/unintended_consequences/index.html">Unintended Consequences</a>
+                    
+                    <a href="blog/first_principles/index.html">First Principles Daily</a>
+                    
+                    <a href="blog/dp_pod/index.html">The DP Pod: The Do Positive Podcast</a>
+                    
+                    <a href="blog/age_of_ai/index.html">The Age of AI</a>
+                    
+                    <a href="blog/offshore_north/index.html">Offshore North</a>
+                    
+                    <a href="blog.rss">Blog RSS (All Shows)</a>
+                </div>
+                <div class="nn-footer-col">
+                    <h4>Listen</h4>
+                    <a href="how-to-listen.html" style="font-weight:600">How to Listen</a>
+                    <a href="player.html" style="font-weight:600">Network Player</a>
+                    <a href="https://podcasts.apple.com/us/podcast/tesla-shorts-time/id1855142939?utm_source=nerranetwork&utm_medium=footer&utm_campaign=tesla" target="_blank" rel="noopener" data-show="tesla">Tesla Shorts Time on Apple Podcasts</a>
+                    <a href="network.rss">Network RSS</a>
+                    
+                    <a href="nerra_daily_podcast.rss">Nerra Daily RSS</a>
+                    
+                    <a href="models_agents_podcast.rss">Models & Agents RSS</a>
+                    
+                    <a href="planetterrian_podcast.rss">Planetterrian Daily RSS</a>
+                    
+                    <a href="omni_view_podcast.rss">Omni View RSS</a>
+                    
+                    <a href="models_agents_beginners_podcast.rss">Models & Agents for Beginners RSS</a>
+                    
+                    <a href="fascinating_frontiers_podcast.rss">Fascinating Frontiers RSS</a>
+                    
+                    <a href="modern_investing_podcast.rss">Modern Investing Techniques RSS</a>
+                    
+                    <a href="podcast.rss">Tesla Shorts Time RSS</a>
+                    
+                    <a href="spacex_podcast.rss">SpaceX Daily RSS</a>
+                    
+                    <a href="env_intel_podcast.rss">Environmental Intelligence RSS</a>
+                    
+                    <a href="finansy_prosto_podcast.rss">Финансы Просто RSS</a>
+                    
+                    <a href="privet_russian_podcast.rss">Привет, Русский! RSS</a>
+                    
+                    <a href="unintended_consequences_podcast.rss">Unintended Consequences RSS</a>
+                    
+                    <a href="first_principles_podcast.rss">First Principles Daily RSS</a>
+                    
+                    <a href="dp_pod_podcast.rss">The DP Pod: The Do Positive Podcast RSS</a>
+                    
+                    <a href="age_of_ai_podcast.rss">The Age of AI RSS</a>
+                    
+                    <a href="offshore_north_podcast.rss">Offshore North RSS</a>
+                    
+                </div><div class="nn-footer-col">
+                    <h4>About</h4>
+                    <a href="about.html">About Nerra Network</a>
+                    <a href="start-here.html">Start Here</a>
+                    <a href="faq.html">FAQ</a>
+                    <a href="contact.html">Contact</a>
+                    <a href="press.html">Press Kit</a>
+                    <a href="editorial.html">Editorial Process</a>
+                    <a href="ai-disclosure.html">AI Disclosure</a>
+                    <a href="privacy-policy.html">Privacy Policy</a>
+                    <a href="terms-of-service.html">Terms of Service</a>
+                    <a href="gallery.html">Image Gallery</a>
+                    <a href="books.html">Books</a>
+                    <a href="data.html">Data & Dashboards</a>
+                    <a href="support.html">Support the Network</a><a href="management.html?view=sponsor">Network Status</a>
+                </div>
+                <div class="nn-footer-col">
+                    <h4>Connect</h4>
+                    <a href="https://x.com/teslashortstime" target="_blank" rel="noopener">@teslashortstime</a>
+                    <a href="https://x.com/omniviewnews" target="_blank" rel="noopener">@omniviewnews</a>
+                    <a href="https://x.com/planetterrian" target="_blank" rel="noopener">@planetterrian</a>
+                    <a href="https://www.youtube.com/@NerraNetwork" target="_blank" rel="noopener">YouTube @NerraNetwork</a>
+                    <a href="https://www.youtube.com/@NerraRU" target="_blank" rel="noopener">YouTube @NerraRU</a>
+                    <a href="contact.html">Contact</a>
+                </div>
+            </div>
+            <!-- Newsletter Subscribe — posts to the account Worker (Aug
+                 2026): every newsletter signup now creates a Nerra
+                 account (same identity as the gallery gate), so the
+                 member surface and the list grow together. -->
+            <div class="nn-footer-subscribe">
+                <form class="nn-subscribe-form"
+                      onsubmit="var f=this,btn=f.querySelector('button[type=submit]');btn.disabled=true;btn.textContent="Subscribing…";var tags=Array.prototype.map.call(f.querySelectorAll('input[name=tag]:checked'),function(c){return c.value;});fetch('https://api.nerranetwork.com/api/subscribe',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:f.email.value,list:'member',tags:tags})}).then(function(r){btn.textContent=r.ok?"Check your email ✓":"Subscribe";if(r.ok){var a=f.querySelector('.nn-account-link');if(a)a.style.display='inline';}}).catch(function(){btn.textContent="Subscribe";}).then(function(){btn.disabled=false;});return false;">
+                    <h4>Get Show Updates</h4>
+                    <p>Pick the shows you want in your inbox:</p>
+                    <div class="nn-subscribe-tags">
+                        <label><input type="checkbox" name="tag" value="Nerra Daily"> Nerra Daily</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Models & Agents"> Models & Agents</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Planetterrian Daily"> Planetterrian Daily</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Omni View"> Omni View</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Models & Agents for Beginners"> Models & Agents for Beginners</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Fascinating Frontiers"> Fascinating Frontiers</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Modern Investing Techniques"> Modern Investing Techniques</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Tesla Shorts Time"> Tesla Shorts Time</label>
+                        
+                        <label><input type="checkbox" name="tag" value="SpaceX Daily"> SpaceX Daily</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Environmental Intelligence"> Environmental Intelligence</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Finansy Prosto"> Финансы Просто</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Privet Russian"> Привет, Русский!</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Unintended Consequences"> Unintended Consequences</label>
+                        
+                        <label><input type="checkbox" name="tag" value="First Principles Daily"> First Principles Daily</label>
+                        
+                        <label><input type="checkbox" name="tag" value="DP Pod"> The DP Pod: The Do Positive Podcast</label>
+                        
+                        <label><input type="checkbox" name="tag" value="The Age of AI"> The Age of AI</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Offshore North"> Offshore North</label>
+                        
+                    </div>
+                    <div class="nn-subscribe-row">
+                        <input type="email" name="email" placeholder="your@email.com" required aria-label="Email address">
+                        <button type="submit">Subscribe</button>
+                    </div>
+                    <p style="margin-top:0.5rem;font-size:0.85rem;">
+                        <a href="join.html">Nerra Personal — your own daily show, gallery &amp; member perks →</a>
+                        <a class="nn-account-link" href="account.html" style="display:none;margin-left:0.75rem;">Your account →</a>
+                    </p>
+                </form>
+            </div>
+            <div class="nn-footer-bottom">
+                <span>© 2026 Nerra Network. All shows independently produced.</span>
+                <a href="index.html">nerranetwork.com</a>
+            </div>
+            <div class="nn-footer-legal">
+                <p class="ai-notice">Nerra Network uses AI tools in content production. <a href="ai-disclosure.html">Learn more</a></p>
+                <div>
+                    <a href="support.html">Support the network</a> &middot;
+                    <a href="privacy-policy.html">Privacy</a> &middot;
+                    <a href="terms-of-service.html">Terms</a> &middot;
+                    <a href="ai-disclosure.html">AI Disclosure</a>
+                    <span style="opacity:0.5;">&middot;</span>
+                    <span style="font-size:0.7rem;opacity:0.6;">Automation: reliable nightly + post-publish pipeline</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+    // Nav dropdowns: hover opens via CSS; click / Enter / Space toggle the
+    // `.open` class so keyboard and touch users can actually open them
+    // (until Sep 2026 focus set aria-expanded="true" while nothing was
+    // visible). Escape or an outside click closes any open menu.
+    (function () {
+        var dropdowns = Array.prototype.slice.call(document.querySelectorAll('.nn-nav-dropdown'));
+        function closeAll(except) {
+            dropdowns.forEach(function (d) {
+                if (d === except) return;
+                d.classList.remove('open');
+                var b = d.querySelector('.nn-nav-dropdown-btn');
+                if (b) b.setAttribute('aria-expanded', 'false');
+            });
+        }
+        dropdowns.forEach(function (dd) {
+            var btn = dd.querySelector('.nn-nav-dropdown-btn');
+            if (!btn) return;
+            dd.addEventListener('mouseenter', function () { btn.setAttribute('aria-expanded', 'true'); });
+            dd.addEventListener('mouseleave', function () {
+                if (!dd.classList.contains('open')) btn.setAttribute('aria-expanded', 'false');
+            });
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                var willOpen = !dd.classList.contains('open');
+                closeAll(dd);
+                dd.classList.toggle('open', willOpen);
+                btn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+            });
+            dd.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') {
+                    dd.classList.remove('open');
+                    btn.setAttribute('aria-expanded', 'false');
+                    btn.focus();
+                }
+            });
+            dd.addEventListener('focusout', function () {
+                setTimeout(function () {
+                    if (!dd.contains(document.activeElement)) {
+                        dd.classList.remove('open');
+                        btn.setAttribute('aria-expanded', 'false');
+                    }
+                }, 100);
+            });
+        });
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('.nn-nav-dropdown')) closeAll(null);
+        });
+    })();
+    // Mobile menu: one delegated close handler for every link inside it.
+    (function () {
+        var menu = document.getElementById('mobileMenu');
+        var burger = document.querySelector('.nn-hamburger');
+        if (!menu) return;
+        menu.addEventListener('click', function (e) {
+            if (!e.target.closest('a')) return;
+            menu.classList.remove('open');
+            document.body.classList.remove('menu-open');
+            if (burger) burger.setAttribute('aria-expanded', 'false');
+        });
+    })();
+    // Footer accordions on narrow screens. Bound at every width (the CSS
+    // decides whether the toggle has any visible effect) so a rotate or
+    // resize after load can never strand the links hidden; headers are
+    // keyboard-operable.
+    document.querySelectorAll('.nn-footer-col h4').forEach(function (h4) {
+        h4.setAttribute('role', 'button');
+        h4.setAttribute('tabindex', '0');
+        h4.setAttribute('aria-expanded', 'false');
+        function toggle() {
+            var on = h4.parentElement.classList.toggle('expanded');
+            h4.setAttribute('aria-expanded', on ? 'true' : 'false');
+        }
+        h4.addEventListener('click', toggle);
+        h4.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+        });
+    });
+    </script>
+    
+
+    <!-- Centralized, improved global search -->
+    <script src="assets/js/search.js" defer></script>
+    <script src="assets/js/language-control.js" defer></script>
+    <script>
+    // Member-aware nav (Aug 30 2026): the "Join" pill becomes "My Nerra"
+    // when the api.nerranetwork.com session cookie answers. Fail-silent —
+    // signed-out visitors, blocked cookies, or an unreachable Worker all
+    // leave the default Join link untouched.
+    (function () {
+      try {
+        fetch('https://api.nerranetwork.com/api/account', { credentials: 'include' })
+          .then(function (r) {
+            if (!r.ok) return;
+            ['nn-nav-account', 'nn-nav-account-m'].forEach(function (id) {
+              var a = document.getElementById(id);
+              if (a) { a.textContent = 'My Nerra'; a.href = 'account.html'; }
+            });
+          }).catch(function () {});
+      } catch (e) {}
+    })();
+    </script>
 </body>
 </html>

@@ -149,7 +149,7 @@ RSS URL. Being in Apple Podcasts is sufficient for Overcast discoverability.
 | Финансы Просто | LIVE | LIVE | -- | -- | -- | -- | -- |
 | Привет, Русский! | LIVE | LIVE | -- | -- | -- | -- | -- |
 | FR dub feeds (4) | LIVE (2026-07-23) | LIVE | n/a (playlists) | -- | -- | -- | -- |
-| RU dub feeds (4) | LIVE (2026-07-23) | LIVE (except SpaceX RU) | n/a (playlists) | -- | -- | -- | -- |
+| RU dub feeds (4) | LIVE (2026-07-23) | LIVE (all 4 as of 2026-08-16) | n/a (playlists) | -- | -- | -- | -- |
 
 Apple 2026-07-23 publish pass: the last 7 drafts (The DP Pod, Age of AI,
 Le Temps des Shorts Tesla, SpaceX Quotidien, Frontières Fascinantes,
@@ -161,9 +161,16 @@ show status "Available". Apple show IDs visible on each show page
 FR Frontiers 6794048504, FR Investing 6794048326, RU SpaceX 6794048451).
 Spotify 2026-07-23: all feeds indexed; every `spotify_show_id` (plus
 `spotify_show_ids:` fr/ru dub maps) is recorded in the show YAMLs, so
-the nightly Spotify analytics fetch is active. Exception: the RU SpaceX
-feed (spacex_podcast.ru.rss) never indexed on Spotify — resubmit at
-creators.spotify.com if wanted.
+the nightly Spotify analytics fetch is active. Exception, now closed: the RU
+SpaceX feed (spacex_podcast.ru.rss) had never indexed on Spotify. It was
+resubmitted 2026-08-16 via creators.spotify.com and went live the same
+day — show ID `0347V0gqJTXeWlk114Lbng`, recorded as
+`spotify_show_ids.ru` in shows/spacex.yaml, which is what turns on the
+nightly analytics fetch for it. The likely reason the earlier attempt
+never stuck is that it predates the 2026-08-15 channel `<title>`
+localisation to «SpaceX Ежедневно» (the feed announced itself in English
+on a Russian-language listing). Verification code goes to the feed's
+`itunes:email`, patrick@planetterrian.com — not the Gmail account.
 Amazon Music 2026-07-23: the 16 missing feeds were submitted and all
 ownership-confirmation emails were clicked the same day — shows go
 LIVE as Amazon ingests them. iHeart: not yet submitted (manual form).

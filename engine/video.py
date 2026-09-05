@@ -1592,6 +1592,78 @@ def _long_form_hook_stage(post_label: str, hook: str, *,
     return chain, post_label
 
 
+# Chapter title cards (Sep 2026). Long-form viewers' average view
+# duration sits at ~80 s regardless of episode length and half the
+# audience leaves inside the first 5% — the video gives no visual cue of
+# what is coming. Each chapter boundary now shows a broadcast-style
+# card (chapter title, top-left under the brand pill, boxed, 250 ms
+# fade in/out, on screen ~4 s) driven by the same chapters JSON that
+# powers the seek-bar chapters. Render/metadata only.
+_CHAPTER_CARD_SECONDS = 4.0
+# Structural chapter titles never earn a card — the viewer is watching
+# the intro / closing already; a card saying "Closing" is noise.
+_CHAPTER_CARD_SKIP_TITLES = frozenset({
+    "introduction", "intro", "closing", "outro", "tomorrow teaser", "teaser",
+})
+
+
+def _long_form_chapter_cards_stage(
+    post_label: str,
+    cards: Sequence[Tuple[float, str]],
+    *, width: int = 1920,
+) -> Tuple[str, str]:
+    """drawtext chain painting one title card per chapter boundary.
+
+    *cards* is ``[(start_seconds, title), ...]``. Cards starting inside
+    the opening hook window (< 5 s) are skipped — the hook owns the
+    open. Returns ``(chain_fragment, new_post_label)``; an empty list
+    returns ``("", post_label)`` so callers' terminal logic is untouched.
+    """
+    from engine.titles import CHAPTER_CARD_MAX, ELLIPSIS, fits
+
+    usable = []
+    for start, title in cards or []:
+        try:
+            s = float(start)
+        except (TypeError, ValueError):
+            continue
+        t = str(title or "").strip()
+        if s < 5.0 or not t:
+            continue
+        # Quality gate (Sep 3 2026): only a clean headline earns a card.
+        # A title the chapter builder already clipped (trailing ellipsis
+        # = a first-sentence fallback, never a real headline), one that
+        # would not fit the card, or a structural label is skipped —
+        # never cut. The limit lives in engine.titles like every other.
+        if t.endswith(ELLIPSIS) or t.endswith("...") or not fits(t, CHAPTER_CARD_MAX):
+            continue
+        if t.lower().rstrip(".:") in _CHAPTER_CARD_SKIP_TITLES:
+            continue
+        usable.append((s, t))
+    if not usable:
+        return "", post_label
+    font_path = _drawtext_escape(_find_font())
+    chain = ""
+    label = post_label
+    for i, (s, t) in enumerate(usable):
+        end = s + _CHAPTER_CARD_SECONDS
+        out = f"[chap{i}]"
+        alpha = (f"clip((t-{s:.2f})/0.25,0,1)*"
+                 f"clip(({end:.2f}-t)/0.25,0,1)")
+        chain += (
+            f";{label}drawtext=fontfile='{font_path}':"
+            f"text='{_drawtext_escape(t)}':"
+            f"fontsize=40:fontcolor=white:"
+            f"x=24:y=112:"
+            f"box=1:boxcolor=black@0.55:boxborderw=14:"
+            f"alpha='{alpha}':"
+            f"enable='between(t,{s:.2f},{end + 0.05:.2f})'"
+            f"{out}"
+        )
+        label = out
+    return chain, label
+
+
 def _long_form_subtitles_stage(post_label: str,
                                subtitles_path: str) -> str:
     """The terminal subtitles stage for the long-form composite.
@@ -1617,7 +1689,8 @@ def _long_form_filter_graph(*, width: int = 1920, height: int = 1080,
                             bg_is_video: bool = False,
                             subtitles_path: Optional[str] = None,
                             with_url_pill: bool = False,
-                            hook: Optional[str] = None) -> str:
+                            hook: Optional[str] = None,
+                            chapter_cards: Optional[Sequence[Tuple[float, str]]] = None) -> str:
     """filter_complex for stage 2.
 
     Inputs:
@@ -1698,11 +1771,17 @@ def _long_form_filter_graph(*, width: int = 1920, height: int = 1080,
     if hook:
         frag, post_brand_label = _long_form_hook_stage(
             post_brand_label, hook, width=width,
-            has_subtitles=bool(subtitles_path),
+            has_subtitles=bool(subtitles_path) or bool(chapter_cards),
         )
         graph += frag
         if not subtitles_path and post_brand_label == "[v]":
             return graph  # hook stage terminated the graph
+
+    # Chapter title cards (Sep 2026) — after the hook, before captions.
+    if chapter_cards:
+        frag, post_brand_label = _long_form_chapter_cards_stage(
+            post_brand_label, chapter_cards, width=width)
+        graph += frag
 
     if subtitles_path:
         graph += _long_form_subtitles_stage(post_brand_label, subtitles_path)
@@ -2183,6 +2262,7 @@ def _single_pass_long_form_filter_graph(
     kb_seed: int = 0,
     kb_extended: bool = True,
     input_map: Optional[Sequence[int]] = None,
+    chapter_cards: Optional[Sequence[Tuple[float, str]]] = None,
 ) -> str:
     """One filter graph for slideshow + overlays + captions (P1-2).
 
@@ -2254,11 +2334,17 @@ def _single_pass_long_form_filter_graph(
     if hook:
         frag, post_brand_label = _long_form_hook_stage(
             post_brand_label, hook, width=width,
-            has_subtitles=bool(subtitles_path),
+            has_subtitles=bool(subtitles_path) or bool(chapter_cards),
         )
         graph += frag
         if not subtitles_path and post_brand_label == "[v]":
             return graph  # hook stage terminated the graph
+
+    # Chapter title cards (Sep 2026) — after the hook, before captions.
+    if chapter_cards:
+        frag, post_brand_label = _long_form_chapter_cards_stage(
+            post_brand_label, chapter_cards, width=width)
+        graph += frag
 
     if subtitles_path:
         graph += _long_form_subtitles_stage(post_brand_label, subtitles_path)
@@ -2297,6 +2383,7 @@ def _single_pass_long_form_cmd(
     url_pill_in: Optional[str] = None,
     chapter_metadata_in: Optional[str] = None,
     hook: Optional[str] = None,
+    chapter_cards: Optional[Sequence[Tuple[float, str]]] = None,
     kb_seed: int = 0,
     kb_extended: bool = True,
     outro_card_in: Optional[str] = None,
@@ -2371,6 +2458,7 @@ def _single_pass_long_form_cmd(
         subtitles_path=subtitles_path,
         with_url_pill=bool(url_pill_in),
         hook=hook,
+        chapter_cards=chapter_cards,
         kb_seed=kb_seed, kb_extended=kb_extended,
     )
     map_label = "[v]"
@@ -2407,6 +2495,7 @@ def _long_form_cmd(audio_in: str, bg_in: str, brand_in: str,
                    url_pill_in: Optional[str] = None,
                    chapter_metadata_in: Optional[str] = None,
                    hook: Optional[str] = None,
+                   chapter_cards: Optional[Sequence[Tuple[float, str]]] = None,
                    outro_card_in: Optional[str] = None,
                    total_duration: float = 0.0,
                    outro_duration: float = 6.0) -> List[str]:
@@ -2465,6 +2554,7 @@ def _long_form_cmd(audio_in: str, bg_in: str, brand_in: str,
         subtitles_path=subtitles_path,
         with_url_pill=bool(url_pill_in),
         hook=hook,
+        chapter_cards=chapter_cards,
     )
     map_label = "[v]"
     if outro_active and outro_label:
@@ -2609,6 +2699,7 @@ def build_long_form_video(
     broll_clips: Optional[Sequence[Path]] = None,
     chapters_path: Optional[Path] = None,
     hook: Optional[str] = None,
+    chapter_cards: Optional[Sequence[Tuple[float, str]]] = None,
     outro_card_path: Optional[Path] = None,
     outro_card_duration: float = 6.0,
 ) -> Path:
@@ -2686,6 +2777,23 @@ def build_long_form_video(
     # Built before the render branches so both the hybrid and the
     # pure-slideshow paths get the same chapter track.
     chapter_meta: Optional[str] = None
+    # Chapter title cards (Sep 2026): derived from the same chapters
+    # JSON that powers the seek-bar chapters unless the caller supplied
+    # its own list. ``chapter_cards=[]`` disables them explicitly.
+    if chapter_cards is None and chapters_path and Path(chapters_path).exists():
+        try:
+            _raw = json.loads(Path(chapters_path).read_text(encoding="utf-8"))
+            _chs = _raw.get("chapters") if isinstance(_raw, dict) else _raw
+            chapter_cards = [
+                (float(c.get("startTime", c.get("start_time", c.get("start")))),
+                 str(c.get("title") or ""))
+                for c in (_chs or []) if isinstance(c, dict)
+                and c.get("title")
+                and c.get("startTime", c.get("start_time", c.get("start"))) is not None
+            ]
+        except Exception as exc:  # noqa: BLE001 — cards are best-effort
+            logger.info("chapter cards skipped (%s)", exc)
+            chapter_cards = None
     if chapters_path and Path(chapters_path).exists():
         try:
             from engine.audio import get_audio_duration
@@ -2829,6 +2937,7 @@ def build_long_form_video(
                 url_pill_in=str(url_pill_path) if url_pill_path else None,
                 chapter_metadata_in=chapter_meta,
                 hook=hook,
+                chapter_cards=chapter_cards,
                 outro_card_in=outro_in,
                 total_duration=outro_total,
                 outro_duration=outro_card_duration,
@@ -2866,6 +2975,7 @@ def build_long_form_video(
                             str(url_pill_path) if url_pill_path else None),
                         chapter_metadata_in=chapter_meta,
                         hook=hook,
+                chapter_cards=chapter_cards,
                         kb_seed=kb_seed,
                         outro_card_in=outro_in,
                         total_duration=outro_total,
@@ -2949,6 +3059,7 @@ def build_long_form_video(
         url_pill_in=str(url_pill_path) if url_pill_path else None,
         chapter_metadata_in=chapter_meta,
         hook=hook,
+                chapter_cards=chapter_cards,
         outro_card_in=outro_in,
         total_duration=outro_total,
         outro_duration=outro_card_duration,

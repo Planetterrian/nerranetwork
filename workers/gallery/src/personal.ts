@@ -61,6 +61,19 @@ export const DEFAULT_LINEUP = [
   "dp_pod",
 ] as const;
 
+// Closed add-on vocabulary — MUST mirror PERSONAL_ADDONS in
+// engine/personal_edition.py (drift-guarded in tests/test_nerra_personal.py).
+// The Worker validates ids only; tier gating and build behavior live in
+// the Python builder, which re-validates everything anyway.
+export const PERSONAL_ADDONS = [
+  "weather",
+  "local_news",
+  "events",
+  "traffic",
+  "markets",
+] as const;
+const ADDONS_MAX = 8;
+
 const COOKIE_NAME = "nn_gallery";
 const FEED_FILE_RE = /^[A-Za-z0-9_.-]+$/;
 const TOKEN_RE = /^[a-f0-9]{16,64}$/;
@@ -69,6 +82,7 @@ const CITY_MAX = 80;
 
 interface MemberRecord {
   shows: string[];
+  addons?: string[];   // validated subset of PERSONAL_ADDONS; absent = defaults
   first_name: string;
   city: string;
   tier: string;          // "personal" | "personal_local"
@@ -141,6 +155,7 @@ export async function handleAccount(request: Request, env: Env): Promise<Respons
             shows: member.shows || [],
             first_name: member.first_name || "",
             city: member.city || "",
+            addons: member.addons ?? null,
           }
         : null,
       tier: member?.tier || "none",
@@ -188,6 +203,19 @@ export async function handlePreferences(
   }
   const firstName = String(body?.first_name ?? "").trim().slice(0, NAME_MAX);
   const city = String(body?.city ?? "").trim().slice(0, CITY_MAX);
+  // addons: absent = leave the stored choice untouched; an array (even
+  // empty — a real "no add-ons" choice) replaces it, unknown ids dropped.
+  let addons: string[] | undefined;
+  if (Array.isArray(body?.addons)) {
+    addons = [];
+    for (const a of body.addons.slice(0, ADDONS_MAX)) {
+      const id = String(a);
+      if ((PERSONAL_ADDONS as readonly string[]).includes(id) &&
+          !addons.includes(id)) {
+        addons.push(id);
+      }
+    }
+  }
 
   const existing = (await loadMember(env, email)) || {
     shows: [], first_name: "", city: "", tier: "none", status: "none",
@@ -198,11 +226,13 @@ export async function handlePreferences(
     shows,
     first_name: firstName,
     city,
+    ...(addons !== undefined ? { addons } : {}),
     updated_at: new Date().toISOString(),
   };
   await saveMember(env, email, rec);
   return jsonResponse(request, 200, { ok: true, saved: {
     shows, first_name: firstName, city,
+    addons: addons !== undefined ? addons : (existing as MemberRecord).addons ?? null,
   } });
 }
 
@@ -432,6 +462,7 @@ export async function handleAdminSpecs(
           tier: rec.tier,
           first_name: rec.first_name || "",
           city: rec.city || "",
+          ...(rec.addons !== undefined ? { addons: rec.addons } : {}),
           default_lineup: (rec.shows?.length ?? 0) < 2,
         });
       }

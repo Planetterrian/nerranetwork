@@ -440,8 +440,13 @@ class TestGateBlockCooldown:
             '"source_integrity_failed"')
 
     def test_workflow_commits_cooldown_state_on_skip(self):
+        # Aug 30 2026: the step also commits the day's .skip_*.json — the
+        # daily audit's skip-marker check was structurally blind (no
+        # marker had ever been committed) and paged deliberate gate
+        # blocks as '[CRITICAL] Missed episode'.
         wf = (Path(__file__).resolve().parent.parent / ".github" / "workflows"
               / "run-show.yml").read_text(encoding="utf-8")
-        assert "Commit topic-queue cooldown state" in wf
+        assert "Commit skip state (queue cooldown + skip marker)" in wf
         assert "steps.pipeline.outputs.skipped == 'true'" in wf
         assert "git add shows/topic_queues/" in wf
+        assert 'git add -f "$SKIP_MARKER"' in wf

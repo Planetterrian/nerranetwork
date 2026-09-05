@@ -77,6 +77,48 @@ cron or a private repo's Actions) — never in this public repo's
 workflows, whose logs are world-readable. Recommended cron:
 `30 12 * * *` UTC (after the English slate + Nerra Daily).
 
+## Add-ons (Aug 30 2026)
+
+Members customize what Mira researches for their edition from the
+dashboard (`/account.html`). Closed vocabulary — `PERSONAL_ADDONS` in
+`engine/personal_edition.py`, mirrored verbatim in
+`workers/gallery/src/personal.ts` (drift guard:
+`tests/test_nerra_personal.py::TestAddons`):
+
+| Add-on | Tier | Source | Marginal cost |
+|---|---|---|---|
+| `weather` | Personal + Local | Open-Meteo (measured, keyless, free) | ~0 |
+| `local_news` | Personal + Local | Mira web search, source named aloud | shared* |
+| `events` | Personal + Local | Mira web search | shared* |
+| `traffic` | Personal + Local | Mira web search (real disruptions only — regional 511 APIs all need keys, so research beats integration) | shared* |
+| `markets` | Personal | `api/tsla.json` + `api/spcx.json` (deterministic, zero LLM) | ~0 |
+
+*One Grok web-search call covers ALL selected researched sections for a
+member — cost does not scale with add-on count. Weather-only briefs skip
+the LLM entirely (measured data spoken verbatim).
+
+Rules that bind:
+
+- **Defaults preserve pre-add-on behavior**: a member who never touched
+  the toggles gets weather + local news + events on the local tier and
+  nothing extra on the base tier. A saved empty list is a real "no
+  add-ons" choice, distinct from never-saved (Worker keeps them apart:
+  absent field vs `[]`).
+- **Tier gating is server-side twice**: the Worker only stores ids from
+  the closed set, and `PersonalSpec.effective_addons()` re-filters by
+  tier at build time — a base-tier record can never buy a local brief by
+  writing addons into KV.
+- **Honesty per section**: an unverifiable requested section is silently
+  omitted; a day with nothing verifiable and no weather SKIPs the brief.
+  Never filler. The markets line reads the committed price caches and
+  emits nothing when they're missing — never an invented number.
+- **SPCX is spoken "Ess Pee See Ex"** in the markets line — the spaced
+  "S P" bigram regresses to "S&P" under Grok TTS text normalization
+  (Aug 29 landmine).
+- The dashboard's location field is free-text — "wherever you choose",
+  not billing address; Open-Meteo geocodes it. Multiple locations per
+  feed is roadmap, not yet schema.
+
 ## Donations (`/support.html`)
 
 Cost-transparency page (the honest-ledger pitch: ~$120/month runs the

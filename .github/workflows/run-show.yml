@@ -96,6 +96,11 @@ on:
         required: false
         type: boolean
         default: false
+      force_rerun:
+        description: 'Run even if this show already published an episode today (intentional same-day replacement — without this, a dispatch for an already-published show skips cleanly)'
+        required: false
+        type: boolean
+        default: false
       deep_dive:
         description: 'Deep-dive topic id — runs a standalone SPECIAL episode via --deep-dive (bypasses the news fetch; single-show dispatch only, ignored for show=all). Example: show=spacex, deep_dive=q2-2026-earnings'
         required: false
@@ -413,15 +418,31 @@ jobs:
           # waited on the per-show concurrency lock, then shipped a second
           # episode 11 minutes after the first. This re-check runs AFTER
           # the lock + checkout, so it always sees the first run's commit.
-          # Scheduled triggers only — manual dispatch reruns stay possible.
+          #
+          # Aug 28 2026: the re-check now also covers workflow_dispatch
+          # unless force_rerun=true. During the cron outage, recovery
+          # dispatches came from MULTIPLE sources (the daily audit's
+          # midnight retry wave + operator/bridge dispatches) and a
+          # redundant spacex dispatch came within one apt hang of
+          # shipping a second same-day episode — dispatch used to bypass
+          # this guard entirely. Intentional same-day reruns (replacing a
+          # bad episode) set force_rerun=true in the dispatch form.
+          # Deep-dive specials are exempt: they are standalone episodes
+          # that legitimately land beside the daily.
+          RECHECK="false"
           if [ "${{ github.event_name }}" = "schedule" ]; then
+            RECHECK="true"
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ] &&                [ "${{ github.event.inputs.force_rerun }}" != "true" ] &&                [ -z "${{ github.event.inputs.deep_dive }}" ]; then
+            RECHECK="true"
+          fi
+          if [ "$RECHECK" = "true" ]; then
             OUTPUT_DIR="digests/${{ matrix.show }}"
             [ "${{ matrix.show }}" = "tesla" ] && OUTPUT_DIR="digests/tesla_shorts_time"
             git fetch origin main --depth=1 -q 2>/dev/null || true
             git checkout origin/main -- "$OUTPUT_DIR" 2>/dev/null || true
             TODAY=$(date -u +%Y%m%d)
             if find "$OUTPUT_DIR" -name "*_${TODAY}.md" -o -name "*${TODAY}*.md" 2>/dev/null | grep -q .; then
-              echo "::notice::Duplicate re-check: ${{ matrix.show }} already published today — skipping scheduled rerun."
+              echo "::notice::Duplicate re-check: ${{ matrix.show }} already published today — skipping rerun (pass force_rerun=true to override on a manual dispatch)."
               echo "skipped=true" >> "$GITHUB_OUTPUT"
               exit 0
             fi
@@ -547,25 +568,40 @@ jobs:
           # can break a run.
           NERRA_SINGLE_PASS_RENDER: ${{ vars.NERRA_SINGLE_PASS_RENDER }}
 
-      - name: Commit topic-queue cooldown state (gate-block skips)
+      - name: Commit skip state (queue cooldown + skip marker)
         # A source_integrity_failed skip publishes nothing and the normal
-        # commit step is skipped — so the ONLY durable record that a topic
-        # blocked the gate is the queue annotation run_show wrote
-        # (gate_blocks / gate_blocked_last, engine/topic_queue.py).
-        # Without this commit the loop-breaker has amnesia and the same
-        # topic is re-picked every day (UC 2026-08-24/25: two lost days on
-        # one 403-heavy topic). Narrow by design: commits ONLY the
-        # shows/topic_queues/ path, best-effort, never fails the job.
+        # commit step is skipped — so the ONLY durable records of the skip
+        # are the queue annotation run_show wrote (gate_blocks /
+        # gate_blocked_last, engine/topic_queue.py) and the day's skip
+        # marker. Without the annotation the loop-breaker has amnesia and
+        # the same topic is re-picked every day (UC 2026-08-24/25: two
+        # lost days on one 403-heavy topic). Without the MARKER the daily
+        # audit reads a deliberate gate skip as "[CRITICAL] Missed
+        # episode … no skip marker was present" and pages the operator
+        # for a pipeline failure that didn't happen (UC 2026-08-30).
+        # Narrow by design: commits ONLY those two paths, best-effort,
+        # never fails the job.
         if: always() && steps.pipeline.outputs.skipped == 'true'
         run: |
-          if git diff --quiet -- shows/topic_queues/; then
-            echo "No topic-queue cooldown state to commit."
+          SKIP_DIR="digests/${{ matrix.show }}"
+          [ "${{ matrix.show }}" = "tesla" ] && SKIP_DIR="digests/tesla_shorts_time"
+          SKIP_MARKER="$SKIP_DIR/.skip_$(date -u +%Y%m%d).json"
+          [ -f "$SKIP_MARKER" ] && git add -f "$SKIP_MARKER"
+          if git diff --quiet -- shows/topic_queues/ && git diff --cached --quiet; then
+            echo "No topic-queue cooldown state or skip marker to commit."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add shows/topic_queues/
-          git commit -m "Topic-queue gate-block state: ${{ matrix.show }} $(date -u +%F)"
+          git commit -m "Gate-block skip state: ${{ matrix.show }} $(date -u +%F)"
+          # Discard the run's other tracked modifications (content tracker,
+          # memory files — none of which should survive a skip). With them
+          # in the tree, `git pull --rebase` refuses ("Please commit or
+          # stash them") whenever concurrent shows have pushed, so during
+          # a recovery wave every retry failed identically and the
+          # annotation was lost (UC 2026-08-30, wave of 11).
+          git checkout -- . 2>/dev/null || true
           for i in 1 2 3 4; do
             # A conflicting concurrent push leaves a stopped rebase behind;
             # without this abort every later attempt dies on "unmerged

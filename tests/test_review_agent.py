@@ -490,3 +490,17 @@ class TestLedgerDrivenRotation:
             "rotation is no longer advanced here", ""
         ).replace("advances the\n# rotation", "")
         assert 'review_state.yaml"' not in text
+
+
+class TestSnapshotOnShowsWithoutFetchFilters:
+    """Sep 4 2026: ``build_snapshot`` raised UnboundLocalError on every show
+    with no ``exclude_title_patterns`` (models_agents, the network's #2
+    show by downloads) because ``digest_files`` was only bound inside the
+    fetch-filter branch and the heading-integrity audit read it after."""
+
+    def test_snapshot_runs_on_models_agents(self):
+        snap = _load_script("review_snapshot")
+        report = snap.build_snapshot("models_agents", episodes=2)
+        assert "Review snapshot: models_agents" in report
+        assert "Digest heading integrity" in report
+        assert "Fetch-filter leakage" not in report  # no patterns configured

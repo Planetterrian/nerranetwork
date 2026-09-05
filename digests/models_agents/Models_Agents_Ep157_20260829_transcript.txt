@@ -1,0 +1,47 @@
+Claude just showed it can autonomously improve alignment in other models on a single GPU, shifting alignment work from human teams to model driven loops. This is Models & Agents, episode 157. Anthropic researchers gave Claude 48 hours and one GPU to improve alignment of small models. The model researched methods, proposed fixes, trained, and evaluated the results on its own. It improved safety scores across 10 common misalignment types.
+While preserving general capabilities. The best methods generalized to held out benchmarks and models up to 4.7 times larger. In a follow-up test, Sonnet 5, post-trained in an early checkpoint of the more capable Opus 4.8, and reached safety scores close to the production version. Claude hill climbed safety benchmarks for common misalignments like deception or sick of fancy, under the constraint of preserving general capabilities.
+Its best methods also generalized to the petri behavioral audit. This work sits in the ongoing safety and policy conversation where labs seek scalable evaluation methods beyond full human pipelines. Builders tracking alignment automation should test the released methods on their own small models this week.
+Cohear released parse 5, a 2.3 billion parameter vision language model built on the north microvision instruct architecture. It carries an 8,192 token context window. The model converts PDFs, slides, and images to structured markdown in a single pass and returns tables as HTML along with bounding boxes where needed.
+On parse bench, it scored 79.2 behind GPT 5.5 at 84.4 and Opus 4.8 at 84.3.
+parse 5 is priced at $1.50 per 1000 pages via the Cohear API. It is available on model vault, Microsoft Foundry, and AWS SageMaker. The model accepts a PDF, PowerPoint, or JPEG page as a base 64 encoded image and returns markdown in reading order.
+It supports Arabic, English, French, German, Italian, Japanese, Korean, Portuguese, and Spanish with stable accuracy. Cohear modeled a financial services workflow processing 750 million documents a year and showed choosing parse 5 over GPT 5.5 would reduce costs by more than 98%.
+Meta AI and University of Illinois researchers trained Quinn 38B with EVO Harness RL, a two-stage framework that teaches agents to manage a unified belief progress experience workspace through four meta actions. The resulting model reached 96.9% success on ALF world, matching Claude Opus 4.5 at 96.4% and beating skill RL at 89.9%.
+The approach includes cost-aware reinforcement learning so the agent learns when querying external state is worth the token budget. During training the model exhibited harness and kneeling, reducing tool calls on familiar tasks while scaling them on novel ones. The BPE workspace categorizes external needs into belief for current environment state, progress for completed and pending sub goals, and experience for historical knowledge.
+The agent issues track, commit, recall, and note commands to interact with this dashboard. The framework also improved frozen frontier models, raising GPT 4.1 success rate by 22.1 points and GPT 5 by 25.7 points when equipped with the BPE prompt time harness.
+A developer implemented a 2.4 to 4 million parameter latent flow transformer on the RP2350 microcontroller. The model generates 128 by 128 face images in roughly 20 seconds at int 8 quantization.
+The 12-layer model uses add-a-ln-zero conditioning, supports CFG, and streams weights via DMA while computing prior layers. Reloose-squared activation increases sparsity for skipped calculations. The full pipeline runs locally and can display output on a monitor or transfer via USB.
+CFG boosted image quality substantially during testing. The inference engine streams weights from flash memory while the previous layer is still being computed. Edge developers should examine the oblation results for similar microcontroller deployments.
+Simon Willison updated his LLM cliche highlighter tool to detect 38 patterns. The lightweight utility flags overused LLM phrasing in generated text. Builders reviewing large volumes of model output can add it to their post-processing scripts to improve readability.
+Simon Willison reported that security issues in open source projects now see explode attempts within minutes of patch discussions appearing publicly.
+Automated agents are scanning repositories and generating probes faster than traditional embargo windows allow.
+Maintainers are seeing a sharp rise in disclosures with one project moving from 20 total reports over 10 years to over 40 in the last month.
+GitHub CVE assignment times have stretched from 2 to 3 days to 3 to 4 weeks under the increased volume. The RClone maintainer noted that 75% of recent disclosures contain something requiring attention.
+Projects using public repositories should accelerate their disclosure and patching processes. Everyone treats learned prompt compression as a simple, keep the important tokens switch.
+In practice, it is a supervised transfer problem where the compressor learns which tokens to drop from English centric training data.
+When the same compressor is applied to other languages, the keep rate that preserves 57 to 62% normalized context utilization in English can drop to 10 to 24% for Lithuanian and near zero for Chinese at the same budget.
+The gap appears because the model internalizes English token importance patterns rather than language agnostic information density.
+Deterministic baselines avoid the transfer failure but cannot match peak English performance.
+Multilingual trained compressors close the gap yet still require careful rate tuning.
+Aggressive thresholds can push non-English contexts below no context utility on downstream tasks.
+Teams should measure both token savings and task accuracy on their actual language mix before adopting alert compressor.
+Consider a translate then compressed pipeline when the target language has a high token premium.
+Test cohere parse 5 on your highest volume document set to measure cost versus current frontier model usage.
+Run the evil harness RL-BPE workspace on one of your existing long horizon agent tasks to see whether harness annealing reduces token spend.
+Add Simon Willison's cliche highlighter to your generation review pipeline if you ship customer facing LLM text.
+Port the RP-2350 latent flow transformer ablation approach to your own edge hardware if you need local image generation.
+Compare parse 5 output structure against your current OCR plus model pipeline on enterprise PDFs containing tables and charts.
+More results from anthropics automated alignment experiments are expected as other labs reproduce the single GPU setup.
+Additional language coverage and chart extraction features are planned for future parse 5 releases.
+Further scaling tests of evil harness RL on models beyond 8B are likely in the coming weeks.
+Continued discussion on open source embargo timing given faster AI driven exploit discovery is also expected.
+Before we go watch for the first independent reproductions of the single GPU alignment loop and whether they surface new generalization limits on larger models.
+That wraps up today's AI briefing.
+Share this with a developer or builder who wants to stay current.
+Subscribe wherever you listen. See you tomorrow.
+And if you'd rather watch than listen, find us on YouTube at Narrow Network.
+Links in the show notes.
+Quick tip from the network. Try fascinating frontiers next. The most fascinating news from space and science.
+Every Narrow Network show is free at NarrowNetwork.com.
+Want the written briefing with source links? Each show keeps a summaries page on NarrowNetwork.com.
+Scannable, dated, and free. This episode used AI voice synthesis of my voice.
+Editorial selection and analysis are my own.

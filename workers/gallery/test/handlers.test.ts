@@ -314,7 +314,7 @@ describe("GET /api/login", () => {
 // ---------------------------------------------------------------------------
 
 describe("GET /api/magic", () => {
-  it("302s to /gallery.html and sets the subscriber cookie", async () => {
+  it("302s to /account.html (the member dashboard) and sets the subscriber cookie", async () => {
     const env = makeEnv();
     const token = await signJwt(
       { sub: "alice@example.com", scope: "magic-login", ttlSeconds: 600 },
@@ -326,7 +326,7 @@ describe("GET /api/magic", () => {
     );
     const resp = await handleMagic(req, env, makeDeps());
     expect(resp.status).toBe(302);
-    expect(resp.headers.get("Location")).toBe("https://nerranetwork.com/gallery.html");
+    expect(resp.headers.get("Location")).toBe("https://nerranetwork.com/account.html");
     const setCookie = resp.headers.get("Set-Cookie");
     expect(setCookie).toMatch(/^nn_gallery=/);
     expect(setCookie).toContain("HttpOnly");

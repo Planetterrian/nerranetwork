@@ -323,6 +323,8 @@ def _market_status_suffix(market_state: str) -> str:
     s = (market_state or "REGULAR").upper()
     if s == "PRE":
         return " (Pre-market)"
+    if s == "INTRADAY":
+        return " (Intraday)"
     if s == "REGULAR":
         return ""
     # POST, POSTPOST, CLOSED, anything unknown → after-hours.
@@ -340,6 +342,8 @@ def _normalize_market_state(raw: object) -> str:
     s = str(raw).upper()
     if s == "PRE":
         return "PRE"
+    if s == "INTRADAY":
+        return "INTRADAY"
     if s == "REGULAR":
         return "REGULAR"
     return "POST"
@@ -365,11 +369,46 @@ def _fetch_via_yfinance_history() -> tuple[float, float, str] | None:
         return None
 
     price = float(hist["Close"].iloc[-1])
-    # ``history()`` doesn't expose marketState; default to REGULAR
-    # (close-of-day is by definition a regular-session price).  The
-    # fast_info source below picks up pre/post-market when relevant.
+    # ``history()`` doesn't expose marketState. A completed daily bar is
+    # by definition a regular-session close — but during the regular
+    # session the LAST bar is today's in-progress bar and ``Close`` is
+    # the live price. Ep585 (2026-08-27, a daily-audit retry that ran at
+    # 11:27 ET) spoke "closed at $351.73" for a stock that closed at
+    # $345.82. When today's bar is open, report INTRADAY so the spoken
+    # line says "is trading at" (Sep 4 2026 flagship pass).
     prev_close = float(hist["Close"].iloc[-2]) if len(hist) >= 2 else price
-    return price, prev_close, "REGULAR"
+    state = "REGULAR"
+    try:
+        last_bar_date = hist.index[-1].date()
+        if _regular_session_open() and last_bar_date == _today_et():
+            state = "INTRADAY"
+    except Exception:  # pragma: no cover - defensive; a close is the safe default
+        pass
+    return price, prev_close, state
+
+
+def _now_et(now: datetime.datetime | None = None) -> datetime.datetime:
+    if now is None:
+        now = datetime.datetime.now(datetime.timezone.utc)
+    try:
+        from zoneinfo import ZoneInfo
+        return now.astimezone(ZoneInfo("America/New_York"))
+    except Exception:  # pragma: no cover
+        return now - datetime.timedelta(hours=4)
+
+
+def _today_et(now: datetime.datetime | None = None) -> datetime.date:
+    return _now_et(now).date()
+
+
+def _regular_session_open(now: datetime.datetime | None = None) -> bool:
+    """True inside the NYSE regular session (09:30-16:00 New York,
+    weekdays). Exchange holidays are not modelled."""
+    local = _now_et(now)
+    if local.weekday() >= 5:
+        return False
+    minutes = local.hour * 60 + local.minute
+    return 9 * 60 + 30 <= minutes < 16 * 60
 
 
 def _fetch_via_yfinance_fast_info() -> tuple[float, float, str] | None:
@@ -543,14 +582,30 @@ def _format_price_for_speech(price_str: str) -> str:
         whole_words = number_to_words(whole)
         if cents:
             cents_words = number_to_words(cents)
-            return f"{whole_words} dollars and {cents_words} cents"
-        return f"{whole_words} dollars"
+            return f"{whole_words} dollars and {cents_words} {_cent_word(cents)}"
+        return f"{whole_words} {_dollar_word(whole)}"
     except (ValueError, TypeError):
         return f"{price_str} dollars"
 
 
+def _dollar_word(n: int) -> str:
+    return "dollar" if n == 1 else "dollars"
+
+
+def _cent_word(n: int) -> str:
+    return "cent" if n == 1 else "cents"
+
+
 def _format_change_for_speech(change_str: str) -> str:
-    """Convert '▲ $0.57 (0.1%)' to natural speech like 'up fifty-seven cents, zero point one percent'."""
+    """Convert '▲ $0.57 (0.1%)' to natural speech like
+    'up fifty-seven cents, or zero point one percent'.
+
+    Sep 4 2026 flagship pass: the parts used to be joined with bare
+    commas — "up, ninety-two cents, zero point three percent" — which
+    Whisper transcribed as "up 92.3%" (Ep593), and $1.30 / $0.01 came out
+    as "one dollars" / "one cents" (Ep584, Ep593). The direction now binds
+    to the amount, "or" separates the two figures, and units singularise.
+    """
     if not change_str or change_str == "(price unavailable)":
         return "price unavailable"
 
@@ -568,23 +623,32 @@ def _format_change_for_speech(change_str: str) -> str:
             whole = int(amount)
             cents = round((amount - whole) * 100)
             if whole > 0 and cents > 0:
-                parts.append(f"{number_to_words(whole)} dollars and {number_to_words(cents)} cents")
+                parts.append(
+                    f"{number_to_words(whole)} {_dollar_word(whole)} and "
+                    f"{number_to_words(cents)} {_cent_word(cents)}"
+                )
             elif whole > 0:
-                parts.append(f"{number_to_words(whole)} dollars")
+                parts.append(f"{number_to_words(whole)} {_dollar_word(whole)}")
             elif cents > 0:
-                parts.append(f"{number_to_words(cents)} cents")
+                parts.append(f"{number_to_words(cents)} {_cent_word(cents)}")
         except (ValueError, TypeError):
             pass
 
+    pct_phrase = ""
     if pct_match:
         try:
             pct_val = float(pct_match.group(1))
-            pct_words = number_to_words(pct_val)
-            parts.append(f"{pct_words} percent")
+            pct_phrase = f"{number_to_words(pct_val)} percent"
         except (ValueError, TypeError):
-            pass
+            pct_phrase = ""
 
-    return ", ".join(parts)
+    if len(parts) == 2 and pct_phrase:      # direction + amount + percent
+        return f"{parts[0]} {parts[1]}, or {pct_phrase}"
+    if len(parts) == 2:                     # direction + amount
+        return f"{parts[0]} {parts[1]}"
+    if pct_phrase:                          # direction + percent only
+        return f"{parts[0]} {pct_phrase}"
+    return parts[0]
 
 
 def _tone_from_change(change_str: str) -> str:
@@ -651,6 +715,8 @@ def _price_sentence(price_str: str, change_str: str) -> str:
         return f"T S L A is trading at {price_spoken} in the pre-market, {change_spoken}. "
     if "After-hours" in change_str:
         return f"T S L A is at {price_spoken} in after-hours trading, {change_spoken}. "
+    if "Intraday" in change_str:
+        return f"T S L A is trading at {price_spoken}, {change_spoken}. "
     return f"T S L A closed at {price_spoken}, {change_spoken}. "
 
 
