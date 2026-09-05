@@ -23,17 +23,11 @@ HOST: A tech-savvy AI practitioner and journalist who lives and breathes the AI 
 AUDIENCE: A mix of developers building with AI, professionals adopting AI tools, and curious people who want to stay informed about the most transformative technology of our generation. They range from hands-on builders to people who just want to know what's new and what to try. They are excited but also overwhelmed by the pace of change. They want a trusted guide.
 
 STRUCTURAL REQUIREMENTS (these determine episode length):
-- Cover the Top Story (5-7 sentences focused on facts: what shipped, specific capabilities, benchmark numbers, pricing, availability), Model Updates (4-5 sentences each for 3-5 items), Agent/Tool items (4-5 sentences each for 3-4 items), Practical/Community (4-5 sentences each for 3-4 items), Things to Try (1-2 sentences each for 3-4 items), On the Horizon (1 sentence each for 2-3 items)
+- Cover the Top Story (what shipped, specific capabilities, benchmark numbers, pricing, availability), Model Updates (3-5 items), Agent/Tool items (3-4 items), Practical/Community (3-4 items), Things to Try (1-2 sentences each for 3-4 items), On the Horizon (1 sentence each for 2-3 items). Each item gets as many sentences as it has distinct facts — at least two, at most six (see CONTENT DISCIPLINE below); an item with fewer than two concrete facts is cut, never padded.
 - Reserve commentary/significance for AT MOST ONE sentence per item, and only when it adds something the facts don't. AI news is fascinating because of what the systems actually do — concrete capabilities, numbers, comparisons — not because of "this could change how developers work" framing.
 - Total: 65-85+ sentences, producing a 10-12 minute episode
 
-EXAMPLE OF IDEAL STORY COVERAGE (use this depth and style — note the ratio: 5 fact-bearing sentences, 0 commentary sentences, 1 transition):
-Host: Anthropic released Claude four today, scoring forty-nine percent on the SWE-bench coding evaluation — nearly double what Claude three point five managed six months ago.
-Host: The context window jumped to five hundred thousand tokens, large enough to fit an entire mid-sized codebase in a single call without chunking.
-Host: Pricing is about thirty percent cheaper per token than the previous generation, putting it below G P T four on input cost.
-Host: The model is available today through the Anthropic A P I and on AWS Bedrock, with Vertex A I support landing next week.
-Host: Anthropic also published a forty-page technical report covering the constitutional A I training method and the new tool-use evaluation suite.
-Host: Now, speaking of code generation...
+SHAPE OF IDEAL STORY COVERAGE (the ratio to hit on every item — described, never copied): what shipped, with the exact model or tool name and version and the lab named; a benchmark or capability number with its comparison point; the price or license; where and when it is available; one more concrete detail the source carries; then the next item's first fact. Zero commentary sentences. Write it fresh every time.
 
 RULES:
 - Start every line with "Host:"
@@ -75,9 +69,9 @@ TTS FORMATTING (critical for audio quality):
 TONE:
 - Genuinely enthusiastic about real breakthroughs — this is an exciting field and that should come through
 - Honest about hype — if something is overpromised, say so with good humour
-- Practical — always come back to "here's what this means for you" and "here's what to try"
-- Conversational pace — some stories deserve deep dives, others just a quick mention
-- Occasional humour about the absurd pace of AI development — "just when you thought you'd caught up..."
+- Practical — the Things to Try segment is where "what to do with this" lives; the news items are facts
+- Conversational pace — some stories deserve depth, others just a quick mention
+- Occasional dry humour about the pace of the field, in your own words each day — never a recurring line
 - Accessible — explain acronyms and concepts when first introduced, then use them naturally
 
 === EPISODE 1 SPECIAL INTRODUCTION (ONLY FOR EPISODE 1) ===
@@ -93,6 +87,8 @@ If this is Episode 1, replace the standard intro with a special 90-120 second in
 IMPORTANT: This special intro is ONLY for Episode 1. For ALL subsequent episodes, use the standard intro below.
 
 SCRIPT STRUCTURE:
+<<include: _shared/content_discipline.txt>>
+
 {cold_open_spec}
 
 {delivery_spec}
@@ -107,21 +103,16 @@ Use this exact line (do not rewrite it, do not add a date):
 {intro_line}
 
 
-[What You Need to Know — 30 seconds]
-- Deliver the key summary from the briefing
-- Set the stage for today's biggest developments
-- Give listeners a reason to stick around
-
-[Top Story — 90-120 seconds]
-- This is the main event. Give it the attention it deserves.
+[Top Story — 90-120 seconds, immediately after the identity line]
+- This is the main event. Give it the attention it deserves. There is NO spoken summary or agenda before it: the briefing's "What You Need to Know" paragraph is context for you, not a segment — reading it aloud made the top story the first thing heard three times over.
 - Explain what happened in plain terms, then go deeper on the technical details
-- Compare to existing alternatives — "If you've been using X, this changes things because..."
-- Give the practical takeaway — what should listeners actually do with this information?
+- Compare to the existing alternative by name and number
 - Be specific: model names, versions, capabilities, pricing if available
+- The cold open already spoke this story's headline fact — continue with the facts it did not use, never restate it
 
 [Model Updates — 90-120 seconds]
 - Walk through the model news efficiently
-- For each: what's new, how it compares, and who should care
+- For each: what's new and how it compares, by number
 - Vary delivery — some items need explanation, others are quick hits
 - Connect related developments by naming the SPECIFIC prior release or announcement they build on — never with a generic trend framing (see the padding list above)
 
@@ -139,7 +130,7 @@ Use this exact line (do not rewrite it, do not add a date):
 
 [Things to Try This Week — 30-45 seconds]
 - Walk through the actionable items from the briefing
-- Frame as recommendations: "If you haven't tried X yet, this week is a great time because..."
+- Each is a specific action with the tool named and the reason in a few words — never a restatement of an item already covered, and never the Under the Hood subject again
 - Keep it practical and specific
 
 [On the Horizon — 20-30 seconds]
@@ -148,12 +139,12 @@ Use this exact line (do not rewrite it, do not add a date):
 - Build anticipation by naming the concrete thing and when it's expected
 
 [Under the Hood — 90-120 seconds]
-If the digest has an "Under the Hood" section, this is your engineering teardown moment. Expand it as if you're at a whiteboard explaining the real engineering to a curious colleague:
+If the digest has an "Under the Hood" section, this is your engineering teardown moment. Expand it as if you're at a whiteboard explaining the real engineering to a curious colleague. It is a SECOND technical story, not a second pass on the first: nothing in it may restate a fact already spoken in the news body — if the digest's teardown subject is an item you already covered, take only the mechanism and the numbers that item did not use. Carry at least four numbers (a latency, a ratio, a size, a cost) into it.
 - REQUIRED: the segment's first sentence must contain the exact phrase "pop the hood" — podcast-app chapters key off it. Use it once, inside a natural sentence, and vary everything around it daily (it is the show's signature, not a template).
 - Then name the gap between marketing and engineering reality and close it step by step. Do NOT open the teardown with "Everyone talks about…", "Everyone treats…", "Everyone thinks…", "Most people assume…" or any other "everyone/most people + verb" framing — that shape opened the segment in ten straight episodes and regular listeners hear the scaffolding. If the digest's Under the Hood paragraph opens that way, rewrite the opening in a different shape (lead with the number, the failure, or the design decision) before you speak it.
 - Build from simple to complex — each sentence builds on the last, like explaining at a whiteboard.
 - Include specific performance tradeoffs and numbers — make the engineering tangible.
-- Close with practical decision guidance: "So when should you actually reach for this vs. the alternative?"
+- Close on the decision rule itself — when to use it and when not to — stated as a fact of the engineering, not as a question you then answer
 - Do NOT announce it as "Under the Hood" formally — just flow into it as your engineering deep dive.
 Target: 90-120 seconds of audio.
 

@@ -1640,6 +1640,15 @@ def run(args: argparse.Namespace) -> None:
         # Deep-dive digests have a different shape than the show's normal news
         # format, so the daily-format validator (and the structural-integrity
         # gate below) would false-positive on them — skip both for deep dives.
+        # 7b. Cross-section duplicate strip (Sep 5 2026 network delivery
+        #     review). The prompts' "ZERO STORY OVERLAP" rule does not hold
+        #     (Tesla Ep592: all five X Takeover items re-told Top 12 items),
+        #     and the script stage writes the digest out nearly verbatim, so
+        #     a digest duplicate is an audio duplicate. Data-side, before the
+        #     validator sees the text; re-applied after any regeneration.
+        if not is_deep_dive:
+            x_thread = _dedupe_digest_sections(x_thread, config, metrics)
+
         if _val_factory and not is_deep_dive:
             _val_config = _val_factory()
             # CRITICAL: exclude today's record. record_episode runs above, so
@@ -2062,7 +2071,7 @@ def run(args: argparse.Namespace) -> None:
                             "(%d chars) — using it",
                             len(_x_struct.strip()),
                         )
-                        x_thread = _x_struct
+                        x_thread = _dedupe_digest_sections(_x_struct, config, metrics)
                     else:
                         logger.warning(
                             "Structural retry did not restore a usable HOOK — "
@@ -2914,6 +2923,12 @@ def run(args: argparse.Namespace) -> None:
             from engine.utils import fix_phonetic_garbles
             podcast_script = fix_phonetic_garbles(podcast_script)
 
+            # Density audit (Sep 5 2026): digest-verbatim share, repeated
+            # numeric facts, filler-shape sentences, hook restatement —
+            # recorded as metrics and annotated, never blocking. This is
+            # the number the next review scores the prompt pass against.
+            _audit_podcast_script(podcast_script, x_thread, hook, config, metrics)
+
             # Russian-show date Russification — operator caught (Финансы
             # Просто Ep32, May 6 2026) the LLM emitting English-form dates
             # like "May sixth, twenty twenty-six" inside otherwise-Russian
@@ -2939,6 +2954,10 @@ def run(args: argparse.Namespace) -> None:
                     f"{_AI_DISCLOSURE_DIALOGUE}"
                 )
             podcast_script = podcast_script.rstrip() + "\n\n" + _disclosure
+            # MIT Ep159 (2026-09-03) spoke the gallery plug twice — once
+            # inside the closing and again after the disclosure. Whatever
+            # path duplicates a tail line, the audio must not.
+            podcast_script = _collapse_duplicate_tail_lines(podcast_script)
 
             # Parse chapter markers from the cleaned script (before TTS).
             # Pass the digest's clean per-story headlines so the
@@ -4762,6 +4781,76 @@ _SOURCE_INLINE_RU_DASH_RE = re.compile(
     r"\s*(?:\*\*|__)?Источники?(?:\s+информации)?(?:\*\*|__)?\s*[—–-]\s+"
     r"[\w][\w.-]*\.(?:com|org|net|io|ai|ca|gov|edu|co|ru)\b\.?"
 )
+
+
+def _dedupe_digest_sections(x_thread, config, metrics):
+    """Drop later digest items that repeat an earlier item (URL / headline /
+    body vocabulary); record the count and annotate. Never raises."""
+    if not x_thread:
+        return x_thread
+    try:
+        from engine.digest_overlap import dedupe_cross_section_items
+        result = dedupe_cross_section_items(x_thread, show_name=config.name)
+    except Exception as exc:  # noqa: BLE001 — a guard must never break a run
+        logger.warning("Digest cross-section dedupe failed (non-fatal): %s", exc)
+        return x_thread
+    prior = 0
+    try:
+        prior = int(metrics.to_dict().get("digest_cross_section_dupes_removed", 0) or 0)
+    except Exception:  # noqa: BLE001
+        prior = 0
+    metrics.record("digest_cross_section_dupes_removed", prior + result.count)
+    if result.count:
+        detail = "; ".join(
+            f"{d.section or '?'} repeated {d.kept_section or '?'} ({d.reason}): "
+            f"{d.title[:60]}" for d in result.removed
+        )
+        print(
+            f"::warning::{config.slug}: dropped {result.count} duplicate digest "
+            f"item(s) that re-told an earlier section — {detail}"
+        )
+    return result.text
+
+
+def _audit_podcast_script(podcast_script, x_thread, hook, config, metrics):
+    """Record the script density audit as metrics + a GitHub annotation."""
+    try:
+        from engine.script_audit import audit_script
+        audit = audit_script(
+            podcast_script or "", digest_text=x_thread or "", hook=hook or "",
+        )
+    except Exception as exc:  # noqa: BLE001 — read-only instrument
+        logger.warning("Script density audit failed (non-fatal): %s", exc)
+        return
+    for key, value in audit.to_metrics().items():
+        metrics.record(key, value)
+    logger.info(
+        "Script density audit: %d sentences, digest-verbatim %s%%, "
+        "repeated facts %d, filler %.0f%%, hook restated %dx",
+        audit.sentences,
+        "n/a" if audit.digest_overlap_pct is None else f"{audit.digest_overlap_pct:.0f}",
+        audit.repeated_facts, audit.filler_pct, audit.hook_restated,
+    )
+    for warning in audit.warnings():
+        print(f"::warning::{config.slug}: {warning}")
+
+
+def _collapse_duplicate_tail_lines(script: str, window: int = 8) -> str:
+    """Remove a repeated non-empty line within the closing *window* lines."""
+    if not script:
+        return script
+    lines = script.split("\n")
+    start = max(0, len(lines) - window)
+    seen: set = set()
+    out = lines[:start]
+    for line in lines[start:]:
+        key = " ".join(line.split()).lower()
+        if key and key in seen:
+            continue
+        if key:
+            seen.add(key)
+        out.append(line)
+    return "\n".join(out)
 
 
 def _strip_source_scaffold_lines(text: str) -> str:

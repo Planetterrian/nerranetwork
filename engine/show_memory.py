@@ -213,7 +213,7 @@ def build_narrative_status_block(tracker: Dict[str, Any], label: str) -> str:
 
     lines = [
         f"### {label} PROGRAM NARRATIVE MEMORY",
-        "Use this to give regular listeners a sense of ongoing stories and real progress (or the lack of it).",
+        "This block exists for ACCURACY and for at most one callback — it is not a storytelling layer.",
         "CONTINUITY BUDGET — at most ONE audible continuity callback in the whole episode",
         "(across all programs). Prefer the date ('yesterday' / the covered date). NEVER write",
         "'Ep141', 'Ep 141', 'ep141', or any 'EpN' abbreviation — those get voiced as letter-soup.",
@@ -221,10 +221,10 @@ def build_narrative_status_block(tracker: Dict[str, Any], label: str) -> str:
         "callback: name the specific prior development in your own words, then what today adds —",
         "never a generic 'we covered <program name> yesterday' sentence, and never a callback to",
         "a program that only appears in this memory block rather than in a recent episode.",
-        "Then answer naturally:",
-        "  - Where does today's development fit in the bigger arc for this program?",
-        "  - Does it meaningfully move any of the key open questions?",
-        "  - What should attentive listeners be watching for next?",
+        "Everything below is background so a status is not contradicted or re-announced as new.",
+        "Do NOT add 'where this fits in the bigger arc', 'what this means for the program',",
+        "open-question recaps, or 'what to watch next' framing to stories: a fact that moves a",
+        "tracked question is stated as the fact, once, and the episode moves on.",
         "If the show covered the same program YESTERDAY, do not re-explain it — say only what is NEW today.",
         "",
         "Tracked programs (with current status and open questions):",
@@ -608,12 +608,23 @@ def auto_update_narrative_from_digest(
 # Composed prompt section (single placeholder, empty == true no-op)
 # ---------------------------------------------------------------------------
 
+# Sep 5 2026 (network delivery review): this used to read "MANDATORY
+# CONTINUITY ... add 1-2 natural sentences of where today's development fits
+# in the ongoing arc" — on EVERY story touching a tracked program, in every
+# memory-enabled prompt. The status block above says "at most ONE callback";
+# the model obeyed the mandatory line, and the audible result was the
+# arc-framing sentence that adds no fact (Omni View Ep164 "fits into the
+# broader Russia-Ukraine war tracked since last month", MIT Ep159/160,
+# M&A 5/5 callbacks re-tells). Memory is for accuracy; one callback, and only
+# with a delta.
 _SECTION_INSTRUCTIONS = (
-    "MANDATORY CONTINUITY (use, do not read aloud): when a story touches one of the "
-    "tracked programs above, add 1-2 natural sentences of where today's development fits "
-    "in the ongoing arc and whether it moves any of the key open questions. Treat the "
-    "memory as long-term context — surface evolving progress instead of treating each day "
-    "in isolation. Never narrate these notes or program names as a list; weave them in."
+    "HOW TO USE THIS MEMORY (do not read aloud): it is background so today's facts are "
+    "stated accurately against what the show already knows — a status is never "
+    "contradicted, and never re-announced as if new. At most ONE audible callback in the "
+    "whole episode, and only when it carries a delta: the specific thing that changed "
+    "since the prior coverage (a number that moved, a claim confirmed or refuted). No "
+    "'where this fits in the arc' sentences, no open-question recaps, no program names "
+    "read as a list. A story with nothing new against the memory gets no callback at all."
 )
 
 

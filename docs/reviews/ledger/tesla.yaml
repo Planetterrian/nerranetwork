@@ -314,6 +314,43 @@ reviews:
       verdict: pending
       evidence: null
     agent_cost_usd: null
+  - date: 2026-09-05
+    pr: null
+    doc: docs/reviews/network_delivery_review_2026_09_05.md
+    summary: "Network delivery review (operator brief - narrative-driven, redundant). Root causes measured, not the host's taste - the script copies the digest (Ep592/594 73-78% verbatim 8-grams), the digest repeats itself across sections (Ep592 all five X Takeover items re-told Top 12; Ep594 Short Spot = story 11, First Principles = story 3), the prompt mandated a per-story 'bigger story' sentence, and supplied transitions shipped verbatim."
+    shipped:
+      - "engine/digest_overlap - cross-section duplicate strip (URL / headline / body vocabulary) before validation and after regen; metric digest_cross_section_dupes_removed"
+      - "engine/script_audit - per-episode density metrics (script_digest_overlap_pct, script_repeated_facts, script_filler_pct, script_hook_restated) + review_snapshot table"
+      - "tesla_podcast.txt - STORYTELLING LAYER + MANDATORY continuity removed; memory = accuracy background with one delta callback; sentence count follows fact count; Counterpoint enters on the concern's first fact; First Principles / Counterpoint may not restate the body (A/B)"
+      - "tesla_digest.txt - per-item 'what to watch next' -> dated next step only when sourced; X Takeover placeholders -> facts + mandatory Source line; restatement sentence and 'no figures provided' banned (A/B)"
+      - "tesla_memory status block - quotable 'Remember, we covered' example and the three arc prompts removed"
+      - "closing pinned to one sign-off (A/B)"
+      - "pronunciation - r/teslamotors spoken as 'the teslamotors subreddit' (Ep590 'our slash Tesla motors' x3)"
+    deferred:
+      - "a data-side paraphrase gate (reject + one script rerun when digest-verbatim stays above threshold) - only if the prompt rule does not move the metric"
+    predictions:
+    - metric: "script_digest_overlap_pct, median of last 10 _tts.txt"
+      baseline: "49% (Ep591-594: 10/73/24/78)"
+      expected: "<=25% on every episode"
+      verdict: pending
+      evidence: null
+    - metric: "digest_cross_section_dupes_removed per episode (metrics_ep*.json)"
+      baseline: "1.6 (33 duplicates in the last 20 digests)"
+      expected: "<=0.3 - the digest prompt stops producing them; the strip catches the rest"
+      verdict: pending
+      evidence: null
+    - metric: "script_filler_pct, last 10"
+      baseline: "2-9%"
+      expected: "<=5% on 9/10"
+      verdict: pending
+      evidence: null
+    - metric: "closing text identical across episodes"
+      baseline: "3 variants over Ep589-594"
+      expected: "1 on 10/10"
+      verdict: pending
+      evidence: null
+    agent_cost_usd: null
+
 do_not_retry:
   - idea: phonetic respellings or programmatic speech-tag injection
     evidence: 100% regression rate on custom voice kdif6sqjcyiq (May 2026,

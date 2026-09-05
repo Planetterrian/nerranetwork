@@ -561,13 +561,21 @@ class TestRotationMemory:
     def test_recent_intro_openers_from_committed_rundowns(self):
         from engine.daily_edition import recent_intro_openers
 
+        from engine.daily_edition import RECENT_MEMORY_EPISODES
+
         openers = recent_intro_openers(SPEC, ROOT)
         assert openers, "no openers parsed from committed rundowns"
-        # The launch tic this memory exists to break:
-        assert any(o.startswith("Good morning") for o in openers)
+        assert len(openers) <= RECENT_MEMORY_EPISODES
         # Never a heading/byline — always spoken prose.
         for o in openers:
             assert not o.startswith(("#", "*", ">")), o
+        # The launch tic this memory exists to break. The rolling window
+        # is SUPPOSED to forget it (Ep015 on 2026-09-04 rolled the last
+        # "Good morning" launch edition out of the ten-episode window and
+        # this assertion, written against the live window, went red on
+        # main) — so read the whole committed history for it instead.
+        history = recent_intro_openers(SPEC, ROOT, limit=10_000)
+        assert any(o.startswith("Good morning") for o in history)
 
     def test_recent_field_note_topics_from_committed_rundowns(self):
         from engine.daily_edition import recent_field_note_topics
@@ -590,7 +598,13 @@ class TestRotationMemory:
         ]
         prompt = build_links_prompt(SPEC, ROOT, segs, dt.date(2026, 8, 25), None)
         assert "Recent editions opened with these lines" in prompt
-        assert "Good morning" in prompt
+        # Every opener in the live window is shown back — whatever the
+        # window holds today (the literal launch tic rolled out of it).
+        from engine.daily_edition import recent_intro_openers
+        openers = recent_intro_openers(SPEC, ROOT)
+        assert openers
+        for o in openers:
+            assert f"- {o}" in prompt, o
 
     def test_find_prompt_injects_field_note_memory(self):
         from engine.daily_edition import build_find_prompt
