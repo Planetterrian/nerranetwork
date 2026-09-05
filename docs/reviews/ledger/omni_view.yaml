@@ -296,6 +296,109 @@ reviews:
       ab_listen_required: false
       rationale: Every behavioral fix needs a drift-guard per playbook; mirrors TestEditorialRealignmentJuly18 style without weakening hard guardrails.
     agent_cost_usd: 0.126
+  - date: '2026-08-29'
+    pr: null
+    doc: docs/reviews/omni_view_review_2026_08_29.md
+    generated_by: grok-4.5
+    summary: 'July-18 realignment still holds on tabloid/Both-sides-family ceilings in most eps, but Aug-23 proposals never shipped: deep-dive openers remain 8–9/10 stock, Progress Watch shipped a disaster (Ep158) and skipped once (Ep157), banned ''Both sides agree'' and ''advocates on each side'' reappeared, EXAMPLE-bleed risk is still in the prompt, and median length fell further (~1411) — escalate digest depth only.'
+    scored_prior_predictions:
+    - metric: verbatim podcast-EXAMPLE lines in _tts/transcripts (e.g. compliance-deadlines what-happens-next)
+      verdict: partial
+      evidence: Exact Ep145 compliance-deadlines line absent Ep150–159; EXAMPLE rewrite never shipped; Ep153 still uses compliance-shaped what-happens-next; seed remains in podcast prompt
+    - metric: episodes (last 10) opening Understanding deep-dive with exact 'something most coverage leaves out' + 'Most coverage treats'
+      verdict: miss
+      evidence: Still 8–9/10 in Ep150–159 (snapshot 8/10 + 8/10); de-seed never shipped
+    - metric: Progress Watch slots that are disasters/accidents/deaths (last 10)
+      verdict: miss
+      evidence: Ep158 Progress = stopped Nepal-border rescue after lake overflow; Ep154 Hawk-fire containment after 30+ homes; expected 0
+    - metric: episodes with Progress Watch chapter (last 10)
+      verdict: miss
+      evidence: 9/10 — chapters_ep157.json has no Progress Watch (expected 10/10)
+    - metric: '"strongest argument for/against" dual-scaffold uses per episode (last 10 max)'
+      verdict: partial
+      evidence: Exact strongest-argument phrase quiet; successors shipped — Ep151 case-for/case-against; Ep152 interpretations-split; Ep159 advocates-on-each-side; Ep155 Both-sides-agree regression
+    - metric: median _tts.txt words (last 10) — observation only, no new podcast lever
+      verdict: miss
+      evidence: Median ≈1411 on Ep150–159 (baseline ≈1449); 5/10 under 1400; no digest-depth lever shipped
+    shipped: []
+    deferred:
+    - 'Chronic under-length: operator decision only — audit last-10 digest word counts vs min_digest_words 1500 and deepen-expansion hit rate before any digest-depth config change; do NOT re-propose podcast_expand_below_target, min_podcast_words hikes, or prompt word-pressure (multiple misses; network do_not_retry class)'
+    - Reuters/AP Google News proxy label attribution still cosmetic (July-18 carry)
+    - BBC Latin America feed low-volume monitor (July-18 carry)
+    - 'Network tooling: mechanical digest lint for template-saturation counts (interpretations-split / case-for-case-against / shared-facts family)'
+    - Watch fourth-generation steel-man / deep-dive opener convergence next pass after proposed bans ship (successor-tic prediction recorded)
+    - OP3 volatility as network-funnel topic (42/7d cooled from 133; not OV-only editorial blocker)
+    predictions:
+    - metric: episodes (last 10) opening Understanding with verbatim 'something most coverage leaves out' (after de-seed+MEMORY ships)
+      baseline: 8/10 (Ep150–159)
+      expected: ≤2/10
+      verdict: pending
+      evidence: null
+    - metric: Progress Watch slots that are disasters/accidents/deaths/stopped-rescues (last 10, after eligibility ban ships)
+      baseline: ≥1 (Ep158; Ep154 adjacent)
+      expected: '0'
+      verdict: pending
+      evidence: null
+    - metric: episodes with Progress Watch chapter (last 10)
+      baseline: 9/10 (ep157 missing)
+      expected: 10/10
+      verdict: pending
+      evidence: null
+    - metric: verbatim 'Both sides agree' + 'advocates on each side' in last-10 transcripts
+      baseline: ≥1 each (Ep155 Both-sides; Ep159 advocates-on-each-side)
+      expected: '0'
+      verdict: pending
+      evidence: null
+    - metric: dual 'case for / case against' story openers per episode (last 10 max)
+      baseline: 1 episode (Ep151)
+      expected: 0 episodes with dual case-for/against scaffold
+      verdict: pending
+      evidence: null
+    - metric: verbatim EXAMPLE compliance-deadlines closer in any _tts/transcript (last 10)
+      baseline: 0 exact in Ep150–159 but seed still in prompt; Ep153 near-shape
+      expected: 0 exact and 0 compliance-deadlines paste after EXAMPLE rewrite
+      verdict: pending
+      evidence: null
+    - metric: successor deep-dive opener tic (third-generation stock phrase after de-seed) — watch metric
+      baseline: n/a (current tic = something-most-coverage-leaves-out)
+      expected: next review names any new ≥5/10 Understanding opener and de-seeds by shape again
+      verdict: pending
+      evidence: null
+    - metric: median _tts.txt words (last 10) — observation only unless operator ships digest-depth change
+      baseline: ≈1411
+      expected: n/a-lever-not-shipped (score only if operator ships digest-depth change; else record only)
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/prompts/omni_view_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Ep145 verbatim EXAMPLE bleed; seed still in prompt; Ep153 near-shape compliance closer. De-seed by rewriting the quotable line + explicit anti-paste rule (shape ban, no new quotable stock closer).
+    - file: shows/prompts/omni_view_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Snapshot 8/10 on both stock phrases across Ep150–159; Aug-23 de-seed never applied. De-seed by shape + verbatim ban + rotation MEMORY; coordinate with yaml pattern broaden so markers do not die.
+    - file: shows/omni_view.yaml
+      kind: config
+      ab_listen_required: true
+      rationale: If podcast openers rotate off the old stock pair, chapter detection must accept new shapes in the same change set (PT dead-marker class). Audio-adjacent → A/B-listen.
+    - file: shows/prompts/omni_view_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Ep158 disaster-as-progress and Ep157 skip; podcast layer must block audio from reframing tragedies as progress even if digest mis-picks.
+    - file: shows/prompts/omni_view_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Digest is where Ep144/Ep158-class mis-picks start; tighten eligibility with negative shapes (no quotable 'good' example that becomes the next tic).
+    - file: shows/prompts/omni_view_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Banned frames partially returned (Ep155 Both-sides, Ep159 advocates-on-each-side) and successors saturated (Ep151 case-for/against, Ep152 interpretations-split). Extend bans by shape + verbatim caps; ledger watches next successor.
+    - file: tests/test_omni_view_quality_pass.py
+      kind: code
+      ab_listen_required: false
+      rationale: Every behavioral fix needs a drift-guard per playbook; pins bans and chapter-pattern broaden without weakening hard guardrails.
+    agent_cost_usd: 0.1347
   - date: 2026-09-05
     pr: null
     doc: docs/reviews/network_delivery_review_2026_09_05.md
