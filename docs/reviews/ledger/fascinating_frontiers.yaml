@@ -786,6 +786,35 @@ reviews:
       ab_listen_required: true
       rationale: Ep166 (prior window) transcript never said 'This is Fascinating Frontiers, episode …'; chapters_ep166.json had ONLY Teaser+Closing. Ep167–176 recovered, but the failure is intermittent after cold-open retunes. Hardens post cold-open identity so Introduction marker fires every episode.
     agent_cost_usd: 0.1539
+  - date: 2026-09-05
+    pr: null
+    doc: docs/reviews/network_delivery_review_2026_09_05.md
+    summary: "Network delivery review sample. Fact-dense (~70%) but the prompt's worked example 'Now, on a completely different note...' shipped verbatim in Ep182 L2 and collided with the identity line; the Cosmic Deep Dive re-expanded a story already covered (Sporadic-E, Ep182); lunar occultations ran as items 9 and 14 in Ep183."
+    shipped:
+      - "shared CONTENT DISCIPLINE block (A/B)"
+      - "fascinating_frontiers_podcast.txt - worked example -> described shape; 'Think about that for a second' specimen removed; deep dive may not restate a covered body (A/B)"
+      - "fascinating_frontiers_digest.txt - sentence count follows fact count; watch-next -> dated step only when sourced (A/B)"
+      - "engine/digest_overlap strip (same-story items in one section)"
+    deferred:
+      - "none"
+    predictions:
+    - metric: "deep dive restating a covered story's facts (manual)"
+      baseline: "1/2 (Ep182)"
+      expected: "0/10"
+      verdict: pending
+      evidence: null
+    - metric: "prompt example transition in a shipped transcript"
+      baseline: "1/2 (Ep182 L2)"
+      expected: "0/10"
+      verdict: pending
+      evidence: null
+    - metric: "digest_cross_section_dupes_removed"
+      baseline: "0.1/episode"
+      expected: "stays <=0.1"
+      verdict: pending
+      evidence: null
+    agent_cost_usd: null
+
 do_not_retry:
   - idea: Phonetic respellings or programmatic speech-tag injection.
     evidence: >-

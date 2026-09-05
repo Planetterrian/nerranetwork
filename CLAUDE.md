@@ -541,6 +541,29 @@ today's work, not just explain yesterday's):
   harmless — unreferenced). `metrics_ep*/credit_usage_*` files kept as
   real spend accounting. Still open: `dispatches.json` is empty until a
   real listener/host dispatch is seeded.
+  **Sep 4 2026 naturalness pass** (review:
+  [`docs/reviews/dp_pod_review_2026_09_04.md`](docs/reviews/dp_pod_review_2026_09_04.md);
+  drift guards: `tests/test_dp_pod_show.py::TestSep4NaturalnessPass`):
+  the Aug-10 renewal scored 3 hits / 1 miss on 26 shipped episodes
+  (verbatim paste ~30% → ~3% median; the grok-4.6 script stage adopted
+  Sep 1). Successor tics, all fixed data-side: the Lever converged on
+  the "Open your <website> today…" SHAPE (13/26; 21/26 screen lookups) —
+  `_recent_levers()` now collapses fuzzy re-skins and computes BANNED
+  OPENING VERBS + REAL-WORLD ACTION DUE from the last six levers; the
+  prompt's own comedy examples calcified ("checklist" 23/26, "steel-man"
+  23/26) — `_recent_banter_phrases()` mines RETIRED BITS from the last
+  six scripts (furniture-excluded) and the comedy/dynamic examples were
+  removed by shape; the founders' notes went unused (Yukon 0/26) —
+  `_founders_detail_nudge()` fires only after five real-material-free
+  episodes. Episodes ran 11–14 min against a ten-minute promise → HARD
+  CEILING 1,750 words. Two closings double-asked for dispatches (one
+  claimed "we read every dispatch" with zero ever received) → mission
+  lines instead. **YouTube ON, Shorts-only** (experiment
+  `dp-pod-youtube-shorts`; long-form waits on the adaptive policy).
+  `review_snapshot.py` crashed on any show without
+  `exclude_title_patterns` — fixed. Do NOT re-add example actions,
+  example jokes, or example concession phrases to either prompt: three
+  generations of this show's tics came from exactly that.
 - **AOAI** (The Age of AI) — the network's **AI-hosted LIVE interview show**
   (July 2026): Mira, an AI documentarian persona (Grok voice `ara`,
   deliberately NOT the Patrick clone), phones REAL guests via a Voximplant
@@ -607,6 +630,32 @@ today's work, not just explain yesterday's):
   post — never duplicates their digests). Docs:
   [`docs/nerra_daily.md`](docs/nerra_daily.md). Drift guards:
   `tests/test_daily_edition.py`.
+  **Sep 3 2026 second pass** (review:
+  [`docs/reviews/nerra_daily_review_2026_09_03.md`](docs/reviews/nerra_daily_review_2026_09_03.md)):
+  the metrics file caught a **P0** — the one non-`promo` cut it ever
+  recorded was DP Pod Ep52 losing its Dispatch and sign-off (69 s) in
+  Ep10: Whisper writes "sister shows"/"sisters show", the frame regex
+  wanted the singular, and the weak brand-mention fallback matched the
+  Dispatch's own "show page at nerranetwork.com". Fixed (`sisters?
+  shows?` + `WEAK_EVIDENCE_MAX_TAIL_SECONDS` 60 s ceiling on any
+  non-frame cut; 210/210 recent transcripts trim on frame evidence and
+  `TestPromoCutHardening` sweeps them all in CI — **extend the matcher
+  for a new Whisper spelling, never lean on the fallback**). Rotation
+  memory v2: the date defeated the Aug 25 opener memory (5/9 intros were
+  "<date> opens Nerra Daily…"), so openers are date-normalized, and the
+  sign-off ("Across these segments" 7/9) and field-note closer
+  ("quietly" 10/13 — seeded by BOTH prompts' register lines) got their
+  own memory blocks + shape de-seeds (A/B-listen). Every edition had
+  been titled with SpaceX's hook (lead show) — the links call now writes
+  a validated whole-day `title` (metadata only; experiment
+  `nerra-daily-edition-titles`); show notes carry chapter timestamps +
+  the field note; `podcast:person` credits Mira. Same-day follow-up: the
+  ready gate reads the committed `.skip_<date>.json` marker
+  (`discover_lineup` → `skipped`, metrics `skipped_today`) and no
+  longer waits for a show that skipped — a UC gate-block had held the
+  edition to the 12:00 force hour (12:09 / 12:41 vs ~08:13 on complete
+  days). Open operator item: UC's claims-gate retry lands after the
+  edition, so a gate-blocked UC never makes that day's edition.
   **Aug 25 2026 first quality pass** (review:
   [`docs/reviews/nerra_daily_review_2026_08_25.md`](docs/reviews/nerra_daily_review_2026_08_25.md);
   ledger `docs/reviews/ledger/nerra_daily.yaml`): audio core verified
@@ -1138,6 +1187,32 @@ the starting hook sequence"). Render/metadata-only — outside landmine
   legacy order); motion-A/B window-parity de-confound (top-two windows
   swap by episode parity on enrolled shows).
 
+### Narrative-matched imagery + delivered resolution (Sep 2026)
+
+Operator complaints about video quality traced to two silent defaults:
+every Grok Imagine prompt led with a static `image_queries` phrase (so
+each Tesla episode shipped the same four pictures) and the library blend
+padded the slideshow with older images ranked by weak token overlap.
+Now `engine/scene_briefs.py` writes one photographable scene per STORY
+(one Grok text call; deterministic fallback) and those briefs LEAD the
+prompts (`build_image_prompts(scene_briefs=)`); one fresh 16:9 scene
+per story (`scenes_per_episode`) + `short_scenes_per_episode` 9:16;
+Shorts open on the scene matching their own window text
+(`short_visual_extras(fresh_scene_context=)`). **The image endpoint
+ignores `size`** (Sep 3 2026 — every one of 7,500+ committed sidecars
+is 1280x720 whatever was requested): the request carries the documented
+`aspect_ratio` + `resolution: "2k"` (`engine/grok_imagine.py`, `size`
+only as the ladder's fallback) and the delivered width is a per-episode
+metric (`grok_image_px_max`) — read THAT, never the request. **Library
+overlap is counted on salient tokens** (`gallery_library._common_tokens`:
+document frequency > 20% dropped from both sides — "tesla"/"optimus"/
+"cinematic" sit in ~100% of the library and matched every image).
+**Chapter title cards are a fit gate on `engine.titles.CHAPTER_CARD_MAX`,
+never a clip.** Register: `scene-briefs-narrative-imagery`,
+`image-source-2k-and-story-matched-shorts`, `video-quality-round-3`
+(readouts 2026-09-23). Guards: `tests/test_scene_briefs.py`,
+`tests/test_video_commands.py::TestChapterTitleCards`.
+
 ### Anthology books — ebook + audiobook from the narrative shows (Aug 2026)
 
 Product B6 (operator-directed): a SERIES machine, not one-off books.
@@ -1640,6 +1715,149 @@ digest-scope bullet. Drift guards:
 `tests/test_dp_pod_show.py::TestNetworkPickRotationMemory`,
 `tests/test_review_agent.py::{TestSnapshotFetchFilterLeakage,TestDashboardVoiceBaseline}`.
 
+### Flagship review — SpaceX, Tesla, Models & Agents + shared pipeline (Sep 4, 2026)
+
+Operator-directed pass over the three shows carrying >50% of downloads.
+Canonical writeup:
+[`docs/reviews/flagship_review_2026_09_04.md`](docs/reviews/flagship_review_2026_09_04.md);
+ledger entries in `spacex.yaml` / `tesla.yaml` / `models_agents.yaml`
+(prior predictions scored; new ones filed). Drift guards:
+`tests/test_flagship_pass_2026_09_04.py` + the per-show quality-pass
+files. Rules that bind from this pass:
+
+- **A stock quote's VERB comes from the clock, never from which data
+  source answered.** SpaceX runs ~07:30 UTC (03:30 New York, before
+  pre-market), so `fast_info.last_price` was the prior close on EVERY
+  run and 10/10 closings said "is trading at" (Ep084–086 aired Friday's
+  move as live three days running); Tesla's history source hard-coded
+  REGULAR and an 11:27 ET retry (Ep585) spoke "closed at $351.73" for a
+  $345.82 close. `shows/hooks/spacex.py::_market_is_open` and
+  `shows/hooks/tesla.py::_regular_session_open` (INTRADAY state) decide
+  the wording; a zero move is "unchanged", never "up/down zero percent".
+- **The spoken price line is never a Shorts opener**
+  (`engine.shorts_selector.is_price_line`) — the numeric-reveal scorer
+  loved it (5/68 SpaceX EN Shorts titled "SPCX Trading at $141.50 Up 1%").
+- **Google News re-surfaces OLD articles under fresh index dates** (Ep088
+  led with a two-year-old "23rd flight reuse record"). `engine/fetcher.py`
+  drops an article whose resolved publisher URL path (`/YYYY/MM[/DD]/`)
+  is older than the fetch window; undated URLs still pass (open item).
+- **Both prompts can seed a tic.** M&A's "Everyone talks about…" deep-dive
+  opener (10/10) was supplied verbatim by the DIGEST prompt and the podcast
+  prompt; three Grok-generated reviews aimed at the podcast layer only and
+  every one shipped nothing. Check every prompt that touches a section
+  before de-seeding one. "pop the hood" is now the REQUIRED M&A deep-dive
+  anchor (it was one of two example openers, and the model elected the
+  other — three episodes shipped with no Under the Hood chapter).
+- **Chapter titles never carry links** — `engine/chapters.py` and
+  `engine/grok_imagine.py` flatten `[label](url)` and drop `@handle`
+  tails (M&A Ep161 shipped "…: [@AnthropicAI](https" as a chapter). M&A's
+  literal `**Title: Source Name**` placeholder (the SpaceX Aug-15 root
+  cause) is now replaced too; `env_intel_digest.txt` still carries it.
+- **A topic word is not a section marker.** M&A's `open.source` alternate
+  fired on "open-sourced Pipette" at 7–16% of the script, titled the whole
+  news body "Practical & Community" and, by clearing `min_chapters`,
+  suppressed the digest-headline navigation. Removed.
+- **RSS item `<link>` is the episode blog page** (was the MP3 on the
+  newest item only; the re-add path never wrote it) and **feeds serialize
+  newest-first** (feedgen prepends by default — every feed was
+  oldest-first in document order). Other `update_rss_feed` callers keep
+  the legacy MP3 link until they pass `episode_page_url`.
+- **Whitelist globs, not literals:** `nightly-maintenance.yml` listed five
+  `*_performance_tracker.json` paths while `update_performance_trackers.py`
+  writes ten — six memory shows' trackers were discarded every night.
+  Same class: `site/data/gallery/*.json` (new per-show manifest slices so a
+  show page loads ~1/15th of the 14 MB manifest) is whitelisted in BOTH
+  committing workflows.
+- **Null stays null on the language card:** OP3 answers 404 for feeds it
+  never indexed (every ZH feed + three FR); the dashboard had been showing
+  them as `0 downloads, measured: true`. Six of the 14 paid language feeds
+  are unmeasurable by construction — submit them to Podcast Index or
+  switch them off (operator).
+- `wall_duration_s` (stages + timed counters) is the pipeline-health
+  duration; `total_duration_s` covers fetch/digest/gate only (spacex p50
+  read 99 s for ~29-minute runs). The blog player routes through the OP3
+  prefix so blog plays count. `youtube_tmp/*_square.jpg`, `*.social.json`
+  and `*.chapters.ffmeta` are ignored (656 tracked files / 54 MB removed).
+- Prompt/audio-affecting changes in this pass (A/B-listen per landmine
+  #17): M&A digest + podcast de-seeds and the required anchor, two new M&A
+  closing variants, the shared `engine/show_memory.py` continuity example
+  (de-seeded by shape — M&A had reproduced it verbatim with tracker
+  display names 8/10), the SpaceX/Tesla closing-line wording.
+
+### Network delivery review — content density over narration (Sep 5, 2026)
+
+Operator brief: the flagships read as "narrative driven with redundant
+repetition"; the ask is content- and information-driven episodes with a
+consistent, engaging delivery across podcast, blog and video. Canonical
+writeup:
+[`docs/reviews/network_delivery_review_2026_09_05.md`](docs/reviews/network_delivery_review_2026_09_05.md);
+ledger entries (predictions to score) in eight per-show ledgers + `network`;
+experiment `network-content-discipline-2026-09` (readout 2026-09-26). Drift
+guards: `tests/test_delivery_pass_2026_09_05.py`. Four audits agreed the
+cause was mechanical, not the host's taste, and the rules below bind:
+
+- **The script stage must WRITE, not de-markdown.** On the worst days 62–78%
+  of a script's 8-word phrases were verbatim digest text, so every digest
+  duplicate shipped as audio. `engine/script_audit.py` measures it per
+  episode (`script_digest_overlap_pct`, `script_repeated_facts`,
+  `script_filler_pct`, `script_hook_restated`; `::warning::` above
+  thresholds; `review_snapshot.py` tabulates it). It is a READ-ONLY
+  instrument — a review re-reads the baseline before moving a threshold,
+  and a rule that changes the script belongs in the prompt or in a gate,
+  never in the audit.
+- **The digest's "ZERO STORY OVERLAP" rule is enforced by code, not prose.**
+  `engine/digest_overlap.py` drops a later item that repeats an earlier
+  one (same Source URL; headline sharing ≥50% of salient words; body
+  sharing ≥50% of salient vocabulary — Tesla Ep592's five re-headlined
+  X Takeover items carried no Source lines, so URL matching alone was
+  blind). Runs before the validator and again after the structural
+  regeneration; a section it empties triggers the existing one-shot
+  regen, which is the correct outcome. Blocks split at numbered items AND
+  header lines — the templates put `### Top News` directly under the hook.
+- **Memory is for accuracy, never narration.** `show_memory`'s composed
+  section used to inject *MANDATORY CONTINUITY: add 1-2 natural sentences
+  of where today's development fits in the ongoing arc* on every story of
+  every memory show, contradicting the status block's "at most ONE" — the
+  model obeyed the mandatory line. Now: one audible callback, only with a
+  delta (what changed since prior coverage); no arc sentences, no
+  open-question recaps. Tesla's bespoke `tesla_memory` block still carried
+  the quotable "Remember, we covered…" example the shared block lost on
+  Sep 4 — gone.
+- **`shows/prompts/_shared/content_discipline.txt`** is included in the nine
+  English news-show podcast prompts: digest is source material not a
+  draft; sentences follow facts (2–6 per story, cut below two, never "no
+  details were provided"); one owner per fact; a story ends on its last
+  fact; transitions carry information or are dropped; source named once;
+  the same voice every day. It is shape-only. **Every worked example
+  sentence was removed from seven podcast prompts** (FF Ep182 L2, PT
+  Ep172/173, OV Ep164/165 and Tesla Ep594 all shipped a prompt's own
+  specimen line) — "described shape, never a quotable line" now applies to
+  the EXAMPLE OF IDEAL STORY COVERAGE blocks too, not only to tics.
+- **A deep dive is a second story, not a second pass.** M&A's Under the
+  Hood re-explained a news item in 5/6 episodes (the exception was the
+  densest episode); OV's Understanding the Issue re-narrated the lead;
+  SpaceX's Deep Dive carried two numbers, both already spoken. Every
+  deep-dive spec now forbids restating a covered body and carries a
+  numbers floor (SpaceX 5, M&A 4, Tesla 3). Chapter anchor phrases stay
+  as phrases the writer builds a sentence around.
+- **Digest items: sentence count follows fact count.** Fixed "4–5 / 5–7
+  sentences" produced a fifth sentence restating the first and generic
+  consequence prose ("Buyers gain a clearer picture…"). Per-item "what to
+  watch next" became a dated next step only when the source names one;
+  "why it matters" only when the source explains it. Tesla's X Takeover
+  items must carry Source lines; M&A gained ONE STORY = ONE ITEM.
+- **One closing per flagship** (SpaceX, Tesla, M&A, MIT) — the rotating
+  pool read as register drift. This reverses the Sep 4 M&A pool expansion
+  on purpose; the sibling plug and website surface still rotate after it.
+  MIT's Market Pulse speaks index levels only; portfolio numbers belong to
+  Portfolio Performance alone (Ep160 read the record twice).
+- Bugs from the transcripts: "VS Code" is spelled out before the versus
+  rule ("versus versus Code"); `r/teslamotors` is spoken as a subreddit
+  name; a line repeated inside the closing eight is collapsed (MIT Ep159's
+  doubled gallery plug).
+- Every prompt-side item above is landmine-#17 A/B; the engine modules are
+  removal-only or read-only and are not.
+
 ### Network prompt + LLM review (July 31, 2026)
 
 Operator-directed all-show prompt pass + model strategy — canonical
@@ -1741,6 +1959,65 @@ Russian brand-page translations, inline-style cleanup, contrast audit.
 Rejected after verification: nav-cover empty alts (correct WCAG — visible
 text adjacent), search loading state (already exists), blog next-episode nav
 (already exists).
+
+### Website review (September 3, 2026)
+
+Second full public-site pass — canonical writeup:
+[`docs/website_review_2026_09_03.md`](docs/website_review_2026_09_03.md);
+drift guards: `tests/test_website_review_2026_09_03.py`. Rules that now
+bind:
+
+- **The legal/trust pages are TEMPLATES** (`templates/ai_disclosure.html.j2`,
+  `privacy_policy.html.j2`, `terms_of_service.html.j2` on the shared
+  `_legal_page.html.j2` chrome; `generate_legal_page()` / `--legal`).
+  Never hand-edit `ai-disclosure.html` / `privacy-policy.html` /
+  `terms-of-service.html` at the root again — they were hand-written
+  for five months, drifted off-brand (Inter, no nav/footer, hardcoded
+  GA4 id) and off-truth (the AI disclosure claimed every episode was
+  personally reviewed before publication and cited a Supreme Court
+  ruling that does not exist). The disclosure says plainly that no
+  human reads every episode before it ships and describes the
+  safeguards instead; keep it that way.
+- **`--static-pages` is the one flag for every cheap page** (start-here,
+  about, FAQ, how-to-listen, press, contact, editorial, legal, gallery,
+  books, 404); nightly runs it. A new static page is added to
+  `generate_static_pages()`, or it silently stops refreshing between
+  `--all` runs (editorial/press/contact/legal had for months).
+- **`<title>` comes from `page_title` OR a `block title`** — base now
+  renders both. The MIT performance page shipped `<title></title>` for
+  the same reason the Tesla tracker did in August; pass `page_title`
+  in every generator regardless.
+- **The blog hub renders the newest `NETWORK_BLOG_INDEX_MAX_POSTS`
+  (240)** plus an archive-by-show rail; per-show indexes stay complete.
+  Do not "restore" the full list — it was 1.7 MB and growing daily.
+- **Homepage claims are computed, not typed**: show count, ticker,
+  About paragraph, cadence wording ("most shows daily"), Most Played
+  (`POPULAR_EPISODES_MAX_PER_SHOW = 2`). The homepage newsletter form
+  posts to the account Worker like every other form — the Buttondown
+  embed endpoint is gone from the site for good.
+- **Navigation contract** (`base.html.j2`): "More" dropdown for
+  Books/Gallery/Data/Editorial/FAQ/Press/Support; no "Home" item (the
+  logo is home); dropdowns capped + keyboard-operable; ONE delegated
+  mobile-menu close handler (no inline `onclick` on menu links — the
+  homepage override forgot `body.menu-open` and scroll-locked phones);
+  `scroll-padding-top` under the sticky nav; footer About column
+  inside the 6-child grid. `--nn-accent` / `--nn-text-secondary` are
+  defined tokens now.
+- **Scaffolded shows need a real `display_order`** in
+  `shows/network_meta.yaml` (the five were 99–102 and rendered last,
+  Nerra Daily dead last; ties fall back to insertion order, guarded).
+- **Mission Control never fabricates a zero** (`fmtOrDash` on the show
+  cards) and every top-level read is guarded; a data-age pill is
+  visible in all three views; the site footer's "Network Status" lands
+  on `?view=sponsor`.
+
+Deferred with rationale in the doc: blog `<h1>`==hook duplication
+(needs `**TITLE:**` in 13 digest prompts — A/B), boilerplate Story
+Trackers on 10 of 11 shows (`last_major_update_episode` never written),
+per-show blog pagination, SSR summaries, stale curated Tesla/SpaceX
+series under "Live" badges, MIT alpha framing on Mission Control, and
+the three remaining hand-written pages (`ru/index.html`,
+`modern-investing-resources.html`, `age-of-ai-apply.html`).
 
 ### YouTube pipeline pass (June 10, 2026)
 

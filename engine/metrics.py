@@ -87,6 +87,22 @@ class PipelineMetrics:
         """Sum of all stage durations."""
         return round(sum(s.duration_s for s in self.stages), 2)
 
+    def wall_duration(self) -> float:
+        """Stage durations PLUS the timed counters the pipeline records
+        outside ``stage()`` (``tts_duration_s``, ``audio_mix_duration_s``,
+        ``youtube_publish_duration_s``, ...). ``total_duration`` covers only
+        fetch/digest/gate, so it under-reported a 30-minute episode as
+        ~100 s on the dashboard (Sep 4 2026 flagship pass). ``audio_duration_s``
+        is the episode's length, not a timing, and is excluded."""
+        extra = 0.0
+        for key, value in self.counters.items():
+            if key.endswith("_duration_s") and key != "audio_duration_s":
+                try:
+                    extra += float(value or 0.0)
+                except (TypeError, ValueError):
+                    continue
+        return round(self.total_duration() + extra, 2)
+
     def to_dict(self) -> Dict[str, Any]:
         """Serialize metrics to a JSON-compatible dict.
 
@@ -106,6 +122,7 @@ class PipelineMetrics:
             "show_slug": self.show_slug,
             "episode_num": self.episode_num,
             "total_duration_s": self.total_duration(),
+            "wall_duration_s": self.wall_duration(),
             "stages": [
                 {
                     "name": s.name,

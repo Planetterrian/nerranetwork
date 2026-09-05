@@ -66,11 +66,21 @@ def main():
 
         prompt_file = Path(f"shows/prompts/{show_slug}_weekly.txt")
 
-        envelope = synthesize_weekly_newsletter(
-            show_slug=show_slug,
-            week_ending=week_ending,
-            prompt_file=prompt_file if prompt_file.exists() else None,
-        )
+        # One show's failure must never sink the whole weekly run: on
+        # 2026-08-30 first_principles' template carried a placeholder the
+        # synthesizer doesn't supply (KeyError: 'episodes_block') and
+        # every show after it in the loop got no newsletter that week.
+        try:
+            envelope = synthesize_weekly_newsletter(
+                show_slug=show_slug,
+                week_ending=week_ending,
+                prompt_file=prompt_file if prompt_file.exists() else None,
+            )
+        except Exception as exc:  # noqa: BLE001 — isolate per show, stay loud
+            logger.error("  Weekly newsletter CRASHED for %s: %s",
+                         show_slug, exc)
+            results[show_slug] = f"failed ({type(exc).__name__})"
+            continue
 
         if not envelope or not envelope.get("body_md"):
             logger.warning("  No newsletter generated for %s", show_slug)
@@ -175,6 +185,13 @@ def main():
     logger.info("WEEKLY NEWSLETTER SUMMARY")
     for show, status in results.items():
         logger.info("  %s: %s", show, status)
+    # Per-show crashes are isolated above so every show still runs, but
+    # the JOB must stay red when any show crashed — otherwise a broken
+    # template fails silently forever.
+    failed = [s for s, st in results.items() if st.startswith("failed")]
+    if failed:
+        logger.error("Weekly newsletter FAILED for: %s", ", ".join(failed))
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":

@@ -61,11 +61,14 @@ from engine.personal_edition import (  # noqa: E402
     PersonalSpec,
     build_chapters,
     build_local_brief_prompt,
+    build_markets_line,
     build_personal_feed_xml,
     build_personal_links_prompt,
     fallback_personal_links,
     fetch_weather_line,
+    needs_research_call,
     parse_local_brief,
+    wants_local_brief,
     personal_chapter_pieces,
     personal_episode_title,
     validate_spec,
@@ -258,12 +261,22 @@ def generate_personal_links(
 
 def generate_local_brief(spec: PersonalSpec,
                          target_date: dt.date) -> Optional[str]:
-    if spec.tier != "personal_local" or not spec.city:
+    # Gate on the member's add-on toggles (Aug 30 2026): the brief runs
+    # only when a location add-on is actually on — and tier is enforced
+    # inside effective_addons(), so a base-tier spec can never buy a
+    # local brief by writing addons into its record.
+    if not wants_local_brief(spec):
         return None
     try:
+        weather = ""
+        if "weather" in spec.effective_addons():
+            weather = fetch_weather_line(spec)
+        if not needs_research_call(spec):
+            # Weather-only: measured data, no research sections — spoken
+            # verbatim, no LLM call to pay for or to hallucinate.
+            return weather or None
         from digests.xai_grok import grok_generate_text
 
-        weather = fetch_weather_line(spec)
         prompt = build_local_brief_prompt(ROOT, spec, target_date, weather)
         text, _meta = grok_generate_text(
             prompt=prompt, model=LINKS_MODEL, temperature=0.6,
@@ -309,6 +322,9 @@ def build_for_spec(
     try:
         links = generate_personal_links(spec, segments, target_date)
         local_text = generate_local_brief(spec, target_date)
+        markets_text = ""
+        if "markets" in spec.effective_addons():
+            markets_text = build_markets_line(ROOT)
 
         durations: Dict[str, float] = {}
         intro = _mira_piece(links["intro"], "intro", workdir)
@@ -317,6 +333,10 @@ def build_for_spec(
         if local_text:
             local_piece = _mira_piece(local_text, "local", workdir)
             durations["local"] = _duration(local_piece)
+        markets_piece = None
+        if markets_text:
+            markets_piece = _mira_piece(markets_text, "markets", workdir)
+            durations["markets"] = _duration(markets_piece)
         handoffs = []
         for i, text in enumerate(links["handoffs"], 1):
             piece = _mira_piece(text, f"handoff_{i}", workdir)
@@ -332,6 +352,8 @@ def build_for_spec(
         splice: List[Path] = [intro]
         if local_piece:
             splice.append(local_piece)
+        if markets_piece:
+            splice.append(markets_piece)
         for i, seg in enumerate(segments):
             if i > 0:
                 splice.append(handoffs[i - 1])

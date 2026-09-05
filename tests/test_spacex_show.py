@@ -356,13 +356,63 @@ class TestStockClosing:
         assert "S P C X" not in closing
         assert "unavailable" not in closing.lower()
 
+    # A Wednesday at 10:00 New York = a live session; the verb test must
+    # not depend on the wall clock the suite happens to run at.
+    _SESSION_OPEN = __import__("datetime").datetime(2026, 9, 2, 14, 0, tzinfo=__import__("datetime").timezone.utc)
+
     def test_price_sentence_phrasing_by_source(self):
         from shows.hooks.spacex import _price_sentence
-        closed = _price_sentence(161.0, "+19.2%", "yfinance_history")
+        closed = _price_sentence(161.0, "+19.2%", "yfinance_history", now=self._SESSION_OPEN)
         assert closed.startswith("Ess Pee See Ex closed at")
         assert "percent" in closed
-        live = _price_sentence(161.0, "+19.2%", "yfinance_fast_info")
+        live = _price_sentence(161.0, "+19.2%", "yfinance_fast_info", now=self._SESSION_OPEN)
         assert "is trading at" in live and "closed" not in live
+
+    def test_price_sentence_says_closed_outside_a_session(self):
+        """Sep 4 2026: the run lands ~07:30 UTC (03:30 New York, before
+        pre-market), so fast_info's last trade is the prior close — and
+        Ep084 (Sat) / Ep085 (Sun) / Ep086 (Mon) all said "is trading at"
+        on Friday's number. The verb follows the clock."""
+        import datetime
+        from shows.hooks.spacex import _price_sentence, _market_is_open
+        run_time = datetime.datetime(2026, 9, 3, 7, 30, tzinfo=datetime.timezone.utc)  # Thu 03:30 ET
+        saturday = datetime.datetime(2026, 8, 29, 14, 0, tzinfo=datetime.timezone.utc)
+        assert not _market_is_open(run_time)
+        assert not _market_is_open(saturday)
+        assert _market_is_open(self._SESSION_OPEN)
+        assert "closed at" in _price_sentence(141.5, "+1.0%", "yfinance_fast_info", now=run_time)
+        assert "closed at" in _price_sentence(141.5, "+1.0%", "yfinance_fast_info", now=saturday)
+
+    def test_zero_move_is_unchanged_never_down_zero(self):
+        """Ep080 closed with "down zero percent" (digest: "-0.0% vs the
+        previous close"). Rounding happens before the sign is chosen and
+        a zero move is spoken as unchanged."""
+        from shows.hooks.spacex import _price_sentence
+        out = _price_sentence(135.0, "+0.0%", "yfinance_history")
+        assert "unchanged" in out and "zero percent" not in out
+        out = _price_sentence(135.0, "-0.0%", "yfinance_history")
+        assert "unchanged" in out and "down" not in out
+
+    def test_change_str_never_negative_zero(self):
+        import shows.hooks.spacex as hook
+        captured = {}
+        def fake_persist(price, prev_close, change_str, source):
+            captured["change_str"] = change_str
+        with __import__("unittest.mock").mock.patch.object(hook, "_persist", fake_persist), \
+             __import__("unittest.mock").mock.patch.object(hook, "_quote_from_fast_info", lambda: (135.0, 135.04)), \
+             __import__("unittest.mock").mock.patch.object(hook, "_validate", lambda p: True):
+            price, change_str, source = hook._fetch_spcx_quote()
+        assert change_str == "+0.0%", change_str
+
+    def test_market_watch_pattern_matches_session_verbs(self):
+        # Ep087 "finished the session higher by nearly two percent" shipped
+        # with no Market Watch chapter.
+        import re, yaml
+        cfg = yaml.safe_load((_ROOT / "shows/spacex.yaml").read_text(encoding="utf-8"))
+        marker = next(m for m in cfg["chapters"]["section_markers"] if m["title"] == "Market Watch")
+        rx = re.compile(marker["pattern"], re.IGNORECASE)
+        assert rx.search("Ess Pee See Ex finished the session higher by nearly two percent.")
+        assert rx.search("SPCX ended the session down one percent.")
 
     def test_closing_rotates_by_date(self):
         from shows.hooks.spacex import _pick_closing

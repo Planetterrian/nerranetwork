@@ -641,4 +641,121 @@ reviews:
       ab_listen_required: true
       rationale: 'Podcast-side mirror of the digest mega-story rule so Ep081-class multi-section echo cannot be re-emitted from a clean digest. A/B-listen required (landmine #17). Shape + ban; no new example sentence.'
     agent_cost_usd: 0.1499
+  - date: '2026-09-04'
+    pr: null
+    doc: docs/reviews/flagship_review_2026_09_04.md
+    generated_by: claude-code-session
+    summary: 'Operator-directed flagship pass (SpaceX + Tesla + M&A + shared pipeline), implement mode. SpaceX: the closing spoke a stale quote as live on 10/10 dailies (run lands ~07:30 UTC, before pre-market; verb was chosen from the data source) and Ep080 said "down zero percent"; Ep087 lost its Market Watch chapter; 5/68 EN Shorts opened on the price line; Ep088 led with a two-year-old reuse "record" re-surfaced by Google News. All fixed data-side; mega-story retell scored miss with the lever shipped and escalated.'
+    scored_prior_predictions:
+    - metric: chapters_ep*.json titles outside known section set in next 10
+      verdict: hit
+      evidence: 0/8 Ep082-089; known_sections_only holds (Introduction now spans 280-360 s on four episodes with no sub-navigation)
+    - metric: same-episode multi-section full retell of one mega-story
+      verdict: miss
+      evidence: lever shipped (digest:8 + podcast:48) and 6/8 episodes still retell (Ep083 Nvidia x3, Ep085 Cursor x4, Ep087 turbines x4); structural cause is Top News 8-10 items + AI routing + podcast covering both - escalated, next attack data-side
+    shipped:
+    - file: shows/hooks/spacex.py
+      kind: code
+      ab_listen_required: true
+      rationale: 'closing verb follows the market clock (_market_is_open); zero move spoken as "unchanged"; pct rounded before sign so "-0.0%" cannot occur'
+    - file: shows/spacex.yaml
+      kind: config
+      ab_listen_required: false
+      rationale: Market Watch pattern + finished/ended/closed the session (Ep087)
+    - file: engine/shorts_selector.py
+      kind: code
+      ab_listen_required: false
+      rationale: the spoken stock-quote line is never a Shorts opener (network-wide)
+    - file: engine/fetcher.py
+      kind: code
+      ab_listen_required: false
+      rationale: drop articles whose resolved publisher URL carries a /YYYY/MM[/DD]/ path older than the fetch window (Ep088 / Ep080 stale-article class)
+    - file: engine/publisher.py
+      kind: code
+      ab_listen_required: false
+      rationale: RSS item <link> = episode blog page, preserved across rebuilds (was the MP3 on the newest item only); feeds serialize newest-first
+    - file: digests/spacex/*.md + summaries_spacex.json
+      kind: data
+      ab_listen_required: false
+      rationale: 153 leaked "Title:" labels backfilled out of 16 archived digests (Aug-15 scrub was forward-only; blog still rendered them)
+    - file: generate_html.py
+      kind: code
+      ab_listen_required: false
+      rationale: FAQ "Every weekday" -> "Every day" (seven-day show)
+    deferred:
+    - 'OPERATOR DECISION (length plateau, carried): 0/10 >= 1500w, 3/10 >= 1300w; digest expansion retry fires 9/10 with no metric recording whether it reached the floor'
+    - 'OPERATOR DECISION (mega-story retell, lever missed): data-side exclusion of any headline already in AI/Counterpoint/Deep Dive from Top News -> one regeneration; do not file a third prompt rule'
+    - Required anchors dropped (Counterpoint 2/10, Engineering 1/10, Teaser 1/10) - deterministic post-generation anchor validator, code-side
+    - Stale articles with undated URLs (accuweather Ep088) - read article:published_time at fetch, or refuse record/first claims below the memory's last known figure
+    - 'Seeded tics (A/B): "A quick market note" 3/10 despite ban; AI fallback sentence identical on Ep084/086 (seeded by the prompt list); Counterpoint closer "Resolution would require" 7/10; "No X was disclosed" zero-fact padding 14 sentences/3 eps; Community Buzz one paragraph overlapping Top News 8/10; xAI operator naming drift'
+    - Percent/direction still spoken twice ~30 s apart in 7/10 (dollar figure once, 10/10) - carried operator item
+    - Teaser recycles an already-spoken sentence 5/10 - prompt (A/B)
+    predictions:
+    - metric: closings saying "is trading at" on episodes generated outside a NY session (weekday 04:00-20:00 ET), last 10
+      baseline: 10/10 (Ep080-089; Ep084/085/086 aired Friday's move as live)
+      expected: 0/10
+      verdict: pending
+      evidence: null
+    - metric: closings saying "up/down zero percent"
+      baseline: 1/10 (Ep080)
+      expected: 0/10 ("unchanged on the session" on a flat day)
+      verdict: pending
+      evidence: null
+    - metric: EN Shorts whose stored hook/title is the SPCX price line (youtube_videos.json)
+      baseline: 5/68 since Ep060 (Ep061/073/074/085/086)
+      expected: 0 in the next 30 Shorts
+      verdict: pending
+      evidence: null
+    - metric: non-special dailies with a mid-body tape/price line and no Market Watch chapter
+      baseline: 1/10 (Ep087 "finished the session")
+      expected: 0/10
+      verdict: pending
+      evidence: null
+    - metric: Top News items whose publisher URL path is dated older than lookback (stale re-surfaced articles)
+      baseline: 2/10 episodes (Ep080, Ep088)
+      expected: 0 with a dated URL path; undated-URL cases scored separately
+      verdict: pending
+      evidence: null
+    agent_cost_usd: null
+  - date: 2026-09-05
+    pr: null
+    doc: docs/reviews/network_delivery_review_2026_09_05.md
+    summary: "Network delivery review. Ep090 is >60% verbatim digest; the Memphis outage was spoken six times (hook, Top News, AI & Compute, Deep Dive x3); the 467-word Deep Dive carried two numbers, both already spoken; four sign-off registers across six episodes; 'versus versus Code' TTS bug."
+    shipped:
+      - "shared CONTENT DISCIPLINE block (digest is source not draft; one owner per fact; ends on last fact; source once) (A/B)"
+      - "spacex_podcast.txt - Deep Dive density floor (>=5 numbers not spoken earlier), no re-telling of the Top News item it grows out of; Counterpoint anchor sentence carries the concern's first fact; Buzz items repeating Top News skipped; worked example -> described shape (A/B)"
+      - "spacex_digest.txt - sentence count follows fact count; per-item watch-next -> dated step only when sourced; Buzz items must carry Source lines (A/B)"
+      - "engine/digest_overlap strip + engine/script_audit metrics"
+      - "closing pinned to one sign-off (A/B)"
+      - "pronunciation - 'VS Code' spelled V S Code before the versus rule"
+    deferred:
+      - "none"
+    predictions:
+    - metric: "script_digest_overlap_pct, median of last 10"
+      baseline: "66% (Ep087-090: 63/71/70/61)"
+      expected: "<=25% on every episode"
+      verdict: pending
+      evidence: null
+    - metric: "script_repeated_facts per episode"
+      baseline: "0-4 (Ep090: 4)"
+      expected: "<=1"
+      verdict: pending
+      evidence: null
+    - metric: "script_filler_pct"
+      baseline: "6-10%"
+      expected: "<=5%; 'underscores' + 'spectator' shapes at 0 on 8/10"
+      verdict: pending
+      evidence: null
+    - metric: "Deep Dive numbers not spoken earlier in the episode (manual count)"
+      baseline: "2 (Ep090)"
+      expected: ">=5 on 8/10"
+      verdict: pending
+      evidence: null
+    - metric: "closing text identical across episodes"
+      baseline: "3 variants over Ep085-090"
+      expected: "1 on 10/10"
+      verdict: pending
+      evidence: null
+    agent_cost_usd: null
+
 do_not_retry: []

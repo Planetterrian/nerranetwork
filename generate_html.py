@@ -46,6 +46,9 @@ MIN_SOCIAL_PROOF_SUBSCRIBERS = 50
 # Hide the "Most Played" homepage rail when OP3 data is older than this
 # (token unset / fetch stalled leaves a stale JSON that misleads visitors).
 POPULAR_EPISODES_MAX_AGE_DAYS = 8
+# Homepage "Most Played This Week" rail: cap per show so one flagship
+# cannot fill all six slots (Sep 2026: six of six were SpaceX Daily).
+POPULAR_EPISODES_MAX_PER_SHOW = 2
 
 # Channel handles for the YouTube CTA on show pages. The handle is
 # determined per-show by youtube.channel in the YAML (en → @NerraNetwork,
@@ -343,7 +346,7 @@ NETWORK_SHOWS = {
         "about_text": "Tesla Shorts Time is a daily podcast covering the full Tesla business — vehicles, Robotaxi/Cybercab and FSD, Optimus, Tesla Energy (Megapack/Powerwall), Tesla Solar, Cortex/Dojo AI compute, Supercharging, Semi, and manufacturing — with sources, the real-time TSLA picture, community buzz, one honest counterpoint, and a daily first-principles analysis.",
         "about_host": "Hosted by Patrick, each episode covers breaking news across every Tesla business line: product updates, energy and solar deployments, Optimus and autonomy progress, Cortex compute, and the latest from the broader EV world.",
         "description_long": "Daily podcast covering the whole Tesla business: FSD and Robotaxi milestones, Optimus, Cybertruck and vehicle production, Megapack and Powerwall energy storage, Solar Roof, Cortex/Dojo compute, Supercharging, Semi, TSLA stock context, and why the shorts keep getting it wrong.",
-        "related_show": "omni_view",
+        "related_show": "spacex",
         "related_reason": "If you enjoy Tesla Shorts Time, you might also like Omni View — balanced daily news from every perspective.",
         "apple_podcasts_url": "https://podcasts.apple.com/us/podcast/tesla-shorts-time/id1855142939",
         "spotify_url": "https://open.spotify.com/show/7I1DIaUaSlVsYliigOe6sS",
@@ -468,7 +471,7 @@ NETWORK_SHOWS = {
         "about_text": "Omni View is a calm daily briefing on the day's most important stories worldwide — every region, every side of the spectrum, in plain language a curious teenager and a retired professor can both follow. Real disagreements are presented at their strongest with named advocates; gossip and clickbait are left at the door; and every episode includes one story about what's actually being done.",
         "about_host": "Hosted by Patrick in Vancouver. Helping you form your own informed opinions through balanced, multi-perspective coverage.",
         "description_long": "A calm daily briefing on the day's most important stories worldwide — every region, every side, in plain language for everyone from teens to seniors. Genuine disagreements presented at their strongest with named advocates, one progress story every day, and each episode ends by pointing you to a second perspective worth reading — so you can decide for yourself.",
-        "related_show": "tesla",
+        "related_show": "nerra_daily",
         "related_reason": "If you enjoy Omni View, you might also like Tesla Shorts Time — daily news focused on Tesla and sustainable energy.",
         "apple_podcasts_url": "https://podcasts.apple.com/us/podcast/omni-view-balanced-news-perspectives/id1885661594",
         "spotify_url": "https://open.spotify.com/show/4KuOgvZMm4Mweorshrm2qR",
@@ -767,7 +770,10 @@ NETWORK_SHOWS = {
         "json_format": "wrapped",
         "rss_file": "env_intel_podcast.rss",
         "podcast_image": "assets/covers/environmental-intelligence.jpg",
-        "x_account": "teslashortstime",
+        # EI posts via the Tesla X app (see CLAUDE.md) but it is not the
+        # show's own handle — the show page was embedding a Tesla timeline
+        # under "Latest from @teslashortstime" (Sep 2026 review).
+        "x_account": None,
         "brand_color": "#1B5E20",
         "brand_color_dark": "#0D3B0F",
         "tagline": "Environmental regulatory and compliance briefing.",
@@ -777,7 +783,7 @@ NETWORK_SHOWS = {
         "about_text": "Environmental regulatory, science, and compliance briefing for BC professionals. Covers contaminated sites, CEPA, emissions, carbon policy, PFAS, and remediation developments.",
         "about_host": "Hosted by Patrick in Vancouver.",
         "description_long": "Environmental regulatory, science, and compliance briefing for BC professionals. Covers contaminated sites, CEPA, emissions, carbon policy, PFAS, and remediation developments across Canada.",
-        "related_show": "planetterrian",
+        "related_show": "offshore_north",
         "related_reason": "If you enjoy Environmental Intelligence, you might also like Planetterrian Daily — science, longevity, and health research.",
         "apple_podcasts_url": None,  # Not yet on Apple Podcasts
         "spotify_url": None,  # Not yet on Spotify
@@ -868,7 +874,7 @@ NETWORK_SHOWS = {
         "tagline": "Daily AI models, agents, and practical developments.",
         "hero_tagline": "Daily AI models, agents, and practical developments.",
         "schedule": "Daily",
-        "episode_length": "~15 min",
+        "episode_length": "~10 min",
         "about_text": "Daily AI briefing covering new model releases, agent frameworks, and practical developments. From GPT and Claude to OpenClaw and Agent Zero — stay on top of the most exciting developments of our generation.",
         "about_host": "Hosted by Patrick in Vancouver.",
         "description_long": "Daily AI briefing covering new model releases, agent frameworks, and practical developments. From GPT and Claude to open-source projects — stay on top of the most exciting tech developments of our generation.",
@@ -1370,7 +1376,7 @@ NETWORK_SHOWS = {
         "about_text": "A daily narrative podcast profiling case studies of well-intentioned actions that triggered surprising consequences. From the Cobra Effect to social media algorithms, every episode follows a single story through good intentions, implementation, unexpected fallout, and the lessons we can learn.",
         "about_host": "Hosted by Patrick in Vancouver.",
         "description_long": "A daily narrative podcast profiling inventions, policies, and systems that were meant to help — but triggered surprising, unintended consequences. From the Cobra Effect to social media algorithms, every episode follows a single case study through good intentions, implementation, unexpected fallout, and the lessons we can learn.",
-        "related_show": "env_intel",
+        "related_show": "first_principles",
         "related_reason": "If you enjoy Unintended Consequences, you might also like Environmental Intelligence — the regulatory side of how policy actually plays out.",
         # TODO(uc-launch): paste Apple Podcasts / Spotify URLs once
         # both directories ingest the feed (typically 3-7 days after
@@ -1434,7 +1440,7 @@ NETWORK_SHOWS = {
         "about_text": "A daily narrative podcast that reasons from first principles. Each episode alternates between a concrete example of first-principles thinking in action — drawn from across history and modern industry, from Henry Ford and Bessemer steel to solar, batteries, and yes sometimes SpaceX — and a deep exposé on an industry ripe for the same treatment. The recurring tools are the 'magic wand number' (what a thing would cost if you only paid for its raw materials) and the 'Idiot Index' (how many times more the finished thing costs than the materials inside it). Elon Musk popularized that language; the method is much older and much bigger than any one person.",
         "about_host": "Hosted by Patrick in Vancouver.",
         "description_long": "A daily narrative podcast that takes one idea seriously: most of the world runs on reasoning by analogy, and reasoning from first principles — building up from raw materials and physics — is how the biggest leaps actually happen. Episodes alternate between a concrete example of this thinking in action — historical breakthroughs like the moving assembly line, Bessemer steel, and the shipping container, modern cost curves like solar and batteries, and occasionally one of Musk's teams — and a deep look at an industry whose Idiot Index is begging to be attacked.",
-        "related_show": "tesla",
+        "related_show": "unintended_consequences",
         "related_reason": "If you enjoy First Principles Daily, you might also like Tesla Shorts Time — the daily rundown on the company where a lot of this thinking shows up first.",
         "apple_podcasts_url": None,
         "spotify_url": None,
@@ -1579,7 +1585,7 @@ _SCAFFOLD_SHOW_RESOURCES: dict = {
             {"name": "Next Spaceflight", "url": "https://nextspaceflight.com", "desc": "Never miss a launch — schedules and countdowns", "badge": "Free"},
         ],
         "faq": [
-            {"q": "What is SpaceX Daily?", "a": "A daily podcast and blog that tracks SpaceX now that it's a public company (Nasdaq: SPCX). Every weekday: the day's developments with sources, what the spaceflight community is talking about, one honest counterpoint, a first-principles engineering deep dive, a dedicated AI & Compute segment (the SpaceX↔xAI/Grok thread), and the SPCX market picture. Hosted by Patrick in Vancouver."},
+            {"q": "What is SpaceX Daily?", "a": "A daily podcast and blog that tracks SpaceX now that it's a public company (Nasdaq: SPCX). Every day: the day's developments with sources, what the spaceflight community is talking about, one honest counterpoint, a first-principles engineering deep dive, a dedicated AI & Compute segment (the SpaceX↔xAI/Grok thread), and the SPCX market picture. Hosted by Patrick in Vancouver."},
             {"q": "Why does a SpaceX show cover xAI, Grok, and Cursor?", "a": "Because the businesses are increasingly one stack. SpaceX earmarked IPO proceeds for AI compute infrastructure, is developing orbital data centers and 'AI satellites', and Starlink is the backhaul for a planet-wide compute-and-connectivity play. xAI (Grok, the Colossus datacenters) and X sit on the other side of that same Musk compute ecosystem — and Cursor (Anysphere) is where Grok reaches developers day to day. So the show carries a dedicated AI & Compute segment for Grok, xAI, X, Cursor, and the partnerships that show where the models are going."},
             {"q": "What is SPCX?", "a": "SPCX is SpaceX's stock ticker on the Nasdaq. SpaceX held the largest IPO in history in June 2026, pricing at $135 per share and raising about $75 billion at a valuation near $1.8 trillion. A dual-class share structure leaves Elon Musk with a controlling majority of the voting power. Nothing on this show is financial advice."},
             {"q": "Where do the numbers come from?", "a": "Official sources wherever possible — SpaceX announcements, the SEC S-1/prospectus and later filings, and credible reporting from NASASpaceflight, SpaceNews, Ars Technica, and CNBC. Community and social posts are clearly flagged as unverified. The live SPCX price on this page is refreshed every run from market data."},
@@ -2044,6 +2050,9 @@ def _get_jinja_env():
     # Make marketing config available in every template without
     # threading it through every render() call.
     env.globals["marketing"] = MARKETING_CONFIG
+    # Footer copyright year (Sep 2026 review: "© 2026" was a literal in
+    # base.html.j2 and would have rolled over to wrong on Jan 1).
+    env.globals["current_year"] = datetime.now(timezone.utc).year
     env.filters["with_utm"] = _with_utm
     # Jinja's default ``tojson`` filter inherits Python's
     # ``ensure_ascii=True``, which escapes Cyrillic to ``Ф...``
@@ -2089,7 +2098,9 @@ def generate_summaries_page(slug, *, dry_run=False):
         "canonical_url": f"{GITHUB_RAW}/{cfg['summaries_page']}",
         "rss_url": f"{prefix}{cfg['rss_file']}",
         "hero_title": cfg["name"],
-        "hero_subtitle": f"Complete archive of {cfg['name']} episode summaries.",
+        # Honest label (Sep 2026 review): the summaries JSON holds the most
+        # recent ~30 episodes, not the archive — the blog has every episode.
+        "hero_subtitle": f"The most recent {cfg['name']} episodes, summarised with a player for each. The complete archive, with transcripts, is on the blog.",
         "blog_page": f"blog/{cfg['slug']}/index.html",
         "all_shows": _build_all_shows_list(),
         "page_lang": "ru" if slug in ("finansy_prosto", "privet_russian") else "en",
@@ -2139,12 +2150,30 @@ def generate_mit_performance_page(*, dry_run=False):
     except Exception:
         pass
 
+    _mit_perf_desc = (
+        "Modern Investing Techniques' public practice-portfolio record: "
+        "every simulated trade with entry and exit dates, alpha versus the "
+        "NASDAQ, S&P 500 and TSX, the fixed rulebook, and the downloadable "
+        "trade ledger so anyone can verify the numbers."
+    )
     context = {
         "show": cfg,
         "performance_data": performance_data,
         "tracker": tracker_data,
         "mit_charts": _mit_chart_data(tracker_data),
         "path_prefix": "",
+        # Sep 2026 review: the page rendered ``<title></title>`` and an
+        # empty meta description — the template's ``block title`` was
+        # never wired into base.html.j2 and no page_title was passed.
+        "page_title": "Modern Investing Techniques — Performance & Lessons Learned | Nerra Network",
+        "page_description": _mit_perf_desc,
+        "meta_description": _mit_perf_desc,
+        "meta_keywords": "Modern Investing Techniques performance, practice portfolio, simulated trades, alpha vs NASDAQ, trade ledger",
+        "canonical_url": "https://nerranetwork.com/modern-investing-performance.html",
+        "og_image": f"https://nerranetwork.com/{cfg.get('podcast_image', 'assets/og-preview.png')}",
+        "theme_color": cfg.get("brand_color", "#6B47FF"),
+        "show_color": cfg.get("brand_color", ""),
+        "show_color_dark": cfg.get("brand_color_dark", cfg.get("brand_color", "")),
         "is_russian": False,
         "t": {
             "nav_shows": "Shows", "nav_blog": "Blog", "all_blog_posts": "All Blog Posts",
@@ -2190,6 +2219,8 @@ def generate_tesla_narrative_page(*, dry_run=False):
             "current status, key open questions, and real progress across "
             "episodes."
         ),
+        "canonical_url": "https://nerranetwork.com/tesla-narrative.html",
+        "og_image": "https://nerranetwork.com/assets/covers/tesla-shorts-time.jpg",
         "path_prefix": "",
         "is_russian": False,
         "t": {
@@ -2259,12 +2290,22 @@ def generate_narrative_page(slug, *, dry_run=False):
         "x_account": cfg.get("x_account") or "",
         "brand_color": cfg.get("brand_color", ""),
         "source_path": f"digests/{slug}/{mcfg.narrative_filename}",
+        # In-content way back to the show (Sep 2026 review: the tracker
+        # was a dead end — no link to the show page, blog, or feed).
+        "show_page": cfg.get("show_page", ""),
+        "blog_page": cfg.get("blog_page", f"blog/{slug}/index.html"),
+        "summaries_page": cfg.get("summaries_page", ""),
+        "rss_file": cfg.get("rss_file", ""),
         "page_title": f"{cfg['name']} — Narrative Tracker | Nerra Network",
         "meta_description": (
             f"The ongoing storylines {cfg['name']} tracks over time — current status, "
             "key open questions, and real progress across episodes."
         ),
-        "og_image": cfg.get("podcast_image", ""),
+        "og_image": f"https://nerranetwork.com/{cfg['podcast_image']}" if cfg.get("podcast_image") else "",
+        # Sep 2026 review: narrative pages had no canonical (every other
+        # generated page does) — social cards also carried a RELATIVE
+        # og:image, which share previews reject.
+        "canonical_url": "https://nerranetwork.com/" + cfg["show_page"].replace(".html", "-narrative.html"),
         "path_prefix": "",
         "is_russian": False,
         "t": {
@@ -2599,7 +2640,11 @@ def generate_show_page(slug, *, dry_run=False):
         "show_name": cfg["name"],
         "show_slug": cfg["slug"],
         "stock_widget": stock_widget,
-        "show_description": cfg.get("about_text", cfg["description"]),
+        # Hero copy is the punchy registry blurb; the long about_text is
+        # rendered ONCE, in the About section (Sep 2026 review: 12 of 12
+        # show pages printed the same ~800-char paragraph twice).
+        "show_description": cfg.get("description_long") or cfg.get("about_text") or cfg["description"],
+        "summaries_page_url": cfg.get("summaries_page", ""),
         "page_title": page_title,
         "meta_description": meta_description,  # override the static one from **cfg
         "latest_episode_title": latest_episode_title,
@@ -2848,9 +2893,25 @@ def generate_network_page(*, dry_run=False):
                         _ep.get("show_slug") or "",
                         title=_ep.get("title") or "",
                     )
-            popular_episodes = [
-                ep for ep in popular_episodes if ep.get("audio_url")
-            ][:6]
+            # At most two per show: on 2026-09-03 the top six were ALL
+            # SpaceX Daily, which made a 17-show network's "listener
+            # favourites" rail look like a one-show network. Ranks are
+            # re-numbered after the cut so the badges stay 1..6.
+            _per_show: dict = {}
+            _deduped = []
+            for ep in popular_episodes:
+                if not ep.get("audio_url"):
+                    continue
+                _slug = ep.get("show_slug") or ep.get("show_name") or ""
+                if _per_show.get(_slug, 0) >= POPULAR_EPISODES_MAX_PER_SHOW:
+                    continue
+                _per_show[_slug] = _per_show.get(_slug, 0) + 1
+                _deduped.append(ep)
+                if len(_deduped) >= 6:
+                    break
+            for _i, ep in enumerate(_deduped, 1):
+                ep["rank"] = _i
+            popular_episodes = _deduped
     except Exception as e:
         print(f"Warning: could not load popular episodes: {e}")
 
@@ -2876,7 +2937,9 @@ def generate_network_page(*, dry_run=False):
         "meta_keywords": "podcast network, daily podcasts, Nerra Network, Tesla, space, science, AI, environment, history, unintended consequences",
         "theme_color": "#6B47FF",
         "og_image": f"{GITHUB_RAW}/assets/og-preview.png",
-        "canonical_url": f"{GITHUB_RAW}/index.html",
+        # Bare origin, not /index.html: inbound links, the CNAME and the
+        # hreflang tags all resolve to "/" (Sep 2026 review).
+        "canonical_url": f"{GITHUB_RAW}/",
         "rss_url": "network.rss",
         "all_shows": _build_all_shows_list(),
         "latest_blog_posts": latest_blog_posts,
@@ -3917,13 +3980,14 @@ def _member_page_context(title, description, canonical):
     }
 
 
-def generate_join_page(*, dry_run=False):
-    """Generate /join.html — the Nerra Personal membership lander."""
-    env = _get_jinja_env()
-    # The pickable lineup, rendered as real cards (Aug 27 2026): the page
-    # used to ASSERT "pick the shows" without ever showing what there is
-    # to pick — the closed vocabulary from engine.personal_edition is the
-    # product, so show it.
+def _personal_shows_list():
+    """The pickable Nerra Personal lineup as template-ready cards.
+
+    Shared by the join lander and the member dashboard (Aug 30 2026):
+    both render the closed vocabulary from engine.personal_edition with
+    real cover art, so the product looks the same before and after
+    sign-in.
+    """
     from engine.personal_edition import PERSONAL_SHOW_SLUGS
     personal_shows = []
     for slug in PERSONAL_SHOW_SLUGS:
@@ -3939,6 +4003,17 @@ def generate_join_page(*, dry_run=False):
             "cover": cover,
             "cover_webp": f"{cover_base}-400.webp" if cover_base else "",
         })
+    return personal_shows
+
+
+def generate_join_page(*, dry_run=False):
+    """Generate /join.html — the Nerra Personal membership lander."""
+    env = _get_jinja_env()
+    # The pickable lineup, rendered as real cards (Aug 27 2026): the page
+    # used to ASSERT "pick the shows" without ever showing what there is
+    # to pick — the closed vocabulary from engine.personal_edition is the
+    # product, so show it.
+    personal_shows = _personal_shows_list()
     ctx = _member_page_context(
         "Nerra Personal — your own daily show | Nerra Network",
         "Pick your shows, set the order, and every morning Mira builds "
@@ -3967,18 +4042,38 @@ def generate_join_page(*, dry_run=False):
 
 
 def generate_account_page(*, dry_run=False):
-    """Generate /account.html — the member console (client-side app
-    against api.nerranetwork.com; the page itself is static)."""
+    """Generate /account.html — "My Nerra", the member dashboard
+    (client-side app against api.nerranetwork.com; the page itself is
+    static and reads the pipeline's committed api/*.json for content)."""
     env = _get_jinja_env()
-    from engine.personal_edition import PERSONAL_SHOW_SLUGS
-    names = {s: NETWORK_SHOWS.get(s, {}).get("name", s)
-             for s in PERSONAL_SHOW_SLUGS}
     ctx = _member_page_context(
-        "Your account | Nerra Network",
-        "Manage your Nerra account: your personal feed lineup, newsletter, "
-        "gallery access and member perks.",
+        "My Nerra | Nerra Network",
+        "Your member home: today's episodes from your shows, your private "
+        "personal feed, add-ons, lineup, and member perks.",
         "https://nerranetwork.com/account.html")
-    ctx["show_names"] = names
+    ctx["personal_shows"] = _personal_shows_list()
+    # Add-on catalog (Aug 30 2026): ids + tiers come from the engine's
+    # closed vocabulary; display copy lives here. A new addon in the
+    # engine without a row here fails the drift guard rather than
+    # silently missing from the dashboard.
+    from engine.personal_edition import DEFAULT_ADDONS, PERSONAL_ADDONS
+    _ADDON_DISPLAY = {
+        "weather": ("🌤️", "Measured Open-Meteo forecast for your location, "
+                          "read by Mira"),
+        "local_news": ("📰", "One local story a resident would care about, "
+                             "researched and sourced aloud"),
+        "events": ("🎟️", "One notable local event coming up"),
+        "traffic": ("🚗", "A real closure, strike or disruption changing "
+                          "how you get around"),
+        "markets": ("📈", "TSLA + SPCX closes from the network's own data "
+                          "pipeline — on any paid tier"),
+    }
+    ctx["personal_addons"] = [
+        {"id": aid, "label": meta["label"], "tier": meta["tier"],
+         "emoji": _ADDON_DISPLAY[aid][0], "desc": _ADDON_DISPLAY[aid][1]}
+        for aid, meta in PERSONAL_ADDONS.items()
+    ]
+    ctx["default_addons"] = list(DEFAULT_ADDONS)
     html = env.get_template("account_page.html.j2").render(**ctx)
     out_path = ROOT / "account.html"
     if dry_run:
@@ -3996,9 +4091,9 @@ def generate_support_page(*, dry_run=False):
     html = env.get_template("support_page.html.j2").render(
         **_member_page_context(
             "Support the Nerra Network",
-            "Seventeen daily shows, free and ad-free. See what the network "
-            "actually costs to run, and chip in if you want it to keep "
-            "existing.",
+            f"{len(NETWORK_SHOWS)} shows, most of them daily, all free and "
+            "ad-free. See what the network actually costs to run, and chip "
+            "in if you want it to keep existing.",
             "https://nerranetwork.com/support.html"))
     out_path = ROOT / "support.html"
     if dry_run:
@@ -4110,6 +4205,115 @@ def generate_editorial_page(*, dry_run=False):
     out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
     print(f"Wrote {out_path}")
     return out_path
+
+
+# ---------------------------------------------------------------------------
+# Legal / trust pages (Sep 2026 website review)
+# ---------------------------------------------------------------------------
+#
+# ai-disclosure.html, privacy-policy.html and terms-of-service.html were
+# hand-written files: a different font (Inter), no shared nav/footer, no
+# meta description or canonical, and copy that had drifted from the rest
+# of the site (the AI disclosure claimed every episode was personally
+# reviewed before publication — the editorial page said otherwise). They
+# are the pages every footer, every AI badge, and every feed description
+# points at, so they now render from templates on the shared chrome.
+
+_LEGAL_PAGES = {
+    "ai_disclosure": {
+        "template": "ai_disclosure.html.j2",
+        "out": "ai-disclosure.html",
+        "title": "AI Disclosure — Nerra Network",
+        "description": (
+            "How Nerra Network uses AI: what is automated (writing, narration, "
+            "imagery, translation), what humans own (briefs, sources, "
+            "standards, corrections), and the source-integrity safeguards "
+            "between the two."
+        ),
+        "keywords": "AI disclosure, AI podcast transparency, AI-narrated podcast, Nerra Network AI policy",
+    },
+    "privacy_policy": {
+        "template": "privacy_policy.html.j2",
+        "out": "privacy-policy.html",
+        "title": "Privacy Policy — Nerra Network",
+        "description": (
+            "What Nerra Network collects (an email address if you subscribe, "
+            "consent-gated analytics, anonymised download counts), the services "
+            "that process it, and your rights under PIPEDA and CASL."
+        ),
+        "keywords": "Nerra Network privacy policy, PIPEDA, CASL, podcast privacy",
+    },
+    "terms_of_service": {
+        "template": "terms_of_service.html.j2",
+        "out": "terms-of-service.html",
+        "title": "Terms of Service — Nerra Network",
+        "description": (
+            "Terms for using nerranetwork.com, its podcast feeds, newsletters, "
+            "memberships and donations, including the investment-content "
+            "disclaimer and AI-produced content notice."
+        ),
+        "keywords": "Nerra Network terms of service, podcast terms, investment disclaimer",
+    },
+}
+
+# Rendered into each legal page's "Updated" line. Bump when the copy
+# changes materially; it is deliberately NOT the build date (a date that
+# moves on every regeneration tells readers nothing).
+LEGAL_PAGES_UPDATED_LABEL = "September 3, 2026"
+
+
+def generate_legal_page(key, *, dry_run=False):
+    """Render one of the legal / trust pages from ``_LEGAL_PAGES``."""
+    spec = _LEGAL_PAGES[key]
+    env = _get_jinja_env()
+    template = env.get_template(spec["template"])
+    context = {
+        "path_prefix": "",
+        "page_title": spec["title"],
+        "page_description": spec["description"],
+        "meta_description": spec["description"],
+        "meta_keywords": spec["keywords"],
+        "theme_color": "#6B47FF",
+        "og_image": "",
+        "canonical_url": f"https://nerranetwork.com/{spec['out']}",
+        "show_color": "",
+        "show_color_dark": "",
+        "all_shows": _build_all_shows_list(),
+        "updated_label": LEGAL_PAGES_UPDATED_LABEL,
+    }
+    html = template.render(**context)
+    out_path = ROOT / spec["out"]
+    if dry_run:
+        print(f"[dry-run] Would write {out_path}")
+        return None
+    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
+    print(f"Wrote {out_path}")
+    return out_path
+
+
+def generate_legal_pages(*, dry_run=False):
+    return [generate_legal_page(k, dry_run=dry_run) for k in _LEGAL_PAGES]
+
+
+def generate_static_pages(*, dry_run=False):
+    """Regenerate every cheap, data-light page in one call.
+
+    Sep 2026 review: the nightly ran ``--start-here --faq --about`` and
+    ``--how-to-listen`` but nothing regenerated editorial / press /
+    contact / gallery / books / 404 / the legal pages between full
+    ``--all`` runs, so template fixes on those pages could sit unpublished
+    for weeks. One flag, one list, nothing left out."""
+    generate_start_here_page(dry_run=dry_run)
+    generate_about_page(dry_run=dry_run)
+    generate_faq_page(dry_run=dry_run)
+    generate_how_to_listen_page(dry_run=dry_run)
+    generate_press_page(dry_run=dry_run)
+    generate_contact_page(dry_run=dry_run)
+    generate_editorial_page(dry_run=dry_run)
+    generate_legal_pages(dry_run=dry_run)
+    generate_gallery_page(dry_run=dry_run)
+    generate_books_page(dry_run=dry_run)
+    generate_404_page(dry_run=dry_run)
 
 
 def generate_contact_page(*, dry_run=False):
@@ -4334,6 +4538,19 @@ def main():
         help="Generate the Books page from books/catalog.json",
     )
     parser.add_argument(
+        "--legal",
+        action="store_true",
+        help="Generate the AI disclosure, privacy policy and terms pages",
+    )
+    parser.add_argument(
+        "--static-pages",
+        action="store_true",
+        help=(
+            "Generate every cheap static page (start-here, about, FAQ, how to "
+            "listen, press, contact, editorial, legal, gallery, books, 404)"
+        ),
+    )
+    parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Preview output without writing files",
@@ -4346,7 +4563,7 @@ def main():
         args.summaries or args.shows or args.network or args.all or args.show
         or args.blogs or args.sitemap or args.player or args.how_to_listen
         or args.start_here or args.faq or args.about or args.blog_aggregates
-        or args.books
+        or args.books or args.legal or args.static_pages
     )
     if not _any_flag:
         args.all = True
@@ -4425,6 +4642,7 @@ def main():
         generate_contact_page(dry_run=args.dry_run)
         generate_editorial_page(dry_run=args.dry_run)
         generate_faq_page(dry_run=args.dry_run)
+        generate_legal_pages(dry_run=args.dry_run)
         # Sitemap last so it picks up every page generated above
         generate_sitemap(dry_run=args.dry_run)
         # Regenerate JSON API for mobile app
@@ -4477,6 +4695,10 @@ def main():
         generate_about_page(dry_run=args.dry_run)
     if args.books:
         generate_books_page(dry_run=args.dry_run)
+    if args.legal:
+        generate_legal_pages(dry_run=args.dry_run)
+    if args.static_pages:
+        generate_static_pages(dry_run=args.dry_run)
 
 
 if __name__ == "__main__":

@@ -1640,6 +1640,15 @@ def run(args: argparse.Namespace) -> None:
         # Deep-dive digests have a different shape than the show's normal news
         # format, so the daily-format validator (and the structural-integrity
         # gate below) would false-positive on them — skip both for deep dives.
+        # 7b. Cross-section duplicate strip (Sep 5 2026 network delivery
+        #     review). The prompts' "ZERO STORY OVERLAP" rule does not hold
+        #     (Tesla Ep592: all five X Takeover items re-told Top 12 items),
+        #     and the script stage writes the digest out nearly verbatim, so
+        #     a digest duplicate is an audio duplicate. Data-side, before the
+        #     validator sees the text; re-applied after any regeneration.
+        if not is_deep_dive:
+            x_thread = _dedupe_digest_sections(x_thread, config, metrics)
+
         if _val_factory and not is_deep_dive:
             _val_config = _val_factory()
             # CRITICAL: exclude today's record. record_episode runs above, so
@@ -2062,7 +2071,7 @@ def run(args: argparse.Namespace) -> None:
                             "(%d chars) — using it",
                             len(_x_struct.strip()),
                         )
-                        x_thread = _x_struct
+                        x_thread = _dedupe_digest_sections(_x_struct, config, metrics)
                     else:
                         logger.warning(
                             "Structural retry did not restore a usable HOOK — "
@@ -2914,6 +2923,12 @@ def run(args: argparse.Namespace) -> None:
             from engine.utils import fix_phonetic_garbles
             podcast_script = fix_phonetic_garbles(podcast_script)
 
+            # Density audit (Sep 5 2026): digest-verbatim share, repeated
+            # numeric facts, filler-shape sentences, hook restatement —
+            # recorded as metrics and annotated, never blocking. This is
+            # the number the next review scores the prompt pass against.
+            _audit_podcast_script(podcast_script, x_thread, hook, config, metrics)
+
             # Russian-show date Russification — operator caught (Финансы
             # Просто Ep32, May 6 2026) the LLM emitting English-form dates
             # like "May sixth, twenty twenty-six" inside otherwise-Russian
@@ -2939,6 +2954,10 @@ def run(args: argparse.Namespace) -> None:
                     f"{_AI_DISCLOSURE_DIALOGUE}"
                 )
             podcast_script = podcast_script.rstrip() + "\n\n" + _disclosure
+            # MIT Ep159 (2026-09-03) spoke the gallery plug twice — once
+            # inside the closing and again after the disclosure. Whatever
+            # path duplicates a tail line, the audio must not.
+            podcast_script = _collapse_duplicate_tail_lines(podcast_script)
 
             # Parse chapter markers from the cleaned script (before TTS).
             # Pass the digest's clean per-story headlines so the
@@ -3854,6 +3873,12 @@ def run(args: argparse.Namespace) -> None:
             funding_label="Support the Nerra Network",
             person_name=config.publishing.host_name or "Patrick",
             person_url=f"{config.publishing.base_url}/about.html",
+            # Item <link> = the episode's blog post (player + notes +
+            # transcript), the page podcast apps open as "episode website".
+            # Was the MP3 (Sep 4 2026 flagship pass).
+            episode_page_url=(
+                f"{config.publishing.base_url}/blog/{config.slug}/ep{episode_num:03d}.html"
+            ),
         )
 
         metrics.record("rss_update_duration_s", round(time.monotonic() - _t_rss, 2))
@@ -4758,6 +4783,76 @@ _SOURCE_INLINE_RU_DASH_RE = re.compile(
 )
 
 
+def _dedupe_digest_sections(x_thread, config, metrics):
+    """Drop later digest items that repeat an earlier item (URL / headline /
+    body vocabulary); record the count and annotate. Never raises."""
+    if not x_thread:
+        return x_thread
+    try:
+        from engine.digest_overlap import dedupe_cross_section_items
+        result = dedupe_cross_section_items(x_thread, show_name=config.name)
+    except Exception as exc:  # noqa: BLE001 — a guard must never break a run
+        logger.warning("Digest cross-section dedupe failed (non-fatal): %s", exc)
+        return x_thread
+    prior = 0
+    try:
+        prior = int(metrics.to_dict().get("digest_cross_section_dupes_removed", 0) or 0)
+    except Exception:  # noqa: BLE001
+        prior = 0
+    metrics.record("digest_cross_section_dupes_removed", prior + result.count)
+    if result.count:
+        detail = "; ".join(
+            f"{d.section or '?'} repeated {d.kept_section or '?'} ({d.reason}): "
+            f"{d.title[:60]}" for d in result.removed
+        )
+        print(
+            f"::warning::{config.slug}: dropped {result.count} duplicate digest "
+            f"item(s) that re-told an earlier section — {detail}"
+        )
+    return result.text
+
+
+def _audit_podcast_script(podcast_script, x_thread, hook, config, metrics):
+    """Record the script density audit as metrics + a GitHub annotation."""
+    try:
+        from engine.script_audit import audit_script
+        audit = audit_script(
+            podcast_script or "", digest_text=x_thread or "", hook=hook or "",
+        )
+    except Exception as exc:  # noqa: BLE001 — read-only instrument
+        logger.warning("Script density audit failed (non-fatal): %s", exc)
+        return
+    for key, value in audit.to_metrics().items():
+        metrics.record(key, value)
+    logger.info(
+        "Script density audit: %d sentences, digest-verbatim %s%%, "
+        "repeated facts %d, filler %.0f%%, hook restated %dx",
+        audit.sentences,
+        "n/a" if audit.digest_overlap_pct is None else f"{audit.digest_overlap_pct:.0f}",
+        audit.repeated_facts, audit.filler_pct, audit.hook_restated,
+    )
+    for warning in audit.warnings():
+        print(f"::warning::{config.slug}: {warning}")
+
+
+def _collapse_duplicate_tail_lines(script: str, window: int = 8) -> str:
+    """Remove a repeated non-empty line within the closing *window* lines."""
+    if not script:
+        return script
+    lines = script.split("\n")
+    start = max(0, len(lines) - window)
+    seen: set = set()
+    out = lines[:start]
+    for line in lines[start:]:
+        key = " ".join(line.split()).lower()
+        if key and key in seen:
+            continue
+        if key:
+            seen.add(key)
+        out.append(line)
+    return "\n".join(out)
+
+
 def _strip_source_scaffold_lines(text: str) -> str:
     """Drop raw 'Source:'-label scaffold from the spoken script.
 
@@ -5344,6 +5439,7 @@ def _publish_youtube(
     pexels_filtered = 0
     grok_image_cost = 0.0
     grok_images_generated = 0
+    grok_image_widths: list = []   # delivered px widths (Sep 3 2026)
     grok_image_failures: list = []
     # Gallery upload counters (Phase 1 → diagnostics added May 2026).
     # Surfaced in per-episode metrics so we can tell from the dashboard
@@ -5393,6 +5489,27 @@ def _publish_youtube(
     except Exception:  # pragma: no cover — best-effort
         _scene_contexts = []
 
+    # Story-driven scene briefs (Sep 2026, engine.scene_briefs): one
+    # concrete visual scene per story, written once and shared by the
+    # 16:9 and 9:16 sets so the pictures follow the narration instead
+    # of the show's static keyword list.
+    _scene_briefs: list = []
+    try:
+        if str(getattr(yt, "image_provider", "pexels")) in ("grok", "hybrid"):
+            from engine.scene_briefs import generate_scene_briefs
+            _scene_briefs = generate_scene_briefs(
+                _scene_contexts,
+                hook=hook or "",
+                show_name=config.name,
+                show_descriptor=getattr(
+                    yt, "grok_image_descriptor", "photorealistic news photo"),
+                max_n=int(getattr(yt, "scenes_per_episode", 8) or 8),
+                enabled=bool(getattr(yt, "scene_briefs_enabled", True)),
+            )
+    except Exception as exc:  # pragma: no cover — best-effort
+        logger.warning("scene briefs failed (%s) — legacy prompts", exc)
+        _scene_briefs = []
+
     # Bias Grok Imagine visuals toward the show's currently-tracked narrative
     # programs so the imagery reinforces the ongoing story, not only the day's
     # hook. Tesla uses its bespoke memory module; the Phase-3 memory shows
@@ -5431,6 +5548,7 @@ def _publish_youtube(
             fetch_scene_images_grok,
         )
         nonlocal grok_image_cost, grok_images_generated, grok_image_failures
+        nonlocal grok_image_widths
         try:
             prompts = build_image_prompts(
                 hook=hook or "",
@@ -5454,6 +5572,7 @@ def _publish_youtube(
                 ),
                 per_scene_contexts=_scene_contexts,
                 narrative_keywords=narrative_keywords if 'narrative_keywords' in locals() else None,
+                scene_briefs=_scene_briefs or None,
             )
             result = fetch_scene_images_grok(
                 work_dir=work_dir,
@@ -5467,6 +5586,7 @@ def _publish_youtube(
             grok_image_cost += result.cost_usd
             grok_images_generated += result.images_generated
             grok_image_failures.extend(result.failures)
+            grok_image_widths.extend(getattr(result, "widths", []) or [])
             if not result.scene_set.is_fallback and len(result.scene_set) >= 2:
                 # Grok-generated images are royalty-free under xAI's
                 # terms; we still credit the model in the description
@@ -5485,7 +5605,18 @@ def _publish_youtube(
                 for _sp in result.scene_set.paths():
                     _m = _re_ctx.match(r"grok_(\d+)\.", Path(_sp).name)
                     if _m and 0 <= int(_m.group(1)) < len(prompts):
-                        fresh_scene_prompts[Path(_sp)] = prompts[int(_m.group(1))]
+                        _idx = int(_m.group(1))
+                        # Scene i was generated FOR story i: key its
+                        # scheduler context on the story headline + brief
+                        # so the chapter picker lands the right picture
+                        # on the right chapter (chapter titles derive from
+                        # the same headlines).
+                        _ctx = prompts[_idx]
+                        if _scene_briefs and _idx < len(_scene_briefs):
+                            _story = (_scene_contexts[_idx]
+                                      if _idx < len(_scene_contexts) else "")
+                            _ctx = f"{_story} {_scene_briefs[_idx]} {_ctx}"
+                        fresh_scene_prompts[Path(_sp)] = _ctx
                 return result.scene_set.paths()
         except Exception as exc:  # pragma: no cover — best-effort
             logger.warning("Grok Imagine scene fetch failed: %s", exc)
@@ -5652,7 +5783,14 @@ def _publish_youtube(
     # gallery contribution); drop the rest. Shorts thumbnails are
     # unaffected: they come from ``short_scene_paths`` (9:16).
     _long_form_produced = bool(_policy_publish_long or config.video_podcast.enabled)
-    _fresh_long_scene_count = 4 if _long_form_produced else 1
+    # Sep 2026: one fresh 16:9 scene per STORY (scene briefs), capped by
+    # youtube.scenes_per_episode — was a fixed 4 generic images.
+    _scene_cap = int(getattr(yt, "scenes_per_episode", 8) or 8)
+    _fresh_long_scene_count = (
+        max(4, min(_scene_cap, len(_scene_briefs) or _scene_cap))
+        if _long_form_produced else 1
+    )
+    _fresh_short_scene_count = int(getattr(yt, "short_scenes_per_episode", 5) or 5)
 
     if video_provider != "grok" and not recap_pool_used:
         if image_provider == "grok":
@@ -5666,10 +5804,14 @@ def _publish_youtube(
                 aspect="16:9", label_suffix="",
                 count=_fresh_long_scene_count,
             )
-            short_scene_paths = _run_grok_path(aspect="9:16", label_suffix="_short")
+            short_scene_paths = _run_grok_path(
+                aspect="9:16", label_suffix="_short",
+                count=_fresh_short_scene_count)
         elif image_provider == "hybrid":
             _run_pexels_path(into_long=True, into_short=False)
-            short_scene_paths = _run_grok_path(aspect="9:16", label_suffix="_short")
+            short_scene_paths = _run_grok_path(
+                aspect="9:16", label_suffix="_short",
+                count=_fresh_short_scene_count)
         else:  # pexels (default)
             _run_pexels_path(into_long=True, into_short=True)
 
@@ -6586,6 +6728,9 @@ def _publish_youtube(
                             window_start_s=this_offset - _caption_offset,
                             clip_duration_s=duration,
                             context_text=(this_hook or hook or ""),
+                            # The Short's window text picks which fresh
+                            # story scene leads (Sep 2026).
+                            fresh_scene_context=fresh_scene_prompts,
                             blend_library=(
                                 False if recap_pool_used else None
                             ),
@@ -6996,6 +7141,12 @@ def _publish_youtube(
     # image generation. Zero when image_provider != grok / hybrid.
     result["grok_image_cost_usd"] = round(grok_image_cost, 4)
     result["grok_images_generated"] = grok_images_generated
+    # Delivered source resolution (max / min width across the episode's
+    # fresh images). A requested size is not a delivered size — every
+    # image before 2026-09-03 arrived at 1280 px wide whatever was asked.
+    if grok_image_widths:
+        result["grok_image_px_max"] = max(grok_image_widths)
+        result["grok_image_px_min"] = min(grok_image_widths)
     if grok_image_failures:
         result["grok_image_failures"] = grok_image_failures[:5]
     result["image_provider"] = image_provider

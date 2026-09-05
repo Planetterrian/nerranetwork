@@ -141,6 +141,26 @@ def validate_rss(rss_path: Path, expected_episode_num: Optional[int] = None) -> 
     return True
 
 
+def _item_sort_key(item) -> tuple:
+    """Newest-first ordering key for an RSS <item>: (pubDate epoch,
+    itunes:episode). Missing / unparseable values sort as oldest."""
+    from email.utils import parsedate_to_datetime
+    stamp = 0.0
+    pub = item.findtext("pubDate") or ""
+    if pub:
+        try:
+            stamp = parsedate_to_datetime(pub).timestamp()
+        except Exception:
+            stamp = 0.0
+    ep = 0
+    ep_text = item.findtext("{http://www.itunes.com/dtds/podcast-1.0.dtd}episode") or ""
+    try:
+        ep = int(ep_text.strip() or 0)
+    except ValueError:
+        ep = 0
+    return (stamp, ep)
+
+
 def validate_enclosure_reachability(
     rss_path: Path,
     *,
@@ -165,21 +185,29 @@ def validate_enclosure_reachability(
         return True  # malformed RSS is caught by validate_rss; don't double-report
 
     items = tree.getroot().findall(".//item")
-    urls = []
-    for item in items:
+    dated = []  # (sort_key, position, url)
+    for pos, item in enumerate(items):
         enc = item.find("enclosure")
-        if enc is not None:
-            url = enc.get("url", "")
-            if url:
-                urls.append(url)
-    if not urls:
+        if enc is None:
+            continue
+        url = enc.get("url", "")
+        if not url:
+            continue
+        dated.append((_item_sort_key(item), pos, url))
+    if not dated:
         return True
 
     headers = {"User-Agent": "NerraPipelineValidator/1.0"}
     all_ok = True
-    # Sample from the END of the list — RSS items may be oldest-first in the
-    # XML, so urls[:N] would check legacy episodes instead of the newest ones.
-    sample = urls[-sample_count:] if len(urls) > sample_count else urls
+    # Sep 4 2026: pick the NEWEST items by pubDate / itunes:episode, never
+    # by document position. The sampler used to take urls[-N:] on the
+    # assumption that feeds were oldest-first; once update_rss_feed
+    # started serializing newest-first (the feedgen order fix) the tail
+    # became the OLDEST three items — Planetterrian Ep011-013 from Dec
+    # 2025, whose audio was deleted on purpose — and Ep173 failed
+    # post-run validation after publishing cleanly.
+    dated.sort(key=lambda t: (t[0], -t[1]), reverse=True)
+    sample = [url for _k, _p, url in dated[:sample_count]]
     for url in sample:
         try:
             resp = _req.head(url, headers=headers, timeout=timeout, allow_redirects=True)

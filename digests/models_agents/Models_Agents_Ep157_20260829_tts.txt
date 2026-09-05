@@ -1,0 +1,131 @@
+Claude just showed it can autonomously improve alignment in other models on a single G P U — shifting alignment work from human teams to model-driven loops.
+
+This is Models and Agents, episode one hundred fifty-seven.
+
+Anthropic researchers gave Claude 48 hours and one G P U to improve alignment of small models.
+
+The model researched methods, proposed fixes, trained, and evaluated the results on its own.
+
+It improved safety scores across ten common misalignment types while preserving general capabilities.
+
+The best methods generalized to held-out benchmarks and models up to four point seven times larger.
+
+In a follow-up test, Sonnet five post-trained an early checkpoint of the more capable Opus four point eight and reached safety scores close to the production version.
+
+Claude hill-climbed safety benchmarks for common misalignments like deception or sycophancy under the constraint of preserving general capabilities.
+
+Its best methods also generalized to the Petri behavioral audit.
+
+This work sits in the ongoing safety and policy conversation where labs seek scalable evaluation methods beyond full human pipelines.
+
+Builders tracking alignment automation should test the released methods on their own small models this week.
+
+Cohere released Parse five, a two point three billion parameter vision language model built on the North Micro Vision Instruct architecture.
+
+It carries an eight thousand one hundred ninety two token context window.
+
+The model converts PDFs, slides, and images to structured Markdown in a single pass and returns tables as HTML along with bounding boxes where needed.
+
+On ParseBench it scored seventy nine point two, behind G P T five point five at eighty four point four and Opus four point eight at eighty four point three.
+
+Parse five is priced at one dollar fifty per one thousand pages via the Cohere A P I.
+
+It is available on Model Vault, Microsoft Foundry, and AWS SageMaker.
+
+The model accepts a PDF, PowerPoint, or JPEG page as a base64 encoded image and returns Markdown in reading order.
+
+It supports Arabic, English, French, German, Italian, Japanese, Korean, Portuguese, and Spanish with stable accuracy.
+
+Cohere modeled a financial services workflow processing seven hundred fifty million documents a year and showed choosing Parse five over G P T five point five would reduce costs by more than ninety eight percent.
+
+Meta A I and University of Illinois researchers trained Qwen three eight B with EvoHarness RL, a two stage framework that teaches agents to manage a unified Belief Progress Experience workspace through four meta actions.
+
+The resulting model reached ninety six point nine percent success on ALFWorld, matching Claude Opus four point five at ninety six point four percent and beating SkillRL at eighty nine point nine percent.
+
+The approach includes cost aware reinforcement learning so the agent learns when querying external state is worth the token budget.
+
+During training the model exhibited harness annealing, reducing tool calls on familiar tasks while scaling them on novel ones.
+
+The BPE workspace categorizes external needs into Belief for current environment state, Progress for completed and pending subgoals, and Experience for historical knowledge.
+
+The agent issues track, commit, recall, and note commands to interact with this dashboard.
+
+The framework also improved frozen frontier models, raising G P T four point one success rate by twenty two point one points and G P T five by twenty five point seven points when equipped with the BPE prompt time harness.
+
+A developer implemented a two point four to four million parameter latent flow transformer on the RP two three five zero microcontroller.
+
+The model generates one hundred twenty eight by one hundred twenty eight face images in roughly twenty seconds at int eight quantization.
+
+The twelve layer model uses AdaLN Zero conditioning, supports CFG, and streams weights via DMA while computing prior layers.
+
+ReLU squared activation increases sparsity for skipped calculations.
+
+The full pipeline runs locally and can display output on a monitor or transfer via U S B.
+
+CFG boosted image quality substantially during testing.
+
+The inference engine streams weights from flash memory while the previous layer is still being computed.
+
+Edge developers should examine the ablation results for similar microcontroller deployments.
+
+Simon Willison updated his L L M cliché highlighter tool to detect thirty eight patterns.
+
+The lightweight utility flags overused L L M phrasing in generated text.
+
+Builders reviewing large volumes of model output can add it to their post processing scripts to improve readability.
+
+Simon Willison reported that security issues in open source projects now see exploit attempts within minutes of patch discussions appearing publicly.
+
+Automated agents are scanning repositories and generating probes faster than traditional embargo windows allow.
+
+Maintainers are seeing a sharp rise in disclosures, with one project moving from twenty total reports over ten years to over forty in the last month.
+
+GitHub CVE assignment times have stretched from two to three days to three to four weeks under the increased volume.
+
+The rclone maintainer noted that seventy five percent of recent disclosures contained something requiring attention.
+
+Projects using public repositories should accelerate their disclosure and patching processes.
+
+Everyone treats learned prompt compression as a simple keep the important tokens switch.
+
+In practice it is a supervised transfer problem where the compressor learns which tokens to drop from English centric training data.
+
+When the same compressor is applied to other languages the keep rate that preserves fifty seven to sixty two percent normalized context utilization in English can drop to ten to twenty four percent for Lithuanian and near zero for Chinese at the same budget.
+
+The gap appears because the model internalizes English token importance patterns rather than language agnostic information density.
+
+Deterministic baselines avoid the transfer failure but cannot match peak English performance.
+
+Multilingually trained compressors close the gap yet still require careful rate tuning.
+
+Aggressive thresholds can push non English contexts below no context utility on downstream tasks.
+
+Teams should measure both token savings and task accuracy on their actual language mix before adopting a learned compressor.
+
+Consider a translate then compress pipeline when the target language has a high token premium.
+
+Test Cohere Parse five on your highest volume document set to measure cost versus current frontier model usage.
+
+Run the EvoHarness RL BPE workspace on one of your existing long horizon agent tasks to see whether harness annealing reduces token spend.
+
+Add Simon Willison’s cliché highlighter to your generation review pipeline if you ship customer facing L L M text.
+
+Port the RP two three five zero latent flow transformer ablation approach to your own edge hardware if you need local image generation.
+
+Compare Parse five output structure against your current OCR plus model pipeline on enterprise PDFs containing tables and charts.
+
+More results from Anthropic’s automated alignment experiments are expected as other labs reproduce the single G P U setup.
+
+Additional language coverage and chart extraction features are planned for future Parse five releases.
+
+Further scaling tests of EvoHarness RL on models beyond eight B are likely in the coming weeks.
+
+Continued discussion on open source embargo timing given faster A I driven exploit discovery is also expected.
+
+Before we go, watch for the first independent reproductions of the single G P U alignment loop and whether they surface new generalization limits on larger models.
+
+That wraps up today's A I briefing. Share this with a developer or builder who wants to stay current. Subscribe wherever you listen. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes. Quick tip from the network: try Fascinating Frontiers next — the most fascinating news from space and science.
+
+Every Nerra Network show is free at nerranetwork dot com. Want the written briefing with source links? Each show keeps a summaries page on nerranetwork dot com — scannable, dated, and free.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.

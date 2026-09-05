@@ -362,7 +362,9 @@ class TestPerformanceLoopFromOp3:
         wf = (Path(__file__).resolve().parent.parent / ".github" / "workflows"
               / "nightly-maintenance.yml").read_text(encoding="utf-8")
         assert "update_performance_trackers.py" in wf
-        assert "tesla_performance_tracker.json" in wf
+        # Sep 4 2026: the five literal tracker paths became one glob so the
+        # other six memory shows' trackers stop being discarded nightly.
+        assert "digests/**/*_performance_tracker.json" in wf
 
 
 class TestExpansionRetryCarriesDigest:
@@ -721,3 +723,114 @@ class TestChapterMarkerHygiene:
             "{% block title %}; without it the flagship Story Tracker "
             "ships <title></title>"
         )
+
+
+class TestSep2026FlagshipPass:
+    """Sep 4 2026 flagship pass (docs/reviews/flagship_review_2026_09_04.md).
+
+    Verified against Ep584-593: Ep585 (a daily-audit retry at 11:27 ET)
+    spoke "closed at $351.73" for a stock that closed at $345.82 because the
+    history source hard-coded REGULAR on an in-progress bar; the closer
+    said "one dollars" / "one cents" and "up, ninety-two cents, zero point
+    three percent" (Whisper: "up 92.3%"); four 13F/fund title shapes still
+    passed the Aug-15 filter (one aired on Ep590); the digest's checklist
+    item "Sign-off paragraph" and the ``@username`` placeholder reached the
+    blog; an unclosed ```claims fence reached summaries + blog on Ep585.
+    """
+
+    _NY_OPEN = __import__("datetime").datetime(2026, 8, 27, 15, 27, tzinfo=__import__("datetime").timezone.utc)   # Thu 11:27 ET
+    _NY_PRE = __import__("datetime").datetime(2026, 8, 27, 12, 0, tzinfo=__import__("datetime").timezone.utc)     # Thu 08:00 ET
+
+    def test_intraday_bar_is_spoken_as_trading_not_closed(self):
+        import shows.hooks.tesla as hook
+        assert hook._regular_session_open(self._NY_OPEN)
+        assert not hook._regular_session_open(self._NY_PRE)
+        assert hook._market_status_suffix("INTRADAY") == " (Intraday)"
+        assert hook._normalize_market_state("intraday") == "INTRADAY"
+        spoken = hook._price_sentence("351.73", "▲ $5.90 (1.7%) (Intraday)")
+        assert spoken.startswith("T S L A is trading at") and "closed" not in spoken
+        assert hook._price_sentence("345.82", "▲ $5.90 (1.7%)").startswith("T S L A closed at")
+
+    def test_history_source_reports_intraday_during_session(self, monkeypatch):
+        import datetime as dt
+        import shows.hooks.tesla as hook
+        import types
+        class _Idx(list):
+            pass
+        class _Hist:
+            empty = False
+            def __init__(self):
+                today = hook._today_et(self._now)
+                self.index = [types.SimpleNamespace(date=lambda d=today - dt.timedelta(days=1): d),
+                              types.SimpleNamespace(date=lambda d=today: d)]
+                self._closes = [345.82, 351.73]
+            def __len__(self):
+                return 2
+            @property
+            def Close(self):
+                return self._closes
+            def __getitem__(self, key):
+                assert key == "Close"
+                return types.SimpleNamespace(iloc=self._closes)
+        _Hist._now = self._NY_OPEN
+        fake_yf = types.SimpleNamespace(Ticker=lambda sym: types.SimpleNamespace(history=lambda **kw: _Hist()))
+        monkeypatch.setitem(__import__("sys").modules, "yfinance", fake_yf)
+        fixed_today = hook._today_et(self._NY_OPEN)
+        monkeypatch.setattr(hook, "_regular_session_open", lambda now=None: True)
+        monkeypatch.setattr(hook, "_today_et", lambda now=None: fixed_today)
+        price, prev, state = hook._fetch_via_yfinance_history()
+        assert (price, prev, state) == (351.73, 345.82, "INTRADAY")
+        monkeypatch.setattr(hook, "_regular_session_open", lambda now=None: False)
+        assert hook._fetch_via_yfinance_history()[2] == "REGULAR"
+
+    def test_closer_grammar(self):
+        from shows.hooks.tesla import _format_change_for_speech as f, _format_price_for_speech as p
+        assert f("▲ $0.92 (0.3%)") == "up ninety-two cents, or zero point three percent"
+        assert f("▲ $1.30 (0.4%)") == "up one dollar and thirty cents, or zero point four percent"
+        assert f("▼ $6.06 (1.7%)") == "down six dollars and six cents, or one point seven percent"
+        assert f("▲ $0.57") == "up fifty-seven cents"
+        assert p("357.01") == "three hundred fifty-seven dollars and one cent"
+        assert p("1.00") == "one dollar"
+
+    def test_four_more_13f_shapes_are_dropped(self):
+        import yaml
+        from engine.utils import drop_excluded_titles
+        patterns = yaml.safe_load((_ROOT / "shows" / "tesla.yaml").read_text())["exclude_title_patterns"]
+        leaked = [
+            {"title": "11,600 Shares in Tesla, Inc. $TSLA Acquired by Lynch Asset Management Inc. - MarketBeat"},
+            {"title": "Peachtree Investment Partners LLC Invests $649,000 in Tesla"},
+            {"title": "Advisors Capital Management LLC Buys Shares of 29,536 Tesla, Inc."},
+            {"title": "Cathie Wood Reveals Ark's Position On Tesla Stock"},
+            {"title": "Tesla (NASDAQ:TSLA) Trading 2.6% Higher - Should You Buy? - MarketBeat"},
+        ]
+        kept, dropped = drop_excluded_titles(leaked, patterns)
+        assert dropped == 5 and not kept, kept
+        legit = [
+            {"title": "Tesla shares jump 5% on robotaxi news"},
+            {"title": "Tesla reveals Cybercab production position in Austin"},
+            {"title": "Tesla adds $2 billion to Giga Texas expansion"},
+        ]
+        kept, dropped = drop_excluded_titles(legit, patterns)
+        assert dropped == 0 and len(kept) == 3
+
+    def test_sanitizer_scrubs_tesla_scaffold_leaks(self):
+        from engine.newsletter_sanitizer import scrub_scaffold
+        out = scrub_scaffold(
+            "**Tesla Faces Probe: @username/Source**\nSome text. Source/Post: https://x.com/a\n\nSign-off paragraph\n"
+        )
+        assert "@username" not in out and "Sign-off paragraph" not in out
+        assert "Source: https://x.com/a" in out and "Source/Post" not in out
+        assert "**Tesla Faces Probe**" in out
+        assert "[@username]" not in scrub_scaffold("**Probe [@username](https://x.com/username)**")
+
+    def test_unclosed_claims_fence_is_still_extracted(self):
+        from engine.claims import extract_claims_block
+        clean, claims = extract_claims_block("Digest body.\n\n```claims\n[]")
+        assert claims == [] and "claims" not in clean and "[]" not in clean
+        clean, claims = extract_claims_block("Body with ```code``` inline.")
+        assert claims is None and clean == "Body with ```code``` inline."
+
+    def test_theme_stopwords_cover_source_labels(self):
+        from engine.tesla_memory import _THEME_STOPWORDS
+        for w in ("google", "reddit", "quarter", "full"):
+            assert w in _THEME_STOPWORDS, w

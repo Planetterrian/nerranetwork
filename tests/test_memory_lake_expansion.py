@@ -135,9 +135,12 @@ class TestThemeMiningHygiene:
     def test_doubled_word_bigrams_skipped(self):
         # "Google News … Google News" with "news" stopworded used to
         # produce "google google" (count 109 on Tesla).
-        bigrams = _extract_bigrams("google google google nvidia robotaxi")
-        assert "google google" not in bigrams
-        assert "google nvidia" in bigrams
+        # Sep 4 2026: "google" itself is now a Tesla theme stopword
+        # (source-label adjacency), so the probe uses a real entity.
+        bigrams = _extract_bigrams("optimus optimus optimus nvidia robotaxi")
+        assert "optimus optimus" not in bigrams
+        assert "optimus nvidia" in bigrams
+        assert "google google" not in _extract_bigrams("google google google nvidia robotaxi")
 
     def test_junk_bigrams_skipped(self):
         assert "need know" in _JUNK_BIGRAMS

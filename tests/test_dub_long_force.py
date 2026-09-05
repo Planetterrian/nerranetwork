@@ -106,7 +106,10 @@ class TestExperimentRegistered:
         by_id = {e["id"]: e for e in data["experiments"]}
         e = by_id["dub-long-form-probe"]
         assert e["status"] == "done" and "NEGATIVE" in e.get("criteria", "")
-        assert by_id["shorts-progress-bar"]["status"] == "reading"
+        # Registered with a readout; its status moves as it is read
+        # (closed 'done' 2026-09-02 once the readout date passed).
+        assert by_id["shorts-progress-bar"]["status"] in ("reading", "done")
+        assert by_id["shorts-progress-bar"].get("readout")
 
 
 class TestShortsProgressBar:

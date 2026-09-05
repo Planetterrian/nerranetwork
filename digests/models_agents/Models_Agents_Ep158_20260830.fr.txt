@@ -1,0 +1,123 @@
+Tencent vient de lâcher un modèle en mélange d’experts à poids ouverts de sept cent soixante-dix milliards de paramètres, avec un contexte d’un million de jetons et des contrôles de raisonnement explicites que les créateurs peuvent basculer dès aujourd’hui.
+
+Ici Models and Agents, épisode cent cinquante-huit.
+
+Tencent a publié Hy4 Preview, un modèle uniquement textuel de sept cent soixante-dix milliards de paramètres au total, dont quarante-neuf milliards de paramètres actifs.
+
+Le modèle offre une fenêtre de contexte d’un million de jetons et est proposé en téléchargement d’un virgule cinquante-six téraoctet sur Hugging Face.
+
+Son gabarit de conversation est réglé par défaut sur un effort de raisonnement élevé et accepte un mode sans réflexion pour des réponses plus rapides.
+
+Au cours de la semaine écoulée, les discussions les plus importantes ont porté sur les agents qui basculent vers des charges de travail d’A P I en production, les modèles locaux qui gèrent de vraies fusions de code, et Anthropic qui publie à la fois des données d’usage et des normes matérielles permettant aux modèles de contrôler directement du matériel de laboratoire.
+
+Ces fils s’ajoutent désormais à la poursuite de la montée en échelle des modèles à poids ouverts issus des laboratoires chinois, et à de nouveaux outils pour repérer la dérive des tests de performance dans les déploiements en conditions réelles.
+
+La une du jour, c’est la sortie de Hy4 Preview elle-même.
+
+Tencent a publié Hy4 Preview comme un grand modèle de langage uniquement textuel, à poids ouverts.
+
+Il compte sept cent soixante-dix milliards de paramètres au total et quarante-neuf milliards de paramètres actifs, dans une configuration en mélange d’experts.
+
+La fenêtre de contexte atteint un million de jetons, une hausse substantielle par rapport au précédent modèle Hy3 de l’entreprise, sorti en juillet.
+
+Le gabarit de conversation expose un paramètre d’effort de raisonnement, verrouillé sur les valeurs « élevé » ou « sans réflexion ».
+
+Les premières invites, comme générer un S V G d’un pélican à bicyclette, produisent des traces de raisonnement visibles avant le résultat final.
+
+Les développeurs peuvent tester le modèle via OpenRouter cette semaine, sur des tâches de raisonnement à long contexte.
+
+Cette sortie poursuit les progrès des modèles à poids ouverts suivis dans les épisodes récents, en poussant plus loin l’échelle des paramètres et le raisonnement contrôlable.
+
+Passons maintenant aux mises à jour des modèles.
+
+Une analyse a examiné trente et un mille trois cent cinquante-deux scores horaires de tests de performance, répartis sur quarante-neuf identifiants de modèles.
+
+La variation des scores au sein d’une même journée s’établit à deux virgule huit points.
+
+La variation d’un jour à l’autre atteint huit virgule quatre points, soit environ trois fois plus.
+
+L’étude a exécuté des tâches stables de code, de raisonnement et d’appel d’outils, dans des environnements Docker, à raison de cinq passages par tâche.
+
+Le système qui en résulte, AIStupidLevel, suit désormais vingt-deux modèles chez six fournisseurs, après cent soixante-neuf mille huit cent cinquante-huit exécutions au total.
+
+Gnani A I a lancé Evon version trois virgule trois, aux côtés de la plateforme d’intelligence artificielle agentique Plexus.
+
+Cette version vise les flux de travail d’agents en entreprise dans les secteurs réglementés.
+
+Aucun décompte de paramètres ni aucun résultat de tests de performance n’a été communiqué.
+
+Anthropic a publié des résultats montrant que les modèles plus récents s’améliorent pour générer des données d’entraînement et des signaux de supervision destinés aux modèles suivants.
+
+L’étude explore des chaînes de traitement de données synthétiques, sans publier de chiffres précis de tests de performance.
+
+Les chercheurs qui suivent les lois d’échelle peuvent consulter l’article complet pour la méthodologie.
+
+Passons aux développements côté agents et outils.
+
+Un vérificateur de contrôle d’accès R A G à code ouvert teste si les applications de recherche documentaire extraient des documents auxquels un utilisateur ne devrait pas avoir accès.
+
+Il prend en charge des cas de test hors ligne et des tests d’A P I H T T P en direct, avec des jetons d’authentification de type porteur ou des clés d’A P I.
+
+Le projet cherche des retours d’ingénieurs qui font tourner des environnements non sensibles.
+
+Une nouvelle revue de littérature cartographie la progression des modèles de langage classiques vers les agents autonomes.
+
+Elle couvre les jalons de capacités et les évolutions d’architecture, sans chiffres de performance précis.
+
+Les chercheurs qui conçoivent des systèmes d’agents peuvent consulter cette revue pour une vue consolidée de la littérature.
+
+Dans l’espace pratique et communautaire.
+
+Un chercheur a montré qu’un algorithme de maîtrise statistique des procédés, vieux de cent ans, surpasse les méthodes actuelles à l’état de l’art pour la détection d’anomalies en séries temporelles, sur le banc d’essai TSB AD M.
+
+Plusieurs traces, y compris des données d’électrocardiogramme, ont atteint une détection parfaite avec la simple méthode de référence, alors que les approches d’apprentissage profond publiées peinaient.
+
+Le billet avance que de nombreux jeux de données de tests de performance restent trop triviaux pour étayer des affirmations solides.
+
+Un article explicatif détaille les différences pratiques entre les modèles d’intelligence artificielle propriétaires, à poids ouverts et à code ouvert, pour l’usage commercial et les droits de modification.
+
+Les équipes qui hésitent entre des A P I hébergées et des modèles auto-hébergés peuvent examiner ces distinctions avant de s’engager sur une voie de déploiement.
+
+Allez, on soulève le capot sur la détection de dérive des tests de performance.
+
+Les A P I de production montrent une variation mesurable d’un jour à l’autre, que les évaluations ponctuelles ratent.
+
+Le mécanisme exécute le même jeu d’invites de façon répétée, sous des paramètres fixes, calcule les médianes quotidiennes, puis applique une détection de points de rupture uniquement lorsque le mouvement dépasse le bruit historique intra-journalier.
+
+Cette approche ajoute à peu près cinq à dix fois le coût d’évaluation d’un test de performance unique, mais elle fait remonter une dégradation durable masquée par l’échantillonnage stochastique.
+
+L’étude portant sur trente et un mille scores a confirmé des écarts d’un jour à l’autre trois fois plus grands que le bruit d’une même journée.
+
+Quand l’écart entre les médianes quotidiennes franchit un seuil d’effet minimum, le système signale le modèle comme dégradé ou en train de se rétablir.
+
+Utilisez un suivi continu quand vous répartissez le trafic entre plusieurs fournisseurs, ou quand les écarts de coût des jetons justifient un basculement.
+
+Passez-le pour les expériences ponctuelles, où un instantané unique de test de performance suffit.
+
+Le piège classique, c’est de traiter chaque mouvement de score comme un signal, avant d’avoir soustrait le plancher de variance quotidienne attendu.
+
+Des choses à essayer cette semaine.
+
+Essayez Hy4 Preview via OpenRouter sur une tâche de raisonnement à long contexte, pour voir si la fenêtre d’un million de jetons et l’effort de raisonnement contrôlable font bouger vos choix actuels de modèles à poids ouverts.
+
+Lancez le vérificateur de contrôle d’accès R A G d’InfraGuard Labs sur un dispositif de recherche documentaire de test, pour vérifier les permissions au niveau des documents avant de passer aux données de production.
+
+Réévaluez n’importe quelle chaîne de traitement de détection d’anomalies en séries temporelles face à la maîtrise statistique des procédés de base, pour voir si les modèles plus récents apportent des gains au-delà des cas de tests trop triviaux.
+
+Testez la chaîne d’évaluation continue AIStupidLevel sur votre propre mix de modèles, pour séparer la variation quotidienne normale d’une vraie dérive de performance.
+
+À l’horizon.
+
+Davantage de détails sont attendus sur les capacités de Hy4 et sa disponibilité commerciale, à mesure que Tencent élargit les tests.
+
+Une analyse de suivi devrait paraître sur l’étude d’Anthropic concernant l’entraînement des modèles, une fois l’article complet en circulation.
+
+D’autres outils à code ouvert d’accès et de supervision devraient probablement émerger, à mesure que les déploiements R A G et agents se développent.
+
+Avant de nous quitter, l’étude d’Anthropic sur les modèles qui en entraînent d’autres devrait recevoir une couverture méthodologique plus approfondie, une fois que les chercheurs auront creusé l’article.
+
+Voilà pour Models and Agents aujourd’hui. Si vous avez trouvé ça utile, partagez-le avec quelqu’un qui essaie de suivre tous ces changements, et abonnez-vous pour ne pas rater la mise à jour de demain. Le monde de l’intelligence artificielle avance vite. On vous aide à suivre. À demain. Et si vous préférez regarder plutôt qu’écouter, retrouvez-nous sur YouTube chez Nerra Network — le lien est dans les notes de l’émission. Cette émission vous vient du Nerra Network.
+
+Si vous voulez un autre point quotidien bien tranché, Planetterrian Daily est là pour vous — des percées quotidiennes en science, en santé et en longévité. Toutes nos émissions sont gratuites sur nerranetwork point com. Et sur le site : les visuels de chaque épisode se trouvent dans notre galerie d’images gratuite, à nerranetwork point com gallery — libres de droits sous Creative Commons, à télécharger avec attribution.
+
+Cet épisode a utilisé une synthèse vocale par intelligence artificielle de ma voix — la sélection éditoriale et l’analyse sont les miennes.
