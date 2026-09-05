@@ -24,7 +24,7 @@ reviews:
         + future tic-detection substrate)
       - metrics_ep*.json per build (cut kinds, shipped-whole count,
         missing_expected, dropped, links_source, field-note flag) +
-        ::warning:: annotation when force-building without expected shows
+        GitHub warning annotation when force-building without expected shows
       - OP3 fetcher resolves registry-only virtual shows from
         network_meta.yaml (nerra_daily measurable at last)
       - dashboard cost rollup counts nerra_daily credit files
@@ -47,31 +47,116 @@ reviews:
       - metric: "distinct blog <title> per Nerra Daily post (no byline-titled posts)"
         baseline: "4/4 posts titled 'Hosted by Mira · Episode N · …'"
         expected: "0 byline-titled posts; every post titled '<Weekday> edition — <lead hook>'"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "Eps 6-14 all titled <Weekday> edition - <hook> - EpN | Nerra Daily; zero byline titles (2026-09-03)"
       - metric: "consecutive editions opening with identical first words (committed intros)"
         baseline: "4/4 open 'Good morning.'"
         expected: "no two consecutive editions share opening words over the next 10 eps"
-        verdict: pending
-        evidence: null
+        verdict: partial
+        evidence: "first words differ only because the date differs; 5/9 post-fix intros are the same sentence <date> opens Nerra Daily with me, Mira - memory compared raw words, date defeated it"
       - metric: "field-note topic repeated within 10 editions"
         baseline: "unmeasurable (no memory; 3 notes so far, distinct)"
         expected: "0 repeats in the next 10 field notes"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "13 notes, 13 distinct subjects through Ep14"
       - metric: "successor tic after the opener de-seed (the shape the model converges to next)"
         baseline: "sign-offs already lean 'thread/through-line' (3/4)"
         expected: "next review checks sign-off framing + whatever replaces 'Good morning' for a new 3+/5 convergence"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "sign-off Across these segments/the reports 7/9 post-fix, thread 7/14, back tomorrow 11/14; field-note closer It is the kind/sort of X that quietly Y with quietly in 10/13 notes"
       - metric: "nerra_daily present in api/op3_stats.json shows section"
         baseline: "absent (fetcher never resolved the feed)"
         expected: "entry exists within 2 weeks of merge (nightly runs); if OP3 still 404s the feed, check the prefix per the dp_pod/age_of_ai lesson"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "entry present, show_uuid resolved, 21 downloads/30d as of 2026-09-01 (feed still not in Apple/Spotify)"
       - metric: "editions built with missing_expected non-empty (metrics_ep*.json)"
         baseline: "1 known miss in 4 editions (offshore_north, 2026-08-24) — previously uncounted"
         expected: "measured rate available at next review; if Monday weeklies miss ≥2 more times, escalate the force-hour decision"
+        verdict: hit
+        evidence: "4/9 metric-d editions incomplete: Ep7 outage day (SpaceX/OV/FPD published 1-58 min AFTER the force-build), Ep14 UC claims-gate retry published 13:26 after the 12:09 build; Ep6/Ep10 misses were genuine skips. Monday weeklies did not miss again"
+    agent_cost_usd: null
+
+  - date: 2026-09-03
+    pr: null
+    doc: docs/reviews/nerra_daily_review_2026_09_03.md
+    reviewer: claude-code (second pass, operator-directed deep review)
+    summary: >-
+      Fourteen editions in. The metrics file paid for itself: the only
+      non-promo cut it ever recorded (DP Pod Ep52 in Ep10, kind
+      network_mention) was a 69 s cut of the DP Pod's Dispatch and
+      sign-off - Whisper writes "sister shows"/"sisters show", the frame
+      regex wanted the singular, and the weak fallback matched the
+      Dispatch's own "show page at nerranetwork.com". Mira's words
+      converged on three shapes the first memory pass could not see
+      (date-led intro skeleton, "Across these segments" sign-off,
+      "quietly" closer seeded by both prompts). Every edition was titled
+      with SpaceX's hook; show notes had no timestamps.
+    shipped:
+      - promo-cut hardening — sisters?/shows? frame variants + 60 s weak-evidence
+        tail ceiling (210/210 recent transcripts now trim on frame
+        evidence; network-wide sweep guard fails CI on a new weak cut)
+      - rotation memory v2 - date-normalized intro openers, sign-off
+        opener memory ({recent_signoffs}), field-note closer memory;
+        prompts de-seeded by shape (no "quietly" seed, no thread
+        metaphor, handoff show-name cap 1-in-3) - A/B-listen flagged
+      - LLM-written edition title (validated, lead-hook fallback,
+        edition_title_source metric) - written metadata only
+      - show notes with H:MM:SS chapter timestamps + the field note in
+        full; chapters built once and shared; podcast:person Mira
+      - link-shape metrics (intro_words, handoffs_show_name_led,
+        handoff_count) per build
+      - show-page description_long rewritten to the real rundown order
+    deferred:
+      - UC claims-gate retry lands after the 12:00 force hour (Ep14) -
+        operator decision — accept / move UC's retry earlier / addendum
+        item (recommend accept or earlier retry). Same-day follow-up
+        PR - the ready gate now reads the committed
+        .skip_<date>.json marker and stops WAITING for a show that
+        skipped, so a skip day builds ~08:15 instead of the 12:00 force
+        hour; the late-published episode is still lost to the edition
+      - Apple/Spotify submission (still null in network_meta) - the
+        launch experiment cannot read through zero directory presence
+      - intro length under the prompt floor (75-131 vs 110-170) -
+        deliberately not chased (cold-open lesson; length levers banned)
+    predictions:
+      - metric: "segments with cut_kind != promo (metrics_ep*.json), next 20 editions"
+        baseline: "1 in 92 metric'd segments (DP Pod Ep52, 69 s of content cut)"
+        expected: "0 non-promo cuts; any new one fails TestPromoCutHardening's sweep first"
+        verdict: pending
+        evidence: null
+      - metric: "post-merge intros sharing the date-normalized skeleton '[date] opens Nerra Daily…' (next 10 eps)"
+        baseline: "5/9"
+        expected: "<= 2/10, and no other single skeleton at 3+/10"
+        verdict: pending
+        evidence: null
+      - metric: "sign-offs opening 'Across …' or carrying thread/through-line/pattern (next 10 eps)"
+        baseline: "7/9 'Across', 7/14 'thread'"
+        expected: "<= 2/10 each"
+        verdict: pending
+        evidence: null
+      - metric: "field-note closers containing 'quietly' or the 'It is the kind/sort of' skeleton (next 10 notes)"
+        baseline: "10/13 'quietly'; 8/13 'It is the kind/sort of'"
+        expected: "<= 2/10 each"
+        verdict: pending
+        evidence: null
+      - metric: "handoffs_show_name_led / handoff_count (metrics), next 10 eps"
+        baseline: "83/83 (100%)"
+        expected: "<= 40% per edition on 8+ of 10 editions"
+        verdict: pending
+        evidence: null
+      - metric: "successor tic after the sign-off/closer de-seed (next review names the new 3+/5 shape)"
+        baseline: "n/a"
+        expected: "next review checks sign-off farewells + field-note FIRST sentences for a new convergence"
+        verdict: pending
+        evidence: null
+      - metric: "edition build time (summaries datetime) on a day a lineup show skipped, next 5 such days"
+        baseline: "12:41 UTC (2026-08-30) and 12:09 UTC (2026-09-03) vs ~08:13 on complete days"
+        expected: "<= 09:00 UTC on every skip day whose marker was committed before the last expected show published; skipped_today non-empty in that edition's metrics"
+        verdict: pending
+        evidence: null
+      - metric: "edition_title_source == llm (metrics), next 10 eps"
+        baseline: "0/14 (every title was the SpaceX lead hook)"
+        expected: ">= 8/10 llm titles; none containing a show name as its first words"
         verdict: pending
         evidence: null
     agent_cost_usd: null

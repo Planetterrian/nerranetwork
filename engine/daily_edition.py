@@ -84,6 +84,15 @@ PROMO_MIN_FRACTION = 0.5
 #: include it (it reads as part of the outro block, and repeating it 11x in
 #: one combined episode is the exact fatigue the trim exists to remove).
 YOUTUBE_LEAD_WINDOW_SECONDS = 25.0
+#: A WEAK-evidence cut (brand mention / disclosure only — no frame matched)
+#: may never remove more than this much tail. The real outro block runs
+#: ~17-45 s on every measured episode (median 36.8 s, p90 45.4 s across 207
+#: frame-matched cuts, Aug 15 - Sep 3 2026); a bare "nerranetwork.com"
+#: further up is BODY content — The DP Pod's Dispatch segment says "hit the
+#: dispatch button on the show page at nerranetwork.com" every day, and on
+#: 2026-08-30 the fallback cut 69 s: the Dispatch invitation, the hosts'
+#: sign-off and "Do something about it" all went with the plug.
+WEAK_EVIDENCE_MAX_TAIL_SECONDS = 60.0
 
 
 # ---------------------------------------------------------------------------
@@ -260,19 +269,57 @@ def _transcript_path_for(digest_dir: Path, audio_url: str) -> Optional[Path]:
     return candidate if candidate.exists() else None
 
 
-def discover_segments(
+def skip_marker_path(digest_dir: Path, target_date: _dt.date) -> Path:
+    """``digests/<show>/.skip_YYYYMMDD.json`` — the marker ``run_show.py``
+    writes on every graceful skip (insufficient articles, thin script,
+    empty narrative queue, claims-gate block) and run-show.yml commits
+    (its "Commit skip state" step runs on every ``skipped == true``)."""
+    return digest_dir / f".skip_{target_date:%Y%m%d}.json"
+
+
+def read_skip_marker(digest_dir: Path, target_date: _dt.date) -> Optional[dict]:
+    """The committed skip marker for *target_date*, or None."""
+    path = skip_marker_path(digest_dir, target_date)
+    if not path.exists():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8")) or {}
+    except (OSError, json.JSONDecodeError):
+        return {"reason": "unreadable_marker"}
+    return data if isinstance(data, dict) else {"reason": "unreadable_marker"}
+
+
+@dataclass
+class Lineup:
+    """One day's discovery result."""
+
+    segments: List[Segment]
+    #: Expected today, not published, and NOT known to have skipped — the
+    #: ready gate waits for these (until the force hour).
+    missing: List[str]
+    #: Expected today, not published, and carrying a committed skip marker
+    #: for the date: ``[{"slug", "reason"}]``. The gate does not wait for
+    #: them — a show that told the network it skipped is never going to
+    #: publish before the force hour, and waiting cost every listener four
+    #: hours on 2026-08-30 (12:41) and 2026-09-03 (12:09) against ~08:13
+    #: on a complete day.
+    skipped: List[dict]
+
+
+def discover_lineup(
     spec: EditionSpec,
     root: Path,
     target_date: _dt.date,
     *,
     config_loader=None,
-) -> Tuple[List[Segment], List[str]]:
+) -> Lineup:
     """Find every lineup show with an episode dated *target_date*.
 
-    Returns ``(segments_in_lineup_order, missing_slugs)`` where missing
-    covers only shows *expected* that day (weekday-aware) — a Monday-only
-    show absent on a Wednesday is not missing, but its episode IS spliced
-    if one happens to carry today's date (late publish).
+    ``missing`` covers only shows *expected* that day (weekday-aware) — a
+    Monday-only show absent on a Wednesday is not missing, but its episode
+    IS spliced if one happens to carry today's date (late publish). An
+    expected show whose committed ``.skip_<date>.json`` marker exists is
+    reported under ``skipped`` instead, so the ready gate stops waiting.
     """
     if config_loader is None:
         from engine.config import load_config as config_loader  # noqa: PLC0415
@@ -281,6 +328,7 @@ def discover_segments(
     expected = set(expected_slugs(spec, target_date))
     segments: List[Segment] = []
     missing: List[str] = []
+    skipped: List[dict] = []
 
     for slug in spec.lineup:
         try:
@@ -297,7 +345,14 @@ def discover_segments(
         )
         if entry is None or not entry.get("audio_url"):
             if slug in expected:
-                missing.append(slug)
+                marker = read_skip_marker(summaries_path.parent, target_date)
+                if marker is not None:
+                    skipped.append({
+                        "slug": slug,
+                        "reason": str(marker.get("reason") or "unknown"),
+                    })
+                else:
+                    missing.append(slug)
             continue
         digest_dir = summaries_path.parent
         audio_url = strip_op3(str(entry["audio_url"]))
@@ -326,7 +381,22 @@ def discover_segments(
                 music_intro_offset=float(cfg.audio.voice_intro_delay or 0.0),
             )
         )
-    return segments, missing
+    return Lineup(segments=segments, missing=missing, skipped=skipped)
+
+
+def discover_segments(
+    spec: EditionSpec,
+    root: Path,
+    target_date: _dt.date,
+    *,
+    config_loader=None,
+) -> Tuple[List[Segment], List[str]]:
+    """``(segments_in_lineup_order, missing_slugs)`` — the original
+    two-tuple shape (``build_personal_feeds`` and the tests unpack it).
+    ``missing`` excludes shows with a committed skip marker for the date;
+    use :func:`discover_lineup` when the skipped list is needed."""
+    lineup = discover_lineup(spec, root, target_date, config_loader=config_loader)
+    return lineup.segments, lineup.missing
 
 
 def expected_slugs(spec: EditionSpec, target_date: _dt.date) -> List[str]:
@@ -349,7 +419,11 @@ def expected_slugs(spec: EditionSpec, target_date: _dt.date) -> List[str]:
 _PRIMARY_PROMO_PATTERNS = [
     re.compile(r"\b(?:and\s+)?before you go\s+this show is part of the \w+ network\b"),
     re.compile(r"\bthis show is part of the \w+ network\b"),
-    re.compile(r"\bone more thing\b(?:\s+\w+){0,14}?\s+sister show\b"),
+    # Whisper renders "our sister show SpaceX Daily" as "sister shows spacex"
+    # and "sisters show space x" (both observed on DP Pod / First Principles
+    # transcripts) — the singular-only form missed the frame entirely and
+    # handed the cut to the weak brand-mention fallback.
+    re.compile(r"\bone more thing\b(?:\s+\w+){0,14}?\s+sisters?\s+shows?\b"),
     re.compile(r"\bquick tip from the network\b"),
     re.compile(r"\bthis show comes to you from the \w+ network\b"),
 ]
@@ -475,7 +549,18 @@ def find_promo_cut(transcript: dict) -> Optional[dict]:
                     seg_start = s
                     break
             cut, kind = max(0.0, seg_start - PROMO_CUT_PAD_SECONDS), "network_mention"
-        else:
+            if duration - cut > WEAK_EVIDENCE_MAX_TAIL_SECONDS:
+                # A brand mention this far from the end is body content
+                # (an in-episode "at nerranetwork.com" call to action),
+                # not the outro block. Drop to the mildest trim instead of
+                # cutting real content on weak evidence.
+                logger.warning(
+                    "weak-evidence cut at %.1fs of %.1fs would remove %.0fs "
+                    "(> %.0fs ceiling) — treating the mention as body content",
+                    cut, duration, duration - cut, WEAK_EVIDENCE_MAX_TAIL_SECONDS,
+                )
+                cut, kind = None, ""
+        if cut is None:
             disclosure_idx = _search_stream(stream, _DISCLOSURE_PATTERN)
             if disclosure_idx is not None:
                 cut, kind = _cut_before(stream, disclosure_idx), "disclosure"
@@ -581,22 +666,85 @@ def _recent_rundowns(spec: EditionSpec, root: Path,
     return texts
 
 
+_DATE_TOKEN_RE = re.compile(
+    r"\b(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|"
+    r"January|February|March|April|May|June|July|August|September|October|"
+    r"November|December|\d{1,2}(?:st|nd|rd|th)?|\d{4})\b,?"
+)
+
+
+def normalize_date_tokens(text: str) -> str:
+    """Collapse weekday / month / day / year tokens to ``[date]`` so the
+    sentence SKELETON is what the memory block shows. The first memory
+    pass compared raw opening words, and the date is the first thing
+    Mira says — so "Friday, August 28, 2026, opens Nerra Daily…" and
+    "Saturday, August 29, 2026 opens Nerra Daily…" read as different
+    lines to the model while being the same sentence (5 of the 9 post-fix
+    editions converged on "<date> opens Nerra Daily")."""
+    out = _DATE_TOKEN_RE.sub("[date]", text or "")
+    out = re.sub(r"(?:\[date\]\s*)+", "[date] ", out)
+    out = re.sub(r"\[date\]\s+([.,;:])", r"[date]\1", out)
+    return _WS_RE.sub(" ", out).strip()
+
+
+def _first_prose_line(text: str) -> str:
+    for line in text.splitlines():
+        s = line.strip()
+        if not s or s.startswith(("#", ">", "*", "|", "-", "[")):
+            continue
+        return s
+    return ""
+
+
 def recent_intro_openers(spec: EditionSpec, root: Path,
                          limit: int = RECENT_MEMORY_EPISODES,
-                         words: int = 8) -> List[str]:
-    """Opening words of recent editions' intros — data-side rotation memory
-    (the DP Pod lever-memory pattern). All four launch editions opened
-    "Good morning." because the model had no view of yesterday's opening;
-    an instruction alone cannot fix what the model cannot see."""
+                         words: int = 10) -> List[str]:
+    """Opening words of recent editions' intros, date-normalized — data-side
+    rotation memory (the DP Pod lever-memory pattern). All four launch
+    editions opened "Good morning." because the model had no view of
+    yesterday's opening; an instruction alone cannot fix what the model
+    cannot see. Dates are collapsed to ``[date]`` so the successor tic
+    ("<date> opens Nerra Daily") is visible as ONE repeated shape."""
     openers: List[str] = []
     for text in _recent_rundowns(spec, root, limit):
-        for line in text.splitlines():
-            s = line.strip()
-            if not s or s.startswith(("#", ">", "*", "|", "-")):
-                continue
-            openers.append(" ".join(s.split()[:words]))
-            break
+        first = _first_prose_line(text)
+        if first:
+            openers.append(normalize_date_tokens(" ".join(first.split()[:words])))
     return openers
+
+
+def recent_signoff_openers(spec: EditionSpec, root: Path,
+                           limit: int = RECENT_MEMORY_EPISODES,
+                           words: int = 9) -> List[str]:
+    """Opening words of recent sign-offs. The first memory pass covered
+    only the intro; the sign-off converged instead — 7 of the 9 editions
+    after it opened "Across these segments…" / "Across the reports…", and
+    "thread" carried 7 of 14 closings (the successor tic the 2026-08-25
+    ledger predicted)."""
+    openers: List[str] = []
+    for text in _recent_rundowns(spec, root, limit):
+        m = re.search(r"^## Sign-off\s*\n+(.+)$", text, re.MULTILINE)
+        if m:
+            openers.append(" ".join(m.group(1).strip().split()[:words]))
+    return openers
+
+
+def recent_field_note_closers(spec: EditionSpec, root: Path,
+                              limit: int = RECENT_MEMORY_EPISODES) -> List[str]:
+    """The closing sentence of each recent field note. 10 of the 13 notes
+    shipped ended on the same reflective skeleton — "It is the kind / sort
+    of X that quietly Y" — because the prompt itself seeded "quietly"
+    twice; the closer is where the model performs the register, so it is
+    the sentence to show back."""
+    closers: List[str] = []
+    for text in _recent_rundowns(spec, root, limit):
+        m = re.search(r"^## Mira's field note\s*\n+(.+)$", text, re.MULTILINE)
+        if not m:
+            continue
+        sentences = re.split(r"(?<=[.!?])\s+", m.group(1).strip())
+        if sentences and sentences[-1].strip():
+            closers.append(sentences[-1].strip())
+    return closers
 
 
 def recent_field_note_topics(spec: EditionSpec, root: Path,
@@ -680,10 +828,20 @@ def build_links_prompt(
     recent_openers = ""
     if openers:
         recent_openers = (
-            "Recent editions opened with these lines. Today's intro must not "
-            "reuse their opening words or repeat their sentence shape — vary "
-            "the greeting itself, not just what follows it:\n"
+            "Recent editions opened with these lines ([date] stands for "
+            "whatever date was spoken — the date changes daily, the sentence "
+            "shape must too). Today's intro must not reuse their opening "
+            "words or repeat any of these sentence skeletons — vary the "
+            "greeting itself, not just what follows it:\n"
             + "\n".join(f"- {o}" for o in openers)
+        )
+    signoffs = recent_signoff_openers(spec, root)
+    recent_signoffs = ""
+    if signoffs:
+        recent_signoffs = (
+            "Recent sign-offs opened with these lines. Today's sign-off must "
+            "not reuse their opening words or their sentence shape:\n"
+            + "\n".join(f"- {o}" for o in signoffs)
         )
     return template.format(
         date_spoken=target_date.strftime("%A, %B %-d, %Y"),
@@ -693,6 +851,7 @@ def build_links_prompt(
         lineup_block="\n".join(lineup_lines),
         aoai_block=aoai_block,
         recent_openers=recent_openers,
+        recent_signoffs=recent_signoffs,
     )
 
 
@@ -713,7 +872,38 @@ def parse_links_json(text: str, handoff_count: int) -> Optional[dict]:
     handoffs = [sanitize_spoken(str(h)) for h in data.get("handoffs", []) if str(h).strip()]
     if not intro or not signoff or len(handoffs) < handoff_count:
         return None
-    return {"intro": intro, "handoffs": handoffs[:handoff_count], "signoff": signoff}
+    return {
+        "intro": intro,
+        "handoffs": handoffs[:handoff_count],
+        "signoff": signoff,
+        "title": validate_edition_title(str(data.get("title", "") or "")),
+    }
+
+
+#: Bounds for the LLM-written edition title (written metadata, never
+#: spoken). "Ep NN: <Weekday> edition — " uses ~27 of the 100-char podcast
+#: limit, so the day's headline gets ~70; below 20 chars it is a fragment.
+EDITION_TITLE_MIN_CHARS = 20
+EDITION_TITLE_MAX_CHARS = 72
+
+
+def validate_edition_title(text: str) -> str:
+    """Accept the model's one-line edition headline or return "" (the
+    caller then falls back to the lead show's hook). Rejected: fragments,
+    over-length lines, anything that names the edition or the weekday
+    (the title template already carries both), markdown residue."""
+    title = _WS_RE.sub(" ", _MD_NOISE_RE.sub("", text or "")).strip().strip("\"'")
+    title = title.rstrip(" .")
+    if not EDITION_TITLE_MIN_CHARS <= len(title) <= EDITION_TITLE_MAX_CHARS:
+        return ""
+    low = title.lower()
+    if "nerra daily" in low or low.startswith("ep ") or "edition" in low:
+        return ""
+    if _DATE_TOKEN_RE.search(title) and re.search(
+        r"\b(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\b", title
+    ):
+        return ""
+    return title
 
 
 def fallback_links(
@@ -758,6 +948,13 @@ def build_find_prompt(
             "overlap with none of them (a different subject, not the same "
             "story re-angled):\n" + "\n".join(f"- {t}" for t in topics)
         )
+    closers = recent_field_note_closers(spec, root)
+    if closers:
+        recent_notes += (
+            "\n\nYour recent field notes ENDED on these sentences. Today's "
+            "closing sentence must share neither their shape nor their "
+            "vocabulary:\n" + "\n".join(f"- {c}" for c in closers)
+        )
     return template.format(
         date_spoken=target_date.strftime("%A, %B %-d, %Y"),
         lineup_titles=titles,
@@ -798,32 +995,77 @@ def aoai_new_episode(root: Path, target_date: _dt.date) -> Optional[dict]:
 # Titles, descriptions, digest markdown
 # ---------------------------------------------------------------------------
 
-def edition_hook(target_date: _dt.date, segments: List[Segment]) -> str:
-    """``"<Weekday> edition — <lead hook>"`` — the edition's per-day hook,
-    shared by the episode title and the digest's blockquote hook line."""
-    lead = segments[0].hook or segments[0].episode_title if segments else ""
+def edition_hook(target_date: _dt.date, segments: List[Segment],
+                 edition_title: str = "") -> str:
+    """``"<Weekday> edition — <headline>"`` — the edition's per-day hook,
+    shared by the episode title, the chapters title and the digest's
+    blockquote hook line.
+
+    *edition_title* is the model's one-line headline for the WHOLE day
+    (validated by :func:`validate_edition_title`). Without it the headline
+    is the lead show's hook — and because the lead is always SpaceX Daily,
+    every one of the first 14 editions was titled with a SpaceX headline
+    in every directory listing ("Thursday edition — FAA clearance for a
+    wider Starship flight corridor…"), so the network's all-shows product
+    read as a SpaceX show to anyone browsing.
+    """
+    lead = edition_title.strip() if edition_title else ""
+    if not lead and segments:
+        lead = segments[0].hook or segments[0].episode_title
     return f"{target_date.strftime('%A')} edition — {lead}".rstrip(" —")
 
 
-def daily_title(episode_num: int, target_date: _dt.date, segments: List[Segment]) -> str:
-    """``"Ep N: <Weekday> edition — <lead hook>"``, clipped by the one
+def daily_title(episode_num: int, target_date: _dt.date, segments: List[Segment],
+                edition_title: str = "") -> str:
+    """``"Ep N: <Weekday> edition — <headline>"``, clipped by the one
     module that owns title limits (engine.titles)."""
     from engine.titles import episode_title  # noqa: PLC0415
 
-    hook = edition_hook(target_date, segments)
+    hook = edition_hook(target_date, segments, edition_title)
     return episode_title(hook, episode_num, fallback=f"Nerra Daily — {target_date.isoformat()}")
 
 
+def format_timestamp(seconds: float) -> str:
+    """``H:MM:SS`` (``M:SS`` under an hour) — the shape podcast apps
+    (Apple Podcasts, Overcast, Pocket Casts, Castro) linkify in show notes
+    so a tap seeks the player."""
+    total = max(0, int(round(float(seconds or 0.0))))
+    h, rem = divmod(total, 3600)
+    m, sec = divmod(rem, 60)
+    return f"{h}:{m:02d}:{sec:02d}" if h else f"{m}:{sec:02d}"
+
+
 def feed_description(
-    spec: EditionSpec, segments: List[Segment], target_date: _dt.date
+    spec: EditionSpec,
+    segments: List[Segment],
+    target_date: _dt.date,
+    chapters: Optional[dict] = None,
+    find_text: Optional[str] = None,
 ) -> str:
+    """Show notes for one edition item. With *chapters* (the exact JSON
+    chapters we just built) every line carries its start time — a ~2 h
+    episode with thirteen segments is navigated from the notes in every
+    app, not only the few that render ``podcast:chapters``. Mira's field
+    note, the edition's only unique text, is quoted in full: it was
+    previously aired and then discarded from every written surface but
+    the blog."""
     lines = [
         f"{spec.name} — {target_date.strftime('%A, %B %-d, %Y')}. The whole "
         f"Nerra Network in one listen, anchored by {spec.host}.",
         "",
         "In this edition:",
     ]
-    lines += [f"• {seg.show_name}: {seg.hook or seg.episode_title}" for seg in segments]
+    chapter_list = (chapters or {}).get("chapters") or []
+    if chapter_list:
+        lines += [
+            f"{format_timestamp(ch.get('startTime', 0.0))} {ch.get('title', '')}"
+            for ch in chapter_list
+            if str(ch.get("title", "")).strip()
+        ]
+    else:
+        lines += [f"• {seg.show_name}: {seg.hook or seg.episode_title}" for seg in segments]
+    if find_text:
+        lines += ["", f"{spec.host}'s field note: {find_text.strip()}"]
     lines += [
         "",
         "Every show has its own feed and full notes at https://nerranetwork.com",
@@ -856,7 +1098,7 @@ def build_digest_md(
         # hook fallback grabbed the italic byline below, and — because the
         # H1 starts with the show name — every post's <title>/<h1>/og:title
         # became "Hosted by Mira · Episode N · …" (caught 2026-08-25).
-        f"> **{edition_hook(target_date, segments)}**",
+        f"> **{edition_hook(target_date, segments, links.get('title', ''))}**",
         "",
         f"*Hosted by {spec.host} · Episode {episode_num} · every English "
         f"show the Nerra Network published today, in one listen.*",
@@ -908,6 +1150,22 @@ def build_digest_md(
     return "\n".join(parts)
 
 
+def handoffs_show_name_led(links: dict, segments: List[Segment]) -> int:
+    """How many handoffs open with the show name they introduce. The
+    links prompt asks for varied construction; across the 83 handoffs of
+    editions 6-14 EVERY one opened "<Show name> follows / turns next /
+    steps back…" (83/83) — an instruction-only ask, unmeasured. Recorded
+    per build so the next review scores the de-seed mechanically."""
+    count = 0
+    for i, text in enumerate(links.get("handoffs") or []):
+        if i + 1 >= len(segments):
+            break
+        name = (segments[i + 1].show_name or "").strip().lower()
+        if name and (text or "").strip().lower().startswith(name):
+            count += 1
+    return count
+
+
 def build_edition_metrics(
     episode_num: int,
     target_date: _dt.date,
@@ -918,6 +1176,8 @@ def build_edition_metrics(
     field_note_included: bool,
     missing_expected: List[str],
     dropped: List[str],
+    links: Optional[dict] = None,
+    skipped_today: Optional[List[dict]] = None,
 ) -> dict:
     """The committed ``metrics_ep*.json`` record for one edition build.
 
@@ -949,7 +1209,18 @@ def build_edition_metrics(
             1 for s in segments if s.cut_final_seconds is None
         ),
         "missing_expected": list(missing_expected),
+        # Expected shows that committed a skip marker for the date — the
+        # gate did not wait for them (Sep 3 2026). Distinct from
+        # missing_expected so "skipped" and "not yet published" are never
+        # one bucket again (the Aug 25 miss classification was by hand).
+        "skipped_today": list(skipped_today or []),
         "segments_dropped": list(dropped),
         "links_source": links_source,
         "field_note_included": bool(field_note_included),
+        # Link-shape signals (Sep 3 2026 review) — the tics the rotation
+        # memory targets, counted at build time so they are scorable.
+        "intro_words": len(((links or {}).get("intro") or "").split()),
+        "handoffs_show_name_led": handoffs_show_name_led(links or {}, segments),
+        "handoff_count": len((links or {}).get("handoffs") or []),
+        "edition_title_source": "llm" if (links or {}).get("title") else "lead_hook",
     }

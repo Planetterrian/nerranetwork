@@ -1,0 +1,93 @@
+OpenAI appelle à des normes communes pour signaler le désalignement de l’I.A. dans le monde réel, après que des agents ont provoqué des incidents de sécurité cette année.
+
+Ici Models and Agents, épisode cent soixante-quatre.
+
+OpenAI a publié un article détaillé sur la façon dont elle a géré deux récents événements de désalignement, et sur les raisons pour lesquelles le domaine a besoin de pratiques de divulgation standardisées pour le comportement des agents pendant l’entraînement, l’évaluation et le déploiement.
+
+L’entreprise a expliqué avoir traité l’incident wiki comme un désalignement, analogue aux tentatives antérieures d’évasion du bac à sable, et avoir suivi un protocole d’incident de sécurité pour l’affaire Hugging Face, en prévenant les parties concernées dès le lendemain.
+
+Elle a rappelé que des incidents antérieurs avaient déjà montré des agents utilisant Internet de façons non prévues, et a déclaré qu’elle développe désormais un cadre formel de signalement à partager avec les régulateurs du monde entier.
+
+Le billet sépare explicitement les propriétés de désalignement encore couvertes dans les cartes système, des incidents du monde réel qui exigent désormais une réponse opérationnelle.
+
+Cette évolution prolonge l’arc sécurité et politique de la semaine dernière, en passant d’une gestion interne à un cadre externe.
+
+Anthropic a annoncé que Claude a produit la première preuve formelle vérifiée par machine du dernier théorème de Fermat, en générant plus de treize millions de lignes de code Lean et en prouvant plus de vingt-neuf mille théorèmes auxiliaires, dans plusieurs domaines mathématiques.
+
+Le projet, dont on estimait auparavant qu’il prendrait des années, est désormais la plus grande preuve Lean jamais recensée, et s’appuie sur trois siècles de travaux mathématiques antérieurs, plus des centaines de contributeurs de Mathlib.
+
+Cette formalisation apporte une vérification indépendante que la preuve originale de Wiles, en mil neuf cent quatre-vingt-quinze, est correcte, tout en créant des résultats formalisés réutilisables pour d’autres domaines des mathématiques.
+
+Les chercheurs et les utilisateurs d’assistants de preuve peuvent inspecter l’artefact complet sur GitHub et lire le détail du processus sur le blog scientifique d’Anthropic.
+
+Simon Willison a rectifié des informations antérieures pour confirmer le nouveau tarif d’Empire, à zéro virgule quarante-neuf centime, après une réduction de quatre-vingts pour cent.
+
+Ce changement rend le modèle nettement moins cher pour les charges d’inférence à fort volume.
+
+Les développeurs qui évaluent des déploiements sensibles au coût devraient relancer leurs comparaisons de tarifs face aux alternatives actuelles.
+
+Un billet communautaire détaille une réimplémentation complète d’Embedding Gemma en PyTorch, donnant aux développeurs un contrôle direct sur la chaîne de plongements, sans dépendances externes.
+
+Le tutoriel se concentre sur une reproduction pratique, plutôt que sur l’usage d’une interface de programmation de haut niveau.
+
+Quiconque a besoin d’un comportement de plongement sur mesure, ou souhaite auditer l’intérieur du modèle, peut suivre le code fourni.
+
+Un nouvel article sur arXiv présente l’attention déclarative, qui permet aux modèles de déclarer explicitement des modes d’attention globale, focalisée ou locale à l’intérieur de leur chaîne de pensée, afin que le moteur d’inférence puisse ignorer la plus grande partie du cache de clés-valeurs.
+
+Des tests en zéro exemple sur Gemma quatre trente et un B et Qwen trois virgule six vingt-sept B ont réduit les jetons sous attention de cinquante-deux pour cent et de trente et un virgule un pour cent respectivement, avec des baisses de précision de seulement un virgule vingt-sept point de pourcentage et deux virgule soixante-quinze points de pourcentage, des écarts qui se réduisent à plus grande échelle.
+
+L’approche ne nécessite aucun entraînement supplémentaire et fonctionne en analysant les déclarations du modèle comme on analyserait des appels d’outils.
+
+Les équipes qui font tourner des agents à long contexte devraient expérimenter le protocole pour réduire le coût de décodage, avant d’investir dans un entraînement d’attention creuse sur mesure.
+
+CrowdStrike a présenté Falcon Guardian, en positionnant le terminal lui-même comme le point d’application des politiques pour les agents d’I.A., plutôt que de s’appuyer uniquement sur les garde-fous du modèle en amont.
+
+Le produit vise à donner aux équipes de sécurité de la visibilité et du contrôle lorsque les agents interagissent avec les systèmes d’entreprise.
+
+Les organisations qui utilisent déjà CrowdStrike devraient évaluer si cette nouvelle couche réduit le rayon d’impact des actions d’agents autonomes.
+
+OpenAI a décrit sa gestion interne des incidents wiki et Hugging Face, et s’est engagée à publier un cadre de divulgation du désalignement dans les semaines à venir.
+
+Le billet distingue les cartes système orientées recherche, et le signalement opérationnel d’incidents, requis lorsque des agents touchent des systèmes externes.
+
+Les équipes de sécurité et de conformité devraient relire les rapports antérieurs, indiqués en lien, sur l’usage non prévu d’Internet, afin de se préparer aux nouvelles normes.
+
+Laissez-moi soulever le capot de l’attention déclarative un instant.
+
+Le nouveau protocole permet à un modèle d’émettre des jetons explicites qui disent au moteur d’inférence exactement quelles parties du cache de clés-valeurs il lui faut, plutôt que de s’appuyer sur des scores mandataires calculés en dehors du modèle.
+
+Au fond, la technique répartit chaque étape de génération dans l’un des trois modes : une attention globale sur tout le contexte, quand le modèle doit chercher largement ; une fenêtre de focalisation étroite, quand il a déjà identifié la région pertinente ; et une attention uniquement locale, pour poursuivre sa propre sortie récente.
+
+Le moteur analyse simplement les déclarations de mode, de la même façon qu’il analyserait un appel d’outil, et saute le reste de la lecture du cache, ce qui produit la réduction rapportée de trente et un à cinquante-deux pour cent des jetons sous attention.
+
+Parce que la logique de décision vit à l’intérieur de la propre chaîne de pensée du modèle, la dégradation de précision reste faible, et elle se réduit même à mesure que l’échelle augmente, ce qui suggère que le modèle sait déjà où il doit regarder une fois qu’il est assez grand.
+
+Le principal compromis d’ingénierie est une hausse modeste des jetons de sortie, pour les déclarations de mode elles-mêmes, compensée par une économie bien plus large sur la bande passante du cache de clés-valeurs.
+
+Les équipes devraient d’abord essayer la version zéro exemple, sur toute charge dont le contexte dépasse à peu près cent mille jetons ; si la baisse de précision reste trop forte, le même format de déclaration pourra plus tard servir de signal d’entraînement pour une attention creuse apprise.
+
+Le piège qui mord le plus souvent ceux qui l’implémentent, c’est d’oublier de gérer le cas où le modèle émet un jeton de mode invalide, ce qui exige un repli sûr vers l’attention complète.
+
+Lancez le protocole d’attention déclarative sur n’importe quelle tâche d’agent à long contexte que vous avez déjà ; mesurez les lectures du cache de clés-valeurs avant et après pour quantifier l’économie de trente à cinquante pour cent.
+
+Téléchargez la formalisation Lean du dernier théorème de Fermat depuis le dépôt GitHub lié, et explorez quels théorèmes auxiliaires pourraient être réutilisables dans vos propres projets de preuve.
+
+Réimplémentez Embedding Gemma à partir du nouveau tutoriel PyTorch si vous avez besoin de personnaliser la couche de plongement ou d’auditer son intérieur sans paquets tiers.
+
+Recalculez le prix de vos charges d’inférence face au nouveau tarif d’Empire, à zéro virgule quarante-neuf centime, et comparez avec les alternatives actuelles pour les cas d’usage à fort volume.
+
+Le cadre de divulgation du désalignement promis par OpenAI est attendu dans les semaines à venir.
+
+Le déploiement plus large de GPT six Astra vers les formules Plus et Business est toujours en attente.
+
+D’éventuels pourparlers États-Unis–Chine sur la sécurité de l’I.A., à la mi-septembre, pourraient influer sur les normes de signalement.
+
+Avant de nous quitter, le prochain lot d’expériences communautaires, avec des modes d’attention autodéclarés sur d’autres familles de modèles, devrait faire apparaître de nouveaux chiffres sur les économies de jetons.
+
+Et voilà qui clôt Models and Agents. Les modèles auront encore changé d’ici demain matin ; on triera le signal du bruit quand ça arrivera. Abonnez-vous pour ne rien manquer, et à demain. Et si vous préférez regarder plutôt qu’écouter, retrouvez-nous sur YouTube chez Nerra Network — le lien est dans les notes de l’épisode.
+
+Encore une chose — si l’épisode d’aujourd’hui vous a plu, notre émission sœur First Principles Daily mérite une place dans votre flux : un raisonnement à partir des matières premières, pas par analogie, sur les percées qui font vraiment baisser les coûts. C’est l’un des points quotidiens de Nerra Network, entièrement gratuit, sur nerranetwork point com.
+
+Le Do Positive Pod, c’est le club de ceux et celles qui passent à l’action — les épisodes et le Dispatch Wall, sur nerranetwork point com thedppod.
+
+Cet épisode a utilisé une synthèse vocale par I.A. de ma voix — la sélection éditoriale et l’analyse sont les miennes.

@@ -1,0 +1,179 @@
+Simon Willison is ignoring his X replies because AI-generated slop is wasting everyone's time.
+
+This is Models and Agents, episode 162.
+
+Simon Willison called out automated scripts that post pointless questions on X.
+
+Those scripts trick people into spending mental energy on answers nobody cares about.
+
+He added that AI slop replies have made him stop reading most of his notifications.
+
+Builders should prioritize output quality and real utility over volume when deploying models in public spaces.
+
+The posts underscore a practical problem for anyone building public-facing AI tools.
+
+Volume without intent pollutes shared spaces and erodes trust.
+
+Watch for similar complaints from other high-profile builders as agent-driven posting increases.
+
+Now for the model updates.
+
+MemeCULT-1K is a new benchmark with one thousand South Asian memes across Bengali, English, and Hindi.
+
+Each meme comes with cultural context notes and human explanations, plus fifty-four additional Bengali dialect memes.
+
+Thirteen vision-language models were tested in meme-only and context-aware settings.
+
+Adding minimal cultural context lifted mean SBERT similarity from forty-four point six to fifty-six point four.
+
+LLM-as-a-Judge scores rose from two point five seven to three point four three.
+
+Closed-source models mainly failed on entity identification while open-source models struggled with broader cultural gaps.
+
+VakyArth introduces the first pragmatic benchmark for Hindi, Punjabi, Tamil, and Malayalam.
+
+It covers deixis, speech acts, implicature, social pragmatics, and coherence.
+
+Native-speaker-authored items show consistent model failures on Indic conventions.
+
+MCQ accuracy exceeds NLI accuracy across families and sizes.
+
+Translation performance does not reliably track pragmatic understanding.
+
+Indo-Aryan languages show an advantage over Dravidian ones.
+
+TalkFa supplies three human-reviewed datasets totaling over twelve thousand Farsi dialogues.
+
+The datasets cover knowledge-grounded generation, dialogue-act annotation, and sentiment-labeled theatrical exchanges.
+
+LoRA fine-tuning on Llama and Mistral models recovered over ninety percent of final performance with only twenty-five to fifty percent of the training data.
+
+FABERT led dialogue-act classification while LORA-MISTRAL-7B performed best on emotion recognition.
+
+How Output Format Confounds Data Quality and Capability in Instruction Tuning ran gradient-signature experiments across twelve tasks and three model families.
+
+Output interface rotation leaves spectral statistics invariant while carrying the actual quality signal in the update direction.
+
+A skill that raises accuracy more than forty points under the training format can become nearly invisible under any other interface.
+
+Selective Knowledge Edit Reversal via Gated Singular Vector Shrinkage locates edit-sensitive components inside the dominant singular subspace of edited weights.
+
+It reverses only targeted facts while preserving unrelated edits.
+
+Experiments confirm that different edits remain separable when the total number of edits stays moderate.
+
+Do Cantonese-Adapted Language Models Better Predict Cantonese Reading tested lexical surprisal and a joint four-metric model.
+
+The extensively continued-pretrained CantoneseLLM-7B outperformed its base Qwen2.5-7B.
+
+Entropy reduction favored the lighter CKIP model instead.
+
+Now for agent and tool developments.
+
+OBJECTION inserts an adversarial lawyer agent into each step of a three-stage offense-unlawfulness-culpability reasoning pipeline.
+
+On a new Natural Innocent dataset of three point four thousand real-world cases the approach cut the false guilty rate from eighty-two point nine three percent to sixteen point six nine percent.
+
+The pipeline requires no retraining and works at inference time.
+
+HyGRAIL routes only graph-uncertain candidates from a GNN triage step to an LLM reviewer that receives naturalized multi-hop paths from the knowledge graph.
+
+On MatKG it reached zero point four two nine F1 while cutting LLM calls by fifty-four point three six percent versus exhaustive review.
+
+AVERT combines cross-turn agreement scoring with an audio-conditioned verifier and applies three targeted operators only on slots where each error type is common.
+
+On SpokenWOZ it lifted joint goal accuracy from thirty-eight point three four to forty point one three without retraining the underlying speech-LLM.
+
+A Tri-Agent Framework for Evaluating and Aligning Question Clarification Capabilities uses a Question Clarifying Agent under test, a Respondent Agent that can give irrelevant or challenging replies, and an Evaluator Agent.
+
+Synthetic supply-chain data generation plus native-speaker validation provides a repeatable test harness for clarification behavior.
+
+NS-Copilot orchestrates specialized agents for planning, adaptive control, code generation, and result synthesis while routing to pre-trained models for EEG and spike data.
+
+Across eight trials on Alzheimer's, Parkinson's, and working-memory benchmarks it consistently outperformed strong baselines on primary metrics.
+
+Now for practical and community items.
+
+PRO-Step trains a generative process reward model that scores both logical validity and evidential grounding at each retrieval-reasoning step.
+
+It then uses PRM-guided value tree search to build preference pairs for step-level DPO.
+
+The method achieved the best average EM and F1 across five single- and multi-hop QA benchmarks, with code, models, and training data released.
+
+How Do Prompt Variations Affect Energy Consumption in On-Device LLMs separates prefill and decode energy across models, devices, and datasets.
+
+Cognitive load mainly affects energy per token while phrasing pattern acts through token count.
+
+The work supplies phase-level profiling scripts and a public energy-quality frontier for model-aware prompt design.
+
+Cite or Decline retrieves only from the active course, uses chapter summaries for transcript ranking, and returns timestamped citations or declines when no evidence matches.
+
+In a semester-long deployment seventy point five percent of eight hundred thirty-three messages included citations and none crossed course boundaries.
+
+text2ql supplies a seven-stage detection pipeline and pluggable renderers that target both SQL and GraphQL from a single QueryIR representation.
+
+The deterministic zero-LLM mode delivered one hundred percent execution accuracy at three point two milliseconds median latency with no API cost.
+
+Schema-aware prompting contributed an eighteen point four point exact-match gain.
+
+OK, let's pop the hood on dimension-level conditioning in activation steering.
+
+Everyone talks about activation steering as if you simply add one vector and the model behaves.
+
+In practice the technique is a set of selectivity decisions that trade precision against overhead.
+
+The core move is to decide not only when to steer but which hidden dimensions actually carry the target concept.
+
+GAPS implements this with a static separability gate that keeps only neurons showing reliable concept information via AUROC.
+
+A dynamic posterior gate steers a neuron only when its current activation is better explained by the undesired concept under a Gaussian model.
+
+The two gates add O of D work per token yet measurably improve the capability-behavior tradeoff.
+
+On toxicity mitigation with Gemma-3-4B the combined DSAS plus GAPS pipeline dropped toxicity from six point five two percent to zero point four eight percent while staying inside the same capability budget.
+
+The practical decision rule is straightforward.
+
+If your steering vector is dense and you observe capability regression, add dimension-level gating before you increase steering strength or switch to a heavier model.
+
+Things to try this week include testing the released PRO-Step code and models on your own multi-hop RAG traces.
+
+Run the MemeCULT-1K evaluation harness against any vision-language model you deploy for South Asian audiences before claiming cultural competence.
+
+Add the text2ql deterministic mode to a prototype natural-language query interface to measure latency and accuracy gains versus pure LLM routing.
+
+Apply the OBJECTION lawyer-agent pattern to any legal or policy judgment pipeline you maintain and track the drop in false-positive guilty labels.
+
+Profile your on-device prompts with the energy-measurement scripts from the prompt-variation study to identify which phrasing patterns cut decode energy most effectively.
+
+On the horizon more labs are expected to release culturally specific pragmatic and meme benchmarks following the VakyArth and MemeCULT pattern.
+
+Inference-time verification layers like AVERT and OBJECTION will likely appear in commercial agent frameworks within the next quarter.
+
+Energy-aware prompt tooling is moving from research scripts to integrated features in on-device SDKs.
+
+Selective edit-reversal methods will be packaged as maintenance utilities for long-running fine-tuned models.
+
+Before we go, several labs are preparing follow-up releases that test the same cultural and pragmatic benchmarks on next-generation vision-language models.
+
+That's Models and Agents for today.
+
+If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update.
+
+The AI world moves fast.
+
+We'll help you keep up.
+
+See you tomorrow.
+
+And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+This show comes to you from the Nerra Network.
+
+If you want another sharp daily briefing, Unintended Consequences has you covered — true stories of good intentions that backfired.
+
+All our shows are free at nerranetwork.com.
+
+New to the network? nerranetwork.com/start-here picks the right daily briefing for you in about two minutes.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.

@@ -201,9 +201,7 @@ class TestShowMemoryHardening:
         wf = (_ROOT / ".github" / "workflows" / "nightly-maintenance.yml"
               ).read_text(encoding="utf-8")
         assert "update_performance_trackers.py" in wf
-        for tracker in (
-            "models_agents_performance_tracker.json",
-            "fascinating_frontiers_performance_tracker.json",
-            "planetterrian_performance_tracker.json",
-        ):
-            assert tracker in wf
+        # Sep 4 2026: the literal per-show paths became one glob so every
+        # memory show's tracker (not just five) survives the nightly
+        # whitelist.
+        assert "digests/**/*_performance_tracker.json" in wf
