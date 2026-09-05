@@ -48,7 +48,7 @@ DEFAULT_POLICY_PATH = PROJECT_ROOT / "api" / "youtube_policy.json"
 # The bound is a guard against a runaway count (a mis-generated policy
 # file, a YAML typo), not a target. What a show actually publishes is the
 # policy's business; this only says no configuration may exceed it.
-MAX_SHORTS_PER_EPISODE = 3
+MAX_SHORTS_PER_EPISODE = 4  # Sep 2026: 4-Short band at 60 vpd (see update_youtube_policy)
 
 
 def load_policy(path: Optional[Path] = None) -> Optional[dict]:

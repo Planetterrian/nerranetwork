@@ -259,9 +259,23 @@ chapters:
     title: Model Updates
   - pattern: agent and tool developments|tool developments|agentic systems|agent news
     title: Agent & Tool Developments
-  - pattern: practical and community|community corner|open.source
+  # Sep 4 2026: the "open.source" alternate REMOVED. The host never
+  # announces this section (the prompt forbids spoken labels), so the only
+  # way the marker ever fired was a topic word — "open-sourced Pipette"
+  # at 8% of Ep153, 7% of Ep154, 10% of Ep155, 16% of Ep156 — which titled
+  # the ENTIRE news body "Practical & Community" and, by clearing
+  # min_chapters, suppressed the digest-headline auto-segmentation that
+  # gives listeners real per-story navigation (guard:
+  # tests/test_models_agents_quality_pass.py).
+  - pattern: practical and community|community corner
     title: Practical & Community
-  - pattern: under the hood|deep dive|technical deep dive|pop the hood
+  # Sep 4 2026: "pop the hood" is now REQUIRED in the deep dive's first
+  # sentence (podcast prompt) — the prompt used to offer it as one of two
+  # example openers and the model elected the other ("Everyone talks
+  # about…", 10/10 in Ep153-162), so Ep153/155/156 shipped with NO Under
+  # the Hood chapter. The everyone-talks alternates below are a safety
+  # net for the transition, not the intended anchor.
+  - pattern: under the hood|deep dive|technical deep dive|pop the hood|everyone (talks|thinks) about|everyone treats|most people assume
     title: Under the Hood
   - pattern: things to try|try this week
     title: Things to Try

@@ -995,7 +995,11 @@ def aggregate_metrics(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]
                 data = json.loads(f.read_text(encoding="utf-8"))
             except Exception:
                 continue
-            total = float(data.get("total_duration_s") or 0.0)
+            # Prefer the wall-clock figure (stages + the timed counters
+            # for TTS / mix / YouTube) — ``total_duration_s`` sums only
+            # the three stage() blocks, which put spacex's p50 at 99 s
+            # against ~29 min of real run time (Sep 4 2026 flagship pass).
+            total = float(data.get("wall_duration_s") or data.get("total_duration_s") or 0.0)
             totals.append(total)
             stages = data.get("stages") or []
             ep_success = all(bool(st.get("success", True)) for st in stages)
@@ -1396,11 +1400,20 @@ def aggregate_multilingual(
             continue
         slug = entry.get("show_slug") or key.split(":", 1)[0]
         lang = entry.get("language") or (key.split(":", 1)[-1])
+        # Null stays null (Sep 4 2026 flagship pass): OP3 answers 404 for
+        # feeds it has never indexed (every ZH feed — no directory lists
+        # them — plus three FR feeds), and ``int(None or 0)`` turned
+        # "unmeasured" into "0 downloads, measured: true" on the very
+        # card the language cull is supposed to be decided from.
+        _d7, _d30 = entry.get("downloads_7d"), entry.get("downloads_30d")
         row = {
-            "downloads_7d": int(entry.get("downloads_7d") or 0),
-            "downloads_30d": int(entry.get("downloads_30d") or 0),
+            "downloads_7d": int(_d7) if _d7 is not None else None,
+            "downloads_30d": int(_d30) if _d30 is not None else None,
+            "measured": _d30 is not None or _d7 is not None,
             "stale": bool(entry.get("not_refreshed_this_run")),
         }
+        if entry.get("note"):
+            row["note"] = entry["note"]
         per_language_audience[key] = {"show_slug": slug, "language": lang, **row}
         show_row = per_show.get(slug)
         if show_row is not None:
@@ -1422,10 +1435,12 @@ def aggregate_multilingual(
             agg["shows"] += 1
             agg["approx_cost_7d_usd"] = round(agg["approx_cost_7d_usd"] + share, 4)
             aud = (row.get("audience_by_language") or {}).get(lang)
-            if aud:
+            if aud and aud.get("measured"):
                 agg["measured"] = True
-                agg["downloads_7d"] += aud["downloads_7d"]
-                agg["downloads_30d"] += aud["downloads_30d"]
+                agg["downloads_7d"] += aud["downloads_7d"] or 0
+                agg["downloads_30d"] += aud["downloads_30d"] or 0
+            elif aud:
+                agg["unmeasured_shows"] = agg.get("unmeasured_shows", 0) + 1
 
     return {
         "languages": list(_ML_LANGS),

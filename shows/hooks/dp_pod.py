@@ -204,21 +204,241 @@ def _recent_levers(max_digests: int = 15) -> str:
             first = re.split(r"(?<=[.!?])\s+", lever)[0].strip()
             if len(first) < 20:
                 continue
-            if first not in seen:
+            # Sep 4 2026: exact-string dedup let rephrased repeats through
+            # ("...enter your postcode, and check" vs "...and sign up")
+            # — collapse near-duplicates so the list shows each action
+            # once and the ban covers the variant.
+            if not any(_lever_similarity(first, s) >= 0.34 for s in seen):
                 seen.append(first)
         if not seen:
             return ""
-        return (
+        block = (
             "RECENT LEVERS (actions this show already aired, newest first "
             "— today's Lever must be a genuinely DIFFERENT action: never "
-            "repeat or lightly rephrase any action below, and change the "
-            "domain from the newest entries — if recent levers were home "
-            "energy, go to transport, food, citizen science, community, "
-            "health, or repair/reuse today):\n"
+            "repeat, lightly rephrase, or re-skin any action below (a "
+            "different website with the same verb and the same outcome is "
+            "the same lever), and change the domain from the newest "
+            "entries — if recent levers were home energy, go to transport, "
+            "food, citizen science, community, health, or repair/reuse "
+            "today):\n"
             + "\n".join(f"- {s}" for s in seen)
         )
+        # Sep 4 2026 successor-tic guard. The Aug-10 rotation memory
+        # stopped exact repeats, and the Lever promptly converged on a new
+        # SHAPE instead: "Open your <website> today, enter ..., write down
+        # ..." opened 13 of the 26 renewed episodes and 21 of 26 levers
+        # were screen lookups. A show whose sign-off is "do something
+        # about it" was telling people to open a browser four days in
+        # five. Supply the shape data, not just a shape instruction.
+        recent = seen[:6]
+        verbs: dict[str, int] = {}
+        for s in recent:
+            v = re.match(r"([A-Za-z\-]+)", s)
+            if v:
+                verbs[v.group(1).capitalize()] = verbs.get(v.group(1).capitalize(), 0) + 1
+        banned_verbs = sorted(v for v, n in verbs.items() if n >= 2)
+        screen = sum(1 for s in recent if _SCREEN_ACTION_RX.search(s))
+        if banned_verbs:
+            block += (
+                "\nBANNED OPENING VERBS today (each opened two or more of "
+                "the most recent levers): " + ", ".join(banned_verbs)
+                + " — today's action starts with a different verb."
+            )
+        if len(recent) >= 3 and screen * 2 >= len(recent):
+            block += (
+                f"\nREAL-WORLD ACTION DUE: {screen} of the last {len(recent)} "
+                "levers were screen lookups (open a website, search, note a "
+                "number). Today's Lever must be done with hands, feet, voice, "
+                "or wallet in the physical world — something a listener could "
+                "photograph having done — and any screen step in it must END "
+                "in a thing booked, sent, signed up for, planted, fixed, or "
+                "bought, never in a note."
+            )
+        return block
     except Exception as exc:
         logger.warning("dp_pod hook: lever history unavailable (non-fatal): %s", exc)
+        return ""
+
+
+_SCREEN_ACTION_RX = re.compile(
+    r"\b(open|website|web site|app\b|portal|download|online|search|"
+    r"\.gov|\.org|\.com|browser|log in|login|dashboard)\b", re.IGNORECASE,
+)
+_LEVER_STOP = frozenset(
+    "today your that with this from which into then them they have will "
+    "the and for one any each every week this local".split()
+)
+
+
+def _lever_similarity(a: str, b: str) -> float:
+    """Jaccard similarity on content words (4+ letters, stop-words out)."""
+    ta = set(re.findall(r"[a-z]{4,}", a.lower())) - _LEVER_STOP
+    tb = set(re.findall(r"[a-z]{4,}", b.lower())) - _LEVER_STOP
+    if not ta or not tb:
+        return 0.0
+    return len(ta & tb) / len(ta | tb)
+
+
+# Phrases that belong to the fixed furniture (intro/closing pools, segment
+# names, the AI disclosure, the Dispatch channel line) — never "bits".
+_BANTER_FIXED = (
+    "positive papers", "think positive", "the lever", "positive dispatch",
+    "do something about it", "perra", "novak", "dp pod",
+    "nerranetwork", "nerra network", "voice", "synthesis", "editorial",
+    "selection", "our own", "used ai", "ai voice",
+    "do positive", "episode", "email", "dispatch", "show page",
+    "started counts", "honest sentences", "genuinely struggling",
+    "professional help", "rating or review", "doomscroll", "sister show",
+    "next listen", "dot com", "network",
+)
+_BANTER_STOP = frozenset(
+    "the a an and or but if so of to in on at for from with by as is are was "
+    "were be been being it its this that these those we you they he she i me "
+    "my your our their his her them us do does did done not no yes just like "
+    "than then there here what which who how when where why all any some one "
+    "two three more most very can could would should will shall may might have "
+    "has had get got go going come came say said says see saw make made take "
+    "took know knew think thought about into over out up down off only also "
+    "still even ever never now today yesterday tomorrow day week time way thing "
+    "things something anything nothing everything okay right well because "
+    "really actually let's dan patrick".split()
+)
+
+
+def _recent_banter_phrases(max_scripts: int = 6, min_hits: int = 3,
+                           cap: int = 12) -> str:
+    """Running gags calcifying into catchphrases (rotation memory as data).
+
+    Sep 4 2026: the podcast prompt says "no catchphrases, ever" and then
+    supplies its own comedy examples — and the model elected exactly
+    those: "checklist" in 23 of the 26 renewed episodes, "steel-man" in
+    23, "I'll concede" in 17, "preflight" in 10, "chemist brain" in 8.
+    Mined from this show's own recent scripts: 2-3 word content phrases
+    appearing in *min_hits* of the last *max_scripts* scripts, excluding
+    anything that is part of the prompts or the fixed intro/closing
+    furniture (so a phrase the prompt itself asks for is never banned).
+    Returns "" when nothing recurs.
+    """
+    try:
+        scripts = sorted(
+            (_ROOT / "digests" / "dp_pod").glob("DP_Pod_Ep*_tts.txt"),
+            reverse=True,
+        )[:max_scripts]
+        if len(scripts) < min_hits:
+            return ""
+        furniture = ""
+        for rel in ("shows/prompts/dp_pod_podcast.txt",
+                    "shows/prompts/dp_pod_digest.txt", "engine/intros.py"):
+            p = _ROOT / rel
+            if p.exists():
+                furniture += " " + p.read_text(encoding="utf-8").lower()
+        furniture = re.sub(r"[^a-z'\- ]+", " ", furniture)
+        furniture = re.sub(r"\s+", " ", furniture)
+        per_script: list[set] = []
+        for sp in scripts:
+            t = sp.read_text(encoding="utf-8").lower()
+            t = re.sub(r"^(dan|patrick):\s*", "", t, flags=re.MULTILINE)
+            t = re.sub(r"\[(?:laugh|sigh|breath|pause|long-pause)\]|</?emphasis>", " ", t)
+            words = re.findall(r"[a-z][a-z'\-]+", t)
+            grams: set[str] = set()
+            for k in (2, 3):
+                need = 1 if k == 2 else 2
+                for i in range(len(words) - k + 1):
+                    g = words[i:i + k]
+                    if g[0] in _BANTER_STOP or g[-1] in _BANTER_STOP:
+                        continue
+                    if sum(1 for x in g if x not in _BANTER_STOP) < need:
+                        continue
+                    grams.add(" ".join(g))
+            per_script.append(grams)
+        counts: dict[str, int] = {}
+        for grams in per_script:
+            for g in grams:
+                counts[g] = counts.get(g, 0) + 1
+        hits = []
+        for g, n in counts.items():
+            if n < min_hits:
+                continue
+            if any(f in g for f in _BANTER_FIXED):
+                continue
+            if g in furniture:
+                continue
+            hits.append((n, g))
+        hits.sort(key=lambda x: (-x[0], x[1]))
+        # Collapse a 2-gram that is contained in a listed 3-gram.
+        chosen: list[str] = []
+        for _n, g in hits:
+            if any(g in c or c in g for c in chosen):
+                continue
+            chosen.append(g)
+            if len(chosen) >= cap:
+                break
+        if not chosen:
+            return ""
+        return (
+            "RETIRED BITS (phrases and running gags that appeared in "
+            f"{min_hits}+ of the last {len(scripts)} episodes — a catchphrase "
+            "is a bit that stopped being funny; do NOT use these words or "
+            "the gag behind them today, and pick a comedic device the show "
+            "has not leaned on this week): " + "; ".join(chosen)
+        )
+    except Exception as exc:
+        logger.warning("dp_pod hook: banter history unavailable (non-fatal): %s", exc)
+        return ""
+
+
+# Markers of REAL founders' material (shows/dp_pod_founders_notes.md). If
+# none has aired recently the hosts have been running on generic texture.
+_FOUNDERS_MARKERS = tuple(re.compile(p, re.IGNORECASE) for p in (
+    r"\byukon\b", r"\bwestjet\b", r"\bcollingwood\b", r"\bvancouver\b",
+    r"\bcaro\b", r"\balberta\b", r"\bkayak", r"\bpaddl", r"\bdaughters?\b",
+    r"\bmountain bik", r"\bsurfing\b", r"\bfoiling\b", r"\bsailing\b",
+    r"\bskiing\b", r"\bmodel (?:3|three|y)\b", r"\bsolar on my\b",
+    r"\bmy roof\b", r"\bmy panels\b", r"\bmy own payback\b", r"\bnovelist\b",
+    r"\bsci-?fi novel", r"\bincubator\b", r"\bplanetterrian ventures\b",
+    r"\bbill saved\b", r"\bavvizo\b", r"\blilwords\b", r"\bspent yeast\b",
+    r"\bangel invest", r"\bsubstack\b", r"\bmy (?:old )?lab\b",
+    r"\benvironmental lab", r"\bcannabis testing\b", r"\bmy (?:own )?cockpit\b",
+))
+
+
+def _founders_detail_nudge(max_scripts: int = 5) -> str:
+    """Data-side nudge when the founders' notes have gone unused.
+
+    Sep 4 2026: the notes' pacing rule ("at most one real detail per host
+    per episode, only when it serves") was read as "never" — across the
+    26 renewed episodes the Yukon race aired 0 times, WestJet 0, Dan's own
+    solar payback once. Two friends with real lives were sounding like
+    two archetypes. Nudge only when nothing real has aired in the last
+    *max_scripts* episodes; the notes remain the only sanctioned source.
+    """
+    try:
+        notes = _ROOT / "shows" / "dp_pod_founders_notes.md"
+        if not notes.exists():
+            return ""
+        if not re.sub(r"<!--.*?-->", "", notes.read_text(encoding="utf-8"),
+                      flags=re.DOTALL).strip():
+            return ""
+        scripts = sorted(
+            (_ROOT / "digests" / "dp_pod").glob("DP_Pod_Ep*_tts.txt"),
+            reverse=True,
+        )[:max_scripts]
+        if len(scripts) < max_scripts:
+            return ""
+        for sp in scripts:
+            t = sp.read_text(encoding="utf-8")
+            if any(rx.search(t) for rx in _FOUNDERS_MARKERS):
+                return ""
+        return (
+            f"FOUNDERS' DETAIL DUE: no real host material has aired in the "
+            f"last {max_scripts} episodes. Today ONE host brings ONE genuine "
+            "detail from the FOUNDERS' NOTES below — a real place, a real "
+            "past effort, a real number from their own life — at the moment "
+            "a story genuinely calls for it, in one or two turns. Still never "
+            "invent a single specific beyond what the notes say."
+        )
+    except Exception as exc:
+        logger.warning("dp_pod hook: founders nudge unavailable (non-fatal): %s", exc)
         return ""
 
 
@@ -410,6 +630,14 @@ def pre_fetch(config, *, episode_num=None, today_str=None) -> dict:
     if prev_lever:
         sections.append("")
         sections.append(prev_lever)
+    bits = _recent_banter_phrases()
+    if bits:
+        sections.append("")
+        sections.append(bits)
+    nudge = _founders_detail_nudge()
+    if nudge:
+        sections.append("")
+        sections.append(nudge)
     notes = _founders_notes()
     if notes:
         sections.append("")

@@ -183,7 +183,7 @@
     letter-spacing: 0.07em; color: var(--ink-3); font-weight: 600; }
   .mc-section > h2 .pill-note { font-size: 12px; font-weight: 400; text-transform: none;
     letter-spacing: 0; margin-left: 8px; color: var(--ink-4); }
-  .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr));
     gap: 14px; align-items: start; }
   .mc-card { background: var(--surface-1); border: 1px solid var(--hairline);
     border-radius: 14px; padding: 16px 18px; min-width: 0; }
@@ -311,6 +311,10 @@
       <button type="button" id="view-sponsor" aria-pressed="false">Sponsor</button>
       <button type="button" id="view-investor" aria-pressed="false">Investor</button>
     </div>
+    <!-- Data age, visible in EVERY view (the health pills below are
+         operator-only, so sponsor/investor readers had no staleness
+         signal at all — Sep 2026 review). Amber past 36 h, red past 72 h. -->
+    <span class="pill idle" id="data-age" hidden></span>
     <div class="health-pills" id="status-summary" data-ops hidden>
       <span class="pill ok"><span id="count-ok">0</span>&nbsp;OK</span>
       <span class="pill warn"><span id="count-warn">0</span>&nbsp;warn</span>
@@ -322,9 +326,11 @@
 <div class="view-note" id="view-note" hidden></div>
 
 <nav class="mc-nav" aria-label="Sections">
+  <a href="index.html">← nerranetwork.com</a>
   <a href="#audience-section">Audience</a>
   <a href="#benchmarks">Benchmarks</a>
   <a href="#investor" data-investor>Investor</a>
+  <a href="#growth-levers" data-ops>Growth</a>
   <a href="#distribution">Distribution</a>
   <a href="#catalog">Catalog</a>
   <a href="#operations" data-ops>Operations</a>
@@ -334,6 +340,7 @@
   <a href="#voice" data-ops>Voice</a>
   <a href="#mit">MIT performance</a>
   <a href="#feeds" data-ops>Feeds</a>
+  <a href="data.html">Public dashboards ↗</a>
   <a href="docs/analytics.md" data-ops>Analytics contract ↗</a>
   <a href="api/dashboard.json" data-ops>Raw JSON ↗</a>
 </nav>
@@ -611,6 +618,17 @@
     $("#error").style.display = "block";
     return;
   }
+  // A render-time throw (a schema change, a missing section) used to kill
+  // everything after it silently — including the view switcher, which
+  // runs last. Surface it instead of shipping a half-rendered page.
+  window.addEventListener("error", (ev) => {
+    const box = $("#error");
+    if (!box) return;
+    box.style.display = "block";
+    box.appendChild(h("div", { style: "margin-top:8px;font-size:12.5px;",
+      text: "Render error: " + (ev && ev.message ? ev.message : "unknown") +
+            " — some sections below may be missing." }));
+  });
 
   $("#loading").hidden = true;
   $("#content").hidden = false;
@@ -618,9 +636,17 @@
   const genDate = new Date(data.generated_at);
   $("#generated-at").textContent = "Generated " + genDate.toLocaleString() +
     " · one page, every number the network collects.";
-  const hoursAgo = Math.round((Date.now() - genDate.getTime()) / 3600000);
-  $("#last-refreshed").textContent = hoursAgo < 2 ? "fresh" : hoursAgo + "h old";
+  const hoursAgo = Math.max(0, Math.round((Date.now() - genDate.getTime()) / 3600000));
+  const ageLabel = hoursAgo < 2 ? "fresh" : hoursAgo < 48 ? hoursAgo + "h old" : Math.round(hoursAgo / 24) + "d old";
+  const ageClass = hoursAgo > 72 ? "fail" : hoursAgo > 36 ? "warn" : "ok";
+  $("#last-refreshed").textContent = ageLabel;
   $("#last-refreshed").title = genDate.toLocaleString();
+  $("#last-refreshed").className = "pill " + ageClass;
+  const ageEl = $("#data-age");
+  ageEl.textContent = "data " + ageLabel;
+  ageEl.title = "Dashboard data generated " + genDate.toLocaleString();
+  ageEl.className = "pill " + ageClass;
+  ageEl.hidden = false;
 
   const counts = (data.network && data.network.landmines_counts) || {};
   $("#count-ok").textContent = counts.ok || 0;
@@ -715,9 +741,9 @@
         : "GA4 not configured",
       spark: siteSpark,
       sparkTitle: "Daily active users, last " + siteSpark.length + " days" }));
-  tiles.appendChild(statTile("Spend · 7d", money(data.network.total_cost_last_7_days_usd),
+  tiles.appendChild(statTile("Spend · 7d", money((data.network || {}).total_cost_last_7_days_usd),
     { econ: true,
-      sub: money(data.network.total_cost_last_30_days_usd) + " · 30d · " +
+      sub: money((data.network || {}).total_cost_last_30_days_usd) + " · 30d · " +
            (eff.usd_per_op3_download_7d != null
              ? ("$" + Number(eff.usd_per_op3_download_7d).toFixed(3) + "/RSS dl")
              : (money((cost.projections || {}).projected_weekly_usd) + "/wk burn")) }));
@@ -1639,8 +1665,10 @@
         card.appendChild(h("p", { class: "fine-list", html:
           "<span class='k'>" + fmt(dist.rows) + "</span> feed rows tracked · source: <code>" +
           dist.source_doc + "</code> (hand-maintained during submission passes)" }));
+        // Operator notes name secrets and failing integrations — never in
+        // the sponsor / investor views.
         (dist.notes || []).forEach((n) => {
-          card.appendChild(h("div", { class: "alert warn",
+          card.appendChild(h("div", { class: "alert warn", "data-ops": "",
             style: "margin-top:8px;font-size:12.5px;", text: n }));
         });
       }
@@ -2177,8 +2205,10 @@
     addStat(fmt(cat.episodes_to_date || 0), "episodes");
     addStat(String(s.episodes_last_7_days || 0), "ep · 7d");
     addStat(money(s.cost_last_7_days_usd), "cost · 7d");
-    addStat(fmt(dl.downloads_7d || 0), "RSS · 7d");
-    addStat(fmt(yRow.views || eRow.youtube_views || 0), "YT views");
+    // Not measured is not zero: age_of_ai / offshore_north have no OP3
+    // row and dp_pod no YouTube row — they read "—", not a fabricated 0.
+    addStat(fmtOrDash(dl.downloads_7d), "RSS · 7d");
+    addStat(fmtOrDash(yRow.views != null ? yRow.views : eRow.youtube_views), "YT views");
     addStat(
       (sRow.streams != null ? fmt(sRow.streams) :
         (eRow.spotify_streams_30d != null ? fmt(eRow.spotify_streams_30d) : "—")),
@@ -2213,7 +2243,7 @@
 
   // ---------- voice table ----------
   const tbody = $("#voice-table tbody");
-  (data.voice_config.shows || []).forEach((row) => {
+  ((data.voice_config || {}).shows || []).forEach((row) => {
     const tr = h("tr");
     tr.appendChild(h("td", { text: row.slug }));
     tr.appendChild(h("td", { text: row.voice_id, style: "font-family:ui-monospace,monospace;font-size:11px" }));
@@ -2275,14 +2305,14 @@
     }
 
     const tradesBox = h("div", { class: "mc-card", style: "margin-bottom:14px;padding:0;overflow-x:auto;" });
-    tradesBox.appendChild(h("div", { style: "padding:12px 16px;border-bottom:1px solid var(--hairline);font-weight:600;font-size:13.5px;", text: "Mock trades (newest first, last " + mit.trades.length + ")" }));
+    tradesBox.appendChild(h("div", { style: "padding:12px 16px;border-bottom:1px solid var(--hairline);font-weight:600;font-size:13.5px;", text: "Mock trades (newest first, last " + (mit.trades || []).length + ")" }));
     const tt = h("table", { class: "mc-table", style: "margin:0;" });
     tt.innerHTML =
       "<thead><tr><th>Date</th><th>Ep</th><th>Ticker</th><th>Sector</th>" +
       "<th>Type</th><th>Entry</th><th>Exit</th><th>P&amp;L %</th>" +
       "<th>NASDAQ %</th><th>Alpha %</th><th>Status</th><th>Tags</th></tr></thead>";
     const ttbody = h("tbody");
-    mit.trades.forEach((t) => {
+    (mit.trades || []).forEach((t) => {
       const tr = document.createElement("tr");
       const cells = [
         t.date || "",
@@ -2374,7 +2404,7 @@
   const auditEl = $("#feed-audit");
   const malformed = (rss.feeds || []).filter((f) => f.malformed).length;
   auditEl.appendChild(h("p", { style: "margin:0;font-size:13.5px;color:var(--ink-2);",
-    text: rss.feeds.length + " feeds audited · " +
+    text: (rss.feeds || []).length + " feeds audited · " +
           (rss.raw_github_hits || []).length + " raw.githubusercontent.com hits · " +
           (rss.non_r2_hosts || []).length + " non-R2 hosts · " +
           malformed + " malformed",

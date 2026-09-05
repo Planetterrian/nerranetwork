@@ -853,7 +853,22 @@ class YouTubeConfig:
     # for — the only cost of a bigger pool is R2 download volume during the
     # render, which is free egress. Generating more *fresh* images is the
     # alternative and it is not free: ~$0.02 each across eleven daily shows.
-    gallery_blend_max_long: int = 24   # 16:9 library scenes per long-form (36-slot cap needs a deeper pool)
+    # Sep 2026: back to 8. With one fresh scene PER STORY (scene briefs)
+    # the episode's own imagery covers its chapters; the library only
+    # fills gaps, and only with on-topic images (gallery_blend_min_overlap).
+    gallery_blend_max_long: int = 8    # 16:9 library scenes per long-form
+    # Minimum token overlap (context = hook + chapter titles) a library
+    # scene needs to be blended at all; 0 = legacy rank-only behaviour.
+    gallery_blend_min_overlap: int = 1
+    # ---- Story-driven scene briefs (Sep 2026, engine.scene_briefs) ----
+    # One Grok text call per episode writes a concrete visual scene per
+    # story; those briefs LEAD the Grok Imagine prompts. False = the
+    # deterministic headline-subject briefs (no LLM). Images per episode:
+    # one 16:9 scene per story up to scenes_per_episode (was a fixed 4
+    # generic images), and short_scenes_per_episode 9:16 scenes.
+    scene_briefs_enabled: bool = True
+    scenes_per_episode: int = 8
+    short_scenes_per_episode: int = 5
     gallery_blend_max_short: int = 6   # 9:16 library scenes per Short
     # Align long-form scene switches with the episode's chapters.json
     # boundaries (engine.scene_scheduler.plan_chapter_schedule) instead of

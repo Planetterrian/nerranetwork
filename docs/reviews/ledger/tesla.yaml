@@ -237,6 +237,120 @@ reviews:
       verdict: pending
       evidence: null
     agent_cost_usd: null
+  - date: '2026-09-04'
+    pr: null
+    doc: docs/reviews/flagship_review_2026_09_04.md
+    generated_by: claude-code-session
+    summary: 'Operator-directed flagship pass (SpaceX + Tesla + M&A + shared pipeline), implement mode. Tesla: Ep585 (an 11:27 ET daily-audit retry) spoke "closed at $351.73" for a $345.82 close because the history source hard-coded REGULAR on an in-progress bar; the closer said "one dollars"/"one cents" and a comma-joined amount/percent Whisper heard as "up 92.3%"; four 13F title shapes still passed the Aug-15 widen (Ep590 aired one); "Sign-off paragraph", the @username placeholder and an unclosed claims fence reached the blog. All fixed; chapter-anchoring and same-URL double-telling proposed data-side.'
+    scored_prior_predictions:
+    - metric: excluded-class 13F/fund/consensus items in last-10 tesla digests (incl. X-sourced)
+      verdict: miss
+      evidence: '3 in Ep584-593 (Ep590 X#5 Lynch 13F spoken; Ep586 X#1 Ark position; Ep586 X#2 MarketBeat Should You Buy) + >=4 more in the post-filter pool; four uncovered shapes now excluded'
+    - metric: chapters files with a First Principles chapter mislabeling news-body content
+      verdict: hit
+      evidence: 0/10 FP-titled chapters; the mislabel moved clothes (Ep584 4/7 wrong-story titles; FP essay absorbed into 116-160 s Introductions on 3 episodes) - see deferred chapter-anchoring item
+    - metric: 'successor teaser tic watch: "should clarify|could clarify" reveal in last-10 teasers'
+      verdict: partial
+      evidence: 2/10 (down from 6/10, no lever shipped); successor "watch for (more details on how)" 4/10 - below threshold, watch
+    shipped:
+    - file: shows/hooks/tesla.py
+      kind: code
+      ab_listen_required: true
+      rationale: 'INTRADAY market state when today''s bar is open during the regular session -> "is trading at"; closer singularises "one dollar"/"one cent" and binds direction to amount with "or" before the percent'
+    - file: shows/tesla.yaml
+      kind: config
+      ab_listen_required: false
+      rationale: 'five more exclude_title_patterns: sub-million "invests $649,000 in Tesla", "buys shares of 29,536 Tesla", "11,600 shares in Tesla ... acquired by", "reveals ... position on Tesla", "should you buy"'
+    - file: engine/newsletter_sanitizer.py
+      kind: code
+      ab_listen_required: false
+      rationale: scrub "Sign-off paragraph", the @username placeholder link/tail, "Source/Post:" -> "Source:", and the echoed "### DEPTH OVER BREADTH" heading
+    - file: engine/claims.py
+      kind: code
+      ab_listen_required: false
+      rationale: an unclosed trailing ```claims fence is still the ledger (Ep585 shipped "[]" as a <pre> block)
+    - file: engine/tesla_memory.py
+      kind: code
+      ab_listen_required: false
+      rationale: theme stopwords + google/reddit/quarter/full/insideevs/teslarati (source-label adjacency + "full self" fragment were in the injected top-6)
+    - file: engine/shorts_selector.py
+      kind: code
+      ab_listen_required: false
+      rationale: the "TSLA closed at" line is never a Shorts opener (network-wide fix from the SpaceX finding)
+    deferred:
+    - 'OPERATOR DECISION (length, carried): 7/10 < 1400; prompt still states four lengths (14-16 min / 10-13 min / ~1400 / 1600-1900); digest expansion retry fires 9/10 unmeasured'
+    - Same-URL double-telling (8/10 digests; Ep592 told five stories twice because all five X Takeover items reuse Top-12 URLs) - data-side drop of later-section items whose Source URL is already in Top 12; content removal -> A/B one episode
+    - Chapter anchoring lands 1-3 sentences into the story (27/46 chapters 8-25 s late; Ep584 4/7 wrong-story titles) - walk back to the first paragraph of the headline-token run; lower min_segment_words; hook exclusion in _best_headline_for_segment; replay Ep584/589/592
+    - Counterpoint chapter fires 2/10 (marker keys on the prompt's example transitions) - anchor on the Short Spot headline
+    - Story-outline preamble voiced (Ep584 six outline-then-expansion pairs) - reword/drop podcast_chain for Tesla (A/B)
+    - Pure valuation items shipping as news (Trefis / Motley Fool / Intellectia / MarketBeat alerts; 8 items with "No specific ... was provided" padding) - domain-level excludes, operator call
+    - RU/FR dub Short titles for filled windows are transcript fragments (8 of last 10; "cellules 8680") - translate the EN bundle title instead
+    - Narrative tracker 104 days stale and contradicting the air (Solar Roof discontinued, AI5 finalized, unsupervised rides live) - operator curation via scripts/update_tesla_narrative.py
+    - Aug 28 double publish Ep586 + Ep587 (retry + scheduled) - operator may unpublish one
+    predictions:
+    - metric: excluded-class 13F/fund/aggregator items in last-10 tesla digests (incl. X-sourced)
+      baseline: 3 in Ep584-593
+      expected: 0 in the next 10
+      verdict: pending
+      evidence: null
+    - metric: closings saying "closed at" on an episode generated inside the regular session (summaries datetime 09:30-16:00 ET weekday)
+      baseline: 1/10 (Ep585)
+      expected: 0 - such runs say "is trading at"
+      verdict: pending
+      evidence: null
+    - metric: closer grammar defects ("one dollars"/"one cents"/comma-joined amount+percent) in last-10 _tts.txt
+      baseline: 3 occurrences (Ep584, Ep593 x2)
+      expected: 0
+      verdict: pending
+      evidence: null
+    - metric: blog posts rendering "Sign-off paragraph", "@username", "Source/Post:" or a bare <pre>[]</pre> claims fence
+      baseline: Ep584/585/590 + 8/10 "Source/Post:"
+      expected: 0 on posts generated after merge
+      verdict: pending
+      evidence: null
+    - metric: source-label / calendar bigrams in the injected top-6 theme block ("reddit google", "second quarter", "full self")
+      baseline: 3 of the top themes
+      expected: 0 after the next theme mine
+      verdict: pending
+      evidence: null
+    agent_cost_usd: null
+  - date: 2026-09-05
+    pr: null
+    doc: docs/reviews/network_delivery_review_2026_09_05.md
+    summary: "Network delivery review (operator brief - narrative-driven, redundant). Root causes measured, not the host's taste - the script copies the digest (Ep592/594 73-78% verbatim 8-grams), the digest repeats itself across sections (Ep592 all five X Takeover items re-told Top 12; Ep594 Short Spot = story 11, First Principles = story 3), the prompt mandated a per-story 'bigger story' sentence, and supplied transitions shipped verbatim."
+    shipped:
+      - "engine/digest_overlap - cross-section duplicate strip (URL / headline / body vocabulary) before validation and after regen; metric digest_cross_section_dupes_removed"
+      - "engine/script_audit - per-episode density metrics (script_digest_overlap_pct, script_repeated_facts, script_filler_pct, script_hook_restated) + review_snapshot table"
+      - "tesla_podcast.txt - STORYTELLING LAYER + MANDATORY continuity removed; memory = accuracy background with one delta callback; sentence count follows fact count; Counterpoint enters on the concern's first fact; First Principles / Counterpoint may not restate the body (A/B)"
+      - "tesla_digest.txt - per-item 'what to watch next' -> dated next step only when sourced; X Takeover placeholders -> facts + mandatory Source line; restatement sentence and 'no figures provided' banned (A/B)"
+      - "tesla_memory status block - quotable 'Remember, we covered' example and the three arc prompts removed"
+      - "closing pinned to one sign-off (A/B)"
+      - "pronunciation - r/teslamotors spoken as 'the teslamotors subreddit' (Ep590 'our slash Tesla motors' x3)"
+    deferred:
+      - "a data-side paraphrase gate (reject + one script rerun when digest-verbatim stays above threshold) - only if the prompt rule does not move the metric"
+    predictions:
+    - metric: "script_digest_overlap_pct, median of last 10 _tts.txt"
+      baseline: "49% (Ep591-594: 10/73/24/78)"
+      expected: "<=25% on every episode"
+      verdict: pending
+      evidence: null
+    - metric: "digest_cross_section_dupes_removed per episode (metrics_ep*.json)"
+      baseline: "1.6 (33 duplicates in the last 20 digests)"
+      expected: "<=0.3 - the digest prompt stops producing them; the strip catches the rest"
+      verdict: pending
+      evidence: null
+    - metric: "script_filler_pct, last 10"
+      baseline: "2-9%"
+      expected: "<=5% on 9/10"
+      verdict: pending
+      evidence: null
+    - metric: "closing text identical across episodes"
+      baseline: "3 variants over Ep589-594"
+      expected: "1 on 10/10"
+      verdict: pending
+      evidence: null
+    agent_cost_usd: null
+
 do_not_retry:
   - idea: phonetic respellings or programmatic speech-tag injection
     evidence: 100% regression rate on custom voice kdif6sqjcyiq (May 2026,

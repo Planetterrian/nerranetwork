@@ -2,28 +2,28 @@
 > **Vandenberg site clearance and a Texas court ruling together remove two long-standing constraints on West Coast and Texas launch rates.**
 ---
 ### Top News
-1. **Title: Historic Vandenberg launch complex razed to make way for SpaceX**
+1. **Historic Vandenberg launch complex razed to make way for SpaceX**
    Crews have begun demolition of legacy structures at Vandenberg Space Force Base to prepare ground for new SpaceX pads and processing buildings. The work targets the former SLC-6 complex and adjacent facilities that previously supported Delta and Titan vehicles. Removal of these buildings directly expands usable real estate for Falcon Heavy and future Starship-class operations on the West Coast. Source: [Google News](https://news.google.com/rss/articles/CBMiugFBVV95cUxQc1l2Nzk3dlFCUjBlUlhNZnZGUTM4SFJKLXBGOWdrYmpyYzdldnk2QWIwUGlkc2RJcHo3MUNsdzlVeUFfcW5ZYVppeVBuQXA5VEY2bl94YTd6QjdVUGZmTHNTZGlOMC1xY3VHdF91aW9hdXVkVXMyeUV3amVuRHJyLUNvQ0w0UjMyS0JITjF4R3Q5Mk4zM2pFc3ZCeHYwZGpMMjNqTjlmdHp2bFJIcy1NSU1xbWZqcVhZZUE?oc=5)
 
-2. **Title: Texas Supreme Court sides with SpaceX over closing of Boca Chica Beach during launches**
+2. **Texas Supreme Court sides with SpaceX over closing of Boca Chica Beach during launches**
    The court upheld SpaceX’s authority to close Boca Chica Beach during Falcon and Starship operations, ending a multi-year challenge from local residents. The ruling removes a recurring source of schedule uncertainty that had previously forced last-minute adjustments to launch windows. With the legal path cleared, Starbase can now plan tighter turnaround cycles between flights without external litigation risk. Source: [Google News](https://news.google.com/rss/articles/CBMixwFBVV95cUxQZXNuTlBYZHRqTUFkdkNRdklGQzdtNGNDQzVUMUFab1pDSXZPUmZVQUJTZzJkU0dIVDdnZGpIU1lWajRMMlFkTzhYZXhxTmc0cGRiamxjZUl6SC1IYVhtalFHOFY5Z3ZyVE9yRHpBaFFkaVdBYUpsNTF1Mk1xUjBXYlVybkc2RkhPX2lSd0dpWHZ0ZjhxaHc4VTl2NnJiZC1KZkVCQk9vd0pMZXY2VjRvUHRJUnE3dC1renpGQlNTdjJxaFhfbDFr?oc=5)
 
-3. **Title: SpaceX rocket launch should be visible in Phoenix this week**
+3. **SpaceX rocket launch should be visible in Phoenix this week**
    A Falcon 9 mission scheduled for the coming days will pass over the Phoenix metro area during its ascent from either Florida or California. Observers in central Arizona can expect a visible plume and possible sonic booms depending on trajectory and time of day. The event continues the pattern of public visibility for routine Falcon flights that has grown with higher launch cadence. Source: [Google News](https://news.google.com/rss/articles/CBMirAFBVV95cUxQQjVTTks2U1BBLVlSX3p3c1pyejVlVWx1UXJjaFMyUWs1WnNDSkpHWVlNVWtiUGkxZlFyTkxvTjJpUWpWRFQ3UWg3QXFLSnloaW10aGZYVjVkZURRMTFJcUpUMVFMcVZueG5QWVV3andpWDdvandOTnRzRlZHOW1kQ0gtdjNUNUtTSDctbUpDMHluUl9YUGlMbzZNdjl4NzlFU0FlT0RMVjNoeVBz?oc=5)
 
-4. **Title: Launch Preview: Pegasus XL to launch amongst Falcon 9 and Chinese missions**
+4. **Launch Preview: Pegasus XL to launch amongst Falcon 9 and Chinese missions**
    The week’s global manifest lists six orbital attempts, with one Falcon 9 flight scheduled alongside the first Pegasus XL mission in years and multiple Chinese Long March launches. The Falcon 9 will continue the booster-reuse sequence that has now exceeded thirty flights on several vehicles. Source: [nasaspaceflight.com](https://www.nasaspaceflight.com/2026/06/launch-preview-062326/)
 
-5. **Title: ASTS Stock Jumps Overnight: Rakuten CEO Calls AST Satellite Push ‘Critical’ For Japan Security Amid SpaceX Rivalry**
+5. **ASTS Stock Jumps Overnight: Rakuten CEO Calls AST Satellite Push ‘Critical’ For Japan Security Amid SpaceX Rivalry**
    Rakuten’s CEO stated that AST SpaceMobile’s direct-to-cell satellite network is essential for Japanese national security communications resilience. The comment highlights competitive pressure on SpaceX’s own direct-to-cell Starlink service in the Asia-Pacific region. Source: [Google News](https://news.google.com/rss/articles/CBMiggJBVV95cUxOT28yMFhWeHJhZ0pzTEZBTDNGSWNkQm5lczRqWlN3ZUFKX0UwTXlFQTlfSGQ0WFI3b1FzdVNVblBEUlJhbWxGYXdlVTJUV0tSblJNVENYd0lqaVpsMExZN3RnaXZOcmpFeDUtTlJtSi1jeFNJWnlFQ0hYZFFyS2MyYVdKQnpoNmtNdDhfVlBBT3BwNjhYZWQwMWl5OE0tUDItazE5eUd3YmtzZ2JVaUhXTDh6dkNWTV83dmxxR19LY1lqZW8zdEtaTmpSYUtCU2Z6azZPZ2RtVU1xTlBjUmlWWlllTHkxTTYtb1YxdjlUbTVBcWtHVWszb1lmNFBrSWVrQXc?oc=5)
 
-6. **Title: NASA’s Moon Plan Depends on 15 Starship Launches. There’s Just One Problem**
+6. **NASA’s Moon Plan Depends on 15 Starship Launches. There’s Just One Problem**
    NASA’s current lunar architecture requires fifteen Starship flights per crewed landing to deliver propellant and cargo. The plan assumes rapid reuse and orbital refueling that have not yet been demonstrated at that tempo. Source: [Google News](https://news.google.com/rss/articles/CBMipAFBVV95cUxONkwxMjhfZ1R1R2gxeVN2M01zNDJWNFlDV2JYRGphNm0zTGpFZlNvTnJfUUI5RTJKYlpyOVJOc3ZaS0gwelVBNW91TnNmNmhiQnRpZDhsdVdVa3lWOE5XTEJsaDRzSGtxSGJEYVRiWlE5RDRaaGl4MFk4aE1lNnRXSFBJZGxEMm9URThqMjJ6QWpnZTZLcG0xQmQ3NHNyZlpSX1B4cQ?oc=5)
 
-7. **Title: Now That the IPO Has Passed, Here Are 5 Important Milestones SpaceX Investors Should Pay Attention to**
+7. **Now That the IPO Has Passed, Here Are 5 Important Milestones SpaceX Investors Should Pay Attention to**
    The article flags upcoming operational markers including first crewed Starship flight, Starlink subscriber targets, and Raptor production rate increases. These milestones sit downstream of the June 12 listing and will shape revenue recognition in the public-company era. Source: [Google News](https://news.google.com/rss/articles/CBMihwFBVV95cUxQYW44ckRLQUxOYzdwMUgtOWJRU1JLYzZvc3p0aklYbjQzMk01dDhnVWNvankzTEkzdjBOWlVRQjNheHBJNWswNHE3TW5CTFBKZFI0Z2lJNEJ1cDh2cTV1RVlreVNsNzYtS1dEdHZMVnhfUDQ1czgyUjlodnBMMnc2bTFGbGpNNjA?oc=5)
 
-8. **Title: SPCX: Should you Buy the Dip?**
+8. **SPCX: Should you Buy the Dip?**
    The piece examines post-IPO share movement and notes continued capital requirements for Starship and Starlink expansion. It frames the current price action against the June 12 listing valuation without providing forward guidance. Source: [Google News](https://news.google.com/rss/articles/CBMibkFVX3lxTE1aVmpUcFlrT2JGOUtDYmQwT3d3ZVhZU3BDdEpXYzNzVTFhUlJlSlN1RmxwbEJ0bXZXVk9TUnhhc2R0NVg2RDlOcUJ6cHhnbWxqRWEzakVFMTJlcHU4WEtvZ0JQUjNadHQwSlp5NDh3?oc=5)
 ---
 ## Community Buzz

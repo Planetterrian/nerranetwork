@@ -256,9 +256,11 @@ jobs:
           # two primary discovery pages until someone runs --all.
           python generate_html.py --player
           python generate_html.py --how-to-listen
-          # Start Here / FAQ / About are cheap static pages that drift when
-          # shows launch — regenerate so onboarding stays current.
-          python generate_html.py --start-here --faq --about
+          # Every cheap static page (Start Here / About / FAQ / How to Listen /
+          # press / contact / editorial / legal / gallery / books / 404) —
+          # they drift when shows launch or copy changes, and until Sep
+          # 2026 only three of them were regenerated between --all runs.
+          python generate_html.py --static-pages
           # Cross-show blog aggregates (blog/index.html + blog.rss +
           # blog_*.rss). Aug 15 2026: the run-show finalize regenerates
           # these but deliberately EXCLUDES them from its commit (matrix
@@ -345,16 +347,13 @@ jobs:
             api/apple_stats.json
             api/apple_reporter.json
             api/apple_reporter_daily.json
-            digests/tesla_shorts_time/tesla_performance_tracker.json
-            digests/models_agents/models_agents_performance_tracker.json
-            digests/fascinating_frontiers/fascinating_frontiers_performance_tracker.json
-            digests/planetterrian/planetterrian_performance_tracker.json
-            digests/spacex/spacex_performance_tracker.json
+            digests/**/*_performance_tracker.json
             api/spacex_launches.json
             api/tesla_dashboard.json
             site/data/spacex_metrics.json
             site/data/popular_episodes.json
             site/data/gallery-manifest.json
+            site/data/gallery/*.json
             site/data/search-index.json
             index.html
             player.html

@@ -546,10 +546,12 @@ class TestScenesDeferralIndex:
 
 class TestRealShowConfigs:
     def test_four_shows_enabled(self):
-        for slug in ("tesla", "spacex", "fascinating_frontiers", "modern_investing"):
+        # modern_investing culled 2026-09-02 (operator-directed).
+        for slug in ("tesla", "spacex", "fascinating_frontiers"):
             c = load_config(f"shows/{slug}.yaml")
             assert c.youtube.ru_dub_enabled is True, slug
             assert "ru" in (c.multilingual.languages or []), slug
+        assert load_config("shows/modern_investing.yaml").youtube.ru_dub_enabled is False
 
     def test_other_shows_not_enabled(self):
         for slug in ("omni_view", "env_intel", "planetterrian"):

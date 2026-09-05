@@ -980,3 +980,16 @@ def test_short_tags_include_per_episode_entities():
         hook="OpenAI ships a new Cybercab model", long_form_url="https://youtu.be/x",
     )
     assert "openai" in meta["tags"]
+
+
+
+def test_short_title_is_headline_plus_shorts_only():
+    """Sep 2026: no ' | <show>' tail on Shorts — the player shows the
+    channel beside the clip and the UI truncates ~40 chars; the 45-day
+    top-vs-bottom quartile cut on every channel favoured shorter titles."""
+    cfg = _make_config()
+    meta = vm.build_short_metadata(
+        cfg, episode_num=1, today_str="September 2, 2026",
+        hook="Starship stacks for Flight 14 as FAA clears the pad")
+    assert meta["title"].endswith("#Shorts")
+    assert " | " not in meta["title"]

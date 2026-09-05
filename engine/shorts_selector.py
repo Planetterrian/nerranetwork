@@ -87,6 +87,24 @@ _NUMERIC_PATTERNS = (
     re.compile(r"\b\d{4}\b"),                               # years / large numbers
 )
 
+# The daily stock-quote line ("SPCX is trading at $141.50, up 1%",
+# "TSLA closed at $328.58, up $9.05") is the most number-dense sentence
+# in a news episode, so the numeric-reveal scorer kept opening Shorts on
+# it: 5 of 68 SpaceX EN Shorts since Ep060 were titled "SPCX Trading at
+# $141.50 Up 1% | SpaceX Daily" (Sep 4 2026 flagship pass). A price
+# ticker is the weakest possible 35-second hook, so a window whose
+# opening segment IS the quote line is never a candidate.
+_PRICE_LINE_RE = re.compile(
+    r"\b(?:is trading at|trading at|trades at|closed at|closing at|"
+    r"finished the session|ended the session)\b",
+    re.I,
+)
+
+
+def is_price_line(text: str) -> bool:
+    """True when *text* is the spoken market-quote sentence."""
+    return bool(text) and bool(_PRICE_LINE_RE.search(text))
+
 
 # ---------------------------------------------------------------------------
 # Data shape
@@ -294,6 +312,8 @@ def score_candidates(
             continue
         text = (s.get("text") or "").strip()
         if not text:
+            continue
+        if is_price_line(text):
             continue
         try:
             seg_start = float(s.get("start") or 0.0)
