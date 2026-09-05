@@ -414,25 +414,26 @@ def expected_slugs(spec: EditionSpec, target_date: _dt.date) -> List[str]:
 
 # Anchored on the four rotating frames in engine.network_promo, with the
 # brand token fuzzy (Whisper spellings observed in committed transcripts:
-# Nerra / Nera / Narra / Narrow / NERA). Order does not imply priority —
+# Nerra / Nera / Narra / Narrow / NERA, and glued to the noun — "narenetwork"
+# on DP Pod Ep058, 2026-09-05 — so the brand/network gap is optional). Order does not imply priority —
 # the earliest match in the tail window wins.
 _PRIMARY_PROMO_PATTERNS = [
-    re.compile(r"\b(?:and\s+)?before you go\s+this show is part of the \w+ network\b"),
-    re.compile(r"\bthis show is part of the \w+ network\b"),
+    re.compile(r"\b(?:and\s+)?before you go\s+this show is part of the \w+\s*network\b"),
+    re.compile(r"\bthis show is part of the \w+\s*network\b"),
     # Whisper renders "our sister show SpaceX Daily" as "sister shows spacex"
     # and "sisters show space x" (both observed on DP Pod / First Principles
     # transcripts) — the singular-only form missed the frame entirely and
     # handed the cut to the weak brand-mention fallback.
     re.compile(r"\bone more thing\b(?:\s+\w+){0,14}?\s+sisters?\s+shows?\b"),
     re.compile(r"\bquick tip from the network\b"),
-    re.compile(r"\bthis show comes to you from the \w+ network\b"),
+    re.compile(r"\bthis show comes to you from the \w+\s*network\b"),
 ]
 #: The YouTube CTA that immediately precedes the plug on most shows.
 _YOUTUBE_LEAD_PATTERN = re.compile(
     r"\b(?:and\s+)?if you(?:\s+\w+){0,2}\s+rather watch than listen\b"
 )
 #: Weaker evidence, used only when no frame matched.
-_NETWORK_MENTION_PATTERN = re.compile(r"\b(?:nerra|nera|narra|narrow)\s*network\b")
+_NETWORK_MENTION_PATTERN = re.compile(r"\b(?:nerra|nera|narra|narrow|nare)\s*network\b")
 _DISCLOSURE_PATTERN = re.compile(r"\bthis episode used ai voice synthesis\b")
 
 _TOKEN_CLEAN_RE = re.compile(r"[^a-z0-9]+")

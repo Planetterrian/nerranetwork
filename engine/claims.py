@@ -698,14 +698,48 @@ def run_source_integrity_gate(
 # gate's contract is untouched: nothing ships unless every claim traces to
 # a fetched, quote-matched source — repair just stops a bot-blocked
 # government site from reading as fabrication.
+#
+# Sep 5 2026: the dominant enforce-mode block was never a failed
+# verification. Every UC/FPD ledger since the counters exist was EMPTY
+# (the appendix calls an empty array normal), so the gate's real trigger
+# on the narrative shows was the citation-shape lint alone — and repair
+# keyed on failed_verifications, so it never fired for it (UC 2026-09-05:
+# claims=0, two uncovered shapes, blocked twice on one topic). Repair now
+# also asks for a source for each UNCOVERED sentence, with the anchor
+# pinned to the sentence itself; the full mechanical gate re-runs, so an
+# unsourced sentence still blocks exactly as before.
 
 REPAIR_MAX_CLAIMS = 10
 
 
+def _uncovered_repair_items(uncovered: List[dict]) -> List[dict]:
+    """Synthetic repair targets for citation-shaped sentences no VERIFIED
+    ledger entry covers (Sep 5 2026). The sentence IS the anchor — the
+    model may only supply the sourcing for it, never rewrite it."""
+    items: List[dict] = []
+    seen: set = set()
+    for finding in uncovered:
+        sentence = str(finding.get("sentence") or "").strip()
+        if not sentence or sentence in seen:
+            continue
+        seen.add(sentence)
+        items.append({
+            "id": f"u{len(items) + 1}",
+            "sentence": sentence,
+            "match": str(finding.get("match") or ""),
+        })
+        if len(items) >= REPAIR_MAX_CLAIMS:
+            break
+    return items
+
+
 def build_repair_prompt(episode_text: str, failed: List[dict],
-                        claims: List[dict]) -> str:
+                        claims: List[dict],
+                        uncovered_items: Optional[List[dict]] = None) -> str:
     """Prompt for the one-shot repair call. *failed* are verification
-    results; *claims* the original ledger entries (for claim text)."""
+    results; *claims* the original ledger entries (for claim text);
+    *uncovered_items* (from ``_uncovered_repair_items``) are
+    citation-shaped sentences with no covering verified entry."""
     by_id = {str(c.get("id", "")): c for c in claims}
     lines = []
     for v in failed[:REPAIR_MAX_CLAIMS]:
@@ -722,18 +756,44 @@ def build_repair_prompt(episode_text: str, failed: List[dict],
             f"  original_source: {v.get('url', '')}\n"
             f"  problem: {why}"
         )
+    sections = []
+    if lines:
+        sections.append(
+            "Some claims in an episode's source ledger failed automated "
+            "verification. For EACH claim below, provide a replacement ledger "
+            "entry with a DIFFERENT source_url that (a) directly supports the "
+            "claim, (b) is publicly fetchable without login or bot-blocking "
+            "(prefer major encyclopedias, news organizations, .edu pages, "
+            "archived copies), and (c) a supporting_quote of 5-25 words copied "
+            "VERBATIM from that source's text. Keep the claim and episode_span "
+            "EXACTLY as given — only the sourcing changes. If you cannot find "
+            "a genuine source for a claim, omit it (an omitted claim blocks "
+            "publication — never invent a source).\n\n"
+            "Failed claims:\n" + "\n".join(lines)
+        )
+    unc_lines = []
+    for item in uncovered_items or []:
+        unc_lines.append(
+            f"- id: {item['id']}\n"
+            f"  sentence: {item['sentence']}"
+        )
+    if unc_lines:
+        sections.append(
+            "The following sentences in the episode assert checkable "
+            "provenance (a study, a dated institutional action, a statistic, "
+            "an attributed finding) but NO ledger entry covers them. For EACH "
+            "sentence, provide a ledger entry: episode_span EXACTLY the "
+            "sentence as given, claim = the specific fact it asserts in one "
+            "plain sentence, source_url = a real, publicly fetchable page "
+            "that directly supports that fact (prefer major encyclopedias, "
+            "news organizations, .edu or .gov pages, archived copies), and a "
+            "supporting_quote of 5-25 words copied VERBATIM from that page. "
+            "If you cannot find a genuine source for a sentence, omit it (an "
+            "omitted sentence blocks publication — never invent a source).\n\n"
+            "Unsourced sentences:\n" + "\n".join(unc_lines)
+        )
     return (
-        "Some claims in an episode's source ledger failed automated "
-        "verification. For EACH claim below, provide a replacement ledger "
-        "entry with a DIFFERENT source_url that (a) directly supports the "
-        "claim, (b) is publicly fetchable without login or bot-blocking "
-        "(prefer major encyclopedias, news organizations, .edu pages, "
-        "archived copies), and (c) a supporting_quote of 5-25 words copied "
-        "VERBATIM from that source's text. Keep the claim and episode_span "
-        "EXACTLY as given — only the sourcing changes. If you cannot find "
-        "a genuine source for a claim, omit it (an omitted claim blocks "
-        "publication — never invent a source).\n\n"
-        "Failed claims:\n" + "\n".join(lines) + "\n\n"
+        "\n\n".join(sections) + "\n\n"
         "Episode text (for context):\n---\n" + episode_text[:6000] + "\n---\n\n"
         "Reply with ONLY a JSON array of objects with keys: id, claim, "
         "episode_span, source_url, supporting_quote."
@@ -770,11 +830,22 @@ def attempt_claim_repair(
     apply to the repaired ledger exactly as to the original. Any error
     returns the original result unchanged (repair can only help, never
     mask)."""
-    if gate.passed or not gate.failed_verifications:
+    # A sentence whose ledger entry FAILED verification is already a repair
+    # target through that entry (the lint lists it as uncovered because
+    # only verified entries cover) — don't ask for it twice under a
+    # synthetic id, or the two answers race for one anchor.
+    failed_ids = {str(v.get("id", "")) for v in gate.failed_verifications}
+    failed_claims = [c for c in claims if str(c.get("id", "")) in failed_ids]
+    uncovered_items = _uncovered_repair_items([
+        u for u in gate.uncovered_shapes
+        if not any(_sentence_covered(str(u.get("sentence") or ""), c)
+                   for c in failed_claims)
+    ])
+    if gate.passed or not (gate.failed_verifications or uncovered_items):
         return gate, claims
     try:
         prompt = build_repair_prompt(
-            episode_text, gate.failed_verifications, claims)
+            episode_text, gate.failed_verifications, claims, uncovered_items)
         replacements = parse_repair_response(generate(prompt))
     except Exception as exc:  # noqa: BLE001 — repair is best-effort
         logger.warning("claim repair call failed: %s", exc)
@@ -783,10 +854,30 @@ def attempt_claim_repair(
         logger.info("claim repair produced no usable replacements")
         return gate, claims
 
-    failed_ids = {str(v.get("id", "")) for v in gate.failed_verifications}
     by_id = {str(r.get("id", "")): r for r in replacements
              if str(r.get("id", "")) in failed_ids}
-    if not by_id:
+    # Entries the model supplied for uncovered sentences (Sep 5 2026):
+    # the anchor is PINNED to the exact sentence the lint flagged, so the
+    # only thing the model contributed is the sourcing — which the full
+    # gate below verifies mechanically before the sentence counts as
+    # covered. Ids are synthetic (u1..uN) and never shadow a real entry.
+    existing_ids = {str(c.get("id", "")) for c in claims}
+    uncovered_by_id = {it["id"]: it for it in uncovered_items
+                       if it["id"] not in existing_ids}
+    new_entries: List[dict] = []
+    for r in replacements:
+        rid = str(r.get("id", ""))
+        item = uncovered_by_id.pop(rid, None)
+        if item is None:
+            continue
+        entry = dict(r)
+        entry["id"] = rid
+        entry["episode_span"] = item["sentence"]
+        if not str(entry.get("claim") or "").strip():
+            entry["claim"] = item["sentence"]
+        entry.setdefault("confidence", "medium")
+        new_entries.append(entry)
+    if not by_id and not new_entries:
         return gate, claims
     repaired: List[dict] = []
     for claim in claims:
@@ -801,6 +892,7 @@ def attempt_claim_repair(
             repaired.append(replacement)
         else:
             repaired.append(claim)
+    repaired.extend(new_entries)
     new_gate = run_source_integrity_gate(episode_text, repaired, fetch=fetch)
     logger.info(
         "claim repair: %d replacement(s) tried — gate now %s (%s)",
