@@ -245,6 +245,85 @@ reviews:
       ab_listen_required: true
       rationale: 'Ep147 dairy segment used “most people have heard that…” and got no Dive chapter; aligns marker with prompt-seeded myth-bust openers without phonetic hacks. A/B-listen: changes player chapter boundaries.'
     agent_cost_usd: 0.1194
+  - date: '2026-08-31'
+    pr: null
+    doc: docs/reviews/planetterrian_review_2026_08_31.md
+    generated_by: grok-4.5
+    summary: 9/10 scripts still under the 1600-word floor, astronomy filter leakage returned (3 hits in ep160), brand scope still general-science firehose, and Science Deep Dive body-swallow is worse (6/10); prior August proposals never shipped so life-science floor and transition de-seed remain open.
+    scored_prior_predictions:
+    - metric: life-science / longevity / clinical-health items in Top 15 per digest (manual count, last 10)
+      verdict: miss
+      evidence: August scope floor never shipped; ep160–169 still mix archaeology, materials, education policy, climate-tech, dental crowns, lunar ops with longevity items
+    - metric: fetch-filter leakage matches in last 10 digests
+      verdict: miss
+      evidence: 'snapshot: 3 hits in ep160 (black hole, superstorm, solar wind) vs August baseline 0'
+    - metric: episodes under 1600-word floor, last 10
+      verdict: miss
+      evidence: 9/10 under (only ep163=1649 clears); min_digest_words 1700 never shipped — score as lever-not-shipped + digest ceiling
+    - metric: transcripts with verbatim transition 'shifting to a very different area of research', last 10
+      verdict: miss
+      evidence: still in ep160/161/162/163/165/167; podcast EXAMPLE block still seeds the line; de-seed never shipped
+    - metric: episodes whose Science Deep Dive chapter spans >50% of runtime (body swallow), last 10
+      verdict: partial
+      evidence: 'worse: ep161/163/164/165/166 swallow; ep168 missing Introduction (Dive first); ~6/10 vs prior 5/10'
+    - metric: median _tts.txt words, last 10 eps
+      verdict: miss
+      evidence: ep160–169 median ~1260 words; 9/10 below 1600 floor — chronic under-length unchanged
+    shipped: []
+    deferred:
+    - 'Operator decision on chronic under-length after repeated misses with digest_expand already on: (a) full-text journal fetch Nature/Science/bioRxiv, (b) higher min_digest_words + per-item sentence floors only, (c) lower min_podcast_words to honest ceiling, (d) accept short days — do NOT re-propose podcast_expand_below_target or podcast word-pressure'
+    - Engine-level split so content after Science Deep Dive re-enters story auto-segments (body-swallow on ep161/163/164/165/166; missing Intro on ep168) — shared chapter architecture, not PT prompt padding
+    - Garbage mid-body LLM auto-segment titles — shared Tesla/M&A-deferred class
+    - 'Network pronunciation of Nerra / Planetterrian (Whisper: Narra/Narrow/Planetarian) — no phonetic respelling (landmine #17)'
+    - Optional min_digest_words 1400→1700 only if operator explicitly picks length option (b); do not treat as automatic ship with a conditional length hit prediction
+    predictions:
+    - metric: fetch-filter leakage matches in last 10 digests (black hole|superstorm|solar wind|exoplanet|telescope classes)
+      baseline: 3 (ep160)
+      expected: 0 after fetcher path fix + drift-guard; if only YAML untouched and no code fix, expect ≥1 residual
+      verdict: pending
+      evidence: null
+    - metric: life-science / longevity / clinical-health items in Top 15 per digest (manual count, last 10)
+      baseline: often well under 8/15 (ep160–169 firehose mix)
+      expected: ≥8/15 core life-science on ≥8/10 post-merge episodes only if digest scope floor actually merges; else n/a-lever-not-shipped
+      verdict: pending
+      evidence: null
+    - metric: transcripts with verbatim 'shifting to a very different area of research', last 10
+      baseline: 6+/10 (ep160/161/162/163/165/167)
+      expected: '≤2/10 if EXAMPLE de-seed + ban ships; successor-tic watch: ''on a different note'' / ''moving to another finding'' may rise'
+      verdict: pending
+      evidence: null
+    - metric: episodes under 1600-word floor, last 10
+      baseline: 9/10
+      expected: still 8+/10 unless operator ships digest full-text or higher min_digest_words (no podcast lever)
+      verdict: pending
+      evidence: null
+    - metric: episodes with Science Deep Dive spanning >50% runtime or missing Introduction, last 10
+      baseline: 6/10 (ep161/163/164/165/166/168)
+      expected: monitor only unless engine split ships; pattern widen alone ≤ partial
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: engine/fetcher.py
+      kind: code
+      ab_listen_required: false
+      rationale: 'P0 regression: August leakage was 0; ep160 shipped FF-beat astronomy on air despite patterns already listed in shows/planetterrian.yaml. Garble/fetch-filter fixes are highest-yield per meta-review.'
+    - file: shows/prompts/planetterrian_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 'August-19 scope proposal never applied; transcripts ep160–169 still read as general-science radio. Enforces YAML description brand. A/B-listen: changes story mix and spoken content.'
+    - file: shows/prompts/planetterrian_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 'Meta-review: de-seed by shape + verbatim ban, never leave quotable EXAMPLE the model elects. 6+/10 transcripts still speak the EXAMPLE line. Successor-tic prediction logged for ''on a different note''.'
+    - file: shows/prompts/planetterrian_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 'Snapshot: ''keep an eye on'' in 9/10 — prompt-seeded convergence. Rotation keeps chapter regex valid (shows/planetterrian.yaml teaser pattern).'
+    - file: shows/planetterrian.yaml
+      kind: config
+      ab_listen_required: true
+      rationale: 'Prior miss class: paraphrase openers (''most people have heard'' / dairy ep147-class) skip the Dive chapter. Belt-and-braces only — does NOT fix body-swallow (engine split still deferred). A/B-listen: changes player chapter boundaries.'
+    agent_cost_usd: 0.1263
   - date: 2026-09-05
     pr: null
     doc: docs/reviews/network_delivery_review_2026_09_05.md
