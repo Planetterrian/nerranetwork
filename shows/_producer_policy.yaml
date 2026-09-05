@@ -1,0 +1,82 @@
+# Nerra Producer — inbox job policy (September 2026).
+#
+# The Producer is the network's back office: it reads Patrick's inbox,
+# classifies guest pitches and answers them in-thread with the apply link
+# for the right Mira-hosted interview show. It is never on-air.
+#
+# Read by pipelines/producer/policy.py. Env PRODUCER_MODE overrides `mode`.
+# Everything here is operator-editable without a code change.
+
+# auto  = classify, send invites for clean guest pitches, draft everything else
+# draft = never send; every guest pitch becomes a Gmail draft for Patrick
+# off   = do nothing at all (no sends, no drafts, no labels, no DB writes)
+mode: auto
+
+# Below this classifier confidence the Producer never sends; it holds the
+# thread for Patrick (draft + Slack note).
+min_confidence: 0.75
+
+# Circuit breaker: at most this many invites sent per inbox tick. Anything
+# past the cap is drafted instead so a runaway run cannot spam.
+max_sends_per_run: 25
+
+# Mail from these domains is never answered automatically, whatever the
+# classifier says (platform notices, vendor mail, billing).
+never_auto_reply_domains:
+  - apple.com
+  - spotify.com
+  - google.com
+  - github.com
+  - voximplant.com
+  - supabase.com
+  - cloudflare.com
+  - x.ai
+  - openai.com
+  - stripe.com
+  - resend.com
+  - buttondown.email
+
+# Categories that always hold for Patrick (never auto-replied), even in
+# auto mode. guest_followup is handled separately (skip when we already
+# replied in the thread; hold otherwise).
+hold_categories:
+  - sponsor_or_sales
+  - personal_or_business
+
+# Categories that get the processed label and nothing else.
+ignore_categories:
+  - platform_notice
+  - newsletter_or_noise
+
+# Gmail labels the Producer maintains (created on first use).
+labels:
+  processed: Producer/Processed
+  hold: Producer/Hold
+
+# Gmail search used to find unprocessed threads (the processed label is
+# excluded by the client automatically).
+inbox_query: "newer_than:30d in:inbox"
+
+# One-line description of each interview show, dropped into the invite:
+# "the right home is <show name>, <blurb>."
+show_blurbs:
+  age_of_ai: "our show on how AI is changing people's work"
+  nerra_voices: "our show on people and the work they've chosen"
+
+# Display names for the daily shows a publicist may have pitched. The
+# invite promises to feature the finished interview on that channel.
+# Keys are the slugs shows/<slug>.yaml uses (and cross_show_callouts).
+pitched_show_names:
+  planetterrian: Planetterrian Daily
+  models_agents: Models & Agents
+  modern_investing: Modern Investing Techniques
+  fascinating_frontiers: Fascinating Frontiers
+  env_intel: Environmental Intelligence
+  nerra_daily: Nerra Daily
+  spacex: SpaceX Daily
+  tesla: Tesla Shorts Time
+  omni_view: Omni View
+  unintended_consequences: Unintended Consequences
+  dp_pod: The DP Pod
+  first_principles: First Principles Daily
+  offshore_north: Offshore North

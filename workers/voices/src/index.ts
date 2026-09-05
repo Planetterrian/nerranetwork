@@ -1,14 +1,17 @@
 /**
- * Nerra Voices (The Age of AI) API Worker.
+ * Voices API Worker — The Age of AI + Nerra Voices (the two Mira-hosted
+ * live interview shows share this Worker, the Supabase tables and the
+ * pipelines; rows carry a `show` slug, see SHOWS below).
  *
  * Routes (all under /voices/ — see wrangler.toml):
- *   POST /voices/apply                public guest application form
+ *   POST /voices/apply                public guest application form (both shows)
  *   POST /voices/interview-complete   Voximplant scenario hangup webhook
- *   POST /voices/cal-com-booked       Cal.com booking webhook
+ *   POST /voices/cal-com-booked       Cal.com booking webhook (show from event type)
  *   GET  /voices/review/:token        guest transcript review page (gate 2)
  *   POST /voices/review/:token        guest approve / redact submit
- *   GET  /voices/admin/triage         Patrick's application triage UI
+ *   GET  /voices/admin/triage         Patrick's application triage UI (grouped by show)
  *   POST /voices/triage-decision      approve/decline an application
+ *   POST /voices/triage-reassign      move an application to the other show
  *   GET  /voices/admin/review/:id     Patrick's editorial review UI (gate 1)
  *   POST /voices/editorial-decision   approve/kill an editorial package
  *   GET  /voices/episode-lookup       Mira tool: nerra_episode_lookup
@@ -29,6 +32,14 @@ export interface Env {
   RESEND_API_KEY: string;
   VOICES_FROM_EMAIL: string;
   CALCOM_BOOKING_URL: string;
+  // Nerra Voices (Sept 2026): optional second Cal.com event. Falls back to
+  // CALCOM_BOOKING_URL when unset so one shared event link keeps working.
+  CALCOM_BOOKING_URL_NERRA_VOICES?: string;
+  // Optional: the Cal.com event-type slug (or numeric id) per show, used to
+  // route the booking webhook. Without them, an event slug containing
+  // "voices" → nerra_voices, anything else → age_of_ai.
+  CALCOM_EVENT_SLUG_AGE_OF_AI?: string;
+  CALCOM_EVENT_SLUG_NERRA_VOICES?: string;
   SLACK_WEBHOOK?: string;
   // WebRTC studio (July 2026): Voximplant app user the browser SDK logs in
   // as, via the one-time-key handshake in /voices/studio-auth.
@@ -39,6 +50,90 @@ export interface Env {
 
 const REPO = "Planetterrian/nerranetwork";
 const SEARCH_INDEX_URL = "https://nerranetwork.com/api/search_index.json";
+const SITE = "https://nerranetwork.com";
+
+// ---------------------------------------------------------------------------
+// Shows (Sept 2026). Mirrors pipelines/voices/shows.py + shows/<slug>.yaml
+// `voices:` blocks — keep the three in sync. Rows written before the
+// 20260905 migration have no `show` and resolve to age_of_ai.
+// ---------------------------------------------------------------------------
+
+export type ShowSlug = "age_of_ai" | "nerra_voices";
+
+export interface Show {
+  slug: ShowSlug;
+  name: string;        // "The Age of AI" — sentences, sign-offs
+  shortLabel: string;  // "Age of AI" — Slack prefixes, subjects, titles
+  brandColor: string;
+  page: string;        // public show page on nerranetwork.com
+  applyPage: string;
+  studioPage: string;  // shared studio; branded via ?show=<slug>
+}
+
+export const SHOWS: Record<ShowSlug, Show> = {
+  age_of_ai: {
+    slug: "age_of_ai",
+    name: "The Age of AI",
+    shortLabel: "Age of AI",
+    brandColor: "#7C3AED",
+    page: "age-of-ai.html",
+    applyPage: "age-of-ai-apply.html",
+    studioPage: "age-of-ai-studio.html",
+  },
+  nerra_voices: {
+    slug: "nerra_voices",
+    name: "Nerra Voices",
+    shortLabel: "Nerra Voices",
+    brandColor: "#0F766E",
+    page: "nerra-voices.html",
+    applyPage: "nerra-voices-apply.html",
+    studioPage: "age-of-ai-studio.html",
+  },
+};
+
+export const DEFAULT_SHOW: ShowSlug = "age_of_ai";
+
+export function isShow(slug: unknown): slug is ShowSlug {
+  return typeof slug === "string" && Object.prototype.hasOwnProperty.call(SHOWS, slug);
+}
+
+/** Show for a Supabase row (interview, application, run), with fallbacks —
+ *  e.g. `showFor(interview, application)`. Missing/unknown → age_of_ai. */
+export function showFor(...rows: Array<{ show?: unknown } | null | undefined>): Show {
+  for (const row of rows) {
+    if (row && isShow(row.show)) return SHOWS[row.show];
+  }
+  return SHOWS[DEFAULT_SHOW];
+}
+
+function studioUrl(show: Show, interviewId: string): string {
+  return `${SITE}/${show.studioPage}?interview=${interviewId}&show=${show.slug}`;
+}
+
+function bookingUrl(env: Env, show: Show): string {
+  if (show.slug === "nerra_voices" && env.CALCOM_BOOKING_URL_NERRA_VOICES) {
+    return env.CALCOM_BOOKING_URL_NERRA_VOICES;
+  }
+  return env.CALCOM_BOOKING_URL;
+}
+
+const signOff = (show: Show) => `— ${show.name}, Nerra Network`;
+
+/** Which show a Cal.com booking belongs to. Explicit env mapping first
+ *  (event-type slug or numeric id), then the "voices" heuristic. */
+function showFromCalCom(env: Env, eventSlug: string, eventTypeId: string): Show {
+  const slug = eventSlug.trim().toLowerCase();
+  const id = eventTypeId.trim();
+  const mapping: Array<[ShowSlug, string | undefined]> = [
+    ["age_of_ai", env.CALCOM_EVENT_SLUG_AGE_OF_AI],
+    ["nerra_voices", env.CALCOM_EVENT_SLUG_NERRA_VOICES],
+  ];
+  for (const [showSlug, configured] of mapping) {
+    const want = (configured ?? "").trim().toLowerCase();
+    if (want && (want === slug || (id && want === id.toLowerCase()))) return SHOWS[showSlug];
+  }
+  return slug.includes("voices") ? SHOWS.nerra_voices : SHOWS.age_of_ai;
+}
 
 // ---------------------------------------------------------------------------
 // Small clients
@@ -132,6 +227,17 @@ function requireAdmin(req: Request, env: Env): Response | null {
 const esc = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
+/** interview + its application + resolved show (two queries, the pattern
+ *  the rest of this file uses). `interview` is null when the id is unknown. */
+async function interviewWithApp(env: Env, interviewId: string):
+    Promise<{ interview: any | null; app: any | null; show: Show }> {
+  const interview = (await sb(env, "GET", `interviews?id=eq.${interviewId}`))?.[0] ?? null;
+  const app = interview?.application_id
+    ? (await sb(env, "GET", `guest_applications?id=eq.${interview.application_id}`))?.[0] ?? null
+    : null;
+  return { interview, app, show: showFor(interview, app) };
+}
+
 // ---------------------------------------------------------------------------
 // Handlers
 // ---------------------------------------------------------------------------
@@ -139,9 +245,13 @@ const esc = (s: string) =>
 async function handleApply(req: Request, env: Env): Promise<Response> {
   const form = await req.json<any>().catch(() => null);
   if (!form?.name || !form?.email) return json({ error: "name and email are required" }, 400);
-  const row = await sb(env, "POST", "guest_applications", {
+  // `show` comes from the apply page (age-of-ai-apply.html posts age_of_ai,
+  // nerra-voices-apply.html posts nerra_voices); anything else → default.
+  const show = showFor({ show: form.show });
+  const emailAddr = String(form.email).trim().slice(0, 200);
+  const fields: Record<string, unknown> = {
     name: String(form.name).slice(0, 200),
-    email: String(form.email).slice(0, 200),
+    email: emailAddr,
     phone: form.phone ? String(form.phone).slice(0, 40) : null,
     organization: form.organization ? String(form.organization).slice(0, 200) : null,
     title: form.title ? String(form.title).slice(0, 200) : null,
@@ -150,15 +260,45 @@ async function handleApply(req: Request, env: Env): Promise<Response> {
     links: form.links ?? null,
     preferred_window: form.preferred_window ?? null,
     referrer: form.referrer ?? null,
-  }, "return=representation");
-  await slack(env, `Age of AI: new guest application — *${form.name}* (${form.organization ?? "independent"}). Triage: https://api.nerranetwork.com/voices/admin/triage`);
+    show: show.slug,
+  };
+
+  // Nerra Producer (Sept 2026): the inbox job may already have created an
+  // `invited` row for this email (publicist pitched, Mira replied with the
+  // apply link). The form completes THAT row instead of creating a
+  // duplicate — provenance (source='email', pitched_show, email_thread_id,
+  // publicist_*) is kept; only the fields the guest actually filled in
+  // are merged over the Producer's stub.
+  let id: string | undefined;
+  let merged = false;
+  const invited = await sb(env, "GET",
+    `guest_applications?email=ilike.${encodeURIComponent(emailAddr)}&status=eq.invited` +
+    `&order=created_at.desc&limit=1&select=id,show`);
+  if (invited?.length) {
+    const patch: Record<string, unknown> = { status: "pending" };
+    for (const [k, v] of Object.entries(fields)) {
+      if (v !== null && v !== undefined && v !== "") patch[k] = v;
+    }
+    const rows = await sb(env, "PATCH", `guest_applications?id=eq.${invited[0].id}`,
+      patch, "return=representation");
+    id = rows?.[0]?.id ?? invited[0].id;
+    merged = true;
+    if (invited[0].show && invited[0].show !== show.slug) {
+      console.warn(`apply: invited row ${id} was ${invited[0].show}, form says ${show.slug} — using the form's show`);
+    }
+  } else {
+    const row = await sb(env, "POST", "guest_applications", fields, "return=representation");
+    id = row?.[0]?.id;
+  }
+
+  await slack(env, `${show.shortLabel}: ${merged ? "invited guest completed their application" : "new guest application"} — *${form.name}* (${form.organization ?? "independent"}). Triage: https://api.nerranetwork.com/voices/admin/triage`);
   // Mira notifies the operator directly (July 2026 process): Patrick
   // approves guests from his inbox rather than watching a dashboard.
   try {
     await email(env, operatorEmail(env),
-      `New Age of AI guest application: ${form.name}`,
+      `New ${show.shortLabel} guest application: ${form.name}`,
       `<p>Hi Patrick,</p>
-       <p>A new guest just applied to the show:</p>
+       <p>A new guest just applied to ${esc(show.name)}${merged ? " (completing the application I invited them to from the inbox)" : ""}:</p>
        <p><strong>${esc(form.name)}</strong>${form.title ? `, ${esc(form.title)}` : ""}
        ${form.organization ? ` — ${esc(form.organization)}` : ""}<br>
        ${esc(String(form.bio ?? "").slice(0, 400))}</p>
@@ -171,7 +311,7 @@ async function handleApply(req: Request, env: Env): Promise<Response> {
   } catch (err: any) {
     console.error("operator application email failed:", err?.message ?? err);
   }
-  return json({ ok: true, id: row[0]?.id });
+  return json({ ok: true, id, show: show.slug, merged });
 }
 
 async function handleInterviewComplete(req: Request, env: Env): Promise<Response> {
@@ -199,6 +339,9 @@ async function handleInterviewComplete(req: Request, env: Env): Promise<Response
       `interview_runs?id=eq.${payload.run_id}&select=interview_id,grok_session_log`);
     const runRow = runRows?.[0] ?? {};
     const attempts = Number(runRow.grok_session_log?.aborted_attempts ?? 0) + 1;
+    const ivRows = runRow.interview_id ? await sb(env, "GET",
+      `interviews?id=eq.${runRow.interview_id}&select=application_id,show`) : [];
+    const show = showFor(ivRows?.[0]);
 
     if (attempts >= 2 && runRow.interview_id) {
       // AUTO PHONE FALLBACK (Aug 6 2026, after Dan Perra's four-attempt
@@ -211,10 +354,8 @@ async function handleInterviewComplete(req: Request, env: Env): Promise<Response
         { status: "briefed", call_mode: "pstn" });
       await sb(env, "PATCH", `interview_runs?id=eq.${payload.run_id}`,
         { status: "failed", disconnect_reason: "studio_join_failed_x2_auto_pstn" });
-      const ivs = await sb(env, "GET",
-        `interviews?id=eq.${runRow.interview_id}&select=application_id`);
-      const apps = ivs?.[0] ? await sb(env, "GET",
-        `guest_applications?id=eq.${ivs[0].application_id}&select=name,email`) : [];
+      const apps = ivRows?.[0]?.application_id ? await sb(env, "GET",
+        `guest_applications?id=eq.${ivRows[0].application_id}&select=name,email`) : [];
       if (apps?.[0]?.email) {
         await email(env, apps[0].email,
           "Change of plan — I'll call your phone instead",
@@ -225,7 +366,7 @@ async function handleInterviewComplete(req: Request, env: Env): Promise<Response
            call. Everything else works exactly the same.</p><p>— Mira</p>`,
           true);
       }
-      await slack(env, `Age of AI: 2 failed studio joins — auto-switched to PSTN; Mira dials within 5 minutes.`);
+      await slack(env, `${show.shortLabel}: 2 failed studio joins — auto-switched to PSTN; Mira dials within 5 minutes.`);
       return json({ ok: true, auto_pstn_fallback: true });
     }
 
@@ -238,10 +379,10 @@ async function handleInterviewComplete(req: Request, env: Env): Promise<Response
           record_url: payload.voximplant_record_url ?? null,
           at: new Date().toISOString() } },
     });
-    await slack(env, `Age of AI: studio call ended after ${dur}s (attempt ${attempts}) — studio reopened for retry; one more failure auto-switches to phone.`);
+    await slack(env, `${show.shortLabel}: studio call ended after ${dur}s (attempt ${attempts}) — studio reopened for retry; one more failure auto-switches to phone.`);
     try {
       await email(env, operatorEmail(env),
-        "Age of AI: guest's studio call dropped early — retry is open",
+        `${show.shortLabel}: guest's studio call dropped early — retry is open`,
         `<p>Hi Patrick,</p><p>A studio session ended after only ${dur} seconds
          (attempt ${attempts}) — a failed join. The studio is reopened for
          the guest; if the next attempt fails too, I'll automatically switch
@@ -269,26 +410,28 @@ async function handleInterviewComplete(req: Request, env: Env): Promise<Response
       const ivId = runs?.[0]?.interview_id;
       if (ivId) {
         const ivs = await sb(env, "GET",
-          `interviews?id=eq.${ivId}&select=no_show_count,application_id`);
+          `interviews?id=eq.${ivId}&select=no_show_count,application_id,show`);
         const strikes = (ivs?.[0]?.no_show_count ?? 0) + 1;
+        const show = showFor(ivs?.[0]);
         if (strikes < 2) {
           await sb(env, "PATCH", `interviews?id=eq.${ivId}`,
             { status: "briefed", no_show_count: strikes });
-          await slack(env, `Age of AI: call attempt ${strikes} failed (${reason.slice(0, 120)}) — will retry within the fire grace window.`);
+          await slack(env, `${show.shortLabel}: call attempt ${strikes} failed (${reason.slice(0, 120)}) — will retry within the fire grace window.`);
         } else {
           await sb(env, "PATCH", `interviews?id=eq.${ivId}`,
             { status: "missed", no_show_count: strikes });
           const apps = await sb(env, "GET",
             `guest_applications?id=eq.${ivs[0].application_id}&select=name,email`);
           if (apps?.[0]?.email) {
+            const rebook = bookingUrl(env, show);
             await email(env, apps[0].email,
-              "We missed you — rebook your Age of AI interview",
-              `<p>Hi ${apps[0].name},</p><p>Mira tried to reach you twice for your` +
-              ` Age of AI interview but couldn't get through. No problem — pick a` +
-              ` new time that works for you:</p><p><a href="${env.CALCOM_BOOKING_URL}">` +
-              `Rebook your interview</a></p><p>— The Age of AI, Nerra Network</p>`);
+              `We missed you — rebook your ${show.shortLabel} interview`,
+              `<p>Hi ${esc(apps[0].name)},</p><p>Mira tried to reach you twice for your` +
+              ` ${esc(show.shortLabel)} interview but couldn't get through. No problem — pick a` +
+              ` new time that works for you:</p><p><a href="${esc(rebook)}">` +
+              `Rebook your interview</a></p><p>${esc(signOff(show))}</p>`);
           }
-          await slack(env, `Age of AI: interview ${ivId} marked missed after 2 failed attempts — reschedule email sent.`);
+          await slack(env, `${show.shortLabel}: interview ${ivId} marked missed after 2 failed attempts — reschedule email sent.`);
         }
       }
     } catch (err: any) {
@@ -309,9 +452,30 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
   const startTime = p.startTime ?? p.start_time ?? null;
   if (!emailAddr || !startTime) return json({ error: "email + startTime required" }, 400);
 
-  const apps = await sb(env, "GET",
-    `guest_applications?email=eq.${encodeURIComponent(emailAddr)}&status=eq.approved&order=created_at.desc&limit=1`);
+  // Which show was booked: Cal.com sends the event type in a few shapes
+  // depending on webhook version. Env mapping wins; else the "voices"
+  // heuristic (see showFromCalCom).
+  const eventSlug = String(p.eventType?.slug ?? p.eventTypeSlug ?? p.event_type_slug ?? "");
+  const eventTypeId = String(p.eventTypeId ?? p.eventType?.id ?? p.event_type_id ?? "");
+  const bookedShow = showFromCalCom(env, eventSlug, eventTypeId);
+
+  const base = `guest_applications?email=eq.${encodeURIComponent(emailAddr)}&status=eq.approved`;
+  let apps = await sb(env, "GET",
+    `${base}&show=eq.${bookedShow.slug}&order=created_at.desc&limit=1`);
+  if (!apps?.length) {
+    // No approved application for that show — fall back to the newest
+    // approved one for the email regardless of show (a guest booked via
+    // the other show's event link, or a pre-migration row).
+    apps = await sb(env, "GET", `${base}&order=created_at.desc&limit=1`);
+    if (apps?.length) {
+      console.warn(`cal-com-booked: no approved ${bookedShow.slug} application for ${emailAddr}; ` +
+        `falling back to application ${apps[0].id} (show=${apps[0].show ?? "unset"})`);
+    }
+  }
   if (!apps?.length) return json({ error: "no approved application for that email" }, 404);
+  // The application decides the interview's show (that is what Patrick
+  // approved and what the pipeline keys prompts/publishing on).
+  const show = showFor(apps[0], { show: bookedShow.slug });
 
   const existing = await sb(env, "GET",
     `interviews?application_id=eq.${apps[0].id}&status=in.(scheduled,briefed)&limit=1`);
@@ -319,19 +483,19 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
   if (existing?.length) {
     interviewId = existing[0].id;
     await sb(env, "PATCH", `interviews?id=eq.${interviewId}`,
-      { scheduled_at: startTime, status: "scheduled", reminder_sent_at: null });
+      { scheduled_at: startTime, status: "scheduled", reminder_sent_at: null, show: show.slug });
   } else {
     const created = await sb(env, "POST", "interviews",
-      { application_id: apps[0].id, scheduled_at: startTime, status: "scheduled" },
+      { application_id: apps[0].id, scheduled_at: startTime, status: "scheduled", show: show.slug },
       "return=representation");
     interviewId = created?.[0]?.id ?? "";
   }
-  const studioUrl = `https://nerranetwork.com/age-of-ai-studio.html?interview=${interviewId}`;
-  await email(env, emailAddr, "Your Age of AI interview is booked",
+  const studio = studioUrl(show, interviewId);
+  await email(env, emailAddr, `Your ${show.shortLabel} interview is booked`,
     `<p>Hi ${esc(apps[0].name)},</p>
      <p>You're booked. At the scheduled time, join Mira — our AI host — from
      your personal browser studio:</p>
-     <p><a href="${studioUrl}"><strong>Join your interview here</strong></a>
+     <p><a href="${studio}"><strong>Join your interview here</strong></a>
      (bookmark it — it unlocks a few minutes before your slot).</p>
      <p>To sound your best: use a computer in a quiet room, with headphones
      or AirPods (a dedicated mic is even better). Camera is optional but
@@ -343,9 +507,9 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
      <p>Two things to know: the conversation is recorded for the podcast,
      and nothing publishes until you've reviewed and approved the
      transcript.</p>
-     <p>— The Age of AI, Nerra Network</p>`, true);
-  await slack(env, `Age of AI: ${apps[0].name} booked ${startTime}`);
-  return json({ ok: true });
+     <p>${esc(signOff(show))}</p>`, true);
+  await slack(env, `${show.shortLabel}: ${apps[0].name} booked ${startTime}`);
+  return json({ ok: true, show: show.slug, interview_id: interviewId });
 }
 
 async function handleTriageDecision(req: Request, env: Env): Promise<Response> {
@@ -360,16 +524,38 @@ async function handleTriageDecision(req: Request, env: Env): Promise<Response> {
     { status: body.decision, notes: body.notes ?? null }, "return=representation");
   const app = rows?.[0];
   if (app && body.decision === "approved") {
-    await email(env, app.email, "You're invited — book your Age of AI interview",
+    const show = showFor(app);
+    const link = bookingUrl(env, show);
+    await email(env, app.email, `You're invited — book your ${show.name} interview`,
       `<p>Hi ${esc(app.name)},</p>
-       <p>We'd love to have you on The Age of AI. Pick a time that works and
+       <p>We'd love to have you on ${esc(show.name)}. Pick a time that works and
        Mira — our AI host — will call you: </p>
-       <p><a href="${esc(env.CALCOM_BOOKING_URL)}">${esc(env.CALCOM_BOOKING_URL)}</a></p>
+       <p><a href="${esc(link)}">${esc(link)}</a></p>
        <p>The call runs about forty-five minutes. It's recorded, and nothing
        publishes until you've approved the transcript.</p>
-       <p>— The Age of AI, Nerra Network</p>`, true);
+       <p>${esc(signOff(show))}</p>`, true);
   }
   return json({ ok: true });
+}
+
+// POST /voices/triage-reassign {application_id, show} — a pitch that landed
+// on the wrong show (the Producer's classifier or the guest's own pick)
+// moves before approval, so the booking link, studio branding and the
+// pipeline's prompts all follow the corrected show.
+async function handleTriageReassign(req: Request, env: Env): Promise<Response> {
+  const denied = requireAdmin(req, env);
+  if (denied) return denied;
+  const body = await req.json<any>().catch(() => null);
+  if (!body?.application_id || !isShow(body.show)) {
+    return json({ error: `application_id + show(${Object.keys(SHOWS).join("|")}) required` }, 400);
+  }
+  const rows = await sb(env, "PATCH",
+    `guest_applications?id=eq.${body.application_id}`,
+    { show: body.show }, "return=representation");
+  const app = rows?.[0];
+  if (!app) return json({ error: "application not found" }, 404);
+  await slack(env, `${SHOWS[body.show as ShowSlug].shortLabel}: application from *${app.name}* reassigned to this show by Patrick.`);
+  return json({ ok: true, id: app.id, show: app.show });
 }
 
 async function handleEditorialDecision(req: Request, env: Env): Promise<Response> {
@@ -391,13 +577,13 @@ async function handleEditorialDecision(req: Request, env: Env): Promise<Response
   const pkg = rows?.[0];
   if (!pkg) return json({ error: "package not found" }, 404);
 
+  const { interview, app, show } = await interviewWithApp(env, pkg.interview_id);
   if (body.decision === "approve") {
     // Gate 1 cleared → open gate 2: email the guest their review link.
-    const interview = (await sb(env, "GET", `interviews?id=eq.${pkg.interview_id}`))[0];
-    const app = (await sb(env, "GET", `guest_applications?id=eq.${interview.application_id}`))[0];
+    if (!interview || !app) return json({ error: "interview/application not found" }, 404);
     await sb(env, "PATCH", `interviews?id=eq.${interview.id}`, { status: "guest_review" });
     const link = `https://api.nerranetwork.com/voices/review/${pkg.guest_review_token}`;
-    await email(env, app.email, "Your Age of AI transcript is ready for review",
+    await email(env, app.email, `Your ${show.shortLabel} transcript is ready for review`,
       `<p>Hi ${esc(app.name)},</p>
        <p>Your conversation with Mira is edited and ready. Please review the
        transcript — approve it as-is, or mark anything you'd like removed:</p>
@@ -405,11 +591,11 @@ async function handleEditorialDecision(req: Request, env: Env): Promise<Response
        <p>If we don't hear from you within seven days we'll take that as
        approval (we'll remind you at day four). You can always request
        changes post-publish as well.</p>
-       <p>— The Age of AI, Nerra Network</p>`);
-    await slack(env, `Age of AI: Patrick approved package ${pkg.id} — guest review email sent`);
+       <p>${esc(signOff(show))}</p>`);
+    await slack(env, `${show.shortLabel}: Patrick approved package ${pkg.id} — guest review email sent`);
   } else {
     await sb(env, "PATCH", `interviews?id=eq.${pkg.interview_id}`, { status: "failed" });
-    await slack(env, `Age of AI: Patrick KILLED package ${pkg.id}`);
+    await slack(env, `${show.shortLabel}: Patrick KILLED package ${pkg.id}`);
   }
   return json({ ok: true });
 }
@@ -428,15 +614,16 @@ async function handleGuestReviewPage(env: Env, token: string): Promise<Response>
   if (["approved_by_guest", "published"].includes(pkg.status)) {
     return html("<h1>Already approved — thank you!</h1>");
   }
+  const { show } = await interviewWithApp(env, pkg.interview_id);
   return html(`<!doctype html><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex">
-<title>Review your Age of AI transcript</title>
+<title>Review your ${esc(show.shortLabel)} transcript</title>
 <style>body{font:16px/1.6 system-ui;max-width:760px;margin:2rem auto;padding:0 1rem;color:#1a202c}
 pre{white-space:pre-wrap;background:#f7fafc;border:1px solid #e2e8f0;border-radius:8px;padding:1rem;max-height:60vh;overflow:auto}
-textarea{width:100%;min-height:90px}button{background:#7C3AED;color:#fff;border:0;border-radius:8px;padding:.7rem 1.4rem;font-size:1rem;cursor:pointer;margin-right:.6rem}
+textarea{width:100%;min-height:90px}button{background:${show.brandColor};color:#fff;border:0;border-radius:8px;padding:.7rem 1.4rem;font-size:1rem;cursor:pointer;margin-right:.6rem}
 .secondary{background:#4a5568}</style>
-<h1>Your Age of AI transcript</h1>
+<h1>Your ${esc(show.shortLabel)} transcript</h1>
 <p>Everything below is what would publish. Approve it as-is, or tell us what
 to remove — quote the passage(s) and we'll cut them from both the audio and
 the transcript before anything goes out.</p>
@@ -465,12 +652,13 @@ async function handleGuestReviewSubmit(req: Request, env: Env, token: string): P
   if (!pkg) return json({ error: "not found" }, 404);
   const body = await req.json<any>().catch(() => ({}));
   const now = new Date().toISOString();
+  const { show } = await interviewWithApp(env, pkg.interview_id);
   if (body.approve) {
     await sb(env, "PATCH", `editorial_packages?id=eq.${pkg.id}`,
       { status: "approved_by_guest", guest_reviewed_at: now });
     await sb(env, "PATCH", `interviews?id=eq.${pkg.interview_id}`, { status: "approved" });
     await dispatch(env, "interview-approved-by-guest", { interview_id: pkg.interview_id });
-    await slack(env, `Age of AI: guest APPROVED package ${pkg.id} — production dispatched`);
+    await slack(env, `${show.shortLabel}: guest APPROVED package ${pkg.id} — production dispatched`);
   } else {
     const requests = String(body.redactions ?? "").trim();
     await sb(env, "PATCH", `editorial_packages?id=eq.${pkg.id}`, {
@@ -478,7 +666,7 @@ async function handleGuestReviewSubmit(req: Request, env: Env, token: string): P
       guest_redactions: [{ note: requests, resolved: false }],
       status: "in_review",
     });
-    await slack(env, `Age of AI: guest requested removals on package ${pkg.id} — needs Patrick:\n${requests.slice(0, 500)}`);
+    await slack(env, `${show.shortLabel}: guest requested removals on package ${pkg.id} — needs Patrick:\n${requests.slice(0, 500)}`);
   }
   return json({ ok: true });
 }
@@ -489,23 +677,54 @@ async function handleAdminTriage(req: Request, env: Env): Promise<Response> {
   const denied = requireAdmin(req, env);
   if (denied) return denied;
   const apps = await sb(env, "GET",
-    "guest_applications?status=eq.pending&order=created_at.asc&limit=50");
-  const rows = (apps ?? []).map((a: any) => `
+    "guest_applications?status=eq.pending&order=created_at.asc&limit=100");
+  const all: any[] = apps ?? [];
+  const provenance = (a: any) => {
+    const bits: string[] = [];
+    if (a.source && a.source !== "form") bits.push(`source: ${esc(String(a.source))}`);
+    if (a.pitched_show) bits.push(`pitched for: ${esc(String(a.pitched_show))}`);
+    if (a.publicist_name || a.publicist_email) {
+      bits.push(`publicist: ${esc(String(a.publicist_name ?? ""))}${a.publicist_email ? ` &lt;${esc(String(a.publicist_email))}&gt;` : ""}`);
+    }
+    if (a.pitch_summary) bits.push(`pitch: ${esc(String(a.pitch_summary)).slice(0, 300)}`);
+    return bits.length ? `<br><small class="prov">${bits.join(" · ")}</small>` : "";
+  };
+  const reassignOptions = (current: ShowSlug) => Object.values(SHOWS)
+    .filter((s) => s.slug !== current)
+    .map((s) => `<option value="${s.slug}">${esc(s.name)}</option>`).join("");
+  const rowHtml = (a: any, show: Show) => `
     <li><b>${esc(a.name)}</b> — ${esc(a.title ?? "")} ${esc(a.organization ?? "")}
-      <br><small>${esc((a.topics ?? []).join(", "))}</small>
+      <br><small>${esc((a.topics ?? []).join(", "))}</small>${provenance(a)}
       <br>${esc(a.bio ?? "").slice(0, 500)}
       <br><button onclick="decide('${a.id}','approved')">Approve</button>
-      <button onclick="decide('${a.id}','declined')">Decline</button></li>`).join("");
+      <button onclick="decide('${a.id}','declined')">Decline</button>
+      <span class="move">Move to
+        <select id="mv-${a.id}">${reassignOptions(show.slug)}</select>
+        <button onclick="reassign('${a.id}')">Reassign</button></span></li>`;
+  const sections = (Object.values(SHOWS) as Show[]).map((show) => {
+    const mine = all.filter((a) => showFor(a).slug === show.slug);
+    return `<h2 style="border-left:6px solid ${show.brandColor};padding-left:.6rem">${esc(show.name)}
+      <small>(${mine.length})</small></h2>
+      <ul>${mine.map((a) => rowHtml(a, show)).join("") || "<i>none</i>"}</ul>`;
+  }).join("");
   return html(`<!doctype html><meta charset="utf-8"><meta name="robots" content="noindex">
-<title>Age of AI — triage</title>
-<style>body{font:15px/1.5 system-ui;max-width:800px;margin:2rem auto;padding:0 1rem}li{margin-bottom:1.4rem}</style>
-<h1>Pending applications (${(apps ?? []).length})</h1><ul>${rows || "<i>none</i>"}</ul>
+<title>Guest triage — Nerra Network</title>
+<style>body{font:15px/1.5 system-ui;max-width:800px;margin:2rem auto;padding:0 1rem}li{margin-bottom:1.4rem}
+.prov{color:#4a5568}.move{margin-left:.8rem;font-size:.9rem;color:#4a5568}</style>
+<h1>Pending applications (${all.length})</h1>${sections}
 <script>
 const token = new URL(location).searchParams.get('token');
 async function decide(id, decision){
   await fetch('/voices/triage-decision?token='+token, {method:'POST',
     headers:{'Content-Type':'application/json'},
     body: JSON.stringify({application_id:id, decision})});
+  location.reload();
+}
+async function reassign(id){
+  const show = document.getElementById('mv-'+id).value;
+  await fetch('/voices/triage-reassign?token='+token, {method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({application_id:id, show})});
   location.reload();
 }
 </script>`);
@@ -518,13 +737,15 @@ async function handleAdminReview(req: Request, env: Env, id: string): Promise<Re
   const pkg = rows?.[0];
   if (!pkg) return html("<h1>Package not found</h1>", 404);
   const run = (await sb(env, "GET", `interview_runs?id=eq.${pkg.interview_run_id}`))[0] ?? {};
+  const { app, show } = await interviewWithApp(env, pkg.interview_id);
   return html(`<!doctype html><meta charset="utf-8"><meta name="robots" content="noindex">
-<title>Age of AI — editorial review</title>
+<title>${esc(show.shortLabel)} — editorial review</title>
 <style>body{font:15px/1.6 system-ui;max-width:860px;margin:2rem auto;padding:0 1rem}
 pre{white-space:pre-wrap;background:#f7fafc;border:1px solid #e2e8f0;border-radius:8px;padding:1rem;max-height:50vh;overflow:auto}
-textarea{width:100%;min-height:80px}button{padding:.6rem 1.2rem;margin-right:.6rem}</style>
-<h1>Editorial review — gate 1</h1>
-<p>Status: <b>${esc(pkg.status)}</b>${pkg.audio_quality_flag ? ` · ⚠️ ${esc(pkg.audio_quality_flag)}` : ""}</p>
+textarea{width:100%;min-height:80px}button{padding:.6rem 1.2rem;margin-right:.6rem}
+h1{border-left:6px solid ${show.brandColor};padding-left:.6rem}</style>
+<h1>${esc(show.name)} — editorial review (gate 1)</h1>
+<p>Guest: <b>${esc(app?.name ?? "unknown")}</b> · Status: <b>${esc(pkg.status)}</b>${pkg.audio_quality_flag ? ` · ⚠️ ${esc(pkg.audio_quality_flag)}` : ""}</p>
 ${run.recording_mixed_url ? `<audio controls src="${esc(run.recording_mixed_url)}" style="width:100%"></audio>` : ""}
 <h3>Episode notes</h3><pre>${esc(pkg.episode_notes ?? "")}</pre>
 <h3>Cleaned transcript</h3><pre>${esc(pkg.transcript_cleaned ?? "")}</pre>
@@ -616,24 +837,27 @@ async function gate2Housekeeping(env: Env) {
     "editorial_packages?status=eq.approved_by_patrick&guest_review_deadline=not.is.null");
   for (const pkg of pkgs ?? []) {
     const deadline = Date.parse(pkg.guest_review_deadline);
-    const interview = (await sb(env, "GET", `interviews?id=eq.${pkg.interview_id}`))[0];
-    const app = (await sb(env, "GET", `guest_applications?id=eq.${interview.application_id}`))[0];
+    const { interview, app, show } = await interviewWithApp(env, pkg.interview_id);
+    if (!interview || !app) {
+      console.error(`gate2: package ${pkg.id} has no interview/application — skipped`);
+      continue;
+    }
     if (now >= deadline) {
       // Day 7: auto-approve (spec §7) — guest can still request takedown.
       await sb(env, "PATCH", `editorial_packages?id=eq.${pkg.id}`,
         { status: "approved_by_guest", guest_reviewed_at: new Date().toISOString() });
       await sb(env, "PATCH", `interviews?id=eq.${interview.id}`, { status: "approved" });
       await dispatch(env, "interview-approved-by-guest", { interview_id: interview.id });
-      await slack(env, `Age of AI: package ${pkg.id} AUTO-APPROVED (7-day window elapsed)`);
+      await slack(env, `${show.shortLabel}: package ${pkg.id} AUTO-APPROVED (7-day window elapsed)`);
     } else if (deadline - now < 3 * 864e5 && deadline - now > 2 * 864e5) {
       // Day 4 (±cron granularity): one reminder.
       const link = `https://api.nerranetwork.com/voices/review/${pkg.guest_review_token}`;
-      await email(env, app.email, "Reminder: your Age of AI transcript awaits",
+      await email(env, app.email, `Reminder: your ${show.shortLabel} transcript awaits`,
         `<p>Hi ${esc(app.name)},</p>
          <p>A gentle nudge — your transcript is waiting for review:</p>
          <p><a href="${esc(link)}">${esc(link)}</a></p>
          <p>If we don't hear from you in the next three days we'll take that
-         as approval.</p><p>— The Age of AI, Nerra Network</p>`);
+         as approval.</p><p>${esc(signOff(show))}</p>`);
     }
   }
 }
@@ -721,9 +945,16 @@ async function handleStudioState(req: Request, env: Env): Promise<Response> {
   const interviewId = url.searchParams.get("interview") ?? "";
   if (!/^[0-9a-f-]{36}$/.test(interviewId)) return json({ error: "interview required" }, 400);
   const ivs = await sb(env, "GET",
-    `interviews?id=eq.${interviewId}&select=id,status,scheduled_at,call_mode`);
+    `interviews?id=eq.${interviewId}&select=id,status,scheduled_at,call_mode,show,application_id`);
   const iv = ivs?.[0];
   if (!iv) return json({ error: "not found" }, 404);
+  // Pre-migration interviews carry no show; fall back to the application's.
+  let show = showFor(iv);
+  if (!isShow(iv.show) && iv.application_id) {
+    const apps = await sb(env, "GET",
+      `guest_applications?id=eq.${iv.application_id}&select=show`);
+    show = showFor(apps?.[0]);
+  }
   const runs = await sb(env, "GET",
     `interview_runs?interview_id=eq.${interviewId}&status=in.(awaiting_guest,pending)` +
     `&order=created_at.desc&limit=1&select=id,status`);
@@ -734,6 +965,8 @@ async function handleStudioState(req: Request, env: Env): Promise<Response> {
     interview_status: iv.status,
     scheduled_at: iv.scheduled_at,
     call_mode: iv.call_mode ?? "webrtc",
+    show: show.slug,
+    show_name: show.name,
   });
 }
 
@@ -800,8 +1033,11 @@ async function handleHealth(env: Env): Promise<Response> {
       admin_token: !!env.ADMIN_TOKEN,
       resend: !!(env.RESEND_API_KEY && env.VOICES_FROM_EMAIL),
       calcom: !!env.CALCOM_BOOKING_URL,
+      calcom_nerra_voices: !!env.CALCOM_BOOKING_URL_NERRA_VOICES,
+      calcom_event_slugs: !!(env.CALCOM_EVENT_SLUG_AGE_OF_AI || env.CALCOM_EVENT_SLUG_NERRA_VOICES),
       slack: !!env.SLACK_WEBHOOK,
     },
+    shows: Object.keys(SHOWS),
   };
   if (tok) {
     try {
@@ -846,6 +1082,7 @@ export default {
       if (req.method === "POST" && path === "/voices/interview-complete") return handleInterviewComplete(req, env);
       if (req.method === "POST" && path === "/voices/cal-com-booked") return handleCalComBooked(req, env);
       if (req.method === "POST" && path === "/voices/triage-decision") return handleTriageDecision(req, env);
+      if (req.method === "POST" && path === "/voices/triage-reassign") return handleTriageReassign(req, env);
       if (req.method === "POST" && path === "/voices/editorial-decision") return handleEditorialDecision(req, env);
       const review = path.match(/^\/voices\/review\/([A-Za-z0-9_-]{16,})$/);
       if (review) {

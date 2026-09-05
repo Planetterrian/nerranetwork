@@ -1,4 +1,5 @@
-"""Shared plumbing for the Nerra Voices (The Age of AI) pipelines.
+"""Shared plumbing for the Mira-hosted interview pipelines (The Age of AI,
+Nerra Voices).
 
 Every pipeline script imports this first. It provides:
 
@@ -22,7 +23,7 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import requests
 
@@ -30,13 +31,32 @@ ROOT = Path(__file__).resolve().parent.parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+# Registry import goes through the repo-root namespace path, NOT a bare
+# ``import shows``: the repo already has a top-level ``shows/`` package
+# (``shows.hooks.*``) and a bare import would shadow one or the other
+# depending on sys.path order.
+from pipelines.voices.shows import (  # noqa: E402,F401
+    DEFAULT_SHOW, VoiceShow, get_show, show_for,
+)
+
 logger = logging.getLogger("nerra_voices")
 logging.basicConfig(level=logging.INFO, stream=sys.stdout,
                     format="%(asctime)s %(levelname)s %(message)s")
 
-SHOW_SLUG = "age_of_ai"
-SHOW_NAME = "The Age of AI"
-EPISODE_URL_BASE = "https://nerranetwork.com/blog/age_of_ai"
+# Deprecated (September 2026): the pipeline is show-generic now — resolve
+# the show per row with ``show_for(interview, app)``. Kept only so any
+# out-of-tree import of the old constant keeps working; it is the DEFAULT
+# show's name, never the current row's.
+SHOW_NAME = get_show(DEFAULT_SHOW).name
+
+ShowRef = Union[str, VoiceShow, None]
+
+
+def resolve_show(show: ShowRef = None) -> VoiceShow:
+    """Accept a slug, a :class:`VoiceShow`, or ``None`` (→ default show)."""
+    if isinstance(show, VoiceShow):
+        return show
+    return get_show(show)
 
 
 # ---------------------------------------------------------------------------
@@ -141,14 +161,42 @@ def send_email(to: str, subject: str, html_body: str,
     logger.info("Email sent to %s: %s", to, subject)
 
 
-def render_email(template_name: str, **context: Any) -> str:
-    """Render a templates/email/*.j2 template with jinja2."""
+def show_email_context(show: ShowRef = None,
+                       interview_id: str = "") -> Dict[str, Any]:
+    """The show-branding variables every ``templates/email/voices_*.j2``
+    template reads: show_name, show_short_label, brand_color, studio_url,
+    apply_url, page_url, sign_off (+ show_slug, closing_question)."""
+    s = resolve_show(show)
+    return {
+        "show_slug": s.slug,
+        "show_name": s.name,
+        "show_short_label": s.short_label,
+        "brand_color": s.brand_color,
+        "studio_url": s.studio_url(interview_id or ""),
+        "apply_url": s.apply_url,
+        "page_url": s.page_url,
+        "sign_off": s.sign_off,
+        "closing_question": s.closing_question,
+    }
+
+
+def render_email(template_name: str, show: ShowRef = None,
+                 **context: Any) -> str:
+    """Render a templates/email/*.j2 template with jinja2.
+
+    ``show`` (slug or :class:`VoiceShow`; ``None`` → the default show)
+    injects the show branding fields — see :func:`show_email_context`.
+    Explicit kwargs win over the injected fields. ``interview_id`` in the
+    context is used to build a per-interview ``studio_url``.
+    """
     from jinja2 import Environment, FileSystemLoader, select_autoescape
     env = Environment(
         loader=FileSystemLoader(str(ROOT / "templates" / "email")),
         autoescape=select_autoescape(["html", "j2"]),
     )
-    return env.get_template(template_name).render(**context)
+    merged = show_email_context(show, str(context.get("interview_id") or ""))
+    merged.update(context)
+    return env.get_template(template_name).render(**merged)
 
 
 # ---------------------------------------------------------------------------
@@ -184,16 +232,39 @@ def llm(prompt: str, *, temperature: float = 0.5, max_tokens: int = 3500,
     return (text or "").strip()
 
 
-def load_prompt(template: str, **subs: Any) -> str:
+def show_prompt_subs(show: ShowRef = None) -> Dict[str, str]:
+    """The show tokens every prompt may use: {{show_name}}, {{show_slug}},
+    {{show_short_label}}, {{show_premise}}, {{opening_line}},
+    {{closing_question}}."""
+    s = resolve_show(show)
+    return {
+        "show_name": s.name,
+        "show_slug": s.slug,
+        "show_short_label": s.short_label,
+        "show_premise": s.premise,
+        "opening_line": s.opening_line,
+        "closing_question": s.closing_question,
+    }
+
+
+def load_prompt(template: str, show: ShowRef = None, **subs: Any) -> str:
     """Load pipelines/voices/prompts/<template> and substitute {{token}} vars.
+
+    ``show`` (slug or :class:`VoiceShow`; ``None`` → the default show)
+    picks the per-show override via :meth:`VoiceShow.prompt_path` (falls
+    back to the shared prompt) and pre-fills the show tokens from
+    :func:`show_prompt_subs`. Explicit ``subs`` win over those.
 
     First param is deliberately NOT called ``name``: callers pass a
     ``name=<guest name>`` substitution kwarg, which collided with the old
     positional param and made every generate_brief call a TypeError
     (latent since launch — surfaced July 17 2026 on the first real brief).
     """
-    text = (Path(__file__).parent / "prompts" / template).read_text(encoding="utf-8")
-    for key, value in subs.items():
+    s = resolve_show(show)
+    text = s.prompt_path(template).read_text(encoding="utf-8")
+    merged: Dict[str, Any] = dict(show_prompt_subs(s))
+    merged.update(subs)
+    for key, value in merged.items():
         text = text.replace("{{" + key + "}}", str(value))
     return text
 
@@ -258,23 +329,27 @@ def parse_json_lenient(text: str) -> Any:
 
 
 # ---------------------------------------------------------------------------
-# Show memory (July 24 2026) — Age of AI runs OUTSIDE run_show, so the
-# network's digest-driven narrative memory never fires for it. This is its
-# memory surface: the committed episode record, injected into brief /
-# thesis / narration prompts so the show behaves like a chronicle
-# (continuity, callbacks, no retreading) instead of isolated one-offs.
+# Show memory (July 24 2026) — the interview shows run OUTSIDE run_show,
+# so the network's digest-driven narrative memory never fires for them.
+# This is their memory surface: the committed episode record, injected
+# into brief / thesis / narration prompts so each show behaves like a
+# chronicle (continuity, callbacks, no retreading) instead of isolated
+# one-offs. Memory is PER SHOW — an Age of AI brief never sees Nerra
+# Voices episodes and vice versa.
 # ---------------------------------------------------------------------------
 
-def episode_memory_block(limit: int = 10) -> str:
+def episode_memory_block(limit: int = 10, show: ShowRef = None) -> str:
     """Published-episode memory for prompt injection ({{show_memory}}).
 
-    Reads the committed ``digests/age_of_ai/summaries_age_of_ai.json`` —
-    the durable record of what the show has already aired (guest, date,
-    episode framing). Returns a labeled block, or ``""`` when no episodes
-    exist yet / on any failure — memory must never block an interview.
+    Reads the show's committed summaries JSON
+    (:attr:`VoiceShow.summaries_path`, e.g.
+    ``digests/age_of_ai/summaries_age_of_ai.json``) — the durable record of
+    what the show has already aired (guest, date, episode framing). Returns
+    a labeled block, or ``""`` when no episodes exist yet / on any failure
+    — memory must never block an interview.
     """
     try:
-        path = ROOT / "digests" / "age_of_ai" / "summaries_age_of_ai.json"
+        path = resolve_show(show).summaries_path
         if not path.exists():
             return ""
         data = json.loads(path.read_text(encoding="utf-8"))

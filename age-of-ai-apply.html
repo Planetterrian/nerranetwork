@@ -168,7 +168,8 @@ document.getElementById('applyForm').addEventListener('submit', async (e) => {
     topics: val('topics').split('\n').map(s => s.trim()).filter(Boolean),
     links: { raw: val('links') },
     preferred_window: val('preferred_window'),
-    referrer: document.referrer || null
+    referrer: document.referrer || null,
+    show: 'age_of_ai'
   };
   try {
     const resp = await fetch('https://api.nerranetwork.com/voices/apply', {

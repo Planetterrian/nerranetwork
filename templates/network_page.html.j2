@@ -215,8 +215,9 @@
                     <div aria-hidden="true" style="display:grid;gap:0.6rem;">
                         <div style="font-family:var(--font-ui);font-size:0.72rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--nn-text-muted);">Your morning, one feed</div>
                         {#- Sample lineup: only shows that are actually in the
-                            Personal lineup (Nerra Daily and Age of AI are not). -#}
-                        {% set _lineup_sample = all_shows | rejectattr('slug', 'in', ['nerra_daily', 'age_of_ai', 'finansy_prosto', 'privet_russian']) | list %}
+                            Personal lineup (Nerra Daily and the two Mira
+                            interview shows are not). -#}
+                        {% set _lineup_sample = all_shows | rejectattr('slug', 'in', ['nerra_daily', 'age_of_ai', 'nerra_voices', 'finansy_prosto', 'privet_russian']) | list %}
                         {% for s in _lineup_sample[:4] %}
                         {% set _pbase = s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image %}
                         <div style="display:flex;align-items:center;gap:0.7rem;border:1px solid var(--nn-border);border-radius:12px;padding:0.5rem 0.7rem;background:color-mix(in srgb, var(--nn-surface) 70%, transparent);">

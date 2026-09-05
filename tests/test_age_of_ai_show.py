@@ -172,14 +172,23 @@ class TestSpecArtifacts:
         assert len(EDITORIAL_PASSES) == 8, "spec §5.3: exactly 8 passes"
 
     def test_mira_system_prompt_contracts(self):
+        """The shared prompt is show-generic (Sept 2026): the show's name,
+        premise, opening line and closing question are tokens filled from
+        pipelines/voices/shows.py; the Age of AI closing question (spec
+        §3.3) lives in the registry defaults and is checked below."""
         text = (PIPELINES / "prompts" / "mira_system_prompt.txt").read_text(
             encoding="utf-8")
         assert "You are Mira" in text
         assert "Lightning round" in text
-        assert "the one bet you're making" in text, "closing question (spec §3.3)"
+        assert 'Closing question always: "{{closing_question}}"' in text
         assert "Hard time cap: 45 minutes" in text
-        for token in ("{{guest_name}}", "{{episode_thesis}}", "{{guest_brief}}"):
+        for token in ("{{guest_name}}", "{{episode_thesis}}", "{{guest_brief}}",
+                      "{{show_name}}", "{{show_premise}}", "{{opening_line}}"):
             assert token in text, f"missing template token {token}"
+        assert "Age of AI" not in text, "show name must come from the registry"
+        from pipelines.voices.shows import get_show
+        assert "the one bet you're making" in get_show("age_of_ai").closing_question, (
+            "closing question (spec §3.3)")
 
     def test_worker_routes_cover_spec_endpoints(self):
         worker = WORKER_TS.read_text(encoding="utf-8")
@@ -236,6 +245,9 @@ class TestFireLogic:
                        "Q-ONE?", "Q-TWO?"):
             assert needle in prompt, needle
         assert "{{" not in prompt, "unsubstituted template tokens remain"
+        # No `show` on either row → the default show (pre-migration rows).
+        assert "The Age of AI" in prompt
+        assert "the one bet you're making" in prompt, "closing question (spec §3.3)"
 
     def test_fire_window_tolerates_cron_drift(self):
         import fire_interviews as fi

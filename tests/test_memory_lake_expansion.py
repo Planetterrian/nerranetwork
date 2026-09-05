@@ -116,7 +116,8 @@ class TestAgeOfAiVoicesMemory:
         briefs = (ROOT / "pipelines/voices/generate_briefs.py").read_text()
         produce = (ROOT / "pipelines/voices/produce_episode.py").read_text()
         assert briefs.count("show_memory=") == 2
-        assert "show_memory=episode_memory_block()" in produce
+        # Sept 2026: memory is per show (Age of AI vs Nerra Voices).
+        assert "show_memory=episode_memory_block(show=show)" in produce
 
     def test_memory_block_reads_real_summaries(self):
         from pipelines.voices.common import episode_memory_block

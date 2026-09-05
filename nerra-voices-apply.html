@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Apply to be a guest — Nerra Voices · Nerra Network</title>
+<meta name="description" content="Apply to be interviewed on Nerra Voices — real people on the work they've chosen, interviewed live by Mira, the Nerra Network's AI host. No AI angle required.">
+<meta property="og:title" content="Be a guest on Nerra Voices">
+<meta property="og:description" content="Real people. Real work. AI host. Mira, an AI, asks the questions. Real people answer. Apply to be interviewed live.">
+<meta property="og:image" content="https://nerranetwork.com/assets/covers/nerra-voices.jpg">
+<style>
+  /* Nerra Voices brand — shows/nerra_voices.yaml voices.brand_color */
+  :root {
+    --teal: #0F766E; --teal-bright: #2DD4BF; --amber: #FBBF24;
+    --deep: #0B1F21; --midnight: #113534; --mint: #99F6E4;
+    --white: #F5FFFE; --card: rgba(245, 255, 254, 0.05);
+    --line: rgba(153, 246, 228, 0.25);
+  }
+  * { box-sizing: border-box; }
+  body { font: 16px/1.65 'DM Sans', system-ui, -apple-system, sans-serif;
+         color: var(--white); margin: 0; min-height: 100vh;
+         background: linear-gradient(180deg, var(--midnight) 0%, var(--deep) 55%) fixed; }
+  .wrap { max-width: 740px; margin: 0 auto; padding: 2.5rem 1.2rem 4rem; }
+  .lockup { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.6rem; }
+  .lockup svg { flex-shrink: 0; }
+  .lockup .words { line-height: 1.25; }
+  .lockup .title { font-size: 1.5rem; font-weight: 700; letter-spacing: .08em; }
+  .lockup .sub { color: var(--mint); font-size: .8rem; letter-spacing: .28em; }
+  .lockup .sub::before { content: ""; display: block; width: 56px; height: 3px;
+                         border-radius: 2px; background: var(--amber); margin: .35rem 0 .3rem; }
+  h1 { font-size: 1.9rem; margin: 0 0 .3rem; }
+  .tagline { color: var(--mint); margin-top: 0; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+          padding: 1.1rem 1.3rem; margin: 1.5rem 0; backdrop-filter: blur(4px); }
+  .card strong { color: var(--white); }
+  .card ul { margin: .6rem 0 0; padding-left: 1.2rem; }
+  .card li { margin: .35rem 0; color: var(--mint); }
+  .card li b { color: var(--white); font-weight: 600; }
+  label { display: block; font-weight: 600; margin: 1.1rem 0 .3rem; }
+  input, textarea { width: 100%; padding: .65rem .75rem; border: 1px solid var(--line);
+                    border-radius: 10px; font: inherit; color: var(--white);
+                    background: rgba(11, 31, 33, 0.6); }
+  input:focus, textarea:focus { outline: 2px solid var(--teal); border-color: transparent; }
+  textarea { min-height: 110px; }
+  ::placeholder { color: rgba(153, 246, 228, 0.45); }
+  .hint { font-size: .85rem; color: var(--mint); margin-top: .25rem; opacity: .85; }
+  button { margin-top: 1.6rem; background: var(--teal); color: var(--white); border: 0;
+           border-radius: 12px; padding: .9rem 1.7rem; font: inherit; font-size: 1.05rem;
+           font-weight: 600; cursor: pointer; transition: background .15s; }
+  button:hover { background: var(--teal-bright); }
+  button:disabled { opacity: .55; cursor: wait; }
+  #result { margin-top: 1rem; font-weight: 600; color: var(--amber); }
+  a { color: var(--teal-bright); }
+  .foot { margin-top: 3rem; font-size: .8rem; color: var(--mint); opacity: .7;
+          letter-spacing: .12em; }
+  .foot a { color: var(--mint); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="lockup" aria-hidden="false">
+    <!-- The Dialogue mark, recoloured in the Nerra Voices teal -->
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="74" height="74" role="img" aria-label="Nerra Voices mark">
+      <rect width="120" height="120" rx="26" fill="#0B1F21"/>
+      <circle cx="60" cy="60" r="46" fill="none" stroke="#99F6E4" stroke-opacity="0.8" stroke-width="2.8"/>
+      <g id="dialogue-wave"></g>
+    </svg>
+    <div class="words">
+      <div class="title">NERRA VOICES</div>
+      <div class="sub">WITH&nbsp;MIRA&nbsp;·&nbsp;NERRA&nbsp;NETWORK</div>
+    </div>
+  </div>
+
+  <h1>Be a guest on the show</h1>
+  <p class="tagline">Real people. Real work. AI host. Mira, an AI, asks the questions. Real people answer.</p>
+
+  <div class="card">
+    <strong>How it works, honestly and completely:</strong>
+    <ul>
+      <li>Nerra Voices is about people and the work they've chosen — founders, clinicians, tradespeople, teachers, artists, organizers. <b>No AI angle required.</b> AI only comes up if you bring it up.</li>
+      <li>Our AI host, <b>Mira</b>, calls you at a time you book — a real ~45-minute conversation, recorded for the podcast.</li>
+      <li>The day before, you get a short prep brief with the themes she plans to explore.</li>
+      <li><b>Nothing publishes until you approve the transcript.</b> You can have anything removed.</li>
+      <li>Every episode discloses that the host is an AI. The guests never are.</li>
+    </ul>
+  </div>
+
+  <form id="applyForm">
+    <label for="name">Your name *</label>
+    <input id="name" name="name" required maxlength="200" autocomplete="name">
+
+    <label for="email">Email *</label>
+    <input id="email" name="email" type="email" required maxlength="200" autocomplete="email">
+
+    <label for="phone">Phone number (the one Mira should call)</label>
+    <input id="phone" name="phone" maxlength="40" placeholder="+1 604 …" autocomplete="tel">
+    <p class="hint">You can add this later — it's only needed once your interview is booked.</p>
+
+    <label for="title">Role / title</label>
+    <input id="title" name="title" maxlength="200" placeholder="Nurse · Founder · Electrician · Teacher · Potter …">
+
+    <label for="organization">Organization (optional)</label>
+    <input id="organization" name="organization" maxlength="200">
+
+    <label for="bio">Who are you? *</label>
+    <textarea id="bio" name="bio" required maxlength="4000" placeholder="A few sentences about you and the work you've chosen — in your own words."></textarea>
+
+    <label for="topics">What should Mira ask you about? *</label>
+    <textarea id="topics" name="topics" required maxlength="1000" placeholder="One topic per line — e.g. 'what a night shift in the ER is really like', 'why I left the firm to make furniture', 'the part of the job nobody warns you about'"></textarea>
+
+    <label for="links">Links (optional)</label>
+    <input id="links" name="links" maxlength="500" placeholder="Website, LinkedIn, portfolio — comma separated">
+
+    <label for="preferred_window">Rough availability (optional)</label>
+    <input id="preferred_window" name="preferred_window" maxlength="200" placeholder="e.g. weekday mornings, Pacific time">
+
+    <button id="submitBtn" type="submit">Apply to be a guest</button>
+    <p id="result" role="status"></p>
+  </form>
+
+  <p class="foot">REAL PEOPLE · REAL WORK · AI HOST · <a href="nerra-voices.html">LISTEN TO NERRA VOICES</a></p>
+</div>
+
+<script>
+// Draw The Dialogue wave (same geometry as scripts/generate_age_of_ai_brand.py),
+// bars in the Nerra Voices teal (#0F766E → #2DD4BF).
+(function () {
+  const g = document.getElementById('dialogue-wave');
+  const NS = 'http://www.w3.org/2000/svg';
+  const BAR_HEIGHTS = [0.22,0.40,0.30,0.62,0.48,0.85,0.58,1.00,0.70,0.44,0.58,0.32];
+  const cx = 60, cy = 60, radius = 46;
+  const innerR = radius - (radius/26*1.6)*4, span = innerR*0.82;
+  const barGap = span/BAR_HEIGHTS.length, barW = barGap*0.52, maxH = innerR*1.12;
+  BAR_HEIGHTS.forEach((h, i) => {
+    const t = i/(BAR_HEIGHTS.length-1);
+    const c = [14 + (45-14)*t, 165 + (212-165)*t, 164 + (191-164)*t].map(Math.round);
+    const r = document.createElementNS(NS, 'rect');
+    const half = h*maxH/2, x = cx - span + i*barGap + barGap/2;
+    r.setAttribute('x', x-barW/2); r.setAttribute('y', cy-half);
+    r.setAttribute('width', barW); r.setAttribute('height', half*2);
+    r.setAttribute('rx', barW/2); r.setAttribute('fill', `rgb(${c.join(',')})`);
+    g.appendChild(r);
+  });
+  const pts = [];
+  for (let s = 0; s <= 60; s++) {
+    const t = s/60, env = Math.pow(Math.sin(t*Math.PI), 0.85);
+    const y = cy - Math.sin(t*Math.PI*2.35 + 0.35)*env*maxH*0.40;
+    pts.push(`${(cx + barGap*0.4 + t*span).toFixed(1)},${y.toFixed(1)}`);
+  }
+  const line = document.createElementNS(NS, 'polyline');
+  line.setAttribute('points', pts.join(' '));
+  line.setAttribute('fill', 'none'); line.setAttribute('stroke', '#FBBF24');
+  line.setAttribute('stroke-width', radius/22); line.setAttribute('stroke-linecap', 'round');
+  g.appendChild(line);
+  const [ex, ey] = pts[pts.length-1].split(',');
+  const dot = document.createElementNS(NS, 'circle');
+  dot.setAttribute('cx', ex); dot.setAttribute('cy', ey);
+  dot.setAttribute('r', radius/20); dot.setAttribute('fill', '#FBBF24');
+  g.appendChild(dot);
+})();
+
+document.getElementById('applyForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('submitBtn');
+  const result = document.getElementById('result');
+  btn.disabled = true; result.textContent = '';
+  const val = id => document.getElementById(id).value.trim();
+  const payload = {
+    name: val('name'), email: val('email'), phone: val('phone'),
+    title: val('title'), organization: val('organization'), bio: val('bio'),
+    topics: val('topics').split('\n').map(s => s.trim()).filter(Boolean),
+    links: { raw: val('links') },
+    preferred_window: val('preferred_window'),
+    referrer: document.referrer || null,
+    show: 'nerra_voices'
+  };
+  try {
+    const resp = await fetch('https://api.nerranetwork.com/voices/apply', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    result.textContent = 'Application received! We read every one — if it\'s a fit, a booking link lands in your inbox.';
+    e.target.reset();
+  } catch (err) {
+    result.textContent = 'Something went wrong — email patrick@planetterrian.com and we\'ll sort it out.';
+  } finally { btn.disabled = false; }
+});
+</script>
+</body>
+</html>

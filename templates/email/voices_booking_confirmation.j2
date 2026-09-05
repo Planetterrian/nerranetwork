@@ -1,15 +1,15 @@
-{# Age of AI — booking confirmation. Live send is the Worker's inline copy
+{# Mira interview shows — booking confirmation (show fields injected by render_email(show=...)). Live send is the Worker's inline copy
    (cal-com-booked handler); keep in sync if you edit tone. #}
 <div style="font-family:system-ui,sans-serif;max-width:640px;margin:0 auto;color:#1a202c;line-height:1.6">
-  <h2 style="color:#7C3AED">You're booked</h2>
+  <h2 style="color:{{ brand_color }}">You're booked</h2>
   <p>Hi {{ guest_name }},</p>
-  <p>Your Age of AI interview is set for <strong>{{ scheduled_at }}</strong>.
+  <p>Your {{ show_name }} interview is set for <strong>{{ scheduled_at }}</strong>.
   You'll join from your personal browser studio —
-  <a href="https://nerranetwork.com/age-of-ai-studio.html?interview={{ interview_id }}">bookmark your studio link</a>
+  <a href="{{ studio_url }}">bookmark your studio link</a>
   — from a computer in a quiet room, ideally with headphones or AirPods
   (camera optional but appreciated). The day before, you'll receive a
   short prep brief with the themes she plans to explore.</p>
   <p>The call is recorded, and nothing publishes until you've reviewed and
   approved the transcript.</p>
-  <p>— The Age of AI, Nerra Network</p>
+  <p>{{ sign_off }}</p>
 </div>

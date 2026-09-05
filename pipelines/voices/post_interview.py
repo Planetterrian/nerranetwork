@@ -28,7 +28,7 @@ import requests
 from common import (  # noqa: E402
     llm, load_prompt, logger, new_review_token, notify_operator,
     parse_json_lenient, r2_upload, render_email, sb_insert, sb_select,
-    sb_update, send_email,
+    sb_update, send_email, show_for,
 )
 
 sys.path.insert(0, str(Path(__file__).parent))
@@ -74,19 +74,24 @@ def _interview_and_app(run: dict) -> tuple[dict, dict]:
 
 def handle_missed(run: dict, interview: dict, app: dict) -> int:
     """Guest didn't answer (spec §7 row 1 + §11.7 no-show policy)."""
+    show = show_for(interview, app)
     no_shows = int(interview.get("no_show_count") or 0) + 1
     status = "missed" if no_shows < 2 else "cancelled"
     sb_update("interviews", f"id=eq.{interview['id']}",
               {"status": status, "no_show_count": no_shows})
     if no_shows < 2:
-        html = render_email("voices_interview_reminder.j2",
+        html = render_email("voices_interview_reminder.j2", show=show,
                             guest_name=app["name"], missed=True,
                             booking_url=os.environ.get("CALCOM_BOOKING_URL", ""))
-        send_email(app["email"], "We missed you — reschedule your Age of AI interview", html)
-        notify_operator(f"Age of AI: {app['name']} no-show #{no_shows} — reschedule email sent")
+        send_email(app["email"],
+                   f"We missed you — reschedule your {show.short_label} interview",
+                   html)
+        notify_operator(show.slack(
+            f"{app['name']} no-show #{no_shows} — reschedule email sent"))
     else:
         sb_update("guest_applications", f"id=eq.{app['id']}", {"status": "lapsed"})
-        notify_operator(f"Age of AI: {app['name']} second no-show — application lapsed")
+        notify_operator(show.slack(
+            f"{app['name']} second no-show — application lapsed"))
     return 0
 
 
@@ -163,10 +168,12 @@ def diarized_transcript(raw: Path, workdir: Path) -> tuple[str, float]:
 
 
 def run_editorial_passes(transcript: str, interview: dict, app: dict) -> dict:
+    show = show_for(interview, app)
     package: dict = {}
     for prompt_file, field in EDITORIAL_PASSES:
         base_prompt = load_prompt(
             f"editorial_passes/{prompt_file}",
+            show=show,
             guest_name=app["name"],
             guest_title=app.get("title", ""),
             guest_organization=app.get("organization", ""),
@@ -192,9 +199,9 @@ def run_editorial_passes(transcript: str, interview: dict, app: dict) -> dict:
                                field, attempt + 1, exc)
         if output is None:
             # Spec §7: surface to Patrick for a manual editorial draft.
-            notify_operator(
-                f"Age of AI: editorial pass {field!r} failed validation twice "
-                f"— manual draft needed. Last error: {error}", critical=True)
+            notify_operator(show.slack(
+                f"editorial pass {field!r} failed validation twice "
+                f"— manual draft needed. Last error: {error}"), critical=True)
             output = [] if field in JSON_PASSES else ""
         package[field] = output
         logger.info("Editorial pass complete: %s", field)
@@ -204,11 +211,12 @@ def run_editorial_passes(transcript: str, interview: dict, app: dict) -> dict:
 def main() -> int:
     run = _run_row()
     interview, app = _interview_and_app(run)
+    show = show_for(interview, app)
 
     if run.get("status") == "failed" or run.get("disconnect_reason", "").startswith("call_failed"):
         return handle_missed(run, interview, app)
 
-    with tempfile.TemporaryDirectory(prefix="aoa_post_") as tmp:
+    with tempfile.TemporaryDirectory(prefix=f"{show.slug}_post_") as tmp:
         workdir = Path(tmp)
         raw = fetch_recording(run, workdir)
         duration = duration_seconds(raw)
@@ -220,7 +228,7 @@ def main() -> int:
         # the same artifact as recording_video_url (raw material for the
         # future YouTube version).
         ext = raw.suffix.lstrip(".") or "mp3"
-        raw_url = r2_upload(raw, f"age_of_ai/raw/{run['id']}_{stamp}.{ext}")
+        raw_url = r2_upload(raw, show.r2_key("raw", f"{run['id']}_{stamp}.{ext}"))
         # Video (WebRTC mode) is a SEPARATE recording since dry-run 2
         # showed call.record({video:true}) collapses audio to a mono mix.
         # The scenario ships its URL in the webhook; fall back to probing
@@ -236,13 +244,14 @@ def main() -> int:
                     with vfile.open("wb") as fh:
                         for chunk in vresp.iter_content(1 << 16):
                             fh.write(chunk)
-                video_url = r2_upload(vfile, f"age_of_ai/raw/{run['id']}_{stamp}_video.{vext}")
+                video_url = r2_upload(
+                    vfile, show.r2_key("raw", f"{run['id']}_{stamp}_video.{vext}"))
             except Exception:  # noqa: BLE001 — video is best-effort
                 logger.exception("Video download/upload failed (non-fatal)")
         if video_url is None and has_video_stream(raw):
             video_url = raw_url
         mixed = mix_interview(raw, workdir / "mixed.wav")
-        mixed_url = r2_upload(mixed, f"age_of_ai/raw/{run['id']}_{stamp}_mixed.wav")
+        mixed_url = r2_upload(mixed, show.r2_key("raw", f"{run['id']}_{stamp}_mixed.wav"))
 
         transcript, confidence = diarized_transcript(raw, workdir)
 
@@ -285,11 +294,11 @@ def main() -> int:
                       {"topical_show_fits": package["topical_show_fits"]})
 
     flag_note = f" ⚠️ {', '.join(flags)}" if flags else ""
-    notify_operator(
-        f"Age of AI: {app['name']} interview processed "
+    notify_operator(show.slack(
+        f"{app['name']} interview processed "
         f"({int(duration // 60)} min).{flag_note} "
         f"Review (gate 1): {REVIEW_BASE}/{pkg['id']}"
-    )
+    ))
     logger.info("Editorial package %s ready for Patrick", pkg["id"])
     return 0
 

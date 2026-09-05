@@ -1,0 +1,62 @@
+# Nerra Producer — inbox job (September 2026). Reads Patrick's Gmail via a
+# delegated service account, classifies guest pitches with Grok and answers
+# clean ones in-thread with the apply link for the right interview show.
+# Everything uncertain becomes a draft + Slack note. docs/nerra_producer.md.
+name: Nerra Producer inbox
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Read + classify only; never send, draft, label or write'
+        type: boolean
+        default: false
+      limit:
+        description: 'Max threads to process this run'
+        type: string
+        default: '50'
+      inbox_query:
+        description: "Override the Gmail search (e.g. 'newer_than:180d in:inbox' to drain the backlog)"
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+# Runs must never overlap: two ticks could answer the same thread twice
+# before the processed label lands.
+concurrency:
+  group: nerra-producer-inbox
+  cancel-in-progress: false
+
+jobs:
+  inbox:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # No git history needed (landmine #1: full clone is ~2.5 GB).
+          fetch-depth: 1
+      - uses: ./.github/actions/setup-python
+        with:
+          python-version: '3.12'
+          requirements-file: 'pipelines/requirements.txt'
+          skip-checkout: 'true'
+      - name: Run Producer inbox
+        run: >-
+          python -m pipelines.producer.inbox
+          ${{ (github.event_name == 'workflow_dispatch' && inputs.dry_run) && '--dry-run' || '' }}
+          --limit ${{ (github.event_name == 'workflow_dispatch' && inputs.limit) || '50' }}
+        env:
+          GMAIL_SERVICE_ACCOUNT_JSON: ${{ secrets.GMAIL_SERVICE_ACCOUNT_JSON }}
+          GMAIL_DELEGATED_USER: ${{ secrets.GMAIL_DELEGATED_USER }}
+          GMAIL_SEND_AS: ${{ secrets.GMAIL_SEND_AS }}
+          SUPABASE_URL: ${{ secrets.VOICES_SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.VOICES_SUPABASE_SERVICE_KEY }}
+          GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          NOTIFICATION_WEBHOOK_URL: ${{ secrets.NOTIFICATION_WEBHOOK_URL }}
+          PRODUCER_MODE: ${{ vars.PRODUCER_MODE }}
+          PRODUCER_INBOX_QUERY: ${{ (github.event_name == 'workflow_dispatch' && inputs.inbox_query) || '' }}

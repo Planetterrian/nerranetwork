@@ -15,7 +15,7 @@ import json
 from common import (  # noqa: E402  (sys.path bootstrapped in common)
     episode_memory_block, llm, load_prompt, logger, notify_operator,
     parse_json_lenient, render_email, sb_insert, sb_select, sb_update,
-    send_email,
+    send_email, show_for,
 )
 
 
@@ -36,26 +36,27 @@ def _application(interview: dict) -> dict:
 
 
 def generate_brief(interview: dict, app: dict) -> dict:
+    show = show_for(interview, app)
     links = json.dumps(app.get("links") or {})
     topics = ", ".join(app.get("topics") or [])
 
     bio_research = llm(
-        load_prompt("research_brief.txt",
+        load_prompt("research_brief.txt", show=show,
                     name=app["name"], title=app.get("title", ""),
                     organization=app.get("organization", ""),
                     bio=app.get("bio", ""), topics=topics, links=links),
         temperature=0.3, web_search=True, max_tokens=2500,
     )
-    memory = episode_memory_block()
+    memory = episode_memory_block(show=show)
     questions_raw = llm(
-        load_prompt("question_generation.txt",
+        load_prompt("question_generation.txt", show=show,
                     name=app["name"], bio_research=bio_research,
                     topics=topics, show_memory=memory),
         temperature=0.6, max_tokens=2000,
     )
     questions = parse_json_lenient(questions_raw)
     thesis = llm(
-        load_prompt("episode_thesis.txt",
+        load_prompt("episode_thesis.txt", show=show,
                     name=app["name"], bio_research=bio_research,
                     topics=topics, show_memory=memory),
         temperature=0.5, max_tokens=600,
@@ -71,16 +72,20 @@ def generate_brief(interview: dict, app: dict) -> dict:
 
 
 def email_brief_to_guest(interview: dict, app: dict, brief: dict) -> None:
+    show = show_for(interview, app)
     when = interview.get("scheduled_at", "")
     html = render_email(
         "voices_prep_brief.j2",
+        show=show,
         guest_name=app["name"],
         scheduled_at=when,
         interview_id=interview["id"],
         thesis=brief["episode_thesis_draft"],
         questions=brief["likely_questions"],
+        closing_question=show.closing_question,
     )
-    send_email(app["email"], "Your Age of AI interview — what Mira will ask",
+    send_email(app["email"],
+               f"Your {show.short_label} interview — what Mira will ask",
                html, cc_operator=True)
     sb_update("interview_briefs", f"id=eq.{brief['id']}",
               {"sent_to_guest_at": dt.datetime.now(dt.timezone.utc).isoformat()})
@@ -103,8 +108,10 @@ def main() -> int:
         if existing:
             logger.info("Interview %s already briefed — skipping", interview["id"])
             continue
+        show = show_for(interview)
         try:
             app = _application(interview)
+            show = show_for(interview, app)
             brief = generate_brief(interview, app)
             email_brief_to_guest(interview, app, brief)
             sb_update("interviews", f"id=eq.{interview['id']}",
@@ -115,8 +122,8 @@ def main() -> int:
             failures += 1
             logger.exception("Brief generation failed for %s", interview["id"])
             notify_operator(
-                f"Age of AI: brief generation FAILED for interview "
-                f"{interview['id']}: {exc}", critical=True,
+                show.slack(f"brief generation FAILED for interview "
+                           f"{interview['id']}: {exc}"), critical=True,
             )
     return 1 if failures else 0
 

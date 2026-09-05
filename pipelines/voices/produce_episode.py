@@ -23,7 +23,7 @@ import requests
 
 from common import (  # noqa: E402
     ROOT, episode_memory_block, llm, load_prompt, logger, notify_operator,
-    parse_json_lenient, r2_upload, sb_insert, sb_select, sb_update,
+    parse_json_lenient, r2_upload, sb_insert, sb_select, sb_update, show_for,
 )
 
 sys.path.insert(0, str(Path(__file__).parent))
@@ -32,8 +32,8 @@ from audio.generate_narration import synthesize_segments  # noqa: E402
 from audio.waveform_video import render as render_waveform  # noqa: E402
 from audio.polish import build_word_cuts, polish_audio  # noqa: E402
 
-MUSIC_BED = ROOT / "assets" / "music" / "age_of_ai.mp3"  # optional; no-op if absent
-COVER = ROOT / "assets" / "covers" / "age-of-ai.jpg"
+# Music bed + cover are per show: VoiceShow.music_bed_path (optional; the
+# assembly is a no-op without it) and VoiceShow.cover_path.
 NARRATION_SEGMENT_IDS = ["cold_open", "act_one", "act_two", "act_three", "sign_off"]
 CALLOUT_TTL_DAYS = 14
 
@@ -59,16 +59,18 @@ def _load_context() -> tuple[dict, dict, dict, dict]:
 
 
 def write_narration(interview: dict, app: dict, pkg: dict) -> list[dict]:
+    show = show_for(interview, app)
     raw = llm(
         load_prompt(
             "mira_narration.txt",
+            show=show,
             guest_name=app["name"],
             guest_title=app.get("title", ""),
             guest_organization=app.get("organization", ""),
             episode_thesis=interview.get("episode_thesis", ""),
             episode_notes=pkg.get("episode_notes", ""),
             transcript=pkg.get("transcript_cleaned", ""),
-            show_memory=episode_memory_block(),
+            show_memory=episode_memory_block(show=show),
         ),
         temperature=0.6, max_tokens=4000,
     )
@@ -84,8 +86,11 @@ def write_narration(interview: dict, app: dict, pkg: dict) -> list[dict]:
 
 def main() -> int:
     interview, app, pkg, run = _load_context()
+    show = show_for(interview, app)
+    music_bed = show.music_bed_path
+    cover = show.cover_path
 
-    with tempfile.TemporaryDirectory(prefix="aoa_produce_") as tmp:
+    with tempfile.TemporaryDirectory(prefix=f"{show.slug}_produce_") as tmp:
         workdir = Path(tmp)
 
         # 1. Interview audio (mixed track from post-processing).
@@ -122,10 +127,11 @@ def main() -> int:
 
         # 4. Assembly (guest redactions + polish cuts, then bed + loudnorm).
         stamp = dt.datetime.now(dt.timezone.utc)
-        final_name = f"Age_of_AI_{app['name'].replace(' ', '_')}_{stamp:%Y%m%d}"
+        final_name = (f"{show.episode_prefix}_{app['name'].replace(' ', '_')}"
+                      f"_{stamp:%Y%m%d}")
         episode_mp3 = assemble(
             narration, polished, workdir / f"{final_name}.mp3",
-            music_bed=MUSIC_BED if MUSIC_BED.exists() else None,
+            music_bed=music_bed if music_bed.exists() else None,
             redactions=(pkg.get("guest_redactions") or []) + auto_cuts,
         )
 
@@ -137,16 +143,16 @@ def main() -> int:
         try:
             video = render_waveform(
                 episode_mp3, workdir / f"{final_name}.mp4",
-                cover_image=COVER if COVER.exists() else None,
-                title=f"{app['name']} — The Age of AI",
+                cover_image=cover if cover.exists() else None,
+                title=f"{app['name']} — {show.name}",
             )
         except Exception:  # noqa: BLE001
             logger.exception("Waveform video failed (non-fatal) — "
                              "publishing audio-only")
 
         # 5. Durable copies.
-        episode_url = r2_upload(episode_mp3, f"age_of_ai/{episode_mp3.name}")
-        video_url = (r2_upload(video, f"age_of_ai/video/{video.name}")
+        episode_url = r2_upload(episode_mp3, show.r2_key(episode_mp3.name))
+        video_url = (r2_upload(video, show.r2_key("video", video.name))
                      if video else None)
 
     # 6. State + callout queue.
@@ -163,13 +169,13 @@ def main() -> int:
         from common import OPERATOR_EMAIL, send_email
         send_email(
             OPERATOR_EMAIL,
-            f"Episode ready for your final listen: {app['name']}",
+            f"{show.short_label} episode ready for your final listen: {app['name']}",
             f"<p>Hi Patrick,</p>"
             f"<p>The produced episode with <strong>{app['name']}</strong> is "
             f"ready: <a href=\"{episode_url}\">listen here</a>"
             + (f" (<a href=\"{video_url}\">video</a>)" if video_url else "")
             + ".</p><p>Nothing publishes until you say so. When it passes "
-            "your ear, dispatch <em>Publish Age of AI episode</em> from the "
+            f"your ear, dispatch the {show.name} publish workflow from the "
             f"Actions tab with interview id <code>{interview['id']}</code> — "
             "or tell Claude to publish it.</p><p>— Mira</p>")
     except Exception:  # noqa: BLE001 — the gate email is best-effort
@@ -181,16 +187,18 @@ def main() -> int:
     for target_show, text in callouts.items():
         sb_insert("cross_show_callouts", {
             "source_episode_id": interview["id"],
+            "source_show": show.slug,
             "target_show": target_show,
             "callout_text": text,
-            "callout_url": "https://nerranetwork.com/age-of-ai.html",
+            "callout_url": show.page_url,
             "expires_at": expires,
         })
 
-    notify_operator(
-        f"Age of AI: {app['name']} episode PRODUCED — audio {episode_url} · "
-        f"video {video_url}. Publish workflow will pick it up on schedule."
-    )
+    notify_operator(show.slack(
+        f"{app['name']} episode PRODUCED — audio {episode_url} · "
+        f"video {video_url}. Dispatch the publish workflow after the "
+        "final listen."
+    ))
     logger.info("Production complete for interview %s", interview["id"])
     return 0
 

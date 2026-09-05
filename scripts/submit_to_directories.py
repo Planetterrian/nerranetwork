@@ -39,6 +39,7 @@ SHOWS = [
     ("spacex", "SpaceX Daily", "spacex_podcast.rss"),
     ("dp_pod", "The DP Pod", "dp_pod_podcast.rss"),
     ("age_of_ai", "The Age of AI", "age_of_ai_podcast.rss"),
+    ("nerra_voices", "Nerra Voices", "nerra_voices_podcast.rss"),
     ("offshore_north", "Offshore North", "offshore_north_podcast.rss"),
     # Language dub feeds (localized names, same artwork family)
     ("tesla_fr", "Le Temps des Shorts Tesla", "podcast.fr.rss"),

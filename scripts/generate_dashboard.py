@@ -118,6 +118,7 @@ _SHOW_PAGE_BY_SLUG: Dict[str, str] = {
     "spacex": "spacex.html",
     "dp_pod": "thedppod.html",
     "age_of_ai": "age-of-ai.html",
+    "nerra_voices": "nerra-voices.html",
 }
 
 # Cadence-aware publish-staleness thresholds (warn_hours, stale_hours).
@@ -130,6 +131,7 @@ _PUB_AGE_THRESHOLDS_H: Dict[str, Optional[tuple]] = {
     "privet_russian": (192, 240),   # Monday
     "offshore_north": (192, 240),   # Monday
     "age_of_ai": None,              # on-demand interviews
+    "nerra_voices": None,           # on-demand interviews (Age of AI sister)
 }
 _PUB_AGE_DEFAULT_H = (48, 72)
 

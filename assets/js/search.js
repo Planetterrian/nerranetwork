@@ -31,7 +31,7 @@
     '/api/unintended_consequences.json', '/api/spacex.json',
     '/api/first_principles.json', '/api/dp_pod.json', '/api/age_of_ai.json',
     '/api/models_agents_beginners.json', '/api/offshore_north.json',
-    '/api/nerra_daily.json'
+    '/api/nerra_daily.json', '/api/nerra_voices.json'
   ];
 
   function norm(s) { return (s || '').toLowerCase().trim(); }

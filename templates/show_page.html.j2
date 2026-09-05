@@ -108,8 +108,11 @@
                    row below so the hero isn't a wall of identical pills. #}
                 <div class="show-hero-actions">
                     <a href="#episodes" class="nn-btn nn-btn-primary">{% if _is_ru %}Слушать{% else %}Listen Now{% endif %}</a>
-                    {% if show_slug == 'age_of_ai' %}
-                    <a href="{{ path_prefix }}age-of-ai-apply.html" class="nn-btn nn-btn-primary" style="background:var(--show-color, #00D4FF);">Apply to be a guest</a>
+                    {#- The Mira interview shows are guest-driven: promote the
+                        apply page instead of a blog that is empty until the
+                        first interview publishes. -#}
+                    {% if show_slug in ('age_of_ai', 'nerra_voices') %}
+                    <a href="{{ path_prefix }}{{ 'age-of-ai-apply.html' if show_slug == 'age_of_ai' else 'nerra-voices-apply.html' }}" class="nn-btn nn-btn-primary" style="background:var(--show-color, #00D4FF);">Apply to be a guest</a>
                     <a href="{{ path_prefix }}{{ summaries_page }}" class="nn-btn">{% if _is_ru %}Все выпуски{% else %}View Summaries{% endif %}</a>
                     {% else %}
                     <a href="{{ path_prefix }}{{ blog_page }}" class="nn-btn">{% if _is_ru %}Читать блог{% else %}Read Blog{% endif %}</a>

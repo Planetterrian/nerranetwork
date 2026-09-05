@@ -4,12 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>The Age of AI — Guest Studio · Nerra Network</title>
+<title id="pageTitle">Guest Studio · Nerra Network</title>
 <style>
+  /* Shared studio for both Mira-hosted shows (Sept 2026). The palette is
+     The Age of AI's; --accent is swapped per show from ?show= (see the
+     SHOWS map in the script) so the same page brands as Nerra Voices. */
   :root {
     --bg: #17102b; --bg2: #1e1538; --card: #241a42; --line: #3a2d63;
     --text: #f0ecfa; --muted: #a89fc7; --accent: #7c5cff; --ok: #3ddc84;
     --warn: #ffb454; --err: #ff6b6b;
+  }
+  :root[data-show="nerra_voices"] {
+    --bg: #0b1f21; --bg2: #113534; --card: #143d3b; --line: #1f5e5a;
+    --text: #f5fffe; --muted: #99f6e4;
   }
   * { box-sizing: border-box; }
   body {
@@ -58,8 +65,8 @@
 </head>
 <body>
 <div class="wrap">
-  <h1>The Age of AI — Guest Studio</h1>
-  <p class="sub">A recorded conversation with Mira, the AI host. Real people · AI host · the age we're all living through.</p>
+  <h1 id="heading">Guest Studio</h1>
+  <p class="sub" id="subheading">A recorded conversation with Mira, the AI host.</p>
 
   <!-- State: checking / waiting -->
   <div id="stateCheck" class="card">
@@ -126,7 +133,7 @@
     and we'll sort it out.</p>
   </div>
 
-  <div class="footer">Real people · AI host · The Age of AI · Nerra Network</div>
+  <div class="footer" id="footerLine">Real people · AI host · Nerra Network</div>
 </div>
 
 <script src="https://cdn.voximplant.com/edge/voximplant.min.js"></script>
@@ -135,10 +142,39 @@
   "use strict";
   var API = "https://api.nerranetwork.com/voices";
   var VOX_APP_SUFFIX = "@nerra-voices.billsaved.voximplant.com";
-  var interviewId = new URLSearchParams(location.search).get("interview") || "";
+  var params = new URLSearchParams(location.search);
+  var interviewId = params.get("interview") || "";
   var runId = null, sdk = null, activeCall = null, localStream = null;
   var camOn = true, muted = false, timerHandle = null, callStart = null;
   var analyserRAF = null;
+
+  // ---- 0. Show branding (Sept 2026) ---------------------------------------
+  // Mirrors the SHOWS map in workers/voices/src/index.ts and the `voices:`
+  // blocks in shows/<slug>.yaml. `?show=` comes from the booking email;
+  // anything unknown falls back to age_of_ai. The Worker's studio-state
+  // response also carries show/show_name and wins if it disagrees.
+  var SHOWS = {
+    age_of_ai: { name: "The Age of AI", accent: "#7c5cff",
+      sub: "Real people · AI host · the age we're all living through." },
+    nerra_voices: { name: "Nerra Voices", accent: "#0F766E",
+      sub: "Real people. Real work. AI host." }
+  };
+  var showSlug = params.get("show") || "age_of_ai";
+  if (!Object.prototype.hasOwnProperty.call(SHOWS, showSlug)) showSlug = "age_of_ai";
+  function brand(slug, name) {
+    if (Object.prototype.hasOwnProperty.call(SHOWS, slug)) showSlug = slug;
+    var s = SHOWS[showSlug];
+    var showName = name || s.name;
+    document.documentElement.setAttribute("data-show", showSlug);
+    document.documentElement.style.setProperty("--accent", s.accent);
+    document.title = showName + " — Guest Studio · Nerra Network";
+    document.getElementById("heading").textContent = showName + " — Guest Studio";
+    document.getElementById("subheading").textContent =
+      "A recorded conversation with Mira, the AI host. " + s.sub;
+    document.getElementById("footerLine").textContent =
+      "Real people · AI host · " + showName + " · Nerra Network";
+  }
+  brand(showSlug);
 
   function show(id) {
     ["stateCheck", "stateSetup", "stateCall", "stateDone", "stateError"]
@@ -154,10 +190,11 @@
     if (!/^[0-9a-f-]{36}$/.test(interviewId)) {
       return fail("This studio link is missing its interview id — use the link from your email.");
     }
-    fetch(API + "/studio-state?interview=" + interviewId)
+    fetch(API + "/studio-state?interview=" + interviewId + "&show=" + encodeURIComponent(showSlug))
       .then(function (r) { return r.json(); })
       .then(function (s) {
         if (s.error) return fail("We couldn't find this interview. Check the link from your email.");
+        if (s.show) brand(s.show, s.show_name);
         if (s.ready && s.run_id) {
           runId = s.run_id;
           startSetup();
