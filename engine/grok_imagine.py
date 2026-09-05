@@ -110,6 +110,21 @@ _HEADLINE_PATTERNS = (
 _BOLD_LINE_PATTERN_INDEX = len(_HEADLINE_PATTERNS) - 1
 
 
+# ``[label](url)`` inside a headline. The M&A digest writes X-sourced items
+# as ``**Title: [@handle](https://x.com/handle)**`` (22 digests by Sep
+# 2026); the link is longer than any outlet name, so the tail survived the
+# outlet check below and ``rpartition(":")`` then split INSIDE the URL —
+# Ep161 shipped the chapter title "Training a Misaligned Reward Seeker:
+# [@AnthropicAI](https" (2026-09-04 flagship pass). Flatten links to
+# their label before any tail logic runs.
+_MD_LINK_RE = re.compile(r"\[([^\]]*)\]\((?:[^)\s]*)\)")
+
+
+def flatten_markdown_links(text: str) -> str:
+    """Replace every ``[label](url)`` in *text* with ``label``."""
+    return _MD_LINK_RE.sub(lambda m: m.group(1), text or "")
+
+
 def _strip_bold_line_source_tail(headline: str) -> str:
     """Drop a trailing ``: Source`` tail from a bold-line item title.
 
@@ -119,6 +134,7 @@ def _strip_bold_line_source_tail(headline: str) -> str:
     and a substantial title remains, so titles whose colon introduces real
     content ("Starlink update: 42 new satellites") survive intact.
     """
+    headline = flatten_markdown_links(headline).strip()
     if ":" not in headline:
         return headline
     head, _, tail = headline.rpartition(":")
@@ -182,8 +198,13 @@ def extract_story_headlines(digest_text: str, max_count: int = 12) -> List[str]:
         # show the heading shape literally and the model periodically
         # reproduces it (SpaceX Ep58/60/66/68/70). Without this, the junk
         # flows into scene prompts and chapter titles downstream.
-        raw = re.sub(r"^(?:title|headline)\s*\d*\s*[:\-—]\s*", "", raw.strip(),
-                     flags=re.IGNORECASE)
+        raw = re.sub(r"^(?:title|headline)\s*\d*\s*[:\-—]\s*", "",
+                     flatten_markdown_links(raw).strip(), flags=re.IGNORECASE)
+        if raw.startswith("#"):
+            # A markdown heading pasted into a headline slot (M&A Ep148's
+            # blockquote hook was literally "# Models & Agents") is the
+            # show name, not a story — it shipped as a chapter title.
+            return False
         h = _strip_source_suffix(raw).rstrip(":.,;").strip()
         # Drop obvious junk: too short, too long, or already seen
         # (case-insensitive — same story sometimes appears in two
@@ -233,8 +254,17 @@ def build_image_prompts(
     show_descriptor: str = "",
     per_scene_contexts: Optional[List[str]] = None,
     narrative_keywords: Optional[List[str]] = None,
+    scene_briefs: Optional[List[str]] = None,
 ) -> List[str]:
     """Build *count* image prompts that combine each query with a context.
+
+    *scene_briefs* (Sep 2026 — engine.scene_briefs): when provided, each
+    prompt LEADS with a concrete, story-specific scene description and
+    the static ``image_queries`` are demoted to a fill for any remaining
+    slots. This is the fix for "the pictures don't match what's being
+    said": the old shape led with the generic query ("cybertruck") and
+    tacked an 8-word headline slice on the end, so every episode of a
+    show shipped the same four pictures regardless of its stories.
 
     Image queries are the show's curated phrases (Tesla → "tesla
     factory", "tesla cybertruck on highway", etc.).
@@ -253,7 +283,8 @@ def build_image_prompts(
     (e.g. "high-energy news photo") that the show's prompt template
     may want to inject for tone consistency.
     """
-    if not image_queries:
+    briefs = [b.strip().rstrip(".") for b in (scene_briefs or []) if b and b.strip()]
+    if not image_queries and not briefs:
         return []
 
     is_vertical = aspect.startswith("9:") or aspect == "vertical"
@@ -300,6 +331,17 @@ def build_image_prompts(
     narrative_boost = ""
     if narrative_keywords:
         narrative_boost = " | focus on: " + ", ".join(narrative_keywords[:4])
+
+    # Brief-first pass: the story's own scene leads; style follows.
+    for b in briefs:
+        if len(prompts) >= count:
+            break
+        prompts.append(", ".join([
+            b, descriptor, framing_hint, quality_hint, no_text_hint]))
+    if prompts and len(prompts) >= count:
+        return prompts
+    if not image_queries:
+        return prompts
 
     # First pass: one image per query, up to count.
     for i, raw_query in enumerate(image_queries):
@@ -375,10 +417,53 @@ def _api_size_for_aspect(aspect: str) -> str:
     use a portrait size matched to YouTube Shorts' 1080×1920 guidance.
     """
     if aspect.startswith("9:") or aspect == "vertical":
-        return "1024x1792"
+        return "1152x2048"
     if aspect == "1:1":
         return "1024x1024"
-    return "1792x1024"
+    return "2048x1152"
+
+
+# Sep 2026: the request size moved to the endpoint's 2K ceiling. The
+# 16:9 render prescales every still to 3840x2160 for Ken Burns, so a
+# 1792-wide source was a 2.1x upsample before any zoom — the softness
+# viewers describe. 2048 wide is the largest the endpoint documents; the
+# request ladder below falls back to the legacy size, then to no size,
+# so a revision that rejects 2K can never cost an image.
+_LEGACY_SIZE_FOR = {
+    "2048x1152": "1792x1024",
+    "1152x2048": "1024x1792",
+}
+
+# Sep 3 2026: the endpoint IGNORES ``size``. Every image the network has
+# ever received (7,500+ committed gallery sidecars, dimensions probed
+# from the real bytes) is 1280x720 / 720x1280 on ``grok-imagine-image``
+# regardless of the WIDTHxHEIGHT requested — the 2K request above
+# changed nothing. The documented controls (xai-sdk ``image.sample``)
+# are ``aspect_ratio`` ("16:9", "9:16", "1:1", ...) and ``resolution``
+# ("1k" | "2k"). ``size`` stays only as the request ladder's fallback
+# for a revision that rejects the new fields.
+DEFAULT_RESOLUTION = "2k"
+
+
+def _api_aspect_ratio(aspect: str) -> str:
+    """Translate a human aspect string to the API's ``aspect_ratio``."""
+    if aspect.startswith("9:") or aspect == "vertical":
+        return "9:16"
+    if aspect == "1:1":
+        return "1:1"
+    return "16:9"
+
+
+def probe_image_size(image_bytes: bytes) -> tuple:
+    """``(width, height)`` of *image_bytes*, or ``(0, 0)`` if Pillow can't
+    read them. Best-effort — never raises."""
+    try:
+        import io
+        from PIL import Image
+        with Image.open(io.BytesIO(image_bytes)) as im:
+            return int(im.size[0]), int(im.size[1])
+    except Exception:  # noqa: BLE001 — diagnostics only
+        return 0, 0
 
 
 def _post_image_request(
@@ -412,6 +497,8 @@ def _request_one_image(
     model: str,
     size: str,
     timeout_s: int = DEFAULT_TIMEOUT_S,
+    aspect_ratio: Optional[str] = None,
+    resolution: Optional[str] = None,
 ) -> bytes:
     """POST a single prompt to ``/v1/images/generations`` and return
     the raw image bytes. Wrapped in tenacity retry for transient
@@ -434,18 +521,45 @@ def _request_one_image(
         "model": model,
         "prompt": prompt,
         "n": 1,
-        "size": size,
         "response_format": "b64_json",
     }
+    if aspect_ratio:
+        # The documented controls. ``size`` is deliberately NOT sent
+        # alongside them — it is ignored at best and a second, possibly
+        # conflicting, shape hint at worst.
+        payload["aspect_ratio"] = aspect_ratio
+        if resolution:
+            payload["resolution"] = resolution
+    else:
+        payload["size"] = size
     resp = _post_image_request(payload, api_key, timeout_s)
 
-    # Retry without ``size`` if the API rejected it. Cover the two
-    # plausible error shapes — error.message or top-level message.
+    # Request ladder on a 400. Cover the two plausible error shapes —
+    # error.message or top-level message.
     if resp.status_code == 400:
         body_text = resp.text.lower()
-        if "size" in body_text or "invalid_request" in body_text:
-            payload.pop("size", None)
+        if aspect_ratio and any(
+            k in body_text for k in ("aspect_ratio", "resolution", "invalid_request")
+        ):
+            # A revision that does not know the documented fields:
+            # fall back to the legacy WIDTHxHEIGHT request.
+            payload.pop("aspect_ratio", None)
+            payload.pop("resolution", None)
+            payload["size"] = size
             resp = _post_image_request(payload, api_key, timeout_s)
+            body_text = resp.text.lower() if resp.status_code == 400 else ""
+        if resp.status_code == 400 and (
+            "size" in body_text or "invalid_request" in body_text
+        ):
+            # Ladder: 2K -> legacy size -> no size. A rejected 2K request
+            # must never degrade straight to the endpoint's 1024 default.
+            legacy = _LEGACY_SIZE_FOR.get(payload.get("size", ""))
+            if legacy:
+                payload["size"] = legacy
+                resp = _post_image_request(payload, api_key, timeout_s)
+            if resp.status_code == 400:
+                payload.pop("size", None)
+                resp = _post_image_request(payload, api_key, timeout_s)
 
     if resp.status_code >= 400:
         # Surface the API error message; HTTP 4xx isn't retried by
@@ -495,6 +609,10 @@ class GrokSceneResult:
     cost_usd: float = 0.0
     images_generated: int = 0
     failures: List[str] = field(default_factory=list)
+    # Sep 3 2026: delivered pixel widths, probed from the real bytes —
+    # the only way to know what the endpoint actually returned (a
+    # requested size is not a delivered size; see ``DEFAULT_RESOLUTION``).
+    widths: List[int] = field(default_factory=list)
 
 
 def fetch_scene_images_grok(
@@ -507,6 +625,7 @@ def fetch_scene_images_grok(
     label_suffix: str = "",
     model: str = DEFAULT_MODEL,
     api_key: Optional[str] = None,
+    resolution: str = DEFAULT_RESOLUTION,
 ) -> GrokSceneResult:
     """Generate one image per prompt and persist to the per-episode
     scenes directory.
@@ -557,10 +676,12 @@ def fetch_scene_images_grok(
         )
 
     size = _api_size_for_aspect(aspect)
+    aspect_ratio = _api_aspect_ratio(aspect)
     per_image_cost = MODEL_COST_USD.get(model, 0.0)
 
     scenes: List[Scene] = []
     failures: List[str] = []
+    widths: List[int] = []
     images_generated = 0
     cost_usd = 0.0
 
@@ -569,8 +690,18 @@ def fetch_scene_images_grok(
         try:
             img_bytes = _request_one_image(
                 prompt, api_key=api_key, model=model, size=size,
+                aspect_ratio=aspect_ratio, resolution=resolution or None,
             )
             out_path.write_bytes(img_bytes)
+            w, h = probe_image_size(img_bytes)
+            if w:
+                widths.append(w)
+                logger.info(
+                    "Grok Imagine ep%s%s prompt %d delivered %dx%d "
+                    "(requested %s @ %s)",
+                    episode_num, label_suffix, idx, w, h,
+                    aspect_ratio, resolution or "default",
+                )
             scenes.append(Scene(
                 path=out_path,
                 photographer="Grok Imagine (xAI)",
@@ -600,15 +731,18 @@ def fetch_scene_images_grok(
             cost_usd=round(cost_usd, 4),
             images_generated=images_generated,
             failures=failures,
+            widths=widths,
         )
 
     logger.info(
-        "Grok Imagine generated %d images for ep%s%s (cost=$%.2f)",
+        "Grok Imagine generated %d images for ep%s%s (cost=$%.2f, max width %s px)",
         images_generated, episode_num, label_suffix, cost_usd,
+        max(widths) if widths else "?",
     )
     return GrokSceneResult(
         scene_set=SceneSet(scenes=scenes, is_fallback=False),
         cost_usd=round(cost_usd, 4),
         images_generated=images_generated,
         failures=failures,
+        widths=widths,
     )

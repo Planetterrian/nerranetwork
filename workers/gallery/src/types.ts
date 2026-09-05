@@ -41,6 +41,9 @@ export interface ButtondownClient {
     alreadySubscribed: boolean;
     error?: string;
     status?: number;
+    /** Redacted upstream body for the Worker log only (see
+     *  buttondown.ts SubscribeResult) — never returned to the client. */
+    detail?: string;
   }>;
   isSubscribed(
     apiKey: string,

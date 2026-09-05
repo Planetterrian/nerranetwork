@@ -37,7 +37,13 @@
       we're following.
     </p>
     <p style="font-size: 0.85rem; color: var(--nn-text-muted); margin-top: 0.4rem;">
-      Updated as episodes ship. Source: <code>{{ source_path }}</code>
+      {% if narrative and narrative.last_updated %}Last updated {{ narrative.last_updated[:10] }}.{% else %}Updated as episodes ship.{% endif %} Source: <code>{{ source_path }}</code>
+    </p>
+    <p class="nn-chip-row" style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.9rem;">
+      {% if show_page %}<a class="nn-btn" href="{{ path_prefix }}{{ show_page }}">Listen to {{ show_name }}</a>{% endif %}
+      {% if blog_page %}<a class="nn-btn" href="{{ path_prefix }}{{ blog_page }}">Episode articles</a>{% endif %}
+      {% if summaries_page %}<a class="nn-btn" href="{{ path_prefix }}{{ summaries_page }}">Summaries</a>{% endif %}
+      {% if rss_file %}<a class="nn-btn" href="{{ path_prefix }}{{ rss_file }}">RSS feed</a>{% endif %}
     </p>
   </div>
 

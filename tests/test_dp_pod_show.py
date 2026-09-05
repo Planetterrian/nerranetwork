@@ -53,17 +53,24 @@ class TestLaunchDistribution:
         """Launch was RSS+site only. Aug 10 2026 (operator-directed): the
         newsletter is ON — the club's join form had promised a daily
         briefing since launch, and email replies are the Dispatch
-        submission channel. X / YouTube / multilingual stay off."""
+        submission channel. Sep 4 2026 (operator-directed reach pass):
+        YouTube ON, Shorts-only, once the script-model A/B had closed with
+        adoption. X / multilingual stay off."""
         assert CFG.publishing.x_enabled is False
-        assert CFG.youtube.enabled is False
+        assert CFG.youtube.enabled is True
+        assert CFG.youtube.publish_long_form is False
         assert CFG.newsletter.enabled is True
         assert CFG.newsletter.tag == "DP Pod"
         assert CFG.multilingual.enabled is False
 
-    def test_future_youtube_enable_is_one_line(self):
-        # image_provider pre-set to grok so flipping youtube.enabled doesn't
-        # trip test_config.py::test_youtube_enabled_shows_use_grok_image_provider.
+    def test_youtube_shorts_shape(self):
+        # Fleet Shorts settings: smart start at the 3.5 threshold (every
+        # Short used to open on the intro beat at the 5.0 default), Grok
+        # imagery (the gallery pipeline requires it), curated queries.
         assert CFG.youtube.image_provider == "grok"
+        assert CFG.youtube.shorts_start_mode == "smart"
+        assert CFG.youtube.shorts_min_score_threshold == 3.5
+        assert CFG.youtube.channel == "en"
         assert len(CFG.youtube.image_queries) >= 3
 
 
@@ -1032,3 +1039,130 @@ class TestLeverRotationMemory:
         trade for the facts-first stage."""
         assert CFG.llm.podcast_model in ("", "grok-4.5", "grok-4.6")
         assert CFG.llm.model != "grok-4.5"
+
+
+class TestSep4NaturalnessPass:
+    """Sep 4 2026 pass (docs/reviews/dp_pod_review_2026_09_04.md). The Aug-10
+    rotation memory stopped exact Lever repeats and the Lever converged on
+    a new SHAPE ("Open your <website> today..." 13/26, screen lookups
+    21/26); the comedy examples the prompt supplied became catchphrases
+    ("checklist" 23/26, "steel-man" 23/26); the founders' notes went
+    unused; two closings double-asked for dispatches. Every fix here is
+    data-side rotation memory or de-seed by shape."""
+
+    def _write_digest(self, d, ep, lever):
+        (d / f"DP_Pod_Ep{ep:03d}_2026090{ep % 10}.md").write_text(
+            "# The DP Pod\n**HOOK:** x\n\n### The Positive Papers\n1. **A**\n   t.\n\n"
+            f"### The Lever\n{lever} Costs roughly nothing.\n\n### Do Positive Dispatch\nx\n",
+            encoding="utf-8")
+
+    def test_lever_memory_collapses_reskins_and_bans_the_shared_verb(self, tmp_path, monkeypatch):
+        import shows.hooks.dp_pod as hook
+
+        monkeypatch.setattr(hook, "_ROOT", tmp_path)
+        d = tmp_path / "digests" / "dp_pod"; d.mkdir(parents=True)
+        self._write_digest(d, 1, "Open your utility website today, enter your postcode, and check whether a battery rebate is open.")
+        self._write_digest(d, 2, "Open your utility website or app today, enter your postcode, and sign up for a time-of-use rate plan.")
+        self._write_digest(d, 3, "Open ClinicalTrials.gov today, search for mRNA vaccine trials, and note the contact email.")
+        self._write_digest(d, 4, "Plant three native shrubs along the sunniest fence line this weekend.")
+        block = hook._recent_levers()
+        bullets = [ln for ln in block.splitlines() if ln.startswith("- ")]
+        # The two utility re-skins collapse to one listed action.
+        assert len(bullets) == 3
+        assert "BANNED OPENING VERBS" in block and "Open" in block.split("BANNED OPENING VERBS")[1]
+        assert "REAL-WORLD ACTION DUE" in block
+
+    def test_lever_memory_stays_quiet_on_a_varied_physical_week(self, tmp_path, monkeypatch):
+        import shows.hooks.dp_pod as hook
+
+        monkeypatch.setattr(hook, "_ROOT", tmp_path)
+        d = tmp_path / "digests" / "dp_pod"; d.mkdir(parents=True)
+        self._write_digest(d, 1, "Plant three native shrubs along the fence line this weekend.")
+        self._write_digest(d, 2, "Cook one meal this week from a bag of dried beans instead of meat.")
+        self._write_digest(d, 3, "Repair one small household item instead of replacing it.")
+        self._write_digest(d, 4, "Walk a regular errand you usually drive.")
+        block = hook._recent_levers()
+        assert "BANNED OPENING VERBS" not in block
+        assert "REAL-WORLD ACTION DUE" not in block
+
+    def test_retired_bits_mined_from_scripts_never_include_furniture(self):
+        import shows.hooks.dp_pod as hook
+
+        block = hook._recent_banter_phrases()
+        # Real history: the calcified bits are present in the last 6 scripts.
+        assert block.startswith("RETIRED BITS")
+        listed = block.split("): ", 1)[1].lower()
+        for furniture in ("novak", "perra", "voice", "editorial", "dispatch",
+                          "email", "positive papers", "do something about it"):
+            assert furniture not in listed, f"fixed furniture leaked into the ban list: {furniture}"
+
+    def test_retired_bits_unit(self, tmp_path, monkeypatch):
+        import shows.hooks.dp_pod as hook
+
+        monkeypatch.setattr(hook, "_ROOT", tmp_path)
+        d = tmp_path / "digests" / "dp_pod"; d.mkdir(parents=True)
+        for ep in range(1, 7):
+            (d / f"DP_Pod_Ep{ep:03d}_20260901_tts.txt").write_text(
+                "DAN: There's your preflight checklist again.\n\n"
+                f"PATRICK: Fair. Story number {ep} is about a different thing entirely.\n\n"
+                "DAN: I'm Dan Perra. Do something about it.\n", encoding="utf-8")
+        block = hook._recent_banter_phrases()
+        assert "preflight checklist" in block or "checklist again" in block
+        assert "dan perra" not in block.lower()
+        # Fewer scripts than the hit threshold → clean no-op.
+        for p in list(d.glob("*_tts.txt"))[:4]:
+            p.unlink()
+        assert hook._recent_banter_phrases() == ""
+
+    def test_founders_nudge_fires_only_when_nothing_real_has_aired(self, tmp_path, monkeypatch):
+        import shows.hooks.dp_pod as hook
+
+        monkeypatch.setattr(hook, "_ROOT", tmp_path)
+        d = tmp_path / "digests" / "dp_pod"; d.mkdir(parents=True)
+        (tmp_path / "shows").mkdir()
+        (tmp_path / "shows" / "dp_pod_founders_notes.md").write_text(
+            "## DAN\n- WestJet captain.\n", encoding="utf-8")
+        for ep in range(1, 6):
+            (d / f"DP_Pod_Ep{ep:03d}_20260901_tts.txt").write_text(
+                "DAN: Generic texture.\n\nPATRICK: More generic texture.\n", encoding="utf-8")
+        assert hook._founders_detail_nudge().startswith("FOUNDERS' DETAIL DUE")
+        (d / "DP_Pod_Ep005_20260901_tts.txt").write_text(
+            "DAN: When I raced the Yukon River Quest I learned this.\n", encoding="utf-8")
+        assert hook._founders_detail_nudge() == ""
+        # Empty notes (comments only) → never nudge toward nothing.
+        (tmp_path / "shows" / "dp_pod_founders_notes.md").write_text("<!-- x -->", encoding="utf-8")
+        (d / "DP_Pod_Ep005_20260901_tts.txt").write_text("DAN: Generic.\n", encoding="utf-8")
+        assert hook._founders_detail_nudge() == ""
+
+    def test_prompts_carry_no_comedy_seeds_and_obey_the_data_blocks(self):
+        podcast = (PROJECT_ROOT / "shows" / "prompts" / "dp_pod_podcast.txt").read_text(encoding="utf-8")
+        digest = (PROJECT_ROOT / "shows" / "prompts" / "dp_pod_digest.txt").read_text(encoding="utf-8")
+        for seed in ("preflight checklist", "chemist brain", "there's your checklist again",
+                     "steel-man", "seal my own windows"):
+            assert seed not in podcast, f"quotable comedy seed still in prompt: {seed}"
+        assert "RETIRED BITS" in podcast
+        assert "HARD CEILING 1,750" in podcast
+        assert "REAL-WORLD ACTION DUE" in digest and "BANNED OPENING VERBS" in digest
+        assert "photograph having DONE" in digest
+
+    def test_closings_do_not_double_ask_or_claim_dispatches(self):
+        from engine.intros import _SHOW_PERSONALITIES
+
+        for closing in _SHOW_PERSONALITIES["dp_pod"]["closings"]:
+            assert "we read every dispatch" not in closing.lower()
+            assert "write in and tell us" not in closing.lower()
+            assert closing.rstrip().endswith("Do something about it.")
+
+    def test_review_snapshot_runs_for_a_show_without_exclude_patterns(self):
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location(
+            "review_snapshot", PROJECT_ROOT / "scripts" / "review_snapshot.py")
+        mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
+        out = mod.build_snapshot("dp_pod", 10)
+        assert "Review snapshot: dp_pod" in out
+        assert "Digest heading integrity" in out
+
+    def test_api_duration_matches_the_ten_minute_promise(self):
+        src = (PROJECT_ROOT / "scripts" / "generate_api.py").read_text(encoding="utf-8")
+        assert '"dp_pod":' in src and "~12 min" in src.split('"dp_pod":', 1)[1][:80]

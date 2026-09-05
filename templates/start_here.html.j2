@@ -171,7 +171,7 @@
                 </div>
             </div>
             <div class="start-shows-row">
-                {% for s in all_shows if s.slug in ['omni_view'] %}
+                {% for s in all_shows if s.slug in ['nerra_daily', 'omni_view'] %}
                 <a href="{{ path_prefix }}{{ s.show_page }}" class="start-show-card" style="--card-color: {{ s.brand_color }}">
                     <picture>
                         <source type="image/webp" srcset="{{ path_prefix }}{{ s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image }}-400.webp">
@@ -255,7 +255,7 @@
                 </div>
             </div>
             <div class="start-shows-row">
-                {% for s in all_shows if s.slug in ['env_intel'] %}
+                {% for s in all_shows if s.slug in ['env_intel', 'offshore_north'] %}
                 <a href="{{ path_prefix }}{{ s.show_page }}" class="start-show-card" style="--card-color: {{ s.brand_color }}">
                     <picture>
                         <source type="image/webp" srcset="{{ path_prefix }}{{ s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image }}-400.webp">

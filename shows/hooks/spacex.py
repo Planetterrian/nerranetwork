@@ -174,7 +174,13 @@ def _fetch_spcx_quote() -> tuple[float, str, str]:
             continue
         change_str = ""
         if prev_close and prev_close > 0:
-            pct = (price - prev_close) / prev_close * 100.0
+            pct = round((price - prev_close) / prev_close * 100.0, 1)
+            # Round BEFORE choosing the sign: a -0.04% move formatted as
+            # "-0.0%" and Ep080 (2026-08-25) closed the show with "down
+            # zero percent" while the digest read "-0.0% vs the previous
+            # close". Zero is flat, never a direction.
+            if pct == 0:
+                pct = 0.0
             change_str = f"{'+' if pct >= 0 else ''}{pct:.1f}%"
         _persist(price, prev_close, change_str, source_name)
         return price, change_str, source_name
@@ -288,12 +294,46 @@ def _spoken_number(value: float) -> str:
     return spoken
 
 
-def _price_sentence(price: float, change_str: str, source: str) -> str:
+def _market_is_open(now: datetime.datetime | None = None) -> bool:
+    """True when a ``fast_info`` last trade can be a LIVE quote.
+
+    Sep 4 2026 flagship pass: the show actually runs ~07:20-07:55 UTC
+    (``api/spcx.json`` ``updated_at``; the "Auto-generated: spacex" commit
+    times), which is 03:20-03:55 in New York — before the 04:00 ET
+    pre-market opens — so ``fast_info.last_price`` is the prior close on
+    EVERY run, and 10/10 closings in Ep080-089 still said "is trading at".
+    Ep084 (Sat), Ep085 (Sun) and Ep086 (Mon) all aired Friday's move as
+    a live quote three days running. The verb is chosen from the clock,
+    not from which yfinance accessor happened to answer.
+
+    Session window: weekdays 04:00-20:00 America/New_York (pre-market
+    through after-hours). Exchange holidays are not modelled — a holiday
+    weekday says "is trading at" on a stale quote, which is the pre-fix
+    behaviour on one day a quarter rather than every day.
+    """
+    if now is None:
+        now = datetime.datetime.now(datetime.timezone.utc)
+    try:
+        from zoneinfo import ZoneInfo
+        local = now.astimezone(ZoneInfo("America/New_York"))
+    except Exception:  # pragma: no cover - zoneinfo missing on exotic hosts
+        local = now - datetime.timedelta(hours=4)
+    if local.weekday() >= 5:
+        return False
+    return 4 <= local.hour < 20
+
+
+def _price_sentence(
+    price: float, change_str: str, source: str,
+    now: datetime.datetime | None = None,
+) -> str:
     """Spoken SPCX sentence, or '' when the quote isn't trustworthy.
 
-    Phrasing is honest about market state: a ``history`` bar is a close;
-    a ``fast_info`` quote at the ~12:07 UTC run time is live pre-market
-    trade and must not be presented as a close.
+    Phrasing is honest about market state: a ``history`` bar is a close,
+    and a ``fast_info`` quote is only "trading at" while a session
+    (pre-market through after-hours) is actually open — otherwise it is
+    the last close and is spoken as one. A zero move is spoken as
+    "unchanged", never "up/down zero percent".
     """
     if not price:
         return ""
@@ -305,13 +345,16 @@ def _price_sentence(price: float, change_str: str, source: str) -> str:
         from engine.utils import number_to_words
         try:
             whole, _, frac = pct.partition(".")
-            pct_spoken = number_to_words(int(whole)) + (
-                f" point {number_to_words(int(frac))}" if frac and int(frac) else ""
-            )
-            change_part = f", {direction} {pct_spoken} percent"
+            if int(whole) == 0 and not (frac and int(frac)):
+                change_part = ", unchanged on the session"
+            else:
+                pct_spoken = number_to_words(int(whole)) + (
+                    f" point {number_to_words(int(frac))}" if frac and int(frac) else ""
+                )
+                change_part = f", {direction} {pct_spoken} percent"
         except (TypeError, ValueError):
             change_part = ""
-    if source == "yfinance_history":
+    if source == "yfinance_history" or not _market_is_open(now):
         return f"Ess Pee See Ex closed at {spoken}{change_part}. "
     return f"Ess Pee See Ex is trading at {spoken}{change_part}. "
 

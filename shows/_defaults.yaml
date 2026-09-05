@@ -485,7 +485,11 @@ youtube:
   # committed manifest) into the fresh Grok Imagine sets — zero new
   # image-generation cost; the caps bound the per-episode downloads.
   gallery_blend_enabled: true
-  gallery_blend_max_long: 24    # 16:9 library scenes per long-form video (raised with the 36-slot cap so images repeat ~1.3x, not 2x+)
+  gallery_blend_max_long: 8     # 16:9 library scenes per long-form video (fills gaps only — one fresh scene per story now)
+  gallery_blend_min_overlap: 1  # library scenes must share >=1 token with hook+chapter titles (no off-topic padding)
+  scene_briefs_enabled: true    # Grok-written per-story scene briefs lead the image prompts (engine/scene_briefs.py)
+  scenes_per_episode: 8         # fresh 16:9 scenes: one per story, capped here (was a fixed 4)
+  short_scenes_per_episode: 5   # fresh 9:16 scenes for the Shorts
   gallery_blend_max_short: 6    # 9:16 library scenes per Short
   # Scene switches land on chapters.json boundaries instead of the
   # uniform timer (<2 usable chapters falls back to uniform).

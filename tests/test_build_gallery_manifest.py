@@ -301,3 +301,37 @@ def test_main_dry_run_does_not_write(tmp_path, monkeypatch, capsys):
     assert not out.exists()
     captured = capsys.readouterr().out
     assert '"image_count": 0' in captured
+
+
+# ---------------------------------------------------------------------------
+# write_show_slices (Sep 4 2026 flagship pass)
+# ---------------------------------------------------------------------------
+
+
+def test_write_show_slices_splits_manifest_per_show(tmp_path, config):
+    import json
+    a1 = _sidecar(image_id="a1", slug="tesla", generated_at="2026-09-01T00:00:00+00:00")
+    a2 = _sidecar(image_id="a2", slug="tesla", generated_at="2026-09-02T00:00:00+00:00")
+    b1 = _sidecar(image_id="b1", slug="spacex", name="SpaceX Daily", generated_at="2026-09-03T00:00:00+00:00")
+    manifest = bgm.build_manifest([a1, a2, b1], config=config)
+    out = tmp_path / "gallery-manifest.json"
+    written = bgm.write_show_slices(manifest, out)
+    assert {p.name for p in written} == {"tesla.json", "spacex.json"}
+    tesla = json.loads((tmp_path / "gallery" / "tesla.json").read_text(encoding="utf-8"))
+    assert tesla["image_count"] == 2 and tesla["show_slug"] == "tesla"
+    assert all(i["show_slug"] == "tesla" for i in tesla["images"])
+    assert tesla["shows"] == [s for s in manifest["shows"] if s["slug"] == "tesla"]
+    # Idempotent: unchanged content is not rewritten; a vanished show's
+    # slice is removed.
+    assert bgm.write_show_slices(manifest, out) == []
+    (tmp_path / "gallery" / "gone.json").write_text("{}", encoding="utf-8")
+    bgm.write_show_slices(manifest, out)
+    assert not (tmp_path / "gallery" / "gone.json").exists()
+
+
+def test_frontend_requests_the_show_slice():
+    js = (bgm.PROJECT_ROOT / "assets" / "js" / "gallery.js").read_text(encoding="utf-8")
+    assert "'gallery/' + fixedShowSlug + '.json'" in js
+    for wf in ("build-gallery-manifest.yml", "nightly-maintenance.yml"):
+        text = (bgm.PROJECT_ROOT / ".github" / "workflows" / wf).read_text(encoding="utf-8")
+        assert "site/data/gallery/*.json" in text, wf

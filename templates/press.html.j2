@@ -160,10 +160,12 @@
                     <li><strong>Name:</strong> Nerra Network</li>
                     <li><strong>Founded:</strong> 2024, Vancouver, Canada</li>
                     <li><strong>Founder:</strong> Patrick Novak</li>
-                    <li><strong>Episodes:</strong> {{ total_episodes }}+ shipped</li>
-                    <li><strong>Languages:</strong> English, Français, Русский, 中文</li>
-                    <li><strong>Cadence:</strong> Daily</li>
-                    <li><strong>Funding:</strong> Independent, self-funded, ad-free</li>
+                    <li><strong>Shows:</strong> {{ shows_count }} (incl. Nerra Daily, the combined daily edition)</li>
+                    <li><strong>Episodes:</strong> {{ "{:,}".format(total_episodes) }} shipped</li>
+                    <li><strong>Languages:</strong> English, Français, Русский, 中文 (two shows produced natively in Russian)</li>
+                    <li><strong>Cadence:</strong> Most shows daily; others weekly or when an interview is ready (each show page lists its schedule)</li>
+                    <li><strong>Production:</strong> AI-written and AI-narrated from curated sources, human-owned editorial standards (<a href="{{ path_prefix }}ai-disclosure.html" style="color:var(--nn-cyan);">AI disclosure</a>)</li>
+                    <li><strong>Funding:</strong> Independent and ad-free; listener memberships (Nerra Personal) and donations</li>
                     <li><strong>Website:</strong> <a href="https://nerranetwork.com" style="color:var(--nn-cyan);">nerranetwork.com</a></li>
                 </ul>
             </div>
@@ -181,14 +183,14 @@
 
             <h3>Medium (60 words)</h3>
             <div class="press-card">
-                <pre id="boilerplate-medium">Nerra Network is an independent podcast network based in Vancouver, Canada, producing ad-free daily shows covering AI, Tesla and EVs, investing, space and astronomy, environmental policy, and language learning. Founded in 2024 by Patrick Novak, the network focuses on short, calm, daily episodes designed to help curious people stay informed without algorithmic outrage or clickbait.</pre>
+                <pre id="boilerplate-medium">Nerra Network is an independent podcast network based in Vancouver, Canada, producing ad-free daily shows covering AI, Tesla, SpaceX, investing, space and science, world news, environmental policy, and language learning, plus Nerra Daily, a combined edition of the whole network. Founded in 2024 by Patrick Novak, the shows are written and narrated with AI from curated sources under human editorial standards, and are designed to help curious people stay informed without algorithmic outrage or clickbait.</pre>
                 <button class="copy-btn" onclick="navigator.clipboard.writeText(document.getElementById('boilerplate-medium').textContent);this.textContent='Copied ✓';setTimeout(()=>this.textContent='Copy',1500)">Copy</button>
             </div>
         </section>
 
         <section class="press-section">
             <h2>Shows</h2>
-            <p>All shows publish daily or on a predictable alternating-day cadence. Cover art and feeds available below.</p>
+            <p>Most shows publish daily; the rest run on a fixed weekly or alternating-day cadence, and The Age of AI publishes when an interview is ready. Cover art and feeds available below.</p>
             <div class="press-show-grid">
                 {% for s in all_shows %}
                 <div class="press-show-tile">

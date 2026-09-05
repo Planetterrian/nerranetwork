@@ -717,11 +717,31 @@ def replace_multiplier_notation(text: str) -> str:
 
 
 def replace_versus(text: str) -> str:
-    """Convert 'vs.' and 'vs' abbreviation to 'versus'."""
+    """Convert 'vs.' and 'vs' abbreviation to 'versus'.
+
+    "VS Code" / "VSCode" (the editor) is spelled out letter by letter
+    instead — the case-insensitive ``\bvs\b`` used to turn "Cursor vs. VS
+    Code" into "Cursor versus versus Code" (SpaceX Ep090, 2026-09-04).
+    """
+    text = re.sub(r"\bVS ?Code\b", "V S Code", text)
     text = re.sub(r"\bvs\.(?:\s)", lambda m: "versus " , text, flags=re.IGNORECASE)
     text = re.sub(r"\bvs\.\b", "versus", text, flags=re.IGNORECASE)
     text = re.sub(r"\bvs\b", "versus", text, flags=re.IGNORECASE)
     return text
+
+
+_SUBREDDIT_RE = re.compile(r"(?<![\w/])r/([A-Za-z0-9_]{2,40})\b")
+
+
+def replace_subreddit_paths(text: str) -> str:
+    """Speak ``r/teslamotors`` as "the teslamotors subreddit".
+
+    A Reddit path is a URL fragment, not a name: Tesla Ep590 (2026-08-31)
+    read "according to our slash Tesla motors" three times because the
+    digest's source tail was ``r/teslamotors`` and the generic slash
+    handling voiced the letter. Runs before ``replace_slashes``.
+    """
+    return _SUBREDDIT_RE.sub(lambda m: f"the {m.group(1)} subreddit", text)
 
 
 def replace_approximate(text: str) -> str:
@@ -1623,6 +1643,8 @@ def prepare_text_for_tts(
     text = replace_common_abbreviations(text)
     # Standalone & → "and" (compound forms like R&D handled by acronym dict)
     text = replace_standalone_ampersand(text)
+    # r/subreddit → "the <name> subreddit" (before any slash handling)
+    text = replace_subreddit_paths(text)
     # vs. / vs → "versus"
     text = replace_versus(text)
     # ~ prefix → "approximately"

@@ -1291,3 +1291,65 @@ class TestRedditUserAgent:
             "https://reddit.com.evil.example/feed",
         ):
             assert _headers_for_url(url) == DEFAULT_HEADERS, url
+
+
+# ===================================================================
+# Sep 4 2026 — stale-article guard on dated publisher URL paths
+# ===================================================================
+
+class TestUrlPathDateGuard:
+    """SpaceX Ep088 led with a two-year-old article Google News re-surfaced
+    under a fresh index date. The guard drops an article whose resolved
+    publisher URL carries a /YYYY/MM[/DD]/ path older than the fetch window
+    — and the FIRST post-merge run showed the sharp edge: a day-dated path
+    must mean the END of that day, and the guard must carry a day of
+    slack, or a 24 h window taken at 07:24 drops everything from
+    yesterday (Planetterrian Ep173 lost 13 STAT News articles)."""
+
+    def test_day_path_resolves_to_end_of_day(self):
+        from engine.fetcher import _url_path_date
+        d = _url_path_date("https://www.statnews.com/2026/09/03/some-story/")
+        assert d == datetime.datetime(2026, 9, 3, 23, 59, 59, tzinfo=UTC)
+        m = _url_path_date("https://example.org/2024/08/reuse-record")
+        assert m == datetime.datetime(2024, 8, 31, 23, 59, 59, tzinfo=UTC)
+        assert _url_path_date("https://example.org/news/1929243") is None
+        assert _url_path_date("https://example.org/2026/13/01/x") is None
+
+    @patch("engine.fetcher.requests")
+    def test_yesterday_kept_two_years_ago_dropped(self, mock_requests, mock_feedparser):
+        now = datetime.datetime(2026, 9, 4, 7, 24, tzinfo=UTC)
+        cutoff = now - datetime.timedelta(hours=24)
+        fresh_pub = _dt_to_timetuple(now - datetime.timedelta(hours=2))
+        yesterday = _make_entry(
+            title="Recipients of gene-edited pig kidneys receive human organs",
+            link="https://www.statnews.com/2026/09/03/pig-kidney/",
+            description="Yesterday afternoon's story, indexed this morning.",
+            published_parsed=fresh_pub,
+        )
+        two_days = _make_entry(
+            title="Borderline: dated the day before yesterday",
+            link="https://www.statnews.com/2026/09/02/borderline/",
+            description="Inside the one-day slack window.",
+            published_parsed=fresh_pub,
+        )
+        ancient = _make_entry(
+            title="Falcon 9 booster completes 23rd flight, new reuse record",
+            link="https://www.accuweather.com/2024/08/falcon-reuse-record/",
+            description="Two years old, re-surfaced by the aggregator.",
+            published_parsed=fresh_pub,
+        )
+        mock_response = MagicMock()
+        mock_response.content = b"<rss>...</rss>"
+        mock_requests.get.return_value = mock_response
+        mock_requests.RequestException = Exception
+        mock_feedparser.parse.return_value = _make_feed(
+            [yesterday, two_days, ancient], title="STAT Feed", bozo=False
+        )
+        result = _fetch_single_feed(
+            "https://www.statnews.com/feed", cutoff, None, set(), Lock(),
+        )
+        assert result is not None
+        titles = [a["title"] for a in result[1]]
+        assert "Recipients of gene-edited pig kidneys receive human organs" in titles
+        assert "Borderline: dated the day before yesterday" in titles
+        assert not any("23rd flight" in t for t in titles), titles
