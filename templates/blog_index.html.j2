@@ -135,10 +135,10 @@
     </div>
     {% else %}
     <div class="blog-idx-empty" style="max-width:640px;margin:0 auto;padding:var(--sp-12) var(--sp-6);text-align:center;">
-        {% if show_slug == 'age_of_ai' %}
+        {% if show_slug in ('age_of_ai', 'nerra_voices') %}
         <p>Episodes publish when an interview is ready. Want to be a guest?</p>
         <p style="margin-top:var(--sp-6);">
-            <a href="{{ path_prefix }}age-of-ai-apply.html" class="nn-btn nn-btn-primary" style="--show-color:{{ show_color }};">Apply to be a guest</a>
+            <a href="{{ path_prefix }}{{ 'age-of-ai-apply.html' if show_slug == 'age_of_ai' else 'nerra-voices-apply.html' }}" class="nn-btn nn-btn-primary" style="--show-color:{{ show_color }};">Apply to be a guest</a>
         </p>
         {% else %}
         <p>No blog posts yet. Check back soon!</p>

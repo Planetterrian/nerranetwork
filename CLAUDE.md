@@ -125,7 +125,7 @@ fabricated citation this section opens with. Guards:
 
 ## Project Overview
 
-Automated daily podcast generation system running 17 shows via a unified
+Automated daily podcast generation system running 18 shows via a unified
 `run_show.py` runner + per-show YAML configs, plus 4 legacy standalone scripts
 (deprecated — see note below). Shows use **Grok TTS** (`engine.tts.grok_speak_chunk`)
 and (where enabled) post to X/Twitter via `engine/publisher.post_to_x()`.

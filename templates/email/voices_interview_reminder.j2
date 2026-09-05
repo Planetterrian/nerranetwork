@@ -1,17 +1,17 @@
-{# Age of AI — used for the missed-call reschedule email
+{# Mira interview shows — used for the missed-call reschedule email
    (pipelines/voices/post_interview.py) and any manual re-send. #}
 <div style="font-family:system-ui,sans-serif;max-width:640px;margin:0 auto;color:#1a202c;line-height:1.6">
   {% if missed %}
-  <h2 style="color:#7C3AED">We missed you!</h2>
+  <h2 style="color:{{ brand_color }}">We missed you!</h2>
   <p>Hi {{ guest_name }},</p>
-  <p>Mira called for your Age of AI interview but couldn't reach you — no
+  <p>Mira called for your {{ show_name }} interview but couldn't reach you — no
   worries at all, life happens. Grab a new slot whenever suits:</p>
-  <p><a href="{{ booking_url }}" style="color:#7C3AED">{{ booking_url }}</a></p>
+  <p><a href="{{ booking_url }}" style="color:{{ brand_color }}">{{ booking_url }}</a></p>
   {% else %}
-  <h2 style="color:#7C3AED">Your interview is coming up</h2>
+  <h2 style="color:{{ brand_color }}">Your interview is coming up</h2>
   <p>Hi {{ guest_name }},</p>
   <p>A reminder that Mira calls you at <strong>{{ scheduled_at }}</strong>.
   Quiet room, decent signal, and you're set.</p>
   {% endif %}
-  <p>— The Age of AI, Nerra Network</p>
+  <p>{{ sign_off }}</p>
 </div>

@@ -1,10 +1,12 @@
-{# Age of AI — application acknowledgement. NOTE: the live send happens in
+{# Mira interview shows (Age of AI / Nerra Voices) — application acknowledgement.
+   Render with render_email(..., show=<slug|VoiceShow>) — show_name, brand_color,
+   sign_off, studio_url, apply_url, page_url are injected from the registry. NOTE: the live send happens in
    the Worker (workers/voices) with an inline copy of this content, because
    Workers can't render jinja; keep the two in sync if you edit tone. #}
 <div style="font-family:system-ui,sans-serif;max-width:640px;margin:0 auto;color:#1a202c;line-height:1.6">
-  <h2 style="color:#7C3AED">Application received</h2>
+  <h2 style="color:{{ brand_color }}">Application received</h2>
   <p>Hi {{ guest_name }},</p>
-  <p>Thanks for applying to The Age of AI. A human (Patrick) reads every
+  <p>Thanks for applying to {{ show_name }}. A human (Patrick) reads every
   application; if it's a fit, a booking link lands in this inbox.</p>
-  <p>— The Age of AI, Nerra Network</p>
+  <p>{{ sign_off }}</p>
 </div>

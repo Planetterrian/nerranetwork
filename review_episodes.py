@@ -309,11 +309,12 @@ SHOW_REGISTRY = {
     },
 }
 
-# Shows deliberately outside the daily audit. age_of_ai never runs through
-# run_show (the Nerra Voices pipeline publishes it), so schedule-based
-# "missed episode" detection would fire every single day. Its quality gate
-# is the two human review gates in that pipeline instead.
-AUDIT_EXEMPT_SLUGS = frozenset({"age_of_ai"})
+# Shows deliberately outside the daily audit. age_of_ai and nerra_voices
+# never run through run_show (the Nerra Voices interview pipeline publishes
+# both, keyed on the Supabase `show` column), so schedule-based "missed
+# episode" detection would fire every single day. Their quality gate is the
+# two human review gates in that pipeline instead.
+AUDIT_EXEMPT_SLUGS = frozenset({"age_of_ai", "nerra_voices"})
 
 
 # ---------------------------------------------------------------------------

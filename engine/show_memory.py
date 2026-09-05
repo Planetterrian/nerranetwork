@@ -1210,6 +1210,41 @@ SHOW_MEMORY_CONFIGS: Dict[str, MemoryConfig] = {
             "displacement", "augment", "creativity", "trust", "disclosure",
         ],
     ),
+    # Nerra Voices (Sept 2026): Age of AI's sister interview show — same
+    # Mira pipeline (pipelines/voices/, keyed on the `show` column), same
+    # memory surface (episode_memory_block(show="nerra_voices") reads its
+    # own summaries file). Registered the same data-only way: the
+    # narrative page / OP3 trackers no-op until a tracker is committed
+    # under digests/nerra_voices/.
+    "nerra_voices": MemoryConfig(
+        slug="nerra_voices",
+        label="NERRA VOICES",
+        file_prefix="nerra_voices",
+        default_programs={
+            "voices_chronicle": _prog(
+                "Voices Chronicle",
+                "The growing record of real people interviewed live about "
+                "the work they've chosen — founders, clinicians, "
+                "tradespeople, teachers, artists, organizers.",
+                ["Which crafts, missions and communities are still missing",
+                 "Recurring lessons guests independently say they learned "
+                 "the hard way"],
+                confidence="medium",
+            ),
+            "ai_hosted_format": _prog(
+                "AI-Hosted Format",
+                "Mira's disclosed-AI documentarian format applied to a "
+                "no-AI-angle show — verbatim guest words, two human gates "
+                "before publish.",
+                ["Whether guests engage differently when AI is not the topic",
+                 "Booking rate from the Producer inbox vs the apply form"],
+            ),
+        },
+        theme_keywords=[
+            "interview", "guest", "craft", "career", "founder", "community",
+            "mission", "apprentice", "teacher", "clinic", "trade", "lesson",
+        ],
+    ),
     # Aug 2026 field review: the show's spine IS a two-year longitudinal
     # story (the first Canadian campaign to finish the Vendée Globe,
     # 12 Nov 2028) — the exact shape this engine chronicles. Seeded from

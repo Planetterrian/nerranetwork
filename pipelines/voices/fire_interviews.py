@@ -24,11 +24,10 @@ import os
 
 from common import (  # noqa: E402
     ROOT, load_prompt, logger, notify_operator, sb_insert, sb_select,
-    sb_update,
+    sb_update, show_for,
 )
 
 FIRE_WINDOW_AHEAD_MIN = 5
-STUDIO_URL = "https://nerranetwork.com/age-of-ai-studio.html"
 FIRE_GRACE_BEHIND_MIN = 30   # cron drift tolerance — never leave a guest
                              # waiting; GitHub delivers */5 crons roughly
                              # hourly under load, so 10 min missed real slots
@@ -106,11 +105,23 @@ def _iso(t: dt.datetime) -> str:
 
 
 def compile_mira_prompt(interview: dict, app: dict, brief: dict) -> str:
+    """Mira's system prompt for this interview, branded for its show.
+
+    The show (name, premise, opening line, closing question) comes from
+    ``show_for(interview, app)`` — the ``show`` column on the interview,
+    then the application, then the default show for pre-migration rows.
+    """
+    show = show_for(interview, app)
     questions = brief.get("likely_questions") or []
     q_text = "\n".join(f"- {q.get('question', q) if isinstance(q, dict) else q}"
                        for q in questions)
     return load_prompt(
         "mira_system_prompt.txt",
+        show=show,
+        show_name=show.name,
+        show_premise=show.premise,
+        opening_line=show.opening_line,
+        closing_question=show.closing_question,
         guest_name=app["name"],
         guest_title=app.get("title", ""),
         guest_organization=app.get("organization", ""),
@@ -132,7 +143,9 @@ def send_reminders() -> None:
         try:
             app_rows = sb_select("guest_applications",
                                  f"id=eq.{interview['application_id']}")
-            phone = (app_rows[0].get("phone") or "").strip() if app_rows else ""
+            app = app_rows[0] if app_rows else {}
+            show = show_for(interview, app)
+            phone = (app.get("phone") or "").strip()
             if not phone:
                 logger.warning("Interview %s: no phone — reminder skipped",
                                interview["id"])
@@ -142,15 +155,15 @@ def send_reminders() -> None:
                 "VOXIMPLANT_CALLER_ID", "")
             if (interview.get("call_mode") or "webrtc") == "webrtc":
                 text = (
-                    "Mira here, from The Age of AI (Nerra Network). Your "
+                    f"Mira here, from {show.name} (Nerra Network). Your "
                     "interview starts in about two hours. Join from a "
                     "computer in a quiet room (headphones or AirPods "
                     "help a lot): "
-                    f"{STUDIO_URL}?interview={interview['id']} — Mira"
+                    f"{show.studio_url(interview['id'])} — Mira"
                 )
             else:
                 text = (
-                    "Mira here, from The Age of AI (Nerra Network). Your "
+                    f"Mira here, from {show.name} (Nerra Network). Your "
                     "interview starts in about two hours — I'll be calling "
                     f"you from this number ({caller_id}). Find a quiet spot "
                     "and we'll make something great. — Mira"
@@ -184,9 +197,11 @@ def fire_due_interviews() -> int:
             logger.info("Interview %s already has an active run — skipping",
                         interview["id"])
             continue
+        show = show_for(interview)
         try:
             app = sb_select("guest_applications",
                             f"id=eq.{interview['application_id']}")[0]
+            show = show_for(interview, app)
             brief_rows = sb_select("interview_briefs",
                                    f"interview_id=eq.{interview['id']}")
             if not brief_rows:
@@ -235,9 +250,9 @@ def fire_due_interviews() -> int:
                 # starts on the inbound call (CallAlerting) and flips the
                 # run to in_progress itself.
                 logger.info(
-                    "Interview %s (run %s) awaiting guest in the studio: "
-                    "%s?interview=%s", interview["id"], run["id"],
-                    STUDIO_URL, interview["id"])
+                    "Interview %s (run %s, %s) awaiting guest in the studio: "
+                    "%s", interview["id"], run["id"], show.slug,
+                    show.studio_url(interview["id"]))
                 continue
 
             from voximplant.api_clients.voximplant_client import (
@@ -260,7 +275,7 @@ def fire_due_interviews() -> int:
             sb_update("interviews", f"id=eq.{interview['id']}",
                       {"status": "failed"})
             notify_operator(
-                f"Age of AI: interview {interview['id']} FAILED to fire: {exc}",
+                show.slack(f"interview {interview['id']} FAILED to fire: {exc}"),
                 critical=True,
             )
     return failures

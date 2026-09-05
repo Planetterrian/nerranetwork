@@ -1,6 +1,7 @@
-# Nerra Voices (The Age of AI) API Worker — webhook + tool-endpoint layer
-# for the live-interview pipeline. See workers/voices/README.md and
-# docs/age_of_ai_plan.md.
+# Voices API Worker (The Age of AI + Nerra Voices) — webhook + tool-endpoint
+# layer for the live-interview pipeline. Both Mira-hosted shows share this
+# Worker; rows carry a `show` slug (see the SHOWS map in src/index.ts).
+# See workers/voices/README.md and docs/age_of_ai_plan.md.
 #
 # NOTE (documented deviation from the pipeline spec §5.6): the spec sketched
 # these handlers as Vercel/Next.js API routes beside Bill Saved. This repo's
@@ -37,5 +38,14 @@ crons = ["*/5 * * * *", "0 17 * * *"]
 #   ADMIN_TOKEN               bearer token gating /voices/admin/*
 #   RESEND_API_KEY            transactional email (booking link, approvals)
 #   VOICES_FROM_EMAIL         e.g. mira@nerranetwork.com
-#   CALCOM_BOOKING_URL        the show's Cal.com event link
+#   CALCOM_BOOKING_URL        The Age of AI Cal.com event link (also the
+#                             fallback for Nerra Voices)
 #   SLACK_WEBHOOK             operator notifications (optional)
+#
+# Optional, Nerra Voices (Sept 2026) — all fall back to the values above:
+#   CALCOM_BOOKING_URL_NERRA_VOICES  second Cal.com event link for Nerra Voices
+#   CALCOM_EVENT_SLUG_AGE_OF_AI      Cal.com event-type slug (or numeric id)
+#                                    that routes /voices/cal-com-booked to age_of_ai
+#   CALCOM_EVENT_SLUG_NERRA_VOICES   ditto for nerra_voices; when both are
+#                                    unset an event slug containing "voices"
+#                                    → nerra_voices, anything else → age_of_ai

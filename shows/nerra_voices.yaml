@@ -1,0 +1,151 @@
+# Nerra Voices — the network's second AI-hosted LIVE INTERVIEW show
+# (September 2026). Sister show to The Age of AI, same host, same pipeline.
+#
+# Host: Mira, the network's AI documentarian (Grok voice `ara`). Where
+# The Age of AI asks how AI is changing a person's work, Nerra Voices is
+# the catch-all: real people on the work they've chosen, no AI angle
+# required. Guests who pitch the network but don't fit The Age of AI land
+# here so they still get a full interview without confusing either
+# audience. See docs/nerra_voices.md.
+#
+# IMPORTANT — production does NOT go through run_show.py generation.
+# Episodes are produced by the Nerra Voices pipeline
+# (pipelines/voices/ + .github/workflows/nerra_voices_*.yml), keyed on the
+# `show` column in Supabase. This YAML makes the show a first-class network
+# citizen (RSS, blog, site page, dashboards) and keeps an ACCIDENTAL
+# `run_show.py nerra_voices` dispatch a clean no-op (narrative_mode + a
+# permanently-empty topic queue → `narrative_queue_empty` skip).
+name: "Nerra Voices"
+slug: nerra_voices
+memory_enabled: true
+description: >-
+  Real people on the work they've chosen, interviewed live by Mira, the
+  Nerra Network's AI host. Founders, clinicians, tradespeople, teachers,
+  artists and organizers on what they do, why it matters, and what they've
+  learned the hard way. No AI angle required. Honest conversations, recorded
+  live, with the host's nature disclosed in every episode.
+
+# Guard rail: keeps an accidental run_show dispatch a clean skip.
+narrative_mode: true
+topic_queue_file: shows/topic_queues/nerra_voices.yaml
+weekly_summary_segment: false
+min_articles_skip: 0
+
+multilingual:
+  enabled: false
+  auto: false
+  languages: []
+
+llm:
+  provider: xai
+  # Contingency prompts only — never used while the topic queue stays empty
+  # (the live pipeline's prompts live in pipelines/voices/prompts/).
+  system_prompt_file: shows/prompts/nerra_voices_system.txt
+  digest_prompt_file: shows/prompts/nerra_voices_digest.txt
+  podcast_prompt_file: shows/prompts/nerra_voices_podcast.txt
+  digest_temperature: 0.5
+  podcast_temperature: 0.7
+  max_tokens: 4500
+  podcast_max_tokens: 9000
+  min_podcast_words: 1200
+  min_podcast_word_floor: 700
+
+tts:
+  # Mira — same on-air identity as The Age of AI.
+  voice_id: ara
+
+audio:
+  transition_sting: assets/music/transition_sting.mp3
+
+# Settings read by pipelines/voices/shows.py (the live interview pipeline).
+voices:
+  short_label: "Nerra Voices"
+  brand_color: "#0F766E"
+  apply_page: nerra-voices-apply.html
+  studio_page: age-of-ai-studio.html      # shared studio; branded via ?show=
+  r2_prefix: nerra_voices
+  music_bed: assets/music/nerra_voices.mp3
+  cover: assets/covers/nerra-voices.jpg
+  prompt_dir: nerra_voices                # pipelines/voices/prompts/nerra_voices/
+  sign_off: "— Nerra Voices, Nerra Network"
+  premise: >-
+    Nerra Voices is a documentary interview show about people and the work
+    they've chosen. Mira, an AI, interviews real people live about what they
+    actually do, why it matters to them, what the job looks like from the
+    inside, and what they've learned the hard way. The subject is the
+    person's craft, mission or community, not artificial intelligence; AI
+    comes up only if the guest brings it up.
+  opening_line: >-
+    Welcome to Nerra Voices. I'm Mira. I'm an AI, and my guests never are.
+  closing_question: >-
+    What's the one thing about your work that you wish more people
+    understood?
+
+publishing:
+  rss_file: nerra_voices_podcast.rss
+  rss_title: "Nerra Voices"
+  rss_description: >-
+    Real people on the work they've chosen, interviewed live by Mira, the
+    Nerra Network's AI host. Founders, clinicians, tradespeople, teachers,
+    artists and organizers on what they do and what they've learned the hard
+    way. Honest conversations, recorded live, with full disclosure in every
+    episode: the host is a machine, the guests never are.
+  rss_summary: "Real people. Real work. AI host."
+  rss_link: https://nerranetwork.com/nerra-voices.html
+  rss_author: Nerra Network
+  rss_email: patrick@planetterrian.com
+  rss_image: https://nerranetwork.com/assets/covers/nerra-voices.jpg
+  rss_category: Society & Culture
+  rss_subcategory: Personal Journals
+  rss_keywords: "interviews, careers, founders, craft, work, entrepreneurship, health, community, real people"
+  guid_prefix: nerra-voices
+  base_url: https://nerranetwork.com
+  audio_subdir: digests/nerra_voices
+  summaries_json: digests/nerra_voices/summaries_nerra_voices.json
+  summaries_podcast_name: nerra_voices
+  player_html: nerra-voices.html
+  summaries_html: nerra-voices-summaries.html
+  x_enabled: false
+  x_env_prefix: ""
+  host_name: Mira
+
+episode:
+  prefix: Nerra_Voices
+  filename_pattern: "{prefix}_Ep{num:03d}_{date:%Y%m%d}.mp3"
+  output_dir: digests/nerra_voices
+  mp3_glob: "Nerra_Voices_Ep*.mp3"
+
+chapters:
+  enabled: true
+  section_markers:
+    - pattern: "[Ww]elcome to Nerra Voices|[Tt]his is Nerra Voices"
+      title: "Introduction"
+      where: start
+    - pattern: "keep being human|[Tt]hat.?s Nerra Voices for"
+      title: "Closing"
+      where: end
+
+newsletter:
+  enabled: false
+  tag: "Nerra Voices"
+  short_label: "Nerra Voices"
+  emoji: "🎙️"
+
+content_tracking:
+  section_patterns: {}
+
+youtube:
+  enabled: false
+  channel: en
+  category_id: 22               # People & Blogs
+  image_provider: grok
+  image_queries:
+    - person at work in their own workshop warm light
+    - portrait of a professional in their workplace
+    - hands doing skilled work close up
+    - small business owner in their shop doorway
+    - two people in conversation across a table
+
+# Spotify / Apple IDs are set once the feeds are submitted (docs/nerra_voices.md).
+spotify_show_id: null
+apple_show_id: null

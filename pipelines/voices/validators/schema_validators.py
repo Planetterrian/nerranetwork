@@ -11,11 +11,15 @@ from __future__ import annotations
 from typing import Any
 
 # Show slugs the classifier may target (cross-show callouts / show fits).
+# The two Mira-hosted interview shows are legitimate targets of each other
+# (an Age of AI episode may call out Nerra Voices and vice versa) — the
+# prompts don't offer a show its own slug, so self-callouts don't arise.
 KNOWN_SHOWS = {
     "tesla", "omni_view", "fascinating_frontiers", "planetterrian",
     "env_intel", "models_agents", "models_agents_beginners",
     "finansy_prosto", "modern_investing", "privet_russian",
     "unintended_consequences", "first_principles", "spacex", "dp_pod",
+    "age_of_ai", "nerra_voices",
 }
 
 
