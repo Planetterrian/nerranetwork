@@ -536,3 +536,116 @@ class TestClaimRepair:
         assert "attempt_claim_repair" in RUN_SHOW_SRC
         assert RUN_SHOW_SRC.index("attempt_claim_repair") < RUN_SHOW_SRC.index(
             '"source_integrity_failed"')
+
+
+class TestClaimRepairUncoveredShapes:
+    """Sep 5 2026: every UC / FPD ledger since the counters exist was EMPTY
+    (UC Ep099-106, FPD Ep086-091 — the appendix calls an empty array
+    normal), so on the narrative shows the enforce gate was in practice the
+    citation-shape lint alone, and attempt_claim_repair never fired for it
+    (it keyed on failed_verifications). UC 2026-09-05 blocked twice on one
+    topic with claims=0 and two uncovered shapes. Repair now also asks for
+    a source for each uncovered sentence; the anchor is PINNED to the
+    sentence and the FULL gate re-runs, so an unsourced sentence still
+    blocks."""
+
+    EPISODE = (
+        "### Segment 1\n\n"
+        "Researchers found that minute doses of antibiotics improved feed "
+        "conversion in postwar herds. The practice spread quickly.\n"
+    )
+    SENTENCE = ("Researchers found that minute doses of antibiotics improved "
+                "feed conversion in postwar herds.")
+    QUOTE = "low doses of antibiotics in feed improved feed conversion"
+    URL = "https://example.edu/growth-promoters"
+
+    def _fetch(self, good_url):
+        def _f(url):
+            if url == good_url:
+                return 200, f"<html><body>{self.QUOTE}</body></html>"
+            return 404, ""
+        return _f
+
+    def _entry(self, url):
+        return {"id": "u1",
+                "claim": "Low-dose antibiotics improved feed conversion",
+                "episode_span": "IGNORED — the anchor is pinned",
+                "source_url": url, "supporting_quote": self.QUOTE}
+
+    def test_empty_ledger_uncovered_shape_is_repairable(self):
+        from engine.claims import attempt_claim_repair
+
+        fetch = self._fetch(self.URL)
+        gate = run_source_integrity_gate(self.EPISODE, [], fetch=fetch)
+        assert not gate.passed
+        assert gate.uncovered_shapes and not gate.failed_verifications
+        seen = {}
+
+        def generate(prompt):
+            seen["prompt"] = prompt
+            return json.dumps([self._entry(self.URL)])
+
+        new_gate, new_claims = attempt_claim_repair(
+            self.EPISODE, gate, [], generate, fetch=fetch)
+        assert self.SENTENCE in seen["prompt"]
+        assert new_gate.passed, new_gate.summary()
+        assert new_gate.claims_verified == 1
+        assert new_claims[0]["episode_span"] == self.SENTENCE
+        assert new_claims[0]["source_url"] == self.URL
+
+    def test_unsourced_uncovered_shape_still_blocks(self):
+        from engine.claims import attempt_claim_repair
+
+        fetch = self._fetch(self.URL)
+        gate = run_source_integrity_gate(self.EPISODE, [], fetch=fetch)
+        new_gate, new_claims = attempt_claim_repair(
+            self.EPISODE, gate, [], lambda p: "[]", fetch=fetch)
+        assert not new_gate.passed and new_claims == []
+
+    def test_invented_source_still_blocks(self):
+        from engine.claims import attempt_claim_repair
+
+        fetch = self._fetch(self.URL)
+        gate = run_source_integrity_gate(self.EPISODE, [], fetch=fetch)
+        new_gate, _ = attempt_claim_repair(
+            self.EPISODE, gate, [],
+            lambda p: json.dumps([self._entry("https://example.edu/made-up")]),
+            fetch=fetch)
+        assert not new_gate.passed
+        assert new_gate.uncovered_shapes
+
+    def test_repair_targets_both_failed_and_uncovered(self):
+        from engine.claims import attempt_claim_repair
+
+        text = EPISODE_WITH_CLAIM + "\n" + self.EPISODE
+        good = "https://example.edu/alt"
+
+        def fetch(url):
+            if url == good:
+                return 200, (f"<html>{GOOD_CLAIM['supporting_quote']} "
+                             f"{self.QUOTE}</html>")
+            return 403, ""
+
+        gate = run_source_integrity_gate(text, [GOOD_CLAIM], fetch=fetch)
+        assert gate.failed_verifications and gate.uncovered_shapes
+
+        def generate(prompt):
+            assert "Failed claims:" in prompt and "Unsourced sentences:" in prompt
+            fixed = dict(GOOD_CLAIM, source_url=good)
+            return json.dumps([fixed, self._entry(good)])
+
+        new_gate, new_claims = attempt_claim_repair(
+            text, gate, [GOOD_CLAIM], generate, fetch=fetch)
+        assert new_gate.passed, new_gate.summary()
+        assert [c["id"] for c in new_claims] == ["c1", "u1"]
+
+    def test_run_show_triggers_repair_on_uncovered_shapes(self):
+        assert "or _si_gate.uncovered_shapes" in RUN_SHOW_SRC
+
+    def test_no_prompt_seeds_the_fabricated_nature_citation(self):
+        # The exact citation this network published as fabricated
+        # ("a 1962 paper in Nature") was still the quotable EXAMPLE in
+        # UC's episode prompt until 2026-09-05.
+        for path in (ROOT / "shows" / "prompts").glob("*.txt"):
+            assert "Nature paper warned" not in path.read_text(encoding="utf-8"), path.name
+

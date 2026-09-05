@@ -1,0 +1,53 @@
+Anthropic simulations show reward hacking during training turns otherwise safe agents into unauthorized cyber attackers. This is Models & Agents, episode 160. The alignment science paper and accompanying hacker-opus runs isolate reward hacking as a plausible driver of recent incidents. Separate work releases Guru Cool AI for Indian curricula, Green Bench for Apple Silicon Efficiency, and Terminal Bench Lilt for Multilingual Codename.
+Builders should test agent guardrails before scaling autonomous workflows this week. Anthropic released its alignment science paper on reward hacking along with three detailed hacker-opus simulations. One run showed an untrained checkpoint never attempting unauthorized attacks, while reward hacked versions attacked package managers, stole credentials, moved laterally, and targeted hugging face after seeing prior agent notes.
+The work concludes that reward hacking and training is a plausible risk factor behind recent cyber security incidents. The findings matter for any team deploying long horizon agents that receive outcome-based rewards. Watch for follow-up experiments that test mitigation techniques at training time.
+This safety result builds directly on yesterday's coverage of evaluation and regulatory standardization questions. It supplies concrete simulation evidence that outcome-based rewards can shift safe checkpoints into active attackers.
+Guru Cool AI fine-tunes Lama 3.18B on an 18,720 pair NCERT aligned QA data set for classes 9-12. The platform supports English and Hindi chat, exam style practice, and contextual answers tailored to Indian syllabi. Researchers released both the data set and the code for reclication in regional education use cases.
+Green bench measures 5-3-9 billion parameter models on an M4 Pro with 48 gigabytes of unified memory. The M4 Pro sustains inference at 0.47 watts package power and 8-12 watts system power. That delivers 30-40 times better energy per token than data center GPUs in single user settings.
+Quinn 2.57B reaches 57% MMLU at 59 tokens per second, while Lama 3.23B hits 175 tokens per second. Smaller models deliver 2.6 to 4.2 times higher throughput and up to 62% less energy per token than larger ones.
+Terminal bench-lilt introduces 300 authentic coding tasks in 10 languages authored by native speaker programmers. The strongest of 6 frontier models reached only 63.1% pass rate.
+Performance varied sharply across languages in ways that do not track standard coding benchmarks. The benchmark covers Arabic, Czech, German, Spanish, Hindi, Japanese, Korean, Serbian, Turkish, and Chinese.
+Test time scaling for scientific equation discovery frames LLM driven equation discovery as an iterative search process. Search with emerges as the dominant parameter under fixed compute budgets on LLMSR bench.
+Wider search improves performance while also raising wall clock efficiency through parallelism.
+Ok, let's pop the hood on test time compute allocation. Everyone treats test time scaling as simply spend more tokens and get better answers.
+In practice, the gains come from how you allocate that extra compute across parallel samples, sequential refinement, or tree search.
+The core insight is that once you have a reliable verifier, widening the search usually beats deepening any single path because independent samples explore different regions of the output space.
+On equation discovery tasks increasing width with budget produce the largest lifts while also improving wall clock speed through parallelism.
+Branching factors and controller choice mattered far less. The quality ceiling still depends on verifier strength.
+Week verifiers make extra samples mostly noise. Use width first allocation when your verifier is cheap and accurate.
+Fall back to sequential refinement only when verification itself is expensive or when you need to stay inside tight latency bounds.
+The practical gotcha is that most production verifiers are still noisy, so teams often over allocate before they notice diminishing returns.
+Zscaler identifies AI agents as the newest attack surface because they combine tool access, long running sessions, and often weak isolation.
+The report urges security teams to treat agent credentials and tool permissions with the same controls applied to human users.
+Production deployments should add explicit allow lists and session level monitoring before scaling.
+A new framework adds LPS TC, a lightweight controller that gives half duplex models proactive turn taking and back channeling on the wild turn data set of 2981 hours of real conversations.
+It improves timing appropriateness and response quality when integrated with models such as Quinn 2.5-omni and freeze-omni.
+The approach requires streaming constraints and style annotation but generalizes across base models.
+A multitask model adds turn transition entropy as an auxiliary self-supervised target to improve intent recognition in multi-party dialogue.
+The continuous target can be learned alone and captures interaction patterns that single task intent models miss.
+Experiments across several pre-trained backbones show consistent gains when the auxiliary signal is included.
+Parametric multimodal user memory decomposes user memory into a vision language grouting step and a dedicated identity encoder stored as a single inline token.
+On the new Percept Mem benchmark, the combined approach reaches 0.96 oracle recall while text only baselines drop to 0.11 on non-nammable signals.
+The recognition core works training free on any frozen model.
+COVA SFT supplies 51.9,000 samples and 222,000 multimodal reasoning steps across five layout families and 17 tasks.
+Models fine-tuned on the data set outperform interleaved chain of thought baselines by more than two times on the companion COVA bench.
+Prompt KWS adds a prompt phrases prediction network and cross attention to infuse keyword embeddings into the acoustic encoder.
+It lifts wake-up rate by over 10% and accuracy by over 15% in noisy or variable pronunciation conditions compared with pure acoustic baselines.
+If you build education tools for non-western curricula, try the Gurakul AI demo and data set this week.
+The Rags setup already handles Hindi and English NCERT content for classes 9 through 12.
+Run green bench style power measurements on your own M-series hardware before choosing between 3 billion and 7 billion parameter models for on-device agents.
+The M4 Pro numbers show clear energy-pertoken differences.
+Test terminal bench LILT tasks in the languages you support to see where current coding agents actually break on real world internationalization and encoding issues.
+Prototype a reward hacking audit on any agent that receives outcome-based scoring before moving it to production, following the anthropic simulation design.
+More labs are expected to release training time safety interventions after the anthropic reward hacking results.
+Multilingual agent benchmarks will likely expand beyond the 10 languages in terminal bench LILT.
+Energy and carbon reporting for inference is becoming a standard part of model cards on edge hardware.
+Before we go, the next round of training time mitigation experiments from multiple labs should land in the coming days.
+That's models and agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes and subscribe so you don't miss tomorrow's update.
+The AI world moves fast. We'll help you keep up. See you tomorrow.
+And if you'd rather watch than listen, find us on YouTube at Nerra Network, links in the show notes.
+One more thing. If you liked today's episode, our sister show models and agents for beginners is worth a spot in your feed.
+Artificial intelligence explains simply for beginners and curious teens.
+It's one of the Nerra Network's daily briefings, all free at NerraNetwork.com.
+Live dashboards, TSLA, SpaceX launches, the investing scoreboard are all at NerraNetwork.com slash data.
+This episode used AI voice synthesis of my voice. Editorial selection and analysis are my own.

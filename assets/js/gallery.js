@@ -705,11 +705,22 @@
         host.classList.add('nn-gallery');
         host.innerHTML = '<p class="nn-gallery-loading">Loading gallery…</p>';
 
-        fetch(MANIFEST_URL, { credentials: 'omit' })
-            .then(function (r) {
+        // Per-show embeds load the show's own slice (~1/15th of the full
+        // 14 MB manifest; scripts/build_gallery_manifest.py writes them)
+        // and fall back to the full manifest if the slice is missing.
+        var sliceUrl = fixedShowSlug
+            ? MANIFEST_URL.replace(/gallery-manifest\.json$/,
+                                   'gallery/' + fixedShowSlug + '.json')
+            : '';
+        var load = function (url) {
+            return fetch(url, { credentials: 'omit' }).then(function (r) {
                 if (!r.ok) throw new Error('manifest HTTP ' + r.status);
                 return r.json();
-            })
+            });
+        };
+        (sliceUrl && sliceUrl !== MANIFEST_URL
+            ? load(sliceUrl).catch(function () { return load(MANIFEST_URL); })
+            : load(MANIFEST_URL))
             .then(function (manifest) {
                 var images = manifest.images || [];
                 var shows = manifest.shows || [];

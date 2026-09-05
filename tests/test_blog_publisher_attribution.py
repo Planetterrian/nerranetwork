@@ -273,5 +273,13 @@ class TestBackCatalogueRecovery:
         # remaining gap is digests whose headlines carry no outlet at
         # all; those are closed going forward by relabel_aggregator_links,
         # not retroactively.
-        assert aggregated > 0, "no aggregated sources found — fixture drift"
+        # 2026-09-01: the last-3-per-show window can now contain ZERO
+        # aggregator links — relabel_aggregator_links rewrites them
+        # before persist, so as fixed digests age in, this fixture
+        # naturally evaporates. Zero is the SUCCESS state, not drift;
+        # the extractor itself stays covered by the unit tests above.
+        if aggregated == 0:
+            import pytest as _pytest
+            _pytest.skip("no aggregator links left in recent digests — "
+                         "the relabel fix has fully aged in")
         assert recovered == aggregated

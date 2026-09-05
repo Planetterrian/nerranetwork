@@ -757,3 +757,34 @@ class TestRequestedCountDefaultsToZero:
         assert 'youtube_urls.get("shorts_count_requested", 0)' in src, (
             "shorts_count_requested default regressed to a phantom 1"
         )
+
+
+# ---------------------------------------------------------------------------
+# Sep 4 2026 flagship pass — the stock-quote line is never a Shorts opener
+# ---------------------------------------------------------------------------
+
+
+def test_price_line_detector():
+    from engine.shorts_selector import is_price_line
+    assert is_price_line("Ess Pee See Ex is trading at $141.50, up 1%.")
+    assert is_price_line("TSLA closed at $328.58, up $9.05.")
+    assert is_price_line("SPCX finished the session higher by nearly 2%.")
+    assert not is_price_line("The booster is slotted for Flight Twelve at $15 billion.")
+
+
+def test_price_line_window_is_never_a_candidate(tmp_path):
+    """5 of 68 SpaceX EN Shorts since Ep060 opened on the quote line
+    ("SPCX Trading at $141.50 Up 1%") because it is the most number-dense
+    sentence in the episode. It is excluded before scoring."""
+    segs = [
+        _seg(0.0, 5.0, "Welcome to today's episode."),
+        _seg(5.0, 12.0, "The booster flew for the twenty-third time."),
+        _seg(12.0, 18.0, "Ess Pee See Ex is trading at $141.50, up 1% on the day."),
+        _seg(18.0, 25.0, "Before we go, watch the pad."),
+    ]
+    tp = _write_transcript(tmp_path, segs)
+    out = score_candidates(
+        tp, audio_offset=3.0, audio_duration=300.0, window_duration=35.0,
+    )
+    assert out, "other windows still qualify"
+    assert not any("trading at" in w.opening_text.lower() for w in out), out

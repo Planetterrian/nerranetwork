@@ -60,11 +60,19 @@ async function sb(env: Env, method: string, path: string, body?: unknown,
   return text ? JSON.parse(text) : null;
 }
 
+/** Secrets pasted into `wrangler secret put` routinely carry a trailing
+ *  newline; GitHub answers 401 to `Bearer <token>\n` and the five-minute
+ *  fire-tick silently never arrives (Aug 2026 outage debugging). Trim
+ *  defensively. */
+function githubToken(env: Env): string {
+  return (env.GITHUB_DISPATCH_TOKEN || "").trim();
+}
+
 async function dispatch(env: Env, eventType: string, payload: Record<string, unknown>) {
   const resp = await fetch(`https://api.github.com/repos/${REPO}/dispatches`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${env.GITHUB_DISPATCH_TOKEN}`,
+      Authorization: `Bearer ${githubToken(env)}`,
       Accept: "application/vnd.github+json",
       "User-Agent": "nerra-voices-worker",
     },
@@ -772,6 +780,52 @@ function withCors(req: Request, res: Response): Response {
   return out;
 }
 
+// GET /voices/health — deploy verification without waiting for a cron
+// tick. Read-only: reports which secrets are set (never their values), the
+// cron schedule, and a live GitHub auth probe (`GET /repos/<repo>` needs
+// only metadata:read, which every fine-grained PAT has — so 401 here means
+// the STORED token is bad: expired, or pasted with a trailing newline).
+// The five-minute fire-tick uses repository_dispatch, which needs Contents: write.
+async function handleHealth(env: Env): Promise<Response> {
+  const raw = env.GITHUB_DISPATCH_TOKEN || "";
+  const tok = githubToken(env);
+  const out: Record<string, unknown> = {
+    worker: "nerra-voices-api",
+    now: new Date().toISOString(),
+    cron: { fire_tick: "*/5 * * * * -> repository_dispatch fire-tick", gate2: "0 17 * * * UTC" },
+    configured: {
+      supabase: !!(env.SUPABASE_URL && env.SUPABASE_SERVICE_KEY),
+      github_token: tok.length > 0,
+      github_token_had_whitespace: raw !== tok,
+      admin_token: !!env.ADMIN_TOKEN,
+      resend: !!(env.RESEND_API_KEY && env.VOICES_FROM_EMAIL),
+      calcom: !!env.CALCOM_BOOKING_URL,
+      slack: !!env.SLACK_WEBHOOK,
+    },
+  };
+  if (tok) {
+    try {
+      const resp = await fetch(`https://api.github.com/repos/${REPO}`, {
+        headers: {
+          Authorization: `Bearer ${tok}`,
+          Accept: "application/vnd.github+json",
+          "X-GitHub-Api-Version": "2022-11-28",
+          "User-Agent": "nerra-voices-worker",
+        },
+      });
+      out.github_status = resp.status;
+      out.github_hint =
+        resp.status === 200 ? "token authenticates; repository_dispatch additionally needs Contents: Read and write"
+        : resp.status === 401 ? "401: stored token rejected — re-run `wrangler secret put GITHUB_DISPATCH_TOKEN` (expired PAT or pasted newline)"
+        : `unexpected ${resp.status}`;
+    } catch (e: any) {
+      out.github_error = e?.message ?? String(e);
+    }
+  }
+  const ok = out.github_status === 200 && (out.configured as any).supabase;
+  return json({ ok, ...out }, ok ? 200 : 503);
+}
+
 export default {
   async fetch(req: Request, env: Env): Promise<Response> {
     if (req.method === "OPTIONS") {
@@ -806,6 +860,7 @@ export default {
       if (req.method === "GET" && path === "/voices/guest-brief") return handleGuestBrief(req, env);
       if (req.method === "POST" && path === "/voices/fact-check") return handleFactCheck(req, env);
       if (req.method === "GET" && path === "/voices/studio-state") return handleStudioState(req, env);
+      if (req.method === "GET" && path === "/voices/health") return handleHealth(env);
       if (req.method === "POST" && path === "/voices/studio-auth") return handleStudioAuth(req, env);
       return json({ error: "not found" }, 404);
     } catch (err: any) {
