@@ -476,7 +476,56 @@ def build_personal_feed_xml(
             str(int(row.get("bytes", 0) or 0)),
             "audio/mpeg",
         )
-    return fg.rss_str(pretty=True).decode("utf-8")
+    return _with_chapter_tags(
+        fg.rss_str(pretty=True).decode("utf-8"), spec.token, rows)
+
+
+def chapters_filename_for(date_iso: str) -> str:
+    """``chapters_YYYYMMDD.json`` — the name the builder uploads beside
+    each edition's MP3 (scripts/build_personal_feeds.py)."""
+    return f"chapters_{date_iso.replace('-', '')}.json"
+
+
+def _with_chapter_tags(xml: str, token: str, rows: List[dict]) -> str:
+    """Add ``<podcast:chapters>`` to every item that has a date.
+
+    The builder has always uploaded a Podcasting 2.0 chapters file per
+    edition, but until the first paid subscriber's feed was inspected
+    (2026-09-06) nothing in the RSS pointed at it — so apps showed one
+    24-minute block instead of a chapter per show. feedgen's podcast
+    extension has no chapters support; post-process like engine.publisher
+    does for the network feeds. Best-effort: on any failure the feed is
+    returned unchanged rather than empty.
+    """
+    import xml.etree.ElementTree as ET
+
+    podcast_ns = "https://podcastindex.org/namespace/1.0"
+    try:
+        ET.register_namespace("podcast", podcast_ns)
+        ET.register_namespace("itunes", "http://www.itunes.com/dtds/podcast-1.0.dtd")
+        ET.register_namespace("atom", "http://www.w3.org/2005/Atom")
+        root = ET.fromstring(xml.encode("utf-8"))
+        channel = root.find("channel")
+        if channel is None:
+            return xml
+        by_guid = {
+            f"personal-{token[:8]}-ep{int(r.get('episode_num', 0)):03d}-"
+            f"{str(r.get('date') or '').replace('-', '')}": str(r.get("date") or "")
+            for r in rows
+        }
+        for item in channel.findall("item"):
+            guid_el = item.find("guid")
+            date = by_guid.get((guid_el.text or "").strip()) if guid_el is not None else None
+            if not date:
+                continue
+            el = ET.SubElement(item, f"{{{podcast_ns}}}chapters")
+            el.set("url", enclosure_url_for(token, chapters_filename_for(date)))
+            el.set("type", "application/json+chapters")
+        return '<?xml version="1.0" encoding="UTF-8"?>\n' + ET.tostring(
+            root, encoding="unicode")
+    except Exception as exc:  # noqa: BLE001 — a feed without chapters beats no feed
+        logger.warning("personal feed: chapter tags skipped (%s)", exc)
+        return xml
 
 
 def prune_episode_state(episodes: List[dict]) -> Tuple[List[dict], List[str]]:
@@ -542,6 +591,7 @@ __all__ = [
     "wants_local_brief",
     "build_personal_feed_xml",
     "build_personal_links_prompt",
+    "chapters_filename_for",
     "enclosure_url_for",
     "fallback_personal_links",
     "feed_url_for",
