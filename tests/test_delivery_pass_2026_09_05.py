@@ -437,3 +437,216 @@ class TestScriptRewriteGate:
     def test_tesla_first_principles_must_not_be_a_covered_story(self):
         text = (ROOT / "shows/prompts/tesla_digest.txt").read_text(encoding="utf-8")
         assert "TOPIC DISTINCTNESS" in text and "Short Spot item today" in text
+
+
+# ---------------------------------------------------------------------------
+# Sep 6 2026 readout — first slate with the prompts + gate live
+# ---------------------------------------------------------------------------
+
+
+def _long_body(n_sentences: int = 30) -> str:
+    """Distinct filler-free body sentences so the hook check has >= 200 words."""
+    return "\n".join(
+        f"Patrick: Item number {i} reports a figure of {i * 3} units at the {chr(65 + i % 26)}{i} facility "
+        f"according to the {i}th quarterly bulletin from the regional operator."
+        for i in range(1, n_sentences + 1)
+    )
+
+
+class TestSep6SectionCopyAndOrphanedHook:
+    """SpaceX Ep092 sat at 24% whole-script verbatim while its Engineering
+    Deep Dive matched 10 of 13 digest sentences; Tesla Ep597 (59%) had its
+    First Principles 13/15; Planetterrian Ep175's Science Deep Dive was
+    6/6 — and PT's cold open promised a story the body never told. The
+    whole-script number could not see any of it."""
+
+    DEEP_DIVE = (
+        "Splitting production into separate booster and upper-stage lines changes the critical-path "
+        "logic of the entire manufacturing flow at the site. "
+        "When both stages share a single final-assembly hall, every delay on one vehicle idles tooling "
+        "and labor allocated to the other vehicle. "
+        "Parallel sites remove that serial dependency and let each line optimize its own takt time "
+        "without waiting on the neighbouring line. "
+        "The transporter now operating at the coastal pad extends the same principle to the East Coast "
+        "by allowing stacking and checkout to occur away from the flight-test queue. "
+        "From a first-principles standpoint, the dominant cost driver in reusable launch hardware is not "
+        "raw material but the calendar time a high-value asset spends waiting between process steps. "
+        "By decoupling the two stages, the company reduces the fraction of calendar time any single "
+        "vehicle spends in shared facilities, directly lowering the effective cost per flight-ready stack."
+    )
+    DIGEST = (
+        "> **A second transporter reached the coastal pad on Tuesday, the company said.**\n\n"
+        "### Top News\n1. **Transporter arrives**\n   A second transporter reached the coastal pad on Tuesday. "
+        "It moves both booster and upper stage horizontally without a crane, the company said.\n\n"
+        f"### Engineering Deep Dive\n{DEEP_DIVE}\n"
+    )
+    WORD_SWAPPED = DEEP_DIVE.replace("single", "one").replace("allocated to", "meant for") \
+        .replace("optimize", "set").replace("the company", "the firm").replace("directly", "and that")
+
+    def _script(self, deep_dive: str) -> str:
+        return (
+            "Patrick: A second transporter reached the coastal pad on Tuesday, the company said.\n"
+            "Patrick: This is SpaceX Daily, episode ninety-two.\n"
+            "Patrick: The new transporter carries a booster or an upper stage lying flat, so no crane is needed.\n"
+            + _long_body(14) + "\n"
+            + "\n".join(f"Patrick: {s.strip()}" for s in re.split(r"(?<=\.)\s+", deep_dive) if s.strip())
+            + "\nPatrick: And that's a wrap on today's SpaceX developments.\n"
+        )
+
+    def test_word_swapped_section_is_still_a_copied_section(self):
+        hits = sa.copied_sections(self._script(self.WORD_SWAPPED), self.DIGEST)
+        assert [h["title"] for h in hits] == ["Engineering Deep Dive"]
+        assert hits[0]["sentence_pct"] >= 70 and hits[0]["ngram_pct"] < 80
+
+    def test_fresh_section_is_not_flagged(self):
+        fresh = (
+            "Two lines instead of one means a stuck booster no longer stalls the ship behind it. "
+            "Each hall runs at its own rhythm and the pad on the coast now stacks and checks vehicles "
+            "outside the test queue. The expensive part of a reusable rocket is the idle day, not the metal, "
+            "so cutting shared-facility time cuts the price of every stack that reaches the mount. "
+            "That is the whole argument for splitting the factory in two, and the transporter is its first proof. "
+            "The next tests will show how many vehicles the pad can hold at once and how fast they cycle through."
+        )
+        assert sa.copied_sections(self._script(fresh), self.DIGEST) == []
+
+    def test_short_sections_are_ignored(self):
+        assert sa.copied_sections(self._script(self.WORD_SWAPPED), "### Top News\n" + self.DEEP_DIVE[:300]) == []
+
+    def test_orphaned_hook_is_detected_and_a_covered_one_is_not(self):
+        orphan = ("Patrick: Archaeologists uncovered projectile points in Uzbekistan matching European designs.\n"
+                  "Patrick: This is Planetterrian Daily, episode one hundred seventy-five.\n" + _long_body(20))
+        cov = sa.hook_coverage(orphan)
+        assert cov is not None and cov < sa.HOOK_ORPHAN_MAX_COVERAGE
+        covered = orphan + ("\nPatrick: The Uzbekistan points were dated by archaeologists to eighty thousand years "
+                            "and their projectile shape matches the European designs found later in France.")
+        cov2 = sa.hook_coverage(covered)
+        assert cov2 is not None and cov2 >= sa.HOOK_ORPHAN_MAX_COVERAGE
+
+    def test_identity_line_first_does_not_become_the_hook(self):
+        script = ("Patrick: This is Tesla Shorts Time, episode five hundred ninety-seven.\n"
+                  "Patrick: Fifty Megapacks now power a two hundred megawatt hour facility in Queensland.\n"
+                  + _long_body(20)
+                  + "\nPatrick: The Queensland facility uses exactly fifty Megapacks for its two hundred megawatt hour capacity.")
+        cov = sa.hook_coverage(script)
+        assert cov is not None and cov >= sa.HOOK_ORPHAN_MAX_COVERAGE
+
+    def test_short_scripts_and_thin_hooks_return_none(self):
+        assert sa.hook_coverage("Patrick: One two three four five six seven.\nPatrick: Short body here.") is None
+        assert sa.hook_coverage("Patrick: It is on.\n" + _long_body(20)) is None
+
+    def test_audit_carries_the_new_metrics_and_warnings(self):
+        a = sa.audit_script(self._script(self.WORD_SWAPPED), digest_text=self.DIGEST,
+                            hook="A second transporter reached the coastal pad on Tuesday, the company said.")
+        m = a.to_metrics()
+        assert m["script_copied_sections"] == 1 and "script_hook_coverage_pct" in m
+        assert any("read aloud" in w for w in a.warnings())
+
+    def test_snapshot_table_shows_sections_and_hook_coverage(self):
+        src = (ROOT / "scripts/review_snapshot.py").read_text(encoding="utf-8")
+        assert "copied sections" in src and "hook cov" in src
+
+
+class TestSep6RewriteGateTriggersAndFloor:
+    """Tesla Ep597's rewrite went 61% -> 2% verbatim and was thrown away
+    because the floor was pinned to an over-long draft; nothing recorded
+    why. The gate now fires on a copied SECTION or an orphaned hook too,
+    floors on min(draft, target), and records its reasons."""
+
+    D = TestSep6SectionCopyAndOrphanedHook
+
+    class _Cfg:
+        class llm:
+            script_rewrite_gate_overlap_pct = 40.0
+
+    def _copied_script(self):
+        return self.D()._script(self.D.WORD_SWAPPED)
+
+    def test_fires_on_a_copied_section_below_the_overlap_threshold(self, monkeypatch):
+        from engine import pipeline
+        copied = self._copied_script()
+        assert sa.digest_overlap(copied, self.D.DIGEST) < 40
+        fresh = self.D()._script(
+            "Two lines instead of one means a stuck booster no longer stalls the ship behind it. "
+            "Each hall runs at its own rhythm and the coastal pad stacks and checks vehicles outside the test queue. "
+            "The expensive part of a reusable rocket is the idle day, not the metal. "
+            "Cutting shared-facility time cuts the price of every stack that reaches the mount. "
+            "That is the whole argument for splitting the factory in two. "
+            "The next tests will show how many vehicles the pad can hold at once and how fast they cycle."
+        )
+        calls = []
+        def fake_gen(tv, config, tracker=None, prompt_appendix=""):
+            calls.append(prompt_appendix)
+            return fresh
+        monkeypatch.setattr("engine.generator.generate_podcast_script", fake_gen)
+        out = pipeline._script_rewrite_gate(copied, self.D.DIGEST, self._Cfg(), {"hook": ""}, None)
+        assert out["fired"] and out["reasons"] == "section" and out["accepted"]
+        assert out["copied_sections_before"] == 1 and out["copied_sections_after"] == 0
+        assert "Engineering Deep Dive" in calls[0] and "must run at least" in calls[0]
+
+    def test_rejects_when_the_section_is_still_copied(self, monkeypatch):
+        from engine import pipeline
+        copied = self._copied_script()
+        monkeypatch.setattr("engine.generator.generate_podcast_script",
+                            lambda tv, config, tracker=None, prompt_appendix="": copied)
+        out = pipeline._script_rewrite_gate(copied, self.D.DIGEST, self._Cfg(), {"hook": ""}, None)
+        assert out["fired"] and not out["accepted"]
+        assert out["reject_reason"] == "section_still_copied" and out["script"] == copied
+
+    def test_fires_on_an_orphaned_hook_and_names_it(self, monkeypatch):
+        from engine import pipeline
+        hook = "Archaeologists uncovered projectile points in Uzbekistan matching European designs."
+        orphan = f"Patrick: {hook}\nPatrick: This is Planetterrian Daily, episode one hundred seventy-five.\n" + _long_body(20)
+        digest = "### Top 15\n1. **Arrowheads**\n   " + " ".join(f"Fact {i} stands alone here." for i in range(30)) + "\n"
+        covered = orphan + ("\nPatrick: The Uzbekistan points were dated by archaeologists to eighty thousand years "
+                            "and their projectile shape matches the European designs found later in France.")
+        calls = []
+        def fake_gen(tv, config, tracker=None, prompt_appendix=""):
+            calls.append(prompt_appendix)
+            return covered
+        monkeypatch.setattr("engine.generator.generate_podcast_script", fake_gen)
+        out = pipeline._script_rewrite_gate(orphan, digest, self._Cfg(), {"hook": hook}, None)
+        assert out["fired"] and out["reasons"] == "hook" and out["accepted"]
+        assert "Uzbekistan" in calls[0] and "never tells" in calls[0]
+
+    def test_floor_is_the_target_when_the_draft_over_ran(self):
+        from engine import pipeline
+        class Cfg:
+            class llm:
+                min_podcast_words = 1400
+        assert pipeline._rewrite_gate_floor_words(1607, Cfg()) == int(0.7 * 1400)
+        assert pipeline._rewrite_gate_floor_words(1000, Cfg()) == 700
+        assert pipeline._rewrite_gate_floor_words(1000, self._Cfg()) == 700
+
+    def test_run_show_records_reasons_and_reject_reason(self):
+        src = (ROOT / "run_show.py").read_text(encoding="utf-8")
+        for key in ("script_rewrite_gate_reasons", "script_rewrite_gate_reject_reason",
+                    "script_rewrite_gate_rewrite_words", "script_rewrite_gate_copied_sections_after"):
+            assert f'metrics.record("{key}"' in src, key
+
+
+class TestSep6PromptAndPronunciationFollowups:
+    def test_us_dollar_prefix_is_spoken_not_glued(self):
+        from assets.pronunciation import prepare_text_for_tts
+        out = prepare_text_for_tts("oil slips below US$95 on the ceasefire")
+        assert "USninety" not in out and "95 U S dollars" in out
+        assert "3 billion U S dollars" in prepare_text_for_tts("worth US$3 billion")
+        assert "and fifty cents" in prepare_text_for_tts("US$1,250.50")
+
+    def test_content_discipline_covers_headline_echo_sections_and_hook_promise(self):
+        text = (ROOT / "shows/prompts/_shared/content_discipline.txt").read_text(encoding="utf-8")
+        assert "headline is a label" in text
+        assert "EVERY section of the digest" in text
+        assert "cold open is a promise" in text
+        assert "whose only content is who covered the story" in text
+
+    def test_mit_prompt_no_longer_seeds_the_three_quotable_lines(self):
+        text = (ROOT / "shows/prompts/modern_investing_podcast.txt").read_text(encoding="utf-8")
+        for seeded in ("Now, here's something that most retail investors get wrong",
+                       "is exactly how you'd screen for setups like this",
+                       '"what this teaches us about'):
+            assert seeded not in text, seeded
+        assert "ONE lesson has ONE owner" in text
+
+    def test_mab_keeps_every_number(self):
+        text = (ROOT / "shows/prompts/mab_podcast.txt").read_text(encoding="utf-8")
+        assert "Every number the briefing gives a story is spoken" in text

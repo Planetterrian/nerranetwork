@@ -379,6 +379,35 @@ reviews:
       verdict: pending
       evidence: null
     agent_cost_usd: null
+  - date: 2026-09-06
+    pr: null
+    doc: docs/reviews/network_delivery_review_2026_09_05.md
+    summary: "Sep 6 readout - first slate with the Sep 5 prompts and the rewrite gate live. OV/FF/MIT clearly better, SpaceX/M&A/MAB/Tesla mixed, PT worse. Three defects the whole-script number could not see: the gate rejected a clean 61->2% rewrite on a floor pinned to an over-long draft (Tesla); deep-dive sections were read aloud at 78-100% under the 40% whole-script threshold (72 of the last 90 episodes across nine shows); a cold open promised a story the body never told (PT). Plus a headline-echo tic (Tesla x6, M&A x9), three MIT prompt lines aired verbatim, US$ unpronounceable, MAB numbers dropped."
+    shipped:
+      - "engine/script_audit copied_sections + hook_coverage (metrics script_copied_sections, script_hook_coverage_pct, script_hook_orphaned; snapshot columns)"
+      - "engine/pipeline rewrite gate - three triggers (overlap / section / hook), floor = 70% of min(draft, target), reasons + reject_reason recorded"
+      - "content_discipline.txt - four rules added (every section rewritten; headline is a label; source inside a fact sentence; cold open is a promise) (A/B)"
+      - "MIT + MAB prompt de-seeds / numbers rule (A/B); US$ pronunciation"
+    deferred:
+      - "per-section rewrite (rewrite only the copied section, splice it back) - only if the whole-script retry keeps failing the section test"
+      - "M&A Sunday weekly-summary segment placement (lands mid-Top-Story unframed) - next M&A pass"
+    predictions:
+    - metric: "share of English news-show episodes with script_copied_sections == 0, next 2 weeks"
+      baseline: "18/90 (20%) on the last 10 per show"
+      expected: ">=60%"
+      verdict: pending
+      evidence: null
+    - metric: "script_rewrite_gate_accepted rate when fired, network, next 2 weeks"
+      baseline: "2/3 on Sep 6 (Tesla rejected on length)"
+      expected: ">=70%, and zero rejections with reject_reason=truncated where rewrite_words >= 70% of target"
+      verdict: pending
+      evidence: null
+    - metric: "script_hook_orphaned, network, next 2 weeks"
+      baseline: "1 (PT Ep175)"
+      expected: "0"
+      verdict: pending
+      evidence: null
+    agent_cost_usd: null
 
 do_not_retry:
   - idea: podcast-side length levers (word floors, expand-retries, prompt

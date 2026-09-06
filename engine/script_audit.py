@@ -27,11 +27,30 @@ Loops that operate on text fail loudly; loops that operate on numbers
 fail silently — so the thresholds below are documented against the
 baseline they were read from, and a review must re-read them, never
 trust them.
+
+Sep 6 2026 readout (first day with the prompts + rewrite gate live)
+added two measures the whole-script number could not see:
+
+* **Section copy.** The news body was being rewritten while the DEEP
+  DIVE was read aloud: SpaceX Ep092's Engineering Deep Dive matched
+  10 of 13 digest sentences, Tesla Ep597's First Principles 13/15,
+  Planetterrian Ep175's Science Deep Dive 6/6 — and the whole-script
+  8-gram share sat at 24 / 59 / 33 %, so a light word-swap paraphrase
+  of one long section never tripped the gate. Across the last twelve
+  episodes of nine shows the deep-dive section was 78-100 % verbatim
+  on most days. `copied_sections` scores each digest header block on
+  its own (8-gram share AND sentence-level near-match share).
+* **Orphaned hook.** Planetterrian Ep175 opened on "Archaeologists
+  uncovered 80,000-year-old projectile points in Uzbekistan" and the
+  body never mentioned the story — the cold open sold something the
+  episode did not deliver. `hook_coverage` measures the share of the
+  opener's salient words that appear in the body (0.09 there; every
+  other recent episode 0.33-1.0).
 """
 from __future__ import annotations
 
 import re
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 from engine.utils import calculate_similarity
@@ -130,6 +149,46 @@ _FILLER_COMPILED = [(name, re.compile(pat, re.IGNORECASE)) for name, pat in FILL
 DUPLICATE_SENTENCE_THRESHOLD = 0.8
 HOOK_RESTATE_THRESHOLD = 0.7
 
+# Section copy (Sep 6 2026). A digest header block of >= 100 words
+# counts as carried over when 80 % of its 8-grams are in the script,
+# OR when 70 % of its sentences have a script sentence at >= 0.7
+# similarity AND at least a quarter of its 8-grams are verbatim (the
+# word-swap paraphrase SpaceX Ep092 shipped: 59 % 8-grams, 10/13
+# sentences). Calibrated on the Sep 6 deep dives — SpaceX 77 % / Tesla
+# 87 % / PT 100 % of sentences (copied) against Omni View 50 %, M&A
+# 50 %, MAB 25 %, FF 0 % (written fresh). The word floor keeps short
+# list sections (Things to Try, Quick Hits, On the Horizon) out: their
+# one-line items restate similarly however they are written.
+SECTION_COPY_MIN_WORDS = 100
+SECTION_COPY_NGRAM_SHARE = 0.8
+SECTION_COPY_SENTENCE_SHARE = 0.7
+SECTION_COPY_SENTENCE_MIN_NGRAM_SHARE = 0.25
+SECTION_COPY_SENTENCE_SIMILARITY = 0.7
+SECTION_COPY_MIN_SENTENCES = 4
+
+# Orphaned hook (Sep 6 2026): share of the opener's salient words that
+# the body speaks. Planetterrian Ep175 scored 0.09; the next-lowest of
+# ~100 recent episodes was 0.25 (an EI episode with the same defect)
+# and everything healthy sat at 0.33-1.0.
+HOOK_ORPHAN_MAX_COVERAGE = 0.3
+HOOK_MIN_SALIENT_TOKENS = 4
+HOOK_MIN_BODY_WORDS = 200
+_IDENTITY_LINE_RE = re.compile(
+    r"^(?:this is|you're listening to|you are listening to|welcome to|welcome back to)\b|"
+    r"\bepisode (?:number )?(?:one|two|three|four|five|six|seven|eight|nine|ten|\d)",
+    re.IGNORECASE,
+)
+_HOOK_STOPWORDS = frozenset(
+    "that this with from have will were been their about which would there after into over "
+    "more than also they them very when where these those what your just like some could "
+    "should might make made says said onto under while during before against between among "
+    "within without through across around because however although whether every each other "
+    "both same such only still even does done being today tonight week year years".split()
+    + "zero one two three four five six seven eight nine ten eleven twelve twenty thirty forty "
+      "fifty sixty seventy eighty ninety hundred thousand million billion trillion percent "
+      "half quarter first second third".split()
+)
+
 # Warning thresholds: read from the Sep 2026 baseline (flagship scripts
 # 21-78% digest overlap, 7-15% filler, 2-11 repeated facts/episode). The
 # aim of the prompt pass shipped with this module is to sit well under
@@ -152,6 +211,12 @@ class ScriptAudit:
     hook_restated: int
     filler_by_shape: Dict[str, int]
     repeated_fact_examples: List[str]
+    copied_sections: List[str] = field(default_factory=list)
+    hook_coverage: Optional[float] = None
+
+    @property
+    def hook_orphaned(self) -> bool:
+        return self.hook_coverage is not None and self.hook_coverage < HOOK_ORPHAN_MAX_COVERAGE
 
     def to_metrics(self) -> Dict[str, object]:
         m: Dict[str, object] = {
@@ -162,13 +227,27 @@ class ScriptAudit:
             "script_filler_sentences": self.filler_sentences,
             "script_filler_pct": round(self.filler_pct, 1),
             "script_hook_restated": self.hook_restated,
+            "script_copied_sections": len(self.copied_sections),
         }
         if self.digest_overlap_pct is not None:
             m["script_digest_overlap_pct"] = round(self.digest_overlap_pct, 1)
+        if self.hook_coverage is not None:
+            m["script_hook_coverage_pct"] = round(100.0 * self.hook_coverage, 1)
+            m["script_hook_orphaned"] = self.hook_orphaned
         return m
 
     def warnings(self) -> List[str]:
         out = []
+        if self.copied_sections:
+            out.append(
+                "digest section(s) read aloud rather than written: "
+                + "; ".join(self.copied_sections[:4])
+            )
+        if self.hook_orphaned:
+            out.append(
+                f"the cold open promises a story the body never covers "
+                f"(only {100 * (self.hook_coverage or 0):.0f}% of its words reappear)"
+            )
         if self.digest_overlap_pct is not None and self.digest_overlap_pct >= WARN_DIGEST_OVERLAP_PCT:
             out.append(
                 f"script copies the digest: {self.digest_overlap_pct:.0f}% of its "
@@ -239,6 +318,137 @@ def _closing_cut(sentences: List[str]) -> List[str]:
     return keep
 
 
+# ---------------------------------------------------------------------------
+# Section copy + orphaned hook (Sep 6 2026)
+# ---------------------------------------------------------------------------
+
+_HEADER_RE = re.compile(r"^\s{0,3}#{1,6}\s*(.+?)\s*#*\s*$")
+_MD_DECOR_RE = re.compile(r"[*_`>\[\]]|\(https?://\S+\)")
+
+
+def _digest_sections(digest_text: str) -> List[Tuple[str, str]]:
+    """(title, body) per markdown header block; the preamble is skipped."""
+    out: List[Tuple[str, str]] = []
+    title: Optional[str] = None
+    buf: List[str] = []
+    for line in (digest_text or "").splitlines():
+        m = _HEADER_RE.match(line)
+        if m:
+            if title is not None and buf:
+                out.append((title, "\n".join(buf)))
+            title = " ".join(_MD_DECOR_RE.sub("", m.group(1)).split())
+            buf = []
+        elif title is not None:
+            buf.append(line)
+    if title is not None and buf:
+        out.append((title, "\n".join(buf)))
+    return out
+
+
+def _digest_sentences(body: str) -> List[str]:
+    plain = _MD_DECOR_RE.sub("", body)
+    plain = re.sub(r"^\s*(?:\d+[.)]|[-•])\s*", "", plain, flags=re.MULTILINE)
+    plain = re.sub(r"\bSource:?\s*\S+", "", plain)
+    return [s for s in split_sentences(plain) if len(s.split()) >= 6]
+
+
+def copied_sections(
+    script_text: str,
+    digest_text: str,
+    *,
+    min_words: int = SECTION_COPY_MIN_WORDS,
+) -> List[Dict[str, object]]:
+    """Digest header blocks the script carried over almost sentence for
+    sentence. Each hit: ``{"title", "words", "ngram_pct", "sentence_pct"}``.
+
+    Two tests, either one is enough: the block's 8-gram share in the
+    script (verbatim lift), or the share of its sentences that have a
+    script sentence at >= 0.7 similarity (the word-swap paraphrase that
+    keeps the digest's sentence structure and reads exactly like it).
+    """
+    if not script_text or not digest_text:
+        return []
+    script_sents = [s.lower() for s in _closing_cut(split_sentences(script_text))]
+    sgrams = _ngrams(_words(_SPEAKER_PREFIX_RE.sub("", script_text)))
+    hits: List[Dict[str, object]] = []
+    for title, body in _digest_sections(digest_text):
+        words = _words(body)
+        if len(words) < min_words:
+            continue
+        grams = _ngrams(words)
+        ngram_pct = 100.0 * len(grams & sgrams) / len(grams) if grams else 0.0
+        dsents = _digest_sentences(body)
+        matched = 0
+        for ds in dsents:
+            low = ds.lower()
+            n = len(low)
+            for ss in script_sents:
+                if abs(len(ss) - n) > max(len(ss), n) * 0.5:
+                    continue
+                if calculate_similarity(low, ss) >= SECTION_COPY_SENTENCE_SIMILARITY:
+                    matched += 1
+                    break
+        sentence_pct = 100.0 * matched / len(dsents) if dsents else 0.0
+        copied = ngram_pct >= 100.0 * SECTION_COPY_NGRAM_SHARE or (
+            len(dsents) >= SECTION_COPY_MIN_SENTENCES
+            and sentence_pct >= 100.0 * SECTION_COPY_SENTENCE_SHARE
+            and ngram_pct >= 100.0 * SECTION_COPY_SENTENCE_MIN_NGRAM_SHARE
+        )
+        if copied:
+            hits.append({
+                "title": title, "words": len(words),
+                "ngram_pct": round(ngram_pct, 1), "sentence_pct": round(sentence_pct, 1),
+            })
+    return hits
+
+
+def _salient(text: str) -> Set[str]:
+    return {
+        w for w in re.findall(r"[a-z][a-z'’-]+", (text or "").lower())
+        if len(w) >= 4 and w not in _HOOK_STOPWORDS
+    }
+
+
+def _is_identity_line(sentence: str) -> bool:
+    return bool(_IDENTITY_LINE_RE.search(sentence))
+
+
+def hook_coverage(script_text: str, hook: str = "") -> Optional[float]:
+    """Share (0-1) of the cold open's salient words that the body speaks.
+
+    ``None`` when there is nothing to judge (no opener, a short script, a
+    hook with fewer than four salient words). The opener is the supplied
+    hook, else the first non-identity sentence of the script; the body
+    is every other sentence except the opener's own restatements.
+    """
+    sentences = _closing_cut(split_sentences(script_text))
+    if not sentences:
+        return None
+    opener = " ".join((hook or "").split())
+    if not opener:
+        for s in sentences:
+            if not _is_identity_line(s):
+                opener = s
+                break
+    if not opener:
+        return None
+    hs = _salient(opener)
+    if len(hs) < HOOK_MIN_SALIENT_TOKENS:
+        return None
+    opener_low = opener.lower()
+    body: List[str] = []
+    for s in sentences:
+        if _is_identity_line(s):
+            continue
+        if calculate_similarity(opener_low, s.lower()) >= HOOK_RESTATE_THRESHOLD:
+            continue
+        body.append(s)
+    body_text = " ".join(body)
+    if len(body_text.split()) < HOOK_MIN_BODY_WORDS:
+        return None
+    return len(hs & _salient(body_text)) / len(hs)
+
+
 def audit_script(
     script_text: str,
     *,
@@ -291,6 +501,7 @@ def audit_script(
             if calculate_similarity(hook_low, s.lower()) >= HOOK_RESTATE_THRESHOLD:
                 hook_hits += 1
 
+    sections = copied_sections(script_text, digest_text) if digest_text else []
     return ScriptAudit(
         sentences=n,
         words=words,
@@ -302,6 +513,11 @@ def audit_script(
         hook_restated=hook_hits,
         filler_by_shape=by_shape,
         repeated_fact_examples=examples,
+        copied_sections=[
+            f"{c['title']} ({c['sentence_pct']:.0f}% of sentences, {c['ngram_pct']:.0f}% verbatim)"
+            for c in sections
+        ],
+        hook_coverage=hook_coverage(script_text, hook),
     )
 
 

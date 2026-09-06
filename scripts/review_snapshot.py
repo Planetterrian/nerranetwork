@@ -277,8 +277,11 @@ def build_snapshot(slug: str, episodes: int = 10) -> str:
                      "appear word for word in the digest; facts×2 = numeric facts "
                      "spoken more than once; filler = sentences with no fact "
                      "(spectator / underscores / watch-for / announcing shapes).")
-        lines.append("| ep | sentences | digest-verbatim | facts×2 | filler | hook restated |")
-        lines.append("|---|---|---|---|---|---|")
+        lines.append("copied sections = digest header blocks read aloud (sentence-level); "
+                     "hook cov = share of the cold open's words the body speaks (<30% = "
+                     "the opener sold a story the episode skipped).")
+        lines.append("| ep | sentences | digest-verbatim | copied sections | facts×2 | filler | hook restated | hook cov |")
+        lines.append("|---|---|---|---|---|---|---|---|")
         for num, path in tts_files:
             script_text = path.read_text(encoding="utf-8", errors="replace")
             digest_path = path.with_name(path.name.replace("_tts.txt", ".md"))
@@ -292,8 +295,10 @@ def build_snapshot(slug: str, episodes: int = 10) -> str:
                 continue
             ovl = "n/a" if a.digest_overlap_pct is None else f"{a.digest_overlap_pct:.0f}%"
             flag = " ⚠" if a.warnings() else ""
-            lines.append(f"| ep{num} | {a.sentences} | {ovl} | {a.repeated_facts} | "
-                         f"{a.filler_pct:.0f}% | {a.hook_restated}{flag} |")
+            secs = ", ".join(s.split(" (")[0][:28] for s in a.copied_sections) or "—"
+            cov = "n/a" if a.hook_coverage is None else f"{100 * a.hook_coverage:.0f}%"
+            lines.append(f"| ep{num} | {a.sentences} | {ovl} | {secs} | {a.repeated_facts} | "
+                         f"{a.filler_pct:.0f}% | {a.hook_restated} | {cov}{flag} |")
         lines.append("")
 
     # --- Fetch-filter leakage (July 18 2026 network meta-review) ---

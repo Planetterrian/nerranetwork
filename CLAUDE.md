@@ -1882,6 +1882,33 @@ cause was mechanical, not the host's taste, and the rules below bind:
   rule M&A's Under the Hood has. A mechanical essay-vs-item overlap note
   was prototyped and rejected (no threshold separates re-tells from
   unrelated essays).
+- **Sep 6 readout (first full slate with prompts + gate live; the
+  "Sep 6 readout" section of the review doc):** OV/FF/MIT clearly
+  better, SpaceX/M&A/MAB/Tesla mixed, PT worse. Three defects the
+  whole-script number could not see, all fixed in
+  `engine/script_audit.py` + `engine/pipeline.py`: (1) **the gate threw
+  away a clean rewrite** — Tesla Ep597 went 61 → 2% verbatim and was
+  rejected because the floor was pinned to an over-long draft; the floor
+  is now 70% of **min(draft, target)** and `script_rewrite_gate_reasons`
+  / `_reject_reason` / `_rewrite_words` are recorded — a silent rejection
+  is the silent-number class. (2) **Sections were read aloud under the
+  threshold** — SpaceX Ep092 sat at 24% overall with its Engineering
+  Deep Dive 10/13 digest sentences (word-swap paraphrase, 59% 8-grams);
+  the deep-dive block was 78–100% verbatim on 72 of the last 90 episodes
+  across nine shows. `copied_sections` scores each digest header block
+  (≥100 words; ≥80% 8-grams, or ≥70% sentences near-matched with ≥25%
+  verbatim) and the gate fires on it, naming the section. It WILL fire
+  on most episodes at first; `script_rewrite_gate_copied_sections_after`
+  says whether the retry clears it. (3) **An orphaned hook** — PT Ep175
+  opened on a story the body never told; `hook_coverage` (share of the
+  opener's salient words the body speaks; PT 0.09, everything healthy
+  0.33–1.0) fires the gate below 0.3. Also: the headline-echo tic
+  (Tesla ×6, M&A ×9 — a spoken headline then the body restating it) and
+  attribution-only sentences are named in the shared snippet; MIT's three
+  prompt-supplied lines aired verbatim and are de-seeded; `US$95` had no
+  pronunciation handler ("USninety-five dollars" on air) — the `C$` path
+  now handles `US$`/`USD$`; MAB keeps every number the briefing gives.
+  Guards: `TestSep6*` in `tests/test_delivery_pass_2026_09_05.py`.
 - Every prompt-side item above is landmine-#17 A/B; the engine modules are
   removal-only or read-only and are not.
 

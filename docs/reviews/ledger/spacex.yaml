@@ -799,5 +799,24 @@ reviews:
       verdict: pending
       evidence: null
     agent_cost_usd: null
+  - date: 2026-09-06
+    pr: null
+    doc: docs/reviews/network_delivery_review_2026_09_05.md
+    summary: "Sep 6 readout (Ep092 vs Ep091): body clean (no fact twice, filler 12->5), but the Engineering Deep Dive was a word-swap paraphrase of the digest (10/13 sentences, 59% 8-grams - under the 40% whole-script gate), re-told all four covered stories and carried zero numbers."
+    shipped:
+      - "engine/script_audit copied_sections - sentence-level section copy; gate fires on it and names the section"
+      - "content_discipline.txt - every digest section is rewritten sentence by sentence (A/B)"
+    predictions:
+    - metric: "script_copied_sections on the Engineering Deep Dive, last 10 episodes"
+      baseline: "flagged 9/10 (Ep083-092; 100% on 5 of them)"
+      expected: "<=3/10"
+      verdict: pending
+      evidence: null
+    - metric: "Deep Dive numbers (hand-count), 3 episodes"
+      baseline: "0 (Ep092), 3 (Ep091)"
+      expected: ">=5 on every episode, none already spoken in the body"
+      verdict: pending
+      evidence: null
+    agent_cost_usd: null
 
 do_not_retry: []
