@@ -28,7 +28,9 @@ routes = [
 # GitHub's own */5 cron arrives ~hourly under load; Cloudflare fires to
 # the minute, same pattern as workers/scheduler for the shows).
 # 17:00: gate-2 housekeeping (guest-review reminders / auto-approve).
-crons = ["*/5 * * * *", "0 17 * * *"]
+# */30: Nerra Producer inbox tick (repository_dispatch producer-tick) —
+# GitHub's own */30 schedule for that workflow arrived ~4-hourly.
+crons = ["*/5 * * * *", "*/30 * * * *", "0 17 * * *"]
 
 # Phase 2 co-host (Sept 2026): local browser recordings (guest + host
 # MediaRecorder chunks and their manifest.json) are written straight to R2

@@ -1,0 +1,61 @@
+# Nerra Producer — daily jobs (September 2026): chase nudges for invites
+# with no reply (day 5 / day 12, lapse at day 22), then the summary email
+# to Patrick (his only operator channel; no Slack). 01:00 UTC = 6 pm
+# Pacific, so the digest covers the working day. docs/nerra_producer.md.
+name: Nerra Producer daily
+on:
+  schedule:
+    - cron: '0 1 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Chase: read only. Digest: log instead of sending.'
+        type: boolean
+        default: false
+      skip_chase:
+        description: 'Send the digest only'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nerra-producer-inbox
+  cancel-in-progress: false
+
+jobs:
+  daily:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+      - uses: ./.github/actions/setup-python
+        with:
+          python-version: '3.12'
+          requirements-file: 'pipelines/requirements.txt'
+          skip-checkout: 'true'
+      - name: Chase invites with no reply
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_chase) }}
+        run: >-
+          python -m pipelines.producer.chase
+          ${{ (github.event_name == 'workflow_dispatch' && inputs.dry_run) && '--dry-run' || '' }}
+        env:
+          GMAIL_SERVICE_ACCOUNT_JSON: ${{ secrets.GMAIL_SERVICE_ACCOUNT_JSON }}
+          GMAIL_DELEGATED_USER: ${{ secrets.GMAIL_DELEGATED_USER }}
+          GMAIL_SEND_AS: ${{ secrets.GMAIL_SEND_AS }}
+          SUPABASE_URL: ${{ secrets.VOICES_SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.VOICES_SUPABASE_SERVICE_KEY }}
+          PRODUCER_MODE: ${{ vars.PRODUCER_MODE }}
+      - name: Daily summary email
+        if: ${{ always() }}
+        run: >-
+          python -m pipelines.producer.digest
+          ${{ (github.event_name == 'workflow_dispatch' && inputs.dry_run) && '--dry-run' || '' }}
+        env:
+          SUPABASE_URL: ${{ secrets.VOICES_SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.VOICES_SUPABASE_SERVICE_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          OPERATOR_EMAIL: patricknovak1@gmail.com

@@ -153,7 +153,31 @@ def parse_message(msg: Dict[str, Any]) -> Dict[str, Any]:
         "references": _header(headers, "References"),
         "body": extract_body(payload),
         "snippet": msg.get("snippet") or "",
+        "auto_submitted": is_auto_submitted(headers, _header(headers, "Subject")),
     }
+
+
+_AUTO_SUBJECTS = ("automatic reply", "auto-reply", "autoreply", "out of office",
+                  "out of the office", "on leave", "away from", "delivery status",
+                  "undeliverable", "mail delivery failed")
+
+
+def is_auto_submitted(headers: List[Dict[str, str]], subject: str = "") -> bool:
+    """Out-of-office / bounce detection so the Producer never converses
+    with an autoresponder (RFC 3834 + the common vendor headers)."""
+    auto = _header(headers, "Auto-Submitted").strip().lower()
+    if auto and auto != "no":
+        return True
+    if _header(headers, "X-Autoreply") or _header(headers, "X-Autorespond"):
+        return True
+    if "auto_reply" in _header(headers, "Precedence").lower():
+        return True
+    if _header(headers, "X-Auto-Response-Suppress"):
+        # Present on Exchange autoreplies (and, harmlessly, on some
+        # ordinary Outlook mail — the subject check below decides).
+        pass
+    subj = (subject or "").strip().lower()
+    return any(subj.startswith(a) or f": {a}" in subj for a in _AUTO_SUBJECTS)
 
 
 def build_reply_mime(*, sender: str, to: str, subject: str, body_text: str,

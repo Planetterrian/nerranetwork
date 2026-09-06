@@ -1,0 +1,55 @@
+<!doctype html>
+<html><body style="font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.5;color:#1f2937;max-width:640px;margin:0 auto;padding:24px">
+<p style="margin:0 0 4px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#6b7280">Nerra Producer</p>
+<h1 style="font-size:20px;margin:0 0 16px">Daily summary for {{ day }}</h1>
+
+<table style="border-collapse:collapse;margin:0 0 20px">
+<tr><td style="padding:2px 16px 2px 0">Invitations sent</td><td style="padding:2px 0;font-weight:600">{{ s.invited }}</td></tr>
+<tr><td style="padding:2px 16px 2px 0">Follow-ups answered</td><td style="padding:2px 0;font-weight:600">{{ s.followups }}</td></tr>
+<tr><td style="padding:2px 16px 2px 0">Booking links sent</td><td style="padding:2px 0;font-weight:600">{{ s.approved }}</td></tr>
+<tr><td style="padding:2px 16px 2px 0">Interviews booked</td><td style="padding:2px 0;font-weight:600">{{ s.booked }}</td></tr>
+<tr><td style="padding:2px 16px 2px 0">Nudges sent</td><td style="padding:2px 0;font-weight:600">{{ s.chased }}</td></tr>
+<tr><td style="padding:2px 16px 2px 0">Lapsed (no reply)</td><td style="padding:2px 0;font-weight:600">{{ s.lapsed }}</td></tr>
+<tr><td style="padding:2px 16px 2px 0">Held for you</td><td style="padding:2px 0;font-weight:600">{{ s.held }}</td></tr>
+<tr><td style="padding:2px 16px 2px 0">Errors</td><td style="padding:2px 0;font-weight:600">{{ s.errors }}</td></tr>
+</table>
+
+{% if held %}
+<h2 style="font-size:16px;margin:24px 0 8px">Waiting on you ({{ held|length }})</h2>
+<p style="margin:0 0 8px;color:#6b7280;font-size:13px">Each has a draft in Gmail under Producer/Hold. Send, edit, or discard.</p>
+{% for h in held %}
+<p style="margin:0 0 10px"><a href="{{ h.url }}" style="color:{{ brand }}">{{ h.subject or '(no subject)' }}</a><br>
+<span style="color:#374151">{{ h.guest or h.sender }}</span> &middot; {{ h.reason }}</p>
+{% endfor %}
+{% endif %}
+
+{% if booked %}
+<h2 style="font-size:16px;margin:24px 0 8px">Booked</h2>
+{% for b in booked %}
+<p style="margin:0 0 8px"><strong>{{ b.name }}</strong> &middot; {{ b.show }} &middot; {{ b.when }}</p>
+{% endfor %}
+{% endif %}
+
+{% if approved %}
+<h2 style="font-size:16px;margin:24px 0 8px">Sent a booking link</h2>
+{% for a in approved %}
+<p style="margin:0 0 8px"><a href="{{ a.url }}" style="color:{{ brand }}">{{ a.name }}</a> &middot; {{ a.show }}</p>
+{% endfor %}
+{% endif %}
+
+{% if invited %}
+<h2 style="font-size:16px;margin:24px 0 8px">Invited today</h2>
+{% for i in invited %}
+<p style="margin:0 0 6px"><a href="{{ i.url }}" style="color:{{ brand }}">{{ i.name }}</a> &middot; {{ i.show }}{% if i.pitched %} &middot; pitched {{ i.pitched }}{% endif %}</p>
+{% endfor %}
+{% endif %}
+
+{% if errors %}
+<h2 style="font-size:16px;margin:24px 0 8px">Errors</h2>
+{% for e in errors %}
+<p style="margin:0 0 6px;font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#991b1b">{{ e }}</p>
+{% endfor %}
+{% endif %}
+
+<p style="margin:28px 0 0;color:#6b7280;font-size:12px">Runs in the last 24 hours: {{ s.runs }}. Pipeline state: {{ s.invited_total }} invited and waiting, {{ s.approved_total }} approved and not yet booked, {{ s.scheduled_total }} interviews scheduled.</p>
+</body></html>

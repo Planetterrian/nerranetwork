@@ -18,7 +18,10 @@ Schema (every key required):
   "is_ai_related": boolean,
   "recommended_show": "age_of_ai" | "nerra_voices" | null,
   "pitched_show": one of {{daily_show_slugs}} or null,
-  "mentions_money_or_legal": boolean
+  "mentions_money_or_legal": boolean,
+  "bio": string or null,
+  "topics": array of up to 5 short strings,
+  "links": array of up to 5 URL strings
 }
 
 Rules:
@@ -31,6 +34,9 @@ Rules:
 - recommended_show is only set for guest_pitch / guest_followup: "age_of_ai" when the pitch's substance is AI, agents, automation, AI inside an industry, or AI investing; otherwise "nerra_voices". null for every other category.
 - pitched_show is the daily show the sender explicitly asked to appear on, mapped to its slug; null if none was named or it is one of the interview shows.
 - mentions_money_or_legal is true if the email talks about payment, fees, contracts, lawyers, legal claims, or anything Patrick must decide on financially.
+- bio: for guest_pitch only, a 2-5 sentence third-person bio of the GUEST assembled from what the email says (who they are, what they do, what they have built or written). Copy facts, never invent them. null for other categories.
+- topics: for guest_pitch only, up to 5 concrete talking points the email proposes, each under 80 characters. Empty array otherwise.
+- links: URLs in the email that belong to the guest (website, LinkedIn, book, company). Never include unsubscribe or tracking links. Empty array if none.
 - Be conservative with confidence: below 0.75 when the email is ambiguous, truncated, or you are guessing.
 
 EMAIL

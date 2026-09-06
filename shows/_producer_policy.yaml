@@ -14,7 +14,9 @@ mode: auto
 
 # Below this classifier confidence the Producer never sends; it holds the
 # thread for Patrick (draft + Slack note).
-min_confidence: 0.75
+# Sept 6 2026: lowered from 0.75 at Patrick's request ("invite everyone");
+# money/legal mentions and blocked domains still hold regardless.
+min_confidence: 0.5
 
 # Circuit breaker: at most this many invites sent per inbox tick. Anything
 # past the cap is drafted instead so a runaway run cannot spam.
@@ -55,7 +57,7 @@ labels:
 
 # Gmail search used to find unprocessed threads (the processed label is
 # excluded by the client automatically).
-inbox_query: "newer_than:30d in:inbox"
+inbox_query: "newer_than:45d in:inbox"
 
 # One-line description of each interview show, dropped into the invite:
 # "the right home is <show name>, <blurb>."

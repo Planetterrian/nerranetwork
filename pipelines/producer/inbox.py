@@ -40,6 +40,7 @@ from pipelines.voices.common import (  # noqa: E402
 from pipelines.voices.shows import get_show  # noqa: E402
 from pipelines.producer import classify as _classify  # noqa: E402
 from pipelines.producer.gmail_client import GmailClient  # noqa: E402
+from pipelines.producer import followup as _followup  # noqa: E402
 from pipelines.producer.policy import (  # noqa: E402
     Decision, Policy, decide, decision_log_line, load_policy,
 )
@@ -108,10 +109,29 @@ def render_invite(classification: Dict[str, Any], sender_name: str,
 # Supabase
 # ---------------------------------------------------------------------------
 
-def application_exists(thread_id: str) -> bool:
+APP_COLUMNS = ("id,name,email,show,status,source,pitched_show,publicist_name,"
+               "publicist_email,producer_followup_count,producer_action,"
+               "producer_acted_at,chase_count,chased_at,email_thread_id")
+
+
+def application_for_thread(thread_id: str) -> Optional[Dict[str, Any]]:
     rows = sb_select("guest_applications",
-                     f"email_thread_id=eq.{thread_id}&select=id")
-    return bool(rows)
+                     f"email_thread_id=eq.{thread_id}&select={APP_COLUMNS}&limit=1")
+    return rows[0] if rows else None
+
+
+def application_exists(thread_id: str) -> bool:
+    return application_for_thread(thread_id) is not None
+
+
+def newest_is_inbound(thread: Dict[str, Any], own_email: str) -> bool:
+    """True when the last message in the thread is NOT ours: someone wrote
+    back after our invite and is waiting on an answer."""
+    msgs = thread.get("messages") or []
+    if not msgs:
+        return False
+    own = _classify._own_set(own_email)
+    return (msgs[-1].get("from_email") or "").lower() not in own
 
 
 def application_row(*, thread: Dict[str, Any], inbound: Dict[str, Any],
@@ -131,6 +151,11 @@ def application_row(*, thread: Dict[str, Any], inbound: Dict[str, Any],
             sender_name if classification.get("guest_name") else None),
         "publicist_email": classification.get("publicist_email") or inbound.get("from_email"),
         "pitch_summary": classification.get("topic_summary"),
+        # Pre-filled from the pitch so a guest who never opens the form
+        # still gets a real prep brief (Sept 2026: most never do).
+        "bio": classification.get("bio"),
+        "topics": classification.get("topics") or None,
+        "links": ({"urls": classification["links"]} if classification.get("links") else None),
         "producer_classification": clean,
         "producer_action": action,
         "producer_acted_at": _now(),
@@ -204,14 +229,31 @@ def process_thread(thread_id: str, *, gmail: GmailClient, policy: Policy,
         classification: Dict[str, Any] = {"category": None, "confidence": None}
     else:
         in_db = False
+        app_row: Optional[Dict[str, Any]] = None
         if not dry_run or os.environ.get("SUPABASE_URL"):
             try:
-                in_db = application_exists(thread_id)
+                app_row = application_for_thread(thread_id)
+                in_db = app_row is not None
             except Exception as exc:  # noqa: BLE001
                 if dry_run:
                     logger.warning("[dry-run] duplicate check skipped: %s", exc)
                 else:
                     raise
+        if in_db and app_row and (app_row.get("source") or "email") == "email" \
+                and already_replied(thread, gmail.user) \
+                and newest_is_inbound(thread, gmail.user):
+            # They wrote back after our invite: the follow-up conversation
+            # (pipelines/producer/followup.py) — booking link, FAQ answer,
+            # or a hold for Patrick.
+            line = _followup.handle_followup(thread=thread, inbound=inbound, app=app_row,
+                                             gmail=gmail, policy=policy, dry_run=dry_run)
+            key = {"send": "followups_sent", "draft": "followups_held"}.get(line["action"])
+            if key:
+                summary[key] = summary.get(key, 0) + 1
+            if line["action"] == "send" and line.get("intent") == "ready_to_book":
+                summary["approved"] = summary.get("approved", 0) + 1
+            run.record(line)
+            return line
         if in_db:
             classification = {"category": None, "confidence": None}
             decision = decide(classification, policy=policy,
@@ -349,7 +391,10 @@ def run_inbox(*, gmail: Optional[GmailClient] = None, policy: Optional[Policy] =
     by = summary["by_show"]
     text = (f"Producer inbox: {summary['seen']} seen, {summary['sent']} invited "
             f"(age_of_ai {by.get('age_of_ai', 0)} / nerra_voices {by.get('nerra_voices', 0)}), "
-            f"{summary['drafted']} drafted, {summary['skipped']} skipped")
+            f"{summary['drafted']} drafted, {summary['skipped']} skipped, "
+            f"{summary.get('followups_sent', 0)} follow-ups answered "
+            f"({summary.get('approved', 0)} sent a booking link), "
+            f"{summary.get('followups_held', 0)} awaiting Patrick")
     if summary["failed"]:
         text += f", {summary['failed']} FAILED"
     if dry_run:

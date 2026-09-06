@@ -155,15 +155,72 @@ autoescaping (`inbox.render_text`), unlike the HTML `voices_*.j2` mails.
    drafts. `PRODUCER_INBOX_QUERY` in the environment does the same for a
    local run.
 
+## Follow-ups, chasing and the daily summary (September 6 2026)
+
+The Producer now runs the whole email conversation, not just the first
+reply. Patrick has no Slack, so its single operator channel is one email
+a day.
+
+**Punctual ticks.** GitHub delivered the inbox job's `*/30` schedule about
+every four hours (same landmine as the fire job). The nerra-voices
+Cloudflare Worker now fires `repository_dispatch: producer-tick` every 30
+minutes; GitHub's cron stays as fallback and the workflow's concurrency
+group makes overlaps harmless. Check `/voices/health` → `cron.producer_tick`.
+
+**Follow-up replies** (`pipelines/producer/followup.py`). When a thread
+that already has an email-sourced `guest_applications` row gets a new
+inbound message after our invite, the inbox job asks Grok (`grok-latest`)
+for an intent and a reply in Patrick's voice, working only from a fixed
+FAQ (`prompts/followup_reply.txt`: format, 45 minutes, browser link, Mira
+is an AI with Patrick as co-host, transcript approval, no fee either way,
+booking page, time zone). Intents:
+
+| intent | what happens |
+| --- | --- |
+| `ready_to_book` | reply carries the show's Cal.com link (`CALCOM_BOOKING_URL[_NERRA_VOICES]`); row → `approved`. The form is skipped: bio, topics and links were already pulled from the pitch at invite time. |
+| `question` | reply from the FAQ |
+| `later` | reply; `chased_at` stamped so the chase job waits a full cycle |
+| `decline` | two-sentence thanks; row → `declined` |
+| `needs_patrick` / confidence < 0.7 / 4 replies already | Gmail draft + `Producer/Hold`; listed in the daily summary |
+| `auto_reply` (or RFC 3834 headers / "Automatic reply" subjects) | labelled, nothing sent |
+
+Every reply passes the voice guard (`Sincerely, / Patrick`, no em
+dashes). `PRODUCER_MODE=draft` drafts instead of sending; `off` does nothing.
+
+The Cal.com webhook now also matches a booking by `publicist_email`, and
+records the address the guest actually booked with on the row, so a
+publicist booking for their client (or the guest booking themselves) both
+land on the right application.
+
+**Chase job** (`pipelines/producer/chase.py`, in `nerra_producer_daily.yml`
+at 01:00 UTC). Invited, email-sourced rows with no reply since our last
+message get a nudge in the same thread at day 5 (`producer_chase_1.j2`)
+and day 12 (`producer_chase_2.j2`), then lapse at day 22
+(`status = lapsed`, `producer_closed_reason = no_reply`). The thread is
+re-read first: an unprocessed inbound message or an autoresponder blocks
+the nudge. Cap 30 actions per run.
+
+**Daily summary** (`pipelines/producer/digest.py`, same workflow, runs
+even if the chase step fails). One HTML email via Resend to
+`OPERATOR_EMAIL` (patricknovak1@gmail.com): invitations sent, follow-ups
+answered, booking links sent, interviews booked, nudges, lapses, errors,
+and everything held for Patrick with a Gmail link to each draft. Logged
+as a `producer_runs` row with `job = review`.
+
+**Policy change.** `min_confidence` lowered from 0.75 to 0.5 and the
+default window widened to 45 days ("invite everyone", Sept 6 2026).
+Money/legal mentions, blocked domains and threads Patrick already
+answered by hand still hold.
+
+Migration: `supabase/migrations/20260907_producer_autonomy.sql`
+(`producer_followup_count`, `producer_last_inbound_at`,
+`producer_last_outbound_at`, `chase_count`, `chased_at`,
+`producer_closed_reason`).
+
 ## Roadmap (not yet built)
 
-* **chase**: nudge invited guests who have not filled the form after N
-  days, and applicants who have not booked after triage.
 * **gate-1 pre-review**: a first editorial pass on the eight post-interview
   passes before Patrick's gate-1 review, flagging what needs his eye.
 * **weekly improvement loop**: a Sunday digest of what the Producer sent,
   held, and got wrong (Patrick's edits to drafts as the training signal),
   with proposed policy and prompt changes.
-
-The `producer_runs.job` column already accepts `chase` and `review`
-alongside `inbox` for these.

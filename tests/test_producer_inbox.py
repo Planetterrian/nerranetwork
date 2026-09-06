@@ -353,11 +353,11 @@ class TestGuestPitchFlow:
 
     def test_low_confidence_pitch_is_drafted(self, db, slack, grok):
         t = make_thread("t4", "maybe@example.org", "possible guest?", "hey")
-        svc, summary = run([t], grok, {"possible guest?": _classification(confidence=0.5)})
+        svc, summary = run([t], grok, {"possible guest?": _classification(confidence=0.4)})
         assert not svc.sent and len(svc.drafted) == 1
         assert svc.drafted[0]["threadId"] == "t4"
         assert AGE_OF_AI_APPLY in decode_raw(svc.drafted[0])
-        assert any("confidence 0.50" in s for s in slack)
+        assert any("confidence 0.40 < 0.50" in s for s in slack)
         assert db.applications[0]["producer_action"] == "drafted"
 
     def test_money_or_legal_pitch_is_drafted(self, db, slack, grok):
@@ -511,9 +511,10 @@ class TestInviteTemplate:
             "guests approve their transcript before anything publishes. I sit in on the "
             "sessions as co-host.\n\n"
             "For Dr. Lena Ortiz the right home is The Age of AI, our show on how AI is "
-            "changing people's work. The fastest path is the application form at "
-            f"{AGE_OF_AI_APPLY}; it takes a couple of minutes, and once I've reviewed it "
-            "you'll get a booking link. I'd also feature the finished interview on the "
+            "changing people's work. There is a short application form at "
+            f"{AGE_OF_AI_APPLY} if you'd like to send details, but it isn't required: just "
+            "reply to this email and I'll send a booking link so Dr. Lena Ortiz can pick a "
+            "time. I'd also feature the finished interview on the "
             "Models & Agents channel, since that's the audience you had in mind.\n\n"
             "Let me know if you have any questions.\n\n"
             "Sincerely,\n\n"
@@ -613,7 +614,7 @@ class TestPolicy:
         policy_mod._load_yaml.cache_clear()
         p = policy_mod.load_policy(env={})
         assert p.mode == "auto"
-        assert p.min_confidence == 0.75 and p.max_sends_per_run == 25
+        assert p.min_confidence == 0.5 and p.max_sends_per_run == 25
         for d in ("apple.com", "spotify.com", "google.com", "github.com",
                   "voximplant.com", "supabase.com", "cloudflare.com"):
             assert d in p.never_auto_reply_domains

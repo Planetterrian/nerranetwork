@@ -510,6 +510,23 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
         `falling back to application ${apps[0].id} (show=${apps[0].show ?? "unset"})`);
     }
   }
+  if (!apps?.length) {
+    // Producer-sourced pitches (Sept 2026): the row's email is usually the
+    // publicist's, but the guest books with their own address (or the
+    // publicist books with theirs). Match either side before giving up.
+    const alt = `guest_applications?status=eq.approved&or=(publicist_email.eq.${encodeURIComponent(emailAddr)},email.eq.${encodeURIComponent(emailAddr)})`;
+    apps = await sb(env, "GET", `${alt}&order=created_at.desc&limit=1`);
+    if (apps?.length) {
+      console.warn(`cal-com-booked: matched ${emailAddr} via publicist_email on application ${apps[0].id}`);
+      // Remember the address the guest actually booked with so the
+      // confirmation, brief and studio link reach the person on the call.
+      if ((apps[0].email ?? "").toLowerCase() !== emailAddr) {
+        await sb(env, "PATCH", `guest_applications?id=eq.${apps[0].id}`,
+          { email: emailAddr, notes: `${apps[0].notes ?? ""}\nBooked with ${emailAddr} (row email was ${apps[0].email}).`.trim() });
+        apps[0].email = emailAddr;
+      }
+    }
+  }
   if (!apps?.length) return json({ error: "no approved application for that email" }, 404);
   // The application decides the interview's show (that is what Patrick
   // approved and what the pipeline keys prompts/publishing on).
@@ -1268,7 +1285,9 @@ async function handleHealth(env: Env): Promise<Response> {
   const out: Record<string, unknown> = {
     worker: "nerra-voices-api",
     now: new Date().toISOString(),
-    cron: { fire_tick: "*/5 * * * * -> repository_dispatch fire-tick", gate2: "0 17 * * * UTC" },
+    cron: { fire_tick: "*/5 * * * * -> repository_dispatch fire-tick",
+            producer_tick: "*/30 * * * * -> repository_dispatch producer-tick",
+            gate2: "0 17 * * * UTC" },
     configured: {
       supabase: !!(env.SUPABASE_URL && env.SUPABASE_SERVICE_KEY),
       github_token: tok.length > 0,
@@ -1370,6 +1389,19 @@ export default {
         await dispatch(env, "fire-tick", { source: "voices-worker-cron" });
       } catch (err: any) {
         console.error("fire-tick dispatch failed:", err?.message ?? err);
+      }
+      return;
+    }
+    // */30 tick: the Nerra Producer inbox job. Same landmine as the fire
+    // tick — GitHub delivered the Producer's own */30 schedule roughly
+    // every four hours on Sept 5-6 2026, so a publicist's reply waited
+    // half a day. Cloudflare fires to the minute; the workflow's
+    // concurrency group makes the overlap with GitHub's cron harmless.
+    if (event.cron === "*/30 * * * *") {
+      try {
+        await dispatch(env, "producer-tick", { source: "voices-worker-cron" });
+      } catch (err: any) {
+        console.error("producer-tick dispatch failed:", err?.message ?? err);
       }
       return;
     }

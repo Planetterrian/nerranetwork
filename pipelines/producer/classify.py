@@ -61,6 +61,9 @@ LOW_CONFIDENCE_FALLBACK: Dict[str, Any] = {
     "recommended_show": None,
     "pitched_show": None,
     "mentions_money_or_legal": False,
+    "bio": None,
+    "topics": [],
+    "links": [],
 }
 
 
@@ -75,6 +78,36 @@ def _opt_str(value: Any, key: str, limit: int = 300) -> Optional[str]:
         raise ClassificationError(f"{key} must be a string or null")
     value = " ".join(value.split())
     return value[:limit] or None
+
+
+def _str_list(value: Any, max_items: int, max_len: int) -> list:
+    if not isinstance(value, list):
+        return []
+    out = []
+    for item in value:
+        if isinstance(item, str):
+            item = " ".join(item.split())[:max_len]
+            if item and item not in out:
+                out.append(item)
+        if len(out) >= max_items:
+            break
+    return out
+
+
+_URL_RE = re.compile(r"^https?://[^\s<>\"']+$", re.I)
+_TRACKING = ("unsubscribe", "utm_", "mailtrack", "list-manage", "sendgrid.net",
+             "mailchimp", "hubspotlinks", "click.", "track.")
+
+
+def _url_list(value: Any, max_items: int) -> list:
+    out = []
+    for item in _str_list(value, max_items * 2, 500):
+        low = item.lower()
+        if _URL_RE.match(item) and not any(t in low for t in _TRACKING):
+            out.append(item)
+        if len(out) >= max_items:
+            break
+    return out
 
 
 def validate_classification(obj: Any) -> Dict[str, Any]:
@@ -129,6 +162,12 @@ def validate_classification(obj: Any) -> Dict[str, Any]:
         "recommended_show": rec,
         "pitched_show": pitched,
         "mentions_money_or_legal": bool(obj["mentions_money_or_legal"]),
+        # Optional (Sept 2026): what the Producer pre-fills on the
+        # application so a guest who never touches the form still gets a
+        # real prep brief. Missing keys are tolerated (older prompt).
+        "bio": _opt_str(obj.get("bio"), "bio", 1500),
+        "topics": _str_list(obj.get("topics"), 5, 120),
+        "links": _url_list(obj.get("links"), 5),
     }
     # Routing rule: AI substance -> The Age of AI, everything else -> Nerra
     # Voices. The model is asked for it; we enforce it.

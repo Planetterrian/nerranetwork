@@ -6,6 +6,11 @@ name: Nerra Producer inbox
 on:
   schedule:
     - cron: '*/30 * * * *'
+  # Punctual tick from the nerra-voices Cloudflare Worker (*/30 cron →
+  # repository_dispatch). GitHub's schedule above is the fallback: on
+  # Sept 5-6 2026 it arrived about every four hours.
+  repository_dispatch:
+    types: [producer-tick]
   workflow_dispatch:
     inputs:
       dry_run:
@@ -59,4 +64,8 @@ jobs:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
           NOTIFICATION_WEBHOOK_URL: ${{ secrets.NOTIFICATION_WEBHOOK_URL }}
           PRODUCER_MODE: ${{ vars.PRODUCER_MODE }}
+          # Follow-up fast path: a publicist who replies "yes" gets the
+          # booking link straight from the Producer (no form).
+          CALCOM_BOOKING_URL: ${{ secrets.CALCOM_BOOKING_URL }}
+          CALCOM_BOOKING_URL_NERRA_VOICES: ${{ secrets.CALCOM_BOOKING_URL_NERRA_VOICES }}
           PRODUCER_INBOX_QUERY: ${{ (github.event_name == 'workflow_dispatch' && inputs.inbox_query) || '' }}
