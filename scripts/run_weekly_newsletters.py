@@ -38,6 +38,27 @@ def _discover_shows() -> list:
 SHOWS = _discover_shows()
 
 
+def sent_marker_path(output_dir: Path, show_slug: str, week_ending: date) -> Path:
+    """Per-show, per-week 'already sent' marker (see the guard in main)."""
+    return output_dir / f"{show_slug}_weekly_{week_ending.isoformat()}.sent.json"
+
+
+def record_sent(marker: Path, *, email_id: str, subject: str) -> None:
+    """Write the sent marker after a successful Buttondown send. Best-effort:
+    a write failure must never turn a sent newsletter into a job error."""
+    import json
+    from datetime import datetime, timezone
+    try:
+        marker.parent.mkdir(parents=True, exist_ok=True)
+        marker.write_text(json.dumps({
+            "email_id": email_id,
+            "subject": subject,
+            "sent_at": datetime.now(timezone.utc).isoformat(),
+        }, indent=2) + "\n", encoding="utf-8")
+    except OSError as exc:
+        logger.warning("  could not write sent marker %s: %s", marker, exc)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Generate weekly newsletters")
     parser.add_argument("--show", type=str, help="Specific show slug (default: all)")
@@ -65,6 +86,23 @@ def main():
         logger.info("Week ending: %s", week_ending)
 
         prompt_file = Path(f"shows/prompts/{show_slug}_weekly.txt")
+
+        # Same-week double-send guard (Sep 6 2026). The Sunday cron has
+        # been arriving hours late (or not at all) during the GitHub cron
+        # outage, so the operator dispatches the workflow by hand — and a
+        # late cron firing AFTER that dispatch would send every show's
+        # weekly a second time. The marker is written only after a real
+        # send and lives in the tracked outputs/newsletters/ directory the
+        # workflow commits, so a fresh checkout sees it. The daily guard
+        # (engine.newsletter._can_send_now) is 20-hour and per-DAILY send;
+        # it does not know about weeklies.
+        sent_marker = sent_marker_path(output_dir, show_slug, week_ending)
+        if not args.dry_run and sent_marker.exists():
+            logger.info("  Weekly newsletter for %s (week ending %s) already "
+                        "sent — marker %s; skipping", show_slug, week_ending,
+                        sent_marker.name)
+            results[show_slug] = "already sent this week"
+            continue
 
         # One show's failure must never sink the whole weekly run: on
         # 2026-08-30 first_principles' template carried a placeholder the
@@ -176,6 +214,8 @@ def main():
                 slug=bd_slug,
             )
             results[show_slug] = f"sent ({email_id})" if email_id else "send failed"
+            if email_id:
+                record_sent(sent_marker, email_id=email_id, subject=subject)
         except Exception as e:
             logger.error("  Send failed for %s: %s", show_slug, e)
             results[show_slug] = f"error: {e}"

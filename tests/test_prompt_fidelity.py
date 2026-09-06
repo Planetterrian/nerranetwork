@@ -148,3 +148,83 @@ class TestWeeklyNewsletterPromptPlaceholders:
             "cannot sink every show after it in the loop")
         assert 'st.startswith("failed")' in src, (
             "crashed shows must still fail the JOB at the end")
+
+
+class TestWeeklyNewsletterSameWeekGuard:
+    """Sep 6 2026: the Sunday 14:00 UTC cron arrives hours late (or never)
+    during the GitHub cron outage, so the operator dispatches the workflow
+    by hand — and a late cron firing afterwards would re-send every show's
+    weekly. A per-show, per-week marker written after a real send makes the
+    second run a no-op. The marker lives in outputs/newsletters/, which the
+    workflow commits — but only if add-paths is a block scalar (the
+    composite uses --pathspec-from-file, so a space-separated single line
+    is one pathspec that matches nothing)."""
+
+    def _load_runner(self, monkeypatch):
+        import importlib.util
+        from pathlib import Path
+        root = Path(__file__).resolve().parent.parent
+        spec = importlib.util.spec_from_file_location(
+            "run_weekly_newsletters", root / "scripts" / "run_weekly_newsletters.py")
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        monkeypatch.setattr(mod, "get_lake_stats",
+                            lambda: {"total_episodes": 0, "total_words": 0})
+        return mod
+
+    def test_marker_skips_synthesis_and_send(self, monkeypatch, tmp_path):
+        import datetime as dt
+        mod = self._load_runner(monkeypatch)
+        week = dt.date(2026, 9, 6)
+        mod.sent_marker_path(tmp_path, "tesla", week).write_text("{}")
+
+        def boom(**kw):
+            raise AssertionError("synthesis must not run for an already-sent week")
+        monkeypatch.setattr(mod, "synthesize_weekly_newsletter", boom)
+        monkeypatch.setattr("sys.argv", ["x", "--show", "tesla", "--date",
+                                         "2026-09-06", "--output-dir", str(tmp_path)])
+        mod.main()  # no SystemExit: an already-sent show is not a failure
+
+    def test_dry_run_ignores_marker(self, monkeypatch, tmp_path):
+        import datetime as dt
+        mod = self._load_runner(monkeypatch)
+        week = dt.date(2026, 9, 6)
+        mod.sent_marker_path(tmp_path, "tesla", week).write_text("{}")
+        calls = []
+        monkeypatch.setattr(mod, "synthesize_weekly_newsletter",
+                            lambda **kw: calls.append(kw) or None)
+        monkeypatch.setattr("sys.argv", ["x", "--show", "tesla", "--date",
+                                         "2026-09-06", "--output-dir",
+                                         str(tmp_path), "--dry-run"])
+        mod.main()
+        assert calls, "dry run must still generate"
+
+    def test_marker_written_after_send_only(self, tmp_path):
+        import importlib.util, json
+        from pathlib import Path
+        import datetime as dt
+        root = Path(__file__).resolve().parent.parent
+        spec = importlib.util.spec_from_file_location(
+            "run_weekly_newsletters", root / "scripts" / "run_weekly_newsletters.py")
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        marker = mod.sent_marker_path(tmp_path, "spacex", dt.date(2026, 9, 6))
+        assert marker.name == "spacex_weekly_2026-09-06.sent.json"
+        mod.record_sent(marker, email_id="em_123", subject="Hello")
+        data = json.loads(marker.read_text())
+        assert data["email_id"] == "em_123" and data["sent_at"]
+        src = (root / "scripts" / "run_weekly_newsletters.py").read_text()
+        assert src.index("email_id = send_newsletter(") < src.index("record_sent(sent_marker")
+
+    def test_workflow_add_paths_is_block_scalar(self):
+        from pathlib import Path
+        import yaml
+        wf = yaml.safe_load((Path(__file__).resolve().parent.parent
+                             / ".github" / "workflows" / "weekly-newsletter.yml").read_text())
+        steps = wf["jobs"]["generate"]["steps"]
+        commit = next(s for s in steps if str(s.get("uses", "")).endswith("safe-commit-push"))
+        paths = commit["with"]["add-paths"]
+        assert "\n" in paths.strip(), "add-paths must be one path per line"
+        assert all(" " not in line.strip() for line in paths.splitlines()), paths
+        assert "outputs/newsletters/" in paths
+
