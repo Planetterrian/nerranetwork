@@ -139,7 +139,22 @@ that series.
 The build gives you: `uc_vol1.epub` (store-ready EPUB 3),
 `uc_vol1.m4b` (chaptered audiobook), `cover.png` (1600×2560), per-chapter
 MP3s in `outputs/books/<id>/audio/` (aggregator ingest format), and the
-free sample EPUB. As each listing goes live, paste its URL into
+free sample EPUB.
+
+**EPUB payload budget (Sept 2026).** The EPUB embeds a *display-size*
+copy of every image — chapter art at 720 px wide under a ~45 KB
+per-image budget, the cover as a 1200×1920 JPEG — and deflates its
+documents; the full-resolution art lives on R2 and in the gallery for
+the audiobook and site. A fully illustrated 73-chapter collected
+edition packs under 4 MB, and `build_epub` refuses to write anything
+over 5 MB (`engine.book_compiler.EPUB_MAX_BYTES`, measured size in the
+error). Why it is a hard rule: KDP charges **$0.15/MB delivery per
+sale** on the 70% royalty plan — the first collected-edition build
+shipped at 15.4 MB (96% images, a 4.8 MB PNG cover), which is $2.25 per
+copy, $1.26 of royalty on a $7.99 book — and KDP's browser upload
+rejects files over 10 MB, so an oversized EPUB cannot be submitted by
+automation at all. Tune `engine.book_art`'s `EPUB_*` constants, never
+the cap. As each listing goes live, paste its URL into
 `books/volumes/<id>.yaml` → `buy_links` and re-run the workflow (or just
 `generate_html.py --books` after editing catalog) so /books.html shows
 the button.
