@@ -64,6 +64,7 @@ from engine.personal_edition import (  # noqa: E402
     build_markets_line,
     build_personal_feed_xml,
     build_personal_links_prompt,
+    chapters_filename_for,
     fallback_personal_links,
     fetch_weather_line,
     needs_research_call,
@@ -399,7 +400,7 @@ def build_for_spec(
         chapters = build_chapters(
             personal_chapter_pieces(spec, segments, durations_for_chapters),
             title)
-        _r2_put(client, f"{prefix}/chapters_{target_date:%Y%m%d}.json",
+        _r2_put(client, f"{prefix}/{chapters_filename_for(target_date.isoformat())}",
                 json.dumps(chapters).encode("utf-8"), "application/json")
         _r2_put(client, state_key,
                 json.dumps({"episodes": episodes}).encode("utf-8"),
