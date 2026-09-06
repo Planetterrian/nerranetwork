@@ -56,6 +56,19 @@ jobs:
           # No git history needed (landmine #1: full clone is ~2.5 GB).
           fetch-depth: 1
 
+      - name: Sync to live main
+        # A queued run checks out the SHA that was current when it was
+        # TRIGGERED, not when it starts. On 2026-09-06 the late Sunday
+        # cron queued behind a manual dispatch (concurrency group), ran
+        # twenty minutes later against a tree from before that dispatch
+        # had committed its sent markers, and re-sent six shows' weeklies.
+        # Any guard that lives in committed state is blind unless the
+        # workspace is moved to the live tip first.
+        run: |
+          git fetch --depth=1 origin main
+          git reset --hard origin/main
+          git log --oneline -1
+
       - uses: ./.github/actions/setup-python
         with:
           python-version: '3.12'

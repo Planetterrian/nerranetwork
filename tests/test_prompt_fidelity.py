@@ -216,6 +216,23 @@ class TestWeeklyNewsletterSameWeekGuard:
         src = (root / "scripts" / "run_weekly_newsletters.py").read_text()
         assert src.index("email_id = send_newsletter(") < src.index("record_sent(sent_marker")
 
+    def test_workflow_syncs_to_live_main_before_running(self):
+        # A queued run checks out the SHA fixed at TRIGGER time; the
+        # same-week guard reads committed markers, so the workspace must
+        # be moved to the live tip before the runner (2026-09-06: six
+        # shows double-sent because the late cron ran on a stale tree).
+        from pathlib import Path
+        import yaml
+        wf = yaml.safe_load((Path(__file__).resolve().parent.parent
+                             / ".github" / "workflows" / "weekly-newsletter.yml").read_text())
+        steps = wf["jobs"]["generate"]["steps"]
+        names = [str(s.get("name", s.get("uses", ""))) for s in steps]
+        sync = next(i for i, s in enumerate(steps)
+                    if "git reset --hard origin/main" in str(s.get("run", "")))
+        run = next(i for i, n in enumerate(names) if n == "Run weekly newsletters")
+        assert sync < run, names
+        assert "git fetch" in steps[sync]["run"]
+
     def test_workflow_add_paths_is_block_scalar(self):
         from pathlib import Path
         import yaml
