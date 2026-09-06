@@ -1,0 +1,45 @@
+## This Week's Big Picture
+
+Tesla spent the week asking investors to underwrite three futures at once. Monday opened on a $25 billion 2026 capital budget with a large share pointed at Optimus scaling at Giga Texas — dedicated factory space, prototype-to-volume language, the humanoid program treated as a real line item rather than a keynote prop ([▶ Episode 590 · 2026-08-31](https://nerranetwork.com/blog/tesla/ep590.html)). By Friday the center of gravity had shifted to Robotaxi: one million unsupervised miles, a wheel-free Cybercab on ordinary Austin streets, and a plan to run the fleet 24/7 within about a month ([▶ Episode 594 · 2026-09-04](https://nerranetwork.com/blog/tesla/ep594.html)). In the same stretch Tesla said AI5 is finished for production at TSMC and Samsung, revived Dojo 3 with Intel packaging, booked a 3 GWh storage deal with Zhero, and started putting fifty Megapacks into a 200 MWh project in Colorado.
+
+The stock followed the loudest headline of each session. Monday's print sat at $348.75, down 1.7%. Tuesday jumped 5.5% to $367.95 after Musk said Tesla and SpaceX are each building 100 GW of solar a year and the Zhero contract hit. Wednesday fell 3.2% to $356.09 when Globe and Mail coverage landed that Tesla stopped reporting solar numbers ten quarters ago, dropped Solar Roof, and left installers with six-figure inventory losses. Thursday was flat at $357.01. Friday ripped 5.4% to $376.37 on the Robotaxi data, then a later print at $354.08 walked most of that surge back. Autonomy still reprices in both directions once the market has a night to sit with it.
+
+Underneath the robots-and-chips noise, the car business kept doing unfashionable work. Model Y led all passenger-car sales in South Korea in August and Tesla topped Korean imports for a seventh straight month. In Taiwan, Model 3 and Model Y went one-two. Australia posted another near-record August. That is not a new product cycle. It is the installed base reminding everyone it still has to fund the rest of the story.
+
+## Stock Watch
+
+These are show snapshots, not official exchange opens and closes, but the path is clear enough. Monday $348.75, Tuesday $367.95, Wednesday $356.09, Thursday $357.01, Friday $376.37, later print $354.08. High in the set: $376.37. Low: $348.75.
+
+Tuesday's bounce mapped to energy — Musk's 100 GW solar comment plus Tesla Energy's 3 GWh Zhero deal, which the show framed as grid demand growing independently of vehicle sales ([▶ Episode 591 · 2026-09-01](https://nerranetwork.com/blog/tesla/ep591.html)). Wednesday's drop mapped to the other half of energy: Solar Roof is gone, solar deployment figures have been dark for two and a half years, and installers are eating stranded inventory ([▶ Episode 592 · 2026-09-02](https://nerranetwork.com/blog/tesla/ep592.html)). Friday's surge mapped to Robotaxi miles, the Austin Cybercab demo, and 24/7 service talk. The later $354.08 quote, down 5.9% from Friday, is the reminder that a million miles is a milestone, not a multiple.
+
+## Top Stories
+
+**1. Robotaxi: a million unsupervised miles and a wheel-free Austin run.** Tesla now has a round number regulators can put in a briefing packet. Teslarati reported a production-configuration Cybercab — no steering wheel, no pedals — carrying passengers on regular Austin routes from pickup to drop-off with no manual intervention, plus continuous 24/7 operation perhaps thirty days out. Butterfly doors that reverse on obstruction, and a separate note that Tesla is already gauging fleet-order demand with a stated cadence of one Cybercab every five seconds, complete the shift from demo to operations.
+
+**2. A $25 billion 2026 budget with Optimus in large type.** Globe and Mail reporting put a lot of the increase into the Optimus ramp at Giga Texas. That is a different capital story than another Model Y line, and it is the one Tesla wants the back half of the decade underwritten on. The HW4 note that current cars already contain contested hardware sits in the same family: Tesla keeps arguing the fleet is already the platform.
+
+**3. AI5 is locked; Dojo 3 returns with Intel.** DailySynapse reported AI5 finalized for volume at TSMC and Samsung, with two chips described as matching one NVIDIA Blackwell on Tesla's targeted inference workloads. Dojo 3, paused on packaging bottlenecks, is back via Intel EMIB so Tesla is not queued solely on TSMC's advanced packaging lines. Car silicon and training silicon are now two separate supply-chain bets ([▶ Episode 596 · 2026-09-05](https://nerranetwork.com/blog/tesla/ep596.html)).
+
+**4. Storage is scaling; Solar Roof is over.** Zhero at 3 GWh and Colorado at 200 MWh with fifty Megapacks are the demand and construction signals. Recharge News putting Tesla Energy on a global storage power list is the reputation signal. Against that, ten quarters without solar numbers, Solar Roof pulled, and installers describing six-figure losses. Tesla wants Megapack and Powerwall in the conversation. It is done talking about solar as a standalone product ([▶ Episode 597 · 2026-09-06](https://nerranetwork.com/blog/tesla/ep597.html)).
+
+**5. Model Y is still the ballast.** Taiwan August: Model 3 949, Model Y 788, combined 1,737 and one-two in the EV market; year-to-date the pair is over 12,550, Model Y alone 9,315 versus Toyota's bZ4X at 2,511. South Korea: Model Y was the top passenger car in August, Tesla the import leader for seven months running even as rivals push more China-made product ([▶ Episode 593 · 2026-09-03](https://nerranetwork.com/blog/tesla/ep593.html)). Australia added another near-record August. A Glovis Nova arrival at Antwerp with roughly 8,000 vehicles, and the first Cybertruck built with 4680 cells using lithium from Tesla's Gulf Coast refinery in Robstown, are the logistics and manufacturing footnotes — internal battery supply showing up on a real truck, not a slide ([▶ Episode 595 · 2026-09-05](https://nerranetwork.com/blog/tesla/ep595.html)).
+
+## Elon Watch
+
+The comment that actually moved the tape was not about cars. Musk said Tesla and SpaceX are each building 100 GW a year of solar as fast as possible, and Tuesday treated that as a Tesla Energy scale signal. He also congratulated Tesla Australia on August sales — a simple note that the cars are selling in a week otherwise dominated by bots and chips. A Musk post was cited as confirming pothole avoidance is coming, using existing sensor data and no new hardware. Small feature, large implication: more software into a fleet that already has the boards.
+
+## Competitor Corner
+
+Thin week for the usual names. No Rivian, Lucid, or BYD headline rose to the top of the shows. The comparison that did land was Toyota's bZ4X in Taiwan, at 2,511 registrations against Model Y's 9,315 so far in 2026. Korean coverage framed Tesla's import streak against other brands increasing China-made offerings — cheaper China-origin product in markets Tesla already leads, not a new American startup. On the grid side, Recharge News's storage power list treats Megapack and Powerwall as the products already competing with peaker plants on cost per megawatt-hour.
+
+## Trend Watch
+
+**Robotaxi is trying to become an operations story.** A million unsupervised miles, 24/7 service on the calendar, a wheel-free vehicle in city traffic, and early Cybercab demand-tracking are the same shift: from whether it works on a good day to whether you can staff, insure, and run it overnight. Lemonade launching Missouri policies with a 50% per-mile discount when FSD Supervised is engaged is the parallel in personal cars — the stack leaking into insurance pricing. FSD speed-profile integration in the nav UI is the smaller version of that idea.
+
+**Tesla is buying its way out of other people's bottlenecks.** Gulf Coast lithium into 4680 cells into a Cybertruck. AI5 dual-sourced at TSMC and Samsung. Dojo 3 packaged by Intel. Pulsed lasers designed to clean camera lenses so a vehicle that never parks does not depend on a wiper. Every bottleneck Tesla does not own has become a 2026 capital or partnership problem.
+
+**Solar-the-product and storage-the-product have split.** Ten quarters without solar numbers, Solar Roof discontinued, installers taking the loss — and in the same week, 3 GWh and 200 MWh of storage news. Tesla Energy's growth story is now Megapack, Powerwall, and solar only as a bundle.
+
+## What to Watch Next Week
+
+Robotaxi 24/7 in Austin is the clock that matters. Tesla framed it as next month or so, which means the next stretch of fleet hours — especially overnight — is the dataset that million-mile preface was built for. On the factory side, watch whether Optimus production cells at Giga Texas become visible and whether Robstown 4680 cells show up beyond that first Cybertruck. Energy deployment totals remain the scoreboard Tesla still publishes; solar will not be on it. And Chinese Model Y L owners reporting rear-wheel collapse after long loaded trips still have no official response. That silence is itself a deadline.
