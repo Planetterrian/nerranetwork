@@ -1,0 +1,45 @@
+# Nerra Voices — deploy the Voximplant interview scenario (operator step).
+# Manual only. Substitutes the Supabase URL / service key and the Grok key
+# into voximplant/scenarios/age_of_ai_interview.js at deploy time (see
+# voximplant_client.upload_scenario) and pushes it to the `nerra-voices`
+# application, so no operator ever has to paste secrets into the
+# Voximplant panel or a local shell. Run it after any scenario change.
+name: Deploy Voximplant scenario
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nerra-voices-deploy-scenario
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+      - uses: ./.github/actions/setup-python
+        with:
+          python-version: '3.12'
+          requirements-file: 'pipelines/requirements.txt'
+          skip-checkout: 'true'
+      - name: Upload scenario to Voximplant
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from voximplant.api_clients.voximplant_client import upload_scenario, SCENARIO_NAME
+          path = Path("voximplant/scenarios/age_of_ai_interview.js")
+          result = upload_scenario(path)
+          print(f"deployed {SCENARIO_NAME} ({path.stat().st_size} bytes): {result}")
+          PY
+        env:
+          SUPABASE_URL: ${{ secrets.VOICES_SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.VOICES_SUPABASE_SERVICE_KEY }}
+          VOXIMPLANT_ACCOUNT_ID: ${{ secrets.VOXIMPLANT_ACCOUNT_ID }}
+          VOXIMPLANT_API_KEY: ${{ secrets.VOXIMPLANT_API_KEY }}
+          GROK_API_KEY: ${{ secrets.GROK_API_KEY }}

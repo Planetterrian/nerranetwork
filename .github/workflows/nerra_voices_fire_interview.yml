@@ -48,6 +48,12 @@ jobs:
           VOXIMPLANT_API_KEY: ${{ secrets.VOXIMPLANT_API_KEY }}
           VOXIMPLANT_CALLER_ID: ${{ secrets.VOXIMPLANT_CALLER_ID }}
           GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+          # Phase 2 co-host: Patrick's host link carries the Worker's
+          # ADMIN_TOKEN; OPERATOR_PHONE (E.164) gets the SMS copy;
+          # VOX_HOST_USER is the Voximplant user the scenario dials.
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+          OPERATOR_PHONE: ${{ secrets.OPERATOR_PHONE }}
+          VOX_HOST_USER: ${{ vars.VOX_HOST_USER }}
           # Inline short-notice briefs email the guest from the fire step.
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
