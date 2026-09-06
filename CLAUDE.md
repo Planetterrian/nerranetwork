@@ -2528,6 +2528,17 @@ Do not "simplify" it back to `_file_lastmod`.
 newsletter for 7 days.** If newsletters stop going out, check for that
 file before debugging Buttondown.
 
+**A queued Actions run checks out the SHA fixed at TRIGGER time.** Any
+guard that reads committed state (the weekly newsletter's per-week
+sent markers, skip markers, cooldown annotations) is blind in a run
+that queued behind another in a concurrency group unless the job
+first moves its workspace to the live tip (`git fetch --depth=1
+origin main && git reset --hard origin/main`). Sep 6 2026: the late
+Sunday cron queued behind a manual dispatch, ran twenty minutes later
+on a tree from before that dispatch committed its markers, and
+re-sent six shows' weeklies. `weekly-newsletter.yml` now syncs first;
+guard: `TestWeeklyNewsletterSameWeekGuard`.
+
 **Show slugs use underscores, page filenames use hyphens.**
 `fascinating_frontiers` → `fascinating-frontiers.html`. Getting this
 wrong in `publishing.rss_link` 404s the "website" button in every
