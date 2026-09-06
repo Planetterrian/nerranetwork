@@ -100,5 +100,12 @@ jobs:
 
       - uses: ./.github/actions/safe-commit-push
         with:
-          add-paths: "outputs/newsletters/ outputs/cross_network/"
+          # Block scalar, one path per line: the composite feeds this to
+          # `git add --pathspec-from-file`, so a space-separated single
+          # line is ONE pathspec (with a space in it) that matches nothing
+          # — the newsletter bodies and the weekly sent markers were never
+          # being committed.
+          add-paths: |
+            outputs/newsletters/
+            outputs/cross_network/
           commit-message: "Add weekly newsletters + cross-network briefing for $(date -I)"
