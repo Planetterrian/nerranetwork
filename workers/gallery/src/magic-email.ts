@@ -1,6 +1,13 @@
 /**
  * HTML email body for the magic-link login flow.
  *
+ * The copy is account-centric, not gallery-centric. Under the
+ * one-identity model (Aug 2026) this single link signs a person into
+ * everything: the newsletter, member perks, gallery downloads, and the
+ * paid personal feed. It used to say "sign in and download
+ * full-resolution images", which meant somebody paying $4.99/mo to
+ * manage their daily show received an email about downloading pictures.
+ *
  * Kept deliberately plain — single CTA, brand colour from the
  * existing design tokens, no images (Buttondown / Outlook will
  * sometimes block remote images on first send to a new sender).
@@ -17,7 +24,7 @@ export function buildMagicLinkEmail(opts: {
   magicUrl: string;
   ttlMinutes: number;
 }): MagicLinkEmail {
-  const subject = "Sign in to the Nerra Network gallery";
+  const subject = "Sign in to your Nerra Network account";
   const safeUrl = escapeHtml(opts.magicUrl);
   const ttl = opts.ttlMinutes;
   const html = `<!doctype html>
@@ -31,8 +38,8 @@ export function buildMagicLinkEmail(opts: {
     <tr><td align="center" style="padding:32px 16px;">
       <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width:480px;background:#111627;border:1px solid rgba(255,255,255,0.08);border-radius:14px;">
         <tr><td style="padding:28px 28px 8px;">
-          <h1 style="margin:0 0 8px;font-size:1.25rem;color:#ffffff;">Nerra Network gallery</h1>
-          <p style="margin:0;color:#8b8fae;font-size:0.95rem;">Click the button below to sign in and download full-resolution images.</p>
+          <h1 style="margin:0 0 8px;font-size:1.25rem;color:#ffffff;">Your Nerra Network account</h1>
+          <p style="margin:0;color:#8b8fae;font-size:0.95rem;">Click the button below to sign in. Your account covers your personal daily feed, your newsletter settings, member perks and gallery downloads.</p>
         </td></tr>
         <tr><td align="center" style="padding:24px 28px;">
           <a href="${safeUrl}"
@@ -49,8 +56,10 @@ export function buildMagicLinkEmail(opts: {
 </body>
 </html>`;
   const text =
-    `Sign in to the Nerra Network gallery\n\n` +
-    `Click the link below to sign in and download full-resolution images:\n\n` +
+    `Sign in to your Nerra Network account\n\n` +
+    `Click the link below to sign in. Your account covers your personal ` +
+    `daily feed, your newsletter settings, member perks and gallery ` +
+    `downloads:\n\n` +
     `${opts.magicUrl}\n\n` +
     `The link expires in ${ttl} minutes. If you didn't request this email ` +
     `you can safely ignore it.\n\n` +
