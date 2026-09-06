@@ -22,6 +22,7 @@ from engine.personal_edition import (
     PERSONAL_SHOW_SLUGS,
     PersonalSpec,
     build_personal_feed_xml,
+    chapters_filename_for,
     build_personal_links_prompt,
     fallback_personal_links,
     format_weather_line,
@@ -113,6 +114,21 @@ class TestPersonalFeed:
         # Private: directories must never index a personal feed.
         assert "<itunes:block>yes</itunes:block>" in xml
         assert "Sam's Nerra Daily" in xml
+
+    def test_feed_advertises_chapters(self):
+        # The builder uploads chapters_YYYYMMDD.json beside every edition;
+        # the first paid subscriber's feed (2026-09-06) never pointed at
+        # it, so apps showed one flat 24-minute block. Every item must
+        # carry a Podcasting 2.0 tag at the Worker-gated URL.
+        xml = build_personal_feed_xml(self._spec(), self._episodes())
+        assert 'xmlns:podcast="https://podcastindex.org/namespace/1.0"' in xml
+        assert xml.count("<podcast:chapters") == 2
+        assert (f'url="https://api.nerranetwork.com/api/feed/{TOKEN}/'
+                f'chapters_20260812.json" type="application/json+chapters"') in xml
+        # The post-processing must not drop anything the contract relies on.
+        assert "<itunes:block>yes</itunes:block>" in xml
+        assert f"personal-{TOKEN[:8]}-ep002-20260812" in xml
+        assert chapters_filename_for("2026-08-12") == "chapters_20260812.json"
 
     def test_feed_depth_capped(self):
         xml = build_personal_feed_xml(self._spec(), self._episodes(12))
