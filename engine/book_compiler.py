@@ -966,7 +966,7 @@ def _package_opf(volume: BookVolume, chapters: List[BookChapter],
     spine = ['<itemref idref="titlepage"/>', '<itemref idref="copyright"/>']
     if has_cover:
         manifest.append(
-            '<item id="cover-image" href="cover.png" media-type="image/png" '
+            '<item id="cover-image" href="cover.jpg" media-type="image/jpeg" '
             'properties="cover-image"/>'
         )
 
@@ -1047,12 +1047,20 @@ def build_epub(
     with a nav document).
 
     *chapter_images* maps chapter number -> JPEG bytes; chapters present
-    in the map get their illustration embedded above the epigraph.
+    in the map get their illustration embedded above the epigraph. Every
+    image is re-encoded to its EPUB display size on the way in and the
+    cover PNG is embedded as a reader-size JPEG (``engine.book_art``
+    ``EPUB_*`` constants) — the payload budget ``validate_epub_size``
+    enforces at the end is a delivery-fee contract, not a style choice.
     """
+    from engine.book_art import to_epub_chapter_jpeg, to_epub_cover_jpeg
+
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     has_cover = bool(cover_png and Path(cover_png).exists())
-    chapter_images = chapter_images or {}
+    chapter_images = {n: to_epub_chapter_jpeg(b)
+                      for n, b in (chapter_images or {}).items()}
+    cover_jpeg = to_epub_cover_jpeg(Path(cover_png)) if has_cover else b""
     for c in chapters:
         c.image_name = (f"art_{c.number:03d}.jpg"
                         if c.number in chapter_images else "")
@@ -1071,7 +1079,11 @@ def build_epub(
         "author_bio": bool(bio_prose),
         "crosspromo": bool(crosspromo_page),
     }
-    with zipfile.ZipFile(out_path, "w") as z:
+    # Deflate the documents (zipfile's default is STORED — the first
+    # collected editions shipped every XHTML uncompressed); images are
+    # already JPEG and stay stored.
+    with zipfile.ZipFile(out_path, "w",
+                         compression=zipfile.ZIP_DEFLATED) as z:
         # Spec: first entry, uncompressed, exact bytes.
         z.writestr(
             zipfile.ZipInfo("mimetype"), "application/epub+zip",
@@ -1102,7 +1114,8 @@ def build_epub(
                        _prose_xhtml("Introduction", intro_prose,
                                     volume.language))
         if has_cover:
-            z.write(cover_png, "OEBPS/cover.png")
+            z.writestr("OEBPS/cover.jpg", cover_jpeg,
+                       compress_type=zipfile.ZIP_STORED)
         if layout is not None:
             for i, (title, _chs) in enumerate(layout, start=1):
                 z.writestr(f"OEBPS/part_{i:02d}.xhtml",
@@ -1112,7 +1125,8 @@ def build_epub(
                        _chapter_xhtml(c, volume.language, volume))
             if c.image_name:
                 z.writestr(f"OEBPS/{c.image_name}",
-                           chapter_images[c.number])
+                           chapter_images[c.number],
+                           compress_type=zipfile.ZIP_STORED)
         if conclusion_prose:
             z.writestr("OEBPS/conclusion.xhtml",
                        _prose_xhtml("Conclusion", conclusion_prose,
@@ -1126,10 +1140,60 @@ def build_epub(
                                     volume.language))
         if crosspromo_page:
             z.writestr("OEBPS/alsoby.xhtml", crosspromo_page)
-    logger.info("EPUB written: %s (%d chapters, %d words)",
-                out_path, len(chapters), sum(c.word_count for c in chapters))
     validate_epub_escaping(out_path)
+    validate_epub_size(out_path)
+    payload = epub_payload_breakdown(out_path)
+    logger.info("EPUB written: %s (%d chapters, %d words, %.2f MB: "
+                "%.2f MB images in %d files, %.2f MB documents)",
+                out_path, len(chapters), sum(c.word_count for c in chapters),
+                payload["total"] / _MB, payload["images"] / _MB,
+                payload["image_count"], payload["documents"] / _MB)
     return out_path
+
+
+_MB = 1024 * 1024
+
+#: Hard cap on a built EPUB — the alarm, not the target. The embed
+#: constants in engine.book_art aim a fully illustrated 73-chapter
+#: collected edition under 4 MB; a build crossing 5 MB means art is
+#: reaching the file at a size the reader never displays (or the cover
+#: came back as a PNG), and it costs $0.15/MB per sale on KDP's 70%
+#: royalty plan — the 15.4 MB first build lost $1.26 of royalty on every
+#: copy. Shrink the payload, never raise the cap.
+EPUB_MAX_BYTES = 5 * _MB
+
+_IMAGE_SUFFIXES = (".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg")
+
+
+def epub_payload_breakdown(epub_path: Path) -> Dict[str, int]:
+    """Bytes on disk split into images vs documents (as packed)."""
+    epub_path = Path(epub_path)
+    total = epub_path.stat().st_size
+    images = image_count = 0
+    with zipfile.ZipFile(epub_path) as z:
+        for info in z.infolist():
+            if info.filename.lower().endswith(_IMAGE_SUFFIXES):
+                images += info.compress_size
+                image_count += 1
+    return {"total": total, "images": images, "image_count": image_count,
+            "documents": total - images}
+
+
+def validate_epub_size(epub_path: Path, *,
+                       max_bytes: int = EPUB_MAX_BYTES) -> None:
+    """Fail the build when the packaged EPUB exceeds *max_bytes*, naming
+    the measured size and where it went."""
+    payload = epub_payload_breakdown(epub_path)
+    if payload["total"] > max_bytes:
+        raise ValueError(
+            f"{Path(epub_path).name} is {payload['total'] / _MB:.2f} MB "
+            f"({payload['images'] / _MB:.2f} MB of images across "
+            f"{payload['image_count']} files, "
+            f"{payload['documents'] / _MB:.2f} MB of documents) — exceeds "
+            f"the {max_bytes / _MB:.0f} MB EPUB payload cap. KDP charges "
+            "$0.15/MB delivery per sale on the 70% royalty plan and its "
+            "browser upload caps at 10 MB; shrink the embedded art "
+            "(engine.book_art EPUB_* constants), do not raise the cap.")
 
 
 _DOUBLE_ESCAPE_RE = re.compile(r"&amp;(?:amp|lt|gt|quot|apos|#\d+);")

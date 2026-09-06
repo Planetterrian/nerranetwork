@@ -43,6 +43,22 @@ COVER_ART_SIZE = "1024x1792"
 CHAPTER_IMAGE_WIDTH = 1000
 CHAPTER_JPEG_QUALITY = 80
 
+#: What the EPUB actually embeds (Sept 2026). The first 73-chapter
+#: collected edition shipped at 15.4 MB — 96% images, the cover alone a
+#: 4.8 MB PNG — which costs $2.25 of KDP delivery fee per sale on the 70%
+#: royalty plan ($1.26 of royalty on a $7.99 book) and cannot be uploaded
+#: through KDP's 10 MB browser path at all. Chapter art is embedded at
+#: display width under a per-image byte budget (quality steps down until
+#: it fits, never below the floor); the cover is a JPEG at reader size.
+#: Full-resolution art stays on R2 and in the gallery for the audiobook
+#: and site — this is an EPUB-payload contract only.
+EPUB_CHAPTER_IMAGE_WIDTH = 720
+EPUB_CHAPTER_IMAGE_TARGET_BYTES = 40_000
+EPUB_CHAPTER_JPEG_QUALITY_MAX = 76
+EPUB_CHAPTER_JPEG_QUALITY_MIN = 36
+EPUB_COVER_SIZE = (1200, 1920)
+EPUB_COVER_JPEG_QUALITY = 80
+
 
 def model_cost_usd(model: str) -> float:
     return MODEL_COST_USD.get(model, 0.05)
@@ -103,6 +119,45 @@ def to_chapter_jpeg(image_bytes: bytes) -> bytes:
         img = img.resize((CHAPTER_IMAGE_WIDTH, int(img.height * ratio)))
     out = io.BytesIO()
     img.save(out, "JPEG", quality=CHAPTER_JPEG_QUALITY, optimize=True)
+    return out.getvalue()
+
+
+def to_epub_chapter_jpeg(image_bytes: bytes) -> bytes:
+    """The display-size copy of a chapter illustration that the EPUB
+    embeds: ``EPUB_CHAPTER_IMAGE_WIDTH`` wide, baseline JPEG (Kindle does
+    not render progressive reliably), quality stepped down from the max
+    until the file fits ``EPUB_CHAPTER_IMAGE_TARGET_BYTES`` or reaches
+    the quality floor. Deterministic for a given input."""
+    from PIL import Image
+
+    img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+    if img.width > EPUB_CHAPTER_IMAGE_WIDTH:
+        ratio = EPUB_CHAPTER_IMAGE_WIDTH / img.width
+        img = img.resize(
+            (EPUB_CHAPTER_IMAGE_WIDTH, max(1, round(img.height * ratio))),
+            Image.LANCZOS)
+    quality = EPUB_CHAPTER_JPEG_QUALITY_MAX
+    while True:
+        out = io.BytesIO()
+        img.save(out, "JPEG", quality=quality, optimize=True)
+        data = out.getvalue()
+        if (len(data) <= EPUB_CHAPTER_IMAGE_TARGET_BYTES
+                or quality <= EPUB_CHAPTER_JPEG_QUALITY_MIN):
+            return data
+        quality -= 4
+
+
+def to_epub_cover_jpeg(cover_png: Path) -> bytes:
+    """The cover the EPUB embeds: the composited 1600x2560 PNG re-encoded
+    as a JPEG within ``EPUB_COVER_SIZE`` (aspect preserved). The PNG
+    itself stays the store/marketing cover and the audiobook art."""
+    from PIL import Image
+
+    img = Image.open(cover_png).convert("RGB")
+    if img.width > EPUB_COVER_SIZE[0] or img.height > EPUB_COVER_SIZE[1]:
+        img.thumbnail(EPUB_COVER_SIZE, Image.LANCZOS)
+    out = io.BytesIO()
+    img.save(out, "JPEG", quality=EPUB_COVER_JPEG_QUALITY, optimize=True)
     return out.getvalue()
 
 

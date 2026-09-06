@@ -639,3 +639,151 @@ class TestWO6CombinedVolume:
         assert not any(n.startswith("OEBPS/part_") for n in names)
         assert "OEBPS/author.xhtml" in names
         assert "OEBPS/alsoby.xhtml" in names
+
+
+class TestEpubPayloadBudget:
+    """Sept 2026: the first collected edition shipped at 15.4 MB (96%
+    images, a 4.8 MB PNG cover) — $2.25 of KDP delivery fee per sale and
+    over KDP's 10 MB browser-upload cap. The EPUB now embeds display-size
+    images only and refuses to write anything over EPUB_MAX_BYTES."""
+
+    @staticmethod
+    def _art(seed: int, size=(1792, 1024)) -> bytes:
+        """Synthetic 'illustration' with real-ish entropy (gradient +
+        shapes + grain) so the byte budget is exercised, not trivially met."""
+        import io
+        import random
+        from PIL import Image, ImageDraw, ImageFilter
+        rnd = random.Random(seed)
+        img = Image.new("RGB", size)
+        draw = ImageDraw.Draw(img)
+        for y in range(0, size[1], 4):
+            draw.line([(0, y), (size[0], y + 4)],
+                      fill=(y % 256, (y * 2) % 256, 180), width=4)
+        for _ in range(120):
+            x0, y0 = rnd.randrange(size[0]), rnd.randrange(size[1])
+            draw.ellipse([x0, y0, x0 + rnd.randrange(20, 300),
+                          y0 + rnd.randrange(20, 300)],
+                         fill=tuple(rnd.randrange(256) for _ in range(3)))
+        img = img.filter(ImageFilter.GaussianBlur(1.2))
+        # Seeded grain (Image.effect_noise is unseeded — the encoder's
+        # determinism assertion needs a reproducible input).
+        for _ in range(6000):
+            x0, y0 = rnd.randrange(size[0]), rnd.randrange(size[1])
+            g = rnd.randrange(256)
+            draw.rectangle([x0, y0, x0 + rnd.randrange(1, 5),
+                            y0 + rnd.randrange(1, 5)], fill=(g, g, g))
+        buf = io.BytesIO()
+        img.save(buf, "PNG")
+        return buf.getvalue()
+
+    @staticmethod
+    def _cover_png(path: Path) -> Path:
+        """A KDP-size PNG with painterly (blurred-grain) texture — the
+        shape of a real Grok cover, which packs to a multi-MB PNG."""
+        from PIL import Image, ImageFilter
+        img = Image.effect_noise((1600, 2560), 40).convert("RGB")
+        img.filter(ImageFilter.GaussianBlur(2.5)).save(path, "PNG")
+        return path
+
+    def test_chapter_art_is_display_sized_and_budgeted(self):
+        import io
+        from PIL import Image
+        from engine.book_art import (EPUB_CHAPTER_IMAGE_TARGET_BYTES,
+                                     EPUB_CHAPTER_IMAGE_WIDTH,
+                                     EPUB_CHAPTER_JPEG_QUALITY_MIN,
+                                     to_epub_chapter_jpeg)
+        out = to_epub_chapter_jpeg(self._art(1))
+        img = Image.open(io.BytesIO(out))
+        assert img.format == "JPEG"
+        assert img.width == EPUB_CHAPTER_IMAGE_WIDTH
+        assert len(out) <= EPUB_CHAPTER_IMAGE_TARGET_BYTES
+        # Deterministic — the same art embeds byte-identically on a rebuild.
+        assert to_epub_chapter_jpeg(self._art(1)) == out
+        assert EPUB_CHAPTER_JPEG_QUALITY_MIN >= 30, "floor guards legibility"
+
+    def test_cover_embeds_as_reader_size_jpeg_not_png(self, tmp_path):
+        import io
+        import zipfile
+        from PIL import Image
+        from engine.book_art import EPUB_COVER_SIZE
+        from engine.book_compiler import build_epub, load_volume
+        vol = load_volume(VOLS / "unintended_consequences_vol1.yaml")
+        ch = _uc_chapter(3)
+        cover = self._cover_png(tmp_path / "cover.png")
+        assert cover.stat().st_size > 1_500_000, "fixture cover must be heavy"
+        epub = build_epub(vol, [ch], tmp_path / "c.epub", cover_png=cover)
+        with zipfile.ZipFile(epub) as z:
+            names = z.namelist()
+            assert "OEBPS/cover.jpg" in names
+            assert "OEBPS/cover.png" not in names
+            opf = z.read("OEBPS/package.opf").decode("utf-8")
+            assert ('href="cover.jpg" media-type="image/jpeg" '
+                    'properties="cover-image"') in opf
+            assert "cover.png" not in opf
+            data = z.read("OEBPS/cover.jpg")
+        img = Image.open(io.BytesIO(data))
+        assert img.format == "JPEG"
+        assert (img.width, img.height) <= EPUB_COVER_SIZE
+        assert abs(img.width / img.height - 1600 / 2560) < 0.01
+        assert len(data) < 700_000
+        assert len(data) < cover.stat().st_size / 3
+
+    def test_documents_are_deflated_mimetype_stored(self, tmp_path):
+        import zipfile
+        from engine.book_compiler import build_epub, load_volume
+        vol = load_volume(VOLS / "unintended_consequences_vol1.yaml")
+        epub = build_epub(vol, [_uc_chapter(3)], tmp_path / "d.epub",
+                          chapter_images={1: self._art(2)})
+        with zipfile.ZipFile(epub) as z:
+            infos = {i.filename: i for i in z.infolist()}
+            assert infos["mimetype"].compress_type == zipfile.ZIP_STORED
+            assert z.namelist()[0] == "mimetype"
+            assert infos["OEBPS/chap_001.xhtml"].compress_type == (
+                zipfile.ZIP_DEFLATED)
+            assert infos["OEBPS/art_001.jpg"].compress_type == (
+                zipfile.ZIP_STORED)
+
+    def test_fully_illustrated_collected_edition_packs_under_4mb(
+            self, tmp_path):
+        from engine.book_compiler import (EPUB_MAX_BYTES, build_epub,
+                                          collect_chapters,
+                                          epub_payload_breakdown,
+                                          load_volume)
+        vol = load_volume(VOLS / "unintended_consequences_collected.yaml")
+        chapters = collect_chapters(vol)
+        assert len(chapters) >= 70
+        images = {c.number: self._art(c.number) for c in chapters}
+        cover = self._cover_png(tmp_path / "cover.png")
+        epub = build_epub(vol, chapters, tmp_path / "uc.epub",
+                          cover_png=cover, chapter_images=images)
+        payload = epub_payload_breakdown(epub)
+        assert payload["image_count"] == len(chapters) + 1
+        assert payload["total"] < 4 * 1024 * 1024, payload
+        assert EPUB_MAX_BYTES == 5 * 1024 * 1024
+
+    def test_oversized_epub_fails_with_measured_size(self, tmp_path):
+        import os
+        import zipfile
+        from engine.book_compiler import validate_epub_size
+        fat = tmp_path / "fat.epub"
+        with zipfile.ZipFile(fat, "w") as z:
+            z.writestr("mimetype", "application/epub+zip",
+                       compress_type=zipfile.ZIP_STORED)
+            z.writestr("OEBPS/cover.png", os.urandom(6 * 1024 * 1024),
+                       compress_type=zipfile.ZIP_STORED)
+        with pytest.raises(ValueError) as exc:
+            validate_epub_size(fat)
+        msg = str(exc.value)
+        assert "6.0" in msg and "MB" in msg
+        assert "exceeds the 5 MB" in msg
+        assert "$0.15/MB" in msg
+        validate_epub_size(fat, max_bytes=7 * 1024 * 1024)  # cap is a param
+
+
+def _uc_chapter(ep: int):
+    from engine.book_compiler import (find_digest, load_volume,
+                                      parse_digest_to_chapter)
+    vol = load_volume(VOLS / "unintended_consequences_vol1.yaml")
+    md = find_digest(vol, ep).read_text(encoding="utf-8")
+    return parse_digest_to_chapter(md, number=1, episode_num=ep)

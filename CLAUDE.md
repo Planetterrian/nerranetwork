@@ -1265,7 +1265,13 @@ reader-facing link goes through `engine.funnel` `kind="book"` (campaign
 carries the VOLUME number; each chapter ends on a funnel-tagged link to
 its source episode page); artifacts to R2 keyspace `books/<id>/` ONLY
 (never a show's audio prefix); `outputs/books/` gitignored (landmine
-#1); **store-level digital-narration DECLARATIONS are non-negotiable
+#1); **the EPUB embeds display-size images only** (Sept 2026 — the
+first 73-chapter collected edition shipped at 15.4 MB, 96% images, a
+4.8 MB PNG cover: $2.25 of KDP delivery fee per sale and over the 10 MB
+upload cap; now chapter art at 720 px under a ~45 KB budget, the cover a
+1200×1920 JPEG, documents deflated, `build_epub` refuses anything over
+`EPUB_MAX_BYTES` = 5 MB — tune `engine.book_art`'s `EPUB_*` constants,
+never the cap; full-res art stays on R2/gallery); **store-level digital-narration DECLARATIONS are non-negotiable
 (KDP AI questionnaire stays YES, Spotify's digital-narration box stays
 ticked, Google Play stays declared — never remove any of them;
 Audible/ACX takes no third-party AI narration at all), but the SPOKEN
