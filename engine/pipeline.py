@@ -357,13 +357,39 @@ def run_publish_phase(
 # Generation Phase
 # ---------------------------------------------------------------------------
 
-REWRITE_GATE_MIN_KEEP_RATIO = 0.7  # a rewrite shorter than this is a truncation, not a rewrite
+# A rewrite shorter than this share of the ORIGINAL — or of the show's
+# target length, whichever is smaller — is a truncation, not a rewrite.
+# Sep 6 2026: Tesla Ep597's rewrite went 61 % -> 2 % digest-verbatim and
+# was thrown away because the 1,607-word draft (target 1,400) had
+# over-run and the floor was pinned to the draft; the copied one aired.
+REWRITE_GATE_MIN_KEEP_RATIO = 0.7
+
+
+def _rewrite_gate_floor_words(orig_words, config):
+    target = 0
+    try:
+        target = int(getattr(config.llm, "min_podcast_words", 0) or 0)
+    except (TypeError, ValueError):
+        target = 0
+    base = min(orig_words, target) if target > 0 else orig_words
+    return int(REWRITE_GATE_MIN_KEEP_RATIO * base)
 
 
 def _script_rewrite_gate(podcast_script, digest_text, config, template_vars_for_script, tracker):
-    """Re-run the script stage once when it copied the digest; return a
-    dict with the chosen ``script`` and the gate's metrics, or None when
-    the gate is off / did not fire / failed (the original script stands)."""
+    """Re-run the script stage once when it failed the script standard;
+    return a dict with the chosen ``script`` and the gate's metrics, or
+    None when the gate is off / did not fire / failed (the original
+    script stands).
+
+    Three triggers, any one fires the single retry (Sep 6 2026 readout):
+    the whole script copies the digest (8-gram share >= the show's
+    threshold); a digest SECTION was read aloud even though the rest was
+    written (the deep dives — SpaceX Ep092 sat at 24 % overall with its
+    Engineering Deep Dive 10/13 sentences copied); the cold open
+    promises a story the body never covers (Planetterrian Ep175). The
+    rewrite is kept only when it fixes what fired, copies no more than
+    before, and is not a truncation.
+    """
     try:
         threshold = float(getattr(config.llm, "script_rewrite_gate_overlap_pct", 0) or 0)
     except (TypeError, ValueError):
@@ -371,42 +397,103 @@ def _script_rewrite_gate(podcast_script, digest_text, config, template_vars_for_
     if threshold <= 0 or not podcast_script or not digest_text:
         return None
     try:
-        from engine.script_audit import copied_sentences, digest_overlap
-        before = digest_overlap(podcast_script, digest_text)
-        if before is None or before < threshold:
-            return {"script": podcast_script, "fired": False, "before_pct": round(before or 0.0, 1)}
-        copied = copied_sentences(podcast_script, digest_text)
-        appendix = (
-            "REWRITE REQUIRED — your previous draft read the digest aloud: "
-            f"{before:.0f} percent of its eight-word phrases appear word for word in "
-            "the digest, and these sentences were carried over verbatim:\n"
-            + "\n".join(f"- {s}" for s in copied)
-            + "\n\nWrite the whole script again in your own spoken sentences from the "
-            "same facts. Keep every fact, every number, every name and every required "
-            "anchor phrase; keep the identity line and the closing block exactly as "
-            "supplied. Do not shorten the episode and do not add framing — change the "
-            "WORDING, sentence by sentence, so no run of eight consecutive words "
-            "matches the digest."
+        from engine.script_audit import (
+            HOOK_ORPHAN_MAX_COVERAGE, copied_sections, copied_sentences,
+            digest_overlap, hook_coverage,
         )
+        hook = str((template_vars_for_script or {}).get("hook") or "")
+        before = digest_overlap(podcast_script, digest_text)
+        sections_before = copied_sections(podcast_script, digest_text)
+        hook_before = hook_coverage(podcast_script, hook)
+        reasons = []
+        if before is not None and before >= threshold:
+            reasons.append("overlap")
+        if sections_before:
+            reasons.append("section")
+        if hook_before is not None and hook_before < HOOK_ORPHAN_MAX_COVERAGE:
+            reasons.append("hook")
+        base = {
+            "before_pct": round(before or 0.0, 1),
+            "copied_sections_before": len(sections_before),
+            "hook_coverage_before": None if hook_before is None else round(hook_before, 2),
+        }
+        if not reasons:
+            return {"script": podcast_script, "fired": False, **base}
+
+        orig_words = len((podcast_script or "").split())
+        floor_words = _rewrite_gate_floor_words(orig_words, config)
+        parts = ["REWRITE REQUIRED — your previous draft failed the script standard:"]
+        if "overlap" in reasons:
+            copied = copied_sentences(podcast_script, digest_text)
+            parts.append(
+                f"- It read the digest aloud: {before:.0f} percent of its eight-word "
+                "phrases appear word for word in the digest, and these sentences were "
+                "carried over verbatim:\n" + "\n".join(f"  - {s}" for s in copied)
+            )
+        if "section" in reasons:
+            named = "; ".join(
+                f"\"{c['title']}\" ({c['sentence_pct']:.0f} percent of its sentences)"
+                for c in sections_before[:4]
+            )
+            parts.append(
+                "- These digest sections were carried over almost sentence for sentence, "
+                "keeping the digest's sentence structure with a few words swapped: "
+                f"{named}. Write each of them fresh — same facts, same numbers, your own "
+                "sentences, none built on a digest sentence."
+            )
+        if "hook" in reasons:
+            parts.append(
+                f"- The cold open promises a story the body never tells: \"{hook.strip() or 'the opening line'}\". "
+                "The story the opener sells must be covered in full, with its facts, in the body."
+            )
+        parts.append(
+            "Write the whole script again in your own spoken sentences from the same "
+            "facts. Keep every fact, every number, every name and every required anchor "
+            "phrase; keep the identity line and the closing block exactly as supplied. "
+            f"The rewrite must run at least {floor_words} words (the draft was {orig_words}) "
+            "— do not shorten the episode and do not add framing; change the WORDING, "
+            "sentence by sentence, so no run of eight consecutive words matches the digest."
+        )
+        appendix = "\n".join(parts)
         from engine.generator import generate_podcast_script as _gen
         rewritten = _gen(template_vars_for_script, config, tracker=tracker, prompt_appendix=appendix)
         after = digest_overlap(rewritten or "", digest_text)
-        orig_words = len((podcast_script or "").split())
+        sections_after = copied_sections(rewritten or "", digest_text)
+        hook_after = hook_coverage(rewritten or "", hook)
         new_words = len((rewritten or "").split())
-        accepted = bool(
-            rewritten and after is not None and after < before
-            and new_words >= REWRITE_GATE_MIN_KEEP_RATIO * orig_words
-        )
+
+        reject = None
+        if not rewritten or after is None:
+            reject = "empty"
+        elif new_words < floor_words:
+            reject = "truncated"
+        elif "overlap" in reasons and not after < before:
+            reject = "still_copies"
+        elif "overlap" not in reasons and after >= threshold:
+            reject = "copies_more"
+        elif "section" in reasons and not len(sections_after) < len(sections_before):
+            reject = "section_still_copied"
+        elif "section" not in reasons and len(sections_after) > len(sections_before):
+            reject = "new_section_copied"
+        elif "hook" in reasons and (hook_after is not None and hook_after < HOOK_ORPHAN_MAX_COVERAGE):
+            reject = "hook_still_orphaned"
+        accepted = reject is None
         logger.info(
-            "Script rewrite gate: digest-verbatim %.0f%% -> %.0f%% (%d -> %d words) — %s",
-            before, after if after is not None else -1.0, orig_words, new_words,
-            "rewrite accepted" if accepted else "original kept",
+            "Script rewrite gate [%s]: digest-verbatim %.0f%% -> %.0f%%, copied sections "
+            "%d -> %d, hook coverage %s -> %s (%d -> %d words, floor %d) — %s",
+            ",".join(reasons), before or 0.0, after if after is not None else -1.0,
+            len(sections_before), len(sections_after), hook_before, hook_after,
+            orig_words, new_words, floor_words,
+            "rewrite accepted" if accepted else f"original kept ({reject})",
         )
         return {
             "script": rewritten if accepted else podcast_script,
-            "fired": True, "before_pct": round(before, 1),
+            "fired": True, "reasons": ",".join(reasons), **base,
             "after_pct": round(after, 1) if after is not None else None,
-            "accepted": accepted, "copied_sentences": len(copied),
+            "copied_sections_after": len(sections_after),
+            "hook_coverage_after": None if hook_after is None else round(hook_after, 2),
+            "accepted": accepted, "reject_reason": reject,
+            "rewrite_words": new_words, "floor_words": floor_words,
         }
     except Exception as exc:  # noqa: BLE001 — the gate must never cost an episode
         logger.warning("Script rewrite gate failed (original script kept): %s", exc)

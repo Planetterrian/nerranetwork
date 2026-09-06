@@ -350,6 +350,31 @@ reviews:
       verdict: pending
       evidence: null
     agent_cost_usd: null
+  - date: 2026-09-06
+    pr: null
+    doc: docs/reviews/network_delivery_review_2026_09_05.md
+    summary: "Sep 6 readout (Ep597 vs Ep595): denser (4.3 vs 3.5 facts/100w) and advisory tails gone, but the rewrite gate REJECTED a 61->2% verbatim rewrite on length (draft 1,607w over a 1,400w target; floor pinned to the draft) and the copied draft aired with six lead-in-then-verbatim-bullet duplications and a First Principles segment lifted 85% from the digest."
+    shipped:
+      - "engine/pipeline rewrite gate - floor = 70% of min(draft, target); reasons + reject_reason + rewrite_words recorded"
+      - "engine/script_audit copied_sections + hook_coverage; gate fires on a copied section (First Principles 85%) and names it"
+      - "content_discipline.txt - the headline is a label, not a line; every digest section is rewritten (A/B)"
+    predictions:
+    - metric: "script_rewrite_gate_accepted when fired, next 10 episodes"
+      baseline: "0/1 (Ep597 rejected: truncated)"
+      expected: ">=7/10 accepted; no rejection with reject_reason=truncated where rewrite_words >= 980"
+      verdict: pending
+      evidence: null
+    - metric: "copied sections (script_copied_sections) on Tesla First Principles, last 10"
+      baseline: "First Principles flagged on 8 of the last 9 episodes"
+      expected: "<=2/10"
+      verdict: pending
+      evidence: null
+    - metric: "headline-echo pairs (lead-in sentence + verbatim first bullet) per episode, hand-count on 3 episodes"
+      baseline: "6 (Ep597)"
+      expected: "<=1"
+      verdict: pending
+      evidence: null
+    agent_cost_usd: null
 
 do_not_retry:
   - idea: phonetic respellings or programmatic speech-tag injection

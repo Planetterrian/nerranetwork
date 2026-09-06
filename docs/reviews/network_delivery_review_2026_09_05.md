@@ -231,3 +231,104 @@ network verdict waits for the 2026-09-06 slate. The re-run finding that
 transfers now is the gate: every English news show copied 27–78% on its
 last four episodes, so the threshold is set network-wide rather than for
 Tesla alone.
+
+## Sep 6 readout — the first full slate with the prompts and the gate live
+
+Eleven Sep 6 episodes were read against their Sep 5 predecessors (three
+transcript audits: SpaceX + Tesla; M&A + Omni View + MIT; FF + PT + MAB)
+and every `_tts.txt` was re-scored with `engine.script_audit`. Verdicts:
+Omni View, Fascinating Frontiers and MIT **clearly better**; SpaceX, M&A
+and MAB **mixed**; Tesla **mixed** (denser, less advisory, but its "one
+owner per fact" rule is the one it broke hardest); Planetterrian
+**worse**. The numbers:
+
+| show | Ep | words | gate | verbatim | filler | facts×2 |
+|---|---|---|---|---|---|---|
+| SpaceX | 092 | 939 | no fire (24%) | 24% | 0% | 1 |
+| Tesla | 597 | 1607 | fired 61→**2%**, REJECTED | 59% | 0% | 2 |
+| Models & Agents | 165 | 1622 | no fire (16%) | 12% | 1% | 1 |
+| Omni View | 167 | 1354 | no fire (6%) | 4% | 1% | 0 |
+| Fascinating Frontiers | 185 | 1080 | fired 52→2%, accepted | 1% | 6% | 1 |
+| Planetterrian | 175 | 1347 | fired 65→34%, accepted | 32% | 6% | 0 |
+| Modern Investing | 162 | 1412 | no fire (31%) | 26% | 3% | 3 |
+| MAB | 158 | 1464 | no fire (7%) | 6% | 1% | 0 |
+
+Against the Sep 5 baseline (SpaceX 66% / Tesla 49% / M&A 44% verbatim,
+filler 6–10%) the whole-script copy number fell on every show but Tesla,
+and filler is at or near zero network-wide. FF is the cleanest result:
+filler 12 → 3 sentences, fact density +30%, zero digest sentences
+carried over, the Sep 5 dangling referent gone. OV and MIT lost their
+worst mechanical defects (OV's "watch for" tail on every story; MIT's raw
+schema fields read aloud — "Trade Type: Weekly Hold." — and the portfolio
+record spoken twice). What the readout found that the Sep 5 instruments
+could not see:
+
+1. **The gate threw away a clean rewrite.** Tesla Ep597's rewrite went
+   61 → 2% verbatim and was rejected because the 1,607-word draft had
+   over-run its 1,400-word target and the 70% floor was pinned to the
+   draft. The copied draft aired, with the day's worst defect: a spoken
+   lead-in followed by the digest bullet verbatim ("A Reddit thread has
+   compiled videos of Cybercab stopping in ways that partially block
+   traffic. Owners have documented stops that partially block traffic."),
+   six times. Fixed: the floor is now 70% of **min(draft, target)**, the
+   appendix states the floor in words, and `script_rewrite_gate_reasons`
+   / `_reject_reason` / `_rewrite_words` are recorded so a rejection is
+   never silent again.
+2. **Sections were read aloud under the threshold.** SpaceX Ep092 sat at
+   24% whole-script verbatim while its Engineering Deep Dive matched 10
+   of 13 digest sentences (a word-swap paraphrase: "single" → "one",
+   "allocated to" → "meant for", commas dropped — so the 8-gram share was
+   59%); Tesla's First Principles 13/15; PT's Science Deep Dive 6/6.
+   Across the last twelve episodes of nine shows the deep-dive section was
+   78–100% verbatim on most days — the news body was being written and
+   the essay read. `script_audit.copied_sections` scores each digest
+   header block on its own (8-gram share ≥80%, or ≥70% of its sentences
+   near-matched with ≥25% verbatim; blocks under 100 words ignored so
+   one-line list sections cannot fire) and the gate fires on it, naming
+   the section. Calibration: Sep 6 SpaceX 77% / Tesla 87% / PT 100% of
+   sentences fire; OV 50%, M&A 50%, MAB 25%, FF 0% do not. Expect the
+   gate to fire on most episodes until the rewrite teaches the model the
+   section rule; `script_rewrite_gate_copied_sections_{before,after}`
+   is the number to watch.
+3. **An orphaned hook.** PT Ep175 opened on 80,000-year-old projectile
+   points in Uzbekistan and the body never covered the story (digest
+   item 1). `script_audit.hook_coverage` measures the share of the
+   opener's salient words the body speaks — 0.09 there, every other
+   recent episode 0.33–1.0 — and the gate fires below 0.3, naming the
+   promise. The shared snippet gained the rule in words.
+4. **Headline echo** (Tesla ×6, M&A ×9): the model spoke each item's
+   headline as a sentence and then began the body with the same fact.
+   The snippet now says the headline is a label, not a line. M&A's other
+   new tic — an attribution sentence with no fact ("Reports from Manila
+   Times covered the expanded catalog and tooling package together") as
+   sentence four of most items — is the snippet's "source named once"
+   rule obeyed in the wrong place; it now requires the outlet inside a
+   fact sentence, never a sentence of its own.
+5. **MIT's prompt still seeded three quotable lines** and Ep162 aired all
+   three ("Now, here's something that most retail investors get wrong,
+   and it cost me money before I figured it out"; "what this teaches us
+   is"; "Unusual Whales is exactly how you would check"). De-seeded by
+   shape, and a one-lesson-one-owner rule added (volume confirmation was
+   explained in five segments). Also fixed: the hook aired "oil slips
+   below USninety-five dollars" — `US$95` had no pronunciation handler
+   (the `C$` path existed since May); `replace_canadian_currency` now
+   handles `US$` / `USD$` too.
+6. **MAB lost its numbers** (numeric tokens per 100 words 1.8 → 0.7; the
+   Gemini rescue story dropped the food-and-water figures) while running
+   six analogies. The prompt's ≥8-analogies rule stays (it is the show's
+   format); a rule that every number the briefing gives a story is spoken
+   was added beside it.
+
+Not actioned, with reasons: SpaceX's "a little over one percent" beside
+the closing's "one point four percent" is the Market Watch design (words
+in the body, the exact quote once in the closing); SpaceX's comma-light
+deep dive is the model's habit on both Sep 5 and Sep 6 (1.3 commas per
+100 words either day), not a stripper; M&A's mid-episode "over the past
+week" block is Sunday's weekly-summary segment landing unframed — a
+placement note for the next M&A pass; MIT's "no new weekly hold" beside
+a META setup is the tracker's monitoring state read faithfully. UC and
+FPD score 77–81% verbatim by design (narrative mode: the digest is the
+story) and the gate stays off there.
+
+Predictions filed in the per-show ledgers; the network readout stays on
+experiment `network-content-discipline-2026-09` (2026-09-26).

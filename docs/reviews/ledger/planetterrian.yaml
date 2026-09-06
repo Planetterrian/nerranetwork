@@ -351,5 +351,30 @@ reviews:
       verdict: pending
       evidence: null
     agent_cost_usd: null
+  - date: 2026-09-06
+    pr: null
+    doc: docs/reviews/network_delivery_review_2026_09_05.md
+    summary: "Sep 6 readout (Ep175 vs Ep174): WORSE - the cold open promised 80,000-year-old projectile points in Uzbekistan and the body never covered the story (hook coverage 0.09; every other recent episode 0.33-1.0); the Science Deep Dive was 6/6 digest sentences; the gate fired 65->34% and accepted, so the rewrite kept the copied essay; 'The practical takeaway is' and 'keep an eye on' survived the prompt pass."
+    shipped:
+      - "engine/script_audit hook_coverage - orphaned-hook detection; gate fires below 0.3 and names the promise"
+      - "engine/script_audit copied_sections - gate fires on the copied Science Deep Dive"
+      - "content_discipline.txt - the cold open is a promise (A/B)"
+    predictions:
+    - metric: "script_hook_orphaned, next 15 episodes"
+      baseline: "1 (Ep175)"
+      expected: "0"
+      verdict: pending
+      evidence: null
+    - metric: "script_copied_sections on the Science Deep Dive, last 10"
+      baseline: "flagged 10/10 (Ep166-175)"
+      expected: "<=3/10"
+      verdict: pending
+      evidence: null
+    - metric: "surviving banned tails ('practical takeaway', 'keep an eye on') per episode"
+      baseline: "2 (Ep175)"
+      expected: "0 on 8/10"
+      verdict: pending
+      evidence: null
+    agent_cost_usd: null
 
 do_not_retry: []

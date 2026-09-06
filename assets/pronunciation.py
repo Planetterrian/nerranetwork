@@ -634,6 +634,33 @@ def replace_canadian_currency(text: str) -> str:
         text,
         flags=re.IGNORECASE,
     )
+
+    # US$ / USD$ — the same stranded-prefix bug on the other currency
+    # Modern Investing quotes daily. Sep 6 2026, MIT Ep162's HOOK aired
+    # "oil slips below USninety-five dollars": the "$95" was converted
+    # and the "US" glued onto the number word. Large-unit amounts
+    # ("US$3 billion") keep the unit next to the number so the
+    # downstream large-currency handler still sees "3 billion".
+    def _us(m: re.Match) -> str:
+        amount, unit = m.group(1), m.group(2) or ""
+        if "." in amount and not unit:
+            whole, _, frac = amount.replace(",", "").partition(".")
+            try:
+                spoken = f"{number_to_words(int(whole))} U S dollars"
+                if int(frac[:2].ljust(2, "0")):
+                    spoken += f" and {number_to_words(int(frac[:2].ljust(2, '0')))} cents"
+                return spoken
+            except ValueError:
+                return m.group(0)
+        return f"{amount}{unit} U S dollars"
+
+    text = re.sub(
+        r"\b(?:USD\$|US\$)(\d{1,3}(?:,\d{3})*(?:\.\d+)?|\d+(?:\.\d+)?)"
+        r"(\s*(?:trillion|billion|million|thousand))?",
+        _us,
+        text,
+        flags=re.IGNORECASE,
+    )
     return text
 
 

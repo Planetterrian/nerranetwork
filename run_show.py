@@ -2600,6 +2600,16 @@ def run(args: argparse.Namespace) -> None:
                 if _gate_info.get("fired"):
                     metrics.record("script_rewrite_gate_after_pct", _gate_info.get("after_pct"))
                     metrics.record("script_rewrite_gate_accepted", bool(_gate_info.get("accepted")))
+                    # Sep 6 2026: WHY it fired and, when the rewrite was
+                    # thrown away, why — Tesla Ep597's 61 % -> 2 % rewrite
+                    # was rejected and nothing recorded the reason.
+                    metrics.record("script_rewrite_gate_reasons", _gate_info.get("reasons") or "")
+                    metrics.record("script_rewrite_gate_reject_reason", _gate_info.get("reject_reason") or "")
+                    metrics.record("script_rewrite_gate_rewrite_words", _gate_info.get("rewrite_words") or 0)
+                    metrics.record("script_rewrite_gate_copied_sections_before",
+                                   _gate_info.get("copied_sections_before") or 0)
+                    metrics.record("script_rewrite_gate_copied_sections_after",
+                                   _gate_info.get("copied_sections_after") or 0)
 
             # 8b. Podcast script length check — two-tier gate.
             #     Hard floor (true garbage): abort only when clearly broken.
