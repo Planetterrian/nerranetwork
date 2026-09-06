@@ -17,6 +17,13 @@
  *   GET  /voices/episode-lookup       Mira tool: nerra_episode_lookup
  *   GET  /voices/guest-brief          Mira tool: guest_brief_lookup
  *   POST /voices/fact-check           Mira tool: fact_check_claim (proxy note)
+ *   GET  /voices/studio-state         studio page poll (run readiness, presence)
+ *   POST /voices/studio-auth          Voximplant one-time-key login (guest | host)
+ *   POST /voices/leg-event            scenario: per-leg joined/left (Phase 2)
+ *   POST /voices/upload-chunk         studio: local MediaRecorder chunk → R2 (Phase 2)
+ *   POST /voices/upload-done          studio: local recording manifest → R2 + run row
+ *   GET  /voices/host-link            admin: Patrick's co-host studio link
+ *   GET  /voices/health               deploy verification
  *   scheduled (daily)                 gate-2 day-4 reminder + day-7 auto-approve
  *
  * Design: thin handlers — update Supabase (service key), send the odd
@@ -46,6 +53,17 @@ export interface Env {
   VOX_GUEST_USER?: string;      // default "guest"
   VOX_GUEST_PASSWORD?: string;
   OPERATOR_EMAIL?: string;      // default patricknovak1@gmail.com
+  // Phase 2 co-host (Sept 2026, docs/cohost_phase2_contract.md): Patrick
+  // joins every interview from the same studio page as `host`. The
+  // scenario dials this Voximplant user; the page auto-answers. Host
+  // credentials are only issued to a caller presenting ADMIN_TOKEN.
+  VOX_HOST_USER?: string;       // default "host"
+  VOX_HOST_PASSWORD?: string;
+  OPERATOR_PHONE?: string;      // E.164; the fire step SMSes the host link
+  // R2 bucket the Python pipeline also uploads to (VOICES_R2_BUCKET in
+  // Actions). Local browser recordings land here as
+  // <r2_prefix>/local/<run_id>/<role>/<seq>.webm + manifest.json.
+  VOICES_R2: R2Bucket;
 }
 
 const REPO = "Planetterrian/nerranetwork";
@@ -68,6 +86,7 @@ export interface Show {
   page: string;        // public show page on nerranetwork.com
   applyPage: string;
   studioPage: string;  // shared studio; branded via ?show=<slug>
+  r2Prefix: string;    // R2 key prefix (mirrors shows/<slug>.yaml r2_prefix)
 }
 
 export const SHOWS: Record<ShowSlug, Show> = {
@@ -79,6 +98,7 @@ export const SHOWS: Record<ShowSlug, Show> = {
     page: "age-of-ai.html",
     applyPage: "age-of-ai-apply.html",
     studioPage: "age-of-ai-studio.html",
+    r2Prefix: "age_of_ai",
   },
   nerra_voices: {
     slug: "nerra_voices",
@@ -88,6 +108,7 @@ export const SHOWS: Record<ShowSlug, Show> = {
     page: "nerra-voices.html",
     applyPage: "nerra-voices-apply.html",
     studioPage: "age-of-ai-studio.html",
+    r2Prefix: "nerra_voices",
   },
 };
 
@@ -106,8 +127,16 @@ export function showFor(...rows: Array<{ show?: unknown } | null | undefined>): 
   return SHOWS[DEFAULT_SHOW];
 }
 
-function studioUrl(show: Show, interviewId: string): string {
-  return `${SITE}/${show.studioPage}?interview=${interviewId}&show=${show.slug}`;
+export type StudioRole = "guest" | "host";
+
+/** Studio page URL. Guests get `&role=guest`; the host link (Phase 2) adds
+ *  `&role=host&token=<ADMIN_TOKEN>` — see hostStudioUrl(). */
+function studioUrl(show: Show, interviewId: string, role: StudioRole = "guest"): string {
+  return `${SITE}/${show.studioPage}?interview=${interviewId}&show=${show.slug}&role=${role}`;
+}
+
+function hostStudioUrl(env: Env, show: Show, interviewId: string): string {
+  return `${studioUrl(show, interviewId, "host")}&token=${encodeURIComponent(env.ADMIN_TOKEN)}`;
 }
 
 function bookingUrl(env: Env, show: Show): string {
@@ -327,6 +356,15 @@ async function handleInterviewComplete(req: Request, env: Env): Promise<Response
       voximplant_video_url: payload.voximplant_video_url ?? null,
       call_mode: payload.call_mode ?? null,
     },
+    // Phase 2 co-host (Sept 2026): per-leg Voximplant recordings and the
+    // host-leg timeline the scenario reports. Columns from
+    // supabase/migrations/20260906_cohost_conference.sql; the
+    // post-interview pipeline reads them to build three clean tracks.
+    recording_host_url: payload.voximplant_host_record_url ?? null,
+    recording_mira_url: payload.voximplant_mira_record_url ?? null,
+    host_joined_at: payload.host_joined_at ?? null,
+    host_left_at: payload.host_left_at ?? null,
+    host_attempts: Number(payload.host_attempts ?? 0) || 0,
   };
   // Aborted studio call (Aug 5 2026, Dan Perra dry run): a WebRTC session
   // shorter than 5 minutes is a failed join (media-path failure, refresh,
@@ -490,7 +528,7 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
       "return=representation");
     interviewId = created?.[0]?.id ?? "";
   }
-  const studio = studioUrl(show, interviewId);
+  const studio = studioUrl(show, interviewId, "guest");
   await email(env, emailAddr, `Your ${show.shortLabel} interview is booked`,
     `<p>Hi ${esc(apps[0].name)},</p>
      <p>You're booked. At the scheduled time, join Mira — our AI host — from
@@ -937,15 +975,31 @@ function md5(input: string): string {
   return out;
 }
 
-// GET /voices/studio-state?interview=<id> — the studio page polls this
-// until the fire step has created the run row (webrtc mode leaves it
-// `awaiting_guest`), then joins with the returned run_id.
+const UUID_RE = /^[0-9a-f-]{36}$/;
+const isStudioRole = (r: unknown): r is StudioRole => r === "guest" || r === "host";
+
+/** Admin token from the Authorization header, `?token=` or a JSON body. */
+function adminTokenOk(env: Env, req: Request, bodyToken?: unknown): boolean {
+  const auth = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
+  const q = new URL(req.url).searchParams.get("token") ?? "";
+  const t = auth || q || (typeof bodyToken === "string" ? bodyToken : "");
+  return Boolean(env.ADMIN_TOKEN) && t === env.ADMIN_TOKEN;
+}
+
+// GET /voices/studio-state?interview=<id>&show=&role=[&token=] — the studio
+// page polls this until the fire step has created the run row (webrtc mode
+// leaves it `awaiting_guest`), then joins with the returned run_id. Phase 2:
+// both pages keep polling during the call for presence — `guest_joined` /
+// `host_joined` come from the interview_runs columns that /voices/leg-event
+// and the interview-complete webhook maintain. `host_user` (the Voximplant
+// user the scenario dials) is only revealed to a host presenting ADMIN_TOKEN.
 async function handleStudioState(req: Request, env: Env): Promise<Response> {
   const url = new URL(req.url);
   const interviewId = url.searchParams.get("interview") ?? "";
-  if (!/^[0-9a-f-]{36}$/.test(interviewId)) return json({ error: "interview required" }, 400);
+  const role: StudioRole = url.searchParams.get("role") === "host" ? "host" : "guest";
+  if (!UUID_RE.test(interviewId)) return json({ error: "interview required" }, 400);
   const ivs = await sb(env, "GET",
-    `interviews?id=eq.${interviewId}&select=id,status,scheduled_at,call_mode,show,application_id`);
+    `interviews?id=eq.${interviewId}&select=id,status,scheduled_at,call_mode,show,application_id,host_mode`);
   const iv = ivs?.[0];
   if (!iv) return json({ error: "not found" }, 404);
   // Pre-migration interviews carry no show; fall back to the application's.
@@ -959,27 +1013,216 @@ async function handleStudioState(req: Request, env: Env): Promise<Response> {
     `interview_runs?interview_id=eq.${interviewId}&status=in.(awaiting_guest,pending)` +
     `&order=created_at.desc&limit=1&select=id,status`);
   const run = runs?.[0];
+  // Presence comes from the NEWEST run whatever its status (the scenario
+  // flips it to in_progress once the guest is on the line, which is exactly
+  // when the host page needs to know who is in the room).
+  const latestRows = await sb(env, "GET",
+    `interview_runs?interview_id=eq.${interviewId}&order=created_at.desc&limit=1` +
+    `&select=id,status,host_mode,guest_joined_at,host_joined_at,host_left_at`);
+  const latest = latestRows?.[0] ?? null;
+  const hostMode = latest ? latest.host_mode !== false : iv.host_mode !== false;
+  const hostAllowed = role === "host" && adminTokenOk(env, req);
   return json({
     ready: Boolean(run),
     run_id: run?.id ?? null,
+    // The host page must know the run even after the guest has joined
+    // (status in_progress) so its local-recording uploads carry the id.
+    live_run_id: latest?.id ?? null,
+    run_status: latest?.status ?? null,
     interview_status: iv.status,
     scheduled_at: iv.scheduled_at,
     call_mode: iv.call_mode ?? "webrtc",
     show: show.slug,
     show_name: show.name,
+    role,
+    host_mode: hostMode,
+    guest_joined: Boolean(latest?.guest_joined_at),
+    host_joined: Boolean(latest?.host_joined_at) && !latest?.host_left_at,
+    ...(hostAllowed ? { host_user: env.VOX_HOST_USER || "host" } : {}),
   });
 }
 
-// POST /voices/studio-auth {key} — Voximplant one-time-key handshake:
-// hash = MD5(key + "|" + MD5(user + ":voximplant.com:" + password)).
+// POST /voices/studio-auth {key, role?, token?} — Voximplant one-time-key
+// handshake: hash = MD5(key + "|" + MD5(user + ":voximplant.com:" + password)).
+// role=guest (default) uses VOX_GUEST_*; role=host (Phase 2) requires
+// token === ADMIN_TOKEN and uses VOX_HOST_* — the host link in Patrick's
+// fire-time email carries the token, nobody else can log in as the host.
 async function handleStudioAuth(req: Request, env: Env): Promise<Response> {
-  if (!env.VOX_GUEST_PASSWORD) return json({ error: "studio auth not configured" }, 503);
   const body = await req.json<any>().catch(() => null);
   const key = String(body?.key ?? "");
   if (!key) return json({ error: "key required" }, 400);
-  const user = env.VOX_GUEST_USER || "guest";
-  const token = md5(`${key}|${md5(`${user}:voximplant.com:${env.VOX_GUEST_PASSWORD}`)}`);
-  return json({ token, user });
+  const role: StudioRole = body?.role === "host" ? "host" : "guest";
+  let user: string, password: string | undefined;
+  if (role === "host") {
+    if (!adminTokenOk(env, req, body?.token)) return json({ error: "unauthorized" }, 401);
+    user = env.VOX_HOST_USER || "host";
+    password = env.VOX_HOST_PASSWORD;
+    if (!password) return json({ error: "host studio auth not configured" }, 503);
+  } else {
+    user = env.VOX_GUEST_USER || "guest";
+    password = env.VOX_GUEST_PASSWORD;
+    if (!password) return json({ error: "studio auth not configured" }, 503);
+  }
+  const token = md5(`${key}|${md5(`${user}:voximplant.com:${password}`)}`);
+  return json({ token, user, role });
+}
+
+// ---------------------------------------------------------------------------
+// Phase 2 co-host endpoints (Sept 2026, docs/cohost_phase2_contract.md)
+// ---------------------------------------------------------------------------
+
+// POST /voices/leg-event {run_id, role, event:"joined"|"left"} — the scenario
+// reports each leg's Connected/Disconnected (fire-and-forget on its side).
+// No auth beyond the run existing: the payload carries nothing sensitive
+// and only moves presence timestamps. First join only for *_joined_at; a
+// host rejoin after a drop clears host_left_at so `host_joined` is live
+// again (the webhook writes the final host_left_at at hangup). Attempts
+// are NOT counted here — the scenario reports host_attempts in the webhook.
+async function handleLegEvent(req: Request, env: Env): Promise<Response> {
+  const body = await req.json<any>().catch(() => null);
+  const runId = String(body?.run_id ?? "");
+  const role = body?.role, event = body?.event;
+  if (!UUID_RE.test(runId) || !isStudioRole(role) || !["joined", "left"].includes(event)) {
+    return json({ error: "run_id + role(guest|host) + event(joined|left) required" }, 400);
+  }
+  const runs = await sb(env, "GET",
+    `interview_runs?id=eq.${runId}&select=id,guest_joined_at,host_joined_at,host_left_at`);
+  const run = runs?.[0];
+  if (!run) return json({ error: "run not found" }, 404);
+  const now = new Date().toISOString();
+  const patch: Record<string, unknown> = {};
+  if (role === "guest" && event === "joined" && !run.guest_joined_at) patch.guest_joined_at = now;
+  if (role === "host" && event === "joined") {
+    if (!run.host_joined_at) patch.host_joined_at = now;
+    if (run.host_left_at) patch.host_left_at = null;
+  }
+  if (role === "host" && event === "left") patch.host_left_at = now;
+  if (Object.keys(patch).length) await sb(env, "PATCH", `interview_runs?id=eq.${runId}`, patch);
+  return json({ ok: true, run_id: runId, role, event, patched: Object.keys(patch) });
+}
+
+const LOCAL_CHUNK_MAX_BYTES = 10 * 1024 * 1024;
+// Guest uploads are allowed while the run is live — `completed` included,
+// because the last chunks (and upload-done) arrive AFTER the hangup webhook.
+const GUEST_UPLOAD_STATUSES = new Set(["fired", "in_progress", "awaiting_guest", "completed"]);
+
+/** Run + resolved show for the local-recording endpoints. */
+async function runWithShow(env: Env, runId: string):
+    Promise<{ run: any | null; show: Show }> {
+  const runs = await sb(env, "GET",
+    `interview_runs?id=eq.${runId}&select=id,status,interview_id,local_guest_url,local_host_url`);
+  const run = runs?.[0] ?? null;
+  if (!run) return { run: null, show: SHOWS[DEFAULT_SHOW] };
+  const ivs = run.interview_id
+    ? await sb(env, "GET", `interviews?id=eq.${run.interview_id}&select=show,application_id`)
+    : [];
+  let show = showFor(ivs?.[0]);
+  if (ivs?.[0] && !isShow(ivs[0].show) && ivs[0].application_id) {
+    const apps = await sb(env, "GET",
+      `guest_applications?id=eq.${ivs[0].application_id}&select=show`);
+    show = showFor(apps?.[0]);
+  }
+  return { run, show };
+}
+
+function localKey(show: Show, runId: string, role: StudioRole, name: string): string {
+  return `${show.r2Prefix}/local/${runId}/${role}/${name}`;
+}
+
+/** Shared gate for upload-chunk / upload-done: run must exist; guest role
+ *  needs a live-ish run status; host role needs ADMIN_TOKEN. Returns the
+ *  error Response or the run+show. */
+async function localUploadGate(req: Request, env: Env, runId: string, role: unknown,
+                               bodyToken?: unknown):
+    Promise<Response | { run: any; show: Show; role: StudioRole }> {
+  if (!env.VOICES_R2) return json({ error: "VOICES_R2 binding not configured" }, 503);
+  if (!UUID_RE.test(runId) || !isStudioRole(role)) {
+    return json({ error: "run_id + role(guest|host) required" }, 400);
+  }
+  if (role === "host" && !adminTokenOk(env, req, bodyToken)) return json({ error: "unauthorized" }, 401);
+  const { run, show } = await runWithShow(env, runId);
+  if (!run) return json({ error: "run not found" }, 404);
+  if (role === "guest" && !GUEST_UPLOAD_STATUSES.has(String(run.status))) {
+    return json({ error: `run status ${run.status} does not accept guest uploads` }, 409);
+  }
+  return { run, show, role };
+}
+
+// POST /voices/upload-chunk?run_id=&role=&seq=[&token=] — body: raw
+// audio/webm bytes from the studio page's MediaRecorder (5 s timeslices,
+// opus 192 kbps), max 10 MB. Key <prefix>/local/<run>/<role>/<seq:05d>.webm.
+async function handleUploadChunk(req: Request, env: Env): Promise<Response> {
+  const url = new URL(req.url);
+  const runId = url.searchParams.get("run_id") ?? "";
+  const role = url.searchParams.get("role");
+  const seq = Number(url.searchParams.get("seq"));
+  if (!Number.isInteger(seq) || seq < 0 || seq > 99999) return json({ error: "seq required (0..99999)" }, 400);
+  const gate = await localUploadGate(req, env, runId, role);
+  if (gate instanceof Response) return gate;
+  const declared = Number(req.headers.get("Content-Length") ?? 0);
+  if (declared > LOCAL_CHUNK_MAX_BYTES) return json({ error: "chunk too large (10 MB max)" }, 413);
+  const body = await req.arrayBuffer();
+  if (body.byteLength === 0) return json({ error: "empty chunk" }, 400);
+  if (body.byteLength > LOCAL_CHUNK_MAX_BYTES) return json({ error: "chunk too large (10 MB max)" }, 413);
+  const contentType = (req.headers.get("Content-Type") || "audio/webm").split(";")[0].trim() || "audio/webm";
+  const key = localKey(gate.show, runId, gate.role, `${String(seq).padStart(5, "0")}.webm`);
+  await env.VOICES_R2.put(key, body, { httpMetadata: { contentType } });
+  return json({ ok: true, key, size: body.byteLength });
+}
+
+// POST /voices/upload-done {run_id, role, chunks, mime, started_at,
+// duration_ms, token?} — writes the manifest the post-interview pipeline
+// reads (pipelines/voices/audio/local_tracks.py) and points
+// interview_runs.local_<role>_url at its KEY (not a URL: the Python side
+// reads R2 with its own credentials). Every listed chunk is HEADed; gaps
+// are reported in `missing` and recorded in the manifest so the pipeline
+// can decide to fall back to the Voximplant track.
+async function handleUploadDone(req: Request, env: Env): Promise<Response> {
+  const body = await req.json<any>().catch(() => null);
+  const runId = String(body?.run_id ?? "");
+  const gate = await localUploadGate(req, env, runId, body?.role, body?.token);
+  if (gate instanceof Response) return gate;
+  const chunks = Number(body?.chunks);
+  if (!Number.isInteger(chunks) || chunks < 0 || chunks > 100000) return json({ error: "chunks (int) required" }, 400);
+  const keys: string[] = [];
+  for (let i = 0; i < chunks; i++) keys.push(localKey(gate.show, runId, gate.role, `${String(i).padStart(5, "0")}.webm`));
+  const missing: string[] = [];
+  let bytes = 0;
+  for (const key of keys) {
+    const head = await env.VOICES_R2.head(key);
+    if (!head) missing.push(key); else bytes += head.size;
+  }
+  const manifestKey = localKey(gate.show, runId, gate.role, "manifest.json");
+  const manifest = {
+    run_id: runId,
+    role: gate.role,
+    show: gate.show.slug,
+    mime: String(body?.mime ?? "audio/webm;codecs=opus"),
+    started_at: body?.started_at ?? null,
+    duration_ms: Number(body?.duration_ms ?? 0) || 0,
+    completed_at: new Date().toISOString(),
+    chunks: keys,
+    missing,
+    bytes,
+  };
+  await env.VOICES_R2.put(manifestKey, JSON.stringify(manifest, null, 2),
+    { httpMetadata: { contentType: "application/json" } });
+  await sb(env, "PATCH", `interview_runs?id=eq.${runId}`,
+    { [`local_${gate.role}_url`]: manifestKey });
+  return json({ ok: true, key: manifestKey, chunks: keys.length, missing, bytes });
+}
+
+// GET /voices/host-link?interview=<id> (admin) — Patrick's co-host studio
+// link for one interview: the studio page with role=host and the admin
+// token, which studio-auth requires before issuing host credentials.
+async function handleHostLink(req: Request, env: Env): Promise<Response> {
+  const denied = requireAdmin(req, env);
+  if (denied) return denied;
+  const interviewId = new URL(req.url).searchParams.get("interview") ?? "";
+  if (!UUID_RE.test(interviewId)) return json({ error: "interview required" }, 400);
+  const { interview, show } = await interviewWithApp(env, interviewId);
+  if (!interview) return json({ error: "not found" }, 404);
+  return json({ url: hostStudioUrl(env, show, interviewId), show: show.slug, role: "host" });
 }
 
 // ---------------------------------------------------------------------------
@@ -1036,6 +1279,12 @@ async function handleHealth(env: Env): Promise<Response> {
       calcom_nerra_voices: !!env.CALCOM_BOOKING_URL_NERRA_VOICES,
       calcom_event_slugs: !!(env.CALCOM_EVENT_SLUG_AGE_OF_AI || env.CALCOM_EVENT_SLUG_NERRA_VOICES),
       slack: !!env.SLACK_WEBHOOK,
+      vox_guest_password: !!env.VOX_GUEST_PASSWORD,
+      // Phase 2 co-host: host credentials + the R2 binding the local
+      // browser recordings upload to.
+      vox_host_password: !!env.VOX_HOST_PASSWORD,
+      voices_r2: !!env.VOICES_R2,
+      operator_phone: !!env.OPERATOR_PHONE,
     },
     shows: Object.keys(SHOWS),
   };
@@ -1099,6 +1348,11 @@ export default {
       if (req.method === "GET" && path === "/voices/studio-state") return handleStudioState(req, env);
       if (req.method === "GET" && path === "/voices/health") return handleHealth(env);
       if (req.method === "POST" && path === "/voices/studio-auth") return handleStudioAuth(req, env);
+      // Phase 2 co-host (Sept 2026)
+      if (req.method === "POST" && path === "/voices/leg-event") return handleLegEvent(req, env);
+      if (req.method === "POST" && path === "/voices/upload-chunk") return handleUploadChunk(req, env);
+      if (req.method === "POST" && path === "/voices/upload-done") return handleUploadDone(req, env);
+      if (req.method === "GET" && path === "/voices/host-link") return handleHostLink(req, env);
       return json({ error: "not found" }, 404);
     } catch (err: any) {
       console.error("voices worker error:", err?.message ?? err);

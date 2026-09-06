@@ -8,6 +8,8 @@ Covers exactly what fire_interviews.py and the deploy tooling need:
 * ``set_application_secrets(...)`` — store SUPABASE_SERVICE_KEY /
   XAI_API_KEY as application custom data the scenario reads via
   ``Application.customData()``.
+* ``add_user(...)`` / ``list_users()`` — Voximplant application users
+  (Phase 2 co-host: the ``host`` user is created once at bootstrap).
 
 Auth: account-level API key (VOXIMPLANT_ACCOUNT_ID + VOXIMPLANT_API_KEY env
 vars), per https://voximplant.com/docs/references/httpapi. All calls raise
@@ -20,7 +22,7 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import requests
 
@@ -134,6 +136,48 @@ def set_application_secrets(supabase_service_key: str,
         supabase_service_key=supabase_service_key,
         xai_api_key=xai_api_key,
     )
+
+
+def add_user(user_name: str, user_display_name: str, user_password: str,
+             application_name: str = APPLICATION_NAME) -> Dict[str, Any]:
+    """Create a Voximplant application user (Management API ``AddUser``).
+
+    Phase 2 co-host (docs/cohost_phase2_contract.md): the ``host`` user is
+    created ONCE at operator bootstrap, alongside the existing ``guest``
+    user, and its credentials go into the Worker as
+    ``VOX_HOST_USER`` / ``VOX_HOST_PASSWORD``. The scenario dials it with
+    ``VoxEngine.callUser({username: host, ...})`` so Patrick's studio page
+    (logged in via the Web SDK) rings and auto-answers. Re-running this for
+    an existing user raises ``VoximplantError`` (the API rejects the
+    duplicate) — check :func:`list_users` first if you need idempotence.
+
+    Returns the AddUser response (``{"result": 1, "user_id": ...}``).
+    """
+    if not user_name or not user_password:
+        raise VoximplantError("user_name and user_password are required")
+    if len(user_password) < 6:
+        raise VoximplantError("Voximplant user passwords must be at least 6 characters")
+    result = _call(
+        "AddUser",
+        user_name=user_name,
+        user_display_name=user_display_name or user_name,
+        user_password=user_password,
+        application_name=application_name,
+    )
+    logger.info("Voximplant user %s created in %s: %s", user_name,
+                application_name, result)
+    return result
+
+
+def list_users(application_name: str = APPLICATION_NAME) -> List[Dict[str, Any]]:
+    """List the application's users (Management API ``GetUsers``).
+
+    Returns the ``result`` list (``user_name``, ``user_display_name``,
+    ``user_id``, ``user_active`` ...). Used by the bootstrap to check
+    whether ``guest`` / ``host`` already exist before :func:`add_user`.
+    """
+    data = _call("GetUsers", application_name=application_name)
+    return list(data.get("result") or [])
 
 
 def send_sms(dest_number: str, text: str,

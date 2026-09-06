@@ -4,6 +4,12 @@ The Voximplant recorder produces one stereo file: guest on the left
 channel, Mira on the right (VoxEngine stereo recorder convention — each
 media source lands on its own channel). This module splits the channels
 for per-speaker STT and produces the leveled mix used for the episode.
+
+Phase 2 co-host (Sept 2026): with Patrick in the room the interview has
+three clean mono tracks (guest, host, Mira — local browser recordings or
+Voximplant per-leg channels; see ``local_tracks.py``). ``split_left`` pulls
+a speaker's own channel from a per-leg recording and ``mix_three`` levels
+the three tracks into the episode mix.
 """
 
 from __future__ import annotations
@@ -134,6 +140,48 @@ def mix_interview(stereo_path: Path, out_path: Path) -> Path:
     else:
         _run(["ffmpeg", "-y", "-i", stereo_path,
               "-af", gentle, "-ar", "48000", out_path])
+    return out_path
+
+
+def split_left(src_path: Path, out_wav: Path) -> Path:
+    """Left channel only → 48 kHz mono WAV.
+
+    Phase 2 co-host: the host leg is recorded with
+    ``hostCall.record({stereo:true})`` (L = host mic, R = what the host
+    hears) and Mira's recorder may be mono or stereo — this takes the
+    speaker's own channel either way (``pan`` with a mono source is a
+    no-op copy, never an upmix)."""
+    out_wav = Path(out_wav)
+    out_wav.parent.mkdir(parents=True, exist_ok=True)
+    _run(["ffmpeg", "-y", "-i", src_path, "-vn",
+          "-af", "pan=mono|c0=c0", "-ar", "48000", "-c:a", "pcm_s16le",
+          out_wav])
+    return out_wav
+
+
+def mix_three(guest_wav: Path, host_wav: Path, mira_wav: Path,
+              out_path: Path) -> Path:
+    """Leveled mono mix of three clean speaker tracks (guest, co-host,
+    Mira) for STT + episode assembly — Phase 2 co-host.
+
+    Same gentle chain as the full-band two-track path (highpass →
+    compressor → dynaudnorm), no telephony surgery: every track here is
+    either a local 48 kHz browser recording or a Voximplant hd_audio leg.
+    Output length = the longest input (``duration=longest``)."""
+    out_path = Path(out_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    gentle = ("highpass=f=60,"
+              "acompressor=threshold=-21dB:ratio=3:attack=20:release=250,"
+              "dynaudnorm=f=250:g=15")
+    _run(["ffmpeg", "-y", "-i", guest_wav, "-i", host_wav, "-i", mira_wav,
+          "-filter_complex",
+          "[0:a]aformat=channel_layouts=mono[g];"
+          "[1:a]aformat=channel_layouts=mono[h];"
+          "[2:a]aformat=channel_layouts=mono[m];"
+          "[g][h][m]amix=inputs=3:duration=longest:normalize=0,"
+          f"{gentle}[out]",
+          "-map", "[out]", "-ar", "48000", "-ac", "1", "-c:a", "pcm_s16le",
+          out_path])
     return out_path
 
 
