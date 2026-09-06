@@ -14,9 +14,24 @@
  *    Management API (StartScenarios) with customData {"run_id": ...};
  *    outbound call to the guest's phone, audio-only recording.
  *
+ * Phase 2 (Sept 2026, docs/cohost_phase2_contract.md): Patrick is in the
+ * room as co-host. Every interview is a three-party local conference —
+ * guest + host (Voximplant user `host`, browser studio, WebRTC) + Mira —
+ * and each participant is recorded on its own track:
+ *
+ *  - guest:  call.record({stereo:true, hd_audio:true})  L = guest mic
+ *  - host:   hostCall.record({stereo:true, hd_audio:true})  L = host mic
+ *  - mira:   VoxEngine.createRecorder({hd_audio:true}) fed ONLY by Mira
+ *
+ * The host leg is dialed with VoxEngine.callUser once the guest is
+ * connected (both call modes — callUser does not care how the guest
+ * joined) and re-dialed every 20 s while the guest is on the line. Mira's
+ * opening waits for the host OR 20 s, whichever comes first.
+ *
  * All call config (guest phone, caller id, compiled Mira prompt, tools,
- * voice preset) is pulled from Supabase so the fire step / studio page stay
- * thin triggers and the run row is the single source of truth.
+ * voice preset, host_mode / host_user) is pulled from Supabase so the fire
+ * step / studio page stay thin triggers and the run row is the single
+ * source of truth.
  *
  * Secrets: SUPABASE_SERVICE_KEY and XAI_API_KEY are substituted into the
  * deployed copy at deploy time (upload_scenario placeholder substitution,
@@ -30,17 +45,34 @@
 // verified July 2026 against voximplant/grok-voice-agent-example +
 // docs.voximplant.ai: Modules.Grok / Grok.createVoiceAgentAPIClient.
 require(Modules.Grok);
-// Recorder module: used ONLY for the separate video recorder in WebRTC
-// mode (the primary audio recording stays call.record — see below).
+// Recorder module: the separate video recorder (WebRTC mode) and, since
+// Phase 2, the Mira-only audio recorder (the per-human audio recordings
+// stay call.record — see below).
 require(Modules.Recorder);
+// Conference module (Phase 2): local three-party mixer — guest + host +
+// Mira. VoxEngine.createConference lives in Modules.Conference.
+require(Modules.Conference);
 
 const SUPABASE_URL = "__SUPABASE_URL__";           // substituted at deploy time
 const API_BASE = "https://api.nerranetwork.com/voices";
 const WEBHOOK_URL = API_BASE + "/interview-complete";
+const LEG_EVENT_URL = API_BASE + "/leg-event";     // Phase 2: per-leg joined/left
 const HARD_CAP_MS = 50 * 60 * 1000;                // spec §11.8: 50-min hard cap
 const GROK_DROP_GUARD_MS = 1500;                   // spec §7: teardown-race guard
 const PLANNED_MIN = 45;            // soft interview length the prompt paces to
 const TIME_CHECK_EVERY_MS = 5 * 60 * 1000;
+// Phase 2 co-host timings (docs/cohost_phase2_contract.md §Session topology).
+const HOST_REDIAL_MS = 20 * 1000;  // re-dial the host every 20 s while the guest is on
+const HOST_MAX_ATTEMPTS = 60;      // ... but not forever (60 dials ≈ 20 min)
+const OPENING_WAIT_MS = 20 * 1000; // Mira's opening waits for the host OR 20 s
+const DEFAULT_HOST_USER = "host";  // Voximplant user in the nerra-voices app
+// ASSUMPTION (verify in the Phase 2 smoke test): Conference.add endpoint
+// mode. VoxEngine documents mode "MIX" | "FORWARD"; the contract asks for
+// "FORWARD". For an audio-only conference both should deliver the mix of
+// the other endpoints; if the smoke test shows one-way audio, flip this
+// single constant to "MIX" (or the conf.add call falls back to
+// sendMediaBetween — see attachToConference).
+const CONF_ENDPOINT_MODE = "MIX"; // MIX = mixed audio for every endpoint (audio-only room); flip to FORWARD only if the smoke test shows one-way audio
 
 let runId = null;
 let call = null;
@@ -55,6 +87,24 @@ let videoRecorder = null;  // separate WebRTC-mode video recorder
 let guestHeard = false;    // set on first InputAudioBufferSpeechStarted
 let micCheckTimer = null;  // silent-mic detection
 let videoRecordUrl = null;
+
+// Phase 2 co-host state.
+let conf = null;            // local conference (VoxEngine.createConference)
+let hostMode = true;        // interview_runs.host_mode (false disables the host leg)
+let hostUser = DEFAULT_HOST_USER; // interview_runs.host_user
+let hostCall = null;        // current host leg (VoxEngine.callUser)
+let hostJoined = false;     // host leg currently connected
+let hostJoinedAt = null;    // ISO string of the FIRST successful join
+let hostLeftAt = null;      // ISO string of the last host drop (null if none)
+let hostAttempts = 0;       // number of callUser dials (capped at HOST_MAX_ATTEMPTS)
+let hostRedialTimer = null; // pending re-dial
+let hostRecordUrl = null;   // hostCall.record → CallEvents.RecordStarted
+let miraRecorder = null;    // Mira-only audio recorder
+let miraRecordUrl = null;   // RecorderEvents.Started/Stopped
+let sessionReady = false;   // Grok SessionUpdated received (media bridged)
+let openingFired = false;   // openWhenReady() guard — Mira opens exactly once
+let openingTimer = null;    // the 20 s "open without the host" fallback
+let guestGone = false;      // guest Disconnected — teardown in progress
 
 // ---------------------------------------------------------------------------
 // Entry 1: outbound PSTN (fallback mode) — StartScenarios with customData.
@@ -168,6 +218,22 @@ async function beginInterview(config, withVideo) {
       }
     }
 
+    // 1b. Phase 2: local conference mixer. Created in BOTH call modes so
+    //     the host can join PSTN interviews too. The guest is added first;
+    //     Mira and the host attach as they come up.
+    hostMode = config.host_mode !== false;
+    hostUser = config.host_user || DEFAULT_HOST_USER;
+    createLocalConference();
+    attachToConference(call, "guest");
+    postLegEvent("guest", "joined");
+    // 1c. Dial the host leg now (not after the disclosure) so Patrick has
+    //     the disclosure + Grok session setup time to pick up.
+    if (hostMode) {
+      dialHost();
+    } else {
+      Logger.write("[aoa " + runId + "] host_mode=false — no host leg");
+    }
+
     // 2. Recording-consent disclosure — pre-generated Mira clip from R2
     //    (spec §11.2; wording confirmed by Patrick before launch).
     if (config.recording_disclosure_url) {
@@ -199,15 +265,29 @@ async function beginInterview(config, withVideo) {
 
     grokAgent.addEventListener(Grok.VoiceAgentAPIEvents.SessionUpdated, function () {
       try {
-        // 4. Bridge guest <-> Mira; Mira opens the conversation.
-        VoxEngine.sendMediaBetween(call, grokAgent);
+        // 4. Bridge Mira <-> conference (Phase 2: was sendMediaBetween(call,
+        //    grokAgent)). Mira hears the guest+host mix; everyone hears her.
+        //    The VoiceAgentAPIClient is a VoxMediaUnit, not a Call, so it
+        //    cannot go through conf.add — sendMediaBetween is the documented
+        //    unit<->unit bridge and a Conference is a VoxMediaUnit.
+        VoxEngine.sendMediaBetween(grokAgent, conf);
         if (videoRecorder) {
           try { grokAgent.sendMediaTo(videoRecorder); } catch (e) {
             Logger.write("[aoa " + runId + "] mira->video-recorder failed (non-fatal): " + e.message);
           }
         }
-        grokAgent.responseCreate({});
-        startTimeChecks();
+        // Mira-only track (best-effort, never blocks the interview).
+        startMiraRecorder();
+        sessionReady = true;
+        // Mira opens when the host is in the room, or after OPENING_WAIT_MS
+        // — whichever comes first (contract §Session topology 3).
+        if (hostJoined || !hostMode) {
+          openWhenReady(hostJoined ? "host already joined" : "host_mode off");
+        } else {
+          openingTimer = setTimeout(function () {
+            openWhenReady("host wait timed out");
+          }, OPENING_WAIT_MS);
+        }
       } catch (e) {
         Logger.write("[aoa " + runId + "] media-bridge failure: " + e.message);
         call.hangup();
@@ -216,6 +296,9 @@ async function beginInterview(config, withVideo) {
 
     // Telephony-natural barge-in: flush Mira's buffered audio the moment
     // the guest starts speaking. Also feeds the silent-mic detector.
+    // Phase 2: Mira listens to the conference mix, so this fires for the
+    // host's speech too — intended (Patrick interjecting should also cut
+    // Mira off), and the silent-mic check only needs SOMEONE to be heard.
     grokAgent.addEventListener(Grok.VoiceAgentAPIEvents.InputAudioBufferSpeechStarted, function () {
       guestHeard = true;
       if (grokAgent) grokAgent.clearMediaBuffer();
@@ -270,6 +353,209 @@ function silentMicNudge(attempt) {
   } catch (e) {
     Logger.write("[aoa " + runId + "] silent-mic nudge failed: " + e.message);
   }
+}
+
+// ---------------------------------------------------------------------------
+// Phase 2: conference, host leg, per-leg recording (docs/cohost_phase2_contract.md)
+// ---------------------------------------------------------------------------
+
+// Local mixer. hd_audio keeps the mix at Opus wideband so the per-leg
+// recordings (and Mira's input) don't get narrowband-downmixed.
+function createLocalConference() {
+  conf = VoxEngine.createConference({ hd_audio: true });
+  Logger.write("[aoa " + runId + "] conference created");
+  return conf;
+}
+
+/**
+ * Attach a Call to the conference. Primary path is the documented
+ * Conference.add({call, mode, direction}) endpoint API; if that throws
+ * (ASSUMPTION to verify in the smoke test: exact EndpointParameters shape
+ * on the live platform), fall back to the generic VoxMediaUnit bridge
+ * VoxEngine.sendMediaBetween(call, conf), which a Conference also supports.
+ * Logs which path was used so the smoke test can confirm it.
+ */
+function attachToConference(participant, label) {
+  if (!conf) createLocalConference();
+  try {
+    conf.add({ call: participant, mode: CONF_ENDPOINT_MODE, direction: "BOTH" });
+    Logger.write("[aoa " + runId + "] " + label + " attached via conf.add (" + CONF_ENDPOINT_MODE + "/BOTH)");
+    return "conf.add";
+  } catch (e) {
+    Logger.write("[aoa " + runId + "] conf.add failed for " + label + " (" + e.message +
+      ") — falling back to sendMediaBetween");
+    VoxEngine.sendMediaBetween(participant, conf);
+    Logger.write("[aoa " + runId + "] " + label + " attached via sendMediaBetween");
+    return "sendMediaBetween";
+  }
+}
+
+// Mira-only recording: a Recorder fed solely by the Grok agent. Started
+// once the agent session is up (SessionUpdated), stopped on teardown.
+function startMiraRecorder() {
+  if (miraRecorder || !grokAgent) return;
+  try {
+    miraRecorder = VoxEngine.createRecorder({
+      name: "aoa_" + runId + "_mira",
+      hd_audio: true,
+    });
+    miraRecorder.addEventListener(RecorderEvents.Started, function (e) {
+      if (e && e.url) miraRecordUrl = e.url;
+    });
+    miraRecorder.addEventListener(RecorderEvents.Stopped, function (e) {
+      if (e && e.url) miraRecordUrl = e.url;
+    });
+    grokAgent.sendMediaTo(miraRecorder);
+  } catch (e) {
+    Logger.write("[aoa " + runId + "] mira recorder unavailable (non-fatal): " + e.message);
+    miraRecorder = null;
+  }
+}
+
+function guestOnLine() {
+  return !guestGone && call && call.state() !== "DISCONNECTED";
+}
+
+/**
+ * Dial the host studio (Voximplant user `host`, logged in via the Web SDK
+ * and auto-answering). Independent of how the guest joined, so PSTN
+ * interviews get a host leg too. Re-dialed from onHostGone every
+ * HOST_REDIAL_MS while the guest is on the line, up to HOST_MAX_ATTEMPTS.
+ */
+function dialHost() {
+  if (hostRedialTimer) { clearTimeout(hostRedialTimer); hostRedialTimer = null; }
+  if (!hostMode || !guestOnLine() || hostJoined) return;
+  if (hostAttempts >= HOST_MAX_ATTEMPTS) {
+    Logger.write("[aoa " + runId + "] host dial cap reached (" + HOST_MAX_ATTEMPTS + ") — giving up on the host leg");
+    return;
+  }
+  hostAttempts++;
+  Logger.write("[aoa " + runId + "] dialing host '" + hostUser + "' (attempt " + hostAttempts + ")");
+  try {
+    hostCall = VoxEngine.callUser({
+      username: hostUser,
+      callerid: "mira",
+      displayName: "Mira",
+      video: false,
+      extraHeaders: { "X-Run-Id": runId, "X-Role": "host" },
+    });
+  } catch (e) {
+    Logger.write("[aoa " + runId + "] callUser threw: " + e.message);
+    hostCall = null;
+    scheduleHostRedial();
+    return;
+  }
+  const thisLeg = hostCall;
+  thisLeg.addEventListener(CallEvents.Connected, function () { onHostConnected(thisLeg); });
+  thisLeg.addEventListener(CallEvents.RecordStarted, function (e) {
+    if (e && e.url) hostRecordUrl = e.url;
+  });
+  thisLeg.addEventListener(CallEvents.Failed, function (e) {
+    onHostGone(thisLeg, "failed: " + ((e && (e.reason || e.code)) || "unknown"));
+  });
+  thisLeg.addEventListener(CallEvents.Disconnected, function () {
+    onHostGone(thisLeg, "disconnected");
+  });
+}
+
+function scheduleHostRedial() {
+  if (hostRedialTimer || !guestOnLine() || !hostMode) return;
+  hostRedialTimer = setTimeout(function () {
+    hostRedialTimer = null;
+    dialHost();
+  }, HOST_REDIAL_MS);
+}
+
+function onHostConnected(leg) {
+  if (leg !== hostCall) { try { leg.hangup(); } catch (ignored) {} return; } // stale leg
+  hostJoined = true;
+  if (!hostJoinedAt) hostJoinedAt = new Date().toISOString();
+  Logger.write("[aoa " + runId + "] host joined (attempt " + hostAttempts + ")");
+  try {
+    attachToConference(leg, "host");
+    // Host track: L = host mic (R = what the host hears; the same
+    // Call.record split the guest recording relies on).
+    leg.record({
+      name: "aoa_" + runId + "_host",
+      stereo: true,
+      hd_audio: true,
+    });
+    // Video recorder (WebRTC guest) also gets the host's voice so its
+    // soundtrack stays the full conversation. Best-effort.
+    if (videoRecorder) {
+      try { leg.sendMediaTo(videoRecorder); } catch (e) {
+        Logger.write("[aoa " + runId + "] host->video-recorder failed (non-fatal): " + e.message);
+      }
+    }
+  } catch (e) {
+    Logger.write("[aoa " + runId + "] host attach/record failure (non-fatal): " + e.message);
+  }
+  postLegEvent("host", "joined");
+  openWhenReady("host joined");
+}
+
+function onHostGone(leg, why) {
+  if (leg !== hostCall) return; // an older leg we already replaced
+  const wasJoined = hostJoined;
+  hostCall = null;
+  hostJoined = false;
+  Logger.write("[aoa " + runId + "] host leg " + why);
+  if (guestGone) return; // teardown — we hung the host up ourselves
+  if (wasJoined) {
+    hostLeftAt = new Date().toISOString();
+    postLegEvent("host", "left");
+  }
+  scheduleHostRedial();
+}
+
+/**
+ * Mira's opening line — exactly once, only after the Grok session is ready
+ * (media bridged), triggered by whichever comes first: the host joining or
+ * the OPENING_WAIT_MS fallback timer started on SessionUpdated.
+ */
+function openWhenReady(reason) {
+  if (openingFired || !sessionReady || !grokAgent) return;
+  openingFired = true;
+  if (openingTimer) { clearTimeout(openingTimer); openingTimer = null; }
+  Logger.write("[aoa " + runId + "] Mira opening (" + reason + ")");
+  try {
+    grokAgent.responseCreate({});
+    startTimeChecks();
+  } catch (e) {
+    Logger.write("[aoa " + runId + "] opening responseCreate failed: " + e.message);
+  }
+}
+
+// Per-leg presence for the studio pages (Worker POST /voices/leg-event).
+// Fire-and-forget, never blocks call flow.
+function postLegEvent(role, event) {
+  try {
+    Net.httpRequestAsync(LEG_EVENT_URL, {
+      method: "POST",
+      headers: ["Content-Type: application/json"],
+      postData: JSON.stringify({ run_id: runId, role: role, event: event }),
+    }).then(function (res) {
+      if (!(res && res.code >= 200 && res.code < 300)) {
+        Logger.write("[aoa " + runId + "] leg-event " + role + "/" + event + " got HTTP " + (res && res.code));
+      }
+    }, function (e) {
+      Logger.write("[aoa " + runId + "] leg-event " + role + "/" + event + " failed: " + e.message);
+    });
+  } catch (e) {
+    Logger.write("[aoa " + runId + "] leg-event " + role + "/" + event + " threw: " + e.message);
+  }
+}
+
+// Guest gone → drop the host leg and the Mira recorder before the webhook.
+function teardownCohost() {
+  guestGone = true;
+  if (hostRedialTimer) { clearTimeout(hostRedialTimer); hostRedialTimer = null; }
+  if (openingTimer) { clearTimeout(openingTimer); openingTimer = null; }
+  if (hostCall) {
+    try { hostCall.hangup(); } catch (ignored) {}
+    hostCall = null;
+  }
+  if (miraRecorder) { try { miraRecorder.stop(); } catch (ignored) {} }
 }
 
 // Real-clock time checks: an LLM voice agent has no sense of elapsed time
@@ -366,12 +652,20 @@ function attachEndHandlers() {
       // happens in GitHub Actions (Net.httpRequest can't stream multi-MB
       // audio reliably from a scenario).
       if (videoRecorder) { try { videoRecorder.stop(); } catch (ignored) {} }
+      // Phase 2: hang up the host leg + stop the Mira recorder BEFORE the
+      // webhook. The host still being on the line is a normal "completed".
+      teardownCohost();
       await fireWebhook({
         run_id: runId,
         status: "completed",
         call_mode: callMode,
         voximplant_record_url: recordUrl,
         voximplant_video_url: videoRecordUrl,
+        voximplant_host_record_url: hostRecordUrl,
+        voximplant_mira_record_url: miraRecordUrl,
+        host_joined_at: hostJoinedAt,
+        host_left_at: hostLeftAt,
+        host_attempts: hostAttempts,
         duration_sec: connectedAt
           ? Math.round((Date.now() - connectedAt) / 1000)
           : 0,
@@ -391,6 +685,7 @@ function attachEndHandlers() {
     // Guest didn't answer / call failed → Worker retry ladder re-dials
     // (PSTN) or the guest can rejoin from the studio page (WebRTC).
     if (hardCapTimer) clearTimeout(hardCapTimer);
+    teardownCohost();
     await fireWebhook({
       run_id: runId,
       status: "failed",

@@ -68,11 +68,16 @@ the operator later prefers Vercel. Routing: the gallery worker owns
 | `GET /voices/admin/triage?token=…` | Patrick's application triage UI (~30 s/app), grouped by show |
 | `GET /voices/admin/review/<pkg-id>?token=…` | Patrick's editorial review UI (gate 1): audio + transcript + drafts, approve/kill |
 | `POST /voices/triage-decision` · `POST /voices/triage-reassign` · `POST /voices/editorial-decision` | The admin actions (token-gated); `triage-reassign` moves an application to the other show |
-| `GET /voices/studio-state?interview=…` | Studio page poll: run readiness plus `show` / `show_name` for branding |
+| `GET /voices/studio-state?interview=…&role=guest\|host[&token=…]` | Studio page poll: run readiness plus `show` / `show_name` for branding; Phase 2 adds `host_mode`, `guest_joined`, `host_joined`, `live_run_id`/`run_status`, and `host_user` (host role with a valid token only) |
+| `POST /voices/studio-auth {key, role?, token?}` | Voximplant one-time-key login → `{token, user, role}`; `role=host` requires `token === ADMIN_TOKEN` and uses `VOX_HOST_*` (503 when unset) |
+| `POST /voices/leg-event {run_id, role, event}` | Scenario reports each leg's `joined`/`left` → `guest_joined_at` (first join), `host_joined_at` (first join; a rejoin clears `host_left_at`), `host_left_at` |
+| `POST /voices/upload-chunk?run_id=&role=&seq=[&token=]` | Raw `audio/webm` body (≤ 10 MB) from the studio page's local MediaRecorder → R2 `<r2_prefix>/local/<run_id>/<role>/<seq:05d>.webm`. Guest uploads need run status `fired\|in_progress\|awaiting_guest\|completed` (the tail arrives after hangup); host uploads need the admin token |
+| `POST /voices/upload-done {run_id, role, chunks, mime, started_at, duration_ms, token?}` | HEADs every chunk, writes `…/<role>/manifest.json` (ordered keys, `missing`, timings) and sets `interview_runs.local_<role>_url` to the manifest **key** (the pipeline reads R2 with its own credentials) |
+| `GET /voices/host-link?interview=…&token=…` | Admin: Patrick's co-host studio link (`…&role=host&token=<ADMIN_TOKEN>`) |
 | `GET /voices/episode-lookup` · `GET /voices/guest-brief` · `POST /voices/fact-check` | Mira's three in-call tools (spec §3.2) |
 | `scheduled` (daily 17:00 UTC) | Gate-2 housekeeping: day-4 guest reminder, day-7 auto-approve |
 | `scheduled` (every 5 min) | Punctual fire-tick → `repository_dispatch: fire-tick` (GitHub's own 5-minute cron arrives hours late under load) |
-| `GET /voices/health` | Deploy verification: which secrets are set (never values), cron config, and a live read-only GitHub auth probe — `github_status: 401` means the stored token is bad (expired, or pasted with a trailing newline); `repository_dispatch` needs **Contents: Read and write** |
+| `GET /voices/health` | Deploy verification: which secrets are set (never values — includes `vox_host_password` and the `voices_r2` binding), cron config, and a live read-only GitHub auth probe — `github_status: 401` means the stored token is bad (expired, or pasted with a trailing newline); `repository_dispatch` needs **Contents: Read and write** |
 
 ## Deploy
 
@@ -90,8 +95,38 @@ wrangler secret put SLACK_WEBHOOK           # optional
 wrangler secret put CALCOM_BOOKING_URL_NERRA_VOICES   # second Cal.com event; else CALCOM_BOOKING_URL is reused
 wrangler secret put CALCOM_EVENT_SLUG_AGE_OF_AI       # Cal.com event-type slug (or numeric id) → routes the booking webhook
 wrangler secret put CALCOM_EVENT_SLUG_NERRA_VOICES    # ditto; unset = slug containing "voices" → nerra_voices
-wrangler deploy
+# WebRTC studio:
+wrangler secret put VOX_GUEST_PASSWORD                # Voximplant "guest" user (VOX_GUEST_USER optional)
+# Phase 2 co-host (docs/cohost_phase2_contract.md):
+wrangler secret put VOX_HOST_PASSWORD                 # Voximplant "host" user (VOX_HOST_USER optional); create it with voximplant_client.add_user()
+wrangler secret put OPERATOR_PHONE                    # optional, E.164 — the fire step SMSes the host link
+wrangler deploy                                       # binds R2 bucket podcast-audio as VOICES_R2 (wrangler.toml)
 ```
+
+Verify with `GET /voices/health`: `configured.vox_host_password` and
+`configured.voices_r2` must both be `true` before the first co-hosted show.
+
+## Co-host studio (Phase 2, Sept 2026)
+
+One studio page, two roles. `age-of-ai-studio.html?interview=…&show=…&role=guest`
+is what the booking email sends the guest; `…&role=host&token=<ADMIN_TOKEN>`
+(from `GET /voices/host-link`, emailed/SMSed to Patrick at fire time) is the
+co-host page. The host page logs in as the Voximplant `host` user and
+**waits**: the scenario dials it with `VoxEngine.callUser({username: host,
+extraHeaders: {"X-Run-Id", "X-Role": "host"}})` once the guest is on the
+line, and the page auto-answers audio-only (it checks `X-Run-Id` against its
+own run and ignores anything else). If the leg drops, the scenario re-dials
+every 20 s and the page re-arms its `IncomingCall` listener, so Patrick can
+simply reload.
+
+Both pages also record their selected microphone locally with
+`MediaRecorder` (`audio/webm;codecs=opus`, 48 kHz, 192 kbps, 5 s chunks,
+echo cancellation / noise suppression / AGC off) and stream the chunks to
+`/voices/upload-chunk` with a sequential retry queue; on hangup they flush
+and call `/voices/upload-done`. Failures are non-fatal — the Voximplant
+per-leg recordings (`recording_guest_url` / `recording_host_url` /
+`recording_mira_url`) remain the fallback, and the manifest's `missing`
+array tells the post-interview pipeline when to use them.
 
 Then point the external services at it:
 
@@ -107,5 +142,7 @@ Then point the external services at it:
   without duplicating a search stack in the Worker.
 - `episode-lookup` reads the public site search index; if the index shape
   changes, the tool degrades to an empty result (never an error mid-call).
-- No R2 binding needed: recordings move via the GitHub Actions pipelines,
-  which have retry-friendly runtimes for multi-hundred-MB files.
+- The Voximplant recordings still move via the GitHub Actions pipelines,
+  which have retry-friendly runtimes for multi-hundred-MB files. The only
+  thing the Worker writes to R2 (`VOICES_R2`) is the studio pages' local
+  recording chunks — small (≤ 10 MB) and uploaded as they are produced.

@@ -99,6 +99,28 @@ idempotency check.
    network announcement until 2-3 real interviews land (phase 8 flips on
    cross-promo via the `cross_show_callouts` table + X/YouTube/newsletter
    in `shows/age_of_ai.yaml`).
+8. **Phase 2 co-host (Sept 2026, docs/cohost_phase2_contract.md)** —
+   Patrick in the room on every interview, three clean tracks, local
+   browser recordings:
+   1. Voximplant: create the `host` user in app `nerra-voices` —
+      `voximplant_client.add_user("host", "Patrick (co-host)", <password>)` (the guest user
+      already exists). Re-upload the scenario.
+   2. Worker secrets: `wrangler secret put VOX_HOST_USER` (= `host`),
+      `VOX_HOST_PASSWORD`, `OPERATOR_PHONE` (E.164). Add the R2 binding
+      (`[[r2_buckets]] binding="VOICES_R2" bucket_name="podcast-audio"` is
+      in `wrangler.toml`) and `wrangler deploy`.
+   3. GitHub secrets: `ADMIN_TOKEN` (= the Worker's `ADMIN_TOKEN`; the
+      fire step appends it to Patrick's host link) and `OPERATOR_PHONE`
+      (the fire step + T-2h reminder SMS him the link). Optional
+      `COHOST_NAME` (default "Patrick Novak"), `VOX_HOST_USER`.
+   4. Apply `supabase/migrations/20260906_cohost_conference.sql`
+      (idempotent; adds `host_mode`, `host_user`, per-leg recording URLs,
+      local-recording manifest keys, join/leave timestamps).
+   5. Three dry runs with Patrick as host and a friend as guest: check the
+      host page auto-answers, both local uploads complete (manifest
+      `missing: []`), post-production picks `local` for both humans
+      (`grok_session_log.tracks.sources`), and the transcript labels
+      `Mira:` / `Patrick:` / `<Guest>:` land correctly.
 
 Open decisions §11 stay with Patrick (caller ID bought vs shared, consent
 wording, Cal.com self-host vs cloud, Postmark vs Resend, slot windows,

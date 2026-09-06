@@ -30,6 +30,15 @@ routes = [
 # 17:00: gate-2 housekeeping (guest-review reminders / auto-approve).
 crons = ["*/5 * * * *", "0 17 * * *"]
 
+# Phase 2 co-host (Sept 2026): local browser recordings (guest + host
+# MediaRecorder chunks and their manifest.json) are written straight to R2
+# by /voices/upload-chunk and /voices/upload-done. Same bucket the Python
+# pipeline uploads to (VOICES_R2_BUCKET env in GitHub Actions); the
+# post-interview job reads <r2_prefix>/local/<run_id>/<role>/ from it.
+[[r2_buckets]]
+binding = "VOICES_R2"
+bucket_name = "podcast-audio"
+
 # Secrets (set once via `wrangler secret put <NAME>`):
 #   SUPABASE_URL              Nerra Voices Supabase project URL
 #   SUPABASE_SERVICE_KEY      service-role key (RLS bypass; Worker-only)
@@ -41,6 +50,18 @@ crons = ["*/5 * * * *", "0 17 * * *"]
 #   CALCOM_BOOKING_URL        The Age of AI Cal.com event link (also the
 #                             fallback for Nerra Voices)
 #   SLACK_WEBHOOK             operator notifications (optional)
+#   VOX_GUEST_USER / VOX_GUEST_PASSWORD
+#                             Voximplant app user the guest studio logs in as
+#                             (one-time-key handshake; user defaults to "guest")
+#
+# Phase 2 co-host (Sept 2026, docs/cohost_phase2_contract.md):
+#   VOX_HOST_USER             Voximplant user the scenario dials for Patrick
+#                             (default "host"; create it with
+#                             voximplant_client.add_user())
+#   VOX_HOST_PASSWORD         its password — /voices/studio-auth only issues
+#                             host credentials to a caller holding ADMIN_TOKEN
+#   OPERATOR_PHONE            optional E.164 number the fire step SMSes the
+#                             host link to (OPERATOR_EMAIL gets it regardless)
 #
 # Optional, Nerra Voices (Sept 2026) — all fall back to the values above:
 #   CALCOM_BOOKING_URL_NERRA_VOICES  second Cal.com event link for Nerra Voices

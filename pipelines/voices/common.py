@@ -124,6 +124,26 @@ FROM_EMAIL = os.environ.get("VOICES_FROM_EMAIL", "mira@nerranetwork.com")
 
 OPERATOR_EMAIL = os.environ.get("OPERATOR_EMAIL", "patricknovak1@gmail.com")
 
+# Phase 2 co-host (Sept 2026): Patrick sits in the room as co-host on
+# every Mira interview. His display name lives in ONE env var so the
+# prompt, the transcript labels and the editorial passes all agree.
+COHOST_NAME_DEFAULT = "Patrick Novak"
+
+
+def operator_phone() -> str:
+    """E.164 operator number for the host-link SMS (empty = no SMS)."""
+    return os.environ.get("OPERATOR_PHONE", "").strip()
+
+
+def cohost_name() -> str:
+    """Full co-host name for prompts/emails (env COHOST_NAME)."""
+    return os.environ.get("COHOST_NAME", "").strip() or COHOST_NAME_DEFAULT
+
+
+def cohost_label() -> str:
+    """First name — the transcript speaker label (``Patrick:``)."""
+    return cohost_name().split()[0]
+
 
 def send_email(to: str, subject: str, html_body: str,
                cc_operator: bool = False) -> None:
@@ -235,7 +255,9 @@ def llm(prompt: str, *, temperature: float = 0.5, max_tokens: int = 3500,
 def show_prompt_subs(show: ShowRef = None) -> Dict[str, str]:
     """The show tokens every prompt may use: {{show_name}}, {{show_slug}},
     {{show_short_label}}, {{show_premise}}, {{opening_line}},
-    {{closing_question}}."""
+    {{closing_question}} — plus the Phase 2 co-host tokens {{cohost_name}}
+    (always filled) and {{cohost_block}} (empty unless the caller passes
+    the block; see fire_interviews.compile_mira_prompt)."""
     s = resolve_show(show)
     return {
         "show_name": s.name,
@@ -244,6 +266,8 @@ def show_prompt_subs(show: ShowRef = None) -> Dict[str, str]:
         "show_premise": s.premise,
         "opening_line": s.opening_line,
         "closing_question": s.closing_question,
+        "cohost_name": cohost_name(),
+        "cohost_block": "",
     }
 
 
@@ -273,20 +297,16 @@ def load_prompt(template: str, show: ShowRef = None, **subs: Any) -> str:
 # R2 storage (env-driven wrapper over engine.storage.upload_to_r2)
 # ---------------------------------------------------------------------------
 
-def r2_upload(local_path: Path, remote_key: str) -> str:
-    """Upload to the network's R2 audio bucket; returns the public URL.
+def _r2_config() -> Dict[str, str]:
+    """Bucket + credentials shared by upload/download/read.
 
-    Uses the same env vars as the show pipeline (R2_* — see
-    docs/env_var_inventory.md). VOICES_R2_BUCKET overrides the bucket for
-    raw-interview segregation if the operator wants one.
+    Env names follow the NETWORK standard (R2_ACCESS_KEY_ID /
+    R2_SECRET_ACCESS_KEY — see docs/env_var_inventory.md and the existing
+    GitHub secrets); the launch code invented R2_ACCESS_KEY/R2_SECRET_KEY
+    names that exist nowhere, which failed the first real post-interview
+    run (July 17 2026). Old names kept as fallbacks. Bucket/public-base
+    default to the network audio bucket like shows/_defaults.yaml.
     """
-    from engine.storage import upload_to_r2
-    # Env names follow the NETWORK standard (R2_ACCESS_KEY_ID /
-    # R2_SECRET_ACCESS_KEY — see docs/env_var_inventory.md and the existing
-    # GitHub secrets); the launch code invented R2_ACCESS_KEY/R2_SECRET_KEY
-    # names that exist nowhere, which failed the first real post-interview
-    # run (July 17 2026). Old names kept as fallbacks. Bucket/public-base
-    # default to the network audio bucket like shows/_defaults.yaml.
     bucket = (os.environ.get("VOICES_R2_BUCKET", "")
               or os.environ.get("R2_BUCKET", "")
               or "podcast-audio")
@@ -300,13 +320,73 @@ def r2_upload(local_path: Path, remote_key: str) -> str:
             "R2 env vars missing (R2_ENDPOINT_URL/R2_ACCESS_KEY_ID/"
             "R2_SECRET_ACCESS_KEY) — cannot store interview audio"
         )
+    return {"bucket": bucket, "endpoint": endpoint,
+            "access": access, "secret": secret}
+
+
+def _r2_client():
+    """boto3 S3 client with the same credentials/config as
+    ``engine.storage.upload_to_r2`` (which builds its own per call)."""
+    import boto3
+    from botocore.config import Config as BotoConfig
+    cfg = _r2_config()
+    return boto3.client(
+        "s3",
+        endpoint_url=cfg["endpoint"],
+        aws_access_key_id=cfg["access"],
+        aws_secret_access_key=cfg["secret"],
+        config=BotoConfig(signature_version="s3v4",
+                          retries={"max_attempts": 3, "mode": "adaptive"}),
+    ), cfg["bucket"]
+
+
+def r2_upload(local_path: Path, remote_key: str) -> str:
+    """Upload to the network's R2 audio bucket; returns the public URL.
+
+    Uses the same env vars as the show pipeline (R2_* — see
+    docs/env_var_inventory.md). VOICES_R2_BUCKET overrides the bucket for
+    raw-interview segregation if the operator wants one.
+    """
+    from engine.storage import upload_to_r2
+    cfg = _r2_config()
     return upload_to_r2(
         Path(local_path), remote_key,
-        bucket=bucket, endpoint_url=endpoint,
-        access_key=access, secret_key=secret,
+        bucket=cfg["bucket"], endpoint_url=cfg["endpoint"],
+        access_key=cfg["access"], secret_key=cfg["secret"],
         public_base_url=(os.environ.get("R2_PUBLIC_BASE_URL", "")
                          or "https://audio.nerranetwork.com"),
     )
+
+
+def r2_download(remote_key: str, local_path: Path) -> Path:
+    """Download one R2 object (by KEY, not URL) to ``local_path``.
+
+    Phase 2 co-host: the studio page's local browser recording lands in R2
+    via the Worker's ``VOICES_R2`` binding (bucket ``podcast-audio``, keys
+    ``<r2_prefix>/local/<run_id>/<role>/<seq>.webm``); the objects are not
+    necessarily public, so the pipeline reads them with its own
+    credentials. Raises on a missing key (callers decide the fallback).
+    """
+    s3, bucket = _r2_client()
+    local_path = Path(local_path)
+    local_path.parent.mkdir(parents=True, exist_ok=True)
+    logger.info("Downloading r2://%s/%s → %s", bucket, remote_key, local_path.name)
+    s3.download_file(bucket, remote_key, str(local_path))
+    return local_path
+
+
+def r2_read_json(remote_key: str) -> Optional[Any]:
+    """Read + parse a JSON object from R2; ``None`` when the key is absent
+    (a local-recording manifest that never got written = no upload-done)."""
+    s3, bucket = _r2_client()
+    try:
+        obj = s3.get_object(Bucket=bucket, Key=remote_key)
+    except Exception as exc:  # noqa: BLE001 — NoSuchKey and friends
+        code = getattr(exc, "response", {}).get("Error", {}).get("Code", "")
+        if code in ("NoSuchKey", "404", "NotFound") or "NoSuchKey" in str(exc):
+            return None
+        raise
+    return json.loads(obj["Body"].read().decode("utf-8"))
 
 
 # ---------------------------------------------------------------------------

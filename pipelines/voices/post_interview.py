@@ -10,6 +10,16 @@ per-channel STT (stereo channels ARE the diarization) → 8 LLM editorial
 passes (schema-validated, one retry each) → ``editorial_packages`` row →
 Slack ping to Patrick with the review link (gate 1).
 
+Phase 2 co-host (Sept 2026): when Patrick sat in as co-host the run also
+carries ``recording_host_url`` / ``recording_mira_url`` (Voximplant
+per-leg recordings) and ``local_guest_url`` / ``local_host_url`` (R2
+manifest keys of the in-browser recordings). :func:`build_tracks` picks
+one clean mono track per speaker — local when its upload is complete,
+Voximplant leg otherwise — Whisper runs per track, the transcript is
+labelled ``Mira:`` / ``Patrick:`` / ``<Guest>:`` and the mix is
+``mix_three``. No host track at all → the original two-track path,
+unchanged.
+
 A ``failed`` run (guest never answered) short-circuits: interview marked
 missed, reschedule email sent, no-show count incremented (spec §7/§11.7).
 """
@@ -26,14 +36,17 @@ from pathlib import Path
 import requests
 
 from common import (  # noqa: E402
-    llm, load_prompt, logger, new_review_token, notify_operator,
-    parse_json_lenient, r2_upload, render_email, sb_insert, sb_select,
-    sb_update, send_email, show_for,
+    cohost_label, cohost_name, llm, load_prompt, logger, new_review_token,
+    notify_operator, parse_json_lenient, r2_upload, render_email, sb_insert,
+    sb_select, sb_update, send_email, show_for,
 )
 
 sys.path.insert(0, str(Path(__file__).parent))
+from audio.local_tracks import (  # noqa: E402
+    align_to_reference, fetch_local_track,
+)
 from audio.mix_tracks import (  # noqa: E402
-    duration_seconds, mix_interview, split_channels,
+    duration_seconds, mix_interview, mix_three, split_channels, split_left,
 )
 from validators.schema_validators import validate_pass_output  # noqa: E402
 
@@ -95,27 +108,105 @@ def handle_missed(run: dict, interview: dict, app: dict) -> int:
     return 0
 
 
+def _ext_of(url: str, default: str = "mp3") -> str:
+    # Keep the source container extension: WebRTC recordings are MP4
+    # (video + stereo audio), PSTN are MP3. ffmpeg sniffs by content, but
+    # a truthful extension keeps R2 keys and tooling honest.
+    ext = Path(url.split("?", 1)[0]).suffix.lstrip(".").lower() or default
+    return ext if ext in ("mp3", "mp4", "webm", "wav", "m4a") else default
+
+
+def _download(url: str, dest: Path, timeout: int = 600) -> Path:
+    with requests.get(url, stream=True, timeout=timeout) as resp:
+        resp.raise_for_status()
+        with dest.open("wb") as fh:
+            for chunk in resp.iter_content(1 << 16):
+                fh.write(chunk)
+    return dest
+
+
 def fetch_recording(run: dict, workdir: Path) -> Path:
     url = (run.get("recording_guest_url")  # already in R2 (re-run case)
            or (run.get("grok_session_log") or {}).get("voximplant_record_url")
            or "")
     if not url:
         raise RuntimeError("run has no recording URL — scenario upload failed?")
-    # Keep the source container extension: WebRTC recordings are MP4
-    # (video + stereo audio), PSTN are MP3. ffmpeg sniffs by content, but
-    # a truthful extension keeps R2 keys and tooling honest.
-    ext = Path(url.split("?", 1)[0]).suffix.lstrip(".").lower() or "mp3"
-    if ext not in ("mp3", "mp4", "webm", "wav", "m4a"):
-        ext = "mp3"
-    raw = workdir / f"raw_interview.{ext}"
-    with requests.get(url, stream=True, timeout=600) as resp:
-        resp.raise_for_status()
-        with raw.open("wb") as fh:
-            for chunk in resp.iter_content(1 << 16):
-                fh.write(chunk)
+    raw = _download(url, workdir / f"raw_interview.{_ext_of(url)}")
     if raw.stat().st_size < 50_000:
         raise RuntimeError(f"recording suspiciously small ({raw.stat().st_size} bytes)")
     return raw
+
+
+def fetch_leg_recording(url: str, workdir: Path, name: str) -> Path | None:
+    """Best-effort download of a Phase 2 per-leg Voximplant recording
+    (host leg / Mira recorder). ``None`` when absent, unreachable or too
+    small to be a real track (a host who never joined leaves a stub)."""
+    url = (url or "").strip()
+    if not url:
+        return None
+    try:
+        path = _download(url, workdir / f"raw_{name}.{_ext_of(url)}")
+    except Exception as exc:  # noqa: BLE001 — per-leg tracks are optional
+        logger.warning("%s leg recording fetch failed (%s) — fallback", name, exc)
+        return None
+    if path.stat().st_size < 50_000:
+        logger.warning("%s leg recording too small (%d bytes) — ignored",
+                       name, path.stat().st_size)
+        return None
+    return path
+
+
+def build_tracks(run: dict, raw: Path, workdir: Path,
+                 host_raw: Path | None = None,
+                 mira_raw: Path | None = None) -> dict:
+    """One clean 48 kHz mono WAV per speaker (Phase 2 co-host).
+
+    Precedence per speaker:
+
+    * guest — local browser recording (``local_guest_url`` manifest,
+      complete) aligned to the Voximplant guest L channel; else that
+      channel.
+    * host  — local (``local_host_url``) aligned to the Voximplant host
+      leg's L channel (or, when the host leg never recorded, to the
+      guest's R channel, which carries the host's voice); else the host
+      leg L channel; else ``None`` (→ two-track path).
+    * mira  — the Voximplant Mira-only recorder (mono, or L of a stereo
+      file); else the R channel of the guest recording (Mira + host mix
+      in Phase 2, Mira alone before it).
+
+    Returns ``{"guest": Path, "host": Path|None, "mira": Path,
+    "sources": {speaker: "local"|"voximplant"|"guest_r"}}``.
+    """
+    chan_dir = workdir / "channels"
+    guest_vox, guest_r = split_channels(raw, chan_dir)
+    sources: dict = {}
+
+    guest = None
+    local_guest = fetch_local_track(run.get("local_guest_url") or "",
+                                    workdir / "local_guest")
+    if local_guest is not None:
+        guest = align_to_reference(local_guest, guest_vox, workdir / "aligned")
+        sources["guest"] = "local"
+    if guest is None:
+        guest, sources["guest"] = guest_vox, "voximplant"
+
+    host_vox = split_left(host_raw, chan_dir / "host.wav") if host_raw else None
+    host = None
+    local_host = fetch_local_track(run.get("local_host_url") or "",
+                                   workdir / "local_host")
+    if local_host is not None:
+        host = align_to_reference(local_host, host_vox or guest_r,
+                                  workdir / "aligned")
+        sources["host"] = "local"
+    if host is None and host_vox is not None:
+        host, sources["host"] = host_vox, "voximplant"
+
+    if mira_raw is not None:
+        mira, sources["mira"] = split_left(mira_raw, chan_dir / "mira_leg.wav"), "voximplant"
+    else:
+        mira, sources["mira"] = guest_r, "guest_r"
+    logger.info("tracks: %s", sources)
+    return {"guest": guest, "host": host, "mira": mira, "sources": sources}
 
 
 def has_video_stream(path: Path) -> bool:
@@ -132,22 +223,23 @@ def has_video_stream(path: Path) -> bool:
         return False
 
 
-def diarized_transcript(raw: Path, workdir: Path) -> tuple[str, float]:
-    """Per-channel Whisper transcription; the stereo channels ARE the
-    diarization (guest left, Mira right — VoxEngine recorder convention).
-    Returns (labeled merged transcript, mean segment confidence 0..1)."""
+def diarized_tracks(tracks: list[tuple[str, Path]], workdir: Path,
+                    header: str = "") -> tuple[str, float]:
+    """Whisper each (label, mono wav) track and merge the segments by
+    start time into ``[MM:SS] <label>: text`` lines. The tracks ARE the
+    diarization. Returns (transcript, mean segment confidence 0..1)."""
     from engine.transcripts import generate_transcript
-    guest_wav, mira_wav = split_channels(raw, workdir / "channels")
     merged: list[tuple[float, str, str]] = []
     confidences: list[float] = []
-    for label, wav in (("GUEST", guest_wav), ("MIRA", mira_wav)):
+    for label, wav in tracks:
+        slug = "".join(c if c.isalnum() else "_" for c in label.lower())
         result = generate_transcript(
-            wav, workdir / "transcripts", f"{label.lower()}_track",
+            wav, workdir / "transcripts", f"{slug}_track",
             model_size="small", language="en",
         )
         if result is None:
             raise RuntimeError(
-                f"transcription failed for the {label} channel "
+                f"transcription failed for the {label} track "
                 "(faster-whisper unavailable or audio unreadable)"
             )
         data = json.loads(result.json_path.read_text(encoding="utf-8"))
@@ -163,8 +255,38 @@ def diarized_transcript(raw: Path, workdir: Path) -> tuple[str, float]:
     merged.sort(key=lambda s: s[0])
     lines = [f"[{int(s // 60):02d}:{int(s % 60):02d}] {label}: {text}"
              for s, label, text in merged]
+    if header:
+        lines.insert(0, header)
     mean_conf = sum(confidences) / len(confidences) if confidences else 1.0
     return "\n".join(lines), mean_conf
+
+
+def diarized_transcript(raw: Path, workdir: Path) -> tuple[str, float]:
+    """Per-channel Whisper transcription; the stereo channels ARE the
+    diarization (guest left, Mira right — VoxEngine recorder convention).
+    Returns (labeled merged transcript, mean segment confidence 0..1).
+    The pre-Phase-2 two-track path — labels stay ``GUEST`` / ``MIRA``."""
+    guest_wav, mira_wav = split_channels(raw, workdir / "channels")
+    return diarized_tracks([("GUEST", guest_wav), ("MIRA", mira_wav)], workdir)
+
+
+def _guest_label(app: dict) -> str:
+    first = (app.get("name") or "Guest").strip().split()[0]
+    return first or "Guest"
+
+
+def speakers_header(app: dict) -> str:
+    return (f"Speakers: Mira (AI host), {cohost_label()} (co-host), "
+            f"{_guest_label(app)} (guest)")
+
+
+def diarized_transcript_three(tracks: dict, app: dict,
+                              workdir: Path) -> tuple[str, float]:
+    """Phase 2: per-speaker tracks → ``Mira:`` / ``Patrick:`` / ``<Guest>:``
+    labelled transcript with the speakers header line on top."""
+    labelled = [("Mira", tracks["mira"]), (cohost_label(), tracks["host"]),
+                (_guest_label(app), tracks["guest"])]
+    return diarized_tracks(labelled, workdir, header=speakers_header(app))
 
 
 def run_editorial_passes(transcript: str, interview: dict, app: dict) -> dict:
@@ -180,6 +302,7 @@ def run_editorial_passes(transcript: str, interview: dict, app: dict) -> dict:
             episode_thesis=interview.get("episode_thesis", ""),
             transcript=transcript,
             cleaned_transcript=package.get("transcript_cleaned", transcript),
+            cohost_name=cohost_name(),
         )
         output, error = None, None
         for attempt, strictness in enumerate((
@@ -250,17 +373,50 @@ def main() -> int:
                 logger.exception("Video download/upload failed (non-fatal)")
         if video_url is None and has_video_stream(raw):
             video_url = raw_url
-        mixed = mix_interview(raw, workdir / "mixed.wav")
+
+        # Phase 2 co-host: per-leg Voximplant recordings (host, Mira) +
+        # local browser recordings → one clean track per speaker.
+        host_raw = fetch_leg_recording(run.get("recording_host_url") or "",
+                                       workdir, "host")
+        mira_raw = fetch_leg_recording(run.get("recording_mira_url") or "",
+                                       workdir, "mira")
+        # Durable R2 copies of the per-leg source files (Voximplant URLs
+        # expire); the run row keeps the Voximplant URLs the Worker wrote
+        # (recording_host_url / recording_mira_url) — the copies and the
+        # processed per-speaker WAVs are recorded in grok_session_log.tracks.
+        durable: dict = {}
+        for name, src in (("host", host_raw), ("mira", mira_raw)):
+            if src is not None:
+                durable[name] = r2_upload(src, show.r2_key(
+                    "raw", f"{run['id']}_{stamp}_{name}.{src.suffix.lstrip('.')}"))
+
+        tracks = build_tracks(run, raw, workdir, host_raw=host_raw, mira_raw=mira_raw)
+        processed: dict = {}
+        if tracks["host"] is not None:
+            for speaker in ("guest", "host", "mira"):
+                processed[speaker] = r2_upload(
+                    tracks[speaker], show.r2_key("raw", f"{run['id']}_{speaker}.wav"))
+            mixed = mix_three(tracks["guest"], tracks["host"], tracks["mira"],
+                              workdir / "mixed.wav")
+            transcript, confidence = diarized_transcript_three(tracks, app, workdir)
+        else:
+            # Pre-Phase-2 / host never joined: the original two-track path.
+            mixed = mix_interview(raw, workdir / "mixed.wav")
+            transcript, confidence = diarized_transcript(raw, workdir)
         mixed_url = r2_upload(mixed, show.r2_key("raw", f"{run['id']}_{stamp}_mixed.wav"))
+        logger.info("track sources: %s; processed: %s; durable legs: %s",
+                    tracks["sources"], processed, durable)
 
-        transcript, confidence = diarized_transcript(raw, workdir)
-
+        session_log = dict(run.get("grok_session_log") or {})
+        session_log["tracks"] = {"sources": tracks["sources"],
+                                 "processed": processed, "durable": durable}
         sb_update("interview_runs", f"id=eq.{run['id']}", {
             "status": "completed",
             "recording_guest_url": raw_url,
             "recording_mixed_url": mixed_url,
             "recording_video_url": video_url,
             "duration_sec": int(duration),
+            "grok_session_log": session_log,
         })
         sb_update("interviews", f"id=eq.{interview['id']}",
                   {"status": "editorial_review"})

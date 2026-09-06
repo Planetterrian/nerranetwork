@@ -19,6 +19,9 @@ workflow; nothing here requires operator action unless explicitly marked.
 | 7 | Grok connection drops mid-call | WebSocket close/error with guest still on line | Mira's pre-recorded apology plays; call ends cleanly; normal webhook with partial recording. |
 | 8 | Zombie webhook (abandoned session's disconnect arriving late) | Short-session guard (#4) catches most | Residual risk: a stale session completing OVER a live one's row. Mitigated by the <300 s guard; full fix is per-session webhook keys (below). |
 | 9 | Post-production/publish failures | Workflow failure | Video render is best-effort (audio publishes without it); polish stage is best-effort (unpolished episode beats no episode); publish is always a deliberate dispatch, so a failed run just re-dispatches. |
+| 10 | Co-host (Patrick) not online when the guest connects (Phase 2) | `VoxEngine.callUser` → `CallEvents.Failed` on the host leg | Scenario re-dials the `host` user every 20 s until the hard cap; Mira's opening waits for the host leg OR 20 s, whichever first, so the guest never sits in silence. `host_attempts` on the run row; the fire step + T-2h reminder already sent Patrick the link by email and SMS. |
+| 11 | Co-host leg drops mid-interview | Host `CallEvents.Disconnected` while the guest is still connected | Interview continues (Mira + guest); scenario re-dials the host every 20 s; `host_left_at` / `host_joined_at` recorded via `/voices/leg-event`. Post-production still gets his track (local recording keeps running in the page; the Voximplant host leg restarts on re-dial). |
+| 12 | Local browser recording has gaps (chunk upload failed, page closed early, no upload-done) | Manifest absent or `missing[]` non-empty (`local_tracks.fetch_local_track` → `None`) | Fallback is PER TRACK: that speaker uses their Voximplant leg channel (guest L / host L), the other speaker keeps their local track; alignment against the Voximplant channel falls back to no offset on low correlation. No host track at all → the original two-track path. Never blocks post-production. |
 
 ## Connection drop mid-interview: restart & continue (DESIGNED, NOT YET BUILT)
 
@@ -52,11 +55,11 @@ guests.
 
 ## Also on the quality roadmap
 
-- **Local browser recording (Riverside model):** guest mic + camera captured
-  in-browser at full quality, chunk-uploaded to R2; cures both the
-  compressed-call audio ceiling AND the Bluetooth capture conflict class
-  (the browser records the same device it captures). The Voximplant
-  recording becomes the live/backup track.
+- **Local browser recording (Riverside model):** ✅ BUILT (Phase 2, Sept
+  2026) for audio — guest and co-host mics captured in-browser at full
+  quality (webm/opus 48 kHz, 5 s chunks → R2), Voximplant recording is
+  the live/backup track per speaker (row 12). Camera stays on the
+  Voximplant video recorder for now.
 - **Per-session webhook keys:** scenario includes its Voximplant session id
   in the webhook; the Worker ignores updates from a session that is not the
   run's CURRENT session — eliminates the zombie-overwrite class (#8) fully.

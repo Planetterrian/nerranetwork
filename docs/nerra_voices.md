@@ -42,7 +42,11 @@ Network"*. (All three live in the yaml `voices:` block and are read by
 Everything else is shared: Mira's voice (`ara`), the Supabase tables, the
 Cloudflare Worker (`workers/voices/`), the five `nerra_voices_*` GitHub
 Actions workflows, the editorial passes, and the two human gates
-(editorial review, guest transcript approval) before publish.
+(editorial review, guest transcript approval) before publish. Both shows
+also share the Phase 2 co-host flow (Sept 2026): Patrick joins every
+interview from the same studio page as `role=host`, records locally, and
+post-production builds three clean tracks — see
+`docs/cohost_phase2_contract.md`.
 
 The split exists so neither audience gets confused: an Age of AI listener
 expects the AI transition to be the subject; a Nerra Voices listener

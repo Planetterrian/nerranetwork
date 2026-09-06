@@ -59,6 +59,12 @@
   .row { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; }
   #callTimer { font-variant-numeric: tabular-nums; font-size: 1.4rem; font-weight: 700; }
   .hidden { display: none !important; }
+  .presence { display: flex; gap: 1rem; flex-wrap: wrap; margin: .6rem 0 1rem; }
+  .presence span { padding: .35rem .7rem; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); font-size: .9rem; }
+  .presence span.on { border-color: var(--ok); color: var(--ok); }
+  #localRec { color: var(--muted); font-size: .8rem; margin: .4rem 0 0; }
+  #localRec.err { color: var(--warn); }
+  .hostnote { color: var(--muted); font-size: .95rem; }
   .footer { color: var(--muted); font-size: .8rem; letter-spacing: .08em; margin-top: 2.5rem; text-transform: uppercase; }
   a { color: var(--accent); }
 </style>
@@ -76,8 +82,11 @@
 
   <!-- State: setup -->
   <div id="stateSetup" class="card hidden">
-    <p class="status ok">Your interview is ready — let's get you sounding great.</p>
-    <ul class="tips">
+    <p class="status ok" id="setupMsg">Your interview is ready — let's get you sounding great.</p>
+    <p class="hostnote host-only hidden">Mira will call this page when the guest
+    connects — pick your microphone, press <b>Ready</b>, and keep the tab open.
+    No camera is used for the co-host leg.</p>
+    <ul class="tips guest-only">
       <li><b>Quiet room</b> — close the door, kill fans and background music.</li>
       <li><b>Headphones or AirPods</b> — the single biggest upgrade. A dedicated mic is even better.</li>
       <li><b>Computer over phone</b>, wired internet or strong Wi-Fi, recent Chrome, Edge, or Safari.</li>
@@ -86,43 +95,69 @@
     <label for="micSel">Microphone</label>
     <select id="micSel"></select>
     <div id="miclevel"><div></div></div>
-    <label for="camSel">Camera</label>
-    <select id="camSel"></select>
-    <video id="preview" autoplay playsinline muted></video>
+    <div class="guest-only">
+      <label for="camSel">Camera</label>
+      <select id="camSel"></select>
+      <video id="preview" autoplay playsinline muted></video>
+    </div>
     <div class="row" style="margin-top:1rem">
       <button class="primary" id="joinBtn">Join your interview</button>
-      <button class="ghost" id="camToggle">Turn camera off</button>
+      <button class="ghost guest-only" id="camToggle">Turn camera off</button>
     </div>
-    <p class="tips" style="color:var(--muted);margin-bottom:0">
+    <p class="tips guest-only" style="color:var(--muted);margin-bottom:0">
       By joining you'll hear a short recording-consent notice from Mira, then
       the conversation begins. Plan for about 45 minutes.
     </p>
   </div>
 
+  <!-- State: host ready (logged in, waiting for Mira to dial) -->
+  <div id="stateReady" class="card hidden">
+    <p class="status ok" id="readyMsg">Ready — Mira will call this page when the guest connects.</p>
+    <div class="presence">
+      <span id="presGuest">guest: not yet</span>
+      <span id="presHost">host: not yet</span>
+    </div>
+    <p class="hostnote">The call answers itself (audio only). If the leg drops,
+    Mira re-dials every 20 seconds — just keep this tab open.</p>
+    <div class="row">
+      <button class="ghost hidden" id="rearmBtn">Ready again</button>
+    </div>
+  </div>
+
   <!-- State: in call -->
   <div id="stateCall" class="card hidden">
-    <p class="status ok">You're live with Mira.</p>
+    <p class="status ok" id="callMsg">You're live with Mira.</p>
+    <div class="presence host-only hidden">
+      <span id="presGuestCall">guest: not yet</span>
+      <span id="presHostCall">host: not yet</span>
+    </div>
     <div class="row">
       <span id="callTimer">00:00</span>
       <button class="ghost" id="muteBtn">Mute</button>
       <button class="danger" id="hangupBtn">End interview</button>
     </div>
+    <p class="hostnote host-only hidden">Say <b>"hold on"</b> (or "let's pause")
+    to make Mira stop talking and wait for you.</p>
     <label>Your microphone (this should move when you speak — if it
     doesn't, Mira can't hear you)</label>
     <div id="micLevelCall"><div style="height:8px;width:0%;background:var(--ok);border-radius:4px;transition:width .08s linear"></div></div>
     <video id="selfview" class="hidden"></video>
-    <p class="tips" style="color:var(--muted)">
+    <p class="tips guest-only" style="color:var(--muted)">
       Interrupt her whenever you like — she can handle it. Ask her questions
       too; the conversation goes both ways.
     </p>
+    <p id="localRec">local recording: not started</p>
   </div>
 
   <!-- State: done -->
   <div id="stateDone" class="card hidden">
     <p class="status ok">That's a wrap — thank you!</p>
-    <p>Your conversation is processing. You'll get an email with the full
+    <p class="guest-only">Your conversation is processing. You'll get an email with the full
     transcript to review before anything is published, and you can request
     removals there. Talk soon.</p>
+    <p class="host-only hidden">The interview is over; post-production is
+    dispatched. Your local track has been uploaded (see below).</p>
+    <p id="localRecDone" class="hostnote"></p>
   </div>
 
   <!-- State: error -->
@@ -144,9 +179,21 @@
   var VOX_APP_SUFFIX = "@nerra-voices.billsaved.voximplant.com";
   var params = new URLSearchParams(location.search);
   var interviewId = params.get("interview") || "";
+  // Phase 2 co-host (Sept 2026, docs/cohost_phase2_contract.md): the same
+  // page serves the guest (default) and Patrick as host. Host links carry
+  // &role=host&token=<ADMIN_TOKEN>; the Worker only issues host
+  // credentials against that token.
+  var role = params.get("role") === "host" ? "host" : "guest";
+  var adminToken = params.get("token") || "";
+  var isHost = role === "host";
   var runId = null, sdk = null, activeCall = null, localStream = null;
-  var camOn = true, muted = false, timerHandle = null, callStart = null;
+  var camOn = !isHost, muted = false, timerHandle = null, callStart = null;
   var analyserRAF = null;
+  var hostUser = "host";          // studio-state reveals the real one to a valid host token
+  var armed = false;              // host: auto-answer incoming calls
+  var loggedIn = false;
+  var leaving = false;            // host pressed Leave (don't re-arm)
+  var pollHandle = null;
 
   // ---- 0. Show branding (Sept 2026) ---------------------------------------
   // Mirrors the SHOWS map in workers/voices/src/index.ts and the `voices:`
@@ -165,39 +212,84 @@
     if (Object.prototype.hasOwnProperty.call(SHOWS, slug)) showSlug = slug;
     var s = SHOWS[showSlug];
     var showName = name || s.name;
+    var studioLabel = isHost ? "Co-host studio" : "Guest Studio";
     document.documentElement.setAttribute("data-show", showSlug);
     document.documentElement.style.setProperty("--accent", s.accent);
-    document.title = showName + " — Guest Studio · Nerra Network";
-    document.getElementById("heading").textContent = showName + " — Guest Studio";
-    document.getElementById("subheading").textContent =
-      "A recorded conversation with Mira, the AI host. " + s.sub;
+    document.title = showName + " — " + studioLabel + " · Nerra Network";
+    document.getElementById("heading").textContent = showName + " — " + studioLabel;
+    document.getElementById("subheading").textContent = isHost
+      ? "Patrick in the room with Mira and the guest. " + s.sub
+      : "A recorded conversation with Mira, the AI host. " + s.sub;
     document.getElementById("footerLine").textContent =
       "Real people · AI host · " + showName + " · Nerra Network";
   }
   brand(showSlug);
 
+  // Role-specific bits of the shared markup.
+  function applyRoleUi() {
+    document.querySelectorAll(".host-only").forEach(function (el) { el.classList.toggle("hidden", !isHost); });
+    document.querySelectorAll(".guest-only").forEach(function (el) { el.classList.toggle("hidden", isHost); });
+    if (isHost) {
+      document.getElementById("setupMsg").textContent = "Co-host studio — pick your microphone and get ready.";
+      document.getElementById("joinBtn").textContent = "Ready";
+      document.getElementById("hangupBtn").textContent = "Leave";
+      document.getElementById("callMsg").textContent = "You're in the room with Mira and the guest.";
+    }
+  }
+  applyRoleUi();
+
   function show(id) {
-    ["stateCheck", "stateSetup", "stateCall", "stateDone", "stateError"]
+    ["stateCheck", "stateSetup", "stateReady", "stateCall", "stateDone", "stateError"]
       .forEach(function (s) { document.getElementById(s).classList.toggle("hidden", s !== id); });
   }
   function fail(msg) {
     document.getElementById("errMsg").textContent = msg;
     show("stateError");
   }
+  function setPresence(state) {
+    var g = "guest: " + (state.guest_joined ? "in the room" : "not yet");
+    var h = "host: " + (state.host_joined ? "in the room" : "not yet");
+    ["presGuest", "presGuestCall"].forEach(function (id) {
+      var el = document.getElementById(id); el.textContent = g;
+      el.classList.toggle("on", !!state.guest_joined);
+    });
+    ["presHost", "presHostCall"].forEach(function (id) {
+      var el = document.getElementById(id); el.textContent = h;
+      el.classList.toggle("on", !!state.host_joined);
+    });
+  }
 
   // ---- 1. Poll studio-state until the run row exists -----------------------
+  function stateUrl() {
+    return API + "/studio-state?interview=" + interviewId + "&show=" + encodeURIComponent(showSlug)
+      + "&role=" + role + (isHost && adminToken ? "&token=" + encodeURIComponent(adminToken) : "");
+  }
   function checkState() {
     if (!/^[0-9a-f-]{36}$/.test(interviewId)) {
       return fail("This studio link is missing its interview id — use the link from your email.");
     }
-    fetch(API + "/studio-state?interview=" + interviewId + "&show=" + encodeURIComponent(showSlug))
+    if (isHost && !adminToken) {
+      return fail("This co-host link is missing its token — use the host link from the fire-time email.");
+    }
+    fetch(stateUrl())
       .then(function (r) { return r.json(); })
       .then(function (s) {
         if (s.error) return fail("We couldn't find this interview. Check the link from your email.");
         if (s.show) brand(s.show, s.show_name);
-        if (s.ready && s.run_id) {
-          runId = s.run_id;
+        if (s.host_user) hostUser = s.host_user;
+        setPresence(s);
+        if (isHost && s.host_mode === false) {
+          return fail("This interview runs without a co-host (host_mode is off).");
+        }
+        // Guest: the run must be awaiting them. Host: any live run will do
+        // (the guest may already be on the line → status in_progress).
+        var id = s.ready && s.run_id ? s.run_id : (isHost ? s.live_run_id : null);
+        var liveStatus = s.run_status || "";
+        if (isHost && id && (liveStatus === "completed" || liveStatus === "failed") && !s.ready) id = null;
+        if (id) {
+          runId = id;
           startSetup();
+          if (isHost) pollPresence();
           return;
         }
         var when = s.scheduled_at ? new Date(s.scheduled_at) : null;
@@ -209,11 +301,35 @@
       })
       .catch(function () { setTimeout(checkState, 20000); });
   }
+  // Host: keep polling during the session for presence, a fresh run id
+  // (a failed guest join creates a new run), and the end of the interview.
+  function pollPresence() {
+    if (pollHandle) clearInterval(pollHandle);
+    pollHandle = setInterval(function () {
+      fetch(stateUrl()).then(function (r) { return r.json(); }).then(function (s) {
+        if (s.error) return;
+        setPresence(s);
+        if (s.host_user) hostUser = s.host_user;
+        var id = s.ready && s.run_id ? s.run_id : s.live_run_id;
+        if (id && id !== runId && !activeCall) {
+          console.log("[studio] run id changed", runId, "->", id);
+          runId = id;
+        }
+        if (!activeCall && (s.run_status === "completed" || s.run_status === "failed")
+            && !s.ready && armed) {
+          armed = false;
+          clearInterval(pollHandle); pollHandle = null;
+          finishDone();
+        }
+      }).catch(function () { /* next tick */ });
+    }, 10000);
+  }
 
   // ---- 2. Device check -----------------------------------------------------
   function startSetup() {
     show("stateSetup");
-    navigator.mediaDevices.getUserMedia({ audio: true, video: true })
+    var want = isHost ? { audio: true } : { audio: true, video: true };
+    navigator.mediaDevices.getUserMedia(want)
       .catch(function () {
         // Camera may be blocked/absent — retry audio-only.
         camOn = false;
@@ -283,45 +399,21 @@
     } catch (e) { /* meter is cosmetic */ }
   }
 
-  // ---- 3. Join: SDK connect → one-time-key auth → call ---------------------
+  // ---- 3. Join: SDK connect → one-time-key auth → call / auto-answer -------
   document.getElementById("joinBtn").addEventListener("click", function () {
     var btn = this;
     btn.disabled = true; btn.textContent = "Connecting…";
     join().catch(function (e) {
       console.error(e);
-      btn.disabled = false; btn.textContent = "Join your interview";
+      btn.disabled = false; btn.textContent = isHost ? "Ready" : "Join your interview";
       fail("Couldn't connect to the studio: " + (e && e.message ? e.message : e));
     });
   });
+  document.getElementById("rearmBtn").addEventListener("click", function () {
+    leaving = false; armHost();
+  });
 
-  async function join() {
-    // Release the preview devices so the SDK can claim the selected ones.
-    if (localStream) { localStream.getTracks().forEach(function (t) { t.stop(); }); localStream = null; }
-    if (analyserRAF) cancelAnimationFrame(analyserRAF);
-
-    sdk = VoxImplant.getInstance();
-    await sdk.init({ micRequired: true, videoSupport: true, progressTone: false, showDebugInfo: false });
-    await sdk.connect();
-
-    var user = null, key = null;
-    var fullUserGuess = "guest" + VOX_APP_SUFFIX;
-    // The one-time key is delivered via an AuthResult with code 302 —
-    // depending on SDK version this surfaces as a resolve or a reject.
-    try {
-      var res = await sdk.requestOneTimeLoginKey(fullUserGuess);
-      key = res && res.key;
-    } catch (e) { key = e && e.key; }
-    if (!key) throw new Error("no one-time login key from Voximplant");
-
-    var auth = await fetch(API + "/studio-auth", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ key: key }),
-    }).then(function (r) { return r.json(); });
-    if (!auth.token) throw new Error(auth.error || "studio auth unavailable");
-    user = (auth.user || "guest") + VOX_APP_SUFFIX;
-
-    await sdk.loginWithOneTimeKey(user, auth.token);
-
+  function selectCallDevices() {
     // Use the classic SDK's REAL device-selection APIs. The original code
     // called sdk.setAudioInputDevice, which does not exist — the guard
     // made it a silent no-op, so the CALL captured the system-default
@@ -336,28 +428,122 @@
       }
     } catch (e) { console.warn("audio device select failed", e); }
     try {
-      if (camOn && camId) {
+      if (!isHost && camOn && camId) {
         VoxImplant.Hardware.CameraManager.get()
           .setCallVideoSettings({ cameraId: camId,
                                   frameWidth: 1280, frameHeight: 720 });
       }
     } catch (e) { console.warn("camera select failed", e); }
+  }
+
+  async function join() {
+    // Release the preview devices so the SDK can claim the selected ones.
+    if (localStream) { localStream.getTracks().forEach(function (t) { t.stop(); }); localStream = null; }
+    if (analyserRAF) cancelAnimationFrame(analyserRAF);
+
+    if (!loggedIn) {
+      sdk = VoxImplant.getInstance();
+      await sdk.init({ micRequired: true, videoSupport: !isHost, progressTone: false, showDebugInfo: false });
+      await sdk.connect();
+
+      var key = null;
+      var fullUserGuess = (isHost ? hostUser : "guest") + VOX_APP_SUFFIX;
+      // The one-time key is delivered via an AuthResult with code 302 —
+      // depending on SDK version this surfaces as a resolve or a reject.
+      try {
+        var res = await sdk.requestOneTimeLoginKey(fullUserGuess);
+        key = res && res.key;
+      } catch (e) { key = e && e.key; }
+      if (!key) throw new Error("no one-time login key from Voximplant");
+
+      var authBody = { key: key, role: role };
+      if (isHost) authBody.token = adminToken;
+      var auth = await fetch(API + "/studio-auth", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(authBody),
+      }).then(function (r) { return r.json(); });
+      if (!auth.token) throw new Error(auth.error || "studio auth unavailable");
+      var user = (auth.user || (isHost ? hostUser : "guest")) + VOX_APP_SUFFIX;
+
+      await sdk.loginWithOneTimeKey(user, auth.token);
+      loggedIn = true;
+    }
+
+    selectCallDevices();
+
+    if (isHost) { armHost(); return; }
 
     activeCall = sdk.call({
       number: "mira",
       video: { sendVideo: camOn, receiveVideo: false },
       extraHeaders: { "X-Run-Id": runId },
     });
-    activeCall.on(VoxImplant.CallEvents.Connected, onCallConnected);
-    activeCall.on(VoxImplant.CallEvents.Disconnected, onCallEnded);
-    activeCall.on(VoxImplant.CallEvents.Failed, function (e) {
+    wireCall(activeCall);
+  }
+
+  // Host: the scenario dials us (VoxEngine.callUser with X-Run-Id /
+  // X-Role: host) once the guest is on the line, and re-dials every 20 s
+  // after a drop. We never place a call — we answer, audio only.
+  function armHost() {
+    if (!sdk) return;
+    if (!armed) {
+      sdk.on(VoxImplant.Events.IncomingCall, onIncomingCall);
+      armed = true;
+    }
+    document.getElementById("rearmBtn").classList.add("hidden");
+    document.getElementById("readyMsg").textContent = "Ready — Mira will call this page when the guest connects.";
+    show("stateReady");
+  }
+  function onIncomingCall(e) {
+    var call = e && e.call;
+    var headers = (e && e.headers) || (call && call.headers && call.headers()) || {};
+    console.log("[studio] incoming call", headers);
+    var incomingRun = headers["X-Run-Id"] || headers["x-run-id"] || null;
+    if (leaving || !armed) {
+      console.log("[studio] not armed — declining");
+      try { call.decline(); } catch (ignored) {}
+      return;
+    }
+    if (incomingRun && runId && incomingRun !== runId) {
+      console.warn("[studio] ignoring call for another run", incomingRun, "(ours:", runId + ")");
+      try { call.decline(); } catch (ignored) {}
+      return;
+    }
+    if (activeCall) {
+      console.warn("[studio] already on a call — declining duplicate leg");
+      try { call.decline(); } catch (ignored) {}
+      return;
+    }
+    if (incomingRun && !runId) runId = incomingRun;
+    activeCall = call;
+    wireCall(call);
+    selectCallDevices();
+    try {
+      call.answer("", {}, { sendVideo: false, receiveVideo: false });
+    } catch (err) {
+      console.error("[studio] answer failed", err);
+      activeCall = null;
+    }
+  }
+  function wireCall(call) {
+    call.on(VoxImplant.CallEvents.Connected, onCallConnected);
+    call.on(VoxImplant.CallEvents.Disconnected, onCallEnded);
+    call.on(VoxImplant.CallEvents.Failed, function (e) {
+      if (isHost) {
+        console.warn("[studio] host leg failed", e && e.reason);
+        activeCall = null;
+        if (!leaving) armHost();   // the scenario re-dials every 20 s
+        return;
+      }
       fail("The call didn't go through (" + (e && e.reason ? e.reason : "unknown") + "). Reload to try again.");
     });
   }
 
   function onCallConnected() {
     show("stateCall");
+    muted = false; document.getElementById("muteBtn").textContent = "Mute";
     callStart = Date.now();
+    if (timerHandle) clearInterval(timerHandle);
     timerHandle = setInterval(function () {
       var s = Math.floor((Date.now() - callStart) / 1000);
       document.getElementById("callTimer").textContent =
@@ -385,10 +571,34 @@
           })();
         }).catch(function () { /* meter is best-effort */ });
     } catch (e) { /* best-effort */ }
+    startLocalRecording();
   }
   function onCallEnded() {
     if (timerHandle) clearInterval(timerHandle);
+    activeCall = null;
+    var flush = stopLocalRecording();
+    if (isHost) {
+      // Host leg dropped or Patrick left. The interview goes on without
+      // him; the scenario re-dials every 20 s, so re-arm unless he chose
+      // to leave. The presence poll flips to "done" when the run completes.
+      if (!leaving) {
+        armHost();
+        document.getElementById("readyMsg").textContent = "Leg ended — waiting for Mira to call back.";
+      } else {
+        document.getElementById("readyMsg").textContent = "You left. Press “Ready again” to be called back.";
+        document.getElementById("rearmBtn").classList.remove("hidden");
+        show("stateReady");
+      }
+      return;
+    }
     show("stateDone");
+    flush.then(function () {
+      document.getElementById("localRecDone").textContent = document.getElementById("localRec").textContent;
+    });
+  }
+  function finishDone() {
+    show("stateDone");
+    document.getElementById("localRecDone").textContent = document.getElementById("localRec").textContent;
   }
   document.getElementById("muteBtn").addEventListener("click", function () {
     if (!activeCall) return;
@@ -397,7 +607,128 @@
     else { activeCall.unmuteMicrophone(); this.textContent = "Mute"; }
   });
   document.getElementById("hangupBtn").addEventListener("click", function () {
+    if (isHost) leaving = true;
     if (activeCall) activeCall.hangup();
+  });
+
+  // ---- 4. Local high-quality recording (Riverside model, Phase 2) ---------
+  // The call track keeps the browser's defaults; this second capture of the
+  // SAME microphone is raw (no echo cancellation / noise suppression / AGC),
+  // 48 kHz mono opus at 192 kbps, cut into 5 s chunks that stream to the
+  // Worker → R2 as they are produced. Post-production prefers a complete
+  // local track and falls back to the Voximplant leg — so nothing here is
+  // fatal, it only degrades quality.
+  var LOCAL_MIME = "audio/webm;codecs=opus";
+  var rec = { recorder: null, stream: null, seq: 0, uploaded: 0, failed: 0,
+              queue: Promise.resolve(), startedAt: null, stopping: null, done: false };
+  function localRecStatus(extra) {
+    var el = document.getElementById("localRec");
+    var txt = "local recording: " + rec.uploaded + " chunk" + (rec.uploaded === 1 ? "" : "s") + " uploaded";
+    if (rec.failed) txt += " · " + rec.failed + " failed";
+    if (extra) txt += " · " + extra;
+    el.textContent = txt;
+    el.classList.toggle("err", rec.failed > 0);
+  }
+  function uploadUrl(seq) {
+    return API + "/upload-chunk?run_id=" + encodeURIComponent(runId) + "&role=" + role
+      + "&seq=" + seq + (isHost && adminToken ? "&token=" + encodeURIComponent(adminToken) : "");
+  }
+  function uploadChunk(blob, seq) {
+    var attempt = 0;
+    function tryOnce() {
+      attempt++;
+      return fetch(uploadUrl(seq), { method: "POST", headers: { "Content-Type": "audio/webm" }, body: blob })
+        .then(function (r) {
+          if (!r.ok) throw new Error("HTTP " + r.status);
+          rec.uploaded++; localRecStatus();
+        })
+        .catch(function (e) {
+          if (attempt < 3) {
+            return new Promise(function (res) { setTimeout(res, 1000 * attempt); }).then(tryOnce);
+          }
+          rec.failed++; localRecStatus();
+          console.warn("[studio] chunk", seq, "upload failed after 3 attempts", e);
+        });
+    }
+    return tryOnce();
+  }
+  function startLocalRecording() {
+    if (rec.recorder || !runId) return;
+    if (!window.MediaRecorder || !MediaRecorder.isTypeSupported || !MediaRecorder.isTypeSupported(LOCAL_MIME)) {
+      localRecStatus("not supported in this browser");
+      return;
+    }
+    var micId = document.getElementById("micSel").value;
+    var audio = { echoCancellation: false, noiseSuppression: false, autoGainControl: false,
+                  channelCount: 1, sampleRate: 48000 };
+    if (micId) audio.deviceId = { exact: micId };
+    navigator.mediaDevices.getUserMedia({ audio: audio }).then(function (stream) {
+      rec.stream = stream;
+      var recorder = new MediaRecorder(stream, { mimeType: LOCAL_MIME, audioBitsPerSecond: 192000 });
+      rec.recorder = recorder;
+      rec.startedAt = new Date().toISOString();
+      rec.seq = 0; rec.uploaded = 0; rec.failed = 0; rec.done = false;
+      recorder.addEventListener("dataavailable", function (ev) {
+        if (!ev.data || !ev.data.size) return;
+        var seq = rec.seq++;
+        var blob = ev.data;
+        // Sequential queue: chunks must land in order so a gap is a gap,
+        // not a reorder; retries stay inside the queue.
+        rec.queue = rec.queue.then(function () { return uploadChunk(blob, seq); });
+      });
+      recorder.start(5000);
+      localRecStatus("recording");
+    }).catch(function (e) {
+      console.warn("[studio] local recording unavailable", e);
+      localRecStatus("unavailable");
+    });
+  }
+  function uploadDonePayload() {
+    var payload = { run_id: runId, role: role, chunks: rec.seq, mime: LOCAL_MIME,
+                    started_at: rec.startedAt,
+                    duration_ms: rec.startedAt ? Date.now() - Date.parse(rec.startedAt) : 0 };
+    if (isHost && adminToken) payload.token = adminToken;
+    return payload;
+  }
+  function stopLocalRecording() {
+    if (!rec.recorder) return Promise.resolve();
+    if (rec.stopping) return rec.stopping;
+    var recorder = rec.recorder;
+    var stopped = new Promise(function (resolve) {
+      if (recorder.state === "inactive") return resolve();
+      recorder.addEventListener("stop", function () { resolve(); });
+      try { recorder.stop(); } catch (e) { resolve(); }
+    });
+    rec.stopping = stopped
+      .then(function () { return rec.queue; })       // final dataavailable fires before "stop"
+      .then(function () {
+        if (rec.stream) rec.stream.getTracks().forEach(function (t) { t.stop(); });
+        return fetch(API + "/upload-done", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(uploadDonePayload()),
+        }).then(function (r) { return r.json(); });
+      })
+      .then(function (res) {
+        rec.done = true;
+        var missing = res && res.missing ? res.missing.length : 0;
+        localRecStatus("saved" + (missing ? " (" + missing + " missing)" : ""));
+      })
+      .catch(function (e) {
+        console.warn("[studio] upload-done failed", e);
+        localRecStatus("finalize failed");
+      })
+      .then(function () { rec.recorder = null; rec.stream = null; rec.stopping = null; });
+    return rec.stopping;
+  }
+  // Tab closing mid-flush: the Worker still gets an upload-done (text/plain
+  // keeps sendBeacon preflight-free; the Worker parses the body as JSON
+  // regardless) and writes a manifest listing whatever chunks landed.
+  window.addEventListener("pagehide", function () {
+    if (!rec.recorder || rec.done || !runId || !navigator.sendBeacon) return;
+    try {
+      navigator.sendBeacon(API + "/upload-done",
+        new Blob([JSON.stringify(uploadDonePayload())], { type: "text/plain" }));
+    } catch (e) { /* best-effort */ }
   });
 
   checkState();

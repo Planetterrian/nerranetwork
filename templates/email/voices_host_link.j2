@@ -1,0 +1,33 @@
+{# Mira interview shows — Phase 2 co-host: Patrick's studio link, sent by
+   pipelines/voices/fire_interviews.py at fire time ("in 2 min") and with
+   the T-2h reminder ("in about 2 hours"). Context: host_url, guest_name,
+   scheduled_at, when, cohost_name (+ the show branding fields). #}
+<div style="font-family:system-ui,sans-serif;max-width:640px;margin:0 auto;color:#1a202c;line-height:1.6">
+  <h2 style="color:{{ brand_color }}">{{ show_name }}: {{ guest_name }} {{ when }}</h2>
+  <p>Hi {{ cohost_name }},</p>
+  <p>Mira's interview with <strong>{{ guest_name }}</strong> is scheduled for
+  <strong>{{ scheduled_at }}</strong>. You are in the room as co-host —
+  your own studio seat, your own clean track.</p>
+  <p style="margin:1.4em 0">
+    <a href="{{ host_url }}"
+       style="display:inline-block;background:{{ brand_color }};color:#fff;text-decoration:none;padding:.8em 1.4em;border-radius:6px;font-weight:600">
+      Open your co-host studio
+    </a>
+  </p>
+  <p style="font-size:.9em;color:#4a5568;word-break:break-all">{{ host_url }}</p>
+  <h3>Reminders</h3>
+  <ul>
+    <li>Open the page a few minutes early, from a computer with your good
+    mic (headphones on — your local track records the raw mic, no echo
+    cancellation).</li>
+    <li>Click <strong>Ready</strong>. Mira will call the page as soon as
+    {{ guest_name }} connects; the page answers by itself.</li>
+    <li>If you are not on the page yet, Mira opens without you after 20 s
+    and keeps re-dialing every 20 s until you pick up.</li>
+    <li>Say <strong>"hold on"</strong> (or "let's pause") and Mira stops
+    talking and waits for you — use it to fix a technical problem or to
+    steer.</li>
+    <li>This link carries your admin token: do not forward it.</li>
+  </ul>
+  <p>{{ sign_off }}</p>
+</div>

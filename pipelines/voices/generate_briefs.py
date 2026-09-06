@@ -13,7 +13,7 @@ import datetime as dt
 import json
 
 from common import (  # noqa: E402  (sys.path bootstrapped in common)
-    episode_memory_block, llm, load_prompt, logger, notify_operator,
+    cohost_name, episode_memory_block, llm, load_prompt, logger, notify_operator,
     parse_json_lenient, render_email, sb_insert, sb_select, sb_update,
     send_email, show_for,
 )
@@ -83,6 +83,8 @@ def email_brief_to_guest(interview: dict, app: dict, brief: dict) -> None:
         thesis=brief["episode_thesis_draft"],
         questions=brief["likely_questions"],
         closing_question=show.closing_question,
+        # Phase 2: tell the guest who is in the room (empty → no paragraph).
+        cohost_name=cohost_name() if interview.get("host_mode") is not False else "",
     )
     send_email(app["email"],
                f"Your {show.short_label} interview — what Mira will ask",
