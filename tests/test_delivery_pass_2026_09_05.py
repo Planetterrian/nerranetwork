@@ -358,7 +358,7 @@ class TestScriptRewriteGate:
         "Patrick: That's your Tesla news for today.\n"
     )
     REWRITTEN = (
-        "Patrick: The AI5 car chip is done, and Tesla will build it at two foundries, TSMC and Samsung.\n"
+        "Patrick: The Artificial Intelligence 5 car chip is done, and Tesla will build it at two foundries, TSMC and Samsung.\n"
         "Patrick: Dojo 3 is back, with Intel packaging the modules on its EMIB process.\n"
         "Patrick: That means two suppliers for inference silicon and a third for training hardware.\n"
         "Patrick: That's your Tesla news for today.\n"
@@ -567,7 +567,7 @@ class TestSep6RewriteGateTriggersAndFloor:
         assert sa.digest_overlap(copied, self.D.DIGEST) < 40
         fresh = self.D()._script(
             "Two lines instead of one means a stuck booster no longer stalls the ship behind it. "
-            "Each hall runs at its own rhythm and the coastal pad stacks and checks vehicles outside the test queue. "
+            "Each hall runs at its own rhythm and the East Coast pad stacks and checks vehicles outside Starbase's test queue. "
             "The expensive part of a reusable rocket is the idle day, not the metal. "
             "Cutting shared-facility time cuts the price of every stack that reaches the mount. "
             "That is the whole argument for splitting the factory in two. "
@@ -581,7 +581,7 @@ class TestSep6RewriteGateTriggersAndFloor:
         out = pipeline._script_rewrite_gate(copied, self.D.DIGEST, self._Cfg(), {"hook": ""}, None)
         assert out["fired"] and out["reasons"] == "section" and out["accepted"]
         assert out["copied_sections_before"] == 1 and out["copied_sections_after"] == 0
-        assert "Engineering Deep Dive" in calls[0] and "must run at least" in calls[0]
+        assert "Engineering Deep Dive" in calls[0] and "is discarded" in calls[0]
 
     def test_rejects_when_the_section_is_still_copied(self, monkeypatch):
         from engine import pipeline
@@ -650,3 +650,116 @@ class TestSep6PromptAndPronunciationFollowups:
     def test_mab_keeps_every_number(self):
         text = (ROOT / "shows/prompts/mab_podcast.txt").read_text(encoding="utf-8")
         assert "Every number the briefing gives a story is spoken" in text
+
+
+# ---------------------------------------------------------------------------
+# Sep 7 2026 readout — first slate with the section/hook gate live
+# ---------------------------------------------------------------------------
+
+
+class TestSep7RewriteKeepsNamesAndLength:
+    """Sep 7: the gate fired on every gated show and every rewrite was
+    accepted at 0-5% verbatim — but the rewrites paraphrased NAMES
+    ("Megapack" -> "the large battery packs"; Tesla kept 53% of the
+    digest's entities against 73% the day before, M&A 52% vs 81%), the
+    section test read zero sections because the podcast digest has no
+    markdown headers, and the scripts shrank toward the stated floor."""
+
+    D = TestSep6SectionCopyAndOrphanedHook
+
+    class _Cfg:
+        class llm:
+            script_rewrite_gate_overlap_pct = 40.0
+
+    def test_digest_entities_skip_sentence_initial_capitals(self):
+        ents = sa.digest_entities(
+            "### Top News\n1. **Chip news**\n   Volume production is scheduled at TSMC and Samsung. "
+            "Intel joins as a packaging partner. Source: [reuters.com](https://reuters.com/x)\n"
+        )
+        assert {"tsmc", "samsung"} <= ents
+        assert "volume" not in ents and "intel" not in ents  # sentence-initial only
+        assert "reuters" not in ents and "source" not in ents
+
+    def test_entity_retention_counts_spaced_acronyms(self):
+        digest = "The TSX Composite and Megapack lines at Giga Texas, per Reuters filings."
+        assert sa.entity_retention("Patrick: The T S X Composite fell, per Reuters, while Megapack lines at Giga Texas ran.", digest) == 1.0
+        low = sa.entity_retention("Patrick: The index fell while the large battery packs at the Texas plant ran.", digest)
+        assert low is not None and low < 0.5
+
+    def test_gate_rejects_a_rewrite_that_paraphrases_the_names(self, monkeypatch):
+        from engine import pipeline
+        copied = TestScriptRewriteGate.COPIED
+        digest = TestScriptRewriteGate.DIGEST
+        generic = (
+            "Patrick: The new car chip is finished, and the company will build it at two foundries.\n"
+            "Patrick: The training computer is back, with a partner packaging the modules on its process.\n"
+            "Patrick: That means two suppliers for inference silicon and a third for training hardware.\n"
+            "Patrick: That's your Tesla news for today.\n"
+        )
+        monkeypatch.setattr("engine.generator.generate_podcast_script",
+                            lambda tv, config, tracker=None, prompt_appendix="": generic)
+        out = pipeline._script_rewrite_gate(copied, digest, self._Cfg(), {}, None)
+        assert out["fired"] and not out["accepted"] and out["reject_reason"] == "names_lost"
+        assert out["entity_retention_before"] > out["entity_retention_after"]
+        assert out["script"] == copied
+
+    def test_appendix_names_the_names_rule_and_anchors_on_draft_length(self, monkeypatch):
+        from engine import pipeline
+        calls = []
+        def fake_gen(tv, config, tracker=None, prompt_appendix=""):
+            calls.append(prompt_appendix)
+            return TestScriptRewriteGate.REWRITTEN
+        monkeypatch.setattr("engine.generator.generate_podcast_script", fake_gen)
+        out = pipeline._script_rewrite_gate(TestScriptRewriteGate.COPIED, TestScriptRewriteGate.DIGEST,
+                                            self._Cfg(), {}, None)
+        assert out["accepted"] and out["original_words"] > 0
+        assert "never the names" in calls[0] and "Match the draft's length" in calls[0]
+        assert f"about {out['original_words']} words" in calls[0]
+
+    def test_section_test_uses_the_raw_digest_when_the_podcast_copy_has_no_headers(self, monkeypatch):
+        from engine import pipeline
+        copied = self.D()._script(self.D.WORD_SWAPPED)
+        raw = self.D.DIGEST
+        stripped = re.sub(r"^#{1,6}\s+", "", raw, flags=re.M)  # run_show's podcast copy
+        assert sa.copied_sections(copied, stripped) == []
+        monkeypatch.setattr("engine.generator.generate_podcast_script",
+                            lambda tv, config, tracker=None, prompt_appendix="": copied)
+        out = pipeline._script_rewrite_gate(copied, stripped, self._Cfg(), {"hook": ""}, None, section_digest=raw)
+        assert out["fired"] and "section" in out["reasons"] and out["copied_sections_before"] == 1
+        src = (ROOT / "engine/pipeline.py").read_text(encoding="utf-8")
+        assert "section_digest=x_thread" in src
+
+    def test_run_show_records_entity_and_original_word_metrics(self):
+        src = (ROOT / "run_show.py").read_text(encoding="utf-8")
+        for key in ("script_rewrite_gate_original_words", "script_rewrite_gate_entity_retention_before",
+                    "script_rewrite_gate_entity_retention_after"):
+            assert f'metrics.record("{key}"' in src, key
+
+    def test_audit_reports_entity_retention(self):
+        a = sa.audit_script(TestScriptRewriteGate.COPIED, digest_text=TestScriptRewriteGate.DIGEST)
+        assert a.to_metrics()["script_entity_retention_pct"] >= 85.0  # AI5 lives only in the item title
+
+
+class TestSep7Pronunciation:
+    def test_dataset_names_with_k_suffix_stay_names(self):
+        from assets.pronunciation import prepare_text_for_tts
+        out = prepare_text_for_tts("trained on Nutrition5k meals and 2.5k samples")
+        assert "Nutritionfive" not in out and "Nutrition 5 K" in out
+        assert "two thousand five hundred" in out
+
+    def test_gpu_model_numbers_are_spoken_as_pairs(self):
+        from assets.pronunciation import prepare_text_for_tts
+        out = prepare_text_for_tts("an RTX 5090 machine, an RTX 4070 Super, and a GTX 1080 Ti")
+        assert "RTX fifty ninety" in out and "RTX forty seventy Super" in out and "GTX ten eighty Ti" in out
+        assert "thousand" not in out
+
+    def test_subreddit_does_not_double_the_article(self):
+        from assets.pronunciation import prepare_text_for_tts
+        assert "the the" not in prepare_text_for_tts("posted in the r/SpaceXLounge area")
+        assert "the SpaceXLounge subreddit" in prepare_text_for_tts("posted on r/SpaceXLounge today")
+
+    def test_mit_pick_numbers_once_and_ma_model_numbers(self):
+        mit = (ROOT / "shows/prompts/modern_investing_podcast.txt").read_text(encoding="utf-8")
+        assert "The pick's numbers are spoken ONCE" in mit
+        ma = (ROOT / "shows/prompts/models_agents_podcast.txt").read_text(encoding="utf-8")
+        assert "A product MODEL number is a name" in ma

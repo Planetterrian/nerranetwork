@@ -768,7 +768,13 @@ def replace_subreddit_paths(text: str) -> str:
     digest's source tail was ``r/teslamotors`` and the generic slash
     handling voiced the letter. Runs before ``replace_slashes``.
     """
-    return _SUBREDDIT_RE.sub(lambda m: f"the {m.group(1)} subreddit", text)
+    def _sub(m: re.Match) -> str:
+        # "the r/SpaceXLounge area" must not become "the the SpaceXLounge
+        # subreddit area" (SpaceX Ep093, 2026-09-07).
+        preceded = text[max(0, m.start() - 4):m.start()].lower().endswith("the ")
+        return f"{'' if preceded else 'the '}{m.group(1)} subreddit"
+
+    return _SUBREDDIT_RE.sub(_sub, text)
 
 
 def replace_approximate(text: str) -> str:
@@ -1419,9 +1425,38 @@ def replace_large_numbers_with_k(text: str) -> str:
         except ValueError:
             return m.group(0)
 
+    # A dataset / product name with a glued "Nk" tail is a NAME, not a
+    # quantity: M&A Ep166 (2026-09-07) aired "Nutritionfive thousand
+    # meals" for Nutrition5k. Split it into "Nutrition 5 K" so the
+    # server-side normaliser speaks the digits and the letter.
+    text = re.sub(r"(?<=[A-Za-z])(\d+)k\b", r" \1 K", text)
     # "2.5k" -> "two thousand five hundred"
-    text = re.sub(r"(\d+\.?\d*)k\b", _k_number, text, flags=re.IGNORECASE)
+    text = re.sub(r"(?<![A-Za-z])(\d+\.?\d*)k\b", _k_number, text, flags=re.IGNORECASE)
     return text
+
+
+_GPU_MODEL_RE = re.compile(r"\b(RTX|GTX|RX)\s?(\d)(\d)(\d{2})\b(\s+(?:Ti|Super|XT|XTX))?")
+
+
+def replace_gpu_model_numbers(text: str) -> str:
+    """Speak GPU model numbers the way people say them: RTX 5090 -> "RTX
+    fifty ninety", RTX 4070 Super -> "RTX forty seventy Super".
+
+    M&A Ep166 (2026-09-07) aired "a five thousand ninety machine" and
+    "RTX four thousand seventy Super" — the script stage spelled the
+    model number out as a quantity. This handler covers the digit form
+    on every surface; the M&A prompt names the spoken shape for the
+    script.
+    """
+    def _gpu(m: re.Match) -> str:
+        try:
+            head = number_to_words(int(m.group(2) + m.group(3)))
+            tail = number_to_words(int(m.group(4)))
+        except ValueError:
+            return m.group(0)
+        return f"{m.group(1)} {head} {tail}{m.group(5) or ''}"
+
+    return _GPU_MODEL_RE.sub(_gpu, text)
 
 
 def replace_scientific_designations(text: str) -> str:
@@ -1702,6 +1737,9 @@ def prepare_text_for_tts(
     # Order matters: currency before percentages, large numbers before units.
     if do_k_numbers:
         text = replace_large_numbers_with_k(text)
+    # GPU model numbers before the generic number expansion ("RTX 5090"
+    # is "fifty ninety", not "five thousand ninety" — M&A Ep166).
+    text = replace_gpu_model_numbers(text)
 
     if do_currency:
         text = replace_currency(text)

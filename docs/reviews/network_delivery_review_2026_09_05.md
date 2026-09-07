@@ -332,3 +332,75 @@ story) and the gate stays off there.
 
 Predictions filed in the per-show ledgers; the network readout stays on
 experiment `network-content-discipline-2026-09` (2026-09-26).
+
+## Sep 7 readout — the gate does the work; the rewrite must keep the names
+
+The Sep 7 slate (all fifteen shows ran 07:31–08:12 UTC, the first with
+the Sep 6 gate triggers live) was scored the same way. The gate fired
+on every one of the nine gated shows and every rewrite was accepted:
+
+| show | Ep | words | first draft → rewrite (verbatim) | filler | names kept |
+|---|---|---|---|---|---|
+| SpaceX | 093 | 909 | 55 → 2% | 2% | 74% |
+| Tesla | 598 | 985 | 66 → 5% | 2% | 53% (73% on Sep 6) |
+| Models & Agents | 166 | 1318 | 42 → 1% | 1% | 52% (81%) |
+| Omni View | 168 | 1724 | 56 → 0% | 2% | 65% (100%) |
+| Fascinating Frontiers | 186 | 1203 | 55 → 2% | 1% | 90% |
+| Planetterrian | 176 | 1146 | 61 → 19% | 4% | 59% |
+| Modern Investing | 163 | 1363 | 44 → 2% | 0% | 67% |
+| MAB | 159 | 1627 | hook trigger, accepted | 0% | 82% |
+| Env Intel | 067 | 850 | 57 → 1% | 6% | 70% |
+
+So the copying is solved by the gate, not by the prompt: first drafts
+still copy 42–66% every day and the retry brings them to 0–5%. Filler is
+0–6% on every show. Two things the rewrites did that the Sep 6 checks
+could not see, both confirmed by a transcript read of Tesla, SpaceX and
+M&A:
+
+1. **The rewrite paraphrased the names.** Tesla Ep598 said "the latest
+   version of the large battery packs" for Megapack 3, "switching modes"
+   for Sloth mode, "current or next silicon" for HW4/AI5, "robot work"
+   for Optimus, "a firm" for Tesla; SpaceX Ep093 never spoke "Raptor V3"
+   in the body, said "large computing facilities" for Colossus, and
+   dropped the deep dive's one date (2027) and Musk's attribution. The
+   measure: share of the digest's named entities the script speaks
+   (`script_audit.entity_retention`; capitalised mid-sentence tokens,
+   spaced acronyms re-joined) — Tesla 73 → 53%, M&A 81 → 52%, Omni View
+   100 → 65% between the copied Sep 6 script and the paraphrased Sep 7
+   one. Now: the appendix says names are never paraphrased ("a listener
+   wants to hear Megapack, not 'the large battery packs'"), the gate
+   rejects a rewrite that loses more than 15 points of the draft's
+   retention (`reject_reason=names_lost`), and `script_entity_retention_pct`
+   is a per-episode metric with a snapshot column.
+2. **The rewrites shrank toward the stated floor.** The Sep 6 appendix
+   said "at least N words" and the model wrote to N: Tesla 985 words
+   against a 1,400 target (1,607 on Sep 6), SpaceX 909, Env Intel 850.
+   The appendix now anchors on the draft ("about {draft} words, the same
+   stories at the same depth; a rewrite under {floor} is discarded") and
+   `script_rewrite_gate_original_words` is recorded so the shrink is
+   measurable.
+3. **The section test read zero sections on every show.** The gate
+   receives run_show's podcast copy of the digest, which strips the
+   markdown header markers; `copied_sections` splits on headers. The
+   raw digest is now passed alongside for the section and entity tests.
+   PT Ep176's Science Deep Dive was the one copied section that survived
+   a rewrite (19% verbatim) — the retry would have named it.
+
+Smaller items from the read: Tesla Ep598 told two FSD X-posts twice (a
+paraphrase followed by the near-verbatim copy, ~120 words apart, with
+invented "a separate driver account" attributions) — the "one owner per
+fact" rule is the lever and the pair sits under the 0.8 duplicate
+threshold, so it is noted, not gated; MIT Ep163 spoke the pick's numbers
+twice inside its own segment (a prompt rule now says once); M&A Ep166
+aired "Nutritionfive thousand" for Nutrition5k and "a five thousand
+ninety machine" for an RTX 5090 (pronunciation: a glued `Nk` tail stays
+a name; GPU model numbers speak as two pairs; the prompt names the
+shape); SpaceX Ep093 aired "the the SpaceXLounge subreddit area"
+(article doubled by the subreddit handler — fixed). "Pop the hood on
+pause token training shows…" (M&A, the required anchor bent into a
+subjectless sentence) is left for the next M&A pass.
+
+Verdict on direction: the network is moving the right way — every gated
+show is now written, not read; filler is gone; the pinned closings hold.
+The cost is one extra script call per episode per day, and the risk that
+remains is specificity, which is now measured and gated.

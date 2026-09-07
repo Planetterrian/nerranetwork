@@ -408,6 +408,37 @@ reviews:
       verdict: pending
       evidence: null
     agent_cost_usd: null
+  - date: 2026-09-07
+    pr: null
+    doc: docs/reviews/network_delivery_review_2026_09_05.md
+    summary: "Sep 7 readout - first slate with the section/hook gate live. The gate fired on all 9 gated shows and every rewrite was accepted (first drafts 42-66% verbatim -> 0-5%; filler 0-6%). Two side effects: rewrites paraphrased NAMES (Tesla 73->53%, M&A 81->52%, OV 100->65% of digest entities kept; 'Megapack' -> 'the large battery packs'), and rewrites shrank toward the stated floor (Tesla 985w vs 1,400 target). The section test read zero sections everywhere (the podcast digest has no markdown headers)."
+    shipped:
+      - "engine/script_audit entity_retention + digest_entities (metric script_entity_retention_pct; snapshot column)"
+      - "engine/pipeline rewrite gate - reject_reason=names_lost above a 15-point entity drop; appendix keeps names verbatim and anchors on the draft's length; raw digest passed for the section test; original_words recorded"
+      - "pronunciation: glued Nk dataset names, GPU model numbers as pairs, subreddit article doubling"
+      - "MIT pick numbers once; M&A model-number spoken shape (A/B)"
+    predictions:
+    - metric: "script_entity_retention_pct on accepted rewrites, nine gated shows, next 2 weeks"
+      baseline: "52-74% on Sep 7 (Tesla 53, M&A 52, OV 65)"
+      expected: ">=75% median; no accepted rewrite more than 15 points under its draft"
+      verdict: pending
+      evidence: null
+    - metric: "script_words on accepted rewrites vs script_rewrite_gate_original_words"
+      baseline: "rewrites landed at the floor (Tesla 975w on a 980w floor)"
+      expected: "median rewrite >= 90% of the draft's words"
+      verdict: pending
+      evidence: null
+    - metric: "script_rewrite_gate_copied_sections_before, nine gated shows"
+      baseline: "0 on every show (dead measure)"
+      expected: "non-zero on days the audit's script_copied_sections is non-zero; copied_sections_after <= 1 on 8/10"
+      verdict: pending
+      evidence: null
+    - metric: "share of gated episodes whose FIRST draft is under the 40% overlap threshold"
+      baseline: "0/9 on Sep 7"
+      expected: ">=3/9 within two weeks (the prompt rule starts to hold without the retry)"
+      verdict: pending
+      evidence: null
+    agent_cost_usd: null
 
 do_not_retry:
   - idea: podcast-side length levers (word floors, expand-retries, prompt

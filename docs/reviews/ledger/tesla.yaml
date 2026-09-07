@@ -375,6 +375,29 @@ reviews:
       verdict: pending
       evidence: null
     agent_cost_usd: null
+  - date: 2026-09-07
+    pr: null
+    doc: docs/reviews/network_delivery_review_2026_09_05.md
+    summary: "Sep 7 readout (Ep598, first accepted rewrite): 66->5% verbatim, filler 2%, every story and number kept - but the rewrite paraphrased the names (Megapack 3 -> 'the latest version of the large battery packs', Sloth mode, HW4/AI5, Optimus, 'a firm' for Tesla; 53% of digest entities kept vs 73%), told two FSD X-posts twice with invented 'a separate driver account' attributions, and shrank to 985 words against a 1,400 target."
+    shipped:
+      - "gate names_lost rejection + names-verbatim appendix + draft-length anchor (engine/pipeline)"
+    predictions:
+    - metric: "script_entity_retention_pct, last 10"
+      baseline: "53% (Ep598)"
+      expected: ">=75% on 8/10"
+      verdict: pending
+      evidence: null
+    - metric: "script_words, last 10"
+      baseline: "985 (Ep598), 1,607 (Ep597)"
+      expected: "median >= 1,200"
+      verdict: pending
+      evidence: null
+    - metric: "stories told twice per episode (hand-count), 3 episodes"
+      baseline: "2 (Ep598 FSD interventions, bumps/slopes)"
+      expected: "0"
+      verdict: pending
+      evidence: null
+    agent_cost_usd: null
 
 do_not_retry:
   - idea: phonetic respellings or programmatic speech-tag injection
