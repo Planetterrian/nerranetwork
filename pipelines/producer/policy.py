@@ -11,8 +11,8 @@ Actions:
 * ``draft``  — hold for Patrick: Gmail draft of the invite when there is
                one to draft, plus a Slack hold note; thread labelled
 * ``label``  — mark processed, no reply (platform notices, newsletters)
-* ``skip``   — mark processed, no reply, no note (duplicates, follow-ups
-               on threads we already answered)
+* ``skip``   — mark processed, no reply, no note (duplicates; follow-ups
+               on answered threads go to followup.py instead)
 * ``defer``  — per-run send cap reached: touch nothing, next tick retries
 * ``none``   — mode off: touch nothing
 """
@@ -145,17 +145,19 @@ def decide(classification: Dict[str, Any], *, policy: Policy,
     if cat in policy.ignore_categories:
         return Decision("label", f"category={cat}")
 
-    if cat == "guest_followup":
-        if already_replied:
-            return Decision("skip", "guest_followup on a thread we already answered")
-        return Decision("draft", "guest_followup on a thread we never answered",
-                        notify=True, draft_invite=True)
+    if cat == "guest_followup" and already_replied:
+        # Answered threads are the follow-up path's job (inbox.py routes
+        # them there before we get here); reaching this means the row is
+        # missing — leave it alone rather than double-reply.
+        return Decision("skip", "guest_followup on a thread we already answered")
 
     if cat in policy.hold_categories:
         return Decision("draft", f"category={cat} is held for Patrick", notify=True)
 
-    # From here on: guest_pitch (any unknown category is treated as a hold).
-    if cat != "guest_pitch":
+    # From here on: guest_pitch, or a publicist's nudge on a pitch nobody
+    # ever answered (Sept 6 2026, "invite everyone": that is still a pitch
+    # waiting for its invite). Any unknown category is treated as a hold.
+    if cat not in ("guest_pitch", "guest_followup"):
         return Decision("draft", f"unhandled category={cat}", notify=True)
 
     if already_replied:

@@ -405,13 +405,103 @@ def run_inbox(*, gmail: Optional[GmailClient] = None, policy: Optional[Policy] =
     return summary
 
 
+# ---------------------------------------------------------------------------
+# Release held invites (Sept 6 2026: "invite everyone")
+# ---------------------------------------------------------------------------
+
+RELEASABLE_CATEGORIES = ("guest_pitch", "guest_followup")
+
+
+def release_held(*, gmail: Optional[GmailClient] = None, policy: Optional[Policy] = None,
+                 dry_run: bool = False, limit: int = 50) -> Dict[str, Any]:
+    """Send the invites the Producer only drafted because of the old
+    confidence gate or the guest_followup rule. Skips anything held for a
+    real reason (money/legal, blocked domain, hold categories, Patrick
+    already in the thread). Re-renders the invite from the stored
+    classification, sends it in-thread, flips the row to ``sent`` and
+    removes the stale Gmail draft."""
+    policy = policy or load_policy()
+    summary: Dict[str, Any] = {"considered": 0, "sent": 0, "skipped": 0, "failed": 0, "errors": []}
+    if policy.mode != "auto":
+        logger.info("PRODUCER_MODE=%s: release_held only runs in auto mode", policy.mode)
+        return summary
+    gmail = gmail or GmailClient.from_env(dry_run=dry_run, processed_label=policy.processed_label)
+    rows = sb_select("guest_applications",
+                     "source=eq.email&producer_action=eq.drafted&status=eq.invited"
+                     "&select=id,name,show,publicist_name,publicist_email,email,email_thread_id,"
+                     "producer_classification&order=producer_acted_at.asc&limit=200")
+    for app in rows:
+        if summary["sent"] >= limit:
+            break
+        summary["considered"] += 1
+        cls = app.get("producer_classification") or {}
+        try:
+            reason = _release_block_reason(cls, app, policy)
+            if reason:
+                summary["skipped"] += 1
+                logger.info("release: keep held %s (%s)", app.get("name"), reason)
+                continue
+            thread = gmail.get_thread(app["email_thread_id"])
+            if already_replied(thread, gmail.user):
+                summary["skipped"] += 1
+                logger.info("release: keep held %s (thread already answered)", app.get("name"))
+                continue
+            inbound = _classify.latest_inbound(thread, gmail.user)
+            if inbound is None:
+                summary["skipped"] += 1
+                continue
+            body = render_invite(cls, inbound.get("from_name", ""), policy)
+            gmail.send_reply(
+                thread_id=thread["id"],
+                to=inbound.get("from") or inbound.get("from_email", ""),
+                subject=thread.get("subject") or inbound.get("subject", ""),
+                body_text=body,
+                in_reply_to=inbound.get("message_id", ""),
+                references=inbound.get("references", ""),
+            )
+            gmail.delete_drafts_in_thread(thread["id"])
+            if not dry_run:
+                sb_update("guest_applications", f"id=eq.{app['id']}", {
+                    "producer_action": "sent", "producer_acted_at": _now(),
+                    "producer_last_outbound_at": _now()})
+            summary["sent"] += 1
+            logger.info("release: invited %s (%s)", app.get("name"), app.get("show"))
+        except Exception as exc:  # noqa: BLE001
+            logger.exception("release failed for %s: %s", app.get("id"), exc)
+            summary["failed"] += 1
+            summary["errors"].append({"application_id": app.get("id"),
+                                      "error": f"{type(exc).__name__}: {exc}"[:400]})
+    logger.info("release_held: %d considered, %d sent, %d kept held, %d failed",
+                summary["considered"], summary["sent"], summary["skipped"], summary["failed"])
+    return summary
+
+
+def _release_block_reason(cls: Dict[str, Any], app: Dict[str, Any], policy: Policy) -> str:
+    if cls.get("category") not in RELEASABLE_CATEGORIES:
+        return f"category={cls.get('category')}"
+    if cls.get("mentions_money_or_legal"):
+        return "mentions money or legal"
+    if float(cls.get("confidence") or 0.0) < policy.min_confidence:
+        return f"confidence {float(cls.get('confidence') or 0.0):.2f} < {policy.min_confidence:.2f}"
+    from pipelines.producer.policy import domain_blocked, sender_domain
+    dom = sender_domain(app.get("publicist_email") or app.get("email") or "")
+    if domain_blocked(dom, policy.never_auto_reply_domains):
+        return f"domain {dom} never auto-replied"
+    return ""
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     ap = argparse.ArgumentParser(description="Nerra Producer inbox job")
     ap.add_argument("--dry-run", action="store_true",
                     help="read Gmail and classify, but never send/draft/label/write")
     ap.add_argument("--limit", type=int, default=int(os.environ.get("PRODUCER_LIMIT", "50")),
                     help="max threads per run")
+    ap.add_argument("--release-held", action="store_true",
+                    help="send the invites previously held only for confidence / follow-up "
+                         "reasons, then run the inbox as usual")
     args = ap.parse_args(argv)
+    if args.release_held:
+        release_held(dry_run=args.dry_run, limit=max(1, args.limit))
     summary = run_inbox(dry_run=args.dry_run, limit=max(1, args.limit))
     seen = summary["seen"]
     if seen and summary["failed"] * 2 > seen:

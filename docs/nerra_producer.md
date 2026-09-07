@@ -207,10 +207,14 @@ answered, booking links sent, interviews booked, nudges, lapses, errors,
 and everything held for Patrick with a Gmail link to each draft. Logged
 as a `producer_runs` row with `job = review`.
 
-**Policy change.** `min_confidence` lowered from 0.75 to 0.5 and the
-default window widened to 45 days ("invite everyone", Sept 6 2026).
-Money/legal mentions, blocked domains and threads Patrick already
-answered by hand still hold.
+**Policy change.** `min_confidence` lowered from 0.75 to 0.5, the default
+window widened to 45 days, and a publicist's nudge on a pitch nobody ever
+answered (`guest_followup`, no reply from us in the thread) is now
+invited like a fresh pitch ("invite everyone", Sept 6 2026). Money/legal
+mentions, blocked domains, hold categories and threads Patrick already
+answered by hand still hold. `python -m pipelines.producer.inbox
+--release-held` (workflow input `release_held`) sends the invites that
+were drafted under the old rules and removes their stale Gmail drafts.
 
 Migration: `supabase/migrations/20260907_producer_autonomy.sql`
 (`producer_followup_count`, `producer_last_inbound_at`,

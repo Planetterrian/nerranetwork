@@ -317,6 +317,23 @@ class GmailClient:
                     thread_id, to, resp.get("id"))
         return resp.get("id")
 
+    def delete_drafts_in_thread(self, thread_id: str) -> int:
+        """Remove the Producer's own drafts in a thread (after the real
+        reply went out). Best-effort; returns how many were deleted."""
+        if self.dry_run:
+            logger.info("[dry-run] would delete drafts in thread %s", thread_id)
+            return 0
+        deleted = 0
+        try:
+            resp = self._users().drafts().list(userId="me", maxResults=100).execute()
+            for d in resp.get("drafts") or []:
+                if (d.get("message") or {}).get("threadId") == thread_id:
+                    self._users().drafts().delete(userId="me", id=d["id"]).execute()
+                    deleted += 1
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("draft cleanup in thread %s failed (non-fatal): %s", thread_id, exc)
+        return deleted
+
     def create_draft(self, thread_id: str, to: str, subject: str, body_text: str,
                      in_reply_to: str = "", references: str = "") -> Optional[str]:
         raw = build_reply_mime(sender=self.send_as, to=to, subject=subject,

@@ -25,6 +25,10 @@ on:
         description: "Override the Gmail search (e.g. 'newer_than:180d in:inbox' to drain the backlog)"
         type: string
         default: ''
+      release_held:
+        description: 'First send the invites held only for confidence / follow-up reasons'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -53,6 +57,7 @@ jobs:
         run: >-
           python -m pipelines.producer.inbox
           ${{ (github.event_name == 'workflow_dispatch' && inputs.dry_run) && '--dry-run' || '' }}
+          ${{ (github.event_name == 'workflow_dispatch' && inputs.release_held) && '--release-held' || '' }}
           --limit ${{ (github.event_name == 'workflow_dispatch' && inputs.limit) || '50' }}
         env:
           GMAIL_SERVICE_ACCOUNT_JSON: ${{ secrets.GMAIL_SERVICE_ACCOUNT_JSON }}

@@ -579,3 +579,84 @@ class TestWiring:
         src = (ROOT / "pipelines/producer/followup.py").read_text()
         assert "_classify.PRODUCER_MODEL" in src
         assert not re.search(r"grok-\d", src)
+
+
+# ---------------------------------------------------------------------------
+# "Invite everyone": unanswered follow-ups are pitches; held drafts released
+# ---------------------------------------------------------------------------
+
+class TestInviteEveryone:
+    def test_unanswered_publicist_nudge_gets_the_invite(self, db, slack, grok):
+        t = make_thread("t3", "Nina <nina@podstar.me>", "Re: Yossi for your show", "Any interest?")
+        svc, summary = _run([t], grok, {"Yossi for your show": _classification(
+            category="guest_followup", guest_name="Yossi Barishev", is_ai_related=False)})
+        assert len(svc.sent) == 1 and not svc.drafted
+        assert summary["sent"] == 1 and db.applications[0]["show"] == "nerra_voices"
+
+    def test_answered_thread_without_row_is_still_skipped(self, db, slack, grok):
+        t = make_thread("t3", "nina@podstar.me", "Re: Yossi", "Any interest?", own_reply=True)
+        t["messages"].append(gmail_message("t3m3", "t3", "nina@podstar.me", "Nudge", "Re: Yossi", 3000))
+        svc, summary = _run([t], grok, {"Yossi": _classification(category="guest_followup")})
+        assert not svc.sent and not svc.drafted and summary["skipped"] == 1
+
+    @pytest.fixture
+    def rdb(self, monkeypatch, env):
+        class DB:
+            def __init__(self):
+                self.rows: List[Dict[str, Any]] = []
+                self.updates: List[Any] = []
+
+            def select(self, table, query=""):
+                return list(self.rows)
+
+            def update(self, table, query, patch):
+                self.updates.append((table, query, patch))
+                return [patch]
+        d = DB()
+        monkeypatch.setattr(inbox, "sb_select", d.select)
+        monkeypatch.setattr(inbox, "sb_update", d.update)
+        return d
+
+    def _held_row(self, tid, **cls_over):
+        cls = _classification(**{"category": "guest_followup", **cls_over})
+        return {"id": f"app-{tid}", "name": cls["guest_name"], "show": cls["recommended_show"],
+                "publicist_name": "Sam Reyes", "publicist_email": "sam@reyespr.com",
+                "email": "sam@reyespr.com", "email_thread_id": tid, "producer_classification": cls}
+
+    def test_release_sends_and_cleans_draft(self, rdb):
+        rdb.rows.append(self._held_row("t1"))
+        t = make_thread("t1", "Sam Reyes <sam@reyespr.com>", "Lena pitch", "pitching")
+        svc = FakeGmailService([t])
+        client = GmailClient(svc, OWNER)
+        client.create_draft(thread_id="t1", to="sam@reyespr.com", subject="Re: Lena pitch", body_text="old draft")
+        summary = inbox.release_held(gmail=client, policy=load_policy())
+        assert summary["sent"] == 1 and len(svc.sent) == 1
+        text = decode_raw(svc.sent[0])
+        assert "Hi Sam," in text and "age-of-ai-apply.html" in text and "In-Reply-To: <t1m1@example.com>" in text
+        assert svc.drafted == [None], "stale draft removed"
+        patch = rdb.updates[-1][2]
+        assert patch["producer_action"] == "sent" and rdb.updates[-1][1] == "id=eq.app-t1"
+
+    def test_release_keeps_real_holds(self, rdb):
+        rdb.rows.append(self._held_row("t1", mentions_money_or_legal=True))
+        rdb.rows.append(self._held_row("t2", confidence=0.3))
+        rdb.rows.append(self._held_row("t3", category="sponsor_or_sales"))
+        row = self._held_row("t4"); row["publicist_email"] = "x@apple.com"; rdb.rows.append(row)
+        rdb.rows.append(self._held_row("t5"))  # Patrick already answered this one by hand
+        threads = [make_thread(f"t{i}", "sam@reyespr.com", "pitch", "p") for i in range(1, 5)]
+        threads.append(make_thread("t5", "sam@reyespr.com", "pitch", "p", own_reply=True))
+        svc = FakeGmailService(threads)
+        summary = inbox.release_held(gmail=GmailClient(svc, OWNER), policy=load_policy())
+        assert summary["sent"] == 0 and summary["skipped"] == 5 and not svc.sent and not rdb.updates
+
+    def test_release_only_in_auto_mode(self, rdb, monkeypatch):
+        monkeypatch.setenv("PRODUCER_MODE", "draft")
+        rdb.rows.append(self._held_row("t1"))
+        svc = FakeGmailService([make_thread("t1", "sam@reyespr.com", "pitch", "p")])
+        summary = inbox.release_held(gmail=GmailClient(svc, OWNER), policy=load_policy())
+        assert summary["sent"] == 0 and not svc.sent
+
+    def test_workflow_input(self):
+        wf = yaml.safe_load((ROOT / ".github/workflows/nerra_producer_inbox.yml").read_text())
+        assert wf[True]["workflow_dispatch"]["inputs"]["release_held"]["type"] == "boolean"
+        assert "--release-held" in wf["jobs"]["inbox"]["steps"][-1]["run"]

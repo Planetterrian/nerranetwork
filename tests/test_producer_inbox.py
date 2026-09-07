@@ -157,6 +157,18 @@ class _Drafts:
             return {"id": f"draft{len(self.svc.drafted)}"}
         return _Call(_do)
 
+    def list(self, userId, maxResults=100):
+        return _Call(lambda: {"drafts": [
+            {"id": f"draft{i + 1}", "message": {"threadId": m.get("threadId")}}
+            for i, m in enumerate(self.svc.drafted) if m is not None]})
+
+    def delete(self, userId, id):
+        def _do():
+            idx = int(id.replace("draft", "")) - 1
+            self.svc.drafted[idx] = None
+            return {}
+        return _Call(_do)
+
 
 def decode_raw(body: Dict[str, Any]) -> str:
     raw = body["raw"]
