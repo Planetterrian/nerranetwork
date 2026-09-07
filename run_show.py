@@ -2606,6 +2606,11 @@ def run(args: argparse.Namespace) -> None:
                     metrics.record("script_rewrite_gate_reasons", _gate_info.get("reasons") or "")
                     metrics.record("script_rewrite_gate_reject_reason", _gate_info.get("reject_reason") or "")
                     metrics.record("script_rewrite_gate_rewrite_words", _gate_info.get("rewrite_words") or 0)
+                    metrics.record("script_rewrite_gate_original_words", _gate_info.get("original_words") or 0)
+                    metrics.record("script_rewrite_gate_entity_retention_before",
+                                   _gate_info.get("entity_retention_before"))
+                    metrics.record("script_rewrite_gate_entity_retention_after",
+                                   _gate_info.get("entity_retention_after"))
                     metrics.record("script_rewrite_gate_copied_sections_before",
                                    _gate_info.get("copied_sections_before") or 0)
                     metrics.record("script_rewrite_gate_copied_sections_after",

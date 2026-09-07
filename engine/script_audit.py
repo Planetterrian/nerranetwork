@@ -213,6 +213,7 @@ class ScriptAudit:
     repeated_fact_examples: List[str]
     copied_sections: List[str] = field(default_factory=list)
     hook_coverage: Optional[float] = None
+    entity_retention: Optional[float] = None
 
     @property
     def hook_orphaned(self) -> bool:
@@ -234,6 +235,8 @@ class ScriptAudit:
         if self.hook_coverage is not None:
             m["script_hook_coverage_pct"] = round(100.0 * self.hook_coverage, 1)
             m["script_hook_orphaned"] = self.hook_orphaned
+        if self.entity_retention is not None:
+            m["script_entity_retention_pct"] = round(100.0 * self.entity_retention, 1)
         return m
 
     def warnings(self) -> List[str]:
@@ -420,6 +423,14 @@ def hook_coverage(script_text: str, hook: str = "") -> Optional[float]:
     hook with fewer than four salient words). The opener is the supplied
     hook, else the first non-identity sentence of the script; the body
     is every other sentence except the opener's own restatements.
+
+    Sep 7 2026 note: a paraphrased body that swaps the opener's names for
+    descriptions ("Megapack" -> "the large battery packs", Tesla Ep598,
+    0.17) scores like an orphan. That is the entity-retention defect,
+    not a measurement error — widening the vocabulary to the hook's
+    digest paragraph was tried and lifted PT Ep175's genuine orphan to
+    0.31 on generic science words, so the measure stays hook-only and
+    the rewrite gate keeps the names instead.
     """
     sentences = _closing_cut(split_sentences(script_text))
     if not sentences:
@@ -447,6 +458,74 @@ def hook_coverage(script_text: str, hook: str = "") -> Optional[float]:
     if len(body_text.split()) < HOOK_MIN_BODY_WORDS:
         return None
     return len(hs & _salient(body_text)) / len(hs)
+
+
+# ---------------------------------------------------------------------------
+# Entity retention (Sep 7 2026)
+# ---------------------------------------------------------------------------
+
+_ENTITY_STOP = frozenset(
+    "the this that these those there then when while after before source sources read more top "
+    "news items takeover hot right now digest daily episode host patrick vancouver monday tuesday "
+    "wednesday thursday friday saturday sunday january february march april may june july august "
+    "september october november december for and but with from into over about what how why who "
+    "which where its not new key also here today weekly brief story stories section update updates "
+    "watch note quick hits things try week horizon summary spotlight deep dive counterpoint closing "
+    "hook title headline".split()
+)
+_SPACED_ACRONYM_RE = re.compile(r"\b([A-Z]) (?=[A-Z]\b)")
+
+
+def digest_entities(digest_text: str) -> Set[str]:
+    """Capitalised tokens of the digest — names, products, places, tickers.
+
+    Lower-cased, three letters or more, header/markdown/URL noise removed,
+    a small stop list of digest furniture words. This is the vocabulary a
+    paraphrase must NOT paraphrase.
+    """
+    mid: Set[str] = set()
+    initial: Set[str] = set()
+    for line in (digest_text or "").splitlines():
+        if _HEADER_RE.match(line):
+            continue
+        line = re.sub(r"\(https?://\S+\)|https?://\S+", "", line)
+        line = re.sub(r"\bSource:?\s*\S+", "", line)
+        line = _MD_DECOR_RE.sub("", line)
+        line = re.sub(r"^\s*(?:\d+[.)]|[-•])\s*", "", line)
+        for sent in _SENTENCE_SPLIT_RE.split(line):
+            toks = re.findall(r"\b[A-Z][A-Za-z0-9\-'’]{2,}\b", sent)
+            for i, tok in enumerate(toks):
+                low = re.sub(r"['’]s$", "", tok.lower())
+                if low in _ENTITY_STOP:
+                    continue
+                # A sentence-initial capital is ordinary English ("Volume
+                # production is…"); it counts only if it also appears
+                # capitalised mid-sentence somewhere in the digest.
+                if i == 0 and sent.lstrip().startswith(tok):
+                    initial.add(low)
+                else:
+                    mid.add(low)
+    return mid
+
+
+def entity_retention(script_text: str, digest_text: str) -> Optional[float]:
+    """Share (0-1) of the digest's named entities the script speaks.
+
+    Sep 7 2026: the first day of accepted rewrites kept 53-66% of the
+    digest's names on Tesla / M&A / Omni View against 77-84% the day
+    before — the model paraphrased proper nouns along with the prose.
+    Scripts spell acronyms letter by letter ("T S X"), so those are
+    re-joined before matching.
+    """
+    ents = digest_entities(digest_text)
+    if not ents or not script_text:
+        return None
+    joined = _SPACED_ACRONYM_RE.sub(r"\1", script_text)
+    have = {
+        re.sub(r"['’]s$", "", w.lower())
+        for w in re.findall(r"[A-Za-z][A-Za-z0-9\-'’]+", script_text + " " + joined)
+    }
+    return len(ents & have) / len(ents)
 
 
 def audit_script(
@@ -518,6 +597,7 @@ def audit_script(
             for c in sections
         ],
         hook_coverage=hook_coverage(script_text, hook),
+        entity_retention=entity_retention(script_text, digest_text) if digest_text else None,
     )
 
 

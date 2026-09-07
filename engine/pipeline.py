@@ -375,7 +375,16 @@ def _rewrite_gate_floor_words(orig_words, config):
     return int(REWRITE_GATE_MIN_KEEP_RATIO * base)
 
 
-def _script_rewrite_gate(podcast_script, digest_text, config, template_vars_for_script, tracker):
+# Sep 7 2026: the first day of accepted rewrites kept 53-66 % of the
+# digest's named entities on Tesla / M&A / Omni View against 77-84 % the
+# day before — "Megapack" became "the large battery packs". A rewrite
+# that loses more than this many points of the draft's entity retention
+# is rejected; the appendix tells the model names are not paraphrased.
+REWRITE_GATE_MAX_ENTITY_DROP = 0.15
+
+
+def _script_rewrite_gate(podcast_script, digest_text, config, template_vars_for_script, tracker,
+                         section_digest=None):
     """Re-run the script stage once when it failed the script standard;
     return a dict with the chosen ``script`` and the gate's metrics, or
     None when the gate is off / did not fire / failed (the original
@@ -388,7 +397,12 @@ def _script_rewrite_gate(podcast_script, digest_text, config, template_vars_for_
     Engineering Deep Dive 10/13 sentences copied); the cold open
     promises a story the body never covers (Planetterrian Ep175). The
     rewrite is kept only when it fixes what fired, copies no more than
-    before, and is not a truncation.
+    before, keeps the digest's names, and is not a truncation.
+
+    ``section_digest`` is the RAW digest (markdown headers intact) for the
+    section test; ``digest_text`` is what the script prompt received —
+    run_show's podcast copy strips the ``#`` markers, so on Sep 7 the
+    section test read zero sections on every show.
     """
     try:
         threshold = float(getattr(config.llm, "script_rewrite_gate_overlap_pct", 0) or 0)
@@ -399,12 +413,14 @@ def _script_rewrite_gate(podcast_script, digest_text, config, template_vars_for_
     try:
         from engine.script_audit import (
             HOOK_ORPHAN_MAX_COVERAGE, copied_sections, copied_sentences,
-            digest_overlap, hook_coverage,
+            digest_overlap, entity_retention, hook_coverage,
         )
         hook = str((template_vars_for_script or {}).get("hook") or "")
+        section_src = section_digest or digest_text
         before = digest_overlap(podcast_script, digest_text)
-        sections_before = copied_sections(podcast_script, digest_text)
+        sections_before = copied_sections(podcast_script, section_src)
         hook_before = hook_coverage(podcast_script, hook)
+        ents_before = entity_retention(podcast_script, section_src)
         reasons = []
         if before is not None and before >= threshold:
             reasons.append("overlap")
@@ -412,15 +428,17 @@ def _script_rewrite_gate(podcast_script, digest_text, config, template_vars_for_
             reasons.append("section")
         if hook_before is not None and hook_before < HOOK_ORPHAN_MAX_COVERAGE:
             reasons.append("hook")
+        orig_words = len((podcast_script or "").split())
         base = {
             "before_pct": round(before or 0.0, 1),
             "copied_sections_before": len(sections_before),
             "hook_coverage_before": None if hook_before is None else round(hook_before, 2),
+            "entity_retention_before": None if ents_before is None else round(ents_before, 2),
+            "original_words": orig_words,
         }
         if not reasons:
             return {"script": podcast_script, "fired": False, **base}
 
-        orig_words = len((podcast_script or "").split())
         floor_words = _rewrite_gate_floor_words(orig_words, config)
         parts = ["REWRITE REQUIRED — your previous draft failed the script standard:"]
         if "overlap" in reasons:
@@ -448,9 +466,13 @@ def _script_rewrite_gate(podcast_script, digest_text, config, template_vars_for_
             )
         parts.append(
             "Write the whole script again in your own spoken sentences from the same "
-            "facts. Keep every fact, every number, every name and every required anchor "
-            "phrase; keep the identity line and the closing block exactly as supplied. "
-            f"The rewrite must run at least {floor_words} words (the draft was {orig_words}) "
+            "facts. Keep every fact and every number. Keep every NAME exactly as the "
+            "digest spells it — products, models, versions, places, companies, people, "
+            "tickers, programs — paraphrase the sentences, never the names: a listener "
+            "wants to hear Megapack, not 'the large battery packs'. Keep every required "
+            "anchor phrase, and the identity line and the closing block exactly as "
+            f"supplied. Match the draft's length: about {orig_words} words, the same "
+            f"stories at the same depth (a rewrite under {floor_words} words is discarded) "
             "— do not shorten the episode and do not add framing; change the WORDING, "
             "sentence by sentence, so no run of eight consecutive words matches the digest."
         )
@@ -458,8 +480,9 @@ def _script_rewrite_gate(podcast_script, digest_text, config, template_vars_for_
         from engine.generator import generate_podcast_script as _gen
         rewritten = _gen(template_vars_for_script, config, tracker=tracker, prompt_appendix=appendix)
         after = digest_overlap(rewritten or "", digest_text)
-        sections_after = copied_sections(rewritten or "", digest_text)
+        sections_after = copied_sections(rewritten or "", section_src)
         hook_after = hook_coverage(rewritten or "", hook)
+        ents_after = entity_retention(rewritten or "", section_src)
         new_words = len((rewritten or "").split())
 
         reject = None
@@ -467,6 +490,9 @@ def _script_rewrite_gate(podcast_script, digest_text, config, template_vars_for_
             reject = "empty"
         elif new_words < floor_words:
             reject = "truncated"
+        elif (ents_before is not None and ents_after is not None
+              and ents_after < ents_before - REWRITE_GATE_MAX_ENTITY_DROP):
+            reject = "names_lost"
         elif "overlap" in reasons and not after < before:
             reject = "still_copies"
         elif "overlap" not in reasons and after >= threshold:
@@ -480,10 +506,11 @@ def _script_rewrite_gate(podcast_script, digest_text, config, template_vars_for_
         accepted = reject is None
         logger.info(
             "Script rewrite gate [%s]: digest-verbatim %.0f%% -> %.0f%%, copied sections "
-            "%d -> %d, hook coverage %s -> %s (%d -> %d words, floor %d) — %s",
+            "%d -> %d, hook coverage %s -> %s, entity retention %s -> %s "
+            "(%d -> %d words, floor %d) — %s",
             ",".join(reasons), before or 0.0, after if after is not None else -1.0,
             len(sections_before), len(sections_after), hook_before, hook_after,
-            orig_words, new_words, floor_words,
+            ents_before, ents_after, orig_words, new_words, floor_words,
             "rewrite accepted" if accepted else f"original kept ({reject})",
         )
         return {
@@ -492,6 +519,7 @@ def _script_rewrite_gate(podcast_script, digest_text, config, template_vars_for_
             "after_pct": round(after, 1) if after is not None else None,
             "copied_sections_after": len(sections_after),
             "hook_coverage_after": None if hook_after is None else round(hook_after, 2),
+            "entity_retention_after": None if ents_after is None else round(ents_after, 2),
             "accepted": accepted, "reject_reason": reject,
             "rewrite_words": new_words, "floor_words": floor_words,
         }
@@ -815,6 +843,7 @@ def run_generation_phase(
     _gate = _script_rewrite_gate(
         podcast_script, template_vars_for_script.get("digest", ""), config,
         template_vars_for_script, tracker,
+        section_digest=x_thread,  # raw digest: the podcast copy has no headers
     )
     if _gate:
         podcast_script = _gate.pop("script")

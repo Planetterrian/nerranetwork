@@ -1926,6 +1926,27 @@ cause was mechanical, not the host's taste, and the rules below bind:
   pronunciation handler ("USninety-five dollars" on air) — the `C$` path
   now handles `US$`/`USD$`; MAB keeps every number the briefing gives.
   Guards: `TestSep6*` in `tests/test_delivery_pass_2026_09_05.py`.
+- **Sep 7 readout (first slate with the section/hook gate live; "Sep 7
+  readout" in the review doc):** the gate fired on all nine gated shows
+  and every rewrite was accepted — first drafts still copy 42–66% daily
+  and the retry brings them to 0–5%, so **the gate, not the prompt, is
+  what keeps scripts written**; budget one extra script call per gated
+  episode. Two side effects, both fixed: (1) **rewrites paraphrased the
+  NAMES** — "Megapack 3" became "the latest version of the large battery
+  packs", "Raptor V3" was never spoken in the body; `script_audit.
+  entity_retention` (share of the digest's capitalised mid-sentence
+  tokens the script speaks) fell Tesla 73→53%, M&A 81→52%, OV 100→65%.
+  The gate now rejects a rewrite more than 15 points under its draft
+  (`reject_reason=names_lost`, `REWRITE_GATE_MAX_ENTITY_DROP`) and the
+  appendix says names are never paraphrased. (2) **Rewrites shrank to
+  the stated floor** (Tesla 985 words on a 1,400 target) — the appendix
+  now anchors on the draft's length and records
+  `script_rewrite_gate_original_words`. Also: the section test had read
+  zero sections everywhere because run_show's podcast digest strips the
+  `#` markers — the RAW digest is passed as `section_digest`; a glued
+  `Nk` tail is a name ("Nutritionfive thousand" aired), GPU model numbers
+  speak as pairs ("RTX fifty ninety"), the subreddit handler no longer
+  doubles "the". Guards: `TestSep7*`.
 - Every prompt-side item above is landmine-#17 A/B; the engine modules are
   removal-only or read-only and are not.
 
