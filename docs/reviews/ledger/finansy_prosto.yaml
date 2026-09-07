@@ -180,4 +180,102 @@ reviews:
       ab_listen_required: false
       rationale: Every behavioral fix needs a drift-guard per playbook.
     agent_cost_usd: 0.101
+  - date: '2026-09-07'
+    pr: null
+    doc: docs/reviews/finansy_prosto_review_2026_09_07.md
+    generated_by: grok-4.5
+    summary: FP still ships chronic under-length (10/10 below 1000w), live Russian source-scaffold and section-chapter collapses the Aug-6 proposals never fixed, plus unchanged boilerplate tics and off-niche Коротко—re-propose digest-side length + scrub/chapter/de-seed only; escalate length to operator if digest lever is declined again.
+    scored_prior_predictions:
+    - metric: spoken Russian/English source-scaffold lines in FP _tts.txt (Источник информации / Информация размещена на / Source / Сорс)
+      verdict: miss
+      evidence: Scrub never shipped; ep75 «Источник информации BNN…» ×3, ep76 «Источник Медузы», ep73/79/82 «Информация размещена/доступна на …» still on air
+    - metric: median FP _tts.txt words, last ~5 episodes after digest-side lever
+      verdict: miss
+      evidence: Lever never merged; ep78–82 words 732/768/634/741/938, median ~741w, 10/10 still under 1000w
+    - metric: podcast_expand_below_target firings / cost spikes on FP
+      verdict: miss
+      evidence: YAML still podcast_expand_below_target true; avg $0.249/ep, ep82 $0.447 expand-burn signature
+    - metric: episodes using «а теперь моя любимая часть» OR «Подруга спросила меня вчера» OR «не так уж и сложно, правда?» shapes
+      verdict: miss
+      evidence: De-seed never applied; ep73 all three shapes; ep74–76 keep любимая часть ± подруга/не так уж
+    - metric: Коротко и ясно items with no household-finance hook (pure tech/corp/geopolitics)
+      verdict: miss
+      evidence: ep74 bosses RTO + Meta–Anthropic; ep75 Chinese AI freeze; ep76 Rostov storm + Japan delegation still shipped
+    - metric: ep chapters including both Практические советы and Коротко when those segments exist in transcript
+      verdict: miss
+      evidence: chapters_ep077/079/081.json still 3-chapter collapses; ep80/82 body-text titles; YAML patterns never broadened
+    - metric: spoken source-scaffold lines («Сорс …» / «Source …») in _tts.txt
+      verdict: miss
+      evidence: July-2 Latin scrub held but Russian equivalents replaced it; still open as Aug-6 miss
+    shipped: []
+    deferred:
+    - 'Operator: resolve cadence contradiction (YAML «ежедневный» vs CLAUDE.md Monday vs historical even-days; actual ep73–82 roughly weekly).'
+    - 'Operator: YOUTUBE_REFRESH_TOKEN_RU so RU YouTube uploads are real.'
+    - 'Operator A/B: fully localized AI-disclosure wording on Olya (still garble-prone «с помощью и синтеза голоса» / ИИ drop).'
+    - 'If digest-side lever is declined again OR misses length after a full post-merge window: operator product decision (accept ~5–6 min vs restructure segments) — do not re-propose podcast expand/word-floor.'
+    - 'Optional later: stabilize YouTube CTA spoken brand as pure Cyrillic «Нерра РУ» if handle garble persists after source scrub (A/B; no phonetic respelling).'
+    - 'Optional: first-use Russian expansion of RRSP/TFSA/FHSA then Russian short name (A/B; no letter-salad Latin).'
+    - Closing-pool disclaimer already on most eps; only chase short closer path (ep76/78/80-style) if advisor line drops after other prompt edits.
+    predictions:
+    - metric: spoken Russian source-scaffold lines in FP _tts.txt (Источник… / Информация размещена|доступна|поступила… / Подробности доступны на / История опубликована на)
+      baseline: ≥6/10 episodes in ep73–82 window with explicit scaffold or outlet-attribution lines in Коротко
+      expected: 0 in episodes produced after scrub extension merges
+      verdict: pending
+      evidence: null
+    - metric: FP episodes whose chapters omit Практические советы or Коротко when those segments exist in transcript
+      baseline: ep77/79/81 full collapse; ep78 missing practical; ep80/82 mis-titled markers
+      expected: 0 collapses on full five-segment scripts after pattern broaden; titles match section names not body clauses
+      verdict: pending
+      evidence: null
+    - metric: median FP _tts.txt words, last ~5 episodes after digest-side lever merges
+      baseline: median ~741w (ep78–82); 10/10 below 1000w
+      expected: median ≥950w and ≥3/5 episodes ≥1000w on normal news days; not lower than baseline — if lever not shipped, score n/a-lever-not-shipped next pass
+      verdict: pending
+      evidence: null
+    - metric: podcast_expand_below_target true and expand-retry cost spikes on FP
+      baseline: flag true; avg $0.249/ep, ep82 $0.447
+      expected: flag false post-merge; no podcast-expand cost signature; avg $/ep back near pre-spike unless digest expand is doing real work
+      verdict: pending
+      evidence: null
+    - metric: episodes using «а теперь моя любимая часть» OR «Подруга спросила меня вчера» OR «не так уж и сложно, правда?» shapes
+      baseline: ep73–76 still carry the cluster; de-seed never applied
+      expected: 0/10 for all three shapes in post-merge window (successor tic may appear—score separately)
+      verdict: pending
+      evidence: null
+    - metric: Коротко и ясно items with no household-finance hook in sentence one
+      baseline: ≥1 off-niche item in ep74,75,76
+      expected: 0 off-niche items per episode post-relevance rule
+      verdict: pending
+      evidence: null
+    - metric: successor deep-dive/transition tic after de-seed (rhetorical Q or «по полочкам»/equivalent cute closer)
+      baseline: not yet dominant; prior cluster still live
+      expected: track only — if ≥4/10 adopt one new shape, next pass de-seeds that shape (no prompt example phrase)
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: engine/generator.py
+      kind: code
+      ab_listen_required: false
+      rationale: 'Aug-6 miss: Latin scrub left Russian scaffold on air (ep75/76/73/79/82). Deterministic high-yield garble class; no A/B.'
+    - file: shows/finansy_prosto.yaml
+      kind: config
+      ab_listen_required: false
+      rationale: 'ep77/79/81 collapse and ep78/80/82 mis-markers: body uses «коротко о других новостях», «практическим шагам», «практической стороне» which current regex misses. Metadata-only.'
+    - file: shows/finansy_prosto.yaml
+      kind: config
+      ab_listen_required: true
+      rationale: 'Length miss ×2 at podcast/digest-depth prompts; network policy = digest-substrate only. FP last podcast-expand holdout. Flipping expand off stops $0.25–0.45 burn; digest floor is the real ceiling. Net audio longer/richer → operator A/B-listen. If declined or misses after full window: operator product decision, do not re-file.'
+    - file: shows/prompts/fp_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: July-2/Aug-6 deferred de-seed + relevance + non-repeat never applied; ep73–76 still tic; ep74–76 off-niche Коротко; ep76/80 deep-dive re-teaches. Shape ban + memory per playbook.
+    - file: shows/prompts/fp_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Podcast cannot hit 1000w from a ~700w digest; June depth steer alone missed. Digest is the lever; A/B because spoken length/content change.
+    - file: tests/test_finansy_prosto_quality_pass.py
+      kind: code
+      ab_listen_required: false
+      rationale: Every behavioral fix needs a drift-guard per playbook.
+    agent_cost_usd: 0.1074
 do_not_retry: []
