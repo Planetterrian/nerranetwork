@@ -138,11 +138,20 @@ class BookVolume:
     #: the pamphlet-thin numbered volumes; the collected editions are
     #: the store products.
     unlisted: bool = False
-    #: True for a combined/best-of volume that REUSES episodes already
-    #: published in the numbered volumes. Anthologies are exempt from the
-    #: contiguous/disjoint coverage invariant and from the planner's
-    #: covered-set arithmetic concerns; full_title drops the
-    #: ", Volume N" suffix.
+    #: RETIRED (WO-12, Sept 2026): a superseded book — the 20-chapter
+    #: vol1-vol4 / vol1-vol3 configs that became strict subsets of the
+    #: series' Volume 1. Never listed anywhere, hidden from the Books
+    #: page and the cross-promotion page, ignored by the planner (its
+    #: episodes do not count as "already in a book" and its number does
+    #: not advance the next volume number). Config + R2 objects stay for
+    #: provenance. Implies unlisted.
+    retired: bool = False
+    #: True for a curated volume: reading order is editorial (not
+    #: broadcast order), it may carry parts, and it may reuse any
+    #: episode. Since WO-12 it has NO effect on the title or the cover
+    #: badge — a curated Volume 1 is still "Series, Volume 1"; only a
+    #: volume with no number (volume_number 0) is a bare-titled
+    #: collected edition.
     anthology: bool = False
     #: Cover re-roll knob (WO-7). cover_art_prompt() is deterministic —
     #: same style + volume + chapter titles returns the byte-identical
@@ -161,9 +170,11 @@ class BookVolume:
 
     @property
     def full_title(self) -> str:
-        """Store-listing title: series title + volume number (bare title
-        for anthologies — a combined edition is not Volume N)."""
-        if self.anthology:
+        """Store-listing title: series title + volume number. Only a
+        volume with no number at all (volume_number 0) is a bare-titled
+        collected edition; a curated anthology WITH a number is a
+        numbered volume of its series (WO-12)."""
+        if not self.volume_number:
             return self.title
         return f"{self.title}, Volume {self.volume_number}"
 
@@ -178,6 +189,12 @@ class BookVolume:
 
 SERIES_DIR = ROOT / "books" / "series"
 VOLUMES_DIR = ROOT / "books" / "volumes"
+
+#: Chapters per planner-cut volume when a series config does not say
+#: (WO-12). 60, deliberately not 20: see load_series.
+DEFAULT_VOLUME_CHAPTERS = 60
+MIN_VOLUME_CHAPTERS = 10
+MAX_VOLUME_CHAPTERS = 80
 
 #: Series-level keys a volume inherits. ``subtitle`` is derived from
 #: ``subtitle_template`` at load time so per-volume story counts read
@@ -195,22 +212,26 @@ def load_series(slug_or_path: str | Path) -> Dict:
     if not path.suffix:
         path = SERIES_DIR / f"{slug_or_path}.yaml"
     data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-    required = ("show_slug", "show_name", "series_title", "author",
-                "volume_size")
+    required = ("show_slug", "show_name", "series_title", "author")
     missing = [k for k in required if not data.get(k)]
     if missing:
         raise ValueError(f"series config {path} missing fields: {missing}")
-    size = int(data["volume_size"])
-    # Band widened 10-20 -> 10-60 (Aug 2026, operator-directed): the
-    # 20-chapter volumes the planner cut came out at 12-24k words —
-    # pamphlet-length at store prices. Future auto-planned volumes are
-    # book-length annual collections (volume_size ~50 => ~40-55k words
-    # at current chapter lengths).
-    if not 10 <= size <= 60:
+    # Chapters per planner-cut volume is a PRODUCT decision set once per
+    # series (WO-12, Sept 2026). ``volume_chapters`` is the key;
+    # ``volume_size`` is honored as a legacy alias; absent = the default
+    # below — never 20 (the 20-chapter volumes came out pamphlet-thin,
+    # ~5x market rate per word at $4.99; Volume 1 at 73 chapters / $7.99
+    # is the healthy shape).
+    raw = data.get("volume_chapters", data.get("volume_size"))
+    size = int(raw) if raw not in (None, "") else DEFAULT_VOLUME_CHAPTERS
+    if not MIN_VOLUME_CHAPTERS <= size <= MAX_VOLUME_CHAPTERS:
         raise ValueError(
-            f"series {data['show_slug']}: volume_size {size} outside the "
-            "10-60 stories-per-volume band"
+            f"series {data['show_slug']}: volume_chapters {size} outside "
+            f"the {MIN_VOLUME_CHAPTERS}-{MAX_VOLUME_CHAPTERS} "
+            "chapters-per-volume band"
         )
+    data["volume_chapters"] = size
+    data["volume_size"] = size  # legacy readers
     return data
 
 
@@ -335,24 +356,57 @@ def _available_episode_numbers(series: Dict) -> List[int]:
     return sorted(nums)
 
 
-def _episodes_already_in_volumes(show_slug: str) -> set:
-    covered: set = set()
+def _live_volume_configs(show_slug: str) -> List[Dict]:
+    """Every non-retired volume config of a series (raw YAML dicts).
+
+    Retired volumes (WO-12) are superseded books: their episodes do not
+    count as "already in a book" and their numbers do not advance the
+    series — otherwise the retired 20-chapter vol4 would make the next
+    UC volume "Volume 5" and its episodes would never be re-cut.
+    """
+    out: List[Dict] = []
     for p in sorted(VOLUMES_DIR.glob("*.yaml")):
         data = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
         slug = data.get("show_slug") or data.get("series", "")
-        if slug == show_slug:
-            covered.update(int(e) for e in data.get("episodes", []))
+        if slug == show_slug and not data.get("retired"):
+            data["_path"] = p
+            out.append(data)
+    return out
+
+
+def _episodes_already_in_volumes(show_slug: str) -> set:
+    covered: set = set()
+    for data in _live_volume_configs(show_slug):
+        covered.update(int(e) for e in data.get("episodes", []))
     return covered
 
 
 def _max_volume_number(show_slug: str) -> int:
     highest = 0
-    for p in sorted(VOLUMES_DIR.glob("*.yaml")):
-        data = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
-        slug = data.get("show_slug") or data.get("series", "")
-        if slug == show_slug:
-            highest = max(highest, int(data.get("volume_number", 0)))
+    for data in _live_volume_configs(show_slug):
+        highest = max(highest, int(data.get("volume_number", 0)))
     return highest
+
+
+def plan_preview(series_slug: str) -> Dict:
+    """What the planner WOULD do next, whether or not a full volume is
+    ready — the dry-run readout (WO-12): next volume number, the first
+    uncollected episode, how many are pending and how many a volume
+    needs. ``ready`` is True when plan_next_volumes would cut one."""
+    series = load_series(series_slug)
+    size = int(series["volume_chapters"])
+    covered = _episodes_already_in_volumes(series["show_slug"])
+    excluded = {int(e) for e in series.get("excluded_episodes", []) or []}
+    pending = [n for n in _available_episode_numbers(series)
+               if n not in covered and n not in excluded]
+    return {
+        "series": series_slug,
+        "next_volume_number": _max_volume_number(series["show_slug"]) + 1,
+        "first_episode": pending[0] if pending else None,
+        "pending_episodes": pending,
+        "volume_chapters": size,
+        "ready": len(pending) >= size,
+    }
 
 
 def plan_next_volumes(series_slug: str, *, write: bool = True) -> List[Path]:
@@ -365,7 +419,7 @@ def plan_next_volumes(series_slug: str, *, write: bool = True) -> List[Path]:
     Returns the volume YAML paths it wrote (or would write).
     """
     series = load_series(series_slug)
-    size = int(series["volume_size"])
+    size = int(series["volume_chapters"])
     covered = _episodes_already_in_volumes(series["show_slug"])
     # Episodes editorially excluded from BOOKS (the podcast episodes stay
     # published). Without this, an episode removed from a volume config
@@ -377,8 +431,24 @@ def plan_next_volumes(series_slug: str, *, write: bool = True) -> List[Path]:
 
     written: List[Path] = []
     next_num = _max_volume_number(series["show_slug"]) + 1
+    # Read the live volumes' episodes afresh for the overlap guard so it
+    # does not share the coverage arithmetic it is guarding.
+    live_episodes = {int(e) for d in _live_volume_configs(series["show_slug"])
+                     for e in d.get("episodes", [])}
     while len(pending) >= size:
         block, pending = pending[:size], pending[size:]
+        # Two invariants the planner can never break (WO-12 drift
+        # guards): a volume is numbered from 1, and its episodes never
+        # overlap a live (non-retired) volume of the series.
+        if next_num < 1:
+            raise RuntimeError(
+                f"planner would emit volume {next_num} for {series_slug} "
+                "— volumes are numbered from 1")
+        overlap = sorted(set(block) & live_episodes)
+        if overlap:
+            raise RuntimeError(
+                f"planner would put episodes {overlap} of {series_slug} "
+                "into a second live volume")
         vol_id = f"{series_slug}_vol{next_num}"
         out = VOLUMES_DIR / f"{vol_id}.yaml"
         if out.exists():
@@ -642,6 +712,8 @@ p { margin: 0 0 0.9em; text-align: justify; }
 .titlepage { text-align: center; margin-top: 20%; }
 .titlepage h1 { font-size: 2em; }
 .titlepage .subtitle { font-style: italic; margin-top: 1em; }
+.titlepage .volnum { margin-top: 1.6em; letter-spacing: 0.2em;
+                     text-transform: uppercase; color: #666; }
 .titlepage .author { margin-top: 3em; letter-spacing: 0.1em;
                      text-transform: uppercase; }
 .partpage { text-align: center; margin-top: 30%; }
@@ -713,6 +785,8 @@ def _title_page_xhtml(volume: BookVolume) -> str:
     ]
     if volume.subtitle:
         body.append(f'<p class="subtitle">{xml_escape(volume.subtitle)}</p>')
+    if volume.volume_number:
+        body.append(f'<p class="volnum">Volume {volume.volume_number}</p>')
     body.append(f'<p class="author">{xml_escape(volume.author)}</p>')
     body.append("</div>")
     return _xhtml(volume.title, "\n".join(body), volume.language)
@@ -862,6 +936,8 @@ def _other_books(volume: BookVolume) -> List[Dict]:
         vid = entry.get("volume_id", "")
         if not vid or vid == volume.volume_id:
             continue
+        if entry.get("retired"):
+            continue  # superseded books are never promoted (WO-12)
         out.append(entry)
     return out
 

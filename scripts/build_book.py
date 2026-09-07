@@ -57,6 +57,7 @@ from engine.book_compiler import (  # noqa: E402
     generate_cover,
     load_volume,
     plan_next_volumes,
+    plan_preview,
     update_catalog,
 )
 
@@ -127,8 +128,16 @@ def _unbuilt_volume_ids() -> list:
         for v in json.loads(catalog.read_text(encoding="utf-8")).get(
                 "volumes", []):
             built[v.get("volume_id")] = bool(v.get("files"))
-    return [p.stem for p in sorted((ROOT / "books" / "volumes").glob("*.yaml"))
-            if not built.get(p.stem)]
+    import yaml as _yaml
+    out = []
+    for p in sorted((ROOT / "books" / "volumes").glob("*.yaml")):
+        if built.get(p.stem):
+            continue
+        data = _yaml.safe_load(p.read_text(encoding="utf-8")) or {}
+        if data.get("retired"):
+            continue  # superseded books are never (re)built (WO-12)
+        out.append(p.stem)
+    return out
 
 
 def _r2_client():
@@ -215,6 +224,11 @@ def main() -> int:
                          "volumes are built too.")
     ap.add_argument("--build-planned", action="store_true",
                     help="build every volume the planner just created")
+    ap.add_argument("--plan-preview", action="store_true",
+                    help="dry run: print what the planner would cut next "
+                         "for each --plan-series (next volume number, "
+                         "first uncollected episode, pending count) and "
+                         "exit without planning or building anything")
     ap.add_argument("--skip-audio", action="store_true",
                     help="build the ebook only")
     ap.add_argument("--skip-images", action="store_true",
@@ -234,6 +248,10 @@ def main() -> int:
     args = ap.parse_args()
 
     to_build = []
+    if args.plan_preview:
+        for series_slug in args.plan_series:
+            print(json.dumps(plan_preview(series_slug), indent=2))
+        return 0
     for series_slug in args.plan_series:
         planned = plan_next_volumes(series_slug)
         logger.info("series %s: planned %d new volume(s)", series_slug,
@@ -392,6 +410,11 @@ def _build_one(volume_id: str, args) -> int:
         "volume_number": volume.volume_number,
         "title": volume.title,
         "full_title": volume.full_title,
+        # Storefront visibility flags travel with the entry so the Books
+        # page and the cross-promotion page can honor them from the
+        # catalog alone (WO-12).
+        "unlisted": bool(volume.unlisted or volume.retired),
+        "retired": bool(volume.retired),
         "subtitle": volume.subtitle,
         "author": volume.author,
         "description": volume.description,

@@ -15,6 +15,7 @@ import zipfile
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
+import pytest
 import yaml
 
 _ROOT = Path(__file__).resolve().parent.parent
@@ -421,45 +422,61 @@ class TestSeriesInheritance:
         for slug in slugs:
             s = load_series(slug)
             assert s["author"] == "Patrick Novak"
-            # Band widened to 10-60 (Aug 2026 bigger-books shift):
-            # future planner-cut volumes are book-length.
-            assert 10 <= int(s["volume_size"]) <= 60
+            # WO-12: chapters per planner-cut volume is a series-level
+            # product decision (volume_chapters), 60 on both series.
+            assert int(s["volume_chapters"]) == 60
+            assert s["volume_size"] == s["volume_chapters"]  # legacy alias
 
-    def test_volume_size_outside_band_raises(self, tmp_path):
-        from engine.book_compiler import load_series
+    def test_volume_chapters_band_default_and_alias(self, tmp_path):
+        from engine.book_compiler import (DEFAULT_VOLUME_CHAPTERS,
+                                          load_series)
+        head = ("show_slug: x\nshow_name: X\nseries_title: X\n"
+                "author: A\n")
         bad = tmp_path / "s.yaml"
-        bad.write_text(
-            "show_slug: x\nshow_name: X\nseries_title: X\n"
-            "author: A\nvolume_size: 99\n", encoding="utf-8")
-        try:
+        bad.write_text(head + "volume_chapters: 99\n", encoding="utf-8")
+        with pytest.raises(ValueError):
             load_series(bad)
-        except ValueError:
-            pass
-        else:
-            raise AssertionError("volume_size 50 must be rejected (10-20)")
+        # Absent = 60 (never the old 20-chapter pamphlet size).
+        absent = tmp_path / "a.yaml"
+        absent.write_text(head, encoding="utf-8")
+        assert load_series(absent)["volume_chapters"] == 60
+        assert DEFAULT_VOLUME_CHAPTERS == 60
+        # The pre-WO-12 key still reads.
+        legacy = tmp_path / "l.yaml"
+        legacy.write_text(head + "volume_size: 25\n", encoding="utf-8")
+        assert load_series(legacy)["volume_chapters"] == 25
 
 
 class TestVolumePlanner:
     def test_planner_is_currently_drained(self):
-        """Both series' complete volumes are already cut; the tails
-        (UC 81-93, FPD 61-74) are below volume_size and must wait."""
+        """Volume 1 of each series is cut; the tails (UC from ep 81,
+        FPD from ep 61) are below volume_chapters (60) and must wait —
+        see TestWO12SeriesVolumes in test_book_release_pass for the
+        preview of what the planner cuts next."""
         from engine.book_compiler import plan_next_volumes
         for slug in ("unintended_consequences", "first_principles"):
             assert plan_next_volumes(slug, write=False) == []
 
     def test_committed_volumes_are_contiguous_and_disjoint(self):
+        """The LIVE volumes of a series (retired superseded books skipped
+        — WO-12) partition the collected range: no episode in two live
+        volumes, and coverage contiguous from 1 minus the series-level
+        excluded_episodes. A curated volume may order its episodes
+        editorially, so the check is on sets, not sequence."""
         from engine.book_compiler import VOLUMES_DIR
         by_show = {}
         for p in sorted(VOLUMES_DIR.glob("*.yaml")):
             data = yaml.safe_load(p.read_text(encoding="utf-8"))
-            if data.get("anthology"):
-                continue  # combined editions reuse episodes by design
+            if data.get("retired"):
+                continue
             by_show.setdefault(data.get("series"), []).extend(
                 data["episodes"])
         from engine.book_compiler import load_series
+        assert set(by_show) == {"unintended_consequences",
+                                "first_principles"}
         for slug, eps in by_show.items():
             assert len(eps) == len(set(eps)), f"{slug}: episode in 2 volumes"
-            assert eps == sorted(eps)
+            eps = sorted(eps)
             # Since WO-3, coverage is contiguous from 1 MINUS the
             # series-level excluded_episodes (book-inclusion cuts —
             # the podcast episodes stay published).
