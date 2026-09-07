@@ -306,10 +306,15 @@ class TestWO11ShipBlockers:
         for name in ("unintended_consequences_collected",
                      "first_principles_collected"):
             vol = load_volume(VOLS / f"{name}.yaml")
-            badge = cover_badge_text(vol)
-            assert badge == "COLLECTED EDITION", name
+            # WO-12: the former collected editions ARE Volume 1.
+            assert cover_badge_text(vol) == "VOLUME 1", name
         numbered = load_volume(VOLS / "unintended_consequences_vol1.yaml")
         assert cover_badge_text(numbered) == "VOLUME 1"
+        # A volume with no number at all is the only bare-titled case.
+        import dataclasses
+        assert cover_badge_text(
+            dataclasses.replace(numbered, volume_number=0)
+        ) == "COLLECTED EDITION"
         # the invariant itself: no badge string ever contains a bare 0
         for name in sorted(p.stem for p in VOLS.glob("*.yaml")):
             vol = load_volume(VOLS / f"{name}.yaml")
@@ -454,10 +459,10 @@ class TestBiggerBooksShift:
     """The forward pipeline can never cut pamphlets again, and the
     storefront sells only the collected editions."""
 
-    def test_series_volume_size_is_book_length(self):
+    def test_series_volume_chapters_is_book_length(self):
         from engine.book_compiler import load_series
         for slug in ("unintended_consequences", "first_principles"):
-            assert int(load_series(slug)["volume_size"]) == 50, slug
+            assert int(load_series(slug)["volume_chapters"]) == 60, slug
 
     def test_thin_numbered_volumes_are_unlisted(self):
         for name in ("unintended_consequences_vol1",
@@ -469,6 +474,7 @@ class TestBiggerBooksShift:
             data = yaml.safe_load(
                 (VOLS / f"{name}.yaml").read_text(encoding="utf-8"))
             assert data.get("unlisted") is True, name
+            assert data.get("retired") is True, name  # WO-12
 
     def test_collected_editions_are_listed(self):
         for name in ("unintended_consequences_collected",
@@ -513,8 +519,9 @@ class TestWO6CombinedVolume:
 
     def test_anthology_identity_and_price(self, built):
         vol, _, _ = built
-        assert vol.anthology and vol.volume_number == 0
-        assert vol.full_title == "Unintended Consequences: The Collected Edition"
+        # WO-12: curated (anthology) AND Volume 1 of the series.
+        assert vol.anthology and vol.volume_number == 1
+        assert vol.full_title == "Unintended Consequences, Volume 1"
         assert float(vol.price_usd) == 7.99
         assert vol.subtitle.startswith("Seventy-three ")
 
@@ -787,3 +794,212 @@ def _uc_chapter(ep: int):
     vol = load_volume(VOLS / "unintended_consequences_vol1.yaml")
     md = find_digest(vol, ep).read_text(encoding="utf-8")
     return parse_digest_to_chapter(md, number=1, episode_num=ep)
+
+
+class TestWO12SeriesVolumes:
+    """WO-12 (Sept 2026): the collected editions are Volume 1 of an
+    ongoing series, the 20-chapter books are retired, and the planner
+    cuts Volume 2 next — never volume 0, never overlapping a live
+    volume."""
+
+    COLLECTED = ("unintended_consequences_collected",
+                 "first_principles_collected")
+    RETIRED = ("unintended_consequences_vol1", "unintended_consequences_vol2",
+               "unintended_consequences_vol3", "unintended_consequences_vol4",
+               "first_principles_vol1", "first_principles_vol2",
+               "first_principles_vol3")
+
+    # ---- Part A: renumber + retitle ----------------------------------
+    def test_collected_editions_are_volume_one(self):
+        from engine.book_art import cover_badge_text
+        from engine.book_compiler import load_volume
+        expect = {
+            "unintended_consequences_collected": (
+                "Unintended Consequences, Volume 1", "Seventy-three "),
+            "first_principles_collected": (
+                "First Principles, Volume 1", "Fifty-eight "),
+        }
+        for vid, (full, sub) in expect.items():
+            vol = load_volume(VOLS / f"{vid}.yaml")
+            assert vol.volume_number == 1
+            assert vol.full_title == full
+            assert vol.title == full.split(",")[0]
+            assert vol.subtitle.startswith(sub)
+            assert cover_badge_text(vol) == "VOLUME 1"
+            assert vol.anthology and not vol.retired and not vol.unlisted
+
+    @pytest.mark.parametrize("vid", COLLECTED)
+    def test_no_collected_edition_text_anywhere_in_epub(self, vid, tmp_path):
+        import zipfile
+        from engine.book_compiler import (build_epub, collect_chapters,
+                                          load_volume)
+        vol = load_volume(VOLS / f"{vid}.yaml")
+        epub = build_epub(vol, collect_chapters(vol), tmp_path / "v1.epub")
+        with zipfile.ZipFile(epub) as z:
+            docs = {n: z.read(n).decode("utf-8") for n in z.namelist()
+                    if n.endswith((".xhtml", ".opf", ".ncx", ".css"))}
+        for name, text in docs.items():
+            assert "Collected Edition" not in text, name
+            assert "collected edition" not in text.lower(), name
+        opf = docs["OEBPS/package.opf"]
+        assert f"<dc:title>{vol.full_title}:" in opf
+        assert "Volume 1" in docs["OEBPS/titlepage.xhtml"]
+        # Cross-promotion lists the sibling Volume 1 only — never a
+        # retired book.
+        also = docs["OEBPS/alsoby.xhtml"]
+        assert also.count('class="alsoby-entry"><a') == 1
+        assert ", Volume 1</a>" in also
+        for old in self.RETIRED:
+            assert old not in also
+
+    def test_volume_ids_keep_collected_names_by_decision(self):
+        """Naming debt accepted and documented: `_vol1` is the retired
+        20-chapter book and the R2 keyspace/narration cache live under
+        the `_collected` id."""
+        for vid in self.COLLECTED:
+            assert (VOLS / f"{vid}.yaml").exists()
+            text = (VOLS / f"{vid}.yaml").read_text(encoding="utf-8")
+            assert "naming debt" in text or "keeps the historical" in text
+        docs = (ROOT / "docs" / "books.md").read_text(encoding="utf-8")
+        assert "_collected" in docs and "naming debt" in docs.lower()
+
+    # ---- Part B: retire the old per-volume books ---------------------
+    def test_old_volumes_are_retired_everywhere(self):
+        import json
+        from engine.book_compiler import load_volume
+        catalog = {v["volume_id"]: v for v in json.loads(
+            (ROOT / "books" / "catalog.json").read_text(encoding="utf-8")
+        )["volumes"]}
+        for vid in self.RETIRED:
+            vol = load_volume(VOLS / f"{vid}.yaml")
+            assert vol.retired is True, vid
+            assert catalog[vid].get("retired") is True, vid
+            assert catalog[vid].get("unlisted") is True, vid
+        for vid in self.COLLECTED:
+            assert catalog[vid].get("retired") is False
+            assert catalog[vid]["volume_number"] == 1
+            assert catalog[vid]["full_title"].endswith(", Volume 1")
+
+    def test_books_page_hides_retired(self):
+        src = (ROOT / "generate_html.py").read_text(encoding="utf-8")
+        assert 'vdata.get("retired")' in src
+        assert 'not v.get("retired")' in src
+        page = (ROOT / "books.html").read_text(encoding="utf-8")
+        assert "Collected Edition" not in page
+        assert page.count("— Volume 1</h2>") == 2
+        assert "Volume 2</h2>" not in page and "Volume 3</h2>" not in page
+
+    def test_cross_promo_and_build_script_skip_retired(self):
+        from engine.book_compiler import _other_books, load_volume
+        vol = load_volume(VOLS / "unintended_consequences_collected.yaml")
+        others = _other_books(vol)
+        assert [o["volume_id"] for o in others] == [
+            "first_principles_collected"]
+        src = (ROOT / "scripts" / "build_book.py").read_text("utf-8")
+        assert '"retired": bool(volume.retired)' in src
+        assert 'if data.get("retired")' in src  # never (re)built
+
+    # ---- Part C: the planner produces Volume 2 next ------------------
+    def test_planner_preview_next_is_volume_two(self):
+        from engine.book_compiler import load_series, plan_preview
+        uc = plan_preview("unintended_consequences")
+        assert uc["next_volume_number"] == 2 and uc["first_episode"] == 81
+        fp = plan_preview("first_principles")
+        assert fp["next_volume_number"] == 2 and fp["first_episode"] == 61
+        assert set(load_series("first_principles")["excluded_episodes"]) \
+            == {21, 25}
+        for pv in (uc, fp):
+            assert pv["volume_chapters"] == 60
+            assert all(n > 60 for n in pv["pending_episodes"])
+            assert 21 not in pv["pending_episodes"]
+        src = (ROOT / "scripts" / "build_book.py").read_text("utf-8")
+        assert "--plan-preview" in src
+
+    @pytest.fixture
+    def fake_series(self, tmp_path, monkeypatch):
+        """A throwaway series: Volume 1 (curated order, eps 1-10), a
+        RETIRED book over eps 11-20, digests for eps 1-25."""
+        import engine.book_compiler as bc
+        (tmp_path / "books" / "series").mkdir(parents=True)
+        (tmp_path / "books" / "volumes").mkdir(parents=True)
+        dig = tmp_path / "digests" / "fake_show"
+        dig.mkdir(parents=True)
+        for n in range(1, 26):
+            (dig / f"Fake_Ep{n:03d}_20260101.md").write_text("# x\n")
+        # As in the real repo, the series file is named by the show slug
+        # and volumes reference it through `series:`.
+        (tmp_path / "books" / "series" / "fake_show.yaml").write_text(
+            "show_slug: fake_show\nshow_name: Fake\nseries_title: Fake\n"
+            "author: A\nvolume_chapters: 10\n", encoding="utf-8")
+        (tmp_path / "books" / "volumes" / "fake_show_vol1.yaml").write_text(
+            "volume_id: fake_show_vol1\nseries: fake_show\nvolume_number: 1\n"
+            "anthology: true\nepisodes: [3, 1, 2, 4, 5, 6, 7, 8, 9, 10]\n",
+            encoding="utf-8")
+        (tmp_path / "books" / "volumes" / "fake_show_old.yaml").write_text(
+            "volume_id: fake_show_old\nseries: fake_show\nvolume_number: 4\n"
+            "retired: true\nepisodes: [11, 12, 13, 14, 15, 16, 17, 18, 19, 20]\n",
+            encoding="utf-8")
+        monkeypatch.setattr(bc, "ROOT", tmp_path)
+        monkeypatch.setattr(bc, "SERIES_DIR", tmp_path / "books" / "series")
+        monkeypatch.setattr(bc, "VOLUMES_DIR", tmp_path / "books" / "volumes")
+        return bc
+
+    def test_planner_ignores_retired_and_numbers_from_live(self, fake_series):
+        bc = fake_series
+        pv = bc.plan_preview("fake_show")
+        # The retired book's number (4) does not advance the series and
+        # its episode range is re-cut.
+        assert pv["next_volume_number"] == 2
+        assert pv["first_episode"] == 11 and pv["ready"] is True
+        written = bc.plan_next_volumes("fake_show")
+        assert [p.name for p in written] == ["fake_show_vol2.yaml"]
+        data = yaml.safe_load(written[0].read_text(encoding="utf-8"))
+        assert data["volume_number"] == 2
+        assert data["episodes"] == list(range(11, 21))
+
+    def test_planner_never_emits_volume_zero(self, fake_series, monkeypatch):
+        bc = fake_series
+        monkeypatch.setattr(bc, "_max_volume_number", lambda slug: -1)
+        with pytest.raises(RuntimeError, match="numbered from 1"):
+            bc.plan_next_volumes("fake_show", write=False)
+
+    def test_planner_never_overlaps_a_live_volume(self, fake_series,
+                                                  monkeypatch):
+        bc = fake_series
+        # Simulate a broken coverage computation: the guard reads the
+        # live configs itself and still refuses to double-book eps 1-10.
+        monkeypatch.setattr(bc, "_episodes_already_in_volumes",
+                            lambda slug: set())
+        with pytest.raises(RuntimeError, match="second live volume"):
+            bc.plan_next_volumes("fake_show", write=False)
+
+    # ---- Part D: FP corrections are in the shipped text --------------
+    def test_fp_arithmetic_corrections_reach_the_epub(self, tmp_path):
+        """The four WO-11/WO-12 items, checked in the BUILT book, not
+        just the digests (TestWO5 pins the digest text)."""
+        import zipfile
+        from engine.book_compiler import (build_epub, collect_chapters,
+                                          load_volume)
+        vol = load_volume(VOLS / "first_principles_collected.yaml")
+        chapters = collect_chapters(vol)
+        epub = build_epub(vol, chapters, tmp_path / "fp.epub")
+        by_ep = {c.episode_num: c.number for c in chapters}
+        with zipfile.ZipFile(epub) as z:
+            texts = {ep: z.read(f"OEBPS/chap_{by_ep[ep]:03d}.xhtml").decode()
+                     for ep in (7, 33, 55, 26)}
+        text = texts.__getitem__
+        t7 = text(7)   # ammonia: free-energy floor, exothermic synthesis
+        assert "reversible minimum of about 33 kWh" in t7
+        assert "exothermic, releasing about 2.7 GJ per ton" in t7
+        assert "theoretical minimum of 39.4 kWh" not in t7
+        t33 = text(33)  # Atlantic cable: ~200 t copper core, index in tens
+        assert "roughly two hundred tons of copper" in t33
+        assert "complete armoured cable" in t33
+        assert "Idiot Index in the tens" in t33
+        t55 = text(55)  # Watt: lede and body agree (two-thirds / one-third)
+        assert "cut fuel use by roughly two-thirds" in t55
+        assert "roughly one-third that of a comparable Newcomen" in t55
+        assert "three-quarters" not in t55
+        t26 = text(26)  # rPET: pellets $1,300-2,600/t; $200/t is baled
+        assert "$1,300–2,600 per ton once cleaned and pelletized" in t26
+        assert "two hundred dollars per ton once pelletized" not in t26

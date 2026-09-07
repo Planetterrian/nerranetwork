@@ -183,14 +183,14 @@ def upload_book_image_to_gallery(
         episode_id = f"{volume.show_slug}_ep{chapter.episode_num:03d}"
         title = chapter.title
         date = chapter.episode_date
-        if getattr(volume, "anthology", False) or not volume.volume_number:
+        if not volume.volume_number:
             caption = f"Chapter illustration — {volume.title}"
         else:
             caption = (f"Chapter illustration — {volume.title}, "
                        f"Vol. {volume.volume_number}")
         tags = ["book", volume.volume_id, f"ep{chapter.episode_num:03d}"]
     else:
-        if getattr(volume, "anthology", False) or not volume.volume_number:
+        if not volume.volume_number:
             episode_id = f"{volume.show_slug}_book_collected"
             title = volume.title
         else:
@@ -228,11 +228,13 @@ def upload_book_image_to_gallery(
 def cover_badge_text(volume: BookVolume) -> str:
     """The cover badge label.
 
-    A numbered volume reads "VOLUME N"; a collected edition (anthology,
-    volume_number 0) reads "COLLECTED EDITION" — a badge must never
+    A numbered volume reads "VOLUME N" — curated or not (WO-12: the
+    former collected editions ARE Volume 1 of their series, and the KDP
+    listing's cover must say so). Only a volume with no number at all
+    (volume_number 0) reads "COLLECTED EDITION"; a badge must never
     render a 0 (WO-11: "VOLUME 0" shipped on both collected covers).
     """
-    if getattr(volume, "anthology", False) or not volume.volume_number:
+    if not volume.volume_number:
         return "COLLECTED EDITION"
     return f"VOLUME {volume.volume_number}"
 

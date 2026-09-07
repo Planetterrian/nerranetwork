@@ -3906,12 +3906,16 @@ def generate_books_page(*, dry_run=False):
             for vp in (ROOT / "books" / "volumes").glob("*.yaml"):
                 try:
                     vdata = _yaml.safe_load(vp.read_text(encoding="utf-8"))
-                    if vdata and vdata.get("unlisted"):
+                    if vdata and (vdata.get("unlisted")
+                                  or vdata.get("retired")):
                         unlisted.add(vdata.get("volume_id"))
                 except Exception:  # noqa: BLE001 — visibility is best-effort
                     pass
+            # A retired catalog entry (WO-12: the superseded 20-chapter
+            # books) is hidden even if its YAML were ever lost.
             volumes = [v for v in volumes
-                       if v.get("volume_id") not in unlisted]
+                       if v.get("volume_id") not in unlisted
+                       and not v.get("retired")]
         except (json.JSONDecodeError, OSError) as exc:
             print(f"Warning: books catalog unreadable ({exc}) — "
                   "rendering empty Books page", file=sys.stderr)

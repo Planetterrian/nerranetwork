@@ -4,18 +4,37 @@
 [`docs/product_opportunities_2026_08.md`](product_opportunities_2026_08.md));
 series machinery + Grok art + auto-planner same day (operator-directed).
 **Author on every volume: Patrick Novak.**
-**Live series:** *Unintended Consequences* Vols 1–4 (episodes 1–80) and
-*First Principles* Vols 1–3 (episodes 1–60) — 20 stories per volume.
+**Live series (WO-12, Sept 2026):** *Unintended Consequences*, **Volume 1**
+(73 chapters from episodes 1–80; volume id `unintended_consequences_collected`)
+and *First Principles*, **Volume 1** (58 chapters from episodes 1–60;
+`first_principles_collected`). Both were first built as "The Collected
+Edition" (volume_number 0); the operator's decision is that they are
+Volume 1 of an ongoing series and the planner cuts Volume 2 next (UC from
+episode 81, FP from 61). The earlier 20-chapter books (`*_vol1`–`_vol4`,
+`_vol1`–`_vol3`) are strict subsets of Volume 1 and are **retired**
+(`retired: true`): never listed on any store, hidden from `/books.html`
+and the cross-promotion page, ignored by the planner, kept with their R2
+objects for provenance. **Naming debt, accepted and documented:** the
+Volume 1 configs keep their historical `_collected` volume ids because
+`_vol1` is taken by the retired 20-chapter book and the R2 keyspace
+`books/<id>/` holds the narration cache and the private masters — renaming
+would orphan both. KDP listing for UC (title A1H5JJRA162UHN): title
+"Unintended Consequences", subtitle "Seventy-three true stories of good
+intentions gone spectacularly wrong: Volume 1", series book 1 — the cover
+renders the series title, the subtitle and a VOLUME 1 badge to match.
 
 ## What the pipeline does
 
 ```
 books/series/<show>.yaml       SERIES config — author, series title,
         │                      subtitle template, brand colors, Grok art
-        │                      style guides, volume_size (10-20)
-        │  plan_next_volumes() cuts the next 20-episode volume config
-        │  automatically as the show publishes (append-only; published
-        │  volumes never change)
+        │                      style guides, volume_chapters (10-80,
+        │                      default 60 — a PRODUCT decision, set once)
+        │  plan_next_volumes() cuts the next volume_chapters-episode
+        │  volume config automatically as the show publishes
+        │  (append-only; published volumes never change; retired
+        │  volumes' episodes and numbers are ignored; never volume 0,
+        │  never an episode that is already in a live volume)
         ▼
 books/volumes/<id>.yaml        thin volume config (episodes + buy links);
         │                      everything else inherits from the series
@@ -82,9 +101,15 @@ Rules that bind:
 
 - **One volume:** Actions → **Build Book** → volume id
   (e.g. `unintended_consequences_vol2`).
+- **Planner dry run:** `python scripts/build_book.py --plan-series
+  unintended_consequences --plan-series first_principles --plan-preview`
+  prints, per series, the next volume number, the first uncollected
+  episode, the pending count and whether a full volume is ready — with
+  no side effects. (Sept 2026: UC → Volume 2 from ep 81, FP → Volume 2
+  from ep 61, both waiting on 60 chapters.)
 - **Planner mode:** leave the volume input empty (or let the monthly
   cron run) — plans the next volume for every series with ≥
-  `volume_size` uncollected episodes AND builds every committed volume
+  `volume_chapters` uncollected episodes AND builds every committed volume
   whose catalog entry has no artifacts (the 2026-08-22 fix: planner
   mode originally built only volumes created in that same run, so the
   first live dispatch went green having built nothing). A volume that

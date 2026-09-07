@@ -1231,10 +1231,15 @@ never a clip.** Register: `scene-briefs-narrative-imagery`,
 Product B6 (operator-directed): a SERIES machine, not one-off books.
 `books/series/<show>.yaml` is the branding contract (author **Patrick
 Novak**, series title, subtitle template, show brand colors, Grok-art
-style guides, `volume_size` 10–20 — enforced); `plan_next_volumes()`
+style guides, `volume_chapters` — a series-level PRODUCT decision,
+default 60, band 10–80, never 20: the 20-chapter volumes priced ~5x
+market rate per word); `plan_next_volumes()`
 (`engine/book_compiler.py`) cuts the next thin
 `books/volumes/<id>.yaml` automatically as episodes accrue
-(append-only — published volumes never change), and
+(append-only — published volumes never change; **retired** volumes
+are ignored for coverage and numbering; it can never emit volume 0 or
+an episode already in a live volume — `TestWO12SeriesVolumes`;
+`--plan-preview` is the dry run), and
 `scripts/build_book.py` (Actions "Build Book": manual per-volume, or
 monthly-cron planner mode that plans + builds everything pending)
 compiles digests into a store-ready EPUB 3 + Grok-TTS-narrated
@@ -1279,8 +1284,14 @@ in-file disclosure line was removed from the audiobook credits Aug 2026
 (WO-8, operator-directed) — no retail channel requires a spoken line,
 only the upload declaration; an earlier note here conflated the two.** Committed record: series + volume
 YAMLs + `books/catalog.json` → `/books.html` (`generate_html.py
---books`, in `--all` + sitemap + footer). Live: UC Vols 1–4 (eps 1–80),
-First Principles Vols 1–3 (eps 1–60), 20 stories each. Spot-listen +
+--books`, in `--all` + sitemap + footer). Live (WO-12, Sept 2026): **UC Volume 1** (73 chapters, eps 1–80) and
+**First Principles Volume 1** (58 chapters, eps 1–60) — the former
+"Collected Editions", renumbered because they are Volume 1 of an
+ongoing series (Volume 2 comes from ep 81 / ep 61); their volume ids
+keep the historical `_collected` names on purpose (R2 keyspace +
+narration cache; `_vol1` is taken). The 20-chapter vol1–4 / vol1–3
+books are **retired** (`retired: true` — never on a store, hidden from
+books.html and cross-promo, kept for provenance). Spot-listen +
 eyeball art on a new volume before store submission (landmine-#17
 habit). Store checklist + policies: [`docs/books.md`](docs/books.md).
 Drift guards: `tests/test_book_compiler.py`.

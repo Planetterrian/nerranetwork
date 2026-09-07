@@ -8,11 +8,14 @@ subtitle_template: "{count_words} teardowns of what things really cost — and w
 author: "Patrick Novak"
 language: en
 
-# 50 since Aug 2026 (operator-directed bigger-books shift):
-# 20-chapter volumes came out pamphlet-thin (12-24k words) at
-# store prices. Future planner-cut volumes are book-length
-# annual collections (~40-55k words).
-volume_size: 50
+# Chapters per planner-cut volume (the planner only cuts FULL volumes;
+# a partial tail waits for the show to publish more episodes). This is
+# a PRODUCT decision, set once here (WO-12, Sept 2026): the editorial
+# review found 20-chapter volumes at $4.99 priced ~5x market rate per
+# word, while Volume 1 at 73 chapters / $7.99 is healthy. Default when
+# absent is 60 (engine.book_compiler.DEFAULT_VOLUME_CHAPTERS), never
+# 20. Band 10-80.
+volume_chapters: 60
 
 price_usd: 4.99
 
@@ -47,3 +50,10 @@ chapter_art_style: >-
 # WO-6: series-inherited About-the-Author page (authored prose,
 # never generated).
 author_bio_file: books/frontmatter/author_bio_patrick_novak.md
+
+# Episodes editorially EXCLUDED from books (WO-12). The podcast episodes
+# stay published; Volume 1 omitted them as true retellings and the
+# planner must never sweep them into Volume 2:
+#  21  Haber-Bosch — retells ep7's ammonia cost argument
+#  25  Container ships — retells ep6's shipping-container story
+excluded_episodes: [21, 25]
