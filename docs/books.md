@@ -22,6 +22,10 @@ would orphan both. KDP listing for UC (title A1H5JJRA162UHN): title
 "Unintended Consequences", subtitle "Seventy-three true stories of good
 intentions gone spectacularly wrong: Volume 1", series book 1 — the cover
 renders the series title, the subtitle and a VOLUME 1 badge to match.
+Every chapter of both Volume 1s carries a verified claim ledger
+(`digests/<show>/*_claims.json`; the Sources page lists 293 distinct
+sources for UC and 301 for FP as of Sept 2026 — `TestFPLedgerCoverage`
+holds the FP floor at 200).
 
 ## What the pipeline does
 

@@ -452,7 +452,10 @@ class TestFPLedgerCoverage:
         assert "OEBPS/sources.xhtml" in z.namelist()
         src = z.read("OEBPS/sources.xhtml").decode("utf-8")
         assert src.count("<h2>") == 58  # one group per chapter
-        assert src.count('<a href="http') >= 170
+        # WO-12 acceptance: >= 200 source links (301 after the Sept 2026
+        # extension pass; UC's page carries 293). Deduped across the
+        # volume, so this counts distinct sources.
+        assert src.count('<a href="http') >= 200
 
 
 class TestBiggerBooksShift:
@@ -1003,3 +1006,67 @@ class TestWO12SeriesVolumes:
         t26 = text(26)  # rPET: pellets $1,300-2,600/t; $200/t is baled
         assert "$1,300–2,600 per ton once cleaned and pelletized" in t26
         assert "two hundred dollars per ton once pelletized" not in t26
+
+
+class TestWO12FPCorrections:
+    """WO-12 Part D: corrections the ledger-extension pass surfaced while
+    sourcing First Principles — each one either an internal-arithmetic
+    miss (the chapter's own inputs did not yield its stated index) or a
+    figure a primary source contradicts. Softened to what the sources
+    support; never an invented number."""
+
+    @pytest.mark.parametrize("ep,gone,present", [
+        # Nuclear: floor 1/80-1/160 of cost => index 80-160, not 10-20
+        (5, "lies in the range of ten to twenty",
+         "somewhere between eighty and one hundred sixty"),
+        # Penicillin: first patient 12 Feb 1941; "entire British stock"
+        # unsupported
+        (20, "In the spring of 1941 a single patient in Oxford received "
+             "the entire British stock",
+         "In February 1941 a single patient in Oxford received nearly all "
+         "the penicillin the research team could make"),
+        # Rail vs truck: trucks lead by tonnage, rail by ton-miles
+        (50, "majority of ton-miles", "majority of freight tonnage"),
+        # Ice trade: Boston-Calcutta ~four months (Tuscany, May-Sept 1833)
+        (41, "travel three months in sawdust", "travel four months in sawdust"),
+        # Desalination: $1/m3 over a 5-6 cent floor is 17-20x, and the
+        # cold open already said ten to twenty
+        (3, "closer to four to ten when the full capital",
+         "closer to ten to twenty when the full capital"),
+        # Bessemer: converter charges 8-30 t (typ. 15); a crucible held
+        # ~15-20 kg so the ratio is hundreds, not ten; pre-Bessemer price
+        # sources span GBP40-60
+        (4, "roughly three to five tons of molten pig iron",
+         "later converters took eight to thirty tons, typically about fifteen"),
+        (4, "ten times the mass of a large crucible heat",
+         "hundreds of times the mass of a crucible heat"),
+        (4, "from roughly £40 to £6–7", "from roughly £40–60 to £6–7"),
+        # Aluminum: ~$5/lb in 1888 against a floor of a few $/kg is
+        # several to one, not ten
+        (14, "the ratio was still roughly ten to one",
+         "almost five dollars a pound, or about eleven dollars a kilogram"),
+        # Cotton gin: hand-cleaning rate is disputed (1 lb vs 5 lb/day)
+        (45, "fell from one full day to roughly one-fiftieth of a day",
+         "somewhere between ten- and fifty-fold"),
+        # Prosthetics: sockets and powered hands are Class I, exempt
+        (52, "Regulatory pathways for new socket materials or myoelectric "
+             "controllers add documentation and testing costs",
+         "sit in the lightest device class"),
+        # Legal: state-average hourly rates run ~$160-390
+        (54, "valued at three to six hundred dollars per hour",
+         "state averages run roughly $160 to $390"),
+        # Indoor farm: the one cost study found ~2x, not "several times"
+        (24, "at prices several times higher than field-grown",
+         "roughly twice as much to produce as California field lettuce"),
+        # Pipe premium: the one-tenth share had no source — general form
+        (56, "might represent perhaps one-tenth of the installed cost",
+         "are a small fraction of the installed cost"),
+    ])
+    def test_correction_applied(self, ep, gone, present):
+        text = _fp_digest(ep)
+        assert gone not in text, f"ep{ep}: wrong text returned: {gone!r}"
+        assert present in text, f"ep{ep}: correction missing: {present!r}"
+
+    def test_corrections_added_no_citation_shapes(self):
+        for ep in (5, 20, 50, 41, 3, 4, 14, 45, 52, 54, 24, 56):
+            assert not find_citation_shapes(_fp_digest(ep)), ep
