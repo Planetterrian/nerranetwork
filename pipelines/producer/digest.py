@@ -41,7 +41,10 @@ BRAND = "#0F766E"
 
 
 def _iso(dt: datetime) -> str:
-    return dt.astimezone(timezone.utc).isoformat()
+    """UTC timestamp for a PostgREST filter. Must not contain '+': an
+    unencoded '+00:00' becomes a space in the query string and PostgREST
+    answers 400 (first digest run, Sept 7 2026)."""
+    return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def _show_name(slug: Optional[str]) -> str:

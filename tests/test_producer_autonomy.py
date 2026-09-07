@@ -660,3 +660,36 @@ class TestInviteEveryone:
         wf = yaml.safe_load((ROOT / ".github/workflows/nerra_producer_inbox.yml").read_text())
         assert wf[True]["workflow_dispatch"]["inputs"]["release_held"]["type"] == "boolean"
         assert "--release-held" in wf["jobs"]["inbox"]["steps"][-1]["run"]
+
+
+class TestDraftsAreNotReplies:
+    def test_get_thread_drops_gmail_drafts(self):
+        t = make_thread("t1", "Sam Reyes <sam@reyespr.com>", "Lena pitch", "pitching")
+        draft = gmail_message("t1d", "t1", f"Patrick Novak <{OWNER}>", "unsent invite", "Re: Lena pitch", 5000)
+        draft["labelIds"] = ["DRAFT"]
+        t["messages"].append(draft)
+        client = GmailClient(FakeGmailService([t]), OWNER)
+        thread = client.get_thread("t1")
+        assert [m["id"] for m in thread["messages"]] == ["t1m1"]
+        assert not inbox.already_replied(thread, OWNER)
+
+    def test_release_ignores_the_stale_draft(self, monkeypatch, env):
+        rows = [{"id": "app-t1", "name": "Dr. Lena Ortiz", "show": "age_of_ai",
+                 "publicist_name": "Sam Reyes", "publicist_email": "sam@reyespr.com",
+                 "email": "sam@reyespr.com", "email_thread_id": "t1",
+                 "producer_classification": _classification(category="guest_followup")}]
+        updates = []
+        monkeypatch.setattr(inbox, "sb_select", lambda t, q="": list(rows))
+        monkeypatch.setattr(inbox, "sb_update", lambda t, q, p: updates.append((t, q, p)) or [p])
+        t = make_thread("t1", "Sam Reyes <sam@reyespr.com>", "Lena pitch", "pitching")
+        draft = gmail_message("t1d", "t1", f"Patrick Novak <{OWNER}>", "unsent invite", "Re: Lena pitch", 5000)
+        draft["labelIds"] = ["DRAFT"]
+        t["messages"].append(draft)
+        svc = FakeGmailService([t])
+        summary = inbox.release_held(gmail=GmailClient(svc, OWNER), policy=load_policy())
+        assert summary["sent"] == 1 and len(svc.sent) == 1
+
+
+def test_digest_timestamps_are_url_safe():
+    out = digest._iso(datetime(2026, 9, 7, 14, 52, 20, 123456, tzinfo=timezone.utc))
+    assert out == "2026-09-07T14:52:20Z" and "+" not in out

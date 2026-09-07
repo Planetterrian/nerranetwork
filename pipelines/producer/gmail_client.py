@@ -296,6 +296,10 @@ class GmailClient:
         raw = self._users().threads().get(
             userId="me", id=thread_id, format="full").execute()
         messages = [parse_message(m) for m in raw.get("messages") or []]
+        # Gmail returns our own unsent drafts as thread members (label
+        # DRAFT). They are not replies: with them in the list every held
+        # thread looked "already answered" (Sept 7 2026 release run).
+        messages = [m for m in messages if "DRAFT" not in (m.get("label_ids") or [])]
         messages.sort(key=lambda m: m.get("internal_date") or 0)
         subject = next((m["subject"] for m in messages if m.get("subject")), "")
         return {"id": raw.get("id") or thread_id, "subject": subject,
