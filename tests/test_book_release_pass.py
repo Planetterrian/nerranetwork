@@ -399,7 +399,13 @@ class TestNoReviewerAnnotationLeaks:
     _BANNED = ("fetchable source", "verified as c", "a general form",
                "suggested fix", "episode_span", "supporting_quote",
                "could not be verified", "could not be anchored",
-               "[NOTE:", "(Note:")
+               "[NOTE:", "(Note:",
+               # WO-13: the five parentheticals that shipped in the
+               # Volume 1 builds (2026-09-07)
+               "No public source", "no public source",
+               "could not be traced", "not supported by the sources",
+               "keep it general", "keep the engineering point",
+               "keep it framed", "No published bulk-price")
 
     @pytest.mark.parametrize("show", ["unintended_consequences",
                                       "first_principles"])
@@ -542,7 +548,7 @@ class TestWO6CombinedVolume:
         import re
         _, _, z = built
         opf = z.read("OEBPS/package.opf").decode("utf-8")
-        spine = re.search(r"<spine>(.*?)</spine>", opf, re.S).group(1)
+        spine = re.search(r"<spine[^>]*>(.*?)</spine>", opf, re.S).group(1)
         order = re.findall(r'idref="([^"]+)"', spine)
         assert order[:6] == ["titlepage", "copyright", "contents",
                              "introduction", "part01", "chap001"]
@@ -1070,3 +1076,170 @@ class TestWO12FPCorrections:
     def test_corrections_added_no_citation_shapes(self):
         for ep in (5, 20, 50, 41, 3, 4, 14, 45, 52, 54, 24, 56):
             assert not find_citation_shapes(_fp_digest(ep)), ep
+
+
+class TestWO13ReviewerNoteGate:
+    """WO-13 (Sept 2026): five fact-checker parentheticals shipped inside
+    chapter bodies of the Volume 1 builds and had to be cut from the
+    store EPUBs by hand. The source digests are clean, the claim-repair
+    path can never write into prose, and both the episode gate and the
+    book build refuse a reviewer note. Plus the legacy NCX Draft2Digital
+    asked for."""
+
+    LEAKED = (
+        '(The month “August” is not supported by the sources, which date '
+        'the illegal introduction only to 1954.)',
+        '(No public source found tying this specific manifold redesign to '
+        'the reusability program; keep the engineering point without '
+        'implying a documented specific change.)',
+        '(The specific valve-timing-logic detail could not be traced to '
+        'any public source.)',
+        '(SpaceX has publicized additive manufacturing of some Merlin '
+        'components, e.g. the SuperDraco chamber and a Merlin '
+        'main-oxidizer valve body, but no public source documents this '
+        'specific turbopump-housing consolidation narrative; keep it '
+        'general.)',
+        "(No published bulk-price source found for the specific "
+        "low-tens-of-dollars-per-gram figure; keep it framed as the "
+        "show's own order-of-magnitude estimate.)",
+        # the sixth, in UC ep26 (No Child Left Behind) — found by the
+        # network-wide sweep the new finder made possible
+        "(The specific Texas teacher vignette is an illustrative "
+        "composite that cannot be traced to a source.)",
+    )
+
+    def test_source_digests_no_longer_carry_the_notes(self):
+        for ep, show in ((75, "unintended_consequences"),
+                         (26, "unintended_consequences"),  # sixth, found by sweep
+                         (10, "first_principles"), (12, "first_principles")):
+            text = (_uc_digest(ep) if show == "unintended_consequences"
+                    else _fp_digest(ep))
+            for note in self.LEAKED:
+                assert note not in text, (show, ep, note[:40])
+
+    @pytest.mark.parametrize("note", LEAKED)
+    def test_finder_catches_every_leaked_string(self, note):
+        from engine.claims import find_reviewer_notes
+        hits = find_reviewer_notes(f"Some prose here. {note} More prose.")
+        assert len(hits) == 1 and hits[0]["match"] == note
+
+    def test_finder_second_rule_and_no_false_positive(self):
+        from engine.claims import find_reviewer_notes
+        # rule 2: >40 chars, "source" + found/traced/supported
+        assert find_reviewer_notes(
+            "figure (the original source could not be found in any "
+            "archive we checked) stands")
+        # ordinary parentheticals pass
+        assert not find_reviewer_notes(
+            "the plant (built in 1954, according to the company) was sold")
+        assert not find_reviewer_notes("a short aside (see chapter 3)")
+
+    def test_episode_gate_fails_on_a_reviewer_note(self):
+        from engine.claims import run_source_integrity_gate
+        text = ("Kudzu was planted widely. " + self.LEAKED[0]
+                + " Catches rose through the 1970s.")
+        gate = run_source_integrity_gate(text, [], verify_sources=False)
+        assert not gate.passed
+        assert gate.reviewer_notes and \
+            gate.reviewer_notes[0]["match"] == self.LEAKED[0]
+        assert "reviewer_notes=1" in gate.summary()
+        assert "reviewer_notes" in gate.to_report()
+        clean = run_source_integrity_gate(
+            "Kudzu was planted widely. Catches rose through the 1970s.",
+            [], verify_sources=False)
+        assert clean.passed and clean.reviewer_notes == []
+
+    def test_book_build_fails_hard_on_a_reviewer_note(self, tmp_path):
+        from engine.book_compiler import BookChapter, build_epub, load_volume
+        vol = load_volume(VOLS / "unintended_consequences_vol1.yaml")
+        ch = BookChapter(number=1, episode_num=75, title="The Nile Perch",
+                         epigraph="A lake was remade.",
+                         sections=[("The Story", [
+                             "Later introductions came in 1962 and 1963. "
+                             + self.LEAKED[0] + " Early catches were rare."])])
+        with pytest.raises(ValueError) as exc:
+            build_epub(vol, [ch], tmp_path / "leak.epub")
+        msg = str(exc.value)
+        assert "chapter 1 (ep 75, The Nile Perch)" in msg
+        assert "not supported by the sources" in msg
+        assert not (tmp_path / "leak.epub").exists()
+        # a clean chapter builds
+        ch.sections = [("The Story", ["Later introductions came in 1962."])]
+        build_epub(vol, [ch], tmp_path / "ok.epub")
+
+    def test_claim_repair_never_writes_into_the_prose(self):
+        """The repair call returns ledger entries only; the episode text
+        is never rewritten, the anchor is pinned, and a note the model
+        smuggles into a claim field stays out of the body."""
+        from engine.claims import (GateResult, attempt_claim_repair,
+                                   run_source_integrity_gate)
+        text = ("In 1954 the perch was introduced illegally. "
+                "Later introductions came in 1962 and 1963.")
+        claims = [{"id": "c1", "claim": "Perch introduced in 1954",
+                   "episode_span": "In 1954 the perch was introduced illegally.",
+                   "source_url": "https://example.org/x",
+                   "supporting_quote": "introduced in 1954"}]
+        gate = GateResult(passed=False, ledger_present=True, claims_total=1,
+                          failed_verifications=[{"id": "c1", "passed": False,
+                                                 "reason": "HTTP 404",
+                                                 "url": "https://example.org/x"}])
+        note = self.LEAKED[0]
+        def generate(prompt):
+            return ('[{"id": "c1", "claim": "Perch introduced in 1954 '
+                    + note.replace('"', "'") + '", '
+                    '"episode_span": "REWRITTEN TEXT ' + note.replace('"', "'")
+                    + '", "source_url": "https://example.org/y", '
+                    '"supporting_quote": "introduced in 1954"}]')
+        fetch = lambda url: (200, "<p>The perch was introduced in 1954.</p>")
+        new_gate, repaired = attempt_claim_repair(text, gate, claims,
+                                                  generate, fetch=fetch)
+        # prose untouched; anchor + claim text pinned to the originals
+        assert repaired[0]["episode_span"] == claims[0]["episode_span"]
+        assert repaired[0]["claim"] == claims[0]["claim"]
+        assert new_gate.reviewer_notes == []
+        # and the gate over the actual text stays clean
+        assert run_source_integrity_gate(
+            text, repaired, verify_sources=False).reviewer_notes == []
+
+    def test_epub_carries_legacy_ncx_matching_nav(self, tmp_path):
+        import xml.etree.ElementTree as ET
+        import zipfile
+        from engine.book_compiler import (build_epub, collect_chapters,
+                                          load_volume)
+        vol = load_volume(VOLS / "unintended_consequences_collected.yaml")
+        chapters = collect_chapters(vol)
+        epub = build_epub(vol, chapters, tmp_path / "ncx.epub")
+        with zipfile.ZipFile(epub) as z:
+            opf = z.read("OEBPS/package.opf").decode("utf-8")
+            ncx = z.read("OEBPS/toc.ncx").decode("utf-8")
+            nav = z.read("OEBPS/nav.xhtml").decode("utf-8")
+        assert ('<item id="ncx" href="toc.ncx" '
+                'media-type="application/x-dtbncx+xml"/>') in opf
+        assert '<spine toc="ncx">' in opf
+        root = ET.fromstring(ncx.encode("utf-8"))
+        ns = {"n": "http://www.daisy.org/z3986/2005/ncx/"}
+        uid = root.find("n:head/n:meta[@name='dtb:uid']", ns).get("content")
+        assert f'<dc:identifier id="uid">{uid}</dc:identifier>' in opf
+        points = root.findall(".//n:navPoint", ns)
+        assert len(points) == nav.count("<a href=")  # one per nav entry
+        hrefs = [p.find("n:content", ns).get("src") for p in points]
+        assert hrefs == [h for h in
+                         __import__("re").findall(r'<a href="([^"]+)"', nav)]
+        # parts nest their chapters
+        assert root.find(".//n:navPoint/n:navPoint", ns) is not None
+        assert root.find("n:docTitle/n:text", ns).text == vol.full_title
+
+    def test_rebuilt_epubs_are_free_of_the_notes(self, tmp_path):
+        import zipfile
+        from engine.book_compiler import (build_epub, collect_chapters,
+                                          load_volume)
+        for vid in ("unintended_consequences_collected",
+                    "first_principles_collected"):
+            vol = load_volume(VOLS / f"{vid}.yaml")
+            epub = build_epub(vol, collect_chapters(vol),
+                              tmp_path / f"{vid}.epub")
+            with zipfile.ZipFile(epub) as z:
+                body = " ".join(z.read(n).decode("utf-8")
+                                for n in z.namelist() if n.endswith(".xhtml"))
+            for note in self.LEAKED:
+                assert note not in body, (vid, note[:40])
