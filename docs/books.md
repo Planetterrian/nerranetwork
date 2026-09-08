@@ -78,6 +78,20 @@ royalty plan).
 
 Rules that bind:
 
+- **No reviewer note ever reaches prose.** `build_epub` runs
+  `validate_chapter_prose` (WO-13, Sept 2026) and refuses the volume
+  when a chapter body carries a fact-checker parenthetical — "(No
+  public source found …; keep it general.)" and the like
+  (`engine.claims.find_reviewer_notes`). Five shipped in the first
+  Volume 1 builds and were hand-cut from the store files; the fix is
+  always the source digest, never the EPUB. The same finder fails the
+  episode gate in run_show.
+- **Both tables of contents render from one list.** `_nav_entries`
+  feeds the EPUB 3 nav and the legacy `toc.ncx` (Draft2Digital warns
+  without an NCX); `<spine toc="ncx">`. Validate with epubcheck
+  (`pip install epubcheck`, bundles the jar) — both Volume 1s report
+  0 errors / 0 warnings.
+
 - **Chapter titles are CURATED, never derived.** Each volume YAML
   carries a `chapter_titles:` map (episode number → 2-5-word title,
   e.g. `1: "The Cobra Bounty"`). The original design clipped the

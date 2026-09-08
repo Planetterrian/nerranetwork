@@ -978,50 +978,114 @@ def _crosspromo_xhtml(volume: BookVolume) -> str:
 
 def _nav_xhtml(volume: BookVolume, chapters: List[BookChapter],
                *, extras: Optional[Dict[str, bool]] = None) -> str:
+    """EPUB 3 nav document, rendered from ``_nav_entries`` (shared with
+    the legacy NCX so the two tables of contents can never drift)."""
     extras = extras or {}
-    items = [
-        '<li><a href="titlepage.xhtml">Title Page</a></li>',
-        '<li><a href="copyright.xhtml">Copyright</a></li>',
-    ]
-    if extras.get("toc_page"):
-        items.append('<li><a href="contents.xhtml">Contents</a></li>')
-    if extras.get("introduction"):
-        items.append(
-            '<li><a href="introduction.xhtml">Introduction</a></li>')
-    layout = resolve_parts(volume, chapters)
-    if layout is None:
-        items += [
-            f'<li><a href="chap_{c.number:03d}.xhtml">'
-            f"{xml_escape(c.heading)}</a></li>"
-            for c in chapters
-        ]
-    else:
-        for i, (title, chs) in enumerate(layout, start=1):
-            sub = "".join(
-                f'<li><a href="chap_{c.number:03d}.xhtml">'
-                f"{xml_escape(c.heading)}</a></li>"
-                for c in chs
-            )
-            items.append(
-                f'<li><a href="part_{i:02d}.xhtml">'
-                f"{xml_escape(title)}</a><ol>{sub}</ol></li>"
-            )
-    if extras.get("conclusion"):
-        items.append('<li><a href="conclusion.xhtml">Conclusion</a></li>')
-    if _has_sources(chapters):
-        items.append('<li><a href="sources.xhtml">Sources</a></li>')
-    if extras.get("author_bio"):
-        items.append(
-            '<li><a href="author.xhtml">About the Author</a></li>')
-    if extras.get("crosspromo"):
-        items.append(
-            '<li><a href="alsoby.xhtml">Also from the Nerra Network</a>'
-            "</li>")
+
+    def li(label: str, href: str, children: list) -> str:
+        sub = ("<ol>" + "".join(li(*c) for c in children) + "</ol>"
+               if children else "")
+        return (f'<li><a href="{xml_escape(href)}">{xml_escape(label)}</a>'
+                f"{sub}</li>")
+
+    items = "".join(li(*e) for e in _nav_entries(volume, chapters, extras))
     body = (
         '<nav epub:type="toc" id="toc"><h1>Contents</h1><ol>'
-        + "".join(items) + "</ol></nav>"
+        + items + "</ol></nav>"
     )
     return _xhtml("Contents", body, volume.language)
+
+
+def _nav_entries(volume: BookVolume, chapters: List[BookChapter],
+                 extras: Dict[str, bool]) -> List[Tuple[str, str, list]]:
+    """(label, href, children) in reading order — the one list both the
+    EPUB 3 nav and the legacy NCX render from, so they can never drift."""
+    entries: List[Tuple[str, str, list]] = [
+        ("Title Page", "titlepage.xhtml", []),
+        ("Copyright", "copyright.xhtml", []),
+    ]
+    if extras.get("toc_page"):
+        entries.append(("Contents", "contents.xhtml", []))
+    if extras.get("introduction"):
+        entries.append(("Introduction", "introduction.xhtml", []))
+    layout = resolve_parts(volume, chapters)
+    if layout is None:
+        entries += [(c.heading, f"chap_{c.number:03d}.xhtml", [])
+                    for c in chapters]
+    else:
+        for i, (title, chs) in enumerate(layout, start=1):
+            entries.append((title, f"part_{i:02d}.xhtml",
+                            [(c.heading, f"chap_{c.number:03d}.xhtml", [])
+                             for c in chs]))
+    if extras.get("conclusion"):
+        entries.append(("Conclusion", "conclusion.xhtml", []))
+    if _has_sources(chapters):
+        entries.append(("Sources", "sources.xhtml", []))
+    if extras.get("author_bio"):
+        entries.append(("About the Author", "author.xhtml", []))
+    if extras.get("crosspromo"):
+        entries.append(("Also from the Nerra Network", "alsoby.xhtml", []))
+    return entries
+
+
+def _ncx_xml(volume: BookVolume, chapters: List[BookChapter],
+             *, extras: Optional[Dict[str, bool]] = None) -> str:
+    """Legacy NCX (EPUB 2 table of contents) generated from the same
+    entries as the nav document: one navPoint per nav entry, nested
+    under parts; ``dtb:uid`` is the package's dc:identifier."""
+    extras = extras or {}
+    uid = f"urn:nerranetwork:book:{volume.volume_id}"
+    counter = [0]
+
+    def nav_point(label: str, href: str, children: list) -> str:
+        counter[0] += 1
+        n = counter[0]
+        inner = "".join(nav_point(*c) for c in children)
+        return (
+            f'<navPoint id="np{n}" playOrder="{n}">'
+            f"<navLabel><text>{xml_escape(label)}</text></navLabel>"
+            f'<content src="{xml_escape(href)}"/>{inner}</navPoint>'
+        )
+
+    points = "".join(nav_point(*e)
+                     for e in _nav_entries(volume, chapters, extras))
+    title = volume.full_title
+    return (
+        '<?xml version="1.0" encoding="utf-8"?>\n'
+        '<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1" '
+        f'xml:lang="{volume.language}">\n'
+        "<head>"
+        f'<meta name="dtb:uid" content="{xml_escape(uid)}"/>'
+        '<meta name="dtb:depth" content="2"/>'
+        '<meta name="dtb:totalPageCount" content="0"/>'
+        '<meta name="dtb:maxPageNumber" content="0"/>'
+        "</head>\n"
+        f"<docTitle><text>{xml_escape(title)}</text></docTitle>\n"
+        f"<navMap>{points}</navMap>\n</ncx>\n"
+    )
+
+
+def validate_chapter_prose(chapters: List[BookChapter]) -> None:
+    """Hard build gate (WO-13): no chapter body may carry a reviewer
+    note — a fact-checker parenthetical such as "(No public source found
+    tying … keep it general.)". Five shipped inside the Volume 1 builds
+    and had to be cut from the store EPUBs by hand. Raises ValueError
+    naming the chapter and the matched text (also logged)."""
+    from engine.claims import find_reviewer_notes
+
+    problems: List[str] = []
+    for c in chapters:
+        texts = [c.epigraph] + [p for _, paras in c.sections for p in paras]
+        for hit in find_reviewer_notes("\n".join(t for t in texts if t)):
+            msg = (f"chapter {c.number} (ep {c.episode_num}, "
+                   f"{c.title or 'untitled'}): {hit['reason']}: "
+                   f"{hit['match']}")
+            logger.error("reviewer note in chapter body — %s", msg)
+            problems.append(msg)
+    if problems:
+        raise ValueError(
+            "reviewer notes leaked into chapter prose — fix the source "
+            "digest, never the EPUB:\n  " + "\n  ".join(problems))
 
 
 def _package_opf(volume: BookVolume, chapters: List[BookChapter],
@@ -1033,6 +1097,11 @@ def _package_opf(volume: BookVolume, chapters: List[BookChapter],
     manifest = [
         '<item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" '
         'properties="nav"/>',
+        # Legacy NCX beside the EPUB 3 nav (WO-13): Draft2Digital warns
+        # "ePub3 missing an NCX file, may prevent publication at certain
+        # digital stores" without it.
+        '<item id="ncx" href="toc.ncx" '
+        'media-type="application/x-dtbncx+xml"/>',
         '<item id="css" href="style.css" media-type="text/css"/>',
         '<item id="titlepage" href="titlepage.xhtml" '
         'media-type="application/xhtml+xml"/>',
@@ -1104,7 +1173,7 @@ def _package_opf(volume: BookVolume, chapters: List[BookChapter],
         f'<meta property="dcterms:modified">{modified}</meta>\n'
         "</metadata>\n"
         "<manifest>\n" + "\n".join(manifest) + "\n</manifest>\n"
-        '<spine>\n' + "\n".join(spine) + "\n</spine>\n"
+        '<spine toc="ncx">\n' + "\n".join(spine) + "\n</spine>\n"
         "</package>\n"
     )
 
@@ -1131,6 +1200,7 @@ def build_epub(
     """
     from engine.book_art import to_epub_chapter_jpeg, to_epub_cover_jpeg
 
+    validate_chapter_prose(chapters)
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     has_cover = bool(cover_png and Path(cover_png).exists())
@@ -1179,6 +1249,8 @@ def build_epub(
                                 extras=extras))
         z.writestr("OEBPS/nav.xhtml",
                    _nav_xhtml(volume, chapters, extras=extras))
+        z.writestr("OEBPS/toc.ncx",
+                   _ncx_xml(volume, chapters, extras=extras))
         z.writestr("OEBPS/style.css", _EPUB_CSS)
         z.writestr("OEBPS/titlepage.xhtml", _title_page_xhtml(volume))
         z.writestr("OEBPS/copyright.xhtml", _copyright_xhtml(volume))

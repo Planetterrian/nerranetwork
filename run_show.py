@@ -2266,6 +2266,10 @@ def run(args: argparse.Namespace) -> None:
                             _u.get("match"), _u.get("sentence"))
                     for _e in _si_gate.shape_errors:
                         logger.error("  malformed ledger entry: %s", _e)
+                    for _n in _si_gate.reviewer_notes:
+                        logger.error(
+                            "  reviewer note in prose (%s): %s",
+                            _n.get("reason"), _n.get("match"))
                     if _si_enforce:
                         # Loop-breaker state: annotate the topic-queue
                         # entry so tomorrow's picker can defer a topic the

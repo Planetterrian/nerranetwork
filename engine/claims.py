@@ -583,6 +583,69 @@ def lint_uncovered_shapes(text: str, claims: List[dict]) -> List[dict]:
 # The gate
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# Reviewer-note leakage (WO-13, Sept 2026)
+# ---------------------------------------------------------------------------
+
+#: Fact-checker meta-commentary that must never survive into published
+#: prose. Five parentheticals of this shape shipped inside chapter
+#: bodies of the Volume 1 builds (2026-09-07) — "(No public source found
+#: tying this specific manifold redesign to the reusability program;
+#: keep the engineering point …)" — the verification workflow talking to
+#: itself. They came from research-fleet rewrites applied to digests,
+#: not from the pipeline's claim repair (which only ever writes ledger
+#: entries), but the gate covers both: any parenthetical carrying these
+#: phrases fails the episode and the book build.
+REVIEWER_NOTE_PHRASE_RE = re.compile(
+    r"\((?:[^()]{0,200})"
+    r"(no public source|no published .{0,40}source|could not be traced|"
+    r"cannot be traced|not supported by the sources|keep it general|"
+    r"keep the engineering point|keep it framed|could not verify|"
+    r"cannot verify|unverified|citation needed|source needed)"
+    r"(?:[^()]{0,200})\)",
+    re.IGNORECASE | re.DOTALL,
+)
+_PAREN_RE = re.compile(r"\(([^()]{40,})\)", re.DOTALL)
+_NOTE_SOURCE_RE = re.compile(r"\bsource\b", re.IGNORECASE)
+_NOTE_VERB_RE = re.compile(r"\b(found|traced|supported)\b", re.IGNORECASE)
+
+
+def find_reviewer_notes(text: str) -> List[dict]:
+    """Parentheticals that read as fact-checker notes rather than prose.
+
+    Two shapes: (1) a parenthetical carrying one of the note phrases in
+    ``REVIEWER_NOTE_PHRASE_RE``; (2) any parenthetical longer than 40
+    characters that mentions "source" together with "found", "traced" or
+    "supported". Returns ``[{"match": <parenthetical>, "reason": …}]``.
+    """
+    hits: List[dict] = []
+    seen: set = set()
+
+    def _is_link_target(span: str) -> bool:
+        # A markdown link's parenthesised URL is not prose (Omni View
+        # Ep014 linked a Fox News URL containing "unverified").
+        return span[1:].lstrip().lower().startswith(("http://", "https://"))
+
+    for m in REVIEWER_NOTE_PHRASE_RE.finditer(text or ""):
+        span = m.group(0)
+        if _is_link_target(span):
+            continue
+        if span not in seen:
+            seen.add(span)
+            hits.append({"match": span, "reason": f"note phrase {m.group(1)!r}"})
+    for m in _PAREN_RE.finditer(text or ""):
+        span = m.group(0)
+        inner = m.group(1)
+        if span in seen or _is_link_target(span):
+            continue
+        if _NOTE_SOURCE_RE.search(inner) and _NOTE_VERB_RE.search(inner):
+            seen.add(span)
+            hits.append({"match": span,
+                         "reason": "parenthetical mentions a source being "
+                                   "found/traced/supported"})
+    return hits
+
+
 @dataclass
 class GateResult:
     passed: bool = True
@@ -595,6 +658,9 @@ class GateResult:
     failed_verifications: List[dict] = field(default_factory=list)
     uncovered_shapes: List[dict] = field(default_factory=list)
     verified_claims: List[dict] = field(default_factory=list)
+    #: Reviewer-note parentheticals found in the prose (WO-13) — a
+    #: non-empty list fails the gate like an uncovered citation shape.
+    reviewer_notes: List[dict] = field(default_factory=list)
 
     def summary(self) -> str:
         unreachable = sum(
@@ -605,7 +671,8 @@ class GateResult:
             f"verified={self.claims_verified} "
             f"failed_verifications={len(self.failed_verifications)} "
             f"(unreachable_sources={unreachable}) "
-            f"uncovered_citation_shapes={len(self.uncovered_shapes)}"
+            f"uncovered_citation_shapes={len(self.uncovered_shapes)} "
+            f"reviewer_notes={len(self.reviewer_notes)}"
         )
 
     def to_report(self) -> dict:
@@ -619,6 +686,7 @@ class GateResult:
             "dropped_claims": self.dropped_claims,
             "failed_verifications": self.failed_verifications,
             "uncovered_shapes": self.uncovered_shapes,
+            "reviewer_notes": self.reviewer_notes,
         }
 
 
@@ -676,12 +744,17 @@ def run_source_integrity_gate(
         episode_text, result.verified_claims,
     )
 
+    # Reviewer notes in the prose (WO-13): fact-checker commentary is
+    # never publishable, whatever the ledger says.
+    result.reviewer_notes = find_reviewer_notes(episode_text)
+
     # Malformed entries also fail: the model asserted it had a source but
     # could not name one — that is a claim, not a formatting problem.
     result.passed = not (
         result.failed_verifications
         or result.uncovered_shapes
         or result.shape_errors
+        or result.reviewer_notes
     )
     return result
 
