@@ -1,0 +1,107 @@
+Mistral just closed Europe’s largest venture round at a $24B valuation, giving builders a new well-funded open-weight contender to test against closed frontier models.
+
+This is Models and Agents, episode 167.
+
+Mistral raised three billion euros in the round.
+
+Samsung led the investment and lifted the valuation past twenty four billion dollars.
+
+The total came to three point five billion dollars according to the terms reported across outlets.
+
+The company plans to use the money for training runs at greater scale than before.
+
+The move gives builders a better-capitalized European open-weight option with clearer roadmap visibility.
+
+Arm released a new compute platform that includes the AGI CPU and Neoverse CSS N4.
+
+The platform targets agentic workloads and mobile graphics for both edge and infrastructure use.
+
+Early partner sampling starts in the coming months.
+
+A local swap from full-row sorting to radix-selection top-k cut median decode time from thirty point two per second to thirty three point three per second at one hundred nineteen thousand context on dual three thousand ninety cards.
+
+The change touched only the sparse-attention indexer fallback path.
+
+A four hundred eighty request quality screen showed no consistent regression.
+
+Control accuracy hit two hundred thirty five out of two hundred forty while the candidate reached two hundred thirty eight out of two hundred forty.
+
+The setup now runs in production on two RTX three thousand ninety cards with dual Xeon E5-2696 v4 processors and one hundred twenty eight gigabytes of DDR4-2133 memory.
+
+Gemma four twelve B runs on an RTX PRO four thousand five hundred Blackwell while the E2B variant runs on Jetson Orin NX sixteen gigabytes.
+
+Cortexist Little Gemma handles inference in C for CUDA devices and supports lip sync, expressions, and gestures.
+
+The full pipeline and engine source are open source.
+
+The engine runs faster than llama dot cpp on Jetson Orin with no degradation after long voice prompts.
+
+Airties released Aura, an agentic AI engine aimed at network and device orchestration.
+
+The engine focuses on connected intelligence workflows across devices.
+
+S2W announced DRI, an autonomous AI agent built for criminal investigation workflows.
+
+The agent operates fully autonomously inside that domain.
+
+Embedflow lets teams upgrade embedding models on up to one billion documents without full re-indexing.
+
+The method reranks K documents from the old index with the new model.
+
+At K equals fifty the retrieval quality matched the target model on tested migrations.
+
+The package installs via pip and works with Qdrant.
+
+The lab ran sixty three migrations on up to one million documents.
+
+Three community forks deliver higher throughput than official llama dot cpp on Strix Halo hardware with Qwen three point eight Flash Next.
+
+One fork reaches roughly fifty per second decode and twelve hundred per second prefill at ninety percent of theoretical peak.
+
+Another hits roughly sixty per second decode and six hundred per second prefill at eighty percent of theory.
+
+Official llama dot cpp sits at half those rates on the same model and hardware.
+
+A new preprocessing approach cut image tokens by approximately ninety five percent versus sending raw images to GPT-4o while holding accuracy steady on the MOMA Graph benchmark of one thousand three hundred fifteen questions.
+
+Let me pop the hood on the top-k selection step inside long-context sparse attention.
+
+The default CUDA path falls back to a full-row sort when newer CUB DeviceTopK primitives are unavailable.
+
+That turns an O of n selection into an O of n log n operation per committed token.
+
+A radix-selection implementation drops kernel time from roughly five point one milliseconds to zero point two five milliseconds per token on wide rows.
+
+The change produced a nine to twelve percent median decode throughput gain at one hundred nineteen thousand context on dual three thousand ninety hardware.
+
+The gain stays confined to the indexer and leaves model quality unchanged when the rest of the pipeline stays fixed.
+
+The improvement disappears once the build already links against a newer CCCL that supplies the optimized DeviceTopK path natively.
+
+Teams on older CUDA twelve point zero toolchains should check their top-k path before assuming sparse attention is inherently slow.
+
+The eight thousand one hundred ninety two column threshold used in the tested build avoids the expensive sort while preserving the sparse pattern.
+
+Test the latest Mistral models on your preferred inference stack now that the new funding round clarifies the company’s scale ambitions.
+
+Try embedflow on a Qdrant index if you need to swap embedding models without rebuilding vectors from scratch.
+
+Run the radix-selection top-k patch on Qwen three point eight Flash Next with your current CUDA version to measure decode gains at long context.
+
+Experiment with the three Strix Halo forks on Qwen three point eight Flash Next if you have that hardware and want higher prefill and decode throughput than official llama dot cpp.
+
+Next Mistral model release expected to leverage the new capital for larger-scale training runs.
+
+Arm’s Neoverse CSS N4 and AGI CPU platforms move into early silicon sampling with partners.
+
+Further community forks and patches for Strix Halo and other edge platforms continue as adoption grows.
+
+Before we go, the next round of Strix Halo throughput numbers should land from the same community group that posted the current forks.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The AI world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+And before you go: this show is part of the Nerra Network — a family of daily podcasts on tech, science, and markets, each one a short, sharp briefing you can finish on the commute. If today earned its place in your feed, here's your next listen — Tesla Shorts Time, your daily deep dive into everything Tesla. Find every show, free, at nerranetwork.com. Want the written briefing with source links?
+
+Each show keeps a summaries page on nerranetwork.com — scannable, dated, and free.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
