@@ -726,6 +726,16 @@ class TestPromoCutHardening:
         from engine.daily_edition import _PRIMARY_PROMO_PATTERNS
         assert any(p.search(phrase) for p in _PRIMARY_PROMO_PATTERNS), phrase
 
+    @pytest.mark.parametrize("phrase", [
+        "and before you go this show is part of the nerra network a family of daily podcasts",
+        # UC Ep110, 2026-09-09: Whisper heard the article as "a".
+        "and before you go this show is part of a nerra network a family of daily podcasts",
+        "this show is part of an era network a family of daily podcasts",
+    ])
+    def test_part_of_frame_article_is_fuzzy(self, phrase):
+        from engine.daily_edition import _PRIMARY_PROMO_PATTERNS
+        assert any(p.search(phrase) for p in _PRIMARY_PROMO_PATTERNS), phrase
+
     def test_every_recent_lineup_transcript_hits_a_frame(self):
         # Network-wide: every committed transcript from the last ~3 weeks
         # must trim on FRAME evidence. A weak-evidence kind here means a
