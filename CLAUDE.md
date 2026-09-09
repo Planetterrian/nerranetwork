@@ -1257,6 +1257,23 @@ the publish result is NOT a metric until it is on the allowlist in
 shipped 09-03 and recorded nothing for six days. 2K is confirmed from
 the sidecars: 2816x1584 since 09-03.
 
+**Sep 9 2026 — captions: the long-form layer is the uploaded TRACK,
+never the pixels.** The Aug 1 network-wide burn-in assumed CC defaults
+off; YouTube remembers CC per account, and the operator's screenshot
+showed YouTube's caption box drawn over the burned per-word captions
+on long-form. `long_form_burn_in_captions: false` in `_defaults.yaml`
+(guard `TestLongFormCaptionLayer`); Shorts keep burn-in and upload no
+track. Arabic (or any other language) captions on a Short are
+YouTube's auto-generated track auto-translated by the VIEWER's
+caption-language preference — nothing in the pipeline carries a
+language but `en`/`ru`/`fr`; it is a player setting, not a bug to
+chase in code. Same day: EN `filled` Shorts (the second Short that
+exists only to reach the requested count) earned a median of 3 views
+across 17 uploads while the hook Short earned 48 — `shorts_fill_to_
+requested: false` (EN path only; RU/FR dubs pick their own windows and
+their filled Shorts earn ~225). Register: `long-form-captions-track-only`,
+`en-shorts-no-fill`.
+
 ### Anthology books — ebook + audiobook from the narrative shows (Aug 2026)
 
 Product B6 (operator-directed): a SERIES machine, not one-off books.

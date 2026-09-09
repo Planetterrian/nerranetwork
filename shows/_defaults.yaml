@@ -504,11 +504,34 @@ youtube:
   # so long-form shipped with NO on-screen captions at all and the July
   # 31 per-word ASS work (transcript_to_ass_full) was dormant. The
   # operator's video directive ("most enjoyable, visually appealing")
-  # wants the burned per-word treatment; the uploaded caption TRACK
-  # still ships alongside (YouTube CC defaults off, so no doubling for
-  # normal viewers). long_form_captions_path metric records ass vs
-  # srt_fallback per episode.
-  long_form_burn_in_captions: true
+  # turned the burned per-word treatment on Aug 1 on the assumption
+  # that YouTube CC defaults off, so the uploaded caption TRACK would
+  # not double it.
+  #
+  # Sep 9 2026 — OFF again (operator-directed, from a screenshot): the
+  # assumption was wrong for anyone whose player has CC on (YouTube
+  # remembers it per account, and deaf/HoH, second-language and
+  # auto-translate viewers keep it on). Those viewers saw YouTube's
+  # caption box drawn OVER the burned per-word captions on every
+  # long-form video — two caption layers obscuring the imagery. The
+  # long-form caption layer is the uploaded track only (toggleable,
+  # translatable, indexed); Shorts KEEP their burn-in (watched muted,
+  # in-feed — the Shorts idiom) and never upload a track.
+  # long_form_captions_path metric records ass vs srt_fallback when a
+  # show opts back in per-show.
+  long_form_burn_in_captions: false
+  # Sep 9 2026 — EN "filled" Shorts are off. July 18 made the selector
+  # fill to the policy's requested count with sub-threshold windows so a
+  # tier-A show never shipped 1-of-2. Seven weeks of Analytics say the EN
+  # second Short that exists only to reach the count earns a median of
+  # 3 views (n=17, 09-03..07) against 48 for the hook Short, one
+  # subscriber a week, and adds to the daily cadence YouTube's
+  # inauthentic-content policy watches. A second EN Short still ships
+  # when a window QUALIFIES (score >= shorts_min_score_threshold). This
+  # knob is read by run_show's EN path only: the RU/FR dubs select their
+  # own windows, and their filled Shorts earn ~225 views. Per-show
+  # opt-back-in: shorts_fill_to_requested: true.
+  shorts_fill_to_requested: false
   thumbnail_variants: 2
   # Sunday recaps reuse the week's gallery scenes (both aspects) instead
   # of regenerating imagery for stories already illustrated this week.
