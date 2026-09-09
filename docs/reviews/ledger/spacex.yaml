@@ -836,5 +836,23 @@ reviews:
       verdict: pending
       evidence: null
     agent_cost_usd: null
+  - date: 2026-09-09
+    pr: null
+    doc: docs/reviews/network_delivery_review_2026_09_05.md
+    summary: "Sep 9 readout (Ep094): the script told every story the digest had and kept all 7 numbers (coverage 81%), but the digest had TWO news items from 14 articles (median 30; Labor Day Monday) and 39 of 76 script lines re-analysed the lead item; the AI & Compute placeholder line was read aloud with its punctuation; 'Idiot Index' arrived undefined."
+    shipped:
+      - "network completeness rule + facts_lost gate; no SpaceX-specific change - a thin-fetch day is the article-count alarm's job"
+    predictions:
+    - metric: "article_count vs article_count_recent_median, next 10 runs"
+      baseline: "14 vs 30 (Ep094)"
+      expected: "the collapse alarm annotates any run under 60% of the recent median (verify it fired on Ep094 in the Actions log)"
+      verdict: pending
+      evidence: null
+    - metric: "AI & Compute no-news line spoken as a sentence (hand-count), 5 episodes"
+      baseline: "1/1 (Ep094)"
+      expected: "0 - the segment is skipped when the digest has no sourced item"
+      verdict: pending
+      evidence: null
+    agent_cost_usd: null
 
 do_not_retry: []

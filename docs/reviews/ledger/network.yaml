@@ -439,6 +439,40 @@ reviews:
       verdict: pending
       evidence: null
     agent_cost_usd: null
+  - date: 2026-09-09
+    pr: null
+    doc: docs/reviews/network_delivery_review_2026_09_05.md
+    summary: "Sep 9 readout (Sep 8 slate, third under the gate). Copying trend right: first drafts 5/9 under the 40% threshold before any retry (0/9 on Sep 7); accepted rewrites keep names (SpaceX 88, OV 85, PT 81%). New instrument digest_coverage (share of digest sentences told in any wording): copied scripts 77-95%, the rewritten week 43-65% - the 'two to six sentences' rule read as a cap (Tesla Ep599: 2 stories skipped, 8 of 17 numbers, 915w). Tesla's rewrite copied MORE and the draft aired; M&A's better rewrite (20->14%) was rejected on a section that stayed flagged; M&A digest carried a placeholder number ('2xxt/s') the script turned into 'half those rates'."
+    shipped:
+      - "engine/script_audit digest_coverage (metric script_digest_coverage_pct, warn <50, snapshot column)"
+      - "content_discipline.txt - every fact is spoken; the digest's facts are the floor, not a menu (A/B)"
+      - "engine/pipeline gate - reject_reason=facts_lost above a 15-point coverage drop; section rule accepts a rewrite that copies less with no new section; bounded attempts (llm.script_rewrite_gate_attempts, default 1, Tesla 2)"
+      - "run_show _lint_digest_placeholders (metric digest_placeholder_tokens); pronunciation keeps letter-glued model numbers (E5-2696, DDR4-2133)"
+    deferred:
+      - "a coverage-triggered retry (fire the gate when the DRAFT is under 55% coverage) - only if the completeness rule does not move the number; it would be a length-shaped lever and needs the operator's call"
+      - "M&A Things to Try lead-in sentence; Tesla First Principles digest-side topic pick"
+    predictions:
+    - metric: "script_digest_coverage_pct, nine gated shows, next 2 weeks"
+      baseline: "43-65% on Sep 7-8 (copied baseline 77-95%)"
+      expected: ">=70% median on accepted rewrites with script_digest_overlap_pct still <=15%"
+      verdict: pending
+      evidence: null
+    - metric: "share of gated episodes whose FIRST draft is under the 40% threshold"
+      baseline: "5/9 on Sep 8"
+      expected: ">=7/9 by the readout"
+      verdict: pending
+      evidence: null
+    - metric: "script_rewrite_gate_reject_reason=facts_lost rate"
+      baseline: "n/a (new)"
+      expected: "fires on <=1/5 rewrites once the completeness rule holds; never on a rewrite whose script_words >= draft"
+      verdict: pending
+      evidence: null
+    - metric: "digest_placeholder_tokens > 0, network"
+      baseline: "1 known (M&A Ep167)"
+      expected: "0 on 13/14 days"
+      verdict: pending
+      evidence: null
+    agent_cost_usd: null
 
 do_not_retry:
   - idea: podcast-side length levers (word floors, expand-retries, prompt

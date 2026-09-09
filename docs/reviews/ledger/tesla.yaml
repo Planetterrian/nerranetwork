@@ -398,6 +398,35 @@ reviews:
       verdict: pending
       evidence: null
     agent_cost_usd: null
+  - date: 2026-09-09
+    pr: null
+    doc: docs/reviews/network_delivery_review_2026_09_05.md
+    summary: "Sep 9 readout (Ep599): the draft aired at 41% verbatim after the rewrite copied MORE (44%); 915 words on 1,400 (draft 898); the X Takeover 'Cybercab doubles by year-end' (4 facts) and the non-OEM parts story (3) skipped, 8 of 17 digest numbers kept, First Principles re-told the floating clip with zero numbers; two stories told twice (app update, floating clip); five filler transitions. Digest coverage 53% (77% on Sep 6)."
+    shipped:
+      - "tesla.yaml script_rewrite_gate_attempts: 2 (each judged against the draft; first pass ships)"
+      - "content_discipline completeness rule + facts_lost gate (network)"
+    predictions:
+    - metric: "script_rewrite_gate_accepted when fired, next 10"
+      baseline: "1/3 (Ep597 truncated, Ep598 accepted, Ep599 still_copies)"
+      expected: ">=7/10; attempts metric shows the second attempt used on <=4/10"
+      verdict: pending
+      evidence: null
+    - metric: "script_digest_coverage_pct, last 10"
+      baseline: "53% (Ep599), 43% (Ep598)"
+      expected: ">=70% on 7/10"
+      verdict: pending
+      evidence: null
+    - metric: "digest stories skipped per episode (hand-count), 3 episodes"
+      baseline: "2 (Ep599)"
+      expected: "0"
+      verdict: pending
+      evidence: null
+    - metric: "script_words, last 10"
+      baseline: "915 (Ep599), 985 (Ep598)"
+      expected: "median >= 1,200 with overlap <=15%"
+      verdict: pending
+      evidence: null
+    agent_cost_usd: null
 
 do_not_retry:
   - idea: phonetic respellings or programmatic speech-tag injection

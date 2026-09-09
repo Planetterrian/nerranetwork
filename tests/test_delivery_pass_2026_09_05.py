@@ -321,7 +321,7 @@ class TestContentDisciplineShared:
     def test_snippet_exists_and_is_shape_only(self):
         text = (ROOT / "shows/prompts/_shared/content_discipline.txt").read_text(encoding="utf-8")
         for token in ("source material, not a draft", "eight consecutive words", "owner per fact",
-                      "as many sentences as it has distinct facts", "ends on its last fact",
+                      "one sentence per distinct fact", "ends on its last fact",
                       "ONE audible callback", "named once"):
             assert token in text, token
         # No quotable specimen sentence anywhere in the snippet.
@@ -763,3 +763,161 @@ class TestSep7Pronunciation:
         assert "The pick's numbers are spoken ONCE" in mit
         ma = (ROOT / "shows/prompts/models_agents_podcast.txt").read_text(encoding="utf-8")
         assert "A product MODEL number is a name" in ma
+
+
+# ---------------------------------------------------------------------------
+# Sep 9 2026 readout — the rewrites stopped copying and started dropping
+# ---------------------------------------------------------------------------
+
+
+class TestSep9DigestCoverageAndGateAttempts:
+    """Copied scripts told 77-95% of the digest's sentences; the first
+    rewritten week told 43-65% (Tesla Ep599: two stories and nine of
+    seventeen numbers gone, 915 words on a 1,400 target). The
+    whole-script verbatim number cannot see a thin script; coverage can.
+    Tesla's Sep 8 rewrite copied MORE and the draft aired, so the gate
+    takes bounded attempts; M&A's rewrite copied less with the same one
+    section flagged and was thrown away, so that acceptance softened."""
+
+    D = TestSep6SectionCopyAndOrphanedHook
+
+    class _Cfg:
+        class llm:
+            script_rewrite_gate_overlap_pct = 40.0
+
+    # Twelve-fact digest: coverage needs >= 10 scorable sentences.
+    FACTS = [
+        ("Starlink V3 satellites carry a 60 gigabit downlink per unit", "Each Starlink V3 satellite carries a sixty gigabit downlink"),
+        ("Falcon 9 booster B1085 flew its twentieth mission from Vandenberg", "Booster B1085 flew mission twenty from Vandenberg on Falcon 9"),
+        ("Raptor 3 hot-fire campaign at McGregor passed 300 cumulative seconds", "The Raptor 3 hot-fire campaign at McGregor passed three hundred cumulative seconds"),
+        ("Starship Flight 14 targets a Pacific splashdown near Hawaii", "Flight 14 of Starship targets a Pacific splashdown near Hawaii"),
+        ("Dragon Crew-13 hatch closes at 0930 UTC Thursday", "The Crew-13 Dragon hatch closes Thursday at nine thirty UTC"),
+        ("Starbase Bay Area orbital pad B tank farm added four methane spheres", "Pad B's tank farm at Starbase added four methane spheres"),
+        ("Starshield contract with Space Force worth 720 million dollars", "The Starshield contract with Space Force is worth seven hundred twenty million dollars"),
+        ("Polaris program astronauts trained on the new EVA suit gloves", "Polaris astronauts trained on the new EVA suit gloves"),
+        ("Cape Canaveral SLC-40 crew tower completed its escape slide test", "The SLC-40 crew tower at Cape Canaveral completed its escape slide test"),
+        ("Hawthorne factory shipped its 9000th Merlin engine this week", "Hawthorne shipped its nine thousandth Merlin engine this week"),
+        ("Direct-to-cell service reaches 2 million T-Mobile subscribers", "Direct-to-cell service reaches two million T-Mobile subscribers"),
+        ("Gwynne Shotwell reiterated a 2027 Mars cargo window at the briefing", "Gwynne Shotwell reiterated the 2027 Mars cargo window at the briefing"),
+    ]
+    BIG_DIGEST = "### Top News\n" + "\n".join(
+        f"{i}. **Item {i}**\n   {d}. Source: https://x.example/{i}" for i, (d, _) in enumerate(FACTS, 1)
+    ) + "\n"
+
+    @classmethod
+    def _big_script(cls, keep):
+        body = "\n".join(f"Patrick: {p}." for _, p in cls.FACTS[:keep])
+        return ("Patrick: SpaceX had a full day across the fleet.\n"
+                "Patrick: This is SpaceX Daily, episode ninety-nine.\n" + body + "\n" + _long_body(12 - keep + 4)
+                + "\nPatrick: And that's a wrap on today's SpaceX developments.\n")
+
+    def test_digest_coverage_separates_full_from_thin_scripts(self):
+        full = self._big_script(12)
+        thin = self._big_script(4)
+        c_full = sa.digest_coverage(full, self.BIG_DIGEST)
+        c_thin = sa.digest_coverage(thin, self.BIG_DIGEST)
+        assert c_full is not None and c_thin is not None
+        assert c_full >= 0.9 and c_thin <= 0.4
+        assert sa.digest_coverage("", self.BIG_DIGEST) is None
+        assert sa.digest_coverage(full, "") is None
+        # a digest too small to score returns None instead of a noisy share
+        assert sa.digest_coverage(self.D()._script(self.D.WORD_SWAPPED), self.D.DIGEST) is None
+
+    def test_audit_reports_coverage_and_warns_when_thin(self):
+        a = sa.audit_script(self._big_script(4), digest_text=self.BIG_DIGEST)
+        assert a.to_metrics()["script_digest_coverage_pct"] <= 40
+        assert any("tells only" in w for w in a.warnings())
+        full = sa.audit_script(self._big_script(12), digest_text=self.BIG_DIGEST)
+        assert not any("tells only" in w for w in full.warnings())
+
+    def test_gate_rejects_a_rewrite_that_drops_the_facts(self, monkeypatch):
+        from engine import pipeline
+        copied = "\n".join(f"Patrick: {d}." for d, _ in self.FACTS) + "\nPatrick: And that's a wrap.\n"
+        # Keeps every NAME (a roll-call line) but tells only five of the twelve facts,
+        # so the names guard passes and only the coverage guard can catch it.
+        names = ("Patrick: Starlink, Falcon 9, B1085, Vandenberg, Raptor 3, McGregor, Starship, Hawaii, "
+                 "Dragon, Crew-13, Starbase, Space Force, Starshield, Polaris, EVA, Cape Canaveral, "
+                 "SLC-40, Hawthorne, Merlin, T-Mobile, Gwynne Shotwell and Mars all featured today.")
+        thin = self._big_script(5).replace("Patrick: And that's a wrap", names + "\nPatrick: And that's a wrap")
+        monkeypatch.setattr("engine.generator.generate_podcast_script",
+                            lambda tv, config, tracker=None, prompt_appendix="": thin)
+        class Low:  # short fixture sentences carry few 8-grams; fire at 20%
+            class llm:
+                script_rewrite_gate_overlap_pct = 20.0
+        out = pipeline._script_rewrite_gate(copied, self.BIG_DIGEST, Low(), {}, None)
+        assert out["fired"] and out["reasons"] == "overlap"
+        assert out["digest_coverage_before"] is not None and out["digest_coverage_after"] is not None
+        assert not out["accepted"] and out["reject_reason"] == "facts_lost"
+        assert out["script"] == copied
+        # the same rewrite with every fact kept ships
+        monkeypatch.setattr("engine.generator.generate_podcast_script",
+                            lambda tv, config, tracker=None, prompt_appendix="": self._big_script(12))
+        out = pipeline._script_rewrite_gate(copied, self.BIG_DIGEST, Low(), {}, None)
+        assert out["accepted"], out["reject_reason"]
+
+    def test_section_reason_accepts_a_rewrite_that_copies_less_with_no_new_section(self, monkeypatch):
+        from engine import pipeline
+        copied = self.D()._script(self.D.WORD_SWAPPED)
+        # Same section still flagged, but fewer 8-grams overall: swap more words.
+        looser = self.D()._script(
+            self.D.WORD_SWAPPED.replace("critical-path logic", "critical path")
+            .replace("final-assembly hall", "assembly hall").replace("takt time", "own pace")
+            .replace("high-value asset", "costly asset").replace("shared facilities", "common halls")
+        )
+        assert sa.copied_sections(looser, self.D.DIGEST), "fixture must still flag the section"
+        monkeypatch.setattr("engine.generator.generate_podcast_script",
+                            lambda tv, config, tracker=None, prompt_appendix="": looser)
+        out = pipeline._script_rewrite_gate(copied, self.D.DIGEST, self._Cfg(), {"hook": ""}, None)
+        assert out["fired"] and "section" in out["reasons"]
+        assert out["after_pct"] < out["before_pct"]
+        assert out["accepted"], out["reject_reason"]
+
+    def test_gate_takes_bounded_attempts_and_ships_the_first_pass(self, monkeypatch):
+        from engine import pipeline
+        class Two:
+            class llm:
+                script_rewrite_gate_overlap_pct = 40.0
+                script_rewrite_gate_attempts = 2
+        calls = []
+        def fake_gen(tv, config, tracker=None, prompt_appendix=""):
+            calls.append(1)
+            return TestScriptRewriteGate.COPIED if len(calls) == 1 else TestScriptRewriteGate.REWRITTEN
+        monkeypatch.setattr("engine.generator.generate_podcast_script", fake_gen)
+        out = pipeline._script_rewrite_gate(TestScriptRewriteGate.COPIED, TestScriptRewriteGate.DIGEST, Two(), {}, None)
+        assert out["accepted"] and out["attempts"] == 2 and len(calls) == 2
+        calls.clear()
+        out = pipeline._script_rewrite_gate(TestScriptRewriteGate.COPIED, TestScriptRewriteGate.DIGEST, self._Cfg(), {}, None)
+        assert not out["accepted"] and out["attempts"] == 1 and len(calls) == 1
+        assert pipeline._rewrite_gate_attempts(Two()) == 2 and pipeline._rewrite_gate_attempts(self._Cfg()) == 1
+
+    def test_tesla_gets_two_attempts_and_the_rest_one(self):
+        from engine.config import load_config
+        assert int(load_config(str(ROOT / "shows/tesla.yaml")).llm.script_rewrite_gate_attempts) == 2
+        for slug in ("spacex", "models_agents", "omni_view"):
+            assert int(load_config(str(ROOT / "shows" / f"{slug}.yaml")).llm.script_rewrite_gate_attempts) == 1, slug
+
+    def test_run_show_records_coverage_attempts_and_placeholder_metrics(self):
+        src = (ROOT / "run_show.py").read_text(encoding="utf-8")
+        for key in ("script_rewrite_gate_digest_coverage_before", "script_rewrite_gate_digest_coverage_after",
+                    "script_rewrite_gate_attempts", "digest_placeholder_tokens"):
+            assert f'metrics.record("{key}"' in src, key
+        assert "_lint_digest_placeholders(x_thread, config, metrics)" in src
+
+    def test_digest_placeholder_lint_catches_the_ep167_shape(self):
+        import run_show
+        rx = run_show._DIGEST_PLACEHOLDER_RE
+        assert [m.group(0) for m in rx.finditer("2x t/s decode and 2xxt/s prefill")] == ["2xxt/s"]
+        assert not list(rx.finditer("a 2x speedup and 3.5x more throughput"))
+        assert list(rx.finditer("about xx percent")) and list(rx.finditer("[number] users"))
+
+    def test_prompt_rule_is_completeness_and_snapshot_has_coverage(self):
+        text = (ROOT / "shows/prompts/_shared/content_discipline.txt").read_text(encoding="utf-8")
+        assert "EVERY fact is spoken" in text and "floor, not a menu" in text
+        snap = (ROOT / "scripts/review_snapshot.py").read_text(encoding="utf-8")
+        assert "| coverage |" in snap
+
+    def test_model_numbers_keep_their_hyphen(self):
+        from assets.pronunciation import prepare_text_for_tts
+        out = prepare_text_for_tts("a Xeon E5-2696 v4 with DDR4-2133 memory")
+        assert "E5-2696" in out and "DDR4-2133" in out and " to " not in out
+        assert "ten to twenty" in prepare_text_for_tts("prices of 10-20 dollars")

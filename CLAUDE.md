@@ -1978,6 +1978,31 @@ cause was mechanical, not the host's taste, and the rules below bind:
   `Nk` tail is a name ("Nutritionfive thousand" aired), GPU model numbers
   speak as pairs ("RTX fifty ninety"), the subreddit handler no longer
   doubles "the". Guards: `TestSep7*`.
+- **Sep 9 readout (Sep 8 slate; "Sep 9 readout" in the review doc): the
+  rewrites stopped copying and started DROPPING.** First drafts are now
+  under the 40% threshold on 5 of 9 shows before any retry, but a new
+  measure — `script_audit.digest_coverage`, the share of the digest's
+  sentences the script tells in any wording (`script_digest_coverage_pct`,
+  warn < 50, snapshot column) — read 77–95% on copied scripts and 43–65%
+  on the rewritten week (Tesla Ep599: two stories skipped, 8 of 17
+  numbers, 915 words on 1,400). **Read overlap and coverage together:
+  the goal is overlap ≤ 15% AND coverage ≥ 70%; either alone is gamed by
+  the other.** The "two to six sentences" rule read as a cap and now
+  says every digest fact is spoken ("the floor, not a menu"); the gate
+  rejects a rewrite 15 points thinner than its draft (`facts_lost`);
+  a rewrite that copies less overall with no new copied section ships
+  even if a flagged section persists (M&A Ep167's better rewrite was
+  thrown away); `llm.script_rewrite_gate_attempts` (default 1, Tesla 2 —
+  its Sep 8 rewrite copied MORE and the draft aired) takes bounded
+  attempts each judged against the draft. Also: `_lint_digest_placeholders`
+  warns when the digest carries a placeholder-shaped number ("2xxt/s"
+  became "half those rates" on air — `digest_placeholder_tokens`), and
+  a digit glued to a letter is a model number, not a range ("Xeon Efive
+  to two thousand six hundred ninety-six" aired for E5-2696). Two of the
+  three short Sep 8 scripts were not thinning: SpaceX's digest had two
+  items from 14 articles (a fetch-famine day) and M&A's 1,044 words were
+  the headline-echo padding removed with 33 numbers kept — coverage
+  tells them apart where word count cannot. Guards: `TestSep9*`.
 - Every prompt-side item above is landmine-#17 A/B; the engine modules are
   removal-only or read-only and are not.
 

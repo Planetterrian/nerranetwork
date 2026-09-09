@@ -579,5 +579,30 @@ reviews:
       verdict: pending
       evidence: null
     agent_cost_usd: null
+  - date: 2026-09-09
+    pr: null
+    doc: docs/reviews/network_delivery_review_2026_09_05.md
+    summary: "Sep 9 readout (Ep167): BETTER than Ep165 at 579 fewer words - the headline-echo padding is gone and 33 numbers survive (Under the Hood 7) - but the rewrite that copied less (20->14%) was rejected because Under the Hood stayed flagged, so the draft aired; the digest carried a placeholder number ('2x t/s decode and 2xxt/s prefill') the script turned into 'half those rates'; 'Xeon E5-2696 v4' aired as a range; Things to Try read as bare imperatives; UTH re-told Model Updates item 3 (9-12%, 119k, dual 3090 spoken twice)."
+    shipped:
+      - "gate section rule accepts a rewrite that copies less with no new section"
+      - "run_show digest placeholder lint"
+      - "pronunciation: letter-glued model numbers keep their hyphen"
+    predictions:
+    - metric: "digest_placeholder_tokens, next 15 episodes"
+      baseline: "1 (Ep167)"
+      expected: "0 on 14/15; any hit stays out of the script (hand-check)"
+      verdict: pending
+      evidence: null
+    - metric: "script_rewrite_gate_reject_reason=section_still_copied when the rewrite copied less overall"
+      baseline: "1 (Ep167)"
+      expected: "0"
+      verdict: pending
+      evidence: null
+    - metric: "Under the Hood re-tells a Model Updates item (hand-count), 5 episodes"
+      baseline: "1/1"
+      expected: "<=1/5"
+      verdict: pending
+      evidence: null
+    agent_cost_usd: null
 
 do_not_retry: []
