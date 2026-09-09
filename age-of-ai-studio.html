@@ -404,11 +404,60 @@
     var btn = this;
     btn.disabled = true; btn.textContent = "Connecting…";
     join().catch(function (e) {
-      console.error(e);
+      console.error("[studio] join failed at step", joinStep, e);
       btn.disabled = false; btn.textContent = isHost ? "Ready" : "Join your interview";
-      fail("Couldn't connect to the studio: " + (e && e.message ? e.message : e));
+      fail(explainJoinError(e));
     });
   });
+
+  // Sept 9 2026 (Dan Perra, live): both the guest and the host page sat on
+  // "Connecting…" for ten minutes with no message. Every step of the join
+  // now has a name, a visible status line and a hard timeout, and the
+  // one failure that actually happened (Voximplant rejecting the login
+  // because the Worker's password for the studio user does not match the
+  // user's password) is spelled out instead of swallowed.
+  var joinStep = "start";
+  var STEP_TIMEOUT_MS = 15000;
+  function step(name, label, promise) {
+    joinStep = name;
+    var btn = document.getElementById("joinBtn");
+    if (btn) btn.textContent = label;
+    console.log("[studio] step:", name);
+    return Promise.race([
+      promise,
+      new Promise(function (_, reject) {
+        setTimeout(function () {
+          reject(new Error("timed out after " + (STEP_TIMEOUT_MS / 1000) + "s during: " + label.replace(/…$/, "")));
+        }, STEP_TIMEOUT_MS);
+      }),
+    ]);
+  }
+  function explainJoinError(e) {
+    var code = e && (e.code || e.status || (typeof e === "number" ? e : null));
+    var msg = e && e.message ? e.message : (typeof e === "string" ? e : "");
+    if (String(code) === "401" || /401/.test(msg) || (joinStep === "login" && !msg)) {
+      return "The studio's sign-in was rejected (Voximplant 401 at step \"login\"). " +
+        "This is a configuration fault on our side, not your browser: the studio " +
+        (isHost ? "host" : "guest") + " password on the server does not match the " +
+        "Voximplant user. Please tell Patrick; nothing on your end will fix it.";
+    }
+    if (joinStep === "init" || /NotAllowedError|Permission denied|micRequired/i.test(msg)) {
+      return "Your browser did not give the studio access to the microphone. Click the " +
+        "lock icon in the address bar, allow the microphone, and reload.";
+    }
+    if (joinStep === "connect") {
+      return "Couldn't reach the Voximplant media servers (" + (msg || "no response") + "). " +
+        "A VPN, corporate firewall or hotel Wi-Fi often blocks this; try a phone hotspot.";
+    }
+    if (joinStep === "onetimekey") {
+      return "Voximplant did not issue a login key (" + (msg || "no response") + "). " +
+        "Reload once; if it repeats, tell Patrick.";
+    }
+    if (joinStep === "studio-auth") {
+      return "The Nerra studio server did not answer the sign-in request (" + (msg || "no response") + ").";
+    }
+    return "Couldn't connect to the studio at step \"" + joinStep + "\": " + (msg || JSON.stringify(e));
+  }
   document.getElementById("rearmBtn").addEventListener("click", function () {
     leaving = false; armHost();
   });
@@ -443,30 +492,41 @@
 
     if (!loggedIn) {
       sdk = VoxImplant.getInstance();
-      await sdk.init({ micRequired: true, videoSupport: !isHost, progressTone: false, showDebugInfo: false });
-      await sdk.connect();
+      try {
+        await step("init", "Opening microphone…",
+          sdk.init({ micRequired: true, videoSupport: !isHost, progressTone: false, showDebugInfo: false }));
+      } catch (e) {
+        // A second click after a failure: the SDK is already initialised.
+        if (!(e && /already initialized/i.test(e.message || ""))) throw e;
+      }
+      await step("connect", "Connecting to Voximplant…", sdk.connect());
 
       var key = null;
       var fullUserGuess = (isHost ? hostUser : "guest") + VOX_APP_SUFFIX;
       // The one-time key is delivered via an AuthResult with code 302 —
       // depending on SDK version this surfaces as a resolve or a reject.
       try {
-        var res = await sdk.requestOneTimeLoginKey(fullUserGuess);
+        var res = await step("onetimekey", "Requesting login key…", sdk.requestOneTimeLoginKey(fullUserGuess));
         key = res && res.key;
-      } catch (e) { key = e && e.key; }
+      } catch (e) {
+        key = e && e.key;
+        if (!key && e && /timed out/.test(e.message || "")) throw e;
+      }
       if (!key) throw new Error("no one-time login key from Voximplant");
 
       var authBody = { key: key, role: role };
       if (isHost) authBody.token = adminToken;
-      var auth = await fetch(API + "/studio-auth", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(authBody),
-      }).then(function (r) { return r.json(); });
+      var auth = await step("studio-auth", "Checking in with the studio…",
+        fetch(API + "/studio-auth", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(authBody),
+        }).then(function (r) { return r.json(); }));
       if (!auth.token) throw new Error(auth.error || "studio auth unavailable");
       var user = (auth.user || (isHost ? hostUser : "guest")) + VOX_APP_SUFFIX;
 
-      await sdk.loginWithOneTimeKey(user, auth.token);
+      await step("login", "Signing in…", sdk.loginWithOneTimeKey(user, auth.token));
       loggedIn = true;
+      joinStep = "call";
     }
 
     selectCallDevices();
