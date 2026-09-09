@@ -1,0 +1,46 @@
+# Nerra Voices — room probe (Sept 9 2026 diagnostics). Starts a synthetic
+# participant (scenario probeSession) that joins the interview room of the
+# given run and plays a speech clip into it, so the room's
+# interview_runs.scenario_trace says whether the mixer and Mira hear a
+# leg — without anyone at a microphone. Manual only.
+name: Voximplant room probe
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: 'interview_runs.id (a live or awaiting_guest run)'
+        type: string
+        required: true
+      clip:
+        description: 'Speech clip URL to play into the room'
+        type: string
+        default: 'https://audio.nerranetwork.com/age_of_ai/system/mira_disclosure.mp3'
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+      - uses: ./.github/actions/setup-python
+        with:
+          python-version: '3.12'
+          requirements-file: 'pipelines/requirements.txt'
+          skip-checkout: 'true'
+      - name: Start the probe
+        run: |
+          python - <<'PY'
+          import os
+          from voximplant.api_clients.voximplant_client import start_room_probe
+          print("probe:", start_room_probe(os.environ["RUN_ID"], os.environ["CLIP"]))
+          PY
+        env:
+          RUN_ID: ${{ inputs.run_id }}
+          CLIP: ${{ inputs.clip }}
+          VOXIMPLANT_ACCOUNT_ID: ${{ secrets.VOXIMPLANT_ACCOUNT_ID }}
+          VOXIMPLANT_API_KEY: ${{ secrets.VOXIMPLANT_API_KEY }}

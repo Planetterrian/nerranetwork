@@ -365,6 +365,8 @@ async function handleInterviewComplete(req: Request, env: Env): Promise<Response
       ...(payload.voximplant_record_url ? { voximplant_record_url: payload.voximplant_record_url } : {}),
       ...(payload.voximplant_video_url ? { voximplant_video_url: payload.voximplant_video_url } : {}),
       ...(payload.audio_path ? { audio_path: payload.audio_path } : {}),
+      ...(payload.voximplant_mix_record_url ? { voximplant_mix_record_url: payload.voximplant_mix_record_url } : {}),
+      ...(payload.speech_events !== undefined ? { speech_events: Number(payload.speech_events) || 0 } : {}),
       call_mode: payload.call_mode ?? existingLog.call_mode ?? null,
     },
     // Per-leg Voximplant recordings and the host timeline the room
@@ -1138,14 +1140,22 @@ async function handleLegEvent(req: Request, env: Env): Promise<Response> {
   const body = await req.json<any>().catch(() => null);
   const runId = String(body?.run_id ?? "");
   const role = body?.role, event = body?.event;
-  if (!UUID_RE.test(runId) || !isStudioRole(role) || !["joined", "left"].includes(event)) {
-    return json({ error: "run_id + role(guest|host) + event(joined|left) required" }, 400);
+  if (!UUID_RE.test(runId) || !(isStudioRole(role) || role === "probe") || !["joined", "left"].includes(event)) {
+    return json({ error: "run_id + role(guest|host|probe) + event(joined|left) required" }, 400);
   }
   const runs = await sb(env, "GET",
     `interview_runs?id=eq.${runId}&select=id,guest_joined_at,host_joined_at,host_left_at,` +
     `recording_guest_url,recording_host_url,grok_session_log`);
   const run = runs?.[0];
   if (!run) return json({ error: "run not found" }, 404);
+  if (role === "probe") {
+    // Diagnostics: the synthetic participant's room-leg recording.
+    if (typeof body?.record_url === "string" && body.record_url) {
+      await sb(env, "PATCH", `interview_runs?id=eq.${runId}`,
+        { grok_session_log: { ...(run.grok_session_log ?? {}), probe_record_url: body.record_url } });
+    }
+    return json({ ok: true, run_id: runId, role, event });
+  }
   const now = new Date().toISOString();
   const patch: Record<string, unknown> = {};
   if (role === "guest" && event === "joined" && !run.guest_joined_at) patch.guest_joined_at = now;

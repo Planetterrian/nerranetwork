@@ -79,6 +79,20 @@ def start_interview_scenario(run_id: str,
     return result
 
 
+def start_room_probe(run_id: str, clip_url: str,
+                     rule_name: str = RULE_NAME) -> Dict[str, Any]:
+    """Diagnostics (Sept 9 2026): start a PROBE session for an interview run
+    — a synthetic participant that joins the room and plays ``clip_url``
+    into it (see probeSession in the scenario). The room's scenario_trace
+    then shows whether the mixer and Mira heard it."""
+    return _call(
+        "StartScenarios",
+        rule_name=rule_name,
+        application_name=APPLICATION_NAME,
+        script_custom_data=json.dumps({"run_id": run_id, "probe": True, "clip": clip_url}),
+    )
+
+
 def upload_scenario(path: Path,
                     scenario_name: str = SCENARIO_NAME,
                     supabase_url: Optional[str] = None,
@@ -331,7 +345,9 @@ def ensure_room_rule(application_name: str = APPLICATION_NAME,
         rules = list_rules(application_name)
     else:
         rule_id = existing.get("rule_id")
-        if existing.get("rule_pattern") != pattern:
+        # The panel stores the pattern without a leading ^ (it anchors
+        # itself); compare normalised so a no-op deploy stays a no-op.
+        if str(existing.get("rule_pattern") or "").lstrip("^") != pattern.lstrip("^"):
             _call("SetRuleInfo", rule_id=rule_id, rule_pattern=pattern)
             logger.info("Voximplant rule %s pattern set to %s", rule_name, pattern)
     order = [r.get("rule_id") for r in rules]

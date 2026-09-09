@@ -90,6 +90,7 @@ let webhookFired = false;
 VoxEngine.addEventListener(AppEvents.Started, async function () {
   const custom = JSON.parse(VoxEngine.customData() || "{}");
   if (!custom.run_id) return; // inbound session — CallAlerting takes over.
+  if (custom.probe) return probeSession(custom); // synthetic participant (diagnostics)
 
   sessionKind = "participant";
   callMode = "pstn";
@@ -294,6 +295,72 @@ async function participantLeft() {
   VoxEngine.terminate();
 }
 
+// ---------------------------------------------------------------------------
+// PROBE session (Sept 9 2026 diagnostics): a synthetic participant. Fired by
+// the "Voximplant room probe" workflow (StartScenarios with customData
+// {run_id, probe: true, clip}). It joins the room exactly like a human leg
+// (callConference with X-Role guest) and, instead of a microphone, plays a
+// speech clip into its room leg twice: once right after joining (while the
+// room mix is Mira's input) and once after the 12 s audio-path fallback
+// (when the first guest leg is bridged to her directly). The room's trace
+// then says which hop carries speech — no human timing needed. The probe
+// records its room leg (R = what the room sent back, i.e. Mira's replies)
+// and reports it via /voices/leg-event role=probe.
+// ---------------------------------------------------------------------------
+
+async function probeSession(custom) {
+  sessionKind = "probe";
+  runId = custom.run_id;
+  const clip = custom.clip || "";
+  const headers = { "X-Run-Id": runId, "X-Role": "guest", "X-Call-Mode": "webrtc", "X-Probe": "1" };
+  let probeRecordUrl = null;
+  let roomCall;
+  try {
+    roomCall = VoxEngine.callConference(ROOM_PREFIX + runId, "probe", "probe", headers);
+  } catch (err) {
+    Logger.write("[aoa " + runId + "] probe callConference threw: " + err.message);
+    return VoxEngine.terminate();
+  }
+  const finish = async function () {
+    await sleep(1500);
+    try {
+      await Net.httpRequestAsync(LEG_EVENT_URL, {
+        method: "POST", headers: ["Content-Type: application/json"],
+        postData: JSON.stringify({ run_id: runId, role: "probe", event: "left", record_url: probeRecordUrl }),
+      });
+    } catch (err) { /* best-effort */ }
+    VoxEngine.terminate();
+  };
+  roomCall.addEventListener(CallEvents.Failed, function (ev) {
+    Logger.write("[aoa " + runId + "] probe room leg failed: " + ((ev && (ev.reason || ev.code)) || "unknown"));
+    finish();
+  });
+  roomCall.addEventListener(CallEvents.Disconnected, function () { finish(); });
+  roomCall.addEventListener(CallEvents.RecordStarted, function (ev) { if (ev && ev.url) probeRecordUrl = ev.url; });
+  roomCall.addEventListener(CallEvents.Connected, async function () {
+    Logger.write("[aoa " + runId + "] probe in the room");
+    try { roomCall.record({ name: "aoa_" + runId + "_probe", stereo: true, hd_audio: true }); } catch (err) {}
+    const play = async function (label) {
+      if (!clip) return;
+      try {
+        const player = VoxEngine.createURLPlayer(clip);
+        player.sendMediaTo(roomCall);
+        Logger.write("[aoa " + runId + "] probe playing clip (" + label + ")");
+        await waitForEvent(player, PlayerEvents.PlaybackFinished);
+        try { player.stop(); } catch (err) {}
+      } catch (err) {
+        Logger.write("[aoa " + runId + "] probe clip failed (" + label + "): " + err.message);
+      }
+    };
+    await sleep(4000);      // Mira's session is up and she is opening
+    await play("via room mix");
+    await sleep(12000);     // past the fallback point (opening + 12 s)
+    await play("after fallback");
+    await sleep(20000);     // let Mira answer; it is on the recording
+    try { roomCall.hangup(); } catch (err) {}
+  });
+}
+
 // ===========================================================================
 // ROOM SESSION
 // ===========================================================================
@@ -316,6 +383,9 @@ let openingTimer = null;
 let fallbackTimer = null;
 let miraRecorder = null;
 let miraRecordUrl = null;
+let mixRecorder = null;     // the whole room mix (conf -> recorder), diagnostics + post-production
+let mixRecordUrl = null;
+let speechEvents = 0;       // InputAudioBufferSpeechStarted count
 let sessionReady = false;   // Grok SessionUpdated received (media bridged)
 let openingFired = false;   // Mira opens exactly once
 let anyoneHeard = false;    // first InputAudioBufferSpeechStarted
@@ -356,6 +426,16 @@ async function openRoom() {
   // the per-person recordings don't get narrowband-downmixed.
   conf = VoxEngine.createConference({ hd_audio: true });
   trace("room", "opened (" + callMode + "); mixer via sendMediaBetween");
+  try {
+    ["ConferenceError", "Started", "Stopped", "EndpointAdded", "EndpointRemoved"].forEach(function (name) {
+      if (ConferenceEvents[name]) {
+        conf.addEventListener(ConferenceEvents[name], function (ev) {
+          trace("conference", name + (ev && ev.code ? " code " + ev.code : "") + (ev && ev.error ? " " + ev.error : ""));
+        });
+      }
+    });
+  } catch (err) { /* event names differ across VoxEngine versions */ }
+  startMixRecorder();
   hardCapTimer = setTimeout(function () {
     Logger.write("[aoa " + runId + "] hard cap reached, ending room");
     endRoom("hard_cap");
@@ -461,7 +541,9 @@ async function startAgent() {
 
     // Barge-in: flush Mira's buffered audio the moment anyone speaks.
     grokAgent.addEventListener(Grok.VoiceAgentAPIEvents.InputAudioBufferSpeechStarted, function () {
+      speechEvents++;
       if (!anyoneHeard) trace("grok", "first inbound speech heard" + (directBridge ? " (direct bridge)" : " (via room mix)"));
+      else if (speechEvents <= 6) trace("grok", "speech heard #" + speechEvents + (directBridge ? " (direct bridge)" : " (via room mix)"));
       anyoneHeard = true;
       if (grokAgent) grokAgent.clearMediaBuffer();
     });
@@ -540,6 +622,22 @@ function announce(what) {
     grokAgent.responseCreate({});
   } catch (err) {
     Logger.write("[aoa " + runId + "] announce failed: " + err.message);
+  }
+}
+
+// Whole-room mix: everything the conference outputs (people + Mira). Also
+// the definitive diagnostic for the leg->mixer hop: if a person's voice is
+// on this file, the mixer heard them.
+function startMixRecorder() {
+  if (mixRecorder || !conf) return;
+  try {
+    mixRecorder = VoxEngine.createRecorder({ name: "aoa_" + runId + "_mix", hd_audio: true });
+    mixRecorder.addEventListener(RecorderEvents.Started, function (ev) { if (ev && ev.url) mixRecordUrl = ev.url; });
+    mixRecorder.addEventListener(RecorderEvents.Stopped, function (ev) { if (ev && ev.url) mixRecordUrl = ev.url; });
+    conf.sendMediaTo(mixRecorder);
+  } catch (err) {
+    Logger.write("[aoa " + runId + "] mix recorder unavailable (non-fatal): " + err.message);
+    mixRecorder = null;
   }
 }
 
@@ -673,6 +771,7 @@ async function endRoom(reason) {
   if (timeCheckTimer) clearInterval(timeCheckTimer);
   trace("room", "ending: " + reason);
   if (miraRecorder) { try { miraRecorder.stop(); } catch (ignored) {} }
+  if (mixRecorder) { try { mixRecorder.stop(); } catch (ignored) {} }
   legs.slice().forEach(function (l) { try { l.call.hangup(); } catch (ignored) {} });
   await sleep(1000); // let the Mira recorder report its Stopped URL
   try {
@@ -681,6 +780,8 @@ async function endRoom(reason) {
       status: "completed",
       call_mode: callMode,
       voximplant_mira_record_url: miraRecordUrl,
+      voximplant_mix_record_url: mixRecordUrl,
+      speech_events: speechEvents,
       host_joined_at: hostJoinedAt,
       host_left_at: hostLeftAt,
       host_attempts: hostJoins,
