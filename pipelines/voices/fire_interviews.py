@@ -28,7 +28,11 @@ from common import (  # noqa: E402
     show_for,
 )
 
-FIRE_WINDOW_AHEAD_MIN = 5
+FIRE_WINDOW_AHEAD_MIN = 5          # phone (PSTN) interviews: Mira dials at T-5..T-0
+STUDIO_UNLOCK_AHEAD_MIN = 12       # browser studio: run row (= unlock) at T-12, so
+                                   # guests and the co-host can sign in, test the
+                                   # mic and be in the room 10 minutes early
+                                   # (Patrick, Sept 9 2026 rehearsal)
 FIRE_GRACE_BEHIND_MIN = 30   # cron drift tolerance — never leave a guest
                              # waiting; GitHub delivers */5 crons roughly
                              # hourly under load, so 10 min missed real slots
@@ -184,6 +188,15 @@ def _now() -> dt.datetime:
     return dt.datetime.now(dt.timezone.utc)
 
 
+def _parse(value) -> "dt.datetime | None":
+    if not value:
+        return None
+    try:
+        return dt.datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
 def _iso(t: dt.datetime) -> str:
     # Z suffix, not +00:00: these strings go raw into PostgREST query
     # strings, where an unencoded "+" is decoded as a space → 400 (this
@@ -275,7 +288,8 @@ def send_reminders() -> None:
 
 def fire_due_interviews() -> int:
     lo = _now() - dt.timedelta(minutes=FIRE_GRACE_BEHIND_MIN)
-    hi = _now() + dt.timedelta(minutes=FIRE_WINDOW_AHEAD_MIN)
+    hi = _now() + dt.timedelta(minutes=max(FIRE_WINDOW_AHEAD_MIN, STUDIO_UNLOCK_AHEAD_MIN))
+    phone_hi = _now() + dt.timedelta(minutes=FIRE_WINDOW_AHEAD_MIN)
     # status=in.(briefed,scheduled): short-notice bookings (inside the daily
     # prep cron's 12-36h lookahead) arrive still `scheduled` with no brief —
     # they get an inline brief below instead of silently never firing
@@ -287,6 +301,12 @@ def fire_due_interviews() -> int:
     )
     failures = 0
     for interview in due:
+        # Phone interviews keep the tight window: dialling a guest's phone
+        # ten minutes early is not "unlocking a studio".
+        if (interview.get("call_mode") or "webrtc") != "webrtc":
+            when = _parse(interview["scheduled_at"])
+            if when and when > phone_hi:
+                continue
         # Idempotency: a delayed/parallel tick must not double-call.
         if sb_select("interview_runs",
                      f"interview_id=eq.{interview['id']}&status=neq.failed"):
@@ -345,7 +365,8 @@ def fire_due_interviews() -> int:
                 **({"status": "awaiting_guest"} if call_mode == "webrtc" else {}),
             })
             if host_mode:
-                notify_host(interview, app, show, when="in 2 min")
+                notify_host(interview, app, show,
+                            when=("in 10 min" if call_mode == "webrtc" else "in 2 min"))
 
             if call_mode == "webrtc":
                 # WebRTC (default): no outbound dial. The run row is the

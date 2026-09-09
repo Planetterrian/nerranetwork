@@ -1,0 +1,49 @@
+# Nerra Voices — print the VoxEngine logs of recent interview sessions
+# (Sept 9 2026). The panel session expires and the Logger output is the
+# only place the scenario says what it did (conf.add vs sendMediaBetween,
+# host dial attempts, Grok agent events). Read-only.
+name: Voximplant session logs
+on:
+  workflow_dispatch:
+    inputs:
+      hours:
+        description: 'Look back this many hours'
+        type: string
+        default: '3'
+      limit:
+        description: 'Max sessions'
+        type: string
+        default: '5'
+
+permissions:
+  contents: read
+
+jobs:
+  logs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+      - uses: ./.github/actions/setup-python
+        with:
+          python-version: '3.12'
+          requirements-file: 'pipelines/requirements.txt'
+          skip-checkout: 'true'
+      - name: Fetch session logs
+        run: |
+          python - <<'PY'
+          import os
+          from voximplant.api_clients.voximplant_client import recent_session_logs
+          for s in recent_session_logs(hours=float(os.environ["HOURS"]), limit=int(os.environ["LIMIT"])):
+              print("=" * 100)
+              print("session", s["session_id"], "start", s["start"], "duration", s["duration"], "calls", s["calls"])
+              print("-" * 100)
+              print(s["log"] or "(no log)")
+          PY
+        env:
+          HOURS: ${{ inputs.hours }}
+          LIMIT: ${{ inputs.limit }}
+          VOXIMPLANT_ACCOUNT_ID: ${{ secrets.VOXIMPLANT_ACCOUNT_ID }}
+          VOXIMPLANT_API_KEY: ${{ secrets.VOXIMPLANT_API_KEY }}

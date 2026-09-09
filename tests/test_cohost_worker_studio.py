@@ -301,3 +301,22 @@ def test_studio_page_names_every_join_step():
     assert "function explainJoinError" in html
     assert "password on the server does not match" in html
     assert "STEP_TIMEOUT_MS = 15000" in html
+
+
+def test_studio_signs_in_at_unlock_and_retries_the_key():
+    html = (ROOT / "age-of-ai-studio.html").read_text()
+    assert "function preLogin()" in html and "preLogin();" in html
+    assert "async function studioLogin()" in html and "async function requestKey(" in html
+    assert 'step("connect", "Reconnecting to Voximplant…"' in html
+    assert 'id="studioStatus"' in html
+    assert "the studio opens 10 minutes before your slot" in html
+
+
+def test_session_logs_workflow():
+    import yaml
+    wf = yaml.safe_load((ROOT / ".github/workflows/nerra_voices_session_logs.yml").read_text())
+    step = [s for s in wf["jobs"]["logs"]["steps"] if s.get("name") == "Fetch session logs"][0]
+    assert "recent_session_logs" in step["run"]
+    assert step["env"]["VOXIMPLANT_API_KEY"] == "${{ secrets.VOXIMPLANT_API_KEY }}"
+    src = (ROOT / "voximplant/api_clients/voximplant_client.py").read_text()
+    assert '"GetCallHistory"' in src and "log_file_url" in src

@@ -83,6 +83,7 @@
   <!-- State: setup -->
   <div id="stateSetup" class="card hidden">
     <p class="status ok" id="setupMsg">Your interview is ready — let's get you sounding great.</p>
+    <p class="tips" id="studioStatus" style="color:var(--muted)">Signing in to the studio…</p>
     <p class="hostnote host-only hidden">Mira will call this page when the guest
     connects — pick your microphone, press <b>Ready</b>, and keep the tab open.
     No camera is used for the co-host leg.</p>
@@ -293,7 +294,7 @@
           return;
         }
         var when = s.scheduled_at ? new Date(s.scheduled_at) : null;
-        document.getElementById("checkMsg").textContent = "You're early — the studio opens a few minutes before your slot.";
+        document.getElementById("checkMsg").textContent = "You're early — the studio opens 10 minutes before your slot.";
         document.getElementById("checkDetail").textContent = when
           ? ("Your interview is scheduled for " + when.toLocaleString() + ". Keep this page open; it will unlock automatically.")
           : "Keep this page open; it will unlock automatically.";
@@ -340,10 +341,35 @@
       .then(function (stream) {
         localStream = stream;
         wirePreview(); listDevices(); meterMic();
+        // Sign in to Voximplant NOW, while the guest is still checking
+        // their mic, so a sign-in fault shows minutes before the slot
+        // (Sept 9 2026) instead of at the moment they press Join.
+        preLogin();
       })
       .catch(function () {
         fail("We need microphone access for the interview — allow it in your browser and reload.");
       });
+  }
+  function setStudioStatus(text, ok) {
+    var el = document.getElementById("studioStatus");
+    if (!el) return;
+    el.textContent = text;
+    el.style.color = ok === true ? "var(--ok, #6ee7b7)" : ok === false ? "var(--err, #fca5a5)" : "var(--muted)";
+  }
+  var preLoginPromise = null;
+  function preLogin() {
+    if (loggedIn || preLoginPromise) return preLoginPromise;
+    setStudioStatus("Signing in to the studio…");
+    preLoginPromise = studioLogin().then(function () {
+      setStudioStatus("Signed in to the studio. " + (isHost
+        ? "Press Ready and keep this tab open; Mira will call it when the guest connects."
+        : "Press Join when you're ready."), true);
+    }).catch(function (e) {
+      console.error("[studio] pre-login failed at step", joinStep, e);
+      setStudioStatus("Studio sign-in failed: " + explainJoinError(e) + " (Join will retry.)", false);
+      preLoginPromise = null;
+    });
+    return preLoginPromise;
   }
   function wirePreview() {
     var v = document.getElementById("preview");
@@ -485,48 +511,68 @@
     } catch (e) { console.warn("camera select failed", e); }
   }
 
+  async function requestKey(fullUser) {
+    // The one-time key is delivered via an AuthResult with code 302 —
+    // depending on SDK version this surfaces as a resolve or a reject.
+    // Sept 9 2026: Patrick's host tab saw the request hang; a fresh
+    // connection answered in 160 ms, so one retry re-connects first.
+    for (var attempt = 1; attempt <= 2; attempt++) {
+      var key = null;
+      try {
+        var res = await step("onetimekey", "Requesting login key…", sdk.requestOneTimeLoginKey(fullUser));
+        key = res && res.key;
+      } catch (e) {
+        key = e && e.key;
+        if (!key && attempt === 2) throw e;
+      }
+      if (key) return key;
+      console.warn("[studio] no login key on attempt", attempt, "— reconnecting");
+      try { sdk.disconnect(); } catch (ignored) {}
+      await new Promise(function (r) { setTimeout(r, 1000); });
+      await step("connect", "Reconnecting to Voximplant…", sdk.connect());
+    }
+    throw new Error("no one-time login key from Voximplant");
+  }
+
+  async function studioLogin() {
+    if (loggedIn) return;
+    sdk = VoxImplant.getInstance();
+    try {
+      await step("init", "Opening microphone…",
+        sdk.init({ micRequired: false, videoSupport: !isHost, progressTone: false, showDebugInfo: false }));
+    } catch (e) {
+      // A second attempt after a failure: the SDK is already initialised.
+      if (!(e && /already initialized/i.test(e.message || ""))) throw e;
+    }
+    if (!(sdk.connected && sdk.connected())) {
+      await step("connect", "Connecting to Voximplant…", sdk.connect());
+    }
+    var fullUserGuess = (isHost ? hostUser : "guest") + VOX_APP_SUFFIX;
+    var key = await requestKey(fullUserGuess);
+
+    var authBody = { key: key, role: role };
+    if (isHost) authBody.token = adminToken;
+    var auth = await step("studio-auth", "Checking in with the studio…",
+      fetch(API + "/studio-auth", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(authBody),
+      }).then(function (r) { return r.json(); }));
+    if (!auth.token) throw new Error(auth.error || "studio auth unavailable");
+    var user = (auth.user || (isHost ? hostUser : "guest")) + VOX_APP_SUFFIX;
+
+    await step("login", "Signing in…", sdk.loginWithOneTimeKey(user, auth.token));
+    loggedIn = true;
+    joinStep = "call";
+  }
+
   async function join() {
     // Release the preview devices so the SDK can claim the selected ones.
     if (localStream) { localStream.getTracks().forEach(function (t) { t.stop(); }); localStream = null; }
     if (analyserRAF) cancelAnimationFrame(analyserRAF);
 
     if (!loggedIn) {
-      sdk = VoxImplant.getInstance();
-      try {
-        await step("init", "Opening microphone…",
-          sdk.init({ micRequired: true, videoSupport: !isHost, progressTone: false, showDebugInfo: false }));
-      } catch (e) {
-        // A second click after a failure: the SDK is already initialised.
-        if (!(e && /already initialized/i.test(e.message || ""))) throw e;
-      }
-      await step("connect", "Connecting to Voximplant…", sdk.connect());
-
-      var key = null;
-      var fullUserGuess = (isHost ? hostUser : "guest") + VOX_APP_SUFFIX;
-      // The one-time key is delivered via an AuthResult with code 302 —
-      // depending on SDK version this surfaces as a resolve or a reject.
-      try {
-        var res = await step("onetimekey", "Requesting login key…", sdk.requestOneTimeLoginKey(fullUserGuess));
-        key = res && res.key;
-      } catch (e) {
-        key = e && e.key;
-        if (!key && e && /timed out/.test(e.message || "")) throw e;
-      }
-      if (!key) throw new Error("no one-time login key from Voximplant");
-
-      var authBody = { key: key, role: role };
-      if (isHost) authBody.token = adminToken;
-      var auth = await step("studio-auth", "Checking in with the studio…",
-        fetch(API + "/studio-auth", {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(authBody),
-        }).then(function (r) { return r.json(); }));
-      if (!auth.token) throw new Error(auth.error || "studio auth unavailable");
-      var user = (auth.user || (isHost ? hostUser : "guest")) + VOX_APP_SUFFIX;
-
-      await step("login", "Signing in…", sdk.loginWithOneTimeKey(user, auth.token));
-      loggedIn = true;
-      joinStep = "call";
+      if (preLoginPromise) { try { await preLoginPromise; } catch (ignored) {} }
+      if (!loggedIn) await studioLogin();
     }
 
     selectCallDevices();

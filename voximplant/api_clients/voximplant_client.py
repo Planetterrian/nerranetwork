@@ -245,3 +245,41 @@ def sync_studio_users(application_name: str = APPLICATION_NAME,
             out[user] = "created"
         logger.info("studio user %s %s (password derived from ADMIN_TOKEN)", user, out[user])
     return out
+
+
+# ---------------------------------------------------------------------------
+# Session logs (Sept 9 2026): read the scenario's Logger output after a run
+# ---------------------------------------------------------------------------
+
+def recent_session_logs(hours: float = 2.0, limit: int = 5,
+                        application_name: str = APPLICATION_NAME) -> List[Dict[str, Any]]:
+    """The last ``limit`` call sessions of the application with their
+    VoxEngine log text (Management API ``GetCallHistory`` → ``log_file_url``).
+    Used by the "Voximplant session logs" workflow so a failed rehearsal can
+    be read from GitHub without panel access."""
+    import datetime as _dt
+    now = _dt.datetime.now(_dt.timezone.utc)
+    fmt = "%Y-%m-%d %H:%M:%S"
+    data = _call("GetCallHistory", application_name=application_name,
+                 from_date=(now - _dt.timedelta(hours=hours)).strftime(fmt),
+                 to_date=now.strftime(fmt), count=limit, with_calls="true",
+                 with_records="true", desc_order="true")
+    out: List[Dict[str, Any]] = []
+    for sess in data.get("result") or []:
+        entry = {
+            "session_id": sess.get("call_session_history_id"),
+            "start": sess.get("start_date"), "duration": sess.get("duration"),
+            "calls": [{"direction": c.get("direction"), "remote": c.get("remote_number"),
+                       "duration": c.get("duration"), "successful": c.get("successful")}
+                      for c in sess.get("calls") or []],
+            "log": "",
+        }
+        url = sess.get("log_file_url")
+        if url:
+            try:
+                resp = requests.get(url, timeout=60)
+                entry["log"] = resp.text[-60000:]
+            except Exception as exc:  # noqa: BLE001
+                entry["log"] = f"(log fetch failed: {exc})"
+        out.append(entry)
+    return out
