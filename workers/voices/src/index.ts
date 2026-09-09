@@ -1059,7 +1059,7 @@ async function handleStudioState(req: Request, env: Env): Promise<Response> {
     host_mode: hostMode,
     guest_joined: Boolean(latest?.guest_joined_at),
     host_joined: Boolean(latest?.host_joined_at) && !latest?.host_left_at,
-    ...(hostAllowed ? { host_user: env.VOX_HOST_USER || "host" } : {}),
+    ...(hostAllowed ? { host_user: studioUser(env, "host") } : {}),
   });
 }
 
@@ -1075,6 +1075,16 @@ async function handleStudioState(req: Request, env: Env): Promise<Response> {
 // hex(HMAC_SHA256(ADMIN_TOKEN, "nerra-studio:" + user))[:32] + "Aa1";
 // the workflow pushes it onto the users with SetUserInfo. VOX_*_PASSWORD
 // secrets are no longer read.
+// Studio user NAMES are trimmed and sanitised too (Sept 9 2026, second
+// rehearsal): a VOX_HOST_USER secret pasted with a trailing newline made
+// the host page ask Voximplant for a key for "host\n@app", which never
+// answers, while the same request for "host" answers in 200 ms.
+function studioUser(env: Env, role: "guest" | "host"): string {
+  const raw = role === "host" ? env.VOX_HOST_USER : env.VOX_GUEST_USER;
+  const clean = String(raw || "").trim().replace(/[^A-Za-z0-9_.-]/g, "");
+  return clean || role;
+}
+
 async function studioPassword(env: Env, user: string): Promise<string> {
   const token = (env.ADMIN_TOKEN || "").trim();
   if (!token) throw new Error("ADMIN_TOKEN required to derive studio passwords");
@@ -1094,9 +1104,9 @@ async function handleStudioAuth(req: Request, env: Env): Promise<Response> {
   let user: string;
   if (role === "host") {
     if (!adminTokenOk(env, req, body?.token)) return json({ error: "unauthorized" }, 401);
-    user = env.VOX_HOST_USER || "host";
+    user = studioUser(env, "host");
   } else {
-    user = env.VOX_GUEST_USER || "guest";
+    user = studioUser(env, "guest");
   }
   if (!env.ADMIN_TOKEN) return json({ error: "studio auth not configured (ADMIN_TOKEN)" }, 503);
   const password = await studioPassword(env, user);

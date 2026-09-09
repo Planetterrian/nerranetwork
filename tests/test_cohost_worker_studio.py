@@ -77,14 +77,14 @@ def test_studio_auth_gates_host_on_admin_token():
     assert 'body?.role === "host"' in body
     assert "adminTokenOk(env, req, body?.token)" in body, "host role must check ADMIN_TOKEN"
     assert 'json({ error: "unauthorized" }, 401)' in body
-    assert 'env.VOX_HOST_USER || "host"' in body
+    assert 'studioUser(env, "host")' in body
     # Sept 9 2026: passwords are derived from ADMIN_TOKEN on both sides,
     # never read from VOX_*_PASSWORD (a hand-typed mismatch hung Dan
     # Perra's live studio join).
     assert "await studioPassword(env, user)" in body
     assert "VOX_HOST_PASSWORD" not in body and "VOX_GUEST_PASSWORD" not in body
     assert '"studio auth not configured (ADMIN_TOKEN)" }, 503' in body
-    assert 'env.VOX_GUEST_USER || "guest"' in body
+    assert 'studioUser(env, "guest")' in body
     assert "return json({ token, user, role })" in body
     ok = _fn("function adminTokenOk")
     assert "t === env.ADMIN_TOKEN" in ok and "Boolean(env.ADMIN_TOKEN)" in ok
@@ -97,7 +97,7 @@ def test_studio_state_reports_presence_and_host_user_only_with_token():
                   "live_run_id:", "run_status:"):
         assert field in body, field
     assert 'role === "host" && adminTokenOk(env, req)' in body
-    assert 'hostAllowed ? { host_user: env.VOX_HOST_USER || "host" } : {}' in body
+    assert 'hostAllowed ? { host_user: studioUser(env, "host") } : {}' in body
     # Existing fields survive.
     for field in ("ready: Boolean(run)", "run_id: run?.id ?? null", "show: show.slug",
                   "show_name: show.name", "interview_status: iv.status"):
@@ -320,3 +320,13 @@ def test_session_logs_workflow():
     assert step["env"]["VOXIMPLANT_API_KEY"] == "${{ secrets.VOXIMPLANT_API_KEY }}"
     src = (ROOT / "voximplant/api_clients/voximplant_client.py").read_text()
     assert '"GetCallHistory"' in src and "log_file_url" in src
+
+
+def test_studio_user_names_are_sanitised_on_both_sides():
+    ts = (ROOT / "workers/voices/src/index.ts").read_text()
+    assert 'function studioUser(env: Env, role: "guest" | "host")' in ts
+    assert '.trim().replace(/[^A-Za-z0-9_.-]/g, "")' in ts
+    html = (ROOT / "age-of-ai-studio.html").read_text()
+    assert "function cleanUser(u)" in html
+    assert "cleanUser(isHost ? hostUser : \"guest\") + VOX_APP_SUFFIX" in html
+    assert "cleanUser(s.host_user)" in html

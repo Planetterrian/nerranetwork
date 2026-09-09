@@ -277,7 +277,7 @@
       .then(function (s) {
         if (s.error) return fail("We couldn't find this interview. Check the link from your email.");
         if (s.show) brand(s.show, s.show_name);
-        if (s.host_user) hostUser = s.host_user;
+        if (s.host_user) hostUser = cleanUser(s.host_user);
         setPresence(s);
         if (isHost && s.host_mode === false) {
           return fail("This interview runs without a co-host (host_mode is off).");
@@ -310,7 +310,7 @@
       fetch(stateUrl()).then(function (r) { return r.json(); }).then(function (s) {
         if (s.error) return;
         setPresence(s);
-        if (s.host_user) hostUser = s.host_user;
+        if (s.host_user) hostUser = cleanUser(s.host_user);
         var id = s.ready && s.run_id ? s.run_id : s.live_run_id;
         if (id && id !== runId && !activeCall) {
           console.log("[studio] run id changed", runId, "->", id);
@@ -349,6 +349,12 @@
       .catch(function () {
         fail("We need microphone access for the interview — allow it in your browser and reload.");
       });
+  }
+  // Sept 9 2026: a username with stray whitespace makes Voximplant's
+  // one-time-key request hang forever instead of failing.
+  function cleanUser(u) {
+    var c = String(u || "").trim().replace(/[^A-Za-z0-9_.-]/g, "");
+    return c || (isHost ? "host" : "guest");
   }
   function setStudioStatus(text, ok) {
     var el = document.getElementById("studioStatus");
@@ -547,7 +553,7 @@
     if (!(sdk.connected && sdk.connected())) {
       await step("connect", "Connecting to Voximplant…", sdk.connect());
     }
-    var fullUserGuess = (isHost ? hostUser : "guest") + VOX_APP_SUFFIX;
+    var fullUserGuess = cleanUser(isHost ? hostUser : "guest") + VOX_APP_SUFFIX;
     var key = await requestKey(fullUserGuess);
 
     var authBody = { key: key, role: role };
@@ -558,7 +564,7 @@
         body: JSON.stringify(authBody),
       }).then(function (r) { return r.json(); }));
     if (!auth.token) throw new Error(auth.error || "studio auth unavailable");
-    var user = (auth.user || (isHost ? hostUser : "guest")) + VOX_APP_SUFFIX;
+    var user = cleanUser(auth.user || (isHost ? hostUser : "guest")) + VOX_APP_SUFFIX;
 
     await step("login", "Signing in…", sdk.loginWithOneTimeKey(user, auth.token));
     loggedIn = true;
