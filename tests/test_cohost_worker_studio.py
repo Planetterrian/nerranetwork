@@ -87,7 +87,7 @@ def test_studio_auth_gates_host_on_admin_token():
     assert 'studioUser(env, "guest")' in body
     assert "return json({ token, user, role })" in body
     ok = _fn("function adminTokenOk")
-    assert "t === env.ADMIN_TOKEN" in ok and "Boolean(env.ADMIN_TOKEN)" in ok
+    assert "t === expected" in ok and '(env.ADMIN_TOKEN || "").trim()' in ok
 
 
 def test_studio_state_reports_presence_and_host_user_only_with_token():

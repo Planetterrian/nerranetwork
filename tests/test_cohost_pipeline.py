@@ -522,10 +522,10 @@ class TestFireHostLink:
         assert '"host_mode": host_mode,' in src
         assert '"host_user": os.environ.get("VOX_HOST_USER", "").strip() or "host",' in src
         assert 'when=("in 10 min" if call_mode == "webrtc" else "in 2 min")' in src
-    # Sept 9 2026: the browser studio unlocks 10 minutes early; phones
-    # keep the tight window.
-    assert "STUDIO_UNLOCK_AHEAD_MIN = 12" in src and "FIRE_WINDOW_AHEAD_MIN = 5" in src
-    assert "if when and when > phone_hi" in src
+        # Sept 9 2026: the browser studio unlocks 10 minutes early; phones
+        # keep the tight window.
+        assert "STUDIO_UNLOCK_AHEAD_MIN = 12" in src and "FIRE_WINDOW_AHEAD_MIN = 5" in src
+        assert "if when and when > phone_hi" in src
         assert 'notify_host(interview, app, show, when="in about 2 hours")' in src
         assert "ADMIN_TOKEN" in src
 
