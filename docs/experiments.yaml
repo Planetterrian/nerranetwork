@@ -1082,6 +1082,74 @@ experiments:
       qualified rate is the problem rather than the audience, the lever
       is shorts_min_score_threshold, not fill.
 
+  - id: shorts-subscribe-cta
+    title: "Shorts end card asks for the subscribe, not the full episode"
+    area: reach
+    shipped: 2026-09-09
+    readout: 2026-09-30
+    status: reading
+    metric: short_subs_per_video_14d_en
+    baseline: 0.11
+    target: >
+      EN Shorts earned 22 subscribers from 198 uploads in 14 days (0.11 per
+      Short); the hook Short's 30-day rate is 0.16. Target: >= 0.16 per Short
+      with EN Short views per video not down. RU/FR read from their own
+      channel subscriber series (localized cards shipped on the dub paths).
+    notes: >
+      Grok retention review 2026-09-09, item 1B, adapted. "WATCH FULL
+      EPISODE / Tap Subscribe" pointed at a surface the burned-in card
+      cannot link and the site funnel it fed measures ~0 (8 attributed
+      sessions from 246k views); the subscribe is measured per video.
+      Same change added shrink-to-fit to the card headline - the old
+      18-character line at 88 px had run off both edges since May. The
+      site strip and long-form outro card (operator-directed) are kept.
+      Render-only. Revert = the two text lines in _defaults.yaml plus
+      _RU_END_CARD_* / the FR DubLanguage strings.
+
+  - id: fresh-open-long-form
+    title: "Long-form opening slot is always this episode's imagery"
+    area: retention
+    shipped: 2026-09-09
+    readout: 2026-09-30
+    status: reading
+    metric: long_open_hold_5pct_en
+    baseline: 0.48
+    target: >
+      Mean audienceWatchRatio at 5% elapsed on EN longs >= 0.52 (was 0.51
+      on 08-17, 0.48 on 09-09). Read with chapter-title-cards and
+      long-form-fact-cards, which share the metric.
+    notes: >
+      Grok review item 1D (long-form half). scene_scheduler._pick_scene
+      scores one token of title overlap above the 0.25 fresh bonus, so a
+      library scene from an older episode could open the video; the first
+      slot now draws from the fresh pool only. Shorts already open fresh
+      (short_visual_extras orders fresh first). Guard:
+      tests/test_scene_scheduler.py::TestFreshOpen.
+
+  - id: long-form-fact-cards
+    title: "Spoken figures as timed on-screen cards (tesla/spacex/FF vs control)"
+    area: retention
+    shipped: 2026-09-09
+    readout: 2026-09-30
+    status: reading
+    metric: long_form_median_avp_en_14d
+    baseline: 12.6
+    target: >
+      Treatment shows (tesla, spacex, fascinating_frontiers) at least +2
+      AVP points over the control arm (models_agents, MAB, omni_view) on
+      EN longs published after 09-10; fact_cards_rendered >= 3 on most
+      episodes (metrics_ep*.json). Long-form view duration and the open
+      hold read alongside.
+    notes: >
+      Grok review item 1A. engine/fact_cards.py: figures from the Whisper
+      word transcript (runs merged - Whisper splits "$368" ".16,"), $ / %
+      / million-billion first, counts >= 100 next; never the episode
+      number, a bare year, or a token with letters; <= 8 per episode, >= 40
+      s apart, clear of the hook window and chapter cards; label <= 36
+      chars via engine.titles (FACT_CARD_LABEL_MAX) with the dangling-tail
+      rule. Render-only, best-effort, per-show youtube.fact_cards_enabled.
+      Miss = flip the three YAML flags back; the module stays.
+
   - id: dp-pod-youtube-shorts
     title: "DP Pod on YouTube — Shorts-only, first video surface"
     area: reach

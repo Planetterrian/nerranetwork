@@ -71,6 +71,11 @@ BOOK_CHAPTER_TITLE_MAX = 72
 # Ep592 rendered "Several projects pair storage with solar to").
 CHAPTER_CARD_MAX = 48
 
+# Long-form fact-card label (Sep 2026, engine/fact_cards.py): the short
+# line under the on-screen figure. Fit gate + dangling-tail rule, never a
+# slice.
+FACT_CARD_LABEL_MAX = 36
+
 ELLIPSIS = "…"
 
 # Trailing characters that read as debris once the tail is gone.

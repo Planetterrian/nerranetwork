@@ -1664,6 +1664,72 @@ def _long_form_chapter_cards_stage(
     return chain, label
 
 
+# Fact cards (Sep 2026, engine/fact_cards.py): the spoken figure, large
+# in Nerra cyan with a short label, lower-left — clear of the brand pill
+# / chapter cards (top-left) and of YouTube's caption box (bottom
+# centre, now that long-form captions are the uploaded track).
+_FACT_CARD_SECONDS = 4.0
+
+
+def _long_form_fact_cards_stage(
+    post_label: str,
+    cards: Sequence[Tuple[float, str, str]],
+    *, width: int = 1920,
+) -> Tuple[str, str]:
+    """drawtext chain painting one figure + label card per fact.
+
+    *cards* is ``[(start_seconds, figure, label), ...]``. Returns
+    ``(chain_fragment, new_post_label)``; an empty list returns
+    ``("", post_label)`` so callers' terminal logic is untouched.
+    """
+    from engine.titles import FACT_CARD_LABEL_MAX, fits
+
+    usable = []
+    for start, figure, label in cards or []:
+        try:
+            s = float(start)
+        except (TypeError, ValueError):
+            continue
+        f = str(figure or "").strip()
+        lab = str(label or "").strip()
+        if s < 5.0 or not f or len(f) > 24:
+            continue
+        if lab and not fits(lab, FACT_CARD_LABEL_MAX):
+            lab = ""
+        usable.append((s, f, lab))
+    if not usable:
+        return "", post_label
+    font_path = _drawtext_escape(_find_font())
+    chain = ""
+    label_in = post_label
+    for i, (s, f, lab) in enumerate(usable):
+        end = s + _FACT_CARD_SECONDS
+        alpha = (f"clip((t-{s:.2f})/0.25,0,1)*"
+                 f"clip(({end:.2f}-t)/0.25,0,1)")
+        enable = f"enable='between(t,{s:.2f},{end + 0.05:.2f})'"
+        out = f"[fact{i}]"
+        chain += (
+            f";{label_in}drawtext=fontfile='{font_path}':"
+            f"text='{_drawtext_escape(f)}':"
+            f"fontsize=72:fontcolor=0x00D4FF:"
+            f"x=24:y=h-300:"
+            f"box=1:boxcolor=black@0.6:boxborderw=18:"
+            f"alpha='{alpha}':{enable}"
+        )
+        if lab:
+            chain += (
+                f"[factfig{i}];[factfig{i}]drawtext=fontfile='{font_path}':"
+                f"text='{_drawtext_escape(lab)}':"
+                f"fontsize=34:fontcolor=white:"
+                f"x=24:y=h-190:"
+                f"box=1:boxcolor=black@0.6:boxborderw=12:"
+                f"alpha='{alpha}':{enable}"
+            )
+        chain += out
+        label_in = out
+    return chain, label_in
+
+
 def _long_form_subtitles_stage(post_label: str,
                                subtitles_path: str) -> str:
     """The terminal subtitles stage for the long-form composite.
@@ -1690,7 +1756,8 @@ def _long_form_filter_graph(*, width: int = 1920, height: int = 1080,
                             subtitles_path: Optional[str] = None,
                             with_url_pill: bool = False,
                             hook: Optional[str] = None,
-                            chapter_cards: Optional[Sequence[Tuple[float, str]]] = None) -> str:
+                            chapter_cards: Optional[Sequence[Tuple[float, str]]] = None,
+                            fact_cards: Optional[Sequence[Tuple[float, str, str]]] = None) -> str:
     """filter_complex for stage 2.
 
     Inputs:
@@ -1771,7 +1838,8 @@ def _long_form_filter_graph(*, width: int = 1920, height: int = 1080,
     if hook:
         frag, post_brand_label = _long_form_hook_stage(
             post_brand_label, hook, width=width,
-            has_subtitles=bool(subtitles_path) or bool(chapter_cards),
+            has_subtitles=(bool(subtitles_path) or bool(chapter_cards)
+                           or bool(fact_cards)),
         )
         graph += frag
         if not subtitles_path and post_brand_label == "[v]":
@@ -1781,6 +1849,12 @@ def _long_form_filter_graph(*, width: int = 1920, height: int = 1080,
     if chapter_cards:
         frag, post_brand_label = _long_form_chapter_cards_stage(
             post_brand_label, chapter_cards, width=width)
+        graph += frag
+
+    # Fact cards (Sep 2026) — after the chapter cards, before captions.
+    if fact_cards:
+        frag, post_brand_label = _long_form_fact_cards_stage(
+            post_brand_label, fact_cards, width=width)
         graph += frag
 
     if subtitles_path:
@@ -1799,8 +1873,8 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
                              end_card: bool = False,
                              end_card_duration: float = 3.0,
                              total_duration: float = 55.0,
-                             end_card_main_text: str = "WATCH FULL EPISODE",
-                             end_card_sub_text: str = "Tap Subscribe ↗",
+                             end_card_main_text: str = "SUBSCRIBE",
+                             end_card_sub_text: str = "Never miss an episode ↓",
                              end_card_image_input_label: Optional[str] = None,
                              progress_bar: bool = False,
                              caption_margin_v: Optional[int] = None) -> str:
@@ -2263,6 +2337,7 @@ def _single_pass_long_form_filter_graph(
     kb_extended: bool = True,
     input_map: Optional[Sequence[int]] = None,
     chapter_cards: Optional[Sequence[Tuple[float, str]]] = None,
+    fact_cards: Optional[Sequence[Tuple[float, str, str]]] = None,
 ) -> str:
     """One filter graph for slideshow + overlays + captions (P1-2).
 
@@ -2334,7 +2409,8 @@ def _single_pass_long_form_filter_graph(
     if hook:
         frag, post_brand_label = _long_form_hook_stage(
             post_brand_label, hook, width=width,
-            has_subtitles=bool(subtitles_path) or bool(chapter_cards),
+            has_subtitles=(bool(subtitles_path) or bool(chapter_cards)
+                           or bool(fact_cards)),
         )
         graph += frag
         if not subtitles_path and post_brand_label == "[v]":
@@ -2344,6 +2420,12 @@ def _single_pass_long_form_filter_graph(
     if chapter_cards:
         frag, post_brand_label = _long_form_chapter_cards_stage(
             post_brand_label, chapter_cards, width=width)
+        graph += frag
+
+    # Fact cards (Sep 2026) — after the chapter cards, before captions.
+    if fact_cards:
+        frag, post_brand_label = _long_form_fact_cards_stage(
+            post_brand_label, fact_cards, width=width)
         graph += frag
 
     if subtitles_path:
@@ -2384,6 +2466,7 @@ def _single_pass_long_form_cmd(
     chapter_metadata_in: Optional[str] = None,
     hook: Optional[str] = None,
     chapter_cards: Optional[Sequence[Tuple[float, str]]] = None,
+    fact_cards: Optional[Sequence[Tuple[float, str, str]]] = None,
     kb_seed: int = 0,
     kb_extended: bool = True,
     outro_card_in: Optional[str] = None,
@@ -2459,6 +2542,7 @@ def _single_pass_long_form_cmd(
         with_url_pill=bool(url_pill_in),
         hook=hook,
         chapter_cards=chapter_cards,
+        fact_cards=fact_cards,
         kb_seed=kb_seed, kb_extended=kb_extended,
     )
     map_label = "[v]"
@@ -2496,6 +2580,7 @@ def _long_form_cmd(audio_in: str, bg_in: str, brand_in: str,
                    chapter_metadata_in: Optional[str] = None,
                    hook: Optional[str] = None,
                    chapter_cards: Optional[Sequence[Tuple[float, str]]] = None,
+                   fact_cards: Optional[Sequence[Tuple[float, str, str]]] = None,
                    outro_card_in: Optional[str] = None,
                    total_duration: float = 0.0,
                    outro_duration: float = 6.0) -> List[str]:
@@ -2555,6 +2640,7 @@ def _long_form_cmd(audio_in: str, bg_in: str, brand_in: str,
         with_url_pill=bool(url_pill_in),
         hook=hook,
         chapter_cards=chapter_cards,
+        fact_cards=fact_cards,
     )
     map_label = "[v]"
     if outro_active and outro_label:
@@ -2595,8 +2681,8 @@ def _short_form_cmd(audio_in: str, bg_in: str, brand_in: str,
                     url_pill_in: Optional[str] = None,
                     subtitles_path: Optional[str] = None,
                     end_card: bool = False,
-                    end_card_main_text: str = "WATCH FULL EPISODE",
-                    end_card_sub_text: str = "Tap Subscribe ↗",
+                    end_card_main_text: str = "SUBSCRIBE",
+                    end_card_sub_text: str = "Never miss an episode ↓",
                     end_card_duration: float = 3.0,
                     end_card_image_in: Optional[str] = None,
                     caption_margin_v: Optional[int] = None,
@@ -2700,6 +2786,7 @@ def build_long_form_video(
     chapters_path: Optional[Path] = None,
     hook: Optional[str] = None,
     chapter_cards: Optional[Sequence[Tuple[float, str]]] = None,
+    fact_cards: Optional[Sequence[Tuple[float, str, str]]] = None,
     outro_card_path: Optional[Path] = None,
     outro_card_duration: float = 6.0,
 ) -> Path:
@@ -2938,6 +3025,7 @@ def build_long_form_video(
                 chapter_metadata_in=chapter_meta,
                 hook=hook,
                 chapter_cards=chapter_cards,
+                fact_cards=fact_cards,
                 outro_card_in=outro_in,
                 total_duration=outro_total,
                 outro_duration=outro_card_duration,
@@ -2976,6 +3064,7 @@ def build_long_form_video(
                         chapter_metadata_in=chapter_meta,
                         hook=hook,
                 chapter_cards=chapter_cards,
+                fact_cards=fact_cards,
                         kb_seed=kb_seed,
                         outro_card_in=outro_in,
                         total_duration=outro_total,
@@ -3060,6 +3149,7 @@ def build_long_form_video(
         chapter_metadata_in=chapter_meta,
         hook=hook,
                 chapter_cards=chapter_cards,
+                fact_cards=fact_cards,
         outro_card_in=outro_in,
         total_duration=outro_total,
         outro_duration=outro_card_duration,
@@ -3080,8 +3170,8 @@ def build_short_video(audio_path: Path, cover_path: Path,
                       show_name: Optional[str] = None,
                       subtitles_path: Optional[Path] = None,
                       end_card: bool = False,
-                      end_card_main_text: str = "WATCH FULL EPISODE",
-                      end_card_sub_text: str = "Tap Subscribe ↗",
+                      end_card_main_text: str = "SUBSCRIBE",
+                      end_card_sub_text: str = "Never miss an episode ↓",
                       end_card_duration: float = 3.0,
                       end_card_image_path: Optional[Path] = None,
                       drop_url_pill: bool = False,
