@@ -60,10 +60,13 @@ class TestConference:
         assert "VoxEngine.sendMediaBetween(participant, conf)" in js
         assert 'attachToConference(call, "guest")' in js
 
-    def test_mira_bridged_to_conference_not_directly_to_guest(self, js):
-        assert "VoxEngine.sendMediaBetween(grokAgent, conf)" in js
-        assert "VoxEngine.sendMediaBetween(call, grokAgent)" not in js, (
-            "Phase 2: Mira talks to the conference, not the guest leg")
+    def test_mira_speaks_to_the_room_and_hears_the_guest_directly(self, js):
+        # Sept 9 2026 rehearsal: conference->agent delivered nothing; the
+        # direct guest->agent bridge is primary, Mira's voice goes to the room.
+        assert "grokAgent.sendMediaTo(conf);" in js
+        assert "call.sendMediaTo(grokAgent);" in js
+        assert "VoxEngine.sendMediaBetween(grokAgent, conf)" not in js
+        assert "VoxEngine.sendMediaBetween(call, grokAgent)" not in js
 
     def test_pstn_branch_also_gets_the_conference(self, js):
         # Both entries converge on beginInterview, which creates the conf

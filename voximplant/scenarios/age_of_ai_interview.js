@@ -271,8 +271,17 @@ async function beginInterview(config, withVideo) {
         //    The VoiceAgentAPIClient is a VoxMediaUnit, not a Call, so it
         //    cannot go through conf.add — sendMediaBetween is the documented
         //    unit<->unit bridge and a Conference is a VoxMediaUnit.
-        VoxEngine.sendMediaBetween(grokAgent, conf);
-        trace("grok", "session updated; agent<->conference bridged");
+        // Sept 9 2026 rehearsal (run bd9b1814): agent->conference carries
+        // Mira to everyone, but conference->agent delivered NOTHING (the
+        // 12 s fallback to a direct guest->agent bridge is what made her
+        // answer). So the direct bridge is now the primary path: Mira
+        // hears the guest leg; everyone hears Mira through the room.
+        // Known limit until the room->agent direction is proven with two
+        // participants: the host's voice reaches the guest, not Mira.
+        grokAgent.sendMediaTo(conf);
+        call.sendMediaTo(grokAgent);
+        directBridge = true;
+        trace("grok", "session updated; agent->conference + guest->agent direct");
         if (videoRecorder) {
           try { grokAgent.sendMediaTo(videoRecorder); } catch (e) {
             Logger.write("[aoa " + runId + "] mira->video-recorder failed (non-fatal): " + e.message);
@@ -598,7 +607,7 @@ function armAudioFallback() {
   fallbackTimer = setTimeout(function () {
     fallbackTimer = null;
     if (guestHeard || directBridge || !grokAgent || !call || call.state() === "DISCONNECTED") {
-      trace("audio_path", guestHeard ? "conference->agent OK (speech heard)" : "fallback skipped");
+      trace("audio_path", guestHeard ? "speech heard" : (directBridge ? "direct bridge is primary" : "fallback skipped"));
       return;
     }
     try {
