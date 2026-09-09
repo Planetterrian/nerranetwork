@@ -186,6 +186,8 @@ def record_youtube_outcomes(
         for key in ("grok_image_px_max", "grok_image_px_min"):
             if youtube_urls.get(key) is not None:
                 metrics.record(key, int(youtube_urls[key]))
+        if youtube_urls.get("fact_cards_rendered") is not None:
+            metrics.record("fact_cards_rendered", int(youtube_urls["fact_cards_rendered"]))
         metrics.record("image_provider", youtube_urls.get("image_provider", "pexels"))
         metrics.record("gallery_attempted", int(youtube_urls.get("gallery_attempted", 0) or 0))
         metrics.record("gallery_uploaded", int(youtube_urls.get("gallery_uploaded", 0) or 0))

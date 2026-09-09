@@ -56,8 +56,8 @@ _AI_DISCLOSURE_RU = (
 
 # Russian end-card call-to-action for the Shorts (parity with the EN
 # "WATCH FULL EPISODE" / "Tap Subscribe ↗" card).
-_RU_END_CARD_MAIN = "СМОТРЕТЬ ВЫПУСК"
-_RU_END_CARD_SUB = "Подпишись ↗"
+_RU_END_CARD_MAIN = "ПОДПИШИСЬ"  # Sep 9 2026: subscribe CTA (was СМОТРЕТЬ ВЫПУСК)
+_RU_END_CARD_SUB = "Не пропусти новый выпуск ↓"
 
 
 def _episode_id(episode_num: int) -> str:

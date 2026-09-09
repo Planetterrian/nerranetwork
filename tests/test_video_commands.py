@@ -1087,8 +1087,8 @@ def test_short_form_filter_graph_omits_end_card_when_disabled():
     short-form drift guards stay green."""
     graph = _short_form_filter_graph(end_card=False)
     assert "drawbox" not in graph
-    assert "WATCH FULL EPISODE" not in graph
-    assert "Tap Subscribe" not in graph
+    assert "SUBSCRIBE" not in graph
+    assert "Never miss an episode" not in graph
 
 
 def test_short_form_filter_graph_appends_end_card_when_enabled():
@@ -1102,8 +1102,8 @@ def test_short_form_filter_graph_appends_end_card_when_enabled():
     assert "drawbox=x=0:y=0:w=iw:h=ih" in graph
     assert "color=black@0.78" in graph
     # Headline + sub-line text.
-    assert "WATCH FULL EPISODE" in graph
-    assert "Tap Subscribe" in graph
+    assert "SUBSCRIBE" in graph
+    assert "Never miss an episode" in graph
     # All three filters share a single enable window keyed off the
     # passed ``total_duration``.
     assert "between(t,52.00,55.00)" in graph
@@ -1141,7 +1141,7 @@ def test_short_form_filter_graph_end_card_custom_text():
     assert "WATCH THE FULL SHOW" in graph
     assert "Subscribe now" in graph
     # Defaults must NOT appear.
-    assert "WATCH FULL EPISODE" not in graph
+    assert "SUBSCRIBE" not in graph
 
 
 def test_short_form_filter_graph_end_card_composes_with_subtitles():
@@ -1161,7 +1161,7 @@ def test_short_form_filter_graph_end_card_composes_with_subtitles():
     assert graph.count("[v]") == 1
     assert graph.endswith("[v]")
     assert graph.index("drawbox") < graph.index("subtitles=")
-    assert "WATCH FULL EPISODE" in graph
+    assert "SUBSCRIBE" in graph
 
 
 def test_short_form_filter_graph_end_card_composes_with_hook_only():
@@ -1364,7 +1364,7 @@ def test_short_form_filter_graph_end_card_image_uses_overlay():
     assert "[endcard]overlay=x=0:y=0:enable='between(t,52.00,55.00)'[v]" in graph
     # Drawtext fallback is NOT emitted.
     assert "drawbox" not in graph
-    assert "WATCH FULL EPISODE" not in graph
+    assert "SUBSCRIBE" not in graph
 
 
 def test_short_form_filter_graph_end_card_drawtext_when_no_image():
@@ -1375,7 +1375,7 @@ def test_short_form_filter_graph_end_card_drawtext_when_no_image():
         end_card_image_input_label=None,
     )
     assert "drawbox" in graph
-    assert "WATCH FULL EPISODE" in graph
+    assert "SUBSCRIBE" in graph
     assert "[endcard]overlay" not in graph
 
 
@@ -1495,7 +1495,7 @@ def test_short_form_cmd_missing_end_card_image_falls_back_to_drawtext(
     graph = cmd[cmd.index("-filter_complex") + 1]
     # Drawtext fallback in use.
     assert "drawbox" in graph
-    assert "WATCH FULL EPISODE" in graph
+    assert "SUBSCRIBE" in graph
     # Filter graph does NOT reference any [N:v] for the missing image.
     assert "[endcard]overlay" not in graph
 

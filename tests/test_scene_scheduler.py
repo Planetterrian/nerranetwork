@@ -405,3 +405,36 @@ class TestSentenceCutTimes:
         ]
         cuts = sentence_cut_times(words, 0.0, 20.0)
         assert cuts[0] == 6.9
+
+
+class TestFreshOpen:
+    """Sep 9 2026: the opening slot is always this episode's imagery.
+
+    The fresh bonus (0.25) loses to one token of title overlap, so a
+    library scene whose caption matched the first chapter title used to
+    open the video. The first slot now draws from the fresh pool only;
+    later slots keep overlap-first.
+    """
+
+    def test_first_slot_is_fresh_even_when_library_overlaps_the_title(self):
+        from engine.scene_scheduler import plan_chapter_schedule
+        fresh = [Path("/f/a.jpg"), Path("/f/b.jpg")]
+        library = [Path("/lib/starship.jpg")]
+        chapters = [
+            {"startTime": 0.0, "title": "Starship flight seven"},
+            {"startTime": 30.0, "title": "Starship flight seven, continued"},
+        ]
+        ctx = {library[0]: "starship flight seven launch pad",
+               fresh[0]: "office", fresh[1]: "factory"}
+        plan = plan_chapter_schedule(fresh, library, chapters, 60.0,
+                                     scene_context=ctx)
+        assert plan[0][0] in fresh
+        # The library scene still wins a LATER slot on overlap.
+        assert any(p == library[0] for p, _ in plan[1:])
+
+    def test_no_fresh_scenes_keeps_the_library_open(self):
+        from engine.scene_scheduler import plan_chapter_schedule
+        library = [Path("/lib/x.jpg"), Path("/lib/y.jpg")]
+        chapters = [{"startTime": 0.0, "title": "A"}, {"startTime": 30.0, "title": "B"}]
+        plan = plan_chapter_schedule([], library, chapters, 60.0)
+        assert plan and plan[0][0] in library

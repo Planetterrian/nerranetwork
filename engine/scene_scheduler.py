@@ -340,8 +340,14 @@ def plan_chapter_schedule(
             if start < _OPEN_FAST_WINDOW_S else max_hold_s
         )
         for slot_duration in _subdivide(end - start, effective_max, min_hold_s):
+            # The OPENING slot is this episode's imagery (Sep 2026): the
+            # fresh bonus (0.25) loses to a single token of title overlap,
+            # so a library scene from an older episode could open the
+            # video — the first frame a viewer judges was not today's
+            # story. Later slots keep the overlap-first rule.
+            slot_pool = fresh_list if (not plan and fresh_list) else pool
             pick = _pick_scene(
-                pool, fresh, context, title_tokens, use_counts, last_pick,
+                slot_pool, fresh, context, title_tokens, use_counts, last_pick,
             )
             plan.append((pick, slot_duration))
             use_counts[pick] += 1

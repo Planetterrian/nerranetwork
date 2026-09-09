@@ -100,8 +100,8 @@ DUB_LANGUAGES: Dict[str, DubLanguage] = {
             "Divulgation IA : le podcast est préparé par Patrick ; "
             "la voix est générée par synthèse vocale IA."
         ),
-        end_card_main="VOIR L'ÉPISODE",
-        end_card_sub="Abonnez-vous ↗",
+        end_card_main="ABONNEZ-VOUS",
+        end_card_sub="Ne manquez aucun épisode ↓",
         comment_full_episode=(
             "▶ Épisode complet : {url}\n"
             "🔔 Abonnez-vous — nouveaux épisodes chaque jour"

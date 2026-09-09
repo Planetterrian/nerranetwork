@@ -1659,8 +1659,8 @@ def generate_shorts_end_card(
     output_path: Path,
     *,
     show_name: str = "",
-    main_text: str = "WATCH FULL EPISODE",
-    sub_text: str = "Tap Subscribe ↗",
+    main_text: str = "SUBSCRIBE",
+    sub_text: str = "Never miss an episode ↓",
     size: tuple = (1080, 1920),
     scene_image_path: "Path | None" = None,
     site_image_path: "Path | None" = None,
@@ -1738,9 +1738,18 @@ def generate_shorts_end_card(
     # Main CTA headline — same fontsize as the drawtext end card so
     # the visual jump from PNG → drawtext fallback isn't jarring.
     main_y = int(height * 0.62)
+    # Shrink-to-fit (Sep 9 2026): an 18-character headline at 88 px ran
+    # off both edges of the 1080 px card; step down until it fits inside
+    # the safe width, floor 48 px. Same pattern as the thumbnail autofit.
     main_font = _load_font(88)
     mw_bbox = main_font.getbbox(main_text)
     main_w = mw_bbox[2] - mw_bbox[0]
+    _size = 88
+    while main_w > width - 80 and _size > 48:
+        _size -= 8
+        main_font = _load_font(_size)
+        mw_bbox = main_font.getbbox(main_text)
+        main_w = mw_bbox[2] - mw_bbox[0]
     main_x = (width - main_w) // 2
     # Subtle drop shadow + outline for legibility on the dark BG.
     draw.text((main_x + 3, main_y + 3), main_text, font=main_font,

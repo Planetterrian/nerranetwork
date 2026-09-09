@@ -312,7 +312,7 @@ class TestRuEngineUntouched:
         assert callable(ru_dub.publish_ru_dub)
         src = (_ROOT / "engine/ru_dub.py").read_text(encoding="utf-8")
         # RU-specific strings still present (not refactored away).
-        assert "СМОТРЕТЬ ВЫПУСК" in src
+        assert "ПОДПИШИСЬ" in src
         assert "youtube_videos.ru.json" in src
 
     def test_lang_dub_imports_shared_helpers_from_ru_dub(self):

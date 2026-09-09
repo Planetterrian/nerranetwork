@@ -6147,6 +6147,22 @@ def _publish_youtube(
                 logger.warning("Outro card generation failed: %s", exc)
                 _outro_card_path = None
         result["outro_card"] = bool(_outro_card_path)
+        # ---- Fact cards (Sep 9 2026, engine/fact_cards.py) ----
+        # Spoken figures as timed on-screen cards from the Whisper word
+        # transcript. Render-only, best-effort: None ships the legacy
+        # render. Experiment long-form-fact-cards (per-show YAML flag).
+        _fact_cards = None
+        if bool(getattr(config.youtube, "fact_cards_enabled", False)):
+            try:
+                from engine.fact_cards import fact_cards_for_episode
+                _fact_cards = fact_cards_for_episode(
+                    transcript_path,
+                    chapters_path if chapters_path.exists() else None,
+                )
+            except Exception as exc:  # noqa: BLE001 — never block a render
+                logger.warning("Fact cards skipped: %s", exc)
+                _fact_cards = None
+            result["fact_cards_rendered"] = len(_fact_cards or [])
         try:
             build_long_form_video(
                 final_mp3, cover_path, long_video_path,
@@ -6194,6 +6210,7 @@ def _publish_youtube(
                 # video player and any offline copy can use.
                 chapters_path=(chapters_path if chapters_path
                                and chapters_path.exists() else None),
+                fact_cards=_fact_cards,
             )
             # ---- Video podcast (July 2026 pilot) ----
             # Host the rendered MP4 on R2 so it can also ship as an Apple
@@ -6535,10 +6552,10 @@ def _publish_youtube(
                 getattr(_yt, "shorts_end_card_enabled", True)
             )
             _end_card_main = str(
-                getattr(_yt, "shorts_end_card_main_text", "WATCH FULL EPISODE")
+                getattr(_yt, "shorts_end_card_main_text", "SUBSCRIBE")
             )
             _end_card_sub = str(
-                getattr(_yt, "shorts_end_card_sub_text", "Tap Subscribe ↗")
+                getattr(_yt, "shorts_end_card_sub_text", "Never miss an episode ↓")
             )
             _end_card_dur = float(
                 getattr(_yt, "shorts_end_card_duration_seconds", 3.0) or 3.0

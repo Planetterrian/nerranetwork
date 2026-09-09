@@ -2011,6 +2011,19 @@ def _experiment_live_metrics(root: Path) -> Dict[str, Any]:
     out["long_form_median_avp_en_14d"] = (
         round(avps[len(avps) // 2], 1) if avps else None)
 
+    # EN Shorts: subscribers gained per Short published in the last 14
+    # analytics days (Sep 9 2026 — the shorts-subscribe-cta readout).
+    # Null under 10 Shorts, never a fake zero. Baseline 0.11 (22 / 198).
+    sn = ss = 0
+    for show in (stats.get("shows") or {}).values():
+        for v in show.get("videos", []):
+            if (v.get("kind") == "short" and (v.get("channel") or "en") == "en"
+                    and str(v.get("published") or "")[:10] >= win_lo):
+                sn += 1
+                ss += int(v.get("subscribers_gained") or 0)
+    out["short_subs_per_video_14d_en"] = (
+        round(ss / sn, 3) if sn >= 10 else None)
+
     # Channel views WoW from the day series.
     for ch in ("en", "ru"):
         ds = ((stats.get("channels") or {}).get(ch) or {}).get("day_series") or []
