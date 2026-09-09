@@ -1297,6 +1297,11 @@ has never held a tag — do not cite it. Register: `shorts-subscribe-cta`
 (metric `short_subs_per_video_14d_en`, baseline 0.11),
 `fresh-open-long-form`, `long-form-fact-cards` (readouts 2026-09-30).
 Guards: `tests/test_fact_cards.py`, `TestFreshOpen`.
+**Same day, operator-directed:** YouTube PAUSED on env_intel and
+finansy_prosto (`youtube.enabled: false`, blocks intact for a one-line
+re-enable; ~10 and ~6 views per upload). MIT's RU/FR dubs were already
+culled 2026-09-02. `YOUTUBE_ENABLED_SHOWS` in `tests/test_schedule.py`
+pins the set; register `pause-dead-youtube-uploads`.
 
 ### Anthology books — ebook + audiobook from the narrative shows (Aug 2026)
 
