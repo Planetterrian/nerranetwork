@@ -999,8 +999,12 @@ const isStudioRole = (r: unknown): r is StudioRole => r === "guest" || r === "ho
 function adminTokenOk(env: Env, req: Request, bodyToken?: unknown): boolean {
   const auth = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
   const q = new URL(req.url).searchParams.get("token") ?? "";
-  const t = auth || q || (typeof bodyToken === "string" ? bodyToken : "");
-  return Boolean(env.ADMIN_TOKEN) && t === env.ADMIN_TOKEN;
+  const t = (auth || q || (typeof bodyToken === "string" ? bodyToken : "")).trim();
+  // Trim both sides: a secret pasted with a trailing newline (wrangler
+  // secret put via a pipe, or GitHub's secret box) must not turn every
+  // host link into "unauthorized" (Patrick, Sept 9 2026, 08:28).
+  const expected = (env.ADMIN_TOKEN || "").trim();
+  return expected.length > 0 && t === expected;
 }
 
 // GET /voices/studio-state?interview=<id>&show=&role=[&token=] — the studio
@@ -1064,22 +1068,38 @@ async function handleStudioState(req: Request, env: Env): Promise<Response> {
 // role=guest (default) uses VOX_GUEST_*; role=host (Phase 2) requires
 // token === ADMIN_TOKEN and uses VOX_HOST_* — the host link in Patrick's
 // fire-time email carries the token, nobody else can log in as the host.
+// Studio user passwords are DERIVED, never stored (Sept 9 2026, Dan
+// Perra live: a hand-typed VOX_GUEST_PASSWORD did not match the
+// Voximplant user and every browser join hung). Both this Worker and the
+// deploy workflow (voximplant_client.derive_studio_password) compute
+// hex(HMAC_SHA256(ADMIN_TOKEN, "nerra-studio:" + user))[:32] + "Aa1";
+// the workflow pushes it onto the users with SetUserInfo. VOX_*_PASSWORD
+// secrets are no longer read.
+async function studioPassword(env: Env, user: string): Promise<string> {
+  const token = (env.ADMIN_TOKEN || "").trim();
+  if (!token) throw new Error("ADMIN_TOKEN required to derive studio passwords");
+  const enc = new TextEncoder();
+  const cryptoKey = await crypto.subtle.importKey(
+    "raw", enc.encode(token), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const sig = await crypto.subtle.sign("HMAC", cryptoKey, enc.encode(`nerra-studio:${user}`));
+  const hex = Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, "0")).join("");
+  return hex.slice(0, 32) + "Aa1";
+}
+
 async function handleStudioAuth(req: Request, env: Env): Promise<Response> {
   const body = await req.json<any>().catch(() => null);
   const key = String(body?.key ?? "");
   if (!key) return json({ error: "key required" }, 400);
   const role: StudioRole = body?.role === "host" ? "host" : "guest";
-  let user: string, password: string | undefined;
+  let user: string;
   if (role === "host") {
     if (!adminTokenOk(env, req, body?.token)) return json({ error: "unauthorized" }, 401);
     user = env.VOX_HOST_USER || "host";
-    password = env.VOX_HOST_PASSWORD;
-    if (!password) return json({ error: "host studio auth not configured" }, 503);
   } else {
     user = env.VOX_GUEST_USER || "guest";
-    password = env.VOX_GUEST_PASSWORD;
-    if (!password) return json({ error: "studio auth not configured" }, 503);
   }
+  if (!env.ADMIN_TOKEN) return json({ error: "studio auth not configured (ADMIN_TOKEN)" }, 503);
+  const password = await studioPassword(env, user);
   const token = md5(`${key}|${md5(`${user}:voximplant.com:${password}`)}`);
   return json({ token, user, role });
 }
@@ -1298,10 +1318,11 @@ async function handleHealth(env: Env): Promise<Response> {
       calcom_nerra_voices: !!env.CALCOM_BOOKING_URL_NERRA_VOICES,
       calcom_event_slugs: !!(env.CALCOM_EVENT_SLUG_AGE_OF_AI || env.CALCOM_EVENT_SLUG_NERRA_VOICES),
       slack: !!env.SLACK_WEBHOOK,
-      vox_guest_password: !!env.VOX_GUEST_PASSWORD,
-      // Phase 2 co-host: host credentials + the R2 binding the local
-      // browser recordings upload to.
-      vox_host_password: !!env.VOX_HOST_PASSWORD,
+      // Studio passwords are derived from ADMIN_TOKEN (Sept 9 2026); the
+      // deploy workflow syncs them onto the Voximplant users.
+      studio_passwords_derived: !!env.ADMIN_TOKEN,
+      vox_guest_password_env_ignored: !!env.VOX_GUEST_PASSWORD,
+      vox_host_password_env_ignored: !!env.VOX_HOST_PASSWORD,
       voices_r2: !!env.VOICES_R2,
       operator_phone: !!env.OPERATOR_PHONE,
     },

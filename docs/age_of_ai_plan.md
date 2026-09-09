@@ -102,11 +102,15 @@ idempotency check.
 8. **Phase 2 co-host (Sept 2026, docs/cohost_phase2_contract.md)** —
    Patrick in the room on every interview, three clean tracks, local
    browser recordings:
-   1. Voximplant: create the `host` user in app `nerra-voices` —
-      `voximplant_client.add_user("host", "Patrick (co-host)", <password>)` (the guest user
-      already exists). Re-upload the scenario.
-   2. Worker secrets: `wrangler secret put VOX_HOST_USER` (= `host`),
-      `VOX_HOST_PASSWORD`, `OPERATOR_PHONE` (E.164). Add the R2 binding
+   1. Voximplant users `guest` and `host` in app `nerra-voices`: run the
+      **Deploy Voximplant scenario** workflow. Since Sept 9 2026 its
+      "Sync studio users" step creates/updates both users with passwords
+      DERIVED from `ADMIN_TOKEN` (`voximplant_client.sync_studio_users`);
+      the Worker derives the same value in `studio-auth`. Nobody types a
+      studio password anywhere, and `VOX_*_PASSWORD` secrets are ignored.
+      (Dan Perra, Sept 9: a hand-typed mismatch hung every browser join.)
+   2. Worker secrets: `wrangler secret put VOX_HOST_USER` (= `host`) and
+      `OPERATOR_PHONE` (E.164). Add the R2 binding
       (`[[r2_buckets]] binding="VOICES_R2" bucket_name="podcast-audio"` is
       in `wrangler.toml`) and `wrangler deploy`.
    3. GitHub secrets: `ADMIN_TOKEN` (= the Worker's `ADMIN_TOKEN`; the

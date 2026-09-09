@@ -191,3 +191,57 @@ def send_sms(dest_number: str, text: str,
                  source=source,
                  destination=dest_number,
                  sms_body=text[:640])
+
+
+# ---------------------------------------------------------------------------
+# Studio users: derived passwords, one source of truth (Sept 9 2026)
+# ---------------------------------------------------------------------------
+# Dan Perra's live interview: the browser studio could not sign in because
+# the Worker's VOX_GUEST_PASSWORD and the `guest` user's password in
+# Voximplant had been typed on different days and did not match. Nobody
+# should ever type these. Both sides now DERIVE the password from the
+# ADMIN_TOKEN they already share (HMAC-SHA256, hex, plus a suffix that
+# satisfies Voximplant's letters+digits rule), and the deploy workflow
+# pushes the derived value onto the users with SetUserInfo. The Worker's
+# studio-auth computes the same value (workers/voices/src/index.ts,
+# studioPassword()). Change ADMIN_TOKEN → rerun the deploy workflow.
+
+STUDIO_USERS = {"guest": "Age of AI Guest", "host": "Patrick (co-host)"}
+
+
+def derive_studio_password(user_name: str, admin_token: Optional[str] = None) -> str:
+    """Deterministic per-user password from the shared ADMIN_TOKEN.
+
+    Must stay byte-for-byte identical to ``studioPassword()`` in the
+    Worker: ``hex(HMAC_SHA256(admin_token, "nerra-studio:" + user))[:32] + "Aa1"``.
+    """
+    import hashlib
+    import hmac
+    token = (admin_token if admin_token is not None else os.environ.get("ADMIN_TOKEN", "")).strip()
+    if not token:
+        raise VoximplantError("ADMIN_TOKEN is required to derive studio passwords")
+    digest = hmac.new(token.encode("utf-8"), f"nerra-studio:{user_name}".encode("utf-8"),
+                      hashlib.sha256).hexdigest()
+    return digest[:32] + "Aa1"
+
+
+def sync_studio_users(application_name: str = APPLICATION_NAME,
+                      admin_token: Optional[str] = None) -> Dict[str, str]:
+    """Create-or-update the ``guest`` and ``host`` users with their derived
+    passwords (Management API ``SetUserInfo``, ``AddUser`` when missing).
+    Returns {user: "updated"|"created"}. Never logs the passwords."""
+    existing = {u.get("user_name") for u in list_users(application_name)}
+    out: Dict[str, str] = {}
+    for user, display in STUDIO_USERS.items():
+        password = derive_studio_password(user, admin_token)
+        if user in existing:
+            _call("SetUserInfo", user_name=user, application_name=application_name,
+                  user_password=password, user_active=True)
+            out[user] = "updated"
+        else:
+            _call("AddUser", user_name=user, user_display_name=display,
+                  user_password=password, application_name=application_name,
+                  user_active=True)
+            out[user] = "created"
+        logger.info("studio user %s %s (password derived from ADMIN_TOKEN)", user, out[user])
+    return out

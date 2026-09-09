@@ -599,7 +599,7 @@ class TestMigrationAndTemplates:
         assert "re-dials the `host` user every 20 s" in res
         assert "Fallback is PER TRACK" in res
         plan = (ROOT / "docs" / "age_of_ai_plan.md").read_text(encoding="utf-8")
-        for needle in ("add_user", "VOX_HOST_USER", "VOICES_R2", "ADMIN_TOKEN",
+        for needle in ("sync_studio_users", "VOX_HOST_USER", "VOICES_R2", "ADMIN_TOKEN",
                        "OPERATOR_PHONE", "20260906_cohost_conference.sql",
                        "Three dry runs"):
             assert needle in plan, needle

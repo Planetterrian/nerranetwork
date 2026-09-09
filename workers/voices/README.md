@@ -95,10 +95,11 @@ wrangler secret put SLACK_WEBHOOK           # optional
 wrangler secret put CALCOM_BOOKING_URL_NERRA_VOICES   # second Cal.com event; else CALCOM_BOOKING_URL is reused
 wrangler secret put CALCOM_EVENT_SLUG_AGE_OF_AI       # Cal.com event-type slug (or numeric id) → routes the booking webhook
 wrangler secret put CALCOM_EVENT_SLUG_NERRA_VOICES    # ditto; unset = slug containing "voices" → nerra_voices
-# WebRTC studio:
-wrangler secret put VOX_GUEST_PASSWORD                # Voximplant "guest" user (VOX_GUEST_USER optional)
-# Phase 2 co-host (docs/cohost_phase2_contract.md):
-wrangler secret put VOX_HOST_PASSWORD                 # Voximplant "host" user (VOX_HOST_USER optional); create it with voximplant_client.add_user()
+# WebRTC studio + Phase 2 co-host (docs/cohost_phase2_contract.md):
+#   NO studio passwords here. Since Sept 9 2026 the Worker derives the
+#   guest/host passwords from ADMIN_TOKEN and the "Deploy Voximplant
+#   scenario" workflow writes the same values onto the Voximplant users.
+#   VOX_GUEST_USER / VOX_HOST_USER are optional (default guest / host).
 wrangler secret put OPERATOR_PHONE                    # optional, E.164 — the fire step SMSes the host link
 wrangler deploy                                       # binds R2 bucket podcast-audio as VOICES_R2 (wrangler.toml)
 ```

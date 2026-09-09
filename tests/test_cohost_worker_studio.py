@@ -78,10 +78,13 @@ def test_studio_auth_gates_host_on_admin_token():
     assert "adminTokenOk(env, req, body?.token)" in body, "host role must check ADMIN_TOKEN"
     assert 'json({ error: "unauthorized" }, 401)' in body
     assert 'env.VOX_HOST_USER || "host"' in body
-    assert "env.VOX_HOST_PASSWORD" in body
-    assert '"host studio auth not configured" }, 503' in body
-    # Guest path is unchanged: VOX_GUEST_* with the same 503 when unset.
-    assert 'env.VOX_GUEST_USER || "guest"' in body and "env.VOX_GUEST_PASSWORD" in body
+    # Sept 9 2026: passwords are derived from ADMIN_TOKEN on both sides,
+    # never read from VOX_*_PASSWORD (a hand-typed mismatch hung Dan
+    # Perra's live studio join).
+    assert "await studioPassword(env, user)" in body
+    assert "VOX_HOST_PASSWORD" not in body and "VOX_GUEST_PASSWORD" not in body
+    assert '"studio auth not configured (ADMIN_TOKEN)" }, 503' in body
+    assert 'env.VOX_GUEST_USER || "guest"' in body
     assert "return json({ token, user, role })" in body
     ok = _fn("function adminTokenOk")
     assert "t === env.ADMIN_TOKEN" in ok and "Boolean(env.ADMIN_TOKEN)" in ok
@@ -173,7 +176,7 @@ def test_host_link_and_guest_studio_url_roles():
 
 def test_health_reports_host_password_and_r2():
     body = _fn("async function handleHealth")
-    assert "vox_host_password: !!env.VOX_HOST_PASSWORD" in body
+    assert "studio_passwords_derived: !!env.ADMIN_TOKEN" in body
     assert "voices_r2: !!env.VOICES_R2" in body
 
 
@@ -188,7 +191,7 @@ def test_wrangler_has_r2_binding_and_documents_vars():
     for var in ("VOX_HOST_USER", "VOX_HOST_PASSWORD", "OPERATOR_PHONE"):
         assert var in WRANGLER, f"wrangler.toml must document {var}"
     for text in ("/voices/leg-event", "/voices/upload-chunk", "/voices/upload-done",
-                 "/voices/host-link", "VOX_HOST_PASSWORD"):
+                 "/voices/host-link", "NO studio passwords here"):
         assert text in README
 
 
@@ -233,3 +236,68 @@ def test_studio_local_recording_contract():
     # Chunks are queued sequentially and the final chunk is awaited before upload-done.
     assert "rec.queue = rec.queue.then(" in STUDIO
     assert "return rec.queue;" in STUDIO
+
+
+# ---------------------------------------------------------------------------
+# Sept 9 2026: studio passwords are derived, never typed
+# ---------------------------------------------------------------------------
+
+def test_studio_password_derivation_matches_worker():
+    """The Python side (deploy workflow → SetUserInfo) and the Worker
+    (studio-auth) must derive the same value. Vector cross-checked against
+    WebCrypto HMAC-SHA256 in Node on Sept 9 2026."""
+    from voximplant.api_clients.voximplant_client import derive_studio_password
+    assert derive_studio_password("guest", "test-token-123") == "dda8f5612e27fc0ac143d61551fe6005Aa1"
+    assert derive_studio_password("host", "test-token-123") == "34e7304da61872d19937e6226167f2bcAa1"
+    assert derive_studio_password("guest", " test-token-123\n") == derive_studio_password("guest", "test-token-123")
+
+
+def test_studio_password_requires_admin_token(monkeypatch):
+    from voximplant.api_clients import voximplant_client as vc
+    monkeypatch.delenv("ADMIN_TOKEN", raising=False)
+    import pytest as _pytest
+    with _pytest.raises(vc.VoximplantError):
+        vc.derive_studio_password("guest")
+
+
+def test_sync_studio_users_updates_or_creates(monkeypatch):
+    from voximplant.api_clients import voximplant_client as vc
+    calls = []
+    monkeypatch.setenv("ADMIN_TOKEN", "test-token-123")
+    monkeypatch.setattr(vc, "list_users", lambda app: [{"user_name": "guest"}])
+    monkeypatch.setattr(vc, "_call", lambda method, **kw: calls.append((method, kw)) or {"result": 1})
+    out = vc.sync_studio_users()
+    assert out == {"guest": "updated", "host": "created"}
+    methods = [m for m, _ in calls]
+    assert methods == ["SetUserInfo", "AddUser"]
+    assert calls[0][1]["user_name"] == "guest"
+    assert calls[0][1]["user_password"] == "dda8f5612e27fc0ac143d61551fe6005Aa1"
+    assert calls[1][1]["user_name"] == "host"
+    assert calls[1][1]["user_password"] == "34e7304da61872d19937e6226167f2bcAa1"
+    assert calls[1][1]["user_display_name"] == "Patrick (co-host)"
+
+
+def test_worker_derives_and_workflow_syncs():
+    import yaml
+    ts = (ROOT / "workers/voices/src/index.ts").read_text()
+    assert "async function studioPassword" in ts
+    assert 'enc.encode(`nerra-studio:${user}`)' in ts
+    assert 'hex.slice(0, 32) + "Aa1"' in ts
+    assert "const password = await studioPassword(env, user);" in ts
+    # the hand-typed secrets are no longer consulted for the hash
+    auth = ts[ts.index("async function handleStudioAuth"):ts.index("// Phase 2 co-host endpoints")]
+    assert "VOX_GUEST_PASSWORD" not in auth and "VOX_HOST_PASSWORD" not in auth
+    wf = yaml.safe_load((ROOT / ".github/workflows/nerra_voices_deploy_scenario.yml").read_text())
+    steps = {s.get("name"): s for s in wf["jobs"]["deploy"]["steps"]}
+    sync = steps["Sync studio users (guest, host)"]
+    assert "sync_studio_users" in sync["run"]
+    assert sync["env"]["ADMIN_TOKEN"] == "${{ secrets.ADMIN_TOKEN }}"
+
+
+def test_studio_page_names_every_join_step():
+    html = (ROOT / "age-of-ai-studio.html").read_text()
+    for name in ('step("init"', 'step("connect"', 'step("onetimekey"', 'step("studio-auth"', 'step("login"'):
+        assert name in html
+    assert "function explainJoinError" in html
+    assert "password on the server does not match" in html
+    assert "STEP_TIMEOUT_MS = 15000" in html

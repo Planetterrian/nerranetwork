@@ -52,16 +52,21 @@ bucket_name = "podcast-audio"
 #   CALCOM_BOOKING_URL        The Age of AI Cal.com event link (also the
 #                             fallback for Nerra Voices)
 #   SLACK_WEBHOOK             operator notifications (optional)
-#   VOX_GUEST_USER / VOX_GUEST_PASSWORD
-#                             Voximplant app user the guest studio logs in as
-#                             (one-time-key handshake; user defaults to "guest")
+#   VOX_GUEST_USER            Voximplant app user the guest studio logs in as
+#                             (default "guest"). Its PASSWORD is not a secret
+#                             here any more: since Sept 9 2026 the Worker
+#                             derives it from ADMIN_TOKEN and the "Deploy
+#                             Voximplant scenario" workflow writes the same
+#                             value onto the user (voximplant_client.
+#                             sync_studio_users). VOX_GUEST_PASSWORD is ignored.
 #
 # Phase 2 co-host (Sept 2026, docs/cohost_phase2_contract.md):
 #   VOX_HOST_USER             Voximplant user the scenario dials for Patrick
 #                             (default "host"; create it with
 #                             voximplant_client.add_user())
-#   VOX_HOST_PASSWORD         its password — /voices/studio-auth only issues
-#                             host credentials to a caller holding ADMIN_TOKEN
+#   (VOX_HOST_PASSWORD        ignored since Sept 9 2026 — derived, see above;
+#                             /voices/studio-auth still only issues host
+#                             credentials to a caller holding ADMIN_TOKEN)
 #   OPERATOR_PHONE            optional E.164 number the fire step SMSes the
 #                             host link to (OPERATOR_EMAIL gets it regardless)
 #

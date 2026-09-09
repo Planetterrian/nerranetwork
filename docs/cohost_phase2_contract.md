@@ -10,10 +10,11 @@ are complete and falls back to the Voximplant tracks.
 
 ## Roles and identities
 
-* Voximplant users (application `nerra-voices`): `guest` (exists) and a new
-  `host` user. Worker env: `VOX_GUEST_USER/VOX_GUEST_PASSWORD` (exist),
-  `VOX_HOST_USER/VOX_HOST_PASSWORD` (new). `voximplant_client.add_user()`
-  creates the user for the operator bootstrap.
+* Voximplant users (application `nerra-voices`): `guest` and `host`.
+  Worker env: `VOX_GUEST_USER` / `VOX_HOST_USER` (optional names). Their
+  passwords are derived from `ADMIN_TOKEN` on both sides (Sept 9 2026:
+  `voximplant_client.sync_studio_users()` in the deploy workflow,
+  `studioPassword()` in the Worker); `VOX_*_PASSWORD` are ignored.
 * Studio page roles: `?interview=<uuid>&show=<slug>&role=guest|host`.
   Default role `guest`. Host links carry `&token=<ADMIN_TOKEN>` and the
   Worker only issues host credentials when the token matches.
