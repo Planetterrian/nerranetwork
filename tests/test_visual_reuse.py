@@ -395,6 +395,20 @@ class TestVisualMetricsRecorded:
         assert metrics.data["thumbnail_base"] == "scene"
         assert metrics.data["thumbnail_variant_urls"] == ["https://g/x.jpg"]
 
+    def test_delivered_px_keys_recorded(self):
+        """Sep 9 2026: grok_image_px_max was set on the publish result on
+        09-03 and persisted by nothing — this allowlist is the gate."""
+        from engine.pipeline import record_youtube_outcomes
+        metrics = _FakeMetrics()
+        record_youtube_outcomes(
+            metrics, {"grok_image_px_max": 2816, "grok_image_px_min": 2816},
+            1.0, config=_config())
+        assert metrics.data["grok_image_px_max"] == 2816
+        assert metrics.data["grok_image_px_min"] == 2816
+        metrics = _FakeMetrics()
+        record_youtube_outcomes(metrics, {}, 1.0, config=_config())
+        assert "grok_image_px_max" not in metrics.data
+
     def test_absent_keys_not_recorded(self):
         from engine.pipeline import record_youtube_outcomes
         metrics = _FakeMetrics()

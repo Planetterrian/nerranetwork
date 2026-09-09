@@ -178,6 +178,14 @@ def record_youtube_outcomes(
         metrics.record("pexels_photos_filtered", int(youtube_urls.get("pexels_photos_filtered", 0) or 0))
         metrics.record("grok_image_cost_usd", float(youtube_urls.get("grok_image_cost_usd", 0.0) or 0.0))
         metrics.record("grok_images_generated", int(youtube_urls.get("grok_images_generated", 0) or 0))
+        # Delivered source resolution (Sep 3 2026): run_show sets these
+        # from the real image bytes; this allowlist is the only way a
+        # result key reaches the metrics file, so a key missing here is a
+        # metric that never existed (grok_image_px_max shipped 09-03 and
+        # recorded nothing for six days).
+        for key in ("grok_image_px_max", "grok_image_px_min"):
+            if youtube_urls.get(key) is not None:
+                metrics.record(key, int(youtube_urls[key]))
         metrics.record("image_provider", youtube_urls.get("image_provider", "pexels"))
         metrics.record("gallery_attempted", int(youtube_urls.get("gallery_attempted", 0) or 0))
         metrics.record("gallery_uploaded", int(youtube_urls.get("gallery_uploaded", 0) or 0))
