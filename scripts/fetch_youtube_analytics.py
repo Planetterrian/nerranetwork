@@ -461,27 +461,14 @@ def append_channel_history(channels: Dict[str, dict],
     )
 
 
-def detect_view_cliffs(rows: List[dict],
-                       min_baseline: float = 200.0) -> List[str]:
-    """Per-channel daily-views cliff detector (2026-08-21).
-
-    The Aug 17-19 2026 collapse (RU -78%, EN subs +9/day -> +1/day) ran
-    for four days before anyone looked: the dashboard tracked freshness
-    and totals but nothing compared today's view FLOW to its own recent
-    baseline. For each channel, compare the latest day's total_views
-    delta against the median of the prior seven daily deltas; a drop
-    past 50% of a meaningful baseline (>= *min_baseline* views/day)
-    returns a warning line. A cliff detector by design — the numbers
-    lesson says a rolling baseline can't catch a slide, but a one-day
-    halving is exactly what it can catch, loudly, the next morning.
-    """
-    import statistics
+def _counter_deltas(rows: List[dict]) -> Dict[str, List[tuple]]:
+    """Per-channel ``(date, daily delta)`` from the Data API counter rows."""
     by_channel: Dict[str, List[dict]] = {}
     for r in rows:
         if isinstance(r, dict) and r.get("date"):
             by_channel.setdefault(str(r.get("channel") or ""), []).append(r)
-    warnings: List[str] = []
-    for channel, series in sorted(by_channel.items()):
+    out: Dict[str, List[tuple]] = {}
+    for channel, series in by_channel.items():
         series = sorted(series, key=lambda r: r["date"])
         deltas = []
         for prev, cur in zip(series, series[1:]):
@@ -492,16 +479,111 @@ def detect_view_cliffs(rows: List[dict],
                      - float(prev.get("total_views", 0))))
             except (TypeError, ValueError):
                 continue
-        if len(deltas) < 8:
+        out[channel] = deltas
+    return out
+
+
+def _analytics_flow(day_series: Optional[Dict[str, List[dict]]]
+                    ) -> Dict[str, List[tuple]]:
+    """Per-channel ``(day, views)`` from the Analytics API day series."""
+    out: Dict[str, List[tuple]] = {}
+    for channel, series in (day_series or {}).items():
+        flow = []
+        for r in series or []:
+            if not isinstance(r, dict) or not r.get("day"):
+                continue
+            try:
+                flow.append((str(r["day"]), float(r.get("views") or 0)))
+            except (TypeError, ValueError):
+                continue
+        flow.sort()
+        if flow:
+            out[str(channel)] = flow
+    return out
+
+
+def detect_view_cliffs(rows: List[dict],
+                       min_baseline: float = 200.0,
+                       day_series: Optional[Dict[str, List[dict]]] = None,
+                       ) -> List[str]:
+    """Per-channel daily-views cliff detector (2026-08-21).
+
+    The Aug 17-19 2026 collapse (RU -78%, EN subs +9/day -> +1/day) ran
+    for four days before anyone looked: the dashboard tracked freshness
+    and totals but nothing compared today's view FLOW to its own recent
+    baseline. For each channel, compare the latest day's views against
+    the median of the prior seven days; a drop past 50% of a meaningful
+    baseline (>= *min_baseline* views/day) returns a warning line. A
+    cliff detector by design — the numbers lesson says a rolling
+    baseline can't catch a slide, but a one-day halving is exactly what
+    it can catch, loudly, the next morning.
+
+    **Sep 9 2026 — the flow comes from the Analytics API, not the Data
+    API counter.** The detector originally differenced the channel
+    ``statistics.viewCount`` snapshot in the history file. On 2026-09-02
+    that counter stopped moving on all three channels at once (@NerraRU
+    +19/day against ~4,000 real views/day in Analytics; @NerraFR +9;
+    @NerraNetwork about a third of its flow) while every other read —
+    Analytics day series, per-video views, subscribers, uploads — was UP.
+    The alarm paged "CHANNEL VIEW CLIFF" on three channels for four
+    nights over a counter that had simply stopped counting Shorts. When
+    *day_series* (``{channel: [{day, views, ...}]}``, the Analytics
+    payload) is supplied it is the ONLY source for that channel; the
+    counter deltas remain the fallback for channels the Analytics read
+    could not cover, and ``detect_counter_divergence`` reports the
+    counter stall separately as information.
+    """
+    import statistics
+    warnings: List[str] = []
+    flow_by_channel = _analytics_flow(day_series)
+    counter_by_channel = _counter_deltas(rows)
+    channels = sorted(set(flow_by_channel) | set(counter_by_channel))
+    for channel in channels:
+        series = flow_by_channel.get(channel) or counter_by_channel.get(channel) or []
+        source = "analytics" if channel in flow_by_channel else "counter"
+        if len(series) < 8:
             continue
-        *baseline, (day, latest) = deltas[-8:]
+        *baseline, (day, latest) = series[-8:]
         med = statistics.median(d for _, d in baseline)
         if med >= min_baseline and latest < 0.5 * med:
             warnings.append(
                 f"{channel}: {latest:.0f} views on {day} vs a "
-                f"{med:.0f}/day baseline ({latest / med:.0%}) — "
+                f"{med:.0f}/day baseline ({latest / med:.0%}, {source}) — "
                 "check recent uploads, metadata changes, and Studio")
     return warnings
+
+
+def detect_counter_divergence(rows: List[dict],
+                              day_series: Optional[Dict[str, List[dict]]],
+                              min_flow: float = 200.0) -> List[str]:
+    """Report a Data API ``viewCount`` that has stopped tracking the
+    Analytics view flow (Sep 9 2026). Information, never an alarm: the
+    counter is the investor page's lifetime figure and the history
+    file's trend line, and a reader who sees it flat while the channel
+    is growing needs to know WHICH number is lying. For each channel with
+    both reads, compare the counter's mean daily delta over the last
+    three overlapping days with the Analytics mean for the same days;
+    below 25% of a meaningful flow (>= *min_flow*) is a divergence.
+    """
+    notes: List[str] = []
+    flow_by_channel = _analytics_flow(day_series)
+    counter_by_channel = _counter_deltas(rows)
+    for channel in sorted(set(flow_by_channel) & set(counter_by_channel)):
+        flow = dict(flow_by_channel[channel])
+        counter = dict(counter_by_channel[channel])
+        common = sorted(set(flow) & set(counter))[-3:]
+        if len(common) < 3:
+            continue
+        flow_mean = sum(flow[d] for d in common) / 3.0
+        counter_mean = sum(counter[d] for d in common) / 3.0
+        if flow_mean >= min_flow and counter_mean < 0.25 * flow_mean:
+            notes.append(
+                f"{channel}: Data API viewCount moved {counter_mean:.0f}/day "
+                f"over {common[0]}..{common[-1]} while Analytics counted "
+                f"{flow_mean:.0f}/day — the counter is not tracking views "
+                "(likely Shorts); trust the Analytics day series, and read "
+                "total_views as a lower bound")
+    return notes
 
 
 def fetch(digests_dir: Path, days: int,
@@ -712,8 +794,17 @@ def main() -> int:
         try:
             hist = json.loads(
                 (_ROOT / _CHANNEL_HISTORY_PATH).read_text(encoding="utf-8"))
-            for warning in detect_view_cliffs(hist.get("rows", [])):
+            day_series = {
+                ch: (block or {}).get("day_series") or []
+                for ch, block in payload["channels"].items()
+            }
+            for warning in detect_view_cliffs(hist.get("rows", []),
+                                              day_series=day_series):
                 print(f"::warning::CHANNEL VIEW CLIFF — {warning}",
+                      flush=True)
+            for note in detect_counter_divergence(hist.get("rows", []),
+                                                  day_series):
+                print(f"::notice::CHANNEL COUNTER DIVERGENCE — {note}",
                       flush=True)
         except Exception:  # noqa: BLE001 — the alarm never blocks the fetch
             logger.debug("view-cliff check failed", exc_info=True)

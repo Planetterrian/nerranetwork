@@ -591,3 +591,49 @@ class TestViewCliffDetector:
     def test_short_history_is_silent(self):
         m = self._mod()
         assert m.detect_view_cliffs(self._rows("en", [1500] * 3)) == []
+
+    # -- Sep 9 2026: the flow comes from Analytics, the counter is a fallback
+
+    @staticmethod
+    def _series(daily, start=None):
+        import datetime as dt
+        day = start or dt.date(2026, 8, 2)
+        return [{"day": (day + dt.timedelta(days=i)).isoformat(),
+                 "views": v, "subscribersGained": 1, "subscribersLost": 0}
+                for i, v in enumerate(daily)]
+
+    def test_flat_counter_with_healthy_analytics_is_silent(self):
+        """The 2026-09-02..08 shape: @NerraRU's Data API viewCount moved
+        ~19/day while Analytics counted ~4,000/day. The counter paged
+        CHANNEL VIEW CLIFF on three channels for four nights."""
+        m = self._mod()
+        rows = self._rows("ru", [4000] * 7 + [19])
+        assert m.detect_view_cliffs(rows) != []          # legacy read pages
+        healthy = {"ru": self._series([3500, 4000, 3800, 4200, 3900, 4100, 4000, 4700])}
+        assert m.detect_view_cliffs(rows, day_series=healthy) == []
+
+    def test_analytics_cliff_still_pages(self):
+        m = self._mod()
+        rows = self._rows("ru", [4000] * 8)             # counter looks fine
+        cliff = {"ru": self._series([4000] * 7 + [800])}
+        out = m.detect_view_cliffs(rows, day_series=cliff)
+        assert len(out) == 1 and out[0].startswith("ru:") and "analytics" in out[0]
+
+    def test_channel_without_analytics_keeps_counter_fallback(self):
+        m = self._mod()
+        rows = self._rows("ru", [4000] * 7 + [800]) + self._rows("en", [1500] * 8)
+        out = m.detect_view_cliffs(rows, day_series={"en": self._series([1500] * 8)})
+        assert len(out) == 1 and out[0].startswith("ru:") and "counter" in out[0]
+
+    def test_counter_divergence_is_reported_as_information(self):
+        m = self._mod()
+        rows = self._rows("ru", [4000] * 5 + [19, 19, 19])
+        healthy = {"ru": self._series([4000] * 8)}
+        notes = m.detect_counter_divergence(rows, healthy)
+        assert len(notes) == 1 and notes[0].startswith("ru:")
+        assert "not tracking" in notes[0]
+        # A counter that tracks the flow says nothing.
+        assert m.detect_counter_divergence(self._rows("ru", [4000] * 8), healthy) == []
+        # Small channels never page.
+        assert m.detect_counter_divergence(
+            self._rows("fr", [30] * 5 + [1, 1, 1]), {"fr": self._series([30] * 8)}) == []

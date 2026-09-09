@@ -395,3 +395,62 @@ fields + delivered-size metric; salient-token library overlap
 small candidate sets keep legacy overlap); chapter cards as a fit gate
 on `engine.titles.CHAPTER_CARD_MAX` (clipped or structural titles get
 no card, never a cut); the restock guard fix.
+
+
+## Health check — 2026-09-09 ("metrics, pipeline or posting has broken")
+
+Operator report: viewers and subscribers appear stalled again. Checked
+against every primary source rather than the alarm that said so.
+
+**Posting is healthy.** Every day 09-03..09-08 the video indexes show
+7-9 EN long-form, 15-17 EN Shorts, 8-12 RU Shorts, 6-8 FR Shorts
+(plus 1-2 RU/FR longs); `shorts_count_uploaded == requested` on all 40
+YouTube episodes of the week, two funnel comments posted per episode,
+zero `short_errors`, stagger queue empty, policy tiers steady (Omni
+View A -> B on hysteresis is the only move).
+
+**Viewers are UP, not stalled** (Analytics API, the authoritative
+per-day source; fetch of 09-08, complete through 09-06):
+
+| Channel | views/day late Aug | views/day 09-04..06 | WoW (dashboard scorecard) | subs 09-02 -> 09-08 |
+|---|---|---|---|---|
+| EN @NerraNetwork | ~1,900 | 3,800-4,300 | **+55.7%** | 397 -> 423 |
+| RU @NerraRU | ~2,800 | 3,500-4,700 | **+17.1%** | 173 -> 192 |
+| FR @NerraFR | ~400 | 470-790 | -29.7% (prior window holds the 08-22/23 viral spike) | 35 -> 46 |
+
+Per-video, 09-03..06 vs 08-27..31: EN long 30 -> 78 views (FF 28 -> 116,
+SpaceX 80 -> 277, MAB 168 -> 318), EN Short 12 -> 25 (MAB 10 -> 227,
+Planetterrian 9 -> 287, M&A 28 -> 98, FF 32 -> 91), RU Short 172 -> 292,
+FR Short 35 -> 54. Shorts AVP: EN 43 -> 50%, FR 44 -> 52%, RU flat
+~50%. Long-form AVP did not move (EN 14 -> 10-14%; MAB long 13 -> 7%
+as its views tripled — browse traffic arriving colder), and the open
+cliff is unchanged at 0.48-0.49 hold at 5%. Joint read with the
+hook-first / headline-title / scene-brief / 2K changes that all landed
+09-01..03; the register entries carry it as an early read, not a verdict.
+
+**What actually stalled: the Data API counter.** `api/youtube_channel_
+history.json` snapshots `channels().list statistics.viewCount` nightly.
+On 09-02 that counter stopped moving on all three channels at once —
+@NerraRU +19/day against ~4,000 Analytics views/day, @NerraFR +9, EN
+about a third of its flow — i.e. it stopped counting Shorts views. The
+2026-08-21 `detect_view_cliffs` differenced exactly that counter, so the
+nightly printed `CHANNEL VIEW CLIFF` for RU, FR and EN on 09-03..06
+("19 views vs a 3,500/day baseline") while every other number was
+climbing. The alarm was the outage. Fixed: the detector reads the
+Analytics day series (counter deltas stay as a fallback for a channel
+the Analytics read could not cover) and a separate
+`detect_counter_divergence` prints the counter stall as a
+`::notice::` so the flat trend line in the history file is explained
+rather than believed. The investor page's "lifetime views" is the same
+counter and now reads as a lower bound.
+
+**2K landed.** From the 09-03 slate every gallery sidecar is
+2816x1584 / 1584x2816 (was 1280x720 since June). The per-episode metric
+built to prove it recorded nothing for six days: `record_youtube_
+outcomes` copies an allowlist of result keys into the metrics file and
+`grok_image_px_max/min` were not on it. Added.
+
+Still open for the operator: the quality-tier decision is now
+genuinely optional — the standard model at 2K removed the upsample
+softness; decide on complaints, not on the request size. FR is not
+broken; re-read it after the spike leaves the window (~09-13).
