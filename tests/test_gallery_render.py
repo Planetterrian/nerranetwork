@@ -218,8 +218,11 @@ def test_all_grok_youtube_shows_are_gallery_enabled():
     if str(PROJECT_ROOT) not in sys.path:
         sys.path.insert(0, str(PROJECT_ROOT))
     from generate_html import _read_show_image_provider, _read_show_youtube
+    # Sep 9 2026 (operator-directed): finansy_prosto + env_intel are PAUSED
+    # on YouTube (pause-dead-youtube-uploads); the gallery follows
+    # youtube.enabled by design, so their sections auto-hide.
     for slug in ("tesla", "spacex", "fascinating_frontiers", "modern_investing",
-                 "finansy_prosto", "privet_russian"):
+                 "privet_russian"):
         yt = _read_show_youtube(slug)
         provider = _read_show_image_provider(slug)
         gallery_enabled = (
@@ -228,6 +231,11 @@ def test_all_grok_youtube_shows_are_gallery_enabled():
         assert gallery_enabled, (
             f"{slug} should embed the per-show gallery (youtube_enabled + grok), "
             f"got youtube_enabled={yt.get('youtube_enabled')} provider={provider!r}"
+        )
+    for slug in ("finansy_prosto", "env_intel"):
+        assert not _read_show_youtube(slug).get("youtube_enabled"), (
+            f"{slug} is paused on YouTube — re-enabling it puts it back in the "
+            "gallery list above"
         )
 
 
@@ -238,7 +246,8 @@ def test_committed_show_pages_have_gallery_mount():
         "spacex.html": "spacex",
         "fascinating-frontiers.html": "fascinating_frontiers",
         "modern-investing.html": "modern_investing",
-        "ru/finansy-prosto.html": "finansy_prosto",
+        # ru/finansy-prosto.html dropped Sep 9 2026: YouTube paused, so the
+        # mount disappears on the next nightly regeneration.
         "ru/privet-russian.html": "privet_russian",
     }
     for rel, slug in pages.items():
