@@ -203,11 +203,15 @@ def test_daily_narrative_show_runs_daily_without_recap(slug):
 YOUTUBE_ENABLED_SHOWS = {
     "tesla", "spacex", "first_principles",
     "fascinating_frontiers", "modern_investing",
-    "env_intel", "planetterrian", "omni_view",
+    "planetterrian", "omni_view",
     "models_agents", "models_agents_beginners",
     "unintended_consequences",
-    "finansy_prosto", "privet_russian",
+    "privet_russian",
     "dp_pod",  # Sep 4 2026: Shorts-only (publish_long_form: false)
+    # Sep 9 2026 (operator-directed): env_intel + finansy_prosto PAUSED —
+    # ~10 and ~6 views per upload over 14 days, the lowest on their channels.
+    # MIT's RU/FR dubs were culled 2026-09-02. Blocks stay in the YAMLs for
+    # a one-line re-enable. Register: pause-dead-youtube-uploads.
 }
 
 
@@ -228,6 +232,12 @@ def test_youtube_enabled_show_set():
         yt = (cfg.get("youtube") or {})
         if yt.get("enabled") is True:
             enabled.add(slug)
+    # The paused shows keep their full youtube: block (playlist id, channel,
+    # image queries) so re-enabling is one line, never a rebuild.
+    for slug in ("env_intel", "finansy_prosto"):
+        paused = yaml.safe_load((SHOWS_DIR / f"{slug}.yaml").read_text(encoding="utf-8"))
+        assert paused["youtube"]["enabled"] is False, slug
+        assert paused["youtube"].get("podcast_playlist_id"), slug
     assert enabled == YOUTUBE_ENABLED_SHOWS, (
         f"YouTube uploads enabled on {enabled}; expected the full network "
         f"{YOUTUBE_ENABLED_SHOWS}. Update both the YAML and this set together."

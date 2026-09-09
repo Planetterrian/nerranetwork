@@ -1150,6 +1150,29 @@ experiments:
       rule. Render-only, best-effort, per-show youtube.fact_cards_enabled.
       Miss = flip the three YAML flags back; the module stays.
 
+  - id: pause-dead-youtube-uploads
+    title: "YouTube paused on env_intel + finansy_prosto (operator-directed)"
+    area: reach
+    shipped: 2026-09-09
+    readout: 2026-09-30
+    status: reading
+    metric: channel_views_wow_en
+    baseline: 55.7
+    target: >
+      Nothing lost: @NerraNetwork and @NerraRU weekly views and net
+      subscribers unchanged or up without the two shows' uploads (they
+      earned ~10 and ~6 views per upload over 14 days, 33 views combined,
+      0 subscribers). Read the channel day_series, not the counter.
+    notes: >
+      From the Grok retention review (2026-09-09), item 1E, corrected: FPD
+      (34 views/Short) and UC were NOT paused; the dead uploads were
+      env_intel (Monday, EN), finansy_prosto (Monday, RU) and MIT's RU/FR
+      dubs (already culled 2026-09-02). youtube.enabled: false on the two
+      YAMLs with the blocks intact; re-enable is one line each. Their
+      Grok Imagine spend stops with the render (gallery auto-hides —
+      gallery_enabled follows youtube.enabled). Guard:
+      tests/test_schedule.py::test_youtube_enabled_show_set.
+
   - id: dp-pod-youtube-shorts
     title: "DP Pod on YouTube — Shorts-only, first video surface"
     area: reach
