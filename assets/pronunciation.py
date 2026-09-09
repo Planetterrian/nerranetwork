@@ -1520,9 +1520,13 @@ def replace_number_ranges(text: str) -> str:
         return m.group(0)
 
     # Match digit-hyphen-digit ranges that aren't preceded by a currency
-    # symbol (those are handled by replace_price_ranges).
+    # symbol (those are handled by replace_price_ranges). A digit glued
+    # to a LETTER is a model number, not a range — M&A Ep167 (2026-09-08)
+    # aired "Xeon Efive to two thousand six hundred ninety-six" for
+    # E5-2696 and "DDRfour to two thousand one hundred thirty-three" for
+    # DDR4-2133; those keep their hyphen for the server-side normaliser.
     text = re.sub(
-        r"(?<![$€£])(\d+\.?\d*)\s*[-–—]\s*(\d+\.?\d*)(?!\s*%)",
+        r"(?<![$€£A-Za-z])(\d+\.?\d*)\s*[-–—]\s*(\d+\.?\d*)(?!\s*%)",
         _num_range,
         text,
     )

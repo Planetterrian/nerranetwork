@@ -197,6 +197,9 @@ WARN_DIGEST_OVERLAP_PCT = 50.0
 WARN_FILLER_PCT = 12.0
 WARN_DUPLICATE_SENTENCES = 3
 WARN_REPEATED_FACTS = 6
+# Sep 9 2026: copied scripts told 77-95 % of the digest's sentences; the
+# first rewritten week told 43-65 %. Under half is a thin episode.
+WARN_DIGEST_COVERAGE_PCT = 50.0
 
 
 @dataclass
@@ -214,6 +217,7 @@ class ScriptAudit:
     copied_sections: List[str] = field(default_factory=list)
     hook_coverage: Optional[float] = None
     entity_retention: Optional[float] = None
+    digest_coverage: Optional[float] = None
 
     @property
     def hook_orphaned(self) -> bool:
@@ -237,6 +241,8 @@ class ScriptAudit:
             m["script_hook_orphaned"] = self.hook_orphaned
         if self.entity_retention is not None:
             m["script_entity_retention_pct"] = round(100.0 * self.entity_retention, 1)
+        if self.digest_coverage is not None:
+            m["script_digest_coverage_pct"] = round(100.0 * self.digest_coverage, 1)
         return m
 
     def warnings(self) -> List[str]:
@@ -250,6 +256,11 @@ class ScriptAudit:
             out.append(
                 f"the cold open promises a story the body never covers "
                 f"(only {100 * (self.hook_coverage or 0):.0f}% of its words reappear)"
+            )
+        if self.digest_coverage is not None and 100.0 * self.digest_coverage < WARN_DIGEST_COVERAGE_PCT:
+            out.append(
+                f"the script tells only {100 * self.digest_coverage:.0f}% of the digest's sentences "
+                f"(warn < {WARN_DIGEST_COVERAGE_PCT:.0f}%) — stories or facts were dropped"
             )
         if self.digest_overlap_pct is not None and self.digest_overlap_pct >= WARN_DIGEST_OVERLAP_PCT:
             out.append(
@@ -461,6 +472,54 @@ def hook_coverage(script_text: str, hook: str = "") -> Optional[float]:
 
 
 # ---------------------------------------------------------------------------
+# Digest coverage (Sep 9 2026)
+# ---------------------------------------------------------------------------
+
+# Share of a digest sentence's salient words a script sentence must carry
+# to count as having told it. Paraphrase-tolerant on purpose: this is the
+# inverse of `copied_sections` — content carried over regardless of
+# wording. Calibrated Sep 9: a copied script scores ~85-95 %, a rewritten
+# one that kept its stories ~65-80 %, and Tesla Ep599 (915 words on a
+# 1,400 target, seventeen stories at two sentences each) ~45 %.
+COVERAGE_SENTENCE_SHARE = 0.4
+COVERAGE_MIN_SALIENT = 4
+# Below this many scorable digest sentences one miss swings the share by
+# 10+ points, so the measure returns None (real digests carry 60-150).
+COVERAGE_MIN_SENTENCES = 10
+
+
+def digest_coverage(script_text: str, digest_text: str) -> Optional[float]:
+    """Share (0-1) of the digest's body sentences the script tells, in any
+    wording.
+
+    Sep 9 2026: once the rewrite gate stopped the copying, scripts shrank
+    — Tesla 1,607 -> 985 -> 915 words in three days on the same digest
+    size — because "sentences follow facts, two to six" read as a cap.
+    `digest_overlap` cannot see that (a short script copies little); this
+    can. Headers, source lines and the hook block are skipped.
+    """
+    if not script_text or not digest_text:
+        return None
+    script_sents = [_salient(s) for s in _closing_cut(split_sentences(script_text))]
+    script_sents = [s for s in script_sents if s]
+    if not script_sents:
+        return None
+    total = covered = 0
+    for title, body in _digest_sections(digest_text):
+        for ds in _digest_sentences(body):
+            toks = _salient(ds)
+            if len(toks) < COVERAGE_MIN_SALIENT:
+                continue
+            total += 1
+            need = COVERAGE_SENTENCE_SHARE * len(toks)
+            if any(len(toks & ss) >= need for ss in script_sents):
+                covered += 1
+    if total < COVERAGE_MIN_SENTENCES:
+        return None
+    return covered / total
+
+
+# ---------------------------------------------------------------------------
 # Entity retention (Sep 7 2026)
 # ---------------------------------------------------------------------------
 
@@ -598,6 +657,7 @@ def audit_script(
         ],
         hook_coverage=hook_coverage(script_text, hook),
         entity_retention=entity_retention(script_text, digest_text) if digest_text else None,
+        digest_coverage=digest_coverage(script_text, digest_text) if digest_text else None,
     )
 
 

@@ -1648,6 +1648,7 @@ def run(args: argparse.Namespace) -> None:
         #     validator sees the text; re-applied after any regeneration.
         if not is_deep_dive:
             x_thread = _dedupe_digest_sections(x_thread, config, metrics)
+            _lint_digest_placeholders(x_thread, config, metrics)
 
         if _val_factory and not is_deep_dive:
             _val_config = _val_factory()
@@ -2615,6 +2616,11 @@ def run(args: argparse.Namespace) -> None:
                                    _gate_info.get("entity_retention_before"))
                     metrics.record("script_rewrite_gate_entity_retention_after",
                                    _gate_info.get("entity_retention_after"))
+                    metrics.record("script_rewrite_gate_digest_coverage_before",
+                                   _gate_info.get("digest_coverage_before"))
+                    metrics.record("script_rewrite_gate_digest_coverage_after",
+                                   _gate_info.get("digest_coverage_after"))
+                    metrics.record("script_rewrite_gate_attempts", _gate_info.get("attempts") or 1)
                     metrics.record("script_rewrite_gate_copied_sections_before",
                                    _gate_info.get("copied_sections_before") or 0)
                     metrics.record("script_rewrite_gate_copied_sections_after",
@@ -4837,6 +4843,29 @@ def _dedupe_digest_sections(x_thread, config, metrics):
             f"item(s) that re-told an earlier section — {detail}"
         )
     return result.text
+
+
+# Sep 9 2026: M&A Ep167's digest carried "2x t/s decode and 2xxt/s
+# prefill" — the model's placeholder for a number it did not have — and
+# the script turned it into "half those rates", an invented figure that
+# aired. A digit glued to a run of x's is never a real value.
+_DIGEST_PLACEHOLDER_RE = re.compile(r"\b\d*x{2,}\d*(?:[a-z/]*)\b|\bXX+\b|\[(?:number|figure|value|tbd)\]", re.IGNORECASE)
+
+
+def _lint_digest_placeholders(x_thread, config, metrics):
+    """Count placeholder-shaped tokens in the digest; warn, never block."""
+    if not x_thread:
+        return
+    try:
+        hits = [m.group(0) for m in _DIGEST_PLACEHOLDER_RE.finditer(x_thread)]
+        metrics.record("digest_placeholder_tokens", len(hits))
+        if hits:
+            print(
+                f"::warning::{config.slug}: digest carries {len(hits)} placeholder-shaped "
+                f"number(s) the script may turn into an invented figure — {', '.join(hits[:5])}"
+            )
+    except Exception as exc:  # noqa: BLE001 — read-only instrument
+        logger.warning("Digest placeholder lint failed (non-fatal): %s", exc)
 
 
 def _audit_podcast_script(podcast_script, x_thread, hook, config, metrics):

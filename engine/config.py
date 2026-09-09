@@ -66,6 +66,12 @@ class LLMConfig:
     # REWRITE gate, not a length lever — it never changes a length target
     # and never fires on word count (the banned podcast-side retry class).
     script_rewrite_gate_overlap_pct: float = 0.0
+    # Sep 9 2026: bounded retries when the gate fires. Each attempt is a
+    # fresh script call judged against the ORIGINAL draft; the first that
+    # passes ships. Default 1 (the Sep 5 contract); Tesla sets 2 because
+    # its rewrites copied MORE on Sep 8 (41 -> 44 %) and the copied draft
+    # aired. Never a length lever: the attempts fire on the same triggers.
+    script_rewrite_gate_attempts: int = 1
     # Absolute hard floor below which the runner aborts the episode as
     # "clearly broken" (see run_show.py:1580). Network default 600 is
     # tuned for the news-show shape where 600 words ~ 4 minutes — well

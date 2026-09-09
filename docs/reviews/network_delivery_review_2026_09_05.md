@@ -404,3 +404,85 @@ Verdict on direction: the network is moving the right way — every gated
 show is now written, not read; filler is gone; the pinned closings hold.
 The cost is one extra script call per episode per day, and the risk that
 remains is specificity, which is now measured and gated.
+
+## Sep 9 readout — the rewrites stopped copying and started dropping
+
+Sep 8 (Tuesday, the third slate under the gate) was scored the same way,
+with a transcript read of Tesla Ep599, SpaceX Ep094 and M&A Ep167. The
+copying trend is right: first drafts now sit at SpaceX 29 / M&A 20 /
+Omni View 23 / MIT 37 / MAB 4 percent verbatim (five of nine under the
+40 percent threshold before any retry, against zero of nine on Sep 7),
+and the gate cleared the rest (Omni View 23 → 0.5, Planetterrian 74 →
+40, FF 56 → 13). Names held on the accepted rewrites (SpaceX 88, Omni
+View 85, PT 81 percent). Filler 0–7 percent. Workflows: every Sep 8 run
+succeeded; nightly and the daily audit green; every memory show's
+narrative tracker advanced on Sep 8.
+
+What the Sep 5–7 instruments could not see, and this pass adds:
+
+1. **The scripts are thinner.** A new measure, `script_audit.digest_coverage`
+   — the share of the digest's sentences the script tells in ANY wording
+   (a digest sentence counts when a script sentence carries 40 percent
+   of its salient words; the paraphrase-tolerant inverse of the copy
+   test) — reads like this across the week:
+
+   | show | Sep 3 | Sep 4 | Sep 5 | Sep 6 | Sep 7 | Sep 8 |
+   |---|---|---|---|---|---|---|
+   | SpaceX | 86% | 87% | 87% | 53% | 46% | 81% |
+   | Tesla | 54% | 77% | 79% | 77% | 43% | 53% |
+   | Models & Agents | 69% | 79% | 92% | 80% | 51% | 62% |
+   | Omni View | 88% | 83% | 84% | 65% | 43% | 52% |
+   | Fascinating Frontiers | 90% | 88% | 88% | 53% | 70% | 56% |
+   | Planetterrian | 80% | 62% | 79% | 63% | 64% | 55% |
+   | Modern Investing | 95% | 91% | 100% | 87% | 65% | 84% |
+   | MAB | 69% | 63% | 83% | 53% | 58% | 42% |
+
+   Copied scripts told 77–95 percent of the digest; the rewritten week
+   tells 43–65. The transcript read put faces on it: Tesla Ep599 (915
+   words on a 1,400 target, its draft 898) skipped the X Takeover's
+   "Cybercab doubles by year-end" item (four facts) and the non-OEM parts
+   story (three), told three more in one sentence, carried 8 of the
+   digest's 17 numbers, dropped "third straight decline" and the app
+   version, and spent the saved space re-telling the floating-clip story
+   in First Principles (zero numbers). The cause is the Sep 5 rule
+   "sentences follow facts — at least two and at most six", which the
+   model reads as a cap: seventeen stories at two sentences each is 900
+   words. The rule now says every fact is spoken — one sentence per
+   distinct fact the digest carries, "the digest's facts are the floor,
+   not a menu" — and the gate rejects a rewrite that tells 15 points less
+   of the digest than its draft (`reject_reason=facts_lost`). Metric
+   `script_digest_coverage_pct`, warning under 50, snapshot column.
+   Two of the three short scripts were NOT this: SpaceX's Sep 8 digest
+   had two news items from 14 articles (median 30 — the Labor Day
+   Monday), and M&A's 1,044 words were the Sep 6 headline-echo padding
+   removed with 33 numbers kept, a better episode at 579 fewer words.
+   Coverage separates the three where word count could not.
+2. **Tesla's rewrite copied more, and the draft aired.** Ep599's draft
+   was 41 percent verbatim; its rewrite 44 (rejected `still_copies`).
+   Tesla's first drafts copy the most in the network (63 / 51 / 61 / 66 /
+   41 on Sep 5–8). The gate now takes bounded attempts
+   (`llm.script_rewrite_gate_attempts`, default 1 so every other show is
+   unchanged; Tesla 2), each judged against the original draft, the first
+   pass ships, `script_rewrite_gate_attempts` records how many ran.
+3. **M&A's better rewrite was thrown away.** Ep167's rewrite went 20 → 14
+   percent verbatim with the same one section (Under the Hood) still
+   flagged, and the section rule rejected it, so the worse draft aired. A
+   rewrite that copies less overall and copies no new section now ships.
+4. **A placeholder became a fact.** M&A's digest carried "2x t/s decode
+   and 2xxt/s prefill" — the model's stand-in for a number it did not
+   have — and the script turned it into "half those rates". run_show now
+   lints the digest for placeholder-shaped tokens (`2xx`, `XX`,
+   `[number]`) after the cross-section strip, records
+   `digest_placeholder_tokens`, and warns; the claims gate is the
+   enforcement path, this is the alarm.
+5. **Pronunciation:** "Xeon E5-2696" aired as "Efive to two thousand six
+   hundred ninety-six" and DDR4-2133 the same way — the number-range
+   handler read a letter-glued model number as a range. A digit glued to
+   a letter keeps its hyphen.
+
+Left open: Tesla's First Principles still re-tells a covered story (the
+TOPIC DISTINCTNESS rule is in the digest prompt; the model chose the
+day's lead anyway — a digest-side pick, not a script defect); M&A's
+Things to Try still reads as bare imperatives with no lead-in; SpaceX's
+thin-fetch day is the article-count alarm's job, not the script's.
+Predictions in the network, tesla, models_agents and spacex ledgers.
