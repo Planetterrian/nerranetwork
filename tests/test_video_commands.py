@@ -2166,30 +2166,35 @@ class TestLongFormCaptionLayer:
         assert "shipped with NO captions" in src
 
     def test_burn_in_decision_is_centralized_in_defaults(self):
-        """Aug 1 2026 reversal: burn-in is ON as the NETWORK default.
+        """Sep 9 2026: long-form burn-in is OFF as the NETWORK default —
+        the uploaded caption track is the long-form caption layer.
 
-        History: July 30 made burn-in opt-in ("captions from the track,
-        not the pixels") — and no show opted in, so long-form shipped
-        with no on-screen captions at all and the July-31 per-word ASS
-        layer was dormant. The operator's video directive turned it back
-        on network-wide. The decision lives in _defaults.yaml ONLY:
-        per-show files stay silent (a show wanting out sets false
-        explicitly, which this guard permits but none does today)."""
+        History: July 30 made burn-in opt-in; Aug 1 turned it ON
+        network-wide on the assumption that YouTube CC defaults off, so
+        the uploaded track would never double it. The operator then saw
+        (screenshot, 2026-09-09) YouTube's caption box drawn over the
+        burned per-word captions on a long-form video: YouTube remembers
+        CC per account, and deaf/HoH, second-language and auto-translate
+        viewers keep it on — two caption layers obscuring the imagery.
+        The decision lives in _defaults.yaml ONLY; per-show files stay
+        silent (a show that genuinely cannot render a track may opt IN
+        explicitly, which this guard permits but none does today).
+        Shorts keep their burn-in — see test_shorts_burn_in_is_untouched."""
         import pathlib
         import yaml as _yaml
         root = pathlib.Path(__file__).resolve().parent.parent
         defaults = _yaml.safe_load(
             (root / "shows" / "_defaults.yaml").read_text(encoding="utf-8"))
         assert (defaults.get("youtube") or {}).get(
-            "long_form_burn_in_captions") is True
+            "long_form_burn_in_captions") is False
         for path in sorted((root / "shows").glob("*.yaml")):
             if path.name == "_defaults.yaml":
                 continue
             raw = _yaml.safe_load(path.read_text(encoding="utf-8")) or {}
             yt = raw.get("youtube") or {}
-            assert yt.get("long_form_burn_in_captions") is not True, (
-                f"{path.name}: redundant per-show flip — the default is "
-                "already true; only explicit opt-OUTs belong in show YAMLs")
+            assert "long_form_burn_in_captions" not in yt, (
+                f"{path.name}: the long-form caption layer is a network "
+                "decision — no per-show flip without a documented reason")
 
 
 # ---------------------------------------------------------------------------

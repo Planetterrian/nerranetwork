@@ -454,3 +454,78 @@ Still open for the operator: the quality-tier decision is now
 genuinely optional — the standard model at 2K removed the upsample
 softness; decide on complaints, not on the request size. FR is not
 broken; re-read it after the spike leaves the window (~09-13).
+
+
+## Captions doubled, Arabic captions, and the Sep 6-9 read — 2026-09-09
+
+Operator screenshots: (1) a First Principles Daily Short showing an
+ARABIC caption box at the top of the frame beside the burned-in
+English per-word captions; (2) a SpaceX long-form video with YouTube's
+caption box drawn over the burned-in per-word captions, obscuring the
+scene.
+
+**The Arabic is not ours.** EN Shorts upload no caption track at all
+(`upload_caption_track` is called for long-form and the RU/FR dubs
+only), and nothing in the pipeline, the show YAMLs or the upload
+metadata carries an Arabic code — every upload is tagged `en` with an
+English track name. What the Short shows is YouTube's own
+auto-generated captions, auto-translated by the viewing account's
+caption-language preference (YouTube remembers the CC toggle and the
+chosen subtitle language per account; the CC icon is lit in the
+screenshot). It is a player setting, fixed in the player's CC menu
+(Subtitles -> English (auto-generated) or Off), and cannot be set from
+the pipeline. Viewers who chose Arabic see Arabic on every YouTube
+video, not only ours.
+
+**The doubling on long-form was ours.** The Aug 1 flip to burned-in
+per-word captions on long-form assumed "CC defaults off, so the
+uploaded track never doubles it". YouTube remembers CC per account,
+and the viewers who keep it on (second-language, auto-translate,
+deaf and hard-of-hearing — on a channel whose audience is 37%
+outside the US) saw both layers on every long-form video. Long-form
+burn-in is OFF network-wide again; the uploaded track is the long-form
+caption layer (toggleable, translatable, indexed for search). Shorts
+keep their burn-in — watched muted, in-feed, no caption UI to fall
+back on — and upload no track. The burn-in period never moved long
+AVD (flat Aug 1 -> Sep 6), so nothing measurable is lost. Register:
+`long-form-captions-track-only`.
+
+**How the week landed.** Every slate 09-03..09-09 shipped complete:
+7-9 EN long + 15-17 EN Shorts + 8-12 RU + 6-8 FR Shorts a day,
+`shorts_count_uploaded == requested` on every episode, two funnel
+comments each, zero Short errors, and — from the first metric on
+09-09 — `grok_image_px_max 2816` on all seven YouTube episodes (the
+sidecars agree back to 09-03). The script rewrite gate fired on six of
+seven 09-09 episodes and was rejected on Tesla Ep600 (45.5% verbatim
+shipped) and M&A Ep168 (29.8%) — a delivery-review item, noted for
+that loop.
+
+**How it performed** (Analytics through 09-06 at the 09-08 fetch;
+09-07 arrives tonight, 09-08/09 need two more nightlies — the
+Analytics API lags two days and Google blocks unauthenticated watch
+pages, so there is no earlier honest read):
+
+| Read | Value |
+|---|---|
+| EN views/day, 09-04..06 | 3,800-4,300 (late Aug ~1,900); WoW +55.7% |
+| RU views/day | 3,500-4,700; WoW +17.1% |
+| FR views/day | 470-790, climbing; WoW -29.7% only against the 08-22/23 viral spike |
+| EN Short #1 (`hook_open`), 09-03..07 | n=41, median 48 views, mean 128, 8 subscribers |
+| EN 2nd/3rd Short (`filled`), 09-03..07 | n=17, median 3 views, mean 4.4, 1 subscriber |
+| RU `filled` Shorts | n=24, median 225 — the RU feed carries them; EN's does not |
+| Top of the week | RU FF Shorts 1,043 / 1,003 views; SpaceX long "Starship Flight 14 Gets Wider FAA Corridor" 906; MAB Short "GPT-6 Astra…" 788 |
+| MAB long-form | views 168 -> 318/video while AVP 13 -> 7% — GPT-6 search traffic arriving colder than the show's beginner register holds |
+
+**Acted on:** EN `filled` Shorts are switched off (`shorts_fill_to_requested:
+false` in `_defaults.yaml`, EN path only — the RU/FR dubs select their
+own windows and their filled Shorts earn ~225 views). The July 18
+fill-to-requested rule was written when tier-A shows shipped 1-of-2;
+seven weeks of data say the EN second Short that only exists to fill
+the count earns 3 views and one subscriber a week across 17 uploads,
+while adding to the daily upload cadence YouTube's inauthentic-content
+policy watches. A second EN Short still ships when a window QUALIFIES
+(score >= threshold). Register: `en-shorts-no-fill`.
+
+**Not acted on (watch):** MAB long-form AVP; the open cliff (0.48-0.49
+hold at 5%, unchanged through every change since Aug 17) — the 09-23
+readouts are the right place to decide the next long-form move.
