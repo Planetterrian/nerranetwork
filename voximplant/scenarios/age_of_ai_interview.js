@@ -224,7 +224,7 @@ async function beginInterview(config, withVideo) {
     hostMode = config.host_mode !== false;
     hostUser = config.host_user || DEFAULT_HOST_USER;
     createLocalConference();
-    attachToConference(call, "guest");
+    trace("conference", "created; guest attach via " + attachToConference(call, "guest") + " (" + CONF_ENDPOINT_MODE + ")");
     postLegEvent("guest", "joined");
     // 1c. Dial the host leg now (not after the disclosure) so Patrick has
     //     the disclosure + Grok session setup time to pick up.
@@ -248,6 +248,7 @@ async function beginInterview(config, withVideo) {
       xAIApiKey: getSecret("XAI_API_KEY"),
       onWebSocketClose: onGrokDropped,
     });
+    trace("grok", "agent created");
 
     grokAgent.addEventListener(Grok.VoiceAgentAPIEvents.ConversationCreated, function () {
       // Voice presets are capitalized on the Voice Agent API ("Ara");
@@ -271,6 +272,7 @@ async function beginInterview(config, withVideo) {
         //    cannot go through conf.add — sendMediaBetween is the documented
         //    unit<->unit bridge and a Conference is a VoxMediaUnit.
         VoxEngine.sendMediaBetween(grokAgent, conf);
+        trace("grok", "session updated; agent<->conference bridged");
         if (videoRecorder) {
           try { grokAgent.sendMediaTo(videoRecorder); } catch (e) {
             Logger.write("[aoa " + runId + "] mira->video-recorder failed (non-fatal): " + e.message);
@@ -300,9 +302,25 @@ async function beginInterview(config, withVideo) {
     // host's speech too — intended (Patrick interjecting should also cut
     // Mira off), and the silent-mic check only needs SOMEONE to be heard.
     grokAgent.addEventListener(Grok.VoiceAgentAPIEvents.InputAudioBufferSpeechStarted, function () {
+      if (!guestHeard) trace("grok", "first inbound speech heard" + (directBridge ? " (direct bridge)" : " (via conference)"));
       guestHeard = true;
       if (grokAgent) grokAgent.clearMediaBuffer();
     });
+    // Output-side visibility: does Mira's audio actually leave the agent?
+    try {
+      const outEvents = ["ResponseAudioDeltaReceived", "ResponseAudioDelta", "ResponseOutputAudioDelta"];
+      let firstAudio = false;
+      outEvents.forEach(function (name) {
+        if (Grok.VoiceAgentAPIEvents[name]) {
+          grokAgent.addEventListener(Grok.VoiceAgentAPIEvents[name], function () {
+            if (!firstAudio) { firstAudio = true; trace("grok", "first outbound audio (" + name + ")"); }
+          });
+        }
+      });
+      if (Grok.VoiceAgentAPIEvents.ResponseDone) {
+        grokAgent.addEventListener(Grok.VoiceAgentAPIEvents.ResponseDone, function () { trace("grok", "response done"); });
+      }
+    } catch (e) { /* event names differ across connector versions */ }
 
     // Silent-mic detection (Aug 5 2026, Dan Perra dry run: guest heard
     // Mira fine, his mic never reached us, and the call limped on in
@@ -431,6 +449,7 @@ function dialHost() {
   }
   hostAttempts++;
   Logger.write("[aoa " + runId + "] dialing host '" + hostUser + "' (attempt " + hostAttempts + ")");
+  if (hostAttempts === 1 || hostAttempts % 5 === 0) trace("host", "dialing '" + hostUser + "' attempt " + hostAttempts);
   try {
     hostCall = VoxEngine.callUser({
       username: hostUser,
@@ -451,6 +470,7 @@ function dialHost() {
     if (e && e.url) hostRecordUrl = e.url;
   });
   thisLeg.addEventListener(CallEvents.Failed, function (e) {
+    if (hostAttempts === 1) trace("host", "first dial failed: " + ((e && (e.reason || e.code)) || "unknown"));
     onHostGone(thisLeg, "failed: " + ((e && (e.reason || e.code)) || "unknown"));
   });
   thisLeg.addEventListener(CallEvents.Disconnected, function () {
@@ -471,6 +491,7 @@ function onHostConnected(leg) {
   hostJoined = true;
   if (!hostJoinedAt) hostJoinedAt = new Date().toISOString();
   Logger.write("[aoa " + runId + "] host joined (attempt " + hostAttempts + ")");
+  trace("host", "joined on attempt " + hostAttempts);
   try {
     attachToConference(leg, "host");
     // Host track: L = host mic (R = what the host hears; the same
@@ -518,12 +539,81 @@ function openWhenReady(reason) {
   openingFired = true;
   if (openingTimer) { clearTimeout(openingTimer); openingTimer = null; }
   Logger.write("[aoa " + runId + "] Mira opening (" + reason + ")");
+  trace("opening", reason);
   try {
     grokAgent.responseCreate({});
     startTimeChecks();
+    armAudioFallback();
   } catch (e) {
     Logger.write("[aoa " + runId + "] opening responseCreate failed: " + e.message);
   }
+}
+
+// Trace (Sept 9 2026): the Voximplant session log is size-capped and the
+// panel session expires, so the scenario keeps its own timeline on the
+// run row (interview_runs.scenario_trace, jsonb array) via PostgREST.
+// Fire-and-forget; a failed trace never affects the call.
+const traceLines = [];
+let traceFlushTimer = null;
+function trace(event, detail) {
+  const line = { t: new Date().toISOString(), e: event };
+  if (detail !== undefined && detail !== null) line.d = String(detail).slice(0, 200);
+  traceLines.push(line);
+  Logger.write("[aoa " + runId + "] trace " + event + (line.d ? ": " + line.d : ""));
+  if (traceFlushTimer) return;
+  traceFlushTimer = setTimeout(flushTrace, 1500);
+}
+function flushTrace() {
+  traceFlushTimer = null;
+  if (!runId) return;
+  try {
+    Net.httpRequestAsync(
+      SUPABASE_URL + "/rest/v1/interview_runs?id=eq." + runId,
+      {
+        method: "PATCH",
+        headers: [
+          "apikey: " + getSecret("SUPABASE_SERVICE_KEY"),
+          "Authorization: Bearer " + getSecret("SUPABASE_SERVICE_KEY"),
+          "Content-Type: application/json",
+        ],
+        postData: JSON.stringify({ scenario_trace: traceLines.slice(-120) }),
+      }
+    ).then(function () {}, function () {});
+  } catch (e) { /* never blocks */ }
+}
+
+// Audio-path fallback (Sept 9 2026 rehearsal: the guest heard Mira's
+// opening, Mira never heard the guest — the conference->agent direction
+// delivered nothing). If Grok reports no inbound speech within
+// FALLBACK_AFTER_MS of the opening, re-bridge the guest straight to the
+// agent (the Aug 5 phone path, which is known to work). The guest and the
+// host still hear each other and Mira through the conference; only
+// Mira's INPUT becomes guest-only. Traced either way so the next
+// rehearsal says which path carried the show.
+const FALLBACK_AFTER_MS = 12 * 1000;
+let directBridge = false;
+let fallbackTimer = null;
+function armAudioFallback() {
+  if (fallbackTimer) return;
+  fallbackTimer = setTimeout(function () {
+    fallbackTimer = null;
+    if (guestHeard || directBridge || !grokAgent || !call || call.state() === "DISCONNECTED") {
+      trace("audio_path", guestHeard ? "conference->agent OK (speech heard)" : "fallback skipped");
+      return;
+    }
+    try {
+      try { conf.stopMediaTo(grokAgent); } catch (e) { /* may not be wired */ }
+      call.sendMediaTo(grokAgent);
+      directBridge = true;
+      trace("audio_path", "FALLBACK guest->agent direct (no speech heard " + (FALLBACK_AFTER_MS / 1000) + "s after opening)");
+      // Give the guest a moment, then let Mira pick the thread back up.
+      setTimeout(function () {
+        try { if (grokAgent && !guestHeard) grokAgent.responseCreate({}); } catch (e) { /* best-effort */ }
+      }, 2500);
+    } catch (e) {
+      trace("audio_path", "fallback failed: " + e.message);
+    }
+  }, FALLBACK_AFTER_MS);
 }
 
 // Per-leg presence for the studio pages (Worker POST /voices/leg-event).

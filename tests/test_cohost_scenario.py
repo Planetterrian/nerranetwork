@@ -269,3 +269,20 @@ class TestClientUsers:
                      "set_application_secrets", "send_sms"):
             assert callable(getattr(vc, name)), name
         assert "created ONCE at operator bootstrap" in vc.add_user.__doc__
+
+
+def test_scenario_traces_and_falls_back_to_direct_bridge():
+    """Sept 9 2026 rehearsal: guest heard Mira, Mira heard nothing. The
+    scenario now (a) writes a timeline to interview_runs.scenario_trace and
+    (b) re-bridges the guest straight to the agent when no inbound speech
+    is heard 12 s after the opening."""
+    src = (ROOT / "voximplant/scenarios/age_of_ai_interview.js").read_text()
+    assert "function trace(event, detail)" in src and "scenario_trace" in src
+    assert "function armAudioFallback()" in src and "FALLBACK_AFTER_MS = 12 * 1000" in src
+    assert "conf.stopMediaTo(grokAgent)" in src and "call.sendMediaTo(grokAgent);" in src
+    assert 'trace("opening", reason)' in src and "armAudioFallback();" in src
+    for needle in ('trace("conference"', 'trace("grok", "agent created")',
+                   "first inbound speech heard", 'trace("host", "dialing'):
+        assert needle in src, needle
+    sql = (ROOT / "supabase/migrations/20260909_scenario_trace.sql").read_text()
+    assert "add column if not exists scenario_trace jsonb" in sql
