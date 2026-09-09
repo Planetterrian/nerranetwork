@@ -2,11 +2,13 @@
 
 String-level drift guards on workers/voices/src/index.ts, wrangler.toml and
 age-of-ai-studio.html (the pattern tests/test_voices_worker_routing.py
-uses), pinned to docs/cohost_phase2_contract.md: the host role is gated by
-ADMIN_TOKEN, the scenario's per-leg events and the new webhook fields land
-on interview_runs, local browser recordings stream to the VOICES_R2 bucket
-under <r2_prefix>/local/<run>/<role>/, and the host studio page answers
-Mira's callUser leg instead of dialling.
+uses), pinned to docs/cohost_phase2_contract.md as amended by the room
+model (Sept 9 2026): every role signs in as the shared guest studio user
+and places the same call (no admin token on the co-host link), the
+participant sessions' leg events carry the per-person recording URLs onto
+interview_runs, the completion webhook merges instead of overwriting, and
+local browser recordings stream to the VOICES_R2 bucket under
+<r2_prefix>/local/<run>/<role>/.
 """
 
 from __future__ import annotations
@@ -72,12 +74,12 @@ def test_scenario_and_worker_agree_on_leg_event_url():
 # Worker: studio-auth / studio-state
 # ---------------------------------------------------------------------------
 
-def test_studio_auth_gates_host_on_admin_token():
+def test_studio_auth_issues_shared_guest_creds_for_every_role():
     body = _fn("async function handleStudioAuth")
     assert 'body?.role === "host"' in body
-    assert "adminTokenOk(env, req, body?.token)" in body, "host role must check ADMIN_TOKEN"
-    assert 'json({ error: "unauthorized" }, 401)' in body
-    assert 'studioUser(env, "host")' in body
+    # Room model: no token gate, no host user — the role rides in X-Role.
+    assert "adminTokenOk(" not in body
+    assert 'studioUser(env, "host")' not in body
     # Sept 9 2026: passwords are derived from ADMIN_TOKEN on both sides,
     # never read from VOX_*_PASSWORD (a hand-typed mismatch hung Dan
     # Perra's live studio join).
@@ -90,14 +92,19 @@ def test_studio_auth_gates_host_on_admin_token():
     assert "t === expected" in ok and '(env.ADMIN_TOKEN || "").trim()' in ok
 
 
-def test_studio_state_reports_presence_and_host_user_only_with_token():
+def test_studio_state_reports_presence_and_joinable_run_for_every_role():
     body = _fn("async function handleStudioState")
     for field in ("host_mode: hostMode", "guest_joined: Boolean(latest?.guest_joined_at)",
                   "host_joined: Boolean(latest?.host_joined_at) && !latest?.host_left_at",
                   "live_run_id:", "run_status:"):
         assert field in body, field
-    assert 'role === "host" && adminTokenOk(env, req)' in body
-    assert 'hostAllowed ? { host_user: studioUser(env, "host") } : {}' in body
+    # Room model: the newest run is joinable while awaiting_guest/in_progress,
+    # for guests, the co-host and anyone rejoining — no token, no host_user.
+    assert "JOINABLE_RUN_STATUSES.has(String(latest.status))" in body
+    assert "adminTokenOk(" not in body and "host_user" not in body
+    joinable = WORKER.split("const JOINABLE_RUN_STATUSES = new Set([")[1].split("])")[0]
+    for st in ("awaiting_guest", "in_progress"):
+        assert f'"{st}"' in joinable
     # Existing fields survive.
     for field in ("ready: Boolean(run)", "run_id: run?.id ?? null", "show: show.slug",
                   "show_name: show.name", "interview_status: iv.status"):
@@ -129,8 +136,8 @@ def test_upload_chunk_contract():
     key = _fn("function localKey")
     assert "`${show.r2Prefix}/local/${runId}/${role}/${name}`" in key
     gate = _fn("async function localUploadGate")
-    assert 'role === "host" && !adminTokenOk(env, req, bodyToken)' in gate
-    assert 'role === "guest" && !GUEST_UPLOAD_STATUSES.has' in gate
+    assert "adminTokenOk(" not in gate, "room model: host uploads need no token"
+    assert "!GUEST_UPLOAD_STATUSES.has(String(run.status))" in gate
     statuses = WORKER.split("const GUEST_UPLOAD_STATUSES = new Set([")[1].split("])")[0]
     for st in ("fired", "in_progress", "awaiting_guest", "completed"):
         assert f'"{st}"' in statuses, f"guest uploads must be allowed while {st}"
@@ -147,20 +154,32 @@ def test_upload_done_writes_manifest_key_and_reports_missing():
     assert "return json({ ok: true, key: manifestKey, chunks: keys.length, missing" in body
 
 
-def test_interview_complete_persists_phase2_fields():
+def test_interview_complete_merges_and_never_nulls_per_leg_urls():
     body = _fn("async function handleInterviewComplete")
-    assert "recording_host_url: payload.voximplant_host_record_url ?? null" in body
-    assert "recording_mira_url: payload.voximplant_mira_record_url ?? null" in body
-    assert "host_joined_at: payload.host_joined_at ?? null" in body
-    assert "host_left_at: payload.host_left_at ?? null" in body
+    # Room model: per-person URLs arrive via leg-event; the completion
+    # payload merges into grok_session_log and only sets what it carries.
+    assert "...existingLog," in body
+    assert "payload.voximplant_mira_record_url ? { recording_mira_url:" in body
+    assert "payload.voximplant_host_record_url ? { recording_host_url:" in body
+    assert "payload.host_joined_at ? { host_joined_at:" in body
     assert "host_attempts: Number(payload.host_attempts ?? 0) || 0" in body
-    # Existing behaviour untouched.
-    assert "voximplant_record_url: payload.voximplant_record_url ?? null" in body
+    assert "payload.audio_path ? { audio_path:" in body
     assert 'dispatch(env, "interview-complete", { run_id: payload.run_id })' in body
-    # The scenario actually sends those keys.
-    for key in ("voximplant_host_record_url", "voximplant_mira_record_url",
-                "host_joined_at", "host_left_at", "host_attempts"):
+    # The room session actually sends those keys.
+    for key in ("voximplant_mira_record_url", "host_joined_at", "host_left_at",
+                "host_attempts", "audio_path"):
         assert f"{key}:" in SCENARIO, f"scenario webhook payload lacks {key}"
+
+
+def test_leg_event_left_carries_recording_urls():
+    body = _fn("async function handleLegEvent")
+    assert "patch.recording_host_url = recordUrl" in body
+    assert "patch.recording_guest_url = recordUrl" in body
+    assert "log.voximplant_record_url = recordUrl" in body
+    assert "log.voximplant_video_url = videoUrl" in body
+    assert "extra_guest_record_urls" in body
+    # Participant sessions send them.
+    assert 'event: "left"' in SCENARIO and "record_url: pRecordUrl, video_url: pVideoUrl" in SCENARIO
 
 
 def test_host_link_and_guest_studio_url_roles():
@@ -168,7 +187,7 @@ def test_host_link_and_guest_studio_url_roles():
     assert 'studioUrl(show, interviewId, "guest")' in _fn("async function handleCalComBooked")
     link = _fn("function hostStudioUrl")
     assert 'studioUrl(show, interviewId, "host")' in link
-    assert "&token=${encodeURIComponent(env.ADMIN_TOKEN)}" in link
+    assert "token" not in link.split("{")[1], "room model: the co-host link carries no token"
     body = _fn("async function handleHostLink")
     assert "requireAdmin(req, env)" in body
     assert "url: hostStudioUrl(env, show, interviewId)" in body
@@ -199,26 +218,24 @@ def test_wrangler_has_r2_binding_and_documents_vars():
 # Studio page
 # ---------------------------------------------------------------------------
 
-def test_studio_reads_role_and_token():
+def test_studio_reads_role_without_token():
     assert 'params.get("role") === "host" ? "host" : "guest"' in STUDIO
-    assert 'params.get("token")' in STUDIO
     assert "Co-host studio" in STUDIO
     assert "hold on" in STUDIO
-    assert 'role: role' in STUDIO and "authBody.token = adminToken" in STUDIO
+    assert 'role: role' in STUDIO and "authBody.token" not in STUDIO
+    assert "missing its token" not in STUDIO, "room model: no token gate on the co-host link"
     assert '"&role=" + role' in STUDIO, "studio-state poll must carry the role"
 
 
-def test_studio_host_auto_answers_incoming_call():
-    assert "sdk.on(VoxImplant.Events.IncomingCall, onIncomingCall)" in STUDIO
-    assert 'call.answer("", {}, { sendVideo: false, receiveVideo: false })' in STUDIO
-    assert 'headers["X-Run-Id"]' in STUDIO
-    assert "incomingRun !== runId" in STUDIO, "must ignore calls for another run"
-    # Re-arm after a drop; only a deliberate Leave stops auto-answer.
-    assert "if (!leaving) armHost()" in STUDIO or "if (!leaving) {\n        armHost();" in STUDIO
+def test_studio_every_role_places_the_same_call():
+    # Room model: nobody waits to be called; the host is a participant.
+    assert "IncomingCall" not in STUDIO and "armHost" not in STUDIO
+    assert 'extraHeaders: { "X-Run-Id": runId, "X-Role": role }' in STUDIO
+    assert 'number: "mira"' in STUDIO
+    assert "sendVideo: !isHost && camOn" in STUDIO
     assert "call.on(VoxImplant.CallEvents.Connected, onCallConnected)" in STUDIO
     assert "call.on(VoxImplant.CallEvents.Disconnected, onCallEnded)" in STUDIO
-    # Guest flow keeps dialling Mira with the run id header.
-    assert 'number: "mira"' in STUDIO and '"X-Run-Id": runId' in STUDIO
+    assert "Rejoin the room" in STUDIO
 
 
 def test_studio_local_recording_contract():
@@ -328,5 +345,4 @@ def test_studio_user_names_are_sanitised_on_both_sides():
     assert '.trim().replace(/[^A-Za-z0-9_.-]/g, "")' in ts
     html = (ROOT / "age-of-ai-studio.html").read_text()
     assert "function cleanUser(u)" in html
-    assert "cleanUser(isHost ? hostUser : \"guest\") + VOX_APP_SUFFIX" in html
-    assert "cleanUser(s.host_user)" in html
+    assert 'cleanUser("guest") + VOX_APP_SUFFIX' in html

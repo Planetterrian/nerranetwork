@@ -459,15 +459,16 @@ class TestFireHostLink:
         from pipelines.voices.shows import get_show
         show = get_show("age_of_ai")
         url = host_link(show, "abc-123")
-        assert url == show.studio_url("abc-123") + "&role=host&token=sekrit"
+        # Room model (Sept 9 2026): the co-host link carries NO token.
+        assert url == show.studio_url("abc-123") + "&role=host"
+        assert "token" not in url
         assert "interview=abc-123" in url and "show=age_of_ai" in url
 
-    def test_host_link_requires_admin_token(self, monkeypatch):
+    def test_host_link_needs_no_admin_token(self, monkeypatch):
         monkeypatch.delenv("ADMIN_TOKEN", raising=False)
         from fire_interviews import host_link
         from pipelines.voices.shows import get_show
-        with pytest.raises(RuntimeError):
-            host_link(get_show("age_of_ai"), "x")
+        assert host_link(get_show("age_of_ai"), "x").endswith("&role=host")
 
     def test_notify_host_sends_email_and_sms(self, monkeypatch):
         monkeypatch.setenv("ADMIN_TOKEN", "tok")
@@ -488,12 +489,12 @@ class TestFireHostLink:
         to, subj, html = emails[0]
         assert to == fi.OPERATOR_EMAIL
         assert "Jane Doe" in subj and "co-host" in subj
-        assert "&amp;role=host&amp;token=tok" in html  # jinja autoescape
-        assert "Ready" in html and "hold on" in html
+        assert "&amp;role=host" in html and "token" not in html  # jinja autoescape
+        assert "Join the room" in html and "hold on" in html
         dest, text, src = smss[0]
         assert dest == "+16045551234" and src == "+16045550000"
         assert text == ("Nerra Voices: Jane Doe in 2 min. Your co-host link: "
-                        + show.studio_url("iv-1") + "&role=host&token=tok")
+                        + show.studio_url("iv-1") + "&role=host")
 
     def test_notify_host_skips_sms_without_phone(self, monkeypatch):
         monkeypatch.setenv("ADMIN_TOKEN", "tok")
@@ -509,10 +510,10 @@ class TestFireHostLink:
         assert emails == [fi.OPERATOR_EMAIL]
 
     def test_notify_host_never_raises(self, monkeypatch):
-        monkeypatch.delenv("ADMIN_TOKEN", raising=False)
         import fire_interviews as fi
         pings = []
         monkeypatch.setattr(fi, "notify_operator", lambda t, critical=False: pings.append(t))
+        monkeypatch.setattr(fi, "host_link", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("boom")))
         from pipelines.voices.shows import get_show
         fi.notify_host({"id": "iv"}, {"name": "J"}, get_show("age_of_ai"), when="in 2 min")
         assert pings and "NOT sent" in pings[0]
@@ -527,7 +528,6 @@ class TestFireHostLink:
         assert "STUDIO_UNLOCK_AHEAD_MIN = 12" in src and "FIRE_WINDOW_AHEAD_MIN = 5" in src
         assert "if when and when > phone_hi" in src
         assert 'notify_host(interview, app, show, when="in about 2 hours")' in src
-        assert "ADMIN_TOKEN" in src
 
     def test_host_mode_enabled_semantics(self):
         from fire_interviews import host_mode_enabled
@@ -554,14 +554,14 @@ class TestMigrationAndTemplates:
     def test_host_link_template_renders(self):
         from common import render_email
         html = render_email("voices_host_link.j2", show="nerra_voices",
-                            host_url="https://x/studio?interview=1&show=nerra_voices&role=host&token=t",
+                            host_url="https://x/studio?interview=1&show=nerra_voices&role=host",
                             guest_name="Jane <Doe>", scheduled_at="Thu 10 Sep, 10:00 PT",
                             cohost_name="Patrick Novak", when="in 2 min")
         assert "{{" not in html and "}}" not in html
         assert "Jane &lt;Doe&gt;" in html
-        assert "role=host&amp;token=t" in html
+        assert "role=host" in html
         assert "#0F766E" in html and "Nerra Voices" in html
-        for needle in ("few minutes early", "Ready", "hold on", "20 s"):
+        for needle in ("few minutes early", "Join the room", "hold on", "rejoin"):
             assert needle in html, needle
 
     def test_prep_brief_mentions_cohost_only_when_given(self):

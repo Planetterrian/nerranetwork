@@ -73,13 +73,13 @@ def cohost_block(enabled: bool = True) -> str:
 
 
 def host_link(show, interview_id: str) -> str:
-    """Patrick's co-host studio link: the guest studio URL + role=host +
-    the Worker's ADMIN_TOKEN (GitHub secret ADMIN_TOKEN; the Worker only
-    issues host credentials when the token matches)."""
-    token = os.environ.get("ADMIN_TOKEN", "").strip()
-    if not token:
-        raise RuntimeError("ADMIN_TOKEN env var is required for the host link")
-    return f"{show.studio_url(interview_id)}&role=host&token={token}"
+    """Patrick's co-host studio link: the guest studio URL + role=host.
+
+    Room model (Sept 9 2026): no token. Everyone joins the interview room
+    the same way; the role only tells Mira who the co-host is and labels
+    his recording. The link is the same for the whole session, so it can
+    be reused to rejoin after a drop."""
+    return f"{show.studio_url(interview_id)}&role=host"
 
 
 def notify_host(interview: dict, app: dict, show, *, when: str) -> None:

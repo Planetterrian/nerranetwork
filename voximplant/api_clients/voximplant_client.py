@@ -206,6 +206,10 @@ def send_sms(dest_number: str, text: str,
 # studio-auth computes the same value (workers/voices/src/index.ts,
 # studioPassword()). Change ADMIN_TOKEN → rerun the deploy workflow.
 
+# Room model (Sept 9 2026): every participant — the co-host included —
+# signs in as the shared `guest` user; the role travels in the call's
+# X-Role header. The `host` user is kept in sync too so old links and the
+# Web SDK auto-answer path keep working, but nothing depends on it.
 STUDIO_USERS = {"guest": "Age of AI Guest", "host": "Patrick (co-host)"}
 
 
@@ -283,3 +287,62 @@ def recent_session_logs(hours: float = 2.0, limit: int = 5,
                 entry["log"] = f"(log fetch failed: {exc})"
         out.append(entry)
     return out
+
+
+# ---------------------------------------------------------------------------
+# Routing rules (Sept 9 2026): the interview room
+# ---------------------------------------------------------------------------
+# Every participant session joins its interview with
+# VoxEngine.callConference("room-<run_id>", ...). Voximplant routes that
+# call through the application's rules like any other and merges all calls
+# with the same conference id into ONE session — the room. The rule below
+# makes sure "room-*" lands on the interview scenario and is evaluated
+# before any catch-all rule (rules match in order; ReorderRules puts it
+# first).
+
+ROOM_RULE_NAME = os.environ.get("VOXIMPLANT_ROOM_RULE_NAME", "age-of-ai-room")
+ROOM_RULE_PATTERN = r"^room-.*"
+
+
+def list_rules(application_name: str = APPLICATION_NAME) -> List[Dict[str, Any]]:
+    """The application's routing rules (Management API ``GetRules``), in
+    evaluation order — ``rule_name``, ``rule_pattern``, ``rule_id``, ``scenarios``."""
+    data = _call("GetRules", application_name=application_name, with_scenarios="true")
+    return list(data.get("result") or [])
+
+
+def ensure_room_rule(application_name: str = APPLICATION_NAME,
+                     scenario_name: str = SCENARIO_NAME,
+                     rule_name: str = ROOM_RULE_NAME,
+                     pattern: str = ROOM_RULE_PATTERN) -> Dict[str, Any]:
+    """Create the room rule if missing and move it to the top of the rule
+    list. Idempotent; returns {"rule_id", "created", "reordered", "rules"}
+    where ``rules`` is the final ordered [(name, pattern)] list."""
+    rules = list_rules(application_name)
+    existing = next((r for r in rules if r.get("rule_name") == rule_name), None)
+    created = False
+    if existing is None:
+        res = _call("AddRule", application_name=application_name,
+                    rule_name=rule_name, rule_pattern=pattern,
+                    scenario_name=scenario_name)
+        rule_id = res.get("rule_id")
+        created = True
+        logger.info("Voximplant rule %s (%s) created: %s", rule_name, pattern, res)
+        rules = list_rules(application_name)
+    else:
+        rule_id = existing.get("rule_id")
+        if existing.get("rule_pattern") != pattern:
+            _call("SetRuleInfo", rule_id=rule_id, rule_pattern=pattern)
+            logger.info("Voximplant rule %s pattern set to %s", rule_name, pattern)
+    order = [r.get("rule_id") for r in rules]
+    reordered = False
+    if order and order[0] != rule_id and rule_id in order:
+        order.remove(rule_id)
+        order.insert(0, rule_id)
+        _call("ReorderRules", rule_id=";".join(str(i) for i in order))
+        reordered = True
+        rules = list_rules(application_name)
+    return {
+        "rule_id": rule_id, "created": created, "reordered": reordered,
+        "rules": [(r.get("rule_name"), r.get("rule_pattern")) for r in rules],
+    }

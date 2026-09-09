@@ -84,9 +84,9 @@
   <div id="stateSetup" class="card hidden">
     <p class="status ok" id="setupMsg">Your interview is ready — let's get you sounding great.</p>
     <p class="tips" id="studioStatus" style="color:var(--muted)">Signing in to the studio…</p>
-    <p class="hostnote host-only hidden">Mira will call this page when the guest
-    connects — pick your microphone, press <b>Ready</b>, and keep the tab open.
-    No camera is used for the co-host leg.</p>
+    <p class="hostnote host-only hidden">Pick your microphone and press
+    <b>Join the room</b>. You can join before or after the guest; Mira hears
+    everyone in the room. No camera is used for the co-host.</p>
     <ul class="tips guest-only">
       <li><b>Quiet room</b> — close the door, kill fans and background music.</li>
       <li><b>Headphones or AirPods</b> — the single biggest upgrade. A dedicated mic is even better.</li>
@@ -111,17 +111,17 @@
     </p>
   </div>
 
-  <!-- State: host ready (logged in, waiting for Mira to dial) -->
+  <!-- State: co-host out of the room (left or dropped) — rejoin -->
   <div id="stateReady" class="card hidden">
-    <p class="status ok" id="readyMsg">Ready — Mira will call this page when the guest connects.</p>
+    <p class="status ok" id="readyMsg">You left the room.</p>
     <div class="presence">
       <span id="presGuest">guest: not yet</span>
       <span id="presHost">host: not yet</span>
     </div>
-    <p class="hostnote">The call answers itself (audio only). If the leg drops,
-    Mira re-dials every 20 seconds — just keep this tab open.</p>
+    <p class="hostnote">The interview keeps going without you. Your link stays
+    valid for the whole session — rejoin whenever you like.</p>
     <div class="row">
-      <button class="ghost hidden" id="rearmBtn">Ready again</button>
+      <button class="ghost hidden" id="rearmBtn">Rejoin the room</button>
     </div>
   </div>
 
@@ -180,18 +180,18 @@
   var VOX_APP_SUFFIX = "@nerra-voices.billsaved.voximplant.com";
   var params = new URLSearchParams(location.search);
   var interviewId = params.get("interview") || "";
-  // Phase 2 co-host (Sept 2026, docs/cohost_phase2_contract.md): the same
-  // page serves the guest (default) and Patrick as host. Host links carry
-  // &role=host&token=<ADMIN_TOKEN>; the Worker only issues host
-  // credentials against that token.
+  // Room model (Sept 9 2026): the same page serves guests (default) and
+  // Patrick as co-host, and EVERYONE joins the same way — open the link,
+  // pick a mic, press Join. role=host only tells Mira who the co-host is
+  // and labels his recording; no token, no "wait for Mira to call you".
+  // Anyone can join or rejoin while the interview is live.
   var role = params.get("role") === "host" ? "host" : "guest";
-  var adminToken = params.get("token") || "";
+  var adminToken = params.get("token") || "";   // legacy links still carry it; ignored
   var isHost = role === "host";
   var runId = null, sdk = null, activeCall = null, localStream = null;
   var camOn = !isHost, muted = false, timerHandle = null, callStart = null;
   var analyserRAF = null;
-  var hostUser = "host";          // studio-state reveals the real one to a valid host token
-  var armed = false;              // host: auto-answer incoming calls
+  var armed = false;              // legacy (dial-out host); kept for the presence poll
   var loggedIn = false;
   var leaving = false;            // host pressed Leave (don't re-arm)
   var pollHandle = null;
@@ -231,8 +231,8 @@
     document.querySelectorAll(".host-only").forEach(function (el) { el.classList.toggle("hidden", !isHost); });
     document.querySelectorAll(".guest-only").forEach(function (el) { el.classList.toggle("hidden", isHost); });
     if (isHost) {
-      document.getElementById("setupMsg").textContent = "Co-host studio — pick your microphone and get ready.";
-      document.getElementById("joinBtn").textContent = "Ready";
+      document.getElementById("setupMsg").textContent = "Co-host studio — pick your microphone and join the room.";
+      document.getElementById("joinBtn").textContent = "Join the room";
       document.getElementById("hangupBtn").textContent = "Leave";
       document.getElementById("callMsg").textContent = "You're in the room with Mira and the guest.";
     }
@@ -269,28 +269,23 @@
     if (!/^[0-9a-f-]{36}$/.test(interviewId)) {
       return fail("This studio link is missing its interview id — use the link from your email.");
     }
-    if (isHost && !adminToken) {
-      return fail("This co-host link is missing its token — use the host link from the fire-time email.");
-    }
     fetch(stateUrl())
       .then(function (r) { return r.json(); })
       .then(function (s) {
         if (s.error) return fail("We couldn't find this interview. Check the link from your email.");
         if (s.show) brand(s.show, s.show_name);
-        if (s.host_user) hostUser = cleanUser(s.host_user);
         setPresence(s);
         if (isHost && s.host_mode === false) {
           return fail("This interview runs without a co-host (host_mode is off).");
         }
-        // Guest: the run must be awaiting them. Host: any live run will do
-        // (the guest may already be on the line → status in_progress).
-        var id = s.ready && s.run_id ? s.run_id : (isHost ? s.live_run_id : null);
-        var liveStatus = s.run_status || "";
-        if (isHost && id && (liveStatus === "completed" || liveStatus === "failed") && !s.ready) id = null;
+        // The Worker says `ready` while the newest run is joinable
+        // (awaiting_guest or in_progress) — for every role, so a second
+        // guest or someone rejoining after a drop gets in too.
+        var id = s.ready && s.run_id ? s.run_id : null;
         if (id) {
           runId = id;
           startSetup();
-          if (isHost) pollPresence();
+          pollPresence();
           return;
         }
         var when = s.scheduled_at ? new Date(s.scheduled_at) : null;
@@ -310,15 +305,13 @@
       fetch(stateUrl()).then(function (r) { return r.json(); }).then(function (s) {
         if (s.error) return;
         setPresence(s);
-        if (s.host_user) hostUser = cleanUser(s.host_user);
         var id = s.ready && s.run_id ? s.run_id : s.live_run_id;
         if (id && id !== runId && !activeCall) {
           console.log("[studio] run id changed", runId, "->", id);
           runId = id;
         }
         if (!activeCall && (s.run_status === "completed" || s.run_status === "failed")
-            && !s.ready && armed) {
-          armed = false;
+            && !s.ready) {
           clearInterval(pollHandle); pollHandle = null;
           finishDone();
         }
@@ -354,7 +347,7 @@
   // one-time-key request hang forever instead of failing.
   function cleanUser(u) {
     var c = String(u || "").trim().replace(/[^A-Za-z0-9_.-]/g, "");
-    return c || (isHost ? "host" : "guest");
+    return c || "guest";
   }
   function setStudioStatus(text, ok) {
     var el = document.getElementById("studioStatus");
@@ -367,9 +360,7 @@
     if (loggedIn || preLoginPromise) return preLoginPromise;
     setStudioStatus("Signing in to the studio…");
     preLoginPromise = studioLogin().then(function () {
-      setStudioStatus("Signed in to the studio. " + (isHost
-        ? "Press Ready and keep this tab open; Mira will call it when the guest connects."
-        : "Press Join when you're ready."), true);
+      setStudioStatus("Signed in to the studio. Press Join when you're ready.", true);
     }).catch(function (e) {
       console.error("[studio] pre-login failed at step", joinStep, e);
       setStudioStatus("Studio sign-in failed: " + explainJoinError(e) + " (Join will retry.)", false);
@@ -437,7 +428,7 @@
     btn.disabled = true; btn.textContent = "Connecting…";
     join().catch(function (e) {
       console.error("[studio] join failed at step", joinStep, e);
-      btn.disabled = false; btn.textContent = isHost ? "Ready" : "Join your interview";
+      btn.disabled = false; btn.textContent = isHost ? "Join the room" : "Join your interview";
       fail(explainJoinError(e));
     });
   });
@@ -491,7 +482,13 @@
     return "Couldn't connect to the studio at step \"" + joinStep + "\": " + (msg || JSON.stringify(e));
   }
   document.getElementById("rearmBtn").addEventListener("click", function () {
-    leaving = false; armHost();
+    leaving = false;
+    var btn = document.getElementById("joinBtn");
+    btn.disabled = true; btn.textContent = "Connecting…";
+    join().catch(function (e) {
+      btn.disabled = false; btn.textContent = "Join the room";
+      fail(explainJoinError(e));
+    });
   });
 
   function selectCallDevices() {
@@ -553,18 +550,19 @@
     if (!(sdk.connected && sdk.connected())) {
       await step("connect", "Connecting to Voximplant…", sdk.connect());
     }
-    var fullUserGuess = cleanUser(isHost ? hostUser : "guest") + VOX_APP_SUFFIX;
+    // One shared studio user for every role (the Worker answers the
+    // one-time-key handshake for it; the role rides in the call headers).
+    var fullUserGuess = cleanUser("guest") + VOX_APP_SUFFIX;
     var key = await requestKey(fullUserGuess);
 
     var authBody = { key: key, role: role };
-    if (isHost) authBody.token = adminToken;
     var auth = await step("studio-auth", "Checking in with the studio…",
       fetch(API + "/studio-auth", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify(authBody),
       }).then(function (r) { return r.json(); }));
     if (!auth.token) throw new Error(auth.error || "studio auth unavailable");
-    var user = cleanUser(auth.user || (isHost ? hostUser : "guest")) + VOX_APP_SUFFIX;
+    var user = cleanUser(auth.user || "guest") + VOX_APP_SUFFIX;
 
     await step("login", "Signing in…", sdk.loginWithOneTimeKey(user, auth.token));
     loggedIn = true;
@@ -583,70 +581,21 @@
 
     selectCallDevices();
 
-    if (isHost) { armHost(); return; }
-
+    // Everyone places the same call. The scenario answers it as a
+    // participant session, records this person, and bridges them into
+    // the interview room (room-<run id>); X-Role labels the leg.
     activeCall = sdk.call({
       number: "mira",
-      video: { sendVideo: camOn, receiveVideo: false },
-      extraHeaders: { "X-Run-Id": runId },
+      video: { sendVideo: !isHost && camOn, receiveVideo: false },
+      extraHeaders: { "X-Run-Id": runId, "X-Role": role },
     });
     wireCall(activeCall);
   }
 
-  // Host: the scenario dials us (VoxEngine.callUser with X-Run-Id /
-  // X-Role: host) once the guest is on the line, and re-dials every 20 s
-  // after a drop. We never place a call — we answer, audio only.
-  function armHost() {
-    if (!sdk) return;
-    if (!armed) {
-      sdk.on(VoxImplant.Events.IncomingCall, onIncomingCall);
-      armed = true;
-    }
-    document.getElementById("rearmBtn").classList.add("hidden");
-    document.getElementById("readyMsg").textContent = "Ready — Mira will call this page when the guest connects.";
-    show("stateReady");
-  }
-  function onIncomingCall(e) {
-    var call = e && e.call;
-    var headers = (e && e.headers) || (call && call.headers && call.headers()) || {};
-    console.log("[studio] incoming call", headers);
-    var incomingRun = headers["X-Run-Id"] || headers["x-run-id"] || null;
-    if (leaving || !armed) {
-      console.log("[studio] not armed — declining");
-      try { call.decline(); } catch (ignored) {}
-      return;
-    }
-    if (incomingRun && runId && incomingRun !== runId) {
-      console.warn("[studio] ignoring call for another run", incomingRun, "(ours:", runId + ")");
-      try { call.decline(); } catch (ignored) {}
-      return;
-    }
-    if (activeCall) {
-      console.warn("[studio] already on a call — declining duplicate leg");
-      try { call.decline(); } catch (ignored) {}
-      return;
-    }
-    if (incomingRun && !runId) runId = incomingRun;
-    activeCall = call;
-    wireCall(call);
-    selectCallDevices();
-    try {
-      call.answer("", {}, { sendVideo: false, receiveVideo: false });
-    } catch (err) {
-      console.error("[studio] answer failed", err);
-      activeCall = null;
-    }
-  }
   function wireCall(call) {
     call.on(VoxImplant.CallEvents.Connected, onCallConnected);
     call.on(VoxImplant.CallEvents.Disconnected, onCallEnded);
     call.on(VoxImplant.CallEvents.Failed, function (e) {
-      if (isHost) {
-        console.warn("[studio] host leg failed", e && e.reason);
-        activeCall = null;
-        if (!leaving) armHost();   // the scenario re-dials every 20 s
-        return;
-      }
       fail("The call didn't go through (" + (e && e.reason ? e.reason : "unknown") + "). Reload to try again.");
     });
   }
@@ -690,17 +639,14 @@
     activeCall = null;
     var flush = stopLocalRecording();
     if (isHost) {
-      // Host leg dropped or Patrick left. The interview goes on without
-      // him; the scenario re-dials every 20 s, so re-arm unless he chose
-      // to leave. The presence poll flips to "done" when the run completes.
-      if (!leaving) {
-        armHost();
-        document.getElementById("readyMsg").textContent = "Leg ended — waiting for Mira to call back.";
-      } else {
-        document.getElementById("readyMsg").textContent = "You left. Press “Ready again” to be called back.";
-        document.getElementById("rearmBtn").classList.remove("hidden");
-        show("stateReady");
-      }
+      // The co-host left (or dropped). The room goes on without him; the
+      // link is still valid, so offer to rejoin. The presence poll flips
+      // to "done" when the run completes.
+      document.getElementById("readyMsg").textContent = leaving
+        ? "You left the room. You can rejoin any time while the interview is live."
+        : "Your connection to the room ended. Rejoin below; the interview is still live.";
+      document.getElementById("rearmBtn").classList.remove("hidden");
+      show("stateReady");
       return;
     }
     show("stateDone");

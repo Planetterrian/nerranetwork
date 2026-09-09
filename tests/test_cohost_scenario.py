@@ -1,12 +1,15 @@
-"""Phase 2 co-host contracts for the Voximplant scenario + Management client.
+"""Interview ROOM contracts for the Voximplant scenario + Management client.
 
-docs/cohost_phase2_contract.md: every Mira interview is a three-party local
-conference (guest + Patrick as host + Mira), each participant recorded on
-its own track, the host dialed with VoxEngine.callUser and re-dialed every
-20 s while the guest is on the line, and Mira's opening delayed until the
-host is in the room (or 20 s). These are string contracts on the scenario
-source (VoxEngine JS is not importable here) plus a mocked check of the
-``add_user`` bootstrap helper.
+Room model (Sept 9 2026, replaces the dialed-out host leg of
+docs/cohost_phase2_contract.md): every participant — guests, Patrick as
+co-host, anyone rejoining — places the same call; a PARTICIPANT session
+records that person and joins the interview room with
+VoxEngine.callConference("room-<run id>"); the ROOM session mixes everyone
+with the audio-conferencing API (sendMediaBetween — Conference.add
+endpoints need the rule's "video conference" option and silently left Mira
+deaf), bridges Mira to the mix, and ends REJOIN_GRACE_MS after the last
+human leaves. String contracts on the scenario source (VoxEngine JS is not
+importable here) plus mocked checks of the Management client helpers.
 """
 
 from __future__ import annotations
@@ -36,180 +39,231 @@ def _load_client():
     return mod
 
 
-# ---------------------------------------------------------------------------
-# Conference mixer
-# ---------------------------------------------------------------------------
-
-class TestConference:
-    def test_conference_module_required(self, js):
-        assert "require(Modules.Conference)" in js
-        # The existing modules must survive the rewrite.
-        assert "require(Modules.Grok)" in js
-        assert "require(Modules.Recorder)" in js
-
-    def test_local_conference_created_hd(self, js):
-        assert "VoxEngine.createConference({ hd_audio: true })" in js
-
-    def test_guest_added_with_documented_endpoint_shape_and_fallback(self, js):
-        assert "function attachToConference(" in js
-        assert re.search(
-            r"conf\.add\(\{\s*call:\s*participant,\s*mode:\s*CONF_ENDPOINT_MODE,"
-            r"\s*direction:\s*\"BOTH\"\s*\}\)", js), "conf.add({call, mode, direction})"
-        assert 'CONF_ENDPOINT_MODE = "MIX"' in js
-        # Fallback path when conf.add is not the live shape.
-        assert "VoxEngine.sendMediaBetween(participant, conf)" in js
-        assert 'attachToConference(call, "guest")' in js
-
-    def test_mira_speaks_to_the_room_and_hears_the_guest_directly(self, js):
-        # Sept 9 2026 rehearsal: conference->agent delivered nothing; the
-        # direct guest->agent bridge is primary, Mira's voice goes to the room.
-        assert "grokAgent.sendMediaTo(conf);" in js
-        assert "call.sendMediaTo(grokAgent);" in js
-        assert "VoxEngine.sendMediaBetween(grokAgent, conf)" not in js
-        assert "VoxEngine.sendMediaBetween(call, grokAgent)" not in js
-
-    def test_pstn_branch_also_gets_the_conference(self, js):
-        # Both entries converge on beginInterview, which creates the conf
-        # unconditionally (before any withVideo branch).
-        body = js.split("async function beginInterview")[1].split("function silentMicNudge")[0]
-        assert "createLocalConference();" in body
-        assert body.index("createLocalConference();") > body.index("if (withVideo)")
-        assert "dialHost();" in body
+def _fn(js: str, name: str) -> str:
+    """Body of one top-level function (up to the next top-level function)."""
+    assert name in js, name
+    return re.split(r"\n(?:async )?function ", js.split(name, 1)[1])[0]
 
 
 # ---------------------------------------------------------------------------
-# Per-leg recording
+# Session routing: participant vs room
 # ---------------------------------------------------------------------------
 
-class TestRecording:
-    def test_guest_recording_unchanged(self, js):
-        assert re.search(r'call\.record\(\{\s*name:\s*"aoa_"\s*\+\s*runId,\s*'
-                         r'stereo:\s*true,\s*hd_audio:\s*true,\s*\}\)', js)
+class TestRouting:
+    def test_modules(self, js):
+        for mod in ("Modules.Grok", "Modules.Recorder", "Modules.Conference"):
+            assert f"require({mod})" in js
+        assert "Modules.Player" not in js  # createURLPlayer is core VoxEngine
 
-    def test_host_recording_stereo_hd(self, js):
-        assert re.search(r'leg\.record\(\{\s*name:\s*"aoa_"\s*\+\s*runId\s*\+\s*"_host",\s*'
-                         r'stereo:\s*true,\s*hd_audio:\s*true,\s*\}\)', js)
-        assert "hostRecordUrl = e.url" in js, "host RecordStarted must be captured"
+    def test_call_alerting_splits_on_destination(self, js):
+        assert 'ROOM_PREFIX = "room-"' in js
+        body = js.split("AppEvents.CallAlerting, async function (e)")[1].split("});")[0]
+        assert "e.destination" in body
+        assert "dest.indexOf(ROOM_PREFIX) === 0" in body
+        assert "return roomAlerting(e, dest)" in body and "return participantAlerting(e)" in body
+
+    def test_no_dialed_host_leg_and_no_endpoint_api(self, js):
+        assert "callUser" not in js, "the co-host is a participant now, never dialed"
+        assert "conf.add(" not in js, "Conference.add needs the rule's video-conference flag"
+        assert "CONF_ENDPOINT_MODE" not in js
+
+    def test_pstn_guest_is_a_participant(self, js):
+        started = js.split("AppEvents.Started, async function")[1].split("\n});")[0]
+        assert "VoxEngine.callPSTN(config.guest_phone, config.caller_id)" in started
+        assert 'participantConnected(call, "guest", config, /* withVideo = */ false)' in started
+        assert "call_failed:" in started
+
+
+# ---------------------------------------------------------------------------
+# Participant session
+# ---------------------------------------------------------------------------
+
+class TestParticipant:
+    def test_role_from_header_defaults_to_guest(self, js):
+        assert 'const ROLES = { guest: true, host: true }' in js
+        body = _fn(js, "function cleanRole(raw)")
+        assert 'return ROLES[r] ? r : "guest"' in body
+        alerting = _fn(js, "async function participantAlerting(e)")
+        assert 'headers["X-Role"] || headers["x-role"]' in alerting
+        assert 'headers["X-Run-Id"] || headers["x-run-id"]' in alerting
+        assert 'config.status === "completed" || config.status === "failed"' in alerting
+        assert "call.answer();" in alerting
+
+    def test_records_person_stereo_then_disclosure_then_room(self, js):
+        body = _fn(js, "async function participantConnected(")
+        assert re.search(r'call\.record\(\{\s*name:\s*"aoa_" \+ runId \+ \(role === "host" \? "_host" : ""\),\s*'
+                         r'stereo: true,\s*hd_audio: true,?\s*\}\)', body)
+        assert "pRecordUrl = ev.url" in body
+        assert 'role === "guest" && config.recording_disclosure_url' in body
+        assert "waitForEvent(call, CallEvents.PlaybackFinished)" in body
+        assert body.index("call.record(") < body.index("recording_disclosure_url") < body.index("joinRoom(call, role)")
+        # Guest camera on a separate recorder (audio stays a clean stereo split).
+        assert 'name: "aoa_" + runId + "_video", video: true' in body
+        assert "call.sendMediaTo(pVideoRecorder)" in body
+
+    def test_join_room_via_call_conference(self, js):
+        body = _fn(js, "function joinRoom(call, role)")
+        assert "VoxEngine.callConference(ROOM_PREFIX + runId, role, role, headers)" in body
+        assert '"X-Run-Id": runId, "X-Role": role, "X-Call-Mode": callMode' in body
+        assert "VoxEngine.sendMediaBetween(call, roomCall)" in body
+        assert "roomCall.sendMediaTo(pVideoRecorder)" in body
+        # Room gone (hard cap / grace / Grok drop) → drop the person too.
+        assert body.count("call.hangup()") >= 2
+
+    def test_left_reports_recording_urls(self, js):
+        body = _fn(js, "async function participantLeft()")
+        assert "pRoomCall.hangup()" in body and "pVideoRecorder.stop()" in body
+        assert 'event: "left"' in body
+        assert "record_url: pRecordUrl, video_url: pVideoUrl" in body
+        assert "VoxEngine.terminate()" in body
+
+
+# ---------------------------------------------------------------------------
+# Room session
+# ---------------------------------------------------------------------------
+
+class TestRoom:
+    def test_room_opens_once_and_serialises_joiners(self, js):
+        body = _fn(js, "async function roomAlerting(e, dest)")
+        assert "if (!roomReady) {" in body and "roomReady = openRoom();" in body
+        assert "ok = await roomReady" in body
+        assert "admitLeg(e.call, role)" in body
+        opened = _fn(js, "async function openRoom()")
+        assert 'markRunStatus(runId, "in_progress")' in opened
+        assert "conf = VoxEngine.createConference({ hd_audio: true })" in opened
+        assert "HARD_CAP_MS" in opened and "startAgent()" in opened
+
+    def test_legs_mix_via_send_media_between(self, js):
+        body = _fn(js, "function admitLeg(call, role)")
+        assert "VoxEngine.sendMediaBetween(call, conf)" in body
+        assert 'postLegEvent(role, "joined")' in body and 'postLegEvent(role, "left")' in body
+        assert "hostJoinedAt = new Date().toISOString()" in body
+        assert "hostLeftAt = new Date().toISOString()" in body
+        assert "call.answer();" in body
+        assert "scheduleTeardown()" in body
+
+    def test_rejoin_grace(self, js):
+        assert "REJOIN_GRACE_MS = 90 * 1000" in js
+        body = _fn(js, "function scheduleTeardown()")
+        assert 'if (legs.length === 0) endRoom("normal")' in body
+        admit = _fn(js, "function admitLeg(call, role)")
+        assert "clearTimeout(teardownTimer)" in admit, "a rejoin must cancel the pending teardown"
+
+    def test_mira_bridged_to_the_mix(self, js):
+        session = _fn(js, "async function startAgent()")
+        assert "VoxEngine.sendMediaBetween(grokAgent, conf)" in session
+        assert "startMiraRecorder()" in session and "sessionReady = true" in session
+        assert "maybeOpen()" in session
+        assert "InputAudioBufferSpeechStarted" in js and "grokAgent.clearMediaBuffer()" in js
+        assert "ResponseFunctionCallArgumentsDone, onToolCall" in session
+
+    def test_opening_waits_for_a_guest_or_20s(self, js):
+        assert "OPENING_WAIT_MS = 20 * 1000" in js
+        body = _fn(js, "function maybeOpen()")
+        assert 'if (humansIn("guest") > 0) return openWhenReady("guest in the room")' in body
+        assert "OPENING_WAIT_MS" in body
+        opened = _fn(js, "function openWhenReady(reason)")
+        assert "if (openingFired || !sessionReady || !grokAgent) return;" in opened
+        assert "openingFired = true;" in opened
+        assert "grokAgent.responseCreate({});" in opened
+        assert "startTimeChecks();" in opened and "armAudioFallback();" in opened
+
+    def test_joins_and_leaves_are_announced(self, js):
+        body = _fn(js, "function announce(what)")
+        assert '"[ROOM — system note] " + what' in body
+        assert "grokAgent.responseCreate({});" in body
+
+    def test_audio_fallback_bridges_first_guest(self, js):
+        assert "FALLBACK_AFTER_MS = 12 * 1000" in js
+        body = _fn(js, "function armAudioFallback()")
+        assert "conf.stopMediaTo(grokAgent)" in body
+        assert "guest.call.sendMediaTo(grokAgent)" in body
+        assert 'trace("audio_path"' in body
 
     def test_mira_recorder(self, js):
-        assert re.search(r'miraRecorder = VoxEngine\.createRecorder\(\{\s*'
-                         r'name:\s*"aoa_"\s*\+\s*runId\s*\+\s*"_mira",\s*hd_audio:\s*true,\s*\}\)', js)
-        assert "grokAgent.sendMediaTo(miraRecorder)" in js
-        assert "miraRecordUrl = e.url" in js
-        assert "miraRecorder.stop()" in js
+        body = _fn(js, "function startMiraRecorder()")
+        assert 'name: "aoa_" + runId + "_mira", hd_audio: true' in body
+        assert "grokAgent.sendMediaTo(miraRecorder)" in body
+        assert "miraRecordUrl = ev.url" in body
 
-    def test_video_recorder_still_gets_mira(self, js):
-        assert "grokAgent.sendMediaTo(videoRecorder)" in js
-        assert "call.sendMediaTo(videoRecorder)" in js
+    def test_grok_drop_apologises_into_the_room(self, js):
+        body = _fn(js, "function onGrokDropped()")
+        assert "VoxEngine.createURLPlayer(config.grok_drop_apology_url)" in body
+        assert "player.sendMediaTo(conf)" in body
+        assert 'endRoom("grok_dropped")' in body
 
-
-# ---------------------------------------------------------------------------
-# Host leg
-# ---------------------------------------------------------------------------
-
-class TestHostLeg:
-    def test_call_user_shape(self, js):
-        m = re.search(r"VoxEngine\.callUser\(\{(.*?)\}\);", js, re.S)
-        assert m, "host leg must be dialed with VoxEngine.callUser"
-        params = m.group(1)
-        assert "username: hostUser" in params
-        assert 'callerid: "mira"' in params
-        assert 'displayName: "Mira"' in params
-        assert "video: false" in params
-        assert '"X-Run-Id": runId' in params
-        assert '"X-Role": "host"' in params
-
-    def test_host_user_from_run_row_with_default(self, js):
-        assert 'DEFAULT_HOST_USER = "host"' in js
-        assert "hostUser = config.host_user || DEFAULT_HOST_USER" in js
-
-    def test_host_mode_false_disables_leg(self, js):
-        assert "hostMode = config.host_mode !== false" in js
-        assert "if (hostMode) {" in js and "dialHost();" in js
-
-    def test_leg_events_posted(self, js):
-        assert 'API_BASE + "/leg-event"' in js
-        assert 'postLegEvent("guest", "joined")' in js
-        assert 'postLegEvent("host", "joined")' in js
-        assert 'postLegEvent("host", "left")' in js
-        assert "JSON.stringify({ run_id: runId, role: role, event: event })" in js
-
-    def test_redial_every_20s_capped_at_60(self, js):
-        assert "HOST_REDIAL_MS = 20 * 1000" in js
-        assert "HOST_MAX_ATTEMPTS = 60" in js
-        assert "hostAttempts >= HOST_MAX_ATTEMPTS" in js
-        assert "hostAttempts++" in js
-        assert "}, HOST_REDIAL_MS);" in js
-        # Both Failed (host not online) and Disconnected (host dropped) re-dial.
-        block = js.split("function dialHost()")[1].split("function openWhenReady")[0]
-        assert "CallEvents.Failed" in block and "CallEvents.Disconnected" in block
-        assert "scheduleHostRedial()" in block
-
-    def test_redial_only_while_guest_on_line(self, js):
-        assert "function guestOnLine()" in js
-        block = js.split("function scheduleHostRedial()")[1].split("function onHostConnected")[0]
-        assert "!guestOnLine()" in block
-
-    def test_host_hung_up_on_guest_disconnect_before_webhook(self, js):
-        assert "function teardownCohost()" in js
-        assert "hostCall.hangup()" in js
-        handler = js.split("CallEvents.Disconnected, async function")[1].split("CallEvents.Failed")[0]
-        assert handler.index("teardownCohost();") < handler.index("await fireWebhook(")
-        assert 'status: "completed"' in handler
-
-
-# ---------------------------------------------------------------------------
-# Mira's opening waits for the host (or 20 s)
-# ---------------------------------------------------------------------------
-
-class TestOpening:
-    def test_open_when_ready_guard(self, js):
-        assert "function openWhenReady(" in js
-        body = js.split("function openWhenReady(")[1].split("function postLegEvent")[0]
-        assert "if (openingFired || !sessionReady || !grokAgent) return;" in body
-        assert "openingFired = true;" in body
-        assert "grokAgent.responseCreate({});" in body
-        assert "startTimeChecks();" in body
-
-    def test_opening_triggers(self, js):
-        assert "OPENING_WAIT_MS = 20 * 1000" in js
-        session = js.split("Grok.VoiceAgentAPIEvents.SessionUpdated")[1].split("InputAudioBufferSpeechStarted")[0]
-        assert "sessionReady = true;" in session
-        assert "openingTimer = setTimeout(" in session and "OPENING_WAIT_MS" in session
-        host = js.split("function onHostConnected(")[1].split("function onHostGone(")[0]
-        assert 'openWhenReady("host joined")' in host
-        # The bare responseCreate that used to open on SessionUpdated is gone.
-        assert session.count("grokAgent.responseCreate({})") == 0
-
-
-# ---------------------------------------------------------------------------
-# Webhook payload + unchanged guards
-# ---------------------------------------------------------------------------
-
-class TestWebhook:
-    def test_payload_keys(self, js):
-        handler = js.split("CallEvents.Disconnected, async function")[1].split("CallEvents.Failed")[0]
-        for key in ("voximplant_host_record_url: hostRecordUrl",
-                    "voximplant_mira_record_url: miraRecordUrl",
-                    "host_joined_at: hostJoinedAt",
-                    "host_left_at: hostLeftAt",
-                    "host_attempts: hostAttempts",
-                    "voximplant_record_url: recordUrl",
-                    "voximplant_video_url: videoRecordUrl"):
-            assert key in handler, key
-
-    def test_join_timestamps_are_iso(self, js):
-        assert "hostJoinedAt = new Date().toISOString()" in js
-        assert "hostLeftAt = new Date().toISOString()" in js
+    def test_end_room_webhook(self, js):
+        body = _fn(js, "async function endRoom(reason)")
+        assert "miraRecorder.stop()" in body
+        assert "l.call.hangup()" in body
+        for key in ('status: "completed"', "voximplant_mira_record_url: miraRecordUrl",
+                    "host_joined_at: hostJoinedAt", "host_left_at: hostLeftAt",
+                    "host_attempts: hostJoins", "disconnect_reason: reason",
+                    'audio_path: directBridge ? "direct" : "room_mix"'):
+            assert key in body, key
+        assert "VoxEngine.terminate()" in body
 
     def test_hard_cap_and_time_checks_unchanged(self, js):
         assert "50 * 60 * 1000" in js
         assert "TIME_CHECK_EVERY_MS = 5 * 60 * 1000" in js
         assert "webhookFired" in js
 
-    def test_barge_in_kept(self, js):
-        assert "InputAudioBufferSpeechStarted" in js
-        assert "grokAgent.clearMediaBuffer()" in js
+    def test_trace_timeline(self, js):
+        assert "function trace(event, detail)" in js and "scenario_trace" in js
+        for needle in ('trace("room", "opened', 'trace("grok", "agent created")',
+                       "first inbound speech heard", 'trace("leg", role'):
+            assert needle in js, needle
+        sql = (ROOT / "supabase/migrations/20260909_scenario_trace.sql").read_text()
+        assert "add column if not exists scenario_trace jsonb" in sql
+
+
+# ---------------------------------------------------------------------------
+# voximplant_client.ensure_room_rule
+# ---------------------------------------------------------------------------
+
+class TestRoomRule:
+    def test_creates_and_moves_first(self, monkeypatch):
+        vc = _load_client()
+        calls = []
+        state = {"rules": [{"rule_id": 1, "rule_name": "age-of-ai-interview", "rule_pattern": ".*"}]}
+
+        def fake_call(method, **params):
+            calls.append((method, params))
+            if method == "GetRules":
+                return {"result": list(state["rules"])}
+            if method == "AddRule":
+                state["rules"].append({"rule_id": 9, "rule_name": params["rule_name"],
+                                       "rule_pattern": params["rule_pattern"]})
+                return {"result": 1, "rule_id": 9}
+            if method == "ReorderRules":
+                ids = [int(i) for i in params["rule_id"].split(";")]
+                state["rules"].sort(key=lambda r: ids.index(r["rule_id"]))
+                return {"result": 1}
+            raise AssertionError(method)
+
+        monkeypatch.setattr(vc, "_call", fake_call)
+        out = vc.ensure_room_rule()
+        assert out["created"] and out["reordered"] and out["rule_id"] == 9
+        assert out["rules"][0] == ("age-of-ai-room", r"^room-.*")
+        add = next(p for m, p in calls if m == "AddRule")
+        assert add == {"application_name": vc.APPLICATION_NAME, "rule_name": "age-of-ai-room",
+                       "rule_pattern": r"^room-.*", "scenario_name": vc.SCENARIO_NAME}
+        assert ("ReorderRules", {"rule_id": "9;1"}) in calls
+
+    def test_idempotent_when_already_first(self, monkeypatch):
+        vc = _load_client()
+        calls = []
+        rules = [{"rule_id": 9, "rule_name": "age-of-ai-room", "rule_pattern": r"^room-.*"},
+                 {"rule_id": 1, "rule_name": "age-of-ai-interview", "rule_pattern": ".*"}]
+        monkeypatch.setattr(vc, "_call", lambda m, **p: calls.append(m) or {"result": rules})
+        out = vc.ensure_room_rule()
+        assert not out["created"] and not out["reordered"]
+        assert calls == ["GetRules"]
+
+    def test_deploy_workflow_ensures_rule(self):
+        wf = (ROOT / ".github/workflows/nerra_voices_deploy_scenario.yml").read_text()
+        assert "ensure_room_rule" in wf
+        assert wf.index("ensure_room_rule") > wf.index("upload_scenario")
 
 
 # ---------------------------------------------------------------------------
@@ -274,18 +328,3 @@ class TestClientUsers:
         assert "created ONCE at operator bootstrap" in vc.add_user.__doc__
 
 
-def test_scenario_traces_and_falls_back_to_direct_bridge():
-    """Sept 9 2026 rehearsal: guest heard Mira, Mira heard nothing. The
-    scenario now (a) writes a timeline to interview_runs.scenario_trace and
-    (b) re-bridges the guest straight to the agent when no inbound speech
-    is heard 12 s after the opening."""
-    src = (ROOT / "voximplant/scenarios/age_of_ai_interview.js").read_text()
-    assert "function trace(event, detail)" in src and "scenario_trace" in src
-    assert "function armAudioFallback()" in src and "FALLBACK_AFTER_MS = 12 * 1000" in src
-    assert "conf.stopMediaTo(grokAgent)" in src and "call.sendMediaTo(grokAgent);" in src
-    assert 'trace("opening", reason)' in src and "armAudioFallback();" in src
-    for needle in ('trace("conference"', 'trace("grok", "agent created")',
-                   "first inbound speech heard", 'trace("host", "dialing'):
-        assert needle in src, needle
-    sql = (ROOT / "supabase/migrations/20260909_scenario_trace.sql").read_text()
-    assert "add column if not exists scenario_trace jsonb" in sql

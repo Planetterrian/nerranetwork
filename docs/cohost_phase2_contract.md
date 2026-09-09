@@ -1,5 +1,45 @@
 # Phase 2 — Patrick in the room (co-host conference) — build contract
 
+> **Amended Sept 9 2026 — the ROOM model.** Two rehearsals proved the
+> dialed-out host leg fragile (the host page had to be signed in as a
+> second Voximplant user before `callUser` could reach it, and the
+> `Conference.add` endpoint API silently does nothing unless the routing
+> rule has the "video conference" option, which left Mira deaf to the
+> room). Superseding rules, which win over anything below:
+>
+> * **Every participant joins the same way.** Guests, Patrick, a second
+>   guest, someone rejoining after a drop: open the studio link, pick a
+>   mic, press Join. The co-host link is the guest link with `role=host`
+>   and **no token**. The interview id in the link admits everyone.
+> * **One Voximplant user for everyone** (`guest`, derived password). The
+>   role rides in the call's `X-Role` header; `studio-auth` no longer
+>   checks `ADMIN_TOKEN`, `studio-state` reports the newest run as
+>   joinable while it is `awaiting_guest` or `in_progress`.
+> * **Two session kinds, one scenario file.** A PARTICIPANT session per
+>   person (answers the call, records that person — `Call.record`
+>   stereo, L = mic, R = what they hear — plus the guest camera, plays
+>   the disclosure to guests, then `VoxEngine.callConference("room-<run
+>   id>", role, role, headers)` and `sendMediaBetween`). A ROOM session
+>   per run (first `callConference` starts it, later ones arrive as
+>   `CallAlerting`): `createConference({hd_audio:true})`, each leg
+>   `sendMediaBetween(leg, conf)`, Mira `sendMediaBetween(grokAgent,
+>   conf)` so she hears the mix minus herself, Mira-only recorder, time
+>   checks, hard cap, completion webhook. Routing rule `age-of-ai-room`
+>   (`^room-.*`) is created/kept first by the deploy workflow
+>   (`voximplant_client.ensure_room_rule`).
+> * **Rejoin grace.** The room ends `REJOIN_GRACE_MS` (90 s) after the
+>   last human leaves; a rejoin cancels it. Joins and leaves mid-show are
+>   injected as system notes so Mira acknowledges them.
+> * **Recording URLs.** Participant sessions post `/voices/leg-event`
+>   `left` with `record_url` / `video_url`; the Worker writes
+>   `recording_guest_url` / `recording_host_url` and
+>   `grok_session_log.voximplant_record_url` / `voximplant_video_url`
+>   (extra guests → `extra_guest_record_urls`). The room's completion
+>   webhook MERGES into `grok_session_log` and only sets the fields it
+>   carries (`voximplant_mira_record_url`, host timeline, `audio_path`).
+> * `host_attempts` now counts host joins; `VOX_HOST_USER` /
+>   `VOX_HOST_PASSWORD` are unused.
+
 Goal: every Mira interview (The Age of AI and Nerra Voices) has three
 participants in one live session: the guest (browser studio, WebRTC), Patrick
 as co-host (browser studio, WebRTC, best audio), and Mira (Grok Voice Agent).

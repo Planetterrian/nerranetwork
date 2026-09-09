@@ -129,14 +129,16 @@ export function showFor(...rows: Array<{ show?: unknown } | null | undefined>): 
 
 export type StudioRole = "guest" | "host";
 
-/** Studio page URL. Guests get `&role=guest`; the host link (Phase 2) adds
- *  `&role=host&token=<ADMIN_TOKEN>` — see hostStudioUrl(). */
+/** Studio page URL. Guests get `&role=guest`; the co-host link is the
+ *  same page with `&role=host` — since Sept 9 2026 (rooms) it carries NO
+ *  token: everyone joins the interview room the same way, the role only
+ *  tells Mira who the co-host is and labels his recording. */
 function studioUrl(show: Show, interviewId: string, role: StudioRole = "guest"): string {
   return `${SITE}/${show.studioPage}?interview=${interviewId}&show=${show.slug}&role=${role}`;
 }
 
-function hostStudioUrl(env: Env, show: Show, interviewId: string): string {
-  return `${studioUrl(show, interviewId, "host")}&token=${encodeURIComponent(env.ADMIN_TOKEN)}`;
+function hostStudioUrl(_env: Env, show: Show, interviewId: string): string {
+  return studioUrl(show, interviewId, "host");
 }
 
 function bookingUrl(env: Env, show: Show): string {
@@ -346,24 +348,32 @@ async function handleApply(req: Request, env: Env): Promise<Response> {
 async function handleInterviewComplete(req: Request, env: Env): Promise<Response> {
   const payload = await req.json<any>().catch(() => null);
   if (!payload?.run_id) return json({ error: "run_id required" }, 400);
+  // Room model (Sept 9 2026): the per-person recording URLs arrive from
+  // the participant sessions via /voices/leg-event, so the completion
+  // payload MERGES into grok_session_log and never nulls a per-leg URL
+  // it does not carry.
+  const existingRows = await sb(env, "GET",
+    `interview_runs?id=eq.${payload.run_id}&select=grok_session_log`);
+  const existingLog = existingRows?.[0]?.grok_session_log ?? {};
   const patch: Record<string, unknown> = {
     status: payload.status === "failed" ? "failed" : "completed",
     disconnect_reason: payload.disconnect_reason ?? payload.reason ?? null,
     duration_sec: payload.duration_sec ?? null,
     grok_session_log: {
+      ...existingLog,
       ...(payload.grok_session_log ? { log: payload.grok_session_log } : {}),
-      voximplant_record_url: payload.voximplant_record_url ?? null,
-      voximplant_video_url: payload.voximplant_video_url ?? null,
-      call_mode: payload.call_mode ?? null,
+      ...(payload.voximplant_record_url ? { voximplant_record_url: payload.voximplant_record_url } : {}),
+      ...(payload.voximplant_video_url ? { voximplant_video_url: payload.voximplant_video_url } : {}),
+      ...(payload.audio_path ? { audio_path: payload.audio_path } : {}),
+      call_mode: payload.call_mode ?? existingLog.call_mode ?? null,
     },
-    // Phase 2 co-host (Sept 2026): per-leg Voximplant recordings and the
-    // host-leg timeline the scenario reports. Columns from
-    // supabase/migrations/20260906_cohost_conference.sql; the
-    // post-interview pipeline reads them to build three clean tracks.
-    recording_host_url: payload.voximplant_host_record_url ?? null,
-    recording_mira_url: payload.voximplant_mira_record_url ?? null,
-    host_joined_at: payload.host_joined_at ?? null,
-    host_left_at: payload.host_left_at ?? null,
+    // Per-leg Voximplant recordings and the host timeline the room
+    // reports. Columns from supabase/migrations/20260906_cohost_conference.sql;
+    // the post-interview pipeline reads them to build three clean tracks.
+    ...(payload.voximplant_host_record_url ? { recording_host_url: payload.voximplant_host_record_url } : {}),
+    ...(payload.voximplant_mira_record_url ? { recording_mira_url: payload.voximplant_mira_record_url } : {}),
+    ...(payload.host_joined_at ? { host_joined_at: payload.host_joined_at } : {}),
+    ...(payload.host_left_at ? { host_left_at: payload.host_left_at } : {}),
     host_attempts: Number(payload.host_attempts ?? 0) || 0,
   };
   // Aborted studio call (Aug 5 2026, Dan Perra dry run): a WebRTC session
@@ -1030,19 +1040,15 @@ async function handleStudioState(req: Request, env: Env): Promise<Response> {
       `guest_applications?id=eq.${iv.application_id}&select=show`);
     show = showFor(apps?.[0]);
   }
-  const runs = await sb(env, "GET",
-    `interview_runs?interview_id=eq.${interviewId}&status=in.(awaiting_guest,pending)` +
-    `&order=created_at.desc&limit=1&select=id,status`);
-  const run = runs?.[0];
-  // Presence comes from the NEWEST run whatever its status (the scenario
-  // flips it to in_progress once the guest is on the line, which is exactly
-  // when the host page needs to know who is in the room).
+  // The room model (Sept 9 2026): anyone — guest, co-host, a second guest,
+  // someone rejoining after a drop — may join while the newest run is
+  // awaiting_guest or in_progress. The run row IS the unlocked studio.
   const latestRows = await sb(env, "GET",
     `interview_runs?interview_id=eq.${interviewId}&order=created_at.desc&limit=1` +
     `&select=id,status,host_mode,guest_joined_at,host_joined_at,host_left_at`);
   const latest = latestRows?.[0] ?? null;
+  const run = latest && JOINABLE_RUN_STATUSES.has(String(latest.status)) ? latest : null;
   const hostMode = latest ? latest.host_mode !== false : iv.host_mode !== false;
-  const hostAllowed = role === "host" && adminTokenOk(env, req);
   return json({
     ready: Boolean(run),
     run_id: run?.id ?? null,
@@ -1059,15 +1065,17 @@ async function handleStudioState(req: Request, env: Env): Promise<Response> {
     host_mode: hostMode,
     guest_joined: Boolean(latest?.guest_joined_at),
     host_joined: Boolean(latest?.host_joined_at) && !latest?.host_left_at,
-    ...(hostAllowed ? { host_user: studioUser(env, "host") } : {}),
   });
 }
 
-// POST /voices/studio-auth {key, role?, token?} — Voximplant one-time-key
+const JOINABLE_RUN_STATUSES = new Set(["awaiting_guest", "pending", "in_progress"]);
+
+// POST /voices/studio-auth {key, role?} — Voximplant one-time-key
 // handshake: hash = MD5(key + "|" + MD5(user + ":voximplant.com:" + password)).
-// role=guest (default) uses VOX_GUEST_*; role=host (Phase 2) requires
-// token === ADMIN_TOKEN and uses VOX_HOST_* — the host link in Patrick's
-// fire-time email carries the token, nobody else can log in as the host.
+// Since the room model (Sept 9 2026) EVERY role signs in as the shared
+// `guest` studio user — the co-host included, no token. The role travels
+// in the call's X-Role header instead; the interview id in the link is
+// the only thing that admits anyone, exactly as for guests.
 // Studio user passwords are DERIVED, never stored (Sept 9 2026, Dan
 // Perra live: a hand-typed VOX_GUEST_PASSWORD did not match the
 // Voximplant user and every browser join hung). Both this Worker and the
@@ -1101,13 +1109,7 @@ async function handleStudioAuth(req: Request, env: Env): Promise<Response> {
   const key = String(body?.key ?? "");
   if (!key) return json({ error: "key required" }, 400);
   const role: StudioRole = body?.role === "host" ? "host" : "guest";
-  let user: string;
-  if (role === "host") {
-    if (!adminTokenOk(env, req, body?.token)) return json({ error: "unauthorized" }, 401);
-    user = studioUser(env, "host");
-  } else {
-    user = studioUser(env, "guest");
-  }
+  const user = studioUser(env, "guest");
   if (!env.ADMIN_TOKEN) return json({ error: "studio auth not configured (ADMIN_TOKEN)" }, 503);
   const password = await studioPassword(env, user);
   const token = md5(`${key}|${md5(`${user}:voximplant.com:${password}`)}`);
@@ -1125,6 +1127,13 @@ async function handleStudioAuth(req: Request, env: Env): Promise<Response> {
 // host rejoin after a drop clears host_left_at so `host_joined` is live
 // again (the webhook writes the final host_left_at at hangup). Attempts
 // are NOT counted here — the scenario reports host_attempts in the webhook.
+// Room model (Sept 9 2026): each PARTICIPANT session also posts "left"
+// with its own recording URLs (record_url = that person's stereo
+// Call.record, video_url = the guest camera recorder); those land on the
+// run row here — recording_guest_url / recording_host_url and
+// grok_session_log.voximplant_record_url / voximplant_video_url, which
+// post_interview.py reads — because the room session that fires the
+// completion webhook never sees them.
 async function handleLegEvent(req: Request, env: Env): Promise<Response> {
   const body = await req.json<any>().catch(() => null);
   const runId = String(body?.run_id ?? "");
@@ -1133,7 +1142,8 @@ async function handleLegEvent(req: Request, env: Env): Promise<Response> {
     return json({ error: "run_id + role(guest|host) + event(joined|left) required" }, 400);
   }
   const runs = await sb(env, "GET",
-    `interview_runs?id=eq.${runId}&select=id,guest_joined_at,host_joined_at,host_left_at`);
+    `interview_runs?id=eq.${runId}&select=id,guest_joined_at,host_joined_at,host_left_at,` +
+    `recording_guest_url,recording_host_url,grok_session_log`);
   const run = runs?.[0];
   if (!run) return json({ error: "run not found" }, 404);
   const now = new Date().toISOString();
@@ -1144,6 +1154,23 @@ async function handleLegEvent(req: Request, env: Env): Promise<Response> {
     if (run.host_left_at) patch.host_left_at = null;
   }
   if (role === "host" && event === "left") patch.host_left_at = now;
+  const recordUrl = typeof body?.record_url === "string" && body.record_url ? body.record_url : null;
+  const videoUrl = typeof body?.video_url === "string" && body.video_url ? body.video_url : null;
+  if (event === "left" && (recordUrl || videoUrl)) {
+    if (role === "host" && recordUrl) patch.recording_host_url = recordUrl;
+    if (role === "guest") {
+      // First guest wins the primary track; extra guests are kept in the log.
+      const log = { ...(run.grok_session_log ?? {}) };
+      if (recordUrl && !run.recording_guest_url && !log.voximplant_record_url) {
+        patch.recording_guest_url = recordUrl;
+        log.voximplant_record_url = recordUrl;
+      } else if (recordUrl) {
+        log.extra_guest_record_urls = [...(log.extra_guest_record_urls ?? []), recordUrl];
+      }
+      if (videoUrl && !log.voximplant_video_url) log.voximplant_video_url = videoUrl;
+      patch.grok_session_log = log;
+    }
+  }
   if (Object.keys(patch).length) await sb(env, "PATCH", `interview_runs?id=eq.${runId}`, patch);
   return json({ ok: true, run_id: runId, role, event, patched: Object.keys(patch) });
 }
@@ -1176,9 +1203,9 @@ function localKey(show: Show, runId: string, role: StudioRole, name: string): st
   return `${show.r2Prefix}/local/${runId}/${role}/${name}`;
 }
 
-/** Shared gate for upload-chunk / upload-done: run must exist; guest role
- *  needs a live-ish run status; host role needs ADMIN_TOKEN. Returns the
- *  error Response or the run+show. */
+/** Shared gate for upload-chunk / upload-done: run must exist and be in a
+ *  live-ish status. Since the room model (Sept 9 2026) the host is a
+ *  participant like any other — no token; the run id admits the upload. */
 async function localUploadGate(req: Request, env: Env, runId: string, role: unknown,
                                bodyToken?: unknown):
     Promise<Response | { run: any; show: Show; role: StudioRole }> {
@@ -1186,11 +1213,11 @@ async function localUploadGate(req: Request, env: Env, runId: string, role: unkn
   if (!UUID_RE.test(runId) || !isStudioRole(role)) {
     return json({ error: "run_id + role(guest|host) required" }, 400);
   }
-  if (role === "host" && !adminTokenOk(env, req, bodyToken)) return json({ error: "unauthorized" }, 401);
+  void bodyToken; // kept for callers; the token is no longer required
   const { run, show } = await runWithShow(env, runId);
   if (!run) return json({ error: "run not found" }, 404);
-  if (role === "guest" && !GUEST_UPLOAD_STATUSES.has(String(run.status))) {
-    return json({ error: `run status ${run.status} does not accept guest uploads` }, 409);
+  if (!GUEST_UPLOAD_STATUSES.has(String(run.status))) {
+    return json({ error: `run status ${run.status} does not accept uploads` }, 409);
   }
   return { run, show, role };
 }
@@ -1260,8 +1287,8 @@ async function handleUploadDone(req: Request, env: Env): Promise<Response> {
 }
 
 // GET /voices/host-link?interview=<id> (admin) — Patrick's co-host studio
-// link for one interview: the studio page with role=host and the admin
-// token, which studio-auth requires before issuing host credentials.
+// link for one interview: the studio page with role=host (no token since
+// the room model; the admin check here only guards this lookup endpoint).
 async function handleHostLink(req: Request, env: Env): Promise<Response> {
   const denied = requireAdmin(req, env);
   if (denied) return denied;
