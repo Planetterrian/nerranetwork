@@ -166,19 +166,22 @@ class TestRoom:
         assert "if (openingFired || !sessionReady || !grokAgent) return;" in opened
         assert "openingFired = true;" in opened
         assert "grokAgent.responseCreate({});" in opened
-        assert "startTimeChecks();" in opened and "armAudioFallback();" in opened
+        assert "startTimeChecks();" in opened and "armAudioCheck();" in opened
 
     def test_joins_and_leaves_are_announced(self, js):
         body = _fn(js, "function announce(what)")
         assert '"[ROOM — system note] " + what' in body
         assert "grokAgent.responseCreate({});" in body
 
-    def test_audio_fallback_bridges_first_guest(self, js):
-        assert "FALLBACK_AFTER_MS = 12 * 1000" in js
-        body = _fn(js, "function armAudioFallback()")
-        assert "conf.stopMediaTo(grokAgent)" in body
-        assert "guest.call.sendMediaTo(grokAgent)" in body
-        assert 'trace("audio_path"' in body
+    def test_no_direct_bridge_fallback(self, js):
+        # Sept 10 2026: the "no speech in 12 s → bridge one leg to the agent"
+        # fallback cut the mixer off Mira mid-show. The mix is the only path.
+        assert "armAudioFallback" not in js and "directBridge" not in js
+        assert "conf.stopMediaTo(grokAgent)" not in js
+        assert "AUDIO_CHECK_AFTER_MS = 12 * 1000" in js
+        body = _fn(js, "function armAudioCheck()")
+        assert 'trace("audio_path"' in body and "sendMediaTo(grokAgent)" not in body
+        assert 'audio_path: "room_mix"' in js
 
     def test_mira_recorder(self, js):
         body = _fn(js, "function startMiraRecorder()")
@@ -199,7 +202,7 @@ class TestRoom:
         for key in ('status: "completed"', "voximplant_mira_record_url: miraRecordUrl",
                     "host_joined_at: hostJoinedAt", "host_left_at: hostLeftAt",
                     "host_attempts: hostJoins", "disconnect_reason: reason",
-                    'audio_path: directBridge ? "direct" : "room_mix"'):
+                    'audio_path: "room_mix"'):
             assert key in body, key
         assert "VoxEngine.terminate()" in body
 

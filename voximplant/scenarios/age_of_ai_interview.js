@@ -72,7 +72,7 @@ const TIME_CHECK_EVERY_MS = 5 * 60 * 1000;
 const ROOM_PREFIX = "room-";       // callConference id = ROOM_PREFIX + run id (rule ^room-.*)
 const REJOIN_GRACE_MS = 90 * 1000; // room stays up this long after the last human leaves
 const OPENING_WAIT_MS = 20 * 1000; // Mira opens when a guest is in, or after 20 s with only the host
-const FALLBACK_AFTER_MS = 12 * 1000; // no speech via the mix → bridge the first guest directly
+const AUDIO_CHECK_AFTER_MS = 12 * 1000; // trace whether the mix has carried speech yet (diagnostic only)
 const ROLES = { guest: true, host: true };
 
 // Shared state (each session is one of the two kinds; unused fields stay null).
@@ -301,9 +301,8 @@ async function participantLeft() {
 // {run_id, probe: true, clip}). It joins the room exactly like a human leg
 // (callConference with X-Role guest) and, instead of a microphone, plays a
 // speech clip into its room leg twice: once right after joining (while the
-// room mix is Mira's input) and once after the 12 s audio-path fallback
-// (when the first guest leg is bridged to her directly). The room's trace
-// then says which hop carries speech — no human timing needed. The probe
+// room mix is Mira's input) and once more 12 s later. The room's trace
+// then says whether the mix carries speech — no human timing needed. The probe
 // records its room leg (R = what the room sent back, i.e. Mira's replies)
 // and reports it via /voices/leg-event role=probe.
 // ---------------------------------------------------------------------------
@@ -354,8 +353,8 @@ async function probeSession(custom) {
     };
     await sleep(4000);      // Mira's session is up and she is opening
     await play("via room mix");
-    await sleep(12000);     // past the fallback point (opening + 12 s)
-    await play("after fallback");
+    await sleep(12000);
+    await play("second pass");
     await sleep(20000);     // let Mira answer; it is on the recording
     try { roomCall.hangup(); } catch (err) {}
   });
@@ -380,7 +379,6 @@ let timeCheckTimer = null;
 let micCheckTimer = null;
 let teardownTimer = null;
 let openingTimer = null;
-let fallbackTimer = null;
 let miraRecorder = null;
 let miraRecordUrl = null;
 let mixRecorder = null;     // the whole room mix (conf -> recorder), diagnostics + post-production
@@ -389,7 +387,6 @@ let speechEvents = 0;       // InputAudioBufferSpeechStarted count
 let sessionReady = false;   // Grok SessionUpdated received (media bridged)
 let openingFired = false;   // Mira opens exactly once
 let anyoneHeard = false;    // first InputAudioBufferSpeechStarted
-let directBridge = false;   // fallback engaged (first guest -> agent directly)
 let roomEnded = false;
 let endReason = "normal";
 
@@ -542,8 +539,8 @@ async function startAgent() {
     // Barge-in: flush Mira's buffered audio the moment anyone speaks.
     grokAgent.addEventListener(Grok.VoiceAgentAPIEvents.InputAudioBufferSpeechStarted, function () {
       speechEvents++;
-      if (!anyoneHeard) trace("grok", "first inbound speech heard" + (directBridge ? " (direct bridge)" : " (via room mix)"));
-      else if (speechEvents <= 6) trace("grok", "speech heard #" + speechEvents + (directBridge ? " (direct bridge)" : " (via room mix)"));
+      if (!anyoneHeard) trace("grok", "first inbound speech heard (via room mix)");
+      else if (speechEvents <= 6) trace("grok", "speech heard #" + speechEvents + " (via room mix)");
       anyoneHeard = true;
       if (grokAgent) grokAgent.clearMediaBuffer();
     });
@@ -598,7 +595,7 @@ function openWhenReady(reason) {
     }
     grokAgent.responseCreate({});
     startTimeChecks();
-    armAudioFallback();
+    armAudioCheck();
     micCheckTimer = setTimeout(function () { silentMicNudge(1); }, 35 * 1000);
   } catch (err) {
     Logger.write("[aoa " + runId + "] opening responseCreate failed: " + err.message);
@@ -655,32 +652,21 @@ function startMiraRecorder() {
   }
 }
 
-// Audio-path fallback: if Grok reports no inbound speech within
-// FALLBACK_AFTER_MS of the opening, bridge the first guest straight to the
-// agent (the path proven on Sept 9). Everyone still hears each other and
-// Mira through the room; only Mira's INPUT becomes that one guest.
-function armAudioFallback() {
-  if (fallbackTimer) return;
-  fallbackTimer = setTimeout(function () {
-    fallbackTimer = null;
-    if (anyoneHeard || directBridge || !grokAgent || roomEnded) {
-      trace("audio_path", anyoneHeard ? "room mix carries speech" : "fallback skipped");
-      return;
-    }
-    const guest = legs.filter(function (l) { return l.role === "guest"; })[0] || legs[0];
-    if (!guest) { trace("audio_path", "nobody to bridge"); return; }
-    try {
-      try { conf.stopMediaTo(grokAgent); } catch (err) { /* may not be wired */ }
-      guest.call.sendMediaTo(grokAgent);
-      directBridge = true;
-      trace("audio_path", "FALLBACK " + guest.role + " #" + guest.id + "->agent direct (no speech heard " + (FALLBACK_AFTER_MS / 1000) + "s after opening)");
-      setTimeout(function () {
-        try { if (grokAgent && !anyoneHeard) grokAgent.responseCreate({}); } catch (err) { /* best-effort */ }
-      }, 2500);
-    } catch (err) {
-      trace("audio_path", "fallback failed: " + err.message);
-    }
-  }, FALLBACK_AFTER_MS);
+// Audio-path check (diagnostic only). Sept 10 2026: the old "no speech
+// 12 s after the opening → re-bridge the first leg straight to the agent"
+// fallback is GONE. In the room it did real harm: a guest who politely
+// listens to Mira's opening for 12 s tripped it, conf.stopMediaTo(agent)
+// cut the mixer off Mira for good, and she was left listening to one leg
+// — which then left the room. The probe and a fake-mic WebRTC guest both
+// proved the room mix carries speech to her ("first inbound speech heard
+// (via room mix)"); the mix is the only path now.
+let audioCheckTimer = null;
+function armAudioCheck() {
+  if (audioCheckTimer) return;
+  audioCheckTimer = setTimeout(function () {
+    audioCheckTimer = null;
+    trace("audio_path", anyoneHeard ? "room mix carries speech" : "no speech heard yet (room mix stays Mira's input)");
+  }, AUDIO_CHECK_AFTER_MS);
 }
 
 function silentMicNudge(attempt) {
@@ -767,7 +753,7 @@ async function endRoom(reason) {
   if (roomEnded) return;
   roomEnded = true;
   endReason = reason;
-  [hardCapTimer, micCheckTimer, teardownTimer, openingTimer, fallbackTimer].forEach(function (t) { if (t) clearTimeout(t); });
+  [hardCapTimer, micCheckTimer, teardownTimer, openingTimer, audioCheckTimer].forEach(function (t) { if (t) clearTimeout(t); });
   if (timeCheckTimer) clearInterval(timeCheckTimer);
   trace("room", "ending: " + reason);
   if (miraRecorder) { try { miraRecorder.stop(); } catch (ignored) {} }
@@ -787,7 +773,7 @@ async function endRoom(reason) {
       host_attempts: hostJoins,
       duration_sec: firstJoinAt ? Math.round((Date.now() - firstJoinAt) / 1000) : 0,
       disconnect_reason: reason,
-      audio_path: directBridge ? "direct" : "room_mix",
+      audio_path: "room_mix",
       grok_session_log: grokAgent && grokAgent.getSessionLog ? grokAgent.getSessionLog() : null,
     });
   } catch (err) {
