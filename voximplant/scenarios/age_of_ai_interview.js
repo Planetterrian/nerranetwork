@@ -418,6 +418,15 @@ async function openRoom() {
     setTimeout(function () { VoxEngine.terminate(); }, 500);
     return false;
   }
+  // A run can see several room sessions (a room that ended on a platform
+  // fault and reopened when someone rejoined): keep the earlier timeline
+  // instead of overwriting it, with a marker between sessions.
+  try {
+    if (Array.isArray(config.scenario_trace) && config.scenario_trace.length) {
+      config.scenario_trace.slice(-100).forEach(function (line) { traceLines.push(line); });
+      traceLines.push({ t: new Date().toISOString(), e: "room", d: "---- new room session ----" });
+    }
+  } catch (err) { /* trace is best-effort */ }
   await markRunStatus(runId, "in_progress");
   // The mixer. hd_audio keeps the mix at Opus wideband so Mira's input and
   // the per-person recordings don't get narrowband-downmixed.

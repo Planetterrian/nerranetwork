@@ -346,3 +346,21 @@ def test_studio_user_names_are_sanitised_on_both_sides():
     html = (ROOT / "age-of-ai-studio.html").read_text()
     assert "function cleanUser(u)" in html
     assert 'cleanUser("guest") + VOX_APP_SUFFIX' in html
+
+
+def test_platform_faults_reopen_the_studio_without_counting_a_join():
+    # Sept 10 2026: a room that ended because the Grok connector closed
+    # (code 1011) is not a failed guest join — never auto-flip to PSTN.
+    ts = (ROOT / "workers/voices/src/index.ts").read_text()
+    faults = ts.split("const PLATFORM_FAULT_REASONS = new Set([")[1].split("])")[0]
+    for reason in ("grok_dropped", "agent_startup_failed", "media_bridge_failed"):
+        assert f'"{reason}"' in faults
+    body = _fn("async function handleInterviewComplete")
+    assert "PLATFORM_FAULT_REASONS.has(String(payload.disconnect_reason" in body
+    assert body.index("platform_fault: true") < body.index("aborted_attempts")
+    assert 'endRoom("grok_dropped")' in SCENARIO and 'endRoom("agent_startup_failed")' in SCENARIO
+
+
+def test_room_trace_survives_a_reopened_room():
+    assert "config.scenario_trace.slice(-100)" in SCENARIO
+    assert "---- new room session ----" in SCENARIO

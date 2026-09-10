@@ -345,6 +345,8 @@ async function handleApply(req: Request, env: Env): Promise<Response> {
   return json({ ok: true, id, show: show.slug, merged });
 }
 
+const PLATFORM_FAULT_REASONS = new Set(["grok_dropped", "agent_startup_failed", "media_bridge_failed"]);
+
 async function handleInterviewComplete(req: Request, env: Env): Promise<Response> {
   const payload = await req.json<any>().catch(() => null);
   if (!payload?.run_id) return json({ error: "run_id required" }, 400);
@@ -384,6 +386,31 @@ async function handleInterviewComplete(req: Request, env: Env): Promise<Response
   // immediately — do NOT mark it completed or dispatch post-production on
   // 141 seconds of silence.
   const dur = Number(payload.duration_sec ?? 0);
+  // Room model (Sept 10 2026): a room that ended on a PLATFORM fault
+  // (Grok connector closed, agent never started, media bridge failed) is
+  // not a failed join by the guest — reopen the studio so the next join
+  // starts a fresh room, count nothing against the browser path, and
+  // never flip the interview to a phone call over it.
+  const platformFault = PLATFORM_FAULT_REASONS.has(String(payload.disconnect_reason ?? ""));
+  if (payload.call_mode === "webrtc" && platformFault) {
+    await sb(env, "PATCH", `interview_runs?id=eq.${payload.run_id}`, {
+      status: "awaiting_guest", duration_sec: null, disconnect_reason: null,
+      grok_session_log: { ...existingLog, last_platform_fault: {
+        reason: payload.disconnect_reason, duration_sec: dur, at: new Date().toISOString() } },
+    });
+    try {
+      await email(env, operatorEmail(env),
+        `Age of AI studio: room ended on a platform fault (${payload.disconnect_reason})`,
+        `<p>Hi Patrick,</p><p>The interview room for run ${esc(String(payload.run_id))} ended after
+         ${dur} seconds because of <strong>${esc(String(payload.disconnect_reason))}</strong>
+         (the AI voice connection, not anyone's browser). The studio is open again: everyone
+         can press Join on the same links and a fresh room starts. If it repeats, the xAI
+         connector is having a bad moment; wait a minute and try again.</p><p>— Mira</p>`);
+    } catch (err: any) {
+      console.error("platform-fault email failed:", err?.message ?? err);
+    }
+    return json({ ok: true, platform_fault: true, reopened: true });
+  }
   if (payload.call_mode === "webrtc" && payload.status !== "failed" && dur < 300) {
     const runRows = await sb(env, "GET",
       `interview_runs?id=eq.${payload.run_id}&select=interview_id,grok_session_log`);
