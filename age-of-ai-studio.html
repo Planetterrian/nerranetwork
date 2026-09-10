@@ -689,7 +689,8 @@
   }
   function uploadUrl(seq) {
     return API + "/upload-chunk?run_id=" + encodeURIComponent(runId) + "&role=" + role
-      + "&seq=" + seq + (isHost && adminToken ? "&token=" + encodeURIComponent(adminToken) : "");
+      + "&seq=" + seq + (rec.sid ? "&sid=" + encodeURIComponent(rec.sid) : "")
+      + (isHost && adminToken ? "&token=" + encodeURIComponent(adminToken) : "");
   }
   function uploadChunk(blob, seq) {
     var attempt = 0;
@@ -725,6 +726,11 @@
       var recorder = new MediaRecorder(stream, { mimeType: LOCAL_MIME, audioBitsPerSecond: 192000 });
       rec.recorder = recorder;
       rec.startedAt = new Date().toISOString();
+      // Sept 10 2026 (Matt Davis): a rejoin restarted this counter at 0 and
+      // overwrote the first half's chunks at the same R2 keys, destroying
+      // 26 minutes of 192 kbps audio. Every join gets its own id, so the
+      // takes sit side by side instead of on top of each other.
+      rec.sid = (Date.now().toString(36) + Math.random().toString(36).slice(2, 6));
       rec.seq = 0; rec.uploaded = 0; rec.failed = 0; rec.done = false;
       recorder.addEventListener("dataavailable", function (ev) {
         if (!ev.data || !ev.data.size) return;
@@ -743,6 +749,7 @@
   }
   function uploadDonePayload() {
     var payload = { run_id: runId, role: role, chunks: rec.seq, mime: LOCAL_MIME,
+                    sid: rec.sid || null,
                     started_at: rec.startedAt,
                     duration_ms: rec.startedAt ? Date.now() - Date.parse(rec.startedAt) : 0 };
     if (isHost && adminToken) payload.token = adminToken;

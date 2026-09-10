@@ -14,6 +14,7 @@
  *   POST /voices/triage-reassign      move an application to the other show
  *   GET  /voices/admin/review/:id     Patrick's editorial review UI (gate 1)
  *   POST /voices/editorial-decision   approve/kill an editorial package
+ *   POST /voices/lesson-decision      promote/drop a proposed Mira lesson
  *   GET  /voices/episode-lookup       Mira tool: nerra_episode_lookup
  *   GET  /voices/guest-brief          Mira tool: guest_brief_lookup
  *   POST /voices/fact-check           Mira tool: fact_check_claim (proxy note)
@@ -762,6 +763,23 @@ async function handleEditorialDecision(req: Request, env: Env): Promise<Response
   return json({ ok: true });
 }
 
+/** Promote or drop one proposed lesson. Scoped by the package's review token
+ *  like every other gate-1 action, so the emailed link can do it. */
+async function handleLessonDecision(req: Request, env: Env): Promise<Response> {
+  const body = await req.json<any>().catch(() => null);
+  const lessonId = String(body?.lesson_id ?? "");
+  const status = String(body?.status ?? "");
+  if (!UUID_RE.test(lessonId) || !["active", "retired"].includes(status)) {
+    return json({ error: "lesson_id + status(active|retired) required" }, 400);
+  }
+  const denied = await requirePackageAccess(req, env, String(body?.package_id ?? ""));
+  if (denied) return denied;
+  const rows = await sb(env, "PATCH", `show_lessons?id=eq.${lessonId}`,
+    { status, decided_at: new Date().toISOString() }, "return=representation");
+  if (!rows?.[0]) return json({ error: "lesson not found" }, 404);
+  return json({ ok: true, id: lessonId, status });
+}
+
 // -- Gate 2: guest transcript review ----------------------------------------
 
 async function pkgByToken(env: Env, token: string): Promise<any | null> {
@@ -911,6 +929,30 @@ async function handleAdminReview(req: Request, env: Env, id: string): Promise<Re
   if (!pkg) return html("<h1>Package not found</h1>", 404);
   const run = (await sb(env, "GET", `interview_runs?id=eq.${pkg.interview_run_id}`))[0] ?? {};
   const { app, show } = await interviewWithApp(env, pkg.interview_id);
+  // The learning loop's output: what this interview proposes Mira should do
+  // differently, and the numbers behind it. Nothing here reaches Mira until
+  // it is promoted on this page.
+  const proposed = (await sb(env, "GET",
+    `show_lessons?interview_id=eq.${pkg.interview_id}&status=eq.proposed&order=created_at.asc`)) ?? [];
+  const activeLessons = (await sb(env, "GET",
+    `show_lessons?show=eq.${show.slug}&status=eq.active&order=decided_at.desc&limit=12`)) ?? [];
+  const metrics = (await sb(env, "GET",
+    `episode_metrics?interview_id=eq.${pkg.interview_id}`))?.[0] ?? null;
+  const metricLine = metrics
+    ? `Guest spoke ${Math.round(Number(metrics.guest_talk_share ?? 0) * 100)}% of the words ·
+       Mira took ${metrics.mira_turns ?? "?"} turns${metrics.mira_mean_turn_sec ? ` (avg ${metrics.mira_mean_turn_sec}s apart)` : ""} ·
+       ${metrics.repeated_questions ?? 0} repeated question(s) ·
+       ${metrics.dead_air_sec ?? 0}s dead air · ${metrics.agent_sessions ?? 1} session(s), ${metrics.drops ?? 0} drop(s)`
+    : "not measured";
+  const lessonRow = (l: any, kind: "proposed" | "active") => `
+    <li style="margin:.5rem 0">
+      <b>${esc(String(l.category ?? ""))}</b> — ${esc(String(l.lesson ?? ""))}
+      ${l.evidence ? `<br><small style="color:#4a5568">${esc(String(l.evidence))}</small>` : ""}
+      ${kind === "proposed"
+        ? `<br><button onclick="lesson('${l.id}','active')">Teach Mira this</button>
+           <button onclick="lesson('${l.id}','retired')">Discard</button>`
+        : `<br><button onclick="lesson('${l.id}','retired')">Stop applying this</button>`}
+    </li>`;
   return html(`<!doctype html><meta charset="utf-8"><meta name="robots" content="noindex">
 <title>${esc(show.shortLabel)} — editorial review</title>
 <style>body{font:15px/1.6 system-ui;max-width:860px;margin:2rem auto;padding:0 1rem}
@@ -923,6 +965,16 @@ ${reviewAudioUrl(run) ? `<audio controls preload="none" src="${esc(reviewAudioUr
 <h3>Episode notes</h3><pre>${esc(pkg.episode_notes ?? "")}</pre>
 <h3>Cleaned transcript</h3><pre>${esc(pkg.transcript_cleaned ?? "")}</pre>
 <h3>Newsletter draft</h3><pre>${esc(pkg.newsletter_draft ?? "")}</pre>
+<h3>How this interview went, by the numbers</h3>
+<p>${metricLine}</p>
+<h3>What Mira should learn from it</h3>
+${proposed.length
+  ? `<ul>${proposed.map((l: any) => lessonRow(l, "proposed")).join("")}</ul>`
+  : "<p><em>No lessons proposed — the producer's pass found nothing worth changing.</em></p>"}
+${activeLessons.length
+  ? `<details><summary>Standing instructions Mira is already following (${activeLessons.length})</summary>
+     <ul>${activeLessons.map((l: any) => lessonRow(l, "active")).join("")}</ul></details>`
+  : ""}
 <h3>Decision</h3>
 <textarea id="notes" placeholder="Editorial notes (kept on the package)"></textarea>
 <p><button onclick="decide('approve')">Approve → guest review</button>
@@ -935,6 +987,15 @@ async function decide(decision){
     headers:{'Content-Type':'application/json'},
     body: JSON.stringify({package_id:'${pkg.id}', decision, notes: document.getElementById('notes').value})});
   document.getElementById('status').textContent = resp.ok ? 'Saved.' : 'Failed — check the token.';
+}
+async function lesson(id, status){
+  const resp = await fetch('/voices/lesson-decision?token='+token, {method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({package_id:'${pkg.id}', lesson_id:id, status})});
+  document.getElementById('status').textContent = resp.ok
+    ? (status === 'active' ? 'Mira will apply that from the next interview.' : 'Dropped.')
+    : 'Failed.';
+  if (resp.ok) event.target.closest('li').style.opacity = .45;
 }
 </script>`);
 }
@@ -1315,9 +1376,21 @@ async function runWithShow(env: Env, runId: string):
   return { run, show };
 }
 
-function localKey(show: Show, runId: string, role: StudioRole, name: string): string {
-  return `${show.r2Prefix}/local/${runId}/${role}/${name}`;
+/** `sid` is the per-join take id the studio page mints each time it starts
+ *  recording (Sept 10 2026). Without it a rejoin rewrote 00000.webm onwards
+ *  and the earlier take was gone. Old clients send none; those keep the flat
+ *  layout so their manifests still resolve. */
+function localKey(show: Show, runId: string, role: StudioRole, name: string,
+                  sid?: string | null): string {
+  const take = sid ? `${sid}/` : "";
+  return `${show.r2Prefix}/local/${runId}/${role}/${take}${name}`;
 }
+
+const SID_RE = /^[A-Za-z0-9_-]{1,32}$/;
+const cleanSid = (raw: unknown): string | null => {
+  const s = String(raw ?? "");
+  return SID_RE.test(s) ? s : null;
+};
 
 /** Shared gate for upload-chunk / upload-done: run must exist and be in a
  *  live-ish status. Since the room model (Sept 9 2026) the host is a
@@ -1347,6 +1420,7 @@ async function handleUploadChunk(req: Request, env: Env): Promise<Response> {
   const role = url.searchParams.get("role");
   const seq = Number(url.searchParams.get("seq"));
   if (!Number.isInteger(seq) || seq < 0 || seq > 99999) return json({ error: "seq required (0..99999)" }, 400);
+  const sid = cleanSid(url.searchParams.get("sid"));
   const gate = await localUploadGate(req, env, runId, role);
   if (gate instanceof Response) return gate;
   const declared = Number(req.headers.get("Content-Length") ?? 0);
@@ -1355,7 +1429,7 @@ async function handleUploadChunk(req: Request, env: Env): Promise<Response> {
   if (body.byteLength === 0) return json({ error: "empty chunk" }, 400);
   if (body.byteLength > LOCAL_CHUNK_MAX_BYTES) return json({ error: "chunk too large (10 MB max)" }, 413);
   const contentType = (req.headers.get("Content-Type") || "audio/webm").split(";")[0].trim() || "audio/webm";
-  const key = localKey(gate.show, runId, gate.role, `${String(seq).padStart(5, "0")}.webm`);
+  const key = localKey(gate.show, runId, gate.role, `${String(seq).padStart(5, "0")}.webm`, sid);
   await env.VOICES_R2.put(key, body, { httpMetadata: { contentType } });
   return json({ ok: true, key, size: body.byteLength });
 }
@@ -1374,19 +1448,21 @@ async function handleUploadDone(req: Request, env: Env): Promise<Response> {
   if (gate instanceof Response) return gate;
   const chunks = Number(body?.chunks);
   if (!Number.isInteger(chunks) || chunks < 0 || chunks > 100000) return json({ error: "chunks (int) required" }, 400);
+  const sid = cleanSid(body?.sid);
   const keys: string[] = [];
-  for (let i = 0; i < chunks; i++) keys.push(localKey(gate.show, runId, gate.role, `${String(i).padStart(5, "0")}.webm`));
+  for (let i = 0; i < chunks; i++) keys.push(localKey(gate.show, runId, gate.role, `${String(i).padStart(5, "0")}.webm`, sid));
   const missing: string[] = [];
   let bytes = 0;
   for (const key of keys) {
     const head = await env.VOICES_R2.head(key);
     if (!head) missing.push(key); else bytes += head.size;
   }
-  const manifestKey = localKey(gate.show, runId, gate.role, "manifest.json");
+  const manifestKey = localKey(gate.show, runId, gate.role, "manifest.json", sid);
   const manifest = {
     run_id: runId,
     role: gate.role,
     show: gate.show.slug,
+    sid,
     mime: String(body?.mime ?? "audio/webm;codecs=opus"),
     started_at: body?.started_at ?? null,
     duration_ms: Number(body?.duration_ms ?? 0) || 0,
@@ -1397,8 +1473,22 @@ async function handleUploadDone(req: Request, env: Env): Promise<Response> {
   };
   await env.VOICES_R2.put(manifestKey, JSON.stringify(manifest, null, 2),
     { httpMetadata: { contentType: "application/json" } });
+  // local_<role>_url keeps pointing at the newest take (what the pipeline
+  // reads today); every take is also listed so an interview that survived a
+  // reconnect can be reassembled from all of them instead of just the last.
+  const existing = (await sb(env, "GET",
+    `interview_runs?id=eq.${runId}&select=grok_session_log`))?.[0]?.grok_session_log ?? {};
+  const takes = { ...(existing.local_takes ?? {}) };
+  const forRole: any[] = Array.isArray(takes[gate.role]) ? takes[gate.role] : [];
+  if (!forRole.some((t) => t?.manifest === manifestKey)) {
+    forRole.push({ manifest: manifestKey, sid, started_at: manifest.started_at,
+                   duration_ms: manifest.duration_ms, chunks: keys.length,
+                   missing: missing.length });
+  }
+  takes[gate.role] = forRole;
   await sb(env, "PATCH", `interview_runs?id=eq.${runId}`,
-    { [`local_${gate.role}_url`]: manifestKey });
+    { [`local_${gate.role}_url`]: manifestKey,
+      grok_session_log: { ...existing, local_takes: takes } });
   return json({ ok: true, key: manifestKey, chunks: keys.length, missing, bytes });
 }
 
@@ -1526,6 +1616,7 @@ export default {
       if (req.method === "POST" && path === "/voices/triage-decision") return handleTriageDecision(req, env);
       if (req.method === "POST" && path === "/voices/triage-reassign") return handleTriageReassign(req, env);
       if (req.method === "POST" && path === "/voices/editorial-decision") return handleEditorialDecision(req, env);
+      if (req.method === "POST" && path === "/voices/lesson-decision") return handleLessonDecision(req, env);
       const review = path.match(/^\/voices\/review\/([A-Za-z0-9_-]{16,})$/);
       if (review) {
         return req.method === "POST"

@@ -904,6 +904,41 @@ function startTimeChecks() {
  * into the room and end it.
  */
 let grokDropHandled = false;
+let grokRecoveries = 0;     // in-place rescues after a mid-call socket drop
+// Sept 10 2026 (Matt Davis): 52 seconds after a clean hand-over the new
+// socket died with code 1006 and this function ended the room. Everyone was
+// thrown out, they rejoined into a BRAND NEW room, and Mira — with no memory
+// of the first half — restarted the interview from the top. A 45-minute
+// conversation became two chunks and a pile of repeated questions.
+//
+// A dropped socket is not a dead interview. The rotation machinery already
+// knows how to put a fresh session on the mix carrying the transcript so
+// far; this now uses it. The room only ends if the rescue itself fails, or
+// if sockets keep dying (GROK_MAX_RECOVERIES), which means something is
+// wrong upstream that a third attempt will not fix.
+const GROK_MAX_RECOVERIES = 3;
+
+async function recoverAgent(reason) {
+  const previous = grokAgent;
+  grokAgent = null;
+  try { if (previous) { if (previous.close) previous.close(); else if (previous.stop) previous.stop(); } }
+  catch (err) { /* it is already gone; that is why we are here */ }
+  const note = handoverNote();
+  let next;
+  try {
+    next = await createAgent(note);
+  } catch (err) {
+    trace("grok", "rescue " + grokRecoveries + " failed to start a session: " + err.message);
+    return false;
+  }
+  grokAgent = next;
+  agentStartedAt = Date.now();
+  armRotation();              // the replacement gets its own full session clock
+  trace("grok", "rescued after " + reason + " — session " + agentGeneration +
+        " is live with the conversation so far (" + transcript.length + " lines)");
+  return true;
+}
+
 function onGrokDropped(event) {
   if (grokDropHandled || roomEnded || rotating) return;
   grokDropHandled = true;
@@ -919,6 +954,16 @@ function onGrokDropped(event) {
           ? " — " + earlyMs + "ms after startup, so xAI refused the session (model " + GROK_MODEL + ")"
           : ""));
   setTimeout(async function () {
+    if (roomEnded || legs.length === 0) return;
+    // Try to rescue the conversation before telling anyone it broke.
+    if (grokRecoveries < GROK_MAX_RECOVERIES) {
+      grokRecoveries += 1;
+      grokDropHandled = false;   // the replacement gets its own drop handling
+      if (await recoverAgent("a dropped connection")) return;
+      grokDropHandled = true;
+    } else {
+      trace("grok", "gave up after " + grokRecoveries + " rescue attempts");
+    }
     if (roomEnded || legs.length === 0) return;
     try {
       if (config && config.grok_drop_apology_url) {

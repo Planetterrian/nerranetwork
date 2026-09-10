@@ -134,7 +134,10 @@ def test_upload_chunk_contract():
     assert "return json({ ok: true, key, size: body.byteLength })" in body
     assert '`${String(seq).padStart(5, "0")}.webm`' in body
     key = _fn("function localKey")
-    assert "`${show.r2Prefix}/local/${runId}/${role}/${name}`" in key
+    # Sept 10 2026: a per-join take id keeps a rejoin from overwriting the
+    # first half's chunks. Absent (old clients), the layout is unchanged.
+    assert "`${show.r2Prefix}/local/${runId}/${role}/${take}${name}`" in key
+    assert 'const take = sid ? `${sid}/` : "";' in key
     gate = _fn("async function localUploadGate")
     assert "adminTokenOk(" not in gate, "room model: host uploads need no token"
     assert "!GUEST_UPLOAD_STATUSES.has(String(run.status))" in gate
@@ -147,7 +150,7 @@ def test_upload_done_writes_manifest_key_and_reports_missing():
     body = _fn("async function handleUploadDone")
     assert "env.VOICES_R2.head(key)" in body
     assert "missing.push(key)" in body
-    assert 'localKey(gate.show, runId, gate.role, "manifest.json")' in body
+    assert 'localKey(gate.show, runId, gate.role, "manifest.json", sid)' in body
     for field in ("mime:", "started_at:", "duration_ms:", "completed_at:", "chunks: keys", "missing,"):
         assert field in body, field
     assert "[`local_${gate.role}_url`]: manifestKey" in body, "store the KEY, not a URL"

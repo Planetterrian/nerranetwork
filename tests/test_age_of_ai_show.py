@@ -163,13 +163,20 @@ class TestSpecArtifacts:
     def test_editorial_pass_prompts_match_pipeline_list(self):
         from post_interview import EDITORIAL_PASSES
         prompt_dir = PIPELINES / "prompts" / "editorial_passes"
-        on_disk = {p.name for p in prompt_dir.glob("*.txt")}
+        # 09_interview_retro is deliberately NOT an editorial pass (Sept 10
+        # 2026): it produces nothing for the episode. It reads the tape and
+        # the session log and proposes standing instructions for Mira, which
+        # land in show_lessons for Patrick to promote at gate 1.
+        STANDALONE = {"09_interview_retro.txt"}
+        on_disk = {p.name for p in prompt_dir.glob("*.txt")} - STANDALONE
         listed = {name for name, _ in EDITORIAL_PASSES}
         assert listed == on_disk, (
             f"editorial pass list and prompt files diverged: "
             f"listed-only={listed - on_disk}, disk-only={on_disk - listed}"
         )
         assert len(EDITORIAL_PASSES) == 8, "spec §5.3: exactly 8 passes"
+        assert (prompt_dir / "09_interview_retro.txt").exists(), (
+            "the learning loop's producer pass must exist on disk")
 
     def test_mira_system_prompt_contracts(self):
         """The shared prompt is show-generic (Sept 2026): the show's name,

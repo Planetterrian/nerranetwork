@@ -27,6 +27,7 @@ from common import (  # noqa: E402
     operator_phone, render_email, sb_insert, sb_select, sb_update, send_email,
     show_for, to_e164,
 )
+from learning import lessons_block  # noqa: E402
 
 FIRE_WINDOW_AHEAD_MIN = 5          # phone (PSTN) interviews: Mira dials at T-5..T-0
 STUDIO_UNLOCK_AHEAD_MIN = 12       # browser studio: run row (= unlock) at T-12, so
@@ -231,7 +232,7 @@ def compile_mira_prompt(interview: dict, app: dict, brief: dict) -> str:
         likely_questions=q_text,
         cohost_name=cohost_name(),
         cohost_block=cohost_block(host_mode_enabled(interview)),
-    )
+    ) + lessons_block(show.slug)
 
 
 def send_reminders() -> None:

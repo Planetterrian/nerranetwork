@@ -51,6 +51,9 @@ from audio.mix_tracks import (  # noqa: E402
     duration_seconds, mix_interview, mix_three, mix_two, split_channels,
     split_left,
 )
+from learning import (  # noqa: E402
+    measure, save_metrics, save_proposed_lessons, session_events_summary,
+)
 from validators.schema_validators import validate_pass_output  # noqa: E402
 
 SHORT_CALL_THRESHOLD_SEC = 10 * 60
@@ -474,6 +477,27 @@ def main() -> int:
             "guest_review_token": new_review_token(),
             "audio_quality_flag": ",".join(flags) or None,
         })
+
+        # Learning loop: measure the craft, and ask a producer's pass what
+        # should change next time. Lessons land as proposals; Patrick
+        # promotes them at gate 1 and only then do they reach Mira.
+        try:
+            metrics = measure(run, package.get("transcript_cleaned") or transcript,
+                              host_label="Mira", guest_label=_guest_label(app))
+            save_metrics(interview["id"], metrics)
+            logger.info("episode metrics: %s", metrics)
+            retro = llm(load_prompt(
+                "editorial_passes/09_interview_retro.txt",
+                show=show, show_name=show.name,
+                guest_name=app["name"],
+                session_events=session_events_summary(run),
+                cleaned_transcript=package.get("transcript_cleaned") or transcript,
+            ), temperature=0.3, max_tokens=2000)
+            saved = save_proposed_lessons(show.slug, interview["id"],
+                                          parse_json_lenient(retro) or [])
+            logger.info("retro proposed %d lesson(s)", saved)
+        except Exception:  # noqa: BLE001 — an episode never waits on this
+            logger.exception("Retrospective failed (non-fatal)")
 
         if package.get("topical_show_fits"):
             sb_update("interviews", f"id=eq.{interview['id']}",
