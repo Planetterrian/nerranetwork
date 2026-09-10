@@ -43,6 +43,8 @@ jobs:
           VOXIMPLANT_ACCOUNT_ID: ${{ secrets.VOXIMPLANT_ACCOUNT_ID }}
           VOXIMPLANT_API_KEY: ${{ secrets.VOXIMPLANT_API_KEY }}
           GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+          # Optional override; blank falls back to grok-voice-latest.
+          GROK_VOICE_MODEL: ${{ vars.GROK_VOICE_MODEL }}
       # Room rule (Sept 9 2026): participants join their interview with
       # VoxEngine.callConference("room-<run id>"); this rule routes those
       # calls to the scenario and is kept first in the rule list.

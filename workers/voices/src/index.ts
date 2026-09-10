@@ -400,7 +400,7 @@ async function handleInterviewComplete(req: Request, env: Env): Promise<Response
     });
     try {
       await email(env, operatorEmail(env),
-        `Age of AI studio: room ended on a platform fault (${payload.disconnect_reason})`,
+        `Studio: room ended on a platform fault (${payload.disconnect_reason})`,
         `<p>Hi Patrick,</p><p>The interview room for run ${esc(String(payload.run_id))} ended after
          ${dur} seconds because of <strong>${esc(String(payload.disconnect_reason))}</strong>
          (the AI voice connection, not anyone's browser). The studio is open again: everyone

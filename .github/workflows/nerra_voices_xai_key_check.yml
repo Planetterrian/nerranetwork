@@ -39,6 +39,28 @@ jobs:
                   print("models visible:", len(models), "| voice models:", [m for m in models if "voice" in m])
           except urllib.error.HTTPError as e:
               print("models HTTP", e.code, e.read().decode()[:300])
+          # Realtime voice models are NOT in /v1/models. Ask the realtime
+          # endpoint directly whether the model the scenario deploys with is
+          # served: a deprecated id is what killed every interview on
+          # Sept 10 2026 (bare WebSocket close 1011).
+          for model in [os.environ.get("GROK_VOICE_MODEL", "").strip() or "grok-voice-latest",
+                        "grok-voice-fast-1.0", "grok-voice-think-fast-1.0", "grok-voice-think-fast-2.0"]:
+              req = urllib.request.Request(
+                  f"https://api.x.ai/v1/realtime?model={model}",
+                  headers={"Authorization": "Bearer " + key.strip(),
+                           "Connection": "Upgrade", "Upgrade": "websocket",
+                           "Sec-WebSocket-Version": "13",
+                           "Sec-WebSocket-Key": "dGhlIHNhbXBsZSBub25jZQ=="})
+              try:
+                  with urllib.request.urlopen(req, timeout=20) as r:
+                      print(f"  realtime {model}: HTTP {r.status}")
+              except urllib.error.HTTPError as e:
+                  body = e.read().decode()[:200]
+                  verdict = "SERVED (upgrade refused by urllib, model accepted)" if e.code in (101, 400, 426) and "model" not in body.lower() else body
+                  print(f"  realtime {model}: HTTP {e.code} {verdict}")
+              except Exception as e:
+                  print(f"  realtime {model}: {type(e).__name__} {str(e)[:120]}")
           PY
         env:
           GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+          GROK_VOICE_MODEL: ${{ vars.GROK_VOICE_MODEL }}

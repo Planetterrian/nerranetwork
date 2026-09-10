@@ -77,6 +77,15 @@ const REJOIN_GRACE_MS = 45 * 1000; // room stays up this long after the last hum
 const OPENING_WAIT_MS = 20 * 1000; // Mira opens when a guest is in, or after 20 s with only the host
 const AUDIO_CHECK_AFTER_MS = 12 * 1000; // trace whether the mix has carried speech yet (diagnostic only)
 const ROLES = { guest: true, host: true };
+// Voice Agent model (Sept 10 2026). The Voximplant connector's built-in
+// default is `grok-voice-fast-1.0`, which xAI has DEPRECATED — once xAI
+// stopped serving it, every session died 100 ms after the socket opened
+// with "WebSocket.Close 1011 Internal server error while operating" and
+// Mira never spoke. Always send an explicit model. Substituted at deploy
+// time from the GROK_VOICE_MODEL env/var (see upload_scenario); the
+// literal below is the fallback if substitution did not run.
+const GROK_MODEL = ("__GROK_VOICE_MODEL__".indexOf("__") === 0)
+  ? "grok-voice-latest" : "__GROK_VOICE_MODEL__";
 
 // Shared state (each session is one of the two kinds; unused fields stay null).
 let runId = null;
@@ -387,6 +396,7 @@ let miraRecordUrl = null;
 let mixRecorder = null;     // the whole room mix (conf -> recorder), diagnostics + post-production
 let mixRecordUrl = null;
 let speechEvents = 0;       // InputAudioBufferSpeechStarted count
+let agentStartedAt = null;  // when createVoiceAgentAPIClient returned
 let sessionReady = false;   // Grok SessionUpdated received (media bridged)
 let openingFired = false;   // Mira opens exactly once
 let anyoneHeard = false;    // first InputAudioBufferSpeechStarted
@@ -510,13 +520,15 @@ function scheduleTeardown() {
 
 async function startAgent() {
   try {
-    // Grok Voice Agent with Mira's compiled persona. No explicit model:
-    // xAI's Voice Agent API default is current post May 31 2026.
+    // Grok Voice Agent with Mira's compiled persona, on an EXPLICIT model
+    // (never the connector's deprecated default — see GROK_MODEL above).
     grokAgent = await Grok.createVoiceAgentAPIClient({
       xAIApiKey: getSecret("XAI_API_KEY"),
+      model: GROK_MODEL,
       onWebSocketClose: onGrokDropped,
     });
-    trace("grok", "agent created");
+    agentStartedAt = Date.now();
+    trace("grok", "agent created (model " + GROK_MODEL + ")");
 
     grokAgent.addEventListener(Grok.VoiceAgentAPIEvents.ConversationCreated, function () {
       // Voice presets are capitalized on the Voice Agent API ("Ara");
@@ -741,11 +753,20 @@ function startTimeChecks() {
  * into the room and end it.
  */
 let grokDropHandled = false;
-function onGrokDropped() {
+function onGrokDropped(event) {
   if (grokDropHandled || roomEnded) return;
   grokDropHandled = true;
-  Logger.write("[aoa " + runId + "] Grok connection dropped/errored");
-  trace("grok", "connection dropped");
+  const code = (event && (event.code || event.status)) || "";
+  const why = (event && (event.reason || event.message)) || "";
+  Logger.write("[aoa " + runId + "] Grok connection dropped/errored " + code + " " + why);
+  // A close within a few seconds of startup is xAI refusing the session
+  // (deprecated/unknown model, or a key problem) — not a mid-call drop.
+  const earlyMs = agentStartedAt ? Date.now() - agentStartedAt : -1;
+  trace("grok", "connection dropped" + (code ? " code " + code : "") +
+        (why ? " (" + String(why).slice(0, 80) + ")" : "") +
+        (earlyMs >= 0 && earlyMs < 5000
+          ? " — " + earlyMs + "ms after startup, so xAI refused the session (model " + GROK_MODEL + ")"
+          : ""));
   setTimeout(async function () {
     if (roomEnded || legs.length === 0) return;
     try {

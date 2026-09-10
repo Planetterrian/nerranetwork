@@ -34,6 +34,12 @@ API_BASE = "https://api.voximplant.com/platform_api"
 APPLICATION_NAME = os.environ.get("VOXIMPLANT_APP_NAME", "nerra-voices")
 RULE_NAME = os.environ.get("VOXIMPLANT_RULE_NAME", "age-of-ai-interview")
 SCENARIO_NAME = "age_of_ai_interview"
+# xAI Voice Agent model for Mira. `grok-voice-latest` follows xAI's current
+# recommended realtime voice model (Patrick's standing rule: reference the
+# latest alias so the codebase does not need editing as versions ship).
+# Pin a version here or in the GROK_VOICE_MODEL repo variable if needed.
+DEFAULT_GROK_VOICE_MODEL = os.environ.get(
+    "GROK_VOICE_MODEL", "").strip() or "grok-voice-latest"
 _SCENARIO_PATH = (Path(__file__).resolve().parent.parent
                   / "scenarios" / "age_of_ai_interview.js")
 
@@ -100,8 +106,8 @@ def upload_scenario(path: Path,
                     xai_api_key: Optional[str] = None) -> Dict[str, Any]:
     """Create or update the scenario source from *path* (deploy step).
 
-    ``__SUPABASE_URL__``, ``__SUPABASE_SERVICE_KEY__`` and
-    ``__XAI_API_KEY__`` in the source are substituted here so the committed
+    ``__SUPABASE_URL__``, ``__SUPABASE_SERVICE_KEY__``, ``__XAI_API_KEY__``
+    and ``__GROK_VOICE_MODEL__`` in the source are substituted here so the committed
     scenario never carries a project-specific hostname or secrets. The
     secrets live only in the deployed copy inside the Voximplant account.
 
@@ -128,6 +134,15 @@ def upload_scenario(path: Path,
             "to deploy the scenario (deploy-time secret substitution)")
     source = source.replace("__SUPABASE_SERVICE_KEY__", service_key)
     source = source.replace("__XAI_API_KEY__", xai_key)
+
+    # Voice Agent model (Sept 10 2026): the Voximplant connector defaults to
+    # xAI's DEPRECATED `grok-voice-fast-1.0`; when xAI stopped serving it,
+    # every interview died with a bare WebSocket 1011. Always deploy an
+    # explicit model. Override with the GROK_VOICE_MODEL repo variable.
+    voice_model = (os.environ.get("GROK_VOICE_MODEL", "").strip()
+                   or DEFAULT_GROK_VOICE_MODEL)
+    source = source.replace("__GROK_VOICE_MODEL__", voice_model)
+    logger.info("scenario deploys with Grok voice model %s", voice_model)
 
     try:
         return _call("SetScenarioInfo",

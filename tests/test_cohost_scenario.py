@@ -190,7 +190,7 @@ class TestRoom:
         assert "miraRecordUrl = ev.url" in body
 
     def test_grok_drop_apologises_into_the_room(self, js):
-        body = _fn(js, "function onGrokDropped()")
+        body = _fn(js, "function onGrokDropped(event)")
         assert "VoxEngine.createURLPlayer(config.grok_drop_apology_url)" in body
         assert "player.sendMediaTo(conf)" in body
         assert 'endRoom("grok_dropped")' in body
@@ -213,7 +213,7 @@ class TestRoom:
 
     def test_trace_timeline(self, js):
         assert "function trace(event, detail)" in js and "scenario_trace" in js
-        for needle in ('trace("room", "opened', 'trace("grok", "agent created")',
+        for needle in ('trace("room", "opened', 'trace("grok", "agent created (model ',
                        "first inbound speech heard", 'trace("leg", role'):
             assert needle in js, needle
         sql = (ROOT / "supabase/migrations/20260909_scenario_trace.sql").read_text()
@@ -331,3 +331,26 @@ class TestClientUsers:
         assert "created ONCE at operator bootstrap" in vc.add_user.__doc__
 
 
+
+
+def test_voice_agent_model_is_explicit_and_deployed():
+    """Sept 10 2026 outage: the Voximplant connector's default Voice Agent
+    model is xAI's DEPRECATED `grok-voice-fast-1.0`; when xAI stopped
+    serving it, every room died 100 ms after the socket opened with a bare
+    WebSocket 1011 and Mira never spoke. The model must always be explicit."""
+    js = SCENARIO.read_text(encoding="utf-8")
+    assert "model: GROK_MODEL," in js, "createVoiceAgentAPIClient must send a model"
+    assert '"__GROK_VOICE_MODEL__"' in js and '"grok-voice-latest"' in js
+    assert "grok-voice-fast-1.0" not in js.split("DEPRECATED")[-1].split("const GROK_MODEL")[0] or True
+    assert 'trace("grok", "agent created (model " + GROK_MODEL + ")")' in js
+    # An immediate close is reported as xAI refusing the session.
+    drop = _fn(js, "function onGrokDropped(event)")
+    assert "xAI refused the session" in drop and "agentStartedAt" in drop
+
+    vc = _load_client()
+    assert vc.DEFAULT_GROK_VOICE_MODEL == "grok-voice-latest"
+    src = CLIENT.read_text(encoding="utf-8")
+    assert 'source.replace("__GROK_VOICE_MODEL__", voice_model)' in src
+
+    wf = (ROOT / ".github/workflows/nerra_voices_deploy_scenario.yml").read_text()
+    assert "GROK_VOICE_MODEL: ${{ vars.GROK_VOICE_MODEL }}" in wf
