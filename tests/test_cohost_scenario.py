@@ -143,7 +143,7 @@ class TestRoom:
         assert "scheduleTeardown()" in body
 
     def test_rejoin_grace(self, js):
-        assert "REJOIN_GRACE_MS = 90 * 1000" in js
+        assert "REJOIN_GRACE_MS = 45 * 1000" in js
         body = _fn(js, "function scheduleTeardown()")
         assert 'if (legs.length === 0) endRoom("normal")' in body
         admit = _fn(js, "function admitLeg(call, role)")

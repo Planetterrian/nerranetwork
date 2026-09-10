@@ -1,0 +1,44 @@
+# Nerra Voices — xAI key preflight (Sept 10 2026). The Voximplant Grok
+# connector answers a bad key with a bare "WebSocket.Close 1011 Internal
+# server error"; this asks xAI directly what it thinks of the key the
+# scenario is deployed with (GROK_API_KEY). Prints status only, never the key.
+name: xAI key check
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Ask xAI about the key
+        run: |
+          python3 - <<'PY'
+          import json, os, urllib.request
+          key = os.environ.get("GROK_API_KEY", "")
+          print("key present:", bool(key), "| length:", len(key), "| starts with xai-:", key.startswith("xai-"),
+                "| has whitespace:", key != key.strip())
+          req = urllib.request.Request("https://api.x.ai/v1/api-key",
+                                       headers={"Authorization": "Bearer " + key.strip()})
+          try:
+              with urllib.request.urlopen(req, timeout=30) as r:
+                  info = json.loads(r.read().decode())
+                  print("HTTP", r.status)
+                  for k in ("name", "status", "acls", "api_key_blocked", "api_key_disabled", "team_blocked", "create_time"):
+                      if k in info: print(f"  {k}: {info[k]}")
+          except urllib.error.HTTPError as e:
+              print("HTTP", e.code, e.read().decode()[:300])
+          req = urllib.request.Request("https://api.x.ai/v1/models",
+                                       headers={"Authorization": "Bearer " + key.strip()})
+          try:
+              with urllib.request.urlopen(req, timeout=30) as r:
+                  models = [m.get("id") for m in json.loads(r.read().decode()).get("data", [])]
+                  print("models visible:", len(models), "| voice models:", [m for m in models if "voice" in m])
+          except urllib.error.HTTPError as e:
+              print("models HTTP", e.code, e.read().decode()[:300])
+          PY
+        env:
+          GROK_API_KEY: ${{ secrets.GROK_API_KEY }}

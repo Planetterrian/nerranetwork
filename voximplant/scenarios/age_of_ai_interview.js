@@ -70,7 +70,10 @@ const GROK_DROP_GUARD_MS = 1500;                   // spec §7: teardown-race gu
 const PLANNED_MIN = 45;            // soft interview length the prompt paces to
 const TIME_CHECK_EVERY_MS = 5 * 60 * 1000;
 const ROOM_PREFIX = "room-";       // callConference id = ROOM_PREFIX + run id (rule ^room-.*)
-const REJOIN_GRACE_MS = 90 * 1000; // room stays up this long after the last human leaves
+// Voximplant ends a session that has had no call for 60 s (session
+// limits) — a 90 s grace never fired its webhook and left runs stuck
+// in_progress (Sept 10 2026). Stay under the limit.
+const REJOIN_GRACE_MS = 45 * 1000; // room stays up this long after the last human leaves
 const OPENING_WAIT_MS = 20 * 1000; // Mira opens when a guest is in, or after 20 s with only the host
 const AUDIO_CHECK_AFTER_MS = 12 * 1000; // trace whether the mix has carried speech yet (diagnostic only)
 const ROLES = { guest: true, host: true };

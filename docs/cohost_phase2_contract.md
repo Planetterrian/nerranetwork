@@ -27,7 +27,7 @@
 >   checks, hard cap, completion webhook. Routing rule `age-of-ai-room`
 >   (`^room-.*`) is created/kept first by the deploy workflow
 >   (`voximplant_client.ensure_room_rule`).
-> * **Rejoin grace.** The room ends `REJOIN_GRACE_MS` (90 s) after the
+> * **Rejoin grace.** The room ends `REJOIN_GRACE_MS` (45 s; Voximplant ends a call-less session at 60 s) after the
 >   last human leaves; a rejoin cancels it. Joins and leaves mid-show are
 >   injected as system notes so Mira acknowledges them.
 > * **Recording URLs.** Participant sessions post `/voices/leg-event`
