@@ -172,6 +172,25 @@ def cohost_label() -> str:
     return cohost_name().split()[0]
 
 
+def package_review_token(package_id: str, admin_token: Optional[str] = None) -> str:
+    """Per-package gate-1 token; safe to put in an email.
+
+    Must stay byte-for-byte identical to ``packageReviewToken()`` in the
+    Worker: ``hex(HMAC_SHA256(admin_token, "nerra-review:" + id))[:40]``.
+    It opens exactly one editorial package and grants nothing else.
+    """
+    import hashlib
+    import hmac
+    token = (admin_token if admin_token is not None
+             else os.environ.get("ADMIN_TOKEN", "")).strip()
+    if not token:
+        raise RuntimeError("ADMIN_TOKEN is required to derive review tokens")
+    digest = hmac.new(token.encode("utf-8"),
+                      f"nerra-review:{package_id}".encode("utf-8"),
+                      hashlib.sha256).hexdigest()
+    return digest[:40]
+
+
 def send_email(to: str, subject: str, html_body: str,
                cc_operator: bool = False) -> None:
     """Send mail as Mira. ``cc_operator=True`` copies Patrick — the July

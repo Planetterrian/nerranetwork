@@ -29,6 +29,7 @@ from __future__ import annotations
 import datetime as dt
 import json
 import os
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -36,9 +37,10 @@ from pathlib import Path
 import requests
 
 from common import (  # noqa: E402
-    cohost_label, cohost_name, llm, load_prompt, logger, new_review_token,
-    notify_operator, parse_json_lenient, r2_upload, render_email, sb_insert,
-    sb_select, sb_update, send_email, show_for,
+    OPERATOR_EMAIL, cohost_label, cohost_name, llm, load_prompt, logger,
+    new_review_token, notify_operator, package_review_token,
+    parse_json_lenient, r2_upload, render_email, sb_insert, sb_select,
+    sb_update, send_email, show_for,
 )
 
 sys.path.insert(0, str(Path(__file__).parent))
@@ -46,7 +48,8 @@ from audio.local_tracks import (  # noqa: E402
     align_to_reference, fetch_local_track,
 )
 from audio.mix_tracks import (  # noqa: E402
-    duration_seconds, mix_interview, mix_three, split_channels, split_left,
+    duration_seconds, mix_interview, mix_three, mix_two, split_channels,
+    split_left,
 )
 from validators.schema_validators import validate_pass_output  # noqa: E402
 
@@ -399,17 +402,44 @@ def main() -> int:
             mixed = mix_three(tracks["guest"], tracks["host"], tracks["mira"],
                               workdir / "mixed.wav")
             transcript, confidence = diarized_transcript_three(tracks, app, workdir)
+        elif tracks["sources"].get("guest") == "local":
+            # No co-host, but the guest's browser recording arrived intact.
+            # Sept 10 2026: this branch used to fall through to mixing the
+            # raw Voximplant stereo, throwing away a 192 kbps local track
+            # for no reason. Keep the clean-track path with two speakers.
+            for speaker in ("guest", "mira"):
+                processed[speaker] = r2_upload(
+                    tracks[speaker], show.r2_key("raw", f"{run['id']}_{speaker}.wav"))
+            mixed = mix_two(tracks["guest"], tracks["mira"], workdir / "mixed.wav")
+            transcript, confidence = diarized_tracks(
+                [(_guest_label(app), tracks["guest"]), ("Mira", tracks["mira"])],
+                workdir)
         else:
-            # Pre-Phase-2 / host never joined: the original two-track path.
+            # Pre-Phase-2, no co-host and no usable local track: the
+            # original two-track path off the raw Voximplant stereo.
             mixed = mix_interview(raw, workdir / "mixed.wav")
             transcript, confidence = diarized_transcript(raw, workdir)
         mixed_url = r2_upload(mixed, show.r2_key("raw", f"{run['id']}_{stamp}_mixed.wav"))
+        # A review copy both humans can actually stream. The mixed WAV is
+        # ~250 MB for a 45-minute call, which is a cruel thing to put in
+        # front of a guest on a phone (Sept 10 2026).
+        preview_url = None
+        try:
+            preview = workdir / "preview.mp3"
+            subprocess.run(["ffmpeg", "-y", "-i", str(mixed), "-c:a", "libmp3lame",
+                            "-b:a", "96k", "-ac", "1", str(preview)],
+                           check=True, capture_output=True)
+            preview_url = r2_upload(preview, show.r2_key(
+                "raw", f"{run['id']}_{stamp}_preview.mp3"))
+        except Exception:  # noqa: BLE001 — the review pages fall back to the WAV
+            logger.exception("Review preview MP3 failed (non-fatal)")
         logger.info("track sources: %s; processed: %s; durable legs: %s",
                     tracks["sources"], processed, durable)
 
         session_log = dict(run.get("grok_session_log") or {})
         session_log["tracks"] = {"sources": tracks["sources"],
-                                 "processed": processed, "durable": durable}
+                                 "processed": processed, "durable": durable,
+                                 "preview": preview_url}
         sb_update("interview_runs", f"id=eq.{run['id']}", {
             "status": "completed",
             "recording_guest_url": raw_url,
@@ -450,11 +480,35 @@ def main() -> int:
                       {"topical_show_fits": package["topical_show_fits"]})
 
     flag_note = f" ⚠️ {', '.join(flags)}" if flags else ""
+    # Sept 10 2026: this link used to go out without a token, so it 401'd
+    # until Patrick pasted the admin token by hand — and it went to Slack
+    # only, so a quiet Slack meant no signal at all that a package was
+    # waiting. Now it is a real link, by email as well as Slack.
+    try:
+        review_url = f"{REVIEW_BASE}/{pkg['id']}?token={package_review_token(pkg['id'])}"
+    except Exception:  # noqa: BLE001 — never lose the notification over this
+        logger.exception("Review token unavailable; sending the bare link")
+        review_url = f"{REVIEW_BASE}/{pkg['id']}"
     notify_operator(show.slack(
         f"{app['name']} interview processed "
         f"({int(duration // 60)} min).{flag_note} "
-        f"Review (gate 1): {REVIEW_BASE}/{pkg['id']}"
+        f"Review (gate 1): {review_url}"
     ))
+    try:
+        send_email(
+            OPERATOR_EMAIL,
+            f"{show.short_label}: {app['name']} is ready for your review",
+            f"<p>Hi Patrick,</p>"
+            f"<p>The interview with <strong>{app['name']}</strong> "
+            f"({int(duration // 60)} minutes) is processed and waiting at gate 1."
+            f"{' <strong>Flagged: ' + ', '.join(flags) + '.</strong>' if flags else ''}"
+            f" The page has the audio, the episode notes, the cleaned transcript "
+            f"and the newsletter draft, with Approve and Kill on the bottom:</p>"
+            f'<p><a href="{review_url}">Review this episode</a></p>'
+            f"<p>Nothing reaches the guest until you approve here.</p>"
+            f"<p>— Mira</p>")
+    except Exception:  # noqa: BLE001 — Slack already carries the link
+        logger.exception("Gate 1 email failed (non-fatal)")
     logger.info("Editorial package %s ready for Patrick", pkg["id"])
     return 0
 

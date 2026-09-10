@@ -36,6 +36,9 @@ jobs:
       - run: python pipelines/voices/post_interview.py
         env:
           INTERVIEW_RUN_ID: ${{ github.event.client_payload.run_id }}
+          # ADMIN_TOKEN derives the per-package gate-1 review token that
+          # goes in Patrick's email (must match the Worker's).
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
           SUPABASE_URL: ${{ secrets.VOICES_SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.VOICES_SUPABASE_SERVICE_KEY }}
           GROK_API_KEY: ${{ secrets.GROK_API_KEY }}

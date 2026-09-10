@@ -185,6 +185,29 @@ def mix_three(guest_wav: Path, host_wav: Path, mira_wav: Path,
     return out_path
 
 
+def mix_two(guest_wav: Path, mira_wav: Path, out_path: Path) -> Path:
+    """Leveled mono mix of two clean speaker tracks (guest, Mira).
+
+    Sept 10 2026: when no co-host is in the room the pipeline used to fall
+    back to mixing the raw Voximplant stereo file, silently discarding the
+    guest's 192 kbps browser recording. This keeps the clean-track path
+    alive for a two-person conversation; same gentle chain as mix_three."""
+    out_path = Path(out_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    gentle = ("highpass=f=60,"
+              "acompressor=threshold=-21dB:ratio=3:attack=20:release=250,"
+              "dynaudnorm=f=250:g=15")
+    _run(["ffmpeg", "-y", "-i", guest_wav, "-i", mira_wav,
+          "-filter_complex",
+          "[0:a]aformat=channel_layouts=mono[g];"
+          "[1:a]aformat=channel_layouts=mono[m];"
+          "[g][m]amix=inputs=2:duration=longest:normalize=0,"
+          f"{gentle}[out]",
+          "-map", "[out]", "-ar", "48000", "-ac", "1", "-c:a", "pcm_s16le",
+          out_path])
+    return out_path
+
+
 def duration_seconds(path: Path) -> float:
     out = subprocess.run(
         ["ffprobe", "-v", "quiet", "-show_entries", "format=duration",

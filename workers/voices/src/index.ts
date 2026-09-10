@@ -271,6 +271,49 @@ function requireAdmin(req: Request, env: Env): Response | null {
   return null;
 }
 
+// Gate 1 used to be reachable only with the raw ADMIN_TOKEN, and the
+// Slack ping linked to it without one — so the link 401'd until Patrick
+// pasted the token by hand, and nothing was emailed at all (Sept 10
+// 2026). A per-package token, derived the same way studio passwords are,
+// is safe to put in an email: it opens exactly one package and carries no
+// admin rights anywhere else.
+//   hex(HMAC_SHA256(ADMIN_TOKEN, "nerra-review:" + packageId))[:40]
+// The Python side computes the identical value (pipelines/voices/common.py,
+// package_review_token) to build the link it emails.
+async function packageReviewToken(env: Env, packageId: string): Promise<string> {
+  const token = (env.ADMIN_TOKEN || "").trim();
+  if (!token) throw new Error("ADMIN_TOKEN required to derive review tokens");
+  const enc = new TextEncoder();
+  const cryptoKey = await crypto.subtle.importKey(
+    "raw", enc.encode(token), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const sig = await crypto.subtle.sign("HMAC", cryptoKey, enc.encode(`nerra-review:${packageId}`));
+  return Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 40);
+}
+
+/** Admin rights, or the per-package review token for THIS package. */
+async function requirePackageAccess(req: Request, env: Env, packageId: string):
+    Promise<Response | null> {
+  const url = new URL(req.url);
+  const supplied = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "")
+    || url.searchParams.get("token") || "";
+  if (env.ADMIN_TOKEN && supplied === env.ADMIN_TOKEN) return null;
+  if (supplied && packageId) {
+    try {
+      if (supplied === await packageReviewToken(env, packageId)) return null;
+    } catch { /* fall through to 401 */ }
+  }
+  return json({ error: "unauthorized" }, 401);
+}
+
+/** What a reviewer should stream: the small MP3 preview the post-interview
+ *  job renders when it can, falling back to the raw mixed WAV (which for a
+ *  45-minute call is a ~250 MB download and punishing on a phone). */
+function reviewAudioUrl(run: any): string | null {
+  const preview = run?.grok_session_log?.tracks?.preview;
+  const url = (typeof preview === "string" && preview) || run?.recording_mixed_url;
+  return typeof url === "string" && url ? url : null;
+}
+
 const esc = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
@@ -675,12 +718,14 @@ async function handleTriageReassign(req: Request, env: Env): Promise<Response> {
 }
 
 async function handleEditorialDecision(req: Request, env: Env): Promise<Response> {
-  const denied = requireAdmin(req, env);
-  if (denied) return denied;
   const body = await req.json<any>().catch(() => null);
   if (!body?.package_id || !["approve", "kill"].includes(body.decision)) {
     return json({ error: "package_id + decision(approve|kill) required" }, 400);
   }
+  // Scoped to the package being decided: a review link can approve or kill
+  // its own episode and nothing else.
+  const denied = await requirePackageAccess(req, env, String(body.package_id));
+  if (denied) return denied;
   const status = body.decision === "approve" ? "approved_by_patrick" : "killed";
   const rows = await sb(env, "PATCH", `editorial_packages?id=eq.${body.package_id}`, {
     status,
@@ -699,10 +744,11 @@ async function handleEditorialDecision(req: Request, env: Env): Promise<Response
     if (!interview || !app) return json({ error: "interview/application not found" }, 404);
     await sb(env, "PATCH", `interviews?id=eq.${interview.id}`, { status: "guest_review" });
     const link = `https://api.nerranetwork.com/voices/review/${pkg.guest_review_token}`;
-    await email(env, app.email, `Your ${show.shortLabel} transcript is ready for review`,
+    await email(env, app.email, `Your ${show.shortLabel} conversation is ready for review`,
       `<p>Hi ${esc(app.name)},</p>
-       <p>Your conversation with Mira is edited and ready. Please review the
-       transcript — approve it as-is, or mark anything you'd like removed:</p>
+       <p>Your conversation with Mira is edited and ready. Have a listen and
+       read through the transcript — approve it as-is, or mark anything
+       you'd like removed:</p>
        <p><a href="${esc(link)}">${esc(link)}</a></p>
        <p>If we don't hear from you within seven days we'll take that as
        approval (we'll remind you at day four). You can always request
@@ -731,18 +777,29 @@ async function handleGuestReviewPage(env: Env, token: string): Promise<Response>
     return html("<h1>Already approved — thank you!</h1>");
   }
   const { show } = await interviewWithApp(env, pkg.interview_id);
+  // The guest reviewed a transcript and never heard a word of it until
+  // publication (Sept 10 2026). They approve the audio too, so give them
+  // the audio: the same mixed recording Patrick listens to at gate 1.
+  const run = (await sb(env, "GET",
+    `interview_runs?id=eq.${pkg.interview_run_id}&select=recording_mixed_url,grok_session_log`))?.[0] ?? {};
+  const listenUrl = reviewAudioUrl(run);
   return html(`<!doctype html><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex">
-<title>Review your ${esc(show.shortLabel)} transcript</title>
+<title>Review your ${esc(show.shortLabel)} conversation</title>
 <style>body{font:16px/1.6 system-ui;max-width:760px;margin:2rem auto;padding:0 1rem;color:#1a202c}
 pre{white-space:pre-wrap;background:#f7fafc;border:1px solid #e2e8f0;border-radius:8px;padding:1rem;max-height:60vh;overflow:auto}
 textarea{width:100%;min-height:90px}button{background:${show.brandColor};color:#fff;border:0;border-radius:8px;padding:.7rem 1.4rem;font-size:1rem;cursor:pointer;margin-right:.6rem}
 .secondary{background:#4a5568}</style>
-<h1>Your ${esc(show.shortLabel)} transcript</h1>
-<p>Everything below is what would publish. Approve it as-is, or tell us what
-to remove — quote the passage(s) and we'll cut them from both the audio and
-the transcript before anything goes out.</p>
+<h1>Your ${esc(show.shortLabel)} conversation</h1>
+<p>Here is the recording and the transcript — this is what would publish.
+Have a listen, then approve it as-is, or tell us what to remove: quote the
+passage(s) and we'll cut them from both the audio and the transcript before
+anything goes out.</p>
+${listenUrl
+  ? `<audio controls preload="none" src="${esc(listenUrl)}" style="width:100%;margin:1rem 0"></audio>`
+  : `<p><em>The audio is still being processed — the transcript below is final. Check back shortly, or approve on the transcript alone.</em></p>`}
+<h3>Transcript</h3>
 <pre>${esc(pkg.transcript_cleaned ?? pkg.transcript_raw ?? "")}</pre>
 <h3>Request removals (optional)</h3>
 <textarea id="redactions" placeholder="Quote any passage you'd like removed, one per line, with a word on why if you like."></textarea>
@@ -847,7 +904,7 @@ async function reassign(id){
 }
 
 async function handleAdminReview(req: Request, env: Env, id: string): Promise<Response> {
-  const denied = requireAdmin(req, env);
+  const denied = await requirePackageAccess(req, env, id);
   if (denied) return denied;
   const rows = await sb(env, "GET", `editorial_packages?id=eq.${id}&limit=1`);
   const pkg = rows?.[0];
@@ -862,7 +919,7 @@ textarea{width:100%;min-height:80px}button{padding:.6rem 1.2rem;margin-right:.6r
 h1{border-left:6px solid ${show.brandColor};padding-left:.6rem}</style>
 <h1>${esc(show.name)} — editorial review (gate 1)</h1>
 <p>Guest: <b>${esc(app?.name ?? "unknown")}</b> · Status: <b>${esc(pkg.status)}</b>${pkg.audio_quality_flag ? ` · ⚠️ ${esc(pkg.audio_quality_flag)}` : ""}</p>
-${run.recording_mixed_url ? `<audio controls src="${esc(run.recording_mixed_url)}" style="width:100%"></audio>` : ""}
+${reviewAudioUrl(run) ? `<audio controls preload="none" src="${esc(reviewAudioUrl(run)!)}" style="width:100%"></audio>` : ""}
 <h3>Episode notes</h3><pre>${esc(pkg.episode_notes ?? "")}</pre>
 <h3>Cleaned transcript</h3><pre>${esc(pkg.transcript_cleaned ?? "")}</pre>
 <h3>Newsletter draft</h3><pre>${esc(pkg.newsletter_draft ?? "")}</pre>
