@@ -690,6 +690,10 @@ function armRotation() {
 async function rotateAgent() {
   rotateTimer = null;
   if (roomEnded || rotating || !grokAgent) return;
+  // Nobody is in the room (everyone dropped, or the room is draining). A
+  // fresh session would just burn an xAI session on silence; wait for a
+  // rejoin instead. If the room really is over, endRoom() clears the timer.
+  if (legs.length === 0) { rotateTimer = setTimeout(rotateAgent, 15 * 1000); return; }
   rotating = true;
   const previous = grokAgent;
   const note = handoverNote();

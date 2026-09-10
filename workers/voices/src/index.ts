@@ -471,7 +471,9 @@ async function handleInterviewComplete(req: Request, env: Env): Promise<Response
       status: "awaiting_guest",
       duration_sec: null,
       disconnect_reason: null,
-      grok_session_log: { aborted_attempts: attempts,
+      // Merge, never replace: the log already holds per-leg recording URLs
+      // and hand-over history that a short run must not wipe out.
+      grok_session_log: { ...existingLog, aborted_attempts: attempts,
         last_aborted: { duration_sec: dur,
           record_url: payload.voximplant_record_url ?? null,
           at: new Date().toISOString() } },

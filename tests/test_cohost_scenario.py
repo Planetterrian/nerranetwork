@@ -385,8 +385,13 @@ class TestSessionRelay:
         assert "previous.stopMediaTo(conf)" in body
         # A failed hand-over must not kill a live interview.
         assert "staying on the current session" in body
-        # Humans are never touched by a hand-over.
-        assert "hangup" not in body and "legs" not in body
+        # Humans are never touched by a hand-over: no leg is hung up, no leg
+        # is removed from the room. (Reading legs.length to skip a pointless
+        # rotation of an empty room is fine.)
+        assert ".hangup(" not in body and "legs.splice" not in body
+        assert "legs.push" not in body
+        # An empty room does not burn a fresh xAI session on silence.
+        assert "legs.length === 0" in body
 
     def test_old_socket_closing_is_not_a_drop(self, js):
         body = _fn(js, "function onAgentClosed(generation, event)")
