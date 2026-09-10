@@ -582,8 +582,12 @@ class TestMigrationAndTemplates:
         assert common.cohost_name() == "Patrick Novak"
         assert common.cohost_label() == "Patrick"
         assert common.operator_phone() == ""
-        monkeypatch.setenv("OPERATOR_PHONE", " +1604 ")
-        assert common.operator_phone() == "+1604"
+        # Sept 10 2026: operator_phone normalises to E.164 (Voximplant
+        # rejects anything else with "'destination' parameter is invalid").
+        monkeypatch.setenv("OPERATOR_PHONE", " (604) 644-2382 ")
+        assert common.operator_phone() == "+16046442382"
+        monkeypatch.setenv("OPERATOR_PHONE", "+1604")   # too short to be real
+        assert common.operator_phone() == ""
         assert callable(common.r2_download) and callable(common.r2_read_json)
 
     def test_r2_read_json_returns_none_on_missing_key(self, monkeypatch):
@@ -609,3 +613,30 @@ class TestMigrationAndTemplates:
             assert needle in plan, needle
         nv = (ROOT / "docs" / "nerra_voices.md").read_text(encoding="utf-8")
         assert "co-host flow" in nv
+
+
+class TestPhoneNormalisation:
+    """Matt Davis, Sept 10 2026: his number was stored as "7737240695", so
+    Voximplant refused the reminder SMS (code 423) and the phone fallback
+    would have failed too. Every number must reach the API as E.164."""
+
+    def test_to_e164(self):
+        from common import to_e164
+        assert to_e164("7737240695") == "+17737240695"
+        assert to_e164("(773) 724-0695") == "+17737240695"
+        assert to_e164("1-773-724-0695") == "+17737240695"
+        assert to_e164("+1 604 644 2382") == "+16046442382"
+        assert to_e164("004420 7946 0958") == "+442079460958"
+        assert to_e164("") == "" and to_e164(None) == "" and to_e164("abc") == ""
+
+    def test_fire_normalises_both_paths(self):
+        src = (ROOT / "pipelines/voices/fire_interviews.py").read_text()
+        assert src.count("to_e164(app.get(\"phone\"))") == 2, \
+            "reminder SMS and the run row must both normalise the guest number"
+
+    def test_reminder_is_claimed_before_it_can_throw(self):
+        """A bad number must not re-send the co-host email every 5 minutes."""
+        src = (ROOT / "pipelines/voices/fire_interviews.py").read_text()
+        body = src.split("def send_reminders()")[1].split("\ndef ")[0]
+        assert body.index('"reminder_sent_at"') < body.index("send_sms(")
+        assert body.count('"reminder_sent_at"') == 1

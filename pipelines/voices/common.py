@@ -21,6 +21,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
@@ -130,9 +131,35 @@ OPERATOR_EMAIL = os.environ.get("OPERATOR_EMAIL", "patricknovak1@gmail.com")
 COHOST_NAME_DEFAULT = "Patrick Novak"
 
 
+def to_e164(raw: str, default_country: str = "1") -> str:
+    """Normalise a human-typed phone number to E.164, or "" if unusable.
+
+    Sept 10 2026 (Matt Davis): guests type their number however they like —
+    his was stored as "7737240695". Voximplant answered every send with
+    "'destination' parameter is invalid" (code 423), so his reminder SMS
+    never went out AND the automatic phone fallback would have failed too.
+    Nothing normalised the number between the application form and the API.
+    """
+    digits = re.sub(r"[^\d+]", "", str(raw or "").strip())
+    if not digits:
+        return ""
+    if digits.startswith("+"):
+        rest = re.sub(r"\D", "", digits[1:])
+        return ("+" + rest) if 8 <= len(rest) <= 15 else ""
+    digits = re.sub(r"\D", "", digits)
+    if len(digits) == 10:                       # 7737240695 → +17737240695
+        return "+" + default_country + digits
+    if len(digits) == 11 and digits.startswith("1"):
+        return "+" + digits
+    # 00-prefixed international (0044…) or a plain international number.
+    if digits.startswith("00") and 10 <= len(digits) <= 17:
+        return "+" + digits[2:]
+    return "+" + digits if 8 <= len(digits) <= 15 else ""
+
+
 def operator_phone() -> str:
     """E.164 operator number for the host-link SMS (empty = no SMS)."""
-    return os.environ.get("OPERATOR_PHONE", "").strip()
+    return to_e164(os.environ.get("OPERATOR_PHONE", ""))
 
 
 def cohost_name() -> str:

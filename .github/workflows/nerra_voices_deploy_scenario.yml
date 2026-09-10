@@ -45,6 +45,9 @@ jobs:
           GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
           # Optional override; blank falls back to grok-voice-latest.
           GROK_VOICE_MODEL: ${{ vars.GROK_VOICE_MODEL }}
+          # xAI's per-session ceiling in minutes; the room hands over 4 min
+          # before it. Set to something small (e.g. 6) to rehearse a hand-over.
+          GROK_SESSION_MAX_MIN: ${{ vars.GROK_SESSION_MAX_MIN }}
       # Room rule (Sept 9 2026): participants join their interview with
       # VoxEngine.callConference("room-<run id>"); this rule routes those
       # calls to the scenario and is kept first in the rule list.

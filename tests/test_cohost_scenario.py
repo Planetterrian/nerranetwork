@@ -150,11 +150,11 @@ class TestRoom:
         assert "clearTimeout(teardownTimer)" in admit, "a rejoin must cancel the pending teardown"
 
     def test_mira_bridged_to_the_mix(self, js):
-        session = _fn(js, "async function startAgent()")
-        assert "VoxEngine.sendMediaBetween(grokAgent, conf)" in session
+        session = _fn(js, "async function createAgent(note)")
+        assert "VoxEngine.sendMediaBetween(agent, conf)" in session
         assert "startMiraRecorder()" in session and "sessionReady = true" in session
         assert "maybeOpen()" in session
-        assert "InputAudioBufferSpeechStarted" in js and "grokAgent.clearMediaBuffer()" in js
+        assert "InputAudioBufferSpeechStarted" in js and "agent.clearMediaBuffer()" in js
         assert "ResponseFunctionCallArgumentsDone, onToolCall" in session
 
     def test_opening_waits_for_a_guest_or_20s(self, js):
@@ -354,3 +354,43 @@ def test_voice_agent_model_is_explicit_and_deployed():
 
     wf = (ROOT / ".github/workflows/nerra_voices_deploy_scenario.yml").read_text()
     assert "GROK_VOICE_MODEL: ${{ vars.GROK_VOICE_MODEL }}" in wf
+
+
+class TestSessionRelay:
+    """xAI kills one Voice Agent session at GROK_SESSION_MAX_MIN (30 on
+    Tier 3), but interviews are booked for 45. The room hands the
+    conversation to a fresh session before the ceiling, carrying a
+    transcript, so nobody is cut off mid-sentence."""
+
+    def test_rotation_is_armed_and_configurable(self, js):
+        assert '__GROK_SESSION_MAX_MIN__' in js and "return (raw > 0) ? raw : 30;" in js
+        assert "ROTATE_AFTER_MS_DEFAULT = Math.max(2, GROK_SESSION_MAX_MIN - 4)" in js
+        assert "rotate_after_sec" in js, "a run row must be able to shorten it for a rehearsal"
+        assert "setTimeout(rotateAgent, rotateAfterMs())" in js
+
+    def test_handover_note_tells_her_to_continue(self, js):
+        body = _fn(js, "function handoverNote()")
+        for needle in ("ALREADY IN PROGRESS", "Do NOT re-introduce yourself",
+                       "do NOT repeat questions already asked", "conversation so far"):
+            assert needle in body, needle
+
+    def test_transcript_is_captured_from_both_sides(self, js):
+        assert "ResponseOutputAudioTranscriptDone" in js and 'remember("Mira"' in js
+        assert "input_audio_transcription.completed" in js and 'remember("Guest"' in js
+
+    def test_swap_keeps_the_room_and_recordings(self, js):
+        body = _fn(js, "async function rotateAgent()")
+        assert "next = await createAgent(note)" in body
+        assert "grokAgent = next" in body
+        assert "previous.stopMediaTo(conf)" in body
+        # A failed hand-over must not kill a live interview.
+        assert "staying on the current session" in body
+        # Humans are never touched by a hand-over.
+        assert "hangup" not in body and "legs" not in body
+
+    def test_old_socket_closing_is_not_a_drop(self, js):
+        body = _fn(js, "function onAgentClosed(generation, event)")
+        assert "generation !== agentGeneration" in body and "expected" in body
+        assert "if (rotating) return;" in body
+        drop = _fn(js, "function onGrokDropped(event)")
+        assert "|| rotating" in drop

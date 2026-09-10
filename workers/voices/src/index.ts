@@ -129,6 +129,22 @@ export function showFor(...rows: Array<{ show?: unknown } | null | undefined>): 
 
 export type StudioRole = "guest" | "host";
 
+/** Phone number → E.164, or null when it cannot be one. A bare 10-digit
+ *  number is assumed North American (+1); 11 digits starting 1 likewise. */
+export function toE164(raw: unknown, defaultCountry = "1"): string | null {
+  const s = String(raw ?? "").trim();
+  if (!s) return null;
+  if (s.startsWith("+")) {
+    const rest = s.slice(1).replace(/\D/g, "");
+    return rest.length >= 8 && rest.length <= 15 ? `+${rest}` : null;
+  }
+  const d = s.replace(/\D/g, "");
+  if (d.length === 10) return `+${defaultCountry}${d}`;
+  if (d.length === 11 && d.startsWith("1")) return `+${d}`;
+  if (d.startsWith("00") && d.length >= 10 && d.length <= 17) return `+${d.slice(2)}`;
+  return d.length >= 8 && d.length <= 15 ? `+${d}` : null;
+}
+
 /** Studio page URL. Guests get `&role=guest`; the co-host link is the
  *  same page with `&role=host` — since Sept 9 2026 (rooms) it carries NO
  *  token: everyone joins the interview room the same way, the role only
@@ -283,7 +299,11 @@ async function handleApply(req: Request, env: Env): Promise<Response> {
   const fields: Record<string, unknown> = {
     name: String(form.name).slice(0, 200),
     email: emailAddr,
-    phone: form.phone ? String(form.phone).slice(0, 40) : null,
+    // Normalise at the door (Sept 10 2026): a guest typed "7737240695" and
+    // Voximplant refused every send with "'destination' parameter is
+    // invalid", costing him his reminder SMS and his phone fallback. Bare
+    // 10-digit numbers are assumed US/Canada (+1).
+    phone: toE164(form.phone),
     organization: form.organization ? String(form.organization).slice(0, 200) : null,
     title: form.title ? String(form.title).slice(0, 200) : null,
     bio: form.bio ? String(form.bio).slice(0, 4000) : null,

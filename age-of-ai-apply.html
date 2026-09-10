@@ -90,8 +90,12 @@
     <label for="email">Email *</label>
     <input id="email" name="email" type="email" required maxlength="200" autocomplete="email">
 
-    <label for="phone">Phone number (the one Mira should call)</label>
-    <input id="phone" name="phone" maxlength="40" placeholder="+1 604 …" autocomplete="tel">
+    <label for="phone">Phone number (for your reminder text, and as a backup if the browser studio fails)</label>
+    <input id="phone" name="phone" type="tel" maxlength="40"
+           placeholder="+1 604 644 2382" autocomplete="tel"
+           aria-describedby="phoneHint">
+    <p class="hint" id="phoneHint">Include your country code. A plain
+    10-digit number is treated as US/Canada (+1).</p>
     <p class="hint">You can add this later — it's only needed once your interview is booked.</p>
 
     <label for="title">Role / title</label>
@@ -162,8 +166,24 @@ document.getElementById('applyForm').addEventListener('submit', async (e) => {
   const result = document.getElementById('result');
   btn.disabled = true; result.textContent = '';
   const val = id => document.getElementById(id).value.trim();
+  // Send the server a number it can actually dial (E.164). A bare 10-digit
+  // number is assumed US/Canada; anything unusable is sent as typed so the
+  // producers can chase it rather than silently losing it.
+  function normalisePhone(raw) {
+    var s = String(raw || '').trim();
+    if (!s) return '';
+    if (s.charAt(0) === '+') {
+      var rest = s.slice(1).replace(/\D/g, '');
+      return (rest.length >= 8 && rest.length <= 15) ? '+' + rest : s;
+    }
+    var d = s.replace(/\D/g, '');
+    if (d.length === 10) return '+1' + d;
+    if (d.length === 11 && d.charAt(0) === '1') return '+' + d;
+    if (d.length >= 8 && d.length <= 15) return '+' + d;
+    return s;
+  }
   const payload = {
-    name: val('name'), email: val('email'), phone: val('phone'),
+    name: val('name'), email: val('email'), phone: normalisePhone(val('phone')),
     title: val('title'), organization: val('organization'), bio: val('bio'),
     topics: val('topics').split('\n').map(s => s.trim()).filter(Boolean),
     links: { raw: val('links') },

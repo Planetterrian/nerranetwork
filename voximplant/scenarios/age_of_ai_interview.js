@@ -86,6 +86,34 @@ const ROLES = { guest: true, host: true };
 // literal below is the fallback if substitution did not run.
 const GROK_MODEL = ("__GROK_VOICE_MODEL__".indexOf("__") === 0)
   ? "grok-voice-latest" : "__GROK_VOICE_MODEL__";
+// SESSION RELAY (Sept 10 2026). xAI caps ONE Voice Agent session at
+// GROK_SESSION_MAX_MIN (30 on Tier 3, and the ceiling is a Voice Agent API
+// limit rather than a tier perk). Interviews are booked for 45 minutes, so
+// a single session would be killed mid-sentence. Instead the room hands the
+// conversation to a FRESH Mira session a few minutes before the ceiling,
+// carrying a transcript so she picks up where she left off. Humans never
+// leave the room, so the mix and every recording stay continuous.
+// Substituted at deploy time; lower it (e.g. 6) to rehearse a hand-off in
+// minutes instead of half an hour.
+const GROK_SESSION_MAX_MIN = (function () {
+  const raw = parseInt("__GROK_SESSION_MAX_MIN__", 10);
+  return (raw > 0) ? raw : 30;
+})();
+// Rotate 4 min before the ceiling, never sooner than 2 min in.
+const ROTATE_AFTER_MS_DEFAULT = Math.max(2, GROK_SESSION_MAX_MIN - 4) * 60 * 1000;
+// A run row may shorten this for a rehearsal:
+//   update interview_runs set grok_session_log =
+//     coalesce(grok_session_log,'{}'::jsonb) || '{"rotate_after_sec":90}'
+//   where id = '<run>';
+function rotateAfterMs() {
+  try {
+    const override = config && config.grok_session_log &&
+                     Number(config.grok_session_log.rotate_after_sec);
+    if (override > 0) return override * 1000;
+  } catch (err) { /* fall through */ }
+  return ROTATE_AFTER_MS_DEFAULT;
+}
+const HANDOVER_TURNS = 24;   // transcript lines carried into the next session
 
 // Shared state (each session is one of the two kinds; unused fields stay null).
 let runId = null;
@@ -396,7 +424,11 @@ let miraRecordUrl = null;
 let mixRecorder = null;     // the whole room mix (conf -> recorder), diagnostics + post-production
 let mixRecordUrl = null;
 let speechEvents = 0;       // InputAudioBufferSpeechStarted count
-let agentStartedAt = null;  // when createVoiceAgentAPIClient returned
+let agentStartedAt = null;  // when the CURRENT session's client was created
+let rotateTimer = null;     // pending hand-off to a fresh session
+let rotating = false;       // a hand-off is in flight (ignore the old socket closing)
+let agentGeneration = 0;    // 1 = first session, 2 = after the first hand-off...
+const transcript = [];      // rolling [who, text] for the hand-over note
 let sessionReady = false;   // Grok SessionUpdated received (media bridged)
 let openingFired = false;   // Mira opens exactly once
 let anyoneHeard = false;    // first InputAudioBufferSpeechStarted
@@ -518,71 +550,186 @@ function scheduleTeardown() {
   }, REJOIN_GRACE_MS);
 }
 
-async function startAgent() {
-  try {
-    // Grok Voice Agent with Mira's compiled persona, on an EXPLICIT model
-    // (never the connector's deprecated default — see GROK_MODEL above).
-    grokAgent = await Grok.createVoiceAgentAPIClient({
-      xAIApiKey: getSecret("XAI_API_KEY"),
-      model: GROK_MODEL,
-      onWebSocketClose: onGrokDropped,
-    });
-    agentStartedAt = Date.now();
-    trace("grok", "agent created (model " + GROK_MODEL + ")");
+// Remember one line of the conversation for the hand-over note. Text can
+// arrive on a few shapes depending on connector version, so dig defensively.
+function textOf(event) {
+  const e = (event && (event.data || event)) || {};
+  const p = e.payload || e;
+  const t = p.transcript || p.text || (p.delta && p.delta.transcript) ||
+            (p.item && p.item.content && p.item.content[0] &&
+             (p.item.content[0].transcript || p.item.content[0].text));
+  return typeof t === "string" ? t.trim() : "";
+}
 
-    grokAgent.addEventListener(Grok.VoiceAgentAPIEvents.ConversationCreated, function () {
-      // Voice presets are capitalized on the Voice Agent API ("Ara");
-      // the DB stores lowercase ("ara") for TTS parity.
-      const preset = (config.voice_preset || "ara");
-      grokAgent.sessionUpdate({
-        session: {
-          voice: preset.charAt(0).toUpperCase() + preset.slice(1),
-          turn_detection: { type: "server_vad" },
-          instructions: config.mira_system_prompt,
-          tools: config.tools || [],
-        },
-      });
-    });
+function remember(who, text) {
+  if (!text) return;
+  transcript.push(who + ": " + String(text).slice(0, 400));
+  if (transcript.length > 200) transcript.splice(0, transcript.length - 200);
+}
 
-    grokAgent.addEventListener(Grok.VoiceAgentAPIEvents.SessionUpdated, function () {
-      try {
-        // Bridge Mira <-> the mix: she hears everyone (minus herself),
-        // everyone hears her. Audio-conferencing API (sendMediaBetween),
-        // not Conference.add endpoints — see the file header.
-        VoxEngine.sendMediaBetween(grokAgent, conf);
+// What the next Mira needs in order to continue rather than restart.
+function handoverNote() {
+  const said = transcript.slice(-HANDOVER_TURNS).join("\n");
+  return "\n\n=== HANDOVER — READ BEFORE SPEAKING ===\n" +
+    "This interview is ALREADY IN PROGRESS and you are continuing it. The " +
+    "guest has been talking with you for about " +
+    Math.round((Date.now() - (firstJoinAt || Date.now())) / 60000) + " minutes. " +
+    "Do NOT re-introduce yourself, do NOT greet them again, do NOT restate " +
+    "the premise of the show, and do NOT repeat questions already asked. " +
+    "There was a brief technical pause; if anything, say something short and " +
+    "natural like \"sorry, go on\" and carry straight on.\n" +
+    (said ? "Here is the conversation so far:\n" + said + "\n" : "") +
+    "=== END HANDOVER ===\n";
+}
+
+/**
+ * Build a Voice Agent session and wire every listener. `note` is appended to
+ * Mira's instructions for a continuation session (null for the first one).
+ */
+async function createAgent(note) {
+  const generation = ++agentGeneration;
+  const agent = await Grok.createVoiceAgentAPIClient({
+    xAIApiKey: getSecret("XAI_API_KEY"),
+    model: GROK_MODEL,
+    onWebSocketClose: function (event) { onAgentClosed(generation, event); },
+  });
+
+  agent.addEventListener(Grok.VoiceAgentAPIEvents.ConversationCreated, function () {
+    // Voice presets are capitalized on the Voice Agent API ("Ara");
+    // the DB stores lowercase ("ara") for TTS parity.
+    const preset = (config.voice_preset || "ara");
+    agent.sessionUpdate({
+      session: {
+        voice: preset.charAt(0).toUpperCase() + preset.slice(1),
+        turn_detection: { type: "server_vad" },
+        instructions: config.mira_system_prompt + (note || ""),
+        tools: config.tools || [],
+      },
+    });
+  });
+
+  agent.addEventListener(Grok.VoiceAgentAPIEvents.SessionUpdated, function () {
+    if (generation !== agentGeneration) return; // superseded mid-handshake
+    try {
+      // Bridge Mira <-> the mix: she hears everyone (minus herself),
+      // everyone hears her. Audio-conferencing API (sendMediaBetween),
+      // not Conference.add endpoints — see the file header.
+      VoxEngine.sendMediaBetween(agent, conf);
+      if (miraRecorder) { try { agent.sendMediaTo(miraRecorder); } catch (err) { /* best-effort */ } }
+      sessionReady = true;
+      armRotation();
+      if (generation === 1) {
         trace("grok", "session updated; agent<->room mix bridged");
         startMiraRecorder();
-        sessionReady = true;
         maybeOpen();
-      } catch (err) {
-        Logger.write("[aoa " + runId + "] media-bridge failure: " + err.message);
-        endRoom("media_bridge_failed");
+      } else {
+        trace("grok", "session " + generation + " bridged — resuming the interview");
+        rotating = false;
+        // Nudge her to speak first so the seam is a beat, not a silence.
+        try { agent.responseCreate({}); } catch (err) { /* best-effort */ }
       }
-    });
+    } catch (err) {
+      Logger.write("[aoa " + runId + "] media-bridge failure: " + err.message);
+      endRoom("media_bridge_failed");
+    }
+  });
 
-    // Barge-in: flush Mira's buffered audio the moment anyone speaks.
-    grokAgent.addEventListener(Grok.VoiceAgentAPIEvents.InputAudioBufferSpeechStarted, function () {
-      speechEvents++;
-      if (!anyoneHeard) trace("grok", "first inbound speech heard (via room mix)");
-      else if (speechEvents <= 6) trace("grok", "speech heard #" + speechEvents + " (via room mix)");
-      anyoneHeard = true;
-      if (grokAgent) grokAgent.clearMediaBuffer();
-    });
-    try {
-      if (Grok.VoiceAgentAPIEvents.ResponseDone) {
-        grokAgent.addEventListener(Grok.VoiceAgentAPIEvents.ResponseDone, function () { trace("grok", "response done"); });
-      }
-    } catch (err) { /* event names differ across connector versions */ }
+  // Barge-in: flush Mira's buffered audio the moment anyone speaks.
+  agent.addEventListener(Grok.VoiceAgentAPIEvents.InputAudioBufferSpeechStarted, function () {
+    speechEvents++;
+    if (!anyoneHeard) trace("grok", "first inbound speech heard (via room mix)");
+    else if (speechEvents <= 6) trace("grok", "speech heard #" + speechEvents + " (via room mix)");
+    anyoneHeard = true;
+    if (agent === grokAgent) agent.clearMediaBuffer();
+  });
 
-    // Mira's in-call tools — WITHOUT this handler a tool call stalls her
-    // mid-conversation forever (the request is never answered).
-    grokAgent.addEventListener(Grok.VoiceAgentAPIEvents.ResponseFunctionCallArgumentsDone, onToolCall);
-    grokAgent.addEventListener(Grok.VoiceAgentAPIEvents.WebSocketError, onGrokDropped);
+  // Rolling transcript — the raw material for the hand-over note.
+  try {
+    if (Grok.VoiceAgentAPIEvents.ResponseOutputAudioTranscriptDone) {
+      agent.addEventListener(Grok.VoiceAgentAPIEvents.ResponseOutputAudioTranscriptDone,
+        function (ev) { remember("Mira", textOf(ev)); });
+    }
+    if (Grok.VoiceAgentAPIEvents.Unknown) {
+      agent.addEventListener(Grok.VoiceAgentAPIEvents.Unknown, function (ev) {
+        const raw = JSON.stringify((ev && (ev.data || ev)) || {});
+        if (raw.indexOf("input_audio_transcription.completed") >= 0) remember("Guest", textOf(ev));
+      });
+    }
+    if (Grok.VoiceAgentAPIEvents.ResponseDone) {
+      agent.addEventListener(Grok.VoiceAgentAPIEvents.ResponseDone, function () { trace("grok", "response done"); });
+    }
+  } catch (err) { /* event names differ across connector versions */ }
+
+  // Mira's in-call tools — WITHOUT this handler a tool call stalls her
+  // mid-conversation forever (the request is never answered).
+  agent.addEventListener(Grok.VoiceAgentAPIEvents.ResponseFunctionCallArgumentsDone, onToolCall);
+  agent.addEventListener(Grok.VoiceAgentAPIEvents.WebSocketError, function (event) {
+    onAgentClosed(generation, event);
+  });
+  return agent;
+}
+
+async function startAgent() {
+  try {
+    grokAgent = await createAgent(null);
+    agentStartedAt = Date.now();
+    trace("grok", "agent created (model " + GROK_MODEL + ")");
   } catch (err) {
     Logger.write("[aoa " + runId + "] agent startup failure: " + err.message);
     trace("grok", "agent startup failed: " + err.message);
     endRoom("agent_startup_failed");
   }
+}
+
+// Hand the conversation to a fresh session before xAI kills this one.
+function armRotation() {
+  if (rotateTimer) clearTimeout(rotateTimer);
+  rotateTimer = setTimeout(rotateAgent, rotateAfterMs());
+}
+
+async function rotateAgent() {
+  rotateTimer = null;
+  if (roomEnded || rotating || !grokAgent) return;
+  rotating = true;
+  const previous = grokAgent;
+  const note = handoverNote();
+  trace("grok", "handing over to a fresh session after " +
+        Math.round((Date.now() - (agentStartedAt || Date.now())) / 1000) + "s (" +
+        transcript.length + " lines of transcript, xAI cap " + GROK_SESSION_MAX_MIN + " min)");
+  let next;
+  try {
+    next = await createAgent(note);
+  } catch (err) {
+    rotating = false;
+    trace("grok", "hand-over failed, staying on the current session: " + err.message);
+    // Try again shortly; the current session still has a couple of minutes.
+    rotateTimer = setTimeout(rotateAgent, 30 * 1000);
+    return;
+  }
+  // Swap: the new session takes over the mix, the old one is unwired and
+  // closed. The humans and their recordings never move.
+  grokAgent = next;
+  agentStartedAt = Date.now();
+  try { previous.stopMediaTo(conf); } catch (err) { /* best-effort */ }
+  try { conf.stopMediaTo(previous); } catch (err) { /* best-effort */ }
+  if (miraRecorder) { try { previous.stopMediaTo(miraRecorder); } catch (err) { /* best-effort */ } }
+  setTimeout(function () {
+    try { if (previous.close) previous.close(); else if (previous.stop) previous.stop(); }
+    catch (err) { /* best-effort */ }
+  }, 2000);
+}
+
+/**
+ * A Voice Agent socket closed. Only the CURRENT session ending matters —
+ * a superseded session closing is the hand-over working as intended.
+ */
+function onAgentClosed(generation, event) {
+  if (generation !== agentGeneration) {
+    trace("grok", "old session " + generation + " closed after hand-over (expected)");
+    return;
+  }
+  if (rotating) return; // its replacement is already on the way
+  onGrokDropped(event);
 }
 
 /**
@@ -754,7 +901,7 @@ function startTimeChecks() {
  */
 let grokDropHandled = false;
 function onGrokDropped(event) {
-  if (grokDropHandled || roomEnded) return;
+  if (grokDropHandled || roomEnded || rotating) return;
   grokDropHandled = true;
   const code = (event && (event.code || event.status)) || "";
   const why = (event && (event.reason || event.message)) || "";
@@ -786,7 +933,7 @@ async function endRoom(reason) {
   if (roomEnded) return;
   roomEnded = true;
   endReason = reason;
-  [hardCapTimer, micCheckTimer, teardownTimer, openingTimer, audioCheckTimer].forEach(function (t) { if (t) clearTimeout(t); });
+  [hardCapTimer, micCheckTimer, teardownTimer, openingTimer, audioCheckTimer, rotateTimer].forEach(function (t) { if (t) clearTimeout(t); });
   if (timeCheckTimer) clearInterval(timeCheckTimer);
   trace("room", "ending: " + reason);
   if (miraRecorder) { try { miraRecorder.stop(); } catch (ignored) {} }
@@ -801,6 +948,7 @@ async function endRoom(reason) {
       voximplant_mira_record_url: miraRecordUrl,
       voximplant_mix_record_url: mixRecordUrl,
       speech_events: speechEvents,
+      agent_sessions: agentGeneration,
       host_joined_at: hostJoinedAt,
       host_left_at: hostLeftAt,
       host_attempts: hostJoins,

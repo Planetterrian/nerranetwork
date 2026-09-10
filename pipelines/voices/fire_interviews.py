@@ -25,7 +25,7 @@ import os
 from common import (  # noqa: E402
     OPERATOR_EMAIL, ROOT, cohost_name, load_prompt, logger, notify_operator,
     operator_phone, render_email, sb_insert, sb_select, sb_update, send_email,
-    show_for,
+    show_for, to_e164,
 )
 
 FIRE_WINDOW_AHEAD_MIN = 5          # phone (PSTN) interviews: Mira dials at T-5..T-0
@@ -247,17 +247,28 @@ def send_reminders() -> None:
                                  f"id=eq.{interview['application_id']}")
             app = app_rows[0] if app_rows else {}
             show = show_for(interview, app)
+            # Claim the reminder FIRST. Sept 10 2026 (Matt Davis): the guest
+            # SMS threw on an un-normalised number, so reminder_sent_at was
+            # never written and every 5-minute tick re-ran this block —
+            # Patrick got five copies of the co-host email. A reminder is
+            # best-effort; it must never be retried in a loop.
+            sb_update("interviews", f"id=eq.{interview['id']}",
+                      {"reminder_sent_at": _iso(_now())})
             # Phase 2: Patrick's T-2h co-host link goes out first (his own
             # SMS/email, never to the guest) — it does not depend on the
             # guest having a phone on file.
             if host_mode_enabled(interview):
                 notify_host(interview, app, show, when="in about 2 hours")
-            phone = (app.get("phone") or "").strip()
+            phone = to_e164(app.get("phone"))
             if not phone:
-                logger.warning("Interview %s: no phone — guest reminder skipped",
-                               interview["id"])
-                sb_update("interviews", f"id=eq.{interview['id']}",
-                          {"reminder_sent_at": _iso(_now())})
+                logger.warning("Interview %s: no usable phone (%r) — guest "
+                               "reminder SMS skipped", interview["id"],
+                               app.get("phone"))
+                notify_operator(show.slack(
+                    f"{app.get('name') or 'guest'} has no usable phone number "
+                    f"({app.get('phone')!r}) — reminder SMS and the phone "
+                    "fallback are unavailable for this interview; the emailed "
+                    "studio link still works."))
                 continue
             from voximplant.api_clients.voximplant_client import send_sms
             caller_id = interview.get("caller_id") or os.environ.get(
@@ -278,8 +289,6 @@ def send_reminders() -> None:
                     "and we'll make something great. — Mira"
                 )
             send_sms(phone, text, source_number=caller_id or None)
-            sb_update("interviews", f"id=eq.{interview['id']}",
-                      {"reminder_sent_at": _iso(_now())})
             logger.info("Reminder SMS sent for interview %s", interview["id"])
         except Exception:  # noqa: BLE001 — a reminder failure must not stop firing
             logger.exception("Reminder failed for %s (non-fatal)",
@@ -339,9 +348,17 @@ def fire_due_interviews() -> int:
                            "episode_thesis": brief["episode_thesis_draft"]})
             else:
                 brief = brief_rows[0]
-            phone = (app.get("phone") or "").strip()
+            phone = to_e164(app.get("phone"))
             if not phone:
-                raise RuntimeError("guest has no phone number on file")
+                if (interview.get("call_mode") or "webrtc") != "webrtc":
+                    raise RuntimeError(
+                        f"guest phone {app.get('phone')!r} is not a usable "
+                        "number and this interview is phone-mode")
+                # Browser interview: a bad number only costs the SMS and the
+                # phone fallback, so let the studio go ahead and say so.
+                logger.warning("Interview %s: guest phone %r unusable — studio "
+                               "only, no phone fallback", interview["id"],
+                               app.get("phone"))
             caller_id = interview.get("caller_id") or os.environ.get(
                 "VOXIMPLANT_CALLER_ID", "")
             if not caller_id:

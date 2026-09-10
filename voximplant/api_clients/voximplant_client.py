@@ -40,6 +40,9 @@ SCENARIO_NAME = "age_of_ai_interview"
 # Pin a version here or in the GROK_VOICE_MODEL repo variable if needed.
 DEFAULT_GROK_VOICE_MODEL = os.environ.get(
     "GROK_VOICE_MODEL", "").strip() or "grok-voice-latest"
+# xAI Voice Agent max session duration, minutes (console → Realtime API →
+# Rate limits). The scenario hands over to a fresh session before this.
+DEFAULT_GROK_SESSION_MAX_MIN = "30"
 _SCENARIO_PATH = (Path(__file__).resolve().parent.parent
                   / "scenarios" / "age_of_ai_interview.js")
 
@@ -142,7 +145,14 @@ def upload_scenario(path: Path,
     voice_model = (os.environ.get("GROK_VOICE_MODEL", "").strip()
                    or DEFAULT_GROK_VOICE_MODEL)
     source = source.replace("__GROK_VOICE_MODEL__", voice_model)
-    logger.info("scenario deploys with Grok voice model %s", voice_model)
+    # Session relay: xAI kills one Voice Agent session at this many minutes
+    # (30 on Tier 3). The room hands over to a fresh session 4 min before,
+    # so a 45-minute interview survives. Lower it to rehearse a hand-over.
+    session_max = (os.environ.get("GROK_SESSION_MAX_MIN", "").strip()
+                   or DEFAULT_GROK_SESSION_MAX_MIN)
+    source = source.replace("__GROK_SESSION_MAX_MIN__", str(session_max))
+    print(f"scenario deploys with Grok voice model {voice_model}, "
+          f"session cap {session_max} min", flush=True)
 
     try:
         return _call("SetScenarioInfo",
