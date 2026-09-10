@@ -1,0 +1,38 @@
+reviews:
+- date: '2026-09-10'
+  pr: null
+  doc: docs/reviews/age_of_ai_review_2026_09_10.md
+  generated_by: grok-4.5
+  summary: 'First Age of AI pass: registry/no-op shell and contingency prompts look intentional and safe, but the review harness is blind (0 local scripts/chapters/costs/OP3) to the real Nerra Voices path, and the contingency podcast prompt contradicts the network cold-open order.'
+  scored_prior_predictions: []
+  shipped: []
+  deferred:
+  - Full Nerra Voices pipeline + shipped-episode transcript/editorial quality audit (no pipeline files in this bundle)
+  - Phase-8 enable of X, YouTube, newsletter, multilingual when operator launches publicly
+  - Operator verify Apple/Spotify catalog episode counts vs age_of_ai_podcast.rss and OP3 feed resolution
+  - Voices episode_memory_block coherence with memory_enabled narrative/Story Tracker surfaces
+  - Guest-funnel and diversity metrics from Supabase Voices tables
+  - Any podcast-side min_podcast_words / expand-retry length lever (network length meta-rule; interview length is edit/guest-driven)
+  - 'TTS voice_id, speech tags, phonetic respellings, coupled speech_wrap/use_section_tts/max_chars changes (landmine #17)'
+  predictions:
+  - metric: review_snapshot_aoai_artifact_visibility
+    baseline: 0 _tts.txt, 0 chapters, no credit-usage, no OP3 row; harness treats Voices show like run_show
+    expected: snapshot emits Voices-aware episode/artifact counts (summaries/chapters/transcripts/metrics) or explicit zero_published_episodes — not a vacuous _tts cleanliness report
+    verdict: pending
+    evidence: null
+  - metric: contingency_podcast_cold_open_order
+    baseline: age_of_ai_podcast.txt puts {intro_line} before {hook} while also injecting {delivery_spec}
+    expected: contingency podcast body orders hook/substance before identity {intro_line}, consistent with delivery_spec and network cold-open
+    verdict: pending
+    evidence: null
+  proposed_changes_in_pr:
+  - file: shows/prompts/age_of_ai_podcast.txt
+    kind: prompt
+    ab_listen_required: true
+    rationale: Contingency path currently contradicts {delivery_spec} and the network cold-open contract (hook before intro_line). Low runtime probability while the topic queue stays empty, but harmless to align; any exercise of this path needs A/B-listen.
+  - file: scripts/review_snapshot.py
+    kind: code
+    ab_listen_required: false
+    rationale: 'P1 blocker: without Voices-aware substrate every AOAI review can only restate the registry shell and will mis-score empty _tts as quality.'
+  agent_cost_usd: 0.0453
+do_not_retry: []
