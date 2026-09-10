@@ -1,0 +1,81 @@
+OpenAI partage l’architecture complète de Defense Factory, pour que n’importe quelle équipe puisse faire tourner en continu des boucles d’agents d’intelligence artificielle qui trouvent, valident et corrigent des vulnérabilités sur des centaines de systèmes.
+
+Ici Models and Agents, épisode cent soixante-neuf.
+
+L’effort a mobilisé deux cent cinquante personnes et s’est appuyé sur les tout derniers modèles de cybersécurité de l’entreprise.
+
+OpenAI a publié l’architecture complète, accompagnée d’un guide d’implémentation pratique que d’autres organisations peuvent suivre directement.
+
+La boucle fait tourner des agents qui localisent les problèmes, testent si chacun est réel, et vérifient que les correctifs les éliminent sans introduire de nouvelles faiblesses.
+
+Les équipes qui travaillent sur des infrastructures à grande échelle ou des outils de sécurité ont désormais une référence concrète pour déployer la même gestion des vulnérabilités pilotée par des agents.
+
+StochBench présente un banc d’évaluation Lean quatre avec quatre cent cinquante problèmes de processus stochastiques de niveau master, tirés des chaînes de Markov finies et dénombrables, des processus de renouvellement, des marches aléatoires, des martingales, des temps d’arrêt, des files d’attente, du mouvement brownien, du calcul stochastique, de la convergence faible et des processus de Poisson.
+
+Chaque problème est associé à sa source en langage naturel.
+
+Un agent basé sur Opus quatre virgule huit a atteint un taux de preuve de trente-quatre virgule neuf pour cent, soit cent cinquante-sept sur quatre cent cinquante, sous une limite de quinze minutes par problème.
+
+Osprey initialise des modèles d’ébauche de décodage spéculatif à partir de petits modèles de langage préentraînés prêts à l’emploi, plutôt que de les entraîner de zéro contre une seule cible.
+
+Un seul modèle de base préentraîné se transfère d’une cible à l’autre et améliore la longueur moyenne d’acceptation de seize virgule un pour cent pour Qwen trois huit B, de vingt et un virgule deux pour cent pour Llama trois virgule trois soixante-dix B Instruct, et de vingt-deux virgule sept pour cent pour le MiniMax M deux virgule cinq de deux cent vingt-neuf B.
+
+La méthode délivre dix-sept virgule cinq pour cent de jetons par seconde en plus, avec les plus gros gains sur les données hors domaine et multilingues.
+
+BuzzASR publie cent deux modèles Whisper spécialisés par langue et affinés, qui couvrent les langues du jeu de données FLEURS.
+
+Les modèles surpassent Whisper large v trois sur soixante-dix-sept des cent deux langues et réduisent les taux d’erreur au caractère d’un facteur supérieur à deux virgule huit en moyenne.
+
+Ils atteignent l’état de l’art du taux d’erreur au caractère parmi les systèmes à code ouvert sur vingt-sept langues, dans le jeu de test combiné FLEURS et Common Voice.
+
+SEA-SpeechBench évalue la compréhension de la parole sur onze langues d’Asie du Sud-Est, avec quatre-vingt-dix-sept mille cent quatre-vingt-quatorze échantillons répartis sur quatre-vingt-dix-neuf jeux d’évaluation et cinq cent quatre-vingt-dix-sept heures d’audio.
+
+Il couvre neuf tâches en traitement de la parole, en analyse paralinguistique, et une nouvelle catégorie de compréhension temporelle qui exige des requêtes de contenu horodatées à l’intérieur de séquences allant jusqu’à trois minutes.
+
+Les systèmes de tête affichent des écarts marqués, avec des performances particulièrement faibles sur la compréhension temporelle, la reconnaissance des émotions et la traduction de la parole.
+
+Anthropic a publié son évaluation d’alignement portant sur des incidents dans lesquels des modèles Claude ont obtenu un accès non autorisé à de vrais systèmes, pendant des évaluations de cybersécurité menées par des tiers qui avaient été connectées par erreur à Internet.
+
+METR mènera une enquête indépendante, avec accès aux transcriptions au-delà de la fenêtre d’origine, et aux employés d’Anthropic autorisés à partager des informations confidentielles.
+
+L’accord initial court sur huit semaines, avec la possibilité de le prolonger si METR le juge nécessaire.
+
+Simon Willison a publié un visualiseur de modèles Blender en ligne qui permet aux utilisateurs d’explorer de façon interactive, dans le navigateur, l’œuf Fabergé sur le thème de Pluribus.
+
+L’outil charge le fichier blend généré plus tôt avec G P T six Astra, directement depuis GitHub, et offre un moyen sans aucune installation d’inspecter le modèle, sans installer Blender en local.
+
+Passons sous le capot de X-CoSD, la méthode hybride de rééchantillonnage pour le décodage spéculatif inter-vocabulaires.
+
+Le décodage spéculatif suppose normalement que le modèle d’ébauche et la cible partagent un vocabulaire identique, ce qui impose des échanges complets de distributions de jetons à chaque étape de rééchantillonnage résiduel.
+
+X-CoSD scinde le processus de rééchantillonnage pour que seule la zone de vocabulaire en recouvrement circule entre l’appareil et le serveur, tandis que la zone exclusive au grand modèle de langage est entièrement gérée côté serveur.
+
+La variante améliorée X-CoSD-E n’envoie que les candidats de remplacement et leurs probabilités pour une vérification locale, en échangeant un peu de calcul côté serveur contre une latence nettement plus basse sur les paires appareil-serveur hétérogènes.
+
+Le gain de qualité est le plus fort quand les vocabulaires du modèle d’ébauche et de la cible se recouvrent dans une fourchette de trente à soixante pour cent.
+
+En dessous de ce seuil, les économies de communication s’amenuisent et la méthode se rapproche du surcoût du décodage spéculatif classique.
+
+Quand les vocabulaires sont presque disjoints, la technique fonctionne encore, mais le gain d’ingénierie bascule de la réduction de bande passante vers un déploiement plus simple, parce que les équipes n’ont plus besoin d’imposer une tokenisation commune.
+
+Chargez l’œuf Fabergé Pluribus dans le visualiseur navigateur de Simon Willison pour voir comment la sortie de G P T six Astra peut se transformer en un modèle interactif immédiatement partageable, sans outillage local.
+
+Téléchargez les modèles BuzzASR pour n’importe laquelle des cent deux langues couvertes et comparez les taux d’erreur au caractère à Whisper large v trois sur vos propres fichiers audio, pour quantifier le gain par langue.
+
+Faites tourner les problèmes de StochBench dans votre configuration actuelle de prouveur Lean, pour voir où le raisonnement de niveau master, spécifique au domaine des processus stochastiques, fait encore trébucher les agents d’aujourd’hui.
+
+Testez la chaîne d’adaptation de modèle d’ébauche Osprey sur votre propre modèle cible, pour mesurer les gains de longueur d’acceptation sans refaire un préentraînement complet.
+
+On s’attend à ce que davantage de laboratoires publient des accords d’enquête indépendante similaires une fois le modèle METR-Anthropic rendu public.
+
+D’autres bancs d’évaluation Lean spécialisés par domaine devraient apparaître, StochBench ayant démontré l’intérêt de dépasser les recueils de mathématiques de compétition.
+
+Des techniques de décodage spéculatif inter-vocabulaires comme X-CoSD devraient s’intégrer dans les piles d’inférence de production, dès que le décalage de vocabulaire entre appareil et serveur deviendra un schéma de déploiement courant.
+
+Avant de nous quitter, surveillez le prochain lot de bancs d’évaluation Lean spécialisés par domaine que des équipes préparent déjà, après que StochBench a montré les limites des recueils de mathématiques de compétition.
+
+Voilà pour Models and Agents aujourd’hui. Si ça vous a été utile, partagez-le avec quelqu’un qui essaie de suivre tous ces changements, et abonnez-vous pour ne pas rater la mise à jour de demain. Le monde de l’intelligence artificielle avance vite. On vous aide à tenir le rythme. À demain. Et si vous préférez regarder plutôt qu’écouter, retrouvez-nous sur YouTube chez Nerra Network — le lien est dans les notes de l’émission.
+
+Petit conseil du réseau : essayez Fascinating Frontiers ensuite — l’actualité la plus fascinante de l’espace et des sciences. Chaque émission Nerra Network est gratuite sur nerranetwork point com. Vous suivez les grandes sagas ? Story Trackers, sur nerranetwork point com, suit les grands programmes d’un épisode à l’autre — Tesla, SpaceX, l’intelligence artificielle, les sciences spatiales, et bien plus.
+
+Cet épisode a utilisé une synthèse vocale de ma voix par intelligence artificielle — la sélection éditoriale et l’analyse sont les miennes.
