@@ -46,7 +46,9 @@ NARRATION_DIR = Path(__file__).parent / "narration"
 TAKE_TIMEOUT_SEC = 180
 POLL_SEC = 5
 BREATH_SEC = 0.45          # between paragraphs, so it reads as one take
-PARAGRAPH_MAX_CHARS = 900  # a paragraph must fit inside a 60 s session
+PARAGRAPH_MAX_CHARS = 420  # a paragraph must be SAID inside a 60 s session
+SHORT_TAKE_RATIO = 0.6     # a take this far under its script was cut off
+WORDS_PER_SEC = 2.4        # Mira's measured pace, for the truncation check
 
 
 def paragraphs(text: str) -> List[str]:
@@ -87,6 +89,32 @@ def _record_take(slug: str, segment_id: str, seq: int, text: str, voice: str) ->
         if row.get("status") == "failed":
             raise RuntimeError(f"take {take_id} failed: {row.get('detail')}")
     raise RuntimeError(f"take {take_id} never reported within {TAKE_TIMEOUT_SEC}s")
+
+
+def _duration(path: Path) -> float:
+    out = subprocess.run(["ffprobe", "-v", "quiet", "-show_entries", "format=duration",
+                          "-of", "csv=p=0", str(path)], capture_output=True, text=True)
+    try:
+        return float(out.stdout.strip())
+    except ValueError:
+        return 0.0
+
+
+def _check_not_truncated(part: Path, text: str) -> None:
+    """A take that is far shorter than its script was cut off mid-sentence.
+
+    Sept 11 2026: ResponseDone fires while Mira is still speaking, so every
+    take came back after roughly its first sentence and the episode shipped a
+    mangled introduction. Shipping a silently truncated read is worse than
+    failing, so this fails.
+    """
+    words = len(text.split())
+    expected = words / WORDS_PER_SEC
+    actual = _duration(part)
+    if actual < expected * SHORT_TAKE_RATIO:
+        raise RuntimeError(
+            f"take was cut off: {actual:.1f}s of audio for {words} words "
+            f"(expected about {expected:.0f}s) — {text[:60]!r}")
 
 
 def _stitch(parts: List[Path], out_mp3: Path) -> Path:
@@ -147,6 +175,7 @@ def narrate(slug: str) -> Dict[str, str]:
                 url = _record_take(slug, seg_id, seq, para, voice)
                 part = work / f"{seg_id}_{seq:03d}.mp3"
                 part.write_bytes(requests.get(url, timeout=180).content)
+                _check_not_truncated(part, para)
                 parts.append(part)
             if not parts:
                 continue

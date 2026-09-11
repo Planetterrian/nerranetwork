@@ -209,8 +209,15 @@ async function narrationSession(custom) {
 
   if (!takeId || !text) return report("failed", "take_id and text are required");
 
+  // How long this paragraph should take to say. ResponseDone fires while she
+  // is still speaking (Sept 11 2026: every take came back cut off after the
+  // first sentence), so the recorder runs for the length of the script plus a
+  // tail, and ResponseDone is only a log line.
+  const words = text.split(/\s+/).filter(Boolean).length;
+  const expectedMs = Math.min(44000, Math.max(6000, Math.round(words * 430) + 3500));
+
   // Hard stop well inside the call-less session limit.
-  setTimeout(function () { report("failed", "timed out before the read finished"); }, 50 * 1000);
+  setTimeout(function () { report("failed", "timed out before the read finished"); }, 52 * 1000);
 
   let agent;
   try {
@@ -255,15 +262,16 @@ async function narrationSession(custom) {
           content: [{ type: "input_text", text: text }] },
       });
       agent.responseCreate({});
+      setTimeout(function () { report("ok", "read " + words + " words"); }, expectedMs);
     } catch (err) {
       report("failed", "recorder/read: " + err.message);
     }
   });
 
   if (Grok.VoiceAgentAPIEvents.ResponseDone) {
-    agent.addEventListener(Grok.VoiceAgentAPIEvents.ResponseDone, async function () {
-      await sleep(1500);          // let the tail of the audio reach the recorder
-      report("ok", null);
+    agent.addEventListener(Grok.VoiceAgentAPIEvents.ResponseDone, function () {
+      // Not a stop signal — she is usually still talking. Logged only.
+      Logger.write("[aoa narr " + takeId + "] ResponseDone (still recording)");
     });
   }
 }

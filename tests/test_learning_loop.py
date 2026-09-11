@@ -218,7 +218,7 @@ class TestMiraReadsHerOwnPickups:
     def test_a_take_cannot_outlive_the_session_limit(self):
         body = SCENARIO[SCENARIO.index("async function narrationSession("):]
         body = body[:body.index("\n}\n") + 3]
-        assert "50 * 1000" in body, "must report before Voximplant's 60 s cut-off"
+        assert "52 * 1000" in body, "must report before Voximplant's 60 s cut-off"
 
     def test_paragraphs_are_split_to_fit_one_session(self):
         from narrate import PARAGRAPH_MAX_CHARS, paragraphs
@@ -307,3 +307,51 @@ class TestNarrationEntryOrdering:
         assert narrate < guard, (
             "a narration take has no interview and therefore no run_id; if the "
             "guard runs first the session silently does nothing")
+
+
+class TestATakeIsNotCutOff:
+    """Sept 11 2026: ResponseDone fires while Mira is still speaking, so the
+    recorder stopped after roughly the first sentence of every paragraph and
+    the episode shipped a mangled introduction."""
+
+    def test_the_recorder_runs_for_the_length_of_the_script(self):
+        body = SCENARIO[SCENARIO.index("async function narrationSession("):]
+        body = body[:body.index("\n}\n") + 3]
+        assert "expectedMs" in body
+        assert "setTimeout(function () { report(\"ok\"" in body
+
+    def test_response_done_is_not_a_stop_signal(self):
+        body = SCENARIO[SCENARIO.index("async function narrationSession("):]
+        body = body[:body.index("\n}\n") + 3]
+        rd = body[body.index("ResponseDone, function"):]
+        assert "report(" not in rd[:400], "ResponseDone must not end the take"
+        assert "still recording" in rd[:400]
+
+    def test_the_read_stops_before_the_session_does(self):
+        body = SCENARIO[SCENARIO.index("async function narrationSession("):]
+        body = body[:body.index("\n}\n") + 3]
+        assert "Math.min(44000" in body
+        assert "52 * 1000" in body
+
+    def test_a_short_take_fails_instead_of_shipping(self):
+        import importlib
+
+        narrate = importlib.import_module("narrate")
+        text = " ".join(["word"] * 60)          # ~25 s of speech
+        narrate._duration = lambda p: 4.0        # what a cut-off take looks like
+        with pytest.raises(RuntimeError, match="cut off"):
+            narrate._check_not_truncated(Path("/dev/null"), text)
+
+    def test_a_full_take_passes(self):
+        import importlib
+
+        narrate = importlib.import_module("narrate")
+        text = " ".join(["word"] * 60)
+        narrate._duration = lambda p: 24.0
+        narrate._check_not_truncated(Path("/dev/null"), text)
+
+    def test_paragraphs_are_short_enough_to_say_in_one_session(self):
+        from narrate import PARAGRAPH_MAX_CHARS, WORDS_PER_SEC
+
+        worst_case_sec = (PARAGRAPH_MAX_CHARS / 5) / WORDS_PER_SEC
+        assert worst_case_sec < 45, "a paragraph must be SAID inside the session limit"
