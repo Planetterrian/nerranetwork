@@ -595,12 +595,16 @@ async function createAgent(note) {
   });
 
   agent.addEventListener(Grok.VoiceAgentAPIEvents.ConversationCreated, function () {
-    // Voice presets are capitalized on the Voice Agent API ("Ara");
-    // the DB stores lowercase ("ara") for TTS parity.
-    const preset = (config.voice_preset || "ara");
+    // Sept 11 2026: this used to capitalize the preset ("ara" -> "Ara") on
+    // the belief that the Voice Agent API wanted title case. xAI's docs are
+    // explicit that the Speech-to-Speech and Text-to-Speech APIs share one
+    // voice roster and both take the LOWERCASE id, so "Ara" was not a voice
+    // and every interview silently fell back to the default voice — which is
+    // why Mira on the tape did not match Mira in the narration.
+    const preset = String(config.voice_preset || "ara").trim().toLowerCase();
     agent.sessionUpdate({
       session: {
-        voice: preset.charAt(0).toUpperCase() + preset.slice(1),
+        voice: preset,
         turn_detection: { type: "server_vad" },
         instructions: config.mira_system_prompt + (note || ""),
         tools: config.tools || [],

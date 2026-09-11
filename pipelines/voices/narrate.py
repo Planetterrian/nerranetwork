@@ -10,6 +10,7 @@ of a production run.
 
     pipelines/voices/narration/<slug>.json
       { "show": "age_of_ai",
+        "voice": "ara",            # optional; shared xAI voice roster
         "segments": [ {"id": "intro", "text": "..."}, ... ] }
 
 Each segment lands at <r2_prefix>/narration/<slug>/<id>.mp3 and its public
@@ -44,6 +45,13 @@ def narrate(slug: str) -> dict:
         raise SystemExit("spec has no segments")
 
     from audio.generate_narration import synthesize_segments
+
+    # A spec may pin its own voice. The voice roster is shared between xAI's
+    # Speech-to-Speech and Text-to-Speech APIs, so narration can be rendered
+    # in exactly the voice the live host used.
+    voice = spec.get("voice")
+    if voice:
+        os.environ["MIRA_VOICE_PRESET"] = str(voice).strip().lower()
 
     out: dict = {}
     with tempfile.TemporaryDirectory() as tmp:

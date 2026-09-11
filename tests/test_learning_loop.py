@@ -223,3 +223,21 @@ class TestNarrationPickup:
         assert "GROK_API_KEY: ${{ secrets.GROK_API_KEY }}" in wf
         assert "R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}" in wf
         assert "NARRATION_SLUG: ${{ inputs.slug }}" in wf
+
+
+class TestVoiceRoster:
+    """xAI's Speech-to-Speech and Text-to-Speech APIs share one voice roster
+    and both take the LOWERCASE voice id. Title-casing it (Sept 2026) meant
+    "Ara" matched nothing and every interview fell back to the default voice,
+    so the live host and the narration were two different people."""
+
+    def test_scenario_sends_a_lowercase_voice_id(self):
+        assert 'voice: preset,' in SCENARIO
+        assert "toUpperCase() + preset.slice(1)" not in SCENARIO
+        assert '.trim().toLowerCase()' in SCENARIO
+
+    def test_a_spec_can_pin_its_own_voice(self):
+        src = (ROOT / "pipelines" / "voices" / "narrate.py").read_text(encoding="utf-8")
+        assert 'voice = spec.get("voice")' in src
+        assert 'os.environ["MIRA_VOICE_PRESET"]' in src
+        assert '.strip().lower()' in src
