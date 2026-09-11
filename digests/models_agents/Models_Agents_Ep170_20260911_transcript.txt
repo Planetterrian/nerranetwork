@@ -1,0 +1,68 @@
+Andthropics latest threat report details how sophisticated actors attempted cyber attacks, influence ops, and bioweapons with Claude, and how every attempt was stopped. This is Models & Agents, episode 170. The company issued its most detailed public account of real misuse attempts involving the model. Those attempts spanned five areas including cyber attacks, influence operations, surveillance, biology work, and weapons development.
+Every single operation was detected and halted before it advanced. Insights from the incidents led to updated safeguards inside the system.
+The same findings went to government agencies and peer labs to help spot matching patterns elsewhere. The cases highlighted are the most advanced examples seen so far, not everyday interactions, and they point to future threat directions.
+Making the full document public lets other platforms watch for the same signals and gives outsiders a clearer picture of how misuse is evolving.
+A fresh benchmark called CMNI, supplies 13,000 annotated instances drawn from Chinese military news. It applies joint labels across seven event types, ten argument roles, seven entity types, and eight relation types in a single schema.
+The task requires models to pull triggers, arguments, entities, and relations together rather than handling them separately.
+Tests on a held-out set covered supervised information extraction models, zero-shot large language models, and fine-tuned large language model extractors.
+The benchmark proves especially hard for relation extraction and for matching event argument spans exactly.
+Zero-shot models often locate relevant meaning yet miss the precise gold boundaries. Researchers created 93 Urdu stories using GPT 5.1, Quen3 Max, and DeepSeq 3.1.
+They then labeled errors across nine categories that cover linguistic, semantic, and cultural issues.
+The outputs showed basic grammar and meaning mistakes, broken story flow, repeated phrasing, and thin cultural detail.
+Few-shot prompting eased some problems but left most cultural and contextual errors in place.
+The study treats Urdu as a stand-in for other low resource languages to reveal current limits in multilingual generation.
+A prompt-based approach for minimal edit grammatical error correction combined taxonomy instructions, batching of uncorrected sentences, and LLM assisted prompt tuning.
+It reached an F0.5 score of 78.32 on the BEA 2019 set.
+That result sits just 0.38 points below the fine-tuned single model state of the art without any fine-tuning step.
+Batching lowers the overall edit rate across model families by spreading attention.
+The taxonomy instructions enforce minimal edit rules through a full list of grammatical error categories.
+The complete prompts, code, and outputs are now available for anyone to use.
+Search Atlas turns long agent search paths into graphs that track how evidence travels from each query to the final answer.
+An automated pipeline scores 86.0% mean edge F1 against human annotated graphs and stays stable across repeated runs.
+Five agents were evaluated on three benchmarks showing clear differences in search scale and evidence aggregation.
+Process failures tracked more closely with wrong answers than LLM judges did when looking only at raw traces.
+The graphs reveal fragmented support, unreachable question constraints, and unverified parametric knowledge slipping into responses.
+Autorexis runs parallel experiments across servers using distributed asynchronous execution, cross-server persistent memory, and separation of natural language skill files from deterministic scripts.
+A dual loop design lets execution outcomes update playbooks while experimental results generate new ideas.
+The system targets the long feedback loops and fragile infrastructure that makes serial iteration impractical from multi-day GPU jobs on large recommendation models.
+Playbooks gather operational knowledge by logging failed attempts alongside successful pipelines.
+Pro Medicon frames mediation as a proactive, multi-stage, party-aware process with 11 strategies and four party behavior states.
+It rests on 972 real world cases that carry utterance level annotations.
+A new mad metric tracks behavior pattern shifts turn by turn.
+Tests of several models plus a custom pro-media agent baseline show ongoing difficulty in dynamic multi-party settings.
+The data set and code are released for others to build on.
+One article explains how KV caching keeps key and value vectors from earlier tokens, so the model skips recomputing them for each new token.
+The write-up covers the memory bandwidth trade-off and why the technique matters for practical inference speed.
+It also notes how the cache size grows with sequence length and what that means for hardware choices at deployment time.
+A thread on R-slash local LLAMA looks at which models still run usefully on eight gigabytes of VRAM.
+Participants focus on office tasks, embeddings, re-ranking and chat, stressing tool use and multilingual performance over broad world knowledge.
+Vision features often take a backseat when hardware forces trade-offs.
+Flex comp trains one compressor that handles any memory budget K by sampling different budgets during training in a matrioshka style.
+At inference time, either a confidence cascade or a lightweight learned predictor picks the right K for each input.
+The single model matches the accuracy of separately trained fixed ratio specialists while cutting KV cache use by 50% and lifting decoding throughput by 47% at serving batch sizes.
+The cascade keeps over 98% of the mildest ratios accuracy at up to 266 times average compression.
+The learned predictor reaches 158 to 236 times compression while staying within 0.7 F1 of the mildest ratio in one pass.
+Pop the hood on context compression and flex comp shows a single set of weights can handle many ratios because the memory budget K gets sampled per instance during training.
+Instead of being locked at architecture time.
+The matrioshka nesting means lower K prefixes of the memory tokens stay useful even when the model saw higher budgets in training.
+At serving time, the system routes either through the cascade until a confidence threshold is reached or through the small learned predictor in one forward pass.
+The single pass predictor stays within 0.7 F1 while hitting 158 to 236 times compression.
+Quality at high compression is not uniform across inputs so some documents keep accuracy at far higher ratios than others.
+Teams reach for the cascade when an extra model call fits the latency budget and for the learned predictor when throughput is the tightest limit.
+Very high ratios still need the base model to have seen enough variety in K during training or the low K regime drops faster than the reported numbers indicate.
+Read the complete and thropic threat report and compare the misuse patterns against the guardrails in your own application.
+Test flex comp style per input compression on your longest context workloads to measure KV cache savings against accuracy.
+Run the search Atlas graph parser on your own agent traces to find evidence flow failures that accuracy metrics overlook.
+Apply the cmni schema to any Chinese domain extraction task to see where current zero shot models fail on span boundaries.
+More labs are expected to issue similar detailed misuse reports after anthropics example.
+Additional agent benchmarks that score process traces instead of final answers are likely in the coming weeks.
+Further work on variable ratio context compression is anticipated as inference costs stays a primary constraint.
+Before we go watch for expanded low resource language evaluation sets as researchers keep testing multilingual generation limits.
+That's models and agents for today.
+If you found this useful share it with someone who's trying to keep up with all these changes and subscribe so you don't miss tomorrow's update.
+The AI world moves fast will help you keep up see you tomorrow.
+And if you'd rather watch than listen find us on YouTube at narrow network links in the show notes.
+This show comes to you from the narrow network.
+If you want another sharp daily briefing planetary and daily has you covered daily breakthroughs in science health and longevity.
+All our shows are free at narrow network dot com live dashboards TS LA space X launches the investing scoreboard.
+Our all at narrow network dot com data this episode used AI voice synthesis of my voice editorial selection and analysis are my own.
