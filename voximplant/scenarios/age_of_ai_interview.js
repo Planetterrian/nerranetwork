@@ -130,9 +130,12 @@ let webhookFired = false;
 
 VoxEngine.addEventListener(AppEvents.Started, async function () {
   const custom = JSON.parse(VoxEngine.customData() || "{}");
+  // A narration take has no interview and therefore no run_id, so it must be
+  // recognised BEFORE the run_id guard below (Sept 11 2026: it was not, and
+  // every take fell through to the inbound-session return and did nothing).
+  if (custom.narrate) return narrationSession(custom); // Mira reading a scripted pickup
   if (!custom.run_id) return; // inbound session — CallAlerting takes over.
   if (custom.probe) return probeSession(custom); // synthetic participant (diagnostics)
-  if (custom.narrate) return narrationSession(custom); // Mira reading a scripted pickup
 
   sessionKind = "participant";
   callMode = "pstn";

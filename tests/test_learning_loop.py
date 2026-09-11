@@ -296,3 +296,14 @@ class TestVoiceRoster:
         assert 'spec.get("voice")' in src
         assert '.strip().lower()' in src
         assert "voice=voice" in src, "the pinned voice must reach the take"
+
+
+class TestNarrationEntryOrdering:
+    def test_a_take_is_recognised_before_the_run_id_guard(self):
+        entry = SCENARIO[SCENARIO.index("VoxEngine.addEventListener(AppEvents.Started"):]
+        entry = entry[:entry.index("});")]
+        narrate = entry.index("custom.narrate")
+        guard = entry.index("if (!custom.run_id) return;")
+        assert narrate < guard, (
+            "a narration take has no interview and therefore no run_id; if the "
+            "guard runs first the session silently does nothing")
