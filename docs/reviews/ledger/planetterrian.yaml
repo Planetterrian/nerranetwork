@@ -485,4 +485,119 @@ reviews:
       ab_listen_required: true
       rationale: 'Belt-and-braces for paraphrase myth openers that skip the Dive chapter; does NOT fix body-swallow (engine split still deferred). A/B-listen: changes player chapter boundaries.'
     agent_cost_usd: 0.1338
+  - date: '2026-09-11'
+    pr: null
+    doc: docs/reviews/planetterrian_review_2026_09_11.md
+    generated_by: grok-4.5
+    summary: 9/10 scripts still under the 1600-word floor, Science Deep Dive body-swallow on ~8/10, residual banned tails and transition tics, one telescope fetch leak, and longevity brand still shipping general-science firehose; escalate length again and re-propose only digest-side scope plus residual ban/MEMORY fixes.
+    scored_prior_predictions:
+    - metric: fetch-filter leakage matches in last 10 digests
+      verdict: partial
+      evidence: 1 hit ep176 Parkes telescope vs baseline 0; not multi-hit regression but not clean
+    - metric: life-science / longevity / clinical-health items in Top 15 per digest (manual count, last 10)
+      verdict: miss
+      evidence: scope floor never shipped; ep172–180 still mix archaeology, materials, graphene, Mercury, dark matter, conflict, education with longevity items
+    - metric: episodes under 1600-word floor, last 10
+      verdict: hit
+      evidence: 9/10 under (only ep171=1709 clears) — matches expected still 8+/10 with digest ceiling unchanged
+    - metric: script_hook_orphaned rate, last 10 after hook_coverage gate
+      verdict: miss
+      evidence: ep175 hook cov 10% (Uzbekistan points never in body); ep180 36%
+    - metric: transcripts with 'The practical takeaway is' OR sole teaser lead-in 'keep an eye on', last 10
+      verdict: miss
+      evidence: practical takeaway on ep171/173/174/175; keep an eye on in 9/10 teasers
+    - metric: episodes with Science Deep Dive spanning >50% runtime or missing Introduction, last 10
+      verdict: miss
+      evidence: '~8/10: ep172/174/175/177/178/179 swallow; ep173 no Intro; ep180 no Teaser'
+    - metric: script_digest_overlap_pct median + Dive listed in copied_sections, last 10
+      verdict: miss
+      evidence: ep173/174/179 at 63–64% verbatim; Dive under copied_sections on ep171–176 and ep179
+    - metric: median _tts.txt words, last 10 eps
+      verdict: miss
+      evidence: median ~1330 on ep171–180; 9/10 below 1600 floor
+    - metric: deep dive restating a covered story (manual)
+      verdict: miss
+      evidence: copied_sections flags Dive majority of window; ep171 dive retells obesity leukocyte body story
+    - metric: surviving banned tails / Sep-5 transition shapes
+      verdict: partial
+      evidence: shifting line still ep173; successor 'on a different note' rises; filler 2–11% not zeroed
+    shipped: []
+    deferred:
+    - 'OPERATOR DECISION on chronic under-length after repeated misses with digest_expand already on: (a) full-text journal fetch Nature/Science/bioRxiv, (b) higher min_digest_words + per-item sentence floors only, (c) lower min_podcast_words to honest ceiling, (d) accept short days — do NOT re-propose podcast_expand_below_target or podcast word-pressure'
+    - Engine-level split so content after Science Deep Dive re-enters story auto-segments (body-swallow ep172/174/175/177–179; missing Intro ep173; missing Teaser ep180) — shared chapter architecture, not PT prompt padding
+    - Garbage mid-body LLM auto-segment titles — shared Tesla/M&A-deferred class (ep171 samples)
+    - 'Network pronunciation of Nerra / Planetterrian (Whisper: Narra/Narrow/Planetarian) — no phonetic respelling (landmine #17)'
+    - Optional min_digest_words 1400→1700 only if operator explicitly picks length option (b); no conditional length hit prediction
+    - Confirm hook_coverage / copied_sections gates fail closed on PT (ep175 orphan + Dive copy) rather than rewrite-and-accept weak scripts
+    predictions:
+    - metric: fetch-filter leakage matches in last 10 digests
+      baseline: 1 (ep176 telescope/pulsar)
+      expected: 0 after any pattern/path tighten + drift-guard; else monitor ≥0 residual
+      verdict: pending
+      evidence: null
+    - metric: life-science / longevity / clinical-health items in Top 15 per digest (manual count, last 10)
+      baseline: often well under 8/15 (ep172–180 firehose mix)
+      expected: ≥8/15 core life-science on ≥8/10 only if digest scope floor merges; else score n/a-lever-not-shipped
+      verdict: pending
+      evidence: null
+    - metric: episodes under 1600-word floor, last 10
+      baseline: 9/10
+      expected: still 8+/10 unless operator ships full-text fetch or higher min_digest_words (no podcast lever)
+      verdict: pending
+      evidence: null
+    - metric: transcripts with 'The practical takeaway is' OR sole teaser lead-in 'keep an eye on' OR stock 'Right now, as you', last 10
+      baseline: practical takeaway multi-ep; keep an eye on 9/10; Right now multi-ep
+      expected: '≤2/10 each if verbatim ban + teaser/dive MEMORY ships; successor-tic watch: ''Before we wrap'' / ''Worth watching next'' / ''One detail worth remembering'' / ''As you hear this'''
+      verdict: pending
+      evidence: null
+    - metric: transcripts with verbatim 'shifting to a very different area of research' OR 'on a different note' handoff, last 10
+      baseline: shifting on ep173; on a different note on ep175/176/177/179
+      expected: ≤2/10 combined if handoff ban + MEMORY ships
+      verdict: pending
+      evidence: null
+    - metric: script_hook_orphaned rate, last 10
+      baseline: ≥1/10 (ep175); ep180 36% borderline
+      expected: 0/10 if hook_coverage gate fails closed on orphaned hooks
+      verdict: pending
+      evidence: null
+    - metric: episodes with Science Deep Dive spanning >50% runtime or missing Introduction/Teaser, last 10
+      baseline: 8/10
+      expected: monitor only unless engine split ships; pattern/gate tweaks ≤ partial
+      verdict: pending
+      evidence: null
+    - metric: script_digest_overlap_pct median + Dive listed in copied_sections, last 10
+      baseline: median ≫25% on several eps; Dive copied majority
+      expected: median ≤35% and Dive copied ≤3/10 if copied_sections gate + zero-overlap hold post-merge
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/prompts/planetterrian_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: July-2 through Sep-6 scope proposals never applied; ep172–180 still read as general-science radio while YAML description promises longevity/health. Digest-only lever; A/B changes spoken mix.
+    - file: shows/prompts/planetterrian_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Digest framework still seeds the exact spoken tics (Right now / memorable detail / practical takeaway) that survive into podcast audio on ep171–179. De-seed by shape; meta-review successor-tic rule.
+    - file: shows/prompts/planetterrian_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 'ep173 still speaks the shifting line; successor ''on a different note'' on ep175/176/177/179. Meta-review: ban + shape + MEMORY, no new example menu.'
+    - file: shows/prompts/planetterrian_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 'Sep-5/6 de-seed incomplete: practical takeaway + memorable detail + Right now frames survive through ep179; ep171 restated body obesity story. Reinforce zero-overlap + bans.'
+    - file: shows/prompts/planetterrian_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Snapshot 9/10 “keep an eye on” — prompt-seeded convergence. Chapter YAML already accepts alternate anchors; rotation stays parseable.
+    - file: shows/planetterrian.yaml
+      kind: config
+      ab_listen_required: true
+      rationale: 'Belt-and-braces for paraphrase myth openers that skip the Dive chapter; does NOT fix body-swallow (engine split still deferred). A/B-listen: changes player chapter boundaries.'
+    - file: shows/planetterrian.yaml
+      kind: config
+      ab_listen_required: false
+      rationale: ep176 Parkes telescope/pulsar glitch leaked despite telescope pattern — likely mid-title or alternate wording path; add pulsar class (no life-science reading) and keep telescope. Code path audit still recommended if leakage repeats. No A/B (fetch only).
+    agent_cost_usd: 0.1486
 do_not_retry: []
