@@ -24,6 +24,9 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 1
+      # Grok TTS chunks long text and stitches the pieces with ffmpeg, which
+      # is not on the runner by default (Sept 11 2026, first narrate run).
+      - uses: FedericoCarboni/setup-ffmpeg@v3
       - uses: ./.github/actions/setup-python
         with:
           python-version: '3.12'
