@@ -377,4 +377,112 @@ reviews:
       evidence: null
     agent_cost_usd: null
 
+  - date: '2026-09-06'
+    pr: null
+    doc: docs/reviews/planetterrian_review_2026_09_06.md
+    generated_by: grok-4.5
+    summary: Sep 5–6 delivery gates and de-seeds partly landed but ep166–175 still show 9/10 under-length, Deep Dive body-swallow on ~7/10, orphaned cold-open on ep175, surviving banned tails, and general-science firehose scope; escalate length to operator decision and propose only digest-side scope + residual ban/MEMORY fixes.
+    scored_prior_predictions:
+    - metric: fetch-filter leakage matches in last 10 digests (black hole|superstorm|solar wind|exoplanet|telescope classes)
+      verdict: hit
+      evidence: 'snapshot fetch-filter section: 0 hits vs 21 exclude_title_patterns (was 3 on ep160)'
+    - metric: life-science / longevity / clinical-health items in Top 15 per digest (manual count, last 10)
+      verdict: miss
+      evidence: scope floor never shipped; ep168–175 still mix archaeology, materials, graphene, Mercury geology, dark matter, policy with longevity items
+    - metric: transcripts with verbatim 'shifting to a very different area of research', last 10
+      verdict: partial
+      evidence: still spoken on ep167 and ep173; down from 6+/10 but ban not clean
+    - metric: episodes under 1600-word floor, last 10
+      verdict: hit
+      evidence: 9/10 under (only ep171=1709 clears) — matches expected still 8+/10 with digest ceiling unchanged
+    - metric: episodes with Science Deep Dive spanning >50% runtime or missing Introduction, last 10
+      verdict: miss
+      evidence: 'worse: ep166/172/174/175 swallow; ep168 missing Intro; ep170 missing Teaser; ~7/10'
+    - metric: median _tts.txt words, last 10 eps
+      verdict: miss
+      evidence: median ~1280 words on ep166–175; 9/10 below 1600 floor
+    - metric: '''announcing'' filler shape per episode (script_audit)'
+      verdict: partial
+      evidence: density filler column 3–11% across ep166–175; not held to ≤1
+    - metric: deep dive restating a covered story (manual)
+      verdict: miss
+      evidence: snapshot copied_sections flags Science Deep Dive on most of ep166–175; ep171 dive retells obesity leukocyte body story
+    - metric: script_digest_overlap_pct median
+      verdict: miss
+      evidence: ep166/168/170/173/174 at 53–77% verbatim; median well above ≤25% target
+    - metric: script_hook_orphaned, next 15 episodes
+      verdict: miss
+      evidence: ep175 hook coverage 10% — Uzbekistan projectile cold open never covered in body
+    - metric: script_copied_sections on the Science Deep Dive, last 10
+      verdict: miss
+      evidence: snapshot marks Dive under copied sections on ~10/10 ep166–175
+    - metric: surviving banned tails ('practical takeaway', 'keep an eye on') per episode
+      verdict: miss
+      evidence: both still multi-episode through ep175 (practical takeaway in dives; keep an eye on in 9/10 teasers)
+    shipped: []
+    deferred:
+    - 'OPERATOR DECISION on chronic under-length after repeated misses with digest_expand already on: (a) full-text journal fetch Nature/Science/bioRxiv, (b) higher min_digest_words + per-item sentence floors only, (c) lower min_podcast_words to honest ceiling, (d) accept short days — do NOT re-propose podcast_expand_below_target or podcast word-pressure'
+    - Engine-level split so content after Science Deep Dive re-enters story auto-segments (body-swallow ep166/172/174/175; missing Intro ep168; missing Teaser ep170) — shared chapter architecture, not PT prompt padding
+    - Garbage mid-body LLM auto-segment titles — shared Tesla/M&A-deferred class (ep171 samples)
+    - 'Network pronunciation of Nerra / Planetterrian (Whisper: Narra/Narrow/Planetarian) — no phonetic respelling (landmine #17)'
+    - Optional min_digest_words 1400→1700 only if operator explicitly picks length option (b); no conditional length hit prediction
+    - Confirm hook_coverage / copied_sections gates fail closed on PT (ep175 orphan + Dive copy) rather than rewrite-and-accept weak scripts
+    predictions:
+    - metric: fetch-filter leakage matches in last 10 digests
+      baseline: '0'
+      expected: remain 0 (no regression)
+      verdict: pending
+      evidence: null
+    - metric: life-science / longevity / clinical-health items in Top 15 per digest (manual count, last 10)
+      baseline: often well under 8/15 (ep168–175 firehose mix)
+      expected: ≥8/15 core life-science on ≥8/10 only if digest scope floor merges; else score n/a-lever-not-shipped
+      verdict: pending
+      evidence: null
+    - metric: episodes under 1600-word floor, last 10
+      baseline: 9/10
+      expected: still 8+/10 unless operator ships full-text fetch or higher min_digest_words (no podcast lever)
+      verdict: pending
+      evidence: null
+    - metric: script_hook_orphaned rate, last 10 after hook_coverage gate
+      baseline: 1/10 (ep175)
+      expected: 0/10 if gate fails closed on orphaned hooks
+      verdict: pending
+      evidence: null
+    - metric: transcripts with 'The practical takeaway is' OR sole teaser lead-in 'keep an eye on', last 10
+      baseline: practical takeaway multi-ep; keep an eye on 9/10
+      expected: '≤2/10 each if verbatim ban + teaser MEMORY ships; successor-tic watch: ''Before we wrap'' / ''Worth watching next'' / ''One detail worth remembering'''
+      verdict: pending
+      evidence: null
+    - metric: episodes with Science Deep Dive spanning >50% runtime or missing Introduction, last 10
+      baseline: 7/10
+      expected: monitor only unless engine split ships; pattern/gate tweaks ≤ partial
+      verdict: pending
+      evidence: null
+    - metric: script_digest_overlap_pct median + Dive listed in copied_sections, last 10
+      baseline: median ≫25%; Dive copied ~10/10
+      expected: median ≤35% and Dive copied ≤3/10 if copied_sections gate + zero-overlap hold post-merge
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/prompts/planetterrian_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: July-2 through Aug-31 scope proposals never applied; ep168–175 still read as general-science radio while YAML description promises longevity/health. Digest-only lever; A/B changes spoken mix.
+    - file: shows/prompts/planetterrian_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 'Sep-5 de-seed incomplete: ep167/173 still speak the shifting line; practical takeaway + one memorable detail + right-now frames survive through ep175. Meta-review: ban + shape, no new example menu; log successor tics.'
+    - file: shows/prompts/planetterrian_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Snapshot 9/10 “keep an eye on” — prompt-seeded convergence. Chapter YAML already accepts alternate anchors; rotation stays parseable.
+    - file: shows/prompts/planetterrian_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: copied_sections still flags Dive most days; ep171 re-told obesity body story. Reinforces Sep-5/6 gates with explicit podcast-side no-restatement + no takeaway closer.
+    - file: shows/planetterrian.yaml
+      kind: config
+      ab_listen_required: true
+      rationale: 'Belt-and-braces for paraphrase myth openers that skip the Dive chapter; does NOT fix body-swallow (engine split still deferred). A/B-listen: changes player chapter boundaries.'
+    agent_cost_usd: 0.1338
 do_not_retry: []
