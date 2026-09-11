@@ -193,3 +193,33 @@ class TestARejoinNeverOverwritesTheFirstHalf:
         key = WORKER[WORKER.index("function localKey("):]
         key = key[:key.index("\n}\n") + 3]
         assert 'sid ? `${sid}/` : ""' in key
+
+
+class TestNarrationPickup:
+    """Hand-written narration (Sept 11 2026): an episode sometimes needs a
+    proper introduction or a clean close, written and reviewed as words
+    rather than produced as a side effect of a production run."""
+
+    def test_spec_files_are_well_formed(self):
+        import json
+
+        d = ROOT / "pipelines" / "voices" / "narration"
+        specs = list(d.glob("*.json"))
+        assert specs, "no narration specs on disk"
+        for p in specs:
+            spec = json.loads(p.read_text(encoding="utf-8"))
+            assert spec.get("segments"), p.name
+            for seg in spec["segments"]:
+                assert seg.get("id") and seg.get("text", "").strip(), p.name
+
+    def test_narrate_reads_the_spec_and_uploads_per_segment(self):
+        src = (ROOT / "pipelines" / "voices" / "narrate.py").read_text(encoding="utf-8")
+        assert "synthesize_segments(" in src
+        assert 'show.r2_key("narration", slug, f"{seg_id}.mp3")' in src
+
+    def test_workflow_supplies_the_voice_key_and_bucket(self):
+        wf = (ROOT / ".github" / "workflows"
+              / "nerra_voices_narrate.yml").read_text(encoding="utf-8")
+        assert "GROK_API_KEY: ${{ secrets.GROK_API_KEY }}" in wf
+        assert "R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}" in wf
+        assert "NARRATION_SLUG: ${{ inputs.slug }}" in wf
