@@ -195,6 +195,58 @@ class TestARejoinNeverOverwritesTheFirstHalf:
         assert 'sid ? `${sid}/` : ""' in key
 
 
+class TestMiraReadsHerOwnPickups:
+    """Sept 11 2026: narration used xAI's text-to-speech while the interview
+    is the Speech-to-Speech agent. Two engines, two voices, one show — so a
+    pickup is now read by the same agent that hosts the interview."""
+
+    def test_scenario_has_a_narration_mode_that_records_the_agent(self):
+        assert "if (custom.narrate) return narrationSession(custom);" in SCENARIO
+        body = SCENARIO[SCENARIO.index("async function narrationSession("):]
+        body = body[:body.index("\n}\n") + 3]
+        assert "createVoiceAgentAPIClient" in body
+        assert "agent.sendMediaTo(recorder)" in body
+        assert "voice: preset," in body
+        assert "turn_detection: null" in body
+
+    def test_the_read_is_verbatim_and_unhosted(self):
+        body = SCENARIO[SCENARIO.index("async function narrationSession("):]
+        body = body[:body.index("\n}\n") + 3]
+        assert "word for word" in body
+        assert "Do not greet" in body
+
+    def test_a_take_cannot_outlive_the_session_limit(self):
+        body = SCENARIO[SCENARIO.index("async function narrationSession("):]
+        body = body[:body.index("\n}\n") + 3]
+        assert "50 * 1000" in body, "must report before Voximplant's 60 s cut-off"
+
+    def test_paragraphs_are_split_to_fit_one_session(self):
+        from narrate import PARAGRAPH_MAX_CHARS, paragraphs
+
+        text = "One short opener.\n\n" + ("A sentence that keeps going. " * 60)
+        parts = paragraphs(text)
+        assert parts[0] == "One short opener."
+        assert len(parts) > 2
+        assert all(len(p) <= PARAGRAPH_MAX_CHARS for p in parts)
+
+    def test_empty_and_whitespace_blocks_are_dropped(self):
+        from narrate import paragraphs
+
+        assert paragraphs("\n\n   \n\nHello.\n\n\n") == ["Hello."]
+
+    def test_agent_is_the_default_engine(self):
+        src = (ROOT / "pipelines" / "voices" / "narrate.py").read_text(encoding="utf-8")
+        assert 'os.environ.get("NARRATION_ENGINE", "agent")' in src
+        assert "will NOT match the" in src, "the tts fallback must warn"
+
+    def test_worker_attaches_a_take_recording(self):
+        body = WORKER[WORKER.index("async function handleNarrationTake("):]
+        body = body[:body.index("\n// -- Gate 2")]
+        assert "narration_takes?take_id=eq." in body
+        assert '"take not found" }, 404' in body
+        assert '"/voices/narration-take"' in WORKER
+
+
 class TestNarrationPickup:
     """Hand-written narration (Sept 11 2026): an episode sometimes needs a
     proper introduction or a clean close, written and reviewed as words
@@ -212,10 +264,10 @@ class TestNarrationPickup:
             for seg in spec["segments"]:
                 assert seg.get("id") and seg.get("text", "").strip(), p.name
 
-    def test_narrate_reads_the_spec_and_uploads_per_segment(self):
+    def test_narrate_uploads_one_file_per_segment(self):
         src = (ROOT / "pipelines" / "voices" / "narrate.py").read_text(encoding="utf-8")
-        assert "synthesize_segments(" in src
         assert 'show.r2_key("narration", slug, f"{seg_id}.mp3")' in src
+        assert "_stitch(parts," in src
 
     def test_workflow_supplies_the_voice_key_and_bucket(self):
         wf = (ROOT / ".github" / "workflows"
@@ -223,6 +275,9 @@ class TestNarrationPickup:
         assert "GROK_API_KEY: ${{ secrets.GROK_API_KEY }}" in wf
         assert "R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}" in wf
         assert "NARRATION_SLUG: ${{ inputs.slug }}" in wf
+        # The agent path starts Voximplant sessions and polls Supabase.
+        assert "VOXIMPLANT_API_KEY: ${{ secrets.VOXIMPLANT_API_KEY }}" in wf
+        assert "SUPABASE_SERVICE_KEY: ${{ secrets.VOICES_SUPABASE_SERVICE_KEY }}" in wf
 
 
 class TestVoiceRoster:
@@ -238,6 +293,6 @@ class TestVoiceRoster:
 
     def test_a_spec_can_pin_its_own_voice(self):
         src = (ROOT / "pipelines" / "voices" / "narrate.py").read_text(encoding="utf-8")
-        assert 'voice = spec.get("voice")' in src
-        assert 'os.environ["MIRA_VOICE_PRESET"]' in src
+        assert 'spec.get("voice")' in src
         assert '.strip().lower()' in src
+        assert "voice=voice" in src, "the pinned voice must reach the take"

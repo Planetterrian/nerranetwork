@@ -65,6 +65,7 @@ const SUPABASE_URL = "__SUPABASE_URL__";           // substituted at deploy time
 const API_BASE = "https://api.nerranetwork.com/voices";
 const WEBHOOK_URL = API_BASE + "/interview-complete";
 const LEG_EVENT_URL = API_BASE + "/leg-event";     // per-leg joined/left (+ recording URLs)
+const NARRATION_TAKE_URL = API_BASE + "/narration-take"; // Mira reading a scripted pickup
 const HARD_CAP_MS = 50 * 60 * 1000;                // spec §11.8: 50-min hard cap
 const GROK_DROP_GUARD_MS = 1500;                   // spec §7: teardown-race guard
 const PLANNED_MIN = 45;            // soft interview length the prompt paces to
@@ -131,6 +132,7 @@ VoxEngine.addEventListener(AppEvents.Started, async function () {
   const custom = JSON.parse(VoxEngine.customData() || "{}");
   if (!custom.run_id) return; // inbound session — CallAlerting takes over.
   if (custom.probe) return probeSession(custom); // synthetic participant (diagnostics)
+  if (custom.narrate) return narrationSession(custom); // Mira reading a scripted pickup
 
   sessionKind = "participant";
   callMode = "pstn";
@@ -158,6 +160,110 @@ VoxEngine.addEventListener(AppEvents.Started, async function () {
     VoxEngine.terminate();
   });
 });
+
+// ---------------------------------------------------------------------------
+// Narration takes (Sept 11 2026): Mira reads a written pickup HERSELF.
+//
+// The show's introductions and closes used to be produced by xAI's
+// text-to-speech endpoint while the interview itself is the Speech-to-Speech
+// voice agent. Even asking both for the same voice, they are different
+// engines and a listener hears two different people — which defeats the
+// point of a show hosted by one. So a pickup is now spoken by the same agent
+// that hosts the interview: same model, same voice, same person.
+//
+// One session per paragraph. A Voximplant session with no call is torn down
+// after 60 seconds, and a two-minute introduction does not fit inside that;
+// a paragraph comfortably does. The caller stitches the takes back together.
+// ---------------------------------------------------------------------------
+
+async function narrationSession(custom) {
+  sessionKind = "narration";
+  const takeId = String(custom.take_id || "");
+  const text = String(custom.text || "");
+  const preset = String(custom.voice || "ara").trim().toLowerCase();
+  let recorder = null;
+  let recordUrl = null;
+  let finished = false;
+
+  const report = async function (status, detail) {
+    if (finished) return;
+    finished = true;
+    try { if (recorder) recorder.stop(); } catch (err) { /* best-effort */ }
+    await sleep(1200);            // let RecorderEvents.Stopped land the URL
+    try {
+      await Net.httpRequestAsync(NARRATION_TAKE_URL, {
+        method: "POST", headers: ["Content-Type: application/json"],
+        postData: JSON.stringify({
+          take_id: takeId, status: status,
+          record_url: recordUrl, detail: detail || null,
+        }),
+      });
+    } catch (err) {
+      Logger.write("[aoa narr " + takeId + "] report failed: " + err.message);
+    }
+    VoxEngine.terminate();
+  };
+
+  if (!takeId || !text) return report("failed", "take_id and text are required");
+
+  // Hard stop well inside the call-less session limit.
+  setTimeout(function () { report("failed", "timed out before the read finished"); }, 50 * 1000);
+
+  let agent;
+  try {
+    agent = await Grok.createVoiceAgentAPIClient({
+      xAIApiKey: getSecret("XAI_API_KEY"),
+      model: GROK_MODEL,
+      onWebSocketClose: function (event) {
+        if (finished) return;
+        report("failed", "socket closed: " + ((event && (event.code || event.reason)) || "unknown"));
+      },
+    });
+  } catch (err) {
+    return report("failed", "agent startup: " + err.message);
+  }
+
+  agent.addEventListener(Grok.VoiceAgentAPIEvents.ConversationCreated, function () {
+    agent.sessionUpdate({
+      session: {
+        voice: preset,
+        turn_detection: null,     // nobody is talking to her; this is a read
+        instructions:
+          "You are Mira, the host of this show, recording a scripted segment " +
+          "in the studio. The user message contains your script. Read it " +
+          "aloud word for word, exactly as written. Do not greet anyone, do " +
+          "not introduce the script, do not comment on it, do not add or " +
+          "remove or reorder anything, and do not answer it as if it were a " +
+          "question. Speak it as your own words, warmly and unhurried, the " +
+          "way you speak on the show. When the script ends, stop.",
+      },
+    });
+  });
+
+  agent.addEventListener(Grok.VoiceAgentAPIEvents.SessionUpdated, function () {
+    if (recorder) return;         // session.update is echoed back more than once
+    try {
+      recorder = VoxEngine.createRecorder({ name: "narr_" + takeId, hd_audio: true });
+      recorder.addEventListener(RecorderEvents.Started, function (ev) { if (ev && ev.url) recordUrl = ev.url; });
+      recorder.addEventListener(RecorderEvents.Stopped, function (ev) { if (ev && ev.url) recordUrl = ev.url; });
+      agent.sendMediaTo(recorder);
+      agent.conversationItemCreate({
+        item: { type: "message", role: "user",
+          content: [{ type: "input_text", text: text }] },
+      });
+      agent.responseCreate({});
+    } catch (err) {
+      report("failed", "recorder/read: " + err.message);
+    }
+  });
+
+  if (Grok.VoiceAgentAPIEvents.ResponseDone) {
+    agent.addEventListener(Grok.VoiceAgentAPIEvents.ResponseDone, async function () {
+      await sleep(1500);          // let the tail of the audio reach the recorder
+      report("ok", null);
+    });
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Entry 2: inbound calls. Two shapes land here:

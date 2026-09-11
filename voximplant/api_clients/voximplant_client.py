@@ -102,6 +102,26 @@ def start_room_probe(run_id: str, clip_url: str,
     )
 
 
+def start_narration_take(take_id: str, text: str, voice: str = "ara",
+                         rule_name: str = RULE_NAME) -> Dict[str, Any]:
+    """Start a session in which Mira READS one paragraph of a scripted pickup
+    (see narrationSession in the scenario, Sept 11 2026).
+
+    One paragraph per session: Voximplant tears down a session with no call
+    after 60 seconds, and a two-minute introduction does not fit in that. The
+    scenario reports the recording URL to the Worker, which writes it onto the
+    narration_takes row this ``take_id`` names.
+    """
+    return _call(
+        "StartScenarios",
+        rule_name=rule_name,
+        application_name=APPLICATION_NAME,
+        script_custom_data=json.dumps({
+            "narrate": True, "take_id": take_id, "text": text, "voice": voice,
+        }),
+    )
+
+
 def upload_scenario(path: Path,
                     scenario_name: str = SCENARIO_NAME,
                     supabase_url: Optional[str] = None,

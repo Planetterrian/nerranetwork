@@ -1,9 +1,11 @@
-# Nerra Voices — voice a hand-written narration pickup (Sept 11 2026).
-# The normal path writes and voices narration inside produce_episode. This
-# is for the times an episode needs words a person wrote: a proper guest
-# introduction, a closing summary replacing a fumbled goodbye. Commit the
-# text to pipelines/voices/narration/<slug>.json, run this, and the MP3s
-# appear in R2 with their URLs in the log.
+# Nerra Voices — Mira reads a hand-written pickup (Sept 11 2026).
+# An episode sometimes needs words a person wrote: a proper guest
+# introduction, a closing summary replacing a fumbled goodbye. Mira reads
+# them HERSELF, through the same Speech-to-Speech agent that hosts the
+# interview, one Voximplant session per paragraph — text-to-speech is a
+# different engine and a listener hears two different hosts. Commit the text
+# to pipelines/voices/narration/<slug>.json, run this, and the MP3s appear in
+# R2 with their URLs in the log.
 name: Voice a narration pickup
 on:
   workflow_dispatch:
@@ -12,6 +14,11 @@ on:
         description: 'pipelines/voices/narration/<slug>.json'
         type: string
         required: true
+      engine:
+        description: 'agent = Mira reads it herself (matches the show); tts = fallback only'
+        type: choice
+        options: [agent, tts]
+        default: agent
 
 permissions:
   contents: read
@@ -19,7 +26,7 @@ permissions:
 jobs:
   narrate:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v7
         with:
@@ -35,7 +42,12 @@ jobs:
       - run: python pipelines/voices/narrate.py
         env:
           NARRATION_SLUG: ${{ inputs.slug }}
+          NARRATION_ENGINE: ${{ inputs.engine }}
           GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+          SUPABASE_URL: ${{ secrets.VOICES_SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.VOICES_SUPABASE_SERVICE_KEY }}
+          VOXIMPLANT_ACCOUNT_ID: ${{ secrets.VOXIMPLANT_ACCOUNT_ID }}
+          VOXIMPLANT_API_KEY: ${{ secrets.VOXIMPLANT_API_KEY }}
           MIRA_VOICE_PRESET: ${{ vars.MIRA_VOICE_PRESET }}
           R2_BUCKET: ${{ secrets.R2_BUCKET }}
           R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}

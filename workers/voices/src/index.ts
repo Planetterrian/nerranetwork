@@ -15,6 +15,7 @@
  *   GET  /voices/admin/review/:id     Patrick's editorial review UI (gate 1)
  *   POST /voices/editorial-decision   approve/kill an editorial package
  *   POST /voices/lesson-decision      promote/drop a proposed Mira lesson
+ *   POST /voices/narration-take       scenario reports a finished Mira read
  *   GET  /voices/episode-lookup       Mira tool: nerra_episode_lookup
  *   GET  /voices/guest-brief          Mira tool: guest_brief_lookup
  *   POST /voices/fact-check           Mira tool: fact_check_claim (proxy note)
@@ -778,6 +779,27 @@ async function handleLessonDecision(req: Request, env: Env): Promise<Response> {
     { status, decided_at: new Date().toISOString() }, "return=representation");
   if (!rows?.[0]) return json({ error: "lesson not found" }, 404);
   return json({ ok: true, id: lessonId, status });
+}
+
+/** POST /voices/narration-take {take_id, status, record_url?, detail?}
+ *  The scenario's narrationSession reports here when Mira has finished
+ *  reading one paragraph of a scripted pickup (Sept 11 2026). No auth: the
+ *  take_id is an opaque row that must already exist, and the only thing this
+ *  can do is attach a Voximplant recording URL to it. */
+async function handleNarrationTake(req: Request, env: Env): Promise<Response> {
+  const body = await req.json<any>().catch(() => null);
+  const takeId = String(body?.take_id ?? "");
+  if (!takeId || takeId.length > 128) return json({ error: "take_id required" }, 400);
+  const status = ["ok", "failed"].includes(String(body?.status)) ? String(body.status) : "failed";
+  const rows = await sb(env, "PATCH",
+    `narration_takes?take_id=eq.${encodeURIComponent(takeId)}`, {
+      status,
+      record_url: typeof body?.record_url === "string" ? body.record_url : null,
+      detail: typeof body?.detail === "string" ? body.detail.slice(0, 500) : null,
+      reported_at: new Date().toISOString(),
+    }, "return=representation");
+  if (!rows?.[0]) return json({ error: "take not found" }, 404);
+  return json({ ok: true });
 }
 
 // -- Gate 2: guest transcript review ----------------------------------------
@@ -1617,6 +1639,7 @@ export default {
       if (req.method === "POST" && path === "/voices/triage-reassign") return handleTriageReassign(req, env);
       if (req.method === "POST" && path === "/voices/editorial-decision") return handleEditorialDecision(req, env);
       if (req.method === "POST" && path === "/voices/lesson-decision") return handleLessonDecision(req, env);
+      if (req.method === "POST" && path === "/voices/narration-take") return handleNarrationTake(req, env);
       const review = path.match(/^\/voices\/review\/([A-Za-z0-9_-]{16,})$/);
       if (review) {
         return req.method === "POST"
