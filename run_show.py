@@ -46,6 +46,18 @@ _PIPELINE_STARTED_AT = time.monotonic()
 # step (see the comment near the translation stage below).
 _PIPELINE_COMMIT_RESERVE_S = int(os.environ.get("PIPELINE_COMMIT_RESERVE_SECONDS", 420))
 
+# Seconds the long-form slideshow render is assumed to need. Below this (after
+# the commit reserve) the render is skipped so the episode still publishes and
+# commits — see the guard in _publish_youtube. Tesla Ep601 spent 1,620 s in the
+# whole YouTube stage (render + a 205 MB video-podcast upload + the YouTube
+# upload + 2 Shorts + thumbnails), and Ep602 rendered for 814 s without
+# finishing 36 scenes, so 600 s is a floor, not a measurement: every episode
+# now records `long_form_render_duration_s` so this can be set from the
+# distribution instead of from one bad day.
+_LONG_FORM_RENDER_BUDGET_S = int(
+    os.environ.get("LONG_FORM_RENDER_BUDGET_SECONDS", 600)
+)
+
 
 def _timeout_handler(signum, frame):
     raise SystemExit(f"PIPELINE TIMEOUT: exceeded {_PIPELINE_TIMEOUT}s — aborting to prevent hung CI job")
@@ -6117,6 +6129,38 @@ def _publish_youtube(
             "%s: YouTube policy skipped long-form today; rendering anyway "
             "for the video podcast feed (no YouTube upload).", config.slug)
         result["video_podcast_render_only"] = True
+    # Budget the long-form render against the time LEFT, holding back the
+    # commit/finalize reserve — the same guard the Grok Video clips path has
+    # carried since June 2026, and for the same reason: a SIGALRM inside the
+    # render skips the episode's git commit, because the workflow's commit
+    # step requires `steps.pipeline.outcome == 'success'`. That guard was
+    # watching the wrong door. The clips path is disabled network-wide
+    # (`video_clips_enabled: false` everywhere), while THIS render is the
+    # 27-minute stage on every episode — Tesla Ep602 (2026-09-11) reached it
+    # 2,186 s into a 3,000 s budget after a 17-minute script stage, rendered
+    # for 13 minutes, died on the alarm, and was orphaned: the MP3 was
+    # already on R2 and in no feed, with nothing committed to git.
+    # Skipping the long-form costs the video episode and the YouTube long
+    # (Shorts still publish — they render from the audio independently); the
+    # alternative costs the whole day. Tune with the env var, never by
+    # raising PIPELINE_TIMEOUT_SECONDS past the job's timeout-minutes
+    # (tests/test_pipeline_safety.py::TestTimeoutEnvelope pins that order).
+    if _render_long:
+        _long_render_budget = (
+            _pipeline_budget_remaining() - _PIPELINE_COMMIT_RESERVE_S
+        )
+        if _long_render_budget < _LONG_FORM_RENDER_BUDGET_S:
+            logger.warning(
+                "::warning::%s: skipping the long-form render — %.0fs left "
+                "after the %ds commit reserve, under the %ds a render needs. "
+                "Shorts and the audio episode still publish.",
+                config.slug, _long_render_budget, _PIPELINE_COMMIT_RESERVE_S,
+                _LONG_FORM_RENDER_BUDGET_S,
+            )
+            _render_long = False
+            _policy_publish_long = False
+            result["long_form_skipped_budget"] = True
+            result["long_form_render_budget_s"] = round(_long_render_budget, 1)
     if _render_long:
         # ---- Site-showcase outro card (Aug 2026, operator-directed) ----
         # Composited from committed nerranetwork.com screenshots; the QR
@@ -6164,6 +6208,7 @@ def _publish_youtube(
                 _fact_cards = None
             result["fact_cards_rendered"] = len(_fact_cards or [])
         try:
+            _long_render_started = time.monotonic()
             build_long_form_video(
                 final_mp3, cover_path, long_video_path,
                 outro_card_path=_outro_card_path,
@@ -6211,6 +6256,17 @@ def _publish_youtube(
                 chapters_path=(chapters_path if chapters_path
                                and chapters_path.exists() else None),
                 fact_cards=_fact_cards,
+            )
+            # What the render actually cost. The budget guard above defaults
+            # to a floor rather than a measurement because this number has
+            # never been recorded — only the whole YouTube stage was.
+            result["long_form_render_duration_s"] = round(
+                time.monotonic() - _long_render_started, 1
+            )
+            logger.info(
+                "Long-form render took %.0fs (%.0fs of pipeline budget left)",
+                result["long_form_render_duration_s"],
+                _pipeline_budget_remaining(),
             )
             # ---- Video podcast (July 2026 pilot) ----
             # Host the rendered MP4 on R2 so it can also ship as an Apple

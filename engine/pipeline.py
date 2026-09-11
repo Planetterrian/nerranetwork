@@ -186,6 +186,18 @@ def record_youtube_outcomes(
         for key in ("grok_image_px_max", "grok_image_px_min"):
             if youtube_urls.get(key) is not None:
                 metrics.record(key, int(youtube_urls[key]))
+        # Long-form render cost and the budget guard that skips it (Sep 11
+        # 2026, Tesla Ep602). Same allowlist rule as above: a key missing
+        # here is a metric that never existed. `long_form_render_duration_s`
+        # is what makes LONG_FORM_RENDER_BUDGET_SECONDS tunable from the
+        # distribution instead of from a single orphaned episode.
+        if youtube_urls.get("long_form_render_duration_s") is not None:
+            metrics.record("long_form_render_duration_s",
+                           float(youtube_urls["long_form_render_duration_s"]))
+        if youtube_urls.get("long_form_skipped_budget"):
+            metrics.record("long_form_skipped_budget", True)
+            metrics.record("long_form_render_budget_s",
+                           float(youtube_urls.get("long_form_render_budget_s") or 0.0))
         if youtube_urls.get("fact_cards_rendered") is not None:
             metrics.record("fact_cards_rendered", int(youtube_urls["fact_cards_rendered"]))
         metrics.record("image_provider", youtube_urls.get("image_provider", "pexels"))
