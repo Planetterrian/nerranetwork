@@ -190,3 +190,62 @@ class TestTimeoutEnvelope:
         src = (PROJECT_ROOT / "engine" / "generator.py").read_text(
             encoding="utf-8")
         assert "NERRA_LLM_TIMEOUT_SECONDS" in src
+
+
+# ---------------------------------------------------------------------------
+# Long-form render budget (Tesla Ep602, 2026-09-11)
+# ---------------------------------------------------------------------------
+#
+# The commit reserve has guarded the Grok Video CLIPS path since June 2026 so
+# a slow optional stage "can never trip the SIGALRM and skip the episode's git
+# commit". That path is disabled network-wide (`video_clips_enabled: false`),
+# while the long-form slideshow render — the 27-minute stage on every episode
+# (Ep601: youtube_publish_duration_s 1619.65) — was not budgeted at all.
+# Ep602 reached it 2,186 s into a 3,000 s budget after a 17-minute script
+# stage, rendered for 13 minutes, died on the alarm, and was orphaned: audio
+# already on R2, nothing committed, no RSS item.
+
+class TestLongFormRenderBudget:
+    SRC = (PROJECT_ROOT / "run_show.py")
+
+    def _src(self):
+        return self.SRC.read_text(encoding="utf-8")
+
+    def test_render_budget_constant_is_env_tunable(self):
+        """The floor must be tunable without touching the timeout envelope:
+        raising PIPELINE_TIMEOUT_SECONDS past the job's timeout-minutes is
+        the mis-ordering TestTimeoutEnvelope exists to forbid."""
+        src = self._src()
+        assert "_LONG_FORM_RENDER_BUDGET_S" in src
+        assert "LONG_FORM_RENDER_BUDGET_SECONDS" in src
+
+    def test_long_form_render_is_budgeted_against_the_commit_reserve(self):
+        """The render must consult the SAME budget-minus-reserve expression
+        the clips path uses, and must turn the render off rather than
+        continue into a SIGALRM."""
+        src = self._src()
+        guard = src.split("_render_long = _policy_publish_long", 1)[1][:3000]
+        assert "_pipeline_budget_remaining() - _PIPELINE_COMMIT_RESERVE_S" in guard
+        assert "_LONG_FORM_RENDER_BUDGET_S" in guard
+        assert "_render_long = False" in guard
+        # The YouTube upload must be disarmed too — uploading a long-form
+        # that was never rendered is a guaranteed error path.
+        assert "_policy_publish_long = False" in guard
+
+    def test_skip_keeps_shorts_and_records_the_decision(self):
+        """Skipping the long-form must stay observable: a silent skip is the
+        silent-number class the Sep 2026 passes kept paying for."""
+        src = self._src()
+        assert 'result["long_form_skipped_budget"] = True' in src
+        assert 'result["long_form_render_budget_s"]' in src
+        assert 'result["long_form_render_duration_s"]' in src
+
+    def test_render_metrics_are_on_the_allowlist(self):
+        """`record_youtube_outcomes` is the only way a result key reaches the
+        metrics file (grok_image_px_max shipped 09-03 and recorded nothing
+        for six days)."""
+        src = (PROJECT_ROOT / "engine" / "pipeline.py").read_text(
+            encoding="utf-8")
+        for key in ("long_form_render_duration_s", "long_form_skipped_budget",
+                    "long_form_render_budget_s"):
+            assert f'"{key}"' in src, f"{key} never reaches the metrics file"
