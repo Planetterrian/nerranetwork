@@ -38,7 +38,7 @@ def narrate(slug: str) -> dict:
     if not spec_path.exists():
         raise SystemExit(f"no narration spec at {spec_path}")
     spec = json.loads(spec_path.read_text(encoding="utf-8"))
-    show = get_show(spec.get("show") or "age_of_ai")
+    show = get_show(spec.get("show"))
     segments = spec.get("segments") or []
     if not segments:
         raise SystemExit("spec has no segments")
