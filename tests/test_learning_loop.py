@@ -629,3 +629,26 @@ class TestTheEditIsData:
         assert "SUPABASE_SERVICE_KEY: ${{ secrets.VOICES_SUPABASE_SERVICE_KEY }}" in wf
         assert "setup-ffmpeg" in wf
         assert "EDL_SLUG: ${{ inputs.slug }}" in wf
+
+
+class TestTheAssemblerDoesNotTrustItsSources:
+    """Sept 12 2026: Matt's episode rebuilt from its EDL came back 106
+    seconds longer than the edit Patrick approved, all of it silence between
+    Mira's paragraphs — the narration in R2 predated the trim fix."""
+
+    def test_narration_is_trimmed_by_default(self):
+        import importlib
+
+        mod = importlib.import_module("assemble_edit")
+        src = (ROOT / "pipelines" / "voices" / "assemble_edit.py").read_text(encoding="utf-8")
+        assert "TRIM = (" in src
+        assert 'str(cut.get("from", "")).startswith("narration:")' in src
+
+    def test_conversation_is_never_trimmed_by_default(self):
+        src = (ROOT / "pipelines" / "voices" / "assemble_edit.py").read_text(encoding="utf-8")
+        assert "pauses in it are the conversation" in src
+
+    def test_a_cut_can_override_either_way(self):
+        src = (ROOT / "pipelines" / "voices" / "assemble_edit.py").read_text(encoding="utf-8")
+        assert 'trim = cut.get("trim")' in src
+        assert "if trim is None:" in src

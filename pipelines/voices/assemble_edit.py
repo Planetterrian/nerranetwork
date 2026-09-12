@@ -57,6 +57,15 @@ GENTLE = ("highpass=f=60,"
           "acompressor=threshold=-21dB:ratio=3:attack=20:release=250,"
           "dynaudnorm=f=250:g=15")
 LOUDNESS = "loudnorm=I=-16:TP=-1.5:LRA=11"
+# Trimming dead air off a narration take belongs in narrate.py, but an EDL
+# resolves takes that may have been recorded before that existed (Matt Davis:
+# the assembled episode came back 106 seconds longer than the approved edit,
+# all of it silence between Mira's paragraphs). Trimming a tight file is a
+# no-op, so the assembler does it too rather than trusting its sources.
+TRIM = ("silenceremove=start_periods=1:start_threshold=-45dB:"
+        "start_silence=0.35:detection=rms,"
+        "silenceremove=stop_periods=-1:stop_duration=0.35:"
+        "stop_threshold=-45dB:detection=rms")
 CHANNEL_FILTERS = {
     "left": "pan=mono|c0=c0",
     "right": "pan=mono|c0=c1",
@@ -116,6 +125,13 @@ def _piece(cut: dict, src: Path, out: Path) -> Path:
         if channel not in CHANNEL_FILTERS:
             raise SystemExit(f"channel must be one of {sorted(CHANNEL_FILTERS)}")
         chain.append(CHANNEL_FILTERS[channel])
+    # Narration is trimmed by default; a conversation never is, because the
+    # pauses in it are the conversation.
+    trim = cut.get("trim")
+    if trim is None:
+        trim = str(cut.get("from", "")).startswith("narration:")
+    if trim:
+        chain.append(TRIM)
     chain.append(GENTLE)
     cmd = ["ffmpeg", "-y", "-v", "error"]
     if cut.get("start") is not None:
