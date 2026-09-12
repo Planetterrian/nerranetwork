@@ -19,7 +19,7 @@ import difflib
 import re
 from typing import Any, Dict, List, Optional, Tuple
 
-from common import logger, sb_insert, sb_select, sb_update
+from common import cohost_label, logger, sb_insert, sb_select, sb_update
 
 LESSON_CATEGORIES = {"pacing", "questions", "interruption", "listening", "tone"}
 MAX_ACTIVE_LESSONS = 12          # Mira's prompt is not a filing cabinet
@@ -61,6 +61,33 @@ def count_repeated_questions(host_texts: List[str]) -> int:
     return repeats
 
 
+def count_interruptions(rows: List[Tuple[float, str, str]], host_label: str,
+                        guest_label: str) -> Optional[int]:
+    """Times the host started talking while the guest was still going.
+
+    The transcript carries a start time per line but not an end, so a line's
+    span is estimated from its own word count at the host's measured pace. A
+    host line that starts well inside a guest line's estimated span, and is
+    not the guest trailing off, is an interruption. Approximate by
+    construction — it is a trend line, not a verdict on any one moment.
+    """
+    if not guest_label:
+        return None
+    pace = 2.4          # words per second
+    guest = [(t, len(txt.split()) / pace) for t, spk, txt in rows
+             if spk.lower() == guest_label.lower()]
+    if not guest:
+        return None
+    host_starts = [t for t, spk, _ in rows if spk.lower() == host_label.lower()]
+    hits = 0
+    for start in host_starts:
+        for g_start, g_len in guest:
+            if g_len < 20 and g_start + 2.0 < start < g_start + g_len - 1.0:
+                hits += 1
+                break
+    return hits
+
+
 def session_events_summary(run: dict, limit: int = 60) -> str:
     """The scenario trace as plain lines, for the retro prompt."""
     trace = run.get("scenario_trace") or []
@@ -82,10 +109,17 @@ def measure(run: dict, transcript: str, host_label: str = "Mira",
     """
     rows = parse_transcript(transcript)
     speakers = {s for _, s, _ in rows}
-    if guest_label is None:
-        others = [s for s in speakers if s.lower() not in
-                  {host_label.lower(), "patrick", "mira/patrick"}]
-        guest_label = others[0] if others else ""
+    known = {host_label.lower(), "patrick", "mira/patrick", cohost_label().lower()}
+    # Sept 12 2026: talk share came back as 0.0 for the Hogan Shrum episode
+    # because the caller passed the guest's first name while the transcript
+    # labelled him GUEST. Take the name if it is there, else whatever speaker
+    # is left, else the literal GUEST label older transcripts use.
+    wanted = (guest_label or "").lower()
+    match = next((s for s in speakers if s.lower() == wanted), None)
+    if match is None:
+        others = [s for s in speakers if s.lower() not in known]
+        match = others[0] if others else ""
+    guest_label = match
 
     host_rows = [r for r in rows if r[1].lower() == host_label.lower()]
     words: Dict[str, int] = {}
@@ -109,12 +143,13 @@ def measure(run: dict, transcript: str, host_label: str = "Mira",
         "mira_turns": len(host_rows),
         "mira_mean_turn_sec": (round(sum(host_turn_lengths) / len(host_turn_lengths), 1)
                                if host_turn_lengths else None),
-        "interruptions": None,   # needs per-segment end times; not guessed here
+        "interruptions": count_interruptions(rows, host_label, guest_label),
         "repeated_questions": count_repeated_questions([t for _, _, t in host_rows]),
         "dead_air_sec": round(sum(g - DEAD_AIR_SEC for g in gaps if g > DEAD_AIR_SEC), 1),
         "agent_sessions": sessions,
         "drops": drops,
         "notes": {"talk_share_basis": "words", "word_counts": words,
+                  "interruption_basis": "estimated line spans",
                   "host_label": host_label, "guest_label": guest_label},
     }
 

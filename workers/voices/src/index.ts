@@ -1356,7 +1356,19 @@ async function handleLegEvent(req: Request, env: Env): Promise<Response> {
   const recordUrl = typeof body?.record_url === "string" && body.record_url ? body.record_url : null;
   const videoUrl = typeof body?.video_url === "string" && body.video_url ? body.video_url : null;
   if (event === "left" && (recordUrl || videoUrl)) {
-    if (role === "host" && recordUrl) patch.recording_host_url = recordUrl;
+    if (role === "host" && recordUrl) {
+      // Sept 12 2026: this took the LAST host leg, so a ten-second rejoin at
+      // the end of the Hogan Shrum episode overwrote the forty-minute leg it
+      // was recorded on. Same rule as the guest now: first leg wins the
+      // primary track, later ones are kept rather than thrown away.
+      const log = { ...(run.grok_session_log ?? {}) };
+      if (!run.recording_host_url) {
+        patch.recording_host_url = recordUrl;
+      } else {
+        log.extra_host_record_urls = [...(log.extra_host_record_urls ?? []), recordUrl];
+        patch.grok_session_log = log;
+      }
+    }
     if (role === "guest") {
       // First guest wins the primary track; extra guests are kept in the log.
       const log = { ...(run.grok_session_log ?? {}) };

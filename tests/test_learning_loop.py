@@ -77,14 +77,15 @@ class TestMetrics:
         assert m["agent_sessions"] == 2 and m["drops"] == 1
         # Talk share is words, and says so rather than pretending to be seconds.
         assert m["notes"]["talk_share_basis"] == "words"
-        assert m["interruptions"] is None
+        # Interruptions are estimated from line spans, and say so.
+        assert m["notes"]["interruption_basis"] == "estimated line spans"
 
-    def test_metrics_never_invent_an_interruption_count(self):
+    def test_an_interruption_count_is_never_invented_without_a_guest(self):
         from learning import measure
 
-        m = measure({"id": "r"}, TRANSCRIPT)
+        m = measure({"id": "r"}, "[00:00] Mira: Nobody else is here.\n")
         assert m["interruptions"] is None, (
-            "the transcript has no segment end times; a number here would be a guess")
+            "with no guest there is nothing to interrupt; a number would be a guess")
 
 
 class TestLessonsReachMiraOnlyViaAHuman:
@@ -382,3 +383,78 @@ class TestNoDeadAirBetweenParagraphs:
 
         assert 0.2 <= BREATH_SEC <= 0.8
         assert KEEP_SILENCE_SEC < BREATH_SEC
+
+
+class TestEveryoneOnOneClock:
+    """Sept 12 2026 (Hogan Shrum): per-speaker recordings start when that
+    person's leg connects, not when the room opened. Merged on their own
+    clocks, a guest who joined five minutes late appeared five minutes early
+    — Mira looked like she asked her opening question long after he had
+    answered it, and the dead-air metric came back as 2035 seconds."""
+
+    def test_offsets_come_from_the_session_trace(self):
+        import importlib
+
+        post = importlib.import_module("post_interview")
+        run = {"scenario_trace": [
+            {"t": "2026-09-12T00:26:57.7Z", "e": "room", "d": "opened (webrtc); mixer"},
+            {"t": "2026-09-12T00:26:57.8Z", "e": "leg", "d": "host #1 joined (1 in room)"},
+            {"t": "2026-09-12T00:26:58.4Z", "e": "grok", "d": "session updated; agent<->room mix bridged"},
+            {"t": "2026-09-12T00:32:11.2Z", "e": "leg", "d": "guest #2 joined (2 in room)"},
+            {"t": "2026-09-12T01:07:00.0Z", "e": "leg", "d": "host #3 joined (1 in room)"},
+        ]}
+        off = post.room_offsets(run)
+        assert abs(off["guest"] - 313.5) < 1.0
+        assert off["host"] < 1.0
+        # A late rejoin must not replace the first join's offset.
+        assert off["host"] < 60
+
+    def test_a_run_without_a_trace_degrades_to_zero(self):
+        import importlib
+
+        post = importlib.import_module("post_interview")
+        assert post.room_offsets({}) == {"guest": 0.0, "host": 0.0, "mira": 0.0}
+
+    def test_the_merge_applies_the_shift(self):
+        src = (ROOT / "pipelines" / "voices" / "post_interview.py").read_text(encoding="utf-8")
+        assert 'float(seg.get("start", 0.0)) + shift' in src
+        assert "offsets=offsets" in src
+
+    def test_both_clean_paths_pass_offsets(self):
+        src = (ROOT / "pipelines" / "voices" / "post_interview.py").read_text(encoding="utf-8")
+        assert src.count("room_offsets(") >= 3   # definition + three-track + two-track
+
+
+class TestMetricsMeasureTheRightPerson:
+    def test_guest_share_survives_a_label_mismatch(self):
+        import importlib
+
+        learning = importlib.import_module("learning")
+        transcript = ("[00:00] Mira: One short question for you.\n"
+                      "[00:10] GUEST: " + " ".join(["answer"] * 40) + "\n")
+        m = learning.measure({"id": "r"}, transcript, host_label="Mira",
+                             guest_label="Hogan")   # name the transcript never uses
+        assert m["guest_talk_share"] > 0.8, "must still find the guest"
+
+    def test_interruptions_are_counted_now_that_clocks_agree(self):
+        import importlib
+
+        learning = importlib.import_module("learning")
+        rows = [(0.0, "Hogan", " ".join(["word"] * 40)),   # ~17 s from 0
+                (5.0, "Mira", "Sorry, before we move on"),  # lands inside it
+                (40.0, "Mira", "And what about the artists?")]
+        assert learning.count_interruptions(rows, "Mira", "Hogan") == 1
+
+    def test_no_guest_means_no_number_rather_than_a_wrong_one(self):
+        import importlib
+
+        learning = importlib.import_module("learning")
+        assert learning.count_interruptions([(0.0, "Mira", "hello")], "Mira", "") is None
+
+
+class TestHostLegIsNotOverwritten:
+    def test_first_host_leg_wins_and_later_ones_are_kept(self):
+        body = WORKER[WORKER.index("async function handleLegEvent("):]
+        body = body[:body.index("\n}\n") + 3]
+        assert "extra_host_record_urls" in body
+        assert "if (!run.recording_host_url)" in body

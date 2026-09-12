@@ -229,15 +229,62 @@ def has_video_stream(path: Path) -> bool:
         return False
 
 
+def room_offsets(run: dict) -> dict:
+    """Seconds between the room opening and each track's recording starting.
+
+    Every per-speaker recording starts when that person's leg connects, not
+    when the room opened. Merging them on their own clocks puts a guest who
+    joined five minutes late five minutes early in the transcript — which is
+    exactly what happened to the Hogan Shrum episode (Sept 12 2026): Mira
+    appeared to ask her opening question minutes after he had answered it.
+
+    Returns {"guest": sec, "host": sec, "mira": sec}; missing roles are 0.
+    """
+    import datetime as _dt
+
+    def when(stamp):
+        try:
+            return _dt.datetime.fromisoformat(str(stamp).replace("Z", "+00:00"))
+        except Exception:  # noqa: BLE001
+            return None
+
+    trace = run.get("scenario_trace") or []
+    opened = None
+    out = {"guest": 0.0, "host": 0.0, "mira": 0.0}
+    for event in trace:
+        if not isinstance(event, dict):
+            continue
+        at, kind, what = when(event.get("t")), event.get("e"), str(event.get("d", ""))
+        if at is None:
+            continue
+        if opened is None and kind == "room" and what.startswith("opened"):
+            opened = at
+            continue
+        if opened is None:
+            continue
+        delta = (at - opened).total_seconds()
+        if kind == "leg" and " joined" in what:
+            role = what.split()[0]
+            if role in out and out[role] == 0.0:
+                out[role] = max(0.0, delta)
+        elif kind == "grok" and "bridged" in what and out["mira"] == 0.0:
+            out["mira"] = max(0.0, delta)
+    return out
+
+
 def diarized_tracks(tracks: list[tuple[str, Path]], workdir: Path,
-                    header: str = "") -> tuple[str, float]:
+                    header: str = "", offsets: dict | None = None) -> tuple[str, float]:
     """Whisper each (label, mono wav) track and merge the segments by
     start time into ``[MM:SS] <label>: text`` lines. The tracks ARE the
-    diarization. Returns (transcript, mean segment confidence 0..1)."""
+    diarization. ``offsets`` maps a label to the seconds between the room
+    opening and that track's recording starting, so everyone lands on one
+    clock. Returns (transcript, mean segment confidence 0..1)."""
     from engine.transcripts import generate_transcript
     merged: list[tuple[float, str, str]] = []
     confidences: list[float] = []
+    offsets = offsets or {}
     for label, wav in tracks:
+        shift = float(offsets.get(label, 0.0))
         slug = "".join(c if c.isalnum() else "_" for c in label.lower())
         result = generate_transcript(
             wav, workdir / "transcripts", f"{slug}_track",
@@ -253,7 +300,7 @@ def diarized_tracks(tracks: list[tuple[str, Path]], workdir: Path,
             text = (seg.get("text") or "").strip()
             if not text:
                 continue
-            merged.append((float(seg.get("start", 0.0)), label, text))
+            merged.append((float(seg.get("start", 0.0)) + shift, label, text))
             # faster-whisper avg_logprob ≈ log-confidence; map to 0..1-ish.
             if "avg_logprob" in seg:
                 confidences.append(
@@ -286,13 +333,17 @@ def speakers_header(app: dict) -> str:
             f"{_guest_label(app)} (guest)")
 
 
-def diarized_transcript_three(tracks: dict, app: dict,
-                              workdir: Path) -> tuple[str, float]:
+def diarized_transcript_three(tracks: dict, app: dict, workdir: Path,
+                              run: dict | None = None) -> tuple[str, float]:
     """Phase 2: per-speaker tracks → ``Mira:`` / ``Patrick:`` / ``<Guest>:``
     labelled transcript with the speakers header line on top."""
     labelled = [("Mira", tracks["mira"]), (cohost_label(), tracks["host"]),
                 (_guest_label(app), tracks["guest"])]
-    return diarized_tracks(labelled, workdir, header=speakers_header(app))
+    by_role = room_offsets(run or {})
+    offsets = {"Mira": by_role["mira"], cohost_label(): by_role["host"],
+               _guest_label(app): by_role["guest"]}
+    return diarized_tracks(labelled, workdir, header=speakers_header(app),
+                           offsets=offsets)
 
 
 def run_editorial_passes(transcript: str, interview: dict, app: dict) -> dict:
@@ -404,7 +455,7 @@ def main() -> int:
                     tracks[speaker], show.r2_key("raw", f"{run['id']}_{speaker}.wav"))
             mixed = mix_three(tracks["guest"], tracks["host"], tracks["mira"],
                               workdir / "mixed.wav")
-            transcript, confidence = diarized_transcript_three(tracks, app, workdir)
+            transcript, confidence = diarized_transcript_three(tracks, app, workdir, run)
         elif tracks["sources"].get("guest") == "local":
             # No co-host, but the guest's browser recording arrived intact.
             # Sept 10 2026: this branch used to fall through to mixing the
@@ -414,9 +465,11 @@ def main() -> int:
                 processed[speaker] = r2_upload(
                     tracks[speaker], show.r2_key("raw", f"{run['id']}_{speaker}.wav"))
             mixed = mix_two(tracks["guest"], tracks["mira"], workdir / "mixed.wav")
+            by_role = room_offsets(run)
             transcript, confidence = diarized_tracks(
                 [(_guest_label(app), tracks["guest"]), ("Mira", tracks["mira"])],
-                workdir)
+                workdir,
+                offsets={_guest_label(app): by_role["guest"], "Mira": by_role["mira"]})
         else:
             # Pre-Phase-2, no co-host and no usable local track: the
             # original two-track path off the raw Voximplant stereo.
