@@ -50,6 +50,8 @@ SILENCE_DB = -45           # below this is silence, not speech
 KEEP_SILENCE_SEC = 0.35    # a natural pause inside a paragraph
 PARAGRAPH_MAX_CHARS = 420  # a paragraph must be SAID inside a 60 s session
 SHORT_TAKE_RATIO = 0.6     # a take this far under its script was cut off
+MIN_CHECKABLE_WORDS = 14   # below this, pace varies too much to judge
+MIN_TAKE_SEC = 0.4         # ... so all a short line must prove is that it exists
 WORDS_PER_SEC = 2.4        # Mira's measured pace, for the truncation check
 
 
@@ -134,8 +136,17 @@ def _check_not_truncated(part: Path, text: str) -> None:
     failing, so this fails.
     """
     words = len(text.split())
-    expected = words / WORDS_PER_SEC
     actual = _duration(part)
+    # A short line is said at whatever pace it wants: "That is where we will
+    # leave it" is seven words in 1.7 seconds, which tripped this check on its
+    # first real outing (Sept 12 2026). Below MIN_CHECKABLE_WORDS the estimate
+    # means nothing, so all such a take has to prove is that it is not empty.
+    if words < MIN_CHECKABLE_WORDS:
+        if actual < MIN_TAKE_SEC:
+            raise RuntimeError(
+                f"take is empty: {actual:.1f}s of audio for {text[:60]!r}")
+        return
+    expected = words / WORDS_PER_SEC
     if actual < expected * SHORT_TAKE_RATIO:
         raise RuntimeError(
             f"take was cut off: {actual:.1f}s of audio for {words} words "

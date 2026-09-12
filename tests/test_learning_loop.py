@@ -343,6 +343,17 @@ class TestATakeIsNotCutOff:
         with pytest.raises(RuntimeError, match="cut off"):
             narrate._check_not_truncated(Path("/dev/null"), text)
 
+    def test_a_short_line_is_only_required_to_exist(self):
+        import importlib
+
+        narrate = importlib.import_module("narrate")
+        # Seven words in 1.7s is a real read, not a truncation (Sept 12 2026).
+        narrate._duration = lambda p: 1.7
+        narrate._check_not_truncated(Path("/dev/null"), "That is where we will leave it.")
+        narrate._duration = lambda p: 0.05
+        with pytest.raises(RuntimeError, match="empty"):
+            narrate._check_not_truncated(Path("/dev/null"), "That is where we will leave it.")
+
     def test_a_full_take_passes(self):
         import importlib
 
