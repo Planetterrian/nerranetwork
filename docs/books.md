@@ -197,10 +197,71 @@ shipped at 15.4 MB (96% images, a 4.8 MB PNG cover), which is $2.25 per
 copy, $1.26 of royalty on a $7.99 book — and KDP's browser upload
 rejects files over 10 MB, so an oversized EPUB cannot be submitted by
 automation at all. Tune `engine.book_art`'s `EPUB_*` constants, never
-the cap. As each listing goes live, paste its URL into
-`books/volumes/<id>.yaml` → `buy_links` and re-run the workflow (or just
-`generate_html.py --books` after editing catalog) so /books.html shows
-the button.
+the cap.
+
+**Store links live in the volume YAML — nowhere else (WO-15).** As
+each listing goes live, paste its URL into `books/volumes/<id>.yaml` →
+`buy_links`. `/books.html` reads `buy_links` from the YAML at render
+time (`generate_html.books_page_volumes`, the YAML winning per key over
+`books/catalog.json`), so the nightly regen / `generate_html.py --books`
+shows the button without a Build Book run; the catalog copy is only
+refreshed when a build rewrites the entry — never hand-edit it for
+links (PR #1185 changed nothing on the live page because the page read
+the catalog; PR #1187 hand-edited the catalog; both are the reason this
+rule exists). Keys: `direct` (Payhip ebook — "Buy direct"),
+`audiobook_direct` (Payhip audiobook — "Buy the audiobook"; leave empty
+until the product exists, the button and the combined direct-sales copy
+appear the moment it is set), `books2read` (the Books2Read universal
+link Draft2Digital issues — one "Apple, Kobo, B&N and more" button; UC
+`https://books2read.com/u/mBDDaR`, FP `https://books2read.com/u/bWVVnq`),
+`amazon`, `apple_books`, `google_play`, `kobo`, `spotify`.
+
+## Audiobook delivery export (WO-15, Sept 2026)
+
+The paid audio masters live only in the private `nerra-books` bucket,
+and the browser tooling that fills in store forms cannot upload files
+over 10 MB — so the store uploads happen from the operator's Mac, and
+**Actions → Export audiobook** (`.github/workflows/export-audiobook.yml`,
+`scripts/export_audiobook.py --volume <id>`, manual dispatch only, one
+volume per run, the `build-book` concurrency group so it never races a
+build) is how the files get there:
+
+1. pulls `books/<id>/audio/track_*.mp3` from the private bucket
+   (opening credits = `track_000`, one file per chapter, closing
+   credits = the last track — separate files, never baked into
+   chapter 1; narration text is never touched, a text change re-bills
+   TTS for that track);
+2. adds what Voices by INaudio wants beside them: `retail_sample.mp3`
+   (the first ~3.5 minutes of chapter 1, after the credits, 1-second
+   fade-out; INaudio accepts 1–5 min), `cover.jpg` (3000×3000 square)
+   plus `cover_portrait.jpg` (the 1600×2560 store cover), `manifest.csv`
+   (track number, chapter title, duration, sha256) and a README;
+3. zips it all in order to
+   `books/<id>/export/<id>_audiobook_tracks.zip` on the **private**
+   bucket;
+4. mints 7-day presigned GET links (R2's maximum) for the zip and the
+   M4B and writes them — with size and sha256 — to the run's
+   **step summary only**: never the log, never a committed file, never
+   the public bucket (`test_export_never_touches_the_public_bucket`,
+   and the catalog guard `test_paid_masters_are_never_published_at_a_public_url`
+   stays green). Download from the summary into `~/Downloads`, verify
+   the sha256 against the log line, upload to the store.
+
+The `audio/` files are already INaudio's codec spec (192 kbps CBR
+44.1 kHz). Digital narration is declared on every store form; the
+credits carry no spoken disclosure line (WO-8) and the export changes
+nothing in them.
+
+## Payhip store (live 12 Sep 2026)
+
+Store: <https://payhip.com/nerranetwork>. Products: `TKVCl`
+(Unintended Consequences, Volume 1 — EPUB) and `4Vpby` (First
+Principles, Volume 1 — EPUB); the audiobook products are added once the
+export bundle above has been uploaded, and their URLs go into
+`audiobook_direct`. Stripe connected 12 Sep 2026; card statement
+descriptor **PAYHIP\*NERRA BOOKS**. Payhip is merchant-of-record and
+holds its own copy of every file — the network never serves the paid
+product.
 
 **AI disclosure is mandatory and non-optional at every store below** —
 both the AI-assisted text production and the digital-voice narration.
@@ -278,12 +339,14 @@ ffmpeg command shape, funnel round-trip for `kind="book"`, catalog
 upsert idempotence, volume-config episode existence, and the workflow's
 wiring.
 
-## Direct sales (WO-9 — dormant until Patrick provisions Payhip)
+## Direct sales (WO-9; live since 12 Sep 2026 — see "Payhip store")
 
-The site scaffolding ships ready: paste a live Payhip product URL into a
-volume YAML's `buy_links.direct` and the Books page renders a "Buy
-direct" button plus the formats/sideloading/refunds section (and loads
-payhip.js). No URL = nothing renders. Net on a $4.99 ebook: ~$4.26
+Paste a live Payhip product URL into a volume YAML's `buy_links.direct`
+and the Books page renders a "Buy direct" button plus the
+formats/sideloading/refunds section (and loads payhip.js). No URL =
+nothing renders. Until a volume carries `audiobook_direct` the section's
+copy says the direct purchase is the EPUB only; with it set, the
+combined EPUB-or-audiobook copy renders (WO-15). Net on a $4.99 ebook: ~$4.26
 direct vs ~$3.49 retail; on a $9.99 audiobook ~$8.82 vs $5.00 (Spotify)
 — audiobooks are where direct selling roughly doubles the economics.
 
