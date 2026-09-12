@@ -1,0 +1,44 @@
+# Nerra Voices — assemble a finished episode from an edit decision list
+# (Sept 12 2026). Both of the first two Age of AI episodes needed a real
+# edit: a reconnect to bridge, an opening performed to an empty guest chair
+# to remove, a host talking over the guest's closing answer to replace with
+# the guest's own isolated track. Those edits used to live only in whoever
+# made them. Now they live in pipelines/voices/edl/<slug>.json, and this
+# rebuilds the episode from the sources, uploads it, and points the gate 1
+# and gate 2 review pages at it.
+name: Assemble edited episode
+on:
+  workflow_dispatch:
+    inputs:
+      slug:
+        description: 'pipelines/voices/edl/<slug>.json'
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  assemble:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+      - uses: FedericoCarboni/setup-ffmpeg@v3
+      - uses: ./.github/actions/setup-python
+        with:
+          python-version: '3.12'
+          requirements-file: 'pipelines/requirements.txt'
+          skip-checkout: 'true'
+      - run: python pipelines/voices/assemble_edit.py
+        env:
+          EDL_SLUG: ${{ inputs.slug }}
+          SUPABASE_URL: ${{ secrets.VOICES_SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.VOICES_SUPABASE_SERVICE_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_PUBLIC_BASE_URL: ${{ secrets.R2_PUBLIC_BASE_URL }}

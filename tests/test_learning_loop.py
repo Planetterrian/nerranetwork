@@ -560,3 +560,72 @@ class TestTheShowDoesNotOpenToAnEmptyChair:
 
     def test_the_guest_arriving_is_what_opens_the_show(self):
         assert 'if (role === "guest" && !openingFired) maybeOpen();' in SCENARIO
+
+
+class TestTheEditIsData:
+    """Sept 12 2026: both of the first two episodes needed a real edit, and
+    both were cut by hand outside the pipeline — unreproducible, unreviewable,
+    impossible to undo. The edit now lives in the repo as an EDL."""
+
+    def test_every_edl_names_its_run_and_has_cuts(self):
+        import json
+
+        d = ROOT / "pipelines" / "voices" / "edl"
+        specs = list(d.glob("*.json"))
+        assert specs, "no EDLs on disk"
+        for p in specs:
+            spec = json.loads(p.read_text(encoding="utf-8"))
+            assert spec.get("run_id"), p.name
+            assert spec.get("interview_id"), p.name
+            assert spec.get("cuts"), p.name
+            for cut in spec["cuts"]:
+                assert ("from" in cut) ^ ("gap" in cut), f"{p.name}: {cut}"
+            # A narration reference requires the slug that resolves it.
+            if any(str(c.get("from", "")).startswith("narration:") for c in spec["cuts"]):
+                assert spec.get("narration"), p.name
+
+    def test_sources_resolve_from_the_run_row(self):
+        import importlib
+
+        mod = importlib.import_module("assemble_edit")
+        run = {"recording_guest_url": "https://example/guest.mp3",
+               "grok_session_log": {"voximplant_mix_record_url": "https://example/mix.mp3",
+                                    "extra_guest_record_urls": ["https://example/g2.mp3"]}}
+        show = importlib.import_module("shows").get_show("age_of_ai")
+        assert mod._resolve("run:guest", run, show, "") == "https://example/guest.mp3"
+        assert mod._resolve("run:mix", run, show, "") == "https://example/mix.mp3"
+        assert mod._resolve("run:extra_guest:0", run, show, "") == "https://example/g2.mp3"
+        assert mod._resolve("https://example/x.mp3", run, show, "") == "https://example/x.mp3"
+
+    def test_a_missing_source_fails_loudly(self):
+        import importlib
+
+        mod = importlib.import_module("assemble_edit")
+        show = importlib.import_module("shows").get_show("age_of_ai")
+        with pytest.raises(SystemExit, match="not on the run row"):
+            mod._resolve("run:host", {"grok_session_log": {}}, show, "")
+        with pytest.raises(SystemExit, match="needs a top-level"):
+            mod._resolve("narration:intro", {}, show, "")
+        with pytest.raises(SystemExit, match="unrecognised source"):
+            mod._resolve("guest.mp3", {}, show, "")
+
+    def test_channels_are_named_not_guessed(self):
+        import importlib
+
+        mod = importlib.import_module("assemble_edit")
+        assert set(mod.CHANNEL_FILTERS) == {"left", "right", "mono"}
+        # L is that person's microphone on a Voximplant per-person recording.
+        assert mod.CHANNEL_FILTERS["left"] == "pan=mono|c0=c0"
+
+    def test_the_review_pages_are_pointed_at_the_edit(self):
+        src = (ROOT / "pipelines" / "voices" / "assemble_edit.py").read_text(encoding="utf-8")
+        assert 'tracks["preview"] = url' in src
+        assert 'tracks["edit"]' in src
+
+    def test_the_workflow_can_read_and_write_r2(self):
+        wf = (ROOT / ".github" / "workflows"
+              / "nerra_voices_assemble_edit.yml").read_text(encoding="utf-8")
+        assert "R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}" in wf
+        assert "SUPABASE_SERVICE_KEY: ${{ secrets.VOICES_SUPABASE_SERVICE_KEY }}" in wf
+        assert "setup-ffmpeg" in wf
+        assert "EDL_SLUG: ${{ inputs.slug }}" in wf
