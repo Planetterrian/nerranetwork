@@ -165,7 +165,7 @@ def assemble(slug: str) -> dict:
     if not spec_path.exists():
         raise SystemExit(f"no EDL at {spec_path}")
     spec = json.loads(spec_path.read_text(encoding="utf-8"))
-    show = get_show(spec.get("show") or "age_of_ai")
+    show = get_show(spec.get("show"))
     run_id = spec["run_id"]
     runs = sb_select("interview_runs", f"id=eq.{run_id}")
     if not runs:
