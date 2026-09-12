@@ -46,6 +46,8 @@ NARRATION_DIR = Path(__file__).parent / "narration"
 TAKE_TIMEOUT_SEC = 180
 POLL_SEC = 5
 BREATH_SEC = 0.45          # between paragraphs, so it reads as one take
+SILENCE_DB = -45           # below this is silence, not speech
+KEEP_SILENCE_SEC = 0.35    # a natural pause inside a paragraph
 PARAGRAPH_MAX_CHARS = 420  # a paragraph must be SAID inside a 60 s session
 SHORT_TAKE_RATIO = 0.6     # a take this far under its script was cut off
 WORDS_PER_SEC = 2.4        # Mira's measured pace, for the truncation check
@@ -89,6 +91,29 @@ def _record_take(slug: str, segment_id: str, seq: int, text: str, voice: str) ->
         if row.get("status") == "failed":
             raise RuntimeError(f"take {take_id} failed: {row.get('detail')}")
     raise RuntimeError(f"take {take_id} never reported within {TAKE_TIMEOUT_SEC}s")
+
+
+def _trim(part: Path) -> Path:
+    """Strip the dead air off a take.
+
+    The scenario records for as long as the paragraph *should* take to say,
+    because the agent's ResponseDone fires before it has finished speaking.
+    When Mira finishes early the rest of that window is silence, and stitching
+    the takes raw left four to ten second holes between paragraphs (Sept 12
+    2026). Trim both ends and shorten anything long in the middle, so the
+    breath between paragraphs is the one this module adds, not an artefact of
+    how long the recorder happened to run.
+    """
+    out = part.with_name(part.stem + "_trim.wav")
+    subprocess.run(
+        ["ffmpeg", "-y", "-v", "error", "-i", str(part), "-af",
+         f"silenceremove=start_periods=1:start_threshold={SILENCE_DB}dB:"
+         f"start_silence={KEEP_SILENCE_SEC}:detection=rms,"
+         f"silenceremove=stop_periods=-1:stop_duration={KEEP_SILENCE_SEC}:"
+         f"stop_threshold={SILENCE_DB}dB:detection=rms",
+         "-ar", "48000", "-ac", "1", "-c:a", "pcm_s16le", str(out)],
+        check=True)
+    return out
 
 
 def _duration(path: Path) -> float:
@@ -175,8 +200,11 @@ def narrate(slug: str) -> Dict[str, str]:
                 url = _record_take(slug, seg_id, seq, para, voice)
                 part = work / f"{seg_id}_{seq:03d}.mp3"
                 part.write_bytes(requests.get(url, timeout=180).content)
-                _check_not_truncated(part, para)
-                parts.append(part)
+                trimmed = _trim(part)
+                # Checked AFTER trimming: trailing silence would otherwise
+                # make a cut-off read look like a complete one.
+                _check_not_truncated(trimmed, para)
+                parts.append(trimmed)
             if not parts:
                 continue
             mp3 = _stitch(parts, work / f"{seg_id}.mp3")

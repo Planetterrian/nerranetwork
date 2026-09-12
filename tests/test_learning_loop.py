@@ -355,3 +355,30 @@ class TestATakeIsNotCutOff:
 
         worst_case_sec = (PARAGRAPH_MAX_CHARS / 5) / WORDS_PER_SEC
         assert worst_case_sec < 45, "a paragraph must be SAID inside the session limit"
+
+
+class TestNoDeadAirBetweenParagraphs:
+    """Sept 12 2026: the recorder runs for as long as the paragraph should
+    take to say, so a take Mira finishes early ends in silence. Stitched raw,
+    that left four to ten second holes between paragraphs — 57 seconds of dead
+    air in a two-minute introduction."""
+
+    def test_each_take_is_trimmed_before_stitching(self):
+        src = (ROOT / "pipelines" / "voices" / "narrate.py").read_text(encoding="utf-8")
+        assert "def _trim(" in src
+        assert "silenceremove=start_periods=1" in src
+        assert "silenceremove=stop_periods=-1" in src
+        assert "parts.append(trimmed)" in src
+
+    def test_the_length_check_runs_on_the_trimmed_take(self):
+        src = (ROOT / "pipelines" / "voices" / "narrate.py").read_text(encoding="utf-8")
+        i_trim = src.index("trimmed = _trim(part)")
+        i_check = src.index("_check_not_truncated(trimmed, para)")
+        assert i_trim < i_check, (
+            "trailing silence would make a cut-off read look complete")
+
+    def test_the_gap_between_paragraphs_is_the_one_we_choose(self):
+        from narrate import BREATH_SEC, KEEP_SILENCE_SEC
+
+        assert 0.2 <= BREATH_SEC <= 0.8
+        assert KEEP_SILENCE_SEC < BREATH_SEC
