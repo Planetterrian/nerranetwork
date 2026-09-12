@@ -133,14 +133,20 @@
                pays 70% of the MATCHED price); differentiate on bundles
                and formats, never price. #}
             {% if v.buy_links.direct %}<a class="nn-book-primary payhip-buy-button" data-theme="none" href="{{ v.buy_links.direct }}" rel="noopener">Buy direct</a>{% endif %}
+            {# WO-15: the audiobook is its own Payhip product; the button
+               appears the moment audiobook_direct is set in the YAML. #}
+            {% if v.buy_links.audiobook_direct %}<a class="nn-book-primary payhip-buy-button" data-theme="none" href="{{ v.buy_links.audiobook_direct }}" rel="noopener">Buy the audiobook</a>{% endif %}
             {% if v.buy_links.amazon %}<a class="nn-book-primary" href="{{ v.buy_links.amazon }}" rel="noopener">Amazon</a>{% endif %}
+            {# Books2Read universal link (Draft2Digital): one button for
+               every retailer D2D distributes to. #}
+            {% if v.buy_links.books2read %}<a href="{{ v.buy_links.books2read }}" rel="noopener">Apple, Kobo, B&amp;N and more</a>{% endif %}
             {% if v.buy_links.apple_books %}<a href="{{ v.buy_links.apple_books }}" rel="noopener">Apple Books</a>{% endif %}
             {% if v.buy_links.google_play %}<a href="{{ v.buy_links.google_play }}" rel="noopener">Google Play</a>{% endif %}
             {% if v.buy_links.kobo %}<a href="{{ v.buy_links.kobo }}" rel="noopener">Kobo</a>{% endif %}
             {% if v.buy_links.spotify %}<a href="{{ v.buy_links.spotify }}" rel="noopener">Spotify</a>{% endif %}
             {% if v.files.sample_epub %}<a href="{{ v.files.sample_epub }}">Free sample (EPUB)</a>{% endif %}
         </div>
-        {%- set _has_buy = v.buy_links and (v.buy_links.direct or v.buy_links.amazon or v.buy_links.apple_books or v.buy_links.google_play or v.buy_links.kobo or v.buy_links.spotify) %}
+        {%- set _has_buy = v.buy_links and (v.buy_links.direct or v.buy_links.audiobook_direct or v.buy_links.books2read or v.buy_links.amazon or v.buy_links.apple_books or v.buy_links.google_play or v.buy_links.kobo or v.buy_links.spotify) %}
         {%- if not _has_buy %}
         {# Honest state (Sep 2026 review): a price with no checkout read as a
            broken page. Say plainly that the store listing is pending. #}
@@ -150,18 +156,33 @@
     {% endfor %}
 </section>
 {% set has_direct = volumes | selectattr("buy_links.direct") | list %}
-{% if has_direct %}
+{% set has_audiobook_direct = volumes | selectattr("buy_links.audiobook_direct") | list %}
+{% if has_direct or has_audiobook_direct %}
 <script src="https://payhip.com/payhip.js" defer></script>
 <section class="nn-direct-sales" id="direct">
     <h2>Buying direct</h2>
-    <p>Buying direct gets you every format at once — EPUB for Apple
-    Books, Kobo and most readers, plus the chaptered audiobook — and
+    {# WO-15: until an audiobook product exists on Payhip the direct
+       purchase is the EPUB only — say exactly what arrives. #}
+    {% if has_audiobook_direct %}
+    <p>Buying direct gets you the format you choose — the EPUB for
+    Apple Books, Kobo and most readers, or the chaptered audiobook — and
     more of the price reaches the network. Files arrive by email
     immediately after checkout.</p>
     <p><strong>Loading the EPUB:</strong> on Kindle, email the file to
     your Send-to-Kindle address or use Amazon's Send to Kindle app; on
-    Apple Books or Kobo, open the file and it imports. The audiobook is
-    plain MP3 chapters — any podcast or music app plays them.</p>
+    Apple Books or Kobo, open the file and it imports. The audiobook
+    arrives as one chaptered M4B plus the individual chapter MP3s — any
+    podcast, book or music app plays them.</p>
+    {% else %}
+    <p>Buying direct gets you the EPUB — it opens in Apple Books, Kobo
+    and most readers — and more of the price reaches the network. The
+    file arrives by email immediately after checkout. The audiobook is
+    coming to the direct store; until then it is available through the
+    audiobook retailers linked above as each listing goes live.</p>
+    <p><strong>Loading the EPUB:</strong> on Kindle, email the file to
+    your Send-to-Kindle address or use Amazon's Send to Kindle app; on
+    Apple Books or Kobo, open the file and it imports.</p>
+    {% endif %}
     <p><strong>Refunds:</strong> if a file won't open or you bought the
     wrong edition, reply to your receipt email within 14 days and we
     will fix it or refund it. Questions: the contact address on the

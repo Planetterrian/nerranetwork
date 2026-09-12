@@ -1374,7 +1374,15 @@ in-file disclosure line was removed from the audiobook credits Aug 2026
 (WO-8, operator-directed) — no retail channel requires a spoken line,
 only the upload declaration; an earlier note here conflated the two.** Committed record: series + volume
 YAMLs + `books/catalog.json` → `/books.html` (`generate_html.py
---books`, in `--all` + sitemap + footer). Live (WO-12, Sept 2026): **UC Volume 1** (73 chapters, eps 1–80) and
+--books`, in `--all` + sitemap + footer). **Store links live in the
+volume YAML** (`buy_links`: `direct`, `audiobook_direct`, `books2read`,
+retailers) — `/books.html` reads them from the YAML at render time
+(`books_page_volumes`, YAML wins per key); the catalog copy refreshes
+only on a build, so never hand-edit it for links (WO-15). **Audiobook
+masters reach the operator only via Actions "Export audiobook"**
+(`scripts/export_audiobook.py`): private-bucket zip (tracks + retail
+sample + 3000² cover + manifest) and 7-day presigned links for the zip
+and M4B written to the run's step summary and nowhere else. Live (WO-12, Sept 2026): **UC Volume 1** (73 chapters, eps 1–80) and
 **First Principles Volume 1** (58 chapters, eps 1–60) — the former
 "Collected Editions", renumbered because they are Volume 1 of an
 ongoing series (Volume 2 comes from ep 81 / ep 61); their volume ids

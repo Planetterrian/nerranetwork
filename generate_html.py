@@ -3878,6 +3878,55 @@ def generate_gallery_page(*, dry_run=False):
     return out_path
 
 
+def books_page_volumes(catalog_path, volumes_dir):
+    """Catalog entries the storefront renders.
+
+    Two things are read from the volume YAMLs at render time, so neither
+    needs a Build Book run to reach the page: visibility (``unlisted`` /
+    ``retired`` — the bigger-books shift and WO-12) and, since WO-15,
+    ``buy_links`` — the store links are EDITED in the YAML and only reach
+    ``books/catalog.json`` when a build rewrites the entry, which is why
+    a links-only PR changed nothing on the live page. The YAML wins per
+    key over the catalog; a key the YAML lacks keeps the catalog value.
+    """
+    catalog_path = Path(catalog_path)
+    volumes_dir = Path(volumes_dir)
+    if not catalog_path.exists():
+        return []
+    try:
+        volumes = json.loads(
+            catalog_path.read_text(encoding="utf-8")).get("volumes", [])
+    except (json.JSONDecodeError, OSError) as exc:
+        print(f"Warning: books catalog unreadable ({exc}) — "
+              "rendering empty Books page", file=sys.stderr)
+        return []
+    import yaml as _yaml
+    hidden = set()
+    yaml_links = {}
+    for vp in sorted(volumes_dir.glob("*.yaml")):
+        try:
+            vdata = _yaml.safe_load(vp.read_text(encoding="utf-8")) or {}
+        except Exception:  # noqa: BLE001 — visibility is best-effort
+            continue
+        vid = vdata.get("volume_id")
+        if vdata.get("unlisted") or vdata.get("retired"):
+            hidden.add(vid)
+        if isinstance(vdata.get("buy_links"), dict):
+            yaml_links[vid] = {str(k): str(v or "").strip()
+                               for k, v in vdata["buy_links"].items()}
+    out = []
+    for v in volumes:
+        vid = v.get("volume_id")
+        # A retired catalog entry (WO-12: the superseded 20-chapter books)
+        # is hidden even if its YAML were ever lost.
+        if vid in hidden or v.get("retired"):
+            continue
+        merged = dict(v.get("buy_links") or {})
+        merged.update(yaml_links.get(vid, {}))
+        out.append({**v, "buy_links": merged})
+    return out
+
+
 def generate_books_page(*, dry_run=False):
     """Generate the /books.html storefront page from books/catalog.json.
 
@@ -3887,39 +3936,24 @@ def generate_books_page(*, dry_run=False):
     empty state, so wiring this into ``--all`` before the first volume
     ships is a clean no-op page rather than a crash.
     """
+    volumes = books_page_volumes(ROOT / "books" / "catalog.json",
+                                 ROOT / "books" / "volumes")
+    html = render_books_page(volumes)
+    out_path = ROOT / "books.html"
+
+    if dry_run:
+        print(f"[dry-run] Would write {out_path}")
+        return None
+
+    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
+    print(f"Wrote {out_path}")
+    return out_path
+
+
+def render_books_page(volumes):
+    """The /books.html markup for *volumes* (see books_page_volumes)."""
     env = _get_jinja_env()
     template = env.get_template("books_page.html.j2")
-
-    volumes = []
-    catalog_path = ROOT / "books" / "catalog.json"
-    if catalog_path.exists():
-        try:
-            volumes = json.loads(
-                catalog_path.read_text(encoding="utf-8")).get("volumes", [])
-            # The bigger-books shift (Aug 2026): volumes flagged
-            # unlisted in their YAML stay built + cataloged but are
-            # hidden from the storefront — the collected editions are
-            # the store products. The flag lives in the volume YAML so
-            # visibility can change without a rebuild.
-            import yaml as _yaml
-            unlisted = set()
-            for vp in (ROOT / "books" / "volumes").glob("*.yaml"):
-                try:
-                    vdata = _yaml.safe_load(vp.read_text(encoding="utf-8"))
-                    if vdata and (vdata.get("unlisted")
-                                  or vdata.get("retired")):
-                        unlisted.add(vdata.get("volume_id"))
-                except Exception:  # noqa: BLE001 — visibility is best-effort
-                    pass
-            # A retired catalog entry (WO-12: the superseded 20-chapter
-            # books) is hidden even if its YAML were ever lost.
-            volumes = [v for v in volumes
-                       if v.get("volume_id") not in unlisted
-                       and not v.get("retired")]
-        except (json.JSONDecodeError, OSError) as exc:
-            print(f"Warning: books catalog unreadable ({exc}) — "
-                  "rendering empty Books page", file=sys.stderr)
-
     context = {
         "path_prefix": "",
         "page_title": "Books — Nerra Network",
@@ -3944,17 +3978,7 @@ def generate_books_page(*, dry_run=False):
         "all_shows": _build_all_shows_list(),
         "volumes": volumes,
     }
-
-    html = template.render(**context)
-    out_path = ROOT / "books.html"
-
-    if dry_run:
-        print(f"[dry-run] Would write {out_path}")
-        return None
-
-    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
-    print(f"Wrote {out_path}")
-    return out_path
+    return template.render(**context)
 
 
 def _member_page_context(title, description, canonical):

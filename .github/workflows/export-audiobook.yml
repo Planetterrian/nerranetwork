@@ -1,0 +1,51 @@
+# Export one volume's audiobook masters for store upload (WO-15, Sept
+# 2026). The paid masters live only in the PRIVATE nerra-books bucket
+# and the store forms are filled from the operator's machine, so this
+# run zips the per-chapter tracks (+ retail sample, covers, manifest)
+# into the private bucket and writes 7-day presigned download links —
+# for the zip and the M4B — to the run's step summary, and NOWHERE
+# else: never the log, never a committed file, never the public bucket.
+#
+# Manual dispatch only, one volume per run. Shares the build-book
+# concurrency group so it can never race a Build Book run that is
+# rewriting the same audio prefix.
+name: Export audiobook
+
+on:
+  workflow_dispatch:
+    inputs:
+      volume:
+        description: "Volume id (books/volumes/<id>.yaml)"
+        required: true
+
+concurrency:
+  group: build-book
+  cancel-in-progress: false
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - uses: ./.github/actions/setup-python
+        with:
+          python-version: "3.12"
+          requirements-file: "requirements.txt"
+          skip-checkout: "true"
+
+      - name: Install ffmpeg
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+
+      - name: Export bundle + presigned links (links go to the step summary only)
+        env:
+          R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BOOKS_PRIVATE_BUCKET: ${{ vars.R2_BOOKS_PRIVATE_BUCKET || 'nerra-books' }}
+        run: python scripts/export_audiobook.py --volume "${{ github.event.inputs.volume }}"

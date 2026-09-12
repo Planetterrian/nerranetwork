@@ -892,7 +892,7 @@ class TestWO12SeriesVolumes:
     def test_books_page_hides_retired(self):
         src = (ROOT / "generate_html.py").read_text(encoding="utf-8")
         assert 'vdata.get("retired")' in src
-        assert 'not v.get("retired")' in src
+        assert 'v.get("retired")' in src  # catalog flag honoured too
         page = (ROOT / "books.html").read_text(encoding="utf-8")
         assert "Collected Edition" not in page
         assert page.count("— Volume 1</h2>") == 2
@@ -1243,3 +1243,244 @@ class TestWO13ReviewerNoteGate:
                                 for n in z.namelist() if n.endswith(".xhtml"))
             for note in self.LEAKED:
                 assert note not in body, (vid, note[:40])
+
+
+class TestWO15AudiobookExportAndBooksPage:
+    """WO-15 (Sept 2026): the paid audio masters reach the operator's
+    machine through a private-bucket zip + 7-day presigned links written
+    to the run's step summary only; the Books page reads buy links from
+    the volume YAML at render time; two new link keys; honest
+    direct-sales copy until the audiobook product exists."""
+
+    # ---- export bundle ------------------------------------------------
+    @staticmethod
+    def _sine(path: Path, seconds: float, freq: int = 440) -> Path:
+        import subprocess
+        path.parent.mkdir(parents=True, exist_ok=True)
+        subprocess.run(
+            ["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i",
+             f"sine=frequency={freq}:duration={seconds}", "-codec:a",
+             "libmp3lame", "-ar", "44100", "-b:a", "192k", "-ac", "1",
+             str(path)], check=True)
+        return path
+
+    @pytest.fixture
+    def export_mod(self):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "export_audiobook", ROOT / "scripts" / "export_audiobook.py")
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        return mod
+
+    @pytest.fixture
+    def fake_volume_build(self, tmp_path, monkeypatch, export_mod):
+        """A local 'build' of UC vol1 (retired, 19 chapters — small):
+        placeholder tracks + a typographic cover under a fake OUT_ROOT."""
+        import shutil
+        from engine.book_compiler import (collect_chapters, generate_cover,
+                                          load_volume)
+        if not shutil.which("ffmpeg"):
+            pytest.skip("ffmpeg not installed")
+        vid = "unintended_consequences_vol1"
+        vol = load_volume(VOLS / f"{vid}.yaml")
+        n = len(collect_chapters(vol)) + 2
+        out_root = tmp_path / "outputs" / "books"
+        audio = out_root / vid / "audio"
+        for i in range(n):
+            self._sine(audio / f"track_{i:03d}.mp3",
+                       70 if i == 1 else 3, 300 + 5 * i)
+        generate_cover(vol, out_root / vid / "cover.png")
+        monkeypatch.setattr(export_mod.bb, "OUT_ROOT", out_root)
+        return vid, n, out_root
+
+    def test_bundle_shape_and_dry_run(self, fake_volume_build, tmp_path,
+                                      export_mod):
+        import csv
+        import zipfile
+        from PIL import Image
+        from engine.audio import get_audio_duration
+        vid, n, out_root = fake_volume_build
+        report = export_mod.run_export(vid, work_dir=tmp_path / "export",
+                                       s3=None, upload=False)
+        assert report["tracks"] == n and report["uploaded"] is False
+        z = zipfile.ZipFile(tmp_path / "export" / f"{vid}_audiobook_tracks.zip")
+        names = z.namelist()
+        tracks = [x for x in names if x.startswith("track_")]
+        assert tracks == [f"track_{i:03d}.mp3" for i in range(n)]  # in order
+        for extra in ("retail_sample.mp3", "cover.jpg", "cover_portrait.jpg",
+                      "manifest.csv", "README.txt"):
+            assert extra in names, extra
+        rows = list(csv.DictReader(
+            (tmp_path / "export" / "manifest.csv").open(encoding="utf-8")))
+        assert rows[0]["title"] == "Opening Credits"
+        assert rows[n - 1]["title"] == "Closing Credits"
+        assert rows[1]["title"].startswith("Chapter 1 ·")
+        assert rows[-1]["track"] == "sample"
+        assert all(len(r["sha256"]) == 64 for r in rows)
+        # retail sample: from chapter 1 (after the credits), 1-5 min
+        sample = tmp_path / "export" / "retail_sample.mp3"
+        dur = get_audio_duration(sample)
+        assert 60 <= dur <= 300 and abs(dur - 70) < 1.5
+        # covers: 3000x3000 square for INaudio + the 1600x2560 portrait
+        assert Image.open(tmp_path / "export" / "cover.jpg").size == (3000, 3000)
+        assert Image.open(tmp_path / "export" / "cover_portrait.jpg").size \
+            == (1600, 2560)
+        assert "opening credits (separate file)" in z.read("README.txt").decode()
+
+    def test_upload_is_private_and_links_reach_only_the_summary(
+            self, fake_volume_build, tmp_path, export_mod, monkeypatch,
+            capsys, caplog):
+        vid, n, out_root = fake_volume_build
+        uploads = []
+        monkeypatch.setattr(export_mod.bb, "_r2_upload",
+                            lambda local, key, ctype, private=False:
+                            uploads.append((key, ctype, private)) or
+                            f"r2://nerra-books/{key}")
+
+        class FakeS3:
+            def __init__(self):
+                self.signed = []
+
+            def download_file(self, bucket, key, dest):
+                assert bucket == "nerra-books" and key.endswith(".m4b")
+                Path(dest).write_bytes(b"m4b-bytes")
+
+            def generate_presigned_url(self, op, Params, ExpiresIn):
+                assert op == "get_object" and Params["Bucket"] == "nerra-books"
+                assert ExpiresIn == 7 * 24 * 3600
+                url = (f"https://nerra-books.r2.example/{Params['Key']}"
+                       f"?X-Amz-Signature=SECRET{len(self.signed)}")
+                self.signed.append(url)
+                return url
+
+        s3 = FakeS3()
+        summary = tmp_path / "summary.md"
+        with caplog.at_level("INFO"):
+            report = export_mod.run_export(
+                vid, work_dir=tmp_path / "export", s3=s3, upload=True,
+                summary_path=summary)
+        assert report["uploaded"] and report["presigned"] == 2
+        assert uploads == [(f"books/{vid}/export/{vid}_audiobook_tracks.zip",
+                            "application/zip", True)]
+        text = summary.read_text(encoding="utf-8")
+        for url in s3.signed:
+            assert url in text
+        assert report["zip_sha256"] in text and report["m4b_sha256"] in text
+        # never in the log / stdout
+        leaked = capsys.readouterr().out + caplog.text
+        assert "X-Amz-Signature" not in leaked
+        assert "r2.example" not in leaked
+        assert report["zip_sha256"] in leaked  # checksums ARE printed
+
+    def test_export_never_touches_the_public_bucket(self):
+        src = (ROOT / "scripts" / "export_audiobook.py").read_text("utf-8")
+        assert "_books_bucket(" not in src
+        assert "private=False" not in src
+        assert "audio.nerranetwork.com" not in src
+        assert src.count("private=True") >= 1
+        wf = (ROOT / ".github" / "workflows" / "export-audiobook.yml"
+              ).read_text("utf-8")
+        assert "workflow_dispatch" in wf and "schedule:" not in wf
+        assert "group: build-book" in wf
+        assert "safe-commit-push" not in wf and "git push" not in wf
+        assert "contents: read" in wf
+        assert "R2_SECRET_ACCESS_KEY" in wf
+
+    def test_credits_are_separate_tracks_and_untouched(self):
+        from engine.audiobook import narration_texts
+        from engine.book_compiler import (closing_credits_text,
+                                          collect_chapters, load_volume,
+                                          opening_credits_text)
+        vol = load_volume(VOLS / "unintended_consequences_collected.yaml")
+        chapters = collect_chapters(vol)
+        titles = [t for t, _ in narration_texts(vol, chapters)]
+        assert titles[0] == "Opening Credits"
+        assert titles[-1] == "Closing Credits"
+        assert len(titles) == len(chapters) + 2 == 75
+        # WO-8 (operator-directed) removed the SPOKEN disclosure line;
+        # the credits text is not touched by the export.
+        assert opening_credits_text(vol).startswith("Unintended Consequences.")
+        assert "began as an episode of" in closing_credits_text(vol)
+
+    # ---- Books page ---------------------------------------------------
+    def test_books_page_reads_buy_links_from_the_yaml(self, tmp_path):
+        import json
+        import generate_html as gh
+        catalog = tmp_path / "catalog.json"
+        catalog.write_text(json.dumps({"volumes": [
+            {"volume_id": "x_collected", "show_slug": "x", "volume_number": 1,
+             "title": "X", "full_title": "X, Volume 1", "chapters": 3,
+             "word_count": 1000, "description": "d", "price_usd": 7.99,
+             "files": {"cover": "https://c/cover.png",
+                       "sample_epub": "https://c/s.epub"},
+             "buy_links": {"amazon": "https://amzn/old"}},
+            {"volume_id": "x_vol1", "title": "X", "volume_number": 1,
+             "files": {}, "buy_links": {}},
+        ]}), encoding="utf-8")
+        vols = tmp_path / "volumes"
+        vols.mkdir()
+        (vols / "x_collected.yaml").write_text(
+            "volume_id: x_collected\nbuy_links:\n"
+            "  direct: 'https://payhip.com/b/AAA'\n"
+            "  audiobook_direct: ''\n"
+            "  books2read: 'https://books2read.com/u/BBB'\n",
+            encoding="utf-8")
+        (vols / "x_vol1.yaml").write_text(
+            "volume_id: x_vol1\nretired: true\n", encoding="utf-8")
+        merged = gh.books_page_volumes(catalog, vols)
+        assert [v["volume_id"] for v in merged] == ["x_collected"]
+        links = merged[0]["buy_links"]
+        assert links["direct"] == "https://payhip.com/b/AAA"   # YAML only
+        assert links["amazon"] == "https://amzn/old"            # catalog kept
+        assert links["books2read"] == "https://books2read.com/u/BBB"
+        assert links["audiobook_direct"] == ""
+        html = gh.render_books_page(merged)
+        assert 'href="https://payhip.com/b/AAA"' in html and "Buy direct" in html
+        assert "Apple, Kobo, B&amp;N and more" in html
+        assert "Buy the audiobook" not in html
+        assert "Buying direct gets you the EPUB" in html
+        assert "plus the chaptered audiobook" not in html
+        # the moment the audiobook product exists, the button + combined copy
+        merged[0]["buy_links"]["audiobook_direct"] = "https://payhip.com/b/CCC"
+        html = gh.render_books_page(merged)
+        assert "Buy the audiobook" in html
+        assert "or the chaptered audiobook" in html
+        assert "Buying direct gets you the EPUB —" not in html
+
+    def test_yaml_wins_over_the_catalog_per_key(self, tmp_path):
+        import json
+        import generate_html as gh
+        catalog = tmp_path / "catalog.json"
+        catalog.write_text(json.dumps({"volumes": [
+            {"volume_id": "y", "files": {},
+             "buy_links": {"direct": "https://payhip.com/b/STALE",
+                           "kobo": "https://kobo/keep"}}]}))
+        vols = tmp_path / "volumes"
+        vols.mkdir()
+        (vols / "y.yaml").write_text(
+            "volume_id: y\nbuy_links:\n  direct: ''\n", encoding="utf-8")
+        links = gh.books_page_volumes(catalog, vols)[0]["buy_links"]
+        assert links["direct"] == ""            # YAML cleared it
+        assert links["kobo"] == "https://kobo/keep"
+
+    def test_live_volume_yamls_carry_the_new_keys(self):
+        expect = {"unintended_consequences_collected":
+                  "https://books2read.com/u/mBDDaR",
+                  "first_principles_collected":
+                  "https://books2read.com/u/bWVVnq"}
+        for vid, b2r in expect.items():
+            data = yaml.safe_load((VOLS / f"{vid}.yaml").read_text("utf-8"))
+            links = data["buy_links"]
+            assert links["books2read"] == b2r
+            assert links["direct"].startswith("https://payhip.com/b/")
+            assert "audiobook_direct" in links and not links["audiobook_direct"]
+        page = (ROOT / "books.html").read_text(encoding="utf-8")
+        assert page.count("books2read.com/u/") == 2
+        assert "Buy direct" in page and "Buy the audiobook" not in page
+        assert "Buying direct gets you the EPUB" in page
+        # the planner scaffolds the new keys for future volumes
+        import inspect
+        from engine.book_compiler import plan_next_volumes
+        src = inspect.getsource(plan_next_volumes)
+        assert '"audiobook_direct", "books2read"' in src
