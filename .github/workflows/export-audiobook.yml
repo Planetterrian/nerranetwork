@@ -1,10 +1,13 @@
 # Export one volume's audiobook masters for store upload (WO-15, Sept
-# 2026). The paid masters live only in the PRIVATE nerra-books bucket
-# and the store forms are filled from the operator's machine, so this
-# run zips the per-chapter tracks (+ retail sample, covers, manifest)
-# into the private bucket and writes 7-day presigned download links —
-# for the zip and the M4B — to the run's step summary, and NOWHERE
-# else: never the log, never a committed file, never the public bucket.
+# 2026; WO-15b). The paid masters live only in the PRIVATE nerra-books
+# bucket and the store forms are filled from the operator's machine, so
+# this run zips the per-chapter tracks (+ retail sample, covers,
+# manifest) into the private bucket and attaches the zip and the M4B to
+# the run as ARTIFACTS (3-day retention, repo read access required) with
+# a size + sha256 table in the step summary. Never a download URL: GitHub
+# masks secret values in the summary, R2_ENDPOINT_URL is a secret, and a
+# presigned link therefore renders dead (WO-15b). Never the log, never a
+# committed file, never the public bucket.
 #
 # Manual dispatch only, one volume per run. Shares the build-book
 # concurrency group so it can never race a Build Book run that is
@@ -42,10 +45,35 @@ jobs:
       - name: Install ffmpeg
         run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
 
-      - name: Export bundle + presigned links (links go to the step summary only)
+      - name: Export bundle (sha256 table to the step summary; files to artifacts)
+        id: export
         env:
           R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           R2_BOOKS_PRIVATE_BUCKET: ${{ vars.R2_BOOKS_PRIVATE_BUCKET || 'nerra-books' }}
-        run: python scripts/export_audiobook.py --volume "${{ github.event.inputs.volume }}"
+        run: >-
+          python scripts/export_audiobook.py
+          --volume "${{ github.event.inputs.volume }}"
+          --work-dir "${{ runner.temp }}/export"
+
+      # Both files are already compressed (stored zip of MP3s; AAC), so
+      # compression-level 0 — and a missing file is an ERROR so a bundle
+      # that never landed cannot pass as a green run.
+      - name: Attach the tracks zip as a run artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.export.outputs.zip_artifact }}
+          path: ${{ steps.export.outputs.zip_path }}
+          retention-days: 3
+          compression-level: 0
+          if-no-files-found: error
+
+      - name: Attach the M4B as a run artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.export.outputs.m4b_artifact }}
+          path: ${{ steps.export.outputs.m4b_path }}
+          retention-days: 3
+          compression-level: 0
+          if-no-files-found: error

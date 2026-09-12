@@ -239,18 +239,40 @@ build) is how the files get there:
 3. zips it all in order to
    `books/<id>/export/<id>_audiobook_tracks.zip` on the **private**
    bucket;
-4. mints 7-day presigned GET links (R2's maximum) for the zip and the
-   M4B and writes them — with size and sha256 — to the run's
-   **step summary only**: never the log, never a committed file, never
-   the public bucket (`test_export_never_touches_the_public_bucket`,
-   and the catalog guard `test_paid_masters_are_never_published_at_a_public_url`
-   stays green). Download from the summary into `~/Downloads`, verify
-   the sha256 against the log line, upload to the store.
+4. attaches the zip and the M4B to the run as **artifacts**
+   (`actions/upload-artifact`, 3-day retention, no re-compression —
+   downloadable only with read access to the repo, the same audience
+   as the run page) and writes a size + sha256 table with the artifact
+   names to the run's **step summary**. Nothing else ever carries the
+   files: never a URL in the summary or the log, never a committed
+   file, never the public bucket (`test_workflow_publishes_artifacts_not_links`,
+   `test_export_never_touches_the_public_bucket`, and the catalog guard
+   `test_paid_masters_are_never_published_at_a_public_url` stays green).
+   Download the two artifacts from the run page into `~/Downloads`,
+   unzip GitHub's artifact wrapper, verify each sha256 against the
+   summary, upload to the store. The durable copies stay on the private
+   bucket (`books/<id>/export/…zip`, `books/<id>/<id>.m4b`).
 
-The `audio/` files are already INaudio's codec spec (192 kbps CBR
-44.1 kHz). Digital narration is declared on every store form; the
-credits carry no spoken disclosure line (WO-8) and the export changes
-nothing in them.
+**Why artifacts and not links (WO-15b, 12 Sep 2026).** The first
+version minted 7-day presigned R2 links into the step summary. GitHub
+masks every occurrence of a secret's value in the job summary as well
+as in the log, and `R2_ENDPOINT_URL` (`https://<account>.r2.cloudflarestorage.com`)
+is a secret — so each link lost its scheme and host and rendered as a
+dead relative link on the run page (the signature survived, which is
+why a test that only looked for the signature passed). Presigning now
+exists only as `scripts/export_audiobook.py --volume <id> --print-url`,
+a **local** mode that prints the links to the terminal and refuses to
+run under `GITHUB_ACTIONS`.
+
+The `audio/` files were meant to be INaudio's codec spec (192 kbps CBR
+44.1 kHz — `engine.audiobook.MP3_ARGS` since 2026-08-23), but the
+narration cache reuses a track whenever its text hash matches, so both
+Volume 1 builds still carry the earlier 48 kHz / ~128 kbps encode and
+the export logs a warning saying so (12 Sep 2026 runs). Whether to
+conform them at export time (a transcode; no TTS spend) is an open
+operator decision. Digital narration is declared on every store form;
+the credits carry no spoken disclosure line (WO-8) and the export
+changes nothing in them.
 
 ## Payhip store (live 12 Sep 2026)
 

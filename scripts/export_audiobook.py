@@ -18,11 +18,19 @@ machine without ever touching a public hostname:
    number, chapter title, duration, sha256) — and zip it all in order,
 3. upload the zip to the PRIVATE bucket at
    ``books/<id>/export/<id>_audiobook_tracks.zip``,
-4. mint S3-style presigned GET URLs (7 days — R2's maximum) for the zip
-   and the M4B and write them to the run's ``$GITHUB_STEP_SUMMARY`` —
-   and nowhere else: never the log, never a file in the repo, never the
-   public bucket. The log carries sizes and checksums only, so the
-   operator can verify the download.
+4. hand the zip and the M4B to the workflow as **run artifacts**
+   (``actions/upload-artifact``, 3-day retention, no re-compression —
+   downloadable only by people with read access to the repo, the same
+   audience as the run page) and write a size + sha256 table to the
+   run's ``$GITHUB_STEP_SUMMARY``. The log carries sizes and checksums
+   only, so the operator can verify the download.
+
+WO-15b: the first version wrote 7-day presigned R2 links to the step
+summary instead. GitHub masks every occurrence of a secret's value in the
+summary as well as the log, and ``R2_ENDPOINT_URL`` is a secret — so the
+links lost their scheme and host and rendered dead. Presigned links now
+exist only in ``--print-url``, a LOCAL mode that refuses to run under
+``GITHUB_ACTIONS``; nothing in CI ever renders a download URL.
 
 The opening and closing credits stay separate files (track_000 and the
 last track) — they are never baked into chapter 1 — and no narration
@@ -60,8 +68,11 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s",
                     stream=sys.stdout)
 logger = logging.getLogger("export_audiobook")
 
-#: R2 presigned URLs are capped at seven days.
+#: R2 presigned URLs are capped at seven days (``--print-url``, local only).
 PRESIGN_EXPIRES_SECONDS = 7 * 24 * 3600
+#: Run artifacts: long enough to download, short enough not to hoard
+#: paid masters on GitHub. The R2 copy under ``books/<id>/`` is durable.
+ARTIFACT_RETENTION_DAYS = 3
 #: Retail sample: INaudio accepts 1-5 minutes; 3.5 minutes of chapter 1.
 SAMPLE_SECONDS = 210
 SAMPLE_FADE_SECONDS = 1.0
@@ -272,37 +283,63 @@ def build_zip(out_zip: Path, tracks: List[Path], extras: List[Tuple[str, Path]],
     return out_zip
 
 
+def artifact_names(volume_id: str) -> Tuple[str, str]:
+    """(zip artifact, M4B artifact) — what the workflow's upload steps
+    publish and what the step summary points the operator at."""
+    return f"{volume_id}_audiobook_tracks", f"{volume_id}_m4b"
+
+
 def presign(s3, bucket: str, key: str,
             expires: int = PRESIGN_EXPIRES_SECONDS) -> str:
     """S3-style presigned GET on the PRIVATE bucket. The returned string
-    is a secret for its lifetime — it goes to the step summary only."""
+    is a secret for its lifetime. LOCAL use only (``--print-url``): a
+    GitHub job summary masks the endpoint secret out of it (WO-15b)."""
+    if os.environ.get("GITHUB_ACTIONS"):
+        raise SystemExit(
+            "presigned links never run in CI: the step summary masks the "
+            "R2 endpoint (a secret) and the link renders dead — download "
+            "the run artifacts instead, or run --print-url locally")
     return s3.generate_presigned_url(
         "get_object", Params={"Bucket": bucket, "Key": key},
         ExpiresIn=expires)
 
 
-def write_step_summary(summary_path: Path, volume, items: List[dict],
-                       expires_at: datetime) -> None:
-    """The ONLY place a presigned URL is written."""
+def write_step_summary(summary_path: Path, volume, items: List[dict]) -> None:
+    """Sizes, checksums and the artifact each file is attached as.
+    Never a URL: GitHub masks secret values in the summary, and the R2
+    endpoint host is a secret, so a presigned link renders dead."""
     lines = [
         f"## Audiobook export — {volume.full_title}",
         "",
-        "Download from this page into `~/Downloads` and verify each sha256 "
-        "before uploading to a store. Links expire "
-        f"**{expires_at:%Y-%m-%d %H:%M UTC}** (R2's 7-day maximum).",
+        "The files are attached to this run as **artifacts** (see the "
+        "Artifacts box on the run page; repo read access required; kept "
+        f"{ARTIFACT_RETENTION_DAYS} days). Download into `~/Downloads`, "
+        "unzip the artifact wrapper, and verify each sha256 before "
+        "uploading to a store. The durable copies stay on the private "
+        "bucket.",
         "",
-        "| File | Size | sha256 | Download |",
-        "|---|---|---|---|",
+        "| File | Size | sha256 | Artifact | Private-bucket key |",
+        "|---|---|---|---|---|",
     ]
     for it in items:
         lines.append(
             f"| `{it['name']}` | {it['bytes'] / 2**20:.1f} MB | "
-            f"`{it['sha256']}` | [download]({it['url']}) |")
+            f"`{it['sha256']}` | `{it['artifact']}` | `{it['key']}` |")
     lines += ["", "Digital narration — declare it on every store form. "
               "Never Audible/ACX. Never re-host these files at a public URL."]
     summary_path.parent.mkdir(parents=True, exist_ok=True)
     with open(summary_path, "a", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
+
+
+def write_step_outputs(output_path: Path, items: List[dict]) -> None:
+    """``$GITHUB_OUTPUT`` lines the upload-artifact steps read:
+    ``<kind>_path`` / ``<kind>_artifact`` for the zip and the M4B."""
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_path, "a", encoding="utf-8") as f:
+        for it in items:
+            f.write(f"{it['kind']}_path={it['path']}\n")
+            f.write(f"{it['kind']}_artifact={it['artifact']}\n")
 
 
 # ---------------------------------------------------------------------------
@@ -312,8 +349,14 @@ def write_step_summary(summary_path: Path, volume, items: List[dict],
 def run_export(volume_id: str, *, work_dir: Optional[Path] = None,
                s3=None, upload: bool = True,
                summary_path: Optional[Path] = None,
+               output_path: Optional[Path] = None,
+               print_url: bool = False,
                catalog_path: Optional[Path] = None) -> dict:
-    """Build the bundle; upload + presign when *upload* and *s3* are given.
+    """Build the bundle; upload it and fetch the M4B when *upload* and
+    *s3* are given, leaving both files in *work_dir* for the workflow's
+    artifact steps (paths in *output_path*, checksums in *summary_path*).
+    *print_url* additionally prints 7-day presigned links to stdout —
+    local use only; it refuses under GITHUB_ACTIONS.
 
     Returns a report dict with sizes and checksums (never URLs)."""
     vol_path = ROOT / "books" / "volumes" / f"{volume_id}.yaml"
@@ -392,26 +435,36 @@ def run_export(volume_id: str, *, work_dir: Optional[Path] = None,
     logger.info("export: %s %.1f MB sha256 %s", m4b_local.name,
                 report["m4b_bytes"] / 2**20, report["m4b_sha256"])
 
+    zip_artifact, m4b_artifact = artifact_names(volume_id)
     items = [
-        {"name": out_zip.name, "bytes": report["zip_bytes"],
-         "sha256": report["zip_sha256"],
-         "url": presign(s3, bucket, zip_key)},
-        {"name": m4b_local.name, "bytes": report["m4b_bytes"],
-         "sha256": report["m4b_sha256"],
-         "url": presign(s3, bucket, m4b_key)},
+        {"kind": "zip", "name": out_zip.name, "path": str(out_zip),
+         "bytes": report["zip_bytes"], "sha256": report["zip_sha256"],
+         "artifact": zip_artifact, "key": zip_key},
+        {"kind": "m4b", "name": m4b_local.name, "path": str(m4b_local),
+         "bytes": report["m4b_bytes"], "sha256": report["m4b_sha256"],
+         "artifact": m4b_artifact, "key": m4b_key},
     ]
-    expires_at = datetime.now(timezone.utc) + timedelta(
-        seconds=PRESIGN_EXPIRES_SECONDS)
-    if summary_path is None:
-        logger.warning("export: no step summary file — presigned URLs were "
-                       "minted but NOT written anywhere (set "
-                       "GITHUB_STEP_SUMMARY or --summary-file)")
-    else:
-        write_step_summary(Path(summary_path), volume, items, expires_at)
+    report["zip_path"] = str(out_zip)
+    report["m4b_path"] = str(m4b_local)
+    report["artifacts"] = [zip_artifact, m4b_artifact]
+    if summary_path is not None:
+        write_step_summary(Path(summary_path), volume, items)
+        logger.info("export: sha256 table written to the step summary; "
+                    "files go out as run artifacts %s and %s",
+                    zip_artifact, m4b_artifact)
+    if output_path is not None:
+        write_step_outputs(Path(output_path), items)
+
+    if print_url:
+        # Local only — presign() refuses under GITHUB_ACTIONS.
+        expires_at = datetime.now(timezone.utc) + timedelta(
+            seconds=PRESIGN_EXPIRES_SECONDS)
+        for it in items:
+            print(f"{it['name']}: {presign(s3, bucket, it['key'])}")
+        print(f"(links expire {expires_at:%Y-%m-%d %H:%M UTC}; they are "
+              "secrets for their lifetime — never paste them anywhere "
+              "public)")
         report["presigned"] = len(items)
-        logger.info("export: %d presigned link(s) written to the step "
-                    "summary; they expire %s", len(items),
-                    expires_at.strftime("%Y-%m-%d %H:%M UTC"))
     return report
 
 
@@ -422,8 +475,15 @@ def main() -> int:
     ap.add_argument("--no-upload", action="store_true",
                     help="build the bundle locally; skip R2 upload + links")
     ap.add_argument("--summary-file", default=os.getenv("GITHUB_STEP_SUMMARY"),
-                    help="where the presigned links go (default: "
-                         "$GITHUB_STEP_SUMMARY; the ONLY sink for them)")
+                    help="where the size + sha256 table goes (default: "
+                         "$GITHUB_STEP_SUMMARY)")
+    ap.add_argument("--output-file", default=os.getenv("GITHUB_OUTPUT"),
+                    help="where the artifact paths/names go for the "
+                         "upload-artifact steps (default: $GITHUB_OUTPUT)")
+    ap.add_argument("--print-url", action="store_true",
+                    help="LOCAL ONLY: also print 7-day presigned links for "
+                         "the zip and the M4B to stdout (refuses under "
+                         "GITHUB_ACTIONS — a job summary masks the endpoint)")
     ap.add_argument("--work-dir", default="",
                     help="scratch/output dir (default outputs/books/<id>/export)")
     args = ap.parse_args()
@@ -437,6 +497,8 @@ def main() -> int:
         work_dir=Path(args.work_dir) if args.work_dir else None,
         s3=s3, upload=not args.no_upload,
         summary_path=Path(args.summary_file) if args.summary_file else None,
+        output_path=Path(args.output_file) if args.output_file else None,
+        print_url=args.print_url,
     )
     for k, v in report.items():
         print(f"{k}: {v}")

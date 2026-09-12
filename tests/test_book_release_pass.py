@@ -1247,9 +1247,12 @@ class TestWO13ReviewerNoteGate:
 
 class TestWO15AudiobookExportAndBooksPage:
     """WO-15 (Sept 2026): the paid audio masters reach the operator's
-    machine through a private-bucket zip + 7-day presigned links written
-    to the run's step summary only; the Books page reads buy links from
-    the volume YAML at render time; two new link keys; honest
+    machine through a private-bucket zip attached to the run as an
+    artifact (WO-15b — a presigned link in the step summary renders
+    DEAD because GitHub masks the endpoint secret out of it; presigning
+    is a local-only mode now), a size + sha256 table in the summary and
+    nothing but checksums in the log; the Books page reads buy links
+    from the volume YAML at render time; two new link keys; honest
     direct-sales copy until the audiobook product exists."""
 
     # ---- export bundle ------------------------------------------------
@@ -1328,50 +1331,114 @@ class TestWO15AudiobookExportAndBooksPage:
             == (1600, 2560)
         assert "opening credits (separate file)" in z.read("README.txt").decode()
 
-    def test_upload_is_private_and_links_reach_only_the_summary(
+    class _FakeS3:
+        """The private bucket: hands back an M4B, signs on request, and
+        records every signature so a test can prove none happened."""
+
+        def __init__(self):
+            self.signed = []
+
+        def download_file(self, bucket, key, dest):
+            assert bucket == "nerra-books" and key.endswith(".m4b")
+            Path(dest).write_bytes(b"m4b-bytes")
+
+        def generate_presigned_url(self, op, Params, ExpiresIn):
+            assert op == "get_object" and Params["Bucket"] == "nerra-books"
+            assert ExpiresIn == 7 * 24 * 3600
+            url = (f"https://nerra-books.r2.example/{Params['Key']}"
+                   f"?X-Amz-Signature=SECRET{len(self.signed)}")
+            self.signed.append(url)
+            return url
+
+    def test_ci_run_attaches_artifacts_and_never_mints_a_link(
             self, fake_volume_build, tmp_path, export_mod, monkeypatch,
             capsys, caplog):
+        """WO-15b: in CI the files go out as run artifacts; the summary
+        carries sizes, checksums and artifact names — never a URL,
+        because the endpoint host is a masked secret there."""
         vid, n, out_root = fake_volume_build
+        monkeypatch.setenv("GITHUB_ACTIONS", "true")
         uploads = []
         monkeypatch.setattr(export_mod.bb, "_r2_upload",
                             lambda local, key, ctype, private=False:
                             uploads.append((key, ctype, private)) or
                             f"r2://nerra-books/{key}")
-
-        class FakeS3:
-            def __init__(self):
-                self.signed = []
-
-            def download_file(self, bucket, key, dest):
-                assert bucket == "nerra-books" and key.endswith(".m4b")
-                Path(dest).write_bytes(b"m4b-bytes")
-
-            def generate_presigned_url(self, op, Params, ExpiresIn):
-                assert op == "get_object" and Params["Bucket"] == "nerra-books"
-                assert ExpiresIn == 7 * 24 * 3600
-                url = (f"https://nerra-books.r2.example/{Params['Key']}"
-                       f"?X-Amz-Signature=SECRET{len(self.signed)}")
-                self.signed.append(url)
-                return url
-
-        s3 = FakeS3()
+        s3 = self._FakeS3()
         summary = tmp_path / "summary.md"
+        outputs = tmp_path / "github_output.txt"
         with caplog.at_level("INFO"):
             report = export_mod.run_export(
                 vid, work_dir=tmp_path / "export", s3=s3, upload=True,
-                summary_path=summary)
-        assert report["uploaded"] and report["presigned"] == 2
+                summary_path=summary, output_path=outputs)
+        assert report["uploaded"] and report["presigned"] == 0
+        assert s3.signed == []  # nothing was ever presigned
         assert uploads == [(f"books/{vid}/export/{vid}_audiobook_tracks.zip",
                             "application/zip", True)]
+        # the two files the artifact steps upload exist where outputs say
+        zip_a, m4b_a = export_mod.artifact_names(vid)
+        assert report["artifacts"] == [zip_a, m4b_a]
+        out = dict(line.split("=", 1) for line in
+                   outputs.read_text("utf-8").splitlines() if "=" in line)
+        assert out["zip_artifact"] == zip_a and out["m4b_artifact"] == m4b_a
+        assert Path(out["zip_path"]).is_file() and out["zip_path"].endswith(
+            f"{vid}_audiobook_tracks.zip")
+        assert Path(out["m4b_path"]).is_file() and out["m4b_path"].endswith(
+            f"{vid}.m4b")
+        # the summary: checksums + artifact names, and no link of any kind
         text = summary.read_text(encoding="utf-8")
-        for url in s3.signed:
-            assert url in text
         assert report["zip_sha256"] in text and report["m4b_sha256"] in text
-        # never in the log / stdout
+        assert f"`{zip_a}`" in text and f"`{m4b_a}`" in text
+        assert "http" not in text and "X-Amz" not in text
+        assert str(export_mod.ARTIFACT_RETENTION_DAYS) in text
+        # never in the log / stdout either; checksums ARE printed
         leaked = capsys.readouterr().out + caplog.text
-        assert "X-Amz-Signature" not in leaked
-        assert "r2.example" not in leaked
-        assert report["zip_sha256"] in leaked  # checksums ARE printed
+        assert "http" not in leaked and "X-Amz" not in leaked
+        assert report["zip_sha256"] in leaked
+
+    def test_print_url_is_local_only(self, fake_volume_build, tmp_path,
+                                     export_mod, monkeypatch, capsys):
+        """--print-url mints the 7-day links to stdout on a laptop and
+        refuses under GITHUB_ACTIONS, where the summary would mask them."""
+        vid, n, out_root = fake_volume_build
+        monkeypatch.setattr(export_mod.bb, "_r2_upload",
+                            lambda local, key, ctype, private=False:
+                            f"r2://nerra-books/{key}")
+        # CI: refused before any signature is made
+        monkeypatch.setenv("GITHUB_ACTIONS", "true")
+        s3 = self._FakeS3()
+        with pytest.raises(SystemExit, match="never run in CI"):
+            export_mod.run_export(vid, work_dir=tmp_path / "ci", s3=s3,
+                                  upload=True, print_url=True)
+        assert s3.signed == []
+        # laptop: links go to stdout, still never to the summary
+        monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
+        s3 = self._FakeS3()
+        summary = tmp_path / "summary.md"
+        capsys.readouterr()
+        report = export_mod.run_export(vid, work_dir=tmp_path / "local",
+                                       s3=s3, upload=True, print_url=True,
+                                       summary_path=summary)
+        assert report["presigned"] == 2 and len(s3.signed) == 2
+        out = capsys.readouterr().out
+        for url in s3.signed:
+            assert url in out
+        assert "X-Amz" not in summary.read_text("utf-8")
+
+    def test_workflow_publishes_artifacts_not_links(self):
+        wf = (ROOT / ".github" / "workflows" / "export-audiobook.yml"
+              ).read_text("utf-8")
+        assert wf.count("uses: actions/upload-artifact@v7") == 2
+        assert wf.count("retention-days: 3") == 2
+        assert wf.count("compression-level: 0") == 2
+        assert wf.count("if-no-files-found: error") == 2
+        for out in ("zip_artifact", "zip_path", "m4b_artifact", "m4b_path"):
+            assert f"steps.export.outputs.{out}" in wf, out
+        assert "--print-url" not in wf and "generate_presigned_url" not in wf
+        src = (ROOT / "scripts" / "export_audiobook.py").read_text("utf-8")
+        # the only presigning path is guarded against CI
+        assert src.count("generate_presigned_url(") == 1
+        guard = src.index('os.environ.get("GITHUB_ACTIONS")')
+        assert guard < src.index("generate_presigned_url(")
 
     def test_export_never_touches_the_public_bucket(self):
         src = (ROOT / "scripts" / "export_audiobook.py").read_text("utf-8")
