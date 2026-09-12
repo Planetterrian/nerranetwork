@@ -1381,8 +1381,11 @@ retailers) — `/books.html` reads them from the YAML at render time
 only on a build, so never hand-edit it for links (WO-15). **Audiobook
 masters reach the operator only via Actions "Export audiobook"**
 (`scripts/export_audiobook.py`): private-bucket zip (tracks + retail
-sample + 3000² cover + manifest) and 7-day presigned links for the zip
-and M4B written to the run's step summary and nowhere else. Live (WO-12, Sept 2026): **UC Volume 1** (73 chapters, eps 1–80) and
+sample + 3000² cover + manifest), the zip and M4B attached to the run as
+3-day **artifacts** with a sha256 table in the step summary — never a
+download URL anywhere in CI (WO-15b: GitHub masks the endpoint secret
+out of the summary, so a presigned link renders dead; `--print-url` is
+local-only). Live (WO-12, Sept 2026): **UC Volume 1** (73 chapters, eps 1–80) and
 **First Principles Volume 1** (58 chapters, eps 1–60) — the former
 "Collected Editions", renumbered because they are Volume 1 of an
 ongoing series (Volume 2 comes from ep 81 / ep 61); their volume ids
