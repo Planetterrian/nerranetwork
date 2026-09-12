@@ -794,6 +794,13 @@ def _ken_burns_chain(src: str, out_label: str, *, frames: int, index: int,
     )
     if trim_seconds is not None:
         chain += f",trim=duration={trim_seconds:.2f},setpts=PTS-STARTPTS"
+    # ffmpeg 7.x: after trim/setpts the branch no longer advertises a
+    # constant frame rate and the xfade chain refuses it ("The inputs
+    # needs to be a constant frame rate; current rate of 1/0 is
+    # invalid"). A same-rate fps filter as the LAST stage re-stamps CFR —
+    # a pass-through on 6.x (identical frames and timestamps), the
+    # difference between a render and a hard failure on 7.x. Sep 12 2026.
+    chain += f",fps={fps}"
     return chain + out_label
 
 # ffmpeg's default scaler is bicubic. Lanczos preserves noticeably more

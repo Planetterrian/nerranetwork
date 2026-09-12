@@ -132,6 +132,12 @@ jobs:
           YOUTUBE_REFRESH_TOKEN_FR: ${{ secrets.YOUTUBE_REFRESH_TOKEN_FR }}
         run: |
           python scripts/fetch_youtube_analytics.py --out api/youtube_stats.json --days 90 || true
+          # Age-matched early reach (Sep 12 2026): fold tonight's snapshot
+          # into api/youtube_early_reach.json (views per video at each
+          # snapshot age) so the dashboard compares publish days at a
+          # fixed age instead of against the rolling peak. Additive,
+          # idempotent, non-fatal.
+          python scripts/track_early_reach.py || true
           python scripts/update_youtube_performance.py || true
           # Staggered Shorts (Aug 2026): post funnel comments queued for
           # publishAt-scheduled Shorts that have since gone public —
@@ -343,6 +349,7 @@ jobs:
             api/youtube_stats.json
             api/youtube_channel_history.json
             api/youtube_policy.json
+            api/youtube_early_reach.json
             api/gallery_retention.json
             api/funnel.json
             api/mit_trade_ledger.json

@@ -86,13 +86,16 @@ class TestEditorialPage:
         result = generate_editorial_page(dry_run=True)
         assert result is None  # dry-run returns None
 
-    def test_real_run_writes_file(self):
-        """Smoke test: render the template and write the file. Run
-        in-tree so a missing path doesn't fail the test."""
+    def test_real_run_writes_file(self, tmp_path):
+        """Smoke test: render the template and write the file into a
+        temp dir. It used to write the live editorial.html at the repo
+        root, which left the tree dirty after every full suite run and
+        rode into two unrelated commits on 2026-09-09."""
         from generate_html import generate_editorial_page
-        result = generate_editorial_page(dry_run=False)
+        result = generate_editorial_page(dry_run=False, output_dir=tmp_path)
         assert result is not None
         assert result.exists()
+        assert result.parent == tmp_path
         text = result.read_text()
         assert "Editorial process" in text or "How we make every episode" in text
         # AI disclosure context preserved.

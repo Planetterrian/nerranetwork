@@ -1231,6 +1231,44 @@
       grid.appendChild(card);
     }
 
+    // Age-matched early reach (Sep 12 2026) — views at a fixed snapshot
+    // age per publish day, so a normal day after a breakout run does not
+    // read as a drop.
+    {
+      const er = growth.early_reach || {};
+      const card = sectionCard("Early reach (age-matched)",
+        er.configured ? ("views at day " + er.age_days + " · data " + ageText(er.as_of))
+                      : "no data");
+      if (!er.configured) {
+        card.appendChild(h("p", { class: "fine-list", text: er.note || "" }));
+      } else {
+        const chName = (ch) => ch === "ru" ? "@NerraRU" : ch === "fr" ? "@NerraFR"
+          : ch === "en" ? "@NerraNetwork" : ch;
+        Object.keys(er.channels || {}).sort().forEach((ch) => {
+          const c = er.channels[ch];
+          const wow = c.short_wow_pct;
+          const wowTxt = (wow === null || wow === undefined) ? "—"
+            : (wow > 0 ? "+" : "") + wow + "%";
+          const wowCls = (wow === null || wow === undefined) ? ""
+            : (wow >= 0 ? "up" : "down");
+          const head = h("div", { style: "margin-top:10px;font-size:13px;" });
+          head.appendChild(h("strong", { text: chName(ch) }));
+          head.appendChild(h("span", { style: "margin-left:8px;color:var(--ink-2);",
+            text: "Shorts median d" + er.age_days + " " + fmtOrDash(c.short_median_7d)
+                  + " (prior 7 pub-days " + fmtOrDash(c.short_median_prior_7d) + ") " }));
+          head.appendChild(h("span", { class: "t-delta " + wowCls, text: wowTxt }));
+          card.appendChild(head);
+          const line = (c.days || []).slice(-7).map((d) =>
+            d.published.slice(5) + " " + d.weekday + ": S " + fmtOrDash(d.short_median)
+            + "/" + d.short_n + " · L " + fmtOrDash(d.long_median) + "/" + d.long_n
+          ).join("  |  ");
+          card.appendChild(h("div", { class: "fine-list", text: line }));
+        });
+        card.appendChild(h("p", { class: "fine-list", text: er.note || "" }));
+      }
+      grid.appendChild(card);
+    }
+
     // Where long-form viewers LEAVE — audience-retention curves (Aug 2026).
     {
       const rc = data.retention_curves || {};
