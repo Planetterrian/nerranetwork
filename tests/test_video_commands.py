@@ -2791,3 +2791,56 @@ class TestChapterTitleCards:
                               chapters_path=chapters, hook="Hook")
         graph = cmds[-1][cmds[-1].index("-filter_complex") + 1]
         assert "Top Stories" in graph and "Deep Dive" in graph
+
+
+class TestFfmpeg7FrameRateStamp:
+    """Sep 12 2026: every zoompan branch ends on a same-rate ``fps`` stage.
+
+    On ffmpeg 7.x a branch that has been through trim/setpts no longer
+    advertises a constant frame rate and the xfade chain refuses it
+    ("The inputs needs to be a constant frame rate; current rate of 1/0
+    is invalid") — the whole slideshow fails and the render falls back
+    to hard cuts. On 6.x the stage is a pass-through. The stamp must be
+    the LAST filter before the branch label.
+    """
+
+    def test_every_branch_ends_with_fps_stamp(self):
+        from engine.video import _slideshow_cmd
+        cmd = _slideshow_cmd([Path("/x/a.jpg"), Path("/x/b.jpg"), Path("/x/c.jpg")],
+                             Path("/x/out.mp4"), scene_durations=[4.0, 4.0, 4.0], fps=30)
+        graph = cmd[cmd.index("-filter_complex") + 1]
+        for i in range(3):
+            assert f",fps=30[s{i}]" in graph, graph[:400]
+        # The stamp sits after trim/setpts, never glued onto zoompan's own
+        # fps argument (that placement does not survive setpts on 7.x).
+        assert graph.count(":fps=30,fps=30") == 0
+        assert graph.count("setpts=PTS-STARTPTS,fps=30[s") == 3
+
+    def test_single_pass_and_short_paths_carry_it(self):
+        from engine.video import _single_pass_long_form_cmd
+        cmd = _single_pass_long_form_cmd(
+            [Path("/x/a.jpg"), Path("/x/b.jpg")], "/x/a.mp3", "/x/brand.png", "/x/out.mp4",
+            scene_durations=[30.0, 30.0], fps=30)
+        graph = cmd[cmd.index("-filter_complex") + 1]
+        assert ",fps=30[s0]" in graph and ",fps=30[s1]" in graph
+
+
+class TestX264PresetOverride:
+    """Sep 12 2026: NERRA_X264_PRESET is the one-variable render-speed
+    trial lever; the default stays ``medium``."""
+
+    def test_default_is_medium(self):
+        from engine.video import _VIDEO_ENCODE, _X264_PRESET
+        assert _X264_PRESET == "medium"
+        assert _VIDEO_ENCODE[_VIDEO_ENCODE.index("-preset") + 1] == "medium"
+
+    def test_env_override_is_honoured(self, monkeypatch):
+        import importlib
+        monkeypatch.setenv("NERRA_X264_PRESET", "faster")
+        import engine.video as v
+        importlib.reload(v)
+        try:
+            assert v._VIDEO_ENCODE[v._VIDEO_ENCODE.index("-preset") + 1] == "faster"
+        finally:
+            monkeypatch.delenv("NERRA_X264_PRESET")
+            importlib.reload(v)

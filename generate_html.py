@@ -4199,13 +4199,17 @@ def generate_press_page(*, dry_run=False):
     return out_path
 
 
-def generate_editorial_page(*, dry_run=False):
+def generate_editorial_page(*, dry_run=False, output_dir=None):
     """Generate ``editorial.html`` — the methodology / editorial-process
     page added in Phase 5 of the May 2026 strategic audit. It's the
     highest-leverage trust artifact for an AI-narrated network because
     listeners can see *how* stories are selected, *how* the LLM is
     constrained, and *how* fallback paths work, separate from the
-    AI-disclosure page (which only covers *that* AI is used)."""
+    AI-disclosure page (which only covers *that* AI is used).
+
+    ``output_dir`` (Sep 2026) lets a test render into a temp directory;
+    ``None`` keeps the production path (the repo root) byte-identical.
+    """
     env = _get_jinja_env()
     template = env.get_template("editorial.html.j2")
 
@@ -4224,7 +4228,7 @@ def generate_editorial_page(*, dry_run=False):
     }
 
     html = template.render(**context)
-    out_path = ROOT / "editorial.html"
+    out_path = Path(output_dir) / "editorial.html" if output_dir else ROOT / "editorial.html"
 
     if dry_run:
         print(f"[dry-run] Would write {out_path}")

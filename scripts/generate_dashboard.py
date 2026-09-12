@@ -1846,6 +1846,12 @@ def aggregate_mit_performance(root: Path) -> Dict[str, Any]:
 # approximation says so in a note the card renders.
 # ---------------------------------------------------------------------------
 
+# Early reach (Sep 12 2026): the snapshot age the dashboard reads reach at,
+# and the per-day floor under which a median is null rather than noise.
+EARLY_REACH_AGE_DAYS = 3
+EARLY_REACH_MIN_VIDEOS = 3
+
+
 def _load_json(path: Path) -> Optional[Dict[str, Any]]:
     try:
         return json.loads(path.read_text(encoding="utf-8"))
@@ -2024,6 +2030,45 @@ def _experiment_live_metrics(root: Path) -> Dict[str, Any]:
     out["short_subs_per_video_14d_en"] = (
         round(ss / sn, 3) if sn >= 10 else None)
 
+    # Age-matched EN Shorts reach (Sep 12 2026): median views at snapshot
+    # age EARLY_REACH_AGE_DAYS over the last 7 publish days. Null under 10
+    # videos. The instrument that says whether reach moved, independent
+    # of where the rolling channel total happens to sit.
+    reach = build_early_reach_section(root)
+    out["short_reach_d3_median_en_7d"] = (
+        ((reach.get("channels") or {}).get("en") or {}).get("short_median_7d"))
+
+    # Long-form render time (Sep 12 2026): median long_form_render_duration_s
+    # over the last 7 days of metrics files. Renders ran 530-1,200 s per
+    # episode and two shows hit the 3,000 s pipeline budget on 09-11; the
+    # render-speed experiment reads out here. Null under 5 episodes.
+    # The episode DATE comes from the sibling credit file's name
+    # (credit_usage_YYYY-MM-DD_epNNN.json) — never from mtime, which is
+    # the checkout time on every CI runner.
+    renders: List[float] = []
+    cutoff_day = (anchor_d - _dt.timedelta(days=7)).isoformat()
+    for mf in (root / "digests").glob("*/metrics_ep*.json"):
+        try:
+            m = re.search(r"metrics_ep(\d+)\.json$", mf.name)
+            if not m:
+                continue
+            ep = int(m.group(1))
+            dated = sorted(mf.parent.glob(f"credit_usage_*_ep{ep}.json"))
+            if not dated:
+                continue
+            dm = re.search(r"credit_usage_(\d{4}-\d{2}-\d{2})_", dated[-1].name)
+            if not dm or dm.group(1) < cutoff_day:
+                continue
+            counters = (json.loads(mf.read_text(encoding="utf-8")) or {}).get("counters") or {}
+            val = counters.get("long_form_render_duration_s")
+            if val is not None:
+                renders.append(float(val))
+        except (OSError, ValueError, TypeError):
+            continue
+    renders.sort()
+    out["long_form_render_median_s_7d"] = (
+        round(renders[len(renders) // 2]) if len(renders) >= 5 else None)
+
     # Channel views WoW from the day series.
     for ch in ("en", "ru"):
         ds = ((stats.get("channels") or {}).get(ch) or {}).get("day_series") or []
@@ -2088,6 +2133,84 @@ def _experiment_live_metrics(root: Path) -> Dict[str, Any]:
     out["long_open_hold_5pct_en"] = (
         round(sum(holds) / len(holds), 2) if holds else None)
     return out
+
+
+
+def build_early_reach_section(root: Path) -> Dict[str, Any]:
+    """Age-matched reach per publish day (Sep 12 2026).
+
+    Reads ``api/youtube_early_reach.json`` (written nightly by
+    ``scripts/track_early_reach.py``): the views each video had when the
+    analytics snapshot was ``age`` days past its publish date. Rolling
+    channel views compare today against whatever the last few days were
+    — after a breakout run every normal day reads as a drop. Views at a
+    FIXED age per publish day is the comparison that cannot be fooled by
+    that. Honest-null rules: a publish day with fewer than
+    ``MIN_VIDEOS`` observations reports null, never a fake median.
+    """
+    section: Dict[str, Any] = {"configured": False}
+    data = _load_json(root / "api" / "youtube_early_reach.json")
+    if not data or not data.get("videos"):
+        section["note"] = ("No api/youtube_early_reach.json yet — it accrues "
+                           "nightly from the analytics fetch.")
+        return section
+    age_key = str(EARLY_REACH_AGE_DAYS)
+    by_day: Dict[str, Dict[str, Dict[str, List[int]]]] = {}
+    for rec in data["videos"].values():
+        views = (rec.get("views_by_age") or {}).get(age_key)
+        if views is None:
+            continue
+        ch = (rec.get("channel") or "en").lower()
+        kind = rec.get("kind") or ""
+        day = str(rec.get("published") or "")[:10]
+        if not day or kind not in ("short", "long"):
+            continue
+        by_day.setdefault(ch, {}).setdefault(day, {}).setdefault(kind, []).append(int(views))
+    channels: Dict[str, Any] = {}
+    for ch, days in by_day.items():
+        rows = []
+        for day in sorted(days)[-14:]:
+            kinds = days[day]
+            try:
+                wd = _dt.date.fromisoformat(day).strftime("%a")
+            except ValueError:
+                wd = ""
+            row: Dict[str, Any] = {"published": day, "weekday": wd}
+            for kind in ("short", "long"):
+                vals = sorted(kinds.get(kind, []))
+                row[f"{kind}_n"] = len(vals)
+                row[f"{kind}_median"] = (
+                    vals[len(vals) // 2] if len(vals) >= EARLY_REACH_MIN_VIDEOS else None)
+            rows.append(row)
+        # Last 7 publish days vs the 7 before, per-video medians (short).
+        def _pool(kind: str, lo: int, hi: int) -> List[int]:
+            out: List[int] = []
+            for day in sorted(days)[lo:hi]:
+                out.extend(days[day].get(kind, []))
+            return sorted(out)
+        ordered = sorted(days)
+        recent = _pool("short", max(0, len(ordered) - 7), len(ordered))
+        prior = _pool("short", max(0, len(ordered) - 14), max(0, len(ordered) - 7))
+        med = lambda v: (v[len(v) // 2] if len(v) >= 10 else None)  # noqa: E731
+        r_med, p_med = med(recent), med(prior)
+        channels[ch] = {
+            "days": rows,
+            "short_median_7d": r_med,
+            "short_median_prior_7d": p_med,
+            "short_wow_pct": (round(100.0 * (r_med - p_med) / p_med, 1)
+                              if r_med is not None and p_med else None),
+        }
+    section.update({
+        "configured": True,
+        "as_of": data.get("updated"),
+        "age_days": EARLY_REACH_AGE_DAYS,
+        "note": (f"Views at snapshot age {EARLY_REACH_AGE_DAYS} d (analytics lag ~2 d, "
+                 "so roughly the first 24-48 h of exposure). Compare a publish day "
+                 "against the same weekday a week earlier, never against the "
+                 "peak. Null under " + str(EARLY_REACH_MIN_VIDEOS) + " videos."),
+        "channels": channels,
+    })
+    return section
 
 
 def build_retention_curves_section(root: Path) -> Dict[str, Any]:
@@ -2882,6 +3005,7 @@ def build_dashboard(root: Path, *, offline: bool = False, previous_flat: Optiona
         # Growth levers (Aug 2026): trends, experiments, stagger, specials.
         "growth": {
             "channel_scorecard": build_channel_scorecard(root),
+            "early_reach": build_early_reach_section(root),
             "experiments": experiments,
             "shorts_stagger": stagger,
             "specials": build_specials_section(root),
