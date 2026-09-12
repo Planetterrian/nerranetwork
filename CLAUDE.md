@@ -76,10 +76,23 @@ before any published surface sees it), the gate verifies every entry
 citation-shaped prose against it (`CITATION_SHAPE_PATTERNS` — the
 fabrication signature). Verified ledgers commit as
 `digests/<slug>/*_claims.json`; books render them as endnotes. Rollout:
-network-wide SHADOW (`_defaults.yaml`), **enforce: true on the narrative
-shows** (UC/FPD — a blocked episode there costs a rerun, never a burned
-queue slot: the gate runs before the digest save). Widen enforcement per
-show only, never a network-wide flip. The three strippers stay — they
+network-wide SHADOW (`_defaults.yaml`) from Aug 2026, **enforce: true on
+the narrative shows** (UC/FPD — a blocked episode there costs a rerun,
+never a burned queue slot: the gate runs before the digest save).
+**Since Sep 12 2026 the gate is ENFORCED on every show**, with
+`source_integrity.on_failure` deciding what an enforce-mode failure
+does after the one repair pass: `block` (UC/FPD — the episode skips) or
+`strip` (the network default — `engine.claims.strip_unverified` REMOVES
+every sentence the gate cannot vouch for from the digest, the script is
+stripped in step by `strip_script_sentences`, the mechanical gate
+re-runs on what is left, and only a still-failing text blocks). Shadow
+data had shown blocking would lose 2–4 of 7 episodes on five news shows
+for malformed ledger entries and 403s, never a proven fabrication.
+Strip is not a warning: nothing unverified reaches the blog, the feed or
+the newsletter; an uncovered citation shape whose item carries a
+resolving `Source:` URL counts as sourced by the item; HOOK/header lines
+are never edited. Guards: `tests/test_simplification_2026_09_12.py::TestStripMode`.
+The three strippers stay — they
 remove leakage; the ledger carries provenance. Audit tools:
 `scripts/verify_claims.py` (re-verify committed ledgers),
 `scripts/measure_citation_exposure.py` (corpus exposure),
@@ -2051,6 +2064,66 @@ cause was mechanical, not the host's taste, and the rules below bind:
   tells them apart where word count cannot. Guards: `TestSep9*`.
 - Every prompt-side item above is landmine-#17 A/B; the engine modules are
   removal-only or read-only and are not.
+- **Sep 12 2026 — the rewrite gate is GONE.** Measured Sep 9–12 across
+  the nine gated shows: fired on 30/35 episodes, accepted 11, rejected
+  17 (`facts_lost` / `names_lost` / `copies_more`). A two-pass script
+  could be written (1–4% verbatim, 40–60% coverage) or complete (55–77%
+  verbatim, 85–97% coverage), never both, because the script stage
+  re-told a finished document; every patch since Sep 5 moved the tension
+  and none resolved it. Do not re-add a script retry of any shape — the
+  fix is the generation design (next section). `engine/script_audit.py`
+  stays as the read-only instrument.
+
+### Simplification pass — one generation, enforcement everywhere, audience first (Sep 12, 2026)
+
+Operator brief: the pipeline had become convoluted and costly and its
+episodes were not trustworthy by construction; keep every show and every
+cadence, do 1 (stop adding gates), 2 (claims enforcement on all shows),
+4 (collapse digest + script into one generation) and 5 (audience as the
+headline number). Plan + evidence:
+[`docs/reviews/simplification_plan_2026_09_12.md`](docs/reviews/simplification_plan_2026_09_12.md);
+experiments `combined-generation-2026-09-12`,
+`source-integrity-strip-network-2026-09-12`,
+`audience-headline-2026-09-12`; ledger `network` 2026-09-12. Drift
+guards: `tests/test_simplification_2026_09_12.py`. Rules that bind:
+
+- **The digest and the script are written in ONE model call**
+  (`llm.combined_generation`, network default in `_defaults.yaml`; the
+  Russian shows pin it off; narrative, dialogue, prompt-chained,
+  `podcast_model`-override and episode-1 runs stay two-pass by code).
+  run_show renders the podcast prompt BEFORE the digest call through
+  `engine.pipeline.build_podcast_template_vars` (extracted from
+  `run_generation_phase`, which still calls it) with PART-1 placeholders
+  for `{digest}` and `{hook}`; `generate_digest` appends it as PART 2
+  after a fixed marker line, splits every response at the marker BEFORE
+  any digest validation or post-processing, and stashes the script
+  paired with the digest it was written from. `run_generation_phase`
+  ships the stashed script only when the current digest still derives
+  from that digest (a REPLACEMENT regeneration fails the line test —
+  `combined_script_matches_digest`); a missing marker, a refusal-shaped
+  or under-band PART 2, or a stale stash runs the script call exactly as
+  before. Metric `combined_generation` = `combined` | `two_pass` |
+  `combined_stale`. Output budget = `max_tokens + podcast_max_tokens`.
+  **A combined run can never cost an episode; the first live slate is
+  the A/B-listen set (landmine #17).** Revert = one line in
+  `_defaults.yaml`.
+- **Source integrity is enforced on every show** — see the Provenance
+  section at the top of this file for the strip contract.
+- **The audience headline leads every surface a decision is made from.**
+  `scripts/build_audience_headline.py` → `api/audience_headline.json`
+  (nightly, committed): per show and network — RSS downloads 7d/30d,
+  the LAST COMPLETE week vs the week before (`wow_pct`; the current OP3
+  week is partial and never compared), median first-week downloads per
+  episode (episodes 7–30 days old; OP3 lists only a show's top episodes,
+  so the network view names the carrying shows), views-weighted YouTube
+  `averageViewPercentage` over 28 days by kind, newsletter subscribers.
+  Null where unmeasured, never 0. It is the dashboard's FIRST tile, the
+  review snapshot's FIRST section, and the second line of the daily
+  summary. A review scores prompt passes against it first; the 99
+  per-episode script metrics are diagnostics.
+- **Nothing was pruned from the metrics file**: every unread key is
+  recorded inside a retired branch or read by a human; deleting them
+  changes nothing a listener gets. A NEW metric names its consumer.
 
 ### Network prompt + LLM review (July 31, 2026)
 

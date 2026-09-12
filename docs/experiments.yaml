@@ -1262,3 +1262,93 @@ experiments:
       evening (llm.script_rewrite_gate_overlap_pct = 40 on the nine
       English news shows). Score the verbatim target against
       script_rewrite_gate_after_pct where the gate fired.
+      Sep 12: the rewrite gate was REMOVED (Sep 9-12: 30/35 fired, 11
+      accepted, 17 rejected as facts_lost / names_lost / copies_more -
+      a script could be written OR complete, never both, because the
+      script stage re-told a finished document). Superseded by
+      combined-generation-2026-09-12; score this entry's targets on
+      script_digest_overlap_pct + script_digest_coverage_pct from the
+      combined episodes instead.
+
+  - id: combined-generation-2026-09-12
+    title: "One generation — digest and script written in the same model call"
+    area: quality
+    shipped: 2026-09-12
+    readout: 2026-09-26
+    status: reading
+    baseline: "two-pass: first drafts 55-77% digest-verbatim with 85-97% coverage; rewrites 1-4% verbatim with 40-60% coverage (Sep 9-12, nine gated shows); one extra script call per gated episode"
+    target: >
+      combined_generation = "combined" on >= 80% of news-show episodes
+      (two_pass / combined_stale are the fallback); script_digest_overlap_pct
+      <= 25% AND script_digest_coverage_pct >= 70% on the same episode on
+      the three flagships; script_entity_retention_pct >= 75%; no
+      episode lost to the combined path (a missing marker or a short
+      PART 2 falls back to the script call).
+    criteria: >
+      Hit = both density numbers move together on 8/10 flagship episodes
+      with the combined path shipping. Partial = combined ships but
+      coverage stays under 70% -> tighten the PART-2 bridge wording (A/B),
+      never re-add a retry. Miss = fallback rate > 50% or a lost episode
+      -> llm.combined_generation: false in _defaults.yaml (one line).
+    notes: >
+      docs/reviews/simplification_plan_2026_09_12.md Phase B. The script
+      stage used to re-tell a finished document; the Sep 5-9 rewrite gate
+      (removed in the same pass) proved no retry could make it both
+      written and complete. Narrative, dialogue, prompt-chained,
+      script-model-override and episode-1 runs stay two-pass by code;
+      the Russian shows pin the flag off. First live combined slate is
+      the A/B-listen set (landmine #17): the podcast prompt is rendered
+      with PART-1 placeholders for the digest and hook.
+
+  - id: source-integrity-strip-network-2026-09-12
+    title: "Source-integrity enforcement on every show — strip the sentence, keep the day"
+    area: quality
+    shipped: 2026-09-12
+    readout: 2026-09-26
+    status: reading
+    baseline: "shadow mode would have blocked SpaceX 2/7, Tesla 2/7, FF 4/7, PT 4/7, MIT 1/7 of the last seven episodes (malformed ledger entries, one uncovered shape on empty-ledger episodes, 403s) - none a proven fabrication; UC blocked 5x/14d"
+    target: >
+      source_integrity_passed_after_strip = true on >= 95% of news-show
+      episodes; 0 news-show skips with reason source_integrity_failed;
+      source_integrity_stripped_sentences median <= 2 per stripped
+      episode; source_integrity_script_stripped_sentences tracks the
+      digest number (the script no longer carries a sentence the digest
+      lost).
+    criteria: >
+      Hit = no lost news day and every published digest passed the
+      mechanical gate. Partial = strips are frequent (> 3 sentences on
+      > 20% of episodes) -> the prompt's claims appendix is the fix
+      (A/B), not a looser gate. Miss = an unverified citation ships or a
+      whole story is routinely stripped -> on_failure: block per show.
+    notes: >
+      Phase C of the simplification plan. source_integrity.on_failure
+      (block | strip) - the narrative shows keep block. An uncovered
+      citation shape whose item carries a resolving Source URL counts as
+      sourced by the item (source_integrity_covered_by_item_source).
+      Reviewer-note parentheticals are removed, their sentence kept.
+      HOOK / header lines are never edited: a failure there still blocks.
+
+  - id: audience-headline-2026-09-12
+    title: "Audience is the headline number — dashboard tile, snapshot section, summary line"
+    area: growth
+    shipped: 2026-09-12
+    readout: 2026-10-10
+    status: reading
+    baseline: "6,857 RSS downloads/30d, 5 newsletter subscribers, YouTube Shorts retention ~69% / long ~14% (Sep 12); the September script passes were scored on 99 pipeline metrics and no audience number"
+    target: >
+      Every review from Sep 12 opens on the audience headline (the
+      snapshot's first section). Readout question for the September
+      passes: does the last-complete-week RSS WoW on the three flagships
+      and the first-week downloads per episode move over four weeks of
+      combined-generation episodes? A move is the pass's score; the
+      script metrics are diagnostics.
+    criteria: >
+      This entry is a measurement contract, not a lever: hit = the
+      headline is read and quoted in every review doc after Sep 12;
+      miss = a review scores prompts without it.
+    notes: >
+      scripts/build_audience_headline.py -> api/audience_headline.json
+      (nightly). Null where unmeasured, never 0; the current OP3 week is
+      partial and is never compared; OP3 lists only a show's top
+      episodes, so first-week medians rest on a few episodes and the
+      network view names the carrying shows instead of averaging.

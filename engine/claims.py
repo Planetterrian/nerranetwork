@@ -702,7 +702,11 @@ def run_source_integrity_gate(
     citation-shaped construction with no covering verified claim, FAILS the
     gate. A soft failure here would reproduce exactly the
     silent-degradation class that produced fabricated provenance, so the
-    caller in enforce mode must block the episode, not warn.
+    caller in enforce mode must change what ships, never warn: BLOCK the
+    episode (``on_failure: block``) or STRIP the failing sentences and
+    re-run this gate on what is left (``on_failure: strip``,
+    :func:`strip_unverified`) — the stripped text must pass this same
+    function before it is published.
 
     A missing ledger is not by itself a failure: prose written entirely in
     the general form needs no ledger, and the lint decides — any
@@ -973,6 +977,335 @@ def attempt_claim_repair(
         new_gate.summary(),
     )
     return new_gate, repaired
+
+
+# ---------------------------------------------------------------------------
+# Strip mode (Sep 12 2026) — enforcement on every show without losing days
+# ---------------------------------------------------------------------------
+#
+# Shadow-mode data on the news shows (last seven episodes each): enforcing
+# the block policy as-is would have skipped SpaceX 2/7, Tesla 2/7, FF 4/7,
+# PT 4/7, MIT 1/7 — for malformed ledger entries (the model omitted the
+# quote), one citation-shaped sentence on an empty-ledger episode, or a
+# 403 from the publisher. None was a proven fabrication, and a skipped
+# daily news episode is a lost day. Strip mode keeps the contract that
+# nothing unverified is published — it removes the sentence instead of
+# the episode — and hands the mechanical gate the final word.
+
+_CONTENT_STOP = frozenset("""
+about above after again against almost along already also although among
+around because been before being below between both could does doing
+during each either every from further having here into more most much
+must never nothing often only other over same should since some still such
+than that their them then there these they this those through under until
+very were what when where which while whose will with within without would
+your said says will week today yesterday tomorrow percent according
+""".split())
+_CONTENT_TOKEN_RE = re.compile(r"[A-Za-zÀ-ÿА-Яа-я0-9][A-Za-zÀ-ÿА-Яа-я0-9'\-]{3,}")
+
+
+def _content_tokens(text: str) -> set:
+    """Lower-cased content words (4+ chars, stop-words removed) — the
+    vocabulary two sentences share when they tell the same fact."""
+    return {t.lower() for t in _CONTENT_TOKEN_RE.findall(text or "")
+            if t.lower() not in _CONTENT_STOP}
+
+
+_ITEM_START_RE = re.compile(r"^\s*(?:\d+[.)]\s+|[-*•]\s+)")
+_HEADER_RE = re.compile(r"^\s*(#{1,6}\s|\*\*(?:HOOK|ЗАГОЛОВОК|TITLE)\b|>\s*\*\*)", re.IGNORECASE)
+_SOURCE_LINE_RE = re.compile(r"^\s*\**\s*(?:Source|Sources|Источник)\b", re.IGNORECASE)
+_URL_RE = re.compile(r"https?://[^\s)\]>\"']+")
+
+
+@dataclass
+class StripResult:
+    text: str
+    claims: List[dict]
+    removed_sentences: List[str] = field(default_factory=list)
+    removed_notes: List[str] = field(default_factory=list)
+    removed_items: int = 0
+    covered_by_item_source: int = 0
+    gate: Optional[GateResult] = None
+
+
+def _blocks(lines: List[str]) -> List[Tuple[int, int]]:
+    """(start, end) line ranges of the digest's items/paragraphs: a block
+    starts at a numbered/bulleted item or a header and runs to the next."""
+    starts = [i for i, ln in enumerate(lines)
+              if _ITEM_START_RE.match(ln) or _HEADER_RE.match(ln)]
+    if not starts or starts[0] != 0:
+        starts.insert(0, 0)
+    out = []
+    for i, s in enumerate(starts):
+        e = starts[i + 1] if i + 1 < len(starts) else len(lines)
+        out.append((s, e))
+    return out
+
+
+def _block_source_url(lines: List[str], start: int, end: int) -> str:
+    """The item's own Source URL (a ``Source:`` line or the block's last
+    markdown link), or ''."""
+    src = ""
+    for ln in lines[start:end]:
+        if _SOURCE_LINE_RE.match(ln):
+            m = _URL_RE.search(ln)
+            if m:
+                return m.group(0).rstrip(".,;")
+        m = _URL_RE.search(ln)
+        if m:
+            src = m.group(0).rstrip(".,;")
+    return src
+
+
+def _remove_sentence_from_line(line: str, sentence: str) -> Tuple[str, bool]:
+    """Drop one sentence from a line (exact, then fuzzy); returns
+    ``(new_line, removed)``. The line's markdown prefix is kept."""
+    sentence = (sentence or "").strip()
+    if not sentence:
+        return line, False
+    if sentence in line:
+        new = line.replace(sentence, "", 1)
+        return re.sub(r"[ \t]{2,}", " ", new).rstrip(), True
+    parts = _SENTENCE_SPLIT_RE.split(line)
+    kept = []
+    removed = False
+    for p in parts:
+        if not removed and fuzzy_contains(p, sentence, threshold=0.85) \
+                and fuzzy_contains(sentence, p, threshold=0.85):
+            removed = True
+            continue
+        kept.append(p)
+    if not removed:
+        return line, False
+    return " ".join(kept).rstrip(), True
+
+
+def remove_sentences(text: str, sentences: List[str],
+                     protect_headers: bool = True) -> Tuple[str, List[str]]:
+    """Remove each of ``sentences`` from ``text`` (one occurrence each).
+    Header / HOOK lines are never edited when ``protect_headers``. Returns
+    ``(new_text, actually_removed)``."""
+    lines = text.splitlines()
+    removed: List[str] = []
+    for sentence in sentences:
+        for i, ln in enumerate(lines):
+            if protect_headers and _HEADER_RE.match(ln):
+                continue
+            new, ok = _remove_sentence_from_line(ln, sentence)
+            if ok:
+                lines[i] = new
+                removed.append(sentence)
+                break
+    return "\n".join(lines), removed
+
+
+def _drop_empty_items(text: str) -> Tuple[str, int]:
+    """An item whose body lost every prose line goes entirely (a headline
+    with only a Source line under it asserts nothing)."""
+    lines = text.splitlines()
+    keep = [True] * len(lines)
+    dropped = 0
+    for s, e in _blocks(lines):
+        if not _ITEM_START_RE.match(lines[s]):
+            continue
+        body = lines[s + 1:e]
+        prose = [ln for ln in body
+                 if ln.strip() and not _SOURCE_LINE_RE.match(ln)
+                 and not _URL_RE.fullmatch(ln.strip())]
+        first = _ITEM_START_RE.sub("", lines[s]).strip()
+        # A one-line item carries its body on the headline line.
+        first_prose = re.sub(r"\*\*[^*]+\*\*", "", first).strip(" :—-")
+        if not prose and len(first_prose) < 20:
+            for i in range(s, e):
+                keep[i] = False
+            dropped += 1
+    if not dropped:
+        return text, 0
+    out = [ln for ln, k in zip(lines, keep) if k]
+    cleaned = re.sub(r"\n{3,}", "\n\n", "\n".join(out))
+    return cleaned, dropped
+
+
+def strip_unverified(
+    episode_text: str,
+    gate: GateResult,
+    claims: List[dict],
+    fetch: Optional[Callable[[str], Tuple[int, str]]] = None,
+    verify_sources: bool = True,
+) -> StripResult:
+    """Strip-mode enforcement: remove what the gate could not vouch for,
+    then re-run the FULL mechanical gate on the stripped text + ledger.
+
+    Removed: the anchored sentence of every claim whose source failed or
+    was unreachable; the sentence of every malformed ledger entry (the
+    entry itself leaves the ledger); every uncovered citation-shaped
+    sentence whose enclosing item has no Source URL that resolves (an
+    item-level source that answers 2xx counts as sourcing the item's
+    sentences — counted in ``covered_by_item_source``); every reviewer-
+    note parenthetical (the note only, the sentence stays). An item that
+    loses its whole body is removed. HOOK / header lines are never edited:
+    a failure there still blocks.
+    """
+    if gate.passed:
+        return StripResult(text=episode_text, claims=list(claims), gate=gate)
+    if fetch is None:
+        fetch = default_fetch
+    _cache: Dict[str, Tuple[Optional[int], str]] = {}
+
+    def _resolves(url: str) -> bool:
+        if not url:
+            return False
+        if url not in _cache:
+            try:
+                _cache[url] = fetch(url)
+            except Exception:  # noqa: BLE001 — transport failure
+                _cache[url] = (None, "")
+        status, body = _cache[url]
+        return status is not None and 200 <= status < 300 and bool((body or "").strip())
+
+    # Ids as validate_ledger_shape derives them — an entry the model left
+    # without an id is reported as ``c<n>`` and must still be found here.
+    _cid = lambda i, c: str(c.get("id") or f"c{i + 1}")  # noqa: E731
+    by_id = {_cid(i, c): c for i, c in enumerate(claims)}
+    to_remove: List[str] = []
+    bad_ids: set = set()
+
+    for v in gate.failed_verifications:
+        cid = str(v.get("id", ""))
+        bad_ids.add(cid)
+        span = str((by_id.get(cid) or {}).get("episode_span") or "").strip()
+        if span:
+            to_remove.append(span)
+
+    for err in gate.shape_errors:
+        cid = str(err).split(":", 1)[0].strip()
+        bad_ids.add(cid)
+        entry = by_id.get(cid) or {}
+        span = str(entry.get("episode_span") or entry.get("script_span") or "").strip()
+        if span:
+            to_remove.append(span)
+        else:
+            # No anchor: find the sentence the claim text describes.
+            toks = _content_tokens(str(entry.get("claim") or ""))
+            if len(toks) >= 3:
+                for ln in episode_text.splitlines():
+                    if _HEADER_RE.match(ln):
+                        continue
+                    for sent in _SENTENCE_SPLIT_RE.split(ln):
+                        if len(toks & _content_tokens(sent)) >= max(3, int(0.6 * len(toks))):
+                            to_remove.append(sent.strip())
+                            break
+                    else:
+                        continue
+                    break
+
+    covered_by_item = 0
+    lines = episode_text.splitlines()
+    blocks = _blocks(lines)
+    for u in gate.uncovered_shapes:
+        sentence = str(u.get("sentence") or "").strip()
+        if not sentence:
+            continue
+        item_url = ""
+        for s, e in blocks:
+            if any(sentence in ln or fuzzy_contains(sentence, ln, threshold=0.85)
+                   for ln in lines[s:e]):
+                item_url = _block_source_url(lines, s, e)
+                break
+        if item_url and (not verify_sources or _resolves(item_url)):
+            covered_by_item += 1
+            continue
+        to_remove.append(sentence)
+
+    # De-duplicate while keeping order.
+    seen: set = set()
+    ordered = [s for s in to_remove if not (s in seen or seen.add(s))]
+    text, removed = remove_sentences(episode_text, ordered)
+
+    removed_notes: List[str] = []
+    for n in gate.reviewer_notes:
+        match = str(n.get("match") or "")
+        if match and match in text:
+            text = text.replace(match, "", 1)
+            removed_notes.append(match)
+    text = re.sub(r"[ \t]{2,}", " ", text)
+    text = re.sub(r" +([.,;:])", r"\1", text)
+    text, dropped = _drop_empty_items(text)
+
+    stripped_claims = [c for i, c in enumerate(claims) if _cid(i, c) not in bad_ids]
+    new_gate = run_source_integrity_gate(
+        text, stripped_claims, fetch=fetch, verify_sources=verify_sources,
+    )
+    # The re-gate does not know about item-level sourcing; a shape whose
+    # item carries a resolving Source URL was kept on purpose above and
+    # counts as covered here too (same URL cache, no second fetch).
+    if new_gate.uncovered_shapes:
+        still: List[dict] = []
+        new_lines = text.splitlines()
+        new_blocks = _blocks(new_lines)
+        for u in new_gate.uncovered_shapes:
+            sentence = str(u.get("sentence") or "").strip()
+            item_url = ""
+            for s, e in new_blocks:
+                if any(sentence in ln or fuzzy_contains(sentence, ln, threshold=0.85)
+                       for ln in new_lines[s:e]):
+                    item_url = _block_source_url(new_lines, s, e)
+                    break
+            if item_url and (not verify_sources or _resolves(item_url)):
+                continue
+            still.append(u)
+        new_gate.uncovered_shapes = still
+        new_gate.passed = not (
+            new_gate.failed_verifications or new_gate.uncovered_shapes
+            or new_gate.shape_errors or new_gate.reviewer_notes
+        )
+    logger.warning(
+        "source-integrity strip: removed %d sentence(s), %d reviewer note(s), "
+        "%d whole item(s); %d uncovered shape(s) covered by their item's "
+        "Source URL — gate now %s (%s)",
+        len(removed), len(removed_notes), dropped, covered_by_item,
+        "PASSED" if new_gate.passed else "still failing", new_gate.summary(),
+    )
+    return StripResult(
+        text=text, claims=stripped_claims, removed_sentences=removed,
+        removed_notes=removed_notes, removed_items=dropped,
+        covered_by_item_source=covered_by_item, gate=new_gate,
+    )
+
+
+def strip_script_sentences(script: str, removed_sentences: List[str],
+                           min_share: float = 0.5) -> Tuple[str, int]:
+    """Remove every script sentence that tells a removed digest sentence:
+    a script sentence goes when it carries at least ``min_share`` of a
+    removed sentence's content words (and at least three of them)."""
+    targets = [(_content_tokens(s), s) for s in removed_sentences]
+    targets = [(t, s) for t, s in targets if len(t) >= 3]
+    if not targets or not script:
+        return script, 0
+    out_lines: List[str] = []
+    n = 0
+    for line in script.splitlines():
+        if not line.strip():
+            out_lines.append(line)
+            continue
+        m = re.match(r"^(\s*[A-ZА-Я][A-Za-zА-Яа-я .'-]{0,30}:\s*)", line)
+        prefix = m.group(1) if m else ""
+        body = line[len(prefix):]
+        kept = []
+        for sent in _SENTENCE_SPLIT_RE.split(body):
+            toks = _content_tokens(sent)
+            hit = any(len(toks & t) >= max(3, int(min_share * len(t))) for t, _ in targets)
+            if hit:
+                n += 1
+                continue
+            kept.append(sent)
+        new_body = " ".join(k for k in kept if k.strip()).strip()
+        if new_body:
+            out_lines.append(prefix + new_body)
+        elif not prefix:
+            out_lines.append("")
+    text = re.sub(r"\n{3,}", "\n\n", "\n".join(out_lines))
+    return text, n
 
 
 # ---------------------------------------------------------------------------

@@ -1579,6 +1579,56 @@ def run(args: argparse.Namespace) -> None:
             is_deep_dive,
         )
         from engine.generator import generate_digest, LLMRefusalError
+
+        # Combined generation (Sep 12 2026 simplification): render the
+        # podcast prompt NOW, with the digest and hook as PART-1
+        # references, so generate_digest can ask for the digest and the
+        # script in one response. The podcast template variables are the
+        # same ones run_generation_phase builds for the two-pass path
+        # (engine.pipeline.build_podcast_template_vars). The Sunday
+        # week-in-review segment (landmine #19) is data-side and rides
+        # along in the PART-2 digest reference; it is still appended to
+        # the podcast-only digest copy below for the fallback path.
+        template_vars.pop("_combined_podcast_prompt", None)
+        try:
+            from engine.generator import (
+                COMBINED_DIGEST_PLACEHOLDER, COMBINED_HOOK_PLACEHOLDER,
+                combined_generation_enabled, load_prompt as _load_prompt,
+            )
+            if combined_generation_enabled(config, template_vars) and not is_deep_dive:
+                from engine.pipeline import build_podcast_template_vars
+                _pv = build_podcast_template_vars(
+                    config,
+                    episode_num=episode_num,
+                    today_str=today_str,
+                    effective_hook=COMBINED_HOOK_PLACEHOLDER,
+                    extra_context=extra_context,
+                    args=args,
+                    template_vars=template_vars,
+                )
+                _pv.pop("_pod_vars", None)
+                _pv["hook"] = COMBINED_HOOK_PLACEHOLDER
+                _pv_digest = COMBINED_DIGEST_PLACEHOLDER
+                if include_weekly_summary:
+                    try:
+                        from engine.weekly_recap import build_weekly_summary_segment as _bwss
+                        _pre_segment = _bwss(config.slug, config.name, today)
+                    except Exception as _seg_exc:  # noqa: BLE001
+                        logger.warning("Weekly-summary segment build failed (combined "
+                                       "prompt ships without it): %s", _seg_exc)
+                        _pre_segment = None
+                    if _pre_segment:
+                        _pv_digest = _pv_digest + "\n\n" + _pre_segment
+                _pv["digest"] = _pv_digest
+                template_vars["_combined_podcast_prompt"] = _load_prompt(
+                    config.llm.podcast_prompt_file, _pv,
+                )
+                logger.info("Combined generation: podcast prompt rendered for PART 2")
+        except Exception as _comb_exc:  # noqa: BLE001 — combined mode must never cost an episode
+            logger.warning("Combined-generation prompt build failed (two-pass path "
+                           "runs instead): %s", _comb_exc)
+            template_vars.pop("_combined_podcast_prompt", None)
+
         logger.info("Generating digest ...")
         try:
             with metrics.stage("generate_digest"):
@@ -2200,15 +2250,33 @@ def run(args: argparse.Namespace) -> None:
         _si_cfg = getattr(config, "source_integrity", None)
         _si_gate = None
         _si_mod = None
+        # Sentences strip mode removed from the digest (Sep 12 2026); the
+        # script is stripped in step after generation.
+        _si_stripped_sentences: list = []
+        _si_on_failure = str(getattr(_si_cfg, "on_failure", "block") or "block").lower()
         if _si_cfg and getattr(_si_cfg, "enabled", False):
             _si_enforce = bool(getattr(_si_cfg, "enforce", False))
+            _si_verify = bool(getattr(_si_cfg, "verify_sources", True))
             try:
                 from engine import claims as _si_mod
                 _si_claims = _si_mod.drain_stashed_claims()
+
+                # One fetch per URL for the whole gate stage (first pass,
+                # repair, strip-mode re-gate) — a source that answered 2xx
+                # once is not re-fetched, so a flaky second answer can
+                # never fail a verified claim.
+                _si_fetch_cache: dict = {}
+
+                def _si_fetch(url: str):
+                    if url not in _si_fetch_cache:
+                        _si_fetch_cache[url] = _si_mod.default_fetch(url)
+                    return _si_fetch_cache[url]
+
                 with metrics.stage("source_integrity_gate"):
                     _si_gate = _si_mod.run_source_integrity_gate(
                         x_thread, _si_claims,
-                        verify_sources=getattr(_si_cfg, "verify_sources", True),
+                        fetch=_si_fetch,
+                        verify_sources=_si_verify,
                     )
                 metrics.record("source_integrity_claims", _si_gate.claims_total)
                 metrics.record("source_integrity_verified", _si_gate.claims_verified)
@@ -2220,6 +2288,7 @@ def run(args: argparse.Namespace) -> None:
                     len(_si_gate.uncovered_shapes))
                 metrics.record("source_integrity_passed", _si_gate.passed)
                 metrics.record("source_integrity_enforced", _si_enforce)
+                metrics.record("source_integrity_on_failure", _si_on_failure)
 
                 # One bounded repair pass before an enforce-mode block
                 # (Aug 25 2026: UC lost two days because its topic's
@@ -2258,13 +2327,54 @@ def run(args: argparse.Namespace) -> None:
                         return text
 
                     _si_gate, _si_claims = _si_mod.attempt_claim_repair(
-                        x_thread, _si_gate, _si_claims or [], _repair_llm)
+                        x_thread, _si_gate, _si_claims or [], _repair_llm,
+                        fetch=_si_fetch)
                     metrics.record(
                         "source_integrity_repair_succeeded", _si_gate.passed)
                     if _si_gate.passed:
                         logger.info(
                             "Claim repair recovered the episode: %s",
                             _si_gate.summary())
+
+                # Strip mode (Sep 12 2026, network-wide enforcement): what
+                # the repair could not source leaves the digest — the
+                # sentence, not the episode. The mechanical gate re-runs on
+                # the stripped text and has the final word below; the
+                # script is stripped in step after generation.
+                if (not _si_gate.passed and _si_enforce
+                        and _si_on_failure == "strip"):
+                    with metrics.stage("source_integrity_strip"):
+                        _strip = _si_mod.strip_unverified(
+                            x_thread, _si_gate, _si_claims or [],
+                            fetch=_si_fetch, verify_sources=_si_verify,
+                        )
+                    metrics.record("source_integrity_stripped_sentences",
+                                   len(_strip.removed_sentences))
+                    metrics.record("source_integrity_stripped_notes",
+                                   len(_strip.removed_notes))
+                    metrics.record("source_integrity_stripped_items",
+                                   _strip.removed_items)
+                    metrics.record("source_integrity_covered_by_item_source",
+                                   _strip.covered_by_item_source)
+                    for _s in _strip.removed_sentences:
+                        logger.warning("  stripped unverified sentence: %s", _s)
+                    for _s in _strip.removed_notes:
+                        logger.warning("  stripped reviewer note: %s", _s)
+                    if _strip.removed_sentences or _strip.removed_notes:
+                        print(
+                            "::warning::Source-integrity strip for "
+                            f"{config.name}: {len(_strip.removed_sentences)} "
+                            f"sentence(s) and {len(_strip.removed_notes)} "
+                            "reviewer note(s) removed from the digest "
+                            f"({_strip.removed_items} whole item(s)); gate now "
+                            f"{'PASSED' if _strip.gate.passed else 'still failing'}"
+                        )
+                    x_thread = _strip.text
+                    _si_claims = _strip.claims
+                    _si_gate = _strip.gate
+                    _si_stripped_sentences = list(_strip.removed_sentences)
+                    metrics.record("source_integrity_passed_after_strip",
+                                   _si_gate.passed)
 
                 if not _si_gate.passed:
                     logger.error(
@@ -2610,33 +2720,37 @@ def run(args: argparse.Namespace) -> None:
                 podcast_digest=(clean_digest
                                 if 'clean_digest' in locals() else ""),
             )
-            _gate_info = (template_vars or {}).pop("_script_rewrite_gate", None)
-            if _gate_info:
-                metrics.record("script_rewrite_gate_fired", bool(_gate_info.get("fired")))
-                metrics.record("script_rewrite_gate_before_pct", _gate_info.get("before_pct"))
-                if _gate_info.get("fired"):
-                    metrics.record("script_rewrite_gate_after_pct", _gate_info.get("after_pct"))
-                    metrics.record("script_rewrite_gate_accepted", bool(_gate_info.get("accepted")))
-                    # Sep 6 2026: WHY it fired and, when the rewrite was
-                    # thrown away, why — Tesla Ep597's 61 % -> 2 % rewrite
-                    # was rejected and nothing recorded the reason.
-                    metrics.record("script_rewrite_gate_reasons", _gate_info.get("reasons") or "")
-                    metrics.record("script_rewrite_gate_reject_reason", _gate_info.get("reject_reason") or "")
-                    metrics.record("script_rewrite_gate_rewrite_words", _gate_info.get("rewrite_words") or 0)
-                    metrics.record("script_rewrite_gate_original_words", _gate_info.get("original_words") or 0)
-                    metrics.record("script_rewrite_gate_entity_retention_before",
-                                   _gate_info.get("entity_retention_before"))
-                    metrics.record("script_rewrite_gate_entity_retention_after",
-                                   _gate_info.get("entity_retention_after"))
-                    metrics.record("script_rewrite_gate_digest_coverage_before",
-                                   _gate_info.get("digest_coverage_before"))
-                    metrics.record("script_rewrite_gate_digest_coverage_after",
-                                   _gate_info.get("digest_coverage_after"))
-                    metrics.record("script_rewrite_gate_attempts", _gate_info.get("attempts") or 1)
-                    metrics.record("script_rewrite_gate_copied_sections_before",
-                                   _gate_info.get("copied_sections_before") or 0)
-                    metrics.record("script_rewrite_gate_copied_sections_after",
-                                   _gate_info.get("copied_sections_after") or 0)
+            # Which path wrote the script: "combined" (one call with the
+            # digest), "two_pass" (the script call), "combined_stale" (a
+            # combined script was written but the digest was regenerated
+            # afterwards, so the script call ran). Read this beside the
+            # script density audit on the first slates after Sep 12 2026.
+            metrics.record(
+                "combined_generation",
+                (template_vars or {}).pop("_generation_path", None)
+                or ("requested" if (template_vars or {}).get("_combined_podcast_prompt") else "off"),
+            )
+            template_vars.pop("_combined_podcast_prompt", None)
+
+            # Strip mode, script side: every script sentence that tells a
+            # digest sentence the gate removed goes too (the digest and the
+            # script are written from the same facts, so the script carries
+            # the unverified sentence in its own words).
+            if _si_stripped_sentences and podcast_script and _si_mod is not None:
+                try:
+                    podcast_script, _n_script_stripped = _si_mod.strip_script_sentences(
+                        podcast_script, _si_stripped_sentences,
+                    )
+                    metrics.record("source_integrity_script_stripped_sentences",
+                                   _n_script_stripped)
+                    if _n_script_stripped:
+                        logger.warning(
+                            "Stripped %d script sentence(s) telling digest "
+                            "sentences the source-integrity gate removed",
+                            _n_script_stripped,
+                        )
+                except Exception as _ss_exc:  # noqa: BLE001
+                    logger.warning("Script-side strip failed (non-fatal): %s", _ss_exc)
 
             # 8b. Podcast script length check — two-tier gate.
             #     Hard floor (true garbage): abort only when clearly broken.
@@ -2889,7 +3003,33 @@ def run(args: argparse.Namespace) -> None:
                             logger.error(
                                 "Script invented citation shape %r in: %s",
                                 _u.get("match"), _u.get("sentence"))
-                        if getattr(_si_cfg, "enforce", False):
+                        if getattr(_si_cfg, "enforce", False) and _si_on_failure == "strip":
+                            # Strip mode: the invented sentence leaves the
+                            # script; the episode ships without it.
+                            _before_n = len(_script_uncovered)
+                            podcast_script, _n_lint_stripped = _si_mod.remove_sentences(
+                                podcast_script,
+                                [u.get("sentence", "") for u in _script_uncovered],
+                                protect_headers=False,
+                            )
+                            metrics.record(
+                                "source_integrity_script_uncovered_stripped",
+                                len(_n_lint_stripped))
+                            if len(_n_lint_stripped) < _before_n:
+                                logger.error(
+                                    "Source-integrity script lint FAILED — %d "
+                                    "invented citation shape(s) could not be "
+                                    "stripped from the script. Aborting before "
+                                    "TTS.", _before_n - len(_n_lint_stripped),
+                                )
+                                save_usage(tracker, digests_dir)
+                                sys.exit(1)
+                            print(
+                                "::warning::Script-stage citation shapes "
+                                f"stripped ({len(_n_lint_stripped)}) for "
+                                f"{config.name}"
+                            )
+                        elif getattr(_si_cfg, "enforce", False):
                             logger.error(
                                 "Source-integrity script lint FAILED — %d "
                                 "citation-shaped assertion(s) appear in the "

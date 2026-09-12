@@ -17,6 +17,10 @@ min_articles_skip: 0
 source_integrity:
   enabled: true
   enforce: true
+  # Narrative show: a blocked episode costs a rerun, never a queue slot, so
+  # the failure policy stays BLOCK (the network default is strip since
+  # Sep 12 2026).
+  on_failure: block
 multilingual:
   enabled: false
 llm:

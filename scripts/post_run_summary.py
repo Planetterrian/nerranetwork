@@ -63,6 +63,11 @@ def build_summary_text(dashboard: dict, quota: dict | None = None) -> str:
     healthy = (n_alerts + n_stale + n_offline) == 0
     icon = "✅" if healthy else "⚠️"
     lines = [f"{icon} Nerra Network daily summary — {dashboard.get('generated_at', 'unknown time')}"]
+    # The audience headline comes right after the status line (Sep 12
+    # 2026): the network's number, before its own bookkeeping.
+    headline = (dashboard.get("audience_headline") or {}).get("line")
+    if headline:
+        lines.append(str(headline))
     lines.append(f"Shows tracked: {shows_count}")
     if isinstance(cost_7d, (int, float)):
         lines.append(f"7-day spend: ${cost_7d:.2f}")

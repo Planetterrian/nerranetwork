@@ -12,7 +12,7 @@ import os
 import re
 import time
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
 from tenacity import (
     before_sleep_log,
@@ -1625,6 +1625,196 @@ def _record_discarded_call(tracker, step: str, meta: dict, config) -> None:
         logger.warning("Failed to record discarded-call usage: %s", exc)
 
 
+# ---------------------------------------------------------------------------
+# Combined generation (Sep 12 2026): the digest and the podcast script in
+# ONE model call. The script stage used to re-tell a finished document,
+# and no retry could make it both written (low verbatim) and complete
+# (high coverage). Writing both from the same facts in the same response
+# removes the rewrite; the two-pass path stays as the automatic fallback.
+# ---------------------------------------------------------------------------
+
+COMBINED_SCRIPT_MARKER = "===PODCAST SCRIPT==="
+COMBINED_DIGEST_PLACEHOLDER = (
+    "(the digest you wrote in PART 1 above — treat it exactly as if it were "
+    "pasted here; every fact, number and name in it is spoken below)"
+)
+COMBINED_HOOK_PLACEHOLDER = "(the HOOK sentence you wrote in PART 1, word for word)"
+
+_COMBINED_MARKER_RE = re.compile(
+    r"^[ \t]*[=\-#*]*[ \t]*(?:PART\s*2\s*[—\-:]*\s*)?PODCAST SCRIPT[ \t]*[=\-#*]*[ \t]*$",
+    re.IGNORECASE | re.MULTILINE,
+)
+_COMBINED_PART_HEADER_RE = re.compile(
+    r"^\s*(?:[#*=\-\s]*)PART\s*[12]\b[^\n]*\n", re.IGNORECASE,
+)
+
+_COMBINED_BRIDGE = (
+    "\n\n════════════════════════════════════════\n"
+    "YOU WRITE TWO THINGS IN THIS ONE RESPONSE.\n\n"
+    "PART 1 is the digest specified above. Write it in full and exactly to that "
+    "specification — its sections, its Source lines, its HOOK line, and the "
+    "fenced claims block if one was requested (the claims block is the LAST "
+    "thing in PART 1).\n\n"
+    "Then write this line alone on its own line, exactly:\n"
+    f"{COMBINED_SCRIPT_MARKER}\n\n"
+    "PART 2 is the spoken podcast script specified below. Its source material is "
+    "the digest you just wrote in PART 1: every fact, every number and every "
+    "name in PART 1 is spoken in PART 2, in spoken sentences of your own, never "
+    "the digest's sentences read aloud. Where the script instructions refer to "
+    "the digest, they mean PART 1; where they give the hook, they mean PART 1's "
+    "HOOK line, spoken word for word as the opening line. Nothing from PART 2 "
+    "(speaker labels, delivery notes, spoken transitions) belongs in PART 1, "
+    "and no markdown from PART 1 (headers, bold, Source lines, URLs) belongs "
+    "in PART 2.\n"
+    "════════════════════════════════════════\n"
+    "PART 2 — THE PODCAST SCRIPT\n\n"
+)
+_COMBINED_TAIL = (
+    "\n\n════════════════════════════════════════\n"
+    "Now write PART 1 in full, then the marker line, then PART 2 in full. "
+    "Do not stop after PART 1."
+)
+
+# One episode runs per process; generate_digest may run several times per
+# episode (refusal retries, structural retry). Replace-on-stash keeps the
+# script belonging to the LAST generated digest — the pattern
+# engine.claims uses for the ledger. The stash also carries the digest it
+# was written from, so a later regeneration cannot ship a stale script.
+_STASHED_COMBINED: Optional[Dict[str, str]] = None
+
+
+def combined_generation_enabled(config: Any, template_vars: Optional[Dict[str, Any]] = None) -> bool:
+    """True when this run writes digest + script in one call.
+
+    Narrative shows (topic briefs, a different podcast shape), dialogue
+    shows (two-voice scripts), prompt-chained shows, shows whose script
+    stage runs a different model, and episode 1 (its intro embeds the
+    hook) stay on the two-pass path regardless of the flag.
+    """
+    llm = getattr(config, "llm", None)
+    if not llm or not getattr(llm, "combined_generation", False):
+        return False
+    if getattr(config, "narrative_mode", False):
+        return False
+    if getattr(getattr(config, "tts", None), "dialogue_mode", False):
+        return False
+    if getattr(llm, "podcast_chain", False):
+        return False
+    _pm = getattr(llm, "podcast_model", "") or ""
+    if _pm and _pm != getattr(llm, "model", ""):
+        return False
+    try:
+        if int((template_vars or {}).get("episode_num") or 0) == 1:
+            return False
+    except (TypeError, ValueError):
+        pass
+    return True
+
+
+def build_combined_prompt(digest_prompt: str, podcast_prompt: str) -> str:
+    """Digest prompt (PART 1) + bridge + rendered podcast prompt (PART 2)."""
+    return digest_prompt.rstrip() + _COMBINED_BRIDGE + podcast_prompt.strip() + _COMBINED_TAIL
+
+
+def split_combined_output(text: str) -> Tuple[str, Optional[str]]:
+    """Split a combined response at the marker line.
+
+    Returns ``(digest, script)``; ``script`` is None when the marker is
+    absent (the caller falls back to the script call). A fenced claims
+    block the model put after the marker is moved back to the digest half
+    so the ledger extraction sees it.
+    """
+    if not text:
+        return text, None
+    m = _COMBINED_MARKER_RE.search(text)
+    if not m:
+        return text, None
+    digest = text[:m.start()].rstrip()
+    script = text[m.end():].strip()
+    script = _COMBINED_PART_HEADER_RE.sub("", script, count=1).strip()
+    if "```claims" in script:
+        from engine.claims import extract_claims_block
+        _clean_script, _claims = extract_claims_block(script)
+        if _claims is not None:
+            import json as _json
+            digest = digest + "\n\n```claims\n" + _json.dumps(_claims, ensure_ascii=False) + "\n```"
+            script = _clean_script.strip()
+    return digest, script
+
+
+def _finish_combined_script(script: Optional[str], digest_text: str, config: Any) -> None:
+    """Validate + sanitise the PART 2 script and stash it, or leave the
+    stash empty so the two-pass path runs. Never raises."""
+    global _STASHED_COMBINED
+    _STASHED_COMBINED = None
+    if not script or not script.strip():
+        logger.warning(
+            "Combined generation for '%s' returned no script (marker missing) — "
+            "the script stage will run separately", config.name,
+        )
+        return
+    try:
+        min_words = int(getattr(config.llm, "min_podcast_words", 1500) or 1500)
+        script = _sanitize_podcast_script(
+            script,
+            preserve_speaker_labels=getattr(getattr(config, "tts", None), "dialogue_mode", False),
+        )
+        _validate_llm_output(
+            script, stage="podcast_script", show_name=config.name,
+            min_podcast_words=min_words,
+            known_entities=tuple(getattr(config, "keywords", ()) or ()),
+        )
+        words = len(script.split())
+        # run_show skips anything under 60 % of target; the two-pass path
+        # has a publication-floor re-roll for that band, so a short PART 2
+        # hands over to it instead of shipping thin.
+        pub_band = max(600, int(int(min_words * 0.6) * 1.1))
+        if words < pub_band:
+            logger.warning(
+                "Combined script for '%s' is %d words (< %d publication band) — "
+                "the script stage will run separately", config.name, words, pub_band,
+            )
+            return
+    except LLMRefusalError as exc:
+        logger.warning("Combined script for '%s' read as a refusal (%s) — "
+                       "the script stage will run separately", config.name, exc)
+        return
+    except Exception as exc:  # noqa: BLE001 — combined mode must never cost an episode
+        logger.warning("Combined script post-processing failed for '%s' (%s) — "
+                       "the script stage will run separately", config.name, exc)
+        return
+    _STASHED_COMBINED = {"script": script, "digest": digest_text}
+    logger.info("Combined generation for '%s': digest %d words + script %d words in one call",
+                config.name, len(digest_text.split()), words)
+
+
+def take_combined_script() -> Optional[Dict[str, str]]:
+    """Return and clear the script stashed by the last generate_digest."""
+    global _STASHED_COMBINED
+    stash, _STASHED_COMBINED = _STASHED_COMBINED, None
+    return stash
+
+
+def combined_script_matches_digest(stash_digest: str, current_digest: str, min_share: float = 0.6) -> bool:
+    """True when ``current_digest`` is the digest the script was written
+    from, allowing for the trims run_show applies (cross-section dedupe,
+    scaffold scrubs, claim strips). A REPLACEMENT regeneration shares few
+    of its lines and fails the test, so a stale script never ships."""
+    def _lines(t: str):
+        out = []
+        for ln in (t or "").splitlines():
+            ln = re.sub(r"[*_`#>\s]+", " ", ln).strip().lower()
+            if len(ln) >= 40:
+                out.append(ln)
+        return out
+    src = _lines(stash_digest)
+    if not src:
+        return False
+    cur = set(_lines(current_digest))
+    kept = sum(1 for ln in src if ln in cur)
+    return kept / len(src) >= min_share
+
+
 @retry(
     stop=stop_after_attempt(3),
     wait=wait_exponential(multiplier=1, min=1, max=15),
@@ -1678,6 +1868,32 @@ def generate_digest(
         from engine.claims import claims_prompt_appendix
         prompt += "\n\n---\n" + claims_prompt_appendix()
 
+    # Combined generation (Sep 12 2026): run_show renders the show's podcast
+    # prompt ahead of this call when llm.combined_generation applies and
+    # passes it as ``_combined_podcast_prompt``. The model then writes the
+    # digest (PART 1), a marker line, and the script (PART 2) in one
+    # response; every call below is split at the marker BEFORE any
+    # validation or post-processing touches the digest, and the script
+    # paired with the digest that ships is stashed for run_generation_phase.
+    _combined_part2 = str(template_vars.get("_combined_podcast_prompt") or "")
+    _script_for: Dict[str, Optional[str]] = {}
+    if _combined_part2:
+        prompt = build_combined_prompt(prompt, _combined_part2)
+        _digest_tokens = int(config.llm.max_tokens) + int(
+            getattr(config.llm, "podcast_max_tokens", 0) or config.llm.max_tokens
+        )
+        logger.info("Combined generation for '%s': digest + script in one call (%d tokens)",
+                    config.name, _digest_tokens)
+    else:
+        _digest_tokens = int(config.llm.max_tokens)
+
+    def _digest_call(p, **kw):
+        t, m = _call_grok(p, **kw)
+        if _combined_part2:
+            t, _s = split_combined_output(t)
+            _script_for[t] = _s
+        return t, m
+
     system_prompt = None
     if config.llm.system_prompt_file:
         sp_path = Path(config.llm.system_prompt_file)
@@ -1687,22 +1903,22 @@ def generate_digest(
     logger.info("Generating digest for '%s' (model=%s, temp=%.1f) ...",
                 config.name, config.llm.model, config.llm.digest_temperature)
 
-    text, meta = _call_grok(
+    text, meta = _digest_call(
         prompt,
         model=config.llm.model,
         system_prompt=system_prompt,
         temperature=config.llm.digest_temperature,
-        max_tokens=config.llm.max_tokens,
+        max_tokens=_digest_tokens,
         cache_key=_show_cache_key(config),
         reasoning_effort=_llm_reasoning_effort(config),
     )
 
     # Retry once with 50% more tokens if the response was truncated
     if meta.get("finish_reason") == "length":
-        bumped_tokens = int(config.llm.max_tokens * 1.5)
+        bumped_tokens = int(_digest_tokens * 1.5)
         logger.warning(
             "Digest truncated at %d tokens — retrying with %d tokens",
-            config.llm.max_tokens, bumped_tokens,
+            _digest_tokens, bumped_tokens,
         )
         # Record the DISCARDED call before `meta` is overwritten. Until
         # July 2026 only the retry's usage was tracked, so the thrown-away
@@ -1711,7 +1927,7 @@ def generate_digest(
         # (it named SpaceX, which turns out never to truncate). Cost that
         # is not recorded cannot be optimised.
         _record_discarded_call(tracker, "x_thread_generation_truncated", meta, config)
-        text, meta = _call_grok(
+        text, meta = _digest_call(
             prompt,
             model=config.llm.model,
             system_prompt=system_prompt,
@@ -1776,12 +1992,12 @@ def generate_digest(
             "Generate the digest NOW. Создай обзор ПРЯМО СЕЙЧАС."
         )
         retry_prompt = prompt + anti_refusal_suffix
-        text, meta2 = _call_grok(
+        text, meta2 = _digest_call(
             retry_prompt,
             model=config.llm.model,
             system_prompt=system_prompt,
             temperature=config.llm.digest_temperature,
-            max_tokens=config.llm.max_tokens,
+            max_tokens=_digest_tokens,
             cache_key=_show_cache_key(config),
             reasoning_effort=_llm_reasoning_effort(config),
         )
@@ -1816,12 +2032,12 @@ def generate_digest(
             edu_prompt = _build_educational_fallback_prompt(
                 config, template_vars,
             )
-            text, meta3 = _call_grok(
+            text, meta3 = _digest_call(
                 edu_prompt,
                 model=config.llm.model,
                 system_prompt=system_prompt,
                 temperature=config.llm.podcast_temperature,  # slightly more creative
-                max_tokens=config.llm.max_tokens,
+                max_tokens=_digest_tokens,
                 cache_key=_show_cache_key(config),
                 reasoning_effort=_llm_reasoning_effort(config),
             )
@@ -1858,12 +2074,12 @@ def generate_digest(
                     "trying fallback model '%s' ...",
                     config.name, fallback_model,
                 )
-                text, meta4 = _call_grok(
+                text, meta4 = _digest_call(
                     edu_prompt,
                     model=fallback_model,
                     system_prompt=system_prompt,
                     temperature=config.llm.podcast_temperature,
-                    max_tokens=config.llm.max_tokens,
+                    max_tokens=_digest_tokens,
                     cache_key=_show_cache_key(config),
                     reasoning_effort=_llm_reasoning_effort(config),
                 )
@@ -1908,12 +2124,12 @@ def generate_digest(
         )
         lower_temp = max(0.1, config.llm.digest_temperature * 0.7)
         try:
-            text_retry, _ = _call_grok(
+            text_retry, _ = _digest_call(
                 prompt,
                 model=config.llm.model,
                 system_prompt=system_prompt,
                 temperature=lower_temp,
-                max_tokens=config.llm.max_tokens,
+                max_tokens=_digest_tokens,
                 cache_key=_show_cache_key(config),
                 reasoning_effort=_llm_reasoning_effort(config),
             )
@@ -1973,12 +2189,12 @@ def generate_digest(
                 narrative=bool(getattr(config, "narrative_mode", False)),
             )
             try:
-                expanded, meta_exp = _call_grok(
+                expanded, meta_exp = _digest_call(
                     expansion_prompt,
                     model=config.llm.model,
                     system_prompt=system_prompt,
                     temperature=config.llm.digest_temperature,
-                    max_tokens=config.llm.max_tokens,
+                    max_tokens=_digest_tokens,
                     cache_key=_show_cache_key(config),
                     reasoning_effort=_llm_reasoning_effort(config),
                 )
@@ -1993,7 +2209,9 @@ def generate_digest(
                 # and the doubled sentences reached shipped audio). Apply
                 # the same intra-script near-duplicate stripper the July
                 # network pass added on the podcast side.
+                _expanded_raw = expanded
                 expanded, _dig_dup = _dedup_expansion_sentences(expanded)
+                _script_for[expanded] = _script_for.get(_expanded_raw)
                 if _dig_dup:
                     logger.warning(
                         "Digest expansion retry for '%s' repeated itself — "
@@ -2032,6 +2250,10 @@ def generate_digest(
                     config.name, exc,
                 )
 
+    # Combined generation: the script paired with the digest that won the
+    # retries above (None when that call carried no marker).
+    _combined_script = _script_for.get(text) if _combined_part2 else None
+
     # Strip near-verbatim duplicate story blocks so the podcast script
     # generator doesn't inherit them.
     text = _strip_duplicate_stories(text, show_name=config.name)
@@ -2059,6 +2281,9 @@ def generate_digest(
     if _si_enabled:
         from engine.claims import extract_and_stash
         text = extract_and_stash(text)
+
+    if _combined_part2:
+        _finish_combined_script(_combined_script, text, config)
 
     return text
 

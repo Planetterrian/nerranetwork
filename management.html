@@ -714,6 +714,31 @@
     .reduce((s, c) => s + (c[field] || 0), 0);
   const siteSpark = (site.day_series || []).map((r) => Number(r.activeUsers || 0));
 
+  // The headline number (Sep 12 2026): audience first, pipeline second.
+  // Last COMPLETE week of RSS downloads vs the week before, with the
+  // per-episode first-week median and YouTube retention underneath.
+  const ah = data.audience_headline || {};
+  const ahn = ah.network || {};
+  const ahYt = ahn.youtube || {};
+  const ahWow = (ahn.wow_pct == null) ? "WoW unmeasured"
+    : ((ahn.wow_pct >= 0 ? "+" : "") + Number(ahn.wow_pct).toFixed(1) + "% WoW · " +
+       fmt(ahn.prior_week) + " → " + fmt(ahn.last_week) + " last full week");
+  const ahRet = (ahYt.short == null && ahYt.long == null) ? "YouTube retention unmeasured"
+    : ("YouTube retention " + (ahYt.short == null ? "—" : ahYt.short + "%") + " shorts / " +
+       (ahYt.long == null ? "—" : ahYt.long + "%") + " long");
+  tiles.appendChild(statTile("Audience · RSS downloads 7d",
+    ah.configured && ahn.downloads_7d != null ? compact(ahn.downloads_7d) : "—",
+    { delta: ah.configured ? ahn.wow_pct : null, deltaSuffix: "% · WoW",
+      sub: ah.configured
+        ? (ahWow + " · first-week/ep " +
+           ((ahn.first_week_top_shows || []).length
+             ? (ahn.first_week_top_shows || []).map((t) => t.show + " " + fmt(t.median)).join(", ")
+             : "—") +
+           " · " + ahRet)
+        : "audience stats not fetched yet",
+      spark: (ahn.weekly_downloads || []).map((n) => Number(n || 0)),
+      sparkTitle: "Weekly RSS downloads (last element = current partial week)" }));
+
   const weeklyHist = (op3.network_weekly_history || []).map((r) => Number(r[1] || 0));
   const allTimeSub = op3.all_time_incomplete
     ? "incomplete history (below 30d) · since " + (op3.all_time_since || "?")

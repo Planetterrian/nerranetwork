@@ -2829,6 +2829,7 @@ def build_dashboard(root: Path, *, offline: bool = False, previous_flat: Optiona
 
     audience = build_audience_section(root)
     efficiency = build_efficiency_section(costs, audience)
+    audience_headline = build_audience_headline_section(root)
 
     multilingual = aggregate_multilingual(root, shows)
     catalog_section = build_catalog_section(root, shows, rss)
@@ -2864,6 +2865,10 @@ def build_dashboard(root: Path, *, offline: bool = False, previous_flat: Optiona
         "rss_audit": rss,
         "mit_performance": aggregate_mit_performance(root),
         "audience": audience,
+        # Sep 12 2026: the headline number — the first tile, the first
+        # snapshot section, the daily summary line. Built by
+        # scripts/build_audience_headline.py from the same stats files.
+        "audience_headline": audience_headline,
         "efficiency": efficiency,
         "catalog": catalog_section,
         "gallery": gallery_section,
@@ -2967,6 +2972,29 @@ def _merge_op3_history(
         }
     except Exception:  # noqa: BLE001 — never break the dashboard
         return empty
+
+
+def build_audience_headline_section(root: Path) -> Dict[str, Any]:
+    """The audience headline (Sep 12 2026): computed fresh from the stats
+    files by ``scripts.build_audience_headline`` so the dashboard never
+    depends on the nightly's step order. ``configured`` is False when no
+    audience file exists; every unmeasured number is None, never 0."""
+    try:
+        from scripts.build_audience_headline import build_headline, headline_line
+        doc = build_headline(root)
+        network = doc.get("network") or {}
+        configured = bool(network.get("shows_measured")) or network.get("youtube", {}).get("videos", 0) > 0
+        return {
+            "configured": configured,
+            "as_of": doc.get("as_of"),
+            "sources": doc.get("sources"),
+            "definitions": doc.get("definitions"),
+            "network": network,
+            "shows": doc.get("shows") or {},
+            "line": headline_line(doc) if configured else "Audience headline — unmeasured (no audience stats fetched yet)",
+        }
+    except Exception as exc:  # noqa: BLE001 — never break the dashboard
+        return {"configured": False, "error": str(exc)}
 
 
 def build_audience_section(root: Path) -> Dict[str, Any]:

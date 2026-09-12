@@ -57,21 +57,17 @@ class LLMConfig:
     max_tokens: int = 3500
     podcast_max_tokens: int = 0  # 0 = use max_tokens for both
     min_podcast_words: int = 1500  # Minimum word count to trigger retry
-    # Sep 5 2026 delivery review: when this share (0-100) of the finished
-    # script's 8-word phrases appears verbatim in the digest, the script
-    # stage is re-run ONCE with the copied sentences named and an
-    # instruction to write them in spoken English; the rewrite is kept
-    # only when it copies less and is not truncated. 0 = off (default;
-    # the nine English news shows set it in their YAML). This is a
-    # REWRITE gate, not a length lever — it never changes a length target
-    # and never fires on word count (the banned podcast-side retry class).
-    script_rewrite_gate_overlap_pct: float = 0.0
-    # Sep 9 2026: bounded retries when the gate fires. Each attempt is a
-    # fresh script call judged against the ORIGINAL draft; the first that
-    # passes ships. Default 1 (the Sep 5 contract); Tesla sets 2 because
-    # its rewrites copied MORE on Sep 8 (41 -> 44 %) and the copied draft
-    # aired. Never a length lever: the attempts fire on the same triggers.
-    script_rewrite_gate_attempts: int = 1
+    # Sep 12 2026 simplification: write the digest AND the podcast script
+    # in ONE model call (PART 1 / marker / PART 2). The script stage used
+    # to re-tell a finished document, and the Sep 5-9 rewrite gate showed
+    # it could copy the digest (55-77 % verbatim) or lose its facts (20-40
+    # coverage points), never both right. Off (default on the dataclass;
+    # _defaults.yaml turns it on network-wide) = the two-pass path.
+    # Narrative, dialogue and episode-1 runs always stay two-pass, and any
+    # response without the marker falls back to the script call — a
+    # combined run can never cost an episode. See docs/reviews/
+    # simplification_plan_2026_09_12.md.
+    combined_generation: bool = False
     # Absolute hard floor below which the runner aborts the episode as
     # "clearly broken" (see run_show.py:1580). Network default 600 is
     # tuned for the news-show shape where 600 words ~ 4 minutes — well
@@ -544,6 +540,19 @@ class SourceIntegrityConfig:
     """
     enabled: bool = False
     enforce: bool = False
+    # What an enforce-mode failure does after the one repair pass
+    # (Sep 12 2026, network-wide enforcement):
+    #   "block" — skip the episode (the narrative-show contract: UC / FPD,
+    #             where a blocked episode costs a rerun, never a queue slot).
+    #   "strip" — REMOVE every sentence the gate could not vouch for (a
+    #             claim whose source failed or was unreachable, a malformed
+    #             ledger entry, an uncovered citation shape whose item has
+    #             no resolving Source URL, a reviewer note) from the digest
+    #             and, in step, from the script; re-run the mechanical gate
+    #             on what is left; block only if it still fails. Nothing
+    #             unverified is published and a news day is not lost.
+    # Never a warning: an enforce-mode failure always changes what ships.
+    on_failure: str = "block"
     # Skip the HTTP source checks (span-anchoring + lint still run). For
     # offline/test runs; production leaves this on.
     verify_sources: bool = True
