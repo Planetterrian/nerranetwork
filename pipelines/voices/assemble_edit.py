@@ -204,6 +204,24 @@ def assemble(slug: str) -> dict:
         seconds = _duration(episode)
         url = r2_upload(episode, show.r2_key("raw", f"{run_id}_edit.mp3"))
 
+    # A transcript beside the EDL is the transcript OF THE EDIT: same cuts,
+    # same running order, everyone on one clock. The pipeline's own transcript
+    # describes the unedited room, which is not what a guest is asked to
+    # approve, so this replaces it on the editorial package when present.
+    transcript_path = EDL_DIR / f"{slug}.transcript.txt"
+    if transcript_path.exists():
+        text = transcript_path.read_text(encoding="utf-8")
+        pkgs = sb_select("editorial_packages",
+                         f"interview_id=eq.{spec['interview_id']}&select=id")
+        if pkgs:
+            sb_update("editorial_packages", f"id=eq.{pkgs[0]['id']}",
+                      {"transcript_cleaned": text})
+            logger.info("transcript of the edit written to package %s (%d chars)",
+                        pkgs[0]["id"], len(text))
+        else:
+            logger.warning("no editorial package for %s — transcript not written",
+                           spec["interview_id"])
+
     # Both review pages prefer this over the raw mix, so Patrick and the guest
     # hear the edit rather than the unedited room.
     log = dict(run.get("grok_session_log") or {})

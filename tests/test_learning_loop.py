@@ -652,3 +652,22 @@ class TestTheAssemblerDoesNotTrustItsSources:
         src = (ROOT / "pipelines" / "voices" / "assemble_edit.py").read_text(encoding="utf-8")
         assert 'trim = cut.get("trim")' in src
         assert "if trim is None:" in src
+
+
+class TestTheTranscriptDescribesTheEdit:
+    def test_a_transcript_beside_the_edl_replaces_the_pipeline_one(self):
+        src = (ROOT / "pipelines" / "voices" / "assemble_edit.py").read_text(encoding="utf-8")
+        assert 'EDL_DIR / f"{slug}.transcript.txt"' in src
+        assert '"transcript_cleaned": text' in src
+
+    def test_a_missing_transcript_is_not_an_error(self):
+        src = (ROOT / "pipelines" / "voices" / "assemble_edit.py").read_text(encoding="utf-8")
+        assert "if transcript_path.exists():" in src
+
+    def test_every_edl_transcript_matches_an_edl(self):
+        d = ROOT / "pipelines" / "voices" / "edl"
+        for t in d.glob("*.transcript.txt"):
+            slug = t.name[: -len(".transcript.txt")]
+            assert (d / f"{slug}.json").exists(), f"{t.name} has no EDL"
+            body = t.read_text(encoding="utf-8")
+            assert "MIRA — INTRODUCTION" in body and "MIRA — CLOSE" in body
