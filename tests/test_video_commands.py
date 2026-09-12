@@ -2823,3 +2823,24 @@ class TestFfmpeg7FrameRateStamp:
             scene_durations=[30.0, 30.0], fps=30)
         graph = cmd[cmd.index("-filter_complex") + 1]
         assert ",fps=30[s0]" in graph and ",fps=30[s1]" in graph
+
+
+class TestX264PresetOverride:
+    """Sep 12 2026: NERRA_X264_PRESET is the one-variable render-speed
+    trial lever; the default stays ``medium``."""
+
+    def test_default_is_medium(self):
+        from engine.video import _VIDEO_ENCODE, _X264_PRESET
+        assert _X264_PRESET == "medium"
+        assert _VIDEO_ENCODE[_VIDEO_ENCODE.index("-preset") + 1] == "medium"
+
+    def test_env_override_is_honoured(self, monkeypatch):
+        import importlib
+        monkeypatch.setenv("NERRA_X264_PRESET", "faster")
+        import engine.video as v
+        importlib.reload(v)
+        try:
+            assert v._VIDEO_ENCODE[v._VIDEO_ENCODE.index("-preset") + 1] == "faster"
+        finally:
+            monkeypatch.delenv("NERRA_X264_PRESET")
+            importlib.reload(v)

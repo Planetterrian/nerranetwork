@@ -68,10 +68,18 @@ def _run_ffmpeg(cmd: List[str], *, label: str) -> None:
 # Encoding profile
 # ---------------------------------------------------------------------------
 
+# Sep 12 2026: the x264 preset is env-overridable (NERRA_X264_PRESET) so a
+# render-speed trial can flip ONE runner variable and read
+# long_form_render_median_s_7d off the register, instead of editing this
+# file blind. Default is unchanged. The 2.0x pre-scale is NOT exposed the
+# same way — it is a measured judder guard (test_slideshow_prescale_
+# leaves_subpixel_headroom), not a speed knob.
+_X264_PRESET = os.environ.get("NERRA_X264_PRESET", "medium") or "medium"
+
 _VIDEO_ENCODE: List[str] = [
     "-c:v", "libx264",
     "-pix_fmt", "yuv420p",
-    "-preset", "medium",
+    "-preset", _X264_PRESET,
     "-crf", "22",
     "-profile:v", "high",
     "-level", "4.1",

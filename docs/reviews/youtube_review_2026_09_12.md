@@ -119,9 +119,26 @@ qualified second window — Tesla 601/603, FF 189/190, MAB 163/164 did.
   read the early-reach card for 09-13..15 against this week before
   attributing anything to the video changes.
 
-## 4. Render speed (see the register entry `long-form-render-speed`)
+## 4. Render speed — measured in CI, not guessed here
 
-Filled in from the local benchmark below.
+A local benchmark of the production single-pass graph could not be
+completed in this session: the container's ffmpeg is 7.0.2 (CI runs
+6.1), which is where the frame-rate bug above surfaced, and its build
+has no `ffprobe`, so the render path could not time a fixed-length
+episode reliably. Two facts bound what a change could earn:
+
+* The 2.0× pre-scale is a measured judder guard (77% byte-identical
+  consecutive frames at 1.15×, 33% at 2.0×, for +17% render time —
+  `test_slideshow_prescale_leaves_subpixel_headroom`). It is not the
+  dominant cost and it is not a speed knob.
+* The x264 preset (`medium`) and the frame count are the remaining
+  levers. `NERRA_X264_PRESET` is now an env override (default
+  `medium`) so a trial is one runner variable in `run-show.yml`, read
+  off `long_form_render_median_s_7d` (baseline 1,014 s) — `faster`
+  typically encodes ~1.6× quicker at CRF 22 for a slightly larger
+  file. That trial is the operator's to start; it changes no pixels the
+  viewer would notice at 1080p CRF 22 but it should be read, not
+  assumed.
 
 ## 5. What was NOT changed, and why
 
