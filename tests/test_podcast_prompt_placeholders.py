@@ -162,7 +162,12 @@ def test_the_two_specs_from_the_retention_pass_are_wired():
     """Pin the exact regression: SpaceX Ep50, 2026-07-30 20:54 UTC."""
     import inspect
 
-    src = inspect.getsource(pipeline.run_generation_phase)
+    # Sep 12 2026: the podcast variables moved into
+    # build_podcast_template_vars (so combined generation can render the
+    # podcast prompt before the digest exists); run_generation_phase must
+    # still call it, or the same outage recurs.
+    src = inspect.getsource(pipeline.build_podcast_template_vars)
+    assert "build_podcast_template_vars(" in inspect.getsource(pipeline.run_generation_phase)
     for key in ("cold_open_spec", "delivery_spec"):
         assert f'"{key}"' in src, (
             f"{key} is referenced by the podcast prompts but no longer "

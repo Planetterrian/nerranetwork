@@ -118,8 +118,11 @@ class TestBothRetryPathsRecord:
         """Order matters: after the retry, the first call's usage is gone."""
         source = (REPO_ROOT / "engine" / "generator.py").read_text(encoding="utf-8")
         block = source.split('"x_thread_generation_truncated", meta, config)')[1]
-        # The very next _call_grok is the retry that replaces meta.
-        assert block.lstrip().startswith("text, meta = _call_grok(")
+        # The very next model call is the retry that replaces meta. Since
+        # Sep 12 2026 generate_digest routes its calls through the local
+        # _digest_call wrapper (combined generation splits the response
+        # at the marker); the ordering contract is the same.
+        assert block.lstrip().startswith(("text, meta = _call_grok(", "text, meta = _digest_call("))
 
 
 class TestRaisedCaps:

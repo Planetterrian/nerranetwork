@@ -28,6 +28,14 @@ llm:
   podcast_max_tokens: 8000
   min_podcast_words: 1500
   podcast_chain: false
+  # Sep 12 2026 simplification: the digest and the podcast script are
+  # written in ONE model call (PART 1 / ===PODCAST SCRIPT=== / PART 2)
+  # so the script is never a lossy rewrite of a finished document. Code
+  # keeps narrative, dialogue, prompt-chained, script-model-override and
+  # episode-1 runs on the two-pass path; a response without the marker
+  # falls back to the script call. The Russian shows pin false.
+  # Metric: combined_generation (combined | two_pass | combined_stale).
+  combined_generation: true
   # Refusal fallback — must be a DIFFERENT training snapshot than the
   # primary so a refusal genuinely switches model rather than retrying the
   # same one. Back on grok-4.20-reasoning with the 2026-08-18 revert
@@ -359,14 +367,19 @@ content_tracking:
 # makes digest generation emit a verifiable claims ledger (extracted before
 # any published surface sees it), verifies every claim (URL resolves +
 # supporting quote appears in the source) and lints citation-shaped prose
-# against it. Network default is SHADOW mode: loud warnings + metrics +
-# committed *_claims.json sidecars, never a blocked episode. enforce=true
-# (per show — narrative shows first; never a network-wide day-one flip, per
-# docs/model_upgrade_playbook.md) makes the gate blocking: a citation-shaped
-# assertion that traces to nothing skips the episode instead of publishing.
+# against it. ENFORCED network-wide since Sep 12 2026 in STRIP mode: after
+# the one repair pass, every sentence the gate cannot vouch for (a claim
+# whose source failed or was unreachable, a malformed ledger entry, an
+# uncovered citation shape whose item has no resolving Source URL, a
+# reviewer note) is REMOVED from the digest and, in step, from the script;
+# the mechanical gate re-runs on what is left and blocks only if it still
+# fails. Nothing unverified reaches the blog, the feed or the newsletter,
+# and a news day is not lost. The narrative shows (UC / FPD) pin
+# on_failure: block — there a blocked episode costs a rerun, never a slot.
 source_integrity:
   enabled: true
-  enforce: false
+  enforce: true
+  on_failure: strip
 
 youtube:
   # Off by default — flip per-show in the show YAML once an OAuth refresh

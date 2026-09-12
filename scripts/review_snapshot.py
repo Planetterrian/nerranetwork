@@ -228,6 +228,49 @@ def build_snapshot(slug: str, episodes: int = 10) -> str:
                  f"configured `llm.min_podcast_words`: {min_words or 'unset'}")
     lines.append("")
 
+    # --- Audience headline FIRST (Sep 12 2026): a review starts from the
+    # audience, then reads the pipeline. Same builder as the dashboard
+    # tile and the daily summary line. Unmeasured = null, never 0.
+    lines.append("## Audience headline")
+    try:
+        if str(ROOT) not in sys.path:
+            sys.path.insert(0, str(ROOT))
+        from scripts.build_audience_headline import build_headline
+        _doc = build_headline(ROOT)
+        _show = (_doc.get("shows") or {}).get(slug)
+        _net = _doc.get("network") or {}
+        if _show and _show.get("downloads_30d") is not None:
+            _wow = _show.get("wow_pct")
+            _fw = (_show.get("first_week") or {}).get("median")
+            _yt = _show.get("youtube") or {}
+            lines.append(
+                f"- RSS downloads: 7d {_show.get('downloads_7d')} · 30d {_show.get('downloads_30d')} · "
+                f"last full week {_show.get('prior_week')} → {_show.get('last_week')} "
+                f"({'unmeasured' if _wow is None else f'{_wow:+.1f}% WoW'})"
+            )
+            lines.append(
+                f"- First-week downloads per episode (median, eps 7-30 days old): "
+                f"{'unmeasured' if _fw is None else _fw} over "
+                f"{(_show.get('first_week') or {}).get('episodes', 0)} episode(s)"
+            )
+            lines.append(
+                f"- YouTube retention (views-weighted, last 28d): shorts "
+                f"{'—' if _yt.get('short') is None else str(_yt.get('short')) + '%'} · long "
+                f"{'—' if _yt.get('long') is None else str(_yt.get('long')) + '%'} · "
+                f"{_yt.get('videos', 0)} video(s)"
+            )
+        else:
+            lines.append("- (no RSS audience data for this show)")
+        _nw = _net.get("wow_pct")
+        lines.append(
+            f"- Network: 7d {_net.get('downloads_7d')} · "
+            f"{'WoW unmeasured' if _nw is None else f'{_nw:+.1f}% WoW'} · "
+            f"newsletter {_net.get('newsletter_subscribers')}"
+        )
+    except Exception as _ah_exc:  # noqa: BLE001 — the snapshot must always render
+        lines.append(f"- (audience headline unavailable: {_ah_exc})")
+    lines.append("")
+
     # --- Script length per episode ---
     tts_files = _latest(out_dir.glob("*_tts.txt"), episodes)
     lines.append(f"## Script length (last {len(tts_files)} `_tts.txt`)")

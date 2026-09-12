@@ -474,6 +474,41 @@ reviews:
       evidence: null
     agent_cost_usd: null
 
+  - date: 2026-09-12
+    pr: null
+    doc: docs/reviews/simplification_plan_2026_09_12.md
+    summary: "Simplification pass (operator brief: the pipeline is convoluted and its episodes are not trustworthy by construction). The Sep 5-9 rewrite gate was measured and REMOVED: Sep 9-12 it fired on 30/35 gated episodes, accepted 11, rejected 17 (facts_lost / names_lost / copies_more) - a two-pass script could be written (1-4% verbatim, 40-60% coverage) or complete (55-77% verbatim, 85-97% coverage), never both. Replaced by ONE generation (digest + script in the same call, two-pass fallback). Source integrity ENFORCED on every show in strip mode (shadow data: block would have lost 2-4 of 7 episodes on five news shows for non-fabrications). The audience headline now leads the dashboard, the snapshot and the daily summary."
+    shipped:
+      - "engine/pipeline: _script_rewrite_gate + config keys + nine YAML lines + script_rewrite_gate_* metrics removed; engine/script_audit stays read-only"
+      - "engine/generator: llm.combined_generation (network default; RU shows off; narrative/dialogue/ep1/podcast_model/podcast_chain excluded by code) - PART 1 / ===PODCAST SCRIPT=== / PART 2, split before any post-processing, stash paired to the digest it was written from, fallback on a missing marker or a short script; metric combined_generation"
+      - "engine/pipeline.build_podcast_template_vars extracted so run_show renders the podcast prompt before the digest"
+      - "engine/claims: source_integrity.on_failure strip|block; strip_unverified (failed / malformed / uncovered-without-item-source / reviewer notes; item Source URL coverage; empty items dropped; mechanical re-gate); strip_script_sentences; one fetch per URL per gate stage; metrics source_integrity_stripped_*, _covered_by_item_source, _passed_after_strip, _script_stripped_sentences"
+      - "scripts/build_audience_headline.py -> api/audience_headline.json; dashboard first tile; review_snapshot first section; post_run_summary line; nightly step + add-paths"
+    deferred:
+      - "metrics with no code consumer (36 keys) - recorded only in retired branches or read by humans in the file; deleting them changes nothing a listener gets"
+    predictions:
+    - metric: "combined_generation metric, nine news shows, first 14 days"
+      baseline: "n/a (new); two-pass on 100%"
+      expected: "combined on >= 80% of episodes; 0 episodes lost to the combined path"
+      verdict: pending
+      evidence: null
+    - metric: "script_digest_overlap_pct AND script_digest_coverage_pct on the same episode, three flagships"
+      baseline: "copied drafts 55-77% / 85-97%; rewrites 1-4% / 40-60% (Sep 9-12)"
+      expected: "overlap <= 25% with coverage >= 70% on 8/10 episodes"
+      verdict: pending
+      evidence: null
+    - metric: "news-show skips with reason source_integrity_failed; source_integrity_passed_after_strip"
+      baseline: "shadow would-block 2-4/7 on SpaceX, Tesla, FF, PT; UC 5 blocks/14d"
+      expected: "0 news-show skips; passed_after_strip true on >= 95% of stripped episodes; median strip <= 2 sentences"
+      verdict: pending
+      evidence: null
+    - metric: "last-complete-week RSS WoW on the three flagships (api/audience_headline.json), four weeks"
+      baseline: "spacex +4.5%, tesla -18%, models_agents -42% for the week ending 2026-09-06; network -13.1%"
+      expected: "read in every review from Sep 12; direction over four weeks is the score of the September passes"
+      verdict: pending
+      evidence: null
+    agent_cost_usd: null
+
 do_not_retry:
   - idea: podcast-side length levers (word floors, expand-retries, prompt
       pressure on the podcast stage) for ANY show

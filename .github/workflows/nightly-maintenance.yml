@@ -189,6 +189,15 @@ jobs:
         # ("not_started") until the experiment has published Shorts.
         run: python scripts/build_shorts_ab_report.py --out api/shorts_ab.json || echo "::warning::Shorts A/B report failed (non-fatal)"
 
+      - name: Build audience headline
+        # Sep 12 2026: the one number every review starts from — last
+        # complete week of RSS downloads vs the week before, first-week
+        # downloads per episode, YouTube retention — from the stats files
+        # fetched above into api/audience_headline.json. The dashboard's
+        # first tile, the review snapshot's first section and the daily
+        # summary line all read it. Null where unmeasured, never 0.
+        run: python scripts/build_audience_headline.py || echo "::warning::Audience headline build failed (non-fatal)"
+
       - name: Generate Management Dashboard
         # The generator exits 1 when any landmine card is "fail" — keep that
         # loud (an ::error:: annotation) but never let it kill the job: this
@@ -329,6 +338,7 @@ jobs:
             digests/**/channel_i18n.json
             digests/**/scheduled_comments.json
             api/dashboard.json
+            api/audience_headline.json
             api/daily-show-health.json
             api/youtube_stats.json
             api/youtube_channel_history.json

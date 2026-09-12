@@ -379,248 +379,28 @@ def run_publish_phase(
 # Generation Phase
 # ---------------------------------------------------------------------------
 
-# A rewrite shorter than this share of the ORIGINAL — or of the show's
-# target length, whichever is smaller — is a truncation, not a rewrite.
-# Sep 6 2026: Tesla Ep597's rewrite went 61 % -> 2 % digest-verbatim and
-# was thrown away because the 1,607-word draft (target 1,400) had
-# over-run and the floor was pinned to the draft; the copied one aired.
-REWRITE_GATE_MIN_KEEP_RATIO = 0.7
-
-
-def _rewrite_gate_floor_words(orig_words, config):
-    target = 0
-    try:
-        target = int(getattr(config.llm, "min_podcast_words", 0) or 0)
-    except (TypeError, ValueError):
-        target = 0
-    base = min(orig_words, target) if target > 0 else orig_words
-    return int(REWRITE_GATE_MIN_KEEP_RATIO * base)
-
-
-# Sep 7 2026: the first day of accepted rewrites kept 53-66 % of the
-# digest's named entities on Tesla / M&A / Omni View against 77-84 % the
-# day before — "Megapack" became "the large battery packs". A rewrite
-# that loses more than this many points of the draft's entity retention
-# is rejected; the appendix tells the model names are not paraphrased.
-REWRITE_GATE_MAX_ENTITY_DROP = 0.15
-
-# Sep 9 2026: copied scripts told 77-95 % of the digest's sentences; the
-# first rewritten week told 43-65 % (Tesla Ep599: two stories and nine of
-# seventeen numbers gone). A rewrite that tells this much less of the
-# digest than the draft is rejected as "facts_lost".
-REWRITE_GATE_MAX_COVERAGE_DROP = 0.15
-
-
-def _rewrite_gate_attempts(config):
-    try:
-        n = int(getattr(config.llm, "script_rewrite_gate_attempts", 1) or 1)
-    except (TypeError, ValueError):
-        n = 1
-    return max(1, min(n, 3))
-
-
-def _script_rewrite_gate(podcast_script, digest_text, config, template_vars_for_script, tracker,
-                         section_digest=None):
-    """Re-run the script stage once when it failed the script standard;
-    return a dict with the chosen ``script`` and the gate's metrics, or
-    None when the gate is off / did not fire / failed (the original
-    script stands).
-
-    Three triggers, any one fires the single retry (Sep 6 2026 readout):
-    the whole script copies the digest (8-gram share >= the show's
-    threshold); a digest SECTION was read aloud even though the rest was
-    written (the deep dives — SpaceX Ep092 sat at 24 % overall with its
-    Engineering Deep Dive 10/13 sentences copied); the cold open
-    promises a story the body never covers (Planetterrian Ep175). The
-    rewrite is kept only when it fixes what fired, copies no more than
-    before, keeps the digest's names, and is not a truncation.
-
-    ``section_digest`` is the RAW digest (markdown headers intact) for the
-    section test; ``digest_text`` is what the script prompt received —
-    run_show's podcast copy strips the ``#`` markers, so on Sep 7 the
-    section test read zero sections on every show.
-    """
-    try:
-        threshold = float(getattr(config.llm, "script_rewrite_gate_overlap_pct", 0) or 0)
-    except (TypeError, ValueError):
-        threshold = 0.0
-    if threshold <= 0 or not podcast_script or not digest_text:
-        return None
-    try:
-        from engine.script_audit import (
-            HOOK_ORPHAN_MAX_COVERAGE, copied_sections, copied_sentences,
-            digest_coverage, digest_overlap, entity_retention, hook_coverage,
-        )
-        hook = str((template_vars_for_script or {}).get("hook") or "")
-        section_src = section_digest or digest_text
-        before = digest_overlap(podcast_script, digest_text)
-        sections_before = copied_sections(podcast_script, section_src)
-        hook_before = hook_coverage(podcast_script, hook)
-        ents_before = entity_retention(podcast_script, section_src)
-        cov_before = digest_coverage(podcast_script, section_src)
-        reasons = []
-        if before is not None and before >= threshold:
-            reasons.append("overlap")
-        if sections_before:
-            reasons.append("section")
-        if hook_before is not None and hook_before < HOOK_ORPHAN_MAX_COVERAGE:
-            reasons.append("hook")
-        orig_words = len((podcast_script or "").split())
-        base = {
-            "before_pct": round(before or 0.0, 1),
-            "copied_sections_before": len(sections_before),
-            "hook_coverage_before": None if hook_before is None else round(hook_before, 2),
-            "entity_retention_before": None if ents_before is None else round(ents_before, 2),
-            "digest_coverage_before": None if cov_before is None else round(cov_before, 2),
-            "original_words": orig_words,
-        }
-        if not reasons:
-            return {"script": podcast_script, "fired": False, **base}
-
-        floor_words = _rewrite_gate_floor_words(orig_words, config)
-        parts = ["REWRITE REQUIRED — your previous draft failed the script standard:"]
-        if "overlap" in reasons:
-            copied = copied_sentences(podcast_script, digest_text)
-            parts.append(
-                f"- It read the digest aloud: {before:.0f} percent of its eight-word "
-                "phrases appear word for word in the digest, and these sentences were "
-                "carried over verbatim:\n" + "\n".join(f"  - {s}" for s in copied)
-            )
-        if "section" in reasons:
-            named = "; ".join(
-                f"\"{c['title']}\" ({c['sentence_pct']:.0f} percent of its sentences)"
-                for c in sections_before[:4]
-            )
-            parts.append(
-                "- These digest sections were carried over almost sentence for sentence, "
-                "keeping the digest's sentence structure with a few words swapped: "
-                f"{named}. Write each of them fresh — same facts, same numbers, your own "
-                "sentences, none built on a digest sentence."
-            )
-        if "hook" in reasons:
-            parts.append(
-                f"- The cold open promises a story the body never tells: \"{hook.strip() or 'the opening line'}\". "
-                "The story the opener sells must be covered in full, with its facts, in the body."
-            )
-        parts.append(
-            "Write the whole script again in your own spoken sentences from the same "
-            "facts. Keep every fact and every number: every sentence of the digest "
-            "carries something the listener is owed, so each digest sentence's fact "
-            "appears in the rewrite, in your words. Keep every NAME exactly as the "
-            "digest spells it — products, models, versions, places, companies, people, "
-            "tickers, programs — paraphrase the sentences, never the names: a listener "
-            "wants to hear Megapack, not 'the large battery packs'. Keep every required "
-            "anchor phrase, and the identity line and the closing block exactly as "
-            f"supplied. Match the draft's length: about {orig_words} words, the same "
-            f"stories at the same depth (a rewrite under {floor_words} words is discarded) "
-            "— do not shorten the episode and do not add framing; change the WORDING, "
-            "sentence by sentence, so no run of eight consecutive words matches the digest."
-        )
-        appendix = "\n".join(parts)
-        from engine.generator import generate_podcast_script as _gen
-
-        attempts = _rewrite_gate_attempts(config)
-        result = None
-        for attempt in range(1, attempts + 1):
-            rewritten = _gen(template_vars_for_script, config, tracker=tracker, prompt_appendix=appendix)
-            after = digest_overlap(rewritten or "", digest_text)
-            sections_after = copied_sections(rewritten or "", section_src)
-            hook_after = hook_coverage(rewritten or "", hook)
-            ents_after = entity_retention(rewritten or "", section_src)
-            cov_after = digest_coverage(rewritten or "", section_src)
-            new_words = len((rewritten or "").split())
-
-            reject = None
-            if not rewritten or after is None:
-                reject = "empty"
-            elif new_words < floor_words:
-                reject = "truncated"
-            elif (ents_before is not None and ents_after is not None
-                  and ents_after < ents_before - REWRITE_GATE_MAX_ENTITY_DROP):
-                reject = "names_lost"
-            elif (cov_before is not None and cov_after is not None
-                  and cov_after < cov_before - REWRITE_GATE_MAX_COVERAGE_DROP):
-                reject = "facts_lost"
-            elif "overlap" in reasons and not after < before:
-                reject = "still_copies"
-            elif "overlap" not in reasons and after >= threshold:
-                reject = "copies_more"
-            elif "section" in reasons and not (
-                len(sections_after) < len(sections_before)
-                # Sep 9 2026: M&A Ep167's rewrite copied less overall (20 -> 14 %)
-                # with the same one section still flagged and was thrown away,
-                # so the WORSE draft aired. Copying less with no new section
-                # copied is an improvement and ships.
-                or (before is not None and after < before and len(sections_after) <= len(sections_before))
-            ):
-                reject = "section_still_copied"
-            elif "section" not in reasons and len(sections_after) > len(sections_before):
-                reject = "new_section_copied"
-            elif "hook" in reasons and (hook_after is not None and hook_after < HOOK_ORPHAN_MAX_COVERAGE):
-                reject = "hook_still_orphaned"
-            accepted = reject is None
-            logger.info(
-                "Script rewrite gate [%s] attempt %d/%d: digest-verbatim %.0f%% -> %.0f%%, copied "
-                "sections %d -> %d, hook coverage %s -> %s, entity retention %s -> %s, digest "
-                "coverage %s -> %s (%d -> %d words, floor %d) — %s",
-                ",".join(reasons), attempt, attempts, before or 0.0,
-                after if after is not None else -1.0,
-                len(sections_before), len(sections_after), hook_before, hook_after,
-                ents_before, ents_after, cov_before, cov_after, orig_words, new_words, floor_words,
-                "rewrite accepted" if accepted else f"original kept ({reject})",
-            )
-            result = {
-                "script": rewritten if accepted else podcast_script,
-                "fired": True, "reasons": ",".join(reasons), **base,
-                "after_pct": round(after, 1) if after is not None else None,
-                "copied_sections_after": len(sections_after),
-                "hook_coverage_after": None if hook_after is None else round(hook_after, 2),
-                "entity_retention_after": None if ents_after is None else round(ents_after, 2),
-                "digest_coverage_after": None if cov_after is None else round(cov_after, 2),
-                "accepted": accepted, "reject_reason": reject,
-                "rewrite_words": new_words, "floor_words": floor_words,
-                "attempts": attempt,
-            }
-            if accepted:
-                break
-        return result
-    except Exception as exc:  # noqa: BLE001 — the gate must never cost an episode
-        logger.warning("Script rewrite gate failed (original script kept): %s", exc)
-        return None
-
-
-def run_generation_phase(
+def build_podcast_template_vars(
     config: Any,
     *,
     episode_num: int,
     today_str: str,
-    hook: str,
-    x_thread: str = "",
+    effective_hook: str,
     extra_context: Optional[dict] = None,
-    template_vars: Optional[Dict[str, Any]] = None,
     args: Any = None,
-    tracker: Optional[dict] = None,
-    podcast_digest: str = "",
-) -> tuple[str, str, list, str]:
+    template_vars: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Every variable the podcast prompt needs EXCEPT ``digest`` — the
+    intro line, the closing block (with the network promo appended), the
+    cold-open and delivery specs, the hook-failure defaults — merged over
+    the caller's rich ``template_vars``.
+
+    Extracted from run_generation_phase on Sep 12 2026 so combined
+    generation can render the podcast prompt BEFORE the digest exists
+    (run_show calls it with the PART-1 hook placeholder); the two-pass
+    path calls it from run_generation_phase exactly as before. The
+    returned dict also carries ``_pod_vars`` (the podcast-only subset)
+    for the closing-block guard.
     """
-    Run the digest + podcast script generation phase (correctly wired).
-
-    This is the extracted implementation. It uses the canonical calling
-    convention for the generator functions:
-        generate_digest(template_vars_dict, config, tracker=..., prompt_suffix=...)
-        generate_podcast_script(template_vars_dict, config, tracker=...)
-
-    If a rich ``template_vars`` is supplied by the caller (preferred), it is
-    used as-is (preserving news_section, content tracker summaries, hook
-    data from pre-fetch hooks, slow-news context, cross-show context, etc.).
-
-    If ``x_thread`` is already populated, the digest generation step is
-    skipped (the caller already produced it).
-
-    Returns:
-        (x_thread, podcast_script, episode_chapters, effective_hook)
-    """
-    from engine.generator import generate_digest, generate_podcast_script
     from engine.intros import (
         build_intro_line,
         build_closing_block,
@@ -632,62 +412,7 @@ def run_generation_phase(
     )
 
     extra_context = extra_context or {}
-    effective_hook = hook or (x_thread.split("\n", 1)[0][:120] if x_thread else "")
-
-    # Build or use the provided template_vars.
-    # The caller (run_show.py) normally builds a rich one containing
-    # episode_num, today_str, news_section, recent_* summaries, slow_news_context,
-    # cross_show_context, plus hook data via .update(extra_context).
-    if template_vars is None:
-        template_vars = {
-            "today_str": today_str,
-            "date_human": today_str,
-            "episode_num": episode_num,
-            "hook": effective_hook,
-        }
-        template_vars.update(extra_context)
-        # Provide safe fallbacks for keys that many prompts reference
-        template_vars.setdefault("news_section", "")
-        template_vars.setdefault("sections_json", "")
-        template_vars.setdefault("recent_content_summary", "")
-        template_vars.setdefault("recent_deep_dive_topics", "")
-        template_vars.setdefault("slow_news_context", "")
-        template_vars.setdefault("cross_show_context", "")
-        template_vars.setdefault("nerra_network_context", "")
-        if getattr(config, "narrative_mode", False):
-            # Minimal narrative fallbacks; real values should come from caller
-            template_vars.setdefault("topic_title", "")
-            template_vars.setdefault("topic_brief", "")
-            template_vars.setdefault("topic_category", "")
-
-    # If the caller already generated the digest (usual path), reuse it.
-    # Only generate here if we were not given a non-empty x_thread.
-    if not x_thread or not x_thread.strip():
-        try:
-            x_thread = generate_digest(template_vars, config, tracker=tracker)
-        except Exception:
-            # Let the normal tenacity / caller retry logic handle real failures
-            raise
-
-    if not effective_hook:
-        # Fallback: first substantive line of the digest — but SANITIZED.
-        # DP Pod Ep001 v4 spoke a raw markdown header on air ("# The DP Pod:
-        # The Do Positive Podcast") because the debut brief had no **HOOK:**
-        # line and this fallback grabbed line one verbatim. Skip markdown
-        # scaffolding lines and strip md decorations from whatever is used.
-        effective_hook = hook
-        if x_thread:
-            import re as _re
-            for _line in x_thread.splitlines():
-                _line = _line.strip()
-                if not _line or _line.startswith(("#", "━", "---", "===")):
-                    continue
-                _line = _line.lstrip(">* ").strip()
-                _line = _re.sub(r"\*\*(.+?)\*\*", r"\1", _line)
-                if len(_line) < 20:
-                    continue
-                effective_hook = _line[:120]
-                break
+    template_vars = dict(template_vars or {})
 
     # YouTube handle for closing blocks
     _yt_handle = ""
@@ -881,6 +606,111 @@ def run_generation_phase(
     # (the podcast prompt expects many of the same keys + digest, etc.)
     template_vars_for_script = dict(template_vars)
     template_vars_for_script.update(pod_vars)
+    template_vars_for_script["_pod_vars"] = pod_vars
+    return template_vars_for_script
+
+
+def run_generation_phase(
+    config: Any,
+    *,
+    episode_num: int,
+    today_str: str,
+    hook: str,
+    x_thread: str = "",
+    extra_context: Optional[dict] = None,
+    template_vars: Optional[Dict[str, Any]] = None,
+    args: Any = None,
+    tracker: Optional[dict] = None,
+    podcast_digest: str = "",
+) -> tuple[str, str, list, str]:
+    """
+    Run the digest + podcast script generation phase (correctly wired).
+
+    This is the extracted implementation. It uses the canonical calling
+    convention for the generator functions:
+        generate_digest(template_vars_dict, config, tracker=..., prompt_suffix=...)
+        generate_podcast_script(template_vars_dict, config, tracker=...)
+
+    If a rich ``template_vars`` is supplied by the caller (preferred), it is
+    used as-is (preserving news_section, content tracker summaries, hook
+    data from pre-fetch hooks, slow-news context, cross-show context, etc.).
+
+    If ``x_thread`` is already populated, the digest generation step is
+    skipped (the caller already produced it).
+
+    Returns:
+        (x_thread, podcast_script, episode_chapters, effective_hook)
+    """
+    from engine.generator import generate_digest, generate_podcast_script
+
+    extra_context = extra_context or {}
+    effective_hook = hook or (x_thread.split("\n", 1)[0][:120] if x_thread else "")
+
+    # Build or use the provided template_vars.
+    # The caller (run_show.py) normally builds a rich one containing
+    # episode_num, today_str, news_section, recent_* summaries, slow_news_context,
+    # cross_show_context, plus hook data via .update(extra_context).
+    if template_vars is None:
+        template_vars = {
+            "today_str": today_str,
+            "date_human": today_str,
+            "episode_num": episode_num,
+            "hook": effective_hook,
+        }
+        template_vars.update(extra_context)
+        # Provide safe fallbacks for keys that many prompts reference
+        template_vars.setdefault("news_section", "")
+        template_vars.setdefault("sections_json", "")
+        template_vars.setdefault("recent_content_summary", "")
+        template_vars.setdefault("recent_deep_dive_topics", "")
+        template_vars.setdefault("slow_news_context", "")
+        template_vars.setdefault("cross_show_context", "")
+        template_vars.setdefault("nerra_network_context", "")
+        if getattr(config, "narrative_mode", False):
+            # Minimal narrative fallbacks; real values should come from caller
+            template_vars.setdefault("topic_title", "")
+            template_vars.setdefault("topic_brief", "")
+            template_vars.setdefault("topic_category", "")
+
+    # If the caller already generated the digest (usual path), reuse it.
+    # Only generate here if we were not given a non-empty x_thread.
+    if not x_thread or not x_thread.strip():
+        try:
+            x_thread = generate_digest(template_vars, config, tracker=tracker)
+        except Exception:
+            # Let the normal tenacity / caller retry logic handle real failures
+            raise
+
+    if not effective_hook:
+        # Fallback: first substantive line of the digest — but SANITIZED.
+        # DP Pod Ep001 v4 spoke a raw markdown header on air ("# The DP Pod:
+        # The Do Positive Podcast") because the debut brief had no **HOOK:**
+        # line and this fallback grabbed line one verbatim. Skip markdown
+        # scaffolding lines and strip md decorations from whatever is used.
+        effective_hook = hook
+        if x_thread:
+            import re as _re
+            for _line in x_thread.splitlines():
+                _line = _line.strip()
+                if not _line or _line.startswith(("#", "━", "---", "===")):
+                    continue
+                _line = _line.lstrip(">* ").strip()
+                _line = _re.sub(r"\*\*(.+?)\*\*", r"\1", _line)
+                if len(_line) < 20:
+                    continue
+                effective_hook = _line[:120]
+                break
+
+    template_vars_for_script = build_podcast_template_vars(
+        config,
+        episode_num=episode_num,
+        today_str=today_str,
+        effective_hook=effective_hook,
+        extra_context=extra_context,
+        args=args,
+        template_vars=template_vars,
+    )
+    pod_vars = template_vars_for_script.pop("_pod_vars")
     # {digest} for the podcast prompt. ``podcast_digest`` is run_show's
     # podcast-only copy (URL/emoji cleanup, the Sunday weekly-summary
     # segment — landmine #19 — and the 100%-duplicate-headline strip).
@@ -891,25 +721,31 @@ def run_generation_phase(
     # which is byte-for-byte the previous behaviour.
     template_vars_for_script["digest"] = podcast_digest or x_thread
 
-    podcast_script = generate_podcast_script(
-        template_vars_for_script, config, tracker=tracker
-    )
-
-    # Script rewrite gate (Sep 5 2026 delivery review). The first
-    # post-merge Tesla episode still carried 51% of its 8-word phrases
-    # verbatim from the digest (63% the episode before): the prompt rule
-    # alone moved the number, not far enough. One bounded retry, with the
-    # copied sentences named; kept only when it copies less and is not
-    # truncated. Off when the threshold is 0. Not a length lever.
-    _gate = _script_rewrite_gate(
-        podcast_script, template_vars_for_script.get("digest", ""), config,
-        template_vars_for_script, tracker,
-        section_digest=x_thread,  # raw digest: the podcast copy has no headers
-    )
-    if _gate:
-        podcast_script = _gate.pop("script")
-        if template_vars is not None:
-            template_vars["_script_rewrite_gate"] = _gate
+    # Combined generation (Sep 12 2026): generate_digest may have written
+    # the script in the same call as the digest. It ships only when the
+    # digest it was written from is the digest we have now (a REPLACEMENT
+    # regeneration — validation, slow-news, structural — fails the line
+    # test; trims pass it). Otherwise the script stage runs as before.
+    from engine.generator import combined_script_matches_digest, take_combined_script
+    podcast_script = None
+    generation_path = "two_pass"
+    _stash = take_combined_script()
+    if _stash and _stash.get("script"):
+        if combined_script_matches_digest(_stash.get("digest", ""), x_thread):
+            podcast_script = _stash["script"]
+            generation_path = "combined"
+        else:
+            generation_path = "combined_stale"
+            logger.warning(
+                "Combined script discarded: the digest was regenerated after "
+                "the script was written — running the script stage",
+            )
+    if podcast_script is None:
+        podcast_script = generate_podcast_script(
+            template_vars_for_script, config, tracker=tracker
+        )
+    if template_vars is not None:
+        template_vars["_generation_path"] = generation_path
 
     # Missing-closing guard (June 10 2026, Planetterrian review): PT
     # Ep081/Ep084 shipped without the supplied closing block — Ep084

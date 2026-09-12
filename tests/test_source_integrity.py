@@ -235,20 +235,23 @@ class TestLedgerSidecar:
 
 
 class TestConfigRollout:
-    """Network-wide SHADOW, narrative shows ENFORCED — never a
-    network-wide day-one enforcement flip (model-upgrade-playbook)."""
+    """Sep 12 2026: ENFORCED network-wide in STRIP mode (the sentence
+    leaves, never the day); the narrative shows keep BLOCK (a blocked
+    episode there costs a rerun, never a queue slot). Shadow mode — the
+    Aug 2026 default — is gone: every show's gate changes what ships."""
 
-    def test_network_default_is_shadow(self):
-        for slug in ("tesla", "dp_pod", "omni_view", "spacex"):
+    def test_network_default_is_enforced_strip(self):
+        for slug in ("tesla", "dp_pod", "omni_view", "spacex", "models_agents"):
             cfg = load_config(ROOT / "shows" / f"{slug}.yaml")
             si = cfg.source_integrity
             assert si.enabled, f"{slug}: ledger must be on network-wide"
-            assert not si.enforce, (
-                f"{slug}: enforcement must roll out per show, not by "
-                "flipping the network default"
+            assert si.enforce, f"{slug}: the gate must be enforced on every show"
+            assert si.on_failure == "strip", (
+                f"{slug}: a news show strips the unverified sentence; "
+                "blocking would lose the day for a malformed ledger entry"
             )
 
-    def test_narrative_shows_are_enforced(self):
+    def test_narrative_shows_are_enforced_and_block(self):
         for slug in ("unintended_consequences", "first_principles"):
             cfg = load_config(ROOT / "shows" / f"{slug}.yaml")
             si = cfg.source_integrity
@@ -256,6 +259,11 @@ class TestConfigRollout:
                 f"{slug}: the narrative shows are where fabricated "
                 "provenance was demonstrated — the gate stays blocking"
             )
+            assert si.on_failure == "block", slug
+
+    def test_dataclass_default_is_block(self):
+        from engine.config import SourceIntegrityConfig
+        assert SourceIntegrityConfig().on_failure == "block"
 
     def test_verify_sources_defaults_on(self):
         cfg = load_config(ROOT / "shows" / "unintended_consequences.yaml")

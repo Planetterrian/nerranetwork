@@ -341,9 +341,10 @@ class TestContentDisciplineShared:
 
 class TestScriptRewriteGate:
     """Sep 5 evening follow-up: Tesla Ep595 (old prompts) copied 63% of its
-    8-word phrases from the digest, Ep596 (new prompts) 51% — the prompt
-    rule moved the number, not far enough. One bounded rewrite, kept only
-    when it copies less and is not a truncation."""
+    8-word phrases from the digest, Ep596 (new prompts) 51%. The rewrite
+    gate this class once pinned was REMOVED on Sep 12 2026 (see
+    tests/test_simplification_2026_09_12.py); the measurement it used
+    stays, read-only, in engine.script_audit."""
 
     DIGEST = (
         "### Top News\n1. **Tesla finalizes AI5 and revives Dojo 3 with Intel packaging**\n"
@@ -364,75 +365,11 @@ class TestScriptRewriteGate:
         "Patrick: That's your Tesla news for today.\n"
     )
 
-    class _Cfg:
-        class llm:
-            script_rewrite_gate_overlap_pct = 40.0
-
     def test_copied_sentences_names_the_verbatim_ones(self):
         got = sa.copied_sentences(self.COPIED, self.DIGEST)
         assert len(got) == 3
         assert all("nerranetwork" not in s for s in got)
         assert sa.copied_sentences(self.REWRITTEN, self.DIGEST) == []
-
-    def test_gate_rewrites_and_accepts_a_less_copied_script(self, monkeypatch):
-        from engine import pipeline
-        calls = []
-        def fake_gen(tv, config, tracker=None, prompt_appendix=""):
-            calls.append(prompt_appendix)
-            return self.REWRITTEN
-        monkeypatch.setattr("engine.generator.generate_podcast_script", fake_gen)
-        out = pipeline._script_rewrite_gate(self.COPIED, self.DIGEST, self._Cfg(), {}, None)
-        assert out["fired"] and out["accepted"]
-        assert out["script"] == self.REWRITTEN
-        assert out["before_pct"] > 40 and out["after_pct"] < out["before_pct"]
-        assert "REWRITE REQUIRED" in calls[0] and "TSMC and Samsung" in calls[0]
-
-    def test_gate_keeps_original_when_rewrite_is_truncated_or_no_better(self, monkeypatch):
-        from engine import pipeline
-        monkeypatch.setattr("engine.generator.generate_podcast_script",
-                            lambda tv, config, tracker=None, prompt_appendix="": "Patrick: Short.")
-        out = pipeline._script_rewrite_gate(self.COPIED, self.DIGEST, self._Cfg(), {}, None)
-        assert out["fired"] and not out["accepted"] and out["script"] == self.COPIED
-        monkeypatch.setattr("engine.generator.generate_podcast_script",
-                            lambda tv, config, tracker=None, prompt_appendix="": self.COPIED)
-        out = pipeline._script_rewrite_gate(self.COPIED, self.DIGEST, self._Cfg(), {}, None)
-        assert out["fired"] and not out["accepted"]
-
-    def test_gate_is_off_at_zero_and_below_threshold(self, monkeypatch):
-        from engine import pipeline
-        class Off:
-            class llm:
-                script_rewrite_gate_overlap_pct = 0
-        assert pipeline._script_rewrite_gate(self.COPIED, self.DIGEST, Off(), {}, None) is None
-        monkeypatch.setattr("engine.generator.generate_podcast_script",
-                            lambda *a, **k: pytest.fail("must not call the model below threshold"))
-        out = pipeline._script_rewrite_gate(self.REWRITTEN, self.DIGEST, self._Cfg(), {}, None)
-        assert out["fired"] is False
-
-    def test_gate_never_raises(self, monkeypatch):
-        from engine import pipeline
-        def boom(*a, **k):
-            raise RuntimeError("api down")
-        monkeypatch.setattr("engine.generator.generate_podcast_script", boom)
-        assert pipeline._script_rewrite_gate(self.COPIED, self.DIGEST, self._Cfg(), {}, None) is None
-
-    @pytest.mark.parametrize("slug", ("spacex", "tesla", "models_agents", "omni_view", "fascinating_frontiers",
-                                      "planetterrian", "modern_investing", "env_intel", "models_agents_beginners"))
-    def test_english_news_shows_enable_the_gate(self, slug):
-        from engine.config import load_config
-        cfg = load_config(str(ROOT / "shows" / f"{slug}.yaml"))
-        assert float(cfg.llm.script_rewrite_gate_overlap_pct) == 40.0
-
-    def test_narrative_and_russian_shows_leave_it_off(self):
-        from engine.config import load_config
-        for slug in ("unintended_consequences", "first_principles", "finansy_prosto", "privet_russian", "dp_pod"):
-            cfg = load_config(str(ROOT / "shows" / f"{slug}.yaml"))
-            assert float(cfg.llm.script_rewrite_gate_overlap_pct) == 0.0, slug
-
-    def test_run_show_records_gate_metrics(self):
-        src = (ROOT / "run_show.py").read_text(encoding="utf-8")
-        assert 'pop("_script_rewrite_gate"' in src
-        assert 'metrics.record("script_rewrite_gate_fired"' in src
 
     def test_tesla_first_principles_must_not_be_a_covered_story(self):
         text = (ROOT / "shows/prompts/tesla_digest.txt").read_text(encoding="utf-8")
@@ -546,84 +483,6 @@ class TestSep6SectionCopyAndOrphanedHook:
         assert "copied sections" in src and "hook cov" in src
 
 
-class TestSep6RewriteGateTriggersAndFloor:
-    """Tesla Ep597's rewrite went 61% -> 2% verbatim and was thrown away
-    because the floor was pinned to an over-long draft; nothing recorded
-    why. The gate now fires on a copied SECTION or an orphaned hook too,
-    floors on min(draft, target), and records its reasons."""
-
-    D = TestSep6SectionCopyAndOrphanedHook
-
-    class _Cfg:
-        class llm:
-            script_rewrite_gate_overlap_pct = 40.0
-
-    def _copied_script(self):
-        return self.D()._script(self.D.WORD_SWAPPED)
-
-    def test_fires_on_a_copied_section_below_the_overlap_threshold(self, monkeypatch):
-        from engine import pipeline
-        copied = self._copied_script()
-        assert sa.digest_overlap(copied, self.D.DIGEST) < 40
-        fresh = self.D()._script(
-            "Two lines instead of one means a stuck booster no longer stalls the ship behind it. "
-            "Each hall runs at its own rhythm and the East Coast pad stacks and checks vehicles outside Starbase's test queue. "
-            "The expensive part of a reusable rocket is the idle day, not the metal. "
-            "Cutting shared-facility time cuts the price of every stack that reaches the mount. "
-            "That is the whole argument for splitting the factory in two. "
-            "The next tests will show how many vehicles the pad can hold at once and how fast they cycle."
-        )
-        calls = []
-        def fake_gen(tv, config, tracker=None, prompt_appendix=""):
-            calls.append(prompt_appendix)
-            return fresh
-        monkeypatch.setattr("engine.generator.generate_podcast_script", fake_gen)
-        out = pipeline._script_rewrite_gate(copied, self.D.DIGEST, self._Cfg(), {"hook": ""}, None)
-        assert out["fired"] and out["reasons"] == "section" and out["accepted"]
-        assert out["copied_sections_before"] == 1 and out["copied_sections_after"] == 0
-        assert "Engineering Deep Dive" in calls[0] and "is discarded" in calls[0]
-
-    def test_rejects_when_the_section_is_still_copied(self, monkeypatch):
-        from engine import pipeline
-        copied = self._copied_script()
-        monkeypatch.setattr("engine.generator.generate_podcast_script",
-                            lambda tv, config, tracker=None, prompt_appendix="": copied)
-        out = pipeline._script_rewrite_gate(copied, self.D.DIGEST, self._Cfg(), {"hook": ""}, None)
-        assert out["fired"] and not out["accepted"]
-        assert out["reject_reason"] == "section_still_copied" and out["script"] == copied
-
-    def test_fires_on_an_orphaned_hook_and_names_it(self, monkeypatch):
-        from engine import pipeline
-        hook = "Archaeologists uncovered projectile points in Uzbekistan matching European designs."
-        orphan = f"Patrick: {hook}\nPatrick: This is Planetterrian Daily, episode one hundred seventy-five.\n" + _long_body(20)
-        digest = "### Top 15\n1. **Arrowheads**\n   " + " ".join(f"Fact {i} stands alone here." for i in range(30)) + "\n"
-        covered = orphan + ("\nPatrick: The Uzbekistan points were dated by archaeologists to eighty thousand years "
-                            "and their projectile shape matches the European designs found later in France.")
-        calls = []
-        def fake_gen(tv, config, tracker=None, prompt_appendix=""):
-            calls.append(prompt_appendix)
-            return covered
-        monkeypatch.setattr("engine.generator.generate_podcast_script", fake_gen)
-        out = pipeline._script_rewrite_gate(orphan, digest, self._Cfg(), {"hook": hook}, None)
-        assert out["fired"] and out["reasons"] == "hook" and out["accepted"]
-        assert "Uzbekistan" in calls[0] and "never tells" in calls[0]
-
-    def test_floor_is_the_target_when_the_draft_over_ran(self):
-        from engine import pipeline
-        class Cfg:
-            class llm:
-                min_podcast_words = 1400
-        assert pipeline._rewrite_gate_floor_words(1607, Cfg()) == int(0.7 * 1400)
-        assert pipeline._rewrite_gate_floor_words(1000, Cfg()) == 700
-        assert pipeline._rewrite_gate_floor_words(1000, self._Cfg()) == 700
-
-    def test_run_show_records_reasons_and_reject_reason(self):
-        src = (ROOT / "run_show.py").read_text(encoding="utf-8")
-        for key in ("script_rewrite_gate_reasons", "script_rewrite_gate_reject_reason",
-                    "script_rewrite_gate_rewrite_words", "script_rewrite_gate_copied_sections_after"):
-            assert f'metrics.record("{key}"' in src, key
-
-
 class TestSep6PromptAndPronunciationFollowups:
     def test_us_dollar_prefix_is_spoken_not_glued(self):
         from assets.pronunciation import prepare_text_for_tts
@@ -665,12 +524,6 @@ class TestSep7RewriteKeepsNamesAndLength:
     section test read zero sections because the podcast digest has no
     markdown headers, and the scripts shrank toward the stated floor."""
 
-    D = TestSep6SectionCopyAndOrphanedHook
-
-    class _Cfg:
-        class llm:
-            script_rewrite_gate_overlap_pct = 40.0
-
     def test_digest_entities_skip_sentence_initial_capitals(self):
         ents = sa.digest_entities(
             "### Top News\n1. **Chip news**\n   Volume production is scheduled at TSMC and Samsung. "
@@ -685,55 +538,6 @@ class TestSep7RewriteKeepsNamesAndLength:
         assert sa.entity_retention("Patrick: The T S X Composite fell, per Reuters, while Megapack lines at Giga Texas ran.", digest) == 1.0
         low = sa.entity_retention("Patrick: The index fell while the large battery packs at the Texas plant ran.", digest)
         assert low is not None and low < 0.5
-
-    def test_gate_rejects_a_rewrite_that_paraphrases_the_names(self, monkeypatch):
-        from engine import pipeline
-        copied = TestScriptRewriteGate.COPIED
-        digest = TestScriptRewriteGate.DIGEST
-        generic = (
-            "Patrick: The new car chip is finished, and the company will build it at two foundries.\n"
-            "Patrick: The training computer is back, with a partner packaging the modules on its process.\n"
-            "Patrick: That means two suppliers for inference silicon and a third for training hardware.\n"
-            "Patrick: That's your Tesla news for today.\n"
-        )
-        monkeypatch.setattr("engine.generator.generate_podcast_script",
-                            lambda tv, config, tracker=None, prompt_appendix="": generic)
-        out = pipeline._script_rewrite_gate(copied, digest, self._Cfg(), {}, None)
-        assert out["fired"] and not out["accepted"] and out["reject_reason"] == "names_lost"
-        assert out["entity_retention_before"] > out["entity_retention_after"]
-        assert out["script"] == copied
-
-    def test_appendix_names_the_names_rule_and_anchors_on_draft_length(self, monkeypatch):
-        from engine import pipeline
-        calls = []
-        def fake_gen(tv, config, tracker=None, prompt_appendix=""):
-            calls.append(prompt_appendix)
-            return TestScriptRewriteGate.REWRITTEN
-        monkeypatch.setattr("engine.generator.generate_podcast_script", fake_gen)
-        out = pipeline._script_rewrite_gate(TestScriptRewriteGate.COPIED, TestScriptRewriteGate.DIGEST,
-                                            self._Cfg(), {}, None)
-        assert out["accepted"] and out["original_words"] > 0
-        assert "never the names" in calls[0] and "Match the draft's length" in calls[0]
-        assert f"about {out['original_words']} words" in calls[0]
-
-    def test_section_test_uses_the_raw_digest_when_the_podcast_copy_has_no_headers(self, monkeypatch):
-        from engine import pipeline
-        copied = self.D()._script(self.D.WORD_SWAPPED)
-        raw = self.D.DIGEST
-        stripped = re.sub(r"^#{1,6}\s+", "", raw, flags=re.M)  # run_show's podcast copy
-        assert sa.copied_sections(copied, stripped) == []
-        monkeypatch.setattr("engine.generator.generate_podcast_script",
-                            lambda tv, config, tracker=None, prompt_appendix="": copied)
-        out = pipeline._script_rewrite_gate(copied, stripped, self._Cfg(), {"hook": ""}, None, section_digest=raw)
-        assert out["fired"] and "section" in out["reasons"] and out["copied_sections_before"] == 1
-        src = (ROOT / "engine/pipeline.py").read_text(encoding="utf-8")
-        assert "section_digest=x_thread" in src
-
-    def test_run_show_records_entity_and_original_word_metrics(self):
-        src = (ROOT / "run_show.py").read_text(encoding="utf-8")
-        for key in ("script_rewrite_gate_original_words", "script_rewrite_gate_entity_retention_before",
-                    "script_rewrite_gate_entity_retention_after"):
-            assert f'metrics.record("{key}"' in src, key
 
     def test_audit_reports_entity_retention(self):
         a = sa.audit_script(TestScriptRewriteGate.COPIED, digest_text=TestScriptRewriteGate.DIGEST)
@@ -781,10 +585,6 @@ class TestSep9DigestCoverageAndGateAttempts:
 
     D = TestSep6SectionCopyAndOrphanedHook
 
-    class _Cfg:
-        class llm:
-            script_rewrite_gate_overlap_pct = 40.0
-
     # Twelve-fact digest: coverage needs >= 10 scorable sentences.
     FACTS = [
         ("Starlink V3 satellites carry a 60 gigabit downlink per unit", "Each Starlink V3 satellite carries a sixty gigabit downlink"),
@@ -830,77 +630,9 @@ class TestSep9DigestCoverageAndGateAttempts:
         full = sa.audit_script(self._big_script(12), digest_text=self.BIG_DIGEST)
         assert not any("tells only" in w for w in full.warnings())
 
-    def test_gate_rejects_a_rewrite_that_drops_the_facts(self, monkeypatch):
-        from engine import pipeline
-        copied = "\n".join(f"Patrick: {d}." for d, _ in self.FACTS) + "\nPatrick: And that's a wrap.\n"
-        # Keeps every NAME (a roll-call line) but tells only five of the twelve facts,
-        # so the names guard passes and only the coverage guard can catch it.
-        names = ("Patrick: Starlink, Falcon 9, B1085, Vandenberg, Raptor 3, McGregor, Starship, Hawaii, "
-                 "Dragon, Crew-13, Starbase, Space Force, Starshield, Polaris, EVA, Cape Canaveral, "
-                 "SLC-40, Hawthorne, Merlin, T-Mobile, Gwynne Shotwell and Mars all featured today.")
-        thin = self._big_script(5).replace("Patrick: And that's a wrap", names + "\nPatrick: And that's a wrap")
-        monkeypatch.setattr("engine.generator.generate_podcast_script",
-                            lambda tv, config, tracker=None, prompt_appendix="": thin)
-        class Low:  # short fixture sentences carry few 8-grams; fire at 20%
-            class llm:
-                script_rewrite_gate_overlap_pct = 20.0
-        out = pipeline._script_rewrite_gate(copied, self.BIG_DIGEST, Low(), {}, None)
-        assert out["fired"] and out["reasons"] == "overlap"
-        assert out["digest_coverage_before"] is not None and out["digest_coverage_after"] is not None
-        assert not out["accepted"] and out["reject_reason"] == "facts_lost"
-        assert out["script"] == copied
-        # the same rewrite with every fact kept ships
-        monkeypatch.setattr("engine.generator.generate_podcast_script",
-                            lambda tv, config, tracker=None, prompt_appendix="": self._big_script(12))
-        out = pipeline._script_rewrite_gate(copied, self.BIG_DIGEST, Low(), {}, None)
-        assert out["accepted"], out["reject_reason"]
-
-    def test_section_reason_accepts_a_rewrite_that_copies_less_with_no_new_section(self, monkeypatch):
-        from engine import pipeline
-        copied = self.D()._script(self.D.WORD_SWAPPED)
-        # Same section still flagged, but fewer 8-grams overall: swap more words.
-        looser = self.D()._script(
-            self.D.WORD_SWAPPED.replace("critical-path logic", "critical path")
-            .replace("final-assembly hall", "assembly hall").replace("takt time", "own pace")
-            .replace("high-value asset", "costly asset").replace("shared facilities", "common halls")
-        )
-        assert sa.copied_sections(looser, self.D.DIGEST), "fixture must still flag the section"
-        monkeypatch.setattr("engine.generator.generate_podcast_script",
-                            lambda tv, config, tracker=None, prompt_appendix="": looser)
-        out = pipeline._script_rewrite_gate(copied, self.D.DIGEST, self._Cfg(), {"hook": ""}, None)
-        assert out["fired"] and "section" in out["reasons"]
-        assert out["after_pct"] < out["before_pct"]
-        assert out["accepted"], out["reject_reason"]
-
-    def test_gate_takes_bounded_attempts_and_ships_the_first_pass(self, monkeypatch):
-        from engine import pipeline
-        class Two:
-            class llm:
-                script_rewrite_gate_overlap_pct = 40.0
-                script_rewrite_gate_attempts = 2
-        calls = []
-        def fake_gen(tv, config, tracker=None, prompt_appendix=""):
-            calls.append(1)
-            return TestScriptRewriteGate.COPIED if len(calls) == 1 else TestScriptRewriteGate.REWRITTEN
-        monkeypatch.setattr("engine.generator.generate_podcast_script", fake_gen)
-        out = pipeline._script_rewrite_gate(TestScriptRewriteGate.COPIED, TestScriptRewriteGate.DIGEST, Two(), {}, None)
-        assert out["accepted"] and out["attempts"] == 2 and len(calls) == 2
-        calls.clear()
-        out = pipeline._script_rewrite_gate(TestScriptRewriteGate.COPIED, TestScriptRewriteGate.DIGEST, self._Cfg(), {}, None)
-        assert not out["accepted"] and out["attempts"] == 1 and len(calls) == 1
-        assert pipeline._rewrite_gate_attempts(Two()) == 2 and pipeline._rewrite_gate_attempts(self._Cfg()) == 1
-
-    def test_tesla_gets_two_attempts_and_the_rest_one(self):
-        from engine.config import load_config
-        assert int(load_config(str(ROOT / "shows/tesla.yaml")).llm.script_rewrite_gate_attempts) == 2
-        for slug in ("spacex", "models_agents", "omni_view"):
-            assert int(load_config(str(ROOT / "shows" / f"{slug}.yaml")).llm.script_rewrite_gate_attempts) == 1, slug
-
-    def test_run_show_records_coverage_attempts_and_placeholder_metrics(self):
+    def test_run_show_records_placeholder_metrics(self):
         src = (ROOT / "run_show.py").read_text(encoding="utf-8")
-        for key in ("script_rewrite_gate_digest_coverage_before", "script_rewrite_gate_digest_coverage_after",
-                    "script_rewrite_gate_attempts", "digest_placeholder_tokens"):
-            assert f'metrics.record("{key}"' in src, key
+        assert 'metrics.record("digest_placeholder_tokens"' in src
         assert "_lint_digest_placeholders(x_thread, config, metrics)" in src
 
     def test_digest_placeholder_lint_catches_the_ep167_shape(self):
