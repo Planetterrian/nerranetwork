@@ -458,3 +458,94 @@ class TestHostLegIsNotOverwritten:
         body = body[:body.index("\n}\n") + 3]
         assert "extra_host_record_urls" in body
         assert "if (!run.recording_host_url)" in body
+
+
+class TestMiraDoesNotRepeatHerself:
+    """Sept 12 2026: Mira reaches for one acknowledgment shape — "That's a
+    crisp way to put it", "That's a bold direction", "That's a meaningful
+    backstop". Three in an episode and she sounds like a form. Each episode
+    now retires the reflexes it used, and later interviews are told not to
+    reach for them again."""
+
+    def test_formulas_are_collected_and_questions_are_not(self):
+        from learning import host_formulas
+
+        rows = [
+            (0.0, "Mira", "That's a crisp way to put it. What pulled you in?"),
+            (30.0, "Mira", "Good answer."),
+            (60.0, "Mira", "What does that look like in practice?"),
+            (90.0, "Hogan", "That's a fair question from my side."),
+            (120.0, "Mira", "The royalty pays on every generation, including the "
+                            "test renders, which is a real cost to carry."),
+        ]
+        got = [p.lower() for p in host_formulas(rows, "Mira")]
+        assert "that's a crisp way to put it" in got
+        assert "good answer" in got
+        assert not any("what does that look like" in p for p in got), "a question is not a reflex"
+        assert not any("royalty" in p for p in got), "substance is not a reflex"
+        assert not any("fair question from my side" in p for p in got), "the guest is not the host"
+
+    def test_duplicates_collapse(self):
+        from learning import host_formulas
+
+        rows = [(0.0, "Mira", "That's a crisp way to put it."),
+                (10.0, "Mira", "that's a crisp way to put it")]
+        assert len(host_formulas(rows, "Mira")) == 1
+
+    def test_a_show_with_no_history_reads_exactly_as_before(self):
+        import learning
+
+        learning.sb_select = lambda *a, **k: []
+        assert learning.variety_block("age_of_ai") == ""
+
+    def test_retired_phrases_reach_the_prompt(self):
+        import learning
+
+        learning.sb_select = lambda *a, **k: [{"phrase": "That's a crisp way to put it"}]
+        block = learning.variety_block("age_of_ai")
+        assert "ALREADY USED ON THIS SHOW" in block
+        assert "crisp way to put it" in block
+        assert "near-variant" in block
+
+    def test_a_lookup_failure_never_blocks_an_interview(self):
+        import learning
+
+        def boom(*a, **k):
+            raise RuntimeError("supabase down")
+
+        learning.sb_select = boom
+        assert learning.variety_block("age_of_ai") == ""
+
+    def test_both_blocks_are_appended_to_miras_prompt(self):
+        assert "lessons_block(show.slug) + variety_block(show.slug)" in FIRE
+
+    def test_post_interview_retires_this_episodes_tics(self):
+        assert "save_host_phrases(" in POST
+        assert "host_formulas(" in POST
+
+    def test_the_prompt_tells_her_to_vary_her_language(self):
+        text = (ROOT / "pipelines" / "voices" / "prompts"
+                / "mira_system_prompt.txt").read_text(encoding="utf-8")
+        assert "SAY IT A DIFFERENT WAY EVERY TIME" in text
+        assert "ALREADY USED ON THIS SHOW" in text
+        assert "LET THEM FINISH" in text
+        assert "Never read a source aloud" in text
+        assert "the interview is over" in text
+
+
+class TestTheShowDoesNotOpenToAnEmptyChair:
+    def test_the_timeout_greets_the_co_host_instead_of_opening(self):
+        body = SCENARIO[SCENARIO.index("function maybeOpen()"):]
+        body = body[:body.index("\n}\n") + 3]
+        assert "greetHostAndWait()" in body
+        assert "host only, wait timed out" not in body
+
+    def test_the_greeting_is_not_the_show_opening(self):
+        body = SCENARIO[SCENARIO.index("function greetHostAndWait()"):]
+        body = body[:body.index("\n}\n") + 3]
+        assert "Do NOT open the show" in body
+        assert "do not ask any interview questions" in body
+        assert "stay silent until" in body
+
+    def test_the_guest_arriving_is_what_opens_the_show(self):
+        assert 'if (role === "guest" && !openingFired) maybeOpen();' in SCENARIO

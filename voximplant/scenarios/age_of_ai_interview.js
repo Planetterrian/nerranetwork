@@ -624,6 +624,7 @@ function admitLeg(call, role) {
       if (!hostJoinedAt) hostJoinedAt = new Date().toISOString();
     }
     trace("leg", role + " #" + leg.id + " joined (" + legs.length + " in room)");
+    if (role === "guest" && !openingFired) maybeOpen();
     postLegEvent(role, "joined");
     if (openingFired) {
       announce(role + " joined");
@@ -868,7 +869,12 @@ function maybeOpen() {
   if (!openingTimer) {
     openingTimer = setTimeout(function () {
       openingTimer = null;
-      openWhenReady("host only, wait timed out");
+      // Sept 12 2026 (Hogan Shrum, second episode running): this used to
+      // open the show to an empty guest chair after 20 seconds, and then do
+      // the whole cold open AGAIN when the guest arrived. Mira now greets
+      // the co-host in one line and waits. The room's own empty-room
+      // timeout, not this one, decides when nobody is coming.
+      greetHostAndWait();
     }, OPENING_WAIT_MS);
   }
 }
@@ -896,6 +902,33 @@ function openWhenReady(reason) {
   } catch (err) {
     Logger.write("[aoa " + runId + "] opening responseCreate failed: " + err.message);
   }
+}
+
+// Only the co-host is here. Say hello once, then be quiet until the guest
+// arrives — the show has not started yet.
+let hostGreeted = false;
+function greetHostAndWait() {
+  if (hostGreeted || openingFired || !grokAgent) return;
+  hostGreeted = true;
+  trace("opening", "host only — greeting the co-host and waiting for the guest");
+  try {
+    grokAgent.conversationItemCreate({
+      item: { type: "message", role: "system",
+        content: [{ type: "input_text", text:
+          "[ROOM — system note] Only " + cohostName() + " is here; the guest " +
+          "has not joined. Say one short, warm line to him and nothing else. " +
+          "Do NOT open the show, do not say the show's name, do not introduce " +
+          "yourself or the guest, and do not ask any interview questions. " +
+          "Then stay silent until you are told the guest has joined." }] },
+    });
+    grokAgent.responseCreate({});
+  } catch (err) {
+    Logger.write("[aoa " + runId + "] host greeting failed: " + err.message);
+  }
+}
+
+function cohostName() {
+  return (config && config.cohost_name) || "the co-host";
 }
 
 function describeRoom() {

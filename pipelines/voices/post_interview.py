@@ -52,7 +52,8 @@ from audio.mix_tracks import (  # noqa: E402
     split_left,
 )
 from learning import (  # noqa: E402
-    measure, save_metrics, save_proposed_lessons, session_events_summary,
+    host_formulas, measure, parse_transcript, save_host_phrases, save_metrics,
+    save_proposed_lessons, session_events_summary,
 )
 from validators.schema_validators import validate_pass_output  # noqa: E402
 
@@ -549,6 +550,12 @@ def main() -> int:
             saved = save_proposed_lessons(show.slug, interview["id"],
                                           parse_json_lenient(retro) or [])
             logger.info("retro proposed %d lesson(s)", saved)
+            # Retire the acknowledgment reflexes she leaned on this time.
+            tics = host_formulas(
+                parse_transcript(package.get("transcript_cleaned") or transcript),
+                "Mira")
+            logger.info("retiring %d host phrase(s): %s",
+                        save_host_phrases(show.slug, interview["id"], tics), tics)
         except Exception:  # noqa: BLE001 — an episode never waits on this
             logger.exception("Retrospective failed (non-fatal)")
 

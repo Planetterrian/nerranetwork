@@ -23,6 +23,8 @@ from common import cohost_label, logger, sb_insert, sb_select, sb_update
 
 LESSON_CATEGORIES = {"pacing", "questions", "interruption", "listening", "tone"}
 MAX_ACTIVE_LESSONS = 12          # Mira's prompt is not a filing cabinet
+MAX_RETIRED_PHRASES = 20         # the same, for her verbal tics
+PHRASE_MAX_WORDS = 12            # an acknowledgment, not a sentence of substance
 DEAD_AIR_SEC = 4.0
 REPEAT_RATIO = 0.82              # difflib ratio at which two questions are "the same"
 
@@ -86,6 +88,71 @@ def count_interruptions(rows: List[Tuple[float, str, str]], host_label: str,
                 hits += 1
                 break
     return hits
+
+
+def host_formulas(rows: List[Tuple[float, str, str]], host_label: str) -> List[str]:
+    """The host's short acknowledgment lines — the reflexes, not the questions.
+
+    Mira reaches for one shape over and over ("That's a crisp way to put it",
+    "That's a bold direction", "That's a meaningful backstop"). Three in an
+    episode and she sounds like a form. These are collected so later
+    interviews can be told not to use them again.
+    """
+    out: List[str] = []
+    for _, speaker, text in rows:
+        if speaker.lower() != host_label.lower():
+            continue
+        for sentence in re.split(r"(?<=[.?!])\s+", text):
+            line = sentence.strip()
+            if not line or line.endswith("?"):
+                continue                       # a question is not a reflex
+            words = line.split()
+            if 2 <= len(words) <= PHRASE_MAX_WORDS:
+                out.append(line.rstrip(".!").strip())
+    # Keep the ones that read as formulas rather than as content.
+    formulaic = [p for p in out
+                 if re.match(r"(?i)^(that'?s|what a|i love|good|nice|fair|"
+                             r"understood|got it|makes sense|interesting)\b", p)]
+    seen: dict = {}
+    for phrase in formulaic:
+        seen[phrase.lower()] = phrase
+    return list(seen.values())
+
+
+def save_host_phrases(show_slug: str, interview_id: str, phrases: List[str]) -> int:
+    saved = 0
+    for phrase in phrases[:MAX_RETIRED_PHRASES]:
+        try:
+            sb_insert("host_phrases", {"show": show_slug, "interview_id": interview_id,
+                                       "phrase": phrase[:200]})
+            saved += 1
+        except Exception:  # noqa: BLE001 — never block an episode on a tic
+            logger.exception("host_phrases insert failed (non-fatal)")
+    return saved
+
+
+def variety_block(show_slug: str) -> str:
+    """The phrases Mira has already used on this show, so she stops reusing
+    them. Empty for a show with no history, so a first episode reads exactly
+    as it did before."""
+    try:
+        rows = sb_select("host_phrases",
+                         f"show=eq.{show_slug}&order=created_at.desc"
+                         f"&limit={MAX_RETIRED_PHRASES}")
+    except Exception:  # noqa: BLE001
+        logger.exception("host phrases unavailable (non-fatal)")
+        return ""
+    phrases = []
+    for row in rows or []:
+        phrase = (row.get("phrase") or "").strip()
+        if phrase and phrase.lower() not in {p.lower() for p in phrases}:
+            phrases.append(phrase)
+    if not phrases:
+        return ""
+    return ("\n\nALREADY USED ON THIS SHOW\n"
+            "You have said each of these on a previous episode. They are "
+            "retired. Do not say them again, and do not say a near-variant "
+            "of them:\n" + "\n".join(f'- "{p}"' for p in phrases) + "\n")
 
 
 def session_events_summary(run: dict, limit: int = 60) -> str:
