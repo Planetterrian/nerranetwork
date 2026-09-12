@@ -980,4 +980,135 @@ reviews:
       ab_listen_required: true
       rationale: P0 listener-facing host-ID garble on 6/10 transcripts. Structural pause only; must A/B-listen identity line.
     agent_cost_usd: 0.1824
+  - date: '2026-09-12'
+    pr: null
+    doc: docs/reviews/spacex_review_2026_09_12.md
+    generated_by: grok-4.5
+    summary: Eight of ten recent dailies still sit under 1300w, required Counterpoint/Market Watch chapters keep dropping on rotated openers, AI no-news placeholders and host-ID garbles remain on air, and Sep delivery gates only partially moved density metrics—length and price-once stay escalated operator decisions.
+    scored_prior_predictions:
+    - metric: non-special dailies with mid-body SPCX tape/price line and no Market Watch chapter (incl. note-on-the-tape / moved-lower-on-the-session forms)
+      verdict: miss
+      evidence: Ep091 quick-note-on-the-tape + no MW chapter; Ep097 note-on-the-tape shares-moved-higher + no MW; YAML pattern still incomplete
+    - metric: non-special dailies missing Counterpoint chapter and/or Engineering Angle chapter (or missing required anchor strings in _tts.txt)
+      verdict: miss
+      evidence: Ep090 no Engineering chapter; Ep092/093/095 no Counterpoint; Ep093 also no AI chapter
+    - metric: AI & Compute no-news placeholder spoken as a full sentence (hand-count)
+      verdict: miss
+      evidence: Ep092 and Ep094 Whisper still read full no-new-developments + live-threads placeholder
+    - metric: Whisper/transcript hits for identity garble "patrick and vancouver" in next 10
+      verdict: miss
+      evidence: Still present Ep090/093/094/096 (I'm Patrick and Vancouver)
+    - metric: Engineering Deep Dive listed in script_copied_sections, last 10
+      verdict: miss
+      evidence: Copied-sections flags Engineering on Ep089,090,091,096,098 (5/10) vs expected ≤3/10
+    - metric: closings saying "is trading at" on episodes generated outside a NY session (weekday 04:00-20:00 ET), last 10
+      verdict: partial
+      evidence: Ep090-093 prefer closed-at; Ep089/094/096/097 still is-trading-at — incomplete without run timestamps
+    - metric: closings saying "up/down zero percent"
+      verdict: hit
+      evidence: Ep094 unchanged on the session; no up/down zero percent in Ep089-098 Whisper
+    - metric: EN Shorts whose stored hook/title is the SPCX price line (youtube_videos.json)
+      verdict: partial
+      evidence: No youtube_videos.json slice in bundle; Sep-04 shorts_selector ban not re-verified here
+    - metric: Top News items whose publisher URL path is dated older than lookback (stale re-surfaced articles)
+      verdict: partial
+      evidence: No dated-path stale hit in Ep089-098 digests; undated-URL stale class still open
+    - metric: script_digest_overlap_pct, median of last 10
+      verdict: miss
+      evidence: digest-verbatim still 56-71% on Ep089-091/096/098; only Ep092-095/097 under 25%
+    - metric: script_repeated_facts per episode
+      verdict: miss
+      evidence: facts×2 still 1-4 (Ep090=4) vs expected ≤1
+    - metric: script_filler_pct
+      verdict: partial
+      evidence: mixed 0-10%; several eps ≤3% but Ep089/090/094/098 at 6-10%
+    - metric: Deep Dive numbers not spoken earlier in the episode (manual count)
+      verdict: miss
+      evidence: Engineering still flagged copied_sections on 5/10; density not cleared network-wide
+    - metric: closing text identical across episodes
+      verdict: miss
+      evidence: multiple CTA/sign-off packs still rotate across Ep089-098
+    - metric: script_entity_retention_pct, last 10
+      verdict: miss
+      evidence: names-kept ≥80% on only ~2/10; Ep091 56%, Ep097 53%
+    - metric: version/model names in the cold open also spoken in the body (hand-count), 3 episodes
+      verdict: miss
+      evidence: Ep093 hook Raptor v3 not kept as V3 in body
+    - metric: Ep081-class same-episode full retell of one mega-story’s key figures across Engineering + body + AI in next 10 transcripts
+      verdict: miss
+      evidence: Ep090 Memphis outage multi-section retell with MEGA-STORY prompt already shipped
+    - metric: laundered SEO / sports-fixture / video-ID junk titles in digests
+      verdict: hit
+      evidence: 'review_snapshot fetch-filter leakage: 0 hits on last 10 spacex digests'
+    - metric: digests with leaked "Title:" heading labels (snapshot Digest heading integrity section)
+      verdict: hit
+      evidence: 'Digest heading integrity: 0 leaked heading labels on last 10 spacex digests'
+    shipped: []
+    deferred:
+    - 'OPERATOR DECISION (repeated misses): accept grok-4.3 daily length plateau vs further digest-substrate only (min_digest_words / full-text fetch / licensed section floors) — do not re-propose podcast expand, podcast word floors, or conditional 7+/10 if lever ships predictions'
+    - 'OPERATOR DECISION (since 2026-06-13): SPCX price-once — Market Watch qualitative + single precise quote only in closing_block; coupled A/B-listen; or accept double price as brand and close'
+    - 'OPERATOR DECISION (mega-story retell, prompt lever missed on Ep090): data-side exclusion of headlines already used in AI/Counterpoint/Deep Dive from Top News — do not file a third MEGA-STORY prompt rule'
+    - 'Q2/special path: richer spacex_deep_dive.txt briefs so specials clear deep_dive.min_podcast_words 2400; do not stack time-critical specials on the daily publish day'
+    - Entity-discipline prompt (xAI/SpaceX Memphis/Colossus operator) — regression guard only; A/B; carried while window stays clean
+    - Stale articles with undated URLs — article:published_time at fetch or refuse record/first claims below memory last-known figure
+    - api/shorts_ab.json still collecting after experiment ended 2026-08-14 — report builder should mark ended (non-audio)
+    - NASA public-domain b-roll pool vs retired shorts_ab generated motion — render-side follow-up, not audio
+    - Scheduler forensics for any missed Sunday weekly_summary_segment run (June-28 class) — operator
+    - Pin single closing CTA pack network-wide (Sep-05 identical-closing miss) — separate from market verb; A/B if audio-affecting
+    predictions:
+    - metric: non-special dailies with mid-body SPCX tape/price line and no Market Watch chapter (incl. note-on-the-tape / moved-lower / shares-moved forms)
+      baseline: 2+/10 in window (Ep091, Ep097); pattern misses note-on-the-tape
+      expected: 0/10 new dailies after YAML widen; Closing still wins sign-off-only price lines
+      verdict: pending
+      evidence: null
+    - metric: non-special dailies missing Counterpoint chapter and/or Engineering Angle chapter when digest has those sections (or missing required anchor strings in _tts.txt)
+      baseline: Ep090 no Engineering; Ep092/093/095 no Counterpoint; Ep093 no AI
+      expected: 0/10 after code-side mandatory-anchor validator ships (not prompt-only)
+      verdict: pending
+      evidence: null
+    - metric: AI & Compute no-news placeholder spoken as a full sentence (hand-count)
+      baseline: 2/10 (Ep092, Ep094)
+      expected: 0/10 if skip-when-empty podcast rule ships after A/B; else n/a-lever-not-shipped
+      verdict: pending
+      evidence: null
+    - metric: Whisper/transcript hits for identity garble "patrick and vancouver" in next 10
+      baseline: 4/10 in Ep089-098 window (Ep090/093/094/096)
+      expected: ≤1/10 if identity disambiguation ships after A/B; else n/a-lever-not-shipped
+      verdict: pending
+      evidence: null
+    - metric: Engineering Deep Dive listed in script_copied_sections, last 10
+      baseline: 5/10 (Ep089,090,091,096,098)
+      expected: ≤3/10 if section-copy triggers rewrite independent of whole-script 40% overlap
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/spacex.yaml
+      kind: config
+      ab_listen_required: false
+      rationale: 'P0/P1: Ep091 spoke “A quick note on the tape, SPCX moved lower on the session” and Ep097 “A quick note on the tape shows the shares moved higher” with no Market Watch chapter — pattern had look-at-the-tape and note-on-the-market but not note-on-the-tape / moved-lower / shares-moved forms. Metadata-only; Closing must remain listed BEFORE Market Watch with where:end.'
+    - file: engine/generator.py
+      kind: code
+      ab_listen_required: false
+      rationale: 'P0: Ep090/092/093/095 dropped required chapters; Aug-27 prompt reinforcement missed; Sep-04 already deferred to deterministic code-side validator — escalate off third prompt-only re-seed.'
+    - file: tests/test_spacex_show.py
+      kind: code
+      ab_listen_required: false
+      rationale: Code-only locks for P0 chapter/pattern regressions so Ep091-tape and Ep090-anchor classes cannot return unnoticed.
+    - file: shows/prompts/spacex_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 'P1: Ep092/Ep094 still read the full no-news placeholder on air (Sep-09/Sep-10 miss). Shape-only skip rule; no new quotable example sentence (de-seed-by-shape). A/B-listen landmine #17.'
+    - file: shows/prompts/spacex_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Digest substrate marker so podcast skip-when-empty is unambiguous; avoids seeding a spoken laundry-list the model reads verbatim (Ep092/094). A/B-listen.
+    - file: engine/script_audit.py
+      kind: code
+      ab_listen_required: false
+      rationale: 'P1: Sep-06 found section-level Deep Dive paraphrase under the whole-script gate; Ep089–091/096/098 still flag Engineering copied_sections while median overlap stays high on other days. Telemetry prevents silent fire-and-miss (length-retry lesson).'
+    - file: shows/hooks/spacex.py
+      kind: code
+      ab_listen_required: true
+      rationale: P0 listener-facing host-ID garble on multiple transcripts in the window. Structural pause only; must A/B-listen identity line.
+    agent_cost_usd: 0.1843
 do_not_retry: []
