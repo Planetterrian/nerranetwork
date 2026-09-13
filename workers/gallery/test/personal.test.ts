@@ -594,6 +594,7 @@ describe("plan switching (Sep 13 2026)", () => {
     const body = await get(env);
     expect(body.member.billing_portal).toBe(true);
     expect(body.member.ends_at).toBe("2026-10-01");
+    expect((body as any).email).toBe("fan@example.com");
     expect((await get(envWith())).member.billing_portal).toBe(false); // no key
   });
 });
