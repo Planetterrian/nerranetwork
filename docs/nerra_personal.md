@@ -177,3 +177,28 @@ Store:
 - Natural next steps (not in this pass): a Mira spoken mention in the
   network outro rotation (audio — landmine #17, operator A/B), a
   newsletter launch announcement, Nerra Daily blog cross-links.
+
+## Personal News Network (13 Sep 2026)
+
+Two paid tiers, same add-ons, different depth. Internal tier ids are
+unchanged (`personal`, `personal_local`); only the names people see moved.
+
+| | Personal $4.99 | Personal News Network $8.99 |
+|---|---|---|
+| Location add-ons (weather, news, events, transit) | the taster: **one** city, **one** item per section | up to **three** cities, up to **three** items per section |
+| Your topics (member-named subjects, one item each, sourced) | — | up to five |
+| Mira's upgrade nudge | Mondays only, only on a day the taster ran, fixed copy (`upgrade_nudge_line`) | — |
+
+The Worker stores up to the top tier's counts whatever the plan (an
+upgrade applies what the member already typed); `validate_spec` enforces
+the member's real tier — the builder is the trust boundary, as for add-ons.
+Limits live in `engine.personal_edition.TIER_LIMITS` and are mirrored as
+`CITIES_MAX` / `TOPICS_MAX` / `TOPIC_MAX` in the Worker (drift-guarded).
+
+Both prompts (`nerra_personal_local.txt`, `nerra_personal_topics.txt`)
+require every item to name its source aloud; a generic attribution
+("local event guides", "reports say") is forbidden, and
+`generic_attributions()` logs any that slip through. Plan switching goes
+through Stripe's customer portal from the account page (never a second
+checkout); `customer.subscription.updated` moves the tier and keeps the
+feed token.

@@ -79,12 +79,22 @@ const FEED_FILE_RE = /^[A-Za-z0-9_.-]+$/;
 const TOKEN_RE = /^[a-f0-9]{16,64}$/;
 const NAME_MAX = 40;
 const CITY_MAX = 80;
+// Personal News Network (Sep 13 2026): multiple locations + member
+// topics. The Worker stores up to the TOP tier's counts whatever the
+// member's plan (so an upgrade applies what they already typed); the
+// builder's validate_spec caps to the actual tier. Mirrors
+// engine.personal_edition.TIER_LIMITS — drift-guarded.
+const CITIES_MAX = 3;
+const TOPICS_MAX = 5;
+const TOPIC_MAX = 60;
 
 interface MemberRecord {
   shows: string[];
   addons?: string[];   // validated subset of PERSONAL_ADDONS; absent = defaults
   first_name: string;
-  city: string;
+  city: string;        // primary location — always cities[0] (legacy readers)
+  cities?: string[];   // all locations, member's order, ≤ CITIES_MAX
+  topics?: string[];   // member-named subjects, ≤ TOPICS_MAX
   tier: string;          // "personal" | "personal_local"
   status: string;        // "none" | "active" | "cancelled"
   feed_token?: string;
@@ -166,6 +176,8 @@ export async function handleAccount(request: Request, env: Env): Promise<Respons
             shows: member.shows || [],
             first_name: member.first_name || "",
             city: member.city || "",
+            cities: member.cities ?? (member.city ? [member.city] : []),
+            topics: member.topics ?? [],
             addons: member.addons ?? null,
           }
         : null,
@@ -331,7 +343,16 @@ export async function handlePreferences(
     }
   }
   const firstName = String(body?.first_name ?? "").trim().slice(0, NAME_MAX);
-  const city = String(body?.city ?? "").trim().slice(0, CITY_MAX);
+  // Locations: `cities` (array) is the Sep 2026 shape; a bare `city`
+  // string from an older page becomes a one-element list. Primary `city`
+  // is always cities[0] so nothing that reads it needs to change.
+  let citiesIn: unknown[] = Array.isArray(body?.cities)
+    ? body.cities
+    : (body?.city !== undefined ? [body.city] : []);
+  const cities = cleanList(citiesIn, CITIES_MAX, CITY_MAX);
+  const city = cities[0] ?? "";
+  const topics = cleanList(
+    Array.isArray(body?.topics) ? body.topics : [], TOPICS_MAX, TOPIC_MAX);
   // addons: absent = leave the stored choice untouched; an array (even
   // empty — a real "no add-ons" choice) replaces it, unknown ids dropped.
   let addons: string[] | undefined;
@@ -355,14 +376,34 @@ export async function handlePreferences(
     shows,
     first_name: firstName,
     city,
+    cities,
+    topics,
     ...(addons !== undefined ? { addons } : {}),
     updated_at: new Date().toISOString(),
   };
   await saveMember(env, email, rec);
   return jsonResponse(request, 200, { ok: true, saved: {
-    shows, first_name: firstName, city,
+    shows, first_name: firstName, city, cities, topics,
     addons: addons !== undefined ? addons : (existing as MemberRecord).addons ?? null,
   } });
+}
+
+/** Member-typed free text bound for a prompt: tags out whole, control
+ *  and markup characters out, whitespace collapsed, length capped,
+ *  case-insensitive dedupe, list capped. Same rules as the builder's
+ *  _clean_free_text so what the page shows is what Mira gets. */
+function cleanList(values: unknown[], maxItems: number, maxChars: number): string[] {
+  const out: string[] = [];
+  for (const v of values) {
+    let t = String(v ?? "").replace(/<[^>]*>/g, " ");
+    t = t.replace(/[^\p{L}\p{N}_ \-.,'’&/()]/gu, "");
+    t = t.replace(/\s+/g, " ").trim().slice(0, maxChars).trim();
+    if (!t) continue;
+    if (out.some((x) => x.toLowerCase() === t.toLowerCase())) continue;
+    out.push(t);
+    if (out.length >= maxItems) break;
+  }
+  return out;
 }
 
 // ---------------------------------------------------------------------------
@@ -642,6 +683,8 @@ export async function handleAdminSpecs(
           tier: rec.tier,
           first_name: rec.first_name || "",
           city: rec.city || "",
+          cities: rec.cities ?? (rec.city ? [rec.city] : []),
+          topics: rec.topics ?? [],
           ...(rec.addons !== undefined ? { addons: rec.addons } : {}),
           default_lineup: (rec.shows?.length ?? 0) < 2,
         });

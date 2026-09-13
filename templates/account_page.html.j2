@@ -81,6 +81,10 @@
         .nn-addon .em { font-size: 1.2rem; line-height: 1.2; }
         .nn-addon .name { font-weight: 600; font-size: 0.9rem; }
         .nn-addon .desc { font-size: 0.76rem; color: var(--nn-text-muted); margin-top: 0.15rem; }
+        .nn-list { display: grid; gap: 0.4rem; max-width: 420px; }
+        .nn-list input[disabled] { opacity: 0.45; }
+        .nn-pnn-card { border-color: rgba(0,212,255,0.45); }
+        .nn-pnn-card ul { margin: 0.4rem 0 0.8rem 1.1rem; padding: 0; font-size: 0.9rem; }
         .nn-addon .lock { font-size: 0.7rem; color: var(--nn-text-muted); border: 1px solid var(--nn-border); border-radius: 999px; padding: 0.05rem 0.45rem; margin-left: 0.35rem; }
 
         /* Recent editions list */
@@ -186,17 +190,37 @@
                        names her sources aloud, and skips anything she can't
                        verify rather than padding.</p>
                     <div style="margin:var(--sp-3) 0;">
-                        <label>Location <span class="nn-muted">(any city or town — add-ons follow it wherever you choose)</span>
-                            <input type="text" id="nn-city" maxlength="80" placeholder="e.g. Vancouver, BC" style="max-width:320px;"></label>
+                        <label>Locations <span class="nn-muted" id="nn-cities-help">(any city or town — the add-ons below follow it)</span></label>
+                        {# Up to three inputs; the page enables as many as the
+                           tier allows (1 on Personal, 3 on PNN). Extra ones a
+                           member typed before a downgrade are kept, greyed,
+                           and applied again on upgrade — the Worker stores
+                           three whatever the plan; the builder enforces. #}
+                        <div class="nn-list" id="nn-cities">
+                            <input type="text" id="nn-city" class="nn-city" maxlength="80" placeholder="e.g. Vancouver, BC">
+                            <input type="text" class="nn-city" maxlength="80" placeholder="Second location (Personal News Network)">
+                            <input type="text" class="nn-city" maxlength="80" placeholder="Third location (Personal News Network)">
+                        </div>
                     </div>
                     <p class="nn-muted" id="nn-city-nudge" hidden style="margin-top:0.5rem;">
-                       You're on <strong>Personal News Network</strong> but haven't set a
-                       location — add one above and save so Mira can include your
-                       morning brief.</p>
+                       You haven't set a location yet — add one above and save so
+                       Mira can open your edition with your morning brief.</p>
                     <div id="nn-addons" class="nn-addon-grid"></div>
+                    <div style="margin:var(--sp-4) 0 0;">
+                        <label>Your topics <span class="nn-muted" id="nn-topics-help">(subjects you follow — Mira researches each one daily, sources named)</span></label>
+                        <div class="nn-list" id="nn-topics">
+                            <input type="text" class="nn-topic" maxlength="60" placeholder="e.g. Starship">
+                            <input type="text" class="nn-topic" maxlength="60" placeholder="e.g. BC housing policy">
+                            <input type="text" class="nn-topic" maxlength="60" placeholder="e.g. open-source AI models">
+                            <input type="text" class="nn-topic" maxlength="60" placeholder="Fourth topic">
+                            <input type="text" class="nn-topic" maxlength="60" placeholder="Fifth topic">
+                        </div>
+                    </div>
                     <p class="nn-muted" id="nn-addon-upsell" hidden style="margin-top:0.6rem;">
-                       Location add-ons run on <strong>Personal News Network</strong>
-                       ($8.99/mo) —
+                       On Personal your brief is the <strong>taster</strong>: one city, one
+                       item per section. <strong>Personal News Network</strong> ($8.99/mo)
+                       goes to three items per section, three locations, and your
+                       five topics —
                        {# Two different doors on purpose (Sep 13 2026). An
                           existing subscriber switches plans inside Stripe's
                           portal (prorated, same subscription). The old link
@@ -270,6 +294,23 @@
                            saved lineup will be ready on day one.</p>
                         {% endif %}
                     </div>
+                </div>
+
+                <!-- What Personal News Network adds (shown to Personal members) -->
+                <div class="nn-card nn-pnn-card" id="nn-pnn-card" hidden>
+                    <h2>Personal News Network</h2>
+                    <p class="nn-muted" style="margin-top:0;">Your edition, all the way yours. Upgrade adds:</p>
+                    <ul>
+                        <li>Up to <strong>three items</strong> per section in your brief, not one</li>
+                        <li>Up to <strong>three locations</strong> on the same feed</li>
+                        <li><strong>Your topics</strong> — five subjects Mira researches daily</li>
+                        <li>Every Nerra book as an EPUB download, coming soon</li>
+                    </ul>
+                    <button class="ghost" id="nn-pnn-switch" hidden onclick="NN.portal()">Switch to Personal News Network — $8.99/mo</button>
+                    {% if stripe_personal_local_url and stripe_personal_local_url != '#' %}
+                    <a href="{{ stripe_personal_local_url }}" data-checkout id="nn-pnn-checkout" hidden><button class="ghost">Start Personal News Network — $8.99/mo</button></a>
+                    {% endif %}
+                    <p class="nn-muted" style="margin:0.6rem 0 0;">Prorated; switch back any time.</p>
                 </div>
 
                 <!-- Market snapshot (public pipeline data, refreshed daily) -->
@@ -385,6 +426,35 @@ var NN = (function () {
     if (!state.active) return false;
     return a.tier === 'personal' || state.tier === 'personal_local';
   }
+  // Tier ceilings — mirror engine.personal_edition.TIER_LIMITS.
+  var LIMITS = { personal: { cities: 1, topics: 0 }, personal_local: { cities: 3, topics: 5 } };
+  function limits() { return LIMITS[state.tier] || { cities: 0, topics: 0 }; }
+  function cityInputs() { return Array.prototype.slice.call(document.querySelectorAll('#nn-cities .nn-city')); }
+  function topicInputs() { return Array.prototype.slice.call(document.querySelectorAll('#nn-topics .nn-topic')); }
+  function renderLists(prefs) {
+    var lim = limits();
+    var cities = prefs.cities || (prefs.city ? [prefs.city] : []);
+    cityInputs().forEach(function (inp, i) {
+      inp.value = cities[i] || '';
+      // A free account can still type its first city — it's saved and
+      // used the day they subscribe. Beyond the tier's count is greyed.
+      inp.disabled = i > 0 && i >= lim.cities;
+    });
+    var topics = prefs.topics || [];
+    topicInputs().forEach(function (inp, i) {
+      inp.value = topics[i] || '';
+      inp.disabled = i >= lim.topics;
+    });
+    el('nn-topics-help').textContent = lim.topics
+      ? '(subjects you follow — Mira researches each one daily, sources named)'
+      : '(Personal News Network — up to five subjects Mira researches daily)';
+    el('nn-cities-help').textContent = lim.cities > 1
+      ? '(up to three cities or towns — each gets its own brief)'
+      : '(any city or town — the add-ons below follow it)';
+  }
+  function listValues(inputs) {
+    return inputs.map(function (i) { return i.value.trim(); }).filter(Boolean);
+  }
   function renderAddons() {
     var box = el('nn-addons');
     if (!box) return;
@@ -419,7 +489,9 @@ var NN = (function () {
       }
       box.appendChild(d);
     });
-    el('nn-addon-upsell').hidden = !anyLocked;
+    // The upsell now reads on every active Personal member (the add-ons
+    // all run on Personal since 13 Sep 2026; what's locked is depth).
+    el('nn-addon-upsell').hidden = !(state.active && state.tier === 'personal');
   }
 
   // ------- Recent editions (the member's own private feed, CORS-enabled)
@@ -571,7 +643,6 @@ var NN = (function () {
         state.shows = prefs.shows || [];
         state.addons = (prefs.addons === undefined) ? null : prefs.addons;
         el('nn-name').value = prefs.first_name || '';
-        el('nn-city').value = prefs.city || '';
         greet(prefs.first_name || '');
         var feedUrl = data.member && data.member.feed_url;
         var tier = (data.member && data.member.tier) || 'none';
@@ -579,6 +650,7 @@ var NN = (function () {
         var cancelled = status === 'cancelled';
         state.tier = tier; state.active = status === 'active';
         renderLineup();
+        renderLists(prefs);
         renderAddons();
         loadEpisodes();
         loadMarkets();
@@ -604,8 +676,9 @@ var NN = (function () {
         // until they save their own (the Worker fills it server-side).
         el('nn-starter-note').hidden = !(feedUrl && state.shows.length < 2);
         el('nn-city-nudge').hidden = !(
-          status === 'active' && tier === 'personal_local' && !el('nn-city').value
+          status === 'active' && !listValues(cityInputs()).length
         );
+
         // Plan switching (Sep 13 2026): an existing subscriber changes
         // plan or cancels inside Stripe's portal; the account page never
         // opens a second checkout for them.
@@ -621,6 +694,12 @@ var NN = (function () {
           el('nn-ends-note').textContent = 'Your subscription is set to end on ' + endsAt
             + '. Your feed keeps building until then; resume any time from Manage plan & billing.';
         }
+        // Personal members see what the next tier adds; the button is the
+        // portal (existing subscription) — never a second checkout.
+        el('nn-pnn-card').hidden = !(status === 'active' && tier === 'personal');
+        el('nn-pnn-switch').hidden = !(portal && status === 'active');
+        var pnnCheckout = el('nn-pnn-checkout');
+        if (pnnCheckout) { pnnCheckout.hidden = (portal && status === 'active'); }
         attachCheckoutRefs();
         var code = data.perks && data.perks.book_discount_code;
         el('nn-book-perk').innerHTML = code
@@ -647,7 +726,8 @@ var NN = (function () {
       var body = {
         shows: state.shows,
         first_name: el('nn-name').value,
-        city: el('nn-city').value,
+        cities: listValues(cityInputs()),
+        topics: listValues(topicInputs()),
       };
       // Send addons only once the member has a real choice — an untouched
       // page must not overwrite "never saved" (defaults) with a snapshot.
