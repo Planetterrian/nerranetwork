@@ -9,7 +9,7 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>en-us</language>
-    <lastBuildDate>Sat, 12 Sep 2026 08:24:52 +0000</lastBuildDate>
+    <lastBuildDate>Sun, 13 Sep 2026 08:16:40 +0000</lastBuildDate>
     <itunes:author>Patrick</itunes:author>
     <itunes:category text="Technology" />
     <itunes:category text="News">
@@ -23,6 +23,119 @@
     </itunes:owner>
     <itunes:summary>Your daily briefing on AI models and agents: new releases from the frontier labs, open-weight drops, agent frameworks, benchmarks, pricing, and practical tools you can use the same day — with long-running program tracking so you always know where the big stories stand. For developers, builders, and AI practitioners.</itunes:summary>
     <itunes:type>episodic</itunes:type>
+    <item>
+      <title>Ep 172: Industry leaders from Anthropic, OpenAI, and DeepMind align on pacing frontier development…</title>
+      <description>Models &amp; Agents
+&lt;b&gt;Industry leaders from Anthropic, OpenAI, and DeepMind align on pacing frontier development with shared safety evaluator access.&lt;/b&gt;
+
+&lt;b&gt;What You Need to Know:&lt;/b&gt; Dario Amodei published an essay calling for slower frontier progress and announced Anthropic's unilateral commitment to permanent third-party evaluator access. Sam Altman and Demis Hassabis publicly endorsed the direction and committed OpenAI and DeepMind to matching steps. Builders should watch how these commitments translate into concrete evaluation protocols this quarter.
+
+Top Story
+Anthropic CEO Dario Amodei released an essay titled "We Must Pace the Frontier" outlining a three-part plan for slowing AI development and announced that Anthropic will give third-party evaluators permanent employee-level access to its systems for verifying safety measures, reporting incidents, and assessing model alignment during training. The commitment is unilateral and provides evaluators with the same access level as employees so they can verify adherence to safety measures and report on incidents. Sam Altman replied that OpenAI agrees on pacing the frontier after recent internal discussions and will implement the same independent evaluator access with more details coming soon. Demis Hassabis stated that Dario's essay points toward the right path forward even though details need working through and referenced DeepMind's recent proposal for an industry-wide standards body for frontier AI. The commitments respond to rising risks and aim to establish verifiable standards across frontier labs through shared evaluator access. Builders should monitor how these access arrangements affect model release timelines and evaluation transparency in the coming months. Source: &lt;a href="https://x.com/DarioAmodei/status/2098773920774074715"&gt;x.com&lt;/a&gt;
+
+Model Updates
+&lt;b&gt;Dense 9b model ready for community training and open release: r/LocalLLaMA&lt;/b&gt;
+A developer has prepared a 9.4 billion parameter dense model incorporating Engram tables, Moonshot attention residual modeling, and RoPE/NoPE layering at a 3:1 ratio using the Llama 3 tokenizer and LM head as a starting point. The model was trained on logit-level extraction from a Llama 3 teacher model on a single RTX 4090 plus rented hardware and remains stable after initial training steps. The author plans to switch the target to the OLMo 3 series to avoid Llama licensing restrictions on synthetic data and will release all code, data, and weights publicly once pre-training completes. The training code is optimized to run on a single RTX 6000 Pro series card and the developer has already reported issues in vLLM that may benefit the broader community. Source: &lt;a href="https://www.reddit.com/r/LocalLLaMA/comments/1wezm58/is_there_still_strong_interest_in_a_dense_9b_model/"&gt;reddit.com&lt;/a&gt;
+
+&lt;b&gt;ChatGPT Work with GPT-6 Astra generates 5K and 10K running routes from any address using OpenStreetMap: Simon Willison&lt;/b&gt;
+The system accepts an address, queries Nominatim for location, pulls local roads and trails via Overpass, calculates circular loops locally, and returns both an embedded D3 visualization and downloadable GPX and GeoJSON files after running for 27 minutes. The visualization skill produces a self-contained HTML file using D3 from an allow-listed CDN that renders the route directly in the chat interface with map data attributed to OpenStreetMap contributors. The actual Python code used by the model was not visible in the ChatGPT UI due to thread compaction. Source: &lt;a href="https://simonwillison.net/2026/Sep/12/astra-running-routes/"&gt;simonwillison.net&lt;/a&gt;
+
+&lt;b&gt;Reflection on training LLMs on StackOverflow data for promptable Q&amp;A: Andrej Karpathy&lt;/b&gt;
+Karpathy noted that training on StackOverflow would have demonstrated earlier that LLMs can function as promptable general-purpose question-answering engines. Source: &lt;a href="https://x.com/karpathy/status/2098828290152944093"&gt;x.com&lt;/a&gt;
+
+&lt;b&gt;Interest in a serverless LoRA hosting platform using vLLM: r/LocalLLaMA&lt;/b&gt;
+A new platform called Lorivo hosts multiple LoRA adapters on a single base-model GPU instance by loading adapters into memory on demand and exposing OpenAI-compatible endpoints directly from the web app or CLI. The service currently runs Qwen 3.5 4B for free with a 32k context window and collects only token counts and timestamps without saving chats or inference requests. The developer is using $1,000 in AWS credits to add more models and is seeking community input on which models would be most useful. Source: &lt;a href="https://www.reddit.com/r/LocalLLaMA/comments/1weum85/i_built_a_serverless_hosting_platform_for_lora/"&gt;reddit.com&lt;/a&gt;
+
+Agent &amp; Tool Developments
+&lt;b&gt;Reverse-engineered ChatGPT visualize skill for running-route maps: Simon Willison&lt;/b&gt;
+The skill outputs a self-contained HTML fragment that uses D3 to draw both the base map and the overlaid route geometry stored in a JSON script tag inside the HTML. External resources are restricted to a short allow-list of CDNs including cdn.jsdelivr.net, esm.sh, and unpkg.com while other origins are blocked and fail silently. Source: &lt;a href="https://x.com/simonw/status/2098929831945842887"&gt;x.com&lt;/a&gt;
+
+&lt;b&gt;New framework for multi-agent reinforcement learning to reduce chaotic teamwork: Bioengineer.org&lt;/b&gt;
+The framework addresses coordination failures in multi-agent reinforcement learning settings. No further technical details or benchmarks were provided in the report. Source: &lt;a href="https://bioengineer.org/new-ai-framework-tames-chaotic-teamwork-in-multi-agent-reinforcement-learning/"&gt;bioengineer.org&lt;/a&gt;
+
+Practical &amp; Community
+&lt;b&gt;Benchmark tool for custom Pi harnesses and extensions: r/LocalLLaMA&lt;/b&gt;
+RoastMyHarness runs DeepSWE benchmark tasks against both bare Pi and user-modified harnesses, extensions, skills, or AGENTS.md files to measure quality, token efficiency, and cost changes. The tool is currently tested on Linux and remains a work in progress with a wizard available to set up Pi extensions. Source: &lt;a href="https://www.reddit.com/r/LocalLLaMA/comments/1weufjc/benchmark_your_custom_pi_tools/"&gt;reddit.com&lt;/a&gt;
+
+&lt;b&gt;QEMU-based VM manager with planned AI agent integration: r/LocalLLaMA&lt;/b&gt;
+A developer is building a Rust and Tauri desktop application using QEMU with WHPX on Windows and is seeking advice on QMP for lifecycle management and approaches for letting an AI agent interact inside the VM. Source: &lt;a href="https://www.reddit.com/r/LocalLLaMA/comments/1wey0i3/need_some_advice_on_a_qemubased_vm_manager_with/"&gt;reddit.com&lt;/a&gt;
+
+&lt;b&gt;Hugging Face Hub silently fingerprints which AI coding agent is in use: r/LocalLLaMA&lt;/b&gt;
+Users reported that the library sends telemetry identifying the specific coding agent being used. Source: &lt;a href="https://www.reddit.com/r/LocalLLaMA/comments/1wey19g/huggingface_hub_silently_fingerprints_which_ai/"&gt;reddit.com&lt;/a&gt;
+
+Under the Hood: LoRA Adapter Sharing in Inference Servers
+Inference servers can keep a single copy of base model weights in GPU memory while swapping lightweight adapter deltas for different users. The approach works because adapter matrices are orders of magnitude smaller than the base weights, so memory traffic stays low even when many adapters are active. vLLM already implements fused kernels that apply these deltas during the forward pass without materializing full weight copies. The tradeoff appears when adapter rank grows: higher ranks increase both compute per token and the chance that the adapter no longer fits in the remaining GPU memory alongside the base model. Teams therefore choose low-rank adapters when they need to serve dozens of fine-tunes on one card and accept the modest quality drop that comes with rank eight to thirty-two. When the workload instead requires many high-rank adapters or very different base models, the economics shift back toward dedicated instances.
+
+Things to Try This Week
+• Test the Lorivo platform with a rank-8 or rank-16 LoRA on Qwen 3.5 4B to see shared-adapter serving in action.
+• Run RoastMyHarness against your own Pi extensions to quantify whether they improve token efficiency on DeepSWE tasks.
+• Generate a running route from your own address with ChatGPT Work and GPT-6 Astra to explore the visualize skill output.
+
+On the Horizon
+• Further details expected from OpenAI on its independent evaluator program.
+• Additional Western-lab open-weight models in the 120B range may appear as Chinese model restrictions tighten for some organizations.
+• Community training runs on the announced 9.4B dense model could produce early checkpoints within weeks.</description>
+      <guid isPermaLink="false">models-agents-video-ep172-20260913</guid>
+      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep172_20260913.mp4" length="178035566" type="video/mp4" />
+      <pubDate>Sun, 13 Sep 2026 08:00:00 +0000</pubDate>
+      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep172_20260913.jpg" />
+      <itunes:duration>08:27</itunes:duration>
+      <itunes:explicit>no</itunes:explicit>
+      <itunes:summary># Models &amp; Agents
+&gt; **Industry leaders from Anthropic, OpenAI, and DeepMind align on pacing frontier development with shared safety evaluator access.**
+
+**What You Need to Know:** Dario Amodei published an essay calling for slower frontier progress and announced Anthropic's unilateral commitment to permanent third-party evaluator access. Sam Altman and Demis Hassabis publicly endorsed the direction and committed OpenAI and DeepMind to matching steps. Builders should watch how these commitments translate into concrete evaluation protocols this quarter.
+---
+### Top Story
+Anthropic CEO Dario Amodei released an essay titled "We Must Pace the Frontier" outlining a three-part plan for slowing AI development and announced that Anthropic will give third-party evaluators permanent employee-level access to its systems for verifying safety measures, reporting incidents, and assessing model alignment during training. The commitment is unilateral and provides evaluators with the same access level as employees so they can verify adherence to safety measures and report on incidents. Sam Altman replied that OpenAI agrees on pacing the frontier after recent internal discussions and will implement the same independent evaluator access with more details coming soon. Demis Hassabis stated that Dario's essay points toward the right path forward even though details need working through and referenced DeepMind's recent proposal for an industry-wide standards body for frontier AI. The commitments respond to rising risks and aim to establish verifiable standards across frontier labs through shared evaluator access. Builders should monitor how these access arrangements affect model release timelines and evaluation transparency in the coming months. Source: [x.com](https://x.com/DarioAmodei/status/2098773920774074715)
+---
+### Model Updates
+**Dense 9b model ready for community training and open release: r/LocalLLaMA**
+A developer has prepared a 9.4 billion parameter dense model incorporating Engram tables, Moonshot attention residual modeling, and RoPE/NoPE layering at a 3:1 ratio using the Llama 3 tokenizer and LM head as a starting point. The model was trained on logit-level extraction from a Llama 3 teacher model on a single RTX 4090 plus rented hardware and remains stable after initial training steps. The author plans to switch the target to the OLMo 3 series to avoid Llama licensing restrictions on synthetic data and will release all code, data, and weights publicly once pre-training completes. The training code is optimized to run on a single RTX 6000 Pro series card and the developer has already reported issues in vLLM that may benefit the broader community. Source: [reddit.com](https://www.reddit.com/r/LocalLLaMA/comments/1wezm58/is_there_still_strong_interest_in_a_dense_9b_model/)
+
+**ChatGPT Work with GPT-6 Astra generates 5K and 10K running routes from any address using OpenStreetMap: Simon Willison**
+The system accepts an address, queries Nominatim for location, pulls local roads and trails via Overpass, calculates circular loops locally, and returns both an embedded D3 visualization and downloadable GPX and GeoJSON files after running for 27 minutes. The visualization skill produces a self-contained HTML file using D3 from an allow-listed CDN that renders the route directly in the chat interface with map data attributed to OpenStreetMap contributors. The actual Python code used by the model was not visible in the ChatGPT UI due to thread compaction. Source: [simonwillison.net](https://simonwillison.net/2026/Sep/12/astra-running-routes/)
+
+**Reflection on training LLMs on StackOverflow data for promptable Q&amp;A: Andrej Karpathy**
+Karpathy noted that training on StackOverflow would have demonstrated earlier that LLMs can function as promptable general-purpose question-answering engines. Source: [x.com](https://x.com/karpathy/status/2098828290152944093)
+
+**Interest in a serverless LoRA hosting platform using vLLM: r/LocalLLaMA**
+A new platform called Lorivo hosts multiple LoRA adapters on a single base-model GPU instance by loading adapters into memory on demand and exposing OpenAI-compatible endpoints directly from the web app or CLI. The service currently runs Qwen 3.5 4B for free with a 32k context window and collects only token counts and timestamps without saving chats or inference requests. The developer is using $1,000 in AWS credits to add more models and is seeking community input on which models would be most useful. Source: [reddit.com](https://www.reddit.com/r/LocalLLaMA/comments/1weum85/i_built_a_serverless_hosting_platform_for_lora/)
+---
+### Agent &amp; Tool Developments
+**Reverse-engineered ChatGPT visualize skill for running-route maps: Simon Willison**
+The skill outputs a self-contained HTML fragment that uses D3 to draw both the base map and the overlaid route geometry stored in a JSON script tag inside the HTML. External resources are restricted to a short allow-list of CDNs including cdn.jsdelivr.net, esm.sh, and unpkg.com while other origins are blocked and fail silently. Source: [x.com](https://x.com/simonw/status/2098929831945842887)
+
+**New framework for multi-agent reinforcement learning to reduce chaotic teamwork: Bioengineer.org**
+The framework addresses coordination failures in multi-agent reinforcement learning settings. No further technical details or benchmarks were provided in the report. Source: [bioengineer.org](https://bioengineer.org/new-ai-framework-tames-chaotic-teamwork-in-multi-agent-reinforcement-learning/)
+---
+### Practical &amp; Community
+**Benchmark tool for custom Pi harnesses and extensions: r/LocalLLaMA**
+RoastMyHarness runs DeepSWE benchmark tasks against both bare Pi and user-modified harnesses, extensions, skills, or AGENTS.md files to measure quality, token efficiency, and cost changes. The tool is currently tested on Linux and remains a work in progress with a wizard available to set up Pi extensions. Source: [reddit.com](https://www.reddit.com/r/LocalLLaMA/comments/1weufjc/benchmark_your_custom_pi_tools/)
+
+**QEMU-based VM manager with planned AI agent integration: r/LocalLLaMA**
+A developer is building a Rust and Tauri desktop application using QEMU with WHPX on Windows and is seeking advice on QMP for lifecycle management and approaches for letting an AI agent interact inside the VM. Source: [reddit.com](https://www.reddit.com/r/LocalLLaMA/comments/1wey0i3/need_some_advice_on_a_qemubased_vm_manager_with/)
+
+**Hugging Face Hub silently fingerprints which AI coding agent is in use: r/LocalLLaMA**
+Users reported that the library sends telemetry identifying the specific coding agent being used. Source: [reddit.com](https://www.reddit.com/r/LocalLLaMA/comments/1wey19g/huggingface_hub_silently_fingerprints_which_ai/)
+---
+### Under the Hood: LoRA Adapter Sharing in Inference Servers
+Inference servers can keep a single copy of base model weights in GPU memory while swapping lightweight adapter deltas for different users. The approach works because adapter matrices are orders of magnitude smaller than the base weights, so memory traffic stays low even when many adapters are active. vLLM already implements fused kernels that apply these deltas during the forward pass without materializing full weight copies. The tradeoff appears when adapter rank grows: higher ranks increase both compute per token and the chance that the adapter no longer fits in the remaining GPU memory alongside the base model. Teams therefore choose low-rank adapters when they need to serve dozens of fine-tunes on one card and accept the modest quality drop that comes with rank eight to thirty-two. When the workload instead requires many high-rank adapters or very different base models, the economics shift back toward dedicated instances.
+---
+### Things to Try This Week
+- Test the Lorivo platform with a rank-8 or rank-16 LoRA on Qwen 3.5 4B to see shared-adapter serving in action.
+- Run RoastMyHarness against your own Pi extensions to quantify whether they improve token efficiency on DeepSWE tasks.
+- Generate a running route from your own address with ChatGPT Work and GPT-6 Astra to explore the visualize skill output.
+---
+### On the Horizon
+- Further details expected from OpenAI on its independent evaluator program.
+- Additional Western-lab open-weight models in the 120B range may appear as Chinese model restrictions tighten for some organizations.
+- Community training runs on the announced 9.4B dense model could produce early checkpoints within weeks.
+</itunes:summary>
+      <itunes:episode>172</itunes:episode>
+      <itunes:title>Ep 172: Industry leaders from Anthropic, OpenAI, and DeepMind align on pacing frontier development…</itunes:title>
+      <itunes:episodeType>full</itunes:episodeType>
+    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep172_20260913_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep172.json" type="application/json+chapters" /></item>
     <item>
       <title>Ep 171: OpenAI agents carried out an undisclosed attack on RubyGems in May that went unreported to…</title>
       <description>Models &amp; Agents
@@ -3531,117 +3644,5 @@ Everyone talks about linear attention as a simple drop-in replacement that remov
       <itunes:title>Ep 143: Models sound most sure of themselves exactly when their answers are wrong — and a new eval…</itunes:title>
       <itunes:episodeType>full</itunes:episodeType>
     <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep143_20260816_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep143.json" type="application/json+chapters" /></item>
-    <item>
-      <title>Ep 142: Z.ai just showed how far post-training alone can push a fixed base model into serious…</title>
-      <description>Models &amp; Agents
-&lt;b&gt;Z.ai just showed how far post-training alone can push a fixed base model into serious coding and cyber agent territory.&lt;/b&gt;
-
-&lt;b&gt;What You Need to Know:&lt;/b&gt; GLM-5.3 arrives with the same 743-753B base as GLM-5.2 but delivers large jumps on Terminal-Bench, DeepSWE, and ExploitBench after heavy post-training scaling. Anthropic published its second Responsible Scaling Policy Risk Report alongside an EU AI Act watermarking FAQ that confirms no output quality or cost impact. Builders should watch how open-weight labs balance capability gains against the controls now required for cyber-related features.
-
-Top Story
-Z.ai released GLM-5.3, built on the identical 743-753B-parameter base model as GLM-5.2 but with all gains coming from expanded post-training across long-horizon engineering and vulnerability environments. The model reaches 28.3 on Terminal-Bench 3.0, 66.9 on DeepSWE v1.1, 48.2 on AutomationBench, and 28.5 on Agents’ Last Exam CLI, while GLM-5.2 scored 4.6, 46.2, 26.2, and 23.8 on the same suites. On the company’s private Z.ai Code Bench the new model hits 34.5 percent at Max reasoning effort using roughly 75,000 output tokens per task, compared with 23.4 percent and 96,000 tokens for GLM-5.2. CyberGym accuracy rose from 77.2 percent to 84.5 percent and ExploitBench from 24.4 percent to 54.4 percent, with ExploitGym completing 105 tasks in a two-hour budget and 130 tasks in six hours versus 29 and 39 previously. The model already identified a potentially serious vulnerability in Cursor, leading Z.ai to introduce trusted-access controls and delay open weights and general API access until safety hardening finishes. Enterprise teams can now run autonomous coding agents that plan, implement, test, and verify multi-day tasks inside the ZCode environment on macOS, Windows, or Linux, but must specify one of three reasoning-effort levels because thinking can no longer be disabled. The release tests how far post-training can stretch an existing foundation before another pretraining cycle becomes necessary. Source: &lt;a href="https://venturebeat.com/technology/glm-5-3-is-here-with-advanced-cyber-capabilities-and-reportedly-already-found-a-serious-vulnerability-in-cursor"&gt;venturebeat.com&lt;/a&gt;
-
-Model Updates
-&lt;b&gt;Qwen 3.8 27B quantized build: Simon Willison (X)&lt;/b&gt;
-Simon Willison shared a direct link to LM Studio’s 17 GB Q4_K_M quantized version of the corrected Qwen 3.8 27B model. The build runs locally and addresses earlier version-number confusion in community discussion. Builders working with local inference can now test the model immediately through LM Studio without waiting for additional quantization work. The correction clarified that the model is Qwen 3.8 27B rather than any 3.7 variant. Source: &lt;a href="https://x.com/simonw/status/2088504645241160005"&gt;x.com&lt;/a&gt;
-
-&lt;b&gt;Claude watermarking for EU compliance: &lt;a href="https://x.com/AnthropicAI"&gt;@AnthropicAI&lt;/a&gt; (X)&lt;/b&gt;
-Anthropic published an FAQ confirming watermarking will be added to meet the EU AI Act Code of Practice that other major labs have also signed. The method adds no tokens, hidden characters, or quality degradation and cannot be traced to any individual user or conversation. Developers using Claude outputs in regulated environments gain a compliance path that leaves existing prompts, pricing, and output behavior unchanged. The watermark is invisible to readers and does not increase inference cost. Source: &lt;a href="https://x.com/AnthropicAI/status/2088343978873966687"&gt;x.com&lt;/a&gt;
-
-&lt;b&gt;Anthropic second Risk Report: &lt;a href="https://x.com/AnthropicAI"&gt;@AnthropicAI&lt;/a&gt; (X)&lt;/b&gt;
-The company released its second detailed Risk Report under the Responsible Scaling Policy, covering system risks and preparedness measures. The redacted PDF is now public at the provided link. Teams tracking frontier lab safety practices can review the latest internal evaluation approach directly from the source. The report forms part of regular disclosures required by the policy. Source: &lt;a href="https://x.com/AnthropicAI/status/2088324824863236248"&gt;x.com&lt;/a&gt;
-
-Agent &amp; Tool Developments
-&lt;b&gt;NEC’s 17-agent AI department: hi-Tech.ua&lt;/b&gt;
-NEC launched what it describes as the first all-AI department staffed by 17 autonomous agents. The setup targets internal operations without human staff in the loop for routine tasks. Organizations experimenting with fully agentic teams now have a concrete enterprise example to study for scaling patterns and failure modes. The department operates as a self-contained unit handling processes that previously required human coordination. Source: &lt;a href="https://news.google.com/rss/articles/CBMijgFBVV95cUxNZEIxdncyQnBIbHhnaXNRQkllZGhxd3RSSDhwT18tbzdjZnhfaW9XQWZkRXJmNTdENHZNN1FkUTJwazNFS0VINVNPenZNWjVOSnZoSkxzeVNBQmpvRVVlcHVkMlFmLXVKZktBN3ktLXd4VG1pRDQ5X1NVVDFxZnRsMDloLXlVaHJOZG9SdFZR?oc=5"&gt;Google News&lt;/a&gt;
-
-&lt;b&gt;Gemini 3.7 Flash for crypto agent testing: CryptoRank&lt;/b&gt;
-Reports highlight Gemini 3.7 Flash as a potential benchmark environment for autonomous agents operating in crypto markets. The model’s speed and cost profile make it attractive for high-frequency, tool-using agent loops. Developers building financial or on-chain agents can use the Flash tier to prototype before moving to higher-capability variants. The tier is positioned as an accessible entry point for repeated agent interactions in volatile environments. Source: &lt;a href="https://news.google.com/rss/articles/CBMitAFBVV95cUxPWndHTFFJa1JUS0lONTB2elZIXzUxcDBsSHU0eE50dWpmZDFCQXFHV2VUUW1wTkQ3T3dkLXZONkVwOFJRT0ZiazQwZXVRd3lLN0VNbFVUbDhtRVpXak54QmsxN3RDZFkwaTMzNGNVVEZOWDFRalg5WU1YbTQzTHpfTS1IcV9lQnNLMDNJNHNCaXRpWFlfYzFISnZyLTVqakdtcUhPb3Z2UWgwZzZsRXFQd3E0bS0?oc=5"&gt;CryptoRank&lt;/a&gt;
-
-Practical &amp; Community
-&lt;b&gt;BDH-CQ recurrent latent reasoning: r/MachineLearning&lt;/b&gt;
-A 150 M parameter BDH-CQ system updates recurrent memory from in-context demonstrations and solves queries through iterative latent-space computation without verbalizing intermediate steps. It reaches 29.5 percent pass@2 on ARC-AGI-1 at roughly $0.00070 per task, improving the reported cost-accuracy frontier. Researchers exploring memory-augmented or non-verbal reasoning architectures can examine the approach for tasks where token-level chain-of-thought is undesirable. The system performs adaptation and inference inside the same computational fabric without parameter updates at test time. Source: &lt;a href="https://www.reddit.com/r/MachineLearning/comments/1vov5r5/bdhcq_incontext_learning_with_recurrent_latent/"&gt;reddit.com&lt;/a&gt;
-
-&lt;b&gt;Compiled Doom renderer in transformer: r/MachineLearning&lt;/b&gt;
-A 21 B parameter transformer was created by compiling Doom’s rendering algorithm directly into weights using a custom computation-graph compiler, with no training involved. The resulting Hugging Face checkpoint accepts scene prompts and outputs pixel-drawing commands that produce the E1M1 frame after 53,747 generated tokens from a 3,614-token prompt. Developers interested in weight-compilation techniques rather than learned models can inspect the 43-line host program and full graph definition for similar projects. One frame takes approximately 40 minutes on a B200 GPU. Source: &lt;a href="https://www.reddit.com/r/MachineLearning/comments/1voazhm/i_compiled_dooms_renderer_into_a_21bparameter/"&gt;reddit.com&lt;/a&gt;
-
-&lt;b&gt;oncothresh oncology evaluation library: r/MachineLearning&lt;/b&gt;
-The open-source oncothresh Python package plus web dashboard computes sensitivity, specificity, PPV, NPV, decision-curve net benefit, and bootstrap intervals at user-specified clinical thresholds for continuous oncology model outputs. It targets tasks such as Ki-67 or PD-L1 scoring where global metrics like AUC are insufficient. Pathologists and model developers working with threshold-based decisions can run the library locally via Docker without cloud dependencies. The companion web interface accepts CSV uploads and produces downloadable PDF reports. Source: &lt;a href="https://www.reddit.com/r/MachineLearning/comments/1vod2c8/opensource_python_library_nocode_web_dashboard/"&gt;reddit.com&lt;/a&gt;
-
-Under the Hood: Post-training scaling without new pretraining
-Everyone treats post-training as a simple “add more RL” step, yet the engineering reality is a carefully staged expansion of environments, task diversity, and reinforcement-learning compute that can unlock capabilities the base model never saw in pretraining. The process begins by reusing the identical foundation weights and then progressively exposing the model to longer-horizon scenarios—full codebases, multi-day engineering jobs, vulnerability discovery chains—while keeping the parameter count fixed. Each added environment increases the density of useful gradients, but also raises the risk that capabilities such as exploitation-chain construction emerge faster than safety evaluations can track. In GLM-5.3’s case the same base moved from 4.6 to 28.3 on Terminal-Bench and from 24.4 percent to 54.4 percent on ExploitBench solely through this scaling, at the cost of having to introduce trusted-access gates before wider release. The practical tradeoff is that teams gain substantial capability without another multi-hundred-million-dollar pretraining run, yet they inherit the same difficult access-control problem that closed labs already face. Use this route when your base model already covers the domain and you can afford extensive environment engineering; fall back to fresh pretraining only when the target capability lies outside the current weight distribution. The approach also forces changes in how applications call the model, since reasoning effort must now be explicitly chosen and thinking cannot be turned off.
-
-Things to Try This Week
-• Load LM Studio’s Q4_K_M build of Qwen 3.8 27B locally and compare its coding throughput against your current 7-13 B models on a representative SWE-bench subset.
-• Review Anthropic’s redacted Risk Report PDF to see how one lab structures capability evaluations ahead of any EU-mandated watermarking rollout.
-• Clone the BDH-CQ repository once released and test the 150 M recurrent-latent setup on a small ARC-AGI subset to measure the claimed cost-accuracy improvement.
-• Run the oncothresh dashboard on your own oncology model outputs to generate threshold-specific calibration and net-benefit curves before the next clinical review.
-• Experiment with ZCode’s Goal tasks on the GLM Coding Plan to observe how the new reasoning-effort controls affect long-horizon agent workflows.
-
-On the Horizon
-• Z.ai plans to release GLM-5.3 weights roughly two weeks after launch once safety hardening completes.
-• Staged GLM-5.3 API access is expected after the current trusted-access controls are validated.
-• Additional labs are expected to publish their own EU AI Act watermarking details in the coming weeks as the Code of Practice deadline approaches.
-• More post-training-only model updates are likely as teams test how far existing bases can be pushed before the next pretraining cycle.</description>
-      <guid isPermaLink="false">models-agents-video-ep142-20260815</guid>
-      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep142_20260815.mp4" length="243184577" type="video/mp4" />
-      <pubDate>Sat, 15 Aug 2026 08:00:00 +0000</pubDate>
-      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep142_20260815.jpg" />
-      <itunes:duration>09:43</itunes:duration>
-      <itunes:explicit>no</itunes:explicit>
-      <itunes:summary># Models &amp; Agents
-&gt; **Z.ai just showed how far post-training alone can push a fixed base model into serious coding and cyber agent territory.**
-
-**What You Need to Know:** GLM-5.3 arrives with the same 743-753B base as GLM-5.2 but delivers large jumps on Terminal-Bench, DeepSWE, and ExploitBench after heavy post-training scaling. Anthropic published its second Responsible Scaling Policy Risk Report alongside an EU AI Act watermarking FAQ that confirms no output quality or cost impact. Builders should watch how open-weight labs balance capability gains against the controls now required for cyber-related features.
----
-### Top Story
-Z.ai released GLM-5.3, built on the identical 743-753B-parameter base model as GLM-5.2 but with all gains coming from expanded post-training across long-horizon engineering and vulnerability environments. The model reaches 28.3 on Terminal-Bench 3.0, 66.9 on DeepSWE v1.1, 48.2 on AutomationBench, and 28.5 on Agents’ Last Exam CLI, while GLM-5.2 scored 4.6, 46.2, 26.2, and 23.8 on the same suites. On the company’s private Z.ai Code Bench the new model hits 34.5 percent at Max reasoning effort using roughly 75,000 output tokens per task, compared with 23.4 percent and 96,000 tokens for GLM-5.2. CyberGym accuracy rose from 77.2 percent to 84.5 percent and ExploitBench from 24.4 percent to 54.4 percent, with ExploitGym completing 105 tasks in a two-hour budget and 130 tasks in six hours versus 29 and 39 previously. The model already identified a potentially serious vulnerability in Cursor, leading Z.ai to introduce trusted-access controls and delay open weights and general API access until safety hardening finishes. Enterprise teams can now run autonomous coding agents that plan, implement, test, and verify multi-day tasks inside the ZCode environment on macOS, Windows, or Linux, but must specify one of three reasoning-effort levels because thinking can no longer be disabled. The release tests how far post-training can stretch an existing foundation before another pretraining cycle becomes necessary. Source: [venturebeat.com](https://venturebeat.com/technology/glm-5-3-is-here-with-advanced-cyber-capabilities-and-reportedly-already-found-a-serious-vulnerability-in-cursor)
----
-### Model Updates
-**Qwen 3.8 27B quantized build: Simon Willison (X)**
-Simon Willison shared a direct link to LM Studio’s 17 GB Q4_K_M quantized version of the corrected Qwen 3.8 27B model. The build runs locally and addresses earlier version-number confusion in community discussion. Builders working with local inference can now test the model immediately through LM Studio without waiting for additional quantization work. The correction clarified that the model is Qwen 3.8 27B rather than any 3.7 variant. Source: [x.com](https://x.com/simonw/status/2088504645241160005)
-
-**Claude watermarking for EU compliance: [@AnthropicAI](https://x.com/AnthropicAI) (X)**
-Anthropic published an FAQ confirming watermarking will be added to meet the EU AI Act Code of Practice that other major labs have also signed. The method adds no tokens, hidden characters, or quality degradation and cannot be traced to any individual user or conversation. Developers using Claude outputs in regulated environments gain a compliance path that leaves existing prompts, pricing, and output behavior unchanged. The watermark is invisible to readers and does not increase inference cost. Source: [x.com](https://x.com/AnthropicAI/status/2088343978873966687)
-
-**Anthropic second Risk Report: [@AnthropicAI](https://x.com/AnthropicAI) (X)**
-The company released its second detailed Risk Report under the Responsible Scaling Policy, covering system risks and preparedness measures. The redacted PDF is now public at the provided link. Teams tracking frontier lab safety practices can review the latest internal evaluation approach directly from the source. The report forms part of regular disclosures required by the policy. Source: [x.com](https://x.com/AnthropicAI/status/2088324824863236248)
----
-### Agent &amp; Tool Developments
-**NEC’s 17-agent AI department: hi-Tech.ua**
-NEC launched what it describes as the first all-AI department staffed by 17 autonomous agents. The setup targets internal operations without human staff in the loop for routine tasks. Organizations experimenting with fully agentic teams now have a concrete enterprise example to study for scaling patterns and failure modes. The department operates as a self-contained unit handling processes that previously required human coordination. Source: [Google News](https://news.google.com/rss/articles/CBMijgFBVV95cUxNZEIxdncyQnBIbHhnaXNRQkllZGhxd3RSSDhwT18tbzdjZnhfaW9XQWZkRXJmNTdENHZNN1FkUTJwazNFS0VINVNPenZNWjVOSnZoSkxzeVNBQmpvRVVlcHVkMlFmLXVKZktBN3ktLXd4VG1pRDQ5X1NVVDFxZnRsMDloLXlVaHJOZG9SdFZR?oc=5)
-
-**Gemini 3.7 Flash for crypto agent testing: CryptoRank**
-Reports highlight Gemini 3.7 Flash as a potential benchmark environment for autonomous agents operating in crypto markets. The model’s speed and cost profile make it attractive for high-frequency, tool-using agent loops. Developers building financial or on-chain agents can use the Flash tier to prototype before moving to higher-capability variants. The tier is positioned as an accessible entry point for repeated agent interactions in volatile environments. Source: [CryptoRank](https://news.google.com/rss/articles/CBMitAFBVV95cUxPWndHTFFJa1JUS0lONTB2elZIXzUxcDBsSHU0eE50dWpmZDFCQXFHV2VUUW1wTkQ3T3dkLXZONkVwOFJRT0ZiazQwZXVRd3lLN0VNbFVUbDhtRVpXak54QmsxN3RDZFkwaTMzNGNVVEZOWDFRalg5WU1YbTQzTHpfTS1IcV9lQnNLMDNJNHNCaXRpWFlfYzFISnZyLTVqakdtcUhPb3Z2UWgwZzZsRXFQd3E0bS0?oc=5)
----
-### Practical &amp; Community
-**BDH-CQ recurrent latent reasoning: r/MachineLearning**
-A 150 M parameter BDH-CQ system updates recurrent memory from in-context demonstrations and solves queries through iterative latent-space computation without verbalizing intermediate steps. It reaches 29.5 percent pass@2 on ARC-AGI-1 at roughly $0.00070 per task, improving the reported cost-accuracy frontier. Researchers exploring memory-augmented or non-verbal reasoning architectures can examine the approach for tasks where token-level chain-of-thought is undesirable. The system performs adaptation and inference inside the same computational fabric without parameter updates at test time. Source: [reddit.com](https://www.reddit.com/r/MachineLearning/comments/1vov5r5/bdhcq_incontext_learning_with_recurrent_latent/)
-
-**Compiled Doom renderer in transformer: r/MachineLearning**
-A 21 B parameter transformer was created by compiling Doom’s rendering algorithm directly into weights using a custom computation-graph compiler, with no training involved. The resulting Hugging Face checkpoint accepts scene prompts and outputs pixel-drawing commands that produce the E1M1 frame after 53,747 generated tokens from a 3,614-token prompt. Developers interested in weight-compilation techniques rather than learned models can inspect the 43-line host program and full graph definition for similar projects. One frame takes approximately 40 minutes on a B200 GPU. Source: [reddit.com](https://www.reddit.com/r/MachineLearning/comments/1voazhm/i_compiled_dooms_renderer_into_a_21bparameter/)
-
-**oncothresh oncology evaluation library: r/MachineLearning**
-The open-source oncothresh Python package plus web dashboard computes sensitivity, specificity, PPV, NPV, decision-curve net benefit, and bootstrap intervals at user-specified clinical thresholds for continuous oncology model outputs. It targets tasks such as Ki-67 or PD-L1 scoring where global metrics like AUC are insufficient. Pathologists and model developers working with threshold-based decisions can run the library locally via Docker without cloud dependencies. The companion web interface accepts CSV uploads and produces downloadable PDF reports. Source: [reddit.com](https://www.reddit.com/r/MachineLearning/comments/1vod2c8/opensource_python_library_nocode_web_dashboard/)
----
-### Under the Hood: Post-training scaling without new pretraining
-Everyone treats post-training as a simple “add more RL” step, yet the engineering reality is a carefully staged expansion of environments, task diversity, and reinforcement-learning compute that can unlock capabilities the base model never saw in pretraining. The process begins by reusing the identical foundation weights and then progressively exposing the model to longer-horizon scenarios—full codebases, multi-day engineering jobs, vulnerability discovery chains—while keeping the parameter count fixed. Each added environment increases the density of useful gradients, but also raises the risk that capabilities such as exploitation-chain construction emerge faster than safety evaluations can track. In GLM-5.3’s case the same base moved from 4.6 to 28.3 on Terminal-Bench and from 24.4 percent to 54.4 percent on ExploitBench solely through this scaling, at the cost of having to introduce trusted-access gates before wider release. The practical tradeoff is that teams gain substantial capability without another multi-hundred-million-dollar pretraining run, yet they inherit the same difficult access-control problem that closed labs already face. Use this route when your base model already covers the domain and you can afford extensive environment engineering; fall back to fresh pretraining only when the target capability lies outside the current weight distribution. The approach also forces changes in how applications call the model, since reasoning effort must now be explicitly chosen and thinking cannot be turned off.
----
-### Things to Try This Week
-- Load LM Studio’s Q4_K_M build of Qwen 3.8 27B locally and compare its coding throughput against your current 7-13 B models on a representative SWE-bench subset.
-- Review Anthropic’s redacted Risk Report PDF to see how one lab structures capability evaluations ahead of any EU-mandated watermarking rollout.
-- Clone the BDH-CQ repository once released and test the 150 M recurrent-latent setup on a small ARC-AGI subset to measure the claimed cost-accuracy improvement.
-- Run the oncothresh dashboard on your own oncology model outputs to generate threshold-specific calibration and net-benefit curves before the next clinical review.
-- Experiment with ZCode’s Goal tasks on the GLM Coding Plan to observe how the new reasoning-effort controls affect long-horizon agent workflows.
----
-### On the Horizon
-- Z.ai plans to release GLM-5.3 weights roughly two weeks after launch once safety hardening completes.
-- Staged GLM-5.3 API access is expected after the current trusted-access controls are validated.
-- Additional labs are expected to publish their own EU AI Act watermarking details in the coming weeks as the Code of Practice deadline approaches.
-- More post-training-only model updates are likely as teams test how far existing bases can be pushed before the next pretraining cycle.</itunes:summary>
-      <itunes:episode>142</itunes:episode>
-      <itunes:title>Ep 142: Z.ai just showed how far post-training alone can push a fixed base model into serious…</itunes:title>
-      <itunes:episodeType>full</itunes:episodeType>
-    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep142_20260815_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep142.json" type="application/json+chapters" /></item>
   <podcast:locked owner="patrick@planetterrian.com">yes</podcast:locked><itunes:keywords>ai, llm, machine learning, openai, anthropic, agents, claude, gpt, ai news</itunes:keywords></channel>
 </rss>
