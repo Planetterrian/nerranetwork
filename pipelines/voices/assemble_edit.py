@@ -49,7 +49,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import requests  # noqa: E402
 
-from common import logger, r2_upload, sb_select, sb_update  # noqa: E402
+from common import (  # noqa: E402
+    OPERATOR_EMAIL, logger, package_review_token, r2_upload, sb_select,
+    sb_update, send_email,
+)
 from shows import get_show  # noqa: E402
 
 EDL_DIR = Path(__file__).parent / "edl"
@@ -268,7 +271,53 @@ def assemble(slug: str) -> dict:
     log["tracks"] = tracks
     sb_update("interview_runs", f"id=eq.{run_id}", {"grok_session_log": log})
     logger.info("episode %s (%.0f min) -> %s", slug, seconds / 60, url)
+    _tell_patrick(spec, show, slug, url, seconds)
     return {"url": url, "duration_sec": seconds}
+
+
+def _tell_patrick(spec: dict, show, slug: str, url: str, seconds: float) -> None:
+    """Email the finished episode to the operator for gate 1.
+
+    Sept 13 2026: a finished episode used to sit in R2 until someone thought
+    to look. The point of assembling it is that a person hears it and says
+    yes, so the assembler hands it to them.
+    """
+    pkgs = sb_select("editorial_packages",
+                     f"interview_id=eq.{spec['interview_id']}&select=id,status")
+    pkg = pkgs[0] if pkgs else None
+    apps = []
+    ivs = sb_select("interviews", f"id=eq.{spec['interview_id']}&select=application_id")
+    if ivs and ivs[0].get("application_id"):
+        apps = sb_select("guest_applications", f"id=eq.{ivs[0]['application_id']}")
+    guest = (apps[0].get("name") if apps else None) or "the guest"
+    review = ""
+    if pkg:
+        try:
+            review = (f"https://api.nerranetwork.com/voices/admin/review/{pkg['id']}"
+                      f"?token={package_review_token(pkg['id'])}")
+        except Exception:  # noqa: BLE001
+            logger.exception("review token unavailable")
+    try:
+        send_email(
+            OPERATOR_EMAIL,
+            f"{show.short_label}: {guest} is cut and ready for your ear",
+            f"<p>Hi Patrick,</p>"
+            f"<p>The {guest} episode is assembled — introduction, conversation and "
+            f"close, {int(seconds // 60)} minutes {int(seconds % 60):02d}.</p>"
+            f'<p><a href="{url}">Listen to the episode</a></p>'
+            + (f'<p>When it passes your ear, approve it here and the guest is asked '
+               f'to review it: <a href="{review}">gate 1</a>.</p>' if review else "")
+            + f"<p>Nothing reaches {guest} until you do.</p>"
+              f"<p>Edit: <code>{slug}</code>. To change a cut, edit "
+              f"<code>pipelines/voices/edl/{slug}.json</code> and run the assemble "
+              f"workflow again.</p><p>— Mira</p>")
+        if pkg:
+            sb_update("editorial_packages", f"id=eq.{pkg['id']}",
+                      {"operator_preview_sent_at": __import__("datetime")
+                       .datetime.now(__import__("datetime").timezone.utc).isoformat()})
+        logger.info("episode emailed to %s", OPERATOR_EMAIL)
+    except Exception:  # noqa: BLE001 — the episode exists either way
+        logger.exception("operator preview email failed (non-fatal)")
 
 
 if __name__ == "__main__":

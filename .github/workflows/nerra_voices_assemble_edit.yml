@@ -35,6 +35,10 @@ jobs:
       - run: python pipelines/voices/assemble_edit.py
         env:
           EDL_SLUG: ${{ inputs.slug }}
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+          OPERATOR_EMAIL: ${{ secrets.OPERATOR_EMAIL }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          POSTMARK_TOKEN: ${{ secrets.POSTMARK_TOKEN }}
           SUPABASE_URL: ${{ secrets.VOICES_SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.VOICES_SUPABASE_SERVICE_KEY }}
           R2_BUCKET: ${{ secrets.R2_BUCKET }}

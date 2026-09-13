@@ -718,3 +718,66 @@ class TestAudioRestoration:
             if any(c["from"] == "run:mix" for c in conversation):
                 assert "room mix" in spec.get("note", ""), (
                     f"{name}: using the conference mix needs a reason in the note")
+
+
+class TestTheLoopClosesWithoutAsking:
+    """Sept 13 2026: a finished episode used to sit in R2 until someone
+    thought to look for it. The point of assembling one is that a person
+    hears it and says yes."""
+
+    def test_the_assembler_emails_the_operator(self):
+        src = (ROOT / "pipelines" / "voices" / "assemble_edit.py").read_text(encoding="utf-8")
+        assert "_tell_patrick(" in src
+        assert "OPERATOR_EMAIL" in src
+        assert "package_review_token(pkg['id'])" in src
+        assert "Nothing reaches" in src
+
+    def test_a_failed_email_does_not_lose_the_episode(self):
+        src = (ROOT / "pipelines" / "voices" / "assemble_edit.py").read_text(encoding="utf-8")
+        tail = src[src.index("def _tell_patrick("):]
+        assert "except Exception:" in tail
+        assert "the episode exists either way" in tail
+
+    def test_the_workflow_can_send_mail_and_mint_a_token(self):
+        wf = (ROOT / ".github" / "workflows"
+              / "nerra_voices_assemble_edit.yml").read_text(encoding="utf-8")
+        assert "ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}" in wf
+        assert "RESEND_API_KEY" in wf
+
+
+class TestGuestIsOfferedMoreThanApproval:
+    def test_the_page_offers_a_re_record_and_a_return(self):
+        page = WORKER[WORKER.index("async function handleGuestReviewPage("):]
+        page = page[:page.index("\n}\n") + 3]
+        for v in ("return_6", "return_12", "return_other", "redo", "none"):
+            assert f'value="{v}"' in page, v
+        assert "record this conversation again from scratch" in page
+
+    def test_the_choice_is_stored_as_a_dated_request(self):
+        body = WORKER[WORKER.index("async function handleGuestReviewSubmit("):]
+        body = body[:body.index("\n}\n") + 3]
+        assert '"guest_return_requests"' in body
+        assert "due_at: due" in body
+        assert 'kind: followup === "redo" ? "redo" : "return"' in body
+
+    def test_a_return_is_scheduled_not_just_noted(self):
+        body = WORKER[WORKER.index("async function handleGuestReviewSubmit("):]
+        body = body[:body.index("\n}\n") + 3]
+        assert "months * 30 * 864e5" in body, "a horizon must become a date"
+
+    def test_the_invitation_email_thanks_them_and_says_what_is_on_offer(self):
+        decision = WORKER[WORKER.index("async function handleEditorialDecision("):]
+        decision = decision[:decision.index("\n}\n") + 3]
+        assert "Thank you for the time you gave us" in decision
+        assert "record it" in decision and "again from scratch" in decision
+        assert "six months or a year" in decision
+
+
+class TestCraftLessonsFromTheFirstEpisodes:
+    def test_the_prompt_carries_what_the_tapes_taught(self):
+        text = (ROOT / "pipelines" / "voices" / "prompts"
+                / "mira_system_prompt.txt").read_text(encoding="utf-8")
+        assert "WHAT THE FIRST EPISODES TAUGHT US" in text
+        assert "Ask for the instance, not the pattern" in text
+        assert "Say more about" in text and "is almost always the best next thing" in text
+        assert "let it stand" in text

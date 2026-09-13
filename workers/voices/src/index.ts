@@ -746,15 +746,24 @@ async function handleEditorialDecision(req: Request, env: Env): Promise<Response
     if (!interview || !app) return json({ error: "interview/application not found" }, 404);
     await sb(env, "PATCH", `interviews?id=eq.${interview.id}`, { status: "guest_review" });
     const link = `https://api.nerranetwork.com/voices/review/${pkg.guest_review_token}`;
-    await email(env, app.email, `Your ${show.shortLabel} conversation is ready for review`,
+    await email(env, app.email, `Thank you — your ${show.shortLabel} episode is ready for you`,
       `<p>Hi ${esc(app.name)},</p>
-       <p>Your conversation with Mira is edited and ready. Have a listen and
-       read through the transcript — approve it as-is, or mark anything
-       you'd like removed:</p>
-       <p><a href="${esc(link)}">${esc(link)}</a></p>
+       <p>Thank you for the time you gave us. Your episode is edited and
+       ready, and nothing goes out until you have heard it and said yes.</p>
+       <p><a href="${esc(link)}">Listen to the episode and read the transcript</a></p>
+       <p>On that page you can approve it as it stands, or quote anything
+       you'd rather we cut and it comes out of both the audio and the
+       transcript.</p>
+       <p>Two other things are on the page, and we mean them. If the
+       conversation didn't catch you at your best, you can ask to record it
+       again from scratch — we would rather re-record than publish something
+       you are lukewarm about. And you can put yourself down to come back in
+       six months or a year to tell us what has actually changed in your
+       field since we spoke. That follow-up is the part of this show we care
+       most about: almost nobody goes back to check.</p>
        <p>If we don't hear from you within seven days we'll take that as
-       approval (we'll remind you at day four). You can always request
-       changes post-publish as well.</p>
+       approval, and we'll remind you at day four. You can always ask for
+       changes after publication too.</p>
        <p>${esc(signOff(show))}</p>`);
     await slack(env, `${show.shortLabel}: Patrick approved package ${pkg.id} — guest review email sent`);
   } else {
@@ -847,12 +856,25 @@ ${listenUrl
 <button onclick="submitReview(true)">Approve for publication</button>
 <button class="secondary" onclick="submitReview(false)">Submit removal requests</button>
 </p>
+<h3>Before you go</h3>
+<p>Two things we'd rather offer than have you feel stuck with:</p>
+<p>
+<label><input type="radio" name="followup" value="return_6"> Come back in about six months and tell us what changed</label><br>
+<label><input type="radio" name="followup" value="return_12"> Come back in about a year</label><br>
+<label><input type="radio" name="followup" value="return_other"> I'd like to come back, but at a different time</label><br>
+<label><input type="radio" name="followup" value="redo"> I'd rather record this conversation again from scratch</label><br>
+<label><input type="radio" name="followup" value="none" checked> Nothing for now</label>
+</p>
+<textarea id="followupNote" placeholder="Anything you'd like us to know — a better time, what you'd want to talk about, or what you'd do differently in a re-record."></textarea>
 <p id="status"></p>
 <script>
 async function submitReview(approve){
+  const picked = document.querySelector('input[name=followup]:checked');
   const resp = await fetch(location.pathname, {method:'POST',
     headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({approve, redactions: document.getElementById('redactions').value})});
+    body: JSON.stringify({approve, redactions: document.getElementById('redactions').value,
+      followup: picked ? picked.value : 'none',
+      followup_note: document.getElementById('followupNote').value})});
   document.getElementById('status').textContent = resp.ok
     ? (approve ? 'Approved — thank you! Your episode is on its way.' : 'Received — we will apply the removals and confirm by email.')
     : 'Something went wrong — please reply to our email instead.';
@@ -865,7 +887,32 @@ async function handleGuestReviewSubmit(req: Request, env: Env, token: string): P
   if (!pkg) return json({ error: "not found" }, 404);
   const body = await req.json<any>().catch(() => ({}));
   const now = new Date().toISOString();
-  const { show } = await interviewWithApp(env, pkg.interview_id);
+  const { interview, app, show } = await interviewWithApp(env, pkg.interview_id);
+
+  // A guest who would come back, or who would rather do it again, is worth
+  // more than a guest who merely approved (Sept 13 2026). Recorded here so
+  // it becomes a scheduled conversation rather than a good intention.
+  const followup = String(body?.followup ?? "none");
+  if (followup !== "none") {
+    const months = followup === "return_6" ? 6 : followup === "return_12" ? 12 : 0;
+    const due = months
+      ? new Date(Date.now() + months * 30 * 864e5).toISOString() : null;
+    await sb(env, "POST", "guest_return_requests", {
+      interview_id: pkg.interview_id,
+      application_id: interview?.application_id ?? null,
+      show: show.slug,
+      kind: followup === "redo" ? "redo" : "return",
+      horizon: followup === "return_6" ? "6_months"
+        : followup === "return_12" ? "12_months" : "other",
+      note: String(body?.followup_note ?? "").slice(0, 1000) || null,
+      due_at: due,
+    });
+    await sb(env, "PATCH", `editorial_packages?id=eq.${pkg.id}`,
+      { guest_followup: followup, guest_followup_at: now });
+    await slack(env, `${show.shortLabel}: ${app?.name ?? "guest"} chose "${followup}"` +
+      (body?.followup_note ? ` — ${String(body.followup_note).slice(0, 300)}` : ""));
+  }
+
   if (body.approve) {
     await sb(env, "PATCH", `editorial_packages?id=eq.${pkg.id}`,
       { status: "approved_by_guest", guest_reviewed_at: now });
