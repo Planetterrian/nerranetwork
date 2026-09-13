@@ -4112,6 +4112,24 @@ def generate_account_page(*, dry_run=False):
     return out_path
 
 
+def generate_login_page(*, dry_run=False):
+    """Generate /login.html — the passwordless sign-in page (Sep 13 2026).
+    Noindexed and kept out of the sitemap like the account console."""
+    env = _get_jinja_env()
+    ctx = _member_page_context(
+        "Sign in | Nerra Network",
+        "Sign in to your Nerra account — one email, no password.",
+        "https://nerranetwork.com/login.html")
+    html = env.get_template("login_page.html.j2").render(**ctx)
+    out_path = ROOT / "login.html"
+    if dry_run:
+        print(f"[dry-run] Would write {out_path}")
+        return None
+    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
+    print(f"Wrote {out_path}")
+    return out_path
+
+
 def generate_support_page(*, dry_run=False):
     """Generate /support.html — donations + cost transparency. This is
     also the target of every feed's podcast:funding tag."""
@@ -4669,6 +4687,7 @@ def main():
         generate_join_page(dry_run=args.dry_run)
         generate_support_page(dry_run=args.dry_run)
         generate_account_page(dry_run=args.dry_run)
+        generate_login_page(dry_run=args.dry_run)
         generate_how_to_listen_page(dry_run=args.dry_run)
         generate_press_page(dry_run=args.dry_run)
         generate_contact_page(dry_run=args.dry_run)
@@ -4708,6 +4727,7 @@ def main():
         generate_join_page(dry_run=args.dry_run)
         generate_support_page(dry_run=args.dry_run)
         generate_account_page(dry_run=args.dry_run)
+        generate_login_page(dry_run=args.dry_run)
         # --network --blogs: regenerate network blog index only (not all posts)
         if args.blogs:
             generate_network_blog_index(dry_run=args.dry_run)
