@@ -170,6 +170,9 @@ export async function handleAccount(request: Request, env: Env): Promise<Respons
   return jsonResponse(request, 200, {
     ok: true,
     shows: PERSONAL_SHOWS,
+    // The member's own address, for "signed in as" on their own page.
+    // (The admin export stays email-free; this is the account holder.)
+    email,
     member: {
       preferences: member
         ? {
