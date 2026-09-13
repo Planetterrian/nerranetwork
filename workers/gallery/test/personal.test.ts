@@ -502,6 +502,27 @@ describe("plan switching (Sep 13 2026)", () => {
     expect(rec.ends_at).toBeUndefined();
   });
 
+  it("reads current_period_end from the subscription item (2025-03-31.basil shape)", async () => {
+    const env = envWith({ STRIPE_PRICE_PERSONAL: "price_p" });
+    const kv = env.RATE_LIMIT_KV as unknown as FakeKV;
+    await post(env, {
+      type: "checkout.session.completed",
+      data: { object: {
+        customer_email: "fan@example.com",
+        metadata: { tier: "personal" }, subscription: "sub_1", amount_total: 499,
+      } },
+    });
+    await post(env, {
+      type: "customer.subscription.updated",
+      data: { object: {
+        id: "sub_1", cancel_at_period_end: true,
+        items: { data: [{ price: { id: "price_p" }, current_period_end: 1790000000 }] },
+      } },
+    });
+    expect(JSON.parse(kv.store.get("member:fan@example.com")!).ends_at)
+      .toBe("2026-09-21");
+  });
+
   it("an unmapped price leaves the tier alone", async () => {
     const env = envWith({ STRIPE_PRICE_PERSONAL: "price_p" });
     const kv = env.RATE_LIMIT_KV as unknown as FakeKV;
