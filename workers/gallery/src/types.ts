@@ -27,6 +27,16 @@ export interface Env {
   STRIPE_WEBHOOK_SECRET?: string;      // wrangler secret put
   PERSONAL_ADMIN_TOKEN?: string;       // wrangler secret put (batch builder)
   MEMBER_BOOK_CODE?: string;           // member perks: book discount code
+
+  // --- Plan switching (Sep 2026). A restricted Stripe key (billing
+  // portal sessions: write; subscriptions: read) so the account page can
+  // open the customer portal, and the two price ids so
+  // customer.subscription.updated can map a portal plan switch back to a
+  // tier. All optional: without them /api/account/portal answers 503 and
+  // the webhook logs and ignores subscription updates.
+  STRIPE_SECRET_KEY?: string;          // wrangler secret put
+  STRIPE_PRICE_PERSONAL?: string;      // price_… for Personal ($4.99)
+  STRIPE_PRICE_PNN?: string;           // price_… for Personal News Network ($8.99)
 }
 
 export interface ButtondownClient {
