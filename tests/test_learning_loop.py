@@ -805,5 +805,10 @@ class TestNarrationHissIsRemovedAtSource:
     def test_narration_gets_afftdn_and_conversation_does_not(self):
         src = (ROOT / "pipelines" / "voices" / "assemble_edit.py").read_text(encoding="utf-8")
         assert 'NARRATION_RESTORE = "adeclick=w=75:t=2,afftdn=nf=-45:nr=12' in src
-        assert "afftdn" not in src[src.index('RESTORE = "'):src.index("NARRATION_RESTORE")]
+        # The conversation chain (the RESTORE line itself) carries no
+        # afftdn. Sep 13 2026: slicing up to NARRATION_RESTORE swept in the
+        # comment that explains why narration gets it, and failed on the
+        # word in prose.
+        _start = src.index('RESTORE = "')
+        assert "afftdn" not in src[_start:src.index("\n", _start)]
         assert "chain.append(NARRATION_RESTORE if narration else restore)" in src
