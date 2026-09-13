@@ -98,6 +98,17 @@ CHANNEL_FILTERS = {
 #    another 6 dB off the floor.
 RESTORE = "adeclick=w=75:t=2,anlmdn=s=0.0005:p=0.002"
 
+# Narration gets one filter the conversation does not. Her takes come out of
+# the websocket with a floor around -66 dB, and everything downstream — the
+# compressor, then the master loudnorm — adds roughly 13 dB of gain, which
+# puts that floor at -53 in the finished episode where it is audible under a
+# voice with no room tone behind it. afftdn takes it to -63 with the noise
+# estimate parked at the measured floor (nf=-45); at nf=-50 it sits below the
+# noise and does almost nothing. Band energy from 100 Hz to 8 kHz moves by at
+# most 0.2 dB, so she is not dulled. A conversation has its own room tone and
+# does not need or want this.
+NARRATION_RESTORE = "adeclick=w=75:t=2,afftdn=nf=-45:nr=12,anlmdn=s=0.0005:p=0.002"
+
 # A stereo per-person recording is L = their microphone, R = everyone they
 # heard, and those two sides arrive at different levels — on the Hogan Shrum
 # tape the guest sat 6 dB over the host and Mira. Levelling each SIDE before
@@ -184,9 +195,9 @@ def _piece(cut: dict, src: Path, out: Path) -> Path:
             trim = str(cut.get("from", "")).startswith("narration:")
         if trim:
             chain.append(TRIM)
-        if restore:
-            chain.append(restore)
         narration = str(cut.get("from", "")).startswith("narration:")
+        if restore:
+            chain.append(NARRATION_RESTORE if narration else restore)
         chain.append(NARRATION_GENTLE if narration else GENTLE)
         cmd += ["-af", ",".join(chain)]
 
