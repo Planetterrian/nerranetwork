@@ -727,6 +727,149 @@ reviews:
       ab_listen_required: false
       rationale: Every behavioral fix gets a drift-guard per playbook; pins Sep-4 chapter marker wins and the new discipline so a later edit cannot silently drop them.
     agent_cost_usd: 0.1507
+  - date: '2026-09-13'
+    pr: null
+    doc: docs/reviews/models_agents_review_2026_09_13.md
+    generated_by: grok-4.5
+    summary: Sep-4–9 delivery wins largely held (Everyone-talks cleared, UTH chapters 10/10, advisory near-zero, no link titles) but 8/10 scripts still under 1500w, entity retention stays ~half the window below 75%, residual headline-echo/attribution and UTH-number misses continue, and length remains an escalated operator A/B/C decision — no silent 1600 re-file.
+    scored_prior_predictions:
+    - metric: '"Everyone talks/treats/thinks about" or "Most people assume" as UTH opener, last 10'
+      verdict: hit
+      evidence: 0/10 in ep163–172 spoken UTH openers (pop-the-hood / substance-first); clears Sep-8’s 4/10 residual
+    - metric: episodes with Under the Hood chapter when deep-dive present, last 10
+      verdict: hit
+      evidence: 10/10 ep163–172 chapters_ep*.json include an Under the Hood chapter
+    - metric: Under the Hood concrete numerals (hand-count), last 5
+      verdict: partial
+      evidence: ep167–172 deep-dives carry ≥4 numerals; ep165=2 was the miss — not locked by a digest fact floor
+    - metric: script_entity_retention_pct (names kept), last 10
+      verdict: miss
+      evidence: names-kept 53–84%; only ~4–5/10 ≥75% (ep166=53%, ep170=57%, ep167/169=63%, ep171=67%)
+    - metric: headline-echo pairs + attribution-only sentences per episode (hand-count), last 5
+      verdict: partial
+      evidence: ep168 still pastes title-as-sentence; ep165 worst-in-window; not ≤1 echo + 0 attribution on 4/5
+    - metric: model-number or dataset-name mangles per episode, last 5
+      verdict: partial
+      evidence: Ep166=5 baseline; ep167–172 = 0 of Nutrition5k/RTX-5090 class after Sep-7 fix — need full 5-clean cohort
+    - metric: script_digest_overlap_pct median last 10
+      verdict: partial
+      evidence: ep166=1%, ep170=5% clean; ep164=58%, ep171=55%, ep169=40% keep full-window median >25%
+    - metric: chapters with raw mid-sentence auto-titles (ellipsis or >40 chars lowercase start), last 10
+      verdict: partial
+      evidence: ep166 three raw auto-titles; ep164/167 sparse; ep172 missing Teaser chapter — durable drop still waits on digest-driven titles
+    - metric: Under the Hood subject distinct from every news item (manual)
+      verdict: partial
+      evidence: newest window mostly second technical stories; ep167 UTH re-told Model Updates sparse-attention item
+    - metric: '''advisory'' filler shape per episode (script_audit)'
+      verdict: hit
+      evidence: snapshot filler 0–8%; ep165–172 mostly 0–4%
+    - metric: spoken continuity callbacks of the shape "we covered <tracker display name> yesterday"
+      verdict: hit
+      evidence: 0/10 of that quotable shape in ep163–172
+    - metric: '"keep an eye on" as teaser opener (regression watch)'
+      verdict: hit
+      evidence: 0/10 in ep163–172 teasers
+    - metric: chapters_ep*.json titles containing "](" or "http", or early Practical & Community
+      verdict: hit
+      evidence: 0 link titles and 0 early P&C mis-fires in ep163–172
+    - metric: digests carrying a "DEPTH OVER BREADTH" heading
+      verdict: hit
+      evidence: no counter-evidence post Sep-4 bracketed-instruction rewrite
+    - metric: digest_placeholder_tokens, next 15 episodes
+      verdict: partial
+      evidence: ep168–172 transcripts show no fresh placeholder tokens; 15-ep window not yet full
+    - metric: script_rewrite_gate_reject_reason=section_still_copied when the rewrite copied less overall
+      verdict: partial
+      evidence: gate change shipped Sep-9; no fresh reject-of-cleaner-rewrite observed in this window
+    - metric: Under the Hood re-tells a Model Updates item (hand-count), 5 episodes
+      verdict: partial
+      evidence: ep167 = 1 re-tell; not yet ≤1/5 locked across a full 5-ep window
+    - metric: single closing variant share in last-10 transcripts
+      verdict: hit
+      evidence: 'n/a-lever-reversed: Sep-5 re-pinned one sign-off; 8/10 one variant is intended brand behavior'
+    shipped: []
+    deferred:
+    - 'OPERATOR DECISION (length — escalated after July-19 + Aug-2 misses; do not re-file min_digest_words=1600 without an explicit choice): (A) raise min_digest_words to 1600, (B) Under-the-Hood licensed-knowledge sentence/fact floor in digest prompt, or (C) accept ~1200–1400w and lower min_podcast_words. Never re-enable podcast_expand_below_target. Today still 8/10 under 1500w.'
+    - Digest-driven / position-aware mid-section chapter titles (network-wide; UTH 10/10 but ep164/167 sparse, ep166 raw auto-titles, ep172 missing Teaser remain)
+    - RSS title truncation ownership (hook spec under 120 vs 100-char title cap vs title-bundle optimized title)
+    - Same-day double publish Ep155+Ep156 prune (operator; renumbering unsafe)
+    - podcast:transcript from pre-pronunciation text or Whisper post-correct (network-wide LoRA/RAG/Quinn class)
+    - July-2 selection rebalance A/B (lab product/feature announcements outrank preprints; arXiv items <= 40%)
+    - 'Narrative tracker: advance last_mentioned only on headline mentions; seed-only last_major_update (data-side)'
+    - 'MAB sibling: Big Story / Deep Dive / Cool Stuff / Quick Bits required-anchor treatment (host never says them → Welcome spans minutes)'
+    - Recap must synthesize, not splice dailies' sentences (Sunday weekly_summary_segment)
+    - Signature opener 'pop the hood' + pinned closing + 'Before we go' teaser — brand anchors; revisit only with explicit A/B evidence
+    - ep172 Tomorrow Teaser chapter miss — re-diagnose with engine chapter trace next pass if missing-Teaser recurs ≥3/10
+    - OP3 first-week median ~19 downloads/episode + YT long-form retention 11.2% — watch one more cycle before product changes; no metadata root cause this pass
+    predictions:
+    - metric: '"Everyone talks/treats/thinks about" or "Most people assume" as UTH opener, last 10'
+      baseline: 0/10 (ep163–172)
+      expected: ≤1/10 sustained; if any new contrast-cliché hits ≥6/10, ban by shape next pass
+      verdict: pending
+      evidence: null
+    - metric: episodes with Under the Hood chapter when deep-dive present, last 10
+      baseline: 10/10
+      expected: ≥9/10 sustained
+      verdict: pending
+      evidence: null
+    - metric: script_entity_retention_pct (names kept), last 10
+      baseline: 53–84% (~4–5/10 ≥75%)
+      expected: ≥75% on 8/10 after entity-keep discipline merges
+      verdict: pending
+      evidence: null
+    - metric: headline-echo pairs + title-as-sentence + attribution-only sentences per episode, last 5
+      baseline: ep165=9 echoes+~6 attrib; ep168 title-as-sentence residual
+      expected: ≤1 echo and 0 attribution-only/title-as-sentence on 4/5 post content_discipline tighten
+      verdict: pending
+      evidence: null
+    - metric: Under the Hood concrete numerals (hand-count), last 5
+      baseline: ep165=2; ep167–172 ≥4
+      expected: ≥4 numerals in 4/5 post-merge deep-dives if digest UTH fact floor ships
+      verdict: pending
+      evidence: null
+    - metric: Under the Hood re-tells a Model Updates / Agent news item, last 5
+      baseline: 1/5 (ep167)
+      expected: ≤1/5 sustained; 0/5 if distinct-subject floor ships
+      verdict: pending
+      evidence: null
+    - metric: model-number or dataset-name mangles per episode, last 5
+      baseline: Ep166=5; ep167–172=0
+      expected: 0 on 5/5 once ep166 ages out of the window
+      verdict: pending
+      evidence: null
+    - metric: script_digest_overlap_pct median last 10
+      baseline: mixed; clean tail 1–12%, dirty tail 40–58%
+      expected: median ≤25% once rewrite-gate cohort fills the full window
+      verdict: pending
+      evidence: null
+    - metric: 'successor item-opener tic: any single new throat-clear before first fact in ≥6/10 news items'
+      baseline: n/a (watch)
+      expected: 0 phrases at ≥6/10 after headline-echo de-seed; if one converges, ban by shape next pass
+      verdict: pending
+      evidence: null
+    - metric: chapters with raw mid-sentence auto-titles or missing Teaser when Before-we-go present, last 10
+      baseline: ep166 raw autos; ep172 missing Teaser
+      expected: no regression; durable drop only when digest-driven titles ship (deferred)
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/prompts/models_agents_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Sep-6 UTH numerals miss (Ep165=2 vs ≥4) and Sep-9 UTH-retell-of-Model-Updates (ep167) are still partial. Digest-substrate lever only (playbook length meta-rule); also sanctioned operator option B while the length A/B/C decision stays open. A/B-listen.
+    - file: shows/prompts/models_agents_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Sep-7/Sep-8 entity-retention miss still live (only ~4–5/10 ≥75%). Shape + verbatim discipline, no quotable menu (meta-rule). Reinforces UTH distinct-subject on the podcast side so ep167-class retells cannot return. A/B-listen.
+    - file: shows/prompts/_shared/content_discipline.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Sep-6 readout partially cleared; ep168 title-as-sentence residual shows the first discipline pass was not tight enough. De-seed by shape + verbatim ban, no replacement menu; successor-tic prediction recorded. Shared include — A/B-listen on M&A and any other consumer.
+    - file: tests/test_models_agents_quality_pass.py
+      kind: code
+      ab_listen_required: false
+      rationale: Every behavioral fix gets a drift-guard per playbook so a later edit cannot silently drop Sep-4 chapter wins or the new discipline.
+    agent_cost_usd: 0.1677
 do_not_retry:
   - idea: De-seed or rotate the 'Before we go' Tomorrow Teaser opener — Sep-4 closed it as a brand chapter anchor (same class as Tesla/SpaceX); residual keep-an-eye is already cleared
     evidence: flagged 2026-09-08 (Grok review)
