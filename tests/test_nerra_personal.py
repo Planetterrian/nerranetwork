@@ -359,25 +359,28 @@ class TestAddons:
             "workers/gallery/src/personal.ts PERSONAL_ADDONS must mirror "
             "engine.personal_edition.PERSONAL_ADDONS exactly")
 
-    def test_defaults_preserve_pre_addon_behavior(self):
-        # Never-saved (None) on the local tier = weather + news + events —
-        # the exact pre-add-on brief. Base tier defaults run nothing
-        # location-shaped and no markets (opt-in only).
+    def test_defaults_are_the_full_taster(self):
+        # Sep 13 2026 (Personal News Network launch): never-saved (None)
+        # on EITHER paid tier = the full taster, weather + one of each
+        # researched section. Markets stays opt-in. It only bites once a
+        # member sets a location, so nobody's edition changes silently.
         from engine.personal_edition import DEFAULT_ADDONS
-        assert tuple(DEFAULT_ADDONS) == ("weather", "local_news", "events")
+        assert tuple(DEFAULT_ADDONS) == ("weather", "local_news", "events", "traffic")
+        assert "markets" not in DEFAULT_ADDONS
         local = self._spec()
         assert local.addons is None
         assert local.effective_addons() == list(DEFAULT_ADDONS)
         base = self._spec(tier="personal")
-        assert base.effective_addons() == []
+        assert base.effective_addons() == list(DEFAULT_ADDONS)
 
     def test_validation_drops_unknown_and_tier_gates(self):
         s = self._spec(addons=["weather", "junk", "markets", "weather"])
         assert s.addons == ["weather", "markets"]
+        # Every add-on runs on the base tier now; what the tiers gate is
+        # depth, city count and topics (TestTiers below).
         base = self._spec(tier="personal",
                           addons=["weather", "traffic", "markets"])
-        # stored as chosen, but tier-filtered at build time
-        assert base.effective_addons() == ["markets"]
+        assert base.effective_addons() == ["weather", "traffic", "markets"]
 
     def test_empty_list_is_a_real_choice(self):
         s = self._spec(addons=[])
@@ -396,7 +399,7 @@ class TestAddons:
                                      "Today in Vancouver: a high of 21.")
         assert "traffic or transit disruption" in p
         assert "local news item" not in p
-        assert "local event" not in p
+        assert "notable local event" not in p
         assert "Open-Meteo" in p
         no_weather = self._spec(addons=["local_news"])
         p2 = build_local_brief_prompt(root, no_weather, dt.date(2026, 8, 31),
@@ -453,3 +456,131 @@ class TestAddons:
         assert "needs_research_call(spec)" in src
         assert "build_markets_line(ROOT)" in src
         assert 'if "markets" in spec.effective_addons()' in src
+
+
+class TestTiers:
+    """Sep 13 2026: Personal News Network. Same add-ons on both paid
+    tiers; the tiers differ on depth, city count and topics — enforced
+    in validate_spec, the builder's trust boundary, never in the Worker."""
+
+    def _raw(self, tier, **kw):
+        d = {"token": TOKEN, "shows": ["spacex", "tesla"], "tier": tier}
+        d.update(kw); return d
+
+    def test_limits_table(self):
+        from engine.personal_edition import TIER_LIMITS, tier_limits
+        assert TIER_LIMITS["personal"] == {"depth": 1, "cities": 1, "topics": 0}
+        assert TIER_LIMITS["personal_local"] == {"depth": 3, "cities": 3, "topics": 5}
+        assert tier_limits("nonsense") == TIER_LIMITS["personal"]
+
+    def test_personal_is_one_city_no_topics(self):
+        from engine.personal_edition import validate_spec
+        s = validate_spec(self._raw("personal", cities=["Vancouver, BC", "Kelowna"],
+                                    topics=["Starship"]))
+        assert s.cities == ["Vancouver, BC"] and s.city == "Vancouver, BC"
+        assert s.topics == []
+        assert s.depth == 1 and s.is_taster
+
+    def test_pnn_caps_at_three_cities_five_topics(self):
+        from engine.personal_edition import validate_spec
+        s = validate_spec(self._raw(
+            "personal_local",
+            cities=["Vancouver, BC", "kelowna", "Kelowna", "Victoria", "Calgary"],
+            topics=[f"t{i}" for i in range(9)]))
+        assert s.cities == ["Vancouver, BC", "kelowna", "Victoria"]  # dedupe, cap
+        assert len(s.topics) == 5
+        assert s.depth == 3 and not s.is_taster
+
+    def test_legacy_single_city_still_works(self):
+        from engine.personal_edition import validate_spec
+        s = validate_spec(self._raw("personal_local", city="Kelowna"))
+        assert s.cities == ["Kelowna"] and s.city == "Kelowna"
+
+    def test_free_text_is_scrubbed_before_a_prompt(self):
+        from engine.personal_edition import validate_spec, TOPIC_MAX_CHARS
+        s = validate_spec(self._raw("personal_local",
+                                    topics=["<b>rates</b>", "  Mars   rovers ", "x" * 200,
+                                            "{date_spoken}"]))
+        assert s.topics[0] == "rates" and s.topics[1] == "Mars rovers"
+        assert len(s.topics[2]) == TOPIC_MAX_CHARS
+        # Braces stripped so member text can never hit str.format.
+        assert "{" not in s.topics[3]
+
+    def test_depth_shapes_the_prompt(self):
+        import datetime as dt
+        from pathlib import Path
+        from engine.personal_edition import build_local_brief_prompt, validate_spec
+        root = Path(__file__).resolve().parent.parent
+        d = dt.date(2026, 9, 14)
+        taster = validate_spec(self._raw("personal", city="Vancouver, BC"))
+        full = validate_spec(self._raw("personal_local", cities=["Vancouver, BC", "Kelowna"]))
+        pt = build_local_brief_prompt(root, taster, d, "")
+        pf = build_local_brief_prompt(root, full, d, "", city="Kelowna")
+        assert "ONE local news item" in pt and "At most one item" in pt
+        assert "Up to THREE local news items" in pf and "Up to 3 items" in pf
+        assert "location: Kelowna" in pf and "location: Vancouver" in pt
+        assert "60-160 words" in pt and "120-320 words" in pf
+
+    def test_named_sources_rule_in_both_prompts(self):
+        # The Vancouver dry run on 13 Sep cited "local event guides".
+        for name in ("nerra_personal_local.txt", "nerra_personal_topics.txt"):
+            src = _read(f"shows/prompts/{name}")
+            assert "A generic attribution is not a source" in src, name
+            assert "BY NAME" in src, name
+            # The intro already greeted them; the 13 Sep dry run opened
+            # the full brief with a second "Good morning, Patrick".
+            assert "do not greet again" in src, name
+        from engine.personal_edition import generic_attributions, parse_local_brief
+        assert generic_attributions("as listed in local event guides") == ["local event guides"]
+        assert generic_attributions("TransLink says the 9 is detoured") == []
+        # Warn-only: a real item with a lazy attribution still ships.
+        assert parse_local_brief("word " * 40 + "according to reports.") is not None
+
+    def test_topics_prompt(self):
+        import datetime as dt
+        from pathlib import Path
+        from engine.personal_edition import build_topics_prompt, validate_spec, wants_topics_brief
+        root = Path(__file__).resolve().parent.parent
+        s = validate_spec(self._raw("personal_local", topics=["Starship", "BC housing"]))
+        assert wants_topics_brief(s)
+        p = build_topics_prompt(root, s, dt.date(2026, 9, 14))
+        assert "- Starship\n- BC housing" in p and "the 2 things they named" in p
+        assert "80-180 words" in p
+        assert not wants_topics_brief(validate_spec(self._raw("personal", topics=["Starship"])))
+
+    def test_nudge_is_monday_only_personal_only_taster_only(self):
+        import datetime as dt
+        from engine.personal_edition import upgrade_nudge_line, validate_spec
+        mon, tue = dt.date(2026, 9, 14), dt.date(2026, 9, 15)
+        p = validate_spec(self._raw("personal", city="Vancouver, BC"))
+        n = validate_spec(self._raw("personal_local", city="Vancouver, BC"))
+        line = upgrade_nudge_line(p, mon, True)
+        assert "Personal News Network" in line and "Vancouver, BC" in line
+        assert upgrade_nudge_line(p, tue, True) == ""
+        assert upgrade_nudge_line(p, mon, False) == ""
+        assert upgrade_nudge_line(n, mon, True) == ""
+
+    def test_chapters_per_city_and_topics(self):
+        from engine.personal_edition import personal_chapter_pieces, validate_spec
+        s = validate_spec(self._raw("personal_local", cities=["Vancouver, BC", "Kelowna"],
+                                    topics=["Starship"]))
+        segs = [_segment(), _segment("tesla", "Tesla Shorts Time", 5)]
+        titles = [t for t, _ in personal_chapter_pieces(
+            s, segs, {"intro": 10, "local_1": 60, "local_2": 50, "topics": 40,
+                      "seg_spacex": 500, "seg_tesla": 500, "signoff": 8})]
+        assert titles[:4] == ["Good morning from Mira", "Your Vancouver, BC brief",
+                              "Your Kelowna brief", "Your topics"]
+
+    def test_builder_wires_briefs_topics_and_nudge(self):
+        src = _read("scripts/build_personal_feeds.py")
+        for marker in ("generate_local_briefs", "generate_topics_brief",
+                       "upgrade_nudge_line", "brief_max_words(spec.depth)"):
+            assert marker in src, marker
+        # The nudge is spoken BEFORE the disclosure, never after it.
+        assert 'links["signoff"], nudge,' in src
+        assert src.index('links["signoff"], nudge,') < src.index('MIRA_PERSONAL_DISCLOSURE) if x)')
+
+    def test_worker_mirrors_the_limits(self):
+        ts = _read("workers/gallery/src/personal.ts")
+        assert "CITIES_MAX = 3" in ts and "TOPICS_MAX = 5" in ts
+        assert "TOPIC_MAX = 60" in ts
