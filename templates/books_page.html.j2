@@ -92,6 +92,7 @@
             border-color: transparent;
             font-weight: 600;
         }
+        .nn-direct-sales { max-width: 760px; margin: 0 auto; padding: 0 var(--sp-6) var(--sp-16); font-family: var(--font-ui); color: var(--nn-text-muted); font-size: 0.95rem; line-height: 1.6; } .nn-direct-sales h2 { font-family: var(--font-heading); color: var(--nn-text); font-size: 1.4rem; margin: 0 0 var(--sp-4); } .nn-direct-sales p { margin: 0 0 var(--sp-3); } .nn-direct-sales strong { color: var(--nn-text); }        
         .nn-books-empty {
             text-align: center;
             color: var(--nn-text-muted);
@@ -132,10 +133,10 @@
                price direct below retail list (Amazon price-matches and
                pays 70% of the MATCHED price); differentiate on bundles
                and formats, never price. #}
-            {% if v.buy_links.direct %}<a class="nn-book-primary payhip-buy-button" data-theme="none" href="{{ v.buy_links.direct }}" rel="noopener">Buy direct</a>{% endif %}
+            {% if v.buy_links.direct %}<a class="nn-book-primary payhip-buy-button" data-theme="none" data-product="{{ v.buy_links.direct.rstrip('/').split('/')[-1] }}" href="{{ v.buy_links.direct }}" rel="noopener">Buy direct</a>{% endif %}
             {# WO-15: the audiobook is its own Payhip product; the button
                appears the moment audiobook_direct is set in the YAML. #}
-            {% if v.buy_links.audiobook_direct %}<a class="nn-book-primary payhip-buy-button" data-theme="none" href="{{ v.buy_links.audiobook_direct }}" rel="noopener">Buy the audiobook</a>{% endif %}
+            {% if v.buy_links.audiobook_direct %}<a class="nn-book-primary payhip-buy-button" data-theme="none" data-product="{{ v.buy_links.audiobook_direct.rstrip('/').split('/')[-1] }}" href="{{ v.buy_links.audiobook_direct }}" rel="noopener">Buy the audiobook</a>{% endif %}
             {% if v.buy_links.amazon %}<a class="nn-book-primary" href="{{ v.buy_links.amazon }}" rel="noopener">Amazon</a>{% endif %}
             {# Books2Read universal link (Draft2Digital): one button for
                every retailer D2D distributes to. #}
