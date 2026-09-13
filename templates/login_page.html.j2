@@ -1,0 +1,142 @@
+{% extends "base.html.j2" %}
+
+{# /login.html — the sign-in page (Sep 13 2026).
+
+   Until now the only door was the signed-out shell of /account.html and
+   the email field on /join.html, and the emailed link's landing page
+   wasn't obvious. This page does one thing, with a visible state
+   machine: enter the address → "check your inbox, we sent it to X" →
+   resend / wrong address. Still passwordless on purpose: the Worker
+   stores no passwords, the session cookie is 90 days, and email is the
+   identity Stripe and the newsletter already key on. Passkeys are the
+   planned one-tap upgrade; passwords are not.
+
+   Already signed in? The page notices (same /api/account probe the nav
+   uses) and offers the account instead of a pointless email. #}
+
+{% block head_extra %}
+    <meta name="robots" content="noindex,follow">
+    <style>
+        .nn-login { max-width: 520px; margin: 0 auto; padding: calc(var(--nav-height) + var(--sp-10)) var(--sp-6) var(--sp-12); }
+        .nn-login h1 { font-family: var(--font-heading); margin: 0 0 var(--sp-2); font-size: clamp(1.6rem, 4vw, 2.2rem); }
+        .nn-login .nn-card { border: 1px solid var(--nn-border); border-radius: 16px; background: var(--nn-surface); padding: var(--sp-5); margin-top: var(--sp-5); }
+        .nn-login input[type=email] { width: 100%; padding: 0.75rem 0.9rem; border-radius: 10px; border: 1px solid var(--nn-border); background: var(--nn-bg, transparent); color: inherit; font-size: 1rem; }
+        .nn-login button { padding: 0.7rem 1.4rem; border-radius: 10px; border: none; background: var(--nn-gradient); color: #fff; font-weight: 600; cursor: pointer; }
+        .nn-login button.ghost { background: transparent; border: 1px solid var(--nn-border); color: inherit; }
+        .nn-login button[disabled] { opacity: 0.6; cursor: default; }
+        .nn-muted { color: var(--nn-text-muted); font-size: 0.9rem; }
+        .nn-sent-to { font-family: var(--font-mono, monospace); word-break: break-all; }
+        .nn-steps { list-style: none; padding: 0; margin: var(--sp-3) 0 0; }
+        .nn-steps li { display: flex; gap: 0.6rem; margin: 0.4rem 0; }
+        [hidden] { display: none !important; }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="nn-login">
+    <h1>Sign in to your Nerra</h1>
+    <p class="nn-muted">One email, no password. We send a link; you tap it;
+       you're in for 90 days on this device.</p>
+
+    <!-- State 0: already signed in -->
+    <div class="nn-card" id="nn-already" hidden>
+        <h2 style="margin:0 0 0.5rem;">You're already signed in</h2>
+        <p class="nn-muted" style="margin:0 0 var(--sp-3);">This browser has a live
+           Nerra session. No need for another link.</p>
+        <a href="{{ path_prefix }}account.html"><button>Open My Nerra →</button></a>
+    </div>
+
+    <!-- State 1: ask for the address -->
+    <div class="nn-card" id="nn-ask">
+        <form onsubmit="NNL.send(this);return false;">
+            <label for="nn-login-email" class="nn-muted">The email you joined with</label>
+            <input type="email" id="nn-login-email" name="email" placeholder="you@example.com" required autocomplete="email" autofocus style="margin:0.4rem 0 0.8rem;">
+            <button type="submit" id="nn-login-btn">Email me a sign-in link</button>
+            <p class="nn-muted" id="nn-login-err" hidden style="margin:0.6rem 0 0;"></p>
+        </form>
+        <p class="nn-muted" style="margin:var(--sp-3) 0 0;">New here?
+            <a href="{{ path_prefix }}join.html">Create your free account →</a></p>
+    </div>
+
+    <!-- State 2: sent -->
+    <div class="nn-card" id="nn-sent" hidden>
+        <h2 style="margin:0 0 0.5rem;">Check your inbox</h2>
+        <p style="margin:0;">If <span class="nn-sent-to" id="nn-sent-addr"></span> has a
+           Nerra account, a sign-in link is on its way. It expires in
+           15 minutes.</p>
+        <ul class="nn-steps nn-muted">
+            <li><span>1.</span><span>Open the email from <strong>gallery@nerranetwork.com</strong> — check spam or promotions if it's slow.</span></li>
+            <li><span>2.</span><span>Tap <strong>Sign in</strong>. It lands on your account, already signed in.</span></li>
+        </ul>
+        <p style="margin:var(--sp-4) 0 0;display:flex;gap:0.5rem;flex-wrap:wrap;">
+            <button class="ghost" id="nn-resend-btn" onclick="NNL.resend()">Resend link</button>
+            <button class="ghost" onclick="NNL.reset()">Use a different address</button>
+        </p>
+        <p class="nn-muted" id="nn-resend-note" hidden style="margin:0.6rem 0 0;"></p>
+    </div>
+
+    <p class="nn-muted" style="margin-top:var(--sp-5);">Why no password? Because
+       there's nothing to leak, nothing to reset, and your feed, newsletter
+       and book perks all already live behind your email. One link, four
+       times a year.</p>
+</div>
+
+<script>
+var NNL = (function () {
+  var API = 'https://api.nerranetwork.com';
+  var lastEmail = '';
+  function el(id) { return document.getElementById(id); }
+  function show(id) {
+    ['nn-already', 'nn-ask', 'nn-sent'].forEach(function (x) { el(x).hidden = (x !== id); });
+  }
+  function request(email) {
+    return fetch(API + '/api/login?email=' + encodeURIComponent(email))
+      .then(function (r) { if (!r.ok) throw new Error(r.status); });
+  }
+  // Already signed in? Same probe the nav uses; fail-silent.
+  try {
+    fetch(API + '/api/account', { credentials: 'include' })
+      .then(function (r) { if (r.ok) { show('nn-already'); } })
+      .catch(function () {});
+  } catch (e) {}
+  return {
+    send: function (form) {
+      var btn = el('nn-login-btn'), err = el('nn-login-err');
+      var email = (form.email.value || '').trim();
+      if (!email) { return; }
+      btn.disabled = true; btn.textContent = 'Sending…'; err.hidden = true;
+      request(email).then(function () {
+        lastEmail = email;
+        el('nn-sent-addr').textContent = email;
+        el('nn-resend-note').hidden = true;
+        el('nn-resend-btn').disabled = false;
+        show('nn-sent');
+      }).catch(function () {
+        err.textContent = 'Couldn’t send just now — try again in a moment.';
+        err.hidden = false;
+      }).then(function () {
+        btn.disabled = false; btn.textContent = 'Email me a sign-in link';
+      });
+    },
+    resend: function () {
+      var btn = el('nn-resend-btn'), note = el('nn-resend-note');
+      btn.disabled = true; note.hidden = true;
+      request(lastEmail).then(function () {
+        note.textContent = 'Sent again. Only the newest link works.';
+        note.hidden = false;
+        // The Worker rate-limits sign-in requests; don't invite a loop.
+        setTimeout(function () { btn.disabled = false; }, 30000);
+      }).catch(function () {
+        note.textContent = 'Couldn’t resend just now — wait a minute and try again.';
+        note.hidden = false; btn.disabled = false;
+      });
+    },
+    reset: function () {
+      el('nn-login-email').value = '';
+      show('nn-ask');
+      el('nn-login-email').focus();
+    }
+  };
+})();
+</script>
+{% endblock %}

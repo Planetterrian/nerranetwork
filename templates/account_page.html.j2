@@ -122,7 +122,8 @@
                     <button type="submit">Email me a link</button>
                 </form>
                 <p class="nn-muted" style="margin-top:0.75rem;">New here?
-                    <a href="{{ path_prefix }}join.html">Create your free account →</a></p>
+                    <a href="{{ path_prefix }}join.html">Create your free account →</a>
+                    · <a href="{{ path_prefix }}login.html">Full sign-in page →</a></p>
             </div>
             <div class="nn-card">
                 <h2>What members get</h2>
@@ -189,14 +190,20 @@
                             <input type="text" id="nn-city" maxlength="80" placeholder="e.g. Vancouver, BC" style="max-width:320px;"></label>
                     </div>
                     <p class="nn-muted" id="nn-city-nudge" hidden style="margin-top:0.5rem;">
-                       You're on <strong>Personal + Local</strong> but haven't set a
+                       You're on <strong>Personal News Network</strong> but haven't set a
                        location — add one above and save so Mira can include your
                        morning brief.</p>
                     <div id="nn-addons" class="nn-addon-grid"></div>
                     <p class="nn-muted" id="nn-addon-upsell" hidden style="margin-top:0.6rem;">
-                       Location add-ons run on the <strong>Personal + Local</strong>
-                       tier ($8.99/mo){% if stripe_personal_local_url and stripe_personal_local_url != '#' %} —
-                       <a href="{{ stripe_personal_local_url }}">upgrade to switch them on →</a>{% endif %}.
+                       Location add-ons run on <strong>Personal News Network</strong>
+                       ($8.99/mo) —
+                       {# Two different doors on purpose (Sep 13 2026). An
+                          existing subscriber switches plans inside Stripe's
+                          portal (prorated, same subscription). The old link
+                          here opened a FRESH checkout, which would have
+                          created a second subscription. A free account has
+                          nothing to switch, so it goes to checkout. #}
+                       <a href="#" id="nn-switch-portal" hidden onclick="NN.portal();return false;">switch plans →</a>{% if stripe_personal_local_url and stripe_personal_local_url != '#' %}<a href="{{ stripe_personal_local_url }}" id="nn-switch-checkout" data-checkout hidden>start Personal News Network →</a>{% endif %}.
                        The markets minute is included on every paid tier.</p>
                     <p style="margin-top:var(--sp-4);"><button onclick="NN.save()">Save preferences</button>
                        <span id="nn-save-status" class="nn-muted"></span></p>
@@ -216,6 +223,8 @@
                            yours alone; sharing the URL shares your subscription.</p>
                         <p class="nn-feedurl" id="nn-feed-url"></p>
                         <button class="ghost" onclick="NN.copyFeed()">Copy feed URL</button>
+                        <button class="ghost" id="nn-portal-btn" hidden onclick="NN.portal()" style="margin-left:0.4rem;">Manage plan &amp; billing</button>
+                        <p class="nn-muted" id="nn-ends-note" hidden style="margin-top:0.6rem;"></p>
                         <p class="nn-muted" id="nn-feed-note" style="margin-top:0.6rem;">
                            Just subscribed? Your first edition lands with the next
                            morning build — the feed link works from then on.</p>
@@ -236,9 +245,9 @@
                            where you left off.</p>
                         {% if stripe_personal_url and stripe_personal_url != '#' %}
                         <p>
-                            <a href="{{ stripe_personal_url }}"><button>Restart Personal — $4.99/mo</button></a>
+                            <a href="{{ stripe_personal_url }}" data-checkout><button>Restart Personal — $4.99/mo</button></a>
                             {% if stripe_personal_local_url and stripe_personal_local_url != '#' %}
-                            <a href="{{ stripe_personal_local_url }}"><button class="ghost" style="margin-top:0.4rem;">Personal + Local — $8.99/mo</button></a>
+                            <a href="{{ stripe_personal_local_url }}" data-checkout><button class="ghost" style="margin-top:0.4rem;">Personal News Network — $8.99/mo</button></a>
                             {% endif %}
                         </p>
                         {% endif %}
@@ -249,13 +258,13 @@
                            episode within a day.</p>
                         {% if stripe_personal_url and stripe_personal_url != '#' %}
                         <p style="display:grid;gap:0.4rem;">
-                            <a href="{{ stripe_personal_url }}"><button style="width:100%;">Personal — $4.99/mo</button></a>
+                            <a href="{{ stripe_personal_url }}" data-checkout><button style="width:100%;">Personal — $4.99/mo</button></a>
                             {% if stripe_personal_local_url and stripe_personal_local_url != '#' %}
-                            <a href="{{ stripe_personal_local_url }}"><button class="ghost" style="width:100%;">+ City morning brief — $8.99/mo</button></a>
+                            <a href="{{ stripe_personal_local_url }}" data-checkout><button class="ghost" style="width:100%;">Personal News Network — $8.99/mo</button></a>
                             {% endif %}
                         </p>
-                        <p class="nn-muted">Use the same email at checkout that you
-                           signed in with — that's how your feed finds you.</p>
+                        <p class="nn-muted">Your purchase attaches to this account
+                           automatically, whichever card or wallet you pay with.</p>
                         {% else %}
                         <p class="nn-muted">Personal feeds are launching soon — your
                            saved lineup will be ready on day one.</p>
@@ -532,6 +541,25 @@ var NN = (function () {
       { weekday: 'long', month: 'long', day: 'numeric' });
   }
 
+  // Every checkout link on the page carries an opaque one-hour reference
+  // so the Worker attaches the purchase to THIS account, even when the
+  // wallet reports a different email (Apple Pay / Link do). No email in
+  // the URL — the ref is random and resolves server-side.
+  function attachCheckoutRefs() {
+    var links = document.querySelectorAll('a[data-checkout]');
+    if (!links.length) { return; }
+    fetch(API + '/api/account/checkout-ref', { method: 'POST', credentials: 'include' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) {
+        if (!d || !d.ref) { return; }
+        links.forEach(function (a) {
+          var base = a.getAttribute('href').split('?')[0];
+          a.href = base + '?client_reference_id=' + encodeURIComponent(d.ref);
+        });
+      })
+      .catch(function () {});
+  }
+
   function load() {
     fetch(API + '/api/account', { credentials: 'include' })
       .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
@@ -560,7 +588,7 @@ var NN = (function () {
         if (feedUrl) { el('nn-feed-url').textContent = feedUrl; loadEditions(feedUrl); }
         var pill = el('nn-tier-badge');
         if (status === 'active') {
-          pill.textContent = tier === 'personal_local' ? 'Personal + Local' : 'Personal';
+          pill.textContent = tier === 'personal_local' ? 'Personal News Network' : 'Personal';
           pill.className = 'nn-tier-pill active'; pill.hidden = false;
         } else if (cancelled) {
           pill.textContent = 'subscription ended';
@@ -578,6 +606,22 @@ var NN = (function () {
         el('nn-city-nudge').hidden = !(
           status === 'active' && tier === 'personal_local' && !el('nn-city').value
         );
+        // Plan switching (Sep 13 2026): an existing subscriber changes
+        // plan or cancels inside Stripe's portal; the account page never
+        // opens a second checkout for them.
+        var portal = !!(data.member && data.member.billing_portal);
+        state.portal = portal;
+        el('nn-portal-btn').hidden = !(portal && status === 'active');
+        var switchPortal = el('nn-switch-portal'), switchCheckout = el('nn-switch-checkout');
+        if (switchPortal) { switchPortal.hidden = !(portal && status === 'active'); }
+        if (switchCheckout) { switchCheckout.hidden = (portal && status === 'active'); }
+        var endsAt = data.member && data.member.ends_at;
+        el('nn-ends-note').hidden = !endsAt;
+        if (endsAt) {
+          el('nn-ends-note').textContent = 'Your subscription is set to end on ' + endsAt
+            + '. Your feed keeps building until then; resume any time from Manage plan & billing.';
+        }
+        attachCheckoutRefs();
         var code = data.perks && data.perks.book_discount_code;
         el('nn-book-perk').innerHTML = code
           ? 'Use code <strong>' + esc(code) + '</strong> at the book store — '
@@ -621,6 +665,17 @@ var NN = (function () {
     },
     copyFeed: function () {
       navigator.clipboard.writeText(el('nn-feed-url').textContent);
+    },
+    portal: function () {
+      var btn = el('nn-portal-btn');
+      if (btn) { btn.disabled = true; btn.textContent = 'Opening…'; }
+      fetch(API + '/api/account/portal', { method: 'POST', credentials: 'include' })
+        .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+        .then(function (d) { window.location.href = d.url; })
+        .catch(function () {
+          if (btn) { btn.disabled = false; btn.textContent = 'Manage plan & billing'; }
+          el('nn-save-status').textContent = 'Billing portal unavailable right now — try again shortly.';
+        });
     },
     load: load,
   };
