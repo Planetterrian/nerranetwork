@@ -94,16 +94,40 @@ _NUMERIC_PATTERNS = (
 # $141.50 Up 1% | SpaceX Daily" (Sep 4 2026 flagship pass). A price
 # ticker is the weakest possible 35-second hook, so a window whose
 # opening segment IS the quote line is never a candidate.
+# Sep 13 2026: the dubs pick their windows on the RU/FR Whisper
+# transcript, so an English-only pattern let the same line open two of
+# the five SpaceX dub Shorts that day ("рост на 2,3%" on @NerraRU, "151
+# dollars et 21 cents en hausse de 2,3 %" on @NerraFR). The verbs the
+# translation stage writes for the close are covered, plus the two
+# shapes Whisper hands back once it has split the sentence: the
+# "<n> dollars and <n> cents" body and a bare "up/down <n>%" tail.
 _PRICE_LINE_RE = re.compile(
     r"\b(?:is trading at|trading at|trades at|closed at|closing at|"
-    r"finished the session|ended the session)\b",
+    r"finished the session|ended the session|"
+    # Russian: "закрылась на уровне …", "торгуется по …"
+    r"закрыл(?:ась|ись|ся)\s+на\s+уровне|торгу(?:ется|ются)\s+(?:по|на\s+уровне)|"
+    # French: "clôture à …", "a clôturé à …", "se négocie à …"
+    r"clôtur(?:e|é|ée|ent)\s+à|se\s+négocie\s+à|s['’]échange\s+à)\b"
+    # The dollars-and-cents body on its own (Whisper splits the line).
+    r"|\d[\d\s,.]*\s+dollars?\s+et\s+\d[\d\s,.]*\s+cents?\b"
+    r"|доллар\w*\s+и\s+(?:\S+\s+){1,3}?цент",
+    re.I,
+)
+
+# A segment that is ONLY the move ("up 2.3%", "рост на 2,3%", "en hausse
+# de 2,3 %") is the tail of the quote line and nothing else.
+_PRICE_MOVE_ONLY_RE = re.compile(
+    r"^\W*(?:up|down|рост|снижение|падение|(?:en\s+)?hausse|(?:en\s+)?baisse)"
+    r"\s+(?:на|de|of)?\s*\d+(?:[.,]\d+)?\s*%?\W*$",
     re.I,
 )
 
 
 def is_price_line(text: str) -> bool:
     """True when *text* is the spoken market-quote sentence."""
-    return bool(text) and bool(_PRICE_LINE_RE.search(text))
+    if not text:
+        return False
+    return bool(_PRICE_LINE_RE.search(text)) or bool(_PRICE_MOVE_ONLY_RE.match(text))
 
 
 # ---------------------------------------------------------------------------

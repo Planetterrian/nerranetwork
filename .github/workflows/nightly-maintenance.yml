@@ -230,7 +230,9 @@ jobs:
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
         run: |
-          python scripts/build_gallery_manifest.py --out site/data/gallery-manifest.json
+          # --full: the nightly is the safety rebuild that re-reads every
+          # sidecar (finalize runs the incremental pass after each episode).
+          python scripts/build_gallery_manifest.py --full --out site/data/gallery-manifest.json
           python scripts/build_search_index.py --out site/data/search-index.json
 
       - name: Join gallery images with YouTube retention
