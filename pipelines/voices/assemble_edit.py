@@ -60,6 +60,16 @@ GENTLE = ("highpass=f=60,"
           "acompressor=threshold=-21dB:ratio=3:attack=20:release=250,"
           "dynaudnorm=f=250:g=15")
 LOUDNESS = "loudnorm=I=-16:TP=-1.5:LRA=11"
+# Narration does not get dynaudnorm. Mira's takes already arrive at one
+# level, and Sept 13 2026 measured what levelling them costs: her intro came
+# out of the assembler with a noise floor of -51.8 dB against -62.3 in the
+# approved edit, and her outro -48.2 against -74.1, while the conversation
+# either side of them matched to a tenth of a decibel. Nothing had been added
+# to the narration — dynaudnorm had simply lifted its quiet frames, hiss
+# included, by up to 15 dB. Speech level is unaffected: the master loudnorm
+# sets that, and both builds put her at -12.9 dB.
+NARRATION_GENTLE = ("highpass=f=60,"
+                    "acompressor=threshold=-21dB:ratio=2:attack=20:release=250")
 # Trimming dead air off a narration take belongs in narrate.py, but an EDL
 # resolves takes that may have been recorded before that existed (Matt Davis:
 # the assembled episode came back 106 seconds longer than the approved edit,
@@ -176,7 +186,8 @@ def _piece(cut: dict, src: Path, out: Path) -> Path:
             chain.append(TRIM)
         if restore:
             chain.append(restore)
-        chain.append(GENTLE)
+        narration = str(cut.get("from", "")).startswith("narration:")
+        chain.append(NARRATION_GENTLE if narration else GENTLE)
         cmd += ["-af", ",".join(chain)]
 
     cmd += ["-ar", "48000", "-ac", "1", "-c:a", "pcm_s16le", str(out)]

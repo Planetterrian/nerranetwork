@@ -781,3 +781,21 @@ class TestCraftLessonsFromTheFirstEpisodes:
         assert "Ask for the instance, not the pattern" in text
         assert "Say more about" in text and "is almost always the best next thing" in text
         assert "let it stand" in text
+
+
+class TestNarrationIsNotLevelled:
+    """Sept 13 2026: dynaudnorm lifted the hiss in Mira's takes by 10 dB in
+    the intro and 26 in the outro. The conversation either side was
+    untouched, which is how the cause was found."""
+
+    def test_narration_skips_dynaudnorm(self):
+        src = (ROOT / "pipelines" / "voices" / "assemble_edit.py").read_text(encoding="utf-8")
+        assert "NARRATION_GENTLE" in src
+        block = src[src.index("NARRATION_GENTLE = ("):src.index("# Trimming dead air")]
+        assert "dynaudnorm" not in block
+
+    def test_conversation_still_gets_it(self):
+        src = (ROOT / "pipelines" / "voices" / "assemble_edit.py").read_text(encoding="utf-8")
+        assert "chain.append(NARRATION_GENTLE if narration else GENTLE)" in src
+        gentle = src[src.index("GENTLE = ("):src.index("LOUDNESS =")]
+        assert "dynaudnorm" in gentle
