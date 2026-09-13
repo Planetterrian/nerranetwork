@@ -4,17 +4,21 @@
  * spec export.
  */
 
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   DEFAULT_LINEUP,
   PERSONAL_ADDONS,
   PERSONAL_SHOWS,
+  handleAccount,
   handleAdminSpecs,
+  handleCheckoutRef,
   handlePersonalFeed,
+  handlePortal,
   handleStripeWebhook,
   verifyStripeSignature,
 } from "../src/personal";
 import { resolveSubscribeTags } from "../src/handlers";
+import { signJwt } from "../src/jwt";
 import type { Env } from "../src/types";
 
 // ---------------------------------------------------------------------------
@@ -358,5 +362,216 @@ describe("membership plumbing", () => {
 
   it("show vocabulary matches the EN edition lineup size", () => {
     expect(PERSONAL_SHOWS).toHaveLength(13);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Plan switching (Sep 13 2026): checkout refs, subscription.updated,
+// and the customer-portal route.
+// ---------------------------------------------------------------------------
+
+async function memberCookie(env: Env, email: string) {
+  const token = await signJwt(
+    { sub: email, scope: "gallery-subscriber", ttlSeconds: 3600 },
+    env.JWT_SECRET,
+  );
+  return `nn_gallery=${encodeURIComponent(token)}`;
+}
+
+describe("plan switching (Sep 13 2026)", () => {
+  async function post(env: Env, event: object) {
+    const payload = JSON.stringify(event);
+    const sig = await stripeSig(
+      payload, "whsec_test", Math.floor(Date.now() / 1000));
+    return handleStripeWebhook(
+      new Request("https://api.example.com/api/stripe/webhook", {
+        method: "POST", body: payload,
+        headers: { "Stripe-Signature": sig },
+      }), env);
+  }
+
+  afterEach(() => { vi.unstubAllGlobals(); });
+
+  it("a checkout ref attaches the purchase to the signed-in account, not the wallet email", async () => {
+    const env = envWith();
+    const kv = env.RATE_LIMIT_KV as unknown as FakeKV;
+    // Signed in as the +tag address, mint a ref…
+    const refRes = await handleCheckoutRef(
+      new Request("https://api.example.com/api/account/checkout-ref", {
+        method: "POST",
+        headers: { Cookie: await memberCookie(env, "me+nerra@example.com") },
+      }), env);
+    const { ref } = await refRes.json() as { ref: string };
+    expect(ref).toMatch(/^[a-f0-9]{32}$/);
+    // …then Apple Pay reports the bare address (the 2026-09-06 case).
+    await post(env, {
+      type: "checkout.session.completed",
+      data: { object: {
+        client_reference_id: ref,
+        customer_details: { email: "me@example.com" },
+        customer: "cus_42",
+        metadata: { tier: "personal" },
+        subscription: "sub_42", amount_total: 499,
+      } },
+    });
+    expect(kv.store.has("member:me@example.com")).toBe(false);
+    const rec = JSON.parse(kv.store.get("member:me+nerra@example.com")!);
+    expect(rec.status).toBe("active");
+    expect(rec.customer_id).toBe("cus_42");
+    // One-shot: the ref is consumed.
+    expect(kv.store.has(`cref:${ref}`)).toBe(false);
+  });
+
+  it("a bogus or expired ref falls back to the wallet email", async () => {
+    const env = envWith();
+    const kv = env.RATE_LIMIT_KV as unknown as FakeKV;
+    await post(env, {
+      type: "checkout.session.completed",
+      data: { object: {
+        client_reference_id: "0".repeat(32),
+        customer_details: { email: "fan@example.com" },
+        metadata: { tier: "personal" }, subscription: "sub_1", amount_total: 499,
+      } },
+    });
+    expect(kv.store.has("member:fan@example.com")).toBe(true);
+  });
+
+  it("checkout-ref requires a session", async () => {
+    const res = await handleCheckoutRef(
+      new Request("https://api.example.com/api/account/checkout-ref",
+        { method: "POST" }), envWith());
+    expect(res.status).toBe(401);
+  });
+
+  it("subscription.updated switches the tier and keeps the feed token", async () => {
+    const env = envWith({
+      STRIPE_PRICE_PERSONAL: "price_p", STRIPE_PRICE_PNN: "price_pnn",
+    });
+    const kv = env.RATE_LIMIT_KV as unknown as FakeKV;
+    await post(env, {
+      type: "checkout.session.completed",
+      data: { object: {
+        customer_email: "fan@example.com", customer: "cus_1",
+        metadata: { tier: "personal" }, subscription: "sub_1", amount_total: 499,
+      } },
+    });
+    const before = JSON.parse(kv.store.get("member:fan@example.com")!);
+    await post(env, {
+      type: "customer.subscription.updated",
+      data: { object: {
+        id: "sub_1", customer: "cus_1",
+        items: { data: [{ price: { id: "price_pnn" } }] },
+        cancel_at_period_end: false,
+      } },
+    });
+    const after = JSON.parse(kv.store.get("member:fan@example.com")!);
+    expect(after.tier).toBe("personal_local");
+    expect(after.feed_token).toBe(before.feed_token);
+    expect(after.status).toBe("active");
+    expect(kv.store.get(`feedtok:${after.feed_token}`)).toBe("fan@example.com");
+  });
+
+  it("subscription.updated records a cancel-at-period-end date and clears it again", async () => {
+    const env = envWith({ STRIPE_PRICE_PERSONAL: "price_p" });
+    const kv = env.RATE_LIMIT_KV as unknown as FakeKV;
+    await post(env, {
+      type: "checkout.session.completed",
+      data: { object: {
+        customer_email: "fan@example.com",
+        metadata: { tier: "personal" }, subscription: "sub_1", amount_total: 499,
+      } },
+    });
+    await post(env, {
+      type: "customer.subscription.updated",
+      data: { object: {
+        id: "sub_1", items: { data: [{ price: { id: "price_p" } }] },
+        cancel_at_period_end: true, current_period_end: 1790000000,
+      } },
+    });
+    let rec = JSON.parse(kv.store.get("member:fan@example.com")!);
+    expect(rec.ends_at).toBe("2026-09-21");
+    expect(rec.status).toBe("active");        // still served until then
+    await post(env, {
+      type: "customer.subscription.updated",
+      data: { object: {
+        id: "sub_1", items: { data: [{ price: { id: "price_p" } }] },
+        cancel_at_period_end: false, current_period_end: 1790000000,
+      } },
+    });
+    rec = JSON.parse(kv.store.get("member:fan@example.com")!);
+    expect(rec.ends_at).toBeUndefined();
+  });
+
+  it("an unmapped price leaves the tier alone", async () => {
+    const env = envWith({ STRIPE_PRICE_PERSONAL: "price_p" });
+    const kv = env.RATE_LIMIT_KV as unknown as FakeKV;
+    await post(env, {
+      type: "checkout.session.completed",
+      data: { object: {
+        customer_email: "fan@example.com",
+        metadata: { tier: "personal_local" }, subscription: "sub_1", amount_total: 899,
+      } },
+    });
+    await post(env, {
+      type: "customer.subscription.updated",
+      data: { object: { id: "sub_1", items: { data: [{ price: { id: "price_mystery" } }] } } },
+    });
+    expect(JSON.parse(kv.store.get("member:fan@example.com")!).tier)
+      .toBe("personal_local");
+  });
+
+  it("portal: 503 without the key, 404 without a subscription, url with both", async () => {
+    const noKey = envWith();
+    const cookie = await memberCookie(noKey, "fan@example.com");
+    const req = () => new Request("https://api.example.com/api/account/portal",
+      { method: "POST", headers: { Cookie: cookie } });
+    expect((await handlePortal(req(), noKey)).status).toBe(503);
+
+    const env = envWith({ STRIPE_SECRET_KEY: "rk_test" });
+    expect((await handlePortal(req(), env)).status).toBe(404);
+
+    const kv = env.RATE_LIMIT_KV as unknown as FakeKV;
+    kv.store.set("member:fan@example.com", JSON.stringify({
+      shows: [], first_name: "", city: "", tier: "personal", status: "active",
+      feed_token: "a".repeat(32), sub_id: "sub_1", updated_at: "",
+    }));
+    const calls: string[] = [];
+    vi.stubGlobal("fetch", async (url: string, init?: RequestInit) => {
+      calls.push(`${init?.method || "GET"} ${url}`);
+      if (url.endsWith("/subscriptions/sub_1")) {
+        return new Response(JSON.stringify({ id: "sub_1", customer: "cus_7" }));
+      }
+      if (url.endsWith("/billing_portal/sessions")) {
+        expect(String(init?.body)).toContain("customer=cus_7");
+        expect(String(init?.body)).toContain("return_url=");
+        return new Response(JSON.stringify({ url: "https://billing.stripe.com/p/session/x" }));
+      }
+      return new Response("{}", { status: 500 });
+    });
+    const res = await handlePortal(req(), env);
+    expect(res.status).toBe(200);
+    expect((await res.json() as { url: string }).url)
+      .toBe("https://billing.stripe.com/p/session/x");
+    // Legacy member (no customer_id) → looked up once, then remembered.
+    expect(JSON.parse(kv.store.get("member:fan@example.com")!).customer_id).toBe("cus_7");
+    expect(calls[0]).toContain("/subscriptions/sub_1");
+  });
+
+  it("account exposes billing_portal only when it can be opened", async () => {
+    const env = envWith({ STRIPE_SECRET_KEY: "rk_test" });
+    const kv = env.RATE_LIMIT_KV as unknown as FakeKV;
+    const cookie = await memberCookie(env, "fan@example.com");
+    const get = async (e: Env) => (await (await handleAccount(
+      new Request("https://api.example.com/api/account", { headers: { Cookie: cookie } }),
+      e)).json()) as { member: { billing_portal: boolean; ends_at: string | null } };
+    expect((await get(env)).member.billing_portal).toBe(false);   // no member yet
+    kv.store.set("member:fan@example.com", JSON.stringify({
+      shows: [], first_name: "", city: "", tier: "personal", status: "active",
+      feed_token: "a".repeat(32), sub_id: "sub_1", ends_at: "2026-10-01", updated_at: "",
+    }));
+    const body = await get(env);
+    expect(body.member.billing_portal).toBe(true);
+    expect(body.member.ends_at).toBe("2026-10-01");
+    expect((await get(envWith())).member.billing_portal).toBe(false); // no key
   });
 });

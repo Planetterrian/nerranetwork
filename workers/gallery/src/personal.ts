@@ -89,8 +89,19 @@ interface MemberRecord {
   status: string;        // "none" | "active" | "cancelled"
   feed_token?: string;
   sub_id?: string;
+  customer_id?: string;  // Stripe customer — needed to open the billing portal
+  ends_at?: string;      // ISO date when a cancel-at-period-end takes effect
   updated_at: string;
 }
+
+// Checkout references: an opaque, short-lived id the signed-in account
+// page appends to the Payment Links as ?client_reference_id=… so the
+// webhook can attach the purchase to THIS account even when the wallet
+// (Apple Pay / Link) reports a different email than the one signed in.
+// Seen for real on 2026-09-06: checkout prefilled with one address, the
+// membership landed on another. Never the email itself in a URL.
+const CREF_TTL_SECONDS = 60 * 60;
+const CREF_RE = /^[a-f0-9]{32}$/;
 
 function notConfigured(request: Request): Response {
   return jsonResponse(request, 503, {
@@ -160,9 +171,14 @@ export async function handleAccount(request: Request, env: Env): Promise<Respons
         : null,
       tier: member?.tier || "none",
       status: member?.status || "none",
+      ends_at: member?.ends_at || null,
       feed_url: active
         ? `https://api.nerranetwork.com/api/feed/${member!.feed_token}/feed.rss`
         : null,
+      // True when the page may offer "Manage plan & billing" (portal) —
+      // a member with a Stripe subscription and a Worker that has the key.
+      billing_portal: Boolean(
+        env.STRIPE_SECRET_KEY && member && (member.customer_id || member.sub_id)),
     },
     perks: {
       // Set via `wrangler secret put MEMBER_BOOK_CODE` (or a plain var) —
@@ -170,6 +186,119 @@ export async function handleAccount(request: Request, env: Env): Promise<Respons
       book_discount_code: env.MEMBER_BOOK_CODE || null,
     },
   });
+}
+
+// ---------------------------------------------------------------------------
+// POST /api/account/checkout-ref
+//
+// Mints a one-hour opaque reference the signed-in page appends to the
+// Payment Links (?client_reference_id=…). The webhook resolves it back
+// to this account. See CREF_* above.
+// ---------------------------------------------------------------------------
+
+export async function handleCheckoutRef(
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  if (!env.RATE_LIMIT_KV) return notConfigured(request);
+  const email = await emailFromCookie(request, env);
+  if (!email) {
+    return jsonResponse(request, 401, { ok: false, error: "auth required" });
+  }
+  const ref = randomToken();
+  await env.RATE_LIMIT_KV.put(`cref:${ref}`, email,
+    { expirationTtl: CREF_TTL_SECONDS });
+  return jsonResponse(request, 200, { ok: true, ref });
+}
+
+// ---------------------------------------------------------------------------
+// POST /api/account/portal
+//
+// Opens Stripe's customer portal for the signed-in member — the one
+// place to switch Personal ↔ Personal News Network (prorated), update
+// the card, or cancel. Replaces the account page's old "upgrade" link,
+// which opened a FRESH checkout and would have created a second
+// subscription for an existing member (found 2026-09-13).
+// ---------------------------------------------------------------------------
+
+const STRIPE_API = "https://api.stripe.com/v1";
+
+async function stripePost(
+  env: Env,
+  path: string,
+  form: Record<string, string>,
+): Promise<any> {
+  const res = await fetch(`${STRIPE_API}${path}`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${env.STRIPE_SECRET_KEY}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: new URLSearchParams(form).toString(),
+  });
+  const body: any = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(`stripe ${path} ${res.status}: ${body?.error?.message || "?"}`);
+  }
+  return body;
+}
+
+async function stripeGet(env: Env, path: string): Promise<any> {
+  const res = await fetch(`${STRIPE_API}${path}`, {
+    headers: { Authorization: `Bearer ${env.STRIPE_SECRET_KEY}` },
+  });
+  const body: any = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(`stripe ${path} ${res.status}: ${body?.error?.message || "?"}`);
+  }
+  return body;
+}
+
+export async function handlePortal(
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  if (!env.RATE_LIMIT_KV || !env.STRIPE_SECRET_KEY) return notConfigured(request);
+  const email = await emailFromCookie(request, env);
+  if (!email) {
+    return jsonResponse(request, 401, { ok: false, error: "auth required" });
+  }
+  const member = await loadMember(env, email);
+  if (!member || (!member.customer_id && !member.sub_id)) {
+    return jsonResponse(request, 404, { ok: false, error: "no subscription" });
+  }
+  try {
+    let customer = member.customer_id || "";
+    if (!customer) {
+      // Members activated before customer_id was recorded (Sep 2026):
+      // look the customer up once from the subscription and remember it.
+      const sub = await stripeGet(env, `/subscriptions/${member.sub_id}`);
+      customer = String(sub.customer || "");
+      if (!customer) throw new Error("subscription has no customer");
+      await saveMember(env, email, { ...member, customer_id: customer,
+        updated_at: new Date().toISOString() });
+    }
+    const session = await stripePost(env, "/billing_portal/sessions", {
+      customer,
+      return_url: "https://nerranetwork.com/account.html",
+    });
+    return jsonResponse(request, 200, { ok: true, url: String(session.url) });
+  } catch (e) {
+    console.error("portal: failed", (e as Error).message);
+    return jsonResponse(request, 502, { ok: false, error: "portal unavailable" });
+  }
+}
+
+/** Map a Stripe price id to a tier id, via the two configured vars. */
+function tierForPrice(env: Env, priceId: string): string | null {
+  if (!priceId) return null;
+  if (env.STRIPE_PRICE_PERSONAL && priceId === env.STRIPE_PRICE_PERSONAL) {
+    return "personal";
+  }
+  if (env.STRIPE_PRICE_PNN && priceId === env.STRIPE_PRICE_PNN) {
+    return "personal_local";
+  }
+  return null;
 }
 
 // ---------------------------------------------------------------------------
@@ -327,9 +456,19 @@ export async function handleStripeWebhook(
       );
       return jsonResponse(request, 200, { ok: true });
     }
-    const email = String(
-      session.customer_details?.email || session.customer_email || "",
-    ).toLowerCase();
+    // Prefer the signed-in account the page attached (client_reference_id
+    // → cref:… → email) over whatever email the wallet reported.
+    let email = "";
+    const cref = String(session.client_reference_id || "");
+    if (CREF_RE.test(cref)) {
+      email = (await env.RATE_LIMIT_KV.get(`cref:${cref}`)) || "";
+      if (email) await env.RATE_LIMIT_KV.delete(`cref:${cref}`);
+    }
+    if (!email) {
+      email = String(
+        session.customer_details?.email || session.customer_email || "",
+      ).toLowerCase();
+    }
     if (!email) {
       console.warn("stripe: membership checkout with no email");
       return jsonResponse(request, 200, { ok: true });
@@ -345,6 +484,8 @@ export async function handleStripeWebhook(
       status: "active",
       feed_token: token,
       sub_id: String(session.subscription || existing.sub_id || ""),
+      customer_id: String(session.customer || existing.customer_id || ""),
+      ends_at: undefined,
       updated_at: new Date().toISOString(),
     };
     await saveMember(env, email, rec);
@@ -373,6 +514,40 @@ export async function handleStripeWebhook(
         });
         console.log("stripe: cancelled sub", subId.slice(0, 12));
       }
+    }
+  } else if (event.type === "customer.subscription.updated") {
+    // A portal plan switch (Personal ↔ PNN) or a cancel-at-period-end.
+    // The feed token never changes here — a member's URL survives an
+    // upgrade; only the tier (and the add-ons the builder lets it run)
+    // moves. Price ids not configured → log and leave the record alone.
+    const sub = event.data?.object ?? {};
+    const subId = String(sub.id || "");
+    const email = subId ? await env.RATE_LIMIT_KV.get(`sub:${subId}`) : null;
+    const member = email ? await loadMember(env, email) : null;
+    if (!member) {
+      console.log("stripe: subscription.updated for unknown sub", subId.slice(0, 12));
+      return jsonResponse(request, 200, { ok: true });
+    }
+    const priceId = String(sub.items?.data?.[0]?.price?.id || "");
+    const tier = tierForPrice(env, priceId);
+    if (!tier && priceId) {
+      console.warn("stripe: unmapped price on subscription.updated", priceId);
+    }
+    const endsAt = sub.cancel_at_period_end && sub.current_period_end
+      ? new Date(Number(sub.current_period_end) * 1000).toISOString().slice(0, 10)
+      : undefined;
+    const next: MemberRecord = {
+      ...member,
+      tier: tier || member.tier,
+      customer_id: String(sub.customer || member.customer_id || ""),
+      ends_at: endsAt,
+      updated_at: new Date().toISOString(),
+    };
+    if (next.tier !== member.tier || next.ends_at !== member.ends_at ||
+        next.customer_id !== member.customer_id) {
+      await saveMember(env, email!, next);
+      console.log("stripe: subscription.updated", member.tier, "→", next.tier,
+        endsAt ? `ends ${endsAt}` : "");
     }
   }
   return jsonResponse(request, 200, { ok: true });

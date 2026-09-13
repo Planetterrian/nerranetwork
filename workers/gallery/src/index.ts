@@ -6,6 +6,8 @@
  *   POST /api/subscribe   - email gate enrolment
  *   GET  /api/login       - request a magic-link email
  *   GET  /api/magic       - consume a magic-link token
+ *   POST /api/account/checkout-ref - opaque ref to attach a checkout to this account
+ *   POST /api/account/portal       - Stripe customer portal session (switch plan / cancel)
  *   GET  /api/download    - stream a private R2 object
  *   GET  /api/health      - liveness ping (no auth)
  *
@@ -22,6 +24,8 @@ import {
 } from "./handlers";
 import {
   handleAccount,
+  handleCheckoutRef,
+  handlePortal,
   handleAdminSpecs,
   handlePersonalFeed,
   handlePreferences,
@@ -64,6 +68,10 @@ export default {
           return await handleAccount(request, env);
         case "POST /api/account/preferences":
           return await handlePreferences(request, env);
+        case "POST /api/account/checkout-ref":
+          return await handleCheckoutRef(request, env);
+        case "POST /api/account/portal":
+          return await handlePortal(request, env);
         case "POST /api/stripe/webhook":
           return await handleStripeWebhook(request, env);
         case "GET /api/admin/personal-specs":
