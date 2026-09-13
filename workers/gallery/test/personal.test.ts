@@ -14,6 +14,7 @@ import {
   handleCheckoutRef,
   handlePersonalFeed,
   handlePortal,
+  handlePreferences,
   handleStripeWebhook,
   verifyStripeSignature,
 } from "../src/personal";
@@ -594,5 +595,82 @@ describe("plan switching (Sep 13 2026)", () => {
     expect(body.member.billing_portal).toBe(true);
     expect(body.member.ends_at).toBe("2026-10-01");
     expect((await get(envWith())).member.billing_portal).toBe(false); // no key
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Personal News Network (Sep 13 2026): locations + topics on the record.
+// ---------------------------------------------------------------------------
+
+describe("locations + topics (Sep 13 2026)", () => {
+  async function save(env: Env, email: string, body: object) {
+    return handlePreferences(new Request("https://api.example.com/api/account/preferences", {
+      method: "POST",
+      headers: { Cookie: await memberCookie(env, email), "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }), env);
+  }
+  async function account(env: Env, email: string) {
+    return (await (await handleAccount(
+      new Request("https://api.example.com/api/account",
+        { headers: { Cookie: await memberCookie(env, email) } }), env)).json()) as any;
+  }
+
+  it("stores up to three cities and five topics, scrubbed and deduped, city = cities[0]", async () => {
+    const env = envWith();
+    const res = await save(env, "fan@example.com", {
+      shows: ["spacex", "tesla"],
+      cities: ["Vancouver, BC", " kelowna ", "Kelowna", "Victoria", "Calgary"],
+      topics: ["<b>Starship</b>", "BC  housing", "x".repeat(200), "", "{date_spoken}", "six", "seven"],
+    });
+    expect(res.status).toBe(200);
+    const saved = (await res.json() as any).saved;
+    expect(saved.cities).toEqual(["Vancouver, BC", "kelowna", "Victoria"]);
+    expect(saved.city).toBe("Vancouver, BC");
+    expect(saved.topics).toHaveLength(5);
+    expect(saved.topics[0]).toBe("Starship");
+    expect(saved.topics[1]).toBe("BC housing");
+    expect(saved.topics[2]).toHaveLength(60);
+    expect(saved.topics[3]).toBe("date_spoken");   // braces never reach a prompt
+    const acct = await account(env, "fan@example.com");
+    expect(acct.member.preferences.cities).toEqual(["Vancouver, BC", "kelowna", "Victoria"]);
+    expect(acct.member.preferences.topics[0]).toBe("Starship");
+  });
+
+  it("a legacy page sending a bare city still works, and old records read back as one city", async () => {
+    const env = envWith();
+    const kv = env.RATE_LIMIT_KV as unknown as FakeKV;
+    await save(env, "fan@example.com", { shows: ["spacex", "tesla"], city: "Kelowna" });
+    let rec = JSON.parse(kv.store.get("member:fan@example.com")!);
+    expect(rec.cities).toEqual(["Kelowna"]);
+    expect(rec.city).toBe("Kelowna");
+    // A pre-Sep-13 record with only `city`:
+    kv.store.set("member:old@example.com", JSON.stringify({
+      shows: ["spacex", "tesla"], first_name: "", city: "Victoria",
+      tier: "personal_local", status: "active", feed_token: "c".repeat(32), updated_at: "",
+    }));
+    const acct = await account(env, "old@example.com");
+    expect(acct.member.preferences.cities).toEqual(["Victoria"]);
+    expect(acct.member.preferences.topics).toEqual([]);
+  });
+
+  it("admin specs carry cities and topics (still no email)", async () => {
+    const env = envWith();
+    await save(env, "fan@example.com", {
+      shows: ["spacex", "tesla"], cities: ["Vancouver, BC", "Kelowna"], topics: ["Starship"],
+    });
+    const kv = env.RATE_LIMIT_KV as unknown as FakeKV;
+    const rec = JSON.parse(kv.store.get("member:fan@example.com")!);
+    kv.store.set("member:fan@example.com", JSON.stringify({
+      ...rec, tier: "personal_local", status: "active", feed_token: "d".repeat(32),
+    }));
+    const res = await handleAdminSpecs(new Request("https://api.example.com/api/admin/personal-specs",
+      { headers: { Authorization: "Bearer admin-token" } }), env);
+    const body = await res.json() as { specs: any[] };
+    const sp = body.specs.find((x) => x.token === "d".repeat(32))!;
+    expect(sp.cities).toEqual(["Vancouver, BC", "Kelowna"]);
+    expect(sp.topics).toEqual(["Starship"]);
+    expect(sp.city).toBe("Vancouver, BC");
+    expect(JSON.stringify(body)).not.toContain("example.com");
   });
 });
