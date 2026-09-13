@@ -64,7 +64,17 @@ bucket_name = "nerra-personal"
 #   wrangler secret put PERSONAL_ADMIN_TOKEN    # any long random string; the
 #                                               # batch builder presents it
 #   wrangler secret put MEMBER_BOOK_CODE        # store discount code members see
+# Plan switching (Sep 2026):
+#   wrangler secret put STRIPE_SECRET_KEY       # RESTRICTED key: billing portal
+#                                               # sessions write, subscriptions read
 # Do NOT commit them here.
+
+# Plain (non-secret) vars. The two Stripe price ids let the webhook map a
+# customer-portal plan switch back to a tier. They are public identifiers
+# (they appear in every Checkout page's HTML), not secrets.
+[vars]
+STRIPE_PRICE_PERSONAL = "price_1U7jGMKE2gtsD9sRPflF3axu"   # Nerra Personal $4.99/mo
+STRIPE_PRICE_PNN = "price_1U7jGNKE2gtsD9sR63qV7lRL"        # Personal News Network $8.99/mo
 
 [observability]
 enabled = true
