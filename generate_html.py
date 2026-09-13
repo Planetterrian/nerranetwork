@@ -4088,9 +4088,11 @@ def generate_account_page(*, dry_run=False):
     _ADDON_DISPLAY = {
         "weather": ("🌤️", "Measured Open-Meteo forecast for your location, "
                           "read by Mira"),
-        "local_news": ("📰", "One local story a resident would care about, "
-                             "researched and sourced aloud"),
-        "events": ("🎟️", "One notable local event coming up"),
+        "local_news": ("📰", "A local story a resident would care about, "
+                             "researched and sourced aloud — up to three on "
+                             "Personal News Network"),
+        "events": ("🎟️", "A notable local event coming up — up to three on "
+                          "Personal News Network"),
         "traffic": ("🚗", "A real closure, strike or disruption changing "
                           "how you get around"),
         "markets": ("📈", "TSLA + SPCX closes from the network's own data "
