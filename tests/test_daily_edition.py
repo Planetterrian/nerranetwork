@@ -10,6 +10,7 @@ CLAUDE.md's first section).
 from __future__ import annotations
 
 import datetime as dt
+import re
 import json
 from pathlib import Path
 
@@ -785,7 +786,14 @@ class TestRotationMemoryV2:
         from engine.daily_edition import (recent_field_note_closers,
                                           recent_signoff_openers)
         signoffs = recent_signoff_openers(SPEC, ROOT)
-        assert signoffs and any(s.startswith("Across") for s in signoffs)
+        # Sep 13 2026: this used to require that a recent rundown still
+        # opened "Across these segments…" — the tic the memory was built
+        # to retire. The committed window rotated past it (0 of the last
+        # 12), which is the memory working, not a regression. Pin the
+        # shape: one opener per rundown with a sign-off, several words
+        # each, never a date.
+        assert signoffs and all(len(s.split()) >= 3 for s in signoffs)
+        assert not any(re.search(r"\b2026\b", s) for s in signoffs), signoffs
         closers = recent_field_note_closers(SPEC, ROOT)
         assert closers and all(c.endswith((".", "!", "?")) for c in closers)
 
