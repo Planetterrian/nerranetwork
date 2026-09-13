@@ -72,6 +72,27 @@ CHANNEL_FILTERS = {
     "mono": "pan=mono|c0=0.5*c0+0.5*c1",
 }
 
+# Restoration (Sept 13 2026). Two faults, measured rather than assumed:
+#
+#  * Ticks. Mira's Speech-to-Speech audio reaches the recorder over a
+#    websocket, and her narration carried roughly 40 click-like events a
+#    minute against 18 in the conversation. adeclick removes about 90% of
+#    them and leaves band energy from 100 Hz to 16 kHz unchanged to a tenth
+#    of a decibel, so nothing is dulled.
+#  * Hiss. It lives in the conference mixer's output, not in anyone's
+#    microphone: in a real pause a guest's own leg recording is digital
+#    silence while the room mix has real energy above 8 kHz. anlmdn takes
+#    another 6 dB off the floor.
+RESTORE = "adeclick=w=75:t=2,anlmdn=s=0.0005:p=0.002"
+
+# A stereo per-person recording is L = their microphone, R = everyone they
+# heard, and those two sides arrive at different levels — on the Hogan Shrum
+# tape the guest sat 6 dB over the host and Mira. Levelling each SIDE before
+# folding fixes that; levelling after the fold cannot, because by then it is
+# one signal. "balance" on a cut turns this on.
+SIDE_CHAIN = ("highpass=f=70,{restore},dynaudnorm=f=200:g=9:p=0.9:m=12")
+BALANCE_GLUE = "acompressor=threshold=-20dB:ratio=2.5:attack=20:release=250"
+
 
 def _run_sources(run: dict, show) -> Dict[str, str]:
     log = run.get("grok_session_log") or {}
@@ -119,27 +140,43 @@ def _fetch(url: str, dest: Path, cache: Dict[str, Path]) -> Path:
 
 
 def _piece(cut: dict, src: Path, out: Path) -> Path:
-    chain = []
-    channel = cut.get("channel")
-    if channel:
-        if channel not in CHANNEL_FILTERS:
-            raise SystemExit(f"channel must be one of {sorted(CHANNEL_FILTERS)}")
-        chain.append(CHANNEL_FILTERS[channel])
-    # Narration is trimmed by default; a conversation never is, because the
-    # pauses in it are the conversation.
-    trim = cut.get("trim")
-    if trim is None:
-        trim = str(cut.get("from", "")).startswith("narration:")
-    if trim:
-        chain.append(TRIM)
-    chain.append(GENTLE)
+    restore = RESTORE if cut.get("restore", True) else None
     cmd = ["ffmpeg", "-y", "-v", "error"]
     if cut.get("start") is not None:
         cmd += ["-ss", str(cut["start"])]
     if cut.get("end") is not None:
         cmd += ["-to", str(cut["end"])]
-    cmd += ["-i", str(src), "-af", ",".join(chain),
-            "-ar", "48000", "-ac", "1", "-c:a", "pcm_s16le", str(out)]
+    cmd += ["-i", str(src)]
+
+    if cut.get("balance"):
+        # Level the two sides of a stereo per-person recording separately,
+        # then fold. Anything else here would be levelling a mixture.
+        side = SIDE_CHAIN.format(restore=restore or "anull")
+        cmd += ["-filter_complex",
+                f"[0:a]channelsplit=channel_layout=stereo[l][r];"
+                f"[l]{side}[lg];[r]{side}[rg];"
+                f"[lg][rg]amix=inputs=2:normalize=0,{BALANCE_GLUE}[o]",
+                "-map", "[o]"]
+    else:
+        chain = []
+        channel = cut.get("channel")
+        if channel:
+            if channel not in CHANNEL_FILTERS:
+                raise SystemExit(f"channel must be one of {sorted(CHANNEL_FILTERS)}")
+            chain.append(CHANNEL_FILTERS[channel])
+        # Narration is trimmed by default; a conversation never is, because
+        # the pauses in it are the conversation.
+        trim = cut.get("trim")
+        if trim is None:
+            trim = str(cut.get("from", "")).startswith("narration:")
+        if trim:
+            chain.append(TRIM)
+        if restore:
+            chain.append(restore)
+        chain.append(GENTLE)
+        cmd += ["-af", ",".join(chain)]
+
+    cmd += ["-ar", "48000", "-ac", "1", "-c:a", "pcm_s16le", str(out)]
     subprocess.run(cmd, check=True)
     return out
 

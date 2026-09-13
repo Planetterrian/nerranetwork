@@ -671,3 +671,50 @@ class TestTheTranscriptDescribesTheEdit:
             assert (d / f"{slug}.json").exists(), f"{t.name} has no EDL"
             body = t.read_text(encoding="utf-8")
             assert "MIRA — INTRODUCTION" in body and "MIRA — CLOSE" in body
+
+
+class TestAudioRestoration:
+    """Sept 13 2026: Patrick heard hiss and ticks. Two faults, both measured.
+    The ticks are Mira's websocket audio path — 40 click-like events a minute
+    in her narration against 18 in the conversation. The hiss is the
+    conference mixer's output: in a real pause a guest's own leg recording is
+    digital silence while the mix has energy above 8 kHz."""
+
+    def test_restoration_is_on_by_default_and_can_be_turned_off(self):
+        src = (ROOT / "pipelines" / "voices" / "assemble_edit.py").read_text(encoding="utf-8")
+        assert "RESTORE =" in src
+        assert 'cut.get("restore", True)' in src
+
+    def test_the_chain_is_declick_then_denoise(self):
+        import importlib
+
+        mod = importlib.import_module("assemble_edit")
+        assert mod.RESTORE.index("adeclick") < mod.RESTORE.index("anlmdn")
+
+    def test_balance_levels_each_side_before_folding(self):
+        src = (ROOT / "pipelines" / "voices" / "assemble_edit.py").read_text(encoding="utf-8")
+        assert "channelsplit=channel_layout=stereo[l][r]" in src
+        assert "[l]{side}[lg];[r]{side}[rg]" in src
+        i_side = src.index("[l]{side}")
+        i_mix = src.index("amix=inputs=2:normalize=0", i_side)
+        assert i_side < i_mix, "levelling after the fold is levelling a mixture"
+
+    def test_a_balanced_cut_ignores_channel(self):
+        src = (ROOT / "pipelines" / "voices" / "assemble_edit.py").read_text(encoding="utf-8")
+        block = src[src.index('if cut.get("balance"):'):src.index("    else:", src.index('if cut.get("balance"):'))]
+        assert "CHANNEL_FILTERS" not in block, "balance uses both sides by definition"
+
+    def test_both_episodes_use_the_guest_leg_not_the_conference_mix(self):
+        import json
+
+        for name in ("matt_davis_2026_09_10", "hogan_shrum_2026_09_11"):
+            spec = json.loads((ROOT / "pipelines" / "voices" / "edl"
+                               / f"{name}.json").read_text(encoding="utf-8"))
+            conversation = [c for c in spec["cuts"] if "from" in c
+                            and not str(c["from"]).startswith("narration:")]
+            assert any(c.get("balance") for c in conversation), name
+            # The conference mix is the noisiest source available. Using it
+            # has to be a decision someone wrote down, not a default.
+            if any(c["from"] == "run:mix" for c in conversation):
+                assert "room mix" in spec.get("note", ""), (
+                    f"{name}: using the conference mix needs a reason in the note")
