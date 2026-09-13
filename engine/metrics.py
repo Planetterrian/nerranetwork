@@ -38,6 +38,20 @@ class StageMetric:
     error: str = ""
 
 
+# Timed counters that are recorded INSIDE another timed counter. They are
+# real timings, but adding them to the wall clock counts the same seconds
+# twice: ``long_form_render_duration_s`` runs inside
+# ``youtube_publish_duration_s`` (Sep 13 2026 — MAB Ep165 reported a
+# 3,257 s wall on a 2,225 s step, which read as a watchdog breach that
+# never happened), and ``youtube_call_duration_s`` is the publish call's
+# own stub. Add a counter here when it is nested; never drop it from the
+# metrics file, the dashboard reads it on its own.
+_NESTED_DURATION_COUNTERS = frozenset({
+    "long_form_render_duration_s",
+    "youtube_call_duration_s",
+})
+
+
 @dataclass
 class PipelineMetrics:
     """Collects timing and metadata for a single pipeline run."""
@@ -96,6 +110,8 @@ class PipelineMetrics:
         is the episode's length, not a timing, and is excluded."""
         extra = 0.0
         for key, value in self.counters.items():
+            if key in _NESTED_DURATION_COUNTERS:
+                continue
             if key.endswith("_duration_s") and key != "audio_duration_s":
                 try:
                     extra += float(value or 0.0)

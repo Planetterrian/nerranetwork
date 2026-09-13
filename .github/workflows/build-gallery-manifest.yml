@@ -66,7 +66,7 @@ jobs:
           R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-        run: python scripts/build_gallery_manifest.py --out site/data/gallery-manifest.json
+        run: python scripts/build_gallery_manifest.py --full --out site/data/gallery-manifest.json
 
       - name: Build global search index (Content Lake FTS)
         # No secrets needed — purely local lake + metadata. Safe even if lake is empty.

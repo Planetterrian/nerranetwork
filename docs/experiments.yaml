@@ -1150,6 +1150,34 @@ experiments:
       rule. Render-only, best-effort, per-show youtube.fact_cards_enabled.
       Miss = flip the three YAML flags back; the module stays.
 
+  - id: x264-preset-faster-2026-09-13
+    title: "Long-form render on x264 preset `faster` (operator-directed trial)"
+    area: quality
+    shipped: 2026-09-13
+    readout: 2026-09-20
+    status: decide
+    metric: long_form_render_median_s_7d
+    baseline: 1024
+    target: >
+      DECIDE on 2026-09-20: keep `faster` if the 7-day median long-form
+      render is at or under ~700 s (a third off the 1,024 s baseline)
+      with no visible banding or blocking on a spot-check of two
+      long-forms (Tesla + one non-flagship), and EN long-form
+      averageViewPercentage over the week is not below the prior week.
+      Revert (repo variable NERRA_X264_PRESET=medium, or drop the
+      default in run-show.yml) if the median moves less than 15% or the
+      spot-check shows a visible quality loss. Also read wall time: the
+      09-11 watchdog fires and the 09-13 MAB run (21 of 37 minutes in
+      the render) are the failure this is meant to remove.
+    notes: >
+      Same crf (22), same maxrate/bufsize; `faster` trades a little
+      compression efficiency for encoder speed, so file size may rise a
+      few percent at equal visual quality. Only the EN run-show.yml job
+      carries the variable (engine.video._X264_PRESET); the RU/FR dub
+      renders in multilingual.yml stay on `medium`, which keeps the
+      metric's credit-file read EN-only and gives a same-week control.
+      Guard: tests/test_youtube_pass_2026_09_13.py.
+
   - id: pause-dead-youtube-uploads
     title: "YouTube paused on env_intel + finansy_prosto (operator-directed)"
     area: reach

@@ -567,6 +567,19 @@ jobs:
           # command re-renders the old way regardless, so neither state
           # can break a run.
           NERRA_SINGLE_PASS_RENDER: ${{ vars.NERRA_SINGLE_PASS_RENDER }}
+          # x264 preset for the long-form + Shorts encodes
+          # (engine.video._X264_PRESET). Sep 13 2026, operator-directed
+          # render-speed TRIAL: `faster` instead of the code default
+          # `medium` — the long-form render ran 640-1,270 s per 10-minute
+          # episode on 09-13 (median 1,024 s over 7 days) and is the
+          # largest single block of every run. Read
+          # `long_form_render_median_s_7d` on the dashboard against the
+          # 1,024 s baseline (experiment x264-preset-faster-2026-09-13,
+          # readout 2026-09-20). Override without a commit via the repo
+          # variable; set it to `medium` to end the trial. The dub
+          # renders (multilingual.yml) do not carry this and stay on
+          # medium, so the EN credit files are the only ones that move.
+          NERRA_X264_PRESET: ${{ vars.NERRA_X264_PRESET || 'faster' }}
 
       - name: Commit skip state (queue cooldown + skip marker)
         # A source_integrity_failed skip publishes nothing and the normal
@@ -947,6 +960,9 @@ jobs:
           # spun up a fresh runner after EVERY Run Podcast Show completion
           # (~13/day) just to run this one script. Building it here reuses
           # this runner; the nightly job remains the safety rebuild.
+          # Sep 13 2026: INCREMENTAL — reuses the committed manifest's
+          # records and downloads only new sidecars. The serial full walk
+          # (10,642 GETs) took 38 of this step's 39 minutes, ~13x/day.
           python scripts/build_gallery_manifest.py --out site/data/gallery-manifest.json
 
       - name: Commit and push shared pages

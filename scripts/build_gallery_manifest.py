@@ -387,17 +387,96 @@ def empty_manifest(config: GalleryConfig) -> Dict:
 # ---------------------------------------------------------------------------
 
 
-def walk_bucket(config: GalleryConfig) -> List[Dict]:
-    """Network walk: list every sidecar and fetch it."""
+# Sidecar downloads run in parallel: one GET is ~0.2 s from a GitHub
+# runner, and the bucket holds 10,000+ sidecars, so a serial walk took
+# 38 minutes on 2026-09-13 — inside run-show's finalize job, after EVERY
+# episode (~13x/day). boto3 clients are thread-safe.
+FETCH_WORKERS = 8
+
+
+def cached_sidecars(existing: Optional[Dict]) -> Dict[str, Dict]:
+    """Map sidecar R2 key -> record for every image in an existing manifest.
+
+    The manifest records ARE the sidecars (``build_manifest`` copies the
+    sidecar and adds the URL fields), so a committed manifest is a
+    complete cache of every sidecar it lists. Records that cannot
+    reconstruct their key (a hand-edited or truncated file) are simply
+    not cached and get fetched again.
+    """
+    out: Dict[str, Dict] = {}
+    if not isinstance(existing, dict):
+        return out
+    for record in existing.get("images") or []:
+        if not isinstance(record, dict):
+            continue
+        try:
+            out[_build_object_keys(record)[2]] = record
+        except (KeyError, TypeError):
+            continue
+    return out
+
+
+def walk_bucket(
+    config: GalleryConfig,
+    *,
+    existing: Optional[Dict] = None,
+    full: bool = False,
+    workers: int = FETCH_WORKERS,
+) -> List[Dict]:
+    """Network walk: list every sidecar key, fetch the ones we do not have.
+
+    Sep 13 2026 — INCREMENTAL by default. The key listing is cheap (a
+    dozen paginated calls); the per-sidecar GETs are what cost 38
+    minutes per finalize. With ``existing`` (the committed manifest)
+    only keys absent from it are downloaded; keys that vanished from the
+    bucket drop out because the listing is the source of truth. A
+    sidecar EDITED in place is not noticed on an incremental pass — the
+    nightly runs ``--full`` for exactly that. Sidecars the manifest
+    excludes (thumbnail composites) are never in the cache and are
+    re-read every pass; that is ~1,400 objects, seconds across
+    ``workers`` threads, and keeps the cache honest without a second
+    committed file.
+    """
+    from concurrent.futures import ThreadPoolExecutor
+
     s3 = _make_s3_client(config)
-    sidecars: List[Dict] = []
     keys = list(_iter_sidecar_keys(s3, config.bucket))
     logger.info("Found %d sidecar(s) in bucket %s", len(keys), config.bucket)
+
+    cache = {} if full else cached_sidecars(existing)
+    sidecars: List[Dict] = []
+    to_fetch: List[str] = []
     for key in keys:
-        body = _fetch_sidecar(s3, config.bucket, key)
-        if body is not None:
-            sidecars.append(body)
+        hit = cache.get(key)
+        if hit is not None:
+            sidecars.append(hit)
+        else:
+            to_fetch.append(key)
+    logger.info(
+        "Reusing %d cached sidecar(s), fetching %d%s",
+        len(sidecars), len(to_fetch), " (full rebuild)" if full else "",
+    )
+
+    fetched = 0
+    if to_fetch:
+        with ThreadPoolExecutor(max_workers=max(1, int(workers or 1))) as pool:
+            for body in pool.map(
+                lambda k: _fetch_sidecar(s3, config.bucket, k), to_fetch
+            ):
+                if body is not None:
+                    sidecars.append(body)
+                    fetched += 1
+    logger.info("Fetched %d sidecar(s)", fetched)
     return sidecars
+
+
+def load_existing_manifest(path: Path) -> Optional[Dict]:
+    """The committed manifest, or ``None`` when absent/unreadable."""
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    return data if isinstance(data, dict) else None
 
 
 def main(argv: Optional[List[str]] = None) -> int:
@@ -409,6 +488,16 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser.add_argument(
         "--dry-run", action="store_true",
         help="Compute the manifest but don't write or commit.",
+    )
+    parser.add_argument(
+        "--full", action="store_true",
+        help="Re-download every sidecar instead of reusing the records "
+             "already in --out (the nightly safety rebuild; catches "
+             "sidecars edited in place).",
+    )
+    parser.add_argument(
+        "--workers", type=int, default=FETCH_WORKERS,
+        help=f"Parallel sidecar downloads (default {FETCH_WORKERS}).",
     )
     parser.add_argument(
         "-v", "--verbose", action="store_true",
@@ -429,9 +518,23 @@ def main(argv: Optional[List[str]] = None) -> int:
         )
         manifest = empty_manifest(config)
     else:
+        existing = load_existing_manifest(args.out)
         try:
-            sidecars = walk_bucket(config)
-        except Exception as exc:  # noqa: BLE001 — log + write empty rather than crash CI
+            sidecars = walk_bucket(
+                config, existing=existing, full=args.full, workers=args.workers,
+            )
+        except Exception as exc:  # noqa: BLE001 — never crash CI
+            # Sep 13 2026: a failed walk used to write an EMPTY manifest,
+            # which would have wiped 9,000+ images from every gallery
+            # (and deleted the per-show slices) on one R2 hiccup — the
+            # search-index lesson of July 24. Keep what is committed.
+            if existing and (existing.get("images") or []):
+                logger.error(
+                    "R2 bucket walk failed (%s): %s — keeping the existing "
+                    "manifest (%d image(s)) untouched",
+                    type(exc).__name__, exc, len(existing.get("images") or []),
+                )
+                return 0
             logger.error(
                 "R2 bucket walk failed (%s): %s — writing empty manifest",
                 type(exc).__name__, exc,
