@@ -533,8 +533,13 @@ export async function handleStripeWebhook(
     if (!tier && priceId) {
       console.warn("stripe: unmapped price on subscription.updated", priceId);
     }
-    const endsAt = sub.cancel_at_period_end && sub.current_period_end
-      ? new Date(Number(sub.current_period_end) * 1000).toISOString().slice(0, 10)
+    // API 2025-03-31.basil moved current_period_end from the subscription
+    // to its items; this endpoint runs on the account default (newer), so
+    // read the item first and fall back to the legacy top-level field.
+    const periodEnd = sub.items?.data?.[0]?.current_period_end
+      ?? sub.current_period_end;
+    const endsAt = sub.cancel_at_period_end && periodEnd
+      ? new Date(Number(periodEnd) * 1000).toISOString().slice(0, 10)
       : undefined;
     const next: MemberRecord = {
       ...member,
