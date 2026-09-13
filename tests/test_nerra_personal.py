@@ -284,6 +284,38 @@ class TestLandingAndConsoleSurfaces:
                        "nn-city-nudge", "nn-tier-badge"):
             assert marker in src, marker
 
+    def test_plan_switching_surfaces(self):
+        """Sep 13 2026: an existing subscriber must switch plans inside
+        Stripe's portal, never through a fresh Payment Link (that created a
+        SECOND subscription). Every checkout link carries the opaque
+        client_reference_id so the webhook attaches the purchase to the
+        signed-in account, not the wallet's email."""
+        src = _read("templates/account_page.html.j2")
+        assert "nn-switch-portal" in src and "NN.portal()" in src
+        assert "/api/account/portal" in src and "/api/account/checkout-ref" in src
+        assert "nn-portal-btn" in src and "nn-ends-note" in src
+        # Every Stripe link is tagged for the ref injector.
+        import re as _re
+        for m in _re.finditer(r'<a href="\{\{ stripe_personal(?:_local)?_url \}\}"([^>]*)>', src):
+            assert "data-checkout" in m.group(1), m.group(0)
+        assert "Personal + Local" not in src
+        assert "Personal + Local" not in _read("templates/join_page.html.j2")
+        # Worker side of the same contract.
+        ts = _read("workers/gallery/src/personal.ts")
+        for marker in ("customer.subscription.updated", "client_reference_id",
+                       "billing_portal/sessions", "handleCheckoutRef", "handlePortal"):
+            assert marker in ts, marker
+
+    def test_login_page_registered(self):
+        assert (ROOT / "templates" / "login_page.html.j2").exists()
+        src = _read("generate_html.py")
+        assert "def generate_login_page" in src
+        assert src.count("generate_login_page(dry_run=args.dry_run)") == 2
+        tpl = _read("templates/login_page.html.j2")
+        assert 'name="robots" content="noindex' in tpl
+        assert "password" in tpl.lower()   # says why there isn't one
+        assert "/api/login?email=" in tpl
+
     def test_worker_starter_lineup_within_vocabulary(self):
         # A paying member with <2 shows now gets DEFAULT_LINEUP instead of
         # silent exclusion; the starter must stay inside the closed set.
