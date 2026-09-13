@@ -799,3 +799,11 @@ class TestNarrationIsNotLevelled:
         assert "chain.append(NARRATION_GENTLE if narration else GENTLE)" in src
         gentle = src[src.index("GENTLE = ("):src.index("LOUDNESS =")]
         assert "dynaudnorm" in gentle
+
+
+class TestNarrationHissIsRemovedAtSource:
+    def test_narration_gets_afftdn_and_conversation_does_not(self):
+        src = (ROOT / "pipelines" / "voices" / "assemble_edit.py").read_text(encoding="utf-8")
+        assert 'NARRATION_RESTORE = "adeclick=w=75:t=2,afftdn=nf=-45:nr=12' in src
+        assert "afftdn" not in src[src.index('RESTORE = "'):src.index("NARRATION_RESTORE")]
+        assert "chain.append(NARRATION_RESTORE if narration else restore)" in src
