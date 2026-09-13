@@ -40,7 +40,7 @@ import shutil
 import sys
 import tempfile
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
@@ -64,6 +64,8 @@ from engine.personal_edition import (  # noqa: E402
     build_markets_line,
     build_personal_feed_xml,
     build_personal_links_prompt,
+    build_topics_prompt,
+    brief_max_words,
     chapters_filename_for,
     fallback_personal_links,
     fetch_weather_line,
@@ -72,7 +74,9 @@ from engine.personal_edition import (  # noqa: E402
     wants_local_brief,
     personal_chapter_pieces,
     personal_episode_title,
+    upgrade_nudge_line,
     validate_spec,
+    wants_topics_brief,
 )
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s",
@@ -260,32 +264,70 @@ def generate_personal_links(
     return fallback_personal_links(spec, segments, target_date)
 
 
-def generate_local_brief(spec: PersonalSpec,
-                         target_date: dt.date) -> Optional[str]:
+def generate_local_brief(spec: PersonalSpec, target_date: dt.date,
+                         city: Optional[str] = None) -> Optional[str]:
+    """One city's brief (``city`` defaults to the primary)."""
     # Gate on the member's add-on toggles (Aug 30 2026): the brief runs
     # only when a location add-on is actually on — and tier is enforced
     # inside effective_addons(), so a base-tier spec can never buy a
-    # local brief by writing addons into its record.
+    # local brief by writing addons into its record. Depth and city
+    # count are tier-enforced the same way (validate_spec, Sep 13 2026).
     if not wants_local_brief(spec):
         return None
+    city = city or spec.city
     try:
         weather = ""
         if "weather" in spec.effective_addons():
-            weather = fetch_weather_line(spec)
+            weather = fetch_weather_line(spec, city=city)
         if not needs_research_call(spec):
             # Weather-only: measured data, no research sections — spoken
             # verbatim, no LLM call to pay for or to hallucinate.
             return weather or None
         from digests.xai_grok import grok_generate_text
 
-        prompt = build_local_brief_prompt(ROOT, spec, target_date, weather)
+        prompt = build_local_brief_prompt(ROOT, spec, target_date, weather,
+                                          city=city)
         text, _meta = grok_generate_text(
             prompt=prompt, model=LINKS_MODEL, temperature=0.6,
-            max_tokens=800, timeout_seconds=600, enable_web_search=True,
+            max_tokens=1200 if spec.depth > 1 else 800,
+            timeout_seconds=600, enable_web_search=True,
         )
-        return parse_local_brief(text)
+        return parse_local_brief(text, max_words=brief_max_words(spec.depth))
     except Exception as exc:  # noqa: BLE001 — the brief never sinks the edition
         logger.info("%s…: local brief failed (%s) — skipped",
+                    spec.token[:8], exc)
+        return None
+
+
+def generate_local_briefs(spec: PersonalSpec,
+                          target_date: dt.date) -> List[Tuple[str, str]]:
+    """(city, text) for every city that produced a brief, in the
+    member's order. One Grok call per city."""
+    out: List[Tuple[str, str]] = []
+    for city in spec.cities:
+        text = generate_local_brief(spec, target_date, city=city)
+        if text:
+            out.append((city, text))
+    return out
+
+
+def generate_topics_brief(spec: PersonalSpec,
+                          target_date: dt.date) -> Optional[str]:
+    """Mira's round-up on the member's own topics (PNN only — topics are
+    empty on Personal by validation). One grounded Grok call."""
+    if not wants_topics_brief(spec):
+        return None
+    try:
+        from digests.xai_grok import grok_generate_text
+
+        prompt = build_topics_prompt(ROOT, spec, target_date)
+        text, _meta = grok_generate_text(
+            prompt=prompt, model=LINKS_MODEL, temperature=0.6,
+            max_tokens=1200, timeout_seconds=600, enable_web_search=True,
+        )
+        return parse_local_brief(text, max_words=90 * len(spec.topics) + 60)
+    except Exception as exc:  # noqa: BLE001
+        logger.info("%s…: topics brief failed (%s) — skipped",
                     spec.token[:8], exc)
         return None
 
@@ -322,7 +364,8 @@ def build_for_spec(
     workdir = Path(tempfile.mkdtemp(prefix=f"np_{spec.token[:8]}_"))
     try:
         links = generate_personal_links(spec, segments, target_date)
-        local_text = generate_local_brief(spec, target_date)
+        local_texts = generate_local_briefs(spec, target_date)
+        topics_text = generate_topics_brief(spec, target_date)
         markets_text = ""
         if "markets" in spec.effective_addons():
             markets_text = build_markets_line(ROOT)
@@ -330,10 +373,15 @@ def build_for_spec(
         durations: Dict[str, float] = {}
         intro = _mira_piece(links["intro"], "intro", workdir)
         durations["intro"] = _duration(intro)
-        local_piece = None
-        if local_text:
-            local_piece = _mira_piece(local_text, "local", workdir)
-            durations["local"] = _duration(local_piece)
+        local_pieces: List[Path] = []
+        for i, (_city, text) in enumerate(local_texts, 1):
+            piece = _mira_piece(text, f"local_{i}", workdir)
+            durations[f"local_{i}"] = _duration(piece)
+            local_pieces.append(piece)
+        topics_piece = None
+        if topics_text:
+            topics_piece = _mira_piece(topics_text, "topics", workdir)
+            durations["topics"] = _duration(topics_piece)
         markets_piece = None
         if markets_text:
             markets_piece = _mira_piece(markets_text, "markets", workdir)
@@ -343,16 +391,19 @@ def build_for_spec(
             piece = _mira_piece(text, f"handoff_{i}", workdir)
             durations[f"handoff_{i}"] = _duration(piece)
             handoffs.append(piece)
+        nudge = upgrade_nudge_line(spec, target_date, bool(local_pieces))
         signoff = _mira_piece(
-            f"{links['signoff']} {MIRA_PERSONAL_DISCLOSURE}",
+            " ".join(x for x in (links["signoff"], nudge,
+                                 MIRA_PERSONAL_DISCLOSURE) if x),
             "signoff", workdir)
         durations["signoff"] = _duration(signoff)
         for seg in segments:
             durations[f"seg_{seg.slug}"] = _duration(cache[seg.slug])
 
         splice: List[Path] = [intro]
-        if local_piece:
-            splice.append(local_piece)
+        splice.extend(local_pieces)
+        if topics_piece:
+            splice.append(topics_piece)
         if markets_piece:
             splice.append(markets_piece)
         for i, seg in enumerate(segments):
@@ -372,9 +423,10 @@ def build_for_spec(
         concatenate_audio(splice, final)
         total = _duration(final)
         title = personal_episode_title(target_date, segments)
-        logger.info("%s…: %0.1f min, %d segments%s", spec.token[:8],
+        logger.info("%s…: %0.1f min, %d segments%s%s", spec.token[:8],
                     total / 60, len(segments),
-                    " + local brief" if local_piece else "")
+                    f" + {len(local_pieces)} local brief(s)" if local_pieces else "",
+                    " + topics" if topics_piece else "")
         if dry_run or client is None:
             return True
 
