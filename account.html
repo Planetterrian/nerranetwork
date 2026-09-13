@@ -130,6 +130,16 @@
         .nn-list input[disabled] { opacity: 0.45; }
         .nn-pnn-card { border-color: rgba(0,212,255,0.45); }
         .nn-pnn-card ul { margin: 0.4rem 0 0.8rem 1.1rem; padding: 0; font-size: 0.9rem; }
+        .nn-whoami { font-size: 0.82rem; color: var(--nn-text-muted); margin-top: 0.6rem; }
+        .nn-whoami button { background: none; border: none; color: var(--nn-text-muted); text-decoration: underline; padding: 0; margin-left: 0.4rem; font: inherit; cursor: pointer; }
+        .nn-tomorrow { border: 1px dashed var(--nn-border); border-radius: 12px; padding: 0.7rem 0.85rem; margin-top: 0.8rem; font-size: 0.88rem; }
+        .nn-tomorrow strong { display: block; font-family: var(--font-heading); font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--nn-text-muted); margin-bottom: 0.3rem; }
+        .nn-tomorrow li { margin: 0.15rem 0; }
+        .nn-tomorrow ul { margin: 0; padding-left: 1.1rem; }
+        .nn-savebar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; background: var(--nn-surface); border-top: 1px solid var(--nn-border); box-shadow: 0 -6px 24px rgba(0,0,0,0.35); padding: 0.7rem var(--sp-6); display: flex; gap: 0.8rem; align-items: center; justify-content: center; flex-wrap: wrap; }
+        .nn-savebar .msg { font-size: 0.9rem; }
+        .nn-road li.done { opacity: 0.6; }
+        .nn-road li.done strong::after { content: " ✓ shipped"; color: #00D4FF; font-weight: 500; font-size: 0.8rem; }
         .nn-addon .lock { font-size: 0.7rem; color: var(--nn-text-muted); border: 1px solid var(--nn-border); border-radius: 999px; padding: 0.05rem 0.45rem; margin-left: 0.35rem; }
 
         /* Recent editions list */
@@ -703,6 +713,12 @@
         </div>
     </div>
 
+    <div class="nn-savebar" id="nn-savebar" hidden>
+        <span class="msg">You have unsaved changes — they reach tomorrow morning's edition once saved.</span>
+        <button onclick="NN.save()">Save preferences</button>
+        <button class="ghost" onclick="NN.load()">Discard</button>
+    </div>
+
     <div id="nn-member" hidden>
         <!-- Dashboard hero -->
         <div class="nn-dash-hero">
@@ -714,6 +730,7 @@
                 <a class="nn-btn" href="gallery.html">Browse the gallery</a>
                 <a class="nn-btn" href="blog/index.html">Read the blog</a>
             </div>
+            <p class="nn-whoami">Signed in as <span id="nn-email"></span><button type="button" onclick="NN.logout()">Sign out</button></p>
         </div>
 
         <div class="nn-dash-grid">
@@ -805,6 +822,10 @@
                         <p class="nn-muted" id="nn-feed-note" style="margin-top:0.6rem;">
                            Just subscribed? Your first edition lands with the next
                            morning build — the feed link works from then on.</p>
+                        <div class="nn-tomorrow" id="nn-tomorrow" hidden>
+                            <strong>Tomorrow's edition, as configured</strong>
+                            <ul id="nn-tomorrow-list"></ul>
+                        </div>
                         <p class="nn-muted" id="nn-starter-note" hidden>
                            You haven't picked your shows yet, so Mira is using the
                            <strong>starter lineup</strong> (SpaceX, Tesla, Models &amp;
@@ -887,7 +908,11 @@
                 <div class="nn-card">
                     <h2>Built for members next</h2>
                     <ul class="nn-road">
-                        <li><span>📍</span><span><strong>Multiple locations</strong> — a second city's brief on the same feed</span></li>
+                        <li class="done"><span>📍</span><span><strong>Multiple locations</strong> — up to three cities on Personal News Network</span></li>
+                        <li class="done"><span>🧭</span><span><strong>Your topics</strong> — five subjects Mira researches daily</span></li>
+                        <li><span>📚</span><span><strong>Books included</strong> — every Nerra EPUB as a download on Personal News Network</span></li>
+                        <li><span>🌅</span><span><strong>Before your morning</strong> — editions built to land ahead of your local commute</span></li>
+                        <li><span>📌</span><span><strong>A real location picker</strong> — confirm the exact place, never the wrong Vancouver</span></li>
                         <li><span>⚽</span><span><strong>Sports scores</strong> — your teams in the markets-minute slot</span></li>
                         <li><span>📊</span><span><strong>Listening stats</strong> — your streaks and hours, right here</span></li>
                         <li><span>🎚️</span><span><strong>Mira, your way</strong> — pace and framing options for your edition</span></li>
@@ -936,7 +961,7 @@ var NN = (function () {
       cb.onchange = function () {
         if (cb.checked) { state.shows.push(slug); }
         else { state.shows = state.shows.filter(function (s) { return s !== slug; }); }
-        renderLineup(); renderToday();
+        renderLineup(); renderToday(); checkDirty();
       };
       var img = document.createElement('span');
       img.innerHTML = coverImg(slug, 34);
@@ -957,7 +982,7 @@ var NN = (function () {
             if (j < 0 || j >= state.shows.length) return;
             state.shows.splice(idx, 1);
             state.shows.splice(j, 0, slug);
-            renderLineup(); renderToday();
+            renderLineup(); renderToday(); checkDirty();
           };
           movers.appendChild(b);
         });
@@ -1005,6 +1030,49 @@ var NN = (function () {
   function listValues(inputs) {
     return inputs.map(function (i) { return i.value.trim(); }).filter(Boolean);
   }
+  // ------- Dirty state: the settings live in two cards, so a sticky bar
+  // follows the member instead of a Save button they have to find.
+  function snapshot() {
+    return JSON.stringify({
+      shows: state.shows, name: el('nn-name').value.trim(),
+      cities: listValues(cityInputs()), topics: listValues(topicInputs()),
+      addons: state.addons,
+    });
+  }
+  function markClean() { state.clean = snapshot(); checkDirty(); }
+  function checkDirty() {
+    var dirty = state.clean !== undefined && snapshot() !== state.clean;
+    el('nn-savebar').hidden = !dirty;
+    renderTomorrow();
+  }
+  // ------- What tomorrow's build will contain, from the current settings
+  function renderTomorrow() {
+    var box = el('nn-tomorrow'); if (!box) return;
+    if (!state.active) { box.hidden = true; return; }
+    var lim = limits();
+    var shows = state.shows.length >= 2 ? state.shows : STARTER;
+    var names = shows.map(function (s) { return (META[s] && META[s].name) || s; });
+    var addons = state.addons === null ? DEFAULT_ADDONS : state.addons;
+    var cities = listValues(cityInputs()).slice(0, lim.cities);
+    var topics = listValues(topicInputs()).slice(0, lim.topics);
+    var local = addons.filter(function (a) { return a !== 'markets'; });
+    var items = [];
+    items.push('<li>Mira opens, greeting ' + (el('nn-name').value.trim() ? esc(el('nn-name').value.trim()) : 'you') + ' by name</li>');
+    if (cities.length && local.length) {
+      var depth = state.tier === 'personal_local' ? 'up to three items per section' : 'one item per section';
+      items.push('<li>' + (cities.length === 1 ? 'Your ' + esc(cities[0]) + ' brief' : cities.length + ' city briefs (' + esc(cities.join(', ')) + ')')
+        + ' — ' + esc(local.map(function (a) { var m = ADDONS.filter(function (x) { return x.id === a; })[0]; return m ? m.label.toLowerCase() : a; }).join(', '))
+        + ', ' + depth + '</li>');
+    } else if (!cities.length) {
+      items.push('<li class="nn-muted">No location set — add one above for a morning brief</li>');
+    }
+    if (topics.length) { items.push('<li>Your topics: ' + esc(topics.join(', ')) + '</li>'); }
+    if (addons.indexOf('markets') !== -1) { items.push('<li>Markets minute</li>'); }
+    items.push('<li>' + shows.length + ' shows in your order: ' + esc(names.join(' → ')) + '</li>');
+    items.push('<li>Sign-off' + (state.tier === 'personal' && cities.length && local.length ? ' (with a one-line note about Personal News Network on Mondays)' : '') + '</li>');
+    el('nn-tomorrow-list').innerHTML = items.join('');
+    box.hidden = false;
+  }
   function renderAddons() {
     var box = el('nn-addons');
     if (!box) return;
@@ -1030,7 +1098,7 @@ var NN = (function () {
           var i = chosen.indexOf(a.id);
           if (i === -1) { chosen.push(a.id); } else { chosen.splice(i, 1); }
           state.addons = chosen; state.addonsTouched = true;
-          renderAddons();
+          renderAddons(); checkDirty();
         };
         d.onclick = toggle;
         d.onkeydown = function (ev) {
@@ -1065,6 +1133,7 @@ var NN = (function () {
             + '</div>';
         }).join('');
         el('nn-editions').hidden = false;
+        el('nn-feed-note').hidden = true;   // editions exist: not "just subscribed"
       })
       .catch(function () {});
   }
@@ -1199,9 +1268,16 @@ var NN = (function () {
         var status = (data.member && data.member.status) || 'none';
         var cancelled = status === 'cancelled';
         state.tier = tier; state.active = status === 'active';
+        el('nn-email').textContent = data.email || '';
         renderLineup();
         renderLists(prefs);
         renderAddons();
+        markClean();
+        ['nn-name'].concat(cityInputs().map(function (i) { return i; }), topicInputs())
+          .forEach(function (x) {
+            var node = typeof x === 'string' ? el(x) : x;
+            if (node && !node._nnWired) { node._nnWired = true; node.addEventListener('input', checkDirty); }
+          });
         loadEpisodes();
         loadMarkets();
         el('nn-feed-active').hidden = !feedUrl;
@@ -1290,11 +1366,16 @@ var NN = (function () {
         el('nn-save-status').textContent = r.ok
           ? 'Saved — changes reach tomorrow’s edition'
           : 'Save failed (are personal accounts live yet?)';
-        if (r.ok) { greet(el('nn-name').value); }
+        if (r.ok) { greet(el('nn-name').value); markClean(); }
       }).catch(function () { el('nn-save-status').textContent = 'Save failed'; });
     },
     copyFeed: function () {
       navigator.clipboard.writeText(el('nn-feed-url').textContent);
+    },
+    logout: function () {
+      fetch(API + '/api/logout', { method: 'POST', credentials: 'include' })
+        .catch(function () {})
+        .then(function () { window.location.href = 'login.html'; });
     },
     portal: function () {
       var btn = el('nn-portal-btn');
