@@ -24,6 +24,7 @@ import requests
 from common import (  # noqa: E402
     ROOT, episode_memory_block, llm, load_prompt, logger, notify_operator,
     parse_json_lenient, r2_upload, sb_insert, sb_select, sb_update, show_for,
+    guest_links_markdown,
 )
 
 sys.path.insert(0, str(Path(__file__).parent))
@@ -67,6 +68,7 @@ def write_narration(interview: dict, app: dict, pkg: dict) -> list[dict]:
             guest_name=app["name"],
             guest_title=app.get("title", ""),
             guest_organization=app.get("organization", ""),
+            guest_links=guest_links_markdown(app, "Their links") or "(none given)",
             episode_thesis=interview.get("episode_thesis", ""),
             episode_notes=pkg.get("episode_notes", ""),
             transcript=pkg.get("transcript_cleaned", ""),

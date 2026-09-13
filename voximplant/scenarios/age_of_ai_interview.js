@@ -66,9 +66,9 @@ const API_BASE = "https://api.nerranetwork.com/voices";
 const WEBHOOK_URL = API_BASE + "/interview-complete";
 const LEG_EVENT_URL = API_BASE + "/leg-event";     // per-leg joined/left (+ recording URLs)
 const NARRATION_TAKE_URL = API_BASE + "/narration-take"; // Mira reading a scripted pickup
-const HARD_CAP_MS = 50 * 60 * 1000;                // spec §11.8: 50-min hard cap
 const GROK_DROP_GUARD_MS = 1500;                   // spec §7: teardown-race guard
-const PLANNED_MIN = 45;            // soft interview length the prompt paces to
+const DEFAULT_PLANNED_MIN = 45;    // when the guest gave no preference
+const HARD_CAP_SLACK_MIN = 5;      // how long past the planned end the room may run
 const TIME_CHECK_EVERY_MS = 5 * 60 * 1000;
 const ROOM_PREFIX = "room-";       // callConference id = ROOM_PREFIX + run id (rule ^room-.*)
 // Voximplant ends a session that has had no call for 60 s (session
@@ -523,6 +523,20 @@ async function probeSession(custom) {
 
 let conf = null;            // the mixer (VoxEngine.createConference)
 let config = null;          // interview_runs row
+
+// The interview's length is the guest's answer on their application, carried
+// on the run row (planned_minutes), not a constant. Before Sept 13 2026 every
+// guest got 45 minutes whatever they had asked for. The room may run a few
+// minutes past the planned end so a closing answer is never guillotined.
+function plannedMin() {
+  const asked = config && Number(config.planned_minutes);
+  if (!isFinite(asked) || asked < 15 || asked > 90) return DEFAULT_PLANNED_MIN;
+  return Math.round(asked);
+}
+
+function hardCapMs() {
+  return (plannedMin() + HARD_CAP_SLACK_MIN) * 60 * 1000;
+}
 let grokAgent = null;
 let legs = [];              // [{ id, role, call, joinedAt }]
 let legSeq = 0;
@@ -607,7 +621,7 @@ async function openRoom() {
   hardCapTimer = setTimeout(function () {
     Logger.write("[aoa " + runId + "] hard cap reached, ending room");
     endRoom("hard_cap");
-  }, HARD_CAP_MS);
+  }, hardCapMs());
   startAgent();   // async; legs are admitted meanwhile
   return true;
 }
@@ -1033,10 +1047,10 @@ function startTimeChecks() {
     try {
       if (!grokAgent || roomEnded) return;
       const elapsedMin = Math.round((Date.now() - (firstJoinAt || Date.now())) / 60000);
-      const remainMin = Math.max(0, PLANNED_MIN - elapsedMin);
+      const remainMin = Math.max(0, plannedMin() - elapsedMin);
       let note = "[TIME CHECK — system note, do not read aloud] " +
         elapsedMin + " minutes elapsed; about " + remainMin +
-        " minutes remain of the planned " + PLANNED_MIN + "-minute interview.";
+        " minutes remain of the planned " + plannedMin() + "-minute interview.";
       if (remainMin <= 5 && remainMin > 0) {
         note += " Begin wrapping up now: one final question, then your closing thanks.";
       } else if (remainMin === 0) {

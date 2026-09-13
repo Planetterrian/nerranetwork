@@ -28,6 +28,8 @@ import requests
 
 from common import (  # noqa: E402
     ROOT, VoiceShow, logger, notify_operator, sb_select, sb_update, show_for,
+    guest_links,
+    guest_links_markdown,
 )
 
 
@@ -97,6 +99,16 @@ def publish_one(interview_id: str) -> int:
     today = dt.date.today()
     title = f"Ep{episode_num}: {app['name']} — {interview.get('episode_thesis') or show.name}"
     description = pkg.get("episode_notes") or interview.get("episode_thesis") or ""
+    # The guest gave us an hour; the least the episode owes them is a working
+    # link. The notes pass is asked for this block too, so only add it here if
+    # the model left it out — belt and braces, because the feed and the site
+    # both read this one string and a missing link cannot be fixed after the
+    # episode ships.
+    links_block = guest_links_markdown(app)
+    if links_block:
+        have = {l["url"].lower() for l in guest_links(app)}
+        if not any(u in description.lower() for u in have):
+            description = (description.rstrip() + "\n\n" + links_block).strip()
 
     # Duration + file size need the real file — fetch headers/bytes to tmp.
     with tempfile.TemporaryDirectory(prefix=f"{show.slug}_publish_") as tmp:
@@ -161,6 +173,7 @@ def publish_one(interview_id: str) -> int:
         "summary": description,
         "audio_url": audio_url,
         "guest": app["name"],
+        "guest_links": guest_links(app),
         "chapters": pkg.get("chapter_markers") or [],
     })
     summaries_path.write_text(

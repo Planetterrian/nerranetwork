@@ -334,6 +334,21 @@ async function interviewWithApp(env: Env, interviewId: string):
 // Handlers
 // ---------------------------------------------------------------------------
 
+/** Interview length the guest asked for, in minutes, or null. Bounded by what
+ *  the room can actually do: the Grok session relay hands over every 30
+ *  minutes and the scenario's hard cap is 50, so anything longer than 90 is a
+ *  typo rather than a request. */
+function clampMinutes(value: unknown): number | null {
+  const n = Math.round(Number(value));
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return Math.min(90, Math.max(15, n));
+}
+
+function oneOf(value: unknown, allowed: string[]): string | null {
+  const v = String(value ?? "").trim().toLowerCase();
+  return allowed.includes(v) ? v : null;
+}
+
 async function handleApply(req: Request, env: Env): Promise<Response> {
   const form = await req.json<any>().catch(() => null);
   if (!form?.name || !form?.email) return json({ error: "name and email are required" }, 400);
@@ -354,6 +369,14 @@ async function handleApply(req: Request, env: Env): Promise<Response> {
     bio: form.bio ? String(form.bio).slice(0, 4000) : null,
     topics: Array.isArray(form.topics) ? form.topics.slice(0, 10) : null,
     links: form.links ?? null,
+    // What the guest wants the conversation to be (Sept 13 2026). These three
+    // shape Mira's brief, the number of questions she prepares, and the clock
+    // she paces to. A guest who asks for twenty minutes and gets forty-five
+    // has been mistreated, however good the questions were.
+    desired_minutes: clampMinutes(form.desired_minutes),
+    depth: oneOf(form.depth, ["accessible", "standard", "deep"]),
+    personal_depth: oneOf(form.personal_depth, ["none", "light", "open"]),
+    off_limits: form.off_limits ? String(form.off_limits).slice(0, 500) : null,
     preferred_window: form.preferred_window ?? null,
     referrer: form.referrer ?? null,
     show: show.slug,
@@ -638,16 +661,24 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
   // approved and what the pipeline keys prompts/publishing on).
   const show = showFor(apps[0], { show: bookedShow.slug });
 
+  // duration_min existed in the schema from the start and nothing ever wrote
+  // it; the length was a constant in the scenario. The guest's answer on the
+  // application decides it now, and 45 stays the default for everyone who has
+  // no preference.
+  const plannedMinutes = clampMinutes(apps[0].desired_minutes) ?? 45;
+
   const existing = await sb(env, "GET",
     `interviews?application_id=eq.${apps[0].id}&status=in.(scheduled,briefed)&limit=1`);
   let interviewId: string;
   if (existing?.length) {
     interviewId = existing[0].id;
     await sb(env, "PATCH", `interviews?id=eq.${interviewId}`,
-      { scheduled_at: startTime, status: "scheduled", reminder_sent_at: null, show: show.slug });
+      { scheduled_at: startTime, status: "scheduled", reminder_sent_at: null, show: show.slug,
+        duration_min: plannedMinutes });
   } else {
     const created = await sb(env, "POST", "interviews",
-      { application_id: apps[0].id, scheduled_at: startTime, status: "scheduled", show: show.slug },
+      { application_id: apps[0].id, scheduled_at: startTime, status: "scheduled", show: show.slug,
+        duration_min: plannedMinutes },
       "return=representation");
     interviewId = created?.[0]?.id ?? "";
   }
@@ -663,6 +694,9 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
      appreciated — we record video for a future YouTube version. If the
      browser route doesn't work for you, reply to this email and Mira can
      call your phone instead.</p>
+     <p>We have it down as about ${plannedMinutes} minutes${apps[0].desired_minutes ? ", which is what you asked for" : ""}. Mira paces the
+     conversation to that and starts wrapping up near the end rather than
+     cutting you off.</p>
      <p>About a day before, you'll receive a short prep brief with the
      themes she plans to explore.</p>
      <p>Two things to know: the conversation is recorded for the podcast,

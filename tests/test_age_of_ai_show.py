@@ -118,7 +118,10 @@ class TestSpecArtifacts:
         assert "require(Modules.Grok)" in js
         assert "createVoiceAgentAPIClient" in js
         assert "stereo: true" in js, "dual-track recording is the diarization"
-        assert "50 * 60 * 1000" in js, "50-minute hard cap (spec §11.8)"
+        # Spec §11.8 fixed this at 50 minutes; since Sept 13 2026 it is the
+        # length the guest asked for plus slack, defaulting to 45 + 5.
+        assert "function hardCapMs()" in js, "the room must still have a cap"
+        assert "HARD_CAP_SLACK_MIN = 5" in js
         # July 2026 (WebRTC guest-studio rewrite): the webhook URL is now
         # assembled from API_BASE + "/interview-complete" instead of one
         # literal — pin both halves so the contract still holds.
@@ -188,7 +191,7 @@ class TestSpecArtifacts:
         assert "You are Mira" in text
         assert "Lightning round" in text
         assert 'Closing question always: "{{closing_question}}"' in text
-        assert "Hard time cap: 45 minutes" in text
+        assert "Hard time cap: {{planned_minutes}} minutes" in text
         for token in ("{{guest_name}}", "{{episode_thesis}}", "{{guest_brief}}",
                       "{{show_name}}", "{{show_premise}}", "{{opening_line}}"):
             assert token in text, f"missing template token {token}"

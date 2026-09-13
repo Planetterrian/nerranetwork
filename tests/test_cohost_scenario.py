@@ -131,7 +131,7 @@ class TestRoom:
         opened = _fn(js, "async function openRoom()")
         assert 'markRunStatus(runId, "in_progress")' in opened
         assert "conf = VoxEngine.createConference({ hd_audio: true })" in opened
-        assert "HARD_CAP_MS" in opened and "startAgent()" in opened
+        assert "hardCapMs()" in opened and "startAgent()" in opened
 
     def test_legs_mix_via_send_media_between(self, js):
         body = _fn(js, "function admitLeg(call, role)")
@@ -206,8 +206,14 @@ class TestRoom:
             assert key in body, key
         assert "VoxEngine.terminate()" in body
 
-    def test_hard_cap_and_time_checks_unchanged(self, js):
-        assert "50 * 60 * 1000" in js
+    def test_hard_cap_follows_the_length_the_guest_asked_for(self, js):
+        # Sept 13 2026: the cap was 50 minutes for everyone. It is now the
+        # planned length plus slack, so a guest who asked for twenty minutes
+        # is not held to forty-five and one who asked for ninety is not cut
+        # off at fifty.
+        assert "function hardCapMs()" in js
+        assert "(plannedMin() + HARD_CAP_SLACK_MIN) * 60 * 1000" in js
+        assert "DEFAULT_PLANNED_MIN = 45" in js
         assert "TIME_CHECK_EVERY_MS = 5 * 60 * 1000" in js
         assert "webhookFired" in js
 

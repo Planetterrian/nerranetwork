@@ -111,6 +111,39 @@
     <label for="links">Links (optional)</label>
     <input id="links" name="links" maxlength="500" placeholder="Website, LinkedIn, portfolio — comma separated">
 
+    <label for="desired_minutes">How long would you like the interview to be?</label>
+    <select id="desired_minutes" name="desired_minutes">
+      <option value="">No preference — we'll plan for about 45 minutes</option>
+      <option value="20">Short — about 20 minutes</option>
+      <option value="30">Medium — about 30 minutes</option>
+      <option value="45">Standard — about 45 minutes</option>
+      <option value="60">Long — about an hour</option>
+      <option value="90">In depth — up to 90 minutes</option>
+    </select>
+    <p class="hint">This is the length Mira paces the conversation to. She will
+    start wrapping up near the end rather than cutting you off.</p>
+
+    <label for="depth">How deep should Mira go on the subject?</label>
+    <select id="depth" name="depth">
+      <option value="">No preference</option>
+      <option value="accessible">Accessible — explain it for a general audience</option>
+      <option value="standard">Standard — informed listener, some technical detail</option>
+      <option value="deep">Deep — assume expertise, go into the specifics and the disagreements</option>
+    </select>
+
+    <label for="personal_depth">How much should she ask about you personally?</label>
+    <select id="personal_depth" name="personal_depth">
+      <option value="">No preference</option>
+      <option value="none">Keep it to the work</option>
+      <option value="light">A little — how you got here, what drew you to this</option>
+      <option value="open">Open — the personal side is part of the story</option>
+    </select>
+    <p class="hint">Mira will not push past what you choose here. You can change
+    your mind on the day, and you approve the episode before it is published.</p>
+
+    <label for="off_limits">Anything off limits? (optional)</label>
+    <input id="off_limits" name="off_limits" maxlength="500" placeholder="Subjects, people or numbers you would rather not discuss">
+
     <label for="preferred_window">Rough availability (optional)</label>
     <input id="preferred_window" name="preferred_window" maxlength="200" placeholder="e.g. weekday mornings, Pacific time">
 
@@ -170,6 +203,10 @@ document.getElementById('applyForm').addEventListener('submit', async (e) => {
     title: val('title'), organization: val('organization'), bio: val('bio'),
     topics: val('topics').split('\n').map(s => s.trim()).filter(Boolean),
     links: { raw: val('links') },
+    desired_minutes: val('desired_minutes') ? parseInt(val('desired_minutes'), 10) : null,
+    depth: val('depth') || null,
+    personal_depth: val('personal_depth') || null,
+    off_limits: val('off_limits') || null,
     preferred_window: val('preferred_window'),
     referrer: document.referrer || null,
     show: 'nerra_voices'

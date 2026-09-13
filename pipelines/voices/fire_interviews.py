@@ -28,6 +28,7 @@ from common import (  # noqa: E402
     show_for, to_e164,
 )
 from learning import lessons_block, variety_block  # noqa: E402
+from interview_shape import planned_minutes, shape_block  # noqa: E402
 
 FIRE_WINDOW_AHEAD_MIN = 5          # phone (PSTN) interviews: Mira dials at T-5..T-0
 STUDIO_UNLOCK_AHEAD_MIN = 12       # browser studio: run row (= unlock) at T-12, so
@@ -213,6 +214,7 @@ def compile_mira_prompt(interview: dict, app: dict, brief: dict) -> str:
     then the application, then the default show for pre-migration rows.
     """
     show = show_for(interview, app)
+    minutes = planned_minutes(interview, app)
     questions = brief.get("likely_questions") or []
     q_text = "\n".join(f"- {q.get('question', q) if isinstance(q, dict) else q}"
                        for q in questions)
@@ -232,6 +234,12 @@ def compile_mira_prompt(interview: dict, app: dict, brief: dict) -> str:
         likely_questions=q_text,
         cohost_name=cohost_name(),
         cohost_block=cohost_block(host_mode_enabled(interview)),
+        planned_minutes=minutes,
+        # The lightning round needs about a third of a short interview and a
+        # fixed quarter-hour of a long one, or a 20-minute conversation is
+        # half lightning round.
+        lightning_at=max(4, min(15, round(minutes / 3))),
+        guest_shape=shape_block(interview, app),
     ) + lessons_block(show.slug) + variety_block(show.slug)
 
 
@@ -370,6 +378,9 @@ def fire_due_interviews() -> int:
             run = sb_insert("interview_runs", {
                 "interview_id": interview["id"],
                 "mira_system_prompt": compile_mira_prompt(interview, app, brief),
+                # The length the guest asked for, in the room as well as in
+                # the prompt: the scenario's time checks and hard cap read it.
+                "planned_minutes": planned_minutes(interview, app),
                 "voice_preset": "ara",
                 "tools": MIRA_TOOLS,
                 "guest_phone": phone,

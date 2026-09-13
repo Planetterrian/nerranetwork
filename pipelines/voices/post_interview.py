@@ -41,6 +41,7 @@ from common import (  # noqa: E402
     new_review_token, notify_operator, package_review_token,
     parse_json_lenient, r2_upload, render_email, sb_insert, sb_select,
     sb_update, send_email, show_for,
+    guest_links_markdown,
 )
 
 sys.path.insert(0, str(Path(__file__).parent))
@@ -357,6 +358,7 @@ def run_editorial_passes(transcript: str, interview: dict, app: dict) -> dict:
             guest_name=app["name"],
             guest_title=app.get("title", ""),
             guest_organization=app.get("organization", ""),
+            guest_links=guest_links_markdown(app, "Their links") or "(none given)",
             episode_thesis=interview.get("episode_thesis", ""),
             transcript=transcript,
             cleaned_transcript=package.get("transcript_cleaned", transcript),

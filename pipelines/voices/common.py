@@ -503,3 +503,107 @@ def episode_memory_block(limit: int = 10, show: ShowRef = None) -> str:
     except Exception as exc:  # noqa: BLE001 — memory must never block
         logger.warning("episode_memory_block failed (non-fatal): %s", exc)
         return ""
+
+
+# ---------------------------------------------------------------------------
+# Guest links
+#
+# A guest's own links are the one thing an episode can give back to them, and
+# until Sept 13 2026 they were collected on the application, handed to the
+# research pass, and then dropped. They reach the show notes, the feed, the
+# site and Mira's sign-off now, which means they have to survive the two
+# shapes the column is actually written in: {"raw": "a.com, b.com"} from the
+# apply form, and {"urls": [...]} from the producer inbox. Older rows may
+# also carry the documented {"website": ..., "twitter": ...} shape.
+
+_LINK_LABELS = {
+    "website": "Website", "site": "Website", "homepage": "Website",
+    "product": "Product", "app": "App", "demo": "Demo", "docs": "Docs",
+    "twitter": "X", "x": "X", "linkedin": "LinkedIn", "github": "GitHub",
+    "youtube": "YouTube", "substack": "Substack", "blog": "Blog",
+    "scholar": "Google Scholar", "company": "Company",
+}
+_SOCIAL_HOSTS = ("twitter.com", "x.com", "linkedin.com", "facebook.com",
+                 "instagram.com", "threads.net", "bsky.app", "mastodon")
+
+
+_HANDLE_HOSTS = {"twitter": "https://x.com/", "x": "https://x.com/",
+                 "github": "https://github.com/",
+                 "instagram": "https://instagram.com/"}
+
+
+def _clean_url(value: Any, hint: str = "") -> str:
+    text = str(value or "").strip().strip(",;")
+    if text.startswith("@") and hint.lower() in _HANDLE_HOSTS:
+        return _HANDLE_HOSTS[hint.lower()] + text[1:]
+    if not text or " " in text.strip():
+        text = text.split()[0] if text.split() else ""
+    if not text:
+        return ""
+    if not text.startswith(("http://", "https://")):
+        if "." not in text or text.startswith("@"):
+            return ""
+        text = "https://" + text
+    return text.rstrip("/.,")
+
+
+def _label_for(url: str, hint: str = "") -> str:
+    if hint:
+        return _LINK_LABELS.get(hint.lower(), hint.replace("_", " ").title())
+    # Match whole host labels, not substrings: "example.com" contains "x"
+    # and was being announced to listeners as the guest's X profile.
+    host = re.sub(r"^https?://(www\.)?", "", url).split("/")[0].lower()
+    parts = host.split(".")
+    for key, label in _LINK_LABELS.items():
+        if key in parts:
+            return label
+    return host
+
+
+def guest_links(app: Dict[str, Any]) -> List[Dict[str, str]]:
+    """The guest's links as ``[{"label": ..., "url": ...}]``, de-duplicated.
+
+    Their own site comes first — a listener who follows one link should land
+    on the thing the guest controls, not on a social profile.
+    """
+    raw = app.get("links") or {}
+    found: List[Dict[str, str]] = []
+    if isinstance(raw, str):
+        raw = {"raw": raw}
+    if isinstance(raw, list):
+        raw = {"urls": raw}
+    if not isinstance(raw, dict):
+        return []
+    for key, value in raw.items():
+        values = value if isinstance(value, (list, tuple)) else [value]
+        if key in ("raw", "urls", "links"):
+            values = [part for item in values
+                      for part in re.split(r"[,\n]+", str(item or ""))]
+            key = ""
+        for item in values:
+            url = _clean_url(item, key)
+            if url:
+                found.append({"label": _label_for(url, key), "url": url})
+    seen, out = set(), []
+    for link in found:
+        if link["url"].lower() in seen:
+            continue
+        seen.add(link["url"].lower())
+        out.append(link)
+    out.sort(key=lambda l: any(h in l["url"].lower() for h in _SOCIAL_HOSTS))
+    return out
+
+
+def guest_links_markdown(app: Dict[str, Any], heading: str = "") -> str:
+    """A links block for show notes, the feed and the site, or ``""``.
+
+    Markdown, because the site renders it through linkify and every podcast
+    client shows the bare URL harmlessly if it does not.
+    """
+    links = guest_links(app)
+    if not links:
+        return ""
+    who = app.get("organization") or app.get("name") or "the guest"
+    head = heading or f"Find {who}"
+    lines = [f"- {l['label']}: {l['url']}" for l in links]
+    return f"{head}:\n" + "\n".join(lines)

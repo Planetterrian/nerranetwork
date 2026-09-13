@@ -17,6 +17,9 @@ from common import (  # noqa: E402  (sys.path bootstrapped in common)
     parse_json_lenient, render_email, sb_insert, sb_select, sb_update,
     send_email, show_for,
 )
+from interview_shape import (  # noqa: E402  (after common: it bootstraps sys.path)
+    planned_minutes, question_count, shape_block,
+)
 
 
 def _window() -> tuple[str, str]:
@@ -48,10 +51,14 @@ def generate_brief(interview: dict, app: dict) -> dict:
         temperature=0.3, web_search=True, max_tokens=2500,
     )
     memory = episode_memory_block(show=show)
+    minutes = planned_minutes(interview, app)
     questions_raw = llm(
         load_prompt("question_generation.txt", show=show,
                     name=app["name"], bio_research=bio_research,
-                    topics=topics, show_memory=memory),
+                    topics=topics, show_memory=memory,
+                    question_count=question_count(minutes),
+                    minutes=minutes,
+                    guest_shape=shape_block(interview, app)),
         temperature=0.6, max_tokens=2000,
     )
     questions = parse_json_lenient(questions_raw)
