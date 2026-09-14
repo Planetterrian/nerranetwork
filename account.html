@@ -139,6 +139,16 @@
         .nn-savebar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; background: var(--nn-surface); border-top: 1px solid var(--nn-border); box-shadow: 0 -6px 24px rgba(0,0,0,0.35); padding: 0.7rem var(--sp-6); display: flex; gap: 0.8rem; align-items: center; justify-content: center; flex-wrap: wrap; }
         .nn-savebar .msg { font-size: 0.9rem; }
         .nn-road li.done { opacity: 0.6; }
+        .nn-lib { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.8rem; margin-top: var(--sp-3); }
+        .nn-book { border: 1px solid var(--nn-border); border-radius: 12px; overflow: hidden; background: var(--nn-bg, transparent); display: flex; flex-direction: column; }
+        .nn-book img { width: 100%; aspect-ratio: 2 / 3; object-fit: cover; display: block; background: #0d151a; }
+        .nn-book .b { padding: 0.55rem 0.6rem 0.65rem; display: flex; flex-direction: column; gap: 0.25rem; flex: 1; }
+        .nn-book .t { font-weight: 600; font-size: 0.82rem; line-height: 1.25; }
+        .nn-book .s { font-size: 0.72rem; color: var(--nn-text-muted); line-height: 1.3; }
+        .nn-book .a { margin-top: auto; padding-top: 0.35rem; font-size: 0.78rem; }
+        .nn-book .a a { text-decoration: none; }
+        .nn-book .a button { padding: 0.35rem 0.7rem; font-size: 0.78rem; width: 100%; }
+        .nn-book .price { color: var(--nn-text-muted); }
         .nn-road li.done strong::after { content: " ✓ shipped"; color: #00D4FF; font-weight: 500; font-size: 0.8rem; }
         .nn-addon .lock { font-size: 0.7rem; color: var(--nn-text-muted); border: 1px solid var(--nn-border); border-radius: 999px; padding: 0.05rem 0.45rem; margin-left: 0.35rem; }
 
@@ -875,7 +885,7 @@
                         <li>Up to <strong>three items</strong> per section in your brief, not one</li>
                         <li>Up to <strong>three locations</strong> on the same feed</li>
                         <li><strong>Your topics</strong> — five subjects Mira researches daily</li>
-                        <li>Every Nerra book as an EPUB download, coming soon</li>
+                        <li><strong>Every Nerra book</strong> as an EPUB download, yours to keep</li>
                     </ul>
                     <button class="ghost" id="nn-pnn-switch" hidden onclick="NN.portal()">Switch to Personal News Network — $8.99/mo</button>
                     
@@ -898,10 +908,45 @@
                         <span class="nn-muted">On the list — manage topics in any email's footer</span></div>
                     <div class="nn-perk"><span>Gallery downloads</span>
                         <a href="gallery.html">Browse →</a></div>
-                    <div class="nn-perk"><span>Book discount</span>
+                    <div class="nn-perk"><span>Books</span>
                         <span id="nn-book-perk" class="nn-muted">—</span></div>
                     <div class="nn-perk"><span>Support the network</span>
                         <a href="support.html">Donate →</a></div>
+                </div>
+
+                <!-- Your library (Sep 14 2026): every Nerra book, included with PNN -->
+                <div class="nn-card" id="nn-library-card">
+                    <h2>Your library</h2>
+                    <p class="nn-muted" id="nn-library-lede" style="margin-top:0;"></p>
+                    <div class="nn-lib">
+                    
+                        <div class="nn-book" data-volume="first_principles_collected" data-epub="first_principles_collected.epub">
+                            <img src="https://audio.nerranetwork.com/books/first_principles_collected/cover.png" alt="" loading="lazy">
+                            <div class="b">
+                                <div class="t">First Principles, Volume 1</div>
+                                <div class="s">Fifty-eight teardowns of what things really cost — and what they could</div>
+                                <div class="a">
+                                    <a class="nn-book-dl" hidden href="https://api.nerranetwork.com/api/books/first_principles_collected/first_principles_collected.epub"><button>Download EPUB</button></a>
+                                    <span class="nn-book-locked price">$7.99 · included with Personal News Network</span>
+                                </div>
+                            </div>
+                        </div>
+                    
+                        <div class="nn-book" data-volume="unintended_consequences_collected" data-epub="unintended_consequences_collected.epub">
+                            <img src="https://audio.nerranetwork.com/books/unintended_consequences_collected/cover.png" alt="" loading="lazy">
+                            <div class="b">
+                                <div class="t">Unintended Consequences, Volume 1</div>
+                                <div class="s">Seventy-three true stories of good intentions gone spectacularly wrong</div>
+                                <div class="a">
+                                    <a class="nn-book-dl" hidden href="https://api.nerranetwork.com/api/books/unintended_consequences_collected/unintended_consequences_collected.epub"><button>Download EPUB</button></a>
+                                    <span class="nn-book-locked price">$7.99 · included with Personal News Network</span>
+                                </div>
+                            </div>
+                        </div>
+                    
+                    </div>
+                    
+                    <p class="nn-muted" id="nn-library-foot" style="margin:0.8rem 0 0;"></p>
                 </div>
 
                 <!-- Roadmap: the page keeps selling what membership funds -->
@@ -910,7 +955,8 @@
                     <ul class="nn-road">
                         <li class="done"><span>📍</span><span><strong>Multiple locations</strong> — up to three cities on Personal News Network</span></li>
                         <li class="done"><span>🧭</span><span><strong>Your topics</strong> — five subjects Mira researches daily</span></li>
-                        <li><span>📚</span><span><strong>Books included</strong> — every Nerra EPUB as a download on Personal News Network</span></li>
+                        <li class="done"><span>📚</span><span><strong>Books included</strong> — every Nerra EPUB as a download on Personal News Network</span></li>
+                        <li><span>🎧</span><span><strong>Audiobooks included</strong> — the M4B editions in your library too</span></li>
                         <li><span>🌅</span><span><strong>Before your morning</strong> — editions built to land ahead of your local commute</span></li>
                         <li><span>📌</span><span><strong>A real location picker</strong> — confirm the exact place, never the wrong Vancouver</span></li>
                         <li><span>⚽</span><span><strong>Sports scores</strong> — your teams in the markets-minute slot</span></li>
@@ -1327,11 +1373,26 @@ var NN = (function () {
         var pnnCheckout = el('nn-pnn-checkout');
         if (pnnCheckout) { pnnCheckout.hidden = (portal && status === 'active'); }
         attachCheckoutRefs();
+        // Library: links answer only for active PNN (the Worker gates the
+        // bytes; this just decides what the page shows).
+        var lib = !!(data.perks && data.perks.library);
+        document.querySelectorAll('.nn-book-dl').forEach(function (a) { a.hidden = !lib; });
+        document.querySelectorAll('.nn-book-locked').forEach(function (x) { x.hidden = lib; });
+        el('nn-library-lede').textContent = lib
+          ? 'Every Nerra book, yours to keep on this plan. EPUB opens in Apple Books, Kindle (via Send to Kindle), Kobo and any reader.'
+          : (status === 'active'
+              ? 'Every Nerra book is included with Personal News Network — switch plans and the downloads unlock here.'
+              : 'Every Nerra book is included with Personal News Network.');
+        el('nn-library-foot').textContent = lib
+          ? 'New volumes appear here the day they are built. Audiobook editions are next.'
+          : '';
         var code = data.perks && data.perks.book_discount_code;
-        el('nn-book-perk').innerHTML = code
-          ? 'Use code <strong>' + esc(code) + '</strong> at the book store — '
-            + '<a href="books.html">see the books →</a>'
-          : 'Member codes appear here as new volumes launch';
+        el('nn-book-perk').innerHTML = lib
+          ? 'Included — see your library below'
+          : (code
+              ? 'Use code <strong>' + esc(code) + '</strong> at the book store — '
+                + '<a href="books.html">see the books →</a>'
+              : 'Included with Personal News Network; member store codes appear here as volumes launch');
       })
       .catch(function () {
         el('nn-status').textContent = '';
