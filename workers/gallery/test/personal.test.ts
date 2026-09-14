@@ -11,6 +11,7 @@ import {
   PERSONAL_SHOWS,
   handleAccount,
   handleAdminSpecs,
+  handleBookDownload,
   handleCheckoutRef,
   handlePersonalFeed,
   handlePortal,
@@ -673,5 +674,70 @@ describe("locations + topics (Sep 13 2026)", () => {
     expect(sp.topics).toEqual(["Starship"]);
     expect(sp.city).toBe("Vancouver, BC");
     expect(JSON.stringify(body)).not.toContain("example.com");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Books for members (Sep 14 2026): the EPUB library behind /api/books.
+// ---------------------------------------------------------------------------
+
+describe("books library (Sep 14 2026)", () => {
+  function envWithBooks() {
+    const env = envWith({ BOOKS_BUCKET: new FakeBucket() as unknown as R2Bucket });
+    const books = env.BOOKS_BUCKET as unknown as FakeBucket;
+    books.objects.set("books/first_principles_vol1/first_principles_vol1.epub", "PK-epub-bytes");
+    return env;
+  }
+  async function member(env: Env, email: string, tier: string, status = "active") {
+    const kv = env.RATE_LIMIT_KV as unknown as FakeKV;
+    kv.store.set(`member:${email}`, JSON.stringify({
+      shows: ["spacex", "tesla"], first_name: "", city: "", tier, status,
+      feed_token: "a".repeat(32), sub_id: "sub_1", updated_at: "",
+    }));
+    return memberCookie(env, email);
+  }
+  const get = (env: Env, path: string, cookie?: string) => handleBookDownload(
+    new Request(`https://api.example.com${path}`, { headers: cookie ? { Cookie: cookie } : {} }),
+    env, path.split("/")[3], path.split("/")[4]);
+
+  it("streams an EPUB to an active Personal News Network member", async () => {
+    const env = envWithBooks();
+    const cookie = await member(env, "fan@example.com", "personal_local");
+    const res = await get(env, "/api/books/first_principles_vol1/first_principles_vol1.epub", cookie);
+    expect(res.status).toBe(200);
+    expect(res.headers.get("Content-Type")).toBe("application/epub+zip");
+    expect(res.headers.get("Content-Disposition")).toContain("first_principles_vol1.epub");
+    expect(res.headers.get("Cache-Control")).toContain("no-store");
+  });
+
+  it("is 401 without a session, 403 on Personal, 403 once cancelled or downgraded", async () => {
+    const env = envWithBooks();
+    const path = "/api/books/first_principles_vol1/first_principles_vol1.epub";
+    expect((await get(env, path)).status).toBe(401);
+    expect((await get(env, path, await member(env, "p@example.com", "personal"))).status).toBe(403);
+    expect((await get(env, path, await member(env, "c@example.com", "personal_local", "cancelled"))).status).toBe(403);
+  });
+
+  it("rejects anything that is not an EPUB of that volume, and unknown volumes", async () => {
+    const env = envWithBooks();
+    const cookie = await member(env, "fan@example.com", "personal_local");
+    expect((await get(env, "/api/books/first_principles_vol1/first_principles_vol1.m4b", cookie)).status).toBe(400);
+    expect((await get(env, "/api/books/first_principles_vol1/other.epub", cookie)).status).toBe(400);
+    expect((await get(env, "/api/books/nope_vol9/nope_vol9.epub", cookie)).status).toBe(404);
+  });
+
+  it("503 without the bucket; account reports library only for active PNN", async () => {
+    const noBucket = envWith();
+    const cookie = await member(noBucket, "fan@example.com", "personal_local");
+    expect((await get(noBucket, "/api/books/first_principles_vol1/first_principles_vol1.epub", cookie)).status).toBe(503);
+    const env = envWithBooks();
+    const c2 = await member(env, "fan@example.com", "personal_local");
+    const acct = await (await handleAccount(new Request("https://api.example.com/api/account",
+      { headers: { Cookie: c2 } }), env)).json() as any;
+    expect(acct.perks.library).toBe(true);
+    const c3 = await member(env, "p@example.com", "personal");
+    const acct2 = await (await handleAccount(new Request("https://api.example.com/api/account",
+      { headers: { Cookie: c3 } }), env)).json() as any;
+    expect(acct2.perks.library).toBe(false);
   });
 });

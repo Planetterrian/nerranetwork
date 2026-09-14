@@ -54,6 +54,16 @@ id = "6bef8549fdb541009f43ce92ee3fbdbd"
 binding = "PERSONAL_BUCKET"
 bucket_name = "nerra-personal"
 
+# Books for members (Sep 14 2026): the private paid-master bucket (the
+# same one scripts/build_book.py uploads to). Personal News Network
+# members download EPUBs through the Worker's session-checked /api/books
+# endpoint; the bucket stays private, so a downgrade or cancellation
+# revokes the library at once. Never a public URL — that was the Aug 26
+# exposure.
+[[r2_buckets]]
+binding = "BOOKS_BUCKET"
+bucket_name = "nerra-books"
+
 # Secrets are set out-of-band via:
 #   wrangler secret put JWT_SECRET
 #   wrangler secret put BUTTONDOWN_API_KEY

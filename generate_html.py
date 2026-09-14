@@ -4069,6 +4069,32 @@ def generate_join_page(*, dry_run=False):
     return out_path
 
 
+def account_library_volumes(volumes):
+    """The member-library rows: id, display title, subtitle, cover URL,
+    list price, EPUB basename — and nothing private. Volumes without a
+    built EPUB are skipped rather than shown with a dead link."""
+    out = []
+    for v in volumes:
+        files = v.get("files") or {}
+        epub = str(files.get("epub") or "")
+        if not epub:
+            continue
+        basename = epub.rsplit("/", 1)[-1]
+        vid = str(v.get("volume_id") or "")
+        if not basename.endswith(".epub") or not basename.startswith(vid):
+            continue
+        out.append({
+            "volume_id": vid,
+            "title": v.get("full_title") or v.get("title") or vid,
+            "subtitle": v.get("subtitle") or "",
+            "cover": str(files.get("cover") or ""),
+            "price_usd": v.get("price_usd"),
+            "epub": basename,
+            "chapters": v.get("chapters"),
+        })
+    return out
+
+
 def generate_account_page(*, dry_run=False):
     """Generate /account.html — "My Nerra", the member dashboard
     (client-side app against api.nerranetwork.com; the page itself is
@@ -4104,6 +4130,14 @@ def generate_account_page(*, dry_run=False):
         for aid, meta in PERSONAL_ADDONS.items()
     ]
     ctx["default_addons"] = list(DEFAULT_ADDONS)
+    # Books for members (Sep 14 2026): the library card lists every
+    # listed volume; the download link answers only for active PNN
+    # members (Worker /api/books). Public metadata only — the private
+    # r2:// refs never reach the page, just the basename the Worker
+    # re-derives inside its own bucket.
+    ctx["library"] = account_library_volumes(
+        books_page_volumes(ROOT / "books" / "catalog.json",
+                           ROOT / "books" / "volumes"))
     html = env.get_template("account_page.html.j2").render(**ctx)
     out_path = ROOT / "account.html"
     if dry_run:

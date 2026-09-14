@@ -24,6 +24,9 @@ export interface Env {
   // --- Nerra Personal (Aug 2026) — all optional until provisioned; the
   // personal endpoints answer 503 "not configured" without them.
   PERSONAL_BUCKET?: R2Bucket;          // bucket: nerra-personal
+  BOOKS_BUCKET?: R2Bucket;             // bucket: nerra-books (private masters;
+                                       // PNN members download EPUBs through
+                                       // /api/books — Sep 2026)
   STRIPE_WEBHOOK_SECRET?: string;      // wrangler secret put
   PERSONAL_ADMIN_TOKEN?: string;       // wrangler secret put (batch builder)
   MEMBER_BOOK_CODE?: string;           // member perks: book discount code

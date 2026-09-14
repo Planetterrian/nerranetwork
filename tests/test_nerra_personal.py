@@ -584,3 +584,24 @@ class TestTiers:
         ts = _read("workers/gallery/src/personal.ts")
         assert "CITIES_MAX = 3" in ts and "TOPICS_MAX = 5" in ts
         assert "TOPIC_MAX = 60" in ts
+
+    def test_library_surfaces(self):
+        """Sep 14 2026: books included with PNN. The page lists public
+        metadata only and links to the Worker's gated route; the r2://
+        master refs never reach the page."""
+        src = _read("templates/account_page.html.j2")
+        assert "nn-library-card" in src and "/api/books/" in src
+        assert "r2://" not in src
+        import generate_html as gh
+        rows = gh.account_library_volumes(gh.books_page_volumes(
+            ROOT / "books" / "catalog.json", ROOT / "books" / "volumes"))
+        assert rows, "no downloadable volumes found in the catalog"
+        for r in rows:
+            assert r["epub"].endswith(".epub") and r["epub"].startswith(r["volume_id"])
+            assert "r2://" not in r["cover"]
+        html = _read("account.html")
+        assert "r2://" not in html and "nerra-books" not in html
+        ts = _read("workers/gallery/src/personal.ts")
+        for marker in ("handleBookDownload", "BOOKS_BUCKET", 'member.tier === "personal_local"'):
+            assert marker in ts, marker
+        assert 'bucket_name = "nerra-books"' in _read("workers/gallery/wrangler.toml")
