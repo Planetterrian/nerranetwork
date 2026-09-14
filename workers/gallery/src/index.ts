@@ -7,6 +7,7 @@
  *   GET  /api/login       - request a magic-link email
  *   GET  /api/magic       - consume a magic-link token
  *   POST /api/logout      - clear the session cookie
+ *   GET  /api/books/<vol>/<file> - PNN members' EPUB library (session + tier gated)
  *   POST /api/account/checkout-ref - opaque ref to attach a checkout to this account
  *   POST /api/account/portal       - Stripe customer portal session (switch plan / cancel)
  *   GET  /api/download    - stream a private R2 object
@@ -26,6 +27,7 @@ import {
 } from "./handlers";
 import {
   handleAccount,
+  handleBookDownload,
   handleCheckoutRef,
   handlePortal,
   handleAdminSpecs,
@@ -40,6 +42,7 @@ const DEPS: HandlerDeps = { buttondown, resend };
 
 // /api/feed/<token>/<file> — the one wildcard route (private feeds).
 const FEED_PATH_RE = /^\/api\/feed\/([a-f0-9]{16,64})\/([A-Za-z0-9_.-]+)$/;
+const BOOK_PATH_RE = /^\/api\/books\/([^/]+)\/([^/]+)$/;
 
 
 export default {
@@ -56,6 +59,13 @@ export default {
       if (feedMatch) {
         return await handlePersonalFeed(
           request, env, feedMatch[1], feedMatch[2]);
+      }
+      const bookMatch = request.method === "GET"
+        ? url.pathname.match(BOOK_PATH_RE)
+        : null;
+      if (bookMatch) {
+        return await handleBookDownload(
+          request, env, bookMatch[1], bookMatch[2]);
       }
       switch (route) {
         case "POST /api/subscribe":

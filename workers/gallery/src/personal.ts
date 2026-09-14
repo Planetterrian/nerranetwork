@@ -199,8 +199,65 @@ export async function handleAccount(request: Request, env: Env): Promise<Respons
       // Set via `wrangler secret put MEMBER_BOOK_CODE` (or a plain var) —
       // the store-side discount code members redeem on /books.html titles.
       book_discount_code: env.MEMBER_BOOK_CODE || null,
+      // Books for members (Sep 14 2026): every Nerra EPUB is included
+      // with Personal News Network, served by /api/books/<vol>/<file>.
+      // The page carries the catalog (public metadata); this flag says
+      // whether the download links will answer for this member.
+      library: libraryUnlocked(env, member),
     },
   });
+}
+
+function libraryUnlocked(env: Env, member: MemberRecord | null): boolean {
+  return Boolean(env.BOOKS_BUCKET && member &&
+    member.status === "active" && member.tier === "personal_local");
+}
+
+// ---------------------------------------------------------------------------
+// GET /api/books/<volume_id>/<file>
+//
+// Session-checked (cookie), tier-checked (PNN only), streamed from the
+// private masters bucket. A top-level navigation from nerranetwork.com
+// carries the SameSite=Lax cookie, so a plain <a href> on the account
+// page works — no token in the URL, nothing to leak or share.
+// ---------------------------------------------------------------------------
+
+const BOOK_VOLUME_RE = /^[a-z0-9_]{3,60}$/;
+const BOOK_FILE_RE = /^[a-z0-9_]{3,80}\.epub$/;
+
+export async function handleBookDownload(
+  request: Request,
+  env: Env,
+  volume: string,
+  file: string,
+): Promise<Response> {
+  if (!env.RATE_LIMIT_KV || !env.BOOKS_BUCKET) return notConfigured(request);
+  if (!BOOK_VOLUME_RE.test(volume) || !BOOK_FILE_RE.test(file) ||
+      !file.startsWith(volume)) {
+    return jsonResponse(request, 400, { ok: false, error: "bad request" });
+  }
+  const email = await emailFromCookie(request, env);
+  if (!email) {
+    return jsonResponse(request, 401, { ok: false, error: "auth required" });
+  }
+  const member = await loadMember(env, email);
+  if (!libraryUnlocked(env, member)) {
+    return jsonResponse(request, 403, {
+      ok: false, error: "books are included with Personal News Network",
+    });
+  }
+  const object = await env.BOOKS_BUCKET.get(`books/${volume}/${file}`);
+  if (!object) {
+    return jsonResponse(request, 404, { ok: false, error: "not found" });
+  }
+  const headers = new Headers(corsHeaders(request));
+  object.writeHttpMetadata(headers);
+  headers.set("etag", object.httpEtag);
+  headers.set("Content-Type", "application/epub+zip");
+  headers.set("Content-Disposition", `attachment; filename="${file}"`);
+  headers.set("Cache-Control", "private, no-store");
+  console.log("books: download", volume, "member", email.slice(0, 3) + "…");
+  return new Response(object.body, { status: 200, headers });
 }
 
 // ---------------------------------------------------------------------------
