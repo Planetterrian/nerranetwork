@@ -1146,6 +1146,7 @@
                     <p style="margin-top:0.5rem;font-size:0.85rem;">
                         <a href="join.html">Nerra Personal — your own daily show, gallery &amp; member perks →</a>
                         <a class="nn-account-link" href="account.html" style="display:none;margin-left:0.75rem;">Your account →</a>
+                        <a class="nn-login-link" href="login.html" style="margin-left:0.75rem;">Sign in →</a>
                     </p>
                 </form>
             </div>
@@ -1429,6 +1430,19 @@
                     const order = langs.length ? ['en'].concat(langs) : [];
                     const langsHtml = order.length ? `<span class="nn-summary-langs" role="group" aria-label="Listen and read in another language" style="display:inline-flex;gap:4px;margin-top:4px;">${order.map(k => `<button type="button" class="nn-summary-lang" data-lang="${k}" style="${pillStyle}">${LANG_LABELS[k] || k.toUpperCase()}</button>`).join('')}</span>` : '';
 
+                    // The guest's own links (Sept 2026). A listener who wants to
+                    // find the person they just heard should not have to search
+                    // for them: their site or product first, social after, in
+                    // the order the publish step normalised.
+                    const guestLinks = Array.isArray(s.guest_links) ? s.guest_links.filter(l => l && l.url) : [];
+                    const linkStyle = 'font-family:var(--font-ui);font-size:0.7rem;font-weight:600;padding:2px 9px;border-radius:100px;text-decoration:none;border:1px solid color-mix(in srgb, var(--show-color) 35%, transparent);color:var(--show-color-text, var(--show-color));background:color-mix(in srgb, var(--show-color) 8%, transparent);';
+                    const guestLinksHtml = guestLinks.length ? `
+                        <div class="nn-summary-guest-links" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;align-items:center;">
+                            <span style="font-family:var(--font-ui);font-size:0.7rem;color:var(--nn-text-muted);">${escapeHtml(s.guest ? s.guest : 'Guest')}:</span>
+                            ${guestLinks.map(l => `<a href="${escapeAttr(l.url)}" target="_blank" rel="noopener" style="${linkStyle}">${escapeHtml(l.label || l.url)}</a>`).join('')}
+                        </div>
+                    ` : '';
+
                     return `
                         <div class="nn-summary-item" data-date="${escapeAttr(date)}" data-i18n='${escapeAttr(JSON.stringify(i18n))}'>
                             <div class="nn-summary-header">
@@ -1440,6 +1454,7 @@
                                 ${audioHtml}
                             </div>
                             <div class="nn-summary-content">${renderMarkdown(content)}</div>
+                            ${guestLinksHtml}
                         </div>
                     `;
                 }
@@ -1710,6 +1725,7 @@
               var a = document.getElementById(id);
               if (a) { a.textContent = 'My Nerra'; a.href = 'account.html'; }
             });
+            document.querySelectorAll('.nn-login-link').forEach(function (a) { a.style.display = 'none'; });
           }).catch(function () {});
       } catch (e) {}
     })();
