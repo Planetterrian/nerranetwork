@@ -6,6 +6,7 @@
  *   POST /api/subscribe   - email gate enrolment
  *   GET  /api/login       - request a magic-link email
  *   GET  /api/magic       - consume a magic-link token
+ *   POST /api/logout      - clear the session cookie
  *   POST /api/account/checkout-ref - opaque ref to attach a checkout to this account
  *   POST /api/account/portal       - Stripe customer portal session (switch plan / cancel)
  *   GET  /api/download    - stream a private R2 object
@@ -18,6 +19,7 @@ import * as buttondown from "./buttondown";
 import { corsHeaders, handlePreflight, jsonResponse } from "./cors";
 import {
   handleDownload,
+  handleLogout,
   handleLogin,
   handleMagic,
   handleSubscribe,
@@ -62,6 +64,8 @@ export default {
           return await handleLogin(request, env, DEPS);
         case "GET /api/magic":
           return await handleMagic(request, env, DEPS);
+        case "POST /api/logout":
+          return handleLogout(request);
         case "GET /api/download":
           return await handleDownload(request, env, DEPS);
         case "GET /api/account":

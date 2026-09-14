@@ -15,6 +15,7 @@ import {
   resolveSubscribeTags,
 } from "../src/handlers";
 import { signJwt } from "../src/jwt";
+import { handleLogout } from "../src/handlers";
 import type { ButtondownClient, Env, HandlerDeps, ResendClient } from "../src/types";
 
 const SECRET = "test-secret-not-for-production-use";
@@ -450,5 +451,16 @@ describe("GET /api/download", () => {
     );
     const resp = await handleDownload(req, makeEnv(), makeDeps());
     expect(resp.status).toBe(404);
+  });
+});
+
+describe("POST /api/logout", () => {
+  it("clears the session cookie", () => {
+    const res = handleLogout(new Request("https://api.example.com/api/logout", { method: "POST" }));
+    expect(res.status).toBe(200);
+    const sc = res.headers.get("Set-Cookie") || "";
+    expect(sc).toContain("nn_gallery=;");
+    expect(sc).toContain("Max-Age=0");
+    expect(sc).toContain("HttpOnly");
   });
 });

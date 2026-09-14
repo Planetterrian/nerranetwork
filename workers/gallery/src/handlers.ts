@@ -481,7 +481,16 @@ export function isSafeKey(key: string): boolean {
   return KEY_SAFE_RE.test(key);
 }
 
-function cookieFor(token: string, ttlSeconds: number): string {
+/** POST /api/logout — clear the session cookie. The JWT itself stays
+ *  valid until it expires (90 days) but no browser holds it any more;
+ *  that's the trade every stateless-cookie site makes, and revocation
+ *  exists for the cases that matter (revoke: prefix). */
+export function handleLogout(request: Request): Response {
+  return jsonResponse(request, 200, { ok: true },
+    { "Set-Cookie": cookieFor("", 0) });
+}
+
+export function cookieFor(token: string, ttlSeconds: number): string {
   // Domain not set — defaults to the Worker's host. The frontend
   // calls the Worker cross-origin with credentials:'include', so the
   // browser sends the cookie back as long as SameSite=None... but
