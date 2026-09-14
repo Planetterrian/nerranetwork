@@ -193,3 +193,62 @@ class TestTheRecordingWithTheInterviewOnIt:
     def test_no_reference_means_trust_the_local_take(self):
         body = _pyfn("_covers", self.SRC)
         assert "if reference is None:\n        return True" in body
+
+
+class TestEveryoneOnTheSameClock:
+    """Sept 14 2026, the third thing John Capobianco's room exposed. He joined
+    at 14:55:13, dropped at 14:56:05, and rejoined at 15:02:21. The recording
+    we use is that second leg, but the transcript anchored it to his FIRST
+    join, so every answer landed seven minutes before the question that
+    prompted it — Mira asking "how would you describe what you do" at 8:51
+    against his answer to it at 1:32."""
+
+    SRC = (ROOT / "pipelines" / "voices" / "post_interview.py").read_text(encoding="utf-8")
+
+    def _offsets(self):
+        src = self.SRC
+        start = src.index("def room_offsets(")
+        ns: dict = {}
+        exec("from __future__ import annotations\n"
+             + src[start:src.index("\ndef ", start + 10)], ns)
+        return ns["room_offsets"]
+
+    TRACE = [
+        {"e": "room", "d": "opened (webrtc)", "t": "2026-09-14T14:55:13.326Z"},
+        {"e": "leg", "d": "guest #1 joined (1 in room)", "t": "2026-09-14T14:55:13.436Z"},
+        {"e": "grok", "d": "session updated; agent<->room mix bridged",
+         "t": "2026-09-14T14:55:14.536Z"},
+        {"e": "leg", "d": "host #2 joined (2 in room)", "t": "2026-09-14T14:55:56.788Z"},
+        {"e": "leg", "d": "guest #1 left: disconnected (1 in room)",
+         "t": "2026-09-14T14:56:05.734Z"},
+        {"e": "leg", "d": "guest #3 joined (2 in room)", "t": "2026-09-14T15:02:21.546Z"},
+        {"e": "leg", "d": "guest #3 left: disconnected (1 in room)",
+         "t": "2026-09-14T15:41:54.813Z"},
+        {"e": "leg", "d": "host #2 left: disconnected (0 in room)",
+         "t": "2026-09-14T15:42:01.835Z"},
+    ]
+
+    def test_the_rejoin_is_found_by_how_long_the_file_is(self):
+        run = {"scenario_trace": self.TRACE}
+        out = self._offsets()(run, {"guest": 2384.6, "host": 2765.9, "mira": 2713.0})
+        assert 425 < out["guest"] < 431, out            # the 15:02 rejoin
+        assert 43 < out["host"] < 44
+
+    def test_the_first_leg_still_anchors_to_the_first_join(self):
+        run = {"scenario_trace": self.TRACE}
+        out = self._offsets()(run, {"guest": 64.9})
+        assert out["guest"] < 1
+
+    def test_without_durations_it_behaves_as_before(self):
+        run = {"scenario_trace": self.TRACE}
+        assert self._offsets()(run)["guest"] < 1
+
+    def test_a_leg_still_open_at_the_end_is_measured_to_the_end(self):
+        trace = [e for e in self.TRACE if "guest #3 left" not in e["d"]]
+        out = self._offsets()({"scenario_trace": trace}, {"guest": 2370.0})
+        assert out["guest"] > 400, "an unterminated leg must still be matchable"
+
+    def test_the_durations_come_from_the_files_being_merged(self):
+        assert "def _track_durations(tracks: dict) -> dict:" in self.SRC
+        assert "room_offsets(run or {}, _track_durations(tracks))" in self.SRC
+        assert "room_offsets(run, _track_durations(tracks))" in self.SRC

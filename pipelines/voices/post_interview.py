@@ -284,7 +284,7 @@ def has_video_stream(path: Path) -> bool:
         return False
 
 
-def room_offsets(run: dict) -> dict:
+def room_offsets(run: dict, durations: dict | None = None) -> dict:
     """Seconds between the room opening and each track's recording starting.
 
     Every per-speaker recording starts when that person's leg connects, not
@@ -292,6 +292,14 @@ def room_offsets(run: dict) -> dict:
     joined five minutes late five minutes early in the transcript — which is
     exactly what happened to the Hogan Shrum episode (Sept 12 2026): Mira
     appeared to ask her opening question minutes after he had answered it.
+
+    A speaker can join more than once, and then the FIRST join is the wrong
+    answer. John Capobianco (Sept 14 2026) joined, dropped, and rejoined
+    seven minutes later; the recording we use is the second leg, so anchoring
+    it to his first join put every answer seven minutes ahead of its
+    question. Pass ``durations`` — ``{"guest": seconds, ...}`` for the tracks
+    actually being merged — and each role is anchored to the join whose
+    time in the room best matches the recording in hand.
 
     Returns {"guest": sec, "host": sec, "mira": sec}; missing roles are 0.
     """
@@ -306,6 +314,8 @@ def room_offsets(run: dict) -> dict:
     trace = run.get("scenario_trace") or []
     opened = None
     out = {"guest": 0.0, "host": 0.0, "mira": 0.0}
+    # Every (role, join_offset, leave_offset) the room saw, in order.
+    spans: dict[str, list[list]] = {"guest": [], "host": []}
     for event in trace:
         if not isinstance(event, dict):
             continue
@@ -317,13 +327,34 @@ def room_offsets(run: dict) -> dict:
             continue
         if opened is None:
             continue
-        delta = (at - opened).total_seconds()
+        delta = max(0.0, (at - opened).total_seconds())
         if kind == "leg" and " joined" in what:
             role = what.split()[0]
-            if role in out and out[role] == 0.0:
-                out[role] = max(0.0, delta)
+            if role in spans:
+                spans[role].append([delta, None])
+        elif kind == "leg" and " left" in what:
+            role = what.split()[0]
+            for span in reversed(spans.get(role, [])):
+                if span[1] is None:
+                    span[1] = delta
+                    break
         elif kind == "grok" and "bridged" in what and out["mira"] == 0.0:
-            out["mira"] = max(0.0, delta)
+            out["mira"] = delta
+
+    room_end = max([s[1] for r in spans.values() for s in r if s[1] is not None] or [0.0])
+    for role, joins in spans.items():
+        if not joins:
+            continue
+        want = (durations or {}).get(role)
+        if want:
+            # The join whose time in the room looks like the file we hold.
+            def _fit(span):
+                left = span[1] if span[1] is not None else room_end
+                return abs((left - span[0]) - want)
+            best = min(joins, key=_fit)
+        else:
+            best = joins[0]
+        out[role] = best[0]
     return out
 
 
@@ -388,13 +419,28 @@ def speakers_header(app: dict) -> str:
             f"{_guest_label(app)} (guest)")
 
 
+def _track_durations(tracks: dict) -> dict:
+    """How long each speaker's file is — the evidence room_offsets uses to
+    tell which of that person's joins the file came from."""
+    out = {}
+    for role in ("guest", "host", "mira"):
+        path = tracks.get(role)
+        if not path:
+            continue
+        try:
+            out[role] = duration_seconds(path)
+        except Exception:  # noqa: BLE001
+            pass
+    return out
+
+
 def diarized_transcript_three(tracks: dict, app: dict, workdir: Path,
                               run: dict | None = None) -> tuple[str, float]:
     """Phase 2: per-speaker tracks → ``Mira:`` / ``Patrick:`` / ``<Guest>:``
     labelled transcript with the speakers header line on top."""
     labelled = [("Mira", tracks["mira"]), (cohost_label(), tracks["host"]),
                 (_guest_label(app), tracks["guest"])]
-    by_role = room_offsets(run or {})
+    by_role = room_offsets(run or {}, _track_durations(tracks))
     offsets = {"Mira": by_role["mira"], cohost_label(): by_role["host"],
                _guest_label(app): by_role["guest"]}
     return diarized_tracks(labelled, workdir, header=speakers_header(app),
@@ -521,7 +567,7 @@ def main() -> int:
                 processed[speaker] = r2_upload(
                     tracks[speaker], show.r2_key("raw", f"{run['id']}_{speaker}.wav"))
             mixed = mix_two(tracks["guest"], tracks["mira"], workdir / "mixed.wav")
-            by_role = room_offsets(run)
+            by_role = room_offsets(run, _track_durations(tracks))
             transcript, confidence = diarized_tracks(
                 [(_guest_label(app), tracks["guest"]), ("Mira", tracks["mira"])],
                 workdir,
