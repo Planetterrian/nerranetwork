@@ -68,6 +68,20 @@ LOUDNESS = "loudnorm=I=-16:TP=-1.5:LRA=11"
 # to the narration — dynaudnorm had simply lifted its quiet frames, hiss
 # included, by up to 15 dB. Speech level is unaffected: the master loudnorm
 # sets that, and both builds put her at -12.9 dB.
+# Sept 14 2026. Mira does not sound like she is in the room, and it is not
+# the room's fault: measured against John Capobianco's microphone on the same
+# tape she is 6.4 dB down at 1-2 kHz and 5.3 dB down at 2-3 kHz — the presence
+# band, where a voice gets its "in front of you" quality — while carrying a
+# 14 dB excess at 4-5 kHz, which is the thin, edgy part. Asking xAI for a
+# higher PCM output rate changed nothing (5310 Hz to 5480 Hz), so the band
+# limit is the synthesis and cannot be bought back. What CAN be fixed is the
+# tilt below it. This lifts the two presence bands and takes the edge off,
+# which closes the 1-2 kHz gap from 6.4 dB to 0.3. Above 5.5 kHz she is still
+# quieter than a real microphone; nothing here pretends otherwise.
+VOICE_MATCH = ("equalizer=f=1800:t=q:w=1.1:g=4,"
+               "equalizer=f=2600:t=q:w=1.2:g=3,"
+               "equalizer=f=4500:t=q:w=1.4:g=-3")
+
 NARRATION_GENTLE = ("highpass=f=60,"
                     "acompressor=threshold=-21dB:ratio=2:attack=20:release=250")
 # Trimming dead air off a narration take belongs in narrate.py, but an EDL
@@ -176,9 +190,14 @@ def _piece(cut: dict, src: Path, out: Path) -> Path:
         # Level the two sides of a stereo per-person recording separately,
         # then fold. Anything else here would be levelling a mixture.
         side = SIDE_CHAIN.format(restore=restore or "anull")
+        # "voice_match": "right" treats the side the guest HEARD — Mira and
+        # the co-host — rather than the guest's own microphone.
+        want = str(cut.get("voice_match") or "")
+        left_extra = ("," + VOICE_MATCH) if want in ("left", "both") else ""
+        right_extra = ("," + VOICE_MATCH) if want in ("right", "both") else ""
         cmd += ["-filter_complex",
                 f"[0:a]channelsplit=channel_layout=stereo[l][r];"
-                f"[l]{side}[lg];[r]{side}[rg];"
+                f"[l]{side}{left_extra}[lg];[r]{side}{right_extra}[rg];"
                 f"[lg][rg]amix=inputs=2:normalize=0,{BALANCE_GLUE}[o]",
                 "-map", "[o]"]
     else:
@@ -198,6 +217,11 @@ def _piece(cut: dict, src: Path, out: Path) -> Path:
         narration = str(cut.get("from", "")).startswith("narration:")
         if restore:
             chain.append(NARRATION_RESTORE if narration else restore)
+        # Narration is Mira alone, so the voice match is unambiguous there.
+        # On a conversation cut it has to be asked for, because the channel
+        # also carries whoever else was in the room.
+        if narration or cut.get("voice_match"):
+            chain.append(VOICE_MATCH)
         chain.append(NARRATION_GENTLE if narration else GENTLE)
         cmd += ["-af", ",".join(chain)]
 
