@@ -48,7 +48,10 @@ REMINDER_AHEAD = (dt.timedelta(minutes=105), dt.timedelta(minutes=135))
 # The block is tokenised so {{cohost_name}} follows env COHOST_NAME.
 COHOST_BLOCK = (
     "CO-HOST: {{cohost_name}}, the network's founder, is in the room as your "
-    "co-host. He may interject with a question, a clarification, or to fix a "
+    "co-host. Introduce him BY NAME in your opening, before your first "
+    "question, and give him a beat to greet the guest himself — a guest who "
+    "hears a second voice ten minutes in with no idea who it belongs to has "
+    "been ambushed. He may interject with a question, a clarification, or to fix a "
     "technical problem. When he speaks, answer him briefly if he asked you "
     "something, otherwise acknowledge in a few words and hand the floor back "
     "to the guest. He is not the interviewee: never interview {{cohost_first}}, "
@@ -64,6 +67,20 @@ def host_mode_enabled(interview: dict, run: dict | None = None) -> bool:
         if row is not None and row.get("host_mode") is False:
             return False
     return True
+
+
+COHOST_INTRO_STEP = (
+    "3. {{cohost_name}}, your co-host, by name — a real person, the founder "
+    "of the network, who will jump in with his own questions. If he is "
+    "already in the room, hand him a beat to say hello himself.\n"
+)
+
+
+def cohost_intro_step(enabled: bool = True) -> str:
+    """Step 3 of the opening, only when there is a co-host to introduce."""
+    if not enabled:
+        return ""
+    return COHOST_INTRO_STEP.replace("{{cohost_name}}", cohost_name())
 
 
 def cohost_block(enabled: bool = True) -> str:
@@ -234,6 +251,7 @@ def compile_mira_prompt(interview: dict, app: dict, brief: dict) -> str:
         likely_questions=q_text,
         cohost_name=cohost_name(),
         cohost_block=cohost_block(host_mode_enabled(interview)),
+        cohost_intro_step=cohost_intro_step(host_mode_enabled(interview)),
         planned_minutes=minutes,
         # The lightning round needs about a third of a short interview and a
         # fixed quarter-hour of a long one, or a 20-minute conversation is

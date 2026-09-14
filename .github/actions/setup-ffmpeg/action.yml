@@ -1,0 +1,24 @@
+name: 'Set up ffmpeg'
+description: >
+  Put ffmpeg and ffprobe on the runner. Ours, not a third party's: on
+  Sept 14 2026 FedericoCarboni/setup-ffmpeg@v3 started failing with
+  "Failed to read version from readme" — it scrapes an upstream page that
+  changed — and took out post-interview processing for a live interview,
+  plus narrate, assemble, produce and publish. An apt install is slower by
+  about fifteen seconds and cannot be broken by someone else's README.
+
+runs:
+  using: composite
+  steps:
+    - name: ffmpeg
+      shell: bash
+      run: |
+        set -euo pipefail
+        if command -v ffmpeg >/dev/null 2>&1 && command -v ffprobe >/dev/null 2>&1; then
+          echo "ffmpeg already present: $(ffmpeg -version | head -1)"
+          exit 0
+        fi
+        sudo apt-get update -qq
+        sudo apt-get install -y -qq ffmpeg
+        ffmpeg -version | head -1
+        ffprobe -version | head -1

@@ -76,6 +76,13 @@ const ROOM_PREFIX = "room-";       // callConference id = ROOM_PREFIX + run id (
 // in_progress (Sept 10 2026). Stay under the limit.
 const REJOIN_GRACE_MS = 45 * 1000; // room stays up this long after the last human leaves
 const OPENING_WAIT_MS = 20 * 1000; // Mira opens when a guest is in, or after 20 s with only the host
+// Sept 14 2026 (John Capobianco). The trace of that room: guest leg attached
+// at 14:55:13.4, Mira opened the show at 14:55:14.5 — 1.1 seconds later,
+// before he had his headphones on — and the co-host joined at 14:55:56, 43
+// seconds into a show that had already started without him. Both halves of
+// the clunky open are timing, not wording.
+const GUEST_SETTLE_MS = 7 * 1000;   // let the guest arrive before she speaks
+const COHOST_WAIT_MS = 2 * 60 * 1000; // hold the open this long for the co-host
 const AUDIO_CHECK_AFTER_MS = 12 * 1000; // trace whether the mix has carried speech yet (diagnostic only)
 const ROLES = { guest: true, host: true };
 // Voice Agent model (Sept 10 2026). The Voximplant connector's built-in
@@ -234,20 +241,21 @@ async function narrationSession(custom) {
   }
 
   agent.addEventListener(Grok.VoiceAgentAPIEvents.ConversationCreated, function () {
-    agent.sessionUpdate({
-      session: {
-        voice: preset,
-        turn_detection: null,     // nobody is talking to her; this is a read
-        instructions:
+    const narrationSessionCfg = {
+      voice: preset,
+      turn_detection: null,       // nobody is talking to her; this is a read
+      instructions:
           "You are Mira, the host of this show, recording a scripted segment " +
           "in the studio. The user message contains your script. Read it " +
           "aloud word for word, exactly as written. Do not greet anyone, do " +
           "not introduce the script, do not comment on it, do not add or " +
           "remove or reorder anything, and do not answer it as if it were a " +
           "question. Speak it as your own words, warmly and unhurried, the " +
-          "way you speak on the show. When the script ends, stop.",
-      },
-    });
+        "way you speak on the show. When the script ends, stop.",
+    };
+    const narrFormat = audioOutputFormat(custom.audio_rate);
+    if (narrFormat) narrationSessionCfg.audio = narrFormat;
+    agent.sessionUpdate({ session: narrationSessionCfg });
   });
 
   agent.addEventListener(Grok.VoiceAgentAPIEvents.SessionUpdated, function () {
@@ -562,6 +570,8 @@ let agentGeneration = 0;    // 1 = first session, 2 = after the first hand-off..
 const transcript = [];      // rolling [who, text] for the hand-over note
 let sessionReady = false;   // Grok SessionUpdated received (media bridged)
 let openingFired = false;   // Mira opens exactly once
+let cohostWaitTimer = null; // holding the open for a co-host who is coming
+let cohostWaitExpired = false;
 let anyoneHeard = false;    // first InputAudioBufferSpeechStarted
 let roomEnded = false;
 let endReason = "normal";
@@ -638,7 +648,7 @@ function admitLeg(call, role) {
       if (!hostJoinedAt) hostJoinedAt = new Date().toISOString();
     }
     trace("leg", role + " #" + leg.id + " joined (" + legs.length + " in room)");
-    if (role === "guest" && !openingFired) maybeOpen();
+    if (!openingFired) maybeOpen();
     postLegEvent(role, "joined");
     if (openingFired) {
       announce(role + " joined");
@@ -714,6 +724,35 @@ function handoverNote() {
     "=== END HANDOVER ===\n";
 }
 
+// Sept 14 2026. Mira's voice is band-limited where the guest's is not: on the
+// John Capobianco tape her speech is 50 dB down by 5.5 kHz while his still has
+// real energy at 8.3 kHz, and her narration takes measure the same, so it is
+// the agent's own output stream and not the call path (the conference, the
+// recorders and the mixer are all hd_audio already). xAI documents a PCM
+// output rate — 8000, 16000, 22050, 24000 (default), 32000, 44100, 48000 — so
+// ask for a specific one and let the measurement decide. Null (the default
+// here) sends nothing and keeps whatever the module negotiates today.
+function audioOutputFormat(rateOverride) {
+  const rate = Number(rateOverride || (config && config.audio_output_rate) || 0);
+  if (!rate) return null;
+  return { output: { format: { type: "audio/pcm", rate: rate } } };
+}
+
+/** End-of-turn detection. Longer silence = she interrupts less. */
+function turnDetection() {
+  const tuned = (config && config.turn_detection) || {};
+  return {
+    type: "server_vad",
+    // 0.1-0.9; the API's own default is 0.85 and it has been fine.
+    threshold: Number(tuned.threshold) || 0.85,
+    prefix_padding_ms: Number(tuned.prefix_padding_ms) || 333,
+    // The number that matters. 1.1s is longer than a clause-boundary breath
+    // and shorter than a "let me think about that" pause, which the prompt
+    // tells her to leave alone anyway.
+    silence_duration_ms: Number(tuned.silence_duration_ms) || 1100,
+  };
+}
+
 /**
  * Build a Voice Agent session and wire every listener. `note` is appended to
  * Mira's instructions for a continuation session (null for the first one).
@@ -734,14 +773,22 @@ async function createAgent(note) {
     // and every interview silently fell back to the default voice — which is
     // why Mira on the tape did not match Mira in the narration.
     const preset = String(config.voice_preset || "ara").trim().toLowerCase();
-    agent.sessionUpdate({
-      session: {
+    const sessionCfg = {
         voice: preset,
-        turn_detection: { type: "server_vad" },
+        // Sept 14 2026 (John Capobianco): "server_vad" with no settings takes
+        // the API's default end-of-turn silence, which is a fraction of a
+        // second — short enough that a breath mid-sentence reads as the guest
+        // finishing, and Mira starts talking over him. A person telling a
+        // story pauses for about a second between clauses, so she waits
+        // longer than that before taking the turn. Tunable per run without a
+        // scenario deploy: interview_runs.turn_detection.
+        turn_detection: turnDetection(),
         instructions: config.mira_system_prompt + (note || ""),
         tools: config.tools || [],
-      },
-    });
+    };
+    const outFormat = audioOutputFormat();
+    if (outFormat) sessionCfg.audio = outFormat;
+    agent.sessionUpdate({ session: sessionCfg });
   });
 
   agent.addEventListener(Grok.VoiceAgentAPIEvents.SessionUpdated, function () {
@@ -879,7 +926,34 @@ function onAgentClosed(generation, event) {
  */
 function maybeOpen() {
   if (openingFired || !sessionReady || !grokAgent || legs.length === 0) return;
-  if (humansIn("guest") > 0) return openWhenReady("guest in the room");
+  if (humansIn("guest") > 0) {
+    // The show is a three-hander when the co-host is coming. Opening it to
+    // the guest alone means either he hears the introduction twice or the
+    // co-host walks into a conversation already in progress; on Sept 14 2026
+    // it was the second, and it is what made the first minutes unusable.
+    if (waitingForCohost()) {
+      greetGuestAndWait();
+      if (!cohostWaitTimer) {
+        cohostWaitTimer = setTimeout(function () {
+          cohostWaitTimer = null;
+          cohostWaitExpired = true;
+          trace("opening", "co-host did not arrive within "
+                + Math.round(COHOST_WAIT_MS / 1000) + "s — opening without him");
+          openWhenReady("co-host no-show");
+        }, COHOST_WAIT_MS);
+      }
+      return;
+    }
+    // A settle beat. She used to start talking about a second after the leg
+    // attached, which lands as an interruption rather than a welcome.
+    if (!openingTimer) {
+      openingTimer = setTimeout(function () {
+        openingTimer = null;
+        openWhenReady("guest settled");
+      }, guestGreeted ? 1500 : GUEST_SETTLE_MS);
+    }
+    return;
+  }
   if (!openingTimer) {
     openingTimer = setTimeout(function () {
       openingTimer = null;
@@ -897,6 +971,7 @@ function openWhenReady(reason) {
   if (openingFired || !sessionReady || !grokAgent) return;
   openingFired = true;
   if (openingTimer) { clearTimeout(openingTimer); openingTimer = null; }
+  if (cohostWaitTimer) { clearTimeout(cohostWaitTimer); cohostWaitTimer = null; }
   Logger.write("[aoa " + runId + "] Mira opening (" + reason + ")");
   trace("opening", reason + "; " + describeRoom());
   try {
@@ -915,6 +990,43 @@ function openWhenReady(reason) {
     micCheckTimer = setTimeout(function () { silentMicNudge(1); }, 35 * 1000);
   } catch (err) {
     Logger.write("[aoa " + runId + "] opening responseCreate failed: " + err.message);
+  }
+}
+
+/** True while we should hold the opening for a co-host who is coming. */
+function waitingForCohost() {
+  return !!(config && config.host_mode) && humansIn("host") === 0
+         && !cohostGaveUp();
+}
+
+function cohostGaveUp() {
+  return cohostWaitExpired;
+}
+
+// The guest is here and the co-host is not. Rather than silence (or an
+// opening he will hear twice), Mira introduces herself once and says what
+// happens next. This is also the first thing most guests hear from her, so
+// it carries her name and the shape of the next hour.
+let guestGreeted = false;
+function greetGuestAndWait() {
+  if (guestGreeted || openingFired || !grokAgent) return;
+  guestGreeted = true;
+  trace("opening", "guest here, holding the open for the co-host");
+  try {
+    grokAgent.conversationItemCreate({
+      item: { type: "message", role: "system",
+        content: [{ type: "input_text", text:
+          "[ROOM — system note] The guest has just joined and " + cohostName() +
+          ", your co-host, has not arrived yet. Say ONE short, warm turn to " +
+          "the guest: your name, that you are the AI host, that " + cohostName() +
+          " is joining in a moment, and that they should take a second to get " +
+          "comfortable. Do NOT start the show, do not give the full " +
+          "introduction, and do not ask an interview question yet. Then stay " +
+          "quiet — small talk if they speak to you, nothing otherwise." }] },
+    });
+    grokAgent.responseCreate({});
+  } catch (err) {
+    Logger.write("[aoa " + runId + "] guest holding greeting failed: " + err.message);
   }
 }
 

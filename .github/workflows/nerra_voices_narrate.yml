@@ -14,6 +14,10 @@ on:
         description: 'pipelines/voices/narration/<slug>.json'
         type: string
         required: true
+      audio_rate:
+        description: 'PCM output rate for Mira (0 = leave as is; 24000/48000 to test)'
+        type: string
+        default: '0'
       engine:
         description: 'agent = Mira reads it herself (matches the show); tts = fallback only'
         type: choice
@@ -33,7 +37,7 @@ jobs:
           fetch-depth: 1
       # Grok TTS chunks long text and stitches the pieces with ffmpeg, which
       # is not on the runner by default (Sept 11 2026, first narrate run).
-      - uses: FedericoCarboni/setup-ffmpeg@v3
+      - uses: ./.github/actions/setup-ffmpeg
       - uses: ./.github/actions/setup-python
         with:
           python-version: '3.12'
@@ -41,6 +45,7 @@ jobs:
           skip-checkout: 'true'
       - run: python pipelines/voices/narrate.py
         env:
+          NARRATION_AUDIO_RATE: ${{ inputs.audio_rate }}
           NARRATION_SLUG: ${{ inputs.slug }}
           NARRATION_ENGINE: ${{ inputs.engine }}
           GROK_API_KEY: ${{ secrets.GROK_API_KEY }}

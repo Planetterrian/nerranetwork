@@ -75,13 +75,20 @@ def paragraphs(text: str) -> List[str]:
     return out
 
 
+# Sept 14 2026: Mira reads at roughly 5.5 kHz of bandwidth where a guest's
+# microphone gives 8 kHz and more, which is most of why she sounds unlike the
+# room. xAI's PCM output rate is configurable; NARRATION_AUDIO_RATE lets a run
+# ask for one so the difference can be measured rather than assumed.
+AUDIO_RATE = int(os.environ.get("NARRATION_AUDIO_RATE", "0") or 0)
+
+
 def _record_take(slug: str, segment_id: str, seq: int, text: str, voice: str) -> str:
     from voximplant.api_clients.voximplant_client import start_narration_take
 
     take_id = f"{slug}-{segment_id}-{seq}-{uuid.uuid4().hex[:8]}"
     sb_insert("narration_takes", {"slug": slug, "segment_id": segment_id,
                                   "seq": seq, "take_id": take_id})
-    start_narration_take(take_id, text, voice=voice)
+    start_narration_take(take_id, text, voice=voice, audio_rate=AUDIO_RATE)
     deadline = time.time() + TAKE_TIMEOUT_SEC
     while time.time() < deadline:
         time.sleep(POLL_SEC)

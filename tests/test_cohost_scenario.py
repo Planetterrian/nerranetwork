@@ -160,7 +160,11 @@ class TestRoom:
     def test_opening_waits_for_a_guest_or_20s(self, js):
         assert "OPENING_WAIT_MS = 20 * 1000" in js
         body = _fn(js, "function maybeOpen()")
-        assert 'if (humansIn("guest") > 0) return openWhenReady("guest in the room")' in body
+        # Sept 14 2026: the guest arriving no longer opens the show that
+        # instant — she holds for the co-host, or lets the guest settle.
+        assert 'if (waitingForCohost())' in body
+        assert "greetGuestAndWait()" in body
+        assert 'openWhenReady("guest settled")' in body
         assert "OPENING_WAIT_MS" in body
         opened = _fn(js, "function openWhenReady(reason)")
         assert "if (openingFired || !sessionReady || !grokAgent) return;" in opened

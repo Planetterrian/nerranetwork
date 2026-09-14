@@ -103,7 +103,8 @@ def start_room_probe(run_id: str, clip_url: str,
 
 
 def start_narration_take(take_id: str, text: str, voice: str = "ara",
-                         rule_name: str = RULE_NAME) -> Dict[str, Any]:
+                         rule_name: str = RULE_NAME,
+                         audio_rate: int | None = None) -> Dict[str, Any]:
     """Start a session in which Mira READS one paragraph of a scripted pickup
     (see narrationSession in the scenario, Sept 11 2026).
 
@@ -118,6 +119,9 @@ def start_narration_take(take_id: str, text: str, voice: str = "ara",
         application_name=APPLICATION_NAME,
         script_custom_data=json.dumps({
             "narrate": True, "take_id": take_id, "text": text, "voice": voice,
+            # PCM output rate for this read (see audioOutputFormat in the
+            # scenario). None = whatever the module negotiates today.
+            "audio_rate": int(audio_rate) if audio_rate else None,
         }),
     )
 

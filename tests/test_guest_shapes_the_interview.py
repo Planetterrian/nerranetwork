@@ -195,8 +195,8 @@ class TestTheShapeReachesMira:
                 "show_name", "show_premise", "opening_line", "closing_question",
                 "guest_name", "guest_title", "guest_organization",
                 "episode_thesis", "guest_brief", "likely_questions",
-                "cohost_name", "cohost_block", "planned_minutes",
-                "lightning_at", "guest_shape",
+                "cohost_name", "cohost_block", "cohost_intro_step",
+                "planned_minutes", "lightning_at", "guest_shape",
             },
             "question_generation.txt": {
                 "show_name", "show_premise", "name", "bio_research", "topics",

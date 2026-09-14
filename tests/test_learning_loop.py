@@ -559,7 +559,9 @@ class TestTheShowDoesNotOpenToAnEmptyChair:
         assert "stay silent until" in body
 
     def test_the_guest_arriving_is_what_opens_the_show(self):
-        assert 'if (role === "guest" && !openingFired) maybeOpen();' in SCENARIO
+        # Any arrival re-evaluates the open now (the co-host's included):
+        # his join is what releases a hold that the guest's arrival started.
+        assert "if (!openingFired) maybeOpen();" in SCENARIO
 
 
 class TestTheEditIsData:
