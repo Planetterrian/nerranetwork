@@ -1,0 +1,417 @@
+{% extends "base.html.j2" %}
+
+{% block title %}Offshore North Dashboard — EMIRA IV, the Route du Rhum & the road to the Vendée Globe | Nerra Network{% endblock %}
+
+{% block og_type %}website{% endblock %}
+
+{% block head_extra %}
+<style>
+  /* ---- Offshore North campaign dashboard (scoped under .on-dash) ---- */
+  .on-dash {
+    --on-navy: #0B3C5D;
+    --on-sea: #1F6F9F;
+    --on-foam: #5BC0EB;
+    --on-ink: #071626;
+    --on-line: rgba(91,192,235,0.22);
+    --on-muted: #9db4c9;
+    --on-text: #e9f2f9;
+    color: var(--on-text);
+  }
+  .on-hero {
+    position: relative; overflow: hidden;
+    background:
+      radial-gradient(1100px 520px at 20% -10%, rgba(91,192,235,0.22), transparent 60%),
+      radial-gradient(900px 480px at 90% 10%, rgba(31,111,159,0.35), transparent 60%),
+      linear-gradient(180deg, #06131f 0%, #0a2136 55%, #0b1b2c 100%);
+    border-bottom: 1px solid var(--on-line);
+  }
+  .on-hero::after {
+    content: ""; position: absolute; inset: auto 0 0 0; height: 90px; pointer-events: none;
+    background: repeating-linear-gradient(-6deg, transparent 0 18px, rgba(91,192,235,0.05) 18px 20px);
+  }
+  .on-container { position: relative; z-index: 1; max-width: 1120px; margin: 0 auto;
+    padding: calc(var(--nav-height, 64px) + 2.4rem) 1.25rem 2.2rem; }
+  .on-kicker { display:inline-flex; align-items:center; gap:8px; font-size:.78rem; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--on-foam); font-weight:700; margin-bottom:.6rem; }
+  .on-kicker .dot { width:8px; height:8px; border-radius:50%; background:var(--on-foam);
+    box-shadow:0 0 10px var(--on-foam); animation:on-pulse 1.8s infinite; }
+  @keyframes on-pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+  .on-h1 { font-size: clamp(1.8rem, 4vw, 2.7rem); line-height:1.06; margin:0 0 .4rem; font-weight:800; letter-spacing:-.02em; }
+  .on-sub { color:var(--on-muted); font-size:1.02rem; max-width:66ch; margin:0 0 1.5rem; }
+  .on-sub a { color: var(--on-foam); }
+
+  .on-cd { display:flex; gap:.6rem; flex-wrap:wrap; margin:.4rem 0 .9rem; }
+  .on-cd-unit { min-width:76px; text-align:center; background:rgba(8,24,40,.72); border:1px solid var(--on-line);
+    border-radius:14px; padding:.7rem .5rem; backdrop-filter:blur(6px); }
+  .on-cd-num { font-size:clamp(1.6rem,4.5vw,2.6rem); font-weight:800; font-variant-numeric:tabular-nums;
+    background:linear-gradient(180deg,#fff,#a9dcf5); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+  .on-cd-label { font-size:.66rem; letter-spacing:.12em; text-transform:uppercase; color:var(--on-muted); margin-top:2px; }
+  .on-cd-card { background:rgba(8,24,40,.66); border:1px solid var(--on-line); border-radius:18px; padding:1.1rem 1.2rem; }
+  .on-cd-card h3 { margin:.2rem 0 .3rem; font-size:1.2rem; }
+  .on-cd-card .when { color:var(--on-muted); font-size:.9rem; }
+  .on-chips { display:flex; flex-wrap:wrap; gap:.5rem; margin-top:.9rem; }
+  .on-chip { display:inline-flex; gap:8px; align-items:baseline; padding:6px 12px; border-radius:999px;
+    border:1px solid var(--on-line); background:rgba(31,111,159,.18); font-size:.82rem; color:var(--on-text); text-decoration:none; }
+  .on-chip b { font-variant-numeric:tabular-nums; color:#fff; }
+  .on-chip.live { border-color:rgba(126,251,176,.4); background:rgba(40,200,120,.12); color:#bdf7d8; }
+
+  .on-grid { max-width:1120px; margin:1.3rem auto; padding:0 1.25rem; display:grid; gap:1.1rem;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
+  .on-grid.one { grid-template-columns:minmax(0,1fr); }
+  @media (max-width:760px){ .on-grid{ grid-template-columns:minmax(0,1fr); } }
+  .on-panel { background:var(--nn-surface,#0f1f31); border:1px solid var(--on-line); border-radius:16px; padding:1.1rem 1.2rem; }
+  .on-panel h2 { font-size:1.05rem; margin:0 0 .8rem; letter-spacing:-.01em; }
+  .on-panel h2 .sm { color:var(--on-muted); font-size:.72rem; font-weight:400; margin-left:6px; }
+  .on-muted { color:var(--on-muted); font-size:.84rem; }
+  .on-panel a { color:var(--on-foam); }
+
+  .on-pos { display:flex; flex-direction:column; gap:.5rem; }
+  .on-pos .fix { font-size:1.1rem; line-height:1.4; color:#fff; }
+  .on-pos .meta { color:var(--on-muted); font-size:.82rem; }
+  .on-pos .tag { display:inline-block; font-size:.66rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+    padding:2px 8px; border-radius:999px; background:rgba(91,192,235,.15); color:var(--on-foam); margin-right:6px; }
+  .on-log { list-style:none; padding:0; margin:.6rem 0 0; }
+  .on-log li { display:flex; gap:10px; padding:.42rem 0; border-top:1px solid rgba(91,192,235,.12); font-size:.86rem; }
+  .on-log .d { color:var(--on-muted); white-space:nowrap; font-variant-numeric:tabular-nums; min-width:86px; }
+
+  .on-tracker { border-radius:14px; overflow:hidden; border:1px solid var(--on-line); background:#061421; }
+  .on-tracker iframe { width:100%; height:440px; border:0; display:block; }
+
+  .on-kv { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:.55rem 1rem; }
+  .on-kv .k { font-size:.66rem; text-transform:uppercase; letter-spacing:.1em; color:var(--on-muted); }
+  .on-kv .v { font-size:.95rem; color:#fff; font-weight:600; }
+  .on-ped { list-style:none; padding:0; margin:.7rem 0 0; }
+  .on-ped li { display:flex; gap:10px; padding:.35rem 0; border-top:1px solid rgba(91,192,235,.12); font-size:.86rem; }
+  .on-ped .y { color:var(--on-foam); font-weight:700; min-width:64px; font-variant-numeric:tabular-nums; }
+
+  .on-cal { list-style:none; padding:0; margin:0; }
+  .on-cal li { display:grid; grid-template-columns:120px 1fr; gap:10px; padding:.45rem 0; border-top:1px solid rgba(91,192,235,.12); font-size:.88rem; align-items:baseline; }
+  .on-cal li:first-child { border-top:none; }
+  .on-cal .d { color:var(--on-muted); font-variant-numeric:tabular-nums; font-size:.8rem; }
+  .on-cal .st { display:inline-block; font-size:.62rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; padding:1px 7px; border-radius:999px; margin-left:6px; vertical-align:middle; }
+  .on-cal .st.done { color:#9db4c9; background:rgba(157,180,201,.12); }
+  .on-cal .st.upcoming { color:#7efbb0; background:rgba(40,200,120,.14); }
+  .on-cal .st.tbc { color:#ffd27a; background:rgba(255,180,40,.14); }
+  .on-cal .st.goal { color:#fff; background:linear-gradient(135deg,var(--on-sea),var(--on-foam)); }
+  .on-cal .emira { color:#fff; font-weight:600; }
+  @media (max-width:520px){ .on-cal li{ grid-template-columns:1fr; gap:2px; } }
+
+  .on-res { margin-bottom:1rem; }
+  .on-res h3 { font-size:.98rem; margin:0 0 .2rem; }
+  .on-res .dates { color:var(--on-muted); font-size:.8rem; margin-bottom:.4rem; }
+  .on-res table { width:100%; border-collapse:collapse; font-size:.86rem; }
+  .on-res td { padding:.32rem .3rem; border-top:1px solid rgba(91,192,235,.12); vertical-align:top; }
+  .on-res td.p { width:26px; color:var(--on-foam); font-weight:800; }
+  .on-res td.n { color:var(--on-muted); font-size:.8rem; }
+
+  .on-entries { columns:2; column-gap:1.4rem; font-size:.86rem; list-style:none; padding:0; margin:.4rem 0 0; }
+  @media (max-width:600px){ .on-entries{ columns:1; } }
+  .on-entries li { break-inside:avoid; padding:.22rem 0; border-top:1px solid rgba(91,192,235,.1); }
+  .on-entries li.can { color:#fff; font-weight:700; }
+  .on-entries li.can::before { content:"🍁 "; }
+  .on-entries .b { color:var(--on-muted); }
+
+  .on-feed { list-style:none; padding:0; margin:0; }
+  .on-feed li { padding:.55rem 0; border-top:1px solid rgba(91,192,235,.12); }
+  .on-feed li:first-child { border-top:none; }
+  .on-feed .h { display:flex; gap:10px; justify-content:space-between; align-items:baseline; }
+  .on-feed .h a { font-weight:600; color:#fff; text-decoration:none; }
+  .on-feed .h a:hover { color:var(--on-foam); }
+  .on-feed .d { color:var(--on-muted); font-size:.76rem; white-space:nowrap; font-variant-numeric:tabular-nums; }
+  .on-feed .x { color:#c7d6e3; font-size:.84rem; margin:.25rem 0 0; line-height:1.45; }
+  .on-feed .c { display:inline-block; font-size:.64rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--on-foam); margin-right:6px; }
+
+  .on-follow { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:1rem; }
+  .on-follow h3 { font-size:.82rem; letter-spacing:.08em; text-transform:uppercase; color:var(--on-muted); margin:0 0 .4rem; }
+  .on-follow ul { list-style:none; padding:0; margin:0; }
+  .on-follow li { padding:.3rem 0; font-size:.88rem; border-top:1px solid rgba(91,192,235,.1); }
+  .on-follow li a { color:#fff; text-decoration:none; }
+  .on-follow li a:hover { color:var(--on-foam); }
+  .on-follow .ic { display:inline-block; width:1.4em; color:var(--on-foam); }
+
+  .on-led { list-style:none; padding:0; margin:0; }
+  .on-led li { display:grid; grid-template-columns:20px 1fr; gap:8px; padding:.4rem 0; border-top:1px solid rgba(91,192,235,.12); font-size:.86rem; }
+  .on-led li:first-child { border-top:none; }
+  .on-led .s { font-weight:800; }
+  .on-led .s.open { color:#ffd27a; } .on-led .s.done { color:#7efbb0; } .on-led .s.unknown { color:var(--on-muted); }
+  .on-led .st { color:var(--on-muted); }
+
+  .on-lin { list-style:none; padding:0; margin:0; }
+  .on-lin li { padding:.45rem 0; border-top:1px solid rgba(91,192,235,.12); font-size:.86rem; }
+  .on-lin li:first-child { border-top:none; }
+  .on-lin b { color:#fff; }
+
+  .on-eps { list-style:none; padding:0; margin:0; }
+  .on-eps li { display:flex; gap:10px; padding:.45rem 0; border-top:1px solid rgba(91,192,235,.12); font-size:.88rem; align-items:baseline; }
+  .on-eps li:first-child { border-top:none; }
+  .on-eps .n { color:var(--on-foam); font-weight:800; min-width:52px; }
+  .on-eps a { color:#fff; text-decoration:none; } .on-eps a:hover { color:var(--on-foam); }
+  .on-eps .d { color:var(--on-muted); font-size:.76rem; margin-left:auto; white-space:nowrap; }
+
+  .on-btn { display:inline-flex; align-items:center; gap:8px; margin-top:.9rem; background:linear-gradient(135deg,var(--on-sea),var(--on-foam));
+    color:#031018; font-weight:700; padding:.6rem 1.1rem; border-radius:12px; text-decoration:none; font-size:.92rem; }
+  .on-btn.ghost { background:transparent; color:var(--on-foam); border:1px solid var(--on-line); }
+  .on-foot { max-width:1120px; margin:0 auto 2rem; padding:0 1.25rem; color:var(--on-muted); font-size:.78rem; }
+  .on-foot a { color:var(--on-foam); }
+</style>
+{% endblock %}
+
+{% block content %}
+{% set camp = d.get('campaign', {}) %}
+{% set boat = camp.get('boat', {}) %}
+{% set primary = (d.get('countdowns', []) | selectattr('primary') | list | first) or {} %}
+<div class="on-dash">
+  <div class="on-hero">
+    <div class="on-container">
+      <div class="on-kicker"><span class="dot"></span> Offshore North · Campaign Dashboard</div>
+      <h1 class="on-h1">{{ camp.get('skipper', 'Scott Shawyer') }} and EMIRA IV — the road to the Vendée Globe</h1>
+      <p class="on-sub">{{ camp.get('goal', '') }} This page follows the campaign between episodes: where the boat was last reported, what the team has said, what is next on the calendar, and where to read and follow it yourself. The companion to the <a href="{{ path_prefix }}{{ show_page }}">Offshore North</a> podcast.</p>
+
+      <div class="on-cd-card">
+        <div class="on-kicker" style="margin-bottom:.2rem;"><span class="dot"></span> Next start line</div>
+        <h3>{{ primary.get('label', 'Route du Rhum – Destination Guadeloupe start') }}</h3>
+        <div class="when" id="onPrimaryWhen" data-when="{{ primary.get('when', '') }}">{{ primary.get('sub', '') }}</div>
+        <div class="on-cd" id="onCountdown" data-when="{{ primary.get('when', '') }}">
+          <div class="on-cd-unit"><div class="on-cd-num" id="cd-d">--</div><div class="on-cd-label">Days</div></div>
+          <div class="on-cd-unit"><div class="on-cd-num" id="cd-h">--</div><div class="on-cd-label">Hours</div></div>
+          <div class="on-cd-unit"><div class="on-cd-num" id="cd-m">--</div><div class="on-cd-label">Min</div></div>
+          <div class="on-cd-unit"><div class="on-cd-num" id="cd-s">--</div><div class="on-cd-label">Sec</div></div>
+        </div>
+        <div class="on-chips">
+          {% for c in d.get('countdowns', []) if not c.get('primary') %}
+          <a class="on-chip" href="{{ c.url }}" target="_blank" rel="noopener" data-when="{{ c.when }}" data-end="{{ c.get('end', '') }}" title="{{ c.get('sub', '') }}"><span>{{ c.label }}</span><b class="days">…</b></a>
+          {% endfor %}
+        </div>
+        {% if primary.get('url') %}<a class="on-btn ghost" href="{{ primary.url }}" target="_blank" rel="noopener">Official race site ↗</a>{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="on-grid">
+    <div class="on-panel">
+      <h2>Last known position <span class="sm">dated · sourced · never guessed</span></h2>
+      <div class="on-pos">
+        <div class="fix" id="onFixText">{{ (d.get('position_log', []) | last).text if d.get('position_log') else 'No dated fix on file.' }}</div>
+        <div class="meta" id="onFixMeta">
+          {% if d.get('position_log') %}{% set lp = d.get('position_log') | last %}<span class="tag">Fix</span>{{ lp.date }} · <a href="{{ lp.url }}" target="_blank" rel="noopener">source</a>{% endif %}
+        </div>
+      </div>
+      <ul class="on-log">
+        {% for p in d.get('position_log', []) | reverse %}
+        <li><span class="d">{{ p.date }}</span><span>{{ p.text }} <a href="{{ p.url }}" target="_blank" rel="noopener" class="on-muted">↗</a></span></li>
+        {% endfor %}
+      </ul>
+      <p class="on-muted" style="margin:.8rem 0 0;">The newest dated post from the team's own channels that describes a movement, refreshed nightly and after each episode; the log above is operator-verified. Between fixes the boat is wherever the tracker says it is — not wherever this page guesses.</p>
+      <a class="on-btn ghost" href="{{ camp.get('tracker_url', '#') }}" target="_blank" rel="noopener">Open the team's tracker ↗</a>
+    </div>
+    <div class="on-panel">
+      <h2>Live tracker <span class="sm">{{ camp.get('tracker_provider', '') }}</span></h2>
+      <div class="on-tracker">
+        <iframe src="{{ camp.get('tracker_embed_url', 'https://my.yb.tl/emira4') }}" loading="lazy" title="EMIRA IV tracker" referrerpolicy="no-referrer-when-downgrade"></iframe>
+      </div>
+      <p class="on-muted" style="margin:.6rem 0 0;">Embedded from the team's public tracker page. If it shows nothing, the tracker is between events — the campaign's own page is <a href="{{ camp.get('tracker_url', '#') }}" target="_blank" rel="noopener">here</a>.</p>
+    </div>
+  </div>
+
+  <div class="on-grid">
+    <div class="on-panel">
+      <h2>Latest from the campaign <span class="sm">what the team said, not just when</span></h2>
+      <ul class="on-feed" id="onPosts"><li class="on-muted">Loading the team's latest posts…</li></ul>
+    </div>
+    <div class="on-panel">
+      <h2>Latest offshore headlines <span class="sm">the press the show reads</span></h2>
+      <ul class="on-feed" id="onHeadlines"><li class="on-muted">Loading…</li></ul>
+      <p class="on-muted" id="onFetched" style="margin:.7rem 0 0;"></p>
+    </div>
+  </div>
+
+  <div class="on-grid">
+    <div class="on-panel">
+      <h2>The boat: {{ boat.get('name', 'EMIRA IV') }} <span class="sm">{{ boat.get('sail_number', '') }}</span></h2>
+      <div class="on-kv">
+        <div><div class="k">Class</div><div class="v">{{ boat.get('class', '') }}</div></div>
+        <div><div class="k">Designer</div><div class="v">{{ boat.get('designer', '') }}</div></div>
+        <div><div class="k">Builder</div><div class="v">{{ boat.get('builder', '') }}</div></div>
+        <div><div class="k">Launched</div><div class="v">{{ boat.get('launched', '') }}</div></div>
+        <div><div class="k">Length</div><div class="v">{{ boat.get('length_m', '') }} m</div></div>
+        <div><div class="k">Beam</div><div class="v">{{ boat.get('beam_m', '') }} m</div></div>
+        <div><div class="k">Draft</div><div class="v">{{ boat.get('draft_m', '') }} m</div></div>
+        <div><div class="k">Displacement</div><div class="v">~{{ boat.get('displacement_t', '') }} t</div></div>
+        <div><div class="k">Races as</div><div class="v">{{ camp.get('entry_name', '') }}</div></div>
+      </div>
+      <ul class="on-ped">
+        {% for p in boat.get('pedigree', []) %}<li><span class="y">{{ p.year }}</span><span>{{ p.text }}</span></li>{% endfor %}
+      </ul>
+      <p class="on-muted" style="margin:.6rem 0 0;">Previously {{ boat.get('previous_names', []) | join(' → ') }}. Spec sheet: <a href="{{ boat.get('spec_source', '#') }}" target="_blank" rel="noopener">IMOCA class register ↗</a></p>
+    </div>
+    <div class="on-panel">
+      <h2>The skipper: {{ camp.get('skipper', '') }}</h2>
+      <p style="margin:0 0 .6rem;font-size:.92rem;line-height:1.5;">{{ camp.get('skipper_line', '') }}</p>
+      <p class="on-muted" style="margin:0 0 .8rem;">{{ camp.get('initiative', '') }}</p>
+      <h2 style="margin-top:1rem;">Vendée Globe 2028 qualification <span class="sm">published outline · the campaign's ledger</span></h2>
+      <ul class="on-led">
+        {% for l in d.get('qualification', {}).get('ledger', []) %}
+        <li><span class="s {{ l.state }}">{% if l.state == 'done' %}✓{% elif l.state == 'open' %}○{% else %}?{% endif %}</span><span><b>{{ l.item }}</b><br><span class="st">{{ l.status }}</span></span></li>
+        {% endfor %}
+      </ul>
+      <p class="on-muted" style="margin:.7rem 0 0;">
+        {% for o in d.get('qualification', {}).get('outline', []) %}{{ o }} {% endfor %}
+        Finer mechanics (points tables, the designated-race list, wild cards) are not published here until sourced from <a href="https://www.imoca.org/en" target="_blank" rel="noopener">imoca.org</a> / <a href="https://www.vendeeglobe.org/en" target="_blank" rel="noopener">vendeeglobe.org</a>.
+      </p>
+    </div>
+  </div>
+
+  <div class="on-grid one">
+    <div class="on-panel">
+      <h2>Season calendar <span class="sm">2026 → 12 November 2028</span></h2>
+      <ul class="on-cal">
+        {% for e in d.get('calendar', []) %}
+        <li><span class="d">{{ e.date }}</span><span class="{{ 'emira' if e.get('emira') else '' }}"><a href="{{ e.url }}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">{{ e.label }}</a><span class="st {{ e.status }}">{{ e.status }}</span></span></li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <div class="on-grid">
+    <div class="on-panel">
+      <h2>Recent results</h2>
+      {% for r in d.get('results', []) %}
+      <div class="on-res">
+        <h3><a href="{{ r.url }}" target="_blank" rel="noopener" style="color:#fff;text-decoration:none;">{{ r.event }} ↗</a></h3>
+        <div class="dates">{{ r.dates }}</div>
+        <table>
+          {% for p in r.podium %}<tr><td class="p">{{ p.pos }}</td><td><b>{{ p.boat }}</b> — {{ p.skipper }}</td><td class="n">{{ p.note }}</td></tr>{% endfor %}
+        </table>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="on-panel">
+      {% set rdr = d.get('rdr_imoca_entries', {}) %}
+      <h2>Route du Rhum 2026 — IMOCA entries <span class="sm">{{ rdr.get('entries', []) | length }} listed</span></h2>
+      <ul class="on-entries">
+        {% for e in rdr.get('entries', []) %}<li class="{{ 'can' if e.get('canada') else '' }}">{{ e.skipper }} <span class="b">· {{ e.boat }}</span></li>{% endfor %}
+      </ul>
+      <p class="on-muted" style="margin:.7rem 0 0;">{{ rdr.get('note', '') }} <a href="{{ rdr.get('source_url', '#') }}" target="_blank" rel="noopener">Source ↗</a></p>
+    </div>
+  </div>
+
+  <div class="on-grid one">
+    <div class="on-panel">
+      <h2>Follow the sport <span class="sm">every source and channel this show reads, and the ones worth following yourself</span></h2>
+      <div class="on-follow">
+        {% for g in d.get('follow', []) %}
+        <div>
+          <h3>{{ g.group }}</h3>
+          <ul>
+            {% for l in g.links %}
+            <li><span class="ic">{% if l.kind == 'instagram' %}◎{% elif l.kind == 'x' %}𝕏{% elif l.kind == 'youtube' %}▶{% elif l.kind == 'facebook' %}f{% elif l.kind == 'tiktok' %}♪{% elif l.kind == 'linkedin' %}in{% elif l.kind == 'tracker' %}⌖{% elif l.kind == 'blog' %}✎{% elif l.kind == 'press' %}¶{% else %}⛵{% endif %}</span><a href="{{ l.url }}" target="_blank" rel="noopener">{{ l.label }}</a></li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="on-grid">
+    <div class="on-panel">
+      <h2>The Canadian lineage</h2>
+      <ul class="on-lin">
+        {% for l in d.get('lineage', []) %}<li><b>{{ l.who }}</b> — {{ l.text }}</li>{% endfor %}
+      </ul>
+    </div>
+    <div class="on-panel">
+      <h2>Latest episodes</h2>
+      <ul class="on-eps">
+        {% for e in recent_episodes %}
+        <li><span class="n">Ep {{ e.episode_num }}</span><a href="{{ path_prefix }}{{ e.url }}">{{ e.title }}</a><span class="d">{{ e.date }}</span></li>
+        {% else %}
+        <li class="on-muted">Episodes appear here as they publish.</li>
+        {% endfor %}
+      </ul>
+      <a class="on-btn" href="{{ path_prefix }}{{ show_page }}">Listen to Offshore North</a>
+    </div>
+  </div>
+
+  <p class="on-foot">
+    Curated facts verified {{ d.get('last_verified', '') }} against the linked sources; the live rails refresh nightly and after each episode from the team's own feeds and the offshore press. Dates are local to the event. Nothing here is a race prediction. Explore every dashboard at the <a href="{{ path_prefix }}data.html">Nerra data hub</a>.
+  </p>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% set camp = d.get('campaign', {}) %}
+<script>
+(function(){
+  var pad = function(n){ return String(n).padStart(2,'0'); };
+  var set = function(id, v){ var e = document.getElementById(id); if (e) e.textContent = v; };
+  var cd = document.getElementById('onCountdown');
+  var target = cd && cd.dataset.when ? Date.parse(cd.dataset.when) : NaN;
+  var whenEl = document.getElementById('onPrimaryWhen');
+  if (whenEl && !isNaN(target)) {
+    try {
+      whenEl.textContent = whenEl.textContent + ' · ' + new Date(target).toLocaleString([], {weekday:'short', year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}) + ' your time';
+    } catch (_) {}
+  }
+  function tick(){
+    if (isNaN(target)) return;
+    var diff = Math.max(0, target - Date.now());
+    var d = Math.floor(diff/86400000); diff -= d*86400000;
+    var h = Math.floor(diff/3600000); diff -= h*3600000;
+    var m = Math.floor(diff/60000); diff -= m*60000;
+    var s = Math.floor(diff/1000);
+    set('cd-d', d); set('cd-h', pad(h)); set('cd-m', pad(m)); set('cd-s', pad(s));
+  }
+  tick(); setInterval(tick, 1000);
+
+  // Secondary countdown chips: days to go, "on now" between when/end, or done.
+  document.querySelectorAll('.on-chip[data-when]').forEach(function(chip){
+    var w = Date.parse(chip.dataset.when), e = chip.dataset.end ? Date.parse(chip.dataset.end) : NaN;
+    var b = chip.querySelector('.days'); if (!b || isNaN(w)) return;
+    var now = Date.now();
+    if (!isNaN(e) && now >= w && now <= e) { b.textContent = 'on now'; chip.classList.add('live'); return; }
+    if (now > (isNaN(e) ? w : e)) { b.textContent = 'done'; return; }
+    var days = Math.ceil((w - now)/86400000);
+    b.textContent = days + (days === 1 ? ' day' : ' days');
+  });
+
+  // Live rails from the same-origin cache written by scripts/fetch_offshore_north_dashboard.py.
+  var esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
+  fetch('{{ path_prefix }}api/offshore_north_dashboard.json', {cache:'no-cache'}).then(function(r){ return r.ok ? r.json() : null; }).then(function(data){
+    var posts = document.getElementById('onPosts'), heads = document.getElementById('onHeadlines');
+    if (!data) {
+      if (posts) posts.innerHTML = '<li class="on-muted">The latest-posts rail is not refreshed right now — the team\'s own site is <a href="{{ camp.get('site_url', 'https://www.canadaoceanracing.com/') }}" target="_blank" rel="noopener">here</a>.</li>';
+      if (heads) heads.innerHTML = '<li class="on-muted">Headlines not refreshed right now.</li>';
+      return;
+    }
+    if (posts) {
+      var cp = data.campaign_posts || [];
+      posts.innerHTML = cp.length ? cp.slice(0, 8).map(function(p){
+        return '<li><div class="h"><a href="' + esc(p.url) + '" target="_blank" rel="noopener">' + esc(p.title) + '</a><span class="d">' + esc(p.date || '') + '</span></div>' +
+               (p.excerpt ? '<p class="x"><span class="c">' + esc(p.channel || '') + '</span>' + esc(p.excerpt) + '</p>' : '') + '</li>';
+      }).join('') : '<li class="on-muted">No posts fetched yet.</li>';
+    }
+    if (heads) {
+      var hl = data.headlines || [];
+      heads.innerHTML = hl.length ? hl.slice(0, 12).map(function(h){
+        return '<li><div class="h"><a href="' + esc(h.url) + '" target="_blank" rel="noopener">' + esc(h.title) + '</a><span class="d">' + esc(h.date || '') + '</span></div><p class="x"><span class="c">' + esc(h.outlet || '') + '</span></p></li>';
+      }).join('') : '<li class="on-muted">No headlines fetched yet.</li>';
+    }
+    // Newest dated fix from the live feed wins over the baked log when it is newer.
+    var pos = data.position, fixText = document.getElementById('onFixText'), fixMeta = document.getElementById('onFixMeta');
+    var bakedDate = '{{ (d.get('position_log', []) | last).date if d.get('position_log') else '' }}';
+    if (pos && pos.date && fixText && pos.date >= bakedDate) {
+      fixText.textContent = pos.text || pos.title || '';
+      if (fixMeta) fixMeta.innerHTML = '<span class="tag">Fix</span>' + esc(pos.date) + ' · ' + esc(pos.channel || '') + ' · <a href="' + esc(pos.url) + '" target="_blank" rel="noopener">source</a>';
+    }
+    var f = document.getElementById('onFetched');
+    if (f && data.fetched_at) {
+      try { f.textContent = 'Rails refreshed ' + new Date(data.fetched_at).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}) + (data.campaign_posts_stale ? ' · campaign posts carried over from the previous refresh' : '') + '.'; } catch (_) {}
+    }
+  }).catch(function(){
+    var posts = document.getElementById('onPosts');
+    if (posts) posts.innerHTML = '<li class="on-muted">The latest-posts rail is not refreshed right now.</li>';
+  });
+})();
+</script>
+{% endblock %}

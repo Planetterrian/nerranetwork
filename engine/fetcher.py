@@ -50,6 +50,36 @@ def _strip_html(text: str) -> str:
     return clean
 
 
+def _entry_body_text(entry) -> str:
+    """Plain text of a feed entry's BODY (``content:encoded``), or ``""``.
+
+    feedparser exposes ``content:encoded`` as ``entry.content[0].value``;
+    the fetcher historically read only ``description``/``summary`` (the
+    teaser), so a campaign blog post arrived as one line. Returned only
+    when it is longer than the description — otherwise there is nothing
+    the teaser did not already say.
+    """
+    try:
+        contents = entry.get("content") or []
+    except Exception:  # noqa: BLE001 — feedparser quirks never break a feed
+        return ""
+    best = ""
+    for item in contents:
+        value = ""
+        try:
+            value = (item.get("value") if isinstance(item, dict) else getattr(item, "value", "")) or ""
+        except Exception:  # noqa: BLE001
+            value = ""
+        if len(value) > len(best):
+            best = value
+    if not best:
+        return ""
+    text = _strip_html(best) if "<" in best else re.sub(r"\s+", " ", best).strip()
+    desc = entry.get("description", "") or entry.get("summary", "") or ""
+    desc_text = _strip_html(desc) if "<" in desc else desc.strip()
+    return text if len(text) > len(desc_text) + 40 else ""
+
+
 # ---------------------------------------------------------------------------
 # Source name mapping
 # ---------------------------------------------------------------------------
@@ -390,6 +420,11 @@ def _fetch_single_feed(
                 or entry.get("summary", "").strip()
             )
             link = entry.get("link", "").strip()
+            # Feed BODY (WordPress-class ``content:encoded``). Stored
+            # separately so no prompt changes unless a show opts into
+            # ``fetch_full_text`` (engine/article_text.py) — the digest
+            # listing keeps rendering ``description`` exactly as before.
+            content_text = _entry_body_text(entry)
 
             # Strip HTML from descriptions (Google News, Reddit, etc.)
             if description and "<" in description:
@@ -500,6 +535,7 @@ def _fetch_single_feed(
                     "relevance_score": 0.0,
                     "author": entry.get("author", ""),
                     "aggregator_url": aggregator_url,
+                    "content_text": content_text,
                 }
             )
 
@@ -1168,6 +1204,32 @@ def fetch_web_search_articles(
 # Campaign channel freshness (Aug 2026 — offshore_north verified-absence rule)
 # ---------------------------------------------------------------------------
 
+#: Characters of the newest post carried into the freshness block. Enough
+#: to know what a post SAID (the Sept 2 2026 "heading back to Europe" line
+#: sat ~600 characters in); short enough that three channels stay compact.
+FRESHNESS_EXCERPT_CHARS = 900
+
+
+def _freshness_excerpt(entry) -> str:
+    """Clipped plain text of a feed entry's body (or teaser) for the
+    freshness block. ``""`` when the entry carries neither."""
+    if entry is None:
+        return ""
+    text = _entry_body_text(entry)
+    if not text:
+        desc = entry.get("description", "") or entry.get("summary", "") or ""
+        text = _strip_html(desc) if "<" in desc else re.sub(r"\s+", " ", desc).strip()
+    if not text:
+        return ""
+    if len(text) <= FRESHNESS_EXCERPT_CHARS:
+        return text
+    head = text[:FRESHNESS_EXCERPT_CHARS]
+    cut = head.rfind(". ")
+    if cut > FRESHNESS_EXCERPT_CHARS // 2:
+        head = head[: cut + 1]
+    return head.rstrip() + " […]"
+
+
 def collect_feed_freshness(sources) -> str:
     """Report the newest entry on each ``freshness_report``-flagged feed.
 
@@ -1199,22 +1261,34 @@ def collect_feed_freshness(sources) -> str:
         try:
             response = _fetch_url_with_retry(src.url)
             feed = feedparser.parse(response.content)
-            newest_date, newest_title = None, ""
+            newest_date, newest_title, newest_entry = None, "", None
             for entry in feed.entries or []:
                 dt = _parse_entry_date(entry)
                 if dt is not None and (newest_date is None or dt > newest_date):
                     newest_date = dt
                     newest_title = (getattr(entry, "title", "") or "").strip()
+                    newest_entry = entry
             if newest_date is None:
                 lines.append(
                     f"- {label}: reachable, but no dated entries found this run "
                     "(do not interpret as an absence of posts)"
                 )
             else:
-                lines.append(
+                line = (
                     f"- {label}: newest post {newest_date.date().isoformat()} — "
                     f"\"{newest_title[:120]}\""
                 )
+                # WHAT the update said, not only WHEN (Sep 14 2026 review,
+                # fix 4): the newest post's body/teaser, clipped, so the
+                # digest can report the content of a post that sits
+                # outside the week's window instead of its timestamp.
+                excerpt = _freshness_excerpt(newest_entry)
+                if excerpt:
+                    line += f"\n  What it said: {excerpt}"
+                link = (getattr(newest_entry, "link", "") or "").strip()
+                if link:
+                    line += f"\n  URL: {link}"
+                lines.append(line)
         except Exception as exc:  # noqa: BLE001 — freshness must never break a run
             logger.warning("Freshness check failed for %s: %s", label, exc)
             lines.append(

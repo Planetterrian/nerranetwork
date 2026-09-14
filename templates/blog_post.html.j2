@@ -1005,12 +1005,18 @@
                 {% else %}
                 {#- Phase 4 of May 2026 audit: when this is the latest
                     episode, ``next_post`` is None and the listener
-                    dead-ends. Show a "next episode tomorrow" placeholder
+                    dead-ends. Show a cadence-aware "next episode" placeholder
                     that captures email instead of a blank space. -#}
                 {% if newsletter_tag %}
                 <div class="next nav-next-placeholder" style="text-align:right;color:var(--nn-text-muted);font-family:var(--font-ui);font-size:0.92rem;">
-                    <span class="nav-label">{% if _is_ru %}Завтра →{% else %}Tomorrow &rarr;{% endif %}</span>
-                    <span class="nav-title">{% if _is_ru %}Новый выпуск утром{% else %}New episode tomorrow{% endif %}</span>
+                    {#- Cadence-aware (Sep 14 2026): a weekly show says
+                        "New episode Monday", never "tomorrow". Copy comes
+                        from engine.blog.next_episode_placeholder; the
+                        literal fallback below only renders when a caller
+                        bypasses that context (none do today). -#}
+                    {% set _nen = next_episode_nav or ({'label': 'Завтра →', 'title': 'Новый выпуск утром'} if _is_ru else {'label': 'Next episode →', 'title': 'New episode coming'}) %}
+                    <span class="nav-label">{{ _nen.label }}</span>
+                    <span class="nav-title">{{ _nen.title }}</span>
                     <a href="#subscribe-cta" style="font-size:0.82rem;color:var(--show-color-text, var(--show-color));text-decoration:none;display:block;margin-top:4px;">{% if _is_ru %}Подписаться, чтобы не пропустить →{% else %}Subscribe so you don't miss it &rarr;{% endif %}</a>
                 </div>
                 {% else %}

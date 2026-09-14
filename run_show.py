@@ -1401,6 +1401,37 @@ def run(args: argparse.Namespace) -> None:
                                "(non-fatal): %s", _rec_exc)
                 _recurrence_notes = {}
 
+        # Full article text (Sep 14 2026 Offshore North review, fix 1):
+        # the prompt listed each source's headline and one-line teaser,
+        # so the model reported WHEN a channel was updated and never WHAT
+        # it said (Ep004 called the boat's position "unconfirmed" while
+        # the unopened Sept 2 post said it was heading back to Europe).
+        # Opt-in per show via ``fetch_full_text: N``; 0 = byte-identical
+        # listing for every other show. Best-effort: never blocks a run.
+        _full_text_n = int(getattr(config, "fetch_full_text", 0) or 0)
+        if _full_text_n and articles:
+            try:
+                from engine.article_text import enrich_articles_with_full_text
+                _prio = [
+                    (getattr(src, "label", "") or "")
+                    for src in (config.sources or [])
+                    if getattr(src, "freshness_report", False)
+                ]
+                _n_full = enrich_articles_with_full_text(
+                    articles,
+                    max_articles=_full_text_n,
+                    max_chars=int(getattr(config, "fetch_full_text_chars", 2500) or 2500),
+                    priority_sources=_prio,
+                )
+                # Consumer: scripts/review_snapshot.py + the show review
+                # (a zero here on a full-text show means the fetch layer
+                # went dark, not that the week was quiet).
+                metrics.record("articles_full_text", _n_full)
+            except Exception as _ft_exc:  # noqa: BLE001 — never block a run
+                logger.warning("Full-text enrichment failed (non-fatal): %s", _ft_exc)
+
+        from engine.article_text import render_full_text_block
+
         news_lines = []
         for i, art in enumerate(articles, 1):
             title = art.get("title", "Untitled")
@@ -1409,10 +1440,12 @@ def run(args: argparse.Namespace) -> None:
             url = art.get("url", "")
             source = art.get("source_name", "Unknown")
             pub = prompt_pub_date(art.get("published_date", ""))
+            full_text_block = render_full_text_block(art)
             news_lines.append(
                 f"{i}. **{title}** — {source}"
                 + (f" ({pub})" if pub else "")
                 + f"\n   {desc}\n   URL: {url}"
+                + (("\n" + full_text_block) if full_text_block else "")
                 + ("\n" + _recurrence_notes[i - 1]
                    if (i - 1) in _recurrence_notes else "")
             )

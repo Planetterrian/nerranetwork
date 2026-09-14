@@ -1,0 +1,79 @@
+# Review ledger — Offshore North. See README.md for schema.
+reviews:
+  - date: 2026-09-14
+    pr: null
+    doc: docs/reviews/offshore_north_review_2026_09_14.md
+    reviewer: claude-code (operator-directed month review + 12-item fix list + campaign dashboard)
+    summary: >-
+      First review with real episodes (Ep001-005). One root cause behind
+      most of the operator's list: the digest prompt saw headline + teaser
+      + URL and never an article, so the show aired "position unconfirmed"
+      four weeks running while the team's 2 Sep post said the boat was
+      heading back to Europe, reported WHEN channels changed instead of
+      WHAT they said, spoke the writer-only "standing facts" label, and on
+      Ep005 aired a race START headline (re-surfaced by Google News) as the
+      RESULT of a race that had finished with a different winner. Shipped
+      the full-text layer (feed bodies + page fetch, opt-in per show), the
+      Scott's Notes feed, the position/content/standings/lead-with-Canada/
+      incidents/evergreen/Dan rules, the race-state rule, refreshed
+      standing facts (Route du Rhum entry confirmed, 118 skippers, TORA
+      result), a cadence-aware blog footer, and the public campaign
+      dashboard.
+    shipped:
+      - engine/article_text.py + fetch_full_text (opt-in; offshore_north 14 articles)
+      - fetcher stores content:encoded as content_text; freshness block carries "What it said" excerpt + URL
+      - Scott's Notes category feed (flagged)
+      - prompts: last-known position + date, never "unconfirmed"; content not timestamps; no standings; Canadian Boat first and longest; incidents not leaderboards; no scaffolding words on air; pedigree rationed; evergreen Plain Sailing; exactly one Dan reference + "Dan's lens" line; finish outranks a re-surfaced start
+      - standing facts + field guide refreshed (CAN 80 spec, 2 Sep post, RdR entry, 118 skippers, TORA + Vendée Arctique results, Beyou)
+      - engine.blog.next_episode_placeholder (cadence-aware footer)
+      - offshore-north-dashboard.html + site/data + api JSON + fetch script + hook refresh + workflow wiring
+    deferred:
+      - A/B-listen the 21 Sep episode (every prompt change is landmine #17)
+      - confirm EMIRA IV's Défi Azimut entry / delivery route (operator, in-week)
+      - YB tracker JSON position fix (endpoint 500 during review)
+      - verify X handles, flip x_fetch_enabled
+      - imoca.org news-page scraper if full text does not surface class news
+    predictions:
+      - metric: "episodes (next 4) whose Canadian Boat says 'unconfirmed' / 'no update' / 'position unknown'"
+        baseline: "4/4 (Ep002-005)"
+        expected: "0/4"
+        verdict: pending
+        evidence: null
+      - metric: "share of spoken words in The Canadian Boat, and its order"
+        baseline: "~22% (Ep004: 80 s of 6 min); first segment"
+        expected: ">= 35% and first, all 4 episodes"
+        verdict: pending
+        evidence: null
+      - metric: "Dan personal references per episode"
+        baseline: "0 in 5/5"
+        expected: "exactly 1 (max 2) in 4/4"
+        verdict: pending
+        evidence: null
+      - metric: "standings roll-calls / mileage gaps spoken in The Fleet"
+        baseline: "Ep004 (430-mile gap, leading trio), Ep002 (Golden Globe fleet roll)"
+        expected: "0/4"
+        verdict: pending
+        evidence: null
+      - metric: "'standing facts' / 'standing item' spoken on air"
+        baseline: "Ep004"
+        expected: "0/4"
+        verdict: pending
+        evidence: null
+      - metric: "articles_full_text per episode (metrics counters)"
+        baseline: "n/a (layer did not exist)"
+        expected: ">= 8 every episode; a 0 is a fetch-layer alarm"
+        verdict: pending
+        evidence: null
+      - metric: "Plain Sailing about a race covered in the same episode"
+        baseline: "2/5 (Ep003, Ep004)"
+        expected: "0/4"
+        verdict: pending
+        evidence: null
+      - metric: "confidently wrong race results (the Ep005 class)"
+        baseline: "1 (Ep005 Malizia start-as-result)"
+        expected: "0"
+        verdict: pending
+        evidence: null
+    agent_cost_usd: null
+
+do_not_retry: []

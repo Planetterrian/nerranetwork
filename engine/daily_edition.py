@@ -420,14 +420,18 @@ def expected_slugs(spec: EditionSpec, target_date: _dt.date) -> List[str]:
 # Sep 9 2026: Whisper heard "part of A Nerra network" (Unintended
 # Consequences Ep110) — the article is fuzzy too, or the frame falls to the
 # weak brand-mention fallback that has cut real content before.
+# Sep 14 2026: and sometimes no article at all — "this show is part of
+# Narrow Network" (Planetterrian Ep183) — so the article is optional.
 _PRIMARY_PROMO_PATTERNS = [
-    re.compile(r"\b(?:and\s+)?before you go\s+this show is part of (?:the|a|an) \w+\s*network\b"),
-    re.compile(r"\bthis show is part of (?:the|a|an) \w+\s*network\b"),
+    re.compile(r"\b(?:and\s+)?before you go\s+this show is part of (?:(?:the|a|an)\s+)?\w+\s*network\b"),
+    re.compile(r"\bthis show is part of (?:(?:the|a|an)\s+)?\w+\s*network\b"),
     # Whisper renders "our sister show SpaceX Daily" as "sister shows spacex"
     # and "sisters show space x" (both observed on DP Pod / First Principles
     # transcripts) — the singular-only form missed the frame entirely and
-    # handed the cut to the weak brand-mention fallback.
-    re.compile(r"\bone more thing\b(?:\s+\w+){0,14}?\s+sisters?\s+shows?\b"),
+    # handed the cut to the weak brand-mention fallback. Sep 14 2026:
+    # "our sister's show" (Unintended Consequences Ep115) tokenizes to
+    # "sister s show" — the possessive is absorbed too.
+    re.compile(r"\bone more thing\b(?:\s+\w+){0,14}?\s+sisters?(?:\s+s)?\s+shows?\b"),
     re.compile(r"\bquick tip from the network\b"),
     re.compile(r"\bthis show comes to you from (?:the|a|an) \w+\s*network\b"),
 ]

@@ -52,6 +52,21 @@ sources:
   - url: "https://www.canadaoceanracing.com/category/news/feed/"
     label: Canada Ocean Racing — News
     freshness_report: true
+  # Scott's Notes — the skipper's own writing (Sep 14 2026 review, fix 2).
+  # The operator's URLs canadaoceanracing.com/scott-notes/ and
+  # /scott-lab-notes/ are the same WordPress PAGE (the second 301s to the
+  # first) and a page has no post feed of its own — /scott-notes/feed/
+  # serves the COMMENTS feed, verified 2026-09-14. The posts on that page
+  # are the "Scott's Blog" category (wp-json/wp/v2/categories id 18), and
+  # its category feed is the machine-readable equivalent: VERIFIED serving
+  # the four Scott posts with full content:encoded bodies on 2026-09-14
+  # ("Thank you, Canada…" 2 Sep; "Fair Winds, Charlie Dalin" 11 Jun;
+  # "Bringing EMIRA IV Home" 9 Jun; "2025: A Year of Momentum" 16 Dec 2025).
+  # These posts are NOT in the /category/news/ feed, so without this entry
+  # the skipper's own account of the summer was invisible to the show.
+  - url: "https://www.canadaoceanracing.com/category/scotts-blog/feed/"
+    label: "Canada Ocean Racing — Scott's Notes"
+    freshness_report: true
   # Official YouTube channel feed (Atom; feedparser handles it like RSS).
   # Channel ID resolved from youtube.com/@CanadaOceanRacing page source and
   # the feed VERIFIED serving 15 entries on 2026-08-14. The channel posts
@@ -160,6 +175,22 @@ sources:
 # came out at 493 words -> 904-word script -> skip. Count was never the
 # right proxy for material quality on a weekly show. Cost: 8 queries/wk.
 web_search_always: true
+
+# ---- Read the articles, not the index (Sep 14 2026 review, fix 1) ----
+# Until this flag the digest prompt saw each source's headline and one-line
+# teaser and nothing else. Ep004 (2026-09-07) therefore knew the campaign
+# site was "last updated 2 September with a summary of summer training" and
+# never opened the post — which said the boat was "now leaving Canada and
+# heading back to Europe" — so the show aired "position unconfirmed" for two
+# weeks. Ep005 read a team-malizia.com headline about the START of The Ocean
+# Race Atlantic (re-surfaced by Google News ten days later) and aired it as
+# the result of a race that had already finished with a different winner.
+# N = articles whose full text is rendered under the headline in the digest
+# prompt: the campaign's own channels first (freshness_report feeds), then
+# newest-first. WordPress feed bodies (content:encoded) cost no HTTP; the
+# rest are fetched and extracted (engine/article_text.py). Best-effort.
+fetch_full_text: 14
+fetch_full_text_chars: 2500
 # ---- X / Twitter as a CONTENT source (not posting) ----
 # Offshore racing breaks on X and Instagram before it reaches any RSS feed:
 # campaigns post launches, damage and routing calls in real time, and the
@@ -172,10 +203,19 @@ web_search_always: true
 # nothing (it fails safe, it does not fabricate), but a wrong one is a
 # silent hole in coverage. Check each, correct it, then flip the flag.
 # Cost: X API calls per episode; weekly cadence keeps that small.
+# Sep 14 2026: the campaign's own X handle is @Canada_Ocean — linked from
+# canadaoceanracing.com/follow/ (twitter.com/Canada_Ocean), verified there
+# rather than against live X, so it keeps the VERIFY tag like the rest
+# until the operator confirms it fetches. IMOCA's X presence is
+# @ImocaGS / @IMOCA60 (search results, 2026-09-14) — "imoca_class" below
+# is almost certainly wrong; replace when verified.
 x_fetch_enabled: false
 x_accounts:
+- handle: Canada_Ocean
+  label: Canada Ocean Racing (VERIFY handle — linked from the team's /follow/ page)
+  max_posts: 5
 - handle: imoca_class
-  label: IMOCA Class (VERIFY handle)
+  label: IMOCA Class (VERIFY handle — likely @ImocaGS or @IMOCA60)
   max_posts: 4
 - handle: TheOceanRace
   label: The Ocean Race (VERIFY handle)

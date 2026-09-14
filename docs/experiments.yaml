@@ -1380,3 +1380,28 @@ experiments:
       partial and is never compared; OP3 lists only a show's top
       episodes, so first-week medians rest on a few episodes and the
       network view names the carrying shows instead of averaging.
+
+  - id: offshore-north-read-the-article-2026-09-14
+    title: "Offshore North: full article text in the brief + lead-with-Canada prompt pass + campaign dashboard"
+    area: quality
+    shipped: 2026-09-14
+    readout: 2026-10-12
+    status: reading
+    baseline: >
+      Ep002-005: position "unconfirmed" 4/4, Dan references 0/5, Canadian
+      Boat ~22% of the episode and shortest, Plain Sailing a same-episode
+      race recap 2/5, one confidently wrong race result (Ep005 aired The
+      Ocean Race Atlantic's START headline as its RESULT). Root cause: the
+      digest prompt never saw an article body.
+    target: >
+      Four episodes (Sep 21 - Oct 12) with zero "unconfirmed" lines, the
+      Canadian Boat first and >= 35% of spoken words, exactly one Dan
+      reference each, no standings roll-calls, Plain Sailing evergreen,
+      articles_full_text >= 8 per episode. Scored in
+      docs/reviews/ledger/offshore_north.yaml.
+    notes: >
+      engine/article_text.py (fetch_full_text, opt-in; every other show
+      byte-identical), Scott's Notes feed, freshness "What it said"
+      excerpts, offshore-north-dashboard.html. Prompt changes are
+      landmine-#17: A/B-listen the Sep 21 episode.
+

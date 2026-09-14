@@ -2424,6 +2424,101 @@ def generate_tesla_dashboard(*, dry_run=False):
     return out_path
 
 
+def _offshore_north_recent_episodes(limit: int = 6) -> list:
+    """Newest-first episode cards for the Offshore North dashboard, read
+    from the committed summaries JSON (the same file the show page uses)."""
+    cfg = NETWORK_SHOWS.get("offshore_north") or {}
+    path = ROOT / cfg.get("json_path", "digests/offshore_north/summaries_offshore_north.json")
+    try:
+        import json as _json
+        data = _json.loads(path.read_text(encoding="utf-8"))
+        items = data.get("summaries", data) if isinstance(data, dict) else data
+    except Exception as exc:  # noqa: BLE001
+        print(f"Warning: could not load Offshore North summaries: {exc}")
+        return []
+    out = []
+    for item in items or []:
+        if not isinstance(item, dict):
+            continue
+        ep = item.get("episode_num") or item.get("episode") or 0
+        title = (item.get("title") or item.get("hook") or "").strip()
+        if not title:
+            content = item.get("content") or ""
+            m = re.search(r"^>\s*\*\*(.+?)\*\*", content, re.M)
+            title = m.group(1).strip() if m else f"Episode {ep}"
+        out.append({
+            "episode_num": ep,
+            "date": item.get("date", ""),
+            "title": title,
+            "url": f"blog/offshore_north/ep{int(ep):03d}.html" if ep else "",
+        })
+    out.sort(key=lambda e: (e.get("date") or "", e.get("episode_num") or 0), reverse=True)
+    return out[:limit]
+
+
+def generate_offshore_north_dashboard(*, dry_run=False):
+    """Render the Offshore North campaign dashboard (offshore-north-dashboard.html).
+
+    The companion page to the podcast for people following Canada Ocean
+    Racing's road to the Route du Rhum and the 2028 Vendée Globe: live
+    countdowns, the boat's last known position with its date and source,
+    the team's own tracker, the season calendar, recent results, the
+    Route du Rhum IMOCA entry list, the qualification ledger, the Canadian
+    lineage, and every source and social channel the show itself reads.
+    Curated facts are baked in from ``site/data/offshore_north_dashboard.json``
+    (operator-maintained, dated, sourced); the live half — latest campaign
+    posts with excerpts, latest offshore headlines, the newest dated
+    position fix — is read client-side from ``api/offshore_north_dashboard.json``
+    (``scripts/fetch_offshore_north_dashboard.py``, nightly + after each
+    Offshore North run), so the page regenerates cheaply and never hits an
+    upstream per visitor. Sep 14 2026 review.
+    """
+    cfg = NETWORK_SHOWS.get("offshore_north")
+    if cfg is None:
+        return None
+    curated = {}
+    try:
+        import json as _json
+        dp = ROOT / "site" / "data" / "offshore_north_dashboard.json"
+        if dp.exists():
+            curated = _json.loads(dp.read_text(encoding="utf-8"))
+    except Exception as exc:  # noqa: BLE001
+        print(f"Warning: could not load offshore_north_dashboard.json: {exc}")
+    env = _get_jinja_env()
+    template = env.get_template("offshore_north_dashboard.html.j2")
+    context = {
+        "path_prefix": "",
+        "page_lang": "en",
+        "show_name": "Offshore North",
+        "page_title": "Offshore North Dashboard — Canada Ocean Racing, EMIRA IV & the road to the Vendée Globe | Nerra Network",
+        "meta_description": (
+            "Follow Canada Ocean Racing's road to the Route du Rhum and the 2028 "
+            "Vendée Globe: countdowns, EMIRA IV's last known position and tracker, "
+            "the IMOCA season calendar, recent results, the Route du Rhum entry "
+            "list, and every source and social channel worth following. The "
+            "companion dashboard to the Offshore North podcast."
+        ),
+        "theme_color": cfg.get("brand_color", "#0B3C5D"),
+        "brand_color": cfg.get("brand_color", "#0B3C5D"),
+        "canonical_url": f"{GITHUB_RAW}/offshore-north-dashboard.html",
+        "og_image": f"{GITHUB_RAW}/{_url_encode_image(cfg['podcast_image'])}",
+        "rss_url": f"{cfg['rss_file']}",
+        "show_page": cfg.get("show_page", "offshore-north.html"),
+        "d": curated,
+        "recent_episodes": _offshore_north_recent_episodes(),
+        "t": _NAV_T,
+        "all_shows": _build_all_shows_list(),
+    }
+    html = template.render(**context)
+    out_path = ROOT / "offshore-north-dashboard.html"
+    if dry_run:
+        print(f"[dry-run] Would write {out_path} ({len(html):,} bytes)")
+        return out_path
+    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
+    print(f"Wrote {out_path} ({len(html):,} bytes)")
+    return out_path
+
+
 def generate_all_narrative_pages(*, dry_run=False):
     """Generate narrative pages for every memory-configured show (except Tesla,
     which has its own dedicated generator)."""
@@ -3410,7 +3505,8 @@ def generate_sitemap(*, dry_run=False, out=None):
                   "gallery.html", "books.html", "player.html", "data.html",
                   "join.html", "support.html",
                   "modern-investing-performance.html",
-                  "spacex-dashboard.html", "tesla-dashboard.html"]:
+                  "spacex-dashboard.html", "tesla-dashboard.html",
+                  "offshore-north-dashboard.html"]:
         if (ROOT / extra).exists():
             urls.append((f"{base}/{extra}", "0.5", _file_lastmod(ROOT / extra)))
 
@@ -3803,8 +3899,9 @@ def generate_data_hub_page(*, dry_run=False):
         "page_title": "Data & Dashboards | Nerra Network",
         "meta_description": (
             "Live data dashboards from Nerra Network — SpaceX launch countdown "
-            "and fleet records, Tesla TSLA price and deliveries, and the Modern "
-            "Investing simulated-portfolio performance page."
+            "and fleet records, Tesla TSLA price and deliveries, the Offshore "
+            "North ocean-racing campaign dashboard, and the Modern Investing "
+            "simulated-portfolio performance page."
         ),
         "theme_color": "#6B47FF",
         "og_image": f"{GITHUB_RAW}/assets/og-default.png",
@@ -4687,6 +4784,9 @@ def main():
         # SpaceX Launch Dashboard
         if args.show == "spacex":
             generate_spacex_dashboard(dry_run=args.dry_run)
+        # Offshore North campaign dashboard (Sep 2026)
+        if args.show == "offshore_north":
+            generate_offshore_north_dashboard(dry_run=args.dry_run)
         # Phase 3 narrative page for other memory-enabled shows (no-op otherwise)
         generate_narrative_page(args.show, dry_run=args.dry_run)
         # Russian funnel landing page (no-op unless the show has one). Must
@@ -4715,6 +4815,7 @@ def main():
         generate_books_page(dry_run=args.dry_run)
         generate_spacex_dashboard(dry_run=args.dry_run)
         generate_tesla_dashboard(dry_run=args.dry_run)
+        generate_offshore_north_dashboard(dry_run=args.dry_run)
         generate_data_hub_page(dry_run=args.dry_run)
         # Member surface (Aug 2026): join/support/account are static and
         # cheap; regenerating with the network keeps Stripe-link env
@@ -4757,6 +4858,7 @@ def main():
         # runtime) so they're cheap to regenerate on every network rebuild.
         generate_spacex_dashboard(dry_run=args.dry_run)
         generate_tesla_dashboard(dry_run=args.dry_run)
+        generate_offshore_north_dashboard(dry_run=args.dry_run)
         generate_data_hub_page(dry_run=args.dry_run)
         # Member surface (Aug 2026): static + cheap; regenerating with the
         # network keeps Stripe-link env changes and lineup names current.

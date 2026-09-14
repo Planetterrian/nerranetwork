@@ -722,6 +722,8 @@ class TestPromoCutHardening:
         "one more thing if you liked today s episode our sister show spacex daily is worth a spot",
         "one more thing if you like today s episode our sister shows spacex daily is worth a spot",
         "one more thing if you liked today s episode our sisters show space x daily is worth a spot",
+        # UC Ep115, 2026-09-14: the possessive — "our sister's show".
+        "one more thing if you like today s episode our sister s show first principles daily is worth a spot",
     ])
     def test_sister_show_whisper_variants(self, phrase):
         from engine.daily_edition import _PRIMARY_PROMO_PATTERNS
@@ -732,6 +734,8 @@ class TestPromoCutHardening:
         # UC Ep110, 2026-09-09: Whisper heard the article as "a".
         "and before you go this show is part of a nerra network a family of daily podcasts",
         "this show is part of an era network a family of daily podcasts",
+        # Planetterrian Ep183, 2026-09-14: no article at all.
+        "and before you go this show is part of narrow network a family of daily podcasts",
     ])
     def test_part_of_frame_article_is_fuzzy(self, phrase):
         from engine.daily_edition import _PRIMARY_PROMO_PATTERNS
