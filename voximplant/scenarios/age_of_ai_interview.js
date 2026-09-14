@@ -83,6 +83,13 @@ const OPENING_WAIT_MS = 20 * 1000; // Mira opens when a guest is in, or after 20
 // the clunky open are timing, not wording.
 const GUEST_SETTLE_MS = 7 * 1000;   // let the guest arrive before she speaks
 const COHOST_WAIT_MS = 2 * 60 * 1000; // hold the open this long for the co-host
+// Sept 14 2026 (Vincent Rylan): he joined at 21:53 for a 22:00 interview and
+// the two-minute hold ran out at 21:55, so Mira opened the show four minutes
+// before the co-host arrived — the hold was measured from the guest's
+// arrival when it should be measured from the time the interview was
+// actually called for. An eager guest must not cost the co-host his
+// introduction.
+const COHOST_WAIT_MAX_MS = 12 * 60 * 1000; // ... but never hold longer than this
 const AUDIO_CHECK_AFTER_MS = 12 * 1000; // trace whether the mix has carried speech yet (diagnostic only)
 const ROLES = { guest: true, host: true };
 // Voice Agent model (Sept 10 2026). The Voximplant connector's built-in
@@ -940,7 +947,7 @@ function maybeOpen() {
           trace("opening", "co-host did not arrive within "
                 + Math.round(COHOST_WAIT_MS / 1000) + "s — opening without him");
           openWhenReady("co-host no-show");
-        }, COHOST_WAIT_MS);
+        }, cohostHoldMs());
       }
       return;
     }
@@ -991,6 +998,17 @@ function openWhenReady(reason) {
   } catch (err) {
     Logger.write("[aoa " + runId + "] opening responseCreate failed: " + err.message);
   }
+}
+
+/** How long to hold the open: two minutes, or until the interview was due
+ *  to start plus that, whichever is later — capped, so a guest who joins an
+ *  hour early is not left listening to nothing. */
+function cohostHoldMs() {
+  const due = config && config.scheduled_for
+    ? Date.parse(config.scheduled_for) : NaN;
+  const untilDue = isFinite(due) ? (due - Date.now()) : 0;
+  return Math.min(COHOST_WAIT_MAX_MS,
+                  Math.max(COHOST_WAIT_MS, untilDue + COHOST_WAIT_MS));
 }
 
 /** True while we should hold the opening for a co-host who is coming. */

@@ -193,6 +193,34 @@ def fetch_leg_recording(url: str, workdir: Path, name: str) -> Path | None:
     return path
 
 
+def longest_leg_recording(run: dict, role: str, workdir: Path) -> Path | None:
+    """The co-host's recording, when he joined more than once.
+
+    Sept 14 2026 (Vincent Rylan). Patrick's connection dropped at 22:12:27
+    and came back nine seconds later, which is two legs: thirteen minutes and
+    thirty. The run row names the first one, so the co-host would have gone
+    missing from the last thirty minutes of his own interview. Same rule as
+    the guest's: the longest leg is the recording.
+    """
+    log = run.get("grok_session_log") or {}
+    urls = [run.get(f"recording_{role}_url") or ""]
+    urls += [u for u in (log.get(f"extra_{role}_record_urls") or []) if u]
+    urls = [u for u in urls if u]
+    best, best_seconds = None, 0.0
+    for i, url in enumerate(urls):
+        leg = fetch_leg_recording(url, workdir, f"{role}{i or ''}")
+        if leg is None:
+            continue
+        seconds = duration_seconds(leg)
+        logger.info("%s leg %d: %.1fs", role, i, seconds)
+        if seconds > best_seconds:
+            best, best_seconds = leg, seconds
+    if best is not None and len(urls) > 1:
+        logger.info("%s recording: using the longest of %d legs (%.1fs)",
+                    role, len(urls), best_seconds)
+    return best
+
+
 # A browser recording is better than a conference leg — 192 kbps against a
 # codec, and it is the voice as the microphone heard it. But only if it is
 # actually there. John Capobianco's browser uploaded 65 seconds of a
@@ -535,8 +563,7 @@ def main() -> int:
 
         # Phase 2 co-host: per-leg Voximplant recordings (host, Mira) +
         # local browser recordings → one clean track per speaker.
-        host_raw = fetch_leg_recording(run.get("recording_host_url") or "",
-                                       workdir, "host")
+        host_raw = longest_leg_recording(run, "host", workdir)
         mira_raw = fetch_leg_recording(run.get("recording_mira_url") or "",
                                        workdir, "mira")
         # Durable R2 copies of the per-leg source files (Voximplant URLs

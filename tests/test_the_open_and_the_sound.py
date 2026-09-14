@@ -252,3 +252,48 @@ class TestEveryoneOnTheSameClock:
         assert "def _track_durations(tracks: dict) -> dict:" in self.SRC
         assert "room_offsets(run or {}, _track_durations(tracks))" in self.SRC
         assert "room_offsets(run, _track_durations(tracks))" in self.SRC
+
+
+class TestTheCoHostAlsoRejoins:
+    """Sept 14 2026 (Vincent Rylan): Patrick's connection dropped at 22:12:27
+    and came back nine seconds later — two host legs, thirteen minutes and
+    thirty. The run row names the first, so the co-host would have vanished
+    from the last thirty minutes of his own interview. His browser take
+    covered only the first leg too."""
+
+    SRC = (ROOT / "pipelines" / "voices" / "post_interview.py").read_text(encoding="utf-8")
+
+    def test_the_host_legs_are_measured_too(self):
+        body = _pyfn("longest_leg_recording", self.SRC)
+        assert 'log.get(f"extra_{role}_record_urls")' in body
+        assert "if seconds > best_seconds" in body
+
+    def test_the_pipeline_uses_it(self):
+        assert 'host_raw = longest_leg_recording(run, "host", workdir)' in self.SRC
+
+    def test_a_missing_leg_is_skipped_not_fatal(self):
+        body = _pyfn("longest_leg_recording", self.SRC)
+        assert "if leg is None:\n            continue" in body
+
+
+class TestAnEagerGuestDoesNotCostTheCoHostHisIntroduction:
+    """Vincent Rylan joined at 21:53 for a 22:00 interview. The hold was two
+    minutes from HIS arrival, so it expired at 21:55 and Mira opened the show
+    four minutes before Patrick got there."""
+
+    def test_the_hold_runs_to_the_scheduled_start(self):
+        body = _fn("cohostHoldMs")
+        assert "config.scheduled_for" in body
+        assert "untilDue + COHOST_WAIT_MS" in body
+
+    def test_it_never_holds_forever(self):
+        assert "COHOST_WAIT_MAX_MS = 12 * 60 * 1000" in SCENARIO
+        assert "Math.min(COHOST_WAIT_MAX_MS" in _fn("cohostHoldMs")
+
+    def test_a_missing_schedule_falls_back_to_the_flat_wait(self):
+        body = _fn("cohostHoldMs")
+        assert "isFinite(due)" in body
+        assert "Math.max(COHOST_WAIT_MS" in body
+
+    def test_the_timer_uses_it(self):
+        assert "}, cohostHoldMs());" in SCENARIO
