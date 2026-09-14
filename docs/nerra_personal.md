@@ -162,6 +162,23 @@ Batch host:
    `R2_SECRET_ACCESS_KEY`, `PERSONAL_R2_BUCKET=nerra-personal`,
    `PERSONAL_ADMIN_TOKEN`; cron
    `python scripts/build_personal_feeds.py --fetch`.
+   Live host: the private repo `Planetterrian/nerra-personal-batch`
+   (`.github/workflows/personal-feeds.yml`), which checks out this repo.
+8b. **Punctuality (Sep 14 2026).** GitHub delivers `schedule` events
+   hours late (the batch repo's 12:30 UTC cron ran 16:30-18:09 UTC every
+   day of Sep 7-14, so a subscriber's edition landed at lunchtime while
+   Nerra Daily, driven by the exact-time scheduler Worker, was out by
+   ~5:40am Pacific). The edition workflow (`nerra-daily.yml`, step "Wake
+   the Nerra Personal build") now dispatches the batch build the moment
+   the edition publishes, gated on the edition having been published by
+   that very run. It needs one secret in THIS repo:
+   `PERSONAL_BATCH_DISPATCH_TOKEN` = a fine-grained PAT (Settings →
+   Developer settings → Personal access tokens → Fine-grained), repository
+   access **only `nerra-personal-batch`**, permission **Actions: Read and
+   write**, 1-year expiry. Without it the step warns and no-ops and the
+   batch repo's own off-peak sweep crons (13:41 / 16:41 UTC) still ship
+   the edition, just late. The builder skips subscribers already built
+   for the date, so dispatch + sweep never double-publish.
 
 Store:
 9. Create the member discount code in the book store matching

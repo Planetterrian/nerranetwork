@@ -221,3 +221,35 @@ def test_scheduler_retries_transient_dispatch_failures():
     assert "attempt <= 2" in _TS
     assert "res.status < 500 && res.status !== 429" in _TS, (
         "4xx is configuration — retrying must not mask a bad token")
+
+
+def test_edition_wakes_the_personal_build():
+    """Sep 14 2026: Nerra Personal's private batch repo relied on its own
+    12:30 UTC GitHub cron, which GitHub delivered 4-5 h late every day
+    (16:30-18:09 UTC, Sep 7-14) — subscribers got Monday's edition at
+    lunchtime while Nerra Daily, which the scheduler Worker dispatches at
+    12:07 sharp, was out for hours. The edition workflow now wakes the
+    personal build the moment it publishes. Pin the two things that make
+    that safe: the dispatch is gated on the edition being published BY
+    THIS RUN (a --when-ready no-op must never wake a build that would
+    splice a day without Nerra Daily and then lock the date), and it
+    soft-no-ops without the cross-repo token so the batch repo's fallback
+    cron still ships the edition, late."""
+    import yaml
+
+    wf = yaml.safe_load(
+        (_ROOT / ".github" / "workflows" / "nerra-daily.yml").read_text(encoding="utf-8"))
+    steps = {s.get("name"): s for s in wf["jobs"]["build"]["steps"]}
+    post = steps["Did this run publish the edition?"]
+    wake = steps["Wake the Nerra Personal build"]
+    assert post["id"] == "postgate"
+    assert "summaries_nerra_daily.json" in post["run"]
+    assert wake["if"].strip() == "steps.postgate.outputs.published == 'true'"
+    assert "nerra-personal-batch/actions/workflows/personal-feeds.yml/dispatches" in wake["run"]
+    assert "PERSONAL_BATCH_DISPATCH_TOKEN" in wake["env"]["PERSONAL_BATCH_DISPATCH_TOKEN"]
+    # Missing token: warn and exit 0, never fail the edition run.
+    assert 'if [ -z "$PERSONAL_BATCH_DISPATCH_TOKEN" ]' in wake["run"]
+    assert "exit 0" in wake["run"]
+    # The dispatched build gets the edition's date, not "today UTC" on the
+    # runner, so a late sweep for yesterday wakes yesterday's build.
+    assert '\\"date\\":\\"$EDITION_DATE\\"' in wake["run"]
