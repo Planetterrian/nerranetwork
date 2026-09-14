@@ -1,0 +1,52 @@
+Sam Altman lays out two concrete risks that could derail AI progress and must be actively avoided. This is Models & Agents, episode 173. The first risk is losing control of the future into AI. Alignment and safety techniques must stay ahead of capabilities to address it. The second risk is excessive concentration of power in one person, company or country, that could impose a single worldview. Altman calls for a narrow middle path that includes
+consistent federal safety requirements. He also calls for safety cases before frontier reinforcement learning runs. OpenAI already uses explicit safety cases ahead of major training runs in addition to pre-release work. The post notes that pacing means slowing progress relative to what is technically possible, not stopping it. International coordination will eventually require government help. Researchers introduced two methods to convert token logits to bite logits for distillation.
+Marginalize it provides approximate conversion and end of token provides exact conversion. They train decoder only dense transformer models with roughly 1 billion parameters across token and bite tokenization schemes up to 1 trillion bytes of data.
+Token 1B models outperform bite models in the low flop regime, but plateau. Bite models start lower yet surpass them with more compute and reach a higher performance ceiling. Distilled end of token 1B models are predicted to outperform distilled token 1B by up to 4% asymptotically. They also match token 1B performance using only 1-6th the training data.
+The bite models reduce logit storage costs to roughly 1-5th because they operate over a 256 bite vocabulary instead of roughly 100,000 tokens. The new RMDM framework encodes text into a continuous semantic space with a pre-trained encoder. It learns an invertible transformation that normalizes the representation distribution to a Gaussian prior.
+The framework conditions a mass diffusion model on this latent semantic representation to coordinate parallel token updates during generation.
+Empirical results show that RMDM significantly improves generation quality, especially in aggressive few-step sampling regimes.
+Chopthin consensus power sampling applies the Chopthin resampler to LLM decoding. It enforces an upper bound on the ratio between largest and smallest weights instead of equalizing weights.
+The method preserves a richer set of distinct reasoning paths while keeping the weighted SMC approximation unchanged in conditional expectation.
+It guarantees a lower bound on effective sample size. Combined with semantic majority selection that merges token identical trajectories and clusters semantically equivalent answers, CCPS matches or exceeds power SMC baseline accuracy in 14 of 15 settings across three open weight models and five reasoning benchmarks.
+Absolute gains reach up to 10.6 percentage points or QA connects OSTAR and ET occupations to trusted occupation specific websites.
+It converts them into source traceable question answer pairs covering 116 occupations from all 21 major SOC groups with 480 questions from 187 websites.
+Clawed Opus 4.6, GPT 5.4 and Clawed Sonnet 4.6 perform best at approximately 58 to 62%.
+Smaller open weight models reach 33 to 41%. Healthcare-related occupations reach 78% accuracy while Office and Administrative Support reach approximately 40%, with some individual occupations at essentially zero.
+AGP places task planning and execution under a general purpose agents control. The agent interprets visual evidence, writes executable programs, issues motion commands and revises actions based on physical outcomes.
+The approaches tested across precision manipulation, dynamic motions and deformable objects including assembly from human videos, block construction from goal images, die reorientation, targeted throwing and bimanual towel folding.
+AGP achieves 100% 100% and 80% success rates on three block construction configurations without any task specific or environment specific training.
+LifeMEM clusters accumulated interaction trajectories based on underlying workflows to extract reusable skills.
+It recalls relevant skills and trajectories at inference time to guide actions across new tasks.
+Experiments across 10 environments and over 13,000 tasks with 2,000 newly annotated trajectories show reduced forgetting on learned tasks and superior cross task transfer.
+Consolidating structurally similar trajectories within memory further boosts performance.
+QMEM extracts fine grain memory cues from dialogue turns. It links each cue to its source turn and at query time retrieves relevant cues, maps them to source turn anchors and expands over a turn graph to reconstruct compact evidence context.
+Experiments on locomo and long MEM EVA show consistent out performance of representative long-term memory baselines while reducing query time input tokens and latency compared with full history LLM settings.
+Duplex drama is built via a four stage pipeline. It contains more than 2,000 hours of audio across a 64-voice tamber pool spanning 13 personas and five age buckets.
+With 3.8% of turns carrying at least one full duplex behavior, a curated subset of 6400 bilingual dialogues totaling 800 hours will be released with roughly 500 hours in Chinese and 300 hours in English.
+Simon Willison released a local web app that helps edit commit messages for a repository.
+The tool runs entirely locally and is documented at SimonWillison.net.
+Graph profiler represents each user's post history as a source linked personal knowledge graph. Nodes and edges trace back to the originating post and resolves attribute predictions to cited graph records and source texts.
+It reaches 86.7% attack success rate on the eight attribute synth PAI benchmark and 84.6% on Pandora while citing supporting evidence for over 98% of predictions.
+Medi's PII data set contains 1 million synthetic clinical documents spanning 17 languages and 9 PII labels. The documents are generated with attribute condition prompts and validated through 13 deterministic gates.
+The resulting Medi's PII model achieves a mean F1 of 0.827 across 15 external benchmarks.
+ZipBench evaluates only a small set of anchor LLMs. It synthesizes pseudo-evaluation results, learns compact sample representations and selects a small yet representative subset.
+The resulting ZipBench Zoo collection of compact versions of over 100 benchmark proxies achieves mean absolute errors of 0.002 to 0.02
+and average spearman correlations of approximately 0.98 with the full benchmarks. You can try the local commit re-writer web app from Simon and Willisson if you frequently edit commit messages in a repository.
+Test the bite distilled end of token models on reasoning benchmarks once weights are released, especially if you are compute constrained.
+Experiment with AGP style agent control on a physical robot arm for simple manipulation tasks if you have access to one.
+Run ZipBench on a new evaluation suite you care about to reduce benchmark cost while preserving rank order.
+More results from the R2VC modular fact checking architecture are expected as the code and ablations are examined.
+Additional occupation level benchmarks following the ORQA methodology may appear for other professional domains.
+Further full duplex dialogue data sets building on duplex drama are likely given the validation results already shown.
+Let us pop the hood on the rate distortion analysis of factual hallucination.
+The paper models factual recall as a coverage compression tradeoff where a learner observes M training facts compresses them into at most B bits and answers test queries without retrieval.
+The derived bound separates two error sources compression distortion on observed facts is given by the inverse rate distortion function of a uniform K-ary source.
+Missing coverage on unobserved facts forms the second source.
+Simulations and controlled fact injection probes in modern language models confirm that lossy recall of observed facts under finite memory is a separable failure mode distinct from simple absence of facts.
+When memory is constrained even facts that were seen during training can only be stored approximately producing hallucinations that look like retrieval failures but originate in compression.
+The bound gives a compact way to reason about selective memory, forced compression structure retrieval, abstention, and long context organization.
+Teams facing persistent factual errors on known content should first measure effective trainable memory load before assuming additional retrieval will solve the problem.
+Before we go watch for new ablations on the bite model scaling curves that could shift the compute efficiency picture.
+That's models and agents for today if you found this useful share it with someone who's trying to keep up with all these changes and subscribe so you don't miss tomorrow's update.
+The AI world moves fast will help you keep up see you tomorrow and if you'd rather watch than listen find us on YouTube at nerra network links in the show notes quick tip from the network try modern investing techniques next modern strategies for Canadian and US investors.
+Every nerra network show is free at nerra network dot com the age of AI puts real builders on the phone with an AI host apply at nerra network dot com age of AI apply this episode used AI voice synthesis of my voice editorial selection and analysis are my own.

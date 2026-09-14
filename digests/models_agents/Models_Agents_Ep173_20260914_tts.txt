@@ -1,0 +1,155 @@
+Sam Altman lays out two concrete risks that could derail A I progress and must be actively avoided.
+
+This is Models and Agents, episode one hundred seventy-three.
+
+The first risk is losing control of the future to A I.
+
+Alignment and safety techniques must stay ahead of capabilities to address it.
+
+The second risk is excessive concentration of power in one person, company, or country that could impose a single worldview.
+
+Altman calls for a narrow middle path that includes consistent federal safety requirements.
+
+He also calls for safety cases before frontier reinforcement learning runs.
+
+Open A I already uses explicit safety cases ahead of major training runs in addition to pre-release work.
+
+The post notes that pacing means slowing progress relative to what is technically possible, not stopping it.
+
+International coordination will eventually require government help.
+
+Researchers introduce two methods to convert token logits to byte logits for distillation.
+
+Marginalize-It provides approximate conversion and End-Of-Token provides exact conversion.
+
+They train decoder-only dense transformer models with roughly one billion parameters across token and byte tokenization schemes up to one trillion bytes of data.
+
+Token-1B models outperform byte models in the low-FLOP regime but plateau.
+
+Byte models start lower yet surpass them with more compute and reach a higher performance ceiling.
+
+Distilled End-Of-Token-1B models are predicted to outperform distilled Token-1B by up to four percent asymptotically.
+
+They also match Token-1B performance using only one-sixth the training data.
+
+The byte models reduce logit storage costs to roughly one-fifth because they operate over a 256-byte vocabulary instead of roughly one hundred thousand tokens.
+
+The new RMDM framework encodes text into a continuous semantic space with a pretrained encoder.
+
+It learns an invertible transformation that normalizes the representation distribution to a Gaussian prior.
+
+The framework conditions a masked diffusion model on this latent semantic representation to coordinate parallel token updates during generation.
+
+Empirical results show that RMDM significantly improves generation quality, especially in aggressive few-step sampling regimes.
+
+Chopthin-Consensus Power Sampling applies the Chopthin resampler to L L M decoding.
+
+It enforces an upper bound on the ratio between largest and smallest weights instead of equalizing weights.
+
+The method preserves a richer set of distinct reasoning paths while keeping the weighted SMC approximation unchanged in conditional expectation.
+
+It guarantees a lower bound on effective sample size.
+
+Combined with semantic-majority selection that merges token-identical trajectories and clusters semantically equivalent answers, CCPS matches or exceeds Power-SMC baseline accuracy in fourteen of fifteen settings across three open-weight models and five reasoning benchmarks.
+
+Absolute gains reach up to ten point six percentage points.
+
+ORQA connects O*NET occupations to trusted occupation-specific websites.
+
+It converts them into source-traceable question-answer pairs covering one hundred sixteen occupations from all twenty-one major SOC groups with four hundred eighty questions from one hundred eighty-seven websites.
+
+Claude Opus four point six, G P T five point four and Claude Sonnet four point six perform best at approximately fifty-eight to sixty-two percent.
+
+Smaller open-weight models reach thirty-three to forty-one percent.
+
+Healthcare-related occupations reach seventy-eight percent accuracy while Office and Administrative Support reach approximately forty percent, with some individual occupations at essentially zero.
+
+AGP places task planning and execution under a general-purpose agent's control.
+
+The agent interprets visual evidence, writes executable programs, issues motion commands, and revises actions based on physical outcomes.
+
+The approach is tested across precision manipulation, dynamic motions, and deformable objects including assembly from human videos, block construction from goal images, die reorientation, targeted throwing, and bimanual towel folding.
+
+AGP achieves one hundred percent, one hundred percent, and eighty percent success rates on three block construction configurations without any task-specific or environment-specific training.
+
+LifeMem clusters accumulated interaction trajectories based on underlying workflows to extract reusable skills.
+
+It recalls relevant skills and trajectories at inference time to guide actions across new tasks.
+
+Experiments across ten environments and over thirteen thousand tasks with two thousand newly annotated trajectories show reduced forgetting on learned tasks and superior cross-task transfer.
+
+Consolidating structurally similar trajectories within memory further boosts performance.
+
+CueMem extracts fine-grained memory cues from dialogue turns.
+
+It links each cue to its source turn and at query time retrieves relevant cues, maps them to source-turn anchors, and expands over a turn graph to reconstruct compact evidence context.
+
+Experiments on LoCoMo and LongMemEval show consistent outperformance of representative long-term memory baselines while reducing query-time input tokens and latency compared with full-history L L M settings.
+
+DuplexDrama is built via a four-stage pipeline.
+
+It contains more than two thousand hours of audio across a sixty-four-voice timbre pool spanning thirteen personas and five age buckets, with three point eight percent of turns carrying at least one full-duplex behavior.
+
+A curated subset of six thousand four hundred bilingual dialogues totaling eight hundred hours will be released, with roughly five hundred hours in Chinese and three hundred hours in English.
+
+Simon Willison released a local web app that helps edit commit messages for a repository.
+
+The tool runs entirely locally and is documented at simonwillison dot net.
+
+GraphProfiler represents each user's post history as a source-linked personal knowledge graph.
+
+Nodes and edges trace back to the originating post and resolves attribute predictions to cited graph records and source texts.
+
+It reaches eighty-six point seven percent attack success rate on the eight-attribute SynthPAI benchmark and eighty-four point six percent on PANDORA while citing supporting evidence for over ninety-eight percent of predictions.
+
+Meddies-PII-Dataset contains one million synthetic clinical documents spanning seventeen languages and nine PII labels.
+
+The documents are generated with attribute-conditioned prompts and validated through thirteen deterministic gates.
+
+The resulting Meddies-PII-Model achieves a mean F1 of zero point eight two seven across fifteen external benchmarks.
+
+Zipbench evaluates only a small set of anchor L L M's.
+
+It synthesizes pseudo evaluation results, learns compact sample representations, and selects a small yet representative subset.
+
+The resulting ZipBench Zoo collection of compact versions of over one hundred benchmark proxies achieves mean absolute errors of zero point zero zero two to zero point zero two and average Spearman correlations of approximately zero point nine eight with the full benchmarks.
+
+You can try the local commit-rewriter web app from Simon Willison if you frequently edit commit messages in a repository.
+
+Test the byte-distilled End-Of-Token models on reasoning benchmarks once weights are released, especially if you are compute-constrained.
+
+Experiment with AGP-style agent control on a physical robot arm for simple manipulation tasks if you have access to one.
+
+Run Zipbench on a new evaluation suite you care about to reduce benchmark cost while preserving rank order.
+
+More results from the R2VC modular fact-checking architecture are expected as the code and ablations are examined.
+
+Additional occupation-level benchmarks following the ORQA methodology may appear for other professional domains.
+
+Further full-duplex dialogue datasets building on DuplexDrama are likely given the validation results already shown.
+
+Let us pop the hood on the rate-distortion analysis of factual hallucination.
+
+The paper models factual recall as a coverage-compression tradeoff where a learner observes M training facts, compresses them into at most B bits, and answers test queries without retrieval.
+
+The derived bound separates two error sources.
+
+Compression distortion on observed facts is given by the inverse rate-distortion function of a uniform K-ary source.
+
+Missing coverage on unobserved facts forms the second source.
+
+Simulations and controlled fact-injection probes in modern language models confirm that lossy recall of observed facts under finite memory is a separable failure mode distinct from simple absence of facts.
+
+When memory is constrained, even facts that were seen during training can only be stored approximately, producing hallucinations that look like retrieval failures but originate in compression.
+
+The bound gives a compact way to reason about selective memory, forced compression, structure, retrieval, abstention, and long-context organization.
+
+Teams facing persistent factual errors on known content should first measure effective trainable memory load before assuming additional retrieval will solve the problem.
+
+Before we go, watch for new ablations on the byte-model scaling curves that could shift the compute-efficiency picture.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The A I world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+Quick tip from the network: try Modern Investing Techniques next — modern strategies for Canadian and U.S. investors. Every Nerra Network show is free at nerranetwork dot com. The Age of A I puts real builders on the phone with an A I host — apply at nerranetwork dot com age of A I apply.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
