@@ -134,3 +134,69 @@ jobs:
             nerra-daily.html
             nerra-daily-summaries.html
           commit-message: "Nerra Daily edition ${{ env.EDITION_DAY }}"
+
+      # --- Nerra Personal follows the edition (Sep 14 2026) ---------------
+      # The per-subscriber build lives in the PRIVATE nerra-personal-batch
+      # repo and used to rely on its own 12:30 UTC GitHub cron, which GitHub
+      # delivered 4-5 h late every day (Sep 7-14: 16:30-18:09 UTC) — so a
+      # subscriber's Monday edition appeared at lunchtime. This chains it
+      # to the moment the edition actually publishes instead. Same
+      # runner-native check as the fast gate, read AFTER the build: the
+      # edition counts as published-by-this-run only when the fast gate
+      # said "not yet" and the summaries now carry the date. A --when-ready
+      # run that exited without building must NOT wake the personal build,
+      # because that build splices whatever segments exist today and then
+      # locks the date (episodes.json), and Nerra Daily would be missing.
+      - name: Did this run publish the edition?
+        id: postgate
+        if: steps.fastgate.outputs.published != 'true' || github.event.inputs.force == 'true'
+        env:
+          EDITION_DATE: ${{ env.EDITION_DAY }}
+        run: |
+          python3 - <<'EOF'
+          import datetime, json, os
+          date = (os.environ.get("EDITION_DATE") or "").strip() or \
+              datetime.datetime.now(datetime.timezone.utc).date().isoformat()
+          done = False
+          try:
+              with open("digests/nerra_daily/summaries_nerra_daily.json") as fh:
+                  data = json.load(fh)
+              done = any(e.get("date") == date for e in data.get("summaries", [])
+                         if isinstance(e, dict))
+          except Exception:
+              pass
+          with open(os.environ["GITHUB_OUTPUT"], "a") as out:
+              out.write(f"published={'true' if done else 'false'}\n")
+              out.write(f"date={date}\n")
+          print(f"edition {date}: {'published by this run' if done else 'not published'}")
+          EOF
+
+      - name: Wake the Nerra Personal build
+        # Fires nerra-personal-batch's workflow_dispatch with today's date.
+        # Needs PERSONAL_BATCH_DISPATCH_TOKEN: a fine-grained PAT scoped to
+        # Planetterrian/nerra-personal-batch with Actions: Read and write
+        # (GITHUB_TOKEN cannot reach another repo). Soft no-op without it —
+        # the batch repo's own off-peak sweep crons remain the fallback, so
+        # a missing token means "late", never "never". The personal builder
+        # skips subscribers already built for the date, so a sweep that
+        # follows this dispatch is harmless.
+        if: steps.postgate.outputs.published == 'true'
+        env:
+          PERSONAL_BATCH_DISPATCH_TOKEN: ${{ secrets.PERSONAL_BATCH_DISPATCH_TOKEN }}
+          EDITION_DATE: ${{ steps.postgate.outputs.date }}
+        run: |
+          if [ -z "$PERSONAL_BATCH_DISPATCH_TOKEN" ]; then
+            echo "::warning::PERSONAL_BATCH_DISPATCH_TOKEN not set — Nerra Personal waits for its fallback cron (hours late). See docs/nerra_personal.md."
+            exit 0
+          fi
+          status=$(curl -sS -o /tmp/dispatch.out -w '%{http_code}' -X POST \
+            -H "Authorization: Bearer $PERSONAL_BATCH_DISPATCH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/Planetterrian/nerra-personal-batch/actions/workflows/personal-feeds.yml/dispatches" \
+            -d "{\"ref\":\"main\",\"inputs\":{\"date\":\"$EDITION_DATE\"}}")
+          if [ "$status" = "204" ]; then
+            echo "Nerra Personal build dispatched for $EDITION_DATE"
+          else
+            echo "::warning::Nerra Personal dispatch failed ($status): $(head -c 300 /tmp/dispatch.out). Fallback cron will build it later."
+          fi
