@@ -27,6 +27,13 @@ def _fn(name: str, src: str = SCENARIO) -> str:
     return src[start:src.index("\n}\n", start) + 3]
 
 
+def _pyfn(name: str, src: str) -> str:
+    start = src.index(f"def {name}(")
+    rest = src[start:]
+    end = rest.index("\n\n\n") if "\n\n\n" in rest else len(rest)
+    return rest[:end]
+
+
 class TestSheWaitsForTheRoom:
     def test_the_guest_gets_a_beat_before_she_speaks(self):
         assert "GUEST_SETTLE_MS = 7 * 1000" in SCENARIO
@@ -151,3 +158,38 @@ class TestTheRunnerCanStillMakeAudio:
               / "nerra_voices_post_interview.yml").read_text(encoding="utf-8")
         assert "workflow_dispatch:" in wf
         assert "github.event.client_payload.run_id || inputs.run_id" in wf
+
+
+class TestTheRecordingWithTheInterviewOnIt:
+    """Sept 14 2026: John Capobianco dropped 50 seconds in and rejoined six
+    minutes later. Voximplant records each leg separately, so the 65-second
+    false start was `voximplant_record_url` and the forty minutes that
+    followed were in `extra_guest_record_urls` — and his browser had uploaded
+    65 seconds too. The pipeline took the short one twice over and produced a
+    transcript with almost none of his answers in it."""
+
+    SRC = (ROOT / "pipelines" / "voices" / "post_interview.py").read_text(encoding="utf-8")
+
+    def test_every_guest_leg_is_considered(self):
+        body = _pyfn("fetch_recording", self.SRC)
+        assert "extra_guest_record_urls" in body
+        assert "if seconds > best_seconds" in body
+
+    def test_a_dead_leg_url_is_not_fatal(self):
+        body = _pyfn("fetch_recording", self.SRC)
+        assert "except Exception as err:" in body
+        assert "did not download" in body
+
+    def test_a_short_local_take_loses_to_a_longer_leg(self):
+        assert "COVERAGE_MIN = 0.80" in self.SRC
+        body = _pyfn("_covers", self.SRC)
+        assert "ratio >= COVERAGE_MIN" in body
+        assert "using the Voximplant leg instead" in body
+
+    def test_both_speakers_are_checked(self):
+        assert '_covers(local_guest, guest_vox, "guest")' in self.SRC
+        assert '_covers(local_host, host_vox or guest_r, "host")' in self.SRC
+
+    def test_no_reference_means_trust_the_local_take(self):
+        body = _pyfn("_covers", self.SRC)
+        assert "if reference is None:\n        return True" in body

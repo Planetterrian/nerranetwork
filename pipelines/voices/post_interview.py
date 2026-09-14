@@ -134,15 +134,44 @@ def _download(url: str, dest: Path, timeout: int = 600) -> Path:
 
 
 def fetch_recording(run: dict, workdir: Path) -> Path:
-    url = (run.get("recording_guest_url")  # already in R2 (re-run case)
-           or (run.get("grok_session_log") or {}).get("voximplant_record_url")
-           or "")
-    if not url:
+    """The guest's Voximplant recording — the one that has the interview on it.
+
+    Sept 14 2026 (John Capobianco). He joined, dropped 50 seconds later, and
+    rejoined six minutes after that; the interview then ran for forty minutes.
+    Voximplant records each leg separately, so the FIRST leg — the 65-second
+    false start — is ``voximplant_record_url`` and the forty minutes are in
+    ``extra_guest_record_urls``. This function took the first one, and the
+    episode came back with a transcript containing almost none of his answers.
+    The first leg is not "the recording"; the longest one is.
+    """
+    log = run.get("grok_session_log") or {}
+    candidates = [run.get("recording_guest_url") or "",   # already in R2 (re-run)
+                  log.get("voximplant_record_url") or ""]
+    candidates += [u for u in (log.get("extra_guest_record_urls") or []) if u]
+    candidates = [u for u in candidates if u]
+    if not candidates:
         raise RuntimeError("run has no recording URL — scenario upload failed?")
-    raw = _download(url, workdir / f"raw_interview.{_ext_of(url)}")
-    if raw.stat().st_size < 50_000:
-        raise RuntimeError(f"recording suspiciously small ({raw.stat().st_size} bytes)")
-    return raw
+
+    best: Path | None = None
+    best_seconds = 0.0
+    for i, url in enumerate(candidates):
+        try:
+            leg = _download(url, workdir / f"raw_leg_{i}.{_ext_of(url)}")
+        except Exception as err:            # a dead leg URL is not fatal
+            logger.warning("guest leg %d did not download: %s", i, err)
+            continue
+        seconds = duration_seconds(leg)
+        logger.info("guest leg %d: %.1fs (%d bytes)", i, seconds, leg.stat().st_size)
+        if seconds > best_seconds:
+            best, best_seconds = leg, seconds
+    if best is None:
+        raise RuntimeError("no guest leg recording could be downloaded")
+    if len(candidates) > 1:
+        logger.info("guest recording: using the longest of %d legs (%.1fs)",
+                    len(candidates), best_seconds)
+    if best.stat().st_size < 50_000:
+        raise RuntimeError(f"recording suspiciously small ({best.stat().st_size} bytes)")
+    return best
 
 
 def fetch_leg_recording(url: str, workdir: Path, name: str) -> Path | None:
@@ -162,6 +191,30 @@ def fetch_leg_recording(url: str, workdir: Path, name: str) -> Path | None:
                        name, path.stat().st_size)
         return None
     return path
+
+
+# A browser recording is better than a conference leg — 192 kbps against a
+# codec, and it is the voice as the microphone heard it. But only if it is
+# actually there. John Capobianco's browser uploaded 65 seconds of a
+# forty-minute interview (he dropped and rejoined, and the second join
+# recorded nothing), and the pipeline still preferred it, which is how an
+# episode came back with a transcript missing almost every answer.
+COVERAGE_MIN = 0.80
+
+
+def _covers(local: Path, reference: Path | None, who: str) -> bool:
+    if reference is None:
+        return True
+    local_sec, ref_sec = duration_seconds(local), duration_seconds(reference)
+    if ref_sec <= 0:
+        return True
+    ratio = local_sec / ref_sec
+    if ratio >= COVERAGE_MIN:
+        return True
+    logger.warning("%s: local take covers only %.0f%% of the leg (%.0fs of "
+                   "%.0fs) — using the Voximplant leg instead",
+                   who, ratio * 100, local_sec, ref_sec)
+    return False
 
 
 def build_tracks(run: dict, raw: Path, workdir: Path,
@@ -192,7 +245,7 @@ def build_tracks(run: dict, raw: Path, workdir: Path,
     guest = None
     local_guest = fetch_local_track(run.get("local_guest_url") or "",
                                     workdir / "local_guest")
-    if local_guest is not None:
+    if local_guest is not None and _covers(local_guest, guest_vox, "guest"):
         guest = align_to_reference(local_guest, guest_vox, workdir / "aligned")
         sources["guest"] = "local"
     if guest is None:
@@ -202,7 +255,7 @@ def build_tracks(run: dict, raw: Path, workdir: Path,
     host = None
     local_host = fetch_local_track(run.get("local_host_url") or "",
                                    workdir / "local_host")
-    if local_host is not None:
+    if local_host is not None and _covers(local_host, host_vox or guest_r, "host"):
         host = align_to_reference(local_host, host_vox or guest_r,
                                   workdir / "aligned")
         sources["host"] = "local"
