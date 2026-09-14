@@ -620,13 +620,16 @@ class TestCampaignFreshnessPlumbing:
     def test_yaml_flags_the_campaign_feeds(self):
         raw = yaml.safe_load(_SHOW_YAML.read_text(encoding="utf-8"))
         flagged = [s["label"] for s in raw["sources"] if s.get("freshness_report")]
-        assert len(flagged) == 3, f"expected the 3 campaign channels, got {flagged}"
+        # 3 -> 4 on 2026-09-14: Scott's Notes (the skipper's own writing)
+        # joined the campaign channels (category feed, see the YAML).
+        assert len(flagged) == 4, f"expected the 4 campaign channels, got {flagged}"
         assert all("Canada Ocean Racing" in l for l in flagged)
+        assert any("Scott" in l for l in flagged), "Scott's Notes feed missing"
 
     def test_flag_survives_into_dataclass(self):
         """Silent config-drop class."""
         flagged = [s for s in _cfg().sources if s.freshness_report]
-        assert len(flagged) == 3
+        assert len(flagged) == 4
 
     def test_no_other_show_flags_feeds(self):
         offenders = []

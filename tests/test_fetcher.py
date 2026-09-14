@@ -512,8 +512,13 @@ class TestFetchSingleFeed:
             # URL the model later retypes into its Sources section can be
             # mapped back to the publisher (engine.url_utils).
             "aggregator_url",
+            # Plain-text feed BODY (content:encoded) when the feed carries
+            # one, else "" — read only by shows that opt into
+            # fetch_full_text (engine/article_text.py, Sep 14 2026).
+            "content_text",
         }
         assert set(article.keys()) == expected_keys
+        assert article["content_text"] == ""  # this entry has no body
         assert article["author"] == "John Doe"
         assert article["relevance_score"] == 0.0
 

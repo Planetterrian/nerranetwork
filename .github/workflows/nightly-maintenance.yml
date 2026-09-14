@@ -166,6 +166,13 @@ jobs:
         # (Yahoo Finance). Keeps last-good cache on failure.
         run: python scripts/fetch_tesla_dashboard.py --out api/tesla_dashboard.json || true
 
+      - name: Refresh Offshore North dashboard data
+        # Latest Canada Ocean Racing posts (with excerpts), the newest dated
+        # position fix, and offshore headlines for offshore-north-dashboard.html
+        # (Sep 2026). Keeps last-good cache on failure; refreshes daily even
+        # though the show itself is weekly.
+        run: python scripts/fetch_offshore_north_dashboard.py --out api/offshore_north_dashboard.json || true
+
       - name: Backfill Content Lake (before dashboard + search index)
         # The content lake DB is gitignored. July 24 2026 lake review: this
         # step used to run AFTER the dashboard build, so api/dashboard.json
@@ -399,6 +406,8 @@ jobs:
             tesla.html
             tesla-dashboard.html
             spacex-dashboard.html
+            offshore-north-dashboard.html
+            api/offshore_north_dashboard.json
             blog.rss
             blog_*.rss
             blog/index.html

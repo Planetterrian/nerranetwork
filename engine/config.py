@@ -1086,6 +1086,15 @@ class ShowConfig:
     # not silence the only route to the primary sources. Default False:
     # every other show keeps the count-gated behavior.
     web_search_always: bool = False
+    # Open the articles, don't just list them (Sep 14 2026 Offshore North
+    # review; engine/article_text.py). N = how many of the prompt's
+    # articles get their FULL TEXT rendered under the headline — the
+    # campaign's own channels first, then newest-first. Feed bodies
+    # (``content:encoded``) are used with no HTTP; the rest are fetched.
+    # 0 (default) = every other show is byte-identical: headline +
+    # description only, exactly as before.
+    fetch_full_text: int = 0
+    fetch_full_text_chars: int = 2500
     min_articles: int = 3  # Minimum articles before expanding search
     min_articles_skip: int = 3  # Hard cutoff — skip episode if fewer articles
     # Progressive fetch-window ladder, in hours, widest last. Empty = use
@@ -1320,6 +1329,8 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
         story_recurrence=bool(data.get("story_recurrence", False)),
         web_search_queries=data.get("web_search_queries", []),
         web_search_always=bool(data.get("web_search_always", False)),
+        fetch_full_text=int(data.get("fetch_full_text", 0) or 0),
+        fetch_full_text_chars=int(data.get("fetch_full_text_chars", 2500) or 2500),
         min_articles=data.get("min_articles", 3),
         min_articles_skip=data.get("min_articles_skip", 3),
         fetch_expansion_hours=[

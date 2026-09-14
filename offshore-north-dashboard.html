@@ -3,26 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Latest: Ep 5: Class40 leads Route du Rhum entries. Offshore North — the weekly English-language offshore ocean racing podcast. Canada Ocean Racing's road to the Vendée Globe 2028, the IMOCA fleet, and one concept explained properly every week.">
+    <meta name="description" content="Follow Canada Ocean Racing's road to the Route du Rhum and the 2028 Vendée Globe: countdowns, EMIRA IV's last known position and tracker, the IMOCA season calendar, recent results, the Route du Rhum entry list, and every source and social channel worth following. The companion dashboard to the Offshore North podcast.">
     
-    <meta name="keywords" content="offshore sailing, ocean racing, IMOCA, Vendee Globe, Canada Ocean Racing, Scott Shawyer, The Ocean Race, Route du Rhum, solo sailing, foiling, yacht racing, Canadian sailing, sailing podcast"><title>Offshore North — Class40 leads Route du Rhum entries | Nerra Network</title>
+    <title>Offshore North Dashboard — EMIRA IV, the Route du Rhum & the road to the Vendée Globe | Nerra Network</title>
     <meta name="theme-color" content="#0B3C5D">
 
     <!-- Open Graph -->
-    <meta property="og:title" content="Offshore North — Class40 leads Route du Rhum entries | Nerra Network">
-    <meta property="og:description" content="Latest: Ep 5: Class40 leads Route du Rhum entries. Offshore North — the weekly English-language offshore ocean racing podcast. Canada Ocean Racing's road to the Vendée Globe 2028, the IMOCA fleet, and one concept explained properly every week.">
+    <meta property="og:title" content="Offshore North Dashboard — Canada Ocean Racing, EMIRA IV & the road to the Vendée Globe | Nerra Network">
+    <meta property="og:description" content="Follow Canada Ocean Racing's road to the Route du Rhum and the 2028 Vendée Globe: countdowns, EMIRA IV's last known position and tracker, the IMOCA season calendar, recent results, the Route du Rhum entry list, and every source and social channel worth following. The companion dashboard to the Offshore North podcast.">
     <meta property="og:type" content="website">
     <meta property="og:image" content="https://nerranetwork.com/assets/covers/offshore-north.jpg">
-    <meta property="og:url" content="https://nerranetwork.com/offshore-north.html">
+    <meta property="og:url" content="https://nerranetwork.com/offshore-north-dashboard.html">
     <meta property="og:site_name" content="Nerra Network">
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Offshore North — Class40 leads Route du Rhum entries | Nerra Network">
-    <meta name="twitter:description" content="Latest: Ep 5: Class40 leads Route du Rhum entries. Offshore North — the weekly English-language offshore ocean racing podcast. Canada Ocean Racing's road to the Vendée Globe 2028, the IMOCA fleet, and one concept explained properly every week.">
+    <meta name="twitter:title" content="Offshore North Dashboard — Canada Ocean Racing, EMIRA IV & the road to the Vendée Globe | Nerra Network">
+    <meta name="twitter:description" content="Follow Canada Ocean Racing's road to the Route du Rhum and the 2028 Vendée Globe: countdowns, EMIRA IV's last known position and tracker, the IMOCA season calendar, recent results, the Route du Rhum entry list, and every source and social channel worth following. The companion dashboard to the Offshore North podcast.">
     <meta name="twitter:image" content="https://nerranetwork.com/assets/covers/offshore-north.jpg">
 
-    <link rel="canonical" href="https://nerranetwork.com/offshore-north.html">
+    <link rel="canonical" href="https://nerranetwork.com/offshore-north-dashboard.html">
     
     <link rel="alternate" type="application/rss+xml" title="Offshore North RSS" href="offshore_north_podcast.rss">
     
@@ -61,50 +61,157 @@
     <link rel="stylesheet" href="styles/main.css">
 
     
-<!-- Schema.org PodcastSeries -->
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "PodcastSeries",
-  "name": "Offshore North",
-  "description": "Latest: Ep 5: Class40 leads Route du Rhum entries. Offshore North — the weekly English-language offshore ocean racing podcast. Canada Ocean Racing\u0027s road to the Vendée Globe 2028, the IMOCA fleet, and one concept explained properly every week.",
-  "url": "https://nerranetwork.com/offshore-north.html",
-  "webFeed": "https://nerranetwork.com/offshore_north_podcast.rss",
-  "image": "https://nerranetwork.com/assets/covers/offshore-north.jpg"
-}
-</script>
 <style>
-    @keyframes shimmer {
-        0% { background-position: -200% 0; }
-        100% { background-position: 200% 0; }
-    }
-    .skeleton-card {
-        background: rgba(255,255,255,0.05);
-        border-radius: 12px;
-        padding: 1.5rem;
-    }
-    .skeleton-line {
-        height: 14px;
-        background: linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.06) 75%);
-        background-size: 200% 100%;
-        animation: shimmer 1.5s infinite;
-        border-radius: 4px;
-        margin-bottom: 0.75rem;
-    }
-    .skeleton-title { width: 70%; height: 18px; }
-    .skeleton-date { width: 30%; }
-    .skeleton-text { width: 100%; }
-    .skeleton-text.short { width: 60%; }
+  /* ---- Offshore North campaign dashboard (scoped under .on-dash) ---- */
+  .on-dash {
+    --on-navy: #0B3C5D;
+    --on-sea: #1F6F9F;
+    --on-foam: #5BC0EB;
+    --on-ink: #071626;
+    --on-line: rgba(91,192,235,0.22);
+    --on-muted: #9db4c9;
+    --on-text: #e9f2f9;
+    color: var(--on-text);
+  }
+  .on-hero {
+    position: relative; overflow: hidden;
+    background:
+      radial-gradient(1100px 520px at 20% -10%, rgba(91,192,235,0.22), transparent 60%),
+      radial-gradient(900px 480px at 90% 10%, rgba(31,111,159,0.35), transparent 60%),
+      linear-gradient(180deg, #06131f 0%, #0a2136 55%, #0b1b2c 100%);
+    border-bottom: 1px solid var(--on-line);
+  }
+  .on-hero::after {
+    content: ""; position: absolute; inset: auto 0 0 0; height: 90px; pointer-events: none;
+    background: repeating-linear-gradient(-6deg, transparent 0 18px, rgba(91,192,235,0.05) 18px 20px);
+  }
+  .on-container { position: relative; z-index: 1; max-width: 1120px; margin: 0 auto;
+    padding: calc(var(--nav-height, 64px) + 2.4rem) 1.25rem 2.2rem; }
+  .on-kicker { display:inline-flex; align-items:center; gap:8px; font-size:.78rem; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--on-foam); font-weight:700; margin-bottom:.6rem; }
+  .on-kicker .dot { width:8px; height:8px; border-radius:50%; background:var(--on-foam);
+    box-shadow:0 0 10px var(--on-foam); animation:on-pulse 1.8s infinite; }
+  @keyframes on-pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+  .on-h1 { font-size: clamp(1.8rem, 4vw, 2.7rem); line-height:1.06; margin:0 0 .4rem; font-weight:800; letter-spacing:-.02em; }
+  .on-sub { color:var(--on-muted); font-size:1.02rem; max-width:66ch; margin:0 0 1.5rem; }
+  .on-sub a { color: var(--on-foam); }
+
+  .on-cd { display:flex; gap:.6rem; flex-wrap:wrap; margin:.4rem 0 .9rem; }
+  .on-cd-unit { min-width:76px; text-align:center; background:rgba(8,24,40,.72); border:1px solid var(--on-line);
+    border-radius:14px; padding:.7rem .5rem; backdrop-filter:blur(6px); }
+  .on-cd-num { font-size:clamp(1.6rem,4.5vw,2.6rem); font-weight:800; font-variant-numeric:tabular-nums;
+    background:linear-gradient(180deg,#fff,#a9dcf5); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+  .on-cd-label { font-size:.66rem; letter-spacing:.12em; text-transform:uppercase; color:var(--on-muted); margin-top:2px; }
+  .on-cd-card { background:rgba(8,24,40,.66); border:1px solid var(--on-line); border-radius:18px; padding:1.1rem 1.2rem; }
+  .on-cd-card h3 { margin:.2rem 0 .3rem; font-size:1.2rem; }
+  .on-cd-card .when { color:var(--on-muted); font-size:.9rem; }
+  .on-chips { display:flex; flex-wrap:wrap; gap:.5rem; margin-top:.9rem; }
+  .on-chip { display:inline-flex; gap:8px; align-items:baseline; padding:6px 12px; border-radius:999px;
+    border:1px solid var(--on-line); background:rgba(31,111,159,.18); font-size:.82rem; color:var(--on-text); text-decoration:none; }
+  .on-chip b { font-variant-numeric:tabular-nums; color:#fff; }
+  .on-chip.live { border-color:rgba(126,251,176,.4); background:rgba(40,200,120,.12); color:#bdf7d8; }
+
+  .on-grid { max-width:1120px; margin:1.3rem auto; padding:0 1.25rem; display:grid; gap:1.1rem;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
+  .on-grid.one { grid-template-columns:minmax(0,1fr); }
+  @media (max-width:760px){ .on-grid{ grid-template-columns:minmax(0,1fr); } }
+  .on-panel { background:var(--nn-surface,#0f1f31); border:1px solid var(--on-line); border-radius:16px; padding:1.1rem 1.2rem; }
+  .on-panel h2 { font-size:1.05rem; margin:0 0 .8rem; letter-spacing:-.01em; }
+  .on-panel h2 .sm { color:var(--on-muted); font-size:.72rem; font-weight:400; margin-left:6px; }
+  .on-muted { color:var(--on-muted); font-size:.84rem; }
+  .on-panel a { color:var(--on-foam); }
+
+  .on-pos { display:flex; flex-direction:column; gap:.5rem; }
+  .on-pos .fix { font-size:1.1rem; line-height:1.4; color:#fff; }
+  .on-pos .meta { color:var(--on-muted); font-size:.82rem; }
+  .on-pos .tag { display:inline-block; font-size:.66rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+    padding:2px 8px; border-radius:999px; background:rgba(91,192,235,.15); color:var(--on-foam); margin-right:6px; }
+  .on-log { list-style:none; padding:0; margin:.6rem 0 0; }
+  .on-log li { display:flex; gap:10px; padding:.42rem 0; border-top:1px solid rgba(91,192,235,.12); font-size:.86rem; }
+  .on-log .d { color:var(--on-muted); white-space:nowrap; font-variant-numeric:tabular-nums; min-width:86px; }
+
+  .on-tracker { border-radius:14px; overflow:hidden; border:1px solid var(--on-line); background:#061421; }
+  .on-tracker iframe { width:100%; height:440px; border:0; display:block; }
+
+  .on-kv { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:.55rem 1rem; }
+  .on-kv .k { font-size:.66rem; text-transform:uppercase; letter-spacing:.1em; color:var(--on-muted); }
+  .on-kv .v { font-size:.95rem; color:#fff; font-weight:600; }
+  .on-ped { list-style:none; padding:0; margin:.7rem 0 0; }
+  .on-ped li { display:flex; gap:10px; padding:.35rem 0; border-top:1px solid rgba(91,192,235,.12); font-size:.86rem; }
+  .on-ped .y { color:var(--on-foam); font-weight:700; min-width:64px; font-variant-numeric:tabular-nums; }
+
+  .on-cal { list-style:none; padding:0; margin:0; }
+  .on-cal li { display:grid; grid-template-columns:120px 1fr; gap:10px; padding:.45rem 0; border-top:1px solid rgba(91,192,235,.12); font-size:.88rem; align-items:baseline; }
+  .on-cal li:first-child { border-top:none; }
+  .on-cal .d { color:var(--on-muted); font-variant-numeric:tabular-nums; font-size:.8rem; }
+  .on-cal .st { display:inline-block; font-size:.62rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; padding:1px 7px; border-radius:999px; margin-left:6px; vertical-align:middle; }
+  .on-cal .st.done { color:#9db4c9; background:rgba(157,180,201,.12); }
+  .on-cal .st.upcoming { color:#7efbb0; background:rgba(40,200,120,.14); }
+  .on-cal .st.tbc { color:#ffd27a; background:rgba(255,180,40,.14); }
+  .on-cal .st.goal { color:#fff; background:linear-gradient(135deg,var(--on-sea),var(--on-foam)); }
+  .on-cal .emira { color:#fff; font-weight:600; }
+  @media (max-width:520px){ .on-cal li{ grid-template-columns:1fr; gap:2px; } }
+
+  .on-res { margin-bottom:1rem; }
+  .on-res h3 { font-size:.98rem; margin:0 0 .2rem; }
+  .on-res .dates { color:var(--on-muted); font-size:.8rem; margin-bottom:.4rem; }
+  .on-res table { width:100%; border-collapse:collapse; font-size:.86rem; }
+  .on-res td { padding:.32rem .3rem; border-top:1px solid rgba(91,192,235,.12); vertical-align:top; }
+  .on-res td.p { width:26px; color:var(--on-foam); font-weight:800; }
+  .on-res td.n { color:var(--on-muted); font-size:.8rem; }
+
+  .on-entries { columns:2; column-gap:1.4rem; font-size:.86rem; list-style:none; padding:0; margin:.4rem 0 0; }
+  @media (max-width:600px){ .on-entries{ columns:1; } }
+  .on-entries li { break-inside:avoid; padding:.22rem 0; border-top:1px solid rgba(91,192,235,.1); }
+  .on-entries li.can { color:#fff; font-weight:700; }
+  .on-entries li.can::before { content:"🍁 "; }
+  .on-entries .b { color:var(--on-muted); }
+
+  .on-feed { list-style:none; padding:0; margin:0; }
+  .on-feed li { padding:.55rem 0; border-top:1px solid rgba(91,192,235,.12); }
+  .on-feed li:first-child { border-top:none; }
+  .on-feed .h { display:flex; gap:10px; justify-content:space-between; align-items:baseline; }
+  .on-feed .h a { font-weight:600; color:#fff; text-decoration:none; }
+  .on-feed .h a:hover { color:var(--on-foam); }
+  .on-feed .d { color:var(--on-muted); font-size:.76rem; white-space:nowrap; font-variant-numeric:tabular-nums; }
+  .on-feed .x { color:#c7d6e3; font-size:.84rem; margin:.25rem 0 0; line-height:1.45; }
+  .on-feed .c { display:inline-block; font-size:.64rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--on-foam); margin-right:6px; }
+
+  .on-follow { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:1rem; }
+  .on-follow h3 { font-size:.82rem; letter-spacing:.08em; text-transform:uppercase; color:var(--on-muted); margin:0 0 .4rem; }
+  .on-follow ul { list-style:none; padding:0; margin:0; }
+  .on-follow li { padding:.3rem 0; font-size:.88rem; border-top:1px solid rgba(91,192,235,.1); }
+  .on-follow li a { color:#fff; text-decoration:none; }
+  .on-follow li a:hover { color:var(--on-foam); }
+  .on-follow .ic { display:inline-block; width:1.4em; color:var(--on-foam); }
+
+  .on-led { list-style:none; padding:0; margin:0; }
+  .on-led li { display:grid; grid-template-columns:20px 1fr; gap:8px; padding:.4rem 0; border-top:1px solid rgba(91,192,235,.12); font-size:.86rem; }
+  .on-led li:first-child { border-top:none; }
+  .on-led .s { font-weight:800; }
+  .on-led .s.open { color:#ffd27a; } .on-led .s.done { color:#7efbb0; } .on-led .s.unknown { color:var(--on-muted); }
+  .on-led .st { color:var(--on-muted); }
+
+  .on-lin { list-style:none; padding:0; margin:0; }
+  .on-lin li { padding:.45rem 0; border-top:1px solid rgba(91,192,235,.12); font-size:.86rem; }
+  .on-lin li:first-child { border-top:none; }
+  .on-lin b { color:#fff; }
+
+  .on-eps { list-style:none; padding:0; margin:0; }
+  .on-eps li { display:flex; gap:10px; padding:.45rem 0; border-top:1px solid rgba(91,192,235,.12); font-size:.88rem; align-items:baseline; }
+  .on-eps li:first-child { border-top:none; }
+  .on-eps .n { color:var(--on-foam); font-weight:800; min-width:52px; }
+  .on-eps a { color:#fff; text-decoration:none; } .on-eps a:hover { color:var(--on-foam); }
+  .on-eps .d { color:var(--on-muted); font-size:.76rem; margin-left:auto; white-space:nowrap; }
+
+  .on-btn { display:inline-flex; align-items:center; gap:8px; margin-top:.9rem; background:linear-gradient(135deg,var(--on-sea),var(--on-foam));
+    color:#031018; font-weight:700; padding:.6rem 1.1rem; border-radius:12px; text-decoration:none; font-size:.92rem; }
+  .on-btn.ghost { background:transparent; color:var(--on-foam); border:1px solid var(--on-line); }
+  .on-foot { max-width:1120px; margin:0 auto 2rem; padding:0 1.25rem; color:var(--on-muted); font-size:.78rem; }
+  .on-foot a { color:var(--on-foam); }
 </style>
 
 
-    
-    
-    <style>:root {
-      --show-color: #0B3C5D;
-      --show-color-dark: #0B3C5D;
-      --show-color-text: color-mix(in srgb, #0B3C5D, white 35%);
-    }</style>
     
     <style>
         @media (max-width: 768px) {
@@ -391,11 +498,11 @@
                 </li>
                 
                 
-<li><a href="start-here.html">Start Here</a></li>
-<li><a href="how-to-listen.html">Listen</a></li>
-<li><a href="about.html">About</a></li>
-<li><a href="player.html">Player</a></li>
-
+                <li><a href="start-here.html">Start Here</a></li>
+                <li><a href="how-to-listen.html">Listen</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="player.html">Player</a></li>
+                
                 
                 <li><a id="nn-nav-account" href="join.html"
                        style="border:1px solid var(--nn-border);border-radius:999px;padding:0.3rem 0.85rem;">Join</a></li>
@@ -414,18 +521,11 @@
     <div id="mobileMenu" class="nn-mobile-menu">
         <a id="nn-nav-account-m" href="join.html" style="font-weight:600;">Join</a>
         
-<a href="start-here.html" onclick="document.getElementById('mobileMenu').classList.remove('open')">Start Here</a>
-<a href="how-to-listen.html" onclick="document.getElementById('mobileMenu').classList.remove('open')">Listen</a>
-<a href="about.html" onclick="document.getElementById('mobileMenu').classList.remove('open')">About</a>
-<a href="player.html" onclick="document.getElementById('mobileMenu').classList.remove('open')">Player</a>
-<a href="offshore-north.html" onclick="document.getElementById('mobileMenu').classList.remove('open')">Home</a>
-<a href="blog/offshore_north/index.html" onclick="document.getElementById('mobileMenu').classList.remove('open')">Blog</a>
-<a href="offshore-north-summaries.html" onclick="document.getElementById('mobileMenu').classList.remove('open')">Summaries</a>
-<a href="#episodes" onclick="document.getElementById('mobileMenu').classList.remove('open')">Episodes</a>
-<a href="#about" onclick="document.getElementById('mobileMenu').classList.remove('open')">About</a>
-<a href="#resources" onclick="document.getElementById('mobileMenu').classList.remove('open')">Resources</a>
-<a href="#faq" onclick="document.getElementById('mobileMenu').classList.remove('open')">FAQ</a>
-
+        <a href="start-here.html">Start Here</a>
+        <a href="how-to-listen.html">How to Listen</a>
+        <a href="about.html">About</a>
+        <a href="player.html">Player</a>
+        
         <div class="nn-mobile-shows">
             <div class="nn-mobile-shows-title">All Shows</div>
             
@@ -630,552 +730,328 @@
 
     <main id="main-content">
     
-    
-    <!-- Hero -->
-    <section class="show-hero">
-        <div class="show-hero-bg"></div>
-        <div class="show-hero-inner">
+
+
+
+<div class="on-dash">
+  <div class="on-hero">
+    <div class="on-container">
+      <div class="on-kicker"><span class="dot"></span> Offshore North · Campaign Dashboard</div>
+      <h1 class="on-h1">Scott Shawyer and EMIRA IV — the road to the Vendée Globe</h1>
+      <p class="on-sub">Become the first Canadian to finish the Vendée Globe — solo, non-stop, unassisted around the world — at the 2028 edition. This page follows the campaign between episodes: where the boat was last reported, what the team has said, what is next on the calendar, and where to read and follow it yourself. The companion to the <a href="offshore-north.html">Offshore North</a> podcast.</p>
+
+      <div class="on-cd-card">
+        <div class="on-kicker" style="margin-bottom:.2rem;"><span class="dot"></span> Next start line</div>
+        <h3>Route du Rhum – Destination Guadeloupe start</h3>
+        <div class="when" id="onPrimaryWhen" data-when="2026-11-01T13:02:00+01:00">Saint-Malo → Pointe-à-Pitre · 118 solo skippers · Scott Shawyer's first solo transatlantic on a foiling IMOCA</div>
+        <div class="on-cd" id="onCountdown" data-when="2026-11-01T13:02:00+01:00">
+          <div class="on-cd-unit"><div class="on-cd-num" id="cd-d">--</div><div class="on-cd-label">Days</div></div>
+          <div class="on-cd-unit"><div class="on-cd-num" id="cd-h">--</div><div class="on-cd-label">Hours</div></div>
+          <div class="on-cd-unit"><div class="on-cd-num" id="cd-m">--</div><div class="on-cd-label">Min</div></div>
+          <div class="on-cd-unit"><div class="on-cd-num" id="cd-s">--</div><div class="on-cd-label">Sec</div></div>
+        </div>
+        <div class="on-chips">
+          
+          <a class="on-chip" href="https://www.defi-azimut.net/en" target="_blank" rel="noopener" data-when="2026-09-15T00:00:00+02:00" data-end="2026-09-20T23:59:00+02:00" title="Speed runs · 48H Azimut solo · Tour de Groix — Lorient"><span>Défi Azimut-Lorient Agglomération</span><b class="days">…</b></a>
+          
+          <a class="on-chip" href="https://www.routedurhum.com/en" target="_blank" rel="noopener" data-when="2026-10-20T00:00:00+02:00" data-end="" title="Saint-Malo"><span>Route du Rhum race village opens</span><b class="days">…</b></a>
+          
+          <a class="on-chip" href="https://www.vendeeglobe.org/en" target="_blank" rel="noopener" data-when="2028-11-12T13:02:00+01:00" data-end="" title="Les Sables d'Olonne — the goal"><span>Vendée Globe 2028 start</span><b class="days">…</b></a>
+          
+        </div>
+        <a class="on-btn ghost" href="https://www.routedurhum.com/en" target="_blank" rel="noopener">Official race site ↗</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="on-grid">
+    <div class="on-panel">
+      <h2>Last known position <span class="sm">dated · sourced · never guessed</span></h2>
+      <div class="on-pos">
+        <div class="fix" id="onFixText">"Emira IV now leaving Canada and heading back to Europe" — Scott's Notes, Thank you, Canada.</div>
+        <div class="meta" id="onFixMeta">
+          <span class="tag">Fix</span>2026-09-02 · <a href="https://www.canadaoceanracing.com/thank-you-canada-what-scott-shawyer-has-learned-after-a-summer-of-intense-training-on-an-imoca-60/" target="_blank" rel="noopener">source</a>
+        </div>
+      </div>
+      <ul class="on-log">
+        
+        <li><span class="d">2026-09-02</span><span>"Emira IV now leaving Canada and heading back to Europe" — Scott's Notes, Thank you, Canada. <a href="https://www.canadaoceanracing.com/thank-you-canada-what-scott-shawyer-has-learned-after-a-summer-of-intense-training-on-an-imoca-60/" target="_blank" rel="noopener" class="on-muted">↗</a></span></li>
+        
+        <li><span class="d">2026-08-31</span><span>Welland Canal transit posted on the team's YouTube channel. <a href="https://www.youtube.com/c/CanadaOceanRacing" target="_blank" rel="noopener" class="on-muted">↗</a></span></li>
+        
+        <li><span class="d">2026-08-09</span><span>Departed Collingwood (weekend of 8–9 August), earlier than the published mid-August plan. <a href="https://www.canadaoceanracing.com/" target="_blank" rel="noopener" class="on-muted">↗</a></span></li>
+        
+        <li><span class="d">2026-06-01</span><span>Arrived in Collingwood, Ontario, for the summer training programme on Georgian Bay. <a href="https://www.canadaoceanracing.com/emira-iv-arrives-in-collingwood-ontario-for-a-summer-of-training/" target="_blank" rel="noopener" class="on-muted">↗</a></span></li>
+        
+      </ul>
+      <p class="on-muted" style="margin:.8rem 0 0;">The newest dated post from the team's own channels that describes a movement, refreshed nightly and after each episode; the log above is operator-verified. Between fixes the boat is wherever the tracker says it is — not wherever this page guesses.</p>
+      <a class="on-btn ghost" href="https://www.canadaoceanracing.com/follow/" target="_blank" rel="noopener">Open the team's tracker ↗</a>
+    </div>
+    <div class="on-panel">
+      <h2>Live tracker <span class="sm">YB Tracking (the team's own public tracker page)</span></h2>
+      <div class="on-tracker">
+        <iframe src="https://my.yb.tl/emira4" loading="lazy" title="EMIRA IV tracker" referrerpolicy="no-referrer-when-downgrade"></iframe>
+      </div>
+      <p class="on-muted" style="margin:.6rem 0 0;">Embedded from the team's public tracker page. If it shows nothing, the tracker is between events — the campaign's own page is <a href="https://www.canadaoceanracing.com/follow/" target="_blank" rel="noopener">here</a>.</p>
+    </div>
+  </div>
+
+  <div class="on-grid">
+    <div class="on-panel">
+      <h2>Latest from the campaign <span class="sm">what the team said, not just when</span></h2>
+      <ul class="on-feed" id="onPosts"><li class="on-muted">Loading the team's latest posts…</li></ul>
+    </div>
+    <div class="on-panel">
+      <h2>Latest offshore headlines <span class="sm">the press the show reads</span></h2>
+      <ul class="on-feed" id="onHeadlines"><li class="on-muted">Loading…</li></ul>
+      <p class="on-muted" id="onFetched" style="margin:.7rem 0 0;"></p>
+    </div>
+  </div>
+
+  <div class="on-grid">
+    <div class="on-panel">
+      <h2>The boat: EMIRA IV <span class="sm">CAN 80</span></h2>
+      <div class="on-kv">
+        <div><div class="k">Class</div><div class="v">IMOCA 60 (foiling)</div></div>
+        <div><div class="k">Designer</div><div class="v">Guillaume Verdier</div></div>
+        <div><div class="k">Builder</div><div class="v">CDK Technologies, Brittany</div></div>
+        <div><div class="k">Launched</div><div class="v">2021-08-24</div></div>
+        <div><div class="k">Length</div><div class="v">18.28 m</div></div>
+        <div><div class="k">Beam</div><div class="v">5.85 m</div></div>
+        <div><div class="k">Draft</div><div class="v">4.5 m</div></div>
+        <div><div class="k">Displacement</div><div class="v">~9 t</div></div>
+        <div><div class="k">Races as</div><div class="v">Canada Ocean Racing – Be Water Positive</div></div>
+      </div>
+      <ul class="on-ped">
+        <li><span class="y">2023</span><span>Won The Ocean Race as Mālama (11th Hour Racing Team, Charlie Enright)</span></li><li><span class="y">2024</span><span>4th, New York Vendée (Sébastien Simon, as Groupe Dubreuil)</span></li><li><span class="y">2024–25</span><span>3rd in the Vendée Globe with Sébastien Simon, most of the course on one foil after early-December damage; solo 24-hour record on this hull</span></li><li><span class="y">2025</span><span>Acquired by Canada Ocean Racing, renamed EMIRA IV; 6th in The Ocean Race Europe; retired from the Rolex Fastnet Race</span></li><li><span class="y">2026</span><span>Delivered France → Canada (Atlantic, St Lawrence Seaway, Welland Canal, Great Lakes); first Canadian summer training programme on Georgian Bay, June–August; departed Collingwood 8–9 August; heading back to Europe (team post, 2 September)</span></li>
+      </ul>
+      <p class="on-muted" style="margin:.6rem 0 0;">Previously 11th Hour Racing Team — Mālama → Groupe Dubreuil. Spec sheet: <a href="https://www.imoca.org/en/boats/emira-iv" target="_blank" rel="noopener">IMOCA class register ↗</a></p>
+    </div>
+    <div class="on-panel">
+      <h2>The skipper: Scott Shawyer</h2>
+      <p style="margin:0 0 .6rem;font-size:.92rem;line-height:1.5;">President and skipper. Came to the sport from engineering and business (26 years leading JMP Solutions). Holds the double-handed course record for the RORC Transatlantic Race; 4th in the 2024 New York Vendée, his first solo IMOCA race. Collingwood, Ontario.</p>
+      <p class="on-muted" style="margin:0 0 .8rem;">Be Water Positive (water-scarcity awareness) + a Youth Pathway Programme for young Canadian sailors.</p>
+      <h2 style="margin-top:1rem;">Vendée Globe 2028 qualification <span class="sm">published outline · the campaign's ledger</span></h2>
+      <ul class="on-led">
+        
+        <li><span class="s open">○</span><span><b>Grade 2 solo race finished on EMIRA IV</b><br><span class="st">Not yet — the Route du Rhum on 1 November 2026 is the first opportunity</span></span></li>
+        
+        <li><span class="s unknown">?</span><span><b>IMOCA Globe Series ranking</b><br><span class="st">Not published here until sourced from imoca.org</span></span></li>
+        
+        <li><span class="s unknown">?</span><span><b>Registration for the 2028 Vendée Globe</b><br><span class="st">Registration opened 16 February 2026; the campaign's filing status is not public</span></span></li>
+        
+      </ul>
+      <p class="on-muted" style="margin:.7rem 0 0;">
+        Complete at least one Grade 2 solo race from the IMOCA 2025–2028 calendar on the boat you will race in the Vendée Globe, finishing within twice the winner's time. Be among the top 37 in the IMOCA Globe Series championship (remaining places under the organisers' criteria). The fleet is capped at 40 boats. 
+        Finer mechanics (points tables, the designated-race list, wild cards) are not published here until sourced from <a href="https://www.imoca.org/en" target="_blank" rel="noopener">imoca.org</a> / <a href="https://www.vendeeglobe.org/en" target="_blank" rel="noopener">vendeeglobe.org</a>.
+      </p>
+    </div>
+  </div>
+
+  <div class="on-grid one">
+    <div class="on-panel">
+      <h2>Season calendar <span class="sm">2026 → 12 November 2028</span></h2>
+      <ul class="on-cal">
+        
+        <li><span class="d">2026-02-16</span><span class=""><a href="https://www.vendeeglobe.org/en" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">Vendée Globe 2028 registration opened (1,000 days out)</a><span class="st done">done</span></span></li>
+        
+        <li><span class="d">2026-04-16</span><span class=""><a href="https://www.imoca.org/en/route-du-rhum-destination-guadeloupe" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">Route du Rhum 2026: 118 skippers selected (26 IMOCA) — Canada Ocean Racing – Be Water Positive on the list</a><span class="st done">done</span></span></li>
+        
+        <li><span class="d">2026-06</span><span class=""><a href="https://www.vendeearctique.org/en/article/ambrogio-beccaria-incredible-winner-vendee-arctique" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">Vendée Arctique (solo) — won by Ambrogio Beccaria</a><span class="st done">done</span></span></li>
+        
+        <li><span class="d">2026-06-11</span><span class=""><a href="https://www.canadaoceanracing.com/fair-winds-charlie-dalin/" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">Charlie Dalin, 2024–25 Vendée Globe winner, dies aged 42</a><span class="st done">done</span></span></li>
+        
+        <li><span class="d">2026-06 → 2026-08</span><span class=""><a href="https://www.canadaoceanracing.com/emira-iv-arrives-in-collingwood-ontario-for-a-summer-of-training/" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">EMIRA IV: first Canadian summer training programme, Georgian Bay (public tours 13 and 20 June)</a><span class="st done">done</span></span></li>
+        
+        <li><span class="d">2026-09-02 → 09-10</span><span class=""><a href="https://www.theoceanrace.com/en/atlantic/2026" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">The Ocean Race Atlantic (crewed, New York → Lorient) — won by United by the Ocean</a><span class="st done">done</span></span></li>
+        
+        <li><span class="d">2026-09-15 → 09-20</span><span class=""><a href="https://www.defi-azimut.net/en" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">Défi Azimut-Lorient Agglomération — the last IMOCA gathering before the Rhum</a><span class="st upcoming">upcoming</span></span></li>
+        
+        <li><span class="d">2026-10-20</span><span class=""><a href="https://www.routedurhum.com/en" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">Route du Rhum race village opens, Saint-Malo</a><span class="st upcoming">upcoming</span></span></li>
+        
+        <li><span class="d">2026-11-01</span><span class="emira"><a href="https://www.routedurhum.com/en" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">Route du Rhum – Destination Guadeloupe start, 13:02 — EMIRA IV entered</a><span class="st upcoming">upcoming</span></span></li>
+        
+        <li><span class="d">2026-11-06</span><span class=""><a href="https://www.routedurhum.com/en" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">Route du Rhum finish village opens, Pointe-à-Pitre (first Ultims expected within days)</a><span class="st upcoming">upcoming</span></span></li>
+        
+        <li><span class="d">2027</span><span class=""><a href="https://www.imoca.org/en" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">Transat Café L'OR + the crewed calendar — dates to be confirmed</a><span class="st tbc">tbc</span></span></li>
+        
+        <li><span class="d">2028-11-12</span><span class="emira"><a href="https://www.vendeeglobe.org/en" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">Vendée Globe start, Les Sables d'Olonne</a><span class="st goal">goal</span></span></li>
+        
+      </ul>
+    </div>
+  </div>
+
+  <div class="on-grid">
+    <div class="on-panel">
+      <h2>Recent results</h2>
+      
+      <div class="on-res">
+        <h3><a href="https://www.theoceanrace.com/en/news/atlantic/16012_LIVE-UNITED-BY-THE-OCEAN-WIN-THE-OCEAN-RACE-ATLANTIC" target="_blank" rel="noopener" style="color:#fff;text-decoration:none;">The Ocean Race Atlantic 2026 ↗</a></h3>
+        <div class="dates">2–10 September 2026 · New York → Lorient · ~3,300 nm · crewed (2 women + 2 men + OBR)</div>
+        <table>
+          <tr><td class="p">1</td><td><b>United by the Ocean</b> — Paul Meilhat (FRA)</td><td class="n">7d 23h 39m 11s</td></tr><tr><td class="p">2</td><td><b>11th Hour Racing</b> — Francesca Clapcich (USA)</td><td class="n">+8m 56s</td></tr><tr><td class="p">3</td><td><b>DMG MORI Global One</b> — Kojiro Shiraishi (JPN)</td><td class="n">+22m 29s</td></tr><tr><td class="p">4</td><td><b>Team Malizia</b> — Boris Herrmann (GER)</td><td class="n">+27m 29s — led early; collision with a marine animal damaged the port foil ram ~2.5 days in</td></tr><tr><td class="p">5</td><td><b>Embrace the Challenge</b> — Oliver Heer (SUI)</td><td class="n">three-metre mainsail tear repaired at sea in 40 knots</td></tr><tr><td class="p">6</td><td><b>MSIG Europe</b> — Conrad Colman (NZL)</td><td class="n">first all-New Zealand IMOCA crew</td></tr>
+        </table>
+      </div>
+      
+      <div class="on-res">
+        <h3><a href="https://www.vendeearctique.org/en/article/ambrogio-beccaria-incredible-winner-vendee-arctique" target="_blank" rel="noopener" style="color:#fff;text-decoration:none;">Vendée Arctique 2026 ↗</a></h3>
+        <div class="dates">June 2026 · solo · from Les Sables d'Olonne</div>
+        <table>
+          <tr><td class="p">1</td><td><b>Allagrande Mapei</b> — Ambrogio Beccaria (ITA)</td><td class="n">8d 14h 05m 50s — from fifth in the final windless miles; first solo race on the boat</td></tr><tr><td class="p">2</td><td><b>MACIF Santé Prévoyance</b> — Sam Goodchild (GBR)</td><td class="n">+1h 15m 03s</td></tr><tr><td class="p">3</td><td><b>Initiatives-Cœur</b> — Violette Dorange (FRA)</td><td class="n"></td></tr>
+        </table>
+      </div>
+      
+    </div>
+    <div class="on-panel">
+      
+      <h2>Route du Rhum 2026 — IMOCA entries <span class="sm">21 listed</span></h2>
+      <ul class="on-entries">
+        <li class="">Sam Goodchild <span class="b">· MACIF Santé Prévoyance</span></li><li class="">Corentin Horeau <span class="b">· MACSF</span></li><li class="">Violette Dorange <span class="b">· Initiatives-Cœur</span></li><li class="">Armel Tripon <span class="b">· Les P'tits Doudous</span></li><li class="">Ambrogio Beccaria <span class="b">· Allagrande Mapei</span></li><li class="">Sébastien Simon <span class="b">· Groupe Dubreuil Air Caraïbes</span></li><li class="">Manuel Cousin <span class="b">· Coup de Pouce</span></li><li class="">Maxime Sorel <span class="b">· (boat to be announced)</span></li><li class="can">Scott Shawyer <span class="b">· Canada Ocean Racing – Be Water Positive (EMIRA IV)</span></li><li class="">Jérémie Beyou <span class="b">· Charal</span></li><li class="">Nicolas d'Estais <span class="b">· Café Joyeux</span></li><li class="">Davy Beaudart <span class="b">· Bureau Vallée</span></li><li class="">Elodie Bonafous <span class="b">· Association Petits Princes – Quéguiner</span></li><li class="">Boris Herrmann <span class="b">· Malizia</span></li><li class="">Fabrice Amedeo <span class="b">· FDJ United – Wewise</span></li><li class="">Masa Suzuki <span class="b">· Milai 22</span></li><li class="">Sébastien Marsset <span class="b">· Foussier</span></li><li class="">Pierre-Louis Attwell <span class="b">· Résilient</span></li><li class="">Francesca Clapcich <span class="b">· 11th Hour Racing</span></li><li class="">Thomas Ruyant <span class="b">· TR Racing</span></li><li class="">Arnaud Boissières <span class="b">· April Marine</span></li>
+      </ul>
+      <p class="on-muted" style="margin:.7rem 0 0;">IMOCA class entry page, read 2026-09-14 (21 of the 26 selected boats listed; late confirmations pending). Entry names are the sponsor names the boats race under. <a href="https://www.imoca.org/en/route-du-rhum-destination-guadeloupe" target="_blank" rel="noopener">Source ↗</a></p>
+    </div>
+  </div>
+
+  <div class="on-grid one">
+    <div class="on-panel">
+      <h2>Follow the sport <span class="sm">every source and channel this show reads, and the ones worth following yourself</span></h2>
+      <div class="on-follow">
+        
+        <div>
+          <h3>The campaign</h3>
+          <ul>
             
-            <picture>
-                <source type="image/webp" srcset="assets/covers/offshore-north-400.webp 400w, assets/covers/offshore-north-800.webp 800w, assets/covers/offshore-north.webp 1400w" sizes="(max-width: 600px) 240px, 360px">
-                <img src="assets/covers/offshore-north.jpg" alt="Offshore North cover art" class="show-hero-art"
-                     width="1400" height="1400" fetchpriority="high"
-                     onerror="this.style.display='none'">
-            </picture>
-            <div class="show-hero-info">
-                <h1>Offshore North</h1>
-                <p class="show-hero-tagline">The quest to become the first Canadian to sail alone, non-stop, around the world — and the wild sport it happens in.</p>
-                <div style="display:flex;gap:var(--sp-2);align-items:center;margin-bottom:var(--sp-3);font-family:var(--font-ui);font-size:0.85rem;color:var(--nn-text-muted);"><span style="background:var(--nn-card);border:1px solid var(--nn-border);padding:2px 10px;border-radius:6px;">Weekly — Mondays</span>
-                    <span style="background:var(--nn-card);border:1px solid var(--nn-border);padding:2px 10px;border-radius:6px;">~12 min</span>
-                </div>
-                <p class="show-hero-desc">Offshore North is the Nerra Network's weekly guide to offshore ocean racing. One of the great endurance sports on earth is reported almost entirely in French, which leaves English-speaking fans with the results but not the meaning. Every Monday, Dan closes that gap: what Canada Ocean Racing did on the road to the Vendée Globe and what it actually changes, the week in the wider IMOCA fleet — races, new boats, rule changes, and the money behind all of it — and Plain Sailing, one concept explained properly for people who love this sport without living inside it. Sources named in every episode and linked in the notes. No hype, no play-by-play, and nothing stated that the sources do not support.</p>
-                
-                <p style="font-family:var(--font-ui);font-size:0.88rem;color:var(--nn-text-muted);margin-bottom:var(--sp-4);font-style:italic;">English-speaking offshore racing fans, Canadian sailors and club racers, and anyone who watched a Vendée Globe documentary and wanted to keep following the sport afterward</p>
-                
-                
-                <div class="show-hero-actions">
-                    <a href="#episodes" class="nn-btn nn-btn-primary">Listen Now</a>
-                    <a href="blog/offshore_north/index.html" class="nn-btn">Read Blog</a>
-                    <a href="offshore-north-summaries.html" class="nn-btn">View Summaries</a>
-                    
-                    
-                    <a href="offshore-north-narrative.html" class="nn-btn">Story Tracker</a>
-                    
-                    
-                    
-                    
-                    <a href="offshore-north-dashboard.html" class="nn-btn">⛵ Campaign Dashboard</a>
-                    
-                    
-                </div>
-
-                
-                <div class="show-hero-subscribe">
-                    <span class="subscribe-label">Subscribe</span>
-                    
-                    
-                    <a href="offshore_north_podcast.rss" class="nn-chip" data-show="offshore_north">RSS</a>
-                    
-                    
-                </div>
-
-                
-                <div style="margin-top:var(--sp-3);">
-                    <a href="ai-disclosure.html" class="nn-ai-badge" rel="nofollow"
-   title="How we use AI — full transparency"
-   style="display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border:1px solid var(--nn-border);border-radius:100px;font-family:var(--font-ui);font-size:0.72rem;font-weight:600;color:var(--nn-text-muted);text-decoration:none;line-height:1.4;white-space:nowrap;">
-  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v.01M11 12h1v4h1"/></svg>
-  Made with AI — transparently
-</a>
-                </div>
-                
-                
-            </div>
-        </div>
-    </section>
-    <section style="padding:var(--sp-3) var(--sp-6);background:var(--nn-card);border-bottom:1px solid var(--nn-border);">
-        <div class="container" style="max-width:760px;display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp-3);justify-content:center;">
-            <span style="font-family:var(--font-ui);font-size:0.92rem;color:var(--nn-text);">
-                📬 Get the next episode in your inbox:
-            </span>
-            <form action="https://buttondown.com/api/emails/embed-subscribe/patricknovak1" method="post" target="popupwindow" style="display:flex;gap:var(--sp-2);flex-wrap:wrap;">
-                <input type="hidden" name="tag" value="Offshore North">
-                <input type="hidden" value="1" name="embed">
-                <input type="email" name="email" placeholder="your@email.com" required aria-label="Email address" style="padding:6px 12px;border-radius:6px;border:1px solid var(--nn-border);background:var(--nn-bg);color:var(--nn-text);font-size:0.92rem;min-width:200px;">
-                <button type="submit" style="padding:6px 14px;border-radius:6px;background:var(--show-color);color:#ffffff;border:none;font-size:0.92rem;font-weight:600;cursor:pointer;">Subscribe</button>
-            </form>
-        </div>
-    </section>
-    
-
-    <!-- Latest Episode -->
-    <section class="nn-section" style="padding-top: var(--sp-8);">
-        <div class="container">
-            <div class="latest-episode glass-card" id="latest-player">
-                <div class="latest-episode-label">Latest Episode</div>
-                <div class="latest-episode-title" id="latest-title">Loading...</div>
-                <div class="latest-episode-date" id="latest-date"></div>
-                <audio id="latest-audio" controls preload="none" aria-label="Latest episode audio player" style="width:100%;height:42px;border-radius:8px;"></audio>
-                
-                <div id="latest-langs" style="display:none;margin-top:10px;align-items:center;flex-wrap:wrap;gap:6px;" aria-label="Listen in another language"></div>
-                <div id="latest-summary" style="margin-top:var(--sp-4);color:var(--nn-text-muted);font-size:0.92rem;display:none;"></div>
-
-                
-                <noscript>
-                    
-                    <div class="latest-episode-title" style="font-size:1.05rem;font-weight:600;margin:0.5rem 0;">Ep 5: Class40 leads Route du Rhum entries</div>
-                    
-                    <div style="color:var(--nn-text-muted);font-size:0.85rem;margin-bottom:0.5rem;">Mon, Sep 14, 2026</div>
-                    
-                    
-                    <audio controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/offshore_north/Offshore_North_Ep005_20260914.mp3" style="width:100%;height:42px;border-radius:8px;" aria-label="Latest episode audio"></audio>
-                    
-                    <div style="margin-top:0.5rem;font-size:0.8rem;opacity:0.7;">(JavaScript disabled — showing first episode from RSS)</div>
-                    
-                </noscript>
-            </div>
-        </div>
-    </section>
-
-    
-
-    <!-- Episode Archive -->
-    <section id="episodes" class="nn-section" style="padding-top: 0;">
-        <div class="container">
-            <div class="nn-section-header" style="text-align:left;">
-                <h2>Recent Episodes</h2>
-            </div>
-            <div id="episodes-grid" class="episodes-grid">
-                
-                
-                <div class="episode-card glass-card">
-                    <div class="episode-card-title">Ep 5: Class40 leads Route du Rhum entries</div>
-                    <div class="episode-card-date">Mon, Sep 14, 2026</div>
-                    
-                    <audio controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/offshore_north/Offshore_North_Ep005_20260914.mp3" style="width:100%;height:36px;border-radius:8px;margin-top:var(--sp-2);"></audio>
-                    
-                </div>
-                
-                <div class="episode-card glass-card">
-                    <div class="episode-card-title">Ep 4: Ocean Race Atlantic Leaders Extend Gap</div>
-                    <div class="episode-card-date">Mon, Sep 07, 2026</div>
-                    
-                    <audio controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/offshore_north/Offshore_North_Ep004_20260907.mp3" style="width:100%;height:36px;border-radius:8px;margin-top:var(--sp-2);"></audio>
-                    
-                </div>
-                
-                <div class="episode-card glass-card">
-                    <div class="episode-card-title">Ep 3: Mixed Crews Open New IMOCA Transatlantic</div>
-                    <div class="episode-card-date">Mon, Aug 31, 2026</div>
-                    
-                    <audio controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/offshore_north/Offshore_North_Ep003_20260831.mp3" style="width:100%;height:36px;border-radius:8px;margin-top:var(--sp-2);"></audio>
-                    
-                </div>
-                
-                <div class="episode-card glass-card">
-                    <div class="episode-card-title">Ep 2: Golden Globe fleet gathers as Route du Rhum prep begins</div>
-                    <div class="episode-card-date">Mon, Aug 24, 2026</div>
-                    
-                    <audio controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/offshore_north/Offshore_North_Ep002_20260824.mp3" style="width:100%;height:36px;border-radius:8px;margin-top:var(--sp-2);"></audio>
-                    
-                </div>
-                
-                <div class="episode-card glass-card">
-                    <div class="episode-card-title">Ep 1: Toronto Star spotlights Shawyer’s solo round-the-world bid</div>
-                    <div class="episode-card-date">Tue, Aug 18, 2026</div>
-                    
-                    <audio controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/offshore_north/Offshore_North_Ep001_20260818.mp3" style="width:100%;height:36px;border-radius:8px;margin-top:var(--sp-2);"></audio>
-                    
-                </div>
-                
-                
-            </div>
-            <div style="text-align:center;margin-top:var(--sp-6);">
-                <a href="offshore-north-summaries.html" class="nn-btn">View All Episodes</a>
-            </div>
-
+            <li><span class="ic">⛵</span><a href="https://www.canadaoceanracing.com/" target="_blank" rel="noopener">canadaoceanracing.com</a></li>
             
+            <li><span class="ic">✎</span><a href="https://www.canadaoceanracing.com/scott-notes/" target="_blank" rel="noopener">Scott's Notes — the skipper's own writing</a></li>
             
+            <li><span class="ic">⌖</span><a href="https://www.canadaoceanracing.com/follow/" target="_blank" rel="noopener">Tracker (YB Tracking)</a></li>
+            
+            <li><span class="ic">◎</span><a href="https://www.instagram.com/Canada_Ocean_Racing/" target="_blank" rel="noopener">Instagram @Canada_Ocean_Racing</a></li>
+            
+            <li><span class="ic">▶</span><a href="https://www.youtube.com/c/CanadaOceanRacing" target="_blank" rel="noopener">YouTube — Canada Ocean Racing</a></li>
+            
+            <li><span class="ic">𝕏</span><a href="https://twitter.com/Canada_Ocean" target="_blank" rel="noopener">X @Canada_Ocean</a></li>
+            
+            <li><span class="ic">f</span><a href="https://www.facebook.com/CanadaOceanRacing" target="_blank" rel="noopener">Facebook</a></li>
+            
+            <li><span class="ic">♪</span><a href="https://www.tiktok.com/@canada_ocean_racing" target="_blank" rel="noopener">TikTok @canada_ocean_racing</a></li>
+            
+            <li><span class="ic">in</span><a href="https://www.linkedin.com/company/canada-ocean-racing/" target="_blank" rel="noopener">LinkedIn</a></li>
+            
+            <li><span class="ic">⛵</span><a href="https://www.imoca.org/en/boats/emira-iv" target="_blank" rel="noopener">EMIRA IV on the IMOCA class register</a></li>
+            
+          </ul>
         </div>
-    </section>
-
-    <!-- About -->
-    <section id="about" class="nn-section" style="border-top:1px solid var(--nn-border);">
-        <div class="container">
-            <div class="nn-section-header">
-                <h2>About Offshore North</h2>
-            </div>
-            <div class="about-section-text">
-                <p>Every four years, around thirty people sail alone, without stopping and without assistance, all the way around the world. No Canadian has ever finished. Scott Shawyer and Canada Ocean Racing are trying to change that at the Vendée Globe starting 12 November 2028, aboard a boat that has already won The Ocean Race and finished third in the Vendée Globe under two previous names. Offshore North follows that attempt week by week — and uses it as a door into the whole sport. Each episode: The Canadian Boat (what the campaign did, and what it changes), The Fleet (the week in offshore racing, with the why-it-matters layer), Plain Sailing (one concept explained for the keen non-expert), and The Countdown (days to the start, and where qualification actually stands). Made for people who are enthusiastic, not expert — and never treated as though those are the same thing.</p>
-                
-                <p>Hosted by Dan — Nerra Network co-founder and commercial airline pilot. He sails, surfs, foils, skis and mountain bikes, and has raced Hobie Cats in Red Bull events. He is not an offshore racing expert and says so plainly, but he brings two things almost no English-language sailing commentator has together: a pilot spends his working life reading weather, trading a shorter track against a faster one, and making irreversible calls on incomplete information at three in the morning — which is very close to the job a solo skipper actually does — and he has felt, at a much smaller scale, what it is like when a hull comes unstuck and starts to fly.</p>
-                
-            </div>
+        
+        <div>
+          <h3>Class and race organisers</h3>
+          <ul>
+            
+            <li><span class="ic">⛵</span><a href="https://www.imoca.org/en" target="_blank" rel="noopener">IMOCA class — imoca.org</a></li>
+            
+            <li><span class="ic">◎</span><a href="https://www.instagram.com/imocaglobeseries/" target="_blank" rel="noopener">IMOCA on Instagram @imocaglobeseries</a></li>
+            
+            <li><span class="ic">𝕏</span><a href="https://x.com/imocags" target="_blank" rel="noopener">IMOCA on X @ImocaGS</a></li>
+            
+            <li><span class="ic">⛵</span><a href="https://www.vendeeglobe.org/en" target="_blank" rel="noopener">Vendée Globe — vendeeglobe.org</a></li>
+            
+            <li><span class="ic">◎</span><a href="https://www.instagram.com/vendeeglobe/" target="_blank" rel="noopener">Vendée Globe on Instagram @vendeeglobe</a></li>
+            
+            <li><span class="ic">⛵</span><a href="https://www.routedurhum.com/en" target="_blank" rel="noopener">Route du Rhum — routedurhum.com</a></li>
+            
+            <li><span class="ic">◎</span><a href="https://www.instagram.com/route_du_rhum/" target="_blank" rel="noopener">Route du Rhum on Instagram @route_du_rhum</a></li>
+            
+            <li><span class="ic">𝕏</span><a href="https://x.com/RouteDuRhum" target="_blank" rel="noopener">Route du Rhum on X @RouteDuRhum</a></li>
+            
+            <li><span class="ic">⛵</span><a href="https://www.defi-azimut.net/en" target="_blank" rel="noopener">Défi Azimut — defi-azimut.net</a></li>
+            
+            <li><span class="ic">⛵</span><a href="https://www.theoceanrace.com/" target="_blank" rel="noopener">The Ocean Race — theoceanrace.com</a></li>
+            
+            <li><span class="ic">⛵</span><a href="https://www.vendeearctique.org/en" target="_blank" rel="noopener">Vendée Arctique — vendeearctique.org</a></li>
+            
+          </ul>
         </div>
-    </section>
-
-    <!-- Resources (categorized) -->
-    
-
-    <!-- Recommended Tools -->
-    
-
-    <!-- Referral -->
-    
-
-    <!-- Key Concepts / FAQ -->
-    
-
-    
-
-    <!-- Related Show Recommendation -->
-    
-    <section class="nn-section" style="padding-top:0;padding-bottom:var(--sp-8);">
-        <div class="container" style="max-width:700px;">
-            <div class="glass-card" style="padding:var(--sp-6);border-color:color-mix(in srgb, var(--show-color) 30%, var(--nn-border));">
-                <div style="font-family:var(--font-ui);font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--show-color-text, var(--show-color));margin-bottom:var(--sp-3);">Recommended for you</div>
-                <a href="thedppod.html" style="display:flex;align-items:center;gap:var(--sp-4);text-decoration:none;">
-                    <picture>
-                        <source type="image/webp" srcset="assets/covers/dp-pod-400.webp">
-                        <img src="assets/covers/dp-pod.jpg" alt="The DP Pod: The Do Positive Podcast" width="72" height="72" style="width:72px;height:72px;border-radius:12px;object-fit:cover;flex-shrink:0;" loading="lazy">
-                    </picture>
-                    <div>
-                        <div style="font-family:var(--font-heading);font-weight:600;color:var(--nn-white);font-size:1.05rem;margin-bottom:var(--sp-1);">The DP Pod: The Do Positive Podcast</div>
-                        <div style="font-family:var(--font-ui);font-size:0.88rem;color:var(--nn-text-muted);line-height:1.5;">If you enjoy Offshore North, The DP Pod is the network's daily conversation about good news in science and tech — same voice, different ocean.</div>
-                    </div>
-                </a>
-            </div>
+        
+        <div>
+          <h3>Press the show reads (English)</h3>
+          <ul>
+            
+            <li><span class="ic">¶</span><a href="https://sailorz.com/en/" target="_blank" rel="noopener">Sailorz by Tip & Shaft (English edition)</a></li>
+            
+            <li><span class="ic">¶</span><a href="https://www.sailingscuttlebutt.com/" target="_blank" rel="noopener">Scuttlebutt Sailing News</a></li>
+            
+            <li><span class="ic">¶</span><a href="https://www.sail-world.com/" target="_blank" rel="noopener">Sail-World</a></li>
+            
+            <li><span class="ic">¶</span><a href="https://www.yachtingworld.com/" target="_blank" rel="noopener">Yachting World</a></li>
+            
+            <li><span class="ic">¶</span><a href="https://canadianboating.ca/" target="_blank" rel="noopener">Canadian Boating</a></li>
+            
+          </ul>
         </div>
-    </section>
-    
+        
+        <div>
+          <h3>Press the show reads (French — where the sport is reported first)</h3>
+          <ul>
+            
+            <li><span class="ic">¶</span><a href="https://sailorz.com/" target="_blank" rel="noopener">Sailorz / Tip & Shaft (FR)</a></li>
+            
+            <li><span class="ic">¶</span><a href="https://www.courseaularge.com/" target="_blank" rel="noopener">Course au Large</a></li>
+            
+            <li><span class="ic">¶</span><a href="https://voilesetvoiliers.ouest-france.fr/" target="_blank" rel="noopener">Voiles et Voiliers (Ouest-France)</a></li>
+            
+          </ul>
+        </div>
+        
+        <div>
+          <h3>Teams and skippers in this cycle</h3>
+          <ul>
+            
+            <li><span class="ic">⛵</span><a href="https://www.team-malizia.com/" target="_blank" rel="noopener">Team Malizia (Boris Herrmann)</a></li>
+            
+            <li><span class="ic">⛵</span><a href="https://www.11thhourracing.org/" target="_blank" rel="noopener">11th Hour Racing (Francesca Clapcich)</a></li>
+            
+            <li><span class="ic">⛵</span><a href="https://www.allagranderacing.com/en" target="_blank" rel="noopener">Allagrande Racing (Ambrogio Beccaria)</a></li>
+            
+            <li><span class="ic">⛵</span><a href="https://www.imoca.org/en/skippers-1/sebastien-simon" target="_blank" rel="noopener">Sébastien Simon — Groupe Dubreuil (the boat that is now EMIRA IV)</a></li>
+            
+          </ul>
+        </div>
+        
+      </div>
+    </div>
+  </div>
 
-    <!-- Latest from the Blog -->
-    
-    <section class="nn-section">
-        <div class="container">
-            <div class="nn-section-header">
-                <h2>Latest from the Blog</h2>
-                <p>Read in-depth articles from recent episodes.</p>
-            </div>
-            <div class="blog-idx-grid" style="max-width:900px;padding-bottom:var(--sp-8)">
-                
-                <a href="blog/offshore_north/ep005.html" class="blog-idx-card">
-                    <div class="blog-idx-card-top">
-                        <span class="blog-idx-date">September 14, 2026</span>
-                        <span class="blog-idx-ep">Ep 5</span>
-                        <span class="blog-idx-reading">5 min</span>
-                    </div>
-                    <h2>Class40 leads Route du Rhum entries</h2>
-                    
-                    <p>Class40 has drawn 49 entries for the upcoming Route du Rhum, making it the largest and most open class on the start line.</p>
-                    
-                    <span class="blog-idx-read-more">Read article &rarr;</span>
-                </a>
-                
-                <a href="blog/offshore_north/ep004.html" class="blog-idx-card">
-                    <div class="blog-idx-card-top">
-                        <span class="blog-idx-date">September 07, 2026</span>
-                        <span class="blog-idx-ep">Ep 4</span>
-                        <span class="blog-idx-reading">5 min</span>
-                    </div>
-                    <h2>Ocean Race Atlantic Leaders Extend Gap</h2>
-                    
-                    <p>Team Malizia leads The Ocean Race Atlantic after recovering from a technical issue while a leading trio pulls ahead of the rest of the fleet in rough conditions&hellip;</p>
-                    
-                    <span class="blog-idx-read-more">Read article &rarr;</span>
-                </a>
-                
-                <a href="blog/offshore_north/ep003.html" class="blog-idx-card">
-                    <div class="blog-idx-card-top">
-                        <span class="blog-idx-date">August 31, 2026</span>
-                        <span class="blog-idx-ep">Ep 3</span>
-                        <span class="blog-idx-reading">5 min</span>
-                    </div>
-                    <h2>Mixed Crews Open New IMOCA Transatlantic</h2>
-                    
-                    <p>Six mixed IMOCA crews start the first Ocean Race Atlantic from New York to Lorient on 1 September.</p>
-                    
-                    <span class="blog-idx-read-more">Read article &rarr;</span>
-                </a>
-                
-            </div>
-            <div style="text-align:center">
-                <a href="blog/offshore_north/index.html" class="nn-btn nn-btn-primary" style="font-size:0.9rem;padding:var(--sp-3) var(--sp-8)">View all blog posts</a>
-            </div>
-        </div>
-    </section>
-    
+  <div class="on-grid">
+    <div class="on-panel">
+      <h2>The Canadian lineage</h2>
+      <ul class="on-lin">
+        <li><b>Mike Birch</b> — Won the very first Route du Rhum in 1978 — 47 years old, in the 12-metre trimaran Olympus Photo, by 98 seconds after 23 days at sea. He died in 2022, aged 90.</li><li><b>Gerry Roufs</b> — Lying second in the 1996–97 Vendée Globe when his last message from the South Pacific described 15-metre seas and 80-knot winds. Never heard from again; wreckage of Groupe LG 2 reached Chile months later.</li><li><b>Derek Hatfield</b> — Campaigned Spirit of Canada through the round-the-world races of the 2000s and started a Vendée Globe; no Vendée finish. Died in 2016.</li><li><b>Scott Shawyer</b> — Chapter four. No Canadian has ever completed the Vendée Globe.</li>
+      </ul>
+    </div>
+    <div class="on-panel">
+      <h2>Latest episodes</h2>
+      <ul class="on-eps">
+        
+        <li><span class="n">Ep 5</span><a href="blog/offshore_north/ep005.html">Class40 has drawn 49 entries for the upcoming Route du Rhum, making it the largest and most open class on the start line.</a><span class="d">2026-09-14</span></li>
+        
+        <li><span class="n">Ep 4</span><a href="blog/offshore_north/ep004.html">Team Malizia leads The Ocean Race Atlantic after recovering from a technical issue while a leading trio pulls ahead of the rest of the fleet in rough conditions.</a><span class="d">2026-09-07</span></li>
+        
+        <li><span class="n">Ep 3</span><a href="blog/offshore_north/ep003.html">Six mixed IMOCA crews start the first Ocean Race Atlantic from New York to Lorient on 1 September.</a><span class="d">2026-08-31</span></li>
+        
+        <li><span class="n">Ep 2</span><a href="blog/offshore_north/ep002.html">Sixteen solo skippers have gathered in Les Sables-d’Olonne to begin final preparations for the 2026 Golden Globe Race, the only round-the-world event sailed in 1960s-era boats without modern electronics or outside assistance.</a><span class="d">2026-08-24</span></li>
+        
+        <li><span class="n">Ep 1</span><a href="blog/offshore_north/ep001.html">A Toronto Star profile this week framed Scott Shawyer’s Vendée Globe attempt against the losses of Gerry Roufs and Derek Hatfield.</a><span class="d">2026-08-18</span></li>
+        
+      </ul>
+      <a class="on-btn" href="offshore-north.html">Listen to Offshore North</a>
+    </div>
+  </div>
 
-    <!-- Newsletter Subscribe -->
-    <section class="nn-section" style="padding-top:0;">
-        <div class="container" style="max-width:700px;">
-            <div class="show-subscribe-inline">
-                <h3>Get Offshore North in your inbox</h3>
-                <p>New episode alerts delivered straight to your email — no spam, unsubscribe anytime.</p>
-                <form action="https://buttondown.com/api/emails/embed-subscribe/patricknovak1" method="post" target="popupwindow">
-                    <input type="hidden" name="tag" value="Offshore North">
-                    <input type="hidden" value="1" name="embed">
-                    <div class="nn-subscribe-row">
-                        <input type="email" name="email" placeholder="your@email.com" required aria-label="Email address">
-                        <button type="submit">Subscribe</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </section>
-    <!-- More from Nerra Network --><section class="cross-network nn-section">
-        <div class="container">
-            <div class="nn-section-header">
-                <h2>More from Nerra Network</h2>
-                <p>Keeping you informed.</p>
-            </div>
-            <div class="cross-network-grid">
-                
-                
-                <div class="cross-network-card" style="display:flex;flex-direction:column;">
-                    <a href="nerra-daily.html" style="display:flex;align-items:center;gap:var(--sp-3);text-decoration:none;flex:1;">
-                        <picture>
-                            <source type="image/webp" srcset="assets/covers/nerra-daily-400.webp">
-                            <img src="assets/covers/nerra-daily.jpg" alt="Nerra Daily cover art" width="1400" height="1400" loading="lazy">
-                        </picture>
-                        <div class="cross-network-card-info">
-                            <div class="cross-network-card-name">Nerra Daily</div>
-                            <div class="cross-network-card-tagline">Every show. One daily listen.</div>
-                        </div>
-                    </a>
-                    <a href="blog/nerra_daily/index.html" style="font-family:var(--font-ui);font-size:0.75rem;color:var(--nn-text-muted);text-decoration:none;margin-top:var(--sp-2);padding-top:var(--sp-2);border-top:1px solid var(--nn-border);">Read blog &rarr;</a>
-                </div>
-                
-                
-                
-                <div class="cross-network-card" style="display:flex;flex-direction:column;">
-                    <a href="models-agents.html" style="display:flex;align-items:center;gap:var(--sp-3);text-decoration:none;flex:1;">
-                        <picture>
-                            <source type="image/webp" srcset="assets/covers/models-agents-400.webp">
-                            <img src="assets/covers/models-agents.jpg" alt="Models & Agents cover art" width="1400" height="1400" loading="lazy">
-                        </picture>
-                        <div class="cross-network-card-info">
-                            <div class="cross-network-card-name">Models & Agents</div>
-                            <div class="cross-network-card-tagline">Daily AI models, agents, and practical developments.</div>
-                        </div>
-                    </a>
-                    <a href="blog/models_agents/index.html" style="font-family:var(--font-ui);font-size:0.75rem;color:var(--nn-text-muted);text-decoration:none;margin-top:var(--sp-2);padding-top:var(--sp-2);border-top:1px solid var(--nn-border);">Read blog &rarr;</a>
-                </div>
-                
-                
-                
-                <div class="cross-network-card" style="display:flex;flex-direction:column;">
-                    <a href="planetterrian.html" style="display:flex;align-items:center;gap:var(--sp-3);text-decoration:none;flex:1;">
-                        <picture>
-                            <source type="image/webp" srcset="assets/covers/planetterrian-daily-400.webp">
-                            <img src="assets/covers/planetterrian-daily.jpg" alt="Planetterrian Daily cover art" width="1400" height="1400" loading="lazy">
-                        </picture>
-                        <div class="cross-network-card-info">
-                            <div class="cross-network-card-name">Planetterrian Daily</div>
-                            <div class="cross-network-card-tagline">Science, longevity, and the frontier of human health.</div>
-                        </div>
-                    </a>
-                    <a href="blog/planetterrian/index.html" style="font-family:var(--font-ui);font-size:0.75rem;color:var(--nn-text-muted);text-decoration:none;margin-top:var(--sp-2);padding-top:var(--sp-2);border-top:1px solid var(--nn-border);">Read blog &rarr;</a>
-                </div>
-                
-                
-                
-                <div class="cross-network-card" style="display:flex;flex-direction:column;">
-                    <a href="omni-view.html" style="display:flex;align-items:center;gap:var(--sp-3);text-decoration:none;flex:1;">
-                        <picture>
-                            <source type="image/webp" srcset="assets/covers/omni-view-400.webp">
-                            <img src="assets/covers/omni-view.jpg" alt="Omni View cover art" width="1400" height="1400" loading="lazy">
-                        </picture>
-                        <div class="cross-network-card-info">
-                            <div class="cross-network-card-name">Omni View</div>
-                            <div class="cross-network-card-tagline">See every side. Decide for yourself.</div>
-                        </div>
-                    </a>
-                    <a href="blog/omni_view/index.html" style="font-family:var(--font-ui);font-size:0.75rem;color:var(--nn-text-muted);text-decoration:none;margin-top:var(--sp-2);padding-top:var(--sp-2);border-top:1px solid var(--nn-border);">Read blog &rarr;</a>
-                </div>
-                
-                
-                
-                <div class="cross-network-card" style="display:flex;flex-direction:column;">
-                    <a href="models-agents-beginners.html" style="display:flex;align-items:center;gap:var(--sp-3);text-decoration:none;flex:1;">
-                        <picture>
-                            <source type="image/webp" srcset="assets/covers/models-agents-beginners-400.webp">
-                            <img src="assets/covers/models-agents-beginners.jpg" alt="Models & Agents for Beginners cover art" width="1400" height="1400" loading="lazy">
-                        </picture>
-                        <div class="cross-network-card-info">
-                            <div class="cross-network-card-name">Models & Agents for Beginners</div>
-                            <div class="cross-network-card-tagline">AI explained simply — for beginners and teens.</div>
-                        </div>
-                    </a>
-                    <a href="blog/models_agents_beginners/index.html" style="font-family:var(--font-ui);font-size:0.75rem;color:var(--nn-text-muted);text-decoration:none;margin-top:var(--sp-2);padding-top:var(--sp-2);border-top:1px solid var(--nn-border);">Read blog &rarr;</a>
-                </div>
-                
-                
-                
-                <div class="cross-network-card" style="display:flex;flex-direction:column;">
-                    <a href="fascinating-frontiers.html" style="display:flex;align-items:center;gap:var(--sp-3);text-decoration:none;flex:1;">
-                        <picture>
-                            <source type="image/webp" srcset="assets/covers/fascinating-frontiers-400.webp">
-                            <img src="assets/covers/fascinating-frontiers.jpg" alt="Fascinating Frontiers cover art" width="1400" height="1400" loading="lazy">
-                        </picture>
-                        <div class="cross-network-card-info">
-                            <div class="cross-network-card-name">Fascinating Frontiers</div>
-                            <div class="cross-network-card-tagline">Journey to the stars with today's discoveries.</div>
-                        </div>
-                    </a>
-                    <a href="blog/fascinating_frontiers/index.html" style="font-family:var(--font-ui);font-size:0.75rem;color:var(--nn-text-muted);text-decoration:none;margin-top:var(--sp-2);padding-top:var(--sp-2);border-top:1px solid var(--nn-border);">Read blog &rarr;</a>
-                </div>
-                
-                
-                
-                <div class="cross-network-card" style="display:flex;flex-direction:column;">
-                    <a href="modern-investing.html" style="display:flex;align-items:center;gap:var(--sp-3);text-decoration:none;flex:1;">
-                        <picture>
-                            <source type="image/webp" srcset="assets/covers/modern-investing-400.webp">
-                            <img src="assets/covers/modern-investing.jpg" alt="Modern Investing Techniques cover art" width="1400" height="1400" loading="lazy">
-                        </picture>
-                        <div class="cross-network-card-info">
-                            <div class="cross-network-card-name">Modern Investing Techniques</div>
-                            <div class="cross-network-card-tagline">AI-Powered Market Intelligence</div>
-                        </div>
-                    </a>
-                    <a href="blog/modern_investing/index.html" style="font-family:var(--font-ui);font-size:0.75rem;color:var(--nn-text-muted);text-decoration:none;margin-top:var(--sp-2);padding-top:var(--sp-2);border-top:1px solid var(--nn-border);">Read blog &rarr;</a>
-                </div>
-                
-                
-                
-                <div class="cross-network-card" style="display:flex;flex-direction:column;">
-                    <a href="tesla.html" style="display:flex;align-items:center;gap:var(--sp-3);text-decoration:none;flex:1;">
-                        <picture>
-                            <source type="image/webp" srcset="assets/covers/tesla-shorts-time-400.webp">
-                            <img src="assets/covers/tesla-shorts-time.jpg" alt="Tesla Shorts Time cover art" width="1400" height="1400" loading="lazy">
-                        </picture>
-                        <div class="cross-network-card-info">
-                            <div class="cross-network-card-name">Tesla Shorts Time</div>
-                            <div class="cross-network-card-tagline">Shorting Tesla? Time's Up.</div>
-                        </div>
-                    </a>
-                    <a href="blog/tesla/index.html" style="font-family:var(--font-ui);font-size:0.75rem;color:var(--nn-text-muted);text-decoration:none;margin-top:var(--sp-2);padding-top:var(--sp-2);border-top:1px solid var(--nn-border);">Read blog &rarr;</a>
-                </div>
-                
-                
-                
-                <div class="cross-network-card" style="display:flex;flex-direction:column;">
-                    <a href="spacex.html" style="display:flex;align-items:center;gap:var(--sp-3);text-decoration:none;flex:1;">
-                        <picture>
-                            <source type="image/webp" srcset="assets/covers/spacex-400.webp">
-                            <img src="assets/covers/spacex.jpg" alt="SpaceX Daily cover art" width="1400" height="1400" loading="lazy">
-                        </picture>
-                        <div class="cross-network-card-info">
-                            <div class="cross-network-card-name">SpaceX Daily</div>
-                            <div class="cross-network-card-tagline">Follow SpaceX as a public company — launches, Starlink, Starship, and the SPCX market picture, every day.</div>
-                        </div>
-                    </a>
-                    <a href="blog/spacex/index.html" style="font-family:var(--font-ui);font-size:0.75rem;color:var(--nn-text-muted);text-decoration:none;margin-top:var(--sp-2);padding-top:var(--sp-2);border-top:1px solid var(--nn-border);">Read blog &rarr;</a>
-                </div>
-                
-                
-                
-                <div class="cross-network-card" style="display:flex;flex-direction:column;">
-                    <a href="env-intel.html" style="display:flex;align-items:center;gap:var(--sp-3);text-decoration:none;flex:1;">
-                        <picture>
-                            <source type="image/webp" srcset="assets/covers/environmental-intelligence-400.webp">
-                            <img src="assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy">
-                        </picture>
-                        <div class="cross-network-card-info">
-                            <div class="cross-network-card-name">Environmental Intelligence</div>
-                            <div class="cross-network-card-tagline">Environmental regulatory and compliance briefing.</div>
-                        </div>
-                    </a>
-                    <a href="blog/env_intel/index.html" style="font-family:var(--font-ui);font-size:0.75rem;color:var(--nn-text-muted);text-decoration:none;margin-top:var(--sp-2);padding-top:var(--sp-2);border-top:1px solid var(--nn-border);">Read blog &rarr;</a>
-                </div>
-                
-                
-                
-                <div class="cross-network-card" style="display:flex;flex-direction:column;">
-                    <a href="unintended-consequences.html" style="display:flex;align-items:center;gap:var(--sp-3);text-decoration:none;flex:1;">
-                        <picture>
-                            <source type="image/webp" srcset="assets/covers/unintended-consequences-400.webp">
-                            <img src="assets/covers/unintended-consequences.jpg" alt="Unintended Consequences cover art" width="1400" height="1400" loading="lazy">
-                        </picture>
-                        <div class="cross-network-card-info">
-                            <div class="cross-network-card-name">Unintended Consequences</div>
-                            <div class="cross-network-card-tagline">Good intentions. Surprising results. Real lessons.</div>
-                        </div>
-                    </a>
-                    <a href="blog/unintended_consequences/index.html" style="font-family:var(--font-ui);font-size:0.75rem;color:var(--nn-text-muted);text-decoration:none;margin-top:var(--sp-2);padding-top:var(--sp-2);border-top:1px solid var(--nn-border);">Read blog &rarr;</a>
-                </div>
-                
-                
-                
-                <div class="cross-network-card" style="display:flex;flex-direction:column;">
-                    <a href="first-principles.html" style="display:flex;align-items:center;gap:var(--sp-3);text-decoration:none;flex:1;">
-                        <picture>
-                            <source type="image/webp" srcset="assets/covers/first-principles-daily-400.webp">
-                            <img src="assets/covers/first-principles-daily.jpg" alt="First Principles Daily cover art" width="1400" height="1400" loading="lazy">
-                        </picture>
-                        <div class="cross-network-card-info">
-                            <div class="cross-network-card-name">First Principles Daily</div>
-                            <div class="cross-network-card-tagline">Reason from raw materials, not analogy.</div>
-                        </div>
-                    </a>
-                    <a href="blog/first_principles/index.html" style="font-family:var(--font-ui);font-size:0.75rem;color:var(--nn-text-muted);text-decoration:none;margin-top:var(--sp-2);padding-top:var(--sp-2);border-top:1px solid var(--nn-border);">Read blog &rarr;</a>
-                </div>
-                
-                
-                
-                <div class="cross-network-card" style="display:flex;flex-direction:column;">
-                    <a href="thedppod.html" style="display:flex;align-items:center;gap:var(--sp-3);text-decoration:none;flex:1;">
-                        <picture>
-                            <source type="image/webp" srcset="assets/covers/dp-pod-400.webp">
-                            <img src="assets/covers/dp-pod.jpg" alt="The DP Pod: The Do Positive Podcast cover art" width="1400" height="1400" loading="lazy">
-                        </picture>
-                        <div class="cross-network-card-info">
-                            <div class="cross-network-card-name">The DP Pod: The Do Positive Podcast</div>
-                            <div class="cross-network-card-tagline">The club for people who do something about it — good news, honest numbers, one action a day.</div>
-                        </div>
-                    </a>
-                    <a href="blog/dp_pod/index.html" style="font-family:var(--font-ui);font-size:0.75rem;color:var(--nn-text-muted);text-decoration:none;margin-top:var(--sp-2);padding-top:var(--sp-2);border-top:1px solid var(--nn-border);">Read blog &rarr;</a>
-                </div>
-                
-                
-                
-                <div class="cross-network-card" style="display:flex;flex-direction:column;">
-                    <a href="age-of-ai.html" style="display:flex;align-items:center;gap:var(--sp-3);text-decoration:none;flex:1;">
-                        <picture>
-                            <source type="image/webp" srcset="assets/covers/age-of-ai-400.webp">
-                            <img src="assets/covers/age-of-ai.jpg" alt="The Age of AI cover art" width="1400" height="1400" loading="lazy">
-                        </picture>
-                        <div class="cross-network-card-info">
-                            <div class="cross-network-card-name">The Age of AI</div>
-                            <div class="cross-network-card-tagline">Real people. AI host. The age we're all living through.</div>
-                        </div>
-                    </a>
-                    <a href="blog/age_of_ai/index.html" style="font-family:var(--font-ui);font-size:0.75rem;color:var(--nn-text-muted);text-decoration:none;margin-top:var(--sp-2);padding-top:var(--sp-2);border-top:1px solid var(--nn-border);">Read blog &rarr;</a>
-                </div>
-                
-                
-                
-                <div class="cross-network-card" style="display:flex;flex-direction:column;">
-                    <a href="nerra-voices.html" style="display:flex;align-items:center;gap:var(--sp-3);text-decoration:none;flex:1;">
-                        <picture>
-                            <source type="image/webp" srcset="assets/covers/nerra-voices-400.webp">
-                            <img src="assets/covers/nerra-voices.jpg" alt="Nerra Voices cover art" width="1400" height="1400" loading="lazy">
-                        </picture>
-                        <div class="cross-network-card-info">
-                            <div class="cross-network-card-name">Nerra Voices</div>
-                            <div class="cross-network-card-tagline">Real people. Real work. AI host.</div>
-                        </div>
-                    </a>
-                    <a href="blog/nerra_voices/index.html" style="font-family:var(--font-ui);font-size:0.75rem;color:var(--nn-text-muted);text-decoration:none;margin-top:var(--sp-2);padding-top:var(--sp-2);border-top:1px solid var(--nn-border);">Read blog &rarr;</a>
-                </div>
-                
-                
-                
-                
-            </div>
-        </div>
-    </section>
+  <p class="on-foot">
+    Curated facts verified 2026-09-14 against the linked sources; the live rails refresh nightly and after each episode from the team's own feeds and the offshore press. Dates are local to the event. Nothing here is a race prediction. Explore every dashboard at the <a href="data.html">Nerra data hub</a>.
+  </p>
+</div>
 
     </main>
 
@@ -1494,247 +1370,80 @@
     });
     </script>
     
-    
-    <script>
-        const JSON_URL = 'digests/offshore_north/summaries_offshore_north.json';
-        const JSON_FORMAT = 'wrapped';
-        const RSS_URL = 'offshore_north_podcast.rss';
-        const SHOW_NAME = "Offshore North";
 
-        // --- Helpers ---
-        function formatDate(d) {
-            try {
-                const date = new Date(d);
-                return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
-            } catch { return d; }
-        }
-        function escapeHtml(s) {
-            const el = document.createElement('span');
-            el.textContent = s;
-            return el.innerHTML;
-        }
-        function getPreviewText(content) {
-            if (!content) return '';
-            let plain = content
-                .replace(/^###\s+/gm, '')
-                .replace(/\*\*(.+?)\*\*/g, '$1')
-                .replace(/https?:\/\/[^\s]+/g, '')
-                .replace(/[━─]+/g, '')
-                .replace(/[\n\r]+/g, ' ')
-                .replace(/\s+/g, ' ')
-                .trim();
-            return plain.length > 200 ? plain.substring(0, 200) + '...' : plain;
-        }
+<script>
+(function(){
+  var pad = function(n){ return String(n).padStart(2,'0'); };
+  var set = function(id, v){ var e = document.getElementById(id); if (e) e.textContent = v; };
+  var cd = document.getElementById('onCountdown');
+  var target = cd && cd.dataset.when ? Date.parse(cd.dataset.when) : NaN;
+  var whenEl = document.getElementById('onPrimaryWhen');
+  if (whenEl && !isNaN(target)) {
+    try {
+      whenEl.textContent = whenEl.textContent + ' · ' + new Date(target).toLocaleString([], {weekday:'short', year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}) + ' your time';
+    } catch (_) {}
+  }
+  function tick(){
+    if (isNaN(target)) return;
+    var diff = Math.max(0, target - Date.now());
+    var d = Math.floor(diff/86400000); diff -= d*86400000;
+    var h = Math.floor(diff/3600000); diff -= h*3600000;
+    var m = Math.floor(diff/60000); diff -= m*60000;
+    var s = Math.floor(diff/1000);
+    set('cd-d', d); set('cd-h', pad(h)); set('cd-m', pad(m)); set('cd-s', pad(s));
+  }
+  tick(); setInterval(tick, 1000);
 
-        // --- Load episodes ---
-        async function loadEpisodes() {
-            try {
-                const resp = await fetch(JSON_URL);
-                if (!resp.ok) throw new Error('JSON not found');
-                const data = await resp.json();
-                const episodes = (JSON_FORMAT === 'array') ? (Array.isArray(data) ? data : []) : (data.summaries || data);
-                if (!episodes || !episodes.length) {
-                    console.warn(`[${SHOW_NAME}] JSON loaded but no episodes found, falling back to RSS`);
-                    loadFromRSS();
-                    return;
-                }
-                renderEpisodes(episodes);
-            } catch (err) {
-                console.warn(`[${SHOW_NAME}] JSON load failed, falling back to RSS:`, err.message);
-                loadFromRSS();
-            }
-        }
+  // Secondary countdown chips: days to go, "on now" between when/end, or done.
+  document.querySelectorAll('.on-chip[data-when]').forEach(function(chip){
+    var w = Date.parse(chip.dataset.when), e = chip.dataset.end ? Date.parse(chip.dataset.end) : NaN;
+    var b = chip.querySelector('.days'); if (!b || isNaN(w)) return;
+    var now = Date.now();
+    if (!isNaN(e) && now >= w && now <= e) { b.textContent = 'on now'; chip.classList.add('live'); return; }
+    if (now > (isNaN(e) ? w : e)) { b.textContent = 'done'; return; }
+    var days = Math.ceil((w - now)/86400000);
+    b.textContent = days + (days === 1 ? ' day' : ' days');
+  });
 
-        function renderEpisodes(episodes) {
-            if (!episodes || !episodes.length) { loadFromRSS(); return; }
-            episodes.sort((a, b) => new Date(b.date) - new Date(a.date));
-            const latest = episodes[0];
-            document.getElementById('latest-title').textContent = latest.episode_title || 'Latest Episode';
-            document.getElementById('latest-date').textContent = formatDate(latest.date);
-            document.getElementById('latest-audio').src = latest.audio_url || '';
-
-            if (latest.content) {
-                const summaryEl = document.getElementById('latest-summary');
-                summaryEl.textContent = getPreviewText(latest.content);
-                summaryEl.style.display = 'block';
-            }
-
-            renderLatestLangs(latest);
-
-            const grid = document.getElementById('episodes-grid');
-            grid.innerHTML = '';
-            episodes.slice(1, 13).forEach((ep, i) => {
-                const card = document.createElement('div');
-                card.className = 'episode-card glass-card';
-                card.innerHTML = `
-                    <div class="episode-card-date">${formatDate(ep.date)}</div>
-                    <div class="episode-card-title" data-role="title">${escapeHtml(ep.episode_title || 'Episode')}</div>
-                    <div style="color:var(--nn-text-muted);font-size:0.85rem;margin-bottom:var(--sp-3);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${escapeHtml(getPreviewText(ep.content))}</div>
-                    <audio controls preload="none" data-role="audio" src="${ep.audio_url || ''}" aria-label="Play ${escapeHtml(ep.episode_title || 'episode')}" style="width:100%;height:36px;border-radius:8px;"></audio>
-                    <div data-role="langs" style="display:none;margin-top:6px;"></div>
-                `;
-                grid.appendChild(card);
-                // Per-episode language switcher (any translated archive episode,
-                // not just the latest) — directly addresses "listen to older
-                // episodes in another language" on the show page.
-                const tr = ep.translations || {};
-                if (Object.keys(tr).some((l) => tr[l] && tr[l].audio_url)) {
-                    attachLangSwitcher({
-                        box: card.querySelector('[data-role=langs]'),
-                        audioEl: card.querySelector('[data-role=audio]'),
-                        titleEl: card.querySelector('[data-role=title]'),
-                        enUrl: ep.audio_url || '',
-                        enTitle: ep.episode_title || 'Episode',
-                        translations: tr,
-                    });
-                }
-            });
-        }
-
-        // Shared per-player language switcher. Builds EN + available-language
-        // pills for ONE episode and swaps that player's audio/title/summary in
-        // place. Honors the site-wide `nn-pref-lang` and live `nn-langchange`,
-        // so it works for the latest player AND every archive card. Russian
-        // shows opt out of multilingual, so this no-ops (no translations).
-        function attachLangSwitcher(opts) {
-            const box = opts.box;
-            if (!box) return;
-            const tr = opts.translations || {};
-            const langs = Object.keys(tr).filter((l) => tr[l] && tr[l].audio_url);
-            if (!langs.length) { box.style.display = 'none'; return; }
-            const LABELS = { en: 'English', fr: 'Français', ru: 'Русский', zh: '中文' };
-            const order = ['en'].concat(langs);
-            const audioEl = opts.audioEl, titleEl = opts.titleEl, summaryEl = opts.summaryEl;
-            const enTitle = opts.enTitle || 'Episode';
-            const enSummary = opts.enSummary || (summaryEl ? summaryEl.textContent : '');
-            const track = (code) => {
-                if (code === 'en') return { url: opts.enUrl || '', title: enTitle, desc: enSummary };
-                const t = tr[code] || {};
-                return { url: t.audio_url || '', title: t.title || enTitle, desc: t.description || enSummary };
-            };
-            const savedPref = () => { try { return localStorage.getItem('nn-pref-lang') || ''; } catch (e) { return ''; } };
-            const apply = (code, persist) => {
-                const t = track(code);
-                if (audioEl && t.url) { const playing = !audioEl.paused && !audioEl.ended; audioEl.src = t.url; if (playing) audioEl.play().catch(() => {}); }
-                if (titleEl && t.title) titleEl.textContent = t.title;
-                if (summaryEl && t.desc) summaryEl.textContent = t.desc;
-                box.querySelectorAll('button[data-lang]').forEach((b) => {
-                    const on = b.dataset.lang === code;
-                    b.setAttribute('aria-pressed', on ? 'true' : 'false');
-                    b.style.borderColor = on ? 'var(--show-color)' : 'var(--nn-border)';
-                    b.style.background = on ? 'color-mix(in srgb, var(--show-color) 15%, transparent)' : 'var(--nn-card)';
-                    b.style.color = on ? 'var(--show-color-text, var(--show-color))' : 'var(--nn-text-muted)';
-                });
-                if (persist) { try { localStorage.setItem('nn-pref-lang', code); } catch (e) {} }
-            };
-            box.innerHTML = '';
-            box.style.display = 'flex';
-            box.style.alignItems = 'center';
-            box.style.flexWrap = 'wrap';
-            box.style.gap = '6px';
-            const label = document.createElement('span');
-            label.textContent = opts.labelText || 'Listen in:';
-            label.style.cssText = 'font-size:0.78rem;color:var(--nn-text-muted);';
-            box.appendChild(label);
-            order.forEach((code) => {
-                const b = document.createElement('button');
-                b.type = 'button';
-                b.dataset.lang = code;
-                b.textContent = LABELS[code] || code.toUpperCase();
-                b.setAttribute('aria-pressed', 'false');
-                b.style.cssText = 'font:600 0.78rem/1.4 var(--font-ui,sans-serif);padding:2px 11px;border-radius:100px;border:1px solid var(--nn-border);background:var(--nn-card);color:var(--nn-text-muted);cursor:pointer;';
-                b.addEventListener('click', () => apply(code, true));
-                box.appendChild(b);
-            });
-            // Live-switch when the global header language control changes.
-            document.addEventListener('nn-langchange', (e) => {
-                const lang = (e.detail && e.detail.lang) || 'en';
-                apply((lang === 'en' || tr[lang]) ? lang : 'en', false);
-            });
-            const pref = savedPref();
-            apply((pref && (pref === 'en' || tr[pref])) ? pref : 'en', false);
-        }
-
-        function renderLatestLangs(latest) {
-            const summaryEl = document.getElementById('latest-summary');
-            attachLangSwitcher({
-                box: document.getElementById('latest-langs'),
-                audioEl: document.getElementById('latest-audio'),
-                titleEl: document.getElementById('latest-title'),
-                summaryEl: summaryEl,
-                enUrl: latest.audio_url || '',
-                enTitle: latest.episode_title || 'Latest Episode',
-                enSummary: summaryEl ? summaryEl.textContent : '',
-                translations: (latest && latest.translations) || {},
-            });
-        }
-
-        function loadFromRSS() {
-            fetch(RSS_URL)
-                .then(r => r.text())
-                .then(xml => {
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(xml, 'text/xml');
-                    const nodeList = doc.querySelectorAll('item');
-                    if (!nodeList.length) { showNoEpisodes(); return; }
-
-                    // The pipeline appends new items to the END of the
-                    // RSS file, so the raw node order is OLDEST first.
-                    // Sort by pubDate desc so the page always shows
-                    // the most recent episode as "latest." Operator
-                    // caught (May 23 2026 env-intel screenshot) the
-                    // old code treating items[0] = oldest as latest
-                    // when the JSON-format path silently fell back
-                    // here.
-                    const items = Array.from(nodeList).sort((a, b) => {
-                        const da = new Date(a.querySelector('pubDate')?.textContent || 0);
-                        const db = new Date(b.querySelector('pubDate')?.textContent || 0);
-                        return db - da;
-                    });
-
-                    const first = items[0];
-                    document.getElementById('latest-title').textContent = first.querySelector('title')?.textContent || 'Latest Episode';
-                    const pubDate = first.querySelector('pubDate')?.textContent || '';
-                    document.getElementById('latest-date').textContent = pubDate ? formatDate(pubDate) : '';
-                    const enc = first.querySelector('enclosure');
-                    if (enc) document.getElementById('latest-audio').src = enc.getAttribute('url') || '';
-
-                    const grid = document.getElementById('episodes-grid');
-                    grid.innerHTML = '';
-                    items.slice(1, 13).forEach(item => {
-                        const title = item.querySelector('title')?.textContent || 'Episode';
-                        const pd = item.querySelector('pubDate')?.textContent || '';
-                        const enclosure = item.querySelector('enclosure');
-                        const url = enclosure ? enclosure.getAttribute('url') : '';
-                        const desc = item.querySelector('description')?.textContent || '';
-                        const card = document.createElement('div');
-                        card.className = 'episode-card glass-card';
-                        card.innerHTML = `
-                            <div class="episode-card-date">${pd ? formatDate(pd) : ''}</div>
-                            <div class="episode-card-title">${escapeHtml(title)}</div>
-                            <div style="color:var(--nn-text-muted);font-size:0.85rem;margin-bottom:var(--sp-3);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${escapeHtml(getPreviewText(desc))}</div>
-                            <audio controls preload="none" src="${url}" aria-label="Play ${escapeHtml(title)}" style="width:100%;height:36px;border-radius:8px;"></audio>
-                        `;
-                        grid.appendChild(card);
-                    });
-                })
-                .catch(err => {
-                    console.warn(`[${SHOW_NAME}] RSS load failed:`, err.message);
-                    showNoEpisodes();
-                });
-        }
-
-        function showNoEpisodes() {
-            document.getElementById('latest-title').textContent = 'No episodes available yet';
-            document.getElementById('episodes-grid').innerHTML = '<p style="color:var(--nn-text-muted);grid-column:1/-1;text-align:center;padding:2rem 0;">Episodes will appear here once available.</p>';
-        }
-
-        
-
-        
-
-        loadEpisodes();
-    </script>
+  // Live rails from the same-origin cache written by scripts/fetch_offshore_north_dashboard.py.
+  var esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
+  fetch('api/offshore_north_dashboard.json', {cache:'no-cache'}).then(function(r){ return r.ok ? r.json() : null; }).then(function(data){
+    var posts = document.getElementById('onPosts'), heads = document.getElementById('onHeadlines');
+    if (!data) {
+      if (posts) posts.innerHTML = '<li class="on-muted">The latest-posts rail is not refreshed right now — the team\'s own site is <a href="https://www.canadaoceanracing.com/" target="_blank" rel="noopener">here</a>.</li>';
+      if (heads) heads.innerHTML = '<li class="on-muted">Headlines not refreshed right now.</li>';
+      return;
+    }
+    if (posts) {
+      var cp = data.campaign_posts || [];
+      posts.innerHTML = cp.length ? cp.slice(0, 8).map(function(p){
+        return '<li><div class="h"><a href="' + esc(p.url) + '" target="_blank" rel="noopener">' + esc(p.title) + '</a><span class="d">' + esc(p.date || '') + '</span></div>' +
+               (p.excerpt ? '<p class="x"><span class="c">' + esc(p.channel || '') + '</span>' + esc(p.excerpt) + '</p>' : '') + '</li>';
+      }).join('') : '<li class="on-muted">No posts fetched yet.</li>';
+    }
+    if (heads) {
+      var hl = data.headlines || [];
+      heads.innerHTML = hl.length ? hl.slice(0, 12).map(function(h){
+        return '<li><div class="h"><a href="' + esc(h.url) + '" target="_blank" rel="noopener">' + esc(h.title) + '</a><span class="d">' + esc(h.date || '') + '</span></div><p class="x"><span class="c">' + esc(h.outlet || '') + '</span></p></li>';
+      }).join('') : '<li class="on-muted">No headlines fetched yet.</li>';
+    }
+    // Newest dated fix from the live feed wins over the baked log when it is newer.
+    var pos = data.position, fixText = document.getElementById('onFixText'), fixMeta = document.getElementById('onFixMeta');
+    var bakedDate = '2026-09-02';
+    if (pos && pos.date && fixText && pos.date >= bakedDate) {
+      fixText.textContent = pos.text || pos.title || '';
+      if (fixMeta) fixMeta.innerHTML = '<span class="tag">Fix</span>' + esc(pos.date) + ' · ' + esc(pos.channel || '') + ' · <a href="' + esc(pos.url) + '" target="_blank" rel="noopener">source</a>';
+    }
+    var f = document.getElementById('onFetched');
+    if (f && data.fetched_at) {
+      try { f.textContent = 'Rails refreshed ' + new Date(data.fetched_at).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}) + (data.campaign_posts_stale ? ' · campaign posts carried over from the previous refresh' : '') + '.'; } catch (_) {}
+    }
+  }).catch(function(){
+    var posts = document.getElementById('onPosts');
+    if (posts) posts.innerHTML = '<li class="on-muted">The latest-posts rail is not refreshed right now.</li>';
+  });
+})();
+</script>
 
 
     <!-- Centralized, improved global search -->

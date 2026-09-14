@@ -758,6 +758,11 @@ jobs:
           # SpaceX launch-dashboard data (next/previous launch, cadence,
           # stats) for spacex-dashboard.html. Same reliability contract.
           git add api/spacex_launches.json || true
+          # Offshore North campaign dashboard data (latest team posts +
+          # newest dated position fix + headlines) — refreshed by the
+          # Offshore North run's fetch step below and nightly; the page
+          # offshore-north-dashboard.html reads it same-origin.
+          git add api/offshore_north_dashboard.json || true
           # Growing SpaceX metrics time-series (monthly mass-to-orbit,
           # satellites, vehicle mix) — accumulates over time to power the
           # dashboard's long-run growth charts.

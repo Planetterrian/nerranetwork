@@ -721,6 +721,53 @@ today's work, not just explain yesterday's):
   four intros had opened "Good morning."). Launch registered as
   experiment `nerra-daily-launch` (readout 2026-09-22; needs the
   Apple/Spotify submission from the operator checklist).
+- **ON** (Offshore North) runs via `run_show.py` + `shows/offshore_north.yaml`;
+  the network's **weekly offshore ocean-racing show** (Mondays; Dan on
+  `0vscf8u8yrxc`, single-narrator, `memory_enabled`). Spine: Canada Ocean
+  Racing / Scott Shawyer / EMIRA IV (CAN 80) toward the Route du Rhum
+  (1 Nov 2026, entry confirmed) and the Vendée Globe (12 Nov 2028).
+  Prompts carry two included files — `offshore_north_standing_facts.txt`
+  (authoritative campaign background, reviewed monthly, with a "standing
+  corrections" list of errors already aired) and
+  `offshore_north_field_guide.txt` (the sport's map). **Sep 14 2026 review**
+  (doc: [`docs/reviews/offshore_north_review_2026_09_14.md`](docs/reviews/offshore_north_review_2026_09_14.md);
+  ledger `docs/reviews/ledger/offshore_north.yaml`; guards
+  `tests/test_offshore_north_review_2026_09_14.py`): **the digest prompt had
+  never seen an article** — headline + feed teaser + URL only — so Ep002–005
+  aired the boat's position as "unconfirmed" while the team's 2 Sep post
+  said it was heading back to Europe, reported WHEN channels changed rather
+  than WHAT they said, spoke the writer-only "standing facts" label, and
+  Ep005 aired a race START headline (Google-News re-surfaced) as the RESULT
+  of a race that had finished with a different winner. Now:
+  `engine/article_text.py` + `fetch_full_text: N` (**opt-in per show; 0 =
+  every other show byte-identical**) renders each article's FULL TEXT under
+  its headline — WordPress `content:encoded` bodies are stored on every
+  article as `content_text` with no HTTP, pages are fetched for the rest,
+  campaign feeds first; the freshness block carries a "What it said"
+  excerpt + URL; Scott's Notes (the skipper's own writing — a WordPress
+  PAGE whose `/feed/` is the COMMENTS feed; the `scotts-blog` category feed
+  is the real one) is a flagged campaign source. Editorial rules that now
+  bind (all landmine-#17 — A/B-listen the first episode): last-known
+  position + the DATE of the fix, never "unconfirmed"; the Canadian Boat is
+  FIRST and LONGEST; incidents not leaderboards, one sentence max on a
+  leader, no roll-calls; never "standing facts/item" on air and the boat's
+  pedigree at most once in four weeks; Plain Sailing EVERGREEN (never a
+  same-episode race recap); EXACTLY ONE Dan reference per episode (the
+  brief's writer-only "Dan's lens" line names it); a finish inside the
+  window outranks a re-surfaced start. Blog footer placeholder is
+  cadence-aware (`engine.blog.next_episode_placeholder` — "New episode
+  Monday", never "tomorrow" on a weekly show). **Public campaign
+  dashboard** `offshore-north-dashboard.html`
+  (`generate_offshore_north_dashboard`; curated
+  `site/data/offshore_north_dashboard.json` + live
+  `api/offshore_north_dashboard.json` from
+  `scripts/fetch_offshore_north_dashboard.py`, refreshed nightly and by the
+  show hook after each episode; both committing workflows whitelist the
+  pair): countdowns, last known position with date + source, the team's
+  YB tracker, latest team posts with excerpts, headlines, spec, calendar,
+  results, the Route du Rhum IMOCA entry list, qualification ledger,
+  lineage, and every source/social the show reads. A new dated position
+  fix goes in the curated file's `position_log`; never guess one.
 - All shows delegate X posting to `engine.publisher.post_to_x()`
 - TST/FF/PT delegate voice normalization to `engine.audio.normalize_voice()`
 - All shows use `engine.audio.mix_with_music()` for music mixing (3 modes:

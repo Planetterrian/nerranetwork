@@ -1045,6 +1045,35 @@ def _build_jsonld(metadata: dict, show_name: str, blog_url: str,
 # High-level generators
 # ---------------------------------------------------------------------------
 
+def next_episode_placeholder(schedule: str, *, is_ru: bool = False) -> dict:
+    """Copy for the latest post's "next episode" nav slot, from the show's
+    registry ``schedule`` string (``shows/network_meta.yaml`` /
+    ``NETWORK_SHOWS``).
+
+    Daily shows keep "New episode tomorrow"; a weekly show names its day
+    ("New episode Monday"); alternate cadences and the interview shows get
+    a cadence-neutral line, never a promise the show cannot keep. Returns
+    ``{"label": ..., "title": ...}``; every branch is a safe default so a
+    missing or unrecognised schedule never breaks a render.
+    """
+    sched = (schedule or "").strip().lower()
+    if is_ru:
+        # The two Russian shows are alternate-day; keep the neutral line.
+        return {"label": "Следующий выпуск →", "title": "Новый выпуск скоро"}
+    if not sched or sched.startswith("daily"):
+        return {"label": "Tomorrow →", "title": "New episode tomorrow"}
+    days = ("monday", "tuesday", "wednesday", "thursday", "friday",
+            "saturday", "sunday")
+    for day in days:
+        if day in sched:
+            return {"label": "Next episode →", "title": f"New episode {day.title()}"}
+    if "weekly" in sched:
+        return {"label": "Next week →", "title": "New episode next week"}
+    if "weekday" in sched:
+        return {"label": "Next episode →", "title": "New episode next weekday"}
+    return {"label": "Next episode →", "title": "New episode coming"}
+
+
 def _blog_meta_description(metadata: dict, show_config: dict) -> str:
     """A description that is not just a copy of the <title>.
 
@@ -1284,6 +1313,13 @@ def generate_blog_post_html(
         # Buttondown rejects tags with no ASCII letter/number.
         "newsletter_tag": show_config.get("newsletter_tag")
             or show_config["name"],
+        # Cadence-aware "next episode" placeholder on the latest post
+        # (Sep 14 2026 Offshore North review, fix 12): the template said
+        # "New episode tomorrow" on every show, weekly ones included.
+        "next_episode_nav": next_episode_placeholder(
+            show_config.get("schedule", ""),
+            is_ru=show_slug in ("finansy_prosto", "privet_russian"),
+        ),
         "page_lang": "ru" if show_slug in ("finansy_prosto", "privet_russian") else "en",
         # YouTube cross-posting — when present, the template renders a
         # "Watch on YouTube" button next to the existing podcast/summaries CTAs.
