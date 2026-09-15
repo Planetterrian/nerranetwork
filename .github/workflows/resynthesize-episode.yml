@@ -1,0 +1,178 @@
+name: Re-synthesize Episode
+
+# Repair a PUBLISHED episode whose audio is not its script.
+#
+# Tesla Ep605 (2026-09-14) shipped with its first 45 seconds replaced by
+# Grok TTS reading its own text-normalizer's reasoning aloud. The saved
+# _tts.txt was clean, so the episode's content was never lost — only its
+# audio. Editing the defect out does not work, because the leak REPLACED
+# the hook, the identity line and the opening of the lead story rather
+# than adding to them; cutting it leaves the episode starting
+# mid-sentence. Re-running the same text is the only repair that yields
+# a correct episode.
+#
+# This exists as a workflow because the credentials live here: the Grok
+# key for synthesis and the R2 keys for the upload. A local run without
+# them reports its plan and writes nothing.
+#
+# DRY RUN IS THE DEFAULT. Dispatch once to read the plan in the job
+# summary — it names the defect's time span and which derived videos
+# actually overlap it — then dispatch again with apply=true.
+#
+# The repair uploads to the SAME R2 key, so the podcast enclosure URL
+# never changes and no subscriber is re-pointed. It refuses to upload
+# audio the spoken-text gate has not passed, so it cannot itself ship
+# the defect it was built to remove.
+#
+# It does NOT touch YouTube: the API cannot replace a video's file, so
+# an affected video must be deleted and re-uploaded by hand. The summary
+# lists exactly which ones — and which to KEEP, since a Short whose clip
+# sits past the defect is fine, and the RU/FR dubs are a separate
+# synthesis of the translated script and are never affected.
+
+on:
+  workflow_dispatch:
+    inputs:
+      show:
+        description: 'Show slug (e.g. tesla)'
+        required: true
+        type: string
+      episode:
+        description: 'Episode number to repair (e.g. 605)'
+        required: true
+        type: string
+      apply:
+        description: 'Perform the repair. Leave false for a dry run.'
+        required: false
+        type: boolean
+        default: false
+      date:
+        description: 'YYYYMMDD — only if the episode number is ambiguous.'
+        required: false
+        type: string
+        default: ''
+      skip_upload:
+        description: 'Rebuild and verify only; do not touch R2 or the feed.'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  # A repair rewrites an episode's committed artifacts and its feed item.
+  # Two at once on the same show would race each other's commits.
+  group: resynthesize-${{ inputs.show }}
+  cancel-in-progress: false
+
+jobs:
+  resynthesize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - uses: ./.github/actions/setup-python
+        with:
+          python-version: '3.12'
+          requirements-file: 'requirements.txt'
+          skip-checkout: 'true'
+
+      # The repair mixes audio and transcribes it back for verification.
+      - name: Install ffmpeg
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+
+      # Whisper downloads ~150 MB on a cold runner; the daily pipeline
+      # caches the same model under the same key.
+      - name: Cache Whisper model
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: whisper-faster-base-v1
+
+      - name: Re-synthesize
+        env:
+          GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+          R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          SHOW_INPUT: ${{ inputs.show }}
+          EPISODE_INPUT: ${{ inputs.episode }}
+          DATE_INPUT: ${{ inputs.date }}
+          APPLY_INPUT: ${{ inputs.apply }}
+          SKIP_UPLOAD_INPUT: ${{ inputs.skip_upload }}
+        run: |
+          set -o pipefail
+          args="--show ${SHOW_INPUT} --episode ${EPISODE_INPUT}"
+          if [ -n "${DATE_INPUT}" ]; then
+            args="$args --date ${DATE_INPUT}"
+          fi
+          if [ "${APPLY_INPUT}" = "true" ]; then
+            args="$args --apply"
+          fi
+          if [ "${SKIP_UPLOAD_INPUT}" = "true" ]; then
+            args="$args --skip-upload"
+          fi
+
+          # Keep the summary even when the run aborts, because an abort
+          # is the interesting case: it means the gate refused the new
+          # audio and the operator needs to see why.
+          set +e
+          # shellcheck disable=SC2086
+          python scripts/resynthesize_episode.py $args 2>&1 \
+            | tee /tmp/resynth.txt
+          status=${PIPESTATUS[0]}
+          set -e
+          echo "resynth_status=$status" >> "$GITHUB_ENV"
+
+          {
+            echo "## Re-synthesize ${SHOW_INPUT} Ep${EPISODE_INPUT}"
+            echo
+            if [ "${APPLY_INPUT}" = "true" ]; then
+              if [ "$status" -eq 0 ]; then
+                echo "**Mode: APPLY** — audio was re-synthesized, verified and uploaded to the same key."
+              else
+                echo "**Mode: APPLY — FAILED.** Nothing was published. See the log below."
+              fi
+            else
+              echo "**Mode: dry run** — nothing was written."
+              echo "Re-dispatch with \`apply: true\` to perform the repair."
+            fi
+            echo
+            echo '```'
+            grep -v 'Loaded config' /tmp/resynth.txt | tail -c 60000
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          exit $status
+
+      # Only the text artifacts are committed. The MP3s are gitignored
+      # and served from R2 (landmine #1 — episode audio never enters
+      # git history).
+      - name: Commit repaired artifacts
+        if: ${{ inputs.apply && inputs.skip_upload != true && env.resynth_status == '0' }}
+        uses: ./.github/actions/safe-commit-push
+        with:
+          add-paths: |
+            digests/**/*_transcript.txt
+            digests/**/*_transcript.json
+            digests/**/chapters_ep*.json
+            digests/**/credit_usage_*.json
+            *.rss
+          commit-message: |
+            Re-synthesize ${{ inputs.show }} Ep${{ inputs.episode }} audio
+
+            The published audio did not match the committed script. Re-ran
+            the same _tts.txt through the same synthesis, verified it with
+            the spoken-text gate, and uploaded to the same R2 key so the
+            enclosure URL is unchanged. Transcript, chapters and the feed
+            item's duration are updated to describe the repaired audio.
+          recovery-on-failure: 'true'

@@ -141,21 +141,71 @@ A/B-listened experiment.
 
 ## What was NOT done, and why
 
-* **Ep605's audio was not repaired from this session.** There is no
-  TTS key or Whisper here. The repair is a re-run of the committed
-  `_tts.txt` through TTS + mix + the same R2 key
-  (`tesla/Tesla_Shorts_Time_Pod_Ep605_20260914.mp3` — same enclosure
-  URL, so subscribers are not re-pointed), plus a YouTube delete +
-  re-upload of long-form `J9ENRcR65sc` and Short `Cfi81jyH6Xc` (YouTube
-  cannot replace a video's file), the Apple video asset, and Nerra
-  Daily Ep025's Tesla segment. Operator's call whether to repair or
-  pull; the Short is the strongest case for pulling — it is 35 s of
-  nothing but the leak.
+* **Ep605's audio was not repaired in the session that wrote the
+  gate** (no TTS key there). **The repair path now exists** — see
+  "Repairing an episode" below. Operator's call whether to run it.
 * **No prompt or voice change.** Nothing here touches what a healthy
   episode sounds like.
 * **The whole-episode `validate_transcription` was left as is** (opt-in,
   off). It answers a different question (pronunciation drift) and its
   score cannot see a localised defect; documenting that is the fix.
+
+## Repairing an episode (Sep 15 2026)
+
+**Clipping the defect out is not an option, and that is the whole
+reason this tool exists.** The leak REPLACED content rather than adding
+it. Measured against the committed script, four sentences were never
+spoken at all — the hook, the identity line, and the two opening
+sentences of the lead story — and the audio resumes mid-sentence at
+"headline density for throughput and cost". Cut the leak and the
+episode opens on that fragment with no hook and no show name. Every
+edit also costs the same downstream work as a re-synthesis: re-mix,
+chapter recompute, long-form re-render, Shorts, the Apple video asset
+and the Nerra Daily segment.
+
+`scripts/resynthesize_episode.py` + Actions **"Re-synthesize Episode"**
+re-run the committed `_tts.txt` through the same synthesis. Dry run by
+default; `--apply` is required for any write.
+
+Properties that make it safe to point at a published episode:
+
+* **The R2 key does not change** (`tesla/<file>.mp3`), so the enclosure
+  URL is untouched and no subscriber is re-pointed. Pinned by
+  `TestSameR2Key`, including against `engine.storage.upload_episode`'s
+  own key shape.
+* **It cannot publish audio it has not verified.** The new audio is
+  transcribed and run through the spoken-text gate; a failure
+  re-synthesizes once, a second failure ABORTS before the upload. A
+  missing transcript aborts too. Pinned by `TestGateRefusal` — the
+  repair tool must never become another way to ship the defect.
+* **Chapter titles reproduce exactly** from the same script and digest;
+  only timestamps move with the new duration. Verified against Ep605's
+  published chapters and pinned by `TestChaptersReproduce`.
+* **The feed item keeps its published title and description** and is
+  corrected only for duration and byte length.
+
+It does not touch YouTube, because the API cannot replace a video's
+file. Instead it computes the defect's time span from the committed
+transcript and names, per video, whether to delete or keep:
+
+| Ep605 surface | verdict |
+|---|---|
+| long-form `J9ENRcR65sc` | delete + re-upload (the whole episode) |
+| Short `Cfi81jyH6Xc` (clip at 0 s) | delete + re-upload — the clip IS the leak |
+| Short `qARzIvraPTw` (clip at 200 s) | **KEEP** — outside the defect, audio is fine |
+| @NerraRU ×3, @NerraFR ×2 | **UNAFFECTED** — dubs are a separate synthesis of the translated script |
+| Apple video MP4, Nerra Daily Ep025 | rebuild |
+
+The dub rule is load-bearing and pinned by
+`test_dub_videos_are_never_listed_for_deletion`: an English-audio
+defect cannot reach a track synthesized from translated text, and an
+earlier draft of the tool listed all eight videos for deletion. When
+the gate reports an opening mismatch the defect window is clamped to
+start at zero, because the longest *contiguous* unmatched run can begin
+after the real damage does (stray words inside a leak align by chance).
+A clip is deleted on that judgement, so it errs toward flagging.
+
+Drift guards: `tests/test_resynthesize_episode.py`.
 
 ## Follow-ups
 
