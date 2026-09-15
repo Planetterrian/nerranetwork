@@ -196,13 +196,13 @@ class TestTheShapeReachesMira:
                 "guest_name", "guest_title", "guest_organization",
                 "episode_thesis", "guest_brief", "likely_questions",
                 "cohost_name", "cohost_first", "cohost_block",
-                "cohost_intro_step", "cohost_craft",
+                "cohost_intro_step", "cohost_craft", "carry_the_show",
                 "planned_minutes", "lightning_at", "guest_shape",
             },
             "question_generation.txt": {
                 "show_name", "show_premise", "name", "bio_research", "topics",
                 "show_memory", "question_count", "minutes", "guest_shape",
-                "prior_record",
+                "prior_record", "carry_the_show",
             },
             "mira_narration.txt": {
                 "show_name", "show_premise", "guest_name", "guest_title",

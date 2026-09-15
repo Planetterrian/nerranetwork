@@ -453,7 +453,13 @@ class TestCohostPrompt:
     def test_block_absent_when_host_mode_false(self):
         from fire_interviews import compile_mira_prompt
         prompt = compile_mira_prompt({"episode_thesis": "T", "host_mode": False}, _APP, _BRIEF)
-        assert "CO-HOST:" not in prompt and "Patrick" not in prompt
+        # Sept 15 2026: the network's founder is named in the section about
+        # what Nerra is for, which is true whether or not he is in the room.
+        # What must be absent is every instruction about a co-host being
+        # present — the block, the introduction step, and the craft section.
+        assert "CO-HOST:" not in prompt
+        assert "LEARN FROM YOUR CO-HOST" not in prompt
+        assert "your co-host, by name" not in prompt
         assert "{{" not in prompt
 
     def test_cohost_name_from_env(self, monkeypatch):

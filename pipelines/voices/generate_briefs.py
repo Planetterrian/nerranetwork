@@ -13,7 +13,8 @@ import datetime as dt
 import json
 
 from common import (  # noqa: E402  (sys.path bootstrapped in common)
-    cohost_name, episode_memory_block, llm, load_prompt, logger, notify_operator,
+    carry_the_show_block, cohost_name, episode_memory_block, llm, load_prompt,
+    logger, notify_operator,
     parse_json_lenient, render_email, sb_insert, sb_select, sb_update,
     send_email, show_for,
 )
@@ -96,7 +97,9 @@ def generate_brief(interview: dict, app: dict) -> dict:
                     question_count=question_count(minutes),
                     minutes=minutes,
                     guest_shape=shape_block(interview, app),
-                    prior_record=prior_record(app)),
+                    prior_record=prior_record(app),
+                    carry_the_show=carry_the_show_block(
+                        show, exclude_email=app.get("email", ""))),
         temperature=0.6, max_tokens=2000,
     )
     questions = parse_json_lenient(questions_raw)

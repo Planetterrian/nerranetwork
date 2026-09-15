@@ -168,3 +168,75 @@ class TestTheContentLake:
         body = _pyfn("_previous", AUTO)
         assert "episode_records" in body
         assert "THIS GUEST HAS BEEN ON BEFORE" in body
+
+
+class TestSheOwnsWhatSheIs:
+    def test_the_claim_is_made_once_and_then_earned(self):
+        assert "WHAT YOU ARE, AND WHAT TO DO WITH IT" in PROMPT
+        assert "first AI to host and produce a podcast end to end" in PROMPT
+        assert "sounds like a press release" in PROMPT
+        assert "What earns something is\nbeing good at it" in PROMPT
+
+    def test_the_guest_experience_is_named_not_ignored(self):
+        assert "this is an\nodd setup, I know" in PROMPT
+        assert "legitimate content, not a\ndistraction" in PROMPT
+
+    def test_nerra_is_described_in_patricks_own_terms(self):
+        block = PROMPT[PROMPT.index("NERRA NETWORK, AND WHY YOU EXIST"):]
+        block = block[:block.index("YOU ARE A GUIDE")]
+        assert "free of advertising and\nfree of positions" in block
+        assert "hand a microphone to people who would not otherwise" in block
+        assert "why this show exists rather than" in block
+
+    def test_she_is_told_what_her_contribution_is(self):
+        assert "remember every conversation the show has ever had" in PROMPT
+
+
+class TestSheGuidesRatherThanHolds:
+    def test_she_brings_a_perspective_and_hands_it_back(self):
+        assert "YOU ARE A GUIDE, NOT A MICROPHONE STAND" in PROMPT
+        assert "does that\n  match what you see?" in PROMPT
+        assert "never\n  instead of a question" in PROMPT
+
+    def test_she_does_not_offer_false_comfort(self):
+        assert "false comfort from an AI about AI is worth\n  nothing" in PROMPT
+        assert "Optimism that has looked at the downside" in PROMPT
+
+    def test_she_is_for_the_listener(self):
+        assert "Be useful to the person listening" in PROMPT
+        assert "Never make anyone feel late or stupid" in PROMPT
+        assert "You want them to come out of this well" in PROMPT
+
+
+class TestTheShowRemembersAcrossGuests:
+    COMMON = (V / "common.py").read_text(encoding="utf-8")
+    FIRE = (V / "fire_interviews.py").read_text(encoding="utf-8")
+
+    def test_the_block_carries_real_quotes(self):
+        body = _pyfn("carry_the_show_block", self.COMMON)
+        assert "In their words:" in body
+        assert "They predicted:" in body
+
+    def test_it_is_put_to_this_guest_not_recited(self):
+        body = _pyfn("carry_the_show_block", self.COMMON)
+        assert "put a previous guest's answer to" in body
+        assert "Name the person" in body
+        assert "Quote them accurately or not at all" in body
+        assert "a forced callback is" in body
+
+    def test_a_guest_does_not_get_quoted_back_to_themselves(self):
+        body = _pyfn("show_insights", self.COMMON)
+        assert "exclude_email" in body
+        assert 'if skip and (row.get("guest_email") or "").lower() == skip' in body
+
+    def test_the_archive_never_blocks_an_interview(self):
+        body = _pyfn("show_insights", self.COMMON)
+        assert "except Exception" in body
+        assert "return []" in body
+
+    def test_it_reaches_the_room_and_the_questions(self):
+        assert "carry_the_show=carry_the_show_block(" in self.FIRE
+        assert "{{carry_the_show}}" in PROMPT
+        qgen = (V / "prompts" / "question_generation.txt").read_text(encoding="utf-8")
+        assert "{{carry_the_show}}" in qgen
+        assert "puts that previous guest's" in qgen

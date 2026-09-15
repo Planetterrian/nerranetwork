@@ -621,3 +621,87 @@ def guest_links_markdown(app: Dict[str, Any], heading: str = "") -> str:
     head = heading or f"Find {who}"
     lines = [f"- {l['label']}: {l['url']}" for l in links]
     return f"{head}:\n" + "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
+# What the show itself has learned
+#
+# Sept 15 2026. episode_memory_block reads the PUBLISHED summaries file, which
+# gives titles and dates — enough not to retread an angle, and nothing Mira can
+# actually say out loud. A host three episodes in should be able to put one
+# guest's answer to the next one: John Capobianco built an agent that cannot
+# write to a network without a human ticket, and Vincent Rylan spent his
+# interview describing the pressure that removes exactly that gate. Neither of
+# them knows the other said it. That connection is the show's own contribution
+# and it is the thing only this host can make.
+
+CARRY_LIMIT = 6
+
+
+def show_insights(show: ShowRef = None, exclude_email: str = "",
+                  limit: int = CARRY_LIMIT) -> List[Dict[str, Any]]:
+    """Quotable things previous guests said, newest first.
+
+    ``exclude_email`` drops this guest's own earlier appearances — those
+    belong in their brief as a follow-up, not here as someone else's view.
+    """
+    slug = resolve_show(show).slug
+    try:
+        rows = sb_select(
+            "episode_records",
+            f"show=eq.{slug}&order=recorded_on.desc&limit={max(limit * 2, 8)}")
+    except Exception:  # noqa: BLE001 — memory never blocks an interview
+        logger.exception("show insights unavailable (non-fatal)")
+        return []
+    out: List[Dict[str, Any]] = []
+    skip = (exclude_email or "").strip().lower()
+    for row in rows or []:
+        if skip and (row.get("guest_email") or "").lower() == skip:
+            continue
+        quotes = row.get("quotes") or []
+        claims = row.get("claims") or []
+        best = None
+        if quotes and isinstance(quotes[0], dict):
+            best = {"text": quotes[0].get("text"), "why": quotes[0].get("why")}
+        elif claims and isinstance(claims[0], dict):
+            best = {"text": claims[0].get("quote") or claims[0].get("claim"),
+                    "why": claims[0].get("claim")}
+        if not best or not best.get("text"):
+            continue
+        out.append({
+            "guest": row.get("guest_name") or "a previous guest",
+            "recorded_on": str(row.get("recorded_on") or "")[:10],
+            "summary": row.get("summary") or "",
+            "quote": best["text"],
+            "why": best.get("why") or "",
+            "predictions": [p for p in (row.get("predictions") or [])
+                            if isinstance(p, dict) and p.get("prediction")][:2],
+        })
+        if len(out) >= limit:
+            break
+    return out
+
+
+def carry_the_show_block(show: ShowRef = None, exclude_email: str = "") -> str:
+    """The block that lets Mira bring one guest's answer to the next guest."""
+    rows = show_insights(show, exclude_email=exclude_email)
+    if not rows:
+        return ""
+    lines = ["WHAT THIS SHOW HAS LEARNED SO FAR (from guests who came before "
+             "this one — real people, real words, and yours to use):"]
+    for row in rows:
+        lines.append(f"\n{row['guest']} ({row['recorded_on']}): {row['summary']}")
+        lines.append(f'  In their words: "{row["quote"]}"')
+        for pred in row["predictions"]:
+            lines.append(f"  They predicted: {pred.get('prediction')}"
+                         + (f" (by {pred['due_on']})" if pred.get("due_on") else ""))
+    lines.append(
+        "\nUSE ONE OF THESE, ONCE, WHERE IT GENUINELY BELONGS. Not as trivia "
+        "and not to show that you remember — put a previous guest's answer to "
+        "THIS guest, in their own area, and ask what they make of it. "
+        "\"Someone who builds these systems told me X. You've spent your "
+        "career on the other side of that. Is he right?\" Name the person. "
+        "Quote them accurately or not at all. If nothing above genuinely "
+        "connects to this conversation, say nothing — a forced callback is "
+        "worse than none, and there will be a better one next time.")
+    return "\n".join(lines)

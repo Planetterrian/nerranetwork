@@ -23,7 +23,8 @@ import json
 import os
 
 from common import (  # noqa: E402
-    OPERATOR_EMAIL, ROOT, cohost_name, load_prompt, logger, notify_operator,
+    OPERATOR_EMAIL, ROOT, carry_the_show_block, cohost_name, load_prompt, logger,
+    notify_operator,
     operator_phone, render_email, sb_insert, sb_select, sb_update, send_email,
     show_for, to_e164,
 )
@@ -274,6 +275,8 @@ def compile_mira_prompt(interview: dict, app: dict, brief: dict) -> str:
         # half lightning round.
         lightning_at=max(4, min(15, round(minutes / 3))),
         guest_shape=shape_block(interview, app),
+        # What previous guests said, so she can put one of them to this one.
+        carry_the_show=carry_the_show_block(show, exclude_email=app.get("email", "")),
     ) + lessons_block(show.slug) + variety_block(show.slug)
 
 
