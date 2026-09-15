@@ -267,3 +267,21 @@ class TestAHandWrittenEditIsNotOverwritten:
         assert "workflow_dispatch:" in wf
         assert "auto_edit.py" in wf
         assert "assemble_edit.py" not in wf, "this one must not publish"
+
+
+class TestTheCutterLearnedFromItsFirstRun:
+    """Sept 15 2026, cutting Vincent Rylan's tape unsupervised. It found a
+    fifty-second echo-troubleshooting loop at 9:49 that the human edit had
+    missed entirely, and it started the episode at 3:08 — past the football
+    and the writing-process questions, straight to the book."""
+
+    def test_the_warm_up_is_protected(self):
+        assert "the warm-up is not throat-clearing" in AUTO_PROMPT
+        assert "born with disappointment in my\nheart" in AUTO_PROMPT
+        assert "Cut\nINTO the warm-up, not past it" in AUTO_PROMPT
+        assert "you have started too late" in AUTO_PROMPT
+
+    def test_technical_loops_are_named_as_the_common_case(self):
+        assert "a mute-and-unmute loop" in AUTO_PROMPT
+        assert "easy to miss" in AUTO_PROMPT
+        assert "whether anything is being SAID" in AUTO_PROMPT
