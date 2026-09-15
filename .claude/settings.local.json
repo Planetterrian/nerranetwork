@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git count-objects *)",
+      "Bash(python -m pytest tests/test_integration.py::IntegrationTests::test_no_newsapi_in_active_workflow -x)",
+      "Bash(python3 -m pytest tests/test_integration.py -k test_no_newsapi -x)",
+      "Bash(grep -E '^\\\\+.*xai-[a-zA-Z0-9]{10,}')",
+      "Bash(grep -E '^\\\\+.*sk_[a-zA-Z0-9]{20,}')",
+      "Bash(grep -E '^\\\\.env$')",
+      "Bash(grep -v \"^[A-Za-z_]*$\")",
+      "Bash(grep -v \".py$\")",
+      "Bash(git checkout *)",
+      "Bash(python -m pytest tests/test_publisher.py tests/test_newsletter.py -x -q)",
+      "Bash(python3 -m pytest tests/test_publisher.py tests/test_newsletter.py -x -q)",
+      "Bash(python3 -m pytest -x -q)"
+    ]
+  }
+}
