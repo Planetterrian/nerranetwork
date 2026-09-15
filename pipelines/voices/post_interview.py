@@ -93,6 +93,28 @@ def _interview_and_app(run: dict) -> tuple[dict, dict]:
     return interview, app
 
 
+def _anyone_joined(run: dict) -> bool:
+    """Did a guest ever connect? The room's own trace is the record.
+
+    A room with no guest leg produced no recording, so everything downstream
+    is meaningless. Absent or unreadable trace counts as "yes" — an empty
+    trace is not proof of an empty room, and it is better to try to process a
+    real interview and fail loudly than to file one as a no-show.
+    """
+    trace = run.get("scenario_trace")
+    if not isinstance(trace, list) or not trace:
+        return True
+    for event in trace:
+        detail = ""
+        if isinstance(event, dict):
+            detail = str(event.get("d", ""))
+        elif isinstance(event, str):
+            detail = event
+        if "guest" in detail and "joined" in detail:
+            return True
+    return False
+
+
 def handle_missed(run: dict, interview: dict, app: dict) -> int:
     """Guest didn't answer (spec §7 row 1 + §11.7 no-show policy)."""
     show = show_for(interview, app)
@@ -561,6 +583,16 @@ def main() -> int:
     show = show_for(interview, app)
 
     if run.get("status") == "failed" or run.get("disconnect_reason", "").startswith("call_failed"):
+        return handle_missed(run, interview, app)
+
+    # Nobody came. Sept 15 2026: Erica Sell did not join, the room opened to
+    # an empty chair, and this job ran anyway and died on "run has no
+    # recording URL" — a red cross on the workflow list and a stack trace for
+    # something that is not a fault. A no-show is a normal outcome of running
+    # a show and should read like one, or a red cross stops meaning anything.
+    if not _anyone_joined(run):
+        logger.info("no guest ever joined run %s — recording this as a no-show",
+                    run["id"])
         return handle_missed(run, interview, app)
 
     with tempfile.TemporaryDirectory(prefix=f"{show.slug}_post_") as tmp:

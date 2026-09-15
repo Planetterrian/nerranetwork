@@ -428,3 +428,38 @@ class TestNeverCutThroughAQuestion:
         assert any(s <= 1020 and e >= 1118 for s, e in kept), kept
         # and the echo (9:49-10:38) must not be.
         assert not any(s <= 600 <= e for s, e in kept), kept
+
+
+class TestANoShowIsNotAFailure:
+    """Sept 15 2026: Erica Sell did not join, the room opened to an empty
+    chair, and post-interview processing ran anyway and died on "run has no
+    recording URL". A red cross and a stack trace for something that is not a
+    fault — and a red cross that means nothing is worse than no red cross."""
+
+    SRC = (V / "post_interview.py").read_text(encoding="utf-8")
+
+    def _fn(self):
+        ns: dict = {}
+        start = self.SRC.index("def _anyone_joined(")
+        exec(self.SRC[start:self.SRC.index("\ndef handle_missed")], ns)
+        return ns["_anyone_joined"]
+
+    def test_a_guest_joining_is_what_counts(self):
+        f = self._fn()
+        assert f({"scenario_trace": [{"e": "leg", "d": "guest #1 joined (1 in room)"}]})
+        assert not f({"scenario_trace": [{"e": "leg", "d": "host #2 joined (1 in room)"},
+                                         {"e": "room", "d": "ending: normal"}]})
+
+    def test_no_evidence_is_not_evidence_of_absence(self):
+        f = self._fn()
+        assert f({}), "no trace at all must not file a real interview as a no-show"
+        assert f({"scenario_trace": []})
+
+    def test_string_events_are_read_too(self):
+        f = self._fn()
+        assert f({"scenario_trace": ['{"d": "guest #3 joined (2 in room)"}']})
+
+    def test_it_routes_to_the_existing_no_show_path(self):
+        assert "if not _anyone_joined(run):" in self.SRC
+        assert "return handle_missed(run, interview, app)" in self.SRC
+        assert "is not a fault" in self.SRC
