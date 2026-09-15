@@ -89,7 +89,8 @@ class TestShowRegistryShape:
         closing = build_closing_block("age_of_ai", episode_num=2,
                                       today_str="July 4, 2026",
                                       date=dt.date(2026, 7, 4))
-        assert closing.rstrip().endswith("keep being human.")
+        assert closing.rstrip().endswith(
+            "the next voice could be yours.")
         assert "Mira" in closing
 
 

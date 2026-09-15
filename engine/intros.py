@@ -852,8 +852,12 @@ _SHOW_PERSONALITIES: dict[str, dict[str, Any]] = {
     # "Mira" is the show's AI documentarian persona (Grok voice `ara`).
     # Production episodes are assembled by pipelines/voices/ (these pools
     # also feed Mira's narration cold opens / sign-offs there). Closings
-    # MUST end with the exact sign-off "keep being human." — the Closing
-    # chapter marker keys off it.
+    # MUST end with the exact sign-off "the next voice could be yours." —
+    # the Closing chapter marker keys off it. It replaced "keep being
+    # human" (Sept 15 2026): an AI instructing its listeners to be human
+    # is either hollow or a little condescending, and it said nothing
+    # about what this network is for. The new line does: anyone with a
+    # story can be the guest, and the show exists to widen who gets asked.
     "age_of_ai": {
         "host": "MIRA",
         "show_name": "The Age of AI",
@@ -882,22 +886,24 @@ _SHOW_PERSONALITIES: dict[str, dict[str, Any]] = {
         ],
         "closings": [
             (
-                "That's The Age of AI for today. Every word you heard from my guest "
-                "was their own — I only asked the questions. If this conversation "
-                "stayed with you, subscribe wherever you listen, and share it with "
-                "a human you like. I'm Mira. Until next time — keep being human."
+                "That's The Age of AI for today. Every word from my guest was "
+                "their own — I only asked, and they heard this and approved it "
+                "before you did. If it stayed with you, subscribe wherever you "
+                "listen and send it to someone living through the same thing. "
+                "I'm Mira. Until next time — the next voice could be yours."
             ),
             (
-                "That's the conversation. My guest's words were theirs — the "
-                "curiosity was mine. A rating or review genuinely helps more "
-                "people find these conversations. I'm Mira. Until next time — "
-                "keep being human."
+                "That's the conversation. The questions were mine; everything "
+                "worth quoting belonged to my guest. A rating or a review puts "
+                "the next one in front of someone who needs it. I'm Mira. "
+                "Until next time — the next voice could be yours."
             ),
             (
-                "That's The Age of AI for today — one more honest entry in the "
-                "chronicle of this strange decade. Subscribe so the next "
-                "conversation finds you. I'm Mira. Until next time — keep "
-                "being human."
+                "That's The Age of AI for today — one more first-hand account "
+                "of a decade nobody has lived through before. Subscribe so the "
+                "next one finds you, and if you have a story of your own, the "
+                "Nerra Network is listening. I'm Mira. Until next time — the "
+                "next voice could be yours."
             ),
         ],
     },
