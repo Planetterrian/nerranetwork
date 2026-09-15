@@ -323,3 +323,45 @@ class TestAFinishedEpisodeIsNeverLost:
         assert "spec['interview_id']" not in self.SRC
         assert 'spec["interview_id"]' not in self.SRC or \
             'if spec.get("interview_id")' in self.SRC
+
+
+class TestSomebodyIsActuallyTold:
+    """Sept 15 2026: both finished episodes sat in R2 with nobody told. The
+    assemble workflow passed OPERATOR_EMAIL from a repository secret that was
+    never set, so the variable existed and was empty — os.environ.get returned
+    "" and the default never applied. Resend got {"to": [""]} and said 422."""
+
+    COMMON = (ROOT / "pipelines" / "voices" / "common.py").read_text(encoding="utf-8")
+
+    def test_an_empty_env_var_is_not_an_address(self):
+        assert 'os.environ.get("OPERATOR_EMAIL") or "patricknovak1@gmail.com"' in self.COMMON
+        assert 'os.environ.get("VOICES_FROM_EMAIL") or "mira@nerranetwork.com"' in self.COMMON
+
+    def test_the_default_survives_an_empty_secret(self):
+        import os
+        import importlib
+        import sys
+        sys.path.insert(0, str(ROOT / "pipelines" / "voices"))
+        before = os.environ.get("OPERATOR_EMAIL")
+        os.environ["OPERATOR_EMAIL"] = ""
+        try:
+            import common
+            importlib.reload(common)
+            assert common.OPERATOR_EMAIL == "patricknovak1@gmail.com"
+        finally:
+            if before is None:
+                os.environ.pop("OPERATOR_EMAIL", None)
+            else:
+                os.environ["OPERATOR_EMAIL"] = before
+            importlib.reload(common)
+
+    def test_the_error_names_the_cause(self):
+        body = _pyfn("send_email", self.COMMON)
+        assert 'if "@" not in to:' in body
+        assert "OPERATOR_EMAIL" in body
+        assert "reads as an empty" in body
+
+    def test_the_workflow_does_not_pass_an_empty_secret(self):
+        wf = (ROOT / ".github" / "workflows"
+              / "nerra_voices_assemble_edit.yml").read_text(encoding="utf-8")
+        assert "secrets.OPERATOR_EMAIL || 'patricknovak1@gmail.com'" in wf

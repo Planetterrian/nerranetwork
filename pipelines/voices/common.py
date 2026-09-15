@@ -120,10 +120,16 @@ def sb_update(table: str, query: str, patch: Dict[str, Any]) -> List[Dict[str, A
 # Email (Resend or Postmark — spec §11.5)
 # ---------------------------------------------------------------------------
 
-FROM_EMAIL = os.environ.get("VOICES_FROM_EMAIL", "mira@nerranetwork.com")
+# `or` rather than a default argument, deliberately. Sept 15 2026: the
+# assemble workflow passes OPERATOR_EMAIL from a repository secret that was
+# never set, so the env var existed and was empty — os.environ.get returned
+# "" and the default never applied. Resend was handed {"to": [""]} and
+# answered 422, which is how two finished episodes ended up with nobody
+# told about either of them.
+FROM_EMAIL = os.environ.get("VOICES_FROM_EMAIL") or "mira@nerranetwork.com"
 
 
-OPERATOR_EMAIL = os.environ.get("OPERATOR_EMAIL", "patricknovak1@gmail.com")
+OPERATOR_EMAIL = os.environ.get("OPERATOR_EMAIL") or "patricknovak1@gmail.com"
 
 # Phase 2 co-host (Sept 2026): Patrick sits in the room as co-host on
 # every Mira interview. His display name lives in ONE env var so the
@@ -196,6 +202,14 @@ def send_email(to: str, subject: str, html_body: str,
     """Send mail as Mira. ``cc_operator=True`` copies Patrick — the July
     2026 oversight process: Mira runs guest comms, the operator sees
     everything without being in the critical path."""
+    to = (to or "").strip()
+    if "@" not in to:
+        # Better to say which address is missing than to let the provider
+        # answer 422 about a payload nobody can see.
+        raise RuntimeError(
+            f"refusing to send {subject!r}: recipient is {to!r}. Check "
+            "OPERATOR_EMAIL — an empty repository secret reads as an empty "
+            "string, not as unset.")
     resend_key = os.environ.get("RESEND_API_KEY", "")
     postmark_token = os.environ.get("POSTMARK_TOKEN", "")
     payload: dict = {"from": FROM_EMAIL, "to": [to],
