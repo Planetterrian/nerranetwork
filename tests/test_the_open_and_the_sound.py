@@ -456,3 +456,41 @@ class TestTheCraftRules:
         fire = (ROOT / "pipelines" / "voices"
                 / "fire_interviews.py").read_text(encoding="utf-8")
         assert "cohost_first=cohost_name().split()[0]," in fire
+
+
+class TestTheTranscriptStopsInventingSpeech:
+    """Whisper fills silence with its most common short utterances, and each
+    speaker's track is mostly silence — it is one microphone in a three-way
+    conversation. John Capobianco's transcript carries 47 lines reading only
+    "You"; Vincent Rylan's has "You" and "Thank you" every thirty seconds
+    through passages where that person said nothing. Cosmetic in the audio,
+    not cosmetic in the transcript a guest approves at gate 2."""
+
+    SRC = (ROOT / "pipelines" / "voices" / "post_interview.py").read_text(encoding="utf-8")
+
+    def _fn(self):
+        ns: dict = {}
+        start = self.SRC.index("_GHOSTS = {")
+        exec(self.SRC[start:self.SRC.index("\ndef diarized_tracks")], ns)
+        return ns["_is_hallucination"]
+
+    def test_a_ghost_in_silence_is_dropped(self):
+        f = self._fn()
+        assert f({"avg_logprob": -0.9, "no_speech_prob": 0.8}, "You")
+        assert f({"avg_logprob": -0.7}, "Thank you.")
+        assert f({}, "You"), "no confidence at all is not a reason to keep it"
+
+    def test_a_word_someone_really_said_survives(self):
+        f = self._fn()
+        assert not f({"avg_logprob": -0.2}, "Thank you."), \
+            "a confident 'thank you' is a real one"
+        assert not f({"avg_logprob": -0.9}, "Yeah, that works.")
+        assert not f({"avg_logprob": -0.95}, "I live at the intersection")
+
+    def test_only_short_reflexes_are_ever_candidates(self):
+        f = self._fn()
+        long_ghost = " ".join(["you"] * 8)
+        assert not f({"avg_logprob": -0.99}, long_ghost)
+
+    def test_the_filter_is_wired_into_the_merge(self):
+        assert "if not text or _is_hallucination(seg, text):" in self.SRC

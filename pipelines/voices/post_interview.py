@@ -386,6 +386,43 @@ def room_offsets(run: dict, durations: dict | None = None) -> dict:
     return out
 
 
+# Whisper invents speech in silence. Each speaker's track is mostly silence —
+# it is one microphone in a three-way conversation — and the model fills those
+# stretches with its most common short utterances. John Capobianco's episode
+# transcript carries 47 lines reading only "You" and Vincent Rylan's has "You"
+# and "Thank you" every thirty seconds through passages where that person said
+# nothing at all. It is cosmetic in the audio and not cosmetic at all in the
+# transcript a guest is asked to approve at gate 2.
+_GHOSTS = {
+    "you", "thank you", "thank you.", "thanks", "bye", "bye.", "okay", "ok",
+    "yeah", "mm", "mhm", "hmm", "uh", "um", "so", ".", "...", "，", "。",
+    "thank you for watching", "thanks for watching", "you.", "the",
+}
+# A real short word is spoken; a hallucinated one is inferred from silence, and
+# the model is much less sure of it. Below this the segment has to earn its
+# place by being longer than a reflex.
+_GHOST_LOGPROB = -0.55
+_GHOST_MAX_WORDS = 3
+
+
+def _is_hallucination(seg: dict, text: str) -> bool:
+    words = text.split()
+    if len(words) > _GHOST_MAX_WORDS:
+        return False
+    stripped = text.strip().strip(".,!?").lower()
+    if stripped not in _GHOSTS:
+        return False
+    # Whisper's own uncertainty is the tell. A guest really saying "thank you"
+    # scores well; the same words conjured out of room tone do not.
+    logprob = seg.get("avg_logprob")
+    if logprob is not None and float(logprob) > _GHOST_LOGPROB:
+        return False
+    no_speech = seg.get("no_speech_prob")
+    if no_speech is not None and float(no_speech) > 0.5:
+        return True
+    return logprob is None or float(logprob) <= _GHOST_LOGPROB
+
+
 def diarized_tracks(tracks: list[tuple[str, Path]], workdir: Path,
                     header: str = "", offsets: dict | None = None) -> tuple[str, float]:
     """Whisper each (label, mono wav) track and merge the segments by
@@ -412,7 +449,7 @@ def diarized_tracks(tracks: list[tuple[str, Path]], workdir: Path,
         data = json.loads(result.json_path.read_text(encoding="utf-8"))
         for seg in data.get("segments", []):
             text = (seg.get("text") or "").strip()
-            if not text:
+            if not text or _is_hallucination(seg, text):
                 continue
             merged.append((float(seg.get("start", 0.0)) + shift, label, text))
             # faster-whisper avg_logprob ≈ log-confidence; map to 0..1-ish.
