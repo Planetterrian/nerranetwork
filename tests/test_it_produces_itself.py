@@ -593,3 +593,38 @@ class TestTheGuestCanActuallyReadIt:
     def test_an_empty_cleaning_pass_falls_back_to_the_raw_one(self):
         assert '(pkg.transcript_cleaned || "").trim()' in self.WORKER
         assert '|| (pkg.transcript_raw || "").trim()' in self.WORKER
+
+
+class TestSheDoesNotEndTheShowInTheMiddle:
+    """Eight minutes into a forty-five minute conversation with Dan Perra,
+    Mira started talking like a host closing a show — thanking him, summing
+    up, reaching for a final thought. A guest hears that and packs up: they
+    stop opening subjects and compress the answer they are in. The best
+    forty minutes never happen."""
+
+    PROMPT = (V / "prompts" / "mira_system_prompt.txt").read_text(encoding="utf-8")
+    EDITOR = (V / "prompts" / "auto_edit.txt").read_text(encoding="utf-8")
+
+    def test_nothing_may_sound_like_an_ending_until_it_is_one(self):
+        assert "NEVER SIGNAL THE END BEFORE IT IS THE END" in self.PROMPT
+        assert "Summing up is an ending move" in self.PROMPT
+
+    def test_she_asks_what_they_came_to_say(self):
+        assert "COVER THEIR GROUND, NOT JUST YOURS" in self.PROMPT
+        assert "still in their pocket" in self.PROMPT
+
+    def test_she_follows_the_interesting_thing_down(self):
+        assert "DRILL IN." in self.PROMPT
+        assert "Three\nquestions deep into one real thing" in self.PROMPT
+
+    def test_the_personal_questions_are_not_optional_or_only_at_the_end(self):
+        assert "ASK ABOUT THE PERSON, NOT ONLY THE SUBJECT" in self.PROMPT
+        assert "spread through the hour" in self.PROMPT
+
+    def test_the_personal_rule_still_defers_to_the_application(self):
+        block = self.PROMPT[self.PROMPT.index("ASK ABOUT THE PERSON"):]
+        block = block[:block.index("THE CLOSING ROUND")]
+        assert "agreed to on their\napplication" in block
+
+    def test_the_editor_can_cut_a_false_ending(self):
+        assert "A FALSE ENDING IN THE MIDDLE IS A CUT CANDIDATE" in self.EDITOR
