@@ -198,6 +198,7 @@ class TestTheShapeReachesMira:
                 "cohost_name", "cohost_first", "cohost_block",
                 "cohost_intro_step", "cohost_craft", "carry_the_show",
                 "planned_minutes", "lightning_at", "guest_shape",
+                "guest_address", "guest_address_rule",
             },
             "question_generation.txt": {
                 "show_name", "show_premise", "name", "bio_research", "topics",
@@ -208,6 +209,7 @@ class TestTheShapeReachesMira:
                 "show_name", "show_premise", "guest_name", "guest_title",
                 "guest_organization", "guest_links", "episode_thesis",
                 "episode_notes", "transcript", "show_memory",
+                "guest_address",
             },
         }
         show_tokens = set(common.show_prompt_subs(common.get_show("age_of_ai")))

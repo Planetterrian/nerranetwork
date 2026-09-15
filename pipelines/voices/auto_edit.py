@@ -39,6 +39,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
+from address import spoken as spoken_address  # noqa: E402
 from common import (  # noqa: E402
     guest_links, llm, load_prompt, logger, parse_json_lenient, sb_insert,
     sb_select, sb_update, show_for,
@@ -130,6 +131,7 @@ def plan(ctx: dict) -> dict:
     raw = llm(
         load_prompt("auto_edit.txt", show=show,
                     guest_name=app.get("name", ""),
+                    guest_address=spoken_address(app),
                     guest_title=app.get("title", ""),
                     guest_organization=app.get("organization", "") or "",
                     guest_bio=app.get("bio", "") or "",

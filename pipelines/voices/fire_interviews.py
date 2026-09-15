@@ -29,6 +29,7 @@ from common import (  # noqa: E402
     show_for, to_e164,
 )
 from learning import lessons_block, variety_block  # noqa: E402
+from address import address_rule, spoken as spoken_address  # noqa: E402
 from interview_shape import planned_minutes, shape_block  # noqa: E402
 
 FIRE_WINDOW_AHEAD_MIN = 5          # phone (PSTN) interviews: Mira dials at T-5..T-0
@@ -267,6 +268,8 @@ def compile_mira_prompt(interview: dict, app: dict, brief: dict) -> str:
         opening_line=show.opening_line,
         closing_question=show.closing_question,
         guest_name=app["name"],
+        guest_address=spoken_address(app),
+        guest_address_rule=address_rule(app),
         guest_title=app.get("title", ""),
         guest_organization=app.get("organization", ""),
         episode_thesis=interview.get("episode_thesis")

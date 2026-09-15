@@ -159,6 +159,33 @@ def split_left(src_path: Path, out_wav: Path) -> Path:
     return out_wav
 
 
+def mix_same_clock(parts, out_path: Path) -> Path:
+    """Lay several recordings that already share one clock over each other.
+
+    The legs of a co-host who dropped and rejoined: each has been placed on
+    the room's clock, each is silence everywhere the others are speaking,
+    and together they are one continuous person. No levelling here — that
+    happens once, later, on the mixed episode.
+    """
+    parts = [Path(p) for p in parts]
+    out_path = Path(out_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    if len(parts) == 1:
+        _run(["ffmpeg", "-y", "-i", parts[0], "-ar", "48000", "-ac", "1",
+              "-c:a", "pcm_s16le", out_path])
+        return out_path
+    cmd = ["ffmpeg", "-y"]
+    for part in parts:
+        cmd += ["-i", part]
+    labels = "".join(f"[{i}:a]" for i in range(len(parts)))
+    cmd += ["-filter_complex",
+            f"{labels}amix=inputs={len(parts)}:duration=longest:normalize=0[out]",
+            "-map", "[out]", "-ar", "48000", "-ac", "1", "-c:a", "pcm_s16le",
+            out_path]
+    _run(cmd)
+    return out_path
+
+
 def mix_three(guest_wav: Path, host_wav: Path, mira_wav: Path,
               out_path: Path) -> Path:
     """Leveled mono mix of three clean speaker tracks (guest, co-host,

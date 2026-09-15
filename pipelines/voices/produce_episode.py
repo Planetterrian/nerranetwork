@@ -21,6 +21,7 @@ from pathlib import Path
 
 import requests
 
+from address import spoken as spoken_address  # noqa: E402
 from common import (  # noqa: E402
     ROOT, episode_memory_block, llm, load_prompt, logger, notify_operator,
     parse_json_lenient, r2_upload, sb_insert, sb_select, sb_update, show_for,
@@ -66,6 +67,7 @@ def write_narration(interview: dict, app: dict, pkg: dict) -> list[dict]:
             "mira_narration.txt",
             show=show,
             guest_name=app["name"],
+            guest_address=spoken_address(app),
             guest_title=app.get("title", ""),
             guest_organization=app.get("organization", ""),
             guest_links=guest_links_markdown(app, "Their links") or "(none given)",

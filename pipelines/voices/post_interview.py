@@ -45,12 +45,13 @@ from common import (  # noqa: E402
 )
 
 sys.path.insert(0, str(Path(__file__).parent))
+from address import written as written_address  # noqa: E402
 from audio.local_tracks import (  # noqa: E402
     ROOM_MIN_WINDOWS, align_to_reference, align_to_room, fetch_local_track,
 )
 from audio.mix_tracks import (  # noqa: E402
-    duration_seconds, mix_interview, mix_three, mix_two, split_channels,
-    split_left,
+    duration_seconds, mix_interview, mix_same_clock, mix_three, mix_two,
+    split_channels, split_left,
 )
 from learning import (  # noqa: E402
     host_formulas, measure, parse_transcript, save_host_phrases, save_metrics,
@@ -215,6 +216,29 @@ def fetch_leg_recording(url: str, workdir: Path, name: str) -> Path | None:
     return path
 
 
+def leg_recordings(run: dict, role: str, workdir: Path) -> list[Path]:
+    """Every recording of this person's legs, in the order they happened.
+
+    Sept 15 2026 (Adrian Wolfberg). Patrick's connection dropped and came
+    back four times in one interview: legs of forty minutes, two minutes,
+    six minutes and thirty seconds. Taking the longest keeps him in the
+    room for the first forty and deletes him from the rest of his own
+    interview. Every leg is real audio of a person talking; they belong in
+    the episode, each at the point in the room where it happened.
+    """
+    log = run.get("grok_session_log") or {}
+    urls = [run.get(f"recording_{role}_url") or ""]
+    urls += [u for u in (log.get(f"extra_{role}_record_urls") or []) if u]
+    out = []
+    for i, url in enumerate(u for u in urls if u):
+        leg = fetch_leg_recording(url, workdir, f"{role}{i or ''}")
+        if leg is None:
+            continue
+        logger.info("%s leg %d: %.1fs", role, i, duration_seconds(leg))
+        out.append(leg)
+    return out
+
+
 def longest_leg_recording(run: dict, role: str, workdir: Path) -> Path | None:
     """The co-host's recording, when he joined more than once.
 
@@ -276,7 +300,8 @@ def _covers(local: Path, reference: Path | None, who: str) -> bool:
 
 def build_tracks(run: dict, raw: Path, workdir: Path,
                  host_raw: Path | None = None,
-                 mira_raw: Path | None = None) -> dict:
+                 mira_raw: Path | None = None,
+                 host_legs: list | None = None) -> dict:
     """One clean 48 kHz mono WAV per speaker (Phase 2 co-host).
 
     Precedence per speaker:
@@ -308,7 +333,32 @@ def build_tracks(run: dict, raw: Path, workdir: Path,
     if guest is None:
         guest, sources["guest"] = guest_vox, "voximplant"
 
-    host_vox = split_left(host_raw, chan_dir / "host.wav") if host_raw else None
+    # A co-host who drops and rejoins has one recording per leg. Each is
+    # real audio of a person talking and each belongs at the point in the
+    # room where it happened, so they are placed on the room's clock by
+    # measurement and laid over one another. Taking the longest (which is
+    # what this did until Sept 15 2026) silently deleted Patrick from the
+    # last seven minutes of the Wolfberg interview.
+    legs = [l for l in (host_legs or ([host_raw] if host_raw else [])) if l]
+    host_vox = None
+    if len(legs) == 1:
+        host_vox = split_left(legs[0], chan_dir / "host.wav")
+    elif legs:
+        placed = []
+        for i, leg in enumerate(legs):
+            mono = split_left(leg, chan_dir / f"host_leg{i}.wav")
+            shifted, delay, windows = align_to_room(mono, guest_r,
+                                                    workdir / "room")
+            if windows < ROOM_MIN_WINDOWS and i:
+                logger.warning("host leg %d could not be placed in the room "
+                               "— left out of the stitch", i)
+                continue
+            logger.info("host leg %d placed at %+.2fs", i, delay)
+            placed.append(shifted)
+        host_vox = (mix_same_clock(placed, chan_dir / "host.wav")
+                    if len(placed) > 1 else (placed[0] if placed else None))
+        if host_vox is not None:
+            logger.info("host: stitched %d legs of %d", len(placed), len(legs))
     host = None
     local_host = fetch_local_track(run.get("local_host_url") or "",
                                    workdir / "local_host")
@@ -577,8 +627,9 @@ def diarized_transcript(raw: Path, workdir: Path) -> tuple[str, float]:
 
 
 def _guest_label(app: dict) -> str:
-    first = (app.get("name") or "Guest").strip().split()[0]
-    return first or "Guest"
+    """What the transcript calls the guest: "Dr. Wolfberg" when they hold a
+    doctorate, their first name otherwise (pipelines/voices/address.py)."""
+    return written_address(app) or "Guest"
 
 
 def speakers_header(app: dict) -> str:
@@ -720,7 +771,8 @@ def main() -> int:
 
         # Phase 2 co-host: per-leg Voximplant recordings (host, Mira) +
         # local browser recordings → one clean track per speaker.
-        host_raw = longest_leg_recording(run, "host", workdir)
+        host_legs = leg_recordings(run, "host", workdir)
+        host_raw = host_legs[0] if host_legs else None
         mira_raw = fetch_leg_recording(run.get("recording_mira_url") or "",
                                        workdir, "mira")
         # Durable R2 copies of the per-leg source files (Voximplant URLs
@@ -733,7 +785,8 @@ def main() -> int:
                 durable[name] = r2_upload(src, show.r2_key(
                     "raw", f"{run['id']}_{stamp}_{name}.{src.suffix.lstrip('.')}"))
 
-        tracks = build_tracks(run, raw, workdir, host_raw=host_raw, mira_raw=mira_raw)
+        tracks = build_tracks(run, raw, workdir, host_raw=host_raw,
+                              mira_raw=mira_raw, host_legs=host_legs)
         processed: dict = {}
         if tracks["host"] is not None:
             for speaker in ("guest", "host", "mira"):

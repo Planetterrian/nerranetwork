@@ -805,3 +805,81 @@ class TestTheRightPackageGetsApproved:
         body = self.ASSEMBLE[self.ASSEMBLE.index("def _tell_patrick"):]
         body = body[:body.index("guest = ")]
         assert body.count("sb_select(\n") >= 2
+
+
+class TestAnEarnedTitleIsUsed:
+    """Mira called Dr. Adrian Wolfberg "Adrian" for an hour. A first name is
+    right for most guests and wrong for a scholar being interviewed about
+    his field — the courtesy costs nothing and its absence is the first
+    thing a listener notices."""
+
+    def _a(self):
+        import address
+        return address
+
+    def test_a_doctorate_in_the_name_is_found(self):
+        a = self._a()
+        assert a.written({"name": "Adrian Wolfberg, PhD"}) == "Dr. Wolfberg"
+        assert a.spoken({"name": "Adrian Wolfberg, PhD"}) == "Doctor Wolfberg"
+
+    def test_a_professor_is_a_professor(self):
+        a = self._a()
+        assert a.spoken({"name": "Ann Lee", "title": "Professor of History"}) \
+            == "Professor Lee"
+
+    def test_most_guests_keep_their_first_name(self):
+        a = self._a()
+        assert a.written({"name": "Dan Perra", "title": "Pilot"}) == "Dan"
+
+    def test_a_guest_who_asked_for_their_first_name_gets_it(self):
+        a = self._a()
+        assert a.written({"name": "Adrian Wolfberg, PhD", "honorific": ""}) == "Adrian"
+
+    def test_a_set_honorific_wins_over_the_guesswork(self):
+        a = self._a()
+        assert a.spoken({"name": "Adrian Wolfberg", "honorific": "Dr."}) \
+            == "Doctor Wolfberg"
+
+    def test_the_rule_tells_her_to_drop_it_if_invited(self):
+        rule = self._a().address_rule({"name": "Adrian Wolfberg", "honorific": "Dr."})
+        assert "ONLY if they invite you to" in rule
+
+    def test_the_transcript_carries_it_too(self):
+        from post_interview import _guest_label, speakers_header
+        app = {"name": "Adrian Wolfberg", "honorific": "Dr."}
+        assert _guest_label(app) == "Dr. Wolfberg"
+        assert "Dr. Wolfberg (guest)" in speakers_header(app)
+
+    def test_every_prompt_that_says_the_name_out_loud_uses_it(self):
+        for name in ("mira_system_prompt.txt", "mira_narration.txt", "auto_edit.txt"):
+            text = (V / "prompts" / name).read_text(encoding="utf-8")
+            assert "{{guest_address}}" in text, name
+
+
+class TestEveryLegOfTheCoHost:
+    """Patrick's connection dropped and came back four times during the
+    Wolfberg interview: legs of forty minutes, two, six and thirty seconds.
+    Taking the longest kept him in the room for the first forty and deleted
+    him from the rest of his own interview."""
+
+    POST = (V / "post_interview.py").read_text(encoding="utf-8")
+    MIX = (V / "audio" / "mix_tracks.py").read_text(encoding="utf-8")
+
+    def test_it_fetches_all_of_them(self):
+        assert "def leg_recordings(run: dict, role: str" in self.POST
+
+    def test_each_leg_is_placed_in_the_room(self):
+        body = self.POST[self.POST.index("def build_tracks"):]
+        body = body[:body.index("def has_video_stream")]
+        assert "align_to_room(mono, guest_r," in body
+        assert "mix_same_clock(placed" in body
+
+    def test_a_leg_that_cannot_be_placed_is_left_out_not_guessed(self):
+        body = self.POST[self.POST.index("def build_tracks"):]
+        body = body[:body.index("def has_video_stream")]
+        assert "left out of the stitch" in body
+
+    def test_the_stitch_does_not_level_anything(self):
+        body = self.MIX[self.MIX.index("def mix_same_clock"):]
+        body = body[:body.index("def mix_three")]
+        assert "normalize=0" in body and "dynaudnorm" not in body
