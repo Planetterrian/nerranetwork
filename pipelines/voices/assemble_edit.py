@@ -131,6 +131,18 @@ NARRATION_RESTORE = "adeclick=w=75:t=2,afftdn=nf=-45:nr=12,anlmdn=s=0.0005:p=0.0
 SIDE_CHAIN = ("highpass=f=70,{restore},dynaudnorm=f=200:g=9:p=0.9:m=12")
 BALANCE_GLUE = "acompressor=threshold=-20dB:ratio=2.5:attack=20:release=250"
 
+# Sept 15 2026. Mira takes a beat before she answers — the model has to
+# think, and in the room that is fine. In a finished episode it is dead air,
+# and John Capobianco's cut had ninety-three silences over eight tenths of a
+# second, two and a quarter minutes of nothing in a thirty-three minute
+# programme, the longest of them five and a half seconds. This caps a silence
+# at about a second: the worst holes close, the natural beats survive (gaps
+# still range up to 1.6s afterwards rather than all snapping to one length),
+# and speech level does not move. MUST run after the two sides are folded
+# together — trimming each side separately would slide them apart.
+GAP_TRIM = ("silenceremove=stop_periods=-1:stop_duration=1.0:"
+            "stop_threshold=-40dB:detection=rms")
+
 
 def _run_sources(run: dict, show) -> Dict[str, str]:
     log = run.get("grok_session_log") or {}
@@ -198,7 +210,8 @@ def _piece(cut: dict, src: Path, out: Path) -> Path:
         cmd += ["-filter_complex",
                 f"[0:a]channelsplit=channel_layout=stereo[l][r];"
                 f"[l]{side}{left_extra}[lg];[r]{side}{right_extra}[rg];"
-                f"[lg][rg]amix=inputs=2:normalize=0,{BALANCE_GLUE}[o]",
+                f"[lg][rg]amix=inputs=2:normalize=0,{BALANCE_GLUE}"
+                + ("," + GAP_TRIM if cut.get("gaps", True) else "") + "[o]",
                 "-map", "[o]"]
     else:
         chain = []
@@ -223,6 +236,10 @@ def _piece(cut: dict, src: Path, out: Path) -> Path:
         if narration or cut.get("voice_match"):
             chain.append(VOICE_MATCH)
         chain.append(NARRATION_GENTLE if narration else GENTLE)
+        # Narration is already trimmed above; a conversation needs the dead
+        # air taken out of it and its real pauses left alone.
+        if not narration and cut.get("gaps", True):
+            chain.append(GAP_TRIM)
         cmd += ["-af", ",".join(chain)]
 
     cmd += ["-ar", "48000", "-ac", "1", "-c:a", "pcm_s16le", str(out)]
