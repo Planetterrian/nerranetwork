@@ -568,6 +568,7 @@ let firstJoinAt = null;     // Date.now() of the first human in the room
 let hostJoinedAt = null;    // ISO of the FIRST host join
 let hostLeftAt = null;      // ISO of the last host drop
 let hostJoins = 0;
+let guestJoins = 0;
 let hardCapTimer = null;
 let timeCheckTimer = null;
 let micCheckTimer = null;
@@ -665,6 +666,8 @@ function admitLeg(call, role) {
     if (role === "host") {
       hostJoins++;
       if (!hostJoinedAt) hostJoinedAt = new Date().toISOString();
+    } else if (role === "guest") {
+      guestJoins++;
     }
     trace("leg", role + " #" + leg.id + " joined (" + legs.length + " in room)");
     if (role === "guest" && noShowTimer) {
@@ -672,10 +675,20 @@ function admitLeg(call, role) {
     }
     if (!openingFired) maybeOpen();
     postLegEvent(role, "joined");
-    if (openingFired) {
-      announce(role + " joined");
-    } else {
+    if (!openingFired) {
       maybeOpen();
+    } else if (role === "guest" && guestJoins > 1) {
+      // The guest dropped and came back. This is the one arrival worth
+      // speaking for: they missed whatever was said while they were gone
+      // and they do not know where to pick up.
+      resumeForGuest();
+    } else {
+      // Anyone else coming or going is context, not an event. The co-host
+      // reconnecting used to make Mira stop and acknowledge it, over the
+      // top of the guest's answer (Adrian Wolfberg, Sept 15 2026, four
+      // times in one interview). Patrick must be able to drop and rejoin
+      // without the interview noticing.
+      noteRoom(role + " joined");
     }
   });
   const gone = function (why) {
@@ -691,7 +704,7 @@ function admitLeg(call, role) {
     if (legs.length === 0) {
       scheduleTeardown();
     } else if (openingFired) {
-      announce(role + " left the room");
+      noteRoom(role + " left the room");
     }
   };
   call.addEventListener(CallEvents.Disconnected, function () { gone("disconnected"); });
@@ -1131,19 +1144,46 @@ function describeRoom() {
   return legs.map(function (l) { return l.role; }).join(", ") || "empty";
 }
 
-// Non-spoken system note when someone joins or leaves mid-conversation.
-function announce(what) {
+// Context, not an event. Mira is told who is in the room and is told NOT to
+// speak about it. Until Sept 15 2026 this forced a response every time
+// anyone's connection moved, which is how a co-host reconnecting talked
+// over the guest mid-answer four times in one interview.
+function noteRoom(what) {
   if (!grokAgent || !openingFired) return;
   try {
     grokAgent.conversationItemCreate({
       item: { type: "message", role: "system",
         content: [{ type: "input_text", text:
-          "[ROOM — system note] " + what + ". Now in the room: " + describeRoom() +
-          ". Acknowledge in a few words if it matters, then carry on." }] },
+          "[ROOM — system note, context only] " + what + ". Now in the room: " +
+          describeRoom() + ". Do NOT respond to this note, do not mention it, " +
+          "and do not stop what you are doing. Connections come and go and " +
+          "the conversation carries on. If the guest has left the room, " +
+          "finish your sentence and then wait quietly until they are back." }] },
+    });
+  } catch (err) {
+    Logger.write("[aoa " + runId + "] noteRoom failed: " + err.message);
+  }
+}
+
+// The guest dropped and came back. They missed whatever happened while they
+// were gone, so this is the one arrival that is worth speaking for.
+function resumeForGuest() {
+  if (!grokAgent || !openingFired) return;
+  try {
+    grokAgent.conversationItemCreate({
+      item: { type: "message", role: "system",
+        content: [{ type: "input_text", text:
+          "[ROOM — system note] The guest's connection dropped and they have " +
+          "just rejoined. They did not hear anything said while they were " +
+          "away. Welcome them back in one short sentence without making a " +
+          "fuss of it, say in one line where the two of you had got to, then " +
+          "ask your last question again IN FULL — they may have answered part " +
+          "of it, and you should ask the whole thing rather than a fragment. " +
+          "Then stop and wait for them." }] },
     });
     grokAgent.responseCreate({});
   } catch (err) {
-    Logger.write("[aoa " + runId + "] announce failed: " + err.message);
+    Logger.write("[aoa " + runId + "] resumeForGuest failed: " + err.message);
   }
 }
 

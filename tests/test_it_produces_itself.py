@@ -871,7 +871,7 @@ class TestEveryLegOfTheCoHost:
     def test_each_leg_is_placed_in_the_room(self):
         body = self.POST[self.POST.index("def build_tracks"):]
         body = body[:body.index("def has_video_stream")]
-        assert "align_to_room(mono, guest_r," in body
+        assert "align_to_room(\n                mono, guest_r," in body
         assert "mix_same_clock(placed" in body
 
     def test_a_leg_that_cannot_be_placed_is_left_out_not_guessed(self):
@@ -883,3 +883,86 @@ class TestEveryLegOfTheCoHost:
         body = self.MIX[self.MIX.index("def mix_same_clock"):]
         body = body[:body.index("def mix_three")]
         assert "normalize=0" in body and "dynaudnorm" not in body
+
+
+class TestALegIsPlacedWhereTheRoomSaysItShouldBe:
+    """Mira's leg began 268 seconds before the guest's in the Wolfberg
+    interview, because the room opened when the co-host arrived and the
+    guest was four and a half minutes behind him. A blind ±180s search
+    could not reach the true peak, so it took a noise peak at -35.7s and
+    the episode came back misaligned again. The room's own timeline says
+    roughly where each leg belongs; the correlation only has to confirm
+    it."""
+
+    TRACKS = (V / "audio" / "local_tracks.py").read_text(encoding="utf-8")
+    POST = (V / "post_interview.py").read_text(encoding="utf-8")
+    ASSEMBLE = (V / "assemble_edit.py").read_text(encoding="utf-8")
+
+    RUN = {"scenario_trace": [
+        {"e": "room", "d": "opened (webrtc)", "t": "2026-09-15T18:54:10.453Z"},
+        {"e": "leg", "d": "host #1 joined (1 in room)", "t": "2026-09-15T18:54:10.520Z"},
+        {"e": "leg", "d": "guest #2 joined (2 in room)", "t": "2026-09-15T18:58:39.084Z"},
+        {"e": "leg", "d": "host #3 joined (3 in room)", "t": "2026-09-15T19:33:25.398Z"},
+    ]}
+
+    def test_it_reads_every_join_in_order(self):
+        from post_interview import join_offsets
+        j = join_offsets(self.RUN)
+        assert round(j["guest"][0]) == 269
+        assert [round(x) for x in j["host"]] == [0, 2355]
+
+    def test_the_search_can_reach_a_late_guest(self):
+        from audio import local_tracks
+        assert local_tracks.ROOM_MAX_OFFSET_SEC >= 600
+
+    def test_the_expectation_narrows_the_search(self):
+        body = self.TRACKS[self.TRACKS.index("def estimate_room_delay"):]
+        body = body[:body.index("def align_to_room")]
+        assert "lo, hi = -expected - span, -expected + span" in body
+
+    def test_mira_is_expected_where_the_room_opened(self):
+        body = self.POST[self.POST.index("def build_tracks"):]
+        body = body[:body.index("def has_video_stream")]
+        assert 'if role == "mira":\n            return -guest_join' in body
+        assert 'expected=expected_delay("host", i)' in body
+
+    def test_a_track_that_would_not_place_is_said_out_loud(self):
+        from assemble_edit import _sync_warning
+        warn = _sync_warning({"grok_session_log": {"tracks": {"unaligned": ["host"]}}})
+        assert "Listen for sync before" in warn
+        assert "do not approve this" in warn
+        assert _sync_warning({"grok_session_log": {"tracks": {"unaligned": []}}}) == ""
+
+
+class TestOnlyTheGuestLeavingIsAnEvent:
+    """Patrick's connection dropped four times during the Wolfberg
+    interview and each reconnection made Mira stop and acknowledge it, over
+    the top of the guest's answer. The co-host must be able to come and go
+    without the interview noticing. A guest coming back is different: they
+    missed what was said and need the question again."""
+
+    SCENARIO = (ROOT / "voximplant" / "scenarios"
+                / "age_of_ai_interview.js").read_text(encoding="utf-8")
+
+    def test_nothing_forces_her_to_speak_about_the_room(self):
+        body = self.SCENARIO[self.SCENARIO.index("function noteRoom("):]
+        body = body[:body.index("function resumeForGuest(")]
+        assert "responseCreate" not in body
+        assert "Do NOT respond to this note" in body
+
+    def test_the_co_host_coming_back_is_context_only(self):
+        assert 'noteRoom(role + " joined")' in self.SCENARIO
+        assert 'noteRoom(role + " left the room")' in self.SCENARIO
+        assert "announce(" not in self.SCENARIO
+
+    def test_a_returning_guest_gets_the_question_again(self):
+        assert 'role === "guest" && guestJoins > 1' in self.SCENARIO
+        body = self.SCENARIO[self.SCENARIO.index("function resumeForGuest("):]
+        body = body[:body.index("// Whole-room mix")]
+        assert "ask your last question again IN FULL" in body
+        assert "responseCreate" in body
+
+    def test_a_guest_arriving_for_the_first_time_is_not_a_rejoin(self):
+        body = self.SCENARIO[self.SCENARIO.index("postLegEvent(role, \"joined\")"):]
+        body = body[:body.index("const gone =")]
+        assert "if (!openingFired) {" in body

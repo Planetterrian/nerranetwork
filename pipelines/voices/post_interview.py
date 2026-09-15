@@ -298,6 +298,41 @@ def _covers(local: Path, reference: Path | None, who: str) -> bool:
     return False
 
 
+def join_offsets(run: dict) -> dict:
+    """Seconds from the room opening to each leg connecting, in order.
+
+    ``{"guest": [sec, ...], "host": [sec, ...]}``. Mira's agent is created
+    with the room, so her offset is 0. These are not when a recorder
+    started — Voximplant begins recording a leg seconds after it connects —
+    but they say which part of the search space to believe when a leg is
+    being placed on the room's clock.
+    """
+    import datetime as _dt
+
+    def when(stamp):
+        try:
+            return _dt.datetime.fromisoformat(str(stamp).replace("Z", "+00:00"))
+        except Exception:  # noqa: BLE001
+            return None
+
+    opened, out = None, {"guest": [], "host": []}
+    for event in run.get("scenario_trace") or []:
+        if not isinstance(event, dict):
+            continue
+        at, kind, what = when(event.get("t")), event.get("e"), str(event.get("d", ""))
+        if at is None:
+            continue
+        if opened is None and kind == "room" and what.startswith("opened"):
+            opened = at
+            continue
+        if opened is None or kind != "leg" or " joined" not in what:
+            continue
+        role = what.split()[0]
+        if role in out:
+            out[role].append(max(0.0, (at - opened).total_seconds()))
+    return out
+
+
 def build_tracks(run: dict, raw: Path, workdir: Path,
                  host_raw: Path | None = None,
                  mira_raw: Path | None = None,
@@ -324,6 +359,21 @@ def build_tracks(run: dict, raw: Path, workdir: Path,
     guest_vox, guest_r = split_channels(raw, chan_dir)
     sources: dict = {}
 
+    # The guest's leg is the clock. Everything else is expected to sit at
+    # its own join time minus the guest's — Mira's agent starts with the
+    # room, so when a guest joins four minutes late her leg begins four
+    # minutes before the reference and has to be trimmed by that much.
+    joins = join_offsets(run)
+    guest_join = (joins["guest"] or [0.0])[0]
+
+    def expected_delay(role: str, index: int = 0) -> float | None:
+        if role == "mira":
+            return -guest_join
+        legs_at = joins.get(role) or []
+        if index >= len(legs_at):
+            return None
+        return legs_at[index] - guest_join
+
     guest = None
     local_guest = fetch_local_track(run.get("local_guest_url") or "",
                                     workdir / "local_guest")
@@ -347,8 +397,9 @@ def build_tracks(run: dict, raw: Path, workdir: Path,
         placed = []
         for i, leg in enumerate(legs):
             mono = split_left(leg, chan_dir / f"host_leg{i}.wav")
-            shifted, delay, windows = align_to_room(mono, guest_r,
-                                                    workdir / "room")
+            shifted, delay, windows = align_to_room(
+                mono, guest_r, workdir / "room",
+                expected=expected_delay("host", i))
             if windows < ROOM_MIN_WINDOWS and i:
                 logger.warning("host leg %d could not be placed in the room "
                                "— left out of the stitch", i)
@@ -388,7 +439,8 @@ def build_tracks(run: dict, raw: Path, workdir: Path,
         if track is None or track == guest_r:
             alignment[role] = 0.0
             continue
-        shifted, delay, windows = align_to_room(track, guest_r, workdir / "room")
+        shifted, delay, windows = align_to_room(track, guest_r, workdir / "room",
+                                                expected=expected_delay(role))
         alignment[role] = delay
         if windows < ROOM_MIN_WINDOWS:
             unaligned.append(role)

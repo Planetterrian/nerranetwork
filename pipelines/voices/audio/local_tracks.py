@@ -62,7 +62,15 @@ MIN_CORRELATION = 0.2   # normalized envelope correlation below this → no offs
 # stretches where a given person says nothing.
 ROOM_WINDOW_SEC = 150.0
 ROOM_STEP_SEC = 200.0
-ROOM_MAX_OFFSET_SEC = 180.0
+# Blind search range. A leg can start a long way from the reference: the
+# room opens when the co-host arrives and the guest may be minutes behind
+# him, so Mira's leg began 268 s before the guest's in the Adrian Wolfberg
+# interview (Sept 15 2026) and a +/-180 s search could not reach the true
+# peak — it picked a noise peak at -35.7 s and the episode came back
+# misaligned again. Callers that know roughly where the leg belongs pass
+# ``expected`` and get a tight search around it instead.
+ROOM_MAX_OFFSET_SEC = 900.0
+ROOM_EXPECTED_SPAN_SEC = 120.0
 ROOM_MIN_CORRELATION = 0.45   # per window; noise peaks sit well below this
 ROOM_MIN_WINDOWS = 2          # agreeing windows needed to trust the median
 ROOM_ENVELOPE_SR = 50         # 20 ms resolution is plenty for whole legs
@@ -290,7 +298,10 @@ def _whole_envelope(path: Path, workdir: Path) -> np.ndarray:
     return np.abs(data[:usable]).reshape(-1, win).mean(axis=1).astype(np.float32)
 
 
-def _window_offset(a: np.ndarray, b: np.ndarray) -> Tuple[Optional[float], float]:
+def _window_offset(a: np.ndarray, b: np.ndarray,
+                   lo: float = -ROOM_MAX_OFFSET_SEC,
+                   hi: float = ROOM_MAX_OFFSET_SEC,
+                   ) -> Tuple[Optional[float], float]:
     """Lag (seconds) at which ``a`` best matches ``b``, plus its strength."""
     a, b = a - a.mean(), b - b.mean()
     if not a.any() or not b.any():
@@ -300,8 +311,8 @@ def _window_offset(a: np.ndarray, b: np.ndarray) -> Tuple[Optional[float], float
     full = np.fft.irfft(np.fft.rfft(a, nfft) * np.conj(np.fft.rfft(b, nfft)), nfft)
     corr = np.concatenate([full[nfft - (len(b) - 1):nfft], full[:len(a)]])
     lags = np.arange(-(len(b) - 1), len(a))
-    limit = int(ROOM_MAX_OFFSET_SEC * ROOM_ENVELOPE_SR)
-    keep = (lags >= -limit) & (lags <= limit)
+    keep = ((lags >= int(lo * ROOM_ENVELOPE_SR))
+            & (lags <= int(hi * ROOM_ENVELOPE_SR)))
     corr, lags = corr[keep], lags[keep]
     if not len(corr):
         return None, 0.0
@@ -310,8 +321,10 @@ def _window_offset(a: np.ndarray, b: np.ndarray) -> Tuple[Optional[float], float
     return float(lags[k]) / ROOM_ENVELOPE_SR, float(max(0.0, corr[k] / norm))
 
 
-def estimate_room_delay(track_wav: Path, room_wav: Path,
-                        workdir: Path) -> Tuple[float, float, int]:
+def estimate_room_delay(track_wav: Path, room_wav: Path, workdir: Path,
+                        expected: Optional[float] = None,
+                        span: float = ROOM_EXPECTED_SPAN_SEC,
+                        ) -> Tuple[float, float, int]:
     """How long to DELAY ``track_wav`` so it sits on the room's clock.
 
     ``room_wav`` is the reference the whole episode is built on — the
@@ -327,11 +340,20 @@ def estimate_room_delay(track_wav: Path, room_wav: Path,
     room = _whole_envelope(Path(room_wav), workdir)
     window = int(ROOM_WINDOW_SEC * ROOM_ENVELOPE_SR)
     step = int(ROOM_STEP_SEC * ROOM_ENVELOPE_SR)
-    span = min(len(track), len(room))
+    # ``expected`` is the delay the room's own timeline implies — when a leg
+    # joined, against when the reference leg joined. It is never exact (a
+    # recorder starts seconds after its leg connects) but it says which
+    # part of the search space to believe, which a blind correlation over
+    # forty-seven minutes of conversation cannot.
+    if expected is None:
+        lo, hi = -ROOM_MAX_OFFSET_SEC, ROOM_MAX_OFFSET_SEC
+    else:
+        lo, hi = -expected - span, -expected + span
+    covered = min(len(track), len(room))
     picks: list[Tuple[float, float]] = []
-    for start in range(0, max(0, span - window), step):
+    for start in range(0, max(0, covered - window), step):
         lag, strength = _window_offset(track[start:start + window],
-                                       room[start:start + window])
+                                       room[start:start + window], lo, hi)
         if lag is None or strength < ROOM_MIN_CORRELATION:
             continue
         picks.append((-lag, strength))   # lag<0 = track runs early = delay it
@@ -350,12 +372,14 @@ def estimate_room_delay(track_wav: Path, room_wav: Path,
 
 
 def align_to_room(track_wav: Path, room_wav: Path, workdir: Path,
+                  expected: Optional[float] = None,
                   ) -> Tuple[Path, float, int]:
     """Shift ``track_wav`` onto the room's clock. Returns the new path, the
     delay applied, and how many windows agreed (0 = left untouched)."""
     workdir = Path(workdir)
     workdir.mkdir(parents=True, exist_ok=True)
-    delay, _agreement, windows = estimate_room_delay(track_wav, room_wav, workdir)
+    delay, _agreement, windows = estimate_room_delay(
+        track_wav, room_wav, workdir, expected=expected)
     if windows < ROOM_MIN_WINDOWS or abs(delay) < 0.05:
         return Path(track_wav), 0.0, windows
     out = workdir / (Path(track_wav).stem + "_room.wav")

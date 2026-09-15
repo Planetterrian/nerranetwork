@@ -376,6 +376,28 @@ def _interview_id(spec: dict, run: dict | None) -> str:
     return str(rows[0]["interview_id"]) if rows else ""
 
 
+def _sync_warning(run: dict | None) -> str:
+    """A loud line when a track could not be placed on the room's clock.
+
+    Sept 15 2026: the Adrian Wolfberg episode went out for review with the
+    co-host's leg sitting at zero because it never correlated. The pipeline
+    knew — it flagged the package "unaligned:host" — and then emailed the
+    episode as though nothing were wrong. A warning nobody is shown is not
+    a warning.
+    """
+    tracks = ((run or {}).get("grok_session_log") or {}).get("tracks") or {}
+    bad = [str(r) for r in (tracks.get("unaligned") or [])]
+    if not bad:
+        return ""
+    who = " and ".join(bad)
+    return ("<p style='background:#FEF3C7;border-left:4px solid #D97706;"
+            "padding:.8em 1em;margin:0 0 1em'><strong>Listen for sync before "
+            f"anything else.</strong> The {who} track could not be lined up "
+            "with the room, so that voice may sit in a different time frame "
+            "from the others. If it does, do not approve this — tell me and "
+            "I will re-place it.</p>")
+
+
 def _tell_patrick(spec: dict, show, slug: str, url: str, seconds: float,
                   run: dict | None = None) -> None:
     """Email the finished episode to the operator for gate 1.
@@ -418,7 +440,8 @@ def _tell_patrick(spec: dict, show, slug: str, url: str, seconds: float,
             OPERATOR_EMAIL,
             f"{show.short_label}: {guest} is cut and ready for your ear",
             f"<p>Hi Patrick,</p>"
-            f"<p>The {guest} episode is assembled — introduction, conversation and "
+            + _sync_warning(run)
+            + f"<p>The {guest} episode is assembled — introduction, conversation and "
             f"close, {int(seconds // 60)} minutes {int(seconds % 60):02d}.</p>"
             f'<p><a href="{url}">Listen to the episode</a></p>'
             + (f'<p>When it passes your ear, approve it here and the guest is asked '
