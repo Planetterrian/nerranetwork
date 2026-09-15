@@ -213,11 +213,32 @@ def _stitch(parts: List[Path], out_mp3: Path) -> Path:
     return out_mp3
 
 
+def _stored_spec(slug: str, column: str):
+    """An auto cut's narration and EDL are written to the runner's checkout
+    and never committed, so they exist nowhere a later workflow run can see
+    them. Sept 15 2026: the chained job stopped after cutting Dan Perra's
+    episode and neither pickup workflow could take over, because the files
+    it needed had gone with the runner. episode_edits holds the same JSON.
+    """
+    try:
+        rows = sb_select("episode_edits", f"slug=eq.{slug}&select={column}")
+    except Exception:  # noqa: BLE001
+        logger.exception("could not read episode_edits for %s", slug)
+        return None
+    spec = rows[0].get(column) if rows else None
+    if spec:
+        logger.info("%s not on disk — using the stored %s for %s",
+                    column, column, slug)
+    return spec or None
+
+
 def narrate(slug: str) -> Dict[str, str]:
     spec_path = NARRATION_DIR / f"{slug}.json"
-    if not spec_path.exists():
-        raise SystemExit(f"no narration spec at {spec_path}")
-    spec = json.loads(spec_path.read_text(encoding="utf-8"))
+    spec = (json.loads(spec_path.read_text(encoding="utf-8"))
+            if spec_path.exists() else _stored_spec(slug, "narration"))
+    if not spec:
+        raise SystemExit(
+            f"no narration spec at {spec_path} and none stored for {slug!r}")
     show = get_show(spec.get("show"))
     segments = spec.get("segments") or []
     if not segments:

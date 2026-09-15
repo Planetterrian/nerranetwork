@@ -628,3 +628,30 @@ class TestSheDoesNotEndTheShowInTheMiddle:
 
     def test_the_editor_can_cut_a_false_ending(self):
         assert "A FALSE ENDING IN THE MIDDLE IS A CUT CANDIDATE" in self.EDITOR
+
+
+class TestAnAutoCutCanBePickedUpAgain:
+    """The auto-cutter writes narration/<slug>.json and edl/<slug>.json into
+    the runner's checkout and nothing ever commits them, so when the chained
+    job stopped after cutting Dan Perra's episode (Sept 15 2026) neither
+    pickup workflow could take over: the files had gone with the runner. The
+    same JSON is in episode_edits, which outlives any runner."""
+
+    NARRATE = (V / "narrate.py").read_text(encoding="utf-8")
+    ASSEMBLE = (V / "assemble_edit.py").read_text(encoding="utf-8")
+
+    def test_narrate_falls_back_to_the_stored_narration(self):
+        assert 'else _stored_spec(slug, "narration")' in self.NARRATE
+        assert "def _stored_spec(slug: str, column: str):" in self.NARRATE
+
+    def test_assemble_falls_back_to_the_stored_edl(self):
+        assert 'else _stored_spec(slug, "edl")' in self.ASSEMBLE
+
+    def test_it_reads_the_row_by_slug(self):
+        body = self.NARRATE[self.NARRATE.index("def _stored_spec"):]
+        body = body[:body.index("def narrate(")]
+        assert 'sb_select("episode_edits", f"slug=eq.{slug}' in body
+
+    def test_missing_everywhere_still_says_so(self):
+        assert "and none stored for" in self.NARRATE
+        assert "and none stored for" in self.ASSEMBLE

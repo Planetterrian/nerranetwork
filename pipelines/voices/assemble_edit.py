@@ -265,9 +265,13 @@ def _duration(path: Path) -> float:
 
 def assemble(slug: str) -> dict:
     spec_path = EDL_DIR / f"{slug}.json"
-    if not spec_path.exists():
-        raise SystemExit(f"no EDL at {spec_path}")
-    spec = json.loads(spec_path.read_text(encoding="utf-8"))
+    # See narrate._stored_spec: an auto cut's EDL lives on the runner that
+    # made it and in episode_edits, never in the repo.
+    from narrate import _stored_spec
+    spec = (json.loads(spec_path.read_text(encoding="utf-8"))
+            if spec_path.exists() else _stored_spec(slug, "edl"))
+    if not spec:
+        raise SystemExit(f"no EDL at {spec_path} and none stored for {slug!r}")
     show = get_show(spec.get("show"))
     run_id = spec["run_id"]
     runs = sb_select("interview_runs", f"id=eq.{run_id}")
