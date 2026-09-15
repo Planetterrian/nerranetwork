@@ -918,7 +918,7 @@ class TestALegIsPlacedWhereTheRoomSaysItShouldBe:
     def test_the_expectation_narrows_the_search(self):
         body = self.TRACKS[self.TRACKS.index("def estimate_room_delay"):]
         body = body[:body.index("def align_to_room")]
-        assert "lo, hi = -expected - span, -expected + span" in body
+        assert "lo, hi = -span, span" in body
 
     def test_mira_is_expected_where_the_room_opened(self):
         body = self.POST[self.POST.index("def build_tracks"):]
@@ -966,3 +966,39 @@ class TestOnlyTheGuestLeavingIsAnEvent:
         body = self.SCENARIO[self.SCENARIO.index("postLegEvent(role, \"joined\")"):]
         body = body[:body.index("const gone =")]
         assert "if (!openingFired) {" in body
+
+
+class TestTheAlignmentChecksItsOwnWork:
+    """Three episodes went out misaligned while the pipeline believed it had
+    done the arithmetic. Two things were wrong. The windows compared the same
+    stretch of both files, so a correlation could never find a lag longer
+    than the window — with Mira's leg 268s ahead of the guest's, one file's
+    150 seconds held no part of the other's conversation. And the answer was
+    the median of every window including the noise, which dragged Mira's
+    estimate 35s off. Measured properly on the Wolfberg tapes the shift is
+    -233.69s for Mira and -256.33s for the co-host, and both verify at zero
+    afterwards."""
+
+    TRACKS = (V / "audio" / "local_tracks.py").read_text(encoding="utf-8")
+
+    def test_the_expectation_is_applied_not_just_searched_within(self):
+        body = self.TRACKS[self.TRACKS.index("def estimate_room_delay"):]
+        body = body[:body.index("def align_to_room")]
+        assert "cut = int(round(-base * ROOM_ENVELOPE_SR))" in body
+        assert "track = track[cut:]" in body
+
+    def test_the_answer_is_what_the_windows_agree_on(self):
+        body = self.TRACKS[self.TRACKS.index("def estimate_room_delay"):]
+        body = body[:body.index("def align_to_room")]
+        assert "picks.sort(key=lambda p: p[1], reverse=True)" in body
+        assert "abs(d - anchor) <= ROOM_AGREE_SEC" in body
+
+    def test_it_measures_again_after_shifting(self):
+        body = self.TRACKS[self.TRACKS.index("def align_to_room"):]
+        assert "expected=0.0, span=30.0" in body
+        assert "ROOM_RESIDUAL_SEC" in body
+
+    def test_a_track_that_does_not_verify_counts_as_unplaced(self):
+        body = self.TRACKS[self.TRACKS.index("def align_to_room"):]
+        assert "treating as unplaced" in body
+        assert "return out, delay, 0" in body

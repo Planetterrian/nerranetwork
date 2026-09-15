@@ -71,6 +71,8 @@ ROOM_STEP_SEC = 200.0
 # ``expected`` and get a tight search around it instead.
 ROOM_MAX_OFFSET_SEC = 900.0
 ROOM_EXPECTED_SPAN_SEC = 120.0
+ROOM_AGREE_SEC = 2.5    # windows this close are measuring the same offset
+ROOM_RESIDUAL_SEC = 1.0  # a placed track must verify this close to zero
 ROOM_MIN_CORRELATION = 0.45   # per window; noise peaks sit well below this
 ROOM_MIN_WINDOWS = 2          # agreeing windows needed to trust the median
 ROOM_ENVELOPE_SR = 50         # 20 ms resolution is plenty for whole legs
@@ -340,15 +342,30 @@ def estimate_room_delay(track_wav: Path, room_wav: Path, workdir: Path,
     room = _whole_envelope(Path(room_wav), workdir)
     window = int(ROOM_WINDOW_SEC * ROOM_ENVELOPE_SR)
     step = int(ROOM_STEP_SEC * ROOM_ENVELOPE_SR)
-    # ``expected`` is the delay the room's own timeline implies — when a leg
-    # joined, against when the reference leg joined. It is never exact (a
-    # recorder starts seconds after its leg connects) but it says which
-    # part of the search space to believe, which a blind correlation over
-    # forty-seven minutes of conversation cannot.
-    if expected is None:
-        lo, hi = -ROOM_MAX_OFFSET_SEC, ROOM_MAX_OFFSET_SEC
-    else:
-        lo, hi = -expected - span, -expected + span
+    # ``expected`` is the delay the room's own timeline implies — this leg's
+    # join, against the reference leg's. It is never exact, because a
+    # recorder starts seconds after its leg connects, so it is applied to
+    # the envelope first and the correlation then measures what is left.
+    #
+    # Applying it matters as much as knowing it. These windows compare the
+    # same stretch of both files, so a correlation can only ever find a lag
+    # shorter than the window: with Mira's leg 268 s ahead of the guest's,
+    # a 150 s window of one holds no part of the conversation in the other,
+    # and the search returned nothing however wide its lag range (Adrian
+    # Wolfberg, second attempt, Sept 15 2026). Shifting the envelope by the
+    # expectation puts the two roughly on top of each other, and what
+    # remains is the few seconds of recorder lag the correlation is good at.
+    lo, hi = -ROOM_MAX_OFFSET_SEC, ROOM_MAX_OFFSET_SEC
+    base = 0.0
+    if expected is not None:
+        base = float(expected)
+        lo, hi = -span, span
+        cut = int(round(-base * ROOM_ENVELOPE_SR))
+        if cut > 0:
+            track = track[cut:]
+        elif cut < 0:
+            track = np.concatenate(
+                [np.zeros(-cut, dtype=np.float32), track])
     covered = min(len(track), len(room))
     picks: list[Tuple[float, float]] = []
     for start in range(0, max(0, covered - window), step):
@@ -356,15 +373,26 @@ def estimate_room_delay(track_wav: Path, room_wav: Path, workdir: Path,
                                        room[start:start + window], lo, hi)
         if lag is None or strength < ROOM_MIN_CORRELATION:
             continue
-        picks.append((-lag, strength))   # lag<0 = track runs early = delay it
+        picks.append((base - lag, strength))  # lag<0 = runs early = delay it
     if not picks:
         logger.warning("room alignment: %s never correlated with the room",
                        Path(track_wav).name)
         return 0.0, 0.0, 0
-    delays = np.array([d for d, _ in picks])
+    # One leg has one offset, so the answer is the value the windows AGREE
+    # on, not the middle of everything they said. A plain median let two
+    # noise windows drag Mira's estimate 35 s off the truth. Anchor on the
+    # window that correlated best and keep only the others that land within
+    # a couple of seconds of it; those are the ones measuring the same
+    # thing.
+    picks.sort(key=lambda p: p[1], reverse=True)
+    anchor = picks[0][0]
+    cluster = [d for d, _ in picks if abs(d - anchor) <= ROOM_AGREE_SEC]
+    strengths = [st for d, st in picks if abs(d - anchor) <= ROOM_AGREE_SEC]
+    delays = np.array(cluster)
     delay = float(np.median(delays))
-    agreement = float(np.median([s for _, s in picks]))
+    agreement = float(np.median(strengths))
     spread = float(np.max(np.abs(delays - delay))) if len(delays) > 1 else 0.0
+    picks = [(d, st) for d, st in zip(cluster, strengths)]
     logger.info("room alignment: %s delay %+.2fs (%d windows, corr %.2f, "
                 "spread %.2fs)", Path(track_wav).name, delay, len(picks),
                 agreement, spread)
@@ -390,7 +418,22 @@ def align_to_room(track_wav: Path, room_wav: Path, workdir: Path,
         cmd += ["-ss", f"{-delay:.3f}", "-i", track_wav]
     cmd += ["-ar", TARGET_SR, "-ac", "1", "-c:a", "pcm_s16le", out]
     _run(cmd)
-    return out, delay, windows
+    # Check the work. Measuring an offset and applying it are two different
+    # things, and three episodes went out misaligned while the pipeline
+    # believed it had done the arithmetic. The shifted track is measured
+    # again against the room: it should now be sitting at zero, and if it
+    # is not, this is reported as a track that could not be placed rather
+    # than shipped as one that was.
+    residual, agree, checked = estimate_room_delay(out, room_wav, workdir,
+                                                  expected=0.0, span=30.0)
+    if checked and abs(residual) <= ROOM_RESIDUAL_SEC:
+        logger.info("room alignment: %s verified at %+.2fs (corr %.2f)",
+                    Path(track_wav).name, residual, agree)
+        return out, delay, windows
+    logger.warning("room alignment: %s still %+.2fs out after shifting by "
+                   "%+.2fs (%d check windows) — treating as unplaced",
+                   Path(track_wav).name, residual, delay, checked)
+    return out, delay, 0
 
 
 def describe_manifest(manifest: Optional[Dict[str, Any]]) -> str:
