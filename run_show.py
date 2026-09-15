@@ -3337,142 +3337,166 @@ def run(args: argparse.Namespace) -> None:
                 logger.info("Synthesizing audio ...")
                 t0 = time.monotonic()
 
-                # Section-aware TTS: split at chapter boundaries and
-                # concatenate with transition stings between sections.
-                sting_path = None
-                if config.audio.transition_sting:
-                    sting_path = PROJECT_ROOT / config.audio.transition_sting
+                def _synthesize_raw_mp3() -> None:
+                    """Synthesize ``podcast_script`` into ``raw_mp3`` — dialogue,
+                    section or single-call, whichever the config selects.
 
-                # ``config.tts.use_section_tts`` is the network-wide opt-in.
-                # As of May 13 2026 the default is False — episodes are
-                # synthesised as a single Grok TTS call so the network-wide
-                # ``<fast>...</fast>`` wrap from ``_defaults.yaml`` is
-                # applied exactly once per episode (no chunk/section
-                # boundaries that could leak the tag aloud). See landmine
-                # #17 + the TTSConfig docstring.
-                use_section_tts = (
-                    getattr(config.tts, "use_section_tts", True)
-                    and not config.tts.dialogue_mode
-                    and episode_chapters
-                    and len(episode_chapters) >= 2
-                    and sting_path
-                )
+                    A closure so the spoken-text gate (9a-gate below) can
+                    re-run the EXACT same synthesis once when Whisper shows
+                    the audio is not the script (Tesla Ep605, Sep 14 2026:
+                    Grok's server-side normalizer spoke its own reasoning
+                    for 45 s). The body is unchanged from the pre-closure
+                    code; only the indentation moved."""
+                    # Section-aware TTS: split at chapter boundaries and
+                    # concatenate with transition stings between sections.
+                    sting_path = None
+                    if config.audio.transition_sting:
+                        sting_path = PROJECT_ROOT / config.audio.transition_sting
 
-                # Two-host dialogue synthesis (The DP Pod): route each
-                # speaker's turns to that speaker's Grok voice. Supersedes
-                # section-TTS (turn-level synthesis and per-section stings
-                # are incompatible) and never applies the speech wrap
-                # (per-turn wraps are the landmine-#17 leak shape).
-                use_dialogue_tts = (
-                    config.tts.dialogue_mode and tts_provider == "grok"
-                )
-                if use_dialogue_tts:
-                    from engine.tts_dialogue import (
-                        dialogue_stats,
-                        parse_dialogue_turns,
-                        synthesize_dialogue,
+                    # ``config.tts.use_section_tts`` is the network-wide opt-in.
+                    # As of May 13 2026 the default is False — episodes are
+                    # synthesised as a single Grok TTS call so the network-wide
+                    # ``<fast>...</fast>`` wrap from ``_defaults.yaml`` is
+                    # applied exactly once per episode (no chunk/section
+                    # boundaries that could leak the tag aloud). See landmine
+                    # #17 + the TTSConfig docstring.
+                    use_section_tts = (
+                        getattr(config.tts, "use_section_tts", True)
+                        and not config.tts.dialogue_mode
+                        and episode_chapters
+                        and len(episode_chapters) >= 2
+                        and sting_path
                     )
-                    _dlg_voices = config.tts.dialogue_voices or {}
-                    _dlg_stats = dialogue_stats(podcast_script, _dlg_voices)
-                    for _k, _v in _dlg_stats.items():
-                        metrics.record(_k, _v)
-                    if parse_dialogue_turns(podcast_script, _dlg_voices):
-                        metrics.record("dialogue_fallback_single_voice", False)
-                        synthesize_dialogue(
-                            podcast_script, _dlg_voices, raw_mp3,
-                            api_key=api_key,
-                            max_chars=config.tts.max_chars,
-                            language_code=config.tts.language_code,
-                            pause_ms=config.tts.dialogue_pause_ms,
-                            speed=getattr(config.tts, "speed", 1.0) or 1.0,
-                        )
-                    else:
-                        logger.warning(
-                            "Dialogue TTS: no %s speaker labels found in the "
-                            "script — falling back to single-voice synthesis "
-                            "with tts.voice_id so the episode still ships. "
-                            "Check the podcast prompt's label rules.",
-                            sorted(_dlg_voices),
-                        )
-                        metrics.record("dialogue_fallback_single_voice", True)
-                        synthesize(
-                            podcast_script, config.tts.voice_id, raw_mp3,
-                            api_key=api_key, provider=tts_provider,
-                            max_chars=config.tts.max_chars,
-                            model_id=config.tts.model, stability=config.tts.stability,
-                            similarity_boost=config.tts.similarity_boost,
-                            style=config.tts.style,
-                            language_code=config.tts.language_code,
-                            speed=config.tts.speed,
-                            apply_text_normalization=config.tts.apply_text_normalization,
-                            speech_wrap_open=config.tts.speech_wrap_open,
-                            speech_wrap_close=config.tts.speech_wrap_close,
-                        )
-                elif use_section_tts:
-                    from engine.chapters import split_script_at_chapters
-                    from engine.audio import generate_transition_sting, concatenate_with_stings
 
-                    sections = split_script_at_chapters(podcast_script, episode_chapters)
-                    sections = [s for s in sections if s.strip()]
-
-                    # Safety: if sections capture < 80% of the script, something
-                    # went wrong with splitting — fall back to single synthesis.
-                    sections_total = sum(len(s) for s in sections)
-                    if sections_total < len(podcast_script) * 0.8:
-                        logger.warning(
-                            "Section TTS: sections only contain %d/%d chars (%.0f%%) — "
-                            "falling back to single synthesis to avoid truncation",
-                            sections_total, len(podcast_script),
-                            100 * sections_total / len(podcast_script) if podcast_script else 0,
+                    # Two-host dialogue synthesis (The DP Pod): route each
+                    # speaker's turns to that speaker's Grok voice. Supersedes
+                    # section-TTS (turn-level synthesis and per-section stings
+                    # are incompatible) and never applies the speech wrap
+                    # (per-turn wraps are the landmine-#17 leak shape).
+                    use_dialogue_tts = (
+                        config.tts.dialogue_mode and tts_provider == "grok"
+                    )
+                    if use_dialogue_tts:
+                        from engine.tts_dialogue import (
+                            dialogue_stats,
+                            parse_dialogue_turns,
+                            synthesize_dialogue,
                         )
-                        metrics.record("section_tts_fallback", True)
-                        metrics.record("section_tts_coverage_pct", round(
-                            100 * sections_total / len(podcast_script), 1,
-                        ) if podcast_script else 0)
-                        sections = []  # Force fallback to single synthesis below
+                        _dlg_voices = config.tts.dialogue_voices or {}
+                        _dlg_stats = dialogue_stats(podcast_script, _dlg_voices)
+                        for _k, _v in _dlg_stats.items():
+                            metrics.record(_k, _v)
+                        if parse_dialogue_turns(podcast_script, _dlg_voices):
+                            metrics.record("dialogue_fallback_single_voice", False)
+                            synthesize_dialogue(
+                                podcast_script, _dlg_voices, raw_mp3,
+                                api_key=api_key,
+                                max_chars=config.tts.max_chars,
+                                language_code=config.tts.language_code,
+                                pause_ms=config.tts.dialogue_pause_ms,
+                                speed=getattr(config.tts, "speed", 1.0) or 1.0,
+                            )
+                        else:
+                            logger.warning(
+                                "Dialogue TTS: no %s speaker labels found in the "
+                                "script — falling back to single-voice synthesis "
+                                "with tts.voice_id so the episode still ships. "
+                                "Check the podcast prompt's label rules.",
+                                sorted(_dlg_voices),
+                            )
+                            metrics.record("dialogue_fallback_single_voice", True)
+                            synthesize(
+                                podcast_script, config.tts.voice_id, raw_mp3,
+                                api_key=api_key, provider=tts_provider,
+                                max_chars=config.tts.max_chars,
+                                model_id=config.tts.model, stability=config.tts.stability,
+                                similarity_boost=config.tts.similarity_boost,
+                                style=config.tts.style,
+                                language_code=config.tts.language_code,
+                                speed=config.tts.speed,
+                                apply_text_normalization=config.tts.apply_text_normalization,
+                                speech_wrap_open=config.tts.speech_wrap_open,
+                                speech_wrap_close=config.tts.speech_wrap_close,
+                            )
+                    elif use_section_tts:
+                        from engine.chapters import split_script_at_chapters
+                        from engine.audio import generate_transition_sting, concatenate_with_stings
 
-                    if len(sections) >= 2:
-                        logger.info("Section TTS: synthesizing %d sections separately", len(sections))
-                        metrics.record("section_tts_fallback", False)
-                        metrics.record("section_tts_section_count", len(sections))
-                        section_tmp_dir = digests_dir / f"_sections_ep{episode_num:03d}"
+                        sections = split_script_at_chapters(podcast_script, episode_chapters)
+                        sections = [s for s in sections if s.strip()]
 
-                        from engine.tts import synthesize_sections
-                        section_files = synthesize_sections(
-                            sections,
-                            config.tts.voice_id,
-                            section_tmp_dir,
-                            api_key=api_key,
-                            provider=tts_provider,
-                            section_prefix=f"sec_ep{episode_num:03d}",
-                            max_chars=config.tts.max_chars,
-                            model_id=config.tts.model,
-                            stability=config.tts.stability,
-                            similarity_boost=config.tts.similarity_boost,
-                            style=config.tts.style,
-                            language_code=config.tts.language_code,
-                            speed=config.tts.speed,
-                            apply_text_normalization=config.tts.apply_text_normalization,
-                            speech_wrap_open=config.tts.speech_wrap_open,
-                            speech_wrap_close=config.tts.speech_wrap_close,
-                        )
+                        # Safety: if sections capture < 80% of the script, something
+                        # went wrong with splitting — fall back to single synthesis.
+                        sections_total = sum(len(s) for s in sections)
+                        if sections_total < len(podcast_script) * 0.8:
+                            logger.warning(
+                                "Section TTS: sections only contain %d/%d chars (%.0f%%) — "
+                                "falling back to single synthesis to avoid truncation",
+                                sections_total, len(podcast_script),
+                                100 * sections_total / len(podcast_script) if podcast_script else 0,
+                            )
+                            metrics.record("section_tts_fallback", True)
+                            metrics.record("section_tts_coverage_pct", round(
+                                100 * sections_total / len(podcast_script), 1,
+                            ) if podcast_script else 0)
+                            sections = []  # Force fallback to single synthesis below
 
-                        generate_transition_sting(sting_path)
-                        concatenate_with_stings(
-                            section_files, raw_mp3, sting_path=sting_path,
-                        )
+                        if len(sections) >= 2:
+                            logger.info("Section TTS: synthesizing %d sections separately", len(sections))
+                            metrics.record("section_tts_fallback", False)
+                            metrics.record("section_tts_section_count", len(sections))
+                            section_tmp_dir = digests_dir / f"_sections_ep{episode_num:03d}"
 
-                        for sf in section_files:
+                            from engine.tts import synthesize_sections
+                            section_files = synthesize_sections(
+                                sections,
+                                config.tts.voice_id,
+                                section_tmp_dir,
+                                api_key=api_key,
+                                provider=tts_provider,
+                                section_prefix=f"sec_ep{episode_num:03d}",
+                                max_chars=config.tts.max_chars,
+                                model_id=config.tts.model,
+                                stability=config.tts.stability,
+                                similarity_boost=config.tts.similarity_boost,
+                                style=config.tts.style,
+                                language_code=config.tts.language_code,
+                                speed=config.tts.speed,
+                                apply_text_normalization=config.tts.apply_text_normalization,
+                                speech_wrap_open=config.tts.speech_wrap_open,
+                                speech_wrap_close=config.tts.speech_wrap_close,
+                            )
+
+                            generate_transition_sting(sting_path)
+                            concatenate_with_stings(
+                                section_files, raw_mp3, sting_path=sting_path,
+                            )
+
+                            for sf in section_files:
+                                try:
+                                    sf.unlink()
+                                except Exception as exc:
+                                    logger.debug("Failed to clean up temp file %s: %s", sf, exc)
                             try:
-                                sf.unlink()
+                                section_tmp_dir.rmdir()
                             except Exception as exc:
-                                logger.debug("Failed to clean up temp file %s: %s", sf, exc)
-                        try:
-                            section_tmp_dir.rmdir()
-                        except Exception as exc:
-                            logger.debug("Failed to remove temp dir %s: %s", section_tmp_dir, exc)
+                                logger.debug("Failed to remove temp dir %s: %s", section_tmp_dir, exc)
+                        else:
+                            # Not enough sections — fall back to single synthesis
+                            synthesize(
+                                podcast_script, config.tts.voice_id, raw_mp3,
+                                api_key=api_key, provider=tts_provider,
+                                max_chars=config.tts.max_chars,
+                                model_id=config.tts.model, stability=config.tts.stability,
+                                similarity_boost=config.tts.similarity_boost,
+                                style=config.tts.style,
+                                language_code=config.tts.language_code,
+                                speed=config.tts.speed,
+                                apply_text_normalization=config.tts.apply_text_normalization,
+                                speech_wrap_open=config.tts.speech_wrap_open,
+                                speech_wrap_close=config.tts.speech_wrap_close,
+                            )
                     else:
-                        # Not enough sections — fall back to single synthesis
                         synthesize(
                             podcast_script, config.tts.voice_id, raw_mp3,
                             api_key=api_key, provider=tts_provider,
@@ -3486,20 +3510,8 @@ def run(args: argparse.Namespace) -> None:
                             speech_wrap_open=config.tts.speech_wrap_open,
                             speech_wrap_close=config.tts.speech_wrap_close,
                         )
-                else:
-                    synthesize(
-                        podcast_script, config.tts.voice_id, raw_mp3,
-                        api_key=api_key, provider=tts_provider,
-                        max_chars=config.tts.max_chars,
-                        model_id=config.tts.model, stability=config.tts.stability,
-                        similarity_boost=config.tts.similarity_boost,
-                        style=config.tts.style,
-                        language_code=config.tts.language_code,
-                        speed=config.tts.speed,
-                        apply_text_normalization=config.tts.apply_text_normalization,
-                        speech_wrap_open=config.tts.speech_wrap_open,
-                        speech_wrap_close=config.tts.speech_wrap_close,
-                    )
+
+                _synthesize_raw_mp3()
 
                 # === TTS + Audio Phase ===
                 _tts_duration = time.monotonic() - t0
@@ -3538,21 +3550,156 @@ def run(args: argparse.Namespace) -> None:
                 # each loaded Whisper independently and re-transcribed
                 # the same audio — operator-caught during the pipeline
                 # audit.
-                _transcript_result = None
-                try:
-                    from engine.transcripts import generate_transcript
-                    _lang = "ru" if args.show in ("finansy_prosto", "privet_russian") else "en"
-                    _ep_prefix = f"{config.episode.prefix}_Ep{episode_num:03d}_{today:%Y%m%d}"
-                    _transcript_result = generate_transcript(
-                        raw_mp3, digests_dir, _ep_prefix,
-                        model_size=config.tts.whisper_model, language=_lang,
-                        # Show proper nouns bias the decoder away from the
-                        # brand garbles that shipped in 790 transcripts
-                        # before July 28 2026 (see engine/transcripts.py).
-                        vocabulary=[config.name, *config.keywords],
+                _lang = "ru" if args.show in ("finansy_prosto", "privet_russian") else "en"
+                _ep_prefix = f"{config.episode.prefix}_Ep{episode_num:03d}_{today:%Y%m%d}"
+
+                def _transcribe_raw():
+                    """Whisper transcript of ``raw_mp3`` (non-fatal; None on
+                    failure). A closure so the spoken-text gate can re-run
+                    it after a re-synthesis."""
+                    try:
+                        from engine.transcripts import generate_transcript
+                        return generate_transcript(
+                            raw_mp3, digests_dir, _ep_prefix,
+                            model_size=config.tts.whisper_model, language=_lang,
+                            # Show proper nouns bias the decoder away from the
+                            # brand garbles that shipped in 790 transcripts
+                            # before July 28 2026 (see engine/transcripts.py).
+                            vocabulary=[config.name, *config.keywords],
+                        )
+                    except Exception as exc:
+                        logger.warning("Transcript generation failed (non-fatal): %s", exc)
+                        return None
+
+                _transcript_result = _transcribe_raw()
+
+                # 9a-gate. Spoken-text gate (Sep 14 2026, Tesla Ep605): what
+                # Grok SPOKE must be the script we SENT. Grok's server-side
+                # text normalizer read its own reasoning aloud for the first
+                # 45 s of Ep605 ("One thing, the input has line breaks,
+                # preserve them ... Rules. Do not convert at sign in code")
+                # in place of the hook and the identity line. The saved
+                # _tts.txt was clean, tag_leaks read 0, the opt-in whole-
+                # episode validator would have scored ~0.9, and the episode
+                # shipped to RSS, both Shorts, the Apple video feed and
+                # Nerra Daily. This is a deterministic transcript-vs-script
+                # check (engine/spoken_text_gate.py): a failure re-runs the
+                # identical synthesis once (the defect is injected server-
+                # side and does not repeat), a second failure SKIPS the
+                # episode in enforce mode. It never blocks on a missing
+                # transcript, and non-English transcripts run in shadow
+                # (resolve_gate_mode) because Whisper is not trustworthy
+                # on them yet.
+                from engine.spoken_text_gate import (
+                    check_transcript_files,
+                    resolve_gate_mode,
+                )
+                _gate_mode = resolve_gate_mode(
+                    getattr(config.tts, "spoken_text_gate", "enforce"), _lang,
+                )
+                metrics.record("spoken_text_gate_mode", _gate_mode)
+                _gate_outcome = "off"
+                if _gate_mode != "off":
+                    _gate_retries = max(
+                        0, int(getattr(config.tts, "spoken_text_gate_retries", 1) or 0),
                     )
-                except Exception as exc:
-                    logger.warning("Transcript generation failed (non-fatal): %s", exc)
+                    _gate_attempts = 0
+                    _gate_retry_seconds = 0.0
+                    _gate_report = None
+                    _gate_first = None
+                    while True:
+                        _gate_attempts += 1
+                        if _transcript_result is None:
+                            _gate_outcome = "no_transcript"
+                            logger.warning(
+                                "::warning::%s Ep%s: spoken-text gate could not "
+                                "run — no Whisper transcript. The audio is "
+                                "UNVERIFIED against the script.",
+                                config.slug, episode_num,
+                            )
+                            break
+                        _gate_report = check_transcript_files(
+                            podcast_script,
+                            _transcript_result.json_path,
+                            _transcript_result.txt_path,
+                            min_opening_match=float(getattr(
+                                config.tts, "spoken_text_gate_min_opening_match", 0.5,
+                            )),
+                            max_unmatched_run=int(getattr(
+                                config.tts, "spoken_text_gate_max_unmatched_run", 40,
+                            )),
+                        )
+                        if _gate_first is None:
+                            _gate_first = _gate_report
+                        if _gate_report.passed:
+                            _gate_outcome = "pass" if _gate_attempts == 1 else "retry_pass"
+                            logger.info("Spoken-text gate: %s", _gate_report.summary())
+                            break
+                        logger.warning(
+                            "::warning::%s Ep%s attempt %d: %s",
+                            config.slug, episode_num, _gate_attempts,
+                            _gate_report.summary(),
+                        )
+                        if _gate_attempts > _gate_retries:
+                            _gate_outcome = (
+                                "blocked" if _gate_mode == "enforce" else "fail_shadow"
+                            )
+                            break
+                        logger.warning(
+                            "Spoken-text gate: the audio is not the script — "
+                            "re-synthesising %s Ep%s (retry %d of %d) ...",
+                            config.slug, episode_num, _gate_attempts, _gate_retries,
+                        )
+                        _t_retry = time.monotonic()
+                        _synthesize_raw_mp3()
+                        record_tts_usage(
+                            tracker, len(podcast_script), provider=config.tts.provider,
+                        )
+                        _transcript_result = _transcribe_raw()
+                        _gate_retry_seconds += time.monotonic() - _t_retry
+
+                    metrics.record("spoken_text_gate_attempts", _gate_attempts)
+                    if _gate_retry_seconds:
+                        metrics.record(
+                            "spoken_text_gate_retry_duration_s",
+                            round(_gate_retry_seconds, 2),
+                        )
+                    if _gate_report is not None:
+                        metrics.record("spoken_text_opening_match", _gate_report.opening_match)
+                        metrics.record("spoken_text_unmatched_run", _gate_report.longest_unmatched_run)
+                        metrics.record("spoken_text_gate_reasons", list(_gate_report.reasons))
+                        metrics.record("spoken_text_whisper_segments_dropped", _gate_report.segments_dropped)
+                        metrics.record("spoken_text_whisper_loops_collapsed", _gate_report.loops_collapsed)
+                    if _gate_first is not None and _gate_first is not _gate_report:
+                        metrics.record("spoken_text_gate_first_attempt", {
+                            "opening_match": _gate_first.opening_match,
+                            "longest_unmatched_run": _gate_first.longest_unmatched_run,
+                            "reasons": list(_gate_first.reasons),
+                            "snippet": _gate_first.unmatched_snippet,
+                        })
+                    if _gate_outcome == "blocked":
+                        logger.error(
+                            "::error::%s Ep%s BLOCKED by the spoken-text gate after %d "
+                            "attempt(s): %s — the audio is not the script and will not "
+                            "be published.",
+                            config.slug, episode_num, _gate_attempts,
+                            _gate_report.summary() if _gate_report else "",
+                        )
+                    elif _gate_outcome == "fail_shadow":
+                        logger.warning(
+                            "::warning::%s Ep%s: spoken-text gate FAILED in shadow mode "
+                            "(%s) — shipping unverified audio; listen before trusting it.",
+                            config.slug, episode_num,
+                            _gate_report.summary() if _gate_report else "",
+                        )
+                metrics.record("spoken_text_gate", _gate_outcome)
+                if _gate_outcome == "blocked":
+                    _skip_episode(
+                        "spoken_text_gate",
+                        "Spoken audio does not match the script after "
+                        f"{_gate_attempts} synthesis attempt(s): "
+                        + (_gate_report.summary() if _gate_report else ""),
+                    )
 
                 # 9b. Post-TTS transcription validation (opt-in). Reuses the
                 # transcript text from 9a when available so Whisper only

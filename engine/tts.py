@@ -945,8 +945,15 @@ def _speak_with_grok(
     speech_wrap_open: str = "",
     speech_wrap_close: str = "",
     speed: float = 1.0,
+    text_normalization: bool = True,
 ) -> None:
     """Grok-TTS counterpart of ``speak()``.
+
+    ``text_normalization`` is forwarded to every ``grok_speak_chunk``
+    request (Sep 14 2026: it was hard-wired ``True`` here; the config's
+    ``apply_text_normalization`` only ever reached the ElevenLabs path,
+    so a show could not switch the server-side normalizer off after it
+    read its own reasoning aloud on Tesla Ep605).
 
     Pipeline: per-chunk Grok TTS → WAV 48 kHz → crossfade in WAV →
     encode once to MP3 at the very end (single lossy pass). Skips the
@@ -1015,7 +1022,7 @@ def _speak_with_grok(
             grok_speak_chunk(
                 out_text, voice_id, wav_chunk,
                 api_key=api_key, language_code=language_code, timeout=timeout,
-                speed=speed,
+                speed=speed, text_normalization=text_normalization,
             )
             subprocess.run(
                 [
@@ -1061,7 +1068,7 @@ def _speak_with_grok(
             grok_speak_chunk(
                 chunk_text_str, voice_id, chunk_file,
                 api_key=api_key, language_code=language_code, timeout=timeout,
-                speed=speed,
+                speed=speed, text_normalization=text_normalization,
             )
             chunk_files.append(chunk_file)
             wav_files.append(chunk_file)
@@ -1104,6 +1111,15 @@ def _speak_with_grok(
 # ---------------------------------------------------------------------------
 # Public entry points (provider-aware)
 # ---------------------------------------------------------------------------
+
+def grok_text_normalization_flag(apply_text_normalization: str) -> bool:
+    """Map the config's ElevenLabs-style ``apply_text_normalization``
+    ("auto" / "on" / "off") onto Grok's boolean request field. Only an
+    explicit ``"off"`` disables the server-side normalizer; every other
+    value keeps the historical ``True`` so existing shows are
+    byte-identical."""
+    return (apply_text_normalization or "on").strip().lower() != "off"
+
 
 def synthesize(
     text: str,
@@ -1154,6 +1170,7 @@ def synthesize(
             speech_wrap_open=speech_wrap_open,
             speech_wrap_close=speech_wrap_close,
             speed=speed,
+            text_normalization=grok_text_normalization_flag(apply_text_normalization),
         )
         return output_path
     # Default: ElevenLabs
@@ -1243,6 +1260,7 @@ def synthesize_sections(
                 speech_wrap_open=speech_wrap_open,
                 speech_wrap_close=speech_wrap_close,
                 speed=speed,
+                text_normalization=grok_text_normalization_flag(apply_text_normalization),
             )
         else:
             speak(

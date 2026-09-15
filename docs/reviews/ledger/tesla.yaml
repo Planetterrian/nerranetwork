@@ -427,6 +427,27 @@ reviews:
       verdict: pending
       evidence: null
     agent_cost_usd: null
+  - date: 2026-09-14
+    pr: null
+    doc: docs/reviews/tesla_ep605_spoken_text_gate_2026_09_14.md
+    summary: "P0: Ep605 opened with 45 s of Grok TTS reading its own text-normalizer's reasoning ('the input has line breaks, preserve them ... Rules. Do not convert at sign in code') in place of the hook and identity line. _tts.txt was clean (server-side defect); tag_leaks read 0; shipped to RSS, both Shorts (hook-first Short is the leak), Apple video feed, Nerra Daily Ep025. Unique across 1,709 committed transcripts. Nothing compared audio with script."
+    shipped:
+      - "engine/spoken_text_gate.py: transcript-vs-script gate (opening_match >= 0.5, longest unmatched run < 40; Whisper hallucination + loop filters), enforce network-wide, shadow on RU shows"
+      - "run_show: synthesis wrapped in _synthesize_raw_mp3(); gate after Whisper, one re-synthesis, then _skip_episode('spoken_text_gate')"
+      - "tts.apply_text_normalization now drives the Grok text_normalization boolean (stays on; byte-identical default)"
+      - "scripts/audit_spoken_text.py (calibration over the committed corpus)"
+    predictions:
+    - metric: "spoken_text_gate outcome, all English shows, next 30 days"
+      baseline: "unmeasured (Ep605 would read blocked-or-retry_pass; 1,136 other English pairs since June pass)"
+      expected: "0 episodes with audio != script published; 'blocked' <= 1 in 30 days; false blocks (operator-confirmed clean audio skipped) = 0"
+      verdict: pending
+      evidence: null
+    - metric: "spoken_text_gate = retry_pass count, network, next 30 days"
+      baseline: "unknown — the normalizer's leak rate was invisible"
+      expected: "<= 2 (if higher, the server-side normalizer is failing routinely: A/B apply_text_normalization: off on that show)"
+      verdict: pending
+      evidence: null
+    agent_cost_usd: null
 
 do_not_retry:
   - idea: phonetic respellings or programmatic speech-tag injection

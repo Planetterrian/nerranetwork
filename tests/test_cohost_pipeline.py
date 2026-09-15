@@ -317,10 +317,18 @@ class TestTrackSelection:
         local = {}
         monkeypatch.setattr(pi, "fetch_local_track",
                             lambda key, wd: local.get(key))
-        return pi, vox, local, aligned
+        # ``_covers`` (b45f37b4: a local take must cover >= 80% of the leg
+        # it replaces) measures both files with ffprobe. None of these
+        # tracks exist on disk and the test runner has no ffprobe, so the
+        # durations are stubbed by file name; unlisted files read as equal
+        # length, i.e. the local take covers its leg.
+        durations = {}
+        monkeypatch.setattr(pi, "duration_seconds",
+                            lambda path: durations.get(Path(path).name, 100.0))
+        return pi, vox, local, aligned, durations
 
     def test_local_wins_and_is_aligned_to_voximplant_channel(self, fakes, tmp_path):
-        pi, vox, local, aligned = fakes
+        pi, vox, local, aligned, _durations = fakes
         local["p/local/r/guest/manifest.json"] = tmp_path / "local_guest.wav"
         local["p/local/r/host/manifest.json"] = tmp_path / "local_host.wav"
         run = {"local_guest_url": "p/local/r/guest/manifest.json",
@@ -335,8 +343,25 @@ class TestTrackSelection:
         assert ("local_guest.wav", "guest.wav") in aligned
         assert ("local_host.wav", "host.wav") in aligned
 
+    def test_short_local_take_falls_back_to_voximplant_leg(self, fakes, tmp_path):
+        """b45f37b4: John Capobianco's browser uploaded 65 s of a 40-minute
+        leg and the pipeline shipped the 65 s. A local take under 80% of
+        its leg loses to the leg; the host's full-length take still wins."""
+        pi, vox, local, aligned, durations = fakes
+        local["p/local/r/guest/manifest.json"] = tmp_path / "local_guest.wav"
+        local["p/local/r/host/manifest.json"] = tmp_path / "local_host.wav"
+        durations.update({"local_guest.wav": 65.0, "guest.wav": 2385.0})
+        run = {"local_guest_url": "p/local/r/guest/manifest.json",
+               "local_host_url": "p/local/r/host/manifest.json"}
+        t = pi.build_tracks(run, tmp_path / "raw.mp4", tmp_path,
+                            host_raw=tmp_path / "raw_host.mp3")
+        assert t["sources"]["guest"] == "voximplant"
+        assert t["guest"] == vox["guest_l"]
+        assert t["sources"]["host"] == "local"
+        assert not any(name == "local_guest.wav" for name, _ in aligned)
+
     def test_voximplant_fallback_per_track(self, fakes, tmp_path):
-        pi, vox, local, aligned = fakes
+        pi, vox, local, aligned, _durations = fakes
         local["p/local/r/guest/manifest.json"] = tmp_path / "local_guest.wav"
         run = {"local_guest_url": "p/local/r/guest/manifest.json",
                "local_host_url": "p/local/r/host/manifest.json"}  # incomplete
@@ -347,7 +372,7 @@ class TestTrackSelection:
         assert t["mira"] == vox["guest_r"]
 
     def test_no_host_anywhere_means_two_track_path(self, fakes, tmp_path):
-        pi, vox, local, aligned = fakes
+        pi, vox, local, aligned, _durations = fakes
         t = pi.build_tracks({}, tmp_path / "raw.mp4", tmp_path)
         assert t["host"] is None
         assert t["guest"] == vox["guest_l"] and t["mira"] == vox["guest_r"]
@@ -355,7 +380,7 @@ class TestTrackSelection:
         assert aligned == []
 
     def test_local_host_without_host_leg_aligns_to_guest_r(self, fakes, tmp_path):
-        pi, vox, local, aligned = fakes
+        pi, vox, local, aligned, _durations = fakes
         local["h"] = tmp_path / "local_host.wav"
         t = pi.build_tracks({"local_host_url": "h"}, tmp_path / "raw.mp4", tmp_path)
         assert t["sources"]["host"] == "local"
