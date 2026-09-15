@@ -698,3 +698,35 @@ class TestEverybodyOnTheSameClock:
     def test_patrick_is_told_when_it_could_not_be_done(self):
         assert 'flags.append("unaligned:"' in self.POST
         assert "the mix may be out of " in self.POST
+
+
+class TestWhisperTalkingToItself:
+    """On a track that is mostly silence Whisper repeats the last real thing
+    that speaker said, at a steady cadence, for as long as the silence lasts.
+    Dan Perra's transcript had Patrick saying "Hey, Dan." at 01:20, 01:50 and
+    02:20 while he sat listening."""
+
+    def _drop(self):
+        from post_interview import _drop_echoes
+        return _drop_echoes
+
+    def test_the_repeats_go_and_the_first_one_stays(self):
+        out = self._drop()([
+            (10.0, "Patrick", "Hey, Dan."),
+            (80.0, "Patrick", "Hey, Dan."),
+            (140.0, "Patrick", "Hey, Dan."),
+            (200.0, "Dan", "I am calling from a very wet corner of Ontario today"),
+        ])
+        assert [t for _s, _l, t in out] == [
+            "Hey, Dan.", "I am calling from a very wet corner of Ontario today"]
+
+    def test_a_real_line_said_twice_survives(self):
+        segs = [(10.0, "Dan", "Yeah."),
+                (30.0, "Mira", "And what happened next in that story?"),
+                (40.0, "Dan", "Yeah.")]
+        assert self._drop()(segs) == segs
+
+    def test_a_long_line_is_never_an_echo(self):
+        line = "The checklist exists because somebody died without one"
+        segs = [(10.0, "Dan", line), (80.0, "Dan", line)]
+        assert self._drop()(segs) == segs
