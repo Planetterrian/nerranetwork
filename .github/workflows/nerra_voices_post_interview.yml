@@ -70,10 +70,15 @@ jobs:
       # transcript intact — only the automatic cut is lost.
       - name: Cut the episode
         id: cut
+        # auto_edit writes the result to AUTO_EDIT_RESULT as well as stdout.
+        # Reading it back from a pipe put every log line into the JSON and
+        # the parse failed, which killed the job after the episode had been
+        # cut and before Mira recorded a word (Sept 15 2026).
         run: |
-          python pipelines/voices/auto_edit.py "${{ github.event.client_payload.run_id || inputs.run_id }}" | tee /tmp/cut.json
-          echo "slug=$(python -c 'import json,sys;print(json.load(open("/tmp/cut.json"))["slug"])')" >> "$GITHUB_OUTPUT"
+          python pipelines/voices/auto_edit.py "${{ github.event.client_payload.run_id || inputs.run_id }}"
+          echo "slug=$(python -c 'import json;print(json.load(open("/tmp/cut.json"))["slug"])')" >> "$GITHUB_OUTPUT"
         env:
+          AUTO_EDIT_RESULT: /tmp/cut.json
           INTERVIEW_RUN_ID: ${{ github.event.client_payload.run_id || inputs.run_id }}
           # ADMIN_TOKEN derives the per-package gate-1 review token that
           # goes in Patrick's email (must match the Worker's).

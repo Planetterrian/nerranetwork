@@ -30,6 +30,8 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import logging
+import os
 import re
 import sys
 from pathlib import Path
@@ -274,11 +276,34 @@ def _remember(ctx: dict, decided: dict, when: dt.date) -> None:
         logger.exception("could not write the episode record — continuing")
 
 
+# common.py sends logging to STDOUT, and this script's stdout is a contract:
+# the workflow reads a JSON object from it to learn the slug and hand it to
+# the narrate and assemble steps. Every log line landed in that JSON and the
+# parse failed, so twice now (Dan Perra, Sept 15 2026) the episode was cut,
+# written to the database — and then the job died before Mira recorded a
+# word, with the cut stranded on a runner that was about to be destroyed.
+# Logs go to stderr here, and the result is written to a file as well, so
+# the hand-off does not depend on stdout staying clean.
+RESULT_PATH = os.environ.get("AUTO_EDIT_RESULT", "cut.json")
+
+
+def _logs_to_stderr() -> None:
+    for handler in logging.getLogger().handlers:
+        if isinstance(handler, logging.StreamHandler) and handler.stream is sys.stdout:
+            handler.setStream(sys.stderr)
+
+
 def main() -> int:
+    _logs_to_stderr()
     if len(sys.argv) < 2:
         raise SystemExit("usage: auto_edit.py <interview_run_id>")
     result = build(sys.argv[1])
-    print(json.dumps(result))
+    payload = json.dumps(result)
+    try:
+        Path(RESULT_PATH).write_text(payload + "\n", encoding="utf-8")
+    except Exception:  # noqa: BLE001 — stdout is still there
+        logger.exception("could not write %s", RESULT_PATH)
+    print(payload)
     return 0
 
 

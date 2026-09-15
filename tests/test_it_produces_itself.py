@@ -730,3 +730,30 @@ class TestWhisperTalkingToItself:
         line = "The checklist exists because somebody died without one"
         segs = [(10.0, "Dan", line), (80.0, "Dan", line)]
         assert self._drop()(segs) == segs
+
+
+class TestTheCutSurvivesTheHandoff:
+    """Twice on Sept 15 2026 Dan Perra's episode was cut, written to the
+    database, and then the job died before Mira recorded a word — with the
+    cut stranded on a runner about to be destroyed. common.py logs to
+    STDOUT, the workflow read auto_edit's stdout as JSON, and every log line
+    went into the JSON."""
+
+    AUTO = (V / "auto_edit.py").read_text(encoding="utf-8")
+    FLOW = (ROOT / ".github" / "workflows"
+            / "nerra_voices_post_interview.yml").read_text(encoding="utf-8")
+
+    def test_the_logs_get_out_of_the_way(self):
+        assert "def _logs_to_stderr()" in self.AUTO
+        body = self.AUTO[self.AUTO.index("def main()"):]
+        assert "_logs_to_stderr()" in body[:200]
+
+    def test_the_result_is_written_somewhere_real(self):
+        assert 'RESULT_PATH = os.environ.get("AUTO_EDIT_RESULT"' in self.AUTO
+        assert "Path(RESULT_PATH).write_text" in self.AUTO
+
+    def test_the_workflow_reads_the_file_not_the_pipe(self):
+        step = self.FLOW[self.FLOW.index("name: Cut the episode"):]
+        step = step[:step.index("name: Mira reads")]
+        assert "| tee" not in step
+        assert "AUTO_EDIT_RESULT: /tmp/cut.json" in step
