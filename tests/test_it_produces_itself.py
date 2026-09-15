@@ -655,3 +655,46 @@ class TestAnAutoCutCanBePickedUpAgain:
     def test_missing_everywhere_still_says_so(self):
         assert "and none stored for" in self.NARRATE
         assert "and none stored for" in self.ASSEMBLE
+
+
+class TestEverybodyOnTheSameClock:
+    """Dan Perra's interview came back with the three people in three
+    different time frames. Every leg's recorder starts when Voximplant
+    starts recording it, which is neither the room opening nor the moment
+    that person joined: the co-host joined 4.1s in and his recording began
+    at 17.2s, Mira's at 16.4s, and both were laid into the mix from zero.
+    Join timestamps cannot fix it because they are not when a recorder
+    starts. The guest's right channel is the room, so measure against it."""
+
+    TRACKS = (V / "audio" / "local_tracks.py").read_text(encoding="utf-8")
+    POST = (V / "post_interview.py").read_text(encoding="utf-8")
+
+    def test_it_measures_across_the_whole_recording(self):
+        assert "def estimate_room_delay" in self.TRACKS
+        body = self.TRACKS[self.TRACKS.index("def estimate_room_delay"):]
+        body = body[:body.index("def align_to_room")]
+        assert "ROOM_STEP_SEC" in body and "np.median" in body
+
+    def test_one_window_is_not_enough(self):
+        assert "ROOM_MIN_WINDOWS = 2" in self.TRACKS
+
+    def test_a_weak_match_is_not_a_match(self):
+        body = self.TRACKS[self.TRACKS.index("def estimate_room_delay"):]
+        body = body[:body.index("def align_to_room")]
+        assert "strength < ROOM_MIN_CORRELATION" in body
+
+    def test_both_other_tracks_are_put_on_the_guests_clock(self):
+        body = self.POST[self.POST.index("def build_tracks"):]
+        body = body[:body.index("def has_video_stream")]
+        assert 'for role in ("host", "mira"):' in body
+        assert "align_to_room(track, guest_r," in body
+
+    def test_the_transcript_stops_guessing_from_join_times(self):
+        body = self.POST[self.POST.index("def diarized_transcript_three"):]
+        body = body[:body.index("def run_editorial_passes")]
+        assert 'tracks.get("alignment") is None' in body
+        assert 'offsets = {"Mira": 0.0' in body
+
+    def test_patrick_is_told_when_it_could_not_be_done(self):
+        assert 'flags.append("unaligned:"' in self.POST
+        assert "the mix may be out of " in self.POST

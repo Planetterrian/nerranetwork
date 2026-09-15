@@ -48,6 +48,25 @@ CORRELATION_WINDOW_SEC = 60.0
 MAX_OFFSET_SEC = 30.0
 MIN_CORRELATION = 0.2   # normalized envelope correlation below this → no offset
 
+# Placing a whole leg on the room's clock (Sept 15 2026). Every leg's
+# recorder starts when Voximplant starts recording it, which is neither the
+# room opening nor the moment the person joined: in the Dan Perra interview
+# the co-host joined 4.1 s after the room opened and his recording began at
+# 17.2 s, while Mira's own leg began at 16.4 s. Both tracks were laid into
+# the mix from zero, so for forty-seven minutes the three people were in
+# three different time frames. Join timestamps cannot fix this because they
+# are not when the recorder started. The guest's right channel — everything
+# the guest HEARD — is the room, so we measure each other track against it
+# across the whole recording and take the median of the windows that
+# correlate. One window at the head is not enough: a conversation has long
+# stretches where a given person says nothing.
+ROOM_WINDOW_SEC = 150.0
+ROOM_STEP_SEC = 200.0
+ROOM_MAX_OFFSET_SEC = 180.0
+ROOM_MIN_CORRELATION = 0.45   # per window; noise peaks sit well below this
+ROOM_MIN_WINDOWS = 2          # agreeing windows needed to trust the median
+ROOM_ENVELOPE_SR = 50         # 20 ms resolution is plenty for whole legs
+
 
 def _run(cmd: list) -> None:
     logger.info("ffmpeg: %s", " ".join(str(c) for c in cmd[:12]) + " …")
@@ -246,6 +265,108 @@ def align_to_reference(track_wav: Path, reference_wav: Path, workdir: Path,
     cmd += ["-ar", TARGET_SR, "-ac", "1", "-c:a", "pcm_s16le", out]
     _run(cmd)
     return out
+
+
+def _whole_envelope(path: Path, workdir: Path) -> np.ndarray:
+    """Loudness envelope of an ENTIRE recording at ROOM_ENVELOPE_SR.
+
+    A 47-minute 48 kHz WAV is a quarter of a gigabyte; ffmpeg down-samples
+    it to 1 kHz mono first so the whole thing fits in a few megabytes and
+    the correlation is cheap.
+    """
+    workdir.mkdir(parents=True, exist_ok=True)
+    small = workdir / (Path(path).stem + "_1k.wav")
+    if not small.exists():
+        _run(["ffmpeg", "-y", "-i", path, "-ac", "1", "-ar", "1000",
+              "-c:a", "pcm_s16le", small])
+    with wave.open(str(small)) as wf:
+        sr = wf.getframerate()
+        data = np.frombuffer(wf.readframes(wf.getnframes()),
+                             dtype="<i2").astype(np.float32) / 32768.0
+    win = max(1, sr // ROOM_ENVELOPE_SR)
+    usable = (len(data) // win) * win
+    if usable == 0:
+        return np.zeros(0, dtype=np.float32)
+    return np.abs(data[:usable]).reshape(-1, win).mean(axis=1).astype(np.float32)
+
+
+def _window_offset(a: np.ndarray, b: np.ndarray) -> Tuple[Optional[float], float]:
+    """Lag (seconds) at which ``a`` best matches ``b``, plus its strength."""
+    a, b = a - a.mean(), b - b.mean()
+    if not a.any() or not b.any():
+        return None, 0.0
+    n = len(a) + len(b) - 1
+    nfft = 1 << (n - 1).bit_length()
+    full = np.fft.irfft(np.fft.rfft(a, nfft) * np.conj(np.fft.rfft(b, nfft)), nfft)
+    corr = np.concatenate([full[nfft - (len(b) - 1):nfft], full[:len(a)]])
+    lags = np.arange(-(len(b) - 1), len(a))
+    limit = int(ROOM_MAX_OFFSET_SEC * ROOM_ENVELOPE_SR)
+    keep = (lags >= -limit) & (lags <= limit)
+    corr, lags = corr[keep], lags[keep]
+    if not len(corr):
+        return None, 0.0
+    k = int(np.argmax(corr))
+    norm = float(np.linalg.norm(a) * np.linalg.norm(b)) or 1.0
+    return float(lags[k]) / ROOM_ENVELOPE_SR, float(max(0.0, corr[k] / norm))
+
+
+def estimate_room_delay(track_wav: Path, room_wav: Path,
+                        workdir: Path) -> Tuple[float, float, int]:
+    """How long to DELAY ``track_wav`` so it sits on the room's clock.
+
+    ``room_wav`` is the reference the whole episode is built on — the
+    guest's right channel, which carries everything the guest heard.
+    Returns ``(delay_seconds, agreement, windows_used)``. ``agreement`` is
+    the median per-window correlation; ``windows_used`` is how many windows
+    cleared ROOM_MIN_CORRELATION. A caller that gets fewer than
+    ROOM_MIN_WINDOWS should treat the answer as unknown and say so rather
+    than shipping a mix nobody checked.
+    """
+    workdir = Path(workdir)
+    track = _whole_envelope(Path(track_wav), workdir)
+    room = _whole_envelope(Path(room_wav), workdir)
+    window = int(ROOM_WINDOW_SEC * ROOM_ENVELOPE_SR)
+    step = int(ROOM_STEP_SEC * ROOM_ENVELOPE_SR)
+    span = min(len(track), len(room))
+    picks: list[Tuple[float, float]] = []
+    for start in range(0, max(0, span - window), step):
+        lag, strength = _window_offset(track[start:start + window],
+                                       room[start:start + window])
+        if lag is None or strength < ROOM_MIN_CORRELATION:
+            continue
+        picks.append((-lag, strength))   # lag<0 = track runs early = delay it
+    if not picks:
+        logger.warning("room alignment: %s never correlated with the room",
+                       Path(track_wav).name)
+        return 0.0, 0.0, 0
+    delays = np.array([d for d, _ in picks])
+    delay = float(np.median(delays))
+    agreement = float(np.median([s for _, s in picks]))
+    spread = float(np.max(np.abs(delays - delay))) if len(delays) > 1 else 0.0
+    logger.info("room alignment: %s delay %+.2fs (%d windows, corr %.2f, "
+                "spread %.2fs)", Path(track_wav).name, delay, len(picks),
+                agreement, spread)
+    return delay, agreement, len(picks)
+
+
+def align_to_room(track_wav: Path, room_wav: Path, workdir: Path,
+                  ) -> Tuple[Path, float, int]:
+    """Shift ``track_wav`` onto the room's clock. Returns the new path, the
+    delay applied, and how many windows agreed (0 = left untouched)."""
+    workdir = Path(workdir)
+    workdir.mkdir(parents=True, exist_ok=True)
+    delay, _agreement, windows = estimate_room_delay(track_wav, room_wav, workdir)
+    if windows < ROOM_MIN_WINDOWS or abs(delay) < 0.05:
+        return Path(track_wav), 0.0, windows
+    out = workdir / (Path(track_wav).stem + "_room.wav")
+    cmd = ["ffmpeg", "-y"]
+    if delay > 0:
+        cmd += ["-i", track_wav, "-af", f"adelay=delays={int(round(delay * 1000))}:all=1"]
+    else:
+        cmd += ["-ss", f"{-delay:.3f}", "-i", track_wav]
+    cmd += ["-ar", TARGET_SR, "-ac", "1", "-c:a", "pcm_s16le", out]
+    _run(cmd)
+    return out, delay, windows
 
 
 def describe_manifest(manifest: Optional[Dict[str, Any]]) -> str:

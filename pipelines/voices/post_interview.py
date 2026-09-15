@@ -46,7 +46,7 @@ from common import (  # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).parent))
 from audio.local_tracks import (  # noqa: E402
-    align_to_reference, fetch_local_track,
+    ROOM_MIN_WINDOWS, align_to_reference, align_to_room, fetch_local_track,
 )
 from audio.mix_tracks import (  # noqa: E402
     duration_seconds, mix_interview, mix_three, mix_two, split_channels,
@@ -255,7 +255,14 @@ COVERAGE_MIN = 0.80
 def _covers(local: Path, reference: Path | None, who: str) -> bool:
     if reference is None:
         return True
-    local_sec, ref_sec = duration_seconds(local), duration_seconds(reference)
+    try:
+        local_sec, ref_sec = duration_seconds(local), duration_seconds(reference)
+    except Exception as err:
+        # Unreadable duration is not evidence against the local take; this
+        # check exists to catch a short upload, not to gate on ffprobe.
+        logger.warning("%s: could not measure coverage (%s) — keeping the "
+                       "local take", who, err)
+        return True
     if ref_sec <= 0:
         return True
     ratio = local_sec / ref_sec
@@ -316,8 +323,34 @@ def build_tracks(run: dict, raw: Path, workdir: Path,
         mira, sources["mira"] = split_left(mira_raw, chan_dir / "mira_leg.wav"), "voximplant"
     else:
         mira, sources["mira"] = guest_r, "guest_r"
-    logger.info("tracks: %s", sources)
-    return {"guest": guest, "host": host, "mira": mira, "sources": sources}
+
+    # Put everyone on one clock before anything is mixed or transcribed.
+    # Each leg's recorder starts when Voximplant starts recording it, which
+    # is neither the room opening nor the person's join: in the Dan Perra
+    # interview the co-host's recording began at 17.2 s and Mira's at 16.4 s,
+    # and both were laid into the mix from zero. The guest's right channel
+    # is the room as the guest heard it, so it is the clock everything else
+    # is measured against. The guest's own track is already on it.
+    alignment: dict = {"guest": 0.0}
+    unaligned: list = []
+    for role in ("host", "mira"):
+        track = host if role == "host" else mira
+        if track is None or track == guest_r:
+            alignment[role] = 0.0
+            continue
+        shifted, delay, windows = align_to_room(track, guest_r, workdir / "room")
+        alignment[role] = delay
+        if windows < ROOM_MIN_WINDOWS:
+            unaligned.append(role)
+        if role == "host":
+            host = shifted
+        else:
+            mira = shifted
+
+    logger.info("tracks: %s; room alignment: %s", sources,
+                {k: round(v, 2) for k, v in alignment.items()})
+    return {"guest": guest, "host": host, "mira": mira, "sources": sources,
+            "alignment": alignment, "unaligned": unaligned}
 
 
 def has_video_stream(path: Path) -> bool:
@@ -527,9 +560,17 @@ def diarized_transcript_three(tracks: dict, app: dict, workdir: Path,
     labelled transcript with the speakers header line on top."""
     labelled = [("Mira", tracks["mira"]), (cohost_label(), tracks["host"]),
                 (_guest_label(app), tracks["guest"])]
-    by_role = room_offsets(run or {}, _track_durations(tracks))
-    offsets = {"Mira": by_role["mira"], cohost_label(): by_role["host"],
-               _guest_label(app): by_role["guest"]}
+    # build_tracks has already shifted every track onto the guest leg's
+    # clock by measurement, so there is nothing left to offset. Before that
+    # (Sept 15 2026) this used join timestamps, which are not when a
+    # recorder starts: Dan Perra's transcript had Mira reacting to things
+    # he had not said yet.
+    if tracks.get("alignment") is None:
+        by_role = room_offsets(run or {}, _track_durations(tracks))
+        offsets = {"Mira": by_role["mira"], cohost_label(): by_role["host"],
+                   _guest_label(app): by_role["guest"]}
+    else:
+        offsets = {"Mira": 0.0, cohost_label(): 0.0, _guest_label(app): 0.0}
     return diarized_tracks(labelled, workdir, header=speakers_header(app),
                            offsets=offsets)
 
@@ -693,7 +734,9 @@ def main() -> int:
         session_log = dict(run.get("grok_session_log") or {})
         session_log["tracks"] = {"sources": tracks["sources"],
                                  "processed": processed, "durable": durable,
-                                 "preview": preview_url}
+                                 "preview": preview_url,
+                                 "alignment": tracks.get("alignment") or {},
+                                 "unaligned": tracks.get("unaligned") or []}
         sb_update("interview_runs", f"id=eq.{run['id']}", {
             "status": "completed",
             "recording_guest_url": raw_url,
@@ -712,6 +755,16 @@ def main() -> int:
             flags.append("short_call")
         if confidence < LOW_STT_CONFIDENCE:
             flags.append("low_stt_confidence")
+        # A track we could not place on the room's clock means the mix may
+        # have people talking over each other in the wrong order. Patrick
+        # should be told that before he spends an hour listening, not after.
+        if tracks.get("unaligned"):
+            flags.append("unaligned:" + "+".join(tracks["unaligned"]))
+            notify_operator(show.slack(
+                "could not line up " + ", ".join(tracks["unaligned"])
+                + f" with the room for {app['name']} — the mix may be out of "
+                  "sync and needs an ear before it goes to the guest"),
+                critical=True)
 
         pkg = sb_insert("editorial_packages", {
             "interview_id": interview["id"],
