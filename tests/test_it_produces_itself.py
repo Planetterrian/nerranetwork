@@ -401,3 +401,30 @@ class TestOneRecordPerInterview:
         body = _pyfn("_remember", AUTO)
         assert "except Exception" in body
         assert "continuing" in body
+
+
+class TestNeverCutThroughAQuestion:
+    """Sept 15 2026, and it was my edit that did it. The first cut of Vincent
+    Rylan's episode started at 17:36, which removed the second half of
+    Patrick's question about prevention — so the episode had Vincent saying
+    "let me get back to the other question, around prevention" to an audience
+    that had never heard it asked."""
+
+    def test_the_rule_is_in_the_cutter_prompt(self):
+        assert "NEVER CUT THROUGH A QUESTION" in AUTO_PROMPT
+        assert "if the next thing anyone says is an answer" in AUTO_PROMPT
+        assert "worse than the\ndead air it removed" in AUTO_PROMPT
+
+    def test_corrections_are_protected_too(self):
+        assert "the thing being corrected has to still be in the\nepisode" in AUTO_PROMPT
+
+    def test_vincents_edit_keeps_the_question(self):
+        import json
+        edl = json.loads((V / "edl" / "vincent_rylan_2026_09_14.json").read_text(encoding="utf-8"))
+        conversation = [c for c in edl["cuts"] if c.get("from") == "run:guest"]
+        assert len(conversation) == 3, "start, the echo drop, the triple-ask drop"
+        # Patrick's question runs 17:00-18:38; it must be inside a kept span.
+        kept = [(c["start"], c["end"]) for c in conversation]
+        assert any(s <= 1020 and e >= 1118 for s, e in kept), kept
+        # and the echo (9:49-10:38) must not be.
+        assert not any(s <= 600 <= e for s, e in kept), kept
