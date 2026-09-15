@@ -38,6 +38,42 @@ def _application(interview: dict) -> dict:
     return rows[0]
 
 
+def prior_record(app: dict) -> str:
+    """What this guest said the last time they were on.
+
+    Sept 15 2026. Every guest so far has asked to come back in six months or
+    a year, and a return interview is only worth doing if it opens with what
+    they actually said — especially anything they put a date on. Empty for a
+    first-time guest, which is nearly everyone, and then the brief reads
+    exactly as it did before.
+    """
+    email = (app.get("email") or "").strip().lower()
+    if not email:
+        return ""
+    try:
+        rows = sb_select("episode_records",
+                         f"guest_email=eq.{email}&order=recorded_on.desc&limit=3")
+    except Exception:  # noqa: BLE001 — a brief never waits on the archive
+        logger.exception("episode records unavailable (non-fatal)")
+        return ""
+    if not rows:
+        return ""
+    out = ["THEY HAVE BEEN ON THIS SHOW BEFORE. Open on what they said then, "
+           "and hold them to anything they put a date on — warmly."]
+    for row in rows:
+        out.append(f"\n{row.get('recorded_on')}: {row.get('summary') or ''}")
+        for pred in (row.get("predictions") or [])[:5]:
+            due = pred.get("due_on")
+            out.append(f"  PREDICTED{' by ' + due if due else ''}: "
+                       f"{pred.get('prediction')}"
+                       + (f' — their words: "{pred["quote"]}"' if pred.get("quote") else ""))
+        for ask in (row.get("follow_ups") or [])[:5]:
+            out.append(f"  TO ASK THIS TIME: {ask}")
+        for miss in (row.get("unanswered") or [])[:3]:
+            out.append(f"  NEVER ANSWERED: {miss}")
+    return "\n".join(out)
+
+
 def generate_brief(interview: dict, app: dict) -> dict:
     show = show_for(interview, app)
     links = json.dumps(app.get("links") or {})
@@ -47,7 +83,8 @@ def generate_brief(interview: dict, app: dict) -> dict:
         load_prompt("research_brief.txt", show=show,
                     name=app["name"], title=app.get("title", ""),
                     organization=app.get("organization", ""),
-                    bio=app.get("bio", ""), topics=topics, links=links),
+                    bio=app.get("bio", ""), topics=topics, links=links,
+                    prior_record=prior_record(app)),
         temperature=0.3, web_search=True, max_tokens=2500,
     )
     memory = episode_memory_block(show=show)
@@ -58,7 +95,8 @@ def generate_brief(interview: dict, app: dict) -> dict:
                     topics=topics, show_memory=memory,
                     question_count=question_count(minutes),
                     minutes=minutes,
-                    guest_shape=shape_block(interview, app)),
+                    guest_shape=shape_block(interview, app),
+                    prior_record=prior_record(app)),
         temperature=0.6, max_tokens=2000,
     )
     questions = parse_json_lenient(questions_raw)

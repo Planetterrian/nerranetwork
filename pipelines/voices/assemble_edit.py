@@ -325,6 +325,18 @@ def assemble(slug: str) -> dict:
     return {"url": url, "duration_sec": seconds}
 
 
+def _improvements(interview_id: str) -> str:
+    """What she will try next time, in the same email as the episode."""
+    if not interview_id:
+        return ""
+    try:
+        from learning import improvement_summary
+        return improvement_summary("age_of_ai", interview_id)
+    except Exception:  # noqa: BLE001 — the episode is the point
+        logger.exception("improvement summary failed (non-fatal)")
+        return ""
+
+
 def _interview_id(spec: dict, run: dict | None) -> str:
     """The interview this edit belongs to.
 
@@ -378,7 +390,8 @@ def _tell_patrick(spec: dict, show, slug: str, url: str, seconds: float,
             + (f'<p>When it passes your ear, approve it here and the guest is asked '
                f'to review it: <a href="{review}">gate 1</a>.</p>' if review else "")
             + f"<p>Nothing reaches {guest} until you do.</p>"
-              f"<p>Edit: <code>{slug}</code>. To change a cut, edit "
+            + _improvements(interview_id)
+            + f"<p>Edit: <code>{slug}</code>. To change a cut, edit "
               f"<code>pipelines/voices/edl/{slug}.json</code> and run the assemble "
               f"workflow again.</p><p>— Mira</p>")
         if pkg:

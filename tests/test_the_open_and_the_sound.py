@@ -419,9 +419,13 @@ class TestTheCraftRules:
         assert "Let the answer land" in self.PROMPT
         assert "anything they wanted to say" in self.PROMPT
 
-    def test_the_lightning_round_is_optional(self):
-        assert "ONLY if it fits" in self.PROMPT
-        assert "a good last ten minutes is not" in self.PROMPT
+    def test_the_closing_round_is_a_tool_not_a_ritual(self):
+        assert "THE CLOSING ROUND is yours to shape" in self.PROMPT
+        assert "a good last ten minutes\nbeats a lightning round" in self.PROMPT
+        # three uses: a gear change, covering ground fast, or getting personal
+        assert "cover ground fast when time got away" in self.PROMPT
+        assert "The personal set" in self.PROMPT
+        assert "What was it like being interviewed by an AI" in self.PROMPT
 
     def test_the_co_host_is_a_model_to_learn_from(self):
         assert "LEARN FROM YOUR CO-HOST" in self.PROMPT

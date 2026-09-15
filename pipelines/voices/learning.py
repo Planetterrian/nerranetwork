@@ -287,3 +287,58 @@ def lessons_block(show_slug: str) -> str:
         "reviewed and approved by your producer. They outrank your habits and "
         "apply to this interview:\n" + lines + "\n"
     )
+
+
+def improvement_summary(show_slug: str, interview_id: str) -> str:
+    """What Mira will try differently next time, as HTML for Patrick's email.
+
+    Sept 15 2026. The retro has been running since Matt Davis and its output
+    has only ever been visible to someone who went looking in the database.
+    Patrick asked for it next to the episode, which is the only place it can
+    actually change anything: he is the one who promotes a proposal into a
+    standing instruction, and he will not promote what he never sees.
+    """
+    try:
+        proposed = sb_select(
+            "show_lessons",
+            f"show=eq.{show_slug}&interview_id=eq.{interview_id}"
+            f"&status=eq.proposed&order=created_at.desc&limit=8") or []
+        metrics = sb_select("episode_metrics",
+                            f"interview_id=eq.{interview_id}&limit=1") or []
+    except Exception:  # noqa: BLE001
+        logger.exception("improvement summary unavailable (non-fatal)")
+        return ""
+    if not proposed and not metrics:
+        return ""
+
+    parts = ["<h3 style='margin:18px 0 6px'>What Mira took from this one</h3>"]
+    if metrics:
+        m = metrics[0]
+        bits = []
+        for label, key, suffix in (
+                ("interruptions", "interruptions", ""),
+                ("repeated questions", "repeated_questions", ""),
+                ("her share of the talking", "host_talk_share", "%"),
+                ("questions asked", "questions", "")):
+            value = m.get(key)
+            if value is None:
+                continue
+            if suffix == "%":
+                value = f"{round(float(value) * 100)}"
+            bits.append(f"{label}: {value}{suffix}")
+        if bits:
+            parts.append("<p style='color:#555'>" + " &middot; ".join(bits) + "</p>")
+    if proposed:
+        parts.append("<p>She is proposing these for next time. They do not "
+                     "reach her until you approve them at gate 1:</p><ul>")
+        for row in proposed:
+            lesson = (row.get("lesson") or "").strip()
+            why = (row.get("evidence") or "").strip()
+            parts.append(f"<li>{lesson}"
+                         + (f"<br><span style='color:#777;font-size:90%'>{why}</span>"
+                            if why else "")
+                         + "</li>")
+        parts.append("</ul>")
+    else:
+        parts.append("<p>No changes proposed from this one.</p>")
+    return "".join(parts)

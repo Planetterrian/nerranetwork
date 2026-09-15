@@ -189,7 +189,7 @@ class TestSpecArtifacts:
         text = (PIPELINES / "prompts" / "mira_system_prompt.txt").read_text(
             encoding="utf-8")
         assert "You are Mira" in text
-        assert "Lightning round" in text
+        assert "THE CLOSING ROUND" in text and "lightning round" in text
         assert 'Closing question always: "{{closing_question}}"' in text
         assert "Hard time cap: {{planned_minutes}} minutes" in text
         for token in ("{{guest_name}}", "{{episode_thesis}}", "{{guest_brief}}",

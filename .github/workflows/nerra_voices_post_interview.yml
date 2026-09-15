@@ -62,3 +62,77 @@ jobs:
           CALCOM_BOOKING_URL: ${{ secrets.CALCOM_BOOKING_URL }}
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
           NOTIFICATION_WEBHOOK_URL: ${{ secrets.NOTIFICATION_WEBHOOK_URL }}
+
+      # Everything below used to be a person remembering to ask. The
+      # interview ends; the episode should be waiting for Patrick, not
+      # waiting for Patrick to request it. Each step is still separately
+      # re-runnable by hand, and a failure here leaves the package and the
+      # transcript intact — only the automatic cut is lost.
+      - name: Cut the episode
+        id: cut
+        run: |
+          python pipelines/voices/auto_edit.py "${{ github.event.client_payload.run_id || inputs.run_id }}" | tee /tmp/cut.json
+          echo "slug=$(python -c 'import json,sys;print(json.load(open("/tmp/cut.json"))["slug"])')" >> "$GITHUB_OUTPUT"
+        env:
+          INTERVIEW_RUN_ID: ${{ github.event.client_payload.run_id || inputs.run_id }}
+          # ADMIN_TOKEN derives the per-package gate-1 review token that
+          # goes in Patrick's email (must match the Worker's).
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+          SUPABASE_URL: ${{ secrets.VOICES_SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.VOICES_SUPABASE_SERVICE_KEY }}
+          GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_PUBLIC_BASE_URL: ${{ secrets.R2_PUBLIC_BASE_URL }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          POSTMARK_TOKEN: ${{ secrets.POSTMARK_TOKEN }}
+          CALCOM_BOOKING_URL: ${{ secrets.CALCOM_BOOKING_URL }}
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          NOTIFICATION_WEBHOOK_URL: ${{ secrets.NOTIFICATION_WEBHOOK_URL }}
+
+      - name: Mira reads the introduction and close
+        run: python pipelines/voices/narrate.py "${{ steps.cut.outputs.slug }}"
+        env:
+          INTERVIEW_RUN_ID: ${{ github.event.client_payload.run_id || inputs.run_id }}
+          # ADMIN_TOKEN derives the per-package gate-1 review token that
+          # goes in Patrick's email (must match the Worker's).
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+          SUPABASE_URL: ${{ secrets.VOICES_SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.VOICES_SUPABASE_SERVICE_KEY }}
+          GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_PUBLIC_BASE_URL: ${{ secrets.R2_PUBLIC_BASE_URL }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          POSTMARK_TOKEN: ${{ secrets.POSTMARK_TOKEN }}
+          CALCOM_BOOKING_URL: ${{ secrets.CALCOM_BOOKING_URL }}
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          NOTIFICATION_WEBHOOK_URL: ${{ secrets.NOTIFICATION_WEBHOOK_URL }}
+          VOXIMPLANT_ACCOUNT_ID: ${{ secrets.VOXIMPLANT_ACCOUNT_ID }}
+          VOXIMPLANT_API_KEY: ${{ secrets.VOXIMPLANT_API_KEY }}
+          MIRA_VOICE_PRESET: ${{ vars.MIRA_VOICE_PRESET }}
+
+      - name: Assemble and send it to Patrick
+        run: python pipelines/voices/assemble_edit.py "${{ steps.cut.outputs.slug }}"
+        env:
+          INTERVIEW_RUN_ID: ${{ github.event.client_payload.run_id || inputs.run_id }}
+          # ADMIN_TOKEN derives the per-package gate-1 review token that
+          # goes in Patrick's email (must match the Worker's).
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+          SUPABASE_URL: ${{ secrets.VOICES_SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.VOICES_SUPABASE_SERVICE_KEY }}
+          GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_PUBLIC_BASE_URL: ${{ secrets.R2_PUBLIC_BASE_URL }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          POSTMARK_TOKEN: ${{ secrets.POSTMARK_TOKEN }}
+          CALCOM_BOOKING_URL: ${{ secrets.CALCOM_BOOKING_URL }}
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          NOTIFICATION_WEBHOOK_URL: ${{ secrets.NOTIFICATION_WEBHOOK_URL }}
