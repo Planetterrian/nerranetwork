@@ -76,6 +76,20 @@ COHOST_INTRO_STEP = (
 )
 
 
+def cohost_craft(enabled: bool = True, show=None) -> str:
+    """What Mira should learn from watching her co-host work.
+
+    Lives in its own prompt file and is loaded only when he is actually in
+    the room — an interview with no co-host must not be told to study one.
+    """
+    if not enabled:
+        return ""
+    name = cohost_name()
+    return (load_prompt("cohost_craft.txt", show=show)
+            .replace("{{cohost_name}}", name)
+            .replace("{{cohost_first}}", name.split()[0]))
+
+
 def cohost_intro_step(enabled: bool = True) -> str:
     """Step 3 of the opening, only when there is a co-host to introduce."""
     if not enabled:
@@ -250,8 +264,10 @@ def compile_mira_prompt(interview: dict, app: dict, brief: dict) -> str:
         guest_brief=brief.get("bio_research", ""),
         likely_questions=q_text,
         cohost_name=cohost_name(),
+        cohost_first=cohost_name().split()[0],
         cohost_block=cohost_block(host_mode_enabled(interview)),
         cohost_intro_step=cohost_intro_step(host_mode_enabled(interview)),
+        cohost_craft=cohost_craft(host_mode_enabled(interview), show),
         planned_minutes=minutes,
         # The lightning round needs about a third of a short interview and a
         # fixed quarter-hour of a long one, or a 20-minute conversation is

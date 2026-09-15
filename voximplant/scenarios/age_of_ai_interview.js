@@ -569,7 +569,9 @@ let miraRecorder = null;
 let miraRecordUrl = null;
 let mixRecorder = null;     // the whole room mix (conf -> recorder), diagnostics + post-production
 let mixRecordUrl = null;
-let speechEvents = 0;       // InputAudioBufferSpeechStarted count
+let speechEvents = 0;
+let bargeIns = 0;           // turns abandoned because someone else was talking
+let miraSpeaking = false;   // a response is in flight (so there is one to cancel)
 let agentStartedAt = null;  // when the CURRENT session's client was created
 let rotateTimer = null;     // pending hand-off to a fresh session
 let rotating = false;       // a hand-off is in flight (ignore the old socket closing)
@@ -816,7 +818,7 @@ async function createAgent(note) {
         trace("grok", "session " + generation + " bridged — resuming the interview");
         rotating = false;
         // Nudge her to speak first so the seam is a beat, not a silence.
-        try { agent.responseCreate({}); } catch (err) { /* best-effort */ }
+        try { miraSpeaking = true; agent.responseCreate({}); } catch (err) { /* best-effort */ }
       }
     } catch (err) {
       Logger.write("[aoa " + runId + "] media-bridge failure: " + err.message);
@@ -824,13 +826,30 @@ async function createAgent(note) {
     }
   });
 
-  // Barge-in: flush Mira's buffered audio the moment anyone speaks.
+  // Barge-in. Flushing the buffer stops her being HEARD; until Sept 15 2026
+  // that was all this did, and the server kept generating the rest of the
+  // turn. The audio then arrived after the guest finished, which is why she
+  // appeared to ask the same question two and three times in a row — it was
+  // one question, replayed from a turn nobody had cancelled. Silence her
+  // locally AND tell the server to stop, so the turn is actually abandoned.
   agent.addEventListener(Grok.VoiceAgentAPIEvents.InputAudioBufferSpeechStarted, function () {
     speechEvents++;
     if (!anyoneHeard) trace("grok", "first inbound speech heard (via room mix)");
     else if (speechEvents <= 6) trace("grok", "speech heard #" + speechEvents + " (via room mix)");
     anyoneHeard = true;
-    if (agent === grokAgent) agent.clearMediaBuffer();
+    if (agent !== grokAgent) return;
+    agent.clearMediaBuffer();
+    if (!miraSpeaking) return;
+    miraSpeaking = false;
+    try {
+      if (agent.responseCancel) { agent.responseCancel(); bargeIns++; }
+      else if (agent.responseCancel === undefined && agent.send) {
+        agent.send(JSON.stringify({ type: "response.cancel" })); bargeIns++;
+      }
+      if (bargeIns <= 6) trace("grok", "yielded mid-turn (" + bargeIns + ")");
+    } catch (err) {
+      if (bargeIns <= 2) trace("grok", "could not cancel the turn: " + err.message);
+    }
   });
 
   // Rolling transcript — the raw material for the hand-over note.
@@ -846,7 +865,10 @@ async function createAgent(note) {
       });
     }
     if (Grok.VoiceAgentAPIEvents.ResponseDone) {
-      agent.addEventListener(Grok.VoiceAgentAPIEvents.ResponseDone, function () { trace("grok", "response done"); });
+      agent.addEventListener(Grok.VoiceAgentAPIEvents.ResponseDone, function () {
+        miraSpeaking = false;
+        trace("grok", "response done");
+      });
     }
   } catch (err) { /* event names differ across connector versions */ }
 
@@ -991,6 +1013,7 @@ function openWhenReady(reason) {
             "before starting the interview." }] },
       });
     }
+    miraSpeaking = true;
     grokAgent.responseCreate({});
     startTimeChecks();
     armAudioCheck();
@@ -1042,6 +1065,7 @@ function greetGuestAndWait() {
           "introduction, and do not ask an interview question yet. Then stay " +
           "quiet — small talk if they speak to you, nothing otherwise." }] },
     });
+    miraSpeaking = true;
     grokAgent.responseCreate({});
   } catch (err) {
     Logger.write("[aoa " + runId + "] guest holding greeting failed: " + err.message);
@@ -1065,6 +1089,7 @@ function greetHostAndWait() {
           "yourself or the guest, and do not ask any interview questions. " +
           "Then stay silent until you are told the guest has joined." }] },
     });
+    miraSpeaking = true;
     grokAgent.responseCreate({});
   } catch (err) {
     Logger.write("[aoa " + runId + "] host greeting failed: " + err.message);

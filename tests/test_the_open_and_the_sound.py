@@ -365,3 +365,94 @@ class TestSomebodyIsActuallyTold:
         wf = (ROOT / ".github" / "workflows"
               / "nerra_voices_assemble_edit.yml").read_text(encoding="utf-8")
         assert "secrets.OPERATOR_EMAIL || 'patricknovak1@gmail.com'" in wf
+
+
+class TestSheActuallyStops:
+    """Sept 15 2026. Barge-in flushed her buffered audio, which stops her
+    being HEARD, and left the server generating the rest of the turn. That
+    audio then arrived after the guest had finished — which is why John's
+    tape has the same question three times in twelve seconds and Vincent's
+    has one question in three shapes. It was one turn, replayed, because
+    nobody cancelled it."""
+
+    def test_the_turn_is_cancelled_not_just_muted(self):
+        body = SCENARIO[SCENARIO.index("VoiceAgentAPIEvents.InputAudioBufferSpeechStarted, function"):]
+        body = body[:body.index("\n  });") + 6]
+        assert "agent.clearMediaBuffer();" in body
+        assert "responseCancel" in body
+        assert 'type: "response.cancel"' in body, "fallback for an older connector"
+
+    def test_it_only_cancels_a_turn_that_exists(self):
+        body = SCENARIO[SCENARIO.index("VoiceAgentAPIEvents.InputAudioBufferSpeechStarted, function"):]
+        body = body[:body.index("\n  });") + 6]
+        assert "if (!miraSpeaking) return;" in body
+
+    def test_the_flag_is_set_where_she_is_asked_to_speak(self):
+        assert SCENARIO.count("miraSpeaking = true") >= 4
+        assert "miraSpeaking = false;\n        trace(\"grok\", \"response done\");" in SCENARIO
+
+    def test_a_connector_without_cancel_does_not_crash_the_room(self):
+        body = SCENARIO[SCENARIO.index("VoiceAgentAPIEvents.InputAudioBufferSpeechStarted, function"):]
+        body = body[:body.index("\n  });") + 6]
+        assert "catch (err)" in body
+        assert "could not cancel the turn" in body
+
+
+class TestTheCraftRules:
+    PROMPT = ((ROOT / "pipelines" / "voices" / "prompts"
+               / "mira_system_prompt.txt").read_text(encoding="utf-8")
+              + (ROOT / "pipelines" / "voices" / "prompts"
+                 / "cohost_craft.txt").read_text(encoding="utf-8"))
+
+    def test_yielding_is_separated_from_waiting(self):
+        assert "YIELD THE MOMENT YOU HEAR THEM" in self.PROMPT
+        assert "mid-sentence, mid-word" in self.PROMPT
+        assert "not the same as the one above" in self.PROMPT
+
+    def test_a_question_is_asked_once(self):
+        assert "ONE QUESTION PER TURN, ASKED ONCE" in self.PROMPT
+        assert "three times in\n  twelve seconds" in self.PROMPT
+        assert "The discomfort is yours to hold, not theirs to fill" in self.PROMPT
+
+    def test_the_close_waits_for_the_answer(self):
+        assert "THE CLOSE IS NOT A TIMER" in self.PROMPT
+        assert "Let the answer land" in self.PROMPT
+        assert "anything they wanted to say" in self.PROMPT
+
+    def test_the_lightning_round_is_optional(self):
+        assert "ONLY if it fits" in self.PROMPT
+        assert "a good last ten minutes is not" in self.PROMPT
+
+    def test_the_co_host_is_a_model_to_learn_from(self):
+        assert "LEARN FROM YOUR CO-HOST" in self.PROMPT
+        # ... and only when he is in the room.
+        assert "{{cohost_craft}}" in (ROOT / "pipelines" / "voices" / "prompts"
+                                      / "mira_system_prompt.txt").read_text(encoding="utf-8")
+        fire = (ROOT / "pipelines" / "voices"
+                / "fire_interviews.py").read_text(encoding="utf-8")
+        assert "def cohost_craft(enabled: bool = True, show=None)" in fire
+        assert "if not enabled:\n        return \"\"" in fire
+        for move in ("HE PUTS HIMSELF IN THE ANSWER",
+                     "HE VALIDATES THE UNPOPULAR ANSWER",
+                     "HE TESTS A CLAIM WITH A PRECEDENT",
+                     "HE ASKS WHAT THEY WANTED TO SAY",
+                     "HE OFFERS THE DOOR BACK",
+                     "HE TELLS THEM WHY IT MATTERS TO HIM"):
+            assert move in self.PROMPT, move
+        assert "he gives something before he asks for\nsomething" in self.PROMPT
+
+    def test_the_examples_are_from_real_tapes(self):
+        assert "almost like your NetClaw" in self.PROMPT
+        assert "part of the necessary dialogue" in self.PROMPT
+        assert "a hundred times smarter" in self.PROMPT
+
+    def test_the_question_pass_learned_the_same_shape(self):
+        qgen = (ROOT / "pipelines" / "voices" / "prompts"
+                / "question_generation.txt").read_text(encoding="utf-8")
+        assert "offer something before it asks for something" in qgen
+        assert "the bleak or unpopular reading is" in qgen
+
+    def test_the_co_host_first_name_is_substituted(self):
+        fire = (ROOT / "pipelines" / "voices"
+                / "fire_interviews.py").read_text(encoding="utf-8")
+        assert "cohost_first=cohost_name().split()[0]," in fire

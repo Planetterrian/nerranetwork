@@ -184,7 +184,7 @@ class TestTheShapeReachesMira:
         fire = (ROOT / "pipelines" / "voices" / "fire_interviews.py").read_text(encoding="utf-8")
         assert "lightning_at=max(4, min(15, round(minutes / 3)))" in fire
         prompt = (PROMPTS / "mira_system_prompt.txt").read_text(encoding="utf-8")
-        assert "{{lightning_at}} minutes remaining" in prompt
+        assert "{{lightning_at}} minutes\nremaining" in prompt
         assert "{{planned_minutes}} minutes" in prompt
 
     def test_every_token_in_the_prompts_is_filled(self):
@@ -195,7 +195,8 @@ class TestTheShapeReachesMira:
                 "show_name", "show_premise", "opening_line", "closing_question",
                 "guest_name", "guest_title", "guest_organization",
                 "episode_thesis", "guest_brief", "likely_questions",
-                "cohost_name", "cohost_block", "cohost_intro_step",
+                "cohost_name", "cohost_first", "cohost_block",
+                "cohost_intro_step", "cohost_craft",
                 "planned_minutes", "lightning_at", "guest_shape",
             },
             "question_generation.txt": {
