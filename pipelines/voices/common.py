@@ -197,6 +197,21 @@ def package_review_token(package_id: str, admin_token: Optional[str] = None) -> 
     return digest[:40]
 
 
+# Something between us and Gmail decodes our HTML as quoted-printable
+# without our ever having encoded it, so an "=" inside a link is eaten
+# together with the two characters after it: "?interview=89fbb824..."
+# arrived as "?interview\ufffdfbb824...", and "?token=09447945..." as
+# "?token<TAB>447945...". Every link with a query string has been broken
+# in Patrick's inbox since the start. An HTML numeric entity survives that
+# decode untouched and the browser turns it back into "=" when the link is
+# clicked, so we spell "=" that way inside URLs and nowhere else.
+_URL_IN_HTML = re.compile(r"https?://[^\s\"'<>]+")
+
+
+def email_safe_html(html: str) -> str:
+    return _URL_IN_HTML.sub(lambda m: m.group(0).replace("=", "&#61;"), html or "")
+
+
 def send_email(to: str, subject: str, html_body: str,
                cc_operator: bool = False) -> None:
     """Send mail as Mira. ``cc_operator=True`` copies Patrick — the July
@@ -212,6 +227,7 @@ def send_email(to: str, subject: str, html_body: str,
             "string, not as unset.")
     resend_key = os.environ.get("RESEND_API_KEY", "")
     postmark_token = os.environ.get("POSTMARK_TOKEN", "")
+    html_body = email_safe_html(html_body)
     payload: dict = {"from": FROM_EMAIL, "to": [to],
                      "subject": subject, "html": html_body}
     if cc_operator and to.lower() != OPERATOR_EMAIL.lower():

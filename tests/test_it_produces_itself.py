@@ -523,3 +523,37 @@ class TestAGuestCanSayNotToday:
     def test_it_is_cleared_when_the_room_ends(self):
         body = self.SCENARIO[self.SCENARIO.index("async function endRoom("):]
         assert "noShowTimer, cohostWaitTimer" in body[:600]
+
+
+class TestALinkThatSurvivesEmail:
+    """Every link with a query string arrived broken in Patrick's inbox.
+    Something between the send and Gmail decoded our HTML as quoted-printable
+    though we never encoded it, so "=" and the two characters after it were
+    eaten: "?interview=89fbb824" became "?interview�fbb824", and
+    "?token=09447945" became "?token<TAB>447945". He could not open his own
+    studio or his own gate-1 page from the mail that invited him to."""
+
+    WORKER = (ROOT / "workers" / "voices" / "src" / "index.ts").read_text(encoding="utf-8")
+
+    def test_urls_leave_with_the_equals_spelled_as_an_entity(self):
+        from common import email_safe_html
+        out = email_safe_html(
+            '<a href="https://n.com/studio.html?interview=89ab&amp;show=age_of_ai">go</a>')
+        assert "?interview&#61;89ab" in out
+        assert "show&#61;age_of_ai" in out
+
+    def test_it_only_touches_urls(self):
+        from common import email_safe_html
+        assert email_safe_html('<p style="a=b">one = two</p>') == '<p style="a=b">one = two</p>'
+
+    def test_the_worker_does_the_same_thing(self):
+        assert "function emailSafeHtml" in self.WORKER
+        assert "html: emailSafeHtml(html)" in self.WORKER
+
+    def test_the_gate_one_token_rides_in_the_path(self):
+        post = (V / "post_interview.py").read_text(encoding="utf-8")
+        assemble = (V / "assemble_edit.py").read_text(encoding="utf-8")
+        assert "?token={package_review_token" not in post
+        assert '?token={package_review_token' not in assemble
+        assert "{pkg['id']}/{package_review_token(pkg['id'])}" in post
+        assert r"admin\/review\/([0-9a-f-]{36})(?:\/([0-9a-f]{40}))?$" in self.WORKER

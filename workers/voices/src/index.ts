@@ -229,10 +229,22 @@ function operatorEmail(env: Env): string {
   return env.OPERATOR_EMAIL || "patricknovak1@gmail.com";
 }
 
+// Something between us and Gmail decodes our HTML as quoted-printable
+// without our ever having encoded it, so an "=" inside a link is eaten
+// together with the two characters after it ("?interview=89fbb824..."
+// arrived as "?interview\uFFFDfbb824..."). A numeric entity survives that
+// decode and the browser turns it back into "=", so we spell "=" that way
+// inside URLs and nowhere else. Mirrors email_safe_html in
+// pipelines/voices/common.py — change the two together.
+function emailSafeHtml(html: string): string {
+  return (html || "").replace(/https?:\/\/[^\s"'<>]+/g,
+    (url) => url.replace(/=/g, "&#61;"));
+}
+
 async function email(env: Env, to: string, subject: string, html: string,
                      ccOperator = false) {
   const body: Record<string, unknown> = {
-    from: env.VOICES_FROM_EMAIL, to: [to], subject, html,
+    from: env.VOICES_FROM_EMAIL, to: [to], subject, html: emailSafeHtml(html),
   };
   // Operator oversight (July 2026): Patrick is CC'ed on guest-facing
   // scheduling/prep mail so Mira can run the show day-to-day while he
@@ -1846,8 +1858,21 @@ export default {
           : handleGuestReviewPage(env, review[1]);
       }
       if (req.method === "GET" && path === "/voices/admin/triage") return handleAdminTriage(req, env);
-      const adminReview = path.match(/^\/voices\/admin\/review\/([0-9a-f-]{36})$/);
-      if (adminReview && req.method === "GET") return handleAdminReview(req, env, adminReview[1]);
+      // The token rides in the path as well as the query string: mail
+      // transports have twice now mangled the "=" in "?token=..." on the way
+      // to Patrick's inbox, and a link that does not survive email is not a
+      // link. /voices/admin/review/<id>/<token> is the form we send.
+      const adminReview = path.match(
+        /^\/voices\/admin\/review\/([0-9a-f-]{36})(?:\/([0-9a-f]{40}))?$/);
+      if (adminReview && req.method === "GET") {
+        let request = req;
+        if (adminReview[2]) {
+          const withToken = new URL(req.url);
+          withToken.searchParams.set("token", adminReview[2]);
+          request = new Request(withToken.toString(), req);
+        }
+        return handleAdminReview(request, env, adminReview[1]);
+      }
       if (req.method === "GET" && path === "/voices/episode-lookup") return handleEpisodeLookup(req, env);
       if (req.method === "GET" && path === "/voices/guest-brief") return handleGuestBrief(req, env);
       if (req.method === "POST" && path === "/voices/fact-check") return handleFactCheck(req, env);

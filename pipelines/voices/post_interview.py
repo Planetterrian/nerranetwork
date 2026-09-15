@@ -766,7 +766,7 @@ def main() -> int:
     # only, so a quiet Slack meant no signal at all that a package was
     # waiting. Now it is a real link, by email as well as Slack.
     try:
-        review_url = f"{REVIEW_BASE}/{pkg['id']}?token={package_review_token(pkg['id'])}"
+        review_url = f"{REVIEW_BASE}/{pkg['id']}/{package_review_token(pkg['id'])}"
     except Exception:  # noqa: BLE001 — never lose the notification over this
         logger.exception("Review token unavailable; sending the bare link")
         review_url = f"{REVIEW_BASE}/{pkg['id']}"

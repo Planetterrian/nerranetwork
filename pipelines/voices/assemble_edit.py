@@ -393,7 +393,7 @@ def _tell_patrick(spec: dict, show, slug: str, url: str, seconds: float,
     if pkg:
         try:
             review = (f"https://api.nerranetwork.com/voices/admin/review/{pkg['id']}"
-                      f"?token={package_review_token(pkg['id'])}")
+                      f"/{package_review_token(pkg['id'])}")
         except Exception:  # noqa: BLE001
             logger.exception("review token unavailable")
     try:
