@@ -1,0 +1,143 @@
+Voodoo Quant sort désormais sous licence MIT, avec des outils de descente de gradient qui optimisent les dispositions de quantification par tenseur pour une compression GGUF agressive.
+
+Ici Models and Agents, épisode cent soixante-quatorze.
+
+L'approche fait tourner simultanément tous les niveaux de quantification candidats pour chaque tenseur.
+
+Elle applique une seule époque de descente de gradient sur des portes scalaires pour retenir la disposition à plus faible perte, pour une taille de fichier cible.
+
+La méthode bat Unsloth Dynamic trois virgule zéro aux niveaux de quantification les plus agressifs, sur les plus petits modèles Qwen trois virgule cinq.
+
+Elle reste adaptable à d'autres architectures.
+
+Le dépôt fournit des jeux de données de calibration, ainsi que des fonctions de perte fondées sur la divergence de Kullback-Leibler.
+
+Les programmes de la version gèlent des poids candidats tirés de llama.cpp.
+
+Les utilisateurs à faible mémoire vidéo sont ceux qui tirent le bénéfice le plus immédiat des nouveaux outils.
+
+PhysMent évalue le raisonnement physique itératif à travers des simulations MuJoCo.
+
+Le banc d'essai couvre cent cinq scènes de mécanique classique, réparties entre régimes facile et difficile.
+
+Il comprend des tâches à concept unique et à concepts multiples, plus des variantes de création d'objets et d'objets cachés.
+
+Les modèles actuels atteignent jusqu'à quatre-vingts pour cent sur les tâches qualitatives à concept unique, mais chutent sous les trente pour cent sur les procédures quantitatives les plus dures.
+
+Sept modèles ont été testés, avec une exactitude allant de vingt-cinq à soixante-sept pour cent.
+
+Les échecs viennent surtout de réponses trop hâtives et d'un ancrage incohérent dans le simulateur.
+
+TestHallVQA introduit le question-réponse visuel sur documents multi-images, avec une redondance contrôlable.
+
+Une nouvelle métrique F1-R2 note à la fois l'exactitude du raisonnement et la robustesse de la récupération des preuves.
+
+Des expériences sur les grands modèles vision-langage grand public montrent une dégradation mesurable due aux jetons visuels non pertinents.
+
+Le jeu de données complet et le code source sont publiés pour aller plus loin.
+
+RFCLLM teste à quel point les grands modèles de langage comprennent les machines à états des protocoles réseau.
+
+Quatre tâches et mille quatre cent quatre-vingt-deux requêtes couvrent seize protocoles.
+
+L'étude mesure à quel point les représentations implicites à états finis correspondent à une vérité de référence construite à la main.
+
+Elle examine le biais du juge, les effets du type de contexte, et les caractéristiques des protocoles qui influencent la difficulté du raisonnement.
+
+CVSS-X publie un corpus de traduction de la parole de seize mille heures, de l'anglais vers vingt-huit langues.
+
+Le corpus synthétique inverse la direction originale de CVSS et fournit des voix canoniques, plus des variantes de clonage de voix interlingue.
+
+La qualité de traduction égale celle de l'ensemble antérieur centré sur l'anglais, sur des cibles typologiquement diverses.
+
+Combiné à l'ensemble CVSS original, il permet la recherche parole-à-parole multilingue bidirectionnelle, sous licence CC-BY-NC quatre virgule zéro.
+
+DARE applique un raisonnement agentique dialectique à la vérification structurée des faits.
+
+La boucle multi-agents effectue une récupération ancrée dans les relations, une vérification bidirectionnelle, et une méta-réflexion guidée par la confiance.
+
+Un modèle de fond de huit milliards de paramètres atteint quatre-vingt-huit virgule douze pour cent d'exactitude sur les bancs d'essai.
+
+Il égale ou dépasse les références de génération de programmes de G P T 4o, tout en produisant des traces de raisonnement explicites.
+
+SyRHM décompose la détection de mèmes nuisibles en étapes de récupération et de raisonnement symbolique.
+
+La chaîne de traitement analyse le contenu multimodal en éléments textuels, puis récupère des mèmes sémantiquement liés.
+
+Elle enchaîne des étapes traducteur-planificateur-solveur et surpasse les références multimodales et de raisonnement sur FHM, HarM et MultiOff.
+
+Le système émet des traces interprétables, et le code est publié dans le dépôt du projet.
+
+PolicyMem externalise les politiques en langage naturel sous forme d'objets de mémoire géométriques, stockés dans des sous-espaces de rang faible.
+
+L'énergie de projection lit les politiques stockées pour la détection, la réécriture et la vérification post-intervention.
+
+La boucle détecter-réécrire-vérifier atteint l'état de l'art en détection de comportements non sûrs, sur cinq bancs d'essai.
+
+Elle permet l'attribution des politiques sans réentraîner le modèle protégé.
+
+ForeSight prédit le risque de la sortie à partir des états cachés du premier jeton.
+
+Une étape de distillation consciente des couches comprime les signaux précoces faibles en représentations compactes du risque.
+
+Sur cinq bancs d'essai de sécurité, la méthode offre une prévision précoce du risque supérieure, tout en n'ajoutant qu'un coût de pré-remplissage négligeable.
+
+Le code est disponible dans le dépôt du projet.
+
+Des retours d'utilisateurs décrivent des boucles et des plantages d'interface quand on fait tourner Qwen trois virgule six et trois virgule huit à une longueur de contexte de soixante-quatre mille.
+
+Une tâche simple d'application web, qui réussit de façon fiable avec Claude, n'arrive pas à maintenir l'état ni à produire les bonnes mises à jour d'interface avec le modèle local.
+
+Les assembleurs comparent une paire de Radeon A I Pro R neuf mille sept cents à des cartes RTX trois mille quatre-vingt-dix d'occasion, pour des charges de trente milliards de paramètres en F P 8, ou de soixante-dix milliards de paramètres en Q quatre.
+
+Le système visé inclut déjà un M1 Max et une configuration sept mille neuf cents X T AM4.
+
+Un cadre de résumé de sortie d'hôpital impose des liens de preuve via des graphes de représentation abstraite du sens.
+
+La chaîne extractive aligne les phrases entre les notes à l'aide de graphes sémantiques, et fournit une provenance explicite des extraits sources pour chaque phrase générée.
+
+Les résultats apparaissent à la fois sur MIMIC-III et sur un corpus privé de l'hôpital de l'université de l'Illinois, avec le code et les modèles entraînés publiés.
+
+Installez le dépôt Voodoo Dynamic Quant et lancez le programme d'entraînement fourni sur un point de contrôle Qwen de sept milliards de paramètres.
+
+Téléchargez les scènes PhysMent et testez n'importe quel modèle augmenté d'outils sur le sous-ensemble quantitatif en plusieurs étapes.
+
+Clonez le dépôt DARE et évaluez le point de contrôle de huit milliards de paramètres sur un banc d'essai de vérification structurée des faits.
+
+Récupérez le corpus CVSS-X et affinez un petit modèle parole-à-parole sur une seule paire de langues cible.
+
+Des pseudo-références supplémentaires pour les paires de langues de WMT vingt-six sont attendues une fois les jugements humains des paires restantes publiés.
+
+D'autres études de pré-entraînement sur le jeu de données NegCue devraient paraître, à mesure que les chercheurs testent de plus gros modèles de fond.
+
+Des évaluations élargies de codage CIM agentique sur d'autres systèmes hospitaliers sont anticipées après la publication de MIMIC-IV.
+
+Ouvrez le capot de l'extraction précoce des signaux de sécurité, et le tableau ressemble moins à de la magie qu'à un traitement de signal soigneux.
+
+L'intention nuisible module déjà l'état caché du tout premier jeton généré.
+
+Cette modulation reste faible, de haute dimension, et enchevêtrée avec les signaux ordinaires de fluidité.
+
+ForeSight entraîne un petit projecteur par couche qui comprime l'activation à quatre mille quatre-vingt-seize dimensions en un résumé à sept dimensions.
+
+Le résumé capture la pente, la courbure et le moment d'apparition, sur les premières couches.
+
+Le projecteur reste gelé après une seule passe avant sur un corpus de sécurité modeste.
+
+Le coût d'inférence reste donc sous les trois micro-opérations flottantes par jeton.
+
+Le score de risque scalaire qui en résulte franchit un seuil de décision en moins de soixante et une millisecondes, sur quatre-vingt-quinze pour cent des invites.
+
+Ce délai s'inscrit confortablement dans le budget de trame de quatre-vingts millisecondes de la génération en flux.
+
+La méthode sacrifie un peu de rappel sur les styles de contournement les plus rares, en échange de zéro latence de pré-remplissage ajoutée, et sans obligation de stocker l'historique complet des activations.
+
+Les équipes qui mènent déjà des tests adverses en continu gagnent donc une garde-fou à sortie anticipée, sans toucher aux poids du modèle de base.
+
+Avant de nous quitter, une nouvelle vague de jugements humains WMT vingt-six est prévue pour la semaine prochaine, et devrait compléter les références des paires de langues restantes.
+
+Voilà pour Models and Agents aujourd'hui. Si ça vous a été utile, partagez-le avec quelqu'un qui essaie de suivre tous ces changements, et abonnez-vous pour ne pas rater la mise à jour de demain. Le monde de l'I A avance vite. On vous aide à suivre. À demain. Et si vous préférez regarder plutôt qu'écouter, retrouvez-nous sur YouTube chez Nerra Network — le lien est dans les notes de l'émission. Cette émission vous vient du Nerra Network.
+
+Si vous voulez une autre revue quotidienne bien tranchante, Unintended Consequences s'en charge — de vraies histoires de bonnes intentions qui ont mal tourné. Toutes nos émissions sont gratuites sur nerranetwork point com. Le Do Positive Pod, c'est le club de ceux qui passent à l'action — les épisodes et le Dispatch Wall sur nerranetwork point com thedppod.
+
+Cet épisode a utilisé une synthèse vocale par I A de ma voix — la sélection éditoriale et l'analyse sont les miennes.
