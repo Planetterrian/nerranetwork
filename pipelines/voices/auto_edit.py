@@ -237,24 +237,36 @@ def _remember(ctx: dict, decided: dict, when: dt.date) -> None:
         predictions.append({"prediction": p.get("prediction"),
                             "horizon_months": months, "due_on": due,
                             "quote": p.get("quote")})
+    row = {
+        "show": show_for(interview, app).slug,
+        "interview_id": interview["id"],
+        "interview_run_id": run["id"],
+        "application_id": app.get("id"),
+        "guest_name": app.get("name"),
+        "guest_email": (app.get("email") or "").lower(),
+        "recorded_on": when.isoformat(),
+        "summary": decided.get("summary", ""),
+        "claims": decided.get("claims") or [],
+        "predictions": predictions,
+        "unanswered": decided.get("unanswered") or [],
+        "follow_ups": decided.get("follow_ups") or [],
+        "quotes": decided.get("quotes") or [],
+        "topics": app.get("topics") or [],
+        "links": app.get("links") or {},
+    }
     try:
-        sb_insert("episode_records", {
-            "show": show_for(interview, app).slug,
-            "interview_id": interview["id"],
-            "interview_run_id": run["id"],
-            "application_id": app.get("id"),
-            "guest_name": app.get("name"),
-            "guest_email": (app.get("email") or "").lower(),
-            "recorded_on": when.isoformat(),
-            "summary": decided.get("summary", ""),
-            "claims": decided.get("claims") or [],
-            "predictions": predictions,
-            "unanswered": decided.get("unanswered") or [],
-            "follow_ups": decided.get("follow_ups") or [],
-            "quotes": decided.get("quotes") or [],
-            "topics": app.get("topics") or [],
-            "links": app.get("links") or {},
-        })
+        # One record per interview, not one per cut. Sept 15 2026: re-cutting
+        # Vincent Rylan's episode to see what the machine would do wrote a
+        # second record of the same conversation. A guest quoted back to
+        # themselves from two slightly different versions of what they said is
+        # worse than not being quoted at all.
+        existing = sb_select("episode_records",
+                             f"interview_run_id=eq.{run['id']}&select=id")
+        if existing:
+            sb_update("episode_records", f"id=eq.{existing[0]['id']}", row)
+            logger.info("content lake: updated this interview's record")
+        else:
+            sb_insert("episode_records", row)
         logger.info("content lake: %d claims, %d predictions, %d follow-ups",
                     len(decided.get("claims") or []), len(predictions),
                     len(decided.get("follow_ups") or []))

@@ -378,3 +378,26 @@ class TestNoLaughter:
         for chunk in narrate.paragraphs(block):
             assert (narrate.WRAP_OPEN_RE.findall(chunk)
                     == narrate.WRAP_CLOSE_RE.findall(chunk)), chunk[:80]
+
+
+class TestOneRecordPerInterview:
+    """Sept 15 2026: re-cutting Vincent Rylan's episode to see what the
+    machine would do wrote a SECOND record of the same conversation. A guest
+    quoted back to themselves from two slightly different versions of what
+    they said is worse than not being quoted at all."""
+
+    def test_a_recut_updates_rather_than_duplicates(self):
+        body = _pyfn("_remember", AUTO)
+        assert 'sb_select("episode_records"' in body
+        assert "interview_run_id=eq." in body
+        assert "sb_update(\"episode_records\"" in body
+        assert "else:\n            sb_insert(\"episode_records\", row)" in body
+
+    def test_the_record_is_built_before_the_write_is_attempted(self):
+        body = _pyfn("_remember", AUTO)
+        assert body.index("row = {") < body.index("try:")
+
+    def test_it_still_never_costs_the_episode(self):
+        body = _pyfn("_remember", AUTO)
+        assert "except Exception" in body
+        assert "continuing" in body
