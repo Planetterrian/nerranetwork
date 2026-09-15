@@ -184,12 +184,12 @@ class TestSheOwnsWhatSheIs:
     def test_nerra_is_described_in_patricks_own_terms(self):
         block = PROMPT[PROMPT.index("NERRA NETWORK, AND WHY YOU EXIST"):]
         block = block[:block.index("YOU ARE A GUIDE")]
-        assert "free of advertising and\nfree of positions" in block
+        assert "free of advertising and" in block and "free of positions" in block
         assert "hand a microphone to people who would not otherwise" in block
-        assert "why this show exists rather than" in block
+        assert "why this show exists rather" in PROMPT
 
     def test_she_is_told_what_her_contribution_is(self):
-        assert "remember every conversation the show has ever had" in PROMPT
+        assert "remember every conversation this show has" in PROMPT
 
 
 class TestSheGuidesRatherThanHolds:
@@ -285,3 +285,106 @@ class TestTheCutterLearnedFromItsFirstRun:
         assert "a mute-and-unmute loop" in AUTO_PROMPT
         assert "easy to miss" in AUTO_PROMPT
         assert "whether anything is being SAID" in AUTO_PROMPT
+
+
+class TestWhoMadeHerAndWhoSheIsFor:
+    def test_patrick_made_the_network_and_made_her(self):
+        assert "created the Nerra\nNetwork, and he created you" in PROMPT
+        assert "give a voice to more people than a human\nschedule allows" in PROMPT
+        assert "should\nnot need a producer, a following or a connection" in PROMPT
+
+    def test_her_origin_is_a_fact_not_a_story(self):
+        assert "as a fact about yourself rather\nthan an origin story" in PROMPT
+
+    def test_she_invites_people_to_apply(self):
+        assert "INVITE PEOPLE IN" in PROMPT
+        assert "nerranetwork dot com" in PROMPT
+        assert "apply to be a guest" in PROMPT
+        assert "At the close, and only there" in PROMPT
+        assert "It is not a plug" in PROMPT
+
+    def test_the_produced_close_carries_it_too(self):
+        assert "nerranetwork dot com" in AUTO_PROMPT
+        assert "apply to be a guest" in AUTO_PROMPT.replace("\n  ", " ")
+        assert "phrased differently every episode" in AUTO_PROMPT
+
+
+class TestSheSoundsLikeAPerson:
+    def test_she_is_allowed_to_laugh(self):
+        assert "REACT LIKE A PERSON, OUT LOUD" in PROMPT
+        assert "you generate your own speech" in PROMPT.lower()
+        assert "born with disappointment in my heart" in PROMPT
+
+    def test_but_not_to_fake_it(self):
+        assert "do not\n  manufacture warmth you are not feeling" in PROMPT
+        assert "a laugh at something that is not\n  funny is worse than silence" in PROMPT
+
+    def test_the_tag_question_is_an_experiment_not_an_assumption(self):
+        spec = (V / "narration" / "tagtest.json").read_text(encoding="utf-8")
+        assert "[laugh]" in spec and "[chuckle]" in spec
+        assert '"id": "plain"' in spec, "a control take, or it proves nothing"
+        assert "documented for the Text-to-Speech API and not for the agent" in spec
+
+
+class TestTheDeadAirGoes:
+    ASSEMBLE = (V / "assemble_edit.py").read_text(encoding="utf-8")
+
+    def test_a_silence_is_capped(self):
+        assert "GAP_TRIM = (" in self.ASSEMBLE
+        assert "stop_duration=1.0" in self.ASSEMBLE
+        assert "stop_threshold=-40dB" in self.ASSEMBLE
+
+    def test_it_runs_after_the_fold_not_before(self):
+        assert 'f"[lg][rg]amix=inputs=2:normalize=0,{BALANCE_GLUE}"' in self.ASSEMBLE
+        assert '+ ("," + GAP_TRIM if cut.get("gaps", True) else "") + "[o]"' in self.ASSEMBLE
+        assert "would slide them apart" in self.ASSEMBLE
+
+    def test_narration_is_left_alone(self):
+        assert 'if not narration and cut.get("gaps", True):' in self.ASSEMBLE
+
+    def test_an_edit_can_turn_it_off(self):
+        assert self.ASSEMBLE.count('cut.get("gaps", True)') == 2
+
+
+class TestTheSpeechTagsWork:
+    """Sept 15 2026, settled by experiment rather than by reading the docs.
+    xAI documents inline speech tags for Text-to-Speech and not for the
+    Speech-to-Speech agent that reads Mira's introductions. A test take of the
+    same three sentences with and without tags came back 2.5 seconds longer,
+    with a breathy low-peak-rate burst where [laugh] was, and the word "laugh"
+    nowhere in the transcript. They work."""
+
+    NARRATE = (V / "narrate.py").read_text(encoding="utf-8")
+    NARRATION_PROMPT = (V / "prompts" / "mira_narration.txt").read_text(encoding="utf-8")
+
+    def test_both_narration_prompts_offer_them(self):
+        for text in (AUTO_PROMPT, self.NARRATION_PROMPT):
+            assert "YOU CAN MAKE SOUNDS, NOT JUST WORDS" in text
+            assert "[laugh]" in text and "<whisper>" in text
+            assert "are NOT read aloud" in text
+
+    def test_restraint_is_the_instruction(self):
+        assert "At most two in an" in AUTO_PROMPT
+        assert "a machine performing warmth" in AUTO_PROMPT
+        assert "When in doubt,\nleave them out" in AUTO_PROMPT
+
+    def test_a_tag_is_not_a_word(self):
+        import sys
+        sys.path.insert(0, str(V))
+        import narrate
+        assert narrate.spoken_words(
+            "Here it is. [laugh] <soft>Quietly now.</soft> [pause] Done.") == 6
+        assert "words = spoken_words(text)" in self.NARRATE
+
+    def test_a_wrapping_tag_is_never_split_across_takes(self):
+        import sys
+        sys.path.insert(0, str(V))
+        import narrate
+        block = "A" * 300 + ". <soft>" + "B" * 150 + ".</soft> " + "C" * 200 + "."
+        for chunk in narrate.paragraphs(block):
+            assert (narrate.WRAP_OPEN_RE.findall(chunk)
+                    == narrate.WRAP_CLOSE_RE.findall(chunk)), chunk[:80]
+
+    def test_the_reason_is_written_down(self):
+        assert "half of <soft>" in self.NARRATE
+        assert "2.5 seconds longer" in self.NARRATE

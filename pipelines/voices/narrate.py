@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -54,6 +55,29 @@ MIN_CHECKABLE_WORDS = 14   # below this, pace varies too much to judge
 MIN_TAKE_SEC = 0.4         # ... so all a short line must prove is that it exists
 WORDS_PER_SEC = 2.4        # Mira's measured pace, for the truncation check
 
+# Speech tags (Sept 15 2026). xAI documents these for Text-to-Speech only, but
+# a test take through the voice agent proved they work there too and are not
+# read aloud: the tagged read came back 2.5 seconds longer than the same
+# sentences plain, with a breathy low-peak-rate burst where [laugh] was and
+# the word "laugh" nowhere in the transcript. Two consequences here. A tag is
+# not a word, so it must not count toward the truncation estimate. And a
+# wrapping tag must never be split across two takes — half of <soft>...</soft>
+# in one session and half in the next is an unclosed instruction and a stray
+# closer, and nobody knows what she does with that.
+TAG_RE = re.compile(r"\[[a-z-]+\]|</?[a-z-]+>")
+WRAP_OPEN_RE = re.compile(r"<([a-z-]+)>")
+WRAP_CLOSE_RE = re.compile(r"</([a-z-]+)>")
+
+
+def spoken_words(text: str) -> int:
+    """Words she will actually say — tags produce sound, not words."""
+    return len(TAG_RE.sub(" ", text or "").split())
+
+
+def _unclosed(text: str) -> bool:
+    """True when a wrapping tag opens in this chunk and does not close."""
+    return WRAP_OPEN_RE.findall(text) != WRAP_CLOSE_RE.findall(text)
+
 
 def paragraphs(text: str) -> List[str]:
     """Split on blank lines, then split anything too long on sentences."""
@@ -65,7 +89,8 @@ def paragraphs(text: str) -> List[str]:
         current = ""
         for sentence in block.replace("\n", " ").split(". "):
             piece = sentence if sentence.endswith(".") else sentence + "."
-            if current and len(current) + len(piece) + 1 > PARAGRAPH_MAX_CHARS:
+            too_long = current and len(current) + len(piece) + 1 > PARAGRAPH_MAX_CHARS
+            if too_long and not _unclosed(current):
                 out.append(current.strip())
                 current = piece
             else:
@@ -142,7 +167,7 @@ def _check_not_truncated(part: Path, text: str) -> None:
     mangled introduction. Shipping a silently truncated read is worse than
     failing, so this fails.
     """
-    words = len(text.split())
+    words = spoken_words(text)
     actual = _duration(part)
     # A short line is said at whatever pace it wants: "That is where we will
     # leave it" is seven words in 1.7 seconds, which tripped this check on its
