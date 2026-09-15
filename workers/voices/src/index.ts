@@ -971,6 +971,11 @@ async function handleGuestReviewPage(env: Env, token: string): Promise<Response>
     return html("<h1>Already approved — thank you!</h1>");
   }
   const { show } = await interviewWithApp(env, pkg.interview_id);
+  // A failed cleaning pass stores "" rather than null, so "??" happily
+  // rendered the empty string and John Capobianco's review page went out
+  // with no transcript on it at all (Sept 15 2026). Fall back on anything
+  // truthy: the raw diarized transcript is readable and it is the same
+  // conversation.
   // The guest reviewed a transcript and never heard a word of it until
   // publication (Sept 10 2026). They approve the audio too, so give them
   // the audio: the same mixed recording Patrick listens to at gate 1.
@@ -994,7 +999,7 @@ ${listenUrl
   ? `<audio controls preload="none" src="${esc(listenUrl)}" style="width:100%;margin:1rem 0"></audio>`
   : `<p><em>The audio is still being processed — the transcript below is final. Check back shortly, or approve on the transcript alone.</em></p>`}
 <h3>Transcript</h3>
-<pre>${esc(pkg.transcript_cleaned ?? pkg.transcript_raw ?? "")}</pre>
+<pre>${esc((pkg.transcript_cleaned || "").trim() || (pkg.transcript_raw || "").trim())}</pre>
 <h3>Request removals (optional)</h3>
 <textarea id="redactions" placeholder="Quote any passage you'd like removed, one per line, with a word on why if you like."></textarea>
 <p>

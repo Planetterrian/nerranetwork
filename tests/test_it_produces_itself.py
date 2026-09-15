@@ -557,3 +557,39 @@ class TestALinkThatSurvivesEmail:
         assert '?token={package_review_token' not in assemble
         assert "{pkg['id']}/{package_review_token(pkg['id'])}" in post
         assert r"admin\/review\/([0-9a-f-]{36})(?:\/([0-9a-f]{40}))?$" in self.WORKER
+
+
+class TestTheGuestCanActuallyReadIt:
+    """John Capobianco's review page went out with no transcript on it. The
+    cleaning pass is told to label a three-track call by name — "Mira:",
+    "Patrick:", "John:" — and the validator demanded the literal "MIRA:" and
+    "GUEST:", so every co-hosted interview failed validation twice and stored
+    an empty string. The page's "??" fallback does not catch "", so the guest
+    was asked to approve a blank page."""
+
+    WORKER = (ROOT / "workers" / "voices" / "src" / "index.ts").read_text(encoding="utf-8")
+
+    def _v(self):
+        from validators.schema_validators import validate_transcript_cleaned
+        return validate_transcript_cleaned
+
+    def test_a_cohosted_transcript_passes(self):
+        self._v()("Speakers: Mira (AI host), Patrick (co-host), John (guest)\n"
+                  "[00:01] Mira: hello" + " word" * 200 + "\n[00:10] John: hi")
+
+    def test_a_two_track_transcript_still_passes(self):
+        self._v()("MIRA: hello" + " word" * 200 + "\nGUEST: hi")
+
+    def test_one_voice_alone_is_still_rejected(self):
+        import pytest
+        with pytest.raises(ValueError):
+            self._v()("[00:01] Mira: talking to herself" + " word" * 200)
+
+    def test_a_transcript_without_mira_is_rejected(self):
+        import pytest
+        with pytest.raises(ValueError):
+            self._v()("[00:01] John: hello" + " word" * 200 + "\n[00:02] Patrick: hi")
+
+    def test_an_empty_cleaning_pass_falls_back_to_the_raw_one(self):
+        assert '(pkg.transcript_cleaned || "").trim()' in self.WORKER
+        assert '|| (pkg.transcript_raw || "").trim()' in self.WORKER

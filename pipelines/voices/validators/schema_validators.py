@@ -8,6 +8,7 @@ the retry prompt can quote.
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 # Show slugs the classifier may target (cross-show callouts / show fits).
@@ -28,12 +29,27 @@ def _require(cond: bool, msg: str) -> None:
         raise ValueError(msg)
 
 
+# A two-track call is labelled MIRA:/GUEST:; a three-track call with the
+# co-host in the room is labelled by name — "Mira:", "Patrick:", "John:" —
+# because that is what the cleaning prompt asks for. Demanding the literal
+# "GUEST:" failed every co-hosted interview twice and stored an empty
+# transcript: John Capobianco's guest-review page went out with nothing to
+# read on it (Sept 15 2026). What matters is that speaker labels survived,
+# Mira is one of them, and somebody else is too.
+_LABEL = re.compile(r"^\s*(?:\[\d{1,2}:\d{2}\]\s*)?([A-Z][A-Za-z.'\- ]{0,24}):",
+                    re.MULTILINE)
+
+
 def validate_transcript_cleaned(value: Any) -> None:
     _require(isinstance(value, str), "expected plain text")
     _require(len(value.split()) >= 200,
              "cleaned transcript under 200 words — looks truncated")
-    _require("MIRA:" in value and "GUEST:" in value,
-             "cleaned transcript must keep MIRA:/GUEST: speaker labels")
+    labels = {m.group(1).strip().lower() for m in _LABEL.finditer(value)}
+    _require("mira" in labels,
+             "cleaned transcript must keep the speaker labels, Mira's included")
+    _require(len(labels) >= 2,
+             "cleaned transcript has only one speaker label — the guest's "
+             "lines must keep theirs (GUEST: or their first name)")
 
 
 def validate_chapter_markers(value: Any) -> None:
