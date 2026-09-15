@@ -696,7 +696,13 @@ class TestAudioRestoration:
     def test_balance_levels_each_side_before_folding(self):
         src = (ROOT / "pipelines" / "voices" / "assemble_edit.py").read_text(encoding="utf-8")
         assert "channelsplit=channel_layout=stereo[l][r]" in src
-        assert "[l]{side}[lg];[r]{side}[rg]" in src
+        # Both sides get the levelling chain before the fold. Matched on
+        # each side's own leg rather than the whole literal, because the
+        # legs carry an optional per-side extra ("voice_match", 8229cf7e)
+        # between the chain and the label — which is still levelling each
+        # side separately, the property this test is named for.
+        assert "[l]{side}" in src and "[lg];" in src
+        assert "[r]{side}" in src and "[rg];" in src
         i_side = src.index("[l]{side}")
         i_mix = src.index("amix=inputs=2:normalize=0", i_side)
         assert i_side < i_mix, "levelling after the fold is levelling a mixture"

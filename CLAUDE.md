@@ -2992,9 +2992,28 @@ decision); everything else has a live status card.
     still reach the TTS text daily and switching it changes shipped
     audio on every show (landmine #17). **Not covered yet:** the FR/RU/ZH
     dub tracks and the RU/FR YouTube dubs use the same request and are
-    never compared with their text. Ep605's audio was not repaired from
-    the session (no key): re-run the committed `_tts.txt` to the SAME R2
-    key, and delete + re-upload the two YouTube videos, or pull them.
+    never compared with their text.
+    **Repairing such an episode: never clip, always re-synthesize**
+    (Sep 15 2026). The leak REPLACES content — Ep605 never spoke its
+    hook, identity line or the two opening sentences of its lead story,
+    and the audio resumes mid-sentence — so cutting the defect ships an
+    episode that opens on a fragment, for the same downstream cost as a
+    re-run. `scripts/resynthesize_episode.py` + Actions
+    **"Re-synthesize Episode"** re-run the committed `_tts.txt` through
+    the same synthesis: dry-run by default, **uploads to the SAME R2
+    key** so no subscriber is re-pointed, and **refuses to upload audio
+    the spoken-text gate has not passed** (one retry, then abort — the
+    repair tool must never become another way to ship the defect).
+    Chapter titles reproduce exactly and only timestamps move; the feed
+    item keeps its published title and description and is corrected for
+    duration and byte length. It does not touch YouTube (the API cannot
+    replace a video's file) — it computes the defect's time span and
+    says per video whether to delete or KEEP, because a Short whose clip
+    sits past the defect is fine and **the RU/FR dubs are a separate
+    synthesis of the translated script and are never affected** (an
+    earlier draft listed all eight Ep605 videos for deletion; guard
+    `test_dub_videos_are_never_listed_for_deletion`). Guards:
+    `tests/test_resynthesize_episode.py`.
     Review: [`docs/reviews/tesla_ep605_spoken_text_gate_2026_09_14.md`](docs/reviews/tesla_ep605_spoken_text_gate_2026_09_14.md).
     Guards: `tests/test_spoken_text_gate.py`.
 
