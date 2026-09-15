@@ -309,23 +309,6 @@ class TestWhoMadeHerAndWhoSheIsFor:
         assert "phrased differently every episode" in AUTO_PROMPT
 
 
-class TestSheSoundsLikeAPerson:
-    def test_she_is_allowed_to_laugh(self):
-        assert "REACT LIKE A PERSON, OUT LOUD" in PROMPT
-        assert "you generate your own speech" in PROMPT.lower()
-        assert "born with disappointment in my heart" in PROMPT
-
-    def test_but_not_to_fake_it(self):
-        assert "do not\n  manufacture warmth you are not feeling" in PROMPT
-        assert "a laugh at something that is not\n  funny is worse than silence" in PROMPT
-
-    def test_the_tag_question_is_an_experiment_not_an_assumption(self):
-        spec = (V / "narration" / "tagtest.json").read_text(encoding="utf-8")
-        assert "[laugh]" in spec and "[chuckle]" in spec
-        assert '"id": "plain"' in spec, "a control take, or it proves nothing"
-        assert "documented for the Text-to-Speech API and not for the agent" in spec
-
-
 class TestTheDeadAirGoes:
     ASSEMBLE = (V / "assemble_edit.py").read_text(encoding="utf-8")
 
@@ -346,34 +329,45 @@ class TestTheDeadAirGoes:
         assert self.ASSEMBLE.count('cut.get("gaps", True)') == 2
 
 
-class TestTheSpeechTagsWork:
-    """Sept 15 2026, settled by experiment rather than by reading the docs.
-    xAI documents inline speech tags for Text-to-Speech and not for the
-    Speech-to-Speech agent that reads Mira's introductions. A test take of the
-    same three sentences with and without tags came back 2.5 seconds longer,
-    with a breathy low-peak-rate burst where [laugh] was, and the word "laugh"
-    nowhere in the transcript. They work."""
+class TestNoLaughter:
+    """Sept 15 2026. The tags do work through the voice agent — a test take
+    proved it — and then Patrick listened to one and said the laugh sounds
+    fake. He is right, and the reason matters: a laugh typed into a script is
+    a performance of amusement by something that was not amused. A show
+    hosted by an AI cannot afford to pretend."""
 
     NARRATE = (V / "narrate.py").read_text(encoding="utf-8")
     NARRATION_PROMPT = (V / "prompts" / "mira_narration.txt").read_text(encoding="utf-8")
 
-    def test_both_narration_prompts_offer_them(self):
+    def test_laughter_is_banned_in_both_narration_prompts(self):
         for text in (AUTO_PROMPT, self.NARRATION_PROMPT):
-            assert "YOU CAN MAKE SOUNDS, NOT JUST WORDS" in text
-            assert "[laugh]" in text and "<whisper>" in text
-            assert "are NOT read aloud" in text
+            assert "NO LAUGHTER, EVER" in text
+            assert "sound fake, because they are" in text
+            for banned in ("[laugh]", "[chuckle]", "[giggle]", "[sigh]", "[breath]"):
+                # named only in the ban, never offered
+                offered = text.split("NO LAUGHTER, EVER")[0]
+                assert banned not in offered, banned
 
-    def test_restraint_is_the_instruction(self):
-        assert "At most two in an" in AUTO_PROMPT
-        assert "a machine performing warmth" in AUTO_PROMPT
-        assert "When in doubt,\nleave them out" in AUTO_PROMPT
+    def test_only_delivery_tags_survive(self):
+        for text in (AUTO_PROMPT, self.NARRATION_PROMPT):
+            assert "[pause]" in text and "<soft>" in text
+            assert "shape\nhow real words are delivered rather than inventing a feeling" in text
 
-    def test_a_tag_is_not_a_word(self):
+    def test_she_does_not_laugh_in_the_room_either(self):
+        assert "REACT, BUT DO NOT PERFORM" in PROMPT
+        assert "Do NOT laugh" in PROMPT
+        assert "sounds manufactured" in PROMPT
+        assert "REACT LIKE A PERSON, OUT LOUD" not in PROMPT
+
+    def test_warmth_still_has_somewhere_to_go(self):
+        assert "say so in words" in PROMPT
+        assert "what you\n  notice and what you ask next" in PROMPT
+
+    def test_a_tag_is_still_not_a_word(self):
         import sys
         sys.path.insert(0, str(V))
         import narrate
-        assert narrate.spoken_words(
-            "Here it is. [laugh] <soft>Quietly now.</soft> [pause] Done.") == 6
+        assert narrate.spoken_words("Here it is. [pause] <soft>Quietly now.</soft> Done.") == 6
         assert "words = spoken_words(text)" in self.NARRATE
 
     def test_a_wrapping_tag_is_never_split_across_takes(self):
@@ -384,7 +378,3 @@ class TestTheSpeechTagsWork:
         for chunk in narrate.paragraphs(block):
             assert (narrate.WRAP_OPEN_RE.findall(chunk)
                     == narrate.WRAP_CLOSE_RE.findall(chunk)), chunk[:80]
-
-    def test_the_reason_is_written_down(self):
-        assert "half of <soft>" in self.NARRATE
-        assert "2.5 seconds longer" in self.NARRATE
