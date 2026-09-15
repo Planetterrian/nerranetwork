@@ -199,6 +199,21 @@ class TTSConfig:
     # calibrated on real episodes for that voice/show.
     tag_leak_hard_block: bool = False
 
+    # ---- Spoken-text gate (Sep 14 2026, Tesla Ep605) ----
+    # After Whisper, ``engine.spoken_text_gate`` checks that the audio's
+    # words are the script's words: the opening must match and no run of
+    # ``spoken_text_gate_max_unmatched_run`` spoken words may be absent
+    # from the script. Grok's server-side text normalizer read its own
+    # reasoning aloud for 45 s at the top of Ep605 and every existing
+    # check passed. ``enforce`` re-synthesises once, then skips the
+    # episode; ``shadow`` records + warns (forced for non-English
+    # transcripts); ``off`` disables. Dataclass defaults are the
+    # network-wide values in ``_defaults.yaml``.
+    spoken_text_gate: str = "enforce"
+    spoken_text_gate_retries: int = 1
+    spoken_text_gate_min_opening_match: float = 0.5
+    spoken_text_gate_max_unmatched_run: int = 40
+
     # ---- Two-host dialogue mode (July 2026, dp_pod) ----
     # When True, the podcast script is speaker-labeled dialogue (one turn
     # per paragraph, e.g. ``DAN: ...`` / ``PATRICK: ...``) and TTS routes

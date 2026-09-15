@@ -2953,6 +2953,51 @@ decision); everything else has a live status card.
     table must stay in sync with the gate's CRON_MAP —
     `tests/test_scheduling_punctuality.py` fails CI on drift.
 
+25. **The TTS engine can speak text we never sent — the spoken-text gate
+    is the only thing standing between that and a listener (Sep 14
+    2026, Tesla Ep605).** The first 45 s of the published Ep605 are Grok
+    TTS reading its own text-normalizer's chain of thought in the host's
+    voice ("One thing, the input has line breaks, preserve them … Rules.
+    Do not convert at sign in code … So the output should be the entire
+    text unchanged") in place of the hook and the identity line. The
+    saved `_tts.txt` was clean: the defect was injected SERVER-SIDE by
+    the `text_normalization: true` LLM stage (the same component that
+    merged "S P C X" into "S&P CX" on SpaceX Ep051), and every check the
+    episode passed measured something else — `tag_leak_detector` is a
+    registry of tag WORDS (read 0), the opt-in `validate_transcription`
+    scores the WHOLE episode (a 50-word leak in 1,083 scores ~0.9), and
+    `script_audit` reads the script, never the audio. It shipped to RSS,
+    both Shorts (the hook-first Short IS the leak), the Apple video feed
+    and Nerra Daily Ep025. Unique across 1,709 committed transcripts.
+    Now: `engine/spoken_text_gate.py` compares the Whisper transcript
+    (already produced for every episode, BEFORE mix and publish) with the
+    in-memory script — the opening must match (`opening_match` ≥ 0.5;
+    Ep605 0.17, healthy floor 0.67) and no run of ≥ 40 spoken words may
+    be absent from the script (Ep605 61, legit max 22) — with Whisper's
+    own artifacts filtered first (a >6 words/s segment is a
+    hallucination, M&A Ep140; an n-gram looped >3× is collapsed, MIT
+    Ep162). A failure re-runs the IDENTICAL synthesis once
+    (`_synthesize_raw_mp3()` closure; the defect does not repeat), a
+    second failure SKIPS the episode (`_skip_episode("spoken_text_gate")`).
+    `tts.spoken_text_gate: enforce` network-wide; `shadow` on the two
+    Russian shows and forced for any non-English transcript (Whisper
+    writes Привет's English halves as Cyrillic sound-alikes — the
+    instrument is not calibrated there). A missing transcript never
+    blocks; it records `no_transcript` and warns that the audio is
+    unverified. Metrics `spoken_text_gate*` per episode; calibration
+    re-run with `scripts/audit_spoken_text.py` BEFORE moving a
+    threshold. Also: `tts.apply_text_normalization` now reaches the Grok
+    request (`"off"` → `text_normalization: false`; it was hard-wired
+    true) — it stays ON because residual digits (14.3.8, B1081, 845km)
+    still reach the TTS text daily and switching it changes shipped
+    audio on every show (landmine #17). **Not covered yet:** the FR/RU/ZH
+    dub tracks and the RU/FR YouTube dubs use the same request and are
+    never compared with their text. Ep605's audio was not repaired from
+    the session (no key): re-run the committed `_tts.txt` to the SAME R2
+    key, and delete + re-upload the two YouTube videos, or pull them.
+    Review: [`docs/reviews/tesla_ep605_spoken_text_gate_2026_09_14.md`](docs/reviews/tesla_ep605_spoken_text_gate_2026_09_14.md).
+    Guards: `tests/test_spoken_text_gate.py`.
+
 ### Resolved Issues (Feb 2026)
 
 4. **TST/OV output dirs fixed** — `shows/tesla.yaml` and `shows/omni_view.yaml`

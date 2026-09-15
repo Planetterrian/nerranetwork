@@ -162,6 +162,10 @@ tts:
   # Align with network default so long Russian scripts keep the single-call
   # <fast> wrap (multi-chunk drops the wrap — landmine #17).
   max_chars: 14000
+  # Whisper mis-transcribes the bilingual/Russian audio (English halves
+  # come back as Cyrillic sound-alikes) — the spoken-text gate records
+  # its numbers here but never blocks. See engine/spoken_text_gate.py.
+  spoken_text_gate: shadow
 multilingual:
   enabled: false
 audio:

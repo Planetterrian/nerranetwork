@@ -122,6 +122,14 @@ tts:
   similarity_boost: 0.75
   style: 0.0
   use_speaker_boost: true
+  # Server-side text normalization. On ElevenLabs this is the documented
+  # "auto"/"on"/"off" switch; on Grok it maps to the request's boolean
+  # `text_normalization` ("off" -> false, anything else -> true). Grok's
+  # normalizer is an LLM stage: it merged "S P" into "S&P" (SpaceX Ep051,
+  # Aug 2026) and on Tesla Ep605 (2026-09-14) it SPOKE ITS OWN REASONING
+  # for 45 s in place of the opening. It stays on because residual digits
+  # (version strings, booster tails, "845km") still reach the TTS text;
+  # the spoken-text gate below is what guarantees a leak never ships.
   apply_text_normalization: "on"
   # Tag-leak hard block (added as quick win in May 2026 codebase review).
   # Default False = best-effort (metric recorded + warning logged; episode ships).
@@ -129,6 +137,20 @@ tts:
   # detector has low false-positive rate on real transcripts for that voice.
   # When true, any leak aborts the episode before mixing/publishing.
   tag_leak_hard_block: false
+  # Spoken-text gate (Sep 14 2026, Tesla Ep605). After Whisper, the runner
+  # checks that what Grok SPOKE is the script we SENT: the opening must
+  # match and no passage of >= 40 spoken words may be absent from the
+  # script. A failure re-synthesises the episode once; a second failure
+  # SKIPS the episode (enforce) — a leak of server-side reasoning must
+  # never reach a listener again. Modes: enforce | shadow (record + warn,
+  # never block; forced for non-English transcripts, see
+  # engine.spoken_text_gate.resolve_gate_mode) | off. Thresholds were
+  # calibrated on every committed English episode since June 2026
+  # (scripts/audit_spoken_text.py re-runs the calibration).
+  spoken_text_gate: enforce
+  spoken_text_gate_retries: 1
+  spoken_text_gate_min_opening_match: 0.5
+  spoken_text_gate_max_unmatched_run: 40
 
 # Network-wide minimum final-audio length guard (skip the episode if
 # shorter). June 10 2026 fix: this lived INSIDE the audio: block, but
