@@ -757,3 +757,51 @@ class TestTheCutSurvivesTheHandoff:
         step = step[:step.index("name: Mira reads")]
         assert "| tee" not in step
         assert "AUTO_EDIT_RESULT: /tmp/cut.json" in step
+
+
+class TestTheCoHostIsNotErased:
+    """Patrick's track from the Dan Perra interview transcribed as "Hey,
+    Dan." ninety-seven times — once every thirty seconds for forty-seven
+    minutes — and everything he actually said was gone, including a long
+    passage steering the second half of the interview. faster-whisper
+    conditions each window on the previous text by default, so one short
+    line emitted into silence propagates for the rest of the file. The same
+    audio, decoded without that conditioning, gives 107 segments and a
+    single "Hey, Dan" line.
+    """
+
+    ENGINE = (ROOT / "engine" / "transcripts.py").read_text(encoding="utf-8")
+
+    def test_the_decoder_does_not_condition_on_its_own_echo(self):
+        assert "condition_on_previous_text: bool = False" in self.ENGINE
+        assert "condition_on_previous_text=condition_on_previous_text" in self.ENGINE
+
+    def test_the_vad_keeps_it_out_of_the_silence(self):
+        assert "vad_filter: bool = True" in self.ENGINE
+
+    def test_a_missing_vad_runtime_does_not_lose_the_transcript(self):
+        body = self.ENGINE[self.ENGINE.index("model = WhisperModel("):]
+        body = body[:body.index("transcript_segments")]
+        assert "transcribing without it" in body
+        assert "model.transcribe(str(audio_path), **kwargs)" in body
+
+
+class TestTheRightPackageGetsApproved:
+    """An interview can have several editorial packages — a re-run of the
+    post-interview job makes a new one. The assembler took whichever row
+    came back first, which for Dan Perra was the oldest, killed one: the
+    gate-1 button in Patrick's email would have approved a transcript
+    nobody wanted."""
+
+    ASSEMBLE = (V / "assemble_edit.py").read_text(encoding="utf-8")
+
+    def test_it_takes_the_newest_live_package(self):
+        body = self.ASSEMBLE[self.ASSEMBLE.index("def _tell_patrick"):]
+        body = body[:body.index("guest = ")]
+        assert "status=neq.killed" in body
+        assert "order=created_at.desc" in body
+
+    def test_it_still_finds_one_when_they_are_all_killed(self):
+        body = self.ASSEMBLE[self.ASSEMBLE.index("def _tell_patrick"):]
+        body = body[:body.index("guest = ")]
+        assert body.count("sb_select(\n") >= 2

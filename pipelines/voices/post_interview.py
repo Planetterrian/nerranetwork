@@ -478,6 +478,52 @@ def _is_hallucination(seg: dict, text: str) -> bool:
     return logprob is None or float(logprob) <= _GHOST_LOGPROB
 
 
+# Whisper on a track that is mostly silence does not only invent "you" and
+# "thank you" — it also repeats the last real thing that speaker said, at a
+# steady cadence, for as long as the silence lasts. Dan Perra's transcript
+# (Sept 15 2026) had Patrick saying "Hey, Dan." at 01:20, 01:50 and 02:20
+# while he sat quietly listening. A phrase this short, repeated by the same
+# speaker with nothing else from them in between, is the echo of the first
+# one, not a person saying it again.
+_ECHO_MAX_WORDS = 6
+_ECHO_MIN_REPEATS = 2
+
+
+def _drop_echoes(segments: list[tuple[float, str, str]],
+                 ) -> list[tuple[float, str, str]]:
+    """Remove a short line a speaker appears to repeat into their own
+    silence. The first occurrence always survives."""
+    counts: dict[tuple[str, str], int] = {}
+    last_said: dict[str, str] = {}
+    repeated: set[tuple[str, str]] = set()
+    for _start, label, text in segments:
+        key = (label, text.strip().lower())
+        if len(text.split()) > _ECHO_MAX_WORDS:
+            last_said[label] = key[1]
+            continue
+        if last_said.get(label) == key[1]:
+            counts[key] = counts.get(key, 0) + 1
+            if counts[key] >= _ECHO_MIN_REPEATS:
+                repeated.add(key)
+        else:
+            counts[key] = 0
+        last_said[label] = key[1]
+    if not repeated:
+        return segments
+    kept: list[tuple[float, str, str]] = []
+    seen: set[tuple[str, str]] = set()
+    for start, label, text in segments:
+        key = (label, text.strip().lower())
+        if key in repeated:
+            if key in seen:
+                continue
+            seen.add(key)
+        kept.append((start, label, text))
+    logger.info("dropped repeated ghost line(s): %s",
+                sorted({t for _l, t in repeated}))
+    return kept
+
+
 def diarized_tracks(tracks: list[tuple[str, Path]], workdir: Path,
                     header: str = "", offsets: dict | None = None) -> tuple[str, float]:
     """Whisper each (label, mono wav) track and merge the segments by
@@ -512,6 +558,7 @@ def diarized_tracks(tracks: list[tuple[str, Path]], workdir: Path,
                 confidences.append(
                     max(0.0, min(1.0, 1.0 + float(seg["avg_logprob"]))))
     merged.sort(key=lambda s: s[0])
+    merged = _drop_echoes(merged)
     lines = [f"[{int(s // 60):02d}:{int(s % 60):02d}] {label}: {text}"
              for s, label, text in merged]
     if header:

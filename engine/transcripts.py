@@ -374,6 +374,8 @@ def generate_transcript(
     model_size: str = "base",
     language: Optional[str] = None,
     vocabulary: Optional[Iterable[str]] = None,
+    condition_on_previous_text: bool = False,
+    vad_filter: bool = True,
 ) -> Optional[TranscriptResult]:
     """Generate a transcript from an MP3 file using faster-whisper.
 
@@ -437,16 +439,37 @@ def generate_transcript(
         if hf_token:
             os.environ.setdefault("HF_HUB_DISABLE_TELEMETRY", "1")
         model = WhisperModel(model_size, device="cpu", compute_type="int8")
-        segments, info = model.transcribe(
-            str(audio_path),
+        # condition_on_previous_text defaults to True in faster-whisper, and
+        # on a track with long gaps it is a trap: once the decoder emits a
+        # short line into silence it conditions every later window to say it
+        # again. Patrick's co-host track from the Dan Perra interview (Sept
+        # 15 2026) came back as "Hey, Dan." ninety-seven times, once every
+        # thirty seconds for forty-seven minutes, with every real thing he
+        # said swallowed — including a long passage steering the second half
+        # of the interview. Decoded window by window the same audio
+        # transcribes correctly. Each speaker now has their own track, so
+        # there is little coherence to lose and a whole failure mode to
+        # avoid. The VAD keeps the decoder out of the silence in the first
+        # place; it needs onnxruntime, so fall back if it is not installed.
+        kwargs = dict(
             language=language,
             beam_size=5,
             word_timestamps=True,
+            condition_on_previous_text=condition_on_previous_text,
             # Bias the decoder toward the real brand vocabulary. This
             # is prevention only — the deterministic repair below is
             # what we actually rely on (July 28 2026).
             initial_prompt=build_initial_prompt(vocabulary),
         )
+        try:
+            segments, info = model.transcribe(
+                str(audio_path), vad_filter=vad_filter, **kwargs)
+            segments = list(segments)
+        except Exception as exc:  # noqa: BLE001 — usually a missing VAD runtime
+            if not vad_filter:
+                raise
+            logger.warning("VAD unavailable (%s) — transcribing without it", exc)
+            segments, info = model.transcribe(str(audio_path), **kwargs)
 
         transcript_segments = []
         full_text_parts = []

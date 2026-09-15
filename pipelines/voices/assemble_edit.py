@@ -272,7 +272,7 @@ def assemble(slug: str) -> dict:
             if spec_path.exists() else _stored_spec(slug, "edl"))
     if not spec:
         raise SystemExit(f"no EDL at {spec_path} and none stored for {slug!r}")
-    show = get_show(spec.get("show"))
+    show = get_show(spec.get("show") or "age_of_ai")
     run_id = spec["run_id"]
     runs = sb_select("interview_runs", f"id=eq.{run_id}")
     if not runs:
@@ -385,8 +385,21 @@ def _tell_patrick(spec: dict, show, slug: str, url: str, seconds: float,
     yes, so the assembler hands it to them.
     """
     interview_id = _interview_id(spec, run)
-    pkgs = sb_select("editorial_packages",
-                     f"interview_id=eq.{interview_id}&select=id,status")
+    # The newest package that is still alive. An interview can have several
+    # — a re-run of the post-interview job makes a new one — and this used
+    # to take whichever row came back first, which on Sept 15 2026 was Dan
+    # Perra's oldest, killed package: the gate-1 button in the email would
+    # have approved a transcript nobody wanted, for an episode nobody had
+    # assembled from it.
+    pkgs = sb_select(
+        "editorial_packages",
+        f"interview_id=eq.{interview_id}&status=neq.killed"
+        "&select=id,status,created_at&order=created_at.desc")
+    if not pkgs:
+        pkgs = sb_select(
+            "editorial_packages",
+            f"interview_id=eq.{interview_id}"
+            "&select=id,status,created_at&order=created_at.desc")
     pkg = pkgs[0] if pkgs else None
     apps = []
     ivs = sb_select("interviews", f"id=eq.{interview_id}&select=application_id")
