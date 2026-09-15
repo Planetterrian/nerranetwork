@@ -57,6 +57,15 @@ def _slug(name: str, when: dt.date) -> str:
     return f"{base}_{when:%Y_%m_%d}"
 
 
+def _ours(slug: str) -> bool:
+    """True when the EDL of this name was written by a previous auto cut."""
+    try:
+        rows = sb_select("episode_edits", f"slug=eq.{slug}&select=generated_by")
+        return bool(rows) and rows[0].get("generated_by") == "auto_edit"
+    except Exception:  # noqa: BLE001
+        return False
+
+
 def _leg_offset(run: dict, role: str = "guest") -> float:
     """Seconds between the room opening and the guest leg we are cutting.
 
@@ -145,6 +154,11 @@ def build(run_id: str) -> dict:
     recorded = (run.get("created_at") or "")[:10] or dt.date.today().isoformat()
     when = dt.date.fromisoformat(recorded)
     slug = _slug(app.get("name", ""), when)
+    # A hand-written edit in the repo is somebody's judgement and outranks
+    # this one. Never overwrite it — cut alongside it and let a human choose.
+    if (EDL_DIR / f"{slug}.json").exists() and not _ours(slug):
+        slug = f"{slug}_auto"
+        logger.info("a hand-written edit already exists — cutting as %s", slug)
     offset = _leg_offset(run)
 
     # Room clock -> the guest leg's own clock, which is what the EDL addresses.

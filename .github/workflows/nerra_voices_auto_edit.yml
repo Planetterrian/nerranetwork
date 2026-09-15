@@ -1,0 +1,51 @@
+# Cut an episode from an interview that has already been processed, without
+# assembling it. The full chain runs inside post-interview processing; this is
+# for re-cutting after feedback ("start later", "keep the lightning round"),
+# and for looking at what the cutter decided before trusting it with a real
+# episode. It writes pipelines/voices/narration/<slug>.json and edl/<slug>.json
+# on the runner and the episode_edits row in Supabase; nothing is published.
+name: Cut an episode (no assemble)
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: 'interview_runs.id to cut'
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  cut:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+      - uses: ./.github/actions/setup-python
+        with:
+          python-version: '3.12'
+          requirements-file: 'pipelines/requirements.txt'
+          skip-checkout: 'true'
+      - name: Cut it
+        run: python pipelines/voices/auto_edit.py "${{ inputs.run_id }}"
+        env:
+          INTERVIEW_RUN_ID: ${{ github.event.client_payload.run_id || inputs.run_id }}
+          # ADMIN_TOKEN derives the per-package gate-1 review token that
+          # goes in Patrick's email (must match the Worker's).
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+          SUPABASE_URL: ${{ secrets.VOICES_SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.VOICES_SUPABASE_SERVICE_KEY }}
+          GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_PUBLIC_BASE_URL: ${{ secrets.R2_PUBLIC_BASE_URL }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          POSTMARK_TOKEN: ${{ secrets.POSTMARK_TOKEN }}
+          CALCOM_BOOKING_URL: ${{ secrets.CALCOM_BOOKING_URL }}
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          NOTIFICATION_WEBHOOK_URL: ${{ secrets.NOTIFICATION_WEBHOOK_URL }}

@@ -240,3 +240,30 @@ class TestTheShowRemembersAcrossGuests:
         qgen = (V / "prompts" / "question_generation.txt").read_text(encoding="utf-8")
         assert "{{carry_the_show}}" in qgen
         assert "puts that previous guest's" in qgen
+
+
+class TestAHandWrittenEditIsNotOverwritten:
+    """A cut somebody made by hand is their judgement and outranks the
+    machine's. The auto cutter names its file from the guest and the date,
+    which is exactly the name a hand-written edit already has."""
+
+    def test_it_steps_aside(self):
+        assert 'if (EDL_DIR / f"{slug}.json").exists() and not _ours(slug):' in AUTO
+        assert 'slug = f"{slug}_auto"' in AUTO
+        assert "let a human choose" in AUTO
+
+    def test_it_may_overwrite_its_own_previous_cut(self):
+        body = _pyfn("_ours", AUTO)
+        assert 'generated_by") == "auto_edit"' in body
+
+    def test_a_missing_row_does_not_stop_the_cut(self):
+        body = _pyfn("_ours", AUTO)
+        assert "except Exception" in body
+        assert "return False" in body
+
+    def test_there_is_a_way_to_cut_without_publishing(self):
+        wf = (ROOT / ".github" / "workflows"
+              / "nerra_voices_auto_edit.yml").read_text(encoding="utf-8")
+        assert "workflow_dispatch:" in wf
+        assert "auto_edit.py" in wf
+        assert "assemble_edit.py" not in wf, "this one must not publish"
