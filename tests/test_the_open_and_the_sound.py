@@ -297,3 +297,29 @@ class TestAnEagerGuestDoesNotCostTheCoHostHisIntroduction:
 
     def test_the_timer_uses_it(self):
         assert "}, cohostHoldMs());" in SCENARIO
+
+
+class TestAFinishedEpisodeIsNeverLost:
+    """Sept 15 2026: John's episode built and uploaded, and then the job died
+    on a KeyError because the EDL had no "interview_id" key — after the work
+    was done, so the episode existed and nobody was told."""
+
+    SRC = (ROOT / "pipelines" / "voices" / "assemble_edit.py").read_text(encoding="utf-8")
+
+    def test_the_interview_is_found_without_the_edl_saying_so(self):
+        body = _pyfn("_interview_id", self.SRC)
+        assert 'if spec.get("interview_id")' in body
+        assert 'run.get("interview_id")' in body
+        assert 'sb_select("interview_runs"' in body
+
+    def test_announcing_it_cannot_take_it_down(self):
+        block = self.SRC[self.SRC.index("_tell_patrick(spec, show, slug, url, seconds, run)"):]
+        block = block[:block.index("return {")]
+        assert "except Exception" in block
+        assert "The episode exists either way" in block
+        assert "it is at %s" in block, "the log must still name the URL"
+
+    def test_no_bare_spec_lookups_remain(self):
+        assert "spec['interview_id']" not in self.SRC
+        assert 'spec["interview_id"]' not in self.SRC or \
+            'if spec.get("interview_id")' in self.SRC

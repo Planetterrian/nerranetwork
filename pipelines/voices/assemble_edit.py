@@ -298,7 +298,7 @@ def assemble(slug: str) -> dict:
     if transcript_path.exists():
         text = transcript_path.read_text(encoding="utf-8")
         pkgs = sb_select("editorial_packages",
-                         f"interview_id=eq.{spec['interview_id']}&select=id")
+                         f"interview_id=eq.{_interview_id(spec, run)}&select=id")
         if pkgs:
             sb_update("editorial_packages", f"id=eq.{pkgs[0]['id']}",
                       {"transcript_cleaned": text})
@@ -306,7 +306,7 @@ def assemble(slug: str) -> dict:
                         pkgs[0]["id"], len(text))
         else:
             logger.warning("no editorial package for %s — transcript not written",
-                           spec["interview_id"])
+                           _interview_id(spec, run))
 
     # Both review pages prefer this over the raw mix, so Patrick and the guest
     # hear the edit rather than the unedited room.
@@ -317,22 +317,46 @@ def assemble(slug: str) -> dict:
     log["tracks"] = tracks
     sb_update("interview_runs", f"id=eq.{run_id}", {"grok_session_log": log})
     logger.info("episode %s (%.0f min) -> %s", slug, seconds / 60, url)
-    _tell_patrick(spec, show, slug, url, seconds)
+    try:
+        _tell_patrick(spec, show, slug, url, seconds, run)
+    except Exception:  # noqa: BLE001
+        # The episode exists either way; losing the email must not lose it.
+        logger.exception("could not announce the episode — it is at %s", url)
     return {"url": url, "duration_sec": seconds}
 
 
-def _tell_patrick(spec: dict, show, slug: str, url: str, seconds: float) -> None:
+def _interview_id(spec: dict, run: dict | None) -> str:
+    """The interview this edit belongs to.
+
+    Sept 15 2026: an EDL without an "interview_id" key took the whole
+    assemble job down with a KeyError — AFTER the episode was built and
+    uploaded, so the work was done and nobody was told. The run row knows
+    its own interview; the EDL saying so is a convenience, not a
+    requirement.
+    """
+    if spec.get("interview_id"):
+        return str(spec["interview_id"])
+    if run and run.get("interview_id"):
+        return str(run["interview_id"])
+    rows = sb_select("interview_runs",
+                     f"id=eq.{spec.get('run_id')}&select=interview_id")
+    return str(rows[0]["interview_id"]) if rows else ""
+
+
+def _tell_patrick(spec: dict, show, slug: str, url: str, seconds: float,
+                  run: dict | None = None) -> None:
     """Email the finished episode to the operator for gate 1.
 
     Sept 13 2026: a finished episode used to sit in R2 until someone thought
     to look. The point of assembling it is that a person hears it and says
     yes, so the assembler hands it to them.
     """
+    interview_id = _interview_id(spec, run)
     pkgs = sb_select("editorial_packages",
-                     f"interview_id=eq.{spec['interview_id']}&select=id,status")
+                     f"interview_id=eq.{interview_id}&select=id,status")
     pkg = pkgs[0] if pkgs else None
     apps = []
-    ivs = sb_select("interviews", f"id=eq.{spec['interview_id']}&select=application_id")
+    ivs = sb_select("interviews", f"id=eq.{interview_id}&select=application_id")
     if ivs and ivs[0].get("application_id"):
         apps = sb_select("guest_applications", f"id=eq.{ivs[0]['application_id']}")
     guest = (apps[0].get("name") if apps else None) or "the guest"
