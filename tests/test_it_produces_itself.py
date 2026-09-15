@@ -463,3 +463,63 @@ class TestANoShowIsNotAFailure:
         assert "if not _anyone_joined(run):" in self.SRC
         assert "return handle_missed(run, interview, app)" in self.SRC
         assert "is not a fault" in self.SRC
+
+
+class TestAGuestCanSayNotToday:
+    """Erica Sell's no-show, the other half. Nobody knew whether she was late,
+    lost or not coming, because the only reminder was an SMS with a studio
+    link and no way to say "not today". A guest who cannot make it either
+    replies to an email nobody is watching or simply does not turn up — and
+    not turning up is what they choose."""
+
+    WORKER = (ROOT / "workers" / "voices" / "src" / "index.ts").read_text(encoding="utf-8")
+    FIRE = (V / "fire_interviews.py").read_text(encoding="utf-8")
+    SCENARIO = (ROOT / "voximplant" / "scenarios"
+                / "age_of_ai_interview.js").read_text(encoding="utf-8")
+
+    def test_there_is_a_page_and_it_needs_no_login(self):
+        assert "\\/voices\\/manage\\/" in self.WORKER
+        assert "async function handleManagePage" in self.WORKER
+        assert "manage_token=eq." in self.WORKER
+
+    def test_it_offers_both_doors(self):
+        body = self.WORKER[self.WORKER.index("async function handleManagePage"):]
+        body = body[:body.index("async function handleManageSubmit")]
+        assert 'value="reschedule"' in body and 'value="cancel"' in body
+        assert "Nobody minds" in body
+        assert "not sitting in an empty room" in body
+
+    def test_cancelling_tells_somebody(self):
+        body = self.WORKER[self.WORKER.index("async function handleManageSubmit"):]
+        body = body[:body.index("async function handleGuestReviewPage")]
+        assert "slack(env," in body
+        assert "email(env, operatorEmail(env)" in body
+        assert 'status: "cancelled"' in body
+
+    def test_the_link_rides_on_the_reminder(self):
+        assert "def manage_url(interview: dict) -> str:" in self.FIRE
+        assert "move it or cancel here" in self.FIRE
+        assert "can't make it?" in self.FIRE.lower()
+
+    def test_an_old_interview_without_a_token_is_not_broken(self):
+        body = _pyfn("manage_url", self.FIRE)
+        assert 'return ""' in body
+
+    def test_the_room_stops_waiting_for_someone_who_is_not_coming(self):
+        assert "NO_SHOW_GRACE_MS" in self.SCENARIO
+        assert "function armNoShowTimer()" in self.SCENARIO
+        assert 'endRoom("no_show")' in self.SCENARIO
+
+    def test_it_counts_from_the_scheduled_start_not_from_room_open(self):
+        body = self.SCENARIO[self.SCENARIO.index("function armNoShowTimer()"):]
+        body = body[:body.index("\n}\n") + 3]
+        assert "config.scheduled_for" in body
+        assert "from + NO_SHOW_GRACE_MS" in body
+
+    def test_a_guest_arriving_cancels_it(self):
+        assert 'if (role === "guest" && noShowTimer) {' in self.SCENARIO
+        assert "clearTimeout(noShowTimer); noShowTimer = null;" in self.SCENARIO
+
+    def test_it_is_cleared_when_the_room_ends(self):
+        body = self.SCENARIO[self.SCENARIO.index("async function endRoom("):]
+        assert "noShowTimer, cohostWaitTimer" in body[:600]

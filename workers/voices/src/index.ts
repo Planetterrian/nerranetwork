@@ -263,6 +263,18 @@ const json = (data: unknown, status = 200) =>
 const html = (body: string, status = 200) =>
   new Response(body, { status, headers: { "Content-Type": "text/html;charset=utf-8" } });
 
+/** The shell every guest-facing page shares. Plain, readable on a phone,
+ *  and no branding games — these pages exist to make one decision easy. */
+const page = (title: string, body: string, brand = "#2b6cb0") => `<!doctype html>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${title}</title>
+<style>body{font:16px/1.6 system-ui;max-width:640px;margin:2rem auto;padding:0 1rem;color:#1a202c}
+button{background:${brand};color:#fff;border:0;border-radius:8px;padding:.7rem 1.4rem;font-size:1rem;cursor:pointer}
+textarea{font:inherit;padding:.5rem;border:1px solid #cbd5e0;border-radius:6px}
+a{color:${brand}}label{cursor:pointer}</style>
+<h1>${title}</h1>
+${body}`;
+
 function requireAdmin(req: Request, env: Env): Response | null {
   const auth = req.headers.get("Authorization") ?? "";
   const url = new URL(req.url);
@@ -851,6 +863,93 @@ async function pkgByToken(env: Env, token: string): Promise<any | null> {
   const rows = await sb(env, "GET",
     `editorial_packages?guest_review_token=eq.${encodeURIComponent(token)}&limit=1`);
   return rows?.[0] ?? null;
+}
+
+/** A guest's own page for the one thing they may need before the day: not
+ *  today. Sept 15 2026 — Erica Sell did not join, and nobody knew whether she
+ *  was late, lost or not coming. The room sat open, Mira waited, and the first
+ *  anyone learned of it was a failed job. One tap two hours earlier would have
+ *  cost nothing, so every reminder now carries this link. No login: the token
+ *  is the interview, the way the review link is the episode. */
+async function manageInterview(env: Env, token: string): Promise<any | null> {
+  const rows = await sb(env, "GET",
+    `interviews?manage_token=eq.${encodeURIComponent(token)}&limit=1`);
+  return rows?.length ? rows[0] : null;
+}
+
+async function handleManagePage(env: Env, token: string): Promise<Response> {
+  const interview = await manageInterview(env, token);
+  if (!interview) return html(page("Link not found",
+    "<p>This link has expired or was mistyped. Reply to any of our emails and we will sort it out.</p>"), 404);
+  const apps = await sb(env, "GET",
+    `guest_applications?id=eq.${interview.application_id}&limit=1`);
+  const app = apps?.[0] ?? {};
+  const show = showFor(interview, app);
+  const when = interview.scheduled_at
+    ? new Date(interview.scheduled_at).toUTCString().replace("GMT", "UTC")
+    : "your scheduled time";
+  const booking = env.CALCOM_BOOKING_URL || "";
+  if (interview.status === "cancelled" || interview.cancelled_at) {
+    return html(page("Already cancelled",
+      `<p>Thanks — your ${esc(show.shortLabel)} interview is cancelled and nobody is waiting for you.</p>` +
+      (booking ? `<p>Whenever you want to pick it up again: <a href="${esc(booking)}">book a new time</a>.</p>` : "")));
+  }
+  return html(page(`Your ${esc(show.shortLabel)} interview`, `
+    <p>Hi ${esc(app.name ?? "there")} — your interview is set for <strong>${esc(when)}</strong>.</p>
+    <p>If that still works, you do not need to do anything. If it does not,
+       tell us here rather than leaving it. Nobody minds, and it means Mira is
+       not sitting in an empty room waiting for you.</p>
+    <form method="POST">
+      <p><label><input type="radio" name="action" value="reschedule" required>
+         I need a different time</label></p>
+      <p><label><input type="radio" name="action" value="cancel">
+         I cannot do this at all — take me off the schedule</label></p>
+      <p><textarea name="note" rows="3" style="width:100%"
+         placeholder="Anything you want us to know (optional)"></textarea></p>
+      <p><button type="submit">Send</button></p>
+    </form>`));
+}
+
+async function handleManageSubmit(req: Request, env: Env, token: string): Promise<Response> {
+  const interview = await manageInterview(env, token);
+  if (!interview) return html(page("Link not found", "<p>This link has expired.</p>"), 404);
+  const form = await req.formData().catch(() => null);
+  const action = String(form?.get("action") ?? "");
+  const note = String(form?.get("note") ?? "").slice(0, 1000);
+  const apps = await sb(env, "GET",
+    `guest_applications?id=eq.${interview.application_id}&limit=1`);
+  const app = apps?.[0] ?? {};
+  const show = showFor(interview, app);
+  const booking = env.CALCOM_BOOKING_URL || "";
+  const now = new Date().toISOString();
+
+  if (action === "cancel") {
+    await sb(env, "PATCH", `interviews?id=eq.${interview.id}`,
+      { status: "cancelled", cancelled_at: now, cancel_reason: note || null });
+    await notify(env, `${app.name ?? "A guest"} cancelled their ${show.shortLabel} interview` +
+      (note ? `: ${note}` : ""));
+    await email(env, operatorEmail(env),
+      `${show.shortLabel}: ${app.name ?? "a guest"} cancelled`,
+      `<p>${esc(app.name ?? "A guest")} cancelled their interview` +
+      `${interview.scheduled_at ? ` (was ${esc(new Date(interview.scheduled_at).toUTCString())})` : ""}.</p>` +
+      (note ? `<p>They said: ${esc(note)}</p>` : "<p>No reason given.</p>"));
+    return html(page("Cancelled", `
+      <p>Done — nobody is waiting for you, and Mira will not call.</p>
+      ${booking ? `<p>If you want to come back to it later: <a href="${esc(booking)}">book a new time</a>.</p>` : ""}
+      <p>Thank you for telling us. It genuinely helps.</p>`));
+  }
+
+  await sb(env, "PATCH", `interviews?id=eq.${interview.id}`,
+    { status: "cancelled", cancelled_at: now,
+      cancel_reason: `reschedule requested${note ? `: ${note}` : ""}`,
+      reschedule_requested_at: now });
+  await slack(env, `${app.name ?? "A guest"} wants to move their ${show.shortLabel} interview` +
+    (note ? `: ${note}` : ""));
+  return html(page("Let's find another time", `
+    <p>No problem at all — the old slot is released.</p>
+    ${booking ? `<p><a href="${esc(booking)}">Pick a new time here</a>.</p>`
+              : "<p>We will email you some options.</p>"}
+    ${note ? "<p>Thanks for the note — we have passed it on.</p>" : ""}`));
 }
 
 async function handleGuestReviewPage(env: Env, token: string): Promise<Response> {
@@ -1733,6 +1832,13 @@ export default {
       if (req.method === "POST" && path === "/voices/editorial-decision") return handleEditorialDecision(req, env);
       if (req.method === "POST" && path === "/voices/lesson-decision") return handleLessonDecision(req, env);
       if (req.method === "POST" && path === "/voices/narration-take") return handleNarrationTake(req, env);
+      const manage = path.match(/^\/voices\/manage\/(.{16,})$/);
+      if (manage) {
+        const token = decodeURIComponent(manage[1]);
+        return req.method === "POST"
+          ? handleManageSubmit(req, env, token)
+          : handleManagePage(env, token);
+      }
       const review = path.match(/^\/voices\/review\/([A-Za-z0-9_-]{16,})$/);
       if (review) {
         return req.method === "POST"

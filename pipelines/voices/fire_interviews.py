@@ -106,6 +106,15 @@ def cohost_block(enabled: bool = True) -> str:
             .replace("{{cohost_first}}", name.split()[0]))
 
 
+def manage_url(interview: dict) -> str:
+    """The guest's own move-or-cancel link, or "" when the row predates it."""
+    token = (interview.get("manage_token") or "").strip()
+    if not token:
+        return ""
+    from urllib.parse import quote
+    return f"https://api.nerranetwork.com/voices/manage/{quote(token, safe='')}"
+
+
 def host_link(show, interview_id: str) -> str:
     """Patrick's co-host studio link: the guest studio URL + role=host.
 
@@ -305,6 +314,31 @@ def send_reminders() -> None:
             # guest having a phone on file.
             if host_mode_enabled(interview):
                 notify_host(interview, app, show, when="in about 2 hours")
+            # Sept 15 2026 (Erica Sell): the only reminder was an SMS with a
+            # studio link and no way to say "not today". A guest who cannot
+            # make it has to either reply to an email nobody is watching or
+            # simply not turn up, and not turning up is what they choose. The
+            # reminder now offers the other door, in the message and in the
+            # text, two hours out — which is early enough to be useful.
+            manage = manage_url(interview)
+            try:
+                send_email(
+                    app.get("email", ""),
+                    f"Your {show.short_label} interview is in about two hours",
+                    f"<p>Hi {app.get('name', 'there')},</p>"
+                    f"<p>Mira is ready for you at <strong>"
+                    f"{interview.get('scheduled_at', '')}</strong>. Join from a "
+                    f"computer in a quiet room — headphones help a lot:</p>"
+                    f'<p><a href="{show.studio_url(interview["id"])}">Join your '
+                    f"interview</a></p>"
+                    + (f'<p>If today does not work after all, '
+                       f'<a href="{manage}">move it or cancel here</a> — one tap, '
+                       f'no explanation needed. We would much rather know.</p>'
+                       if manage else "")
+                    + f"<p>{show.sign_off}</p>")
+            except Exception:  # noqa: BLE001 — the SMS is the primary reminder
+                logger.exception("Reminder email failed for %s (non-fatal)",
+                                 interview["id"])
             phone = to_e164(app.get("phone"))
             if not phone:
                 logger.warning("Interview %s: no usable phone (%r) — guest "
@@ -325,14 +359,18 @@ def send_reminders() -> None:
                     "interview starts in about two hours. Join from a "
                     "computer in a quiet room (headphones or AirPods "
                     "help a lot): "
-                    f"{show.studio_url(interview['id'])} — Mira"
+                    f"{show.studio_url(interview['id'])}"
+                    + (f" — can't make it? {manage}" if manage else "")
+                    + " — Mira"
                 )
             else:
                 text = (
                     f"Mira here, from {show.name} (Nerra Network). Your "
                     "interview starts in about two hours — I'll be calling "
                     f"you from this number ({caller_id}). Find a quiet spot "
-                    "and we'll make something great. — Mira"
+                    "and we'll make something great."
+                    + (f" Can't make it? {manage}" if manage else "")
+                    + " — Mira"
                 )
             send_sms(phone, text, source_number=caller_id or None)
             logger.info("Reminder SMS sent for interview %s", interview["id"])
@@ -394,6 +432,31 @@ def fire_due_interviews() -> int:
                            "episode_thesis": brief["episode_thesis_draft"]})
             else:
                 brief = brief_rows[0]
+            # Sept 15 2026 (Erica Sell): the only reminder was an SMS with a
+            # studio link and no way to say "not today". A guest who cannot
+            # make it has to either reply to an email nobody is watching or
+            # simply not turn up, and not turning up is what they choose. The
+            # reminder now offers the other door, in the message and in the
+            # text, two hours out — which is early enough to be useful.
+            manage = manage_url(interview)
+            try:
+                send_email(
+                    app.get("email", ""),
+                    f"Your {show.short_label} interview is in about two hours",
+                    f"<p>Hi {app.get('name', 'there')},</p>"
+                    f"<p>Mira is ready for you at <strong>"
+                    f"{interview.get('scheduled_at', '')}</strong>. Join from a "
+                    f"computer in a quiet room — headphones help a lot:</p>"
+                    f'<p><a href="{show.studio_url(interview["id"])}">Join your '
+                    f"interview</a></p>"
+                    + (f'<p>If today does not work after all, '
+                       f'<a href="{manage}">move it or cancel here</a> — one tap, '
+                       f'no explanation needed. We would much rather know.</p>'
+                       if manage else "")
+                    + f"<p>{show.sign_off}</p>")
+            except Exception:  # noqa: BLE001 — the SMS is the primary reminder
+                logger.exception("Reminder email failed for %s (non-fatal)",
+                                 interview["id"])
             phone = to_e164(app.get("phone"))
             if not phone:
                 if (interview.get("call_mode") or "webrtc") != "webrtc":

@@ -90,6 +90,14 @@ const COHOST_WAIT_MS = 2 * 60 * 1000; // hold the open this long for the co-host
 // actually called for. An eager guest must not cost the co-host his
 // introduction.
 const COHOST_WAIT_MAX_MS = 12 * 60 * 1000; // ... but never hold longer than this
+// Nobody came (Sept 15 2026, Erica Sell). scheduleTeardown only fires when the
+// room EMPTIES, which needs somebody to have joined first, so a room nobody
+// joins runs to the hard cap: fifty minutes of session and of an open Grok
+// agent for an interview that never happened, and a webhook — and therefore
+// the guest's reschedule email — fifty minutes late. This ends it instead.
+// Measured from the scheduled start, not from room open, because the room
+// opens twelve minutes early and a guest ten minutes late is normal.
+const NO_SHOW_GRACE_MS = 12 * 60 * 1000;
 const AUDIO_CHECK_AFTER_MS = 12 * 1000; // trace whether the mix has carried speech yet (diagnostic only)
 const ROLES = { guest: true, host: true };
 // Voice Agent model (Sept 10 2026). The Voximplant connector's built-in
@@ -564,6 +572,7 @@ let hardCapTimer = null;
 let timeCheckTimer = null;
 let micCheckTimer = null;
 let teardownTimer = null;
+let noShowTimer = null;     // nobody joined at all; end rather than idle
 let openingTimer = null;
 let miraRecorder = null;
 let miraRecordUrl = null;
@@ -637,6 +646,7 @@ async function openRoom() {
     });
   } catch (err) { /* event names differ across VoxEngine versions */ }
   startMixRecorder();
+  armNoShowTimer();
   hardCapTimer = setTimeout(function () {
     Logger.write("[aoa " + runId + "] hard cap reached, ending room");
     endRoom("hard_cap");
@@ -657,6 +667,9 @@ function admitLeg(call, role) {
       if (!hostJoinedAt) hostJoinedAt = new Date().toISOString();
     }
     trace("leg", role + " #" + leg.id + " joined (" + legs.length + " in room)");
+    if (role === "guest" && noShowTimer) {
+      clearTimeout(noShowTimer); noShowTimer = null;
+    }
     if (!openingFired) maybeOpen();
     postLegEvent(role, "joined");
     if (openingFired) {
@@ -692,6 +705,20 @@ function humansIn(role) {
 
 // The room outlives the last human by REJOIN_GRACE_MS so a dropped
 // connection is just "open the link again" — Mira and the mixer stay up.
+// End a room nobody joined. Armed at open, cancelled by the first guest.
+function armNoShowTimer() {
+  if (noShowTimer) clearTimeout(noShowTimer);
+  const due = config && config.scheduled_for ? Date.parse(config.scheduled_for) : NaN;
+  const from = isFinite(due) ? Math.max(0, due - Date.now()) : 0;
+  noShowTimer = setTimeout(function () {
+    noShowTimer = null;
+    if (roomEnded || humansIn("guest") > 0) return;
+    trace("room", "no guest after " + Math.round(NO_SHOW_GRACE_MS / 60000)
+          + " minutes past the scheduled start — ending as a no-show");
+    endRoom("no_show");
+  }, from + NO_SHOW_GRACE_MS);
+}
+
 function scheduleTeardown() {
   if (teardownTimer || roomEnded) return;
   trace("room", "empty — ending in " + (REJOIN_GRACE_MS / 1000) + "s unless someone rejoins");
@@ -1305,7 +1332,8 @@ async function endRoom(reason) {
   if (roomEnded) return;
   roomEnded = true;
   endReason = reason;
-  [hardCapTimer, micCheckTimer, teardownTimer, openingTimer, audioCheckTimer, rotateTimer].forEach(function (t) { if (t) clearTimeout(t); });
+  [hardCapTimer, micCheckTimer, teardownTimer, openingTimer, audioCheckTimer,
+   rotateTimer, noShowTimer, cohostWaitTimer].forEach(function (t) { if (t) clearTimeout(t); });
   if (timeCheckTimer) clearInterval(timeCheckTimer);
   trace("room", "ending: " + reason);
   if (miraRecorder) { try { miraRecorder.stop(); } catch (ignored) {} }
