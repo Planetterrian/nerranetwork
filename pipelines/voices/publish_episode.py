@@ -75,6 +75,31 @@ def find_publishable() -> List[str]:
     return out
 
 
+def episode_audio(run: dict) -> str:
+    """The URL of the thing we are actually publishing.
+
+    Sept 16 2026. This read ``recording_mixed_url``, which for every episode
+    cut by the new pipeline is the RAW mix of the room — no introduction, no
+    close, nothing edited out, and a quarter-gigabyte WAV. Dan Perra's
+    episode was one approval away from going out as the unedited
+    forty-seven-minute room with the false ending still in it. The assembled
+    episode is recorded on the run row by assemble_edit; the older
+    produce_episode path overwrites recording_mixed_url with its finished
+    MP3, so that still counts. The raw mix never does.
+    """
+    tracks = (run.get("grok_session_log") or {}).get("tracks") or {}
+    edit = str((tracks.get("edit") or {}).get("url") or "").strip()
+    if edit:
+        return edit
+    url = str(run.get("recording_mixed_url") or "").strip()
+    if url and not url.endswith("_mixed.wav"):
+        return url
+    raise RuntimeError(
+        "no assembled episode on this run — publishing would ship the raw "
+        "room. Run the assemble workflow for this interview first."
+    )
+
+
 def publish_one(interview_id: str) -> int:
     interview = sb_select("interviews", f"id=eq.{interview_id}")[0]
     if interview.get("status") != "approved":
@@ -91,9 +116,7 @@ def publish_one(interview_id: str) -> int:
                     f"id=eq.{pkg['interview_run_id']}")[0]
     show = show_for(interview, app)
 
-    audio_url = run.get("recording_mixed_url")  # final episode MP3 (produce step)
-    if not audio_url:
-        raise RuntimeError("no final episode URL on the run row")
+    audio_url = episode_audio(run)
 
     episode_num = _next_episode_number(show)
     today = dt.date.today()

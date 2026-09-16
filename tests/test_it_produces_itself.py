@@ -1129,3 +1129,33 @@ class TestABookingIsNeverLost:
         body = body[:body.index("const show = showFor(apps[0]")]
         assert "matched NO approved application" in body
         assert "Action needed: a booked interview has no application" in body
+
+
+class TestPublishingShipsTheEpisodeNotTheRoom:
+    """publish_one read recording_mixed_url, which for every episode cut by
+    the new pipeline is the RAW mix of the room — no introduction, no close,
+    nothing edited out, a quarter-gigabyte WAV. Dan Perra's episode was one
+    approval away from going out as the unedited forty-seven minutes with
+    the false ending still in it."""
+
+    def _f(self):
+        from publish_episode import episode_audio
+        return episode_audio
+
+    def test_the_assembled_edit_wins(self):
+        assert self._f()({"grok_session_log": {"tracks": {
+            "edit": {"url": "https://a/x_edit.mp3"}}}}) == "https://a/x_edit.mp3"
+
+    def test_the_older_produced_episode_still_counts(self):
+        assert self._f()({"recording_mixed_url": "https://a/x_episode.mp3"}) \
+            == "https://a/x_episode.mp3"
+
+    def test_the_raw_room_is_refused(self):
+        import pytest
+        with pytest.raises(RuntimeError, match="raw room"):
+            self._f()({"recording_mixed_url": "https://a/x_20260915_mixed.wav"})
+
+    def test_nothing_at_all_is_refused(self):
+        import pytest
+        with pytest.raises(RuntimeError):
+            self._f()({})
