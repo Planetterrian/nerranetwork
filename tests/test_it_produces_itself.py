@@ -877,8 +877,8 @@ class TestEveryLegOfTheCoHost:
     def test_a_leg_that_cannot_be_placed_is_left_out_not_guessed(self):
         body = self.POST[self.POST.index("def build_tracks"):]
         body = body[:body.index("def has_video_stream")]
-        assert "could not be placed in the room" in body
-        assert "if i:\n                    continue" in body
+        assert "did not correlate with the room" in body
+        assert "unmeasured.append((i, mono, expect))" in body
 
     def test_a_placed_host_is_not_measured_a_second_time(self):
         body = self.POST[self.POST.index("def build_tracks"):]
@@ -931,7 +931,7 @@ class TestALegIsPlacedWhereTheRoomSaysItShouldBe:
         body = self.POST[self.POST.index("def build_tracks"):]
         body = body[:body.index("def has_video_stream")]
         assert 'if role == "mira":\n            return -guest_join' in body
-        assert 'expected=expected_delay("host", i)' in body
+        assert 'expect = expected_delay("host", i)' in body
 
     def test_a_track_that_would_not_place_is_said_out_loud(self):
         from assemble_edit import _sync_warning
@@ -1009,3 +1009,38 @@ class TestTheAlignmentChecksItsOwnWork:
         body = self.TRACKS[self.TRACKS.index("def align_to_room"):]
         assert "treating as unplaced" in body
         assert "return out, delay, 0" in body
+
+
+class TestAShortReconnectionStillCounts:
+    """Adrian Wolfberg's co-host legs were 2421s, 118s, 373s and 28s. A
+    two-minute reconnection cannot hold two 150-second windows, so the
+    short ones were refused and Patrick was thrown out of his own
+    interview. Measured properly the recorder lag is the same on every leg
+    — 12.23s and 12.40s where it could be checked — so a leg that will not
+    correlate can still be placed by the lag a leg that did correlate
+    measured. Stitched, all four verify at +0.04s against the room."""
+
+    TRACKS = (V / "audio" / "local_tracks.py").read_text(encoding="utf-8")
+    POST = (V / "post_interview.py").read_text(encoding="utf-8")
+
+    def test_a_short_leg_is_measured_in_short_windows(self):
+        body = self.TRACKS[self.TRACKS.index("def estimate_room_delay"):]
+        body = body[:body.index("def align_to_room")]
+        assert "if covered < 2 * window:" in body
+        assert "ROOM_MIN_WINDOW_SEC" in body
+
+    def test_one_emphatic_window_is_enough(self):
+        body = self.TRACKS[self.TRACKS.index("def align_to_room"):]
+        assert "agreement >= ROOM_STRONG_CORR" in body
+
+    def test_the_recorder_lag_places_what_cannot_be_measured(self):
+        body = self.POST[self.POST.index("def build_tracks"):]
+        body = body[:body.index("def has_video_stream")]
+        assert "recorder_lag = delay - expect" in body
+        assert "at = expect + recorder_lag" in body
+        assert "place_at(mono, at," in body
+
+    def test_a_leg_with_nothing_to_place_it_by_is_left_out(self):
+        body = self.POST[self.POST.index("def build_tracks"):]
+        body = body[:body.index("def has_video_stream")]
+        assert "nothing to place it by" in body

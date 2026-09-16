@@ -48,6 +48,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from address import written as written_address  # noqa: E402
 from audio.local_tracks import (  # noqa: E402
     ROOM_MIN_WINDOWS, align_to_reference, align_to_room, fetch_local_track,
+    place_at,
 )
 from audio.mix_tracks import (  # noqa: E402
     duration_seconds, mix_interview, mix_same_clock, mix_three, mix_two,
@@ -392,21 +393,35 @@ def build_tracks(run: dict, raw: Path, workdir: Path,
     legs = [l for l in (host_legs or ([host_raw] if host_raw else [])) if l]
     host_vox, host_delay, host_windows = None, 0.0, 0
     if legs:
-        placed = []
+        placed, recorder_lag, unmeasured = [], None, []
         for i, leg in enumerate(legs):
             mono = split_left(leg, chan_dir / f"host_leg{i}.wav")
+            expect = expected_delay("host", i)
             shifted, delay, windows = align_to_room(
-                mono, guest_r, workdir / "room",
-                expected=expected_delay("host", i))
+                mono, guest_r, workdir / "room", expected=expect)
             if i == 0:
                 host_delay, host_windows = delay, windows
-            if windows < ROOM_MIN_WINDOWS:
-                logger.warning("host leg %d could not be placed in the room "
-                               "(%d windows agreed)", i, windows)
-                if i:
-                    continue
+            if windows and expect is not None and recorder_lag is None:
+                # How long after this leg connected its recorder started.
+                # The same machinery records every leg, so this holds for
+                # the ones too short to measure for themselves.
+                recorder_lag = delay - expect
+                logger.info("host recorder lag measured at %+.2fs", recorder_lag)
+            if not windows:
+                logger.warning("host leg %d did not correlate with the room",
+                               i)
+                unmeasured.append((i, mono, expect))
+                continue
             logger.info("host leg %d placed at %+.2fs", i, delay)
             placed.append(shifted)
+        for i, mono, expect in unmeasured:
+            if recorder_lag is None or expect is None:
+                logger.warning("host leg %d left out — nothing to place it by", i)
+                continue
+            at = expect + recorder_lag
+            logger.info("host leg %d placed at %+.2fs from the measured "
+                        "recorder lag", i, at)
+            placed.append(place_at(mono, at, workdir / "room"))
         host_vox = (mix_same_clock(placed, chan_dir / "host.wav")
                     if len(placed) > 1 else (placed[0] if placed else None))
         if host_vox is not None and len(legs) > 1:

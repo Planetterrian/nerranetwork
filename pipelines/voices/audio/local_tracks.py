@@ -73,6 +73,8 @@ ROOM_MAX_OFFSET_SEC = 900.0
 ROOM_EXPECTED_SPAN_SEC = 120.0
 ROOM_AGREE_SEC = 2.5    # windows this close are measuring the same offset
 ROOM_RESIDUAL_SEC = 1.0  # a placed track must verify this close to zero
+ROOM_MIN_WINDOW_SEC = 40.0   # shortest useful correlation window
+ROOM_STRONG_CORR = 0.70      # one window this good stands on its own
 ROOM_MIN_CORRELATION = 0.45   # per window; noise peaks sit well below this
 ROOM_MIN_WINDOWS = 2          # agreeing windows needed to trust the median
 ROOM_ENVELOPE_SR = 50         # 20 ms resolution is plenty for whole legs
@@ -367,6 +369,13 @@ def estimate_room_delay(track_wav: Path, room_wav: Path, workdir: Path,
             track = np.concatenate(
                 [np.zeros(-cut, dtype=np.float32), track])
     covered = min(len(track), len(room))
+    # A two-minute reconnection cannot hold two 150-second windows. The
+    # window follows the material: a short leg is measured in short windows
+    # rather than not measured at all (Adrian Wolfberg's second, third and
+    # fourth legs were 118s, 373s and 28s).
+    if covered < 2 * window:
+        window = max(int(ROOM_MIN_WINDOW_SEC * ROOM_ENVELOPE_SR), covered // 3)
+        step = max(1, window // 2)
     picks: list[Tuple[float, float]] = []
     for start in range(0, max(0, covered - window), step):
         lag, strength = _window_offset(track[start:start + window],
@@ -406,10 +415,15 @@ def align_to_room(track_wav: Path, room_wav: Path, workdir: Path,
     delay applied, and how many windows agreed (0 = left untouched)."""
     workdir = Path(workdir)
     workdir.mkdir(parents=True, exist_ok=True)
-    delay, _agreement, windows = estimate_room_delay(
+    delay, agreement, windows = estimate_room_delay(
         track_wav, room_wav, workdir, expected=expected)
-    if windows < ROOM_MIN_WINDOWS or abs(delay) < 0.05:
-        return Path(track_wav), 0.0, windows
+    # Two agreeing windows, or one that agrees with the room emphatically —
+    # a short leg has only one window to give and refusing it throws the
+    # co-host out of his own interview.
+    enough = windows >= ROOM_MIN_WINDOWS or (windows == 1
+                                             and agreement >= ROOM_STRONG_CORR)
+    if not enough or abs(delay) < 0.05:
+        return Path(track_wav), 0.0, windows if enough else 0
     out = workdir / (Path(track_wav).stem + "_room.wav")
     cmd = ["ffmpeg", "-y"]
     if delay > 0:
@@ -434,6 +448,33 @@ def align_to_room(track_wav: Path, room_wav: Path, workdir: Path,
                    "%+.2fs (%d check windows) — treating as unplaced",
                    Path(track_wav).name, residual, delay, checked)
     return out, delay, 0
+
+
+def place_at(track_wav: Path, delay: float, workdir: Path) -> Path:
+    """Shift a track by a delay somebody else worked out.
+
+    A leg too short or too quiet to correlate can still be placed: every
+    leg of the same participant is recorded by the same machinery, so the
+    gap between a leg connecting and its recorder starting is the same
+    gap each time. On Adrian Wolfberg's four legs it was 12.23s, 12.40s
+    and — where the correlation could be checked — 12.5s. Taking the
+    measured lag from a leg that did correlate and applying it to one that
+    did not put the second leg within 0.21s of its own measurement.
+    """
+    workdir = Path(workdir)
+    workdir.mkdir(parents=True, exist_ok=True)
+    out = workdir / (Path(track_wav).stem + "_placed.wav")
+    cmd = ["ffmpeg", "-y"]
+    if delay > 0:
+        cmd += ["-i", track_wav,
+                "-af", f"adelay=delays={int(round(delay * 1000))}:all=1"]
+    elif delay < 0:
+        cmd += ["-ss", f"{-delay:.3f}", "-i", track_wav]
+    else:
+        cmd += ["-i", track_wav]
+    cmd += ["-ar", TARGET_SR, "-ac", "1", "-c:a", "pcm_s16le", out]
+    _run(cmd)
+    return out
 
 
 def describe_manifest(manifest: Optional[Dict[str, Any]]) -> str:
