@@ -686,7 +686,7 @@ class TestEverybodyOnTheSameClock:
     def test_both_other_tracks_are_put_on_the_guests_clock(self):
         body = self.POST[self.POST.index("def build_tracks"):]
         body = body[:body.index("def has_video_stream")]
-        assert 'for role in ("host", "mira"):' in body
+        assert 'roles = ("host", "mira")' in body
         assert "align_to_room(track, guest_r," in body
 
     def test_the_transcript_stops_guessing_from_join_times(self):
@@ -877,7 +877,14 @@ class TestEveryLegOfTheCoHost:
     def test_a_leg_that_cannot_be_placed_is_left_out_not_guessed(self):
         body = self.POST[self.POST.index("def build_tracks"):]
         body = body[:body.index("def has_video_stream")]
-        assert "left out of the stitch" in body
+        assert "could not be placed in the room" in body
+        assert "if i:\n                    continue" in body
+
+    def test_a_placed_host_is_not_measured_a_second_time(self):
+        body = self.POST[self.POST.index("def build_tracks"):]
+        body = body[:body.index("def has_video_stream")]
+        assert 'sources.get("host") == "voximplant"' in body
+        assert 'roles = ("mira",)' in body
 
     def test_the_stitch_does_not_level_anything(self):
         body = self.MIX[self.MIX.index("def mix_same_clock"):]

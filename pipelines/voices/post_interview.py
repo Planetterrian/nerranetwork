@@ -390,25 +390,26 @@ def build_tracks(run: dict, raw: Path, workdir: Path,
     # what this did until Sept 15 2026) silently deleted Patrick from the
     # last seven minutes of the Wolfberg interview.
     legs = [l for l in (host_legs or ([host_raw] if host_raw else [])) if l]
-    host_vox = None
-    if len(legs) == 1:
-        host_vox = split_left(legs[0], chan_dir / "host.wav")
-    elif legs:
+    host_vox, host_delay, host_windows = None, 0.0, 0
+    if legs:
         placed = []
         for i, leg in enumerate(legs):
             mono = split_left(leg, chan_dir / f"host_leg{i}.wav")
             shifted, delay, windows = align_to_room(
                 mono, guest_r, workdir / "room",
                 expected=expected_delay("host", i))
-            if windows < ROOM_MIN_WINDOWS and i:
+            if i == 0:
+                host_delay, host_windows = delay, windows
+            if windows < ROOM_MIN_WINDOWS:
                 logger.warning("host leg %d could not be placed in the room "
-                               "— left out of the stitch", i)
-                continue
+                               "(%d windows agreed)", i, windows)
+                if i:
+                    continue
             logger.info("host leg %d placed at %+.2fs", i, delay)
             placed.append(shifted)
         host_vox = (mix_same_clock(placed, chan_dir / "host.wav")
                     if len(placed) > 1 else (placed[0] if placed else None))
-        if host_vox is not None:
+        if host_vox is not None and len(legs) > 1:
             logger.info("host: stitched %d legs of %d", len(placed), len(legs))
     host = None
     local_host = fetch_local_track(run.get("local_host_url") or "",
@@ -434,13 +435,28 @@ def build_tracks(run: dict, raw: Path, workdir: Path,
     # is measured against. The guest's own track is already on it.
     alignment: dict = {"guest": 0.0}
     unaligned: list = []
-    for role in ("host", "mira"):
+    # The host's legs were placed in the room above, so the track that came
+    # out of that is already on the clock. Measuring it a second time
+    # against an expectation it has already been moved by finds nothing and
+    # reports a placed track as unplaced, which is exactly what the Wolfberg
+    # re-run did (Sept 16 2026): Mira landed at -233.69s and the co-host,
+    # correctly stitched, came back flagged. A local browser take is a
+    # different file and does still need placing.
+    if host is not None and sources.get("host") == "voximplant":
+        alignment["host"] = round(host_delay, 2)
+        if host_windows < ROOM_MIN_WINDOWS:
+            unaligned.append("host")
+        roles = ("mira",)
+    else:
+        roles = ("host", "mira")
+    for role in roles:
         track = host if role == "host" else mira
         if track is None or track == guest_r:
             alignment[role] = 0.0
             continue
+        expect = host_delay if role == "host" and host_windows else expected_delay(role)
         shifted, delay, windows = align_to_room(track, guest_r, workdir / "room",
-                                                expected=expected_delay(role))
+                                                expected=expect)
         alignment[role] = delay
         if windows < ROOM_MIN_WINDOWS:
             unaligned.append(role)
