@@ -82,6 +82,14 @@ def _leg_offset(run: dict, role: str = "guest") -> float:
     except Exception:  # noqa: BLE001
         return 0.0
     log = run.get("grok_session_log") or {}
+    # Once every track is placed on the guest leg's clock, the transcript IS
+    # on that clock and there is nothing left to convert. Subtracting the
+    # guest's join a second time moved every cut in Adrian Wolfberg's
+    # episode 268 seconds early: it opened four and a half minutes into the
+    # conversation and stopped five minutes before he finished (Sept 16
+    # 2026).
+    if ((log.get("tracks") or {}).get("alignment")) is not None:
+        return 0.0
     tracks = (log.get("tracks") or {}).get("durations") or {}
     seconds = tracks.get(role)
     offsets = room_offsets(run, {role: seconds} if seconds else None)

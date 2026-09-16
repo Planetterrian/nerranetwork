@@ -635,11 +635,34 @@ async function handleInterviewComplete(req: Request, env: Env): Promise<Response
   return json({ ok: true });
 }
 
+/** Every address on a Cal.com booking, booker first.
+ *
+ *  Sept 16 2026: Mo Fakhro booked as mo@mofakhro.com while his application
+ *  was under his publicist's pr@mofakhro.com, which was on the booking as a
+ *  guest. Only the first attendee was ever looked at, so the booking matched
+ *  nothing, no interview row was created, and a confirmed guest would have
+ *  sat waiting for a call that was never scheduled. Nobody would have known
+ *  until the day.
+ */
+function bookingEmails(p: any): string[] {
+  const out: string[] = [];
+  const add = (v: unknown) => {
+    const e = String(v ?? "").trim().toLowerCase();
+    if (e.includes("@") && !out.includes(e)) out.push(e);
+  };
+  for (const a of (p.attendees ?? [])) add(a?.email);
+  add(p.email);
+  add(p.responses?.email?.value ?? p.responses?.email);
+  const guests = p.responses?.guests?.value ?? p.responses?.guests ?? p.guests;
+  if (Array.isArray(guests)) guests.forEach((g: any) => add(g?.email ?? g));
+  return out;
+}
+
 async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
   const hook = await req.json<any>().catch(() => null);
   const p = hook?.payload ?? hook ?? {};
-  const attendee = (p.attendees ?? [])[0] ?? {};
-  const emailAddr = (attendee.email ?? p.email ?? "").toLowerCase();
+  const emails = bookingEmails(p);
+  const emailAddr = emails[0] ?? "";
   const startTime = p.startTime ?? p.start_time ?? null;
   if (!emailAddr || !startTime) return json({ error: "email + startTime required" }, 400);
 
@@ -667,10 +690,16 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
     // Producer-sourced pitches (Sept 2026): the row's email is usually the
     // publicist's, but the guest books with their own address (or the
     // publicist books with theirs). Match either side before giving up.
-    const alt = `guest_applications?status=eq.approved&or=(publicist_email.eq.${encodeURIComponent(emailAddr)},email.eq.${encodeURIComponent(emailAddr)})`;
-    apps = await sb(env, "GET", `${alt}&order=created_at.desc&limit=1`);
+    // Try EVERY address on the booking, against both sides of the row. The
+    // person who books is often not the address we invited.
+    let matchedWith = emailAddr;
+    for (const candidate of emails) {
+      const alt = `guest_applications?status=eq.approved&or=(publicist_email.eq.${encodeURIComponent(candidate)},email.eq.${encodeURIComponent(candidate)})`;
+      apps = await sb(env, "GET", `${alt}&order=created_at.desc&limit=1`);
+      if (apps?.length) { matchedWith = candidate; break; }
+    }
     if (apps?.length) {
-      console.warn(`cal-com-booked: matched ${emailAddr} via publicist_email on application ${apps[0].id}`);
+      console.warn(`cal-com-booked: matched ${matchedWith} via publicist_email on application ${apps[0].id}`);
       // Remember the address the guest actually booked with so the
       // confirmation, brief and studio link reach the person on the call.
       if ((apps[0].email ?? "").toLowerCase() !== emailAddr) {
@@ -680,7 +709,26 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
       }
     }
   }
-  if (!apps?.length) return json({ error: "no approved application for that email" }, 404);
+  if (!apps?.length) {
+    // A booking that matches nothing must never be silent. Somebody has
+    // put a time in Patrick's calendar and is expecting a call.
+    const who = `${p.attendees?.[0]?.name ?? "someone"} (${emails.join(", ") || "no address"})`;
+    await slack(env, `:rotating_light: Cal.com booking for ${who} at ${startTime} matched NO approved application — no interview was created. Somebody booked and nobody is calling them.`);
+    try {
+      await email(env, operatorEmail(env),
+        "Action needed: a booked interview has no application",
+        `<p>Hi Patrick,</p><p><strong>${esc(who)}</strong> booked a time at
+         <strong>${esc(String(startTime))}</strong> and it matched no approved
+         application, so no interview was created and nobody will call them.</p>
+         <p>Either the booking used an address we don't have on the
+         application, or the application was never approved. Fix the address
+         on the application and have them rebook, or add the interview by
+         hand.</p><p>— Mira</p>`);
+    } catch (err: any) {
+      console.error("cal-com-booked: could not warn the operator:", err?.message ?? err);
+    }
+    return json({ error: "no approved application for that email" }, 404);
+  }
   // The application decides the interview's show (that is what Patrick
   // approved and what the pipeline keys prompts/publishing on).
   const show = showFor(apps[0], { show: bookedShow.slug });

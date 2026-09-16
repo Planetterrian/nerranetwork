@@ -12,6 +12,7 @@ kept in a form the next conversation can actually use.
 
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 
@@ -1044,3 +1045,87 @@ class TestAShortReconnectionStillCounts:
         body = self.POST[self.POST.index("def build_tracks"):]
         body = body[:body.index("def has_video_stream")]
         assert "nothing to place it by" in body
+
+
+class TestTheEdlAddressesTheRightSeconds:
+    """Once every track sits on the guest leg's clock, the transcript IS on
+    that clock. Converting from the room's clock a second time moved every
+    cut in Adrian Wolfberg's episode 268 seconds early: it opened four and a
+    half minutes into the conversation and stopped five minutes before he
+    finished."""
+
+    AUTO = (V / "auto_edit.py").read_text(encoding="utf-8")
+    ASSEMBLE = (V / "assemble_edit.py").read_text(encoding="utf-8")
+
+    def test_aligned_tracks_need_no_conversion(self):
+        body = self.AUTO[self.AUTO.index("def _leg_offset"):]
+        body = body[:body.index("def _context")]
+        assert 'if ((log.get("tracks") or {}).get("alignment")) is not None:' in body
+        assert "return 0.0" in body
+
+    def test_one_voice_alone_can_be_cut_to(self):
+        assert 'out[f"track:{role}"] = url' in self.ASSEMBLE
+        body = self.ASSEMBLE[self.ASSEMBLE.index("def _run_sources"):]
+        body = body[:body.index("def _resolve")]
+        assert '(log.get("tracks") or {}).get("processed")' in body
+
+
+class TestWolfbergIsLetToFinish:
+    """Mira read her closing over the last ninety seconds of his final
+    answer, called him by his first name throughout, and left him asking
+    whether he was supposed to press a button. The edit gives him his
+    ending back and the written close says so out loud."""
+
+    EDL = json.loads((V / "edl" / "adrian_wolfberg_2026_09_15.json")
+                     .read_text(encoding="utf-8"))
+    NARRATION = json.loads((V / "narration" / "adrian_wolfberg_2026_09_15.json")
+                           .read_text(encoding="utf-8"))
+
+    def test_his_last_answer_comes_from_his_own_microphone(self):
+        tail = [c for c in self.EDL["cuts"] if c.get("from") == "track:guest"]
+        assert len(tail) == 1
+        assert tail[0]["start"] == 2261.0 and tail[0]["end"] == 2362.0
+
+    def test_the_body_runs_unbroken_to_that_point(self):
+        body = [c for c in self.EDL["cuts"] if c.get("from") == "run:guest"]
+        assert len(body) == 1
+        assert body[0]["end"] == 2261.0
+
+    def test_the_close_owns_the_mistake_and_promises_a_return(self):
+        outro = next(s["text"] for s in self.NARRATION["segments"]
+                     if s["id"] == "outro")
+        assert "talked over the last ninety seconds" in outro
+        assert "should have said Doctor Wolfberg" in outro
+        assert "asked him back" in outro
+
+    def test_he_is_doctor_wolfberg_in_both_segments(self):
+        for seg in self.NARRATION["segments"]:
+            assert "Doctor Wolfberg" in seg["text"], seg["id"]
+
+
+class TestABookingIsNeverLost:
+    """Mo Fakhro booked as mo@mofakhro.com while his application was under
+    his publicist's pr@mofakhro.com, which was on the booking as a guest.
+    Only the first attendee was ever looked at, so the booking matched
+    nothing, no interview was created, and a confirmed guest would have sat
+    waiting for a call nobody had scheduled. Nobody would have known until
+    the day."""
+
+    WORKER = (ROOT / "workers" / "voices" / "src" / "index.ts").read_text(encoding="utf-8")
+
+    def test_every_address_on_the_booking_is_tried(self):
+        assert "function bookingEmails(p: any): string[]" in self.WORKER
+        body = self.WORKER[self.WORKER.index("function bookingEmails"):]
+        body = body[:body.index("async function handleCalComBooked")]
+        assert "p.attendees" in body
+        assert "responses?.guests" in body
+
+    def test_it_matches_on_any_of_them(self):
+        body = self.WORKER[self.WORKER.index("async function handleCalComBooked"):]
+        assert "for (const candidate of emails)" in body
+
+    def test_an_unmatched_booking_shouts(self):
+        body = self.WORKER[self.WORKER.index("async function handleCalComBooked"):]
+        body = body[:body.index("const show = showFor(apps[0]")]
+        assert "matched NO approved application" in body
+        assert "Action needed: a booked interview has no application" in body

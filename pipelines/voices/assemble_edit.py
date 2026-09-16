@@ -156,6 +156,13 @@ def _run_sources(run: dict, show) -> Dict[str, str]:
         out[f"extra_guest:{i}"] = url
     for i, url in enumerate(log.get("extra_host_record_urls") or []):
         out[f"extra_host:{i}"] = url
+    # One person's voice alone, already placed on the room's clock. When two
+    # people talk over each other there is no time-slice that keeps one and
+    # drops the other, and sometimes that is exactly what an edit needs:
+    # Mira read her closing over the last ninety seconds of Dr. Wolfberg's
+    # final answer, and "track:guest" is how he gets to finish it.
+    for role, url in ((log.get("tracks") or {}).get("processed") or {}).items():
+        out[f"track:{role}"] = url
     return {k: v for k, v in out.items() if v}
 
 
