@@ -2293,6 +2293,24 @@ guards: `tests/test_simplification_2026_09_12.py`. Rules that bind:
   length lever: the under-target week (Tesla 56 %, PT skipped at 858 w)
   is the digest-ceiling class, and the combined path's first flagship
   week is its measurement.
+- **Sep 17 2026, same day — main had been red for eleven runs.** The
+  merge of that review was the first the operator could not trust CI
+  on: the test workflow had failed on every push since Sep 16 (seven
+  Voices / co-host assertions pinned code other sessions had moved on
+  from; the SpaceX caption replay, the promo-cut sweep and the UC
+  runway guard are data-driven and all tripped). The fixes are the
+  three commits before the review's follow-up merge (captions HOLD a
+  short segment, the YouTube call-out anchors a promo cut, the restock
+  falls back off grok-4.6 — each noted in its own section above);
+  §6 of the review doc is the record. Two things it adds: **the
+  grok-4.6 restock arm was never exercised in the window it was read
+  out on** (no queue needed topics Aug 19 – Sep 7; every needed run
+  since failed, nine in a row — the register entry carries the
+  correction, and the run summary's `model` field says whether the
+  fallback is doing all the work), and UC was hand-restocked with three
+  documented briefs (the June 2026 precedent) so the alarm clears
+  while the automation refills. **Check the `Run Tests` conclusion on
+  main before reading a merge as checked.**
 
 ### Network prompt + LLM review (July 31, 2026)
 

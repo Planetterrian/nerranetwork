@@ -541,6 +541,16 @@ reviews:
       expected: ">= 6 on 4/5 combined episodes (the bridge names sections); two-pass unchanged is the null"
       verdict: pending
       evidence: null
+    - metric: "Restock Topic Queues workflow conclusion on runs that need a restock, and the summary's `model` field; UC / FPD runway weeks"
+      baseline: "9 consecutive failures Sep 8-16 on grok-4.6 (no JSON array / server disconnect); UC 3.7 wk on Sep 17"
+      expected: "next needed run succeeds via generate_candidates; if `model` reads the grok-4.3 fallback on every restocking night, move the primary off 4.6; UC >= 4.0 wk and FPD >= 3.0 wk by Sep 24"
+      verdict: pending
+      evidence: null
+    - metric: "main-branch test workflow conclusion"
+      baseline: "red on 11 consecutive runs Sep 16-17 (7 stale Voices/co-host assertions, 1 data-driven caption test, 1 data-driven promo-cut test, 1 runway alarm)"
+      expected: "green on the merge of this PR and on the following 7 days' pushes"
+      verdict: pending
+      evidence: null
     agent_cost_usd: null
 
 do_not_retry:
