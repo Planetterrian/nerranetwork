@@ -89,6 +89,14 @@
         .nn-join-form h2 { font-family: var(--font-heading); }
         .nn-join-form input[type=email] { width: 100%; padding: 0.8rem 1rem; border-radius: 10px; border: 1px solid var(--nn-border); background: var(--nn-surface); color: inherit; margin-bottom: var(--sp-3); }
         .nn-join-form button { padding: 0.8rem 2rem; border-radius: 10px; border: none; background: var(--nn-gradient); color: #fff; font-weight: 600; cursor: pointer; }
+        .np-sample { max-width: 760px; margin: 0 auto var(--sp-10); padding: var(--sp-5) var(--sp-6); border: 1px solid var(--nn-border); border-radius: 18px; background: var(--nn-surface); }
+        .np-sample h2 { margin: 0 0 0.3rem; font-family: var(--font-heading); font-size: 1.35rem; }
+        .np-sample p { margin: 0 0 var(--sp-3); color: var(--nn-text-muted); font-size: 0.95rem; }
+        .np-sample audio { width: 100%; display: block; }
+        .np-sample .rundown { display: flex; flex-wrap: wrap; gap: 0.4rem 0.8rem; margin: var(--sp-3) 0 0; padding: 0; list-style: none; font-size: 0.85rem; color: var(--nn-text-muted); }
+        .np-sample .rundown li::before { content: "▸ "; color: var(--nn-accent, #7c5cff); }
+        .np-trial { display: inline-block; font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.2rem 0.6rem; border-radius: 999px; background: rgba(52,211,153,0.14); color: #34d399; margin-bottom: 0.5rem; }
+        .nn-tier .cta small { display: block; font-weight: 400; font-size: 0.8rem; opacity: 0.85; margin-top: 0.15rem; }
         .nn-join-note { font-size: 0.85rem; color: var(--nn-text-muted); max-width: 640px; margin: 0 auto var(--sp-12); padding: 0 var(--sp-6); text-align: center; }
     </style>
 {% endblock %}
@@ -104,10 +112,11 @@
                show — your picks, in your order, anchored by Mira, delivered
                as a private podcast feed that works in any app.</p>
             <div class="np-cta-row">
-                <a class="np-cta primary" href="#plans">Start from $4.99/mo</a>
-                <a class="np-cta ghost" href="#join-free">Create a free account</a>
+                <a class="np-cta primary" href="#plans">{% if trial_days %}Try it free for {{ trial_days }} days{% else %}Start from $4.99/mo{% endif %}</a>
+                <a class="np-cta ghost" href="#sample">Hear a sample</a>
             </div>
-            <p class="np-trust"><span>Cancel in one click</span> ·
+            <p class="np-trust">{% if trial_days %}<span>{{ trial_days }}-day free trial</span> ·{% endif %}
+               <span>Cancel in one click</span> ·
                <span>Chapters for every segment</span> ·
                <span>Yours alone — no algorithm</span></p>
         </div>
@@ -147,10 +156,28 @@
     <div class="np-stat"><strong>1</strong><span>feed made for you</span></div>
 </div>
 
+<section class="np-sample" id="sample" aria-label="Sample personal edition">
+    <h2>Hear five minutes of one</h2>
+    <p>A sample edition for “Alex” in Vancouver, built by the same pipeline
+       that makes every member's — Mira's open, the city brief with its
+       sources named, one of Alex's topics, the markets minute, then a
+       taste of two shows. In a real edition every show plays in full.</p>
+    <audio controls preload="none" src="{{ sample_url }}"></audio>
+    <ul class="rundown">
+        <li>Good morning from Mira</li>
+        <li>Your Vancouver brief</li>
+        <li>Your topics</li>
+        <li>Markets minute</li>
+        <li>SpaceX Daily</li>
+        <li>Tesla Shorts Time</li>
+        <li>Sign-off</li>
+    </ul>
+</section>
+
 <div class="nn-section-head" id="plans">
     <h2>Simple, honest pricing</h2>
     <p>The account is free forever. Personal is the price of a coffee a
-       month, and stopping takes one click.</p>
+       month{% if trial_days %}, the first {{ trial_days }} days are free,{% endif %} and stopping takes one click.</p>
 </div>
 <section class="nn-tiers">
     <div class="nn-tier">
@@ -179,7 +206,7 @@
             <li>Markets-minute add-on: TSLA &amp; SPCX closes, spoken daily</li>
         </ul>
         {% if stripe_personal_url and stripe_personal_url != '#' %}
-        <a class="cta" href="{{ stripe_personal_url }}">Start Personal</a>
+        <a class="cta" href="{{ stripe_personal_url }}">{% if trial_days %}Try Personal free for {{ trial_days }} days<small>then $4.99/mo · cancel any time</small>{% else %}Start Personal{% endif %}</a>
         {% else %}
         <a class="cta secondary" href="#join-free">Launching soon — join free for first access</a>
         {% endif %}
@@ -201,7 +228,7 @@
                 click, prorated</li>
         </ul>
         {% if stripe_personal_local_url and stripe_personal_local_url != '#' %}
-        <a class="cta" href="{{ stripe_personal_local_url }}">Start Personal News Network</a>
+        <a class="cta" href="{{ stripe_personal_local_url }}">{% if trial_days %}Try Personal News Network free for {{ trial_days }} days<small>then $8.99/mo · cancel any time</small>{% else %}Start Personal News Network{% endif %}</a>
         {% else %}
         <a class="cta secondary" href="#join-free">Launching soon — join free for first access</a>
         {% endif %}
