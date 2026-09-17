@@ -229,6 +229,17 @@ class TestInitialPrompt:
     def test_transcribe_is_called_with_initial_prompt(self):
         """The prompt must actually reach faster-whisper, not just exist."""
         source = (REPO_ROOT / "engine" / "transcripts.py").read_text(encoding="utf-8")
+        # Sept 15 2026: the decoder options moved into one ``kwargs`` dict
+        # so the VAD fallback can retry the same call without the filter.
+        # The prompt must sit in that dict, and the dict must reach the call.
+        kwargs_block = source.split("kwargs = dict(", 1)[1]
+        depth, end = 1, 0
+        for idx, ch in enumerate(kwargs_block):
+            depth += (ch == "(") - (ch == ")")
+            if depth == 0:
+                end = idx
+                break
+        assert "initial_prompt=build_initial_prompt(" in kwargs_block[:end]
         call = source.split("model.transcribe(", 1)[1]
         # Walk to the matching close paren so nested calls don't truncate.
         depth, end = 1, 0
@@ -237,7 +248,7 @@ class TestInitialPrompt:
             if depth == 0:
                 end = idx
                 break
-        assert "initial_prompt=" in call[:end]
+        assert "**kwargs" in call[:end]
 
 
 class TestBackCatalogueIsClean:

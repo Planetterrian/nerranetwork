@@ -315,14 +315,20 @@ def restock_show(cfg: RestockConfig, *, dry_run: bool, force: bool) -> dict:
     # Ask for extras so validation losses don't leave us short.
     from engine.generator import _call_grok  # deferred: needs GROK_API_KEY
     prompt = build_prompt(cfg, queue, needed + max(4, needed // 3))
-    # grok-4.6 (2026-08-19, experiment grok-46-funnel-and-ops): topic
-    # briefs become episodes for weeks — the deepest-thinking model pays
-    # compound interest here, and this workflow has no latency pressure.
-    # Env-overridable for rollback.
+    # grok-4.3 — the network default. This call was pinned to grok-4.6 on
+    # 2026-08-19 ("no latency pressure here"), and it never produced a
+    # topic on that model: every run that actually needed a restock
+    # (Sep 8 → Sep 16 2026, nine in a row) died with "Server disconnected
+    # without sending a response" — the same failure the Aug 18 network-
+    # wide 4.6 revert documented, on a prompt that carries the show's
+    # entire queue history. The one-minute "successes" in between were
+    # runs that needed nothing. UC's runway fell to 3.7 weeks before the
+    # runway guard caught it. Env-overridable; a re-pin to 4.6 follows
+    # docs/model_upgrade_playbook.md (latency gate first).
     import os as _os
     text, _ = _call_grok(
         prompt,
-        model=_os.environ.get("NERRA_RESTOCK_MODEL", "").strip() or "grok-4.6",
+        model=_os.environ.get("NERRA_RESTOCK_MODEL", "").strip() or "grok-4.3",
         temperature=0.8,
         max_tokens=8000,
     )

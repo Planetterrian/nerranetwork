@@ -210,3 +210,22 @@ class TestResequenceUnproduced:
     def test_restock_flow_calls_resequence(self):
         src = (ROOT / "scripts/restock_topic_queues.py").read_text()
         assert "resequence_unproduced(queue)" in src
+
+
+class TestRestockModel:
+    """Sep 17 2026: the restock call was pinned to grok-4.6 on Aug 19 and
+    never produced a topic on it — nine consecutive daily runs (Sep 8-16)
+    died with "Server disconnected without sending a response" on the
+    queue-history prompt, the same failure the Aug 18 network-wide 4.6
+    revert documented. UC's runway fell to 3.7 weeks before the runway
+    guard caught it. The default is the network model; the env override
+    is the only path back, per docs/model_upgrade_playbook.md."""
+
+    SRC = (ROOT / "scripts/restock_topic_queues.py").read_text()
+
+    def test_default_model_is_the_network_default(self):
+        assert '"NERRA_RESTOCK_MODEL", "").strip() or "grok-4.3"' in self.SRC
+        assert 'or "grok-4.6"' not in self.SRC
+
+    def test_env_override_is_honoured(self):
+        assert 'NERRA_RESTOCK_MODEL' in self.SRC

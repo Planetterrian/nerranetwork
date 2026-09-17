@@ -172,10 +172,15 @@ class TestRoom:
         assert "grokAgent.responseCreate({});" in opened
         assert "startTimeChecks();" in opened and "armAudioCheck();" in opened
 
-    def test_joins_and_leaves_are_announced(self, js):
-        body = _fn(js, "function announce(what)")
-        assert '"[ROOM — system note] " + what' in body
-        assert "grokAgent.responseCreate({});" in body
+    def test_joins_and_leaves_are_noted_not_spoken(self, js):
+        # Sept 15 2026: forcing a response on every join/leave is how a
+        # reconnecting co-host talked over the guest four times in one
+        # interview. Room changes are context for Mira, never a cue.
+        assert "function announce(what)" not in js
+        body = _fn(js, "function noteRoom(what)")
+        assert '"[ROOM — system note, context only] " + what' in body
+        assert "Do NOT respond to this note" in body
+        assert "grokAgent.responseCreate({});" not in body
 
     def test_no_direct_bridge_fallback(self, js):
         # Sept 10 2026: the "no speech in 12 s → bridge one leg to the agent"

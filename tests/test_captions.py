@@ -86,7 +86,9 @@ def test_transcript_to_srt_basic(tmp_path: Path):
         "segments": [
             {"start": 0.0, "end": 2.5, "text": "Hello world"},
             {"start": 3.0, "end": 6.5, "text": "This is a test caption"},
-            # Sub-min-duration cue should be filtered out.
+            # Sub-min-duration segment: never a cue of its own. Sep 17 2026:
+            # its text is folded into the previous cue rather than dropped
+            # (SpaceX Ep103 lost a real word to the old skip).
             {"start": 7.0, "end": 7.05, "text": "blip"},
             {"start": 8.0, "end": 11.0, "text": "Final cue"},
         ],
@@ -100,11 +102,12 @@ def test_transcript_to_srt_basic(tmp_path: Path):
     assert result == srt_path
     content = srt_path.read_text(encoding="utf-8")
 
-    # Three usable cues (the sub-min-duration one was dropped).
+    # Three cues: the sub-min-duration segment rides on the one before it.
     assert content.count(" --> ") == 3
     assert "Hello world" in content
     assert "Final cue" in content
-    assert "blip" not in content
+    assert "This is a test caption blip" in content
+    assert "00:00:03,000 --> 00:00:07,050" in content
     # Cues are 1-indexed.
     assert content.startswith("1\n")
 
@@ -369,6 +372,55 @@ class TestLongSegmentsBecomeMultipleCues:
     def test_short_segment_is_a_single_cue(self):
         assert self._blocks("A short line of narration.") == \
             ["A short line of narration."]
+
+    # Sep 17 2026: SpaceX Ep103 closed a sentence in a 0.34 s segment of
+    # its own ("comments.") and the 0.4 s flicker filter dropped the word.
+    @staticmethod
+    def _srt_words(segments, **kw):
+        import json
+        import tempfile
+        from pathlib import Path
+        from engine.captions import transcript_to_srt
+        tmp = Path(tempfile.mkdtemp())
+        src = tmp / "t.json"
+        src.write_text(json.dumps({"segments": segments}), encoding="utf-8")
+        out = tmp / "t.srt"
+        transcript_to_srt(src, out, **kw)
+        cues = [c for c in out.read_text(encoding="utf-8").strip().split("\n\n") if c]
+        return cues, " ".join(ln for c in cues for ln in c.split("\n")[2:]).split()
+
+    def test_a_short_sentence_tail_folds_into_the_previous_cue(self):
+        segments = [
+            {"start": 238.42, "end": 242.72,
+             "text": "Engine cycle counts receive particular attention in the"},
+            {"start": 242.72, "end": 243.06, "text": "comments."},
+            {"start": 243.06, "end": 249.54,
+             "text": "From an engineering standpoint the target shows how"},
+        ]
+        cues, words = self._srt_words(segments)
+        assert words == " ".join(s["text"] for s in segments).split()
+        assert len(cues) == 2
+        assert cues[0].split("\n")[1].endswith("00:04:03,060")
+        assert "comments." in cues[0]
+
+    def test_a_leading_short_segment_folds_into_the_next_cue(self):
+        segments = [
+            {"start": 0.0, "end": 0.2, "text": "So."},
+            {"start": 0.2, "end": 3.0, "text": "Here is the first real sentence."},
+        ]
+        cues, words = self._srt_words(segments)
+        assert words == ["So.", "Here", "is", "the", "first", "real", "sentence."]
+        assert len(cues) == 1
+        assert cues[0].split("\n")[1].startswith("00:00:00,200")
+
+    def test_a_textless_artifact_is_still_dropped(self):
+        segments = [
+            {"start": 0.0, "end": 2.0, "text": "A full sentence here."},
+            {"start": 2.0, "end": 2.1, "text": "   "},
+        ]
+        cues, words = self._srt_words(segments)
+        assert len(cues) == 1
+        assert words == ["A", "full", "sentence", "here."]
 
     def test_real_transcript_cues_fit_the_frame(self):
         """Replay the episode the operator reported."""

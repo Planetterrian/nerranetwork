@@ -1879,7 +1879,11 @@ same review ran across the other ten shows. Drift guards:
   history (produced included); existing entries are never modified; the
   workflow re-runs `TestNarrativeQueueRunway` BEFORE committing, so the
   runway floors (3.0/4.0wk) are now the alarm that the AUTOMATION broke,
-  not a manual chore. Age of AI's deliberately-empty queue is not
+  not a manual chore — and on Sep 17 2026 that is exactly what it
+  caught: the call had been pinned to grok-4.6 since Aug 19 and never
+  completed a needed restock (server disconnect on the queue-history
+  prompt, nine daily failures); it is back on the network default, see
+  the Sep 17 bullet under the simplification pass. Age of AI's deliberately-empty queue is not
   registered and must never be. Generated topics sit unproduced for weeks
   — prune any weak ones directly in `shows/topic_queues/*.yaml`.
 - **Финансы Просто YouTube category** fixed 25 (News) → 27 (Education).
@@ -2282,6 +2286,39 @@ guards: `tests/test_simplification_2026_09_12.py`. Rules that bind:
   length lever: the under-target week (Tesla 56 %, PT skipped at 858 w)
   is the digest-ceiling class, and the combined path's first flagship
   week is its measurement.
+- **Sep 17 2026, same day — main had been red for eleven runs and the
+  queue restock had never worked on grok-4.6.** The test workflow was
+  failing on every push since Sep 16 (seven assertions in the Voices /
+  co-host suites pinned code that other sessions had deliberately moved
+  on from; the SpaceX-transcript caption replay and the promo-cut sweep
+  are data-driven and tripped on Ep103 / Ep171 / DP Pod Ep069; the UC
+  runway guard fired), so CI could not have caught anything. Fixed:
+  `engine/captions.py` folds a sub-0.4 s segment that carries text into
+  its neighbour instead of dropping the word (`_cue_segments`); the
+  promo-cut matcher treats a frame's SECOND sentence and the YouTube
+  CTA + disclosure bracket as frame evidence (`_YOUTUBE_LEAD_PATTERN`
+  accepts Whisper's "then"); the stale assertions now pin the new
+  behaviour; Mira's system prompt no longer quotes The Age of AI's
+  closing question as a war story (de-seed by shape — it is a live-host
+  prompt, A/B-listen); `assemble_edit.py` resolves the show from the
+  EDL instead of a literal. **The restock automation:**
+  `scripts/restock_topic_queues.py` was pinned to grok-4.6 on Aug 19 and
+  every run that actually needed topics (Sep 8–16, nine in a row) died
+  on "Server disconnected without sending a response" — the Aug 18
+  failure class, on a prompt carrying the whole queue history; the
+  one-minute successes in between needed nothing. Back on grok-4.3
+  (`NERRA_RESTOCK_MODEL` overrides; guard `TestRestockModel`). Three
+  hand-written briefs (the June 2026 precedent) lifted UC from 3.7 to
+  4.1 weeks so the alarm clears; the automation refills to eight on its
+  next run — dispatch the workflow with `force` after merging if the
+  13:37 UTC cron has already passed.
+  Two one-offs to watch, not classes (87 of 90 promo cuts this week were
+  frame cuts): MIT Ep171 lost the sibling sentence of its promo frame
+  BEFORE TTS (text-side, cause not found — the Actions log is the only
+  record), DP Pod Ep069 lost the whole plug in the AUDIO (the dialogue
+  TTS turn ends "find us on YouTube" and the Whisper transcript goes
+  straight to the disclosure; `spoken_text_gate` passed with an
+  unmatched run of 4).
 
 ### Network prompt + LLM review (July 31, 2026)
 

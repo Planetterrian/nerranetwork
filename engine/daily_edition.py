@@ -434,11 +434,26 @@ _PRIMARY_PROMO_PATTERNS = [
     re.compile(r"\bone more thing\b(?:\s+\w+){0,14}?\s+sisters?(?:\s+s)?\s+shows?\b"),
     re.compile(r"\bquick tip from the network\b"),
     re.compile(r"\bthis show comes to you from (?:the|a|an) \w+\s*network\b"),
+    # Sep 17 2026: the frames' SECOND sentences are frame text too. Modern
+    # Investing Ep171 (2026-09-15) shipped frame 2 without its sibling
+    # sentence — "It's one of the Nerra Network's daily briefings, all free
+    # at nerranetwork.com" was the whole plug — and the cut fell to the
+    # weak brand-mention fallback. Whisper glues the brand ("NerraNetwork's")
+    # and the possessive tokenizes to "network s".
+    re.compile(r"\bone of the (?:\w+\s+)?\w*network(?:\s+s)?\s+daily briefings\b"),
+    re.compile(r"\bevery (?:\w+\s+)?\w*network show is free at\b"),
 ]
 #: The YouTube CTA that immediately precedes the plug on most shows.
+#: Whisper writes "than" as "then" (DP Pod Ep069, 2026-09-16).
 _YOUTUBE_LEAD_PATTERN = re.compile(
-    r"\b(?:and\s+)?if you(?:\s+\w+){0,2}\s+rather watch than listen\b"
+    r"\b(?:and\s+)?if you(?:\s+\w+){0,2}\s+rather watch th[ae]n listen\b"
 )
+#: Sep 17 2026: on DP Pod Ep069 the sibling plug never reached the audio
+#: (the TTS text carried frame 3; the Whisper transcript goes straight
+#: from "find us on YouTube" to the disclosure). The YouTube CTA and the
+#: disclosure bracket the outro block on their own when nothing but the
+#: block can fit between them; that is frame evidence, not a brand guess.
+YOUTUBE_LEAD_TO_DISCLOSURE_MAX_SECONDS = 45.0
 #: Weaker evidence, used only when no frame matched.
 _NETWORK_MENTION_PATTERN = re.compile(r"\b(?:nerra|nera|narra|narrow|nare)\s*network\b")
 _DISCLOSURE_PATTERN = re.compile(r"\bthis episode used ai voice synthesis\b")
@@ -544,6 +559,19 @@ def find_promo_cut(transcript: dict) -> Optional[dict]:
             idx = lead_idx
         cut = _cut_before(stream, idx)
     else:
+        lead_idx = _search_stream(stream, _YOUTUBE_LEAD_PATTERN)
+        disclosure_idx = _search_stream(stream, _DISCLOSURE_PATTERN)
+        if (
+            lead_idx is not None
+            and disclosure_idx is not None
+            and 0 < stream[disclosure_idx][1] - stream[lead_idx][1]
+            <= YOUTUBE_LEAD_TO_DISCLOSURE_MAX_SECONDS
+        ):
+            # The plug between them is missing from the audio; the block
+            # still starts at the CTA and ends at the disclosure.
+            kind = "promo"
+            cut = _cut_before(stream, lead_idx)
+    if cut is None:
         mention_idx = _search_stream(stream, _NETWORK_MENTION_PATTERN)
         if mention_idx is not None:
             # Back up to the start of the transcript segment containing the

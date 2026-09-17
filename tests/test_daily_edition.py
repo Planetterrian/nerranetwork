@@ -718,6 +718,48 @@ class TestPromoCutHardening:
         assert hit and hit["kind"] == "network_mention", hit
         assert 700.0 - hit["raw_seconds"] <= 60.0
 
+    # Sep 17 2026: Modern Investing Ep171 shipped frame 2 WITHOUT its
+    # sibling sentence, so the frame's second sentence was the whole plug
+    # and the cut fell to the weak fallback. The second sentence is frame
+    # text too — Whisper glues the brand and tokenizes the possessive.
+    @pytest.mark.parametrize("phrase", [
+        "it s one of the nerranetwork s daily briefings all free at nerranetwork com",
+        "it s one of the nerra network s daily briefings all free at nerranetwork com",
+        "every narra network show is free at narranetwork com",
+    ])
+    def test_frame_second_sentences_are_frame_evidence(self, phrase):
+        from engine.daily_edition import _PRIMARY_PROMO_PATTERNS
+        assert any(p.search(phrase) for p in _PRIMARY_PROMO_PATTERNS), phrase
+
+    def test_youtube_lead_then_spelling(self):
+        # DP Pod Ep069 (2026-09-16): Whisper wrote "than" as "then".
+        from engine.daily_edition import _YOUTUBE_LEAD_PATTERN
+        assert _YOUTUBE_LEAD_PATTERN.search(
+            "and if you d rather watch then listen find us on youtube")
+
+    def test_youtube_lead_and_disclosure_bracket_a_lost_plug(self):
+        # DP Pod Ep069: the TTS text carried the sibling plug, the audio did
+        # not — the transcript goes from "find us on YouTube" straight to
+        # the disclosure. The CTA and the disclosure bracket the block.
+        body = ["real content " * 40]
+        tail = ["and if you d rather watch then listen find us on youtube",
+                "this episode used ai voice synthesis of our voices"]
+        t = self._synthetic(body + tail, 700.0)
+        hit = find_promo_cut(t)
+        assert hit and hit["kind"] == "promo", hit
+        lead_start = t["segments"][-2]["start"]
+        assert abs(hit["raw_seconds"] - lead_start) < 1.0
+
+    def test_youtube_lead_far_from_the_disclosure_is_body(self):
+        # A mid-episode "rather watch than listen" with real content after
+        # it is not the outro; only the disclosure trims, as before.
+        body = ["and if you d rather watch than listen find us on youtube"]
+        filler = ["and now some more real content " * 30]
+        tail = ["this episode used ai voice synthesis of our voices"]
+        t = self._synthetic(body + filler + tail, 800.0)
+        hit = find_promo_cut(t)
+        assert hit and hit["kind"] == "disclosure", hit
+
     @pytest.mark.parametrize("phrase", [
         "one more thing if you liked today s episode our sister show spacex daily is worth a spot",
         "one more thing if you like today s episode our sister shows spacex daily is worth a spot",

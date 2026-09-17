@@ -144,6 +144,54 @@ def _wrap_caption_line(text: str, max_chars: int = 55,
     return "\n".join(lines)
 
 
+def _cue_segments(segments: list, min_segment_duration: float,
+                  audio_offset_seconds: float) -> List[tuple]:
+    """Yield ``(start, end, text)`` cue spans, folding short segments.
+
+    Whisper sometimes closes a sentence in a segment of its own — SpaceX
+    Ep103 (2026-09-17) ended "...receive particular attention in the" and
+    put "comments." in a 0.34 s segment. The old rule skipped anything
+    under ``min_segment_duration`` as a breath/punctuation artifact, so
+    the burned-in caption dropped a real word. A short segment with text
+    is now folded into the neighbouring cue instead: onto the previous
+    cue when there is one (the common sentence-tail case), otherwise onto
+    the next. Nothing under the threshold ever stands alone on screen,
+    and every transcribed word still reaches the SRT.
+    """
+    spans: List[list] = []
+    pending: List[str] = []  # short text with no previous cue yet
+    for seg in segments:
+        if not isinstance(seg, dict):
+            continue
+        start = seg.get("start")
+        end = seg.get("end")
+        text = (seg.get("text") or "").strip()
+        if start is None or end is None or not text:
+            continue
+        try:
+            start_f = float(start) + audio_offset_seconds
+            end_f = float(end) + audio_offset_seconds
+        except (TypeError, ValueError):
+            continue
+        if end_f - start_f < min_segment_duration:
+            if spans:
+                spans[-1][1] = max(spans[-1][1], end_f)
+                spans[-1][2] = f"{spans[-1][2]} {text}"
+            else:
+                pending.append(text)
+            continue
+        if pending:
+            text = " ".join(pending + [text])
+            pending = []
+        spans.append([start_f, end_f, text])
+    if pending:
+        # Only short segments in the whole transcript: nothing to fold into,
+        # and nothing long enough to show — same outcome as before.
+        logger.warning("%d short caption segment(s) had no neighbour to join",
+                       len(pending))
+    return [tuple(s) for s in spans]
+
+
 def transcript_to_srt(transcript_path: Path, srt_path: Path,
                       *, min_segment_duration: float = 0.4,
                       audio_offset_seconds: float = 0.0) -> Path:
@@ -156,9 +204,11 @@ def transcript_to_srt(transcript_path: Path, srt_path: Path,
     srt_path:
         Where to write the ``.srt``.
     min_segment_duration:
-        Skip cues shorter than this many seconds. Whisper sometimes
-        emits sub-100ms artifacts for breath/punctuation that flicker
-        on screen.
+        Never show a cue shorter than this many seconds on its own.
+        Whisper sometimes emits sub-100ms artifacts for breath/
+        punctuation that flicker on screen; a short segment that carries
+        text is folded into its neighbour rather than dropped (see
+        ``_cue_segments``).
     audio_offset_seconds:
         Shift every cue right by this many seconds. Required when the
         Whisper transcript was generated against a voice-only "raw"
@@ -196,21 +246,9 @@ def transcript_to_srt(transcript_path: Path, srt_path: Path,
     srt_path.parent.mkdir(parents=True, exist_ok=True)
     cues: List[str] = []
     cue_index = 1
-    for seg in segments:
-        if not isinstance(seg, dict):
-            continue
-        start = seg.get("start")
-        end = seg.get("end")
-        text = (seg.get("text") or "").strip()
-        if start is None or end is None or not text:
-            continue
-        try:
-            start_f = float(start) + audio_offset_seconds
-            end_f = float(end) + audio_offset_seconds
-        except (TypeError, ValueError):
-            continue
-        if end_f - start_f < min_segment_duration:
-            continue
+    for start_f, end_f, text in _cue_segments(
+        segments, min_segment_duration, audio_offset_seconds
+    ):
         # A Whisper segment can be much longer than one caption box. Split
         # it into cue-sized blocks and share the segment's time range
         # between them, so every word still appears and no single cue
