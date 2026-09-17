@@ -21,7 +21,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import (  # noqa: E402
     cohost_name, guest_links_markdown, llm, load_prompt, sb_select, sb_update,
 )
-from shows import show_for  # noqa: E402
+from pipelines.voices.shows import show_for  # noqa: E402
 from validators.schema_validators import validate_pass_output  # noqa: E402
 
 logger = logging.getLogger("nerra.voices.reclean")
@@ -39,7 +39,7 @@ def reclean(package_id: str) -> str:
     app = sb_select("guest_applications", f"id=eq.{interview['application_id']}")[0]
     show = show_for(interview, app)
     prompt = load_prompt(
-        "editorial_passes/01_clean_transcript.txt", show=show,
+        "editorial_passes/01_clean_transcript.txt", show=show.slug,
         guest_name=app["name"], guest_title=app.get("title", ""),
         guest_organization=app.get("organization", ""),
         guest_links=guest_links_markdown(app, "Their links") or "(none given)",
