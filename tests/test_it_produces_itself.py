@@ -226,6 +226,15 @@ class TestTheShowRemembersAcrossGuests:
         assert "Quote them accurately or not at all" in body
         assert "a forced callback is" in body
 
+    def test_the_callback_is_one_question_standing_alone(self):
+        """Dr. Wolfberg had to ask "was that a question to me?" — Mira had
+        stacked a three-sentence recap, a quote and a question into one
+        turn (Sept 15 2026)."""
+        body = _pyfn("carry_the_show_block", self.COMMON)
+        assert "The callback is a QUESTION and it stands alone" in body
+        assert "do not answer it" in body
+        assert "re-ask it in one short sentence" in body
+
     def test_a_guest_does_not_get_quoted_back_to_themselves(self):
         body = _pyfn("show_insights", self.COMMON)
         assert "exclude_email" in body
@@ -1249,3 +1258,28 @@ class TestEveryEpisodeGetsItsOwnPost:
         assert 'id="materials"' in self.WORKER
         assert "guest_materials: materials" in self.WORKER
         assert "when this publishes we write a full post" in self.WORKER
+
+
+class TestTheGuestKnowsWhenItIsOver:
+    """Dr. Wolfberg finished his last answer and sat asking "Am I supposed
+    to hit the end interview button or what?" — nobody had told him it was
+    over. The prompt now ends with an explicit handoff and the studio page
+    says the same thing before the call starts."""
+
+    PROMPT = (V / "prompts" / "mira_system_prompt.txt").read_text(encoding="utf-8")
+    STUDIO = (ROOT / "age-of-ai-studio.html").read_text(encoding="utf-8")
+
+    def test_she_says_the_recording_is_finished(self):
+        assert "HOW IT ENDS, FOR THE GUEST" in self.PROMPT
+        assert '"that\'s the end of the recording"' in self.PROMPT
+        assert '"you can hang up now"' in self.PROMPT
+
+    def test_and_then_says_nothing(self):
+        block = self.PROMPT[self.PROMPT.index("HOW IT ENDS, FOR THE GUEST"):]
+        block = block[:block.index("\n\n", 40)]
+        assert "nothing at all once they have left the room" in block
+
+    def test_the_page_tells_them_before_they_start(self):
+        assert "How this ends:" in self.STUDIO
+        assert "press <b>End interview</b>" in self.STUDIO
+

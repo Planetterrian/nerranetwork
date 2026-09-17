@@ -715,9 +715,18 @@ def carry_the_show_block(show: ShowRef = None, exclude_email: str = "") -> str:
         "\nUSE ONE OF THESE, ONCE, WHERE IT GENUINELY BELONGS. Not as trivia "
         "and not to show that you remember — put a previous guest's answer to "
         "THIS guest, in their own area, and ask what they make of it. "
-        "\"Someone who builds these systems told me X. You've spent your "
-        "career on the other side of that. Is he right?\" Name the person. "
-        "Quote them accurately or not at all. If nothing above genuinely "
-        "connects to this conversation, say nothing — a forced callback is "
-        "worse than none, and there will be a better one next time.")
+        "Name the person. Quote them accurately or not at all. If nothing above "
+        "genuinely connects to this conversation, say nothing — "
+        "a forced callback is worse than none, and there will be a better "
+        "one next time."
+        "\n\nHOW TO SAY IT. The callback is a QUESTION and it stands alone. "
+        "One sentence of who said what, then the question, then silence: "
+        "\"Vincent Rylan, a novelist, told me nobody can opt out of the race "
+        "because opting out only decides who the winner is not. Is he "
+        "right?\" Then stop. Do not put it after a recap of what this guest "
+        "just said, do not add a second question, and do not answer it "
+        "yourself. On Sept 15 2026 you stacked a three-sentence summary, a "
+        "quote and a question into one turn, and Dr. Wolfberg had to ask "
+        "whether that was a question to him. If the guest asks that, it "
+        "was not clear: re-ask it in one short sentence.")
     return "\n".join(lines)
