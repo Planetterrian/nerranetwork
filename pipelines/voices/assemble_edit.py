@@ -180,6 +180,18 @@ def _resolve(ref: str, run: dict, show, narration_slug: str) -> str:
         if name not in sources:
             raise SystemExit(f"{ref} not on the run row (have: {sorted(sources)})")
         return sources[name]
+    # "track:<role>" — one speaker's processed, room-aligned track. Named
+    # without the "run:" prefix because an EDL reads better that way, which
+    # meant it resolved to nothing at all until this branch existed (Sept 17
+    # 2026: the Wolfberg assemble died on "unrecognised source
+    # 'track:guest'" after twelve minutes of fetching).
+    if ref.startswith("track:"):
+        sources = _run_sources(run, show)
+        if ref not in sources:
+            raise SystemExit(
+                f"{ref} not on the run row — post_interview records the "
+                f"per-speaker tracks (have: {sorted(sources)})")
+        return sources[ref]
     if ref.startswith(("http://", "https://")):
         return ref
     raise SystemExit(f"unrecognised source {ref!r}")

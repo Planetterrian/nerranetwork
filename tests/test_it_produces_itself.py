@@ -1069,6 +1069,24 @@ class TestTheEdlAddressesTheRightSeconds:
         body = body[:body.index("def _resolve")]
         assert '(log.get("tracks") or {}).get("processed")' in body
 
+    def test_an_edl_can_actually_resolve_it(self):
+        """Offering the source and resolving a reference to it are two
+        different things. The Wolfberg assemble spent twelve minutes
+        fetching and then died on "unrecognised source 'track:guest'"."""
+        from assemble_edit import _resolve
+        from shows import get_show
+        run = {"grok_session_log": {"tracks": {"processed": {
+            "guest": "https://a/g.wav"}}}}
+        assert _resolve("track:guest", run, get_show("age_of_ai"), "s") \
+            == "https://a/g.wav"
+
+    def test_a_track_that_is_not_there_says_which_are(self):
+        import pytest
+        from assemble_edit import _resolve
+        from shows import get_show
+        with pytest.raises(SystemExit, match="not on the run row"):
+            _resolve("track:nobody", {}, get_show("age_of_ai"), "s")
+
 
 class TestWolfbergIsLetToFinish:
     """Mira read her closing over the last ninety seconds of his final
