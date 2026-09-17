@@ -2226,8 +2226,9 @@ guards: `tests/test_simplification_2026_09_12.py`. Rules that bind:
 
 - **The digest and the script are written in ONE model call**
   (`llm.combined_generation`, network default in `_defaults.yaml`; the
-  Russian shows pin it off; narrative, dialogue, prompt-chained,
-  `podcast_model`-override and episode-1 runs stay two-pass by code).
+  Russian shows pin it off; narrative, dialogue, `podcast_model`-override
+  and episode-1 runs stay two-pass by code — chained shows became
+  eligible on Sep 17, see below).
   run_show renders the podcast prompt BEFORE the digest call through
   `engine.pipeline.build_podcast_template_vars` (extracted from
   `run_generation_phase`, which still calls it) with PART-1 placeholders
@@ -2261,6 +2262,26 @@ guards: `tests/test_simplification_2026_09_12.py`. Rules that bind:
 - **Nothing was pruned from the metrics file**: every unread key is
   recorded inside a retired branch or read by a human; deleting them
   changes nothing a listener gets. A NEW metric names its consumer.
+- **Sep 17 2026 — first slate, scored** (review:
+  [`docs/reviews/network_review_2026_09_17.md`](docs/reviews/network_review_2026_09_17.md);
+  guards `tests/test_network_review_2026_09_17.py`). 100/100 runs, 0
+  episodes lost, no placeholder leakage — and combined generation on
+  5 of 56 episodes, because `podcast_chain: true` (every flagship) was
+  an exclusion. **A chained show is eligible now**; the chain runs only
+  on the fallback script call. The five combined episodes kept coverage
+  (72–84 %) but read PART 1 aloud (38–59 % verbatim), so the bridge says
+  "PART 2 is not PART 1 with the markdown removed" and asks the script to
+  name each section once (chapters had collapsed to four on PT 12/15 and
+  MIT 13/16). Strip mode removed 1–3 TRUE sentences a day on
+  Planetterrian — X posts and 403 journals — while the fetch stage held
+  the text: **claims verify against the fetched copy first**
+  (`engine.claims.build_local_texts`, `via: fetched_copy`, metric
+  `source_integrity_verified_from_fetched`), HTTP only for a quote the
+  copy lacks; the committed sidecar now records `stripped_sentences`
+  (it had shown the post-strip ledger as "claims=0, passed"). Not a
+  length lever: the under-target week (Tesla 56 %, PT skipped at 858 w)
+  is the digest-ceiling class, and the combined path's first flagship
+  week is its measurement.
 
 ### Network prompt + LLM review (July 31, 2026)
 

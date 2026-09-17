@@ -162,9 +162,12 @@ class TestCombinedEnabled:
         cfg = _Cfg()
         cfg.llm.podcast_model = "grok-4.6"
         assert not gen.combined_generation_enabled(cfg, {"episode_num": 5})
+        # Sep 17 2026: a chained show IS eligible — the chain exclusion had
+        # kept every flagship on the two-pass path (see
+        # tests/test_network_review_2026_09_17.py).
         cfg = _Cfg()
         cfg.llm.podcast_chain = True
-        assert not gen.combined_generation_enabled(cfg, {"episode_num": 5})
+        assert gen.combined_generation_enabled(cfg, {"episode_num": 5})
 
     def test_network_default_on_and_russian_shows_off(self):
         assert load_config(str(ROOT / "shows/tesla.yaml")).llm.combined_generation is True
