@@ -61,6 +61,17 @@ def load_reach(path: Path) -> Dict[str, Any]:
     return {"schema_version": SCHEMA_VERSION, "updated": None, "videos": {}}
 
 
+def snapshot_unusable(stats: Dict[str, Any]) -> Optional[str]:
+    """Reason a stats snapshot must not be merged, or ``None``."""
+    degraded = (stats or {}).get("degraded") or {}
+    if degraded.get("failed_queries"):
+        return f"{len(degraded['failed_queries'])} analytics quer(ies) failed"
+    channels = (stats or {}).get("channels") or {}
+    if channels and not any((b or {}).get("day_series") for b in channels.values()):
+        return "no channel carries a day series"
+    return None
+
+
 def merge_snapshot(reach: Dict[str, Any], stats: Dict[str, Any]) -> int:
     """Fold one analytics snapshot into *reach*; returns observations added."""
     gen = _parse_date(stats.get("generated"))
@@ -110,6 +121,13 @@ def main(argv=None) -> int:
         stats = json.loads(Path(args.stats).read_text(encoding="utf-8"))
     except (OSError, ValueError) as exc:
         print(f"::warning::early reach: cannot read {args.stats}: {exc}")
+        return 0
+    # Sep 17 2026: a partial snapshot (failed Analytics queries, or a
+    # channel block with no day series) must not be folded in — the
+    # first-observation-wins rule would freeze whatever it carried.
+    reason = snapshot_unusable(stats)
+    if reason:
+        print(f"::warning::early reach: snapshot skipped — {reason}")
         return 0
     out = Path(args.out)
     reach = load_reach(out)

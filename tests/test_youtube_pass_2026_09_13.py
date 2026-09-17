@@ -46,12 +46,14 @@ class TestRenderSpeedTrial:
         return [ln.strip() for ln in wf.splitlines()
                 if ln.strip().startswith("NERRA_X264_PRESET:")]
 
-    def test_run_show_carries_the_preset_with_a_faster_default(self):
+    def test_run_show_carries_the_preset_lever_on_the_medium_default(self):
+        """Sep 17 2026: the `faster` trial measured no effect and was
+        closed; the lever stays, the default is the code default."""
         lines = self._env_lines("run-show.yml")
         assert len(lines) == 1, lines
         assert "vars.NERRA_X264_PRESET" in lines[0], (
-            "the repo variable must be able to end the trial without a commit")
-        assert "'faster'" in lines[0]
+            "the repo variable must be able to start an encoder trial without a commit")
+        assert "'medium'" in lines[0]
 
     def test_dub_workflow_stays_on_the_code_default(self):
         """The metric reads EN credit files; the dubs are the control."""
@@ -62,7 +64,7 @@ class TestRenderSpeedTrial:
         rows = {e["id"]: e for e in data["experiments"]}
         e = rows["x264-preset-faster-2026-09-13"]
         assert e["metric"] == "long_form_render_median_s_7d"
-        assert e["status"] == "decide" and str(e["readout"]) == "2026-09-20"
+        assert e["status"] == "done" and "NO EFFECT" in e["outcome"]
         assert e["baseline"] == 1024
 
 

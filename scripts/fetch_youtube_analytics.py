@@ -138,10 +138,56 @@ def _analytics_service(credentials):
         return None
 
 
+# Sep 17 2026: the Analytics API answered HTTP 500 to most of the 09-16
+# nightly's queries (13 video batches + the day series on all three
+# channels, over ~25 s). Each failure was swallowed as an empty result,
+# so a snapshot with a third of the videos and NO day series overwrote a
+# healthy file and every downstream instrument (policy, scorecard,
+# early-reach card, register metrics) read zeros for a day. Two guards:
+# a short retry on 5xx here, and a refuse-to-overwrite check in main()
+# (`snapshot_regression`). A transient server error is retried; a 403 /
+# scope problem is not (it never fixes itself in five seconds).
+_RETRY_SLEEPS_S = (2.0, 5.0)
+_FAILED_QUERIES: List[str] = []
+
+
+def _is_server_error(exc: Exception) -> bool:
+    status = getattr(getattr(exc, "resp", None), "status", None)
+    try:
+        if status is not None and int(status) >= 500:
+            return True
+    except (TypeError, ValueError):
+        pass
+    low = str(exc).lower()
+    return any(t in low for t in ("http 500", "httperror 500", "returned \"an internal error",
+                                  "http 502", "httperror 502", "http 503", "httperror 503",
+                                  "backend error", "internal error has occurred"))
+
+
+def _execute_with_retry(build_request, what: str):
+    """Run ``build_request().execute()``; retry a 5xx twice with short sleeps.
+
+    Raises the last exception so callers keep their own classification.
+    """
+    import time as _time
+    attempt = 0
+    while True:
+        try:
+            return build_request().execute()
+        except Exception as exc:  # noqa: BLE001
+            if attempt < len(_RETRY_SLEEPS_S) and _is_server_error(exc):
+                logger.warning("%s: server error (attempt %d) — retrying in %.0fs: %s",
+                               what, attempt + 1, _RETRY_SLEEPS_S[attempt], str(exc)[:120])
+                _time.sleep(_RETRY_SLEEPS_S[attempt])
+                attempt += 1
+                continue
+            raise
+
+
 def _query_batch(service, video_ids: List[str], start: str, end: str) -> Dict[str, dict]:
     """Return {video_id: {metric: value}} for a batch of ids. {} on error."""
     try:
-        resp = service.reports().query(
+        resp = _execute_with_retry(lambda: service.reports().query(
             ids="channel==MINE",
             startDate=start,
             endDate=end,
@@ -149,8 +195,9 @@ def _query_batch(service, video_ids: List[str], start: str, end: str) -> Dict[st
             dimensions="video",
             filters="video==" + ",".join(video_ids),
             maxResults=len(video_ids),
-        ).execute()
+        ), "video batch")
     except Exception as exc:
+        _FAILED_QUERIES.append(f"video batch ({len(video_ids)} ids)")
         msg = str(exc)
         low = msg.lower()
         # Distinguish the two common 403s so the operator doesn't re-auth
@@ -413,19 +460,50 @@ def _channel_day_series(service, days: int = 30) -> List[dict]:
     try:
         today = _dt.date.today()
         start = (today - _dt.timedelta(days=days)).isoformat()
-        resp = service.reports().query(
+        resp = _execute_with_retry(lambda: service.reports().query(
             ids="channel==MINE",
             startDate=start,
             endDate=today.isoformat(),
             metrics="views,subscribersGained,subscribersLost",
             dimensions="day",
             sort="day",
-        ).execute()
+        ), "channel day series")
         headers = [h["name"] for h in resp.get("columnHeaders", [])]
         return [dict(zip(headers, row)) for row in resp.get("rows", []) or []]
     except Exception as exc:  # noqa: BLE001
+        _FAILED_QUERIES.append("channel day series")
         logger.warning("Channel day-series query failed: %s", str(exc)[:200])
         return []
+
+
+def snapshot_regression(new: Dict[str, object], old: Optional[Dict[str, object]],
+                        min_video_share: float = 0.6) -> Optional[str]:
+    """Why *new* must NOT replace *old* on disk, or ``None`` when it may.
+
+    A snapshot is refused when the fetch recorded failed queries while the
+    committed file is clean, when it lists under ``min_video_share`` of
+    the videos the committed file has, or when a channel that had a day
+    series comes back without one. The nightly step is ``|| true``, so
+    the refusal is an ``::error::`` annotation plus an untouched file —
+    the dashboard's 36 h freshness alert then says the rest.
+    """
+    if not isinstance(old, dict) or not old:
+        return None
+    old_shows = old.get("shows") or {}
+    old_n = sum(len((sh or {}).get("videos") or []) for sh in old_shows.values())
+    new_n = sum(len((sh or {}).get("videos") or []) for sh in (new.get("shows") or {}).values())
+    degraded = new.get("degraded") or {}
+    if degraded.get("failed_queries") and not old.get("degraded"):
+        return (f"{len(degraded['failed_queries'])} analytics quer(ies) failed "
+                f"({', '.join(sorted(set(degraded['failed_queries'])))}); the committed file is clean")
+    if old_n and new_n < min_video_share * old_n:
+        return f"only {new_n} videos against {old_n} committed ({100 * new_n / old_n:.0f}%)"
+    old_ch = old.get("channels") or {}
+    new_ch = new.get("channels") or {}
+    for ch, block in old_ch.items():
+        if (block or {}).get("day_series") and not ((new_ch.get(ch) or {}).get("day_series")):
+            return f"channel {ch!r} lost its day series"
+    return None
 
 
 def append_channel_history(channels: Dict[str, dict],
@@ -611,6 +689,7 @@ def fetch(digests_dir: Path, days: int,
     metrics_by_video: Dict[str, dict] = {}
     channels_block: Dict[str, dict] = {}
     any_data = False
+    del _FAILED_QUERIES[:]
     for channel, rows in by_channel.items():
         creds = get_channel_credentials_from_env(channel)
         if creds is None:
@@ -748,7 +827,7 @@ def fetch(digests_dir: Path, days: int,
                else {}),
         })
 
-    return {
+    payload = {
         # v2 (July 18 2026): adds the top-level "channels" block
         # (per-channel subscriber snapshot + 30d day-series) and
         # per-video subscribers_gained/lost. The "shows" shape is
@@ -760,6 +839,11 @@ def fetch(digests_dir: Path, days: int,
         "channels": channels_block,
         "shows": shows,
     }
+    if _FAILED_QUERIES:
+        # Sep 17 2026: a partial fetch says so, and main() refuses to let
+        # it replace a clean file (see snapshot_regression).
+        payload["degraded"] = {"failed_queries": list(_FAILED_QUERIES)}
+    return payload
 
 
 def main() -> int:
@@ -781,6 +865,19 @@ def main() -> int:
                 n_videos, len(payload["shows"]))
     if args.dry_run:
         print(json.dumps(payload, indent=2, ensure_ascii=False)[:4000])
+        return 0
+
+    out_path = _ROOT / args.out
+    try:
+        existing = json.loads(out_path.read_text(encoding="utf-8")) if out_path.exists() else None
+    except (OSError, ValueError):
+        existing = None
+    reason = snapshot_regression(payload, existing)
+    if reason:
+        print(f"::error::YouTube analytics snapshot REFUSED — {reason}. "
+              f"{out_path.name} left as committed; the day series, policy and "
+              f"early-reach card keep yesterday's numbers.", flush=True)
+        logger.error("Snapshot refused: %s", reason)
         return 0
 
     if payload.get("channels"):
@@ -809,7 +906,6 @@ def main() -> int:
         except Exception:  # noqa: BLE001 — the alarm never blocks the fetch
             logger.debug("view-cliff check failed", exc_info=True)
 
-    out_path = _ROOT / args.out
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(
         json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8"

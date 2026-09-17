@@ -568,18 +568,15 @@ jobs:
           # can break a run.
           NERRA_SINGLE_PASS_RENDER: ${{ vars.NERRA_SINGLE_PASS_RENDER }}
           # x264 preset for the long-form + Shorts encodes
-          # (engine.video._X264_PRESET). Sep 13 2026, operator-directed
-          # render-speed TRIAL: `faster` instead of the code default
-          # `medium` — the long-form render ran 640-1,270 s per 10-minute
-          # episode on 09-13 (median 1,024 s over 7 days) and is the
-          # largest single block of every run. Read
-          # `long_form_render_median_s_7d` on the dashboard against the
-          # 1,024 s baseline (experiment x264-preset-faster-2026-09-13,
-          # readout 2026-09-20). Override without a commit via the repo
-          # variable; set it to `medium` to end the trial. The dub
-          # renders (multilingual.yml) do not carry this and stay on
-          # medium, so the EN credit files are the only ones that move.
-          NERRA_X264_PRESET: ${{ vars.NERRA_X264_PRESET || 'faster' }}
+          # (engine.video._X264_PRESET). Sep 13-17 2026 render-speed
+          # TRIAL on `faster`: 30 long-form renders over four days ran a
+          # median 932 s against the 1,024 s `medium` baseline — inside
+          # day-to-day noise, because the time is in the 36-branch
+          # supersampled zoompan filter graph, not the encoder
+          # (experiment x264-preset-faster-2026-09-13, closed 09-17).
+          # Back on `medium`; the repo variable remains the override
+          # for any future encoder experiment.
+          NERRA_X264_PRESET: ${{ vars.NERRA_X264_PRESET || 'medium' }}
 
       - name: Commit skip state (queue cooldown + skip marker)
         # A source_integrity_failed skip publishes nothing and the normal
