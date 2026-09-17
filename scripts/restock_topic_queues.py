@@ -250,9 +250,26 @@ def resequence_unproduced(queue: list[dict]) -> None:
     positions in interleaved order, leaving produced entries (and the
     file layout) untouched. Reordering unproduced entries is safe — only
     their relative consumption order changes, which is the point.
+
+    Sep 17 2026: a GATE-DEFERRED entry (``gate_blocks`` at or above
+    ``engine.topic_queue.GATE_BLOCK_DEFER_THRESHOLD``) is skipped by the
+    picker and parked for the operator, and the drift guard measures the
+    sequence the picker will actually AIR — deferred entries filtered
+    out. Interleaving them as if they were pickable put two same-category
+    pickable entries either side of a parked one, the guard read them as
+    adjacent, and the restock workflow died in its own validator after
+    the model had answered (run 58, 15:42 UTC: "clustered head: classic,
+    policy, policy"). Deferred entries now stay exactly where they are
+    and only the pickable entries are interleaved, so the resequencer and
+    the guard describe the same sequence.
     """
+    from engine.topic_queue import GATE_BLOCK_DEFER_THRESHOLD
+
+    def _deferred(e: dict) -> bool:
+        return int(e.get("gate_blocks") or 0) >= GATE_BLOCK_DEFER_THRESHOLD
+
     idxs = [i for i, e in enumerate(queue)
-            if isinstance(e, dict) and not e.get("produced")]
+            if isinstance(e, dict) and not e.get("produced") and not _deferred(e)]
     produced_cats = [e.get("category") for e in queue
                      if isinstance(e, dict) and e.get("produced")]
     seed = produced_cats[-1] if produced_cats else None

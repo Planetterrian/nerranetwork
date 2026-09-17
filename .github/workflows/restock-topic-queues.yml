@@ -54,6 +54,14 @@ jobs:
         env:
           GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
           XAI_API_KEY: ${{ secrets.GROK_API_KEY }}
+          # Sep 17 2026: grok-4.6 is 0 for 11 on a needed restock — nine
+          # scheduled nights (Sep 8-16) and both shows on the 15:29 UTC
+          # dispatch timed out at 300 s (APITimeoutError) before the 4.3
+          # fallback answered each in under a minute. The documented
+          # override runs the network default directly instead of paying
+          # a five-minute failed request per show every night. Remove the
+          # line to trial 4.6 again (docs/model_upgrade_playbook.md).
+          NERRA_RESTOCK_MODEL: grok-4.3
         run: |
           FORCE_FLAG=""
           if [ "${{ github.event.inputs.force }}" = "true" ]; then

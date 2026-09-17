@@ -280,3 +280,58 @@ class TestModelFallback:
         with pytest.raises(ConnectionError):
             rq.generate_candidates("p")
         assert seen == [rq.FALLBACK_RESTOCK_MODEL]
+
+
+class TestResequenceSkipsDeferred:
+    """Sep 17 2026: the picker skips a gate-deferred entry and the runway
+    guard measures the sequence WITHOUT it, but the resequencer had been
+    interleaving deferred entries like any other. With UC's three parked
+    topics at the head, the guard read two pickable policy entries either
+    side of a parked one as adjacent and the restock workflow failed in
+    its own validator after the model had answered (run 58). Deferred
+    entries now stay put; only the pickable ones are interleaved."""
+
+    @staticmethod
+    def _entry(i, cat, produced=False, gate_blocks=0):
+        e = {"id": f"t{i}", "title": f"Topic {i}", "brief": "b" * 60,
+             "category": cat, "produced": produced,
+             "episode_number": None, "produced_date": None}
+        if gate_blocks:
+            e["gate_blocks"] = gate_blocks
+        return e
+
+    def _pickable_seq(self, queue):
+        from engine.topic_queue import GATE_BLOCK_DEFER_THRESHOLD
+        return [e["category"] for e in queue
+                if not e["produced"]
+                and int(e.get("gate_blocks") or 0) < GATE_BLOCK_DEFER_THRESHOLD]
+
+    def test_deferred_entries_stay_in_place(self):
+        from engine.topic_queue import GATE_BLOCK_DEFER_THRESHOLD as T
+        queue = [self._entry(0, "classic", produced=True),
+                 self._entry(1, "policy", gate_blocks=T),
+                 self._entry(2, "economics", gate_blocks=T),
+                 self._entry(3, "policy"), self._entry(4, "policy"),
+                 self._entry(5, "classic"), self._entry(6, "medicine"),
+                 self._entry(7, "policy"), self._entry(8, "classic")]
+        rq.resequence_unproduced(queue)
+        assert queue[1]["id"] == "t1" and queue[2]["id"] == "t2"
+        seq = self._pickable_seq(queue)
+        assert all(a != b for a, b in zip(seq, seq[1:])), seq
+
+    def test_pickable_sequence_is_interleaved_around_a_parked_entry(self):
+        # The exact shape that failed: a parked entry between two of the
+        # dominant category. Measured the way the guard measures it.
+        from engine.topic_queue import GATE_BLOCK_DEFER_THRESHOLD as T
+        queue = [self._entry(0, "medicine", produced=True),
+                 self._entry(1, "policy", gate_blocks=T)]
+        queue += [self._entry(2 + i, cat) for i, cat in enumerate(
+            ["policy", "policy", "policy", "classic", "economics",
+             "infrastructure", "medicine", "tech", "policy", "classic"])]
+        rq.resequence_unproduced(queue)
+        seq = self._pickable_seq(queue)
+        from collections import Counter
+        counts = Counter(seq)
+        dominant = counts.most_common(1)[0][0]
+        head = seq[: len(seq) - counts[dominant]]
+        assert all(a != b for a, b in zip(head, head[1:])), seq
