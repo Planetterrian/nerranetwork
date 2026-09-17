@@ -4097,6 +4097,14 @@ def _member_page_context(title, description, canonical):
         # in via env so the repo never hardcodes payment URLs. Empty =
         # the templates render their coming-soon states.
         "stripe_personal_url": os.environ.get("STRIPE_LINK_PERSONAL", ""),
+        # Free trial (Sep 17 2026): the pages promise a trial ONLY once the
+        # Payment Links carry subscription_data.trial_period_days — set the
+        # same number here (GitHub Actions var STRIPE_TRIAL_DAYS; the
+        # workflows default it to 7, which is what the links carry since
+        # 2026-09-17). 0 = no trial copy anywhere.
+        "trial_days": _env_int("STRIPE_TRIAL_DAYS"),
+        # The public sample edition scripts/build_personal_sample.py uploads.
+        "sample_url": "https://audio.nerranetwork.com/personal/sample/vancouver.mp3",
         "stripe_personal_local_url": os.environ.get(
             "STRIPE_LINK_PERSONAL_LOCAL", ""),
         "donate_monthly_url": os.environ.get("STRIPE_LINK_DONATE_MONTHLY", ""),
@@ -4190,6 +4198,13 @@ def account_library_volumes(volumes):
             "chapters": v.get("chapters"),
         })
     return out
+
+
+def _env_int(name: str) -> int:
+    try:
+        return max(0, int((os.environ.get(name) or "0").strip() or 0))
+    except ValueError:
+        return 0
 
 
 def generate_account_page(*, dry_run=False):
