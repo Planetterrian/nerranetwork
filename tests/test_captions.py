@@ -79,6 +79,30 @@ def test_wrap_caption_line_default_is_55_chars_3_lines():
     assert set(text.split()) == set(out.replace("\n", " ").split())
 
 
+def test_short_real_word_segment_is_held_not_dropped(tmp_path: Path):
+    """SpaceX Ep103 (2026-09-17): Whisper closed a segment on the single
+    word "comments." at 0.34 s and the under-0.4 s skip dropped the word
+    from the caption track. A short segment with real text is held on
+    screen for the minimum instead; only sub-artifact-floor blips go."""
+    from engine.captions import transcript_to_srt
+    transcript = tmp_path / "t.json"
+    transcript.write_text(json.dumps({"segments": [
+        {"start": 240.0, "end": 242.7, "text": "receive particular attention in the"},
+        {"start": 242.72, "end": 243.06, "text": "comments."},
+        {"start": 243.4, "end": 246.0, "text": "From an engineering standpoint"},
+        {"start": 250.0, "end": 250.3, "text": "own."},
+    ]}), encoding="utf-8")
+    out = tmp_path / "t.srt"
+    transcript_to_srt(transcript, out, audio_offset_seconds=0.0)
+    content = out.read_text(encoding="utf-8")
+    assert "comments." in content and "own." in content
+    assert content.count(" --> ") == 4
+    # Held to the 0.4 s minimum, stopping short of the next segment.
+    assert "00:04:02,720 --> 00:04:03,120" in content
+    # The last segment has no successor: held to the full minimum.
+    assert "00:04:10,000 --> 00:04:10,400" in content
+
+
 def test_transcript_to_srt_basic(tmp_path: Path):
     transcript = {
         "language": "en",

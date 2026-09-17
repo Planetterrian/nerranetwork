@@ -340,6 +340,7 @@ def build_edition(
                     if hit:
                         cut_final = hit["raw_seconds"] + seg.music_intro_offset
                         seg.cut_kind = hit["kind"]
+                        seg.cut_anchor = str(hit.get("anchor") or "")
                 if cut_final is None:
                     logger.warning("no promo cut found for %s Ep%s — segment "
                                    "ships whole (plug included)",
@@ -456,6 +457,7 @@ def build_edition(
                     {"slug": s.slug, "episode": s.episode_num,
                      "cut_final_seconds": s.cut_final_seconds,
                      "cut_kind": s.cut_kind or "none",
+                     "cut_anchor": s.cut_anchor or "none",
                      "duration_seconds": round(s.duration_seconds or 0, 1)}
                     for s in segments
                 ],

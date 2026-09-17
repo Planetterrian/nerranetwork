@@ -743,9 +743,10 @@ class TestPromoCutHardening:
 
     def test_every_recent_lineup_transcript_hits_a_frame(self):
         # Network-wide: every committed transcript from the last ~3 weeks
-        # must trim on FRAME evidence. A weak-evidence kind here means a
-        # new Whisper spelling or a new promo frame — extend the matcher,
-        # never lean on the fallback (it cut real content twice).
+        # must trim on FRAME evidence (a plug frame or the scripted YouTube
+        # call-out with the outro behind it). A weak-evidence kind here
+        # means a new Whisper spelling or a new promo frame — extend the
+        # matcher, never lean on the fallback (it cut real content twice).
         import glob as _glob
         import re as _re
         weak = []
@@ -759,6 +760,93 @@ class TestPromoCutHardening:
                 if not hit or hit["kind"] != "promo":
                     weak.append((Path(p).name, hit and hit["kind"]))
         assert not weak, weak
+
+
+class TestYouTubeLeadAnchor:
+    """Sep 17 2026: two transcripts in one week carried the scripted
+    "rather watch than listen" call-out but no plug frame — Modern
+    Investing Ep171's model dropped the sibling sentence of frame 2 (only
+    "It's one of the Nerra Network's daily briefings" survived) and
+    Whisper wrote nothing for the 22 s of DP Pod Ep069 that speak "Quick
+    tip from the network" (the audio has it; a local re-run hears it) and
+    spelled the call-out "watch THEN listen". Both fell to the weak
+    fallbacks: MIT to a brand mention, DP Pod to the disclosure with the
+    Fascinating Frontiers + Age of AI plugs left inside Nerra Daily Ep27.
+    The call-out is pipeline text (``engine.intros``) appended right
+    before the plug, so it is frame-grade evidence of the outro start."""
+
+    @pytest.mark.parametrize("rel_path, max_tail", [
+        ("digests/modern_investing/Modern_Investing_Ep171_20260915_transcript.json", 30.0),
+        ("digests/dp_pod/DP_Pod_Ep069_20260916_transcript.json", 36.0),
+    ])
+    def test_real_transcripts_anchor_on_the_call_out(self, rel_path, max_tail):
+        path = ROOT / rel_path
+        if not path.exists():
+            pytest.skip(f"{rel_path} not committed")
+        transcript = json.loads(path.read_text(encoding="utf-8"))
+        hit = find_promo_cut(transcript)
+        assert hit and hit["kind"] == "promo", hit
+        assert hit["anchor"] == "youtube_lead", hit
+        tail = float(transcript["duration"]) - hit["raw_seconds"]
+        assert tail <= max_tail, f"cut removed {tail:.1f}s — that is content, not the plug"
+        # The sign-off survives and the call-out goes: the cut sits after
+        # the last word of the sign-off ("investing." / "it.") and before
+        # the call-out's "And if you'd rather".
+        words = [w for seg in transcript["segments"] for w in (seg.get("words") or [])]
+        idx = max(i for i, w in enumerate(words) if w["word"].lower().startswith("rather"))
+        assert hit["raw_seconds"] < words[idx - 3]["start"]  # "And"
+        assert hit["raw_seconds"] >= words[idx - 4]["end"] - 0.05
+
+    def test_then_spelling_with_disclosure_behind_it_is_a_promo_cut(self):
+        syn = TestPromoCutHardening()._synthetic
+        body = ["real content " * 40, "do something about it"]
+        tail = ["and if you d rather watch then listen find us on youtube",
+                "this episode used ai voice synthesis of our voices"]
+        t = syn(body + tail, 600.0)
+        hit = find_promo_cut(t)
+        assert hit and hit["kind"] == "promo" and hit["anchor"] == "youtube_lead", hit
+        # Cut lands after "it" and before "and".
+        it_end = t["segments"][1]["words"][-1]["end"]
+        and_start = t["segments"][2]["words"][0]["start"]
+        assert it_end <= hit["raw_seconds"] < and_start
+
+    def test_frame_cut_reports_the_frame_anchor(self):
+        syn = TestPromoCutHardening()._synthetic
+        body = ["real content " * 40]
+        tail = ["quick tip from the network try spacex daily next",
+                "this episode used ai voice synthesis of my voice"]
+        hit = find_promo_cut(syn(body + tail, 600.0))
+        assert hit and hit["kind"] == "promo" and hit["anchor"] == "frame", hit
+
+    def test_call_out_with_nothing_behind_it_is_not_an_anchor(self):
+        # A call-out with neither the disclosure nor a brand mention after
+        # it is not the outro block — nothing to trim on.
+        syn = TestPromoCutHardening()._synthetic
+        body = ["real content " * 40]
+        tail = ["and if you d rather watch than listen find us on youtube",
+                "some closing words with no disclosure"]
+        assert find_promo_cut(syn(body + tail, 600.0)) is None
+
+    def test_call_out_far_from_the_end_is_body_content(self):
+        # 90 s of real content between the call-out and the disclosure:
+        # the call-out ceiling refuses it and the mildest trim ships.
+        syn = TestPromoCutHardening()._synthetic
+        body = ["and if you d rather watch than listen find us on youtube"]
+        filler = ["and now some more real content " * 35]
+        tail = ["this episode used ai voice synthesis of our voices"]
+        t = syn(body + filler + tail, 800.0)
+        hit = find_promo_cut(t)
+        assert hit and hit["kind"] == "disclosure", hit
+        assert "anchor" not in hit
+        assert 800.0 - hit["raw_seconds"] < 10
+
+    def test_edition_metrics_carry_the_anchor(self):
+        from engine.daily_edition import Segment
+        fields = Segment.__dataclass_fields__
+        assert "cut_anchor" in fields and fields["cut_anchor"].default == ""
+        src = (ROOT / "scripts" / "build_daily_edition.py").read_text(encoding="utf-8")
+        assert 'seg.cut_anchor = str(hit.get("anchor") or "")' in src
+        assert '"cut_anchor": s.cut_anchor or "none"' in src
 
 
 class TestRotationMemoryV2:

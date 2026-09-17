@@ -166,6 +166,21 @@ develops Mira's editorial voice beyond announcing.
   `handoffs_show_name_led`, `handoff_count`. UC's claims-gate retry
   publishing after the 12:00 force hour (Ep14) is an open operator
   decision.
+- **Sep 17 2026 — the scripted YouTube call-out is a frame-grade anchor.**
+  Two transcripts in one week had the call-out ("And if you'd rather
+  watch than listen…", appended by `engine.intros` right before the
+  plug) but no frame words: Modern Investing Ep171's model dropped the
+  sibling sentence of frame 2, and Whisper wrote nothing for the 22 s of
+  DP Pod Ep069 that speak "Quick tip from the network" (the audio has
+  it — a local re-run hears it — and it spelled the call-out "watch
+  THEN listen"). Both fell to the weak fallbacks; Ep27 shipped DP Pod
+  with the Fascinating Frontiers + Age of AI plugs inside. `find_promo_cut`
+  now anchors on the call-out when the disclosure or a brand mention
+  follows it (kind `promo`, `anchor: youtube_lead`; frame cuts report
+  `anchor: frame`), under a 60 s tail ceiling (`YOUTUBE_LEAD_MAX_TAIL_SECONDS`).
+  The edition metrics record `cut_anchor` per segment — a rising
+  `youtube_lead` share means frame words are going missing upstream.
+  Guards: `tests/test_daily_edition.py::TestYouTubeLeadAnchor`.
 - **Rotation memory (Aug 25 2026):** `build_links_prompt` injects the
   opening words of the last 10 committed intros (`{recent_openers}`)
   and `build_find_prompt` the last 10 field-note topics

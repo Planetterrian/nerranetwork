@@ -144,8 +144,27 @@ def _wrap_caption_line(text: str, max_chars: int = 55,
     return "\n".join(lines)
 
 
+def _next_segment_start(segments: list, seg: dict,
+                        audio_offset_seconds: float) -> Optional[float]:
+    """Start time (offset applied) of the first well-formed segment after
+    *seg*, or None when *seg* is the last one."""
+    seen = False
+    for other in segments:
+        if other is seg:
+            seen = True
+            continue
+        if not seen or not isinstance(other, dict):
+            continue
+        try:
+            return float(other.get("start")) + audio_offset_seconds
+        except (TypeError, ValueError):
+            continue
+    return None
+
+
 def transcript_to_srt(transcript_path: Path, srt_path: Path,
                       *, min_segment_duration: float = 0.4,
+                      artifact_floor_seconds: float = 0.15,
                       audio_offset_seconds: float = 0.0) -> Path:
     """Convert a faster-whisper transcript JSON into SRT subtitles.
 
@@ -156,9 +175,14 @@ def transcript_to_srt(transcript_path: Path, srt_path: Path,
     srt_path:
         Where to write the ``.srt``.
     min_segment_duration:
+        Hold every cue on screen for at least this many seconds (short
+        of the next segment's start). A segment shorter than this is
+        NOT skipped — Whisper closes a segment on one trailing word now
+        and then and the word must reach the caption track.
+    artifact_floor_seconds:
         Skip cues shorter than this many seconds. Whisper sometimes
         emits sub-100ms artifacts for breath/punctuation that flicker
-        on screen.
+        on screen; nothing real is that short.
     audio_offset_seconds:
         Shift every cue right by this many seconds. Required when the
         Whisper transcript was generated against a voice-only "raw"
@@ -209,8 +233,19 @@ def transcript_to_srt(transcript_path: Path, srt_path: Path,
             end_f = float(end) + audio_offset_seconds
         except (TypeError, ValueError):
             continue
-        if end_f - start_f < min_segment_duration:
+        if end_f - start_f < artifact_floor_seconds:
             continue
+        if end_f - start_f < min_segment_duration:
+            # Real words are never dropped: Whisper closes a segment on a
+            # single trailing word now and then ("comments." at 0.34 s on
+            # SpaceX Ep103, 2026-09-17), and the old skip-under-0.4 s rule
+            # lost the word from the caption track. Hold the cue on screen
+            # for the minimum instead, stopping short of the next segment.
+            held_end = start_f + min_segment_duration
+            nxt = _next_segment_start(segments, seg, audio_offset_seconds)
+            if nxt is not None and nxt > start_f:
+                held_end = min(held_end, nxt)
+            end_f = max(end_f, held_end)
         # A Whisper segment can be much longer than one caption box. Split
         # it into cue-sized blocks and share the segment's time range
         # between them, so every word still appears and no single cue
