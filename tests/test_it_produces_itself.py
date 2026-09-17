@@ -1515,3 +1515,12 @@ class TestTheGuestSeesTheirApprovalLand:
         assert "document.getElementById('actions').style.display = 'none'" in body
         assert "done.scrollIntoView" in body
         assert "approveBtn.textContent = 'Approve for publication'" in body  # re-enabled on failure
+
+
+class TestATruncatedTranscriptCanBeRedoneOnItsOwn:
+    def test_the_script_and_workflow_exist(self):
+        script = (V / "reclean_transcript.py").read_text(encoding="utf-8")
+        assert 'validate_pass_output("transcript_cleaned", text, raw=transcript)' in script
+        assert "budget = max(6000, min(32000, len(transcript) // 2))" in script
+        wf = (ROOT / ".github" / "workflows" / "nerra_voices_reclean_transcript.yml").read_text(encoding="utf-8")
+        assert "reclean_transcript.py" in wf and "package_id" in wf

@@ -1,0 +1,35 @@
+# Nerra Voices — run the transcript-cleaning pass again for one package
+# (Sept 17 2026). The pass used to stop at its 6,000-token output cap, so
+# every long episode's cleaned transcript ended around minute 25. Give it
+# an editorial_packages.id and it rewrites transcript_cleaned in place;
+# nothing else about the package changes.
+name: Re-clean a transcript
+on:
+  workflow_dispatch:
+    inputs:
+      package_id:
+        description: 'editorial_packages.id whose cleaned transcript to redo'
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  reclean:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+      - uses: ./.github/actions/setup-python
+        with:
+          python-version: '3.12'
+          requirements-file: 'pipelines/requirements.txt'
+          skip-checkout: 'true'
+      - run: python pipelines/voices/reclean_transcript.py "${{ inputs.package_id }}"
+        env:
+          GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+          SUPABASE_URL: ${{ secrets.VOICES_SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.VOICES_SUPABASE_SERVICE_KEY }}
