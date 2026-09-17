@@ -1052,6 +1052,23 @@ function openWhenReady(reason) {
             "guest has not joined yet. Greet him briefly and wait for the guest " +
             "before starting the interview." }] },
       });
+    } else if (config && config.host_mode && humansIn("host") === 0) {
+      // Sept 17 2026, Sheldon Poon: Patrick could not make it, the hold
+      // expired, and Mira opened with "Patrick Novak, the founder of the
+      // Nerra Network, is my co-host. He'll jump in once he's settled" to a
+      // guest who then waited forty-eight minutes for a man who never came.
+      // Her prompt introduces the co-host by name; the room has to tell her
+      // when there is nobody to introduce.
+      grokAgent.conversationItemCreate({
+        item: { type: "message", role: "system",
+          content: [{ type: "input_text", text:
+            "[ROOM — system note] " + cohostName() + ", your co-host, has NOT " +
+            "joined and is not expected. Open the show without him: do not " +
+            "introduce him as present and do not say he will jump in. Say " +
+            "once, lightly, that your co-host could not join today, and then " +
+            "carry the conversation yourself. If he arrives later a note will " +
+            "tell you." }] },
+      });
     }
     miraSpeaking = true;
     grokAgent.responseCreate({});

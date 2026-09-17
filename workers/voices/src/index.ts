@@ -1057,8 +1057,11 @@ ${listenUrl
 <h3>Request removals (optional)</h3>
 <textarea id="redactions" placeholder="Quote any passage you'd like removed, one per line, with a word on why if you like."></textarea>
 <p>
-<button onclick="submitReview(true)">Approve for publication</button>
-<button class="secondary" onclick="submitReview(false)">Submit removal requests</button>
+<span id="actions">
+<button id="approveBtn" onclick="submitReview(true)">Approve for publication</button>
+<button id="removeBtn" class="secondary" onclick="submitReview(false)">Submit removal requests</button>
+</span>
+<span id="done" style="display:none;font-weight:600;color:#166534"></span>
 </p>
 <h3>Your episode's post</h3>
 <p>When this publishes we write a full post for it. Anything you'd like a
@@ -1078,17 +1081,41 @@ and we'll link it.</p>
 <textarea id="followupNote" placeholder="Anything you'd like us to know — a better time, what you'd want to talk about, or what you'd do differently in a re-record."></textarea>
 <p id="status"></p>
 <script>
+// Sept 17 2026, Dr. Wolfberg: he pressed Approve, the request went through,
+// and the only acknowledgement was a line at the very bottom of a long page
+// he never scrolled to. The answer now appears where the button was.
 async function submitReview(approve){
   const picked = document.querySelector('input[name=followup]:checked');
-  const resp = await fetch(location.pathname, {method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({approve, redactions: document.getElementById('redactions').value,
-      followup: picked ? picked.value : 'none',
-      followup_note: document.getElementById('followupNote').value,
-      materials: document.getElementById('materials').value})});
-  document.getElementById('status').textContent = resp.ok
-    ? (approve ? 'Approved — thank you! Your episode is on its way.' : 'Received — we will apply the removals and confirm by email.')
-    : 'Something went wrong — please reply to our email instead.';
+  const approveBtn = document.getElementById('approveBtn');
+  const removeBtn = document.getElementById('removeBtn');
+  approveBtn.disabled = removeBtn.disabled = true;
+  (approve ? approveBtn : removeBtn).textContent = 'Sending\u2026';
+  let ok = false;
+  try {
+    const resp = await fetch(location.pathname, {method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({approve, redactions: document.getElementById('redactions').value,
+        followup: picked ? picked.value : 'none',
+        followup_note: document.getElementById('followupNote').value,
+        materials: document.getElementById('materials').value})});
+    ok = resp.ok;
+  } catch (e) { ok = false; }
+  const msg = ok
+    ? (approve ? 'Approved \u2014 thank you! Your episode is on its way.' : 'Received \u2014 we will apply the removals and confirm by email.')
+    : 'Something went wrong \u2014 please reply to our email instead.';
+  document.getElementById('status').textContent = msg;
+  const done = document.getElementById('done');
+  done.textContent = msg;
+  done.style.color = ok ? '#166534' : '#991B1B';
+  done.style.display = 'inline';
+  if (ok) {
+    document.getElementById('actions').style.display = 'none';
+  } else {
+    approveBtn.disabled = removeBtn.disabled = false;
+    approveBtn.textContent = 'Approve for publication';
+    removeBtn.textContent = 'Submit removal requests';
+  }
+  done.scrollIntoView({block: 'center', behavior: 'smooth'});
 }
 </script>`);
 }

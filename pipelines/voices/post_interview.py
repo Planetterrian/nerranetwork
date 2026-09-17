@@ -50,6 +50,7 @@ from audio.local_tracks import (  # noqa: E402
     ROOM_MIN_WINDOWS, align_to_reference, align_to_room, fetch_local_track,
     place_at,
 )
+from audio.bleed import strip_bleed  # noqa: E402
 from audio.mix_tracks import (  # noqa: E402
     duration_seconds, mix_interview, mix_same_clock, mix_three, mix_two,
     split_channels, split_left,
@@ -392,13 +393,20 @@ def build_tracks(run: dict, raw: Path, workdir: Path,
     # last seven minutes of the Wolfberg interview.
     legs = [l for l in (host_legs or ([host_raw] if host_raw else [])) if l]
     host_vox, host_delay, host_windows = None, 0.0, 0
+    # A leg whose recorder lost time part-way through is placed in pieces;
+    # the pieces are recorded so the review can see it happened.
+    pieces: dict = {}
     if legs:
         placed, recorder_lag, unmeasured = [], None, []
         for i, leg in enumerate(legs):
             mono = split_left(leg, chan_dir / f"host_leg{i}.wav")
             expect = expected_delay("host", i)
+            leg_pieces: list = []
             shifted, delay, windows = align_to_room(
-                mono, guest_r, workdir / "room", expected=expect)
+                mono, guest_r, workdir / "room", expected=expect,
+                pieces_out=leg_pieces)
+            if len(leg_pieces) > 1:
+                pieces.setdefault("host", []).extend(leg_pieces)
             if i == 0:
                 host_delay, host_windows = delay, windows
             if windows and expect is not None and recorder_lag is None:
@@ -470,8 +478,12 @@ def build_tracks(run: dict, raw: Path, workdir: Path,
             alignment[role] = 0.0
             continue
         expect = host_delay if role == "host" and host_windows else expected_delay(role)
+        role_pieces: list = []
         shifted, delay, windows = align_to_room(track, guest_r, workdir / "room",
-                                                expected=expect)
+                                                expected=expect,
+                                                pieces_out=role_pieces)
+        if len(role_pieces) > 1:
+            pieces[role] = role_pieces
         alignment[role] = delay
         if windows < ROOM_MIN_WINDOWS:
             unaligned.append(role)
@@ -482,8 +494,25 @@ def build_tracks(run: dict, raw: Path, workdir: Path,
 
     logger.info("tracks: %s; room alignment: %s", sources,
                 {k: round(v, 2) for k, v in alignment.items()})
+
+    # Everyone is on one clock now, so each person's own microphone can be
+    # relieved of what it picked up of the others. Sheldon Poon's laptop
+    # heard Mira through his speakers (Sept 17 2026); left in, that is her
+    # question twice in the mix and her lines in his transcript. The
+    # guest's R channel carries everything the guest heard, which makes it
+    # the reference for the guest's mic; the co-host's own voice is in that
+    # channel too, so his mic is measured against Mira and the guest only.
+    bleed: dict = {}
+    if "guest" not in unaligned:
+        guest, bleed["guest"] = strip_bleed(
+            guest, [mira, host, guest_r],
+            workdir / "bleed", "guest")
+    if host is not None and "host" not in unaligned:
+        host, bleed["host"] = strip_bleed(host, [mira, guest], workdir / "bleed",
+                                          "host")
     return {"guest": guest, "host": host, "mira": mira, "sources": sources,
-            "alignment": alignment, "unaligned": unaligned}
+            "alignment": alignment, "unaligned": unaligned, "pieces": pieces,
+            "bleed": bleed}
 
 
 def has_video_stream(path: Path) -> bool:
@@ -777,11 +806,19 @@ def run_editorial_passes(transcript: str, interview: dict, app: dict) -> dict:
             "", "\n\nSTRICT RETRY: your previous output failed validation "
                 "({error}). Output ONLY the requested format, nothing else.",
         )):
+            # The cleaned transcript is as long as the transcript. 6,000
+            # tokens is twenty-five minutes of conversation, and every
+            # episode longer than that came back cut off at the cap with
+            # nobody noticing (Sept 17 2026). Budget on the input.
+            budget = 6000
+            if field == "transcript_cleaned":
+                budget = max(6000, min(32000, len(transcript) // 2))
             text = llm(base_prompt + strictness.format(error=error),
-                       temperature=0.3, max_tokens=6000)
+                       temperature=0.3, max_tokens=budget)
             try:
                 candidate = parse_json_lenient(text) if field in JSON_PASSES else text
-                validate_pass_output(field, candidate)
+                validate_pass_output(field, candidate,
+                                     raw=transcript if field == "transcript_cleaned" else None)
                 output = candidate
                 break
             except Exception as exc:  # noqa: BLE001
@@ -919,7 +956,9 @@ def main() -> int:
                                  "processed": processed, "durable": durable,
                                  "preview": preview_url,
                                  "alignment": tracks.get("alignment") or {},
-                                 "unaligned": tracks.get("unaligned") or []}
+                                 "unaligned": tracks.get("unaligned") or [],
+                                 "pieces": tracks.get("pieces") or {},
+                                 "bleed": tracks.get("bleed") or {}}
         sb_update("interview_runs", f"id=eq.{run['id']}", {
             "status": "completed",
             "recording_guest_url": raw_url,

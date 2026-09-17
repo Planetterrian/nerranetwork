@@ -9,7 +9,7 @@ the retry prompt can quote.
 from __future__ import annotations
 
 import re
-from typing import Any
+from typing import Any, Optional
 
 # Show slugs the classifier may target (cross-show callouts / show fits).
 # The two Mira-hosted interview shows are legitimate targets of each other
@@ -40,10 +40,32 @@ _LABEL = re.compile(r"^\s*(?:\[\d{1,2}:\d{2}\]\s*)?([A-Z][A-Za-z.'\- ]{0,24}):",
                     re.MULTILINE)
 
 
-def validate_transcript_cleaned(value: Any) -> None:
+_STAMP = re.compile(r"\[(\d{1,2}):(\d{2})(?::(\d{2}))?\]")
+
+
+def last_stamp_seconds(text: str) -> Optional[int]:
+    """The last [mm:ss] or [h:mm:ss] timestamp in a transcript, in seconds."""
+    last = None
+    for m in _STAMP.finditer(text or ""):
+        h, mm, ss = m.groups()
+        last = (int(h) * 3600 + int(mm) * 60 + int(ss)) if ss else (int(h) * 60 + int(mm))
+    return last
+
+
+def validate_transcript_cleaned(value: Any, raw: Optional[str] = None) -> None:
     _require(isinstance(value, str), "expected plain text")
     _require(len(value.split()) >= 200,
              "cleaned transcript under 200 words — looks truncated")
+    # Sept 17 2026: four episodes went out with the cleaned transcript
+    # stopping at the model's output cap, around minute 25 of a 45-minute
+    # conversation, and the guest review page showed half the interview.
+    # The cleaned copy has to reach the end of the raw one.
+    if raw:
+        end_raw, end_clean = last_stamp_seconds(raw), last_stamp_seconds(value)
+        if end_raw is not None:
+            _require(end_clean is not None and end_clean >= end_raw - 90,
+                     f"cleaned transcript ends at {end_clean}s but the raw one "
+                     f"runs to {end_raw}s — truncated")
     labels = {m.group(1).strip().lower() for m in _LABEL.finditer(value)}
     _require("mira" in labels,
              "cleaned transcript must keep the speaker labels, Mira's included")
@@ -129,8 +151,11 @@ _VALIDATORS = {
 }
 
 
-def validate_pass_output(field: str, value: Any) -> None:
+def validate_pass_output(field: str, value: Any, raw: Optional[str] = None) -> None:
     validator = _VALIDATORS.get(field)
     if validator is None:
         raise ValueError(f"no validator registered for pass {field!r}")
-    validator(value)
+    if field == "transcript_cleaned":
+        validator(value, raw)
+    else:
+        validator(value)

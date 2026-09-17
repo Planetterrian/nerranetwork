@@ -417,6 +417,29 @@ def _sync_warning(run: dict | None) -> str:
             "I will re-place it.</p>")
 
 
+def _placement_notes(run: dict | None) -> str:
+    """What the pipeline did to the tapes that Patrick would otherwise
+    only hear as "something is different": a leg placed in pieces because
+    its recorder lost time, a microphone relieved of the others' bleed."""
+    tracks = ((run or {}).get("grok_session_log") or {}).get("tracks") or {}
+    lines = []
+    for role, pieces in (tracks.get("pieces") or {}).items():
+        if len(pieces or []) > 1:
+            jumps = ", ".join(
+                f"{int(p['from'] // 60)}:{int(p['from'] % 60):02d} at {p['delay']:+.1f}s"
+                for p in pieces[1:])
+            lines.append(f"The {role} recording lost time part-way through and was "
+                         f"placed in {len(pieces)} pieces (jumps at {jumps}).")
+    for role, stat in (tracks.get("bleed") or {}).items():
+        if stat and stat.get("bleed"):
+            lines.append(f"The {role} microphone carried the other voices "
+                         f"{stat['own_db'] - stat['bleed_db']:.0f} dB under its own "
+                         f"(no headphones); {stat['muted_sec']:.0f}s of that was muted.")
+    if not lines:
+        return ""
+    return "<p style='color:#555'>" + " ".join(lines) + "</p>"
+
+
 def _tell_patrick(spec: dict, show, slug: str, url: str, seconds: float,
                   run: dict | None = None) -> None:
     """Email the finished episode to the operator for gate 1.
@@ -460,6 +483,7 @@ def _tell_patrick(spec: dict, show, slug: str, url: str, seconds: float,
             f"{show.short_label}: {guest} is cut and ready for your ear",
             f"<p>Hi Patrick,</p>"
             + _sync_warning(run)
+            + _placement_notes(run)
             + f"<p>The {guest} episode is assembled — introduction, conversation and "
             f"close, {int(seconds // 60)} minutes {int(seconds % 60):02d}.</p>"
             f'<p><a href="{url}">Listen to the episode</a></p>'

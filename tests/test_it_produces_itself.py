@@ -14,10 +14,15 @@ from __future__ import annotations
 
 import json
 import re
+import sys
 from pathlib import Path
+
+import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
 V = ROOT / "pipelines" / "voices"
+if str(V) not in sys.path:
+    sys.path.insert(0, str(V))
 def _flat(text: str) -> str:
     """Wording is the contract, line-wrapping is not."""
     return " ".join(text.split())
@@ -1288,3 +1293,225 @@ class TestTheGuestKnowsWhenItIsOver:
         assert "How this ends:" in self.STUDIO
         assert "press <b>End interview</b>" in self.STUDIO
 
+
+
+def _bursts(seconds: float, sr: int, spans, level: float, seed: int = 1) -> "np.ndarray":
+    """Noise bursts (speech, for a correlator) at the given (start, end)
+    seconds, silence elsewhere."""
+    import numpy as np
+    rng = np.random.default_rng(seed)
+    out = np.zeros(int(seconds * sr), dtype=np.float32)
+    for a, b in spans:
+        lo, hi = int(a * sr), min(len(out), int(b * sr))
+        out[lo:hi] = rng.standard_normal(hi - lo).astype(np.float32) * level
+    return out
+
+
+def _write(path, data, sr: int):
+    import wave
+    import numpy as np
+    with wave.open(str(path), "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(sr)
+        w.writeframes(np.clip(data * 32767, -32768, 32767).astype("<i2").tobytes())
+
+
+def _rms_db(path, start: float, end: float) -> float:
+    import wave
+    import numpy as np
+    with wave.open(str(path)) as w:
+        sr = w.getframerate()
+        w.setpos(int(start * sr))
+        x = np.frombuffer(w.readframes(int((end - start) * sr)), dtype="<i2").astype(float) / 32768
+    return float(20 * np.log10(np.sqrt((x ** 2).mean()) + 1e-9))
+
+
+class TestALegThatLostTimeIsPlacedInPieces:
+    """Sheldon Poon, Sept 17 2026. Mira's session was handed over and then
+    reconnected twenty-six minutes in, and her leg's recorder lost 159
+    seconds while that happened. Measured as one offset the leg placed by
+    its first half, the whole second half sat 159 seconds early in the mix,
+    her lines were transcribed off the guest's microphone as his, and the
+    check that was meant to catch a misplaced track passed, because the
+    windows that disagreed were simply the ones it did not count."""
+
+    SR = 8000
+
+    @pytest.fixture
+    def room_and_leg(self, tmp_path):
+        import numpy as np
+        rng = np.random.default_rng(7)
+        # A room of two-second utterances every eight seconds for 15 min.
+        spans = [(t, t + 2) for t in np.arange(3, 890, 8) + rng.uniform(0, 3, 111)]
+        room = _bursts(900, self.SR, spans, 0.3)
+        # The leg starts 10s after the room and, 400s in, skips 60s.
+        first = room[int(10 * self.SR):int(410 * self.SR)]
+        second = room[int(470 * self.SR):]
+        leg = np.concatenate([first, second])
+        _write(tmp_path / "room.wav", room, self.SR)
+        _write(tmp_path / "leg.wav", leg, self.SR)
+        return tmp_path
+
+    def test_both_pieces_and_the_seam_are_found(self, room_and_leg):
+        from audio.local_tracks import room_pieces
+        pieces = room_pieces(room_and_leg / "leg.wav", room_and_leg / "room.wav",
+                             room_and_leg / "work", expected=10.0)
+        assert len(pieces) == 2, pieces
+        assert abs(pieces[0]["delay"] - 10) < 1.0
+        assert abs(pieces[1]["delay"] - 70) < 1.0
+        assert 380 <= pieces[0]["to"] <= 420
+        assert pieces[1]["from"] == pieces[0]["to"]
+
+    def test_the_placed_leg_verifies_along_its_whole_length(self, room_and_leg):
+        from audio.local_tracks import align_to_room
+        pieces = []
+        out, delay, windows = align_to_room(
+            room_and_leg / "leg.wav", room_and_leg / "room.wav",
+            room_and_leg / "work", expected=10.0, pieces_out=pieces)
+        assert windows > 0, "a leg placed in pieces must still count as placed"
+        assert len(pieces) == 2
+        assert abs(delay - 10) < 1.0
+        # After placing, the leg's second half sits where the room has it.
+        import numpy as np
+        for t in (700.0, 800.0):
+            room_on = _rms_db(room_and_leg / "room.wav", t, t + 8)
+            leg_on = _rms_db(out, t, t + 8)
+            assert abs(room_on - leg_on) < 3.0, (t, room_on, leg_on)
+
+    def test_a_single_offset_still_takes_the_short_path(self, tmp_path):
+        import numpy as np
+        rng = np.random.default_rng(3)
+        spans = [(t, t + 2) for t in np.arange(3, 590, 8) + rng.uniform(0, 3, 74)]
+        room = _bursts(600, self.SR, spans, 0.3)
+        _write(tmp_path / "room.wav", room, self.SR)
+        _write(tmp_path / "leg.wav", room[int(10 * self.SR):], self.SR)
+        from audio.local_tracks import room_pieces
+        pieces = room_pieces(tmp_path / "leg.wav", tmp_path / "room.wav",
+                             tmp_path / "work", expected=10.0)
+        assert len(pieces) == 1 and abs(pieces[0]["delay"] - 10) < 1.0
+
+    def test_the_pieces_are_recorded_with_the_run(self):
+        post = (V / "post_interview.py").read_text(encoding="utf-8")
+        assert 'pieces_out=role_pieces' in post
+        assert '"pieces": tracks.get("pieces") or {}' in post
+
+    def test_the_envelope_cache_does_not_outlive_its_file(self):
+        tracks = (V / "audio" / "local_tracks.py").read_text(encoding="utf-8")
+        assert "small.stat().st_mtime < Path(path).stat().st_mtime" in tracks
+
+
+class TestTheGuestsMicrophoneCarriesOnlyTheGuest:
+    """Sheldon had no headphones. His laptop heard Mira through the
+    speakers, eighteen decibels under his own voice, and the mix had every
+    question twice. Patrick: cut his audio so we only hear him."""
+
+    SR = 8000
+
+    def test_the_bleed_is_muted_and_the_voice_is_kept(self, tmp_path):
+        import numpy as np
+        mira_spans = [(t, t + 4) for t in range(2, 300, 20)]
+        guest_spans = [(t + 8, t + 16) for t in range(2, 300, 20)]
+        mira = _bursts(300, self.SR, mira_spans, 0.3, seed=1)
+        own = _bursts(300, self.SR, guest_spans, 0.3, seed=2)
+        bleed = _bursts(300, self.SR, mira_spans, 0.3 / 8, seed=1)  # -18 dB
+        guest = own + bleed
+        _write(tmp_path / "mira.wav", mira, self.SR)
+        _write(tmp_path / "guest.wav", guest, self.SR)
+        from audio.bleed import strip_bleed
+        out, stats = strip_bleed(tmp_path / "guest.wav", [tmp_path / "mira.wav"],
+                                 tmp_path / "work", "guest")
+        assert stats["bleed"] is True
+        assert out != tmp_path / "guest.wav"
+        # Mira's stretch on his track is now silence; his own is untouched.
+        assert _rms_db(out, 42.5, 45.5) < _rms_db(tmp_path / "guest.wav", 42.5, 45.5) - 20
+        assert abs(_rms_db(out, 51, 57) - _rms_db(tmp_path / "guest.wav", 51, 57)) < 0.5
+
+    def test_a_clean_microphone_is_left_alone(self, tmp_path):
+        mira_spans = [(t, t + 4) for t in range(2, 300, 20)]
+        guest_spans = [(t + 8, t + 16) for t in range(2, 300, 20)]
+        _write(tmp_path / "mira.wav", _bursts(300, self.SR, mira_spans, 0.3), self.SR)
+        _write(tmp_path / "guest.wav", _bursts(300, self.SR, guest_spans, 0.3, seed=2), self.SR)
+        from audio.bleed import strip_bleed
+        out, stats = strip_bleed(tmp_path / "guest.wav", [tmp_path / "mira.wav"],
+                                 tmp_path / "work", "guest")
+        assert stats == {"bleed": False} and out == tmp_path / "guest.wav"
+
+    def test_every_own_microphone_is_relieved_before_mixing(self):
+        post = (V / "post_interview.py").read_text(encoding="utf-8")
+        body = post[post.index("def build_tracks"):post.index("def has_video_stream")]
+        assert "strip_bleed(\n            guest, [mira, host, guest_r]" in body
+        assert "strip_bleed(host, [mira, guest]" in body
+        assert '"bleed": tracks.get("bleed") or {}' in post
+
+
+class TestTheCleanedTranscriptReachesTheEnd:
+    """Sept 17 2026: Dan's, Adrian's and Sheldon's cleaned transcripts all
+    stopped around minute 25 — the model's 6,000-token output cap — and the
+    guest review page showed half the interview. The pass has to be given
+    room for the whole transcript, and a copy that stops early is invalid."""
+
+    def test_the_output_budget_follows_the_transcript(self):
+        post = (V / "post_interview.py").read_text(encoding="utf-8")
+        assert 'if field == "transcript_cleaned":\n                budget = max(6000, min(32000, len(transcript) // 2))' in post
+        assert "raw=transcript if field == \"transcript_cleaned\" else None" in post
+
+    def test_a_truncated_copy_is_rejected(self):
+        from validators.schema_validators import validate_pass_output
+        raw = "\n".join(f"[{m:02d}:00] {'Mira' if m % 2 else 'Dan'}: " + "word " * 30
+                        for m in range(0, 46))
+        short = "\n".join(raw.splitlines()[:26])
+        with pytest.raises(Exception) as err:
+            validate_pass_output("transcript_cleaned", short, raw=raw)
+        assert "truncated" in str(err.value)
+        validate_pass_output("transcript_cleaned", raw, raw=raw)  # whole: fine
+
+
+class TestSheDoesNotPromiseACoHostWhoIsNotComing:
+    """Sheldon Poon, Sept 17 2026. Patrick had an emergency and never
+    joined. The hold expired, the show opened, and Mira introduced him as
+    her co-host who would jump in once he was settled, because the prompt
+    tells her to introduce him and nothing told her he was not there."""
+
+    SCENARIO = (ROOT / "voximplant" / "scenarios"
+                / "age_of_ai_interview.js").read_text(encoding="utf-8")
+
+    def test_the_room_tells_her_when_he_is_absent(self):
+        body = self.SCENARIO[self.SCENARIO.index("function openWhenReady("):]
+        body = body[:body.index("function cohostHoldMs(")]
+        assert 'config.host_mode && humansIn("host") === 0' in body
+        assert '"joined and is not expected. Open the show without him: do not "' in body
+        assert "do not say he will jump in" in body
+        assert "your co-host could not join today" in body
+
+
+class TestPatrickIsToldWhatWasDoneToTheTapes:
+    def test_pieces_and_bleed_are_in_the_assemble_email(self):
+        from assemble_edit import _placement_notes
+        run = {"grok_session_log": {"tracks": {
+            "pieces": {"mira": [{"from": 0, "to": 1555, "delay": 15.7},
+                                {"from": 1555, "to": 2760, "delay": 174.8}]},
+            "bleed": {"guest": {"bleed": True, "own_db": -29.5, "bleed_db": -47.1,
+                                "muted_sec": 372.0}}}}}
+        note = _placement_notes(run)
+        assert "placed in 2 pieces" in note and "25:55" in note
+        assert "18 dB under its own" in note and "372s" in note
+        assert _placement_notes({"grok_session_log": {"tracks": {}}}) == ""
+        assemble = (V / "assemble_edit.py").read_text(encoding="utf-8")
+        assert "+ _placement_notes(run)" in assemble
+
+
+class TestTheGuestSeesTheirApprovalLand:
+    """Dr. Wolfberg pressed Approve for publication, the approval was
+    recorded, and he emailed to ask whether anything had happened: the
+    only acknowledgement was a line at the bottom of a long page."""
+
+    WORKER = (ROOT / "workers" / "voices" / "src" / "index.ts").read_text(encoding="utf-8")
+
+    def test_the_answer_appears_where_the_button_was(self):
+        body = self.WORKER[self.WORKER.index("async function submitReview"):]
+        body = body[:body.index("</script>")]
+        assert "approveBtn.disabled = removeBtn.disabled = true" in body
+        assert "document.getElementById('actions').style.display = 'none'" in body
+        assert "done.scrollIntoView" in body
+        assert "approveBtn.textContent = 'Approve for publication'" in body  # re-enabled on failure

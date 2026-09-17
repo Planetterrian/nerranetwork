@@ -321,8 +321,12 @@ class TestTrackSelection:
         # enough agreeing windows that it counts as placed.
         monkeypatch.setattr(
             pi, "align_to_room",
-            lambda track, room, workdir, expected=None: (
+            lambda track, room, workdir, expected=None, pieces_out=None: (
                 Path(track), 0.0, pi.ROOM_MIN_WINDOWS))
+        # Sept 17 2026: each mic is then relieved of the others' bleed,
+        # which correlates real audio; identity here.
+        monkeypatch.setattr(pi, "strip_bleed",
+                            lambda track, others, workdir, label="": (Path(track), {"bleed": False}))
         local = {}
         monkeypatch.setattr(pi, "fetch_local_track",
                             lambda key, wd: local.get(key))
