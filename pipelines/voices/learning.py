@@ -282,10 +282,10 @@ def lessons_block(show_slug: str) -> str:
     if not lines:
         return ""
     return (
-        "\n\nWHAT EARLIER INTERVIEWS TAUGHT YOU\n"
-        "These are standing corrections from tape of your own past episodes, "
-        "reviewed and approved by your producer. They outrank your habits and "
-        "apply to this interview:\n" + lines + "\n"
+        "\nWHAT EARLIER INTERVIEWS TAUGHT YOU. These are standing corrections "
+        "from tape of your own past episodes, reviewed and approved by your "
+        "producer. They outrank everything below and apply to this interview:\n"
+        + lines + "\n"
     )
 
 

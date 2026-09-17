@@ -18,9 +18,14 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 V = ROOT / "pipelines" / "voices"
-PROMPT = (V / "prompts" / "mira_system_prompt.txt").read_text(encoding="utf-8")
+def _flat(text: str) -> str:
+    """Wording is the contract, line-wrapping is not."""
+    return " ".join(text.split())
+
+
+PROMPT = _flat((V / "prompts" / "mira_system_prompt.txt").read_text(encoding="utf-8"))
 AUTO = (V / "auto_edit.py").read_text(encoding="utf-8")
-AUTO_PROMPT = (V / "prompts" / "auto_edit.txt").read_text(encoding="utf-8")
+AUTO_PROMPT = _flat((V / "prompts" / "auto_edit.txt").read_text(encoding="utf-8"))
 WORKFLOW = (ROOT / ".github" / "workflows"
             / "nerra_voices_post_interview.yml").read_text(encoding="utf-8")
 
@@ -39,20 +44,20 @@ class TestTheClosingRoundVaries:
 
     def test_the_personal_questions_respect_what_the_guest_agreed_to(self):
         block = PROMPT[PROMPT.index("The personal set"):]
-        block = block[:block.index("And the one set")]
+        block = block[:block.index("And the set only I can ask")]
         assert "within what they agreed to" in block
         assert "Ask two or three, not five" in block
 
     def test_she_asks_what_it_was_like_to_be_interviewed_by_her(self):
         assert "What was it like being interviewed by an AI" in PROMPT
-        assert "would not have said to a\n  person" in PROMPT
+        assert "would not have said to a person" in PROMPT
         assert "most direct feedback" in PROMPT
 
 
 class TestFactCheckingBuildsRatherThanArgues:
     def test_a_failed_search_is_never_narrated_as_doubt(self):
         assert "NOT FINDING SOMETHING IS NOT EVIDENCE THAT IT IS FALSE" in PROMPT
-        assert "your\n  search was the thing that failed" in PROMPT
+        assert "your search was the thing that failed" in PROMPT
         assert "Never narrate a failed search as doubt" in PROMPT
 
     def test_the_tool_is_for_expanding(self):
@@ -177,11 +182,11 @@ class TestSheOwnsWhatSheIs:
         assert "WHAT YOU ARE, AND WHAT TO DO WITH IT" in PROMPT
         assert "first AI to host and produce a podcast end to end" in PROMPT
         assert "sounds like a press release" in PROMPT
-        assert "What earns something is\nbeing good at it" in PROMPT
+        assert "What earns something is being good at it" in PROMPT
 
     def test_the_guest_experience_is_named_not_ignored(self):
-        assert "this is an\nodd setup, I know" in PROMPT
-        assert "legitimate content, not a\ndistraction" in PROMPT
+        assert "this is an odd setup, I know" in PROMPT
+        assert "legitimate content, not a distraction" in PROMPT
 
     def test_nerra_is_described_in_patricks_own_terms(self):
         block = PROMPT[PROMPT.index("NERRA NETWORK, AND WHY YOU EXIST"):]
@@ -197,11 +202,11 @@ class TestSheOwnsWhatSheIs:
 class TestSheGuidesRatherThanHolds:
     def test_she_brings_a_perspective_and_hands_it_back(self):
         assert "YOU ARE A GUIDE, NOT A MICROPHONE STAND" in PROMPT
-        assert "does that\n  match what you see?" in PROMPT
-        assert "never\n  instead of a question" in PROMPT
+        assert "does that match what you see?" in PROMPT
+        assert "never instead of a question" in PROMPT
 
     def test_she_does_not_offer_false_comfort(self):
-        assert "false comfort from an AI about AI is worth\n  nothing" in PROMPT
+        assert "false comfort from an AI about AI is worth nothing" in PROMPT
         assert "Optimism that has looked at the downside" in PROMPT
 
     def test_she_is_for_the_listener(self):
@@ -288,8 +293,8 @@ class TestTheCutterLearnedFromItsFirstRun:
 
     def test_the_warm_up_is_protected(self):
         assert "the warm-up is not throat-clearing" in AUTO_PROMPT
-        assert "born with disappointment in my\nheart" in AUTO_PROMPT
-        assert "Cut\nINTO the warm-up, not past it" in AUTO_PROMPT
+        assert "born with disappointment in my heart" in AUTO_PROMPT
+        assert "Cut INTO the warm-up, not past it" in AUTO_PROMPT
         assert "you have started too late" in AUTO_PROMPT
 
     def test_technical_loops_are_named_as_the_common_case(self):
@@ -300,12 +305,12 @@ class TestTheCutterLearnedFromItsFirstRun:
 
 class TestWhoMadeHerAndWhoSheIsFor:
     def test_patrick_made_the_network_and_made_her(self):
-        assert "created the Nerra\nNetwork, and he created you" in PROMPT
-        assert "give a voice to more people than a human\nschedule allows" in PROMPT
-        assert "should\nnot need a producer, a following or a connection" in PROMPT
+        assert "created the Nerra Network, and he created you" in PROMPT
+        assert "give a voice to more people than a human schedule allows" in PROMPT
+        assert "should not need a producer, a following or a connection" in PROMPT
 
     def test_her_origin_is_a_fact_not_a_story(self):
-        assert "as a fact about yourself rather\nthan an origin story" in PROMPT
+        assert "as a fact about yourself rather than an origin story" in PROMPT
 
     def test_she_invites_people_to_apply(self):
         assert "INVITE PEOPLE IN" in PROMPT
@@ -316,7 +321,7 @@ class TestWhoMadeHerAndWhoSheIsFor:
 
     def test_the_produced_close_carries_it_too(self):
         assert "nerranetwork dot com" in AUTO_PROMPT
-        assert "apply to be a guest" in AUTO_PROMPT.replace("\n  ", " ")
+        assert "apply to be a guest" in AUTO_PROMPT.replace(" ", " ")
         assert "phrased differently every episode" in AUTO_PROMPT
 
 
@@ -348,7 +353,7 @@ class TestNoLaughter:
     hosted by an AI cannot afford to pretend."""
 
     NARRATE = (V / "narrate.py").read_text(encoding="utf-8")
-    NARRATION_PROMPT = (V / "prompts" / "mira_narration.txt").read_text(encoding="utf-8")
+    NARRATION_PROMPT = _flat((V / "prompts" / "mira_narration.txt").read_text(encoding="utf-8"))
 
     def test_laughter_is_banned_in_both_narration_prompts(self):
         for text in (AUTO_PROMPT, self.NARRATION_PROMPT):
@@ -362,17 +367,17 @@ class TestNoLaughter:
     def test_only_delivery_tags_survive(self):
         for text in (AUTO_PROMPT, self.NARRATION_PROMPT):
             assert "[pause]" in text and "<soft>" in text
-            assert "shape\nhow real words are delivered rather than inventing a feeling" in text
+            assert "shape how real words are delivered rather than inventing a feeling" in text
 
     def test_she_does_not_laugh_in_the_room_either(self):
         assert "REACT, BUT DO NOT PERFORM" in PROMPT
         assert "Do NOT laugh" in PROMPT
-        assert "sounds manufactured" in PROMPT
+        assert "sound manufactured" in PROMPT
         assert "REACT LIKE A PERSON, OUT LOUD" not in PROMPT
 
     def test_warmth_still_has_somewhere_to_go(self):
         assert "say so in words" in PROMPT
-        assert "what you\n  notice and what you ask next" in PROMPT
+        assert "what you notice and what you ask next" in PROMPT
 
     def test_a_tag_is_still_not_a_word(self):
         import sys
@@ -424,10 +429,10 @@ class TestNeverCutThroughAQuestion:
     def test_the_rule_is_in_the_cutter_prompt(self):
         assert "NEVER CUT THROUGH A QUESTION" in AUTO_PROMPT
         assert "if the next thing anyone says is an answer" in AUTO_PROMPT
-        assert "worse than the\ndead air it removed" in AUTO_PROMPT
+        assert "worse than the dead air it removed" in AUTO_PROMPT
 
     def test_corrections_are_protected_too(self):
-        assert "the thing being corrected has to still be in the\nepisode" in AUTO_PROMPT
+        assert "the thing being corrected has to still be in the episode" in AUTO_PROMPT
 
     def test_vincents_edit_keeps_the_question(self):
         import json
@@ -613,7 +618,7 @@ class TestSheDoesNotEndTheShowInTheMiddle:
     stop opening subjects and compress the answer they are in. The best
     forty minutes never happen."""
 
-    PROMPT = (V / "prompts" / "mira_system_prompt.txt").read_text(encoding="utf-8")
+    PROMPT = _flat((V / "prompts" / "mira_system_prompt.txt").read_text(encoding="utf-8"))
     EDITOR = (V / "prompts" / "auto_edit.txt").read_text(encoding="utf-8")
 
     def test_nothing_may_sound_like_an_ending_until_it_is_one(self):
@@ -626,7 +631,7 @@ class TestSheDoesNotEndTheShowInTheMiddle:
 
     def test_she_follows_the_interesting_thing_down(self):
         assert "DRILL IN." in self.PROMPT
-        assert "Three\nquestions deep into one real thing" in self.PROMPT
+        assert "Three questions deep into one real thing" in self.PROMPT
 
     def test_the_personal_questions_are_not_optional_or_only_at_the_end(self):
         assert "ASK ABOUT THE PERSON, NOT ONLY THE SUBJECT" in self.PROMPT
@@ -635,7 +640,7 @@ class TestSheDoesNotEndTheShowInTheMiddle:
     def test_the_personal_rule_still_defers_to_the_application(self):
         block = self.PROMPT[self.PROMPT.index("ASK ABOUT THE PERSON"):]
         block = block[:block.index("THE CLOSING ROUND")]
-        assert "agreed to on their\napplication" in block
+        assert "agreed to on their application" in block
 
     def test_the_editor_can_cut_a_false_ending(self):
         assert "A FALSE ENDING IN THE MIDDLE IS A CUT CANDIDATE" in self.EDITOR
@@ -1266,7 +1271,7 @@ class TestTheGuestKnowsWhenItIsOver:
     over. The prompt now ends with an explicit handoff and the studio page
     says the same thing before the call starts."""
 
-    PROMPT = (V / "prompts" / "mira_system_prompt.txt").read_text(encoding="utf-8")
+    PROMPT = _flat((V / "prompts" / "mira_system_prompt.txt").read_text(encoding="utf-8"))
     STUDIO = (ROOT / "age-of-ai-studio.html").read_text(encoding="utf-8")
 
     def test_she_says_the_recording_is_finished(self):
@@ -1276,7 +1281,7 @@ class TestTheGuestKnowsWhenItIsOver:
 
     def test_and_then_says_nothing(self):
         block = self.PROMPT[self.PROMPT.index("HOW IT ENDS, FOR THE GUEST"):]
-        block = block[:block.index("\n\n", 40)]
+        block = block[:block.index("WHAT YOU ARE")]
         assert "nothing at all once they have left the room" in block
 
     def test_the_page_tells_them_before_they_start(self):

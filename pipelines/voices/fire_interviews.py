@@ -289,7 +289,11 @@ def compile_mira_prompt(interview: dict, app: dict, brief: dict) -> str:
         guest_shape=shape_block(interview, app),
         # What previous guests said, so she can put one of them to this one.
         carry_the_show=carry_the_show_block(show, exclude_email=app.get("email", "")),
-    ) + lessons_block(show.slug) + variety_block(show.slug)
+        # Sept 17 2026: the standing lessons go near the TOP, right after the
+        # guest, not on the end of four thousand words of craft. The prompt
+        # was cut to a third so they carry the weight they are meant to.
+        lessons=lessons_block(show.slug),
+    ) + variety_block(show.slug)
 
 
 def send_reminders() -> None:

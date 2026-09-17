@@ -130,7 +130,7 @@ class TestLessonsReachMiraOnlyViaAHuman:
         assert learning.lessons_block("age_of_ai") == ""
 
     def test_fire_appends_the_block_to_miras_prompt(self):
-        assert "+ lessons_block(show.slug)" in FIRE
+        assert "lessons=lessons_block(show.slug)," in FIRE
 
     def test_post_interview_measures_and_proposes_without_blocking(self):
         assert "09_interview_retro.txt" in POST
@@ -528,7 +528,8 @@ class TestMiraDoesNotRepeatHerself:
         assert learning.variety_block("age_of_ai") == ""
 
     def test_both_blocks_are_appended_to_miras_prompt(self):
-        assert "lessons_block(show.slug) + variety_block(show.slug)" in FIRE
+        assert "lessons=lessons_block(show.slug)," in FIRE
+        assert ") + variety_block(show.slug)" in FIRE
 
     def test_post_interview_retires_this_episodes_tics(self):
         assert "save_host_phrases(" in POST
@@ -696,13 +697,8 @@ class TestAudioRestoration:
     def test_balance_levels_each_side_before_folding(self):
         src = (ROOT / "pipelines" / "voices" / "assemble_edit.py").read_text(encoding="utf-8")
         assert "channelsplit=channel_layout=stereo[l][r]" in src
-        # Both sides get the levelling chain before the fold. Matched on
-        # each side's own leg rather than the whole literal, because the
-        # legs carry an optional per-side extra ("voice_match", 8229cf7e)
-        # between the chain and the label — which is still levelling each
-        # side separately, the property this test is named for.
-        assert "[l]{side}" in src and "[lg];" in src
-        assert "[r]{side}" in src and "[rg];" in src
+        # Sept 14 2026: each side can also carry a voice-match filter.
+        assert "[l]{side}{left_extra}[lg];[r]{side}{right_extra}[rg]" in src
         i_side = src.index("[l]{side}")
         i_mix = src.index("amix=inputs=2:normalize=0", i_side)
         assert i_side < i_mix, "levelling after the fold is levelling a mixture"
@@ -813,10 +809,6 @@ class TestNarrationHissIsRemovedAtSource:
     def test_narration_gets_afftdn_and_conversation_does_not(self):
         src = (ROOT / "pipelines" / "voices" / "assemble_edit.py").read_text(encoding="utf-8")
         assert 'NARRATION_RESTORE = "adeclick=w=75:t=2,afftdn=nf=-45:nr=12' in src
-        # The conversation chain (the RESTORE line itself) carries no
-        # afftdn. Sep 13 2026: slicing up to NARRATION_RESTORE swept in the
-        # comment that explains why narration gets it, and failed on the
-        # word in prose.
-        _start = src.index('RESTORE = "')
-        assert "afftdn" not in src[_start:src.index("\n", _start)]
+        plain = [l for l in src.splitlines() if l.startswith('RESTORE = "')][0]
+        assert "afftdn" not in plain
         assert "chain.append(NARRATION_RESTORE if narration else restore)" in src
