@@ -251,8 +251,18 @@ def resequence_unproduced(queue: list[dict]) -> None:
     file layout) untouched. Reordering unproduced entries is safe — only
     their relative consumption order changes, which is the point.
     """
+    # Sep 17 2026: a gate-deferred entry (``gate_blocks`` at or past the
+    # picker's threshold) is skipped by ``pick_next_topic`` and sits where
+    # it is until the operator re-sources it, so it must not take a slot
+    # in the interleaving: with three parked UC topics counted as slots,
+    # the sequence the picker actually airs read "policy, policy" and the
+    # runway guard threw away a 27-topic restock (run 35240896519). Parked
+    # entries stay exactly where they are; the airable ones interleave
+    # around them.
+    from engine.topic_queue import GATE_BLOCK_DEFER_THRESHOLD
     idxs = [i for i, e in enumerate(queue)
-            if isinstance(e, dict) and not e.get("produced")]
+            if isinstance(e, dict) and not e.get("produced")
+            and int(e.get("gate_blocks") or 0) < GATE_BLOCK_DEFER_THRESHOLD]
     produced_cats = [e.get("category") for e in queue
                      if isinstance(e, dict) and e.get("produced")]
     seed = produced_cats[-1] if produced_cats else None

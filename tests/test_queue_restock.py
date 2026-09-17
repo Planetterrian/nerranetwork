@@ -280,3 +280,53 @@ class TestModelFallback:
         with pytest.raises(ConnectionError):
             rq.generate_candidates("p")
         assert seen == [rq.FALLBACK_RESTOCK_MODEL]
+
+
+class TestParkedEntriesKeepTheirSlot:
+    """Sep 17 2026: three gate-deferred UC topics were counted as slots by
+    the interleaver, so the sequence the picker actually AIRS (which skips
+    them) read "policy, policy" and the runway guard threw away a 27-topic
+    restock (run 35240896519, the first one grok-4.3 ever completed)."""
+
+    def _queue(self):
+        from engine.topic_queue import GATE_BLOCK_DEFER_THRESHOLD as T
+        return [
+            {"id": "p1", "category": "economics", "produced": True},
+            {"id": "a", "category": "policy"},
+            {"id": "parked1", "category": "classic", "gate_blocks": T},
+            {"id": "b", "category": "policy"},
+            {"id": "c", "category": "economics"},
+            {"id": "parked2", "category": "tech", "gate_blocks": T + 1},
+            {"id": "d", "category": "policy"},
+            {"id": "e", "category": "medicine"},
+            {"id": "f", "category": "economics"},
+        ]
+
+    @staticmethod
+    def _aired(queue):
+        from engine.topic_queue import GATE_BLOCK_DEFER_THRESHOLD as T
+        return [e["category"] for e in queue if not e.get("produced")
+                and int(e.get("gate_blocks") or 0) < T]
+
+    def test_aired_sequence_has_no_adjacent_pair(self):
+        q = self._queue()
+        rq.resequence_unproduced(q)
+        seq = self._aired(q)
+        assert all(a != b for a, b in zip(seq, seq[1:])), seq
+        assert seq[0] != "economics"  # seam with the last produced episode
+
+    def test_parked_entries_do_not_move(self):
+        q = self._queue()
+        rq.resequence_unproduced(q)
+        assert q[2]["id"] == "parked1" and q[5]["id"] == "parked2"
+        assert q[0]["id"] == "p1"
+        assert sorted(e["id"] for e in q) == sorted(e["id"] for e in self._queue())
+
+    def test_real_uc_queue_airs_interleaved_after_resequence(self):
+        import copy
+        q = yaml.safe_load((ROOT / "shows/topic_queues/unintended_consequences.yaml")
+                           .read_text(encoding="utf-8"))["queue"]
+        q2 = copy.deepcopy(q)
+        rq.resequence_unproduced(q2)
+        seq = self._aired(q2)
+        assert all(a != b for a, b in zip(seq, seq[1:])), seq

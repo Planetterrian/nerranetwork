@@ -1028,7 +1028,7 @@ def render_cover(spec: PersonalSpec, base: Path, out: Path, size: int = 1400) ->
     network cover — when Pillow or a font is missing; artwork is never a
     reason to fail a build."""
     try:
-        from PIL import Image, ImageDraw, ImageFont
+        from PIL import Image, ImageDraw
     except ImportError:
         logger.info("cover: Pillow missing — network cover kept")
         return False
