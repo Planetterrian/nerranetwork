@@ -288,6 +288,50 @@ reviews:
       ab_listen_required: true
       rationale: 'De-seed recurring ''on the order of'' tic by shape description + verbatim ban + rotation MEMORY per July 2026 meta-review category rule; A/B-listen required (landmine #17).'
     agent_cost_usd: 0.0547
+  - date: '2026-09-17'
+    pr: null
+    doc: docs/reviews/first_principles_review_2026_09_17.md
+    generated_by: grok-4.5
+    summary: All 10 recent scripts sit under the 1400-word floor (length misses again — escalate, do not re-litigate), the 'on the order of' ban hit, but the system prompt still seeds 'a rough magic-wand estimate' (revived in Ep097) and must be de-seeded by shape.
+    scored_prior_predictions:
+    - metric: episodes below 1500-word floor in last 10 _tts.txt
+      verdict: miss
+      evidence: Live floor is 1400; 10/10 last _tts.txt are 1200–1388w (ep94–103 snapshot) — worse than July 29 baseline 6/10
+    - metric: occurrences of 'on the order of' across 10 transcripts
+      verdict: hit
+      evidence: Phrase absent from ep94–103 Whisper transcripts; prior baseline was 6/10
+    shipped: []
+    deferred:
+    - 'OPERATOR DECISION (escalate — length metric missed repeatedly July→Sep with the same proposal class): accept ~1200–1400w grok-4.3 plateau and lower min_podcast_words to a real thin-pass tripwire (~1100), OR invest in richer queue-brief substrate without ''write past the floor'' prompt pressure (Aug 20 listen already rejected that as repetitive). Do not ship another length prompt or re-enable podcast_expand_below_target.'
+    - Garbage auto-segment chapter titles (shared network LLM-title class) — not seen in ep94–103; keep on backlog only.
+    - Further podcast-side length escalation / prompt word-floor pressure — do_not_retry (network category rule + FP ledger).
+    - 'Reword stock closer if operator confirms written text causes Whisper ''depreciated'' garble — no phonetic respelling (landmine #17).'
+    - 'Growth/P2: first-week downloads median 0 despite YT+newsletter on — needs operator distribution strategy, not a prompt tweak.'
+    predictions:
+    - metric: occurrences of 'rough magic wand estimate' / 'rough magic-wand estimate' across 10 transcripts
+      baseline: 1/10 (Ep097)
+      expected: 0/10 after system-prompt de-seed + podcast ban extension
+      verdict: pending
+      evidence: null
+    - metric: successor hedging tic — any single stock estimate-opener (e.g. 'reported to be around', 'ballpark material floor') in 5+/10 transcripts
+      baseline: not dominant in ep94–103 window
+      expected: no new formula in ≥5/10; if one appears, next pass de-seeds by shape + MEMORY
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/prompts/first_principles_system.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: System prompt still seeds the exact hedging strings the podcast stage bans; Ep097 revived 'A rough magic wand estimate' because the teacher prompt keeps quoting it. De-seed by shape + verbatim ban per July 2026 meta-review (no replacement quotable example).
+    - file: shows/prompts/first_principles_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Mirrors the 'on the order of' ban that scored a hit; closes the successor hole proven in Ep097 transcript. Shape ban + verbatim list; no new example phrase for the model to elect next.
+    - file: shows/prompts/first_principles_weekly.txt
+      kind: prompt
+      ab_listen_required: false
+      rationale: Newsletter-only surface; remove the same seeded phrases so weekly copy cannot reintroduce the on-air tic family. No audio path — ab_listen false.
+    agent_cost_usd: 0.1055
 do_not_retry:
   - idea: >-
       Push the podcast length target above ~1500 words via prompt escalation
