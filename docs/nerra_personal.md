@@ -195,6 +195,38 @@ Store:
   network outro rotation (audio — landmine #17, operator A/B), a
   newsletter launch announcement, Nerra Daily blog cross-links.
 
+## First edition in minutes, and the polish pass (17 Sep 2026)
+
+**On-demand builds.** A new subscriber used to wait for the next batch
+run to hear anything. Now `checkout.session.completed` dispatches the
+batch workflow for that one member (`inputs.only=<feed token>`, starter
+lineup until they choose shows), and the account page's "Build my
+edition now" (`POST /api/account/rebuild`) re-makes today's edition
+after a lineup / city / topic change — `REBUILDS_PER_DAY` (2) times a
+day; the first build of a day is free. The builder's `--only` and
+`--replace` flags are the contract: a replaced day keeps its episode
+number and GUID (no duplicate in the app), gets an `_rN` filename so
+cached audio is re-fetched, and the superseded MP3 is deleted.
+`GET /api/account` now carries `member.today` (`built_at`, `building`,
+`rebuilds_left`, `available`).
+
+Secret: `GITHUB_DISPATCH_TOKEN` on the Worker (`wrangler secret put`),
+the same fine-grained PAT as step 8b (repo `nerra-personal-batch`,
+Actions: Read and write). Without it the route answers 503, the page
+hides the button, and activation falls back to the morning sweep.
+
+**Polish.** Every cached segment is measured (`ffmpeg ebur128`) and
+statically levelled to the network's -16 LUFS when a show drifts more
+than 1.5 LU — on 2026-09-17 nine shows sat within ±0.4 LU and
+Unintended Consequences at -25.3 (its voice-only path skips the final
+loudnorm; fix upstream too). A -18 dB two-tone chime precedes each of
+Mira's hand-offs and her sign-off. The feed carries the subscriber's
+own artwork (`cover.jpg`, network cover + name band, re-rendered when
+name or city changes), timestamped episode notes as `content:encoded`
+naming the outlets each brief credits, and `<podcast:transcript>` in
+JSON and VTT built from Mira's text plus the shows' committed Whisper
+transcripts (offset to the edition timeline, cut where the audio is).
+
 ## Personal News Network (13 Sep 2026)
 
 Two paid tiers, same add-ons, different depth. Internal tier ids are
