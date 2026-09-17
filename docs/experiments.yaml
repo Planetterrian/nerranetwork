@@ -1154,10 +1154,19 @@ experiments:
     title: "Long-form render on x264 preset `faster` (operator-directed trial)"
     area: quality
     shipped: 2026-09-13
-    readout: 2026-09-20
-    status: decide
+    readout: 2026-09-17
+    status: done
     metric: long_form_render_median_s_7d
     baseline: 1024
+    outcome: >
+      NO EFFECT — closed early 2026-09-17. Thirty long-form renders
+      under `faster` (09-14..09-17) ran a median 932 s (per-day medians
+      957 / 947 / 835 / 920) against the 1,024 s `medium` baseline, with
+      the same 640-1,270 s spread. The encoder is not where the time is:
+      the 36-branch 2x-supersampled zoompan graph is, and the supersample
+      is a measured judder guard. Reverted to `medium`. A real
+      render-speed change means benchmarking the filter graph (branch
+      count, filter threads), not the preset.
     target: >
       DECIDE on 2026-09-20: keep `faster` if the 7-day median long-form
       render is at or under ~700 s (a third off the 1,024 s baseline)

@@ -1807,12 +1807,34 @@ def combined_script_matches_digest(stash_digest: str, current_digest: str, min_s
             if len(ln) >= 40:
                 out.append(ln)
         return out
+    fwd, back = combined_digest_line_shares(stash_digest, current_digest)
+    # Sep 17 2026: run_show's trims only REMOVE lines (section dedupe,
+    # scaffold scrub, claim strip), so a trimmed digest has nearly all of
+    # ITS lines in the stash even when the stash lost many — M&A's
+    # combined script was discarded every day at 0.3-0.5 forward share.
+    # A replacement regeneration fails both directions.
+    return max(fwd, back) >= min_share
+
+
+def combined_digest_line_shares(stash_digest: str, current_digest: str) -> Tuple[float, float]:
+    """(share of stash lines present now, share of current lines in the
+    stash) — the two numbers behind ``combined_script_matches_digest``,
+    logged when a script is discarded so the reason is never silent."""
+    def _lines(t: str):
+        out = []
+        for ln in (t or "").splitlines():
+            ln = re.sub(r"[*_`#>\s]+", " ", ln).strip().lower()
+            if len(ln) >= 40:
+                out.append(ln)
+        return out
     src = _lines(stash_digest)
-    if not src:
-        return False
-    cur = set(_lines(current_digest))
-    kept = sum(1 for ln in src if ln in cur)
-    return kept / len(src) >= min_share
+    cur = _lines(current_digest)
+    if not src or not cur:
+        return 0.0, 0.0
+    cur_set, src_set = set(cur), set(src)
+    fwd = sum(1 for ln in src if ln in cur_set) / len(src)
+    back = sum(1 for ln in cur if ln in src_set) / len(cur)
+    return fwd, back
 
 
 @retry(
