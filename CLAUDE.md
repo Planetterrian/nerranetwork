@@ -1890,7 +1890,18 @@ same review ran across the other ten shows. Drift guards:
   grok-4.6 alone (no JSON array 09-14, `APIConnectionError` 09-16) while
   UC drained to 3.7 wk; `generate_candidates` now retries one failed
   primary call on `FALLBACK_RESTOCK_MODEL` (grok-4.3) and the result
-  records `model` (`TestModelFallback`). Age of AI's deliberately-empty queue is not
+  records `model` (`TestModelFallback`). **Same day, later:** the
+  15:29 UTC dispatch made the count 0 for 11 — grok-4.6 timed out at
+  300 s on BOTH shows and grok-4.3 answered each in under a minute — so
+  `restock-topic-queues.yml` sets `NERRA_RESTOCK_MODEL: grok-4.3` (the
+  documented override; delete the line to trial 4.6 again). That run
+  also exposed a second blocker: the model answered, FPD was refilled
+  4.0 → 8.0 weeks, and the workflow then died in its own validator
+  because `resequence_unproduced` interleaved UC's three GATE-DEFERRED
+  head entries while `test_uc_unproduced_interleaved_not_clustered`
+  measures the pickable sequence without them; nothing was committed.
+  Deferred entries now stay in place and only pickable entries are
+  interleaved (`TestResequenceSkipsDeferred`). Age of AI's deliberately-empty queue is not
   registered and must never be. Generated topics sit unproduced for weeks
   — prune any weak ones directly in `shows/topic_queues/*.yaml`.
 - **Финансы Просто YouTube category** fixed 25 (News) → 27 (Education).

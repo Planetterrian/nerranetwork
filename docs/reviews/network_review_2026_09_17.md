@@ -193,6 +193,23 @@ field: the primary's record on a needed restock is 0 for 9, so if
 `model` reads grok-4.3 on every night that restocks, the 4.6 call is a
 five-minute failed request paid before each one and the primary should
 follow the FPD/UC arms off 4.6 (the register entry is corrected below).
+**15:29 UTC dispatch (run 58), read after the merge:** grok-4.6 timed
+out at 300 s on both shows (`APITimeoutError`) and grok-4.3 answered
+each in under a minute — 0 for 11 for the primary — so the workflow
+now sets `NERRA_RESTOCK_MODEL: grok-4.3` through the documented
+override. The same run then failed in its own validator AFTER the
+model had answered and First Principles had been refilled 4.0 → 8.0
+weeks: `resequence_unproduced` interleaved UC's three gate-deferred
+head entries while the runway guard measures the pickable sequence
+without them, so two pickable policy entries either side of a parked
+one read as adjacent ("clustered head: classic, policy, policy") and
+nothing was committed. Deferred entries now stay in place and only
+pickable entries are interleaved (`TestResequenceSkipsDeferred`; 200
+simulated restocks against the live queue clear the guard). Also from
+that run: of 30 candidates the model returned for UC, 28 were rejected
+as duplicates of the queue's own history that the prompt already lists
+— the restock prompt's dedupe instruction is not holding on grok-4.3
+either, and that is the next thing to read on the Sep 24 run.
 The workflow's commit step pushes to `main` by name, so it cannot be
 run against a branch, and this session holds no Grok key; three
 hand-written briefs (Mexico City's Hoy No Circula, Jevons' *The Coal

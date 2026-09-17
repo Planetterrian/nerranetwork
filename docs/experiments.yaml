@@ -510,10 +510,11 @@ experiments:
     # window: no queue needed topics between Aug 19 and Sep 7, and the
     # first run that did (Sep 8) and every one after it (nine, through
     # Sep 16) died on "Server disconnected without sending a response" —
-    # the Aug 18 failure class on the queue-history prompt. Since Sep 17
-    # generate_candidates retries a failed 4.6 call once on grok-4.3 and
-    # records `model`; a primary that loses every night is a five-minute
-    # failed request before each restock — read `model` and decide.
+    # the Aug 18 failure class on the queue-history prompt. The 15:29 UTC
+    # dispatch made it 0 for 11 (300 s timeouts on both shows; the 4.3
+    # fallback answered each in under a minute), so the workflow now runs
+    # grok-4.3 via NERRA_RESTOCK_MODEL. generate_candidates keeps the
+    # fallback machinery; delete the env line to trial 4.6 again.
     status: done
     baseline: >
       YouTube title bundle, topic-queue restock, and deep-dive specials
