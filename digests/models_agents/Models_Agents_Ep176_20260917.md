@@ -1,0 +1,48 @@
+# Models & Agents
+> **DeepMind launches an institute to study AGI's economic, scientific, and societal effects with 20-plus years of prior discussion behind it.**
+
+**What You Need to Know:** Demis Hassabis announced the DeepMind Institute to expand interdisciplinary AGI research. Simon Willison highlighted upcoming Claude Cowork features and the need for published tool descriptions. Several new arXiv papers introduce frameworks for language modeling, agent alignment, and medical applications that builders can examine now.
+---
+### Top Story
+Demis Hassabis announced the launch of the DeepMind Institute to expand interdisciplinary research on AGI's potential impact on the economy, science, and society. The institute builds on more than 20 years of discussions between Hassabis and Shane Legg about these topics. A short introduction to the institute's purpose is available at institute.deepmind.com. The effort aims to spur the discussions needed to get the next steps right in the AI era. Hassabis also received the Albert Medal from the RSA, noting that arts and humanities will be crucial in shaping the future society wants in the AGI era. He highlighted a fun discussion with Stephen Fry covering many new topics in the AGI context. Source: [x.com](https://x.com/demishassabis/status/2100230524383981702)
+---
+### Model Updates
+**DANTINOX: A Unified Framework for Multi-Paradigm Language Modeling: arXiv NLP**
+DANTINOX is an open-source JAX/Flax library with a single modular Transformer backbone that supports autoregressive decoding, discrete masked diffusion, and continuous flow-matching. Switching paradigms, attention mechanisms, or hardware topology requires only a configuration change while keeping the backbone, tokenizer, and training infrastructure consistent. The library enables controlled cross-paradigm comparisons within one API for training, streaming inference, and benchmarking. Each paradigm lives in a separate codebase in prior work, so measured differences often reflect implementation details rather than the paradigms themselves. The backbone architecture, initialization strategy, and training infrastructure remain fixed across all three generation methods. Source: [arxiv.org](https://arxiv.org/abs/2609.17535)
+
+**Myovox: Reading Speech from the Muscles of the Face: arXiv NLP**
+Myovox decodes open-vocabulary English text from 31-channel surface electromyography recorded from facial muscles during vocalized speech. It improves on the emg2speech General Corpus from a published 51.17 percent word error rate to 18.53 percent through bidirectional Conformer training and QLoRA-fine-tuned language model reranking. All test numbers use the authors' official 8500/760/400 sequential split. The approach first recovers open-vocabulary decode settings missing from the public release to reach a faithful 40.63 percent WER baseline. A second step replaces the causal encoder with a bidirectional Conformer trained by cross-modal distillation against WavLM-Large layer-9 features. Source: [arxiv.org](https://arxiv.org/abs/2609.17548)
+
+**PrimeScientist: Strategic Allocation of Research Effort in Autonomous Research: arXiv NLP**
+PrimeScientist jointly determines research direction and resource investment across successive research attempts using an executable plan tree and adaptive MCTS-based allocation policy. Across 12 AI research tasks it improves average reward by 10.3 percent with 50.6 percent fewer research attempts than AutoResearch under the same resource budget. The system treats strategic research effort allocation as an explicit optimization target. It preserves competing plans and their outcomes across attempts in the plan tree representation. The policy balances exploration and exploitation using experimental feedback and remaining resources. Source: [arxiv.org](https://arxiv.org/abs/2609.17846)
+
+**SFT or RL for Tool-Calling Agents? A Controlled Study Across Data, Method, and Scale: arXiv NLP**
+The study evaluates supervised fine-tuning with LoRA, reinforcement learning via GRPO, and SFT followed by GRPO across six Qwen3 models from 0.6B to 32B parameters. SFT with LoRA is the strongest in-distribution method in 15 out of 18 experimental settings. LoRA outperforms full-parameter fine-tuning by better preserving pretrained agentic behavior. On cross-dataset transfer, GRPO wins 29 out of 54 settings where training and test datasets differ, but its margin over SFT averages under one point. Dataset mixing gives consistently strong transfer while staying close to specialized in-distribution training. Source: [arxiv.org](https://arxiv.org/abs/2609.17848)
+---
+### Agent & Tool Developments
+**Think Before You Comfort: Reflective Cognitive Alignment for Protocol-Grounded Elderly Stimulation Agents: arXiv NLP**
+The RCA framework models stimulation interactions as a sequential decision process with Protocol-Constrained Chain-of-Cognition and Inference-Time Value Alignment for safety and engagement goals. It improves protocol adherence, safety, and group facilitation over standard prompting baselines across six backbone LLMs. Code is available at github.com/jiangjyjy/RCA_Agent. The framework addresses data scarcity in privacy-sensitive low-resource languages such as Cantonese through STaR-CS style-transfer and role-conditioned synthesis. Evaluations used two independent judges on the synthesized multi-party dialogues. Source: [arxiv.org](https://arxiv.org/abs/2609.17536)
+
+**AfriSyCo: Measuring Assertive Framing, Verification, and Wording Sensitivity Around African-Language Content: arXiv NLP**
+AfriSyCo analyzes 1415 turn-1-correct model-language-item observations from 100 source questions across seven open-weight checkpoints and six languages. Assertive framing increases target selection by 30.4 percentage points while verification decreases it by 17.4 points. The effect remains 34.8 points among observations correct after option reordering. The precommitted 2 by 2 factorial shows the assertive effect rises from 20.5 points without verification to 40.2 with it. Magnitude varies sharply by wording and checkpoint, with prompt-family effects spanning 20.1 to 42.5 points. Source: [arxiv.org](https://arxiv.org/abs/2609.17853)
+---
+### Practical & Community
+**MudawanSn: A Gold-Standard Wolof-Arabic Parallel Corpus for Machine Translation: arXiv NLP**
+MudawanSn provides 1271 sentence-aligned pairs manually translated from Wolof into Modern Standard Arabic drawn from the MasakhaNER corpus. Fine-tuning AfriNLLB-12 on the corpus yields 7.76 BLEU and 30.72 chrF++ for Wolof-to-Arabic. The corpus is released under CC BY-NC on Hugging Face and GitHub. The source texts cover politics, society, religion, and sports in Senegalese news discourse. Benchmarking four machine translation systems shows that fine-tuning on MudawanSn yields substantial improvements in both translation directions. Source: [arxiv.org](https://arxiv.org/abs/2609.17539)
+
+**English Word Sense Disambiguation in 2026: When the Labels Become the Bottleneck: arXiv NLP**
+lexEN is a human-adjudicated correction layer over Maru2022's ALL_NEW benchmark with 211 labels changed and 56 removed. Frontier LLMs converge near 95 percent accuracy on lexEN-v1 with the best at 95.6 percent. Glite LENS, a 298M bi-encoder trained on repaired labels, reaches 83.6 Raganato ALL and 87.4 Maru ALL_NEW. Relabeling SemCor with frontier models and retraining BEM, ESCHER, and ConSeC lifts them by several F1 points on untouched test sets. On hard items, fine-grained WordNet senses are partly ill-posed even for experts with three-reviewer Fleiss kappa at 0.537. Source: [arxiv.org](https://arxiv.org/abs/2609.17554)
+---
+### Under the Hood: Relation Onset Before Entity Commitment in Factual Recall
+Language models retrieve relation-type information such as capital-of before they commit to specific entity answers such as France to Paris. The temporal asymmetry holds across four decoder-only models and eight prompt families, with relation onset preceding entity onset by 10 to 16 layers at a 0.4 threshold. Entity information is already present in early layers yet remains generation-controlling only after it routes to the final token. This separation means activation-steering interventions aimed at entity facts must target later layers than those used for relation facts. When the routing step is the bottleneck, simply increasing early-layer entity patching yields little additional accuracy. Teams debugging factual errors therefore benefit from measuring onset depth separately for relations and entities rather than treating recall as a single monolithic process. The ordering holds across all 16 model-threshold combinations for thresholds between 0.2 and 0.5. Entity-token patching succeeds at 90 to 100 percent in early layers even though commitment is deferred.
+---
+### Things to Try This Week
+- Examine the DANTINOX library to run controlled comparisons across autoregressive, diffusion, and flow-matching paradigms without changing tokenizers or training code.
+- Test the RCA agent framework on cognitive stimulation tasks if you work with low-resource dialogue data or elderly care applications.
+- Fine-tune AfriNLLB variants on the MudawanSn corpus to measure gains on Wolof-Arabic translation directions.
+- Run the lexEN benchmark harness to see how frontier models perform on corrected word-sense labels versus older gold standards.
+---
+### On the Horizon
+- Sam Altman indicated the main OpenAI launch originally planned for this week will arrive next week instead.
+- OpenAI plans to track model misalignment regularly after flagging new concerning AI behavior.
+- Further details on the DeepMind Institute's research agenda are expected in coming weeks.

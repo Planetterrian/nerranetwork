@@ -9,7 +9,7 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>en-us</language>
-    <lastBuildDate>Wed, 16 Sep 2026 08:18:11 +0000</lastBuildDate>
+    <lastBuildDate>Thu, 17 Sep 2026 08:18:56 +0000</lastBuildDate>
     <itunes:author>Patrick</itunes:author>
     <itunes:category text="Technology" />
     <itunes:category text="News">
@@ -23,6 +23,115 @@
     </itunes:owner>
     <itunes:summary>Your daily briefing on AI models and agents: new releases from the frontier labs, open-weight drops, agent frameworks, benchmarks, pricing, and practical tools you can use the same day — with long-running program tracking so you always know where the big stories stand. For developers, builders, and AI practitioners.</itunes:summary>
     <itunes:type>episodic</itunes:type>
+    <item>
+      <title>Ep 176: DeepMind launches an institute to study AGI's economic, scientific, and societal effects…</title>
+      <description>Models &amp; Agents
+&lt;b&gt;DeepMind launches an institute to study AGI's economic, scientific, and societal effects with 20-plus years of prior discussion behind it.&lt;/b&gt;
+
+&lt;b&gt;What You Need to Know:&lt;/b&gt; Demis Hassabis announced the DeepMind Institute to expand interdisciplinary AGI research. Simon Willison highlighted upcoming Claude Cowork features and the need for published tool descriptions. Several new arXiv papers introduce frameworks for language modeling, agent alignment, and medical applications that builders can examine now.
+
+Top Story
+Demis Hassabis announced the launch of the DeepMind Institute to expand interdisciplinary research on AGI's potential impact on the economy, science, and society. The institute builds on more than 20 years of discussions between Hassabis and Shane Legg about these topics. A short introduction to the institute's purpose is available at institute.deepmind.com. The effort aims to spur the discussions needed to get the next steps right in the AI era. Hassabis also received the Albert Medal from the RSA, noting that arts and humanities will be crucial in shaping the future society wants in the AGI era. He highlighted a fun discussion with Stephen Fry covering many new topics in the AGI context. Source: &lt;a href="https://x.com/demishassabis/status/2100230524383981702"&gt;x.com&lt;/a&gt;
+
+Model Updates
+&lt;b&gt;DANTINOX: A Unified Framework for Multi-Paradigm Language Modeling: arXiv NLP&lt;/b&gt;
+DANTINOX is an open-source JAX/Flax library with a single modular Transformer backbone that supports autoregressive decoding, discrete masked diffusion, and continuous flow-matching. Switching paradigms, attention mechanisms, or hardware topology requires only a configuration change while keeping the backbone, tokenizer, and training infrastructure consistent. The library enables controlled cross-paradigm comparisons within one API for training, streaming inference, and benchmarking. Each paradigm lives in a separate codebase in prior work, so measured differences often reflect implementation details rather than the paradigms themselves. The backbone architecture, initialization strategy, and training infrastructure remain fixed across all three generation methods. Source: &lt;a href="https://arxiv.org/abs/2609.17535"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Myovox: Reading Speech from the Muscles of the Face: arXiv NLP&lt;/b&gt;
+Myovox decodes open-vocabulary English text from 31-channel surface electromyography recorded from facial muscles during vocalized speech. It improves on the emg2speech General Corpus from a published 51.17 percent word error rate to 18.53 percent through bidirectional Conformer training and QLoRA-fine-tuned language model reranking. All test numbers use the authors' official 8500/760/400 sequential split. The approach first recovers open-vocabulary decode settings missing from the public release to reach a faithful 40.63 percent WER baseline. A second step replaces the causal encoder with a bidirectional Conformer trained by cross-modal distillation against WavLM-Large layer-9 features. Source: &lt;a href="https://arxiv.org/abs/2609.17548"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;PrimeScientist: Strategic Allocation of Research Effort in Autonomous Research: arXiv NLP&lt;/b&gt;
+PrimeScientist jointly determines research direction and resource investment across successive research attempts using an executable plan tree and adaptive MCTS-based allocation policy. Across 12 AI research tasks it improves average reward by 10.3 percent with 50.6 percent fewer research attempts than AutoResearch under the same resource budget. The system treats strategic research effort allocation as an explicit optimization target. It preserves competing plans and their outcomes across attempts in the plan tree representation. The policy balances exploration and exploitation using experimental feedback and remaining resources. Source: &lt;a href="https://arxiv.org/abs/2609.17846"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;SFT or RL for Tool-Calling Agents? A Controlled Study Across Data, Method, and Scale: arXiv NLP&lt;/b&gt;
+The study evaluates supervised fine-tuning with LoRA, reinforcement learning via GRPO, and SFT followed by GRPO across six Qwen3 models from 0.6B to 32B parameters. SFT with LoRA is the strongest in-distribution method in 15 out of 18 experimental settings. LoRA outperforms full-parameter fine-tuning by better preserving pretrained agentic behavior. On cross-dataset transfer, GRPO wins 29 out of 54 settings where training and test datasets differ, but its margin over SFT averages under one point. Dataset mixing gives consistently strong transfer while staying close to specialized in-distribution training. Source: &lt;a href="https://arxiv.org/abs/2609.17848"&gt;arxiv.org&lt;/a&gt;
+
+Agent &amp; Tool Developments
+&lt;b&gt;Think Before You Comfort: Reflective Cognitive Alignment for Protocol-Grounded Elderly Stimulation Agents: arXiv NLP&lt;/b&gt;
+The RCA framework models stimulation interactions as a sequential decision process with Protocol-Constrained Chain-of-Cognition and Inference-Time Value Alignment for safety and engagement goals. It improves protocol adherence, safety, and group facilitation over standard prompting baselines across six backbone LLMs. Code is available at github.com/jiangjyjy/RCA_Agent. The framework addresses data scarcity in privacy-sensitive low-resource languages such as Cantonese through STaR-CS style-transfer and role-conditioned synthesis. Evaluations used two independent judges on the synthesized multi-party dialogues. Source: &lt;a href="https://arxiv.org/abs/2609.17536"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;AfriSyCo: Measuring Assertive Framing, Verification, and Wording Sensitivity Around African-Language Content: arXiv NLP&lt;/b&gt;
+AfriSyCo analyzes 1415 turn-1-correct model-language-item observations from 100 source questions across seven open-weight checkpoints and six languages. Assertive framing increases target selection by 30.4 percentage points while verification decreases it by 17.4 points. The effect remains 34.8 points among observations correct after option reordering. The precommitted 2 by 2 factorial shows the assertive effect rises from 20.5 points without verification to 40.2 with it. Magnitude varies sharply by wording and checkpoint, with prompt-family effects spanning 20.1 to 42.5 points. Source: &lt;a href="https://arxiv.org/abs/2609.17853"&gt;arxiv.org&lt;/a&gt;
+
+Practical &amp; Community
+&lt;b&gt;MudawanSn: A Gold-Standard Wolof-Arabic Parallel Corpus for Machine Translation: arXiv NLP&lt;/b&gt;
+MudawanSn provides 1271 sentence-aligned pairs manually translated from Wolof into Modern Standard Arabic drawn from the MasakhaNER corpus. Fine-tuning AfriNLLB-12 on the corpus yields 7.76 BLEU and 30.72 chrF++ for Wolof-to-Arabic. The corpus is released under CC BY-NC on Hugging Face and GitHub. The source texts cover politics, society, religion, and sports in Senegalese news discourse. Benchmarking four machine translation systems shows that fine-tuning on MudawanSn yields substantial improvements in both translation directions. Source: &lt;a href="https://arxiv.org/abs/2609.17539"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;English Word Sense Disambiguation in 2026: When the Labels Become the Bottleneck: arXiv NLP&lt;/b&gt;
+lexEN is a human-adjudicated correction layer over Maru2022's ALL_NEW benchmark with 211 labels changed and 56 removed. Frontier LLMs converge near 95 percent accuracy on lexEN-v1 with the best at 95.6 percent. Glite LENS, a 298M bi-encoder trained on repaired labels, reaches 83.6 Raganato ALL and 87.4 Maru ALL_NEW. Relabeling SemCor with frontier models and retraining BEM, ESCHER, and ConSeC lifts them by several F1 points on untouched test sets. On hard items, fine-grained WordNet senses are partly ill-posed even for experts with three-reviewer Fleiss kappa at 0.537. Source: &lt;a href="https://arxiv.org/abs/2609.17554"&gt;arxiv.org&lt;/a&gt;
+
+Under the Hood: Relation Onset Before Entity Commitment in Factual Recall
+Language models retrieve relation-type information such as capital-of before they commit to specific entity answers such as France to Paris. The temporal asymmetry holds across four decoder-only models and eight prompt families, with relation onset preceding entity onset by 10 to 16 layers at a 0.4 threshold. Entity information is already present in early layers yet remains generation-controlling only after it routes to the final token. This separation means activation-steering interventions aimed at entity facts must target later layers than those used for relation facts. When the routing step is the bottleneck, simply increasing early-layer entity patching yields little additional accuracy. Teams debugging factual errors therefore benefit from measuring onset depth separately for relations and entities rather than treating recall as a single monolithic process. The ordering holds across all 16 model-threshold combinations for thresholds between 0.2 and 0.5. Entity-token patching succeeds at 90 to 100 percent in early layers even though commitment is deferred.
+
+Things to Try This Week
+• Examine the DANTINOX library to run controlled comparisons across autoregressive, diffusion, and flow-matching paradigms without changing tokenizers or training code.
+• Test the RCA agent framework on cognitive stimulation tasks if you work with low-resource dialogue data or elderly care applications.
+• Fine-tune AfriNLLB variants on the MudawanSn corpus to measure gains on Wolof-Arabic translation directions.
+• Run the lexEN benchmark harness to see how frontier models perform on corrected word-sense labels versus older gold standards.
+
+On the Horizon
+• Sam Altman indicated the main OpenAI launch originally planned for this week will arrive next week instead.
+• OpenAI plans to track model misalignment regularly after flagging new concerning AI behavior.
+• Further details on the DeepMind Institute's research agenda are expected in coming weeks.</description>
+      <guid isPermaLink="false">models-agents-video-ep176-20260917</guid>
+      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep176_20260917.mp4" length="187994265" type="video/mp4" />
+      <pubDate>Thu, 17 Sep 2026 08:00:00 +0000</pubDate>
+      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep176_20260917.jpg" />
+      <itunes:duration>09:08</itunes:duration>
+      <itunes:explicit>no</itunes:explicit>
+      <itunes:summary># Models &amp; Agents
+&gt; **DeepMind launches an institute to study AGI's economic, scientific, and societal effects with 20-plus years of prior discussion behind it.**
+
+**What You Need to Know:** Demis Hassabis announced the DeepMind Institute to expand interdisciplinary AGI research. Simon Willison highlighted upcoming Claude Cowork features and the need for published tool descriptions. Several new arXiv papers introduce frameworks for language modeling, agent alignment, and medical applications that builders can examine now.
+---
+### Top Story
+Demis Hassabis announced the launch of the DeepMind Institute to expand interdisciplinary research on AGI's potential impact on the economy, science, and society. The institute builds on more than 20 years of discussions between Hassabis and Shane Legg about these topics. A short introduction to the institute's purpose is available at institute.deepmind.com. The effort aims to spur the discussions needed to get the next steps right in the AI era. Hassabis also received the Albert Medal from the RSA, noting that arts and humanities will be crucial in shaping the future society wants in the AGI era. He highlighted a fun discussion with Stephen Fry covering many new topics in the AGI context. Source: [x.com](https://x.com/demishassabis/status/2100230524383981702)
+---
+### Model Updates
+**DANTINOX: A Unified Framework for Multi-Paradigm Language Modeling: arXiv NLP**
+DANTINOX is an open-source JAX/Flax library with a single modular Transformer backbone that supports autoregressive decoding, discrete masked diffusion, and continuous flow-matching. Switching paradigms, attention mechanisms, or hardware topology requires only a configuration change while keeping the backbone, tokenizer, and training infrastructure consistent. The library enables controlled cross-paradigm comparisons within one API for training, streaming inference, and benchmarking. Each paradigm lives in a separate codebase in prior work, so measured differences often reflect implementation details rather than the paradigms themselves. The backbone architecture, initialization strategy, and training infrastructure remain fixed across all three generation methods. Source: [arxiv.org](https://arxiv.org/abs/2609.17535)
+
+**Myovox: Reading Speech from the Muscles of the Face: arXiv NLP**
+Myovox decodes open-vocabulary English text from 31-channel surface electromyography recorded from facial muscles during vocalized speech. It improves on the emg2speech General Corpus from a published 51.17 percent word error rate to 18.53 percent through bidirectional Conformer training and QLoRA-fine-tuned language model reranking. All test numbers use the authors' official 8500/760/400 sequential split. The approach first recovers open-vocabulary decode settings missing from the public release to reach a faithful 40.63 percent WER baseline. A second step replaces the causal encoder with a bidirectional Conformer trained by cross-modal distillation against WavLM-Large layer-9 features. Source: [arxiv.org](https://arxiv.org/abs/2609.17548)
+
+**PrimeScientist: Strategic Allocation of Research Effort in Autonomous Research: arXiv NLP**
+PrimeScientist jointly determines research direction and resource investment across successive research attempts using an executable plan tree and adaptive MCTS-based allocation policy. Across 12 AI research tasks it improves average reward by 10.3 percent with 50.6 percent fewer research attempts than AutoResearch under the same resource budget. The system treats strategic research effort allocation as an explicit optimization target. It preserves competing plans and their outcomes across attempts in the plan tree representation. The policy balances exploration and exploitation using experimental feedback and remaining resources. Source: [arxiv.org](https://arxiv.org/abs/2609.17846)
+
+**SFT or RL for Tool-Calling Agents? A Controlled Study Across Data, Method, and Scale: arXiv NLP**
+The study evaluates supervised fine-tuning with LoRA, reinforcement learning via GRPO, and SFT followed by GRPO across six Qwen3 models from 0.6B to 32B parameters. SFT with LoRA is the strongest in-distribution method in 15 out of 18 experimental settings. LoRA outperforms full-parameter fine-tuning by better preserving pretrained agentic behavior. On cross-dataset transfer, GRPO wins 29 out of 54 settings where training and test datasets differ, but its margin over SFT averages under one point. Dataset mixing gives consistently strong transfer while staying close to specialized in-distribution training. Source: [arxiv.org](https://arxiv.org/abs/2609.17848)
+---
+### Agent &amp; Tool Developments
+**Think Before You Comfort: Reflective Cognitive Alignment for Protocol-Grounded Elderly Stimulation Agents: arXiv NLP**
+The RCA framework models stimulation interactions as a sequential decision process with Protocol-Constrained Chain-of-Cognition and Inference-Time Value Alignment for safety and engagement goals. It improves protocol adherence, safety, and group facilitation over standard prompting baselines across six backbone LLMs. Code is available at github.com/jiangjyjy/RCA_Agent. The framework addresses data scarcity in privacy-sensitive low-resource languages such as Cantonese through STaR-CS style-transfer and role-conditioned synthesis. Evaluations used two independent judges on the synthesized multi-party dialogues. Source: [arxiv.org](https://arxiv.org/abs/2609.17536)
+
+**AfriSyCo: Measuring Assertive Framing, Verification, and Wording Sensitivity Around African-Language Content: arXiv NLP**
+AfriSyCo analyzes 1415 turn-1-correct model-language-item observations from 100 source questions across seven open-weight checkpoints and six languages. Assertive framing increases target selection by 30.4 percentage points while verification decreases it by 17.4 points. The effect remains 34.8 points among observations correct after option reordering. The precommitted 2 by 2 factorial shows the assertive effect rises from 20.5 points without verification to 40.2 with it. Magnitude varies sharply by wording and checkpoint, with prompt-family effects spanning 20.1 to 42.5 points. Source: [arxiv.org](https://arxiv.org/abs/2609.17853)
+---
+### Practical &amp; Community
+**MudawanSn: A Gold-Standard Wolof-Arabic Parallel Corpus for Machine Translation: arXiv NLP**
+MudawanSn provides 1271 sentence-aligned pairs manually translated from Wolof into Modern Standard Arabic drawn from the MasakhaNER corpus. Fine-tuning AfriNLLB-12 on the corpus yields 7.76 BLEU and 30.72 chrF++ for Wolof-to-Arabic. The corpus is released under CC BY-NC on Hugging Face and GitHub. The source texts cover politics, society, religion, and sports in Senegalese news discourse. Benchmarking four machine translation systems shows that fine-tuning on MudawanSn yields substantial improvements in both translation directions. Source: [arxiv.org](https://arxiv.org/abs/2609.17539)
+
+**English Word Sense Disambiguation in 2026: When the Labels Become the Bottleneck: arXiv NLP**
+lexEN is a human-adjudicated correction layer over Maru2022's ALL_NEW benchmark with 211 labels changed and 56 removed. Frontier LLMs converge near 95 percent accuracy on lexEN-v1 with the best at 95.6 percent. Glite LENS, a 298M bi-encoder trained on repaired labels, reaches 83.6 Raganato ALL and 87.4 Maru ALL_NEW. Relabeling SemCor with frontier models and retraining BEM, ESCHER, and ConSeC lifts them by several F1 points on untouched test sets. On hard items, fine-grained WordNet senses are partly ill-posed even for experts with three-reviewer Fleiss kappa at 0.537. Source: [arxiv.org](https://arxiv.org/abs/2609.17554)
+---
+### Under the Hood: Relation Onset Before Entity Commitment in Factual Recall
+Language models retrieve relation-type information such as capital-of before they commit to specific entity answers such as France to Paris. The temporal asymmetry holds across four decoder-only models and eight prompt families, with relation onset preceding entity onset by 10 to 16 layers at a 0.4 threshold. Entity information is already present in early layers yet remains generation-controlling only after it routes to the final token. This separation means activation-steering interventions aimed at entity facts must target later layers than those used for relation facts. When the routing step is the bottleneck, simply increasing early-layer entity patching yields little additional accuracy. Teams debugging factual errors therefore benefit from measuring onset depth separately for relations and entities rather than treating recall as a single monolithic process. The ordering holds across all 16 model-threshold combinations for thresholds between 0.2 and 0.5. Entity-token patching succeeds at 90 to 100 percent in early layers even though commitment is deferred.
+---
+### Things to Try This Week
+- Examine the DANTINOX library to run controlled comparisons across autoregressive, diffusion, and flow-matching paradigms without changing tokenizers or training code.
+- Test the RCA agent framework on cognitive stimulation tasks if you work with low-resource dialogue data or elderly care applications.
+- Fine-tune AfriNLLB variants on the MudawanSn corpus to measure gains on Wolof-Arabic translation directions.
+- Run the lexEN benchmark harness to see how frontier models perform on corrected word-sense labels versus older gold standards.
+---
+### On the Horizon
+- Sam Altman indicated the main OpenAI launch originally planned for this week will arrive next week instead.
+- OpenAI plans to track model misalignment regularly after flagging new concerning AI behavior.
+- Further details on the DeepMind Institute's research agenda are expected in coming weeks.
+</itunes:summary>
+      <itunes:episode>176</itunes:episode>
+      <itunes:title>Ep 176: DeepMind launches an institute to study AGI's economic, scientific, and societal effects…</itunes:title>
+      <itunes:episodeType>full</itunes:episodeType>
+    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep176_20260917_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep176.json" type="application/json+chapters" /></item>
     <item>
       <title>Ep 175: Autonomous AI agents caused Spain's first reported data breach, exposing a new class of…</title>
       <description>Models &amp; Agents
@@ -3559,135 +3668,5 @@ Everyone treats KV-cache eviction as a simple “keep the most attended tokens�
       <itunes:title>Ep 147: OpenAI is testing private safety processing that keeps frontier-model interactions off…</itunes:title>
       <itunes:episodeType>full</itunes:episodeType>
     <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep147_20260820_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep147.json" type="application/json+chapters" /></item>
-    <item>
-      <title>Ep 146: Claude designed novel protein binders from scratch for 14 of 15 targets, with 22-35%…</title>
-      <description>Models &amp; Agents
-&lt;b&gt;Claude designed novel protein binders from scratch for 14 of 15 targets, with 22-35% success rates that beat the field's typical 10-15%.&lt;/b&gt;
-
-&lt;b&gt;What You Need to Know:&lt;/b&gt; Anthropic demonstrated Claude autonomously creating functional protein binders that were then built and validated by Adaptyv Bio and Twist Bioscience. Open-weight releases from Ornith and inclusionAI add new dense and MoE options for local use. OpenAI paused frontier RL training for two weeks to strengthen security and monitoring before resuming larger runs.
-
-DEPTH OVER BREADTH (news items)
-
-Top Story
-Anthropic tested whether Claude could perform de novo protein binder design using a prompt written by a human expert. The model produced candidate binders against 14 out of 15 targets. Independent labs synthesized and tested the designs, confirming that 22-35% of them bound successfully depending on the experimental setup. Some binders showed several times tighter affinity than the best previously published de novo examples. Protein binders represent only the first step toward drug development, not drugs themselves, yet the result establishes a concrete foundation for further Claude work on full end-to-end molecule design pipelines. Anthropic also reiterated plans to launch a scientist access program and noted that Opus 5 remains its most capable model for life-science research. This builds on yesterday's frontier model coverage by showing concrete capability gains in a specialized scientific domain. Source: &lt;a href="https://x.com/AnthropicAI/status/2089842387845804246"&gt;x.com&lt;/a&gt;
-
-Model Updates
-&lt;b&gt;Ornith-1.5 family (9B dense, 35B MoE, 397B MoE): Ornith AI&lt;/b&gt;
-The new open-source suite was trained with self-improving strategies and reports 86.1 on Terminal-Bench 2.1, 86 on SWE-Bench verified, 65.1 on SWE-Bench pro, 79.6 on the multilingual variant, 56 on DeepSWE, 44.6 on HLE, 81.4 on ClawEval, and 71.2 on Tool Decathlon. These scores place the largest variant in the same range as Claude Opus 4.8 on reasoning, agentic, and coding tasks. The family spans a 9B dense model, a 35B MoE, and a 397B MoE with 56 active parameters in the DeepSWE configuration. Checkpoints are available on Hugging Face under the Ornith AI collection. Builders working on long-horizon coding or agentic benchmarks can download the 35B MoE variant to test self-improving training effects directly against Qwen3.8-27B baselines. Source: &lt;a href="https://www.reddit.com/r/LocalLLaMA/comments/1vsou3a/ornith15_397b_deepswe_56_35ba3b_9b/"&gt;reddit.com&lt;/a&gt;
-
-&lt;b&gt;Ling-3.0-tiny-base and Ling-3.0-flash-base checkpoints: inclusionAI&lt;/b&gt;
-Six base-model checkpoints covering pretrained, mid-trained, and WSM-merged stages were released for the 7.9B-active (tiny) and 124B-total / 5.1B-active (flash) models. None have received post-training, giving researchers clean starting points for continued pre-training, fine-tuning, and MoE studies. The tiny-base model delivers performance comparable or superior to Ling-2.5-mini-base on most benchmarks despite having only half the total parameters, with particularly strong coding results. The flash variant shows strong results on coding, reasoning, and long-context tasks relative to models two to three times larger. The WSM merging technique replaces traditional LR decay, enabling offline exploration of different decay strategies on the shared training recipe. Researchers can validate strategies first on the tiny-base checkpoint before scaling to flash-base. Source: &lt;a href="https://www.reddit.com/r/LocalLLaMA/comments/1vsqfmj/antlingve_opensourced_6_base_model_checkpoints/"&gt;reddit.com&lt;/a&gt;
-
-&lt;b&gt;Kimi K3 1M-token context window evaluation: Towards Data Science&lt;/b&gt;
-A controlled head-to-head compared a full 127k-token prompt against a top-5 RAG pipeline on the same 12 questions using identical system prompts and the same model. Blind grading measured correctness, completeness, and grounding while tracking cost and latency differences. The experiment isolates the effect of providing the entire context window versus retrieval-augmented generation on answer quality. Results highlight tradeoffs in token cost, response latency, and grounding accuracy when the model can attend to 127,000 tokens directly. Developers handling large internal document sets can replicate the exact 12-question rubric to benchmark their own RAG pipelines against full-context prompting. Source: &lt;a href="https://towardsdatascience.com/kimi-k3s-1m-token-context-window-vs-rag-cost-latency-and-answer-quality/"&gt;towardsdatascience.com&lt;/a&gt;
-
-&lt;b&gt;Qwen3.8-27B Dynamic v3 Unsloth GGUFs: Unsloth&lt;/b&gt;
-New 10% higher-accuracy GGUFs were released for the 27B model along with 1-bit quants that retain 77% accuracy and run on 8GB RAM. The update uses post-training quantization only, with the imatrix file published for community reuse; no QAT or QAD was applied. The team also released an updated Unsloth Desktop build introducing auto compaction and external API tool calling support. Earlier community concerns about broken quants were addressed as a non-issue—the changes were purely accuracy improvements. The imatrix calibration dataset and overfitting analysis are available for researchers creating further fine-tunes of Qwen3.8. Source: &lt;a href="https://www.reddit.com/r/LocalLLaMA/comments/1vsr67c/introducing_qwen3827b_dynamic_v3_unsloth_ggufs/"&gt;reddit.com&lt;/a&gt;
-
-Agent &amp; Tool Developments
-&lt;b&gt;Droidrun Android automation: Trend Hunter&lt;/b&gt;
-The new tool gives AI agents direct control over Android apps and devices, extending agent reach beyond browser and desktop environments. It targets mobile-specific workflows that current desktop-focused agents cannot reach, such as in-app navigation and device-level automation on Android. Early demonstrations focus on giving agents the same level of control previously limited to mobile ChatGPT apps. The release addresses a gap where remote machine control remains unavailable in ChatGPT desktop and web clients. Source: &lt;a href="https://www.trendhunter.com/trends/droidrun"&gt;trendhunter.com&lt;/a&gt;
-
-&lt;b&gt;HoneyBook Claude connector: artificialintelligence-news.com&lt;/b&gt;
-HoneyBook added a native Claude connector that lets small businesses run autonomous agents for client management and operations. The integration focuses on streamlining repetitive service-business tasks without requiring custom infrastructure or additional orchestration layers. Small merchants and solopreneurs can now connect their existing HoneyBook workflows directly to Claude for agent-driven automation. The connector emphasizes production use cases in regulated or compliance-sensitive small-business environments. Source: &lt;a href="https://www.artificialintelligence-news.com/news/honeybook-bets-agentic-ai-small-business-operations-claude-connector/"&gt;artificialintelligence-news.com&lt;/a&gt;
-
-&lt;b&gt;ForwardLane agentic AI scaling program: FinTech Global&lt;/b&gt;
-ForwardLane is helping financial firms move agentic AI past pilot stage by providing production-grade orchestration and compliance layers. The work targets repeatable deployment patterns for regulated environments where auditability and policy enforcement are required. Financial institutions receive concrete guidance on moving from isolated experiments to scaled agent populations that respect data residency and oversight constraints. The program focuses on the orchestration and monitoring gaps that typically stall agent projects after initial pilots. Source: &lt;a href="https://fintech.global/2026/08/19/beyond-ai-pilots-how-forwardlane-is-helping-financial-firms-scale-agentic-ai/"&gt;fintech.global&lt;/a&gt;
-
-&lt;b&gt;Apodex TRACES benchmark: PR Newswire&lt;/b&gt;
-Apodex released TRACES, a new benchmark specifically designed to measure AI performance on scientific discovery tasks. The benchmark aims to provide standardized evaluation for models operating in research workflows where success metrics differ from general coding or reasoning suites. It fills a gap between existing agent benchmarks and the specialized requirements of hypothesis generation, experimental design, and result interpretation in life sciences. Researchers can now compare model families on discovery-oriented tasks using a single public leaderboard. Source: &lt;a href="https://www.prnewswire.com/news-releases/apodex-launches-traces-a-benchmark-for-scientific-discovery-302855461.html"&gt;prnewswire.com&lt;/a&gt;
-
-Practical &amp; Community
-&lt;b&gt;Beijing AI bar DeepSeek experiment: Tom's Hardware&lt;/b&gt;
-A Beijing bar is offering unlimited free DeepSeek coding tokens with every $1.50 drink, running on two NVIDIA DGX systems. The owner reports the promotion is losing money but continues as a marketing draw that attracts developers and AI enthusiasts. The setup uses the bar's DGX infrastructure to serve tokens on-site, creating a physical location where local model experimentation is subsidized by beverage sales. The experiment highlights how open-weight model access costs can be offset through unconventional community venues. Source: &lt;a href="https://www.tomshardware.com/tech-industry/artificial-intelligence/beijing-ai-bar-pours-pints-of-foam-with-free-deepseek-tokens-served-from-two-nvidia-dgx-sparks"&gt;tomshardware.com&lt;/a&gt;
-
-&lt;b&gt;llama.cpp --n-cpu-ffn option PR: r/LocalLLaMA&lt;/b&gt;
-A new pull request adds CPU offload controls for dense-model FFN layers, mirroring the existing --n-cpu-moe flags. Early testers report it enables Qwen3.8-27B Q4_K_M at 130k context on 16GB VRAM systems. The change provides fine-grained control over which feed-forward layers stay on GPU versus CPU for dense architectures that previously lacked equivalent flexibility to MoE models. Community discussion notes that block 64 (MTP) should remain on GPU when using speculative decoding. The PR is under active review and expected to land soon in the main llama.cpp repository. Source: &lt;a href="https://www.reddit.com/r/LocalLLaMA/comments/1vsjz2n/open_pr_llama_add_ncpuffn_option_by_john194_pull/"&gt;reddit.com&lt;/a&gt;
-
-&lt;b&gt;Intermediate-token analysis: r/LocalLLaMA&lt;/b&gt;
-A recent paper argues that intermediate “thinking” tokens function as prompt augmentation rather than human-like reasoning traces. Models trained on corrupted traces still achieve comparable accuracy, and trace length shows little correlation with problem difficulty. The study finds no consistent link between trace validity and solution correctness, and reinforcement learning can improve final accuracy while sometimes decreasing trace validity. These results suggest that forcing models to produce human-interpretable reasoning steps may be unnecessary for performance gains. The paper is available at openreview.net/forum?id=gDE7YcRC3F. Source: &lt;a href="https://www.reddit.com/r/LocalLLaMA/comments/1vsjcf7/stop_anthropomorphisizing_intermediate_tokens/"&gt;reddit.com&lt;/a&gt;
-
-Under the Hood: Agent Population Scaling Effects
-Everyone talks about “more agents” as if simply adding instances will produce better collective behavior. In practice, the transition from single agents to populations introduces coordination overhead, communication topology choices, and emergent failure modes that are not visible at small scale. At low agent counts, simple voting or sequential hand-off works because conflicts remain rare and shared state stays consistent with minimal synchronization. Once dozens of agents operate concurrently on shared state, message volume grows quadratically unless explicit summarization or hierarchical routing is added to keep each agent’s context window manageable. Experiments show that beyond roughly 20–30 agents the dominant cost shifts from individual inference to maintaining consistent world models across the group, often requiring dedicated memory or consensus layers. The practical decision point is whether your workflow benefits from parallel exploration (favoring loose coupling and periodic merge steps) or requires tight consensus (favoring explicit coordination layers and shared memory buses). Teams that skip this analysis usually hit either redundant work or deadlock once population size exceeds the single-agent regime they originally tested. When scaling past 30 agents, start by measuring message volume and world-model divergence before adding more instances; the first bottleneck is almost always coordination rather than raw compute.
-
-Things to Try This Week
-• Try the Ornith-1.5 35B MoE checkpoint on SWE-Bench-style tasks to see how self-improving training affects long-horizon coding compared with Qwen3.8-27B.
-• Run the new Unsloth Dynamic v3 Qwen3.8-27B GGUF on an 8GB system and measure whether the 1-bit quant preserves enough accuracy for your local agent loops.
-• Test Droidrun on a mobile app workflow you currently handle with browser agents to quantify the reduction in context switching.
-• Compare Kimi K3 full-context prompting against your existing RAG stack on a 100k+ token internal document set using the same grading rubric.
-
-On the Horizon
-• OpenAI expects to resume larger frontier RL runs once the two-week security hardening period completes and smaller-scale evaluations validate the new isolation and monitoring controls.
-• Anthropic plans to share details soon on the scientist access program for its most capable models.
-• ALL IN 2026 will feature sessions with leaders from Cohere, Mistral AI, NVIDIA, and OpenAI on production agent deployments.</description>
-      <guid isPermaLink="false">models-agents-video-ep146-20260819</guid>
-      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep146_20260819.mp4" length="300540794" type="video/mp4" />
-      <pubDate>Wed, 19 Aug 2026 08:00:00 +0000</pubDate>
-      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep146_20260819.jpg" />
-      <itunes:duration>11:59</itunes:duration>
-      <itunes:explicit>no</itunes:explicit>
-      <itunes:summary># Models &amp; Agents
-&gt; **Claude designed novel protein binders from scratch for 14 of 15 targets, with 22-35% success rates that beat the field's typical 10-15%.**
-
-**What You Need to Know:** Anthropic demonstrated Claude autonomously creating functional protein binders that were then built and validated by Adaptyv Bio and Twist Bioscience. Open-weight releases from Ornith and inclusionAI add new dense and MoE options for local use. OpenAI paused frontier RL training for two weeks to strengthen security and monitoring before resuming larger runs.
----
-### DEPTH OVER BREADTH (news items)
-
-### Top Story
-Anthropic tested whether Claude could perform de novo protein binder design using a prompt written by a human expert. The model produced candidate binders against 14 out of 15 targets. Independent labs synthesized and tested the designs, confirming that 22-35% of them bound successfully depending on the experimental setup. Some binders showed several times tighter affinity than the best previously published de novo examples. Protein binders represent only the first step toward drug development, not drugs themselves, yet the result establishes a concrete foundation for further Claude work on full end-to-end molecule design pipelines. Anthropic also reiterated plans to launch a scientist access program and noted that Opus 5 remains its most capable model for life-science research. This builds on yesterday's frontier model coverage by showing concrete capability gains in a specialized scientific domain. Source: [x.com](https://x.com/AnthropicAI/status/2089842387845804246)
----
-### Model Updates
-**Ornith-1.5 family (9B dense, 35B MoE, 397B MoE): Ornith AI**
-The new open-source suite was trained with self-improving strategies and reports 86.1 on Terminal-Bench 2.1, 86 on SWE-Bench verified, 65.1 on SWE-Bench pro, 79.6 on the multilingual variant, 56 on DeepSWE, 44.6 on HLE, 81.4 on ClawEval, and 71.2 on Tool Decathlon. These scores place the largest variant in the same range as Claude Opus 4.8 on reasoning, agentic, and coding tasks. The family spans a 9B dense model, a 35B MoE, and a 397B MoE with 56 active parameters in the DeepSWE configuration. Checkpoints are available on Hugging Face under the Ornith AI collection. Builders working on long-horizon coding or agentic benchmarks can download the 35B MoE variant to test self-improving training effects directly against Qwen3.8-27B baselines. Source: [reddit.com](https://www.reddit.com/r/LocalLLaMA/comments/1vsou3a/ornith15_397b_deepswe_56_35ba3b_9b/)
-
-**Ling-3.0-tiny-base and Ling-3.0-flash-base checkpoints: inclusionAI**
-Six base-model checkpoints covering pretrained, mid-trained, and WSM-merged stages were released for the 7.9B-active (tiny) and 124B-total / 5.1B-active (flash) models. None have received post-training, giving researchers clean starting points for continued pre-training, fine-tuning, and MoE studies. The tiny-base model delivers performance comparable or superior to Ling-2.5-mini-base on most benchmarks despite having only half the total parameters, with particularly strong coding results. The flash variant shows strong results on coding, reasoning, and long-context tasks relative to models two to three times larger. The WSM merging technique replaces traditional LR decay, enabling offline exploration of different decay strategies on the shared training recipe. Researchers can validate strategies first on the tiny-base checkpoint before scaling to flash-base. Source: [reddit.com](https://www.reddit.com/r/LocalLLaMA/comments/1vsqfmj/antlingve_opensourced_6_base_model_checkpoints/)
-
-**Kimi K3 1M-token context window evaluation: Towards Data Science**
-A controlled head-to-head compared a full 127k-token prompt against a top-5 RAG pipeline on the same 12 questions using identical system prompts and the same model. Blind grading measured correctness, completeness, and grounding while tracking cost and latency differences. The experiment isolates the effect of providing the entire context window versus retrieval-augmented generation on answer quality. Results highlight tradeoffs in token cost, response latency, and grounding accuracy when the model can attend to 127,000 tokens directly. Developers handling large internal document sets can replicate the exact 12-question rubric to benchmark their own RAG pipelines against full-context prompting. Source: [towardsdatascience.com](https://towardsdatascience.com/kimi-k3s-1m-token-context-window-vs-rag-cost-latency-and-answer-quality/)
-
-**Qwen3.8-27B Dynamic v3 Unsloth GGUFs: Unsloth**
-New 10% higher-accuracy GGUFs were released for the 27B model along with 1-bit quants that retain 77% accuracy and run on 8GB RAM. The update uses post-training quantization only, with the imatrix file published for community reuse; no QAT or QAD was applied. The team also released an updated Unsloth Desktop build introducing auto compaction and external API tool calling support. Earlier community concerns about broken quants were addressed as a non-issue—the changes were purely accuracy improvements. The imatrix calibration dataset and overfitting analysis are available for researchers creating further fine-tunes of Qwen3.8. Source: [reddit.com](https://www.reddit.com/r/LocalLLaMA/comments/1vsr67c/introducing_qwen3827b_dynamic_v3_unsloth_ggufs/)
----
-### Agent &amp; Tool Developments
-**Droidrun Android automation: Trend Hunter**
-The new tool gives AI agents direct control over Android apps and devices, extending agent reach beyond browser and desktop environments. It targets mobile-specific workflows that current desktop-focused agents cannot reach, such as in-app navigation and device-level automation on Android. Early demonstrations focus on giving agents the same level of control previously limited to mobile ChatGPT apps. The release addresses a gap where remote machine control remains unavailable in ChatGPT desktop and web clients. Source: [trendhunter.com](https://www.trendhunter.com/trends/droidrun)
-
-**HoneyBook Claude connector: artificialintelligence-news.com**
-HoneyBook added a native Claude connector that lets small businesses run autonomous agents for client management and operations. The integration focuses on streamlining repetitive service-business tasks without requiring custom infrastructure or additional orchestration layers. Small merchants and solopreneurs can now connect their existing HoneyBook workflows directly to Claude for agent-driven automation. The connector emphasizes production use cases in regulated or compliance-sensitive small-business environments. Source: [artificialintelligence-news.com](https://www.artificialintelligence-news.com/news/honeybook-bets-agentic-ai-small-business-operations-claude-connector/)
-
-**ForwardLane agentic AI scaling program: FinTech Global**
-ForwardLane is helping financial firms move agentic AI past pilot stage by providing production-grade orchestration and compliance layers. The work targets repeatable deployment patterns for regulated environments where auditability and policy enforcement are required. Financial institutions receive concrete guidance on moving from isolated experiments to scaled agent populations that respect data residency and oversight constraints. The program focuses on the orchestration and monitoring gaps that typically stall agent projects after initial pilots. Source: [fintech.global](https://fintech.global/2026/08/19/beyond-ai-pilots-how-forwardlane-is-helping-financial-firms-scale-agentic-ai/)
-
-**Apodex TRACES benchmark: PR Newswire**
-Apodex released TRACES, a new benchmark specifically designed to measure AI performance on scientific discovery tasks. The benchmark aims to provide standardized evaluation for models operating in research workflows where success metrics differ from general coding or reasoning suites. It fills a gap between existing agent benchmarks and the specialized requirements of hypothesis generation, experimental design, and result interpretation in life sciences. Researchers can now compare model families on discovery-oriented tasks using a single public leaderboard. Source: [prnewswire.com](https://www.prnewswire.com/news-releases/apodex-launches-traces-a-benchmark-for-scientific-discovery-302855461.html)
----
-### Practical &amp; Community
-**Beijing AI bar DeepSeek experiment: Tom's Hardware**
-A Beijing bar is offering unlimited free DeepSeek coding tokens with every $1.50 drink, running on two NVIDIA DGX systems. The owner reports the promotion is losing money but continues as a marketing draw that attracts developers and AI enthusiasts. The setup uses the bar's DGX infrastructure to serve tokens on-site, creating a physical location where local model experimentation is subsidized by beverage sales. The experiment highlights how open-weight model access costs can be offset through unconventional community venues. Source: [tomshardware.com](https://www.tomshardware.com/tech-industry/artificial-intelligence/beijing-ai-bar-pours-pints-of-foam-with-free-deepseek-tokens-served-from-two-nvidia-dgx-sparks)
-
-**llama.cpp --n-cpu-ffn option PR: r/LocalLLaMA**
-A new pull request adds CPU offload controls for dense-model FFN layers, mirroring the existing --n-cpu-moe flags. Early testers report it enables Qwen3.8-27B Q4_K_M at 130k context on 16GB VRAM systems. The change provides fine-grained control over which feed-forward layers stay on GPU versus CPU for dense architectures that previously lacked equivalent flexibility to MoE models. Community discussion notes that block 64 (MTP) should remain on GPU when using speculative decoding. The PR is under active review and expected to land soon in the main llama.cpp repository. Source: [reddit.com](https://www.reddit.com/r/LocalLLaMA/comments/1vsjz2n/open_pr_llama_add_ncpuffn_option_by_john194_pull/)
-
-**Intermediate-token analysis: r/LocalLLaMA**
-A recent paper argues that intermediate “thinking” tokens function as prompt augmentation rather than human-like reasoning traces. Models trained on corrupted traces still achieve comparable accuracy, and trace length shows little correlation with problem difficulty. The study finds no consistent link between trace validity and solution correctness, and reinforcement learning can improve final accuracy while sometimes decreasing trace validity. These results suggest that forcing models to produce human-interpretable reasoning steps may be unnecessary for performance gains. The paper is available at openreview.net/forum?id=gDE7YcRC3F. Source: [reddit.com](https://www.reddit.com/r/LocalLLaMA/comments/1vsjcf7/stop_anthropomorphisizing_intermediate_tokens/)
----
-### Under the Hood: Agent Population Scaling Effects
-Everyone talks about “more agents” as if simply adding instances will produce better collective behavior. In practice, the transition from single agents to populations introduces coordination overhead, communication topology choices, and emergent failure modes that are not visible at small scale. At low agent counts, simple voting or sequential hand-off works because conflicts remain rare and shared state stays consistent with minimal synchronization. Once dozens of agents operate concurrently on shared state, message volume grows quadratically unless explicit summarization or hierarchical routing is added to keep each agent’s context window manageable. Experiments show that beyond roughly 20–30 agents the dominant cost shifts from individual inference to maintaining consistent world models across the group, often requiring dedicated memory or consensus layers. The practical decision point is whether your workflow benefits from parallel exploration (favoring loose coupling and periodic merge steps) or requires tight consensus (favoring explicit coordination layers and shared memory buses). Teams that skip this analysis usually hit either redundant work or deadlock once population size exceeds the single-agent regime they originally tested. When scaling past 30 agents, start by measuring message volume and world-model divergence before adding more instances; the first bottleneck is almost always coordination rather than raw compute.
----
-### Things to Try This Week
-- Try the Ornith-1.5 35B MoE checkpoint on SWE-Bench-style tasks to see how self-improving training affects long-horizon coding compared with Qwen3.8-27B.
-- Run the new Unsloth Dynamic v3 Qwen3.8-27B GGUF on an 8GB system and measure whether the 1-bit quant preserves enough accuracy for your local agent loops.
-- Test Droidrun on a mobile app workflow you currently handle with browser agents to quantify the reduction in context switching.
-- Compare Kimi K3 full-context prompting against your existing RAG stack on a 100k+ token internal document set using the same grading rubric.
----
-### On the Horizon
-- OpenAI expects to resume larger frontier RL runs once the two-week security hardening period completes and smaller-scale evaluations validate the new isolation and monitoring controls.
-- Anthropic plans to share details soon on the scientist access program for its most capable models.
-- ALL IN 2026 will feature sessions with leaders from Cohere, Mistral AI, NVIDIA, and OpenAI on production agent deployments.</itunes:summary>
-      <itunes:episode>146</itunes:episode>
-      <itunes:title>Ep 146: Claude designed novel protein binders from scratch for 14 of 15 targets, with 22-35%…</itunes:title>
-      <itunes:episodeType>full</itunes:episodeType>
-    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep146_20260819_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep146.json" type="application/json+chapters" /></item>
   <podcast:locked owner="patrick@planetterrian.com">yes</podcast:locked><itunes:keywords>ai, llm, machine learning, openai, anthropic, agents, claude, gpt, ai news</itunes:keywords></channel>
 </rss>
