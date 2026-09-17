@@ -34,6 +34,11 @@ def _pyfn(name: str, src: str) -> str:
     return rest[:end]
 
 
+def _flat(text: str) -> str:
+    """Prompt wording, with the line-wrapping taken out of the comparison."""
+    return " ".join(text.split())
+
+
 class TestSheWaitsForTheRoom:
     def test_the_guest_gets_a_beat_before_she_speaks(self):
         assert "GUEST_SETTLE_MS = 7 * 1000" in SCENARIO
@@ -112,17 +117,20 @@ class TestHowSheSounds:
 class TestWhatSheSaysAtTheTop:
     def test_she_introduces_herself_and_the_show(self):
         assert "HOW TO OPEN" in PROMPT
-        assert "I'm the AI who hosts this show" in PROMPT
-        assert "first podcast hosted and run end to end by an\n   AI" in PROMPT
+        assert "I'm Mira. I'm the AI who hosts {{show_name}}." in PROMPT
+        assert ("first podcast hosted and run end to end by an AI"
+                in _flat(PROMPT))
 
     def test_the_claim_is_made_once_and_not_as_a_boast(self):
-        assert "as a fact about the show rather than a" in PROMPT
-        assert "do not repeat it later in the conversation" in PROMPT
+        flat = _flat(PROMPT)
+        assert "Say it once, as a fact rather than a boast, and never again" in flat
+        assert "a host who keeps mentioning it sounds like a press release" in flat
 
     def test_she_says_how_the_hour_will_go(self):
-        assert "roughly {{planned_minutes}} minutes" in PROMPT
-        assert "approve it before anyone else does" in PROMPT
-        assert "nothing\n   is live" in PROMPT
+        flat = _flat(PROMPT)
+        assert "roughly {{planned_minutes}} minutes" in flat
+        assert "approve the episode before anyone else does" in flat
+        assert "nothing is live" in flat
 
     def test_the_co_host_is_introduced_only_when_there_is_one(self):
         assert "{{cohost_intro_step}}" in PROMPT
@@ -408,27 +416,33 @@ class TestTheCraftRules:
                  / "cohost_craft.txt").read_text(encoding="utf-8"))
 
     def test_yielding_is_separated_from_waiting(self):
-        assert "YIELD THE MOMENT YOU HEAR THEM" in self.PROMPT
-        assert "mid-sentence, mid-word" in self.PROMPT
-        assert "not the same as the one above" in self.PROMPT
+        flat = _flat(self.PROMPT)
+        # Waiting: the end of the thought, not the pause for breath ...
+        assert "LET THEM FINISH. Wait for the end of the thought" in flat
+        # ... and yielding: stop the moment the guest starts, mid-word.
+        assert "yield the moment you hear them" in flat
+        assert "stop mid-word, do not finish your thought" in flat
 
     def test_a_question_is_asked_once(self):
-        assert "ONE QUESTION PER TURN, ASKED ONCE" in self.PROMPT
-        assert "three times in\n  twelve seconds" in self.PROMPT
-        assert "The discomfort is yours to hold, not theirs to fill" in self.PROMPT
+        flat = _flat(self.PROMPT)
+        assert "ONE question per turn, asked once" in flat
+        assert "never re-ask a question that has not been answered yet" in flat
+        assert "The discomfort is yours to hold, not theirs to fill" in flat
 
     def test_the_close_waits_for_the_answer(self):
-        assert "THE CLOSE IS NOT A TIMER" in self.PROMPT
-        assert "Let the answer land" in self.PROMPT
-        assert "anything they wanted to say" in self.PROMPT
+        flat = _flat(self.PROMPT)
+        assert "permission to close at the next natural break" in flat
+        assert "not an instruction to talk over the answer in progress" in flat
+        assert "let it land, then close" in flat
 
     def test_the_closing_round_is_a_tool_not_a_ritual(self):
-        assert "THE CLOSING ROUND is yours to shape" in self.PROMPT
-        assert "a good last ten minutes\nbeats a lightning round" in self.PROMPT
+        flat = _flat(self.PROMPT)
+        assert "THE CLOSING ROUND is yours to shape" in flat
+        assert "Skip it when the conversation is somewhere worth staying" in flat
         # three uses: a gear change, covering ground fast, or getting personal
-        assert "cover ground fast when time got away" in self.PROMPT
-        assert "The personal set" in self.PROMPT
-        assert "What was it like being interviewed by an AI" in self.PROMPT
+        assert "cover ground fast when time got away from you" in flat
+        assert "The personal set" in flat
+        assert "What was it like being interviewed by an AI" in flat
 
     def test_the_co_host_is_a_model_to_learn_from(self):
         assert "LEARN FROM YOUR CO-HOST" in self.PROMPT
