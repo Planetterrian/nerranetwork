@@ -81,7 +81,9 @@ class TestGateOneNotification:
 
     def test_slack_and_email_both_carry_a_tokened_link(self):
         assert "package_review_token(pkg['id'])" in POST
-        assert 'f"{REVIEW_BASE}/{pkg[\'id\']}?token=' in POST
+        # c6a276178: the token rides in the PATH — a query string's "=" was
+        # being eaten between the send and Gmail.
+        assert 'f"{REVIEW_BASE}/{pkg[\'id\']}/{package_review_token(pkg[\'id\'])}"' in POST
         assert "send_email(\n            OPERATOR_EMAIL," in POST
         assert "notify_operator(show.slack(" in POST
 

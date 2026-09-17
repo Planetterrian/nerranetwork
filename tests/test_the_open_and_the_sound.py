@@ -269,7 +269,10 @@ class TestTheCoHostAlsoRejoins:
         assert "if seconds > best_seconds" in body
 
     def test_the_pipeline_uses_it(self):
-        assert 'host_raw = longest_leg_recording(run, "host", workdir)' in self.SRC
+        # ae127b98d: every leg is fetched and placed on the room's clock;
+        # the first leg is the host_raw the rest of the pipeline expects.
+        assert 'host_legs = leg_recordings(run, "host", workdir)' in self.SRC
+        assert "host_raw = host_legs[0] if host_legs else None" in self.SRC
 
     def test_a_missing_leg_is_skipped_not_fatal(self):
         body = _pyfn("longest_leg_recording", self.SRC)
