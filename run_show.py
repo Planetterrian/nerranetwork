@@ -2305,14 +2305,30 @@ def run(args: argparse.Namespace) -> None:
                         _si_fetch_cache[url] = _si_mod.default_fetch(url)
                     return _si_fetch_cache[url]
 
+                # The fetched copy of every source this run already holds
+                # (feed bodies, teasers, X post text) verifies a claim
+                # before any HTTP: a publisher that 403s the runner or an
+                # x.com link cannot fail a claim whose evidence the fetch
+                # stage supplied (Sep 17 2026 — Planetterrian lost 1-3
+                # true sentences a day to exactly that).
+                try:
+                    _si_local_texts = _si_mod.build_local_texts(
+                        articles if 'articles' in locals() else [])
+                except Exception as _lt_exc:  # noqa: BLE001
+                    logger.warning("fetched-copy corpus unavailable: %s", _lt_exc)
+                    _si_local_texts = {}
+
                 with metrics.stage("source_integrity_gate"):
                     _si_gate = _si_mod.run_source_integrity_gate(
                         x_thread, _si_claims,
                         fetch=_si_fetch,
                         verify_sources=_si_verify,
+                        local_texts=_si_local_texts,
                     )
                 metrics.record("source_integrity_claims", _si_gate.claims_total)
                 metrics.record("source_integrity_verified", _si_gate.claims_verified)
+                metrics.record("source_integrity_verified_from_fetched",
+                               _si_gate.verified_from_fetched)
                 metrics.record(
                     "source_integrity_failed_verifications",
                     len(_si_gate.failed_verifications))
@@ -2361,7 +2377,7 @@ def run(args: argparse.Namespace) -> None:
 
                     _si_gate, _si_claims = _si_mod.attempt_claim_repair(
                         x_thread, _si_gate, _si_claims or [], _repair_llm,
-                        fetch=_si_fetch)
+                        fetch=_si_fetch, local_texts=_si_local_texts)
                     metrics.record(
                         "source_integrity_repair_succeeded", _si_gate.passed)
                     if _si_gate.passed:
@@ -2380,6 +2396,7 @@ def run(args: argparse.Namespace) -> None:
                         _strip = _si_mod.strip_unverified(
                             x_thread, _si_gate, _si_claims or [],
                             fetch=_si_fetch, verify_sources=_si_verify,
+                            local_texts=_si_local_texts,
                         )
                     metrics.record("source_integrity_stripped_sentences",
                                    len(_strip.removed_sentences))

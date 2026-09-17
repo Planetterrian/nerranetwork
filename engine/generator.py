@@ -1662,7 +1662,12 @@ _COMBINED_BRIDGE = (
     "name in PART 1 is spoken in PART 2, in spoken sentences of your own, never "
     "the digest's sentences read aloud. Where the script instructions refer to "
     "the digest, they mean PART 1; where they give the hook, they mean PART 1's "
-    "HOOK line, spoken word for word as the opening line. Nothing from PART 2 "
+    "HOOK line, spoken word for word as the opening line. PART 2 is not PART 1 "
+    "with the markdown removed: no sentence of PART 2 repeats a sentence of "
+    "PART 1 word for word — say each fact the way you would say it to a "
+    "listener, in the register the script instructions describe, and name "
+    "each section once as you enter it so a listener can find their place. "
+    "Nothing from PART 2 "
     "(speaker labels, delivery notes, spoken transitions) belongs in PART 1, "
     "and no markdown from PART 1 (headers, bold, Source lines, URLs) belongs "
     "in PART 2.\n"
@@ -1687,9 +1692,15 @@ def combined_generation_enabled(config: Any, template_vars: Optional[Dict[str, A
     """True when this run writes digest + script in one call.
 
     Narrative shows (topic briefs, a different podcast shape), dialogue
-    shows (two-voice scripts), prompt-chained shows, shows whose script
-    stage runs a different model, and episode 1 (its intro embeds the
-    hook) stay on the two-pass path regardless of the flag.
+    shows (two-voice scripts), shows whose script stage runs a different
+    model, and episode 1 (its intro embeds the hook) stay on the two-pass
+    path regardless of the flag. ``podcast_chain`` does NOT exclude a
+    show (Sep 17 2026): the chain's outline call exists to give the
+    script a structure, and in a combined call PART 1 is that structure —
+    the Sep 13-17 slate showed the chain exclusion had kept the seven
+    chained shows (every flagship) on the two-pass path, so "one
+    generation" had reached three shows. The chain still runs on the
+    fallback script call.
     """
     llm = getattr(config, "llm", None)
     if not llm or not getattr(llm, "combined_generation", False):
@@ -1697,8 +1708,6 @@ def combined_generation_enabled(config: Any, template_vars: Optional[Dict[str, A
     if getattr(config, "narrative_mode", False):
         return False
     if getattr(getattr(config, "tts", None), "dialogue_mode", False):
-        return False
-    if getattr(llm, "podcast_chain", False):
         return False
     _pm = getattr(llm, "podcast_model", "") or ""
     if _pm and _pm != getattr(llm, "model", ""):

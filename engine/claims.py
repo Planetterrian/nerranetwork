@@ -467,21 +467,80 @@ def _is_unreachable(status: Optional[int]) -> bool:
     return status is None or status in _UNREACHABLE_STATUSES
 
 
+_TRACKING_PARAMS = ("utm_", "ref", "ref_src", "s", "t", "fbclid", "gclid", "igshid", "mc_cid", "mc_eid")
+
+
+def normalize_source_url(url: str) -> str:
+    """One key per source: scheme, ``www.``, tracking params, trailing
+    slash and the twitter/x split all dropped, host lower-cased."""
+    from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
+    u = str(url or "").strip()
+    if not u:
+        return ""
+    try:
+        parts = urlsplit(u)
+    except ValueError:
+        return u.lower()
+    host = (parts.netloc or "").lower()
+    if host.startswith("www."):
+        host = host[4:]
+    if host in ("twitter.com", "mobile.twitter.com", "mobile.x.com"):
+        host = "x.com"
+    query = [(k, v) for k, v in parse_qsl(parts.query, keep_blank_values=True)
+             if not (k.lower().startswith("utm_") or k.lower() in _TRACKING_PARAMS)]
+    path = (parts.path or "/").rstrip("/") or "/"
+    return urlunsplit(("", host, path, urlencode(query), "")).lstrip("/")
+
+
+def build_local_texts(articles: List[dict]) -> Dict[str, str]:
+    """The text the pipeline ALREADY holds for each fetched source —
+    an article's feed body or teaser, an X post's text — keyed by
+    normalized URL. A claim whose source URL is one of these is
+    verified against this copy first, so a publisher that 403s the
+    runner or an x.com link (never fetchable by requests) cannot fail
+    a claim the fetch stage itself supplied the evidence for."""
+    out: Dict[str, str] = {}
+    for art in articles or []:
+        url = normalize_source_url(art.get("url") or "")
+        if not url:
+            continue
+        text = " ".join(
+            str(art.get(k) or "").strip()
+            for k in ("title", "content_text", "description", "summary")
+            if art.get(k)
+        ).strip()
+        if len(text) < 20:
+            continue
+        if url in out and len(out[url]) >= len(text):
+            continue
+        out[url] = text
+    return out
+
+
 def verify_claim_sources(
     claims: List[dict],
     fetch: Optional[Callable[[str], Tuple[int, str]]] = None,
+    local_texts: Optional[Dict[str, str]] = None,
 ) -> List[dict]:
     """Run the §2.2 source checks; return one result dict per claim.
 
     Each result: ``{"id", "url", "resolved", "quote_found", "passed",
-    "unreachable", "reason"}``. URLs are fetched once each (deduped) with
-    one retry on transport error. No model calls — HTTP + string matching
-    only. ``unreachable`` marks fetch-blocked sources (403/429/5xx/
-    transport) — still a failure, but distinct from the fabrication
+    "unreachable", "reason", "via"}``. URLs are fetched once each (deduped)
+    with one retry on transport error. No model calls — HTTP + string
+    matching only. ``unreachable`` marks fetch-blocked sources (403/429/
+    5xx/transport) — still a failure, but distinct from the fabrication
     signature, and repairable with an alternative source.
+
+    ``local_texts`` (Sep 17 2026) is the fetched copy the pipeline already
+    holds for each source (:func:`build_local_texts`). A quote found in
+    that copy passes WITHOUT an HTTP fetch (``via="fetched_copy"``): the
+    evidence was supplied by the fetch stage, and Planetterrian was losing
+    its X-sourced and paywalled-journal findings daily to 403s and x.com.
+    A quote absent from the copy still goes to HTTP, and fails as before.
     """
     if fetch is None:
         fetch = default_fetch
+    local = local_texts or {}
 
     cache: Dict[str, Tuple[Optional[int], str, str]] = {}
 
@@ -503,6 +562,19 @@ def verify_claim_sources(
     for claim in claims:
         url = str(claim.get("source_url") or "").strip()
         quote = str(claim.get("supporting_quote") or "").strip()
+        local_text = local.get(normalize_source_url(url)) if local else None
+        if local_text and quote and fuzzy_contains(quote, local_text):
+            results.append({
+                "id": claim.get("id", ""),
+                "url": url,
+                "resolved": True,
+                "quote_found": True,
+                "passed": True,
+                "unreachable": False,
+                "reason": "",
+                "via": "fetched_copy",
+            })
+            continue
         status, body, err = _fetch_cached(url)
         resolved = status is not None and 200 <= status < 300 and bool(body.strip())
         quote_found = False
@@ -528,6 +600,7 @@ def verify_claim_sources(
             "passed": resolved and quote_found,
             "unreachable": not resolved and _is_unreachable(status),
             "reason": reason,
+            "via": "http",
         })
     return results
 
@@ -661,6 +734,16 @@ class GateResult:
     #: Reviewer-note parentheticals found in the prose (WO-13) — a
     #: non-empty list fails the gate like an uncovered citation shape.
     reviewer_notes: List[dict] = field(default_factory=list)
+    #: Sep 17 2026: claims verified against the fetched copy the
+    #: pipeline already held (no HTTP) — see ``build_local_texts``.
+    verified_from_fetched: int = 0
+    #: Strip-mode record (Sep 17 2026): what left the digest, so the
+    #: committed sidecar says what the gate removed — until now the
+    #: sidecar showed the post-strip ledger and read "claims=0, passed".
+    stripped_sentences: List[str] = field(default_factory=list)
+    stripped_notes: List[str] = field(default_factory=list)
+    removed_items: int = 0
+    covered_by_item_source: int = 0
 
     def summary(self) -> str:
         unreachable = sum(
@@ -687,6 +770,11 @@ class GateResult:
             "failed_verifications": self.failed_verifications,
             "uncovered_shapes": self.uncovered_shapes,
             "reviewer_notes": self.reviewer_notes,
+            "verified_from_fetched": self.verified_from_fetched,
+            "stripped_sentences": self.stripped_sentences,
+            "stripped_notes": self.stripped_notes,
+            "removed_items": self.removed_items,
+            "covered_by_item_source": self.covered_by_item_source,
         }
 
 
@@ -695,6 +783,7 @@ def run_source_integrity_gate(
     claims: Optional[List[dict]],
     fetch: Optional[Callable[[str], Tuple[int, str]]] = None,
     verify_sources: bool = True,
+    local_texts: Optional[Dict[str, str]] = None,
 ) -> GateResult:
     """Compose every check. ``passed`` is the blocking verdict.
 
@@ -730,12 +819,14 @@ def run_source_integrity_gate(
     ]
 
     if verify_sources and anchored:
-        verifications = verify_claim_sources(anchored, fetch=fetch)
+        verifications = verify_claim_sources(anchored, fetch=fetch, local_texts=local_texts)
         by_id = {v["id"]: v for v in verifications}
         result.verified_claims = [
             c for c in anchored if by_id.get(c.get("id", ""), {}).get("passed")
         ]
         result.failed_verifications = [v for v in verifications if not v["passed"]]
+        result.verified_from_fetched = sum(
+            1 for v in verifications if v.get("passed") and v.get("via") == "fetched_copy")
     else:
         result.verified_claims = list(anchored) if not verify_sources else []
         result.failed_verifications = []
@@ -897,6 +988,7 @@ def attempt_claim_repair(
     claims: List[dict],
     generate: Callable[[str], str],
     fetch: Optional[Callable[[str], Tuple[int, str]]] = None,
+    local_texts: Optional[Dict[str, str]] = None,
 ) -> Tuple[GateResult, List[dict]]:
     """One bounded repair pass. Returns ``(new_gate_result, new_claims)``.
 
@@ -970,7 +1062,7 @@ def attempt_claim_repair(
         else:
             repaired.append(claim)
     repaired.extend(new_entries)
-    new_gate = run_source_integrity_gate(episode_text, repaired, fetch=fetch)
+    new_gate = run_source_integrity_gate(episode_text, repaired, fetch=fetch, local_texts=local_texts)
     logger.info(
         "claim repair: %d replacement(s) tried — gate now %s (%s)",
         len(by_id), "PASSED" if new_gate.passed else "still failing",
@@ -1132,6 +1224,7 @@ def strip_unverified(
     claims: List[dict],
     fetch: Optional[Callable[[str], Tuple[int, str]]] = None,
     verify_sources: bool = True,
+    local_texts: Optional[Dict[str, str]] = None,
 ) -> StripResult:
     """Strip-mode enforcement: remove what the gate could not vouch for,
     then re-run the FULL mechanical gate on the stripped text + ledger.
@@ -1235,6 +1328,7 @@ def strip_unverified(
     stripped_claims = [c for i, c in enumerate(claims) if _cid(i, c) not in bad_ids]
     new_gate = run_source_integrity_gate(
         text, stripped_claims, fetch=fetch, verify_sources=verify_sources,
+        local_texts=local_texts,
     )
     # The re-gate does not know about item-level sourcing; a shape whose
     # item carries a resolving Source URL was kept on purpose above and
@@ -1259,6 +1353,11 @@ def strip_unverified(
             new_gate.failed_verifications or new_gate.uncovered_shapes
             or new_gate.shape_errors or new_gate.reviewer_notes
         )
+    # The committed sidecar records what left the digest (Sep 17 2026).
+    new_gate.stripped_sentences = list(removed)
+    new_gate.stripped_notes = list(removed_notes)
+    new_gate.removed_items = dropped
+    new_gate.covered_by_item_source = covered_by_item
     logger.warning(
         "source-integrity strip: removed %d sentence(s), %d reviewer note(s), "
         "%d whole item(s); %d uncovered shape(s) covered by their item's "

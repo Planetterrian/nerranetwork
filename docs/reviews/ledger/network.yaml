@@ -490,21 +490,55 @@ reviews:
     - metric: "combined_generation metric, nine news shows, first 14 days"
       baseline: "n/a (new); two-pass on 100%"
       expected: "combined on >= 80% of episodes; 0 episodes lost to the combined path"
-      verdict: pending
-      evidence: null
+      verdict: miss
+      evidence: "2026-09-17: 0 episodes lost, but combined on 5/56 (M&A x3, env_intel, offshore_north) - the podcast_chain exclusion kept every flagship on two-pass; one M&A PART 2 under the band fell back cleanly. Chain exclusion removed 09-17."
     - metric: "script_digest_overlap_pct AND script_digest_coverage_pct on the same episode, three flagships"
       baseline: "copied drafts 55-77% / 85-97%; rewrites 1-4% / 40-60% (Sep 9-12)"
       expected: "overlap <= 25% with coverage >= 70% on 8/10 episodes"
-      verdict: pending
-      evidence: null
+      verdict: miss
+      evidence: "2026-09-17: flagships never ran combined (two-pass 42-74% overlap, 39-86% coverage); combined M&A 38-59% overlap with 72-84% coverage. Coverage holds, register does not - bridge wording tightened 09-17, re-score 09-24."
     - metric: "news-show skips with reason source_integrity_failed; source_integrity_passed_after_strip"
       baseline: "shadow would-block 2-4/7 on SpaceX, Tesla, FF, PT; UC 5 blocks/14d"
       expected: "0 news-show skips; passed_after_strip true on >= 95% of stripped episodes; median strip <= 2 sentences"
-      verdict: pending
-      evidence: null
+      verdict: hit
+      evidence: "2026-09-17: 0 news-show claims skips Sep 13-17; 20/20 stripped episodes passed after strip; median 1 sentence (max 3). Every removal was an unreachable source (x.com, 403 publishers), never a fabrication - fetched-copy verification shipped 09-17."
     - metric: "last-complete-week RSS WoW on the three flagships (api/audience_headline.json), four weeks"
       baseline: "spacex +4.5%, tesla -18%, models_agents -42% for the week ending 2026-09-06; network -13.1%"
       expected: "read in every review from Sep 12; direction over four weeks is the score of the September passes"
+      verdict: hit
+      evidence: "2026-09-17: read in both reviews since (09-13 YouTube readout, 09-17 network). Week ending 09-13: spacex -29.6%, tesla -5.2%, models_agents +32.1%, network -14.9%. Four-week direction still open (score 10-10)."
+    agent_cost_usd: null
+
+  - date: 2026-09-17
+    pr: null
+    doc: docs/reviews/network_review_2026_09_17.md
+    summary: "First slate after the Sep 12 pass, scored. Pipeline clean (100/100 runs, 0 episodes lost, no placeholder leakage) but combined generation reached 5/56 episodes: the podcast_chain exclusion kept every flagship on two-pass, so Tesla/PT/SpaceX/FF scripts copy 42-74% of the digest with the gate gone. Strip mode: 20/20 stripped episodes passed, 0 news-show blocks, every removed sentence TRUE but unreachable (x.com, 403 journals) - and the fetch stage already held the text. Sidecars showed the post-strip ledger only. Chapters collapsed to 4 on PT (12/15) and MIT (13/16). PT skipped 09-17 at 858 words (two-pass, digest normal)."
+    shipped:
+      - "engine/generator: podcast_chain no longer excludes combined generation (flagships eligible; chain runs on the fallback call only); PART-2 bridge asks for spoken register and section names (A/B)"
+      - "engine/claims: build_local_texts + normalize_source_url; verify_claim_sources(local_texts=) passes a quote found in the fetched copy without HTTP (via=fetched_copy); threaded through gate, repair, strip; metric source_integrity_verified_from_fetched"
+      - "engine/claims: GateResult carries stripped_sentences / stripped_notes / removed_items / covered_by_item_source into the committed sidecar"
+    deferred:
+      - "grok-4.6 script-stage shows (OV, MAB, dp_pod) stay two-pass - an A/B in flight; OV coverage 44.8% x2 and dp_pod 29.6% are its readout"
+      - "chapter-marker fallback for two-pass shows - count chapters per episode on 09-24 first"
+    predictions:
+    - metric: "combined_generation on Tesla / SpaceX / FF / PT / MIT, first 7 days"
+      baseline: "two_pass on 100% (chain-excluded)"
+      expected: "combined on >= 70% of their episodes; 0 lost; fallback reasons logged"
+      verdict: pending
+      evidence: null
+    - metric: "script_words / target on the five chained flagships under combined generation"
+      baseline: "56-84% of target on Sep 16; PT skipped at 858w on 09-17"
+      expected: ">= 85% of target on median; 0 podcast_script_too_thin skips"
+      verdict: pending
+      evidence: null
+    - metric: "source_integrity_verified_from_fetched and source_integrity_stripped_sentences on PT / OV / FF"
+      baseline: "PT stripped 5/5 days (1-2 sentences, all unreachable); verified_from_fetched n/a"
+      expected: "PT stripped on <= 2/5 days; >= 1 claim/day verified from the fetched copy on X-sourced days"
+      verdict: pending
+      evidence: null
+    - metric: "chapters per episode, PT and MIT"
+      baseline: "PT 4 on 12/15, MIT 4 on 13/16"
+      expected: ">= 6 on 4/5 combined episodes (the bridge names sections); two-pass unchanged is the null"
       verdict: pending
       evidence: null
     agent_cost_usd: null

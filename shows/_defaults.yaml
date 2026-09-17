@@ -31,9 +31,11 @@ llm:
   # Sep 12 2026 simplification: the digest and the podcast script are
   # written in ONE model call (PART 1 / ===PODCAST SCRIPT=== / PART 2)
   # so the script is never a lossy rewrite of a finished document. Code
-  # keeps narrative, dialogue, prompt-chained, script-model-override and
-  # episode-1 runs on the two-pass path; a response without the marker
-  # falls back to the script call. The Russian shows pin false.
+  # keeps narrative, dialogue, script-model-override and episode-1 runs
+  # on the two-pass path; a response without the marker falls back to
+  # the script call. The Russian shows pin false. Sep 17 2026: chained
+  # shows (podcast_chain: true — every flagship) are eligible too; the
+  # chain exclusion had left "one generation" on three shows.
   # Metric: combined_generation (combined | two_pass | combined_stale).
   combined_generation: true
   # Refusal fallback — must be a DIFFERENT training snapshot than the
