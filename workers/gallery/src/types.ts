@@ -40,6 +40,13 @@ export interface Env {
   STRIPE_SECRET_KEY?: string;          // wrangler secret put
   STRIPE_PRICE_PERSONAL?: string;      // price_… for Personal ($4.99)
   STRIPE_PRICE_PNN?: string;           // price_… for Personal News Network ($8.99)
+
+  // --- On-demand builds (Sep 2026). Fine-grained PAT scoped to the
+  // private batch repo (Actions: Read and write) so activation and the
+  // account page's "Build my edition now" can dispatch personal-feeds.yml
+  // for one subscriber. Optional: without it those answer 503 and the
+  // scheduled sweeps remain the only driver.
+  GITHUB_DISPATCH_TOKEN?: string;      // wrangler secret put
 }
 
 export interface ButtondownClient {
