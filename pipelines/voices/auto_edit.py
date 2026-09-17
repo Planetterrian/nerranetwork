@@ -129,6 +129,42 @@ def _previous(app: dict) -> str:
     return "THIS GUEST HAS BEEN ON BEFORE:\n" + "\n".join(out)
 
 
+_LINE = re.compile(r"^\[(\d{1,2}):(\d{2})(?::(\d{2}))?\]\s*([^:]+):\s*(.*)$")
+WORD_SEC = 0.45      # a spoken word, roughly
+LINE_TAIL_SEC = 1.2  # breath after the last word before the cut
+
+
+def transcript_of(ctx: dict) -> str:
+    return (ctx.get("package") or {}).get("transcript_raw") or ""
+
+
+def _after_the_line(transcript: str, end_sec: float) -> float:
+    """The transcript stamps where each line STARTS, so the model's end_sec
+    is the start of the guest's last line and a cut there loses the whole
+    line: Sheldon Poon's episode ended on "...to further improve the quality
+    and the amount" with "that we can produce" on the floor (Sept 17 2026).
+    Move the end to where that line plausibly finishes: the next line's
+    start, or the line's word count at speaking pace, whichever is sooner."""
+    lines = []
+    for raw in transcript.splitlines():
+        m = _LINE.match(raw.strip())
+        if not m:
+            continue
+        h, mm, ss, _who, text = m.groups()
+        at = (int(h) * 3600 + int(mm) * 60 + int(ss)) if ss else (int(h) * 60 + int(mm))
+        lines.append((float(at), text))
+    if not lines:
+        return end_sec
+    idx = max((i for i, (at, _t) in enumerate(lines) if at <= end_sec), default=None)
+    if idx is None:
+        return end_sec
+    at, text = lines[idx]
+    spoken = at + WORD_SEC * max(1, len(text.split())) + LINE_TAIL_SEC
+    if idx + 1 < len(lines):
+        return max(end_sec, min(spoken, lines[idx + 1][0] - 0.3))
+    return max(end_sec, spoken)
+
+
 def plan(ctx: dict) -> dict:
     run, interview, app, package = (ctx["run"], ctx["interview"],
                                     ctx["app"], ctx["package"])
@@ -178,7 +214,7 @@ def build(run_id: str) -> dict:
         return max(0.0, float(t) - offset)
 
     start = leg(float(decided.get("start_sec") or 0.0)) + EDGE_PAD_SEC
-    end = leg(float(decided["end_sec"]))
+    end = leg(_after_the_line(transcript_of(ctx), float(decided["end_sec"])))
     drops = []
     for d in decided.get("drop") or []:
         a, b = leg(float(d["from_sec"])), leg(float(d["to_sec"]))

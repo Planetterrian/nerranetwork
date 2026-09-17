@@ -1524,3 +1524,30 @@ class TestATruncatedTranscriptCanBeRedoneOnItsOwn:
         assert "budget = max(6000, min(32000, len(transcript) // 2))" in script
         wf = (ROOT / ".github" / "workflows" / "nerra_voices_reclean_transcript.yml").read_text(encoding="utf-8")
         assert "reclean_transcript.py" in wf and "package_id" in wf
+
+
+class TestTheGuestFinishesTheirSentence:
+    """Sheldon Poon's cut ended at 47:58, the START of his last line, so the
+    episode ended on "...the quality and the amount" and "that we can
+    produce" was never heard. The transcript stamps where lines begin; the
+    end of the edit has to be where the last line ends."""
+
+    def test_the_end_moves_past_the_last_line(self):
+        from auto_edit import _after_the_line
+        t = ("[47:49] Sheldon: So I'm using automation to create more automation\n"
+             "[47:58] Sheldon: that we can produce.\n"
+             "[48:03] Mira: Thank you, Sheldon. That's the end of the recording.\n")
+        end = _after_the_line(t, 2878.0)
+        assert 2879.5 <= end <= 2882.7, end
+        # A long last line is bounded by the next line's start.
+        t2 = "[10:00] Dan: " + "word " * 40 + "\n[10:05] Mira: Right.\n"
+        assert _after_the_line(t2, 600.0) == 604.7
+        # The last line of the file is extended by its own length.
+        assert _after_the_line("[10:00] Dan: four words here now\n", 600.0) == 600.0 + 0.45 * 4 + 1.2
+        # Never moved earlier than the model asked for.
+        assert _after_the_line(t, 2880.0) >= 2880.0
+
+    def test_the_cutter_uses_it(self):
+        auto = (V / "auto_edit.py").read_text(encoding="utf-8")
+        assert 'end = leg(_after_the_line(transcript_of(ctx), float(decided["end_sec"])))' in auto
+        assert "the cut is extended to where that line ends" in AUTO_PROMPT
