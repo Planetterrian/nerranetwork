@@ -683,7 +683,11 @@ today's work, not just explain yesterday's):
   shows?` + `WEAK_EVIDENCE_MAX_TAIL_SECONDS` 60 s ceiling on any
   non-frame cut; 210/210 recent transcripts trim on frame evidence and
   `TestPromoCutHardening` sweeps them all in CI — **extend the matcher
-  for a new Whisper spelling, never lean on the fallback**). Rotation
+  for a new Whisper spelling, never lean on the fallback**). **Sep 17 2026:** the scripted YouTube call-out ("rather watch
+  than listen", `engine.intros`) is a frame-grade anchor when the outro
+  follows it (`anchor: youtube_lead`, 60 s ceiling) — MIT Ep171's model
+  dropped frame 2's sibling sentence and Whisper wrote nothing for 22 s
+  of DP Pod Ep069's plug; the edition metrics record `cut_anchor`. Rotation
   memory v2: the date defeated the Aug 25 opener memory (5/9 intros were
   "<date> opens Nerra Daily…"), so openers are date-normalized, and the
   sign-off ("Across these segments" 7/9) and field-note closer
@@ -1323,7 +1327,10 @@ off; YouTube remembers CC per account, and the operator's screenshot
 showed YouTube's caption box drawn over the burned per-word captions
 on long-form. `long_form_burn_in_captions: false` in `_defaults.yaml`
 (guard `TestLongFormCaptionLayer`); Shorts keep burn-in and upload no
-track. Arabic (or any other language) captions on a Short are
+track. **Sep 17 2026:** `transcript_to_srt` never drops a real word —
+Whisper closed SpaceX Ep103 on the single word "comments." at 0.34 s and
+the under-0.4 s skip lost it from the track; short segments are now HELD
+to the minimum (`artifact_floor_seconds` 0.15 s still drops blips). Arabic (or any other language) captions on a Short are
 YouTube's auto-generated track auto-translated by the VIEWER's
 caption-language preference — nothing in the pipeline carries a
 language but `en`/`ru`/`fr`; it is a player setting, not a bug to
@@ -1879,7 +1886,11 @@ same review ran across the other ten shows. Drift guards:
   history (produced included); existing entries are never modified; the
   workflow re-runs `TestNarrativeQueueRunway` BEFORE committing, so the
   runway floors (3.0/4.0wk) are now the alarm that the AUTOMATION broke,
-  not a manual chore. Age of AI's deliberately-empty queue is not
+  not a manual chore. **Sep 17 2026:** it did break — four nights on
+  grok-4.6 alone (no JSON array 09-14, `APIConnectionError` 09-16) while
+  UC drained to 3.7 wk; `generate_candidates` now retries one failed
+  primary call on `FALLBACK_RESTOCK_MODEL` (grok-4.3) and the result
+  records `model` (`TestModelFallback`). Age of AI's deliberately-empty queue is not
   registered and must never be. Generated topics sit unproduced for weeks
   — prune any weak ones directly in `shows/topic_queues/*.yaml`.
 - **Финансы Просто YouTube category** fixed 25 (News) → 27 (Education).

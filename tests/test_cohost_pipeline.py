@@ -314,6 +314,15 @@ class TestTrackSelection:
             aligned.append((Path(track).name, Path(ref).name))
             return Path(workdir) / (Path(track).stem + "_aligned.wav")
         monkeypatch.setattr(pi, "align_to_reference", align)
+        # Sept 15 2026: build_tracks places every leg on the room's clock
+        # through align_to_room, which correlates real audio with ffmpeg.
+        # These tracks do not exist, so mirror the real function's
+        # already-on-the-clock return: the track untouched, no delay, and
+        # enough agreeing windows that it counts as placed.
+        monkeypatch.setattr(
+            pi, "align_to_room",
+            lambda track, room, workdir, expected=None: (
+                Path(track), 0.0, pi.ROOM_MIN_WINDOWS))
         local = {}
         monkeypatch.setattr(pi, "fetch_local_track",
                             lambda key, wd: local.get(key))
@@ -341,7 +350,9 @@ class TestTrackSelection:
         assert t["host"].name == "local_host_aligned.wav"
         assert t["mira"].name == "mira_leg.wav"
         assert ("local_guest.wav", "guest.wav") in aligned
-        assert ("local_host.wav", "host.wav") in aligned
+        # One host leg: the placed leg itself is the host reference
+        # (mix_same_clock only stitches when there is more than one).
+        assert ("local_host.wav", "host_leg0.wav") in aligned
 
     def test_short_local_take_falls_back_to_voximplant_leg(self, fakes, tmp_path):
         """b45f37b4: John Capobianco's browser uploaded 65 s of a 40-minute
@@ -368,7 +379,7 @@ class TestTrackSelection:
         t = pi.build_tracks(run, tmp_path / "raw.mp4", tmp_path,
                             host_raw=tmp_path / "raw_host.mp3", mira_raw=None)
         assert t["sources"] == {"guest": "local", "host": "voximplant", "mira": "guest_r"}
-        assert t["host"].name == "host.wav"
+        assert t["host"].name == "host_leg0.wav"
         assert t["mira"] == vox["guest_r"]
 
     def test_no_host_anywhere_means_two_track_path(self, fakes, tmp_path):

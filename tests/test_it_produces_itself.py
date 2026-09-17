@@ -125,7 +125,8 @@ class TestPatrickIsToldWhatChanges:
             or "reach her until you approve them at gate 1" in body
 
     def test_it_rides_with_the_episode(self):
-        assert "+ _improvements(interview_id)" in self.ASSEMBLE
+        # The summary is the show's own (Nerra Voices episodes are not Age of AI's).
+        assert "+ _improvements(show.slug, interview_id)" in self.ASSEMBLE
         assert "from learning import improvement_summary" in self.ASSEMBLE
 
     def test_it_never_costs_the_episode(self):

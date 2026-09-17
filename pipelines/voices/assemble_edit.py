@@ -291,7 +291,7 @@ def assemble(slug: str) -> dict:
             if spec_path.exists() else _stored_spec(slug, "edl"))
     if not spec:
         raise SystemExit(f"no EDL at {spec_path} and none stored for {slug!r}")
-    show = get_show(spec.get("show") or "age_of_ai")
+    show = get_show(spec.get("show"))  # ""/None → DEFAULT_SHOW
     run_id = spec["run_id"]
     runs = sb_select("interview_runs", f"id=eq.{run_id}")
     if not runs:
@@ -365,13 +365,13 @@ def assemble(slug: str) -> dict:
     return {"url": url, "duration_sec": seconds}
 
 
-def _improvements(interview_id: str) -> str:
+def _improvements(show_slug: str, interview_id: str) -> str:
     """What she will try next time, in the same email as the episode."""
     if not interview_id:
         return ""
     try:
         from learning import improvement_summary
-        return improvement_summary("age_of_ai", interview_id)
+        return improvement_summary(show_slug, interview_id)
     except Exception:  # noqa: BLE001 — the episode is the point
         logger.exception("improvement summary failed (non-fatal)")
         return ""
@@ -466,7 +466,7 @@ def _tell_patrick(spec: dict, show, slug: str, url: str, seconds: float,
             + (f'<p>When it passes your ear, approve it here and the guest is asked '
                f'to review it: <a href="{review}">gate 1</a>.</p>' if review else "")
             + f"<p>Nothing reaches {guest} until you do.</p>"
-            + _improvements(interview_id)
+            + _improvements(show.slug, interview_id)
             + f"<p>Edit: <code>{slug}</code>. To change a cut, edit "
               f"<code>pipelines/voices/edl/{slug}.json</code> and run the assemble "
               f"workflow again.</p><p>— Mira</p>")
