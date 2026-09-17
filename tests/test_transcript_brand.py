@@ -226,29 +226,39 @@ class TestInitialPrompt:
         assert "Nerra Network" in prompt
         assert len(prompt) <= 620  # cap plus the closing punctuation
 
-    def test_transcribe_is_called_with_initial_prompt(self):
-        """The prompt must actually reach faster-whisper, not just exist."""
-        source = (REPO_ROOT / "engine" / "transcripts.py").read_text(encoding="utf-8")
-        # Sept 15 2026: the decoder options moved into one ``kwargs`` dict
-        # so the VAD fallback can retry the same call without the filter.
-        # The prompt must sit in that dict, and the dict must reach the call.
-        kwargs_block = source.split("kwargs = dict(", 1)[1]
-        depth, end = 1, 0
-        for idx, ch in enumerate(kwargs_block):
-            depth += (ch == "(") - (ch == ")")
-            if depth == 0:
-                end = idx
-                break
-        assert "initial_prompt=build_initial_prompt(" in kwargs_block[:end]
-        call = source.split("model.transcribe(", 1)[1]
-        # Walk to the matching close paren so nested calls don't truncate.
-        depth, end = 1, 0
-        for idx, ch in enumerate(call):
-            depth += (ch == "(") - (ch == ")")
-            if depth == 0:
-                end = idx
-                break
-        assert "**kwargs" in call[:end]
+    def test_transcribe_is_called_with_initial_prompt(self, tmp_path, monkeypatch):
+        """The prompt must actually reach faster-whisper, not just exist.
+
+        Behavioural: a stub ``faster_whisper`` records what ``transcribe``
+        receives. The earlier version of this test read the call's source
+        text and broke the day the kwargs moved into a dict (Sep 15 2026)
+        while the prompt still reached the decoder."""
+        import sys
+        import types
+        from engine.transcripts import generate_transcript
+
+        calls = []
+
+        class _Model:
+            def __init__(self, *a, **k):
+                pass
+
+            def transcribe(self, path, **kwargs):
+                calls.append(kwargs)
+                info = types.SimpleNamespace(language="en", duration=1.0)
+                return iter(()), info
+
+        stub = types.ModuleType("faster_whisper")
+        stub.WhisperModel = _Model
+        monkeypatch.setitem(sys.modules, "faster_whisper", stub)
+        audio = tmp_path / "ep.mp3"
+        audio.write_bytes(b"\x00")
+        generate_transcript(audio, tmp_path / "out", "Show_Ep001_20260917",
+                            vocabulary=["Starship"])
+        assert calls, "faster-whisper was never called"
+        prompt = calls[-1].get("initial_prompt")
+        assert prompt, calls[-1]
+        assert "Nerra Network" in prompt and "Starship" in prompt
 
 
 class TestBackCatalogueIsClean:

@@ -287,6 +287,53 @@ def build_prompt(cfg: RestockConfig, queue: list[dict], needed: int) -> str:
 # Main flow
 # ---------------------------------------------------------------------------
 
+#: grok-4.6 (2026-08-19, experiment grok-46-funnel-and-ops): topic briefs
+#: become episodes for weeks — the deepest-thinking model pays compound
+#: interest here, and this workflow has no latency pressure. Env-overridable
+#: (``NERRA_RESTOCK_MODEL``) for rollback.
+PRIMARY_RESTOCK_MODEL = "grok-4.6"
+#: Sep 17 2026: the restock had failed four nights running (09-13..16) on
+#: grok-4.6 alone — "no JSON array found in model output" one night, an
+#: ``APIConnectionError`` the next — while Unintended Consequences drained
+#: to 3.7 weeks and tripped the runway alarm. The same latency profile that
+#: withdrew the FPD/UC whole-show 4.6 arms on 08-27. One failed 4.6 call
+#: now falls back to the network default for the night instead of leaving
+#: the queue where it was.
+FALLBACK_RESTOCK_MODEL = "grok-4.3"
+
+
+def restock_model() -> str:
+    import os as _os
+    return _os.environ.get("NERRA_RESTOCK_MODEL", "").strip() or PRIMARY_RESTOCK_MODEL
+
+
+def generate_candidates(prompt: str) -> tuple[list[dict], str]:
+    """Ask the primary model for topic briefs; on ANY failure (transport,
+    timeout, unparsable output) ask the fallback model once. Returns the
+    parsed candidates and the model that produced them."""
+    from engine.generator import _call_grok  # deferred: needs GROK_API_KEY
+    primary = restock_model()
+    models = [primary] if primary == FALLBACK_RESTOCK_MODEL else [primary, FALLBACK_RESTOCK_MODEL]
+    last_exc: Exception | None = None
+    for model in models:
+        try:
+            text, _ = _call_grok(prompt, model=model, temperature=0.8, max_tokens=8000)
+            candidates = parse_topics_json(text)
+        except Exception as exc:  # noqa: BLE001 — the fallback is the point
+            last_exc = exc
+            logger.warning("restock call on %s failed (%s: %s)%s", model,
+                           type(exc).__name__, exc,
+                           " — retrying on the fallback model"
+                           if model != models[-1] else "")
+            continue
+        if model != primary:
+            print(f"::warning::topic restock fell back to {model} after "
+                  f"{primary} failed ({type(last_exc).__name__})", flush=True)
+        return candidates, model
+    assert last_exc is not None
+    raise last_exc
+
+
 def restock_show(cfg: RestockConfig, *, dry_run: bool, force: bool) -> dict:
     """Restock one show. Returns a result dict for the run summary."""
     queue_path = ROOT / cfg.queue_file
@@ -313,26 +360,9 @@ def restock_show(cfg: RestockConfig, *, dry_run: bool, force: bool) -> dict:
                 cfg.slug, weeks, unproduced, needed)
 
     # Ask for extras so validation losses don't leave us short.
-    from engine.generator import _call_grok  # deferred: needs GROK_API_KEY
     prompt = build_prompt(cfg, queue, needed + max(4, needed // 3))
-    # grok-4.3 — the network default. This call was pinned to grok-4.6 on
-    # 2026-08-19 ("no latency pressure here"), and it never produced a
-    # topic on that model: every run that actually needed a restock
-    # (Sep 8 → Sep 16 2026, nine in a row) died with "Server disconnected
-    # without sending a response" — the same failure the Aug 18 network-
-    # wide 4.6 revert documented, on a prompt that carries the show's
-    # entire queue history. The one-minute "successes" in between were
-    # runs that needed nothing. UC's runway fell to 3.7 weeks before the
-    # runway guard caught it. Env-overridable; a re-pin to 4.6 follows
-    # docs/model_upgrade_playbook.md (latency gate first).
-    import os as _os
-    text, _ = _call_grok(
-        prompt,
-        model=_os.environ.get("NERRA_RESTOCK_MODEL", "").strip() or "grok-4.3",
-        temperature=0.8,
-        max_tokens=8000,
-    )
-    candidates = parse_topics_json(text)
+    candidates, model_used = generate_candidates(prompt)
+    result["model"] = model_used
     accepted = validate_and_dedupe(candidates, queue, cfg, needed)
     result["added"] = len(accepted)
 

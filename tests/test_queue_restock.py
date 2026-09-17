@@ -212,20 +212,71 @@ class TestResequenceUnproduced:
         assert "resequence_unproduced(queue)" in src
 
 
-class TestRestockModel:
-    """Sep 17 2026: the restock call was pinned to grok-4.6 on Aug 19 and
-    never produced a topic on it — nine consecutive daily runs (Sep 8-16)
-    died with "Server disconnected without sending a response" on the
-    queue-history prompt, the same failure the Aug 18 network-wide 4.6
-    revert documented. UC's runway fell to 3.7 weeks before the runway
-    guard caught it. The default is the network model; the env override
-    is the only path back, per docs/model_upgrade_playbook.md."""
+class TestModelFallback:
+    """Sep 17 2026: four failed nights on grok-4.6 alone ("no JSON array
+    found in model output" 09-14, ``APIConnectionError`` 09-16) drained
+    Unintended Consequences to 3.7 weeks and tripped the runway alarm. A
+    failed primary call now retries once on the network default."""
 
-    SRC = (ROOT / "scripts/restock_topic_queues.py").read_text()
+    def _patch_call(self, monkeypatch, outcomes):
+        import engine.generator as gen
+        seen = []
 
-    def test_default_model_is_the_network_default(self):
-        assert '"NERRA_RESTOCK_MODEL", "").strip() or "grok-4.3"' in self.SRC
-        assert 'or "grok-4.6"' not in self.SRC
+        def fake(prompt, *, model, **kw):
+            seen.append(model)
+            out = outcomes[model]
+            if isinstance(out, Exception):
+                raise out
+            return out, None
 
-    def test_env_override_is_honoured(self):
-        assert 'NERRA_RESTOCK_MODEL' in self.SRC
+        monkeypatch.setattr(gen, "_call_grok", fake)
+        return seen
+
+    def test_primary_success_never_touches_the_fallback(self, monkeypatch):
+        monkeypatch.delenv("NERRA_RESTOCK_MODEL", raising=False)
+        seen = self._patch_call(monkeypatch, {
+            rq.PRIMARY_RESTOCK_MODEL: '[{"title": "A"}]',
+            rq.FALLBACK_RESTOCK_MODEL: '[{"title": "B"}]',
+        })
+        cands, model = rq.generate_candidates("p")
+        assert model == rq.PRIMARY_RESTOCK_MODEL and cands == [{"title": "A"}]
+        assert seen == [rq.PRIMARY_RESTOCK_MODEL]
+
+    def test_transport_failure_falls_back_once(self, monkeypatch, capsys):
+        monkeypatch.delenv("NERRA_RESTOCK_MODEL", raising=False)
+        seen = self._patch_call(monkeypatch, {
+            rq.PRIMARY_RESTOCK_MODEL: ConnectionError("Connection error."),
+            rq.FALLBACK_RESTOCK_MODEL: '[{"title": "B"}]',
+        })
+        cands, model = rq.generate_candidates("p")
+        assert model == rq.FALLBACK_RESTOCK_MODEL and cands == [{"title": "B"}]
+        assert seen == [rq.PRIMARY_RESTOCK_MODEL, rq.FALLBACK_RESTOCK_MODEL]
+        assert "::warning::topic restock fell back to" in capsys.readouterr().out
+
+    def test_unparsable_output_falls_back_too(self, monkeypatch):
+        monkeypatch.delenv("NERRA_RESTOCK_MODEL", raising=False)
+        seen = self._patch_call(monkeypatch, {
+            rq.PRIMARY_RESTOCK_MODEL: "Sorry, here are some ideas in prose.",
+            rq.FALLBACK_RESTOCK_MODEL: '[{"title": "B"}]',
+        })
+        _, model = rq.generate_candidates("p")
+        assert model == rq.FALLBACK_RESTOCK_MODEL
+        assert seen == [rq.PRIMARY_RESTOCK_MODEL, rq.FALLBACK_RESTOCK_MODEL]
+
+    def test_both_failing_raises_the_last_error(self, monkeypatch):
+        monkeypatch.delenv("NERRA_RESTOCK_MODEL", raising=False)
+        self._patch_call(monkeypatch, {
+            rq.PRIMARY_RESTOCK_MODEL: ConnectionError("a"),
+            rq.FALLBACK_RESTOCK_MODEL: ValueError("no JSON array found in model output"),
+        })
+        with pytest.raises(ValueError):
+            rq.generate_candidates("p")
+
+    def test_env_pin_on_the_fallback_model_calls_it_once(self, monkeypatch):
+        monkeypatch.setenv("NERRA_RESTOCK_MODEL", rq.FALLBACK_RESTOCK_MODEL)
+        seen = self._patch_call(monkeypatch, {
+            rq.FALLBACK_RESTOCK_MODEL: ConnectionError("a"),
+        })
+        with pytest.raises(ConnectionError):
+            rq.generate_candidates("p")
+        assert seen == [rq.FALLBACK_RESTOCK_MODEL]

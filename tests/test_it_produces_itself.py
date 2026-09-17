@@ -125,7 +125,7 @@ class TestPatrickIsToldWhatChanges:
             or "reach her until you approve them at gate 1" in body
 
     def test_it_rides_with_the_episode(self):
-        # Sep 17 2026: the show slug comes from the EDL, never a literal.
+        # The summary is the show's own (Nerra Voices episodes are not Age of AI's).
         assert "+ _improvements(show.slug, interview_id)" in self.ASSEMBLE
         assert "from learning import improvement_summary" in self.ASSEMBLE
 

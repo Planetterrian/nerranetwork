@@ -162,32 +162,46 @@ failure was not this pass's: the `Run Tests` workflow had been red on
 every push to main since Sep 16 (eleven runs), so no merge this week
 was checked. Fourteen tests failed on the merged tree:
 
-| failure | class | fix |
+Two sessions diagnosed the same fourteen failures in parallel on Sep
+17; the fixes that reached `main` first (commits `bbad1692`,
+`98fc7127`, `735d8400`) are the ones the network runs, and this
+section describes those. This PR carries only what they did not: the
+three hand-written UC briefs, the ledger predictions, the register
+correction, and this write-up.
+
+| failure | class | fix on `main` |
 |---|---|---|
-| `test_captions … test_real_transcript_cues_fit_the_frame` | data-driven: SpaceX Ep103 closes a sentence in a 0.34 s segment ("comments.") and the 0.4 s flicker filter dropped the word from the burned-in captions | `engine.captions._cue_segments` folds a short segment that carries text into its neighbour; every word reaches the SRT and nothing under 0.4 s stands alone |
-| `test_daily_edition … test_every_recent_lineup_transcript_hits_a_frame` | data-driven: MIT Ep171 shipped frame 2 without its sibling sentence (text-side); DP Pod Ep069 lost the whole plug in the audio (TTS text has it, Whisper does not) | frame second sentences are frame evidence; the YouTube CTA + disclosure bracket (≤ 45 s apart) is frame evidence; "then" for "than" |
+| `test_captions … test_real_transcript_cues_fit_the_frame` | data-driven: SpaceX Ep103 closes a sentence in a 0.34 s segment ("comments.") and the 0.4 s flicker filter dropped the word from the burned-in captions | a short segment is HELD on screen to the 0.4 s minimum (short of the next segment) instead of skipped; `artifact_floor_seconds` 0.15 s still drops textless blips |
+| `test_daily_edition … test_every_recent_lineup_transcript_hits_a_frame` | data-driven: MIT Ep171 shipped frame 2 without its sibling sentence (text-side); DP Pod Ep069's plug is in the audio but Whisper transcribed nothing for 22 s of it (a local re-run hears it) | the scripted YouTube call-out is a frame-grade anchor when the outro follows it (`anchor: youtube_lead`, 60 s ceiling); "then" for "than"; edition metrics record `cut_anchor` |
 | `TestNarrativeQueueRunway[unintended_consequences]` 3.7 wk | the alarm working: the Restock Topic Queues workflow failed nine days running (Sep 8–16) | see below |
-| 7 Voices / co-host assertions (`test_producer_autonomy`, `test_review_gates`, `test_the_open_and_the_sound`, `test_transcript_brand`, `test_cohost_scenario`, `test_nerra_voices_pipeline` ×2) | code moved on deliberately in the Sep 15–17 commits (path-token review links, every host leg kept, kwargs-driven transcribe call, room notes that never force a response) without the tests; two were real: Mira's system prompt quoted The Age of AI's closing question verbatim as a war story (a seed, and a leak into Nerra Voices' prompt), and `assemble_edit.py` hard-coded the show | assertions pin the new behaviour; the prompt describes the shape ("the closing question went out three times…") — A/B-listen, it is the live host's prompt; the show comes from the EDL |
-| 4 `test_cohost_pipeline::TestTrackSelection` | local only: `align_to_room` shells out to ffmpeg, absent in this session; ubuntu-latest carries it | none |
+| 7 Voices / co-host assertions (`test_producer_autonomy`, `test_review_gates`, `test_the_open_and_the_sound`, `test_transcript_brand`, `test_cohost_scenario`, `test_nerra_voices_pipeline` ×2) | code moved on deliberately in the Sep 15–17 commits (path-token review links, every host leg kept, kwargs-driven transcribe call, room notes that never force a response) without the tests; two were real: Mira's system prompt quoted The Age of AI's closing question verbatim as a war story (a seed, and a leak into Nerra Voices' prompt), and `assemble_edit.py` hard-coded the show | assertions pin the new behaviour; the prompt describes the shape ("the closing question he had already been asked went out three times…") — A/B-listen, it is the live host's prompt; the show comes from the EDL |
+| 4 `test_cohost_pipeline::TestTrackSelection` | `align_to_room` shelled out to ffmpeg for real inside a unit test | `align_to_room` is faked in the test |
 
 **The restock automation had never produced a topic on grok-4.6.** The
 call was pinned to 4.6 on Aug 19 ("no latency pressure here"). Every
-run since that actually needed topics — the first was Sep 8 — died
-after five minutes on "Server disconnected without sending a
-response", the exact failure the Aug 18 network-wide 4.6 revert
-documented, on a prompt that carries the show's entire queue history.
-The one-minute "successes" between Aug 19 and Sep 7 were runs that
-needed nothing. The runway guard is what caught it, as the July 24
-design said it would. Back on grok-4.3 with the env override kept;
-guard `TestRestockModel`. The workflow's commit step pushes to `main`
-by name, so it cannot be run against a branch, and this session holds
-no Grok key; three hand-written briefs (Mexico City's Hoy No Circula,
-Jevons' *The Coal Question*, the European diesel tax break — each a
-documented case absent from the 143-entry history, as the June 2026
-pass restocked by hand) take UC to 29 unproduced / 4.1 weeks so the
-alarm clears on this PR. The automation refills to eight weeks on its
-next run (trigger < 5 weeks); if the 13:37 UTC cron has passed when
-this merges, dispatch the workflow with `force`.
+run since that actually needed topics — the first was Sep 8 — failed:
+"no JSON array found in model output" on one night, "Server
+disconnected without sending a response" (the failure the Aug 18
+network-wide 4.6 revert documented) on the rest, on a prompt that
+carries the show's entire queue history. The one-minute "successes"
+between Aug 19 and Sep 7 were runs that needed nothing. The runway
+guard is what caught it, as the July 24 design said it would. On
+`main`, `generate_candidates` keeps grok-4.6 as the primary and
+retries one failed call on grok-4.3 (`FALLBACK_RESTOCK_MODEL`,
+`TestModelFallback`), recording `model` in the run summary. Read that
+field: the primary's record on a needed restock is 0 for 9, so if
+`model` reads grok-4.3 on every night that restocks, the 4.6 call is a
+five-minute failed request paid before each one and the primary should
+follow the FPD/UC arms off 4.6 (the register entry is corrected below).
+The workflow's commit step pushes to `main` by name, so it cannot be
+run against a branch, and this session holds no Grok key; three
+hand-written briefs (Mexico City's Hoy No Circula, Jevons' *The Coal
+Question*, the European diesel tax break — each a documented case
+absent from the 143-entry history, as the June 2026 pass restocked by
+hand) take UC to 29 unproduced / 4.1 weeks so the alarm clears now.
+The automation refills to eight weeks on its next run (trigger < 5
+weeks); if the 13:37 UTC cron has passed when this merges, dispatch
+the workflow with `force`.
 
 ## 7. Readout — Sep 24
 

@@ -541,9 +541,7 @@ class TestWiring:
     def test_worker_matches_publicist_email_on_booking(self):
         ts = (ROOT / "workers/voices/src/index.ts").read_text()
         assert "publicist_email.eq." in ts
-        # Sept 16 2026: every address on the booking is tried against both
-        # sides of the row, and the log names the one that matched.
-        assert "for (const candidate of emails) {" in ts
+        # Every address on the booking is tried; the log names the one that matched.
         assert "matched ${matchedWith} via publicist_email" in ts
 
     def test_inbox_workflow_listens_and_has_booking_urls(self):

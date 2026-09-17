@@ -291,7 +291,7 @@ def assemble(slug: str) -> dict:
             if spec_path.exists() else _stored_spec(slug, "edl"))
     if not spec:
         raise SystemExit(f"no EDL at {spec_path} and none stored for {slug!r}")
-    show = get_show(spec.get("show"))  # None -> the registry default
+    show = get_show(spec.get("show"))  # ""/None → DEFAULT_SHOW
     run_id = spec["run_id"]
     runs = sb_select("interview_runs", f"id=eq.{run_id}")
     if not runs:

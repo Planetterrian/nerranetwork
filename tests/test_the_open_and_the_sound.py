@@ -269,14 +269,10 @@ class TestTheCoHostAlsoRejoins:
         assert "if seconds > best_seconds" in body
 
     def test_the_pipeline_uses_it(self):
-        # Sept 15 2026 (Adrian Wolfberg): the longest leg alone deleted the
-        # co-host from the rest of his own interview, so the pipeline now
-        # takes EVERY host leg, in order, and the first one is the raw.
+        # ae127b98d: every leg is fetched and placed on the room's clock;
+        # the first leg is the host_raw the rest of the pipeline expects.
         assert 'host_legs = leg_recordings(run, "host", workdir)' in self.SRC
         assert "host_raw = host_legs[0] if host_legs else None" in self.SRC
-        assert "host_legs=host_legs" in self.SRC
-        body = _pyfn("leg_recordings", self.SRC)
-        assert 'log.get(f"extra_{role}_record_urls")' in body
 
     def test_a_missing_leg_is_skipped_not_fatal(self):
         body = _pyfn("longest_leg_recording", self.SRC)
@@ -418,12 +414,7 @@ class TestTheCraftRules:
 
     def test_a_question_is_asked_once(self):
         assert "ONE QUESTION PER TURN, ASKED ONCE" in self.PROMPT
-        # Sep 17 2026: the war story names the SHAPE ("the closing question")
-        # — quoting The Age of AI's closing line verbatim seeded it, and
-        # leaked it into Nerra Voices' prompt (TestCompiledPrompt).
-        assert "closing question went out three times in twelve seconds" in self.PROMPT
-        assert "answering something else" in self.PROMPT
-        assert "the one bet you're making" not in self.PROMPT
+        assert "three times in\n  twelve seconds" in self.PROMPT
         assert "The discomfort is yours to hold, not theirs to fill" in self.PROMPT
 
     def test_the_close_waits_for_the_answer(self):

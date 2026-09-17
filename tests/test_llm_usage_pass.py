@@ -267,17 +267,11 @@ class TestGrok46FunnelAndOpsWave:
         assert src.count('model: str = "grok-4.6"') == 3
         assert 'model: str = "grok-4.3"' not in src
 
-    def test_restock_left_the_46_wave(self):
-        """Sep 17 2026: the restock arm is WITHDRAWN. On grok-4.6 the call
-        never completed a needed restock — nine daily runs (Sep 8-16) died
-        on a server disconnect (the Aug 18 failure class) and UC's runway
-        fell to 3.7 weeks. Back on the network default; the env override
-        is the only way to re-pin, after the playbook's latency gate."""
+    def test_restock_runs_on_46_with_env_rollback(self):
         src = (REPO_ROOT / "scripts" / "restock_topic_queues.py").read_text(
             encoding="utf-8")
         assert "NERRA_RESTOCK_MODEL" in src
-        assert 'or "grok-4.3"' in src
-        assert 'or "grok-4.6"' not in src
+        assert '"grok-4.6"' in src
 
     def test_spacex_specials_run_on_46_daily_stays_43(self):
         from engine.config import load_config

@@ -241,6 +241,10 @@ class Segment:
     #: Filled in during assembly:
     cut_final_seconds: Optional[float] = None
     cut_kind: str = ""
+    #: ``"frame"`` | ``"youtube_lead"`` for a ``promo`` cut (see
+    #: :func:`find_promo_cut`) — a rising youtube_lead share means the
+    #: frame words are going missing upstream (model or Whisper).
+    cut_anchor: str = ""
     duration_seconds: Optional[float] = None
 
 
@@ -434,26 +438,25 @@ _PRIMARY_PROMO_PATTERNS = [
     re.compile(r"\bone more thing\b(?:\s+\w+){0,14}?\s+sisters?(?:\s+s)?\s+shows?\b"),
     re.compile(r"\bquick tip from the network\b"),
     re.compile(r"\bthis show comes to you from (?:the|a|an) \w+\s*network\b"),
-    # Sep 17 2026: the frames' SECOND sentences are frame text too. Modern
-    # Investing Ep171 (2026-09-15) shipped frame 2 without its sibling
-    # sentence — "It's one of the Nerra Network's daily briefings, all free
-    # at nerranetwork.com" was the whole plug — and the cut fell to the
-    # weak brand-mention fallback. Whisper glues the brand ("NerraNetwork's")
-    # and the possessive tokenizes to "network s".
-    re.compile(r"\bone of the (?:\w+\s+)?\w*network(?:\s+s)?\s+daily briefings\b"),
-    re.compile(r"\bevery (?:\w+\s+)?\w*network show is free at\b"),
 ]
-#: The YouTube CTA that immediately precedes the plug on most shows.
-#: Whisper writes "than" as "then" (DP Pod Ep069, 2026-09-16).
+#: The YouTube CTA that immediately precedes the plug on most shows. It is
+#: SCRIPTED text (``engine.intros._maybe_append_youtube_cta`` appends it to
+#: the closing, and ``engine.pipeline`` appends the network plug right after
+#: it), so it is frame-grade evidence of where the outro block starts, not a
+#: brand mention. Sep 17 2026: two transcripts in one week had the CTA but
+#: no frame — the model dropped the sibling sentence of frame 2 on Modern
+#: Investing Ep171 (only "It's one of the Nerra Network's daily briefings"
+#: survived), and Whisper transcribed nothing for the 22 s of DP Pod Ep069
+#: that carried "Quick tip from the network" (the audio has it; a local
+#: re-run hears it) — and Whisper wrote "rather watch THEN listen" there.
 _YOUTUBE_LEAD_PATTERN = re.compile(
     r"\b(?:and\s+)?if you(?:\s+\w+){0,2}\s+rather watch th[ae]n listen\b"
 )
-#: Sep 17 2026: on DP Pod Ep069 the sibling plug never reached the audio
-#: (the TTS text carried frame 3; the Whisper transcript goes straight
-#: from "find us on YouTube" to the disclosure). The YouTube CTA and the
-#: disclosure bracket the outro block on their own when nothing but the
-#: block can fit between them; that is frame evidence, not a brand guess.
-YOUTUBE_LEAD_TO_DISCLOSURE_MAX_SECONDS = 45.0
+#: A cut anchored on the YouTube CTA alone (no frame matched after it) may
+#: never remove more than this much tail. The CTA is scripted only inside
+#: the closing, but the ceiling keeps a mid-episode "rather watch than
+#: listen" (none observed) from ever cutting body content.
+YOUTUBE_LEAD_MAX_TAIL_SECONDS = 60.0
 #: Weaker evidence, used only when no frame matched.
 _NETWORK_MENTION_PATTERN = re.compile(r"\b(?:nerra|nera|narra|narrow|nare)\s*network\b")
 _DISCLOSURE_PATTERN = re.compile(r"\bthis episode used ai voice synthesis\b")
@@ -532,6 +535,10 @@ def find_promo_cut(transcript: dict) -> Optional[dict]:
     disclosure all fall after the cut), ``"network_mention"`` (fuzzy brand
     mention only — cut at the containing sentence's segment start), or
     ``"disclosure"`` (only the AI-disclosure line found — the mildest trim).
+    ``anchor`` names what a ``"promo"`` cut landed on: ``"frame"`` (one of
+    the rotating plug frames) or ``"youtube_lead"`` (the scripted "rather
+    watch than listen" call-out, with the disclosure or a brand mention
+    behind it — the frame words were dropped by the model or by Whisper).
     """
     duration = float(transcript.get("duration") or 0.0)
     if duration <= 0:
@@ -543,34 +550,36 @@ def find_promo_cut(transcript: dict) -> Optional[dict]:
 
     cut: Optional[float] = None
     kind = ""
+    anchor = ""
     primary_hits = [
         i for i in (
             _search_stream(stream, pat) for pat in _PRIMARY_PROMO_PATTERNS
         ) if i is not None
     ]
+    lead_idx = _search_stream(stream, _YOUTUBE_LEAD_PATTERN)
     if primary_hits:
         idx = min(primary_hits)
-        kind = "promo"
-        lead_idx = _search_stream(stream, _YOUTUBE_LEAD_PATTERN)
+        kind, anchor = "promo", "frame"
         if (
             lead_idx is not None
             and 0 < stream[idx][1] - stream[lead_idx][1] <= YOUTUBE_LEAD_WINDOW_SECONDS
         ):
             idx = lead_idx
         cut = _cut_before(stream, idx)
-    else:
-        lead_idx = _search_stream(stream, _YOUTUBE_LEAD_PATTERN)
-        disclosure_idx = _search_stream(stream, _DISCLOSURE_PATTERN)
-        if (
-            lead_idx is not None
-            and disclosure_idx is not None
-            and 0 < stream[disclosure_idx][1] - stream[lead_idx][1]
-            <= YOUTUBE_LEAD_TO_DISCLOSURE_MAX_SECONDS
-        ):
-            # The plug between them is missing from the audio; the block
-            # still starts at the CTA and ends at the disclosure.
-            kind = "promo"
-            cut = _cut_before(stream, lead_idx)
+    elif lead_idx is not None and _outro_follows(stream, lead_idx):
+        # No frame words, but the scripted YouTube call-out is there with
+        # the outro's remaining evidence behind it: the block starts on
+        # the call-out. Frame-grade — the words are the pipeline's own.
+        candidate = _cut_before(stream, lead_idx)
+        if duration - candidate <= YOUTUBE_LEAD_MAX_TAIL_SECONDS:
+            cut, kind, anchor = candidate, "promo", "youtube_lead"
+        else:
+            logger.warning(
+                "youtube-lead cut at %.1fs of %.1fs would remove %.0fs "
+                "(> %.0fs ceiling) — treating the call-out as body content",
+                candidate, duration, duration - candidate,
+                YOUTUBE_LEAD_MAX_TAIL_SECONDS,
+            )
     if cut is None:
         mention_idx = _search_stream(stream, _NETWORK_MENTION_PATTERN)
         if mention_idx is not None:
@@ -609,7 +618,20 @@ def find_promo_cut(transcript: dict) -> Optional[dict]:
             cut, duration, int(PROMO_MIN_FRACTION * 100),
         )
         return None
-    return {"raw_seconds": round(cut, 2), "kind": kind}
+    hit = {"raw_seconds": round(cut, 2), "kind": kind}
+    if anchor:
+        hit["anchor"] = anchor
+    return hit
+
+
+def _outro_follows(stream: List[Tuple[str, float, float]], idx: int) -> bool:
+    """True when the AI disclosure or a brand mention appears AFTER token
+    *idx* — the evidence that what starts at *idx* is the outro block."""
+    rest = stream[idx + 1:]
+    return (
+        _search_stream(rest, _DISCLOSURE_PATTERN) is not None
+        or _search_stream(rest, _NETWORK_MENTION_PATTERN) is not None
+    )
 
 
 def load_transcript(path: Path) -> Optional[dict]:
@@ -1236,6 +1258,7 @@ def build_edition_metrics(
                 "slug": s.slug,
                 "episode_num": s.episode_num,
                 "cut_kind": s.cut_kind or "none",
+                "cut_anchor": s.cut_anchor or "none",
                 "cut_final_seconds": s.cut_final_seconds,
                 "duration_seconds": round(s.duration_seconds or 0.0, 1),
             }
