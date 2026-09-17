@@ -24,6 +24,11 @@ on:
         description: 'Supabase interviews.id to publish (blank = sweep all eligible)'
         required: false
         type: string
+      refresh_post:
+        description: 'Only rewrite an already-published episode''s post and pages (no feed change, no new number)'
+        required: false
+        type: boolean
+        default: false
   repository_dispatch:
     types: [interview-publish]
 
@@ -54,6 +59,7 @@ jobs:
       - run: python pipelines/voices/publish_episode.py
         env:
           INTERVIEW_ID: ${{ github.event.inputs.interview_id || github.event.client_payload.interview_id }}
+          REFRESH_POST: ${{ github.event.inputs.refresh_post }}
           SUPABASE_URL: ${{ secrets.VOICES_SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.VOICES_SUPABASE_SERVICE_KEY }}
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}

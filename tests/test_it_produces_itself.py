@@ -1551,3 +1551,19 @@ class TestTheGuestFinishesTheirSentence:
         auto = (V / "auto_edit.py").read_text(encoding="utf-8")
         assert 'end = leg(_after_the_line(transcript_of(ctx), float(decided["end_sec"])))' in auto
         assert "the cut is extended to where that line ends" in AUTO_PROMPT
+
+
+class TestAPublishedEpisodesPostCanBeRefreshed:
+    """Dan's page shipped with half a transcript and no post. Publishing
+    again is refused, and would have minted a second episode number."""
+
+    def test_refresh_keeps_the_number_and_the_feed(self):
+        pub = (V / "publish_episode.py").read_text(encoding="utf-8")
+        body = pub[pub.index("def refresh_post"):pub.index("def main")]
+        assert 'if interview.get("status") != "published":' in body
+        assert 'episode_num = int(interview.get("episode_number") or 0)' in body
+        assert "write_episode_digest(show, episode_num, when, entry[\"title\"]" in body
+        assert "update_rss_feed" not in body and "sb_update" not in body
+        assert 'os.environ.get("REFRESH_POST", "").strip() in ("1", "true")' in pub
+        wf = (ROOT / ".github" / "workflows" / "nerra_voices_publish.yml").read_text(encoding="utf-8")
+        assert "REFRESH_POST" in wf

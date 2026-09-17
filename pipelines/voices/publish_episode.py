@@ -327,14 +327,61 @@ def publish_one(interview_id: str) -> int:
     return 0
 
 
+def refresh_post(interview_id: str) -> int:
+    """Rewrite a PUBLISHED episode's post and site pages from the package as
+    it is now, keeping its episode number, date and audio.
+
+    Sept 17 2026: Dan Perra's page went out with half a transcript (the
+    cleaning pass was capped) and no post (the post-writer came after his
+    publish). Running publish again is refused — and would hand him a new
+    episode number and a duplicate feed entry, which is how Ep2 was once
+    published twice. This touches the digest and the generated pages only:
+    nothing is uploaded, the RSS feed is left alone, no row changes state.
+    """
+    interview = sb_select("interviews", f"id=eq.{interview_id}")[0]
+    if interview.get("status") != "published":
+        raise RuntimeError(
+            f"interview {interview_id} is {interview.get('status')!r} — "
+            "refresh is for episodes that are already published")
+    app = sb_select("guest_applications",
+                    f"id=eq.{interview['application_id']}")[0]
+    pkg = sb_select("editorial_packages",
+                    f"interview_id=eq.{interview_id}&status=eq.published"
+                    "&order=created_at.desc&limit=1")[0]
+    show = show_for(interview, app)
+    episode_num = int(interview.get("episode_number") or 0)
+    data = {"episodes": []}
+    if show.summaries_path.exists():
+        data = json.loads(show.summaries_path.read_text(encoding="utf-8")) or {}
+    entry = next((e for e in (data.get("episodes") or [])
+                  if int(e.get("episode") or 0) == episode_num), None)
+    if not episode_num or entry is None:
+        raise RuntimeError(f"no published record of Ep{episode_num} for "
+                           f"{app['name']} in {show.summaries_path}")
+    when = dt.date.fromisoformat(str(entry["date"])[:10])
+    write_episode_digest(show, episode_num, when, entry["title"],
+                         interview, app, pkg, entry["audio_url"])
+    subprocess.run(
+        ["python", "generate_html.py", "--show", show.slug, "--blogs"],
+        cwd=ROOT, check=True, timeout=1200,
+    )
+    logger.info("Refreshed the post and pages for Ep%d (%s); feed untouched",
+                episode_num, app["name"])
+    return 0
+
+
 def main() -> int:
     """``INTERVIEW_ID`` publishes one episode; without it, sweep.
+    ``REFRESH_POST=1`` with an ``INTERVIEW_ID`` rewrites an already
+    published episode's post and pages instead (see :func:`refresh_post`).
 
     The sweep is what the scheduled workflow runs. It is idempotent —
     ``publish_one`` flips both rows to ``published``, so a second pass
     finds nothing — and one failing episode never blocks the others.
     """
     interview_id = os.environ.get("INTERVIEW_ID", "").strip()
+    if interview_id and os.environ.get("REFRESH_POST", "").strip() in ("1", "true"):
+        return refresh_post(interview_id)
     if interview_id:
         return publish_one(interview_id)
 
