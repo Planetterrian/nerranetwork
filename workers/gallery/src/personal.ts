@@ -18,12 +18,21 @@
  * Endpoints:
  *   GET  /api/account                    - member record for the cookie's email
  *   POST /api/account/preferences        - save shows/order/name/city
+ *   POST /api/account/rebuild            - build/rebuild today's edition now
  *   POST /api/stripe/webhook             - checkout + cancel lifecycle
  *   GET  /api/feed/<token>/<file>        - token-gated private feed/audio
  *   GET  /api/admin/personal-specs       - batch-builder input (bearer auth;
  *                                          tokens + prefs, NEVER emails)
  */
 
+import {
+  BUILD_ETA_MINUTES,
+  dispatchAvailable,
+  dispatchPersonalBuild,
+  noteRebuild,
+  todayIso,
+  todayStatus,
+} from "./build";
 import { corsHeaders, jsonResponse } from "./cors";
 import { verifyJwt } from "./jwt";
 import type { Env } from "./types";
@@ -101,7 +110,19 @@ interface MemberRecord {
   sub_id?: string;
   customer_id?: string;  // Stripe customer — needed to open the billing portal
   ends_at?: string;      // ISO date when a cancel-at-period-end takes effect
+  trial_ends_at?: string; // ISO date the free trial converts (Sep 17 2026)
   updated_at: string;
+}
+
+/** Subscription statuses that mean "stop serving now" when seen on
+ *  customer.subscription.updated — a trial that ended without a working
+ *  card lands here (unpaid / canceled) before, or instead of, the
+ *  .deleted event, depending on the dunning settings. */
+const DEAD_STATUSES = new Set(["canceled", "unpaid", "incomplete_expired"]);
+
+function isoDate(unixSeconds: unknown): string | undefined {
+  const n = Number(unixSeconds);
+  return n > 0 ? new Date(n * 1000).toISOString().slice(0, 10) : undefined;
 }
 
 // Checkout references: an opaque, short-lived id the signed-in account
@@ -187,6 +208,7 @@ export async function handleAccount(request: Request, env: Env): Promise<Respons
       tier: member?.tier || "none",
       status: member?.status || "none",
       ends_at: member?.ends_at || null,
+      trial_ends_at: member?.trial_ends_at || null,
       feed_url: active
         ? `https://api.nerranetwork.com/api/feed/${member!.feed_token}/feed.rss`
         : null,
@@ -194,6 +216,10 @@ export async function handleAccount(request: Request, env: Env): Promise<Respons
       // a member with a Stripe subscription and a Worker that has the key.
       billing_portal: Boolean(
         env.STRIPE_SECRET_KEY && member && (member.customer_id || member.sub_id)),
+      // Today's edition (Sep 17 2026): built when, building now, rebuilds
+      // left — so the page can offer "Build my edition now" after a
+      // change instead of "check back tomorrow".
+      today: active ? await todayStatus(env, member!.feed_token!) : null,
     },
     perks: {
       // Set via `wrangler secret put MEMBER_BOOK_CODE` (or a plain var) —
@@ -448,6 +474,60 @@ export async function handlePreferences(
   } });
 }
 
+// ---------------------------------------------------------------------------
+// POST /api/account/rebuild
+//
+// "Build my edition now." Wakes the batch workflow for this one member:
+// a first build of today is free (activation should already have done
+// it); re-making a date that exists costs one of REBUILDS_PER_DAY. 409
+// while a build is in flight, 503 when the Worker has no dispatch token.
+// ---------------------------------------------------------------------------
+
+export async function handleRebuild(
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  if (!env.RATE_LIMIT_KV || !env.PERSONAL_BUCKET) return notConfigured(request);
+  const email = await emailFromCookie(request, env);
+  if (!email) {
+    return jsonResponse(request, 401, { ok: false, error: "auth required" });
+  }
+  const member = await loadMember(env, email);
+  if (!member || member.status !== "active" || !member.feed_token) {
+    return jsonResponse(request, 404, { ok: false, error: "no active subscription" });
+  }
+  if (!dispatchAvailable(env)) {
+    return jsonResponse(request, 503, {
+      ok: false, error: "on-demand builds not configured",
+    });
+  }
+  const token = member.feed_token;
+  const status = await todayStatus(env, token);
+  if (status.building) {
+    return jsonResponse(request, 409, {
+      ok: false, error: "already building", today: status,
+    });
+  }
+  const replace = Boolean(status.built_at);
+  if (replace && status.rebuilds_left <= 0) {
+    return jsonResponse(request, 429, {
+      ok: false, error: "rebuild limit reached for today", today: status,
+    });
+  }
+  const result = await dispatchPersonalBuild(env, token, {
+    date: status.date, replace, reason: "rebuild",
+  });
+  if (!result.ok) {
+    return jsonResponse(request, result.status, { ok: false, error: result.error });
+  }
+  if (replace) await noteRebuild(env, token, status.date);
+  return jsonResponse(request, 202, {
+    ok: true,
+    eta_minutes: BUILD_ETA_MINUTES,
+    today: await todayStatus(env, token),
+  });
+}
+
 /** Member-typed free text bound for a prompt: tags out whole, control
  *  and markup characters out, whitespace collapsed, length capped,
  *  case-insensitive dedupe, list capped. Same rules as the builder's
@@ -579,14 +659,28 @@ export async function handleStripeWebhook(
       updated_at: "",
     };
     const token = existing.feed_token || randomToken();
+    // Free trial (Sep 17 2026): the session doesn't say when a trial
+    // converts; the subscription does. One read, best-effort — without
+    // the key (or on any error) the member is simply "active".
+    let trialEndsAt: string | undefined;
+    const subId = String(session.subscription || "");
+    if (subId && env.STRIPE_SECRET_KEY) {
+      try {
+        const sub = await stripeGet(env, `/subscriptions/${subId}`);
+        if (sub.status === "trialing") trialEndsAt = isoDate(sub.trial_end);
+      } catch (e) {
+        console.log("stripe: trial lookup skipped:", (e as Error).message);
+      }
+    }
     const rec: MemberRecord = {
       ...existing,
       tier,
       status: "active",
       feed_token: token,
-      sub_id: String(session.subscription || existing.sub_id || ""),
+      sub_id: subId || existing.sub_id || "",
       customer_id: String(session.customer || existing.customer_id || ""),
       ends_at: undefined,
+      trial_ends_at: trialEndsAt,
       updated_at: new Date().toISOString(),
     };
     await saveMember(env, email, rec);
@@ -595,6 +689,15 @@ export async function handleStripeWebhook(
       await env.RATE_LIMIT_KV.put(`sub:${rec.sub_id}`, email);
     }
     console.log("stripe: activated", tier, "token", token.slice(0, 8));
+    if (existing.status !== "active") {
+      // First edition within minutes of paying (Sep 17 2026) — the
+      // starter lineup until they pick shows. Best-effort: a failed or
+      // unconfigured dispatch just means the morning batch does it.
+      const r = await dispatchPersonalBuild(env, token, {
+        date: todayIso(), replace: false, reason: "activation",
+      });
+      if (!r.ok) console.log("stripe: first-edition dispatch skipped:", r.error);
+    }
   } else if (event.type === "customer.subscription.deleted") {
     const subId = String(event.data?.object?.id || "");
     const email = subId
@@ -629,6 +732,21 @@ export async function handleStripeWebhook(
       console.log("stripe: subscription.updated for unknown sub", subId.slice(0, 12));
       return jsonResponse(request, 200, { ok: true });
     }
+    if (DEAD_STATUSES.has(String(sub.status || ""))) {
+      // Trial ended with no working card, or Stripe gave up on dunning:
+      // revoke exactly as .deleted does, without waiting for it.
+      if (member.status === "active") {
+        if (member.feed_token) {
+          await env.RATE_LIMIT_KV.delete(`feedtok:${member.feed_token}`);
+        }
+        await saveMember(env, email!, {
+          ...member, status: "cancelled", trial_ends_at: undefined,
+          updated_at: new Date().toISOString(),
+        });
+        console.log("stripe: subscription", sub.status, "→ cancelled", subId.slice(0, 12));
+      }
+      return jsonResponse(request, 200, { ok: true });
+    }
     const priceId = String(sub.items?.data?.[0]?.price?.id || "");
     const tier = tierForPrice(env, priceId);
     if (!tier && priceId) {
@@ -642,15 +760,18 @@ export async function handleStripeWebhook(
     const endsAt = sub.cancel_at_period_end && periodEnd
       ? new Date(Number(periodEnd) * 1000).toISOString().slice(0, 10)
       : undefined;
+    const trialEndsAt = sub.status === "trialing" ? isoDate(sub.trial_end) : undefined;
     const next: MemberRecord = {
       ...member,
       tier: tier || member.tier,
       customer_id: String(sub.customer || member.customer_id || ""),
       ends_at: endsAt,
+      trial_ends_at: trialEndsAt,
       updated_at: new Date().toISOString(),
     };
     if (next.tier !== member.tier || next.ends_at !== member.ends_at ||
-        next.customer_id !== member.customer_id) {
+        next.customer_id !== member.customer_id ||
+        next.trial_ends_at !== member.trial_ends_at) {
       await saveMember(env, email!, next);
       console.log("stripe: subscription.updated", member.tier, "→", next.tier,
         endsAt ? `ends ${endsAt}` : "");

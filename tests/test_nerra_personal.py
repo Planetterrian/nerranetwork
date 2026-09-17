@@ -605,3 +605,175 @@ class TestTiers:
         for marker in ("handleBookDownload", "BOOKS_BUCKET", 'member.tier === "personal_local"'):
             assert marker in ts, marker
         assert 'bucket_name = "nerra-books"' in _read("workers/gallery/wrangler.toml")
+
+
+# ---------------------------------------------------------------------------
+# Sep 17 2026 polish: notes, transcripts, artwork, levelling, on-demand
+# ---------------------------------------------------------------------------
+
+class TestPolish:
+    def _spec(self):
+        return PersonalSpec(token=TOKEN, shows=["spacex", "tesla"],
+                            first_name="Sam", city="Vancouver, BC")
+
+    def test_named_sources_keeps_outlets_drops_generic(self):
+        from engine.personal_edition import named_sources
+
+        text = ("CBC News reports a tentative deal. The convention opens "
+                "today, according to Global News. TransLink says detours "
+                "continue on the 9. Local reports say rain. Officials "
+                "confirmed it. The City of Vancouver notes a closure. Per "
+                "Castanet, the festival runs Friday. Today in Vancouver, BC, "
+                "residents are looking at a high of 18.")
+        assert named_sources(text) == [
+            "CBC News", "Global News", "TransLink", "The City of Vancouver",
+            "Castanet"]
+        assert named_sources("") == []
+
+    def test_episode_notes_carry_running_order_and_sources(self):
+        from engine.personal_edition import episode_notes
+
+        chapters = [{"startTime": 0.0, "title": "Good morning from Mira"},
+                    {"startTime": 33.1, "title": "Your Vancouver, BC brief"},
+                    {"startTime": 92.3, "title": "SpaceX Daily — Falcon 9"},
+                    {"startTime": 3413.4, "title": "Sign-off"}]
+        plain, html = episode_notes(
+            self._spec(), chapters,
+            sources_by_chapter={"Your Vancouver, BC brief": ["CBC News", "TransLink"]},
+            segments=[_segment()])
+        assert plain.startswith("Sam's edition, in your order.")
+        assert "0:33 Your Vancouver, BC brief (sources: CBC News, TransLink)" in plain
+        assert "56:53 Sign-off" in plain
+        assert "<ol>" in html and "Sources named: CBC News, TransLink" in html
+        assert "nerranetwork.com/account.html" in html
+        assert "<script" not in html
+        # HTML-unsafe text is escaped, never injected.
+        _, html2 = episode_notes(self._spec(), [{"startTime": 0, "title": "<b>x</b>"}])
+        assert "&lt;b&gt;x&lt;/b&gt;" in html2
+
+    def test_feed_carries_notes_transcripts_and_own_cover(self):
+        from engine.personal_edition import (
+            COVER_FILENAME, NETWORK_COVER_URL, transcript_filenames_for)
+
+        rows = TestPersonalFeed()._episodes(1)
+        rows[0]["notes_html"] = "<p><strong>Sam's</strong> edition</p>"
+        rows[0]["transcripts"] = list(transcript_filenames_for("2026-08-11"))
+        xml = build_personal_feed_xml(self._spec(), rows, cover=True)
+        # feedgen writes CDATA; the chapter/transcript post-pass re-serializes
+        # through ElementTree, which escapes instead — equivalent to a reader,
+        # and the prefix must stay `content:` (apps key on it).
+        assert ("<content:encoded>&lt;p&gt;&lt;strong&gt;Sam's&lt;/strong&gt; "
+                "edition&lt;/p&gt;</content:encoded>") in xml
+        assert (f'<podcast:transcript url="https://api.nerranetwork.com/api/feed/{TOKEN}/'
+                f'transcript_20260811.json" type="application/json"') in xml
+        assert (f'<podcast:transcript url="https://api.nerranetwork.com/api/feed/{TOKEN}/'
+                f'transcript_20260811.vtt" type="text/vtt"') in xml
+        assert f'href="https://api.nerranetwork.com/api/feed/{TOKEN}/{COVER_FILENAME}"' in xml
+        assert NETWORK_COVER_URL not in xml
+        # Chapters survive alongside; without a cover the network art stays.
+        assert "<podcast:chapters" in xml
+        assert NETWORK_COVER_URL in build_personal_feed_xml(self._spec(), rows)
+
+    def test_transcript_cues_follow_the_splice_and_stop_at_the_cut(self):
+        from engine.personal_edition import (
+            transcript_entries, transcript_json, transcript_vtt)
+
+        whisper = {"segments": [
+            {"start": 0.0, "end": 4.0, "text": "First line."},
+            {"start": 4.0, "end": 9.0, "text": "Second line."},
+            {"start": 9.5, "end": 14.0, "text": "Promo that was cut."},
+        ]}
+        cues = transcript_entries([
+            ("Mira", 10.0, "Good morning, Sam.", None, None),
+            ("SpaceX Daily", 9.2, None, whisper, 9.2),
+            ("Mira", 5.0, "That's your edition.", None, None),
+        ])
+        assert [c["speaker"] for c in cues] == ["Mira", "SpaceX Daily", "SpaceX Daily", "Mira"]
+        assert cues[1]["startTime"] == 10.0 and cues[2]["endTime"] == 19.0
+        assert cues[3]["startTime"] == pytest.approx(19.2)
+        assert all("Promo" not in c["body"] for c in cues)
+        assert transcript_json(cues)["segments"] == cues
+        vtt = transcript_vtt(cues)
+        assert vtt.startswith("WEBVTT\n\n1\n00:00:00.000 --> 00:00:10.000\n<v Mira>Good morning, Sam.")
+        assert "00:00:19.200 -->" in vtt
+
+    def test_cover_renders_1400_square_and_signature_tracks_identity(self, tmp_path):
+        from engine.personal_edition import cover_signature, render_cover
+
+        spec = self._spec()
+        out = tmp_path / "cover.jpg"
+        base = Path(__file__).resolve().parent.parent / "assets/covers/nerra-daily.jpg"
+        assert render_cover(spec, base, out) is True
+        from PIL import Image
+
+        im = Image.open(out)
+        assert im.size == (1400, 1400) and im.format == "JPEG"
+        assert cover_signature(spec) != cover_signature(
+            PersonalSpec(token=TOKEN, shows=["spacex", "tesla"], first_name="Pat",
+                         city="Vancouver, BC"))
+        # A missing base image never raises — the feed keeps the network art.
+        assert render_cover(spec, tmp_path / "nope.jpg", tmp_path / "c2.jpg") is False
+
+    def test_segment_levelling_is_static_and_bounded(self):
+        from engine.personal_edition import (
+            segment_gain_cmd, segment_gain_db, sting_cmd)
+
+        assert segment_gain_db(-16.4) == 0.0          # in spec: untouched
+        assert segment_gain_db(-25.3) == 9.3          # UC on 2026-09-17
+        assert segment_gain_db(-2.0) == -12.0         # clamped
+        assert segment_gain_db(None) == 0.0 and segment_gain_db(-70.0) == 0.0
+        cmd = segment_gain_cmd(Path("in.mp3"), Path("out.mp3"), 9.3)
+        assert "volume=+9.3dB,alimiter=limit=0.891:level=false" in " ".join(cmd)
+        assert cmd[-1] == "out.mp3" and "-q:a" in cmd
+        sting = " ".join(sting_cmd(Path("sting.mp3")))
+        assert "channel_layouts=stereo" in sting and "volume=-18dB" in sting
+
+    def test_builder_exposes_only_and_replace(self):
+        src = (Path(__file__).resolve().parent.parent
+               / "scripts/build_personal_feeds.py").read_text(encoding="utf-8")
+        assert '"--only"' in src and '"--replace"' in src
+        assert "revision" in src and "built_at" in src
+        # A replaced day keeps its episode number (no duplicate in the app)
+        # and the superseded MP3 is deleted.
+        assert 'int(previous[0].get("episode_num", 0))' in src
+        assert "dropped.extend(" in src
+        wf = (Path(__file__).resolve().parent.parent
+              / "docs/nerra_personal.md").read_text(encoding="utf-8")
+        assert "GITHUB_DISPATCH_TOKEN" in wf
+
+    def test_weather_opener_is_enforced(self):
+        from engine.personal_edition import ensure_weather_opener
+
+        w = "Today in Vancouver, BC: a high of 21 and a low of 12 degrees with clear skies."
+        # Model kept it (numbers present): untouched.
+        kept = "Expect 21 by afternoon after a low of 12. CBC News reports a deal."
+        assert ensure_weather_opener(kept, w) == kept
+        # Model dropped it: spoken first, verbatim.
+        dropped = "Vancouver Sun reports one-quarter of candidates are women."
+        assert ensure_weather_opener(dropped, w) == f"{w} {dropped}"
+        # "21" inside "2021" doesn't count as the high.
+        assert ensure_weather_opener("Founded in 2021, 12 people.", w).startswith(w)
+        assert ensure_weather_opener(None, w) == w
+        assert ensure_weather_opener("x", "") == "x"
+
+    def test_trial_copy_is_gated_and_sample_is_wired(self):
+        root = Path(__file__).resolve().parent.parent
+        join = (root / "templates/join_page.html.j2").read_text(encoding="utf-8")
+        # Every mention of a free trial sits behind trial_days, so a page
+        # built without the var (or with 0) never promises what the Stripe
+        # links don't carry.
+        assert "{% if trial_days %}" in join
+        for line in join.splitlines():
+            if re.search(r"free for \d|days are free|free trial", line) and "trial_days" not in line:
+                raise AssertionError(f"ungated trial copy: {line.strip()}")
+        assert 'src="{{ sample_url }}"' in join and 'id="sample"' in join
+        gen = (root / "generate_html.py").read_text(encoding="utf-8")
+        assert '"trial_days": _env_int("STRIPE_TRIAL_DAYS")' in gen
+        assert "personal/sample/vancouver.mp3" in gen
+        sample = (root / "scripts/build_personal_sample.py").read_text(encoding="utf-8")
+        assert 'SAMPLE_SLUG = "vancouver"' in sample and "personal/sample/" in sample
+        for wf in ("nightly-maintenance.yml", "run-show.yml"):
+            text = (root / ".github/workflows" / wf).read_text(encoding="utf-8")
+            assert "STRIPE_TRIAL_DAYS: ${{ vars.STRIPE_TRIAL_DAYS || '7' }}" in text
+        acct = (root / "templates/account_page.html.j2").read_text(encoding="utf-8")
+        assert "trial_ends_at" in acct and "nn-build-btn" in acct

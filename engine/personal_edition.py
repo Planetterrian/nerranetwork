@@ -546,6 +546,28 @@ def parse_local_brief(text: str, *, max_words: int = 220) -> Optional[str]:
     return cleaned
 
 
+_NUM_RE = re.compile(r"-?\d+")
+
+
+def ensure_weather_opener(brief: Optional[str], weather_line: str) -> Optional[str]:
+    """The prompt asks Mira to open with the measured weather; on
+    2026-09-17 a Vancouver brief came back without it (the model spent
+    its words on three researched items). The numbers are the tell: if
+    the high and low from the Open-Meteo line are not both in the brief,
+    the line is spoken first, verbatim. Measured data is never optional
+    when the member asked for it."""
+    if not weather_line:
+        return brief
+    if not brief:
+        return weather_line
+    nums = _NUM_RE.findall(weather_line)
+    head = brief[:400]
+    if nums and all(re.search(rf"(?<!\d)(?<!\d\.){re.escape(n)}(?!\d)(?!\.\d)", head)
+                    for n in nums):
+        return brief
+    return f"{weather_line} {brief}"
+
+
 def brief_max_words(depth: int) -> int:
     return 220 if depth <= 1 else 400
 
@@ -639,16 +661,27 @@ def enclosure_url_for(token: str, filename: str) -> str:
     return f"{PERSONAL_FEED_BASE}/{token}/{filename}"
 
 
+#: The network cover every personal feed showed until Sep 17 2026; still
+#: the fallback when a subscriber's own artwork can't be rendered.
+NETWORK_COVER_URL = "https://nerranetwork.com/assets/covers/nerra-daily.jpg"
+COVER_FILENAME = "cover.jpg"
+
+
 def build_personal_feed_xml(
     spec: PersonalSpec,
     episodes: List[dict],
+    *,
+    cover: bool = False,
 ) -> str:
     """Personal RSS from the subscriber's episode state (newest first).
 
     *episodes* rows: {episode_num, date (ISO), title, description,
-    filename, duration_seconds, bytes}. GUIDs are deterministic
-    (``personal-<token8>-epNNN-date``) so a rebuild never re-notifies a
-    podcast app.
+    filename, duration_seconds, bytes} plus, since Sep 17 2026, optional
+    ``notes_html`` (rendered as ``content:encoded``) and ``transcripts``
+    (filenames beside the MP3, tagged ``<podcast:transcript>``). GUIDs
+    are deterministic (``personal-<token8>-epNNN-date``) so a rebuild
+    never re-notifies a podcast app. ``cover=True`` points the channel
+    art at the subscriber's own ``cover.jpg`` in their keyspace.
     """
     from feedgen.feed import FeedGenerator
 
@@ -665,7 +698,8 @@ def build_personal_feed_xml(
     fg.language("en")
     fg.podcast.itunes_author("Nerra Network")
     fg.podcast.itunes_image(
-        "https://nerranetwork.com/assets/covers/nerra-daily.jpg")
+        enclosure_url_for(spec.token, COVER_FILENAME) if cover
+        else NETWORK_COVER_URL)
     fg.podcast.itunes_block("yes")  # private: never index in directories
 
     rows = sorted(episodes, key=lambda e: int(e.get("episode_num", 0)),
@@ -677,6 +711,8 @@ def build_personal_feed_xml(
         fe.id(f"personal-{spec.token[:8]}-ep{num:03d}-{date.replace('-', '')}")
         fe.title(str(row.get("title") or f"Your edition — {date}"))
         fe.description(str(row.get("description") or ""))
+        if row.get("notes_html"):
+            fe.content(str(row["notes_html"]), type="CDATA")
         try:
             pub = _dt.datetime.fromisoformat(date).replace(
                 hour=8, tzinfo=_dt.timezone.utc)
@@ -718,6 +754,7 @@ def _with_chapter_tags(xml: str, token: str, rows: List[dict]) -> str:
         ET.register_namespace("podcast", podcast_ns)
         ET.register_namespace("itunes", "http://www.itunes.com/dtds/podcast-1.0.dtd")
         ET.register_namespace("atom", "http://www.w3.org/2005/Atom")
+        ET.register_namespace("content", "http://purl.org/rss/1.0/modules/content/")
         root = ET.fromstring(xml.encode("utf-8"))
         channel = root.find("channel")
         if channel is None:
@@ -725,6 +762,12 @@ def _with_chapter_tags(xml: str, token: str, rows: List[dict]) -> str:
         by_guid = {
             f"personal-{token[:8]}-ep{int(r.get('episode_num', 0)):03d}-"
             f"{str(r.get('date') or '').replace('-', '')}": str(r.get("date") or "")
+            for r in rows
+        }
+        transcripts_by_guid = {
+            f"personal-{token[:8]}-ep{int(r.get('episode_num', 0)):03d}-"
+            f"{str(r.get('date') or '').replace('-', '')}": [
+                str(n) for n in (r.get("transcripts") or []) if n]
             for r in rows
         }
         for item in channel.findall("item"):
@@ -735,6 +778,13 @@ def _with_chapter_tags(xml: str, token: str, rows: List[dict]) -> str:
             el = ET.SubElement(item, f"{{{podcast_ns}}}chapters")
             el.set("url", enclosure_url_for(token, chapters_filename_for(date)))
             el.set("type", "application/json+chapters")
+            for name in transcripts_by_guid.get((guid_el.text or "").strip(), []):
+                mime = TRANSCRIPT_TYPES.get(name.rsplit(".", 1)[-1])
+                if not mime:
+                    continue
+                tr = ET.SubElement(item, f"{{{podcast_ns}}}transcript")
+                tr.set("url", enclosure_url_for(token, name))
+                tr.set("type", mime)
         return '<?xml version="1.0" encoding="UTF-8"?>\n' + ET.tostring(
             root, encoding="unicode")
     except Exception as exc:  # noqa: BLE001 — a feed without chapters beats no feed
@@ -793,6 +843,298 @@ def personal_chapter_pieces(
     return pieces
 
 
+# ---------------------------------------------------------------------------
+# Episode notes, transcripts, artwork, transitions (Sep 17 2026 polish)
+# ---------------------------------------------------------------------------
+
+#: ``<podcast:transcript type>`` by file extension. JSON is the
+#: Podcasting 2.0 shape (segments with startTime/endTime/body/speaker);
+#: VTT is what Apple Podcasts and Pocket Casts read.
+TRANSCRIPT_TYPES = {"json": "application/json", "vtt": "text/vtt"}
+
+_SOURCE_VERBS = (r"reports?|reported|says|said|notes?|noted|confirms?|confirmed|"
+                 r"announced|announces|writes|wrote|adds|added")
+_NAME = (r"((?:The )?[A-Z][\w&'’-]*(?:\.[A-Z][\w&'’-]*)*"
+         r"(?:(?: (?:of|for|and|de|du))? [A-Z][\w&'’-]*(?:\.[A-Z][\w&'’-]*)*){0,4})")
+_NAMED_SOURCE_RES = (
+    # "CBC News reports …", "TransLink says …", "The City of Vancouver notes …"
+    re.compile(r"\b" + _NAME + r" (?:" + _SOURCE_VERBS + r")\b"),
+    # "according to Global News", "Per Castanet, …"
+    re.compile(r"\b(?i:according to|per) (?:the )?" + _NAME),
+)
+_NOT_A_SOURCE = {"the", "today", "tomorrow", "mira", "it", "this", "that",
+                 "there", "monday", "tuesday", "wednesday", "thursday",
+                 "friday", "saturday", "sunday"}
+#: A credited "source" that starts with one of these is the generic kind
+#: ("Local reports say", "Officials confirmed") — not an outlet.
+_GENERIC_LEAD = {"local", "sources", "reports", "officials", "residents",
+                 "some", "several", "many", "one", "a", "an", "our", "your",
+                 "weather", "forecasters", "experts", "analysts", "critics"}
+_SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+(?=[A-Z])")
+
+
+def named_sources(text: str, limit: int = 6) -> List[str]:
+    """Outlets and institutions the brief credits by name ("CBC News
+    reports", "according to TransLink"), in order of first mention. The
+    generic phrasings the prompt forbids ("local reports say") are
+    already screened by :func:`generic_attributions`; this collects the
+    real ones so the episode notes can list them as text — the same
+    honesty rule Mira follows aloud, made visible."""
+    out: List[str] = []
+    for sentence in _SENTENCE_SPLIT_RE.split(text or ""):
+        for rx in _NAMED_SOURCE_RES:
+            for m in rx.finditer(sentence):
+                name = m.group(1).strip(" .,")
+                key = name.lower()
+                lead = key.split(" ", 1)[0]
+                if lead == "the" and " " in key:
+                    lead = key.split(" ", 2)[1]
+                if key in _NOT_A_SOURCE or lead in _GENERIC_LEAD:
+                    continue
+                if len(name) < 3 or key in {x.lower() for x in out}:
+                    continue
+                out.append(name)
+    return out[:limit]
+
+
+def _hms(seconds: float) -> str:
+    seconds = max(0, int(seconds))
+    h, rem = divmod(seconds, 3600)
+    m, s = divmod(rem, 60)
+    return f"{h}:{m:02d}:{s:02d}" if h else f"{m}:{s:02d}"
+
+
+def episode_notes(
+    spec: PersonalSpec,
+    chapters: List[dict],
+    *,
+    sources_by_chapter: Optional[Dict[str, List[str]]] = None,
+    segments: Optional[List[Segment]] = None,
+) -> Tuple[str, str]:
+    """(plain description, HTML notes) for one edition.
+
+    Until now the item description was one line ("Your personal Nerra
+    edition: SpaceX Daily, Tesla Shorts Time…"). Podcast apps show the
+    notes on the episode screen, so they now carry the running order
+    with timestamps, the outlets each brief credits, and where to change
+    the lineup. Plain and HTML variants: apps that ignore
+    ``content:encoded`` still get the running order as text.
+    """
+    who = f"{spec.first_name}'s" if spec.first_name else "Your"
+    lines: List[str] = []
+    html: List[str] = [f"<p><strong>{_esc(who)} edition, in your order.</strong></p>", "<ol>"]
+    for ch in chapters:
+        t = _hms(float(ch.get("startTime", 0.0)))
+        title = str(ch.get("title") or "")
+        src = (sources_by_chapter or {}).get(title) or []
+        tail = f" (sources: {', '.join(src)})" if src else ""
+        lines.append(f"{t} {title}{tail}")
+        html.append(
+            f"<li><strong>{t}</strong> {_esc(title)}"
+            + (f"<br><small>Sources named: {_esc(', '.join(src))}</small>" if src else "")
+            + "</li>")
+    html.append("</ol>")
+    shows = [s.show_name for s in (segments or [])]
+    if shows:
+        html.append(f"<p>Shows today: {_esc(', '.join(shows))}.</p>")
+    html.append(
+        '<p>Change your shows, order, cities and topics any time at '
+        '<a href="https://nerranetwork.com/account.html">nerranetwork.com/account</a>. '
+        "Mira and the shows use AI voice synthesis; the editorial selection is ours.</p>")
+    plain = f"{who} edition, in your order. " + " · ".join(lines)
+    return plain, "\n".join(html)
+
+
+def _esc(text: str) -> str:
+    return (text.replace("&", "&amp;").replace("<", "&lt;")
+            .replace(">", "&gt;").replace('"', "&quot;"))
+
+
+def transcript_filenames_for(date_iso: str) -> Tuple[str, str]:
+    """(``transcript_YYYYMMDD.json``, ``transcript_YYYYMMDD.vtt``)."""
+    stem = f"transcript_{date_iso.replace('-', '')}"
+    return f"{stem}.json", f"{stem}.vtt"
+
+
+def transcript_entries(
+    pieces: List[Tuple[str, float, Optional[str], Optional[dict], Optional[float]]],
+) -> List[dict]:
+    """Flatten the spliced edition into timed cues.
+
+    *pieces* are ``(speaker, duration, spoken_text, whisper_transcript,
+    cut_seconds)`` in splice order. Mira's pieces are TTS text — one cue
+    spanning the piece (we know what she said, not when each word
+    landed). Show segments carry the committed Whisper transcript; its
+    cues are offset to the edition timeline and stop at the promo cut,
+    exactly like the audio. Every show pins ``voice_intro_delay`` 0.0,
+    so raw-voice time is final-MP3 time (see discover_segments).
+    """
+    cues: List[dict] = []
+    cursor = 0.0
+    for speaker, duration, text, transcript, cut in pieces:
+        if text:
+            cues.append({"startTime": round(cursor, 2),
+                         "endTime": round(cursor + duration, 2),
+                         "speaker": speaker, "body": text.strip()})
+        elif transcript and isinstance(transcript.get("segments"), list):
+            for seg in transcript["segments"]:
+                try:
+                    start, end = float(seg["start"]), float(seg["end"])
+                except (KeyError, TypeError, ValueError):
+                    continue
+                if cut is not None and start >= cut:
+                    break
+                body = str(seg.get("text") or "").strip()
+                if not body:
+                    continue
+                cues.append({"startTime": round(cursor + start, 2),
+                             "endTime": round(cursor + min(end, cut if cut else end), 2),
+                             "speaker": speaker, "body": body})
+        cursor += max(0.0, float(duration))
+    return cues
+
+
+def transcript_json(cues: List[dict]) -> dict:
+    return {"version": "1.0.0", "segments": cues}
+
+
+def _vtt_time(seconds: float) -> str:
+    ms = int(round(max(0.0, seconds) * 1000))
+    h, rem = divmod(ms, 3_600_000)
+    m, rem = divmod(rem, 60_000)
+    s, ms = divmod(rem, 1000)
+    return f"{h:02d}:{m:02d}:{s:02d}.{ms:03d}"
+
+
+def transcript_vtt(cues: List[dict]) -> str:
+    out = ["WEBVTT", ""]
+    for i, c in enumerate(cues, 1):
+        out.append(str(i))
+        out.append(f"{_vtt_time(c['startTime'])} --> {_vtt_time(c['endTime'])}")
+        out.append(f"<v {c.get('speaker') or 'Speaker'}>{c['body']}")
+        out.append("")
+    return "\n".join(out)
+
+
+def cover_signature(spec: PersonalSpec) -> str:
+    """What the artwork depends on — re-render only when this changes."""
+    return f"v1|{spec.first_name}|{spec.city}"
+
+
+def render_cover(spec: PersonalSpec, base: Path, out: Path, size: int = 1400) -> bool:
+    """The subscriber's own artwork: the network cover with a band naming
+    the feed ("Patrick's Nerra Daily · Vancouver, BC"). 1400 px square
+    (Apple's minimum) JPEG. Returns False — and the feed keeps the
+    network cover — when Pillow or a font is missing; artwork is never a
+    reason to fail a build."""
+    try:
+        from PIL import Image, ImageDraw, ImageFont
+    except ImportError:
+        logger.info("cover: Pillow missing — network cover kept")
+        return False
+    try:
+        im = Image.open(base).convert("RGB").resize((size, size), Image.LANCZOS)
+        draw = ImageDraw.Draw(im, "RGBA")
+        band_h = int(size * 0.22)
+        draw.rectangle([0, size - band_h, size, size], fill=(8, 10, 20, 214))
+        font_big = _font(int(size * 0.075))
+        font_small = _font(int(size * 0.045))
+        who = f"{spec.first_name}'s" if spec.first_name else "Your"
+        title = f"{who} Nerra Daily"
+        sub = spec.city or "Personal edition"
+        x = int(size * 0.06)
+        y = size - band_h + int(band_h * 0.18)
+        draw.text((x, y), title, font=font_big, fill=(255, 255, 255, 255))
+        draw.text((x, y + int(size * 0.1)), sub, font=font_small, fill=(200, 208, 224, 255))
+        out.parent.mkdir(parents=True, exist_ok=True)
+        im.save(out, "JPEG", quality=88, optimize=True)
+        return True
+    except Exception as exc:  # noqa: BLE001 — never sink a build over art
+        logger.info("cover: render failed (%s) — network cover kept", exc)
+        return False
+
+
+def _font(px: int):
+    from PIL import ImageFont
+
+    for cand in ("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+                 "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+                 "/System/Library/Fonts/Supplemental/Arial Bold.ttf"):
+        if Path(cand).exists():
+            return ImageFont.truetype(cand, px)
+    return ImageFont.load_default()
+
+
+#: Every published show targets -16 LUFS integrated (engine.audio's final
+#: mix). A segment further than this from target gets a static gain so
+#: the edition doesn't jump between shows — measured on 2026-09-17: nine
+#: shows within ±0.4 LU, Unintended Consequences at -25.3 (its voice-only
+#: path never had the final loudnorm). Static gain, not a dynamic
+#: loudnorm: it preserves the show's own dynamics and costs one encode.
+SEGMENT_TARGET_LUFS = -16.0
+SEGMENT_LOUDNESS_TOLERANCE_LU = 1.5
+SEGMENT_MAX_GAIN_DB = 12.0
+
+_LUFS_RE = re.compile(r"I:\s+(-?[\d.]+) LUFS")
+
+
+def measure_lufs(path: Path, *, timeout: int = 600) -> Optional[float]:
+    """Integrated loudness via ffmpeg's ebur128 (decode-only: seconds per
+    ten-minute segment). None when ffmpeg can't say."""
+    import subprocess
+
+    try:
+        proc = subprocess.run(
+            ["ffmpeg", "-nostats", "-i", str(path), "-af", "ebur128",
+             "-f", "null", "-"],
+            capture_output=True, text=True, timeout=timeout)
+    except Exception:  # noqa: BLE001
+        return None
+    tail = proc.stderr[proc.stderr.rfind("Integrated loudness"):]
+    m = _LUFS_RE.search(tail)
+    return float(m.group(1)) if m else None
+
+
+def segment_gain_db(measured: Optional[float]) -> float:
+    """0.0 when the segment is within tolerance (or unmeasured); else the
+    static gain that brings it to target, clamped to ±SEGMENT_MAX_GAIN_DB."""
+    if measured is None or measured <= -60:
+        return 0.0
+    delta = SEGMENT_TARGET_LUFS - measured
+    if abs(delta) <= SEGMENT_LOUDNESS_TOLERANCE_LU:
+        return 0.0
+    return max(-SEGMENT_MAX_GAIN_DB, min(SEGMENT_MAX_GAIN_DB, round(delta, 1)))
+
+
+def segment_gain_cmd(in_path: Path, out_path: Path, gain_db: float) -> List[str]:
+    """Apply a static gain with a true-peak limiter so a lifted segment
+    can't clip (limit -1 dBTP, matching the network's loudnorm TP)."""
+    from engine.daily_edition import SEGMENT_ENCODE_ARGS
+
+    return (["ffmpeg", "-y", "-i", str(in_path), "-af",
+             f"volume={gain_db:+.1f}dB,alimiter=limit=0.891:level=false"]
+            + SEGMENT_ENCODE_ARGS + [str(out_path)])
+
+
+def sting_cmd(out_path: Path) -> List[str]:
+    """The network's two-tone transition chime (engine.audio's sting),
+    rendered straight into the splice format — 44.1 kHz stereo, the
+    shared VBR setting — with a breath either side, so it stream-copies
+    into the edition ahead of each of Mira's hand-offs and her sign-off.
+    Quiet by design (-18 dB): a marker, not a jingle."""
+    from engine.daily_edition import SEGMENT_ENCODE_ARGS
+
+    return (["ffmpeg", "-y",
+             "-f", "lavfi", "-i", "sine=frequency=880:duration=0.15",
+             "-f", "lavfi", "-i", "sine=frequency=1320:duration=0.15",
+             "-filter_complex",
+             "[0][1]amix=inputs=2,afade=t=in:d=0.05,afade=t=out:st=0.1:d=0.05,"
+             "volume=-18dB,adelay=450|450,apad=pad_dur=0.35,"
+             "aformat=channel_layouts=stereo[out]",
+             "-map", "[out]"]
+            + SEGMENT_ENCODE_ARGS + [str(out_path)])
+
+
 __all__ = [
     "DEFAULT_ADDONS",
     "MIRA_PERSONAL_DISCLOSURE",
@@ -814,8 +1156,21 @@ __all__ = [
     "build_topics_prompt",
     "brief_max_words",
     "chapters_filename_for",
+    "cover_signature",
+    "episode_notes",
+    "measure_lufs",
+    "named_sources",
+    "render_cover",
+    "segment_gain_cmd",
+    "segment_gain_db",
+    "sting_cmd",
+    "transcript_entries",
+    "transcript_filenames_for",
+    "transcript_json",
+    "transcript_vtt",
     "generic_attributions",
     "enclosure_url_for",
+    "ensure_weather_opener",
     "fallback_personal_links",
     "feed_url_for",
     "fetch_weather_line",

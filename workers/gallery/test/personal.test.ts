@@ -16,9 +16,11 @@ import {
   handlePersonalFeed,
   handlePortal,
   handlePreferences,
+  handleRebuild,
   handleStripeWebhook,
   verifyStripeSignature,
 } from "../src/personal";
+import { REBUILDS_PER_DAY, todayIso } from "../src/build";
 import { resolveSubscribeTags } from "../src/handlers";
 import { signJwt } from "../src/jwt";
 import type { Env } from "../src/types";
@@ -739,5 +741,214 @@ describe("books library (Sep 14 2026)", () => {
     const acct2 = await (await handleAccount(new Request("https://api.example.com/api/account",
       { headers: { Cookie: c3 } }), env)).json() as any;
     expect(acct2.perks.library).toBe(false);
+  });
+});
+
+
+// ---------------------------------------------------------------------------
+// On-demand builds (Sep 17 2026): activation dispatch, /api/account/rebuild,
+// and the account page's "today" status.
+// ---------------------------------------------------------------------------
+
+describe("on-demand builds (Sep 17 2026)", () => {
+  const TOKEN = "b".repeat(32);
+  const today = todayIso();
+
+  function activeEnv(overrides: Record<string, unknown> = {}) {
+    const env = envWith({ GITHUB_DISPATCH_TOKEN: "github_pat_x\n", ...overrides });
+    (env.RATE_LIMIT_KV as unknown as FakeKV).store.set(
+      "member:fan@example.com", JSON.stringify({
+        shows: ["spacex", "tesla"], first_name: "Pat", city: "", tier: "personal",
+        status: "active", feed_token: TOKEN, sub_id: "sub_1", updated_at: "",
+      }));
+    return env;
+  }
+
+  function stubGitHub(calls: { url: string; body: any; auth: string }[], status = 204) {
+    vi.stubGlobal("fetch", async (url: string, init?: RequestInit) => {
+      const headers = init?.headers as Record<string, string>;
+      calls.push({ url, body: JSON.parse(String(init?.body)), auth: headers.Authorization });
+      return new Response(status === 204 ? null : "{}", { status });
+    });
+  }
+
+  async function rebuild(env: Env) {
+    const cookie = await memberCookie(env, "fan@example.com");
+    return handleRebuild(new Request("https://api.example.com/api/account/rebuild",
+      { method: "POST", headers: { Cookie: cookie } }), env);
+  }
+
+  async function account(env: Env) {
+    const cookie = await memberCookie(env, "fan@example.com");
+    return (await (await handleAccount(
+      new Request("https://api.example.com/api/account", { headers: { Cookie: cookie } }),
+      env)).json()) as any;
+  }
+
+  afterEach(() => { vi.unstubAllGlobals(); });
+
+  it("first build of the day is free, dispatches only this member, trims the token", async () => {
+    const env = activeEnv();
+    const calls: any[] = [];
+    stubGitHub(calls);
+    const res = await rebuild(env);
+    expect(res.status).toBe(202);
+    const body = await res.json() as any;
+    expect(body.eta_minutes).toBeGreaterThan(0);
+    expect(body.today.building).toBe(true);
+    expect(body.today.rebuilds_left).toBe(REBUILDS_PER_DAY);   // not a rebuild
+    expect(calls).toHaveLength(1);
+    expect(calls[0].url).toContain("/repos/Planetterrian/nerra-personal-batch/actions/workflows/personal-feeds.yml/dispatches");
+    expect(calls[0].body).toEqual({ ref: "main", inputs: { date: today, only: TOKEN, replace: "false" } });
+    expect(calls[0].auth).toBe("Bearer github_pat_x");   // newline trimmed
+    // While building: 409, and the account reports it.
+    expect((await rebuild(env)).status).toBe(409);
+    expect((await account(env)).member.today.building).toBe(true);
+  });
+
+  it("re-making a built day costs a rebuild and stops at the daily limit", async () => {
+    const env = activeEnv();
+    (env.PERSONAL_BUCKET as unknown as FakeBucket).objects.set(
+      `personal/${TOKEN}/episodes.json`, JSON.stringify({ episodes: [
+        { date: today, built_at: "2026-01-01T00:00:00Z", filename: "x.mp3" },
+      ] }));
+    const calls: any[] = [];
+    stubGitHub(calls);
+    for (let i = 0; i < REBUILDS_PER_DAY; i++) {
+      const res = await rebuild(env);
+      expect(res.status).toBe(202);
+      expect(calls[i].body.inputs.replace).toBe("true");
+      // Simulate the builder landing a newer row so "building" clears.
+      (env.PERSONAL_BUCKET as unknown as FakeBucket).objects.set(
+        `personal/${TOKEN}/episodes.json`, JSON.stringify({ episodes: [
+          { date: today, built_at: new Date(Date.now() + 1000).toISOString(), filename: "x.mp3" },
+        ] }));
+    }
+    const status = (await account(env)).member.today;
+    expect(status.building).toBe(false);
+    expect(status.rebuilds_left).toBe(0);
+    expect(status.built_at).toBeTruthy();
+    expect((await rebuild(env)).status).toBe(429);
+    expect(calls).toHaveLength(REBUILDS_PER_DAY);
+  });
+
+  it("503 without the dispatch token; 404 for a non-member; 502 when GitHub refuses", async () => {
+    const none = activeEnv({ GITHUB_DISPATCH_TOKEN: undefined });
+    expect((await rebuild(none)).status).toBe(503);
+    expect((await account(none)).member.today.available).toBe(false);
+    const env = activeEnv();
+    (env.RATE_LIMIT_KV as unknown as FakeKV).store.delete("member:fan@example.com");
+    expect((await rebuild(env)).status).toBe(404);
+    const refused = activeEnv();
+    const calls: any[] = [];
+    stubGitHub(calls, 403);
+    expect((await rebuild(refused)).status).toBe(502);
+    expect(calls).toHaveLength(1);   // 4xx is not retried
+    expect((await account(refused)).member.today.building).toBe(false);
+  });
+
+  it("activation dispatches the first edition; a re-activation does not", async () => {
+    const env = envWith({ GITHUB_DISPATCH_TOKEN: "github_pat_x" });
+    const calls: any[] = [];
+    stubGitHub(calls);
+    const post = async (event: object) => {
+      const payload = JSON.stringify(event);
+      const sig = await stripeSig(payload, "whsec_test", Math.floor(Date.now() / 1000));
+      return handleStripeWebhook(new Request("https://api.example.com/api/stripe/webhook", {
+        method: "POST", body: payload, headers: { "Stripe-Signature": sig },
+      }), env);
+    };
+    const session = { metadata: { tier: "personal" }, subscription: "sub_9",
+      customer: "cus_9", customer_details: { email: "new@example.com" } };
+    expect((await post({ type: "checkout.session.completed", data: { object: session } })).status).toBe(200);
+    expect(calls).toHaveLength(1);
+    const rec = JSON.parse((env.RATE_LIMIT_KV as unknown as FakeKV).store.get("member:new@example.com")!);
+    expect(calls[0].body.inputs).toEqual({ date: today, only: rec.feed_token, replace: "false" });
+    // Same member checks out again (already active) → no second dispatch.
+    expect((await post({ type: "checkout.session.completed", data: { object: session } })).status).toBe(200);
+    expect(calls).toHaveLength(1);
+  });
+
+  it("activation without a token still activates (dispatch is best-effort)", async () => {
+    const env = envWith();
+    const payload = JSON.stringify({ type: "checkout.session.completed", data: { object: {
+      metadata: { tier: "personal" }, subscription: "sub_9",
+      customer_details: { email: "new@example.com" } } } });
+    const sig = await stripeSig(payload, "whsec_test", Math.floor(Date.now() / 1000));
+    const res = await handleStripeWebhook(new Request("https://api.example.com/api/stripe/webhook", {
+      method: "POST", body: payload, headers: { "Stripe-Signature": sig } }), env);
+    expect(res.status).toBe(200);
+    expect(JSON.parse((env.RATE_LIMIT_KV as unknown as FakeKV).store.get("member:new@example.com")!).status).toBe("active");
+  });
+});
+
+
+// ---------------------------------------------------------------------------
+// Free trial (Sep 17 2026): trial end recorded at checkout, cleared on
+// conversion, and a dead subscription status revokes without .deleted.
+// ---------------------------------------------------------------------------
+
+describe("free trial (Sep 17 2026)", () => {
+  afterEach(() => { vi.unstubAllGlobals(); });
+
+  async function post(env: Env, event: object) {
+    const payload = JSON.stringify(event);
+    const sig = await stripeSig(payload, "whsec_test", Math.floor(Date.now() / 1000));
+    return handleStripeWebhook(new Request("https://api.example.com/api/stripe/webhook", {
+      method: "POST", body: payload, headers: { "Stripe-Signature": sig } }), env);
+  }
+  const member = (env: Env) => JSON.parse(
+    (env.RATE_LIMIT_KV as unknown as FakeKV).store.get("member:t@example.com")!);
+
+  it("records trial_ends_at from the subscription at checkout, clears it on conversion", async () => {
+    const env = envWith({ STRIPE_SECRET_KEY: "rk_test", STRIPE_PRICE_PERSONAL: "price_p" });
+    vi.stubGlobal("fetch", async (url: string) => {
+      if (url.endsWith("/subscriptions/sub_t")) {
+        return new Response(JSON.stringify({ id: "sub_t", status: "trialing", trial_end: 1790208000 }));
+      }
+      return new Response("{}", { status: 500 });
+    });
+    await post(env, { type: "checkout.session.completed", data: { object: {
+      metadata: { tier: "personal" }, subscription: "sub_t", customer: "cus_t",
+      customer_details: { email: "t@example.com" } } } });
+    expect(member(env).status).toBe("active");
+    expect(member(env).trial_ends_at).toBe("2026-09-24");
+    const cookie = await memberCookie(env, "t@example.com");
+    const acct = await (await handleAccount(new Request("https://api.example.com/api/account",
+      { headers: { Cookie: cookie } }), env)).json() as any;
+    expect(acct.member.trial_ends_at).toBe("2026-09-24");
+    // Trial converts: status active, no trial_end → cleared, still served.
+    await post(env, { type: "customer.subscription.updated", data: { object: {
+      id: "sub_t", status: "active", customer: "cus_t",
+      items: { data: [{ price: { id: "price_p" }, current_period_end: 1792800000 }] } } } });
+    expect(member(env).trial_ends_at).toBeUndefined();
+    expect(member(env).status).toBe("active");
+  });
+
+  it("a subscription that goes unpaid or canceled revokes the feed at once", async () => {
+    const env = envWith();
+    const kv = env.RATE_LIMIT_KV as unknown as FakeKV;
+    kv.store.set("member:t@example.com", JSON.stringify({
+      shows: [], first_name: "", city: "", tier: "personal", status: "active",
+      feed_token: "c".repeat(32), sub_id: "sub_t", trial_ends_at: "2026-09-24", updated_at: "" }));
+    kv.store.set("feedtok:" + "c".repeat(32), "t@example.com");
+    kv.store.set("sub:sub_t", "t@example.com");
+    await post(env, { type: "customer.subscription.updated", data: { object: {
+      id: "sub_t", status: "unpaid", customer: "cus_t", items: { data: [] } } } });
+    expect(member(env).status).toBe("cancelled");
+    expect(member(env).trial_ends_at).toBeUndefined();
+    expect(kv.store.has("feedtok:" + "c".repeat(32))).toBe(false);
+    const res = await handlePersonalFeed(new Request("https://api.example.com/x"), env,
+      "c".repeat(32), "feed.rss");
+    expect(res.status).toBe(404);
+  });
+
+  it("checkout without the key still activates (no trial lookup)", async () => {
+    const env = envWith();
+    await post(env, { type: "checkout.session.completed", data: { object: {
+      metadata: { tier: "personal" }, subscription: "sub_t",
+      customer_details: { email: "t@example.com" } } } });
+    expect(member(env).status).toBe("active");
+    expect(member(env).trial_ends_at).toBeUndefined();
   });
 });

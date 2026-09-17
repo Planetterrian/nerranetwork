@@ -91,6 +91,13 @@
         .nn-tomorrow strong { display: block; font-family: var(--font-heading); font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--nn-text-muted); margin-bottom: 0.3rem; }
         .nn-tomorrow li { margin: 0.15rem 0; }
         .nn-tomorrow ul { margin: 0; padding-left: 1.1rem; }
+        .nn-build { border: 1px solid var(--nn-border); border-radius: 12px; padding: 0.75rem 0.9rem; margin-top: 0.8rem; display: flex; gap: 0.8rem; align-items: center; flex-wrap: wrap; font-size: 0.9rem; }
+        .nn-build .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--nn-text-muted); flex: none; }
+        .nn-build .dot.on { background: #34d399; }
+        .nn-build .dot.busy { background: #fbbf24; animation: nn-pulse 1.2s ease-in-out infinite; }
+        @keyframes nn-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+        .nn-build .txt { flex: 1 1 220px; }
+        .nn-build small { display: block; color: var(--nn-text-muted); margin-top: 0.15rem; }
         .nn-savebar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; background: var(--nn-surface); border-top: 1px solid var(--nn-border); box-shadow: 0 -6px 24px rgba(0,0,0,0.35); padding: 0.7rem var(--sp-6); display: flex; gap: 0.8rem; align-items: center; justify-content: center; flex-wrap: wrap; }
         .nn-savebar .msg { font-size: 0.9rem; }
         .nn-road li.done { opacity: 0.6; }
@@ -276,7 +283,12 @@
                         <button class="ghost" onclick="NN.copyFeed()">Copy feed URL</button>
                         <button class="ghost" id="nn-portal-btn" hidden onclick="NN.portal()" style="margin-left:0.4rem;">Manage plan &amp; billing</button>
                         <p class="nn-muted" id="nn-ends-note" hidden style="margin-top:0.6rem;"></p>
-                        <p class="nn-muted" id="nn-feed-note" style="margin-top:0.6rem;">
+                        <div class="nn-build" id="nn-build" hidden>
+                            <span class="dot" id="nn-build-dot"></span>
+                            <span class="txt"><span id="nn-build-txt">Today's edition</span><small id="nn-build-sub"></small></span>
+                            <button class="ghost" id="nn-build-btn" hidden onclick="NN.rebuild()">Build my edition now</button>
+                        </div>
+                        <p class="nn-muted" id="nn-feed-note" hidden style="margin-top:0.6rem;">
                            Just subscribed? Your first edition lands with the next
                            morning build — the feed link works from then on.</p>
                         <div class="nn-tomorrow" id="nn-tomorrow" hidden>
@@ -287,7 +299,8 @@
                            You haven't picked your shows yet, so Mira is using the
                            <strong>starter lineup</strong> (SpaceX, Tesla, Models &amp;
                            Agents, Planetterrian, DP Pod). Choose 2+ shows and
-                           save to make it yours — changes reach tomorrow's edition.</p>
+                           save to make it yours, then rebuild today's edition to
+                           hear it right away.</p>
                         <div id="nn-editions" style="margin-top:var(--sp-3);" hidden>
                             <h2 style="margin-bottom:0.4rem;">Listen here</h2>
                             <div id="nn-editions-list"></div>
@@ -394,6 +407,8 @@
                         <li class="done"><span>📍</span><span><strong>Multiple locations</strong> — up to three cities on Personal News Network</span></li>
                         <li class="done"><span>🧭</span><span><strong>Your topics</strong> — five subjects Mira researches daily</span></li>
                         <li class="done"><span>📚</span><span><strong>Books included</strong> — every Nerra EPUB as a download on Personal News Network</span></li>
+                        <li class="done"><span>⚡</span><span><strong>Build it now</strong> — your first edition minutes after joining; rebuild today's after a change</span></li>
+                        <li class="done"><span>🎙️</span><span><strong>Studio polish</strong> — every show levelled to one loudness, a soft chime between segments, your own cover art, timestamped notes with the outlets named, and transcripts</span></li>
                         <li><span>🎧</span><span><strong>Audiobooks included</strong> — the M4B editions in your library too</span></li>
                         <li><span>🌅</span><span><strong>Before your morning</strong> — editions built to land ahead of your local commute</span></li>
                         <li><span>📌</span><span><strong>A real location picker</strong> — confirm the exact place, never the wrong Vancouver</span></li>
@@ -556,6 +571,56 @@ var NN = (function () {
     items.push('<li>Sign-off' + (state.tier === 'personal' && cities.length && local.length ? ' (with a one-line note about Personal News Network on Mondays)' : '') + '</li>');
     el('nn-tomorrow-list').innerHTML = items.join('');
     box.hidden = false;
+  }
+  // ------- Today's build (Sep 17 2026): built / building / build now
+  function renderBuild(today) {
+    var box = el('nn-build'); if (!box) return;
+    state.today = today || null;
+    if (!state.active || !today) { box.hidden = true; el('nn-feed-note').hidden = !state.active; return; }
+    box.hidden = false; el('nn-feed-note').hidden = true;
+    var dot = el('nn-build-dot'), txt = el('nn-build-txt'), sub = el('nn-build-sub'), btn = el('nn-build-btn');
+    var when = today.built_at ? new Date(today.built_at) : null;
+    var hhmm = when ? when.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '';
+    if (today.building) {
+      dot.className = 'dot busy';
+      txt.textContent = 'Mira is building your edition now';
+      sub.textContent = 'About five minutes. It appears in “Listen here” and in your podcast app when it lands.';
+      btn.hidden = true;
+      if (!state.todayPoll) { state.todayPoll = setInterval(pollToday, 30000); }
+      return;
+    }
+    if (state.todayPoll) { clearInterval(state.todayPoll); state.todayPoll = null; }
+    if (when) {
+      dot.className = 'dot on';
+      txt.textContent = 'Today’s edition was built at ' + hhmm;
+      sub.textContent = today.available
+        ? (today.rebuilds_left > 0
+            ? 'Changed something? Rebuild it with your new settings (' + today.rebuilds_left + ' rebuild' + (today.rebuilds_left === 1 ? '' : 's') + ' left today).'
+            : 'You’ve used today’s rebuilds — tomorrow’s edition picks up every change.')
+        : 'Changes reach tomorrow morning’s edition.';
+      btn.textContent = 'Rebuild today’s edition';
+      btn.hidden = !(today.available && today.rebuilds_left > 0);
+    } else {
+      dot.className = 'dot';
+      txt.textContent = 'No edition yet today';
+      sub.textContent = today.available
+        ? 'Build one now with your current settings — Mira takes about five minutes.'
+        : 'The morning build makes it; it can run a few hours late on GitHub’s schedule.';
+      btn.textContent = 'Build my edition now';
+      btn.hidden = !today.available;
+    }
+    btn.disabled = false;
+  }
+  function pollToday() {
+    fetch(API + '/api/account', { credentials: 'include' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) {
+        if (!d) return;
+        var t = d.member && d.member.today;
+        var landed = t && !t.building && state.today && state.today.building;
+        renderBuild(t);
+        if (landed && d.member.feed_url) { loadEditions(d.member.feed_url); }
+      }).catch(function () {});
   }
   function renderAddons() {
     var box = el('nn-addons');
@@ -768,6 +833,7 @@ var NN = (function () {
         el('nn-feed-upsell').hidden = !!feedUrl || cancelled;
         el('nn-feed-cancelled').hidden = !cancelled || !!feedUrl;
         if (feedUrl) { el('nn-feed-url').textContent = feedUrl; loadEditions(feedUrl); }
+        renderBuild(data.member && data.member.today);
         var pill = el('nn-tier-badge');
         if (status === 'active') {
           pill.textContent = tier === 'personal_local' ? 'Personal News Network' : 'Personal';
@@ -799,10 +865,16 @@ var NN = (function () {
         if (switchPortal) { switchPortal.hidden = !(portal && status === 'active'); }
         if (switchCheckout) { switchCheckout.hidden = (portal && status === 'active'); }
         var endsAt = data.member && data.member.ends_at;
-        el('nn-ends-note').hidden = !endsAt;
+        var trialEnds = data.member && data.member.trial_ends_at;
+        el('nn-ends-note').hidden = !(endsAt || trialEnds);
         if (endsAt) {
           el('nn-ends-note').textContent = 'Your subscription is set to end on ' + endsAt
             + '. Your feed keeps building until then; resume any time from Manage plan & billing.';
+        } else if (trialEnds) {
+          // Free trial (Sep 17 2026): say plainly when the first charge is.
+          el('nn-ends-note').textContent = 'You’re on the free trial — the first charge ('
+            + (tier === 'personal_local' ? '$8.99' : '$4.99') + '/mo) is on ' + trialEnds
+            + '. Cancel before then from Manage plan & billing and you pay nothing.';
         }
         // Personal members see what the next tier adds; the button is the
         // portal (existing subscription) — never a second checkout.
@@ -846,7 +918,7 @@ var NN = (function () {
         .then(function () { btn.textContent = 'Check your inbox'; })
         .catch(function () { btn.textContent = 'Try again'; btn.disabled = false; });
     },
-    save: function () {
+    save: function (done) {
       el('nn-save-status').textContent = 'Saving…';
       var body = {
         shows: state.shows,
@@ -863,10 +935,34 @@ var NN = (function () {
         body: JSON.stringify(body),
       }).then(function (r) {
         el('nn-save-status').textContent = r.ok
-          ? 'Saved — changes reach tomorrow’s edition'
+          ? (state.today && state.today.available && state.today.built_at && state.today.rebuilds_left > 0
+              ? 'Saved — rebuild today’s edition to hear the change now, or it reaches tomorrow’s'
+              : 'Saved — changes reach tomorrow’s edition')
           : 'Save failed (are personal accounts live yet?)';
         if (r.ok) { greet(el('nn-name').value); markClean(); }
-      }).catch(function () { el('nn-save-status').textContent = 'Save failed'; });
+        if (typeof done === 'function') { done(); }
+      }).catch(function () { el('nn-save-status').textContent = 'Save failed'; if (typeof done === 'function') { done(); } });
+    },
+    rebuild: function () {
+      var btn = el('nn-build-btn');
+      btn.disabled = true; btn.textContent = 'Starting…';
+      // Unsaved changes ride along: save first, then build.
+      var pre = (state.clean !== undefined && snapshot() !== state.clean)
+        ? new Promise(function (res) { NN.save(res); }) : Promise.resolve();
+      pre.then(function () {
+        return fetch(API + '/api/account/rebuild', { method: 'POST', credentials: 'include' });
+      }).then(function (r) { return r.json().then(function (d) { d._status = r.status; return d; }); })
+        .then(function (d) {
+          if (d.today) { renderBuild(d.today); }
+          if (d._status === 202) { return; }
+          btn.disabled = false;
+          el('nn-save-status').textContent = d._status === 429
+            ? 'You’ve used today’s rebuilds — tomorrow’s edition picks up every change.'
+            : d._status === 409 ? 'A build is already running.'
+            : 'Couldn’t start a build right now — the morning build will still run.';
+          if (d._status !== 409) { renderBuild(state.today); }
+        })
+        .catch(function () { btn.disabled = false; renderBuild(state.today); });
     },
     copyFeed: function () {
       navigator.clipboard.writeText(el('nn-feed-url').textContent);
