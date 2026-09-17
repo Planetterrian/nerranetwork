@@ -1177,3 +1177,74 @@ class TestPublishingShipsTheEpisodeNotTheRoom:
         import pytest
         with pytest.raises(RuntimeError):
             self._f()({})
+
+
+class TestEveryEpisodeGetsItsOwnPost:
+    """An hour of somebody's expertise reached the site as one line in a
+    summary list. The interview shows bypass run_show, so they never wrote a
+    digest and never got a blog post, while every other show on the network
+    did. generate_html turns digests/<slug>/*.md into blog/<slug>/ep###.html
+    already — the episode just has to write the file it reads."""
+
+    PUB = (V / "publish_episode.py").read_text(encoding="utf-8")
+    WORKER = (ROOT / "workers" / "voices" / "src" / "index.ts").read_text(encoding="utf-8")
+
+    def _digest(self, **over):
+        import datetime as dt
+        from publish_episode import write_episode_digest
+        from shows import get_show
+        app = {"name": "Ada Lovelace", "title": "Mathematician",
+               "organization": "Analytical Engine", "bio": "She wrote the first program.",
+               "links": {"raw": "https://example.org"}}
+        pkg = {"episode_notes": "The lead paragraph.\n\nThe rest of it.",
+               "chapter_markers": [{"start": 90, "title": "The engine"}],
+               "guest_materials": "https://example.org/paper\nMy book",
+               "transcript_cleaned": "[00:01] Ada: Hello."}
+        pkg.update(over)
+        path = write_episode_digest(get_show("age_of_ai"), 7, dt.date(2026, 9, 17),
+                                    "Ep7", {"episode_thesis": "A thesis."},
+                                    app, pkg, "https://audio/x.mp3")
+        text = path.read_text(encoding="utf-8")
+        path.unlink()
+        return text
+
+    def test_the_post_carries_the_guests_own_links(self):
+        text = self._digest()
+        assert "### Where to find Ada Lovelace" in text
+        assert "https://example.org" in text
+
+    def test_it_carries_what_they_asked_us_to_link(self):
+        text = self._digest()
+        assert "### What they wanted you to read next" in text
+        assert "- https://example.org/paper" in text
+        assert "- My book" in text
+
+    def test_a_guest_who_sent_nothing_gets_no_empty_heading(self):
+        text = self._digest(guest_materials="")
+        assert "What they wanted you to read next" not in text
+
+    def test_bio_chapters_and_transcript_are_there(self):
+        text = self._digest()
+        assert "### About Ada Lovelace" in text
+        assert "She wrote the first program." in text
+        assert "**01:30** The engine" in text
+        assert "### Transcript" in text
+
+    def test_the_file_is_named_so_the_generator_finds_the_episode(self):
+        import datetime as dt
+        from publish_episode import write_episode_digest
+        from shows import get_show
+        path = write_episode_digest(
+            get_show("age_of_ai"), 7, dt.date(2026, 9, 17), "Ep7", {},
+            {"name": "A"}, {}, "https://audio/x.mp3")
+        assert path.name.startswith("Age_of_AI_Ep007_20260917")
+        assert path.parent.name == "age_of_ai"
+        path.unlink()
+
+    def test_the_site_run_actually_renders_posts(self):
+        assert '"--show", show.slug, "--blogs"' in self.PUB
+
+    def test_the_guest_is_asked_for_materials_where_they_are_approving(self):
+        assert 'id="materials"' in self.WORKER
+        assert "guest_materials: materials" in self.WORKER
+        assert "when this publishes we write a full post" in self.WORKER

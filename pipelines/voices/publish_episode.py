@@ -100,6 +100,101 @@ def episode_audio(run: dict) -> str:
     )
 
 
+def _bullets(text: str) -> str:
+    """Free text from a guest, as markdown that keeps their own links."""
+    out = []
+    for line in (text or "").splitlines():
+        line = line.strip().lstrip("-*\u2022 ").strip()
+        if line:
+            out.append(f"- {line}")
+    return "\n".join(out)
+
+
+def write_episode_digest(show, episode_num: int, when: dt.date, title: str,
+                         interview: dict, app: dict, pkg: dict,
+                         audio_url: str) -> Path:
+    """The episode's blog post, as the digest markdown every other show writes.
+
+    Sept 17 2026. The interview shows bypass run_show, so they never wrote a
+    digest and never got a post — an hour of somebody's expertise reached
+    the site as one line in a summary list. generate_html.py already turns
+    digests/<slug>/*.md into blog/<slug>/ep###.html; this writes the file it
+    reads, so an interview episode gets the same page as everything else on
+    the network, with the guest's own links on it.
+    """
+    thesis = (interview.get("episode_thesis") or "").strip()
+    notes = (pkg.get("episode_notes") or "").strip()
+    bio = (app.get("bio") or "").strip()
+    materials = (pkg.get("guest_materials") or "").strip()
+    transcript = (pkg.get("transcript_cleaned") or "").strip()
+    name = app.get("name") or "our guest"
+    role = ", ".join(x for x in (app.get("title"), app.get("organization")) if x)
+
+    parts = [f"# {show.name}"]
+    if thesis:
+        parts.append(f"> **{thesis}**")
+    parts.append(f"*Episode {episode_num} · {when:%B %-d, %Y}*")
+    if notes:
+        parts.append(f"**What You Need to Know:** {notes.splitlines()[0]}")
+    parts.append("---")
+
+    parts.append("### Listen")
+    parts.append(f"[Listen to the full conversation]({audio_url})")
+    parts.append("---")
+
+    parts.append(f"### About {name}")
+    if role:
+        parts.append(f"**{role}**")
+    parts.append(bio or f"{name} joined Mira for this conversation.")
+    parts.append("---")
+
+    body = "\n\n".join(notes.split("\n\n")[1:]).strip()
+    if body:
+        parts.append("### What we talked about")
+        parts.append(body)
+        parts.append("---")
+
+    chapters = pkg.get("chapter_markers") or []
+    if chapters:
+        lines = []
+        for ch in chapters:
+            try:
+                start = int(float(ch.get("start", 0)))
+            except (TypeError, ValueError):
+                start = 0
+            lines.append(f"- **{start // 60:02d}:{start % 60:02d}** "
+                         f"{str(ch.get('title', '')).strip()}")
+        parts.append("### Chapters")
+        parts.append("\n".join(lines))
+        parts.append("---")
+
+    links = guest_links(app)
+    if links:
+        parts.append(f"### Where to find {name}")
+        parts.append("\n".join(f"- [{l['label']}]({l['url']})" for l in links))
+        parts.append("---")
+
+    if materials:
+        parts.append("### What they wanted you to read next")
+        parts.append(f"Sent by {name} when they approved this episode.")
+        parts.append(_bullets(materials))
+        parts.append("---")
+
+    if transcript:
+        parts.append("### Transcript")
+        parts.append("The conversation as it was recorded, reviewed and "
+                     f"approved by {name} before release.")
+        parts.append(transcript)
+
+    md = "\n\n".join(parts).rstrip() + "\n"
+    path = (ROOT / "digests" / show.slug
+            / f"{show.episode_prefix}_Ep{episode_num:03d}_{when:%Y%m%d}.md")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(md, encoding="utf-8")
+    logger.info("episode post written: %s (%d chars)", path.name, len(md))
+    return path
+
+
 def publish_one(interview_id: str) -> int:
     interview = sb_select("interviews", f"id=eq.{interview_id}")[0]
     if interview.get("status") != "approved":
@@ -202,10 +297,21 @@ def publish_one(interview_id: str) -> int:
     summaries_path.write_text(
         json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
 
+    # The episode's own post, written before the site is regenerated so the
+    # generator picks it up in the same pass.
+    try:
+        write_episode_digest(show, episode_num, today, title,
+                             interview, app, pkg, audio_url)
+    except Exception:  # noqa: BLE001 — the episode still publishes
+        logger.exception("episode post not written (non-fatal)")
+
     # Regenerate the show pages so the episode appears on the site.
+    # --blogs is what turns the digest above into blog/<slug>/ep###.html and
+    # refreshes the show's blog index. Without it the episode's post is
+    # written and never rendered.
     subprocess.run(
-        ["python", "generate_html.py", "--show", show.slug],
-        cwd=ROOT, check=True, timeout=600,
+        ["python", "generate_html.py", "--show", show.slug, "--blogs"],
+        cwd=ROOT, check=True, timeout=1200,
     )
 
     sb_update("interviews", f"id=eq.{interview_id}",

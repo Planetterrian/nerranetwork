@@ -867,6 +867,12 @@ async function handleEditorialDecision(req: Request, env: Env): Promise<Response
        six months or a year to tell us what has actually changed in your
        field since we spoke. That follow-up is the part of this show we care
        most about: almost nobody goes back to check.</p>
+       <p>One more thing, and it is the part guests tell us they care about
+       most: when this publishes we write a full post for the episode.
+       There is a box on that page for anything you would like a listener
+       to find next — a short biography in your own words, your site or
+       book, papers or talks worth reading. Whatever you put there goes in
+       the post.</p>
        <p>If we don't hear from you within seven days we'll take that as
        approval, and we'll remind you at day four. You can always ask for
        changes after publication too.</p>
@@ -1054,6 +1060,12 @@ ${listenUrl
 <button onclick="submitReview(true)">Approve for publication</button>
 <button class="secondary" onclick="submitReview(false)">Submit removal requests</button>
 </p>
+<h3>Your episode's post</h3>
+<p>When this publishes we write a full post for it. Anything you'd like a
+listener to find next goes in — a short biography in your own words, your
+book or site, papers, talks, the project you were describing. Paste it here
+and we'll link it.</p>
+<textarea id="materials" placeholder="A short bio, links to your work, papers or talks worth reading next — anything you'd like in the post."></textarea>
 <h3>Before you go</h3>
 <p>Two things we'd rather offer than have you feel stuck with:</p>
 <p>
@@ -1072,7 +1084,8 @@ async function submitReview(approve){
     headers:{'Content-Type':'application/json'},
     body: JSON.stringify({approve, redactions: document.getElementById('redactions').value,
       followup: picked ? picked.value : 'none',
-      followup_note: document.getElementById('followupNote').value})});
+      followup_note: document.getElementById('followupNote').value,
+      materials: document.getElementById('materials').value})});
   document.getElementById('status').textContent = resp.ok
     ? (approve ? 'Approved — thank you! Your episode is on its way.' : 'Received — we will apply the removals and confirm by email.')
     : 'Something went wrong — please reply to our email instead.';
@@ -1090,6 +1103,15 @@ async function handleGuestReviewSubmit(req: Request, env: Env, token: string): P
   // A guest who would come back, or who would rather do it again, is worth
   // more than a guest who merely approved (Sept 13 2026). Recorded here so
   // it becomes a scheduled conversation rather than a good intention.
+  // Whatever they want in their episode's post. Kept even when they ask for
+  // removals or a re-record: the links are still the links.
+  const materials = String(body?.materials ?? "").slice(0, 4000).trim();
+  if (materials) {
+    await sb(env, "PATCH", `editorial_packages?id=eq.${pkg.id}`,
+      { guest_materials: materials });
+    await slack(env, `${show.shortLabel}: ${app?.name ?? "guest"} sent materials for the episode post (${materials.length} chars).`);
+  }
+
   const followup = String(body?.followup ?? "none");
   if (followup !== "none") {
     const months = followup === "return_6" ? 6 : followup === "return_12" ? 12 : 0;
