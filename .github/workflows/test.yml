@@ -28,6 +28,12 @@ jobs:
           python-version: '3.12'
           requirements-file: 'requirements.txt'
           extra-packages: "ruff"
+          # Sep 18 2026: the Nerra Voices leg-placement and mic-bleed
+          # tests (tests/test_it_produces_itself.py) run real ffmpeg on
+          # synthetic audio, and ubuntu-latest does not ship it — main
+          # went red on every push from 09-17 19:40 with
+          # FileNotFoundError: 'ffmpeg'. Same install run-show.yml uses.
+          system-packages: 'ffmpeg'
           skip-checkout: 'true'
 
       - name: Lint with ruff (full)
