@@ -1694,3 +1694,17 @@ class TestTheReadArrivesBeforeTheDecision:
         assert "not going to be able to find a place for it" in body
         assert "you are welcome\n         to apply again" in body or "welcome" in body
         assert "app.publicist_email ? [String(app.publicist_email)] : undefined" in body
+
+
+class TestEveryAssemblyIsANewFile:
+    """The CDN served the first assembly under the same key forever; three
+    corrected endings, three times the old cut in Patrick's ears."""
+
+    def test_the_edit_key_carries_a_stamp(self):
+        asm = (V / "assemble_edit.py").read_text(encoding="utf-8")
+        assert 'f"{run_id}_edit_{stamp}.mp3"' in asm
+        assert 'f"{run_id}_edit.mp3"' not in asm
+
+    def test_the_close_gets_a_breath(self):
+        auto = (V / "auto_edit.py").read_text(encoding="utf-8")
+        assert 'cuts += [{"gap": 1.4}, {"from": "narration:outro"}]' in auto
