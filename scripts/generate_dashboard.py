@@ -2098,6 +2098,28 @@ def _experiment_live_metrics(root: Path) -> Dict[str, Any]:
             continue
     out["caption_track_refusals_14d"] = cap_refused if cap_seen else None
 
+    # Modern Investing pick cadence (Sep 18 2026): share of the last 10
+    # committed trade signals whose action is new_trade. The cold-streak
+    # regime text had the show declaring no trade on 19 of 23 episodes
+    # (1 of the last 10 on 09-18); the no-trade budget is read out here.
+    # None under 5 signals — never a fake zero.
+    sig_rows: List[tuple] = []
+    for sf in (root / "digests" / "modern_investing").glob("trade_signal_ep*.json"):
+        try:
+            m = re.search(r"trade_signal_ep(\d+)\.json$", sf.name)
+            if not m:
+                continue
+            action = (json.loads(sf.read_text(encoding="utf-8")) or {}).get("action")
+            if isinstance(action, str):
+                sig_rows.append((int(m.group(1)), action))
+        except (OSError, ValueError, TypeError):
+            continue
+    sig_rows.sort()
+    last10 = [a for _, a in sig_rows[-10:]]
+    out["mit_new_trade_share_10ep"] = (
+        round(sum(1 for a in last10 if a == "new_trade") / len(last10), 2)
+        if len(last10) >= 5 else None)
+
     # Channel views WoW from the day series.
     for ch in ("en", "ru"):
         ds = ((stats.get("channels") or {}).get(ch) or {}).get("day_series") or []

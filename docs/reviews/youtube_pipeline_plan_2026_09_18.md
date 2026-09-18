@@ -123,9 +123,13 @@ episodes by rule, the way the picker deferral works on UC. Score it on
 
 ## 5. What to change next, ranked
 
-1. **MIT no-trade loop** (§4). Operator-gated prompt-context change;
-   the diagnosis is on the ledger as a prediction so a change can be
-   scored against it.
+1. **MIT no-trade loop** (§4). SHIPPED FOR A/B the same day (register
+   `mit-no-trade-budget-2026-09-18`): the COLD text raises the bar on the
+   pick rather than on picking, voided picks no longer reset the drought
+   valve, and a no-trade budget of one per five episodes is read from
+   the committed trade signals. Operator listens to the first two
+   episodes; revert is the previous COLD text plus dropping the budget
+   block.
 2. **Combined generation on the flagships re-runs PART 2 after a
    regeneration.** Three of five flagship episodes discarded a good
    combined script because the overlap-drop or structural regeneration
