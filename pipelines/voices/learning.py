@@ -149,10 +149,44 @@ def variety_block(show_slug: str) -> str:
             phrases.append(phrase)
     if not phrases:
         return ""
-    return ("\n\nALREADY USED ON THIS SHOW\n"
-            "You have said each of these on a previous episode. They are "
-            "retired. Do not say them again, and do not say a near-variant "
-            "of them:\n" + "\n".join(f'- "{p}"' for p in phrases) + "\n")
+    # Sept 18 2026. Retiring the instances did nothing: seventy "That's a
+    # [adjective] [noun]" lines across six episodes, a fresh adjective each
+    # time, every one of them technically new. The SHAPE is what repeats,
+    # so the shape is what gets named, once, with the count that earned it.
+    shapes: dict = {}
+    singles = []
+    for phrase in phrases:
+        shape = phrase_shape(phrase)
+        if shape:
+            shapes[shape] = shapes.get(shape, 0) + 1
+        else:
+            singles.append(phrase)
+    out = ["\n\nALREADY USED ON THIS SHOW"]
+    for shape, n in sorted(shapes.items(), key=lambda kv: -kv[1]):
+        out.append(f'The shape "{shape}" is retired outright: you have opened '
+                   f'{n} replies with it on this show, changing only the '
+                   f'adjective, which is not variety. Never open a reply that way '
+                   f'again, whatever the adjective.')
+    if singles:
+        out.append("You have said each of these on a previous episode. They are "
+                   "retired. Do not say them again, and do not say a near-variant "
+                   "of them:\n" + "\n".join(f'- "{p}"' for p in singles))
+    return "\n".join(out) + "\n"
+
+
+_SHAPES = (
+    (re.compile(r"(?i)^that'?s (a|an) "), "That's a ..."),
+    (re.compile(r"(?i)^what (a|an) "), "What a ..."),
+    (re.compile(r"(?i)^i love (that|how|the) "), "I love that ..."),
+)
+
+
+def phrase_shape(phrase: str) -> str:
+    """The reflex a phrase is an instance of, or "" when it is just itself."""
+    for pattern, label in _SHAPES:
+        if pattern.match(phrase.strip()):
+            return label
+    return ""
 
 
 def session_events_summary(run: dict, limit: int = 60) -> str:

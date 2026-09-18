@@ -1537,15 +1537,17 @@ class TestTheGuestFinishesTheirSentence:
         t = ("[47:49] Sheldon: So I'm using automation to create more automation\n"
              "[47:58] Sheldon: that we can produce.\n"
              "[48:03] Mira: Thank you, Sheldon. That's the end of the recording.\n")
-        end = _after_the_line(t, 2878.0)
-        assert 2879.5 <= end <= 2882.7, end
-        # A long last line is bounded by the next line's start.
+        # Pointed at the start of his last line: past it, before Mira.
+        assert 2879.5 <= _after_the_line(t, 2878.0) <= 2882.7
+        # Pointed at the first line of his final thought: the whole thought.
+        assert _after_the_line(t, 2869.0) == _after_the_line(t, 2878.0)
+        # Pointed at Mira's sign-off: pulled back to the end of his turn.
+        assert _after_the_line(t, 2883.0) == _after_the_line(t, 2878.0)
+        # A long last line is bounded by the next speaker's start.
         t2 = "[10:00] Dan: " + "word " * 40 + "\n[10:05] Mira: Right.\n"
         assert _after_the_line(t2, 600.0) == 604.7
         # The last line of the file is extended by its own length.
         assert _after_the_line("[10:00] Dan: four words here now\n", 600.0) == 600.0 + 0.45 * 4 + 1.2
-        # Never moved earlier than the model asked for.
-        assert _after_the_line(t, 2880.0) >= 2880.0
 
     def test_the_cutter_uses_it(self):
         auto = (V / "auto_edit.py").read_text(encoding="utf-8")
@@ -1567,3 +1569,29 @@ class TestAPublishedEpisodesPostCanBeRefreshed:
         assert 'os.environ.get("REFRESH_POST", "").strip() in ("1", "true")' in pub
         wf = (ROOT / ".github" / "workflows" / "nerra_voices_publish.yml").read_text(encoding="utf-8")
         assert "REFRESH_POST" in wf
+
+
+class TestTheAdjectiveReflexIsBannedAsAShape:
+    """Retiring "That's a crisp way to put it" produced "That's a sharp
+    distinction", "That's a clean metric", "That's a big phrase": seventy
+    lines across six episodes, each technically new. Patrick, Sept 18 2026:
+    more variety and personality. The shape is what repeats."""
+
+    def test_the_variety_block_names_the_shape_not_the_instances(self, monkeypatch):
+        import learning
+        rows = [{"phrase": p} for p in (
+            "That's a crisp way to put it", "That's a sharp distinction",
+            "That's a clean metric", "Fair enough")]
+        monkeypatch.setattr(learning, "sb_select", lambda *a, **k: rows)
+        block = learning.variety_block("age_of_ai")
+        assert 'The shape "That\'s a ..." is retired outright' in block
+        assert "opened 3 replies with it" in block
+        assert '- "Fair enough"' in block
+        assert "crisp" not in block  # the instances are not listed one by one
+
+    def test_the_prompt_bans_the_shape_and_bridges_the_warm_up(self):
+        assert 'opening a reply with "That\'s a [adjective] [noun]"' in PROMPT
+        assert "Do not grade an answer with an adjective at all" in PROMPT
+        assert "WARM UP FIRST, THEN EASE IN" in PROMPT
+        assert "come out of something they just said" in PROMPT
+        assert "a fast, dry guest gets a fast, dry host" in PROMPT

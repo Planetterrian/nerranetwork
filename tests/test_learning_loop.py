@@ -512,10 +512,13 @@ class TestMiraDoesNotRepeatHerself:
     def test_retired_phrases_reach_the_prompt(self):
         import learning
 
-        learning.sb_select = lambda *a, **k: [{"phrase": "That's a crisp way to put it"}]
+        learning.sb_select = lambda *a, **k: [{"phrase": "That's a crisp way to put it"},
+                                              {"phrase": "Fair enough"}]
         block = learning.variety_block("age_of_ai")
         assert "ALREADY USED ON THIS SHOW" in block
-        assert "crisp way to put it" in block
+        # Sept 18 2026: an instance of a reflex is reported as the reflex.
+        assert 'The shape "That\'s a ..." is retired outright' in block
+        assert "Fair enough" in block
         assert "near-variant" in block
 
     def test_a_lookup_failure_never_blocks_an_interview(self):
@@ -539,7 +542,7 @@ class TestMiraDoesNotRepeatHerself:
         text = (ROOT / "pipelines" / "voices" / "prompts"
                 / "mira_system_prompt.txt").read_text(encoding="utf-8")
         assert "SAY IT A DIFFERENT WAY EVERY TIME" in text
-        assert "ALREADY USED ON THIS SHOW" in text
+        assert "ALREADY USED ON THIS\nSHOW" in text or "ALREADY USED ON THIS SHOW" in " ".join(text.split())
         assert "LET THEM FINISH" in text
         assert "Never read a source aloud" in text
         assert "the interview is over" in text

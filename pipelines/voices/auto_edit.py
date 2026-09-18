@@ -139,30 +139,44 @@ def transcript_of(ctx: dict) -> str:
 
 
 def _after_the_line(transcript: str, end_sec: float) -> float:
-    """The transcript stamps where each line STARTS, so the model's end_sec
-    is the start of the guest's last line and a cut there loses the whole
-    line: Sheldon Poon's episode ended on "...to further improve the quality
-    and the amount" with "that we can produce" on the floor (Sept 17 2026).
-    Move the end to where that line plausibly finishes: the next line's
-    start, or the line's word count at speaking pace, whichever is sooner."""
+    """Where the episode's conversation ends, given the model's end_sec.
+
+    The transcript stamps where each line STARTS, so end_sec is the start
+    of some line and a cut there loses the line: Sheldon Poon's episode
+    ended on "...the quality and the amount" with "that we can produce" on
+    the floor (Sept 17 2026). And a thought is often several lines — the
+    recogniser breaks a long answer at every pause — so the guest is let
+    run to the end of their turn: every consecutive line of theirs, up to
+    the start of the next speaker's line. If the model pointed at Mira's
+    sign-off, the cut is pulled back to the guest's last turn; her live
+    "that's the end of the recording" is for the guest, not the listener,
+    and the produced outro closes the episode."""
     lines = []
     for raw in transcript.splitlines():
         m = _LINE.match(raw.strip())
         if not m:
             continue
-        h, mm, ss, _who, text = m.groups()
+        h, mm, ss, who, text = m.groups()
         at = (int(h) * 3600 + int(mm) * 60 + int(ss)) if ss else (int(h) * 60 + int(mm))
-        lines.append((float(at), text))
+        lines.append((float(at), who.strip(), text))
     if not lines:
         return end_sec
-    idx = max((i for i, (at, _t) in enumerate(lines) if at <= end_sec), default=None)
+    idx = max((i for i, (at, _w, _t) in enumerate(lines) if at <= end_sec), default=None)
     if idx is None:
         return end_sec
-    at, text = lines[idx]
+    host = "mira"
+    while idx > 0 and lines[idx][1].lower() == host:
+        idx -= 1
+    # Run forward through the same speaker's consecutive lines.
+    who = lines[idx][1].lower()
+    last = idx
+    while last + 1 < len(lines) and lines[last + 1][1].lower() == who:
+        last += 1
+    at, _who, text = lines[last]
     spoken = at + WORD_SEC * max(1, len(text.split())) + LINE_TAIL_SEC
-    if idx + 1 < len(lines):
-        return max(end_sec, min(spoken, lines[idx + 1][0] - 0.3))
-    return max(end_sec, spoken)
+    if last + 1 < len(lines):
+        return min(spoken, lines[last + 1][0] - 0.3)
+    return spoken
 
 
 def plan(ctx: dict) -> dict:
