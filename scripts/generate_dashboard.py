@@ -2069,6 +2069,35 @@ def _experiment_live_metrics(root: Path) -> Dict[str, Any]:
     out["long_form_render_median_s_7d"] = (
         round(renders[len(renders) // 2]) if len(renders) >= 5 else None)
 
+    # Long-form caption-track refusals over the last 14 days (Sep 18 2026).
+    # ``caption_track_uploaded`` was set on the publish result since July
+    # and recorded NOWHERE until the allowlist fix; a refusal now means a
+    # captionless long-form (the track is the only caption layer since
+    # Sep 9). None until at least one episode has recorded the key —
+    # never a fake zero for "not measured".
+    cap_seen = cap_refused = 0
+    cutoff_14 = (anchor_d - _dt.timedelta(days=14)).isoformat()
+    for mf in (root / "digests").glob("*/metrics_ep*.json"):
+        try:
+            m = re.search(r"metrics_ep(\d+)\.json$", mf.name)
+            if not m:
+                continue
+            dated = sorted(mf.parent.glob(f"credit_usage_*_ep{int(m.group(1))}.json"))
+            if not dated:
+                continue
+            dm = re.search(r"credit_usage_(\d{4}-\d{2}-\d{2})_", dated[-1].name)
+            if not dm or dm.group(1) < cutoff_14:
+                continue
+            counters = (json.loads(mf.read_text(encoding="utf-8")) or {}).get("counters") or {}
+            if "caption_track_uploaded" not in counters:
+                continue
+            cap_seen += 1
+            if not counters.get("caption_track_uploaded"):
+                cap_refused += 1
+        except (OSError, ValueError, TypeError):
+            continue
+    out["caption_track_refusals_14d"] = cap_refused if cap_seen else None
+
     # Channel views WoW from the day series.
     for ch in ("en", "ru"):
         ds = ((stats.get("channels") or {}).get(ch) or {}).get("day_series") or []
