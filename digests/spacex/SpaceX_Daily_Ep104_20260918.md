@@ -1,0 +1,46 @@
+# SpaceX Daily
+> **NASA plans to keep Starliner in service longer shift Dragon's retirement target to 2030 and change how crews reach the station.**
+---
+### Top News
+
+1. **NASA plans more Starliner flights while Dragon retirement moves to 2030**
+ NASA intends to fly additional Starliner missions before retiring the vehicle. The shift follows internal NASA planning documents reviewed this week. Dragon would continue supporting cargo and crew rotations until that point. The planning documents were part of a broader review of commercial crew capabilities. This approach ensures backup options for accessing the International Space Station remain available through the end of the decade. Source: [keeptrack.space](https://keeptrack.space/x-report/spacex-brief-2026-09-18)
+
+2. **SpaceX delays Starship flight 14 test**
+ The company postponed the next integrated flight test. No new target date was released in the announcement. The delay follows ongoing vehicle processing at Starbase. Teams continue work on the Ship and Super Heavy booster stack. Regulatory review remains a factor in the schedule. Processing work includes final checks on propulsion systems and structural interfaces. The postponement allows additional time for hardware validation before the next attempt. Source: [advanced-television.com](https://www.advanced-television.com/2026/09/18/spacex-delays-starship-14-again/)
+
+3. **Gwynne Shotwell tells Boeing to complete Starliner flights**
+ The comment came during a public appearance on September 18. Shotwell noted the importance of multiple U.S. crew vehicles. She did not specify timelines for Boeing's next attempt. The statement underscores the value of having two independent crew transportation systems. Shotwell's remarks were made in the context of ongoing commercial crew program operations. Source: [wesh.com](https://www.wesh.com/article/gwynne-shotwell-boeing-starliner-comments/73781551)
+
+4. **Crew-13 astronauts enter quarantine for October launch**
+ NASA and SpaceX confirmed the step ahead of the planned October mission. The crew will remain isolated until launch from Kennedy Space Center. Dragon spacecraft processing continues in parallel. The quarantine protocol follows standard procedures to protect crew health before flight. The mission will mark another rotation to the International Space Station. Source: [etvbharat.com](https://www.etvbharat.com/amp/en/technology/nasa-spacex-crew-13-astronauts-enter-quarantine-enn26091802239)
+
+5. **Crew-12 astronauts prepare for return to Earth**
+ The four crew members expressed anticipation for seeing nature again after months on the station. NASA confirmed the upcoming undocking and splashdown sequence. The mission used a SpaceX Dragon capsule for transport. Return timing depends on weather and station operations. The crew has completed all assigned station tasks ahead of departure. Splashdown will occur in the Pacific Ocean under Dragon recovery procedures. Source: [space.com](https://www.space.com/space-exploration/international-space-station/im-so-looking-forward-to-seeing-nature-again-spacexs-crew-12-astronauts-gearing-up-for-trip-home-to-earth)
+
+6. **Tesla and SpaceX file federal lawsuit over Terafab trademark**
+ The companies took the dispute to court on September 17. The filing challenges another party's use of the name. Both firms seek to protect the mark for manufacturing and technology applications. No hearing date has been set. The lawsuit addresses potential confusion in industrial and aerospace sectors. Legal teams from both companies are coordinating the federal case. Source: [teslarati.com](https://www.teslarati.com/tesla-spacex-lawsuit-terafab-trademark-court/)
+
+7. **Memphis data centers face $30 million lawsuit after worker death**
+ A lawsuit alleges negligence at the xAI-linked site. The suit seeks damages from the project owners. Court filings were submitted on September 17. The incident occurred at the expanding data center campus in Tennessee. Project owners are named as defendants in the action. Source: [commercialappeal.com](https://www.commercialappeal.com/story/news/courts/2026/09/17/spacexai-sued-worker-fall-death/91816889007/)
+
+8. **NASA invites media to 35th Dragon resupply launch**
+ The agency opened accreditation for the upcoming cargo mission. The flight will deliver supplies to the International Space Station. SpaceX will use a Falcon 9 and Dragon capsule. Launch is scheduled from Cape Canaveral in the coming weeks. Media credentials must be submitted through the standard NASA process. The mission continues the regular cadence of cargo deliveries to the orbiting laboratory. Source: [nasa.gov](https://www.nasa.gov/news-release/nasa-invites-media-to-spacexs-35th-resupply-launch-to-space-station/)
+---
+## Community Buzz
+r/SpaceX users are tracking the Starlink 15-27 mission from Vandenberg. The thread lists booster B1093 on its 17th flight and a planned landing on OCISLY. Observers note the 3-day pad turnaround as a new record for that site. Weather data remains the main uncertainty for the September 20 window. The discussion includes detailed trajectory analysis and booster reuse statistics. Source: [reddit.com](https://www.reddit.com/r/spacex/comments/1wjcvo1/rspacex_starlink_1527_official_launch_discussion/)
+
+Vandenberg Space Force Base confirmed support for the upcoming USSF-259 launch. The base provided range and safety resources for the Falcon 9 mission. The flight carries national security payloads. Coordination between the base and SpaceX ensures range safety compliance. Source: [vandenberg.spaceforce.mil](https://www.vandenberg.spaceforce.mil/News/Article-Display/Article/4604263/vandenberg-supports-ussf-259-launch/)
+
+Rocket Lab completed hardware tests for its Neutron rocket at Wallops Island. The company aims to compete directly with Falcon 9 on medium-lift missions. Stock analysts noted the tests as a milestone for the program. The hardware validation supports future flight test planning. Source: [stocktwits.com](https://stocktwits.com/news-articles/markets/equity/rklb-stock-rocket-lab-tests-neutron-hardware-take-on-spacex/cZtugMvRBdM)
+------
+### AI & Compute
+GLM-5.3 identified a vulnerability in the Cursor code editor that triggered a $10 billion licensing rule. The flaw affects how models integrate with developer workflows. Cursor's parent company Anysphere is evaluating patches. The incident highlights security considerations when frontier models reach daily coding tools. The vulnerability was discovered during routine model evaluation testing. Anysphere has not disclosed the exact nature of the flaw pending further review. Source: [shattered.io](https://shattered.io/glm-5-3-cursor-vulnerability-license-2026/)
+---
+### Engineering Deep Dive
+The engineering angle on extending Starliner service while planning Dragon retirement centers on life-support redundancy and vehicle certification margins. Dragon's current design uses a trunk section for unpressurized cargo and solar arrays sized for 210-day station stays. Starliner relies on a service module with hypergolic propulsion and a different heat-shield approach. Extending both vehicles requires separate certification paths for avionics and environmental controls. The 2030 target implies roughly four additional years of Dragon flights at current manifest rates. That cadence keeps the vehicle within its original structural life limits while Starliner accumulates flight hours needed for longer-term approval. Trade-offs appear in crew transfer time and launch availability, since each system has distinct ground processing flows. Maintaining two independent vehicles also spreads risk across different propellant types and recovery methods. The decision ultimately rests on demonstrated reliability data from each spacecraft rather than a single shared architecture. From a first-principles view, redundancy in crew access reduces single-point failure risk by distributing the mission across dissimilar hardware. The magic wand number here is the raw material and energy cost of building one additional Dragon versus one additional Starliner service module. The Idiot Index rises when certification and testing overhead multiply the effective cost per flight hour. Dragon's solar array power budget supports longer station stays without resupply of consumables, while Starliner's hypergolic system trades simplicity for different handling requirements on the ground. Over four years the cumulative flight count for Dragon would approach the original design life envelope, requiring careful tracking of structural loads and thermal cycles. The parallel certification tracks allow each vehicle to accumulate the flight data needed for extended approval without forcing a common architecture that might compromise either design. This approach preserves the option to retire one system if reliability data diverges, while keeping the overall manifest resilient to delays in either program.
+---
+### Market Watch
+SPCX is at $154.81, down 0.2 percent from the previous close.
+---
+Starship test delays and Dragon timeline shifts continue to shape near-term flight planning.
