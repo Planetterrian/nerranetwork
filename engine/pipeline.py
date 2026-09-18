@@ -258,6 +258,20 @@ def record_youtube_outcomes(
         # Caption generation mode for Shorts (per-word ASS vs legacy SRT)
         if "shorts_caption_mode" in youtube_urls:
             metrics.record("shorts_caption_mode", str(youtube_urls["shorts_caption_mode"]))
+        # Long-form caption TRACK outcome (Sep 18 2026). Since Sep 9 the
+        # uploaded track is the ONLY caption layer on long-form, and the
+        # publish step had set these two keys on the result since July
+        # without either being on this allowlist — so no episode ever
+        # recorded a refusal (Omni View Ep179 shipped captionless on a
+        # transient 403 and the metrics said nothing). Same class as
+        # grok_image_px_max above: a result key is not a metric until it
+        # is recorded here.
+        if youtube_urls.get("caption_track_uploaded") is not None:
+            metrics.record("caption_track_uploaded",
+                           bool(youtube_urls["caption_track_uploaded"]))
+        if youtube_urls.get("caption_track_error"):
+            metrics.record("caption_track_error",
+                           str(youtube_urls["caption_track_error"])[:300])
 
         # End card (CTA) generation
         metrics.record("shorts_end_card_enabled", bool(youtube_urls.get("shorts_end_card_enabled", True)))

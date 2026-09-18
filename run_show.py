@@ -6749,18 +6749,23 @@ def _publish_youtube(
                 # Still best-effort by contract: logged, run continues, and
                 # the metric below records it.
                 if srt_path and srt_path.exists():
-                    from engine.youtube import upload_caption_track
+                    from engine.youtube import upload_caption_track_detailed
                     lang_code = (config.youtube.default_language or "en").lower()
                     track_name = "English" if lang_code == "en" else (
                         "Русский" if lang_code == "ru" else lang_code.upper()
                     )
                     try:
-                        # upload_caption_track returns False on HttpError
-                        # (its documented 403 force-ssl path) WITHOUT
-                        # raising — recording True unconditionally here
-                        # reported success for the most likely failure
-                        # mode while the video shipped captionless.
-                        _cap_ok = upload_caption_track(
+                        # The detailed variant returns (ok, reason) and
+                        # never raises; a transient 403/429/5xx is retried
+                        # once inside it (Sep 18 2026 — Omni View Ep179
+                        # shipped captionless on a one-off 403 that the
+                        # old message blamed on a missing OAuth scope
+                        # while six sibling uploads used the same token).
+                        # ``caption_track_uploaded`` / ``caption_track_error``
+                        # are on the metrics allowlist in
+                        # engine.pipeline.record_youtube_outcomes; before
+                        # that they were set here and recorded nowhere.
+                        _cap_ok, _cap_reason = upload_caption_track_detailed(
                             credentials=credentials,
                             video_id=upload.video_id,
                             srt_path=srt_path,
@@ -6769,15 +6774,21 @@ def _publish_youtube(
                         )
                         result["caption_track_uploaded"] = bool(_cap_ok)
                         if not _cap_ok:
-                            result["caption_track_error"] = (
-                                "upload_caption_track returned False "
-                                "(HttpError — see log)")
+                            result["caption_track_error"] = _cap_reason
+                            _cap_hint = (
+                                "the API says the OAuth token lacks the "
+                                "youtube.force-ssl scope — re-run the "
+                                "channel auth flow"
+                                if _cap_reason == "http_403_insufficient_scope"
+                                else "refused after the retry; the sibling "
+                                "uploads' outcome says whether the token "
+                                "is at fault")
                             logger.warning(
                                 "::warning::%s long-form shipped with NO "
-                                "captions — caption-track upload was "
-                                "refused (likely missing youtube.force-ssl "
-                                "scope). Burn-in is off by default, so the "
-                                "track is the only layer.", config.slug,
+                                "captions — caption-track upload failed "
+                                "(%s: %s). Burn-in is off by default, so "
+                                "the track is the only layer.",
+                                config.slug, _cap_reason, _cap_hint,
                             )
                     except Exception as _cap_exc:  # noqa: BLE001
                         # Its own try/except: a caption failure must not

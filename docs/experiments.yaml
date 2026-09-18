@@ -551,8 +551,22 @@ experiments:
     title: "grok-4.6 wave-2 script pins — omni_view Steel Man + MAB teaching prose"
     area: quality
     shipped: 2026-09-01
-    readout: 2026-09-12
-    status: reading
+    readout: 2026-09-26
+    status: decide
+    update_2026_09_18: >
+      Read 2026-09-18 (six days late). No missed slot on either show since 09-01
+      (OV and MAB published every day; 09-18 both on tier A/B with long-forms).
+      Script instrument, last 14 days: OV overlap 17.6% / coverage 85.0% / LV
+      5.5 (the 4.3 news shows copy 30-48%); MAB overlap 5.6% / coverage 64.8% /
+      LV 4.2 (dp_pod control on the same pin: 1.4% / 56% / LV 7.4). Reviewer
+      flags over the four committed review days (09-14..09-17): OV 0 factual
+      (baseline 3/10d), MAB 2 (baseline 2/10d). OV reads as a HIT on the writing
+      measure with flags at or below baseline; MAB is thinner (coverage 64.8%,
+      the facts_lost shape) with flags above baseline on a four-day sample,
+      which is not "clearly above". Operator listen verdict not on record.
+      DECIDE by 09-26 with the content-discipline readout: keep the OV pin; the
+      MAB pin needs the listen verdict and a fuller flag count before it is kept
+      or cut.
     baseline: >
       Both shows' scripts on grok-4.3. omni_view: 3 factual flags in 10
       reviewer-days, Steel Man both-sides framing prone to template tics
@@ -585,8 +599,16 @@ experiments:
     title: "Modern Investing states verified-window alpha only"
     area: quality
     shipped: 2026-08-15
-    readout: 2026-08-29
+    readout: 2026-10-15
     status: decide
+    update_2026_09_18: >
+      Still an operator decision: recompute_mit_benchmarks.py --apply has not
+      run (tracker 2026-09-15: verified_window_trades 20, unverified 35). The
+      on-air record is the era figure (-4.76% across 9 closed trades) with the
+      verified-window figure (-8.21% across 20) behind it; no blended lifetime
+      alpha can reach the prompt (TestSingleAlphaSource). Readout moved to 10-15
+      so the register stops counting an unrun operator step as an overdue read;
+      the decision itself is unchanged.
     baseline: "+9.28% across 45 trades spoken on air; the 10 honestly-measured trades were at -1.95%"
     interim: >
       2026-08-18: 2 of the first 3 episodes still spoke the blend —
@@ -636,7 +658,19 @@ experiments:
     area: retention
     shipped: 2026-08-17
     readout: 2026-09-07
-    status: reading
+    status: done
+    outcome: >
+      MISS on the number, 2026-09-18. EN mean audienceWatchRatio at 5% elapsed
+      reads 0.48 (RU 0.54, FR 0.48) against the 0.51 baseline and the 0.55
+      target, across the top recent EN longs with curves. The accelerating open,
+      chapter title cards and the fresh-open slot did not move the open cliff;
+      the instrument works and stays. What remains is the spoken open itself
+      (audio, landmine #17, operator-gated) and the thumbnail/title promise
+      being delivered in the first 30 s — the two outliers that held 68-72% did
+      exactly that. The metric continues under chapter-title-cards, scene-
+      briefs-narrative-imagery, video-quality- round-3, long-form-captions-
+      track-only and fresh-open-long-form (readouts 09-23 / 09-30); do not open
+      another entry on it.
     metric: long_open_hold_5pct_en
     baseline: 0.51
     target: >
@@ -658,7 +692,23 @@ experiments:
     area: quality
     shipped: 2026-08-18
     readout: 2026-09-15
-    status: reading
+    status: done
+    outcome: >
+      PARTIAL, 2026-09-18. HIT: every closed era hold spans exactly its horizon
+      (weekly picks entered 08-18/20/21/24 exited five sessions later on
+      08-24/26/27/28; the three flash picks entered and exited the same bar);
+      13/13 era picks carry an invalidation; two picks were voided at record
+      time rather than priced wrong. MISS: confidence reads "Medium" on 13 of 13
+      picks, so it is not a rating. And a finding the criteria did not
+      anticipate: the show declared "no trade today" on 21 of the 34 era
+      episodes — 19 of the 23 since Ep152 (08-28), the day the regime block
+      first read the era record as a COLD STREAK and told the model to raise the
+      bar. The rules-based era has 9 closed trades in a month and cannot score
+      anything at that rate; the feedback loop is starving its own sample.
+      Follow-up in docs/reviews/youtube_pipeline_plan_2026_09_18.md (MIT no-
+      trade loop) — a prompt-context change, A/B per landmine #17. HPS.A (Ep150,
+      flash) has been "open" with no entry bar since 08-26 and needs the void
+      path.
     baseline: "holds ran 0-6 sessions (median 3) against a five-day thesis; alpha conflated pick quality with pick weekday"
     target: >
       Every weekly hold spans exactly 5 sessions unless stopped out, so
@@ -758,7 +808,12 @@ experiments:
     area: quality
     shipped: 2026-08-20
     readout: 2026-09-10
-    status: reading
+    status: done
+    outcome: >
+      HIT, 2026-09-18. api/review_coverage.json shows every published episode
+      from 09-04 to 09-16 reviewed (0 gaps across 15 shows); the backlog drained
+      and stayed at 0 under the 10/run cap. The AI-review cost line did not need
+      lowering.
     baseline: "4 shows unreviewed on 2026-08-19; a 32-episode network-wide backlog"
     target: >
       Zero episodes that finish after the audit window go permanently
@@ -776,7 +831,15 @@ experiments:
     area: quality
     shipped: 2026-08-20
     readout: 2026-09-15
-    status: reading
+    status: done
+    outcome: >
+      PARTIAL, 2026-09-18. HIT: exactly three airings (Ep145, 149, 150) and the
+      segment retired itself — no fourth. MISS: GA4 shows no sessions on modern-
+      investing-performance.html in the 28 days to 09-17 (the show page itself
+      drew 7 views), so the on-air pointer did not send anyone to the
+      verification panel. Per the criteria, do NOT extend the run; the pointer
+      wording is the fix and it is a prompt change (A/B) — listed in the 09-18
+      plan as an operator-gated item.
     baseline: >
       Ep141-143 all announced the new era-scoped record; 1 of 3 said why,
       0 of 3 pointed at the rulebook or ledger, and 0 of 3 mentioned the
@@ -876,8 +939,18 @@ experiments:
     title: "4th Short per episode at >= 60 vpd (RU/FR science + space shows)"
     area: reach
     shipped: 2026-09-02
-    readout: 2026-09-16
+    readout: 2026-10-02
     status: reading
+    update_2026_09_18: >
+      Read 2026-09-18 (two days late), FF-RU is the only member that reached the
+      band (13 episodes with four Shorts; spacex-RU 24.7 vpd and tesla-RU 18.4
+      sit under 60). FF-RU medians by position, episodes at least five days old:
+      before the band (08-12..09-01, three Shorts) 639 / 371 / 75; under the
+      band (09-02..09-13) 794 / 864 / 282 / 437 (4th n=8). The 4th holds 55% of
+      the hook Short against the 60% target — a near miss on eight videos — and
+      the 3rd did not drop (75 to 282), so neither abort condition fired.
+      ru_short_vpd_max 55.2 to 72.5. Kept in flight; decide on 10-02 when the
+      4th has n >= 20 at age five days.
     metric: ru_short_vpd_max
     baseline: 55.17
     target: >
@@ -1436,3 +1509,23 @@ experiments:
       excerpts, offshore-north-dashboard.html. Prompt changes are
       landmine-#17: A/B-listen the Sep 21 episode.
 
+  - id: caption-track-retry-2026-09-18
+    title: "Long-form caption track: retry the transient, record the refusal"
+    area: quality
+    shipped: 2026-09-18
+    readout: 2026-10-02
+    status: reading
+    metric: caption_track_refusals_14d
+    baseline: null
+    target: >
+      Zero long-form videos shipped without a caption track over 14 days, and
+      every refusal that does happen visible in the metrics file
+      (caption_track_uploaded false + caption_track_error reason). Baseline is
+      null on purpose: the key was set on the publish result since July but
+      never allowlisted, so no episode ever recorded it — Omni View Ep179
+      (09-18) shipped captionless on a one-off HTTP 403 that the warning blamed
+      on a missing OAuth scope while six sibling long-forms uploaded on the same
+      token within the hour. Read on 10-02: refusals should be 0-1 in 14 days; a
+      scope refusal (http_403_insufficient_scope) on every long-form on one
+      channel means that channel's token needs the youtube.force-ssl re-auth,
+      not another retry.

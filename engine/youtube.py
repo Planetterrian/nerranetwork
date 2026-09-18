@@ -33,9 +33,10 @@ import datetime
 import logging
 import os
 import re
+import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from tenacity import (
     retry,
@@ -578,6 +579,139 @@ def post_video_comment(
         return None
 
 
+# Caption-track failure classes (Sep 18 2026). The reason string is what
+# run_show records as ``caption_track_error`` so a refusal is countable
+# from the metrics files instead of only findable in an Actions log.
+CAPTION_REASON_SCOPE = "http_403_insufficient_scope"
+CAPTION_REASON_TRANSIENT = "http_{status}_transient"
+CAPTION_TRACK_RETRY_DELAY_S = 3.0
+# Sep 18 2026, Omni View Ep179: captions.insert answered HTTP 403 once while
+# six sibling long-forms on the SAME channel token uploaded their tracks
+# within the hour. A 403 is only a scope problem when the API says so
+# (``insufficientPermissions`` / "Insufficient Permission"); any other
+# 403, a 429 and every 5xx is a transient the call retries ONCE. 400/404
+# are the caller's problem and are never retried.
+_SCOPE_MARKERS = ("insufficientpermissions", "insufficient permission",
+                  "forbidden.*scope", "youtube.force-ssl")
+
+
+def _caption_error_reason(exc: Exception) -> Tuple[str, bool]:
+    """Classify an ``HttpError`` from ``captions.insert``.
+
+    Returns ``(reason, retryable)``. ``reason`` is a short machine-readable
+    string (recorded as the ``caption_track_error`` metric); ``retryable``
+    is True for the transient class only.
+    """
+    status = getattr(getattr(exc, "resp", None), "status", None)
+    try:
+        status_i = int(status) if status is not None else None
+    except (TypeError, ValueError):
+        status_i = None
+    text = str(exc).lower()
+    if status_i == 403 and any(re.search(m, text) for m in _SCOPE_MARKERS):
+        return CAPTION_REASON_SCOPE, False
+    if status_i in (403, 429) or (status_i is not None and status_i >= 500):
+        return CAPTION_REASON_TRANSIENT.format(status=status_i), True
+    return f"http_{status_i if status_i is not None else 'unknown'}", False
+
+
+def upload_caption_track_detailed(
+    *,
+    credentials,
+    video_id: str,
+    srt_path: Path,
+    language: str = "en",
+    name: str = "English",
+    is_draft: bool = False,
+    retries: int = 1,
+    _sleep=time.sleep,
+) -> Tuple[bool, str]:
+    """Upload a caption track and say WHY when it fails.
+
+    Same contract as :func:`upload_caption_track` (never raises) but
+    returns ``(ok, reason)``: ``reason`` is ``""`` on success, otherwise
+    one of ``no_srt`` / ``no_video_id`` / ``http_403_insufficient_scope``
+    / ``http_<status>_transient`` / ``http_<status>`` / ``exception:<type>``.
+    A transient failure is retried ``retries`` times (default once,
+    ``CAPTION_TRACK_RETRY_DELAY_S`` apart); a scope refusal or a 4xx the
+    caller caused is not.
+    """
+    if not srt_path or not srt_path.exists():
+        logger.info("No SRT file at %s — skipping caption track upload",
+                    srt_path)
+        return False, "no_srt"
+    if not video_id:
+        logger.warning("No video ID — skipping caption track upload")
+        return False, "no_video_id"
+
+    from googleapiclient.discovery import build
+    from googleapiclient.errors import HttpError
+    from googleapiclient.http import MediaFileUpload
+
+    youtube = build(
+        "youtube", "v3", credentials=credentials, cache_discovery=False,
+    )
+    body = {
+        "snippet": {
+            "videoId": video_id,
+            "language": language,
+            "name": name,
+            "isDraft": is_draft,
+        },
+    }
+    attempts = max(1, int(retries) + 1)
+    reason = ""
+    for attempt in range(1, attempts + 1):
+        media = MediaFileUpload(
+            str(srt_path),
+            mimetype="application/octet-stream",
+            resumable=False,
+        )
+        try:
+            youtube.captions().insert(
+                part="snippet", body=body, media_body=media,
+            ).execute()
+        except HttpError as exc:
+            reason, retryable = _caption_error_reason(exc)
+            if reason == CAPTION_REASON_SCOPE:
+                # ``captions.insert`` requires the ``youtube.force-ssl``
+                # OAuth scope. Operator caught this on TST Ep465 (May 6
+                # 2026). Fix is to re-run the OAuth consent flow with
+                # ``--scope https://www.googleapis.com/auth/youtube.force-ssl``
+                # (typically ``scripts/auth_youtube.py``) and replace the
+                # channel refresh tokens in the GitHub Actions secrets.
+                logger.warning(
+                    "Caption track upload rejected for %s (HTTP 403 — the "
+                    "API says the OAuth token lacks youtube.force-ssl). "
+                    "Re-run the channel auth flow with that scope added; "
+                    "the video upload itself succeeded so this is "
+                    "non-blocking. Underlying: %s", video_id, exc,
+                )
+                return False, reason
+            if retryable and attempt < attempts:
+                logger.warning(
+                    "Caption track upload for %s failed (%s) on attempt "
+                    "%d/%d — retrying in %.0fs: %s", video_id, reason,
+                    attempt, attempts, CAPTION_TRACK_RETRY_DELAY_S, exc,
+                )
+                _sleep(CAPTION_TRACK_RETRY_DELAY_S)
+                continue
+            logger.warning(
+                "Failed to upload caption track for %s (%s) after %d "
+                "attempt(s): %s", video_id, reason, attempt, exc,
+            )
+            return False, reason
+        except Exception as exc:  # noqa: BLE001 — never crash the run
+            logger.warning(
+                "Caption track upload errored for %s: %s", video_id, exc,
+            )
+            return False, f"exception:{type(exc).__name__}"
+        logger.info("Uploaded %s caption track for %s%s", language, video_id,
+                    f" (attempt {attempt})" if attempt > 1 else "")
+        return True, ""
+    return False, reason or "unknown"
+
+
 def upload_caption_track(
     *,
     credentials,
@@ -597,7 +731,8 @@ def upload_caption_track(
       - Surface the captions in YouTube search
       - Serve them to screen readers / accessibility tools
 
-    Costs **400 quota units** per call.
+    Costs **400 quota units** per call (800 if the one transient retry
+    fires).
 
     Parameters
     ----------
@@ -623,71 +758,11 @@ def upload_caption_track(
     bool
         ``True`` on success; ``False`` if the SRT is missing or the
         API call fails (logged, never raised — caption upload is
-        best-effort and must not crash a run).
+        best-effort and must not crash a run). Callers that need the
+        failure class use :func:`upload_caption_track_detailed`.
     """
-    if not srt_path or not srt_path.exists():
-        logger.info("No SRT file at %s — skipping caption track upload",
-                    srt_path)
-        return False
-    if not video_id:
-        logger.warning("No video ID — skipping caption track upload")
-        return False
-
-    from googleapiclient.discovery import build
-    from googleapiclient.errors import HttpError
-    from googleapiclient.http import MediaFileUpload
-
-    youtube = build(
-        "youtube", "v3", credentials=credentials, cache_discovery=False,
+    ok, _reason = upload_caption_track_detailed(
+        credentials=credentials, video_id=video_id, srt_path=srt_path,
+        language=language, name=name, is_draft=is_draft,
     )
-    body = {
-        "snippet": {
-            "videoId": video_id,
-            "language": language,
-            "name": name,
-            "isDraft": is_draft,
-        },
-    }
-    media = MediaFileUpload(
-        str(srt_path),
-        mimetype="application/octet-stream",
-        resumable=False,
-    )
-    try:
-        youtube.captions().insert(
-            part="snippet", body=body, media_body=media,
-        ).execute()
-    except HttpError as exc:
-        status = getattr(getattr(exc, "resp", None), "status", "?")
-        # ``captions.insert`` requires the ``youtube.force-ssl`` OAuth
-        # scope — most existing channel tokens were issued with only
-        # ``youtube.upload`` and ``youtube`` (no force-ssl). Operator
-        # caught this on TST Ep465 (May 6 2026): every long-form
-        # upload logs HTTP 403 ``Insufficient Permission`` for the
-        # caption track. Fix is to re-run the OAuth consent flow with
-        # ``--scope https://www.googleapis.com/auth/youtube.force-ssl``
-        # added (typically ``scripts/auth_youtube.py``) and replace
-        # the channel refresh tokens in the GitHub Actions secrets.
-        # The video upload itself still succeeds; this is best-effort.
-        if status in (403, "403"):
-            logger.warning(
-                "Caption track upload rejected for %s (HTTP 403 — "
-                "OAuth missing youtube.force-ssl scope). Re-run the "
-                "channel auth flow with that scope added; the video "
-                "upload itself succeeded so this is non-blocking. "
-                "Underlying: %s",
-                video_id, exc,
-            )
-        else:
-            logger.warning(
-                "Failed to upload caption track for %s (HTTP %s): %s",
-                video_id, status, exc,
-            )
-        return False
-    except Exception as exc:  # noqa: BLE001 — never crash the run
-        logger.warning(
-            "Caption track upload errored for %s: %s", video_id, exc,
-        )
-        return False
-    logger.info("Uploaded %s caption track for %s", language, video_id)
-    return True
+    return ok

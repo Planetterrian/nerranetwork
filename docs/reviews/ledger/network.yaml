@@ -553,6 +553,36 @@ reviews:
       evidence: null
     agent_cost_usd: null
 
+  - date: 2026-09-18
+    pr: null
+    doc: docs/reviews/youtube_pipeline_plan_2026_09_18.md
+    summary: "24-hour read of the first slate after PR #1220 plus the seven experiments past readout. Slate clean (11/11, 38 videos, gate passed everywhere, stagger and tiers as designed); the 09-17 nightly fetched a full snapshot so the guard had nothing to refuse. Omni View Ep179 long-form shipped captionless on a one-off 403 that no metric recorded and the warning mis-diagnosed as a scope problem. Combined generation reached 2/11 (flagships discard on digest regeneration, FF under the band twice). MIT declared no trade on 19/23 episodes since Ep152 - the cold-streak regime block starves the era record. Open cliff 0.48 (miss); 4th RU Short 55% of hook (near miss, n=8); review catch-up hit; methodology correction retired but drew 0 performance-page sessions."
+    shipped:
+      - "engine/youtube: upload_caption_track_detailed (ok, reason); one retry on transient 403/429/5xx; scope named only when the API says insufficientPermissions"
+      - "engine/pipeline: caption_track_uploaded / caption_track_error on the record_youtube_outcomes allowlist; dashboard metric caption_track_refusals_14d"
+      - "docs/experiments.yaml: seven overdue entries scored; caption-track-retry-2026-09-18 registered"
+    deferred:
+      - "MIT no-trade loop (regime block) - prompt-context change, A/B per landmine #17"
+      - "combined generation on the flagships: digest regeneration after the combined call discards the script; needs the regeneration to re-run PART 2 or the combined call to run after overlap-drop"
+      - "methodology-correction pointer rewording (prompt, A/B)"
+    predictions:
+    - metric: "caption_track_refusals_14d (dashboard) and caption_track_uploaded on every long-form metrics file"
+      baseline: "never recorded; 1 known refusal (OV Ep179, 09-18) findable only in the Actions log"
+      expected: "recorded on 100% of long-form episodes from the merge; refusals 0-1 per 14 days; a per-channel run of http_403_insufficient_scope means a re-auth, never another retry"
+      verdict: pending
+      evidence: null
+    - metric: "MIT trade_signal action=new_trade share, next 10 weekday episodes"
+      baseline: "4 of 23 since Ep152 (08-28); 13 of 34 in the era"
+      expected: "unchanged (<= 30%) until the regime block is changed - this prediction scores the diagnosis, not a fix; if it rises without a change, the diagnosis is wrong"
+      verdict: pending
+      evidence: null
+    - metric: "combined_generation on Tesla / SpaceX / FF / PT / MIT"
+      baseline: "09-18: combined 2/11 (M&A, MIT); combined_stale on Tesla, SpaceX, PT; FF under band x2"
+      expected: "stays under 50% on the flagships until the regeneration path re-runs PART 2 (plan item 2); the 09-17 prediction of >= 70% is on course to MISS"
+      verdict: pending
+      evidence: null
+    agent_cost_usd: null
+
 do_not_retry:
   - idea: podcast-side length levers (word floors, expand-retries, prompt
       pressure on the podcast stage) for ANY show
