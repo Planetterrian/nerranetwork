@@ -740,9 +740,9 @@ def run_generation_phase(
             _fwd, _back = combined_digest_line_shares(_stash.get("digest", ""), x_thread)
             logger.warning(
                 "Combined script discarded: the digest was regenerated after "
-                "the script was written (%.0f%% of the stash's lines survive, "
-                "%.0f%% of the current digest's lines were in it) — running "
-                "the script stage", 100 * _fwd, 100 * _back,
+                "the script was written (%.0f%% of the stash's sentences "
+                "survive, %.0f%% of the current digest's sentences were in "
+                "it) — running the script stage", 100 * _fwd, 100 * _back,
             )
     if podcast_script is None:
         podcast_script = generate_podcast_script(
