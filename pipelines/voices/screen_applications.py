@@ -25,9 +25,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+import html as _html  # noqa: E402
+import os  # noqa: E402
+
 from common import (  # noqa: E402
-    guest_links, llm, load_prompt, notify_operator, parse_json_lenient,
-    sb_select, sb_update,
+    OPERATOR_EMAIL, guest_links, llm, load_prompt, notify_operator,
+    parse_json_lenient, sb_select, sb_update, send_email,
 )
 from pipelines.voices.shows import show_for  # noqa: E402
 
@@ -76,6 +79,52 @@ def screen(app: dict) -> dict:
     }
 
 
+def triage_link() -> str:
+    token = os.environ.get("ADMIN_TOKEN", "").strip()
+    return ("https://api.nerranetwork.com/voices/admin/triage"
+            + (f"?token={token}" if token else ""))
+
+
+def assessment_email(app: dict, result: dict) -> tuple[str, str]:
+    """Subject and body of the note Patrick reads before he approves."""
+    show = show_for(app)
+    e = _html.escape
+    topics = app.get("topics") or []
+    if isinstance(topics, str):
+        topics = [topics]
+    verdict = result["verdict"]
+    colour = {"strong": "#166534", "thin": "#991B1B"}.get(verdict, "#92400E")
+
+    def items(label: str, xs: list) -> str:
+        if not xs:
+            return ""
+        return (f"<p><b>{label}</b></p><ul>"
+                + "".join(f"<li>{e(x)}</li>" for x in xs) + "</ul>")
+
+    body = (
+        f"<p>Hi Patrick,</p>"
+        f"<p>A new guest applied to {e(show.name)}: <strong>{e(app.get('name', ''))}</strong>"
+        f"{', ' + e(app['title']) if app.get('title') else ''}"
+        f"{' at ' + e(app['organization']) if app.get('organization') else ''}."
+        f" It arrived {e(provenance(app))}."
+        f"{' They asked for you in the room as co-host.' if app.get('wants_cohost') else ''}</p>"
+        f"<p style='border-left:4px solid {colour};padding:.6em 1em;margin:1em 0'>"
+        f"<b style='color:{colour}'>My read: {e(verdict)}.</b> {e(result['summary'])}</p>"
+        + items("What I could find", result["specifics"])
+        + items("What I could not", result["concerns"])
+        + (f"<p><b>If we have them on, I would open with:</b> {e(result['ask_first'])}</p>"
+           if result.get("ask_first") else "")
+        + f"<p><em>In their words:</em> {e(str(app.get('bio') or '')[:600])}</p>"
+        f"<p><em>Wants to talk about:</em> {e(', '.join(str(t) for t in topics))}</p>"
+        f"<p><a href=\"{triage_link()}\">Approve or decline here</a>. If you approve, "
+        f"I send the booking link; if you decline, I send them a polite no and copy "
+        f"their publicist if they have one. You are copied on both.</p>"
+        f"<p>— Mira</p>"
+    )
+    subject = f"{show.short_label} application: {app.get('name', '')} — my read is {verdict}"
+    return subject, body
+
+
 def screen_one(app: dict) -> dict:
     result = screen(app)
     sb_update("guest_applications", f"id=eq.{app['id']}",
@@ -83,11 +132,17 @@ def screen_one(app: dict) -> dict:
                "screened_at": dt.datetime.now(dt.timezone.utc).isoformat()})
     logger.info("screened %s: %s — %s", app.get("name"), result["verdict"],
                 result["summary"])
+    show = show_for(app)
     if result["verdict"] == "thin":
-        show = show_for(app)
         notify_operator(show.slack(
             f"application screened THIN: {app.get('name')} — {result['summary']} "
             f"(concerns: {'; '.join(result['concerns']) or 'none listed'})"))
+    if app.get("status") == "pending":
+        subject, body = assessment_email(app, result)
+        try:
+            send_email(OPERATOR_EMAIL, subject, body)
+        except Exception:  # noqa: BLE001 — the row has the read; the page shows it
+            logger.exception("assessment email failed for %s", app.get("id"))
     return result
 
 

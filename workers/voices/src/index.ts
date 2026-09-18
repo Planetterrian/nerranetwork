@@ -242,16 +242,22 @@ function emailSafeHtml(html: string): string {
 }
 
 async function email(env: Env, to: string, subject: string, html: string,
-                     ccOperator = false) {
+                     ccOperator = false, extraCc?: string[]) {
   const body: Record<string, unknown> = {
     from: env.VOICES_FROM_EMAIL, to: [to], subject, html: emailSafeHtml(html),
   };
   // Operator oversight (July 2026): Patrick is CC'ed on guest-facing
   // scheduling/prep mail so Mira can run the show day-to-day while he
   // keeps full visibility.
+  const cc: string[] = [];
   if (ccOperator && to.toLowerCase() !== operatorEmail(env).toLowerCase()) {
-    body.cc = [operatorEmail(env)];
+    cc.push(operatorEmail(env));
   }
+  for (const addr of extraCc ?? []) {
+    if (addr && addr.includes("@") && addr.toLowerCase() !== to.toLowerCase()
+        && !cc.some((c) => c.toLowerCase() === addr.toLowerCase())) cc.push(addr);
+  }
+  if (cc.length) body.cc = cc;
   const resp = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" },
@@ -438,26 +444,42 @@ async function handleApply(req: Request, env: Env): Promise<Response> {
   }
 
   await slack(env, `${show.shortLabel}: ${merged ? "invited guest completed their application" : "new guest application"} — *${form.name}* (${form.organization ?? "independent"}). Triage: https://api.nerranetwork.com/voices/admin/triage`);
-  // Mira notifies the operator directly (July 2026 process): Patrick
-  // approves guests from his inbox rather than watching a dashboard.
-  try {
-    await email(env, operatorEmail(env),
-      `New ${show.shortLabel} guest application: ${form.name}`,
-      `<p>Hi Patrick,</p>
-       <p>A new guest just applied to ${esc(show.name)}${merged ? " (completing the application I invited them to from the inbox)" : ""}:</p>
-       <p><strong>${esc(form.name)}</strong>${form.title ? `, ${esc(form.title)}` : ""}
-       ${form.organization ? ` — ${esc(form.organization)}` : ""}<br>
-       ${esc(String(form.bio ?? "").slice(0, 400))}</p>
-       <p><em>Wants to talk about:</em> ${esc((Array.isArray(form.topics) ? form.topics : []).join(", "))}</p>
-       <p><a href="https://api.nerranetwork.com/voices/admin/triage?token=${env.ADMIN_TOKEN}">
-       Review and approve or decline here</a>. If approved, I'll send them
-       my booking link and take it from there — you'll be copied on
-       everything I send them.</p>
-       <p>— Mira</p>`);
-  } catch (err: any) {
-    console.error("operator application email failed:", err?.message ?? err);
+  // Sept 18 2026: the application is read against the open web the moment
+  // it arrives, and Patrick's email carries that read (screen_applications.py
+  // sends it). Rhett Mikols was approved from a bio and a topic list; the
+  // assessment is the paragraph that would have said there was nothing
+  // behind them. If the dispatch fails, the plain email below still goes.
+  let screening = false;
+  if (id) {
+    try {
+      await dispatch(env, "application-received", { application_id: id });
+      screening = true;
+    } catch (err: any) {
+      console.error("apply: could not dispatch the screen:", err?.message ?? err);
+    }
   }
-  return json({ ok: true, id, show: show.slug, merged });
+  if (!screening) {
+    // Mira notifies the operator directly (July 2026 process): Patrick
+    // approves guests from his inbox rather than watching a dashboard.
+    try {
+      await email(env, operatorEmail(env),
+        `New ${show.shortLabel} guest application: ${form.name}`,
+        `<p>Hi Patrick,</p>
+         <p>A new guest just applied to ${esc(show.name)}${merged ? " (completing the application I invited them to from the inbox)" : ""}:</p>
+         <p><strong>${esc(form.name)}</strong>${form.title ? `, ${esc(form.title)}` : ""}
+         ${form.organization ? ` — ${esc(form.organization)}` : ""}<br>
+         ${esc(String(form.bio ?? "").slice(0, 400))}</p>
+         <p><em>Wants to talk about:</em> ${esc((Array.isArray(form.topics) ? form.topics : []).join(", "))}</p>
+         <p><a href="https://api.nerranetwork.com/voices/admin/triage?token=${env.ADMIN_TOKEN}">
+         Review and approve or decline here</a>. If approved, I'll send them
+         my booking link and take it from there — you'll be copied on
+         everything I send them.</p>
+         <p>— Mira</p>`);
+    } catch (err: any) {
+      console.error("operator application email failed:", err?.message ?? err);
+    }
+  }
+  return json({ ok: true, id, show: show.slug, merged, screening });
 }
 
 const PLATFORM_FAULT_REASONS = new Set(["grok_dropped", "agent_startup_failed", "media_bridge_failed"]);
@@ -808,6 +830,31 @@ async function handleTriageDecision(req: Request, env: Env): Promise<Response> {
        <p>The call runs about forty-five minutes. It's recorded, and nothing
        publishes until you've approved the transcript.</p>
        <p>${esc(signOff(show))}</p>`, true);
+  }
+  if (app && body.decision === "declined" && app.email) {
+    // Sept 18 2026: a declined application used to hear nothing at all.
+    // Everyone who took the time to apply gets an answer, the same one,
+    // and a publicist who pitched them is copied so they are not left
+    // chasing.
+    const show = showFor(app);
+    try {
+      await email(env, app.email, `Your ${show.name} application`,
+        `<p>Hi ${esc(app.name)},</p>
+         <p>Thank you for applying to be a guest on ${esc(show.name)}, and for
+         the time you put into telling us about your work.</p>
+         <p>We are not going to be able to find a place for it on the show at
+         the moment. We record a small number of conversations and choose
+         them around what each one lets Mira ask that no other guest could,
+         which means turning down more people than we would like to,
+         including many with real things to say.</p>
+         <p>We keep every application, and if your work takes a turn that
+         would give us a specific story to sit down over, you are welcome
+         to apply again.</p>
+         <p>${esc(signOff(show))}</p>`, true,
+        app.publicist_email ? [String(app.publicist_email)] : undefined);
+    } catch (err: any) {
+      console.error("decline email failed:", err?.message ?? err);
+    }
   }
   return json({ ok: true });
 }
