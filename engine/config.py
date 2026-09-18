@@ -31,6 +31,13 @@ class SourceConfig:
     # updated on [date], with [subject]" is checkable; "no news this week"
     # is not. Default false — shows without the flag are untouched.
     freshness_report: bool = False
+    # Per-feed recency window in hours, overriding the show's fetch ladder
+    # for THIS feed only (Sep 18 2026, Offshore North round-1 fix 5). A
+    # campaign does not generate news weekly: Ep005 (2026-09-14) found
+    # nothing from Canada Ocean Racing inside its 7-day window and reported
+    # the boat as still in Canada when it had crossed the Atlantic. 0 =
+    # the ladder's window, exactly as before.
+    window_hours: int = 0
 
 
 @dataclass
@@ -1110,6 +1117,15 @@ class ShowConfig:
     # description only, exactly as before.
     fetch_full_text: int = 0
     fetch_full_text_chars: int = 2500
+    # Nothing older than this many days is news (Sep 18 2026, Offshore
+    # North round-1 fix 8): an article whose PAGE publish date (meta /
+    # JSON-LD, read during the full-text fetch) or feed date is older is
+    # dropped before the prompt sees it — Google News re-surfaces old
+    # items under fresh index dates (Ep005 reported the 1 Sep race start
+    # on 14 Sep). Sources with their own ``window_hours`` are exempt (the
+    # campaign's own channels are read on a 30-day window by design).
+    # 0 (default) = off, every other show byte-identical.
+    stale_article_days: int = 0
     min_articles: int = 3  # Minimum articles before expanding search
     min_articles_skip: int = 3  # Hard cutoff — skip episode if fewer articles
     # Progressive fetch-window ladder, in hours, widest last. Empty = use
@@ -1190,6 +1206,7 @@ def _build_sources(raw: list) -> List[SourceConfig]:
                 url=item.get("url", ""),
                 label=item.get("label", ""),
                 freshness_report=bool(item.get("freshness_report", False)),
+                window_hours=int(item.get("window_hours", 0) or 0),
             ))
     return sources
 
@@ -1346,6 +1363,7 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
         web_search_always=bool(data.get("web_search_always", False)),
         fetch_full_text=int(data.get("fetch_full_text", 0) or 0),
         fetch_full_text_chars=int(data.get("fetch_full_text_chars", 2500) or 2500),
+        stale_article_days=int(data.get("stale_article_days", 0) or 0),
         min_articles=data.get("min_articles", 3),
         min_articles_skip=data.get("min_articles_skip", 3),
         fetch_expansion_hours=[

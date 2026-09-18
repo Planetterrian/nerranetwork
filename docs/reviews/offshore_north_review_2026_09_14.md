@@ -180,3 +180,40 @@ See the ledger entry: zero "unconfirmed" position lines; the Canadian Boat
 ≥ 35% of spoken words and first; ≥ 1 Dan reference per episode; zero
 standings roll-calls; zero "standing facts/item" on air; `articles_full_text`
 ≥ 8 per episode; Plain Sailing not about a same-episode race.
+
+## 6. Round-1 addendum (18 September 2026)
+
+The operator scored Ep005 against the 14 September pass and sent a
+twelve-item core list. Items 1, 2 and 6 had landed; the rest exposed
+what the first pass left standing:
+
+- **Timestamp sentences survived** ("no new posts inside the seven-day
+  window", "the news section was last updated August 17") because the
+  prompts still *instructed* the writer to report "the date of each
+  channel's most recent post". That instruction is gone from all three
+  prompts and the sentence shapes are banned outright.
+- **The boat was reported as still in Canada** because the campaign's
+  posts fell outside the 7-day ladder. `SourceConfig.window_hours`
+  reads the four campaign feeds on 30 days (`engine.fetcher` takes the
+  wider of the two cutoffs per feed); the prompts explain the window.
+- **The labelled background block** was deleted rather than renamed:
+  standing facts are briefing material, never script.
+- **A 1 September race start aired on the 14th.** The full-text fetch
+  now reads the page's own publish date (`extract_published_date`:
+  OpenGraph/article meta, JSON-LD, `<time>`), and
+  `stale_article_days: 10` drops anything older before the prompt sees
+  it (`drop_stale_articles`; campaign feeds exempt; undated pages kept).
+  A RACE STATE CHECK (not started / running / finished, with the date)
+  precedes any sentence about a race.
+- **Plain Sailing** is capped at 300 words, makes one point once, never
+  takes the lead story's subject, and is no longer a length lever.
+- **Class names** come from the official race site: the organisers'
+  16 April 2026 announcement names ULTIM, Ocean Fifty, IMOCA, Class40,
+  Vintage Multi and Vintage Mono (the last two are the categories
+  older coverage calls Rhum Multi / Rhum Mono). Ep005's "Class 50" was
+  Ocean Fifty twice.
+
+Guards: `tests/test_offshore_north_round1_2026_09_18.py`. Host voice
+and the incident-driven Fleet rewrite are deferred at the operator's
+direction.
+

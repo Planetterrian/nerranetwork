@@ -331,9 +331,11 @@ class TestScriptNaturalness:
     def test_plain_sailing_has_a_hard_ceiling(self):
         src = self._prompt()
         assert "HARD CEILING" in src
-        # Tightened 600 -> 450 by the August 2026 editorial review (v2
-        # prompt): 350-450 target, never more than a quarter of the episode.
-        assert "450 spoken words" in src
+        # Tightened 600 -> 450 by the August 2026 editorial review, then
+        # 450 -> 300 by the Sep 18 2026 round-1 fixes (Ep005 ran ~600 and
+        # said one point five ways). A hard cap, not a length lever.
+        assert "300 spoken words" in src
+        assert "450 spoken words" not in src
         assert "600 spoken words" not in src
 
 

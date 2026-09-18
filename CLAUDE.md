@@ -810,6 +810,28 @@ today's work, not just explain yesterday's):
   results, the Route du Rhum IMOCA entry list, qualification ledger,
   lineage, and every source/social the show reads. A new dated position
   fix goes in the curated file's `position_log`; never guess one.
+  **Sep 18 2026 round-1 fixes** (operator list on Ep005; guards
+  `tests/test_offshore_north_round1_2026_09_18.py`): the campaign's four
+  feeds carry `window_hours: 720` (`SourceConfig.window_hours` — a
+  per-feed cutoff that may look FURTHER back than the ladder, never less;
+  a campaign does not generate news weekly and Ep005 reported the boat
+  still in Canada from an empty 7-day window); `stale_article_days: 10`
+  drops any article whose PAGE publish date (`engine.article_text.
+  extract_published_date`, read during the full-text fetch — OpenGraph
+  meta, JSON-LD, `<time>`) or feed date is older than ten days before the
+  prompt sees it (`drop_stale_articles`; `window_hours` feeds exempt;
+  undated pages kept; metric `articles_dropped_stale`), because Google
+  News re-surfaced the 1 Sep race START under a 12 Sep index date and
+  Ep005 aired it on the 14th; timestamp sentences ("last updated on…",
+  "no new posts inside the window") are banned and the prompt line that
+  produced them is gone; the labelled background block is deleted, not
+  renamed; a RACE STATE CHECK precedes any race sentence; Plain Sailing
+  is a HARD 300-word cap, one point made once, never the lead story's
+  subject, and no longer a length lever; class names come from the
+  official race site — the 2026 Route du Rhum's six are ULTIM, Ocean
+  Fifty, IMOCA, Class40, Vintage Multi, Vintage Mono (formerly Rhum
+  Multi / Rhum Mono). Host voice and the incident-driven Fleet rewrite
+  are deferred at the operator's direction.
 - All shows delegate X posting to `engine.publisher.post_to_x()`
 - TST/FF/PT delegate voice normalization to `engine.audio.normalize_voice()`
 - All shows use `engine.audio.mix_with_music()` for music mixing (3 modes:

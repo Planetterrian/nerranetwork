@@ -196,7 +196,7 @@ class TestEditorialRules:
 
     def test_report_what_not_when(self):
         assert "What it said" in _digest()
-        assert "not the date it was posted" in _digest()
+        assert 'NEVER WRITE A "LAST UPDATED" SENTENCE' in _digest()
         assert "not when the website changed" in _podcast()
         assert "Report WHEN a channel was updated instead of WHAT" in _system()
 
@@ -241,8 +241,8 @@ class TestEditorialRules:
         p, d, s = _podcast(), _digest(), _system()
         assert 'NEVER SPEAK THE WORDS "standing facts", "standing item"' in p
         assert "**Standing item:**" not in d, "the old writer label was spoken on air"
-        assert "writer-only label — never spoken" in d
-        assert "IS NOT A WEEKLY ITEM" in d
+        assert "writer-only label — never spoken" in d  # Dan's lens keeps its label
+        assert "NO BACKGROUND BLOCK, NO LABELS" in d  # round 1 (Sep 18): the block is gone
         assert "at most once in any four-week span" in _facts()
         assert 'Say "standing facts", "standing item"' in s
 
