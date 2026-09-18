@@ -2380,6 +2380,15 @@ def run(args: argparse.Namespace) -> None:
                         fetch=_si_fetch, local_texts=_si_local_texts)
                     metrics.record(
                         "source_integrity_repair_succeeded", _si_gate.passed)
+                    # Sep 18 2026: how many failed claims the repair
+                    # brought back (a verbatim re-quote from the SAME
+                    # resolved source counts). Read beside
+                    # source_integrity_stripped_sentences: a strip on a
+                    # day this is 0 means the passage did not support
+                    # the claim, or the model would not quote it.
+                    metrics.record(
+                        "source_integrity_repair_recovered",
+                        int(getattr(_si_gate, "repair_recovered", 0) or 0))
                     if _si_gate.passed:
                         logger.info(
                             "Claim repair recovered the episode: %s",
