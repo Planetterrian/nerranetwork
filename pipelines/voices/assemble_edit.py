@@ -36,6 +36,7 @@ and gate 2 play the EDITED episode rather than the raw mix.
 
 from __future__ import annotations
 
+import datetime as dt
 import json
 import os
 import subprocess
@@ -328,7 +329,12 @@ def assemble(slug: str) -> dict:
              "-c:a", "libmp3lame", "-b:a", "128k", str(episode)],
             check=True)
         seconds = _duration(episode)
-        url = r2_upload(episode, show.r2_key("raw", f"{run_id}_edit.mp3"))
+        # Sept 18 2026: the same key every time meant the CDN kept serving
+        # the FIRST assembly to anyone who had already played it. Patrick
+        # listened to Sheldon's corrected ending three times and heard the
+        # old cut three times. Every assembly gets its own file.
+        stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%d%H%M%S")
+        url = r2_upload(episode, show.r2_key("raw", f"{run_id}_edit_{stamp}.mp3"))
 
     # A transcript beside the EDL is the transcript OF THE EDIT: same cuts,
     # same running order, everyone on one clock. The pipeline's own transcript

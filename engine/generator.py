@@ -1804,45 +1804,68 @@ def take_combined_script() -> Optional[Dict[str, str]]:
     return stash
 
 
+_COMBINED_MD_LINK_RE = re.compile(r"\[([^\]]*)\]\((?:https?://)[^)]*\)")
+_COMBINED_URL_RE = re.compile(r"https?://\S+")
+_COMBINED_SOURCE_TAIL_RE = re.compile(
+    r"(?i)\b(?:sources?|источник(?:и)?)(?:/post)?\s*:.*$")
+_COMBINED_SENTENCE_RE = re.compile(r"(?<=[.!?])\s+")
+
+
+def _combined_units(text: str) -> list:
+    """The comparable units of a digest: its SENTENCES, normalised.
+
+    Sep 18 2026: the test compared raw lines, and run_show rewrites the
+    tail of every item line after generation — ``transform_daily_body``
+    turns each ``Source: <url>`` into ``Source: [domain](url)``, the
+    Google-News resolver swaps the url itself — so the whole item line
+    changed and Tesla Ep609 / SpaceX Ep104 / PT Ep187 discarded their
+    combined scripts at ~50 % line survival with NO regeneration behind
+    it. Sentences with links, URLs, Source tails, markdown and punctuation
+    removed are what a trim, a strip or a link rewrite leaves alone and a
+    regeneration does not.
+    """
+    out: list = []
+    for ln in (text or "").splitlines():
+        ln = _COMBINED_MD_LINK_RE.sub(r"\1", ln)
+        ln = _COMBINED_URL_RE.sub(" ", ln)
+        ln = _COMBINED_SOURCE_TAIL_RE.sub(" ", ln)
+        ln = re.sub(r"[*_`#>]+", " ", ln)
+        for sent in _COMBINED_SENTENCE_RE.split(ln):
+            sent = re.sub(r"[^\w\s]", " ", sent).lower()
+            sent = re.sub(r"\s+", " ", sent).strip()
+            if len(sent) >= 40:
+                out.append(sent)
+    return out
+
+
 def combined_script_matches_digest(stash_digest: str, current_digest: str, min_share: float = 0.6) -> bool:
     """True when ``current_digest`` is the digest the script was written
     from, allowing for the trims run_show applies (cross-section dedupe,
-    scaffold scrubs, claim strips). A REPLACEMENT regeneration shares few
-    of its lines and fails the test, so a stale script never ships."""
-    def _lines(t: str):
-        out = []
-        for ln in (t or "").splitlines():
-            ln = re.sub(r"[*_`#>\s]+", " ", ln).strip().lower()
-            if len(ln) >= 40:
-                out.append(ln)
-        return out
+    scaffold scrubs, claim strips, Source-link rewrites). A REPLACEMENT
+    regeneration shares few of its sentences and fails the test, so a
+    stale script never ships."""
     fwd, back = combined_digest_line_shares(stash_digest, current_digest)
-    # Sep 17 2026: run_show's trims only REMOVE lines (section dedupe,
+    # Sep 17 2026: run_show's trims only REMOVE text (section dedupe,
     # scaffold scrub, claim strip), so a trimmed digest has nearly all of
-    # ITS lines in the stash even when the stash lost many — M&A's
+    # ITS sentences in the stash even when the stash lost many — M&A's
     # combined script was discarded every day at 0.3-0.5 forward share.
     # A replacement regeneration fails both directions.
     return max(fwd, back) >= min_share
 
 
 def combined_digest_line_shares(stash_digest: str, current_digest: str) -> Tuple[float, float]:
-    """(share of stash lines present now, share of current lines in the
-    stash) — the two numbers behind ``combined_script_matches_digest``,
-    logged when a script is discarded so the reason is never silent."""
-    def _lines(t: str):
-        out = []
-        for ln in (t or "").splitlines():
-            ln = re.sub(r"[*_`#>\s]+", " ", ln).strip().lower()
-            if len(ln) >= 40:
-                out.append(ln)
-        return out
-    src = _lines(stash_digest)
-    cur = _lines(current_digest)
+    """(share of the stash's sentences present now, share of the current
+    digest's sentences that were in the stash) — the two numbers behind
+    ``combined_script_matches_digest``, logged when a script is discarded
+    so the reason is never silent. Units are normalised sentences (see
+    ``_combined_units``); the name keeps its Sep 12 spelling."""
+    src = _combined_units(stash_digest)
+    cur = _combined_units(current_digest)
     if not src or not cur:
         return 0.0, 0.0
     cur_set, src_set = set(cur), set(src)
-    fwd = sum(1 for ln in src if ln in cur_set) / len(src)
-    back = sum(1 for ln in cur if ln in src_set) / len(cur)
+    fwd = sum(1 for u in src if u in cur_set) / len(src)
+    back = sum(1 for u in cur if u in src_set) / len(cur)
     return fwd, back
 
 

@@ -744,6 +744,15 @@ class GateResult:
     stripped_notes: List[str] = field(default_factory=list)
     removed_items: int = 0
     covered_by_item_source: int = 0
+    #: Sep 18 2026: claims the repair pass brought from failed to
+    #: verified (a grounded re-quote from the SAME source counts).
+    repair_recovered: int = 0
+    #: Sep 18 2026: what the gate saw BEFORE strip mode edited the digest
+    #: — the failed verifications with their reasons, the failed entries
+    #: with the quotes the model wrote, the uncovered sentences. The
+    #: post-strip sidecar had read "claims=0, passed" on SpaceX Ep104 for
+    #: five true sentences whose quotes were paraphrases.
+    pre_strip: Optional[dict] = None
 
     def summary(self) -> str:
         unreachable = sum(
@@ -775,6 +784,8 @@ class GateResult:
             "stripped_notes": self.stripped_notes,
             "removed_items": self.removed_items,
             "covered_by_item_source": self.covered_by_item_source,
+            "repair_recovered": self.repair_recovered,
+            "pre_strip": self.pre_strip,
         }
 
 
@@ -901,31 +912,107 @@ def _uncovered_repair_items(uncovered: List[dict]) -> List[dict]:
     return items
 
 
+#: Sep 18 2026: the fetched page's most relevant passage, handed to the
+#: repair call so a paraphrased quote can be re-quoted VERBATIM from the
+#: source the model already named. Bounded so ten claims stay well under
+#: the call's context.
+REPAIR_EXCERPT_MAX_CHARS = 1500
+
+
+def source_excerpt_for_claim(claim_text: str, source_text: str,
+                             max_chars: int = REPAIR_EXCERPT_MAX_CHARS) -> str:
+    """The sentences of a fetched source that share the most content
+    words with *claim_text*, returned in page order and capped at
+    *max_chars*. Empty when no sentence shares two content words — the
+    page does not discuss the claim, and the repair must find another
+    source or drop it."""
+    toks = _content_tokens(claim_text)
+    if not toks or not source_text:
+        return ""
+    flat = re.sub(r"\s+", " ", source_text).strip()
+    sentences = [s.strip() for s in _SENTENCE_SPLIT_RE.split(flat)
+                 if len(s.strip()) >= 20]
+    scored = []
+    for i, s in enumerate(sentences):
+        overlap = len(toks & _content_tokens(s))
+        if overlap >= 2:
+            scored.append((overlap, -i, s))
+    if not scored:
+        return ""
+    scored.sort(reverse=True)
+    picked: List[Tuple[int, str]] = []
+    used = 0
+    for overlap, neg_i, s in scored:
+        if used + len(s) + 1 > max_chars:
+            continue
+        picked.append((-neg_i, s))
+        used += len(s) + 1
+    picked.sort()
+    return " ".join(s for _, s in picked)
+
+
+def _quote_consistent_with_claim(quote: str, claim_text: str) -> bool:
+    """A repair quote must be ABOUT the claim it is offered for: two
+    shared content words, or a shared number. Without this a re-quote
+    from a fetched page could be any sentence on it — verbatim, so the
+    mechanical check passes, and unrelated, so it launders the claim."""
+    q = _content_tokens(quote)
+    c = _content_tokens(claim_text)
+    if len(q & c) >= 2:
+        return True
+    nq = set(re.findall(r"\d[\d,.]*\d|\d", quote or ""))
+    nc = set(re.findall(r"\d[\d,.]*\d|\d", claim_text or ""))
+    return bool(nq & nc)
+
+
 def build_repair_prompt(episode_text: str, failed: List[dict],
                         claims: List[dict],
-                        uncovered_items: Optional[List[dict]] = None) -> str:
+                        uncovered_items: Optional[List[dict]] = None,
+                        excerpts: Optional[Dict[str, str]] = None) -> str:
     """Prompt for the one-shot repair call. *failed* are verification
     results; *claims* the original ledger entries (for claim text);
     *uncovered_items* (from ``_uncovered_repair_items``) are
-    citation-shaped sentences with no covering verified entry."""
+    citation-shaped sentences with no covering verified entry;
+    *excerpts* (Sep 18 2026) maps a failed claim's id to the passage of
+    its FETCHED source that discusses the claim, for claims whose source
+    resolved but whose quote was not verbatim."""
     by_id = {str(c.get("id", "")): c for c in claims}
+    excerpts = excerpts or {}
     lines = []
+    any_excerpt = False
     for v in failed[:REPAIR_MAX_CLAIMS]:
         cid = str(v.get("id", ""))
         claim = by_id.get(cid, {})
-        why = ("the source could not be fetched from our verification "
-               "infrastructure (it may block automated readers)"
-               if v.get("unreachable")
-               else f"verification failed: {v.get('reason', 'unknown')}")
+        excerpt = excerpts.get(cid, "")
+        if v.get("unreachable"):
+            why = ("the source could not be fetched from our verification "
+                   "infrastructure (it may block automated readers)")
+        elif excerpt:
+            any_excerpt = True
+            why = ("the source WAS fetched and read, but the supporting_quote "
+                   "is not in it verbatim (it was paraphrased). The page's "
+                   "most relevant passage follows as fetched_passage: if it "
+                   "supports the claim, KEEP this source_url and copy the "
+                   "supporting_quote VERBATIM from that passage")
+        else:
+            why = f"verification failed: {v.get('reason', 'unknown')}"
         lines.append(
             f"- id: {cid}\n"
             f"  claim: {claim.get('claim', '')}\n"
             f"  episode_span: {claim.get('episode_span', '')}\n"
             f"  original_source: {v.get('url', '')}\n"
             f"  problem: {why}"
+            + (f"\n  fetched_passage: {excerpt}" if excerpt else "")
         )
     sections = []
     if lines:
+        same_source_rule = (
+            " The same source_url is allowed ONLY where a fetched_passage is "
+            "shown and supports the claim — then the supporting_quote must be "
+            "copied VERBATIM from that passage (exact characters, 5-25 words); "
+            "everywhere else the source_url must be DIFFERENT."
+            if any_excerpt else ""
+        )
         sections.append(
             "Some claims in an episode's source ledger failed automated "
             "verification. For EACH claim below, provide a replacement ledger "
@@ -933,7 +1020,8 @@ def build_repair_prompt(episode_text: str, failed: List[dict],
             "claim, (b) is publicly fetchable without login or bot-blocking "
             "(prefer major encyclopedias, news organizations, .edu pages, "
             "archived copies), and (c) a supporting_quote of 5-25 words copied "
-            "VERBATIM from that source's text. Keep the claim and episode_span "
+            "VERBATIM from that source's text." + same_source_rule + " Keep "
+            "the claim and episode_span "
             "EXACTLY as given — only the sourcing changes. If you cannot find "
             "a genuine source for a claim, omit it (an omitted claim blocks "
             "publication — never invent a source).\n\n"
@@ -1012,19 +1100,72 @@ def attempt_claim_repair(
     ])
     if gate.passed or not (gate.failed_verifications or uncovered_items):
         return gate, claims
+
+    # Sep 18 2026 (SpaceX Ep104): five claims failed with their sources
+    # RESOLVED — the facts were on the pages (WESH's own headline was the
+    # Shotwell claim), the model's quotes were paraphrases, and the repair
+    # asked for a DIFFERENT url, so a truthful model omitted every one
+    # and five true sentences were stripped. For a resolved source the
+    # repair now carries the page's relevant passage and lets the model
+    # re-quote verbatim from the SAME source; the 0.9 quote check below
+    # is unchanged, and an unrelated verbatim sentence is rejected by
+    # ``_quote_consistent_with_claim``.
+    by_cid = {str(c.get("id", "")): c for c in claims}
+    _fetch_fn = fetch or default_fetch
+    _local = local_texts or {}
+    excerpts: Dict[str, str] = {}
+    for v in gate.failed_verifications:
+        if not v.get("resolved") or v.get("unreachable"):
+            continue
+        cid = str(v.get("id", ""))
+        claim = by_cid.get(cid) or {}
+        url = str(v.get("url") or claim.get("source_url") or "").strip()
+        if not url:
+            continue
+        page = ""
+        try:
+            status, body = _fetch_fn(url)
+            if status is not None and 200 <= status < 300:
+                page = _html_to_text(body or "")
+        except Exception:  # noqa: BLE001 — the local copy is the fallback
+            page = ""
+        if not page.strip():
+            page = _local.get(normalize_source_url(url)) or ""
+        excerpt = source_excerpt_for_claim(
+            f"{claim.get('claim', '')} {claim.get('episode_span', '')}", page)
+        if excerpt:
+            excerpts[cid] = excerpt
+
     try:
         prompt = build_repair_prompt(
-            episode_text, gate.failed_verifications, claims, uncovered_items)
-        replacements = parse_repair_response(generate(prompt))
+            episode_text, gate.failed_verifications, claims, uncovered_items,
+            excerpts=excerpts)
+        raw = generate(prompt)
+        replacements = parse_repair_response(raw)
     except Exception as exc:  # noqa: BLE001 — repair is best-effort
         logger.warning("claim repair call failed: %s", exc)
         return gate, claims
     if not replacements:
-        logger.info("claim repair produced no usable replacements")
+        logger.warning(
+            "claim repair produced no usable replacements (response head: %r)",
+            (raw or "")[:200])
         return gate, claims
 
-    by_id = {str(r.get("id", "")): r for r in replacements
-             if str(r.get("id", "")) in failed_ids}
+    def _claim_text(cid: str) -> str:
+        c = by_cid.get(cid) or {}
+        return f"{c.get('claim', '')} {c.get('episode_span', '')}"
+
+    inconsistent = 0
+    by_id = {}
+    for r in replacements:
+        rid = str(r.get("id", ""))
+        if rid not in failed_ids:
+            continue
+        if not _quote_consistent_with_claim(
+                str(r.get("supporting_quote") or ""), _claim_text(rid)):
+            inconsistent += 1
+            continue
+        by_id[rid] = r
     # Entries the model supplied for uncovered sentences (Sep 5 2026):
     # the anchor is PINNED to the exact sentence the lint flagged, so the
     # only thing the model contributed is the sourcing — which the full
@@ -1036,9 +1177,14 @@ def attempt_claim_repair(
     new_entries: List[dict] = []
     for r in replacements:
         rid = str(r.get("id", ""))
-        item = uncovered_by_id.pop(rid, None)
+        item = uncovered_by_id.get(rid)
         if item is None:
             continue
+        if not _quote_consistent_with_claim(
+                str(r.get("supporting_quote") or ""), item["sentence"]):
+            inconsistent += 1
+            continue
+        uncovered_by_id.pop(rid)
         entry = dict(r)
         entry["id"] = rid
         entry["episode_span"] = item["sentence"]
@@ -1062,11 +1208,21 @@ def attempt_claim_repair(
         else:
             repaired.append(claim)
     repaired.extend(new_entries)
+    if inconsistent:
+        logger.warning(
+            "claim repair: %d replacement quote(s) rejected as unrelated to "
+            "the claim they were offered for", inconsistent)
     new_gate = run_source_integrity_gate(episode_text, repaired, fetch=fetch, local_texts=local_texts)
+    target_ids = failed_ids | {it["id"] for it in uncovered_items}
+    new_gate.repair_recovered = sum(
+        1 for c in new_gate.verified_claims
+        if str(c.get("id", "")) in target_ids)
     logger.info(
-        "claim repair: %d replacement(s) tried — gate now %s (%s)",
-        len(by_id), "PASSED" if new_gate.passed else "still failing",
-        new_gate.summary(),
+        "claim repair: %d replacement(s) tried (%d with a fetched passage) — "
+        "gate now %s, %d claim(s) recovered (%s)",
+        len(by_id) + len(new_entries), len(excerpts),
+        "PASSED" if new_gate.passed else "still failing",
+        new_gate.repair_recovered, new_gate.summary(),
     )
     return new_gate, repaired
 
@@ -1353,11 +1509,28 @@ def strip_unverified(
             new_gate.failed_verifications or new_gate.uncovered_shapes
             or new_gate.shape_errors or new_gate.reviewer_notes
         )
-    # The committed sidecar records what left the digest (Sep 17 2026).
+    # The committed sidecar records what left the digest (Sep 17 2026)
+    # and WHY (Sep 18 2026): the verdicts and the model's own quotes as
+    # the gate saw them before the strip, so a review can tell a
+    # paraphrased quote from a fabricated source without the run log.
     new_gate.stripped_sentences = list(removed)
     new_gate.stripped_notes = list(removed_notes)
     new_gate.removed_items = dropped
     new_gate.covered_by_item_source = covered_by_item
+    new_gate.repair_recovered = int(getattr(gate, "repair_recovered", 0) or 0)
+    new_gate.pre_strip = {
+        "failed_verifications": [dict(v) for v in gate.failed_verifications],
+        "failed_claims": [
+            {k: str((by_id.get(str(v.get("id", ""))) or {}).get(k) or "")
+             for k in ("id", "claim", "episode_span", "source_url",
+                       "supporting_quote")}
+            for v in gate.failed_verifications
+            if str(v.get("id", "")) in by_id
+        ],
+        "uncovered_shapes": [str(u.get("sentence") or "")
+                             for u in gate.uncovered_shapes],
+        "shape_errors": list(gate.shape_errors),
+    }
     logger.warning(
         "source-integrity strip: removed %d sentence(s), %d reviewer note(s), "
         "%d whole item(s); %d uncovered shape(s) covered by their item's "

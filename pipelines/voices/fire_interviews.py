@@ -64,11 +64,19 @@ COHOST_BLOCK = (
 
 
 def host_mode_enabled(interview: dict, run: dict | None = None) -> bool:
-    """``host_mode`` defaults ON; only an explicit ``false`` disables it."""
+    """Whether the co-host is expected in the room.
+
+    Sept 18 2026: this defaulted ON, and every episode was a three-hander
+    whether or not Patrick could make it (Sheldon Poon waited for him for
+    forty-eight minutes). Mira carries the room on her own; Patrick, who
+    created the network, joins when a guest asked for him on the
+    application, which the booking writes onto the interview as
+    ``host_mode``. An explicit value on the run or the interview wins;
+    nothing set means Mira alone."""
     for row in (run, interview):
-        if row is not None and row.get("host_mode") is False:
-            return False
-    return True
+        if row is not None and row.get("host_mode") is not None:
+            return bool(row.get("host_mode"))
+    return False
 
 
 COHOST_INTRO_STEP = (

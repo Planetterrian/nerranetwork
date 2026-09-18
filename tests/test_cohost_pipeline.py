@@ -451,10 +451,11 @@ class TestCohostPrompt:
         text = (PIPELINES / "prompts" / "mira_system_prompt.txt").read_text(encoding="utf-8")
         assert "{{cohost_block}}" in text
 
-    def test_block_present_by_default(self, monkeypatch):
+    def test_block_present_when_the_guest_asked_for_him(self, monkeypatch):
+        # Sept 18 2026: Mira alone by default; Patrick when the guest asked.
         monkeypatch.delenv("COHOST_NAME", raising=False)
         from fire_interviews import compile_mira_prompt
-        prompt = compile_mira_prompt({"episode_thesis": "T"}, _APP, _BRIEF)
+        prompt = compile_mira_prompt({"episode_thesis": "T", "host_mode": True}, _APP, _BRIEF)
         assert "CO-HOST: Patrick Novak, the network's founder, is in the room as your co-host." in prompt
         assert "never interview Patrick, never ask him the lightning round" in prompt
         assert "If Patrick says 'let's pause' or 'hold on', stop talking and wait for him." in prompt
@@ -480,7 +481,7 @@ class TestCohostPrompt:
     def test_cohost_name_from_env(self, monkeypatch):
         monkeypatch.setenv("COHOST_NAME", "Pat Example")
         from fire_interviews import compile_mira_prompt
-        prompt = compile_mira_prompt({"episode_thesis": "T"}, _APP, _BRIEF)
+        prompt = compile_mira_prompt({"episode_thesis": "T", "host_mode": True}, _APP, _BRIEF)
         assert "CO-HOST: Pat Example," in prompt and "never interview Pat," in prompt
 
     def test_load_prompt_fills_cohost_name_everywhere(self):
@@ -577,10 +578,13 @@ class TestFireHostLink:
 
     def test_host_mode_enabled_semantics(self):
         from fire_interviews import host_mode_enabled
-        assert host_mode_enabled({}) is True
-        assert host_mode_enabled({"host_mode": None}) is True
+        # Sept 18 2026: nothing set means Mira alone; the guest opts Patrick in.
+        assert host_mode_enabled({}) is False
+        assert host_mode_enabled({"host_mode": None}) is False
         assert host_mode_enabled({"host_mode": False}) is False
+        assert host_mode_enabled({"host_mode": True}) is True
         assert host_mode_enabled({"host_mode": True}, {"host_mode": False}) is False
+        assert host_mode_enabled({"host_mode": False}, {"host_mode": True}) is True
 
 
 # ---------------------------------------------------------------------------

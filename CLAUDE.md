@@ -153,6 +153,28 @@ seeds the literal "A 1962 Nature paper warned…" example — the exact
 fabricated citation this section opens with. Guards:
 `TestClaimRepairUncoveredShapes`.
 
+**Sep 18 2026 — the quote was the problem, not the source.** SpaceX
+Ep104 lost five TRUE sentences to strip mode (Shotwell telling Boeing
+to fly Starliner, Crew-13 entering quarantine, Dragon's 2030 retirement)
+with every source RESOLVED: WESH's own headline was the claim. The
+model's `supporting_quote`s were paraphrases, so the 0.9 verbatim check
+failed, and the repair prompt demanded a DIFFERENT url — a truthful
+model omitted every claim ("no usable replacements") and the sidecar
+then read "claims=0, passed". Now: for a failed claim whose source
+resolved, `attempt_claim_repair` hands the model the page's most
+relevant passage (`source_excerpt_for_claim`, from the run's fetch
+cache or the fetched copy) and allows the SAME url with a quote copied
+verbatim from it; the mechanical 0.9 check is untouched and a verbatim
+sentence unrelated to the claim is rejected
+(`_quote_consistent_with_claim` — two shared content words or a shared
+number). Metric `source_integrity_repair_recovered` (read beside
+`_stripped_sentences`); the sidecar's `gate.pre_strip` records the
+verdicts and the model's quotes as the gate saw them BEFORE the strip.
+A bag-of-words "claim support" fallback was measured and REJECTED as a
+gate: random foreign claim/source pairs score ≥ 0.5 four percent of the
+time and short true sentences score no higher. Guards:
+`tests/test_provenance_pass_2026_09_18.py`.
+
 ## Project Overview
 
 Automated daily podcast generation system running 18 shows via a unified
@@ -2289,6 +2311,17 @@ guards: `tests/test_simplification_2026_09_12.py`. Rules that bind:
   or under-band PART 2, or a stale stash runs the script call exactly as
   before. Metric `combined_generation` = `combined` | `two_pass` |
   `combined_stale`. Output budget = `max_tokens + podcast_max_tokens`.
+  **Sep 18 2026: the stash test compares normalised SENTENCES, never
+  raw lines** — run_show rewrites the tail of every item line after
+  generation (`transform_daily_body` turns `Source: <url>` into
+  `Source: [domain](url)`, the Google-News resolver swaps the url), so
+  on the first flagship slate Tesla Ep609 / SpaceX Ep104 / PT Ep187
+  discarded their combined scripts at ~50 % line survival with no
+  regeneration behind it and paid for the script twice.
+  `engine.generator._combined_units` drops links, URLs, Source tails,
+  markdown and punctuation; a trim, strip or link rewrite scores ~1.0
+  on today's real digests and yesterday's digest against today's
+  scores 0.0–0.02 (`TestStashSurvivesRunShowTrims`).
   **A combined run can never cost an episode; the first live slate is
   the A/B-listen set (landmine #17).** Revert = one line in
   `_defaults.yaml`.

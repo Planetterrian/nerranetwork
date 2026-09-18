@@ -233,3 +233,52 @@ the workflow with `force`.
 - The audience headline, per show, against the Sep 16 line.
 - Restock Topic Queues: the first needed run's conclusion; UC ≥ 4.0 wk.
 - `Run Tests` on main: green on every push since this merge.
+
+## 8. Sep 18 follow-up — the first flagship slate under combined generation
+
+Eleven of eleven shows published; nothing lost; every spoken-text gate
+passed first time; Nerra Daily Ep029 trimmed all eleven segments on frame
+anchors. Two defects the counters could see:
+
+**Combined generation shipped on 2 of 5 eligible flagships.** M&A and MIT
+kept their combined scripts (M&A 1,540 words on a 1,500 target, 25 %
+verbatim, 80 % coverage — the first at-target M&A in weeks; MIT 2,013
+words, 100 % coverage, but 63 % verbatim and 7 copied sections, so the
+"PART 2 is not PART 1" bridge did not hold there). Tesla, SpaceX and
+Planetterrian recorded `combined_stale` and ran the script call anyway.
+The run logs show no regeneration behind two of them: Tesla's stash
+survived at 50 % of its lines, SpaceX's at 28 % — and the reason is that
+run_show rewrites the tail of EVERY item line after generation
+(`transform_daily_body` turns `Source: <url>` into `Source: [domain](url)`,
+the Google-News resolver swaps the url), so a comparison on raw lines
+read a link rewrite as a replacement. The test now compares normalised
+sentences: on today's real digests a link-rewritten copy scores 1.00 and
+yesterday's digest against today's scores 0.00–0.02.
+
+**Strip mode removed five true sentences from SpaceX Ep104.** All five
+sources resolved (HTTP 200) and each page carries the fact — WESH's own
+headline is "SpaceX president to Boeing: You got paid — now fly the
+thing"; keeptrack's lede is "NASA preparing to order two additional
+Starliner missions as SpaceX plans Crew Dragon retirement by 2030". The
+model's `supporting_quote`s were paraphrases, the 0.9 verbatim check
+failed as designed, and the repair prompt required a DIFFERENT url, so a
+truthful model omitted every claim ("no usable replacements") and the
+committed sidecar read "claims=0, passed". Omni View lost the Bank of
+Japan's move to 1.25 % the same way. Fix: for a failed claim whose
+source resolved, the repair carries the page's most relevant passage and
+allows the same url with a quote copied verbatim from it; the mechanical
+check is untouched, an unrelated verbatim sentence is rejected, the new
+metric `source_integrity_repair_recovered` says whether it worked, and
+the sidecar's `gate.pre_strip` records what the gate saw before the strip.
+
+A bag-of-words "claim support" check was measured on 28 quote-verified
+claims from the last ten days' sidecars against their own and 752 foreign
+sources: own-source scores 0.43–1.0, foreign p95 0.57, and 4 % of foreign
+pairs reach 0.5 with every number present — not a gate, and rejected.
+
+Guards: `tests/test_provenance_pass_2026_09_18.py`. Read on 09-24:
+`combined_stale` share on the five flagships, `source_integrity_repair_recovered`
+against `_stripped_sentences` on SpaceX / OV / PT, and `script_repeated_facts`
+on combined episodes (a dropped cross-section duplicate is still spoken by
+a combined script — `strip_script_sentences` would also remove the first
+telling, so that stays open).

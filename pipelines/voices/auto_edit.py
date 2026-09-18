@@ -247,7 +247,9 @@ def build(run_id: str) -> dict:
     cuts.append({"from": "run:guest", "balance": True, "voice_match": "right",
                  "start": round(at, 1), "end": round(end, 1),
                  "note": decided.get("end_why", "")})
-    cuts += [{"gap": 0.7}, {"from": "narration:outro"}]
+    # A breath after the guest's last word before the produced close; 0.7 s
+    # ran the outro straight into the end of the sentence.
+    cuts += [{"gap": 1.4}, {"from": "narration:outro"}]
 
     narration = {
         "show": show_for(interview, app).slug,

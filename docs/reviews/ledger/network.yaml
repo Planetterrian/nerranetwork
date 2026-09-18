@@ -555,6 +555,28 @@ reviews:
 
   - date: 2026-09-18
     pr: null
+    doc: docs/reviews/network_review_2026_09_17.md
+    summary: "First slate with the flagships eligible for combined generation: it shipped on 2 of 5 (M&A, MIT) and was DISCARDED on Tesla/SpaceX/PT at ~50% line survival with no regeneration behind it - the stash test compared raw lines and run_show rewrites every item line's Source tail after generation. Same day strip mode removed five TRUE sentences from SpaceX Ep104 with every source resolved (WESH's own headline was the Shotwell claim): the model's quotes were paraphrases and the repair demanded a different url, so a truthful model omitted every claim. Both fixed data-side; a bag-of-words claim-support gate was measured and rejected (foreign pairs >= 0.5 four percent of the time)."
+    shipped:
+      - "engine/generator: combined_script_matches_digest / combined_digest_line_shares compare normalised SENTENCES (links, URLs, Source tails, markdown, punctuation removed); real-digest check 1.00 for a link rewrite, 0.00-0.02 for a regeneration"
+      - "engine/claims: attempt_claim_repair passes the fetched page's relevant passage (source_excerpt_for_claim) for a resolved-but-paraphrased claim and allows the SAME url with a verbatim re-quote; unrelated verbatim quotes rejected (_quote_consistent_with_claim); metric source_integrity_repair_recovered; sidecar gate.pre_strip records verdicts + the model's quotes before the strip"
+    deferred:
+      - "a dropped cross-section duplicate item is still spoken by a combined script (strip_script_sentences would also remove the FIRST telling) - read script_repeated_facts on combined episodes 09-24"
+    predictions:
+    - metric: "combined_generation == combined_stale on Tesla / SpaceX / PT / FF / MIT, first 7 days"
+      baseline: "3 of 5 eligible flagships on 2026-09-18 (Tesla 50%, SpaceX 28%, PT) with no regeneration logged"
+      expected: "combined_stale only on days a regeneration is logged (validation / slow-news / structural retry); <= 1 of 5 per day"
+      verdict: pending
+      evidence: null
+    - metric: "source_integrity_stripped_sentences on SpaceX / OV / PT where the failed source RESOLVED (pre_strip.failed_verifications[].resolved true)"
+      baseline: "SpaceX 5 and OV 2 on 2026-09-18, all resolved, repair recovered 0"
+      expected: "source_integrity_repair_recovered >= 1 on the first day a resolved-source claim fails; resolved-source strips <= 1 sentence/day on the median"
+      verdict: pending
+      evidence: null
+    agent_cost_usd: null
+
+  - date: 2026-09-18
+    pr: null
     doc: docs/reviews/youtube_pipeline_plan_2026_09_18.md
     summary: "24-hour read of the first slate after PR #1220 plus the seven experiments past readout. Slate clean (11/11, 38 videos, gate passed everywhere, stagger and tiers as designed); the 09-17 nightly fetched a full snapshot so the guard had nothing to refuse. Omni View Ep179 long-form shipped captionless on a one-off 403 that no metric recorded and the warning mis-diagnosed as a scope problem. Combined generation reached 2/11 (flagships discard on digest regeneration, FF under the band twice). MIT declared no trade on 19/23 episodes since Ep152 - the cold-streak regime block starves the era record. Open cliff 0.48 (miss); 4th RU Short 55% of hook (near miss, n=8); review catch-up hit; methodology correction retired but drew 0 performance-page sessions."
     shipped:
@@ -579,9 +601,6 @@ reviews:
     - metric: "combined_generation on Tesla / SpaceX / FF / PT / MIT"
       baseline: "09-18: combined 2/11 (M&A, MIT); combined_stale on Tesla, SpaceX, PT; FF under band x2"
       expected: "stays under 50% on the flagships until the regeneration path re-runs PART 2 (plan item 2); the 09-17 prediction of >= 70% is on course to MISS"
-      verdict: pending
-      evidence: null
-    agent_cost_usd: null
 
 do_not_retry:
   - idea: podcast-side length levers (word floors, expand-retries, prompt

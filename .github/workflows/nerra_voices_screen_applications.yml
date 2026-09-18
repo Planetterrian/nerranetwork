@@ -1,0 +1,51 @@
+# Nerra Voices — screen a guest application for substance (Sept 18 2026).
+# The Worker dispatches this the moment an application arrives; the
+# application is read once against the open web and Patrick gets the read
+# (strong / thin / unclear, what was found, what was not, the question to
+# open with) in his inbox with the approve/decline link, before he decides.
+# The hourly sweep catches anything the dispatch missed. Advice for the
+# producer; nobody is declined by a machine.
+name: Screen guest applications
+on:
+  repository_dispatch:
+    types: [application-received]
+  schedule:
+    - cron: '20 * * * *'
+  workflow_dispatch:
+    inputs:
+      application_id:
+        description: 'guest_applications.id to (re)screen; blank = every unscreened pending application'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nerra-voices-screen
+  cancel-in-progress: false
+
+jobs:
+  screen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+      - uses: ./.github/actions/setup-python
+        with:
+          python-version: '3.12'
+          requirements-file: 'pipelines/requirements.txt'
+          skip-checkout: 'true'
+      - run: python pipelines/voices/screen_applications.py ${{ github.event.client_payload.application_id || inputs.application_id }}
+        env:
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+          OPERATOR_EMAIL: ${{ secrets.OPERATOR_EMAIL }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          POSTMARK_TOKEN: ${{ secrets.POSTMARK_TOKEN }}
+          SUPABASE_URL: ${{ secrets.VOICES_SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.VOICES_SUPABASE_SERVICE_KEY }}
+          GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          NOTIFICATION_WEBHOOK_URL: ${{ secrets.NOTIFICATION_WEBHOOK_URL }}
