@@ -459,6 +459,22 @@ today's work, not just explain yesterday's):
   out of the pick prompt, and `_rule_core` dedups on the rule's
   constraint with its scope clause stripped. Guards:
   `TestRuleScoreboardHonesty`, `TestTradingVsPipelineRules`.
+- **MIT's cold streak raises the bar on the pick, never on picking**
+  (2026-09-18). The COLD regime text had called an explicit no-trade day
+  "acceptable and unremarkable"; from Ep152 (08-28, the first episode
+  after the era record turned negative) the show declared no trade on
+  19 of 23 episodes, the drought valve fired weekly, its forced pick was
+  voided (voided picks reset the valve) or closed into the same
+  ten-trade window, and the window never turned over — 9 closed era
+  trades in a month, nothing scoreable. Now `_build_regime_block`'s COLD
+  text demands named factors, an invalidation level and a graded
+  confidence but still expects a pick; `_days_since_last_pick` ignores
+  voided picks; and `_no_trade_budget_block` allows ONE no-trade per
+  five episodes, read from the committed `trade_signal_ep*.json`, with
+  a spent budget making a pick mandatory. Register
+  `mit-no-trade-budget-2026-09-18` (metric `mit_new_trade_share_10ep`,
+  baseline 0.1). Prompt-context change — A/B-listen the first two
+  episodes. Guards: `tests/test_mit_no_trade_budget_2026_09_18.py`.
 - **The MIT trade ledger is public** (`scripts/build_mit_ledger.py` ->
   `api/mit_trade_ledger.json` + `.csv`, nightly): every trade with entry/
   exit bar dates, stop, horizon, invalidation, confidence, rules in
