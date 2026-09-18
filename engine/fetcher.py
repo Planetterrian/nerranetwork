@@ -636,6 +636,19 @@ def fetch_rss_articles(
     url_labels = {
         fd["url"]: (fd.get("label") or "").strip() for fd in feed_urls
     }
+    # Per-feed window override (``window_hours`` on the source): a feed
+    # may look FURTHER back than the ladder, never less far. Offshore
+    # North reads the campaign's own channels on 30 days while the wider
+    # press stays on the ladder.
+    now_utc = datetime.datetime.now(datetime.timezone.utc)
+    url_cutoffs = {}
+    for fd in feed_urls:
+        try:
+            wh = int(fd.get("window_hours") or 0)
+        except (TypeError, ValueError):
+            wh = 0
+        feed_cutoff = now_utc - datetime.timedelta(hours=wh) if wh > 0 else cutoff_time
+        url_cutoffs[fd["url"]] = min(feed_cutoff, cutoff_time)
     logger.info("Fetching news from %d RSS feeds...", len(urls))
 
     all_articles: List[Dict] = []
@@ -648,7 +661,7 @@ def fetch_rss_articles(
             pool.submit(
                 _fetch_single_feed,
                 url,
-                cutoff_time,
+                url_cutoffs.get(url, cutoff_time),
                 keywords,
                 problematic_feeds,
                 problematic_feeds_lock,

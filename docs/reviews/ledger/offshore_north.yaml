@@ -76,4 +76,57 @@ reviews:
         evidence: null
     agent_cost_usd: null
 
+  - date: 2026-09-18
+    pr: null
+    doc: docs/reviews/offshore_north_review_2026_09_14.md
+    reviewer: claude-code (operator round-1 fix list on Ep005, 14 Sep 2026)
+    summary: >-
+      Operator scored Ep005 against the 14 Sep pass: full text, Scott's
+      Notes and the position rule had landed, but the lead segment still
+      opened on three timestamp sentences, the boat was reported as still
+      in Canada because the campaign's posts fell outside a 7-day window,
+      the brief carried a labelled background block, a 1 Sep race start
+      aired on the 14th as if live, and Plain Sailing ran ~600 words on
+      the lead's own subject with one point made five ways and a class
+      list that named Ocean Fifty twice. Shipped: per-feed window_hours
+      (campaign channels on 30 days), stale_article_days (page publish
+      date read during the full-text fetch; 10 days; campaign exempt),
+      timestamp sentences banned outright and the instruction that
+      produced them removed, the background block deleted, a race-state
+      check, Plain Sailing hard cap 300 / one point once / never the
+      lead's subject, and the organisers' official six-class list in the
+      field guide. Host voice and the incident-driven Fleet rewrite are
+      deferred at the operator's direction.
+    shipped:
+      - SourceConfig.window_hours + per-feed cutoff in engine.fetcher (campaign feeds 720h)
+      - stale_article_days + engine.article_text.extract_published_date / drop_stale_articles (page date > feed date; exempt window_hours feeds)
+      - prompts: timestamp sentences banned; background block + labels deleted; RACE STATE CHECK; ten-day rule; Plain Sailing 300-word cap, one point once, never the lead's subject; official class names
+      - field guide: ULTIM / Ocean Fifty / IMOCA / Class40 / Vintage Multi / Vintage Mono (formerly Rhum Multi / Rhum Mono)
+    deferred:
+      - host voice pass (operator: later)
+      - incident-driven Fleet rewrite (operator: later)
+      - A/B-listen the 21 Sep episode
+    predictions:
+      - metric: "timestamp sentences ('last updated', 'inside the window', 'last posted') spoken in The Canadian Boat, next 4 episodes"
+        baseline: "Ep005: 3"
+        expected: "0/4"
+        verdict: pending
+        evidence: null
+      - metric: "Plain Sailing spoken words"
+        baseline: "Ep005 ~600"
+        expected: "<= 300 on 4/4"
+        verdict: pending
+        evidence: null
+      - metric: "articles_dropped_stale per episode (metrics counters) and race-state errors on air"
+        baseline: "Ep005: a 1 Sep start aired on 14 Sep as live"
+        expected: "gate records >= 0 every episode; 0 race-state errors"
+        verdict: pending
+        evidence: null
+      - metric: "campaign posts in the brief when the 7-day window is empty"
+        baseline: "Ep005: 0 (reported the boat still in Canada)"
+        expected: "the newest 30-day post is in the brief on every episode"
+        verdict: pending
+        evidence: null
+    agent_cost_usd: null
+
 do_not_retry: []

@@ -148,6 +148,85 @@ def default_fetch(url: str, timeout: int = 20) -> Tuple[int, str]:
     return resp.status_code, ""
 
 
+#: Where a page states its own publish date, in the order they are
+#: trusted. The OpenGraph/article meta is what publishers set for social
+#: cards; JSON-LD ``datePublished`` is what Google reads; ``<time
+#: datetime>`` is the visible byline. A page with none yields ``None``.
+_META_DATE_RE = re.compile(
+    r'<meta\s+(?:property|name)=["\'](?:article:published_time|og:published_time|'
+    r'datePublished|pubdate|publish-date|date)["\']\s+content=["\']([^"\']+)["\']',
+    re.IGNORECASE,
+)
+_META_DATE_RE_REV = re.compile(
+    r'<meta\s+content=["\']([^"\']+)["\']\s+(?:property|name)=["\'](?:article:published_time|'
+    r'og:published_time|datePublished|pubdate|publish-date|date)["\']',
+    re.IGNORECASE,
+)
+_JSONLD_DATE_RE = re.compile(r'"datePublished"\s*:\s*"([^"]+)"')
+_TIME_TAG_RE = re.compile(r'<time[^>]+datetime=["\']([^"\']+)["\']', re.IGNORECASE)
+
+
+def _parse_iso_date(value: str):
+    """Best-effort ISO-8601 → aware UTC datetime, else ``None``."""
+    import datetime as _dt
+
+    raw = (value or "").strip()
+    if not raw:
+        return None
+    raw = raw.replace("Z", "+00:00")
+    if re.fullmatch(r"\d{4}-\d{2}-\d{2}", raw):
+        raw += "T00:00:00+00:00"
+    try:
+        parsed = _dt.datetime.fromisoformat(raw)
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=_dt.timezone.utc)
+    return parsed.astimezone(_dt.timezone.utc)
+
+
+def extract_published_date(html: str):
+    """The page's own publish date as an aware UTC datetime, or ``None``.
+
+    Read during the full-text fetch so a story an aggregator re-surfaced
+    under a fresh index date carries its REAL date (Sep 18 2026 review,
+    fix 8: Ep005 reported the 1 September race start on 14 September)."""
+    if not html:
+        return None
+    head = html[:200_000]
+    for pattern in (_META_DATE_RE, _META_DATE_RE_REV, _JSONLD_DATE_RE, _TIME_TAG_RE):
+        m = pattern.search(head)
+        if m:
+            parsed = _parse_iso_date(m.group(1))
+            if parsed is not None:
+                return parsed
+    return None
+
+
+def fetch_article(
+    url: str,
+    *,
+    fetch: Optional[Callable[[str], Tuple[int, str]]] = None,
+    max_chars: int = DEFAULT_MAX_CHARS,
+) -> Tuple[str, Optional[object]]:
+    """Open *url* → ``(text, published)``: the main text clipped to
+    *max_chars* and the page's own publish date (or ``None``).
+
+    ``("", None)`` on any failure (transport error, non-200, empty page)."""
+    if not url:
+        return "", None
+    fetcher = fetch or default_fetch
+    try:
+        status, html = fetcher(url)
+    except Exception as exc:  # noqa: BLE001 — never break a run
+        logger.info("Full-text fetch failed for %s: %s", url[:100], exc)
+        return "", None
+    if status != 200 or not html:
+        logger.info("Full-text fetch skipped for %s (status %s)", url[:100], status)
+        return "", None
+    return clip_text(extract_article_text(html), max_chars), extract_published_date(html)
+
+
 def fetch_article_text(
     url: str,
     *,
@@ -157,19 +236,7 @@ def fetch_article_text(
     """Open *url* and return its main text, clipped to *max_chars*.
 
     ``""`` on any failure (transport error, non-200, empty extraction)."""
-    if not url:
-        return ""
-    fetcher = fetch or default_fetch
-    try:
-        status, html = fetcher(url)
-    except Exception as exc:  # noqa: BLE001 — never break a run
-        logger.info("Full-text fetch failed for %s: %s", url[:100], exc)
-        return ""
-    if status != 200 or not html:
-        logger.info("Full-text fetch skipped for %s (status %s)", url[:100], status)
-        return ""
-    text = extract_article_text(html)
-    return clip_text(text, max_chars)
+    return fetch_article(url, fetch=fetch, max_chars=max_chars)[0]
 
 
 def clip_text(text: str, max_chars: int) -> str:
@@ -238,16 +305,18 @@ def enrich_articles_with_full_text(
     if to_fetch:
         with ThreadPoolExecutor(max_workers=max(1, min(workers, len(to_fetch)))) as pool:
             futures = {
-                pool.submit(fetch_article_text, a["url"], fetch=fetch, max_chars=max_chars): a
+                pool.submit(fetch_article, a["url"], fetch=fetch, max_chars=max_chars): a
                 for a in to_fetch
             }
             for fut in as_completed(futures):
                 art = futures[fut]
                 try:
-                    text = fut.result()
+                    text, published = fut.result()
                 except Exception as exc:  # noqa: BLE001
                     logger.info("Full-text worker failed: %s", exc)
-                    text = ""
+                    text, published = "", None
+                if published is not None:
+                    art["page_published_date"] = published.isoformat()
                 if text:
                     art["full_text"] = text
                     art["full_text_source"] = "page"
@@ -267,3 +336,58 @@ def render_full_text_block(article: Dict, indent: str = "   ") -> str:
         return ""
     body = text.replace("\n\n", "\n" + indent)
     return f"{indent}FULL TEXT: {body}"
+
+
+
+def article_age_days(article: Dict, now) -> Optional[float]:
+    """Age in days of the article's most trustworthy date: the page's own
+    publish date when the full-text fetch found one, else the feed date.
+    ``None`` when neither parses."""
+    for key in ("page_published_date", "published_date"):
+        parsed = _parse_iso_date(str(article.get(key) or ""))
+        if parsed is not None:
+            return (now - parsed).total_seconds() / 86400.0
+    return None
+
+
+def drop_stale_articles(
+    articles: List[Dict],
+    *,
+    max_age_days: int,
+    now=None,
+    exempt_sources: Optional[Iterable[str]] = None,
+) -> Tuple[List[Dict], List[Dict]]:
+    """Nothing older than *max_age_days* is news.
+
+    Returns ``(kept, dropped)``. An article is dropped when its page publish
+    date — or, failing that, its feed date — is older than the limit.
+    Undated articles are kept (the guard exists for re-surfaced old
+    stories, never to lose a story the page did not date). Sources named
+    in *exempt_sources* (the campaign's own channels, which are read on a
+    deliberately wider window) are never dropped. ``max_age_days <= 0``
+    is a no-op.
+    """
+    if max_age_days <= 0 or not articles:
+        return list(articles), []
+    import datetime as _dt
+
+    now = now or _dt.datetime.now(_dt.timezone.utc)
+    exempt = {s.strip().lower() for s in (exempt_sources or []) if s}
+    kept: List[Dict] = []
+    dropped: List[Dict] = []
+    for art in articles:
+        src = (art.get("source_name") or "").strip().lower()
+        if src in exempt:
+            kept.append(art)
+            continue
+        age = article_age_days(art, now)
+        if age is not None and age > max_age_days:
+            dropped.append(art)
+            logger.info(
+                "Dropping stale article (%.0f days, page-dated=%s): %s",
+                age, bool(art.get("page_published_date")),
+                (art.get("title") or "")[:80],
+            )
+        else:
+            kept.append(art)
+    return kept, dropped
