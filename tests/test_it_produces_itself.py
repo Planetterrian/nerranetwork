@@ -1595,3 +1595,63 @@ class TestTheAdjectiveReflexIsBannedAsAShape:
         assert "WARM UP FIRST, THEN EASE IN" in PROMPT
         assert "come out of something they just said" in PROMPT
         assert "a fast, dry guest gets a fast, dry host" in PROMPT
+
+
+class TestPatrickIsTheCreatorAndAnOccasionalCoHost:
+    """Sept 18 2026. Mira does the job on her own. Patrick, who made the
+    network, joins when a guest asks for him on the application."""
+
+    WORKER = (ROOT / "workers" / "voices" / "src" / "index.ts").read_text(encoding="utf-8")
+
+    def test_the_form_asks_and_the_booking_carries_it(self):
+        for page in ("age-of-ai-apply.html", "nerra-voices-apply.html"):
+            html = (ROOT / page).read_text(encoding="utf-8")
+            assert 'name="wants_cohost"' in html
+            assert "wants_cohost: val('wants_cohost') === 'yes'" in html
+        assert "wants_cohost: form.wants_cohost === true" in self.WORKER
+        assert self.WORKER.count("host_mode: !!apps[0].wants_cohost") == 2
+        assert "asked for Patrick as co-host" in self.WORKER
+
+    def test_mira_alone_is_the_default(self):
+        fire = (V / "fire_interviews.py").read_text(encoding="utf-8")
+        body = fire[fire.index("def host_mode_enabled"):fire.index("COHOST_INTRO_STEP")]
+        assert "return False" in body and 'is not None' in body
+        assert "he joins as co-host when a guest has asked for him" in PROMPT
+
+
+class TestApplicationsAreScreenedForSubstance:
+    """Rhett Mikols, Sept 17 2026: a publicist's pitch, a name and a vision,
+    no work behind either, forty-five minutes of Mira asking for an instance.
+    The producer approved from a bio and a topic list; the screen is the
+    paragraph that would have said there was nothing behind them."""
+
+    SCREEN = (V / "screen_applications.py").read_text(encoding="utf-8")
+    PROMPT_TXT = _flat((V / "prompts" / "screen_application.txt").read_text(encoding="utf-8"))
+    WORKER = (ROOT / "workers" / "voices" / "src" / "index.ts").read_text(encoding="utf-8")
+
+    def test_it_looks_for_checkable_work_not_phrasing(self):
+        assert "Abstractions with no instance" in self.PROMPT_TXT
+        assert "A publicist's pitch is not a mark against the guest" in self.PROMPT_TXT
+        assert "Not finding something is not proof of anything" in self.PROMPT_TXT
+        assert '"verdict": "strong" | "thin" | "unclear"' in self.PROMPT_TXT
+
+    def test_it_advises_and_never_declines(self):
+        assert 'sb_update("guest_applications"' in self.SCREEN
+        assert '"screen": result' in self.SCREEN
+        assert "status" not in self.SCREEN[self.SCREEN.index("def screen_one"):self.SCREEN.index("def main")]
+        assert "web_search=True" in self.SCREEN
+        assert 'if result["verdict"] == "thin":' in self.SCREEN
+
+    def test_the_triage_page_shows_it_beside_approve(self):
+        body = self.WORKER[self.WORKER.index("const screenHtml"):self.WORKER.index("const sections")]
+        assert "not yet screened" in body
+        assert 'sc.verdict === "thin" ? "#991B1B"' in body
+        assert "${screenHtml(a)}" in body
+        wf = (ROOT / ".github" / "workflows" / "nerra_voices_screen_applications.yml").read_text(encoding="utf-8")
+        assert "screen_applications.py" in wf and "cron:" in wf
+
+    def test_the_columns_exist(self):
+        sql = (ROOT / "supabase" / "migrations"
+               / "20260918_cohost_on_request_and_substance_screen.sql").read_text(encoding="utf-8")
+        assert "wants_cohost boolean not null default false" in sql
+        assert "screen jsonb" in sql

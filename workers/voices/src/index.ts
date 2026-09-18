@@ -401,6 +401,9 @@ async function handleApply(req: Request, env: Env): Promise<Response> {
     depth: oneOf(form.depth, ["accessible", "standard", "deep"]),
     personal_depth: oneOf(form.personal_depth, ["none", "light", "open"]),
     off_limits: form.off_limits ? String(form.off_limits).slice(0, 500) : null,
+    // Sept 18 2026: Mira carries the room on her own. Patrick Novak, who
+    // created the network, joins as co-host only when the guest asks.
+    wants_cohost: form.wants_cohost === true || String(form.wants_cohost ?? "").toLowerCase() === "yes",
     preferred_window: form.preferred_window ?? null,
     referrer: form.referrer ?? null,
     show: show.slug,
@@ -746,11 +749,11 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
     interviewId = existing[0].id;
     await sb(env, "PATCH", `interviews?id=eq.${interviewId}`,
       { scheduled_at: startTime, status: "scheduled", reminder_sent_at: null, show: show.slug,
-        duration_min: plannedMinutes });
+        duration_min: plannedMinutes, host_mode: !!apps[0].wants_cohost });
   } else {
     const created = await sb(env, "POST", "interviews",
       { application_id: apps[0].id, scheduled_at: startTime, status: "scheduled", show: show.slug,
-        duration_min: plannedMinutes },
+        duration_min: plannedMinutes, host_mode: !!apps[0].wants_cohost },
       "return=representation");
     interviewId = created?.[0]?.id ?? "";
   }
@@ -769,13 +772,17 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
      <p>We have it down as about ${plannedMinutes} minutes${apps[0].desired_minutes ? ", which is what you asked for" : ""}. Mira paces the
      conversation to that and starts wrapping up near the end rather than
      cutting you off.</p>
+     ${apps[0].wants_cohost
+       ? "<p>You asked for Patrick Novak, the network's creator, to join as co-host. He will be in the room with Mira.</p>"
+       : ""}
      <p>About a day before, you'll receive a short prep brief with the
      themes she plans to explore.</p>
      <p>Two things to know: the conversation is recorded for the podcast,
      and nothing publishes until you've reviewed and approved the
      transcript.</p>
      <p>${esc(signOff(show))}</p>`, true);
-  await slack(env, `${show.shortLabel}: ${apps[0].name} booked ${startTime}`);
+  await slack(env, `${show.shortLabel}: ${apps[0].name} booked ${startTime}` +
+    (apps[0].wants_cohost ? " — guest asked for Patrick as co-host" : ""));
   return json({ ok: true, show: show.slug, interview_id: interviewId });
 }
 
@@ -1199,10 +1206,24 @@ async function handleAdminTriage(req: Request, env: Env): Promise<Response> {
   const reassignOptions = (current: ShowSlug) => Object.values(SHOWS)
     .filter((s) => s.slug !== current)
     .map((s) => `<option value="${s.slug}">${esc(s.name)}</option>`).join("");
+  // Sept 18 2026: what the screen found, beside the Approve button. Rhett
+  // Mikols was approved from a bio and a topic list; this is the paragraph
+  // that would have said there was nothing behind them.
+  const screenHtml = (a: any) => {
+    const sc = a.screen;
+    if (!sc?.verdict) return `<br><small class="prov">not yet screened</small>`;
+    const colour = sc.verdict === "strong" ? "#166534" : sc.verdict === "thin" ? "#991B1B" : "#92400E";
+    const list = (items: any, label: string) => Array.isArray(items) && items.length
+      ? `<br><small><b>${label}:</b> ${items.map((x: any) => esc(String(x))).join(" · ")}</small>` : "";
+    return `<br><span style="color:${colour};font-weight:600">screen: ${esc(String(sc.verdict))}</span>
+      — ${esc(String(sc.summary ?? ""))}${list(sc.specifics, "found")}${list(sc.concerns, "concerns")}`
+      + (sc.ask_first ? `<br><small><b>open with:</b> ${esc(String(sc.ask_first))}</small>` : "");
+  };
   const rowHtml = (a: any, show: Show) => `
     <li><b>${esc(a.name)}</b> — ${esc(a.title ?? "")} ${esc(a.organization ?? "")}
+      ${a.wants_cohost ? '<small class="prov">· asked for Patrick as co-host</small>' : ""}
       <br><small>${esc((a.topics ?? []).join(", "))}</small>${provenance(a)}
-      <br>${esc(a.bio ?? "").slice(0, 500)}
+      <br>${esc(a.bio ?? "").slice(0, 500)}${screenHtml(a)}
       <br><button onclick="decide('${a.id}','approved')">Approve</button>
       <button onclick="decide('${a.id}','declined')">Decline</button>
       <span class="move">Move to
