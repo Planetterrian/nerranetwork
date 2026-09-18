@@ -1,0 +1,265 @@
+OpenAI launches Astra for Law, pairing GPT-6 Astra with a 230-million-URL legal search index and firm-specific workflow tools.
+
+This is Models and Agents, episode 177.
+
+OpenAI released Astra for Law today.
+
+The new offering runs on GPT-6 Astra.
+
+It adds instructions for legal analysis and writing.
+
+Settings are tuned for thorough work.
+
+A Legal Search Index covers U.S. case law, statutes, regulations, court rules, and administrative decisions.
+
+The index spans more than 230 million URLs with sources added daily.
+
+Sullivan and Cromwell built an agreement analyzer inside the platform.
+
+Ropes and Gray built an M and A diligence system.
+
+Cooley built GO Public for IPO preparation.
+
+OpenAI is also rolling out 26 partner-built plugins.
+
+There are 47 community plugins for legal work in ChatGPT.
+
+Partners include Thomson Reuters, Harvey, Legora, and iManage.
+
+Privacy and governance controls are expanding for eligible firms through Trusted Access.
+
+The release targets law firms and legal technology teams that need specialized context.
+
+Anthropic optimized inference for more than 30 open-source biomolecular models.
+
+The optimizations deliver four times faster performance on average.
+
+Custom GPU software produced the gains.
+
+All code is on GitHub at the uplifting-biomolecular-modeling repository.
+
+A technical report accompanies the release.
+
+The work targets molecular structure modeling, drug-like molecule design, and genetic mutation effect prediction.
+
+The optimizations are released under an open-source license.
+
+Anthropic partnered with Adaptyv Bio on a protein design competition.
+
+The effort will experimentally validate over 5,000 protein designs.
+
+Up to one million dollars in Claude credits are available.
+
+Funding for validation is included.
+
+Modal contributes up to 250,000 dollars in compute.
+
+Twist Bioscience supplies DNA.
+
+Sign-up details are on Adaptyv’s Proteinbase.
+
+The competition demonstrates the practical impact of the inference optimizations.
+
+Anthropic released three measurements to track AI development.
+
+The first tracks the share of AI R and D performed by AI itself.
+
+The second measures the quality of oversight applied to AI agents.
+
+The third tracks allocation of compute resources.
+
+A snapshot from inside Anthropic is included.
+
+Any frontier lab could publish comparable figures for third-party verification.
+
+The full post and methodology are on the Anthropic site.
+
+The measurements aim to reduce the information gap between labs and the public.
+
+A 421 million parameter non-autoregressive decision model called Laya was trained on a 100 percent human-annotated corpus.
+
+The corpus contains over 25,000 real-world examples.
+
+Training used an RLCD policy-gradient approach.
+
+The model pairs a bidirectional ModernBERT-large encoder with a scratch Transformer head.
+
+It runs in a single 35 millisecond forward pass on low-end hardware.
+
+The model is available on Hugging Face at the convaiinnovations laya repository.
+
+A demo space and GitHub repo are included.
+
+Training ran on a single RTX 6000 Pro with 96 GB VRAM.
+
+A proposed frontend-backend split lets a duplex speech-to-text frontend emit a delegation token.
+
+ASR transcripts stream to a text-based backend LLM for tool calls.
+
+Tool results return through a lightweight prefill-and-repeat mechanism.
+
+Streaming TTS synthesis follows.
+
+The system preserves regular duplex turn-taking and interruption handling.
+
+It achieves 92 to 97 percent tool-call recall.
+
+Accuracy rejecting irrelevant calls reaches 81.2 percent.
+
+With a larger backend such as Qwen3-235B-A22B it outperforms GPT-realtime-mini and Qwen3-Omni-30B-A3B-Instruct on EVA-Bench.
+
+The architecture requires only minimal changes to the frontend model.
+
+TrioRAG retrieves independently over a shared multi-vector index.
+
+It uses the question, the anchor image, and a VLM-enhanced query.
+
+Results combine through late fusion.
+
+The approach matches or exceeds graph-based systems on three benchmarks.
+
+Total cost drops while per-query inference accelerates by 1.6 to 2.3 times.
+
+It is paired with the new AutoQA automotive benchmark built from noisy web-sourced images.
+
+The framework avoids maintaining a corpus-level graph that would need frequent rebuilds.
+
+CliniCIRCA is a multi-stage LLM framework.
+
+It produces calendar-anchored, imprecision-aware reconstructions of clinical events.
+
+The source is unstructured discharge summaries without event-level timestamps.
+
+On 52 MIMIC-III summaries it extracted 15,891 temporally tagged events.
+
+After clinician correction the timelines compress source material 1.52 times into date-grouped records.
+
+Instruction tuning on the resulting silver-standard data improves five open-weight models.
+
+Gains appear on event extraction, temporal tagging, and summarization.
+
+The framework was evaluated on a clinician-in-the-loop benchmark of verified gold-standard labels.
+
+ProKDA uses an agentic background-knowledge pipeline.
+
+A three-stage training sequence follows.
+
+The stages are background learning, detection learning, and boundary alignment.
+
+The method avoids interference between explanation generation and label prediction.
+
+Prior explain-then-detect approaches were limited by that interference.
+
+It reaches state-of-the-art detection on three public hateful-meme benchmarks.
+
+Accurate, evidence-supported explanations are produced.
+
+The staged approach was tested on three public benchmarks with consistent gains over joint-training baselines.
+
+SynUC is a constraint-guided synthesis method.
+
+It represents user-side conflicts in a constraint space.
+
+The SPEAKING framework generates traceable implicit conflict samples.
+
+Applied to WildChat it produced UC-Data, a 2,487-example training set.
+
+A Qwen3.5-4B model trained on UC-Data outperforms larger general-purpose LLMs.
+
+Claude Opus 4.8 is among those outperformed.
+
+The evaluation uses the new UC-Bench conflict-detection benchmark.
+
+The method explicitly models implicit incompatibilities between historical and current utterances.
+
+Reflective Recovery extracts initial segments of failed trajectories.
+
+Those segments are concatenated with prompts.
+
+Models are trained to recognize and correct mistakes.
+
+On DeepSeek-R1-Distill-Qwen-7B the method raised accuracy from 30.0 percent to 37.5 percent on AIME 2025.
+
+Accuracy rose from 37.6 percent to 47.8 percent on Minerva.
+
+Emergent self-correction behaviors appear.
+
+The technique was evaluated across extensive benchmarks.
+
+It breaks the scaling collapse seen in pure imitation learning.
+
+Late fusion keeps each retrieval signal independent until the final ranking step.
+
+Early joint embedding is avoided.
+
+The three signals in TrioRAG each query the same multi-vector index.
+
+A weak image match can still surface if the VLM-enhanced text query scores strongly.
+
+This independence removes the need to maintain a single corpus-level graph.
+
+The graph would otherwise need rebuilding whenever any document changes.
+
+On the reported benchmarks the approach delivers 1.6 to 2.3 times faster per-query inference.
+
+No cross-signal attention occurs until after the top-k candidates are already fetched.
+
+The tradeoff appears when one modality dominates.
+
+If the anchor image is the only reliable cue, the text-only signals add noise.
+
+Late fusion must down-weight that noise at ranking time.
+
+Teams facing rapidly changing document collections therefore prefer late fusion when update latency matters more than the marginal gain from joint early fusion training.
+
+When the corpus is static and every modality is equally informative, early graph construction can still justify its rebuild cost.
+
+The design choice trades a small amount of potential accuracy for substantially lower maintenance overhead in production settings.
+
+Try Astra for Law if you handle U.S. legal research.
+
+The Legal Search Index surfaces authorities across 230 million URLs with daily updates.
+
+Run the Laya 421 million parameter model from the Hugging Face space.
+
+It tests calibrated decision scoring on intent routing or moderation tasks without a full LLM forward pass.
+
+Experiment with TrioRAG on your own multimodal documents.
+
+See whether late fusion removes the need for a maintained corpus graph.
+
+Apply Reflective Recovery to your own failed reasoning traces.
+
+Generate self-correction training data for smaller models.
+
+More partner and community plugins for legal workflows are expected as firms adapt the new Astra for Law controls.
+
+Experimental results from the Adaptyv Bio protein design competition will validate the 5,000 plus designs backed by Anthropic credits.
+
+Additional arXiv releases on user-side conflict detection and full-duplex tool calling are anticipated in the coming weeks.
+
+Pop the hood on late fusion and you see why the independence of signals matters more than most retrieval papers admit.
+
+Each query runs separately against the same index so a strong text signal can rescue a weak image match.
+
+No joint embedding forces every modality through the same representation bottleneck.
+
+That removes the constant rebuild cost of a corpus graph when documents change daily.
+
+The measured speedup of 1.6 to 2.3 times comes directly from skipping cross-signal attention until after top-k candidates are fetched.
+
+The cost appears when one modality carries all the useful information.
+
+Text-only signals then inject noise that must be down-weighted at ranking time.
+
+Static corpora with balanced modalities can still justify early graph construction.
+
+Rapidly changing collections favor late fusion because update latency outweighs the marginal accuracy gain.
+
+Before we go, Adaptyv Bio will release the first experimental validation results from the protein design competition next week.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The AI world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+Quick tip from the network: try The Do Positive Pod next — good news in science and tech, plus one concrete action you can take. Every Nerra Network show is free at nerranetwork.com. Want the written briefing with source links? Each show keeps a summaries page on nerranetwork.com — scannable, dated, and free.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
