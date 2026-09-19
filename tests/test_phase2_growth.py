@@ -155,9 +155,36 @@ class TestBlogPostRender:
     def test_share_row_has_facebook_email_and_utm(self, html):
         assert "facebook.com/sharer" in html
         assert "mailto:?subject=" in html
-        # Every share network is UTM-tagged (url-encoded '=' -> %3D).
-        for src in ("twitter", "linkedin", "facebook", "whatsapp", "telegram", "email"):
+        # Every share network is UTM-tagged (url-encoded '=' -> %3D). Sep 2026:
+        # the sources come from engine.funnel's closed vocabulary, so the X
+        # button is "x" (not "twitter") and a reader's forward is
+        # "email_share" (distinct from the newsletter WE send).
+        for src in ("x", "linkedin", "facebook", "whatsapp", "telegram",
+                    "email_share"):
             assert f"utm_source%3D{src}" in html, f"missing UTM for {src}"
+
+    def test_share_row_campaign_is_parseable_by_the_funnel(self, html):
+        """A share campaign the funnel cannot parse is a click the funnel
+        report files under ``unattributed`` — which is what
+        ``utm_campaign=blog`` did to every share this network ever earned."""
+        import re as _re
+
+        from engine.funnel import parse_campaign_id
+
+        # The share hrefs are url-encoded, so a campaign ends at the encoded
+        # '&' that starts the next parameter.
+        campaigns = set(_re.findall(r"utm_campaign%3D([A-Za-z0-9_-]+)", html))
+        assert campaigns, "share row carries no campaign at all"
+        for campaign in campaigns:
+            assert parse_campaign_id(campaign) is not None, (
+                f"{campaign!r} does not parse"
+            )
+
+    def test_internal_story_tracker_link_carries_no_utm(self, html):
+        """GA4 starts a new session on any page_view carrying utm_source, so a
+        tagged INTERNAL link inflates sessions and overwrites the visitor's
+        real acquisition source. Internal links stay clean."""
+        assert "story_tracker" not in html
 
     def test_transcript_section_is_anchored(self, html):
         assert 'class="blog-transcript" id="transcript"' in html

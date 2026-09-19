@@ -1368,6 +1368,7 @@ def _build_reply_share_html(
     *,
     archive_url: str = "",
     slug: str = "",
+    episode_num: Optional[int] = None,
 ) -> str:
     """Render a reply-CTA + share-intents row above the footer CTAs.
 
@@ -1439,11 +1440,25 @@ def _build_reply_share_html(
     # must carry its own subscribe path. UTM-tagged so analytics can
     # attribute signups to forwards; the query string goes BEFORE the
     # #newsletter fragment.
-    subscribe_url = (
-        "https://nerranetwork.com/"
-        "?utm_source=newsletter&utm_medium=email&utm_campaign=forward_subscribe"
-        "#newsletter"
-    )
+    # engine.funnel owns every campaign id (CLAUDE.md). The old hand-rolled
+    # ``utm_campaign=forward_subscribe`` did not parse, so a signup earned by
+    # a forward was indistinguishable from direct traffic in the funnel
+    # report — which matters precisely because forwarding is the only viral
+    # loop this network has. The fragment must stay AFTER the query string.
+    subscribe_url = "https://nerranetwork.com/#newsletter"
+    if slug and episode_num:
+        from engine.funnel import (
+            MEDIUM_EMAIL, PLACEMENT_BODY, SOURCE_NEWSLETTER, network_link,
+        )
+        tagged = network_link(
+            "#newsletter", slug, int(episode_num),
+            surface="forward",
+            source=SOURCE_NEWSLETTER,
+            medium=MEDIUM_EMAIL,
+            placement=PLACEMENT_BODY,
+        )
+        if tagged:
+            subscribe_url = tagged
     if is_russian:
         forward_html = (
             f'Вам переслали это письмо? '
@@ -1858,7 +1873,10 @@ def wrap_with_branding(
         adjacent_shows, show["brand_color"]
     )
     reply_share = (
-        _build_reply_share_html(show, slug=slug)
+        _build_reply_share_html(
+            show, slug=slug,
+            episode_num=(featured_with_slug or {}).get("episode_num"),
+        )
         if show_reply_share else ""
     )
     footer = _build_footer_html(show)

@@ -684,6 +684,12 @@ jobs:
         if: steps.pipeline.outputs.skipped != 'true'
         env:
           GA4_MEASUREMENT_ID: ${{ secrets.GA4_MEASUREMENT_ID }}
+          # Search Console ownership tag. Read by generate_html.py since
+          # May 2026 but never passed here, so the verification meta tag
+          # could not render even once the secret was set — and with no
+          # verified property there is no impressions, query or coverage
+          # data for 1,880 indexed-candidate pages.
+          GSC_VERIFICATION: ${{ secrets.GSC_VERIFICATION }}
           GOOGLE_ADS_ID: ${{ secrets.GOOGLE_ADS_ID }}
           GOOGLE_ADS_SIGNUP_LABEL: ${{ secrets.GOOGLE_ADS_SIGNUP_LABEL }}
           PLAUSIBLE_DOMAIN: ${{ secrets.PLAUSIBLE_DOMAIN }}
@@ -919,6 +925,12 @@ jobs:
       - name: Regenerate shared pages
         env:
           GA4_MEASUREMENT_ID: ${{ secrets.GA4_MEASUREMENT_ID }}
+          # Search Console ownership tag. Read by generate_html.py since
+          # May 2026 but never passed here, so the verification meta tag
+          # could not render even once the secret was set — and with no
+          # verified property there is no impressions, query or coverage
+          # data for 1,880 indexed-candidate pages.
+          GSC_VERIFICATION: ${{ secrets.GSC_VERIFICATION }}
           GOOGLE_ADS_ID: ${{ secrets.GOOGLE_ADS_ID }}
           GOOGLE_ADS_SIGNUP_LABEL: ${{ secrets.GOOGLE_ADS_SIGNUP_LABEL }}
           PLAUSIBLE_DOMAIN: ${{ secrets.PLAUSIBLE_DOMAIN }}

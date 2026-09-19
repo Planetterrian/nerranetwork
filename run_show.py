@@ -4512,7 +4512,9 @@ def run(args: argparse.Namespace) -> None:
                 # (publishing.x_cross_promo); failure never blocks.
                 if getattr(config.publishing, "x_cross_promo", False):
                     try:
-                        reply_text = _build_cross_promo_reply(config, today)
+                        reply_text = _build_cross_promo_reply(
+                            config, today, episode_num
+                        )
                         if reply_text:
                             reply_url = post_to_x(
                                 reply_text,
@@ -7776,7 +7778,7 @@ def _build_teaser(config, episode_num: int, today_str: str, extra_context: dict)
     return _append_youtube_line(teaser, extra_context)
 
 
-def _build_cross_promo_reply(config, today) -> str:
+def _build_cross_promo_reply(config, today, episode_num=None) -> str:
     """Build the cross-promo reply posted under the daily teaser tweet.
 
     Shape: optional "Follow @handle" line (omitted when the show's YAML
@@ -7802,7 +7804,7 @@ def _build_cross_promo_reply(config, today) -> str:
     # Even days → sibling show (legacy behaviour).
     use_surface = (today.toordinal() % 2) == 1
     if use_surface:
-        surface_text = build_surface_x_reply(config.slug, today)
+        surface_text = build_surface_x_reply(config.slug, today, episode_num)
         if surface_text:
             parts = [p for p in (follow_line, surface_text) if p]
             return "\n\n".join(parts) if follow_line else surface_text
@@ -7819,10 +7821,19 @@ def _build_cross_promo_reply(config, today) -> str:
         name = ENGLISH_SHOWS[featured]["spoken_name"]
         tagline = ENGLISH_SHOWS[featured]["tagline"]
         if show_page:
-            url = (
-                f"https://nerranetwork.com/{show_page}"
-                "?utm_source=x&utm_medium=social&utm_campaign=cross_promo"
-            )
+            # engine.funnel owns every campaign id (CLAUDE.md). The old
+            # hand-rolled ``utm_campaign=cross_promo`` did not parse, so
+            # every sibling-plug click landed in the funnel report's
+            # unattributed bucket. Without an episode number the link ships
+            # untagged rather than unparseably tagged.
+            if episode_num:
+                from engine.funnel import network_link
+                url = network_link(
+                    show_page, config.slug, int(episode_num),
+                    surface=f"sibling_{featured}",
+                )
+            else:
+                url = f"https://nerranetwork.com/{show_page}"
         # Budget: 280 minus follow line, minus the t.co URL (23) + spacing.
         X_URL_LEN = 23
         fixed = len(follow_line) + (2 if follow_line else 0)  # + blank line

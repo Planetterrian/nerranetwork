@@ -202,6 +202,16 @@ jobs:
         # ("not_started") until the experiment has published Shorts.
         run: python scripts/build_shorts_ab_report.py --out api/shorts_ab.json || echo "::warning::Shorts A/B report failed (non-fatal)"
 
+      # Reads the landing pages GA4 actually measured and checks them against
+      # the tree. On 2026-09-18 that was 49 of 188 landing sessions (26%)
+      # arriving at a path with no file, all bouncing at 100% — invisible until
+      # something looked, because every other check asks whether the pages we
+      # GENERATE are sound, never whether the pages people ASK for exist.
+      # Loud, never blocking: a new hole is news, not a reason to fail the
+      # nightly. Answer it in site/redirects.yaml.
+      - name: Audit dead URLs (measured 404s)
+        run: python scripts/audit_dead_urls.py || true
+
       - name: Build audience headline
         # Sep 12 2026: the one number every review starts from — last
         # complete week of RSS downloads vs the week before, first-week
@@ -257,6 +267,12 @@ jobs:
         # daily run-show regen (which passes them) had added.
         env:
           GA4_MEASUREMENT_ID: ${{ secrets.GA4_MEASUREMENT_ID }}
+          # Search Console ownership tag. Read by generate_html.py since
+          # May 2026 but never passed here, so the verification meta tag
+          # could not render even once the secret was set — and with no
+          # verified property there is no impressions, query or coverage
+          # data for 1,880 indexed-candidate pages.
+          GSC_VERIFICATION: ${{ secrets.GSC_VERIFICATION }}
           GOOGLE_ADS_ID: ${{ secrets.GOOGLE_ADS_ID }}
           GOOGLE_ADS_SIGNUP_LABEL: ${{ secrets.GOOGLE_ADS_SIGNUP_LABEL }}
           PLAUSIBLE_DOMAIN: ${{ secrets.PLAUSIBLE_DOMAIN }}
@@ -347,6 +363,11 @@ jobs:
       # comment syntax.
       - uses: ./.github/actions/safe-commit-push
         with:
+          # Every line below is a pathspec — no comments inside the block.
+          # A generated path missing from this list is rebuilt nightly and then
+          # thrown away: the silent-drop class that cost
+          # api/youtube_channel_history.json four runs and six shows' memory
+          # trackers a month of nights.
           add-paths: |
             *_podcast.*.rss
             *.video.rss
@@ -394,6 +415,7 @@ jobs:
             editorial.html
             gallery.html
             404.html
+            llms.txt
             ai-disclosure.html
             privacy-policy.html
             terms-of-service.html

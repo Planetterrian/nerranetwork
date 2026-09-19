@@ -20,12 +20,10 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Nerra Voices | Nerra Network">
     <meta name="twitter:description" content="Nerra Voices — Mira, an AI host, interviews real people live about the work they've chosen. Guest-approved transcripts. Full disclosure, every episode.">
-    <meta name="twitter:image" content="https://nerranetwork.com/assets/covers/nerra-voices.jpg">
+    <meta name="twitter:image" content="https://nerranetwork.com/assets/covers/nerra-voices.jpg"><meta name="twitter:site" content="@nerranetwork">
+    <meta name="twitter:creator" content="@nerranetwork">
 
     <link rel="canonical" href="https://nerranetwork.com/nerra-voices.html">
-    
-    <link rel="alternate" type="application/rss+xml" title="Nerra Voices RSS" href="nerra_voices_podcast.rss">
-    
     
     
 
@@ -69,7 +67,6 @@
   "name": "Nerra Voices",
   "description": "Nerra Voices — Mira, an AI host, interviews real people live about the work they\u0027ve chosen. Guest-approved transcripts. Full disclosure, every episode.",
   "url": "https://nerranetwork.com/nerra-voices.html",
-  "webFeed": "https://nerranetwork.com/nerra_voices_podcast.rss",
   "image": "https://nerranetwork.com/assets/covers/nerra-voices.jpg"
 }
 </script>
@@ -659,7 +656,6 @@
                     <a href="nerra-voices-summaries.html" class="nn-btn">View Summaries</a>
                     
                     
-                    <a href="nerra-voices-narrative.html" class="nn-btn">Story Tracker</a>
                     
                     
                     
@@ -671,7 +667,6 @@
                     <span class="subscribe-label">Subscribe</span>
                     
                     
-                    <a href="nerra_voices_podcast.rss" class="nn-chip" data-show="nerra_voices">RSS</a>
                     
                     
                 </div>
@@ -1204,7 +1199,6 @@
                     
                     <a href="age_of_ai_podcast.rss">The Age of AI RSS</a>
                     
-                    <a href="nerra_voices_podcast.rss">Nerra Voices RSS</a>
                     
                     <a href="offshore_north_podcast.rss">Offshore North RSS</a>
                     
@@ -1226,11 +1220,13 @@
                 </div>
                 <div class="nn-footer-col">
                     <h4>Connect</h4>
-                    <a href="https://x.com/teslashortstime" target="_blank" rel="noopener">@teslashortstime</a>
-                    <a href="https://x.com/omniviewnews" target="_blank" rel="noopener">@omniviewnews</a>
-                    <a href="https://x.com/planetterrian" target="_blank" rel="noopener">@planetterrian</a>
-                    <a href="https://www.youtube.com/@NerraNetwork" target="_blank" rel="noopener">YouTube @NerraNetwork</a>
-                    <a href="https://www.youtube.com/@NerraRU" target="_blank" rel="noopener">YouTube @NerraRU</a>
+                    <a href="https://x.com/nerranetwork" target="_blank" rel="noopener">@nerranetwork <span style="opacity:.6;">(X)</span></a>
+                    <a href="https://www.youtube.com/@NerraNetwork" target="_blank" rel="noopener">@NerraNetwork <span style="opacity:.6;">(YouTube (English))</span></a>
+                    <a href="https://www.youtube.com/@NerraFR" target="_blank" rel="noopener">@NerraFR <span style="opacity:.6;">(YouTube (French))</span></a>
+                    <a href="https://www.youtube.com/@NerraRU" target="_blank" rel="noopener">@NerraRU <span style="opacity:.6;">(YouTube (Russian))</span></a>
+                    <a href="https://x.com/teslashortstime" target="_blank" rel="noopener">@teslashortstime <span style="opacity:.6;">(Tesla Shorts Time)</span></a>
+                    <a href="https://x.com/omniviewnews" target="_blank" rel="noopener">@omniviewnews <span style="opacity:.6;">(Omni View)</span></a>
+                    <a href="https://x.com/planetterrian" target="_blank" rel="noopener">@planetterrian <span style="opacity:.6;">(Planetterrian)</span></a>
                     <a href="contact.html">Contact</a>
                 </div>
             </div>
@@ -1288,6 +1284,7 @@
                     <p style="margin-top:0.5rem;font-size:0.85rem;">
                         <a href="join.html">Nerra Personal — your own daily show, gallery &amp; member perks →</a>
                         <a class="nn-account-link" href="account.html" style="display:none;margin-left:0.75rem;">Your account →</a>
+                        <a class="nn-login-link" href="login.html" style="margin-left:0.75rem;">Sign in →</a>
                     </p>
                 </form>
             </div>
@@ -1394,6 +1391,7 @@
         const JSON_URL = 'digests/nerra_voices/summaries_nerra_voices.json';
         const JSON_FORMAT = 'wrapped';
         const RSS_URL = 'nerra_voices_podcast.rss';
+        const HAS_FEED = false;
         const SHOW_NAME = "Nerra Voices";
 
         // --- Helpers ---
@@ -1565,6 +1563,10 @@
         }
 
         function loadFromRSS() {
+            // A show registered before its first episode has no feed file, so
+            // fetching it is a guaranteed 404 and a console error on a page
+            // whose whole job right now is to take guest applications.
+            if (!HAS_FEED) { showNoEpisodes(); return; }
             fetch(RSS_URL)
                 .then(r => r.text())
                 .then(xml => {
@@ -1649,6 +1651,7 @@
               var a = document.getElementById(id);
               if (a) { a.textContent = 'My Nerra'; a.href = 'account.html'; }
             });
+            document.querySelectorAll('.nn-login-link').forEach(function (a) { a.style.display = 'none'; });
           }).catch(function () {});
       } catch (e) {}
     })();
