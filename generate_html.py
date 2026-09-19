@@ -2593,6 +2593,28 @@ def generate_offshore_north_glossary(*, dry_run=False):
     return out_path
 
 
+def _offshore_north_campaign_strip():
+    """Next start line + last dated fix for the show page hero, from the
+    curated record (None when the record is missing — the page renders
+    without the strip)."""
+    try:
+        import json as _json
+        d = _json.loads((ROOT / "site" / "data" / "offshore_north_dashboard.json").read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001
+        return None
+    primary = next((c for c in d.get("countdowns", []) if c.get("primary")), None)
+    log = [p for p in d.get("position_log", []) if p.get("date")]
+    if not primary or not log:
+        return None
+    last = max(log, key=lambda p: p["date"])
+    return {
+        "label": primary.get("label", ""),
+        "when": primary.get("when", ""),
+        "fix_date": last["date"],
+        "fix_text": last.get("text", ""),
+    }
+
+
 def generate_offshore_north_dashboard(*, dry_run=False):
     """Render the Offshore North campaign dashboard (offshore-north-dashboard.html).
 
@@ -2865,9 +2887,14 @@ def generate_show_page(slug, *, dry_run=False):
     # June 2026.
     stock_widget = _STOCK_WIDGETS.get(slug)
 
+    # Offshore North (Sep 19 2026): the show page carries the campaign's
+    # headline facts from the verified record (see generate_offshore_north_dashboard).
+    campaign_strip = _offshore_north_campaign_strip() if slug == "offshore_north" else None
+
     context = {
         **cfg,
         "narrative_page_url": narrative_page_url,
+        "campaign_strip": campaign_strip,
         "path_prefix": prefix,
         "show_name": cfg["name"],
         "show_slug": cfg["slug"],

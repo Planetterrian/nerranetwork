@@ -5,6 +5,30 @@
 {% block og_type %}website{% endblock %}
 
 {% block head_extra %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+<style>
+  .on-map { border-radius:14px; overflow:hidden; border:1px solid rgba(91,192,235,.22); background:#061421; }
+  .on-map #onMap { height:420px; width:100%; }
+  .on-map .leaflet-container { background:#06131f; font-family:inherit; }
+  .on-map .leaflet-popup-content-wrapper, .on-map .leaflet-popup-tip { background:#0f1f31; color:#e9f2f9; }
+  .on-map .leaflet-popup-content { font-size:.84rem; line-height:1.4; }
+  .on-cast { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:.7rem; }
+  .on-cast .p { background:rgba(8,24,40,.5); border:1px solid rgba(91,192,235,.14); border-radius:12px; padding:.7rem .85rem; font-size:.84rem; line-height:1.45; }
+  .on-cast .p b { color:#fff; display:block; font-size:.92rem; }
+  .on-cast .p .bt { color:#9db4c9; font-size:.76rem; display:block; margin-bottom:.3rem; }
+  .on-cast .p a { color:#5BC0EB; text-decoration:none; font-size:.76rem; }
+  .on-cast .p.can { border-color:rgba(91,192,235,.45); }
+  .on-fleet { list-style:none; padding:0; margin:0; }
+  .on-fleet li { border-top:1px solid rgba(91,192,235,.12); padding:.55rem 0; font-size:.86rem; }
+  .on-fleet li:first-child { border-top:none; }
+  .on-fleet .h { display:flex; gap:10px; justify-content:space-between; align-items:baseline; flex-wrap:wrap; }
+  .on-fleet .h b { color:#fff; }
+  .on-fleet .h .sn { color:#9db4c9; font-size:.76rem; font-variant-numeric:tabular-nums; }
+  .on-fleet .spec { color:#c7d6e3; font-size:.8rem; margin:.15rem 0 0; }
+  .on-fleet .hl { color:#9db4c9; font-size:.78rem; margin:.15rem 0 0; }
+  .on-fleet li.can b::before { content:"🍁 "; }
+  .on-fleet .h a { color:#5BC0EB; text-decoration:none; font-size:.76rem; }
+</style>
 <style>
   /* ---- Offshore North campaign dashboard (scoped under .on-dash) ---- */
   .on-dash {
@@ -160,6 +184,7 @@
 {% set camp = d.get('campaign', {}) %}
 {% set boat = camp.get('boat', {}) %}
 {% set primary = (d.get('countdowns', []) | selectattr('primary') | list | first) or {} %}
+{% set result_keys = d.get('results', []) | map(attribute='key') | list %}
 <div class="on-dash">
   <div class="on-hero">
     <div class="on-container">
@@ -212,6 +237,25 @@
         <iframe src="{{ camp.get('tracker_embed_url', 'https://my.yb.tl/emira4') }}" loading="lazy" title="EMIRA IV tracker" referrerpolicy="no-referrer-when-downgrade"></iframe>
       </div>
       <p class="on-muted" style="margin:.6rem 0 0;">Embedded from the team's public tracker page. If it shows nothing, the tracker is between events — the campaign's own page is <a href="{{ camp.get('tracker_url', '#') }}" target="_blank" rel="noopener">here</a>.</p>
+    </div>
+  </div>
+
+  <div class="on-grid one">
+    <div class="on-panel">
+      <h2>The road to the Rhum <span class="sm">dated places from the team's own posts · course lines are sketches, not routing</span></h2>
+      <div class="on-map"><div id="onMap" role="img" aria-label="Map of EMIRA IV's dated positions and the Route du Rhum course"></div></div>
+      <p class="on-muted" style="margin:.6rem 0 0;">{{ d.get('map', {}).get('note', '') }}</p>
+    </div>
+  </div>
+
+  <div class="on-grid one">
+    <div class="on-panel">
+      <h2>The cast this cycle <span class="sm">one fact each — the people the show follows, so a name lands when it comes up</span></h2>
+      <div class="on-cast">
+        {% for c in d.get('cast', []) %}
+        <div class="p {{ 'can' if c.flag == 'CAN' else '' }}"><b>{{ c.name }} <span style="color:#9db4c9;font-weight:400;font-size:.76rem;">{{ c.flag }}</span></b><span class="bt">{{ c.boat }}</span>{{ c.line }}{% if c.url %} <a href="{{ c.url }}" target="_blank" rel="noopener">↗</a>{% endif %}</div>
+        {% endfor %}
+      </div>
     </div>
   </div>
 
@@ -275,7 +319,7 @@
       <h2>Season calendar <span class="sm">2026 → 12 November 2028 · states computed from the official dates, by today</span></h2>
       <ul class="on-cal">
         {% for e in d.get('calendar', []) %}
-        <li><span class="d">{{ e.date }}</span><span class="{{ 'emira' if e.get('emira') else '' }}"><a href="{{ e.url }}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">{{ e.label }}</a><span class="st {{ e.status }}" data-start="{{ e.get('start', '') }}" data-end="{{ e.get('end', '') }}">{{ e.status }}</span></span></li>
+        <li><span class="d">{{ e.date }}</span><span class="{{ 'emira' if e.get('emira') else '' }}"><a href="{{ e.url }}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">{{ e.label }}</a><span class="st {{ e.status }}" data-start="{{ e.get('start', '') }}" data-end="{{ e.get('end', '') }}" data-result="{{ 'yes' if e.get('results_key') in result_keys else ('no' if e.get('results_key') else '') }}">{{ e.status }}</span></span></li>
         {% endfor %}
       </ul>
     </div>
@@ -302,6 +346,14 @@
         {% for e in rdr.get('entries', []) %}<li class="{{ 'can' if e.get('canada') else '' }}">{{ e.skipper }} <span class="b">· {{ e.boat }}</span>{% if e.get('azimut_48h') and e.azimut_48h != '—' %} <span class="b" style="font-size:.74rem;">· 48H Azimut: {{ e.azimut_48h }}</span>{% endif %}</li>{% endfor %}
       </ul>
       <p class="on-muted" style="margin:.7rem 0 0;">{{ rdr.get('note', '') }} <a href="{{ rdr.get('source_url', '#') }}" target="_blank" rel="noopener">Source ↗</a></p>
+    </div>
+  </div>
+
+  <div class="on-grid one">
+    <div class="on-panel">
+      <h2>Know the fleet <span class="sm">each Rhum entry's boat from the IMOCA class register — designer, yard, launch, foils, recent highlights</span></h2>
+      <ul class="on-fleet" id="onFleet"><li class="on-muted">Loading the class register…</li></ul>
+      <p class="on-muted" style="margin:.6rem 0 0;">Read nightly from <a href="{{ rdr.get('register_url', 'https://www.imoca.org/en/boats') }}" target="_blank" rel="noopener">imoca.org/en/boats</a>; a boat whose page could not be read keeps its last good record and is marked.</p>
     </div>
   </div>
 
@@ -351,6 +403,7 @@
 
 {% block scripts %}
 {% set camp = d.get('campaign', {}) %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script>
 (function(){
   var pad = function(n){ return String(n).padStart(2,'0'); };
@@ -383,8 +436,34 @@
     var now = Date.now();
     if (now < start) { var dd = Math.ceil((start - now)/86400000); st.textContent = 'in ' + dd + (dd === 1 ? ' day' : ' days'); st.className = 'st upcoming'; }
     else if (now <= end) { st.textContent = 'on now'; st.className = 'st upcoming'; }
+    else if (st.dataset.result === 'no') { st.textContent = 'finished · result pending'; st.className = 'st tbc'; }
     else { st.textContent = 'finished'; st.className = 'st done'; }
   });
+
+  // The map: dated places from the team's posts + course sketches (Leaflet, OSM tiles).
+  (function(){
+    var el = document.getElementById('onMap'); if (!el || typeof L === 'undefined') return;
+    var ports = {{ d.get('map', {}).get('ports', []) | tojson }};
+    var courses = {{ d.get('map', {}).get('courses', []) | tojson }};
+    var fixes = {{ (d.get('position_log', []) | selectattr('lat') | list) | tojson }};
+    var map = L.map(el, {scrollWheelZoom:false, worldCopyJump:true});
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 10, attribution: '&copy; OpenStreetMap contributors'}).addTo(map);
+    var byId = {}; ports.forEach(function(p){ byId[p.id] = p; });
+    var bounds = [];
+    ports.forEach(function(p){
+      L.circleMarker([p.lat, p.lon], {radius:5, color:'#5BC0EB', fillColor:'#5BC0EB', fillOpacity:.9, weight:1}).addTo(map).bindPopup('<b>' + p.name + '</b><br>' + (p.role || ''));
+      bounds.push([p.lat, p.lon]);
+    });
+    courses.forEach(function(c){
+      var a = byId[c.from], b = byId[c.to]; if (!a || !b) return;
+      L.polyline([[a.lat, a.lon], [b.lat, b.lon]], {color: c.emira ? '#7efbb0' : '#9db4c9', weight: c.emira ? 3 : 2, dashArray: '6 6', opacity:.85}).addTo(map).bindPopup(c.label);
+    });
+    fixes.forEach(function(f){
+      L.marker([f.lat, f.lon]).addTo(map).bindPopup('<b>' + f.date + '</b> · ' + (f.place || '') + '<br>' + f.text);
+      bounds.push([f.lat, f.lon]);
+    });
+    if (bounds.length) map.fitBounds(bounds, {padding:[24, 24]});
+  })();
 
   // Secondary countdown chips: days to go, "on now" between when/end, or done.
   document.querySelectorAll('.on-chip[data-when]').forEach(function(chip){
@@ -418,6 +497,16 @@
       heads.innerHTML = hl.length ? hl.slice(0, 12).map(function(h){
         return '<li><div class="h"><a href="' + esc(h.url) + '" target="_blank" rel="noopener">' + esc(h.title) + '</a><span class="d">' + esc(h.date || '') + '</span></div><p class="x"><span class="c">' + esc(h.outlet || '') + '</span></p></li>';
       }).join('') : '<li class="on-muted">No headlines fetched yet.</li>';
+    }
+    var fl = document.getElementById('onFleet');
+    if (fl) {
+      var fs = data.fleet || [];
+      fl.innerHTML = fs.length ? fs.map(function(b){
+        var spec = [b.architect ? 'Design ' + esc(b.architect) : '', b.construction ? esc(b.construction) : '', b.launch_date ? 'launched ' + esc(b.launch_date) : '', b.foils ? 'foils: ' + esc(b.foils) : '', b.former_names ? 'ex ' + esc(b.former_names) : ''].filter(Boolean).join(' · ');
+        var hl = (b.highlights || []).slice(0, 4).map(esc).join(' · ');
+        return '<li class="' + (b.canada ? 'can' : '') + '"><div class="h"><span><b>' + esc(b.skipper) + '</b> · ' + esc(b.entry) + (b.stale ? ' <span class="sn">(last good read)</span>' : '') + '</span><span class="sn">' + esc(b.sail_number || '') + ' <a href="' + esc(b.url) + '" target="_blank" rel="noopener">register ↗</a></span></div>' +
+               (spec ? '<p class="spec">' + spec + '</p>' : '') + (hl ? '<p class="hl">' + hl + '</p>' : '') + '</li>';
+      }).join('') : '<li class="on-muted">No register records fetched yet.</li>';
     }
     var pr = document.getElementById('onPress');
     if (pr) {

@@ -270,3 +270,35 @@ with no JSON endpoint on any probed path, so the embed stays an embed.
 4.50 m is the class's maximum DRAUGHT (EMIRA IV's beam is 5.85 m). Guards:
 `tests/test_offshore_north_resource_2026_09_19.py`.
 
+## 8. Resource pass, round 2 — 19 September 2026
+
+Same brief, same day, after #1234 merged. All data- and page-side.
+
+- **A finished race with no result on record is flagged, not licensed.**
+  Countdowns and results are now linked by key (`results_key` / `key`);
+  the CAMPAIGN STATUS block writes "RESULT NOT YET ON RECORD — do not
+  state a winner or a placing unless a this-week source reports it,
+  attributed" for a FINISHED window with no result entry, and the
+  dashboard calendar shows "finished · result pending". The Tour de
+  Groix (20 Sep) is the first case this will catch.
+- **Know the fleet.** Every Route du Rhum IMOCA entry carries its slug on
+  the class register (`imoca_slug`); the nightly fetch reads each boat's
+  imoca.org page (`parse_imoca_boat_page`: architect, yard and year,
+  launch date, sail number, foils, weight, former names, the dated
+  "Sailing Highlights") into `api/offshore_north_dashboard.json` `fleet`,
+  keeping the last good record for a page that fails. 20 of 21 named
+  entries resolved on the first run (Sorel's boat is unannounced).
+- **The cast this cycle** — twelve people, one verified fact each, from
+  the record and the field guide; the bible's "cast principle" made a
+  page.
+- **The road to the Rhum** — a Leaflet map (cdnjs, OpenStreetMap tiles)
+  of the dated PLACES the team's posts named (Collingwood, the Welland
+  Canal) and indicative course sketches for the Rhum and the Ocean Race
+  Atlantic. The 2 September "leaving Canada" post names no place and
+  gets no marker; the note on the panel says the tracker is the live
+  source.
+- **The show page carries a campaign strip** (days to the next start
+  line, the last dated fix) from the same record.
+- Register: `offshore-north-resource-pages-2026-09-19` (readout
+  2026-10-19). Guards: `TestRound2FleetAndRecord`.
+

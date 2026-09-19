@@ -163,6 +163,7 @@ def build_campaign_status(curated: Dict[str, Any], *, live: Optional[Dict[str, A
                  "A race marked FINISHED has a result (below); a headline about its START is old news. "
                  "A race marked NOT STARTED has no result, whatever a preview implies.")
     next_ms: Optional[Dict[str, Any]] = None
+    on_record = {r.get("key") for r in (curated.get("results") or []) if r.get("key")}
     for c in curated.get("countdowns") or []:
         when, end = _parse_when(c.get("when")), _parse_when(c.get("end"))
         state = race_state(when, end, now)
@@ -181,7 +182,11 @@ def build_campaign_status(curated: Dict[str, Any], *, live: Optional[Dict[str, A
             ref = end.date() if end else when.date()
             detail = f"ended {_days_word((today - ref).days)} ago"
         entered = f" {_entered_word(c.get('emira_entered'))}." if "emira_entered" in c else ""
-        lines.append(f"- {c.get('label', '')} ({_fmt(when.date())}): {state} — {detail}.{entered}")
+        pending = ""
+        if state == "FINISHED" and c.get("results_key") and c["results_key"] not in on_record:
+            pending = (" RESULT NOT YET ON RECORD — do not state a winner or a placing unless a this-week"
+                       " source reports it, attributed.")
+        lines.append(f"- {c.get('label', '')} ({_fmt(when.date())}): {state} — {detail}.{entered}{pending}")
 
     # --- Results on record -----------------------------------------------
     results = curated.get("results") or []
