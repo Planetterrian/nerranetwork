@@ -249,3 +249,101 @@ class TestDashboardV2:
         assert {"offshore-north-dashboard.html", "offshore-north-glossary.html"} <= links
         assert "show_resources" in _read("templates/blog_post.html.j2")
         assert "Plain Sailing glossary" in _read("blog/offshore_north/ep005.html")
+
+
+# ---------------------------------------------------------------------------
+# Round 2 (same day): fleet guide, result-pending flag, cast, map, show strip
+# ---------------------------------------------------------------------------
+
+class TestRound2FleetAndRecord:
+    def test_finished_race_without_a_result_is_flagged_not_licensed(self):
+        """A countdown whose window has closed but whose results_key has no
+        results entry must tell the writer the result is NOT on record."""
+        import copy
+        from engine.offshore_north_status import build_campaign_status
+
+        d = copy.deepcopy(_curated())
+        d["results"] = [r for r in d["results"] if r.get("key") != "defi_azimut_2026"]
+        out = build_campaign_status(d, now=dt.datetime(2026, 9, 21, 13, tzinfo=dt.timezone.utc))
+        assert "Défi Azimut-Lorient Agglomération (15 September 2026): FINISHED" in out
+        assert "RESULT NOT YET ON RECORD" in out
+        # with the result on record the flag is absent
+        full = build_campaign_status(_curated(), now=dt.datetime(2026, 9, 21, 13, tzinfo=dt.timezone.utc))
+        assert "RESULT NOT YET ON RECORD" not in full
+
+    def test_record_links_countdowns_to_results_and_entries_to_the_register(self):
+        d = _curated()
+        keys = {r["key"] for r in d["results"]}
+        assert "defi_azimut_2026" in keys and "ocean_race_atlantic_2026" in keys
+        rdr = next(c for c in d["countdowns"] if c["id"] == "rdr_start")
+        assert rdr["results_key"] == "route_du_rhum_2026" and "route_du_rhum_2026" not in keys
+        entries = d["rdr_imoca_entries"]["entries"]
+        slugs = [e.get("imoca_slug") for e in entries if e.get("imoca_slug")]
+        assert len(slugs) >= 19 and len(slugs) == len(set(slugs))
+        assert next(e for e in entries if e.get("canada"))["imoca_slug"] == "emira-iv"
+
+    def test_map_markers_are_named_places_never_a_guessed_fix(self):
+        d = _curated()
+        for p in d["position_log"]:
+            if "lat" in p:
+                assert p.get("place") and "lon" in p, p["date"]
+        # the 2 Sep "leaving Canada" post names no place -> no marker
+        assert "lat" not in d["position_log"][-1]
+        ports = {p["id"] for p in d["map"]["ports"]}
+        for c in d["map"]["courses"]:
+            assert c["from"] in ports and c["to"] in ports
+
+    def test_cast_is_short_factual_and_sourced(self):
+        cast = _curated()["cast"]
+        assert 8 <= len(cast) <= 16
+        for c in cast:
+            assert c["name"] and c["flag"] and c["line"] and c["url"]
+            assert len(c["line"]) < 320, c["name"]
+        assert cast[0]["name"] == "Scott Shawyer"
+
+    def test_imoca_boat_page_parser(self):
+        sys.path.insert(0, str(_ROOT / "scripts"))
+        import fetch_offshore_north_dashboard as f
+
+        html = (
+            '<h2 class="x">FRA 3</h2>'
+            '<table><tr><th><span class="ProfileCard-label">Baptismal name</span></th><td>Charal</td></tr>'
+            '<tr><th><span class="ProfileCard-label">Architect</span></th><td>Sam Manuard</td></tr>'
+            '<tr><th><span class="ProfileCard-label">Construction</span></th><td>2022, CDK Technologies, Lorient</td></tr>'
+            '<tr><th><span class="ProfileCard-label">Launch date</span></th><td>7/11/22</td></tr></table>'
+            '<table><tr><th>Foils</th><td>Yes</td></tr><tr><th>Weight</th><td>8 tonnes</td></tr></table>'
+            '<h2>Sailing Highlights</h2><div class="richtext"><strong>2026 : </strong> Défi Azimut - 3rd<br />'
+            '<strong>2025 : </strong> Transat Café L\'OR - Winner<br /></div>'
+        )
+        out = f.parse_imoca_boat_page(html)
+        assert out["architect"] == "Sam Manuard" and out["launch_date"] == "7/11/22"
+        assert out["sail_number"] == "FRA 3" and out["foils"] == "Yes"
+        assert out["highlights"] == ["2026: Défi Azimut - 3rd", "2025: Transat Café L'OR - Winner"]
+
+    def test_fleet_keeps_previous_record_when_a_page_fails(self, monkeypatch):
+        sys.path.insert(0, str(_ROOT / "scripts"))
+        import fetch_offshore_north_dashboard as f
+
+        monkeypatch.setattr(f, "_rdr_entries", lambda: [{"skipper": "A", "boat": "X", "imoca_slug": "x"}])
+
+        class _Boom:
+            def get(self, *a, **k):
+                raise RuntimeError("down")
+
+        monkeypatch.setitem(sys.modules, "requests", _Boom())
+        prev = {"fleet": [{"slug": "x", "skipper": "A", "architect": "Y"}]}
+        out = f.collect_fleet(prev)
+        assert out[0]["architect"] == "Y" and out[0]["stale"] is True
+
+    def test_show_page_carries_the_campaign_strip(self):
+        import generate_html as gh
+
+        strip = gh._offshore_north_campaign_strip()
+        assert strip and strip["label"].startswith("Route du Rhum") and strip["fix_date"] == "2026-09-02"
+        assert "campaign_strip" in _read("templates/show_page.html.j2")
+        assert "onStripDays" in _read("offshore-north.html")
+
+    def test_dashboard_template_round2_surfaces(self):
+        tpl = _read("templates/offshore_north_dashboard.html.j2")
+        for needle in ('id="onMap"', 'id="onFleet"', "on-cast", "result pending", "leaflet"):
+            assert needle in tpl, needle

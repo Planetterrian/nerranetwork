@@ -852,6 +852,17 @@ today's work, not just explain yesterday's):
   (the show's GN query resolved to publisher URLs), calendar state pills,
   the Défi Azimut result and the Rhum entries' 48H form. The YB tracker
   page exposes no JSON endpoint (probed 19 Sep); the embed stays.
+  **Round 2, same day:** countdowns and results are linked by key
+  (`results_key` ↔ `key`) and a FINISHED race with no result entry gets
+  "RESULT NOT YET ON RECORD" in the status block and "result pending" on
+  the calendar — add the result entry, never a placing from memory. The
+  **fleet guide** is parsed nightly from each Rhum entry's imoca.org boat
+  page (`imoca_slug` on the entry; `parse_imoca_boat_page`; a failed page
+  keeps the last good record, marked `stale`), the **cast** panel is
+  twelve one-fact identifiers from the record, the **map** (Leaflet from
+  cdnjs + OSM tiles) plots only the dated PLACES a team post named — an
+  entry without `lat`/`lon` gets no marker — and the show page carries a
+  campaign strip from the same record.
 - All shows delegate X posting to `engine.publisher.post_to_x()`
 - TST/FF/PT delegate voice normalization to `engine.audio.normalize_voice()`
 - All shows use `engine.audio.mix_with_music()` for music mixing (3 modes:

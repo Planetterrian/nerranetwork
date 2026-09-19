@@ -100,6 +100,23 @@
                     {% if episode_length %}<span style="background:var(--nn-card);border:1px solid var(--nn-border);padding:2px 10px;border-radius:6px;">{{ episode_length }}</span>{% endif %}
                 </div>
                 <p class="show-hero-desc">{{ show_description }}</p>
+                {% if campaign_strip %}
+                {#- Offshore North (Sep 2026): the campaign's headline facts on
+                    the show page itself — days to the next start line, the
+                    boat's last dated fix — from the same verified record the
+                    dashboard and the prompts read. -#}
+                <div style="display:flex;flex-wrap:wrap;gap:.6rem;margin:0 0 var(--sp-4);font-family:var(--font-ui);font-size:.86rem;">
+                    <a href="{{ path_prefix }}offshore-north-dashboard.html" style="text-decoration:none;color:inherit;background:var(--nn-card);border:1px solid var(--nn-border);border-radius:10px;padding:.5rem .8rem;">
+                        <span style="display:block;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--nn-text-muted);">Next start line</span>
+                        <b id="onStripDays" data-when="{{ campaign_strip.when }}">…</b> · {{ campaign_strip.label }}
+                    </a>
+                    <a href="{{ path_prefix }}offshore-north-dashboard.html" style="text-decoration:none;color:inherit;background:var(--nn-card);border:1px solid var(--nn-border);border-radius:10px;padding:.5rem .8rem;max-width:34rem;">
+                        <span style="display:block;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--nn-text-muted);">Last known position · {{ campaign_strip.fix_date }}</span>
+                        {{ campaign_strip.fix_text }}
+                    </a>
+                </div>
+                <script>(function(){var b=document.getElementById('onStripDays');if(!b)return;var t=Date.parse(b.dataset.when);if(isNaN(t))return;var d=Math.ceil((t-Date.now())/86400000);b.textContent=d>0?(d+(d===1?' day':' days')):(d===0?'today':'started');})();</script>
+                {% endif %}
                 {% if audience %}
                 <p style="font-family:var(--font-ui);font-size:0.88rem;color:var(--nn-text-muted);margin-bottom:var(--sp-4);font-style:italic;">{{ audience }}</p>
                 {% endif %}
