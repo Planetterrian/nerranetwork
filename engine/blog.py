@@ -725,6 +725,14 @@ def _md_inline(text: str) -> str:
         lambda m: m.group(1) + _cite_html(m.group(2)),
         text,
     )
+    # Any bare URL still standing becomes a link (Sept 19 2026: the guest
+    # links on the Age of AI posts were plain text). Skip URLs already
+    # inside an href or a tag, and leave trailing punctuation outside.
+    text = re.sub(
+        r'(?<![\w"\'=>/(])(https?://[^\s<>"\')\]]+?)([.,;:!?)\]]*)(?=\s|$|<)',
+        lambda m: f'<a href="{m.group(1)}" target="_blank" rel="noopener">{m.group(1)}</a>{m.group(2)}',
+        text,
+    )
     return text
 
 

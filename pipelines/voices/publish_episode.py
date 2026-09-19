@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import re
 import os
 import subprocess
 import tempfile
@@ -149,6 +150,11 @@ def write_episode_digest(show, episode_num: int, when: dt.date, title: str,
     parts.append("---")
 
     body = "\n\n".join(notes.split("\n\n")[1:]).strip()
+    # The notes pass ends with a "Find <name>:" block of bare URLs for the
+    # feed. The post has its own "Where to find" section with real links,
+    # and the bare copy rendered as plain text above it (Adrian Wolfberg's
+    # page, Sept 18 2026), so it is dropped here.
+    body = re.sub(r"\n+Find [^\n]*:\n(?:[^\n]*https?://[^\n]*\n?)+\s*$", "", body).strip()
     if body:
         parts.append("### What we talked about")
         parts.append(body)

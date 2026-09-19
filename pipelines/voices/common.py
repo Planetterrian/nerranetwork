@@ -552,9 +552,13 @@ _LINK_LABELS = {
     "twitter": "X", "x": "X", "linkedin": "LinkedIn", "github": "GitHub",
     "youtube": "YouTube", "substack": "Substack", "blog": "Blog",
     "scholar": "Google Scholar", "company": "Company",
+    "instagram": "Instagram", "tiktok": "TikTok", "facebook": "Facebook",
+    "threads": "Threads", "bluesky": "Bluesky", "bsky": "Bluesky",
+    "company_linkedin": "LinkedIn (company)", "book": "Book",
 }
 _SOCIAL_HOSTS = ("twitter.com", "x.com", "linkedin.com", "facebook.com",
-                 "instagram.com", "threads.net", "bsky.app", "mastodon")
+                 "instagram.com", "threads.net", "bsky.app", "mastodon",
+                 "tiktok.com", "youtube.com")
 
 
 _HANDLE_HOSTS = {"twitter": "https://x.com/", "x": "https://x.com/",
@@ -578,11 +582,15 @@ def _clean_url(value: Any, hint: str = "") -> str:
 
 
 def _label_for(url: str, hint: str = "") -> str:
+    host = re.sub(r"^https?://(www\.)?", "", url).split("/")[0].lower()
     if hint:
+        # A guest's own site is best announced as its domain: "gopippa.ai"
+        # tells a listener where they are going; "Website" does not.
+        if hint.lower() in ("website", "site", "homepage"):
+            return host
         return _LINK_LABELS.get(hint.lower(), hint.replace("_", " ").title())
     # Match whole host labels, not substrings: "example.com" contains "x"
     # and was being announced to listeners as the guest's X profile.
-    host = re.sub(r"^https?://(www\.)?", "", url).split("/")[0].lower()
     parts = host.split(".")
     for key, label in _LINK_LABELS.items():
         if key in parts:
