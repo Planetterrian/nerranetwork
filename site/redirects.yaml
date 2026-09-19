@@ -69,6 +69,17 @@ redirects:
     to: blog/dp_pod/index.html
     reason: purged 2026-08-10 (DP Pod catalogue prune)
 
+  # --- An episode that predates the blog ---------------------------------
+  # The Age of AI Ep1 (Patrick Novak, 2026-07-20) is in the RSS feed and in
+  # summaries_age_of_ai.json, but it published before the Voices pipeline wrote
+  # a digest .md, so there is nothing for the blog generator to render and there
+  # never will be. Its summary DOES exist on the summaries page, which is where
+  # someone asking for the article should land — not on an archive index that
+  # does not mention the episode they came for.
+  - from: blog/age_of_ai/ep001.html
+    to: age-of-ai-summaries.html
+    reason: predates the digest .md — the summary lives on the summaries page
+
   # --- Mis-resolved chrome links under blog/dp_pod/ -----------------------
   # A crawler walked a DP Pod post from before ``path_prefix`` was fixed, so
   # every nav and footer target resolved one directory deep instead of at the

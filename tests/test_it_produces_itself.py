@@ -1708,3 +1708,31 @@ class TestEveryAssemblyIsANewFile:
     def test_the_close_gets_a_breath(self):
         auto = (V / "auto_edit.py").read_text(encoding="utf-8")
         assert 'cuts += [{"gap": 1.4}, {"from": "narration:outro"}]' in auto
+
+
+class TestTheGuestsLinksAreLinks:
+    """Adrian Wolfberg's post showed "oicllc.org: https://www.oicllc.org" as
+    plain text, twice. A URL on the site is a link, and a guest's own site
+    is named by its domain."""
+
+    def test_bare_urls_render_as_links(self):
+        sys.path.insert(0, str(ROOT))
+        from engine.blog import _md_inline
+        out = _md_inline("oicllc.org: https://www.oicllc.org.")
+        assert '<a href="https://www.oicllc.org"' in out and out.endswith("</a>.")
+        # Existing links and citation pills are left alone.
+        assert _md_inline("[s](https://x.y)").count("<a ") == 1
+        assert _md_inline("Source: https://n.e/x").count("<a ") == 1
+
+    def test_the_find_block_is_not_duplicated_in_the_post(self):
+        pub = (V / "publish_episode.py").read_text(encoding="utf-8")
+        assert 'body = re.sub(r"\\n+Find [^\\n]*:\\n' in pub
+
+    def test_a_website_is_named_by_its_domain(self):
+        from common import guest_links
+        links = guest_links({"links": {"website": "https://www.gopippa.ai",
+                                       "tiktok": "https://www.tiktok.com/@gopippa",
+                                       "company_linkedin": "https://www.linkedin.com/company/gopippa"}})
+        assert links[0] == {"label": "gopippa.ai", "url": "https://www.gopippa.ai"}
+        assert {"label": "TikTok", "url": "https://www.tiktok.com/@gopippa"} in links
+        assert {"label": "LinkedIn (company)", "url": "https://www.linkedin.com/company/gopippa"} in links

@@ -102,6 +102,18 @@ _SEPARATED_RE = re.compile(
     rf"\b(?:at?)?{_STEM}\b(?=[\s\-]{{1,3}}networks?\b)", re.I
 )
 
+# 3b. A filler syllable between the halves: Whisper heard the doubled R
+#     of "Nerra Network" as a conjunction and wrote "NARA and Network"
+#     (Unintended Consequences Ep119, 2026-09-19 — the YouTube call-out
+#     "find us on YouTube at Nerra Network"). The stem AND the filler
+#     collapse to the brand; "network" keeps its own casing. Anchored on
+#     the following "network" exactly like the separated form, so "NARA
+#     and the archives" is never touched.
+_FILLER_TOKENS = ("and", "an", "n")
+_FILLER_RE = re.compile(
+    rf"\b(?:at?)?{_STEM}\b\s+(?:{'|'.join(_FILLER_TOKENS)})\s+(?=networks?\b)", re.I
+)
+
 # 4. The ORIGIN LINE. Every show's debut explains the network's name as
 #    "Novak plus Perra equals Nerra", and Whisper mangles all three
 #    proper nouns at once with no "network" token anywhere near them:
@@ -156,6 +168,7 @@ def correct_brand_text(text: str) -> str:
     text = _JOINED_RE.sub(
         lambda m: _match_case("NerraNetwork", m.group(0)), text
     )
+    text = _FILLER_RE.sub(lambda m: _match_case("Nerra", m.group(0)) + " ", text)
     text = _SEPARATED_RE.sub(lambda m: _match_case("Nerra", m.group(0)), text)
     return text
 
@@ -235,6 +248,7 @@ def correct_brand_words(
     split across a segment boundary is repaired too.
     """
     out: list[dict] = []
+    blank_next: set[int] = set()
     for i, entry in enumerate(words):
         token = entry.get("word")
         if not token:
@@ -267,10 +281,23 @@ def correct_brand_words(
             previous = words[i - 1].get("word", "") if i > 0 else ""
             if _next_token_anchors(following) or _prev_token_anchors_origin(previous):
                 fixed = _repair_with_external_anchor(token)
+            elif _norm(following) in _FILLER_TOKENS and _next_token_anchors(
+                words[i + 2].get("word", "") if i + 2 < len(words) else next_token
+            ):
+                # "NARA" + "and" + "Network": the filler is Whisper's
+                # rendering of the doubled R. Repair the stem here and
+                # blank the filler below — an empty word keeps the array
+                # length and every timestamp, and the caption builders
+                # skip empty tokens (engine/captions.py).
+                fixed = _repair_with_external_anchor(token)
+                blank_next.add(i + 1)
 
         if fixed != token:
             entry = {**entry, "word": fixed}
         out.append(entry)
+    for j in blank_next:
+        if j < len(out):
+            out[j] = {**out[j], "word": ""}
     return out
 
 

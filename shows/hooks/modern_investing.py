@@ -344,6 +344,11 @@ def pre_fetch(config, *, episode_num: int | None = None, today_str: str | None =
     regime = _build_regime_block(tracker)
     if regime:
         strategy_block = f"{strategy_block}\n\n{regime}"
+    # No-trade budget (Sep 18 2026): counted from the committed signals,
+    # so a week of "no trade today" makes the next pick mandatory.
+    budget = _no_trade_budget_block(output_dir, episode_num)
+    if budget:
+        strategy_block = f"{strategy_block}\n\n{budget}"
     context["strategy_performance"] = strategy_block
 
     # Dynamic tone based on portfolio performance
@@ -476,9 +481,31 @@ _REGIME_COLD_DRAWDOWN = 250.0
 _REGIME_PICK_DROUGHT_DAYS = 7
 
 
+# No-trade budget (Sep 18 2026). The COLD text used to say an explicit
+# no-trade day was "acceptable and unremarkable"; from Ep152 (2026-08-28,
+# the first episode after the era record turned negative) the show
+# declared no trade on 19 of 23 episodes, the drought valve fired once a
+# week, the one pick it forced was voided or closed into the same cold
+# window, and the ten-trade regime window never turned over. A record
+# that stops trading cannot score a rule. At most ``_NO_TRADE_BUDGET``
+# no-trade days per ``_NO_TRADE_BUDGET_WINDOW`` episodes, counted from
+# the committed trade_signal files; a spent budget makes a pick
+# mandatory. Prompt-context change — A/B-listen per landmine #17.
+_NO_TRADE_BUDGET_WINDOW = 5
+_NO_TRADE_BUDGET = 1
+
+
 def _days_since_last_pick(tracker: dict) -> int | None:
+    """Days since the last pick that ENTERED the record.
+
+    A voided pick (wrong symbol, unpriceable) never traded, so it does
+    not reset the drought clock — ILMN (Ep161) and PATH (Ep163) were both
+    voided at record time and each reset the valve for another week.
+    """
     dates = []
     for t in tracker.get("trades", []):
+        if t.get("status") == "voided":
+            continue
         d = t.get("date")
         if isinstance(d, str):
             try:
@@ -540,13 +567,19 @@ def _build_regime_block(tracker: dict) -> str:
         )
     elif is_cold:
         guidance = (
-            " COLD STREAK — RAISE THE BAR for today's Practice Investment: "
-            "an explicit no-trade day is acceptable and unremarkable, and "
-            "a pick needs 3+ independent aligned factors. Do not chase a "
-            "comeback. TELL LISTENERS PLAINLY that the playbook is in "
-            "capital-preservation mode after the recent drawdown and what "
-            "would re-open normal trading — that transparency is part of "
-            "the product, not an admission of failure."
+            " COLD STREAK — RAISE THE BAR ON THE PICK, NOT ON PICKING: "
+            "today's Practice Investment is still expected. A pick needs "
+            "3+ independent aligned factors, each named; the invalidation "
+            "is a level, not a feeling; the confidence rating follows the "
+            "count of aligned factors; and if the record has scored this "
+            "setup family before, say what it scored. Do not chase a "
+            "comeback and do not size up. A no-trade day needs a REASON "
+            "specific to today's tape, never the streak, and the no-trade "
+            "budget below applies. TELL LISTENERS PLAINLY that the "
+            "playbook is rebuilding after the recent drawdown and that "
+            "the record only improves by trading through it with tighter "
+            "framing — that transparency is part of the product, not an "
+            "admission of failure."
         )
     elif median_alpha > 1.0:
         guidance = (
@@ -560,6 +593,65 @@ def _build_regime_block(tracker: dict) -> str:
             "days remain acceptable."
         )
     return header + guidance
+
+
+def _recent_trade_signal_actions(output_dir: Path, episode_num: int | None,
+                                 n: int = _NO_TRADE_BUDGET_WINDOW) -> list[str]:
+    """Actions of the last ``n`` committed trade signals before this episode.
+
+    Reads ``trade_signal_epNNN.json`` (written by ``_write_trade_signal``)
+    so the budget is decided from what actually shipped, never from the
+    tracker alone (a voided pick is a signal too). Missing or unreadable
+    files are skipped; oldest-first order.
+    """
+    rows: list[tuple[int, str]] = []
+    for path in Path(output_dir).glob("trade_signal_ep*.json"):
+        m = re.search(r"trade_signal_ep(\d+)\.json$", path.name)
+        if not m:
+            continue
+        ep = int(m.group(1))
+        if episode_num is not None and ep >= episode_num:
+            continue
+        try:
+            action = json.loads(path.read_text(encoding="utf-8")).get("action")
+        except (OSError, ValueError, AttributeError):
+            continue
+        if isinstance(action, str):
+            rows.append((ep, action))
+    rows.sort()
+    return [a for _, a in rows[-n:]]
+
+
+def _no_trade_budget_block(output_dir: Path, episode_num: int | None) -> str:
+    """The no-trade budget, stated from the committed signals.
+
+    Empty when no signal has been recorded yet (a new show has no budget
+    to spend). Otherwise names the recent no-trade count and either the
+    remaining allowance or the fact that a pick is mandatory today.
+    """
+    actions = _recent_trade_signal_actions(output_dir, episode_num)
+    if not actions:
+        return ""
+    no_trade = sum(1 for a in actions if a == "no_trade")
+    window = len(actions)
+    header = (
+        f"NO-TRADE BUDGET: {no_trade} of the last {window} episodes declared "
+        f"no trade (allowance {_NO_TRADE_BUDGET} per {_NO_TRADE_BUDGET_WINDOW})."
+    )
+    if no_trade >= _NO_TRADE_BUDGET:
+        return header + (
+            " The budget is SPENT — today's Practice Investment MUST name a "
+            "pick (shares, covered call or cash-secured put per THE TRADING "
+            "RULES) with its invalidation level and a graded confidence. "
+            "Declaring no trade today is not available; the simulated "
+            "record is educational and only improves by trading through a "
+            "cold stretch with tighter framing."
+        )
+    return header + (
+        " A no-trade day is available today only with a reason specific "
+        "to today's tape (a named setup that fails a named criterion), "
+        "never the streak or the record."
+    )
 
 
 def _tone_from_portfolio(tracker: dict) -> str:

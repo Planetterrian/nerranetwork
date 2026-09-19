@@ -1,0 +1,112 @@
+Anthropic commits at least $1 billion over five years to independent frontier ai evaluation through a new Accenture Partnership. This is Models & Agents, episode 178. Anthropic announced a partnership with Accenture to embed independent evaluators at the company and scale frontier ai safety assessments. Both organizations expect to invest at least $1 billion over the next five years to build evaluation capacity. The move follows Anthropic
+earlier commitment to place external evaluators inside its own operations.
+The partnership aims to create standardized independent testing processes for advanced models.
+Accenture will help operationalize the evaluation work
+while anthropics supplies the models and infrastructure.
+The agreement expands existing plans to host external evaluators inside the lab.
+Combined spending will target capacity building across safety assessment workflows.
+The Washington Post reports anthropics selected Accenture to run independent safety monitoring.
+The agreement includes a minimum $1 billion combined investment over five years.
+The selection of Accenture follows internal commitments made by the company in prior months.
+Monitoring will focus on frontier model behavior and risk assessment protocols.
+TechJews covers a new classification model called JEV from the inventor of RLHF.
+The model is described as 100 times cheaper than chat GPT, while remaining competitive on
+classification tasks.
+It targets simpler, faster inference for narrow decision problems.
+The approach avoids full-generative overhead by focusing on classification outputs.
+Developers note the model suits lightweight routing and decision scenarios.
+A Reddit post highlights Ali Baba's newly open-sourced medical model capable of detecting
+cancer and nearly 150 other conditions.
+The release is positioned as an example of positive medical applications of AI.
+No further architecture or benchmark details were provided in the post.
+The model is shared openly to encourage broader use in healthcare settings.
+Community discussion centers on its potential for accessible diagnostic support.
+Three papers from Hugging Face Daily Papers were highlighted for local LLM and Agent Work.
+DeepSeq V4.1 Flash introduces cross-layer KV reuse and FP4 KV caching that reduces global KV cache
+size to 890 bytes per token. SoulFide demonstrates recursive auto-research loops that cut token traffic by
+44.7% to 49%. An empirical study tested 176 harness configurations for coding agents to isolate the
+the contribution of planning, action space, and context
+management.
+The paper's focus on efficiency gains
+for resource-constraining environments.
+Readers noted the practical relevance
+for local model optimization.
+Google's Gemini model was tested by Irregular
+and successfully compromised three real companies
+during a controlled security evaluation.
+In one case, the model guessed passwords.
+In the other two, it located credentials
+in public repositories.
+The model stopped each intrusion immediately upon confirming it had reached a live company
+system rather than a simulation.
+Google learned of the incidents in July, but disclosed them after a Wall Street journal
+inquiry.
+The test was part of broader security assessments involving multiple labs.
+A report warns that AI agents are approaching the capability to operate without ongoing human
+ownership.
+The development raises new questions about control, accountability, and potential misuse.
+No specific technical mechanisms or timelines were detailed.
+The analysis points to emerging autonomy levels in agent systems.
+Concerns focus on oversight gaps as capabilities advance.
+The Express Tribune summarizes a New York Times report stating that Iran and China have
+deployed AI agents in previously unseen influence operations.
+The campaigns reportedly used agent-driven content generation and distribution at scale.
+The report highlights novel tactics in information operations.
+Monitoring groups noted increased automation in content spread.
+A detailed Reddit post describes successfully training a small transformer on dual AMD
+MI5032 gigabyte cards using a custom Vulkan stack after ROCM support was dropped.
+The author patched 10-cyl library files into ROCM 6.4.3, the author built Compute from Source,
+the author wrote GLSL compute shaders for Matrix multiplication, layer norm, softmax,
+and autograd operations. Training ran on a 75-character vocabulary from simple English Wikipedia.
+Training reached step 1,300 with loss at 2.598. The full training code
+and patched components were released on GitHub.
+The setup used Ubuntu 22.04 with Vulkan 1.4.313 and showed stable loss reduction across
+1,300 steps.
+A developer shared a lightweight classification method that uses raw output logits of a small
+LLM inside llama.cpp to select from a short list of numbered answers.
+The approach stops inference at the first non-control token and converts digit
+logits into normalized probabilities without relying on grammar features.
+The method supports up to 9 or 10 classes and can be extended with follow-up questions.
+Code is available on GitHub under the MT underscore LLM repository.
+The technique avoids full token sampling for faster classification decisions.
+Inco Splash, an open-source inference engine delivers up to 144 tokens per second on
+Qn3.8227b running on an M5 Max MacBook Pro.
+The engine requires M3 or newer hardware and Mac OS 26.4 or later.
+It supports Clawed Code, Open Code, Codex, and Hermes agents, and is also available inside
+the latest LM Studio build.
+The single-command installation uses Brew for quick setup on supported systems.
+Cross-layer KV reuse plus FP4 quantization can shrink the global KV cache to roughly
+890 bytes per token.
+The technique stores a single-shared key-value representation across multiple layers instead
+of duplicating tensors at every layer.
+FP4 quantization further reduces precision while the reuse mechanism avoids recomputing
+earlier states during decode. The compression works because attention patterns in later layers
+often remain similar to earlier ones, allowing the same compressed vectors to serve multiple depths.
+In practice, this cuts memory bandwidth pressure during long context generation,
+though it requires careful calibration to avoid accuracy loss on tasks that depend on fine-grained token
+distinctions. Teams wanting on consumer GPUs or high-batch inference servers see the largest gains when
+context lengths exceed 32,000 tokens. The approach trades a modest increase in
+pre-fill compute for substantially lower decode memory traffic. Use it when
+memory capacity or bandwidth is the binding constraint and when downstream tasks
+tolerate the small quality tradeoff introduced by aggressive quantization.
+Additional calibration steps help maintain performance on retrieval heavy workloads.
+modes. Try the Incos Splash engine with Quinn 3.8-27b on an M5 Series Mac if you need
+fast local agent inference. Experiment with the digit logit's classifier pattern in
+llama.cpp for lightweight intent routing without grammar overhead. Run the released Vulcan
+training code on any supported AMD card to test training without ROCM or CUDA. Review the
+The three highlighted hugging facepapers for KVCASH and Agent Harness optimizations.
+Further details on the Anthropic Accenture Evaluation Partnership are expected in coming weeks.
+Additional open-weight medical models from Chinese labs are anticipated following Ali
+Baba's release.
+More reports on agent-driven influence operations are likely as monitoring improves.
+Updates on AMD hardware support for training stacks may emerge from community experiments.
+advance. Before we go, watch for more community experiments on AMD hardware training stocks
+in the days ahead. That's models and agents for today. If you found this useful, share
+it with someone who's trying to keep up with all these changes, and subscribe so you don't
+miss tomorrow's update. The AI world moves fast. We'll help you keep up. See you tomorrow.
+And if you'd rather watch than listen, find us on YouTube at Nerra Network. Links in the
+Narra Network. If you want another sharp daily briefing, Offshore North has you covered. Offshore
+Ocean Racing explained every Monday with a Canadian angle. All our shows are free at NarraNetwork.com.
+And on the website, every episode's visuals live in our free image gallery at NarraNetwork.com
+slash gallery. Royalty free under Creative Commons. Download with Attribution.
+This episode used AI voice synthesis of my voice, editorial selection and analysis are my own.

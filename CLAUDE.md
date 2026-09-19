@@ -459,6 +459,22 @@ today's work, not just explain yesterday's):
   out of the pick prompt, and `_rule_core` dedups on the rule's
   constraint with its scope clause stripped. Guards:
   `TestRuleScoreboardHonesty`, `TestTradingVsPipelineRules`.
+- **MIT's cold streak raises the bar on the pick, never on picking**
+  (2026-09-18). The COLD regime text had called an explicit no-trade day
+  "acceptable and unremarkable"; from Ep152 (08-28, the first episode
+  after the era record turned negative) the show declared no trade on
+  19 of 23 episodes, the drought valve fired weekly, its forced pick was
+  voided (voided picks reset the valve) or closed into the same
+  ten-trade window, and the window never turned over — 9 closed era
+  trades in a month, nothing scoreable. Now `_build_regime_block`'s COLD
+  text demands named factors, an invalidation level and a graded
+  confidence but still expects a pick; `_days_since_last_pick` ignores
+  voided picks; and `_no_trade_budget_block` allows ONE no-trade per
+  five episodes, read from the committed `trade_signal_ep*.json`, with
+  a spent budget making a pick mandatory. Register
+  `mit-no-trade-budget-2026-09-18` (metric `mit_new_trade_share_10ep`,
+  baseline 0.1). Prompt-context change — A/B-listen the first two
+  episodes. Guards: `tests/test_mit_no_trade_budget_2026_09_18.py`.
 - **The MIT trade ledger is public** (`scripts/build_mit_ledger.py` ->
   `api/mit_trade_ledger.json` + `.csv`, nightly): every trade with entry/
   exit bar dates, stop, horizon, invalidation, confidence, rules in
@@ -794,6 +810,59 @@ today's work, not just explain yesterday's):
   results, the Route du Rhum IMOCA entry list, qualification ledger,
   lineage, and every source/social the show reads. A new dated position
   fix goes in the curated file's `position_log`; never guess one.
+  **Sep 18 2026 round-1 fixes** (operator list on Ep005; guards
+  `tests/test_offshore_north_round1_2026_09_18.py`): the campaign's four
+  feeds carry `window_hours: 720` (`SourceConfig.window_hours` — a
+  per-feed cutoff that may look FURTHER back than the ladder, never less;
+  a campaign does not generate news weekly and Ep005 reported the boat
+  still in Canada from an empty 7-day window); `stale_article_days: 10`
+  drops any article whose PAGE publish date (`engine.article_text.
+  extract_published_date`, read during the full-text fetch — OpenGraph
+  meta, JSON-LD, `<time>`) or feed date is older than ten days before the
+  prompt sees it (`drop_stale_articles`; `window_hours` feeds exempt;
+  undated pages kept; metric `articles_dropped_stale`), because Google
+  News re-surfaced the 1 Sep race START under a 12 Sep index date and
+  Ep005 aired it on the 14th; timestamp sentences ("last updated on…",
+  "no new posts inside the window") are banned and the prompt line that
+  produced them is gone; the labelled background block is deleted, not
+  renamed; a RACE STATE CHECK precedes any race sentence; Plain Sailing
+  is a HARD 300-word cap, one point made once, never the lead story's
+  subject, and no longer a length lever; class names come from the
+  official race site — the 2026 Route du Rhum's six are ULTIM, Ocean
+  Fifty, IMOCA, Class40, Vintage Multi, Vintage Mono (formerly Rhum
+  Multi / Rhum Mono). Host voice and the incident-driven Fleet rewrite
+  are deferred at the operator's direction.
+  **Sep 19 2026 resource pass** (§7 of the review doc; guards
+  `tests/test_offshore_north_resource_2026_09_19.py`): **the campaign
+  record is ONE file** — `site/data/offshore_north_dashboard.json` is
+  baked into the dashboard AND rendered by `engine/offshore_north_status.py`
+  into a dated CAMPAIGN STATUS block (`{campaign_status}`, hook-supplied,
+  defaulted to "" in run_show + `engine.pipeline`) in both prompts: newest
+  dated fix + its age, each countdown's NOT STARTED / RUNNING / FINISHED
+  state by the clock with EMIRA IV's entry, results on record, the Rhum
+  entry count, the countdown as arithmetic. Update the record (dated,
+  sourced) and both surfaces follow; never hand-write a date into the
+  prompts. A verified ABSENCE (EMIRA IV was not among the 14 at the 48H
+  Azimut) is a `position_note`, never a position. The **Plain Sailing
+  glossary** (`offshore-north-glossary.html`, `site/data/offshore_north_glossary.json`,
+  55 hand-written sourced entries + the aired-explainer archive with
+  `#t=` audio deep links, titles via `engine.titles.PLAIN_SAILING_TITLE_MAX`)
+  is linked from the show page, the dashboard and every ON blog post
+  (`engine.blog.SHOW_RESOURCES`). Dashboard v2 adds an "In the press" rail
+  (the show's GN query resolved to publisher URLs), calendar state pills,
+  the Défi Azimut result and the Rhum entries' 48H form. The YB tracker
+  page exposes no JSON endpoint (probed 19 Sep); the embed stays.
+  **Round 2, same day:** countdowns and results are linked by key
+  (`results_key` ↔ `key`) and a FINISHED race with no result entry gets
+  "RESULT NOT YET ON RECORD" in the status block and "result pending" on
+  the calendar — add the result entry, never a placing from memory. The
+  **fleet guide** is parsed nightly from each Rhum entry's imoca.org boat
+  page (`imoca_slug` on the entry; `parse_imoca_boat_page`; a failed page
+  keeps the last good record, marked `stale`), the **cast** panel is
+  twelve one-fact identifiers from the record, the **map** (Leaflet from
+  cdnjs + OSM tiles) plots only the dated PLACES a team post named — an
+  entry without `lat`/`lon` gets no marker — and the show page carries a
+  campaign strip from the same record.
 - All shows delegate X posting to `engine.publisher.post_to_x()`
 - TST/FF/PT delegate voice normalization to `engine.audio.normalize_voice()`
 - All shows use `engine.audio.mix_with_music()` for music mixing (3 modes:

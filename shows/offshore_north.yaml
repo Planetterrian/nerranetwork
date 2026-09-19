@@ -46,12 +46,20 @@ sources:
   # updated on [date], with [subject]" instead of the banned "no news
   # this week" (Aug 2026 editorial review: Ep2 claimed an absence while
   # the boat had already departed Collingwood).
+  # window_hours (Sep 18 2026, round-1 fix 5): the campaign's own channels
+  # are read on a THIRTY-DAY window whatever the ladder says. A campaign
+  # does not generate news weekly — Ep005 (2026-09-14) found nothing from
+  # the team inside its 7-day window and reported the boat as still in
+  # Canada when it had crossed the Atlantic. The wider press keeps the
+  # ladder; these feeds are exempt from stale_article_days below.
   - url: "https://www.canadaoceanracing.com/feed/"
     label: Canada Ocean Racing
     freshness_report: true
+    window_hours: 720
   - url: "https://www.canadaoceanracing.com/category/news/feed/"
     label: Canada Ocean Racing — News
     freshness_report: true
+    window_hours: 720
   # Scott's Notes — the skipper's own writing (Sep 14 2026 review, fix 2).
   # The operator's URLs canadaoceanracing.com/scott-notes/ and
   # /scott-lab-notes/ are the same WordPress PAGE (the second 301s to the
@@ -67,6 +75,7 @@ sources:
   - url: "https://www.canadaoceanracing.com/category/scotts-blog/feed/"
     label: "Canada Ocean Racing — Scott's Notes"
     freshness_report: true
+    window_hours: 720
   # Official YouTube channel feed (Atom; feedparser handles it like RSS).
   # Channel ID resolved from youtube.com/@CanadaOceanRacing page source and
   # the feed VERIFIED serving 15 entries on 2026-08-14. The channel posts
@@ -79,6 +88,7 @@ sources:
   - url: "https://www.youtube.com/feeds/videos.xml?channel_id=UCbyLJ8WsopLJ0fLjkCAVQjg"
     label: Canada Ocean Racing — YouTube
     freshness_report: true
+    window_hours: 720
 
   # ---- Tier 2: class + organizers ----
   # NOTE: imoca.org and theoceanrace.com publish NO RSS feed (verified
@@ -191,6 +201,13 @@ web_search_always: true
 # rest are fetched and extracted (engine/article_text.py). Best-effort.
 fetch_full_text: 14
 fetch_full_text_chars: 2500
+# Nothing older than ten days is news (Sep 18 2026, round-1 fix 8). The
+# page's own publish date (read during the full-text fetch) or the feed
+# date, whichever is more trustworthy, decides; Google News re-surfaced
+# the 1 September Ocean Race Atlantic START under a 12 September index
+# date and Ep005 aired it on the 14th. The campaign feeds above are
+# exempt (they carry their own 30-day window on purpose).
+stale_article_days: 10
 # ---- X / Twitter as a CONTENT source (not posting) ----
 # Offshore racing breaks on X and Instagram before it reaches any RSS feed:
 # campaigns post launches, damage and routing calls in real time, and the

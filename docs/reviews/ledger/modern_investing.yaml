@@ -1112,4 +1112,33 @@ reviews:
     predictions: []
     proposed_changes_in_pr: []
     agent_cost_usd: 0.1866
+  - date: '2026-09-18'
+    pr: null
+    doc: docs/reviews/youtube_pipeline_plan_2026_09_18.md
+    summary: "The no-trade loop: from Ep152 (08-28, the first episode after the era record turned negative) the COLD regime text called a no-trade day acceptable and unremarkable, the show declared no trade on 19 of 23 episodes, the drought valve fired weekly and its forced pick was voided (ILMN Ep161, PATH Ep163 - each reset the valve) or closed into the same ten-trade window, which never turned over. 9 closed era trades in a month; no rule scoreable; confidence Medium on 13 of 13 era picks."
+    shipped:
+      - "shows/hooks/modern_investing: COLD text raises the bar on the pick (named factors, invalidation level, graded confidence, what the record says about the setup family), never on picking; a no-trade day needs a reason specific to today's tape (A/B)"
+      - "shows/hooks/modern_investing: _days_since_last_pick ignores voided picks; _no_trade_budget_block - at most 1 no-trade per 5 episodes from the committed trade_signal files, a spent budget makes a pick mandatory (A/B)"
+      - "dashboard metric mit_new_trade_share_10ep; register entry mit-no-trade-budget-2026-09-18"
+    deferred:
+      - "confidence calibration: Medium on 13/13 era picks - read after the budget lands; the calibration block is the next item"
+      - "HPS.A (Ep150, flash) open with no entry bar since 08-26 - needs the void path"
+    predictions:
+    - metric: "mit_new_trade_share_10ep (dashboard) on 2026-10-02"
+      baseline: "0.1 (1 of the last 10 signals on 09-18); 4 of 23 since Ep152"
+      expected: ">= 0.8"
+      verdict: pending
+      evidence: null
+    - metric: "closed era trades added between 09-19 and 10-02"
+      baseline: "9 closed in the era's first month"
+      expected: ">= 8 (a weekday show with at most one abstention per five episodes)"
+      verdict: pending
+      evidence: null
+    - metric: "picks with an invalidation level and a confidence rating that is not Medium, first 10 picks after the merge"
+      baseline: "13/13 invalidations; 0/13 non-Medium"
+      expected: "10/10 invalidations; >= 3 non-Medium - if 0, open the calibration item"
+      verdict: pending
+      evidence: null
+    agent_cost_usd: null
+
 do_not_retry: []

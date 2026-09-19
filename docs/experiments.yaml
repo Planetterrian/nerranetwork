@@ -1485,6 +1485,33 @@ experiments:
       Sep 17: read in both reviews since; week ending 09-13 network
       -14.9% (spacex -29.6% off its spike week, models_agents +32.1%).
 
+  - id: offshore-north-resource-pages-2026-09-19
+    title: "Offshore North: glossary + campaign dashboard v3 (map, cast, fleet guide) as the show's public resource"
+    area: reach
+    shipped: 2026-09-19
+    readout: 2026-10-19
+    status: reading
+    baseline: >
+      offshore-north-dashboard.html existed for five days with countdowns,
+      position log and feeds; no glossary page; the show page carried only
+      a button. GA4 landing-page sessions for the pair: unmeasured (null).
+    target: >
+      By the readout the glossary and dashboard together draw sessions
+      from outside the episode pages (GA4 landing-page report), the
+      Offshore North blog posts show click-through to the companion panel,
+      and at least one inbound link from a sailing forum or the campaign.
+      Kept if the pages earn any measurable non-episode traffic; the
+      fleet guide is retired if the IMOCA register pages stop parsing for
+      more than two nightlies (the rail then shows last-good records).
+    notes: >
+      site/data/offshore_north_glossary.json (55 entries + aired Plain
+      Sailing archive with #t= audio links), the cast panel, the Leaflet
+      road-to-the-Rhum map (dated places only), the fleet guide parsed
+      nightly from imoca.org boat pages, the show-page campaign strip.
+      Data/page-side only — no audio change. Same record feeds the prompts
+      (engine/offshore_north_status.py), incl. the RESULT NOT YET ON
+      RECORD flag for a finished race with no result entry.
+
   - id: offshore-north-read-the-article-2026-09-14
     title: "Offshore North: full article text in the brief + lead-with-Canada prompt pass + campaign dashboard"
     area: quality
@@ -1507,7 +1534,12 @@ experiments:
       engine/article_text.py (fetch_full_text, opt-in; every other show
       byte-identical), Scott's Notes feed, freshness "What it said"
       excerpts, offshore-north-dashboard.html. Prompt changes are
-      landmine-#17: A/B-listen the Sep 21 episode.
+      landmine-#17: A/B-listen the Sep 21 episode. Sep 18 round-1
+      additions: campaign feeds on a 30-day window (window_hours),
+      stale_article_days 10 (page publish date), timestamp sentences
+      banned, background block deleted, race-state check, Plain Sailing
+      300-word cap / one point once / never the lead's subject, official
+      class names. Same readout date.
 
   - id: caption-track-retry-2026-09-18
     title: "Long-form caption track: retry the transient, record the refusal"
@@ -1530,6 +1562,37 @@ experiments:
       channel means that channel's token needs the youtube.force-ssl re-auth,
       not another retry.
 
+  - id: mit-no-trade-budget-2026-09-18
+    title: "MIT: the cold streak raises the bar on the pick, not on picking (no-trade budget)"
+    area: quality
+    shipped: 2026-09-18
+    readout: 2026-10-02
+    status: reading
+    metric: mit_new_trade_share_10ep
+    baseline: 0.1
+    target: >
+      Share of the last 10 committed trade signals with action new_trade at or
+      above 0.8 by 10-02 (weekday show; one no-trade per five episodes is the
+      allowance), with the era record adding at least 8 closed trades in the
+      same window so the rule scoreboard can start scoring. Read the picks too:
+      the point is a pick with a named invalidation level and a graded
+      confidence, not a pick at any cost — if confidence still reads Medium on
+      every pick, the calibration block is the next item.
+    criteria: >
+      PROMPT-CONTEXT CHANGE — A/B-listen the first two episodes (landmine #17):
+      the regime block is spoken through; listen for the transparency line and
+      for a pick framed as rebuilding, not as a comeback. REVERT TRIGGERS: a
+      pick with no invalidation level, an options structure reached for to
+      satisfy the budget, or the operator's listen verdict. Revert = restore the
+      previous COLD text and drop the budget block; the voided-pick drought fix
+      stays either way.
+    notes: >
+      Mechanism the 09-18 plan found: COLD said an explicit no-trade day was
+      acceptable and unremarkable; the drought valve fired weekly; the forced
+      pick was voided (ILMN Ep161, PATH Ep163 — voided picks reset the valve) or
+      closed into the same ten-trade window; the window never turned over
+      because nothing new closed. 19 of 23 episodes since Ep152 declared no
+      trade; 9 closed era trades in a month.
   - id: funnel-attribution-repair-2026-09-19
     title: "Every published link through engine.funnel (X replies, newsletter forward, blog share row)"
     area: funnel

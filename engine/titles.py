@@ -71,6 +71,11 @@ BOOK_CHAPTER_TITLE_MAX = 72
 # Ep592 rendered "Several projects pair storage with solar to").
 CHAPTER_CARD_MAX = 48
 
+#: Offshore North glossary page (Sep 19 2026): a Plain Sailing archive entry
+#: is titled from the segment's FIRST SENTENCE (the digest has no segment
+#: title), clipped word-safe to this many characters for the card heading.
+PLAIN_SAILING_TITLE_MAX = 90
+
 # Long-form fact-card label (Sep 2026, engine/fact_cards.py): the short
 # line under the on-screen figure. Fit gate + dangling-tail rule, never a
 # slice.

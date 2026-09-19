@@ -180,3 +180,125 @@ See the ledger entry: zero "unconfirmed" position lines; the Canadian Boat
 ≥ 35% of spoken words and first; ≥ 1 Dan reference per episode; zero
 standings roll-calls; zero "standing facts/item" on air; `articles_full_text`
 ≥ 8 per episode; Plain Sailing not about a same-episode race.
+
+## 6. Round-1 addendum (18 September 2026)
+
+The operator scored Ep005 against the 14 September pass and sent a
+twelve-item core list. Items 1, 2 and 6 had landed; the rest exposed
+what the first pass left standing:
+
+- **Timestamp sentences survived** ("no new posts inside the seven-day
+  window", "the news section was last updated August 17") because the
+  prompts still *instructed* the writer to report "the date of each
+  channel's most recent post". That instruction is gone from all three
+  prompts and the sentence shapes are banned outright.
+- **The boat was reported as still in Canada** because the campaign's
+  posts fell outside the 7-day ladder. `SourceConfig.window_hours`
+  reads the four campaign feeds on 30 days (`engine.fetcher` takes the
+  wider of the two cutoffs per feed); the prompts explain the window.
+- **The labelled background block** was deleted rather than renamed:
+  standing facts are briefing material, never script.
+- **A 1 September race start aired on the 14th.** The full-text fetch
+  now reads the page's own publish date (`extract_published_date`:
+  OpenGraph/article meta, JSON-LD, `<time>`), and
+  `stale_article_days: 10` drops anything older before the prompt sees
+  it (`drop_stale_articles`; campaign feeds exempt; undated pages kept).
+  A RACE STATE CHECK (not started / running / finished, with the date)
+  precedes any sentence about a race.
+- **Plain Sailing** is capped at 300 words, makes one point once, never
+  takes the lead story's subject, and is no longer a length lever.
+- **Class names** come from the official race site: the organisers'
+  16 April 2026 announcement names ULTIM, Ocean Fifty, IMOCA, Class40,
+  Vintage Multi and Vintage Mono (the last two are the categories
+  older coverage calls Rhum Multi / Rhum Mono). Ep005's "Class 50" was
+  Ocean Fifty twice.
+
+Guards: `tests/test_offshore_north_round1_2026_09_18.py`. Host voice
+and the incident-driven Fleet rewrite are deferred at the operator's
+direction.
+
+## 7. Resource pass — 19 September 2026
+
+Operator brief: keep improving the show, the blog, the website and the
+dashboard so they become a genuine resource for people interested in the
+sport. Everything below is data-side or page-side except the two prompt
+placeholders, which are landmine-#17 items (A/B-listen the 21 Sep episode).
+
+**Verified this week (all sourced in the record):** the 48H Azimut
+(17–19 Sep, 14 IMOCA) was won by Sam Goodchild in 1d 14h 48m 21s,
+Beccaria second, Beyou third; Goodchild set a class Runs record at 32.1
+knots on the 16th; **EMIRA IV was not among the 14 starters** and no
+campaign channel has posted since 2 September; the IMOCA class page lists
+**22 registered** Route du Rhum boats (of 26 selected) with Scott Shawyer
+on it. The absence from Lorient is recorded as a dated NOTE, never as a
+position — it says what the boat did not do, not where it is.
+
+**One record, two surfaces.** `engine/offshore_north_status.py` renders
+`site/data/offshore_north_dashboard.json` — the same file the dashboard
+bakes in — into a dated CAMPAIGN STATUS block for both prompts
+(`{campaign_status}`, hook-supplied, defaulted to "" in run_show and
+`engine.pipeline`): the newest dated fix and its age (the live rail's
+derived fix wins when newer), each countdown's state by today's date
+(NOT STARTED / RUNNING / FINISHED, with EMIRA IV's entry where the record
+knows it), the results on record, the Route du Rhum entry count, and the
+countdown as arithmetic. The Ep005 start-as-result and still-in-Canada
+errors were both date errors; the block does the date arithmetic so the
+model does not have to infer it from articles.
+
+**The Plain Sailing glossary** (`offshore-north-glossary.html`,
+`site/data/offshore_north_glossary.json`, `generate_offshore_north_glossary`):
+55 hand-written entries in five themes, each ending on the sentence a
+listener could repeat, sourced where a number is specific, plus the
+archive of every aired Plain Sailing segment derived from the digests —
+title clipped via `engine.titles.PLAIN_SAILING_TITLE_MAX`, chapter
+timestamp from `chapters_epNNN.json`, and a link that opens the MP3 at the
+segment (`#t=` media fragment). "Heard on Ep N" links are matched
+data-side on whole-word keywords. Linked from the show page, the
+dashboard hero, and every Offshore North blog post (new
+`SHOW_RESOURCES` panel in `engine/blog.py`).
+
+**Dashboard v2:** an "In the press" rail (the show's own Google News
+query, resolved to publisher URLs at fetch time; kept from the previous
+run when the query is dark); calendar state pills computed client-side
+from ISO windows with the same arithmetic as the status block; the Défi
+Azimut result with the Runs, the absences and the pending Tour de Groix
+as extra rows; the Route du Rhum entries' 48H Azimut form; the dated
+absence note under the position log. The YB tracker page is a JS app
+with no JSON endpoint on any probed path, so the embed stays an embed.
+
+**Also fixed:** the explainer bank's IMOCA spec said "max beam 4.50 m" —
+4.50 m is the class's maximum DRAUGHT (EMIRA IV's beam is 5.85 m). Guards:
+`tests/test_offshore_north_resource_2026_09_19.py`.
+
+## 8. Resource pass, round 2 — 19 September 2026
+
+Same brief, same day, after #1234 merged. All data- and page-side.
+
+- **A finished race with no result on record is flagged, not licensed.**
+  Countdowns and results are now linked by key (`results_key` / `key`);
+  the CAMPAIGN STATUS block writes "RESULT NOT YET ON RECORD — do not
+  state a winner or a placing unless a this-week source reports it,
+  attributed" for a FINISHED window with no result entry, and the
+  dashboard calendar shows "finished · result pending". The Tour de
+  Groix (20 Sep) is the first case this will catch.
+- **Know the fleet.** Every Route du Rhum IMOCA entry carries its slug on
+  the class register (`imoca_slug`); the nightly fetch reads each boat's
+  imoca.org page (`parse_imoca_boat_page`: architect, yard and year,
+  launch date, sail number, foils, weight, former names, the dated
+  "Sailing Highlights") into `api/offshore_north_dashboard.json` `fleet`,
+  keeping the last good record for a page that fails. 20 of 21 named
+  entries resolved on the first run (Sorel's boat is unannounced).
+- **The cast this cycle** — twelve people, one verified fact each, from
+  the record and the field guide; the bible's "cast principle" made a
+  page.
+- **The road to the Rhum** — a Leaflet map (cdnjs, OpenStreetMap tiles)
+  of the dated PLACES the team's posts named (Collingwood, the Welland
+  Canal) and indicative course sketches for the Rhum and the Ocean Race
+  Atlantic. The 2 September "leaving Canada" post names no place and
+  gets no marker; the note on the panel says the tracker is the live
+  source.
+- **The show page carries a campaign strip** (days to the next start
+  line, the last dated fix) from the same record.
+- Register: `offshore-north-resource-pages-2026-09-19` (readout
+  2026-10-19). Guards: `TestRound2FleetAndRecord`.
+

@@ -777,7 +777,15 @@ def run(args: argparse.Namespace) -> None:
         )
         content_tracker.load()
 
-        feed_dicts = [{"url": s.url, "label": s.label} for s in config.sources]
+        feed_dicts = [
+            {
+                "url": s.url,
+                "label": s.label,
+                # Per-feed recency override (0 = the ladder's window).
+                "window_hours": int(getattr(s, "window_hours", 0) or 0),
+            }
+            for s in config.sources
+        ]
 
         from concurrent.futures import ThreadPoolExecutor
 
@@ -1430,6 +1438,36 @@ def run(args: argparse.Namespace) -> None:
             except Exception as _ft_exc:  # noqa: BLE001 — never block a run
                 logger.warning("Full-text enrichment failed (non-fatal): %s", _ft_exc)
 
+        # Nothing older than N days is news (Sep 18 2026, Offshore North
+        # round-1 fix 8). The page publish date read during the full-text
+        # fetch outranks the feed date, so a story Google News re-surfaced
+        # under a fresh index date is caught here (Ep005 reported the
+        # 1 Sep race start on 14 Sep). Campaign feeds with their own
+        # window_hours are exempt. 0 = off, every other show unchanged.
+        _stale_days = int(getattr(config, "stale_article_days", 0) or 0)
+        if _stale_days and articles:
+            try:
+                from engine.article_text import drop_stale_articles
+                _exempt = [
+                    (getattr(src, "label", "") or "")
+                    for src in (config.sources or [])
+                    if int(getattr(src, "window_hours", 0) or 0) > 0
+                ]
+                articles, _stale = drop_stale_articles(
+                    articles, max_age_days=_stale_days, exempt_sources=_exempt,
+                )
+                if _stale:
+                    logger.info(
+                        "Stale-article gate: dropped %d article(s) older than "
+                        "%d days: %s", len(_stale), _stale_days,
+                        "; ".join((a.get("title") or "")[:60] for a in _stale[:6]),
+                    )
+                # Consumer: the show review (a high count means the wider
+                # press is re-surfacing old stories; zero is normal).
+                metrics.record("articles_dropped_stale", len(_stale))
+            except Exception as _st_exc:  # noqa: BLE001 — never block a run
+                logger.warning("Stale-article gate failed (non-fatal): %s", _st_exc)
+
         from engine.article_text import render_full_text_block
 
         news_lines = []
@@ -1574,6 +1612,9 @@ def run(args: argparse.Namespace) -> None:
         # pre_fetch hook. Default it to empty so a hook-load failure (or a show
         # without memory) can never KeyError in prompt substitution.
         template_vars.setdefault("narrative_memory_section", "")
+        # Offshore North (Sep 19 2026): the computed CAMPAIGN STATUS block
+        # from shows/hooks/offshore_north.py. Same defaulting contract.
+        template_vars.setdefault("campaign_status", "")
         # Привет, Русский! vocabulary memory (June 2026): the prompts
         # reference {vocab_review_section}, supplied by the show's hook.
         # Same defaulting contract as above.
