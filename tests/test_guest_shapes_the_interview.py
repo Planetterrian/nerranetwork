@@ -49,7 +49,7 @@ class TestGuestLinksSurvive:
     def test_the_documented_shape_and_bare_handles(self):
         app = {"links": {"website": "foo.com", "twitter": "@bar"}}
         assert guest_links(app) == [
-            {"label": "Website", "url": "https://foo.com"},
+            {"label": "foo.com", "url": "https://foo.com"},
             {"label": "X", "url": "https://x.com/bar"},
         ]
 
