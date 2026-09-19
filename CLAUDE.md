@@ -832,6 +832,26 @@ today's work, not just explain yesterday's):
   Fifty, IMOCA, Class40, Vintage Multi, Vintage Mono (formerly Rhum
   Multi / Rhum Mono). Host voice and the incident-driven Fleet rewrite
   are deferred at the operator's direction.
+  **Sep 19 2026 resource pass** (§7 of the review doc; guards
+  `tests/test_offshore_north_resource_2026_09_19.py`): **the campaign
+  record is ONE file** — `site/data/offshore_north_dashboard.json` is
+  baked into the dashboard AND rendered by `engine/offshore_north_status.py`
+  into a dated CAMPAIGN STATUS block (`{campaign_status}`, hook-supplied,
+  defaulted to "" in run_show + `engine.pipeline`) in both prompts: newest
+  dated fix + its age, each countdown's NOT STARTED / RUNNING / FINISHED
+  state by the clock with EMIRA IV's entry, results on record, the Rhum
+  entry count, the countdown as arithmetic. Update the record (dated,
+  sourced) and both surfaces follow; never hand-write a date into the
+  prompts. A verified ABSENCE (EMIRA IV was not among the 14 at the 48H
+  Azimut) is a `position_note`, never a position. The **Plain Sailing
+  glossary** (`offshore-north-glossary.html`, `site/data/offshore_north_glossary.json`,
+  55 hand-written sourced entries + the aired-explainer archive with
+  `#t=` audio deep links, titles via `engine.titles.PLAIN_SAILING_TITLE_MAX`)
+  is linked from the show page, the dashboard and every ON blog post
+  (`engine.blog.SHOW_RESOURCES`). Dashboard v2 adds an "In the press" rail
+  (the show's GN query resolved to publisher URLs), calendar state pills,
+  the Défi Azimut result and the Rhum entries' 48H form. The YB tracker
+  page exposes no JSON endpoint (probed 19 Sep); the embed stays.
 - All shows delegate X posting to `engine.publisher.post_to_x()`
 - TST/FF/PT delegate voice normalization to `engine.audio.normalize_voice()`
 - All shows use `engine.audio.mix_with_music()` for music mixing (3 modes:

@@ -217,3 +217,56 @@ Guards: `tests/test_offshore_north_round1_2026_09_18.py`. Host voice
 and the incident-driven Fleet rewrite are deferred at the operator's
 direction.
 
+## 7. Resource pass — 19 September 2026
+
+Operator brief: keep improving the show, the blog, the website and the
+dashboard so they become a genuine resource for people interested in the
+sport. Everything below is data-side or page-side except the two prompt
+placeholders, which are landmine-#17 items (A/B-listen the 21 Sep episode).
+
+**Verified this week (all sourced in the record):** the 48H Azimut
+(17–19 Sep, 14 IMOCA) was won by Sam Goodchild in 1d 14h 48m 21s,
+Beccaria second, Beyou third; Goodchild set a class Runs record at 32.1
+knots on the 16th; **EMIRA IV was not among the 14 starters** and no
+campaign channel has posted since 2 September; the IMOCA class page lists
+**22 registered** Route du Rhum boats (of 26 selected) with Scott Shawyer
+on it. The absence from Lorient is recorded as a dated NOTE, never as a
+position — it says what the boat did not do, not where it is.
+
+**One record, two surfaces.** `engine/offshore_north_status.py` renders
+`site/data/offshore_north_dashboard.json` — the same file the dashboard
+bakes in — into a dated CAMPAIGN STATUS block for both prompts
+(`{campaign_status}`, hook-supplied, defaulted to "" in run_show and
+`engine.pipeline`): the newest dated fix and its age (the live rail's
+derived fix wins when newer), each countdown's state by today's date
+(NOT STARTED / RUNNING / FINISHED, with EMIRA IV's entry where the record
+knows it), the results on record, the Route du Rhum entry count, and the
+countdown as arithmetic. The Ep005 start-as-result and still-in-Canada
+errors were both date errors; the block does the date arithmetic so the
+model does not have to infer it from articles.
+
+**The Plain Sailing glossary** (`offshore-north-glossary.html`,
+`site/data/offshore_north_glossary.json`, `generate_offshore_north_glossary`):
+55 hand-written entries in five themes, each ending on the sentence a
+listener could repeat, sourced where a number is specific, plus the
+archive of every aired Plain Sailing segment derived from the digests —
+title clipped via `engine.titles.PLAIN_SAILING_TITLE_MAX`, chapter
+timestamp from `chapters_epNNN.json`, and a link that opens the MP3 at the
+segment (`#t=` media fragment). "Heard on Ep N" links are matched
+data-side on whole-word keywords. Linked from the show page, the
+dashboard hero, and every Offshore North blog post (new
+`SHOW_RESOURCES` panel in `engine/blog.py`).
+
+**Dashboard v2:** an "In the press" rail (the show's own Google News
+query, resolved to publisher URLs at fetch time; kept from the previous
+run when the query is dark); calendar state pills computed client-side
+from ISO windows with the same arithmetic as the status block; the Défi
+Azimut result with the Runs, the absences and the pending Tour de Groix
+as extra rows; the Route du Rhum entries' 48H Azimut form; the dated
+absence note under the position log. The YB tracker page is a JS app
+with no JSON endpoint on any probed path, so the embed stays an embed.
+
+**Also fixed:** the explainer bank's IMOCA spec said "max beam 4.50 m" —
+4.50 m is the class's maximum DRAUGHT (EMIRA IV's beam is 5.85 m). Guards:
+`tests/test_offshore_north_resource_2026_09_19.py`.
+

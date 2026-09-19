@@ -129,4 +129,48 @@ reviews:
         evidence: null
     agent_cost_usd: null
 
+  - date: 2026-09-19
+    pr: null
+    doc: docs/reviews/offshore_north_review_2026_09_14.md
+    reviewer: claude-code (operator resource pass — show, blog, site, dashboard)
+    summary: >-
+      Verified the week (48H Azimut won by Goodchild; EMIRA IV not among
+      the 14 starters; 22 IMOCA registered for the Rhum) into the
+      campaign record, then made that record the single source for both
+      the dashboard and the prompts: engine/offshore_north_status.py
+      renders it into a dated CAMPAIGN STATUS block (position + age, race
+      states by the clock, results on record, entry, countdown). Shipped
+      the Plain Sailing glossary page (55 entries + the aired-explainer
+      archive with audio deep links), dashboard v2 (press rail, race-state
+      pills, Azimut result, entries' form) and a companion panel on every
+      Offshore North blog post. Fixed the explainer bank's beam/draught
+      mix-up.
+    shipped:
+      - engine/offshore_north_status.py + {campaign_status} in both prompts (hook-supplied, defaulted)
+      - site/data/offshore_north_glossary.json + offshore-north-glossary.html (generator, sitemap, nightly whitelist, show-page + dashboard + blog links)
+      - dashboard v2 (press rail via resolved GN query, calendar ISO windows + state pills, Défi Azimut result rows, 48H Azimut form on the RdR list, dated absence note)
+      - engine/blog.py SHOW_RESOURCES panel
+      - standing facts + field guide: Azimut result, 22 registered, verified absence
+    deferred:
+      - A/B-listen the 21 Sep episode (two new prompt placeholders)
+      - YB tracker position fix (no JSON endpoint found on any probed path)
+      - Tour de Groix result (20 Sep) into the record
+    predictions:
+      - metric: "race-state errors on air (a start aired as a result, a finished race as live), next 4 episodes"
+        baseline: "Ep005: 1"
+        expected: "0/4 with the CAMPAIGN STATUS block in the brief"
+        verdict: pending
+        evidence: null
+      - metric: "The Countdown's day count matches the block's arithmetic"
+        baseline: "Ep005 said 790 on 14 Sep (correct: 790)"
+        expected: "exact on 4/4"
+        verdict: pending
+        evidence: null
+      - metric: "offshore-north-glossary.html sessions (GA4) in its first 30 days"
+        baseline: "n/a (page did not exist)"
+        expected: "> 0 and linked from every ON blog post; readout with the 2026-10-12 experiment"
+        verdict: pending
+        evidence: null
+    agent_cost_usd: null
+
 do_not_retry: []

@@ -1025,6 +1025,17 @@
                 {% endif %}
             </nav>
             {% endif %}
+            {% if show_resources and show_resources.links %}
+            <section class="blog-related" style="margin-top:1.4rem;">
+                <h2>{{ show_resources.title }}</h2>
+                <p style="color:var(--nn-text-muted);font-size:.95rem;line-height:1.55;margin:0 0 .8rem;">{{ show_resources.blurb }}</p>
+                <div style="display:flex;flex-wrap:wrap;gap:.6rem;">
+                    {% for l in show_resources.links %}
+                    <a href="{{ path_prefix }}{{ l.href }}" style="display:inline-flex;align-items:center;gap:6px;padding:.5rem .9rem;border-radius:10px;border:1px solid color-mix(in srgb, var(--show-color), transparent 60%);color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;font-size:.9rem;">{{ l.label }}</a>
+                    {% endfor %}
+                </div>
+            </section>
+            {% endif %}
             <!-- Cross-show Recommendations -->
             {% if related_posts %}
             <section class="blog-related">

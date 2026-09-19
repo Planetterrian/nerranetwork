@@ -2456,6 +2456,143 @@ def _offshore_north_recent_episodes(limit: int = 6) -> list:
     return out[:limit]
 
 
+def _offshore_north_plain_sailing() -> list:
+    """Every Plain Sailing segment the show has aired, newest first, from
+    the committed digests: a word-safe title from the segment's first
+    sentence (``engine.titles.PLAIN_SAILING_TITLE_MAX``), a two-sentence
+    teaser, the episode page, and the audio URL with a ``#t=`` media
+    fragment at the chapter's start so a browser opens the MP3 at the
+    segment (the chapters JSON is the same one podcast apps read)."""
+    import json as _json
+    from engine.titles import PLAIN_SAILING_TITLE_MAX, clip_words
+
+    ddir = ROOT / "digests" / "offshore_north"
+    cfg = NETWORK_SHOWS.get("offshore_north") or {}
+    audio_by_ep = {}
+    try:
+        data = _json.loads((ROOT / cfg.get("json_path", "digests/offshore_north/summaries_offshore_north.json")).read_text(encoding="utf-8"))
+        for item in (data.get("summaries", data) if isinstance(data, dict) else data) or []:
+            if isinstance(item, dict) and item.get("episode_num"):
+                audio_by_ep[int(item["episode_num"])] = item.get("audio_url", "")
+    except Exception as exc:  # noqa: BLE001
+        print(f"Warning: could not read Offshore North summaries for the glossary: {exc}")
+    out = []
+    for md in sorted(ddir.glob("Offshore_North_Ep*_*.md")):
+        m = re.match(r"Offshore_North_Ep(\d+)_(\d{8})\.md$", md.name)
+        if not m:
+            continue
+        ep, ymd = int(m.group(1)), m.group(2)
+        try:
+            text = md.read_text(encoding="utf-8")
+        except Exception:  # noqa: BLE001
+            continue
+        sec = re.search(r"^#{2,3}\s*Plain Sailing\s*$\n(.*?)(?=^#{2,3}\s|\Z)", text, re.M | re.S)
+        if not sec:
+            continue
+        body = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", sec.group(1))
+        body = re.sub(r"\*\*(.+?)\*\*", r"\1", body)
+        body = re.sub(r"(?im)^\s*source:.*$", "", body)
+        body = re.sub(r"\s+", " ", body).strip()
+        if not body:
+            continue
+        sents = re.split(r"(?<=[.!?])\s+", body)
+        title = clip_words(sents[0], PLAIN_SAILING_TITLE_MAX)
+        teaser = " ".join(sents[:2])
+        at = ""
+        try:
+            ch = _json.loads((ddir / f"chapters_ep{ep:03d}.json").read_text(encoding="utf-8"))
+            for c in ch.get("chapters", []):
+                if c.get("title") == "Plain Sailing":
+                    secs = int(float(c.get("startTime", 0)))
+                    at = f"{secs // 60}:{secs % 60:02d}"
+                    break
+        except Exception:  # noqa: BLE001
+            at = ""
+        audio = audio_by_ep.get(ep, "")
+        if audio and at:
+            audio = f"{audio}#t={int(at.split(':')[0]) * 60 + int(at.split(':')[1])}"
+        out.append({
+            "episode_num": ep,
+            "date": f"{ymd[:4]}-{ymd[4:6]}-{ymd[6:]}",
+            "title": title,
+            "teaser": teaser,
+            "text": body.lower(),
+            "at": at,
+            "url": f"blog/offshore_north/ep{ep:03d}.html",
+            "audio_url": audio,
+        })
+    out.sort(key=lambda e: e["episode_num"], reverse=True)
+    return out
+
+
+def generate_offshore_north_glossary(*, dry_run=False):
+    """Render offshore-north-glossary.html — the Plain Sailing companion
+    (Sep 19 2026): the hand-written glossary in
+    ``site/data/offshore_north_glossary.json`` (terms grouped by theme,
+    each ending on the sentence a listener could repeat) plus the archive
+    of every Plain Sailing segment the show has aired, with a link that
+    opens the audio at the segment. "Heard on" links are derived by
+    matching each term's keywords against the aired segments — data-side,
+    never written by hand.
+    """
+    cfg = NETWORK_SHOWS.get("offshore_north")
+    if cfg is None:
+        return None
+    import json as _json
+    glossary = {}
+    try:
+        gp = ROOT / "site" / "data" / "offshore_north_glossary.json"
+        if gp.exists():
+            glossary = _json.loads(gp.read_text(encoding="utf-8"))
+    except Exception as exc:  # noqa: BLE001
+        print(f"Warning: could not load offshore_north_glossary.json: {exc}")
+    aired = _offshore_north_plain_sailing()
+    term_count = 0
+    for grp in glossary.get("groups", []):
+        for t in grp.get("terms", []):
+            term_count += 1
+            keys = [k.lower() for k in (t.get("keywords") or []) if k]
+            heard = []
+            for ps in aired:
+                if any(re.search(r"\b" + re.escape(k) + r"\b", ps["text"]) for k in keys):
+                    heard.append({"episode_num": ps["episode_num"], "url": ps["url"], "at": ps["at"], "title": ps["title"]})
+            t["heard"] = heard[:3]
+    env = _get_jinja_env()
+    template = env.get_template("offshore_north_glossary.html.j2")
+    context = {
+        "path_prefix": "",
+        "page_lang": "en",
+        "show_name": "Offshore North",
+        "page_title": "Plain Sailing — the Offshore North glossary of ocean racing | Nerra Network",
+        "meta_description": (
+            "Ocean racing explained for people who have never touched a rope: what an "
+            "IMOCA is, how foils and canting keels work, weather routing, the Southern "
+            "Ocean, the Vendée Globe and Route du Rhum, and the money behind the sport — "
+            f"{term_count} plain-language entries plus every Plain Sailing explainer the "
+            "Offshore North podcast has aired."
+        ),
+        "theme_color": cfg.get("brand_color", "#0B3C5D"),
+        "brand_color": cfg.get("brand_color", "#0B3C5D"),
+        "canonical_url": f"{GITHUB_RAW}/offshore-north-glossary.html",
+        "og_image": f"{GITHUB_RAW}/{_url_encode_image(cfg['podcast_image'])}",
+        "rss_url": f"{cfg['rss_file']}",
+        "show_page": cfg.get("show_page", "offshore-north.html"),
+        "g": glossary,
+        "term_count": term_count,
+        "plain_sailing": [{k: v for k, v in ps.items() if k != "text"} for ps in aired],
+        "t": _NAV_T,
+        "all_shows": _build_all_shows_list(),
+    }
+    html = template.render(**context)
+    out_path = ROOT / "offshore-north-glossary.html"
+    if dry_run:
+        print(f"[dry-run] Would write {out_path} ({len(html):,} bytes)")
+        return out_path
+    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
+    print(f"Wrote {out_path} ({len(html):,} bytes)")
+    return out_path
+
+
 def generate_offshore_north_dashboard(*, dry_run=False):
     """Render the Offshore North campaign dashboard (offshore-north-dashboard.html).
 
@@ -3506,7 +3643,8 @@ def generate_sitemap(*, dry_run=False, out=None):
                   "join.html", "support.html",
                   "modern-investing-performance.html",
                   "spacex-dashboard.html", "tesla-dashboard.html",
-                  "offshore-north-dashboard.html"]:
+                  "offshore-north-dashboard.html",
+                  "offshore-north-glossary.html"]:
         if (ROOT / extra).exists():
             urls.append((f"{base}/{extra}", "0.5", _file_lastmod(ROOT / extra)))
 
@@ -4802,6 +4940,7 @@ def main():
         # Offshore North campaign dashboard (Sep 2026)
         if args.show == "offshore_north":
             generate_offshore_north_dashboard(dry_run=args.dry_run)
+            generate_offshore_north_glossary(dry_run=args.dry_run)
         # Phase 3 narrative page for other memory-enabled shows (no-op otherwise)
         generate_narrative_page(args.show, dry_run=args.dry_run)
         # Russian funnel landing page (no-op unless the show has one). Must
@@ -4831,6 +4970,7 @@ def main():
         generate_spacex_dashboard(dry_run=args.dry_run)
         generate_tesla_dashboard(dry_run=args.dry_run)
         generate_offshore_north_dashboard(dry_run=args.dry_run)
+        generate_offshore_north_glossary(dry_run=args.dry_run)
         generate_data_hub_page(dry_run=args.dry_run)
         # Member surface (Aug 2026): join/support/account are static and
         # cheap; regenerating with the network keeps Stripe-link env
@@ -4874,6 +5014,7 @@ def main():
         generate_spacex_dashboard(dry_run=args.dry_run)
         generate_tesla_dashboard(dry_run=args.dry_run)
         generate_offshore_north_dashboard(dry_run=args.dry_run)
+        generate_offshore_north_glossary(dry_run=args.dry_run)
         generate_data_hub_page(dry_run=args.dry_run)
         # Member surface (Aug 2026): static + cheap; regenerating with the
         # network keeps Stripe-link env changes and lineup names current.

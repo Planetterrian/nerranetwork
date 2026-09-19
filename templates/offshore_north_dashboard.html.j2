@@ -183,6 +183,7 @@
           {% endfor %}
         </div>
         {% if primary.get('url') %}<a class="on-btn ghost" href="{{ primary.url }}" target="_blank" rel="noopener">Official race site ↗</a>{% endif %}
+        <a class="on-btn ghost" href="{{ path_prefix }}offshore-north-glossary.html" style="margin-left:.5rem;">Plain Sailing glossary →</a>
       </div>
     </div>
   </div>
@@ -201,6 +202,7 @@
         <li><span class="d">{{ p.date }}</span><span>{{ p.text }} <a href="{{ p.url }}" target="_blank" rel="noopener" class="on-muted">↗</a></span></li>
         {% endfor %}
       </ul>
+      {% set pn = d.get('position_note') or {} %}{% if pn.get('text') %}<p class="on-muted" style="margin:.7rem 0 0;color:#c7d6e3;"><span class="tag">As of {{ pn.get('as_of', '') }}</span> {{ pn.text }} {% if pn.get('url') %}<a href="{{ pn.url }}" target="_blank" rel="noopener">source ↗</a>{% endif %}</p>{% endif %}
       <p class="on-muted" style="margin:.8rem 0 0;">The newest dated post from the team's own channels that describes a movement, refreshed nightly and after each episode; the log above is operator-verified. Between fixes the boat is wherever the tracker says it is — not wherever this page guesses.</p>
       <a class="on-btn ghost" href="{{ camp.get('tracker_url', '#') }}" target="_blank" rel="noopener">Open the team's tracker ↗</a>
     </div>
@@ -222,6 +224,13 @@
       <h2>Latest offshore headlines <span class="sm">the press the show reads</span></h2>
       <ul class="on-feed" id="onHeadlines"><li class="on-muted">Loading…</li></ul>
       <p class="on-muted" id="onFetched" style="margin:.7rem 0 0;"></p>
+    </div>
+  </div>
+
+  <div class="on-grid one">
+    <div class="on-panel">
+      <h2>In the press <span class="sm">coverage of the campaign, newest first · publisher links</span></h2>
+      <ul class="on-feed" id="onPress"><li class="on-muted">Loading…</li></ul>
     </div>
   </div>
 
@@ -263,10 +272,10 @@
 
   <div class="on-grid one">
     <div class="on-panel">
-      <h2>Season calendar <span class="sm">2026 → 12 November 2028</span></h2>
+      <h2>Season calendar <span class="sm">2026 → 12 November 2028 · states computed from the official dates, by today</span></h2>
       <ul class="on-cal">
         {% for e in d.get('calendar', []) %}
-        <li><span class="d">{{ e.date }}</span><span class="{{ 'emira' if e.get('emira') else '' }}"><a href="{{ e.url }}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">{{ e.label }}</a><span class="st {{ e.status }}">{{ e.status }}</span></span></li>
+        <li><span class="d">{{ e.date }}</span><span class="{{ 'emira' if e.get('emira') else '' }}"><a href="{{ e.url }}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">{{ e.label }}</a><span class="st {{ e.status }}" data-start="{{ e.get('start', '') }}" data-end="{{ e.get('end', '') }}">{{ e.status }}</span></span></li>
         {% endfor %}
       </ul>
     </div>
@@ -281,15 +290,16 @@
         <div class="dates">{{ r.dates }}</div>
         <table>
           {% for p in r.podium %}<tr><td class="p">{{ p.pos }}</td><td><b>{{ p.boat }}</b> — {{ p.skipper }}</td><td class="n">{{ p.note }}</td></tr>{% endfor %}
+          {% for x in r.get('extra', []) %}<tr><td class="p">·</td><td colspan="2" class="n"><b style="color:#e9f2f9;">{{ x.label }}:</b> {{ x.text }}{% if x.get('url') %} <a href="{{ x.url }}" target="_blank" rel="noopener">↗</a>{% endif %}</td></tr>{% endfor %}
         </table>
       </div>
       {% endfor %}
     </div>
     <div class="on-panel">
       {% set rdr = d.get('rdr_imoca_entries', {}) %}
-      <h2>Route du Rhum 2026 — IMOCA entries <span class="sm">{{ rdr.get('entries', []) | length }} listed</span></h2>
+      <h2>Route du Rhum 2026 — IMOCA entries <span class="sm">{{ rdr.get('total_registered') or (rdr.get('entries', []) | length) }} registered · read {{ rdr.get('read_date', d.get('last_verified', '')) }}</span></h2>
       <ul class="on-entries">
-        {% for e in rdr.get('entries', []) %}<li class="{{ 'can' if e.get('canada') else '' }}">{{ e.skipper }} <span class="b">· {{ e.boat }}</span></li>{% endfor %}
+        {% for e in rdr.get('entries', []) %}<li class="{{ 'can' if e.get('canada') else '' }}">{{ e.skipper }} <span class="b">· {{ e.boat }}</span>{% if e.get('azimut_48h') and e.azimut_48h != '—' %} <span class="b" style="font-size:.74rem;">· 48H Azimut: {{ e.azimut_48h }}</span>{% endif %}</li>{% endfor %}
       </ul>
       <p class="on-muted" style="margin:.7rem 0 0;">{{ rdr.get('note', '') }} <a href="{{ rdr.get('source_url', '#') }}" target="_blank" rel="noopener">Source ↗</a></p>
     </div>
@@ -364,6 +374,18 @@
   }
   tick(); setInterval(tick, 1000);
 
+  // Calendar state pills: the same NOT STARTED / RUNNING / FINISHED arithmetic
+  // the show's CAMPAIGN STATUS block does, from the official dates, by today.
+  document.querySelectorAll('.on-cal .st[data-start]').forEach(function(st){
+    var s = st.dataset.start, e = st.dataset.end; if (!s) return;
+    var start = Date.parse(s + 'T00:00:00'), end = e ? Date.parse(e + 'T23:59:59') : start + 86400000;
+    if (isNaN(start)) return;
+    var now = Date.now();
+    if (now < start) { var dd = Math.ceil((start - now)/86400000); st.textContent = 'in ' + dd + (dd === 1 ? ' day' : ' days'); st.className = 'st upcoming'; }
+    else if (now <= end) { st.textContent = 'on now'; st.className = 'st upcoming'; }
+    else { st.textContent = 'finished'; st.className = 'st done'; }
+  });
+
   // Secondary countdown chips: days to go, "on now" between when/end, or done.
   document.querySelectorAll('.on-chip[data-when]').forEach(function(chip){
     var w = Date.parse(chip.dataset.when), e = chip.dataset.end ? Date.parse(chip.dataset.end) : NaN;
@@ -396,6 +418,13 @@
       heads.innerHTML = hl.length ? hl.slice(0, 12).map(function(h){
         return '<li><div class="h"><a href="' + esc(h.url) + '" target="_blank" rel="noopener">' + esc(h.title) + '</a><span class="d">' + esc(h.date || '') + '</span></div><p class="x"><span class="c">' + esc(h.outlet || '') + '</span></p></li>';
       }).join('') : '<li class="on-muted">No headlines fetched yet.</li>';
+    }
+    var pr = document.getElementById('onPress');
+    if (pr) {
+      var ps = data.press || [];
+      pr.innerHTML = ps.length ? ps.slice(0, 10).map(function(h){
+        return '<li><div class="h"><a href="' + esc(h.url) + '" target="_blank" rel="noopener">' + esc(h.title) + '</a><span class="d">' + esc(h.date || '') + '</span></div><p class="x"><span class="c">' + esc(h.outlet || '') + '</span></p></li>';
+      }).join('') : '<li class="on-muted">No press items fetched yet.</li>';
     }
     // Newest dated fix from the live feed wins over the baked log when it is newer.
     var pos = data.position, fixText = document.getElementById('onFixText'), fixMeta = document.getElementById('onFixMeta');

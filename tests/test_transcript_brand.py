@@ -138,6 +138,26 @@ class TestWordLevelRepair:
         out = correct_brand_words(words)
         assert [w["word"] for w in out] == ["the", "Nerra", "Network,"]
 
+    def test_filler_between_the_halves_is_collapsed(self):
+        """UC Ep119 (2026-09-19): "at NARA and Network" — the doubled R
+        heard as a conjunction. The stem is repaired, the filler token is
+        blanked (length + timestamps preserved; caption builders skip
+        empty words), and the text form collapses to the brand."""
+        words = [
+            {"word": "at", "start": 379.96, "end": 380.34, "probability": 0.5},
+            {"word": "NARA", "start": 380.34, "end": 380.68, "probability": 0.55},
+            {"word": "and", "start": 380.68, "end": 380.84, "probability": 0.24},
+            {"word": "Network,", "start": 380.84, "end": 381.16, "probability": 0.8},
+        ]
+        out = correct_brand_words(words)
+        assert [w["word"] for w in out] == ["at", "Nerra", "", "Network,"]
+        assert [w["start"] for w in out] == [w["start"] for w in words]
+        assert correct_brand_text("find us on YouTube at NARA and Network, links") == (
+            "find us on YouTube at Nerra Network, links"
+        )
+        # an unanchored filler shape stays: the archives are not the brand
+        assert correct_brand_text("records at NARA and the archives") == "records at NARA and the archives"
+
     def test_self_contained_token_repaired(self):
         words = [{"word": "NARANetwork.com.", "start": 1.0, "end": 1.4, "probability": 0.6}]
         assert correct_brand_words(words)[0]["word"] == "NerraNetwork.com."
@@ -270,7 +290,11 @@ class TestBackCatalogueIsClean:
     """
 
     def test_no_committed_transcript_contains_the_misspelling(self):
-        pattern = re.compile(r"\bnaran?\b[\s\-]{1,3}network\b|\bnaran?network\b", re.I)
+        pattern = re.compile(
+            r"\bnaran?\b[\s\-]{1,3}network\b|\bnaran?network\b"
+            r"|\bnaran?\b\s+(?:and|an|n)\s+network\b",  # "NARA and Network" (UC Ep119)
+            re.I,
+        )
         offenders = []
         for path in sorted((REPO_ROOT / "digests").glob("*/*_transcript.txt")):
             if pattern.search(path.read_text(encoding="utf-8")):

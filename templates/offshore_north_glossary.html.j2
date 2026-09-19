@@ -1,0 +1,157 @@
+{% extends "base.html.j2" %}
+
+{% block title %}Plain Sailing — the Offshore North glossary of ocean racing | Nerra Network{% endblock %}
+
+{% block og_type %}website{% endblock %}
+
+{% block head_extra %}
+<style>
+  /* ---- Offshore North glossary (scoped under .on-gl) ---- */
+  .on-gl { --on-navy:#0B3C5D; --on-sea:#1F6F9F; --on-foam:#5BC0EB; --on-line:rgba(91,192,235,.22);
+    --on-muted:#9db4c9; --on-text:#e9f2f9; color:var(--on-text); }
+  .on-gl-hero { background:
+      radial-gradient(900px 420px at 15% -10%, rgba(91,192,235,.2), transparent 60%),
+      linear-gradient(180deg,#06131f 0%,#0a2136 60%,#0b1b2c 100%);
+    border-bottom:1px solid var(--on-line); }
+  .on-gl-wrap { max-width:1040px; margin:0 auto; padding:calc(var(--nav-height,64px) + 2.2rem) 1.25rem 2rem; }
+  .on-gl-kicker { display:inline-flex; gap:8px; align-items:center; font-size:.78rem; letter-spacing:.14em; text-transform:uppercase; color:var(--on-foam); font-weight:700; margin-bottom:.6rem; }
+  .on-gl h1 { font-size:clamp(1.8rem,4vw,2.6rem); line-height:1.08; margin:0 0 .5rem; font-weight:800; letter-spacing:-.02em; }
+  .on-gl-sub { color:var(--on-muted); max-width:70ch; margin:0 0 1.2rem; font-size:1.02rem; }
+  .on-gl-sub a { color:var(--on-foam); }
+  .on-gl-nav { display:flex; flex-wrap:wrap; gap:.5rem; margin:.2rem 0 0; }
+  .on-gl-nav a { display:inline-flex; gap:6px; align-items:baseline; padding:6px 12px; border-radius:999px; border:1px solid var(--on-line);
+    background:rgba(31,111,159,.18); color:#fff; text-decoration:none; font-size:.84rem; }
+  .on-gl-nav a b { color:var(--on-foam); font-variant-numeric:tabular-nums; }
+  .on-gl-search { margin-top:1rem; display:flex; gap:.6rem; align-items:center; }
+  .on-gl-search input { flex:1; max-width:420px; padding:.6rem .9rem; border-radius:12px; border:1px solid var(--on-line);
+    background:rgba(8,24,40,.7); color:#fff; font-size:.95rem; }
+  .on-gl-search .n { color:var(--on-muted); font-size:.82rem; }
+
+  .on-gl-main { max-width:1040px; margin:0 auto; padding:0 1.25rem 2rem; }
+  .on-gl-group { margin:1.6rem 0 .4rem; }
+  .on-gl-group h2 { font-size:1.25rem; margin:0 0 .25rem; letter-spacing:-.01em; }
+  .on-gl-group p.blurb { color:var(--on-muted); margin:0 0 .9rem; font-size:.92rem; max-width:80ch; }
+  .on-gl-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:.9rem; }
+  .on-term { background:var(--nn-surface,#0f1f31); border:1px solid var(--on-line); border-radius:16px; padding:1rem 1.1rem; display:flex; flex-direction:column; gap:.45rem; scroll-margin-top:calc(var(--nav-height,64px) + 1rem); }
+  .on-term h3 { margin:0; font-size:1.05rem; display:flex; gap:8px; align-items:baseline; flex-wrap:wrap; }
+  .on-term h3 a { color:#fff; text-decoration:none; }
+  .on-term h3 .aka { color:var(--on-muted); font-size:.78rem; font-weight:400; }
+  .on-term .gist { color:#fff; font-weight:600; font-size:.92rem; line-height:1.4; }
+  .on-term .body { color:#c7d6e3; font-size:.88rem; line-height:1.55; margin:0; }
+  .on-term .repeat { border-left:3px solid var(--on-foam); padding:.35rem .7rem; margin:.1rem 0 0; color:#e9f2f9; font-size:.9rem; font-style:italic; background:rgba(91,192,235,.07); border-radius:0 10px 10px 0; }
+  .on-term .foot { display:flex; flex-wrap:wrap; gap:.5rem 1rem; font-size:.78rem; color:var(--on-muted); margin-top:.15rem; }
+  .on-term .foot a { color:var(--on-foam); text-decoration:none; }
+  .on-term .foot a:hover { text-decoration:underline; }
+  .on-term.hide { display:none; }
+
+  .on-ps { max-width:1040px; margin:0 auto 2rem; padding:0 1.25rem; }
+  .on-ps h2 { font-size:1.25rem; margin:1.4rem 0 .25rem; }
+  .on-ps p.blurb { color:var(--on-muted); margin:0 0 .9rem; font-size:.92rem; max-width:80ch; }
+  .on-ps ol { list-style:none; padding:0; margin:0; display:grid; gap:.7rem; }
+  .on-ps li { background:var(--nn-surface,#0f1f31); border:1px solid var(--on-line); border-radius:14px; padding:.85rem 1rem; }
+  .on-ps .h { display:flex; gap:10px; justify-content:space-between; align-items:baseline; flex-wrap:wrap; }
+  .on-ps .h a { color:#fff; font-weight:700; text-decoration:none; }
+  .on-ps .h a:hover { color:var(--on-foam); }
+  .on-ps .d { color:var(--on-muted); font-size:.78rem; white-space:nowrap; }
+  .on-ps .x { color:#c7d6e3; font-size:.88rem; margin:.35rem 0 .3rem; line-height:1.5; }
+  .on-ps .play { display:inline-flex; gap:6px; align-items:center; font-size:.8rem; color:var(--on-foam); text-decoration:none; margin-right:1rem; }
+  .on-ps .play:hover { text-decoration:underline; }
+
+  .on-gl-foot { max-width:1040px; margin:0 auto 2rem; padding:0 1.25rem; color:var(--on-muted); font-size:.78rem; }
+  .on-gl-foot a { color:var(--on-foam); }
+  .on-btn { display:inline-flex; align-items:center; gap:8px; margin-top:.9rem; background:linear-gradient(135deg,var(--on-sea),var(--on-foam));
+    color:#031018; font-weight:700; padding:.6rem 1.1rem; border-radius:12px; text-decoration:none; font-size:.92rem; }
+  .on-btn.ghost { background:transparent; color:var(--on-foam); border:1px solid var(--on-line); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="on-gl">
+  <div class="on-gl-hero">
+    <div class="on-gl-wrap">
+      <div class="on-gl-kicker">Offshore North · Plain Sailing</div>
+      <h1>Ocean racing, explained properly — the Offshore North glossary</h1>
+      <p class="on-gl-sub">{{ term_count }} terms across {{ g.get('groups', []) | length }} themes: the class and its rules, the boat, racing and navigation, the races on the calendar, and the money behind it all — written for someone who has never touched a rope and wants to follow the sport anyway. Each card ends on the one sentence you could repeat at the dock. The companion to the <a href="{{ path_prefix }}{{ show_page }}">Offshore North</a> podcast and its <a href="{{ path_prefix }}offshore-north-dashboard.html">campaign dashboard</a>.</p>
+      <div class="on-gl-nav">
+        {% for grp in g.get('groups', []) %}<a href="#{{ grp.id }}"><span>{{ grp.title }}</span><b>{{ grp.terms | length }}</b></a>{% endfor %}
+        {% if plain_sailing %}<a href="#heard"><span>Heard on the show</span><b>{{ plain_sailing | length }}</b></a>{% endif %}
+      </div>
+      <div class="on-gl-search">
+        <input type="search" id="onGlSearch" placeholder="Search the glossary — foil, doldrums, Route du Rhum…" aria-label="Search the glossary">
+        <span class="n" id="onGlCount"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="on-gl-main">
+    {% for grp in g.get('groups', []) %}
+    <section class="on-gl-group" id="{{ grp.id }}">
+      <h2>{{ grp.title }}</h2>
+      <p class="blurb">{{ grp.blurb }}</p>
+      <div class="on-gl-grid">
+        {% for t in grp.terms %}
+        {% set tid = t.term | lower | replace(' ', '-') | replace("'", '') | replace('’', '') | replace('/', '-') %}
+        <article class="on-term" id="t-{{ tid }}" data-q="{{ (t.term ~ ' ' ~ (t.aka or '') ~ ' ' ~ t.gist ~ ' ' ~ t.body) | lower | e }}">
+          <h3><a href="#t-{{ tid }}">{{ t.term }}</a>{% if t.aka %}<span class="aka">also: {{ t.aka }}</span>{% endif %}</h3>
+          <div class="gist">{{ t.gist }}</div>
+          <p class="body">{{ t.body }}</p>
+          {% if t.repeat %}<div class="repeat">{{ t.repeat }}</div>{% endif %}
+          <div class="foot">
+            {% for h in t.heard %}<a href="{{ path_prefix }}{{ h.url }}" title="{{ h.title }}">▶ Heard on Ep {{ h.episode_num }}{% if h.at %} at {{ h.at }}{% endif %}</a>{% endfor %}
+            {% if t.source %}<a href="{{ t.source }}" target="_blank" rel="noopener">Source ↗</a>{% endif %}
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+    </section>
+    {% endfor %}
+  </div>
+
+  {% if plain_sailing %}
+  <div class="on-ps" id="heard">
+    <h2>Plain Sailing — every explainer the show has aired</h2>
+    <p class="blurb">Each Offshore North episode carries one two-minute explainer. Here they are in order, with the episode page and a link that opens the audio at the moment the segment starts.</p>
+    <ol>
+      {% for ps in plain_sailing %}
+      <li>
+        <div class="h"><a href="{{ path_prefix }}{{ ps.url }}">Ep {{ ps.episode_num }} — {{ ps.title }}</a><span class="d">{{ ps.date }}</span></div>
+        <p class="x">{{ ps.teaser }}</p>
+        {% if ps.audio_url %}<a class="play" href="{{ ps.audio_url }}" target="_blank" rel="noopener">▶ Play from {{ ps.at or 'the start' }}</a>{% endif %}
+        <a class="play" href="{{ path_prefix }}{{ ps.url }}">Read the episode →</a>
+      </li>
+      {% endfor %}
+    </ol>
+  </div>
+  {% endif %}
+
+  <p class="on-gl-foot">
+    Entries explain established mechanisms and rules; specific numbers are the organisers' own or ones the show has verified (last checked {{ g.get('last_verified', '') }}). Nothing here describes a campaign's private plans. Corrections welcome via the <a href="{{ path_prefix }}contact.html">contact page</a>. <a class="on-btn ghost" href="{{ path_prefix }}{{ show_page }}" style="margin-left:.6rem;">Listen to Offshore North</a>
+  </p>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function(){
+  var input = document.getElementById('onGlSearch'), count = document.getElementById('onGlCount');
+  var cards = Array.prototype.slice.call(document.querySelectorAll('.on-term'));
+  if (!input) return;
+  function apply(){
+    var q = (input.value || '').trim().toLowerCase(), shown = 0;
+    cards.forEach(function(c){
+      var hit = !q || (c.dataset.q || '').indexOf(q) !== -1;
+      c.classList.toggle('hide', !hit); if (hit) shown++;
+    });
+    document.querySelectorAll('.on-gl-group').forEach(function(s){
+      s.style.display = s.querySelector('.on-term:not(.hide)') ? '' : 'none';
+    });
+    if (count) count.textContent = q ? shown + ' of ' + cards.length + ' terms' : '';
+  }
+  input.addEventListener('input', apply);
+  if (location.hash && location.hash.indexOf('#t-') === 0) {
+    var el = document.getElementById(location.hash.slice(1));
+    if (el) el.style.boxShadow = '0 0 0 2px #5BC0EB';
+  }
+})();
+</script>
+{% endblock %}

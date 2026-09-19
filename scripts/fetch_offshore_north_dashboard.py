@@ -14,6 +14,8 @@ What it collects, all best-effort:
 * ``headlines`` — recent items from the wider offshore press feeds the
   show itself reads (Vendée Globe wall, Sailorz EN, Scuttlebutt, …),
   keyword-filtered to offshore racing.
+* ``press`` — recent press coverage OF the campaign (a Google News query
+  resolved to publisher URLs), for the "In the press" rail.
 * ``position`` — the newest dated campaign post that reads like a
   position fix (departure, arrival, transit, "heading to …"), so the
   "last known position" card always carries a date and a source.
@@ -78,6 +80,16 @@ _POSITION_HINTS = re.compile(
     r"seaway|delivery)\b",
     re.IGNORECASE,
 )
+
+#: Press coverage OF the campaign (Sep 19 2026): the same Google News
+#: query the show reads, resolved to publisher URLs at fetch time so the
+#: page never links a news.google.com redirect. Headlines only — the
+#: dashboard's "In the press" rail is a reading list, not a source of fact.
+_PRESS_QUERY_URL = (
+    "https://news.google.com/rss/search?q=%22Canada+Ocean+Racing%22+OR+%22Scott+Shawyer%22"
+    "+OR+%22Emira+IV%22&hl=en-US&gl=US&ceid=US:en"
+)
+MAX_PRESS = 10
 
 MAX_POSTS_PER_FEED = 4
 MAX_HEADLINES = 14
@@ -209,6 +221,47 @@ def collect_headlines() -> List[Dict[str, Any]]:
     return items[:MAX_HEADLINES]
 
 
+def collect_press() -> List[Dict[str, Any]]:
+    """Recent press about the campaign, newest first, publisher URLs."""
+    try:
+        parsed = _parse_feed(_PRESS_QUERY_URL)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Press query failed: %s", exc)
+        return []
+    try:
+        from engine.url_utils import resolve_google_news_url
+    except Exception:  # noqa: BLE001
+        resolve_google_news_url = None  # type: ignore[assignment]
+    items: List[Dict[str, Any]] = []
+    seen = set()
+    for entry in (parsed.entries or [])[:30]:
+        link = (entry.get("link") or "").strip()
+        title = _strip(entry.get("title") or "")
+        if not link or not title:
+            continue
+        # Google News titles end " - Outlet"; keep the outlet, trim the title.
+        outlet = ""
+        src = entry.get("source")
+        if isinstance(src, dict):
+            outlet = _strip(src.get("title") or "")
+        if " - " in title:
+            head, _, tail = title.rpartition(" - ")
+            if tail and len(tail) < 60:
+                title, outlet = head.strip(), outlet or tail.strip()
+        # The campaign's own site is the "Latest from the campaign" rail.
+        if resolve_google_news_url is not None:
+            try:
+                link = resolve_google_news_url(link) or link
+            except Exception:  # noqa: BLE001
+                pass
+        if "canadaoceanracing.com" in link or link in seen:
+            continue
+        seen.add(link)
+        items.append({"outlet": outlet, "title": title, "url": link, "date": _entry_date(entry)})
+    items.sort(key=lambda p: p.get("date") or "", reverse=True)
+    return items[:MAX_PRESS]
+
+
 def derive_position(posts: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
     """The newest campaign post whose title/excerpt reads like a movement
     or position fix — reported WITH its date and URL, never inferred."""
@@ -235,6 +288,7 @@ def build(*, now: Optional[_dt.datetime] = None) -> Dict[str, Any]:
     now = now or _dt.datetime.now(_dt.timezone.utc)
     posts = collect_campaign_posts(_campaign_feeds())
     headlines = collect_headlines()
+    press = collect_press()
     position = derive_position(posts)
     public_posts = [{k: v for k, v in p.items() if not k.startswith("_")} for p in posts[:12]]
     return {
@@ -242,6 +296,7 @@ def build(*, now: Optional[_dt.datetime] = None) -> Dict[str, Any]:
         "campaign_posts": public_posts,
         "position": position,
         "headlines": headlines,
+        "press": press,
     }
 
 
@@ -269,6 +324,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         data["campaign_posts"] = previous.get("campaign_posts", [])
         data["position"] = previous.get("position")
         data["campaign_posts_stale"] = True
+    if previous and not data.get("press"):
+        data["press"] = previous.get("press", [])
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     logger.info(

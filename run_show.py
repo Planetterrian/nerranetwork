@@ -1612,6 +1612,9 @@ def run(args: argparse.Namespace) -> None:
         # pre_fetch hook. Default it to empty so a hook-load failure (or a show
         # without memory) can never KeyError in prompt substitution.
         template_vars.setdefault("narrative_memory_section", "")
+        # Offshore North (Sep 19 2026): the computed CAMPAIGN STATUS block
+        # from shows/hooks/offshore_north.py. Same defaulting contract.
+        template_vars.setdefault("campaign_status", "")
         # Привет, Русский! vocabulary memory (June 2026): the prompts
         # reference {vocab_review_section}, supplied by the show's hook.
         # Same defaulting contract as above.

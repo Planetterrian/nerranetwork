@@ -563,6 +563,8 @@ def build_podcast_template_vars(
     # in that dead block. setdefault means a working hook is unaffected.
     pod_vars.setdefault("narrative_memory_section", "")
     pod_vars.setdefault("vocab_review_section", "")
+    # Offshore North (Sep 19 2026): {campaign_status} in both prompts.
+    pod_vars.setdefault("campaign_status", "")
     # Tesla's bespoke memory module injects three placeholders of its own
     # (the generalized shows share {narrative_memory_section} above). A
     # tesla hook-load failure would KeyError the podcast prompt exactly
