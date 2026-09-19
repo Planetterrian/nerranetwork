@@ -78,6 +78,13 @@ def _blog_url_for_episode(slug: str, title: str = "", episode_num=None) -> str:
     if ep_i <= 0:
         return ""
     rel = f"blog/{slug}/ep{ep_i:03d}.html"
+    # "The file exists" was the proxy for "the article exists", and redirect
+    # stubs broke it: a stub IS a file at an epNNN.html path, so this helper
+    # started handing out links to episodes that have no article (Age of AI
+    # Ep1, whose stub points at the summaries page because it published before
+    # the Voices pipeline wrote a digest .md). A stub is not an episode page.
+    if rel in redirect_stub_paths():
+        return ""
     if (ROOT / rel).exists():
         return rel
     return ""
@@ -3704,6 +3711,7 @@ def _load_redirects():
     return redirects, accepted
 
 
+@functools.lru_cache(maxsize=1)
 def redirect_stub_paths():
     """The repo-relative paths ``generate_redirect_stubs`` writes.
 
@@ -3712,7 +3720,8 @@ def redirect_stub_paths():
     be submitted to Google as a real post — advertising a redirect as content.
     """
     redirects, _ = _load_redirects()
-    return {str(r["from"]).strip().lstrip("/") for r in redirects}
+    # frozenset: the result is cached and shared, so no caller can mutate it.
+    return frozenset(str(r["from"]).strip().lstrip("/") for r in redirects)
 
 
 def generate_redirect_stubs(*, dry_run=False):
