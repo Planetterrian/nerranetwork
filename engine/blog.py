@@ -595,6 +595,33 @@ def extract_blog_metadata(
     }
 
 
+#: Companion pages a show's blog posts link to (Sep 19 2026). Keyed by slug;
+#: a show without an entry renders no panel. Paths are site-relative and
+#: prefixed with ``path_prefix`` in the template.
+SHOW_RESOURCES = {
+    "offshore_north": {
+        "title": "Follow the campaign between episodes",
+        "blurb": (
+            "Offshore North keeps two companion pages: the campaign dashboard "
+            "(EMIRA IV's last known position with its date and source, the "
+            "team's tracker, race countdowns and states, results on record, "
+            "the Route du Rhum entry list, and every channel the show reads) "
+            "and the Plain Sailing glossary (ocean racing explained for people "
+            "who have never touched a rope, plus every explainer the show has aired)."
+        ),
+        "links": [
+            {"label": "⛵ Campaign dashboard", "href": "offshore-north-dashboard.html"},
+            {"label": "📖 Plain Sailing glossary", "href": "offshore-north-glossary.html"},
+            {"label": "Story tracker", "href": "offshore-north-narrative.html"},
+        ],
+    },
+}
+
+
+def _show_resources(show_slug: str) -> dict:
+    return dict(SHOW_RESOURCES.get(show_slug) or {})
+
+
 # ---------------------------------------------------------------------------
 # Markdown cleaning
 # ---------------------------------------------------------------------------
@@ -1273,6 +1300,10 @@ def generate_blog_post_html(
         "prev_post": prev_post,
         "next_post": next_post,
         "rss_file": show_config.get("rss_file", ""),
+        # Sep 19 2026: a show's companion resources, rendered as a panel
+        # under the episode nav (Offshore North: the campaign dashboard and
+        # the Plain Sailing glossary). Empty for every other show.
+        "show_resources": _show_resources(show_slug),
         "blog_rss_url": f"https://nerranetwork.com/blog_{show_slug}.rss",
         "show_page": show_config.get("show_page", ""),
         "summaries_page": show_config.get("summaries_page", ""),

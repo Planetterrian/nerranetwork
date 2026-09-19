@@ -267,7 +267,9 @@ class TestEditorialRules:
 
     def test_standing_facts_refreshed(self):
         f = _facts()
-        assert "14 September 2026" in f
+        # the verification date moves with each pass (19 Sep 2026 onward);
+        # the guard is that it is dated, not what day it says
+        assert re.search(r"\*\*Last verified:\*\* \d{1,2} [A-Z][a-z]+ 20\d\d", f)
         assert "CAN 80" in f
         assert "heading back to Europe" in f
         assert "Entry CONFIRMED" in f

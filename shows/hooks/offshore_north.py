@@ -14,7 +14,25 @@ _SLUG = "offshore_north"
 
 
 def pre_fetch(config, *, episode_num=None, today_str=None) -> dict:
-    return show_memory.memory_pre_fetch(config, _SLUG)
+    ctx = dict(show_memory.memory_pre_fetch(config, _SLUG) or {})
+    # Sep 19 2026: the dated CAMPAIGN STATUS block, computed from the same
+    # verified record the public dashboard bakes in (last known position
+    # and its age, race states by today's date, results on record, the
+    # Route du Rhum entry, the countdown). Both prompts reference
+    # {campaign_status}; run_show / engine.pipeline default it to "" so
+    # a failure here degrades to the pre-Sep-19 prompt, never a KeyError.
+    try:
+        from engine.offshore_north_status import campaign_status_from_files
+
+        ctx["campaign_status"] = campaign_status_from_files()
+    except Exception as exc:  # noqa: BLE001
+        import logging
+
+        logging.getLogger(__name__).warning(
+            "Offshore North campaign status skipped (non-fatal): %s", exc
+        )
+        ctx["campaign_status"] = ""
+    return ctx
 
 
 def post_generate(config, *, digest_text="", episode_num=None) -> None:
