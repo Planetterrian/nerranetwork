@@ -111,10 +111,7 @@ COMPACT_PROMO_SHOWS = frozenset({"offshore_north"})
 NETWORK_SURFACES: list[dict[str, str]] = [
     {
         "id": "gallery",
-        # Was 3. Two surfaces joined the pool in Sep 2026 (Nerra Daily and
-        # Nerra Personal); the free gallery keeps a boost but no longer takes
-        # triple the airtime of the network's own daily edition.
-        "weight": "2",
+        "weight": "3",
         "spoken": (
             "And on the website: every episode's visuals live in our free "
             "image gallery at nerranetwork.com/gallery — royalty-free under "
@@ -201,7 +198,10 @@ NETWORK_SURFACES: list[dict[str, str]] = [
         "url": "age-of-ai-apply.html",
     },
     {
-        # Sep 19 2026 — NEITHER of the next two was in this pool. The network's
+        # Sep 19 2026 — NEITHER of the next two was in this pool. Gallery's
+        # weight of 3 is left alone: it is a July 2026 operator decision, and
+        # adding two entries already dilutes every surface proportionally, so
+        # there was nothing to make room for. The network's
         # combined daily edition and its only paid product were never mentioned
         # on air or in the X replies, while the free image gallery had triple
         # airtime. Nerra Daily is also the cheapest show to make ($0.085/ep),

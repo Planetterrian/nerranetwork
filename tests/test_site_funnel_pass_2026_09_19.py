@@ -564,10 +564,13 @@ class TestPersonalAndNerraDailyArePlugged:
         }
         assert {"personal", "nerra_daily"} <= seen
 
-    def test_gallery_no_longer_triples_the_rotation(self):
+    def test_gallery_keeps_its_july_2026_weight(self):
+        """Adding two surfaces already dilutes every entry proportionally, so
+        there was nothing to make room for — and gallery's boost is a prior
+        operator decision, not spare capacity."""
         from engine.network_promo import NETWORK_SURFACES
         gallery = next(s for s in NETWORK_SURFACES if s["id"] == "gallery")
-        assert int(gallery["weight"]) <= 2
+        assert int(gallery["weight"]) == 3
 
     def test_spoken_copy_avoids_chapter_marker_trigger_phrases(self):
         """The module's own rule: spoken copy must not collide with the chapter
