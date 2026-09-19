@@ -650,3 +650,34 @@ class TestCaptureAttributionIsLoudWhenBroken:
                 f"{tag} is produced by engine.funnel but the Worker would drop "
                 "it, losing the attribution"
             )
+
+
+class TestAStubIsNotAnEpisodePage:
+    """`_blog_url_for_episode` used file existence as the proxy for "this
+    episode has an article". A redirect stub IS a file at an epNNN.html path,
+    so the moment stubs shipped the helper began handing out links to episodes
+    with no article — Age of AI Ep1 (published before the Voices pipeline wrote
+    a digest .md) and the thirteen purged DP Pod episodes. Caught by
+    test_blog_url_helper_uses_underscores after the stubs merged."""
+
+    def test_stubbed_episode_yields_no_blog_url(self):
+        assert gh._blog_url_for_episode("age_of_ai", title="Ep 1: Debut") == ""
+
+    def test_purged_episodes_yield_no_blog_url(self):
+        for ep in (4, 5, 6, 7, 10, 12, 13, 14, 16, 17, 18, 20, 22):
+            assert gh._blog_url_for_episode("dp_pod", episode_num=ep) == "", ep
+
+    def test_real_episodes_still_resolve(self):
+        assert gh._blog_url_for_episode("dp_pod", episode_num=8) == (
+            "blog/dp_pod/ep008.html"
+        )
+        assert gh._blog_url_for_episode("age_of_ai", title="Ep 2: Dan Perra") == (
+            "blog/age_of_ai/ep002.html"
+        )
+
+    def test_stub_set_is_immutable_and_cached(self):
+        """The helper runs once per episode in a loop, so the YAML read is
+        memoised — which means the result is shared and must not be mutable."""
+        first = gh.redirect_stub_paths()
+        assert isinstance(first, frozenset)
+        assert gh.redirect_stub_paths() is first
