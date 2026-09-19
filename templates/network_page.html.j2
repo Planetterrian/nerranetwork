@@ -44,7 +44,7 @@
       "@type": "PodcastSeries",
       "name": "{{ s.name }}",
       "description": "{{ s.description_long[:200] | e }}",
-      "webFeed": "https://nerranetwork.com/{{ s.rss_file }}",
+      {% if s.has_feed %}"webFeed": "https://nerranetwork.com/{{ s.rss_file }}",{% endif %}
       "image": "https://nerranetwork.com/{{ s.podcast_image }}",
       "url": "https://nerranetwork.com/{{ s.show_page }}"
     }{% if not loop.last %},{% endif %}
@@ -464,7 +464,9 @@
                         {% if s.spotify_url %}
                         <a href="{{ s.spotify_url | with_utm(campaign=s.slug) }}" target="_blank" rel="noopener" class="subscribe-link-btn" aria-label="Subscribe to {{ s.name }} on Spotify" data-show="{{ s.slug }}">Spotify</a>
                         {% endif %}
+                        {%- if s.has_feed %}
                         <a href="{{ path_prefix }}{{ s.rss_file }}" class="subscribe-link-btn subscribe-link-rss" aria-label="Subscribe to {{ s.name }} via RSS" data-show="{{ s.slug }}">RSS</a>
+                        {%- endif %}
                     </div>
                 </div>
                 {% endfor %}

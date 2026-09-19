@@ -20,10 +20,10 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Omni View — A new U.S. military arrangement in Greenland could reshape… | Nerra Network">
     <meta name="twitter:description" content="Latest: Ep 180: A new U.S. military arrangement in Greenland could reshape Arctic security arrangements…. Omni View — the day's most important world news, explained calmly from every side. A daily balanced briefing in plain language, without clickbait or spin.">
-    <meta name="twitter:image" content="https://nerranetwork.com/assets/covers/omni-view.jpg">
+    <meta name="twitter:image" content="https://nerranetwork.com/assets/covers/omni-view.jpg"><meta name="twitter:site" content="@nerranetwork">
+    <meta name="twitter:creator" content="@nerranetwork">
 
     <link rel="canonical" href="https://nerranetwork.com/omni-view.html">
-    
     <link rel="alternate" type="application/rss+xml" title="Omni View RSS" href="omni_view_podcast.rss">
     
     
@@ -650,6 +650,7 @@
                     <span style="background:var(--nn-card);border:1px solid var(--nn-border);padding:2px 10px;border-radius:6px;">~12 min</span>
                 </div>
                 <p class="show-hero-desc">A calm daily briefing on the day's most important stories worldwide — every region, every side, in plain language for everyone from teens to seniors. Genuine disagreements presented at their strongest with named advocates, one progress story every day, and each episode ends by pointing you to a second perspective worth reading — so you can decide for yourself.</p>
+                
                 
                 <p style="font-family:var(--font-ui);font-size:0.88rem;color:var(--nn-text-muted);margin-bottom:var(--sp-4);font-style:italic;">For anyone — teenagers to seniors — who wants to actually understand the day's news without clickbait, doom, or spin.</p>
                 
@@ -1690,7 +1691,6 @@
                     
                     <a href="age_of_ai_podcast.rss">The Age of AI RSS</a>
                     
-                    <a href="nerra_voices_podcast.rss">Nerra Voices RSS</a>
                     
                     <a href="offshore_north_podcast.rss">Offshore North RSS</a>
                     
@@ -1712,11 +1712,13 @@
                 </div>
                 <div class="nn-footer-col">
                     <h4>Connect</h4>
-                    <a href="https://x.com/teslashortstime" target="_blank" rel="noopener">@teslashortstime</a>
-                    <a href="https://x.com/omniviewnews" target="_blank" rel="noopener">@omniviewnews</a>
-                    <a href="https://x.com/planetterrian" target="_blank" rel="noopener">@planetterrian</a>
-                    <a href="https://www.youtube.com/@NerraNetwork" target="_blank" rel="noopener">YouTube @NerraNetwork</a>
-                    <a href="https://www.youtube.com/@NerraRU" target="_blank" rel="noopener">YouTube @NerraRU</a>
+                    <a href="https://x.com/nerranetwork" target="_blank" rel="noopener">@nerranetwork <span style="opacity:.6;">(X)</span></a>
+                    <a href="https://www.youtube.com/@NerraNetwork" target="_blank" rel="noopener">@NerraNetwork <span style="opacity:.6;">(YouTube (English))</span></a>
+                    <a href="https://www.youtube.com/@NerraFR" target="_blank" rel="noopener">@NerraFR <span style="opacity:.6;">(YouTube (French))</span></a>
+                    <a href="https://www.youtube.com/@NerraRU" target="_blank" rel="noopener">@NerraRU <span style="opacity:.6;">(YouTube (Russian))</span></a>
+                    <a href="https://x.com/teslashortstime" target="_blank" rel="noopener">@teslashortstime <span style="opacity:.6;">(Tesla Shorts Time)</span></a>
+                    <a href="https://x.com/omniviewnews" target="_blank" rel="noopener">@omniviewnews <span style="opacity:.6;">(Omni View)</span></a>
+                    <a href="https://x.com/planetterrian" target="_blank" rel="noopener">@planetterrian <span style="opacity:.6;">(Planetterrian)</span></a>
                     <a href="contact.html">Contact</a>
                 </div>
             </div>
@@ -1883,6 +1885,7 @@
         const JSON_URL = 'digests/omni_view/summaries_omni.json';
         const JSON_FORMAT = 'wrapped';
         const RSS_URL = 'omni_view_podcast.rss';
+        const HAS_FEED = true;
         const SHOW_NAME = "Omni View";
 
         // --- Helpers ---
@@ -2054,6 +2057,10 @@
         }
 
         function loadFromRSS() {
+            // A show registered before its first episode has no feed file, so
+            // fetching it is a guaranteed 404 and a console error on a page
+            // whose whole job right now is to take guest applications.
+            if (!HAS_FEED) { showNoEpisodes(); return; }
             fetch(RSS_URL)
                 .then(r => r.text())
                 .then(xml => {

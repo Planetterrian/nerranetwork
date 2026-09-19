@@ -134,7 +134,9 @@ NETWORK_SURFACES: list[dict[str, str]] = [
             "More from the Nerra Network: full write-ups, sources, and "
             "transcripts on every episode blog"
         ),
-        "url": "blog.html",
+        # blog/index.html, never "blog.html" — the latter has never existed
+        # and every rotation of this surface shipped a 404 to X.
+        "url": "blog/index.html",
     },
     {
         "id": "summaries",
@@ -194,6 +196,47 @@ NETWORK_SURFACES: list[dict[str, str]] = [
             "More from the Nerra Network: apply to be a guest on The Age of AI"
         ),
         "url": "age-of-ai-apply.html",
+    },
+    {
+        # Sep 19 2026 — NEITHER of the next two was in this pool. Gallery's
+        # weight of 3 is left alone: it is a July 2026 operator decision, and
+        # adding two entries already dilutes every surface proportionally, so
+        # there was nothing to make room for. The network's
+        # combined daily edition and its only paid product were never mentioned
+        # on air or in the X replies, while the free image gallery had triple
+        # airtime. Nerra Daily is also the cheapest show to make ($0.085/ep),
+        # the only one trending up (+22.7% WoW) and the site's most-visited
+        # show page — the one thing a listener of one show most plausibly
+        # wants next.
+        #
+        # Spoken copy changes shipped audio on every English show:
+        # A/B-LISTEN before merging (landmine #17). Revert = delete these two
+        # dicts. De-seeded by shape: no quotable sentence a model can copy,
+        # and no example of what a "personal edition" sounds like.
+        "id": "nerra_daily",
+        "spoken": (
+            "If you follow more than one of our shows, Nerra Daily stitches "
+            "the whole network into one morning listen — free, with chapters, "
+            "at nerranetwork.com/nerra-daily."
+        ),
+        "x_line": (
+            "More from the Nerra Network: Nerra Daily puts the whole network "
+            "in one daily listen"
+        ),
+        "url": "nerra-daily.html",
+    },
+    {
+        "id": "personal",
+        "spoken": (
+            "And if you would rather hear only your shows, in your order, "
+            "Nerra Personal builds you a private daily edition — the details "
+            "are at nerranetwork.com/join."
+        ),
+        "x_line": (
+            "More from the Nerra Network: Nerra Personal builds you a private "
+            "daily edition from the shows you pick"
+        ),
+        "url": "join.html",
     },
     {
         "id": "dp_club",
@@ -285,20 +328,32 @@ def pick_featured_surface(
     return pool[idx]
 
 
-def build_surface_x_reply(show_slug: str, date: _dt.date) -> str:
+def build_surface_x_reply(
+    show_slug: str, date: _dt.date, episode_num: Optional[int] = None
+) -> str:
     """Build an X-length discovery reply that plugs a website surface.
 
     Used on alternate days instead of the sibling-show reply so listeners
     also discover gallery / blogs / trackers / apply without blowing the
     280-char budget by stacking both plugs.
+
+    The link is built by :func:`engine.funnel.network_link` so the click is
+    attributable to the episode that carried it and to the surface that was
+    plugged. The old hand-rolled ``utm_campaign=network_discovery`` did not
+    parse, so those clicks were invisible in ``api/funnel.json``. Without
+    *episode_num* the link is left untagged rather than tagged wrongly.
     """
     surface = pick_featured_surface(show_slug, date)
     if not surface:
         return ""
-    url = (
-        f"https://nerranetwork.com/{surface['url']}"
-        "?utm_source=x&utm_medium=social&utm_campaign=network_discovery"
-    )
+    if episode_num:
+        from engine.funnel import network_link
+        url = network_link(
+            surface["url"], show_slug, int(episode_num),
+            surface=surface["id"],
+        )
+    else:
+        url = f"https://nerranetwork.com/{surface['url']}"
     return f"{surface['x_line']}\n{url}"
 
 

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {#- A stub for a URL that moved or was retired. GitHub Pages cannot issue a
+        301, so the redirect is a meta refresh plus a canonical pointing at the
+        real page. noindex keeps the stub itself out of search results while the
+        canonical passes the signal to the target. The visible link is the
+        fallback for anyone whose browser or reader ignores both. -#}
+    <meta http-equiv="refresh" content="0;url={{ target_rel }}">
+    <meta name="robots" content="noindex, follow">
+    <title>Redirecting to {{ target_label }} — Nerra Network</title>
+    <link rel="canonical" href="https://nerranetwork.com/{{ target }}">
+    <script>window.location.replace("{{ target_rel }}");</script>
+</head>
+<body style="font-family:system-ui,-apple-system,'Segoe UI',sans-serif;background:#0b0f14;color:#e6edf3;margin:0;display:grid;place-items:center;min-height:100vh;padding:24px;">
+    <main style="max-width:32rem;text-align:center;">
+        <p style="margin:0 0 .75rem;font-size:1.05rem;">{{ message }}</p>
+        <p style="margin:0;"><a href="{{ target_rel }}" style="color:#00D4FF;">Continue to {{ target_label }} →</a></p>
+    </main>
+</body>
+</html>

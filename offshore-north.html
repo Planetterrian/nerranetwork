@@ -20,10 +20,10 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Offshore North — Class40 leads Route du Rhum entries | Nerra Network">
     <meta name="twitter:description" content="Latest: Ep 5: Class40 leads Route du Rhum entries. Offshore North — the weekly English-language offshore ocean racing podcast. Canada Ocean Racing's road to the Vendée Globe 2028, the IMOCA fleet, and one concept explained properly every week.">
-    <meta name="twitter:image" content="https://nerranetwork.com/assets/covers/offshore-north.jpg">
+    <meta name="twitter:image" content="https://nerranetwork.com/assets/covers/offshore-north.jpg"><meta name="twitter:site" content="@nerranetwork">
+    <meta name="twitter:creator" content="@nerranetwork">
 
     <link rel="canonical" href="https://nerranetwork.com/offshore-north.html">
-    
     <link rel="alternate" type="application/rss+xml" title="Offshore North RSS" href="offshore_north_podcast.rss">
     
     
@@ -1321,7 +1321,6 @@
                     
                     <a href="age_of_ai_podcast.rss">The Age of AI RSS</a>
                     
-                    <a href="nerra_voices_podcast.rss">Nerra Voices RSS</a>
                     
                     <a href="offshore_north_podcast.rss">Offshore North RSS</a>
                     
@@ -1343,11 +1342,13 @@
                 </div>
                 <div class="nn-footer-col">
                     <h4>Connect</h4>
-                    <a href="https://x.com/teslashortstime" target="_blank" rel="noopener">@teslashortstime</a>
-                    <a href="https://x.com/omniviewnews" target="_blank" rel="noopener">@omniviewnews</a>
-                    <a href="https://x.com/planetterrian" target="_blank" rel="noopener">@planetterrian</a>
-                    <a href="https://www.youtube.com/@NerraNetwork" target="_blank" rel="noopener">YouTube @NerraNetwork</a>
-                    <a href="https://www.youtube.com/@NerraRU" target="_blank" rel="noopener">YouTube @NerraRU</a>
+                    <a href="https://x.com/nerranetwork" target="_blank" rel="noopener">@nerranetwork <span style="opacity:.6;">(X)</span></a>
+                    <a href="https://www.youtube.com/@NerraNetwork" target="_blank" rel="noopener">@NerraNetwork <span style="opacity:.6;">(YouTube (English))</span></a>
+                    <a href="https://www.youtube.com/@NerraFR" target="_blank" rel="noopener">@NerraFR <span style="opacity:.6;">(YouTube (French))</span></a>
+                    <a href="https://www.youtube.com/@NerraRU" target="_blank" rel="noopener">@NerraRU <span style="opacity:.6;">(YouTube (Russian))</span></a>
+                    <a href="https://x.com/teslashortstime" target="_blank" rel="noopener">@teslashortstime <span style="opacity:.6;">(Tesla Shorts Time)</span></a>
+                    <a href="https://x.com/omniviewnews" target="_blank" rel="noopener">@omniviewnews <span style="opacity:.6;">(Omni View)</span></a>
+                    <a href="https://x.com/planetterrian" target="_blank" rel="noopener">@planetterrian <span style="opacity:.6;">(Planetterrian)</span></a>
                     <a href="contact.html">Contact</a>
                 </div>
             </div>
@@ -1512,6 +1513,7 @@
         const JSON_URL = 'digests/offshore_north/summaries_offshore_north.json';
         const JSON_FORMAT = 'wrapped';
         const RSS_URL = 'offshore_north_podcast.rss';
+        const HAS_FEED = true;
         const SHOW_NAME = "Offshore North";
 
         // --- Helpers ---
@@ -1683,6 +1685,10 @@
         }
 
         function loadFromRSS() {
+            // A show registered before its first episode has no feed file, so
+            // fetching it is a guaranteed 404 and a console error on a page
+            // whose whole job right now is to take guest applications.
+            if (!HAS_FEED) { showNoEpisodes(); return; }
             fetch(RSS_URL)
                 .then(r => r.text())
                 .then(xml => {

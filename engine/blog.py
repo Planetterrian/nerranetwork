@@ -296,6 +296,40 @@ def _clip_words(text: str, limit: int) -> str:
     return clip_words(text, limit)
 
 
+def _share_urls(show_slug: str, episode_num: int, blog_url: str) -> dict:
+    """Funnel-tagged copies of *blog_url*, one per share destination.
+
+    Keyed by the share button ("x", "linkedin", "facebook", "whatsapp",
+    "telegram", "email"). ``engine.funnel`` owns the campaign, so a click
+    that arrives from a reader's share is attributable to the episode that
+    was shared and to the platform it travelled through — which is the only
+    way earned reach can be told apart from direct traffic.
+    """
+    from engine.funnel import (
+        MEDIUM_SHARE, PLACEMENT_BODY, SOURCE_EMAIL_SHARE, SOURCE_FACEBOOK,
+        SOURCE_LINKEDIN, SOURCE_TELEGRAM, SOURCE_WHATSAPP, SOURCE_X,
+        campaign_id, funnel_link,
+    )
+    campaign = campaign_id(
+        show_slug, episode_num, channel="en", kind="post", variant="share",
+    )
+    sources = {
+        "x": SOURCE_X,
+        "linkedin": SOURCE_LINKEDIN,
+        "facebook": SOURCE_FACEBOOK,
+        "whatsapp": SOURCE_WHATSAPP,
+        "telegram": SOURCE_TELEGRAM,
+        "email": SOURCE_EMAIL_SHARE,
+    }
+    return {
+        key: funnel_link(
+            blog_url, source=source, medium=MEDIUM_SHARE,
+            campaign=campaign, placement=PLACEMENT_BODY,
+        )
+        for key, source in sources.items()
+    }
+
+
 @lru_cache(maxsize=64)
 def _show_host_name(show_slug: str) -> str:
     """Host name for *show_slug*, read from the show's YAML.
@@ -1326,6 +1360,13 @@ def generate_blog_post_html(
             else ""
         ),
         "blog_index_url": f"../../blog/{show_slug}/index.html",
+        # Share-row destinations (Sep 2026). These are the ONE place on the
+        # website where a reader hands our own URL to someone else, so they
+        # are the only site links whose campaign the funnel report can read.
+        # They used to be tagged in the template with
+        # ``utm_campaign=blog``, which parse_campaign_id() rejects — every
+        # click earned by a share was counted as unattributed traffic.
+        "share_urls": _share_urls(show_slug, ep_num, blog_url),
         "tagline": show_config.get("tagline", ""),
         "transcript": transcript_text,
         # PodcastEpisode JSON-LD fields. These were referenced by the template

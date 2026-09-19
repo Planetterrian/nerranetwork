@@ -110,6 +110,16 @@ const SOURCE_TAGS = new Set([
   "src-newsletter",
   "src-x",
   "src-nerranetwork",
+  // Sep 2026 — a READER passing one of our pages on. The blog share row now
+  // tags each destination through engine.funnel, so a signup that came from
+  // someone forwarding an episode is distinguishable from our own posting.
+  // Earned reach is the one acquisition channel this network cannot buy, and
+  // it was indistinguishable from direct traffic.
+  "src-facebook",
+  "src-linkedin",
+  "src-whatsapp",
+  "src-telegram",
+  "src-email-share",
 ]);
 
 // Per-show newsletter tags a member may opt into from the join/footer

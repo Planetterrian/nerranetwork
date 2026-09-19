@@ -28,10 +28,13 @@
         <p>In the spirit of this network's honesty rules, here's the real
            ledger — the entire operation runs on roughly
            <strong>${{ monthly_cost_usd }}/month</strong>:</p>
-        <div class="nn-cost-row"><span>Voice synthesis (every episode, every language)</span><span>~40%</span></div>
-        <div class="nn-cost-row"><span>Writing &amp; research models</span><span>~25%</span></div>
-        <div class="nn-cost-row"><span>Artwork &amp; video imagery</span><span>~25%</span></div>
-        <div class="nn-cost-row"><span>Hosting, storage &amp; delivery</span><span>~10%</span></div>
+        {#- The split is computed from api/dashboard.json's 30-day rollup, not
+            typed here. The typed version said voice was the biggest line at
+            40%; imagery is, and it had been for months. Hosting is the one
+            estimated row — it is paid outside the per-episode credit files. -#}
+        {%- for label, percent in cost_split %}
+        <div class="nn-cost-row"><span>{{ label }}</span><span>~{{ percent }}%</span></div>
+        {%- endfor %}
         <p class="nn-fineprint" style="margin-top: var(--sp-3);">A ${{ ((monthly_cost_usd / 30) | round(0, 'ceil')) | int }} monthly
            donation covers about a day of the whole network. Every dollar past
            costs goes to making the shows better — new formats, better

@@ -77,11 +77,26 @@ SOURCE_PODCAST = "podcast"
 SOURCE_NEWSLETTER = "newsletter"
 SOURCE_X = "x"
 SOURCE_SITE = "nerranetwork"
+# A READER passing one of our pages on. Distinct from the surfaces above,
+# which are places the network itself publishes: a share is earned reach,
+# and mixing it into ``nerranetwork`` would hide it inside our own traffic.
+# ``SOURCE_EMAIL_SHARE`` is a reader forwarding a link; ``SOURCE_NEWSLETTER``
+# is an email WE sent.
+SOURCE_FACEBOOK = "facebook"
+SOURCE_LINKEDIN = "linkedin"
+SOURCE_WHATSAPP = "whatsapp"
+SOURCE_TELEGRAM = "telegram"
+SOURCE_EMAIL_SHARE = "email_share"
+
+SHARE_SOURCES = frozenset({
+    SOURCE_X, SOURCE_FACEBOOK, SOURCE_LINKEDIN,
+    SOURCE_WHATSAPP, SOURCE_TELEGRAM, SOURCE_EMAIL_SHARE,
+})
 
 SOURCES = frozenset({
     SOURCE_YOUTUBE, SOURCE_YOUTUBE_RU, SOURCE_YOUTUBE_FR,
     SOURCE_PODCAST, SOURCE_NEWSLETTER, SOURCE_X, SOURCE_SITE,
-})
+}) | SHARE_SOURCES
 
 # utm_medium — WHAT KIND of thing the click came from.
 MEDIUM_SHORT = "short"
@@ -91,10 +106,14 @@ MEDIUM_EMAIL = "email"
 MEDIUM_SOCIAL = "social"
 MEDIUM_WEB = "web"
 MEDIUM_BOOK = "book"
+# A reader forwarding a page (the blog share row). Kept apart from
+# ``social`` (which is the network posting) so earned reach is countable.
+MEDIUM_SHARE = "share"
 
 MEDIUMS = frozenset({
     MEDIUM_SHORT, MEDIUM_LONG, MEDIUM_EPISODE,
     MEDIUM_EMAIL, MEDIUM_SOCIAL, MEDIUM_WEB, MEDIUM_BOOK,
+    MEDIUM_SHARE,
 })
 
 # utm_content — WHICH PLACEMENT inside that thing.
@@ -107,10 +126,15 @@ PLACEMENT_BODY = "body"
 # placement, distinct from ``endcard`` (the Shorts end card's tap link),
 # so QR scans are separable from taps in GA4.
 PLACEMENT_OUTRO = "outro"
+# The reply threaded under an episode's teaser post (sibling-show plug or
+# website-surface plug). Separate from ``body`` — the teaser itself is the
+# body, the reply is a second post with its own click behaviour.
+PLACEMENT_REPLY = "reply"
 
 PLACEMENTS = frozenset({
     PLACEMENT_DESCRIPTION, PLACEMENT_COMMENT, PLACEMENT_ENDCARD,
     PLACEMENT_SHOWNOTES, PLACEMENT_BODY, PLACEMENT_OUTRO,
+    PLACEMENT_REPLY,
 })
 
 # The ``kind`` component of a campaign id — the asset that carried the link.
@@ -342,6 +366,48 @@ def episode_link(
         campaign=campaign_id(
             show_slug, episode, channel=channel, kind=kind_norm,
             variant=variant,
+        ),
+        placement=placement,
+    )
+
+
+NETWORK_BASE_URL = "https://nerranetwork.com"
+
+
+def network_link(
+    path: str,
+    show_slug: str,
+    episode: int,
+    *,
+    surface: str = "",
+    source: str = SOURCE_X,
+    medium: str = MEDIUM_SOCIAL,
+    placement: str = PLACEMENT_REPLY,
+    base_url: str = NETWORK_BASE_URL,
+) -> str:
+    """A funnel-tagged link to a NETWORK page (not an episode's own page).
+
+    The cross-promo and discovery replies posted under each episode's
+    teaser used to hand-roll ``utm_campaign=network_discovery`` /
+    ``cross_promo``. Neither parses, so every click they earned landed in
+    ``api/funnel.json``'s ``unattributed`` bucket and the report could not
+    say whether plugging the gallery or a sibling show did anything. The
+    post still belongs to ONE episode of ONE show, so it gets that
+    episode's campaign with ``kind="post"``; *surface* rides in the
+    campaign's variant slot, which is what makes "which plug earns clicks"
+    answerable at all.
+
+    *path* is relative to the site root, with or without a leading slash.
+    """
+    path = (path or "").strip().lstrip("/")
+    if not path:
+        return ""
+    return funnel_link(
+        f"{base_url.rstrip('/')}/{path}",
+        source=source,
+        medium=medium,
+        campaign=campaign_id(
+            show_slug, episode, channel="en", kind="post", variant=surface,
         ),
         placement=placement,
     )

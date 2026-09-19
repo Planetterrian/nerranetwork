@@ -1593,3 +1593,132 @@ experiments:
       closed into the same ten-trade window; the window never turned over
       because nothing new closed. 19 of 23 episodes since Ep152 declared no
       trade; 9 closed era trades in a month.
+  - id: funnel-attribution-repair-2026-09-19
+    title: "Every published link through engine.funnel (X replies, newsletter forward, blog share row)"
+    area: funnel
+    shipped: 2026-09-19
+    readout: 2026-10-20
+    status: reading
+    baseline: >
+      attribution_coverage_pct 4.049% over the 30 days to 2026-09-17: 10
+      attributed sessions against 237 unattributed, from 134,171 YouTube views
+      and 6,528 downloads. Five places built utm_* links outside
+      engine/funnel.py, and parse_campaign_id() returns None for every campaign
+      they emitted (network_discovery, cross_promo, forward_subscribe,
+      utm_campaign=blog on the share row). None of those names appear anywhere
+      in GA4's 17-row campaign table, so those surfaces measured as nothing at
+      all. Separately, the blog post's Story Tracker link carried utm_source on
+      an INTERNAL href, which starts a fresh GA4 session and overwrites the
+      visitor's real acquisition source.
+    target: >
+      attribution_coverage_pct materially above 4% by 10-20, with at least one
+      of the newly-tagged surfaces (X discovery reply, X cross-promo reply,
+      newsletter forward, blog share) appearing as a parseable campaign in
+      api/funnel.json's click stage. NOT a traffic target: this pass makes
+      existing clicks countable, it does not create clicks. If coverage stays
+      near 4% with the tags in place, the honest read is that those surfaces
+      earn almost nothing — which is itself the finding, and the next question
+      is whether to keep them.
+    notes: >
+      engine.funnel gains SHARE_SOURCES, MEDIUM_SHARE, PLACEMENT_REPLY and
+      network_link(); the plugged surface rides in the campaign's variant slot,
+      so "which plug earns clicks" is answerable for the first time. Outbound
+      Apple/Spotify links are deliberately untouched — those parameters are
+      read by the destination's analytics, never ours. Guards:
+      tests/test_site_funnel_pass_2026_09_19.py.
+
+  - id: site-dead-url-redirects-2026-09-19
+    title: "Redirect stubs + a dead-URL audit for the 26% of landings that 404"
+    area: growth
+    shipped: 2026-09-19
+    readout: 2026-10-20
+    status: reading
+    baseline: >
+      49 of 188 measured landing sessions (26%) over the 28 days to 2026-09-17
+      arrived at a path with no file, every one bouncing at 100%: the thirteen
+      DP Pod blog posts removed in the 2026-08-10 catalogue prune, plus a
+      cluster of blog/dp_pod/<nav target> paths left by a crawl of posts whose
+      chrome links resolved relative before path_prefix was fixed. Nothing in
+      the pipeline noticed, because every check the site had asked whether the
+      pages it GENERATES are sound, never whether the pages people ASK for
+      exist.
+    target: >
+      scripts/audit_dead_urls.py reports clean on the 10-20 GA4 snapshot, and
+      the page_not_found event count on 404.html trends toward zero for paths
+      that have a stub. A new hole appearing is the expected steady state — the
+      audit is there to name it within a day rather than a month.
+    notes: >
+      site/redirects.yaml (25 stubs + 6 accepted 404s, each with a reason),
+      generate_redirect_stubs() in --all and --static-pages, stubs excluded
+      from the sitemap's blog/<show>/ep*.html glob, and a page_not_found GA4
+      event so a 404 is a metric instead of an inference. Feed URLs that never
+      existed stay 404 on purpose: a meta-refresh at a .rss path hands a reader
+      HTML it cannot parse.
+
+  - id: network-x-account-and-llms-txt-2026-09-19
+    title: "@nerranetwork as the network identity, plus llms.txt for answer engines"
+    area: growth
+    shipped: 2026-09-19
+    readout: 2026-10-20
+    status: reading
+    baseline: >
+      twitter:site and twitter:creator did not exist anywhere in the repo, so
+      no link this network has ever shared carried an account. The footer
+      Connect column and the Organization JSON-LD listed three SHOW accounts
+      (@teslashortstime, @omniviewnews, @planetterrian) and no network account,
+      and @NerraFR had been live since 2026-07-21 without appearing anywhere on
+      the site. Search Console was never verified: GSC_VERIFICATION is read by
+      generate_html.py but was passed by no workflow, so the ownership tag
+      could not render even once the secret was set — no impressions, query or
+      coverage data for 1,880 indexed-candidate pages. chatgpt.com already sent
+      4 of 243 sessions with no help at all, against 20 from Google.
+    target: >
+      Share cards attributed to @nerranetwork; Search Console verified and
+      api/gsc_stats.json accruing (operator must set the secret); llms.txt
+      served and the AI Assistant channel above 4 sessions/28d by 10-20.
+    notes: >
+      NETWORK_SOCIAL in generate_html.py is the single owner — an account with
+      an empty handle renders nothing, so the next platform is one line and
+      never a dead link in the meantime. Show accounts stay listed, labelled as
+      shows (operator decision, 2026-09-19). engine/brand.py owns the Mira
+      first-of-its-kind claim, its basis and its correction invitation so the
+      wording cannot drift across surfaces; llms.txt is its first consumer.
+
+  - id: personal-visibility-2026-09-19
+    title: "Nerra Personal: the Nerra Daily upsell band, and Personal + Nerra Daily in the promo rotation"
+    area: growth
+    shipped: 2026-09-19
+    readout: 2026-10-20
+    status: reading
+    baseline: >
+      Nerra Personal is live and sellable (real Stripe links, provisioned
+      Worker, 200 on the sample edition, buy.stripe.com appearing as a 7-session
+      referral) and was reachable from a nav item labelled "Join", one footer
+      line and one homepage band. /nerra-daily.html is the site's most-visited
+      show page (46 views vs SpaceX's 6; 17 landing sessions, bounce 0.35) and
+      Nerra Personal is a personalised Nerra Daily, yet that page had no route
+      to it. engine.network_promo's NETWORK_SURFACES had eight entries and
+      neither Nerra Daily nor Personal was among them, while the free image
+      gallery carried triple weight — so the network's only paid product was
+      never mentioned on air or in the X replies at all. Paid conversion is
+      measured nowhere: no Stripe/member file exists and
+      buttondown_stats.tag_counts is {} beside 5 subscribers.
+    target: >
+      By 10-20: select_personal_upsell events in GA4 with a measurable
+      click-through from nerra-daily.html to join.html, join.html landing
+      sessions above 8/28d, and at least one attributed capture once the
+      Buttondown tag chain is fixed. The honest floor is that the on-air plug
+      reaches ~6,500 downloads and 134,000 views a month against a site that
+      sees 243 sessions — if Personal still converts nothing after a month of
+      that, the product's problem is not visibility.
+    notes: >
+      Registry-gated band (personal_upsell on nerra_daily only) with an internal
+      CTA measured by EVENT, never a UTM — a UTM on an internal href starts a
+      new GA4 session and overwrites the visitor's acquisition source, which is
+      the defect this pass removed from the blog Story Tracker link.
+      ⚠️ The two NETWORK_SURFACES entries change SPOKEN audio on every English
+      show: A/B-LISTEN the first episode per landmine #17 before trusting them;
+      revert is deleting the two dicts. The gallery's weight of 3 is left alone
+      (a July 2026 operator decision) — adding two entries already dilutes every
+      surface proportionally. Guards:
+      tests/test_site_funnel_pass_2026_09_19.py.

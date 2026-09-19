@@ -41,7 +41,9 @@ Worker's 90-day JWT cookie + Buttondown record). Nothing was forked:
 | Revocation | Subscription cancelled → `feedtok:` mapping deleted → feed 404s immediately |
 
 Pricing (operator sets the amounts in Stripe; the pages read the links
-from env): **Personal $4.99/mo**, **Personal + Local $8.99/mo**. Tier is
+from env): **Personal $4.99/mo**, **Personal News Network $8.99/mo** (the
+public name since 13 Sep 2026 — see that section below; the internal tier
+id stays `personal_local`). Tier is
 carried on the Payment Link's `metadata.tier`
 (`personal` / `personal_local`), which Stripe copies onto every Checkout
 Session the link creates.
@@ -62,7 +64,7 @@ local brief, and a stream-copy concat. Measured marginal cost
 ~$0.05–0.07/subscriber/day. Feeds keep the newest 7 episodes
 (`PERSONAL_FEED_MAX_EPISODES`); older audio is deleted on prune.
 
-**The local brief** (personal_local tier): Open-Meteo geocoding +
+**The local brief** (`personal_local` tier — publicly Personal News Network): Open-Meteo geocoding +
 forecast (free, keyless, measured data only) plus ONE
 web-search-grounded Grok call for a local story/event — the field-note
 honesty contract: source named aloud, `SKIP` when nothing verifiable,
@@ -87,10 +89,10 @@ dashboard (`/account.html`). Closed vocabulary — `PERSONAL_ADDONS` in
 
 | Add-on | Tier | Source | Marginal cost |
 |---|---|---|---|
-| `weather` | Personal + Local | Open-Meteo (measured, keyless, free) | ~0 |
-| `local_news` | Personal + Local | Mira web search, source named aloud | shared* |
-| `events` | Personal + Local | Mira web search | shared* |
-| `traffic` | Personal + Local | Mira web search (real disruptions only — regional 511 APIs all need keys, so research beats integration) | shared* |
+| `weather` | Personal News Network | Open-Meteo (measured, keyless, free) | ~0 |
+| `local_news` | Personal News Network | Mira web search, source named aloud | shared* |
+| `events` | Personal News Network | Mira web search | shared* |
+| `traffic` | Personal News Network | Mira web search (real disruptions only — regional 511 APIs all need keys, so research beats integration) | shared* |
 | `markets` | Personal | `api/tsla.json` + `api/spcx.json` (deterministic, zero LLM) | ~0 |
 
 *One Grok web-search call covers ALL selected researched sections for a
@@ -143,7 +145,8 @@ uncomment bindings before the resources exist):
 
 Stripe (dashboard, ~15 min):
 5. Products + **Payment Links**: Personal $4.99/mo (link metadata
-   `tier=personal`), Personal+Local $8.99/mo (`tier=personal_local`),
+   `tier=personal`), Personal News Network $8.99/mo
+   (`tier=personal_local`),
    Donate monthly (open amount), Donate one-time (open amount). Enable
    the customer portal for self-serve cancellation.
 6. Webhook endpoint `https://api.nerranetwork.com/api/stripe/webhook`

@@ -7,6 +7,7 @@ remove the hero/footer or break the per-show branding.
 
 from __future__ import annotations
 
+import re
 import datetime
 
 from engine import newsletter_template as nt
@@ -1116,20 +1117,46 @@ class TestDailyReadabilityCleanup:
 
 def test_reply_share_includes_forward_subscribe_line():
     show = nt._load_show_branding("tesla")
-    out = nt._build_reply_share_html(show, slug="tesla")
+    out = nt._build_reply_share_html(show, slug="tesla", episode_num=604)
     assert "Forwarded this email?" in out
     assert "Subscribe here" in out
-    # UTM attribution, with the query string BEFORE the #newsletter fragment.
-    assert "utm_campaign=forward_subscribe" in out
-    assert "forward_subscribe#newsletter" in out
+    # Sep 2026: the campaign is built by engine.funnel so a signup earned by
+    # a forward is attributable (the old hand-rolled "forward_subscribe" did
+    # not parse). Query string still BEFORE the #newsletter fragment.
+    assert "utm_campaign=nn-tesla-en-post-ep604-forward" in out
+    assert "forward&utm_content=body#newsletter" in out
+
+
+def test_reply_share_forward_campaign_is_parseable():
+    """A campaign engine.funnel cannot parse is a campaign the funnel
+    report drops into ``unattributed`` — the exact failure this replaced."""
+    from engine.funnel import parse_campaign_id
+    show = nt._load_show_branding("tesla")
+    out = nt._build_reply_share_html(show, slug="tesla", episode_num=604)
+    campaign = re.search(r"utm_campaign=([^&\"#]+)", out).group(1)
+    parsed = parse_campaign_id(campaign)
+    assert parsed is not None
+    assert parsed.show == "tesla" and parsed.episode == 604
+
+
+def test_reply_share_forward_line_untagged_without_episode():
+    """No episode number means no attribution is possible, so the link
+    ships clean rather than carrying a campaign that cannot be parsed."""
+    show = nt._load_show_branding("tesla")
+    out = nt._build_reply_share_html(show, slug="tesla")
+    assert "Subscribe here" in out
+    assert "https://nerranetwork.com/#newsletter" in out
+    assert "utm_campaign=" not in out.split("Subscribe here")[0][-300:]
 
 
 def test_reply_share_forward_line_localized_for_russian():
     show = nt._load_show_branding("privet_russian")
-    out = nt._build_reply_share_html(show, slug="privet_russian")
+    out = nt._build_reply_share_html(
+        show, slug="privet_russian", episode_num=70
+    )
     assert "Вам переслали это письмо?" in out
     assert "Подпишитесь здесь" in out
-    assert "utm_campaign=forward_subscribe" in out
+    assert "utm_campaign=nn-privet_russian-en-post-ep070-forward" in out
 
 
 def test_view_in_browser_renders_when_archive_url_passed():

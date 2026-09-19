@@ -20,10 +20,10 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Unintended Consequences — Norway introduced vessel quotas to protect cod stocks, only… | Nerra Network">
     <meta name="twitter:description" content="Latest: Ep 119: Norway introduced vessel quotas to protect cod stocks, only to watch fishers discard…. Unintended Consequences — Daily narrative podcast on inventions, policies, and systems that were designed to help but triggered surprising results.">
-    <meta name="twitter:image" content="https://nerranetwork.com/assets/covers/unintended-consequences.jpg">
+    <meta name="twitter:image" content="https://nerranetwork.com/assets/covers/unintended-consequences.jpg"><meta name="twitter:site" content="@nerranetwork">
+    <meta name="twitter:creator" content="@nerranetwork">
 
     <link rel="canonical" href="https://nerranetwork.com/unintended-consequences.html">
-    
     <link rel="alternate" type="application/rss+xml" title="Unintended Consequences RSS" href="unintended_consequences_podcast.rss">
     
     
@@ -650,6 +650,7 @@
                     <span style="background:var(--nn-card);border:1px solid var(--nn-border);padding:2px 10px;border-radius:6px;">~15-18 min</span>
                 </div>
                 <p class="show-hero-desc">A daily narrative podcast profiling inventions, policies, and systems that were meant to help — but triggered surprising, unintended consequences. From the Cobra Effect to social media algorithms, every episode follows a single case study through good intentions, implementation, unexpected fallout, and the lessons we can learn.</p>
+                
                 
                 <p style="font-family:var(--font-ui);font-size:0.88rem;color:var(--nn-text-muted);margin-bottom:var(--sp-4);font-style:italic;">For curious listeners who want stories with depth — historians, policy wonks, designers, engineers, and anyone who's ever wondered why a well-meaning fix made things worse.</p>
                 
@@ -1512,7 +1513,6 @@
                     
                     <a href="age_of_ai_podcast.rss">The Age of AI RSS</a>
                     
-                    <a href="nerra_voices_podcast.rss">Nerra Voices RSS</a>
                     
                     <a href="offshore_north_podcast.rss">Offshore North RSS</a>
                     
@@ -1534,11 +1534,13 @@
                 </div>
                 <div class="nn-footer-col">
                     <h4>Connect</h4>
-                    <a href="https://x.com/teslashortstime" target="_blank" rel="noopener">@teslashortstime</a>
-                    <a href="https://x.com/omniviewnews" target="_blank" rel="noopener">@omniviewnews</a>
-                    <a href="https://x.com/planetterrian" target="_blank" rel="noopener">@planetterrian</a>
-                    <a href="https://www.youtube.com/@NerraNetwork" target="_blank" rel="noopener">YouTube @NerraNetwork</a>
-                    <a href="https://www.youtube.com/@NerraRU" target="_blank" rel="noopener">YouTube @NerraRU</a>
+                    <a href="https://x.com/nerranetwork" target="_blank" rel="noopener">@nerranetwork <span style="opacity:.6;">(X)</span></a>
+                    <a href="https://www.youtube.com/@NerraNetwork" target="_blank" rel="noopener">@NerraNetwork <span style="opacity:.6;">(YouTube (English))</span></a>
+                    <a href="https://www.youtube.com/@NerraFR" target="_blank" rel="noopener">@NerraFR <span style="opacity:.6;">(YouTube (French))</span></a>
+                    <a href="https://www.youtube.com/@NerraRU" target="_blank" rel="noopener">@NerraRU <span style="opacity:.6;">(YouTube (Russian))</span></a>
+                    <a href="https://x.com/teslashortstime" target="_blank" rel="noopener">@teslashortstime <span style="opacity:.6;">(Tesla Shorts Time)</span></a>
+                    <a href="https://x.com/omniviewnews" target="_blank" rel="noopener">@omniviewnews <span style="opacity:.6;">(Omni View)</span></a>
+                    <a href="https://x.com/planetterrian" target="_blank" rel="noopener">@planetterrian <span style="opacity:.6;">(Planetterrian)</span></a>
                     <a href="contact.html">Contact</a>
                 </div>
             </div>
@@ -1703,6 +1705,7 @@
         const JSON_URL = 'digests/unintended_consequences/summaries_unintended_consequences.json';
         const JSON_FORMAT = 'wrapped';
         const RSS_URL = 'unintended_consequences_podcast.rss';
+        const HAS_FEED = true;
         const SHOW_NAME = "Unintended Consequences";
 
         // --- Helpers ---
@@ -1874,6 +1877,10 @@
         }
 
         function loadFromRSS() {
+            // A show registered before its first episode has no feed file, so
+            // fetching it is a guaranteed 404 and a console error on a page
+            // whose whole job right now is to take guest applications.
+            if (!HAS_FEED) { showNoEpisodes(); return; }
             fetch(RSS_URL)
                 .then(r => r.text())
                 .then(xml => {

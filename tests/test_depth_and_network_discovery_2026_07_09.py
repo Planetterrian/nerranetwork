@@ -5,6 +5,7 @@ See ``docs/reviews/depth_and_network_discovery_2026_07_09.md``.
 
 from __future__ import annotations
 
+import re
 import datetime as dt
 from pathlib import Path
 
@@ -153,8 +154,18 @@ class TestNetworkDiscoverySurfaces:
     def test_surface_x_reply_has_utm(self):
         from engine.network_promo import build_surface_x_reply
 
-        text = build_surface_x_reply("tesla", _DAY)
-        assert "utm_campaign=network_discovery" in text
+        # Sep 2026: engine.funnel builds the campaign from the episode that
+        # carried the reply. The old "network_discovery" was not parseable, so
+        # api/funnel.json counted every click these replies earned as
+        # unattributed and could not say which surface was worth plugging.
+        from engine.funnel import parse_campaign_id
+
+        text = build_surface_x_reply("tesla", _DAY, 604)
+        campaign = re.search(r"utm_campaign=([^&\s]+)", text).group(1)
+        parsed = parse_campaign_id(campaign)
+        assert parsed is not None, campaign
+        assert parsed.show == "tesla" and parsed.episode == 604
+        assert parsed.variant, "the plugged surface rides in the variant slot"
         assert "nerranetwork.com/" in text
         assert "More from the Nerra Network:" in text
 
@@ -167,10 +178,13 @@ class TestNetworkDiscoverySurfaces:
         odd = dt.date(2026, 7, 8)   # odd → surface
         assert even.toordinal() % 2 == 0
         assert odd.toordinal() % 2 == 1
-        sibling = run_show._build_cross_promo_reply(cfg, even)
-        surface = run_show._build_cross_promo_reply(cfg, odd)
-        assert "utm_campaign=cross_promo" in sibling
-        assert "utm_campaign=network_discovery" in surface
+        sibling = run_show._build_cross_promo_reply(cfg, even, 604)
+        surface = run_show._build_cross_promo_reply(cfg, odd, 604)
+        # Both are attributable now, and the campaign's variant is what tells
+        # a sibling plug apart from a website-surface plug.
+        assert "utm_campaign=nn-tesla-en-post-ep604-sibling_" in sibling
+        assert "utm_campaign=nn-tesla-en-post-ep604-" in surface
+        assert "sibling_" not in surface.split("utm_campaign=")[1]
 
     def test_newsletter_footer_links_gallery_and_data(self):
         src = (

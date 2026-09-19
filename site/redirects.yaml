@@ -1,0 +1,144 @@
+# Redirect stubs for URLs that used to work, or that people keep asking for.
+#
+# GitHub Pages cannot issue a 301, so a URL that has moved is answered with a
+# tiny generated page: meta refresh + canonical + a visible link
+# (``templates/redirect_stub.html.j2``, written by
+# ``generate_redirect_stubs()`` in ``generate_html.py``). The pattern is the
+# one the hand-written ``finansy-prosto.html`` has used since the RU pages
+# moved under ``ru/``; this file makes it a generated, tested surface instead
+# of a one-off.
+#
+# Why this exists: on 2026-09-18, 49 of 188 measured landing sessions — 26% —
+# arrived at a path with no file, every one bouncing at 100%
+# (``api/ga4_stats.json``). Nothing noticed, because every check the site had
+# asked whether the pages it GENERATES are sound, never whether the pages
+# people ASK for exist. ``scripts/audit_dead_urls.py`` is the instrument;
+# this file is the answer.
+#
+# Rules:
+#   * ``to`` must exist in the repo, and ``from`` must NOT — a stub may never
+#     shadow a real page (guarded in tests).
+#   * Stubs are ``noindex`` and are excluded from ``sitemap.xml``, including
+#     from its ``blog/<show>/ep*.html`` glob.
+#   * Send people somewhere that answers the question they arrived with: a
+#     deleted episode goes to its show's archive, not to the homepage.
+
+redirects:
+  # --- The DP Pod catalogue prune (2026-08-10, operator-directed) ---------
+  # Thirteen episodes were removed from RSS/summaries/blog/site for repeated
+  # levers or high verbatim paste. Their URLs stayed indexed and still take
+  # ~28 landing sessions a month, all bouncing. The show's blog archive is
+  # the honest destination: the episode is gone, the show is not.
+  - from: blog/dp_pod/ep004.html
+    to: blog/dp_pod/index.html
+    reason: purged 2026-08-10 (DP Pod catalogue prune)
+  - from: blog/dp_pod/ep005.html
+    to: blog/dp_pod/index.html
+    reason: purged 2026-08-10 (DP Pod catalogue prune)
+  - from: blog/dp_pod/ep006.html
+    to: blog/dp_pod/index.html
+    reason: purged 2026-08-10 (DP Pod catalogue prune)
+  - from: blog/dp_pod/ep007.html
+    to: blog/dp_pod/index.html
+    reason: purged 2026-08-10 (DP Pod catalogue prune)
+  - from: blog/dp_pod/ep010.html
+    to: blog/dp_pod/index.html
+    reason: purged 2026-08-10 (DP Pod catalogue prune)
+  - from: blog/dp_pod/ep012.html
+    to: blog/dp_pod/index.html
+    reason: purged 2026-08-10 (DP Pod catalogue prune)
+  - from: blog/dp_pod/ep013.html
+    to: blog/dp_pod/index.html
+    reason: purged 2026-08-10 (DP Pod catalogue prune)
+  - from: blog/dp_pod/ep014.html
+    to: blog/dp_pod/index.html
+    reason: purged 2026-08-10 (DP Pod catalogue prune)
+  - from: blog/dp_pod/ep016.html
+    to: blog/dp_pod/index.html
+    reason: purged 2026-08-10 (DP Pod catalogue prune)
+  - from: blog/dp_pod/ep017.html
+    to: blog/dp_pod/index.html
+    reason: purged 2026-08-10 (DP Pod catalogue prune)
+  - from: blog/dp_pod/ep018.html
+    to: blog/dp_pod/index.html
+    reason: purged 2026-08-10 (DP Pod catalogue prune)
+  - from: blog/dp_pod/ep020.html
+    to: blog/dp_pod/index.html
+    reason: purged 2026-08-10 (DP Pod catalogue prune)
+  - from: blog/dp_pod/ep022.html
+    to: blog/dp_pod/index.html
+    reason: purged 2026-08-10 (DP Pod catalogue prune)
+
+  # --- An episode that predates the blog ---------------------------------
+  # The Age of AI Ep1 (Patrick Novak, 2026-07-20) is in the RSS feed and in
+  # summaries_age_of_ai.json, but it published before the Voices pipeline wrote
+  # a digest .md, so there is nothing for the blog generator to render and there
+  # never will be. Its summary DOES exist on the summaries page, which is where
+  # someone asking for the article should land — not on an archive index that
+  # does not mention the episode they came for.
+  - from: blog/age_of_ai/ep001.html
+    to: age-of-ai-summaries.html
+    reason: predates the digest .md — the summary lives on the summaries page
+
+  # --- Mis-resolved chrome links under blog/dp_pod/ -----------------------
+  # A crawler walked a DP Pod post from before ``path_prefix`` was fixed, so
+  # every nav and footer target resolved one directory deep instead of at the
+  # root. Today's posts are correct (``../../about.html``), but the wrong URLs
+  # are indexed and still being retried. Each goes to the page it meant.
+  - from: blog/dp_pod/about.html
+    to: about.html
+    reason: chrome link resolved relative before path_prefix was fixed
+  - from: blog/dp_pod/account.html
+    to: account.html
+    reason: chrome link resolved relative before path_prefix was fixed
+  - from: blog/dp_pod/age-of-ai.html
+    to: age-of-ai.html
+    reason: chrome link resolved relative before path_prefix was fixed
+  - from: blog/dp_pod/ai-disclosure.html
+    to: ai-disclosure.html
+    reason: chrome link resolved relative before path_prefix was fixed
+  - from: blog/dp_pod/books.html
+    to: books.html
+    reason: chrome link resolved relative before path_prefix was fixed
+  - from: blog/dp_pod/contact.html
+    to: contact.html
+    reason: chrome link resolved relative before path_prefix was fixed
+  - from: blog/dp_pod/data.html
+    to: data.html
+    reason: chrome link resolved relative before path_prefix was fixed
+  - from: blog/dp_pod/editorial.html
+    to: editorial.html
+    reason: chrome link resolved relative before path_prefix was fixed
+  - from: blog/dp_pod/env-intel.html
+    to: env-intel.html
+    reason: chrome link resolved relative before path_prefix was fixed
+  - from: blog/dp_pod/faq.html
+    to: faq.html
+    reason: chrome link resolved relative before path_prefix was fixed
+  - from: blog/dp_pod/fascinating-frontiers.html
+    to: fascinating-frontiers.html
+    reason: chrome link resolved relative before path_prefix was fixed
+  - from: blog/dp_pod/first-principles.html
+    to: first-principles.html
+    reason: chrome link resolved relative before path_prefix was fixed
+
+# Paths that are measured as 404s and should STAY 404s. Listed so the audit
+# reports only genuinely new holes, and so the reasoning is not re-litigated.
+accepted_404:
+  # A feed URL that never existed must not answer with HTML: GitHub Pages
+  # serves ``.rss`` as application/rss+xml, so a redirect stub there would
+  # hand a feed reader a document it cannot parse — worse than a clean 404.
+  # These came from the same mis-resolved crawl as the pages above, one
+  # session each.
+  - path: blog/dp_pod/age_of_ai_podcast.rss
+    reason: feed path that never existed — a 404 is the correct answer
+  - path: blog/dp_pod/blog.rss
+    reason: feed path that never existed — a 404 is the correct answer
+  - path: blog/dp_pod/dp_pod_podcast.rss
+    reason: feed path that never existed — a 404 is the correct answer
+  - path: blog/dp_pod/env_intel_podcast.rss
+    reason: feed path that never existed — a 404 is the correct answer
+  - path: blog/dp_pod/fascinating_frontiers_podcast.rss
+    reason: feed path that never existed — a 404 is the correct answer
+  - path: blog/dp_pod/finansy_prosto_podcast.rss
+    reason: feed path that never existed — a 404 is the correct answer

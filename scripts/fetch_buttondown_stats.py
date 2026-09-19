@@ -141,6 +141,29 @@ def main(argv: Optional[List[str]] = None) -> int:
             name: n for name, n in sorted(tag_counts.items())
             if name.startswith("src-")
         }
+        # An empty breakdown beside a non-zero total is not "no news": it means
+        # the tags the Worker is supposed to apply are not arriving, so no
+        # capture can be traced to the page or the show that earned it. That is
+        # the difference between a funnel and a subscriber count, and it read as
+        # a pair of tidy empty objects for weeks. Say it out loud.
+        if count > 0 and not tag_counts:
+            log.warning(
+                "::warning title=Buttondown attribution::%d subscriber(s) and "
+                "ZERO tags. resolveSubscribeTags in workers/gallery is supposed "
+                "to attach a list tag and a src-* tag to every signup, so an "
+                "empty breakdown means no capture can be attributed to a "
+                "surface. Check the Worker's /api/subscribe path.", count,
+            )
+            stats["attribution_warning"] = (
+                "subscribers exist but no tags were returned — captures cannot "
+                "be attributed to a surface"
+            )
+        elif count > 0 and not stats["source_counts"]:
+            log.warning(
+                "::warning title=Buttondown attribution::tags exist but none "
+                "are src-* — captures can be traced to a LIST but not to the "
+                "surface that earned them."
+            )
 
     if args.dry_run:
         print(json.dumps(stats, indent=2))

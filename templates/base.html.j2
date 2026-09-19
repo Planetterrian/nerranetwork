@@ -27,9 +27,18 @@
     <meta name="twitter:title" content="{{ page_title | default('Nerra Network') }}">
     <meta name="twitter:description" content="{{ page_description | default(meta_description | default('Daily ad-free shows. Feed your curiosity. Not your anxiety.')) }}">
     <meta name="twitter:image" content="{{ og_image | default('https://nerranetwork.com/assets/og-preview.png', boolean=true) }}">
+    {#- Until Sep 2026 no page on this site named an account on its share card,
+        so every link shared anywhere was attributed to nobody. The handle comes
+        from NETWORK_SOCIAL in generate_html.py, which is also what the footer
+        and the Organization JSON-LD read. -#}
+    {% if network_x_handle %}<meta name="twitter:site" content="{{ network_x_handle }}">
+    <meta name="twitter:creator" content="{{ network_x_handle }}">{% endif %}
 
     {% if canonical_url %}<link rel="canonical" href="{{ canonical_url }}">{% endif %}
-    {% if rss_url %}
+    {#- has_feed is unset on pages that are not a show's, so the default keeps
+        their behaviour; a show whose feed file does not exist yet advertises no
+        feed rather than a 404 (Nerra Voices, registered before episode 1). -#}
+    {% if rss_url and (has_feed is not defined or has_feed) %}
     <link rel="alternate" type="application/rss+xml" title="{{ show_name | default('Nerra Network') }} RSS" href="{{ rss_url }}">
     {% endif %}
     {# Bilingual hreflang — English root ↔ Russian root. Only emitted on the
@@ -387,7 +396,9 @@
                     <a href="{{ 'https://podcasts.apple.com/us/podcast/tesla-shorts-time/id1855142939' | with_utm(campaign='tesla', medium='footer') }}" target="_blank" rel="noopener" data-show="tesla">Tesla Shorts Time on Apple Podcasts</a>
                     <a href="{{ path_prefix }}network.rss">{{ t.footer_network_rss }}</a>
                     {% for s in all_shows %}
+                    {%- if s.has_feed %}
                     <a href="{{ path_prefix }}{{ s.rss_file }}">{{ s.name }} RSS</a>
+                    {%- endif %}
                     {% endfor %}
                 </div>
                 {#- The About column used to sit OUTSIDE .nn-footer-grid
@@ -415,11 +426,18 @@
                 </div>
                 <div class="nn-footer-col">
                     <h4>{{ t.footer_connect }}</h4>
-                    <a href="https://x.com/teslashortstime" target="_blank" rel="noopener">@teslashortstime</a>
-                    <a href="https://x.com/omniviewnews" target="_blank" rel="noopener">@omniviewnews</a>
-                    <a href="https://x.com/planetterrian" target="_blank" rel="noopener">@planetterrian</a>
-                    <a href="https://www.youtube.com/@NerraNetwork" target="_blank" rel="noopener">YouTube @NerraNetwork</a>
-                    <a href="https://www.youtube.com/@NerraRU" target="_blank" rel="noopener">YouTube @NerraRU</a>
+                    {#- The network's own accounts first, from NETWORK_SOCIAL
+                        (@NerraFR had been live since July and was missing
+                        here). The three SHOW accounts follow, labelled as
+                        shows — the footer used to list only those, so a
+                        visitor could not tell which handle was the
+                        network's. -#}
+                    {%- for account in network_social %}
+                    <a href="{{ account.url }}" target="_blank" rel="noopener">{{ account.handle }} <span style="opacity:.6;">({{ account.label }})</span></a>
+                    {%- endfor %}
+                    <a href="https://x.com/teslashortstime" target="_blank" rel="noopener">@teslashortstime <span style="opacity:.6;">(Tesla Shorts Time)</span></a>
+                    <a href="https://x.com/omniviewnews" target="_blank" rel="noopener">@omniviewnews <span style="opacity:.6;">(Omni View)</span></a>
+                    <a href="https://x.com/planetterrian" target="_blank" rel="noopener">@planetterrian <span style="opacity:.6;">(Planetterrian)</span></a>
                     <a href="{{ path_prefix }}contact.html">{{ t.footer_contact }}</a>
                 </div>
             </div>

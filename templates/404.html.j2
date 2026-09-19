@@ -92,4 +92,21 @@
             <a href="{{ path_prefix }}blog/index.html" class="secondary">Browse Blog</a>
         </div>
     </div>
+    {#- A static host serves this page for every dead URL, so GA4 records the
+        404 as an ordinary page_view of the path that was asked for. That is how
+        the Sep 2026 audit found that 26% of landing sessions were hitting URLs
+        with no file — by inference, from a report that looked like traffic.
+        A named event makes the same fact a first-class metric instead:
+        scripts/audit_dead_urls.py reads landing pages, this reads the misses
+        nobody lands twice on. -#}
+    <script>
+      (function () {
+        if (typeof gtag !== 'function') return;
+        gtag('event', 'page_not_found', {
+          requested_path: window.location.pathname,
+          requested_query: window.location.search,
+          referrer: document.referrer || '(none)'
+        });
+      })();
+    </script>
 {% endblock %}

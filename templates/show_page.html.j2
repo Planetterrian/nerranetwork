@@ -8,8 +8,8 @@
   "@type": "PodcastSeries",
   "name": {{ show_name | tojson }},
   "description": {{ meta_description | tojson }},
-  "url": {{ canonical_url | tojson }},
-  "webFeed": {{ schema_web_feed | tojson }}{% if schema_image_url %},
+  "url": {{ canonical_url | tojson }}{% if has_feed %},
+  "webFeed": {{ schema_web_feed | tojson }}{% endif %}{% if schema_image_url %},
   "image": {{ schema_image_url | tojson }}{% endif %}{% if apple_podcasts_url %},
   "sameAs": [{{ apple_podcasts_url | tojson }}]{% endif %}
 }
@@ -171,7 +171,9 @@
                     {% if spotify_url %}
                     <a href="{{ spotify_url | with_utm(campaign=show_slug) }}" class="nn-chip" target="_blank" rel="noopener" data-show="{{ show_slug }}">Spotify</a>
                     {% endif %}
+                    {%- if has_feed %}
                     <a href="{{ path_prefix }}{{ rss_file }}" class="nn-chip" data-show="{{ show_slug }}">{% if _is_ru %}RSS-канал{% else %}RSS{% endif %}</a>
+                    {%- endif %}
                     {% if youtube_playlist_url %}
                     <a href="{{ youtube_playlist_url }}" class="nn-chip" target="_blank" rel="noopener" data-show="{{ show_slug }}">YouTube</a>
                     {% endif %}
@@ -504,6 +506,49 @@
             <p style="color:var(--nn-text-muted);font-size:0.78rem;margin-top:var(--sp-4);">
                 SIMULATED trades for educational purposes only. No real money is involved. This is NOT financial advice.
             </p>
+        </div>
+    </section>
+    {% endif %}
+
+    {#- "Make this yours" — the Nerra Personal path, on the one page the data
+        says people actually land on. /nerra-daily.html is the most-visited show
+        page on the site (46 views against SpaceX's 6 in the 28 days to
+        2026-09-17, and the #1 landing page), and Nerra Personal is literally a
+        personalised Nerra Daily — yet this page's only route to it was the
+        global nav pill labelled "Join". Registry-gated
+        (``personal_upsell: true``), so it appears on the show whose promise
+        Personal extends and nowhere else. -#}
+    {% if personal_upsell %}
+    <section class="nn-section" id="make-it-yours" style="padding-bottom:0;">
+        <div class="container" style="max-width:920px;">
+            <div style="border:1px solid var(--nn-border);border-radius:18px;background:var(--nn-surface);position:relative;overflow:hidden;">
+                <div style="position:absolute;inset:0;background:
+                    radial-gradient(ellipse at 90% 8%, rgba(0,212,255,0.13), transparent 55%),
+                    radial-gradient(ellipse at 4% 96%, rgba(107,71,255,0.11), transparent 50%);pointer-events:none;"></div>
+                <div style="position:relative;padding:2rem 2rem 1.8rem;">
+                    <div class="section-label">Nerra Personal</div>
+                    <h2 style="font-family:var(--font-heading);margin:0.4rem 0 0.7rem;font-size:1.6rem;line-height:1.2;">Like this, but only your shows</h2>
+                    <p style="color:var(--nn-text-muted);margin:0 0 1rem;max-width:56ch;">
+                        Nerra Daily is the whole network in one listen, free, every
+                        day. <strong>Personal is the same idea narrowed to you</strong>
+                        — the shows you pick, in the order you want them, with Mira
+                        greeting you by name and a chapter for every segment. One
+                        private feed that works in any podcast app.</p>
+                    <p style="margin:0;display:flex;gap:0.6rem;flex-wrap:wrap;">
+                        {#- An internal link, so NO UTM tags: GA4 starts a new
+                            session on any page_view carrying utm_source, which
+                            would overwrite the visitor's real acquisition
+                            source and double-count the session. A click on an
+                            internal CTA is measured with an EVENT. -#}
+                        <a class="nn-btn nn-btn-primary" href="{{ path_prefix }}join.html"
+                           onclick="if(typeof gtag==='function'){gtag('event','select_personal_upsell',{show:'{{ show_slug }}',placement:'show_page'});}">Build your own edition →</a>
+                        <a class="nn-btn" href="{{ path_prefix }}{{ rss_file }}">Keep listening free</a>
+                    </p>
+                    <p style="margin:0.9rem 0 0;font-family:var(--font-ui);font-size:0.78rem;color:var(--nn-text-muted);">
+                        Free for 7 days, then $4.99/month. Cancel in one click — your
+                        feed stops working the moment you do.</p>
+                </div>
+            </div>
         </div>
     </section>
     {% endif %}
@@ -841,6 +886,7 @@
         const JSON_URL = '{{ path_prefix }}{{ json_path }}';
         const JSON_FORMAT = '{{ json_format }}';
         const RSS_URL = '{{ path_prefix }}{{ rss_file }}';
+        const HAS_FEED = {{ 'true' if has_feed else 'false' }};
         const SHOW_NAME = {{ show_name | tojson }};
 
         // --- Helpers ---
@@ -1012,6 +1058,10 @@
         }
 
         function loadFromRSS() {
+            // A show registered before its first episode has no feed file, so
+            // fetching it is a guaranteed 404 and a console error on a page
+            // whose whole job right now is to take guest applications.
+            if (!HAS_FEED) { showNoEpisodes(); return; }
             fetch(RSS_URL)
                 .then(r => r.text())
                 .then(xml => {

@@ -53,13 +53,17 @@ class TestReplyText:
 
     @pytest.mark.parametrize("slug", _X_ENABLED)
     def test_plug_links_a_sibling_with_utm(self, slug):
-        # Even ordinal → sibling show (legacy cross_promo campaign).
+        # Even ordinal → sibling show. Sep 2026: the campaign is built by
+        # engine.funnel from the episode that carried the reply, because the
+        # old hand-rolled "cross_promo" was not something
+        # parse_campaign_id() could read — so every click these replies earned
+        # was filed as unattributed traffic.
         cfg = load_config(f"shows/{slug}.yaml")
         day = datetime.date(2026, 6, 11)  # even toordinal
         assert day.toordinal() % 2 == 0
-        text = run_show._build_cross_promo_reply(cfg, day)
+        text = run_show._build_cross_promo_reply(cfg, day, 604)
         assert "More from the Nerra Network:" in text
-        assert "utm_campaign=cross_promo" in text
+        assert f"utm_campaign=nn-{cfg.slug}-en-post-ep604-sibling_" in text
         assert cfg.name not in text.split("More from the Nerra Network:")[1], (
             "the plug must feature a SIBLING show, not the show itself"
         )
@@ -69,9 +73,32 @@ class TestReplyText:
         cfg = load_config(f"shows/{slug}.yaml")
         day = datetime.date(2026, 6, 10)  # odd toordinal
         assert day.toordinal() % 2 == 1
-        text = run_show._build_cross_promo_reply(cfg, day)
-        assert "utm_campaign=network_discovery" in text
+        text = run_show._build_cross_promo_reply(cfg, day, 604)
+        assert f"utm_campaign=nn-{cfg.slug}-en-post-ep604-" in text
         assert "More from the Nerra Network:" in text
+
+    @pytest.mark.parametrize("slug", ["tesla", "planetterrian"])
+    def test_every_reply_campaign_is_parseable(self, slug):
+        """The whole point: a campaign the funnel cannot parse is a click the
+        funnel report drops."""
+        import re
+
+        from engine.funnel import parse_campaign_id
+        cfg = load_config(f"shows/{slug}.yaml")
+        for day in range(1, 9):
+            text = run_show._build_cross_promo_reply(
+                cfg, datetime.date(2026, 6, day), 604
+            )
+            for campaign in re.findall(r"utm_campaign=([^&\s]+)", text):
+                assert parse_campaign_id(campaign) is not None, campaign
+
+    def test_reply_is_untagged_without_an_episode_number(self):
+        """Better an untagged link than one carrying a campaign that will be
+        silently dropped — and the link itself must still work."""
+        cfg = load_config("shows/tesla.yaml")
+        text = run_show._build_cross_promo_reply(cfg, datetime.date(2026, 6, 11))
+        assert "utm_" not in text
+        assert "https://nerranetwork.com/" in text
 
     def test_follow_line_present_when_handle_set(self):
         cfg = load_config("shows/tesla.yaml")

@@ -321,6 +321,62 @@ MARKETING_CONFIG = {
 }
 
 # ---------------------------------------------------------------------------
+# Network social accounts
+# ---------------------------------------------------------------------------
+#
+# ONE place for the network's own accounts. Before Sep 2026 the site had no
+# network handle at all: the footer listed three SHOW accounts
+# (@teslashortstime, @omniviewnews, @planetterrian), the Organization JSON-LD
+# listed the same three, and ``twitter:site`` did not exist anywhere in the
+# repo — so no card the network has ever shared carried an account.
+#
+# ``handle`` is what renders; a falsy handle renders NOTHING, so an account
+# that does not exist yet is one line away without putting a dead link on
+# every page in the meantime. Per-SHOW accounts stay in the registry's
+# ``x_account`` field — this is the network speaking as itself.
+NETWORK_SOCIAL = {
+    "x": {
+        "handle": "@nerranetwork",
+        "url": "https://x.com/nerranetwork",
+        "label": "X",
+        "primary": True,
+    },
+    "youtube_en": {
+        "handle": "@NerraNetwork",
+        "url": "https://www.youtube.com/@NerraNetwork",
+        "label": "YouTube (English)",
+    },
+    "youtube_ru": {
+        "handle": "@NerraRU",
+        "url": "https://www.youtube.com/@NerraRU",
+        "label": "YouTube (Russian)",
+    },
+    # Live since 2026-07-21 and missing from the footer until Sep 2026.
+    "youtube_fr": {
+        "handle": "@NerraFR",
+        "url": "https://www.youtube.com/@NerraFR",
+        "label": "YouTube (French)",
+    },
+}
+
+
+def network_social_links():
+    """The accounts that actually exist, primary first, for the chrome."""
+    entries = [
+        dict(key=key, **value)
+        for key, value in NETWORK_SOCIAL.items()
+        if (value.get("handle") or "").strip() and (value.get("url") or "").strip()
+    ]
+    entries.sort(key=lambda e: (not e.get("primary"), e["key"]))
+    return entries
+
+
+def network_social_sameas():
+    """``sameAs`` URLs for the Organization JSON-LD."""
+    return [e["url"] for e in network_social_links()]
+
+
+# ---------------------------------------------------------------------------
 # Per-show configuration
 # ---------------------------------------------------------------------------
 
@@ -1873,6 +1929,13 @@ def _build_all_shows_list():
             "summaries_page": cfg["summaries_page"],
             "podcast_image": cfg["podcast_image"],
             "rss_file": cfg["rss_file"],
+            # A feed file only exists once a show has published. Nerra Voices
+            # has a page, a registry entry and a feed NAME but no episodes, so
+            # the footer's per-show RSS list linked
+            # nerra_voices_podcast.rss from every page on the site — the
+            # single most-repeated broken link there was. Same rule the Sep 3
+            # pass applied to the per-show blog index's RSS button.
+            "has_feed": (ROOT / cfg["rss_file"]).exists(),
             "language_feeds": _collect_language_feeds(cfg["rss_file"], ""),
             "brand_color": cfg["brand_color"],
             "tagline": cfg["tagline"],
@@ -2050,6 +2113,10 @@ def _get_jinja_env():
     # Make marketing config available in every template without
     # threading it through every render() call.
     env.globals["marketing"] = MARKETING_CONFIG
+    # The network's own accounts, so the footer, the share cards and the
+    # Organization JSON-LD can never disagree about which handle is ours.
+    env.globals["network_social"] = network_social_links()
+    env.globals["network_x_handle"] = NETWORK_SOCIAL["x"]["handle"]
     # Footer copyright year (Sep 2026 review: "© 2026" was a literal in
     # base.html.j2 and would have rolled over to wrong on Jan 1).
     env.globals["current_year"] = datetime.now(timezone.utc).year
@@ -2097,6 +2164,9 @@ def generate_summaries_page(slug, *, dry_run=False):
         "show_color_dark": cfg.get("brand_color_dark", cfg["brand_color"]),
         "canonical_url": f"{GITHUB_RAW}/{cfg['summaries_page']}",
         "rss_url": f"{prefix}{cfg['rss_file']}",
+        # A show registered before its first episode has a feed NAME but no
+        # feed FILE; linking it 404s (Nerra Voices).
+        "has_feed": (ROOT / cfg["rss_file"]).exists(),
         "hero_title": cfg["name"],
         # Honest label (Sep 2026 review): the summaries JSON holds the most
         # recent ~30 episodes, not the archive — the blog has every episode.
@@ -2296,6 +2366,8 @@ def generate_narrative_page(slug, *, dry_run=False):
         "blog_page": cfg.get("blog_page", f"blog/{slug}/index.html"),
         "summaries_page": cfg.get("summaries_page", ""),
         "rss_file": cfg.get("rss_file", ""),
+        "has_feed": bool(cfg.get("rss_file"))
+        and (ROOT / cfg["rss_file"]).exists(),
         "page_title": f"{cfg['name']} — Narrative Tracker | Nerra Network",
         "meta_description": (
             f"The ongoing storylines {cfg['name']} tracks over time — current status, "
@@ -2880,6 +2952,12 @@ def generate_show_page(slug, *, dry_run=False):
         narrative_page_url = cfg["show_page"].replace(".html", "-narrative.html")
     else:
         narrative_page_url = ""
+    # Being REGISTERED for memory is not the same as having a tracker page:
+    # generate_narrative_page no-ops until the show has a committed tracker
+    # JSON, so a show registered before its first episode (Nerra Voices) linked
+    # a Story Tracker that 404s.
+    if narrative_page_url and not (ROOT / narrative_page_url).exists():
+        narrative_page_url = ""
 
     # Live stock-price pill (Tesla + SpaceX). Each show's pipeline hook
     # writes a same-origin api/<ticker>.json the page JS reads first, with
@@ -2916,6 +2994,15 @@ def generate_show_page(slug, *, dry_run=False):
         "schema_image_url": f"{GITHUB_RAW}/{cfg['podcast_image'].lstrip('/')}",
         "rss_url": f"{prefix}{cfg['rss_file']}",
         "language_feeds": _collect_language_feeds(cfg["rss_file"], prefix),
+        # A show registered before its first episode has a feed NAME but no
+        # feed FILE; linking it 404s (Nerra Voices).
+        "has_feed": (ROOT / cfg["rss_file"]).exists(),
+        # The Nerra Personal path, on the show whose promise Personal extends.
+        # /nerra-daily.html is the site's #1 landing page and Personal is a
+        # personalised Nerra Daily, yet the only route from one to the other was
+        # the nav pill labelled "Join". Registry-gated so it never becomes a
+        # banner on every show.
+        "personal_upsell": bool(cfg.get("personal_upsell")),
         "related_show": related_show_data,
         "blog_page": f"blog/{cfg['slug']}/index.html",
         "latest_blog_posts": latest_blog_posts,
@@ -3588,6 +3675,243 @@ def generate_all_blogs(*, dry_run=False):
 # ---------------------------------------------------------------------------
 
 
+REDIRECTS_FILE = ROOT / "site" / "redirects.yaml"
+
+
+def _load_redirects():
+    """Read ``site/redirects.yaml`` -> (redirects, accepted_404).
+
+    Missing or malformed file is a clean no-op: the site renders exactly as
+    it did before redirect stubs existed rather than failing a whole regen
+    over a data file.
+    """
+    try:
+        import yaml
+        data = yaml.safe_load(REDIRECTS_FILE.read_text(encoding="utf-8")) or {}
+    except FileNotFoundError:
+        return [], []
+    except Exception as exc:
+        print(f"Warning: could not read {REDIRECTS_FILE}: {exc}", file=sys.stderr)
+        return [], []
+    redirects = [
+        r for r in (data.get("redirects") or [])
+        if isinstance(r, dict) and r.get("from") and r.get("to")
+    ]
+    accepted = [
+        a for a in (data.get("accepted_404") or [])
+        if isinstance(a, dict) and a.get("path")
+    ]
+    return redirects, accepted
+
+
+def redirect_stub_paths():
+    """The repo-relative paths ``generate_redirect_stubs`` writes.
+
+    ``generate_sitemap`` needs this: its blog loop GLOBS
+    ``blog/<show>/ep*.html``, so a stub for a retired episode would otherwise
+    be submitted to Google as a real post — advertising a redirect as content.
+    """
+    redirects, _ = _load_redirects()
+    return {str(r["from"]).strip().lstrip("/") for r in redirects}
+
+
+def generate_redirect_stubs(*, dry_run=False):
+    """Write a stub page for every entry in ``site/redirects.yaml``.
+
+    A stub never shadows a real page: if ``from`` exists on disk the entry is
+    skipped with a warning, because a live page beats a redirect to one every
+    time. A ``to`` that does not exist is also skipped — a redirect into a
+    404 is worse than the 404 it replaces.
+    """
+    import os
+
+    redirects, _ = _load_redirects()
+    if not redirects:
+        return 0
+
+    env = _get_jinja_env()
+    template = env.get_template("redirect_stub.html.j2")
+    written = 0
+
+    for entry in redirects:
+        src = str(entry["from"]).strip().lstrip("/")
+        dst = str(entry["to"]).strip().lstrip("/")
+        src_path = ROOT / src
+        dst_path = ROOT / dst
+
+        if not dst_path.exists():
+            print(
+                f"Warning: redirect target missing, skipping {src} -> {dst}",
+                file=sys.stderr,
+            )
+            continue
+        if src_path.exists() and not _is_redirect_stub(src_path):
+            print(
+                f"Warning: {src} is a real page — refusing to overwrite it "
+                f"with a redirect to {dst}",
+                file=sys.stderr,
+            )
+            continue
+
+        target_rel = os.path.relpath(dst_path, src_path.parent)
+        label = _redirect_target_label(dst)
+        html = template.render(
+            target=dst,
+            target_rel=target_rel,
+            target_label=label,
+            message=_redirect_message(entry, label),
+        )
+        if dry_run:
+            print(f"[dry-run] Would write {src} -> {dst}")
+        else:
+            src_path.parent.mkdir(parents=True, exist_ok=True)
+            src_path.write_text(html, encoding="utf-8")
+        written += 1
+
+    if not dry_run:
+        print(f"Generated {written} redirect stub(s)")
+    return written
+
+
+_REDIRECT_STUB_MARK = 'name="robots" content="noindex, follow"'
+
+
+def _is_redirect_stub(path) -> bool:
+    """True when *path* is a stub this generator wrote (so it may be
+    rewritten) rather than a real page that happens to sit at that URL."""
+    try:
+        head = path.read_text(encoding="utf-8", errors="ignore")[:1200]
+    except Exception:
+        return False
+    return 'http-equiv="refresh"' in head and _REDIRECT_STUB_MARK in head
+
+
+def _redirect_target_label(dst: str) -> str:
+    """A human name for the redirect target, drawn from the registry where
+    one exists so the stub reads like the site rather than like a path."""
+    for cfg in NETWORK_SHOWS.values():
+        if dst == cfg.get("show_page"):
+            return cfg.get("name", dst)
+        if dst == f"blog/{cfg.get('slug', '')}/index.html":
+            name = (cfg.get("name") or "").strip()
+            # "The DP Pod" already carries its article; "Tesla Shorts Time"
+            # does not. Reading "the The DP Pod archive" is the giveaway that
+            # a label was assembled without looking at it.
+            article = "" if name[:4].lower() == "the " else "the "
+            return f"{article}{name} archive"
+    return {
+        "about.html": "About Nerra Network",
+        "account.html": "your account",
+        "ai-disclosure.html": "the AI disclosure",
+        "books.html": "Books",
+        "contact.html": "Contact",
+        "data.html": "Data & Dashboards",
+        "editorial.html": "the Editorial Process",
+        "faq.html": "the FAQ",
+        "index.html": "Nerra Network",
+    }.get(dst, dst)
+
+
+def _redirect_message(entry: dict, label: str) -> str:
+    """One honest sentence about why this URL no longer holds a page."""
+    reason = (entry.get("reason") or "").lower()
+    if "purge" in reason or "prune" in reason:
+        return (
+            "That episode is no longer published. Taking you to "
+            f"{label} instead."
+        )
+    return f"This page has moved. Taking you to {label}."
+
+
+def generate_llms_txt(*, dry_run=False):
+    """Write ``/llms.txt`` — what this network is, for an answer engine.
+
+    ``robots.txt`` already draws the line this network chose: the TRAINING
+    crawlers (GPTBot, ClaudeBot, CCBot, Google-Extended …) are disallowed while
+    the RETRIEVAL ones (OAI-SearchBot, ChatGPT-User, PerplexityBot, Claude-Web)
+    are welcome. Retrieval was already working with no help at all —
+    chatgpt.com sent 4 of the site's 243 sessions in the 28 days to
+    2026-09-17, against 20 from Google — so it is worth telling those crawlers
+    what they are looking at instead of making them infer it from 1,880 dated
+    news posts.
+
+    Plain text, stable headings, absolute URLs, and no marketing: an answer
+    engine quoting this should end up saying something true.
+    """
+    from engine.brand import (
+        MIRA_FIRST_CLAIM, MIRA_FIRST_CLAIM_BASIS, MIRA_SHORT_DESCRIPTION,
+    )
+
+    shows = _build_all_shows_list()
+    base = "https://nerranetwork.com"
+
+    lines = [
+        "# Nerra Network",
+        "",
+        f"> An independent, ad-free podcast network of {len(shows)} shows, "
+        "produced in Vancouver, Canada. Every episode is written, narrated and "
+        "illustrated by AI under human editorial ownership, and every episode "
+        "says so.",
+        "",
+        "## What to know",
+        "",
+        "- Free: every episode, every show, no ads and no sponsors. Nerra "
+        f"Personal ({base}/join.html) is an optional paid membership.",
+        f"- {MIRA_SHORT_DESCRIPTION}",
+        f"- {MIRA_FIRST_CLAIM} {MIRA_FIRST_CLAIM_BASIS}",
+        "- How it is made, and what a human does and does not check, is stated "
+        f"in full at {base}/ai-disclosure.html — including that no person "
+        "reads every episode before it publishes.",
+        "- Sources: episodes carry a verified claim ledger. A statement whose "
+        "source cannot be checked is removed before publication, not softened. "
+        f"Method: {base}/editorial.html",
+        "- Languages: English, plus French and Russian dubs and two "
+        "Russian-original shows.",
+        "",
+        "## Start here",
+        "",
+        f"- [Start Here — pick a show]({base}/start-here.html)",
+        f"- [All shows]({base}/index.html#shows)",
+        f"- [How to listen]({base}/how-to-listen.html)",
+        f"- [Every episode, as articles]({base}/blog/index.html)",
+        f"- [AI disclosure]({base}/ai-disclosure.html)",
+        f"- [Editorial process]({base}/editorial.html)",
+        f"- [Press kit]({base}/press.html)",
+        f"- [Nerra Personal]({base}/join.html)",
+        f"- [Books]({base}/books.html)",
+        f"- [Image gallery, CC BY-SA 4.0]({base}/gallery.html)",
+        f"- [Public data and dashboards]({base}/data.html)",
+        "",
+        "## Shows",
+        "",
+    ]
+    for show in shows:
+        tagline = (show.get("tagline") or show.get("description") or "").strip()
+        schedule = (show.get("schedule") or "").strip()
+        suffix = f" ({schedule})" if schedule else ""
+        lines.append(
+            f"- [{show['name']}]({base}/{show['show_page']}){suffix}"
+            + (f" — {tagline}" if tagline else "")
+        )
+    lines += [
+        "",
+        "## Contact",
+        "",
+        "- hello@nerranetwork.com (general), press@nerranetwork.com (media)",
+        f"- X: {NETWORK_SOCIAL['x']['handle']} — {NETWORK_SOCIAL['x']['url']}",
+        "",
+    ]
+
+    text = "\n".join(lines)
+    out_path = ROOT / "llms.txt"
+    if dry_run:
+        print(f"[dry-run] Would write {out_path} ({len(text)} bytes)")
+        return text
+    out_path.write_text(text, encoding="utf-8")
+    print(f"Wrote {out_path} ({len(text)} bytes)")
+    return text
+
+
 def generate_sitemap(*, dry_run=False, out=None):
     """Write sitemap.xml. *out* overrides the destination (tests only —
     regenerating the real file outside the pipeline rewrites every
@@ -3696,12 +4020,19 @@ def generate_sitemap(*, dry_run=False, out=None):
         m = _dp_re.search(head)
         return m.group(1) if m else _file_lastmod(ep_file)
 
+    # Redirect stubs live at the URLs of retired episodes, so they match the
+    # ep*.html glob below. Submitting one to Google would advertise a redirect
+    # as an article; skip them (they are noindex besides).
+    _stubs = redirect_stub_paths()
+
     blog_dir = ROOT / "blog"
     if blog_dir.exists():
         for show_dir in sorted(blog_dir.iterdir()):
             if show_dir.is_dir():
                 for ep_file in sorted(show_dir.glob("ep*.html")):
                     rel = f"blog/{show_dir.name}/{ep_file.name}"
+                    if rel in _stubs:
+                        continue
                     urls.append((f"{base}/{rel}", "0.6", _post_lastmod(ep_file)))
 
     # Build XML
@@ -4274,7 +4605,70 @@ def _member_page_context(title, description, canonical):
             "STRIPE_LINK_PERSONAL_LOCAL", ""),
         "donate_monthly_url": os.environ.get("STRIPE_LINK_DONATE_MONTHLY", ""),
         "donate_once_url": os.environ.get("STRIPE_LINK_DONATE_ONCE", ""),
-        "monthly_cost_usd": 120,
+        # The support page's whole premise is "here's the real ledger", so the
+        # figure has to come from the ledger. Hardcoded at 120 since Aug 2026
+        # while api/dashboard.json read $155.85/30d — a page about honesty
+        # understating its own costs by 30%.
+        **_network_cost_ledger(),
+    }
+
+
+# Hosting, storage and delivery (R2, Cloudflare, the domain) are paid outside
+# the per-episode credit files, so cost_rollup cannot see them. This is the
+# operator's standing estimate of that share; everything else is measured.
+_HOSTING_SHARE_ESTIMATE = 0.10
+
+
+def _network_cost_ledger() -> dict:
+    """Real monthly spend and its split, read from ``api/dashboard.json``.
+
+    Returns ``monthly_cost_usd`` plus ``cost_split`` — a list of
+    ``(label, percent)`` rows that sum to 100. The measured categories are
+    scaled to leave room for the hosting estimate, so the page never claims a
+    precision it does not have and never publishes a split that does not add
+    up. Falls back to the long-standing static figures when the dashboard is
+    absent, so a missing data file never blocks a regen.
+    """
+    fallback = {
+        "monthly_cost_usd": 156,
+        "cost_split": [
+            ("Voice synthesis (every episode, every language)", 29),
+            ("Artwork & video imagery", 35),
+            ("Writing, research & source models", 26),
+            ("Hosting, storage & delivery", 10),
+        ],
+    }
+    try:
+        data = json.loads((ROOT / "api" / "dashboard.json").read_text())
+        rollup = (data.get("cost_rollup") or {}).get("network_last_30_days") or {}
+        total = float(rollup.get("total") or 0)
+        if total <= 0:
+            return fallback
+        tts = float(rollup.get("tts") or 0)
+        images = float(rollup.get("images") or 0)
+        models = float(rollup.get("grok") or 0) + float(rollup.get("search") or 0)
+    except Exception:
+        return fallback
+
+    measured = 1.0 - _HOSTING_SHARE_ESTIMATE
+    rows = [
+        ("Voice synthesis (every episode, every language)", tts),
+        ("Artwork & video imagery", images),
+        ("Writing, research & source models", models),
+    ]
+    split = [
+        (label, int(round(amount / total * measured * 100)))
+        for label, amount in rows
+    ]
+    # Absorb any rounding drift into the estimate rather than shipping a
+    # column of percentages that does not reach 100.
+    split.append((
+        "Hosting, storage & delivery",
+        max(0, 100 - sum(pct for _, pct in split)),
+    ))
+    return {
+        "monthly_cost_usd": int(round(total)),
+        "cost_split": split,
     }
 
 
@@ -4472,7 +4866,11 @@ def generate_about_page(*, dry_run=False):
         "path_prefix": "",
         "page_title": "About — Nerra Network",
         "page_description": "Meet the independent podcast network producing ad-free daily shows on AI, Tesla, investing, space, science, and environmental policy. Based in Vancouver, Canada.",
-        "meta_description": f"About Nerra Network — an independent, ad-free podcast network producing {len(NETWORK_SHOWS)} daily shows covering AI, Tesla, investing, space, science, and environmental policy. Founded by Patrick Novak.",
+        # "N daily shows" was not true: six of the eighteen are weekly,
+        # alternate-day, or published when an interview is ready. The Sep 3
+        # pass corrected the visible copy to "most shows daily" and missed the
+        # meta description, which is the line Google actually prints.
+        "meta_description": f"About Nerra Network — an independent, ad-free podcast network of {len(NETWORK_SHOWS)} shows, most of them daily, covering AI, Tesla, investing, space, science, and environmental policy. Founded by Patrick Novak.",
         "meta_keywords": "about Nerra Network, Patrick Novak, independent podcast network, Vancouver podcasts, ad-free podcasts",
         "theme_color": "#6B47FF",
         "og_image": "",
@@ -4483,6 +4881,10 @@ def generate_about_page(*, dry_run=False):
         # Stats (shows_count removed as part of count-agnostic brand refresh)
         "total_episodes": _count_total_episodes(),
         "founding_date": "2024-07-01",
+        # Organization sameAs — the network's accounts (the three SHOW
+        # handles were the only ones here, which told search engines the
+        # network's identity was Tesla Shorts Time's X account).
+        "network_sameas": network_social_sameas(),
     }
 
     html = template.render(**context)
@@ -4677,6 +5079,8 @@ def generate_static_pages(*, dry_run=False):
     generate_gallery_page(dry_run=dry_run)
     generate_books_page(dry_run=dry_run)
     generate_404_page(dry_run=dry_run)
+    generate_redirect_stubs(dry_run=dry_run)
+    generate_llms_txt(dry_run=dry_run)
 
 
 def generate_contact_page(*, dry_run=False):
@@ -4914,6 +5318,14 @@ def main():
         ),
     )
     parser.add_argument(
+        "--redirects",
+        action="store_true",
+        help=(
+            "Generate redirect stubs for the URLs listed in "
+            "site/redirects.yaml (retired episodes, moved pages)"
+        ),
+    )
+    parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Preview output without writing files",
@@ -4926,7 +5338,7 @@ def main():
         args.summaries or args.shows or args.network or args.all or args.show
         or args.blogs or args.sitemap or args.player or args.how_to_listen
         or args.start_here or args.faq or args.about or args.blog_aggregates
-        or args.books or args.legal or args.static_pages
+        or args.books or args.legal or args.static_pages or args.redirects
     )
     if not _any_flag:
         args.all = True
@@ -5013,6 +5425,14 @@ def main():
         generate_editorial_page(dry_run=args.dry_run)
         generate_faq_page(dry_run=args.dry_run)
         generate_legal_pages(dry_run=args.dry_run)
+        generate_redirect_stubs(dry_run=args.dry_run)
+        generate_llms_txt(dry_run=args.dry_run)
+        # Three generators used to run ONLY under --show, so a full regen left
+        # them stale: the story trackers, the MIT performance page and the RU
+        # funnel landers. --all means all.
+        generate_all_narrative_pages(dry_run=args.dry_run)
+        generate_mit_performance_page(dry_run=args.dry_run)
+        generate_all_ru_landing_pages(dry_run=args.dry_run)
         # Sitemap last so it picks up every page generated above
         generate_sitemap(dry_run=args.dry_run)
         # Regenerate JSON API for mobile app
@@ -5072,6 +5492,8 @@ def main():
         generate_legal_pages(dry_run=args.dry_run)
     if args.static_pages:
         generate_static_pages(dry_run=args.dry_run)
+    if args.redirects:
+        generate_redirect_stubs(dry_run=args.dry_run)
 
 
 if __name__ == "__main__":

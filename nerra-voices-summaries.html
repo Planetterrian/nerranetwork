@@ -20,12 +20,10 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Nerra Voices | Summaries">
     <meta name="twitter:description" content="Nerra Voices — Mira, an AI host, interviews real people live about the work they've chosen. Guest-approved transcripts. Full disclosure, every episode.">
-    <meta name="twitter:image" content="https://nerranetwork.com/assets/covers/nerra-voices.jpg">
+    <meta name="twitter:image" content="https://nerranetwork.com/assets/covers/nerra-voices.jpg"><meta name="twitter:site" content="@nerranetwork">
+    <meta name="twitter:creator" content="@nerranetwork">
 
     <link rel="canonical" href="https://nerranetwork.com/nerra-voices-summaries.html">
-    
-    <link rel="alternate" type="application/rss+xml" title="Nerra Voices RSS" href="nerra_voices_podcast.rss">
-    
     
     
 
@@ -362,7 +360,7 @@
 
 <li><a href="blog/nerra_voices/index.html">Blog</a></li>
 <li><a href="nerra-voices-summaries.html">Summaries</a></li>
-<li><a href="nerra_voices_podcast.rss">RSS</a></li>
+
 
 
                 
@@ -390,7 +388,7 @@
 <a href="nerra-voices.html" onclick="document.getElementById('mobileMenu').classList.remove('open')">Nerra Voices</a>
 <a href="blog/nerra_voices/index.html" onclick="document.getElementById('mobileMenu').classList.remove('open')">Blog</a>
 <a href="nerra-voices-summaries.html" onclick="document.getElementById('mobileMenu').classList.remove('open')">Summaries</a>
-<a href="nerra_voices_podcast.rss" onclick="document.getElementById('mobileMenu').classList.remove('open')">RSS</a>
+
 
 
         <div class="nn-mobile-shows">
@@ -639,10 +637,6 @@
     <div class="nn-subscribe-bar">
         
         
-        <a href="nerra_voices_podcast.rss" target="_blank" rel="noopener" class="nn-subscribe-btn nn-subscribe-rss" aria-label="Subscribe via RSS">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19 7.38 20 6.18 20C5 20 4 19 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93V10.1z"/></svg>
-            RSS Feed
-        </a>
         
     </div>
 
@@ -1062,7 +1056,6 @@
                     
                     <a href="age_of_ai_podcast.rss">The Age of AI RSS</a>
                     
-                    <a href="nerra_voices_podcast.rss">Nerra Voices RSS</a>
                     
                     <a href="offshore_north_podcast.rss">Offshore North RSS</a>
                     
@@ -1084,11 +1077,13 @@
                 </div>
                 <div class="nn-footer-col">
                     <h4>Connect</h4>
-                    <a href="https://x.com/teslashortstime" target="_blank" rel="noopener">@teslashortstime</a>
-                    <a href="https://x.com/omniviewnews" target="_blank" rel="noopener">@omniviewnews</a>
-                    <a href="https://x.com/planetterrian" target="_blank" rel="noopener">@planetterrian</a>
-                    <a href="https://www.youtube.com/@NerraNetwork" target="_blank" rel="noopener">YouTube @NerraNetwork</a>
-                    <a href="https://www.youtube.com/@NerraRU" target="_blank" rel="noopener">YouTube @NerraRU</a>
+                    <a href="https://x.com/nerranetwork" target="_blank" rel="noopener">@nerranetwork <span style="opacity:.6;">(X)</span></a>
+                    <a href="https://www.youtube.com/@NerraNetwork" target="_blank" rel="noopener">@NerraNetwork <span style="opacity:.6;">(YouTube (English))</span></a>
+                    <a href="https://www.youtube.com/@NerraFR" target="_blank" rel="noopener">@NerraFR <span style="opacity:.6;">(YouTube (French))</span></a>
+                    <a href="https://www.youtube.com/@NerraRU" target="_blank" rel="noopener">@NerraRU <span style="opacity:.6;">(YouTube (Russian))</span></a>
+                    <a href="https://x.com/teslashortstime" target="_blank" rel="noopener">@teslashortstime <span style="opacity:.6;">(Tesla Shorts Time)</span></a>
+                    <a href="https://x.com/omniviewnews" target="_blank" rel="noopener">@omniviewnews <span style="opacity:.6;">(Omni View)</span></a>
+                    <a href="https://x.com/planetterrian" target="_blank" rel="noopener">@planetterrian <span style="opacity:.6;">(Planetterrian)</span></a>
                     <a href="contact.html">Contact</a>
                 </div>
             </div>
@@ -1146,6 +1141,7 @@
                     <p style="margin-top:0.5rem;font-size:0.85rem;">
                         <a href="join.html">Nerra Personal — your own daily show, gallery &amp; member perks →</a>
                         <a class="nn-account-link" href="account.html" style="display:none;margin-left:0.75rem;">Your account →</a>
+                        <a class="nn-login-link" href="login.html" style="margin-left:0.75rem;">Sign in →</a>
                     </p>
                 </form>
             </div>
@@ -1429,6 +1425,19 @@
                     const order = langs.length ? ['en'].concat(langs) : [];
                     const langsHtml = order.length ? `<span class="nn-summary-langs" role="group" aria-label="Listen and read in another language" style="display:inline-flex;gap:4px;margin-top:4px;">${order.map(k => `<button type="button" class="nn-summary-lang" data-lang="${k}" style="${pillStyle}">${LANG_LABELS[k] || k.toUpperCase()}</button>`).join('')}</span>` : '';
 
+                    // The guest's own links (Sept 2026). A listener who wants to
+                    // find the person they just heard should not have to search
+                    // for them: their site or product first, social after, in
+                    // the order the publish step normalised.
+                    const guestLinks = Array.isArray(s.guest_links) ? s.guest_links.filter(l => l && l.url) : [];
+                    const linkStyle = 'font-family:var(--font-ui);font-size:0.7rem;font-weight:600;padding:2px 9px;border-radius:100px;text-decoration:none;border:1px solid color-mix(in srgb, var(--show-color) 35%, transparent);color:var(--show-color-text, var(--show-color));background:color-mix(in srgb, var(--show-color) 8%, transparent);';
+                    const guestLinksHtml = guestLinks.length ? `
+                        <div class="nn-summary-guest-links" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;align-items:center;">
+                            <span style="font-family:var(--font-ui);font-size:0.7rem;color:var(--nn-text-muted);">${escapeHtml(s.guest ? s.guest : 'Guest')}:</span>
+                            ${guestLinks.map(l => `<a href="${escapeAttr(l.url)}" target="_blank" rel="noopener" style="${linkStyle}">${escapeHtml(l.label || l.url)}</a>`).join('')}
+                        </div>
+                    ` : '';
+
                     return `
                         <div class="nn-summary-item" data-date="${escapeAttr(date)}" data-i18n='${escapeAttr(JSON.stringify(i18n))}'>
                             <div class="nn-summary-header">
@@ -1440,6 +1449,7 @@
                                 ${audioHtml}
                             </div>
                             <div class="nn-summary-content">${renderMarkdown(content)}</div>
+                            ${guestLinksHtml}
                         </div>
                     `;
                 }
@@ -1710,6 +1720,7 @@
               var a = document.getElementById(id);
               if (a) { a.textContent = 'My Nerra'; a.href = 'account.html'; }
             });
+            document.querySelectorAll('.nn-login-link').forEach(function (a) { a.style.display = 'none'; });
           }).catch(function () {});
       } catch (e) {}
     })();
