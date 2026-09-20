@@ -99,6 +99,7 @@
 {% endblock %}
 
 {% block content %}
+{% from "_macros.html.j2" import mira_claim %}
 <div class="page-main">
     <section class="editorial-hero">
         <h1>How we make every episode</h1>
@@ -232,6 +233,41 @@
                 automatically. Transcripts are searchable on the blog.
             </p>
         </div>
+    </section>
+
+    <section class="editorial-section">
+        {# Interviews are the one part of this pipeline where a person outside
+           the network is in the recording, so the rules that apply to them are
+           different from the rest of the page and belong stated separately.
+           The claim itself is rendered from engine/brand.py. #}
+        <h2>Interviews: the two gates</h2>
+        <p>
+            Everything above describes shows written from public sources. The
+            two interview shows — <a href="{{ path_prefix }}age-of-ai.html">The Age of AI</a>
+            and <a href="{{ path_prefix }}nerra-voices.html">Nerra Voices</a> —
+            put a real person in the recording, so they carry two gates the
+            other shows do not need.
+        </p>
+        <ul>
+            <li>
+                <strong>A human editorial review, with no timer.</strong> Every
+                interview is reviewed before it is assembled. Nothing publishes
+                because a review was slow: an episode waiting on review simply
+                waits.
+            </li>
+            <li>
+                <strong>The guest approves their own transcript.</strong> The
+                guest reads what they said before anything reaches a feed.
+                Anything they ask to have removed is cut from the audio before
+                the episode is built — not bleeped over — and a takedown stays
+                available after publication.
+            </li>
+        </ul>
+        {{ mira_claim(heading='', level='h3', show_footnote=true) }}
+        <p>
+            How an interview runs end to end, and what a guest is asked to
+            agree to, is set out on <a href="{{ path_prefix }}mira.html">Mira's page</a>.
+        </p>
     </section>
 
     <section class="editorial-section">

@@ -2496,3 +2496,74 @@ body.nn-no-scroll { overflow: hidden; }
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+/* ---------------------------------------------------------------------------
+   Mira claim block (Sep 2026, phase 3)
+   ---------------------------------------------------------------------------
+   Rendered by the ``mira_claim`` macro in templates/_macros.html.j2 on
+   /mira.html, the three Mira show pages, the press kit and the editorial
+   page. The styles live here rather than in each page's <style> block so the
+   claim looks the same wherever it appears — the same reason the sentence
+   itself has exactly one owner in engine/brand.py. */
+.nn-mira-claim {
+  border: 1px solid var(--nn-border);
+  border-left: 3px solid var(--nn-accent);
+  border-radius: var(--radius-lg, 12px);
+  background: var(--nn-surface-2, rgba(255, 255, 255, 0.03));
+  padding: var(--sp-6);
+  margin: var(--sp-6) 0;
+}
+.nn-mira-claim__heading {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  color: var(--nn-white);
+  margin: 0 0 var(--sp-3);
+}
+.nn-mira-claim__claim {
+  font-family: var(--font-body);
+  font-size: 1.1rem;
+  line-height: 1.55;
+  color: var(--nn-white);
+  margin: 0 0 var(--sp-3);
+}
+.nn-mira-claim__basis {
+  font-family: var(--font-body);
+  font-size: 0.97rem;
+  line-height: 1.65;
+  color: var(--nn-text);
+  margin: 0 0 var(--sp-3);
+}
+.nn-mira-claim__footnote {
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--nn-text-secondary);
+  margin: 0;
+}
+
+/* Group label inside a nav dropdown (Sep 2026): the Shows menu is grouped by
+   ``strand`` so the three Mira-hosted shows read as a set instead of being
+   scattered by display_order. Not a link — a heading. */
+.nn-nav-group-label {
+  display: block;
+  padding: 10px 12px 4px;
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--nn-text-secondary);
+  pointer-events: none;
+}
+.nn-nav-group-label:not(:first-child) {
+  margin-top: 6px;
+  border-top: 1px solid var(--nn-border);
+}
+
+/* Strand badge on a homepage show card (Sep 2026). Same shape as the schedule
+   badges beside it, in the network accent so the grouping is visible in a grid
+   that display_order otherwise scatters. */
+.show-card-badge--strand {
+  border-color: var(--nn-accent);
+  color: var(--nn-accent);
+}

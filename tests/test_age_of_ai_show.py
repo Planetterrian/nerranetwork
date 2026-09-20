@@ -70,14 +70,48 @@ class TestShowRegistryShape:
             "through pipelines/voices/ (see the comment in the queue file)"
         )
 
-    def test_distribution_off_at_launch(self):
+    def test_distribution_state(self):
+        """Sep 20 2026 (operator-directed): newsletter + YouTube ON, X still off.
+
+        Four episodes with named external guests and live Apple + Spotify
+        listings had been shipping to RSS alone. The flags only mean something
+        because pipelines/voices/publish_episode.py now reads them — this show
+        bypasses run_show.py, where every other show's newsletter send and
+        YouTube upload live, so before that the flags were read by nothing.
+
+        X stays off in the pipeline: the network posts these from
+        @nerranetwork by hand, which needs no second credential set.
+        Multilingual stays off — a dub of a human guest's own recorded voice is
+        a different consent question, not a config flip.
+        """
         raw = yaml.safe_load(SHOW_YAML.read_text(encoding="utf-8"))
         assert raw["publishing"]["x_enabled"] is False
-        assert raw["youtube"]["enabled"] is False
+        assert raw["youtube"]["enabled"] is True
         assert raw["youtube"]["image_provider"] == "grok"
-        assert raw["newsletter"]["enabled"] is False
+        assert raw["newsletter"]["enabled"] is True
         assert raw["multilingual"]["enabled"] is False
         assert raw.get("weekly_summary_segment") is False
+
+    def test_voices_publisher_reads_the_distribution_flags(self):
+        """The flags above must be wired, or flipping them is theatre.
+
+        This is the OP3-prefix class: a show that skips run_show gets none of
+        run_show's publish surface unless the Voices publisher asks for it.
+        """
+        src = (ROOT / "pipelines" / "voices" / "publish_episode.py").read_text(
+            encoding="utf-8")
+        assert "maybe_send_newsletter" in src
+        assert "maybe_publish_youtube" in src
+        assert "send_show_newsletter" in src, (
+            "reuse engine.newsletter.send_show_newsletter — it carries the "
+            "sanitizer, the contrast check and the double-send guard"
+        )
+        # Both calls must sit AFTER the rows flip to published: the audio in
+        # the feed is the product, and a failed email must never cost the
+        # episode or make the sweep publish it twice.
+        published_at = src.index('"status": "published", "episode_number"')
+        assert src.index("maybe_send_newsletter(show") > published_at
+        assert src.index("maybe_publish_youtube(show") > published_at
 
     def test_intro_personality_is_mira(self):
         import datetime as dt

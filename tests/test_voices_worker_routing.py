@@ -51,9 +51,25 @@ def test_nerra_voices_apply_page_branding():
     assert "#0F766E" in page, "brand colour from shows/nerra_voices.yaml"
     assert 'href="nerra-voices.html"' in page
     assert "assets/covers/nerra-voices.jpg" in page
-    # No Age of AI residue.
-    assert "Age of AI" not in page
-    assert "#7C3AED" not in page
+    # No Age of AI residue. This page was derived from the Age of AI form, so
+    # the guard is against COPY-PASTE LEFTOVERS — its own title, tagline, brand
+    # colour and cover art must be its own.
+    assert "#7C3AED" not in page, "Age of AI's brand colour leaked back in"
+    assert "Apply to be a guest — The Age of AI" not in page
+    assert "the roles are reversed" not in page, "Age of AI's tagline leaked in"
+    # Sep 20 2026: ONE deliberate mention is allowed — a sideways link for an
+    # applicant who wants the other show, since the endpoint files the
+    # application against whichever form posted it and a misfiled one has to be
+    # reassigned by hand. Anything more than that link is residue again.
+    mentions = page.count("Age of AI")
+    assert mentions <= 1, (
+        f"{mentions} mentions of Age of AI — only the sideways apply link "
+        "belongs on this page"
+    )
+    if mentions:
+        assert 'href="age-of-ai-apply.html">The Age of AI</a>' in page, (
+            "the only permitted mention is the link to the other apply form"
+        )
 
 
 def test_age_of_ai_apply_page_unchanged_otherwise():

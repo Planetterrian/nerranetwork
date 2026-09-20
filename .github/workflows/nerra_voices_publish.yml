@@ -64,6 +64,18 @@ jobs:
           SUPABASE_SERVICE_KEY: ${{ secrets.VOICES_SUPABASE_SERVICE_KEY }}
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
           NOTIFICATION_WEBHOOK_URL: ${{ secrets.NOTIFICATION_WEBHOOK_URL }}
+          # Sep 20 2026: the publisher now honours the show's own
+          # newsletter.enabled / youtube.enabled (these shows bypass
+          # run_show.py, where every other show's distribution lives). Both
+          # paths are best-effort and a missing secret is a logged skip, not
+          # a failure — the episode is already in the feed by then.
+          BUTTONDOWN_API_KEY: ${{ secrets.BUTTONDOWN_API_KEY }}
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          # The suffix is the channel key uppercased — age_of_ai is channel
+          # "en", so engine.youtube reads YOUTUBE_REFRESH_TOKEN_EN. Passing
+          # the unsuffixed name would no-op the upload forever, silently.
+          YOUTUBE_REFRESH_TOKEN_EN: ${{ secrets.YOUTUBE_REFRESH_TOKEN_EN }}
       # Aug 15 2026: replaced a naive 4-attempt push loop. By this point
       # the Supabase row already reads `published` and the audio is on R2,
       # so a lost push silently strands the RSS entry / digest / site
@@ -74,12 +86,22 @@ jobs:
       - name: Commit RSS + summaries + pages
         uses: ./.github/actions/safe-commit-push
         with:
+          # publish_episode.py resolves the show per interview row, so this
+          # workflow can publish either interview show — but the list below
+          # named only Age of AI, which means a Nerra Voices episode would
+          # have had its feed, summaries, page and post generated and then
+          # thrown away (the silent-drop class). Both shows now.
           add-paths: |
             age_of_ai_podcast.rss
             digests/age_of_ai/
             age-of-ai.html
             age-of-ai-summaries.html
             blog/age_of_ai/
+            nerra_voices_podcast.rss
+            digests/nerra_voices/
+            nerra-voices.html
+            nerra-voices-summaries.html
+            blog/nerra_voices/
           commit-message: "Publish: Age of AI episode"
           recovery-on-failure: "true"
           recovery-show: "age_of_ai"

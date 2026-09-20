@@ -177,6 +177,9 @@
         'footer_ai_disclosure': 'ИИ-раскрытие' if _is_ru else 'AI Disclosure',
         'footer_network_status': 'Статус сети' if _is_ru else 'Network Status',
         'nav_more': 'Ещё' if _is_ru else 'More',
+        'nav_mira': 'Мира — ИИ-ведущая' if _is_ru else 'Mira, the AI host',
+        'nav_hosted_by_mira': 'Ведёт Мира' if _is_ru else 'Hosted by Mira',
+        'nav_other_shows': 'Остальные шоу' if _is_ru else 'Every other show',
         'nav_books': 'Книги' if _is_ru else 'Books',
         'nav_gallery': 'Галерея' if _is_ru else 'Image Gallery',
         'nav_data': 'Данные и дашборды' if _is_ru else 'Data & Dashboards',
@@ -249,12 +252,27 @@
                         {{ t.nav_shows }}
                         <svg viewBox="0 0 12 12" fill="none"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </button>
+                    {#- Grouped by ``strand`` (Sep 2026): the three shows the
+                        network's AI host presents sit at display_order 0.5, 13
+                        and 13.5, so a flat list scattered them and a reader who
+                        found one had no way to see the other two. One named
+                        group, then everything else. A show with no strand is
+                        unaffected, and the group vanishes if the registry
+                        stops declaring one. #}
+                    {%- set _mira_shows = all_shows | selectattr('strand', 'equalto', 'mira') | list -%}
+                    {%- set _other_shows = all_shows | rejectattr('strand', 'equalto', 'mira') | list -%}
+                    {%- set _show_groups = [(t.nav_hosted_by_mira, _mira_shows), (t.nav_other_shows, _other_shows)] if _mira_shows else [('', all_shows)] -%}
                     <div class="nn-nav-dropdown-menu" role="menu">
-                        {% for s in all_shows %}
+                        {% for _group_label, _group_shows in _show_groups %}
+                        {%- if _group_label %}
+                        <span class="nn-nav-group-label">{{ _group_label }}</span>
+                        {%- endif %}
+                        {% for s in _group_shows %}
                         <a href="{{ path_prefix }}{{ s.show_page }}" role="menuitem">
                             <picture><source type="image/webp" srcset="{{ path_prefix }}{{ s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image }}-400.webp"><img src="{{ path_prefix }}{{ s.podcast_image }}" alt="{{ s.name }} cover art" width="1400" height="1400" loading="lazy"></picture>
                             {{ s.name }}
                         </a>
+                        {% endfor %}
                         {% endfor %}
                     </div>
                 </li>
@@ -285,6 +303,7 @@
                         <svg viewBox="0 0 12 12" fill="none"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </button>
                     <div class="nn-nav-dropdown-menu nn-nav-dropdown-menu--compact">
+                        <a href="{{ path_prefix }}mira.html">{{ t.nav_mira }}</a>
                         <a href="{{ path_prefix }}books.html">{{ t.nav_books }}</a>
                         <a href="{{ path_prefix }}gallery.html">{{ t.nav_gallery }}</a>
                         <a href="{{ path_prefix }}data.html">{{ t.nav_data }}</a>
@@ -331,15 +350,21 @@
         <a href="{{ path_prefix }}about.html">{{ t.nav_about }}</a>
         <a href="{{ path_prefix }}player.html">{{ t.nav_player }}</a>
         {% endblock %}
+        {#- Mirrors the desktop Shows dropdown's strand grouping. #}
+        {%- set _m_mira = all_shows | selectattr('strand', 'equalto', 'mira') | list -%}
+        {%- set _m_other = all_shows | rejectattr('strand', 'equalto', 'mira') | list -%}
+        {%- set _m_groups = [(t.nav_hosted_by_mira, _m_mira), (t.nav_other_shows, _m_other)] if _m_mira else [(t.mobile_all_shows, all_shows)] -%}
+        {% for _m_label, _m_shows in _m_groups %}
         <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">{{ t.mobile_all_shows }}</div>
-            {% for s in all_shows %}
+            <div class="nn-mobile-shows-title">{{ _m_label }}</div>
+            {% for s in _m_shows %}
             <a href="{{ path_prefix }}{{ s.show_page }}" class="nn-mobile-show-link">
                 <picture><source type="image/webp" srcset="{{ path_prefix }}{{ s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image }}-400.webp"><img src="{{ path_prefix }}{{ s.podcast_image }}" alt="{{ s.name }} cover art" width="1400" height="1400" loading="lazy"></picture>
                 {{ s.name }}
             </a>
             {% endfor %}
         </div>
+        {% endfor %}
         <div class="nn-mobile-shows">
             <div class="nn-mobile-shows-title">{{ t.mobile_blogs }}</div>
             <a href="{{ path_prefix }}blog/index.html" class="nn-mobile-show-link" style="font-weight:600">
@@ -354,6 +379,7 @@
         </div>
         <div class="nn-mobile-shows">
             <div class="nn-mobile-shows-title">{{ t.nav_more }}</div>
+            <a href="{{ path_prefix }}mira.html" class="nn-mobile-show-link">{{ t.nav_mira }}</a>
             <a href="{{ path_prefix }}books.html" class="nn-mobile-show-link">{{ t.nav_books }}</a>
             <a href="{{ path_prefix }}gallery.html" class="nn-mobile-show-link">{{ t.nav_gallery }}</a>
             <a href="{{ path_prefix }}data.html" class="nn-mobile-show-link">{{ t.nav_data }}</a>
@@ -409,6 +435,10 @@
                     <h4>{{ t.footer_about }}</h4>
                     <a href="{{ path_prefix }}about.html">{{ t.footer_about_network }}</a>
                     <a href="{{ path_prefix }}start-here.html">{{ t.nav_start_here }}</a>
+                    {#- Flat, like every other link in this column: the mobile
+                        accordion CSS targets .nn-footer-col > a directly, so a
+                        grouped sub-list here would stop collapsing. #}
+                    <a href="{{ path_prefix }}mira.html">{{ t.nav_mira }}</a>
                     <a href="{{ path_prefix }}faq.html">{{ t.footer_faq }}</a>
                     <a href="{{ path_prefix }}contact.html">{{ t.footer_contact }}</a>
                     <a href="{{ path_prefix }}press.html">{{ t.footer_press }}</a>

@@ -1,0 +1,296 @@
+{% extends "base.html.j2" %}
+{#- /mira.html — the hub for the three shows Mira hosts.
+
+    Every contestable sentence here is imported, not typed: the claim, its
+    basis and the correction invitation come from engine/brand.py via the
+    ``mira_claim`` macro, the episode counts are read from the committed
+    summaries files at render time, and the interview steps are
+    ``MIRA_INTERVIEW_STEPS`` in generate_html.py. Nothing on this page should
+    be a number or a claim a reader can catch out of date. -#}
+
+{% block head_extra %}
+    {% from "_macros.html.j2" import mira_claim %}
+    <style>
+        .mira-hero {
+            padding: calc(var(--nav-height) + var(--sp-12)) var(--sp-6) var(--sp-8);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .mira-hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at 50% 0%, rgba(107, 71, 255, 0.18), transparent 70%);
+            pointer-events: none;
+        }
+        .mira-hero .eyebrow {
+            font-family: var(--font-ui);
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--nn-accent);
+            margin: 0 0 var(--sp-3);
+        }
+        .mira-hero h1 {
+            font-family: var(--font-heading);
+            font-size: clamp(2rem, 4.5vw, 2.9rem);
+            font-weight: 700;
+            color: var(--nn-white);
+            margin: 0 0 var(--sp-4);
+            line-height: 1.15;
+        }
+        .mira-hero p.lede {
+            font-family: var(--font-body);
+            font-size: clamp(1rem, 1.8vw, 1.18rem);
+            color: var(--nn-text);
+            line-height: 1.6;
+            max-width: 680px;
+            margin: 0 auto var(--sp-6);
+        }
+        .mira-section {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: var(--sp-8) var(--sp-6);
+        }
+        .mira-section h2 {
+            font-family: var(--font-heading);
+            font-size: clamp(1.4rem, 2.6vw, 1.8rem);
+            color: var(--nn-white);
+            margin: 0 0 var(--sp-4);
+        }
+        .mira-section p {
+            font-family: var(--font-body);
+            font-size: 1rem;
+            line-height: 1.7;
+            color: var(--nn-text);
+            margin: 0 0 var(--sp-4);
+        }
+        .mira-shows {
+            display: grid;
+            gap: var(--sp-5);
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            margin-top: var(--sp-6);
+        }
+        .mira-show {
+            border: 1px solid var(--nn-border);
+            border-radius: var(--radius-lg, 12px);
+            background: var(--nn-surface-2, rgba(255, 255, 255, 0.03));
+            padding: var(--sp-5);
+            display: flex;
+            flex-direction: column;
+            gap: var(--sp-3);
+        }
+        .mira-show h3 {
+            font-family: var(--font-heading);
+            font-size: 1.1rem;
+            margin: 0;
+        }
+        .mira-show h3 a { color: var(--nn-white); text-decoration: none; }
+        .mira-show h3 a:hover { color: var(--nn-accent); }
+        .mira-show .state {
+            font-family: var(--font-ui);
+            font-size: 0.76rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--nn-text-secondary);
+        }
+        .mira-show p {
+            font-size: 0.93rem;
+            line-height: 1.6;
+            margin: 0;
+            flex: 1;
+        }
+        .mira-show .links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--sp-3);
+            font-family: var(--font-ui);
+            font-size: 0.85rem;
+        }
+        .mira-show .links a { color: var(--nn-accent); text-decoration: none; }
+        .mira-show .links a:hover { text-decoration: underline; }
+        .mira-steps {
+            list-style: none;
+            counter-reset: mira-step;
+            margin: var(--sp-6) 0 0;
+            padding: 0;
+        }
+        .mira-steps li {
+            counter-increment: mira-step;
+            position: relative;
+            padding: 0 0 var(--sp-5) var(--sp-10);
+            border-left: 1px solid var(--nn-border);
+            margin-left: 14px;
+        }
+        .mira-steps li:last-child { border-left-color: transparent; padding-bottom: 0; }
+        .mira-steps li::before {
+            content: counter(mira-step);
+            position: absolute;
+            left: -14px;
+            top: 0;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--nn-accent);
+            color: #fff;
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .mira-steps h3 {
+            font-family: var(--font-heading);
+            font-size: 1.02rem;
+            color: var(--nn-white);
+            margin: 2px 0 var(--sp-2);
+        }
+        .mira-steps p { font-size: 0.95rem; margin: 0; }
+        .mira-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 22px;
+            border-radius: 100px;
+            background: var(--nn-accent);
+            color: #fff;
+            font-family: var(--font-ui);
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .mira-cta:hover { background: var(--nn-accent-hover); }
+        .mira-cta--ghost {
+            background: transparent;
+            color: var(--nn-white);
+            border: 1px solid var(--nn-border);
+        }
+        .mira-cta--ghost:hover { background: rgba(255, 255, 255, 0.06); }
+        .mira-ctas { display: flex; flex-wrap: wrap; gap: var(--sp-4); }
+        .mira-notlist { margin: var(--sp-4) 0 0; padding-left: var(--sp-6); }
+        .mira-notlist li {
+            font-family: var(--font-body);
+            font-size: 0.97rem;
+            line-height: 1.7;
+            color: var(--nn-text);
+            margin-bottom: var(--sp-3);
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+{% from "_macros.html.j2" import mira_claim %}
+<div class="page-main">
+    <section class="mira-hero">
+        <p class="eyebrow">The host</p>
+        <h1>Meet {{ host_name }}</h1>
+        <p class="lede">{{ host_summary }}</p>
+        <div class="mira-ctas" style="justify-content:center;">
+            <a class="mira-cta" href="{{ apply_url }}">Be interviewed by {{ host_name }} →</a>
+            <a class="mira-cta mira-cta--ghost" href="nerra-daily.html">Hear her daily edition</a>
+        </div>
+    </section>
+
+    <section class="mira-section">
+        {{ mira_claim(heading='Why this is unusual', level='h2') }}
+    </section>
+
+    <section class="mira-section">
+        <h2>Three jobs, one host</h2>
+        <p>{{ host_network_role }}</p>
+        <div class="mira-shows">
+            {% for show in mira_shows %}
+            <article class="mira-show">
+                <span class="state">{{ show.episode_label }}{% if show.schedule %} · {{ show.schedule }}{% endif %}</span>
+                <h3><a href="{{ show.show_page }}">{{ show.name }}</a></h3>
+                <p>{{ show.description }}</p>
+                <div class="links">
+                    <a href="{{ show.show_page }}">Show page</a>
+                    {%- if show.episode_count and show.summaries_page %}
+                    <a href="{{ show.summaries_page }}">Episodes</a>
+                    {%- endif %}
+                    {%- if show.has_feed %}
+                    <a href="{{ show.rss_file }}">RSS</a>
+                    {%- endif %}
+                    {%- if show.apple_podcasts_url %}
+                    <a href="{{ show.apple_podcasts_url }}" rel="noopener">Apple</a>
+                    {%- endif %}
+                    {%- if show.spotify_url %}
+                    <a href="{{ show.spotify_url }}" rel="noopener">Spotify</a>
+                    {%- endif %}
+                    {%- if show.apply_page %}
+                    <a href="{{ show.apply_page }}">Be a guest</a>
+                    {%- endif %}
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="mira-section">
+        <h2>What happens if you agree to an interview</h2>
+        <p>
+            Start to finish, with the two places a human decides something
+            marked. There is no step where a recording becomes an episode
+            because nobody stopped it.
+        </p>
+        <ol class="mira-steps">
+            {% for title, detail in interview_steps %}
+            <li>
+                <h3>{{ title }}</h3>
+                <p>{{ detail }}</p>
+            </li>
+            {% endfor %}
+        </ol>
+    </section>
+
+    <section class="mira-section">
+        <h2>What {{ host_name }} is not</h2>
+        <ul class="mira-notlist">
+            <li>
+                <strong>Not a person, and never presented as one.</strong>
+                {{ host_name }} says on air that the host is an AI. Her voice is
+                synthetic and deliberately not a clone of the network's human
+                editor, who narrates the other shows.
+            </li>
+            <li>
+                <strong>Not a rewrite of what you said.</strong> A guest's words
+                are their own recorded audio. Nothing a guest says is
+                regenerated, re-voiced or paraphrased into synthetic speech.
+            </li>
+            <li>
+                <strong>Not unsupervised.</strong> A human owns the brief, reads
+                every application, and reviews the episode. The published
+                <a href="ai-disclosure.html">AI disclosure</a> states plainly
+                what a person does and does not check across the network.
+            </li>
+            <li>
+                <strong>Not a way to harvest your voice.</strong> We use the
+                recording for the episode, its transcript and its archive page,
+                and for nothing else — we do not train a voice model on it, and
+                Mira's own voice is a synthetic preset, not built from guests.
+            </li>
+        </ul>
+        <p style="margin-top:var(--sp-6);">
+            The longer version of all of this — the pipeline, the source
+            checks, the corrections policy — is on the
+            <a href="editorial.html">editorial process</a> page.
+        </p>
+    </section>
+
+    <section class="mira-section" style="text-align:center;">
+        <h2>Come on the show</h2>
+        <p>
+            No media training, no pitch deck, no AI angle required. If you do
+            something and can talk about it honestly, that is the whole bar.
+        </p>
+        <div class="mira-ctas" style="justify-content:center;">
+            <a class="mira-cta" href="{{ apply_url }}">Apply to be a guest →</a>
+            <a class="mira-cta mira-cta--ghost" href="press.html">Press &amp; media kit</a>
+        </div>
+    </section>
+</div>
+{% endblock %}
