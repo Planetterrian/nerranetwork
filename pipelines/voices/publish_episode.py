@@ -27,10 +27,13 @@ from pathlib import Path
 
 import requests
 
+import html as _html
+
 from common import (  # noqa: E402
     ROOT, VoiceShow, logger, notify_operator, sb_select, sb_update, show_for,
     guest_links,
     guest_links_markdown,
+    send_email,
 )
 
 
@@ -201,6 +204,90 @@ def write_episode_digest(show, episode_num: int, when: dt.date, title: str,
     return path
 
 
+def published_email(show: VoiceShow, app: dict, pkg: dict,
+                    episode_num: int) -> tuple:
+    """Subject and body of the note the guest gets when their episode is out.
+
+    Sept 20 2026. John Capobianco's team asked twice where the episode would
+    live and what to share, and the answer was written by hand after the
+    publish. The guest gave an hour; the least the publish owes them is the
+    link, the same day, with every link they gave us shown back to them so
+    they can see it landed. Their publicist, if they have one, is copied.
+    """
+    e = _html.escape
+    name = str(app.get("name") or "").strip()
+    first = name.split()[0] if name else "there"
+    post = show.post_url(episode_num)
+    links = guest_links(app)
+    materials = [ln.strip().lstrip("-*• ").strip()
+                 for ln in str(pkg.get("guest_materials") or "").splitlines()
+                 if ln.strip()]
+
+    def link(url: str) -> str:
+        return f'<a href="{e(url)}">{e(url)}</a>'
+
+    where = [f"the show page, {link(show.page_url)}"]
+    if show.apple_url:
+        where.append(f"Apple Podcasts, {link(show.apple_url)}")
+    if show.spotify_url:
+        where.append(f"Spotify, {link(show.spotify_url)}")
+    where_txt = (", ".join(where[:-1]) + " and " + where[-1]) if len(where) > 1 else where[0]
+
+    parts = [
+        f"<p>Hi {e(first)},</p>",
+        f"<p>Your episode is out. It is Episode {int(episode_num)} of {e(show.name)}, "
+        f"and the post with the player, the transcript and your links is here:</p>",
+        f"<p>{link(post)}</p>",
+        "<p>If that page is not there the moment you click, give it a few "
+        "minutes; it goes up with the site build that follows this note.</p>",
+        f"<p>It is also in the podcast feed, so it is on {where_txt}, "
+        f"as the apps pick it up over the next day or so.</p>",
+    ]
+    if links:
+        parts.append("<p>Where to find you, as it appears on the post:</p><ul>"
+                     + "".join(f"<li>{e(l['label'])}: {link(l['url'])}</li>" for l in links)
+                     + "</ul>")
+    if materials:
+        parts.append("<p>And the reading you asked us to point people at:</p><ul>"
+                     + "".join(f"<li>{_md_link_html(m)}</li>" for m in materials)
+                     + "</ul>")
+    parts += [
+        "<p>If anything on the page is wrong, a link, a title, a spelling, "
+        "reply to this and it is fixed the same day. If you post about it, "
+        "send the link and we will share it on. The network is "
+        f"{link(show.base_url)} and @planetterrian on X if you want to tag it.</p>",
+        f"<p>Thank you again for the hour.</p>",
+        f"<p>{e(show.sign_off)}</p>",
+    ]
+    subject = f"Your {show.short_label} episode is live: Ep{int(episode_num)}"
+    return subject, "".join(parts)
+
+
+def _md_link_html(line: str) -> str:
+    """One guest-materials line, ``[label](url)`` or a bare URL, as HTML."""
+    e = _html.escape
+    m = re.match(r"\[([^\]]+)\]\((https?://[^)\s]+)\)", line.strip())
+    if m:
+        return f'{e(m.group(1))}: <a href="{e(m.group(2))}">{e(m.group(2))}</a>'
+    return re.sub(r"(https?://[^\s<>\"')\]]+)",
+                  lambda u: f'<a href="{e(u.group(1))}">{e(u.group(1))}</a>',
+                  e(line))
+
+
+def tell_the_guest(show: VoiceShow, app: dict, pkg: dict, episode_num: int) -> None:
+    """Send :func:`published_email`; a failure here never unpublishes anything."""
+    subject, body = published_email(show, app, pkg, episode_num)
+    to = str(app.get("email") or "").strip()
+    cc = [str(app.get("publicist_email") or "").strip()]
+    try:
+        send_email(to, subject, body, cc_operator=True, cc=cc)
+    except Exception:  # noqa: BLE001 — the episode is out; the note can be resent
+        logger.exception("published email to %s not sent", to)
+        notify_operator(show.slack(
+            f"Ep{episode_num} is out but the guest email to {to} failed; "
+            f"send them {show.post_url(episode_num)} by hand"))
+
+
 def publish_one(interview_id: str) -> int:
     interview = sb_select("interviews", f"id=eq.{interview_id}")[0]
     if interview.get("status") != "approved":
@@ -330,6 +417,10 @@ def publish_one(interview_id: str) -> int:
         f"site regenerated. {audio_url}"
     ))
     logger.info("Published episode %d (%s)", episode_num, app["name"])
+    # The site is regenerated in this run but the workflow commits and
+    # deploys it after this script returns, so the page may lag the email by
+    # a few minutes. The link is right; the guest will not race it.
+    tell_the_guest(show, app, pkg, episode_num)
     return 0
 
 

@@ -1736,3 +1736,62 @@ class TestTheGuestsLinksAreLinks:
         assert links[0] == {"label": "gopippa.ai", "url": "https://www.gopippa.ai"}
         assert {"label": "TikTok", "url": "https://www.tiktok.com/@gopippa"} in links
         assert {"label": "LinkedIn (company)", "url": "https://www.linkedin.com/company/gopippa"} in links
+
+
+class TestTheGuestHearsTheMomentTheyAreOut:
+    """John Capobianco's team asked twice where the episode would live and
+    what to share, and the answer was typed by hand after the publish. Now
+    the publish itself tells the guest: the post, where the feed lands, and
+    every link they gave us shown back so they can see it took."""
+
+    APP = {"name": "John Capobianco", "email": "john@example.com",
+           "publicist_email": "pr@example.com",
+           "links": {"website": "https://automateyournetwork.ca",
+                     "linkedin": "https://www.linkedin.com/in/jc"}}
+    PKG = {"guest_materials": "- [NetClaw on GitHub](https://github.com/x/netclaw)\n"
+                              "- https://bit.ly/podcast-sdd-guide"}
+
+    def test_the_note_carries_the_post_and_every_link(self):
+        from publish_episode import published_email
+        from shows import get_show
+        show = get_show("age_of_ai")
+        subject, body = published_email(show, self.APP, self.PKG, 5)
+        assert "Ep5" in subject and "live" in subject
+        assert "Hi John," in body
+        assert 'href="https://nerranetwork.com/blog/age_of_ai/ep005.html"' in body
+        for url in ("https://automateyournetwork.ca", "https://www.linkedin.com/in/jc",
+                    "https://github.com/x/netclaw", "https://bit.ly/podcast-sdd-guide"):
+            assert f'href="{url}"' in body, url
+        assert "NetClaw on GitHub" in body
+        assert show.apple_url in body and show.spotify_url in body
+
+    def test_it_is_sent_after_the_rows_flip_and_copies_the_publicist(self):
+        pub = (V / "publish_episode.py").read_text(encoding="utf-8")
+        flip = pub.index('{"status": "published", "episode_number": episode_num}')
+        assert pub.index("tell_the_guest(show, app, pkg, episode_num)") > flip
+        assert 'cc = [str(app.get("publicist_email")' in pub
+        assert "cc_operator=True, cc=cc" in pub
+
+    def test_a_show_knows_where_its_episodes_live(self):
+        from shows import get_show
+        aoa = get_show("age_of_ai")
+        assert aoa.post_url(5) == "https://nerranetwork.com/blog/age_of_ai/ep005.html"
+        assert aoa.apple_url.startswith("https://podcasts.apple.com/")
+        assert aoa.spotify_url.startswith("https://open.spotify.com/show/")
+        nv = get_show("nerra_voices")
+        assert nv.apple_url == "" and nv.spotify_url == ""
+
+    def test_send_email_copies_without_duplicates(self, monkeypatch):
+        import common
+        sent = {}
+        class R:
+            status_code = 200
+            def raise_for_status(self): pass
+        def fake_post(url, headers=None, json=None, timeout=None):
+            sent.update(json); return R()
+        monkeypatch.setenv("RESEND_API_KEY", "x")
+        monkeypatch.setattr(common.requests, "post", fake_post)
+        common.send_email("guest@example.com", "s", "<p>b</p>", cc_operator=True,
+                          cc=["pr@example.com", "", "guest@example.com",
+                              common.OPERATOR_EMAIL.upper()])
+        assert sent["cc"] == [common.OPERATOR_EMAIL, "pr@example.com"]

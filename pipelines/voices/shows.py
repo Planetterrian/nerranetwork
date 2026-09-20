@@ -104,11 +104,17 @@ class VoiceShow:
     premise: str
     opening_line: str
     closing_question: str
+    apple_url: str = ""        # the show on Apple Podcasts, "" until it is listed
+    spotify_url: str = ""      # the show on Spotify, "" until it is listed
 
     # -- derived -----------------------------------------------------------
     @property
     def page_url(self) -> str:
         return f"{self.base_url}/{self.page}"
+
+    def post_url(self, episode_num: int) -> str:
+        """The episode's own page, as generate_html writes it from the digest."""
+        return f"{self.base_url}/blog/{self.slug}/ep{int(episode_num):03d}.html"
 
     @property
     def apply_url(self) -> str:
@@ -213,6 +219,10 @@ def get_show(slug: Optional[str] = None) -> VoiceShow:
         premise=" ".join(str(voices["premise"]).split()),
         opening_line=" ".join(str(voices["opening_line"]).split()),
         closing_question=" ".join(str(voices["closing_question"]).split()),
+        apple_url=(f"https://podcasts.apple.com/us/podcast/id{cfg['apple_show_id']}"
+                   if cfg.get("apple_show_id") else ""),
+        spotify_url=(f"https://open.spotify.com/show/{cfg['spotify_show_id']}"
+                     if cfg.get("spotify_show_id") else ""),
     )
 
 

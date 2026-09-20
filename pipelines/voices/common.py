@@ -213,10 +213,11 @@ def email_safe_html(html: str) -> str:
 
 
 def send_email(to: str, subject: str, html_body: str,
-               cc_operator: bool = False) -> None:
+               cc_operator: bool = False, cc: Optional[List[str]] = None) -> None:
     """Send mail as Mira. ``cc_operator=True`` copies Patrick — the July
     2026 oversight process: Mira runs guest comms, the operator sees
-    everything without being in the critical path."""
+    everything without being in the critical path. ``cc`` copies anyone
+    else (a publicist, say); empties and duplicates are dropped."""
     to = (to or "").strip()
     if "@" not in to:
         # Better to say which address is missing than to let the provider
@@ -230,8 +231,17 @@ def send_email(to: str, subject: str, html_body: str,
     html_body = email_safe_html(html_body)
     payload: dict = {"from": FROM_EMAIL, "to": [to],
                      "subject": subject, "html": html_body}
-    if cc_operator and to.lower() != OPERATOR_EMAIL.lower():
-        payload["cc"] = [OPERATOR_EMAIL]
+    copies: List[str] = []
+    if cc_operator:
+        copies.append(OPERATOR_EMAIL)
+    for addr in cc or []:
+        addr = (addr or "").strip()
+        if "@" in addr and addr.lower() != to.lower() \
+                and addr.lower() not in {c.lower() for c in copies}:
+            copies.append(addr)
+    copies = [c for c in copies if c.lower() != to.lower()]
+    if copies:
+        payload["cc"] = copies
     if resend_key:
         resp = requests.post(
             "https://api.resend.com/emails",
@@ -245,7 +255,8 @@ def send_email(to: str, subject: str, html_body: str,
             headers={"X-Postmark-Server-Token": postmark_token,
                      "Content-Type": "application/json"},
             json={"From": FROM_EMAIL, "To": to,
-                  "Subject": subject, "HtmlBody": html_body},
+                  "Subject": subject, "HtmlBody": html_body,
+                  **({"Cc": ", ".join(copies)} if copies else {})},
             timeout=30,
         )
     else:
