@@ -977,6 +977,16 @@
                 <a href="mailto:patrick@planetterrian.com?subject={{ ('Suggestion for ' ~ show_name) | urlencode }}&body={{ ('Re: ' ~ canonical_url ~ '%0A%0A') }}" style="padding:6px 14px;border:1px solid var(--nn-border);border-radius:100px;color:var(--nn-text-muted);text-decoration:none;font-weight:600;">{% if _is_ru %}\ud83d\udca1 \u0418\u0434\u0435\u044f{% else %}\ud83d\udca1 Suggest a story{% endif %}</a>
             </div>
 
+            {#- Per-show rating/review ask (engine.episode_ask). SpaceX Ask B
+                from Ep 99 — same copy as the RSS show-notes footer. -#}
+            {% if episode_ask and episode_ask.paragraphs %}
+            <aside class="episode-ask" style="margin:var(--sp-6) 0;padding:var(--sp-5);border-left:3px solid var(--show-color);background:color-mix(in srgb, var(--show-color), transparent 94%);font-family:var(--font-ui);font-size:0.98rem;line-height:1.55;color:var(--nn-text);">
+                {% for p in episode_ask.paragraphs %}
+                <p style="margin:0{% if not loop.last %} 0 0.85rem{% endif %};">{{ p }}</p>
+                {% endfor %}
+            </aside>
+            {% endif %}
+
             <!-- Subscribe CTA -->
             {% if newsletter_tag %}
             <div id="subscribe-cta" class="show-subscribe-inline" style="margin-top:var(--sp-6);margin-bottom:var(--sp-6);">

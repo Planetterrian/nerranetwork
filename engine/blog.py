@@ -24,6 +24,8 @@ from pathlib import Path
 from typing import Optional
 from urllib.parse import urlparse
 
+from engine.episode_ask import episode_ask_for
+
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
@@ -1346,6 +1348,10 @@ def generate_blog_post_html(
         # under the episode nav (Offshore North: the campaign dashboard and
         # the Plain Sailing glossary). Empty for every other show.
         "show_resources": _show_resources(show_slug),
+        # Sep 2026: per-show rating/review ask (SpaceX Ask B from Ep 99).
+        # Owned by engine.episode_ask so RSS show notes and the blog footer
+        # cannot drift. None for shows/episodes without an entry.
+        "episode_ask": episode_ask_for(show_slug, ep_num),
         "blog_rss_url": f"https://nerranetwork.com/blog_{show_slug}.rss",
         "show_page": show_config.get("show_page", ""),
         "summaries_page": show_config.get("summaries_page", ""),

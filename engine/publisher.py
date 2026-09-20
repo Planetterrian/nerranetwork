@@ -134,31 +134,41 @@ def build_show_notes_footer(
     Returns markdown (rendered to ``<a>`` anchors by
     :func:`_markdown_to_rss_html`):
 
+      - a per-show rating/review ask when registered in
+        :mod:`engine.episode_ask` for this slug + episode (SpaceX Ask B
+        from Ep 99),
       - a per-episode blog link (full show notes / transcript / sources) when
         ``has_blog`` is true (the show actually publishes a blog page for this
         episode — i.e. it is in ``NETWORK_SHOWS``), and
       - always the network home-page link.
 
     Returns ``""`` when ``base_url`` is empty so callers can append
-    unconditionally without emitting a dangling footer.
+    unconditionally without emitting a dangling footer. An ask alone (no
+    base URL) is still emitted so a misconfigured site URL cannot silence
+    the rating CTA.
     """
-    site = (base_url or "").rstrip("/")
-    if not site:
-        return ""
+    from engine.episode_ask import episode_ask_markdown
+
     parts: list[str] = []
-    if has_blog and show_slug:
-        blog_url = (
-            f"{site}/{blog_path_prefix.strip('/')}/{show_slug}/ep{episode_num:03d}.html"
-        )
+    ask_md = episode_ask_markdown(show_slug, episode_num)
+    if ask_md:
+        parts.append(ask_md)
+
+    site = (base_url or "").rstrip("/")
+    if site:
+        if has_blog and show_slug:
+            blog_url = (
+                f"{site}/{blog_path_prefix.strip('/')}/{show_slug}/ep{episode_num:03d}.html"
+            )
+            parts.append(
+                "📝 Full show notes, transcript & sources: "
+                f"[read the episode page]({blog_url})"
+            )
+        domain = site.split("//", 1)[-1]
         parts.append(
-            "📝 Full show notes, transcript & sources: "
-            f"[read the episode page]({blog_url})"
+            "🌐 Part of the Nerra Network — explore every show at "
+            f"[{domain}]({site})."
         )
-    domain = site.split("//", 1)[-1]
-    parts.append(
-        "🌐 Part of the Nerra Network — explore every show at "
-        f"[{domain}]({site})."
-    )
     return "\n\n".join(parts)
 
 
