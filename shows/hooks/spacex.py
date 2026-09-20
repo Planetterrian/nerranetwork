@@ -363,36 +363,44 @@ def _price_sentence(
 # pattern). {price_sentence} is empty when the quote failed validation.
 # Every variant MUST match the Closing chapter pattern in shows/spacex.yaml
 # (drift guard in tests/test_spacex_show.py).
+#
+# Sep 19 2026 Ask A (CMO-approved): rating and subscribe asks were removed
+# from these variants. ``_pick_closing`` appends
+# ``engine.intros.SPACEX_ASK_A_END_STING`` after the main close / Patrick
+# sign-off; ``engine.pipeline`` then appends sister-show / network promo.
+# Do not re-add a rating or subscribe ask here — that would double-speak.
 _CLOSING_VARIANTS = (
     (
         "Patrick: That's your SpaceX news for today. {price_sentence}"
-        "If the show saves you time, a rating or review on Apple Podcasts or "
-        "Spotify genuinely helps new listeners find it. "
         "I'm Patrick in Vancouver. Thanks for listening — see you tomorrow."
     ),
     (
         "Patrick: And that's a wrap on today's SpaceX developments. {price_sentence}"
-        "Share this with a fellow spaceflight fan if you found it useful, "
-        "and subscribe so you don't miss tomorrow's episode. "
         "I'm Patrick in Vancouver. See you next time."
     ),
     (
         "Patrick: That covers everything worth knowing about SpaceX today. {price_sentence}"
-        "A quick rating on Apple Podcasts or Spotify goes a long way. "
         "I'm Patrick in Vancouver. See you tomorrow."
     ),
     (
         "Patrick: That's the day at SpaceX — that's a wrap. {price_sentence}"
-        "If you're new here, subscribe and this briefing finds you every day. "
         "I'm Patrick in Vancouver. Thanks for being here, and I'll see you tomorrow."
     ),
 )
 
 
 def _pick_closing(price: float, change_str: str, source: str, *, date=None) -> str:
+    from engine.intros import SPACEX_ASK_A_END_STING
+
     d = date or datetime.date.today()
     template = _CLOSING_VARIANTS[d.toordinal() % len(_CLOSING_VARIANTS)]
-    return template.format(price_sentence=_price_sentence(price, change_str, source))
+    closing = template.format(
+        price_sentence=_price_sentence(price, change_str, source)
+    )
+    # Ask A end-sting after main close; pipeline adds network promo after.
+    if SPACEX_ASK_A_END_STING not in closing:
+        closing = f"{closing.rstrip()} {SPACEX_ASK_A_END_STING}"
+    return closing
 
 
 # ---------------------------------------------------------------------------
