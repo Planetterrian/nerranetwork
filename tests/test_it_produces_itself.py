@@ -1809,3 +1809,59 @@ class TestTheGuestHearsTheMomentTheyAreOut:
                           cc=["pr@example.com", "", "guest@example.com",
                               common.OPERATOR_EMAIL.upper()])
         assert sent["cc"] == [common.OPERATOR_EMAIL, "pr@example.com"]
+
+
+class TestSheDoesNotEndTheInterviewInTheFirstThird:
+    """Sept 20 2026, Meridan Zerner. Mira worked through the eight prepared
+    questions, stacked the last three into one turn, asked the personal
+    closing set eleven minutes in and told the guest to hang up at sixteen
+    minutes of a forty-five minute interview. The time checks were correct
+    and she ignored them: her prompt's closing trigger counts minutes
+    REMAINING while the note counts minutes ELAPSED, and with Patrick out of
+    the room there was nobody to fill the silence her list left behind."""
+
+    SCENARIO = (ROOT / "voximplant" / "scenarios" / "age_of_ai_interview.js").read_text(encoding="utf-8")
+    PROMPT = (V / "prompts" / "mira_system_prompt.txt").read_text(encoding="utf-8")
+
+    def test_the_room_says_in_words_whether_she_may_close(self):
+        block = self.SCENARIO[self.SCENARIO.index("function startTimeChecks"):
+                              self.SCENARIO.index("const SIGN_OFF_RE")]
+        assert "YOU ARE NOT NEAR THE END" in block
+        assert "elapsed < closingOpensAtMin()" in block
+        assert "You may begin the closing round" in block
+
+    def test_the_closing_window_matches_the_prompts(self):
+        import importlib, sys as _sys
+        _sys.path.insert(0, str(V))
+        fire = importlib.import_module("fire_interviews")
+        js = self.SCENARIO[self.SCENARIO.index("function closingWindowMin"):]
+        js = js[:js.index("}")]
+        # Both sides compute max(4, min(15, round(planned / 3))).
+        assert "Math.max(4, Math.min(15, Math.round(plannedMin() / 3)))" in js
+        src = (V / "fire_interviews.py").read_text(encoding="utf-8")
+        assert "lightning_at=max(4, min(15, round(minutes / 3)))" in src
+        assert fire is not None
+
+    def test_an_early_sign_off_is_caught_and_she_carries_on(self):
+        assert "function catchEarlySignOff(text)" in self.SCENARIO
+        assert 'if (who === "Mira")' in self.SCENARIO
+        guard = self.SCENARIO[self.SCENARIO.index("function catchEarlySignOff"):]
+        guard = guard[:guard.index("function startTimeChecks")] if "function startTimeChecks" in guard else guard
+        assert "closingPermitted" in guard
+        assert "the interview is NOT" in guard
+        assert "earlySignOffs > 2" in guard      # rescue, never nag
+        assert "responseCreate" in guard         # she says it, not us
+
+    def test_the_prompt_waits_for_permission_and_does_no_arithmetic(self):
+        flat = _flat(self.PROMPT)
+        assert "it starts only when a [TIME CHECK] note has told you in words that you may begin it" in flat
+        assert "Never before, however few prepared questions you have left" in flat
+        assert "A note saying \"fifteen minutes elapsed\" is not the same as fifteen minutes remaining" in flat
+        # The old trigger, which she read as an elapsed count, is gone.
+        assert "minutes remaining, or sooner if you are short of time" not in flat
+
+    def test_the_prompt_says_the_list_is_a_floor(self):
+        flat = _flat(self.PROMPT)
+        assert "THE LIST IS A FLOOR, NOT THE HOUR" in flat
+        assert "Reaching the end of the list early is a sign you have been reading it" in flat
+        assert "ONE QUESTION, THEN SILENCE" in flat

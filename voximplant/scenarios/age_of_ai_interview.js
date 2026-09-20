@@ -756,6 +756,10 @@ function remember(who, text) {
   if (!text) return;
   transcript.push(who + ": " + String(text).slice(0, 400));
   if (transcript.length > 200) transcript.splice(0, transcript.length - 200);
+  if (who === "Mira") {
+    try { catchEarlySignOff(text); }
+    catch (err) { Logger.write("[aoa " + runId + "] sign-off check failed: " + err.message); }
+  }
 }
 
 // What the next Mira needs in order to continue rather than restart.
@@ -1280,19 +1284,69 @@ function silentMicNudge(attempt) {
 // (first dry run: Mira thought a 25-min call had run far longer). Every 5
 // minutes, inject a non-spoken system note with true elapsed/remaining
 // time; the prompt tells Mira to pace ONLY from these notes.
+// How long the closing round is allowed to take, and therefore the earliest
+// minute Mira may start it. Mirrors fire_interviews.compile_mira_prompt's
+// lightning_at so the room and the prompt agree.
+function closingWindowMin() {
+  return Math.max(4, Math.min(15, Math.round(plannedMin() / 3)));
+}
+
+function closingOpensAtMin() {
+  return Math.max(1, plannedMin() - closingWindowMin());
+}
+
+function elapsedMin() {
+  return Math.round((Date.now() - (firstJoinAt || Date.now())) / 60000);
+}
+
+let closingPermitted = false;   // has a note told her she may close?
+let earlySignOffs = 0;          // how often she tried to end before that
+
 function startTimeChecks() {
   if (timeCheckTimer) clearInterval(timeCheckTimer);
   timeCheckTimer = setInterval(function () {
     try {
       if (!grokAgent || roomEnded) return;
-      const elapsedMin = Math.round((Date.now() - (firstJoinAt || Date.now())) / 60000);
-      const remainMin = Math.max(0, plannedMin() - elapsedMin);
+      const elapsed = elapsedMin();
+      const remainMin = Math.max(0, plannedMin() - elapsed);
+      // Sept 20 2026, Meridan Zerner. Mira ran a 45-minute interview for
+      // sixteen minutes: she worked through the eight prepared questions,
+      // stacked the last three into one turn, asked the personal closing
+      // set at 11 minutes and told the guest to hang up at 16. The notes
+      // she had been given said "10 minutes elapsed; about 35 minutes
+      // remain" and she closed anyway, because a number is not an
+      // instruction and her prompt's closing trigger is phrased in minutes
+      // REMAINING while the note counts minutes ELAPSED — the same "15"
+      // appears in both. So the note no longer reports the clock and hopes.
+      // It says, in words, whether she is allowed to end yet.
       let note = "[TIME CHECK — system note, do not read aloud] " +
-        elapsedMin + " minutes elapsed; about " + remainMin +
+        elapsed + " minutes elapsed; about " + remainMin +
         " minutes remain of the planned " + plannedMin() + "-minute interview.";
-      if (remainMin <= 5 && remainMin > 0) {
+      if (elapsed < closingOpensAtMin()) {
+        const left = closingOpensAtMin() - elapsed;
+        note += " YOU ARE NOT NEAR THE END. Do not start a closing round, do" +
+          " not ask a final question, do not thank her for the conversation" +
+          " and do not say anything about the recording finishing. You have" +
+          " about " + left + " more minutes of real questions to ask before" +
+          " any of that. If you have reached the end of the prepared" +
+          " questions, that is normal and early: go back to the most" +
+          " interesting thing she has said so far and ask the next question" +
+          " down from it — how it actually worked, what it cost, who" +
+          " disagreed, what happened next. One question per turn, and let" +
+          " the answer finish.";
+      } else if (remainMin > 3) {
+        if (!closingPermitted) {
+          closingPermitted = true;
+          trace("time", "closing round permitted at " + elapsed + " min");
+        }
+        note += " You may begin the closing round when the current thread" +
+          " reaches a natural end. There is no hurry; stay if the" +
+          " conversation is somewhere worth staying.";
+      } else if (remainMin > 0) {
+        closingPermitted = true;
         note += " Begin wrapping up now: one final question, then your closing thanks.";
-      } else if (remainMin === 0) {
+      } else {
+        closingPermitted = true;
         note += " Time is up — deliver your closing thanks and end the interview.";
       }
       grokAgent.conversationItemCreate({
@@ -1302,6 +1356,47 @@ function startTimeChecks() {
       Logger.write("[aoa " + runId + "] time-check inject failed: " + err.message);
     }
   }, TIME_CHECK_EVERY_MS);
+}
+
+// The words Mira is told to say when the interview really is over. Hearing
+// them from her before the closing round has opened means she has ended the
+// interview by mistake, and the guest is about to hang up.
+const SIGN_OFF_RE = /(end of the recording|you can hang up|that'?s a wrap|we'?re all done here)/i;
+
+/**
+ * She just told the guest it was over, far too early. The guest is
+ * listening right now, so the recovery has to be immediate and has to be
+ * spoken by her, not by us: one light correction and a real question.
+ * Called from remember() on every line of hers.
+ */
+function catchEarlySignOff(text) {
+  if (roomEnded || !grokAgent || closingPermitted) return;
+  if (!SIGN_OFF_RE.test(text || "")) return;
+  const elapsed = elapsedMin();
+  if (elapsed >= closingOpensAtMin()) return;
+  earlySignOffs += 1;
+  if (earlySignOffs > 2) return;   // never nag; two rescues is already a lot
+  trace("time", "early sign-off at " + elapsed + " min of " + plannedMin() +
+        " — asking her to carry on");
+  Logger.write("[aoa " + runId + "] early sign-off caught at " + elapsed + " min");
+  try {
+    grokAgent.conversationItemCreate({
+      item: { type: "message", role: "system", content: [{ type: "input_text", text:
+        "[ROOM — system note, do not read aloud] You have just told the guest" +
+        " the recording is over, but only " + elapsed + " minutes of the" +
+        " planned " + plannedMin() + " have passed and the interview is NOT" +
+        " over. She is still on the line. Say so straight away, lightly and" +
+        " in one sentence — you spoke too soon, you have more you want to ask" +
+        " — and then ask your next question. Take it from the most" +
+        " interesting thing she has said so far and go one level down into" +
+        " it rather than opening a new subject. Do not apologise at length" +
+        " and do not explain yourself." }] },
+    });
+    miraSpeaking = true;
+    grokAgent.responseCreate({});
+  } catch (err) {
+    Logger.write("[aoa " + runId + "] early sign-off rescue failed: " + err.message);
+  }
 }
 
 /**

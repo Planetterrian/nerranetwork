@@ -224,7 +224,11 @@ class TestTheRoomKeepsThePromise:
     def test_the_scenario_paces_to_the_run_row(self):
         assert "function plannedMin()" in SCENARIO
         assert "config.planned_minutes" in SCENARIO
-        assert "plannedMin() - elapsedMin" in SCENARIO
+        # The remaining-time arithmetic reads the run row's length, not a
+        # constant (elapsedMin() became a function on Sept 20 2026 when the
+        # time checks started saying in words whether she may close).
+        assert "plannedMin() - elapsed" in SCENARIO
+        assert "function elapsedMin()" in SCENARIO
 
     def test_an_out_of_range_value_falls_back(self):
         fn = SCENARIO[SCENARIO.index("function plannedMin()"):]
