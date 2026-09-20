@@ -1220,7 +1220,9 @@ class TestBuildShowNotesFooter:
             assert "nerranetwork.com" in out
 
     def test_empty_base_url_returns_empty(self):
-        """Caller can append unconditionally without a dangling footer."""
+        """Caller can append unconditionally without a dangling footer.
+        Shows without an episode-ask still return "" when base_url is empty.
+        """
         assert build_show_notes_footer("", "tesla", 1, has_blog=True) == ""
 
     def test_trailing_slash_in_base_url_is_normalised(self):
