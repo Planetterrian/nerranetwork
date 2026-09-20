@@ -362,12 +362,13 @@
             <div class="nn-section-header">
                 <div class="section-label">Our Shows</div>
                 <h2>Daily intelligence on the topics that matter</h2>
-                <p>Every show is ad-free and independently produced; most publish every day. Pick one, or let <a href="{{ path_prefix }}nerra-daily.html">Nerra Daily</a> hand you the whole network in one episode.</p>
+                <p>Every show is ad-free and independently produced; most publish every day. Pick one, or let <a href="{{ path_prefix }}nerra-daily.html">Nerra Daily</a> hand you the whole network in one episode. Three of them are hosted by <a href="{{ path_prefix }}mira.html">Mira</a>, who also does the network's interviews herself.</p>
             </div>
             <div class="show-showcase" id="show-showcase-grid">
                 {% for s in all_shows %}
                 <div class="show-card-wrap"
                      data-slug="{{ s.slug }}"
+                     data-strand="{{ s.strand | default('') }}"
                      data-topics="{{ s.picker_tags.topics | default([]) | join(' ') }}"
                      data-audience="{{ s.picker_tags.audience | default([]) | join(' ') }}"
                      data-language="{{ s.picker_tags.language | default([]) | join(' ') }}"
@@ -380,6 +381,10 @@
                         </picture>
                         <div class="show-card-name">{{ s.name }}</div>
                         <div class="show-card-badges">
+                            {#- The strand badge is first: the three shows Mira
+                                hosts are the network's most differentiated and
+                                display_order scatters them through this grid. #}
+                            {% if s.strand == 'mira' %}<span class="show-card-badge show-card-badge--strand">Hosted by Mira</span>{% endif %}
                             {% if s.schedule %}<span class="show-card-badge">{{ s.schedule }}</span>{% endif %}
                             {% if s.episode_length %}<span class="show-card-badge">{{ s.episode_length }}</span>{% endif %}
                             {% if s.picker_tags and s.picker_tags.language and 'russian' in s.picker_tags.language %}<span class="show-card-badge">In Russian</span>{% endif %}

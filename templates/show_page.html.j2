@@ -72,7 +72,7 @@
 {% endblock %}
 
 {% block content %}
-    {% from "_macros.html.j2" import ai_badge %}
+    {% from "_macros.html.j2" import ai_badge, mira_claim %}
     <!-- Hero -->
     <section class="show-hero">
         <div class="show-hero-bg"></div>
@@ -549,6 +549,54 @@
                         feed stops working the moment you do.</p>
                 </div>
             </div>
+        </div>
+    </section>
+    {% endif %}
+
+    {# Pre-launch state (Sep 2026). A show with no feed file has published
+       nothing, and Nerra Voices spent its first weeks rendering an episode rail
+       that said "Episodes will appear here once available." above a subscribe
+       button for a feed that 404s. Say it plainly and lead with the thing a
+       visitor can actually do. Same rule the Sep 3 pass applied to the blog
+       index's RSS button: no surface advertises a feed that does not exist. #}
+    {% if not has_feed %}
+    <section class="nn-section" id="not-yet-published" style="padding-bottom:0;">
+        <div class="container" style="max-width:920px;">
+            <div style="border:1px solid var(--nn-border);border-left:3px solid var(--nn-accent);border-radius:14px;background:var(--nn-surface);padding:1.6rem 1.8rem;">
+                <div class="section-label">Not published yet</div>
+                <h2 style="font-family:var(--font-heading);margin:0.4rem 0 0.7rem;font-size:1.45rem;line-height:1.25;">{% if _is_ru %}Первый выпуск ещё не вышел{% else %}The first episode has not shipped{% endif %}</h2>
+                <p style="color:var(--nn-text-muted);margin:0 0 1rem;max-width:60ch;">
+                    {% if _is_ru %}Как только выйдет первый выпуск, здесь появится лента и подписка.{% else %}This show is open for guests and has nothing published. There is no
+                    feed to subscribe to yet — when the first interview is out, it
+                    appears here and in every podcast app.{% endif %}
+                </p>
+                <p style="margin:0;display:flex;gap:0.6rem;flex-wrap:wrap;">
+                    <a class="nn-btn nn-btn-primary" href="{{ path_prefix }}{{ apply_page or 'age-of-ai-apply.html' }}">{% if _is_ru %}Стать гостем{% else %}Apply to be a guest{% endif %} →</a>
+                    <a class="nn-btn" href="{{ path_prefix }}nerra-daily.html">{% if _is_ru %}Слушать Nerra Daily{% else %}Listen to Nerra Daily meanwhile{% endif %}</a>
+                </p>
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    {# "Hosted by Mira" (Sep 2026). Three shows share a host and had no link
+       between them: a reader who found Nerra Daily could not learn that the
+       same host runs two interview shows, and the sentence saying why that is
+       unusual lived nowhere. Registry-gated on ``strand``, so it appears on
+       those three and nowhere else, and the claim itself is rendered from
+       engine/brand.py — never typed into this template. #}
+    {% if strand == 'mira' %}
+    <section class="nn-section" id="hosted-by-mira" style="padding-bottom:0;">
+        <div class="container" style="max-width:920px;">
+            <div class="section-label">Hosted by Mira</div>
+            {{ mira_claim(heading='', level='h2', show_footnote=false) }}
+            <p style="color:var(--nn-text-muted);margin:0 0 1rem;max-width:62ch;">
+                {{ mira.network_role }}
+            </p>
+            <p style="margin:0;display:flex;gap:0.6rem;flex-wrap:wrap;">
+                <a class="nn-btn" href="{{ path_prefix }}mira.html">Meet Mira</a>
+                <a class="nn-btn" href="{{ path_prefix }}{{ apply_page or 'age-of-ai-apply.html' }}">Be a guest</a>
+            </p>
         </div>
     </section>
     {% endif %}
@@ -1117,7 +1165,7 @@
         }
 
         function showNoEpisodes() {
-            document.getElementById('latest-title').textContent = 'No episodes available yet';
+            document.getElementById('latest-title').textContent = HAS_FEED ? 'No episodes available yet' : 'Not published yet';
             document.getElementById('episodes-grid').innerHTML = '<p style="color:var(--nn-text-muted);grid-column:1/-1;text-align:center;padding:2rem 0;">Episodes will appear here once available.</p>';
         }
 

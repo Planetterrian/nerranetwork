@@ -305,9 +305,10 @@ def publish_one(interview_id: str) -> int:
 
     # The episode's own post, written before the site is regenerated so the
     # generator picks it up in the same pass.
+    digest_path = None
     try:
-        write_episode_digest(show, episode_num, today, title,
-                             interview, app, pkg, audio_url)
+        digest_path = write_episode_digest(show, episode_num, today, title,
+                                          interview, app, pkg, audio_url)
     except Exception:  # noqa: BLE001 — the episode still publishes
         logger.exception("episode post not written (non-fatal)")
 
@@ -325,12 +326,245 @@ def publish_one(interview_id: str) -> int:
     sb_update("editorial_packages", f"id=eq.{pkg['id']}",
               {"status": "published"})
 
+    # Distribution beyond the feed, gated on the show's own YAML and strictly
+    # after the episode is recorded as published: the audio in the feed is the
+    # product, and a failed email or upload must never cost the episode or
+    # make the sweep re-publish it.
+    cfg = _show_config(show)
+    maybe_send_newsletter(show, cfg, episode_num, today,
+                          interview.get("episode_thesis") or "",
+                          digest_path)
+    maybe_publish_youtube(show, cfg, episode_num, today, title, description,
+                          audio_url, app.get("name") or "")
+
     notify_operator(show.slack(
         f"Ep{episode_num} PUBLISHED: {app['name']} — RSS updated, "
         f"site regenerated. {audio_url}"
     ))
     logger.info("Published episode %d (%s)", episode_num, app["name"])
     return 0
+
+
+# ---------------------------------------------------------------------------
+# Distribution beyond RSS (Sep 2026)
+# ---------------------------------------------------------------------------
+#
+# The interview shows bypass ``run_show.py``, which is where every other show's
+# newsletter send and YouTube upload live. So ``newsletter.enabled`` and
+# ``youtube.enabled`` in shows/age_of_ai.yaml were read by NOTHING: flipping
+# them looked like enabling distribution and did nothing at all. That is the
+# same class as the OP3-prefix hole above — a show that skips run_show gets
+# none of run_show's publish surface unless this file asks for it.
+#
+# Both paths below are BEST-EFFORT and gated on the show's own YAML, so:
+#   * the flags the operator flips are the flags the code reads;
+#   * a failure can never unpublish or block an episode that is already in the
+#     feed (the audio is the product);
+#   * a show with the flags off is byte-identical to before.
+
+
+def _show_config(show: VoiceShow):
+    """The show's full ShowConfig, or ``None`` if it cannot be loaded.
+
+    This pipeline deliberately does not load the show-config stack for its
+    core path — the VoiceShow registry is thinner and enough for RSS. It is
+    loaded here so that the distribution flags have exactly one home: the
+    show YAML every other show is configured from.
+    """
+    try:
+        from engine.config import load_config
+        return load_config(ROOT / "shows" / f"{show.slug}.yaml")
+    except Exception:  # noqa: BLE001 — distribution is optional, publishing is not
+        logger.exception("could not load shows/%s.yaml (distribution skipped)",
+                         show.slug)
+        return None
+
+
+def maybe_send_newsletter(show: VoiceShow, cfg, episode_num: int,
+                          when: dt.date, hook: str, digest_path: Path) -> None:
+    """Email the episode to the show's subscribers, if the show enables it.
+
+    Reuses ``engine.newsletter.send_show_newsletter`` — the same function every
+    other show uses — so the interview shows get the scaffold sanitizer, the
+    contrast check, the subject-line builder and the 20-hour double-send guard
+    without a second implementation. The digest written moments ago is the
+    body, which is why this runs after :func:`write_episode_digest`.
+    """
+    if cfg is None or not getattr(getattr(cfg, "newsletter", None), "enabled", False):
+        return
+    if not digest_path or not digest_path.exists():
+        logger.warning("::warning::newsletter skipped for %s Ep%d: no digest at %s",
+                       show.slug, episode_num, digest_path)
+        return
+    try:
+        from engine.newsletter import send_show_newsletter
+        email_id = send_show_newsletter(
+            digest_path.read_text(encoding="utf-8"),
+            cfg,
+            episode_num,
+            when.isoformat(),
+            hook=hook,
+        )
+        if email_id:
+            logger.info("Newsletter sent for %s Ep%d (%s)",
+                        show.slug, episode_num, email_id)
+        else:
+            logger.info("Newsletter not sent for %s Ep%d "
+                        "(not configured, or a guard declined)",
+                        show.slug, episode_num)
+    except Exception:  # noqa: BLE001 — the episode is already published
+        logger.exception("newsletter failed for %s Ep%d (non-fatal)",
+                         show.slug, episode_num)
+
+
+def waveform_video_url(audio_url: str) -> str:
+    """Where the produce step put this episode's waveform MP4.
+
+    ``produce_episode.py`` renders ``<name>.mp4`` beside ``<name>.mp3`` and
+    uploads them to ``show.r2_key(name)`` and ``show.r2_key("video", name)``
+    respectively — but it only ever put the video URL in an email, so there is
+    no row to read it from. The key convention is the contract, so the URL is
+    derived from the audio URL and then HEAD-checked: the video is best-effort
+    in produce too, and an episode with no video must simply skip YouTube.
+    """
+    if not audio_url.endswith(".mp3"):
+        return ""
+    head, _, filename = audio_url.rpartition("/")
+    if not head or not filename:
+        return ""
+    return f"{head}/video/{filename[:-4]}.mp4"
+
+
+def maybe_publish_youtube(show: VoiceShow, cfg, episode_num: int, when: dt.date,
+                          title: str, description: str, audio_url: str,
+                          guest_name: str) -> None:
+    """Upload the episode's waveform video to YouTube, if the show enables it.
+
+    Deliberately minimal: one long-form upload of the video the produce step
+    already rendered and paid for. No Shorts, no dubs, no adaptive-policy tier
+    — those live in run_show's YouTube stage and porting them is a much larger
+    job than this show needs to have a video presence. The upload is recorded
+    in ``digests/<slug>/youtube_videos.json``, which is the file the analytics
+    fetcher, the adaptive policy and the subscriber tracker already glob, so
+    the episode shows up in the feedback loop without any further wiring.
+    """
+    if cfg is None or not getattr(getattr(cfg, "youtube", None), "enabled", False):
+        return
+    yt = cfg.youtube
+    video_url = waveform_video_url(audio_url)
+    if not video_url:
+        logger.warning("::warning::YouTube skipped for %s Ep%d: cannot derive a "
+                       "video URL from %s", show.slug, episode_num, audio_url)
+        return
+    try:
+        probe = requests.head(video_url, timeout=60, allow_redirects=True)
+        if probe.status_code != 200:
+            logger.warning("::warning::YouTube skipped for %s Ep%d: no waveform "
+                           "video at %s (HTTP %s)", show.slug, episode_num,
+                           video_url, probe.status_code)
+            return
+    except Exception:  # noqa: BLE001
+        logger.exception("YouTube skipped for %s Ep%d: HEAD %s failed",
+                         show.slug, episode_num, video_url)
+        return
+
+    try:
+        from engine.funnel import PLACEMENT_DESCRIPTION, episode_link
+        from engine.youtube import (
+            add_video_to_playlist, get_channel_credentials_from_env,
+            upload_video,
+        )
+        from engine.utils import strip_speech_tags
+
+        credentials = get_channel_credentials_from_env(
+            getattr(yt, "channel", "en") or "en")
+        if credentials is None:
+            logger.warning("::warning::YouTube skipped for %s Ep%d: no channel "
+                           "credentials in the environment", show.slug, episode_num)
+            return
+
+        # show.page_url is already absolute (shows.py builds it from the
+        # registry). Every published link goes through engine.funnel — see
+        # the standing rule at the top of CLAUDE.md.
+        page = episode_link(
+            show.page_url, show.slug, episode_num, kind="long",
+            placement=PLACEMENT_DESCRIPTION,
+        )
+        body = strip_speech_tags(description or "").strip()
+        full_description = "\n\n".join(x for x in (
+            body,
+            f"Full episode, transcript and every other show: {page}",
+            f"{cfg.name} is hosted by Mira, an AI. Every episode says so, and "
+            "no interview is published until the guest has read and approved "
+            "their own transcript.",
+        ) if x)
+
+        with tempfile.TemporaryDirectory(prefix=f"{show.slug}_yt_") as tmp:
+            local = Path(tmp) / f"{show.episode_prefix}_Ep{episode_num:03d}.mp4"
+            with requests.get(video_url, stream=True, timeout=1800) as resp:
+                resp.raise_for_status()
+                with local.open("wb") as fh:
+                    for chunk in resp.iter_content(1 << 16):
+                        fh.write(chunk)
+            result = upload_video(
+                local,
+                credentials=credentials,
+                title=title,
+                description=full_description,
+                tags=list(getattr(yt, "tags", None) or [])[:15],
+                category_id=int(getattr(yt, "category_id", 24) or 24),
+                privacy_status=getattr(yt, "privacy_status", "public") or "public",
+                contains_synthetic_media=True,
+            )
+        video_id = getattr(result, "video_id", "") or ""
+        if not video_id:
+            logger.warning("::warning::YouTube upload returned no video id for "
+                           "%s Ep%d", show.slug, episode_num)
+            return
+        playlist = getattr(yt, "podcast_playlist_id", "") or ""
+        if playlist:
+            try:
+                add_video_to_playlist(video_id, playlist, credentials=credentials)
+            except Exception:  # noqa: BLE001 — the video is up either way
+                logger.exception("playlist add failed for %s (non-fatal)", video_id)
+        _record_youtube_video(show, episode_num, when, title, video_id,
+                              guest_name, getattr(yt, "channel", "en") or "en")
+        logger.info("YouTube: %s Ep%d uploaded as %s",
+                    show.slug, episode_num, video_id)
+    except Exception:  # noqa: BLE001 — the episode is already published
+        logger.exception("YouTube upload failed for %s Ep%d (non-fatal)",
+                         show.slug, episode_num)
+
+
+def _record_youtube_video(show: VoiceShow, episode_num: int, when: dt.date,
+                          title: str, video_id: str, guest_name: str,
+                          channel: str) -> None:
+    """Append to the per-show video index the rest of the network already reads."""
+    index = ROOT / show.audio_subdir / "youtube_videos.json"
+    data = {"schema_version": 2, "videos": []}
+    if index.exists():
+        try:
+            data = json.loads(index.read_text(encoding="utf-8")) or data
+        except json.JSONDecodeError:
+            logger.warning("::warning::%s is not valid JSON — starting a new index",
+                           index)
+    videos = data.setdefault("videos", [])
+    if any(v.get("video_id") == video_id for v in videos if isinstance(v, dict)):
+        return
+    videos.append({
+        "video_id": video_id,
+        "show_slug": show.slug,
+        "episode": episode_num,
+        "kind": "long",
+        "title": title,
+        "hook": guest_name,
+        "published": when.isoformat(),
+        "watch_url": f"https://www.youtube.com/watch?v={video_id}",
+        "channel": channel,
+    })
+    index.parent.mkdir(parents=True, exist_ok=True)
+    index.write_text(json.dumps(data, indent=2, ensure_ascii=False),
+                     encoding="utf-8")
 
 
 def refresh_post(interview_id: str) -> int:

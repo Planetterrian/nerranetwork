@@ -647,9 +647,16 @@ today's work, not just explain yesterday's):
   generations of this show's tics came from exactly that.
 - **AOAI** (The Age of AI) — the network's **AI-hosted LIVE interview show**
   (July 2026): Mira, an AI documentarian persona (Grok voice `ara`,
-  deliberately NOT the Patrick clone), phones REAL guests via a Voximplant
-  scenario bridged to a Grok Voice Agent, dual-track records the call, and
-  the episode is produced from the real recording. **Production does NOT go
+  deliberately NOT the Patrick clone), interviews REAL guests live through a
+  Voximplant scenario bridged to a Grok Voice Agent, dual-track records the
+  conversation, and the episode is produced from the real recording.
+  **Since 2026-09-09 every interview is a ROOM** — the guest (and an optional
+  co-host) joins from `age-of-ai-studio.html`, picks a mic and presses Join,
+  and the **outbound PSTN call is the FALLBACK mode**, not the default. An
+  earlier version of this paragraph said Mira "phones" guests, and that claim
+  had also reached `engine/brand.py` as the BASIS of the network's
+  first-of-its-kind claim; corrected 2026-09-20. Do not describe the show as
+  a phone-call show on any surface. **Production does NOT go
   through run_show** — `shows/age_of_ai.yaml` exists for registry/publish
   surfaces only, and its narrative mode + permanently-empty topic queue make
   an accidental `run_show.py age_of_ai` a clean `narrative_queue_empty` skip.
@@ -675,8 +682,25 @@ today's work, not just explain yesterday's):
   phase-1 smoke test): [`docs/age_of_ai_plan.md`](docs/age_of_ai_plan.md);
   drift guards: `tests/test_age_of_ai_show.py` (registry no-op shape, spec
   artifacts, dispatch-event coherence, validators, the two human gates).
-  RSS + site only at launch; X/YouTube/newsletter/multilingual off until
-  the phase-8 public launch.
+  **Distribution (2026-09-20, operator-directed): newsletter + YouTube ON,
+  X still posted by hand from @nerranetwork, multilingual off** (a dub of a
+  guest's own recorded voice is a different consent question, not a config
+  flip). Those two flags had been read by NOTHING until this date — the
+  interview shows bypass `run_show.py`, where every other show's newsletter
+  send and YouTube upload live, so flipping them looked like enabling
+  distribution and did nothing, the same class as the OP3-prefix hole.
+  `pipelines/voices/publish_episode.py` now reads them:
+  `maybe_send_newsletter` reuses `engine.newsletter.send_show_newsletter`
+  (so the sanitizer, the contrast check and the 20-hour double-send guard all
+  apply) and `maybe_publish_youtube` uploads the waveform MP4 the produce
+  step already renders — long-form only, no Shorts/thumbnails/dubs/policy
+  tier, recorded in `digests/age_of_ai/youtube_videos.json` so the analytics
+  fetcher and the adaptive policy see it. Both run AFTER the rows flip to
+  `published` and swallow their own failures: the audio in the feed is the
+  product. The video URL is DERIVED from the audio URL
+  (`waveform_video_url` — `<prefix>/video/<name>.mp4`) and HEAD-checked,
+  because the produce step only ever put it in an email. Any new show that
+  bypasses run_show inherits this hole; wire its distribution explicitly.
 - **NDaily** (Nerra Daily) — the network's **combined daily edition**
   (Aug 2026): one ~2 h episode/day that SPLICES the day's already-published
   English episode MP3s (pulled back from R2) with short Mira host links
@@ -2610,6 +2634,73 @@ per-show blog pagination, SSR summaries, stale curated Tesla/SpaceX
 series under "Live" badges, MIT alpha framing on Mission Control, and
 the three remaining hand-written pages (`ru/index.html`,
 `modern-investing-resources.html`, `age-of-ai-apply.html`).
+
+### Site + funnel + Mira program (Sep 19–20, 2026)
+
+Operator brief: review the site and the last 30 days, then a plan driven by
+analytics, with Nerra Personal's visibility and the Mira shows' novelty as the
+priorities. The finding was that the factory is healthy and almost nothing it
+makes reaches a person: **134,171 YouTube views in 30 days produced 10
+attributed sessions and 1 newsletter signup**, the site saw 243 sessions in 28
+days with **26% of measured landing sessions hitting a path with no file**, and
+the three most differentiated, cheapest, best-trending and most-visited
+properties — Nerra Daily, The Age of AI, Nerra Voices — were the three with no
+YouTube, no X, no newsletter and no on-air presence. Plan:
+`/root/.claude/plans/` (session artifact); guards
+`tests/test_site_funnel_pass_2026_09_19.py`,
+`tests/test_mira_pass_2026_09_20.py`. Rules that now bind:
+
+- **`engine/brand.py` owns every claim the network makes about itself**, the
+  way `engine/titles.py` owns limits and `engine/funnel.py` owns campaign ids.
+  Import `mira_claim_paragraphs()`; render it through the `mira_claim` macro in
+  `templates/_macros.html.j2` (fed by the `mira` / `mira_shows` Jinja globals).
+  A template that hardcodes the sentence fails CI.
+- **The Mira claim is NARROW on purpose, and widening it is the failure mode.**
+  It rests on the guest holding the publish decision — *an AI asks the
+  questions, and the human guest decides whether the conversation is published
+  at all* — because the general shape ("an AI host interviews real people") is
+  **not ours to claim**: a prior-art search found platforms doing exactly that,
+  at least one since 2024, so the broad version is disprovable in one search on
+  the page a journalist reads. The basis must also stay true of BOTH call modes:
+  the pre-2026-09-09 basis said Mira "places the call", which is now the
+  fallback, and it had already shipped inside `llms.txt`. Guards:
+  `TestTheClaimHasOneOwner`.
+- **The claim never ships without its basis and its correction invitation.**
+  A superlative nobody can challenge is a superlative nobody should believe, and
+  the AI-disclosure page is the asset the claim trades on.
+- **`strand` groups shows in the chrome** (`shows/network_meta.yaml`;
+  `_merge_scaffolded_network_registry` passes it through untouched, so a
+  registry-only show needs no Python change). It drives the nav Shows dropdown
+  group, the mobile menu, and a badge on the homepage grid card. The FOOTER show
+  list stays flat — its mobile accordion targets `.nn-footer-col > a` directly,
+  so nesting would stop it collapsing on phones.
+- **A show that bypasses `run_show.py` gets none of run_show's publish
+  surface.** `newsletter.enabled` and `youtube.enabled` on `age_of_ai` were read
+  by NOTHING for months; `pipelines/voices/publish_episode.py` reads them now
+  (see the AOAI entry above for the mechanics). This is the third instance of
+  the class after the OP3 prefix and the per-language OP3 feeds — when a new
+  show skips run_show, wire its distribution explicitly and check the secret
+  NAMES (`YOUTUBE_REFRESH_TOKEN_EN`, not `YOUTUBE_REFRESH_TOKEN`).
+- **No surface advertises something that does not exist.** A show with no feed
+  FILE gets no feed link, no `webFeed` JSON-LD, no `alternate`, no JS fetch and
+  no Story Tracker link (`has_feed`, Sep 19 — Nerra Voices' dead feed link was
+  on ~1,990 pages, the most-repeated broken link on the site), and its page
+  leads with a "Not published yet" band and the apply CTA instead of an empty
+  episode rail.
+- **An internal link never carries a `utm_*` tag.** GA4 starts a new session on
+  any page_view carrying `utm_source`, so an internal UTM inflates the session
+  count and overwrites the visitor's real acquisition source. Internal CTAs are
+  measured with a GA4 EVENT (`select_personal_upsell`). The blog Story Tracker
+  link had been doing exactly this.
+- **`site/redirects.yaml` + `scripts/audit_dead_urls.py`** own dead URLs: a
+  committed stub (meta-refresh + canonical + `noindex`) per retired path, and a
+  nightly loud-but-non-blocking audit against the GA4 landing pages. A redirect
+  stub is **not** an episode page — `_blog_url_for_episode` skips
+  `redirect_stub_paths()`, because "the file exists" stopped being a proxy for
+  "the article exists" the moment stubs appeared at `blog/<slug>/epNNN.html`.
+- **`age-of-ai-studio.html` stays out of the sitemap** (a private join link for
+  a scheduled interview); `age-of-ai-apply.html` is now IN it, having been the
+  unfindable acquisition surface for the network's most differentiated shows.
 
 ### YouTube pipeline pass (June 10, 2026)
 

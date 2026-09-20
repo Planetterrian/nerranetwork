@@ -1722,3 +1722,62 @@ experiments:
       (a July 2026 operator decision) — adding two entries already dilutes every
       surface proportionally. Guards:
       tests/test_site_funnel_pass_2026_09_19.py.
+
+  - id: mira-visibility-and-claim-2026-09-20
+    title: >
+      Mira gets a home, a narrowed first-of-its-kind claim, and Age of AI gets
+      the distribution its flags only pretended to enable
+    area: growth
+    shipped: 2026-09-20
+    readout: 2026-10-20
+    status: reading
+    hypothesis: >
+      The three shows Mira hosts are the network's cheapest ($0.085/episode for
+      Nerra Daily), best-trending (+22.7% WoW against the network's -13.3%) and
+      most-visited show pages — and they were the three with no shared home, no
+      claim explaining why they are unusual, and no link between each other. A
+      named host with a stated, checkable differentiator should convert a
+      stranger better than three unrelated show pages do.
+    baseline: >
+      A repo-wide grep for "first of its kind" / "world's first" across
+      templates/, every root .html and the three Mira docs returned zero hits,
+      so the novelty was claimed nowhere. press.html, editorial.html and
+      how-to-listen.html had no mention of Mira at all; about.html and
+      start-here.html had one each and neither linked anything. In the 28 days
+      to 2026-09-17: nerra-daily.html 46 views (the #1 show page),
+      age-of-ai.html 16, nerra-voices.html 7, and age-of-ai-apply.html
+      unmeasured because it was hand-written, linked from two show pages and
+      absent from sitemap.xml. Age of AI had 4 published episodes with named
+      external guests and live Apple + Spotify listings while
+      newsletter.enabled, youtube.enabled and x_enabled were all false.
+    target: >
+      By 10-20: /mira.html carrying measurable sessions, age-of-ai-apply.html
+      appearing in GA4 landing pages at all (it cannot today), Age of AI
+      downloads up from a 4-episode base, and at least one guest application
+      attributable to the site rather than to an outbound ask. Honest floor:
+      243 sessions in 28 days cannot power a significance test, so this is
+      judged on leading indicators — pages measurable at all, apply-page
+      sessions, AoAI downloads — never on a conversion rate.
+    notes: >
+      The claim was NARROWED twice before shipping and that is the point of the
+      entry. The first version claimed the general shape ("an AI host, and she
+      does the interviewing"); a prior-art search found at least two platforms
+      already doing exactly that, one since 2024, so the claim was disprovable
+      in one search on the page a journalist reads. Its basis was worse: it
+      rested on "Mira places the call herself … over the phone", which stopped
+      being how the show works on 2026-09-09 when every interview became a room
+      joined from age-of-ai-studio.html with the outbound PSTN leg demoted to a
+      fallback. The shipped claim rests on the one term no other show appears to
+      offer and which is verifiable in this repository: the guest decides
+      whether the conversation is published at all. engine/brand.py owns it, the
+      mira_claim macro renders it, and a guard fails if a template hardcodes it
+      or if the basis drifts back to the phone call.
+      No prompt and no audio changed, so nothing here is landmine #17.
+      Distribution (operator-directed): newsletter + YouTube ON for Age of AI,
+      X still posted by hand from @nerranetwork. Those two flags had been read
+      by NOTHING — the interview shows bypass run_show.py, where every other
+      show's newsletter send and YouTube upload live — so
+      pipelines/voices/publish_episode.py now reads them, reusing
+      engine.newsletter.send_show_newsletter and uploading the waveform MP4 the
+      produce step already renders. Guards:
+      tests/test_mira_pass_2026_09_20.py, tests/test_age_of_ai_show.py.

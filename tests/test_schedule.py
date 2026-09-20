@@ -208,6 +208,12 @@ YOUTUBE_ENABLED_SHOWS = {
     "unintended_consequences",
     "privet_russian",
     "dp_pod",  # Sep 4 2026: Shorts-only (publish_long_form: false)
+    # Sep 20 2026 (operator-directed): age_of_ai ON, long-form only. It does
+    # NOT run through run_show, so run_show's YouTube stage never sees it —
+    # pipelines/voices/publish_episode.py uploads the waveform video the
+    # produce step already renders. One insert per interview, on a show that
+    # publishes when an interview is ready, so the quota math is unchanged.
+    "age_of_ai",
     # Sep 9 2026 (operator-directed): env_intel + finansy_prosto PAUSED —
     # ~10 and ~6 views per upload over 14 days, the lowest on their channels.
     # MIT's RU/FR dubs were culled 2026-09-02. Blocks stay in the YAMLs for

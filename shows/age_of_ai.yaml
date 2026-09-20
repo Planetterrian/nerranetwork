@@ -117,7 +117,12 @@ chapters:
       where: end
 
 newsletter:
-  enabled: false
+  # ON since 2026-09-20 (operator-directed). Four episodes with named external
+  # guests and live Apple + Spotify listings were shipping to RSS alone. NOTE
+  # this show does not run through run_show.py, so this flag is read by
+  # pipelines/voices/publish_episode.py::maybe_send_newsletter — before that
+  # existed the flag was read by nothing and flipping it did nothing.
+  enabled: true
   tag: "The Age of AI"
   short_label: "Age of AI"
   emoji: "🤖"
@@ -126,11 +131,18 @@ content_tracking:
   section_patterns: {}
 
 youtube:
-  # Off at launch. image_provider pre-set to grok so a future one-line
-  # enable doesn't trip tests/test_config.py's Grok-Imagine drift guard.
-  # The voices pipeline publishes a waveform video independently of this
-  # block (pipelines/voices/audio/waveform_video.py).
-  enabled: false
+  # ON since 2026-09-20 (operator-directed), long-form only: the waveform
+  # video the produce step already renders is uploaded by
+  # pipelines/voices/publish_episode.py::maybe_publish_youtube. This show
+  # bypasses run_show.py, so NONE of run_show's YouTube stage applies — no
+  # Shorts, no thumbnails, no dubs, no adaptive-policy tier — and the quota
+  # cost is one insert per interview, on a show that publishes when an
+  # interview is ready. image_provider stays grok for
+  # tests/test_config.py's drift guard.
+  # OPERATOR: create + flag this show's podcast playlist in Studio
+  # (landmine #15) and set podcast_playlist_id below; uploads publish
+  # without it, they just do not appear under YouTube Podcasts.
+  enabled: true
   channel: en
   category_id: 28               # Science & Technology
   image_provider: grok

@@ -301,10 +301,34 @@ class TestSmartShortsNetworkWide:
     proven fleet setting (Tesla/SpaceX/FF).
     """
 
+    # Shows that publish to YouTube WITHOUT going through run_show.py, so
+    # run_show's Shorts selector never sees them and its settings would be
+    # inert configuration. age_of_ai (Sep 20 2026) uploads one long-form
+    # waveform video from pipelines/voices/publish_episode.py and renders no
+    # Short at all. A show added here must genuinely not produce Shorts —
+    # this is not an escape hatch for a run_show show that has not been tuned.
+    NO_SHORTS_PIPELINE = {"age_of_ai.yaml"}
+
     def _yaml(self, path):
         import yaml
         return yaml.safe_load((_ROOT / "shows" / path).read_text(
             encoding="utf-8"))
+
+    def test_the_exemptions_really_do_not_render_shorts(self):
+        """Guard the guard: an exempt show must not be a run_show show."""
+        import yaml
+        for name in self.NO_SHORTS_PIPELINE:
+            data = yaml.safe_load(
+                (_ROOT / "shows" / name).read_text(encoding="utf-8"))
+            assert data.get("narrative_mode") is True, name
+            queue = _ROOT / "shows" / "topic_queues" / name
+            assert not queue.exists() or yaml.safe_load(
+                queue.read_text(encoding="utf-8")) == {"queue": []}, name
+            publisher = (_ROOT / "pipelines" / "voices"
+                         / "publish_episode.py").read_text(encoding="utf-8")
+            assert "maybe_publish_youtube" in publisher, (
+                f"{name} is exempt because its own publisher uploads the "
+                "video; if that path is gone, the exemption is wrong")
 
     def test_every_enabled_show_uses_smart_mode(self):
         for path in sorted((_ROOT / "shows").glob("*.yaml")):
@@ -312,7 +336,7 @@ class TestSmartShortsNetworkWide:
                 continue
             data = self._yaml(path.name)
             yt = (data or {}).get("youtube") or {}
-            if not yt.get("enabled"):
+            if not yt.get("enabled") or path.name in self.NO_SHORTS_PIPELINE:
                 continue
             assert yt.get("shorts_start_mode") == "smart", path.name
 
@@ -324,7 +348,7 @@ class TestSmartShortsNetworkWide:
                 continue
             data = self._yaml(path.name)
             yt = (data or {}).get("youtube") or {}
-            if not yt.get("enabled"):
+            if not yt.get("enabled") or path.name in self.NO_SHORTS_PIPELINE:
                 continue
             assert float(yt.get("shorts_min_score_threshold", 5.0)) <= 3.5, \
                 path.name

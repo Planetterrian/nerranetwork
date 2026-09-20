@@ -1955,6 +1955,16 @@ def _build_all_shows_list():
                 cfg["slug"], cfg.get("apple_podcasts_url"))["apple_podcasts_url"],
             "spotify_url": cfg.get("spotify_url"),
             "picker_tags": _SHOW_PICKER_TAGS.get(cfg["slug"], {}),
+            # ``strand`` groups shows that share a host or a format so the nav,
+            # the footer and the homepage can name the group instead of
+            # rendering 18 flat links. Today the only strand is "mira" — the
+            # three shows the network's AI host presents, which display_order
+            # scatters across the list (0.5, 13, 13.5).
+            "strand": cfg.get("strand", ""),
+            # The interview shows each have their own guest-application page;
+            # sending a Nerra Voices reader to the Age of AI form files their
+            # application against the wrong show.
+            "apply_page": cfg.get("apply_page", ""),
             "blog_page": f"blog/{cfg['slug']}/index.html",
             "newsletter_tag": _newsletter_tag_for_slug(cfg["slug"], cfg["name"]),
             "_order": cfg.get("display_order", 99),
@@ -2124,6 +2134,28 @@ def _get_jinja_env():
     # Organization JSON-LD can never disagree about which handle is ours.
     env.globals["network_social"] = network_social_links()
     env.globals["network_x_handle"] = NETWORK_SOCIAL["x"]["handle"]
+    # The Mira claim, its basis and its correction invitation. Registered as a
+    # global rather than threaded through each generator's context so that
+    # every surface renders the same three paragraphs from engine/brand.py —
+    # the claim is the network's most quotable and most contestable sentence,
+    # and a drifted copy of it is worse than no copy.
+    from engine.brand import (
+        MIRA_FIRST_CLAIM, MIRA_FIRST_CLAIM_BASIS, MIRA_FIRST_CLAIM_FOOTNOTE,
+        MIRA_HOST_NAME, MIRA_NETWORK_ROLE, MIRA_SHORT_DESCRIPTION,
+    )
+    # The three Mira shows with their real published state, so any page can
+    # name them without its generator threading a context key (press.html and
+    # the Mira hub both need them). Read at env-creation time from the
+    # committed summaries files.
+    env.globals["mira_shows"] = _mira_shows()
+    env.globals["mira"] = {
+        "host_name": MIRA_HOST_NAME,
+        "summary": MIRA_SHORT_DESCRIPTION,
+        "network_role": MIRA_NETWORK_ROLE,
+        "claim": MIRA_FIRST_CLAIM,
+        "basis": MIRA_FIRST_CLAIM_BASIS,
+        "footnote": MIRA_FIRST_CLAIM_FOOTNOTE,
+    }
     # Footer copyright year (Sep 2026 review: "© 2026" was a literal in
     # base.html.j2 and would have rolled over to wrong on Jan 1).
     env.globals["current_year"] = datetime.now(timezone.utc).year
@@ -3010,6 +3042,11 @@ def generate_show_page(slug, *, dry_run=False):
         # the nav pill labelled "Join". Registry-gated so it never becomes a
         # banner on every show.
         "personal_upsell": bool(cfg.get("personal_upsell")),
+        # The strand this show belongs to ("mira" today). Drives the
+        # "Hosted by Mira" band and the link to her hub, so the three shows
+        # cross-reference each other instead of each being a dead end.
+        "strand": cfg.get("strand", ""),
+        "apply_page": cfg.get("apply_page", ""),
         "related_show": related_show_data,
         "blog_page": f"blog/{cfg['slug']}/index.html",
         "latest_blog_posts": latest_blog_posts,
@@ -3832,6 +3869,204 @@ def _redirect_message(entry: dict, label: str) -> str:
     return f"This page has moved. Taking you to {label}."
 
 
+# ---------------------------------------------------------------------------
+# /mira.html — the Mira hub (Sep 2026 website + growth program, phase 3)
+# ---------------------------------------------------------------------------
+#
+# The three shows Mira hosts are the network's cheapest to produce, its best
+# trending, and its most visited show pages — and they were the three with no
+# YouTube, no X, no newsletter and no on-air presence. They also had no shared
+# home: a reader who landed on nerra-daily.html had no way to learn that the
+# same host runs an interview show, and the sentence that says why any of it is
+# unusual existed nowhere on the site.
+#
+# The page is generated, never hand-written, for the reason the Sep 3 review
+# gave for the legal pages: hand-written trust pages drift off-brand and
+# off-truth. Every number on it is read from the committed record at render
+# time, so it cannot claim an episode count the feeds do not have.
+
+
+@functools.lru_cache(maxsize=32)
+def _mira_episode_count_for(json_path: str) -> int:
+    """Cached record count for one summaries file.
+
+    ``_get_jinja_env()`` runs once per generator call and registers
+    ``mira_shows`` as a global, so an uncached read would re-parse Nerra
+    Daily's ~180 KB summaries file on every page. The file does not change
+    mid-build.
+    """
+    import json
+
+    path = ROOT / json_path
+    if not json_path or not path.exists():
+        return 0
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return 0
+    if isinstance(data, list):
+        return len(data)
+    if not isinstance(data, dict):
+        return 0
+    for key in ("summaries", "episodes"):
+        if isinstance(data.get(key), list):
+            return len(data[key])
+    for value in data.values():
+        if isinstance(value, list):
+            return len(value)
+    return 0
+
+
+def _mira_episode_count(cfg):
+    """Episodes published for *cfg*, read from its committed summaries file.
+
+    Handles both committed shapes — ``{"summaries": [...]}`` (the network
+    standard) and ``{"episodes": [...]}`` (what the Nerra Voices publisher
+    writes for Age of AI) — and falls back to any list value rather than
+    trusting the registry's ``json_format``, which says ``wrapped`` for both.
+    Returns 0 when the file is absent: a show with no episodes is a real
+    state here, not an error.
+    """
+    return _mira_episode_count_for(cfg.get("json_path", "") or "")
+
+
+def _mira_shows():
+    """The Mira shows in introduction order, with their real state attached."""
+    from engine.brand import MIRA_SHOW_SLUGS
+
+    out = []
+    for slug in MIRA_SHOW_SLUGS:
+        cfg = NETWORK_SHOWS.get(slug)
+        if not cfg:
+            continue
+        count = _mira_episode_count(cfg)
+        out.append({
+            "slug": slug,
+            "name": cfg["name"],
+            "show_page": cfg["show_page"],
+            "summaries_page": cfg.get("summaries_page", ""),
+            "podcast_image": cfg.get("podcast_image", ""),
+            "tagline": cfg.get("tagline", ""),
+            "description": cfg.get("description", ""),
+            "schedule": cfg.get("schedule", ""),
+            "episode_length": cfg.get("episode_length", ""),
+            "brand_color": cfg.get("brand_color", "#6B47FF"),
+            "apply_page": cfg.get("apply_page", ""),
+            "rss_file": cfg.get("rss_file", ""),
+            "has_feed": (ROOT / cfg.get("rss_file", "x")).exists(),
+            "apple_podcasts_url": _apple_links_for(
+                slug, cfg.get("apple_podcasts_url"))["apple_podcasts_url"],
+            "spotify_url": cfg.get("spotify_url"),
+            "episode_count": count,
+            # The honest label. "0 published" is the state Nerra Voices is
+            # actually in, and the page says so rather than rendering an
+            # empty rail (the Sep 3 blog-index precedent).
+            "episode_label": (
+                "Not published yet" if count == 0
+                else f"{count} episode{'s' if count != 1 else ''}"
+            ),
+        })
+    return out
+
+
+# How an interview actually runs, from docs/age_of_ai_plan.md and
+# voximplant/scenarios/age_of_ai_interview.js. Kept as data so the page and
+# any future press copy read the same steps, and so a change to the flow is a
+# one-line edit here instead of a paragraph rewrite.
+#
+# Step 5 is deliberately mode-agnostic: since 2026-09-09 the default is a
+# browser studio room and the outbound phone call is the fallback, so no
+# surface should describe the show as "she phones you".
+MIRA_INTERVIEW_STEPS = [
+    ("You apply", "A short form: who you are and what you would talk about. "
+                  "No media training, no pitch deck, no AI angle required."),
+    ("A human reads it", "Patrick triages every application himself. This is "
+                         "the step that decides whether an interview happens."),
+    ("You pick a time", "A booking link, your calendar, your timezone."),
+    ("You get a prep brief", "The day before, an emailed brief: the themes "
+                             "Mira means to explore and the ground she will "
+                             "cover, so nothing in the conversation is a "
+                             "surprise."),
+    ("You talk to Mira", "Open the studio link, pick a microphone, join — or "
+                         "take a call on your phone if you would rather. "
+                         "Mira hears you and answers in real time. It is a "
+                         "conversation, not a questionnaire, and it runs "
+                         "under an hour."),
+    ("A human edits it", "Patrick reviews the episode before anything is "
+                         "assembled. This gate has no timer: nothing "
+                         "publishes because a review was slow."),
+    ("You approve your transcript", "You read what you said. Anything you "
+                                    "ask to have removed is cut from the "
+                                    "audio before the episode is built — not "
+                                    "bleeped, cut. Nothing reaches a feed "
+                                    "until you have signed off, and you can "
+                                    "ask for a takedown afterwards."),
+    ("It publishes", "Mira records the narration around your words, and the "
+                     "episode goes to the feeds, the site and the archive "
+                     "with the AI host disclosed on air."),
+]
+
+
+def generate_mira_page(*, dry_run=False, output_dir=None):
+    """Generate ``mira.html`` — the hub for the three shows Mira hosts.
+
+    Everything contestable on this page comes from one place:
+    ``engine/brand.py`` owns the claim, its basis and the correction
+    invitation; the episode counts are read from the committed summaries
+    files; the interview steps are the module-level list above. Nothing is
+    typed twice, because the claim is the network's most quotable sentence
+    and a drifted copy of it is worse than no copy.
+    """
+    from engine.brand import (
+        MIRA_HOST_NAME, MIRA_NETWORK_ROLE, MIRA_SHORT_DESCRIPTION,
+    )
+
+    env = _get_jinja_env()
+    template = env.get_template("mira_page.html.j2")
+
+    description = (
+        "Mira is the Nerra Network's AI host. She anchors the daily combined "
+        "edition and interviews real people live — and nothing publishes "
+        "until the guest approves their own transcript."
+    )
+
+    context = {
+        "path_prefix": "",
+        "page_title": "Mira — the Nerra Network's AI host",
+        "page_description": description,
+        "meta_description": description,
+        "meta_keywords": (
+            "Mira AI host, AI podcast host, AI interviewer, Nerra Daily, "
+            "The Age of AI podcast, Nerra Voices, AI hosted interview show"
+        ),
+        "theme_color": "#6B47FF",
+        "og_image": "",
+        "canonical_url": "https://nerranetwork.com/mira.html",
+        "show_color": "",
+        "show_color_dark": "",
+        "all_shows": _build_all_shows_list(),
+        "host_name": MIRA_HOST_NAME,
+        "host_summary": MIRA_SHORT_DESCRIPTION,
+        "host_network_role": MIRA_NETWORK_ROLE,
+        "mira_shows": _mira_shows(),
+        "interview_steps": MIRA_INTERVIEW_STEPS,
+        # The hub's headline CTA points at the show that has episodes; each
+        # card below links its own form from the registry.
+        "apply_url": "age-of-ai-apply.html",
+    }
+
+    html = template.render(**context)
+    out_path = Path(output_dir) / "mira.html" if output_dir else ROOT / "mira.html"
+
+    if dry_run:
+        print(f"[dry-run] Would write {out_path}")
+        return None
+
+    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
+    print(f"Wrote {out_path}")
+    return out_path
+
+
 def generate_llms_txt(*, dry_run=False):
     """Write ``/llms.txt`` — what this network is, for an answer engine.
 
@@ -3881,6 +4116,7 @@ def generate_llms_txt(*, dry_run=False):
         "",
         f"- [Start Here — pick a show]({base}/start-here.html)",
         f"- [All shows]({base}/index.html#shows)",
+        f"- [Mira, the network's AI host]({base}/mira.html)",
         f"- [How to listen]({base}/how-to-listen.html)",
         f"- [Every episode, as articles]({base}/blog/index.html)",
         f"- [AI disclosure]({base}/ai-disclosure.html)",
@@ -3996,8 +4232,16 @@ def generate_sitemap(*, dry_run=False, out=None):
 
     # Special pages. 404.html is deliberately NOT listed — error pages
     # don't belong in sitemaps (Search Console flags them).
+    # mira.html is the Mira hub; the two *-apply.html pages are the
+    # guest-application forms, one per interview show, and were reachable only
+    # from a couple of show pages — so the acquisition surface for the
+    # network's most differentiated shows could not be found by search at all.
+    # age-of-ai-studio.html stays OUT deliberately — it is the private join
+    # link for a scheduled interview.
     for extra in ["modern-investing-resources.html", "start-here.html",
                   "about.html", "how-to-listen.html", "faq.html",
+                  "mira.html", "age-of-ai-apply.html",
+                  "nerra-voices-apply.html",
                   "press.html", "contact.html", "editorial.html",
                   "gallery.html", "books.html", "player.html", "data.html",
                   "join.html", "support.html",
@@ -5088,6 +5332,7 @@ def generate_static_pages(*, dry_run=False):
     generate_gallery_page(dry_run=dry_run)
     generate_books_page(dry_run=dry_run)
     generate_404_page(dry_run=dry_run)
+    generate_mira_page(dry_run=dry_run)
     generate_redirect_stubs(dry_run=dry_run)
     generate_llms_txt(dry_run=dry_run)
 
@@ -5323,8 +5568,14 @@ def main():
         action="store_true",
         help=(
             "Generate every cheap static page (start-here, about, FAQ, how to "
-            "listen, press, contact, editorial, legal, gallery, books, 404)"
+            "listen, press, contact, editorial, legal, gallery, books, mira, "
+            "404)"
         ),
+    )
+    parser.add_argument(
+        "--mira",
+        action="store_true",
+        help="Generate mira.html, the hub for the three Mira-hosted shows",
     )
     parser.add_argument(
         "--redirects",
@@ -5348,6 +5599,7 @@ def main():
         or args.blogs or args.sitemap or args.player or args.how_to_listen
         or args.start_here or args.faq or args.about or args.blog_aggregates
         or args.books or args.legal or args.static_pages or args.redirects
+        or args.mira
     )
     if not _any_flag:
         args.all = True
@@ -5436,6 +5688,7 @@ def main():
         generate_legal_pages(dry_run=args.dry_run)
         generate_redirect_stubs(dry_run=args.dry_run)
         generate_llms_txt(dry_run=args.dry_run)
+        generate_mira_page(dry_run=args.dry_run)
         # Three generators used to run ONLY under --show, so a full regen left
         # them stale: the story trackers, the MIT performance page and the RU
         # funnel landers. --all means all.
@@ -5501,6 +5754,8 @@ def main():
         generate_legal_pages(dry_run=args.dry_run)
     if args.static_pages:
         generate_static_pages(dry_run=args.dry_run)
+    if args.mira:
+        generate_mira_page(dry_run=args.dry_run)
     if args.redirects:
         generate_redirect_stubs(dry_run=args.dry_run)
 

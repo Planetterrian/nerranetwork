@@ -51,3 +51,36 @@
   {% if is_ru %}Создано с ИИ — прозрачно{% else %}Made with AI — transparently{% endif %}
 </a>
 {%- endmacro -%}
+
+{#- mira_claim: the network's novelty claim, its basis, and the invitation to
+    correct it — always all three, always from engine/brand.py.
+
+    The claim is deliberately narrow ("the guest decides whether it is
+    published"), because the broad version ("an AI host interviews people")
+    is not ours to claim: other people were doing that first. Do not
+    paraphrase it in a template and do not render the claim without the
+    basis — a superlative with no basis is exactly what the AI-disclosure
+    page exists to rule out, and this network's honesty is the asset the
+    claim trades on.
+
+    Reads the ``mira`` Jinja global (registered in generate_html.py's
+    ``_get_jinja_env``), so any page can call it with no generator change.
+
+    Arguments:
+      heading     : optional <h2>/<h3> text above the claim ('' = no heading)
+      level       : heading tag to use (default 'h2')
+      classes     : extra class names on the wrapper
+      show_footnote : render the correction invitation (default true)
+-#}
+{%- macro mira_claim(heading='', level='h2', classes='', show_footnote=true) -%}
+<div class="nn-mira-claim {{ classes }}">
+  {%- if heading %}
+  <{{ level }} class="nn-mira-claim__heading">{{ heading }}</{{ level }}>
+  {%- endif %}
+  <p class="nn-mira-claim__claim"><strong>{{ mira.claim }}</strong></p>
+  <p class="nn-mira-claim__basis">{{ mira.basis }}</p>
+  {%- if show_footnote %}
+  <p class="nn-mira-claim__footnote"><em>{{ mira.footnote }}</em></p>
+  {%- endif %}
+</div>
+{%- endmacro -%}
