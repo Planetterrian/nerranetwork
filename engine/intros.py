@@ -24,6 +24,20 @@ logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
+# SpaceX Daily Ask A end-sting (CMO-approved 2026-09-19)
+# ---------------------------------------------------------------------------
+# Appended AFTER the main close and BEFORE sister-show / network promo.
+# Exact wording — do not paraphrase. SpaceX Daily only; do not spray
+# across the network. Live path: ``shows.hooks.spacex._pick_closing``;
+# pipeline also appends for the intros-fallback / episode-1 paths.
+SPACEX_ASK_A_END_STING = (
+    "If SpaceX Daily helps you stay curious without the noise, a quick "
+    "rating on Apple Podcasts or Spotify helps other people find it. "
+    "No pressure — the show stays free either way."
+)
+
+
+# ---------------------------------------------------------------------------
 # Per-show personality pools
 # ---------------------------------------------------------------------------
 # Each show defines:
@@ -191,12 +205,13 @@ _SHOW_PERSONALITIES: dict[str, dict[str, Any]] = {
         # Every variant MUST match the Closing chapter pattern in
         # shows/spacex.yaml (drift guard in tests/test_spacex_show.py).
         "closings": [
-            # Sep 5 2026 delivery review: ONE closing, every day. The rotating pool read as register drift (four different sign-offs across six episodes); the sibling plug and website surface still rotate after it. A/B-listen.
+            # Sep 5 2026 delivery review: ONE closing, every day. Sep 19 2026
+            # Ask A: exact CMO copy after main close (before network promo).
+            # A/B-listen.
             (
                 "That's your SpaceX news for today. "
-                "If the show saves you time, a rating or review on Apple Podcasts or "
-                "Spotify genuinely helps new listeners find it. "
-                "I'm Patrick in Vancouver. Thanks for listening — see you tomorrow."
+                "I'm Patrick in Vancouver. Thanks for listening — see you tomorrow. "
+                + SPACEX_ASK_A_END_STING
             ),
         ],
     },
@@ -1231,6 +1246,8 @@ def build_delivery_spec(show_slug: str = "", *, is_ru: bool = False) -> str:
         "on a single word. Rhythm from sentence construction is worth "
         "more than any tag, so if in doubt use none."
     )
+
+
 
 
 def build_closing_block(

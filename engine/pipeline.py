@@ -596,16 +596,35 @@ def build_podcast_template_vars(
         "delivery_spec", build_delivery_spec(_spec_slug, is_ru=_spec_is_ru),
     )
 
+    # Resolve the show slug once — Ask A (SpaceX) and the network promo
+    # both need it, and Ask A must run BEFORE the promo so the spoken
+    # order is: main close → Ask A → sister-show / network promo.
+    _promo_date = datetime.date.today()
+    _show_slug = getattr(config, "slug", "") or (
+        getattr(args, "show", "") if args is not None else ""
+    )
+
+    # SpaceX Daily Ask A end-sting (CMO-approved 2026-09-19). After the
+    # main close, before sister-show / network promo. Exact copy lives in
+    # ``engine.intros.SPACEX_ASK_A_END_STING`` — do not paraphrase. SpaceX
+    # only; other shows keep their existing embedded rating CTAs.
+    if _show_slug == "spacex":
+        try:
+            from engine.intros import SPACEX_ASK_A_END_STING
+            _close = str(pod_vars.get("closing_block", "")).rstrip()
+            if _close and SPACEX_ASK_A_END_STING not in _close:
+                pod_vars["closing_block"] = (
+                    f"{_close} {SPACEX_ASK_A_END_STING}"
+                ).strip()
+        except Exception as exc:  # noqa: BLE001 — Ask A must never break a run
+            logger.warning("SpaceX Ask A append failed (non-fatal): %s", exc)
+
     # Append the rotating Nerra Network cross-promo to the spoken closing.
     # Done HERE (after closing_block is resolved from any source) so it covers
     # every path: build_closing_block, the episode-1 closing, AND shows whose
     # pre-fetch hook supplied closing_block via extra_context (e.g. Tesla). The
     # promo is English-only and varies by day + show so every English sibling
     # eventually gets advertised. Russian shows get "" → no change.
-    _promo_date = datetime.date.today()
-    _show_slug = getattr(config, "slug", "") or (
-        getattr(args, "show", "") if args is not None else ""
-    )
     if _show_slug:
         try:
             from engine.network_promo import build_network_promo

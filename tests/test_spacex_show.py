@@ -30,7 +30,7 @@ if str(_ROOT) not in sys.path:
 
 from engine.chapters import parse_chapters  # noqa: E402
 from engine.config import load_config  # noqa: E402
-from engine.intros import _SHOW_PERSONALITIES, build_closing_block  # noqa: E402
+from engine.intros import _SHOW_PERSONALITIES, build_closing_block, SPACEX_ASK_A_END_STING  # noqa: E402
 from engine.show_memory import SHOW_MEMORY_CONFIGS  # noqa: E402
 
 
@@ -1003,3 +1003,167 @@ class TestKnownSectionsOnlyChapters:
         )
         titles = {c.title for c in chapters}
         assert titles <= self.KNOWN_TITLES, titles
+
+
+# ---------------------------------------------------------------------------
+# Sep 19 2026 — Ask A end-sting (CMO-approved rating CTA)
+# ---------------------------------------------------------------------------
+# Exact copy after main close, before sister-show / network promo. SpaceX
+# Daily only. Old embedded rating lines must not return (would double-ask).
+
+_ASK_A_EXACT = (
+    "If SpaceX Daily helps you stay curious without the noise, a quick "
+    "rating on Apple Podcasts or Spotify helps other people find it. "
+    "No pressure — the show stays free either way."
+)
+
+
+class TestSpacexAskAEndSting:
+    def test_approved_copy_is_exact(self):
+        assert SPACEX_ASK_A_END_STING == _ASK_A_EXACT
+
+    def test_pick_closing_includes_ask_a(self):
+        from shows.hooks.spacex import _pick_closing
+        import datetime
+        for i in range(4):
+            closing = _pick_closing(
+                150.0, "+1.0%", "yfinance_history",
+                date=datetime.date(2026, 9, 20) + datetime.timedelta(days=i),
+            )
+            assert SPACEX_ASK_A_END_STING in closing
+            low = closing.lower()
+            assert low.index("see you") < low.index(SPACEX_ASK_A_END_STING.lower())
+
+    def test_hook_variants_have_no_embedded_rating_or_subscribe_ask(self):
+        from shows.hooks.spacex import _CLOSING_VARIANTS
+        banned = (
+            "saves you time",
+            "genuinely helps new listeners",
+            "a quick rating on apple podcasts or spotify goes a long way",
+            "share this with a fellow spaceflight fan",
+            "if you're new here, subscribe",
+            "stay curious without the noise",  # Ask A is appended by _pick_closing
+        )
+        for variant in _CLOSING_VARIANTS:
+            rendered = variant.format(price_sentence="").lower()
+            for phrase in banned:
+                assert phrase not in rendered, (phrase, rendered[:120])
+
+    def test_intros_fallback_carries_ask_a(self):
+        for variant in _SHOW_PERSONALITIES["spacex"]["closings"]:
+            assert SPACEX_ASK_A_END_STING in variant
+            assert "saves you time" not in variant.lower()
+            assert "rating or review" not in variant.lower()
+
+    def test_pipeline_appends_ask_a_before_network_promo(self):
+        from types import SimpleNamespace
+        from engine.pipeline import build_podcast_template_vars
+
+        config = SimpleNamespace(
+            name="SpaceX Daily",
+            slug="spacex",
+            youtube=SimpleNamespace(enabled=False, channel=""),
+            tts=SimpleNamespace(dialogue_mode=False),
+        )
+        # Simulate the live hook path: closing already carries Ask A.
+        main_close = (
+            "Patrick: That's your SpaceX news for today. "
+            "I'm Patrick in Vancouver. Thanks for listening — see you tomorrow. "
+            + SPACEX_ASK_A_END_STING
+        )
+        out = build_podcast_template_vars(
+            config,
+            episode_num=106,
+            today_str="September 20, 2026",
+            effective_hook="hook",
+            extra_context={"closing_block": main_close},
+            args=SimpleNamespace(show="spacex"),
+        )
+        closing = out["closing_block"]
+        assert closing.count(SPACEX_ASK_A_END_STING) == 1
+        ask_at = closing.index(SPACEX_ASK_A_END_STING)
+        close_at = closing.index("see you tomorrow")
+        assert close_at < ask_at, "Ask A must follow the main close"
+        assert "nerranetwork.com" in closing.lower()
+        promo_at = closing.lower().index("nerranetwork.com")
+        assert ask_at < promo_at, "Ask A must precede sister-show / network promo"
+
+    def test_pipeline_ask_a_is_idempotent(self):
+        from types import SimpleNamespace
+        from engine.pipeline import build_podcast_template_vars
+
+        config = SimpleNamespace(
+            name="SpaceX Daily",
+            slug="spacex",
+            youtube=SimpleNamespace(enabled=False, channel=""),
+            tts=SimpleNamespace(dialogue_mode=False),
+        )
+        seeded = (
+            "Patrick: That's your SpaceX news for today. "
+            "I'm Patrick in Vancouver. Thanks for listening — see you tomorrow. "
+            + SPACEX_ASK_A_END_STING
+        )
+        out = build_podcast_template_vars(
+            config,
+            episode_num=106,
+            today_str="September 20, 2026",
+            effective_hook="hook",
+            extra_context={"closing_block": seeded},
+            args=SimpleNamespace(show="spacex"),
+        )
+        assert out["closing_block"].count(SPACEX_ASK_A_END_STING) == 1
+
+    def test_pipeline_fills_ask_a_when_hook_omitted_it(self):
+        """Defense path: intros/ep1 closings without Ask A still get it."""
+        from types import SimpleNamespace
+        from engine.pipeline import build_podcast_template_vars
+
+        config = SimpleNamespace(
+            name="SpaceX Daily",
+            slug="spacex",
+            youtube=SimpleNamespace(enabled=False, channel=""),
+            tts=SimpleNamespace(dialogue_mode=False),
+        )
+        bare = (
+            "Patrick: That's your SpaceX news for today. "
+            "I'm Patrick in Vancouver. Thanks for listening — see you tomorrow."
+        )
+        out = build_podcast_template_vars(
+            config,
+            episode_num=106,
+            today_str="September 20, 2026",
+            effective_hook="hook",
+            extra_context={"closing_block": bare},
+            args=SimpleNamespace(show="spacex"),
+        )
+        closing = out["closing_block"]
+        assert SPACEX_ASK_A_END_STING in closing
+        assert closing.index("see you tomorrow") < closing.index(SPACEX_ASK_A_END_STING)
+        assert closing.index(SPACEX_ASK_A_END_STING) < closing.lower().index(
+            "nerranetwork.com"
+        )
+
+    def test_ask_a_does_not_spray_to_other_shows(self):
+        from types import SimpleNamespace
+        from engine.pipeline import build_podcast_template_vars
+
+        config = SimpleNamespace(
+            name="Tesla Shorts Time",
+            slug="tesla",
+            youtube=SimpleNamespace(enabled=False, channel=""),
+            tts=SimpleNamespace(dialogue_mode=False),
+        )
+        main_close = (
+            "Patrick: That's your Tesla news for today. "
+            "I'm Patrick in Vancouver. Thanks for listening."
+        )
+        out = build_podcast_template_vars(
+            config,
+            episode_num=600,
+            today_str="September 20, 2026",
+            effective_hook="hook",
+            extra_context={"closing_block": main_close},
+            args=SimpleNamespace(show="tesla"),
+        )
+        assert SPACEX_ASK_A_END_STING not in out["closing_block"]
+        assert "stay curious without the noise" not in out["closing_block"]
