@@ -683,6 +683,59 @@ function bookingEmails(p: any): string[] {
   return out;
 }
 
+/** The booker's name as Cal.com gives it ("Meridan Zerner Nutrition"). */
+function bookingName(p: any): string {
+  const n = p.attendees?.[0]?.name ?? p.responses?.name?.value ?? p.responses?.name ?? p.name;
+  return String(n ?? "").trim();
+}
+
+/** Letters and spaces only, lower-cased, for comparing names. */
+function nameKey(s: unknown): string {
+  return String(s ?? "").toLowerCase().normalize("NFKD")
+    .replace(/[^a-z\s]/g, " ").replace(/\s+/g, " ").trim();
+}
+
+/** "Meridan Zerner" is on the booking as "Meridan Zerner Nutrition"; a
+ *  publicist books as "Rhett Mikols (Think Right PR)". One name containing
+ *  the other, with at least two words in common, is the same person. */
+function namesOverlap(a: unknown, b: unknown): boolean {
+  const ka = nameKey(a), kb = nameKey(b);
+  if (ka.length < 5 || kb.length < 5) return false;
+  if (ka === kb) return true;
+  const wa = new Set(ka.split(" ")), wb = new Set(kb.split(" "));
+  const common = [...wa].filter((w) => w.length > 1 && wb.has(w));
+  return common.length >= 2 && (` ${kb} `.includes(` ${ka} `) || ` ${ka} `.includes(` ${kb} `));
+}
+
+/** Digits of a phone number, or "" when it is not one. */
+function phoneDigits(v: unknown): string {
+  const d = String(v ?? "").replace(/\D/g, "");
+  return d.length >= 10 && d.length <= 15 ? d : "";
+}
+
+/** The number typed into the booking, as digits, from wherever Cal.com put
+ *  it: the attendee, a phone field, or a custom question. */
+function bookingPhone(p: any): string {
+  const candidates: unknown[] = [p.attendees?.[0]?.phoneNumber, p.attendees?.[0]?.phone,
+                                 p.responses?.phone?.value ?? p.responses?.phone];
+  for (const v of Object.values(p.responses ?? {})) {
+    const val = (v as any)?.value ?? v;
+    if (typeof val === "string" && /\+?\d[\d\s().-]{8,}\d/.test(val)) candidates.push(val);
+  }
+  for (const c of candidates) {
+    const m = String(c ?? "").match(/\+?\d[\d\s().-]{8,}\d/);
+    const d = phoneDigits(m?.[0]);
+    if (d) return d;
+  }
+  return "";
+}
+
+/** Whatever the booker wrote in the notes/"additional notes" question. */
+function bookingNotes(p: any): string {
+  const n = p.responses?.notes?.value ?? p.responses?.notes ?? p.additionalNotes ?? p.description;
+  return String(n ?? "").trim();
+}
+
 async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
   const hook = await req.json<any>().catch(() => null);
   const p = hook?.payload ?? hook ?? {};
@@ -734,25 +787,90 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
       }
     }
   }
+  // Sept 20 2026: Meridan Zerner applied as lyndon@withmeridanzernernutrition.com
+  // and booked as meridan@meridanzernernutrition.com. No address matched, the
+  // alert above did not exist yet, and the interview was found by hand
+  // thirty-eight minutes before it was due. An address is the weakest key we
+  // have; the person's name and the phone they typed into the booking are
+  // on the row too. Try those before declaring the booking an orphan.
+  const bookedName = bookingName(p);
+  const bookedPhone = bookingPhone(p);
+  let howMatched = "";
+  if (!apps?.length && (bookedName || bookedPhone)) {
+    const approved: any[] = (await sb(env, "GET",
+      "guest_applications?status=eq.approved&order=created_at.desc&limit=300")) ?? [];
+    let hits = bookedPhone
+      ? approved.filter((a) => phoneDigits(a.phone) && phoneDigits(a.phone) === bookedPhone)
+      : [];
+    if (hits.length) howMatched = "phone";
+    if (!hits.length && bookedName) {
+      hits = approved.filter((a) => namesOverlap(a.name, bookedName));
+      if (hits.length) howMatched = "name";
+    }
+    if (hits.length > 1) {
+      // Prefer the show that was booked, then the newest; never guess
+      // across two people who share a name.
+      const sameShow = hits.filter((a) => a.show === bookedShow.slug);
+      hits = sameShow.length ? sameShow : hits;
+      const distinct = new Set(hits.map((a) => nameKey(a.name)));
+      if (distinct.size > 1) hits = [];
+    }
+    if (hits.length) {
+      apps = [hits[0]];
+      console.warn(`cal-com-booked: matched ${bookedName || bookedPhone} by ${howMatched} to application ${apps[0].id}`);
+      const patch: Record<string, unknown> = {
+        notes: `${apps[0].notes ?? ""}\nBooked with ${emailAddr} (row email was ${apps[0].email}); matched by ${howMatched}.`.trim(),
+      };
+      if ((apps[0].email ?? "").toLowerCase() !== emailAddr) patch.email = emailAddr;
+      if (!phoneDigits(apps[0].phone) && bookedPhone) patch.phone = `+${bookedPhone}`;
+      await sb(env, "PATCH", `guest_applications?id=eq.${apps[0].id}`, patch);
+      Object.assign(apps[0], patch);
+      await slack(env, `${bookedShow.shortLabel}: booking from ${emailAddr} matched *${apps[0].name}* by ${howMatched}, not by address — row email updated.`);
+    }
+  }
   if (!apps?.length) {
-    // A booking that matches nothing must never be silent. Somebody has
-    // put a time in Patrick's calendar and is expecting a call.
-    const who = `${p.attendees?.[0]?.name ?? "someone"} (${emails.join(", ") || "no address"})`;
-    await slack(env, `:rotating_light: Cal.com booking for ${who} at ${startTime} matched NO approved application — no interview was created. Somebody booked and nobody is calling them.`);
+    // A booking that matches nothing must never be silent, and it must never
+    // be dropped either. Somebody has put a time in Patrick's calendar and is
+    // expecting a call, so the call is scheduled from what the booking says
+    // and Patrick is told he can kill it. A stranger who found the link costs
+    // one wasted call; a confirmed guest nobody rings costs the show a guest.
+    const who = `${bookedName || "someone"} (${emails.join(", ") || "no address"})`;
+    const stub = await sb(env, "POST", "guest_applications", {
+      name: bookedName || emailAddr,
+      email: emailAddr,
+      phone: bookedPhone ? `+${bookedPhone}` : null,
+      bio: bookingNotes(p) || null,
+      show: bookedShow.slug,
+      status: "approved",
+      source: "calcom",
+      notes: `Created from a Cal.com booking at ${startTime} that matched no application. ` +
+        `Patrick was told; kill the interview from the triage page if this is not a guest we invited.`,
+    }, "return=representation");
+    apps = stub?.length ? stub : [];
+    await slack(env, `:rotating_light: Cal.com booking for ${who} at ${startTime} matched NO application. ` +
+      (apps.length
+        ? "A placeholder application and the interview were created so Mira still calls; check the triage page."
+        : "And the placeholder could not be created — nobody is calling them."));
     try {
       await email(env, operatorEmail(env),
-        "Action needed: a booked interview has no application",
+        `A booked ${bookedShow.shortLabel} interview matched no application`,
         `<p>Hi Patrick,</p><p><strong>${esc(who)}</strong> booked a time at
-         <strong>${esc(String(startTime))}</strong> and it matched no approved
-         application, so no interview was created and nobody will call them.</p>
-         <p>Either the booking used an address we don't have on the
-         application, or the application was never approved. Fix the address
-         on the application and have them rebook, or add the interview by
-         hand.</p><p>— Mira</p>`);
+         <strong>${esc(String(startTime))}</strong> and it matched no application
+         by address, name or phone.</p>
+         ${apps.length
+           ? `<p>So that nobody is left waiting for a call, I created an application
+              from the booking and scheduled the interview. If this is someone we
+              invited under another address, merge it into their real application
+              on the <a href="https://api.nerranetwork.com/voices/admin/triage?token=${env.ADMIN_TOKEN}">triage page</a>;
+              if it is not a guest we want, kill it there.</p>`
+           : `<p>I could not create a placeholder either, so no interview exists and
+              nobody will call them. Add it by hand.</p>`}
+         ${bookingNotes(p) ? `<p><em>What they wrote on the booking:</em> ${esc(bookingNotes(p).slice(0, 800))}</p>` : ""}
+         <p>— Mira</p>`);
     } catch (err: any) {
       console.error("cal-com-booked: could not warn the operator:", err?.message ?? err);
     }
-    return json({ error: "no approved application for that email" }, 404);
+    if (!apps.length) return json({ error: "no application for that booking" }, 404);
   }
   // The application decides the interview's show (that is what Patrick
   // approved and what the pipeline keys prompts/publishing on).
@@ -1046,7 +1164,7 @@ async function handleManageSubmit(req: Request, env: Env, token: string): Promis
   if (action === "cancel") {
     await sb(env, "PATCH", `interviews?id=eq.${interview.id}`,
       { status: "cancelled", cancelled_at: now, cancel_reason: note || null });
-    await notify(env, `${app.name ?? "A guest"} cancelled their ${show.shortLabel} interview` +
+    await slack(env, `${app.name ?? "A guest"} cancelled their ${show.shortLabel} interview` +
       (note ? `: ${note}` : ""));
     await email(env, operatorEmail(env),
       `${show.shortLabel}: ${app.name ?? "a guest"} cancelled`,

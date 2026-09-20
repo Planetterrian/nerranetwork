@@ -1162,11 +1162,25 @@ class TestABookingIsNeverLost:
         body = self.WORKER[self.WORKER.index("async function handleCalComBooked"):]
         assert "for (const candidate of emails)" in body
 
-    def test_an_unmatched_booking_shouts(self):
+    def test_an_unmatched_booking_shouts_and_still_schedules(self):
+        """Sept 20 2026: Meridan Zerner applied under one address and booked
+        under another, before the shout existed. Found by hand 38 minutes
+        before the call. Now the name and the phone on the booking are tried,
+        and a booking that still matches nothing gets a placeholder
+        application and a scheduled call rather than silence."""
         body = self.WORKER[self.WORKER.index("async function handleCalComBooked"):]
         body = body[:body.index("const show = showFor(apps[0]")]
-        assert "matched NO approved application" in body
-        assert "Action needed: a booked interview has no application" in body
+        assert "matched NO application" in body
+        assert "matched no application" in body
+        assert 'source: "calcom"' in body and 'status: "approved"' in body
+        assert "namesOverlap(a.name, bookedName)" in body
+        assert "phoneDigits(a.phone) === bookedPhone" in body
+        assert "if (distinct.size > 1) hits = [];" in body
+
+    def test_the_name_match_is_strict_enough(self):
+        helpers = self.WORKER[self.WORKER.index("function nameKey"):self.WORKER.index("async function handleCalComBooked")]
+        assert "common.length >= 2" in helpers
+        assert "function bookingPhone(p: any): string" in helpers
 
 
 class TestPublishingShipsTheEpisodeNotTheRoom:
