@@ -4067,6 +4067,126 @@ def generate_mira_page(*, dry_run=False, output_dir=None):
     return out_path
 
 
+# ---------------------------------------------------------------------------
+# /topics/ — evergreen subject hubs (Sep 2026, phase 4)
+# ---------------------------------------------------------------------------
+#
+# The site had 1,952 sitemap URLs and earned 20 organic sessions in 28 days,
+# because 1,880 of those URLs are DATED news articles: a headline that was
+# right on the day it shipped is not a landing page three weeks later. These
+# pages answer the durable query instead ("AI podcast", "space podcast",
+# "Canadian investing podcast"), and they are the only part of this program
+# that compounds without spend.
+#
+# engine/topic_hubs.py owns the vocabulary, the copy and the depth bar; this
+# function only renders. Two contracts it enforces:
+#
+#  * The episode lists come from the COMMITTED site/data/search-index.json. If
+#    that file is missing or empty, NOTHING is written — a hub page with no
+#    episodes is worse than no hub page, and this is the same failure the
+#    search index itself shipped ~13x a day until July 2026 (built on a fresh
+#    checkout that had never backfilled the gitignored content lake).
+#  * A hub below ``MIN_EPISODES_FOR_HUB`` is skipped rather than stubbed.
+
+
+def generate_topic_hub_pages(*, dry_run=False, output_dir=None):
+    """Render ``topics/index.html`` + one page per topic hub that has depth.
+
+    Returns the list of site-relative paths written (empty when the index is
+    unusable), so the sitemap and the caller can both see what exists.
+    """
+    from engine import topic_hubs as _hubs
+
+    index = _hubs.load_search_index()
+    if index is None or not index.get("episodes"):
+        print(
+            "::warning::topic hubs skipped: site/data/search-index.json is "
+            "missing or empty. Run scripts/build_search_index.py (after "
+            "scripts/backfill_content_lake.py) first — writing hubs from an "
+            "empty index would publish pages with no episodes on them.",
+            file=sys.stderr,
+        )
+        return []
+
+    all_shows = _build_all_shows_list()
+    contexts = _hubs.renderable_hubs(all_shows, index)
+    if not contexts:
+        print("::warning::topic hubs skipped: no hub cleared "
+              f"MIN_EPISODES_FOR_HUB={_hubs.MIN_EPISODES_FOR_HUB}",
+              file=sys.stderr)
+        return []
+
+    env = _get_jinja_env()
+    base = Path(output_dir) if output_dir else ROOT
+    out_dir = base / _hubs.HUB_DIR
+    written = []
+
+    template = env.get_template("topic_hub.html.j2")
+    for ctx in contexts:
+        hub = ctx["hub"]
+        others = [c["hub"] for c in contexts if c["hub"]["id"] != hub["id"]]
+        html = template.render(
+            path_prefix="../",
+            page_title=f"{hub['title']} | Nerra Network",
+            page_description=hub["meta_description"],
+            meta_description=hub["meta_description"],
+            meta_keywords=hub["keywords"],
+            theme_color="#6B47FF",
+            og_image="",
+            canonical_url=f"https://nerranetwork.com/{_hubs.hub_page_path(hub['id'])}",
+            show_color="",
+            show_color_dark="",
+            all_shows=all_shows,
+            hub=hub,
+            shows=ctx["shows"],
+            episodes=ctx["episodes"],
+            episode_total=ctx["episode_total"],
+            other_hubs=others,
+        )
+        path = out_dir / f"{hub['id']}.html"
+        if dry_run:
+            print(f"[dry-run] Would write {path}")
+        else:
+            out_dir.mkdir(parents=True, exist_ok=True)
+            path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
+        written.append(_hubs.hub_page_path(hub["id"]))
+
+    description = (
+        "Every Nerra Network show grouped by subject: AI, space, markets, "
+        "Tesla, science, health, climate, world news and more. Free, ad-free, "
+        "with sources named."
+    )
+    index_html = env.get_template("topics_index.html.j2").render(
+        path_prefix="../",
+        page_title="Browse podcasts by topic | Nerra Network",
+        page_description=description,
+        meta_description=description,
+        meta_keywords=(
+            "podcast topics, AI podcast, space podcast, investing podcast, "
+            "science podcast, news podcast, Nerra Network"
+        ),
+        theme_color="#6B47FF",
+        og_image="",
+        canonical_url=f"https://nerranetwork.com/{_hubs.HUB_DIR}/index.html",
+        show_color="",
+        show_color_dark="",
+        all_shows=all_shows,
+        hubs=contexts,
+        alternatives=_hubs.alternatives_for_thin_hubs(all_shows, index),
+    )
+    index_path = out_dir / "index.html"
+    if dry_run:
+        print(f"[dry-run] Would write {index_path}")
+    else:
+        out_dir.mkdir(parents=True, exist_ok=True)
+        index_path.write_text(_strip_lone_surrogates(index_html), encoding="utf-8")
+    written.append(f"{_hubs.HUB_DIR}/index.html")
+
+    if not dry_run:
+        print(f"Wrote {len(written)} topic page(s) to {out_dir}")
+    return written
+
+
 def generate_llms_txt(*, dry_run=False):
     """Write ``/llms.txt`` — what this network is, for an answer engine.
 
@@ -4117,6 +4237,7 @@ def generate_llms_txt(*, dry_run=False):
         f"- [Start Here — pick a show]({base}/start-here.html)",
         f"- [All shows]({base}/index.html#shows)",
         f"- [Mira, the network's AI host]({base}/mira.html)",
+        f"- [Browse by topic]({base}/topics/index.html)",
         f"- [How to listen]({base}/how-to-listen.html)",
         f"- [Every episode, as articles]({base}/blog/index.html)",
         f"- [AI disclosure]({base}/ai-disclosure.html)",
@@ -4224,6 +4345,27 @@ def generate_sitemap(*, dry_run=False, out=None):
         _target = _ru_landing_target(_slug)
         if _target and (ROOT / _target).exists():
             urls.append((f"{base}/{_target}", "0.8", _lm_or_today(_target)))
+
+    # Evergreen topic hubs (Sep 2026). Listed from engine/topic_hubs.py rather
+    # than a glob so a hub the generator SKIPPED for thinness can never be
+    # advertised to Google as a page that exists.
+    try:
+        from engine import topic_hubs as _topic_hubs
+        _index = _topic_hubs.load_search_index()
+        if _index:
+            _hub_paths = [
+                _topic_hubs.hub_page_path(c["hub"]["id"])
+                for c in _topic_hubs.renderable_hubs(
+                    _build_all_shows_list(), _index)
+            ]
+            if _hub_paths:
+                _hub_paths.append(f"{_topic_hubs.HUB_DIR}/index.html")
+            for _hub_rel in _hub_paths:
+                if (ROOT / _hub_rel).exists():
+                    urls.append((f"{base}/{_hub_rel}", "0.7",
+                                 _file_lastmod(ROOT / _hub_rel)))
+    except Exception as exc:  # noqa: BLE001 — a sitemap is never worth a crash
+        print(f"Warning: topic hubs not added to sitemap: {exc}", file=sys.stderr)
 
     # Legal pages
     for legal in ["privacy-policy.html", "terms-of-service.html", "ai-disclosure.html"]:
@@ -5333,6 +5475,7 @@ def generate_static_pages(*, dry_run=False):
     generate_books_page(dry_run=dry_run)
     generate_404_page(dry_run=dry_run)
     generate_mira_page(dry_run=dry_run)
+    generate_topic_hub_pages(dry_run=dry_run)
     generate_redirect_stubs(dry_run=dry_run)
     generate_llms_txt(dry_run=dry_run)
 
@@ -5573,6 +5716,11 @@ def main():
         ),
     )
     parser.add_argument(
+        "--topics",
+        action="store_true",
+        help="Generate the evergreen topic hubs under topics/",
+    )
+    parser.add_argument(
         "--mira",
         action="store_true",
         help="Generate mira.html, the hub for the three Mira-hosted shows",
@@ -5599,7 +5747,7 @@ def main():
         or args.blogs or args.sitemap or args.player or args.how_to_listen
         or args.start_here or args.faq or args.about or args.blog_aggregates
         or args.books or args.legal or args.static_pages or args.redirects
-        or args.mira
+        or args.mira or args.topics
     )
     if not _any_flag:
         args.all = True
@@ -5689,6 +5837,7 @@ def main():
         generate_redirect_stubs(dry_run=args.dry_run)
         generate_llms_txt(dry_run=args.dry_run)
         generate_mira_page(dry_run=args.dry_run)
+        generate_topic_hub_pages(dry_run=args.dry_run)
         # Three generators used to run ONLY under --show, so a full regen left
         # them stale: the story trackers, the MIT performance page and the RU
         # funnel landers. --all means all.
@@ -5756,6 +5905,8 @@ def main():
         generate_static_pages(dry_run=args.dry_run)
     if args.mira:
         generate_mira_page(dry_run=args.dry_run)
+    if args.topics:
+        generate_topic_hub_pages(dry_run=args.dry_run)
     if args.redirects:
         generate_redirect_stubs(dry_run=args.dry_run)
 

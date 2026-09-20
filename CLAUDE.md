@@ -2612,7 +2612,10 @@ bind:
   posts to the account Worker like every other form — the Buttondown
   embed endpoint is gone from the site for good.
 - **Navigation contract** (`base.html.j2`): "More" dropdown for
-  Books/Gallery/Data/Editorial/FAQ/Press/Support; no "Home" item (the
+  Mira/Topics/Books/Gallery/Data/Editorial/FAQ/Press/Support (Mira and the
+  topics map joined it Sep 19–20 2026 — a fourth dropdown would crowd the bar,
+  and `topics/index.html` is the crawlable map that carries all twelve hubs);
+  no "Home" item (the
   logo is home); dropdowns capped + keyboard-operable; ONE delegated
   mobile-menu close handler (no inline `onclick` on menu links — the
   homepage override forgot `body.menu-open` and scroll-locked phones);
@@ -2699,8 +2702,43 @@ YouTube, no X, no newsletter and no on-air presence. Plan:
   `redirect_stub_paths()`, because "the file exists" stopped being a proxy for
   "the article exists" the moment stubs appeared at `blog/<slug>/epNNN.html`.
 - **`age-of-ai-studio.html` stays out of the sitemap** (a private join link for
-  a scheduled interview); `age-of-ai-apply.html` is now IN it, having been the
-  unfindable acquisition surface for the network's most differentiated shows.
+  a scheduled interview); both `*-apply.html` forms are now IN it, having been
+  the unfindable acquisition surface for the network's most differentiated
+  shows. Each interview show links its OWN form (registry `apply_page`) —
+  the Worker files an application against whichever form posted it.
+
+**Sep 20 2026 — `/topics/` hubs: `engine/topic_hubs.py` owns the subject
+vocabulary.** The site had 1,952 sitemap URLs and 20 organic sessions in 28
+days because 1,880 of those URLs are DATED news articles — the right shape on
+the day, useless as a landing page three weeks later. Twelve evergreen hubs
+(`topics/<id>.html` + `topics/index.html`, `generate_topic_hub_pages`) answer
+the durable query instead. Rules that bind:
+
+- **The vocabulary is CURATED (`picker_tags.topics` from the registry), never
+  the search index's auto-mined `topics`** — those put `regulation` on 1,708 of
+  1,886 episodes (91%) and `finance` on 1,263, so a hub named for one is a
+  keyword artifact. Adding a show to a hub is a registry edit, not a code edit.
+- **Episode lists read the COMMITTED `site/data/search-index.json`, never
+  `data/content_lake.db`** (gitignored, rebuilt from the repo). A generator on
+  the lake would render empty hubs on any checkout that had not backfilled —
+  exactly how the public search index shipped zero episodes ~13×/day until July
+  2026. A missing or empty index writes **no pages at all**.
+- **Every intro is hand-written.** A hub whose prose is assembled from its own
+  episode titles is thin content, which ranks worse than no page.
+- **A hub under `MIN_EPISODES_FOR_HUB` (12) is not built**, is not in the
+  sitemap, and is never linked from a post. `interviews` and `sailing` sit
+  below it today and name the page that already serves the subject
+  (`/mira.html`, the Offshore North dashboard); they turn themselves on when the
+  archive grows. The sitemap lists hubs from `renderable_hubs`, never a glob,
+  so a skipped hub can never be advertised as a page that exists.
+- **Every blog post links its subjects** (`topic_hubs` in the post context).
+  That link is why the hubs can rank; without it they are orphans reachable
+  only from the nav. Committed posts pick it up on their next per-show regen,
+  per the Sep 3 source-only convention.
+- `topics/*.html` is in nightly's add-paths, and the blog `<title>` lead now
+  reads `engine.titles.WEB_TITLE_LEAD_MAX` instead of a literal 62. Per-episode
+  blog titles were ALREADY shipped (the Sep 3 deferred item) — 25/25 distinct
+  on Tesla; `TestTitleLimitHasOneOwner` pins both.
 
 ### YouTube pipeline pass (June 10, 2026)
 

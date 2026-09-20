@@ -1054,6 +1054,21 @@
                 </div>
             </section>
             {% endif %}
+            {# Subject links (Sep 2026, phase 4). A dated article cannot rank
+               for "AI podcast"; the evergreen hub can, and it only gets there
+               if the archive points at it. A hub the generator skipped for
+               thinness is never in this list, so these are never dead. #}
+            {% if topic_hubs %}
+            <section class="blog-related" style="margin-top:1.4rem;">
+                <h2>More on this subject</h2>
+                <div style="display:flex;flex-wrap:wrap;gap:.6rem;">
+                    {% for hub in topic_hubs %}
+                    <a href="{{ path_prefix }}topics/{{ hub.id }}.html" style="display:inline-flex;align-items:center;padding:.5rem .9rem;border-radius:10px;border:1px solid color-mix(in srgb, var(--show-color), transparent 60%);color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;font-size:.9rem;">{{ hub.heading }}</a>
+                    {% endfor %}
+                    <a href="{{ path_prefix }}topics/index.html" style="display:inline-flex;align-items:center;padding:.5rem .9rem;border-radius:10px;border:1px solid var(--nn-border);color:var(--nn-text-muted);text-decoration:none;font-size:.9rem;">All topics</a>
+                </div>
+            </section>
+            {% endif %}
             <!-- Cross-show Recommendations -->
             {% if related_posts %}
             <section class="blog-related">

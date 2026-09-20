@@ -1781,3 +1781,57 @@ experiments:
       engine.newsletter.send_show_newsletter and uploading the waveform MP4 the
       produce step already renders. Guards:
       tests/test_mira_pass_2026_09_20.py, tests/test_age_of_ai_show.py.
+
+  - id: topic-hubs-2026-09-20
+    title: >
+      Twelve evergreen topic hubs, because 1,880 dated articles cannot rank for
+      a durable query
+    area: growth
+    shipped: 2026-09-20
+    readout: 2026-10-27
+    status: reading
+    hypothesis: >
+      Organic search is the only channel in this program that compounds without
+      spend, and the site has nothing for it to land on: every one of its 1,880
+      blog posts is a dated news article, which is the right shape for the day
+      it shipped and the wrong shape for a query typed three weeks later. A
+      dozen evergreen subject pages — the shows that cover it, written copy
+      about the subject, and the newest episodes — can rank for "AI podcast",
+      "space podcast", "Canadian investing podcast"; the archive cannot.
+    baseline: >
+      28 days to 2026-09-17: 20 organic-search sessions against 1,952 sitemap
+      URLs, of which 1,880 are dated blog posts. Google Search Console is not
+      verified, so impressions and queries are unmeasured — GSC_VERIFICATION
+      reaches both workflows since 2026-09-19 but the property is not set up.
+      No page on the site grouped shows by subject; the only topical surfaces
+      were the 18 individual show pages.
+    target: >
+      By 10-27: the twelve /topics/ pages indexed (visible in Search Console
+      once the property exists) and appearing in api/ga4_stats.json landing
+      pages at all. Organic sessions above the 20/28d baseline is the outcome
+      that matters, but it is NOT the readout criterion — indexation and
+      landing sessions are, because 20 sessions cannot move measurably in five
+      weeks and a hub that Google has not indexed cannot be judged yet.
+    notes: >
+      Design decisions that are the point of the entry, each a scar from
+      elsewhere in this repo. The hub VOCABULARY is the curated
+      picker_tags.topics from the show registry, never the search index's
+      auto-mined topics — those put "regulation" on 1,708 of 1,886 episodes
+      (91%) and "finance" on 1,263, so a hub named for one is a keyword
+      artifact, not a subject. Episode lists come from the COMMITTED
+      site/data/search-index.json, never data/content_lake.db, which is
+      gitignored and rebuilt from the repo: a generator reading the lake would
+      render empty hubs on any checkout that had not backfilled first, exactly
+      how the public search index shipped zero episodes ~13x a day until July
+      2026. An empty or missing index writes NO pages. Every intro is
+      hand-written; a hub whose prose is assembled from its own episode titles
+      is thin content, which ranks worse than no page. Two hubs (interviews,
+      sailing) are BELOW the 12-episode bar and are deliberately not built —
+      they name the page that already serves the subject (/mira.html, the
+      Offshore North dashboard) and turn themselves on when the archive grows.
+      Every blog post links its subjects, which is what stops the hubs being
+      orphans; a skipped hub is never linked and never in the sitemap.
+      Committed blog posts pick up those links on their next per-show regen,
+      per the Sep 3 source-only convention.
+      No prompt and no audio changed. Guards:
+      tests/test_topic_hubs_2026_09_20.py.

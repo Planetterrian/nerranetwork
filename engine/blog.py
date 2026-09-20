@@ -298,6 +298,26 @@ def _clip_words(text: str, limit: int) -> str:
     return clip_words(text, limit)
 
 
+def _web_title_lead_max() -> int:
+    """The <title> lead budget, from the module that owns every title limit."""
+    from engine.titles import WEB_TITLE_LEAD_MAX
+    return WEB_TITLE_LEAD_MAX
+
+
+def _topic_hubs_for(show_slug: str) -> list:
+    """Topic hubs this show belongs to, for the post's subject links.
+
+    Best-effort: a missing search index means no hubs were generated, so the
+    post links none rather than linking pages that do not exist.
+    """
+    try:
+        from generate_html import _build_all_shows_list
+        from engine.topic_hubs import hubs_for_show
+        return hubs_for_show(show_slug, _build_all_shows_list())
+    except Exception:  # noqa: BLE001 — a post is never worth a crash
+        return []
+
+
 def _share_urls(show_slug: str, episode_num: int, blog_url: str) -> dict:
     """Funnel-tagged copies of *blog_url*, one per share destination.
 
@@ -1312,7 +1332,7 @@ def generate_blog_post_html(
         # episode and brand, so the part Google actually renders (~60
         # chars) is a readable phrase rather than a severed word.
         "page_title": (
-            f"{_clip_words(metadata['title'], 62)} — Ep{ep_num}"
+            f"{_clip_words(metadata['title'], _web_title_lead_max())} — Ep{ep_num}"
             f" | {show_config['name']}"
         ),
         "meta_description": _blog_meta_description(metadata, show_config),
@@ -1324,6 +1344,10 @@ def generate_blog_post_html(
         "show_color_dark": show_config.get("brand_color_dark", show_config["brand_color"]),
         "all_shows": _build_all_shows_list(),
         # Blog-specific
+        # Subject links (Sep 2026, phase 4): every post points at the
+        # evergreen hub for its topics. Without these the hubs are orphans
+        # reachable only from the nav, and an orphan page does not rank.
+        "topic_hubs": _topic_hubs_for(show_slug),
         "blog_author": _show_host_name(show_slug),
         "show_name": show_config["name"],
         "show_slug": show_slug,

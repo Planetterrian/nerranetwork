@@ -1,0 +1,73 @@
+{% extends "base.html.j2" %}
+{#- /topics/index.html — the map of the subject pages.
+
+    A hub that did not clear the depth bar in engine/topic_hubs.py appears here
+    as a one-line pointer to the page that already serves the subject, so
+    nothing quietly vanishes from the site's own map. -#}
+
+{% block head_extra %}
+    <style>
+        .topics-hero { padding: calc(var(--nav-height) + var(--sp-10)) var(--sp-6) var(--sp-6); max-width: 860px; margin: 0 auto; text-align: center; }
+        .topics-hero h1 {
+            font-family: var(--font-heading); font-size: clamp(1.9rem, 4vw, 2.6rem);
+            color: var(--nn-white); margin: 0 0 var(--sp-4); line-height: 1.15;
+        }
+        .topics-hero p { font-family: var(--font-body); font-size: 1.05rem; line-height: 1.7; color: var(--nn-text); margin: 0 auto; max-width: 620px; }
+        .topics-grid {
+            max-width: 980px; margin: 0 auto; padding: var(--sp-6);
+            display: grid; gap: var(--sp-5); grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        }
+        .topic-card {
+            border: 1px solid var(--nn-border); border-radius: var(--radius-lg, 12px);
+            background: var(--nn-surface-2, rgba(255,255,255,0.03));
+            padding: var(--sp-5); display: flex; flex-direction: column; gap: var(--sp-3);
+        }
+        .topic-card h2 { font-family: var(--font-heading); font-size: 1.15rem; margin: 0; }
+        .topic-card h2 a { color: var(--nn-white); text-decoration: none; }
+        .topic-card h2 a:hover { color: var(--nn-accent); }
+        .topic-card p { font-family: var(--font-body); font-size: 0.93rem; line-height: 1.6; color: var(--nn-text); margin: 0; flex: 1; }
+        .topic-card .meta {
+            font-family: var(--font-ui); font-size: 0.74rem; letter-spacing: 0.04em;
+            text-transform: uppercase; color: var(--nn-text-secondary);
+        }
+        .topics-also { max-width: 860px; margin: 0 auto; padding: 0 var(--sp-6) var(--sp-10); }
+        .topics-also h2 { font-family: var(--font-heading); font-size: 1.2rem; color: var(--nn-white); margin: 0 0 var(--sp-3); }
+        .topics-also ul { margin: 0; padding-left: var(--sp-6); }
+        .topics-also li { font-family: var(--font-body); font-size: 0.97rem; line-height: 1.8; color: var(--nn-text); }
+        .topics-also a { color: var(--nn-accent); }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="page-main">
+    <section class="topics-hero">
+        <h1>Browse by topic</h1>
+        <p>
+            Every Nerra Network show is free and ad-free. These pages group them
+            by subject, with the shows that cover it and the most recent
+            episodes — each one a full article with its sources and a transcript.
+        </p>
+    </section>
+
+    <div class="topics-grid">
+        {% for ctx in hubs %}
+        <article class="topic-card">
+            <span class="meta">{{ ctx.episode_total }} episodes · {{ ctx.shows|length }} show{{ 's' if ctx.shows|length != 1 }}</span>
+            <h2><a href="{{ path_prefix }}topics/{{ ctx.hub.id }}.html">{{ ctx.hub.heading }}</a></h2>
+            <p>{{ ctx.hub.intro }}</p>
+        </article>
+        {% endfor %}
+    </div>
+
+    {% if alternatives %}
+    <section class="topics-also">
+        <h2>Also covered, with a page of its own</h2>
+        <ul>
+            {% for alt in alternatives %}
+            <li><strong>{{ alt.heading }}</strong> — <a href="{{ path_prefix }}{{ alt.href }}">{{ alt.label }}</a></li>
+            {% endfor %}
+        </ul>
+    </section>
+    {% endif %}
+</div>
+{% endblock %}
