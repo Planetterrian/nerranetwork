@@ -1,0 +1,158 @@
+{% extends "base.html.j2" %}
+{#- /topics/<id>.html — one evergreen subject page.
+
+    Everything on this page is either hand-written copy from
+    engine/topic_hubs.py or a real record from the committed episode index.
+    Nothing here is assembled from episode titles into filler prose: a hub
+    whose text is generated from its own listing is thin content, which ranks
+    worse than no page at all. -#}
+
+{% block head_extra %}
+    <style>
+        .hub-hero {
+            padding: calc(var(--nav-height) + var(--sp-10)) var(--sp-6) var(--sp-6);
+            max-width: 860px;
+            margin: 0 auto;
+        }
+        .hub-hero .eyebrow {
+            font-family: var(--font-ui);
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 0.09em;
+            text-transform: uppercase;
+            color: var(--nn-accent);
+            margin: 0 0 var(--sp-3);
+        }
+        .hub-hero h1 {
+            font-family: var(--font-heading);
+            font-size: clamp(1.9rem, 4vw, 2.6rem);
+            font-weight: 700;
+            color: var(--nn-white);
+            line-height: 1.15;
+            margin: 0 0 var(--sp-4);
+        }
+        .hub-hero p {
+            font-family: var(--font-body);
+            font-size: clamp(1rem, 1.7vw, 1.12rem);
+            line-height: 1.7;
+            color: var(--nn-text);
+            margin: 0 0 var(--sp-4);
+        }
+        .hub-hero p.angle {
+            border-left: 3px solid var(--nn-accent);
+            padding-left: var(--sp-4);
+            color: var(--nn-text-secondary);
+            font-size: 1rem;
+        }
+        .hub-section { max-width: 860px; margin: 0 auto; padding: var(--sp-6); }
+        .hub-section h2 {
+            font-family: var(--font-heading);
+            font-size: clamp(1.3rem, 2.4vw, 1.6rem);
+            color: var(--nn-white);
+            margin: 0 0 var(--sp-4);
+        }
+        .hub-shows { display: grid; gap: var(--sp-4); grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+        .hub-show {
+            border: 1px solid var(--nn-border);
+            border-radius: var(--radius-lg, 12px);
+            background: var(--nn-surface-2, rgba(255,255,255,0.03));
+            padding: var(--sp-4);
+            display: flex; gap: var(--sp-3); align-items: flex-start;
+        }
+        .hub-show img { width: 56px; height: 56px; border-radius: 8px; flex: 0 0 auto; }
+        .hub-show-name { font-family: var(--font-heading); font-size: 1rem; margin: 0 0 2px; }
+        .hub-show-name a { color: var(--nn-white); text-decoration: none; }
+        .hub-show-name a:hover { color: var(--nn-accent); }
+        .hub-show-meta {
+            font-family: var(--font-ui); font-size: 0.74rem; letter-spacing: 0.03em;
+            text-transform: uppercase; color: var(--nn-text-secondary);
+        }
+        .hub-show-tag { font-family: var(--font-body); font-size: 0.9rem; line-height: 1.5; color: var(--nn-text); margin: 4px 0 0; }
+        .hub-eps { list-style: none; margin: 0; padding: 0; }
+        .hub-eps li { border-bottom: 1px solid var(--nn-border); padding: var(--sp-3) 0; }
+        .hub-eps li:last-child { border-bottom: none; }
+        .hub-eps a { color: var(--nn-white); text-decoration: none; font-family: var(--font-body); font-size: 1rem; line-height: 1.5; }
+        .hub-eps a:hover { color: var(--nn-accent); }
+        .hub-ep-meta {
+            display: block; margin-top: 3px;
+            font-family: var(--font-ui); font-size: 0.74rem;
+            color: var(--nn-text-secondary);
+        }
+        .hub-archive { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-5); }
+        .hub-archive a {
+            display: inline-flex; align-items: center; padding: 8px 16px;
+            border: 1px solid var(--nn-border); border-radius: 100px;
+            font-family: var(--font-ui); font-size: 0.85rem;
+            color: var(--nn-white); text-decoration: none;
+        }
+        .hub-archive a:hover { border-color: var(--nn-accent); color: var(--nn-accent); }
+        .hub-others { display: flex; flex-wrap: wrap; gap: var(--sp-3); }
+        .hub-others a {
+            font-family: var(--font-ui); font-size: 0.85rem; color: var(--nn-accent); text-decoration: none;
+            border: 1px solid var(--nn-border); border-radius: 100px; padding: 6px 14px;
+        }
+        .hub-others a:hover { border-color: var(--nn-accent); }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="page-main">
+    <section class="hub-hero">
+        <p class="eyebrow">Topic</p>
+        <h1>{{ hub.heading }}</h1>
+        <p>{{ hub.intro }}</p>
+        <p class="angle">{{ hub.angle }}</p>
+    </section>
+
+    <section class="hub-section">
+        <h2>{% if shows|length == 1 %}The show{% else %}The {{ shows|length }} shows that cover it{% endif %}</h2>
+        <div class="hub-shows">
+            {% for s in shows %}
+            <article class="hub-show">
+                <picture>
+                    <source type="image/webp" srcset="{{ path_prefix }}{{ s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image }}-400.webp">
+                    <img src="{{ path_prefix }}{{ s.podcast_image }}" alt="{{ s.name }} cover art" width="56" height="56" loading="lazy">
+                </picture>
+                <div>
+                    <p class="hub-show-name"><a href="{{ path_prefix }}{{ s.show_page }}">{{ s.name }}</a></p>
+                    <span class="hub-show-meta">{{ s.schedule }}{% if s.episode_length %} · {{ s.episode_length }}{% endif %}</span>
+                    <p class="hub-show-tag">{{ s.tagline }}</p>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="hub-section">
+        <h2>Recent episodes</h2>
+        <p style="font-family:var(--font-body);color:var(--nn-text-secondary);margin:0 0 var(--sp-4);">
+            {{ episode_total }} episodes in this subject so far. The newest
+            {{ episodes|length }} are below; every one is a full article with its
+            sources and a transcript.
+        </p>
+        <ul class="hub-eps">
+            {% for ep in episodes %}
+            <li>
+                <a href="{{ path_prefix }}{{ ep.url }}">{{ ep.title }}</a>
+                <span class="hub-ep-meta">{{ ep.show_name }}{% if ep.date %} · {{ ep.date }}{% endif %}</span>
+            </li>
+            {% endfor %}
+        </ul>
+        <div class="hub-archive">
+            {% for s in shows %}
+            <a href="{{ path_prefix }}blog/{{ s.slug }}/index.html">All {{ s.name }} articles →</a>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="hub-section">
+        <h2>Other topics</h2>
+        <div class="hub-others">
+            {% for other in other_hubs %}
+            <a href="{{ path_prefix }}topics/{{ other.id }}.html">{{ other.heading }}</a>
+            {% endfor %}
+            <a href="{{ path_prefix }}topics/index.html">All topics</a>
+        </div>
+    </section>
+</div>
+{% endblock %}
