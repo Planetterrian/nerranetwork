@@ -1,0 +1,89 @@
+Local neural programs compiled from English descriptions now run entirely on CPU without external APIs. This is Models & Agents, Episode 179. Program as weights lets users describe a text function in English and compile it into a reusable neural program. The system relies on a fine-tuned Q3-4B to generate a LLHF adapter for a frozen Q3-0.6B interpreter.
+On Fuzzy Bench, the approach hits 73.4% exact match accuracy.
+Compolation stays separate from inference, so the task definition remains fixed while
+inputs vary.
+The project releases code and model weights as open source.
+A higher accuracy path called compile by training runs 100 steps of adapter fine-tuning
+and reaches 83.6% semantic accuracy on Fuzzy Bench hard.
+The interpreter stays frozen in every case, so only the generated adapter changes per task.
+Looking back over the past week, several threads stood out across frontier releases and agent reliability.
+Discussions around open AI and GPT centered on concrete risks and new legal workflow tools,
+while clawed and llama families saw continued open weight and evaluation moves.
+agent incidents and large-scale funding commitments also surfaced as
+recurring points of attention. China AI startup Naive AI bets on mid and post
+training to compete in LLM's according to DOT. Naive AI directs its effort at
+the mid and post training stages to build competitive large language models.
+The startup focuses on those phases to close the gap with larger players.
+Specialized training techniques form the core of its strategy. Further results
+from naive AI on mid-training approaches are expected in coming weeks.
+The company positions itself through targeted work in those later training periods rather than
+pre-training scale alone. Anonymizing prompts cuts open AI's GPT-40 mini retrieval score by 60%
+according to PPC land. Anonymizing prompts reduces the retrieval performance of GPT-40 mini by 60%.
+This change shows the direct impact of privacy techniques on model capabilities.
+The drop occurs specifically in retrieval tasks.
+Experimenting with anonymized prompts helps measure those privacy trade-offs during testing.
+The effect appears consistent when prompts are stripped of identifying details before submission.
+Raindrop raises series A funding for AI agent or liability platform, according to Pulse2.com.
+Reindrop raised Series A funding led by CRV. Total funding now reaches $50 million.
+The platform focuses on improving reliability for AI agents in production.
+Potential updates to agent reliability tools from Reindrop may appear soon.
+The round targets production stage reliability challenges for deployed agents.
+CRV led the Series A that brought the cumulative capital to that level.
+Tranged tiny LLM years ago, now runs good local LLMs on 8GB RAM according to Simon Willisyn on X.
+Simon Willisyn notes that he trained a tiny LLM years ago. He now runs good local LLMs on roughly
+8GB of RAM. The observation highlights progress in local inference efficiency. Developers tracking
+open source local tools can draw from his experience. The shift from early tiny models to current
+capable ones on modest hardware shows rapid practical gains, data set auth github 1.0 according
+to Simon Willison. The data set auth github plugin reached version 1.0. The release followed
+fixes for cookie exploration issues. Those fixes support longer authenticated sessions.
+The update improves session handling for users of the plugin. Version 1.0 marks the resolution
+of prior expiration limitations, experimenting with hyper surface constrained dynamic weight updating
+according to the machine learning subreddit. A researcher shared results from a side project using
+hyper surfaces to generate weight deltas. The deltas applied to a single decoder block iterated
+multiple times. The approach reduces parameter count to about 16% of a standard 24-layer transformer.
+It maintains competitive loss throughout.
+The model uses a triangular wave function set and a context vector from gated linear attention
+to modulate weight updates.
+Check out the hyper-surface weight update experiment when exploring parameter-efficient training methods.
+Let me pop the hood on token routing inside mixture of experts' layers,
+where the router itself adds a small feed-forward pass before the main computation.
+Routing decisions can be cashed across similar tokens to cut compute, yet accuracy falls
+once the cash window passes a few hundred tokens.
+Quality gains from extra experts level off once the router underutilizes added capacity,
+typically near 64 experts for models under 30 billion parameters.
+An auxiliary load balancing loss makes expert distribution more uniform but can raise primary
+task loss by up to 2%.
+The router is a lightweight two-layer network whose output directly decides which expert
+weights load into memory.
+Caching router output for tokens within a small cosine distance of prior tokens, trims
+router flops by roughly 30% on repetitive text, though the same cache degrades quickly
+on code or multilingual inputs.
+Load balancing losses are scaled by a small coefficient, and raising that coefficient
+past 0.01 often triggers the 2% regression.
+In production, the router decision occurs once
+per token at the start of the layer
+and stays reused for the rest of the block,
+keeping added latency to a few microseconds.
+Try program as weights for defining reusable local functions
+from English descriptions on your own machine.
+Experiment with anonymized prompts when testing retrieval tasks
+with GPT-40 mini to measure privacy trade-offs.
+new local inference optimizations from the open source community are also on
+the way. Before we go, the next wave of open-weight model releases will likely
+test how far specialized post-training can push smaller bases. That's models and
+agents for today. If you found this useful, share it with someone who's trying to
+keep up with all these changes and subscribe so you don't miss tomorrow's update.
+The AI world moves fast. We'll help you keep up. See you tomorrow. And if you'd
+You rather watch than listen, find us on YouTube at Narra Network, links in the show notes.
+And before you go, this show is part of the Narra Network, a family of daily podcasts
+on tech, science, and markets.
+Each want a short, sharp briefing you can finish on the commute.
+If today earned its place in your feed, here's your next listen.
+Tesla shorts time.
+Your daily deep dive into everything Tesla.
+Find every show free at NarraNetwork.com.
+And if you would rather hear only your shows in your order,
+Narra Personal builds you a private daily edition.
+The details are at narennetwork.com slash join.
+This episode used AI voice synthesis of my voice.
+Editorial selection and analysis are my own.

@@ -1,0 +1,131 @@
+Local neural programs compiled from English descriptions now run entirely on CPU without external A P I's.
+
+This is Models and Agents, episode one hundred seventy-nine.
+
+ProgramAsWeights lets users describe a text function in English and compile it into a reusable neural program.
+
+The system relies on a finetuned Qwen3 four B to generate a Laura adapter for a frozen Qwen3 zero point six B interpreter.
+
+On FuzzyBench the approach hits seventy three point four percent exact match accuracy.
+
+Compilation stays separate from inference so the task definition remains fixed while inputs vary.
+
+The project releases code and model weights as open source.
+
+A higher accuracy path called Compile by Training runs one hundred steps of adapter finetuning and reaches eighty three point six percent semantic accuracy on FuzzyBench Hard.
+
+The interpreter stays frozen in every case so only the generated adapter changes per task.
+
+Looking back over the past week several threads stood out across frontier releases and agent reliability.
+
+Discussions around Open A I and G P T centered on concrete risks and new legal workflow tools while Claude and Llama families saw continued open weight and evaluation moves.
+
+Agent incidents and large scale funding commitments also surfaced as recurring points of attention.
+
+China A I startup Naive A I bets on mid and post-training to compete in L L M's according to .
+
+Naive A I directs its effort at the mid and post-training stages to build competitive large language models.
+
+The startup focuses on those phases to close the gap with larger players.
+
+Specialized training techniques form the core of its strategy.
+
+Further results from Naive A I on mid-training approaches are expected in coming weeks.
+
+The company positions itself through targeted work in those later training periods rather than pre-training scale alone.
+
+Anonymizing prompts cuts Open A I's G P T 4o mini retrieval score by 60 percent according to PPC Land.
+
+Anonymizing prompts reduces the retrieval performance of G P T 4o mini by sixty percent.
+
+This change shows the direct impact of privacy techniques on model capabilities.
+
+The drop occurs specifically in retrieval tasks.
+
+Experimenting with anonymized prompts helps measure those privacy tradeoffs during testing.
+
+The effect appears consistent when prompts are stripped of identifying details before submission.
+
+Raindrop Raises Series A Funding For A I Agent Reliability Platform according to pulse2 dot com.
+
+Raindrop raised Series A funding led by CRV.
+
+Total funding now reaches fifty million dollars.
+
+The platform focuses on improving reliability for A I agents in production.
+
+Potential updates to agent reliability tools from Raindrop may appear soon.
+
+The round targets production-stage reliability challenges for deployed agents.
+
+CRV led the Series A that brought the cumulative capital to that level.
+
+Trained tiny L L M years ago, now runs good local L L M's on 8GB RAM according to Simon Willison on X.
+
+Simon Willison notes that he trained a tiny L L M years ago.
+
+He now runs good local L L M's on roughly eight gigabytes of RAM.
+
+The observation highlights progress in local inference efficiency.
+
+Developers tracking open-source local tools can draw from his experience.
+
+The shift from early tiny models to current capable ones on modest hardware shows rapid practical gains.
+
+datasette-auth-github 1.0 according to Simon Willison.
+
+The datasette-auth-github plugin reached version one point zero.
+
+The release followed fixes for cookie expiration issues.
+
+Those fixes support longer authenticated sessions.
+
+The update improves session handling for users of the plugin.
+
+Version one point zero marks the resolution of prior expiration limitations.
+
+Experimenting with hypersurface-constrained dynamic weight updating according to the MachineLearning subreddit.
+
+A researcher shared results from a side project using hypersurfaces to generate weight deltas.
+
+The deltas apply to a single decoder block iterated multiple times.
+
+The approach reduces parameter count to about sixteen percent of a standard twenty four layer transformer.
+
+It maintains competitive loss throughout.
+
+The model uses a triangular wave function set and a context vector from Gated Linear Attention to modulate weight updates.
+
+Check out the hypersurface weight update experiment when exploring parameter-efficient training methods.
+
+Let me pop the hood on token routing inside mixture of experts layers where the router itself adds a small feed forward pass before the main computation.
+
+Routing decisions can be cached across similar tokens to cut compute yet accuracy falls once the cache window passes a few hundred tokens.
+
+Quality gains from extra experts level off once the router under utilizes added capacity typically near sixty four experts for models under thirty billion parameters.
+
+An auxiliary load balancing loss makes expert distribution more uniform but can raise primary task loss by up to two percent.
+
+The router is a lightweight two layer network whose output directly decides which expert weights load into memory.
+
+Caching router output for tokens within a small cosine distance of prior tokens trims router FLOPs by roughly thirty percent on repetitive text though the same cache degrades quickly on code or multilingual inputs.
+
+Load balancing losses are scaled by a small coefficient and raising that coefficient past zero point zero one often triggers the two percent regression.
+
+In production the router decision occurs once per token at the start of the layer and stays reused for the rest of the block keeping added latency to a few microseconds.
+
+Try ProgramAsWeights for defining reusable local functions from English descriptions on your own machine.
+
+Experiment with anonymized prompts when testing retrieval tasks with G P T four o mini to measure privacy tradeoffs.
+
+New local inference optimizations from the open source community are also on the way.
+
+Before we go the next wave of open weight model releases will likely test how far specialized post training can push smaller bases.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The A I world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+And before you go: this show is part of the Nerra Network — a family of daily podcasts on tech, science, and markets, each one a short, sharp briefing you can finish on the commute. If today earned its place in your feed, here's your next listen — Tesla Shorts Time, your daily deep dive into everything Tesla. Find every show, free, at nerranetwork dot com.
+
+And if you would rather hear only your shows, in your order, Nerra Personal builds you a private daily edition — the details are at nerranetwork dot com join.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
